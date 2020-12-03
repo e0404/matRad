@@ -2,7 +2,7 @@ function matRad_writeMHA(filepath,cube,metadata)
 % matRad function to write mha files
 % 
 % call
-%   matRad_writeMHA(cube,metadata,filename)
+%   matRad_writeMHA(filepath,cube,metadata)
 %
 % input
 %   filepath:   full filename (with extension)
@@ -76,6 +76,7 @@ fprintf(fid, 'DimSize = %d %d %d\n',dimensions(1),dimensions(2),dimensions(3));
 fprintf(fid, 'ElementType = %s\n',matlabTypeToMHAtype(metadata.datatype));
 fprintf(fid, 'ElementDataFile = LOCAL\n');
 fwrite(fid,cube,metadata.datatype,'b');
+fclose(fid);
 
 end
 

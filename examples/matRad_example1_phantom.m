@@ -19,8 +19,7 @@
 % (ii) how to create a cst structure containing the volume of interests of the phantom
 % (iii) generate a treatment plan for this phantom
 
-
-clc, clear, close all
+matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
 
 %% Create a CT image series
 xDim = 200;
@@ -52,11 +51,12 @@ cst{ixPTV,2} = 'target';
 cst{ixPTV,3} = 'TARGET';
  
 % define optimization parameter for both VOIs
-cst{ixOAR,5}.TissueClass = 1;
-cst{ixOAR,5}.alphaX      = 0.1000;
-cst{ixOAR,5}.betaX       = 0.0500;
-cst{ixOAR,5}.Priority    = 2;
-cst{ixOAR,5}.Visible     = 1;
+cst{ixOAR,5}.TissueClass  = 1;
+cst{ixOAR,5}.alphaX       = 0.1000;
+cst{ixOAR,5}.betaX        = 0.0500;
+cst{ixOAR,5}.Priority     = 2;
+cst{ixOAR,5}.Visible      = 1;
+cst{ixOAR,5}.visibleColor = [0 0 0];
 
 % define objective as struct for compatibility with GNU Octave I/O
 cst{ixOAR,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(10,30));
@@ -66,9 +66,10 @@ cst{ixPTV,5}.alphaX      = 0.1000;
 cst{ixPTV,5}.betaX       = 0.0500;
 cst{ixPTV,5}.Priority    = 1;
 cst{ixPTV,5}.Visible     = 1;
+cst{ixPTV,5}.visibleColor = [1 1 1];
 
 % define objective as struct for compatibility with GNU Octave I/O
-cst{ixPTV,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(10,30));
+cst{ixPTV,6}{1} = struct(DoseObjectives.matRad_SquaredDeviation(800,60));
 
 %% Lets create either a cubic or a spheric phantom
 
@@ -172,8 +173,8 @@ display(cst);
 vIxOAR = cst{ixOAR,4}{1};
 vIxPTV = cst{ixPTV,4}{1};
 
-ct.cubeHU{1}(vIxOAR) = 1;
-ct.cubeHU{1}(vIxPTV) = 1;
+ct.cubeHU{1}(vIxOAR) = 0;
+ct.cubeHU{1}(vIxPTV) = 0;
 
 %% Treatment Plan
 % The next step is to define your treatment plan labeled as 'pln'. This 
@@ -234,5 +235,13 @@ doseWindow = [0 max([resultGUI.physicalDose(:)])];
 figure,title('phantom plan')
 matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
 
-
+%% 
+% We export the the created phantom & dose as dicom. This is handled by the 
+% class matRad_DicomExporter. When no arguments are given, the exporter searches
+% the workspace itself for matRad-structures. The output directory can be set by
+% the property dicomDir. While the different DICOM datasets (ct, RTStruct, etc) 
+% can be exported individually, we call the wrapper to do all possible exports.
+dcmExport = matRad_DicomExporter();
+dcmExport.dicomDir = [pwd filesep 'dicomExport'];
+dcmExport.matRad_exportDicom();
 

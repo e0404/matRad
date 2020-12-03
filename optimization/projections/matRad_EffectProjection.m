@@ -17,19 +17,30 @@ classdef matRad_EffectProjection < matRad_BackProjection
     methods
         function obj = matRad_EffectProjection()
         end
-        
-        function e = computeResult(obj,dij,w)
-            e = cell(numel(dij.mAlphaDose));
-            % calculate effect
-            for i = 1:numel(e)                
-                e{i} = obj.computeSingleScenarioEffect(dij,w,i);                  
-            end
+    end
+    
+    methods
+        function effect = computeSingleScenario(~,dij,scen,w)
+            if isempty(dij.mAlphaDose{scen}) || isempty(dij.mSqrtBetaDose{scen})
+                effect = [];
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispWarning('Empty scenario in optimization detected! This should not happen...\n');
+            else
+                effect = dij.mAlphaDose{scen}*w + (dij.mSqrtBetaDose{scen}*w).^2;
+            end 
         end
         
-        function effect = computeSingleScenarioEffect(obj,dij,w,i)
-            linTerm = dij.mAlphaDose{i} * w;
-            quadTerm = dij.mSqrtBetaDose{i} * w;
-            effect = linTerm + quadTerm.^2;
+        function wGrad = projectSingleScenarioGradient(~,dij,doseGrad,scen,w)
+            if isempty(dij.mAlphaDose{scen}) || isempty(dij.mSqrtBetaDose{scen})
+                wGrad = [];
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispWarning('Empty scenario in optimization detected! This should not happen...\n');
+            else
+                vBias = (doseGrad{scen}' * dij.mAlphaDose{scen})';
+                quadTerm = dij.mSqrtBetaDose{scen} * w;
+                mPsi = (2*(doseGrad{scen}.*quadTerm)' * dij.mSqrtBetaDose{scen})';
+                wGrad = vBias + mPsi;
+            end
         end
     end
 end

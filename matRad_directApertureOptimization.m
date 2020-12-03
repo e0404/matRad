@@ -1,8 +1,9 @@
-function [optResult,info] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln)
+function [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln)
 % matRad function to run direct aperture optimization
 %
 % call
-%   o[optResult,info] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln,visBool)
+%   [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apertureInfo,pln)
+%   [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln)
 %
 % input
 %   dij:            matRad dij struct
@@ -12,13 +13,11 @@ function [optResult,info] = matRad_directApertureOptimization(dij,cst,apertureIn
 %                   this field is empty optResult struct will be created
 %                   (optional)
 %   pln:            matRad pln struct
-%   visBool:        plots the objective function value in dependence of the
-%                   number of iterations
 %
 % output
 %   optResult:  struct containing optimized fluence vector, dose, and
 %               shape info
-%   info:       struct containing information about optimization
+%   optimizer:  used optimizer object
 %
 % References
 %   [1] http://dx.doi.org/10.1118/1.4914863
@@ -36,6 +35,9 @@ function [optResult,info] = matRad_directApertureOptimization(dij,cst,apertureIn
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+matRad_cfg = MatRad_Config.instance();
+
 % adjust overlap priorities
 cst = matRad_setOverlapPriorities(cst);
 
@@ -51,7 +53,7 @@ for i = 1:size(cst,1)
             try
                 obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
             catch
-                error(['cst{' num2str(i) ',6}{' num2str(j) '} is not a valid Objective/constraint! Remove or Replace and try again!']);
+                matRad_cfg.dispError('cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!',i,j);
             end
         end
         
@@ -83,21 +85,20 @@ switch pln.propOpt.optimizer
     case 'fmincon'
         optimizer = matRad_OptimizerFmincon;
     otherwise
-        warning(['Optimizer ''' pln.propOpt.optimizer ''' not known! Fallback to IPOPT!']);
+        matRad_cfg.dispWarning('Optimizer ''%s'' not known! Fallback to IPOPT!',pln.propOpt.optimizer);
         optimizer = matRad_OptimizerIPOPT;
 end
 
 % Run IPOPT.
 optimizer = optimizer.optimize(apertureInfo.apertureVector,optiProb,dij,cst);
 wOpt = optimizer.wResult;
-info = optimizer.resultInfo;
 
 % update the apertureInfoStruct and calculate bixel weights
 apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(apertureInfo,wOpt);
 
 % logging final results
-fprintf('Calculating final cubes...\n');
-resultGUI = matRad_calcCubes(apertureInfo.bixelWeights,dij,cst);
+matRad_cfg.dispInfo('Calculating final cubes...\n');
+resultGUI = matRad_calcCubes(apertureInfo.bixelWeights,dij);
 resultGUI.w    = apertureInfo.bixelWeights;
 resultGUI.wDAO = apertureInfo.bixelWeights;
 resultGUI.apertureInfo = apertureInfo;

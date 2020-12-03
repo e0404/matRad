@@ -1,5 +1,4 @@
 classdef (Abstract) matRad_DoseConstraint < matRad_DoseOptimizationFunction
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad_DoseConstraint: Interface for optimization constraints.
 %   This abstract base class provides the interface of constraints for
 %   non-linear optimization.
@@ -66,9 +65,9 @@ classdef (Abstract) matRad_DoseConstraint < matRad_DoseOptimizationFunction
         end
        
         % default constructor of matRad_DoseConstraint
-        function obj = matRad_DoseConstraint(inputArg)
-            % superclass constructor is already called when this is line is reached
-            % additional matRad_DoseConstraint constructor specific code goes here
+        function obj = matRad_DoseConstraint(varargin)
+            %default initialization from struct (parameters & penalty)
+            obj@matRad_DoseOptimizationFunction(varargin{:});
         end
         
         function jStruct = getDoseConstraintJacobianStructure(obj,n)

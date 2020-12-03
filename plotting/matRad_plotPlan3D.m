@@ -1,8 +1,10 @@
 function matRad_plotPlan3D(axesHandle,pln,stf)
-% matRad function to visualize a plan in 3D. Stf is optional for plotting
-% more detailed field contours in visualization of the impinging beams.
+% matRad function to visualize a plan in 3D 
+% Stf is optional for plotting more detailed field contours in 
+% visualization of the impinging beams.
 % 
 % call
+%  rotMat = matRad_plotPlan3D(axesHandle,pln)
 %  rotMat = matRad_plotPlan3D(axesHandle,pln,stf)
 %
 % input
@@ -12,6 +14,9 @@ function matRad_plotPlan3D(axesHandle,pln,stf)
 %               not empty, the function will use the ray position  
 %               information to plot more detailed field contours than with 
 %               pln only
+%
+% output
+%   -
 %
 % References
 %   -
@@ -54,7 +59,7 @@ if nargin < 3 || isempty(stf)
     fileName = [pln.radiationMode '_' pln.machine];
     %Get a SAD
     try
-        load([fileparts(mfilename('fullpath')) filesep fileName]);
+        load([fileparts(mfilename('fullpath')) filesep 'basedata' filesep fileName]);
         SAD = machine.meta.SAD;
     catch
         if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
@@ -68,9 +73,9 @@ if nargin < 3 || isempty(stf)
     beamVector = [0 SAD 0];
    
     
-    for beamIx = 1:pln.numOfBeams
-        rotMat = matRad_getRotationMatrix(pln.gantryAngles(beamIx),pln.couchAngles(beamIx));
-        beamIsoCenter = pln.isoCenter(beamIx,:);
+    for beamIx = 1:pln.propStf.numOfBeams
+        rotMat = matRad_getRotationMatrix(pln.propStf.gantryAngles(beamIx),pln.propStf.couchAngles(beamIx));
+        beamIsoCenter = pln.propStf.isoCenter(beamIx,:);
         currBeamVector = rotMat*beamVector';        
         currBeamSource = beamIsoCenter - currBeamVector';
         currBeamOuterTarget = beamIsoCenter + currBeamVector';
@@ -109,7 +114,7 @@ else %We use the steering information to visualize the field contour
         beamTarget = stf(fieldIx).isoCenter;
         beamSource = stf(fieldIx).sourcePoint + stf(fieldIx).isoCenter;
         
-        rotMat = matRad_getRotationMatrix(pln.gantryAngles(fieldIx),pln.couchAngles(fieldIx));
+        rotMat = matRad_getRotationMatrix(pln.propStf.gantryAngles(fieldIx),pln.propStf.couchAngles(fieldIx));
         
         bixelWidth = stf(fieldIx).bixelWidth;
         %Accumulate ray positions in matrix

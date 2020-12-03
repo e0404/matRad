@@ -1,8 +1,9 @@
-function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)
+function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol)
 % matRad indictor wrapper
 % 
 % call
-%   matRad_calcIndicators(cst,pln,cube,dvhType,param,refGy,refVol,lineStyleIndicator)
+%   [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI)
+%   [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol)
 %
 % input
 %   cst:                  matRad cst struct
@@ -49,16 +50,8 @@ if ~exist('refGy', 'var')
     refGy = [];
 end
 
-if exist('param','var')
-   if ~isfield(param,'logLevel')
-      param.logLevel = 1;
-   end
-else
-   param.logLevel = 1;
-end
-
 dvh = matRad_calcDVH(cst,doseCube,'cum');
-qi  = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param);
+qi  = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol);
 
 figure,set(gcf,'Color',[1 1 1]);
 subplot(2,1,1)

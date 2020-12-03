@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
+  <configuration build-checksum="2848777975"
+                  file="/home/abbani/Dokumente/matRad/matRadLinux.prj"
+                  location="/home/abbani/Dokumente/matRad"
+                  name="matRadLinux"
+                  preferred-package-location="/home/abbani/Dokumente/matRad/standalone/for_redistribution"
+                  preferred-package-type="package.type.install"
+                  target="target.ezdeploy.standalone"
+                  target-name="Application Compiler">
+      <param.appname>matRad</param.appname>
+      <param.icon>${PROJECT_ROOT}/matRad_resources/icon.ico</param.icon>
+      <param.icons>
+         <file>${PROJECT_ROOT}/matRad_resources/icon_48.png</file>
+         <file>${PROJECT_ROOT}/matRad_resources/icon_32.png</file>
+         <file>${PROJECT_ROOT}/matRad_resources/icon_24.png</file>
+         <file>${PROJECT_ROOT}/matRad_resources/icon_16.png</file>
+      </param.icons>
+      <param.version>2.2</param.version>
+      <param.authnamewatermark>matRad development team @ DKFZ</param.authnamewatermark>
+      <param.email>matRad@dkfz.de</param.email>
+      <param.company>German Cancer Research Center DKFZ</param.company>
+      <param.summary>matRad is an open source treatment planning system for radiation therapy written in Matlab.</param.summary>
+      <param.description/>
+      <param.screenshot>${PROJECT_ROOT}/standalone/matRad_splashscreen.png</param.screenshot>
+      <param.guid/>
+      <param.installpath.string>/matRad</param.installpath.string>
+      <param.installpath.combo>option.installpath.user</param.installpath.combo>
+      <param.logo>${PROJECT_ROOT}/standalone/matRad_installscreen.png</param.logo>
+      <param.install.notes/>
+      <param.target.install.notes>In the following directions, replace MR/v97 by the directory on the target machine where MATLAB is installed, or MR by the directory where the MATLAB Runtime is installed.
+
+(1) Set the environment variable XAPPLRESDIR to this value:
+
+MR/v97/X11/app-defaults
+
+
+(2) If the environment variable LD_LIBRARY_PATH is undefined, set it to the following:
+
+MR/v97/runtime/glnxa64:MR/v97/bin/glnxa64:MR/v97/sys/os/glnxa64:MR/v97/sys/opengl/lib/glnxa64
+
+If it is defined, set it to the following:
+
+${LD_LIBRARY_PATH}:MR/v97/runtime/glnxa64:MR/v97/bin/glnxa64:MR/v97/sys/os/glnxa64:MR/v97/sys/opengl/lib/glnxa64</param.target.install.notes>
+      <param.intermediate>${PROJECT_ROOT}/standalone/for_testing</param.intermediate>
+      <param.files.only>${PROJECT_ROOT}/matRadLinux/for_redistribution_files_only</param.files.only>
+      <param.output>${PROJECT_ROOT}/standalone/for_redistribution</param.output>
+      <param.logdir>${PROJECT_ROOT}/matRadLinux</param.logdir>
+      <param.enable.clean.build>false</param.enable.clean.build>
+      <param.user.defined.mcr.options/>
+      <param.target.type>subtarget.standalone</param.target.type>
+      <param.support.packages/>
+      <param.web.mcr>true</param.web.mcr>
+      <param.package.mcr>false</param.package.mcr>
+      <param.no.mcr>false</param.no.mcr>
+      <param.web.mcr.name>matRad_installerLinux64_v_2_2</param.web.mcr.name>
+      <param.package.mcr.name>matRad_installerLinux64_wRT_v_2_2</param.package.mcr.name>
+      <param.no.mcr.name>matRad_installerLinux64_noRT</param.no.mcr.name>
+      <param.windows.command.prompt>false</param.windows.command.prompt>
+      <param.create.log>true</param.create.log>
+      <param.log.file>matRad_consoleOutput.log</param.log.file>
+      <param.native.matlab>false</param.native.matlab>
+      <param.checkbox>false</param.checkbox>
+      <param.example/>
+      <param.help.text>Syntax 
+	 matRadGUI -? 
+	 matRadGUI varargin 
+ Input Arguments 
+	 -?  print help on how to use the application 
+	 varargin  input arguments</param.help.text>
+      <unset>
+         <param.description/>
+         <param.guid/>
+         <param.installpath.combo/>
+         <param.install.notes/>
+         <param.files.only/>
+         <param.logdir/>
+         <param.enable.clean.build/>
+         <param.user.defined.mcr.options/>
+         <param.target.type/>
+         <param.support.packages/>
+         <param.no.mcr/>
+         <param.no.mcr.name/>
+         <param.windows.command.prompt/>
+         <param.native.matlab/>
+         <param.checkbox/>
+         <param.example/>
+      </unset>
+      <fileset.main>
+         <file>${PROJECT_ROOT}/matRadGUI.m</file>
+      </fileset.main>
+      <fileset.resources>
+         <file>${PROJECT_ROOT}/IO</file>
+         <file>${PROJECT_ROOT}/IO/matRad_exportGUI.fig</file>
+         <file>${PROJECT_ROOT}/IO/matRad_exportGUI.m</file>
+         <file>${PROJECT_ROOT}/IO/matRad_importGUI.fig</file>
+         <file>${PROJECT_ROOT}/IO/matRad_importGUI.m</file>
+         <file>${PROJECT_ROOT}/IO/matRad_importPatient.m</file>
+         <file>${PROJECT_ROOT}/IO/matRad_readCube.m</file>
+         <file>${PROJECT_ROOT}/IO/matRad_readNRRD.m</file>
+         <file>${PROJECT_ROOT}/IO/matRad_writeCube.m</file>
+         <file>${PROJECT_ROOT}/IO/matRad_writeMHA.m</file>
+         <file>${PROJECT_ROOT}/IO/matRad_writeNRRD.m</file>
+         <file>${PROJECT_ROOT}/IO/matRad_writeVTK.m</file>
+         <file>${PROJECT_ROOT}/carbon_Generic.mat</file>
+         <file>${PROJECT_ROOT}/dicomImport</file>
+         <file>${PROJECT_ROOT}/dicomImport/DKFZ_Logo.png</file>
+         <file>${PROJECT_ROOT}/dicomImport/matRad_calcHU.m</file>
+         <file>${PROJECT_ROOT}/dicomImport/matRad_calcWaterEqD.m</file>
+         <file>${PROJECT_ROOT}/dicomImport/matRad_convRtssContours2Indices.m</file>
+         <file>${PROJECT_ROOT}/dicomImport/matRad_createCst.m</file>
+         <file>${PROJECT_ROOT}/dicomImport/matRad_dummyCst.m</file>
+         <file>${PROJECT_ROOT}/dicomImport/matRad_importDicom.m</file>
+         <file>${PROJECT_ROOT}/dicomImport/matRad_importDicomCt.m</file>
+         <file>${PROJECT_ROOT}/dicomImport/matRad_importDicomGUI.fig</file>
+         <file>${PROJECT_ROOT}/dicomImport/matRad_importDicomGUI.m</file>
+         <file>${PROJECT_ROOT}/dicomImport/matRad_importDicomRTDose.m</file>
+         <file>${PROJECT_ROOT}/dicomImport/matRad_importDicomRTPlan.m</file>
+         <file>${PROJECT_ROOT}/dicomImport/matRad_importDicomRtss.m</file>
+         <file>${PROJECT_ROOT}/dicomImport/matRad_importDicomSteeringParticles.m</file>
+         <file>${PROJECT_ROOT}/dicomImport/matRad_importDicomSteeringPhotons.m</file>
+         <file>${PROJECT_ROOT}/dicomImport/matRad_importFieldShapes.m</file>
+         <file>${PROJECT_ROOT}/dicomImport/matRad_interpDicomCtCube.m</file>
+         <file>${PROJECT_ROOT}/dicomImport/matRad_interpDicomDoseCube.m</file>
+         <file>${PROJECT_ROOT}/dicomImport/matRad_listAllFiles.m</file>
+         <file>${PROJECT_ROOT}/dicomImport/matRad_loadHLUT.m</file>
+         <file>${PROJECT_ROOT}/dicomImport/matRad_progress.m</file>
+         <file>${PROJECT_ROOT}/dicomImport/matRad_scanDicomImportFolder.m</file>
+         <file>${PROJECT_ROOT}/dicomImport/matrad_logo.png</file>
+         <file>${PROJECT_ROOT}/matRadGUI.fig</file>
+         <file>${PROJECT_ROOT}/matRadGUI.m</file>
+         <file>${PROJECT_ROOT}/matRad_DijSampling.m</file>
+         <file>${PROJECT_ROOT}/matRad_addMargin.m</file>
+         <file>${PROJECT_ROOT}/matRad_calcCubes.m</file>
+         <file>${PROJECT_ROOT}/matRad_calcDVH.m</file>
+         <file>${PROJECT_ROOT}/matRad_calcGeoDists.m</file>
+         <file>${PROJECT_ROOT}/matRad_calcLQParameter.m</file>
+         <file>${PROJECT_ROOT}/matRad_calcLateralParticleCutOff.m</file>
+         <file>${PROJECT_ROOT}/matRad_calcParticleDose.m</file>
+         <file>${PROJECT_ROOT}/matRad_calcParticleDoseBixel.m</file>
+         <file>${PROJECT_ROOT}/matRad_calcPhotonDose.m</file>
+         <file>${PROJECT_ROOT}/matRad_calcPhotonDoseBixel.m</file>
+         <file>${PROJECT_ROOT}/matRad_calcQualityIndicators.m</file>
+         <file>${PROJECT_ROOT}/matRad_calcSigmaRashi.m</file>
+         <file>${PROJECT_ROOT}/matRad_computeSSD.m</file>
+         <file>${PROJECT_ROOT}/matRad_directApertureOptimization.m</file>
+         <file>${PROJECT_ROOT}/matRad_dispToConsole.m</file>
+         <file>${PROJECT_ROOT}/matRad_electronDensitiesToHU.m</file>
+         <file>${PROJECT_ROOT}/matRad_engelLeafSequencing.m</file>
+         <file>${PROJECT_ROOT}/matRad_fluenceOptimization.m</file>
+         <file>${PROJECT_ROOT}/matRad_generateStf.m</file>
+         <file>${PROJECT_ROOT}/matRad_getIsoCenter.m</file>
+         <file>${PROJECT_ROOT}/matRad_getRotationMatrix.m</file>
+         <file>${PROJECT_ROOT}/matRad_indicatorWrapper.m</file>
+         <file>${PROJECT_ROOT}/matRad_interp1.m</file>
+         <file>${PROJECT_ROOT}/matRad_progress.m</file>
+         <file>${PROJECT_ROOT}/matRad_rayTracing.m</file>
+         <file>${PROJECT_ROOT}/matRad_sequencing2ApertureInfo.m</file>
+         <file>${PROJECT_ROOT}/matRad_setOverlapPriorities.m</file>
+         <file>${PROJECT_ROOT}/matRad_showDVH.m</file>
+         <file>${PROJECT_ROOT}/matRad_showQualityIndicators.m</file>
+         <file>${PROJECT_ROOT}/matRad_siddonRayTracer.m</file>
+         <file>${PROJECT_ROOT}/matRad_siochiLeafSequencing.m</file>
+         <file>${PROJECT_ROOT}/matRad_visApertureInfo.m</file>
+         <file>${PROJECT_ROOT}/matRad_xiaLeafSequencing.m</file>
+         <file>${PROJECT_ROOT}/optimization</file>
+         <file>${PROJECT_ROOT}/optimization/matRad_backProjection.m</file>
+         <file>${PROJECT_ROOT}/optimization/matRad_calcInversDVH.m</file>
+         <file>${PROJECT_ROOT}/optimization/matRad_collapseDij.m</file>
+         <file>${PROJECT_ROOT}/photons_Generic.mat</file>
+         <file>${PROJECT_ROOT}/plotting</file>
+         <file>${PROJECT_ROOT}/plotting/colormaps/colormapTemplate.txt</file>
+         <file>${PROJECT_ROOT}/plotting/matRad_computeAllVoiSurfaces.m</file>
+         <file>${PROJECT_ROOT}/plotting/matRad_computeIsoDoseContours.m</file>
+         <file>${PROJECT_ROOT}/plotting/matRad_computeVoiContours.m</file>
+         <file>${PROJECT_ROOT}/plotting/matRad_computeVoiContoursWrapper.m</file>
+         <file>${PROJECT_ROOT}/plotting/matRad_getColormap.m</file>
+         <file>${PROJECT_ROOT}/plotting/matRad_plotAxisLabels.m</file>
+         <file>${PROJECT_ROOT}/plotting/matRad_plotColorbar.m</file>
+         <file>${PROJECT_ROOT}/plotting/matRad_plotCtSlice.m</file>
+         <file>${PROJECT_ROOT}/plotting/matRad_plotCtSlice3D.m</file>
+         <file>${PROJECT_ROOT}/plotting/matRad_plotDoseSlice.m</file>
+         <file>${PROJECT_ROOT}/plotting/matRad_plotDoseSlice3D.m</file>
+         <file>${PROJECT_ROOT}/plotting/matRad_plotIsoCenterMarker.m</file>
+         <file>${PROJECT_ROOT}/plotting/matRad_plotIsoDoseLines.m</file>
+         <file>${PROJECT_ROOT}/plotting/matRad_plotIsoDoseLines3D.m</file>
+         <file>${PROJECT_ROOT}/plotting/matRad_plotPlan3D.m</file>
+         <file>${PROJECT_ROOT}/plotting/matRad_plotVoiContourSlice.m</file>
+         <file>${PROJECT_ROOT}/plotting/matRad_plotVois3D.m</file>
+         <file>${PROJECT_ROOT}/protons_Generic.mat</file>
+         <file>${PROJECT_ROOT}/tools</file>
+         <file>${PROJECT_ROOT}/tools/matRad_getEnvironment.m</file>
+      </fileset.resources>
+      <fileset.package>
+         <file>${PROJECT_ROOT}/BOXPHANTOM.mat</file>
+         <file>${PROJECT_ROOT}/HEAD_AND_NECK.mat</file>
+         <file>${PROJECT_ROOT}/LIVER.mat</file>
+         <file>${PROJECT_ROOT}/PROSTATE.mat</file>
+         <file>${PROJECT_ROOT}/TG119.mat</file>
+         <file>${PROJECT_ROOT}/readme_linux.txt</file>
+      </fileset.package>
+      <fileset.depfun>
+         <file>${PROJECT_ROOT}/BOXPHANTOM.mat</file>
+         <file>${PROJECT_ROOT}/HEAD_AND_NECK.mat</file>
+         <file>${PROJECT_ROOT}/LIVER.mat</file>
+         <file>${PROJECT_ROOT}/PROSTATE.mat</file>
+         <file>${PROJECT_ROOT}/TG119.mat</file>
+         <file>${PROJECT_ROOT}/matRad_calcDoseDirect.m</file>
+         <file>${PROJECT_ROOT}/matRad_calcDoseFillDij.m</file>
+         <file>${PROJECT_ROOT}/matRad_calcDoseInit.m</file>
+         <file>${PROJECT_ROOT}/matRad_calcDoseInitBeam.m</file>
+         <file>${PROJECT_ROOT}/matRad_getPhotonLQMParameters.m</file>
+         <file>${PROJECT_ROOT}/matRad_interp3.m</file>
+         <file>${PROJECT_ROOT}/matRad_interpRadDepth.m</file>
+         <file>${PROJECT_ROOT}/matRad_resizeCstToGrid.m</file>
+      </fileset.depfun>
+      <build-deliverables>
+         <file location="${PROJECT_ROOT}/standalone/for_testing" name="run_matRad.sh"
+               optional="false">/home/abbani/Dokumente/matRad/standalone/for_testing/run_matRad.sh</file>
+         <file location="${PROJECT_ROOT}/standalone/for_testing" name="splash.png"
+               optional="false">/home/abbani/Dokumente/matRad/standalone/for_testing/splash.png</file>
+         <file location="${PROJECT_ROOT}/standalone/for_testing" name="matRad"
+               optional="false">/home/abbani/Dokumente/matRad/standalone/for_testing/matRad</file>
+         <file location="${PROJECT_ROOT}/standalone/for_testing" name="readme.txt"
+               optional="true">/home/abbani/Dokumente/matRad/standalone/for_testing/readme.txt</file>
+      </build-deliverables>
+      <workflow/>
+      <matlab>
+         <root>/home/abbani/Dokumente/MATLAB</root>
+         <toolboxes/>
+      </matlab>
+      <platform>
+         <unix>true</unix>
+         <mac>false</mac>
+         <windows>false</windows>
+         <win2k>false</win2k>
+         <winxp>false</winxp>
+         <vista>false</vista>
+         <linux>true</linux>
+         <solaris>false</solaris>
+         <osver>4.12.14-lp150.12.82-default</osver>
+         <os32>false</os32>
+         <os64>true</os64>
+         <arch>glnxa64</arch>
+         <matlab>true</matlab>
+      </platform>
+  </configuration>
+</deployment-project>

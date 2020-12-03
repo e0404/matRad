@@ -29,19 +29,20 @@ function stf = matRad_generateStf(ct,cst,pln,visMode)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
 
-fprintf('matRad: Generating stf struct... ');
+matRad_cfg.dispInfo('matRad: Generating stf struct... ');
 
 if nargin < 4
     visMode = 0;
 end
 
 if numel(pln.propStf.gantryAngles) ~= numel(pln.propStf.couchAngles)
-    error('Inconsistent number of gantry and couch angles.');
+    matRad_cfg.dispError('Inconsistent number of gantry and couch angles.');
 end
 
-if pln.propStf.bixelWidth < 0 || ~isfinite(pln.propStf.bixelWidth)
-   error('bixel width (spot distance) needs to be a real number [mm] larger than zero.');
+if ~isnumeric(pln.propStf.bixelWidth) || pln.propStf.bixelWidth < 0 || ~isfinite(pln.propStf.bixelWidth)
+   matRad_cfg.dispError('bixel width (spot distance) needs to be a real number [mm] larger than zero.');
 end
 
 % find all target voxels from cst cell array
@@ -59,7 +60,11 @@ voiTarget    = zeros(ct.cubeDim);
 voiTarget(V) = 1;
     
 % add margin
-addmarginBool = 1;
+addmarginBool = matRad_cfg.propStf.defaultAddMargin;
+if isfield(pln,'propStf') && isfield(pln.propStf,'addMargin')
+   addmarginBool = pln.propStf.addMargin; 
+end
+
 if addmarginBool
     voiTarget = matRad_addMargin(voiTarget,cst,ct.resolution,ct.resolution,true);
     V   = find(voiTarget>0);
@@ -67,7 +72,7 @@ end
 
 % throw error message if no target is found
 if isempty(V)
-    error('Could not find target.');
+    matRad_cfg.dispError('Could not find target.');
 end
 
 % Convert linear indices to 3D voxel coordinates
@@ -76,10 +81,10 @@ end
 % prepare structures necessary for particles
 fileName = [pln.radiationMode '_' pln.machine];
 try
-   load([fileparts(mfilename('fullpath')) filesep fileName]);
+   load([fileparts(mfilename('fullpath')) filesep 'basedata' filesep fileName]);
    SAD = machine.meta.SAD;
 catch
-   error(['Could not find the following machine file: ' fileName ]); 
+   matRad_cfg.dispError('Could not find the following machine file: %s',fileName); 
 end
 
 if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
@@ -88,7 +93,7 @@ if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     availablePeakPos  = [machine.data.peakPos] + [machine.data.offset];
     
     if sum(availablePeakPos<0)>0
-       error('at least one available peak position is negative - inconsistent machine file') 
+       matRad_cfg.dispError('at least one available peak position is negative - inconsistent machine file') 
     end
     %clear machine;
 end
@@ -247,7 +252,7 @@ for i = 1:length(pln.propStf.gantryAngles)
                 targetExit  = radDepths(diff_voi == -1);
 
                 if numel(targetEntry) ~= numel(targetExit)
-                    error('Inconsistency during ray tracing.');
+                    matRad_cfg.dispError('Inconsistency during ray tracing. Please check correct assignment and overlap priorities of structure types OAR & TARGET.');
                 end
 
                 stf(i).ray(j).energy = [];
@@ -284,7 +289,7 @@ for i = 1:length(pln.propStf.gantryAngles)
          stf(i).ray(j).energy = machine.data.energy;
          
        else
-          error('Error generating stf struct: invalid radiation modality.');
+          matRad_cfg.dispError('Error generating stf struct: invalid radiation modality.');
        end
        
     end
@@ -306,11 +311,7 @@ for i = 1:length(pln.propStf.gantryAngles)
         
         % find set of energyies with adequate spacing
         if ~isfield(pln.propStf, 'longitudinalSpotSpacing')
-            if strcmp(machine.meta.machine,'Generic')
-                longitudinalSpotSpacing = 1.5; % enforce all entries to be used
-            else
-                longitudinalSpotSpacing = 3;   % default value for all other treatment machines
-            end
+            longitudinalSpotSpacing = matRad_cfg.propStf.defaultLongitudinalSpotSpacing;
         else
             longitudinalSpotSpacing = pln.propStf.longitudinalSpotSpacing;
         end

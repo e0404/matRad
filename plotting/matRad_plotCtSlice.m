@@ -1,10 +1,13 @@
 function [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,plane,slice,cMap,window)
-% matRad function that generates the plot for the CT in the GUI. The
-% function can also be used in personal matlab figures by passing the
+% matRad function that generates the plot for the CT in the GUI 
+% The function can also be used in personal matlab figures by passing the
 % corresponding axes handle
 %
 % call
-%   [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ct,cubeIdx,plane,slice,cMap,window)
+%   [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,plane,slice)
+%   [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,plane,slice,cMap)
+%   [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,plane,slice,window)
+%   [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,plane,slice,cMap,window)
 %
 % input
 %   axesHandle  handle to axes the slice should be displayed in
@@ -23,6 +26,9 @@ function [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,p
 %   cMap        used colormap (same as input if set)
 %   window      used window (same as input if set)
 %
+% References
+%   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
@@ -36,6 +42,8 @@ function [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,p
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+
 %Use default colormap?
 if nargin < 6 || isempty(cMap)
     cMap = bone(64);
@@ -47,15 +55,24 @@ end
 
 cMapScale = size(cMap,1) - 1;
 
+%Prepare the slice and convert it to uint8
 if plane == 1 % Coronal plane
-    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ctCube{cubeIdx}(slice,:,:)-window(1))/(window(2) - window(1))))),cMap);
-      
+	ctIndexed = uint8(cMapScale*(squeeze((ctCube{cubeIdx}(slice,:,:)-window(1))/(window(2) - window(1)))));      
 elseif plane == 2 % sagittal plane
-    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ctCube{cubeIdx}(:,slice,:)-window(1))/(window(2) - window(1))))),cMap);
-       
+    ctIndexed = uint8(cMapScale*(squeeze((ctCube{cubeIdx}(:,slice,:)-window(1))/(window(2) - window(1)))));	
 elseif plane == 3 % Axial plane
-    ct_rgb = ind2rgb(uint8(cMapScale*(squeeze((ctCube{cubeIdx}(:,:,slice)-window(1))/(window(2) - window(1))))),cMap);
+    ctIndexed = uint8(cMapScale*(squeeze((ctCube{cubeIdx}(:,:,slice)-window(1))/(window(2) - window(1)))));
+else
+	matRad_cfg.dispError('Invalid plane ''%d'' selected for visualization!',plane);
 end
+
+%This circumenvents a bug in Octave when the index in the image hase the maximum value of uint8
+if matRad_cfg.isOctave
+	ctIndexed(ctIndexed == 255) = 254;
+end
+
+ct_rgb = ind2rgb(ctIndexed,cMap);
+
 ctHandle = image('CData',ct_rgb,'Parent',axesHandle);
 
 end

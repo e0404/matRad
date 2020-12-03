@@ -1,8 +1,9 @@
-function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param)
+function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol)
 % matRad QI calculation
 % 
 % call
-%   qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param)
+%   qi = matRad_calcQualityIndicators(cst,pln,doseCube)
+%   qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol)
 %
 % input
 %   cst:                matRad cst struct
@@ -35,6 +36,9 @@ function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+matRad_cfg = MatRad_Config.instance();
+
 if ~exist('refVol', 'var') || isempty(refVol)
     refVol = [2 5 50 95 98];
 end
@@ -43,13 +47,6 @@ if ~exist('refGy', 'var') || isempty(refGy)
     refGy = floor(linspace(0,max(doseCube(:)),6)*10)/10;
 end
 
-if exist('param','var')
-   if ~isfield(param,'logLevel')
-      param.logLevel = 1;
-   end
-else
-   param.logLevel = 1;
-end
     
 % calculate QIs per VOI
 qi = struct;
@@ -96,12 +93,26 @@ for runVoi = 1:size(cst,1)
 
             % loop over target objectives and get the lowest dose objective 
             referenceDose = inf;
+            
+            if isstruct(cst{runVoi,6})
+                cst{runVoi,6} = num2cell(arrayfun(@matRad_DoseOptimizationFunction.convertOldOptimizationStruct,cst{runVoi,6}));
+            end
+            
             for runObjective = 1:numel(cst{runVoi,6})
                % check if this is an objective that penalizes underdosing 
                obj = cst{runVoi,6}{runObjective};
+               if ~isa(obj,'matRad_DoseOptimizationFunction')
+                   try
+                       obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
+                   catch ME
+                       matRad_cfg.dispWarning('Objective/Constraint not valid!\n%s',ME.message)
+                       continue;
+                   end
+               end
+               
                %if strcmp(cst{runVoi,6}(runObjective).type,'square deviation') > 0 || strcmp(cst{runVoi,6}(runObjective).type,'square underdosing') > 0
                if isa(obj,'DoseObjectives.matRad_SquaredDeviation') || isa(obj,'DoseObjectives.matRad_SquaredUnderdosing')
-                   referenceDose = (min(cst{runVoi,6}{runObjective}.getDoseParameters(),referenceDose))/pln.numOfFractions;
+                   referenceDose = (min(obj.getDoseParameters(),referenceDose))/pln.numOfFractions;
                end            
             end
 
@@ -122,12 +133,10 @@ for runVoi = 1:size(cst,1)
                                    qi(runVoi).(['CI_' StringReferenceDose 'Gy']),qi(runVoi).(['HI_' StringReferenceDose 'Gy']),referenceDose);
             end
         end
-        matRad_dispToConsole(voiPrint,param,'info','%s\n')
-    
-    else
-        
-        matRad_dispToConsole([num2str(cst{runVoi,1}) ' ' cst{runVoi,2} ' - No dose information.\n'],param,'info')
-        
+        %We do it this way so the percentages in the string are not interpreted as format specifiers
+        matRad_cfg.dispInfo('%s\n',voiPrint);    
+    else        
+        matRad_cfg.dispInfo('%d %s - No dose information.',cst{runVoi,1},cst{runVoi,2});        
     end
 end
 

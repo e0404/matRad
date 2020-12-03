@@ -14,30 +14,20 @@
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % set search path
-addpath(genpath(pwd));
+
+matRad_cfg = MatRad_Config.instance();
+
+addpath(genpath(matRad_cfg.matRadRoot));
+
+%clear command window and close all figures
+clc;
+close all;
 
 % clear workspace and command prompt, close all figures
-switch matRad_getEnvironment
-    case 'MATLAB'
-        clearvars -except unitTestBool
-    case 'OCTAVE'
-        clear -x unitTestBool
-end
-clc
-close all
+[env,envver] = matRad_getEnvironment();
+vString = matRad_version();
 
-% set log level accordingly if you do _not_ want to do unit testing
-if ~exist('unitTestBool','var') || ~unitTestBool
+matRad_cfg.dispInfo('You are running matRad %s with %s %s\n',vString,env,envver);
+clear env envver vString;
 
-    param.calcDoseDirect = false;
-    param.subIx          = [];
-    param.logLevel       = 1;
-    
-% set log level accordingly if want to do unit testing
-else
-    
-    param.calcDoseDirect = false;
-    param.subIx          = [];
-    param.logLevel       = 3;
-    
-end
+

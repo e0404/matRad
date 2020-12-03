@@ -1,7 +1,7 @@
 function ct = matRad_electronDensitiesToHU(ct)
-% matRad function to calculate recalculate HU values from equivalent 
-% densities. This is done to provide downward compatability to previous
-% matRad versions where HU values were not automatically saved during the
+% matRad function to calculate recalculate HU values from equivalent densities 
+% This is done to provide downward compatability to previous matRad 
+% versions where HU values were not automatically saved during the
 % import process. HU values can only be calculated if the HLUT is
 % bijective.
 %
