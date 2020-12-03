@@ -22,7 +22,7 @@ clear
 matRad_rc
 
 %% Load data, add generic 4D information, and display 'moving' geometry
-load BOXPHANTOM_LUNG_LARGE.mat
+load BOXPHANTOM_LUNG_LARGE_2e-1.mat
 
 %%
 
@@ -44,15 +44,15 @@ motionPeriod = 2.5; % [s]
 %%
 
 
-pln.numOfFractions  = 30;
+pln.numOfFractions  = 1;
 pln.radiationMode   = 'protons';           % either photons / protons / helium / carbon
-pln.machine         = 'GenericAPM';
+pln.machine         = 'generic_TOPAS_cropped_APM';
 
 % beam geometry settings
-pln.propStf.bixelWidth      = 10; % [mm] / also corresponds to lateral spot spacing for particles
-pln.propStf.longitudinalSpotSpacing = 5;      % only relevant for HIT machine, not generic
-pln.propStf.gantryAngles    = [90]; 
-pln.propStf.couchAngles     = [0]; 
+pln.propStf.bixelWidth      = 8; % [mm] / also corresponds to lateral spot spacing for particles
+pln.propStf.longitudinalSpotSpacing = 10;      % only relevant for HIT machine, not generic
+pln.propStf.gantryAngles    = 90; 
+pln.propStf.couchAngles     = 0; 
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
@@ -79,6 +79,8 @@ stf = matRad_generateStf(ct,cst,pln);
 
 %% 
 % dose calculation
+% weights = ones(1,sum([stf(:).totalNumOfBixels]));
+% resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,weights);
 dij = matRad_calcParticleDose(ct,stf,pln,cst);
 
 %% 
@@ -92,18 +94,18 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf) ; 
 
 %%
-pln.propHeterogeneity.calcHetero = true;
-cstHetero = matRad_cstHeteroAutoassign(cst);
+% pln.propHeterogeneity.calcHetero = true;
+% cstHetero = matRad_cstHeteroAutoassign(cst);
 %%
-dijHetero = matRad_calcParticleDose(ct,stf,pln,cstHetero);
-resultGUI_hetero = matRad_fluenceOptimization(dijHetero,cstHetero,pln);
-resultGUI_hetero = matRad_postprocessing(resultGUI_hetero, dijHetero, pln, cstHetero, stf) ; 
+% dijHetero = matRad_calcParticleDose(ct,stf,pln,cstHetero);
+% resultGUI_hetero = matRad_fluenceOptimization(dijHetero,cstHetero,pln);
+% resultGUI_hetero = matRad_postprocessing(resultGUI_hetero, dijHetero, pln, cstHetero, stf) ; 
 %%
-resultGUI_heteroDirect = matRad_calcDoseDirect(ct,stf,pln,cstHetero,resultGUI.w);
+% resultGUI_heteroDirect = matRad_calcDoseDirect(ct,stf,pln,cstHetero,resultGUI.w);
 %%
 % matRad_compareDose(resultGUI.physicalDose, resultGUI_hetero.physicalDose , ct, cst, [1, 1, 0] , 'off', pln, [2, 2], 1, 'global');
-figure, plot(matRad_calcIDD(resultGUI.physicalDose,'x')), hold on, plot(matRad_calcIDD(resultGUI_hetero.physicalDose,'x')), plot(matRad_calcIDD(resultGUI_heteroDirect.physicalDose,'x'),'--'), legend({'homogeneous','with correction dij','with correction direct'})
-xlim([60 150])
+% figure, plot(matRad_calcIDD(resultGUI.physicalDose,'x')), hold on, plot(matRad_calcIDD(resultGUI_hetero.physicalDose,'x')), plot(matRad_calcIDD(resultGUI_heteroDirect.physicalDose,'x'),'--'), legend({'homogeneous','with correction dij','with correction direct'})
+% xlim([60 150])
 % figure, plot(matRad_calcIDD(resultGUI_hetero.physicalDose,'x')), hold on, plot(matRad_calcIDD(resultGUI_heteroDirect.physicalDose,'x')), legend({'with correction dij','with correction direct'})
 % figure, plot(matRad_calcIDD(resultGUI_heteroDirect.physicalDose,'x'))
 %%
@@ -114,30 +116,55 @@ xlim([60 150])
 %%
 % TOPAS calculation
 pln.propMC.proton_engine = 'TOPAS';
-resultGUI_topas = matRad_calcDoseDirectMC(ct,stf,pln,cst,resultGUI.w,1e2);
+resultGUI_topas = matRad_calcDoseDirectMC(ct,stf,pln,cst,resultGUI.optW,1e4);
  
+resultGUI_topas = matRad_postprocessing(resultGUI_topas, dij, pln, cst, stf) ; 
+[resultGUI_topas, timeSequence] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI_topas); 
+
+%%
+figure, hold on,
+for i = 1:5
+    plot(matRad_calcIDD(resultGUI.phaseDose{i},'y'))
+%     imagesc(resultGUI.phaseDose{i}(:,:,80))
+
+%     imagesc(ct.cube{1,i}(:,:,80))
+    waitforbuttonpress;
+end
+
+%%
+figure, hold on,
+for i = 1:5
+    plot(matRad_calcIDD(resultGUI_topas.phaseDose{i},'y'))
+%     imagesc(resultGUI.phaseDose{i}(:,:,80))
+
+%     imagesc(ct.cube{1,i}(:,:,80))
+    waitforbuttonpress;
+end
+
+%%
+figure, plot(matRad_calcIDD(resultGUI.physicalDose,'y')), hold on, plot(matRad_calcIDD(resultGUI_topas.physicalDose,'y'))
 
 
 
 %%
-% plot the result in comparison to the static dose
-% slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z); 
-% 
-% figure 
-% 
-% subplot(2,2,1)
-% imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet);
-% title('static dose distribution [Gy (RBE)]')
-% axis equal
-% 
-% subplot(2,2,3)
-% imagesc(resultGUI.accRBExD(:,:,slice)),colorbar, colormap(jet); 
-% title('accumulated (4D) dose distribution [Gy (RBE)]')
-% axis equal
-% 
-% subplot(2,2,2)
-% imagesc(resultGUI.RBExD(:,:,slice) - resultGUI.accRBExD(:,:,slice)) ,colorbar, colormap(jet); 
-% title('static dose distribution - accumulated (4D) dose distribution [Gy (RBE)]')
-% 
-% axis equal
+%plot the result in comparison to the static dose
+slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z); 
+
+figure 
+
+subplot(2,2,1)
+imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet);
+title('static dose distribution [Gy (RBE)]')
+axis equal
+
+subplot(2,2,3)
+imagesc(resultGUI.accPhysicalDose(:,:,slice)),colorbar, colormap(jet); 
+title('accumulated (4D) dose distribution [Gy (RBE)]')
+axis equal
+
+subplot(2,2,2)
+imagesc(resultGUI.physicalDose(:,:,slice) - resultGUI.accPhysicalDose(:,:,slice)) ,colorbar, colormap(jet); 
+title('static dose distribution - accumulated (4D) dose distribution [Gy (RBE)]')
+
+axis equal
 % 

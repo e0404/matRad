@@ -2,7 +2,9 @@ clear
 
 % Patient Data Import
 load('BOXPHANTOM_LUNG_LARGE_2e-1.mat');
+% load('BOXPHANTOM_LUNG_LARGE_HETEROGENEOUS.mat');
 
+histories = 1e6;
 % Treatment Plan
 
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
@@ -20,7 +22,7 @@ pln.numOfFractions = 1;
 
 pln.propStf.gantryAngles  = 0;
 pln.propStf.couchAngles   = 0;
-pln.propStf.bixelWidth    = 50;
+pln.propStf.bixelWidth    = 8;
 pln.propStf.longitudinalSpotSpacing = 10;
 pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
@@ -36,12 +38,14 @@ pln.multScen = matRad_multScen(ct,'nomScen'); % optimize on the nominal scenario
 pln.heterogeneity.calcHetero = true;
 pln.heterogeneity.useOriginalDepths = false;
 %
-stf = matRad_generateStfPencilBeam(pln,ct);
-% stf = matRad_generateStf(ct,cst,pln);
+% stf = matRad_generateStfPencilBeam(pln,ct);
+stf = matRad_generateStf(ct,cst,pln);
 
-weights = ones(1,sum([stf(:).totalNumOfBixels]));
-resultGUI_matRad = matRad_calcDoseDirect(ct,stf,pln,cst,weights);
+% weights = ones(1,sum([stf(:).totalNumOfBixels]));
+% resultGUI_matRad = matRad_calcDoseDirect(ct,stf,pln,cst,weights);
 
+dij = matRad_calcParticleDose(ct,stf,pln,cst);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 %% Analytical heterogeneity correction
 cstHetero = matRad_cstHeteroAutoassign(cst);
 pln.propHeterogeneity.calcHetero = true;
@@ -49,14 +53,16 @@ resultGUI_matRad_hetero = matRad_calcDoseDirect(ct,stf,pln,cstHetero,resultGUI_m
 
 %% TOPAS heterogeneity correction
 pln.propMC.proton_engine = 'TOPAS';
-resultGUI_TOPAS = matRad_calcDoseDirectMC(ct,stf,pln,cst,weights,1e5);
+resultGUI_TOPAS = matRad_calcDoseDirectMC(ct,stf,pln,cst,resultGUI.w,histories);
 %%
 % dijTOPAS = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst);
 % resultGUI_TOPAS = matRad_fluenceOptimization(dijTOPAS,cst,pln);
 
 
+% caxis([0 1])
 %%
-samples = [5, 10, 50];
+samples = [1, 2, 5, 10, 50];
+% samples = 5;
 
 %%% matRad
 numOfSamples = max(samples);
@@ -67,19 +73,20 @@ for i = 1:numOfSamples
 end
 %%
 %%% TOPAS
-pln.propMC.proton_engine = 'TOPAS';
-for i = 1:numOfSamples
-    ct_mod = matRad_modulateDensity(ct,cst,800);
-    i
-    resultGUI_modTOPAS{i} = matRad_calcDoseDirectMC(ct_mod,stf,pln,cst,weights,1e5);                                                                     
-end
+% pln.propMC.proton_engine = 'TOPAS';
+% for i = 1:numOfSamples
+%     ct_mod = matRad_modulateDensity(ct,cst,800);
+%     i
+%     resultGUI_modTOPAS{i} = matRad_calcDoseDirectMC(ct_mod,stf,pln,cst,weights,histories);                                                                     
+% end
 %%
 %%% TOPAS aufgeteilt
+samples = 2;
 for s = samples
     for i = 1:s
         ct_mod = matRad_modulateDensity(ct,cst,800);
         i
-        resultGUI_modTOPASaufgeteilt.(['samples',num2str(s)]){i} = matRad_calcDoseDirectMC(ct_mod,stf,pln,cst,weights,1e5/s);
+        resultGUI_modTOPASaufgeteilt.(['samples',num2str(s)]){i} = matRad_calcDoseDirectMC(ct_mod,stf,pln,cst,weights,histories/s);
     end
 end
 %%
@@ -93,12 +100,12 @@ for s = samples
 end
 %%
 %%% TOPAS
-for s = samples
-    resultGUI_TOPAS_mod.(['physicalDose',num2str(s)]) = zeros(160,160,160);
-    for i = 1:s
-        resultGUI_TOPAS_mod.(['physicalDose',num2str(s)]) = resultGUI_TOPAS_mod.(['physicalDose',num2str(s)]) + resultGUI_modTOPAS{i}.physicalDose/s;
-    end
-end
+% for s = samples
+%     resultGUI_TOPAS_mod.(['physicalDose',num2str(s)]) = zeros(160,160,160);
+%     for i = 1:s
+%         resultGUI_TOPAS_mod.(['physicalDose',num2str(s)]) = resultGUI_TOPAS_mod.(['physicalDose',num2str(s)]) + resultGUI_modTOPAS{i}.physicalDose/s;
+%     end
+% end
 
 %%% TOPAS aufgeteilt
 for s = samples
@@ -109,7 +116,7 @@ for s = samples
 end
 
 %%
-% save homogeneousPhantom.mat -v7.3
+% save heteroPhantom.mat -v7.3
 %%
 figure, hold on, ...
     plot(matRad_calcIDD(resultGUI_matRad.physicalDose)), ...
@@ -117,27 +124,29 @@ figure, hold on, ...
     
     plot(matRad_calcIDD(resultGUI_matRad_hetero.physicalDose)),...
     
-    plot(matRad_calcIDD(resultGUI_matRad_mod.physicalDose50)),...
+    plot(matRad_calcIDD(resultGUI_matRad_mod.physicalDose5)),...
 
-    plot(matRad_calcIDD(resultGUI_TOPAS_mod.physicalDose50),':'),...
+    plot(matRad_calcIDD(resultGUI_TOPAS_mod_aufgeteilt.physicalDose5),':'),...
+    plot(matRad_calcIDD(resultGUI_TOPAS_mod_aufgeteilt.physicalDose10),'--')
     plot(matRad_calcIDD(resultGUI_TOPAS_mod_aufgeteilt.physicalDose50),'--')
+
 
 legend({'matRad','TOPAS','matRad analytical','matRad modulated','TOPAS modulated','TOPAS modulated split histories'},'Location','northwest')
 xlim([10 100])
 
-
+%%
 figure, hold on, ...
     plot(matRad_calcIDD(resultGUI_matRad_mod.physicalDose5)),...
     plot(matRad_calcIDD(resultGUI_matRad_mod.physicalDose10)),...
     plot(matRad_calcIDD(resultGUI_matRad_mod.physicalDose50)),...
 
-    plot(matRad_calcIDD(resultGUI_TOPAS_mod.physicalDose5),':'),...
-    plot(matRad_calcIDD(resultGUI_TOPAS_mod.physicalDose10),':'),...
-    plot(matRad_calcIDD(resultGUI_TOPAS_mod.physicalDose50),':'),...
+%     plot(matRad_calcIDD(resultGUI_TOPAS_mod.physicalDose5),':'),...
+%     plot(matRad_calcIDD(resultGUI_TOPAS_mod.physicalDose10),':'),...
+%     plot(matRad_calcIDD(resultGUI_TOPAS_mod.physicalDose50),':'),...
 
-    plot(matRad_calcIDD(resultGUI_TOPAS_mod_aufgeteilt.physicalDose5),'--'),...
-    plot(matRad_calcIDD(resultGUI_TOPAS_mod_aufgeteilt.physicalDose10),'--'),...
-    plot(matRad_calcIDD(resultGUI_TOPAS_mod_aufgeteilt.physicalDose50),'--')
+    plot(matRad_calcIDD(1000*resultGUI_TOPAS_mod_aufgeteilt.physicalDose5),'--'),...
+    plot(matRad_calcIDD(1000*resultGUI_TOPAS_mod_aufgeteilt.physicalDose10),'--'),...
+    plot(matRad_calcIDD(1000*resultGUI_TOPAS_mod_aufgeteilt.physicalDose50),'--')
 
 legend({'matRad 5 samples','matRad 10 samples','matRad 50 samples','TOPAS 5 samples','TOPAS 10 samples','TOPAS 50 samples','TOPAS 5 samples split histories','TOPAS 10 samples split histories','TOPAS 50 samples split histories'},'Location','northwest')
 xlim([10 100])
@@ -151,15 +160,15 @@ xlim([10 100])
 % legend({'matRad','matRad analytisch korrigiert','matRad modulated 100 samples','matRad modulated 10 samples'},'Location','northwest')
 % xlim([50 90])
 %%
-% load CalcHomogeneousLungPhantom
 
-% %%
-% load CalcHeterogeneousLungPhantom
-% figure, plot(matRad_calcIDD(resultGUI_matRad.physicalDose)), hold on, plot(matRad_calcIDD(resultGUI_matRad_hetero.physicalDose))
+figure, plot(matRad_calcIDD(resultGUI_matRad.physicalDose)), hold on, plot(matRad_calcIDD(resultGUI_TOPAS.physicalDose))
 % plot(matRad_calcIDD(resultGUI_TOPAS.physicalDose))
 % plot(matRad_calcIDD(resultGUI_MC_mod.physicalDose))
-% title('Heterogeneous Phantom')
-% legend({'matRad','matRad analytisch korrigiert','TOPAS','matRad modulated'},'Location','northwest')
-% xlim([50 90])
+title('Heterogeneous Phantom')
+legend({'matRad','matRad analytisch korrigiert','TOPAS','matRad modulated'},'Location','northwest')
+xlim([50 90])
+
+%%
+
 
 
