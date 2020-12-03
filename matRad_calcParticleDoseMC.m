@@ -267,8 +267,8 @@ end
 matRad_writeMCsquareinputAllFiles(MCsquareConfigFile,MCsquareConfig,stfMCsquare);
 
 % run MCsquare
-mcSquareCall = [mcSquareBinary ' ' MCsquareConfigFile];
-disp(['Calling Monte Carlo Engine: ' mcSquareCall]);
+% mcSquareCall = [mcSquareBinary ' ' MCsquareConfigFile];
+% disp(['Calling Monte Carlo Engine: ' mcSquareCall]);
 [status,cmdout] = system([mcSquareBinary ' ' MCsquareConfigFile],'-echo');
     
 mask = false(dij.doseGrid.numOfVoxels,1);
@@ -304,13 +304,9 @@ catch
 end
 
 %% clear all data
-try
-    delete([MCsquareConfig.CT_File(1:end-4) '.*']);
-    delete('currBixels.txt');
-    delete('MCsquareConfig.txt');
-    eval(['rmdir ' MCsquareConfig.Output_Directory ' s']);
-catch
-    warning('Could not remove MCsquare output!');
+delete([MCsquareConfig.CT_File(1:end-4) '.*']);
+delete('currBixels.txt');
+delete('MCsquareConfig.txt');
 
 
 %For Octave temporarily disable confirmation for recursive rmdir
