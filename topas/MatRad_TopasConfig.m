@@ -48,6 +48,7 @@ classdef MatRad_TopasConfig < handle
               
         useOrigBaseData = false; % base data of the original matRad plan will be used?
         beamProfile = 'biGaussian'; %'biGaussian' (emittance); 'simple'
+        useEnergySpectrum = true;
         
         %Not yet implemented
         %beamletMode = false; %In beamlet mode simulation will be performed for a dose influence matrix (i.e., each beamlet simulates numHistories beamlets)
@@ -383,6 +384,7 @@ classdef MatRad_TopasConfig < handle
                                 
                             else
                                 dataTOPAS(cutNumOfBixel).energy = selectedData(ixTmp).MeanEnergy;
+                                dataTOPAS(cutNumOfBixel).nominalEnergy = selectedData(ixTmp).NominalEnergy;
                                 dataTOPAS(cutNumOfBixel).energySpread = selectedData(ixTmp).EnergySpread;
                                 dataTOPAS(cutNumOfBixel).spotSize = selectedData(ixTmp).SpotSize1x;
                                 dataTOPAS(cutNumOfBixel).divergence = selectedData(ixTmp).Divergence1x;
@@ -515,12 +517,38 @@ classdef MatRad_TopasConfig < handle
                 fprintf(fileID,num2str(linspace(10,cutNumOfBixel*10,cutNumOfBixel)));
                 fprintf(fileID,' ms\n');
                 %fprintf(fileID,'uv:Tf/Beam/Spot/Values = %i %s\n',cutNumOfBixel,num2str(collectBixelIdx));
+                
+                if isfield(baseData.machine.data,'energySpectrum') && obj.useEnergySpectrum
+                    
+                    obj.matRad_cfg.dispInfo('Beam energy spectrum available\n');
+                    energySpectrum = [baseData.machine.data(:).energySpectrum];
+                    nbSpectrumPoints = length(energySpectrum(1).energy_MeVpN);
+                    
+                    [~,energyIx] = ismember([dataTOPAS.nominalEnergy],[baseData.machine.data.energy]);
+                    
+                    fprintf(fileID,'s:So/PencilBeam/BeamEnergySpectrumType = "Continuous"\n');
+                    fprintf(fileID,'dv:So/PencilBeam/BeamEnergySpectrumValues = %d %s MeV\n',nbSpectrumPoints,strtrim(sprintf('Tf/Beam/EnergySpectrum/Energy/Point%03d/Value ',1:nbSpectrumPoints)));
+                    fprintf(fileID,'uv:So/PencilBeam/BeamEnergySpectrumWeights = %d %s\n',nbSpectrumPoints,strtrim(sprintf('Tf/Beam/EnergySpectrum/Weight/Point%03d/Value ',1:nbSpectrumPoints)));
+                    points_energy = reshape([energySpectrum(energyIx).energy_MeVpN],[],length(energyIx));
+                    points_weight = reshape([energySpectrum(energyIx).weight],[],length(energyIx));
+                    for spectrumPoint=1:nbSpectrumPoints
+                        fprintf(fileID,'s:Tf/Beam/EnergySpectrum/Energy/Point%03d/Function = "Step"\n',spectrumPoint);
+                        fprintf(fileID,'dv:Tf/Beam/EnergySpectrum/Energy/Point%03d/Times = Tf/Beam/Spot/Times ms\n',spectrumPoint);
+                        fprintf(fileID,'dv:Tf/Beam/EnergySpectrum/Energy/Point%03d/Values = %d %s MeV\n',spectrumPoint,cutNumOfBixel,strtrim(sprintf('%f ',particleA*points_energy(spectrumPoint,:))));
+                        fprintf(fileID,'s:Tf/Beam/EnergySpectrum/Weight/Point%03d/Function = "Step"\n',spectrumPoint);
+                        fprintf(fileID,'dv:Tf/Beam/EnergySpectrum/Weight/Point%03d/Times = Tf/Beam/Spot/Times ms\n',spectrumPoint);
+                        fprintf(fileID,'uv:Tf/Beam/EnergySpectrum/Weight/Point%03d/Values = %d %s\n',spectrumPoint,cutNumOfBixel,strtrim(sprintf('%f ',points_weight(spectrumPoint,:))));
+                    end
+                    
+                end
+                
                 fprintf(fileID,'s:Tf/Beam/Energy/Function = "Step"\n');
                 fprintf(fileID,'dv:Tf/Beam/Energy/Times = Tf/Beam/Spot/Times ms\n');
                 fprintf(fileID,'dv:Tf/Beam/Energy/Values = %i ', cutNumOfBixel);
                 
                 fprintf(fileID,num2str(particleA*[dataTOPAS.energy])); %Transform total energy with atomic number
                 fprintf(fileID,' MeV\n');
+
                 
                 switch obj.beamProfile
                     case 'biGaussian'
