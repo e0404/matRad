@@ -113,6 +113,13 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             funcs.gradient          = @(x) optiProb.matRad_objectiveGradient(x,dij,cst);
             funcs.jacobian          = @(x) optiProb.matRad_constraintJacobian(x,dij,cst);
             funcs.jacobianstructure = @( ) optiProb.matRad_getJacobianStructure(w0,dij,cst);
+            
+            if strcmp(obj.options.hessian_approximation,'exact')
+                warning('You are optimizing with full computation of the Hessian. Make sure you have enought memory available, or use limited-memory!');
+                funcs.hessian = @(x,sigma,lambda) optiProb.matRad_lagrangianHessian(x,dij,cst,sigma,lambda);
+                funcs.hessianstructure = @() optiProb.matRad_getHessianStructure(w0,dij,cst);
+            end
+            
             funcs.iterfunc          = @(iter,objective,paramter) obj.iterFunc(iter,objective,paramter,ipoptStruct.ipopt.max_iter);
             
             % Informing user to press q to terminate optimization

@@ -4,6 +4,8 @@ classdef matRad_OptimizationProblem < handle
     properties
         BP
         bioOpt = '';
+        
+        auxVars = [];
     end
     
     %properties (Access = private)
@@ -28,10 +30,22 @@ classdef matRad_OptimizationProblem < handle
         %Constraint Jacobian declaration
         cJacob = matRad_constraintJacobian(optiProb,w,dij,cst)
         
+        %lagrangian hessian declaration
+        lHessian = matRad_lagrangianHessian(optiProb,w,dij,cst,lambda,sigma);
+        
         %Jacobian Structure
         jacobStruct = matRad_getJacobianStructure(optiProb,w,dij,cst)
         
-        [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
+        %Hessian Structure
+        hessianStruct = matRad_getHessianStructure(optiProb,w,dij,cst);              
+        
+        [cl,cu] = matRad_getConstraintBounds(optiProb,cst);
+        
+        %Auxiliary Variables
+        function initializeAuxiliaryVariables(optiProb,cst)
+            z = exp((dose-max(dose))/obj.epsilon);
+            
+        end
         
         function lb = lowerBounds(optiProb,w)
             lb = zeros(size(w));

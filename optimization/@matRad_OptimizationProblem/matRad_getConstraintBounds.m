@@ -58,6 +58,12 @@ for  i = 1:size(cst,1)
                     
                     optiFunc = optiFunc.setDoseParameters(effect);
                 end
+                
+                % exact min/max/minimax/maximin dose constraints, temporarily add voxel number to cst-structure
+                %if isequal(cst{i,6}(j).type, 'min dose constraint (exact)') || isequal(cst{i,6}(j).type, 'max dose constraint (exact)') || ...
+                %   isequal(cst{i,6}(j).type, 'minimax constraint (exact)') || isequal(cst{i,6}(j).type, 'maximin constraint (exact)')                        
+                %    cst{i,6}(j).numConst = size(cst{i,4}{1},1);
+                %end
 
                     
                  cl = [cl;optiFunc.lowerBounds(numel(cst{i,4}{1}))];

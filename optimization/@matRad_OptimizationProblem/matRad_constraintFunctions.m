@@ -55,13 +55,10 @@ for  i = 1:size(cst,1)
             % only perform computations for constraints
             % if ~isempty(strfind(obj.type,'constraint'))
             if isa(obj,'DoseConstraints.matRad_DoseConstraint')
-                
+
                 % if we have effect optimization, temporarily replace doses with effect
                 % Maybe we should put some switch into the classes for that
-                if (~isequal(obj.name, 'max dose constraint')      && ~isequal(obj.name, 'min dose constraint')      &&...
-                    ~isequal(obj.name, 'max mean dose constraint') && ~isequal(obj.name, 'min mean dose constraint') && ...
-                    ~isequal(obj.name, 'min EUD constraint')       && ~isequal(obj.name, 'max EUD constraint'))     && ...
-                    (isa(optiProb.BP,'matRad_EffectProjection') && ~isa(optiProb.BP,'matRad_VariableRBEProjection'))
+                if isa(optiProb.BP,'matRad_EffectProjection') && ~isa(optiProb.BP,'matRad_VariableRBEProjection')
                     
                     doses = obj.getDoseParameters();
                     
@@ -69,21 +66,18 @@ for  i = 1:size(cst,1)
                     
                     obj = obj.setDoseParameters(effect);
                 end
-
+                
                 % if conventional opt: just add constraints of nominal dose
                 %if strcmp(cst{i,6}(j).robustness,'none')
 
                     d_i = d{1}(cst{i,4}{1});
-
-                    %c = [c; matRad_constFunc(d_i,cst{i,6}(j),d_ref)];
-                    c = [c; obj.computeDoseConstraintFunction(d_i)];
+                    c = [c; obj.computeDoseConstraintFunction(d_i)];                                        
                     
                 %else
                     
                     %error('Invalid robustness setting.');
 
-                %end % if we are in the nominal sceario or rob opt
-            
+                %end % if we are in the nominal sceario or rob opt                
             end % if we are a constraint
 
         end % over all defined constraints & objectives

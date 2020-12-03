@@ -97,17 +97,19 @@ classdef matRad_MinMaxDVH < DoseConstraints.matRad_DoseConstraint
             %logistic approximation
             
             %Do we really need to sort two times?
-            dose_sort = sort(dose);
+            %dose_sort = sort(dose);
             
             % calculate scaling
-            NoVoxels     = max(obj.voxelScalingRatio*numel(dose),10);
-            absDiffsort  = sort(abs(obj.parameters{1} - dose_sort));
-            deltaDoseMax = absDiffsort(ceil(NoVoxels/2));
+            %NoVoxels     = obj.voxelScalingRatio*numel(dose); %max(obj.voxelScalingRatio*numel(dose),10);
+            %absDiffsort  = sort(abs(obj.parameters{1} - dose_sort));
+            %deltaDoseMax = absDiffsort(ceil(NoVoxels/2));
             
             % calclulate DVHC scaling
-            DVHCScaling = min((log(1/obj.referenceScalingVal-1))/(2*deltaDoseMax),250);
+            %DVHCScaling = min((log(1/obj.referenceScalingVal-1))/(2*deltaDoseMax),250);
             
             d_diff = dose - obj.parameters{1};
+            
+            DVHCScaling = obj.calculateDVHCscaling(d_diff);
             
             cDoseJacob = (2/numel(dose))*DVHCScaling*exp(2*DVHCScaling*d_diff)./(exp(2*DVHCScaling*d_diff)+1).^2;
             
@@ -133,6 +135,52 @@ classdef matRad_MinMaxDVH < DoseConstraints.matRad_DoseConstraint
             % jacobVec = (1/size(cst{j,4},1))*2*deviation; % square deviation with normalization
             % %jacobVec = 4*(deviation).^3;                  % squared square devioation
             % alternative constraint calculation 4/4 %
+        end
+        
+        %% Calculate Dose Constraint Hessian
+        function cDoseHessian  = computeDoseConstraintHessian(obj,dose,lambda)
+            n = numel(dose);
+            
+            %dose_sort = sort(dose);
+            
+            % calculate scaling
+            %NoVoxels     = max(obj.voxelScalingRatio*n,10);
+            %absDiffsort  = sort(abs(obj.parameters{1} - dose_sort));
+            %deltaDoseMax = absDiffsort(ceil(NoVoxels/2));
+            
+            % calclulate DVHC scaling
+            %DVHCScaling = min((log(1/obj.referenceScalingVal-1))/(2*deltaDoseMax),250);
+            
+            d_diff = dose - obj.parameters{1};
+            
+            DVHCScaling = obj.calculateDVHCscaling(d_diff);
+                       
+            % exponential term
+            exp_term = exp(2*DVHCScaling*d_diff);
+                      
+            cDoseHessian = lambda * sparse(1:n,1:n, ((2 * DVHCScaling)^2)/n * (exp_term .* (1 - exp_term)) ./ (exp_term + 1).^3, n, n);  
+        end
+        
+        function hStruct = getDoseConstraintHessianStructure(obj,n)
+            hStruct = speye(n,n);
+        end
+        
+    end
+    
+    methods %(Access = private)
+        function DVHCScaling = calculateDVHCscaling(obj,d_diff)
+            n = numel(d_diff);
+            
+            %sort dose vector with increasing absolute difference
+            absDiffSort = sort(abs(d_diff));
+            
+            NoScaledVoxels = obj.voxelScalingRatio*n; %max(obj.voxelScalingRatio*n,10);
+            
+            %median(
+            
+            deltaDoseMax = absDiffSort(ceil(NoScaledVoxels/2));
+            
+            DVHCScaling = min((log(1/obj.referenceScalingVal-1))/(2*deltaDoseMax),250);
         end
     end
     

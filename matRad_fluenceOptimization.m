@@ -165,13 +165,12 @@ else
 end
 
 % set optimization options
-options.radMod          = pln.radiationMode;
-options.bioOpt          = pln.propOpt.bioOptimization;
-options.ID              = [pln.radiationMode '_' pln.propOpt.bioOptimization];
-options.numOfScenarios  = dij.numOfScenarios;
+%options.radMod          = pln.radiationMode;
+%options.bioOpt          = pln.propOpt.bioOptimization;
+%options.ID              = [pln.radiationMode '_' pln.propOpt.bioOptimization];
+%options.numOfScenarios  = dij.numOfScenarios;
 
 %Select Projection
-
 switch pln.propOpt.bioOptimization
     case 'LEMIV_effect'
         backProjection = matRad_EffectProjection;
@@ -191,24 +190,42 @@ end
 
 optiProb = matRad_OptimizationProblem(backProjection);
 
-%optimizer = matRad_OptimizerIPOPT;
-
 if ~isfield(pln.propOpt,'optimizer')
     pln.propOpt.optimizer = 'IPOPT';
 end
 
-switch pln.propOpt.optimizer
-    case 'IPOPT'
-        optimizer = matRad_OptimizerIPOPT;
-    case 'fmincon'
-        optimizer = matRad_OptimizerFmincon;
-    otherwise
-        warning(['Optimizer ''' pln.propOpt.optimizer ''' not known! Fallback to IPOPT!']);
-        optimizer = matRad_OptimizerIPOPT;
+if ~isa(pln.propOpt.optimizer,'matRad_Optimizer')
+    % set exact optimization options
+    quasiNewton = true;
+    if isfield(pln.propOpt, 'exactOptimization') && ~isempty(pln.propOpt.exactOptimization) && pln.propOpt.exactOptimization
+        % set exact optimization
+        %options.ipopt.hessian_approximation = 'exact';
+        quasiNewton = false;
+    end
+    switch pln.propOpt.optimizer
+        case 'IPOPT'
+            optimizer = matRad_OptimizerIPOPT;
+            if ~quasiNewton
+                optimizer.options.hessian_approximation = 'exact';
+            end
+            
+        case 'fmincon'
+            optimizer = matRad_OptimizerFmincon;
+            if ~quasiNewton
+                warning('Optimization with Hessian not supported for fmincon in matRad. Falling back to Quasi-Newton method!');
+            end
+        otherwise
+            warning(['Optimizer ''' pln.propOpt.optimizer ''' not known! Fallback to IPOPT!']);
+            optimizer = matRad_OptimizerIPOPT;
+            if ~quasiNewton
+                optimizer.options.hessian_approximation = 'exact';
+            end
+    end
+else
+    optimizer = pln.propOpt.optimizer;
 end
         
 %optimizer = matRad_OptimizerFmincon;
-
 optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
 
 wOpt = optimizer.wResult;

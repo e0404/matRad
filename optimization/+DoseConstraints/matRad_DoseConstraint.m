@@ -45,6 +45,13 @@ classdef (Abstract) matRad_DoseConstraint < matRad_DoseOptimizationFunction
         function cl           = lowerBounds(obj,n)                
           error('Function needs to be implemented!');
         end
+        
+        %Returns number of constraint functions where n is the number of 
+        %elements in the dose vector       
+        function n            = numConstraints(obj,n)
+            %Hacky default implementation - determining by number of bounds
+            n = numel(obj.upperBounds(n));
+        end
     end
 
     methods (Access = public)
@@ -53,7 +60,8 @@ classdef (Abstract) matRad_DoseConstraint < matRad_DoseOptimizationFunction
         %Implementation in subclasses only required if
         %no Hessian approximation shall be used. Will be ignored with
         %Quasi-Newton methods
-        function fDoseHessian = computeDoseObjectiveHessian(obj,dose)
+        function fDoseHessian = computeDoseConstraintHessian(obj,dose,lambda)
+            %narginchk(2,3);
             fDoseHessian = NaN;
         end
        
@@ -68,6 +76,13 @@ classdef (Abstract) matRad_DoseConstraint < matRad_DoseOptimizationFunction
         %jacobian for a given length n of the dose vector. Returns a
         %default of a jStruct
             jStruct = ones(n,1);
+        end
+        
+        function hStruct = getDoseConstraintHessianStructure(obj,n)
+        %return the structure of the (dose-dependent) hessian of the 
+        %lagrangian for the resepctive constraint functionsfor a 
+        %given length n of the dose vector. Returns a default zero struct
+            hStruct = sparse(n,n);
         end
         
         %Overloads the struct function to add Objective related information

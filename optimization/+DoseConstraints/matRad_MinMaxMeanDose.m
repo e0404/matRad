@@ -66,6 +66,11 @@ classdef matRad_MinMaxMeanDose < DoseConstraints.matRad_DoseConstraint
         function cDoseJacob  = computeDoseConstraintJacobian(obj,dose)
             cDoseJacob = ones(numel(dose),1)./numel(dose);
         end
+        
+        %% Calculates the Constraint Hessian
+        function cDoseHessian  = computeDoseConstraintHessian(obj,dose,lambda)
+            cDoseHessian = sparse(numel(dose),numel(dose));
+        end
     end
     
 end

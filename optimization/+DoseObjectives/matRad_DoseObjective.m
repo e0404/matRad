@@ -50,6 +50,10 @@ classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
         function fDoseHessian = computeDoseObjectiveHessian(obj,dose)
             fDoseHessian = NaN;
         end
+        
+        function hStruct = getDoseObjectiveHessianStructure(obj,n)
+            hStruct = sparse(n,n);
+        end
        
        % default constructor of matRad_DoseObjective
         function obj = matRad_DoseObjective(inputArg)

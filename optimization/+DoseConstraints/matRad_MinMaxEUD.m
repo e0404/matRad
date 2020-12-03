@@ -66,7 +66,33 @@ classdef matRad_MinMaxEUD < DoseConstraints.matRad_DoseConstraint
         %% Calculates the Constraint jacobian
         function cDoseJacob  = computeDoseConstraintJacobian(obj,dose)
             k = obj.parameters{1};
-            cDoseJacob = nthroot(1/numel(dose),k) * sum(dose.^k)^((1-k)/k) * (dose.^(k-1));
+            cDoseJacob = (1/numel(dose))^(1/k) * sum(dose.^k)^((1-k)/k) * (dose.^(k-1));
+        end
+        
+        function cDoseHessian = computeDoseConstraintHessian(obj,dose,lambda)
+            k = obj.parameters{1};
+            n = numel(dose);
+            
+            %The hessian is annoyingly long, so we split it up to reuse
+            %parts of the computation
+            
+            %Precompute the EUD power-sum
+            powersum = sum(dose.^k);
+                        
+            %Precompute common factors hessian elements            
+            preFac = (1/n)^(1/k) * (k-1);
+            commonFac = -preFac * powersum^(1/k-2);          
+            diagFac = preFac * powersum^(1/k-1);
+            
+            %compute the mixed elements for the hessian
+            dosekMin1 = dose.^(k-1);
+            cDoseHessian = commonFac * (dosekMin1 * dosekMin1');
+            %add the diagonal extra terms
+            cDoseHessian = lambda * (cDoseHessian + diagFac * diag(dose.^(k-2)));            
+        end
+        
+        function hStruct = getDoseConstraintHessianStructure(obj,n)
+            hStruct = sparse(ones(n,n));
         end
     end
     

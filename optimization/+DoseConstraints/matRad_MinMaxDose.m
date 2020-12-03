@@ -124,6 +124,18 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
             
         end
         
+        function hStruct = getDoseConstraintHessianStructure(obj,n)
+            switch obj.parameters{3}
+                case 1 %logsumexp approx
+                    hStruct = sparse(ones(n,n));
+                case 2
+                    hStruct = sparse(n,n);
+                otherwise
+                    error(['Min/max dose constraint evaluation method ''' obj.method ''' not known!']);
+            end
+            
+        end
+        
         %% Calculates the Constraint Function value
         function cDose = computeDoseConstraintFunction(obj,dose)
             %cDose(2) = dose_max + obj.epsilon * log( sum(exp((dose - dose_max)/obj.epsilon)));
@@ -149,6 +161,18 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
                     error(['Min/max dose constraint evaluation method ''' obj.method ''' not known!']);
             end
         end
+        
+        function cDoseHessian = computeDoseConstraintHessian(obj,dose,lambda)
+            switch obj.parameters{3}
+                case 1 %logsumexp approx
+                    cDoseHessian = obj.computeDoseConstraintHessianLogSumExp(dose,lambda);
+                case 2
+                    cDoseHessian = obj.computeDoseConstraintHessianVoxelwise(dose,lambda);
+                otherwise
+                    error(['Min/max dose constraint evaluation method ''' obj.method ''' not known!']);
+            end
+        end
+
     end
     
     methods (Access = private)
@@ -197,6 +221,30 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
         end
         function cDoseJacob  = computeDoseConstraintJacobianVoxelwise(obj,dose)
             cDoseJacob = speye(numel(dose),numel(dose));
+        end
+        
+        %Hessian
+        function cDoseHessian = computeDoseConstraintHessianLogSumExp(obj,dose,lambda)
+            %Validate parameters
+            if obj.parameters{1} <= 0 && isinf(obj.parameters{2}) %Constraint doesn't make sense (min = 0 & max = Inf)
+                cDoseHessian = [];
+            elseif obj.parameters{2} == Inf && numel(lambda) == 1 %Only min dose
+                z = exp((min(dose) - dose)/obj.epsilon);
+                cDoseHessian = lambda * (1/sum(z) * diag(z) - 1/sum(z)^2 * (z*z'));               
+            elseif obj.parameters{1} <= 0 && numel(lambda) == 1 %Only max dose
+                z = exp( (dose-max(dose))/obj.epsilon );
+                cDoseHessian = lambda * (1/sum(z) * diag(z) - 1/sum(z)^2 * (z*z')); 
+            else %both are set sensible
+                z = exp((min(dose) - dose)/obj.epsilon);
+                cDoseHessian = lambda(1) * (1/sum(z) * diag(z) - 1/sum(z)^2 * (z*z'));
+                
+                z = exp( (dose-max(dose))/obj.epsilon );
+                cDoseHessian = cDoseHessian + lambda(2)* (1/sum(z) * diag(z) - 1/sum(z)^2 * (z*z'));
+            end
+        end
+        
+        function cDoseHessian = computeDoseConstraintHessianVoxelwise(obj,dose,lambda)
+            cDoseHessian = sparse(numel(dose),numel(dose));
         end
     end
     
