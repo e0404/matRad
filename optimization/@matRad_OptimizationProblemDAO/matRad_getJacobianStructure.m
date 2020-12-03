@@ -2,12 +2,13 @@ function jacobStruct = matRad_getJacobianStructure(optiProb,apertureInfoVec,dij,
 % matRad IPOPT callback: get jacobian structure for direct aperture optimization
 % 
 % call
-%   jacobStruct = matRad_daoGetJacobStruct(apertureInfo,dij,cst)
+%   jacobStruct = matRad_daoGetJacobStruct(optiProb,apertureInfoVec,dij,cst)
 %
 % input
-%   apertureInfo: aperture info struct
-%   dij:          dose influence matrix
-%   cst:          matRad cst struct
+%   optiProb:           option struct defining the type of optimization
+%   apertureInfoVect:   aperture weights and shapes parameterized as vector
+%   dij:                dose influence matrix
+%   cst:                matRad cst struct
 %
 % output
 %   jacobStruct: jacobian of constraint function

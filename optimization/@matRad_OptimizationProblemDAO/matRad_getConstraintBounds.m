@@ -2,16 +2,15 @@ function [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
 % matRad IPOPT get constraint bounds function for direct aperture optimization
 % 
 % call
-%   [cl,cu] = matRad_daoGetConstBounds(cst,apertureInfo,type)
+%   [cl,cu] = matRad_daoGetConstBounds(optiProb,cst)
 %
 % input
-%   cst:            matRad cst struct
-%   apertureInfo:   aperture info struct
-%   options:        option struct defining the type of optimization
+%   optiProb:   option struct defining the type of optimization
+%   cst:        matRad cst struct
 %
 % output
-%   cl: lower bounds on constraints
-%   cu: lower bounds on constraints
+%   cl:         lower bounds on constraints
+%   cu:         lower bounds on constraints
 %
 % References
 %

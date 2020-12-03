@@ -12,6 +12,9 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
 %
+% References
+%   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties
@@ -24,15 +27,19 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
     properties (Access = private)
         allObjectiveFunctionValues
         axesHandle
+        plotHandle
         abortRequested
+        plotFailed
     end
     
     methods
         function obj = matRad_OptimizerIPOPT
-            %UNTITLED Construct an instance of this class
-            %   Detailed explanation goes here
-            %obj = createDefaultOptimizerOptions;
-            %obj.Property1 = inputArg1 + inputArg2;
+            %matRad_OptimizerIPOPT
+            %   Construct an instance of the IPOPT optimizer (mex
+            %   interface)
+            
+            matRad_cfg = MatRad_Config.instance();
+            
             obj.wResult = [];
             obj.resultInfo = [];
             obj.axesHandle = [];
@@ -40,7 +47,19 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.abortRequested = false;
             
             %Set Default Options
-            obj.options.print_level                   = 5;
+            if matRad_cfg.logLevel <= 1
+                lvl = 0;
+            elseif matRad_cfg.logLevel <= 2
+                lvl = 2;
+            elseif matRad_cfg.logLevel <= 3
+                lvl = 5;
+            else 
+                %There seems to be a problem with higher log levels in
+                %IPOPT!
+                lvl = 5;
+            end
+                
+            obj.options.print_level                   = lvl;
             obj.options.print_user_options            = 'no';
             obj.options.print_options_documentation   = 'no';
             
@@ -57,7 +76,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.options.acceptable_compl_inf_tol      = 1e10; % (Acc5)
             obj.options.acceptable_obj_change_tol     = 1e-3; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
             
-            obj.options.max_iter                      = 1000;
+            obj.options.max_iter                      = matRad_cfg.propOpt.defaultMaxIter;
             obj.options.max_cpu_time                  = 3000;
             
             % Barrier Parameter (C.6)
@@ -82,16 +101,18 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             % for derivate checking
             % obj.options.derivative_test              = 'first-order'; % none / first-order / second-order / only-second-order
             % obj.options.derivative_test_perturbation = 1e-6; % default 1e-8
-            % obj.options.derivative_test_tol          = 1e-6;
+            % obj.options.derivative_test_tol          = 1e-6;  
+            
+            if ~matRad_checkMexFileExists('ipopt')
+                matRad_cfg.dispError('IPOPT mex interface not available for %s!',obj.env);
+            end
 
         end
         
         function obj = optimize(obj,w0,optiProb,dij,cst)
-            % set optimization options
-            %options.radMod          = pln.radiationMode;
-            %options.bioOpt          = pln.propOpt.bioOptimization;
-            %options.ID              = [pln.radiationMode '_' pln.propOpt.bioOptimization];
-            %options.numOfScenarios  = dij.numOfScenarios;
+            matRad_cfg = MatRad_Config.instance();
+            
+            % set optimization options            
             
             %Set up ipopt structure
             ipoptStruct = struct;
@@ -116,32 +137,44 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             funcs.iterfunc          = @(iter,objective,paramter) obj.iterFunc(iter,objective,paramter,ipoptStruct.ipopt.max_iter);
             
             % Informing user to press q to terminate optimization
-            fprintf('\nOptimzation initiating...\n');
-            fprintf('Press q to terminate the optimization...\n');
+            matRad_cfg.dispInfo('\nOptimzation initiating...\n');
             
             % set Callback
-            
+            qCallbackSet = false;
             if ~isdeployed % only if _not_ running as standalone                               
                 switch obj.env
                     case 'MATLAB'
-                        % get handle to Matlab command window
-                        mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
-                        cw          = mde.getClient('Command Window');
-                        xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
-                        h_cw        = handle(xCmdWndView,'CallbackProperties');
+                        try
+                            % get handle to Matlab command window
+                            mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
+                            cw          = mde.getClient('Command Window');
+                            xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
+                            h_cw        = handle(xCmdWndView,'CallbackProperties');
                         
-                        % set Key Pressed Callback of Matlab command window
-                        set(h_cw, 'KeyPressedCallback', @(h,event) obj.abortCallbackKey(h,event));
+                            % set Key Pressed Callback of Matlab command window
+                            set(h_cw, 'KeyPressedCallback', @(h,event) obj.abortCallbackKey(h,event));
+                            fprintf('Press q to terminate the optimization...\n');
+                            qCallbackSet = true;
+                        catch
+                            matRad_cfg.dispInfo('Manual termination with q not possible due to failing callback setup.\n');
+                        end
                 end                
             end
             
             %ipoptStruct.options = obj.options;
             obj.abortRequested = false;
+            obj.plotFailed = false;
+            
             % Run IPOPT.
-            [obj.wResult, obj.resultInfo] = ipopt(w0,funcs,ipoptStruct);
+            try
+                [obj.wResult, obj.resultInfo] = ipopt(w0,funcs,ipoptStruct);
+            catch ME
+                errorString = [ME.message '\nThis error was thrown by the MEX-interface of IPOPT.\nMex interfaces can raise compatability issues which may be resolved by compiling them by hand directly on your particular system.'];
+                matRad_cfg.dispError(errorString);
+            end
             
             % unset Key Pressed Callback of Matlab command window
-            if ~isdeployed && strcmp(obj.env,'MATLAB')
+            if qCallbackSet
                 set(h_cw, 'KeyPressedCallback',' ');
             end
             
@@ -207,58 +240,93 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         end
         
         function flag = iterFunc(obj,iter,objective,~,~)
+             
             obj.allObjectiveFunctionValues(iter + 1) = objective;
-            if strcmp(obj.env,'MATLAB')
-                obj.plotFunction();
+            %We don't want the optimization to crash because of drawing
+            %errors
+            if ~obj.plotFailed
+                try            
+                    obj.plotFunction();
+                catch ME
+                    matRad_cfg = MatRad_Config.instance();
+                    %Put a warning at iteration 1 that plotting failed
+                    matRad_cfg.dispWarning('Objective Function plotting failed and thus disabled. Message:\n%s',ME.message);
+                    obj.plotFailed = true;
+                end                
             end
             flag = ~obj.abortRequested;
         end
         
         function plotFunction(obj)
-            % plot objective function output 
+            % plot objective function output
+            y = obj.allObjectiveFunctionValues;
+            x = 1:numel(y);
+            
             if isempty(obj.axesHandle) || ~isgraphics(obj.axesHandle,'axes')
+                %Create new Fiure and store axes handle
                 hFig = figure('Name','Progress of IPOPT Optimization','NumberTitle','off','Color',[.5 .5 .5]);
-                obj.axesHandle = axes(hFig);
-                hold(obj.axesHandle,'on');
-                grid(obj.axesHandle,'on');
-                grid(obj.axesHandle,'minor');
+                hAx = axes(hFig);
+                hold(hAx,'on');
+                grid(hAx,'on');
+                grid(hAx,'minor');
+                set(hAx,'YScale','log');
+                 
+                %Add a Stop button with callback to change abort flag
                 c = uicontrol;
-                c.String = 'Stop';
-                c.Position(1) = 5;
-                c.Position(2) = 5;
-                c.Callback = @obj.abortCallbackButton;                
-            else
-                hFig = obj.axesHandle.Parent;
+                cPos = get(c,'Position');
+                cPos(1) = 5;
+                cPos(2) = 5;
+                set(c,  'String','Stop',...
+                        'Position',cPos,...
+                        'Callback',@(~,~) abortCallbackButton(obj));                
+                
+                %Set up the axes scaling & labels
+                defaultFontSize = 14;
+                set(hAx,'YScale','log');
+                title(hAx,'Progress of Optimization','LineWidth',defaultFontSize);
+                xlabel(hAx,'# iterations','Fontsize',defaultFontSize),ylabel(hAx,'objective function value','Fontsize',defaultFontSize);
+                
+                %Create plot handle and link to data for faster update
+                hPlot = plot(hAx,x,y,'xb','LineWidth',1.5,'XDataSource','x','YDataSource','y');
+                obj.plotHandle = hPlot;
+                obj.axesHandle = hAx;
+                                
+            else %Figure already exists, retreive from axes handle
+                hFig = get(obj.axesHandle,'Parent');
+                hAx = obj.axesHandle;
+                hPlot = obj.plotHandle;
             end
             
-            defaultFontSize = 14;
-            set(obj.axesHandle,'YScale','log');
-            title(obj.axesHandle,'Progress of Optimization','LineWidth',defaultFontSize),
-            xlabel(obj.axesHandle,'# iterations','Fontsize',defaultFontSize),ylabel(obj.axesHandle,'objective function value','Fontsize',defaultFontSize)
-            
-            % draw updated axes
-            plot(obj.axesHandle,1:numel(obj.allObjectiveFunctionValues),obj.allObjectiveFunctionValues,'xb','LineWidth',1.5);
+            % draw updated axes by refreshing data of the plot handle (which is linked to y and y) 
+            % in the caller workspace. Octave needs and works on figure handles, which
+            % is substantially (factor 10) slower, thus we check explicitly
+            switch obj.env
+                case 'OCTAVE'
+                    refreshdata(hFig,'caller');
+                otherwise
+                    refreshdata(hPlot,'caller');
+            end
             drawnow;
             
-            % ensure to bring optimization window to front also for a re-optimization
+            % ensure to bring optimization window to front
             figure(hFig);
-            
         end
         
         function abortCallbackKey(obj,~,KeyEvent)
-            
             % check if user pressed q
             if  get(KeyEvent,'keyCode') == 81
-                
                 obj.abortRequested = true;
-                
             end
-            
         end
         
         function abortCallbackButton(obj,~,~,~)
             obj.abortRequested = true;
-        end       
-        
+        end        
+    end
+    
+    methods (Static)
+        function available = IsAvailable()
+            available = matRad_checkMexFileExists('ipopt');                   
+        end
     end
 end

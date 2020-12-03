@@ -1,7 +1,10 @@
 classdef (Abstract) matRad_Optimizer < handle
-% matRad_Optimizer This is the superclass for all optimizer to be used
-% within matRad
-%    
+% matRad_Optimizer. This is the superclass for all optimizer 
+% to be used within matRad
+%
+% References
+%   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2019 the matRad development team. 
@@ -31,6 +34,12 @@ classdef (Abstract) matRad_Optimizer < handle
         end
         
         function [msg,statusflag] = GetStatus(obj)
+          error('Function needs to be implemented!');
+        end
+    end
+    
+    methods (Static)
+        function available = IsAvailable(obj)
           error('Function needs to be implemented!');
         end
     end

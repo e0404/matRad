@@ -1,18 +1,22 @@
 function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)
-% matRad dose calculation wrapper bypassing dij calculation for MC dose
-% calculation algorithms
+% matRad function to bypass dij calculation for MC dose calculation 
+% matRad dose calculation wrapper for MC dose calculation algorithms
+% bypassing dij calculation for MC dose calculation algorithms.
 % 
 % call
+%   resultGUI = matRad_calcDoseDirecMC(ct,stf,pln,cst)
 %   resultGUI = matRad_calcDoseDirecMC(ct,stf,pln,cst,w)
+%   resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,nHistories)
+%   resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)
 %
 % input
 %   ct:         ct cube
 %   stf:        matRad steering information struct
 %   pln:        matRad plan meta information struct
 %   cst:        matRad cst struct
-%   w:          optional (if no weights available in stf): bixel weight
+%   w:          (optional, if no weights available in stf): bixel weight
 %               vector
-%   nHistories: number of histories
+%   nHistories: (optional) number of histories
 %
 % output
 %   resultGUI:  matRad result struct
@@ -33,21 +37,25 @@ function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+matRad_cfg =  MatRad_Config.instance();
+
 calcDoseDirect = true;
 
 if nargin < 6 || ~exist('nHistories')
-  nHistories = 2e4;
+  nHistories = matRad_cfg.propMC.direct_defaultHistories;
+  matRad_cfg.dispInfo('Using default number of Histories: %d\n',nHistories);
 end
 
 % check if weight vector is available, either in function call or in stf - otherwise dose calculation not possible
 if ~exist('w','var') && ~isfield([stf.ray],'weight')
-     error('No weight vector available. Please provide w or add info to stf')
+     matRad_cfg.dispError('No weight vector available. Please provide w or add info to stf');
 end
 
 % copy bixel weight vector into stf struct
 if exist('w','var')
     if sum([stf.totalNumOfBixels]) ~= numel(w)
-        error('weighting does not match steering information')
+        matRad_cfg.dispError('weighting does not match steering information');
     end
     counter = 0;
     for i = 1:size(stf,2)
@@ -75,7 +83,7 @@ end
 if strcmp(pln.radiationMode,'protons')
   dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nHistories,calcDoseDirect);
 else
-    error('Forward MC only implemented for protons.');
+    matRad_cfg.dispError('Forward MC only implemented for protons.');
 end
 
 % hack dij struct

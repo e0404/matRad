@@ -1,10 +1,17 @@
 function [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle,doseCube,plane,slice,threshold,alpha,cMap,window)
-% matRad function that generates a dose plot of a selected slice. The
-% function can also be used in personal matlab figures by passing the
-% corresponding axes handle
+% matRad function that generates a dose plot of a selected slice 
+% The function can also be used in personal matlab figures by passing the
+% corresponding axes handle.
 %
 % call
-%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle,ctCube,plane,slice,threshold,alpha,cMap,window)
+%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold)
+%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,alpha)
+%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,cMap)
+%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,window)
+%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,alpha,cMap)
+%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,alpha,window)
+%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,cMap,window)
+%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,alpha,cMap,window)
 %
 % input
 %   axesHandle  handle to axes the slice should be displayed in
@@ -29,6 +36,9 @@ function [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle,doseCube,pla
 %   cMap        used colormap (same as input if set)
 %   window      used window (same as input if set)
 %
+% References
+%   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
@@ -42,6 +52,8 @@ function [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle,doseCube,pla
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+
 %Use default colormap?
 if nargin < 7 || isempty(cMap)
     cMap = jet(64);
@@ -53,27 +65,37 @@ if nargin < 8 || isempty(window)
     window = [min(doseCube(:)) max(doseCube(:))];
 end
 
+maxDose = max(doseCube(:));
+
+cMapScale = size(cMap,1) - 1;
+
 if plane == 1  % Coronal plane
     dose_slice = squeeze(doseCube(slice,:,:));
 elseif plane == 2 % sagittal plane
     dose_slice = squeeze(doseCube(:,slice,:));
 elseif plane == 3 % Axial plane
     dose_slice = squeeze(doseCube(:,:,slice));
+else
+	matRad_cfg.dispError('Invalid plane ''%d'' selected for visualization!',plane);
 end
 
-cMapScale = size(cMap,1) - 1;
-dose_rgb = ind2rgb(uint8(cMapScale*(dose_slice - window(1))/(window(2)-window(1))),cMap);
-
-maxDose = max(doseCube(:));
-% plot dose distribution
-doseHandle = image('CData',dose_rgb,'Parent',axesHandle);
-
-% define and set alpha mask
 if ~isempty(threshold)
-    mask = alpha * (dose_slice < window(2) & dose_slice > window(1) & abs(dose_slice) > threshold*maxDose);
+    mask = alpha * (dose_slice < window(2) & dose_slice > window(1) & dose_slice > threshold*maxDose);
 else
     mask = alpha * (dose_slice < window(2) & dose_slice > window(1));
 end
+
+dose_slice = uint8(cMapScale*(dose_slice - window(1))/(window(2)-window(1)));
+
+%This circumenvents a bug in Octave when the index in the image hase the maximum value of uint8
+if matRad_cfg.isOctave
+	dose_slice(dose_slice == 255) = 254;
+end
+
+dose_rgb = ind2rgb(dose_slice,cMap);
+
+% plot dose distribution
+doseHandle = image('CData',dose_rgb,'Parent',axesHandle);
 
 % alphadata for image objects is not yet implemented in Octave
 set(doseHandle,'AlphaData',mask);

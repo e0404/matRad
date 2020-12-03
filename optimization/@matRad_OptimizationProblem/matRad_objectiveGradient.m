@@ -1,16 +1,16 @@
 function weightGradient = matRad_objectiveGradient(optiProb,w,dij,cst)
-% matRad IPOPT callback: gradient function for inverse planning supporting mean dose
-% objectives, EUD objectives, squared overdosage, squared underdosage,
-% squared deviation and DVH objectives
+% matRad IPOPT callback: gradient function for inverse planning 
+% supporting mean dose objectives, EUD objectives, squared overdosage, 
+% squared underdosage, squared deviation and DVH objectives
 % 
 % call
-%   g = matRad_gradFuncWrapper(w,dij,cst,optiProb)
+%   g = matRad_gradFuncWrapper(optiProb,w,dij,cst)
 %
 % input
+%   optiProb: option struct defining the type of optimization
 %   w:       bixel weight vector
 %   dij:     dose influence matrix
 %   cst:     matRad cst struct
-%   optiProb: option struct defining the type of optimization
 %
 % output
 %   g: gradient of objective function
@@ -40,7 +40,7 @@ optiProb.BP = optiProb.BP.compute(dij,w);
 d = optiProb.BP.GetResult();
 
 % Initializes dose gradient
-doseGradient = zeros(dij.doseGrid.numOfVoxels,1);
+doseGradient{1} = zeros(dij.doseGrid.numOfVoxels,1);
 
 % compute objective function for every VOI.
 for  i = 1:size(cst,1)    
@@ -52,21 +52,34 @@ for  i = 1:size(cst,1)
         for j = 1:numel(cst{i,6})
             
             %Get current optimization function
-            obj = cst{i,6}{j};
+            objective = cst{i,6}{j};
             
             % only perform gradient computations for objectives
-            if isa(obj,'DoseObjectives.matRad_DoseObjective')
+            if isa(objective,'DoseObjectives.matRad_DoseObjective')
+                % if we have effect optimization, temporarily replace doses with effect
+                if (~isequal(objective.name, 'Mean Dose') && ~isequal(objective.name, 'EUD')) &&...
+                    (isa(optiProb.BP,'matRad_EffectProjection') && ~isa(optiProb.BP,'matRad_VariableRBEProjection')) 
+                    
+                    doses = objective.getDoseParameters();
+                
+                    effect = cst{i,5}.alphaX*doses + cst{i,5}.betaX*doses.^2;
+                    
+                    objective = objective.setDoseParameters(effect);
+                end
+                
                 %dose in VOI
                 d_i = d{1}(cst{i,4}{1});
                 
                 %add to dose gradient
-                doseGradient(cst{i,4}{1}) = doseGradient(cst{i,4}{1}) + obj.computeDoseObjectiveGradient(d_i);                
+                doseGradient{1}(cst{i,4}{1}) = doseGradient{1}(cst{i,4}{1}) + objective.computeDoseObjectiveGradient(d_i);                
             end       
         end           
     end    
 end
   
-% Calculate weight gradient
-weightGradient = (doseGradient' * dij.physicalDose{1})';
+%project to weight gradient
+optiProb.BP = optiProb.BP.computeGradient(dij,doseGradient,w);
+g = optiProb.BP.GetGradient();
+weightGradient = g{1};
 
 end

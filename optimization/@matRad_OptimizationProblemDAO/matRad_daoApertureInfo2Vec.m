@@ -1,7 +1,7 @@
 function [apertureInfoVec, mappingMx, limMx] = matRad_daoApertureInfo2Vec(apertureInfo)
-% matRad function to generate a vector respresentation of the aperture
-% weights and shapes and (optional) some meta information needed during
-% optimization
+% matRad function to generate a vector respresentation of objects
+% A vector representation of the aperture weights and shapes and (optional) 
+% some meta information needed during optimization is generated.
 %
 % call
 %   [apertureInfoVec, mappingMx, limMx] = matRad_daoApertureInfo2Vec(apertureInfo)
