@@ -225,11 +225,8 @@ classdef MatRad_MCemittanceBaseData
                     mcDataEnergy.MeanEnergy = meanEnergy(r80);                 
                     mcDataEnergy.EnergySpread = obj.energyspread; 
                 case 'helium'
-                    meanEnergy = @(x) 10.12* x^0.5519 - 0.5487;
+                    meanEnergy = @(x) 7.466* x.^0.5879 + 3.087;
                     mcDataEnergy.MeanEnergy = meanEnergy(r80);  
-%                     mcDataEnergy.MeanEnergy = mcDataEnergy.NominalEnergy;
-%                     meanEnergy = @(x,A,Z,alpha,p) (x*Z^2/A/alpha)^(1/p);
-%                     mcDataEnergy.MeanEnergy = meanEnergy(r80,4,2,0.022,1.77);
                     mcDataEnergy.EnergySpread = obj.energyspread; 
                 otherwise
                     error('not implemented')
