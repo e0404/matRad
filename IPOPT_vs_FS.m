@@ -17,24 +17,27 @@ pln.propOpt.runSequencing = 1;
 pln.propOpt.runDAO        = 0;
 stf                      = matRad_generateStf(ct,cst,pln);
 dij = matRad_calcPhotonDose(ct,stf,pln,cst);
-pln.propOpt.tol_obj = 1e-20;
-pln.propOpt.tol_violation = 1e-20;
-pln.propOpt.accepted_violation = 1e-20;
+pln.propOpt.tol_obj = 1e-6;
+pln.propOpt.tol_violation = 1e-14;
+pln.propOpt.accepted_violation = 1e-14;
 
 cst{1, 5}.visibleColor = [0 0.4470 0.7410];
 cst{2, 5}.visibleColor = [0.9290 0.6940 0.1250];
 cst{3, 5}.visibleColor = [0.3010 0.7450 0.9330];
 
-%% IPOPT
-cst = cst(:, 1:5);
+
 cst{1, 6}{1}=DoseObjectives.matRad_SquaredOverdosing(100, 20)
 cst{2, 6}{1}=DoseObjectives.matRad_SquaredDeviation(1000, 50);
 cst{3, 6}{1}=DoseObjectives.matRad_SquaredOverdosing(30, 30);
+cst{2, 6}{2}=DoseConstraints.matRad_MinMaxDose(49, 51, 1, 1.9);
+%cst{1, 6}{1}=DoseConstraints.matRad_MinMaxDose(0, 20, 1, 0.9);
 
+
+%% IPOPT
 pln.propOpt.optimizer = "IPOPT";
 %pln.propOpt.feasibility_seeker = "AMS_sim";
-pln.propOpt.max_iter = 100;
-pln.propOpt.max_time = 3000;
+pln.propOpt.max_iter = 500;
+pln.propOpt.max_time = 3600;
 %pln.propOpt.lambda = 1;
 %pln.propOpt.weighted = true;
 tic;
@@ -43,16 +46,10 @@ time = toc;
 
 
 %% Super AMS_sim
-
-cst = cst(:, 1:5);
-cst{1, 6}{2}=DoseObjectives.matRad_SquaredOverdosing(100, 20)
-cst{2, 6}{2}=DoseObjectives.matRad_SquaredDeviation(1000, 50);
-cst{2, 6}{1}=DoseConstraints.matRad_MinMaxDose(49, 51, 1, 1.9);
-cst{1, 6}{1}=DoseConstraints.matRad_MinMaxDose(0, 20, 1, 0.9);
 pln.propOpt.optimizer = "Superization";
 pln.propOpt.feasibility_seeker = "AMS_sim";
-pln.propOpt.max_iter = 100;
-pln.propOpt.max_time = 3000;
+pln.propOpt.max_iter = 500;
+pln.propOpt.max_time = 3600;
 pln.propOpt.lambda = 1;
 pln.propOpt.weighted = true;
 
