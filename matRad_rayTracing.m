@@ -104,11 +104,8 @@ for i = 1:size(rayMx_world,1)
     x_dist = coords(ixHitVoxel,1).*scale_factor - rayMx_bev(i,1);
     z_dist = coords(ixHitVoxel,3).*scale_factor - rayMx_bev(i,3);
 
-%     ixRememberFromCurrTracing = x_dist > -raySelection & x_dist <= raySelection ...
-%                               & z_dist > -raySelection & z_dist <= raySelection;
-    ixRememberFromCurrTracing = (x_dist > -raySelection & x_dist <= raySelection ...
-                                & z_dist > -raySelection & z_dist <= raySelection) ...
-                                | isinf(scale_factor);
+    ixRememberFromCurrTracing = x_dist > -raySelection & x_dist <= raySelection ...
+                              & z_dist > -raySelection & z_dist <= raySelection;
 
     if any(ixRememberFromCurrTracing) > 0
 

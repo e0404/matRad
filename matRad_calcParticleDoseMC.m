@@ -253,16 +253,7 @@ MCsquareConfigFile = 'MCsquareConfig.txt';
 
 MCsquareConfig = MatRad_MCsquareConfig;
 
-% bdFile = [machine.meta.machine '.txt'];
-
 bdFile = 'BDL_matrad.txt';
-
-% MCsquareBDL = MatRad_MCsquareBaseData(machine, stf);
-%matRad_createMCsquareBaseDataFile(bdFile,machine,1);
-% MCsquareBDL = MCsquareBDL.saveMatradMachine('test');
-% MCsquareBDL = MCsquareBDL.writeToBDLfile([MCsquareFolder filesep 'BDL' filesep bdFile]);
-%movefile(bdFile,[MCsquareFolder filesep 'BDL/' bdFile]);
-
 
 MCsquareConfig.BDL_Machine_Parameter_File = ['BDL/' bdFile];
 MCsquareConfig.BDL_Plan_File = 'currBixels.txt';
@@ -289,8 +280,6 @@ matRad_writeMhd(HUcube{1},MCsquareBinCubeResolution,MCsquareConfig.CT_File);
 % prepare steering for MCsquare and sort stf by energy
 isoCenterOffset = [dij.doseGrid.resolution.x/2 dij.doseGrid.resolution.y/2 dij.doseGrid.resolution.z/2] ...
                 - [dij.ctGrid.resolution.x   dij.ctGrid.resolution.y   dij.ctGrid.resolution.z];
-
-isoCenterOffset = -[dij.doseGrid.resolution.x/2 dij.doseGrid.resolution.y/2 dij.doseGrid.resolution.z/2];
 
 counter = 0;             
 for i = 1:length(stf)

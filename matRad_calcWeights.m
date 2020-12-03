@@ -52,6 +52,8 @@ if ~strcmp(method, 'russo') && ~strcmp(method, 'fitCircle') && ~strcmp(method, '
     error('method not supported');
 
 elseif strcmp(method, 'russo')
+    % splitting into N^2 sub beams accoring to Russo et al (2016)
+    
     sigmaHead = sqrt(sigmaTot^2 - sigmaSub^2);
 
     gauss = @(sigma, x, y, muX, muY) 1 / (2 * pi * sigma^2) .* exp(-((x + muX).^2 + (y + muY).^2) / (2 * sigma^2)); 
@@ -82,13 +84,10 @@ elseif strcmp(method, 'russo')
     numOfSub = N * N;
     
 elseif strcmp(method, 'fitCircle') || strcmp(method, 'fitSquare')
-
+    % number of sub beams will be (2*n +1)^2 for the square;
+    %                             (2^n -1)*6 +1 for the circle
     if N~=2 && N~=3 && N~=8
         error('number of shells N not supported');
-    end
-
-    if ~strcmp(method,'fitCircle') && ~strcmp(method,'fitSquare')
-        error('method not supported');
     end
 
     % This parameters come from simulations done previously
