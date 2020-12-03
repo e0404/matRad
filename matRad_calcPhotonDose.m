@@ -90,7 +90,8 @@ fieldLimit = ceil(fieldWidth/(2*intConvResolution));
                   intConvResolution: ...
                   (fieldLimit-1)*intConvResolution);    
 
-% gaussian filter to model penumbra from (measured) machine output / see diploma thesis siggel 4.1.2
+% gaussian filter to model penumbra from (measured) machine output / see
+% diploma thesis siggel 4.1.2 -> https://github.com/e0404/matRad/wiki/Dose-influence-matrix-calculation
 if isfield(machine.data,'penumbraFWHMatIso')
     penumbraFWHM = machine.data.penumbraFWHMatIso;
 else
