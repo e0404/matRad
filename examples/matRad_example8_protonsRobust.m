@@ -26,9 +26,9 @@
 matRad_rc
 
 %% Create a CT image series
-xDim = 150;
-yDim = 150;
-zDim = 50;
+xDim = 120;
+yDim = 120;
+zDim = 60;
 
 ct.cubeDim      = [xDim yDim zDim];
 ct.resolution.x = 2; % mm
@@ -40,59 +40,58 @@ ct.numOfCtScen  = 1;
 ct.cubeHU{1} = ones(ct.cubeDim) * -1024;
 
 %% Create VOI data for the phantom
-% Now we define two structures for the phantom 
-ixOAR = 1;
-ixPTV = 2;
+% Now we define three structures for the phantom 
+ixNT     = 1;
+ixTarget = 2;
+ixOAR    = 3;
 
 % define general VOI properties
-cst{ixOAR,1} = 0;
-cst{ixOAR,2} = 'contour';
-cst{ixOAR,3} = 'OAR';
-cst{ixPTV,1} = 1;
-cst{ixPTV,2} = 'target';
-cst{ixPTV,3} = 'TARGET';
- 
+cst{ixNT,1} = 0;     cst{ixNT,2} = 'contour';    cst{ixNT,3} = 'OAR';
+cst{ixTarget,1} = 1; cst{ixTarget,2} = 'target'; cst{ixTarget,3} = 'TARGET';
+cst{ixOAR,3} = 0;    cst{ixOAR,2} = 'OAR';       cst{ixOAR,3} = 'OAR';
+
 % define optimization parameter for both VOIs
+cst{ixNT,5}.TissueClass = 1;
+cst{ixNT,5}.alphaX      = 0.1000;
+cst{ixNT,5}.betaX       = 0.0500;
+cst{ixNT,5}.Priority    = 3;           % overlap priority for optimization - a higher number corresponds to a lower priority
+cst{ixNT,5}.Visible     = 1;
+cst{ixNT,6}{1}          = struct(DoseObjectives.matRad_SquaredOverdosing(5,20));
+
+cst{ixTarget,5}.TissueClass = 1;
+cst{ixTarget,5}.alphaX      = 0.1000;
+cst{ixTarget,5}.betaX       = 0.0500;
+cst{ixTarget,5}.Priority    = 1;           % overlap priority for optimization - a lower number corresponds to a higher priority
+cst{ixTarget,5}.Visible     = 1; 
+cst{ixTarget,6}{1}          = struct(DoseObjectives.matRad_SquaredDeviation(100,60));
+
 cst{ixOAR,5}.TissueClass = 1;
 cst{ixOAR,5}.alphaX      = 0.1000;
 cst{ixOAR,5}.betaX       = 0.0500;
 cst{ixOAR,5}.Priority    = 2;           % overlap priority for optimization - a higher number corresponds to a lower priority
 cst{ixOAR,5}.Visible     = 1;
+cst{ixOAR,6}{1}          = struct(DoseObjectives.matRad_SquaredOverdosing(10,40));
 
-cst{ixOAR,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(10,30));
-
-cst{ixPTV,5}.TissueClass = 1;
-cst{ixPTV,5}.alphaX      = 0.1000;
-cst{ixPTV,5}.betaX       = 0.0500;
-cst{ixPTV,5}.Priority    = 1;           % overlap priority for optimization - a lower number corresponds to a higher priority
-cst{ixPTV,5}.Visible     = 1; 
-
-cst{ixPTV,6}{1} = struct(DoseObjectives.matRad_SquaredDeviation(50,60));
-
-%% Lets create a cubic phantom
+%% Let's create a cubic phantom
 % first define the dimensions of the organ at risk
 cubeHelper = zeros(ct.cubeDim);
-xLowOAR    = round(xDim/2 - xDim/4);
-xHighOAR   = round(xDim/2 + xDim/4);
-yLowOAR    = round(yDim/2 - yDim/4);
-yHighOAR   = round(yDim/2 + yDim/4);
-zLowOAR    = round(zDim/2 - zDim/4);
-zHighOAR   = round(zDim/2 + zDim/4);
+xLowNT    = round(xDim/2 - xDim/4); xHighNT   = round(xDim/2 + xDim/4);
+yLowNT    = round(yDim/2 - yDim/4); yHighNT   = round(yDim/2 + yDim/4);
+zLowNT    = round(zDim/2 - zDim/4); zHighNT   = round(zDim/2 + zDim/4);
 
-for x = xLowOAR:1:xHighOAR
-   for y = yLowOAR:1:yHighOAR
-      for z = zLowOAR:1:zHighOAR
+for x = xLowNT:1:xHighNT
+   for y = yLowNT:1:yHighNT
+      for z = zLowNT:1:zHighNT
          cubeHelper(x,y,z) = 1;
       end
    end
-end
-      
+end    
 % extract the linear voxel indices and save it in the cst
-cst{ixOAR,4}{1} = find(cubeHelper);
+cst{ixNT,4}{1} = find(cubeHelper);
 
-% second the PTV
+% create a spherical target
 cubeHelper = zeros(ct.cubeDim);
-radiusPTV = xDim/13;
+radiusPTV  = xDim/13;
 for x = 1:xDim
    for y = 1:yDim
       for z = 1:zDim
@@ -103,17 +102,34 @@ for x = 1:xDim
       end
    end
 end
-
 % extract the linear voxel indices and save it in the cst
-cst{ixPTV,4}{1} = find(cubeHelper);
+cst{ixTarget,4}{1} = find(cubeHelper);
 
-% assign relative electron densities
-vIxOAR = cst{ixOAR,4}{1};
-vIxPTV = cst{ixPTV,4}{1};
 
-ct.cubeHU{1}(vIxOAR) = 0; % assign HU of soft tissue
-ct.cubeHU{1}(vIxPTV) = 0; % assign HU of water
+% create an OAR
+cubeHelper = zeros(ct.cubeDim);
+radiusOAR  = xDim/15;
+for x = 1:xDim
+   for y = 1:yDim
+      for z = 1:zDim
+         currPost = [x y z] - (round([ct.cubeDim./2])+ [10 -10 0]);
+         if  sqrt(sum(currPost.^2)) < radiusOAR
+            cubeHelper(x,y,z) = 1;
+         end
+      end
+   end
+end
+% extract the linear voxel indices and save it in the cst
+vIxOAR      = find(cubeHelper);
+[vLinLog,b] = ismember(vIxOAR,cst{ixTarget,4}{1});  % avoid overlap with target
+cst{ixOAR,4}{1} = vIxOAR(~vLinLog);
 
+% assign Hounsfield units
+ct.cubeHU{1}(cst{ixNT,4}{1})     = 0; % assign HU of water
+ct.cubeHU{1}(cst{ixTarget,4}{1}) = 0; % assign HU of water
+ct.cubeHU{1}(cst{ixOAR,4}{1}) =  -100; % assign HU of water
+
+clear x y z xDim yDim zDim xLowNT xHighNT yLowNT yHighNT zLowNT zHighNT   
 %% Treatment Plan
 % The next step is to define your treatment plan labeled as 'pln'. This 
 % structure requires input from the treatment planner and defines the most
@@ -173,20 +189,17 @@ dij = matRad_calcParticleDose(ct,stf,pln,cst);
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment.
+
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Trigger robust optimization
 % Make the objective to a composite worst case objective
-cst{ixPTV,6}{1}.robustness  = 'COWC';
-cst{ixOAR,6}{1}.robustness  = 'COWC';
+cst{ixTarget,6}{1}.robustness  = 'COWC';
+cst{ixOAR,6}{1}.robustness     = 'COWC';
+cst{ixNT,6}{1}.robustness      = 'COWC';
 
-% Create for each VOI a second objective and use 
-% voxel wise worst case optimization VWWC.
-% cst{ixPTV,6}(2,1) = cst{ixPTV,6}(1);
-% cst{ixOAR,6}(2,1) = cst{ixOAR,6}(1);
-% cst{ixPTV,6}(2,1).robustness  = 'VWWC';
-% cst{ixOAR,6}(2,1).robustness  = 'VWWC';
-
+%cst{ixOAR,6}{1,2} = struct(DoseConstraints.matRad_MinMaxDose([0 20],'voxel'));
+%cst{ixOAR,6}{1,2}.robustness   = 'COWC';
 %%
 resultGUIrobust = matRad_fluenceOptimization(dij,cst,pln);
 
@@ -194,7 +207,6 @@ resultGUIrobust = matRad_fluenceOptimization(dij,cst,pln);
 resultGUI = matRad_appendResultGUI(resultGUI,resultGUIrobust,0,'robust');
 
 %% Visualize results
-
 plane      = 3;
 slice      = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
 
