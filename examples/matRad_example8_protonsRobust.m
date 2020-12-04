@@ -194,17 +194,26 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Trigger robust optimization
 % Make the objective to a composite worst case objective
-cst{ixTarget,6}{1}.robustness  = 'COWC';
-cst{ixOAR,6}{1}.robustness     = 'COWC';
-cst{ixNT,6}{1}.robustness      = 'COWC';
 
-%cst{ixOAR,6}{1,2} = struct(DoseConstraints.matRad_MinMaxDose([0 20],'voxel'));
-%cst{ixOAR,6}{1,2}.robustness   = 'COWC';
-%%
-resultGUIrobust = matRad_fluenceOptimization(dij,cst,pln);
+ROBUST_OPT = {'none','STOCH','VWWC','VWWC_INV','COWC','OWC','PROB'};
 
-%% combine resultGUI structures
-resultGUI = matRad_appendResultGUI(resultGUI,resultGUIrobust,0,'robust');
+for ixRob = 1:numel(ROBUST_OPT)
+   cst{ixTarget,6}{1}.robustness  = ROBUST_OPT{1,ixRob};
+   cst{ixOAR,6}{1}.robustness     = ROBUST_OPT{1,ixRob};
+   cst{ixNT,6}{1}.robustness      = ROBUST_OPT{1,ixRob};
+   
+   % add a max constraint
+   %cst{ixOAR,6}{1,2} = struct(DoseConstraints.matRad_MinMaxDose([0 20],'voxel'));
+   %cst{ixOAR,6}{1,2}.robustness   = 'COWC';
+   
+   resultGUIrobust = matRad_fluenceOptimization(dij,cst,pln);
+   
+   % combine resultGUI structures
+   resultGUI = matRad_appendResultGUI(resultGUI,resultGUIrobust,0,['robust' ROBUST_OPT{1,ixRob}]);
+   
+end
+
+% matRadGUI
 
 %% Visualize results
 plane      = 3;
