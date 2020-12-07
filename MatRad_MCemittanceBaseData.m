@@ -50,7 +50,7 @@ classdef MatRad_MCemittanceBaseData
             %stfCompressed states whether monteCarloData are calculated for
             %all energies (false) or only for energies which exist in given
             %stf. If function is called without stf stfCompressed = false.
-            if nargin < 2
+            if nargin < 2 || isempty(stf)
                 obj.stfCompressed = false;
             else
                 obj.stfCompressed = true;
@@ -98,42 +98,72 @@ classdef MatRad_MCemittanceBaseData
             obj.selectedFocus(obj.energyIndex) = focusIndex;
             
             count = 1;
-            for ii = 1:numel(obj.energyIndex)
-                
-                i = obj.energyIndex(ii);
-                
+            for i = obj.energyIndex'
+                                
                 %look up whether MonteCarlo data are already present in
                 %machine file , if so do not recalculate
-                if isfield(machine.data(i),'monteCarloData')
-                    if (isempty(machine.data(i).monteCarloData) == 0)
-                        obj.monteCarloData = [obj.monteCarloData, machine.data(i).monteCarloData];
-                        count = count + 1;
-                        continue;
-                    end
+                if isfield(machine.data(i), 'energySpectrum')
+                        if isfield(machine.data(i).energySpectrum, 'mean') && isfield(machine.data(i).energySpectrum, 'spread')
+                            energyData.NominalEnergy    = ones(1,4) * machine.data(i).energy(:);
+                            energyData.MeanEnergy       = machine.data(i).energySpectrum.mean(:);
+                            energyData.EnergySpread     = machine.data(i).energySpectrum.spread(:);
+                        else
+                            energyData = obj.fitPhaseSpaceForEnergy(i);
+                        end
+                    else
+                        energyData = obj.fitPhaseSpaceForEnergy(i);
                 end
-                
-                
-                %calculate monteCarloData for given energy and every focus
-                %index
-                data = [];
-                energyData = obj.fitPhaseSpaceForEnergy(i);
-                obj.FWHMatIso = [];
-                for j = 1:size(machine.data(i).initFocus.sigma,1)
+                    
+                if isfield(machine.data(i).initFocus,'spotsize') && isfield(machine.data(i).initFocus,'divergence') ...
+                        && isfield(machine.data(i).initFocus,'correlation') && isfield(machine.data(i).initFocus,'weight') ...
+                    data = [];
+                    opticsData.ProtonsMU        = ones(1,4) * 1e6;   
+                    opticsData.Weight1          = machine.data(i).initFocus.weight.fist(:);
+                    opticsData.SpotSize1x       = machine.data(i).initFocus.spotsize.x1(:);
+                    opticsData.Divergence1x     = machine.data(i).initFocus.divergence.x1(:);
+                    opticsData.Correlation1x    = machine.data(i).initFocus.correlation.x1(:); 
+                    opticsData.SpotSize1y       = machine.data(i).initFocus.spotsize.y1(:);
+                    opticsData.Divergence1y     = machine.data(i).initFocus.divergence.y1(:);
+                    opticsData.Correlation1y    = machine.data(i).initFocus.correlation.y1(:); 
+                    opticsData.Weight2          = machine.data(i).initFocus.weight.second(:);
+                    opticsData.SpotSize2x       = machine.data(i).initFocus.spotsize.x2(:);
+                    opticsData.Divergence2x     = machine.data(i).initFocus.divergence.x2(:);
+                    opticsData.Correlation2x    = machine.data(i).initFocus.correlation.x2(:);
+                    opticsData.SpotSize2y       = machine.data(i).initFocus.spotsize.y2(:);
+                    opticsData.Divergence2y     = machine.data(i).initFocus.divergence.y2(:);
+                    opticsData.Correlation2y    = machine.data(i).initFocus.spotsize.y2(:);
                     
                     tmp = energyData;
-                    opticsData = obj.fitBeamOpticsForEnergy(i, j);
-                    
                     f = fieldnames(opticsData);
                     for a = 1:length(f)
                         tmp.(f{a}) = opticsData.(f{a});
                     end
+
+                    data = [data; tmp];        
+                else
+                    data = [];
+                    tmp = energyData;
+                    for j = 1:size(machine.data(i).initFocus.sigma,1)
                     
-                    data = [data; tmp];
+%                         tmp = energyData;
+                        opticsData = obj.fitBeamOpticsForEnergy(i, j);
+
+                        f = fieldnames(opticsData);
+                        for a = 1:length(f)
+                            if j == 1
+                                tmp.(f{a}) = opticsData.(f{a});
+                            else
+                                tmp.(f{a}) = [tmp.(f{a}), opticsData.(f{a})];
+                            end
+                        end
+                    
+                        data = tmp;
+                    end
+                    
                 end
-                
-                obj.monteCarloData = [obj.monteCarloData, data];
-                
-                count = count + 1;
+            
+            obj.monteCarloData = [obj.monteCarloData, data]; 
+            count = count + 1;
             end
             
             %throw out warning if there was a problem in calculating the
@@ -160,7 +190,7 @@ classdef MatRad_MCemittanceBaseData
             
             i = energyIx;
             
-            mcDataEnergy.NominalEnergy = obj.machine.data(i).energy;
+            mcDataEnergy.NominalEnergy = ones(1, size(obj.machine.data(1).initFocus.dist,1)) * obj.machine.data(i).energy;
             
             newDepths = linspace(0,obj.machine.data(i).depths(end),numel(obj.machine.data(i).depths) * 100);
             newDepths = newDepths;
@@ -200,7 +230,7 @@ classdef MatRad_MCemittanceBaseData
                 - 2.992344292008054e-11 * x^6 + 8.104111934547256e-09 * x^5 - 1.477860913846939e-06 * x^4 ...
                 + 1.873625800704108e-04 * x^3 - 1.739424343114980e-02 * x^2 + 1.743224692623838e+00 * x ...
                 + 1.827112816899668e+01;
-            mcDataEnergy.MeanEnergy = meanEnergy(r80);
+            mcDataEnergy.MeanEnergy = ones(1, size(obj.machine.data(1).initFocus.dist,1)) * meanEnergy(r80);
             
             %calculate energy straggling using formulae deducted from paper
             %"An analytical approximation of the Bragg curve for therapeutic
@@ -215,9 +245,9 @@ classdef MatRad_MCemittanceBaseData
             % use formula deducted from Bragg Kleeman rule to calcuate
             % energy straggling given the total sigma and the range
             % straggling
-            energySpread = (totalSigmaSq - totalSpreadSq(r80)) / (0.022^2 * 1.77^2 * mcDataEnergy.MeanEnergy^(2*1.77-2));
+            energySpread = (totalSigmaSq - totalSpreadSq(r80)) / (0.022^2 * 1.77^2 * meanEnergy(r80)^(2*1.77-2));
             energySpread(energySpread < 0) = 0;
-            mcDataEnergy.EnergySpread = sqrt(energySpread);
+            mcDataEnergy.EnergySpread = ones(1, size(obj.machine.data(1).initFocus.dist,1)) * sqrt(energySpread);
         end
         
         function mcDataOptics = fitBeamOpticsForEnergy(obj,energyIx, focusIndex)
@@ -287,22 +317,37 @@ classdef MatRad_MCemittanceBaseData
             mcDataOptics.SpotSize2y    = 0;
             mcDataOptics.Divergence2y  = 0;
             mcDataOptics.Correlation2y = 0;
-            mcDataOptics.FWHMatIso = 2.355 * sigmaNull;
+%             mcDataOptics.FWHMatIso = 2.355 * sigmaNull;
         end
         
         function obj = saveMatradMachine(obj,name)
             %save previously calculated monteCarloData in new baseData file
             %with given name
             
-            [~ ,energyIndex, ~] = intersect([obj.machine.data(:).energy], [obj.monteCarloData(:).NominalEnergy]);
+%             [~ ,energyIndex, ~] = intersect([obj.machine.data(:).energy], [obj.monteCarloData(:).NominalEnergy]);
             
             machineName = [obj.machine.meta.radiationMode, '_', name];
             
             count = 1;
-            for i = energyIndex'
+            for i = obj.energyIndex'
                 
-                obj.machine.data(i).monteCarloData = obj.monteCarloData(:,count);
-                
+                obj.machine.data(i).initFocus.spotsize.x1 = [obj.monteCarloData(:,count).SpotSize1x];
+                obj.machine.data(i).initFocus.spotsize.y1 = [obj.monteCarloData(:,count).SpotSize1y];
+                obj.machine.data(i).initFocus.spotsize.x2 = [obj.monteCarloData(:,count).SpotSize2x];
+                obj.machine.data(i).initFocus.spotsize.y2 = [obj.monteCarloData(:,count).SpotSize2y];
+                obj.machine.data(i).initFocus.divergence.x1 = [obj.monteCarloData(:,count).Divergence1x];
+                obj.machine.data(i).initFocus.divergence.y1 = [obj.monteCarloData(:,count).Divergence1y];
+                obj.machine.data(i).initFocus.divergence.x2 = [obj.monteCarloData(:,count).Divergence2x];
+                obj.machine.data(i).initFocus.divergence.y2 = [obj.monteCarloData(:,count).Divergence2y];
+                obj.machine.data(i).initFocus.correlation.x1 = [obj.monteCarloData(:,count).Correlation1x];
+                obj.machine.data(i).initFocus.correlation.y1 = [obj.monteCarloData(:,count).Correlation1y];
+                obj.machine.data(i).initFocus.correlation.x2 = [obj.monteCarloData(:,count).Correlation2x];
+                obj.machine.data(i).initFocus.correlation.y2 = [obj.monteCarloData(:,count).Correlation2y];
+                obj.machine.data(i).initFocus.weight.fist   =  [obj.monteCarloData(:,count).Weight1];
+                obj.machine.data(i).initFocus.weight.second =  [obj.monteCarloData(:,count).Weight2];
+                obj.machine.data(i).energySpectrum.mean   = [obj.monteCarloData(:,count).MeanEnergy];
+                obj.machine.data(i).energySpectrum.spread = [obj.monteCarloData(:,count).EnergySpread];
+
                 count = count + 1;
             end
             machine = obj.machine;
