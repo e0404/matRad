@@ -114,24 +114,23 @@ classdef MatRad_MCemittanceBaseData
                         energyData = obj.fitPhaseSpaceForEnergy(i);
                 end
                     
-                if isfield(machine.data(i).initFocus,'spotsize') && isfield(machine.data(i).initFocus,'divergence') ...
-                        && isfield(machine.data(i).initFocus,'correlation') && isfield(machine.data(i).initFocus,'weight') ...
+                if isfield(machine.data(i).initFocus,'Emittance') 
                     data = [];
                     opticsData.ProtonsMU        = ones(1,4) * 1e6;   
-                    opticsData.Weight1          = machine.data(i).initFocus.weight.fist(:);
-                    opticsData.SpotSize1x       = machine.data(i).initFocus.spotsize.x1(:);
-                    opticsData.Divergence1x     = machine.data(i).initFocus.divergence.x1(:);
-                    opticsData.Correlation1x    = machine.data(i).initFocus.correlation.x1(:); 
-                    opticsData.SpotSize1y       = machine.data(i).initFocus.spotsize.y1(:);
-                    opticsData.Divergence1y     = machine.data(i).initFocus.divergence.y1(:);
-                    opticsData.Correlation1y    = machine.data(i).initFocus.correlation.y1(:); 
-                    opticsData.Weight2          = machine.data(i).initFocus.weight.second(:);
-                    opticsData.SpotSize2x       = machine.data(i).initFocus.spotsize.x2(:);
-                    opticsData.Divergence2x     = machine.data(i).initFocus.divergence.x2(:);
-                    opticsData.Correlation2x    = machine.data(i).initFocus.correlation.x2(:);
-                    opticsData.SpotSize2y       = machine.data(i).initFocus.spotsize.y2(:);
-                    opticsData.Divergence2y     = machine.data(i).initFocus.divergence.y2(:);
-                    opticsData.Correlation2y    = machine.data(i).initFocus.spotsize.y2(:);
+                    opticsData.Weight1          = machine.data(i).initFocus.Emittance.weight.first(:);
+                    opticsData.SpotSize1x       = machine.data(i).initFocus.Emittance.spotsize.x1(:);
+                    opticsData.Divergence1x     = machine.data(i).initFocus.Emittance.divergence.x1(:);
+                    opticsData.Correlation1x    = machine.data(i).initFocus.Emittance.correlation.x1(:); 
+                    opticsData.SpotSize1y       = machine.data(i).initFocus.Emittance.spotsize.y1(:);
+                    opticsData.Divergence1y     = machine.data(i).initFocus.Emittance.divergence.y1(:);
+                    opticsData.Correlation1y    = machine.data(i).initFocus.Emittance.correlation.y1(:); 
+                    opticsData.Weight2          = machine.data(i).initFocus.Emittance.weight.second(:);
+                    opticsData.SpotSize2x       = machine.data(i).initFocus.Emittance.spotsize.x2(:);
+                    opticsData.Divergence2x     = machine.data(i).initFocus.Emittance.divergence.x2(:);
+                    opticsData.Correlation2x    = machine.data(i).initFocus.Emittance.correlation.x2(:);
+                    opticsData.SpotSize2y       = machine.data(i).initFocus.Emittance.spotsize.y2(:);
+                    opticsData.Divergence2y     = machine.data(i).initFocus.Emittance.divergence.y2(:);
+                    opticsData.Correlation2y    = machine.data(i).initFocus.Emittance.spotsize.y2(:);
                     
                     tmp = energyData;
                     f = fieldnames(opticsData);
@@ -331,22 +330,24 @@ classdef MatRad_MCemittanceBaseData
             count = 1;
             for i = obj.energyIndex'
                 
-                obj.machine.data(i).initFocus.spotsize.x1 = [obj.monteCarloData(:,count).SpotSize1x];
-                obj.machine.data(i).initFocus.spotsize.y1 = [obj.monteCarloData(:,count).SpotSize1y];
-                obj.machine.data(i).initFocus.spotsize.x2 = [obj.monteCarloData(:,count).SpotSize2x];
-                obj.machine.data(i).initFocus.spotsize.y2 = [obj.monteCarloData(:,count).SpotSize2y];
-                obj.machine.data(i).initFocus.divergence.x1 = [obj.monteCarloData(:,count).Divergence1x];
-                obj.machine.data(i).initFocus.divergence.y1 = [obj.monteCarloData(:,count).Divergence1y];
-                obj.machine.data(i).initFocus.divergence.x2 = [obj.monteCarloData(:,count).Divergence2x];
-                obj.machine.data(i).initFocus.divergence.y2 = [obj.monteCarloData(:,count).Divergence2y];
-                obj.machine.data(i).initFocus.correlation.x1 = [obj.monteCarloData(:,count).Correlation1x];
-                obj.machine.data(i).initFocus.correlation.y1 = [obj.monteCarloData(:,count).Correlation1y];
-                obj.machine.data(i).initFocus.correlation.x2 = [obj.monteCarloData(:,count).Correlation2x];
-                obj.machine.data(i).initFocus.correlation.y2 = [obj.monteCarloData(:,count).Correlation2y];
-                obj.machine.data(i).initFocus.weight.fist   =  [obj.monteCarloData(:,count).Weight1];
-                obj.machine.data(i).initFocus.weight.second =  [obj.monteCarloData(:,count).Weight2];
+                obj.machine.data(i).initFocus.Emittance.spotsize.x1 = [obj.monteCarloData(:,count).SpotSize1x];
+                obj.machine.data(i).initFocus.Emittance.spotsize.y1 = [obj.monteCarloData(:,count).SpotSize1y];
+                obj.machine.data(i).initFocus.Emittance.spotsize.x2 = [obj.monteCarloData(:,count).SpotSize2x];
+                obj.machine.data(i).initFocus.Emittance.spotsize.y2 = [obj.monteCarloData(:,count).SpotSize2y];
+                obj.machine.data(i).initFocus.Emittance.divergence.x1 = [obj.monteCarloData(:,count).Divergence1x];
+                obj.machine.data(i).initFocus.Emittance.divergence.y1 = [obj.monteCarloData(:,count).Divergence1y];
+                obj.machine.data(i).initFocus.Emittance.divergence.x2 = [obj.monteCarloData(:,count).Divergence2x];
+                obj.machine.data(i).initFocus.Emittance.divergence.y2 = [obj.monteCarloData(:,count).Divergence2y];
+                obj.machine.data(i).initFocus.Emittance.correlation.x1 = [obj.monteCarloData(:,count).Correlation1x];
+                obj.machine.data(i).initFocus.Emittance.correlation.y1 = [obj.monteCarloData(:,count).Correlation1y];
+                obj.machine.data(i).initFocus.Emittance.correlation.x2 = [obj.monteCarloData(:,count).Correlation2x];
+                obj.machine.data(i).initFocus.Emittance.correlation.y2 = [obj.monteCarloData(:,count).Correlation2y];
+                obj.machine.data(i).initFocus.Emittance.weight.first   =  [obj.monteCarloData(:,count).Weight1];
+                obj.machine.data(i).initFocus.Emittance.weight.second =  [obj.monteCarloData(:,count).Weight2];
                 obj.machine.data(i).energySpectrum.mean   = [obj.monteCarloData(:,count).MeanEnergy];
                 obj.machine.data(i).energySpectrum.spread = [obj.monteCarloData(:,count).EnergySpread];
+                obj.machine.data(i).energySpectrum.type  = 'Gaussian';
+                obj.machine.data(i).initFocus.Emittance.type  = 'BiGaussian';
 
                 count = count + 1;
             end
