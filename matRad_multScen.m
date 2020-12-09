@@ -607,8 +607,8 @@ classdef matRad_multScen
                     
                     this.scenForProb  = zeros(size(this.isoShift,1) * size(rangeShift,1),5);
                     Cnt = 1;
-                    for i = 1:size(this.isoShift,1)
-                        for j = 1:size(rangeShift,1)
+                    for j = 1:size(rangeShift,1)
+                        for i = 1:size(this.isoShift,1)
                             this.scenForProb(Cnt,:)   = [this.isoShift(i,:) rangeShift(j,:)];
                             Cnt = Cnt + 1;
                         end
