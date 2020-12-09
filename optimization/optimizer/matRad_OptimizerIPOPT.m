@@ -25,11 +25,19 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
     end
     
     properties (Access = private)
-        allObjectiveFunctionValues
         axesHandle
         plotHandle
         abortRequested
         plotFailed
+    end
+    
+    properties (SetAccess = private)
+        allObjectiveFunctionValues;
+        allConstraintViolations;
+        allOptVars;
+        timeInit;
+        timeStart;
+        timeIter;
     end
     
     methods
@@ -71,7 +79,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             
             obj.options.acceptable_iter               = 3;    % (Acc1)
             obj.options.acceptable_tol                = 1e10; % (Acc2)
-            obj.options.acceptable_constr_viol_tol    = 1e10; % (Acc3)
+            obj.options.acceptable_constr_viol_tol    = 1e-2; % (Acc3)
             obj.options.acceptable_dual_inf_tol       = 1e10; % (Acc4)
             obj.options.acceptable_compl_inf_tol      = 1e10; % (Acc5)
             obj.options.acceptable_obj_change_tol     = 1e-3; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
@@ -111,6 +119,8 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         
         function obj = optimize(obj,w0,optiProb,dij,cst)
             matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispInfo('\nOptimzation initiating... ');
+            obj.timeInit = tic;
             
             % set optimization options            
             
@@ -134,10 +144,9 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             funcs.gradient          = @(x) optiProb.matRad_objectiveGradient(x,dij,cst);
             funcs.jacobian          = @(x) optiProb.matRad_constraintJacobian(x,dij,cst);
             funcs.jacobianstructure = @( ) optiProb.matRad_getJacobianStructure(w0,dij,cst);
-            funcs.iterfunc          = @(iter,objective,paramter) obj.iterFunc(iter,objective,paramter,ipoptStruct.ipopt.max_iter);
+            funcs.iterfunc          = @(iter,objective,optVars) obj.iterFunc(iter,objective,optVars);
             
             % Informing user to press q to terminate optimization
-            matRad_cfg.dispInfo('\nOptimzation initiating...\n');
             
             % set Callback
             qCallbackSet = false;
@@ -165,7 +174,18 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.abortRequested = false;
             obj.plotFailed = false;
             
+            %Empty status arrays
+            obj.allObjectiveFunctionValues = [];
+            obj.allConstraintViolations = [];
+            obj.allOptVars = [];
+            
             % Run IPOPT.
+            initTimeElapsed = toc(obj.timeInit);
+            matRad_cfg.dispDebug('Initialization took %fs\n',initTimeElapsed);
+            
+            obj.timeStart = tic; %Initialize time recording
+            obj.timeIter = [];
+            
             try
                 [obj.wResult, obj.resultInfo] = ipopt(w0,funcs,ipoptStruct);
             catch ME
@@ -180,7 +200,15 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             
             obj.abortRequested = false;
             % Empty the array of stored function values
-            obj.allObjectiveFunctionValues = [];
+            %obj.allObjectiveFunctionValues = [];
+            
+            %Rearrange all optimization variables
+            tmpVars = struct();
+            fn = fieldnames(obj.allOptVars);
+            for fIx = 1:numel(fn)
+                tmpVars.(fn{fIx}) = [obj.allOptVars.(fn{fIx})];
+            end
+            obj.allOptVars = tmpVars;           
         end
         
         function [statusmsg,statusflag] = GetStatus(obj)
@@ -239,9 +267,20 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             end
         end
         
-        function flag = iterFunc(obj,iter,objective,~,~)
-             
+        function flag = iterFunc(obj,iter,objective,optVars)
+            %Record Iteration time
+            obj.timeIter(iter + 1) = toc;
+            
+            %Store Values
             obj.allObjectiveFunctionValues(iter + 1) = objective;
+            obj.allConstraintViolations(iter + 1) = optVars.inf_pr;
+            if isempty(obj.allOptVars)
+                obj.allOptVars = optVars;
+            else
+                obj.allOptVars(iter + 1) = optVars;
+            end
+
+            
             %We don't want the optimization to crash because of drawing
             %errors
             if ~obj.plotFailed
@@ -307,9 +346,6 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
                     refreshdata(hPlot,'caller');
             end
             drawnow;
-            
-            % ensure to bring optimization window to front
-            figure(hFig);
         end
         
         function abortCallbackKey(obj,~,KeyEvent)
