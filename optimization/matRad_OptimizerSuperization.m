@@ -1,6 +1,6 @@
 classdef matRad_OptimizerSuperization < matRad_Optimizer
     properties
-        options     
+        options
         wResult     %last optimization result
         resultInfo  %info struct about last results
         
@@ -10,53 +10,69 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
         alpha {mustBeNumeric, mustBePositive, mustBeLessThan(alpha, 1)} = 0.99;
         lambda {mustBeNumeric, mustBePositive, mustBeLessThan(lambda, 200)} = 1.9;
         feasibility_seeker {mustBeMember(feasibility_seeker, {'AMS_sim', 'AMS_sequential'})} = 'AMS_sim';
-        tol_obj {mustBeNumeric}            = 1e-20;
-        tol_violation {mustBeNumeric}      = 1e-20;
-        accepted_violation {mustBeNumeric} = 1e-20;
+        tol_obj {mustBeNumeric}            = 1e-6;
+        tol_violation {mustBeNumeric}      = 1e-6;
+        tol_max_violation {mustBeNumeric}   = 1e-3;
+        
+        accepted_tol_change {mustBeNumeric} = 1e-3;
+        accepted_violation {mustBeNumeric} = 1e-5;
+        accepted_max_violation {mustBeNumeric} = 1e-2;
+        accepted_iter = 3;
+        
         num_reductions {mustBeInteger}  = 2;
         weighted = false;
         
     end
     
+    properties (SetAccess = private)
+        allObjectiveFunctionValues;
+        allConstraintViolations;
+        allOptVars;
+        timeInit;
+        timeStart;
+        timeIter;
+    end
+    
     properties (Access = private)
-    M; % temp variables for the feasibility seeker
+        M; % temp variables for the feasibility seeker
+        axesHandle;
+        plotHandle;
     end
     
     
     methods
         function obj = matRad_OptimizerSuperization(pln)
-            %matRad_OptimizerFmincon 
+            %matRad_OptimizerFmincon
             %Construct an instance of the superization optimizer
             
             obj.wResult = [];
-            obj.resultInfo = struct();
             obj.M = [];
             
             % Overwrite default values with values provided in pln.propOpt,
             % IF pln is given as input.
             if nargin > 0
-                  if isfield(pln, 'propOpt')
-                        fields = fieldnames(pln.propOpt);
-                        props = properties(obj);
-                        for field=fields'
-                            for i=1:numel(props)
-                                if strcmp(props{i}, field{1})
-                                	obj.(field{1})= pln.propOpt.(props{i});
-                                end
+                if isfield(pln, 'propOpt')
+                    fields = fieldnames(pln.propOpt);
+                    props = properties(obj);
+                    for field=fields'
+                        for i=1:numel(props)
+                            if strcmp(props{i}, field{1})
+                                obj.(field{1})= pln.propOpt.(props{i});
                             end
                         end
-                  end
+                    end
+                end
             end
-            
-            % Init performance measures
-            obj.resultInfo.obj_values = zeros(obj.max_iter+1,1);
-            obj.resultInfo.norm2_violations = zeros(obj.max_iter+1, 1);
-            obj.resultInfo.max_violations = zeros(obj.max_iter+1, 1);
-            obj.resultInfo.betas = zeros(obj.max_iter+1, 1);
-            
-         end
-                
+        end
+        
         function obj = optimize(obj, x_0,  optiProb, dij, cst)
+            
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispInfo('Starting superiorization ... \n');
+            
+            obj.resultInfo = struct();
+            
+            obj.timeInit = tic;
             
             if obj.weighted
                 fprintf("Getting linear inequalities and weights from cst. \n")
@@ -70,15 +86,11 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
             
             if isempty(A)
                 error("No linear inequalities found. Please, consider using IPOPT.")
-            elseif strcmp(obj.feasibility_seeker, 'AMS_sequential') && size(A, 2)>50000
+            elseif strcmp(obj.feasibility_seeker, 'AMS_sequential') && size(A, 2)> 50000
                 warning("sequential AMS does not work well for many voxels. Consider unsing simultaneous AMS.")
             end
             
-            fprintf("Starting optimization ... \n")
-            
-            startSuper = tic; %Start timing the optimization
-
-            %Set objective function and gradient of objective function.    
+            %Set objective function and gradient of objective function.
             f = @(x) (optiProb.matRad_objectiveFunction(x,dij,cst));
             fGrad = @(x) (optiProb.matRad_objectiveGradient(x,dij,cst));
             
@@ -91,7 +103,8 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
                 error('The choosen feasibility seeker (%s) is not implemented.', ...
                     obj.feasibility_seeker)
             end
-
+            
+            obj.timeStart = tic; %Start timing the optimization
             % Superizaztion algorithm
             
             x=x_0;
@@ -99,109 +112,186 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
             n_A = size(A, 2); % number of voxels with constraints
             terminated = false;
             beta = 1;
-
-            for i=0:obj.max_iter+1
+            
+            %Initial values
+            violation = (max(0, x'*A-b')+ max(0, c'-x'*A))'./A_norm;
+            normViolation = (1/n_A)*norm(violation);
+            maxViolation = norm(violation,'inf');
+            
+            fVal = f(x);
+            obj.allObjectiveFunctionValues(1) = fVal;
+            obj.allConstraintViolations(1) = maxViolation;
+            obj.timeIter(1) = toc(obj.timeStart);
+            
+            obj.allOptVars.obj_values(1) = fVal;
+            obj.allOptVars.norm2_violations(1) = normViolation;
+            obj.allOptVars.max_violations(1) = maxViolation;
+            obj.allOptVars.betas(1) = beta;
+            obj.allOptVars.fEvals(1) = 1;
+            obj.allOptVars.numRedus(1) = 0;
+            obj.allOptVars.seekTime(1) = 0;
+            obj.allOptVars.supTime(1) = 0;
+            obj.allOptVars.relObjChange(1) = Inf;
+            
+                    fprintf('iter \t objective \t ||res|| \t max(res) \t beta \t #f_red \t #f_evals \t t_Seek \t t_Sup \n');
                 
-                %Calculation of performance measures
-                violation = (max(0, x'*A-b')+ max(0, c'-x'*A))'./A_norm; 
-                obj.resultInfo.obj_values(i+1) = f(x);
-                obj.resultInfo.norm2_violations(i+1) = (1/n_A)*norm(violation);
-                obj.resultInfo.max_violations(i+1) = norm(violation, 'inf');
-                obj.resultInfo.betas(i+1) = beta;
+                fprintf('%i \t %0.4f \t %0.6f \t %0.4f \t %0.4f \t %d \t %d \t %0.4f \t %0.4f \n', ...
+                0, ...
+                obj.allOptVars.obj_values(1), ...
+                obj.allOptVars.norm2_violations(1), ...
+                obj.allOptVars.max_violations(1), ...
+                obj.allOptVars.betas(1), ...
+                obj.allOptVars.fEvals(1),...
+                obj.allOptVars.numRedus(1), ...
+                obj.allOptVars.seekTime(1), ...
+                obj.allOptVars.supTime(1));
+            
+            obj.plotFunction();
+            
+            for i=1:obj.max_iter+1
                 
-                if mod(i ,10)==0
-                    fprintf('iter \t objective \t ||residual|| \t max(residual) \t beta\n');
-                end
-                
-                fprintf(sprintf('%i \t %0.4f \t %0.6f \t %0.4f \t %0.4f\n', ...
-                [i, obj.resultInfo.obj_values(i+1), ...
-                 obj.resultInfo.norm2_violations(i+1), ...
-                 obj.resultInfo.max_violations(i+1), ...
-                 obj.resultInfo.betas(i+1)]));
-
-                %Stopping rules
-                %if (i ~= 0 ... 
-                %&& (obj.resultInfo.norm2_violations(i+1) < obj.accepted_violation) ...
-                %&& (abs((obj.resultInfo.obj_values(i)-obj.resultInfo.obj_values(i+1))/max(1, obj.resultInfo.obj_values(i)))< obj.tol_obj))
-                 %   terminated = true;
-                 %   obj.resultInfo.stoppedby = "Acceptable_solution";
-                 %   fprintf('Acceptable solution found. Terminating now... \n')
-                %elseif (i ~= 0  ... 
-                %&& (abs((obj.resultInfo.norm2_violations(i)-obj.resultInfo.norm2_violations(i+1))/max(1, obj.resultInfo.norm2_violations(i))) < obj.tol_violation) ...
-                %&& (abs((obj.resultInfo.obj_values(i)-obj.resultInfo.obj_values(i+1))/max(1, obj.resultInfo.obj_values(i))< obj.tol_obj))
-                %    terminated = true;
-                %    obj.resultInfo.stoppedby = "No_change";
-                %    fprintf('No significant change in residual or objectiv function. Terminating now... \n')
-                if toc(startSuper) > obj.max_time
-                    terminated = true;
-                    obj.resultInfo.stoppedby = "Time_exceeded";
-                    fprintf('Time exceeded. Terminating now...\n')
-                elseif i == obj.max_iter
-                    terminated = true;
-                    obj.resultInfo.stoppedby = "Max_iter";
-                    fprintf('Max number of iterations exceeded. Terminating now...\n')
-                end
-               
-                % Stopping and returns
-                if terminated
-                    obj.resultInfo.obj_values =  obj.resultInfo.obj_values(1:i+1);
-                    obj.resultInfo.norm2_violations = obj.resultInfo.norm2_violations(1:i+1);
-                    obj.resultInfo.max_violations = obj.resultInfo.max_violations(1:i+1);
-                    obj.resultInfo.betas = obj.resultInfo.betas(1:i+1);
-                    obj.resultInfo.time = toc(startSuper);
-                    
-                    obj.wResult = x;
-                    
-                    % Deconstruct temp variables
-                    clear obj.M obj.A_norm obj.weights 
-                    return
-                end
-                
+                %Start Superiorization Step
                 n=0;
+                supStart = tic;
+                f_evals = 0;
                 while n<obj.num_reductions
                     
                     v=fGrad(x);
-                                        
+                    
                     loop = true;
                     while loop
                         l=l+1;
                         beta=(obj.alpha)^l;
                         z=x-beta*v;
-                        if f(z) <= obj.resultInfo.obj_values(i+1)
+                        
+                        if f(z) <= fVal
                             n=n+1;
                             x=z;
                             loop=false;
                         end
+                        f_evals = f_evals + 1;
                     end
                 end
+                
+                supStop = toc(supStart);
+                
+                
+                
+                seekStart = tic;
                 if obj.weighted
                     x = seeker(x, A, b, c, A_norm, weights);
                 else
                     x = seeker(x, A, b, c, A_norm);
                 end
+                seekStop = toc(seekStart);
+                
+                fVal = f(x);
+                f_evals = f_evals + 1;
+                
+                %Calculation of performance measures
+                violation = (max(0, x'*A-b')+ max(0, c'-x'*A))'./A_norm;
+                normViolation = (1/n_A)*norm(violation);
+                maxViolation = norm(violation,'inf');
+                
+                obj.allObjectiveFunctionValues(i+1) = fVal;
+                obj.allConstraintViolations(i+1) = maxViolation;
+                obj.timeIter(i+1) = toc(obj.timeStart);
+                
+                obj.allOptVars.obj_values(i+1) = fVal;
+                obj.allOptVars.norm2_violations(i+1) = normViolation;
+                obj.allOptVars.max_violations(i+1) = maxViolation;
+                obj.allOptVars.betas(i+1) = beta;
+                obj.allOptVars.numRedus(i+1) = n;
+                obj.allOptVars.fEvals(i+1) = f_evals;
+                obj.allOptVars.seekTime(i+1) = seekStop;
+                obj.allOptVars.supTime(i+1) = supStop;
+                obj.allOptVars.relObjChange(i+1) = (fVal - obj.allOptVars.obj_values(i))/obj.allOptVars.obj_values(i);
+                
+                
+                if mod(i ,10)==0
+                    fprintf('iter \t objective \t ||res|| \t max(res) \t beta \t #f_red \t #f_evals \t t_Seek \t t_Sup \n');
+                end
+                
+                fprintf('%i \t %0.4f \t %0.6f \t %0.4f \t %0.4f \t %d \t %d \t %0.4f \t %0.4f \n', ...
+                    i, ...
+                    obj.allOptVars.obj_values(i+1), ...
+                    obj.allOptVars.norm2_violations(i+1), ...
+                    obj.allOptVars.max_violations(i+1), ...
+                    obj.allOptVars.betas(i+1), ...
+                    obj.allOptVars.numRedus(i+1), ...
+                    obj.allOptVars.fEvals(i+1), ...
+                    obj.allOptVars.seekTime(i+1), ...
+                    obj.allOptVars.supTime(i+1));
+                
+                obj.plotFunction();
+                
+                %Stopping rules
+                if i >= 1 ...
+                    && obj.allConstraintViolations(end) < obj.tol_max_violation ...
+                    && obj.allOptVars.norm2_violations(end) < obj.tol_violation ...
+                    && obj.allObjectiveFunctionValues < obj.tol_obj
+                
+                  terminated = true;
+                  obj.resultInfo.stoppedby = "solution_found";
+                  fprintf('Solution found. Terminating now... \n')
+                  
+                elseif i >= obj.accepted_iter  ...
+                        &&  all(obj.allConstraintViolations(end-obj.accepted_iter:end) < obj.accepted_max_violation) ...
+                        &&  all(obj.allOptVars.norm2_violations(end-obj.accepted_iter:end) < obj.accepted_violation) ...
+                        &&  all(abs(obj.allOptVars.relObjChange(end-obj.accepted_iter:end)) < obj.accepted_tol_change)
+                    
+                   terminated = true;
+                   obj.resultInfo.stoppedby = "acceptable_solution_found";
+                   fprintf('Acceptable solution found. Terminating now... \n')
+                   
+                elseif toc(obj.timeStart) > obj.max_time
+                    terminated = true;
+                    obj.resultInfo.stoppedby = "time_exceeded";
+                    fprintf('Time exceeded. Terminating now...\n')
+                elseif i == obj.max_iter
+                    terminated = true;
+                    obj.resultInfo.stoppedby = "max_iter";
+                    fprintf('Max number of iterations exceeded. Terminating now...\n')
+                end
+                
+                % Stopping and returns
+                if terminated
+                    
+                    obj.resultInfo.obj_value =  obj.allOptVars.obj_values(end);
+                    obj.resultInfo.norm2_violations = obj.allOptVars.norm2_violations(end);
+                    obj.resultInfo.max_violations = obj.allOptVars.max_violations(end);
+                    obj.resultInfo.betas = obj.allOptVars.betas(end);
+                    obj.resultInfo.time = toc(obj.timeStart);
+                    
+                    obj.wResult = x;
+                    
+                    % Deconstruct temp variables
+                    clear obj.M obj.A_norm obj.weights
+                    return
+                end
             end
-
+            
         end
         
         function [A, b, c, A_norm, weights] = getvariables(obj, dij,cst)
-           
-            b=zeros(dij.ctGrid.numOfVoxels, 1); 
+            
+            b=zeros(dij.ctGrid.numOfVoxels, 1);
             c=zeros(dij.ctGrid.numOfVoxels, 1);
             weights = zeros(dij.ctGrid.numOfVoxels, 1);
             idxs=[];
             
             for i=1:size(cst, 1)
-               for j=1:numel(cst{i, 6})
-                   if strcmp(cst{i, 6}{j}.name, 'Min/Max dose constraint')
+                for j=1:numel(cst{i, 6})
+                    if strcmp(cst{i, 6}{j}.name, 'Min/Max dose constraint')
                         
                         cl=cst{i, 6}{j}.parameters{1, 1};
                         cu=cst{i, 6}{j}.parameters{1, 2};
                         if obj.weighted
                             if ( strcmp(cst{i, 6}{j}.name, 'Min/Max dose constraint') && ...
-                            numel(cst{i, 6}{j}.parameters) == 4 )
-                                weight = cst{i, 6}{j}.parameters{1, 4};  
+                                    numel(cst{i, 6}{j}.parameters) == 4 )
+                                weight = cst{i, 6}{j}.parameters{1, 4};
                             elseif ( strcmp(cst{i, 6}{j}.name, 'Min/Max dose constraint') && ...
-                            numel(cst{i, 6}{j}.parameters) ~= 4 )
+                                    numel(cst{i, 6}{j}.parameters) ~= 4 )
                                 error("Either you forgot to set weights or mixed weighted and unweighted constraints")
                             end
                             weight = weight ./ numel(cst{i,4}{1});
@@ -215,9 +305,9 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
                             if obj.weighted
                                 weights(idx) = weight;
                             end
-                       end
-                   end
-               end
+                        end
+                    end
+                end
             end
             A=dij.physicalDose{1,1}';
             
@@ -239,14 +329,14 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
             
         end
         
-  
+        
         
         
         function [x] = AMS_sim(obj, x, A, b, c, A_norm, weights)
             
             % Precalculat persistent variables
             if isempty(obj.M) && nargin == 6
-                obj.M = obj.lambda*A./A_norm'; 
+                obj.M = obj.lambda*A./A_norm';
             elseif isempty(obj.M) && nargin == 7
                 weights = obj.lambda*weights;
                 obj.M = A.*(weights./A_norm)';
@@ -256,7 +346,7 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
             res_b=b-A_x';
             res_c=A_x'-c;
             x=x+(1/max(1, sum(res_b<0)+sum(res_c<0)))*(obj.M(:, res_b<0)*res_b(res_b<0)-obj.M(:, res_c<0)*res_c(res_c<0));
-            x(x<0)=0;   
+            x(x<0)=0;
         end
         
         
@@ -264,32 +354,88 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
             
             % Precalculat persistent variables
             if isempty(obj.M) && nargin == 6
-                obj.M = obj.lambda*A./A_norm'; 
+                obj.M = obj.lambda*A./A_norm';
             elseif isempty(obj.M) && nargin == 7
                 weights = obj.lambda*weights;
                 obj.M = A.*(weights./A_norm)';
             end
-                               
+            
             for i=1:size(A, 2)
                 
                 A_x = x'*A(:, i);
                 res_b=b(i)-A_x;
                 res_c=A_x-c(i);
-               
+                
                 if res_b < 0
                     x=x+obj.M(:, i)*res_b;
                 elseif res_c <0
                     x=x-obj.M(:, i)*res_c;
                 end
-             end
+            end
             
             x(x<0) = 0;
         end
-    end
         
+        function plotFunction(obj)
+            % plot objective function output
+            y = obj.allObjectiveFunctionValues;
+            x = 1:numel(y);
+            
+            if isempty(obj.axesHandle) || ~isgraphics(obj.axesHandle,'axes')
+                %Create new Fiure and store axes handle
+                hFig = figure('Name','Progress of Superiorization','NumberTitle','off','Color',[.5 .5 .5]);
+                hAx = axes(hFig);
+                hold(hAx,'on');
+                grid(hAx,'on');
+                grid(hAx,'minor');
+                set(hAx,'YScale','log');
+                
+                %Add a Stop button with callback to change abort flag
+                c = uicontrol;
+                cPos = get(c,'Position');
+                cPos(1) = 5;
+                cPos(2) = 5;
+                set(c,  'String','Stop',...
+                    'Position',cPos,...
+                    'Callback',@(~,~) abortCallbackButton(obj));
+                
+                %Set up the axes scaling & labels
+                defaultFontSize = 14;
+                set(hAx,'YScale','log');
+                title(hAx,'Progress of Superiorization','LineWidth',defaultFontSize);
+                xlabel(hAx,'# iterations','Fontsize',defaultFontSize),ylabel(hAx,'objective function value','Fontsize',defaultFontSize);
+                
+                %Create plot handle and link to data for faster update
+                hPlot = plot(hAx,x,y,'xb','LineWidth',1.5,'XDataSource','x','YDataSource','y');
+                obj.plotHandle = hPlot;
+                obj.axesHandle = hAx;
+                
+            else %Figure already exists, retreive from axes handle
+                hFig = get(obj.axesHandle,'Parent');
+                hAx = obj.axesHandle;
+                hPlot = obj.plotHandle;
+            end
+            
+            % draw updated axes by refreshing data of the plot handle (which is linked to y and y)
+            % in the caller workspace. Octave needs and works on figure handles, which
+            % is substantially (factor 10) slower, thus we check explicitly
+            matRad_cfg = MatRad_Config.instance();
+            if matRad_cfg.isOctave
+                refreshdata(hFig,'caller');
+            else
+                refreshdata(hPlot,'caller');
+            end
+            drawnow;
+        end
+        
+        function abortCallbackButton(obj,~,~,~)
+            obj.abortRequested = true;
+        end
+    end
+    
     methods (Static)
         function available = IsAvailable()
-           available = true; % if you made it to here the function exists.
+            available = true; % if you made it to here the function exists.
         end
     end
 end
