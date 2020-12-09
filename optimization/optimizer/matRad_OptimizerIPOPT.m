@@ -339,11 +339,11 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             % draw updated axes by refreshing data of the plot handle (which is linked to y and y) 
             % in the caller workspace. Octave needs and works on figure handles, which
             % is substantially (factor 10) slower, thus we check explicitly
-            switch obj.env
-                case 'OCTAVE'
-                    refreshdata(hFig,'caller');
-                otherwise
-                    refreshdata(hPlot,'caller');
+            matRad_cfg = MatRad_Config.instance();
+            if matRad_cfg.isOctave
+                refreshdata(hFig,'caller');
+            else
+                refreshdata(hPlot,'caller');
             end
             drawnow;
         end
