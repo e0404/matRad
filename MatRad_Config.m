@@ -148,7 +148,7 @@ classdef MatRad_Config < handle
             %   properties
             %  input
             
-            obj.propStf.defaultLongitudinalSpotSpacing = 3;
+            obj.propStf.defaultLongitudinalSpotSpacing = 2;
             obj.propStf.defaultAddMargin = true; %expand target for beamlet finding
             
             obj.propDoseCalc.defaultResolution = struct('x',3,'y',3,'z',3); %[mm]

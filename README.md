@@ -6,6 +6,9 @@
 [![TravisCI Build Status](https://travis-ci.org/e0404/matRad.svg?branch=dev_varRBErobOpt)](https://travis-ci.org/e0404/matRad)
 [![Azure Pipelines Build Status](https://dev.azure.com/e0404/matRad/_apis/build/status/e0404.matRad?branchName=dev_varRBErobOpt)](https://dev.azure.com/e0404/matRad)
 
+DOIs:
+- General DOI: [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.3879615.svg)](https://doi.org/10.5281/zenodo.3879615)
+- Latest Release: [![DOI](https://zenodo.org/badge/29671667.svg)](https://zenodo.org/badge/latestdoi/29671667)
 
 # General information
 
@@ -68,9 +71,13 @@ Still having problems? Then create an issue, provide a **minimum example** of yo
 
 # Citing matRad
 
+### Scientific papers
+
 If you use matRad in a scientific publication, consider citing the following paper:
 
-Wieser, Hans-Peter, et al. "Development of the open-source dose calculation and optimization toolkit matRad." Medical Physics 44.6 (2017): 2556-2568.
+Wieser, Hans-Peter, et al. "Development of the open-source dose calculation and optimization toolkit matRad." Medical Physics 44.6 (2017): 2556-2568. 
+
+[![DOI](https://img.shields.io/badge/DOI-10.1002%2Fmp.12251-blue)](https://doi.org/10.1002/mp.12251) 
 
 BibTex entry:
 ```
@@ -82,9 +89,20 @@ BibTex entry:
   number={6},
   pages={2556--2568},
   year={2017},
-  publisher={Wiley Online Library}
+  publisher={Wiley Online Library},
+  doi={10.1002/mp.12251}
 }
 ```
+
+### Citing as Software
+
+matRad's code also has its own general DOI with Zenodo: 
+
+[![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.3879615.svg)](https://doi.org/10.5281/zenodo.3879615)
+
+You can cite specific versions of matRad in your work! For example, Here is the badge that lead's to the latest release of matRad:
+
+[![DOI](https://zenodo.org/badge/29671667.svg)](https://zenodo.org/badge/latestdoi/29671667)
 
 ---
 

@@ -2,8 +2,8 @@ function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol)
 % matRad indictor wrapper
 % 
 % call
-%   [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,param)
-%   [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)
+%   [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI)
+%   [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol)
 %
 % input
 %   cst:                  matRad cst struct
