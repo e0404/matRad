@@ -213,7 +213,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                         end
                     else
                         for d = 1:length(stf)
-                            dij.physicalDose{1}(:,d) = reshape(topasCubes.(['physicalDose_beam',num2str(d)]),[],1);
+                            dij.physicalDose{1}(:,d) = sum(w)*reshape(topasCubes.(['physicalDose_beam',num2str(d)]),[],1);
                             dij.alpha{1}(:,d) = reshape(topasCubes.(['alpha_beam',num2str(d)]),[],1);
                             dij.beta{1}(:,d) = reshape(topasCubes.(['beta_beam',num2str(d)]),[],1);
                             dij.RBE{1}(:,d) = reshape(topasCubes.(['RBE_beam',num2str(d)]),[],1);
