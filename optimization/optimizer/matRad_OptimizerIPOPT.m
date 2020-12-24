@@ -12,6 +12,9 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
 %
+% References
+%   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties
@@ -35,7 +38,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             %   Construct an instance of the IPOPT optimizer (mex
             %   interface)
             
-            global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+            matRad_cfg = MatRad_Config.instance();
             
             obj.wResult = [];
             obj.resultInfo = [];
@@ -107,7 +110,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         end
         
         function obj = optimize(obj,w0,optiProb,dij,cst)
-            global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+            matRad_cfg = MatRad_Config.instance();
             
             % set optimization options            
             
@@ -167,7 +170,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
                 [obj.wResult, obj.resultInfo] = ipopt(w0,funcs,ipoptStruct);
             catch ME
                 errorString = [ME.message '\nThis error was thrown by the MEX-interface of IPOPT.\nMex interfaces can raise compatability issues which may be resolved by compiling them by hand directly on your particular system.'];
-                matRad_cfg.dispError(ME.identifier,errorString);
+                matRad_cfg.dispError(errorString);
             end
             
             % unset Key Pressed Callback of Matlab command window
@@ -237,7 +240,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         end
         
         function flag = iterFunc(obj,iter,objective,~,~)
-            global matRad_cfg; 
+             
             obj.allObjectiveFunctionValues(iter + 1) = objective;
             %We don't want the optimization to crash because of drawing
             %errors

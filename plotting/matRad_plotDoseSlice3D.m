@@ -2,7 +2,14 @@ function [doseHandle,cMap,window] = matRad_plotDoseSlice3D(axesHandle,ct,doseCub
 % matRad function that generates a dose plot of a selected slice in 3D view
 %
 % call
-%   [doseHandle,cMap,window] = matRad_plotDoseSlice3D(axesHandle,ctCube,plane,slice,threshold,alpha,cMap,window)
+%   [doseHandle,cMap,window] = matRad_plotDose3DSlice(axesHandle, doseCube,plane,slice,threshold)
+%   [doseHandle,cMap,window] = matRad_plotDose3DSlice(axesHandle, doseCube,plane,slice,threshold,alpha)
+%   [doseHandle,cMap,window] = matRad_plotDose3DSlice(axesHandle, doseCube,plane,slice,threshold,cMap)
+%   [doseHandle,cMap,window] = matRad_plotDose3DSlice(axesHandle, doseCube,plane,slice,threshold,window)
+%   [doseHandle,cMap,window] = matRad_plotDose3DSlice(axesHandle, doseCube,plane,slice,threshold,alpha,cMap)
+%   [doseHandle,cMap,window] = matRad_plotDose3DSlice(axesHandle, doseCube,plane,slice,threshold,alpha,window)
+%   [doseHandle,cMap,window] = matRad_plotDose3DSlice(axesHandle, doseCube,plane,slice,threshold,cMap,window)
+%   [doseHandle,cMap,window] = matRad_plotDose3DSlice(axesHandle, doseCube,plane,slice,threshold,alpha,cMap,window)
 %
 % input
 %   axesHandle  handle to axes the slice should be displayed in
@@ -28,6 +35,9 @@ function [doseHandle,cMap,window] = matRad_plotDoseSlice3D(axesHandle,ct,doseCub
 %   cMap        used colormap (same as input if set)
 %   window      used window (same as input if set)
 %
+% References
+%   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 
@@ -40,6 +50,8 @@ function [doseHandle,cMap,window] = matRad_plotDoseSlice3D(axesHandle,ct,doseCub
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+matRad_cfg = MatRad_Config.instance();
 
 %Use default colormap?
 if nargin < 8 || isempty(cMap)
@@ -56,29 +68,41 @@ cMapScale = size(cMap,1) - 1;
 maxDose = max(doseCube(:));
 
 %Create the coordinates
-coords{1} = ct.resolution.x * (1:ct.cubeDim(1));
-coords{2} = ct.resolution.y * (1:ct.cubeDim(2));
+coords{1} = ct.resolution.x * (1:ct.cubeDim(2));
+coords{2} = ct.resolution.y * (1:ct.cubeDim(1));
 coords{3} = ct.resolution.z * (1:ct.cubeDim(3));
 
 if plane == 1  % Coronal plane
     [xMesh,zMesh] = meshgrid(coords{2},coords{3});
     yMesh = slice*ct.resolution.x*ones(size(xMesh));
-    dose_slice = squeeze(doseCube(slice,:,:));
-    dose_slice = permute(dose_slice,[2 1]);
+    %dose_slice = uint8(cMapScale*(squeeze(doseCube(slice,:,:)) - window(1))/(window(2)-window(1)));
+    doseSlice = permute(squeeze(doseCube(slice,:,:)),[2 1]);
 elseif plane == 2 % sagittal plane
     [yMesh,zMesh] = meshgrid(coords{1},coords{3});
     xMesh = slice*ct.resolution.y*ones(size(yMesh));
-    dose_slice = squeeze(doseCube(:,slice,:));
-    dose_slice = permute(dose_slice,[2 1]);
+    %dose_slice = uint8(cMapScale*(squeeze(doseCube(:,slice,:)) - window(1))/(window(2)-window(1)));
+    dose_slice = permute(squeeze(doseCube(:,slice,:)),[2 1]);
 elseif plane == 3 % Axial plane
     [xMesh,yMesh] = meshgrid(coords{2},coords{1});
     zMesh = slice*ct.resolution.z*ones(size(xMesh)); 
+    %dose_slice = uint8(cMapScale*(squeeze(doseCube(:,:,slice)) - window(1))/(window(2)-window(1)));
     dose_slice = squeeze(doseCube(:,:,slice));
 end
 
-dose_rgb = ind2rgb(uint8(cMapScale*(dose_slice - window(1))/(window(2)-window(1))),cMap);
-dose_mask = alpha * (dose_slice < window(2) & dose_slice > max([window(1) threshold*maxDose]));
+if ~isempty(threshold)
+    dose_mask = alpha * (dose_slice < window(2) & dose_slice > window(1) & dose_slice > threshold*maxDose);
+else
+    dose_mask = alpha * (dose_slice < window(2) & dose_slice > window(1));
+end
 
+dose_slice = uint8(cMapScale* (dose_slice - window(1))/(window(2)-window(1)));
+
+%This circumenvents a bug in Octave when the index in the image hase the maximum value of uint8
+if matRad_cfg.isOctave
+	dose_slice(dose_slice == 255) = 254;
+end
+
+dose_rgb = ind2rgb(dose_slice,cMap);
 % slice plot with surface(...), colormapping can be done by texture
 % mapping, this is why we use surface instead of slice
 doseHandle = surface('XData',xMesh, 'YData',yMesh, 'ZData',zMesh,'AlphaData',dose_mask, ...

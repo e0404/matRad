@@ -6,7 +6,7 @@ function pln = matRad_importDicomRTPlan(ct, rtPlanFiles, dicomMetaBool)
 %
 % input
 %   ct:             ct imported by the matRad_importDicomCt function
-%   rtDoseFiles:   	list of RTDOSE Dicom files
+%   rtPlanFiles:   	list of RTPlan Dicom files
 %   dicomMetaBool:  import whole dicom information
 %
 % output

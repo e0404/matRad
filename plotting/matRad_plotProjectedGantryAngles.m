@@ -1,6 +1,6 @@
 function matRad_plotProjectedGantryAngles(axesHandle,pln,ct,plane)
-% matRad function that plots all agntry angles projected to the coplanar
-% plane if current view is axial view
+% matRad function that plots all gantry angles 
+% projected to the coplanar plane if current view is axial view
 %
 % call
 %   matRad_plotProjectedGantryAngles(axesHandle,pln,ct,plane)
@@ -12,6 +12,9 @@ function matRad_plotProjectedGantryAngles(axesHandle,pln,ct,plane)
 %   plane:      current view plane
 %
 % output
+%   -
+%
+% References
 %   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -6,14 +6,14 @@ function [stf, pln] = matRad_importDicomSteeringParticles(ct, pln, rtPlanFile)
 %
 % input
 %   ct:             ct imported by the matRad_importDicomCt function
-%   cst:            cst created by the matRad_createCst function
+%   pln:            matRad pln struct with meta information
 %   rtPlanFile:   	name of RTPLAN DICOM file
 %
 % output
 %   stf             matRad stf struct
-%   pln:            matRad pln struct with meta information. Note that
-%                   we also have here the pln output because pln.bixelWidth
-%                   is determined here
+%   pln:            matRad pln struct. 
+%                   Note: pln is input and output since pln.bixelWidth is 
+%                   determined here.
 %
 % References
 %   -

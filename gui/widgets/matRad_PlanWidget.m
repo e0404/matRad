@@ -6,6 +6,10 @@ classdef matRad_PlanWidget < matRad_Widget
         Optimizations
     end
     
+    properties (Access = private)
+        hTissueWindow;
+    end
+    
     properties (Constant)
         Modalities = {'photons','protons','carbon'};
     end
@@ -30,11 +34,6 @@ classdef matRad_PlanWidget < matRad_Widget
             end
             this = this@matRad_Widget(handleParent);
             
-%             if evalin('base','exist(''pln'')')
-%               getPlnFromWorkspace(this);
-%             else
-%               setPlnDefaultValues(this);
-%             end
             update(this);
             
             handles=this.handles;
@@ -541,12 +540,14 @@ classdef matRad_PlanWidget < matRad_Widget
             pln = evalin('base', 'pln');
             handles = this.handles;
             
+            
             % sanity check of isoCenter
             if size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) == 1
                 pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * pln.propStf.isoCenter(1,:);
             elseif size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) ~= 1
                 error('Isocenter in plan file are incosistent.');
-            end
+            end           
+            
             
             set(handles.editBixelWidth,'String',num2str(pln.propStf.bixelWidth));
             set(handles.editGantryAngle,'String',num2str(pln.propStf.gantryAngles));
@@ -996,14 +997,6 @@ classdef matRad_PlanWidget < matRad_Widget
                     if ~isempty(Files)
                         MachineName = Files(j).name(numel(this.Modalities{1,i})+2:end-4);
                         this.Machines{i}{j} = MachineName;
-%                         if isfield(handles,'Machines')
-%                             if sum(strcmp(handles.Machines,MachineName)) == 0
-%                                 handles.Machines{size(handles.Machines,2)+1} = MachineName;
-%                             end
-%                         else
-%                             handles.Machines = cell(1);
-%                             handles.Machines{1} = MachineName;
-%                         end
                     end
                 end
             end
@@ -1050,11 +1043,6 @@ classdef matRad_PlanWidget < matRad_Widget
             end
             FoundFile = dir([baseroot filesep 'basedata' filesep  radMod '_' Machine '.mat']);
             
-%             if isdeployed
-%                 FoundFile = dir([ctfroot filesep 'matRad' filesep radMod '_' Machine '.mat']);
-%             else
-%                 FoundFile = dir([fileparts(mfilename('fullpath')) filesep  '..' filesep radMod '_' Machine '.mat']);
-%             end
             if isempty(FoundFile)
               %  this.showWarning(['No base data available for machine: ' Machine '. Selecting default machine.']);
                 flag = false;
@@ -1102,5 +1090,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 set(hObject,'Data',data);
             end
         end
+        
+            
     end
 end

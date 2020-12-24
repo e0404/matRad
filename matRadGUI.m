@@ -25,9 +25,6 @@ function hGUI = matRadGUI(varargin)
 
 persistent hMatRadGUI;
 
-matRad_rc(false);
-matRad_cfg = MatRad_Config.instance();
-
 p = inputParser;
 addParameter(p,'devMode',false,@(x) validateModeValue(x));
 addParameter(p,'eduMode',false,@(x) validateModeValue(x));
@@ -43,6 +40,8 @@ end
 if ischar(parsedInput.eduMode) || isstring(parsedInput.eduMode)
     parsedInput.eduMode = str2double(parsedInput.eduMode);
 end
+
+matRad_cfg = MatRad_Config.instance();
 
 %If devMode is true, error dialogs will include the full stack trace of the error
 %If false, only the basic error message is shown (works for errors that
@@ -75,6 +74,7 @@ end
 if handleValid
     figure(hMatRadGUI.guiHandle);
 else
+    matRad_rc(false);
     hMatRadGUI = matRad_MainGUI;
 end
 

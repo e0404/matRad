@@ -1,4 +1,4 @@
-function matRad_checkEnvDicomRequirements(env)
+function available = matRad_checkEnvDicomRequirements(env)
 % matRad function to check if requirements for dicom import / export are
 % given. Throws an error if requirements not met
 % 
@@ -24,17 +24,26 @@ function matRad_checkEnvDicomRequirements(env)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+available = true;
 
-if strcmp(env,'OCTAVE')
+matRad_cfg = MatRad_Config.instance();
+
+if nargin < 1
+    isOctave = matRad_cfg.isOctave;
+else
+    isOctave = strcmp(env,'OCTAVE');
+end
+
+if isOctave
     try
         pkg load dicom;
         pkg load image;
     catch
-        error('Octave needs dicom and image packages from Octave Forge for dicom import!');
+        available = false;
     end
 else
     if ~license('checkout','image_toolbox')
-        error('image processing toolbox and/or corresponding licence not available');
+        available = false;
     end      
 end
 

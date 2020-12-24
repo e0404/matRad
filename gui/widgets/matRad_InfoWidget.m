@@ -110,6 +110,8 @@ classdef matRad_InfoWidget < matRad_Widget
             msg{end+1} = 'Web: www.matrad.org';
             msg{end+1} = 'E-Mail: contact@matrad.org';
             
+            msg{end+1} = 'MATRAD IS NOT A MEDICAL PRODUCT AND THEREFORE NOT SUITABLE FOR CLINICAL USE!';
+            
             msgbox(msg,'About matRad');
             
             

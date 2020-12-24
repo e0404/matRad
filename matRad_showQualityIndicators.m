@@ -27,7 +27,7 @@ function matRad_showQualityIndicators(figHandle,qi)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+matRad_cfg = MatRad_Config.instance();
 
 [env, vStr] = matRad_getEnvironment();
     

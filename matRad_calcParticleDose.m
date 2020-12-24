@@ -2,7 +2,7 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 % matRad particle dose calculation wrapper
 % 
 % call
-%   dij = matRad_calcParticleDose(ct,stf,pln,cst)
+%   dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 %
 % input
 %   ct:             ct cube
@@ -32,7 +32,7 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg;
+
 matRad_cfg =  MatRad_Config.instance();
 
 % init dose calc
@@ -71,7 +71,7 @@ if isfield(pln,'propDoseCalc') && ...
         dij.mLETDose{i} = spalloc(dij.doseGrid.numOfVoxels,numOfColumnsDij,1);
     end
   else
-    warndlg('LET not available in the machine data. LET will not be calculated.');
+    matRad_cfg.dispWarning('LET not available in the machine data. LET will not be calculated.');
   end
 end
 
@@ -297,12 +297,9 @@ for i = 1:length(stf) % loop over all beams
     end
 end
 
-try
-  % wait 0.1s for closing all waitbars
-  allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar'); 
-  delete(allWaitBarFigures);
-  pause(0.1); 
-catch
+%Close Waitbar
+if ishandle(figureWait)
+    delete(figureWait);
 end
 
     

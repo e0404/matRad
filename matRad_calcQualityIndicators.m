@@ -2,7 +2,8 @@ function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol)
 % matRad QI calculation
 % 
 % call
-%   qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param)
+%   qi = matRad_calcQualityIndicators(cst,pln,doseCube)
+%   qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol)
 %
 % input
 %   cst:                matRad cst struct
@@ -35,7 +36,7 @@ function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg;
+
 matRad_cfg = MatRad_Config.instance();
 
 if ~exist('refVol', 'var') || isempty(refVol)

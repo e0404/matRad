@@ -1,6 +1,6 @@
 function apertureInfo = matRad_sequencing2ApertureInfo(Sequencing,stf)
-% matRad function to generate a shape info struct based on the result of
-% multileaf collimator sequencing
+% matRad function to generate a shape info struct 
+% based on the result of multileaf collimator sequencing
 %
 % call
 %   apertureInfo = matRad_sequencing2ApertureInfo(Sequencing,stf)

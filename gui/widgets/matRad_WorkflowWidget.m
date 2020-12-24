@@ -636,7 +636,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 end
                 
                 % recalculate cubes in resultGUI
-                resultGUIreCalc = matRad_calcCubes(resultGUI.w,dij,cst); %(['w' Suffix])
+                resultGUIreCalc = matRad_calcCubes(resultGUI.w,dij); %(['w' Suffix])
                 
                 % delete old variables to avoid confusion
                 if isfield(resultGUI,'effect')

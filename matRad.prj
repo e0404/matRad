@@ -39,8 +39,8 @@
       <param.web.mcr>true</param.web.mcr>
       <param.package.mcr>false</param.package.mcr>
       <param.no.mcr>false</param.no.mcr>
-      <param.web.mcr.name>matRad_installerWin64_v2.10.0_prepareBlaise-ef7488df</param.web.mcr.name>
-      <param.package.mcr.name>matRad_installerWin64_wRT_v2.10.0_prepareBlaise-ef7488df</param.package.mcr.name>
+      <param.web.mcr.name>matRad_installerWin64_v2.10.1</param.web.mcr.name>
+      <param.package.mcr.name>matRad_installerWin64_wRT_v2.10.1</param.package.mcr.name>
       <param.no.mcr.name>MyAppInstaller_app</param.no.mcr.name>
       <param.windows.command.prompt>true</param.windows.command.prompt>
       <param.create.log>true</param.create.log>
@@ -78,44 +78,10 @@
       </fileset.main>
       <fileset.resources>
          <file>${PROJECT_ROOT}\basedata\photons_Generic.mat</file>
-		       <file>${PROJECT_ROOT}\basedata\protons_Generic.mat</file>
-		       <file>${PROJECT_ROOT}\basedata\carbon_Generic.mat</file>
+		 <file>${PROJECT_ROOT}\basedata\protons_Generic.mat</file>
+		 <file>${PROJECT_ROOT}\basedata\carbon_Generic.mat</file>
          <file>${PROJECT_ROOT}\dicom</file>
-         <file>${PROJECT_ROOT}\dicom\DKFZ_Logo.png</file>
-         <file>${PROJECT_ROOT}\dicom\matRad_calcHU.m</file>
-         <file>${PROJECT_ROOT}\dicom\matRad_calcWaterEqD.m</file>
-         <file>${PROJECT_ROOT}\dicom\matRad_convRtssContours2Indices.m</file>
-         <file>${PROJECT_ROOT}\dicom\matRad_createCst.m</file>
-         <file>${PROJECT_ROOT}\dicom\matRad_dummyCst.m</file>
-         <file>${PROJECT_ROOT}\dicom\matRad_importDicom.m</file>
-         <file>${PROJECT_ROOT}\dicom\matRad_importDicomCt.m</file>
-         <file>${PROJECT_ROOT}\dicom\matRad_importDicomGUI.fig</file>
-         <file>${PROJECT_ROOT}\dicom\matRad_importDicomGUI.m</file>
-         <file>${PROJECT_ROOT}\dicom\matRad_importDicomRTDose.m</file>
-         <file>${PROJECT_ROOT}\dicom\matRad_importDicomRTPlan.m</file>
-         <file>${PROJECT_ROOT}\dicom\matRad_importDicomRtss.m</file>
-         <file>${PROJECT_ROOT}\dicom\matRad_importDicomSteeringParticles.m</file>
-         <file>${PROJECT_ROOT}\dicom\matRad_importDicomSteeringPhotons.m</file>
-         <file>${PROJECT_ROOT}\dicom\matRad_importFieldShapes.m</file>
-         <file>${PROJECT_ROOT}\dicom\matRad_interpDicomCtCube.m</file>
-         <file>${PROJECT_ROOT}\dicom\matRad_interpDicomDoseCube.m</file>
-         <file>${PROJECT_ROOT}\dicom\matRad_listAllFiles.m</file>
-         <file>${PROJECT_ROOT}\dicom\matRad_loadHLUT.m</file>
-         <file>${PROJECT_ROOT}\dicom\matrad_logo.png</file>
-         <file>${PROJECT_ROOT}\dicom\matRad_progress.m</file>
-         <file>${PROJECT_ROOT}\dicom\matRad_scanDicomImportFolder.m</file>
          <file>${PROJECT_ROOT}\IO</file>
-         <file>${PROJECT_ROOT}\IO\matRad_exportGUI.fig</file>
-         <file>${PROJECT_ROOT}\IO\matRad_exportGUI.m</file>
-         <file>${PROJECT_ROOT}\IO\matRad_importGUI.fig</file>
-         <file>${PROJECT_ROOT}\IO\matRad_importGUI.m</file>
-         <file>${PROJECT_ROOT}\IO\matRad_importPatient.m</file>
-         <file>${PROJECT_ROOT}\IO\matRad_readCube.m</file>
-         <file>${PROJECT_ROOT}\IO\matRad_readNRRD.m</file>
-         <file>${PROJECT_ROOT}\IO\matRad_writeCube.m</file>
-         <file>${PROJECT_ROOT}\IO\matRad_writeMHA.m</file>
-         <file>${PROJECT_ROOT}\IO\matRad_writeNRRD.m</file>
-         <file>${PROJECT_ROOT}\IO\matRad_writeVTK.m</file>
          <file>${PROJECT_ROOT}\matRad.m</file>
          <file>${PROJECT_ROOT}\matRad_addMargin.m</file>
          <file>${PROJECT_ROOT}\matRad_calcCubes.m</file>
@@ -168,30 +134,8 @@
          <file>${PROJECT_ROOT}\matRadGUI.fig</file>
          <file>${PROJECT_ROOT}\matRadGUI.m</file>
          <file>${PROJECT_ROOT}\optimization</file>
-         <file>${PROJECT_ROOT}\optimization\matRad_backProjection.m</file>
-         <file>${PROJECT_ROOT}\optimization\matRad_calcInversDVH.m</file>
-         <file>${PROJECT_ROOT}\optimization\matRad_collapseDij.m</file>
          <file>${PROJECT_ROOT}\plotting</file>
-         <file>${PROJECT_ROOT}\plotting\colormaps\colormapTemplate.txt</file>
-         <file>${PROJECT_ROOT}\plotting\matRad_computeAllVoiSurfaces.m</file>
-         <file>${PROJECT_ROOT}\plotting\matRad_computeIsoDoseContours.m</file>
-         <file>${PROJECT_ROOT}\plotting\matRad_computeVoiContours.m</file>
-         <file>${PROJECT_ROOT}\plotting\matRad_computeVoiContoursWrapper.m</file>
-         <file>${PROJECT_ROOT}\plotting\matRad_getColormap.m</file>
-         <file>${PROJECT_ROOT}\plotting\matRad_plotAxisLabels.m</file>
-         <file>${PROJECT_ROOT}\plotting\matRad_plotColorbar.m</file>
-         <file>${PROJECT_ROOT}\plotting\matRad_plotCtSlice.m</file>
-         <file>${PROJECT_ROOT}\plotting\matRad_plotCtSlice3D.m</file>
-         <file>${PROJECT_ROOT}\plotting\matRad_plotDoseSlice.m</file>
-         <file>${PROJECT_ROOT}\plotting\matRad_plotDoseSlice3D.m</file>
-         <file>${PROJECT_ROOT}\plotting\matRad_plotIsoCenterMarker.m</file>
-         <file>${PROJECT_ROOT}\plotting\matRad_plotIsoDoseLines.m</file>
-         <file>${PROJECT_ROOT}\plotting\matRad_plotIsoDoseLines3D.m</file>
-         <file>${PROJECT_ROOT}\plotting\matRad_plotPlan3D.m</file>
-         <file>${PROJECT_ROOT}\plotting\matRad_plotVoiContourSlice.m</file>
-         <file>${PROJECT_ROOT}\plotting\matRad_plotVois3D.m</file>
          <file>${PROJECT_ROOT}\tools</file>
-         <file>${PROJECT_ROOT}\tools\matRad_getEnvironment.m</file>
       </fileset.resources>
       <fileset.package>
          <file>${PROJECT_ROOT}\phantoms</file>
@@ -212,7 +156,7 @@
       </build-deliverables>
       <workflow/>
       <matlab>
-        <root>C:\Program Files\MATLAB\R2018b</root>
+        <root>C:\Program Files\MATLAB\R2019a</root>
       </matlab>
       <platform>
          <unix>false</unix>

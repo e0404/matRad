@@ -2,18 +2,17 @@ function intDose = matRad_calcIntEnergy(dose,ct,pln)
 % matRad function to compute the integral energy in MeV for a dose cube
 %
 % call
-%   intDose = matRad_calcIntEnergy(dose,ct)
+%   intDose = matRad_calcIntEnergy(dose,ct,pln)
 %
 % input
+%   dose:   3D matlab array with dose e.g. resultGUI.physicalDose
 %   ct:     matRad ct struct
 %   pln:    matRad pln struct
-%   dose:   3D matlab array with dose e.g. resultGUI.physicalDose
 %
 % output
 %   intDose: integral dose in MeV
 %
 % References
-%   
 %   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -29,7 +28,7 @@ function intDose = matRad_calcIntEnergy(dose,ct,pln)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global matRad_cfg; matRad_cfg = MatRad_Config.instance();
+matRad_cfg = MatRad_Config.instance();
 
 % make HU to RSP/electron density conversion if not available
 if ~isfield(ct,'cube')
