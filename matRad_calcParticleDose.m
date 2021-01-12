@@ -195,12 +195,14 @@ end
 if pln.bioParam.bioOpt
     
     vTissueIndex = zeros(size(VdoseGrid,1),1);
-    dij.ax       = zeros(dij.doseGrid.numOfVoxels,1);
-    dij.bx       = zeros(dij.doseGrid.numOfVoxels,1);
-    dij.abx      = zeros(dij.doseGrid.numOfVoxels,1);  % alpha beta ratio
+    dij.ax       = zeros(dij.doseGrid.numOfVoxels,ct.numOfCtScen);
+    dij.bx       = zeros(dij.doseGrid.numOfVoxels,ct.numOfCtScen);
+    dij.abx      = zeros(dij.doseGrid.numOfVoxels,ct.numOfCtScen);  % alpha beta ratio
     
     % retrieve photon LQM parameter for the current dose grid voxels
-    [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
+%     [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,ct.numOfCtScen,VdoseGrid);
+    [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,ct.numOfCtScen);
+
     
     dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
     
