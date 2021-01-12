@@ -53,7 +53,7 @@ end
 
 % copy bixel weight vector into stf struct
 if exist('w','var')
-    if sum([stf.totalNumOfBixels]) ~= numel(w)
+    if sum([stf.totalNumOfBixels]) ~= size(w,1)
         matRad_cfg.dispError('weighting does not match steering information');
     end
     counter = 0;
@@ -61,7 +61,7 @@ if exist('w','var')
         for j = 1:stf(i).numOfRays
             for k = 1:stf(i).numOfBixelsPerRay(j)
                 counter = counter + 1;
-                stf(i).ray(j).weight(k) = w(counter);
+                stf(i).ray(j).weight(k,:) = w(counter,:);
             end
         end
     end

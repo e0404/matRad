@@ -123,12 +123,12 @@ topasConfig.numHistories = nCasePerBixel;
 
 %Collect weights
 if calcDoseDirect
-    w = zeros(sum([stf(:).totalNumOfBixels]),1);
+    w = zeros(sum([stf(:).totalNumOfBixels]),ct.numOfCtScen);
     counter = 1;
     for i = 1:length(stf)
         for j = 1:stf(i).numOfRays
             rayBix = stf(i).numOfBixelsPerRay(j);
-            w(counter:counter+rayBix-1) = stf(i).ray(j).weight;
+            w(counter:counter+rayBix-1,:) = stf(i).ray(j).weight;
             counter = counter + rayBix;
         end
     end
@@ -156,7 +156,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 delete([topasConfig.workingDir,'matRad_plan*'])
 
                 if calcDoseDirect
-                    topasConfig.writeAllFiles(ctR,pln,stf,topasBaseData,w);
+                    topasConfig.writeAllFiles(ctR,pln,stf,topasBaseData,w(:,ctScen));
                 else
                     topasConfig.writeAllFiles(ctR,pln,stf,topasBaseData);
                 end
@@ -209,13 +209,13 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 if calcDoseDirect
                     if ~isfield(topasCubes,'RBE')
                         for f = 1:numel(fnames)
-                            dij.(fnames{f}){ctScen} = sum(w)*reshape(topasCubes.(fnames{f}),[],1);
+                            dij.(fnames{f}){ctScen,1} = sum(w(:,ctScen))*reshape(topasCubes.(fnames{f}),[],1);
                         end
                     else
                         for d = 1:length(stf)
-                            dij.physicalDose{1}(:,d)    = sum(w)*reshape(topasCubes.(['physicalDose_beam',num2str(d)]),[],1);
-                            dij.alpha{1}(:,d)           = reshape(topasCubes.(['alpha_beam',num2str(d)]),[],1);
-                            dij.beta{1}(:,d)            = reshape(topasCubes.(['beta_beam',num2str(d)]),[],1);
+                            dij.physicalDose{ctScen,1}(:,d)    = sum(w)*reshape(topasCubes.(['physicalDose_beam',num2str(d)]),[],1);
+                            dij.alpha{ctScen,1}(:,d)           = reshape(topasCubes.(['alpha_beam',num2str(d)]),[],1);
+                            dij.beta{ctScen,1}(:,d)            = reshape(topasCubes.(['beta_beam',num2str(d)]),[],1);
 %                             dij.RBE{1}(:,d)             = reshape(topasCubes.(['RBE_beam',num2str(d)]),[],1);
                             
                             [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,prod(ct.cubeDim),1);
@@ -223,8 +223,8 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
 %                             dij.bx = full(reshape(bx,ct.cubeDim));
                             dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
                             
-                            dij.mAlphaDose{1}(:,d)      = dij.physicalDose{1}(:,d) .* dij.alpha{1}(:,d);
-                            dij.mSqrtBetaDose{1}(:,d)   = sqrt(dij.physicalDose{1}(:,d)) .* dij.beta{1}(:,d);
+                            dij.mAlphaDose{ctScen,1}(:,d)      = dij.physicalDose{ctScen,1}(:,d) .* dij.alpha{ctScen,1}(:,d);
+                            dij.mSqrtBetaDose{ctScen,1}(:,d)   = sqrt(dij.physicalDose{ctScen,1}(:,d)) .* dij.beta{ctScen,1}(:,d);
                         end
                     end
                 else
