@@ -48,7 +48,7 @@ classdef MatRad_TopasConfig < handle
               
         useOrigBaseData = false; % base data of the original matRad plan will be used?
         beamProfile = 'biGaussian'; %'biGaussian' (emittance); 'simple'
-        useEnergySpectrum = true;
+        useEnergySpectrum = false;
         
         %Not yet implemented
         %beamletMode = false; %In beamlet mode simulation will be performed for a dose influence matrix (i.e., each beamlet simulates numHistories beamlets)
@@ -94,7 +94,7 @@ classdef MatRad_TopasConfig < handle
         infilenames = struct(   'geometry','TOPAS_matRad_geometry.txt.in',...                               
                                 'surfaceScorer','TOPAS_scorer_surfaceIC.txt.in',...
                                 'doseScorer','TOPAS_scorer_dose.txt.in',...
-                                'doseScorerRBE','TOPAS_scorer_doseRBE.txt.in',...
+                                'doseScorerRBE','TOPAS_scorer_doseRBE_LEM1.txt.in',...
                                 'doseScorerRBE_MCN','TOPAS_scorer_doseRBE_proton.txt.in');
         
            

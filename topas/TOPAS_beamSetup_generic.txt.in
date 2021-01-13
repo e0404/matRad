@@ -1,5 +1,4 @@
 s:So/PencilBeam/BeamParticle = Sim/ParticleName
-#i:So/PencilBeam/NumberOfHistoriesInRun = Tf/Beam/Current/Value MeV
 d:So/PencilBeam/BeamEnergy = Tf/Beam/Energy/Value MeV
 d:So/PencilBeam/BeamPositionSpreadX = Tf/Beam/FocusFWHM/Value mm * Sim/FWHM2SIGMA
 d:So/PencilBeam/BeamPositionSpreadY = Tf/Beam/FocusFWHM/Value mm * Sim/FWHM2SIGMA
