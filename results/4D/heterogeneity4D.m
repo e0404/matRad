@@ -22,7 +22,8 @@ clear
 matRad_rc
 
 %% Load data, add generic 4D information, and display 'moving' geometry
-load BOXPHANTOM_LUNG_LARGE_2e-1.mat
+% load BOXPHANTOM_LUNG_LARGE_2e-1.mat
+load BOXPHANTOM.mat
 
 %%
 
@@ -44,12 +45,15 @@ motionPeriod = 2.5; % [s]
 %%
 
 
-pln.numOfFractions  = 1;
-pln.radiationMode   = 'protons';           % either photons / protons / helium / carbon
-pln.machine         = 'generic_TOPAS_cropped_APM';
+pln.numOfFractions  = 15;
+pln.radiationMode   = 'carbon';           % either photons / protons / helium / carbon
+pln.machine = 'HITgenericRIFI3MMTOPAS_Water_forNiklas';
+% pln.radiationMode   = 'protons';  
+% pln.machine         = 'generic_TOPAS_cropped_APM';
+
 
 % beam geometry settings
-pln.propStf.bixelWidth      = 8; % [mm] / also corresponds to lateral spot spacing for particles
+pln.propStf.bixelWidth      = 7; % [mm] / also corresponds to lateral spot spacing for particles
 pln.propStf.longitudinalSpotSpacing = 10;      % only relevant for HIT machine, not generic
 pln.propStf.gantryAngles    = 90; 
 pln.propStf.couchAngles     = 0; 
@@ -60,11 +64,12 @@ pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCent
 pln.propOpt.runDAO          = false;      % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.propOpt.runSequencing   = false;      % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 
-quantityOpt  = 'physicalDose';     % options: physicalDose, effect, RBExD
-modelName    = 'none';             % none: for photons, protons, carbon            % constRBE: constant RBE 
+% quantityOpt  = 'RBExD';     % options: physicalDose, effect, RBExD
+% modelName    = 'MCN';             % none: for photons, protons, carbon            % constRBE: constant RBE 
                                    % MCN: McNamara-variable RBE model for protons  % WED: Wedenberg-variable RBE model for protons 
                                    % LEM: Local Effect Model for carbon ions
-
+quantityOpt  = 'RBExD';
+modelName    = 'LEM';
 scenGenType  = 'nomScen';          % scenario creation type 'nomScen'  'wcScen' 'impScen' 'rndScen' 
 
 % retrieve bio model parameters
@@ -76,6 +81,7 @@ pln.multScen = matRad_multScen(ct,scenGenType);
 %%
 % generate steering file
 stf = matRad_generateStf(ct,cst,pln);
+% stf = matRad_generateStfPencilBeam(pln,ct);
 
 %% 
 % dose calculation
@@ -116,10 +122,11 @@ resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf) ;
 %%
 % TOPAS calculation
 pln.propMC.proton_engine = 'TOPAS';
-resultGUI_topas = matRad_calcDoseDirectMC(ct,stf,pln,cst,resultGUI.optW,1e4);
+resultGUI_topas = matRad_calcDoseDirectMC(ct,stf,pln,cst,timeSequence.phaseMatrix,1e3);
  
-resultGUI_topas = matRad_postprocessing(resultGUI_topas, dij, pln, cst, stf) ; 
-[resultGUI_topas, timeSequence] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI_topas); 
+%%
+save 4DprotonTOPAScroppedRBE
+figure, plot(matRad_calcIDD(resultGUI.phaseDose{1})), hold on, plot(matRad_calcIDD(resultGUI_topas.phaseDose{1}))
 
 %%
 figure, hold on,
