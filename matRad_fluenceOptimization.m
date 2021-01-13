@@ -110,7 +110,7 @@ if  strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'protons')
 elseif pln.bioParam.bioOpt
     
     % retrieve photon LQM parameter
-    [ax,bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1);
+    [ax,bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,dij.numOfScenarios);
 
     if ~isequal(dij.ax(dij.ax~=0),ax(dij.ax~=0)) || ...
        ~isequal(dij.bx(dij.bx~=0),bx(dij.bx~=0))
@@ -140,7 +140,7 @@ elseif pln.bioParam.bioOpt
     elseif isequal(pln.bioParam.quantityOpt,'RBExD')
 
            %pre-calculations
-           dij.gamma             = zeros(dij.doseGrid.numOfVoxels,1);   
+           dij.gamma             = zeros(dij.doseGrid.numOfVoxels,dij.numOfCtScen);   
            dij.gamma(dij.ixDose) = dij.ax(dij.ixDose)./(2*dij.bx(dij.ixDose)); 
 
             

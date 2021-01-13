@@ -80,7 +80,7 @@ if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
    
        wBeam = (resultGUI.w .* beamInfo(i).logIx);
        
-       ix = dij.bx~=0 & resultGUI.(['physicalDose', beamInfo(i).suffix])(:) > 0;
+       ix = dij.bx(:,scenNum)~=0 & resultGUI.(['physicalDose', beamInfo(i).suffix])(:) > 0;
 
        resultGUI.(['effect', beamInfo(i).suffix])       = full(dij.mAlphaDose{scenNum} * wBeam + (dij.mSqrtBetaDose{scenNum} * wBeam).^2);
        resultGUI.(['effect', beamInfo(i).suffix])       = reshape(resultGUI.(['effect', beamInfo(i).suffix]),dij.doseGrid.dimensions);
