@@ -402,7 +402,7 @@ handles.initialGuiStart = true;
 
 p = inputParser;
 addParameter(p,'devMode',false,@validateModeValue);
-addParameter(p,'eduMode',false,@validateModeValue);
+addParameter(p,'eduMode',true,@validateModeValue);
 p.KeepUnmatched = true; %No error with incorrect parameters
 
 parse(p,varargin{:});
@@ -544,8 +544,13 @@ function btnLoadMat_Callback(hObject, ~, handles)
 % hObject    handle to btnLoadMat (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+matRad_cfg = MatRad_Config.instance();
+if ~isdeployed
+    [FileName, FilePath] = uigetfile([matRad_cfg.matRadRoot filesep 'phantoms' filesep '*.mat']);
+else
+    [FileName, FilePath] = uigetfile('*.mat');
+end
 
-[FileName, FilePath] = uigetfile([handles.matRadDir '*.mat']);
 if FileName == 0 % user pressed cancel --> do nothing.
     return;
 end
