@@ -26,7 +26,9 @@ function matRad_showQualityIndicators(qi)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-[env, ~] = matRad_getEnvironment();
+matRad_cfg = MatRad_Config.instance();
+
+[env, vStr] = matRad_getEnvironment();
     
 % Create the column and row names in cell arrays 
 rnames = {qi.name};
@@ -39,25 +41,29 @@ for i = 1:numel(cnames)
     end
 end
 
-qiTable = transpose(squeeze(struct2cell(qi)));
+qi = (squeeze(struct2cell(qi)))';
 
-% Selection of important QIs for students of the Masterclass
-ix = [3 4 1 2];
-qiTable = qiTable(:,ix);
-cnames = cnames(ix);
+if matRad_cfg.simpleDisplay
+    ix = [3 4 1 2]; % Selection of basic QIs 
+    qi = qi(:,ix);
+    cnames = cnames(ix);
+end
 
-switch env
-     case 'MATLAB'
-        % Create the uitable
-        table = uitable(gcf,'Data',qiTable,...
-                    'ColumnName',cnames,... 
-                    'RowName',rnames,'ColumnWidth',{70});
+%To avoid parse error in octave, replace empty qi values with '-'
+qiEmpty = cellfun(@isempty,qi);
+qi(qiEmpty) = {'-'};
 
-        % Layout
-        pos = get(gca,'position');
-        set(table,'units','normalized','position',pos)
-        axis off
-    case 'OCTAVE'
-        warning('the uitable function is not yet implemented in Octave')
-	end
+%since uitable is only available in newer octave versions, we try and catch
+try
+    % Create the uitable
+    table = uitable(gcf,'Data',qi,...
+        'ColumnName',cnames,...
+        'RowName',rnames,'ColumnWidth',{70});
+    
+    % Layout
+    pos = get(gca,'position');
+    set(table,'units','normalized','position',pos)
+    axis off
+catch ME
+    matRad_cfg.dispWarning('The uitable function is not implemented in %s v%s.',env,vStr);
 end

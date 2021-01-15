@@ -1,65 +1,102 @@
-language: cpp
-group: travis_latest
-  
-matrix:
+jobs:
   include:
     # works on Precise and Trusty
-    - os: linux
+    - name: "Ubuntu Octave"
+      os: linux
+      language: cpp
+      dist: focal # 20.04 -> Octave 5.2
+      services: 
+        - xvfb
       addons:
         apt:
-          sources:
-            - ubuntu-toolchain-r-test
+          update: true
           packages:
-            - g++-7
-      env:
-        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
-    - os: osx
-    - os: windows
+            - gdb
+            - gfortran
+            - fonts-freefont-otf
+            - gnuplot-x11
+            - libgdcm-dev
+            - octave
+            - liboctave-dev      
+    - name: "Ubuntu Matlab"
+      os: linux
+      language: matlab
+      dist: focal
+    - name: "OSX Octave"
+      os: osx
+      language: cpp
+      addons:
+        homebrew:
+          update: true
+          packages: 
+            - llvm
+            - libomp
+            - gdcm
+            - octave
+      cache:
+        directories:
+          - $HOME/Library/Caches/Homebrew
+    - name: "Windows Octave"
+      os: windows
+      language: cpp
+      cache:
+        directories:
+          - $HOME/AppData/Local/Temp/chocolatey
+          - /C/ProgramData/chocolatey/
   allow_failures:
     - os: windows
     - os: osx
       
 before_install:
   # Linux setup
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo "Testing matRad on linux..." ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then eval "${MATRIX_EVAL}" ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo chmod +x before_install_linux.sh ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo ./before_install_linux.sh; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "Ubuntu Octave" ]]; then echo "Testing matRad on linux with Octave..." ; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "Ubuntu Octave" ]]; then sudo chmod +x .travis/before_install_linux.sh ; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "Ubuntu Octave" ]]; then sudo .travis/before_install_linux.sh; fi
+  
+  # Linux Matlab Setup
+  - if [[ "$TRAVIS_JOB_NAME" == "Ubuntu Matlab" ]]; then echo "Testing matRad on linux with Matlab..." ; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "Ubuntu Matlab" ]]; then sudo chmod +x .travis/runtests.sh ; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "Ubuntu Matlab" ]]; then sudo chmod +x MCsquare/bin/MCsquare_linux ; fi
   
   # OSX setup
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then echo "Testing matRad on Mac OSX..." ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install octave  > /dev/null ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install llvm > /dev/null ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install libomp > /dev/null ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo chmod +x before_install_osx.sh ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo ./before_install_osx.sh; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "OSX Octave" ]]; then echo "Testing matRad on Mac OSX..." ; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "OSX Octave" ]]; then sudo chmod +x .travis/before_install_osx.sh ; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "OSX Octave" ]]; then sudo .travis/before_install_osx.sh; fi
   
   # Windows Setup
-  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then echo "Testing matRad on Windows..." ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then choco install octave.portable ; fi  
-  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then bash ./before_install_win_gitbash.sh ; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then echo "Testing matRad on Windows..." ; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then choco install octave.portable ; fi  
+  - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then bash .travis/before_install_win_gitbash.sh ; fi
   
 
 before_script:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ulimit -c unlimited -S ; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "Ubuntu Octave" ]]; then ulimit -c unlimited -S ; fi
   
   
 after_failure:
   ## Linux stack trace
   # find core file
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then COREFILE=$(find . -maxdepth 1 -name "core*" | head -n 1) ; fi 
+  - if [[ "$TRAVIS_JOB_NAME" == "Ubuntu Octave" ]]; then COREFILE=$(find . -maxdepth 1 -name "core*" | head -n 1) ; fi 
   # print stack trace
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then gdb -c "$COREFILE" -ex "thread apply all bt" -ex "set pagination 0" -batch /usr/bin/octave-cli ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then tail runtests.log ; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "Ubuntu Octave" ]]; then gdb -c "$COREFILE" -ex "thread apply all bt" -ex "set pagination 0" -batch /usr/bin/octave-cli ; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "Ubuntu Octave" ]]; then tail runtests.log ; fi
   
 script:
-  # Linux script
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then travis_wait 45 ./runtests.sh octave-cli ; fi
+  # Linux Octave script
+  - if [[ "$TRAVIS_JOB_NAME" == "Ubuntu Octave" ]]; then travis_wait 45 .travis/runtests.sh octave-cli ; fi
+  # Linux Matlab script
+  - if [[ "$TRAVIS_JOB_NAME" == "Ubuntu Matlab" ]]; then travis_wait 45 .travis/runtests.sh matlab; fi
   # OSX script
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then travis_wait 45 ./runtests.sh octave-cli ; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "OSX Octave" ]]; then travis_wait 45 .travis/runtests.sh octave-cli ; fi
   # Windows script
-  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then travis_wait 45 ./runtests.sh octave-cli ; fi
+  - if [[ "$TRAVIS_JOB_NAME" == "Windows Octave" ]]; then travis_wait 45 "cmd.exe //C RefreshEnv.cmd & .travis/runtests.sh octave-cli" ; fi
+
+before_cache:
+  - if [[ "$TRAVIS_JOB_NAME" == "OSX Octave" ]]; then brew cleanup; fi
 
 notifications:
-    slack: e0404:u5tBXbO6D1mEwzJuFZV0MmqJ
+  slack: 
+    if: repo = e0404/matRad 
+    rooms:
+      - e0404:u5tBXbO6D1mEwzJuFZV0MmqJ
+  

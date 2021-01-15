@@ -1,9 +1,9 @@
 function updatedInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVect)
-% matRad function to translate the vector representation of the aperture
-% shape and weight into an aperture info struct. At the same time, the
-% updated bixel weight vector w is computed and a vector listing the
-% correspondence between leaf tips and bixel indices for gradient
-% calculation
+% matRad function to translate vector representation into struct
+% The vector representation of the aperture shape and weight are translated 
+% into an aperture info struct. At the same time, the updated bixel weight
+% vector w is computed and a vector listing the correspondence between leaf 
+% tips and bixel indices for gradient calculation
 %
 % call
 %   updatedInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVect)

@@ -25,7 +25,9 @@
 %% Patient Data Import
 % Let's begin with a clear Matlab environment and import the prostate
 % patient into your workspace
-clc,clear,close all;
+
+matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
+
 load('PROSTATE.mat');
 
 %% Treatment Plan

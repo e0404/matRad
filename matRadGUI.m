@@ -35,6 +35,13 @@ function varargout = matRadGUI(varargin)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+
+if matRad_cfg.disableGUI
+    matRad_cfg.dispInfo('matRad GUI disabled in matRad_cfg!\n');
+    return;
+end
+
 if ~isdeployed
     matRadRootDir = fileparts(mfilename('fullpath'));
     addpath(genpath(matRadRootDir));
@@ -47,10 +54,10 @@ switch env
      case 'MATLAB'
          
      case 'OCTAVE'
-         fprintf(['matRad GUI not available for ' env ' ' versionString ' \n']);
+         matRad_cfg.dispInfo(['matRad GUI not available for ' env ' ' versionString ' \n']);
          return;
      otherwise
-         fprintf(['not yet tested']);
+         matRad_cfg.dispInfo('not yet tested');
  end
         
 % Begin initialization code - DO NOT EDIT
@@ -153,10 +160,12 @@ handles.Modalities = {'photons','protons','carbon'};
 for i = 1:length(handles.Modalities)
   pattern = [handles.Modalities{1,i} '_*'];
   if isdeployed
-      Files = dir([ctfroot filesep 'matRad' filesep pattern]);
+      baseroot = [ctfroot filesep 'matRad'];
   else
-      Files = dir([fileparts(mfilename('fullpath')) filesep pattern]);        
+      baseroot = fileparts(mfilename('fullpath'));
   end
+  Files = dir([baseroot filesep 'basedata' filesep pattern]);
+  
   for j = 1:length(Files)
       if ~isempty(Files)
           MachineName = Files(j).name(numel(handles.Modalities{1,i})+2:end-4);
@@ -235,6 +244,8 @@ if handles.State > 0
             if sum(currPln.propStf.isoCenter(:)) ~= 0
                 %currSlice = round((currPln.propStf.isoCenter(1,planePermIx)+ctRes(planePermix)/2)/ctRes(planePermIx))-1;
                 currSlice = round(currPln.propStf.isoCenter(1,planePermIx) / ctRes(planePermIx));
+            else
+                currSlice = 0;
             end
         end
     catch
@@ -259,7 +270,7 @@ end
 function handles = reloadGUI(hObject, handles, ct, cst)
 AllVarNames = handles.AllVarNames;
 
-if ismember('ct',AllVarNames)
+if nargin >=3 && ismember('ct',AllVarNames)
     % compute HU values
     if ~isfield(ct, 'cubeHU')
         ct = matRad_electronDensitiesToHU(ct);
@@ -273,8 +284,7 @@ if ismember('ct',AllVarNames)
 end
 
 %set plan if available - if not create one
-try 
-    
+try   
     if ismember('pln',AllVarNames) && handles.State > 0
         % check if you are working with a valid pln
         pln = evalin('base','pln');
@@ -386,41 +396,44 @@ function matRadGUI_OpeningFcn(hObject, ~, handles, varargin)
 % variable to check whether GUI is opened or just refreshed / new data
 % loaded, since resetGUI needs to distinguish at one point
 
+matRad_cfg = MatRad_Config.instance();
+
 handles.initialGuiStart = true;
 
 p = inputParser;
-addParameter(p,'devMode',false,@(x) validateattributes(x,{'logical','numeric'},{'scalar'}));
-addParameter(p,'eduMode',true,@(x) validateattributes(x,{'logical','numeric'},{'scalar'}));
+addParameter(p,'devMode',false,@validateModeValue);
+addParameter(p,'eduMode',false,@validateModeValue);
 p.KeepUnmatched = true; %No error with incorrect parameters
 
 parse(p,varargin{:});
 parsedInput = p.Results;
+
+if ischar(parsedInput.devMode) || isstring(parsedInput.devMode)
+    parsedInput.devMode = str2double(parsedInput.devMode);
+end
+
+if ischar(parsedInput.eduMode) || isstring(parsedInput.eduMode)
+    parsedInput.eduMode = str2double(parsedInput.eduMode);
+end
 
 %If devMode is true, error dialogs will include the full stack trace of the error
 %If false, only the basic error message is shown (works for errors that
 %handle the MException object)
 handles.devMode = logical(parsedInput.devMode);
 if handles.devMode
-    disp('matRadGUI starting in developer mode!');
+    matRad_cfg.dispInfo('matRadGUI starting in developer mode!');
+    matRad_cfg.logLevel = 5;
 end
 
 %Enables simple educational mode which removes certain functionality from 
 %the GUI
 handles.eduMode = logical(parsedInput.eduMode);
 if handles.eduMode
-    disp('matRadGUI starting in educational mode!');
-end
-
-%Get some values for reuse
-if isdeployed
-    handles.matRadDir = '';
-else
-    handles.matRadDir = [fileparts(mfilename('fullpath')) filesep];
+    matRad_cfg.dispInfo('matRadGUI starting in educational mode!');
+    matRad_cfg.setDefaultPropertiesForEduMode();
 end
 
 set(handles.radiobtnPlan,'value',0);
-
-
 
 if handles.eduMode
     %Visisbility in Educational Mode
@@ -432,11 +445,27 @@ if handles.eduMode
         handles.importDoseButton};
     eduDisableHandles = {handles.editCouchAngle,handles.popUpMachine};
     cellfun(@(h) set(h,'Visible','Off'),eduHideHandles);
-    cellfun(@(h) set(h,'Enable','Off'),eduDisableHandles);
-    
-    v = get(handles.text15,'String');
-    set(handles.text15,'String',[v ' - edu']);
+    cellfun(@(h) set(h,'Enable','Off'), eduDisableHandles);   
 end
+
+
+%Alter matRad Version string positioning
+vString = matRad_version();
+vPos = get(handles.text15,'Position');
+urlPos = get(handles.text31,'Position');
+btnPos = get(handles.btnAbout,'Position');
+
+%vPos([1 3]) = urlPos([1 3]);
+vPos([1 3]) = [0 1];
+vPos(4) = vPos(4)*1.25;
+btnPos(2) = 0.05;
+urlPos(2) = btnPos(2)+btnPos(4)+0.05;
+vPos(2) = urlPos(2) + urlPos(4) + 0.05;
+vPos(4) = 0.98 - vPos(2);
+
+set(handles.btnAbout,'Position',btnPos);
+set(handles.text31,'String','www.matRad.org','Position',urlPos,'Enable','inactive','ButtonDownFcn', @(~,~) web('www.matrad.org','-browser'));
+set(handles.text15,'String',vString,'Position',vPos);
 
 handles = resetGUI(hObject, handles);
 
@@ -470,6 +499,15 @@ end
 
 guidata(hObject, handles);
 
+%Validates the attributes for the command line Modes
+function validateModeValue(x)
+%When passed from OS terminal (or inline in Command Window) everything is a string 
+if isdeployed || ischar(x) || isstring(x)
+    x=str2double(x);
+end
+validateattributes(x,{'logical','numeric'},{'scalar','binary'});
+
+
 
 function Callback_StructVisibilty(source,~)
 
@@ -486,7 +524,6 @@ end
 %guidata(findobj('Name','matRadGUI'), handles);
 UpdatePlot(handles);
 
-Update
 % --- Outputs from this function are returned to the command line.
 function varargout = matRadGUI_OutputFcn(~, ~, handles) 
 % varargout  cell array for returning output args (see VARARGOUT);
@@ -786,15 +823,7 @@ try
     % disable all active objects
     InterfaceObj = findobj(Figures,'Enable','on');
     set(InterfaceObj,'Enable','off');
-    
-    %pause(0.1);
-    %uiTable_CellEditCallback(hObject,[],handles);
-    %pause(0.3);
 
-    %% get cst from table
-    %if ~getCstTable(handles)
-    %    return
-    %end
     % read plan from gui and save it to workspace
     % gets also IsoCenter from GUI if checkbox is not checked
     getPlnFromGUI(handles);
@@ -807,7 +836,7 @@ try
         handles = showWarning(handles,'number of gantryAngles != number of couchAngles'); 
     end
     %%
-    if ~checkRadiationComposition(handles);
+    if ~checkRadiationComposition(handles)
         fileName = [pln.radiationMode '_' pln.machine];
         handles = showError(handles,errordlg(['Could not find the following machine file: ' fileName ]));
         guidata(hObject,handles);
@@ -1128,7 +1157,7 @@ if get(handles.popupTypeOfPlot,'Value') == 2 && exist('Result','var')
     % set SAD
     fileName = [pln.radiationMode '_' pln.machine];
     try
-        load(fileName);
+        load(['basedata' filesep fileName]);
         SAD = machine.meta.SAD;
     catch
         error(['Could not find the following machine file: ' fileName ]); 
@@ -1292,7 +1321,7 @@ zoom(handles.figure1,'reset');
 axis(handles.axesFig,'tight');
 
 
-if handles.rememberCurrAxes
+if isfield(handles,'rememberCurrAxes') && handles.rememberCurrAxes
     axis(currAxes);
 end
 
@@ -1327,15 +1356,33 @@ elseif handles.State > 0
         Result = evalin('base','resultGUI');
     end
     
+    ct  = evalin('base','ct');
+    cst = evalin('base','cst');
+    pln = evalin('base','pln');
+    
     if  ismember('stf',AllVarNames)
         stf = evalin('base','stf');
+        
+        %validate stf with current pln settings
+        validStf = true;
+        gantryAngles = [stf.gantryAngle];
+        validStf = isequal(gantryAngles,pln.propStf.gantryAngles) & validStf;
+        couchAngles = [stf.couchAngle];
+        validStf = isequal(couchAngles,pln.propStf.couchAngles) & validStf;
+        isoCenter = vertcat(stf.isoCenter);
+        validStf = isequal(isoCenter,pln.propStf.isoCenter) & validStf;
+        
+        if ~validStf
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispWarning('stf and pln are not consistent, using pln for geometry display!');
+            stf = [];
+        end
+        
     else
         stf = [];
     end
 
-    ct  = evalin('base','ct');
-    cst = evalin('base','cst');
-    pln = evalin('base','pln');
+    
 end
 
 oldView = get(axesFig3D,'View');
@@ -1816,415 +1863,6 @@ if strcmp(get(hObject,'Enable') ,'on')
  
 end
 
-function Flag = getCstTable (handles)
-
-data = get(handles.uiTable,'Data');
-OldCst = evalin('base','cst');
-NewCst=[];
-Cnt=1;
-FlagValidParameters = true;
-
-%% generate new cst from GUI
-for i = 1:size(OldCst,1)
-    CntObjF = 1;
-    FlagFound = false;
-    for j = 1:size(data,1)
-        
-        if strcmp(OldCst{i,2},data{j,1})
-            FlagFound = true;
-            
-            if CntObjF == 1
-                %VOI
-                if isempty(data{j,1}) || ~isempty(strfind(data{j,1}, 'Select'))
-                    FlagValidParameters=false;
-                else
-                    NewCst{Cnt,1}=data{j,1}; 
-                end
-                %VOI Type
-                if isempty(data{j,2})|| ~isempty(strfind(data{j,2}, 'Select'))
-                    FlagValidParameters=false;
-                else
-                    NewCst{Cnt,2}=data{j,2};
-                end
-                %Priority
-                if isempty(data{j,3})
-                    FlagValidParameters=false;
-                else
-                    NewCst{Cnt,3}=data{j,3};
-                end
-            end
-            
-            % Obj Func / constraint
-            if isempty(data{j,4}) ||~isempty(strfind(data{j,4}, 'Select'))
-               FlagValidParameters=false;
-            else
-                 NewCst{Cnt,4}(CntObjF,1).type = data{j,4};
-            end
-         
-            % get further parameter
-            if FlagValidParameters
-                
-              NewCst{Cnt,4}(CntObjF,1).dose       = data{j,6};
-              NewCst{Cnt,4}(CntObjF,1).penalty    = data{j,5};
-              NewCst{Cnt,4}(CntObjF,1).EUD        = data{j,7};
-              NewCst{Cnt,4}(CntObjF,1).volume     = data{j,8};
-              NewCst{Cnt,4}(CntObjF,1).robustness = data{j,9};
-             
-            end
-            
-            CntObjF = CntObjF+1; 
-            
-        end
-
-    end
-    
-    if FlagFound == true
-       Cnt = Cnt +1;
-    end
-            
-end
-
-if FlagValidParameters
-    
-       for m=1:size(OldCst,1)
-           VOIexist   = OldCst(m,2);
-           boolChanged = false;
-
-           for n = 1:size(NewCst,1)
-
-               VOIGUI = NewCst(n,1);
-
-               if strcmp(VOIexist,VOIGUI)
-                  % overite existing objectives
-                   boolChanged = true;
-                   OldCst(m,6) = NewCst(n,4);
-                   OldCst(m,3) = NewCst(n,2);
-                   OldCst{m,5}.Priority = NewCst{n,3};
-                   break;
-               end 
-           end
-
-           if ~boolChanged
-               OldCst{m,6}=[];
-           end
-
-       end
-       assignin('base','cst',OldCst);
-       Flag = true;
-       
-else       
-  warndlg('not all values are set - cannot start dose calculation'); 
-  Flag = false;
-end
-
-
-% --- Executes on button press in btnuiTableAdd.
-function btnuiTableAdd_Callback(hObject, ~, handles)
-% hObject    handle to btnuiTableAdd (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-data = get(handles.uiTable, 'data');
-sEnd = size(data,1);
-data{sEnd+1,1} = 'Select VOI';
-data{sEnd+1,2} = 'Select VOI Type';
-data{sEnd+1,4} = 'Select obj func/constraint';
-data{sEnd+1,9} = 'none';
-
-set(handles.uiTable,'data',data);
-
-%handles.State=1;
-guidata(hObject,handles);
-UpdateState(handles);
-
-
-% --- Executes on button press in btnuiTableDel.
-function btnuiTableDel_Callback(hObject, eventdata, handles)
-% hObject    handle to btnuiTableDel (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-data = get(handles.uiTable, 'data');
-Index = get(handles.uiTable,'UserData');
-mask = (1:size(data,1))';
-mask(Index(:,1))=[];
-cst = evalin('base','cst');
-% if all rows have been deleted or a target voi was removed
-if size(data,1)==1 || strcmp(data(Index(1),2),'TARGET')
-    handles.State=1;
-end
-
-try
-    Idx = find(strcmp(cst(:,2),data(Index(1),1)));
-    % if OAR was removed then show a warning 
-    if strcmp(data(Index(1),2),'OAR') && length(cst{Idx,6})<=1
-      handles.DijCalcWarning =true;
-    end
-catch 
-end
-data=data(mask,:);
-set(handles.uiTable,'data',data);
-guidata(hObject,handles);
-UpdateState(handles);
-btnTableSave_Callback(hObject, eventdata, handles);
-
-% --- Executes when selected cell(s) is changed in uiTable.
-function uiTable_CellSelectionCallback(hObject, eventdata, ~)
-% hObject    handle to uiTable (see GCBO)
-% eventdata  structure with the following fields (see MATLAB.UI.CONTROL.TABLE)
-%	Indices: row and column indices of the cell(s) currently selecteds
-% handles    structure with handles and user data (see GUIDATA)
-index = eventdata.Indices;
-    if any(index)             %loop necessary to surpress unimportant errors.
-        set(hObject,'UserData',index);      
-    end
-    
-
-% --- Executes when entered data in editable cell(s) in uiTable.
-function uiTable_CellEditCallback(hObject, eventdata, handles)
-% hObject    handle to uiTable (see GCBO)
-% eventdata  structure with the following fields (see MATLAB.UI.CONTROL.TABLE)
-%	Indices: row and column indices of the cell(s) edited
-%	PreviousData: previous data for the cell(s) edited
-%	EditData: string(s) entered by the user
-%	NewData: EditData or its converted form set on the Data property. Empty if Data was not changed
-%	Error: error string when failed to convert EditData to appropriate value for Data
-% handles    structure with handles and user data (see GUIDATA)
-
-Placeholder = NaN;
-PlaceholderRob  = 'none';
-
-% get table data and current index of cell
-if isempty(eventdata)
-    data = get(handles.uiTable,'Data');
-    Index = get(handles.uiTable,'UserData');
-
-    if ~isempty(Index) && size(Index,1)==1
-        % if this callback was invoked by calculate dij button, eventdata is empty
-        % and needs to be set manually
-        try 
-            % if row gots deleted then index is pointing to non existing
-            % data
-            if size(data,1)<Index(1,1)
-                Index(1,1)=1;
-                Index(1,2)=1;
-            end
-            eventdata.Indices(1) = Index(:,1);
-            eventdata.Indices(2) = Index(:,2);
-            eventdata.PreviousData = 1;
-            eventdata.NewData = data{Index(1),Index(2)};
-        catch
-        end
-    else
-        return
-    end
-else
-    data = get(hObject,'Data'); 
-end
-
-
-%% if VOI, VOI Type or Overlap was changed
-if ~strcmp(eventdata.NewData,eventdata.PreviousData)
-    if eventdata.Indices(2) == 1 || eventdata.Indices(2) == 2 ...
-            || eventdata.Indices(2) == 3
-        
-        handles.TableChanged = true;
-          %% if a new target is defined set state to one
-         if eventdata.Indices(2) == 2 && strcmp('TARGET',eventdata.NewData)
-              handles.State=1;
-         end
-        
-        %% if overlap priority of target changed
-         if eventdata.Indices(2) == 3 && strcmp('TARGET',data(eventdata.Indices(1),2))
-              handles.State=1;
-         end
-         
-        %% if overlap priority of OAR changed
-         if eventdata.Indices(2) == 3 && strcmp('OAR',data(eventdata.Indices(1),2))
-              handles.DijCalcWarning = true;
-         end
-         
-         %% check if new OAR was added
-         cst = evalin('base','cst');
-         Idx = ~cellfun('isempty',cst(:,6));
-         
-         if sum(strcmp(cst(Idx,2),eventdata.NewData))==0 
-             handles.DijCalcWarning = true;
-         end
-    else
-        % if table changed after a optimization was performed
-        if handles.State ==3 && handles.TableChanged == false
-            handles.State=2;
-        end
-    end
-end
-%% if VOI Type was changed -> check if objective function still makes sense
-if eventdata.Indices(2) == 2
-   
-    if strcmp(eventdata.NewData,'OAR')
-        
-        if sum(strcmp({'square deviation','square underdosing'},data{eventdata.Indices(1),4}))>0
-            data{eventdata.Indices(1),4} = 'square overdosing';
-        end
-        
-    else
-        
-        if sum(strcmp({'EUD','mean'},data{eventdata.Indices(1),4}))>0
-            data{eventdata.Indices(1),4} = 'square deviation';
-        end
-        
-    end
-end
-%% if objective function was changed -> check if VOI Type still makes sense
-if eventdata.Indices(2) == 4
-    ObjFunction = eventdata.NewData;
-else
-    ObjFunction = data{eventdata.Indices(1),4};
-end
-
-
-if eventdata.Indices(2) == 4
-    if  sum(strcmp(eventdata.NewData,{'square deviation','square underdosing','min dose constraint',...
-                                      'min mean dose constraint','min DVH constraint','min DVH objective'})) > 0 
-    
-        if strcmp('OAR',data{eventdata.Indices(1),2})
-            data{eventdata.Indices(1),4} = 'square overdosing';
-            ObjFunction                  = 'square overdosing';
-            if isnan(data{eventdata.Indices(1),5})
-                data{eventdata.Indices(1),5} = 1;
-            end
-        end
-        
-        tmpDose = parseStringAsNum(data{eventdata.Indices(1),6},true);
-        if numel(tmpDose) == 2
-            data{eventdata.Indices(1),6} = num2str(tmpDose(1));
-        end
-    
-    elseif strcmp(eventdata.NewData,'mean')
-        
-        if strcmp('TARGET',data{eventdata.Indices(1),2})
-            data{eventdata.Indices(1),4} = 'square deviation';
-        end
-        
-    end
-end
-
-%% set fields to NaN according to objective function
-
-if sum(strcmp(ObjFunction, {'square underdosing','square overdosing','square deviation'})) > 0
-    
-    for k = [5 6]
-        if isnan(data{eventdata.Indices(1),k})
-             data{eventdata.Indices(1),k} = 1;
-        end
-    end 
-    data{eventdata.Indices(1),7} = Placeholder;
-    data{eventdata.Indices(1),8} = Placeholder;
-    data{eventdata.Indices(1),9} = PlaceholderRob;
-   
-elseif strcmp(ObjFunction,'mean')
-    
-        if isnan(data{eventdata.Indices(1),5})
-                 data{eventdata.Indices(1),5} = 1;
-        end
-        data{eventdata.Indices(1),6} = Placeholder;    
-        data{eventdata.Indices(1),7} = Placeholder;   
-        data{eventdata.Indices(1),8} = Placeholder;
-        data{eventdata.Indices(1),9} = PlaceholderRob;
-
-elseif strcmp(ObjFunction,'EUD')
-    
-        for k = [5 7]
-            if isnan(data{eventdata.Indices(1),k})
-                 data{eventdata.Indices(1),k} = 1;
-            end
-        end 
-       data{eventdata.Indices(1),6} = Placeholder; 
-       data{eventdata.Indices(1),8} = Placeholder;
-       data{eventdata.Indices(1),9} = PlaceholderRob;
-       
-elseif sum(strcmp(ObjFunction,{'min dose constraint','max dose constraint'...
-                               'min mean dose constraint','max mean dose constraint'}))> 0
-         
-         if isnan(data{eventdata.Indices(1),6})
-                 data{eventdata.Indices(1),6} = 1;
-         end
-         data{eventdata.Indices(1),5} = Placeholder;
-         data{eventdata.Indices(1),7} = Placeholder;
-         data{eventdata.Indices(1),8} = Placeholder;
-         data{eventdata.Indices(1),9} = PlaceholderRob;
-         
-elseif sum(strcmp(ObjFunction,{'min EUD constraint','max EUD constraint'}) ) > 0
-        
-        if isnan(data{eventdata.Indices(1),7})
-             data{eventdata.Indices(1),7} = 1;
-        end
-        data{eventdata.Indices(1),5} = Placeholder;
-        data{eventdata.Indices(1),6} = Placeholder;
-        data{eventdata.Indices(1),8} = Placeholder;
-        data{eventdata.Indices(1),9} = PlaceholderRob;
-        
-elseif sum(strcmp(ObjFunction,{'min DVH constraint','max DVH constraint'}) ) > 0
-        
-        for k = [6 8]
-            if isnan(data{eventdata.Indices(1),k})
-                 data{eventdata.Indices(1),k} = 1;
-            end
-        end    
-        data{eventdata.Indices(1),5} = Placeholder;
-        data{eventdata.Indices(1),7} = Placeholder;
-        data{eventdata.Indices(1),9} = PlaceholderRob;
-
-elseif sum(strcmp(ObjFunction,{'min DVH objective','max DVH objective'}) ) > 0
-        
-    for k = [5 6 8]
-        if isnan(data{eventdata.Indices(1),k})
-             data{eventdata.Indices(1),k} = 1;
-        end
-    end
-    data{eventdata.Indices(1),7} = Placeholder;
-    data{eventdata.Indices(1),9} = PlaceholderRob;
-    
-end
-    
-%% check if input is a valid
-%check if overlap, penalty and and parameters are numbers
-if (eventdata.Indices(2) == 3  || eventdata.Indices(2) == 5 || eventdata.Indices(2) == 6 || eventdata.Indices(2) == 7 || eventdata.Indices(2) == 8) ...
-        && ~isempty(eventdata.NewData)
-    if CheckValidity(eventdata.NewData) == false
-            data{eventdata.Indices(1),eventdata.Indices(2)} = eventdata.PreviousData;
-    end
-end
-
-
-%% if VOI was changed then change VOI type and overlap according to new VOI
-if eventdata.Indices(2) == 1 && eventdata.Indices(1) == size(data,1)
-    for i = 1:size(data,1)
-        if strcmp(eventdata.NewData,data{i,1})
-           data{eventdata.Indices(1),2}=data{i,2};
-           data{eventdata.Indices(1),3}=data{i,3};
-        end
-    end
-    
-end
-
-%% set VOI type and priority according to existing definitions
-for i=1:size(data,1)
-    if i~=eventdata.Indices(1) && strcmp(data(i,1),data(eventdata.Indices(1)))
-        data{i,2} = data{eventdata.Indices(1),2};
-        data{i,3} = data{eventdata.Indices(1),3};
-    end
-end
-
-
-if isnan(eventdata.NewData)
-    data{eventdata.Indices(1),eventdata.Indices(2)} = eventdata.PreviousData;
-end
-
-
-set(handles.txtInfo,'String','plan changed');
-set(handles.uiTable,'data',data);
-guidata(hObject, handles);
-UpdateState(handles);
-
 % enables/ disables buttons according to the current state      
 function UpdateState(handles)
 
@@ -2351,14 +1989,27 @@ guidata(handles.figure1,handles);
  
 % fill GUI elements with plan information
 function setPln(handles)
+
+matRad_cfg = MatRad_Config.instance();
+
 pln = evalin('base','pln');
 % sanity check of isoCenter
 if size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) == 1
   pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * pln.propStf.isoCenter(1,:);
 elseif size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) ~= 1
-  error('Isocenter in plan file are incosistent.');
+  matRad_cfg.dispError('Isocenter in plan file are incosistent.');
 end
-set(handles.editBixelWidth,'String',num2str(pln.propStf.bixelWidth));
+
+%Sanity check for the bixelWidth field
+bixelWidth = pln.propStf.bixelWidth;
+
+if isnumeric(bixelWidth) && isscalar(bixelWidth)
+    bixelWidth = num2str(pln.propStf.bixelWidth);
+elseif ~isnumeric(bixelWidth) && ~strcmp(bixelWidth,'field')
+    matRad_cfg.dispError('Invalid bixel width! Must be a scalar number or ''field'' for field-based dose calculation with shapes stored in stf!');
+end   
+
+set(handles.editBixelWidth,'String',bixelWidth);
 set(handles.editFraction,'String',num2str(pln.numOfFractions));
 
 if isfield(pln.propStf,'isoCenter')
@@ -2425,7 +2076,6 @@ function btnTableSave_Callback(~, ~, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-%getCstTable(handles);
 if get(handles.checkIsoCenter,'Value')
     pln = evalin('base','pln'); 
     pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct')); 
@@ -2493,7 +2143,20 @@ if evalin('base','exist(''pln'',''var'')')
     pln = evalin('base','pln');
 end
 
-pln.propStf.bixelWidth      = parseStringAsNum(get(handles.editBixelWidth,'String'),false); % [mm] / also corresponds to lateral spot spacing for particles
+% Special parsing of bixelWidth (since it can also be "field") for imported
+% shapes
+bixelWidth = get(handles.editBixelWidth,'String'); % [mm] / also corresponds to lateral spot spacing for particles
+if strcmp(bixelWidth,'field')
+    pln.propStf.bixelWidth = bixelWidth; 
+else
+    pln.propStf.bixelWidth = parseStringAsNum(bixelWidth,false);
+    if isnan(pln.propStf.bixelWidth)
+        warndlg('Invalid bixel width! Use standard bixel width of 5mm!');
+        pln.propStf.bixelWidth = 5;
+        set(handles.editBixelWidth,'String','5');
+    end
+end
+
 pln.propStf.gantryAngles    = parseStringAsNum(get(handles.editGantryAngle,'String'),true); % [???]
 
 if handles.eduMode
@@ -2606,10 +2269,13 @@ contents = cellstr(get(handles.popupRadMode,'String'));
 radMod = contents{get(handles.popupRadMode,'Value')};
 
 if isdeployed
-    FoundFile = dir([ctfroot filesep 'matRad' filesep radMod '_' Machine '.mat']);
+    baseroot = [ctfroot filesep 'matRad'];
 else
-    FoundFile = dir([fileparts(mfilename('fullpath')) filesep radMod '_' Machine '.mat']);    
+    baseroot = fileparts(mfilename('fullpath'));
 end
+FoundFile = dir([baseroot filesep 'basedata' filesep radMod '_' Machine '.mat']);
+
+
 if isempty(FoundFile)
     warndlg(['No base data available for machine: ' Machine]);
     flag = false;
@@ -2694,24 +2360,26 @@ try
         ct  = evalin('base','ct');
         cst = evalin('base','cst');
         %cst = setCstTable(handles,cst);
-        generateCstTable(handles,cst);
+        cst = generateCstTable(handles,cst);
         handles.State = 1;
         cst = matRad_computeVoiContoursWrapper(cst,ct);
         assignin('base','cst',cst);
+        handles = reloadGUI(hObject, handles, ct, cst);
     elseif ismember('ct',AllVarNames) &&  ~ismember('cst',AllVarNames)
-         handles = showError(handles,'GUI OpeningFunc: could not find cst file');
+        handles = showError(handles,'GUI OpeningFunc: could not find cst file');
+        ct  = evalin('base','ct');
+        handles = reloadGUI(hObject,handles,ct);
     elseif ~ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
-         handles = showError(handles,'GUI OpeningFunc: could not find ct file');
+        handles = showError(handles,'GUI OpeningFunc: could not find ct file');
+        handles = reloadGUI(hObject, handles);
+    else
+        handles = reloadGUI(hObject, handles);
     end
-catch  
-   handles = showError(handles,'GUI OpeningFunc: Could not load ct and cst file');
-end
-
-if ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
-    handles = reloadGUI(hObject, handles, ct, cst);
-else
+catch
+    handles = showError(handles,'GUI OpeningFunc: Could not load ct and cst file');
     handles = reloadGUI(hObject, handles);
 end
+
 guidata(hObject, handles);
 
 
@@ -2863,7 +2531,26 @@ guidata(hObject,handles);
 % button: about
 function btnAbout_Callback(hObject, eventdata, handles)
 
-msgbox({'https://github.com/e0404/matRad/' 'email: matrad@dkfz.de'},'About');
+[~,matRadVer] = matRad_version;
+
+msg{1} = ['matRad ''' matRadVer.name '''']; %Name
+if handles.eduMode
+    msg{1} = [msg{1} ' Educational'];
+end
+msg{end+1} = sprintf('v%d.%d.%d',matRadVer.major,matRadVer.minor,matRadVer.patch); %Version Number
+if isdeployed
+   msg{end+1} = 'Standalone Version';
+elseif ~isempty(matRadVer.branch) && ~isempty(matRadVer.commitID)
+    msg{end+1} = sprintf('Git: Branch %s, commit %s',matRadVer.branch,matRadVer.commitID(1:8));
+end
+
+[env,envver]  = matRad_getEnvironment();
+msg{end+1} = sprintf('Environment: %s v%s %s',env,envver,version('-release'));
+
+msg{end+1} = 'Web: www.matrad.org';
+msg{end+1} = 'E-Mail: contact@matrad.org';
+
+msgbox(msg,'About matRad');
 
 % button: close
 function figure1_CloseRequestFcn(hObject, ~, ~)
@@ -2874,7 +2561,7 @@ selection = questdlg('Do you really want to close matRad?',...
 
 %BackgroundColor',[0.5 0.5 0.5]
  switch selection
-   case 'Yes',
+   case 'Yes'
      delete(hObject);
    case 'No'
      return
@@ -2918,9 +2605,22 @@ try
         Suffix = '';
     end
     
-    if sum([stf.totalNumOfBixels]) ~= length(resultGUI.(['w' Suffix]))
-        warndlg('weight vector does not corresponding to current steering file');
-        return
+    wField = ['w' Suffix];
+    
+    if ~isfield(resultGUI,wField) 
+        warndlg(['No exact match found for weight vector ''' wField ''' with selected dose insance. Trying common weight vector ''w'' instead!']);
+        wField = 'w';
+    end
+    
+    %Second sanity check to exclude case with no 'w' present
+    if ~isfield(resultGUI,wField)
+        errordlg('No weight vector found for forward dose recalculation!');
+        return;
+    end
+    
+    if sum([stf.totalNumOfBixels]) ~= length(resultGUI.(wField))
+        errordlg('Selected weight vector does not correspond to current steering file (wrong number of entries/bixels!)!');
+        return;
     end
     
     % change isocenter if that was changed and do _not_ recreate steering
@@ -2937,7 +2637,7 @@ try
     end
 
     % recalculate cubes in resultGUI
-    resultGUIreCalc = matRad_calcCubes(resultGUI.(['w' Suffix]),dij,cst);
+    resultGUIreCalc = matRad_calcCubes(resultGUI.(wField),dij);
     
     % delete old variables to avoid confusion
     if isfield(resultGUI,'effect')
@@ -3011,7 +2711,7 @@ cst = evalin('base','cst');
 pln = evalin('base','pln');
 
 fileName = [pln.radiationMode '_' pln.machine];
-load(fileName);
+load(['basedata' filesep fileName]);
 
 % check for available cell types characterized by alphaX and betaX 
 for i = 1:size(machine.data(1).alphaX,2)
@@ -3065,7 +2765,7 @@ set(tissueTable,'Position',currTablePos);
 % define two buttons with callbacks
 uicontrol('Parent', figTissue,'Style', 'pushbutton', 'String', 'Save&Close',...
         'Position', [Width-(0.25*Width) 0.1 * Height 70 30],...
-        'Callback', @(hpb,eventdata)SaveTissueParameters(hpb,eventdata,handles));
+        'Callback', @(hpb,eventdata)SaveTissueParameters(hpb,eventdata,handles,tissueTable));
     
 uicontrol('Parent', figTissue,'Style', 'pushbutton', 'String', 'Cancel&Close',...
         'Position', [Width-(0.5*Width) 0.1 * Height 80 30],...
@@ -3075,18 +2775,12 @@ guidata(hObject,handles);
 UpdateState(handles);
     
     
-function SaveTissueParameters(~, ~, handles) 
+function SaveTissueParameters(~, ~, handles,tissueTable) 
 cst = evalin('base','cst');    
 % get handle to uiTable
-figHandles = get(0,'Children');
-IdxHandle  = find(strcmp(get(figHandles,'Name'),'Set Tissue Parameters'));
-% find table in window
 
-figHandleChildren = get(figHandles(IdxHandle),'Children');
-IdxTable   = find(strcmp(get(figHandleChildren,'Type'),'uitable'));
-uiTable    = figHandleChildren(IdxTable);
 % retrieve data from uitable
-data       = get(uiTable,'data');
+data       = get(tissueTable,'data');
 
 for i = 1:size(cst,1)
    for j = 1:size(data,1)
@@ -3098,10 +2792,9 @@ for i = 1:size(cst,1)
    end
 end
 assignin('base','cst',cst);
-close
+close(get(tissueTable,'Parent'));
 handles.State = 2;
 UpdateState(handles);
- 
 
         
 function tissueTable_CellEditCallback(hObject, eventdata, ~) 
@@ -4318,12 +4011,12 @@ cnt = cnt + 1;
 
 %Create Objectives / Constraints controls
 for i = 1:size(cst,1)   
-   if strcmp(cst(i,3),'IGNORED')~=1
-       %Compatibility Layer for old objective format
-       if isstruct(cst{i,6})
-           cst{i,6} = num2cell(arrayfun(@matRad_DoseOptimizationFunction.convertOldOptimizationStruct,cst{i,6}));
-       end
-      for j=1:numel(cst{i,6})
+    if strcmp(cst(i,3),'IGNORED')~=1
+        %Compatibility Layer for old objective format
+        if isstruct(cst{i,6})
+            cst{i,6} = arrayfun(@matRad_DoseOptimizationFunction.convertOldOptimizationStruct,cst{i,6},'UniformOutput',false);
+        end
+        for j=1:numel(cst{i,6})
       
            obj = cst{i,6}{j};
            
@@ -4425,7 +4118,7 @@ catch
 end
 
 function btObjAdd_Callback(hObject, ~, handles)
-% hObject    handle to btnuiTableAdd (see GCBO)
+% hObject    handle to btObjAdd
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 popupHandle = hObject.UserData;
@@ -4441,16 +4134,10 @@ end
 
 assignin('base','cst',cst);
 
-%set(handles.uiTable,'data',data);
-
-%handles.State=1;
-%guidata(hObject,handles);
-%UpdateState(handles);
-
 generateCstTable(handles,cst);
 
 function btObjRemove_Callback(hObject, ~, handles)
-% hObject    handle to btnuiTableAdd (see GCBO)
+% hObject    handle to btObjRemove (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 ix = hObject.UserData;
@@ -4462,16 +4149,10 @@ cst{ix(1),6}(ix(2)) = [];
 
 assignin('base','cst',cst);
 
-%set(handles.uiTable,'data',data);
-
-%handles.State=1;
-%guidata(hObject,handles);
-%UpdateState(handles);
-
 generateCstTable(handles,cst);
 
 function editObjParam_Callback(hObject, ~, handles)
-% hObject    handle to btnuiTableAdd (see GCBO)
+% hObject    handle to current objective parameter
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 ix = hObject.UserData;
@@ -4483,19 +4164,6 @@ cst = evalin('base','cst');
 %if we have a popupmenu selection we use value
 %otherwise we use the edit string
 
-%{
-%obj = cst{ix(1),6}{ix(2)};
-%Convert to class if not
-if ~isa(obj,'matRad_DoseOptimizationFunction')
-    try
-        eval([obj.className '(obj)']);
-    catch
-        warning('Objective/Constraint not valid!')
-        return;
-    end
-end
-%}
-
 if ix(3) == 0
     cst{ix(1),6}{ix(2)}.penalty = str2double(hObject.String);
 elseif isequal(hObject.Style,'popupmenu')
@@ -4506,16 +4174,10 @@ end
     
 assignin('base','cst',cst);
 
-%set(handles.uiTable,'data',data);
-
-%handles.State=1;
-%guidata(hObject,handles);
-%UpdateState(handles);
-
 generateCstTable(handles,cst);
 
 function changeObjFunction_Callback(hObject, ~, handles)
-% hObject    handle to btnuiTableAdd (see GCBO)
+% hObject    handle to objective popup 
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 data = hObject.UserData;
@@ -4541,13 +4203,7 @@ if ~strcmp(currentClass,classToCreate)
     
     cst{ix(1),6}{ix(2)} = struct(newObj);
     
-    assignin('base','cst',cst);
-    
-    %set(handles.uiTable,'data',data);
-    
-    %handles.State=1;
-    %guidata(hObject,handles);
-    %UpdateState(handles);
+    assignin('base','cst',cst);   
     
     generateCstTable(handles,cst);
 end

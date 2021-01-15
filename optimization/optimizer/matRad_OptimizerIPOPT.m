@@ -12,6 +12,9 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
 %
+% References
+%   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties
@@ -32,10 +35,12 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
     
     methods
         function obj = matRad_OptimizerIPOPT
-            %UNTITLED Construct an instance of this class
-            %   Detailed explanation goes here
-            %obj = createDefaultOptimizerOptions;
-            %obj.Property1 = inputArg1 + inputArg2;
+            %matRad_OptimizerIPOPT
+            %   Construct an instance of the IPOPT optimizer (mex
+            %   interface)
+            
+            matRad_cfg = MatRad_Config.instance();
+            
             obj.wResult = [];
             obj.resultInfo = [];
             obj.axesHandle = [];
@@ -43,7 +48,19 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.abortRequested = false;
             
             %Set Default Options
-            obj.options.print_level                   = 5;
+            if matRad_cfg.logLevel <= 1
+                lvl = 0;
+            elseif matRad_cfg.logLevel <= 2
+                lvl = 2;
+            elseif matRad_cfg.logLevel <= 3
+                lvl = 5;
+            else 
+                %There seems to be a problem with higher log levels in
+                %IPOPT!
+                lvl = 5;
+            end
+                
+            obj.options.print_level                   = lvl;
             obj.options.print_user_options            = 'no';
             obj.options.print_options_documentation   = 'no';
             
@@ -60,7 +77,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.options.acceptable_compl_inf_tol      = 1e10; % (Acc5)
             obj.options.acceptable_obj_change_tol     = 1e-3; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
             
-            obj.options.max_iter                      = 1000;
+            obj.options.max_iter                      = matRad_cfg.propOpt.defaultMaxIter;
             obj.options.max_cpu_time                  = 3000;
             
             % Barrier Parameter (C.6)
@@ -85,16 +102,18 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             % for derivate checking
             % obj.options.derivative_test              = 'first-order'; % none / first-order / second-order / only-second-order
             % obj.options.derivative_test_perturbation = 1e-6; % default 1e-8
-            % obj.options.derivative_test_tol          = 1e-6;
+            % obj.options.derivative_test_tol          = 1e-6;  
+            
+            if ~matRad_checkMexFileExists('ipopt')
+                matRad_cfg.dispError('IPOPT mex interface not available for %s!',obj.env);
+            end
 
         end
         
         function obj = optimize(obj,w0,optiProb,dij,cst)
-            % set optimization options
-            %options.radMod          = pln.radiationMode;
-            %options.bioOpt          = pln.propOpt.bioOptimization;
-            %options.ID              = [pln.radiationMode '_' pln.propOpt.bioOptimization];
-            %options.numOfScenarios  = dij.numOfScenarios;
+            matRad_cfg = MatRad_Config.instance();
+            
+            % set optimization options            
             
             %Set up ipopt structure
             ipoptStruct = struct;
@@ -119,7 +138,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             funcs.iterfunc          = @(iter,objective,paramter) obj.iterFunc(iter,objective,paramter,ipoptStruct.ipopt.max_iter);
             
             % Informing user to press q to terminate optimization
-            fprintf('\nOptimzation initiating...\n');
+            matRad_cfg.dispInfo('\nOptimzation initiating...\n');
             
             % set Callback
             qCallbackSet = false;
@@ -138,7 +157,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
                             fprintf('Press q to terminate the optimization...\n');
                             qCallbackSet = true;
                         catch
-                            fprintf('Manual optimization termination with q disabled.\n');
+                            matRad_cfg.dispInfo('Manual termination with q not possible due to failing callback setup.\n');
                         end
                 end                
             end
@@ -146,8 +165,14 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             %ipoptStruct.options = obj.options;
             obj.abortRequested = false;
             obj.plotFailed = false;
+            
             % Run IPOPT.
-            [obj.wResult, obj.resultInfo] = ipopt(w0,funcs,ipoptStruct);
+            try
+                [obj.wResult, obj.resultInfo] = ipopt(w0,funcs,ipoptStruct);
+            catch ME
+                errorString = [ME.message '\nThis error was thrown by the MEX-interface of IPOPT.\nMex interfaces can raise compatability issues which may be resolved by compiling them by hand directly on your particular system.'];
+                matRad_cfg.dispError(errorString);
+            end
             
             % unset Key Pressed Callback of Matlab command window
             if qCallbackSet
@@ -217,6 +242,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         end
         
         function flag = iterFunc(obj,iter,objective,~,~)
+             
             obj.allObjectiveFunctionValues(iter + 1) = objective;
             %We don't want the optimization to crash because of drawing
             %errors
@@ -224,8 +250,9 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
                 try            
                     obj.plotFunction();
                 catch ME
+                    matRad_cfg = MatRad_Config.instance();
                     %Put a warning at iteration 1 that plotting failed
-                    warning('Objective Function plotting failed and thus disabled. Message:\n%s',ME.message);
+                    matRad_cfg.dispWarning('Objective Function plotting failed and thus disabled. Message:\n%s',ME.message);
                     obj.plotFailed = true;
                 end                
             end
@@ -288,19 +315,20 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         end
         
         function abortCallbackKey(obj,~,KeyEvent)
-            
             % check if user pressed q
             if  get(KeyEvent,'keyCode') == 81
-                
                 obj.abortRequested = true;
-                
             end
-            
         end
         
         function abortCallbackButton(obj,~,~,~)
             obj.abortRequested = true;
-        end       
-        
+        end        
+    end
+    
+    methods (Static)
+        function available = IsAvailable()
+            available = matRad_checkMexFileExists('ipopt');                   
+        end
     end
 end

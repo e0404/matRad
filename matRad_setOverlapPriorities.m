@@ -1,19 +1,20 @@
 function [cst,overlapPriorityCube] = matRad_setOverlapPriorities(cst,ctDim)
-% function to handle overlap priorities during fluence optimizaiton and
-% dose calculation. If you have overlapping volumes of interest you need to
-% inform matrad to which volume(s) the intersection voxels belong
+% function to handle overlap priorities 
+% during fluence optimization and dose calculation. If you have overlapping 
+% volumes of interest you need to inform matRad to which volume(s) the 
+% intersection voxels belong.
 % 
 % call
 %   cst = matRad_considerOverlap(cst)
-%   [cst, overlapPriorityCube] = matRad_setOverlapPriorities(cst,cubeDim)
+%   [cst, overlapPriorityCube] = matRad_setOverlapPriorities(cst,ctDim)
 %
 % input
 %   cst:        cst file
-%   ctDim:      dimension of the ct for overlap cube claculation (optional)
+%   ctDim:      (optional) dimension of the ct for overlap cube claculation 
 %
 % output
 %   cst:                updated cst file considering overlap priorities
-%   overlapPriorityCube cube visualizing the overlap priority (optional)
+%   overlapPriorityCube:(optional) cube visualizing the overlap priority 
 %
 % References
 %   -

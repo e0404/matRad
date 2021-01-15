@@ -1,7 +1,10 @@
 classdef matRad_OptimizerFmincon < matRad_Optimizer
-% matRad_OptimizerFmincon implements the interface for the fmincon
-% optimizer of the MATLAB Optiization toolbox
+% matRad_OptimizerFmincon implements the interface for the fmincon optimizer 
+% of the MATLAB Optiization toolbox
 %    
+% References
+%   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2019 the matRad development team. 
@@ -24,7 +27,9 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
     
     methods
         function obj = matRad_OptimizerFmincon
-            %matRad_OptimizerFmincon Construct an instance of this class
+            %matRad_OptimizerFmincon 
+            %   Construct an instance of the fmincon optimizer from the Optimization Toolbox           
+            matRad_cfg = MatRad_Config.instance();
             
             obj.wResult = [];
             obj.resultInfo = [];
@@ -37,7 +42,7 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
                 'SpecifyObjectiveGradient',true,...
                 'SpecifyConstraintGradient',true,...
                 'AlwaysHonorConstraints', 'bounds',...
-                'MaxIterations',500,...
+                'MaxIterations',matRad_cfg.propOpt.defaultMaxIter,...
                 'MaxFunctionEvaluations',3000,...
                 'CheckGradients',false,...
                 'HessianApproximation',{'lbfgs',6},...
@@ -80,6 +85,10 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
         function [c,cEq,cJacob,cEqJacob] = fmincon_nonlconWrapper(obj,x,optiProb,dij,cst)
             %Get the bounds of the constraint
             [cl,cu] = optiProb.matRad_getConstraintBounds(cst);
+                    
+            %Get finite bounds
+            clFinIx = isfinite(cl);
+            cuFinIx = isfinite(cu);
             
             % Some checks
             assert(isequal(size(cl),size(cu)));
@@ -88,24 +97,24 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
             %For fmincon we need to separate into equalty and inequality
             %constraints
             isEqConstr = (cl == cu);
-            eqIx = find(isEqConstr);
-            ineqIx = find(~isEqConstr);
+            eqIx = isEqConstr;
+            ineqIx = ~isEqConstr;
             
             %Obtain all constraint functions and derivatives
             cVals = optiProb.matRad_constraintFunctions(x,dij,cst);
             cJacob = optiProb.matRad_constraintJacobian(x,dij,cst);
             
             %Subselection of equality constraints
-            cEq = cVals(eqIx);
-            cEqJacob = cJacob(eqIx,:)';
+            cEq = cVals(eqIx & clFinIx); %We can only rely on cl indices here due to the equality index
+            cEqJacob = cJacob(eqIx & clFinIx,:)';
             
             %Prepare inequality constraints:
             %We need to separate upper and lower bound constraints for
             %fmincon
-            cL = cl(ineqIx) - cVals(ineqIx);
-            cU = cVals(ineqIx) - cu(ineqIx);
-            cJacobL = -cJacob(ineqIx,:);
-            cJacobU = cJacob(ineqIx,:);
+            cL = cl(ineqIx & clFinIx) - cVals(ineqIx & clFinIx);
+            cU = cVals(ineqIx & cuFinIx) - cu(ineqIx & cuFinIx);
+            cJacobL = -cJacob(ineqIx & clFinIx,:);
+            cJacobU = cJacob(ineqIx & cuFinIx,:);
             
             %build the inequality jacobian
             c = [cL; cU];
@@ -126,6 +135,13 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
                 statusmsg = 'No Last Optimizer Status Available!';
                 statusflag = -1;
             end
+        end
+    end
+    
+    methods (Static)    
+        function available = IsAvailable()
+            %'fmincon' is a p-code file in the optimization toolbox
+            available = exist('fmincon') == 6;
         end
     end
 end

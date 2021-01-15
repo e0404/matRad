@@ -55,7 +55,7 @@ for  i = 1:size(cst,1)
 
                 % if we have effect optimization, temporarily replace doses with effect
                 if (~isequal(objective.name, 'Mean Dose') && ~isequal(objective.name, 'EUD')) &&...
-                    isequal(optiProb.bioOpt,'LEMIV_effect') 
+                    (isa(optiProb.BP,'matRad_EffectProjection') && ~isa(optiProb.BP,'matRad_VariableRBEProjection')) 
                     
                     doses = objective.getDoseParameters();
                 

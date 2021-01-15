@@ -1,6 +1,22 @@
 classdef matRad_EUD < DoseObjectives.matRad_DoseObjective
-    %MATRAD_DOSEOBJECTIVE Summary of this class goes here
-    %   Detailed explanation goes here
+% matRad_EUD Implements a penalized equivalent uniform dose objective
+%   See matRad_DoseObjective for interface description
+%
+% References
+%   -
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2020 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (Constant)
         name = 'EUD';
@@ -66,8 +82,13 @@ classdef matRad_EUD < DoseObjectives.matRad_DoseObjective
             % get exponent for EUD
             k = obj.parameters{2};
             
+            %numerical stability
+            dose(dose == 0) = 0.001;
+            
             % calculate power sum
             powersum = sum(dose.^k);
+                        
+            
             %This check is not needed since dose is always positive
             %if powersum > 0
             
