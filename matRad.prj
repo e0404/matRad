@@ -20,7 +20,7 @@
       <param.email>contact@matrad.org</param.email>
       <param.company>German Cancer Research Center - DKFZ</param.company>
       <param.summary>matRad is an open source treatment planning system for radiation therapy written in Matlab.</param.summary>
-      <param.description>!!!matRad development version build from branch/commit prepareBlaise-ef7488df!!! !!!matRad development version build from branch\commit prepareBlaise-18cec97a!!! !!!matRad development version build from branch\commit prepareBlaise-18cec97a!!! !!!matRad development version build from branch\commit prepareBlaise-18cec97a!!! !!!matRad development version build from branch\commit prepareBlaise-18cec97a!!! !!!matRad development version build from branch\commit prepareBlaise-18cec97a!!! This package constains the standalone version of matRad. The standalone version is mainly for educational and demonstration purposes. It only enables access to the graphical user interface and therefore does not contain all available features and might work with lower resolutions and accuracy settings to be efficient enough on common and also less powerful machines. For researchers, we highly recommend to work with the source code directly.</param.description>
+      <param.description>This package constains the standalone version of matRad. The standalone version is mainly for educational and demonstration purposes. It only enables access to the graphical user interface and therefore does not contain all available features and might work with lower resolutions and accuracy settings to be efficient enough on common and also less powerful machines. For researchers, we highly recommend to work with the source code directly. matRad IS NOT A MEDICAL PRODUCT and MUST NOT BE USED CLINICALLY!</param.description>
       <param.screenshot>${PROJECT_ROOT}\standalone\matRad_splashscreen.png</param.screenshot>
       <param.guid/>
       <param.installpath.string>\matRad</param.installpath.string>
@@ -138,7 +138,6 @@
          <file>${PROJECT_ROOT}\tools</file>
       </fileset.resources>
       <fileset.package>
-         <file>${PROJECT_ROOT}\phantoms</file>
          <file>${PROJECT_ROOT}\standalone\readme_standalone_linux.txt</file>
          <file>${PROJECT_ROOT}\standalone\readme_standalone_mac.txt</file>
          <file>${PROJECT_ROOT}\standalone\readme_standalone_windows.txt</file>

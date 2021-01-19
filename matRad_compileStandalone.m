@@ -21,20 +21,21 @@ function matRad_compileStandalone(varargin)
 
 p = inputParser;
 
-p.addParameter('isRelease',false,@islogical);               %By default we compile a snapshot of the current branch
+p.addParameter('releaseType','dev',@(s) any(strcmp(s,{'dev','main','edu'})));               %By default we compile a snapshot of the current branch
 p.addParameter('compileWithRT',false,@islogical);           %By default we don't package installers with runtime
 p.addParameter('compileWithoutRT',true,@islogical);         %By default we do package installers without runtime
 p.addParameter('projectFile','matRad.prj',@(x) exist(x,2)); %Default template prj file
 p.addParameter('override',false,@islogical);                %If set we do not care for any argumetn but use the bare *.prj file specified
+p.addParameter('includePatients',true,@islogical);          %Inlcude patient files in the installer or not
 
 p.parse(varargin{:});
 
-isRelease = p.Results.isRelease;
+releaseType = p.Results.releaseType;
 compileWithRT = p.Results.compileWithRT;
 compileWithoutRT = p.Results.compileWithoutRT;
 projectFile = p.Results.projectFile;
 override = p.Results.override;
-
+includePatients = p.Results.includePatients;
 
 if ~compileWithRT && ~compileWithoutRT
     error('No target specified!');
@@ -44,6 +45,14 @@ end
 
 %Create Standalone with and without runtime
 xDoc = xmlread(projectFile);
+
+%Wether to include or exclude patients
+if includePatients
+    file_node = xDoc.createElement('file');
+    file_text = xDoc.createTextNode('${PROJECT_ROOT}\phantoms');
+    file_node.appendChild(file_text);
+    xDoc.getElementsByTagName('fileset.package').item(0).appendChild(file_node);
+end
 
 if ~override
     
@@ -115,14 +124,31 @@ if ~override
     vernum = sprintf('%d.%d.%d',versionFull.major,versionFull.minor,versionFull.patch);
     
     tmp_verstr = ['v' vernum];
-    if ~isRelease && ~isempty(versionFull.commitID) && ~isempty(versionFull.branch)
-        branchinfo = [versionFull.branch '-' versionFull.commitID(1:8)];
-        tmp_verstr = [tmp_verstr '_' branchinfo];
-        addDescription = ['!!!matRad development version build from branch/commit ' branchinfo '!!!'];
-        desc = xDoc.getElementsByTagName('param.description').item(0).getFirstChild.getData().toCharArray()';
-        desc = [addDescription ' ' desc];
-        xDoc.getElementsByTagName('param.description').item(0).getFirstChild.setData(desc);
+    
+    appName = xDoc.getElementsByTagName('configuration').item(0).getAttribute('name');
+    
+    switch releaseType
+        case 'dev'
+            addDescription = ['!!!matRad development version '];
+            if ~isempty(versionFull.commitID) && ~isempty(versionFull.branch)
+                branchinfo = [versionFull.branch '-' versionFull.commitID(1:8)];
+                tmp_verstr = [tmp_verstr '_' branchinfo];
+                addDescription = [addDescription branchinfo];
+            end
+            addDescription = [addDescription '!!! '];
+            
+            
+            %tmp_verstr = 'dev';
+        case 'main'
+            addDescription = '';
+        case 'edu'
+            tmp_verstr = [tmp_verstr '-edu'];
+            addDescription = 'Educational Version';
     end
+    
+    desc = xDoc.getElementsByTagName('param.description').item(0).getFirstChild.getData().toCharArray()';
+    desc = [addDescription desc];
+    xDoc.getElementsByTagName('param.description').item(0).getFirstChild.setData(desc);
     
     %The Application compiler only allows major and minor version number
     vernum_appCompiler = sprintf('%d.%d',versionFull.major,versionFull.minor);
