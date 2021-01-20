@@ -31,7 +31,7 @@ function [versionString,matRadVer] = matRad_version()
 matRadVer.name = 'Blaise';
 matRadVer.major = 2;
 matRadVer.minor = 10;
-matRadVer.patch = 0;
+matRadVer.patch = 1;
 
 tagged = false;
 
