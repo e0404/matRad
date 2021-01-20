@@ -1,17 +1,19 @@
 function ct = matRad_calcWaterEqD(ct, pln)
-% matRad function to calculate the equivalent densities from a 
-% dicom ct that originally uses intensity values
+% matRad function to calculate the equivalent densities from a dicom ct 
+% that originally uses intensity values
 %
 % call
-%   ct = matRad_calcWaterEqD(ct)
+%   ct = matRad_calcWaterEqD(ct, pln)
 %
 % input
 %   ct: unprocessed dicom ct data which are stored as intensity values (IV)
 %
 %       HU = IV * slope + intercept
 %
+%   pln: matRad plan struct
+%
 % output
-%   ct: ct struct with cube with relative _electron_ densities 
+%   ct: ct struct with cube with relative _electron_ densities
 %
 % References
 %   -

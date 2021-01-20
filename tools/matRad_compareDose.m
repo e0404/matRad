@@ -2,7 +2,8 @@ function [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, c
 % Comparison of two dose cubes in terms of gamma index, absolute and visual difference
 %
 % call
-%    compareDose = matRad_compareDose(cube1,cube2,ct,cst,criteria,n,localglobal)
+%   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst)
+%   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst,enable , contours, pln, criteria, n,localglobal)
 %
 % input
 %   cube1:         dose cube 1 as an M x N x O array
@@ -18,14 +19,14 @@ function [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, c
 %   contours       (optional) specify if contours are plotted,
 %                  'on' or 'off'
 %   pln            (optional) specify BioModel for DVH plot
-%   criteria:      [1x2] vector (optional) specifying the distance to agreement
+%   criteria:      (optional)[1x2] vector specifying the distance to agreement
 %                  criterion; first element is percentage difference,
 %                  second element is distance [mm], default [3 3]
-%   n:             number of interpolations (optional). there will be 2^n-1
+%   n:             (optional) number of interpolations. there will be 2^n-1
 %                  interpolation points. The maximum suggested value is 3.
 %                  default n=0
-%   localglobal:   parameter to choose between 'global' and 'local'
-%                  normalization (optional)
+%   localglobal:   (optional) parameter to choose between 'global' and 'local'
+%                  normalization 
 %
 %
 % output
@@ -298,6 +299,6 @@ if enable(3) == 1 && ~isempty(cst)
     title('Dose Volume Histrogram, Dose 1: solid, Dose 2: dashed')
 end
 %%
-matRad_cfg.dispInfo('Done!');
+matRad_cfg.dispInfo('Done!\n');
 
 end

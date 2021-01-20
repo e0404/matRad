@@ -5,11 +5,11 @@ function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = ...
                               SAD, ...
                               radDepthIx, ...
                               lateralCutOff)
-% matRad calculation of lateral distances from central ray used for
-% dose calcultion
+% matRad calculation of lateral distances from central ray 
+% used for dose calcultion
 % 
 % call
-%   [ix,x_latDists,z_latDists] = ...
+%   [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = ...
 %           matRad_calcGeoDists(rot_coords_bev, ...
 %                               sourcePoint_bev, ...
 %                               targetPoint_bev, ...
@@ -31,15 +31,15 @@ function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = ...
 % output
 %   ix:                 indices of voxels where we want to compute dose
 %                       influence data
+%   rad_distancesSq:    squared radial distance to the central ray (where the
+%                       actual computation of the radiological depth takes place)
 %   isoLatDistsX:       lateral x-distance to the central ray projected to
 %                       iso center plane
 %   isoLatDistsZ:       lateral z-distance to the central ray projected to
 %                       iso center plane
-%   radialDist_sq:      squared radial distance to the central ray (where the
-%                       actual computation of the radiological depth takes place)
 %
 % References
-%
+%   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

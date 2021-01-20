@@ -1,8 +1,15 @@
 function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,n,localglobal,cst)
-% gamma index calculation according to http://www.ncbi.nlm.nih.gov/pubmed/9608475
+% gamma index calculation 
+% according to http://www.ncbi.nlm.nih.gov/pubmed/9608475
 % 
 % call
-%    gammaCube = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,interpoints,localglobal)
+%   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,cst)
+%   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,cst)
+%   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,n,cst)
+%   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,localglobal,cst)
+%   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,n,cst)
+%               ...
+%   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,n,localglobal,cst)
 %
 % input
 %   cube1:         dose cube as an M x N x O array
@@ -11,11 +18,11 @@ function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolutio
 %   criteria:      [1x2] vector specifying the distance to agreement
 %                  criterion; first element is percentage difference,
 %                  second element is distance [mm]
-%   slice:         slice in cube1/2 that will be visualized (optional)
-%   n:             number of interpolations (optional). there will be 2^n-1 
+%   slice:         (optional) slice in cube1/2 that will be visualized 
+%   n:             (optional) number of interpolations. there will be 2^n-1 
 %                  interpolation points. The maximum suggested value is 3.
-%   localglobal:   parameter to choose between 'global' and 'local' 
-%                  normalization (optional)
+%   localglobal:   (optional) parameter to choose between 'global' and 'local' 
+%                  normalization 
 %   cst:           list of interessing volumes inside the patient
 %
 % output 

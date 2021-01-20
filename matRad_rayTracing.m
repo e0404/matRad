@@ -1,9 +1,9 @@
 function radDepthV = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCutoff)
-% matRad visualization of two-dimensional dose distributions on ct including
-% segmentation
+% matRad visualization of two-dimensional dose distributions on ct 
+% including segmentation
 % 
 % call
-%   [radDepthV,geoDistV] = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCutoff)
+%   radDepthV = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCutoff)
 %
 % input
 %   stf:           matRad steering information struct of one beam

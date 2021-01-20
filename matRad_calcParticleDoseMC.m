@@ -16,7 +16,7 @@ function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nHistories,calcDoseDirec
 %   calcDoseDirect:             (optional) binary switch to enable forward 
 %                               dose calcualtion (default: false)
 % output
-%   dij:                        matRad dij struct
+%   dij:            matRad dij struct
 %
 % References
 %

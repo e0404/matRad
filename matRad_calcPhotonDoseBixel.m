@@ -4,9 +4,9 @@ function dose = matRad_calcPhotonDoseBixel(SAD,m,betas,Interp_kernel1,...
 % matRad photon dose calculation for an individual bixel
 % 
 % call
-%   dose = matRad_calcPhotonDoseBixel(SAD,Interp_kernel1,...
+%   dose = matRad_calcPhotonDoseBixel(SAD,m,betas,Interp_kernel1,...
 %                  Interp_kernel2,Interp_kernel3,radDepths,geoDists,...
-%                  latDistsX,latDistsZ)
+%                  isoLatDistsX,isoLatDistsZ)
 %
 % input
 %   SAD:                source to axis distance
@@ -23,7 +23,7 @@ function dose = matRad_calcPhotonDoseBixel(SAD,m,betas,Interp_kernel1,...
 %                       ray at iso center plane
 %
 % output
-%   dose:   photon dose at specified locations as linear vector
+%   dose:               photon dose at specified locations as linear vector
 %
 % References
 %   [1] http://www.ncbi.nlm.nih.gov/pubmed/8497215
