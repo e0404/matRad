@@ -3,6 +3,7 @@ function interpCt = matRad_interpDicomCtCube(origCt, origCtInfo, resolution, gri
 %
 % call
 %   interpCt = matRad_interpDicomCtCube(origCt, origCtInfo, resolution)
+%   interpCt = matRad_interpDicomCtCube(origCt, origCtInfo, resolution, grid)
 %
 % input
 %   origCt:         original CT as matlab 3D array

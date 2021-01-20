@@ -2,7 +2,7 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
 % matRad photon dose calculation wrapper
 % 
 % call
-%   dij = matRad_calcPhotonDose(ct,stf,pln,cst)
+%   dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
 %
 % input
 %   ct:             ct cube
@@ -90,8 +90,16 @@ fieldLimit = ceil(fieldWidth/(2*intConvResolution));
                   intConvResolution: ...
                   (fieldLimit-1)*intConvResolution);    
 
-% gaussian filter to model penumbra
-sigmaGauss = 2.123; % [mm] / see diploma thesis siggel 4.1.2
+% gaussian filter to model penumbra from (measured) machine output / see
+% diploma thesis siggel 4.1.2 -> https://github.com/e0404/matRad/wiki/Dose-influence-matrix-calculation
+if isfield(machine.data,'penumbraFWHMatIso')
+    penumbraFWHM = machine.data.penumbraFWHMatIso;
+else
+    penumbraFWHM = 5;
+    matRad_cfg.dispWarning('photon machine file does not contain measured penumbra width in machine.data.penumbraFWHMatIso. Assuming 5 mm.');
+end
+
+sigmaGauss = penumbraFWHM / sqrt(8*log(2)); % [mm] 
 % use 5 times sigma as the limits for the gaussian convolution
 gaussLimit = ceil(5*sigmaGauss/intConvResolution);
 [gaussFilterX,gaussFilterZ] = meshgrid(-gaussLimit*intConvResolution: ...

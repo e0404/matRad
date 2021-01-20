@@ -1,7 +1,7 @@
 function output = matRad_getColormap(name,size)
-% matRad function wrapper for getting a colormap. We use this wrapper to
-% manually handle the supported colormaps enabling the definition of custom
-% colormaps.
+% matRad function wrapper for getting a colormap 
+% We use this wrapper to manually handle the supported colormaps enabling 
+% the definition of custom colormaps.
 %
 % call
 %   cMap = matRad_getColormap(name,size)

@@ -2,7 +2,8 @@ function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol)
 % matRad QI calculation
 % 
 % call
-%   qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol,param)
+%   qi = matRad_calcQualityIndicators(cst,pln,doseCube)
+%   qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol)
 %
 % input
 %   cst:                matRad cst struct
