@@ -22,6 +22,7 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
         num_reductions {mustBeInteger}  = 2;
         weighted = false;
         
+        ignoreObjective = false;
     end
     
     properties (SetAccess = private)
@@ -154,25 +155,26 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
                 n=0;
                 supStart = tic;
                 f_evals = 0;
-                while n<obj.num_reductions
-                    
-                    v=fGrad(x);
-                    
-                    loop = true;
-                    while loop
-                        l=l+1;
-                        beta=(obj.alpha)^l;
-                        z=x-beta*v;
+                if ~obj.ignoreObjective
+                    while n<obj.num_reductions
                         
-                        if f(z) <= fVal
-                            n=n+1;
-                            x=z;
-                            loop=false;
+                        v=fGrad(x);
+                        
+                        loop = true;
+                        while loop
+                            l=l+1;
+                            beta=(obj.alpha)^l;
+                            z=x-beta*v;
+                            
+                            if f(z) <= fVal
+                                n=n+1;
+                                x=z;
+                                loop=false;
+                            end
+                            f_evals = f_evals + 1;
                         end
-                        f_evals = f_evals + 1;
                     end
                 end
-                
                 supStop = toc(supStart);
                 
                 
