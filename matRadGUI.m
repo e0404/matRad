@@ -93,7 +93,7 @@ end
 function handles = resetGUI(hObject, handles, varargin)
 % enable opengl software rendering to visualize linewidths properly
 if ispc
-  opengl software
+  % opengl software
 elseif ismac
   % opengl is not supported
 end
