@@ -398,6 +398,8 @@ function matRadGUI_OpeningFcn(hObject, ~, handles, varargin)
 
 matRad_cfg = MatRad_Config.instance();
 
+figureName = 'matRad';
+
 handles.initialGuiStart = true;
 
 p = inputParser;
@@ -431,6 +433,8 @@ handles.eduMode = logical(parsedInput.eduMode);
 if handles.eduMode
     matRad_cfg.dispInfo('matRadGUI starting in educational mode!');
     matRad_cfg.setDefaultPropertiesForEduMode();
+    
+    figureName = [figureName ' Educational'];
 end
 
 set(handles.radiobtnPlan,'value',0);
@@ -448,6 +452,9 @@ if handles.eduMode
     cellfun(@(h) set(h,'Enable','Off'), eduDisableHandles);   
 end
 
+figureName = [figureName ' (!!!NOT FOR CLINICAL USE!!!)'];
+
+set(handles.figure1,'Name',figureName);
 
 %Alter matRad Version string positioning
 vString = matRad_version();
