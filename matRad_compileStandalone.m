@@ -143,7 +143,7 @@ if ~override
             addDescription = '';
         case 'edu'
             tmp_verstr = [tmp_verstr '-edu'];
-            addDescription = 'Educational Version';
+            addDescription = 'Educational Version. ';
     end
     
     desc = xDoc.getElementsByTagName('param.description').item(0).getFirstChild.getData().toCharArray()';
