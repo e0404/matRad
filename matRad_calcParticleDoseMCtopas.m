@@ -85,6 +85,10 @@ end
 
 load([pln.radiationMode,'_',pln.machine]);
 topasConfig = MatRad_TopasConfig();
+
+topasConfig.materialConversion = matRad_cfg.propMC.topas_materialConversion;
+topasConfig.rsp_basematerial = matRad_cfg.propMC.topas_rsp_basematerial;
+
 topasBaseData = MatRad_TopasBaseData(machine,stf);%,TopasConfig);
 
 %Collect weights
