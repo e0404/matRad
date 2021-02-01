@@ -50,7 +50,8 @@ else
     dim = size(focusStruct(1).sigma,2);
     
     % repeats every index for a number of times equal to size of sigma
-    repFocusIxVec = kron(focusIxVec, ones(1,dim));
+%     repFocusIxVec = kron(focusIxVec, ones(1,dim));
+    repFocusIxVec = repelem(focusIxVec,dim);
     
     % Take the values of sigma and distance that we need for calculation]
     % The elements I want are the ones which corrispond to index in the same

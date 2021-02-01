@@ -8,24 +8,25 @@ end
 
 % assing analytical mode
 if isfield(pln.propDoseCalc,'fineSampling') && strcmp(pln.radiationMode, 'protons')
-    anaMode = 'fineSampling';
+    pbCalcMode = 'fineSampling';
+    defaultFineSampling = matRad_cfg.propDoseCalc.defaultFineSamplingProperties;    
     if isfield(pln.propDoseCalc.fineSampling,'N')
         fineSamplingN = pln.propDoseCalc.fineSampling.N;
     else
-        fineSamplingN = 21;
+        fineSamplingN = defaultFineSampling.N;
     end
     if isfield(pln.propDoseCalc.fineSampling,'sigmaSub')    
         fineSamplingSigmaSub = pln.propDoseCalc.fineSampling.sigmaSub;
     else
-        fineSamplingSigmaSub = 1;
+        fineSamplingSigmaSub = defaultFineSampling.sigmaSub;
     end
     if isfield(pln.propDoseCalc.fineSampling,'method')    
         fineSamplingMethod = pln.propDoseCalc.fineSampling.method;
     else
-        fineSamplingMethod = 'russo';
+        fineSamplingMethod = defaultFineSampling.method;
     end
 else
-    anaMode = 'standard';
+    pbCalcMode = 'standard';
 end
 
 % to guarantee downwards compatibility with data that does not have

@@ -91,6 +91,8 @@ elseif strcmp(method, 'fitCircle') || strcmp(method, 'fitSquare')
     end
 
     % This parameters come from simulations done previously
+    % see "Research on the dosimetric accuracy of pencil beam fine sampling
+    % for radiation proton dose calculation" by Giuseppe Pezzano (2018)
     if N == 2
         if strcmp(method,'fitCircle')
             sigmaBeamlet = 0.8237 .* sigmaTot;

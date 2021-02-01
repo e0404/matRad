@@ -157,6 +157,11 @@ classdef MatRad_Config < handle
             obj.propDoseCalc.defaultIgnoreOutsideDensities = true; %Ignore densities outside of cst contours
             obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
             
+            % default properties for fine sampling calculation
+            obj.propDoseCalc.defaultFineSamplingProperties.sigmaSub = 1;
+            obj.propDoseCalc.defaultFineSamplingProperties.N = 21;
+            obj.propDoseCalc.defaultFineSamplingProperties.method = 'russo';
+            
             obj.propOpt.defaultMaxIter = 500;
             
             obj.propMC.ompMC_defaultHistories = 1e6;
@@ -184,6 +189,11 @@ classdef MatRad_Config < handle
             obj.propDoseCalc.defaultUseGivenEqDensityCube = false; %Use the given density cube ct.cube and omit conversion from cubeHU.
             obj.propDoseCalc.defaultIgnoreOutsideDensities = true;
             obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
+            
+            % default properties for fine sampling calculation
+            obj.propDoseCalc.defaultFineSamplingProperties.sigmaSub = 2;
+            obj.propDoseCalc.defaultFineSamplingProperties.N = 5;
+            obj.propDoseCalc.defaultFineSamplingProperties.method = 'russo';
             
             obj.propOpt.defaultMaxIter = 10;
             

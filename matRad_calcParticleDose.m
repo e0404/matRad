@@ -160,7 +160,7 @@ for i = 1:length(stf) % loop over all beams
 
             maxLateralCutoffDoseCalc = max(machine.data(energyIx).LatCutOff.CutOff);
 
-            if strcmp(anaMode, 'fineSampling')
+            if strcmp(pbCalcMode, 'fineSampling')
                 % Ray tracing for beam i and ray j
                 [ix,~,~,~,latDistsX,latDistsZ] = matRad_calcGeoDists(rot_coordsVdoseGrid, ...
                                                      stf(i).sourcePoint_bev, ...
@@ -181,7 +181,11 @@ for i = 1:length(stf) % loop over all beams
                         [finalWeight(:,k), sigmaSub(:,k), posX(:,k), posZ(:,k), numOfSub(:,k)] = ...
                                   matRad_calcWeights(sigmaIni(k), fineSamplingMethod, fineSamplingN, fineSamplingSigmaSub);
                     else
-                        error('Problem with chosen sub beam sigma in fine sampling calculation!');
+                        if (fineSamplingSigmaSub < 0)
+                            matRad_cfg.dispError('Chosen fine sampling sigma cannot be negative!');
+                        elseif (fineSamplingSigmaSub > sigmaIni(k))
+                            matRad_cfg.dispError('Chosen fine sampling sigma is too high for defined plan!');
+                        end                          
                     end
                 end
             else
@@ -229,7 +233,7 @@ for i = 1:length(stf) % loop over all beams
                 energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([machine.data.energy],4));
                 
                 
-                    if strcmp(anaMode, 'fineSampling')
+                    if strcmp(pbCalcMode, 'fineSampling')
                     
                         % calculate projected coordinates for fine sampling of
                         % each beamlet
@@ -268,7 +272,7 @@ for i = 1:length(stf) % loop over all beams
                                 (machine.data(energyIx).LatCutOff.CutOff.^2)', radDepths(currIx)) >= currRadialDist_sq(currIx);
                         end
                     else
-                        error('cutoff must be a value between 0 and 1')
+                        matRad_cfg.dispError('Cutoff must be a value between 0 and 1!')
                     end
 
                     % empty bixels may happen during recalculation of error
@@ -298,9 +302,15 @@ for i = 1:length(stf) % loop over all beams
                         
                     end
                                   
-                if strcmp(anaMode, 'fineSampling')
+                if strcmp(pbCalcMode, 'fineSampling')
                     % initialise empty dose array
                     totalDose = zeros(size(currIx,1),1);
+                    
+                    if isfield(dij,'mLETDose')
+                        % calculate particle LET for bixel k on ray j of beam i
+                        depths = machine.data(energyIx).depths + machine.data(energyIx).offset; 
+                        totalLET = zeros(size(currIx,1),1);
+                    end
                     
                     % run over components
                     for c = 1:numOfSub
@@ -313,9 +323,18 @@ for i = 1:length(stf) % loop over all beams
                                                         
                         tmpDose(currIx(:,:,c)) = bixelDose;
                         totalDose = totalDose + tmpDose;
+                        
+                        if isfield(dij,'mLETDose') 
+                            tmpLET = zeros(size(currIx,1),1);
+                            tmpLET(currIx(:,:,c)) = matRad_interp1(depths,machine.data(energyIx).LET,radDepths(currIx(:,:,c),1,c));    
+                            totalLET = totalLET + tmpLET;
+                        end
                     end
                     
                     doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(VdoseGrid(ix),1,totalDose,dij.doseGrid.numOfVoxels,1);
+                    if isfield(dij,'mLETDose') 
+                        letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(VdoseGrid(ix),1,totalDose.*totalLET,dij.doseGrid.numOfVoxels,1);
+                    end                    
                 else
                     % calculate particle dose for bixel k on ray j of beam i
                     bixelDose = matRad_calcParticleDoseBixel(...
@@ -333,7 +352,7 @@ for i = 1:length(stf) % loop over all beams
                     doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(VdoseGrid(ix(currIx)),1,bixelDose,dij.doseGrid.numOfVoxels,1);
                 end
 
-                if isfield(dij,'mLETDose')
+                if isfield(dij,'mLETDose') && ~strcmp(pbCalcMode, 'fineSampling')
                   % calculate particle LET for bixel k on ray j of beam i
                   depths = machine.data(energyIx).depths + machine.data(energyIx).offset; 
                   bixelLET = matRad_interp1(depths,machine.data(energyIx).LET,currRadDepths); 
