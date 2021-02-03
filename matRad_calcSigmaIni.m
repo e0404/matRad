@@ -69,5 +69,7 @@ else
     [x,~]=meshgrid(1:size(distMat,2),1:1);
     [x1,~]=meshgrid(1:size(distMat,2),1:size(distMat,1));
     
-    sigmaIni = griddata(distMat,x1, sigMat, repmat(SSD,1,size(distMat,2)),x);
+    % griddata produces interpolation error in octave
+    % sigmaIni = griddata(distMat,x1, sigMat, repmat(SSD,1,size(distMat,2)),x);
+    sigmaIni = interp2(x1,distMat, sigMat,x, repmat(SSD,1,size(distMat,2)));
 end
