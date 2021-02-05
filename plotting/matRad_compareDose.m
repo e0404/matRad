@@ -80,7 +80,7 @@ if ~exist('n','var')
     n = 0;
 end
 if ~exist('criteria','var')
-    criteria = [3 3];
+    criteria = [2 2];
 end
 if ~exist('cst','var') || isempty(cst)
     cst = [];
@@ -166,7 +166,7 @@ if enable(1) == 1
         cstHandle = cst;
     end
     
-    for plane = 1:3
+    for plane = 3%1:3
         disp(['Plotting ',planename{plane},' plane...']);
         
         % Initialize Figure
