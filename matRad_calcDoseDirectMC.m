@@ -1,4 +1,4 @@
-function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)
+function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories,openStack)
 % matRad function to bypass dij calculation for MC dose calculation 
 % matRad dose calculation wrapper for MC dose calculation algorithms
 % bypassing dij calculation for MC dose calculation algorithms.
@@ -46,6 +46,10 @@ if nargin < 6 || ~exist('nHistories')
   matRad_cfg.dispInfo('Using default number of Histories: %d\n',nHistories);
 end
 
+if nargin < 7
+    openStack = false;
+end
+
 % check if weight vector is available, either in function call or in stf - otherwise dose calculation not possible
 if ~exist('w','var') && ~isfield([stf.ray],'weight')
      matRad_cfg.dispError('No weight vector available. Please provide w or add info to stf');
@@ -90,15 +94,15 @@ if strcmp(pln.radiationMode,'protons')
         case 'MCsquare'
         dij = matRad_calcParticleDoseMCsquare(ct,stf,pln,cst,nHistories,calcDoseDirect);
         case 'TOPAS'
-        dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,nHistories,calcDoseDirect);
+        dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,nHistories,calcDoseDirect,openStack);
     end
 elseif strcmp(pln.radiationMode,'carbon') || strcmp(pln.radiationMode,'helium')
     if ~isfield(pln,'propMC') || ~isfield(pln.propMC,'carbon_engine')
         pln.propMC.carbon_engine = matRad_cfg.propMC.default_carbon_engine;
     end
-        dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,nHistories,calcDoseDirect);
+        dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,nHistories,calcDoseDirect,openStack);
 else
-    matRad_cfg.dispError('Forward MC only implemented for protons.');
+    matRad_cfg.dispError('MC only implemented for protons and carbon ions (only TOPAS).');
 end
 
 %dij.numOfBeams = size(stf,2);

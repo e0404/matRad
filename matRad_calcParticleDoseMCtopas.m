@@ -1,4 +1,4 @@
-function dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect)
+function dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect,openStack)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad TOPAS Monte Carlo proton dose calculation wrapper
 %   This calls a TOPAS installation (not included in matRad due to
@@ -45,6 +45,10 @@ end
 
 if nargin < 6
     calcDoseDirect = false;
+end
+
+if nargin < 7
+    openStack = false;
 end
 
 if isfield(pln,'propMC') && isfield(pln.propMC,'outputVariance')
@@ -119,6 +123,10 @@ end
 topasBaseData = MatRad_TopasBaseData(machine,stf);%,TopasConfig);
 
 topasConfig.numHistories = nCasePerBixel;
+if openStack
+    topasConfig.workingDir = [topasConfig.thisFolder filesep 'MCrun' filesep [pln.machine,'_',pln.radiationMode,'_']];
+    topasConfig.workingDir = [topasConfig.workingDir num2str(length(dir([topasConfig.workingDir,'*'])) + 1) filesep];
+end
 % topasConfig.numOfRuns = matRad_cfg.propMC.topas_defaultNumBatches;
 
 %Collect weights
@@ -164,81 +172,92 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 % Run simulation for current scenario
                 cd(topasConfig.workingDir);
                 
-                for beamIx = 1:numel(stf)
-                    for runIx = 1:topasConfig.numOfRuns       
-                        fname = sprintf('%s_field%d_run%d',topasConfig.label,beamIx,runIx);
-                        topasCall = sprintf('%s %s.txt > %s.out 2> %s.err',topasConfig.topasExecCommand,fname,fname,fname);
-                        if topasConfig.parallelRuns
-                            finishedFiles{runIx} = sprintf('%s.finished',fname);
-                            delete(finishedFiles{runIx});
-                            topasCall = [topasCall '; touch ' finishedFiles{runIx} ' &'];
-                        end
-                        matRad_cfg.dispInfo('Calling TOPAS: %s\n',topasCall);
-                        [status,cmdout] = system(topasCall,'-echo');
-                        if status == 0
-                            matRad_cfg.dispInfo('TOPAS simulation completed succesfully\n');
-                        else
-                            matRad_cfg.dispError('TOPAS simulation exited with error code %d\n',status);
-                        end
-                    end
-
-                    if topasConfig.parallelRuns
-                        runsFinished = false;
-                        pause('on');
-                        while ~runsFinished
-                            pause(1);
-                            fin = cellfun(@(f) exist(f,'file'),finishedFiles);
-                            runsFinished = all(fin);
-                        end
-                    end
-
-                end
-                
-                cd(currDir);
-                
-                %% Simulation finished - read out volume scorers from topas simulation
-                if calcDoseDirect
-                    topasCubes = matRad_readTopasData(topasConfig.workingDir);
+                if openStack
+                    save('dij.mat','dij')
+                    save('weights.mat','w')
+                    matRad_cfg.dispInfo('TOPAS simulation skipped for external calculation\n');
                 else
-                    topasCubes = matRad_readTopasData(topasConfig.workingDir,dij);
-                end
-               
-                fnames = fieldnames(topasCubes);
-                dij.MC_tallies = fnames;
-                
-                if calcDoseDirect
-                    if ~isfield(topasCubes,'RBE')
-                        for f = 1:numel(fnames)
-                            dij.(fnames{f}){ctScen,1} = sum(w(:,ctScen))*reshape(topasCubes.(fnames{f}),[],1);
+                    
+                    for beamIx = 1:numel(stf)
+                        
+                        for runIx = 1:topasConfig.numOfRuns
+                            fname = sprintf('%s_field%d_run%d',topasConfig.label,beamIx,runIx);
+                            topasCall = sprintf('%s %s.txt > %s.out > %s.err',topasConfig.topasExecCommand,fname,fname,fname);
+                            if topasConfig.parallelRuns
+                                finishedFiles{runIx} = sprintf('%s.finished',fname);
+                                delete(finishedFiles{runIx});
+                                topasCall = [topasCall '; touch ' finishedFiles{runIx} ' &'];
+                            end
+                            
+                            matRad_cfg.dispInfo('Calling TOPAS: %s\n',topasCall);
+                            [status,cmdout] = system(topasCall,'-echo');
+                            if status == 0
+                                matRad_cfg.dispInfo('TOPAS simulation completed succesfully\n');
+                            else
+                                matRad_cfg.dispError('TOPAS simulation exited with error code %d\n',status);
+                            end
+                        end
+                        
+                        
+                        
+                        
+                        if topasConfig.parallelRuns
+                            runsFinished = false;
+                            pause('on');
+                            while ~runsFinished
+                                pause(1);
+                                fin = cellfun(@(f) exist(f,'file'),finishedFiles);
+                                runsFinished = all(fin);
+                            end
+                        end
+                        
+                    end
+                    
+                    cd(currDir);
+                    
+                    %% Simulation finished - read out volume scorers from topas simulation
+                    if calcDoseDirect
+                        topasCubes = matRad_readTopasData(topasConfig.workingDir);
+                    else
+                        topasCubes = matRad_readTopasData(topasConfig.workingDir,dij);
+                    end
+                    
+                    fnames = fieldnames(topasCubes);
+                    dij.MC_tallies = fnames;
+                    
+                    if calcDoseDirect
+                        if ~isfield(topasCubes,'RBE')
+                            for f = 1:numel(fnames)
+                                dij.(fnames{f}){ctScen,1} = sum(w(:,ctScen))*reshape(topasCubes.(fnames{f}),[],1);
+                            end
+                        else
+                            for d = 1:length(stf)
+                                dij.physicalDose{ctScen,1}(:,d)    = sum(w)*reshape(topasCubes.(['physicalDose_beam',num2str(d)]),[],1);
+                                dij.alpha{ctScen,1}(:,d)           = reshape(topasCubes.(['alpha_beam',num2str(d)]),[],1);
+                                dij.beta{ctScen,1}(:,d)            = reshape(topasCubes.(['beta_beam',num2str(d)]),[],1);
+                                %                             dij.RBE{1}(:,d)             = reshape(topasCubes.(['RBE_beam',num2str(d)]),[],1);
+                                
+                                [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,prod(ct.cubeDim),1);
+                                %                             dij.ax = full(reshape(ax,ct.cubeDim));
+                                %                             dij.bx = full(reshape(bx,ct.cubeDim));
+                                dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
+                                
+                                dij.mAlphaDose{ctScen,1}(:,d)      = dij.physicalDose{ctScen,1}(:,d) .* dij.alpha{ctScen,1}(:,d);
+                                dij.mSqrtBetaDose{ctScen,1}(:,d)   = sqrt(dij.physicalDose{ctScen,1}(:,d)) .* dij.beta{ctScen,1}(:,d);
+                            end
                         end
                     else
-                        for d = 1:length(stf)
-                            dij.physicalDose{ctScen,1}(:,d)    = sum(w)*reshape(topasCubes.(['physicalDose_beam',num2str(d)]),[],1);
-                            dij.alpha{ctScen,1}(:,d)           = reshape(topasCubes.(['alpha_beam',num2str(d)]),[],1);
-                            dij.beta{ctScen,1}(:,d)            = reshape(topasCubes.(['beta_beam',num2str(d)]),[],1);
-%                             dij.RBE{1}(:,d)             = reshape(topasCubes.(['RBE_beam',num2str(d)]),[],1);
-                            
-                            [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,prod(ct.cubeDim),1);
-%                             dij.ax = full(reshape(ax,ct.cubeDim));
-%                             dij.bx = full(reshape(bx,ct.cubeDim));
-                            dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
-                            
-                            dij.mAlphaDose{ctScen,1}(:,d)      = dij.physicalDose{ctScen,1}(:,d) .* dij.alpha{ctScen,1}(:,d);
-                            dij.mSqrtBetaDose{ctScen,1}(:,d)   = sqrt(dij.physicalDose{ctScen,1}(:,d)) .* dij.beta{ctScen,1}(:,d);
-                        end
-                    end
-                else
-                    for f = 1:numel(fnames)
-                        for d = 1:stf(f).totalNumOfBixels
-                            dij.physicalDose{1}(:,d) = reshape(topasCubes.(fnames{f}){d},[],1);
+                        for f = 1:numel(fnames)
+                            for d = 1:stf(f).totalNumOfBixels
+                                dij.physicalDose{1}(:,d) = reshape(topasCubes.(fnames{f}){d},[],1);
+                            end
                         end
                     end
                 end
-                end
-
             end
         end
     end
+end
     
     % manipulate isocenter back
     for k = 1:length(stf)
