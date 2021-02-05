@@ -32,7 +32,7 @@ classdef MatRad_TopasConfig < handle
         
         %Simulation parameters
         numThreads = 0; %number of used threads, 0 = max number of threads (= num cores)
-        numOfRuns = 1; %Default number of runs / batches
+        numOfRuns = 5; %Default number of runs / batches
         modeHistories = 'num'; %'frac';
         fracHistories = 1e-4; %Fraction of histories to compute
         numHistories = 1e6; %Number of histories to compute        
