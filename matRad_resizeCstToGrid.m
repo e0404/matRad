@@ -37,7 +37,7 @@ matRad_cfg.dispInfo('Resampling structure set... ');
 
 for i = 1:size(cst,1)            % loop over all structures
    for j = 1:numel(cst{i,4})     % loop over all scenarios
-      tmpCube              = zeros([numel(vXgridOld) numel(vYgridOld) numel(vZgridOld)]);
+      tmpCube              = zeros([numel(vYgridOld) numel(vXgridOld) numel(vZgridOld)]);
       tmpCube(cst{i,4}{j}) = 1;
       cst{i,4}{j}          = find(matRad_interp3(vXgridOld,vYgridOld,vZgridOld, ...
                                                  tmpCube, ...
