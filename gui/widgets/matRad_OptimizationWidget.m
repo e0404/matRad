@@ -140,25 +140,26 @@ classdef matRad_OptimizationWidget < matRad_Widget
             %Setup Headlines
             xPos = 0.01; %5
             
-            h = uicontrol(cstPanel,'Style','text','String','+/-','Units','normalized','Position',[xPos ypos(cnt) buttonW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'TooltipString','Remove or add Constraint or Objective','BackgroundColor',matRad_cfg.gui.backgroundColor,'ForegroundColor',matRad_cfg.gui.textColor);
+            h = uicontrol(cstPanel,'Style','text','String','+/-','Units','normalized','Position',[xPos ypos(cnt) buttonW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'Tooltip','Remove or add Constraint or Objective','BackgroundColor',matRad_cfg.gui.backgroundColor,'ForegroundColor',matRad_cfg.gui.textColor);
             tmp_pos = get(h,'Position');
             xPos = xPos + tmp_pos(3) + fieldSep;
-            h = uicontrol(cstPanel,'Style','text','String','VOI name','Units','normalized','Position',[xPos ypos(cnt) nameW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'TooltipString','Name of the structure with objective/constraint','BackgroundColor',matRad_cfg.gui.backgroundColor,'ForegroundColor',matRad_cfg.gui.textColor);
+            h = uicontrol(cstPanel,'Style','text','String','VOI name','Units','normalized','Position',[xPos ypos(cnt) nameW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'Tooltip','Name of the structure with objective/constraint','BackgroundColor',matRad_cfg.gui.backgroundColor,'ForegroundColor',matRad_cfg.gui.textColor);
             tmp_pos = get(h,'Position');
             xPos = xPos + tmp_pos(3) + fieldSep;
-            h = uicontrol(cstPanel,'Style','text','String','VOI type','Units','normalized','Position',[xPos ypos(cnt) typeW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'TooltipString','Segmentation Classification','BackgroundColor',matRad_cfg.gui.backgroundColor,'ForegroundColor',matRad_cfg.gui.textColor);
+            h = uicontrol(cstPanel,'Style','text','String','VOI type','Units','normalized','Position',[xPos ypos(cnt) typeW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'Tooltip','Segmentation Classification','BackgroundColor',matRad_cfg.gui.backgroundColor,'ForegroundColor',matRad_cfg.gui.textColor);
             tmp_pos = get(h,'Position');
             xPos = xPos + tmp_pos(3) + fieldSep;
-            h = uicontrol(cstPanel,'Style','text','String','OP','Units','normalized','Position',[xPos ypos(cnt) opW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'TooltipString',['Overlap Priority' char(10) '(Smaller number overlaps higher number)'],'BackgroundColor',matRad_cfg.gui.backgroundColor,'ForegroundColor',matRad_cfg.gui.textColor);
+            txt = sprintf('Overlap Priority\n(Smaller number overlaps higher number)');
+            h = uicontrol(cstPanel,'Style','text','String','OP','Units','normalized','Position',[xPos ypos(cnt) opW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'Tooltip',txt,'BackgroundColor',matRad_cfg.gui.backgroundColor,'ForegroundColor',matRad_cfg.gui.textColor);
             tmp_pos = get(h,'Position');
             xPos = xPos + tmp_pos(3) + fieldSep;
-            h = uicontrol(cstPanel,'Style','text','String','Function','Units','normalized','Position',[xPos ypos(cnt) functionW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'TooltipString','Objective/Constraint function type','BackgroundColor',matRad_cfg.gui.backgroundColor,'ForegroundColor',matRad_cfg.gui.textColor);
+            h = uicontrol(cstPanel,'Style','text','String','Function','Units','normalized','Position',[xPos ypos(cnt) functionW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'Tooltip','Objective/Constraint function type','BackgroundColor',matRad_cfg.gui.backgroundColor,'ForegroundColor',matRad_cfg.gui.textColor);
             tmp_pos = get(h,'Position');
             xPos = xPos + tmp_pos(3) + fieldSep;
-            h = uicontrol(cstPanel,'Style','text','String','p','Units','normalized','Position',[xPos ypos(cnt) penaltyW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'TooltipString','Optimization penalty','BackgroundColor',matRad_cfg.gui.backgroundColor,'ForegroundColor',matRad_cfg.gui.textColor);
+            h = uicontrol(cstPanel,'Style','text','String','p','Units','normalized','Position',[xPos ypos(cnt) penaltyW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'Tooltip','Optimization penalty','BackgroundColor',matRad_cfg.gui.backgroundColor,'ForegroundColor',matRad_cfg.gui.textColor);
             tmp_pos = get(h,'Position');
             xPos = xPos + tmp_pos(3) + fieldSep;
-            h = uicontrol(cstPanel,'Style','text','String','| Parameters','Units','normalized','Position',[xPos ypos(cnt) paramTitleW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'TooltipString','List of parameters','HorizontalAlignment','left','BackgroundColor',matRad_cfg.gui.backgroundColor,'ForegroundColor',matRad_cfg.gui.textColor);
+            h = uicontrol(cstPanel,'Style','text','String','| Parameters','Units','normalized','Position',[xPos ypos(cnt) paramTitleW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'Tooltip','List of parameters','HorizontalAlignment','left','BackgroundColor',matRad_cfg.gui.backgroundColor,'ForegroundColor',matRad_cfg.gui.textColor);
             tmp_pos = get(h,'Position');
             xPos = xPos + tmp_pos(3) + fieldSep;
             cnt = cnt + 1;
@@ -186,32 +187,33 @@ classdef matRad_OptimizationWidget < matRad_Widget
                         
                         xPos = 0.01;%5;
                         
-                        h = uicontrol(cstPanel,'Style','pushbutton','String','-','Units','normalized','Position',[xPos ypos(cnt) buttonW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'FontName',matRad_cfg.gui.fontName,'FontWeight',matRad_cfg.gui.fontWeight,'BackgroundColor',matRad_cfg.gui.elementColor,'ForegroundColor',matRad_cfg.gui.textColor,'TooltipString','Remove Objective/Constraint','Callback',@(hObject,eventdata)btObjRemove_Callback(this,hObject,eventdata),...
+                        h = uicontrol(cstPanel,'Style','pushbutton','String','-','Units','normalized','Position',[xPos ypos(cnt) buttonW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'FontName',matRad_cfg.gui.fontName,'FontWeight',matRad_cfg.gui.fontWeight,'BackgroundColor',matRad_cfg.gui.elementColor,'ForegroundColor',matRad_cfg.gui.textColor,'Tooltip','Remove Objective/Constraint','Callback',@(hObject,eventdata)btObjRemove_Callback(this,hObject,eventdata),...
                             'UserData',[i,j]);
                         tmp_pos = get(h,'Position');
                         xPos = xPos + tmp_pos(3) + fieldSep;
-                        h = uicontrol(cstPanel','Style','edit','String',cst{i,2},'Units','normalized','Position',[xPos ypos(cnt) nameW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'FontName',matRad_cfg.gui.fontName,'FontWeight',matRad_cfg.gui.fontWeight,'BackgroundColor',matRad_cfg.gui.elementColor,'ForegroundColor',matRad_cfg.gui.textColor,'TooltipString','Name',...
+                        h = uicontrol(cstPanel','Style','edit','String',cst{i,2},'Units','normalized','Position',[xPos ypos(cnt) nameW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'FontName',matRad_cfg.gui.fontName,'FontWeight',matRad_cfg.gui.fontWeight,'BackgroundColor',matRad_cfg.gui.elementColor,'ForegroundColor',matRad_cfg.gui.textColor,'Tooltip','Name',...
                             'Enable','inactive',... %Disable editing of name atm
                             'UserData',[i,2],'Callback',@(hObject,eventdata)editCstParams_Callback(this,hObject,eventdata)); %Callback added, however, editing is disabled atm
                         tmp_pos = get(h,'Position');
                         xPos = xPos + tmp_pos(3) + fieldSep;
-                        h = uicontrol(cstPanel,'Style','popupmenu','String',organTypes','Value',find(strcmp(cst{i,3},organTypes)),'Units','normalized','Position',[xPos ypos(cnt) typeW objHeight],'FontSize',matRad_cfg.gui.fontSize,'FontName',matRad_cfg.gui.fontName,'FontWeight',matRad_cfg.gui.fontWeight,'BackgroundColor',matRad_cfg.gui.elementColor,'ForegroundColor',matRad_cfg.gui.textColor,'TooltipString','Segmentation Classification',...
+                        h = uicontrol(cstPanel,'Style','popupmenu','String',organTypes','Value',find(strcmp(cst{i,3},organTypes)),'Units','normalized','Position',[xPos ypos(cnt) typeW objHeight],'FontSize',matRad_cfg.gui.fontSize,'FontName',matRad_cfg.gui.fontName,'FontWeight',matRad_cfg.gui.fontWeight,'BackgroundColor',matRad_cfg.gui.elementColor,'ForegroundColor',matRad_cfg.gui.textColor,'Tooltip','Segmentation Classification',...
                             'UserData',[i,3],'Callback',@(hObject,eventdata)editCstParams_Callback(this,hObject,eventdata));
                         tmp_pos = get(h,'Position');
                         xPos = xPos + tmp_pos(3) + fieldSep;
-                        h = uicontrol(cstPanel,'Style','edit','String',num2str(cst{i,5}.Priority),'Units','normalized','Position',[xPos ypos(cnt) opW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'FontName',matRad_cfg.gui.fontName,'FontWeight',matRad_cfg.gui.fontWeight,'BackgroundColor',matRad_cfg.gui.elementColor,'ForegroundColor',matRad_cfg.gui.textColor,'TooltipString',['Overlap Priority' newline '(Smaller number overlaps higher number)'],...
+                        txt = sprintf('Overlap Priority\n(Smaller number overlaps higher number)');
+                        h = uicontrol(cstPanel,'Style','edit','String',num2str(cst{i,5}.Priority),'Units','normalized','Position',[xPos ypos(cnt) opW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'FontName',matRad_cfg.gui.fontName,'FontWeight',matRad_cfg.gui.fontWeight,'BackgroundColor',matRad_cfg.gui.elementColor,'ForegroundColor',matRad_cfg.gui.textColor,'Tooltip',txt,...
                             'UserData',[i,5],'Callback',@(hObject,eventdata)editCstParams_Callback(this,hObject,eventdata));
                         tmp_pos = get(h,'Position');
                         xPos = xPos + tmp_pos(3) + fieldSep;
                         
-                        h = uicontrol(cstPanel,'Style','popupmenu','String',classNames(2,:)','Value',find(strcmp(obj.name,classNames(2,:))),'Units','normalized','Position',[xPos ypos(cnt) functionW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'FontName',matRad_cfg.gui.fontName,'FontWeight',matRad_cfg.gui.fontWeight,'BackgroundColor',matRad_cfg.gui.elementColor,'ForegroundColor',matRad_cfg.gui.textColor,'TooltipString','Select Objective/Constraint',...
+                        h = uicontrol(cstPanel,'Style','popupmenu','String',classNames(2,:)','Value',find(strcmp(obj.name,classNames(2,:))),'Units','normalized','Position',[xPos ypos(cnt) functionW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'FontName',matRad_cfg.gui.fontName,'FontWeight',matRad_cfg.gui.fontWeight,'BackgroundColor',matRad_cfg.gui.elementColor,'ForegroundColor',matRad_cfg.gui.textColor,'Tooltip','Select Objective/Constraint',...
                             'UserData',{[i,j],classNames(1,:)},'Callback',@(hObject,eventdata)changeObjFunction_Callback(this,hObject,eventdata));
                         tmp_pos = get(h,'Position');
                         xPos = xPos + tmp_pos(3) + fieldSep;
                         
                         %Check if we have an objective to display penalty
                         if isa(obj,'DoseObjectives.matRad_DoseObjective')
-                            h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.penalty),'Units','normalized','Position',[xPos ypos(cnt) penaltyW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'FontName',matRad_cfg.gui.fontName,'FontWeight',matRad_cfg.gui.fontWeight,'BackgroundColor',matRad_cfg.gui.elementColor,'ForegroundColor',matRad_cfg.gui.textColor,'TooltipString','Objective Penalty','UserData',[i,j,0],...
+                            h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.penalty),'Units','normalized','Position',[xPos ypos(cnt) penaltyW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'FontName',matRad_cfg.gui.fontName,'FontWeight',matRad_cfg.gui.fontWeight,'BackgroundColor',matRad_cfg.gui.elementColor,'ForegroundColor',matRad_cfg.gui.textColor,'Tooltip','Objective Penalty','UserData',[i,j,0],...
                                 'Callback',@(hObject,eventdata)editObjParam_Callback(this,hObject,eventdata));
                         else
                             h = uicontrol(cstPanel,'Style','edit','String','----','Units','normalized','Position',[xPos ypos(cnt) penaltyW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'FontName',matRad_cfg.gui.fontName,'FontWeight',matRad_cfg.gui.fontWeight,'BackgroundColor',matRad_cfg.gui.elementColor,'ForegroundColor',matRad_cfg.gui.textColor,'Enable','off');
@@ -230,10 +232,10 @@ classdef matRad_OptimizationWidget < matRad_Widget
                             
                             %Check if we have a cell and therefore a parameter list
                             if iscell(obj.parameterTypes{p})
-                                h = uicontrol(cstPanel,'Style','popupmenu','String',obj.parameterTypes{p}','Value',obj.parameters{p},'TooltipString',obj.parameterNames{p},'Units','normalized','Position',[xPos ypos(cnt) paramW*2 objHeight], 'FontSize',matRad_cfg.gui.fontSize,'FontName',matRad_cfg.gui.fontName,'FontWeight',matRad_cfg.gui.fontWeight,'BackgroundColor',matRad_cfg.gui.elementColor,'ForegroundColor',matRad_cfg.gui.textColor,'UserData',[i,j,p],...
+                                h = uicontrol(cstPanel,'Style','popupmenu','String',obj.parameterTypes{p}','Value',obj.parameters{p},'Tooltip',obj.parameterNames{p},'Units','normalized','Position',[xPos ypos(cnt) paramW*2 objHeight], 'FontSize',matRad_cfg.gui.fontSize,'FontName',matRad_cfg.gui.fontName,'FontWeight',matRad_cfg.gui.fontWeight,'BackgroundColor',matRad_cfg.gui.elementColor,'ForegroundColor',matRad_cfg.gui.textColor,'UserData',[i,j,p],...
                                     'Callback',@(hObject,eventdata)editObjParam_Callback(this,hObject,eventdata));
                             else
-                                h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.parameters{p}),'TooltipString',obj.parameterNames{p},'Units','normalized','Position',[xPos ypos(cnt) paramW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'FontName',matRad_cfg.gui.fontName,'FontWeight',matRad_cfg.gui.fontWeight,'BackgroundColor',matRad_cfg.gui.elementColor,'ForegroundColor',matRad_cfg.gui.textColor,'UserData',[i,j,p],...
+                                h = uicontrol(cstPanel,'Style','edit','String',num2str(obj.parameters{p}),'Tooltip',obj.parameterNames{p},'Units','normalized','Position',[xPos ypos(cnt) paramW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'FontName',matRad_cfg.gui.fontName,'FontWeight',matRad_cfg.gui.fontWeight,'BackgroundColor',matRad_cfg.gui.elementColor,'ForegroundColor',matRad_cfg.gui.textColor,'UserData',[i,j,p],...
                                     'Callback',@(hObject,eventdata)editObjParam_Callback(this,hObject,eventdata));
                             end
                             
@@ -247,10 +249,11 @@ classdef matRad_OptimizationWidget < matRad_Widget
             end
             xPos = 0.01; %5
             hAdd = uicontrol(cstPanel,'Style','pushbutton','String','+','Units','normalized','Position',[xPos ypos(cnt) buttonW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'FontName',matRad_cfg.gui.fontName,'FontWeight',matRad_cfg.gui.fontWeight,'BackgroundColor',matRad_cfg.gui.elementColor,'ForegroundColor',matRad_cfg.gui.textColor,...
-                'TooltipString','Add Objective/Constraint','Callback',@(hObject,eventdata)btObjAdd_Callback(this,hObject,eventdata)); %{@btObjAdd_Callback,handles});
+                'Tooltip','Add Objective/Constraint','Callback',@(hObject,eventdata)btObjAdd_Callback(this,hObject,eventdata)); %{@btObjAdd_Callback,handles});
             tmp_pos = get(hAdd,'Position');
             xPos = xPos + tmp_pos(3) + fieldSep;
-            h = uicontrol(cstPanel,'Style','popupmenu','String',cst(:,2)','Units','normalized','Position',[xPos ypos(cnt) nameW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'FontName',matRad_cfg.gui.fontName,'FontWeight',matRad_cfg.gui.fontWeight,'BackgroundColor',matRad_cfg.gui.backgroundColor,'ForegroundColor',matRad_cfg.gui.textColor);
+            h = uicontrol(cstPanel,'Style','popupmenu','String',cst(:,2)','Units','normalized','Position',[xPos ypos(cnt) nameW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'FontName',matRad_cfg.gui.fontName,'FontWeight',matRad_cfg.gui.fontWeight,'BackgroundColor',matRad_cfg.gui.backgroundColor,'ForegroundColor',matRad_cfg.gui.textColor,...
+                'Tooltip','String describing the VOI');
             set(hAdd,'UserData',h);
             
             %Calculate Scrollbar
