@@ -46,8 +46,11 @@ beamInfo(dij.numOfBeams+1).logIx  = true(size(w));
 %
 
 % compute physical dose for all beams individually and together
-for i = 1:length(beamInfo)
-    resultGUI.(['physicalDose', beamInfo(i).suffix]) = reshape(full(dij.physicalDose{scenNum} * (resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
+scenNumNom = 1;  % calculate beam dose only for the nominal scenario
+for ixScen = scenNumNom
+   for i = 1:length(beamInfo)
+      resultGUI.(['physicalDose', beamInfo(i).suffix]) = reshape(full(dij.physicalDose{ixScen} * (resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
+   end
 end
 
 % consider RBE for protons

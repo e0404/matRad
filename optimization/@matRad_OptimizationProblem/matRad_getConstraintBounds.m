@@ -65,10 +65,9 @@ for  i = 1:size(cst,1)
             %if ~isempty(strfind(cst{i,6}{j}.type,'constraint'))
             if isa(optiFunc,'DoseConstraints.matRad_DoseConstraint')
                 
-                
                 if isEffectBP
-                    doses = optiFunc.getDoseParameters();
-                
+                   
+                    doses  = optiFunc.getDoseParameters();
                     effect = cst{i,5}.alphaX*doses + cst{i,5}.betaX*doses.^2;
                     
                     optiFunc = optiFunc.setDoseParameters(effect);
