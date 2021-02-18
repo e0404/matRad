@@ -74,7 +74,7 @@ env = matRad_getEnvironment();
 matRad_calcDoseInit;
 
 % fill bixels, rays and beams in case of dij calculation
-if ~calcDoseDirect
+%if ~calcDoseDirect
     counter = 1;
     for f = 1:dij.numOfBeams
         for r = 1:stf(f).numOfRays
@@ -86,7 +86,7 @@ if ~calcDoseDirect
             end
         end
     end
-end
+%end
 
 % for TOPAS we explicitly downsample the ct to the dose grid (might not
 % be necessary in future versions with separated grids)
