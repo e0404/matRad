@@ -206,6 +206,9 @@ for i = 1:length(stf) % loop over all beams
                     vTissueIndex_j = vTissueIndex(ix,:);
             end
             
+            % calculate initial sigma for all bixel on current ray
+            sigmaIniRay = matRad_calcSigmaIni(machine.data,stf(i).ray(j),stf(i).ray(j).SSD);
+
             for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
 
                 counter = counter + 1;
@@ -284,11 +287,9 @@ for i = 1:length(stf) % loop over all beams
                     % adjust radDepth according to range shifter
                     currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness;
 
-                    % calculate initial focus sigma
-                    sigmaIni = matRad_interp1(machine.data(energyIx).initFocus.dist (stf(i).ray(j).focusIx(k),:)', ...
-                                                 machine.data(energyIx).initFocus.sigma(stf(i).ray(j).focusIx(k),:)',stf(i).ray(j).SSD);
-                    sigmaIni_sq = sigmaIni^2;
-
+                    % select correct initial focus sigma squared
+                    sigmaIni_sq = sigmaIniRay(k)^2;
+                          
                     % consider range shifter for protons if applicable
                     if stf(i).ray(j).rangeShifter(k).eqThickness > 0 && strcmp(pln.radiationMode,'protons')
 
