@@ -226,7 +226,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                     dij.MC_tallies = fnames;
                     
                     if calcDoseDirect
-                        if ~isfield(topasCubes,'RBE')
+                        if ~isfield(topasCubes,'RBE_beam1')
                             for f = 1:numel(fnames)
                                 dij.(fnames{f}){ctScen,1} = sum(w(:,ctScen))*reshape(topasCubes.(fnames{f}),[],1);
                             end

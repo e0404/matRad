@@ -38,6 +38,8 @@ if calcDoseDirect
             
             if strcmp(tname,'physicalDose')
                 topasSum = correctionFactor.*topasSum;
+            elseif strcmp(tname,'alpha') || strcmp(tname,'beta') || strcmp(tname,'RBE')
+                topasSum = topasSum./ MCparam.nbRuns;
             end
             
             % Tally per field
@@ -45,9 +47,12 @@ if calcDoseDirect
             
             % Accumulate over the fields
             topasTally = topasTally + topasSum;
+            
         end
         
-        topasCube.(tname) = topasTally;
+        if ~(strcmp(tname,'alpha') || strcmp(tname,'beta') || strcmp(tname,'RBE'))
+            topasCube.(tname) = topasTally;
+        end
     end
 else % if topas dij calculation
     for t = 1:length(MCparam.tallies)
