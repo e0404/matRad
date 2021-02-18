@@ -37,12 +37,20 @@ end
 resultGUI.w = w;
 
 % get bixel - beam correspondence  
-for i = 1:dij.numOfBeams
-    beamInfo(i).suffix = ['_beam', num2str(i)];
-    beamInfo(i).logIx  = (dij.beamNum == i);      
+if all(w == 1)
+    for i = 1:dij.numOfBeams
+        beamInfo(i).suffix = ['_beam', num2str(i)];
+        beamInfo(i).logIx  = 1;
+    end
+    resultGUI.w = 1;
+else
+    for i = 1:dij.numOfBeams
+        beamInfo(i).suffix = ['_beam', num2str(i)];
+        beamInfo(i).logIx  = (dij.beamNum == i);
+    end
 end
-beamInfo(dij.numOfBeams+1).suffix = '';
-beamInfo(dij.numOfBeams+1).logIx  = true(size(w));
+    beamInfo(dij.numOfBeams+1).suffix = '';
+    beamInfo(dij.numOfBeams+1).logIx  = true(size(resultGUI.w));
 %
 
 % compute physical dose for all beams individually and together
