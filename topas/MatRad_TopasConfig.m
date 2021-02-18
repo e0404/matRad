@@ -435,8 +435,22 @@ classdef MatRad_TopasConfig < handle
                     historyCount(beamIx) = uint32(obj.fracHistories * nBeamParticlesTotal(beamIx) / obj.numOfRuns);
                 end
                 
-                if historyCount < cutNumOfBixel || cutNumOfBixel == 0
+                if historyCount(beamIx) < cutNumOfBixel || cutNumOfBixel == 0
                     obj.matRad_cfg.dispError('Insufficient number of histories!')
+                end
+                
+                while sum([dataTOPAS.current]) ~= historyCount(beamIx)
+                    randIx = randi([1 length(dataTOPAS)],1,abs(sum([dataTOPAS(:).current]) - historyCount(beamIx)));
+
+                    if (sum([dataTOPAS(:).current]) > historyCount(beamIx))
+                        for i = randIx
+                            dataTOPAS(i).current = dataTOPAS(i).current - 1;
+                        end
+                    else
+                        for i = randIx
+                            dataTOPAS(i).current = dataTOPAS(i).current + 1;
+                        end
+                    end                   
                 end
                 
                 while sum([dataTOPAS.current]) ~= historyCount(beamIx)
