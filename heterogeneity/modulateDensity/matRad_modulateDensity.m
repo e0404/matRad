@@ -1,4 +1,4 @@
-function [ct]=matRad_modulateDensity(ct,cst,pln,Pmod,mode)
+function [ct] = matRad_modulateDensity(ct,cst,pln,Pmod,mode)
 % matRad density modulation function
 %
 % call
@@ -35,7 +35,7 @@ global matRad_cfg;
 matRad_cfg =  MatRad_Config.instance();
 
 if nargin < 5
-    mode = 'binominal';
+    mode = 'binomial';
 end
 
 % get all unique tumor indices from PTV segmentations
@@ -59,7 +59,7 @@ if ~isfield(ct,'cube')
     ct = matRad_calcWaterEqD(ct,pln);
 end
 
-if strcmp(mode, 'binominal')
+if strcmp(mode, 'binomial')
      
     %pLung = 0.26;
     %pLung = 0.4;
@@ -87,21 +87,22 @@ elseif strcmp(mode, 'poisson')
     DensMod(:,4)=DensMod(:,2);
     
     %normalize density distribution
-    DensMod(:,4) = DensMod(:,4) / sum(DensMod(:,4));
+%     DensMod(:,4) = DensMod(:,4) / sum(DensMod(:,4));
     
     %Connect each density-probability-couple with a number that will later be transformed the HU-Value:
     %The maximum HU-Value of the HU set by Schneider etal is 2995: So the HU of the modulated density must be at least 2995+1=2996 ; This values is prerocessed with the later used RescaleIntercept and RescaleSlope. See also calculation for Threshold_HU_Value_to_double.
-    Min_HU_for_DensMod_in_double=((2995+1000)/1);
+%     Min_HU_for_DensMod_in_double=((2995+1000)/1);
     
     %HU as double in row 2:
-    DensMod(:,2) = (Min_HU_for_DensMod_in_double+1:Min_HU_for_DensMod_in_double+length(DensMod))';
+%     DensMod(:,2) = (Min_HU_for_DensMod_in_double+1:Min_HU_for_DensMod_in_double+length(DensMod))';
     %Real HU values in row 3:
-    DensMod(:,3) = (Min_HU_for_DensMod_in_double+1:Min_HU_for_DensMod_in_double+length(DensMod))'-1000;
+%     DensMod(:,3) = (Min_HU_for_DensMod_in_double+1:Min_HU_for_DensMod_in_double+length(DensMod))'-1000;
     
     % descrete sampling of the density distribution
     P = [0; cumsum(DensMod(:,4))];
-    ct.cube{1}(lungIdx) = discretize(rand(numel(lungIdx),1),P);
     
+    samples = discretize(rand(numel(lungIdx),1),P);
+    ct.cube{1}(lungIdx) = samples / max(samples);
 end
 
 ct.cubeHU{1}(lungIdx) = 1024*(ct.cube{1}(lungIdx)-1);
