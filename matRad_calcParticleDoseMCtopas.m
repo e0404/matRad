@@ -117,7 +117,7 @@ topasConfig = MatRad_TopasConfig();
 % Create Base Data
 if isstruct(machine.data(i).Z)
     for i = 1:length(machine.data)
-        machine.data(i).Z = machine.data(i).Z.profileORG;
+        machine.data(i).Z = machine.data(i).Z.doseORG;
     end
 end
 topasBaseData = MatRad_TopasBaseData(machine,stf);%,TopasConfig);
