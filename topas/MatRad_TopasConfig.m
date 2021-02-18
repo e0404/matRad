@@ -91,7 +91,8 @@ classdef MatRad_TopasConfig < handle
         outfilenames = struct(  'patientParam','matRad_cube.txt',...
                                 'patientCube','matRad_cube.dat');
                                 
-        infilenames = struct(   'geometry','TOPAS_matRad_geometry.txt.in',...                               
+        infilenames = struct(   'geometry','TOPAS_matRad_geometry.txt.in',...
+                                'matConv_Schneider_mod','TOPAS_materialConverter_SchneiderModulation.txt.in',...
                                 'surfaceScorer','TOPAS_scorer_surfaceIC.txt.in',...
                                 'doseScorer','TOPAS_scorer_dose.txt.in',...
                                 'doseScorerRBE','TOPAS_scorer_doseRBE_LEM1.txt.in',...
@@ -754,8 +755,11 @@ classdef MatRad_TopasConfig < handle
                 permutation = [2 1 3];
             end
             
-                        
-            cubeExport = obj.materialConversion; %'RSP'; %'HUSchneiderToWater';
+            if isfield(pln.propMC,'materialConverter')
+                cubeExport = pln.propMC.materialConverter;
+            else
+                cubeExport = obj.materialConversion; %'RSP'; %'HUSchneiderToWater';
+            end
             checkMaterial = false;
             rspCubeMethod = obj.rsp_methodCube; 
             
@@ -949,6 +953,42 @@ classdef MatRad_TopasConfig < handle
                     fwrite(fID,huCube,'short');
                     fclose(fID);
                     cube = huCube;
+                case 'HUToWaterSchneider_mod'
+                    huCube = int32(permute(ct.cubeHU{1},permutation));
+                    
+                    rspHlut = matRad_readHLUT('matRad_default.hlut');
+                   
+                    %Write the Patient
+                    fprintf(fID,'s:Ge/Patient/Parent="World"\n');
+                    fprintf(fID,'s:Ge/Patient/Type = "TsImageCube"\n');
+                    fprintf(fID,'b:Ge/Patient/DumpImagingValues = "True"\n');
+                    fprintf(fID,'s:Ge/Patient/InputDirectory = "./"\n');
+                    fprintf(fID,'s:Ge/Patient/InputFile = "%s"\n',dataFile);
+                    fprintf(fID,'s:Ge/Patient/ImagingtoMaterialConverter = "Schneider"\n');
+                    fprintf(fID,'i:Ge/Patient/NumberOfVoxelsX = %d\n',ct.cubeDim(2));
+                    fprintf(fID,'i:Ge/Patient/NumberOfVoxelsY = %d\n',ct.cubeDim(1));
+                    fprintf(fID,'iv:Ge/Patient/NumberOfVoxelsZ = 1 %d\n',ct.cubeDim(3));
+                    fprintf(fID,'d:Ge/Patient/VoxelSizeX       = %.3f mm\n',ct.resolution.x);
+                    fprintf(fID,'d:Ge/Patient/VoxelSizeY       = %.3f mm\n',ct.resolution.y);
+                    fprintf(fID,'dv:Ge/Patient/VoxelSizeZ       = 1 %.3f mm\n',ct.resolution.z);
+                    fprintf(fID,'s:Ge/Patient/DataType  = "SHORT"\n');
+                    
+                    %Write the Schneider Converter
+                    fprintf(fID,'i:Ge/Patient/MinImagingValue = %d\n',rspHlut(1,1));
+                    
+                    fname = fullfile(obj.thisFolder,obj.infilenames.matConv_Schneider_mod);
+                    obj.matRad_cfg.dispInfo('Reading modulation Schneider Converter from %s\n',fname);
+                    matConv_mod = fileread(fname);
+                    fprintf(fID,'%s\n',matConv_mod);
+
+                    fclose(fID);
+                    
+                    % write data
+                    fID = fopen(fullfile(obj.workingDir, dataFile),'w');
+                    fwrite(fID,huCube,'short');
+                    fclose(fID);
+                    cube = huCube;    
+                    
                 otherwise
                     obj.matRad_cfg.dispError('Material Conversion rule "%s" not implemented (yet)!\n',cubeExport);                    
             end
