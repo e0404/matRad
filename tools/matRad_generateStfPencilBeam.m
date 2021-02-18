@@ -37,6 +37,7 @@ if numel(pln.propStf.gantryAngles) ~= numel(pln.propStf.couchAngles)
 end
 
 SAD = machine.meta.SAD;
+% pln.propStf.bixelWidth = 5;
 currentMinimumFWHM = matRad_interp1(machine.meta.LUT_bxWidthminFWHM(1,:)', machine.meta.LUT_bxWidthminFWHM(2,:)',pln.propStf.bixelWidth);
 
 for i = 1:length(pln.propStf.gantryAngles)
@@ -74,6 +75,9 @@ for i = 1:length(pln.propStf.gantryAngles)
     
     % generate ray
     stf(i).ray.energy = machine.data(energyIx).energy;
+    if max(machine.data(energyIx).initFocus.SisFWHMAtIso) < currentMinimumFWHM
+        currentMinimumFWHM = max(machine.data(energyIx).initFocus.SisFWHMAtIso) - 1;
+    end
     stf(i).ray.focusIx = find(machine.data(energyIx).initFocus.SisFWHMAtIso > currentMinimumFWHM,1,'first');
     stf(i).ray.rangeShifter = struct;
     stf(i).ray.rangeShifter.ID = 0;
