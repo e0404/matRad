@@ -10,7 +10,7 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
         alpha {mustBeNumeric, mustBePositive, mustBeLessThan(alpha, 1)} = 0.99;
         lambda {mustBeNumeric, mustBePositive, mustBeLessThan(lambda, 200)} = 1.9;
         feasibility_seeker {mustBeMember(feasibility_seeker, {'AMS_sim', 'AMS_sequential'})} = 'AMS_sim';
-        control_sequence {mustBeMember(control_sequence, {'sequential', 'random', 'weight'})} = 'random';
+        control_sequence {mustBeMember(control_sequence, {'sequential', 'random', 'weight', 'weight_inv'})} = 'random';
         tol_obj {mustBeNumeric}            = 1e-6;
         tol_violation {mustBeNumeric}      = 1e-6;
         tol_max_violation {mustBeNumeric}   = 1e-3;
@@ -370,6 +370,9 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
                 cycle = 1:size(A, 2);
             elseif strcmp(obj.control_sequence, 'weight')
                 [~,cycle] = sort(weights);
+                cycle = cycle';
+            elseif strcmp(obj.control_sequence, 'weight_inv')
+                [~,cycle] = sort(weights,'descend');
                 cycle = cycle';
             end
             
