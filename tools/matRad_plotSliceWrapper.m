@@ -158,7 +158,8 @@ elseif  plane == 3 % Axial plane
       res = [ratios(2) ratios(1)]./max([ratios(2) ratios(1)]);  
       set(axesHandle,'DataAspectRatio',[res 1])
 end
-
+%xlim([15 35])
+%ylim([0 150])
 hCMap = matRad_plotColorbar(axesHandle,doseColorMap,doseWindow,'Location','EastOutside');
 if ~isempty(colorBarLabel)
     set(get(hCMap,'YLabel'),'String', colorBarLabel,'FontSize',14);
