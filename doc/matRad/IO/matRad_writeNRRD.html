@@ -1,0 +1,305 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_writeNRRD</title>
+  <meta name="keywords" content="matRad_writeNRRD">
+  <meta name="description" content="matRad NRRD writer">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html IO -->
+<h1>matRad_writeNRRD
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad NRRD writer</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function matRad_writeNRRD(filename,cube,metadata) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad NRRD writer
+ 
+ call
+   matRad_writeNRRD(filename,cube,datatype,...
+                    additionalFields,additionalKeyValuePairs)
+
+ input
+   filename:   full output path, including the nrrd extension
+   cube:       cube that is to be written
+   metadata:   struct of metadata. Writer will wrap the existing metadata 
+               to nrrd standard-specific fields [1].
+
+ References
+   [1] http://teem.sourceforge.net/nrrd/format.html5
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_writeCube.html" class="code" title="function [saved_metadata] = matRad_writeCube(filepath,cube,datatype,metadata)">matRad_writeCube</a>	matRad wrapper for Cube export</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>Subfunctions <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<ul style="list-style-type:disc">
+<li><a href="#_sub1" class="code">function newHeader = header_addComment(header,comment)</a></li><li><a href="#_sub2" class="code">function newHeader = header_addField(header,fieldName,fieldDescription)</a></li><li><a href="#_sub3" class="code">function newHeader = header_addKeyValuePair(header,key,value)</a></li><li><a href="#_sub4" class="code">function strOutput = vec2str(V)</a></li><li><a href="#_sub5" class="code">function strOutput = matVec2nrrdVec(V)</a></li><li><a href="#_sub6" class="code">function newType = matlabTypeToNRRD(datatype)</a></li></ul>
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function matRad_writeNRRD(filename,cube,metadata)</a>
+0002 <span class="comment">% matRad NRRD writer</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   matRad_writeNRRD(filename,cube,datatype,...</span>
+0006 <span class="comment">%                    additionalFields,additionalKeyValuePairs)</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% input</span>
+0009 <span class="comment">%   filename:   full output path, including the nrrd extension</span>
+0010 <span class="comment">%   cube:       cube that is to be written</span>
+0011 <span class="comment">%   metadata:   struct of metadata. Writer will wrap the existing metadata</span>
+0012 <span class="comment">%               to nrrd standard-specific fields [1].</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% References</span>
+0015 <span class="comment">%   [1] http://teem.sourceforge.net/nrrd/format.html5</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0022 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0023 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0024 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0025 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0026 <span class="comment">% LICENSE file.</span>
+0027 <span class="comment">%</span>
+0028 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0029     
+0030 <span class="comment">%% Setup Header</span>
+0031 <span class="comment">%The NRRD header description line</span>
+0032 version = 5;
+0033 nrrdVersionStringPrefix = <span class="string">'NRRD000'</span>;
+0034 nrrdVersionString = [nrrdVersionStringPrefix num2str(version)];
+0035 
+0036 header = sprintf(<span class="string">'%s\n'</span>,nrrdVersionString);
+0037 
+0038 <span class="comment">%add matRad specific comment</span>
+0039 header = <a href="#_sub1" class="code" title="subfunction newHeader = header_addComment(header,comment)">header_addComment</a>(header,<span class="string">'Created With matRad - An open source multi-modality radiation treatment planning sytem'</span>);
+0040 
+0041 <span class="comment">%Add Datatype field</span>
+0042 header = <a href="#_sub2" class="code" title="subfunction newHeader = header_addField(header,fieldName,fieldDescription)">header_addField</a>(header,<span class="string">'type'</span>,<a href="#_sub6" class="code" title="subfunction newType = matlabTypeToNRRD(datatype)">matlabTypeToNRRD</a>(metadata.datatype));
+0043 <span class="comment">%NRRD wants to know how the bytes are aligned for datatypes &gt; 1 byte</span>
+0044 <span class="comment">%(little endian vs big endian)</span>
+0045 <span class="keyword">try</span>
+0046     z = zeros(1,metadata.datatype);
+0047     varInfo = whos(<span class="string">'z'</span>);
+0048     <span class="keyword">if</span> varInfo.bytes &gt; 1
+0049         [~,~,endian] = computer;
+0050         <span class="keyword">switch</span> endian
+0051             <span class="keyword">case</span> <span class="string">'L'</span>
+0052                 header = <a href="#_sub2" class="code" title="subfunction newHeader = header_addField(header,fieldName,fieldDescription)">header_addField</a>(header,<span class="string">'endian'</span>,<span class="string">'little'</span>);
+0053             <span class="keyword">case</span> <span class="string">'B'</span>
+0054                 header = <a href="#_sub2" class="code" title="subfunction newHeader = header_addField(header,fieldName,fieldDescription)">header_addField</a>(header,<span class="string">'endian'</span>,<span class="string">'big'</span>);
+0055             <span class="keyword">otherwise</span>
+0056                 error(<span class="string">'Unknown endian!'</span>);
+0057         <span class="keyword">end</span>
+0058     <span class="keyword">end</span>
+0059 <span class="keyword">catch</span>
+0060     error([<span class="string">'Unknown datatype: '</span> metadata.datatype']);
+0061 <span class="keyword">end</span>
+0062 
+0063 
+0064 <span class="comment">%Check if compression was defined</span>
+0065 <span class="keyword">if</span> ~isfield(metadata,<span class="string">'compress'</span>)
+0066     metadata.compress = false;
+0067 <span class="keyword">end</span>  
+0068 <span class="comment">%If we use compression, try to compress, otherwise use raw data</span>
+0069 <span class="keyword">if</span> metadata.compress
+0070     <span class="keyword">try</span>
+0071         <span class="comment">%We write a temporary file to gzip with matlab</span>
+0072         <span class="comment">%It might be also possible to do this with java directly as stream</span>
+0073         tmpRawFile = [tempname() <span class="string">'.bin'</span>];
+0074         fTmp = fopen(tmpRawFile, <span class="string">'wb'</span>);
+0075         
+0076         fwrite(fTmp,cube,metadata.datatype);
+0077         fclose(fTmp);
+0078         
+0079         <span class="comment">%Now zip the file</span>
+0080         fNameZip = gzip(tmpRawFile);
+0081         fNameZip = fNameZip{1};
+0082         
+0083         <span class="comment">%We need this to determine the file size</span>
+0084         fDir = dir(fNameZip);
+0085         
+0086         <span class="comment">%Read the zipped data</span>
+0087         fTmp = fopen(fNameZip, <span class="string">'rb'</span>);
+0088         fileData = fread(fTmp,fDir.bytes,<span class="string">'uint8'</span>);
+0089         fclose(fTmp);
+0090         <span class="comment">%Delete temporary files</span>
+0091         delete(tmpRawFile,fNameZip);
+0092         
+0093         <span class="comment">%Set the datatype to binary for writing the zipped data</span>
+0094         metadata.datatype = <span class="string">'uint8'</span>;
+0095         header = <a href="#_sub2" class="code" title="subfunction newHeader = header_addField(header,fieldName,fieldDescription)">header_addField</a>(header,<span class="string">'encoding'</span>,<span class="string">'gzip'</span>);
+0096     <span class="keyword">catch</span>
+0097         warn(<span class="string">'Could not open temporary file, writing without compression!'</span>);
+0098         header = <a href="#_sub2" class="code" title="subfunction newHeader = header_addField(header,fieldName,fieldDescription)">header_addField</a>(header,<span class="string">'encoding'</span>,<span class="string">'raw'</span>);
+0099         fileData = cube;
+0100     <span class="keyword">end</span>
+0101 <span class="keyword">else</span>
+0102     header = <a href="#_sub2" class="code" title="subfunction newHeader = header_addField(header,fieldName,fieldDescription)">header_addField</a>(header,<span class="string">'encoding'</span>,<span class="string">'raw'</span>);
+0103     fileData = cube;
+0104 <span class="keyword">end</span>
+0105 
+0106 
+0107 <span class="comment">%Dimensionality</span>
+0108 cubeDim = size(cube);
+0109 header = <a href="#_sub2" class="code" title="subfunction newHeader = header_addField(header,fieldName,fieldDescription)">header_addField</a>(header,<span class="string">'dimension'</span>,num2str(numel(cubeDim)));
+0110 strCubeDim = <a href="#_sub4" class="code" title="subfunction strOutput = vec2str(V)">vec2str</a>(cubeDim);
+0111 header = <a href="#_sub2" class="code" title="subfunction newHeader = header_addField(header,fieldName,fieldDescription)">header_addField</a>(header,<span class="string">'sizes'</span>,strCubeDim);
+0112 
+0113 <span class="comment">%Coordinate system - optional</span>
+0114 <span class="keyword">if</span> isfield(metadata,<span class="string">'coordinateSystem'</span>)
+0115     header = <a href="#_sub2" class="code" title="subfunction newHeader = header_addField(header,fieldName,fieldDescription)">header_addField</a>(header,<span class="string">'space'</span>,metadata.coordinateSystem);
+0116 <span class="keyword">end</span>
+0117 
+0118 <span class="comment">%Reference Point - optional</span>
+0119 <span class="keyword">if</span> isfield(metadata,<span class="string">'imageOrigin'</span>)
+0120     vecOrigin = <a href="#_sub5" class="code" title="subfunction strOutput = matVec2nrrdVec(V)">matVec2nrrdVec</a>(metadata.imageOrigin);
+0121     header = <a href="#_sub2" class="code" title="subfunction newHeader = header_addField(header,fieldName,fieldDescription)">header_addField</a>(header,<span class="string">'space origin'</span>,vecOrigin);
+0122 <span class="keyword">end</span>
+0123 
+0124 <span class="comment">%Axis permutation</span>
+0125 <span class="keyword">if</span> isfield(metadata,<span class="string">'resolution'</span>)
+0126     <span class="comment">%If we have more space information, write the space axis</span>
+0127     <span class="keyword">if</span> isfield(metadata,<span class="string">'axisPermutation'</span>)
+0128         strDirection = <span class="string">''</span>;
+0129         <span class="keyword">for</span> dim = 1:numel(cubeDim)
+0130             dimVec = zeros(1,numel(cubeDim));
+0131             dimVec(dim) = 1;
+0132             dimVec = dimVec(metadata.axisPermutation);
+0133             dimVec = dimVec .* metadata.resolution;
+0134             strDirection = [strDirection <a href="#_sub5" class="code" title="subfunction strOutput = matVec2nrrdVec(V)">matVec2nrrdVec</a>(dimVec) <span class="string">' '</span>];
+0135         <span class="keyword">end</span>
+0136         header = <a href="#_sub2" class="code" title="subfunction newHeader = header_addField(header,fieldName,fieldDescription)">header_addField</a>(header,<span class="string">'space directions'</span>,strDirection);
+0137     <span class="comment">%Otherwise only write resolution</span>
+0138     <span class="keyword">else</span>
+0139         strSpacings = <a href="#_sub4" class="code" title="subfunction strOutput = vec2str(V)">vec2str</a>(metadata.resolution);
+0140         header = <a href="#_sub2" class="code" title="subfunction newHeader = header_addField(header,fieldName,fieldDescription)">header_addField</a>(header,<span class="string">'spacings'</span>,strSpacings);
+0141     <span class="keyword">end</span>
+0142 <span class="keyword">end</span>       
+0143 
+0144 <span class="comment">%Additional key-value-pairs if present</span>
+0145 <span class="comment">%Will be added in a later release</span>
+0146 <span class="comment">%{</span>
+0147 <span class="keyword">if</span> nargin &gt; 3
+0148     keys = fieldnames(additionalKeyValuePairs);
+0149     <span class="keyword">for</span> f = 1:numel(fields)
+0150         key = keys{f};
+0151         value = additionalKeyValuePairs.(keys{f});
+0152         
+0153         <span class="comment">%Format the description to fit</span>
+0154         <span class="keyword">if</span> isvector(description)
+0155             value = mat2str(description);
+0156             value = description(2:end-1);
+0157         <span class="keyword">elseif</span> isnumeric(description)
+0158             value = num2str(description);
+0159         <span class="keyword">else</span> 
+0160      
+0161         <span class="keyword">end</span>
+0162         
+0163         <span class="keyword">if</span> and(~ischar(value),~iscellstr(value))
+0164             warning([<span class="string">'Cannot convert value for key '</span> key <span class="string">' to string, key-value-pair will be ignored!'</span>]);
+0165             <span class="keyword">continue</span>;
+0166         <span class="keyword">end</span>
+0167         
+0168         header = <a href="#_sub3" class="code" title="subfunction newHeader = header_addKeyValuePair(header,key,value)">header_addKeyValuePair</a>(header,key,value);
+0169     <span class="keyword">end</span>;
+0170 <span class="keyword">end</span>
+0171 <span class="comment">%}</span>
+0172 
+0173 <span class="comment">%% Write File</span>
+0174 <span class="keyword">try</span>
+0175     <span class="comment">%Write Header to file with the separating blank line</span>
+0176     fileHandle = fopen(filename,<span class="string">'w'</span>);
+0177     fprintf(fileHandle,<span class="string">'%s\n'</span>,header);
+0178     
+0179     <span class="comment">%Write raw or compressed data to file</span>
+0180     fwrite(fileHandle,fileData,metadata.datatype);
+0181     fclose(fileHandle);
+0182     
+0183 <span class="keyword">catch</span> MExc
+0184     fclose(<span class="string">'all'</span>);
+0185     error(sprintf(<span class="string">'File %s could not be written!\n%s'</span>,filename,getReport(MExc)));
+0186 <span class="keyword">end</span>
+0187 
+0188 <span class="keyword">end</span>
+0189 
+0190 <span class="comment">%Used to add comments to the header</span>
+0191 <a name="_sub1" href="#_subfunctions" class="code">function newHeader = header_addComment(header,comment)</a>
+0192     newHeader = sprintf(<span class="string">'%s# %s\n'</span>,header,comment);
+0193 <span class="keyword">end</span>
+0194 
+0195 <span class="comment">%Used to add fields to the header</span>
+0196 <a name="_sub2" href="#_subfunctions" class="code">function newHeader = header_addField(header,fieldName,fieldDescription)</a>
+0197     newHeader = sprintf(<span class="string">'%s%s: %s\n'</span>,header,fieldName,fieldDescription);
+0198 <span class="keyword">end</span>
+0199 
+0200 <span class="comment">%Used to add key-value pairs to the header</span>
+0201 <a name="_sub3" href="#_subfunctions" class="code">function newHeader = header_addKeyValuePair(header,key,value)</a>
+0202     value = strrep(value,<span class="string">':='</span>,<span class="string">''</span>);
+0203     newHeader = sprintf(<span class="string">'%s%s:=%s\n'</span>,header,key,value);
+0204 <span class="keyword">end</span>
+0205 
+0206 <span class="comment">%Used to format dimenional info according to nrrd specification</span>
+0207 <a name="_sub4" href="#_subfunctions" class="code">function strOutput = vec2str(V)</a>
+0208     strOutput = mat2str(V);
+0209     strOutput = strOutput(2:end-1);
+0210 <span class="keyword">end</span>
+0211 
+0212 <span class="comment">%Used to format a matlab vector to nrrd vector with brackets</span>
+0213 <a name="_sub5" href="#_subfunctions" class="code">function strOutput = matVec2nrrdVec(V)</a>
+0214     strOutput = <span class="string">'('</span>;
+0215     <span class="keyword">for</span> v = 1:numel(V)
+0216         strOutput = [strOutput num2str(V(v)) <span class="string">','</span>];
+0217     <span class="keyword">end</span>
+0218     strOutput = [strOutput(1:end-1) <span class="string">')'</span>];
+0219 <span class="keyword">end</span>
+0220 
+0221 <span class="comment">%Used to map matlab definitions of datatypes to the NRRD specs</span>
+0222 <span class="comment">%seems to be only single has to be converted to float</span>
+0223 <a name="_sub6" href="#_subfunctions" class="code">function newType = matlabTypeToNRRD(datatype)</a>
+0224 <span class="keyword">switch</span> datatype
+0225     <span class="keyword">case</span> <span class="string">'single'</span>
+0226         newType = <span class="string">'float'</span>;
+0227     <span class="keyword">otherwise</span>
+0228         newType = datatype;
+0229 <span class="keyword">end</span>
+0230 <span class="keyword">end</span>
+0231</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

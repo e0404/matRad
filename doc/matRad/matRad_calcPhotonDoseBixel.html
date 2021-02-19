@@ -1,0 +1,149 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_calcPhotonDoseBixel</title>
+  <meta name="keywords" content="matRad_calcPhotonDoseBixel">
+  <meta name="description" content="matRad photon dose calculation for an individual bixel">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_calcPhotonDoseBixel
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">matRad photon dose calculation for an individual bixel</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function dose = matRad_calcPhotonDoseBixel(SAD,m,betas,Interp_kernel1,Interp_kernel2,Interp_kernel3,radDepths,geoDists,isoLatDistsX,isoLatDistsZ) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad photon dose calculation for an individual bixel
+ 
+ call
+   dose = matRad_calcPhotonDoseBixel(SAD,m,betas,Interp_kernel1,...
+                  Interp_kernel2,Interp_kernel3,radDepths,geoDists,...
+                  isoLatDistsX,isoLatDistsZ)
+
+ input
+   SAD:                source to axis distance
+   m:                  absorption in water (part of the dose calc base
+                       data)
+   betas:              beta parameters for the parameterization of the 
+                       three depth dose components
+   Interp_kernel1/2/3: kernels for dose calculation
+   radDepths:          radiological depths
+   geoDists:           geometrical distance from virtual photon source
+   isoLatDistsX:       lateral distance in X direction in BEV from central
+                       ray at iso center plane
+   isoLatDistsZ:       lateral distance in Z direction in BEV from central
+                       ray at iso center plane
+
+ output
+   dose:               photon dose at specified locations as linear vector
+
+ References
+   [1] http://www.ncbi.nlm.nih.gov/pubmed/8497215
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_calcPhotonDose.html" class="code" title="function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcPhotonDose</a>	matRad photon dose calculation wrapper</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function dose = matRad_calcPhotonDoseBixel(SAD,m,betas,Interp_kernel1,</a><span class="keyword">...</span>
+0002                   Interp_kernel2,Interp_kernel3,radDepths,geoDists,<span class="keyword">...</span>
+0003                   isoLatDistsX,isoLatDistsZ)
+0004 <span class="comment">% matRad photon dose calculation for an individual bixel</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">% call</span>
+0007 <span class="comment">%   dose = matRad_calcPhotonDoseBixel(SAD,m,betas,Interp_kernel1,...</span>
+0008 <span class="comment">%                  Interp_kernel2,Interp_kernel3,radDepths,geoDists,...</span>
+0009 <span class="comment">%                  isoLatDistsX,isoLatDistsZ)</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% input</span>
+0012 <span class="comment">%   SAD:                source to axis distance</span>
+0013 <span class="comment">%   m:                  absorption in water (part of the dose calc base</span>
+0014 <span class="comment">%                       data)</span>
+0015 <span class="comment">%   betas:              beta parameters for the parameterization of the</span>
+0016 <span class="comment">%                       three depth dose components</span>
+0017 <span class="comment">%   Interp_kernel1/2/3: kernels for dose calculation</span>
+0018 <span class="comment">%   radDepths:          radiological depths</span>
+0019 <span class="comment">%   geoDists:           geometrical distance from virtual photon source</span>
+0020 <span class="comment">%   isoLatDistsX:       lateral distance in X direction in BEV from central</span>
+0021 <span class="comment">%                       ray at iso center plane</span>
+0022 <span class="comment">%   isoLatDistsZ:       lateral distance in Z direction in BEV from central</span>
+0023 <span class="comment">%                       ray at iso center plane</span>
+0024 <span class="comment">%</span>
+0025 <span class="comment">% output</span>
+0026 <span class="comment">%   dose:               photon dose at specified locations as linear vector</span>
+0027 <span class="comment">%</span>
+0028 <span class="comment">% References</span>
+0029 <span class="comment">%   [1] http://www.ncbi.nlm.nih.gov/pubmed/8497215</span>
+0030 <span class="comment">%</span>
+0031 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0032 <span class="comment">%</span>
+0033 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0034 <span class="comment">%</span>
+0035 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0036 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0037 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0038 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0039 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0040 <span class="comment">% LICENSE file.</span>
+0041 <span class="comment">%</span>
+0042 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0043 
+0044 <span class="comment">% Define function_Di</span>
+0045 func_Di = @(beta,x) beta/(beta-m) * (exp(-m*x) - exp(-beta*x)); 
+0046 
+0047 <span class="comment">% Calulate lateral distances using grid interpolation.</span>
+0048 lat1 = Interp_kernel1(isoLatDistsX,isoLatDistsZ);
+0049 lat2 = Interp_kernel2(isoLatDistsX,isoLatDistsZ);
+0050 lat3 = Interp_kernel3(isoLatDistsX,isoLatDistsZ);
+0051 
+0052 <span class="comment">% now add everything together (eq 19 w/o inv sq corr -&gt; see below)</span>
+0053 dose = lat1 .* func_Di(betas(1),radDepths) + <span class="keyword">...</span>
+0054        lat2 .* func_Di(betas(2),radDepths) + <span class="keyword">...</span>
+0055        lat3 .* func_Di(betas(3),radDepths);
+0056 
+0057 <span class="comment">% inverse square correction</span>
+0058 dose = dose .* (SAD./geoDists(:)).^2;
+0059 
+0060 <span class="comment">% check if we have valid dose values and adjust numerical instabilities</span>
+0061 <span class="comment">% from fft convolution</span>
+0062 dose(dose &lt; 0 &amp; dose &gt; -1e-14) = 0;
+0063 <span class="keyword">if</span> any(isnan(dose)) || any(dose&lt;0)
+0064    error(<span class="string">'Error in photon dose calculation.'</span>);
+0065 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

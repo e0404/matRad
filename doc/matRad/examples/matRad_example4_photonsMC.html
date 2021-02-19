@@ -1,0 +1,141 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_example4_photonsMC</title>
+  <meta name="keywords" content="matRad_example4_photonsMC">
+  <meta name="description" content="% Example: Photon Treatment Plan using VMC++ dose calculation">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html examples -->
+<h1>matRad_example4_photonsMC
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">% Example: Photon Treatment Plan using VMC++ dose calculation</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">This is a script file. </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment">% Example: Photon Treatment Plan using VMC++ dose calculation
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2017 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/matRad_calcPhotonDoseMC.html" class="code" title="function dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst,nCasePerBixel,visBool)">matRad_calcPhotonDoseMC</a>	matRad ompMC monte carlo photon dose calculation wrapper</li><li><a href="../../matRad/matRad_fluenceOptimization.html" class="code" title="function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)">matRad_fluenceOptimization</a>	matRad inverse planning wrapper function</li><li><a href="../../matRad/matRad_generateStf.html" class="code" title="function stf = matRad_generateStf(ct,cst,pln,visMode)">matRad_generateStf</a>	matRad steering information generation</li><li><a href="../../matRad/matRad_getIsoCenter.html" class="code" title="function isoCenter = matRad_getIsoCenter(cst,ct,visBool)">matRad_getIsoCenter</a>	computes the isocenter [mm] as the joint center of gravity</li><li><a href="../../matRad/matRad_rc.html" class="code" title="">matRad_rc</a>	matRad rc script</li><li><a href="../../matRad/tools/matRad_calcIntEnergy.html" class="code" title="function intDose = matRad_calcIntEnergy(dose,ct,pln)">matRad_calcIntEnergy</a>	matRad function to compute the integral energy in MeV for a dose cube</li><li><a href="../../matRad/tools/matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>	matRad function to get the software environment matRad is running on</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <span class="comment">%% Example: Photon Treatment Plan using VMC++ dose calculation</span>
+0002 <span class="comment">%</span>
+0003 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% Copyright 2017 the matRad development team.</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0008 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0009 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0010 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0011 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0012 <span class="comment">% LICENSE file.</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0015 
+0016 <span class="comment">%%</span>
+0017 <span class="comment">% In this example we will show</span>
+0018 <span class="comment">% (i) how to load patient data into matRad</span>
+0019 <span class="comment">% (ii) how to setup a photon dose calculation based on the VMC++ Monte Carlo algorithm</span>
+0020 <span class="comment">% (iii) how to inversely optimize the beamlet intensities directly from command window in MATLAB.</span>
+0021 <span class="comment">% (iv) how to visualize the result</span>
+0022 
+0023 <span class="comment">%% Patient Data Import</span>
+0024 <span class="comment">% Let's begin with a clear Matlab environment and import the boxphantom</span>
+0025 <span class="comment">% into your workspace.</span>
+0026 
+0027 <a href="../../matRad/matRad_rc.html" class="code" title="">matRad_rc</a>; <span class="comment">%If this throws an error, run it from the parent directory first to set the paths</span>
+0028 
+0029 load(<span class="string">'BOXPHANTOM.mat'</span>);
+0030 
+0031 <span class="comment">%% Treatment Plan</span>
+0032 <span class="comment">% The next step is to define your treatment plan labeled as 'pln'. This</span>
+0033 <span class="comment">% structure requires input from the treatment planner and defines the most</span>
+0034 <span class="comment">% important cornerstones of your treatment plan.</span>
+0035 
+0036 pln.radiationMode  = <span class="string">'photons'</span>;  
+0037 pln.machine        = <span class="string">'Generic'</span>;
+0038 pln.numOfFractions = 30;
+0039 pln.propOpt.bioOptimization = <span class="string">'none'</span>;    
+0040 pln.propStf.gantryAngles    = [0];
+0041 pln.propStf.couchAngles     = [0];
+0042 pln.propStf.bixelWidth      = 10;
+0043 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
+0044 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * <a href="../../matRad/matRad_getIsoCenter.html" class="code" title="function isoCenter = matRad_getIsoCenter(cst,ct,visBool)">matRad_getIsoCenter</a>(cst,ct,0);
+0045 pln.propOpt.runSequencing   = 0;
+0046 pln.propOpt.runDAO          = 0;
+0047 
+0048 <span class="comment">% dose calculation settings</span>
+0049 pln.propDoseCalc.doseGrid.resolution.x = 3; <span class="comment">% [mm]</span>
+0050 pln.propDoseCalc.doseGrid.resolution.y = 3; <span class="comment">% [mm]</span>
+0051 pln.propDoseCalc.doseGrid.resolution.z = 3; <span class="comment">% [mm]</span>
+0052 
+0053 <span class="comment">%% Generate Beam Geometry STF</span>
+0054 stf = <a href="../../matRad/matRad_generateStf.html" class="code" title="function stf = matRad_generateStf(ct,cst,pln,visMode)">matRad_generateStf</a>(ct,cst,pln);
+0055 
+0056 <span class="comment">%% Dose Calculation</span>
+0057 <span class="comment">% Calculate dose influence matrix for unit pencil beam intensities using</span>
+0058 <span class="comment">% a Monte Carlo algorithm</span>
+0059 dij = <a href="../../matRad/matRad_calcPhotonDoseMC.html" class="code" title="function dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst,nCasePerBixel,visBool)">matRad_calcPhotonDoseMC</a>(ct,stf,pln,cst);
+0060 
+0061 <span class="comment">%% Inverse Optimization for IMRT</span>
+0062 resultGUI = <a href="../../matRad/matRad_fluenceOptimization.html" class="code" title="function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)">matRad_fluenceOptimization</a>(dij,cst,pln);
+0063 
+0064 <span class="comment">%% Plot the Resulting Dose Slice</span>
+0065 <span class="comment">% Just let's plot the transversal iso-center dose slice</span>
+0066 slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
+0067 figure,
+0068 imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet)
+0069 
+0070 <span class="comment">%%</span>
+0071 <span class="comment">% Exemplary, we show how to obtain the dose in the target and plot the histogram</span>
+0072 ixTarget     = cst{2,4}{1};
+0073 doseInTarget = resultGUI.physicalDose(ixTarget);
+0074 figure
+0075 [env, ~] = <a href="../../matRad/tools/matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>();
+0076 hist(doseInTarget);
+0077 
+0078  <span class="comment">% use hist for compatibility with GNU Octave</span>
+0079 title(<span class="string">'dose in target'</span>),xlabel(<span class="string">'[Gy]'</span>),ylabel(<span class="string">'#'</span>);
+0080 
+0081 <span class="comment">%% compute integral energy</span>
+0082 <a href="../../matRad/tools/matRad_calcIntEnergy.html" class="code" title="function intDose = matRad_calcIntEnergy(dose,ct,pln)">matRad_calcIntEnergy</a>(resultGUI.physicalDose,ct,pln);</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

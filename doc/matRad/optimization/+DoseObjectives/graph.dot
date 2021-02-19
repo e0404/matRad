@@ -1,0 +1,20 @@
+/* Created by mdot for Matlab */
+digraph m2html {
+  matRad_DoseObjective -> matRad_DoseObjective;
+  matRad_EUD -> matRad_EUD;
+  matRad_MaxDVH -> matRad_MaxDVH;
+  matRad_MeanDose -> matRad_MeanDose;
+  matRad_MinDVH -> matRad_MinDVH;
+  matRad_SquaredDeviation -> matRad_SquaredDeviation;
+  matRad_SquaredOverdosing -> matRad_SquaredOverdosing;
+  matRad_SquaredUnderdosing -> matRad_SquaredUnderdosing;
+
+  matRad_DoseObjective [URL="matRad_DoseObjective.html"];
+  matRad_EUD [URL="matRad_EUD.html"];
+  matRad_MaxDVH [URL="matRad_MaxDVH.html"];
+  matRad_MeanDose [URL="matRad_MeanDose.html"];
+  matRad_MinDVH [URL="matRad_MinDVH.html"];
+  matRad_SquaredDeviation [URL="matRad_SquaredDeviation.html"];
+  matRad_SquaredOverdosing [URL="matRad_SquaredOverdosing.html"];
+  matRad_SquaredUnderdosing [URL="matRad_SquaredUnderdosing.html"];
+}

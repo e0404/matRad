@@ -1,0 +1,10 @@
+/* Created by mdot for Matlab */
+digraph m2html {
+  MatRad_MCsquareConfig -> MatRad_MCsquareConfig;
+
+  MatRad_MCsquareConfig [URL="MatRad_MCsquareConfig.html"];
+  matRad_compileMCsquareSparseReader [URL="matRad_compileMCsquareSparseReader.html"];
+  matRad_readMhd [URL="matRad_readMhd.html"];
+  matRad_writeMCsquareinputAllFiles [URL="matRad_writeMCsquareinputAllFiles.html"];
+  matRad_writeMhd [URL="matRad_writeMhd.html"];
+}

@@ -1,0 +1,14 @@
+/* Created by mdot for Matlab */
+digraph m2html {
+  matRad_DoseConstraint -> matRad_DoseConstraint;
+  matRad_MinMaxDVH -> matRad_MinMaxDVH;
+  matRad_MinMaxDose -> matRad_MinMaxDose;
+  matRad_MinMaxEUD -> matRad_MinMaxEUD;
+  matRad_MinMaxMeanDose -> matRad_MinMaxMeanDose;
+
+  matRad_DoseConstraint [URL="matRad_DoseConstraint.html"];
+  matRad_MinMaxDVH [URL="matRad_MinMaxDVH.html"];
+  matRad_MinMaxDose [URL="matRad_MinMaxDose.html"];
+  matRad_MinMaxEUD [URL="matRad_MinMaxEUD.html"];
+  matRad_MinMaxMeanDose [URL="matRad_MinMaxMeanDose.html"];
+}

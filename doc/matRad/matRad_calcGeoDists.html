@@ -1,0 +1,201 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_calcGeoDists</title>
+  <meta name="keywords" content="matRad_calcGeoDists">
+  <meta name="description" content="matRad calculation of lateral distances from central ray">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_calcGeoDists
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">matRad calculation of lateral distances from central ray</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] =matRad_calcGeoDists(rot_coords_bev,sourcePoint_bev,targetPoint_bev,SAD,radDepthIx,lateralCutOff) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad calculation of lateral distances from central ray 
+ used for dose calcultion
+ 
+ call
+   [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = ...
+           matRad_calcGeoDists(rot_coords_bev, ...
+                               sourcePoint_bev, ...
+                               targetPoint_bev, ...
+                               SAD, ...
+                               radDepthIx, ...
+                               lateralCutOff)
+
+ input
+   rot_coords_bev:     coordinates in bev of the voxels with index V,
+                       where also ray tracing results are availabe 
+   sourcePoint_bev:    source point in voxel coordinates in beam's eye view
+   targetPoint_bev:    target point in voxel coordinated in beam's eye view
+   SAD:                source-to-axis distance
+   radDepthIx:         sub set of voxels for which radiological depth
+                       calculations are available
+   lateralCutOff:      lateral cutoff specifying the neighbourhood for
+                       which dose calculations will actually be performed
+
+ output
+   ix:                 indices of voxels where we want to compute dose
+                       influence data
+   rad_distancesSq:    squared radial distance to the central ray (where the
+                       actual computation of the radiological depth takes place)
+   isoLatDistsX:       lateral x-distance to the central ray projected to
+                       iso center plane
+   isoLatDistsZ:       lateral z-distance to the central ray projected to
+                       iso center plane
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_calcParticleDose.html" class="code" title="function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcParticleDose</a>	matRad particle dose calculation wrapper</li><li><a href="matRad_calcPhotonDose.html" class="code" title="function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcPhotonDose</a>	matRad photon dose calculation wrapper</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = </a><span class="keyword">...</span>
+0002           matRad_calcGeoDists(rot_coords_bev, <span class="keyword">...</span>
+0003                               sourcePoint_bev, <span class="keyword">...</span>
+0004                               targetPoint_bev, <span class="keyword">...</span>
+0005                               SAD, <span class="keyword">...</span>
+0006                               radDepthIx, <span class="keyword">...</span>
+0007                               lateralCutOff)
+0008 <span class="comment">% matRad calculation of lateral distances from central ray</span>
+0009 <span class="comment">% used for dose calcultion</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% call</span>
+0012 <span class="comment">%   [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = ...</span>
+0013 <span class="comment">%           matRad_calcGeoDists(rot_coords_bev, ...</span>
+0014 <span class="comment">%                               sourcePoint_bev, ...</span>
+0015 <span class="comment">%                               targetPoint_bev, ...</span>
+0016 <span class="comment">%                               SAD, ...</span>
+0017 <span class="comment">%                               radDepthIx, ...</span>
+0018 <span class="comment">%                               lateralCutOff)</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">% input</span>
+0021 <span class="comment">%   rot_coords_bev:     coordinates in bev of the voxels with index V,</span>
+0022 <span class="comment">%                       where also ray tracing results are availabe</span>
+0023 <span class="comment">%   sourcePoint_bev:    source point in voxel coordinates in beam's eye view</span>
+0024 <span class="comment">%   targetPoint_bev:    target point in voxel coordinated in beam's eye view</span>
+0025 <span class="comment">%   SAD:                source-to-axis distance</span>
+0026 <span class="comment">%   radDepthIx:         sub set of voxels for which radiological depth</span>
+0027 <span class="comment">%                       calculations are available</span>
+0028 <span class="comment">%   lateralCutOff:      lateral cutoff specifying the neighbourhood for</span>
+0029 <span class="comment">%                       which dose calculations will actually be performed</span>
+0030 <span class="comment">%</span>
+0031 <span class="comment">% output</span>
+0032 <span class="comment">%   ix:                 indices of voxels where we want to compute dose</span>
+0033 <span class="comment">%                       influence data</span>
+0034 <span class="comment">%   rad_distancesSq:    squared radial distance to the central ray (where the</span>
+0035 <span class="comment">%                       actual computation of the radiological depth takes place)</span>
+0036 <span class="comment">%   isoLatDistsX:       lateral x-distance to the central ray projected to</span>
+0037 <span class="comment">%                       iso center plane</span>
+0038 <span class="comment">%   isoLatDistsZ:       lateral z-distance to the central ray projected to</span>
+0039 <span class="comment">%                       iso center plane</span>
+0040 <span class="comment">%</span>
+0041 <span class="comment">% References</span>
+0042 <span class="comment">%   -</span>
+0043 <span class="comment">%</span>
+0044 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0045 <span class="comment">%</span>
+0046 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0047 <span class="comment">%</span>
+0048 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0049 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0050 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0051 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0052 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0053 <span class="comment">% LICENSE file.</span>
+0054 <span class="comment">%</span>
+0055 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0056 
+0057 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0058 <span class="comment">% ROTATE A SINGLE BEAMLET AND ALIGN WITH BEAMLET WHO PASSES THROUGH</span>
+0059 <span class="comment">% ISOCENTER</span>
+0060 
+0061 <span class="comment">% Put [0 0 0] position in the source point for beamlet who passes through</span>
+0062 <span class="comment">% isocenter</span>
+0063 a = -sourcePoint_bev';
+0064 
+0065 <span class="comment">% Normalize the vector</span>
+0066 a = a/norm(a);
+0067 
+0068 <span class="comment">% Put [0 0 0] position in the source point for a single beamlet</span>
+0069 b = (targetPoint_bev - sourcePoint_bev)';
+0070 
+0071 <span class="comment">% Normalize the vector</span>
+0072 b = b/norm(b);
+0073 
+0074 <span class="comment">% Define function for obtain rotation matrix.</span>
+0075 <span class="keyword">if</span> all(a==b) <span class="comment">% rotation matrix corresponds to eye matrix if the vectors are the same</span>
+0076     rot_coords_temp = rot_coords_bev;
+0077 <span class="keyword">else</span>
+0078     <span class="comment">% Define rotation matrix</span>
+0079     ssc = @(v) [0 -v(3) v(2); v(3) 0 -v(1); -v(2) v(1) 0];
+0080     R   = eye(3) + ssc(cross(a,b)) + ssc(cross(a,b))^2*(1-dot(a,b))/(norm(cross(a,b))^2);
+0081     
+0082     <span class="comment">% Rotate every CT voxel</span>
+0083     rot_coords_temp = rot_coords_bev*R;
+0084 <span class="keyword">end</span>
+0085 
+0086 <span class="comment">% Put [0 0 0] position CT in center of the beamlet.</span>
+0087 latDistsX = rot_coords_temp(:,1) + sourcePoint_bev(1);
+0088 latDistsZ = rot_coords_temp(:,3) + sourcePoint_bev(3);
+0089 
+0090 <span class="comment">% check of radial distance exceeds lateral cutoff (projected to iso center)</span>
+0091 rad_distancesSq = latDistsX.^2 + latDistsZ.^2;
+0092 subsetMask = rad_distancesSq ./ rot_coords_temp(:,2).^2 &lt;= lateralCutOff^2 /SAD^2;
+0093 
+0094 <span class="comment">% return index list within considered voxels</span>
+0095 ix = radDepthIx(subsetMask);
+0096 
+0097 <span class="comment">% return radial distances squared</span>
+0098 <span class="keyword">if</span> nargout &gt; 1
+0099     rad_distancesSq = rad_distancesSq(subsetMask);
+0100 <span class="keyword">end</span>
+0101 
+0102 <span class="comment">% return x &amp; z distance</span>
+0103 <span class="keyword">if</span> nargout &gt; 2
+0104    isoLatDistsX = latDistsX(subsetMask)./rot_coords_temp(subsetMask,2)*SAD;
+0105    isoLatDistsZ = latDistsZ(subsetMask)./rot_coords_temp(subsetMask,2)*SAD; 
+0106 <span class="keyword">end</span>
+0107 
+0108</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

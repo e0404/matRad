@@ -1,0 +1,25 @@
+/* Created by mdot for Matlab */
+digraph m2html {
+  matRad_computeVoiContoursWrapper -> matRad_computeVoiContours;
+  matRad_plotVois3D -> matRad_computeAllVoiSurfaces;
+
+  matRad_computeAllVoiSurfaces [URL="matRad_computeAllVoiSurfaces.html"];
+  matRad_computeIsoDoseContours [URL="matRad_computeIsoDoseContours.html"];
+  matRad_computeVoiContours [URL="matRad_computeVoiContours.html"];
+  matRad_computeVoiContoursWrapper [URL="matRad_computeVoiContoursWrapper.html"];
+  matRad_getColormap [URL="matRad_getColormap.html"];
+  matRad_plotAxisLabels [URL="matRad_plotAxisLabels.html"];
+  matRad_plotColorbar [URL="matRad_plotColorbar.html"];
+  matRad_plotCtSlice [URL="matRad_plotCtSlice.html"];
+  matRad_plotCtSlice3D [URL="matRad_plotCtSlice3D.html"];
+  matRad_plotDoseSlice [URL="matRad_plotDoseSlice.html"];
+  matRad_plotDoseSlice3D [URL="matRad_plotDoseSlice3D.html"];
+  matRad_plotIsoCenterMarker [URL="matRad_plotIsoCenterMarker.html"];
+  matRad_plotIsoDose3D [URL="matRad_plotIsoDose3D.html"];
+  matRad_plotIsoDoseLines [URL="matRad_plotIsoDoseLines.html"];
+  matRad_plotIsoDoseLines3D [URL="matRad_plotIsoDoseLines3D.html"];
+  matRad_plotPlan3D [URL="matRad_plotPlan3D.html"];
+  matRad_plotProjectedGantryAngles [URL="matRad_plotProjectedGantryAngles.html"];
+  matRad_plotVoiContourSlice [URL="matRad_plotVoiContourSlice.html"];
+  matRad_plotVois3D [URL="matRad_plotVois3D.html"];
+}

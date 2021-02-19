@@ -1,0 +1,185 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_directApertureOptimization</title>
+  <meta name="keywords" content="matRad_directApertureOptimization">
+  <meta name="description" content="matRad function to run direct aperture optimization">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_directApertureOptimization
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">matRad function to run direct aperture optimization</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to run direct aperture optimization
+
+ call
+   [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apertureInfo,pln)
+   [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln)
+
+ input
+   dij:            matRad dij struct
+   cst:            matRad cst struct
+   apertureInfo:   aperture shape info struct
+   optResult:      resultGUI struct to which the output data will be added, if
+                   this field is empty optResult struct will be created
+                   (optional)
+   pln:            matRad pln struct
+
+ output
+   optResult:  struct containing optimized fluence vector, dose, and
+               shape info
+   optimizer:  used optimizer object
+
+ References
+   [1] http://dx.doi.org/10.1118/1.4914863
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_calcCubes.html" class="code" title="function resultGUI = matRad_calcCubes(w,dij,scenNum)">matRad_calcCubes</a>	matRad computation of all cubes for the resultGUI struct</li><li><a href="matRad_resizeCstToGrid.html" class="code" title="function cst = matRad_resizeCstToGrid(cst,vXgridOld,vYgridOld,vZgridOld,vXgridNew,vYgridNew,vZgridNew)">matRad_resizeCstToGrid</a>	matRad function to resize the ct to a given resolution</li><li><a href="matRad_setOverlapPriorities.html" class="code" title="function [cst,overlapPriorityCube] = matRad_setOverlapPriorities(cst,ctDim)">matRad_setOverlapPriorities</a>	function to handle overlap priorities</li><li><a href="../matRad/optimization/@matRad_OptimizationProblemDAO/matRad_OptimizationProblemDAO.html" class="code" title="">matRad_OptimizationProblemDAO</a>	</li><li><a href="../matRad/optimization/optimizer/matRad_OptimizerFmincon.html" class="code" title="">matRad_OptimizerFmincon</a>	</li><li><a href="../matRad/optimization/optimizer/matRad_OptimizerIPOPT.html" class="code" title="">matRad_OptimizerIPOPT</a>	</li><li><a href="../matRad/optimization/projections/matRad_DoseProjection.html" class="code" title="">matRad_DoseProjection</a>	</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../matRad/examples/matRad_example3_photonsDAO.html" class="code" title="">matRad_example3_photonsDAO</a>	% Example: Photon Treatment Plan with Direct aperture optimization</li><li><a href="matRad.html" class="code" title="">matRad</a>	matRad script</li><li><a href="matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln)</a>
+0002 <span class="comment">% matRad function to run direct aperture optimization</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apertureInfo,pln)</span>
+0006 <span class="comment">%   [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln)</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% input</span>
+0009 <span class="comment">%   dij:            matRad dij struct</span>
+0010 <span class="comment">%   cst:            matRad cst struct</span>
+0011 <span class="comment">%   apertureInfo:   aperture shape info struct</span>
+0012 <span class="comment">%   optResult:      resultGUI struct to which the output data will be added, if</span>
+0013 <span class="comment">%                   this field is empty optResult struct will be created</span>
+0014 <span class="comment">%                   (optional)</span>
+0015 <span class="comment">%   pln:            matRad pln struct</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">% output</span>
+0018 <span class="comment">%   optResult:  struct containing optimized fluence vector, dose, and</span>
+0019 <span class="comment">%               shape info</span>
+0020 <span class="comment">%   optimizer:  used optimizer object</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% References</span>
+0023 <span class="comment">%   [1] http://dx.doi.org/10.1118/1.4914863</span>
+0024 <span class="comment">%</span>
+0025 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0026 <span class="comment">%</span>
+0027 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0028 <span class="comment">%</span>
+0029 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0030 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0031 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0032 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0033 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0034 <span class="comment">% LICENSE file.</span>
+0035 <span class="comment">%</span>
+0036 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0037 
+0038 
+0039 matRad_cfg = MatRad_Config.instance();
+0040 
+0041 <span class="comment">% adjust overlap priorities</span>
+0042 cst = <a href="matRad_setOverlapPriorities.html" class="code" title="function [cst,overlapPriorityCube] = matRad_setOverlapPriorities(cst,ctDim)">matRad_setOverlapPriorities</a>(cst);
+0043 
+0044 <span class="comment">% check &amp; adjust objectives and constraints internally for fractionation</span>
+0045 <span class="keyword">for</span> i = 1:size(cst,1)
+0046     <span class="keyword">for</span> j = 1:numel(cst{i,6})
+0047         obj = cst{i,6}{j};
+0048         
+0049         <span class="comment">%In case it is a default saved struct, convert to object</span>
+0050         <span class="comment">%Also intrinsically checks that we have a valid optimization</span>
+0051         <span class="comment">%objective or constraint function in the end</span>
+0052         <span class="keyword">if</span> ~isa(obj,<span class="string">'matRad_DoseOptimizationFunction'</span>)
+0053             <span class="keyword">try</span>
+0054                 obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
+0055             <span class="keyword">catch</span>
+0056                 matRad_cfg.dispError(<span class="string">'cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!'</span>,i,j);
+0057             <span class="keyword">end</span>
+0058         <span class="keyword">end</span>
+0059         
+0060         obj = obj.setDoseParameters(obj.getDoseParameters()/pln.numOfFractions);
+0061         
+0062         cst{i,6}{j} = obj;        
+0063     <span class="keyword">end</span>
+0064 <span class="keyword">end</span>
+0065 
+0066 <span class="comment">% resizing cst to dose cube resolution</span>
+0067 cst = <a href="matRad_resizeCstToGrid.html" class="code" title="function cst = matRad_resizeCstToGrid(cst,vXgridOld,vYgridOld,vZgridOld,vXgridNew,vYgridNew,vZgridNew)">matRad_resizeCstToGrid</a>(cst,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,<span class="keyword">...</span>
+0068                                  dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
+0069 
+0070 <span class="comment">% update aperture info vector</span>
+0071 apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(apertureInfo,apertureInfo.apertureVector);
+0072 
+0073 <span class="comment">%Use Dose Projection only</span>
+0074 backProjection = <a href="../matRad/optimization/projections/matRad_DoseProjection.html" class="code" title="">matRad_DoseProjection</a>();
+0075 
+0076 optiProb = <a href="../matRad/optimization/@matRad_OptimizationProblemDAO/matRad_OptimizationProblemDAO.html" class="code" title="">matRad_OptimizationProblemDAO</a>(backProjection,apertureInfo);
+0077 
+0078 <span class="keyword">if</span> ~isfield(pln.propOpt,<span class="string">'optimizer'</span>)
+0079     pln.propOpt.optimizer = <span class="string">'IPOPT'</span>;
+0080 <span class="keyword">end</span>
+0081 
+0082 <span class="keyword">switch</span> pln.propOpt.optimizer
+0083     <span class="keyword">case</span> <span class="string">'IPOPT'</span>
+0084         optimizer = <a href="../matRad/optimization/optimizer/matRad_OptimizerIPOPT.html" class="code" title="">matRad_OptimizerIPOPT</a>;
+0085     <span class="keyword">case</span> <span class="string">'fmincon'</span>
+0086         optimizer = <a href="../matRad/optimization/optimizer/matRad_OptimizerFmincon.html" class="code" title="">matRad_OptimizerFmincon</a>;
+0087     <span class="keyword">otherwise</span>
+0088         matRad_cfg.dispWarning(<span class="string">'Optimizer ''%s'' not known! Fallback to IPOPT!'</span>,pln.propOpt.optimizer);
+0089         optimizer = <a href="../matRad/optimization/optimizer/matRad_OptimizerIPOPT.html" class="code" title="">matRad_OptimizerIPOPT</a>;
+0090 <span class="keyword">end</span>
+0091 
+0092 <span class="comment">% Run IPOPT.</span>
+0093 optimizer = optimizer.optimize(apertureInfo.apertureVector,optiProb,dij,cst);
+0094 wOpt = optimizer.wResult;
+0095 
+0096 <span class="comment">% update the apertureInfoStruct and calculate bixel weights</span>
+0097 apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(apertureInfo,wOpt);
+0098 
+0099 <span class="comment">% logging final results</span>
+0100 matRad_cfg.dispInfo(<span class="string">'Calculating final cubes...\n'</span>);
+0101 resultGUI = <a href="matRad_calcCubes.html" class="code" title="function resultGUI = matRad_calcCubes(w,dij,scenNum)">matRad_calcCubes</a>(apertureInfo.bixelWeights,dij);
+0102 resultGUI.w    = apertureInfo.bixelWeights;
+0103 resultGUI.wDAO = apertureInfo.bixelWeights;
+0104 resultGUI.apertureInfo = apertureInfo;
+0105</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

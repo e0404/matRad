@@ -1,0 +1,268 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_constraintJacobian</title>
+  <meta name="keywords" content="matRad_constraintJacobian">
+  <meta name="description" content="matRad IPOPT callback: jacobian function for inverse planning">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../../menu.html matRad --><!-- ../menu.html optimization --><!-- menu.html @matRad_OptimizationProblem -->
+<h1>matRad_constraintJacobian
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">matRad IPOPT callback: jacobian function for inverse planning</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">function jacob = matRad_constraintJacobian(optiProb,w,dij,cst) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad IPOPT callback: jacobian function for inverse planning 
+ supporting max dose constraint, min dose constraint, min mean dose constraint, 
+ max mean dose constraint, min EUD constraint, max EUD constraint, max DVH 
+ constraint, min DVH constraint 
+ 
+ call
+   jacob = matRad_jacobFunc(optiProb,w,dij,cst)
+
+ input
+   optiProb: option struct defining the type of optimization
+   w:    bixel weight vector
+   dij:  dose influence matrix
+   cst:  matRad cst struct
+
+ output
+   jacob: jacobian of constraint function
+
+ References
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../../matRad/optimization/@matRad_OptimizationProblemDAO/matRad_constraintJacobian.html" class="code" title="function jacob = matRad_constraintJacobian(optiProb,apertureInfoVec,dij,cst)">matRad_constraintJacobian</a>	matRad IPOPT callback: jacobian function for direct aperture optimization</li><li><a href="matRad_OptimizationProblem.html" class="code" title="">matRad_OptimizationProblem</a>	</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function jacob = matRad_constraintJacobian(optiProb,w,dij,cst)</a>
+0002 <span class="comment">% matRad IPOPT callback: jacobian function for inverse planning</span>
+0003 <span class="comment">% supporting max dose constraint, min dose constraint, min mean dose constraint,</span>
+0004 <span class="comment">% max mean dose constraint, min EUD constraint, max EUD constraint, max DVH</span>
+0005 <span class="comment">% constraint, min DVH constraint</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% call</span>
+0008 <span class="comment">%   jacob = matRad_jacobFunc(optiProb,w,dij,cst)</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% input</span>
+0011 <span class="comment">%   optiProb: option struct defining the type of optimization</span>
+0012 <span class="comment">%   w:    bixel weight vector</span>
+0013 <span class="comment">%   dij:  dose influence matrix</span>
+0014 <span class="comment">%   cst:  matRad cst struct</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% output</span>
+0017 <span class="comment">%   jacob: jacobian of constraint function</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% References</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0022 
+0023 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0024 <span class="comment">%</span>
+0025 <span class="comment">% Copyright 2016 the matRad development team.</span>
+0026 <span class="comment">%</span>
+0027 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0028 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0029 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0030 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0031 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0032 <span class="comment">% LICENSE file.</span>
+0033 <span class="comment">%</span>
+0034 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0035 
+0036 <span class="comment">% get current dose / effect / RBExDose vector</span>
+0037 <span class="comment">%d = matRad_backProjection(w,dij,optiProb);</span>
+0038 <span class="comment">%d = optiProb.matRad_backProjection(w,dij);</span>
+0039 optiProb.BP = optiProb.BP.compute(dij,w);
+0040 d = optiProb.BP.GetResult();
+0041 
+0042 <span class="comment">% initialize jacobian (only single scenario supported in optimization)</span>
+0043 jacob = sparse([]);
+0044 
+0045 <span class="comment">% initialize projection matrices and id containers</span>
+0046 DoseProjection{1}          = sparse([]);
+0047 mAlphaDoseProjection{1}    = sparse([]);
+0048 mSqrtBetaDoseProjection{1} = sparse([]);
+0049 voxelID                     = [];
+0050 constraintID                = [];
+0051 scenID2                     = [];
+0052 
+0053 <span class="comment">% compute objective function for every VOI.</span>
+0054 <span class="keyword">for</span> i = 1:size(cst,1)
+0055     
+0056     <span class="comment">% Only take OAR or target VOI.</span>
+0057     <span class="keyword">if</span> ~isempty(cst{i,4}{1}) &amp;&amp; ( isequal(cst{i,3},<span class="string">'OAR'</span>) || isequal(cst{i,3},<span class="string">'TARGET'</span>) )
+0058         
+0059         
+0060         <span class="comment">% loop over the number of constraints for the current VOI</span>
+0061         <span class="keyword">for</span> j = 1:numel(cst{i,6})
+0062             
+0063             obj = cst{i,6}{j}; <span class="comment">%Get the Optimization Object</span>
+0064             
+0065             <span class="comment">% only perform computations for constraints</span>
+0066             <span class="comment">%if ~isempty(strfind(obj.type,'constraint'))</span>
+0067             <span class="keyword">if</span> isa(obj,<span class="string">'DoseConstraints.matRad_DoseConstraint'</span>)
+0068                 
+0069                 <span class="comment">% compute reference</span>
+0070                 <span class="keyword">if</span> (~isequal(obj.name, <span class="string">'max dose constraint'</span>)      &amp;&amp; ~isequal(obj.name, <span class="string">'min dose constraint'</span>)      &amp;&amp;<span class="keyword">...</span>
+0071                         ~isequal(obj.name, <span class="string">'max mean dose constraint'</span>) &amp;&amp; ~isequal(obj.name, <span class="string">'min mean dose constraint'</span>) &amp;&amp; <span class="keyword">...</span>
+0072                         ~isequal(obj.name, <span class="string">'min EUD constraint'</span>)       &amp;&amp; ~isequal(obj.name, <span class="string">'max EUD constraint'</span>))      &amp;&amp; <span class="keyword">...</span>
+0073                         (isa(optiProb.BP,<span class="string">'matRad_EffectProjection'</span>) &amp;&amp; ~isa(optiProb.BP,<span class="string">'matRad_VariableRBEProjection'</span>))
+0074                     
+0075                     doses = obj.getDoseParameters();
+0076                     
+0077                     effect = cst{i,5}.alphaX*doses + cst{i,5}.betaX*doses.^2;
+0078                     
+0079                     obj = obj.setDoseParameters(effect);
+0080                 <span class="keyword">end</span>
+0081                 
+0082                 <span class="comment">% if conventional opt: just add constraints of nominal dose</span>
+0083                 <span class="comment">%if strcmp(cst{i,6}{j}.robustness,'none')</span>
+0084                 
+0085                 d_i = d{1}(cst{i,4}{1});
+0086                 
+0087                 <span class="comment">%jacobVec =  matRad_jacobFunc(d_i,cst{i,6}{j},d_ref);</span>
+0088                 jacobSub = obj.computeDoseConstraintJacobian(d_i);
+0089                 
+0090                 nConst = size(jacobSub,2);
+0091                 
+0092                 <span class="comment">%tic;</span>
+0093                 
+0094                 <span class="comment">%Iterate through columns of the sub-jacobian</span>
+0095                 <span class="comment">%TODO: Maybe this could all be function of the projection</span>
+0096                 <span class="comment">%Objects???</span>
+0097                 <span class="keyword">if</span> isa(optiProb.BP,<span class="string">'matRad_DoseProjection'</span>) &amp;&amp; ~isempty(jacobSub) || isa(optiProb.BP,<span class="string">'matRad_ConstantRBEProjection'</span>)
+0098                     
+0099                     startIx = size(DoseProjection{1},2) + 1;
+0100                     <span class="comment">%First append the Projection matrix with sparse zeros</span>
+0101                     DoseProjection{1}          = [DoseProjection{1},sparse(dij.doseGrid.numOfVoxels,nConst)];
+0102                     
+0103                     <span class="comment">%Now directly write the jacobian in there</span>
+0104                     DoseProjection{1}(cst{i,4}{1},startIx:end) = jacobSub;
+0105                     
+0106                 <span class="keyword">elseif</span> isa(optiProb.BP,<span class="string">'matRad_EffectProjection'</span>) &amp;&amp; ~isempty(jacobSub)
+0107                     
+0108                     <span class="keyword">if</span> isa(optiProb.BP,<span class="string">'matRad_VariableRBEProjection'</span>)
+0109                         scaledEffect = (dij.gamma(cst{i,4}{1}) + d_i);
+0110                         jacobSub = jacobSub./(2*dij.bx(cst{i,4}{1}) .* scaledEffect);
+0111                     <span class="keyword">end</span>
+0112                     
+0113                     startIx = size(mAlphaDoseProjection{1},2) + 1;
+0114                     
+0115                     <span class="comment">%First append the alphaDose matrix with sparse</span>
+0116                     <span class="comment">%zeros then insert</span>
+0117                     mAlphaDoseProjection{1}    = [mAlphaDoseProjection{1},sparse(dij.doseGrid.numOfVoxels,nConst)];
+0118                     mAlphaDoseProjection{1}(cst{i,4}{1},startIx:end) = jacobSub;
+0119                     
+0120                     <span class="comment">%The betadose has a different structure due to the</span>
+0121                     <span class="comment">%quadratic transformation, but in principle the</span>
+0122                     <span class="comment">%same as above</span>
+0123                     mSqrtBetaDoseProjection{1} =  [mSqrtBetaDoseProjection{1}, sparse(repmat(cst{i,4}{1},nConst,1),repmat(1:numel(cst{i,4}{1}),1,nConst),2*reshape(jacobSub',[],1),dij.doseGrid.numOfVoxels,nConst*numel(cst{i,4}{1}))];
+0124                     
+0125                     <span class="keyword">if</span> isempty(constraintID)
+0126                         newID = 1;
+0127                     <span class="keyword">else</span>
+0128                         newID = constraintID(end)+1;
+0129                     <span class="keyword">end</span>
+0130                     
+0131                     voxelID = [voxelID;repmat(cst{i,4}{1},nConst,1)];                         <span class="comment">%Keep track of voxels for organizing the sqrt(beta)Dose projection later</span>
+0132                     constraintID = [constraintID, <span class="keyword">...</span>
+0133                         reshape(ones(numel(cst{i,4}{1}),1)*[newID:newID+nConst-1],[1 nConst*numel(cst{i,4}{1})])];  <span class="comment">%Keep track of constraints for organizing the sqrt(beta)Dose projection later</span>
+0134                     
+0135                 <span class="keyword">end</span>
+0136                 
+0137                       
+0138                 <span class="comment">%Old implementation with for loop</span>
+0139                 <span class="comment">%{</span>
+0140                 <span class="keyword">for</span> c = 1:size(jacobSub,2)
+0141                     jacobVec = jacobSub(:,c);
+0142                     
+0143                     <span class="keyword">if</span> isa(optiProb.BP,<span class="string">'matRad_DoseProjection'</span>) &amp;&amp; ~isempty(jacobVec) || isa(optiProb.BP,<span class="string">'matRad_ConstantRBEProjection'</span>)
+0144                         
+0145                         DoseProjection{1}          = [DoseProjection{1},sparse(cst{i,4}{1},1,jacobVec,dij.doseGrid.numOfVoxels,1)];
+0146                         
+0147                     <span class="keyword">elseif</span> isa(optiProb.BP,<span class="string">'matRad_EffectProjection'</span>) &amp;&amp; ~isempty(jacobVec)
+0148                         
+0149                         <span class="keyword">if</span> isa(optiProb.BP,<span class="string">'matRad_VariableRBEProjection'</span>)
+0150                             scaledEffect = (dij.gamma(cst{i,4}{1}) + d_i);
+0151                             jacobVec = jacobVec./(2*dij.bx(cst{i,4}{1}).*scaledEffect);
+0152                         <span class="keyword">end</span>
+0153                         
+0154                         mAlphaDoseProjection{1}    = [mAlphaDoseProjection{1},sparse(cst{i,4}{1},1,jacobVec,dij.doseGrid.numOfVoxels,1)];
+0155                         mSqrtBetaDoseProjection{1} = [mSqrtBetaDoseProjection{1},<span class="keyword">...</span>
+0156                             sparse(cst{i,4}{1},1:numel(cst{i,4}{1}),2*jacobVec,dij.doseGrid.numOfVoxels,numel(cst{i,4}{1}))];
+0157                         
+0158                         voxelID                 = [voxelID ;cst{i,4}{1}];   <span class="comment">%list of voxels relevant for constraints to enable faster computations</span>
+0159                         
+0160                         <span class="keyword">if</span> isempty(constraintID)
+0161                             lastID = 0;
+0162                         <span class="keyword">else</span>
+0163                             lastID = constraintID(end);
+0164                         <span class="keyword">end</span>
+0165                         constraintID            = [constraintID, repmat(1 + lastID,1,numel(cst{i,4}{1}))]; <span class="comment">%Maps constraints to voxels</span>
+0166                         
+0167                     <span class="keyword">end</span>
+0168                 <span class="keyword">end</span>
+0169                 <span class="comment">%}</span>
+0170             <span class="keyword">end</span>
+0171             
+0172         <span class="keyword">end</span>
+0173         
+0174     <span class="keyword">end</span>
+0175     
+0176 <span class="keyword">end</span>
+0177 
+0178 <span class="comment">% enter if statement also for protons using a constant RBE</span>
+0179 <span class="keyword">if</span> isa(optiProb.BP,<span class="string">'matRad_DoseProjection'</span>)
+0180     
+0181     <span class="keyword">if</span> ~isempty(DoseProjection{1})
+0182         jacob = DoseProjection{1}' * dij.physicalDose{1};
+0183     <span class="keyword">end</span>
+0184     
+0185 <span class="keyword">elseif</span> isa(optiProb.BP,<span class="string">'matRad_ConstantRBEProjection'</span>)
+0186     
+0187     <span class="keyword">if</span> ~isempty(DoseProjection{1})
+0188         jacob = DoseProjection{1}' * dij.RBE * dij.physicalDose{1};
+0189     <span class="keyword">end</span>
+0190     
+0191 <span class="keyword">elseif</span> isa(optiProb.BP,<span class="string">'matRad_EffectProjection'</span>)
+0192     
+0193     <span class="keyword">if</span> ~isempty(mSqrtBetaDoseProjection{1}) &amp;&amp; ~isempty(mAlphaDoseProjection{1})
+0194         mSqrtBetaDoseProjection{1} = mSqrtBetaDoseProjection{1}' * dij.mSqrtBetaDose{1} * w;
+0195         mSqrtBetaDoseProjection{1} = sparse(voxelID,constraintID,mSqrtBetaDoseProjection{1},<span class="keyword">...</span>
+0196             size(mAlphaDoseProjection{1},1),size(mAlphaDoseProjection{1},2));
+0197         
+0198         jacob   = mAlphaDoseProjection{1}' * dij.mAlphaDose{1} +<span class="keyword">...</span>
+0199             mSqrtBetaDoseProjection{1}' * dij.mSqrtBetaDose{1};
+0200         
+0201     <span class="keyword">end</span>
+0202 <span class="keyword">end</span>
+0203 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

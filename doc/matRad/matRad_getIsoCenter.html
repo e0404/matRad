@@ -1,0 +1,164 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_getIsoCenter</title>
+  <meta name="keywords" content="matRad_getIsoCenter">
+  <meta name="description" content="computes the isocenter [mm] as the joint center of gravity">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_getIsoCenter
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">computes the isocenter [mm] as the joint center of gravity</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function isoCenter = matRad_getIsoCenter(cst,ct,visBool) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> computes the isocenter [mm] as the joint center of gravity 
+ of all volumes of interest that are labeled as target within the cst 
+ struct
+ 
+ call
+   isoCenter = matRad_getIsoCenter(cst,ct,visBool)
+
+ input
+   cst:        matRad cst struct
+   ct:         ct cube
+   visBool:    toggle on/off visualization (optional)
+
+ output
+   isoCenter:  isocenter in [mm]   
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../matRad/examples/matRad_example1_phantom.html" class="code" title="">matRad_example1_phantom</a>	% Example: Generate your own phantom geometry</li><li><a href="../matRad/examples/matRad_example2_photons.html" class="code" title="">matRad_example2_photons</a>	% Example: Photon Treatment Plan</li><li><a href="../matRad/examples/matRad_example3_photonsDAO.html" class="code" title="">matRad_example3_photonsDAO</a>	% Example: Photon Treatment Plan with Direct aperture optimization</li><li><a href="../matRad/examples/matRad_example4_photonsMC.html" class="code" title="">matRad_example4_photonsMC</a>	% Example: Photon Treatment Plan using VMC++ dose calculation</li><li><a href="../matRad/examples/matRad_example5_protons.html" class="code" title="">matRad_example5_protons</a>	% Example: Proton Treatment Plan with subsequent Isocenter shift</li><li><a href="../matRad/examples/matRad_example6_protonsNoise.html" class="code" title="">matRad_example6_protonsNoise</a>	% Example: Proton Treatment Plan with Manipulated CT values</li><li><a href="../matRad/examples/matRad_example7_carbon.html" class="code" title="">matRad_example7_carbon</a>	% Example: Carbon Ion Treatment Plan</li><li><a href="matRad.html" class="code" title="">matRad</a>	matRad script</li><li><a href="matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li><li><a href="../matRad/tools/matRad_compareDose.html" class="code" title="function [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst,enable , contours, pln, criteria, n,localglobal)">matRad_compareDose</a>	Comparison of two dose cubes in terms of gamma index, absolute and visual difference</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function isoCenter = matRad_getIsoCenter(cst,ct,visBool)</a>
+0002 <span class="comment">% computes the isocenter [mm] as the joint center of gravity</span>
+0003 <span class="comment">% of all volumes of interest that are labeled as target within the cst</span>
+0004 <span class="comment">% struct</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">% call</span>
+0007 <span class="comment">%   isoCenter = matRad_getIsoCenter(cst,ct,visBool)</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% input</span>
+0010 <span class="comment">%   cst:        matRad cst struct</span>
+0011 <span class="comment">%   ct:         ct cube</span>
+0012 <span class="comment">%   visBool:    toggle on/off visualization (optional)</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% output</span>
+0015 <span class="comment">%   isoCenter:  isocenter in [mm]</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">% References</span>
+0018 <span class="comment">%   -</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0025 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0026 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0027 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0028 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0029 <span class="comment">% LICENSE file.</span>
+0030 <span class="comment">%</span>
+0031 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0032 
+0033 <span class="comment">% if visBool not set toogle off visualization</span>
+0034 <span class="keyword">if</span> nargin &lt; 3
+0035     visBool = 0;
+0036 <span class="keyword">end</span>
+0037 
+0038 <span class="comment">% Initializes V variable.</span>
+0039 V = [];
+0040 
+0041 <span class="comment">%Check if any constraints/Objectives have been defined yet</span>
+0042 noObjOrConst = all(cellfun(@isempty,cst(:,6)));
+0043 
+0044 <span class="comment">% Save target indices in V variable.</span>
+0045 <span class="keyword">for</span> i = 1:size(cst,1)
+0046     <span class="comment">% We only let a target contribute if it has an objective/constraint or</span>
+0047     <span class="comment">% if we do not have specified objectives/constraints at all so far</span>
+0048     <span class="keyword">if</span> isequal(cst{i,3},<span class="string">'TARGET'</span>) &amp;&amp; (~isempty(cst{i,6}) || noObjOrConst)
+0049         V = [V; cst{i,4}{1}];
+0050     <span class="keyword">end</span>
+0051 <span class="keyword">end</span>
+0052 
+0053 <span class="comment">% Delete repeated indices, one voxel can belong to two VOIs, because</span>
+0054 <span class="comment">% VOIs can be overlapping.</span>
+0055 V = unique(V);
+0056 
+0057 <span class="comment">% throw error message if no target is found</span>
+0058 <span class="keyword">if</span> isempty(V)
+0059     error(<span class="string">'Could not find target'</span>);
+0060 <span class="keyword">end</span>
+0061 
+0062 <span class="comment">% Transform subcripts from linear indices</span>
+0063 [yCoordsV, xCoordsV, zCoordsV] = ind2sub(ct.cubeDim,V);
+0064 
+0065 <span class="comment">% Transform to [mm]</span>
+0066 xCoordsV = xCoordsV * ct.resolution.x;
+0067 yCoordsV = yCoordsV * ct.resolution.y;
+0068 zCoordsV = zCoordsV * ct.resolution.z;
+0069 
+0070 <span class="comment">% Calculated isocenter.</span>
+0071 isoCenter = mean([xCoordsV yCoordsV zCoordsV]);
+0072 
+0073 <span class="comment">% Visualization</span>
+0074 <span class="keyword">if</span> visBool
+0075 
+0076     clf
+0077     hold on
+0078     
+0079     <span class="comment">% Plot target</span>
+0080     plot3(yCoordsV,xCoordsV,zCoordsV,<span class="string">'kx'</span>)
+0081     
+0082     <span class="comment">% Show isocenter: red point</span>
+0083     plot3(isoCenter(2),isoCenter(1),isoCenter(3),<span class="string">'r.'</span>,<span class="string">'MarkerSize'</span>,30)
+0084     
+0085     xlabel(<span class="string">'y [mm]'</span>)
+0086     ylabel(<span class="string">'x [mm]'</span>)
+0087     zlabel(<span class="string">'z [mm]'</span>)
+0088     
+0089 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

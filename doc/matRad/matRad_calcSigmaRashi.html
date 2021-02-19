@@ -1,0 +1,160 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_calcSigmaRashi</title>
+  <meta name="keywords" content="matRad_calcSigmaRashi">
+  <meta name="description" content="calculation of additional beam broadening due to the use of range shifters">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_calcSigmaRashi
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">calculation of additional beam broadening due to the use of range shifters</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function sigmaRashi = matRad_calcSigmaRashi(energy,rangeShifter,SSD) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> calculation of additional beam broadening due to the use of range shifters 
+ (only for protons)
+ 
+ call
+   sigmaRashi = matRad_calcSigmaRashi(energy,rangeShifter,SSD)
+
+ input
+   energy:       initial particle energy
+   rangeShifter: structure defining range shifter geometry
+   SSD:          source to surface distance
+
+ output
+   sigmaRashi:   sigma of range shifter (to be added ^2) in mm
+
+ References
+   https://www.ncbi.nlm.nih.gov/pubmed/12375823
+   https://www.ncbi.nlm.nih.gov/pubmed/12701891
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_calcLateralParticleCutOff.html" class="code" title="function [ machine ] = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf,visBool)">matRad_calcLateralParticleCutOff</a>	matRad function to calculate a depth dependend lateral cutoff</li><li><a href="matRad_calcParticleDose.html" class="code" title="function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcParticleDose</a>	matRad particle dose calculation wrapper</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function sigmaRashi = matRad_calcSigmaRashi(energy,rangeShifter,SSD)</a>
+0002 <span class="comment">% calculation of additional beam broadening due to the use of range shifters</span>
+0003 <span class="comment">% (only for protons)</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% call</span>
+0006 <span class="comment">%   sigmaRashi = matRad_calcSigmaRashi(energy,rangeShifter,SSD)</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% input</span>
+0009 <span class="comment">%   energy:       initial particle energy</span>
+0010 <span class="comment">%   rangeShifter: structure defining range shifter geometry</span>
+0011 <span class="comment">%   SSD:          source to surface distance</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">% output</span>
+0014 <span class="comment">%   sigmaRashi:   sigma of range shifter (to be added ^2) in mm</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% References</span>
+0017 <span class="comment">%   https://www.ncbi.nlm.nih.gov/pubmed/12375823</span>
+0018 <span class="comment">%   https://www.ncbi.nlm.nih.gov/pubmed/12701891</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0025 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0026 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0027 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0028 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0029 <span class="comment">% LICENSE file.</span>
+0030 <span class="comment">%</span>
+0031 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0032 
+0033 <span class="comment">% distance of range shifter to patient surface</span>
+0034 rashiDist = SSD - rangeShifter.sourceRashiDistance;
+0035 
+0036 <span class="comment">% convert to mm</span>
+0037 zS = rashiDist / 10; <span class="comment">% [cm] (after division)</span>
+0038 t  = rangeShifter.eqThickness / 10; <span class="comment">% [cm] (after division)</span>
+0039 
+0040 <span class="comment">% --&gt; everything here is in [cm]</span>
+0041 
+0042 a1 = 0.21; <span class="comment">% [1]</span>
+0043 a2 = 0.77; <span class="comment">% [1]</span>
+0044 c0 = 0.0191027; <span class="comment">% [cm]</span>
+0045 c1 = 0.0204539; <span class="comment">% [1]</span>
+0046 alpha = 0.0022; <span class="comment">% [cm MeV ^ (-p)] %</span>
+0047 p = 1.77; <span class="comment">% [1] % Exponent of range-energy relation</span>
+0048 
+0049 <span class="comment">% convert energy to range</span>
+0050 R = alpha * (energy ^ p);
+0051 
+0052 <span class="comment">% check if valid computation possible or range shifter to thick</span>
+0053 <span class="keyword">if</span> t / R &gt;= 0.95
+0054     error(<span class="string">'Computation of range shifter sigma invalid.'</span>);
+0055 <span class="keyword">end</span>
+0056 
+0057 <span class="comment">% Improved HONG's Formula</span>
+0058 s = t / R;
+0059 sigmaT = (a1 * s + a2 * s ^ 2) * (c0 + c1 * R);
+0060 
+0061 PSPpmma = 1.165;
+0062 PrSFpmma = 0.816;
+0063 <span class="comment">% PSP_air = 0.00107;</span>
+0064 <span class="comment">% PrSF_air = 991;</span>
+0065 C = 13.6; <span class="comment">% MeV</span>
+0066 L = 36.1; <span class="comment">% cm</span>
+0067 
+0068 F1part1 = (2 * C ^ 2 * alpha ^ (2 / p)) / (4 * L * (2 / p - 1));
+0069 F1part2 = (((1 - s) ^ (2 - 2 / p) - 1) / (2 / p - 2) - s);
+0070 F1part3 = R ^ (2 - 2 / p);
+0071 
+0072 F1 = F1part1 * F1part2 * F1part3;
+0073 
+0074 F2part1 = (C ^ 2 * alpha ^ (2 / p)) / (4 * L * (2 / p - 1));
+0075 F2part2 = (((1 - s) ^ (1 - 2 / p) - 1)) / 1;
+0076 F2part3 = R ^ (1 - 2 / p);
+0077 
+0078 F2 = F2part1 * F2part2 * F2part3;
+0079 
+0080 sigmaProjSq = PrSFpmma ^ 2 * (sigmaT ^ 2 + F1 .* zS * PSPpmma + F2 * (zS * PSPpmma) .^ 2); <span class="comment">% [cm ^ 2]</span>
+0081 
+0082 <span class="comment">% &lt;-- below in [mm]</span>
+0083 
+0084 sigmaRashi = 10 * sqrt(sigmaProjSq); <span class="comment">% [mm] (after factor 10)</span>
+0085</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

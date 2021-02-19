@@ -1,0 +1,306 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_siddonRayTracer</title>
+  <meta name="keywords" content="matRad_siddonRayTracer">
+  <meta name="description" content="siddon ray tracing through 3D cube to calculate the radiological depth">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_siddonRayTracer
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">siddon ray tracing through 3D cube to calculate the radiological depth</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(isocenter,resolution,sourcePoint,targetPoint,cubes) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> siddon ray tracing through 3D cube to calculate the radiological depth 
+ according to Siddon 1985 Medical Physics
+ 
+ call
+   [alphas,l,rho,d12,vis] = matRad_siddonRayTracer(isocenter, ...
+                               resolution, ...
+                               sourcePoint, ...
+                               targetPoint, ...
+                               cubes)
+
+ input
+   isocenter:      isocenter within cube [voxels]
+   resolution:     resolution of the cubes [mm/voxel]
+   sourcePoint:    source point of ray tracing
+   targetPoint:    target point of ray tracing
+   cubes:          cell array of cubes for ray tracing (it is possible to pass
+                   multiple cubes for ray tracing to save computation time)
+
+ output (see Siddon 1985 Medical Physics for a detailed description of the
+ variales)
+   alphas          relative distance between start and endpoint for the 
+                    intersections with the cube
+   l               lengths of intersestions with cubes
+   rho             densities extracted from cubes
+   d12             distance between start and endpoint of ray tracing
+   ix              indices of hit voxels
+
+ References
+   [1] http://www.ncbi.nlm.nih.gov/pubmed/4000088
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li><li><a href="matRad_computeSSD.html" class="code" title="function stf = matRad_computeSSD(stf,ct,mode)">matRad_computeSSD</a>	matRad SSD calculation</li><li><a href="matRad_generateStf.html" class="code" title="function stf = matRad_generateStf(ct,cst,pln,visMode)">matRad_generateStf</a>	matRad steering information generation</li><li><a href="matRad_rayTracing.html" class="code" title="function radDepthV = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCutoff)">matRad_rayTracing</a>	matRad visualization of two-dimensional dose distributions on ct</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(isocenter, </a><span class="keyword">...</span>
+0002                                     resolution, <span class="keyword">...</span>
+0003                                     sourcePoint, <span class="keyword">...</span>
+0004                                     targetPoint, <span class="keyword">...</span>
+0005                                     cubes)
+0006 <span class="comment">% siddon ray tracing through 3D cube to calculate the radiological depth</span>
+0007 <span class="comment">% according to Siddon 1985 Medical Physics</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% call</span>
+0010 <span class="comment">%   [alphas,l,rho,d12,vis] = matRad_siddonRayTracer(isocenter, ...</span>
+0011 <span class="comment">%                               resolution, ...</span>
+0012 <span class="comment">%                               sourcePoint, ...</span>
+0013 <span class="comment">%                               targetPoint, ...</span>
+0014 <span class="comment">%                               cubes)</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% input</span>
+0017 <span class="comment">%   isocenter:      isocenter within cube [voxels]</span>
+0018 <span class="comment">%   resolution:     resolution of the cubes [mm/voxel]</span>
+0019 <span class="comment">%   sourcePoint:    source point of ray tracing</span>
+0020 <span class="comment">%   targetPoint:    target point of ray tracing</span>
+0021 <span class="comment">%   cubes:          cell array of cubes for ray tracing (it is possible to pass</span>
+0022 <span class="comment">%                   multiple cubes for ray tracing to save computation time)</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% output (see Siddon 1985 Medical Physics for a detailed description of the</span>
+0025 <span class="comment">% variales)</span>
+0026 <span class="comment">%   alphas          relative distance between start and endpoint for the</span>
+0027 <span class="comment">%                    intersections with the cube</span>
+0028 <span class="comment">%   l               lengths of intersestions with cubes</span>
+0029 <span class="comment">%   rho             densities extracted from cubes</span>
+0030 <span class="comment">%   d12             distance between start and endpoint of ray tracing</span>
+0031 <span class="comment">%   ix              indices of hit voxels</span>
+0032 <span class="comment">%</span>
+0033 <span class="comment">% References</span>
+0034 <span class="comment">%   [1] http://www.ncbi.nlm.nih.gov/pubmed/4000088</span>
+0035 <span class="comment">%</span>
+0036 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0037 <span class="comment">%</span>
+0038 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0039 <span class="comment">%</span>
+0040 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0041 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0042 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0043 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0044 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0045 <span class="comment">% LICENSE file.</span>
+0046 <span class="comment">%</span>
+0047 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0048 
+0049 <span class="comment">% Add isocenter to source and target point. Because the algorithm does not</span>
+0050 <span class="comment">% works with negatives values. This put (resolution.x,resolution.y,resolution.z)</span>
+0051 <span class="comment">% in the center of first voxel</span>
+0052 
+0053 sourcePoint = sourcePoint + isocenter;
+0054 targetPoint = targetPoint + isocenter;
+0055 
+0056 <span class="comment">% Save the numbers of planes.</span>
+0057 [yNumPlanes, xNumPlanes, zNumPlanes] = size(cubes{1});
+0058 xNumPlanes = xNumPlanes + 1;
+0059 yNumPlanes = yNumPlanes + 1;
+0060 zNumPlanes = zNumPlanes + 1;
+0061 
+0062 <span class="comment">% eq 11</span>
+0063 <span class="comment">% Calculate the distance from source to target point.</span>
+0064 d12 = norm(sourcePoint-targetPoint);
+0065 
+0066 <span class="comment">% eq 3</span>
+0067 <span class="comment">% Position of first planes in millimeter. 0.5 because the central position</span>
+0068 <span class="comment">% of the first voxel is at [resolution.x resolution.y resolution.z]</span>
+0069 xPlane_1 = .5*resolution.x;
+0070 yPlane_1 = .5*resolution.y;
+0071 zPlane_1 = .5*resolution.z;
+0072 
+0073 <span class="comment">% Position of last planes in milimiter</span>
+0074 xPlane_end = (xNumPlanes - .5)*resolution.x;
+0075 yPlane_end = (yNumPlanes - .5)*resolution.y;
+0076 zPlane_end = (zNumPlanes - .5)*resolution.z;
+0077 
+0078 <span class="comment">% eq 4</span>
+0079 <span class="comment">% Calculate parametrics values of \alpha_{min} and \alpha_{max} for every</span>
+0080 <span class="comment">% axis, intersecting the ray with the sides of the CT.</span>
+0081 <span class="keyword">if</span> targetPoint(1) ~= sourcePoint(1)
+0082     aX_1   = (xPlane_1 - sourcePoint(1)) / (targetPoint(1) - sourcePoint(1));
+0083     aX_end = (xPlane_end - sourcePoint(1)) / (targetPoint(1) - sourcePoint(1));
+0084 <span class="keyword">else</span>
+0085     aX_1   = [];
+0086     aX_end = [];
+0087 <span class="keyword">end</span>
+0088 <span class="keyword">if</span> targetPoint(2) ~= sourcePoint(2)
+0089     aY_1   = (yPlane_1 - sourcePoint(2)) / (targetPoint(2) - sourcePoint(2));
+0090     aY_end = (yPlane_end - sourcePoint(2)) / (targetPoint(2) - sourcePoint(2));
+0091 <span class="keyword">else</span>
+0092     aY_1   = [];
+0093     aY_end = [];
+0094 <span class="keyword">end</span>
+0095 <span class="keyword">if</span> targetPoint(3) ~= sourcePoint(3)
+0096     aZ_1   = (zPlane_1 - sourcePoint(3)) / (targetPoint(3) - sourcePoint(3));
+0097     aZ_end = (zPlane_end - sourcePoint(3)) / (targetPoint(3) - sourcePoint(3));
+0098 <span class="keyword">else</span>
+0099     aZ_1   = [];
+0100     aZ_end = [];
+0101 <span class="keyword">end</span>
+0102 
+0103 <span class="comment">% eq 5</span>
+0104 <span class="comment">% Compute the \alpha_{min} and \alpha_{max} in terms of parametric values</span>
+0105 <span class="comment">% given by equation 4.</span>
+0106 alpha_min = max([0 min(aX_1,aX_end) min(aY_1,aY_end) min(aZ_1,aZ_end)]);
+0107 alpha_max = min([1 max(aX_1,aX_end) max(aY_1,aY_end) max(aZ_1,aZ_end)]);
+0108 
+0109 <span class="comment">% eq 6</span>
+0110 <span class="comment">% Calculate the range of indeces who gives parametric values for</span>
+0111 <span class="comment">% intersected planes.</span>
+0112 <span class="keyword">if</span> targetPoint(1) == sourcePoint(1)
+0113     i_min = []; i_max = [];
+0114 <span class="keyword">elseif</span> targetPoint(1) &gt; sourcePoint(1)
+0115     i_min = xNumPlanes - (xPlane_end - alpha_min * (targetPoint(1) - sourcePoint(1)) - sourcePoint(1))/resolution.x;
+0116     i_max = 1          + (sourcePoint(1) + alpha_max * (targetPoint(1) - sourcePoint(1)) - xPlane_1)/resolution.x;
+0117     <span class="comment">% rounding</span>
+0118     i_min = ceil(1/1000*(round(1000*i_min)));
+0119     i_max = floor(1/1000*(round(1000*i_max)));
+0120 <span class="keyword">else</span>
+0121     i_min = xNumPlanes - (xPlane_end - alpha_max * (targetPoint(1) - sourcePoint(1)) - sourcePoint(1))/resolution.x;
+0122     i_max = 1          + (sourcePoint(1) + alpha_min * (targetPoint(1) - sourcePoint(1)) - xPlane_1)/resolution.x;
+0123     i_min = ceil(1/1000*(round(1000*i_min)));
+0124     i_max = floor(1/1000*(round(1000*i_max)));
+0125 <span class="keyword">end</span>
+0126 <span class="keyword">if</span> targetPoint(2) == sourcePoint(2)
+0127     j_min = []; j_max = [];
+0128 <span class="keyword">elseif</span> targetPoint(2) &gt; sourcePoint(2)
+0129     j_min = yNumPlanes - (yPlane_end - alpha_min * (targetPoint(2) - sourcePoint(2)) - sourcePoint(2))/resolution.y;
+0130     j_max = 1          + (sourcePoint(2) + alpha_max * (targetPoint(2) - sourcePoint(2)) - yPlane_1)/resolution.y;
+0131     j_min = ceil(1/1000*(round(1000*j_min)));
+0132     j_max = floor(1/1000*(round(1000*j_max)));
+0133 <span class="keyword">else</span>
+0134     j_min = yNumPlanes - (yPlane_end - alpha_max * (targetPoint(2) - sourcePoint(2)) - sourcePoint(2))/resolution.y;
+0135     j_max = 1          + (sourcePoint(2) + alpha_min * (targetPoint(2) - sourcePoint(2)) - yPlane_1)/resolution.y;
+0136     j_min = ceil(1/1000*(round(1000*j_min)));
+0137     j_max = floor(1/1000*(round(1000*j_max)));
+0138 <span class="keyword">end</span>
+0139 <span class="keyword">if</span> targetPoint(3) == sourcePoint(3)
+0140     k_min = []; k_max = [];
+0141 <span class="keyword">elseif</span> targetPoint(3) &gt;= sourcePoint(3)
+0142     k_min = zNumPlanes - (zPlane_end - alpha_min * (targetPoint(3) - sourcePoint(3)) - sourcePoint(3))/resolution.z;
+0143     k_max = 1          + (sourcePoint(3) + alpha_max * (targetPoint(3) - sourcePoint(3)) - zPlane_1)/resolution.z;
+0144     k_min = ceil(1/1000*(round(1000*k_min)));
+0145     k_max = floor(1/1000*(round(1000*k_max)));
+0146 <span class="keyword">else</span>
+0147     k_min = zNumPlanes - (zPlane_end - alpha_max * (targetPoint(3) - sourcePoint(3)) - sourcePoint(3))/resolution.z;
+0148     k_max = 1          + (sourcePoint(3) + alpha_min * (targetPoint(3) - sourcePoint(3)) - zPlane_1)/resolution.z;
+0149     k_min = ceil(1/1000*(round(1000*k_min)));
+0150     k_max = floor(1/1000*(round(1000*k_max)));
+0151 <span class="keyword">end</span>
+0152 
+0153 <span class="comment">% eq 7</span>
+0154 <span class="comment">% For the given range of indices, calculate the paremetrics values who</span>
+0155 <span class="comment">% represents intersections of the ray with the plane.</span>
+0156 <span class="keyword">if</span> i_min ~= i_max
+0157     <span class="keyword">if</span> targetPoint(1) &gt; sourcePoint(1)
+0158         alpha_x = (resolution.x*(i_min:1:i_max)-sourcePoint(1)-.5*resolution.x)/(targetPoint(1)-sourcePoint(1));
+0159     <span class="keyword">else</span>
+0160         alpha_x = (resolution.x*(i_max:-1:i_min)-sourcePoint(1)-.5*resolution.x)/(targetPoint(1)-sourcePoint(1));
+0161     <span class="keyword">end</span>
+0162 <span class="keyword">else</span>
+0163     alpha_x = [];
+0164 <span class="keyword">end</span>
+0165 <span class="keyword">if</span> j_min ~= j_max
+0166     <span class="keyword">if</span> targetPoint(2) &gt; sourcePoint(2)
+0167         alpha_y = (resolution.y*(j_min:1:j_max)-sourcePoint(2)-.5*resolution.y)/(targetPoint(2)-sourcePoint(2));
+0168     <span class="keyword">else</span>
+0169         alpha_y = (resolution.y*(j_max:-1:j_min)-sourcePoint(2)-.5*resolution.y)/(targetPoint(2)-sourcePoint(2));
+0170     <span class="keyword">end</span>
+0171 <span class="keyword">else</span>
+0172     alpha_y = [];
+0173 <span class="keyword">end</span>
+0174 <span class="keyword">if</span> k_min ~= k_max
+0175     <span class="keyword">if</span> targetPoint(3) &gt; sourcePoint(3)
+0176         alpha_z = (resolution.z*(k_min:1:k_max)-sourcePoint(3)-.5*resolution.z)/(targetPoint(3)-sourcePoint(3));
+0177     <span class="keyword">else</span>
+0178         alpha_z = (resolution.z*(k_max:-1:k_min)-sourcePoint(3)-.5*resolution.z)/(targetPoint(3)-sourcePoint(3));
+0179     <span class="keyword">end</span>
+0180 <span class="keyword">else</span>
+0181     alpha_z = [];
+0182 <span class="keyword">end</span>
+0183 
+0184 <span class="comment">% eq 8</span>
+0185 <span class="comment">% Merge parametrics sets.</span>
+0186 alphas = unique([alpha_min alpha_x alpha_y alpha_z alpha_max]);
+0187 
+0188 <span class="comment">% eq 10</span>
+0189 <span class="comment">% Calculate the voxel intersection length.</span>
+0190 l = d12*diff(alphas);
+0191 
+0192 <span class="comment">% eq 13</span>
+0193 <span class="comment">% Calculate \alpha_{middle}</span>
+0194 alphas_mid = .5*(alphas(1:end-1)+alphas(2:end));
+0195 
+0196 <span class="comment">% eq 12</span>
+0197 <span class="comment">% Calculate the voxel indices: first convert to physical coords</span>
+0198 i_mm = sourcePoint(1) + alphas_mid*(targetPoint(1) - sourcePoint(1));
+0199 j_mm = sourcePoint(2) + alphas_mid*(targetPoint(2) - sourcePoint(2));
+0200 k_mm = sourcePoint(3) + alphas_mid*(targetPoint(3) - sourcePoint(3));
+0201 <span class="comment">% then convert to voxel index</span>
+0202 i = round(i_mm/resolution.x);
+0203 j = round(j_mm/resolution.y);
+0204 k = round(k_mm/resolution.z);
+0205 
+0206 <span class="comment">% Handle numerical instabilities at the borders.</span>
+0207 i(i&lt;=0) = 1; j(j&lt;=0) = 1; k(k&lt;=0) = 1;
+0208 i(i&gt;xNumPlanes-1) = xNumPlanes-1;
+0209 j(j&gt;yNumPlanes-1) = yNumPlanes-1;
+0210 k(k&gt;zNumPlanes-1) = zNumPlanes-1;
+0211 
+0212 <span class="comment">% Convert to linear indices</span>
+0213 ix = j + (i-1)*size(cubes{1},1) + (k-1)*size(cubes{1},1)*size(cubes{1},2); 
+0214 
+0215 <span class="comment">% obtains the values from cubes</span>
+0216 rho = cell(numel(cubes),1);
+0217 <span class="keyword">for</span> i = 1:numel(cubes)
+0218     rho{i} = cubes{i}(ix);
+0219 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,408 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_readNRRD</title>
+  <meta name="keywords" content="matRad_readNRRD">
+  <meta name="description" content="matRad NRRD reader">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html IO -->
+<h1>matRad_readNRRD
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad NRRD reader</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function [cube, metadata] = matRad_readNRRD(filename) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad NRRD reader
+ 
+ call
+   [cube, metadata] = matRad_readNRRD(filename)
+
+ input
+   filename:   full path to nrrd file
+
+ output
+   cube:       the read cube
+   metadata:   metadata from header information
+
+ References
+   [1] http://teem.sourceforge.net/nrrd/format.html5
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_readCube.html" class="code" title="function [cube, metadata] = matRad_readCube(filename)">matRad_readCube</a>	matRad Cube read wrapper</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>Subfunctions <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<ul style="list-style-type:disc">
+<li><a href="#_sub1" class="code">function datatype = getMATLABdataType(typestring)</a></li></ul>
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [cube, metadata] = matRad_readNRRD(filename)</a>
+0002 <span class="comment">% matRad NRRD reader</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   [cube, metadata] = matRad_readNRRD(filename)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   filename:   full path to nrrd file</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% output</span>
+0011 <span class="comment">%   cube:       the read cube</span>
+0012 <span class="comment">%   metadata:   metadata from header information</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% References</span>
+0015 <span class="comment">%   [1] http://teem.sourceforge.net/nrrd/format.html5</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0022 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0023 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0024 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0025 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0026 <span class="comment">% LICENSE file.</span>
+0027 <span class="comment">%</span>
+0028 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0029 
+0030 <span class="comment">% Open file.</span>
+0031 hFile = fopen(filename, <span class="string">'r'</span>);
+0032 <span class="keyword">if</span> hFile &lt;= 0
+0033     error(<span class="string">'Could not open NRRD file!'</span>);
+0034 <span class="keyword">end</span>
+0035 cleaner = onCleanup(@() fclose(hFile));
+0036 
+0037 <span class="comment">%% Determine NRRD Version</span>
+0038 nrrdLine = fgetl(hFile);
+0039 regTokens = regexp(nrrdLine,<span class="string">'NRRD00(?:\.)?0([1-5])'</span>,<span class="string">'tokens'</span>);
+0040 <span class="keyword">if</span> isempty(regTokens)
+0041     error(<span class="string">'Invalid Header line! Could not identify NRRD version!'</span>);
+0042 <span class="keyword">end</span>
+0043 nrrdVersion = str2num(regTokens{1}{1});
+0044 
+0045 <span class="keyword">if</span> nrrdVersion &gt; 5
+0046     error(<span class="string">'NRRD version &gt; 5 not supported!'</span>);
+0047 <span class="keyword">end</span>
+0048 
+0049 <span class="comment">%% Read header</span>
+0050 nrrdMetaData.fields = cell(0,2);
+0051 nrrdMetaData.keys = cell(0,2);
+0052 nrrdMetaData.comments = cell(0);
+0053 
+0054 currentLine = fgetl(hFile);
+0055 <span class="keyword">while</span> ~isempty(currentLine) &amp;&amp; ischar(currentLine) <span class="comment">%NRRD separates data from header by an empty line</span>
+0056     <span class="comment">%Check for comment</span>
+0057     <span class="keyword">if</span> isequal(currentLine(1),<span class="string">'#'</span>)
+0058         nrrdMetaData.comments{end+1} = currentLine;
+0059     <span class="keyword">else</span>
+0060         <span class="comment">%Parse the line</span>
+0061         lineContent = regexp(currentLine, <span class="string">'(.+):(=|\s)(.+)'</span>, <span class="string">'tokens'</span>);
+0062         <span class="keyword">if</span> isempty(lineContent)
+0063             warning([<span class="string">'Could not parse line: &quot;'</span> lineContent <span class="string">'&quot;'</span>]);
+0064         <span class="keyword">elseif</span> isequal(lineContent{1}{2},<span class="string">' '</span>) <span class="comment">%space after colon refers to &quot;field&quot;</span>
+0065             nrrdMetaData.fields{end+1,1} = lineContent{1}{1}; <span class="comment">%Fieldname</span>
+0066             nrrdMetaData.fields{<span class="keyword">end</span>,2} = lineContent{1}{3}; <span class="comment">%Information</span>
+0067         <span class="keyword">elseif</span> isequal(lineContent{1}{2},<span class="string">'='</span>) <span class="comment">%= after colon refers to key-value pair</span>
+0068             nrrdMetaData.keys{end+1,1} = lineContent{1}{1}; <span class="comment">%Key</span>
+0069             nrrdMetaData.keys{<span class="keyword">end</span>,2} = lineContent{1}{3}; <span class="comment">%Value</span>
+0070         <span class="keyword">else</span>
+0071             warning([<span class="string">'Could not parse line: &quot;'</span> lineContent <span class="string">'&quot;'</span>]);
+0072         <span class="keyword">end</span>        
+0073     <span class="keyword">end</span>
+0074     currentLine = fgetl(hFile);
+0075 <span class="keyword">end</span>
+0076 
+0077 <span class="comment">%% Interpret Headers</span>
+0078 <span class="comment">%check for the always required data type (and endian if required)</span>
+0079 doSwapBytes = false; <span class="comment">%If endian differs</span>
+0080 typeFieldIx = find(ismember(nrrdMetaData.fields(:,1), <span class="string">'type'</span>));
+0081 <span class="keyword">if</span> ~isempty(typeFieldIx)
+0082     datatype = <a href="#_sub1" class="code" title="subfunction datatype = getMATLABdataType(typestring)">getMATLABdataType</a>(nrrdMetaData.fields{typeFieldIx,2});
+0083     <span class="comment">%if size of the datatype is &gt; 1 byte, we need endian information</span>
+0084     <span class="keyword">if</span> ~isequal(datatype(end),<span class="string">'8'</span>)
+0085         endianFieldIx = find(ismember(nrrdMetaData.fields(:,1),<span class="string">'endian'</span>));
+0086         <span class="keyword">if</span> ~isempty(endianFieldIx)
+0087             <span class="keyword">if</span> ~isequal(nrrdMetaData.fields{endianFieldIx,2},<span class="string">'little'</span>) &amp;&amp; ~isequal(nrrdMetaData.fields{endianFieldIx,2},<span class="string">'big'</span>)
+0088                 error([<span class="string">'Datatype is '</span> datatype <span class="string">', thus endian information is required but could not be interpreted!'</span>]);
+0089             <span class="keyword">end</span>;
+0090             <span class="comment">%Now we compare the file endian to the system endian</span>
+0091             <span class="comment">%First acquire system endian</span>
+0092             [~,~,endian] = computer();
+0093             <span class="keyword">if</span> isequal(endian,<span class="string">'B'</span>)
+0094                 endian = <span class="string">'big'</span>;
+0095             <span class="keyword">end</span>;
+0096             <span class="keyword">if</span> isequal(endian,<span class="string">'L'</span>)
+0097                 endian = <span class="string">'little'</span>;
+0098             <span class="keyword">end</span>;
+0099             <span class="comment">%now compare to file endian and set flag if appropriate</span>
+0100             <span class="keyword">if</span> ~isequal(endian,nrrdMetaData.fields{endianFieldIx,2})
+0101                 doSwapBytes = true;
+0102             <span class="keyword">end</span>
+0103         <span class="keyword">else</span>
+0104             error([<span class="string">'Datatype is '</span> datatype <span class="string">', thus endian information is required but could not be found!'</span>]);
+0105         <span class="keyword">end</span>
+0106     <span class="keyword">end</span>
+0107     metadata.datatype = datatype;
+0108     
+0109 <span class="keyword">else</span>
+0110     error(<span class="string">'Could not find required &quot;type&quot; field!'</span>);
+0111 <span class="keyword">end</span>
+0112 
+0113 <span class="comment">%Check for the always required image dimension</span>
+0114 dimFieldIx = find(ismember(nrrdMetaData.fields(:,1), <span class="string">'dimension'</span>)); 
+0115 <span class="keyword">if</span> ~isempty(dimFieldIx)
+0116     [metadata.dimension,success] = str2num(nrrdMetaData.fields{dimFieldIx,2});
+0117     <span class="keyword">if</span> ~success
+0118         error(<span class="string">'Could not read required dimension field'</span>);
+0119     <span class="keyword">end</span>
+0120 <span class="keyword">else</span>
+0121     error(<span class="string">'Could not find required &quot;dimension&quot; field!'</span>);
+0122 <span class="keyword">end</span>
+0123 
+0124 <span class="comment">%Check for size / dim length</span>
+0125 sizeFieldIx = find(ismember(nrrdMetaData.fields(:,1), <span class="string">'sizes'</span>)); 
+0126 <span class="keyword">if</span> ~isempty(sizeFieldIx)
+0127     sizes = textscan(nrrdMetaData.fields{sizeFieldIx,2},<span class="string">'%d'</span>);
+0128     <span class="keyword">if</span> numel(sizes{1}) ~= metadata.dimension || ~all(sizes{1} &gt; 0) 
+0129         error(<span class="string">'Incorrect size definition!'</span>);
+0130     <span class="keyword">end</span>
+0131     metadata.cubeDim = sizes{1}';
+0132 <span class="keyword">else</span>
+0133     error(<span class="string">'Could not find required &quot;dimension&quot; field!'</span>);
+0134 <span class="keyword">end</span>
+0135 
+0136 <span class="comment">%Check for resolution</span>
+0137 <span class="comment">%Here we need either spacings ore space directions</span>
+0138 spacingFieldIx = find(ismember(nrrdMetaData.fields(:,1), <span class="string">'spacings'</span>));
+0139 spaceDirFieldIx = find(ismember(nrrdMetaData.fields(:,1), <span class="string">'space directions'</span>));
+0140 <span class="keyword">if</span> ~isempty(spacingFieldIx)
+0141     resolutions = textscan(nrrdMetaData.fields{spacingFieldIx,2},<span class="string">'%f'</span>);
+0142     <span class="keyword">if</span> numel(resolutions{1}) ~= metadata.dimension
+0143         error(<span class="string">'Incorrect spacings definition'</span>);
+0144     <span class="keyword">end</span>
+0145     metadata.resolution = resolutions{1}';    
+0146     
+0147     <span class="comment">%We have default permutation here (required for mapping to MATLAB</span>
+0148     <span class="comment">%default order 2 1 3)</span>
+0149     metadata.axisPermutation = [1 2 3];
+0150     
+0151 <span class="keyword">elseif</span> ~isempty(spaceDirFieldIx)
+0152     <span class="comment">%space directions are written in vector format</span>
+0153     <span class="comment">%first create the scanning string</span>
+0154     vectorstring = <span class="string">'('</span>;
+0155     <span class="keyword">for</span> c=1:metadata.dimension
+0156         vectorstring = [vectorstring <span class="string">'%f,'</span>];
+0157     <span class="keyword">end</span>
+0158     vectorstring(end) = <span class="string">')'</span>;
+0159     <span class="comment">%Get the vectors</span>
+0160     vectors = textscan(nrrdMetaData.fields{spaceDirFieldIx,2},vectorstring);
+0161     
+0162     <span class="comment">%At the moment we only support cartesian basis vectors</span>
+0163     <span class="comment">%this gives us the permutation to align with the MATLAB default</span>
+0164     <span class="comment">%ordering of 2 1 3</span>
+0165     <span class="keyword">for</span> c=1:metadata.dimension
+0166         <span class="comment">%check if cartesian basis vector</span>
+0167         currentAxis = find(vectors{c});
+0168         
+0169         <span class="keyword">if</span> numel(find(vectors{c})) ~= 1
+0170             error(<span class="string">'Sorry! We currently only support spaces with cartesian basis!'</span>); 
+0171         <span class="keyword">end</span>        
+0172         metadata.axisPermutation(c) = currentAxis*sign(vectors{c}(currentAxis));
+0173         metadata.resolution(c) = vectors{c}(currentAxis);       
+0174     <span class="keyword">end</span>
+0175    
+0176 <span class="keyword">else</span>
+0177     warning(<span class="string">'No Resolution Information available'</span>);
+0178 <span class="keyword">end</span>
+0179 
+0180 <span class="comment">%find the origin if we have one</span>
+0181 originFieldIx = find(ismember(nrrdMetaData.fields(:,1), <span class="string">'space origin'</span>));
+0182 <span class="keyword">if</span> ~isempty(originFieldIx)
+0183     <span class="comment">%first create the scanning string</span>
+0184     vectorstring = <span class="string">'('</span>;
+0185     <span class="keyword">for</span> c=1:metadata.dimension
+0186         vectorstring = [vectorstring <span class="string">'%f,'</span>];
+0187     <span class="keyword">end</span>
+0188     originVector = textscan(nrrdMetaData.fields{originFieldIx,2},vectorstring);
+0189     <span class="keyword">for</span> c=1:metadata.dimension
+0190         metadata.imageOrigin(c) = originVector{c};
+0191     <span class="keyword">end</span>
+0192     <span class="comment">%metadata.imageOrigin = transpose(metadata.imageOrigin);</span>
+0193 <span class="keyword">end</span>
+0194 
+0195 <span class="comment">%Coordinate system - optional</span>
+0196 originFieldIx = find(ismember(nrrdMetaData.fields(:,1), <span class="string">'space'</span>));
+0197 <span class="keyword">if</span> ~isempty(originFieldIx)
+0198     metadata.coordinateSystem = nrrdMetaData.fields{originFieldIx,2};
+0199 <span class="keyword">end</span>
+0200     
+0201 <span class="comment">%Check for separate file</span>
+0202 data_fileFieldIx = find(ismember(nrrdMetaData.fields(:,1), <span class="string">'data file'</span>));
+0203 datafileFieldIx = find(ismember(nrrdMetaData.fields(:,1), <span class="string">'datafile'</span>));
+0204 <span class="keyword">if</span> ~isempty(data_fileFieldIx) || ~isempty(datafileFieldIx)
+0205     error(<span class="string">'Sorry! We currently do not support detached data files!'</span>);
+0206     <span class="comment">%Proposed workflow:</span>
+0207     <span class="comment">%check for data file</span>
+0208     <span class="comment">%close file</span>
+0209     <span class="comment">%replace file handle with data file</span>
+0210     <span class="comment">%continue without the read part knowing its a new file</span>
+0211 <span class="keyword">end</span>
+0212 
+0213 
+0214 <span class="comment">%% Read Data</span>
+0215 <span class="comment">%Check for encoding</span>
+0216 encodingFieldIx = find(ismember(nrrdMetaData.fields(:,1), <span class="string">'encoding'</span>));
+0217 <span class="keyword">if</span> isempty(encodingFieldIx)
+0218     error(<span class="string">'Could not find required &quot;encoding&quot; field!'</span>);
+0219 <span class="keyword">end</span>
+0220 <span class="keyword">switch</span> nrrdMetaData.fields{encodingFieldIx,2}
+0221     <span class="keyword">case</span> <span class="string">'raw'</span>
+0222         cube = fread(hFile,prod(metadata.cubeDim), metadata.datatype);
+0223     <span class="keyword">case</span> {<span class="string">'txt'</span>,<span class="string">'text'</span>,<span class="string">'ascii'</span>}
+0224         cube = cast(fscanf(hFile,<span class="string">'%f'</span>),metadata.datatype);
+0225     <span class="keyword">case</span> <span class="string">'hex'</span>
+0226         error(<span class="string">'Sorry: NRRD hex file not yet supported!'</span>);
+0227     <span class="keyword">case</span> {<span class="string">'gz'</span>,<span class="string">'gzip'</span>}
+0228         compressedByteArray = fread(hFile, inf, <span class="string">'uint8'</span>);
+0229         
+0230         javaUnpackSuccessful = false;
+0231         
+0232         <span class="keyword">if</span> isempty(javachk(<span class="string">'jvm'</span>))
+0233             <span class="comment">%Unzip with java</span>
+0234             <span class="keyword">try</span>
+0235                 javaByteStream = java.io.ByteArrayInputStream(compressedByteArray);
+0236                 gzipStream = java.util.zip.GZIPInputStream(javaByteStream);
+0237                 javaByteOutputStream = java.io.ByteArrayOutputStream();
+0238                 org.apache.commons.io.IOUtils.copy(gzipStream,javaByteOutputStream);
+0239                 gzipStream.close();
+0240                 cube = typecast(javaByteOutputStream.toByteArray(),metadata.datatype)';
+0241                 javaByteStream.close();
+0242                 javaByteOutputStream.close();
+0243                 javaUnpackSuccessful = true;
+0244             <span class="keyword">catch</span>
+0245                 warning(<span class="string">'Java unpacking failed... using temporary files!'</span>);
+0246             <span class="keyword">end</span>
+0247         <span class="keyword">end</span>
+0248         <span class="keyword">if</span> ~javaUnpackSuccessful
+0249             <span class="comment">%Copy content to temporary file</span>
+0250             tmpName = tempname();
+0251             tmpFile = [tmpName <span class="string">'.gz'</span>];
+0252             hFileTmp = fopen(tmpFile, <span class="string">'wb'</span>);
+0253             
+0254             <span class="keyword">if</span> hFileTmp &lt;= 0
+0255                 error(<span class="string">'Could not open temporary file for GZIP!'</span>);
+0256             <span class="keyword">end</span>
+0257             
+0258             fwrite(hFileTmp, compressedByteArray, <span class="string">'uint8'</span>);
+0259             fclose(hFileTmp);
+0260             
+0261             <span class="comment">%Unzip with gzip</span>
+0262             gunzip(tmpFile);
+0263             
+0264             <span class="comment">%Read the uncompressed file</span>
+0265             hFileTmp = fopen(tmpName, <span class="string">'rb'</span>);
+0266             <span class="keyword">if</span> hFileTmp &lt;= 0
+0267                 error(<span class="string">'Could not open unpacked file!'</span>);
+0268             <span class="keyword">end</span>
+0269             cleanTmpFile = onCleanup(@() fclose(hFileTmp));
+0270 
+0271             cube = fread(hFileTmp, prod(metadata.cubeDim), metadata.datatype);
+0272         <span class="keyword">end</span>
+0273     <span class="keyword">case</span> {<span class="string">'bz2'</span>,<span class="string">'bzip2'</span>}
+0274         error(<span class="string">'Sorry: bzip compression not yet supported!'</span>);
+0275     <span class="keyword">otherwise</span> 
+0276         error([<span class="string">'Undefined NRRD encoding scheme: '</span> nrrdMetaData.encoding]);
+0277 <span class="keyword">end</span>
+0278 
+0279 <span class="comment">%maybe we need to correct the byte ordering (endian)</span>
+0280 <span class="keyword">if</span> doSwapBytes
+0281     swapbytes(cube);
+0282 <span class="keyword">end</span>
+0283 
+0284 <span class="keyword">if</span> numel(metadata.cubeDim) &gt; 1
+0285     
+0286     <span class="comment">%first we shape the data into a cube</span>
+0287     cube = reshape(cube,metadata.cubeDim);
+0288     
+0289     <span class="comment">%now we have to do the permutations, 2 1 3 ... is the MATLAB default</span>
+0290     <span class="comment">%We create a transform matrix that transforms a permutation to MATLAB</span>
+0291     <span class="comment">%default</span>
+0292     permutationTransformMatrix = diag(ones(metadata.dimension,1));
+0293     permutationTransformMatrix(1:2,1:2) = flip(permutationTransformMatrix(1:2,1:2));
+0294     
+0295     applyPermutation = permutationTransformMatrix*metadata.axisPermutation';
+0296     
+0297     cube = permute(cube,applyPermutation);
+0298 <span class="keyword">end</span>
+0299 
+0300 
+0301 
+0302 <span class="keyword">end</span>
+0303 
+0304 <span class="comment">%This function wraps datatype definitions to the one used by MATLAB</span>
+0305 <a name="_sub1" href="#_subfunctions" class="code">function datatype = getMATLABdataType(typestring)</a>
+0306 <span class="comment">%The typedefinitions are taken directly from Section 5 of the NRRD</span>
+0307 <span class="comment">%definition</span>
+0308 <span class="keyword">switch</span> typestring
+0309     <span class="keyword">case</span> {<span class="string">'signed char'</span>,<span class="string">'int8'</span>,<span class="string">'int8_t'</span>}
+0310         datatype = <span class="string">'int8'</span>;     
+0311     <span class="keyword">case</span> {<span class="string">'uchar'</span>,<span class="string">'unsigned char'</span>,<span class="string">'uint8'</span>,<span class="string">'uint8_t'</span>}
+0312         datatype = <span class="string">'uint8'</span>;        
+0313     <span class="keyword">case</span> {<span class="string">'short'</span>,<span class="string">'short int'</span>,<span class="string">'signed short'</span>,<span class="string">'signed short int'</span>,<span class="string">'int16'</span>,<span class="string">'int16_t'</span>}
+0314         datatype = <span class="string">'int16'</span>;        
+0315     <span class="keyword">case</span> {<span class="string">'ushort'</span>,<span class="string">'unsigned short'</span>,<span class="string">'unsigned short int'</span>,<span class="string">'uint16'</span>,<span class="string">'uint16_t'</span>}
+0316         datatype = <span class="string">'uint16'</span>;        
+0317     <span class="keyword">case</span> {<span class="string">'int'</span>,<span class="string">'signed int'</span>,<span class="string">'int32'</span>,<span class="string">'int32_t'</span>}
+0318         datatype = <span class="string">'int32'</span>;        
+0319     <span class="keyword">case</span> {<span class="string">'uint'</span>,<span class="string">'unsigned int'</span>,<span class="string">'uint32'</span>,<span class="string">'uint32_t'</span>}
+0320         datatype = <span class="string">'uint32'</span>;        
+0321     <span class="keyword">case</span> {<span class="string">'longlong'</span>,<span class="string">'long long'</span>,<span class="string">'long long int'</span>,<span class="string">'signed long long'</span>,<span class="string">'signed long long int'</span>,<span class="string">'int64'</span>,<span class="string">'int64_t'</span>}
+0322         datatype = <span class="string">'int64'</span>;        
+0323     <span class="keyword">case</span> {<span class="string">'ulonglong'</span>, <span class="string">'unsigned long long'</span>, <span class="string">'unsigned long long int'</span>,<span class="string">'uint64'</span>,<span class="string">'uint64_t'</span>}
+0324         datatype = <span class="string">'uint64'</span>;        
+0325     <span class="keyword">case</span> <span class="string">'float'</span>
+0326         datatype = <span class="string">'single'</span>;        
+0327     <span class="keyword">case</span> <span class="string">'double'</span>
+0328         datatype = <span class="string">'double'</span>;        
+0329     <span class="keyword">otherwise</span>
+0330         error(<span class="string">'Could not identify datatype for NRRD data'</span>);
+0331 <span class="keyword">end</span>
+0332 
+0333 <span class="keyword">end</span>
+0334</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

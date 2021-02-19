@@ -1,0 +1,805 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_importDicomGUI</title>
+  <meta name="keywords" content="matRad_importDicomGUI">
+  <meta name="description" content="MATRAD_IMPORTDICOMGUI MATLAB code for matRad_importDicomGUI.fig">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html dicom -->
+<h1>matRad_importDicomGUI
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">MATRAD_IMPORTDICOMGUI MATLAB code for matRad_importDicomGUI.fig</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function varargout = matRad_importDicomGUI(varargin) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> MATRAD_IMPORTDICOMGUI MATLAB code for matRad_importDicomGUI.fig
+      MATRAD_IMPORTDICOMGUI, by itself, creates a new MATRAD_IMPORTDICOMGUI or raises the existing
+      singleton*.
+
+      H = MATRAD_IMPORTDICOMGUI returns the handle to a new MATRAD_IMPORTDICOMGUI or the handle to
+      the existing singleton*.
+
+      MATRAD_IMPORTDICOMGUI('CALLBACK',hObject,eventData,handles,...) calls the local
+      function named CALLBACK in MATRAD_IMPORTDICOMGUI.M with the given input arguments.
+
+      MATRAD_IMPORTDICOMGUI('Property','Value',...) creates a new MATRAD_IMPORTDICOMGUI or raises the
+      existing singleton*.  Starting from the left, property value pairs are
+      applied to the GUI before matRad_importDicomGUI_OpeningFcn gets called.  An
+      unrecognized property name or invalid value makes property application
+      stop.  All inputs are passed to matRad_importDicomGUI_OpeningFcn via varargin.
+
+      *See GUI Options on GUIDE's Tools menu.  Choose &quot;GUI allows only one
+      instance to run (singleton)&quot;.
+
+ See also: GUIDE, GUIDATA, GUIHANDLES</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_importDicom.html" class="code" title="function [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )">matRad_importDicom</a>	matRad wrapper function to import a predefined set of dicom files</li><li><a href="matRad_scanDicomImportFolder.html" class="code" title="function [ fileList, patientList ] = matRad_scanDicomImportFolder( patDir )">matRad_scanDicomImportFolder</a>	matRad function to scan a folder for dicom data</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>Subfunctions <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<ul style="list-style-type:disc">
+<li><a href="#_sub1" class="code">function matRad_importDicomGUI_OpeningFcn(hObject, eventdata, handles, varargin)</a></li><li><a href="#_sub2" class="code">function varargout = matRad_importDicomGUI_OutputFcn(hObject, eventdata, handles)</a></li><li><a href="#_sub3" class="code">function patDir = browse_button_Callback(hObject, eventdata, handles)</a></li><li><a href="#_sub4" class="code">function scan(hObject, eventdata, handles)</a></li><li><a href="#_sub5" class="code">function patient_listbox_Callback(hObject, eventdata, handles)</a></li><li><a href="#_sub6" class="code">function patient_listbox_CreateFcn(hObject, eventdata, handles)</a></li><li><a href="#_sub7" class="code">function ctseries_listbox_Callback(hObject, eventdata, handles)</a></li><li><a href="#_sub8" class="code">function ctseries_listbox_CreateFcn(hObject, eventdata, handles)</a></li><li><a href="#_sub9" class="code">function rtseries_listbox_Callback(hObject, eventdata, handles)</a></li><li><a href="#_sub10" class="code">function rtseries_listbox_CreateFcn(hObject, eventdata, handles)</a></li><li><a href="#_sub11" class="code">function import_button_Callback(hObject, eventdata, handles)</a></li><li><a href="#_sub12" class="code">function cancel_button_Callback(hObject, eventdata, handles)</a></li><li><a href="#_sub13" class="code">function rescan_button_Callback(hObject, eventdata, handles)</a></li><li><a href="#_sub14" class="code">function figure1_ButtonDownFcn(hObject, eventdata, handles)</a></li><li><a href="#_sub15" class="code">function dir_path_field_Callback(hObject, eventdata, handles)</a></li><li><a href="#_sub16" class="code">function SeriesUID_radiobutton_Callback(hObject, eventdata, handles)</a></li><li><a href="#_sub17" class="code">function SeriesNumber_radiobutton_Callback(hObject, eventdata, handles)</a></li><li><a href="#_sub18" class="code">function resx_edit_Callback(hObject, eventdata, handles)</a></li><li><a href="#_sub19" class="code">function resx_edit_CreateFcn(hObject, eventdata, handles)</a></li><li><a href="#_sub20" class="code">function resy_edit_Callback(hObject, eventdata, handles)</a></li><li><a href="#_sub21" class="code">function resy_edit_CreateFcn(hObject, eventdata, handles)</a></li><li><a href="#_sub22" class="code">function resz_edit_Callback(hObject, eventdata, handles)</a></li><li><a href="#_sub23" class="code">function resz_edit_CreateFcn(hObject, eventdata, handles)</a></li><li><a href="#_sub24" class="code">function doseseries_listbox_Callback(hObject, eventdata, handles)</a></li><li><a href="#_sub25" class="code">function doseseries_listbox_CreateFcn(hObject, eventdata, handles)</a></li><li><a href="#_sub26" class="code">function rtplan_listbox_Callback(hObject, eventdata, handles)</a></li><li><a href="#_sub27" class="code">function rtplan_listbox_CreateFcn(hObject, eventdata, handles)</a></li><li><a href="#_sub28" class="code">function checkPatientName_Callback(hObject, eventdata, handles)</a></li><li><a href="#_sub29" class="code">function checkbox3_Callback(hObject, eventdata, handles)</a></li></ul>
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function varargout = matRad_importDicomGUI(varargin)</a>
+0002 <span class="comment">% MATRAD_IMPORTDICOMGUI MATLAB code for matRad_importDicomGUI.fig</span>
+0003 <span class="comment">%      MATRAD_IMPORTDICOMGUI, by itself, creates a new MATRAD_IMPORTDICOMGUI or raises the existing</span>
+0004 <span class="comment">%      singleton*.</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%      H = MATRAD_IMPORTDICOMGUI returns the handle to a new MATRAD_IMPORTDICOMGUI or the handle to</span>
+0007 <span class="comment">%      the existing singleton*.</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">%      MATRAD_IMPORTDICOMGUI('CALLBACK',hObject,eventData,handles,...) calls the local</span>
+0010 <span class="comment">%      function named CALLBACK in MATRAD_IMPORTDICOMGUI.M with the given input arguments.</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">%      MATRAD_IMPORTDICOMGUI('Property','Value',...) creates a new MATRAD_IMPORTDICOMGUI or raises the</span>
+0013 <span class="comment">%      existing singleton*.  Starting from the left, property value pairs are</span>
+0014 <span class="comment">%      applied to the GUI before matRad_importDicomGUI_OpeningFcn gets called.  An</span>
+0015 <span class="comment">%      unrecognized property name or invalid value makes property application</span>
+0016 <span class="comment">%      stop.  All inputs are passed to matRad_importDicomGUI_OpeningFcn via varargin.</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">%      *See GUI Options on GUIDE's Tools menu.  Choose &quot;GUI allows only one</span>
+0019 <span class="comment">%      instance to run (singleton)&quot;.</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% See also: GUIDE, GUIDATA, GUIHANDLES</span>
+0022 
+0023 <span class="comment">% Edit the above text to modify the response to help matRad_importDicomGUI</span>
+0024 
+0025 <span class="comment">% Last Modified by GUIDE v2.5 02-Jun-2017 00:45:04</span>
+0026 
+0027 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0028 <span class="comment">%</span>
+0029 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0030 <span class="comment">%</span>
+0031 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0032 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0033 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0034 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0035 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0036 <span class="comment">% LICENSE file.</span>
+0037 <span class="comment">%</span>
+0038 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0039 
+0040 <span class="comment">% Begin initialization code - DO NOT EDIT</span>
+0041 gui_Singleton = 1;
+0042 gui_State = struct(<span class="string">'gui_Name'</span>,       mfilename, <span class="keyword">...</span>
+0043     <span class="string">'gui_Singleton'</span>,  gui_Singleton, <span class="keyword">...</span>
+0044     <span class="string">'gui_OpeningFcn'</span>, @<a href="#_sub1" class="code" title="subfunction matRad_importDicomGUI_OpeningFcn(hObject, eventdata, handles, varargin)">matRad_importDicomGUI_OpeningFcn</a>, <span class="keyword">...</span>
+0045     <span class="string">'gui_OutputFcn'</span>,  @<a href="#_sub2" class="code" title="subfunction varargout = matRad_importDicomGUI_OutputFcn(hObject, eventdata, handles)">matRad_importDicomGUI_OutputFcn</a>, <span class="keyword">...</span>
+0046     <span class="string">'gui_LayoutFcn'</span>,  [] , <span class="keyword">...</span>
+0047     <span class="string">'gui_Callback'</span>,   []);
+0048 <span class="keyword">if</span> nargin &amp;&amp; ischar(varargin{1})
+0049     gui_State.gui_Callback = str2func(varargin{1});
+0050 <span class="keyword">end</span>
+0051 
+0052 <span class="comment">% if nargout</span>
+0053     [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
+0054 <span class="comment">% else</span>
+0055 <span class="comment">%     gui_mainfcn(gui_State, varargin{:});</span>
+0056 <span class="comment">% end</span>
+0057 <span class="comment">% End initialization code - DO NOT EDIT</span>
+0058 
+0059 
+0060 <span class="comment">% --- Executes just before matRad_importDicomGUI is made visible.</span>
+0061 <a name="_sub1" href="#_subfunctions" class="code">function matRad_importDicomGUI_OpeningFcn(hObject, eventdata, handles, varargin)</a>
+0062 <span class="comment">% This function has no output args, see OutputFcn.</span>
+0063 <span class="comment">% hObject    handle to figure</span>
+0064 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0065 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0066 <span class="comment">% varargin   command line arguments to matRad_importDicomGUI (see VARARGIN)</span>
+0067 
+0068 <span class="comment">% Choose default command line output for matRad_importDicomGUI</span>
+0069 handles.output = hObject;
+0070 
+0071 axes(handles.axesMatRadLogo)
+0072 [im, ~, alpha] = imread(<span class="string">'matrad_logo.png'</span>);
+0073 q = image(im);
+0074 axis equal off
+0075 set(q, <span class="string">'AlphaData'</span>, alpha);
+0076 <span class="comment">% show dkfz logo</span>
+0077 axes(handles.axesDKFZLogo)
+0078 [im, ~, alpha] = imread(<span class="string">'DKFZ_Logo.png'</span>);
+0079 p = image(im);
+0080 axis equal off
+0081 set(p, <span class="string">'AlphaData'</span>, alpha);
+0082 <span class="comment">% Update handles structure</span>
+0083 guidata(hObject, handles);
+0084 
+0085 <span class="comment">% UIWAIT makes matRad_importDicomGUI wait for user response (see UIRESUME)</span>
+0086 <span class="comment">% uiwait(handles.figure1);</span>
+0087 
+0088 
+0089 <span class="comment">% --- Outputs from this function are returned to the command line.</span>
+0090 <a name="_sub2" href="#_subfunctions" class="code">function varargout = matRad_importDicomGUI_OutputFcn(hObject, eventdata, handles)</a>
+0091 <span class="comment">% varargout  cell array for returning output args (see VARARGOUT);</span>
+0092 <span class="comment">% hObject    handle to figure</span>
+0093 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0094 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0095 
+0096 <span class="comment">% Get default command line output from handles structure</span>
+0097 varargout{1} = handles.output;
+0098 
+0099 
+0100 <span class="comment">% --- Executes on button press in browse_button.</span>
+0101 <a name="_sub3" href="#_subfunctions" class="code">function patDir = browse_button_Callback(hObject, eventdata, handles)</a>
+0102 <span class="comment">% hObject    handle to browse_button (see GCBO)</span>
+0103 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0104 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0105 <span class="comment">%uiwait(warndlg('Choose the input directory'));</span>
+0106 patDir = uigetdir(<span class="string">''</span>, <span class="string">'Choose the input directory...'</span>);
+0107 <span class="keyword">if</span> patDir ~= 0
+0108     patDir = [patDir filesep];
+0109     <span class="comment">%handles.dir_path_field.String = patDir;</span>
+0110     set(handles.dir_path_field,<span class="string">'String'</span>,patDir);
+0111     <span class="comment">% Update handles structure</span>
+0112     guidata(hObject, handles);
+0113     <a href="#_sub4" class="code" title="subfunction scan(hObject, eventdata, handles)">scan</a>(hObject, eventdata, handles)
+0114 <span class="keyword">end</span>
+0115 
+0116 <a name="_sub4" href="#_subfunctions" class="code">function scan(hObject, eventdata, handles)</a>
+0117 [fileList, patient_listbox] = <a href="matRad_scanDicomImportFolder.html" class="code" title="function [ fileList, patientList ] = matRad_scanDicomImportFolder( patDir )">matRad_scanDicomImportFolder</a>(get(handles.dir_path_field,<span class="string">'String'</span>));
+0118 <span class="keyword">if</span> iscell(patient_listbox)
+0119     handles.fileList =  fileList;
+0120     <span class="comment">%handles.patient_listbox.String = patient_listbox;</span>
+0121     set(handles.patient_listbox,<span class="string">'String'</span>,patient_listbox,<span class="string">'Value'</span>,1);
+0122     guidata(hObject, handles);
+0123 <span class="keyword">end</span>
+0124 
+0125 <span class="comment">% --- Executes on selection change in patient_listbox.</span>
+0126 <a name="_sub5" href="#_subfunctions" class="code">function patient_listbox_Callback(hObject, eventdata, handles)</a>
+0127 <span class="comment">% hObject    handle to patient_listbox (see GCBO)</span>
+0128 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0129 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0130 
+0131 <span class="comment">% Hints: contents = cellstr(get(hObject,'String')) returns patient_listbox contents as cell array</span>
+0132 <span class="comment">%        contents{get(hObject,'Value')} returns selected item from patient_listbox</span>
+0133 
+0134 <span class="keyword">if</span> ~isempty(get(hObject,<span class="string">'String'</span>))
+0135     <span class="comment">% enable Import button</span>
+0136     set(handles.import_button,<span class="string">'Enable'</span>,<span class="string">'on'</span>);
+0137     
+0138     <span class="comment">% handles.filelist:</span>
+0139     <span class="comment">%   1. Filepath</span>
+0140     <span class="comment">%   2. Modality</span>
+0141     <span class="comment">%   3. PatientID</span>
+0142     <span class="comment">%   4. SeriesUID</span>
+0143     <span class="comment">%   5. SeriesNumber</span>
+0144     <span class="comment">%   9. res_x</span>
+0145     <span class="comment">%   10. res_y</span>
+0146     <span class="comment">%   11. res_z</span>
+0147     <span class="comment">%   12. detailed dose description - currently not in use for GUI user</span>
+0148     patient_listbox = get(handles.patient_listbox,<span class="string">'String'</span>);
+0149     selected_patient = patient_listbox(get(handles.patient_listbox,<span class="string">'Value'</span>));
+0150     <span class="comment">% this gets a list of rtss series for this patient</span>
+0151     set(handles.rtseries_listbox,<span class="string">'Value'</span>,1); <span class="comment">% set dummy value to one</span>
+0152     set(handles.rtseries_listbox,<span class="string">'String'</span>,handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'RTSTRUCT'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient),4));
+0153     <span class="comment">% this gets a list of rt plan series for this patient</span>
+0154     set(handles.rtplan_listbox,<span class="string">'Value'</span>,[]); <span class="comment">% set dummy value to none</span>
+0155     set(handles.rtplan_listbox,<span class="string">'String'</span>,handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'RTPLAN'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient),4));
+0156     <span class="comment">% this gets a list of dose series for this patient</span>
+0157     set(handles.doseseries_listbox,<span class="string">'Value'</span>,[]); <span class="comment">% set dummy value to none</span>
+0158     set(handles.doseseries_listbox,<span class="string">'String'</span>,handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'RTDOSE'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient),4));
+0159     <span class="comment">% selectedDose</span>
+0160 
+0161     <span class="keyword">if</span> get(handles.SeriesUID_radiobutton,<span class="string">'Value'</span>) == 1
+0162         <span class="comment">% this gets a list of ct series for this patient</span>
+0163         set(handles.ctseries_listbox,<span class="string">'Value'</span>,1); <span class="comment">% set dummy value to one</span>
+0164         set(handles.ctseries_listbox,<span class="string">'String'</span>,unique(handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'CT'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient),4)));
+0165         
+0166         selectedDoseSeriesString = get(handles.doseseries_listbox,<span class="string">'String'</span>);
+0167         <span class="comment">% this gets a resolution for this patient</span>
+0168         selectedCtSeriesString = get(handles.ctseries_listbox,<span class="string">'String'</span>);
+0169         <span class="keyword">if</span> ~isempty(selectedCtSeriesString)
+0170             res_x = unique(handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'CT'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient) &amp; strcmp(handles.fileList(:,4), selectedCtSeriesString{get(handles.ctseries_listbox,<span class="string">'Value'</span>)}),9));
+0171             res_y = unique(handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'CT'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient) &amp; strcmp(handles.fileList(:,4), selectedCtSeriesString{get(handles.ctseries_listbox,<span class="string">'Value'</span>)}),10));
+0172             res_z = unique(handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'CT'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient) &amp; strcmp(handles.fileList(:,4), selectedCtSeriesString{get(handles.ctseries_listbox,<span class="string">'Value'</span>)}),11));
+0173         <span class="keyword">else</span>
+0174             res_x = NaN; res_y = NaN; res_z = NaN;
+0175         <span class="keyword">end</span>
+0176     <span class="keyword">else</span>
+0177         set(handles.ctseries_listbox,<span class="string">'Value'</span>,1); <span class="comment">% set dummy value to one</span>
+0178         set(handles.ctseries_listbox,<span class="string">'String'</span>,unique(handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'CT'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient),5)));
+0179         selectedCtSeriesString = get(handles.ctseries_listbox,<span class="string">'String'</span>);
+0180         <span class="keyword">if</span> ~isempty(selectedCtSeriesString)
+0181             res_x = unique(handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'CT'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient) &amp; strcmp(handles.fileList(:,5), selectedCtSeriesString{get(handles.ctseries_listbox,<span class="string">'Value'</span>)}),9));
+0182             res_y = unique(handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'CT'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient) &amp; strcmp(handles.fileList(:,5), selectedCtSeriesString{get(handles.ctseries_listbox,<span class="string">'Value'</span>)}),10));
+0183             res_z = unique(handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'CT'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient) &amp; strcmp(handles.fileList(:,5), selectedCtSeriesString{get(handles.ctseries_listbox,<span class="string">'Value'</span>)}),11));
+0184         <span class="keyword">else</span>
+0185             res_x = NaN; res_y = NaN; res_z = NaN;
+0186         <span class="keyword">end</span>
+0187     <span class="keyword">end</span>
+0188     set(handles.resx_edit,<span class="string">'String'</span>,res_x);
+0189     set(handles.resy_edit,<span class="string">'String'</span>,res_y);
+0190     <span class="keyword">if</span> numel(res_z) &gt; 1
+0191         set(handles.resz_edit,<span class="string">'String'</span>,<span class="string">'not equi'</span>);
+0192     <span class="keyword">else</span>
+0193         set(handles.resz_edit,<span class="string">'String'</span>,res_z);
+0194     <span class="keyword">end</span>
+0195     <span class="comment">% Update handles structure</span>
+0196     guidata(hObject, handles);
+0197 <span class="keyword">end</span>
+0198 
+0199 <span class="comment">% --- Executes during object creation, after setting all properties.</span>
+0200 <a name="_sub6" href="#_subfunctions" class="code">function patient_listbox_CreateFcn(hObject, eventdata, handles)</a>
+0201 <span class="comment">% hObject    handle to patient_listbox (see GCBO)</span>
+0202 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0203 <span class="comment">% handles    empty - handles not created until after all CreateFcns called</span>
+0204 
+0205 <span class="comment">% Hint: listbox controls usually have a white background on Windows.</span>
+0206 <span class="comment">%       See ISPC and COMPUTER.</span>
+0207 <span class="keyword">if</span> ispc &amp;&amp; isequal(get(hObject,<span class="string">'BackgroundColor'</span>), get(0,<span class="string">'defaultUicontrolBackgroundColor'</span>))
+0208     set(hObject,<span class="string">'BackgroundColor'</span>,<span class="string">'white'</span>);
+0209 <span class="keyword">end</span>
+0210 
+0211 
+0212 <span class="comment">% --- Executes on selection change in ctseries_listbox.</span>
+0213 <a name="_sub7" href="#_subfunctions" class="code">function ctseries_listbox_Callback(hObject, eventdata, handles)</a>
+0214 <span class="comment">% hObject    handle to ctseries_listbox (see GCBO)</span>
+0215 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0216 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0217 
+0218 <span class="comment">% Hints: contents = cellstr(get(hObject,'String')) returns ctseries_listbox contents as cell array</span>
+0219 <span class="comment">%        contents{get(hObject,'Value')} returns selected item from ctseries_listbox</span>
+0220 
+0221 
+0222 <span class="comment">% --- Executes during object creation, after setting all properties.</span>
+0223 <a name="_sub8" href="#_subfunctions" class="code">function ctseries_listbox_CreateFcn(hObject, eventdata, handles)</a>
+0224 <span class="comment">% hObject    handle to ctseries_listbox (see GCBO)</span>
+0225 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0226 <span class="comment">% handles    empty - handles not created until after all CreateFcns called</span>
+0227 
+0228 <span class="comment">% Hint: listbox controls usually have a white background on Windows.</span>
+0229 <span class="comment">%       See ISPC and COMPUTER.</span>
+0230 <span class="keyword">if</span> ispc &amp;&amp; isequal(get(hObject,<span class="string">'BackgroundColor'</span>), get(0,<span class="string">'defaultUicontrolBackgroundColor'</span>))
+0231     set(hObject,<span class="string">'BackgroundColor'</span>,<span class="string">'white'</span>);
+0232 <span class="keyword">end</span>
+0233 
+0234 
+0235 <span class="comment">% --- Executes on selection change in rtseries_listbox.</span>
+0236 <a name="_sub9" href="#_subfunctions" class="code">function rtseries_listbox_Callback(hObject, eventdata, handles)</a>
+0237 <span class="comment">% hObject    handle to rtseries_listbox (see GCBO)</span>
+0238 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0239 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0240 
+0241 <span class="comment">% Hints: contents = cellstr(get(hObject,'String')) returns rtseries_listbox contents as cell array</span>
+0242 <span class="comment">%        contents{get(hObject,'Value')} returns selected item from rtseries_listbox</span>
+0243 
+0244 
+0245 <span class="comment">% --- Executes during object creation, after setting all properties.</span>
+0246 <a name="_sub10" href="#_subfunctions" class="code">function rtseries_listbox_CreateFcn(hObject, eventdata, handles)</a>
+0247 <span class="comment">% hObject    handle to rtseries_listbox (see GCBO)</span>
+0248 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0249 <span class="comment">% handles    empty - handles not created until after all CreateFcns called</span>
+0250 
+0251 <span class="comment">% Hint: listbox controls usually have a white background on Windows.</span>
+0252 <span class="comment">%       See ISPC and COMPUTER.</span>
+0253 <span class="keyword">if</span> ispc &amp;&amp; isequal(get(hObject,<span class="string">'BackgroundColor'</span>), get(0,<span class="string">'defaultUicontrolBackgroundColor'</span>))
+0254     set(hObject,<span class="string">'BackgroundColor'</span>,<span class="string">'white'</span>);
+0255 <span class="keyword">end</span>
+0256 
+0257 
+0258 <span class="comment">% --- Executes on button press in import_button.</span>
+0259 <a name="_sub11" href="#_subfunctions" class="code">function import_button_Callback(hObject, eventdata, handles)</a>
+0260 <span class="comment">% hObject    handle to import_button (see GCBO)</span>
+0261 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0262 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0263 
+0264 patient_listbox = get(handles.patient_listbox,<span class="string">'String'</span>);
+0265 ctseries_listbox = get(handles.ctseries_listbox,<span class="string">'String'</span>);
+0266 rtplan_listbox = get(handles.rtplan_listbox,<span class="string">'String'</span>);
+0267 doseseries_listbox = get(handles.rtplan_listbox,<span class="string">'String'</span>);
+0268 <span class="keyword">if</span> ~isempty(patient_listbox)
+0269     selected_patient = patient_listbox(get(handles.patient_listbox,<span class="string">'Value'</span>));
+0270 <span class="keyword">end</span>
+0271 <span class="keyword">if</span> ~isempty(ctseries_listbox)
+0272     selected_ctseries = ctseries_listbox(get(handles.ctseries_listbox,<span class="string">'Value'</span>));
+0273 <span class="keyword">end</span>
+0274 <span class="keyword">if</span> ~isempty(rtplan_listbox)
+0275     selected_rtplan = rtplan_listbox(get(handles.rtplan_listbox,<span class="string">'Value'</span>));
+0276 <span class="keyword">end</span>
+0277 
+0278 <span class="keyword">if</span> get(handles.SeriesUID_radiobutton,<span class="string">'Value'</span>) == 1
+0279     files.ct = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) &amp; <span class="keyword">...</span>
+0280         strcmp(handles.fileList(:,4), selected_ctseries),:);
+0281     
+0282     <span class="comment">%files.rtss = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) &amp; ...</span>
+0283     <span class="comment">%    strcmp(handles.fileList(:,4), selected_rtseries),:);</span>
+0284 <span class="keyword">else</span>
+0285       files.ct = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) &amp; <span class="keyword">...</span>
+0286         strcmp(handles.fileList(:,5), selected_ctseries) &amp; strcmp(handles.fileList(:,2),<span class="string">'CT'</span>),:);    
+0287     
+0288     <span class="comment">%files.rtss = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) &amp; ...</span>
+0289     <span class="comment">%    strcmp(handles.fileList(:,5), selected_rtseries),:);</span>
+0290 <span class="keyword">end</span>
+0291 
+0292 allRtss = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) &amp; strcmp(handles.fileList(:,2),<span class="string">'RTSTRUCT'</span>),:);
+0293 <span class="keyword">if</span> ~isempty(allRtss)
+0294     files.rtss = allRtss(get(handles.rtseries_listbox,<span class="string">'Value'</span>),:);
+0295 <span class="keyword">else</span>
+0296     files.rtss = [];
+0297 <span class="keyword">end</span>
+0298 
+0299 files.resx = str2double(get(handles.resx_edit,<span class="string">'String'</span>));
+0300 files.resy = str2double(get(handles.resy_edit,<span class="string">'String'</span>));
+0301 <span class="comment">% check if valid assignment is made when z slices are not equi-distant</span>
+0302 <span class="keyword">if</span> strcmp(get(handles.resz_edit,<span class="string">'String'</span>),<span class="string">'not equi'</span>)
+0303     msgbox(<span class="string">'Ct data not sliced equi-distantly in z direction! Chose uniform resolution.'</span>, <span class="string">'Error'</span>,<span class="string">'error'</span>);
+0304     <span class="keyword">return</span>;
+0305 <span class="keyword">else</span>
+0306     files.resz = str2double(get(handles.resz_edit,<span class="string">'String'</span>));
+0307 <span class="keyword">end</span>
+0308 <span class="comment">% selected RT Plan</span>
+0309 rtplan = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) &amp; strcmp(handles.fileList(:,2),<span class="string">'RTPLAN'</span>),:);
+0310 <span class="keyword">if</span> ~isempty(rtplan) &amp;&amp; ~isempty(get(handles.rtplan_listbox,<span class="string">'Value'</span>))
+0311     files.rtplan = rtplan(get(handles.rtplan_listbox,<span class="string">'Value'</span>),:);
+0312 <span class="keyword">end</span>
+0313 
+0314 <span class="comment">% selected RT Dose</span>
+0315 rtdose = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) &amp; strcmp(handles.fileList(:,2),<span class="string">'RTDOSE'</span>),:);
+0316 <span class="keyword">if</span> ~isempty(rtdose) &amp;&amp; ~isempty(get(handles.doseseries_listbox,<span class="string">'Value'</span>))
+0317     selectedRtDose   = get(handles.doseseries_listbox,<span class="string">'String'</span>);
+0318     selectedRtDoseIx = NaN*ones(1,numel(selectedRtDose));
+0319     <span class="keyword">for</span> i = 1:numel(selectedRtDose)
+0320         selectedRtDoseIx(i) = find(strcmp(rtdose(:,4),selectedRtDose{i}));
+0321     <span class="keyword">end</span>
+0322     files.rtdose = rtdose(selectedRtDoseIx,:);
+0323 <span class="keyword">end</span>
+0324 
+0325 <span class="comment">% check if we should use the dose grid resolution</span>
+0326 files.useDoseGrid = get(handles.checkbox3,<span class="string">'Value'</span>);
+0327 
+0328 <span class="comment">% dicomMetaBool: store complete DICOM information and patientName or not</span>
+0329 dicomMetaBool = logical(get(handles.checkPatientName,<span class="string">'Value'</span>));
+0330 <a href="matRad_importDicom.html" class="code" title="function [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )">matRad_importDicom</a>(files, dicomMetaBool);
+0331 
+0332 
+0333 <span class="comment">% --- Executes on button press in cancel_button.</span>
+0334 <a name="_sub12" href="#_subfunctions" class="code">function cancel_button_Callback(hObject, eventdata, handles)</a>
+0335 <span class="comment">% hObject    handle to cancel_button (see GCBO)</span>
+0336 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0337 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0338 close(handles.figure1);
+0339 
+0340 
+0341 <span class="comment">% --- Executes on button press in rescan_button.</span>
+0342 <a name="_sub13" href="#_subfunctions" class="code">function rescan_button_Callback(hObject, eventdata, handles)</a>
+0343 <span class="comment">% hObject    handle to rescan_button (see GCBO)</span>
+0344 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0345 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0346 
+0347 
+0348 <span class="comment">% --- Executes on mouse press over figure background.</span>
+0349 <a name="_sub14" href="#_subfunctions" class="code">function figure1_ButtonDownFcn(hObject, eventdata, handles)</a>
+0350 <span class="comment">% hObject    handle to figure1 (see GCBO)</span>
+0351 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0352 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0353 
+0354 
+0355 
+0356 <a name="_sub15" href="#_subfunctions" class="code">function dir_path_field_Callback(hObject, eventdata, handles)</a>
+0357 <span class="comment">% hObject    handle to dir_path_field (see GCBO)</span>
+0358 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0359 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0360 
+0361 <span class="comment">% Hints: get(hObject,'String') returns contents of dir_path_field as text</span>
+0362 <span class="comment">%        str2double(get(hObject,'String')) returns contents of dir_path_field as a double</span>
+0363 
+0364 patDir = get(handles.dir_path_field,<span class="string">'String'</span>);
+0365 <span class="keyword">if</span> patDir(end) ~= filesep;
+0366     patDir = [patDir filesep];
+0367     set(handles.dir_path_field,<span class="string">'String'</span>,patDir);
+0368     guidata(hObject, handles);
+0369 <span class="keyword">end</span>
+0370 <a href="#_sub4" class="code" title="subfunction scan(hObject, eventdata, handles)">scan</a>(hObject, eventdata, handles);
+0371 
+0372 
+0373 <span class="comment">% --- Executes on button press in SeriesUID_radiobutton.</span>
+0374 <a name="_sub16" href="#_subfunctions" class="code">function SeriesUID_radiobutton_Callback(hObject, eventdata, handles)</a>
+0375 <span class="comment">% hObject    handle to SeriesUID_radiobutton (see GCBO)</span>
+0376 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0377 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0378 
+0379 <span class="keyword">if</span> get(hObject,<span class="string">'Value'</span>) == 1
+0380     set(handles.SeriesNumber_radiobutton,<span class="string">'Value'</span>,0);
+0381 <span class="keyword">else</span>
+0382     set(hObject,<span class="string">'Value'</span>,1);
+0383     set(handles.SeriesNumber_radiobutton,<span class="string">'Value'</span>,0);
+0384 <span class="keyword">end</span>
+0385 <span class="keyword">if</span> isfield(handles, <span class="string">'fileList'</span>)
+0386     patient_listbox = get(handles.patient_listbox,<span class="string">'String'</span>);
+0387     selected_patient = patient_listbox(get(handles.patient_listbox,<span class="string">'Value'</span>));
+0388     set(handles.ctseries_listbox,<span class="string">'String'</span>,unique(handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'CT'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient),4)));
+0389     set(handles.rtseries_listbox,<span class="string">'String'</span>,unique(handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'RTSTRUCT'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient),4)));
+0390     set(handles.doseseries_listbox,<span class="string">'String'</span>,handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'RTDOSE'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient),4));
+0391     set(handles.rtplan_listbox,<span class="string">'String'</span>,unique(handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'RTPLAN'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient),4)));
+0392 <span class="keyword">else</span>
+0393     fprintf(<span class="string">'No patient loaded, so just switching default display option to SeriesUID. \n'</span>);
+0394 <span class="keyword">end</span>
+0395 guidata(hObject, handles);
+0396 
+0397 <span class="comment">% --- Executes on button press in SeriesNumber_radiobutton.</span>
+0398 <a name="_sub17" href="#_subfunctions" class="code">function SeriesNumber_radiobutton_Callback(hObject, eventdata, handles)</a>
+0399 <span class="comment">% hObject    handle to SeriesNumber_radiobutton (see GCBO)</span>
+0400 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0401 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0402 <span class="keyword">if</span> get(hObject,<span class="string">'Value'</span>) == 1
+0403     set(handles.SeriesUID_radiobutton,<span class="string">'Value'</span>,0);
+0404 <span class="keyword">else</span>
+0405     set(hObject,<span class="string">'Value'</span>,1);
+0406     set(handles.SeriesUID_radiobutton,<span class="string">'Value'</span>,0);
+0407 <span class="keyword">end</span>
+0408 <span class="keyword">if</span> isfield(handles, <span class="string">'fileList'</span>)
+0409     patient_listbox = get(handles.patient_listbox,<span class="string">'String'</span>);
+0410     selected_patient = patient_listbox(get(handles.patient_listbox,<span class="string">'Value'</span>));
+0411     set(handles.ctseries_listbox,<span class="string">'String'</span>,unique(handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'CT'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient),5)));
+0412 <span class="keyword">else</span>
+0413     fprintf(<span class="string">'No patient loaded, so just switching default display option to SeriesNumber. \n'</span>);
+0414 <span class="keyword">end</span>
+0415 guidata(hObject, handles);
+0416 
+0417 
+0418 
+0419 <a name="_sub18" href="#_subfunctions" class="code">function resx_edit_Callback(hObject, eventdata, handles)</a>
+0420 <span class="comment">% hObject    handle to resx_edit (see GCBO)</span>
+0421 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0422 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0423 
+0424 <span class="comment">% Hints: get(hObject,'String') returns contents of resx_edit as text</span>
+0425 <span class="comment">%        str2double(get(hObject,'String')) returns contents of resx_edit as a double</span>
+0426 
+0427 
+0428 <span class="comment">% --- Executes during object creation, after setting all properties.</span>
+0429 <a name="_sub19" href="#_subfunctions" class="code">function resx_edit_CreateFcn(hObject, eventdata, handles)</a>
+0430 <span class="comment">% hObject    handle to resx_edit (see GCBO)</span>
+0431 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0432 <span class="comment">% handles    empty - handles not created until after all CreateFcns called</span>
+0433 
+0434 <span class="comment">% Hint: edit controls usually have a white background on Windows.</span>
+0435 <span class="comment">%       See ISPC and COMPUTER.</span>
+0436 <span class="keyword">if</span> ispc &amp;&amp; isequal(get(hObject,<span class="string">'BackgroundColor'</span>), get(0,<span class="string">'defaultUicontrolBackgroundColor'</span>))
+0437     set(hObject,<span class="string">'BackgroundColor'</span>,<span class="string">'white'</span>);
+0438 <span class="keyword">end</span>
+0439 
+0440 
+0441 
+0442 <a name="_sub20" href="#_subfunctions" class="code">function resy_edit_Callback(hObject, eventdata, handles)</a>
+0443 <span class="comment">% hObject    handle to resy_edit (see GCBO)</span>
+0444 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0445 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0446 
+0447 <span class="comment">% Hints: get(hObject,'String') returns contents of resy_edit as text</span>
+0448 <span class="comment">%        str2double(get(hObject,'String')) returns contents of resy_edit as a double</span>
+0449 
+0450 
+0451 <span class="comment">% --- Executes during object creation, after setting all properties.</span>
+0452 <a name="_sub21" href="#_subfunctions" class="code">function resy_edit_CreateFcn(hObject, eventdata, handles)</a>
+0453 <span class="comment">% hObject    handle to resy_edit (see GCBO)</span>
+0454 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0455 <span class="comment">% handles    empty - handles not created until after all CreateFcns called</span>
+0456 
+0457 <span class="comment">% Hint: edit controls usually have a white background on Windows.</span>
+0458 <span class="comment">%       See ISPC and COMPUTER.</span>
+0459 <span class="keyword">if</span> ispc &amp;&amp; isequal(get(hObject,<span class="string">'BackgroundColor'</span>), get(0,<span class="string">'defaultUicontrolBackgroundColor'</span>))
+0460     set(hObject,<span class="string">'BackgroundColor'</span>,<span class="string">'white'</span>);
+0461 <span class="keyword">end</span>
+0462 
+0463 
+0464 
+0465 <a name="_sub22" href="#_subfunctions" class="code">function resz_edit_Callback(hObject, eventdata, handles)</a>
+0466 <span class="comment">% hObject    handle to resz_edit (see GCBO)</span>
+0467 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0468 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0469 
+0470 <span class="comment">% Hints: get(hObject,'String') returns contents of resz_edit as text</span>
+0471 <span class="comment">%        str2double(get(hObject,'String')) returns contents of resz_edit as a double</span>
+0472 
+0473 
+0474 <span class="comment">% --- Executes during object creation, after setting all properties.</span>
+0475 <a name="_sub23" href="#_subfunctions" class="code">function resz_edit_CreateFcn(hObject, eventdata, handles)</a>
+0476 <span class="comment">% hObject    handle to resz_edit (see GCBO)</span>
+0477 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0478 <span class="comment">% handles    empty - handles not created until after all CreateFcns called</span>
+0479 
+0480 <span class="comment">% Hint: edit controls usually have a white background on Windows.</span>
+0481 <span class="comment">%       See ISPC and COMPUTER.</span>
+0482 <span class="keyword">if</span> ispc &amp;&amp; isequal(get(hObject,<span class="string">'BackgroundColor'</span>), get(0,<span class="string">'defaultUicontrolBackgroundColor'</span>))
+0483     set(hObject,<span class="string">'BackgroundColor'</span>,<span class="string">'white'</span>);
+0484 <span class="keyword">end</span>
+0485 
+0486 <span class="comment">%</span>
+0487 <span class="comment">% % --- Executes on selection change in ctseries_listbox.</span>
+0488 <span class="comment">% function ctseries_listbox_Callback(hObject, eventdata, handles)</span>
+0489 <span class="comment">% % hObject    handle to ctseries_listbox (see GCBO)</span>
+0490 <span class="comment">% % eventdata  reserved - to be defined in a future version of MATLAB</span>
+0491 <span class="comment">% % handles    structure with handles and user data (see GUIDATA)</span>
+0492 <span class="comment">%</span>
+0493 <span class="comment">% % Hints: contents = cellstr(get(hObject,'String')) returns ctseries_listbox contents as cell array</span>
+0494 <span class="comment">% %        contents{get(hObject,'Value')} returns selected item from ctseries_listbox</span>
+0495 <span class="comment">%</span>
+0496 <span class="comment">%</span>
+0497 <span class="comment">% % --- Executes during object creation, after setting all properties.</span>
+0498 <span class="comment">% function ctseries_listbox_CreateFcn(hObject, eventdata, handles)</span>
+0499 <span class="comment">% % hObject    handle to ctseries_listbox (see GCBO)</span>
+0500 <span class="comment">% % eventdata  reserved - to be defined in a future version of MATLAB</span>
+0501 <span class="comment">% % handles    empty - handles not created until after all CreateFcns called</span>
+0502 <span class="comment">%</span>
+0503 <span class="comment">% % Hint: listbox controls usually have a white background on Windows.</span>
+0504 <span class="comment">% %       See ISPC and COMPUTER.</span>
+0505 <span class="comment">% if ispc &amp;&amp; isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))</span>
+0506 <span class="comment">%     set(hObject,'BackgroundColor','white');</span>
+0507 <span class="comment">% end</span>
+0508 <span class="comment">%</span>
+0509 <span class="comment">%</span>
+0510 <span class="comment">% % --- Executes on selection change in rtseries_listbox.</span>
+0511 <span class="comment">% function rtseries_listbox_Callback(hObject, eventdata, handles)</span>
+0512 <span class="comment">% % hObject    handle to rtseries_listbox (see GCBO)</span>
+0513 <span class="comment">% % eventdata  reserved - to be defined in a future version of MATLAB</span>
+0514 <span class="comment">% % handles    structure with handles and user data (see GUIDATA)</span>
+0515 <span class="comment">%</span>
+0516 <span class="comment">% % Hints: contents = cellstr(get(hObject,'String')) returns rtseries_listbox contents as cell array</span>
+0517 <span class="comment">% %        contents{get(hObject,'Value')} returns selected item from rtseries_listbox</span>
+0518 <span class="comment">%</span>
+0519 <span class="comment">%</span>
+0520 <span class="comment">% % --- Executes during object creation, after setting all properties.</span>
+0521 <span class="comment">% function rtseries_listbox_CreateFcn(hObject, eventdata, handles)</span>
+0522 <span class="comment">% % hObject    handle to rtseries_listbox (see GCBO)</span>
+0523 <span class="comment">% % eventdata  reserved - to be defined in a future version of MATLAB</span>
+0524 <span class="comment">% % handles    empty - handles not created until after all CreateFcns called</span>
+0525 <span class="comment">%</span>
+0526 <span class="comment">% % Hint: listbox controls usually have a white background on Windows.</span>
+0527 <span class="comment">% %       See ISPC and COMPUTER.</span>
+0528 <span class="comment">% if ispc &amp;&amp; isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))</span>
+0529 <span class="comment">%     set(hObject,'BackgroundColor','white');</span>
+0530 <span class="comment">% end</span>
+0531 
+0532 
+0533 <span class="comment">% --- Executes on selection change in doseseries_listbox.</span>
+0534 <a name="_sub24" href="#_subfunctions" class="code">function doseseries_listbox_Callback(hObject, eventdata, handles)</a>
+0535 <span class="comment">% hObject    handle to doseseries_listbox (see GCBO)</span>
+0536 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0537 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0538 
+0539 <span class="comment">% Hints: contents = cellstr(get(hObject,'String')) returns doseseries_listbox contents as cell array</span>
+0540 <span class="comment">%        contents{get(hObject,'Value')} returns selected item from doseseries_listbox</span>
+0541 
+0542 <span class="keyword">if</span> ~isempty(get(hObject,<span class="string">'Value'</span>))
+0543     set(handles.checkbox3,<span class="string">'Enable'</span>,<span class="string">'on'</span>);
+0544 <span class="keyword">else</span>
+0545     set(handles.checkbox3,<span class="string">'Value'</span>,0);
+0546     set(handles.checkbox3,<span class="string">'Enable'</span>,<span class="string">'off'</span>);
+0547     <span class="comment">% retrieve and display resolution for DICOM ct cube</span>
+0548     patient_listbox = get(handles.patient_listbox,<span class="string">'String'</span>);
+0549     selected_patient = patient_listbox(get(handles.patient_listbox,<span class="string">'Value'</span>));
+0550     selectedCtSeriesString = get(handles.ctseries_listbox,<span class="string">'String'</span>);
+0551     <span class="keyword">if</span> get(handles.SeriesUID_radiobutton,<span class="string">'Value'</span>) == 1
+0552         <span class="keyword">if</span> ~isempty(selectedCtSeriesString)
+0553             res_x = unique(handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'CT'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient) &amp; strcmp(handles.fileList(:,4), selectedCtSeriesString{get(handles.ctseries_listbox,<span class="string">'Value'</span>)}),9));
+0554             res_y = unique(handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'CT'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient) &amp; strcmp(handles.fileList(:,4), selectedCtSeriesString{get(handles.ctseries_listbox,<span class="string">'Value'</span>)}),10));
+0555             res_z = unique(handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'CT'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient) &amp; strcmp(handles.fileList(:,4), selectedCtSeriesString{get(handles.ctseries_listbox,<span class="string">'Value'</span>)}),11));
+0556         <span class="keyword">else</span>
+0557             res_x = NaN; res_y = NaN; res_z = NaN;
+0558         <span class="keyword">end</span>
+0559     <span class="keyword">else</span>
+0560         <span class="keyword">if</span> ~isempty(selectedCtSeriesString)
+0561             res_x = unique(handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'CT'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient) &amp; strcmp(handles.fileList(:,5), selectedCtSeriesString{get(handles.ctseries_listbox,<span class="string">'Value'</span>)}),9));
+0562             res_y = unique(handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'CT'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient) &amp; strcmp(handles.fileList(:,5), selectedCtSeriesString{get(handles.ctseries_listbox,<span class="string">'Value'</span>)}),10));
+0563             res_z = unique(handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'CT'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient) &amp; strcmp(handles.fileList(:,5), selectedCtSeriesString{get(handles.ctseries_listbox,<span class="string">'Value'</span>)}),11));
+0564         <span class="keyword">else</span>
+0565             res_x = NaN; res_y = NaN; res_z = NaN;
+0566         <span class="keyword">end</span>
+0567     <span class="keyword">end</span>
+0568     set(handles.resx_edit,<span class="string">'String'</span>,res_x);
+0569     set(handles.resy_edit,<span class="string">'String'</span>,res_y);
+0570     <span class="keyword">if</span> numel(res_z) &gt; 1
+0571         set(handles.resz_edit,<span class="string">'String'</span>,<span class="string">'not equi'</span>);
+0572     <span class="keyword">else</span>
+0573         set(handles.resz_edit,<span class="string">'String'</span>,res_z);
+0574     <span class="keyword">end</span>
+0575     
+0576 <span class="keyword">end</span>
+0577 
+0578 <span class="comment">% --- Executes during object creation, after setting all properties.</span>
+0579 <a name="_sub25" href="#_subfunctions" class="code">function doseseries_listbox_CreateFcn(hObject, eventdata, handles)</a>
+0580 <span class="comment">% hObject    handle to doseseries_listbox (see GCBO)</span>
+0581 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0582 <span class="comment">% handles    empty - handles not created until after all CreateFcns called</span>
+0583 
+0584 <span class="comment">% Hint: listbox controls usually have a white background on Windows.</span>
+0585 <span class="comment">%       See ISPC and COMPUTER.</span>
+0586 <span class="keyword">if</span> ispc &amp;&amp; isequal(get(hObject,<span class="string">'BackgroundColor'</span>), get(0,<span class="string">'defaultUicontrolBackgroundColor'</span>))
+0587     set(hObject,<span class="string">'BackgroundColor'</span>,<span class="string">'white'</span>);
+0588 <span class="keyword">end</span>
+0589 
+0590 <span class="comment">% --- Executes on selection change in rtplan_listbox.</span>
+0591 <a name="_sub26" href="#_subfunctions" class="code">function rtplan_listbox_Callback(hObject, eventdata, handles)</a>
+0592 <span class="comment">% hObject    handle to rtplan_listbox (see GCBO)</span>
+0593 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0594 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0595 
+0596 contents = cellstr(get(hObject,<span class="string">'String'</span>));
+0597 <span class="keyword">if</span> ~isempty(get(hObject,<span class="string">'Value'</span>)) &amp;&amp; numel(get(hObject,<span class="string">'Value'</span>)) == 1
+0598 
+0599     selectedPlan = contents{get(hObject,<span class="string">'Value'</span>)};
+0600     <span class="comment">% point at plan in listbox</span>
+0601     selectedPlanLoc = strcmp(handles.fileList(:,4),selectedPlan);
+0602     
+0603     <span class="comment">% show only the doses corresponding to the plan</span>
+0604     corrDoses = [handles.fileList{selectedPlanLoc,13}];
+0605     numOfDoses = numel(corrDoses);
+0606     corrDosesLoc = zeros(size(handles.fileList(:,1),1),1);
+0607     <span class="keyword">for</span> j = 1:numOfDoses
+0608         <span class="keyword">if</span> ~isnan(corrDoses{j})
+0609             corrDosesLoc = corrDosesLoc | strcmp(handles.fileList(:,4),corrDoses{j});
+0610         <span class="keyword">end</span>
+0611     <span class="keyword">end</span>
+0612     
+0613     <span class="keyword">if</span> sum(corrDosesLoc) == 0
+0614         warndlg(<span class="string">'no rt dose file directly associated to plan file. showing all rt dose files.'</span>);
+0615         corrDosesLoc = strcmp(handles.fileList(:,2),<span class="string">'RTDOSE'</span>);
+0616     <span class="keyword">end</span>
+0617 
+0618     set(handles.doseseries_listbox,<span class="string">'Value'</span>,[]); <span class="comment">% set dummy value to one</span>
+0619     set(handles.doseseries_listbox,<span class="string">'String'</span>,handles.fileList(corrDosesLoc,4));
+0620     
+0621     <span class="comment">% disable checkbox for use dose grid is currently checked</span>
+0622     <span class="keyword">if</span> get(handles.checkbox3,<span class="string">'Value'</span>) == 1
+0623         set(handles.checkbox3,<span class="string">'Value'</span>,0);
+0624         <a href="#_sub29" class="code" title="subfunction checkbox3_Callback(hObject, eventdata, handles)">checkbox3_Callback</a>(handles.checkbox3,[], handles);
+0625     <span class="keyword">end</span>
+0626     set(handles.checkbox3,<span class="string">'Enable'</span>,<span class="string">'off'</span>);
+0627 
+0628     
+0629 <span class="keyword">elseif</span> numel(get(hObject,<span class="string">'Value'</span>)) &gt;=2
+0630     warning(<span class="string">'More than one RTPLAN selected. Unsetting selection ...'</span>);
+0631     <a href="#_sub5" class="code" title="subfunction patient_listbox_Callback(hObject, eventdata, handles)">patient_listbox_Callback</a>(hObject, eventdata, handles)
+0632 <span class="keyword">else</span>
+0633     <a href="#_sub5" class="code" title="subfunction patient_listbox_Callback(hObject, eventdata, handles)">patient_listbox_Callback</a>(hObject, eventdata, handles)
+0634 <span class="keyword">end</span>
+0635 
+0636 
+0637 <span class="comment">% --- Executes during object creation, after setting all properties.</span>
+0638 <a name="_sub27" href="#_subfunctions" class="code">function rtplan_listbox_CreateFcn(hObject, eventdata, handles)</a>
+0639 <span class="comment">% hObject    handle to rtplan_listbox (see GCBO)</span>
+0640 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0641 <span class="comment">% handles    empty - handles not created until after all CreateFcns called</span>
+0642 
+0643 <span class="comment">% Hint: listbox controls usually have a white background on Windows.</span>
+0644 <span class="comment">%       See ISPC and COMPUTER.</span>
+0645 <span class="keyword">if</span> ispc &amp;&amp; isequal(get(hObject,<span class="string">'BackgroundColor'</span>), get(0,<span class="string">'defaultUicontrolBackgroundColor'</span>))
+0646     set(hObject,<span class="string">'BackgroundColor'</span>,<span class="string">'white'</span>);
+0647 <span class="keyword">end</span>
+0648 
+0649 
+0650 <span class="comment">% --- Executes on button press in checkPatientName.</span>
+0651 <a name="_sub28" href="#_subfunctions" class="code">function checkPatientName_Callback(hObject, eventdata, handles)</a>
+0652 <span class="comment">% hObject    handle to checkPatientName (see GCBO)</span>
+0653 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0654 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0655 <span class="comment">%A = get(hObject,'Value');</span>
+0656 
+0657 <span class="comment">% Hint: get(hObject,'Value') returns toggle state of checkPatientName</span>
+0658 <span class="comment">%guidata(hObject, handles);</span>
+0659 
+0660 
+0661 <span class="comment">% --- Executes on button press in checkbox3.</span>
+0662 <a name="_sub29" href="#_subfunctions" class="code">function checkbox3_Callback(hObject, eventdata, handles)</a>
+0663 <span class="comment">% hObject    handle to checkbox3 (see GCBO)</span>
+0664 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0665 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0666 
+0667 <span class="comment">% Hint: get(hObject,'Value') returns toggle state of checkbox3</span>
+0668 
+0669 <span class="keyword">if</span> get(hObject,<span class="string">'Value'</span>)
+0670     set(handles.resx_edit,<span class="string">'Enable'</span>, <span class="string">'off'</span>);
+0671     set(handles.resy_edit,<span class="string">'Enable'</span>, <span class="string">'off'</span>);
+0672     set(handles.resz_edit,<span class="string">'Enable'</span>, <span class="string">'off'</span>);
+0673     <span class="comment">% retrieve and display resolution for DICOM dose cube</span>
+0674     doseFilesInList = get(handles.doseseries_listbox,<span class="string">'String'</span>);
+0675     selectedDoseFiles = get(handles.doseseries_listbox,<span class="string">'Value'</span>);
+0676     <span class="keyword">if</span> isempty(selectedDoseFiles)
+0677         set(hObject,<span class="string">'Value'</span>,0)
+0678         errordlg(<span class="string">'no dose file selected'</span>);
+0679         <span class="keyword">return</span>;
+0680     <span class="keyword">end</span>
+0681     <span class="keyword">for</span> i = 1:numel(selectedDoseFiles)
+0682         selectedDoseFile = doseFilesInList{selectedDoseFiles(i)};
+0683         <span class="keyword">if</span> verLessThan(<span class="string">'matlab'</span>,<span class="string">'9'</span>)
+0684             dicomDoseInfo = dicominfo(handles.fileList{find(strcmp(handles.fileList(:,4),selectedDoseFile)),1});
+0685         <span class="keyword">else</span>
+0686             dicomDoseInfo = dicominfo(handles.fileList{find(strcmp(handles.fileList(:,4),selectedDoseFile)),1},<span class="string">'UseDictionaryVR'</span>,true);
+0687         <span class="keyword">end</span>
+0688         res_x{i} = dicomDoseInfo.PixelSpacing(1);
+0689         res_y{i} = dicomDoseInfo.PixelSpacing(2);
+0690         res_z{i} = dicomDoseInfo.SliceThickness;
+0691     <span class="keyword">end</span>
+0692 
+0693     <span class="keyword">if</span> numel(unique(cell2mat(res_x)))*numel(unique(cell2mat(res_y)))*numel(unique(cell2mat(res_z))) ~= 1
+0694         set(handles.checkbox3,<span class="string">'Value'</span>,0);
+0695         warndlg(<span class="string">'Different resolutions in dose file(s)'</span>);
+0696         set(handles.resx_edit,<span class="string">'Enable'</span>, <span class="string">'on'</span>);
+0697         set(handles.resy_edit,<span class="string">'Enable'</span>, <span class="string">'on'</span>);
+0698         set(handles.resz_edit,<span class="string">'Enable'</span>, <span class="string">'on'</span>);
+0699     <span class="keyword">else</span>
+0700         set(handles.resx_edit,<span class="string">'String'</span>,num2str(res_x{1}));
+0701         set(handles.resy_edit,<span class="string">'String'</span>,num2str(res_y{1}));
+0702         set(handles.resz_edit,<span class="string">'String'</span>,num2str(res_z{1}));
+0703     <span class="keyword">end</span>
+0704     
+0705 <span class="keyword">else</span>
+0706     set(handles.resx_edit,<span class="string">'Enable'</span>, <span class="string">'on'</span>);
+0707     set(handles.resy_edit,<span class="string">'Enable'</span>, <span class="string">'on'</span>);
+0708     set(handles.resz_edit,<span class="string">'Enable'</span>, <span class="string">'on'</span>);
+0709     <span class="comment">% retrieve and display resolution for DICOM ct cube</span>
+0710     patient_listbox = get(handles.patient_listbox,<span class="string">'String'</span>);
+0711     selected_patient = patient_listbox(get(handles.patient_listbox,<span class="string">'Value'</span>));
+0712     selectedCtSeriesString = get(handles.ctseries_listbox,<span class="string">'String'</span>);
+0713     <span class="keyword">if</span> get(handles.SeriesUID_radiobutton,<span class="string">'Value'</span>) == 1
+0714         <span class="keyword">if</span> ~isempty(selectedCtSeriesString)
+0715             res_x = unique(handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'CT'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient) &amp; strcmp(handles.fileList(:,4), selectedCtSeriesString{get(handles.ctseries_listbox,<span class="string">'Value'</span>)}),9));
+0716             res_y = unique(handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'CT'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient) &amp; strcmp(handles.fileList(:,4), selectedCtSeriesString{get(handles.ctseries_listbox,<span class="string">'Value'</span>)}),10));
+0717             res_z = unique(handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'CT'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient) &amp; strcmp(handles.fileList(:,4), selectedCtSeriesString{get(handles.ctseries_listbox,<span class="string">'Value'</span>)}),11));
+0718         <span class="keyword">else</span>
+0719             res_x = NaN; res_y = NaN; res_z = NaN;
+0720         <span class="keyword">end</span>
+0721     <span class="keyword">else</span>
+0722         <span class="keyword">if</span> ~isempty(selectedCtSeriesString)
+0723             res_x = unique(handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'CT'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient) &amp; strcmp(handles.fileList(:,5), selectedCtSeriesString{get(handles.ctseries_listbox,<span class="string">'Value'</span>)}),9));
+0724             res_y = unique(handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'CT'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient) &amp; strcmp(handles.fileList(:,5), selectedCtSeriesString{get(handles.ctseries_listbox,<span class="string">'Value'</span>)}),10));
+0725             res_z = unique(handles.fileList(strcmp(handles.fileList(:,2), <span class="string">'CT'</span>) &amp; strcmp(handles.fileList(:,3), selected_patient) &amp; strcmp(handles.fileList(:,5), selectedCtSeriesString{get(handles.ctseries_listbox,<span class="string">'Value'</span>)}),11));
+0726         <span class="keyword">else</span>
+0727             res_x = NaN; res_y = NaN; res_z = NaN;
+0728         <span class="keyword">end</span>
+0729     <span class="keyword">end</span>
+0730     set(handles.resx_edit,<span class="string">'String'</span>,res_x);
+0731     set(handles.resy_edit,<span class="string">'String'</span>,res_y);
+0732     <span class="keyword">if</span> numel(res_z) &gt; 1
+0733         set(handles.resz_edit,<span class="string">'String'</span>,<span class="string">'not equi'</span>);
+0734     <span class="keyword">else</span>
+0735         set(handles.resz_edit,<span class="string">'String'</span>,res_z);
+0736     <span class="keyword">end</span>
+0737     
+0738 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

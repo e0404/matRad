@@ -1,0 +1,207 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_visApertureInfo</title>
+  <meta name="keywords" content="matRad_visApertureInfo">
+  <meta name="description" content="matRad function to visualize aperture shapes stored as struct">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_visApertureInfo
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">matRad function to visualize aperture shapes stored as struct</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function matRad_visApertureInfo(apertureInfo,mode) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to visualize aperture shapes stored as struct
+
+ call
+   matRad_visApertureInfo(apertureInfo,mode)
+
+ input
+   apertureInfo: aperture weight and shape info struct
+   mode:         switch to display leaf numbers ('leafNum') or physical
+                 coordinates of the leaves ('physical')
+
+ output
+   -
+
+ References
+   
+   -
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../matRad/examples/matRad_example3_photonsDAO.html" class="code" title="">matRad_example3_photonsDAO</a>	% Example: Photon Treatment Plan with Direct aperture optimization</li><li><a href="matRad.html" class="code" title="">matRad</a>	matRad script</li><li><a href="matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function matRad_visApertureInfo(apertureInfo,mode)</a>
+0002 <span class="comment">% matRad function to visualize aperture shapes stored as struct</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   matRad_visApertureInfo(apertureInfo,mode)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   apertureInfo: aperture weight and shape info struct</span>
+0009 <span class="comment">%   mode:         switch to display leaf numbers ('leafNum') or physical</span>
+0010 <span class="comment">%                 coordinates of the leaves ('physical')</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% output</span>
+0013 <span class="comment">%   -</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% References</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">%   -</span>
+0018 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0023 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0024 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0025 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0026 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0027 <span class="comment">% LICENSE file.</span>
+0028 <span class="comment">%</span>
+0029 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0030 
+0031 <span class="keyword">if</span> nargin &lt; 2 <span class="comment">% set default mode to physical</span>
+0032     mode = <span class="string">'leafNum'</span>; <span class="comment">% options: 'physical','leafNum'</span>
+0033 <span class="keyword">end</span>
+0034 
+0035 <span class="comment">% global parameters</span>
+0036 numOfBeams = size(apertureInfo.beam,2);
+0037 bixelWidth = apertureInfo.bixelWidth;
+0038 
+0039 <span class="comment">% custom colormap</span>
+0040 color = [0.2:0.01:0.8; 0.2:0.01:0.8; 0.2:0.01:0.8]';
+0041 color = flipud(color);
+0042 color(:,3) = 0;
+0043 color(:,2) = 0;
+0044 
+0045 <span class="comment">% loop over all beams</span>
+0046 <span class="keyword">for</span> i=1:numOfBeams
+0047 
+0048     <span class="comment">% open new figure for every beam</span>
+0049     figure(<span class="string">'units'</span>,<span class="string">'inches'</span>)
+0050 
+0051     <span class="comment">% get the MLC dimensions for this beam</span>
+0052     minX = apertureInfo.beam(i).MLCWindow(1);
+0053     maxX = apertureInfo.beam(i).MLCWindow(2);    
+0054     
+0055     <span class="comment">%get maximum weight</span>
+0056     wMax = max([apertureInfo.beam(i).shape(:).weight]);
+0057     <span class="keyword">if</span> strcmp(mode,<span class="string">'leafNum'</span>)
+0058 
+0059         <span class="comment">% get the active leaf Pairs</span>
+0060         <span class="comment">% the leaf indices have to be flipped in order to fit to the order of</span>
+0061         <span class="comment">% the leaf positions (1st row of leafPos is lowest row in physical</span>
+0062         <span class="comment">% coordinates</span>
+0063         activeLeafInd = flipud(find(apertureInfo.beam(i).isActiveLeafPair));
+0064     <span class="keyword">end</span>
+0065     
+0066     subplotColumns = ceil(apertureInfo.beam(i).numOfShapes/2);
+0067     subplotLines   = ceil(apertureInfo.beam(i).numOfShapes/subplotColumns);
+0068     <span class="comment">%adjust figure position</span>
+0069     set(gcf,<span class="string">'pos'</span>,[0 0 1.8*subplotColumns 3*subplotLines])
+0070     
+0071     <span class="comment">% loop over all shapes of the beam</span>
+0072     <span class="keyword">for</span> j = 1:apertureInfo.beam(i).numOfShapes
+0073         
+0074         <span class="comment">% creating subplots</span>
+0075         subplot(subplotLines,subplotColumns,j)
+0076 
+0077         title([<span class="string">'Beam: '</span> num2str(i) <span class="string">' Shape: '</span> num2str(j) <span class="string">' w='</span> <span class="keyword">...</span>
+0078                 num2str(apertureInfo.beam(i).shape(j).weight,2)],<span class="keyword">...</span>
+0079                     <span class="string">'Fontsize'</span>,8)
+0080         colorInd = max(ceil((apertureInfo.beam(i).shape(j).weight/wMax)*61+eps),1);
+0081         set(gca,<span class="string">'Color'</span>,color(colorInd,:));
+0082         
+0083         hold on
+0084         
+0085         <span class="keyword">if</span> strcmp(mode,<span class="string">'physical'</span>)
+0086             <span class="comment">% loop over all active leaf pairs</span>
+0087             <span class="keyword">for</span> k = 1:apertureInfo.beam(i).numOfActiveLeafPairs
+0088                 fill([minX apertureInfo.beam(i).shape(j).leftLeafPos(k) <span class="keyword">...</span>
+0089                         apertureInfo.beam(i).shape(j).leftLeafPos(k) minX],<span class="keyword">...</span>
+0090                         [apertureInfo.beam(i).leafPairPos(k)- bixelWidth/2 <span class="keyword">...</span>
+0091                         apertureInfo.beam(i).leafPairPos(k)- bixelWidth/2 <span class="keyword">...</span>
+0092                         apertureInfo.beam(i).leafPairPos(k)+ bixelWidth/2 <span class="keyword">...</span>
+0093                         apertureInfo.beam(i).leafPairPos(k)+ bixelWidth/2],<span class="string">'b'</span>)
+0094                  fill([apertureInfo.beam(i).shape(j).rightLeafPos(k) <span class="keyword">...</span>
+0095                         maxX maxX <span class="keyword">...</span>
+0096                         apertureInfo.beam(i).shape(j).rightLeafPos(k)],<span class="keyword">...</span>
+0097                         [apertureInfo.beam(i).leafPairPos(k)- bixelWidth/2 <span class="keyword">...</span>
+0098                         apertureInfo.beam(i).leafPairPos(k)- bixelWidth/2 <span class="keyword">...</span>
+0099                         apertureInfo.beam(i).leafPairPos(k)+ bixelWidth/2 <span class="keyword">...</span>
+0100                         apertureInfo.beam(i).leafPairPos(k)+ bixelWidth/2],<span class="string">'b'</span>)                
+0101             <span class="keyword">end</span>
+0102         <span class="keyword">elseif</span> strcmp(mode,<span class="string">'leafNum'</span>)
+0103             <span class="comment">% loop over all active leaf pairs</span>
+0104             <span class="keyword">for</span> k = 1:apertureInfo.beam(i).numOfActiveLeafPairs
+0105                 fill([minX apertureInfo.beam(i).shape(j).leftLeafPos(k) <span class="keyword">...</span>
+0106                     apertureInfo.beam(i).shape(j).leftLeafPos(k) minX],<span class="keyword">...</span>
+0107                     [activeLeafInd(k) - 1/2 <span class="keyword">...</span>
+0108                     activeLeafInd(k) - 1/2 <span class="keyword">...</span>
+0109                     activeLeafInd(k) + 1/2 <span class="keyword">...</span>
+0110                     activeLeafInd(k) + 1/2],<span class="string">'b'</span>) 
+0111                 fill([apertureInfo.beam(i).shape(j).rightLeafPos(k) <span class="keyword">...</span>
+0112                     maxX maxX <span class="keyword">...</span>
+0113                     apertureInfo.beam(i).shape(j).rightLeafPos(k)],<span class="keyword">...</span>
+0114                     [activeLeafInd(k) - 1/2 <span class="keyword">...</span>
+0115                     activeLeafInd(k) - 1/2 <span class="keyword">...</span>
+0116                     activeLeafInd(k) + 1/2 <span class="keyword">...</span>
+0117                     activeLeafInd(k) + 1/2],<span class="string">'b'</span>)                
+0118             <span class="keyword">end</span>
+0119         <span class="keyword">end</span>
+0120     
+0121         axis tight
+0122         xlabel(<span class="string">'horiz. pos. [mm]'</span>)
+0123 
+0124         <span class="keyword">if</span> strcmp(mode,<span class="string">'physical'</span>)
+0125             ylabel(<span class="string">'vert. pos. [mm]'</span>)
+0126         <span class="keyword">elseif</span> strcmp(mode,<span class="string">'leafNum'</span>)
+0127             ylabel(<span class="string">'leaf pair #'</span>)
+0128         <span class="keyword">end</span>
+0129     
+0130     <span class="keyword">end</span>
+0131 
+0132 <span class="keyword">end</span>
+0133 
+0134 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

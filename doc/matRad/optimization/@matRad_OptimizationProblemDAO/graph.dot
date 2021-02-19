@@ -1,0 +1,22 @@
+/* Created by mdot for Matlab */
+digraph m2html {
+  matRad_OptimizationProblemDAO -> matRad_OptimizationProblemDAO;
+  matRad_OptimizationProblemDAO -> matRad_daoApertureInfo2Vec;
+  matRad_OptimizationProblemDAO -> matRad_daoVec2ApertureInfo;
+  matRad_constraintFunctions -> matRad_constraintFunctions;
+  matRad_constraintJacobian -> matRad_constraintJacobian;
+  matRad_getConstraintBounds -> matRad_getConstraintBounds;
+  matRad_getJacobianStructure -> matRad_getJacobianStructure;
+  matRad_objectiveFunction -> matRad_objectiveFunction;
+  matRad_objectiveGradient -> matRad_objectiveGradient;
+
+  matRad_OptimizationProblemDAO [URL="matRad_OptimizationProblemDAO.html"];
+  matRad_constraintFunctions [URL="matRad_constraintFunctions.html"];
+  matRad_constraintJacobian [URL="matRad_constraintJacobian.html"];
+  matRad_daoApertureInfo2Vec [URL="matRad_daoApertureInfo2Vec.html"];
+  matRad_daoVec2ApertureInfo [URL="matRad_daoVec2ApertureInfo.html"];
+  matRad_getConstraintBounds [URL="matRad_getConstraintBounds.html"];
+  matRad_getJacobianStructure [URL="matRad_getJacobianStructure.html"];
+  matRad_objectiveFunction [URL="matRad_objectiveFunction.html"];
+  matRad_objectiveGradient [URL="matRad_objectiveGradient.html"];
+}

@@ -1,0 +1,119 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_DoseConstraint</title>
+  <meta name="keywords" content="matRad_DoseConstraint">
+  <meta name="description" content="">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../../menu.html matRad --><!-- ../menu.html optimization --><!-- menu.html +DoseConstraints -->
+<h1>matRad_DoseConstraint
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box"></div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">This is a script file. </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"></pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_DoseConstraint.html" class="code" title="">matRad_DoseConstraint</a>	</li><li><a href="../../../matRad/optimization/matRad_DoseOptimizationFunction.html" class="code" title="">matRad_DoseOptimizationFunction</a>	</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_DoseConstraint.html" class="code" title="">matRad_DoseConstraint</a>	</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>Subfunctions <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<ul style="list-style-type:disc">
+<li><a href="#_sub1" class="code">function cDose        = computeDoseConstraintFunction(obj,dose)</a></li><li><a href="#_sub2" class="code">function cDoseJacob   = computeDoseConstraintJacobian(obj,dose)</a></li><li><a href="#_sub3" class="code">function cu           = upperBounds(obj,n)</a></li><li><a href="#_sub4" class="code">function cl           = lowerBounds(obj,n)</a></li><li><a href="#_sub5" class="code">function obj = matRad_DoseConstraint(varargin)</a></li><li><a href="#_sub6" class="code">function jStruct = getDoseConstraintJacobianStructure(obj,n)</a></li><li><a href="#_sub7" class="code">function s = struct(obj)</a></li></ul>
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre>0001 classdef (Abstract) <a href="matRad_DoseConstraint.html" class="code" title="">matRad_DoseConstraint</a> &lt; <a href="../../../matRad/optimization/matRad_DoseOptimizationFunction.html" class="code" title="">matRad_DoseOptimizationFunction</a>
+0002 <span class="comment">% matRad_DoseConstraint: Interface for optimization constraints.</span>
+0003 <span class="comment">%   This abstract base class provides the interface of constraints for</span>
+0004 <span class="comment">%   non-linear optimization.</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0007 
+0008 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0013 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0014 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0015 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0016 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0017 <span class="comment">% LICENSE file.</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0020       
+0021     <span class="comment">%These should be abstract methods, however Octave can't parse them. As soon</span>
+0022     <span class="comment">%as Octave is able to do this, they should be made abstract again</span>
+0023     methods <span class="comment">%(Abstract)</span>
+0024         <span class="comment">%returns the constraint function(s) value(s) for a given dose</span>
+0025         <span class="comment">%vector. Needs to be implemented in sub-classes.</span>
+0026         <a name="_sub0" href="#_subfunctions" class="code">function cDose        = computeDoseConstraintFunction(obj,dose)</a>
+0027           error(<span class="string">'Function needs to be implemented!'</span>);
+0028         <span class="keyword">end</span>
+0029         
+0030         <span class="comment">%return the (dose-dependent) constraint function jacobian for a</span>
+0031         <span class="comment">%given dose vector. Needs to be implemented in sub-classes.</span>
+0032         <a name="_sub1" href="#_subfunctions" class="code">function cDoseJacob   = computeDoseConstraintJacobian(obj,dose)</a>
+0033           error(<span class="string">'Function needs to be implemented!'</span>);
+0034         <span class="keyword">end</span>
+0035         
+0036         <span class="comment">%Returns upper bound(s) / max value(s) for constraint function(s)</span>
+0037         <span class="comment">%Needs to be implemented in sub-classes.</span>
+0038         <a name="_sub2" href="#_subfunctions" class="code">function cu           = upperBounds(obj,n)</a>
+0039           error(<span class="string">'Function needs to be implemented!'</span>);
+0040         <span class="keyword">end</span>
+0041         
+0042         <span class="comment">%Returns lower bound(s) / min value(s) for constraint function(s)</span>
+0043         <span class="comment">%Needs to be implemented in sub-classes.</span>
+0044         <a name="_sub3" href="#_subfunctions" class="code">function cl           = lowerBounds(obj,n)                </a>
+0045           error(<span class="string">'Function needs to be implemented!'</span>);
+0046         <span class="keyword">end</span>
+0047     <span class="keyword">end</span>
+0048 
+0049     methods (Access = public)
+0050        
+0051         <span class="comment">% default constructor of matRad_DoseConstraint</span>
+0052         <a name="_sub4" href="#_subfunctions" class="code">function obj = matRad_DoseConstraint(varargin)</a>
+0053             <span class="comment">%default initialization from struct (parameters &amp; penalty)</span>
+0054             obj@<a href="../../../matRad/optimization/matRad_DoseOptimizationFunction.html" class="code" title="">matRad_DoseOptimizationFunction</a>(varargin{:});
+0055         <span class="keyword">end</span>
+0056         
+0057         <a name="_sub5" href="#_subfunctions" class="code">function jStruct = getDoseConstraintJacobianStructure(obj,n)</a>
+0058         <span class="comment">%return the structure of the (dose-dependent) constraint function</span>
+0059         <span class="comment">%jacobian for a given length n of the dose vector. Returns a</span>
+0060         <span class="comment">%default of a jStruct</span>
+0061             jStruct = ones(n,1);
+0062         <span class="keyword">end</span>
+0063         
+0064         <span class="comment">%Overloads the struct function to add Objective related information</span>
+0065         <span class="comment">%to output struct</span>
+0066         <a name="_sub6" href="#_subfunctions" class="code">function s = struct(obj)</a>
+0067             s = <a href="#_sub7" class="code" title="subfunction s = struct(obj)">struct</a>@<a href="../../../matRad/optimization/matRad_DoseOptimizationFunction.html" class="code" title="">matRad_DoseOptimizationFunction</a>(obj);
+0068         <span class="keyword">end</span>
+0069     <span class="keyword">end</span>
+0070 <span class="keyword">end</span>
+0071</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

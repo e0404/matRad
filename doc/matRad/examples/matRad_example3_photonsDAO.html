@@ -1,0 +1,164 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_example3_photonsDAO</title>
+  <meta name="keywords" content="matRad_example3_photonsDAO">
+  <meta name="description" content="% Example: Photon Treatment Plan with Direct aperture optimization">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html examples -->
+<h1>matRad_example3_photonsDAO
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">% Example: Photon Treatment Plan with Direct aperture optimization</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">This is a script file. </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment">% Example: Photon Treatment Plan with Direct aperture optimization
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2017 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li><li><a href="../../matRad/matRad_calcPhotonDose.html" class="code" title="function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcPhotonDose</a>	matRad photon dose calculation wrapper</li><li><a href="../../matRad/matRad_directApertureOptimization.html" class="code" title="function [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln)">matRad_directApertureOptimization</a>	matRad function to run direct aperture optimization</li><li><a href="../../matRad/matRad_fluenceOptimization.html" class="code" title="function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)">matRad_fluenceOptimization</a>	matRad inverse planning wrapper function</li><li><a href="../../matRad/matRad_generateStf.html" class="code" title="function stf = matRad_generateStf(ct,cst,pln,visMode)">matRad_generateStf</a>	matRad steering information generation</li><li><a href="../../matRad/matRad_getIsoCenter.html" class="code" title="function isoCenter = matRad_getIsoCenter(cst,ct,visBool)">matRad_getIsoCenter</a>	computes the isocenter [mm] as the joint center of gravity</li><li><a href="../../matRad/matRad_indicatorWrapper.html" class="code" title="function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)">matRad_indicatorWrapper</a>	matRad indictor wrapper</li><li><a href="../../matRad/matRad_rc.html" class="code" title="">matRad_rc</a>	matRad rc script</li><li><a href="../../matRad/matRad_siochiLeafSequencing.html" class="code" title="function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)">matRad_siochiLeafSequencing</a>	multileaf collimator leaf sequencing algorithm</li><li><a href="../../matRad/matRad_visApertureInfo.html" class="code" title="function matRad_visApertureInfo(apertureInfo,mode)">matRad_visApertureInfo</a>	matRad function to visualize aperture shapes stored as struct</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <span class="comment">%% Example: Photon Treatment Plan with Direct aperture optimization</span>
+0002 <span class="comment">%</span>
+0003 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% Copyright 2017 the matRad development team.</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0008 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0009 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0010 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0011 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0012 <span class="comment">% LICENSE file.</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0015 
+0016 <span class="comment">%%</span>
+0017 <span class="comment">% In this example we will show</span>
+0018 <span class="comment">% (i) how to load patient data into matRad</span>
+0019 <span class="comment">% (ii) how to setup a photon dose calculation and</span>
+0020 <span class="comment">% (iii) how to inversely optimize directly from command window in MatLab.</span>
+0021 <span class="comment">% (iv) how to apply a sequencing algorithm</span>
+0022 <span class="comment">% (v) how to run a direct aperture optimization</span>
+0023 <span class="comment">% (iv) how to visually and quantitatively evaluate the result</span>
+0024 
+0025 <span class="comment">%% Patient Data Import</span>
+0026 <span class="comment">% Let's begin with a clear Matlab environment and import the head &amp;</span>
+0027 <span class="comment">% neck patient into your workspace.</span>
+0028 
+0029 <a href="../../matRad/matRad_rc.html" class="code" title="">matRad_rc</a>; <span class="comment">%If this throws an error, run it from the parent directory first to set the paths</span>
+0030 
+0031 load(<span class="string">'HEAD_AND_NECK.mat'</span>);
+0032 
+0033 <span class="comment">%% Treatment Plan</span>
+0034 <span class="comment">% The next step is to define your treatment plan labeled as 'pln'. This</span>
+0035 <span class="comment">% structure requires input from the treatment planner and defines</span>
+0036 <span class="comment">% the most important cornerstones of your treatment plan.</span>
+0037 
+0038 pln.radiationMode   = <span class="string">'photons'</span>;   <span class="comment">% either photons / protons / carbon</span>
+0039 pln.machine         = <span class="string">'Generic'</span>;
+0040 pln.numOfFractions  = 30;
+0041 
+0042 pln.propOpt.bioOptimization = <span class="string">'none'</span>;    
+0043 pln.propStf.gantryAngles    = [0:72:359];
+0044 pln.propStf.couchAngles     = [0 0 0 0 0];
+0045 pln.propStf.bixelWidth      = 5;
+0046 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
+0047 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * <a href="../../matRad/matRad_getIsoCenter.html" class="code" title="function isoCenter = matRad_getIsoCenter(cst,ct,visBool)">matRad_getIsoCenter</a>(cst,ct,0);
+0048 
+0049 <span class="comment">% dose calculation settings</span>
+0050 pln.propDoseCalc.doseGrid.resolution.x = 3; <span class="comment">% [mm]</span>
+0051 pln.propDoseCalc.doseGrid.resolution.y = 3; <span class="comment">% [mm]</span>
+0052 pln.propDoseCalc.doseGrid.resolution.z = 3; <span class="comment">% [mm]</span>
+0053 
+0054 <span class="comment">% We can also use other solver for optimization than IPOPT. matRad</span>
+0055 <span class="comment">% currently supports fmincon from the MATLAB Optimization Toolbox. First we</span>
+0056 <span class="comment">% check if the fmincon-Solver is available, and if it es, we set in in the</span>
+0057 <span class="comment">% pln.propOpt.optimizer vairable. Otherwise wie set to the default</span>
+0058 <span class="comment">% optimizer 'IPOPT'</span>
+0059 <span class="keyword">if</span> matRad_OptimizerFmincon.IsAvailable()
+0060     pln.propOpt.optimizer = <span class="string">'fmincon'</span>;   
+0061 <span class="keyword">else</span>
+0062     pln.propOpt.optimizer = <span class="string">'IPOPT'</span>;
+0063 <span class="keyword">end</span>
+0064 
+0065 <span class="comment">%%</span>
+0066 <span class="comment">% Enable sequencing and direct aperture optimization (DAO).</span>
+0067 pln.propOpt.runSequencing = 1;
+0068 pln.propOpt.runDAO        = 1;
+0069 
+0070 <span class="comment">%% Generate Beam Geometry STF</span>
+0071 stf = <a href="../../matRad/matRad_generateStf.html" class="code" title="function stf = matRad_generateStf(ct,cst,pln,visMode)">matRad_generateStf</a>(ct,cst,pln);
+0072 
+0073 <span class="comment">%% Dose Calculation</span>
+0074 <span class="comment">% Lets generate dosimetric information by pre-computing dose influence</span>
+0075 <span class="comment">% matrices for unit beamlet intensities. Having dose influences available</span>
+0076 <span class="comment">% allows for subsequent inverse optimization.</span>
+0077 dij = <a href="../../matRad/matRad_calcPhotonDose.html" class="code" title="function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcPhotonDose</a>(ct,stf,pln,cst);
+0078 
+0079 <span class="comment">%% Inverse Planning for IMRT</span>
+0080 <span class="comment">% The goal of the fluence optimization is to find a set of beamlet weights</span>
+0081 <span class="comment">% which yield the best possible dose distribution according to the</span>
+0082 <span class="comment">% predefined clinical objectives and constraints underlying the radiation</span>
+0083 <span class="comment">% treatment. Once the optimization has finished, trigger once the GUI to</span>
+0084 <span class="comment">% visualize the optimized dose cubes.</span>
+0085 resultGUI = <a href="../../matRad/matRad_fluenceOptimization.html" class="code" title="function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)">matRad_fluenceOptimization</a>(dij,cst,pln);
+0086 <a href="../../matRad/matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>;
+0087 
+0088 <span class="comment">%% Sequencing</span>
+0089 <span class="comment">% This is a multileaf collimator leaf sequencing algorithm that is used in</span>
+0090 <span class="comment">% order to modulate the intensity of the beams with multiple static</span>
+0091 <span class="comment">% segments, so that translates each intensity map into a set of deliverable</span>
+0092 <span class="comment">% aperture shapes.</span>
+0093 resultGUI = <a href="../../matRad/matRad_siochiLeafSequencing.html" class="code" title="function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)">matRad_siochiLeafSequencing</a>(resultGUI,stf,dij,5);
+0094 
+0095 <span class="comment">%% DAO - Direct Aperture Optimization</span>
+0096 <span class="comment">% The Direct Aperture Optimization is an optimization approach where we</span>
+0097 <span class="comment">% directly optimize aperture shapes and weights.</span>
+0098 resultGUI = <a href="../../matRad/matRad_directApertureOptimization.html" class="code" title="function [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln)">matRad_directApertureOptimization</a>(dij,cst,resultGUI.apertureInfo,resultGUI,pln);
+0099 
+0100 <span class="comment">%% Aperture visualization</span>
+0101 <span class="comment">% Use a matrad function to visualize the resulting aperture shapes</span>
+0102 <a href="../../matRad/matRad_visApertureInfo.html" class="code" title="function matRad_visApertureInfo(apertureInfo,mode)">matRad_visApertureInfo</a>(resultGUI.apertureInfo);
+0103 
+0104 <span class="comment">%% Indicator Calculation and display of DVH and QI</span>
+0105 [dvh,qi] = <a href="../../matRad/matRad_indicatorWrapper.html" class="code" title="function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)">matRad_indicatorWrapper</a>(cst,pln,resultGUI);</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

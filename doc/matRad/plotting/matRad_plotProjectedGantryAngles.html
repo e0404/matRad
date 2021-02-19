@@ -1,0 +1,142 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_plotProjectedGantryAngles</title>
+  <meta name="keywords" content="matRad_plotProjectedGantryAngles">
+  <meta name="description" content="matRad function that plots all gantry angles">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html plotting -->
+<h1>matRad_plotProjectedGantryAngles
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad function that plots all gantry angles</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function matRad_plotProjectedGantryAngles(axesHandle,pln,ct,plane) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function that plots all gantry angles 
+ projected to the coplanar plane if current view is axial view
+
+ call
+   matRad_plotProjectedGantryAngles(axesHandle,pln,ct,plane)
+
+ input
+   axesHandle: handle to the axis where the plot shouldd appear
+   pln:        matRad pln struct
+   ct:         matRad ct struct
+   plane:      current view plane
+
+ output
+   -
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2019 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function matRad_plotProjectedGantryAngles(axesHandle,pln,ct,plane)</a>
+0002 <span class="comment">% matRad function that plots all gantry angles</span>
+0003 <span class="comment">% projected to the coplanar plane if current view is axial view</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% call</span>
+0006 <span class="comment">%   matRad_plotProjectedGantryAngles(axesHandle,pln,ct,plane)</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% input</span>
+0009 <span class="comment">%   axesHandle: handle to the axis where the plot shouldd appear</span>
+0010 <span class="comment">%   pln:        matRad pln struct</span>
+0011 <span class="comment">%   ct:         matRad ct struct</span>
+0012 <span class="comment">%   plane:      current view plane</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% output</span>
+0015 <span class="comment">%   -</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">% References</span>
+0018 <span class="comment">%   -</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% Copyright 2019 the matRad development team.</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0025 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0026 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0027 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0028 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0029 <span class="comment">% LICENSE file.</span>
+0030 <span class="comment">%</span>
+0031 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0032 
+0033 <span class="comment">% show only in axial plane</span>
+0034 <span class="keyword">if</span> plane == 3
+0035    
+0036     meanIsoCenter = mean(pln.propStf.isoCenter,1);
+0037     
+0038     xOffset = meanIsoCenter(1)/ct.resolution.x;
+0039     yOffset = meanIsoCenter(2)/ct.resolution.y;
+0040     
+0041     <span class="comment">% find radius of inner circle from isocenter</span>
+0042     r = 0.8*min([abs([1 ct.cubeDim(1)]-xOffset) abs([1 ct.cubeDim(2)]-yOffset)]);
+0043     
+0044     <span class="comment">% coordinates of circle</span>
+0045     x = r*cosd(0:360)+xOffset;
+0046     y = r*sind(0:360)+yOffset;
+0047 
+0048     gantryAngleVisColor = <span class="string">'w'</span>;
+0049 
+0050     plot(axesHandle,x,y,<span class="string">'LineWidth'</span>,1,<span class="string">'Color'</span>,gantryAngleVisColor)
+0051 
+0052     <span class="comment">% add text</span>
+0053     txt = <span class="string">'180°'</span>;
+0054     text(axesHandle,1.1*r*sind(0)+xOffset,1.1*r*cosd(0)+yOffset,txt,<span class="string">'Color'</span>,gantryAngleVisColor)
+0055     txt = <span class="string">'90°'</span>;
+0056     text(axesHandle,1.1*r*sind(90)+xOffset,1.1*r*cosd(90)+yOffset,txt,<span class="string">'Color'</span>,gantryAngleVisColor)
+0057     txt = <span class="string">'0°'</span>;
+0058     text(axesHandle,1.1*r*sind(180)+xOffset,1.1*r*cosd(180)+yOffset,txt,<span class="string">'Color'</span>,gantryAngleVisColor)
+0059     txt = <span class="string">'270°'</span>;
+0060     text(axesHandle,1.22*r*sind(270)+xOffset,1.22*r*cosd(270)+yOffset,txt,<span class="string">'Color'</span>,gantryAngleVisColor)
+0061 
+0062     <span class="comment">% plot gantry angles</span>
+0063     <span class="keyword">for</span> i = 1:numel(pln.propStf.gantryAngles)
+0064         plot(axesHandle,[0 r*sind(180-pln.propStf.gantryAngles(i))]+xOffset,[0 r*cosd(180-pln.propStf.gantryAngles(i))]+yOffset,<span class="string">'LineWidth'</span>,1,<span class="string">'Color'</span>,gantryAngleVisColor)
+0065     <span class="keyword">end</span>
+0066     
+0067 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

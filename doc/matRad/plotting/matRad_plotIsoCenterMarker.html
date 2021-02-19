@@ -1,0 +1,189 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_plotIsoCenterMarker</title>
+  <meta name="keywords" content="matRad_plotIsoCenterMarker">
+  <meta name="description" content="matRad function that plots an isocenter marker">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html plotting -->
+<h1>matRad_plotIsoCenterMarker
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad function that plots an isocenter marker</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function markerHandle = matRad_plotIsoCenterMarker(axesHandle,pln,ct,plane,slice,style) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function that plots an isocenter marker
+
+ call
+   markerHandle = matRad_plotIsoCenterMarker(axesHandle,pln,ct,plane,slice)
+   markerHandle = matRad_plotIsoCenterMarker(axesHandle,pln,ct,plane,slice,style)
+
+ input
+   axesHandle          handle to axes the marker should be displayed in
+   pln                 matRad plan structure
+   ct                  matRad ct structure
+   plane               plane view (coronal=1,sagittal=2,axial=3)
+   slice               slice in the selected plane of the 3D cube
+   style               optional argument can be 'marker' or 'lines'. 
+                       this might be useful for some issues 
+                       with export to tikz for example
+                       
+
+ output
+   markerHandle:       handle to the isocenter marker
+
+ References
+
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function markerHandle = matRad_plotIsoCenterMarker(axesHandle,pln,ct,plane,slice,style)</a>
+0002 <span class="comment">% matRad function that plots an isocenter marker</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   markerHandle = matRad_plotIsoCenterMarker(axesHandle,pln,ct,plane,slice)</span>
+0006 <span class="comment">%   markerHandle = matRad_plotIsoCenterMarker(axesHandle,pln,ct,plane,slice,style)</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% input</span>
+0009 <span class="comment">%   axesHandle          handle to axes the marker should be displayed in</span>
+0010 <span class="comment">%   pln                 matRad plan structure</span>
+0011 <span class="comment">%   ct                  matRad ct structure</span>
+0012 <span class="comment">%   plane               plane view (coronal=1,sagittal=2,axial=3)</span>
+0013 <span class="comment">%   slice               slice in the selected plane of the 3D cube</span>
+0014 <span class="comment">%   style               optional argument can be 'marker' or 'lines'.</span>
+0015 <span class="comment">%                       this might be useful for some issues</span>
+0016 <span class="comment">%                       with export to tikz for example</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% output</span>
+0020 <span class="comment">%   markerHandle:       handle to the isocenter marker</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% References</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">%   -</span>
+0025 <span class="comment">%</span>
+0026 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0027 <span class="comment">%</span>
+0028 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0029 <span class="comment">%</span>
+0030 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0031 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0032 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0033 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0034 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0035 <span class="comment">% LICENSE file.</span>
+0036 <span class="comment">%</span>
+0037 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0038 
+0039 uniqueIsoCenters = unique(pln.propStf.isoCenter,<span class="string">'rows'</span>);
+0040 
+0041 <span class="keyword">for</span> i = 1:size(uniqueIsoCenters,1)
+0042 
+0043     vIsoCenter           = round(uniqueIsoCenters(i,:)./[ct.resolution.x ct.resolution.y ct.resolution.z]);
+0044     <span class="keyword">if</span>  plane == 3<span class="comment">% Axial plane</span>
+0045         vIsoCenterPlot  = [vIsoCenter(1) vIsoCenter(2)];
+0046         <span class="keyword">if</span> vIsoCenter(3) == slice
+0047             isoCenterDirection = 0;
+0048         <span class="keyword">else</span> 
+0049             isoCenterDirection = sign(double(vIsoCenter(3) &gt; slice) - 0.5);
+0050         <span class="keyword">end</span>
+0051     <span class="keyword">elseif</span> plane == 2
+0052         vIsoCenterPlot  = [vIsoCenter(3) vIsoCenter(2)];
+0053         <span class="keyword">if</span> vIsoCenter(2) == slice
+0054             isoCenterDirection = 0;
+0055         <span class="keyword">else</span>
+0056             isoCenterDirection = sign(double(vIsoCenter(1) &gt; slice) - 0.5);
+0057         <span class="keyword">end</span>
+0058 
+0059     <span class="keyword">elseif</span> plane == 1    
+0060         vIsoCenterPlot  = [vIsoCenter(3) vIsoCenter(1)];
+0061         <span class="keyword">if</span> vIsoCenter(1) == slice
+0062             isoCenterDirection = 0;
+0063         <span class="keyword">else</span>
+0064             isoCenterDirection = sign(double(vIsoCenter(2) &gt; slice) - 0.5);
+0065         <span class="keyword">end</span>
+0066     <span class="keyword">end</span>
+0067 
+0068 
+0069 
+0070     <span class="keyword">if</span> nargin &lt; 6
+0071         style = <span class="string">'lines'</span>;
+0072     <span class="keyword">end</span>
+0073 
+0074     <span class="keyword">if</span> strcmpi(style,<span class="string">'lines'</span>) == 0 &amp;&amp; strcmpi(style,<span class="string">'marker'</span>) == 0
+0075         warning(<span class="string">'Style option not recognized. Using lines as default'</span>);
+0076         style = <span class="string">'lines'</span>;
+0077     <span class="keyword">end</span>
+0078 
+0079     markerSize = 36/ct.resolution.x;
+0080     markerColor = [0.27 0.27 0.27];
+0081 
+0082     <span class="keyword">if</span> strcmpi(style,<span class="string">'marker'</span>)
+0083         <span class="keyword">if</span> isoCenterDirection &gt; 0
+0084             markerStyle = <span class="string">'^'</span>;
+0085         <span class="keyword">elseif</span> isoCenterDirection &lt; 0
+0086             markerStyle = <span class="string">'v'</span>;
+0087         <span class="keyword">else</span>
+0088             markerStyle = <span class="string">'x'</span>;
+0089             markerColor = [0 0 0];
+0090         <span class="keyword">end</span>    
+0091         markerHandle = plot(axesHandle,vIsoCenterPlot(1),vIsoCenterPlot(2),markerStyle,<span class="string">'MarkerSize'</span>,markerSize,<span class="string">'LineWidth'</span>,4,<span class="string">'Color'</span>,markerColor);
+0092     <span class="keyword">else</span>
+0093         <span class="keyword">if</span> isoCenterDirection &gt; 0
+0094             linesX = [vIsoCenterPlot(1)-markerSize/4 vIsoCenterPlot(1) vIsoCenterPlot(1)+markerSize/4];
+0095             linesY = [vIsoCenterPlot(2)+markerSize/4 vIsoCenterPlot(2) vIsoCenterPlot(2)+markerSize/4];
+0096         <span class="keyword">elseif</span> isoCenterDirection &lt; 0        
+0097             linesX = [vIsoCenterPlot(1)-markerSize/4 vIsoCenterPlot(1) vIsoCenterPlot(1)+markerSize/4];
+0098             linesY = [vIsoCenterPlot(2)-markerSize/4 vIsoCenterPlot(2) vIsoCenterPlot(2)-markerSize/4];
+0099         <span class="keyword">else</span>
+0100             linesX = [vIsoCenterPlot(1)-markerSize/4 vIsoCenterPlot(1)-markerSize/4; vIsoCenterPlot(1)+markerSize/4 vIsoCenterPlot(1)+markerSize/4];
+0101             linesY = [vIsoCenterPlot(2)-markerSize/4 vIsoCenterPlot(2)+markerSize/4; vIsoCenterPlot(2)+markerSize/4 vIsoCenterPlot(2)-markerSize/4];
+0102             markerColor = [0 0 0];
+0103         <span class="keyword">end</span>
+0104 
+0105         markerHandle = line(linesX,linesY,<span class="string">'LineWidth'</span>,4,<span class="string">'Color'</span>,markerColor,<span class="string">'Parent'</span>,axesHandle);
+0106     <span class="keyword">end</span>
+0107 
+0108 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_calcDoseDirectMC</title>
+  <meta name="keywords" content="matRad_calcDoseDirectMC">
+  <meta name="description" content="matRad function to bypass dij calculation for MC dose calculation">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_calcDoseDirectMC
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">matRad function to bypass dij calculation for MC dose calculation</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to bypass dij calculation for MC dose calculation 
+ matRad dose calculation wrapper for MC dose calculation algorithms
+ bypassing dij calculation for MC dose calculation algorithms.
+ 
+ call
+   resultGUI = matRad_calcDoseDirecMC(ct,stf,pln,cst)
+   resultGUI = matRad_calcDoseDirecMC(ct,stf,pln,cst,w)
+   resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,nHistories)
+   resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)
+
+ input
+   ct:         ct cube
+   stf:        matRad steering information struct
+   pln:        matRad plan meta information struct
+   cst:        matRad cst struct
+   w:          (optional, if no weights available in stf): bixel weight
+               vector
+   nHistories: (optional) number of histories
+
+ output
+   resultGUI:  matRad result struct
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2019 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_calcCubes.html" class="code" title="function resultGUI = matRad_calcCubes(w,dij,scenNum)">matRad_calcCubes</a>	matRad computation of all cubes for the resultGUI struct</li><li><a href="matRad_calcParticleDoseMC.html" class="code" title="function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect)">matRad_calcParticleDoseMC</a>	matRad MCsqaure monte carlo photon dose calculation wrapper</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../matRad/examples/matRad_example6_protonsNoise.html" class="code" title="">matRad_example6_protonsNoise</a>	% Example: Proton Treatment Plan with Manipulated CT values</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)</a>
+0002 <span class="comment">% matRad function to bypass dij calculation for MC dose calculation</span>
+0003 <span class="comment">% matRad dose calculation wrapper for MC dose calculation algorithms</span>
+0004 <span class="comment">% bypassing dij calculation for MC dose calculation algorithms.</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">% call</span>
+0007 <span class="comment">%   resultGUI = matRad_calcDoseDirecMC(ct,stf,pln,cst)</span>
+0008 <span class="comment">%   resultGUI = matRad_calcDoseDirecMC(ct,stf,pln,cst,w)</span>
+0009 <span class="comment">%   resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,nHistories)</span>
+0010 <span class="comment">%   resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% input</span>
+0013 <span class="comment">%   ct:         ct cube</span>
+0014 <span class="comment">%   stf:        matRad steering information struct</span>
+0015 <span class="comment">%   pln:        matRad plan meta information struct</span>
+0016 <span class="comment">%   cst:        matRad cst struct</span>
+0017 <span class="comment">%   w:          (optional, if no weights available in stf): bixel weight</span>
+0018 <span class="comment">%               vector</span>
+0019 <span class="comment">%   nHistories: (optional) number of histories</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% output</span>
+0022 <span class="comment">%   resultGUI:  matRad result struct</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% References</span>
+0025 <span class="comment">%   -</span>
+0026 <span class="comment">%</span>
+0027 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0028 <span class="comment">%</span>
+0029 <span class="comment">% Copyright 2019 the matRad development team.</span>
+0030 <span class="comment">%</span>
+0031 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0032 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0033 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0034 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0035 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0036 <span class="comment">% LICENSE file.</span>
+0037 <span class="comment">%</span>
+0038 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0039 
+0040 
+0041 matRad_cfg =  MatRad_Config.instance();
+0042 
+0043 calcDoseDirect = true;
+0044 
+0045 <span class="keyword">if</span> nargin &lt; 6 || ~exist(<span class="string">'nHistories'</span>)
+0046   nHistories = matRad_cfg.propMC.direct_defaultHistories;
+0047   matRad_cfg.dispInfo(<span class="string">'Using default number of Histories: %d\n'</span>,nHistories);
+0048 <span class="keyword">end</span>
+0049 
+0050 <span class="comment">% check if weight vector is available, either in function call or in stf - otherwise dose calculation not possible</span>
+0051 <span class="keyword">if</span> ~exist(<span class="string">'w'</span>,<span class="string">'var'</span>) &amp;&amp; ~isfield([stf.ray],<span class="string">'weight'</span>)
+0052      matRad_cfg.dispError(<span class="string">'No weight vector available. Please provide w or add info to stf'</span>);
+0053 <span class="keyword">end</span>
+0054 
+0055 <span class="comment">% copy bixel weight vector into stf struct</span>
+0056 <span class="keyword">if</span> exist(<span class="string">'w'</span>,<span class="string">'var'</span>)
+0057     <span class="keyword">if</span> sum([stf.totalNumOfBixels]) ~= numel(w)
+0058         matRad_cfg.dispError(<span class="string">'weighting does not match steering information'</span>);
+0059     <span class="keyword">end</span>
+0060     counter = 0;
+0061     <span class="keyword">for</span> i = 1:size(stf,2)
+0062         <span class="keyword">for</span> j = 1:stf(i).numOfRays
+0063             <span class="keyword">for</span> k = 1:stf(i).numOfBixelsPerRay(j)
+0064                 counter = counter + 1;
+0065                 stf(i).ray(j).weight(k) = w(counter);
+0066             <span class="keyword">end</span>
+0067         <span class="keyword">end</span>
+0068     <span class="keyword">end</span>
+0069 <span class="keyword">else</span> <span class="comment">% weights need to be in stf!</span>
+0070     w = NaN*ones(sum([stf.totalNumOfBixels]),1);
+0071     counter = 0;
+0072     <span class="keyword">for</span> i = 1:size(stf,2)
+0073         <span class="keyword">for</span> j = 1:stf(i).numOfRays
+0074             <span class="keyword">for</span> k = 1:stf(i).numOfBixelsPerRay(j)
+0075                 counter = counter + 1;
+0076                 w(counter) = stf(i).ray(j).weight(k);
+0077             <span class="keyword">end</span>
+0078         <span class="keyword">end</span>
+0079     <span class="keyword">end</span>    
+0080 <span class="keyword">end</span>
+0081 
+0082 <span class="comment">% dose calculation</span>
+0083 <span class="keyword">if</span> strcmp(pln.radiationMode,<span class="string">'protons'</span>)
+0084   dij = <a href="matRad_calcParticleDoseMC.html" class="code" title="function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect)">matRad_calcParticleDoseMC</a>(ct,stf,pln,cst,nHistories,calcDoseDirect);
+0085 <span class="keyword">else</span>
+0086     matRad_cfg.dispError(<span class="string">'Forward MC only implemented for protons.'</span>);
+0087 <span class="keyword">end</span>
+0088 
+0089 <span class="comment">% hack dij struct</span>
+0090 dij.numOfBeams = 1;
+0091 dij.beamNum = 1;
+0092 
+0093 <span class="comment">% calculate cubes; use uniform weights here, weighting with actual fluence</span>
+0094 <span class="comment">% already performed in dij construction</span>
+0095 resultGUI    = <a href="matRad_calcCubes.html" class="code" title="function resultGUI = matRad_calcCubes(w,dij,scenNum)">matRad_calcCubes</a>(sum(w),dij);
+0096 
+0097 <span class="comment">% remember original fluence weights</span>
+0098 resultGUI.w  = w; 
+0099 
+0100 
+0101 
+0102</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

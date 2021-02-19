@@ -1,0 +1,382 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_calcParticleDose</title>
+  <meta name="keywords" content="matRad_calcParticleDose">
+  <meta name="description" content="matRad particle dose calculation wrapper">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_calcParticleDose
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">matRad particle dose calculation wrapper</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad particle dose calculation wrapper
+ 
+ call
+   dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
+
+ input
+   ct:             ct cube
+   stf:            matRad steering information struct
+   pln:            matRad plan meta information struct
+   cst:            matRad cst struct
+   calcDoseDirect: boolian switch to bypass dose influence matrix
+                   computation and directly calculate dose; only makes
+                   sense in combination with matRad_calcDoseDirect.m
+
+ output
+   dij:            matRad dij struct
+
+ References
+   [1] http://iopscience.iop.org/0031-9155/41/8/005
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="../matRad/dicom/matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>	matRad progress bar</li><li><a href="matRad_calcDoseFillDij.html" class="code" title="">matRad_calcDoseFillDij</a>	save computation time and memory</li><li><a href="matRad_calcDoseInit.html" class="code" title="">matRad_calcDoseInit</a>	</li><li><a href="matRad_calcDoseInitBeam.html" class="code" title="">matRad_calcDoseInitBeam</a>	</li><li><a href="matRad_calcGeoDists.html" class="code" title="function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] =matRad_calcGeoDists(rot_coords_bev,sourcePoint_bev,targetPoint_bev,SAD,radDepthIx,lateralCutOff)">matRad_calcGeoDists</a>	matRad calculation of lateral distances from central ray</li><li><a href="matRad_calcLQParameter.html" class="code" title="function [vAlpha, vBeta] = matRad_calcLQParameter(vRadDepths,mTissueClass,baseData)">matRad_calcLQParameter</a>	matRad inverse planning wrapper function</li><li><a href="matRad_calcLateralParticleCutOff.html" class="code" title="function [ machine ] = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf,visBool)">matRad_calcLateralParticleCutOff</a>	matRad function to calculate a depth dependend lateral cutoff</li><li><a href="matRad_calcParticleDoseBixel.html" class="code" title="function dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData)">matRad_calcParticleDoseBixel</a>	matRad visualization of two-dimensional dose distributions</li><li><a href="matRad_calcSigmaRashi.html" class="code" title="function sigmaRashi = matRad_calcSigmaRashi(energy,rangeShifter,SSD)">matRad_calcSigmaRashi</a>	calculation of additional beam broadening due to the use of range shifters</li><li><a href="matRad_getPhotonLQMParameters.html" class="code" title="function [ax,bx] = matRad_getPhotonLQMParameters(cst,numVoxel,ctScen,VdoseGrid)">matRad_getPhotonLQMParameters</a>	matRad function to receive the photon LQM reference parameter</li><li><a href="matRad_interp1.html" class="code" title="function y = matRad_interp1(xi,yi,x,extrapolation)">matRad_interp1</a>	interpolates 1-D data (table lookup) and utilizes griddedInterpolant</li><li><a href="matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>	matRad progress bar</li><li><a href="matRad_resizeCstToGrid.html" class="code" title="function cst = matRad_resizeCstToGrid(cst,vXgridOld,vYgridOld,vZgridOld,vXgridNew,vYgridNew,vZgridNew)">matRad_resizeCstToGrid</a>	matRad function to resize the ct to a given resolution</li><li><a href="matRad_setOverlapPriorities.html" class="code" title="function [cst,overlapPriorityCube] = matRad_setOverlapPriorities(cst,ctDim)">matRad_setOverlapPriorities</a>	function to handle overlap priorities</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../matRad/examples/matRad_example5_protons.html" class="code" title="">matRad_example5_protons</a>	% Example: Proton Treatment Plan with subsequent Isocenter shift</li><li><a href="../matRad/examples/matRad_example7_carbon.html" class="code" title="">matRad_example7_carbon</a>	% Example: Carbon Ion Treatment Plan</li><li><a href="matRad.html" class="code" title="">matRad</a>	matRad script</li><li><a href="matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li><li><a href="matRad_calcDoseDirect.html" class="code" title="function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w)">matRad_calcDoseDirect</a>	matRad dose calculation wrapper bypassing dij calculation</li><li><a href="../matRad/tools/matRad_SFUDoptimization.html" class="code" title="function [resultGUI] = matRad_SFUDoptimization(pln, cst, dij, ct, stf)">matRad_SFUDoptimization</a>	Calculation of single field uniform dose (SFUD) optimization</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)</a>
+0002 <span class="comment">% matRad particle dose calculation wrapper</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   ct:             ct cube</span>
+0009 <span class="comment">%   stf:            matRad steering information struct</span>
+0010 <span class="comment">%   pln:            matRad plan meta information struct</span>
+0011 <span class="comment">%   cst:            matRad cst struct</span>
+0012 <span class="comment">%   calcDoseDirect: boolian switch to bypass dose influence matrix</span>
+0013 <span class="comment">%                   computation and directly calculate dose; only makes</span>
+0014 <span class="comment">%                   sense in combination with matRad_calcDoseDirect.m</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% output</span>
+0017 <span class="comment">%   dij:            matRad dij struct</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% References</span>
+0020 <span class="comment">%   [1] http://iopscience.iop.org/0031-9155/41/8/005</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0025 <span class="comment">%</span>
+0026 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0027 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0028 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0029 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0030 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0031 <span class="comment">% LICENSE file.</span>
+0032 <span class="comment">%</span>
+0033 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0034 
+0035 
+0036 matRad_cfg =  MatRad_Config.instance();
+0037 
+0038 <span class="comment">% init dose calc</span>
+0039 <a href="matRad_calcDoseInit.html" class="code" title="">matRad_calcDoseInit</a>;
+0040 
+0041 <span class="comment">% initialize waitbar</span>
+0042 figureWait = waitbar(0,<span class="string">'calculate dose influence matrix for particles...'</span>);
+0043 <span class="comment">% prevent closure of waitbar and show busy state</span>
+0044 set(figureWait,<span class="string">'pointer'</span>,<span class="string">'watch'</span>);
+0045 
+0046 <span class="comment">% helper function for energy selection</span>
+0047 round2 = @(a,b)round(a*10^b)/10^b;
+0048 
+0049 <span class="keyword">if</span> (isequal(pln.propOpt.bioOptimization,<span class="string">'LEMIV_effect'</span>) || isequal(pln.propOpt.bioOptimization,<span class="string">'LEMIV_RBExD'</span>)) <span class="keyword">...</span><span class="comment"> </span>
+0050         &amp;&amp; strcmp(pln.radiationMode,<span class="string">'carbon'</span>)
+0051    
+0052         alphaDoseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
+0053         betaDoseTmpContainer  = cell(numOfBixelsContainer,dij.numOfScenarios);
+0054         <span class="keyword">for</span> i = 1:dij.numOfScenarios
+0055             dij.mAlphaDose{i}    = spalloc(dij.doseGrid.numOfVoxels,numOfColumnsDij,1);
+0056             dij.mSqrtBetaDose{i} = spalloc(dij.doseGrid.numOfVoxels,numOfColumnsDij,1);
+0057         <span class="keyword">end</span>
+0058         
+0059 <span class="keyword">elseif</span> isequal(pln.propOpt.bioOptimization,<span class="string">'const_RBExD'</span>) &amp;&amp; strcmp(pln.radiationMode,<span class="string">'protons'</span>)
+0060             dij.RBE = 1.1;
+0061             matRad_cfg.dispInfo(<span class="string">'matRad: Using a constant RBE of %g\n'</span>,dij.RBE);   
+0062 <span class="keyword">end</span>
+0063 
+0064 <span class="keyword">if</span> isfield(pln,<span class="string">'propDoseCalc'</span>) &amp;&amp; <span class="keyword">...</span>
+0065    isfield(pln.propDoseCalc,<span class="string">'calcLET'</span>) &amp;&amp; <span class="keyword">...</span>
+0066    pln.propDoseCalc.calcLET
+0067   <span class="keyword">if</span> isfield(machine.data,<span class="string">'LET'</span>)
+0068     letDoseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
+0069     <span class="comment">% Allocate space for dij.dosexLET sparse matrix</span>
+0070     <span class="keyword">for</span> i = 1:dij.numOfScenarios
+0071         dij.mLETDose{i} = spalloc(dij.doseGrid.numOfVoxels,numOfColumnsDij,1);
+0072     <span class="keyword">end</span>
+0073   <span class="keyword">else</span>
+0074     matRad_cfg.dispWarning(<span class="string">'LET not available in the machine data. LET will not be calculated.'</span>);
+0075   <span class="keyword">end</span>
+0076 <span class="keyword">end</span>
+0077 
+0078 <span class="comment">% generates tissue class matrix for biological optimization</span>
+0079 <span class="keyword">if</span> (isequal(pln.propOpt.bioOptimization,<span class="string">'LEMIV_effect'</span>) || isequal(pln.propOpt.bioOptimization,<span class="string">'LEMIV_RBExD'</span>)) <span class="keyword">...</span><span class="comment"> </span>
+0080         &amp;&amp; strcmp(pln.radiationMode,<span class="string">'carbon'</span>)
+0081     
+0082     <span class="keyword">if</span>   isfield(machine.data,<span class="string">'alphaX'</span>) &amp;&amp; isfield(machine.data,<span class="string">'betaX'</span>)
+0083             
+0084         matRad_cfg.dispInfo(<span class="string">'matRad: loading biological base data... '</span>);
+0085         vTissueIndex = zeros(size(VdoseGrid,1),1);
+0086         dij.ax       = zeros(dij.doseGrid.numOfVoxels,1);
+0087         dij.bx       = zeros(dij.doseGrid.numOfVoxels,1);
+0088 
+0089         cst = <a href="matRad_setOverlapPriorities.html" class="code" title="function [cst,overlapPriorityCube] = matRad_setOverlapPriorities(cst,ctDim)">matRad_setOverlapPriorities</a>(cst);
+0090     
+0091         <span class="comment">% resizing cst to dose cube resolution</span>
+0092         cst = <a href="matRad_resizeCstToGrid.html" class="code" title="function cst = matRad_resizeCstToGrid(cst,vXgridOld,vYgridOld,vZgridOld,vXgridNew,vYgridNew,vZgridNew)">matRad_resizeCstToGrid</a>(cst,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,<span class="keyword">...</span>
+0093                                          dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
+0094         <span class="comment">% retrieve photon LQM parameter for the current dose grid voxels</span>
+0095         [dij.ax,dij.bx] = <a href="matRad_getPhotonLQMParameters.html" class="code" title="function [ax,bx] = matRad_getPhotonLQMParameters(cst,numVoxel,ctScen,VdoseGrid)">matRad_getPhotonLQMParameters</a>(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
+0096 
+0097         <span class="keyword">for</span> i = 1:size(cst,1)
+0098 
+0099             <span class="comment">% check if cst is compatiable</span>
+0100             <span class="keyword">if</span> ~isempty(cst{i,5}) &amp;&amp; isfield(cst{i,5},<span class="string">'alphaX'</span>) &amp;&amp; isfield(cst{i,5},<span class="string">'betaX'</span>) 
+0101 
+0102                 <span class="comment">% check if base data contains alphaX and betaX</span>
+0103                 IdxTissue = find(ismember(machine.data(1).alphaX,cst{i,5}.alphaX) &amp; <span class="keyword">...</span>
+0104                                  ismember(machine.data(1).betaX,cst{i,5}.betaX));
+0105 
+0106                 <span class="comment">% check consitency of biological baseData and cst settings</span>
+0107                 <span class="keyword">if</span> ~isempty(IdxTissue)
+0108                     isInVdoseGrid = ismember(VdoseGrid,cst{i,4}{1});
+0109                     vTissueIndex(isInVdoseGrid) = IdxTissue;
+0110                 <span class="keyword">else</span>
+0111                     matRad_cfg.dispError(<span class="string">'biological base data and cst inconsistent\n'</span>);
+0112                 <span class="keyword">end</span>
+0113                     
+0114             <span class="keyword">else</span>
+0115                     vTissueIndex(row) = 1;
+0116                     matRad_cfg.dispInfo([<span class="string">'matRad: tissue type of '</span> cst{i,2} <span class="string">' was set to 1\n'</span>]);          
+0117             <span class="keyword">end</span>
+0118         <span class="keyword">end</span>
+0119         matRad_cfg.dispInfo(<span class="string">'done.\n'</span>);
+0120 
+0121     <span class="keyword">else</span>
+0122         
+0123         matRad_cfg.dispError(<span class="string">'base data is incomplement - alphaX and/or betaX is missing'</span>);
+0124         
+0125     <span class="keyword">end</span>
+0126     
+0127 <span class="comment">% issue warning if biological optimization not possible</span>
+0128 <span class="keyword">elseif</span> sum(strcmp(pln.propOpt.bioOptimization,{<span class="string">'LEMIV_effect'</span>,<span class="string">'LEMIV_RBExD'</span>}))&gt;0 &amp;&amp; ~strcmp(pln.radiationMode,<span class="string">'carbon'</span>) ||<span class="keyword">...</span>
+0129        ~strcmp(pln.radiationMode,<span class="string">'protons'</span>) &amp;&amp; strcmp(pln.propOpt.bioOptimization,<span class="string">'const_RBExD'</span>)
+0130     warndlg([pln.propOpt.bioOptimization <span class="string">' optimization not possible with '</span> pln.radiationMode <span class="string">'- physical optimization is carried out instead.'</span>]);
+0131     pln.propOpt.bioOptimization = <span class="string">'none'</span>;      
+0132 <span class="keyword">end</span>
+0133 
+0134 <span class="comment">% lateral cutoff for raytracing and geo calculations</span>
+0135 effectiveLateralCutoff = matRad_cfg.propDoseCalc.defaultGeometricCutOff;
+0136 
+0137 matRad_cfg.dispInfo(<span class="string">'matRad: Particle dose calculation...\n'</span>);
+0138 counter = 0;
+0139 
+0140 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0141 <span class="keyword">for</span> i = 1:length(stf) <span class="comment">% loop over all beams</span>
+0142   
+0143     <span class="comment">% init beam</span>
+0144     <a href="matRad_calcDoseInitBeam.html" class="code" title="">matRad_calcDoseInitBeam</a>;
+0145   
+0146     <span class="comment">% Determine lateral cutoff</span>
+0147     matRad_cfg.dispInfo(<span class="string">'matRad: calculate lateral cutoff...'</span>);
+0148     cutOffLevel = matRad_cfg.propDoseCalc.defaultLateralCutOff;
+0149     visBoolLateralCutOff = 0;
+0150     machine = <a href="matRad_calcLateralParticleCutOff.html" class="code" title="function [ machine ] = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf,visBool)">matRad_calcLateralParticleCutOff</a>(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
+0151     matRad_cfg.dispInfo(<span class="string">'done.\n'</span>);    
+0152 
+0153     <span class="keyword">for</span> j = 1:stf(i).numOfRays <span class="comment">% loop over all rays</span>
+0154 
+0155         <span class="keyword">if</span> ~isempty(stf(i).ray(j).energy)
+0156 
+0157             <span class="comment">% find index of maximum used energy (round to keV for numerical</span>
+0158             <span class="comment">% reasons</span>
+0159             energyIx = max(round2(stf(i).ray(j).energy,4)) == round2([machine.data.energy],4);
+0160 
+0161             maxLateralCutoffDoseCalc = max(machine.data(energyIx).LatCutOff.CutOff);
+0162 
+0163             <span class="comment">% Ray tracing for beam i and ray j</span>
+0164             [ix,radialDist_sq] = <a href="matRad_calcGeoDists.html" class="code" title="function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] =matRad_calcGeoDists(rot_coords_bev,sourcePoint_bev,targetPoint_bev,SAD,radDepthIx,lateralCutOff)">matRad_calcGeoDists</a>(rot_coordsVdoseGrid, <span class="keyword">...</span>
+0165                                                      stf(i).sourcePoint_bev, <span class="keyword">...</span>
+0166                                                      stf(i).ray(j).targetPoint_bev, <span class="keyword">...</span>
+0167                                                      machine.meta.SAD, <span class="keyword">...</span>
+0168                                                      find(~isnan(radDepthVdoseGrid{1})), <span class="keyword">...</span>
+0169                                                      maxLateralCutoffDoseCalc);
+0170              
+0171             radDepths = radDepthVdoseGrid{1}(ix);   
+0172                        
+0173             <span class="comment">% just use tissue classes of voxels found by ray tracer</span>
+0174             <span class="keyword">if</span> (isequal(pln.propOpt.bioOptimization,<span class="string">'LEMIV_effect'</span>) || isequal(pln.propOpt.bioOptimization,<span class="string">'LEMIV_RBExD'</span>)) <span class="keyword">...</span><span class="comment"> </span>
+0175                 &amp;&amp; strcmp(pln.radiationMode,<span class="string">'carbon'</span>)
+0176                     vTissueIndex_j = vTissueIndex(ix,:);
+0177             <span class="keyword">end</span>
+0178 
+0179             <span class="keyword">for</span> k = 1:stf(i).numOfBixelsPerRay(j) <span class="comment">% loop over all bixels per ray</span>
+0180 
+0181                 counter = counter + 1;
+0182                 bixelsPerBeam = bixelsPerBeam + 1;
+0183                 
+0184                 <span class="comment">% Display progress and update text only 200 times</span>
+0185                 <span class="keyword">if</span> mod(bixelsPerBeam,max(1,round(stf(i).totalNumOfBixels/200))) == 0
+0186                         <a href="matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>(bixelsPerBeam/max(1,round(stf(i).totalNumOfBixels/200)),<span class="keyword">...</span>
+0187                                         floor(stf(i).totalNumOfBixels/max(1,round(stf(i).totalNumOfBixels/200))));
+0188                 <span class="keyword">end</span>
+0189                 
+0190                 <span class="comment">% update waitbar only 100 times if it is not closed</span>
+0191                 <span class="keyword">if</span> mod(counter,round(dij.totalNumOfBixels/100)) == 0 &amp;&amp; ishandle(figureWait)
+0192                     waitbar(counter/dij.totalNumOfBixels,figureWait);
+0193                 <span class="keyword">end</span>
+0194 
+0195                 <span class="comment">% remember beam and bixel number</span>
+0196                 <span class="keyword">if</span> ~calcDoseDirect
+0197                    dij.beamNum(counter)  = i;
+0198                    dij.rayNum(counter)   = j;
+0199                    dij.bixelNum(counter) = k;
+0200                 <span class="keyword">end</span>
+0201                 
+0202                 <span class="comment">% find energy index in base data</span>
+0203                 energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([machine.data.energy],4));
+0204                 
+0205                 <span class="comment">% create offset vector to account for additional offsets modelled in the base data and a potential</span>
+0206                 <span class="comment">% range shifter. In the following, we only perform dose calculation for voxels having a radiological depth</span>
+0207                 <span class="comment">% that is within the limits of the base data set (-&gt; machine.data(i).dephts). By this means, we only allow</span>
+0208                 <span class="comment">% interpolations in matRad_calcParticleDoseBixel() and avoid extrapolations.</span>
+0209                 offsetRadDepth = machine.data(energyIx).offset - stf(i).ray(j).rangeShifter(k).eqThickness;
+0210                 
+0211                 <span class="comment">% find depth depended lateral cut off</span>
+0212                 <span class="keyword">if</span> cutOffLevel &gt;= 1
+0213                     currIx = radDepths &lt;= machine.data(energyIx).depths(end) + offsetRadDepth;
+0214                 <span class="keyword">elseif</span> cutOffLevel &lt; 1 &amp;&amp; cutOffLevel &gt; 0
+0215                     <span class="comment">% perform rough 2D clipping</span>
+0216                     currIx = radDepths &lt;= machine.data(energyIx).depths(end) + offsetRadDepth &amp; <span class="keyword">...</span>
+0217                          radialDist_sq &lt;= max(machine.data(energyIx).LatCutOff.CutOff.^2);
+0218 
+0219                     <span class="comment">% peform fine 2D clipping</span>
+0220                     <span class="keyword">if</span> length(machine.data(energyIx).LatCutOff.CutOff) &gt; 1
+0221                         currIx(currIx) = <a href="matRad_interp1.html" class="code" title="function y = matRad_interp1(xi,yi,x,extrapolation)">matRad_interp1</a>((machine.data(energyIx).LatCutOff.depths + offsetRadDepth)',<span class="keyword">...</span>
+0222                             (machine.data(energyIx).LatCutOff.CutOff.^2)', radDepths(currIx)) &gt;= radialDist_sq(currIx);
+0223                     <span class="keyword">end</span>
+0224                 <span class="keyword">else</span>
+0225                     matRad_cfg.dispError(<span class="string">'cutoff must be a value between 0 and 1'</span>)
+0226                 <span class="keyword">end</span>
+0227                 
+0228                 <span class="comment">% empty bixels may happen during recalculation of error</span>
+0229                 <span class="comment">% scenarios -&gt; skip to next bixel</span>
+0230                 <span class="keyword">if</span> ~any(currIx)
+0231                     <span class="keyword">continue</span>;
+0232                 <span class="keyword">end</span>
+0233                 
+0234                 <span class="comment">% adjust radDepth according to range shifter</span>
+0235                 currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness;
+0236 
+0237                 <span class="comment">% calculate initial focus sigma</span>
+0238                 sigmaIni = <a href="matRad_interp1.html" class="code" title="function y = matRad_interp1(xi,yi,x,extrapolation)">matRad_interp1</a>(machine.data(energyIx).initFocus.dist (stf(i).ray(j).focusIx(k),:)', <span class="keyword">...</span>
+0239                                              machine.data(energyIx).initFocus.sigma(stf(i).ray(j).focusIx(k),:)',stf(i).ray(j).SSD);
+0240                 sigmaIni_sq = sigmaIni^2;
+0241                 
+0242                 <span class="comment">% consider range shifter for protons if applicable</span>
+0243                 <span class="keyword">if</span> stf(i).ray(j).rangeShifter(k).eqThickness &gt; 0 &amp;&amp; strcmp(pln.radiationMode,<span class="string">'protons'</span>)
+0244                     
+0245                     <span class="comment">% compute!</span>
+0246                     sigmaRashi = <a href="matRad_calcSigmaRashi.html" class="code" title="function sigmaRashi = matRad_calcSigmaRashi(energy,rangeShifter,SSD)">matRad_calcSigmaRashi</a>(machine.data(energyIx).energy, <span class="keyword">...</span>
+0247                                                        stf(i).ray(j).rangeShifter(k), <span class="keyword">...</span>
+0248                                                        stf(i).ray(j).SSD);
+0249                               
+0250                     <span class="comment">% add to initial sigma in quadrature</span>
+0251                     sigmaIni_sq = sigmaIni_sq +  sigmaRashi^2;
+0252                     
+0253                 <span class="keyword">end</span>
+0254                                 
+0255                 <span class="comment">% calculate particle dose for bixel k on ray j of beam i</span>
+0256                 bixelDose = <a href="matRad_calcParticleDoseBixel.html" class="code" title="function dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData)">matRad_calcParticleDoseBixel</a>(<span class="keyword">...</span>
+0257                     currRadDepths, <span class="keyword">...</span>
+0258                     radialDist_sq(currIx), <span class="keyword">...</span>
+0259                     sigmaIni_sq, <span class="keyword">...</span>
+0260                     machine.data(energyIx));                 
+0261   
+0262                 <span class="comment">% dij sampling is exluded for particles until we investigated the influence of voxel sampling for particles</span>
+0263                 <span class="comment">%relDoseThreshold   =  0.02;   % sample dose values beyond the relative dose</span>
+0264                 <span class="comment">%Type               = 'dose';</span>
+0265                 <span class="comment">%[currIx,bixelDose] = matRad_DijSampling(currIx,bixelDose,radDepths(currIx),radialDist_sq(currIx),Type,relDoseThreshold);</span>
+0266                 
+0267                 <span class="comment">% Save dose for every bixel in cell array</span>
+0268                 doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(VdoseGrid(ix(currIx)),1,bixelDose,dij.doseGrid.numOfVoxels,1);
+0269 
+0270                 <span class="keyword">if</span> isfield(dij,<span class="string">'mLETDose'</span>)
+0271                   <span class="comment">% calculate particle LET for bixel k on ray j of beam i</span>
+0272                   depths = machine.data(energyIx).depths + machine.data(energyIx).offset; 
+0273                   bixelLET = <a href="matRad_interp1.html" class="code" title="function y = matRad_interp1(xi,yi,x,extrapolation)">matRad_interp1</a>(depths,machine.data(energyIx).LET,currRadDepths); 
+0274 
+0275                   <span class="comment">% Save LET for every bixel in cell array</span>
+0276                   letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(VdoseGrid(ix(currIx)),1,bixelLET.*bixelDose,dij.doseGrid.numOfVoxels,1);
+0277                 <span class="keyword">end</span>
+0278                              
+0279                 <span class="keyword">if</span> (isequal(pln.propOpt.bioOptimization,<span class="string">'LEMIV_effect'</span>) || isequal(pln.propOpt.bioOptimization,<span class="string">'LEMIV_RBExD'</span>)) <span class="keyword">...</span><span class="comment"> </span>
+0280                     &amp;&amp; strcmp(pln.radiationMode,<span class="string">'carbon'</span>)
+0281                     <span class="comment">% calculate alpha and beta values for bixel k on ray j of</span>
+0282                     [bixelAlpha, bixelBeta] = <a href="matRad_calcLQParameter.html" class="code" title="function [vAlpha, vBeta] = matRad_calcLQParameter(vRadDepths,mTissueClass,baseData)">matRad_calcLQParameter</a>(<span class="keyword">...</span>
+0283                         currRadDepths,<span class="keyword">...</span>
+0284                         vTissueIndex_j(currIx,:),<span class="keyword">...</span>
+0285                         machine.data(energyIx));
+0286                     
+0287                     alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(VdoseGrid(ix(currIx)),1,bixelAlpha.*bixelDose,dij.doseGrid.numOfVoxels,1);
+0288                     betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1}  = sparse(VdoseGrid(ix(currIx)),1,sqrt(bixelBeta).*bixelDose,dij.doseGrid.numOfVoxels,1);
+0289                 <span class="keyword">end</span>
+0290                 
+0291                 <a href="matRad_calcDoseFillDij.html" class="code" title="">matRad_calcDoseFillDij</a>;                
+0292 
+0293             <span class="keyword">end</span>
+0294             
+0295         <span class="keyword">end</span>
+0296         
+0297     <span class="keyword">end</span>
+0298 <span class="keyword">end</span>
+0299 
+0300 <span class="comment">%Close Waitbar</span>
+0301 <span class="keyword">if</span> ishandle(figureWait)
+0302     delete(figureWait);
+0303 <span class="keyword">end</span>
+0304 
+0305</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

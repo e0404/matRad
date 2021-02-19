@@ -1,0 +1,153 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_listAllFiles</title>
+  <meta name="keywords" content="matRad_listAllFiles">
+  <meta name="description" content="matRad function to get all files in arbitrary deep subfolders">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html dicom -->
+<h1>matRad_listAllFiles
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad function to get all files in arbitrary deep subfolders</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function fileList = matRad_listAllFiles(dirPath,uiInput) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to get all files in arbitrary deep subfolders
+ 
+ call
+   fileList = matRad_listAllFiles()
+   fileList = matRad_listAllFiles(dirPath)
+   fileList = matRad_listAllFiles(uiInput)
+
+ input
+   dirPath:        (optional) initial folder to start searching
+   uiInput:        (optional) if userInteraction is wanted.
+                   Use EITHER dirPath or uiInput
+
+ output
+   fileList:       Filelist
+
+ References
+   -
+ Note
+                   MATLAB has an internal recursion limit. If you want to
+                   list a huge amount of files you may have to: 
+                   &gt;&gt; % N = Number of allowed recursions
+                   &gt;&gt; set(0,'RecursionLimit',N)
+ 
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_listAllFiles.html" class="code" title="function fileList = matRad_listAllFiles(dirPath,uiInput)">matRad_listAllFiles</a>	matRad function to get all files in arbitrary deep subfolders</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_listAllFiles.html" class="code" title="function fileList = matRad_listAllFiles(dirPath,uiInput)">matRad_listAllFiles</a>	matRad function to get all files in arbitrary deep subfolders</li><li><a href="matRad_scanDicomImportFolder.html" class="code" title="function [ fileList, patientList ] = matRad_scanDicomImportFolder( patDir )">matRad_scanDicomImportFolder</a>	matRad function to scan a folder for dicom data</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function fileList = matRad_listAllFiles(dirPath,uiInput)</a>
+0002 <span class="comment">% matRad function to get all files in arbitrary deep subfolders</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   fileList = matRad_listAllFiles()</span>
+0006 <span class="comment">%   fileList = matRad_listAllFiles(dirPath)</span>
+0007 <span class="comment">%   fileList = matRad_listAllFiles(uiInput)</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% input</span>
+0010 <span class="comment">%   dirPath:        (optional) initial folder to start searching</span>
+0011 <span class="comment">%   uiInput:        (optional) if userInteraction is wanted.</span>
+0012 <span class="comment">%                   Use EITHER dirPath or uiInput</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% output</span>
+0015 <span class="comment">%   fileList:       Filelist</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">% References</span>
+0018 <span class="comment">%   -</span>
+0019 <span class="comment">% Note</span>
+0020 <span class="comment">%                   MATLAB has an internal recursion limit. If you want to</span>
+0021 <span class="comment">%                   list a huge amount of files you may have to:</span>
+0022 <span class="comment">%                   &gt;&gt; % N = Number of allowed recursions</span>
+0023 <span class="comment">%                   &gt;&gt; set(0,'RecursionLimit',N)</span>
+0024 <span class="comment">%</span>
+0025 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0026 <span class="comment">%</span>
+0027 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0028 <span class="comment">%</span>
+0029 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0030 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0031 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0032 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0033 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0034 <span class="comment">% LICENSE file.</span>
+0035 <span class="comment">%</span>
+0036 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0037 
+0038 <span class="comment">%% check whether input argument dirPath is parsed</span>
+0039     <span class="keyword">if</span> ~exist(<span class="string">'dirPath'</span>,<span class="string">'var'</span>)
+0040         <span class="keyword">if</span> exist(<span class="string">'uiInput'</span>,<span class="string">'var'</span>)
+0041             <span class="keyword">if</span> uiInput == 1
+0042                 dirPath = uigetdir;
+0043             <span class="keyword">end</span>
+0044         <span class="keyword">else</span>
+0045             dirPath = pwd;
+0046         <span class="keyword">end</span>
+0047     <span class="keyword">end</span>
+0048     
+0049 <span class="comment">%% get all files</span>
+0050     
+0051     <span class="comment">% info of main directory</span>
+0052     mainDirInfo = dir(dirPath);
+0053     <span class="comment">% index of subdirectories</span>
+0054     dirIx = [mainDirInfo.isdir];
+0055     <span class="comment">% list all files which are not subDirs</span>
+0056     fileList = {mainDirInfo(~dirIx).name}';
+0057     <span class="keyword">if</span> ~isempty(fileList)
+0058         <span class="comment">% using fullfile to take care on file seperators</span>
+0059         fileList = cellfun(@(x) fullfile(dirPath,x),<span class="keyword">...</span>
+0060                            fileList,<span class="string">'UniformOutput'</span>,false);
+0061     <span class="keyword">end</span>
+0062     <span class="comment">% subdirectories</span>
+0063     subDirList = {mainDirInfo(dirIx).name};
+0064     <span class="comment">% list items without '.' or '..'</span>
+0065     validIx = ~ismember(subDirList,{<span class="string">'.'</span>,<span class="string">'..'</span>});
+0066     <span class="comment">% loop subDir and recall function itself</span>
+0067     <span class="keyword">for</span> ixDir = find(validIx)
+0068         <span class="comment">% get subDir Path</span>
+0069         nextSubDir = fullfile(dirPath,subDirList{ixDir});
+0070         fileList = [fileList; <a href="matRad_listAllFiles.html" class="code" title="function fileList = matRad_listAllFiles(dirPath,uiInput)">matRad_listAllFiles</a>(nextSubDir)];
+0071     <span class="keyword">end</span>
+0072 
+0073 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

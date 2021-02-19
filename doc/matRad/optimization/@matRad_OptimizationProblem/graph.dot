@@ -1,0 +1,18 @@
+/* Created by mdot for Matlab */
+digraph m2html {
+  matRad_OptimizationProblem -> matRad_OptimizationProblem;
+  matRad_OptimizationProblem -> matRad_constraintFunctions;
+  matRad_OptimizationProblem -> matRad_constraintJacobian;
+  matRad_OptimizationProblem -> matRad_getConstraintBounds;
+  matRad_OptimizationProblem -> matRad_getJacobianStructure;
+  matRad_OptimizationProblem -> matRad_objectiveFunction;
+  matRad_OptimizationProblem -> matRad_objectiveGradient;
+
+  matRad_OptimizationProblem [URL="matRad_OptimizationProblem.html"];
+  matRad_constraintFunctions [URL="matRad_constraintFunctions.html"];
+  matRad_constraintJacobian [URL="matRad_constraintJacobian.html"];
+  matRad_getConstraintBounds [URL="matRad_getConstraintBounds.html"];
+  matRad_getJacobianStructure [URL="matRad_getJacobianStructure.html"];
+  matRad_objectiveFunction [URL="matRad_objectiveFunction.html"];
+  matRad_objectiveGradient [URL="matRad_objectiveGradient.html"];
+}

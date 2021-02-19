@@ -1,0 +1,209 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_daoVec2ApertureInfo</title>
+  <meta name="keywords" content="matRad_daoVec2ApertureInfo">
+  <meta name="description" content="matRad function to translate vector representation into struct">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../../menu.html matRad --><!-- ../menu.html optimization --><!-- menu.html @matRad_OptimizationProblemDAO -->
+<h1>matRad_daoVec2ApertureInfo
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">matRad function to translate vector representation into struct</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">function updatedInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVect) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to translate vector representation into struct
+ The vector representation of the aperture shape and weight are translated 
+ into an aperture info struct. At the same time, the updated bixel weight
+ vector w is computed and a vector listing the correspondence between leaf 
+ tips and bixel indices for gradient calculation
+
+ call
+   updatedInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVect)
+
+ input
+   apertureInfo:     aperture shape info struct
+   apertureInfoVect: aperture weights and shapes parameterized as vector
+
+ output
+   updatedInfo: updated aperture shape info struct according to apertureInfoVect
+
+ References
+   
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_OptimizationProblemDAO.html" class="code" title="">matRad_OptimizationProblemDAO</a>	</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function updatedInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVect)</a>
+0002 <span class="comment">% matRad function to translate vector representation into struct</span>
+0003 <span class="comment">% The vector representation of the aperture shape and weight are translated</span>
+0004 <span class="comment">% into an aperture info struct. At the same time, the updated bixel weight</span>
+0005 <span class="comment">% vector w is computed and a vector listing the correspondence between leaf</span>
+0006 <span class="comment">% tips and bixel indices for gradient calculation</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% call</span>
+0009 <span class="comment">%   updatedInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVect)</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% input</span>
+0012 <span class="comment">%   apertureInfo:     aperture shape info struct</span>
+0013 <span class="comment">%   apertureInfoVect: aperture weights and shapes parameterized as vector</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% output</span>
+0016 <span class="comment">%   updatedInfo: updated aperture shape info struct according to apertureInfoVect</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% References</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0022 
+0023 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0024 <span class="comment">%</span>
+0025 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0026 <span class="comment">%</span>
+0027 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0028 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0029 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0030 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0031 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0032 <span class="comment">% LICENSE file.</span>
+0033 <span class="comment">%</span>
+0034 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0035 
+0036 <span class="comment">% function to update the apertureInfo struct after the each iteraton of the</span>
+0037 <span class="comment">% optimization</span>
+0038 
+0039 w = zeros(apertureInfo.totalNumOfBixels,1);
+0040 
+0041 <span class="comment">% initializing variables</span>
+0042 updatedInfo = apertureInfo;
+0043 
+0044 updatedInfo.apertureVector = apertureInfoVect;
+0045 
+0046 shapeInd = 1;
+0047 
+0048 indVect = NaN*ones(apertureInfo.totalNumOfShapes + apertureInfo.totalNumOfLeafPairs,1);
+0049 
+0050 <span class="comment">% helper function to cope with numerical instabilities through rounding</span>
+0051 round2 = @(a,b) round(a*10^b)/10^b;
+0052 
+0053 
+0054 <span class="comment">%% update the shapeMaps</span>
+0055 <span class="comment">% here the new colimator positions are used to create new shapeMaps that</span>
+0056 <span class="comment">% now include decimal values instead of binary</span>
+0057 
+0058 <span class="comment">% loop over all beams</span>
+0059 <span class="keyword">for</span> i = 1:numel(updatedInfo.beam)
+0060     
+0061     <span class="comment">%posOfRightCornerPixel = apertureInfo.beam(i).posOfCornerBixel(1) + (size(apertureInfo.beam(i).bixelIndMap,2)-1)*apertureInfo.bixelWidth;</span>
+0062 
+0063     <span class="comment">% pre compute left and right bixel edges</span>
+0064     edges_l = updatedInfo.beam(i).posOfCornerBixel(1)<span class="keyword">...</span>
+0065                  + ([1:size(apertureInfo.beam(i).bixelIndMap,2)]-1-1/2)*updatedInfo.bixelWidth;
+0066     edges_r = updatedInfo.beam(i).posOfCornerBixel(1)<span class="keyword">...</span>
+0067                  + ([1:size(apertureInfo.beam(i).bixelIndMap,2)]-1+1/2)*updatedInfo.bixelWidth;
+0068     
+0069     <span class="comment">% loop over all shapes</span>
+0070     <span class="keyword">for</span> j = 1:updatedInfo.beam(i).numOfShapes
+0071         
+0072         <span class="comment">% update the shape weight</span>
+0073         updatedInfo.beam(i).shape(j).weight = apertureInfoVect(shapeInd);
+0074         
+0075         <span class="comment">% get dimensions of 2d matrices that store shape/bixel information</span>
+0076         n = apertureInfo.beam(i).numOfActiveLeafPairs;
+0077         
+0078         <span class="comment">% extract left and right leaf positions from shape vector</span>
+0079         vectorIx     = updatedInfo.beam(i).shape(j).vectorOffset + ([1:n]-1);
+0080         leftLeafPos  = apertureInfoVect(vectorIx);
+0081         rightLeafPos = apertureInfoVect(vectorIx+apertureInfo.totalNumOfLeafPairs);
+0082         
+0083         <span class="comment">% update information in shape structure</span>
+0084         updatedInfo.beam(i).shape(j).leftLeafPos  = leftLeafPos;
+0085         updatedInfo.beam(i).shape(j).rightLeafPos = rightLeafPos;
+0086         
+0087         <span class="comment">% rounding for numerical stability</span>
+0088         leftLeafPos  = round2(leftLeafPos,6);
+0089         rightLeafPos = round2(rightLeafPos,6);
+0090         
+0091         <span class="comment">%</span>
+0092         xPosIndLeftLeaf  = round((leftLeafPos - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth + 1);
+0093         xPosIndRightLeaf = round((rightLeafPos - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth + 1);
+0094         
+0095         <span class="comment">% check limits because of rounding off issues at maximum, i.e.,</span>
+0096         <span class="comment">% enforce round(X.5) -&gt; X</span>
+0097         xPosIndLeftLeaf(leftLeafPos == apertureInfo.beam(i).lim_r) = <span class="keyword">...</span>
+0098             .5 + (leftLeafPos(leftLeafPos == apertureInfo.beam(i).lim_r) <span class="keyword">...</span>
+0099             - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth;
+0100         xPosIndRightLeaf(rightLeafPos == apertureInfo.beam(i).lim_r) = <span class="keyword">...</span>
+0101             .5 + (rightLeafPos(rightLeafPos == apertureInfo.beam(i).lim_r) <span class="keyword">...</span>
+0102             - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth;
+0103         
+0104         <span class="comment">% find the bixel index that the leaves currently touch</span>
+0105         bixelIndLeftLeaf  = apertureInfo.beam(i).bixelIndMap((xPosIndLeftLeaf-1)*n+[1:n]');
+0106         bixelIndRightLeaf = apertureInfo.beam(i).bixelIndMap((xPosIndRightLeaf-1)*n+[1:n]');
+0107         
+0108         <span class="keyword">if</span> any(isnan(bixelIndLeftLeaf)) || any(isnan(bixelIndRightLeaf))
+0109             error(<span class="string">'cannot map leaf position to bixel index'</span>);
+0110         <span class="keyword">end</span>
+0111         
+0112         <span class="comment">% store information in index vector for gradient calculation</span>
+0113         indVect(apertureInfo.beam(i).shape(j).vectorOffset+[1:n]-1) = bixelIndLeftLeaf;
+0114         indVect(apertureInfo.beam(i).shape(j).vectorOffset+[1:n]-1+apertureInfo.totalNumOfLeafPairs) = bixelIndRightLeaf;
+0115 
+0116         <span class="comment">% calculate opening fraction for every bixel in shape to construct</span>
+0117         <span class="comment">% bixel weight vector</span>
+0118         
+0119         coveredByLeftLeaf  = bsxfun(@minus,leftLeafPos,edges_l)  / updatedInfo.bixelWidth;
+0120         coveredByRightLeaf = bsxfun(@minus,edges_r,rightLeafPos) / updatedInfo.bixelWidth;
+0121 
+0122         tempMap = 1 - (coveredByLeftLeaf  + abs(coveredByLeftLeaf))  / 2 <span class="keyword">...</span>
+0123                     - (coveredByRightLeaf + abs(coveredByRightLeaf)) / 2;
+0124             
+0125         <span class="comment">% find open bixels</span>
+0126         tempMapIx = tempMap &gt; 0;
+0127         
+0128         currBixelIx = apertureInfo.beam(i).bixelIndMap(tempMapIx);
+0129         w(currBixelIx) = w(currBixelIx) + tempMap(tempMapIx)*updatedInfo.beam(i).shape(j).weight;
+0130     
+0131         <span class="comment">% save the tempMap (we need to apply a positivity operator !)</span>
+0132         updatedInfo.beam(i).shape(j).shapeMap = (tempMap  + abs(tempMap))  / 2;
+0133         
+0134         <span class="comment">% increment shape index</span>
+0135         shapeInd = shapeInd +1;
+0136     <span class="keyword">end</span>
+0137     
+0138 <span class="keyword">end</span>
+0139 
+0140 updatedInfo.bixelWeights = w;
+0141 updatedInfo.bixelIndices = indVect;
+0142 
+0143 <span class="keyword">end</span>
+0144</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_visSpotWeights</title>
+  <meta name="keywords" content="matRad_visSpotWeights">
+  <meta name="description" content="visualise spot weights per energy slice (or fluence map for photons resp.)">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html tools -->
+<h1>matRad_visSpotWeights
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">visualise spot weights per energy slice (or fluence map for photons resp.)</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function matRad_visSpotWeights(stf,weights) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> visualise spot weights per energy slice (or fluence map for photons resp.)
+ for single beams
+ 
+ call
+    matRad_visSpotWeights(stf,weights)
+
+ input
+   stf:              matRad stf struct
+   weights:          spot weights for bixels (resultGUI.w)</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+</ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>Subfunctions <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<ul style="list-style-type:disc">
+<li><a href="#_sub1" class="code">function figScroll(src,callbackdata)</a></li></ul>
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function matRad_visSpotWeights(stf,weights)</a>
+0002 <span class="comment">% visualise spot weights per energy slice (or fluence map for photons resp.)</span>
+0003 <span class="comment">% for single beams</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% call</span>
+0006 <span class="comment">%    matRad_visSpotWeights(stf,weights)</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% input</span>
+0009 <span class="comment">%   stf:              matRad stf struct</span>
+0010 <span class="comment">%   weights:          spot weights for bixels (resultGUI.w)</span>
+0011 
+0012 <span class="comment">% output</span>
+0013 <span class="comment">%      plots for all beams - for particles: scroll mousewheel to access different energies</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% References</span>
+0016 <span class="comment">%   -</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0023 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0024 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0025 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0026 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0027 <span class="comment">% LICENSE file.</span>
+0028 <span class="comment">%</span>
+0029 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0030 
+0031 numOfBeams = size(stf,2);
+0032 
+0033 <span class="comment">% construct look up table weight --&gt; bixel</span>
+0034 counter = 0;
+0035 <span class="keyword">for</span> i = 1:numOfBeams
+0036     <span class="keyword">for</span> j = 1:stf(i).numOfRays
+0037         <span class="keyword">for</span> k = 1:stf(i).numOfBixelsPerRay(j)
+0038             counter = counter + 1;
+0039             bixelLut.beamNum(counter) = i;
+0040             bixelLut.rayNum(counter) = j;
+0041             bixelLut.bixelNum(counter) = k;
+0042             bixelLut.energy(counter) = stf(i).ray(j).energy(k);
+0043         <span class="keyword">end</span> 
+0044     <span class="keyword">end</span>
+0045 <span class="keyword">end</span>
+0046 
+0047     <span class="keyword">if</span>  strcmp(stf(1).radiationMode, <span class="string">'photons'</span>)
+0048         
+0049         <span class="comment">% plot weights for all beams in one figure</span>
+0050         figure;
+0051         rowNum = floor(sqrt(numOfBeams)); <span class="comment">% number of rows in subplot</span>
+0052         colNum = ceil(numOfBeams/rowNum); <span class="comment">% numberof columns in subplot</span>
+0053         <span class="comment">% maximum weight</span>
+0054         w_max = max(weights);
+0055         
+0056         <span class="keyword">for</span> i=1:numOfBeams
+0057            
+0058            <span class="comment">% find range of ray positions within beam</span>
+0059            rayPos_mat = vertcat(stf(i).ray(:).rayPos_bev);
+0060            x_min = min(rayPos_mat(:, 1));
+0061            z_min = min(rayPos_mat(:, 3));
+0062            x_max = max(rayPos_mat(:, 1));
+0063            z_max = max(rayPos_mat(:, 3));
+0064 
+0065            <span class="comment">% initialise weight matrix</span>
+0066            weight_matrix{i} = zeros((x_max-x_min)/stf(i).bixelWidth,(z_max-z_min)/stf(i).bixelWidth);
+0067 
+0068            <span class="keyword">for</span> j=1:stf(i).numOfRays
+0069                
+0070                <span class="comment">% find weight for this ray</span>
+0071                weight_ix = and((bixelLut.beamNum==i), (bixelLut.rayNum==j));
+0072                <span class="comment">% normalize weight</span>
+0073                w_norm = weights(weight_ix)/w_max;
+0074                <span class="comment">% find position in matrix corresponding to ray</span>
+0075                xpos = (stf(i).ray(j).rayPos_bev(1) + abs(x_min))/stf(i).bixelWidth +1;
+0076                zpos = (stf(i).ray(j).rayPos_bev(3) + abs(z_min))/stf(i).bixelWidth +1;
+0077                weight_matrix{i}(xpos,zpos) = w_norm;          
+0078            <span class="keyword">end</span>
+0079 
+0080            <span class="comment">% plot weight matrix</span>
+0081            ax = subplot(rowNum,colNum, i);
+0082            hold on;
+0083            imagesc( [x_min x_max], [z_min z_max], weight_matrix{i}); 
+0084            axis image;
+0085            title(sprintf([<span class="string">'spotweights in beam '</span> num2str(i)]));
+0086            xlabel(<span class="string">'x [mm]'</span>);
+0087            ylabel(<span class="string">'z [mm]'</span>);
+0088            cmap = colormap(ax, <span class="string">'jet'</span>);
+0089            cb = colorbar;
+0090            ylabel(cb, <span class="string">'normalized weight'</span>);
+0091            hold off;
+0092         <span class="keyword">end</span> 
+0093        
+0094     <span class="keyword">elseif</span> ( strcmp(stf(1).radiationMode, <span class="string">'protons'</span>) || strcmp(stf(1).radiationMode, <span class="string">'carbon'</span>) )
+0095         
+0096         <span class="comment">% for protons and carbon Ions consider different energies as well</span>
+0097         <span class="comment">% maximum weight</span>
+0098         w_max = max(weights);
+0099         
+0100         <span class="keyword">for</span> i=1:numOfBeams
+0101            fprintf([<span class="string">'Calculate weights for Beam '</span> num2str(i) <span class="string">'...\n'</span>]);
+0102            
+0103            <span class="comment">% find range of ray positions within beam</span>
+0104            rayPos_mat = vertcat(stf(i).ray(:).rayPos_bev);
+0105            x_min = min(rayPos_mat(:, 1));
+0106            z_min = min(rayPos_mat(:, 3));
+0107            x_max = max(rayPos_mat(:, 1));
+0108            z_max = max(rayPos_mat(:, 3));
+0109 
+0110            <span class="comment">% find all energies used</span>
+0111            all_energies{i} = unique(cat(2, stf(i).ray(:).energy));
+0112            numOfEnergies(i) = length(all_energies{i});
+0113            
+0114            <span class="comment">% initialise weight matrix</span>
+0115            weight_matrix{i} = zeros((x_max-x_min)/stf(i).bixelWidth,(z_max-z_min)/stf(i).bixelWidth, numOfEnergies(i));
+0116            
+0117            <span class="comment">% find all bixel in this beam</span>
+0118            beam_ix = (bixelLut.beamNum == i);
+0119            
+0120            <span class="keyword">for</span> j=1:numOfEnergies(i)
+0121                <span class="comment">% find all bixel with this energy</span>
+0122                energy_ix = and((bixelLut.energy == all_energies{i}(j)),beam_ix) ;
+0123                
+0124                <span class="keyword">for</span> k=1:stf(i).numOfRays
+0125                    <span class="comment">% find weights for this ray</span>
+0126                    weight_ix = and((bixelLut.rayNum==k),energy_ix);
+0127 
+0128                    <span class="comment">% normalize weight</span>
+0129                    w_norm = weights(weight_ix)/w_max;
+0130                    <span class="keyword">if</span> isempty(w_norm)
+0131                        w_norm = 0;
+0132                    <span class="keyword">end</span>
+0133                    
+0134                    <span class="comment">% find position in matrix corresponding to ray</span>
+0135                    xpos = (stf(i).ray(k).rayPos_bev(1) + abs(x_min))/stf(i).bixelWidth +1;
+0136                    zpos = (stf(i).ray(k).rayPos_bev(3) + abs(z_min))/stf(i).bixelWidth +1;
+0137                    weight_matrix{i}(xpos,zpos, j) = w_norm;          
+0138                <span class="keyword">end</span>
+0139        
+0140            <span class="keyword">end</span>
+0141            
+0142            <span class="comment">% new figure for each beam</span>
+0143            figure(<span class="string">'Name'</span>, sprintf([<span class="string">'Beam '</span> num2str(i)]), <span class="string">'WindowScrollWheelFcn'</span>, @<a href="#_sub1" class="code" title="subfunction figScroll(src,callbackdata)">figScroll</a>);
+0144            ax = axes;
+0145            
+0146            curr_ix_energy(i) = 1; <span class="comment">% current energy slice index</span>
+0147            
+0148            <span class="comment">% plot spot weights</span>
+0149            img = imagesc( [x_min x_max], [z_min z_max], weight_matrix{i}(:,:,curr_ix_energy(i)));
+0150            axis image;
+0151            title(sprintf([<span class="string">'spotweights in beam '</span> num2str(i) <span class="string">', energy: '</span> num2str(all_energies{i}(curr_ix_energy(i)))] ));
+0152            xlabel(<span class="string">'x [mm]'</span>);
+0153            ylabel(<span class="string">'z [mm]'</span>);
+0154            cmap = colormap(ax, <span class="string">'jet'</span>);
+0155            caxis(ax, [0 1]);
+0156            colormap(ax, cmap);
+0157            cb = colorbar;
+0158            ylabel(cb, <span class="string">'normalized weight'</span>);
+0159            hold off;  
+0160 
+0161         <span class="keyword">end</span>
+0162 
+0163     <span class="keyword">end</span>
+0164 
+0165 
+0166     <a name="_sub1" href="#_subfunctions" class="code">function figScroll(src,callbackdata)</a>
+0167       <span class="comment">% function to enable scrolling through energy slices</span>
+0168         
+0169       <span class="comment">% get handles for current figure and object</span>
+0170       curr_fig = gcf;
+0171       curr_ax = gca(curr_fig);
+0172       childrenOfAx = get(curr_ax,<span class="string">'Children'</span>);
+0173       
+0174       <span class="comment">% get current beam number</span>
+0175       fig_name = get(curr_fig,<span class="string">'Name'</span>);
+0176       curr_beam = str2double(fig_name(end));
+0177       
+0178       <span class="comment">% set new energy slice</span>
+0179       curr_ix_energy(curr_beam) = curr_ix_energy(curr_beam) - callbackdata.VerticalScrollCount;
+0180       
+0181       <span class="comment">% project to allowed range</span>
+0182       curr_ix_energy(curr_beam) = min(curr_ix_energy(curr_beam), numOfEnergies(curr_beam));
+0183       curr_ix_energy(curr_beam) = max(curr_ix_energy(curr_beam), 1);
+0184       
+0185       <span class="comment">% change Data in plot</span>
+0186       set(childrenOfAx,<span class="string">'CData'</span>,weight_matrix{curr_beam}(:,:,curr_ix_energy(curr_beam)));
+0187       title(sprintf([<span class="string">'spotweights in beam '</span> num2str(curr_beam) <span class="string">', energy: '</span> num2str(all_energies{curr_beam}(curr_ix_energy(curr_beam)))]));
+0188       drawnow;
+0189       
+0190     <span class="keyword">end</span>
+0191 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

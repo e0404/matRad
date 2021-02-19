@@ -1,0 +1,238 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_calcQualityIndicators</title>
+  <meta name="keywords" content="matRad_calcQualityIndicators">
+  <meta name="description" content="matRad QI calculation">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_calcQualityIndicators
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">matRad QI calculation</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad QI calculation
+ 
+ call
+   qi = matRad_calcQualityIndicators(cst,pln,doseCube)
+   qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol)
+
+ input
+   cst:                matRad cst struct
+   pln:                matRad pln struct
+   doseCube:           arbitrary doseCube (e.g. physicalDose)
+   refGy: (optional)   array of dose values used for V_XGy calculation
+                       default is [40 50 60]
+   refVol:(optional)   array of volumes (0-100) used for D_X calculation
+                       default is [2 5 95 98]
+                       NOTE: Call either both or none!
+
+ output
+   qi                  various quality indicators like CI, HI (for 
+                       targets) and DX, VX within a structure set   
+
+ References
+   van't Riet et. al., IJROBP, 1997 Feb 1;37(3):731-6.
+   Kataria et. al., J Med Phys. 2012 Oct-Dec; 37(4)
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2016 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_interp1.html" class="code" title="function y = matRad_interp1(xi,yi,x,extrapolation)">matRad_interp1</a>	interpolates 1-D data (table lookup) and utilizes griddedInterpolant</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_indicatorWrapper.html" class="code" title="function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)">matRad_indicatorWrapper</a>	matRad indictor wrapper</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol)</a>
+0002 <span class="comment">% matRad QI calculation</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   qi = matRad_calcQualityIndicators(cst,pln,doseCube)</span>
+0006 <span class="comment">%   qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol)</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% input</span>
+0009 <span class="comment">%   cst:                matRad cst struct</span>
+0010 <span class="comment">%   pln:                matRad pln struct</span>
+0011 <span class="comment">%   doseCube:           arbitrary doseCube (e.g. physicalDose)</span>
+0012 <span class="comment">%   refGy: (optional)   array of dose values used for V_XGy calculation</span>
+0013 <span class="comment">%                       default is [40 50 60]</span>
+0014 <span class="comment">%   refVol:(optional)   array of volumes (0-100) used for D_X calculation</span>
+0015 <span class="comment">%                       default is [2 5 95 98]</span>
+0016 <span class="comment">%                       NOTE: Call either both or none!</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% output</span>
+0019 <span class="comment">%   qi                  various quality indicators like CI, HI (for</span>
+0020 <span class="comment">%                       targets) and DX, VX within a structure set</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% References</span>
+0023 <span class="comment">%   van't Riet et. al., IJROBP, 1997 Feb 1;37(3):731-6.</span>
+0024 <span class="comment">%   Kataria et. al., J Med Phys. 2012 Oct-Dec; 37(4)</span>
+0025 <span class="comment">%</span>
+0026 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0027 <span class="comment">%</span>
+0028 <span class="comment">% Copyright 2016 the matRad development team.</span>
+0029 <span class="comment">%</span>
+0030 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0031 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0032 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0033 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0034 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0035 <span class="comment">% LICENSE file.</span>
+0036 <span class="comment">%</span>
+0037 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0038 
+0039 
+0040 matRad_cfg = MatRad_Config.instance();
+0041 
+0042 <span class="keyword">if</span> ~exist(<span class="string">'refVol'</span>, <span class="string">'var'</span>) || isempty(refVol)
+0043     refVol = [2 5 50 95 98];
+0044 <span class="keyword">end</span>
+0045 
+0046 <span class="keyword">if</span> ~exist(<span class="string">'refGy'</span>, <span class="string">'var'</span>) || isempty(refGy)
+0047     refGy = floor(linspace(0,max(doseCube(:)),6)*10)/10;
+0048 <span class="keyword">end</span>
+0049 
+0050     
+0051 <span class="comment">% calculate QIs per VOI</span>
+0052 qi = struct;
+0053 <span class="keyword">for</span> runVoi = 1:size(cst,1)
+0054     
+0055     indices     = cst{runVoi,4}{1};
+0056     numOfVoxels = numel(indices); 
+0057     voiPrint = sprintf(<span class="string">'%3d %20s'</span>,cst{runVoi,1},cst{runVoi,2}); <span class="comment">%String that will print quality indicators</span>
+0058     
+0059     <span class="comment">% get Dose, dose is sorted to simplify calculations</span>
+0060     doseInVoi    = sort(doseCube(indices));
+0061         
+0062     <span class="keyword">if</span> ~isempty(doseInVoi)
+0063         
+0064         qi(runVoi).name = cst{runVoi,2};
+0065         
+0066         <span class="comment">% easy stats</span>
+0067         qi(runVoi).mean = mean(doseInVoi);
+0068         qi(runVoi).std  = std(doseInVoi);
+0069         qi(runVoi).max  = doseInVoi(end);
+0070         qi(runVoi).min  = doseInVoi(1);
+0071 
+0072         voiPrint = sprintf(<span class="string">'%s - Mean dose = %5.2f Gy +/- %5.2f Gy (Max dose = %5.2f Gy, Min dose = %5.2f Gy)\n%27s'</span>, <span class="keyword">...</span>
+0073                            voiPrint,qi(runVoi).mean,qi(runVoi).std,qi(runVoi).max,qi(runVoi).min,<span class="string">' '</span>);
+0074 
+0075         DX = @(x) <a href="matRad_interp1.html" class="code" title="function y = matRad_interp1(xi,yi,x,extrapolation)">matRad_interp1</a>(linspace(0,1,numOfVoxels),doseInVoi,(100-x)*0.01);
+0076         VX = @(x) numel(doseInVoi(doseInVoi &gt;= x)) / numOfVoxels;
+0077 
+0078         <span class="comment">% create VX and DX struct fieldnames at runtime and fill</span>
+0079         <span class="keyword">for</span> runDX = 1:numel(refVol)
+0080             qi(runVoi).(strcat(<span class="string">'D_'</span>,num2str(refVol(runDX)))) = DX(refVol(runDX));
+0081             voiPrint = sprintf(<span class="string">'%sD%d%% = %5.2f Gy, '</span>,voiPrint,refVol(runDX),DX(refVol(runDX)));
+0082         <span class="keyword">end</span>
+0083         voiPrint = sprintf(<span class="string">'%s\n%27s'</span>,voiPrint,<span class="string">' '</span>);
+0084         <span class="keyword">for</span> runVX = 1:numel(refGy)
+0085             sRefGy = num2str(refGy(runVX),3);
+0086             qi(runVoi).([<span class="string">'V_'</span> strrep(sRefGy,<span class="string">'.'</span>,<span class="string">'_'</span>) <span class="string">'Gy'</span>]) = VX(refGy(runVX));
+0087             voiPrint = sprintf([<span class="string">'%sV'</span> sRefGy <span class="string">'Gy = %6.2f%%, '</span>],voiPrint,VX(refGy(runVX))*100);
+0088         <span class="keyword">end</span>
+0089         voiPrint = sprintf(<span class="string">'%s\n%27s'</span>,voiPrint,<span class="string">' '</span>);
+0090 
+0091         <span class="comment">% if current voi is a target -&gt; calculate homogeneity and conformity</span>
+0092         <span class="keyword">if</span> strcmp(cst{runVoi,3},<span class="string">'TARGET'</span>) &gt; 0      
+0093 
+0094             <span class="comment">% loop over target objectives and get the lowest dose objective</span>
+0095             referenceDose = inf;
+0096             
+0097             <span class="keyword">if</span> isstruct(cst{runVoi,6})
+0098                 cst{runVoi,6} = num2cell(arrayfun(@matRad_DoseOptimizationFunction.convertOldOptimizationStruct,cst{runVoi,6}));
+0099             <span class="keyword">end</span>
+0100             
+0101             <span class="keyword">for</span> runObjective = 1:numel(cst{runVoi,6})
+0102                <span class="comment">% check if this is an objective that penalizes underdosing</span>
+0103                obj = cst{runVoi,6}{runObjective};
+0104                <span class="keyword">if</span> ~isa(obj,<span class="string">'matRad_DoseOptimizationFunction'</span>)
+0105                    <span class="keyword">try</span>
+0106                        obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
+0107                    <span class="keyword">catch</span> ME
+0108                        matRad_cfg.dispWarning(<span class="string">'Objective/Constraint not valid!\n%s'</span>,ME.message)
+0109                        <span class="keyword">continue</span>;
+0110                    <span class="keyword">end</span>
+0111                <span class="keyword">end</span>
+0112                
+0113                <span class="comment">%if strcmp(cst{runVoi,6}(runObjective).type,'square deviation') &gt; 0 || strcmp(cst{runVoi,6}(runObjective).type,'square underdosing') &gt; 0</span>
+0114                <span class="keyword">if</span> isa(obj,<span class="string">'DoseObjectives.matRad_SquaredDeviation'</span>) || isa(obj,<span class="string">'DoseObjectives.matRad_SquaredUnderdosing'</span>)
+0115                    referenceDose = (min(obj.getDoseParameters(),referenceDose))/pln.numOfFractions;
+0116                <span class="keyword">end</span>            
+0117             <span class="keyword">end</span>
+0118 
+0119             <span class="keyword">if</span> referenceDose == inf 
+0120                 voiPrint = sprintf(<span class="string">'%s%s'</span>,voiPrint,<span class="string">'Warning: target has no objective that penalizes underdosage, '</span>);
+0121             <span class="keyword">else</span>
+0122  
+0123                 StringReferenceDose = regexprep(num2str(round(referenceDose*100)/100),<span class="string">'\D'</span>,<span class="string">'_'</span>);
+0124                 <span class="comment">% Conformity Index, fieldname contains reference dose</span>
+0125                 VTarget95 = sum(doseInVoi &gt;= 0.95*referenceDose); <span class="comment">% number of target voxels recieving dose &gt;= 0.95 dPres</span>
+0126                 VTreated95 = sum(doseCube(:) &gt;= 0.95*referenceDose);  <span class="comment">%number of all voxels recieving dose &gt;= 0.95 dPres (&quot;treated volume&quot;)</span>
+0127                 qi(runVoi).([<span class="string">'CI_'</span> StringReferenceDose <span class="string">'Gy'</span>]) = VTarget95^2/(numOfVoxels * VTreated95); 
+0128 
+0129                 <span class="comment">% Homogeneity Index (one out of many), fieldname contains reference dose</span>
+0130                 qi(runVoi).([<span class="string">'HI_'</span> StringReferenceDose <span class="string">'Gy'</span>]) = (DX(5) - DX(95))/referenceDose * 100;
+0131 
+0132                 voiPrint = sprintf(<span class="string">'%sCI = %6.4f, HI = %5.2f for reference dose of %3.1f Gy\n'</span>,voiPrint,<span class="keyword">...</span>
+0133                                    qi(runVoi).([<span class="string">'CI_'</span> StringReferenceDose <span class="string">'Gy'</span>]),qi(runVoi).([<span class="string">'HI_'</span> StringReferenceDose <span class="string">'Gy'</span>]),referenceDose);
+0134             <span class="keyword">end</span>
+0135         <span class="keyword">end</span>
+0136         <span class="comment">%We do it this way so the percentages in the string are not interpreted as format specifiers</span>
+0137         matRad_cfg.dispInfo(<span class="string">'%s\n'</span>,voiPrint);    
+0138     <span class="keyword">else</span>        
+0139         matRad_cfg.dispInfo(<span class="string">'%d %s - No dose information.'</span>,cst{runVoi,1},cst{runVoi,2});        
+0140     <span class="keyword">end</span>
+0141 <span class="keyword">end</span>
+0142 
+0143 <span class="comment">% assign VOI names which could be corrupted due to empty structures</span>
+0144 listOfFields = fieldnames(qi);
+0145 <span class="keyword">for</span> i = 1:size(cst,1)
+0146   indices     = cst{i,4}{1};
+0147   doseInVoi    = sort(doseCube(indices));
+0148   <span class="keyword">if</span> isempty(doseInVoi)
+0149       <span class="keyword">for</span> j = 1:numel(listOfFields)
+0150           qi(i).(listOfFields{j}) = NaN;
+0151       <span class="keyword">end</span>
+0152       qi(i).name = cst{i,2};
+0153   <span class="keyword">end</span>
+0154 <span class="keyword">end</span>
+0155 
+0156 <span class="keyword">end</span>
+0157</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

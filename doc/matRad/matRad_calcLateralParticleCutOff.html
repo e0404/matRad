@@ -1,0 +1,418 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_calcLateralParticleCutOff</title>
+  <meta name="keywords" content="matRad_calcLateralParticleCutOff">
+  <meta name="description" content="matRad function to calculate a depth dependend lateral cutoff">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_calcLateralParticleCutOff
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">matRad function to calculate a depth dependend lateral cutoff</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function [ machine ] = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf,visBool) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to calculate a depth dependend lateral cutoff 
+ for each pristine particle beam
+ 
+ call
+   [ machine ] = matRad_calcLateralParticleCutOff( machine,cutOffLevel,stf,visBool )
+
+ input
+   machine:        machine base data file
+   cutOffLevel:    cut off level - number between 0 and 1
+   stf:              matRad steering information struct
+   visBool:         toggle visualization (optional)
+
+ output
+   machine:        machine base data file including an additional field representing the lateral
+                    cutoff
+   
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_calcParticleDoseBixel.html" class="code" title="function dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData)">matRad_calcParticleDoseBixel</a>	matRad visualization of two-dimensional dose distributions</li><li><a href="matRad_calcSigmaRashi.html" class="code" title="function sigmaRashi = matRad_calcSigmaRashi(energy,rangeShifter,SSD)">matRad_calcSigmaRashi</a>	calculation of additional beam broadening due to the use of range shifters</li><li><a href="matRad_interp1.html" class="code" title="function y = matRad_interp1(xi,yi,x,extrapolation)">matRad_interp1</a>	interpolates 1-D data (table lookup) and utilizes griddedInterpolant</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_calcParticleDose.html" class="code" title="function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcParticleDose</a>	matRad particle dose calculation wrapper</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [ machine ] = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf,visBool)</a>
+0002 <span class="comment">% matRad function to calculate a depth dependend lateral cutoff</span>
+0003 <span class="comment">% for each pristine particle beam</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% call</span>
+0006 <span class="comment">%   [ machine ] = matRad_calcLateralParticleCutOff( machine,cutOffLevel,stf,visBool )</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% input</span>
+0009 <span class="comment">%   machine:        machine base data file</span>
+0010 <span class="comment">%   cutOffLevel:    cut off level - number between 0 and 1</span>
+0011 <span class="comment">%   stf:              matRad steering information struct</span>
+0012 <span class="comment">%   visBool:         toggle visualization (optional)</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% output</span>
+0015 <span class="comment">%   machine:        machine base data file including an additional field representing the lateral</span>
+0016 <span class="comment">%                    cutoff</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% References</span>
+0019 <span class="comment">%   -</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0022 <span class="comment">%</span>
+0023 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0024 <span class="comment">%</span>
+0025 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0026 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0027 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0028 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0029 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0030 <span class="comment">% LICENSE file.</span>
+0031 <span class="comment">%</span>
+0032 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0033 
+0034 <span class="keyword">if</span> cutOffLevel &lt;= 0.98
+0035    warning(<span class="string">'a lateral cut off below 0.98 may result in an inaccurate dose calculation'</span>) 
+0036 <span class="keyword">end</span>
+0037 
+0038 conversionFactor = 1.6021766208e-02;
+0039 
+0040 <span class="comment">% function handle for calculating depth dose for APM</span>
+0041 sumGauss = @(x,mu,SqSigma,w) ((1./sqrt(2*pi*ones(numel(x),1) * SqSigma') .* <span class="keyword">...</span>
+0042                               exp(-bsxfun(@minus,x,mu').^2 ./ (2* ones(numel(x),1) * SqSigma' ))) * w);
+0043                           
+0044 <span class="keyword">if</span> (cutOffLevel &lt; 0 || cutOffLevel &gt; 1)
+0045    warning(<span class="string">'lateral cutoff is out of range - using default cut off of 0.99'</span>) 
+0046    cutOffLevel = 0.99;
+0047 <span class="keyword">end</span>
+0048 <span class="comment">% define some variables needed for the cutoff calculation</span>
+0049 vX = [0 logspace(-1,3,1200)]; <span class="comment">% [mm]</span>
+0050 
+0051 <span class="comment">% integration steps</span>
+0052 r_mid          = 0.5*(vX(1:end-1) +  vX(2:end))'; <span class="comment">% [mm]</span>
+0053 dr             = (vX(2:end) - vX(1:end-1))';
+0054 radialDist_sq  = r_mid.^2;
+0055 
+0056 <span class="comment">% number of depth points for which a lateral cutoff is determined</span>
+0057 numDepthVal    = 35; 
+0058 
+0059 <span class="comment">% helper function for energy selection</span>
+0060 round2 = @(a,b)round(a*10^b)/10^b;
+0061 
+0062 <span class="comment">% extract SSD for each bixel</span>
+0063 vSSD = ones(1,length([stf.ray(:).energy]));
+0064 cnt = 1;
+0065 <span class="keyword">for</span> i  = 1:length(stf.ray)
+0066     vSSD(cnt:cnt+numel([stf.ray(i).energy])-1) = stf.ray(i).SSD;
+0067     cnt = cnt + numel(stf.ray(i).energy);
+0068 <span class="keyword">end</span>
+0069 
+0070 <span class="comment">% setup energy, focus index, sigma look up table - only consider unique rows</span>
+0071 [energySigmaLUT,ixUnique]  = unique([[stf.ray(:).energy]; [stf.ray(:).focusIx] ; vSSD]',<span class="string">'rows'</span>);
+0072 rangeShifterLUT = [stf.ray(:).rangeShifter];
+0073 rangeShifterLUT = rangeShifterLUT(1,ixUnique);
+0074 
+0075 <span class="comment">% find the largest inital beam width considering focus index, SSD and range shifter for each individual energy</span>
+0076 <span class="keyword">for</span> i = 1:size(energySigmaLUT,1)
+0077    
+0078     <span class="comment">% find index of maximum used energy (round to keV for numerical reasons</span>
+0079     energyIx = max(round2(energySigmaLUT(i,1),4)) == round2([machine.data.energy],4);
+0080     
+0081     currFoci = energySigmaLUT(i,2);
+0082     sigmaIni = <a href="matRad_interp1.html" class="code" title="function y = matRad_interp1(xi,yi,x,extrapolation)">matRad_interp1</a>(machine.data(energyIx).initFocus.dist(currFoci,:)',<span class="keyword">...</span>
+0083                               machine.data(energyIx).initFocus.sigma(currFoci,:)',<span class="keyword">...</span>
+0084                               energySigmaLUT(i,3));
+0085     sigmaIni_sq = sigmaIni^2;
+0086     
+0087     <span class="comment">% consider range shifter for protons if applicable</span>
+0088     <span class="keyword">if</span>  strcmp(machine.meta.radiationMode,<span class="string">'protons'</span>) &amp;&amp; rangeShifterLUT(i).eqThickness &gt; 0  &amp;&amp; ~strcmp(machine.meta.machine,<span class="string">'Generic'</span>)
+0089 
+0090         <span class="comment">%get max range shift</span>
+0091         sigmaRashi = <a href="matRad_calcSigmaRashi.html" class="code" title="function sigmaRashi = matRad_calcSigmaRashi(energy,rangeShifter,SSD)">matRad_calcSigmaRashi</a>(machine.data(energyIx).energy, <span class="keyword">...</span>
+0092                                            rangeShifterLUT(i), <span class="keyword">...</span>
+0093                                            energySigmaLUT(i,3));
+0094 
+0095         <span class="comment">% add to initial sigma in quadrature</span>
+0096         sigmaIni_sq = sigmaIni_sq +  sigmaRashi.^2;
+0097 
+0098     <span class="keyword">end</span>                          
+0099                                                          
+0100     energySigmaLUT(i,4) = sigmaIni_sq;
+0101     
+0102 <span class="keyword">end</span>
+0103 
+0104 <span class="comment">% find for each individual energy the broadest inital beam width</span>
+0105 uniqueEnergies                = unique(energySigmaLUT(:,1));
+0106 largestSigmaSq4uniqueEnergies = NaN * ones(numel(uniqueEnergies),1);
+0107 ix_Max                        = NaN * ones(numel(uniqueEnergies),1);
+0108 <span class="keyword">for</span> i = 1:numel(uniqueEnergies)
+0109     [largestSigmaSq4uniqueEnergies(i), ix_Max(i)] = max(energySigmaLUT(uniqueEnergies(i) == energySigmaLUT(:,1),4));
+0110 <span class="keyword">end</span>
+0111 
+0112 <span class="comment">% get energy indices for looping</span>
+0113 vEnergiesIx = find(ismember([machine.data(:).energy],uniqueEnergies(:,1)));
+0114 cnt         = 0;    
+0115 
+0116 <span class="comment">% loop over all entries in the machine.data struct</span>
+0117 <span class="keyword">for</span> energyIx = vEnergiesIx
+0118    
+0119     <span class="comment">% set default depth cut off - finite value will be set during first iteration</span>
+0120     depthDoseCutOff = inf;
+0121 
+0122     <span class="comment">% get the current integrated depth dose profile</span>
+0123     <span class="keyword">if</span> isstruct(machine.data(energyIx).Z)
+0124         idd_org = sumGauss(machine.data(energyIx).depths,machine.data(energyIx).Z.mean,<span class="keyword">...</span>
+0125                                    machine.data(energyIx).Z.width.^2,<span class="keyword">...</span>
+0126                                    machine.data(energyIx).Z.weight) * conversionFactor;
+0127     <span class="keyword">else</span>
+0128         idd_org = machine.data(energyIx).Z * conversionFactor;
+0129     <span class="keyword">end</span>
+0130     
+0131     [~,peakIxOrg] = max(idd_org); 
+0132     
+0133     <span class="comment">% get indices for which a lateral cutoff should be calculated</span>
+0134     cumIntEnergy = cumtrapz(machine.data(energyIx).depths,idd_org);
+0135     
+0136     peakTailRelation   = 0.5;
+0137     numDepthValToPeak  = ceil(numDepthVal*peakTailRelation);                                                                          <span class="comment">% number of depth values from 0 to peak position</span>
+0138     numDepthValTail    = ceil(numDepthVal*(1-peakTailRelation));                                                                      <span class="comment">% number of depth values behind peak position</span>
+0139     energyStepsToPeak  = cumIntEnergy(peakIxOrg)/numDepthValToPeak;
+0140     energyStepsTail    = (cumIntEnergy(end)-cumIntEnergy(peakIxOrg))/numDepthValTail;
+0141     <span class="comment">% make sure to include 0, peak position and end position</span>
+0142     vEnergySteps       = unique([0:energyStepsToPeak:cumIntEnergy(peakIxOrg) cumIntEnergy(peakIxOrg) <span class="keyword">...</span>
+0143                                  cumIntEnergy(peakIxOrg+1):energyStepsTail:cumIntEnergy(end) cumIntEnergy(end)]);
+0144 
+0145     [cumIntEnergy,ix] = unique(cumIntEnergy);
+0146     depthValues       = <a href="matRad_interp1.html" class="code" title="function y = matRad_interp1(xi,yi,x,extrapolation)">matRad_interp1</a>(cumIntEnergy,machine.data(energyIx).depths(ix),vEnergySteps);
+0147 
+0148     <span class="keyword">if</span> isstruct(machine.data(energyIx).Z)
+0149         idd = sumGauss(depthValues,machine.data(energyIx).Z.mean,<span class="keyword">...</span>
+0150                                    machine.data(energyIx).Z.width.^2,<span class="keyword">...</span>
+0151                                    machine.data(energyIx).Z.weight) * conversionFactor;
+0152     <span class="keyword">else</span>
+0153         idd  = <a href="matRad_interp1.html" class="code" title="function y = matRad_interp1(xi,yi,x,extrapolation)">matRad_interp1</a>(machine.data(energyIx).depths,machine.data(energyIx).Z,depthValues) * conversionFactor; 
+0154     <span class="keyword">end</span>
+0155      
+0156     cnt = cnt +1 ;
+0157     <span class="comment">% % calculate dose in spot</span>
+0158     baseData                   = machine.data(energyIx);
+0159     baseData.LatCutOff.CompFac = 1;   
+0160   
+0161     <span class="keyword">for</span> j = 1:numel(depthValues)
+0162         
+0163         <span class="comment">% save depth value</span>
+0164         machine.data(energyIx).LatCutOff.depths(j) = depthValues(j);
+0165         
+0166         <span class="keyword">if</span> cutOffLevel == 1
+0167             machine.data(energyIx).LatCutOff.CompFac   = 1;
+0168             machine.data(energyIx).LatCutOff.CutOff(j) = Inf;
+0169         <span class="keyword">else</span>
+0170         
+0171             <span class="comment">% calculate dose</span>
+0172             dose_r = <a href="matRad_calcParticleDoseBixel.html" class="code" title="function dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData)">matRad_calcParticleDoseBixel</a>(depthValues(j) + baseData.offset, radialDist_sq, largestSigmaSq4uniqueEnergies(cnt), baseData);
+0173 
+0174             cumArea = cumsum(2*pi.*r_mid.*dose_r.*dr);
+0175             relativeTolerance = 0.5; <span class="comment">%in [%]</span>
+0176             <span class="keyword">if</span> abs((cumArea(end)./(idd(j)))-1)*100 &gt; relativeTolerance
+0177                 warning(<span class="string">'LateralParticleCutOff: shell integration is wrong !'</span>)
+0178             <span class="keyword">end</span>
+0179 
+0180             IX = find(cumArea &gt;= idd(j) * cutOffLevel,1, <span class="string">'first'</span>); 
+0181             machine.data(energyIx).LatCutOff.CompFac = cutOffLevel^-1;
+0182 
+0183             <span class="keyword">if</span> isempty(IX)
+0184                 depthDoseCutOff = Inf;
+0185                 warning(<span class="string">'LateralParticleCutOff: Couldnt find lateral cut off !'</span>)
+0186             <span class="keyword">elseif</span> isnumeric(IX)
+0187                 depthDoseCutOff = r_mid(IX);
+0188             <span class="keyword">end</span>
+0189 
+0190             machine.data(energyIx).LatCutOff.CutOff(j) = depthDoseCutOff;
+0191 
+0192         <span class="keyword">end</span>
+0193     <span class="keyword">end</span>    
+0194 <span class="keyword">end</span>    
+0195           
+0196 <span class="comment">%% visualization</span>
+0197 <span class="keyword">if</span> visBool
+0198     
+0199     <span class="comment">% determine which pencil beam should be plotted</span>
+0200     subIx    = ceil(numel(vEnergiesIx)/2);
+0201     energyIx = vEnergiesIx(subIx);
+0202     
+0203     baseData       = machine.data(energyIx);
+0204     focusIx        = energySigmaLUT(ix_Max(subIx),2);
+0205     maxSSD         = energySigmaLUT(ix_Max(subIx),3);
+0206     rangeShifter   = rangeShifterLUT(ix_Max(subIx));
+0207     TmpCompFac     = baseData.LatCutOff.CompFac;
+0208     baseData.LatCutOff.CompFac = 1;
+0209     
+0210     <span class="comment">% plot 3D cutoff at one specific depth on a rather sparse grid</span>
+0211     sStep         = 0.5;
+0212     vLatX         = -100 : sStep : 100; <span class="comment">% [mm]</span>
+0213     dimX          = numel(vLatX);
+0214     midPos        = round(length(vLatX)/2);
+0215     [X,Y]         = meshgrid(vLatX,vLatX);
+0216     
+0217     radDepths     = [0:sStep:machine.data(energyIx).depths(end)] + machine.data(energyIx).offset;
+0218     radialDist_sq = (X.^2 + Y.^2);
+0219     radialDist_sq = radialDist_sq(:);
+0220     mDose         = zeros(dimX,dimX,numel(radDepths));
+0221     vDoseInt      = zeros(numel(radDepths),1);
+0222     
+0223     <span class="keyword">for</span> kk = 1:numel(radDepths)    
+0224           
+0225          <span class="comment">% calculate initial focus sigma</span>
+0226          sigmaIni = <a href="matRad_interp1.html" class="code" title="function y = matRad_interp1(xi,yi,x,extrapolation)">matRad_interp1</a>(machine.data(energyIx).initFocus.dist(focusIx,:)', <span class="keyword">...</span>
+0227                                    machine.data(energyIx).initFocus.sigma(focusIx,:)',maxSSD);
+0228          sigmaIni_sq = sigmaIni^2;
+0229 
+0230          <span class="comment">% consider range shifter for protons if applicable</span>
+0231          <span class="keyword">if</span> rangeShifter.eqThickness &gt; 0 &amp;&amp; strcmp(pln.radiationMode,<span class="string">'protons'</span>)
+0232 
+0233               <span class="comment">% compute!</span>
+0234               sigmaRashi = <a href="matRad_calcSigmaRashi.html" class="code" title="function sigmaRashi = matRad_calcSigmaRashi(energy,rangeShifter,SSD)">matRad_calcSigmaRashi</a>(machine.data(energyIx).energy,rangeShifter,maxSSD);
+0235 
+0236               <span class="comment">% add to initial sigma in quadrature</span>
+0237               sigmaIni_sq = sigmaIni_sq +  sigmaRashi^2;
+0238 
+0239          <span class="keyword">end</span>
+0240 
+0241          mDose(:,:,kk) = reshape(<a href="matRad_calcParticleDoseBixel.html" class="code" title="function dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData)">matRad_calcParticleDoseBixel</a>(radDepths(kk), radialDist_sq, sigmaIni_sq,baseData),[dimX dimX]);
+0242           
+0243          [~,IX]           = min(abs((machine.data(energyIx).LatCutOff.depths + machine.data(energyIx).offset) - radDepths(kk)));
+0244          TmpCutOff        = machine.data(energyIx).LatCutOff.CutOff(IX);    
+0245          vXCut            = vX(vX&lt;=TmpCutOff);
+0246          
+0247          <span class="comment">% integration steps</span>
+0248          r_mid_Cut        = (0.5*(vXCut(1:end-1) +  vXCut(2:end)))'; <span class="comment">% [mm]</span>
+0249          dr_Cut           = (vXCut(2:end) - vXCut(1:end-1))';
+0250          radialDist_sqCut = r_mid_Cut.^2;    
+0251          
+0252          dose_r_Cut       = <a href="matRad_calcParticleDoseBixel.html" class="code" title="function dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData)">matRad_calcParticleDoseBixel</a>(radDepths(kk), radialDist_sqCut(:), sigmaIni_sq,baseData);
+0253          
+0254          cumAreaCut = cumsum(2*pi.*r_mid_Cut.*dose_r_Cut.*dr_Cut);  
+0255          
+0256          <span class="keyword">if</span> ~isempty(cumAreaCut)
+0257              vDoseInt(kk) = cumAreaCut(end);
+0258          <span class="keyword">end</span>
+0259     <span class="keyword">end</span>
+0260     
+0261     <span class="comment">% obtain maximum dose</span>
+0262     <span class="keyword">if</span> isstruct(machine.data(energyIx).Z)
+0263         idd = sumGauss(depthValues,machine.data(energyIx).Z.mean,<span class="keyword">...</span>
+0264                                    machine.data(energyIx).Z.width.^2,<span class="keyword">...</span>
+0265                                    machine.data(energyIx).Z.weight) * conversionFactor;
+0266     <span class="keyword">else</span>
+0267         idd  = <a href="matRad_interp1.html" class="code" title="function y = matRad_interp1(xi,yi,x,extrapolation)">matRad_interp1</a>(machine.data(energyIx).depths,machine.data(energyIx).Z,depthValues) * conversionFactor; 
+0268     <span class="keyword">end</span>
+0269     
+0270     [~,peakixDepth] = max(idd); 
+0271     dosePeakPos = <a href="matRad_calcParticleDoseBixel.html" class="code" title="function dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData)">matRad_calcParticleDoseBixel</a>(machine.data(energyIx).depths(peakixDepth), 0, sigmaIni_sq, baseData);   
+0272     
+0273     vLevelsDose = dosePeakPos.*[0.01 0.05 0.1 0.9];
+0274     doseSlice   = squeeze(mDose(midPos,:,:));
+0275     figure,set(gcf,<span class="string">'Color'</span>,[1 1 1]);
+0276     subplot(311),h=imagesc(squeeze(mDose(midPos,:,:)));hold on;
+0277     set(h,<span class="string">'AlphaData'</span>, .8*double(doseSlice&gt;0));
+0278     contour(doseSlice,vLevelsDose,<span class="string">'LevelListMode'</span>,<span class="string">'manual'</span>,<span class="string">'LineWidth'</span>,2);hold on
+0279     
+0280     ax = gca;
+0281     ax.XTickLabelMode = <span class="string">'manual'</span>;
+0282     ax.XTickLabel     = strsplit(num2str(ax.XTick*sStep + machine.data(energyIx).offset),<span class="string">' '</span>)';
+0283     ax.YTickLabelMode = <span class="string">'manual'</span>;
+0284     ax.YTickLabel     = strsplit(num2str(ax.YTick*sStep + machine.data(energyIx).offset),<span class="string">' '</span>)';
+0285   
+0286     plot(1+(machine.data(energyIx).LatCutOff.depths)*sStep^-1,<span class="keyword">...</span>
+0287           machine.data(energyIx).LatCutOff.CutOff * sStep^-1 + midPos,<span class="string">'rx'</span>);
+0288 
+0289     legend({<span class="string">'isodose 1%,5%,10% 90%'</span>,<span class="string">'calculated cutoff'</span>}) ,colorbar,set(gca,<span class="string">'FontSize'</span>,12),xlabel(<span class="string">'z [mm]'</span>),ylabel(<span class="string">'x [mm]'</span>);
+0290        
+0291     entry = machine.data(energyIx);
+0292     <span class="keyword">if</span> isstruct(entry.Z)
+0293        idd = sumGauss(entry.depths,entry.Z.mean,entry.Z.width.^2,entry.Z.weight);
+0294     <span class="keyword">else</span>
+0295        idd = machine.data(energyIx).Z;
+0296     <span class="keyword">end</span>
+0297     subplot(312),plot(machine.data(energyIx).depths,idd*conversionFactor,<span class="string">'k'</span>,<span class="string">'LineWidth'</span>,2),grid on,hold on
+0298                  plot(radDepths - machine.data(energyIx).offset,vDoseInt,<span class="string">'r--'</span>,<span class="string">'LineWidth'</span>,2),hold on,
+0299                  plot(radDepths - machine.data(energyIx).offset,vDoseInt * TmpCompFac,<span class="string">'bx'</span>,<span class="string">'LineWidth'</span>,1),hold on,
+0300     legend({<span class="string">'original IDD'</span>,[<span class="string">'cut off IDD at '</span> num2str(cutOffLevel) <span class="string">'%'</span>],<span class="string">'cut off IDD with compensation'</span>},<span class="string">'Location'</span>,<span class="string">'northwest'</span>),
+0301     xlabel(<span class="string">'z [mm]'</span>),ylabel(<span class="string">'[MeV cm^2 /(g * primary)]'</span>),set(gca,<span class="string">'FontSize'</span>,12)     
+0302            
+0303     totEnergy        = trapz(machine.data(energyIx).depths,idd*conversionFactor) ;
+0304     totEnergyCutOff  = trapz(radDepths,vDoseInt * TmpCompFac) ;
+0305     relDiff          =  ((totEnergy/totEnergyCutOff)-1)*100;   
+0306     title([<span class="string">'rel diff of integral dose '</span> num2str(relDiff) <span class="string">'%'</span>]);
+0307     baseData.LatCutOff.CompFac = TmpCompFac;
+0308     
+0309     subplot(313),
+0310     <span class="keyword">if</span> isfield(machine.data(energyIx),<span class="string">'sigma1'</span>)
+0311         yyaxis left;
+0312         plot(machine.data(energyIx).LatCutOff.depths,machine.data(energyIx).LatCutOff.CutOff,<span class="string">'LineWidth'</span>,2),hold on
+0313         plot(machine.data(energyIx).depths,(machine.data(energyIx).sigma1),<span class="string">':'</span>,<span class="string">'LineWidth'</span>,2),grid on,hold on,ylabel(<span class="string">'mm'</span>)
+0314         yyaxis right; 
+0315         plot(machine.data(energyIx).depths,(machine.data(energyIx).sigma2),<span class="string">'-.'</span>,<span class="string">'LineWidth'</span>,2),grid on,hold on,ylabel(<span class="string">'mm'</span>)
+0316         legend({<span class="string">'Cutoff'</span>,<span class="string">'sigma1'</span>,<span class="string">'sigma2'</span>});
+0317     <span class="keyword">else</span>
+0318         yyaxis left;plot(machine.data(energyIx).LatCutOff.depths,machine.data(energyIx).LatCutOff.CutOff,<span class="string">'LineWidth'</span>,2),hold on,ylabel(<span class="string">'mm'</span>)
+0319         yyaxis right;subplot(313),plot(machine.data(energyIx).depths,machine.data(energyIx).sigma,<span class="string">'LineWidth'</span>,2),grid on,hold on
+0320         legend({<span class="string">'Cutoff'</span>,<span class="string">'sigma'</span>});ylabel(<span class="string">'mm'</span>)
+0321     <span class="keyword">end</span>
+0322 
+0323     set(gca,<span class="string">'FontSize'</span>,12),xlabel(<span class="string">'z [mm]'</span>),  ylabel(<span class="string">'mm'</span>)
+0324 
+0325     <span class="comment">% plot cutoff of different energies</span>
+0326     figure,set(gcf,<span class="string">'Color'</span>,[1 1 1]);
+0327     cnt = 1;
+0328     <span class="keyword">for</span> i = vEnergiesIx
+0329         plot(machine.data(i).LatCutOff.depths,machine.data(i).LatCutOff.CutOff,<span class="string">'LineWidth'</span>,1.5),hold on
+0330         cellLegend{cnt} = [num2str(machine.data(i).energy) <span class="string">' MeV'</span>];
+0331         cnt = cnt + 1;
+0332     <span class="keyword">end</span>
+0333     grid on, grid minor,xlabel(<span class="string">'depth in [mm]'</span>),ylabel(<span class="string">'lateral cutoff in [mm]'</span>)
+0334     title([<span class="string">'cutoff level = '</span> num2str(cutOffLevel)]),
+0335     ylim = get(gca,<span class="string">'Ylim'</span>);    set(gca,<span class="string">'Ylim'</span>,[0 ylim(2)+3]),    legend(cellLegend)
+0336 <span class="keyword">end</span>
+0337 
+0338 
+0339 
+0340 
+0341 <span class="keyword">end</span>
+0342</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

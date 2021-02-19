@@ -1,0 +1,111 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_getEnvironment</title>
+  <meta name="keywords" content="matRad_getEnvironment">
+  <meta name="description" content="matRad function to get the software environment matRad is running on">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html tools -->
+<h1>matRad_getEnvironment
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad function to get the software environment matRad is running on</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function [env, versionString] = matRad_getEnvironment() </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to get the software environment matRad is running on
+ 
+ call
+   [env, versionString] = matRad_getEnvironment()
+
+ input
+   -
+   
+ output
+   env:            outputs either 'MATLAB' or 'OCTAVE' as string
+   versionString:  returns the version number as string
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2017 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/dicom/@matRad_DicomExporter/matRad_DicomExporter.html" class="code" title="">matRad_DicomExporter</a>	</li><li><a href="../../matRad/dicom/@matRad_DicomExporter/matRad_exportDicomRTDoses.html" class="code" title="function obj = matRad_exportDicomRTDoses(obj)">matRad_exportDicomRTDoses</a>	matRad function to exportt resultGUI to dicom RT dose.</li><li><a href="../../matRad/dicom/@matRad_DicomExporter/matRad_exportDicomRTStruct.html" class="code" title="function obj = matRad_exportDicomRTStruct(obj)">matRad_exportDicomRTStruct</a>	matRad function to export dicom RT structure set.</li><li><a href="../../matRad/dicom/matRad_importDicom.html" class="code" title="function [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )">matRad_importDicom</a>	matRad wrapper function to import a predefined set of dicom files</li><li><a href="../../matRad/examples/matRad_example4_photonsMC.html" class="code" title="">matRad_example4_photonsMC</a>	% Example: Photon Treatment Plan using VMC++ dose calculation</li><li><a href="../../matRad/examples/matRad_example5_protons.html" class="code" title="">matRad_example5_protons</a>	% Example: Proton Treatment Plan with subsequent Isocenter shift</li><li><a href="../../matRad/matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li><li><a href="../../matRad/matRad_calcParticleDoseMC.html" class="code" title="function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect)">matRad_calcParticleDoseMC</a>	matRad MCsqaure monte carlo photon dose calculation wrapper</li><li><a href="../../matRad/matRad_calcPhotonDose.html" class="code" title="function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcPhotonDose</a>	matRad photon dose calculation wrapper</li><li><a href="../../matRad/matRad_interp1.html" class="code" title="function y = matRad_interp1(xi,yi,x,extrapolation)">matRad_interp1</a>	interpolates 1-D data (table lookup) and utilizes griddedInterpolant</li><li><a href="../../matRad/matRad_interp3.html" class="code" title="function y = matRad_interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal)">matRad_interp3</a>	interpolates 3-D data (table lookup)</li><li><a href="../../matRad/matRad_rc.html" class="code" title="">matRad_rc</a>	matRad rc script</li><li><a href="../../matRad/matRad_showQualityIndicators.html" class="code" title="function matRad_showQualityIndicators(qi)">matRad_showQualityIndicators</a>	matRad display of quality indicators as table</li><li><a href="../../matRad/ompMC/matRad_compileOmpMCInterface.html" class="code" title="function matRad_compileOmpMCInterface(dest,omcFolder)">matRad_compileOmpMCInterface</a>	Compiles the ompMC interface (integrated as submodule)</li><li><a href="../../matRad/optimization/matRad_DoseOptimizationFunction.html" class="code" title="">matRad_DoseOptimizationFunction</a>	</li><li><a href="../../matRad/optimization/optimizer/matRad_OptimizerIPOPT.html" class="code" title="">matRad_OptimizerIPOPT</a>	</li><li><a href="../../matRad/plotting/matRad_plotVoiContourSlice.html" class="code" title="function [voiContourHandles] = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIndex,selection,plane,slice,cMap,varargin)">matRad_plotVoiContourSlice</a>	matRad function that plots the contours of the segmentations given in cst</li><li><a href="matRad_checkMexFileExists.html" class="code" title="function fileExists = matRad_checkMexFileExists(filename,linkOctave)">matRad_checkMexFileExists</a>	Checks if a matching mex file exists, and can create a link</li><li><a href="matRad_gammaIndex.html" class="code" title="function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,n,localglobal,cst)">matRad_gammaIndex</a>	gamma index calculation</li><li><a href="../../matRad/unitTest/matRad_runTests.html" class="code" title="">matRad_runTests</a>	% This file runs the complete matRad test suite.</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [env, versionString] = matRad_getEnvironment()</a>
+0002 <span class="comment">% matRad function to get the software environment matRad is running on</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   [env, versionString] = matRad_getEnvironment()</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   -</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% output</span>
+0011 <span class="comment">%   env:            outputs either 'MATLAB' or 'OCTAVE' as string</span>
+0012 <span class="comment">%   versionString:  returns the version number as string</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% References</span>
+0015 <span class="comment">%   -</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% Copyright 2017 the matRad development team.</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0022 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0023 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0024 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0025 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0026 <span class="comment">% LICENSE file.</span>
+0027 <span class="comment">%</span>
+0028 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0029 
+0030 <span class="comment">% reduce runtime if function is called multiple times</span>
+0031 
+0032 matRad_cfg = MatRad_Config.instance();
+0033 
+0034 env = matRad_cfg.env;
+0035 versionString = matRad_cfg.envVersion;
+0036 
+0037 <span class="keyword">end</span>
+0038 
+0039</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

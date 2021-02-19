@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_calcWaterEqD</title>
+  <meta name="keywords" content="matRad_calcWaterEqD">
+  <meta name="description" content="matRad function to calculate the equivalent densities from a dicom ct">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html dicom -->
+<h1>matRad_calcWaterEqD
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad function to calculate the equivalent densities from a dicom ct</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function ct = matRad_calcWaterEqD(ct, pln) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to calculate the equivalent densities from a dicom ct 
+ that originally uses intensity values
+
+ call
+   ct = matRad_calcWaterEqD(ct, pln)
+
+ input
+   ct: unprocessed dicom ct data which are stored as intensity values (IV)
+
+       HU = IV * slope + intercept
+
+   pln: matRad plan struct
+
+ output
+   ct: ct struct with cube with relative _electron_ densities
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2018 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_loadHLUT.html" class="code" title="function hlut = matRad_loadHLUT(ct, pln)">matRad_loadHLUT</a>	matRad function to load HLUT file based on the provided ct</li><li><a href="../../matRad/matRad_interp1.html" class="code" title="function y = matRad_interp1(xi,yi,x,extrapolation)">matRad_interp1</a>	interpolates 1-D data (table lookup) and utilizes griddedInterpolant</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/matRad_calcDoseInit.html" class="code" title="">matRad_calcDoseInit</a>	</li><li><a href="../../matRad/matRad_generateStf.html" class="code" title="function stf = matRad_generateStf(ct,cst,pln,visMode)">matRad_generateStf</a>	matRad steering information generation</li><li><a href="../../matRad/tools/matRad_calcIntEnergy.html" class="code" title="function intDose = matRad_calcIntEnergy(dose,ct,pln)">matRad_calcIntEnergy</a>	matRad function to compute the integral energy in MeV for a dose cube</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function ct = matRad_calcWaterEqD(ct, pln)</a>
+0002 <span class="comment">% matRad function to calculate the equivalent densities from a dicom ct</span>
+0003 <span class="comment">% that originally uses intensity values</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% call</span>
+0006 <span class="comment">%   ct = matRad_calcWaterEqD(ct, pln)</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% input</span>
+0009 <span class="comment">%   ct: unprocessed dicom ct data which are stored as intensity values (IV)</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">%       HU = IV * slope + intercept</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">%   pln: matRad plan struct</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% output</span>
+0016 <span class="comment">%   ct: ct struct with cube with relative _electron_ densities</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% References</span>
+0019 <span class="comment">%   -</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0022 <span class="comment">%</span>
+0023 <span class="comment">% Copyright 2018 the matRad development team.</span>
+0024 <span class="comment">%</span>
+0025 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0026 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0027 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0028 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0029 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0030 <span class="comment">% LICENSE file.</span>
+0031 <span class="comment">%</span>
+0032 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0033 
+0034 <span class="comment">% load hlut</span>
+0035 hlut = <a href="matRad_loadHLUT.html" class="code" title="function hlut = matRad_loadHLUT(ct, pln)">matRad_loadHLUT</a>(ct, pln);
+0036     
+0037 <span class="keyword">for</span> i = 1:ct.numOfCtScen
+0038 
+0039     <span class="comment">% Manual adjustments if ct data is corrupt. If some values are out of range</span>
+0040     <span class="comment">% of the LUT, then these values are adjusted.</span>
+0041     <span class="keyword">if</span> max(ct.cubeHU{i}(:)) &gt; max(hlut(:,1))
+0042         warning(<span class="string">'projecting out of range HU values'</span>);
+0043         ct.cubeHU{i}(ct.cubeHU{i} &gt; max(hlut(:,1))) = max(hlut(:,1));
+0044     <span class="keyword">end</span>
+0045     <span class="keyword">if</span> min(ct.cubeHU{i}(:)) &lt; min(hlut(:,1))
+0046         warning(<span class="string">'projecting out of range HU values'</span>);
+0047         ct.cubeHU{i}(ct.cubeHU{i} &lt; min(hlut(:,1))) = min(hlut(:,1));
+0048     <span class="keyword">end</span>
+0049 
+0050     <span class="comment">% interpolate HU to relative electron density or relative stopping power based on lookup table</span>
+0051     ct.cube{i} = reshape(<a href="../../matRad/matRad_interp1.html" class="code" title="function y = matRad_interp1(xi,yi,x,extrapolation)">matRad_interp1</a>(hlut(:,1),hlut(:,2),double(ct.cubeHU{i}(:))),ct.cubeDim);
+0052 
+0053 <span class="keyword">end</span>
+0054 
+0055 <span class="comment">% save hlut</span>
+0056 ct.hlut = hlut;
+0057 
+0058 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_importDicomRTDose</title>
+  <meta name="keywords" content="matRad_importDicomRTDose">
+  <meta name="description" content="matRad function to import dicom RTDOSE data">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html dicom -->
+<h1>matRad_importDicomRTDose
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad function to import dicom RTDOSE data</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function [resultGUI] = matRad_importDicomRTDose(ct, rtDoseFiles, pln) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to import dicom RTDOSE data
+ 
+ call
+   resultGUI = matRad_importDicomRTDose(ct, rtDoseFiles)
+   resultGUI = matRad_importDicomRTDose(ct, rtDoseFiles, pln)
+
+ input
+   ct:             ct imported by the matRad_importDicomCt function
+   rtDoseFiles:       cell array of RTDOSE Dicom files
+   pln:            (optional) matRad pln struct
+
+ output
+   resultGUI:      matRad resultGUI struct with different beams. Note that
+                   the summation (called plan) of the beams is named 
+                   without subscripts, e.g. physical_Dose.
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_interpDicomDoseCube.html" class="code" title="function [ dose ] = matRad_interpDicomDoseCube( ct, currDose )">matRad_interpDicomDoseCube</a>	matRad function to interpolate a given Dicom Dose Cube dicom RTDOSE data</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_importDicom.html" class="code" title="function [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )">matRad_importDicom</a>	matRad wrapper function to import a predefined set of dicom files</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [resultGUI] = matRad_importDicomRTDose(ct, rtDoseFiles, pln)</a>
+0002 <span class="comment">% matRad function to import dicom RTDOSE data</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   resultGUI = matRad_importDicomRTDose(ct, rtDoseFiles)</span>
+0006 <span class="comment">%   resultGUI = matRad_importDicomRTDose(ct, rtDoseFiles, pln)</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% input</span>
+0009 <span class="comment">%   ct:             ct imported by the matRad_importDicomCt function</span>
+0010 <span class="comment">%   rtDoseFiles:       cell array of RTDOSE Dicom files</span>
+0011 <span class="comment">%   pln:            (optional) matRad pln struct</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">% output</span>
+0014 <span class="comment">%   resultGUI:      matRad resultGUI struct with different beams. Note that</span>
+0015 <span class="comment">%                   the summation (called plan) of the beams is named</span>
+0016 <span class="comment">%                   without subscripts, e.g. physical_Dose.</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% References</span>
+0019 <span class="comment">%   -</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0022 <span class="comment">%</span>
+0023 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0024 <span class="comment">%</span>
+0025 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0026 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0027 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0028 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0029 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0030 <span class="comment">% LICENSE file.</span>
+0031 <span class="comment">%</span>
+0032 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0033 
+0034 matRad_cfg = MatRad_Config.instance();
+0035 
+0036 <span class="comment">%% import and interpolate dose files</span>
+0037 <span class="comment">% number of dosefiles</span>
+0038 numDoseFiles = size(rtDoseFiles,1);
+0039 
+0040 <span class="keyword">for</span> i = 1 : numDoseFiles
+0041     currDose = rtDoseFiles(i,:);
+0042     itemName = strcat(<span class="string">'Item_'</span>,num2str(i));
+0043     dose.(itemName) = <a href="matRad_interpDicomDoseCube.html" class="code" title="function [ dose ] = matRad_interpDicomDoseCube( ct, currDose )">matRad_interpDicomDoseCube</a>( ct, currDose);
+0044 <span class="keyword">end</span>
+0045 
+0046 <span class="comment">%% put dose information and dose meta information to resultGUI</span>
+0047 countBeamNumberPhysDose = 1;
+0048 countBeamNumberRBExDose = 1;
+0049 countBeamNumberOther = 1;
+0050 <span class="keyword">for</span> i = 1 : numDoseFiles
+0051     itemName = strcat(<span class="string">'Item_'</span>,num2str(i));
+0052     doseTypeHelper      = dose.(itemName).dicomInfo.DoseType;
+0053     doseSumHelper       = dose.(itemName).dicomInfo.DoseSummationType;
+0054     
+0055     <span class="comment">%Field is not always existing</span>
+0056     <span class="keyword">if</span> isfield(dose.(itemName).dicomInfo,<span class="string">'InstanceNumber'</span>)
+0057         doseInstanceHelper  = dose.(itemName).dicomInfo.InstanceNumber;
+0058     <span class="keyword">else</span>
+0059         doseInstanceHelper = [];
+0060     <span class="keyword">end</span>
+0061     
+0062     <span class="keyword">if</span> strncmpi(doseTypeHelper,<span class="string">'PHYSICAL'</span>,6)
+0063         doseTypeHelper = <span class="string">'physicalDose'</span>;
+0064     <span class="keyword">elseif</span> strncmpi(doseTypeHelper,<span class="string">'EFFECTIVE'</span>,6)
+0065         doseTypeHelper = <span class="string">'RBExDose'</span>;
+0066     <span class="keyword">end</span>
+0067     
+0068     <span class="comment">%If given as plan and not per fraction</span>
+0069     <span class="keyword">if</span> strcmpi(doseSumHelper,<span class="string">'PLAN'</span>) || strcmpi(doseSumHelper,<span class="string">'BEAM'</span>)
+0070         <span class="keyword">if</span> exist(<span class="string">'pln'</span>,<span class="string">'var'</span>) 
+0071             dose.(itemName).cube = dose.(itemName).cube / pln.numOfFractions;
+0072         <span class="keyword">else</span>
+0073             matRad_cfg.dispWarning(<span class="string">'DICOM dose given as PLAN, but no pln struct available to compute fraction dose! Assuming 1 fraction!'</span>);
+0074         <span class="keyword">end</span>
+0075     <span class="keyword">end</span>
+0076         
+0077     <span class="keyword">if</span> strncmpi(doseSumHelper,<span class="string">'BEAM'</span>,4)
+0078         <span class="keyword">try</span>
+0079             beamNumber = dose(itemName).dicomInfo.ReferencedRTPlanSequence.ReferencedFractionGroupSequence.ReferencedBeamSequence.ReferencedBeamNumber;
+0080         <span class="keyword">catch</span>
+0081             <span class="keyword">switch</span> doseTypeHelper
+0082                 <span class="keyword">case</span> <span class="string">'physicalDose'</span>
+0083                     beamNumber = countBeamNumberPhysDose;
+0084                     countBeamNumberPhysDose = countBeamNumberPhysDose +1;
+0085                 <span class="keyword">case</span> <span class="string">'RBExDose'</span>
+0086                     beamNumber = countBeamNumberRBExDose;
+0087                     countBeamNumberRBExDose = countBeamNumberRBExDose + 1;
+0088                 <span class="keyword">otherwise</span>
+0089                     beamNumber = countBeamNumberOther;
+0090                     countBeamNumberOther = countBeamNumberOther + 1;
+0091             <span class="keyword">end</span>
+0092         <span class="keyword">end</span>
+0093         
+0094         beamSuffix = [<span class="string">'_beam'</span> num2str(beamNumber)];
+0095     <span class="keyword">else</span>
+0096         beamSuffix = <span class="string">''</span>;
+0097     <span class="keyword">end</span>
+0098     
+0099     <span class="keyword">if</span> ~isempty(doseInstanceHelper)
+0100         instanceSuffix = [<span class="string">'_'</span> num2str(doseInstanceHelper)];
+0101     <span class="keyword">else</span>
+0102         instanceSuffix = <span class="string">''</span>;
+0103     <span class="keyword">end</span>
+0104         
+0105     
+0106     resultName = strcat(doseTypeHelper,instanceSuffix,beamSuffix);
+0107     
+0108     resultGUI.(resultName) = dose.(itemName).cube;
+0109     resultGUI.doseMetaInfo.(resultName) = dose.(itemName).dicomInfo;
+0110     
+0111 <span class="keyword">end</span>
+0112 <span class="comment">% save timeStamp</span>
+0113 resultGUI.doseMetaInfo.timeStamp = datestr(clock);
+0114 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

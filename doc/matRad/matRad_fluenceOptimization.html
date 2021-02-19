@@ -1,0 +1,305 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_fluenceOptimization</title>
+  <meta name="keywords" content="matRad_fluenceOptimization">
+  <meta name="description" content="matRad inverse planning wrapper function">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_fluenceOptimization
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">matRad inverse planning wrapper function</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad inverse planning wrapper function
+ 
+ call
+   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
+
+ input
+   dij:        matRad dij struct
+   cst:        matRad cst struct
+   pln:        matRad pln struct
+
+ output
+   resultGUI:  struct containing optimized fluence vector, dose, and (for
+               biological optimization) RBE-weighted dose etc.
+   optimizer:  Used Optimizer Object
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2016 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_calcCubes.html" class="code" title="function resultGUI = matRad_calcCubes(w,dij,scenNum)">matRad_calcCubes</a>	matRad computation of all cubes for the resultGUI struct</li><li><a href="matRad_getPhotonLQMParameters.html" class="code" title="function [ax,bx] = matRad_getPhotonLQMParameters(cst,numVoxel,ctScen,VdoseGrid)">matRad_getPhotonLQMParameters</a>	matRad function to receive the photon LQM reference parameter</li><li><a href="matRad_resizeCstToGrid.html" class="code" title="function cst = matRad_resizeCstToGrid(cst,vXgridOld,vYgridOld,vZgridOld,vXgridNew,vYgridNew,vZgridNew)">matRad_resizeCstToGrid</a>	matRad function to resize the ct to a given resolution</li><li><a href="matRad_setOverlapPriorities.html" class="code" title="function [cst,overlapPriorityCube] = matRad_setOverlapPriorities(cst,ctDim)">matRad_setOverlapPriorities</a>	function to handle overlap priorities</li><li><a href="../matRad/optimization/@matRad_OptimizationProblem/matRad_OptimizationProblem.html" class="code" title="">matRad_OptimizationProblem</a>	</li><li><a href="../matRad/optimization/optimizer/matRad_OptimizerFmincon.html" class="code" title="">matRad_OptimizerFmincon</a>	</li><li><a href="../matRad/optimization/optimizer/matRad_OptimizerIPOPT.html" class="code" title="">matRad_OptimizerIPOPT</a>	</li><li><a href="../matRad/optimization/projections/matRad_ConstantRBEProjection.html" class="code" title="">matRad_ConstantRBEProjection</a>	</li><li><a href="../matRad/optimization/projections/matRad_DoseProjection.html" class="code" title="">matRad_DoseProjection</a>	</li><li><a href="../matRad/optimization/projections/matRad_EffectProjection.html" class="code" title="">matRad_EffectProjection</a>	</li><li><a href="../matRad/optimization/projections/matRad_VariableRBEProjection.html" class="code" title="">matRad_VariableRBEProjection</a>	</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../matRad/examples/matRad_example1_phantom.html" class="code" title="">matRad_example1_phantom</a>	% Example: Generate your own phantom geometry</li><li><a href="../matRad/examples/matRad_example2_photons.html" class="code" title="">matRad_example2_photons</a>	% Example: Photon Treatment Plan</li><li><a href="../matRad/examples/matRad_example3_photonsDAO.html" class="code" title="">matRad_example3_photonsDAO</a>	% Example: Photon Treatment Plan with Direct aperture optimization</li><li><a href="../matRad/examples/matRad_example4_photonsMC.html" class="code" title="">matRad_example4_photonsMC</a>	% Example: Photon Treatment Plan using VMC++ dose calculation</li><li><a href="../matRad/examples/matRad_example5_protons.html" class="code" title="">matRad_example5_protons</a>	% Example: Proton Treatment Plan with subsequent Isocenter shift</li><li><a href="../matRad/examples/matRad_example6_protonsNoise.html" class="code" title="">matRad_example6_protonsNoise</a>	% Example: Proton Treatment Plan with Manipulated CT values</li><li><a href="../matRad/examples/matRad_example7_carbon.html" class="code" title="">matRad_example7_carbon</a>	% Example: Carbon Ion Treatment Plan</li><li><a href="matRad.html" class="code" title="">matRad</a>	matRad script</li><li><a href="matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li><li><a href="../matRad/tools/matRad_SFUDoptimization.html" class="code" title="function [resultGUI] = matRad_SFUDoptimization(pln, cst, dij, ct, stf)">matRad_SFUDoptimization</a>	Calculation of single field uniform dose (SFUD) optimization</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)</a>
+0002 <span class="comment">% matRad inverse planning wrapper function</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   dij:        matRad dij struct</span>
+0009 <span class="comment">%   cst:        matRad cst struct</span>
+0010 <span class="comment">%   pln:        matRad pln struct</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% output</span>
+0013 <span class="comment">%   resultGUI:  struct containing optimized fluence vector, dose, and (for</span>
+0014 <span class="comment">%               biological optimization) RBE-weighted dose etc.</span>
+0015 <span class="comment">%   optimizer:  Used Optimizer Object</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">% References</span>
+0018 <span class="comment">%   -</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% Copyright 2016 the matRad development team.</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0025 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0026 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0027 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0028 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0029 <span class="comment">% LICENSE file.</span>
+0030 <span class="comment">%</span>
+0031 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0032 
+0033 matRad_cfg = MatRad_Config.instance();
+0034 
+0035 <span class="comment">% issue warning if biological optimization impossible</span>
+0036 <span class="keyword">if</span> sum(strcmp(pln.propOpt.bioOptimization,{<span class="string">'LEMIV_effect'</span>,<span class="string">'LEMIV_RBExD'</span>}))&gt;0 &amp;&amp; (~isfield(dij,<span class="string">'mAlphaDose'</span>) || ~isfield(dij,<span class="string">'mSqrtBetaDose'</span>)) &amp;&amp; strcmp(pln.radiationMode,<span class="string">'carbon'</span>)
+0037     warndlg(<span class="string">'Alpha and beta matrices for effect based and RBE optimization not available - physical optimization is carried out instead.'</span>);
+0038     pln.propOpt.bioOptimization = <span class="string">'none'</span>;
+0039 <span class="keyword">end</span>
+0040 
+0041 <span class="comment">% consider VOI priorities</span>
+0042 cst  = <a href="matRad_setOverlapPriorities.html" class="code" title="function [cst,overlapPriorityCube] = matRad_setOverlapPriorities(cst,ctDim)">matRad_setOverlapPriorities</a>(cst);
+0043 
+0044 
+0045 <span class="comment">% check &amp; adjust objectives and constraints internally for fractionation</span>
+0046 <span class="keyword">for</span> i = 1:size(cst,1)
+0047     <span class="comment">%Compatibility Layer for old objective format</span>
+0048     <span class="keyword">if</span> isstruct(cst{i,6})
+0049         cst{i,6} = arrayfun(@matRad_DoseOptimizationFunction.convertOldOptimizationStruct,cst{i,6},<span class="string">'UniformOutput'</span>,false);
+0050     <span class="keyword">end</span>
+0051     <span class="keyword">for</span> j = 1:numel(cst{i,6})
+0052         
+0053         obj = cst{i,6}{j};        
+0054         
+0055         <span class="comment">%In case it is a default saved struct, convert to object</span>
+0056         <span class="comment">%Also intrinsically checks that we have a valid optimization</span>
+0057         <span class="comment">%objective or constraint function in the end</span>
+0058         <span class="keyword">if</span> ~isa(obj,<span class="string">'matRad_DoseOptimizationFunction'</span>)
+0059             <span class="keyword">try</span>
+0060                 obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
+0061             <span class="keyword">catch</span>
+0062                 matRad_cfg.dispError(<span class="string">'cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!'</span>,i,j);
+0063             <span class="keyword">end</span>
+0064         <span class="keyword">end</span>
+0065         
+0066         obj = obj.setDoseParameters(obj.getDoseParameters()/pln.numOfFractions);
+0067         
+0068         cst{i,6}{j} = obj;        
+0069     <span class="keyword">end</span>
+0070 <span class="keyword">end</span>
+0071 
+0072 <span class="comment">% resizing cst to dose cube resolution</span>
+0073 cst = <a href="matRad_resizeCstToGrid.html" class="code" title="function cst = matRad_resizeCstToGrid(cst,vXgridOld,vYgridOld,vZgridOld,vXgridNew,vYgridNew,vZgridNew)">matRad_resizeCstToGrid</a>(cst,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,<span class="keyword">...</span>
+0074                                  dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
+0075 
+0076 <span class="comment">% find target indices and described dose(s) for weight vector</span>
+0077 <span class="comment">% initialization</span>
+0078 V          = [];
+0079 doseTarget = [];
+0080 ixTarget   = [];
+0081 
+0082 <span class="keyword">for</span> i = 1:size(cst,1)
+0083     <span class="keyword">if</span> isequal(cst{i,3},<span class="string">'TARGET'</span>) &amp;&amp; ~isempty(cst{i,6})
+0084         V = [V;cst{i,4}{1}];
+0085         
+0086         <span class="comment">%Iterate through objectives/constraints</span>
+0087         fDoses = [];
+0088         <span class="keyword">for</span> fObjCell = cst{i,6}
+0089             dParams = fObjCell{1}.getDoseParameters();
+0090             <span class="comment">%Don't care for Inf constraints</span>
+0091             dParams = dParams(isfinite(dParams));
+0092             <span class="comment">%Add do dose list</span>
+0093             fDoses = [fDoses dParams];
+0094         <span class="keyword">end</span>
+0095                 
+0096         
+0097         doseTarget = [doseTarget fDoses];
+0098         ixTarget   = [ixTarget i*ones(1,length(fDoses))];
+0099     <span class="keyword">end</span>
+0100 <span class="keyword">end</span>
+0101 [doseTarget,i] = max(doseTarget);
+0102 ixTarget       = ixTarget(i);
+0103 wOnes          = ones(dij.totalNumOfBixels,1);
+0104 
+0105 <span class="comment">% modified settings for photon dao</span>
+0106 <span class="keyword">if</span> pln.propOpt.runDAO &amp;&amp; strcmp(pln.radiationMode,<span class="string">'photons'</span>)
+0107 <span class="comment">%    options.ipopt.max_iter = 50;</span>
+0108 <span class="comment">%    options.ipopt.acceptable_obj_change_tol     = 7e-3; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled</span>
+0109 
+0110 <span class="keyword">end</span>
+0111 <span class="comment">% calculate initial beam intensities wInit</span>
+0112 <span class="keyword">if</span>  strcmp(pln.propOpt.bioOptimization,<span class="string">'const_RBExD'</span>) &amp;&amp; strcmp(pln.radiationMode,<span class="string">'protons'</span>)
+0113     
+0114     <span class="comment">% check if a constant RBE is defined - if not use 1.1</span>
+0115     <span class="keyword">if</span> ~isfield(dij,<span class="string">'RBE'</span>)
+0116         dij.RBE = 1.1;
+0117     <span class="keyword">end</span>
+0118     bixelWeight =  (doseTarget)/(dij.RBE * mean(dij.physicalDose{1}(V,:)*wOnes)); 
+0119     wInit       = wOnes * bixelWeight;
+0120         
+0121 <span class="keyword">elseif</span> (strcmp(pln.propOpt.bioOptimization,<span class="string">'LEMIV_effect'</span>) || strcmp(pln.propOpt.bioOptimization,<span class="string">'LEMIV_RBExD'</span>)) <span class="keyword">...</span><span class="comment"> </span>
+0122                                 &amp;&amp; strcmp(pln.radiationMode,<span class="string">'carbon'</span>)
+0123                             
+0124     <span class="comment">% retrieve photon LQM parameter</span>
+0125     [ax,bx] = <a href="matRad_getPhotonLQMParameters.html" class="code" title="function [ax,bx] = matRad_getPhotonLQMParameters(cst,numVoxel,ctScen,VdoseGrid)">matRad_getPhotonLQMParameters</a>(cst,dij.doseGrid.numOfVoxels,1);
+0126 
+0127     <span class="keyword">if</span> ~isequal(dij.ax(dij.ax~=0),ax(dij.ax~=0)) || <span class="keyword">...</span>
+0128        ~isequal(dij.bx(dij.bx~=0),bx(dij.bx~=0))
+0129          matRad_cfg.dispError(<span class="string">'Inconsistent biological parameter - please recalculate dose influence matrix!\n'</span>);
+0130     <span class="keyword">end</span>
+0131 
+0132     <span class="keyword">for</span> i = 1:size(cst,1)
+0133         
+0134         <span class="keyword">for</span> j = 1:size(cst{i,6},2)
+0135             <span class="comment">% check if prescribed doses are in a valid domain</span>
+0136             <span class="keyword">if</span> any(cst{i,6}{j}.getDoseParameters() &gt; 5) &amp;&amp; isequal(cst{i,3},<span class="string">'TARGET'</span>)
+0137                 matRad_cfg.dispError(<span class="string">'Reference dose &gt; 10 Gy[RBE] for target. Biological optimization outside the valid domain of the base data. Reduce dose prescription or use more fractions.\n'</span>);
+0138             <span class="keyword">end</span>
+0139             
+0140         <span class="keyword">end</span>
+0141     <span class="keyword">end</span>
+0142     
+0143     dij.ixDose  = dij.bx~=0; 
+0144         
+0145     <span class="keyword">if</span> isequal(pln.propOpt.bioOptimization,<span class="string">'LEMIV_effect'</span>)
+0146         
+0147            effectTarget = cst{ixTarget,5}.alphaX * doseTarget + cst{ixTarget,5}.betaX * doseTarget^2;
+0148            p            = (sum(dij.mAlphaDose{1}(V,:)*wOnes)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
+0149            q            = -(effectTarget * length(V)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
+0150            wInit        = -(p/2) + sqrt((p^2)/4 -q) * wOnes;
+0151 
+0152     <span class="keyword">elseif</span> isequal(pln.propOpt.bioOptimization,<span class="string">'LEMIV_RBExD'</span>)
+0153         
+0154            <span class="comment">%pre-calculations</span>
+0155            dij.gamma              = zeros(dij.doseGrid.numOfVoxels,1);   
+0156            dij.gamma(dij.ixDose) = dij.ax(dij.ixDose)./(2*dij.bx(dij.ixDose)); 
+0157             
+0158            <span class="comment">% calculate current in target</span>
+0159            CurrEffectTarget = (dij.mAlphaDose{1}(V,:)*wOnes + (dij.mSqrtBetaDose{1}(V,:)*wOnes).^2);
+0160            <span class="comment">% ensure a underestimated biological effective dose</span>
+0161            TolEstBio        = 1.2;
+0162            <span class="comment">% calculate maximal RBE in target</span>
+0163            maxCurrRBE = max(-cst{ixTarget,5}.alphaX + sqrt(cst{ixTarget,5}.alphaX^2 + <span class="keyword">...</span>
+0164                         4*cst{ixTarget,5}.betaX.*CurrEffectTarget)./(2*cst{ixTarget,5}.betaX*(dij.physicalDose{1}(V,:)*wOnes)));
+0165            wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(dij.physicalDose{1}(V,:)*wOnes)))* wOnes;
+0166     <span class="keyword">end</span>
+0167     
+0168 <span class="keyword">else</span> 
+0169     bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
+0170     wInit       = wOnes * bixelWeight;
+0171     pln.propOpt.bioOptimization = <span class="string">'none'</span>;
+0172 <span class="keyword">end</span>
+0173 
+0174 <span class="comment">% set optimization options</span>
+0175 options.radMod          = pln.radiationMode;
+0176 options.bioOpt          = pln.propOpt.bioOptimization;
+0177 options.ID              = [pln.radiationMode <span class="string">'_'</span> pln.propOpt.bioOptimization];
+0178 options.numOfScenarios  = dij.numOfScenarios;
+0179 
+0180 <span class="comment">%Select Projection</span>
+0181 
+0182 <span class="keyword">switch</span> pln.propOpt.bioOptimization
+0183     <span class="keyword">case</span> <span class="string">'LEMIV_effect'</span>
+0184         backProjection = <a href="../matRad/optimization/projections/matRad_EffectProjection.html" class="code" title="">matRad_EffectProjection</a>;
+0185     <span class="keyword">case</span> <span class="string">'const_RBExD'</span>
+0186         backProjection = <a href="../matRad/optimization/projections/matRad_ConstantRBEProjection.html" class="code" title="">matRad_ConstantRBEProjection</a>;
+0187     <span class="keyword">case</span> <span class="string">'LEMIV_RBExD'</span>
+0188         backProjection = <a href="../matRad/optimization/projections/matRad_VariableRBEProjection.html" class="code" title="">matRad_VariableRBEProjection</a>;
+0189     <span class="keyword">case</span> <span class="string">'none'</span>
+0190         backProjection = <a href="../matRad/optimization/projections/matRad_DoseProjection.html" class="code" title="">matRad_DoseProjection</a>;
+0191     <span class="keyword">otherwise</span>
+0192         warning([<span class="string">'Did not recognize bioloigcal setting '''</span> pln.probOpt.bioOptimization <span class="string">'''!\nUsing physical dose optimization!'</span>]);
+0193         backProjection = <a href="../matRad/optimization/projections/matRad_DoseProjection.html" class="code" title="">matRad_DoseProjection</a>;
+0194 <span class="keyword">end</span>
+0195         
+0196 
+0197 <span class="comment">%backProjection = matRad_DoseProjection();</span>
+0198 
+0199 optiProb = <a href="../matRad/optimization/@matRad_OptimizationProblem/matRad_OptimizationProblem.html" class="code" title="">matRad_OptimizationProblem</a>(backProjection);
+0200 
+0201 <span class="comment">%optimizer = matRad_OptimizerIPOPT;</span>
+0202 
+0203 <span class="keyword">if</span> ~isfield(pln.propOpt,<span class="string">'optimizer'</span>)
+0204     pln.propOpt.optimizer = <span class="string">'IPOPT'</span>;
+0205 <span class="keyword">end</span>
+0206 
+0207 <span class="keyword">switch</span> pln.propOpt.optimizer
+0208     <span class="keyword">case</span> <span class="string">'IPOPT'</span>
+0209         optimizer = <a href="../matRad/optimization/optimizer/matRad_OptimizerIPOPT.html" class="code" title="">matRad_OptimizerIPOPT</a>;
+0210     <span class="keyword">case</span> <span class="string">'fmincon'</span>
+0211         optimizer = <a href="../matRad/optimization/optimizer/matRad_OptimizerFmincon.html" class="code" title="">matRad_OptimizerFmincon</a>;
+0212     <span class="keyword">otherwise</span>
+0213         warning([<span class="string">'Optimizer '''</span> pln.propOpt.optimizer <span class="string">''' not known! Fallback to IPOPT!'</span>]);
+0214         optimizer = <a href="../matRad/optimization/optimizer/matRad_OptimizerIPOPT.html" class="code" title="">matRad_OptimizerIPOPT</a>;
+0215 <span class="keyword">end</span>
+0216         
+0217 <span class="comment">%optimizer = matRad_OptimizerFmincon;</span>
+0218 
+0219 optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
+0220 
+0221 wOpt = optimizer.wResult;
+0222 info = optimizer.resultInfo;
+0223 
+0224 resultGUI = <a href="matRad_calcCubes.html" class="code" title="function resultGUI = matRad_calcCubes(w,dij,scenNum)">matRad_calcCubes</a>(wOpt,dij);
+0225 resultGUI.wUnsequenced = wOpt;
+0226 resultGUI.usedOptimizer = optimizer;
+0227 resultGUI.info = info;
+0228 
+0229 <span class="comment">% unblock mex files</span>
+0230 clear mex</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,329 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_DicomExporter</title>
+  <meta name="keywords" content="matRad_DicomExporter">
+  <meta name="description" content="">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../../menu.html matRad --><!-- ../menu.html dicom --><!-- menu.html @matRad_DicomExporter -->
+<h1>matRad_DicomExporter
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box"></div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">This is a script file. </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"></pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_DicomExporter.html" class="code" title="">matRad_DicomExporter</a>	</li><li><a href="matRad_exportDicom.html" class="code" title="function obj = matRad_exportDicom(obj)">matRad_exportDicom</a>	matRad function to export current workspace to DICOM.</li><li><a href="matRad_exportDicomCt.html" class="code" title="function obj = matRad_exportDicomCt(obj)">matRad_exportDicomCt</a>	matRad function to export ct to dicom.</li><li><a href="matRad_exportDicomRTDoses.html" class="code" title="function obj = matRad_exportDicomRTDoses(obj)">matRad_exportDicomRTDoses</a>	matRad function to exportt resultGUI to dicom RT dose.</li><li><a href="matRad_exportDicomRTPlan.html" class="code" title="function obj = matRad_exportDicomRTPlan(obj)">matRad_exportDicomRTPlan</a>	matRad function to export resultGUI to dicom.</li><li><a href="matRad_exportDicomRTStruct.html" class="code" title="function obj = matRad_exportDicomRTStruct(obj)">matRad_exportDicomRTStruct</a>	matRad function to export dicom RT structure set.</li><li><a href="../../../matRad/tools/matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>	matRad function to get the software environment matRad is running on</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_DicomExporter.html" class="code" title="">matRad_DicomExporter</a>	</li><li><a href="../../../matRad/examples/matRad_example1_phantom.html" class="code" title="">matRad_example1_phantom</a>	% Example: Generate your own phantom geometry</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>Subfunctions <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<ul style="list-style-type:disc">
+<li><a href="#_sub1" class="code">function obj = matRad_DicomExporter(ct,cst,pln,stf,resultGUI)</a></li><li><a href="#_sub2" class="code">function obj = generateDefaultDicomData(obj)</a></li><li><a href="#_sub3" class="code">function sarray = addStruct2StructArray(sarray,s,i)</a></li><li><a href="#_sub4" class="code">function meta = assignDefaultMetaValue(meta,fn,default,displayBool)</a></li><li><a href="#_sub5" class="code">function name = dicomName(family,given,middle,prefix,suffix)</a></li></ul>
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre>0001 classdef <a href="matRad_DicomExporter.html" class="code" title="">matRad_DicomExporter</a> &lt; handle
+0002     <span class="comment">% matRad_DicomExporter matRad class to handle a dicom export.</span>
+0003     <span class="comment">%</span>
+0004     <span class="comment">%</span>
+0005     <span class="comment">% Example on how to use the matRad_DicomExport class</span>
+0006     <span class="comment">%</span>
+0007     <span class="comment">% dcmExpObj          = matRad_DicomExporter;   % create instance of matRad_DicomExporter</span>
+0008     <span class="comment">% dcmExpObj.dicomDir = 'pathAsString';         % set the output path for the Dicom export</span>
+0009     <span class="comment">% dcmExp.matRad_exportDicom();                 % run the export</span>
+0010     <span class="comment">%</span>
+0011     <span class="comment">%</span>
+0012     <span class="comment">% References</span>
+0013     <span class="comment">%   -</span>
+0014     <span class="comment">%</span>
+0015     <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0016     <span class="comment">%</span>
+0017     <span class="comment">% Copyright 2020 the matRad development team.</span>
+0018     <span class="comment">%</span>
+0019     <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0020     <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0021     <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0022     <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0023     <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0024     <span class="comment">% LICENSE file.</span>
+0025     <span class="comment">%</span>
+0026     <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0027 
+0028     properties
+0029        
+0030         <span class="comment">%output folder</span>
+0031         dicomDir = [<span class="string">'.'</span> filesep];
+0032         
+0033         <span class="comment">% matRad structures to export</span>
+0034         ct = [];
+0035         cst = [];
+0036         stf = [];
+0037         pln = [];
+0038         resultGUI = [];
+0039         
+0040         <span class="comment">% Study &amp; Patient Dicom Information</span>
+0041         PatientID
+0042         PatientName
+0043         PatientPosition
+0044         PatientBirthDate = <span class="string">''</span>;
+0045         PatientSex = <span class="string">''</span>;
+0046         StudyID
+0047         StudyDate
+0048         StudyTime
+0049         StudyInstanceUID
+0050         FrameOfReferenceUID
+0051         
+0052         <span class="comment">%Operator</span>
+0053         OperatorsName
+0054         
+0055         <span class="comment">% ct</span>
+0056         ctFilePrefix = <span class="string">'ct_slice_'</span>;
+0057         ctMeta
+0058         ctSliceMetas
+0059         ctExportStatus
+0060         
+0061         <span class="comment">% rtstruct</span>
+0062         rtssFileName = <span class="string">'RTStruct'</span>;
+0063         rtssMeta
+0064         rtssExportStatus
+0065         
+0066         <span class="comment">% RTdose</span>
+0067         rtDoseFilePrefix = <span class="string">'RTDose_'</span>;
+0068         rtDoseNames
+0069         rtDoseMetas
+0070         rtDoseExportStatus
+0071         
+0072         <span class="comment">% some dictionaries</span>
+0073         externalContourDict = {<span class="string">'EXTERNAL'</span>,<span class="string">'BODY'</span>,<span class="string">'PATIENT'</span>}; <span class="comment">%Names to identify external contours</span>
+0074         targetPtvDict = {<span class="string">'PTV'</span>,<span class="string">'MARGIN'</span>};
+0075         targetCtvDict = {<span class="string">'CTV'</span>};
+0076         targetGtvDict = {<span class="string">'GTV'</span>,<span class="string">'TUMOR'</span>};
+0077     <span class="keyword">end</span>
+0078     
+0079     methods
+0080         <a name="_sub0" href="#_subfunctions" class="code">function obj = matRad_DicomExporter(ct,cst,pln,stf,resultGUI)</a>
+0081             <span class="comment">%matRad_DicomExporter Construct an instance of this class</span>
+0082             <span class="comment">%   Can be called with the structures. If no argument is given,</span>
+0083             <span class="comment">%   all structures will be read from the base workspace</span>
+0084             
+0085             
+0086             matRad_cfg = MatRad_Config.instance();  
+0087             
+0088             env = <a href="../../../matRad/tools/matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>();
+0089             <span class="keyword">if</span> strcmp(env,<span class="string">'OCTAVE'</span>)
+0090                 <span class="comment">%Octave needs the DICOM package</span>
+0091                 <span class="keyword">try</span>
+0092                     pkg load dicom;
+0093                 <span class="keyword">catch</span>
+0094                     matRad_cfg.dispError(<span class="string">'The DICOM export requires the octave-forge package &quot;dicom&quot;!\n'</span>);
+0095                 <span class="keyword">end</span>
+0096             <span class="keyword">end</span>
+0097             
+0098             <span class="keyword">if</span> nargin == 0
+0099                 <span class="keyword">try</span>
+0100                     obj.ct = evalin(<span class="string">'base'</span>,<span class="string">'ct'</span>);
+0101                 <span class="keyword">catch</span>
+0102                     matRad_cfg.dispInfo(<span class="string">'matRad_DicomExporter: No CT found in workspace.\n'</span>);
+0103                 <span class="keyword">end</span>
+0104                 <span class="keyword">try</span>
+0105                     obj.cst = evalin(<span class="string">'base'</span>,<span class="string">'cst'</span>);
+0106                 <span class="keyword">catch</span>
+0107                     matRad_cfg.dispInfo(<span class="string">'matRad_DicomExporter: No cst found in workspace.\n'</span>);
+0108                 <span class="keyword">end</span>
+0109                 <span class="keyword">try</span>
+0110                     obj.pln = evalin(<span class="string">'base'</span>,<span class="string">'pln'</span>);
+0111                 <span class="keyword">catch</span>
+0112                     matRad_cfg.dispDebug(<span class="string">'matRad_DicomExporter: No pln found in workspace.\n'</span>);
+0113                 <span class="keyword">end</span>
+0114                 <span class="keyword">try</span>
+0115                     obj.stf = evalin(<span class="string">'base'</span>,<span class="string">'stf'</span>);
+0116                 <span class="keyword">catch</span>
+0117                     matRad_cfg.dispDebug(<span class="string">'matRad_DicomExporter: No stf found in workspace.\n'</span>);
+0118                 <span class="keyword">end</span>
+0119                 <span class="keyword">try</span>
+0120                     obj.resultGUI = evalin(<span class="string">'base'</span>,<span class="string">'resultGUI'</span>);
+0121                 <span class="keyword">catch</span>
+0122                 <span class="keyword">end</span>
+0123             <span class="keyword">else</span>
+0124                 <span class="keyword">if</span> exist(<span class="string">'ct'</span>,<span class="string">'var'</span>)
+0125                     obj.ct = ct;
+0126                 <span class="keyword">end</span>
+0127                 <span class="keyword">if</span> exist(<span class="string">'cst'</span>,<span class="string">'var'</span>)
+0128                     obj.cst = cst;
+0129                 <span class="keyword">end</span>
+0130                 <span class="keyword">if</span> exist(<span class="string">'pln'</span>,<span class="string">'var'</span>)
+0131                     obj.pln = pln;
+0132                 <span class="keyword">end</span>
+0133                 <span class="keyword">if</span> exist(<span class="string">'stf'</span>,<span class="string">'var'</span>)
+0134                     obj.stf = stf;
+0135                 <span class="keyword">end</span>
+0136                 <span class="keyword">if</span> exist(<span class="string">'resultGUI'</span>,<span class="string">'var'</span>)
+0137                     obj.pln = resultGUI;
+0138                 <span class="keyword">end</span>
+0139             <span class="keyword">end</span>
+0140             
+0141             obj = obj.generateDefaultDicomData();
+0142         <span class="keyword">end</span>
+0143         
+0144         <a name="_sub1" href="#_subfunctions" class="code">function obj = generateDefaultDicomData(obj)</a>
+0145             <span class="comment">% generateDefaultDicomData Fill Patient &amp; Study dicom info</span>
+0146                         
+0147             date    = now;
+0148             dateStr = datestr(date,<span class="string">'yyyymmdd'</span>);
+0149             timeStr = datestr(date,<span class="string">'HHMMSS'</span>);
+0150             
+0151             obj.PatientID = [<span class="string">'matRad_default_patient_'</span> dateStr];
+0152             obj.PatientName = obj.dicomName();
+0153             obj.OperatorsName = obj.dicomName();
+0154             
+0155             obj.StudyID = [<span class="string">'matRad_'</span> dateStr];
+0156             obj.StudyDate = dateStr;
+0157             obj.StudyTime = timeStr;
+0158             obj.StudyInstanceUID = dicomuid;
+0159             
+0160             <span class="comment">% coordinates</span>
+0161             obj.FrameOfReferenceUID = dicomuid;
+0162             
+0163             <span class="keyword">if</span> isfield(obj.ct,<span class="string">'dicomInfo'</span>) &amp;&amp; isfield(obj.ct.dicomInfo,<span class="string">'PatientPosition'</span>)
+0164                obj.PatientPosition = obj.ct.dicomInfo.PatientPosition;
+0165             <span class="keyword">else</span>
+0166                obj.PatientPosition = <span class="string">'HFS'</span>; <span class="comment">%matRad default coordinate system</span>
+0167             <span class="keyword">end</span>
+0168         <span class="keyword">end</span>
+0169         
+0170         obj = <a href="matRad_exportDicom.html" class="code" title="function obj = matRad_exportDicom(obj)">matRad_exportDicom</a>(obj)
+0171         
+0172         obj = <a href="matRad_exportDicomCt.html" class="code" title="function obj = matRad_exportDicomCt(obj)">matRad_exportDicomCt</a>(obj)
+0173         
+0174         obj = <a href="matRad_exportDicomRTStruct.html" class="code" title="function obj = matRad_exportDicomRTStruct(obj)">matRad_exportDicomRTStruct</a>(obj)
+0175         
+0176         obj = <a href="matRad_exportDicomRTPlan.html" class="code" title="function obj = matRad_exportDicomRTPlan(obj)">matRad_exportDicomRTPlan</a>(obj)
+0177         
+0178         obj = <a href="matRad_exportDicomRTDoses.html" class="code" title="function obj = matRad_exportDicomRTDoses(obj)">matRad_exportDicomRTDoses</a>(obj)
+0179         
+0180     <span class="keyword">end</span>
+0181     
+0182     methods (Static)
+0183         <a name="_sub2" href="#_subfunctions" class="code">function sarray = addStruct2StructArray(sarray,s,i)</a>
+0184             <span class="comment">%addStruct2StructArray Helper function to assign structs</span>
+0185             <span class="comment">%   When assigning structs to a struct array, there is usually</span>
+0186             <span class="comment">%   an error. This method works around this error by assigning</span>
+0187             <span class="comment">%   a struct s to the structure array sarray field by field at</span>
+0188             <span class="comment">%   position i.</span>
+0189             <span class="comment">%</span>
+0190             <span class="comment">%call</span>
+0191             <span class="comment">%   sarray = matRad_DicomExporter.matRad_exportDicomRTStruct(sarray,s,i)</span>
+0192             <span class="comment">%</span>
+0193             <span class="comment">%Input:</span>
+0194             <span class="comment">%   sarray: structure array to add struct s to</span>
+0195             <span class="comment">%   s:      struct to add to sarray</span>
+0196             <span class="comment">%   i:      optional index. if not given, s is appended</span>
+0197             
+0198             <span class="keyword">if</span> nargin &lt; 3
+0199                 i = numel(sarray)+1;
+0200             <span class="keyword">end</span>
+0201             fnames = fieldnames(s);
+0202             sarray(i).(fnames{1}) = s.(fnames{1});
+0203             <span class="keyword">if</span> length(fnames) &gt; 1
+0204                 <span class="keyword">for</span> k = 2:length(fnames)
+0205                     sarray(i).(fnames{k}) = s.(fnames{k});
+0206                 <span class="keyword">end</span>
+0207             <span class="keyword">end</span>
+0208         <span class="keyword">end</span>
+0209                 
+0210         <a name="_sub3" href="#_subfunctions" class="code">function meta = assignDefaultMetaValue(meta,fn,default,displayBool)</a>
+0211             <span class="comment">%assignDefaultMetaValue Helper function to default meta values</span>
+0212             <span class="comment">%   When meta information is already given, it may not be</span>
+0213             <span class="comment">%   overwritten by a default value. This function automatically</span>
+0214             <span class="comment">%   checks for a value and optionally prints to console</span>
+0215             <span class="comment">%</span>
+0216             <span class="comment">%call</span>
+0217             <span class="comment">%   meta = matRad_DicomExporter.assignDefaultMetaValue(meta,fn,default,displayBool)</span>
+0218             <span class="comment">%</span>
+0219             <span class="comment">%Input:</span>
+0220             <span class="comment">%   meta:           structure with dicom meta information</span>
+0221             <span class="comment">%   fn:             meta fieldname</span>
+0222             <span class="comment">%   default:        default value to assign</span>
+0223             <span class="comment">%   displayBool:    optional request for console output.</span>
+0224             <span class="comment">%</span>
+0225             <span class="comment">%Output:</span>
+0226             <span class="comment">%   meta:           meta struct with default value or value</span>
+0227             <span class="comment">%                   that was already there before</span>
+0228             
+0229             <span class="keyword">if</span> nargin &lt; 4
+0230                 displayBool = true;
+0231             <span class="keyword">end</span>
+0232             
+0233             <span class="keyword">if</span> ~isfield(meta,fn)
+0234                 meta.(fn) = default;
+0235                 
+0236                 <span class="keyword">if</span> isnumeric(default)
+0237                     default = num2str(default);
+0238                 <span class="keyword">elseif</span> isstruct(default)
+0239                     default = <span class="string">''</span>;
+0240                 <span class="keyword">end</span>
+0241                 
+0242                 <span class="keyword">if</span> displayBool
+0243                     fprintf(<span class="string">'No value set for ''%s'', using default value ''%s''\n'</span>,fn,default);
+0244                 <span class="keyword">end</span>
+0245             <span class="keyword">end</span>
+0246         <span class="keyword">end</span>
+0247         
+0248         <a name="_sub4" href="#_subfunctions" class="code">function name = dicomName(family,given,middle,prefix,suffix)</a>
+0249             <span class="keyword">if</span> nargin &lt; 5
+0250                 suffix = <span class="string">''</span>;
+0251             <span class="keyword">end</span>
+0252             <span class="keyword">if</span> nargin &lt; 4
+0253                 prefix = <span class="string">''</span>;
+0254             <span class="keyword">end</span>
+0255             <span class="keyword">if</span> nargin &lt; 3
+0256                 middle = <span class="string">''</span>;
+0257             <span class="keyword">end</span>
+0258             <span class="keyword">if</span> nargin &lt; 2
+0259                 given = <span class="string">''</span>;
+0260             <span class="keyword">end</span>
+0261             <span class="keyword">if</span> nargin &lt; 1
+0262                 family = <span class="string">''</span>;
+0263             <span class="keyword">end</span>
+0264             
+0265             name.FamilyName = family;
+0266             name.GivenName = given;
+0267             name.MiddleName = middle;
+0268             name.NamePrefix = prefix;
+0269             name.NameSuffix = suffix;
+0270             
+0271             env = <a href="../../../matRad/tools/matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>();
+0272             <span class="keyword">if</span> strcmp(env,<span class="string">'OCTAVE'</span>)
+0273                 name = strjoin(struct2cell(name));
+0274             <span class="keyword">end</span>
+0275             
+0276         <span class="keyword">end</span>
+0277     <span class="keyword">end</span>
+0278     
+0279     
+0280 <span class="keyword">end</span>
+0281</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

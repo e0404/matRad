@@ -1,0 +1,168 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_addMargin</title>
+  <meta name="keywords" content="matRad_addMargin">
+  <meta name="description" content="matRad add margin function">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_addMargin
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">matRad add margin function</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function mVOIEnlarged = matRad_addMargin(mVOI,cst,vResolution,vMargin,bDiaElem) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad add margin function
+ 
+ call
+   mVOIEnlarged = matRad_addMargin(mVOI,cst,vResolution,vMargin,bDiaElem)
+
+ input
+   mVOI:           image stack in dimensions of X x Y x Z holding ones for
+                   object and zeros otherwise 
+   cst:            matRad cst struct
+   vResolution     ct resolution
+   vMargin:        margin in mm 
+   bDiaElem        if true 26-connectivity is used otherwise 6-connectivity
+
+ output
+   mVOIEnlarged:   enlarged VOI
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_generateStf.html" class="code" title="function stf = matRad_generateStf(ct,cst,pln,visMode)">matRad_generateStf</a>	matRad steering information generation</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function mVOIEnlarged = matRad_addMargin(mVOI,cst,vResolution,vMargin,bDiaElem)</a>
+0002 <span class="comment">% matRad add margin function</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   mVOIEnlarged = matRad_addMargin(mVOI,cst,vResolution,vMargin,bDiaElem)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   mVOI:           image stack in dimensions of X x Y x Z holding ones for</span>
+0009 <span class="comment">%                   object and zeros otherwise</span>
+0010 <span class="comment">%   cst:            matRad cst struct</span>
+0011 <span class="comment">%   vResolution     ct resolution</span>
+0012 <span class="comment">%   vMargin:        margin in mm</span>
+0013 <span class="comment">%   bDiaElem        if true 26-connectivity is used otherwise 6-connectivity</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% output</span>
+0016 <span class="comment">%   mVOIEnlarged:   enlarged VOI</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% References</span>
+0019 <span class="comment">%   -</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0022 <span class="comment">%</span>
+0023 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0024 <span class="comment">%</span>
+0025 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0026 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0027 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0028 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0029 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0030 <span class="comment">% LICENSE file.</span>
+0031 <span class="comment">%</span>
+0032 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0033 
+0034 <span class="keyword">if</span> nargin == 4
+0035     bDiaElem = false;
+0036 <span class="keyword">elseif</span> nargin &lt; 4
+0037     error(<span class="string">'not enough input parameters specified for matRad_addMargin'</span>);
+0038 <span class="keyword">end</span>
+0039 
+0040 <span class="comment">% generate voi cube for patient surface/patient skin</span>
+0041 idx             = [cst{:,4}];
+0042 voiSurfaceIdx   = unique(vertcat(idx{:}));
+0043 
+0044 <span class="comment">% get number of voxels which should be added in each dimension</span>
+0045 voxelMargins = round([vMargin.x vMargin.y vMargin.z]./[vResolution.x vResolution.y vResolution.z]);
+0046 mVOIEnlarged = mVOI;
+0047 newIdx = [];
+0048 
+0049 [yUpperLim,xUpperLim,zUpperLim] = size(mVOI);
+0050 
+0051 <span class="keyword">for</span> cnt = 1:max(voxelMargins)
+0052 
+0053     <span class="comment">% for multiple loops consider just added margin</span>
+0054     newIdx = setdiff(find(mVOIEnlarged),newIdx);
+0055     [yCoord, xCoord, zCoord] = ind2sub(size(mVOIEnlarged),newIdx);
+0056 
+0057     <span class="comment">% find indices on border and take out</span>
+0058     borderIx = xCoord==1 | xCoord==xUpperLim | <span class="keyword">...</span>
+0059                yCoord==1 | yCoord==yUpperLim | <span class="keyword">...</span>
+0060                zCoord==1 | zCoord==zUpperLim;
+0061 
+0062     xCoord(borderIx) = [];
+0063     yCoord(borderIx) = [];
+0064     zCoord(borderIx) = [];
+0065 
+0066     dx = voxelMargins(1)&gt;=cnt;
+0067     dy = voxelMargins(2)&gt;=cnt;
+0068     dz = voxelMargins(3)&gt;=cnt;
+0069 
+0070     <span class="keyword">for</span> i = -1:1
+0071         <span class="keyword">for</span> j = -1:1
+0072             <span class="keyword">for</span> k = -1:1
+0073 
+0074                 <span class="keyword">if</span> (abs(i)+abs(j)+abs(k) == 0) || (~bDiaElem &amp;&amp; abs(i)+abs(j)+abs(k) &gt; 1) <span class="comment">% skip if diagonal elements not wanted or zero offset</span>
+0075                     <span class="keyword">continue</span>;
+0076                 <span class="keyword">end</span>
+0077 
+0078                 newIx = (yCoord+i*dy) + (xCoord+j*dx-1)*size(mVOIEnlarged,1) + <span class="keyword">...</span>
+0079                         (zCoord+k*dz-1)*size(mVOIEnlarged,1)*size(mVOIEnlarged,2);
+0080                     
+0081                 <span class="comment">% check if new indices are part of voiSurfaceIdx</span>
+0082                 bWithinPatient = ismember(newIx,voiSurfaceIdx);
+0083                 
+0084                 mVOIEnlarged(newIx(bWithinPatient)) = 1;
+0085 
+0086             <span class="keyword">end</span>
+0087         <span class="keyword">end</span>
+0088     <span class="keyword">end</span>
+0089 
+0090 
+0091 <span class="keyword">end</span>
+0092</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

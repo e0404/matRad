@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="{{ site.lang | default: "en-US" }}">
+
+
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	{% seo %}
+    <link rel="stylesheet" href="{{ "/assets/css/style.css?v=" | append: site.github.build_revision | relative_url }}">
+    <!--[if lt IE 9]>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js"></script>
+    <![endif]-->	
+  </head>  
+
+
+  <body>
+    <div class="wrapper">
+      <header>
+	  
+	  
+        <p class="solid"> <a style="font-size:20px" href="{{ "/index" | relative_url}}" alt="">About</a> &nbsp; <a style="font-size:20px" href="{{ "/news" | relative_url}}" >News</a> &nbsp; <a style="font-size:20px" href="{{ "/imprint" | relative_url}}" alt="">Imprint</a></p>   	  
+	 
+				 
+        <p><img src="{{ "/assets/img/matRad_hat.svg" | relative_url}}" width="120" alt="matRad_Logo" border="0"></p>        
+
+        <p>{{ site.description | default: site.github.project_tagline }}</p>
+
+        {% if site.github.is_project_page %}
+        <p class="view"></p>
+        {% endif %}
+
+        {% if site.github.is_user_page %}
+        <p class="view"><a href="{{ site.github.owner_url }}">View My GitHub Profile</a></p>
+        {% endif %}
+
+        {% if site.show_downloads %}
+        <ul class="viewOnGitHub">
+		  <li><a href="https://github.com/e0404/matRad">View On <strong>GitHub</strong>  </a></li>         
+        </ul>
+		
+		<ul class="downloads">
+          <li><a href="https://github.com/e0404/matRad/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/e0404/matRad/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/e0404/matRad/releases/latest">Download <strong>Standalone</strong></a></li>
+        </ul>
+		
+        {% endif %}	
+		
+		<p>Find out more in our <a href="https://github.com/e0404/matRad/wiki">Wiki</a><br />
+		Check out the <a href="{{ "/doc/index.html" | relative_url}}" >matRad documentation</a></p>
+		
+      </header>
+      <section>
+	  <p><img src="{{ "/assets/img/matRad_hat.svg" | relative_url}}" width="450" alt="matRad_Logo" border="0"></p>
+	  <p class="solid"> 
+
+      {{ content }}		
+
+      </section>
+      <footer>
+	    <p>
+		<strong>Build Status - Master Branch:</strong><br />
+		<a href="https://travis-ci.org/e0404/matRad"><img src="https://travis-ci.org/e0404/matRad.svg?branch=master" alt="Travis Build Status" border="0"></a> (TravisCI)<br />
+		<a href="https://dev.azure.com/e0404/matRad"><img src="https://dev.azure.com/e0404/matRad/_apis/build/status/e0404.matRad" alt="Azure Build Status"></a><br />	
+		<strong>Build Status - Main development branch:</strong><br />
+		<a href="https://travis-ci.org/e0404/matRad"><img src="https://travis-ci.org/e0404/matRad.svg?branch=dev" alt="Travis Build Status" border="0" ></a> (TravisCI)<br />
+	    <a href="https://dev.azure.com/e0404/matRad"><img src="https://dev.azure.com/e0404/matRad/_apis/build/status/e0404.matRad?branchName=dev" alt="Azure Build Status" /></a>
+		</p>
+		<p>This project is maintained by <a href="https://github.com/e0404">e0404</a></p>
+		
+		<p><img src="{{ "/assets/img/DKFZ_Logo.svg" | relative_url }}" width="210" alt="DKFZ_Logo" border="0"></p>
+		
+		<p>Get in contact via <a href="mailto:contact@matrad.org">contact@matrad.org</a></p>
+		
+		<p><img src="{{ "/assets/img/GitHub_Logo.svg" | relative_url }}" width="15" alt="GitHub_Logo" border="0"><a href="https://github.com/matRad">&nbsp; matRad &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		
+        <img src="{{ "/assets/img/Twitter_Logo.svg" | relative_url }}" width="15" alt="Twitter_Logo" border="0"><a href="https://twitter.com/mat_rad">&nbsp; matRad</p>		
+		
+      </footer>
+    </div>
+    <script src="{{ "/assets/js/scale.fix.js" | relative_url }}"></script>
+	{% include cookie-consent.html %}
+  </body>
+</html>
+
+

@@ -1,0 +1,211 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_exportDicomCt</title>
+  <meta name="keywords" content="matRad_exportDicomCt">
+  <meta name="description" content="matRad function to export ct to dicom.">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../../menu.html matRad --><!-- ../menu.html dicom --><!-- menu.html @matRad_DicomExporter -->
+<h1>matRad_exportDicomCt
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">matRad function to export ct to dicom.</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">function obj = matRad_exportDicomCt(obj) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to export ct to dicom. 
+ Class method of matRad_DicomExporter
+ 
+ call
+   matRad_DicomExporter.matRad_exportDicomCt()
+
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2019 the matRad development team.
+
+ This file is part of the matRad project. It is subject to the license
+ terms in the LICENSE file found in the top-level directory of this
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+ of the matRad project, including this file, may be copied, modified,
+ propagated, or distributed except according to the terms contained in the
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="../../../matRad/dicom/matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>	matRad progress bar</li><li><a href="../../../matRad/matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>	matRad progress bar</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_DicomExporter.html" class="code" title="">matRad_DicomExporter</a>	</li><li><a href="matRad_exportDicom.html" class="code" title="function obj = matRad_exportDicom(obj)">matRad_exportDicom</a>	matRad function to export current workspace to DICOM.</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function obj = matRad_exportDicomCt(obj)</a>
+0002 <span class="comment">% matRad function to export ct to dicom.</span>
+0003 <span class="comment">% Class method of matRad_DicomExporter</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% call</span>
+0006 <span class="comment">%   matRad_DicomExporter.matRad_exportDicomCt()</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% References</span>
+0010 <span class="comment">%   -</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% Copyright 2019 the matRad development team.</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0017 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0018 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0019 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0020 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0021 <span class="comment">% LICENSE file.</span>
+0022 <span class="comment">%</span>
+0023 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0024 
+0025 matRad_cfg = MatRad_Config.instance();
+0026 
+0027 matRad_cfg.dispInfo(<span class="string">'Exporting DICOM CT...'</span>);
+0028 
+0029 <span class="comment">%default meta</span>
+0030 meta.PatientName         = obj.PatientName;
+0031 meta.PatientID           = obj.PatientID;
+0032 meta.PatientBirthDate    = obj.PatientBirthDate;
+0033 meta.PatientSex          = obj.PatientSex;
+0034 meta.PatientPosition     = obj.PatientPosition;
+0035 meta.StudyID             = obj.StudyID;
+0036 meta.StudyDate           = obj.StudyDate;
+0037 meta.StudyTime           = obj.StudyTime;
+0038 meta.StudyInstanceUID    = obj.StudyInstanceUID;
+0039 meta.FrameOfReferenceUID = obj.FrameOfReferenceUID;
+0040 
+0041 ClassUID = <span class="string">'1.2.840.10008.5.1.4.1.1.2'</span>; <span class="comment">%CT Image</span>
+0042 meta.MediaStorageSOPClassUID = ClassUID;
+0043 meta.SOPClassUID = ClassUID;
+0044 <span class="comment">%TransferSyntaxUID = '1.2.840.10008.1.2';</span>
+0045 <span class="comment">%meta.TransferSyntaxUID = TransferSyntaxUID;</span>
+0046 
+0047 <span class="comment">%Identifiers</span>
+0048 meta.SOPInstanceUID             = dicomuid;
+0049 meta.MediaStorageSOPInstanceUID = meta.SOPInstanceUID;
+0050 meta.SeriesInstanceUID          = dicomuid;
+0051 meta.SeriesNumber               = 1;
+0052 meta.InstanceNumber             = 1;
+0053 
+0054 
+0055 obj.ctMeta.SeriesInstanceUID = dicomuid;
+0056 meta.SeriesInstanceUID       = obj.ctMeta.SeriesInstanceUID;
+0057 
+0058 meta.SeriesNumber      = 1;
+0059 meta.AcquisitionNumber = 1;
+0060 meta.InstanceNumber    = 1;
+0061 
+0062 meta.Modality               = <span class="string">'CT'</span>;
+0063 meta.ReferringPhysicianName = obj.dicomName();
+0064 meta.PatientPosition        = obj.PatientPosition;
+0065 
+0066 
+0067 ct = obj.ct;
+0068 
+0069 nSlices = ct.cubeDim(3);
+0070 <span class="comment">%Create X Y Z vectors if not present</span>
+0071 <span class="keyword">if</span> ~any(isfield(ct,{<span class="string">'x'</span>,<span class="string">'y'</span>,<span class="string">'z'</span>}))
+0072     <span class="comment">%positionOffset = transpose(ct.cubeDim ./ 2);</span>
+0073     positionOffset = ct.cubeDim ./ 2;
+0074     ct.x = ct.resolution.x*[0:ct.cubeDim(2)-1] - positionOffset(2);
+0075     ct.y = ct.resolution.y*[0:ct.cubeDim(1)-1] - positionOffset(1);
+0076     ct.z = ct.resolution.z*[0:ct.cubeDim(3)-1] - positionOffset(3);
+0077 <span class="keyword">end</span>
+0078 
+0079 obj.ct = ct;
+0080 
+0081 <span class="comment">%Since we are exporting HU directly --&gt; no rescaling in any case</span>
+0082 meta.SliceThickness = ct.resolution.z;
+0083 meta.PixelSpacing   = [ct.resolution.y; ct.resolution.x];
+0084 meta.ImageOrientationPatient = [1;0;0;0;1;0]; <span class="comment">%lps</span>
+0085 meta.RescaleType = <span class="string">'HU'</span>;
+0086 
+0087 <span class="keyword">if</span> isfield(ct,<span class="string">'z'</span>)
+0088     z = ct.z;
+0089 <span class="keyword">end</span>
+0090 
+0091 ctCube = ct.cubeHU{1};
+0092 ctMin  = min(ctCube(:));
+0093 ctCube = ctCube - ctMin;
+0094 ctMax  = max(ctCube(:));
+0095 ctCube = ctCube ./ ctMax;
+0096 ctCube = uint16(ctCube*double(uint16(Inf)));
+0097 
+0098 meta.RescaleIntercept = ctMin;
+0099 meta.RescaleSlope     = ctMax / double(uint16(Inf) + 1);
+0100 
+0101 meta.ImageType = <span class="string">'DERIVED\PRIMARY\AXIAL'</span>;
+0102 
+0103 fileName = <span class="string">'ct_slice_'</span>;
+0104 
+0105 obj.ctSliceMetas   = struct([]);
+0106 obj.ctExportStatus = struct([]);
+0107 
+0108 
+0109 <span class="keyword">for</span> i = 1:nSlices
+0110     ctSlice = ctCube(:,:,i);
+0111     <span class="comment">%ctSlice = permute(ctSlice,[1 2]);</span>
+0112     
+0113     obj.ctSliceMetas = obj.addStruct2StructArray(obj.ctSliceMetas,meta);
+0114     
+0115     obj.ctSliceMetas(i).ImagePositionPatient = [ct.x(1); ct.y(1); ct.z(i)];
+0116     
+0117     obj.ctSliceMetas(i).SlicePositions = z(i);
+0118     
+0119     <span class="comment">%Create and store unique ID</span>
+0120     obj.ctSliceMetas(i).SOPClassUID    = ClassUID;
+0121     
+0122     fullFileName = fullfile(obj.dicomDir,[fileName num2str(i) <span class="string">'.dcm'</span>]);
+0123     <span class="keyword">if</span> matRad_cfg.isOctave
+0124         obj.ctSliceMetas(i).SOPInstanceUID = dicomuid;
+0125         obj.ctSliceMetas(i).MediaStorageSOPInstanceUID = obj.ctSliceMetas(i).SOPInstanceUID;
+0126     
+0127         dicomwrite(ctSlice,fullFileName,obj.ctSliceMetas(i));
+0128     <span class="keyword">else</span>
+0129         status = dicomwrite(ctSlice,fullFileName,obj.ctSliceMetas(i),<span class="string">'ObjectType'</span>,<span class="string">'CT Image Storage'</span>);
+0130         obj.ctExportStatus = obj.addStruct2StructArray(obj.ctExportStatus,status);
+0131         
+0132         <span class="comment">%We need to get the info of the file just written because of Matlab's</span>
+0133         <span class="comment">%hardcoded way of generating InstanceUIDs during writing</span>
+0134         tmpInfo = dicominfo(fullFileName);
+0135         obj.ctSliceMetas(i).SOPInstanceUID              = tmpInfo.SOPInstanceUID;
+0136         obj.ctSliceMetas(i).MediaStorageSOPInstanceUID  = tmpInfo.MediaStorageSOPInstanceUID;
+0137     <span class="keyword">end</span>   
+0138     
+0139     <a href="../../../matRad/dicom/matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>(i,nSlices);
+0140     
+0141 <span class="keyword">end</span>
+0142 
+0143 <span class="keyword">end</span>
+0144</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

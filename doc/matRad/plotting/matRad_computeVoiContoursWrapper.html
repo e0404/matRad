@@ -1,0 +1,111 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_computeVoiContoursWrapper</title>
+  <meta name="keywords" content="matRad_computeVoiContoursWrapper">
+  <meta name="description" content="matRad computation of VOI contours if not precomputed">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html plotting -->
+<h1>matRad_computeVoiContoursWrapper
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad computation of VOI contours if not precomputed</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function cst = matRad_computeVoiContoursWrapper(cst,ct) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad computation of VOI contours if not precomputed
+ 
+ call
+   cst = matRad_computeVoiContoursWrapper(ct,cst)
+ 
+ input:
+   cst:        matRad cst struct
+   ct:         matRad ct struct
+ 
+ output:
+   cst:        matRad cst struct with VOI contours
+ 
+ References
+   -
+ 
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2017 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_computeVoiContours.html" class="code" title="function cst = matRad_computeVoiContours(ct,cst)">matRad_computeVoiContours</a>	matRad function that computes all VOI contours</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/dicom/@matRad_DicomExporter/matRad_exportDicomRTStruct.html" class="code" title="function obj = matRad_exportDicomRTStruct(obj)">matRad_exportDicomRTStruct</a>	matRad function to export dicom RT structure set.</li><li><a href="../../matRad/matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function cst = matRad_computeVoiContoursWrapper(cst,ct)</a>
+0002 <span class="comment">% matRad computation of VOI contours if not precomputed</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   cst = matRad_computeVoiContoursWrapper(ct,cst)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input:</span>
+0008 <span class="comment">%   cst:        matRad cst struct</span>
+0009 <span class="comment">%   ct:         matRad ct struct</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% output:</span>
+0012 <span class="comment">%   cst:        matRad cst struct with VOI contours</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% References</span>
+0015 <span class="comment">%   -</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% Copyright 2017 the matRad development team.</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0022 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0023 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0024 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0025 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0026 <span class="comment">% LICENSE file.</span>
+0027 <span class="comment">%</span>
+0028 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0029 
+0030 <span class="keyword">if</span> size(cst,2) &lt; 7
+0031     cst = <a href="matRad_computeVoiContours.html" class="code" title="function cst = matRad_computeVoiContours(ct,cst)">matRad_computeVoiContours</a>(ct,cst);
+0032 <span class="keyword">else</span>
+0033     <span class="keyword">for</span> i = 1:size(cst,1)
+0034         <span class="keyword">if</span> isempty(cst{i,7})
+0035             cst = <a href="matRad_computeVoiContours.html" class="code" title="function cst = matRad_computeVoiContours(ct,cst)">matRad_computeVoiContours</a>(ct,cst);
+0036             <span class="keyword">break</span>
+0037         <span class="keyword">end</span>
+0038     <span class="keyword">end</span>
+0039 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

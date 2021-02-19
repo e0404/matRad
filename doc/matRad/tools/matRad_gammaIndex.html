@@ -1,0 +1,306 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_gammaIndex</title>
+  <meta name="keywords" content="matRad_gammaIndex">
+  <meta name="description" content="gamma index calculation">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html tools -->
+<h1>matRad_gammaIndex
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">gamma index calculation</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,n,localglobal,cst) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> gamma index calculation 
+ according to http://www.ncbi.nlm.nih.gov/pubmed/9608475
+ 
+ call
+   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,cst)
+   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,cst)
+   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,n,cst)
+   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,localglobal,cst)
+   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,n,cst)
+               ...
+   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,n,localglobal,cst)
+
+ input
+   cube1:         dose cube as an M x N x O array
+   cube2:         dose cube as an M x N x O array
+   resolution:    resolution of the cubes [mm/voxel]
+   criteria:      [1x2] vector specifying the distance to agreement
+                  criterion; first element is percentage difference,
+                  second element is distance [mm]
+   slice:         (optional) slice in cube1/2 that will be visualized 
+   n:             (optional) number of interpolations. there will be 2^n-1 
+                  interpolation points. The maximum suggested value is 3.
+   localglobal:   (optional) parameter to choose between 'global' and 'local' 
+                  normalization 
+   cst:           list of interessing volumes inside the patient
+
+ output 
+
+   gammaCube:          result of gamma index calculation
+   gammaPassRateCell:  rate of voxels passing the specified gamma criterion 
+                  evaluated for every structure listed in 'cst'.
+                  note that only voxels exceeding the dose threshold are
+                  considered.
+
+ References
+   [1]  http://www.ncbi.nlm.nih.gov/pubmed/9608475
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/plotting/matRad_getColormap.html" class="code" title="function output = matRad_getColormap(name,size)">matRad_getColormap</a>	matRad function wrapper for getting a colormap</li><li><a href="matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>	matRad function to get the software environment matRad is running on</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/examples/matRad_example5_protons.html" class="code" title="">matRad_example5_protons</a>	% Example: Proton Treatment Plan with subsequent Isocenter shift</li><li><a href="../../matRad/examples/matRad_example6_protonsNoise.html" class="code" title="">matRad_example6_protonsNoise</a>	% Example: Proton Treatment Plan with Manipulated CT values</li><li><a href="matRad_compareDose.html" class="code" title="function [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst,enable , contours, pln, criteria, n,localglobal)">matRad_compareDose</a>	Comparison of two dose cubes in terms of gamma index, absolute and visual difference</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,n,localglobal,cst)</a>
+0002 <span class="comment">% gamma index calculation</span>
+0003 <span class="comment">% according to http://www.ncbi.nlm.nih.gov/pubmed/9608475</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% call</span>
+0006 <span class="comment">%   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,cst)</span>
+0007 <span class="comment">%   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,cst)</span>
+0008 <span class="comment">%   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,n,cst)</span>
+0009 <span class="comment">%   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,localglobal,cst)</span>
+0010 <span class="comment">%   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,n,cst)</span>
+0011 <span class="comment">%               ...</span>
+0012 <span class="comment">%   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,n,localglobal,cst)</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% input</span>
+0015 <span class="comment">%   cube1:         dose cube as an M x N x O array</span>
+0016 <span class="comment">%   cube2:         dose cube as an M x N x O array</span>
+0017 <span class="comment">%   resolution:    resolution of the cubes [mm/voxel]</span>
+0018 <span class="comment">%   criteria:      [1x2] vector specifying the distance to agreement</span>
+0019 <span class="comment">%                  criterion; first element is percentage difference,</span>
+0020 <span class="comment">%                  second element is distance [mm]</span>
+0021 <span class="comment">%   slice:         (optional) slice in cube1/2 that will be visualized</span>
+0022 <span class="comment">%   n:             (optional) number of interpolations. there will be 2^n-1</span>
+0023 <span class="comment">%                  interpolation points. The maximum suggested value is 3.</span>
+0024 <span class="comment">%   localglobal:   (optional) parameter to choose between 'global' and 'local'</span>
+0025 <span class="comment">%                  normalization</span>
+0026 <span class="comment">%   cst:           list of interessing volumes inside the patient</span>
+0027 <span class="comment">%</span>
+0028 <span class="comment">% output</span>
+0029 <span class="comment">%</span>
+0030 <span class="comment">%   gammaCube:          result of gamma index calculation</span>
+0031 <span class="comment">%   gammaPassRateCell:  rate of voxels passing the specified gamma criterion</span>
+0032 <span class="comment">%                  evaluated for every structure listed in 'cst'.</span>
+0033 <span class="comment">%                  note that only voxels exceeding the dose threshold are</span>
+0034 <span class="comment">%                  considered.</span>
+0035 <span class="comment">%</span>
+0036 <span class="comment">% References</span>
+0037 <span class="comment">%   [1]  http://www.ncbi.nlm.nih.gov/pubmed/9608475</span>
+0038 <span class="comment">%</span>
+0039 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0040 <span class="comment">%</span>
+0041 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0042 <span class="comment">%</span>
+0043 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0044 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0045 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0046 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0047 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0048 <span class="comment">% LICENSE file.</span>
+0049 <span class="comment">%</span>
+0050 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0051 
+0052 [env, ~] = <a href="matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>();
+0053 
+0054 <span class="comment">% set parameters for gamma index calculation</span>
+0055 <span class="keyword">if</span> exist(<span class="string">'criteria'</span>,<span class="string">'var'</span>)
+0056     relDoseThreshold = criteria(1); <span class="comment">% in [%]</span>
+0057     dist2AgreeMm     = criteria(2); <span class="comment">% in [mm]</span>
+0058 <span class="keyword">else</span>
+0059     dist2AgreeMm     = 3; <span class="comment">% in [mm]</span>
+0060     relDoseThreshold = 3; <span class="comment">% in [%]</span>
+0061 <span class="keyword">end</span>
+0062 
+0063 <span class="comment">% set parameters for gamma index calculation</span>
+0064 <span class="keyword">if</span> ~exist(<span class="string">'n'</span>,<span class="string">'var'</span>)
+0065     n = 0;
+0066 <span class="keyword">end</span>
+0067 
+0068 <span class="comment">% set global or local gamma evaluation</span>
+0069 <span class="keyword">if</span> ~exist(<span class="string">'localglobal'</span>,<span class="string">'var'</span>)
+0070     localglobal = <span class="string">'global'</span>;
+0071 <span class="keyword">end</span>
+0072 
+0073 <span class="comment">% check if cubes consistent</span>
+0074 <span class="keyword">if</span> ~isequal(size(cube1),size(cube2))
+0075    error(<span class="string">'dose cubes must be the same size\n'</span>); 
+0076 <span class="keyword">end</span>
+0077 
+0078 <span class="comment">% define search nighborhood and resolution</span>
+0079 <span class="keyword">if</span> round(n) ~= n
+0080     error(<span class="string">'n must be an integer value'</span>);
+0081 <span class="keyword">else</span>
+0082     resolution = resolution./(2.^n);
+0083 <span class="keyword">end</span>
+0084 
+0085 neighborhood = 1.5* dist2AgreeMm; <span class="comment">% [mm]</span>
+0086 searchX = ceil(neighborhood./resolution(1));
+0087 searchY = ceil(neighborhood./resolution(2));
+0088 searchZ = ceil(neighborhood./resolution(3));
+0089 
+0090 <span class="comment">% init cube</span>
+0091 <span class="comment">% cut all the zeros surrounding the interesting part</span>
+0092 cut1 = any(any(cube1,2),3);
+0093 cut2 = any(any(cube1,1),3);
+0094 cut3 = any(any(cube1,1),2);
+0095 
+0096 <span class="comment">% avoids that &quot;zero-slides&quot; are deleted between two interest regions</span>
+0097 k = find(cut1); cut1(k(1):k(end)) = 1;
+0098 k = find(cut2); cut2(k(1):k(end)) = 1;
+0099 k = find(cut2); cut2(k(1):k(end)) = 1;
+0100 
+0101 <span class="comment">% copy cubes</span>
+0102 cubex1c = cube1;
+0103 cubex2c = cube2;
+0104 
+0105 <span class="comment">% cut cubes</span>
+0106 cubex1c( ~cut1, :, :) = []; <span class="comment">% rows</span>
+0107 cubex1c( :, ~cut2, :) = []; <span class="comment">% columns</span>
+0108 cubex1c( :, :, ~cut3) = []; <span class="comment">% slices</span>
+0109 cubex2c( ~cut1, :, :) = []; <span class="comment">% rows</span>
+0110 cubex2c( :, ~cut2, :) = []; <span class="comment">% columns</span>
+0111 cubex2c( :, :, ~cut3) = []; <span class="comment">% slices</span>
+0112 
+0113 <span class="comment">% pad cubes</span>
+0114 cubex2 = zeros([size(cubex2c,1)+2*searchX size(cubex2c,2)+2*searchY size(cubex2c,3)+2*searchZ]);
+0115 cubex2((1+searchX):(end-searchX), <span class="keyword">...</span>
+0116        (1+searchY):(end-searchY), <span class="keyword">...</span>
+0117        (1+searchZ):(end-searchZ)) = cubex2c;
+0118    
+0119 <span class="comment">% interpolate if necessary</span>
+0120 <span class="keyword">if</span> n &gt; 0
+0121     <span class="keyword">switch</span> env
+0122         <span class="keyword">case</span> <span class="string">'MATLAB'</span>
+0123             cubex2 = interp3(cubex2,n,<span class="string">'cubic'</span>);
+0124         <span class="keyword">case</span> <span class="string">'OCTAVE'</span>
+0125             cubex2 = interp3(cubex2,n,<span class="string">'linear'</span>);
+0126     <span class="keyword">end</span>
+0127 <span class="keyword">end</span>
+0128 
+0129 <span class="comment">% set up temporary cubes required for calculation</span>
+0130 gammaCubeSq = inf*ones(size(cubex1c));
+0131 
+0132 <span class="comment">% adjust dose threshold</span>
+0133 <span class="keyword">if</span> strcmp(localglobal,<span class="string">'local'</span>)
+0134     doseThreshold = cubex1c .* relDoseThreshold/100;                
+0135 <span class="keyword">elseif</span> strcmp(localglobal,<span class="string">'global'</span>)
+0136     doseThreshold = relDoseThreshold/100 * max(cube1(:));
+0137 <span class="keyword">end</span>
+0138 
+0139 <span class="comment">% search for min</span>
+0140 <span class="keyword">for</span> i = -searchX:searchX
+0141     <span class="keyword">for</span> j = -searchY:searchY
+0142         <span class="keyword">for</span> k = -searchZ:searchZ
+0143             
+0144             delta_sq = ((i*resolution(1))^2 + <span class="keyword">...</span>
+0145                         (j*resolution(2))^2 + <span class="keyword">...</span>
+0146                         (k*resolution(3))^2) / dist2AgreeMm^2;                 
+0147             
+0148             tmpCube = cubex1c - cubex2((1+((2^n)*searchX)+i) : 2^n : (end-((2^n)*searchX)+i), <span class="keyword">...</span>
+0149                                        (1+((2^n)*searchY)+j) : 2^n : (end-((2^n)*searchY)+j), <span class="keyword">...</span>
+0150                                        (1+((2^n)*searchZ)+k) : 2^n : (end-((2^n)*searchZ)+k));
+0151                     
+0152             tmpCube = tmpCube.^2 ./ doseThreshold.^2 + delta_sq;
+0153             
+0154             gammaCubeSq = min(gammaCubeSq,tmpCube);
+0155             
+0156             
+0157         <span class="keyword">end</span>
+0158     <span class="keyword">end</span>
+0159     
+0160 <span class="comment">%     display '.';</span>
+0161     
+0162 <span class="keyword">end</span>
+0163 
+0164 <span class="comment">% evaluate gamma cube and set to zero all the voxel that contain an</span>
+0165 <span class="comment">% infinite value</span>
+0166 gammaCubeSqx                 = zeros(size(cube1));
+0167 gammaCubeSqx(cut1,cut2,cut3) = gammaCubeSq;
+0168 gammaCube                    = sqrt(gammaCubeSqx);
+0169 
+0170 <span class="comment">% set values where we did not compute gamma keeping inf in the cube to zero</span>
+0171 gammaCube(cube1&lt;=0 &amp; cube2&lt;=0) = 0;
+0172   
+0173 <span class="comment">% compute gamma pass rate</span>
+0174 doseIx          = cube1 &gt; relDoseThreshold/100*max(cube1(:)) | cube2 &gt; relDoseThreshold/100*max(cube2(:));
+0175 numOfPassGamma  = sum(gammaCube(doseIx) &lt; 1);
+0176 gammaPassRate   = 100 * numOfPassGamma / sum(doseIx(:));
+0177 
+0178 <span class="comment">% compute stats for all segmented sturtures</span>
+0179 <span class="keyword">if</span> exist(<span class="string">'cst'</span>,<span class="string">'var'</span>)
+0180     gammaPassRateCell = cell(1,2);
+0181     gammaPassRateCell{1,1} = <span class="string">'Whole CT'</span>;
+0182     gammaPassRateCell{1,2} = gammaPassRate;
+0183 
+0184     <span class="keyword">for</span> i = 1:size(cst, 1)
+0185         volume = cst{i,4}{1,1}; <span class="comment">% indices of voxels of the interesting volume</span>
+0186         doseIxVol = false(size(doseIx)); 
+0187         doseIxVol(volume) = doseIx(volume); 
+0188         numOfPassGammaVol  = sum(gammaCube(doseIxVol) &lt; 1);
+0189         gammaPassRateVol   = 100 * numOfPassGammaVol / sum(doseIxVol(:));
+0190         <span class="keyword">if</span> isnan(gammaPassRateVol) <span class="comment">% remove organs not receiving any dose (resulting in NaN)</span>
+0191             <span class="keyword">continue</span>;
+0192         <span class="keyword">end</span>
+0193         gammaPassRateCell{end+1, 1} = cst{i,2};
+0194         gammaPassRateCell{<span class="keyword">end</span>, 2} = gammaPassRateVol;
+0195 
+0196     <span class="keyword">end</span>
+0197 <span class="keyword">end</span>
+0198 
+0199 <span class="comment">% visualize if applicable</span>
+0200 <span class="keyword">if</span> exist(<span class="string">'slice'</span>,<span class="string">'var'</span>) &amp;&amp; ~isempty(slice)
+0201     figure
+0202     set(gcf,<span class="string">'Color'</span>,[1 1 1]);
+0203     imagesc(gammaCube(:,:,slice),[0 2])
+0204     myColormap = <a href="../../matRad/plotting/matRad_getColormap.html" class="code" title="function output = matRad_getColormap(name,size)">matRad_getColormap</a>(<span class="string">'gammaIndex'</span>);
+0205 
+0206     colormap(gca,myColormap);
+0207     colorbar
+0208 
+0209     title({[num2str(gammaPassRate,5) <span class="string">'% of points &gt; '</span> num2str(relDoseThreshold) <span class="keyword">...</span>
+0210             <span class="string">'% pass gamma criterion ('</span> num2str(relDoseThreshold) <span class="string">'% / '</span> <span class="keyword">...</span>
+0211             num2str(dist2AgreeMm) <span class="string">'mm)'</span>]; [<span class="string">'with '</span> num2str(2^n-1) <span class="string">' interpolation points'</span>]});
+0212 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

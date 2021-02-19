@@ -1,0 +1,239 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_importDicomRTPlan</title>
+  <meta name="keywords" content="matRad_importDicomRTPlan">
+  <meta name="description" content="matRad function to import dicom RTPLAN data">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html dicom -->
+<h1>matRad_importDicomRTPlan
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad function to import dicom RTPLAN data</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function pln = matRad_importDicomRTPlan(ct, rtPlanFiles, dicomMetaBool) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to import dicom RTPLAN data
+ 
+ call
+   pln = matRad_importDicomRTPlan(ct, rtPlanFiles, dicomMetaBool)
+
+ input
+   ct:             ct imported by the matRad_importDicomCt function
+   rtPlanFiles:       list of RTPlan Dicom files
+   dicomMetaBool:  import whole dicom information
+
+ output
+   pln:            matRad pln struct with meta information. Note that
+                   bixelWidth is determined via the importSteering function.
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_importFieldShapes.html" class="code" title="function collimation = matRad_importFieldShapes(beamSequence, fractionSequence)">matRad_importFieldShapes</a>	function to import collimator shapes from a DICOM RT plan</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_importDicom.html" class="code" title="function [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )">matRad_importDicom</a>	matRad wrapper function to import a predefined set of dicom files</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function pln = matRad_importDicomRTPlan(ct, rtPlanFiles, dicomMetaBool)</a>
+0002 <span class="comment">% matRad function to import dicom RTPLAN data</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   pln = matRad_importDicomRTPlan(ct, rtPlanFiles, dicomMetaBool)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   ct:             ct imported by the matRad_importDicomCt function</span>
+0009 <span class="comment">%   rtPlanFiles:       list of RTPlan Dicom files</span>
+0010 <span class="comment">%   dicomMetaBool:  import whole dicom information</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% output</span>
+0013 <span class="comment">%   pln:            matRad pln struct with meta information. Note that</span>
+0014 <span class="comment">%                   bixelWidth is determined via the importSteering function.</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% References</span>
+0017 <span class="comment">%   -</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0022 <span class="comment">%</span>
+0023 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0024 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0025 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0026 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0027 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0028 <span class="comment">% LICENSE file.</span>
+0029 <span class="comment">%</span>
+0030 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0031 
+0032 <span class="comment">%% load plan file</span>
+0033 <span class="comment">% check size of RT Plan</span>
+0034 <span class="keyword">if</span> size(rtPlanFiles,1) ~= 1
+0035    errordlg(<span class="string">'Too few or to many RTPlan files'</span>)
+0036 <span class="keyword">end</span>
+0037 
+0038 <span class="comment">% read information out of the RT file</span>
+0039 <span class="keyword">if</span> verLessThan(<span class="string">'matlab'</span>,<span class="string">'9'</span>)
+0040     planInfo = dicominfo(rtPlanFiles{1});
+0041 <span class="keyword">else</span>
+0042     planInfo = dicominfo(rtPlanFiles{1},<span class="string">'UseDictionaryVR'</span>,true);
+0043 <span class="keyword">end</span>
+0044 
+0045 <span class="comment">% check which type of Radiation is used</span>
+0046 <span class="keyword">if</span> isfield(planInfo, <span class="string">'BeamSequence'</span>)
+0047     BeamParam = <span class="string">'BeamSequence'</span>;
+0048     ControlParam = <span class="string">'ControlPointSequence'</span>;
+0049 <span class="keyword">elseif</span> isfield(planInfo, <span class="string">'IonBeamSequence'</span>)
+0050     BeamParam = <span class="string">'IonBeamSequence'</span>;
+0051     ControlParam = <span class="string">'IonControlPointSequence'</span>;
+0052 <span class="keyword">else</span>
+0053     errordlg(<span class="string">'Not supported kind of DICOM RT plan file.'</span>);    
+0054 <span class="keyword">end</span>
+0055 
+0056 <span class="comment">% get beam sequence</span>
+0057 BeamSequence = planInfo.(BeamParam);
+0058 BeamSeqNames = fieldnames(BeamSequence);
+0059 
+0060 <span class="comment">% use the treatment beams only</span>
+0061 <span class="keyword">if</span> isfield(BeamSequence.(BeamSeqNames{1}),<span class="string">'TreatmentDeliveryType'</span>)
+0062     <span class="keyword">for</span> i = 1:length(BeamSeqNames)
+0063         currBeamSeq = BeamSequence.(BeamSeqNames{i});
+0064         <span class="keyword">try</span>
+0065             treatDelType = currBeamSeq.TreatmentDeliveryType;
+0066             <span class="keyword">if</span> ~strcmpi(treatDelType,<span class="string">'TREATMENT'</span>)
+0067                 BeamSequence = rmfield(BeamSequence,BeamSeqNames{i});
+0068             <span class="keyword">end</span>
+0069         <span class="keyword">catch</span>
+0070             warning(<span class="string">'Something went wrong while determining the type of the beam.'</span>);
+0071         <span class="keyword">end</span>
+0072     <span class="keyword">end</span>
+0073     BeamSeqNames = fieldnames(BeamSequence);
+0074 <span class="keyword">end</span>
+0075 
+0076 
+0077 <span class="comment">%% get information may change between beams</span>
+0078 <span class="comment">% loop over beams</span>
+0079 gantryAngles{length(BeamSeqNames)} = [];
+0080 PatientSupportAngle{length(BeamSeqNames)} = [];
+0081 isoCenter = NaN*ones(length(BeamSeqNames),3);
+0082 <span class="keyword">for</span> i = 1:length(BeamSeqNames)   
+0083     currBeamSeq             = BeamSequence.(BeamSeqNames{i});
+0084     <span class="comment">% parameters not changing are stored in the first ControlPointSequence</span>
+0085     gantryAngles{i}         = currBeamSeq.(ControlParam).Item_1.GantryAngle;
+0086     PatientSupportAngle{i}  = currBeamSeq.(ControlParam).Item_1.PatientSupportAngle;
+0087     isoCenter(i,:)          = currBeamSeq.(ControlParam).Item_1.IsocenterPosition';
+0088 <span class="keyword">end</span>
+0089 
+0090 <span class="comment">% transform iso. At the moment just this way for HFS</span>
+0091 <span class="keyword">if</span> ct.dicomInfo.ImageOrientationPatient == [1;0;0;0;1;0]
+0092     isoCenter = isoCenter - ones(length(BeamSeqNames),1) * <span class="keyword">...</span>
+0093         ([ct.x(1) ct.y(1) ct.z(1)] - [ct.resolution.x ct.resolution.y ct.resolution.z]);
+0094 <span class="keyword">else</span>
+0095     error(<span class="string">'This Orientation is not yet supported.'</span>);
+0096 <span class="keyword">end</span>
+0097 
+0098 <span class="comment">%% read constant parameters</span>
+0099 <span class="comment">% readout charge and mass to set radiationMode to matRad specific name</span>
+0100 radiationMode = planInfo.(BeamParam).Item_1.RadiationType;
+0101 <span class="keyword">if</span> ~strncmpi(radiationMode,<span class="string">'photons'</span>,6)
+0102     <span class="keyword">try</span>
+0103         radiationMass = planInfo.(BeamParam).Item_1.RadiationMassNumber;
+0104         radiationAtomicNumber = planInfo.(BeamParam).Item_1.RadiationAtomicNumber;
+0105     <span class="keyword">catch</span>
+0106         warning(<span class="string">'Could not determine mass and atomic number of the particle'</span>);
+0107     <span class="keyword">end</span>
+0108 <span class="keyword">end</span>
+0109 
+0110 <span class="keyword">if</span> strncmpi(radiationMode,<span class="string">'photons'</span>,6)
+0111     radiationMode = <span class="string">'photons'</span>;
+0112 <span class="keyword">elseif</span> strncmpi(radiationMode,<span class="string">'proton'</span>,6)
+0113     radiationMode = <span class="string">'protons'</span>;
+0114 <span class="keyword">elseif</span> (strncmpi(radiationMode,<span class="string">'ion'</span>,3) &amp;&amp; radiationMass == 12 &amp;&amp; radiationAtomicNumber == 6)
+0115     radiationMode = <span class="string">'carbon'</span>;
+0116 <span class="keyword">else</span>
+0117     warning(<span class="string">'The given type of radiation is not yet supported'</span>);
+0118 <span class="keyword">end</span>
+0119 
+0120 <span class="comment">% extract field shapes</span>
+0121 <span class="keyword">if</span> strcmp(radiationMode, <span class="string">'photons'</span>)
+0122            
+0123     fractionSequence         = planInfo.FractionGroupSequence.Item_1;
+0124     pln.propStf.collimation  = <a href="matRad_importFieldShapes.html" class="code" title="function collimation = matRad_importFieldShapes(beamSequence, fractionSequence)">matRad_importFieldShapes</a>(BeamSequence,fractionSequence);
+0125     
+0126 <span class="keyword">end</span>
+0127 
+0128 <span class="comment">%% write parameters found to pln variable</span>
+0129 pln.radiationMode   = radiationMode; <span class="comment">% either photons / protons / carbon</span>
+0130 pln.numOfFractions  = planInfo.FractionGroupSequence.Item_1.NumberOfFractionsPlanned;
+0131 pln.machine         = planInfo.(BeamParam).Item_1.TreatmentMachineName;
+0132 
+0133 pln.propStf.isoCenter    = isoCenter;
+0134 pln.propStf.bixelWidth   = NaN; <span class="comment">% [mm] / also corresponds to lateral spot spacing for particles</span>
+0135 pln.propStf.gantryAngles = [gantryAngles{1:length(BeamSeqNames)}];
+0136 pln.propStf.couchAngles  = [PatientSupportAngle{1:length(BeamSeqNames)}]; <span class="comment">% [°]</span>
+0137 pln.propStf.numOfBeams   = length(BeamSeqNames);
+0138 
+0139 
+0140 pln.propOpt.bioOptimization = <span class="string">'none'</span>; <span class="comment">% none: physical optimization;             const_RBExD; constant RBE of 1.1;</span>
+0141                                       <span class="comment">% LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose</span>
+0142 pln.propOpt.runSequencing   = false; <span class="comment">% 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below</span>
+0143 pln.propOpt.runDAO          = false; <span class="comment">% 1/true: run DAO, 0/false: don't / will be ignored for particles</span>
+0144 
+0145 <span class="comment">% if we imported field shapes then let's trigger field based dose calc by</span>
+0146 <span class="comment">% setting the bixelWidth to 'field'</span>
+0147 <span class="keyword">if</span> isfield(pln.propStf,<span class="string">'collimation'</span>)
+0148     pln.propStf.bixelWidth  = <span class="string">'field'</span>; 
+0149 <span class="keyword">end</span>
+0150 
+0151 <span class="comment">% timestamp</span>
+0152 pln.DicomInfo.timeStamp = datestr(clock);
+0153 
+0154 <span class="keyword">try</span>
+0155    pln.DicomInfo.SOPClassUID = planInfo.SOPClassUID;
+0156    pln.DicomInfo.SOPInstanceUID = planInfo.SOPInstanceUID;
+0157    pln.DicomInfo.ReferencedDoseSequence = planInfo.ReferencedDoseSequence;
+0158 <span class="keyword">catch</span>
+0159 <span class="keyword">end</span>
+0160 
+0161 <span class="comment">% safe entire dicomInfo</span>
+0162 <span class="keyword">if</span> dicomMetaBool == true
+0163     pln.DicomInfo.Meta = planInfo;
+0164 <span class="keyword">end</span>
+0165 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

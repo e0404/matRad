@@ -1,0 +1,150 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_plotIsoDose3D</title>
+  <meta name="keywords" content="matRad_plotIsoDose3D">
+  <meta name="description" content="matRad function that plots isolines in 3d">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html plotting -->
+<h1>matRad_plotIsoDose3D
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad function that plots isolines in 3d</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function hpatch = matRad_plotIsoDose3D(axesHandle,xMesh,yMesh,zMesh,doseCube,isoLevels,cMap,window,alpha) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function that plots isolines in 3d
+
+ call
+   hpatch = matRad_plotIsoDose3D(axesHandle,xMesh,yMesh,zMesh,doseCube,isoLevels,cMap,window,alpha)
+
+ input
+   axesHandle  handle to axes the slice should be displayed in
+   x/y/zMesh   meshs
+   doseCube    dose cube
+   isoLevels   levels for computation
+   cMap        colormap
+   window      window for dose display
+   alpha       transparency
+
+ output
+   hpatch: handle to the patch object
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team.
+
+ This file is part of the matRad project. It is subject to the license
+ terms in the LICENSE file found in the top-level directory of this
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+ of the matRad project, including this file, may be copied, modified,
+ propagated, or distributed except according to the terms contained in the
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function hpatch = matRad_plotIsoDose3D(axesHandle,xMesh,yMesh,zMesh,doseCube,isoLevels,cMap,window,alpha)</a>
+0002 <span class="comment">% matRad function that plots isolines in 3d</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   hpatch = matRad_plotIsoDose3D(axesHandle,xMesh,yMesh,zMesh,doseCube,isoLevels,cMap,window,alpha)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   axesHandle  handle to axes the slice should be displayed in</span>
+0009 <span class="comment">%   x/y/zMesh   meshs</span>
+0010 <span class="comment">%   doseCube    dose cube</span>
+0011 <span class="comment">%   isoLevels   levels for computation</span>
+0012 <span class="comment">%   cMap        colormap</span>
+0013 <span class="comment">%   window      window for dose display</span>
+0014 <span class="comment">%   alpha       transparency</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% output</span>
+0017 <span class="comment">%   hpatch: handle to the patch object</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% References</span>
+0020 <span class="comment">%   -</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0025 <span class="comment">%</span>
+0026 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0027 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0028 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0029 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0030 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0031 <span class="comment">% LICENSE file.</span>
+0032 <span class="comment">%</span>
+0033 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0034 
+0035 matRad_cfg = MatRad_Config.instance();
+0036 
+0037 <span class="keyword">if</span> nargin &lt; 9
+0038     alpha = 0.1;
+0039 <span class="keyword">end</span>
+0040 
+0041 <span class="keyword">if</span> nargin &lt; 8
+0042     window = [min(doseCube(:)) max(doseCube(:))];
+0043 <span class="keyword">end</span>
+0044 
+0045 <span class="keyword">if</span> nargin &lt; 7
+0046     cMap = jet(64);
+0047 <span class="keyword">end</span>
+0048 
+0049 <span class="keyword">if</span> nargin &lt; 6
+0050     isoLevels = linspace(window(1),window(2),5);
+0051 <span class="keyword">end</span>
+0052 
+0053 cMapScale = size(cMap,1) - 1;
+0054 
+0055 isoColorLevel = uint8(cMapScale*(isoLevels - window(1))./(window(2)-window(1)));
+0056 
+0057 <span class="comment">%This circumenvents a bug in Octave when the index in the image hase the maximum value of uint8</span>
+0058 <span class="keyword">if</span> matRad_cfg.isOctave
+0059     isoColorLevel(isoColorLevel == 255) = 254;
+0060 <span class="keyword">end</span>
+0061 
+0062 colors = squeeze(ind2rgb(isoColorLevel,cMap));
+0063 
+0064 <span class="keyword">for</span> isoValIx = 1:numel(isoLevels)
+0065     hpatch = patch(axesHandle,isosurface(xMesh,yMesh,zMesh,doseCube,isoLevels(isoValIx)));
+0066     reducepatch(hpatch);
+0067     isonormals(xMesh,yMesh,zMesh,doseCube,hpatch);
+0068     hpatch.FaceColor = colors(isoValIx,:);
+0069     hpatch.EdgeColor = <span class="string">'none'</span>;
+0070     hpatch.FaceAlpha = alpha;
+0071 <span class="keyword">end</span>
+0072 <span class="keyword">end</span>
+0073</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_BackProjection</title>
+  <meta name="keywords" content="matRad_BackProjection">
+  <meta name="description" content="">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../../menu.html matRad --><!-- ../menu.html optimization --><!-- menu.html projections -->
+<h1>matRad_BackProjection
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box"></div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">This is a script file. </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"></pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_BackProjection.html" class="code" title="">matRad_BackProjection</a>	</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_BackProjection.html" class="code" title="">matRad_BackProjection</a>	</li><li><a href="matRad_ConstantRBEProjection.html" class="code" title="">matRad_ConstantRBEProjection</a>	</li><li><a href="matRad_DoseProjection.html" class="code" title="">matRad_DoseProjection</a>	</li><li><a href="matRad_EffectProjection.html" class="code" title="">matRad_EffectProjection</a>	</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>Subfunctions <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<ul style="list-style-type:disc">
+<li><a href="#_sub1" class="code">function obj = matRad_BackProjection()</a></li><li><a href="#_sub2" class="code">function obj = compute(obj,dij,w)</a></li><li><a href="#_sub3" class="code">function obj = computeGradient(obj,dij,doseGrad,w)</a></li><li><a href="#_sub4" class="code">function d = GetResult(obj)</a></li><li><a href="#_sub5" class="code">function wGrad = GetGradient(obj)</a></li><li><a href="#_sub6" class="code">function d = computeResult(obj,dij,w)</a></li><li><a href="#_sub7" class="code">function wGrad = projectGradient(obj,dij,doseGrad,w)</a></li><li><a href="#_sub8" class="code">function d = computeSingleScenario(obj,dij,scen,w)</a></li><li><a href="#_sub9" class="code">function wGrad = projectSingleScenarioGradient(obj,dij,doseGrad,scen,w)</a></li></ul>
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre>0001 classdef <a href="matRad_BackProjection.html" class="code" title="">matRad_BackProjection</a>
+0002 <span class="comment">% matRad_BackProjection superclass for all backprojection algorithms</span>
+0003 <span class="comment">% used within matRad optimzation processes</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% Copyright 2019 the matRad development team.</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0010 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0011 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0012 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0013 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0014 <span class="comment">% LICENSE file.</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0017    
+0018     properties (Access = protected)
+0019         wCache
+0020         wGradCache  <span class="comment">%different cache for optimal performance (if multiple evaluations of objective but not gradient are required)</span>
+0021         d
+0022         wGrad
+0023     <span class="keyword">end</span>
+0024     
+0025     properties 
+0026         dij          <span class="comment">%reference to matRad dij struct (to enable local changes)</span>
+0027     <span class="keyword">end</span>
+0028 
+0029     
+0030     methods
+0031         <a name="_sub0" href="#_subfunctions" class="code">function obj = matRad_BackProjection()</a>
+0032             obj.wCache = [];
+0033             obj.wGradCache = [];
+0034             obj.d = []; 
+0035             obj.wGrad = [];
+0036         <span class="keyword">end</span>
+0037         
+0038         <a name="_sub1" href="#_subfunctions" class="code">function obj = compute(obj,dij,w)</a>
+0039             <span class="keyword">if</span> ~isequal(obj.wCache,w)
+0040                 obj.d = obj.computeResult(dij,w);
+0041                 obj.wCache = w;
+0042             <span class="keyword">end</span>
+0043         <span class="keyword">end</span>
+0044         
+0045         <a name="_sub2" href="#_subfunctions" class="code">function obj = computeGradient(obj,dij,doseGrad,w)</a>
+0046             <span class="keyword">if</span> ~isequal(obj.wGradCache,w)
+0047                 obj.wGrad = obj.projectGradient(dij,doseGrad,w);
+0048                 obj.wGradCache = w;
+0049             <span class="keyword">end</span>
+0050         <span class="keyword">end</span>
+0051         
+0052         <a name="_sub3" href="#_subfunctions" class="code">function d = GetResult(obj)</a>
+0053             d = obj.d;
+0054         <span class="keyword">end</span>
+0055         
+0056         <a name="_sub4" href="#_subfunctions" class="code">function wGrad = GetGradient(obj)</a>
+0057             wGrad = obj.wGrad;
+0058         <span class="keyword">end</span>
+0059         
+0060         <a name="_sub5" href="#_subfunctions" class="code">function d = computeResult(obj,dij,w)</a>
+0061             d = cell(size(dij.physicalDose));
+0062             d = arrayfun(@(scen) <a href="#_sub8" class="code" title="subfunction d = computeSingleScenario(obj,dij,scen,w)">computeSingleScenario</a>(obj,dij,scen,w),ones(size(dij.physicalDose)),<span class="string">'UniformOutput'</span>,false);
+0063         <span class="keyword">end</span>
+0064         
+0065         <a name="_sub6" href="#_subfunctions" class="code">function wGrad = projectGradient(obj,dij,doseGrad,w)</a>
+0066             wGrad = cell(size(dij.physicalDose));
+0067             wGrad = arrayfun(@(scen) <a href="#_sub9" class="code" title="subfunction wGrad = projectSingleScenarioGradient(obj,dij,doseGrad,scen,w)">projectSingleScenarioGradient</a>(obj,dij,doseGrad,scen,w),ones(size(dij.physicalDose)),<span class="string">'UniformOutput'</span>,false);
+0068         <span class="keyword">end</span>
+0069     <span class="keyword">end</span>
+0070     
+0071     <span class="comment">%These should be abstract methods, however Octave can't parse them. As soon</span>
+0072     <span class="comment">%as Octave is able to do this, they should be made abstract again</span>
+0073     methods <span class="comment">%(Abstract)</span>
+0074         <a name="_sub7" href="#_subfunctions" class="code">function d = computeSingleScenario(obj,dij,scen,w)</a>
+0075             error(<span class="string">'Function needs to be implemented'</span>);
+0076         <span class="keyword">end</span>
+0077         
+0078         <a name="_sub8" href="#_subfunctions" class="code">function wGrad = projectSingleScenarioGradient(obj,dij,doseGrad,scen,w)</a>
+0079             error(<span class="string">'Function needs to be implemented'</span>);
+0080         <span class="keyword">end</span>
+0081     <span class="keyword">end</span>
+0082 <span class="keyword">end</span>
+0083</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

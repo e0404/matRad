@@ -1,0 +1,184 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_showDVH</title>
+  <meta name="keywords" content="matRad_showDVH">
+  <meta name="description" content="matRad dvh visualizaion">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_showDVH
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">matRad dvh visualizaion</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function matRad_showDVH(dvh,cst,pln,lineStyleIndicator) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad dvh visualizaion
+ 
+ call
+   matRad_showDVH(dvh,cst)
+   matRad_showDVH(dvh,cst,pln)
+   matRad_showDVH(dvh,cst,lineStyleIndicator)
+   matRad_showDVH(dvh,cst,pln,lineStyleIndicator)
+
+ input
+   dvh:                result struct from fluence optimization/sequencing
+   cst:                matRad cst struct
+   pln:                (now optional) matRad pln struct,
+                       standard uses Dose [Gy]
+   lineStyleIndicator: (optional) integer (1,2,3,4) to indicate the current linestyle
+                       (hint: use different lineStyles to overlay
+                       different dvhs)
+
+ output
+   graphical display of DVH   
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_indicatorWrapper.html" class="code" title="function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)">matRad_indicatorWrapper</a>	matRad indictor wrapper</li><li><a href="../matRad/tools/matRad_compareDose.html" class="code" title="function [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst,enable , contours, pln, criteria, n,localglobal)">matRad_compareDose</a>	Comparison of two dose cubes in terms of gamma index, absolute and visual difference</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function matRad_showDVH(dvh,cst,pln,lineStyleIndicator)</a>
+0002 <span class="comment">% matRad dvh visualizaion</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   matRad_showDVH(dvh,cst)</span>
+0006 <span class="comment">%   matRad_showDVH(dvh,cst,pln)</span>
+0007 <span class="comment">%   matRad_showDVH(dvh,cst,lineStyleIndicator)</span>
+0008 <span class="comment">%   matRad_showDVH(dvh,cst,pln,lineStyleIndicator)</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% input</span>
+0011 <span class="comment">%   dvh:                result struct from fluence optimization/sequencing</span>
+0012 <span class="comment">%   cst:                matRad cst struct</span>
+0013 <span class="comment">%   pln:                (now optional) matRad pln struct,</span>
+0014 <span class="comment">%                       standard uses Dose [Gy]</span>
+0015 <span class="comment">%   lineStyleIndicator: (optional) integer (1,2,3,4) to indicate the current linestyle</span>
+0016 <span class="comment">%                       (hint: use different lineStyles to overlay</span>
+0017 <span class="comment">%                       different dvhs)</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% output</span>
+0020 <span class="comment">%   graphical display of DVH</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% References</span>
+0023 <span class="comment">%   -</span>
+0024 <span class="comment">%</span>
+0025 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0026 <span class="comment">%</span>
+0027 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0028 <span class="comment">%</span>
+0029 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0030 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0031 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0032 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0033 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0034 <span class="comment">% LICENSE file.</span>
+0035 <span class="comment">%</span>
+0036 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0037 
+0038 <span class="keyword">if</span> ~exist(<span class="string">'lineStyleIndicator'</span>,<span class="string">'var'</span>) || isempty(lineStyleIndicator)
+0039     lineStyleIndicator = 1;
+0040 <span class="keyword">end</span>
+0041 
+0042 <span class="comment">% create new figure and set default line style indicator if not explictly</span>
+0043 <span class="comment">% specified</span>
+0044 hold on;
+0045 
+0046 <span class="comment">%reduce cst</span>
+0047 visibleIx = cellfun(@(c) c.Visible == 1,cst(:,5));
+0048 cstNames = cst(visibleIx,2);
+0049 cstInfo = cst(visibleIx,5);
+0050 dvh = dvh(visibleIx);
+0051 
+0052 numOfVois = numel(cstNames);
+0053         
+0054 <span class="comment">%% print the dvh</span>
+0055 
+0056 <span class="comment">%try to get colors from cst</span>
+0057 <span class="keyword">try</span>
+0058     colorMx = cellfun(@(c) c.visibleColor,cstInfo,<span class="string">'UniformOutput'</span>,false);
+0059     colorMx = cell2mat(colorMx);
+0060 <span class="keyword">catch</span>
+0061     colorMx    = colorcube;
+0062     colorMx    = colorMx(1:floor(64/numOfVois):64,:);
+0063 <span class="keyword">end</span>
+0064 
+0065 lineStyles = {<span class="string">'-'</span>,<span class="string">':'</span>,<span class="string">'--'</span>,<span class="string">'-.'</span>};
+0066 
+0067 maxDVHvol  = 0;
+0068 maxDVHdose = 0;
+0069 
+0070 <span class="keyword">for</span> i = 1:numOfVois
+0071     <span class="comment">% cut off at the first zero value where there is no more signal</span>
+0072     <span class="comment">% behind</span>
+0073     ix      = max([1 find(dvh(i).volumePoints&gt;0,1,<span class="string">'last'</span>)]);
+0074     currDvh = [dvh(i).doseGrid(1:ix);dvh(i).volumePoints(1:ix)];
+0075     
+0076     plot(currDvh(1,:),currDvh(2,:),<span class="string">'LineWidth'</span>,4,<span class="string">'Color'</span>,colorMx(i,:), <span class="keyword">...</span>
+0077         <span class="string">'LineStyle'</span>,lineStyles{lineStyleIndicator},<span class="string">'DisplayName'</span>,cstNames{i})
+0078     
+0079     maxDVHvol  = max(maxDVHvol,max(currDvh(2,:)));
+0080     maxDVHdose = max(maxDVHdose,max(currDvh(1,:)));
+0081 <span class="keyword">end</span>
+0082 
+0083 fontSizeValue = 14;
+0084 myLegend = legend(<span class="string">'show'</span>,<span class="string">'location'</span>,<span class="string">'NorthEast'</span>);
+0085 set(myLegend,<span class="string">'FontSize'</span>,10,<span class="string">'Interpreter'</span>,<span class="string">'none'</span>);
+0086 legend boxoff
+0087 
+0088 ylim([0 1.1*maxDVHvol]);
+0089 xlim([0 1.2*maxDVHdose]);
+0090 
+0091 grid on,grid minor
+0092 box(gca,<span class="string">'on'</span>);
+0093 set(gca,<span class="string">'LineWidth'</span>,1.5,<span class="string">'FontSize'</span>,fontSizeValue);
+0094 ylabel(<span class="string">'Volume [%]'</span>,<span class="string">'FontSize'</span>,fontSizeValue)
+0095 
+0096 <span class="keyword">if</span> exist(<span class="string">'pln'</span>,<span class="string">'var'</span>) &amp;&amp; ~isempty(pln)
+0097     <span class="keyword">if</span> strcmp(pln.propOpt.bioOptimization,<span class="string">'none'</span>)
+0098         xlabel(<span class="string">'Dose [Gy]'</span>,<span class="string">'FontSize'</span>,fontSizeValue);
+0099     <span class="keyword">else</span>
+0100         xlabel(<span class="string">'RBE x Dose [Gy(RBE)]'</span>,<span class="string">'FontSize'</span>,fontSizeValue);
+0101     <span class="keyword">end</span>
+0102 <span class="keyword">else</span>
+0103      xlabel(<span class="string">'Dose [Gy]'</span>,<span class="string">'FontSize'</span>,fontSizeValue);
+0104 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_collapseDij</title>
+  <meta name="keywords" content="matRad_collapseDij">
+  <meta name="description" content="matRad collapse dij function for simulation of 3D conformal treatments.">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html optimization -->
+<h1>matRad_collapseDij
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad collapse dij function for simulation of 3D conformal treatments.</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function dijNew = matRad_collapseDij(dij) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad collapse dij function for simulation of 3D conformal treatments.
+ Function to supress intensity-modulation for photons in order to simulate 
+ 3D conformal treatments.
+
+ call
+   dijNew = matRad_collapseDij(dij)
+
+ input
+   dij:    dose influence matrix
+
+ output
+   dijNew: collapsed dose influence matrix
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2018 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function dijNew = matRad_collapseDij(dij)</a>
+0002 <span class="comment">% matRad collapse dij function for simulation of 3D conformal treatments.</span>
+0003 <span class="comment">% Function to supress intensity-modulation for photons in order to simulate</span>
+0004 <span class="comment">% 3D conformal treatments.</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">% call</span>
+0007 <span class="comment">%   dijNew = matRad_collapseDij(dij)</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% input</span>
+0010 <span class="comment">%   dij:    dose influence matrix</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% output</span>
+0013 <span class="comment">%   dijNew: collapsed dose influence matrix</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% References</span>
+0016 <span class="comment">%   -</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">% Copyright 2018 the matRad development team.</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0023 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0024 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0025 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0026 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0027 <span class="comment">% LICENSE file.</span>
+0028 <span class="comment">%</span>
+0029 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0030 
+0031 dijNew.totalNumOfBixels = 1;
+0032 dijNew.totalNumOfRays   = 1;
+0033 dijNew.numOfBeams       = 1;
+0034 dijNew.numOfRaysPerBeam = 1;
+0035 
+0036 dijNew.beamNum          = 1;
+0037 dijNew.bixelNum         = 1;
+0038 dijNew.rayNum           = 1;
+0039 
+0040 dijNew.doseGrid = dij.doseGrid;
+0041 dijNew.ctGrid   = dij.ctGrid;
+0042 
+0043 dijNew.numOfScenarios = dij.numOfScenarios;
+0044 
+0045 <span class="keyword">for</span> i = 1:dij.numOfScenarios
+0046     dijNew.physicalDose{i} = sum(dij.physicalDose{i},2);
+0047 <span class="keyword">end</span>
+0048</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

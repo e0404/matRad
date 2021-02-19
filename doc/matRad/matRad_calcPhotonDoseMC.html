@@ -1,0 +1,403 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_calcPhotonDoseMC</title>
+  <meta name="keywords" content="matRad_calcPhotonDoseMC">
+  <meta name="description" content="matRad ompMC monte carlo photon dose calculation wrapper">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_calcPhotonDoseMC
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">matRad ompMC monte carlo photon dose calculation wrapper</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst,nCasePerBixel,visBool) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad ompMC monte carlo photon dose calculation wrapper
+
+ call
+   dij = matRad_calcPhotonDoseMc(ct,stf,pln,cst,visBool)
+
+ input
+   ct:                         matRad ct struct
+   stf:                        matRad steering information struct
+   pln:                        matRad plan meta information struct
+   cst:                        matRad cst struct
+   visBool:                    binary switch to enable visualization
+ output
+   dij:                        matRad dij struct
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2018 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_calcDoseInit.html" class="code" title="">matRad_calcDoseInit</a>	</li><li><a href="matRad_interp3.html" class="code" title="function y = matRad_interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal)">matRad_interp3</a>	interpolates 3-D data (table lookup)</li><li><a href="../matRad/ompMC/matRad_compileOmpMCInterface.html" class="code" title="function matRad_compileOmpMCInterface(dest,omcFolder)">matRad_compileOmpMCInterface</a>	Compiles the ompMC interface (integrated as submodule)</li><li><a href="../matRad/tools/matRad_checkMexFileExists.html" class="code" title="function fileExists = matRad_checkMexFileExists(filename,linkOctave)">matRad_checkMexFileExists</a>	Checks if a matching mex file exists, and can create a link</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../matRad/examples/matRad_example4_photonsMC.html" class="code" title="">matRad_example4_photonsMC</a>	% Example: Photon Treatment Plan using VMC++ dose calculation</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst,nCasePerBixel,visBool)</a>
+0002 <span class="comment">% matRad ompMC monte carlo photon dose calculation wrapper</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   dij = matRad_calcPhotonDoseMc(ct,stf,pln,cst,visBool)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   ct:                         matRad ct struct</span>
+0009 <span class="comment">%   stf:                        matRad steering information struct</span>
+0010 <span class="comment">%   pln:                        matRad plan meta information struct</span>
+0011 <span class="comment">%   cst:                        matRad cst struct</span>
+0012 <span class="comment">%   visBool:                    binary switch to enable visualization</span>
+0013 <span class="comment">% output</span>
+0014 <span class="comment">%   dij:                        matRad dij struct</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% References</span>
+0017 <span class="comment">%   -</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% Copyright 2018 the matRad development team.</span>
+0022 <span class="comment">%</span>
+0023 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0024 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0025 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0026 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0027 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0028 <span class="comment">% LICENSE file.</span>
+0029 <span class="comment">%</span>
+0030 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0031 
+0032 
+0033 matRad_cfg =  MatRad_Config.instance();
+0034 
+0035 tic
+0036 
+0037 <span class="comment">% disable visualiazation by default</span>
+0038 <span class="keyword">if</span> nargin &lt; 6
+0039     visBool = false;
+0040 <span class="keyword">end</span>
+0041 
+0042 <span class="keyword">if</span> nargin &lt; 5
+0043     nCasePerBixel = matRad_cfg.propMC.ompMC_defaultHistories;
+0044     matRad_cfg.dispInfo(<span class="string">'Using default number of Histories per Bixel: %d\n'</span>,nCasePerBixel);
+0045 <span class="keyword">end</span>
+0046 
+0047 fileFolder = fileparts(mfilename(<span class="string">'fullpath'</span>));
+0048 
+0049 <span class="keyword">if</span> ~<a href="../matRad/tools/matRad_checkMexFileExists.html" class="code" title="function fileExists = matRad_checkMexFileExists(filename,linkOctave)">matRad_checkMexFileExists</a>(<span class="string">'omc_matrad'</span>) <span class="comment">%exist('matRad_ompInterface','file') ~= 3</span>
+0050     matRad_cfg.dispWarning(<span class="string">'Compiled mex interface not found. Trying to compile the ompMC interface on the fly!'</span>);    
+0051     <span class="keyword">try</span>        
+0052         <a href="../matRad/ompMC/matRad_compileOmpMCInterface.html" class="code" title="function matRad_compileOmpMCInterface(dest,omcFolder)">matRad_compileOmpMCInterface</a>();
+0053     <span class="keyword">catch</span> MException       
+0054         matRad_cfg.dispError(<span class="string">'Could not find/generate mex interface for MC dose calculation.\nCause of error:\n%s\n Please compile it yourself (preferably with OpenMP support).'</span>,MException.message);
+0055     <span class="keyword">end</span>
+0056 <span class="keyword">end</span>
+0057 
+0058 <a href="matRad_calcDoseInit.html" class="code" title="">matRad_calcDoseInit</a>;
+0059 
+0060 <span class="comment">% set up arrays for book keeping</span>
+0061 dij.bixelNum = NaN*ones(dij.totalNumOfBixels,1);
+0062 dij.rayNum   = NaN*ones(dij.totalNumOfBixels,1);
+0063 dij.beamNum  = NaN*ones(dij.totalNumOfBixels,1);
+0064 
+0065 dij.numHistoriesPerBeamlet = nCasePerBixel;
+0066 
+0067 omcFolder = [matRad_cfg.matRadRoot filesep <span class="string">'ompMC'</span>];
+0068 <span class="comment">%omcFolder = [matRad_cfg.matRadRoot filesep 'submodules' filesep 'ompMC'];</span>
+0069 
+0070 <span class="comment">%% Setup OmpMC options / parameters</span>
+0071 
+0072 <span class="comment">%display options</span>
+0073 ompMCoptions.verbose = matRad_cfg.logLevel - 1;
+0074 
+0075 <span class="comment">% start MC control</span>
+0076 ompMCoptions.nHistories = nCasePerBixel;
+0077 ompMCoptions.nSplit = 20;
+0078 ompMCoptions.nBatches = 10;
+0079 ompMCoptions.randomSeeds = [97 33];
+0080 
+0081 <span class="comment">%start source definition</span>
+0082 ompMCoptions.spectrumFile = [omcFolder filesep <span class="string">'spectra'</span> filesep <span class="string">'mohan6.spectrum'</span>];
+0083 ompMCoptions.monoEnergy   = 0.1; 
+0084 ompMCoptions.charge       = 0;
+0085                                                                     
+0086 <span class="comment">% start MC transport</span>
+0087 ompMCoptions.dataFolder   = [omcFolder filesep <span class="string">'data'</span> filesep];
+0088 ompMCoptions.pegsFile     = [omcFolder filesep <span class="string">'pegs4'</span> filesep <span class="string">'700icru.pegs4dat'</span>];
+0089 ompMCoptions.pgs4formFile = [omcFolder filesep <span class="string">'pegs4'</span> filesep <span class="string">'pgs4form.dat'</span>];
+0090 
+0091 ompMCoptions.global_ecut = 0.7;
+0092 ompMCoptions.global_pcut = 0.010; 
+0093 
+0094 <span class="comment">% Relative Threshold for dose</span>
+0095 ompMCoptions.relDoseThreshold = 1 - matRad_cfg.propDoseCalc.defaultLateralCutOff;
+0096 
+0097 <span class="comment">% Output folders</span>
+0098 ompMCoptions.outputFolder = [omcFolder filesep <span class="string">'output'</span> filesep];
+0099 
+0100 <span class="comment">% Create Material Density Cube</span>
+0101 material = cell(4,5);
+0102 material{1,1} = <span class="string">'AIR700ICRU'</span>;
+0103 material{1,2} = -1024; 
+0104 material{1,3} = -974;
+0105 material{1,4} = 0.001;
+0106 material{1,5} = 0.044;
+0107 material{2,1} = <span class="string">'LUNG700ICRU'</span>;
+0108 material{2,2} = -974; 
+0109 material{2,3} = -724;
+0110 material{2,4} = 0.044; 
+0111 material{2,5} = 0.302;
+0112 material{3,1} = <span class="string">'ICRUTISSUE700ICRU'</span>;
+0113 material{3,2} = -724; 
+0114 material{3,3} = 101;
+0115 material{3,4} = 0.302; 
+0116 material{3,5} = 1.101;
+0117 material{4,1} = <span class="string">'ICRPBONE700ICRU'</span>;
+0118 material{4,2} = 101; 
+0119 material{4,3} = 1976;
+0120 material{4,4} = 1.101; 
+0121 material{4,5} = 2.088;
+0122 
+0123 <span class="comment">% conversion from HU to densities &amp; materials</span>
+0124 <span class="keyword">for</span> s = 1:dij.numOfScenarios
+0125 
+0126     HUcube{s} =  <a href="matRad_interp3.html" class="code" title="function y = matRad_interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal)">matRad_interp3</a>(dij.ctGrid.x,dij.ctGrid.y',dij.ctGrid.z,ct.cubeHU{s}, <span class="keyword">...</span>
+0127                             dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,<span class="string">'nearest'</span>);
+0128     
+0129     <span class="comment">% projecting out of bounds HU values where necessary</span>
+0130     <span class="keyword">if</span> max(HUcube{s}(:)) &gt; material{<span class="keyword">end</span>,3}
+0131         matRad_cfg.dispWarning(<span class="string">'Projecting out of range HU values'</span>);
+0132         HUcube{s}(HUcube{s}(:) &gt; material{<span class="keyword">end</span>,3}) = material{<span class="keyword">end</span>,3};
+0133     <span class="keyword">end</span>
+0134     <span class="keyword">if</span> min(HUcube{s}(:)) &lt; material{1,2}
+0135         matRad_cfg.dispWarning(<span class="string">'Projecting out of range HU values'</span>);
+0136         HUcube{s}(HUcube{s}(:) &lt; material{1,2}) = material{1,2};
+0137     <span class="keyword">end</span>
+0138 
+0139     <span class="comment">% find material index</span>
+0140     cubeMatIx{s} = NaN*ones(dij.doseGrid.dimensions,<span class="string">'int32'</span>);
+0141     <span class="keyword">for</span> i = size(material,1):-1:1
+0142         cubeMatIx{s}(HUcube{s} &lt;= material{i,3}) = i;
+0143     <span class="keyword">end</span>
+0144     
+0145     <span class="comment">% create an artificial HU lookup table</span>
+0146     hlut = [];
+0147     <span class="keyword">for</span> i = 1:size(material,1)       
+0148         hlut = [hlut;material{i,2} material{i,4};material{i,3}-1e-10 material{i,5}]; <span class="comment">% add eps for interpolation</span>
+0149     <span class="keyword">end</span>
+0150     
+0151     cubeRho{s} = interp1(hlut(:,1),hlut(:,2),HUcube{s});
+0152 
+0153 <span class="keyword">end</span>
+0154 
+0155 ompMCgeo.material = material;
+0156 
+0157 scale = 10; <span class="comment">% to convert to cm</span>
+0158 
+0159 ompMCgeo.xBounds = (dij.doseGrid.resolution.y * (0.5 + [0:dij.doseGrid.dimensions(1)])) ./ scale;
+0160 ompMCgeo.yBounds = (dij.doseGrid.resolution.x * (0.5 + [0:dij.doseGrid.dimensions(2)])) ./ scale;
+0161 ompMCgeo.zBounds = (dij.doseGrid.resolution.z * (0.5 + [0:dij.doseGrid.dimensions(3)])) ./ scale;
+0162 
+0163 <span class="comment">%% debug visualization</span>
+0164 <span class="keyword">if</span> visBool
+0165     
+0166     figure
+0167     hold on
+0168 
+0169     axis equal
+0170     
+0171     <span class="comment">% ct box</span>
+0172     ctCorner1 = [ompMCgeo.xBounds(1) ompMCgeo.yBounds(1) ompMCgeo.zBounds(1)];
+0173     ctCorner2 = [ompMCgeo.xBounds(end) ompMCgeo.yBounds(end) ompMCgeo.zBounds(end)];
+0174     plot3([ctCorner1(1) ctCorner2(1)],[ctCorner1(2) ctCorner1(2)],[ctCorner1(3) ctCorner1(3)],<span class="string">'k'</span> )
+0175     plot3([ctCorner1(1) ctCorner2(1)],[ctCorner2(2) ctCorner2(2)],[ctCorner1(3) ctCorner1(3)],<span class="string">'k'</span> )
+0176     plot3([ctCorner1(1) ctCorner1(1)],[ctCorner1(2) ctCorner2(2)],[ctCorner1(3) ctCorner1(3)],<span class="string">'k'</span> )
+0177     plot3([ctCorner2(1) ctCorner2(1)],[ctCorner1(2) ctCorner2(2)],[ctCorner1(3) ctCorner1(3)],<span class="string">'k'</span> )
+0178     plot3([ctCorner1(1) ctCorner2(1)],[ctCorner1(2) ctCorner1(2)],[ctCorner2(3) ctCorner2(3)],<span class="string">'k'</span> )
+0179     plot3([ctCorner1(1) ctCorner2(1)],[ctCorner2(2) ctCorner2(2)],[ctCorner2(3) ctCorner2(3)],<span class="string">'k'</span> )
+0180     plot3([ctCorner1(1) ctCorner1(1)],[ctCorner1(2) ctCorner2(2)],[ctCorner2(3) ctCorner2(3)],<span class="string">'k'</span> )
+0181     plot3([ctCorner2(1) ctCorner2(1)],[ctCorner1(2) ctCorner2(2)],[ctCorner2(3) ctCorner2(3)],<span class="string">'k'</span> )
+0182     plot3([ctCorner1(1) ctCorner1(1)],[ctCorner1(2) ctCorner1(2)],[ctCorner1(3) ctCorner2(3)],<span class="string">'k'</span> )
+0183     plot3([ctCorner2(1) ctCorner2(1)],[ctCorner1(2) ctCorner1(2)],[ctCorner1(3) ctCorner2(3)],<span class="string">'k'</span> )
+0184     plot3([ctCorner1(1) ctCorner1(1)],[ctCorner2(2) ctCorner2(2)],[ctCorner1(3) ctCorner2(3)],<span class="string">'k'</span> )
+0185     plot3([ctCorner2(1) ctCorner2(1)],[ctCorner2(2) ctCorner2(2)],[ctCorner1(3) ctCorner2(3)],<span class="string">'k'</span> )
+0186         
+0187     xlabel(<span class="string">'x [cm]'</span>)
+0188     ylabel(<span class="string">'y [cm]'</span>)
+0189     zlabel(<span class="string">'z [cm]'</span>)
+0190 
+0191     rotate3d on
+0192     
+0193 <span class="keyword">end</span>
+0194 
+0195 <span class="comment">%% Create beamlet source</span>
+0196 useCornersSCD = false; <span class="comment">%false -&gt; use ISO corners</span>
+0197 
+0198 numOfBixels = [stf(:).numOfRays];
+0199 beamSource = zeros(dij.numOfBeams, 3);
+0200 
+0201 bixelCorner = zeros(dij.totalNumOfBixels,3);
+0202 bixelSide1 = zeros(dij.totalNumOfBixels,3);
+0203 bixelSide2 = zeros(dij.totalNumOfBixels,3);
+0204 
+0205 counter = 0;
+0206 
+0207 <span class="keyword">for</span> i = 1:dij.numOfBeams <span class="comment">% loop over all beams</span>
+0208    
+0209     <span class="comment">% define beam source in physical coordinate system in cm</span>
+0210     beamSource(i,:) = (stf(i).sourcePoint + stf(i).isoCenter)/10;
+0211 
+0212     <span class="keyword">for</span> j = 1:stf(i).numOfRays <span class="comment">% loop over all rays / for photons we only have one bixel per ray!</span>
+0213         
+0214         counter = counter + 1;
+0215         
+0216         dij.beamNum(counter)  = i;
+0217         dij.rayNum(counter)   = j;
+0218         dij.bixelNum(counter) = j;
+0219         
+0220         <span class="keyword">if</span> useCornersSCD
+0221             beamletCorners = stf(i).ray(j).rayCorners_SCD;
+0222         <span class="keyword">else</span>    
+0223             beamletCorners = stf(i).ray(j).beamletCornersAtIso;
+0224         <span class="keyword">end</span>
+0225         
+0226         <span class="comment">% get bixel corner and delimiting vectors.</span>
+0227         <span class="comment">% a) change coordinate system (Isocenter cs-&gt; physical cs) and units mm -&gt; cm</span>
+0228         currCorner = (beamletCorners(1,:) + stf(i).isoCenter) ./ scale;
+0229         bixelCorner(counter,:) = currCorner;
+0230         bixelSide1(counter,:) = (beamletCorners(2,:) + stf(i).isoCenter) ./ scale - currCorner;
+0231         bixelSide2(counter,:) = (beamletCorners(4,:) + stf(i).isoCenter) ./ scale - currCorner;
+0232         
+0233         <span class="keyword">if</span> visBool
+0234             <span class="keyword">for</span> k = 1:4
+0235                 currCornerVis = (beamletCorners(k,:) + stf(i).isoCenter)/10;
+0236                 <span class="comment">% rays connecting source and ray corner</span>
+0237                 plot3([beamSource(i,1) currCornerVis(1)],[beamSource(i,2) currCornerVis(2)],[beamSource(i,3) currCornerVis(3)],<span class="string">'b'</span>)
+0238                 <span class="comment">% connection between corners</span>
+0239                 lRayCorner = (beamletCorners(mod(k,4) + 1,:) + stf(i).isoCenter)/10;
+0240                 plot3([lRayCorner(1) currCornerVis(1)],[lRayCorner(2) currCornerVis(2)],[lRayCorner(3) currCornerVis(3)],<span class="string">'r'</span>)
+0241             <span class="keyword">end</span>
+0242         <span class="keyword">end</span>
+0243         
+0244     <span class="keyword">end</span>
+0245         
+0246 <span class="keyword">end</span>
+0247 
+0248 ompMCsource.nBeams = dij.numOfBeams;
+0249 ompMCsource.iBeam = dij.beamNum(:);
+0250 
+0251 <span class="comment">% Switch x and y directions to match ompMC cs.</span>
+0252 ompMCsource.xSource = beamSource(:,2);
+0253 ompMCsource.ySource = beamSource(:,1);
+0254 ompMCsource.zSource = beamSource(:,3);
+0255 
+0256 ompMCsource.nBixels = sum(numOfBixels(:));
+0257 ompMCsource.xCorner = bixelCorner(:,2);
+0258 ompMCsource.yCorner = bixelCorner(:,1);
+0259 ompMCsource.zCorner = bixelCorner(:,3);
+0260 
+0261 ompMCsource.xSide1 = bixelSide1(:,2);
+0262 ompMCsource.ySide1 = bixelSide1(:,1);
+0263 ompMCsource.zSide1 = bixelSide1(:,3);
+0264 
+0265 ompMCsource.xSide2 = bixelSide2(:,2);
+0266 ompMCsource.ySide2 = bixelSide2(:,1);
+0267 ompMCsource.zSide2 = bixelSide2(:,3);
+0268 
+0269 <span class="keyword">if</span> visBool
+0270     plot3(ompMCsource.ySource,ompMCsource.xSource,ompMCsource.zSource,<span class="string">'rx'</span>)
+0271 <span class="keyword">end</span>
+0272 
+0273 <span class="comment">%% Call the OmpMC interface</span>
+0274 
+0275 <span class="comment">%ompMC for matRad returns dose/history * nHistories.</span>
+0276 <span class="comment">% This factor calibrates to 1 Gy in a %(5x5)cm^2 open field (1 bixel) at</span>
+0277 <span class="comment">% 5cm depth for SSD = 900 which corresponds to the calibration for the</span>
+0278 <span class="comment">% analytical base data.</span>
+0279 absCalibrationFactor = 3.49056 * 1e12; <span class="comment">%Approximate!</span>
+0280 
+0281 <span class="comment">%Now we have to calibrate to the the beamlet width.</span>
+0282 absCalibrationFactor = absCalibrationFactor * (pln.propStf.bixelWidth/50)^2;
+0283 
+0284 matRad_cfg.dispInfo(<span class="string">'matRad: OmpMC photon dose calculation... \n'</span>);
+0285 
+0286 outputVariance = matRad_cfg.propMC.ompMC_defaultOutputVariance;
+0287 
+0288 <span class="keyword">if</span> isfield(pln,<span class="string">'propMC'</span>) &amp;&amp; isfield(pln.propMC,<span class="string">'outputVariance'</span>)
+0289     outputVariance = pln.propMC.outputVariance;
+0290 <span class="keyword">end</span>
+0291 
+0292 
+0293 <span class="comment">%run over all scenarios</span>
+0294 <span class="keyword">for</span> s = 1:dij.numOfScenarios
+0295     ompMCgeo.isoCenter = [stf(:).isoCenter];
+0296     
+0297     <span class="comment">%Run the Monte Carlo simulation and catch  possible mex-interface</span>
+0298     <span class="comment">%issues</span>
+0299     <span class="keyword">try</span>
+0300         <span class="comment">%If we ask for variance, a field in the dij will be filled</span>
+0301         <span class="keyword">if</span> outputVariance
+0302             [dij.physicalDose{s},dij.physicalDose_MCvar{s}] = omc_matrad(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCsource,ompMCoptions);
+0303         <span class="keyword">else</span>
+0304             [dij.physicalDose{s}] = omc_matrad(cubeRho{s},cubeMatIx{s},ompMCgeo,ompMCsource,ompMCoptions);
+0305         <span class="keyword">end</span>
+0306     <span class="keyword">catch</span> ME
+0307         errorString = [ME.message <span class="string">'\nThis error was thrown by the MEX-interface of ompMC.\nMex interfaces can raise compatability issues which may be resolved by compiling them by hand directly on your particular system.'</span>];
+0308         matRad_cfg.dispError(ME.identifier,errorString);
+0309     <span class="keyword">end</span>
+0310     
+0311     <span class="comment">%Calibrate the dose with above factor</span>
+0312     dij.physicalDose{s} = dij.physicalDose{s} * absCalibrationFactor;
+0313     <span class="keyword">if</span> isfield(dij,<span class="string">'physicalDose_MCvar'</span>)
+0314         dij.physicalDose_MCvar{s} = dij.physicalDose_MCvar{s} * absCalibrationFactor^2;
+0315     <span class="keyword">end</span>
+0316 <span class="keyword">end</span>
+0317 
+0318 matRad_cfg.dispInfo(<span class="string">'matRad: MC photon dose calculation done!\n'</span>);
+0319 matRad_cfg.dispInfo(evalc(<span class="string">'toc'</span>));
+0320 
+0321 <span class="keyword">try</span>
+0322     <span class="comment">% wait 0.1s for closing all waitbars</span>
+0323     allWaitBarFigures = findall(0,<span class="string">'type'</span>,<span class="string">'figure'</span>,<span class="string">'tag'</span>,<span class="string">'TMWWaitbar'</span>);
+0324     delete(allWaitBarFigures);
+0325     pause(0.1);
+0326 <span class="keyword">catch</span>
+0327 <span class="keyword">end</span>
+0328 
+0329 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

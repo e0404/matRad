@@ -1,0 +1,92 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_calcDoseFillDij</title>
+  <meta name="keywords" content="matRad_calcDoseFillDij">
+  <meta name="description" content="save computation time and memory">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_calcDoseFillDij
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">save computation time and memory</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">This is a script file. </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> save computation time and memory 
+ by sequentially filling the sparse matrix dose.dij from the cell array</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_calcParticleDose.html" class="code" title="function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcParticleDose</a>	matRad particle dose calculation wrapper</li><li><a href="matRad_calcPhotonDose.html" class="code" title="function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcPhotonDose</a>	matRad photon dose calculation wrapper</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <span class="comment">% save computation time and memory</span>
+0002 <span class="comment">% by sequentially filling the sparse matrix dose.dij from the cell array</span>
+0003 <span class="keyword">if</span> mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
+0004 
+0005     <span class="keyword">if</span> calcDoseDirect
+0006         <span class="keyword">if</span> isfield(stf(1).ray(1),<span class="string">'weight'</span>) &amp;&amp; numel(stf(i).ray(j).weight) &gt;= k
+0007 
+0008             <span class="comment">% score physical dose</span>
+0009             dij.physicalDose{1}(:,i) = dij.physicalDose{1}(:,i) + stf(i).ray(j).weight(k) * doseTmpContainer{1,1};
+0010 
+0011             <span class="keyword">if</span> isfield(dij,<span class="string">'mLETDose'</span>)
+0012                 dij.mLETDose{1}(:,i) = dij.mLETDose{1}(:,i) + stf(i).ray(j).weight(k) * letDoseTmpContainer{1,1};
+0013             <span class="keyword">end</span>
+0014 
+0015             <span class="keyword">if</span> (isequal(pln.propOpt.bioOptimization,<span class="string">'LEMIV_effect'</span>) || isequal(pln.propOpt.bioOptimization,<span class="string">'LEMIV_RBExD'</span>)) <span class="keyword">...</span><span class="comment"> </span>
+0016                 &amp;&amp; strcmp(pln.radiationMode,<span class="string">'carbon'</span>)
+0017 
+0018                 <span class="comment">% score alpha and beta matrices</span>
+0019                 dij.mAlphaDose{1}(:,i)    = dij.mAlphaDose{1}(:,i) + stf(i).ray(j).weight(k) * alphaDoseTmpContainer{1,1};
+0020                 dij.mSqrtBetaDose{1}(:,i) = dij.mSqrtBetaDose{1}(:,i) + stf(i).ray(j).weight(k) * betaDoseTmpContainer{1,1};
+0021 
+0022             <span class="keyword">end</span>
+0023         <span class="keyword">else</span>
+0024 
+0025             error([<span class="string">'No weight available for beam '</span> num2str(i) <span class="string">', ray '</span> num2str(j) <span class="string">', bixel '</span> num2str(k)]);
+0026 
+0027         <span class="keyword">end</span>
+0028     <span class="keyword">else</span>
+0029 
+0030         dij.physicalDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [doseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+0031 
+0032         <span class="keyword">if</span> isfield(dij,<span class="string">'mLETDose'</span>)
+0033             dij.mLETDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [letDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+0034         <span class="keyword">end</span>
+0035 
+0036         <span class="keyword">if</span> (isequal(pln.propOpt.bioOptimization,<span class="string">'LEMIV_effect'</span>) || isequal(pln.propOpt.bioOptimization,<span class="string">'LEMIV_RBExD'</span>)) <span class="keyword">...</span><span class="comment"> </span>
+0037             &amp;&amp; strcmp(pln.radiationMode,<span class="string">'carbon'</span>)
+0038 
+0039             dij.mAlphaDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [alphaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+0040             dij.mSqrtBetaDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [betaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
+0041         <span class="keyword">end</span>
+0042 
+0043     <span class="keyword">end</span>
+0044     
+0045 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

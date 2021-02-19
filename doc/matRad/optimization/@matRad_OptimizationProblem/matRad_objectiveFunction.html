@@ -1,0 +1,156 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_objectiveFunction</title>
+  <meta name="keywords" content="matRad_objectiveFunction">
+  <meta name="description" content="matRad IPOPT objective function wrapper">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../../menu.html matRad --><!-- ../menu.html optimization --><!-- menu.html @matRad_OptimizationProblem -->
+<h1>matRad_objectiveFunction
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">matRad IPOPT objective function wrapper</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">function f = matRad_objectiveFunction(optiProb,w,dij,cst) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad IPOPT objective function wrapper
+ 
+ call
+   f = matRad_objectiveFuncWrapper(optiProb,w,dij,cst)
+
+ input
+   optiProb: matRad optimization problem
+   w:        beamlet/ pencil beam weight vector
+   dij:      matRad dose influence struct
+   cst:      matRad cst struct
+
+ output
+   f: objective function value
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2016 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../../matRad/optimization/@matRad_OptimizationProblemDAO/matRad_objectiveFunction.html" class="code" title="function f = matRad_objectiveFunction(optiProb,apertureInfoVect,dij,cst)">matRad_objectiveFunction</a>	matRad IPOPT callback: objective function for direct aperture optimization</li><li><a href="matRad_OptimizationProblem.html" class="code" title="">matRad_OptimizationProblem</a>	</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function f = matRad_objectiveFunction(optiProb,w,dij,cst)</a>
+0002 <span class="comment">% matRad IPOPT objective function wrapper</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   f = matRad_objectiveFuncWrapper(optiProb,w,dij,cst)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   optiProb: matRad optimization problem</span>
+0009 <span class="comment">%   w:        beamlet/ pencil beam weight vector</span>
+0010 <span class="comment">%   dij:      matRad dose influence struct</span>
+0011 <span class="comment">%   cst:      matRad cst struct</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">% output</span>
+0014 <span class="comment">%   f: objective function value</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% References</span>
+0017 <span class="comment">%   -</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% Copyright 2016 the matRad development team.</span>
+0022 <span class="comment">%</span>
+0023 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0024 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0025 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0026 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0027 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0028 <span class="comment">% LICENSE file.</span>
+0029 <span class="comment">%</span>
+0030 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0031 
+0032 <span class="comment">% get current dose / effect / RBExDose vector</span>
+0033 <span class="comment">%d = optiProb.matRad_backProjection(w,dij);</span>
+0034 optiProb.BP = optiProb.BP.compute(dij,w);
+0035 d = optiProb.BP.GetResult();
+0036 
+0037 
+0038 <span class="comment">% Initialize f</span>
+0039 f = 0;
+0040 
+0041 <span class="comment">% compute objectiveective function for every VOI.</span>
+0042 <span class="keyword">for</span>  i = 1:size(cst,1)
+0043     
+0044     <span class="comment">% Only take OAR or target VOI.</span>
+0045     <span class="keyword">if</span> ~isempty(cst{i,4}{1}) &amp;&amp; ( isequal(cst{i,3},<span class="string">'OAR'</span>) || isequal(cst{i,3},<span class="string">'TARGET'</span>) )
+0046 
+0047         <span class="comment">% loop over the number of constraints for the current VOI</span>
+0048         <span class="keyword">for</span> j = 1:numel(cst{i,6})
+0049             
+0050             objective = cst{i,6}{j};
+0051             
+0052             <span class="comment">% only perform gradient computations for objectiveectives</span>
+0053             <span class="comment">%if isempty(strfind(objective.type,'constraint'))</span>
+0054             <span class="keyword">if</span> isa(objective,<span class="string">'DoseObjectives.matRad_DoseObjective'</span>)
+0055 
+0056                 <span class="comment">% if we have effect optimization, temporarily replace doses with effect</span>
+0057                 <span class="keyword">if</span> (~isequal(objective.name, <span class="string">'Mean Dose'</span>) &amp;&amp; ~isequal(objective.name, <span class="string">'EUD'</span>)) &amp;&amp;<span class="keyword">...</span>
+0058                     (isa(optiProb.BP,<span class="string">'matRad_EffectProjection'</span>) &amp;&amp; ~isa(optiProb.BP,<span class="string">'matRad_VariableRBEProjection'</span>)) 
+0059                     
+0060                     doses = objective.getDoseParameters();
+0061                 
+0062                     effect = cst{i,5}.alphaX*doses + cst{i,5}.betaX*doses.^2;
+0063                     
+0064                     objective = objective.setDoseParameters(effect);
+0065                 <span class="keyword">end</span>
+0066                 
+0067                 <span class="comment">% if conventional opt: just sum objectiveectives of nominal dose</span>
+0068                 <span class="comment">%if strcmp(cst{i,6}{j}.robustness,'none')</span>
+0069 
+0070                     d_i = d{1}(cst{i,4}{1});
+0071 
+0072                     f = f + objective.computeDoseObjectiveFunction(d_i);
+0073                     
+0074                 <span class="comment">%end</span>
+0075             
+0076             <span class="keyword">end</span>
+0077        
+0078         <span class="keyword">end</span>
+0079             
+0080     <span class="keyword">end</span>
+0081     
+0082 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

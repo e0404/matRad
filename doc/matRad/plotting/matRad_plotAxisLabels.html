@@ -1,0 +1,167 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_plotAxisLabels</title>
+  <meta name="keywords" content="matRad_plotAxisLabels">
+  <meta name="description" content="matRad function to plot x and y labels denoting the ct dimensions">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html plotting -->
+<h1>matRad_plotAxisLabels
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad function to plot x and y labels denoting the ct dimensions</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function  matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize,tickdist) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to plot x and y labels denoting the ct dimensions 
+ according to the selected plane
+
+ call
+   matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize)
+   matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize,
+   tickdist)
+
+ input
+   axesHandle         handle to axes the slice should be displayed in
+   ct                 matRad ct structure
+   plane              plane view (coronal=1,sagittal=2,axial=3)
+   slice              slice in the selected plane of the 3D cube
+   defaultFontSize    default font size as double value
+
+ output
+   -
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2017 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li><li><a href="../../matRad/tools/matRad_compareDose.html" class="code" title="function [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst,enable , contours, pln, criteria, n,localglobal)">matRad_compareDose</a>	Comparison of two dose cubes in terms of gamma index, absolute and visual difference</li><li><a href="../../matRad/tools/matRad_plotSliceWrapper.html" class="code" title="function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,varargin)">matRad_plotSliceWrapper</a>	matRad tool function to directly plot a complete slice of a ct with dose</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function  matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize,tickdist)</a>
+0002 <span class="comment">% matRad function to plot x and y labels denoting the ct dimensions</span>
+0003 <span class="comment">% according to the selected plane</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% call</span>
+0006 <span class="comment">%   matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize)</span>
+0007 <span class="comment">%   matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize,</span>
+0008 <span class="comment">%   tickdist)</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% input</span>
+0011 <span class="comment">%   axesHandle         handle to axes the slice should be displayed in</span>
+0012 <span class="comment">%   ct                 matRad ct structure</span>
+0013 <span class="comment">%   plane              plane view (coronal=1,sagittal=2,axial=3)</span>
+0014 <span class="comment">%   slice              slice in the selected plane of the 3D cube</span>
+0015 <span class="comment">%   defaultFontSize    default font size as double value</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">% output</span>
+0018 <span class="comment">%   -</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">% References</span>
+0021 <span class="comment">%   -</span>
+0022 <span class="comment">%</span>
+0023 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0024 <span class="comment">%</span>
+0025 <span class="comment">% Copyright 2017 the matRad development team.</span>
+0026 <span class="comment">%</span>
+0027 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0028 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0029 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0030 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0031 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0032 <span class="comment">% LICENSE file.</span>
+0033 <span class="comment">%</span>
+0034 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0035 
+0036 <span class="keyword">if</span> ~exist(<span class="string">'defaultFontSize'</span>,<span class="string">'var'</span>) || isempty(defaultFontSize)
+0037     defaultFontSize = 12;
+0038 <span class="keyword">end</span>
+0039 
+0040 <span class="keyword">if</span> ~exist(<span class="string">'tickdist'</span>,<span class="string">'var'</span>) || isempty(tickdist)
+0041     tickdist = 50;
+0042 <span class="keyword">end</span>
+0043 <span class="comment">%% Set axis labels and plot iso center</span>
+0044 <span class="keyword">if</span>  plane == 3<span class="comment">% Axial plane</span>
+0045     <span class="keyword">if</span> ~isempty(ct.resolution.x) &amp;&amp; ~isempty(ct.resolution.y)
+0046         set(axesHandle,<span class="string">'XTick'</span>,0:tickdist/ct.resolution.x:1000);
+0047         set(axesHandle,<span class="string">'YTick'</span>,0:tickdist/ct.resolution.y:1000);
+0048         set(axesHandle,<span class="string">'XTickLabel'</span>,0:tickdist:1000*ct.resolution.x);
+0049         set(axesHandle,<span class="string">'YTickLabel'</span>,0:tickdist:1000*ct.resolution.y);   
+0050         xlabel(axesHandle,<span class="string">'x [mm]'</span>,<span class="string">'FontSize'</span>,defaultFontSize)
+0051         ylabel(axesHandle,<span class="string">'y [mm]'</span>,<span class="string">'FontSize'</span>,defaultFontSize)
+0052         title(axesHandle,[<span class="string">'axial plane z = '</span> num2str(ct.resolution.z*slice) <span class="string">' [mm]'</span>],<span class="string">'FontSize'</span>,defaultFontSize)
+0053     <span class="keyword">else</span>
+0054         xlabel(axesHandle,<span class="string">'x [voxels]'</span>,<span class="string">'FontSize'</span>,defaultFontSize)
+0055         ylabel(axesHandle,<span class="string">'y [voxels]'</span>,<span class="string">'FontSize'</span>,defaultFontSize)
+0056         title(axesHandle,<span class="string">'axial plane'</span>,<span class="string">'FontSize'</span>,defaultFontSize)
+0057     <span class="keyword">end</span>
+0058 <span class="keyword">elseif</span> plane == 2 <span class="comment">% Sagittal plane</span>
+0059     <span class="keyword">if</span> ~isempty(ct.resolution.y) &amp;&amp; ~isempty(ct.resolution.z)
+0060         set(axesHandle,<span class="string">'XTick'</span>,0:tickdist/ct.resolution.z:1000)
+0061         set(axesHandle,<span class="string">'YTick'</span>,0:tickdist/ct.resolution.y:1000)
+0062         set(axesHandle,<span class="string">'XTickLabel'</span>,0:tickdist:1000*ct.resolution.z)
+0063         set(axesHandle,<span class="string">'YTickLabel'</span>,0:tickdist:1000*ct.resolution.y)
+0064         xlabel(axesHandle,<span class="string">'z [mm]'</span>,<span class="string">'FontSize'</span>,defaultFontSize);
+0065         ylabel(axesHandle,<span class="string">'y [mm]'</span>,<span class="string">'FontSize'</span>,defaultFontSize);
+0066         title(axesHandle,[<span class="string">'sagittal plane x = '</span> num2str(ct.resolution.y*slice) <span class="string">' [mm]'</span>],<span class="string">'FontSize'</span>,defaultFontSize)
+0067     <span class="keyword">else</span>
+0068         xlabel(axesHandle,<span class="string">'z [voxels]'</span>,<span class="string">'FontSize'</span>,defaultFontSize)
+0069         ylabel(axesHandle,<span class="string">'y [voxels]'</span>,<span class="string">'FontSize'</span>,defaultFontSize)
+0070         title(axesHandle,<span class="string">'sagittal plane'</span>,<span class="string">'FontSize'</span>,defaultFontSize);
+0071     <span class="keyword">end</span>
+0072 <span class="keyword">elseif</span> plane == 1 <span class="comment">% Coronal plane</span>
+0073     <span class="keyword">if</span> ~isempty(ct.resolution.x) &amp;&amp; ~isempty(ct.resolution.z)
+0074         set(axesHandle,<span class="string">'XTick'</span>,0:tickdist/ct.resolution.z:1000)
+0075         set(axesHandle,<span class="string">'YTick'</span>,0:tickdist/ct.resolution.x:1000)
+0076         set(axesHandle,<span class="string">'XTickLabel'</span>,0:tickdist:1000*ct.resolution.z)
+0077         set(axesHandle,<span class="string">'YTickLabel'</span>,0:tickdist:1000*ct.resolution.x)
+0078         xlabel(axesHandle,<span class="string">'z [mm]'</span>,<span class="string">'FontSize'</span>,defaultFontSize)
+0079         ylabel(axesHandle,<span class="string">'x [mm]'</span>,<span class="string">'FontSize'</span>,defaultFontSize)
+0080         title(axesHandle,[<span class="string">'coronal plane y = '</span> num2str(ct.resolution.x*slice) <span class="string">' [mm]'</span>],<span class="string">'FontSize'</span>,defaultFontSize)
+0081     <span class="keyword">else</span>
+0082         xlabel(axesHandle,<span class="string">'z [voxels]'</span>,<span class="string">'FontSize'</span>,defaultFontSize)
+0083         ylabel(axesHandle,<span class="string">'x [voxels]'</span>,<span class="string">'FontSize'</span>,defaultFontSize)
+0084         title(axesHandle,<span class="string">'coronal plane'</span>,<span class="string">'FontSize'</span>,defaultFontSize)
+0085     <span class="keyword">end</span>
+0086 <span class="keyword">end</span>
+0087 
+0088 <span class="keyword">end</span>
+0089</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

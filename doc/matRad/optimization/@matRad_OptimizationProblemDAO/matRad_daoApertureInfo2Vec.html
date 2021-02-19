@@ -1,0 +1,166 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_daoApertureInfo2Vec</title>
+  <meta name="keywords" content="matRad_daoApertureInfo2Vec">
+  <meta name="description" content="matRad function to generate a vector respresentation of objects">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../../menu.html matRad --><!-- ../menu.html optimization --><!-- menu.html @matRad_OptimizationProblemDAO -->
+<h1>matRad_daoApertureInfo2Vec
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">matRad function to generate a vector respresentation of objects</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">function [apertureInfoVec, mappingMx, limMx] = matRad_daoApertureInfo2Vec(apertureInfo) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to generate a vector respresentation of objects
+ A vector representation of the aperture weights and shapes and (optional) 
+ some meta information needed during optimization is generated.
+
+ call
+   [apertureInfoVec, mappingMx, limMx] = matRad_daoApertureInfo2Vec(apertureInfo)
+
+ input
+   apertureInfo:    aperture weight and shape info struct
+
+ output
+   apertureInfoVec: vector respresentation of the apertue weights and shapes
+   mappingMx:       mapping of vector components to beams, shapes and leaves
+   limMx:           bounds on vector components, i.e., minimum and maximum
+                    aperture weights (0/inf) and leav positions (custom)
+
+ References
+   
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_OptimizationProblemDAO.html" class="code" title="">matRad_OptimizationProblemDAO</a>	</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [apertureInfoVec, mappingMx, limMx] = matRad_daoApertureInfo2Vec(apertureInfo)</a>
+0002 <span class="comment">% matRad function to generate a vector respresentation of objects</span>
+0003 <span class="comment">% A vector representation of the aperture weights and shapes and (optional)</span>
+0004 <span class="comment">% some meta information needed during optimization is generated.</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">% call</span>
+0007 <span class="comment">%   [apertureInfoVec, mappingMx, limMx] = matRad_daoApertureInfo2Vec(apertureInfo)</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% input</span>
+0010 <span class="comment">%   apertureInfo:    aperture weight and shape info struct</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% output</span>
+0013 <span class="comment">%   apertureInfoVec: vector respresentation of the apertue weights and shapes</span>
+0014 <span class="comment">%   mappingMx:       mapping of vector components to beams, shapes and leaves</span>
+0015 <span class="comment">%   limMx:           bounds on vector components, i.e., minimum and maximum</span>
+0016 <span class="comment">%                    aperture weights (0/inf) and leav positions (custom)</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% References</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0022 
+0023 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0024 <span class="comment">%</span>
+0025 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0026 <span class="comment">%</span>
+0027 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0028 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0029 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0030 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0031 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0032 <span class="comment">% LICENSE file.</span>
+0033 <span class="comment">%</span>
+0034 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0035 
+0036 <span class="comment">% function to create a single vector for the direct aperature optimization</span>
+0037 <span class="comment">% first: aperature weights</span>
+0038 <span class="comment">% second: left leaf positions</span>
+0039 <span class="comment">% third: right leaf positions</span>
+0040 
+0041 <span class="comment">% initializing variables</span>
+0042 
+0043 apertureInfoVec = NaN * ones(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,1);
+0044 
+0045 offset = 0;
+0046 
+0047 <span class="comment">%% 1. aperture weights</span>
+0048 <span class="keyword">for</span> i = 1:size(apertureInfo.beam,2)
+0049     <span class="keyword">for</span> j = 1:apertureInfo.beam(i).numOfShapes
+0050         apertureInfoVec(offset+j) = apertureInfo.beam(i).shape(j).weight;            
+0051     <span class="keyword">end</span>
+0052     offset = offset + apertureInfo.beam(i).numOfShapes;
+0053 <span class="keyword">end</span>
+0054 
+0055 <span class="comment">% 2. left and right leaf positions</span>
+0056 <span class="comment">%% fill the vector for all shapes of all beams</span>
+0057 <span class="keyword">for</span> i = 1:size(apertureInfo.beam,2)
+0058     <span class="keyword">for</span> j = 1:apertureInfo.beam(i).numOfShapes
+0059         apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]) = apertureInfo.beam(i).shape(j).leftLeafPos;
+0060         apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]+apertureInfo.totalNumOfLeafPairs) = apertureInfo.beam(i).shape(j).rightLeafPos;
+0061         offset = offset + apertureInfo.beam(i).numOfActiveLeafPairs;
+0062     <span class="keyword">end</span>
+0063 <span class="keyword">end</span>
+0064     
+0065 
+0066 <span class="comment">%% 3. create additional information for later use</span>
+0067 <span class="keyword">if</span> nargout &gt; 1
+0068     
+0069     mappingMx =  NaN * ones(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,4);
+0070     limMx     =  NaN * ones(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,2);
+0071     limMx(1:apertureInfo.totalNumOfShapes,:) = ones(apertureInfo.totalNumOfShapes,1)*[0 inf];
+0072     
+0073     counter = 1;
+0074     <span class="keyword">for</span> i = 1:numel(apertureInfo.beam)
+0075         <span class="keyword">for</span> j = 1:apertureInfo.beam(i).numOfShapes
+0076             mappingMx(counter,1) = i;
+0077             counter = counter + 1;
+0078         <span class="keyword">end</span>
+0079     <span class="keyword">end</span>
+0080     
+0081     shapeOffset = 0;
+0082     <span class="keyword">for</span> i = 1:numel(apertureInfo.beam)
+0083         <span class="keyword">for</span> j = 1:apertureInfo.beam(i).numOfShapes
+0084             <span class="keyword">for</span> k = 1:apertureInfo.beam(i).numOfActiveLeafPairs
+0085                 mappingMx(counter,1) = i;
+0086                 mappingMx(counter,2) = j + shapeOffset; <span class="comment">% store global shape number for grad calc</span>
+0087                 mappingMx(counter,3) = j; <span class="comment">% store local shape number</span>
+0088                 mappingMx(counter,4) = k; <span class="comment">% store local leaf number</span>
+0089                 
+0090                 limMx(counter,1)     = apertureInfo.beam(i).lim_l(k);
+0091                 limMx(counter,2)     = apertureInfo.beam(i).lim_r(k);
+0092                 counter = counter + 1;
+0093             <span class="keyword">end</span>
+0094         <span class="keyword">end</span>
+0095         shapeOffset = shapeOffset + apertureInfo.beam(i).numOfShapes;
+0096     <span class="keyword">end</span>
+0097     
+0098     mappingMx(counter:<span class="keyword">end</span>,:) = mappingMx(apertureInfo.totalNumOfShapes+1:counter-1,:);
+0099     limMx(counter:<span class="keyword">end</span>,:)     = limMx(apertureInfo.totalNumOfShapes+1:counter-1,:);
+0100 
+0101 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

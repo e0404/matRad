@@ -1,0 +1,398 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_calcParticleDoseMC</title>
+  <meta name="keywords" content="matRad_calcParticleDoseMC">
+  <meta name="description" content="matRad MCsqaure monte carlo photon dose calculation wrapper">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_calcParticleDoseMC
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">matRad MCsqaure monte carlo photon dose calculation wrapper</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad MCsqaure monte carlo photon dose calculation wrapper
+
+ call
+   dij = matRad_calcParticleDoseMc(ct,stf,pln,cst,calcDoseDirect)
+
+ input
+   ct:              matRad ct struct
+   stf:             atRad steering information struct
+   pln:            matRad plan meta information struct
+   cst:            matRad cst struct
+   nCasePerBixel:  number of histories per beamlet
+   calcDoseDirect: binary switch to enable forward dose
+                   calcualtion
+ output
+   dij:            matRad dij struct
+
+ References
+
+   https://aapm.onlinelibrary.wiley.com/doi/abs/10.1118/1.4943377
+   http://www.openmcsquare.org/
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2019 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="../matRad/MCsquare/MatRad_MCsquareConfig.html" class="code" title="">MatRad_MCsquareConfig</a>	</li><li><a href="../matRad/MCsquare/matRad_compileMCsquareSparseReader.html" class="code" title="function matRad_compileMCsquareSparseReader(dest,sourceFolder)">matRad_compileMCsquareSparseReader</a>	Compiles the sparse mcsquare reader as mex interface</li><li><a href="../matRad/MCsquare/matRad_readMhd.html" class="code" title="function cube = matRad_readMhd(folder,filename)">matRad_readMhd</a>	matRad mhd file reader</li><li><a href="../matRad/MCsquare/matRad_writeMCsquareinputAllFiles.html" class="code" title="function matRad_writeMCsquareinputAllFiles(filename,MCsquareConfig,stf)">matRad_writeMCsquareinputAllFiles</a>	generate input files for MCsquare dose calcualtion from matRad</li><li><a href="../matRad/MCsquare/matRad_writeMhd.html" class="code" title="function matRad_writeMhd(cube,resolution,filename)">matRad_writeMhd</a>	References</li><li><a href="matRad_calcDoseInit.html" class="code" title="">matRad_calcDoseInit</a>	</li><li><a href="matRad_interp3.html" class="code" title="function y = matRad_interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal)">matRad_interp3</a>	interpolates 3-D data (table lookup)</li><li><a href="../matRad/tools/matRad_checkMexFileExists.html" class="code" title="function fileExists = matRad_checkMexFileExists(filename,linkOctave)">matRad_checkMexFileExists</a>	Checks if a matching mex file exists, and can create a link</li><li><a href="../matRad/tools/matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>	matRad function to get the software environment matRad is running on</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../matRad/examples/matRad_example6_protonsNoise.html" class="code" title="">matRad_example6_protonsNoise</a>	% Example: Proton Treatment Plan with Manipulated CT values</li><li><a href="matRad_calcDoseDirectMC.html" class="code" title="function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)">matRad_calcDoseDirectMC</a>	matRad function to bypass dij calculation for MC dose calculation</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect)</a>
+0002 <span class="comment">% matRad MCsqaure monte carlo photon dose calculation wrapper</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   dij = matRad_calcParticleDoseMc(ct,stf,pln,cst,calcDoseDirect)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   ct:              matRad ct struct</span>
+0009 <span class="comment">%   stf:             atRad steering information struct</span>
+0010 <span class="comment">%   pln:            matRad plan meta information struct</span>
+0011 <span class="comment">%   cst:            matRad cst struct</span>
+0012 <span class="comment">%   nCasePerBixel:  number of histories per beamlet</span>
+0013 <span class="comment">%   calcDoseDirect: binary switch to enable forward dose</span>
+0014 <span class="comment">%                   calcualtion</span>
+0015 <span class="comment">% output</span>
+0016 <span class="comment">%   dij:            matRad dij struct</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% References</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">%   https://aapm.onlinelibrary.wiley.com/doi/abs/10.1118/1.4943377</span>
+0021 <span class="comment">%   http://www.openmcsquare.org/</span>
+0022 <span class="comment">%</span>
+0023 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0024 <span class="comment">%</span>
+0025 <span class="comment">% Copyright 2019 the matRad development team.</span>
+0026 <span class="comment">%</span>
+0027 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0028 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0029 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0030 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0031 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0032 <span class="comment">% LICENSE file.</span>
+0033 <span class="comment">%</span>
+0034 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0035 
+0036 
+0037 matRad_cfg = MatRad_Config.instance();
+0038 
+0039 <span class="comment">% check if valid machine</span>
+0040 <span class="keyword">if</span> ~strcmp(pln.radiationMode,<span class="string">'protons'</span>) || ~strcmp(pln.machine,<span class="string">'generic_MCsquare'</span>)
+0041     matRad_cfg.dispError(<span class="string">'Wrong radiation modality and/or machine. For now MCsquare requires machine generic_MCsquare!'</span>);    
+0042 <span class="keyword">end</span>
+0043 
+0044 
+0045 <span class="keyword">if</span> nargin &lt; 5
+0046     <span class="comment">% set number of particles simulated per pencil beam</span>
+0047     nCasePerBixel = matRad_cfg.propMC.MCsquare_defaultHistories;
+0048     matRad_cfg.dispInfo(<span class="string">'Using default number of Histories per Bixel: %d\n'</span>,nCasePerBixel);
+0049 <span class="keyword">end</span>
+0050 
+0051 <span class="keyword">if</span> nargin &lt; 6
+0052     calcDoseDirect = false;
+0053 <span class="keyword">end</span>
+0054 
+0055 <span class="keyword">if</span> isfield(pln,<span class="string">'propMC'</span>) &amp;&amp; isfield(pln.propMC,<span class="string">'outputVariance'</span>)
+0056     matRad_cfg.dispWarning(<span class="string">'Variance scoring for MCsquare not yet supported.'</span>);
+0057 <span class="keyword">end</span>
+0058 
+0059 <span class="keyword">if</span> ~strcmp(pln.radiationMode,<span class="string">'protons'</span>)
+0060     errordlg(<span class="string">'MCsquare is only supported for protons'</span>);
+0061 <span class="keyword">end</span>
+0062 
+0063 env = <a href="../matRad/tools/matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>();
+0064 
+0065 <span class="comment">%% check if binaries are available</span>
+0066 <span class="comment">%Executables for simulation</span>
+0067 <span class="keyword">if</span> ispc
+0068     <span class="keyword">if</span> exist(<span class="string">'MCSquare_windows.exe'</span>,<span class="string">'file'</span>) ~= 2
+0069         matRad_cfg.dispError(<span class="string">'Could not find MCsquare binary.\n'</span>);
+0070     <span class="keyword">else</span>
+0071         mcSquareBinary = <span class="string">'MCSquare_windows.exe'</span>;
+0072     <span class="keyword">end</span>
+0073 <span class="keyword">elseif</span> ismac
+0074     <span class="keyword">if</span> exist(<span class="string">'MCsquare_mac'</span>,<span class="string">'file'</span>) ~= 2
+0075         matRad_cfg.dispError(<span class="string">'Could not find MCsquare binary.\n'</span>);
+0076     <span class="keyword">else</span>
+0077         mcSquareBinary = <span class="string">'./MCsquare_mac'</span>;
+0078     <span class="keyword">end</span>
+0079     <span class="comment">%error('MCsquare binaries not available for mac OS.\n');</span>
+0080 <span class="keyword">elseif</span> isunix
+0081     <span class="keyword">if</span> exist(<span class="string">'MCsquare_linux'</span>,<span class="string">'file'</span>) ~= 2
+0082         matRad_cfg.dispError(<span class="string">'Could not find MCsquare binary.\n'</span>);
+0083     <span class="keyword">else</span>
+0084         mcSquareBinary = <span class="string">'./MCsquare_linux'</span>;
+0085     <span class="keyword">end</span>
+0086 <span class="keyword">end</span>
+0087 
+0088 <span class="comment">%Mex interface for import of sparse matrix</span>
+0089 <span class="keyword">if</span> ~calcDoseDirect &amp;&amp; ~<a href="../matRad/tools/matRad_checkMexFileExists.html" class="code" title="function fileExists = matRad_checkMexFileExists(filename,linkOctave)">matRad_checkMexFileExists</a>(<span class="string">'matRad_sparseBeamletsReaderMCsquare'</span>)
+0090     matRad_cfg.dispWarning(<span class="string">'Compiled sparse reader interface not found. Trying to compile it on the fly!'</span>);      
+0091     <span class="keyword">try</span>
+0092         <a href="../matRad/MCsquare/matRad_compileMCsquareSparseReader.html" class="code" title="function matRad_compileMCsquareSparseReader(dest,sourceFolder)">matRad_compileMCsquareSparseReader</a>();        
+0093     <span class="keyword">catch</span> MException
+0094         matRad_cfg.dispError(<span class="string">'Could not find/generate mex interface for reading the sparse matrix. \nCause of error:\n%s\n Please compile it yourself.'</span>,MException.message);
+0095     <span class="keyword">end</span>
+0096 <span class="keyword">end</span>
+0097 
+0098 
+0099 <span class="comment">% set and change to MCsquare binary folder</span>
+0100 currFolder = pwd;
+0101 fullfilename = mfilename(<span class="string">'fullpath'</span>);
+0102 MCsquareFolder = [fullfilename(1:find(fullfilename==filesep,1,<span class="string">'last'</span>)) <span class="string">'MCsquare'</span> filesep <span class="string">'bin'</span>];
+0103 
+0104 <span class="comment">% cd to MCsquare folder (necessary for binary)</span>
+0105 cd(MCsquareFolder);
+0106 
+0107 <span class="comment">%Check Materials</span>
+0108 <span class="keyword">if</span> ~exist([MCsquareFolder filesep <span class="string">'Materials'</span>],<span class="string">'dir'</span>) || ~exist(fullfile(MCsquareFolder,<span class="string">'Materials'</span>,<span class="string">'list.dat'</span>),<span class="string">'file'</span>)
+0109     matRad_cfg.dispInfo(<span class="string">'First call of MCsquare: unzipping Materials...'</span>);    
+0110     unzip(<span class="string">'Materials.zip'</span>);
+0111     matRad_cfg.dispInfo(<span class="string">'Done'</span>);
+0112 <span class="keyword">end</span>
+0113 
+0114 <span class="comment">% Since MCsquare 1.1 only allows similar resolution in x&amp;y, we do some</span>
+0115 <span class="comment">% extra checks on that before calling calcDoseInit. First, we make sure a</span>
+0116 <span class="comment">% dose grid resolution is set in the pln struct</span>
+0117 <span class="keyword">if</span> ~isfield(pln,<span class="string">'propDoseCalc'</span>) <span class="keyword">...</span>
+0118         || ~isfield(pln.propDoseCalc,<span class="string">'doseGrid'</span>) <span class="keyword">...</span>
+0119         || ~isfield(pln.propDoseCalc.doseGrid,<span class="string">'resolution'</span>) <span class="keyword">...</span>
+0120         || ~all(isfield(pln.propDoseCalc.doseGrid.resolution,{<span class="string">'x'</span>,<span class="string">'y'</span>,<span class="string">'z'</span>}))
+0121     
+0122     <span class="comment">%Take default values</span>
+0123     pln.propDoseCalc.doseGrid.resolution = matRad_cfg.propDoseCalc.defaultResolution;
+0124 <span class="keyword">end</span>
+0125 
+0126 <span class="comment">% Now we check for different x/y</span>
+0127 <span class="keyword">if</span> pln.propDoseCalc.doseGrid.resolution.x ~= pln.propDoseCalc.doseGrid.resolution.y
+0128     pln.propDoseCalc.doseGrid.resolution.x = mean([pln.propDoseCalc.doseGrid.resolution.x pln.propDoseCalc.doseGrid.resolution.y]);
+0129     pln.propDoseCalc.doseGrid.resolution.y = pln.propDoseCalc.doseGrid.resolution.x;
+0130     matRad_cfg.dispWarning(<span class="string">'Anisotropic resolution in axial plane for dose calculation with MCsquare not possible\nUsing average x = y = %g mm\n'</span>,pln.propDoseCalc.doseGrid.resolution.x);
+0131 <span class="keyword">end</span>
+0132 
+0133 <span class="comment">%Now we can run calcDoseInit as usual</span>
+0134 <a href="matRad_calcDoseInit.html" class="code" title="">matRad_calcDoseInit</a>;
+0135 
+0136 <span class="comment">%Issue a warning when we have more than 1 scenario</span>
+0137 <span class="keyword">if</span> dij.numOfScenarios ~= 1
+0138     matRad_cfg.dispWarning(<span class="string">'MCsquare is only implemented for single scenario use at the moment. Will only use the first Scenario for Monte Carlo calculation!'</span>);
+0139 <span class="keyword">end</span>
+0140 
+0141 <span class="comment">% prefill ordering of MCsquare bixels</span>
+0142 dij.MCsquareCalcOrder = NaN*ones(dij.totalNumOfBixels,1);
+0143 
+0144 <span class="comment">% We need to adjust the offset used in matRad_calcDoseInit</span>
+0145 mcSquareAddIsoCenterOffset = [dij.doseGrid.resolution.x/2 dij.doseGrid.resolution.y/2 dij.doseGrid.resolution.z/2] <span class="keyword">...</span>
+0146                 - [dij.ctGrid.resolution.x   dij.ctGrid.resolution.y   dij.ctGrid.resolution.z];
+0147 mcSquareAddIsoCenterOffset = mcSquareAddIsoCenterOffset - offset;
+0148 
+0149 <span class="comment">% for MCsquare we explicitly downsample the ct to the dose grid (might not</span>
+0150 <span class="comment">% be necessary in future MCsquare versions with separated grids)</span>
+0151 <span class="keyword">for</span> s = 1:dij.numOfScenarios
+0152     HUcube{s} =  <a href="matRad_interp3.html" class="code" title="function y = matRad_interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal)">matRad_interp3</a>(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{s}, <span class="keyword">...</span>
+0153                                 dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,<span class="string">'linear'</span>);
+0154 <span class="keyword">end</span>
+0155 
+0156 <span class="comment">% Explicitly setting the number of threads for MCsquare, 0 is all available</span>
+0157 nbThreads = 0;
+0158 
+0159 <span class="comment">% set relative dose cutoff for storage in dose influence matrix, we use the</span>
+0160 <span class="comment">% default value for the lateral cutoff here</span>
+0161 relDoseCutoff = 1 - matRad_cfg.propDoseCalc.defaultLateralCutOff;
+0162 <span class="comment">% set absolute calibration factor</span>
+0163 <span class="comment">% convert from eV/g/primary to Gy 1e6 primaries</span>
+0164 absCalibrationFactorMC2 = 1.602176e-19 * 1.0e+9;
+0165 
+0166 <span class="keyword">if</span> isequal(pln.propOpt.bioOptimization,<span class="string">'const_RBExD'</span>)
+0167             dij.RBE = 1.1;
+0168             matRad_cfg.dispInfo(<span class="string">'matRad: Using a constant RBE of %g\n'</span>,dij.RBE);
+0169 <span class="keyword">end</span>
+0170 
+0171 <span class="comment">% MCsquare settings</span>
+0172 MCsquareConfigFile = <span class="string">'MCsquareConfig.txt'</span>;
+0173 
+0174 MCsquareConfig = <a href="../matRad/MCsquare/MatRad_MCsquareConfig.html" class="code" title="">MatRad_MCsquareConfig</a>;
+0175 
+0176 MCsquareConfig.BDL_Plan_File = <span class="string">'currBixels.txt'</span>;
+0177 MCsquareConfig.CT_File       = <span class="string">'MC2patientCT.mhd'</span>;
+0178 MCsquareConfig.Num_Threads   = nbThreads;
+0179 MCsquareConfig.RNG_Seed      = 1234;
+0180 MCsquareConfig.Num_Primaries = nCasePerBixel;
+0181 
+0182 <span class="comment">% turn simulation of individual beamlets</span>
+0183 MCsquareConfig.Beamlet_Mode = ~calcDoseDirect;
+0184 <span class="comment">% turn of writing of full dose cube</span>
+0185 MCsquareConfig.Dose_MHD_Output = calcDoseDirect;
+0186 <span class="comment">% turn on sparse output</span>
+0187 MCsquareConfig.Dose_Sparse_Output = ~calcDoseDirect;
+0188 <span class="comment">% set threshold of sparse matrix generation</span>
+0189 MCsquareConfig.Dose_Sparse_Threshold = relDoseCutoff;
+0190 
+0191 <span class="comment">% write patient data</span>
+0192 MCsquareBinCubeResolution = [dij.doseGrid.resolution.x <span class="keyword">...</span>
+0193                              dij.doseGrid.resolution.y <span class="keyword">...</span>
+0194                              dij.doseGrid.resolution.z];   
+0195 <a href="../matRad/MCsquare/matRad_writeMhd.html" class="code" title="function matRad_writeMhd(cube,resolution,filename)">matRad_writeMhd</a>(HUcube{1},MCsquareBinCubeResolution,MCsquareConfig.CT_File);
+0196 
+0197 
+0198 
+0199 counter = 0;             
+0200 <span class="keyword">for</span> i = 1:length(stf)
+0201     stfMCsquare(i).gantryAngle = mod(180-stf(i).gantryAngle,360); <span class="comment">%Different MCsquare geometry</span>
+0202     stfMCsquare(i).couchAngle  = stf(i).couchAngle;
+0203     stfMCsquare(i).isoCenter   = stf(i).isoCenter + mcSquareAddIsoCenterOffset;
+0204     stfMCsquare(i).energies    = unique([stf(i).ray.energy]);
+0205     
+0206     <span class="comment">% allocate empty target point container</span>
+0207     <span class="keyword">for</span> j = 1:numel(stfMCsquare(i).energies)
+0208         stfMCsquare(i).energyLayer(j).targetPoints   = [];
+0209         stfMCsquare(i).energyLayer(j).numOfPrimaries = [];
+0210         stfMCsquare(i).energyLayer(j).rayNum         = [];
+0211         stfMCsquare(i).energyLayer(j).bixelNum       = [];
+0212     <span class="keyword">end</span>
+0213     
+0214     <span class="keyword">for</span> j = 1:stf(i).numOfRays
+0215         <span class="keyword">for</span> k = 1:stf(i).numOfBixelsPerRay(j)
+0216             counter = counter + 1;
+0217             dij.beamNum(counter)  = i;
+0218             dij.rayNum(counter)   = j;
+0219             dij.bixelNum(counter) = k;
+0220         <span class="keyword">end</span>
+0221         
+0222         <span class="keyword">for</span> k = 1:numel(stfMCsquare(i).energies)
+0223             <span class="keyword">if</span> any(stf(i).ray(j).energy == stfMCsquare(i).energies(k))
+0224                 stfMCsquare(i).energyLayer(k).rayNum   = [stfMCsquare(i).energyLayer(k).rayNum j];
+0225                 stfMCsquare(i).energyLayer(k).bixelNum = [stfMCsquare(i).energyLayer(k).bixelNum <span class="keyword">...</span>
+0226                     find(stf(i).ray(j).energy == stfMCsquare(i).energies(k))];
+0227                 stfMCsquare(i).energyLayer(k).targetPoints = [stfMCsquare(i).energyLayer(k).targetPoints; <span class="keyword">...</span>
+0228                                         -stf(i).ray(j).rayPos_bev(1) stf(i).ray(j).rayPos_bev(3)];
+0229                 <span class="keyword">if</span> calcDoseDirect
+0230                     stfMCsquare(i).energyLayer(k).numOfPrimaries = [stfMCsquare(i).energyLayer(k).numOfPrimaries <span class="keyword">...</span>
+0231                                          round(stf(i).ray(j).weight(stf(i).ray(j).energy == stfMCsquare(i).energies(k))*MCsquareConfig.Num_Primaries)];
+0232                 <span class="keyword">else</span>
+0233                     stfMCsquare(i).energyLayer(k).numOfPrimaries = [stfMCsquare(i).energyLayer(k).numOfPrimaries <span class="keyword">...</span>
+0234                         MCsquareConfig.Num_Primaries];
+0235                 <span class="keyword">end</span>
+0236             <span class="keyword">end</span>
+0237         <span class="keyword">end</span>
+0238                
+0239     <span class="keyword">end</span>
+0240     
+0241 <span class="keyword">end</span>
+0242 
+0243 <span class="comment">% remember order</span>
+0244 counterMCsquare = 0;
+0245 MCsquareOrder = NaN * ones(dij.totalNumOfBixels,1);
+0246 <span class="keyword">for</span> i = 1:length(stf)
+0247     <span class="keyword">for</span> j = 1:numel(stfMCsquare(i).energies)
+0248         <span class="keyword">for</span> k = 1:numel(stfMCsquare(i).energyLayer(j).numOfPrimaries)
+0249             counterMCsquare = counterMCsquare + 1;
+0250             ix = find(i                                         == dij.beamNum &amp; <span class="keyword">...</span>
+0251                       stfMCsquare(i).energyLayer(j).rayNum(k)   == dij.rayNum &amp; <span class="keyword">...</span>
+0252                       stfMCsquare(i).energyLayer(j).bixelNum(k) == dij.bixelNum);
+0253         
+0254             MCsquareOrder(ix) = counterMCsquare;
+0255         <span class="keyword">end</span>
+0256     <span class="keyword">end</span>
+0257 <span class="keyword">end</span>
+0258 
+0259 <span class="keyword">if</span> any(isnan(MCsquareOrder))
+0260     matRad_cfg.dispError(<span class="string">'Invalid ordering of Beamlets for MCsquare computation!'</span>);
+0261 <span class="keyword">end</span>
+0262 
+0263 <span class="comment">%% MC computation and dij filling</span>
+0264 <a href="../matRad/MCsquare/matRad_writeMCsquareinputAllFiles.html" class="code" title="function matRad_writeMCsquareinputAllFiles(filename,MCsquareConfig,stf)">matRad_writeMCsquareinputAllFiles</a>(MCsquareConfigFile,MCsquareConfig,stfMCsquare);
+0265 
+0266 <span class="comment">% run MCsquare</span>
+0267 [status,cmdout] = system([mcSquareBinary <span class="string">' '</span> MCsquareConfigFile],<span class="string">'-echo'</span>);
+0268     
+0269 mask = false(dij.doseGrid.numOfVoxels,1);
+0270 mask(VdoseGrid) = true;
+0271 
+0272 <span class="comment">% read sparse matrix</span>
+0273 <span class="keyword">if</span> ~calcDoseDirect
+0274     dij.physicalDose{1} = absCalibrationFactorMC2 * matRad_sparseBeamletsReaderMCsquare ( <span class="keyword">...</span>
+0275                     [MCsquareConfig.Output_Directory filesep <span class="string">'Sparse_Dose.bin'</span>], <span class="keyword">...</span>
+0276                     dij.doseGrid.dimensions, <span class="keyword">...</span>
+0277                     dij.totalNumOfBixels, <span class="keyword">...</span>
+0278                     mask);
+0279 <span class="keyword">else</span>
+0280     cube = <a href="../matRad/MCsquare/matRad_readMhd.html" class="code" title="function cube = matRad_readMhd(folder,filename)">matRad_readMhd</a>(MCsquareConfig.Output_Directory,<span class="string">'Dose.mhd'</span>);
+0281     dij.physicalDose{1} = sparse(VdoseGrid,ones(numel(VdoseGrid),1), <span class="keyword">...</span>
+0282                                  absCalibrationFactorMC2 * cube(VdoseGrid), <span class="keyword">...</span>
+0283                                  dij.doseGrid.numOfVoxels,1);
+0284 <span class="keyword">end</span>
+0285 
+0286 <span class="comment">% reorder influence matrix to comply with matRad default ordering</span>
+0287 <span class="keyword">if</span> MCsquareConfig.Beamlet_Mode
+0288     dij.physicalDose{1} = dij.physicalDose{1}(:,MCsquareOrder);            
+0289 <span class="keyword">end</span>        
+0290 
+0291 matRad_cfg.dispInfo(<span class="string">'matRad: done!\n'</span>);
+0292 
+0293 <span class="keyword">try</span>
+0294     <span class="comment">% wait 0.1s for closing all waitbars</span>
+0295     allWaitBarFigures = findall(0,<span class="string">'type'</span>,<span class="string">'figure'</span>,<span class="string">'tag'</span>,<span class="string">'TMWWaitbar'</span>);
+0296     delete(allWaitBarFigures);
+0297     pause(0.1);
+0298 <span class="keyword">catch</span>
+0299 <span class="keyword">end</span>
+0300 
+0301 <span class="comment">%% clear all data</span>
+0302 delete([MCsquareConfig.CT_File(1:end-4) <span class="string">'.*'</span>]);
+0303 delete(<span class="string">'currBixels.txt'</span>);
+0304 delete(<span class="string">'MCsquareConfig.txt'</span>);
+0305 
+0306 <span class="comment">%For Octave temporarily disable confirmation for recursive rmdir</span>
+0307 <span class="keyword">if</span> strcmp(env,<span class="string">'OCTAVE'</span>)    
+0308     rmdirConfirmState = confirm_recursive_rmdir(0);
+0309 <span class="keyword">end</span>
+0310 rmdir(MCsquareConfig.Output_Directory,<span class="string">'s'</span>);
+0311 
+0312 <span class="comment">%Reset to old confirmatoin state</span>
+0313 <span class="keyword">if</span> strcmp(env,<span class="string">'OCTAVE'</span>)
+0314     confirm_recursive_rmdir(rmdirConfirmState);
+0315 <span class="keyword">end</span>
+0316 
+0317 <span class="comment">% cd back</span>
+0318 cd(currFolder);
+0319 
+0320 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

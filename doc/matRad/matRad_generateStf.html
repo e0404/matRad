@@ -1,0 +1,580 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_generateStf</title>
+  <meta name="keywords" content="matRad_generateStf">
+  <meta name="description" content="matRad steering information generation">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_generateStf
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">matRad steering information generation</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function stf = matRad_generateStf(ct,cst,pln,visMode) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad steering information generation
+ 
+ call
+   stf = matRad_generateStf(ct,cst,pln,visMode)
+
+ input
+   ct:         ct cube
+   cst:        matRad cst struct
+   pln:        matRad plan meta information struct
+   visMode:    toggle on/off different visualizations by setting this value to 1,2,3 (optional)
+
+ output
+   stf:        matRad steering information struct
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="../matRad/dicom/matRad_calcWaterEqD.html" class="code" title="function ct = matRad_calcWaterEqD(ct, pln)">matRad_calcWaterEqD</a>	matRad function to calculate the equivalent densities from a dicom ct</li><li><a href="../matRad/dicom/matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>	matRad progress bar</li><li><a href="matRad_addMargin.html" class="code" title="function mVOIEnlarged = matRad_addMargin(mVOI,cst,vResolution,vMargin,bDiaElem)">matRad_addMargin</a>	matRad add margin function</li><li><a href="matRad_getRotationMatrix.html" class="code" title="function rotMat = matRad_getRotationMatrix(gantryAngle,couchAngle,system)">matRad_getRotationMatrix</a>	matRad function to return the rotation / transformation matrix</li><li><a href="matRad_interp1.html" class="code" title="function y = matRad_interp1(xi,yi,x,extrapolation)">matRad_interp1</a>	interpolates 1-D data (table lookup) and utilizes griddedInterpolant</li><li><a href="matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>	matRad progress bar</li><li><a href="matRad_siddonRayTracer.html" class="code" title="function [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(isocenter,resolution,sourcePoint,targetPoint,cubes)">matRad_siddonRayTracer</a>	siddon ray tracing through 3D cube to calculate the radiological depth</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../matRad/examples/matRad_example1_phantom.html" class="code" title="">matRad_example1_phantom</a>	% Example: Generate your own phantom geometry</li><li><a href="../matRad/examples/matRad_example2_photons.html" class="code" title="">matRad_example2_photons</a>	% Example: Photon Treatment Plan</li><li><a href="../matRad/examples/matRad_example3_photonsDAO.html" class="code" title="">matRad_example3_photonsDAO</a>	% Example: Photon Treatment Plan with Direct aperture optimization</li><li><a href="../matRad/examples/matRad_example4_photonsMC.html" class="code" title="">matRad_example4_photonsMC</a>	% Example: Photon Treatment Plan using VMC++ dose calculation</li><li><a href="../matRad/examples/matRad_example5_protons.html" class="code" title="">matRad_example5_protons</a>	% Example: Proton Treatment Plan with subsequent Isocenter shift</li><li><a href="../matRad/examples/matRad_example6_protonsNoise.html" class="code" title="">matRad_example6_protonsNoise</a>	% Example: Proton Treatment Plan with Manipulated CT values</li><li><a href="../matRad/examples/matRad_example7_carbon.html" class="code" title="">matRad_example7_carbon</a>	% Example: Carbon Ion Treatment Plan</li><li><a href="matRad.html" class="code" title="">matRad</a>	matRad script</li><li><a href="matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function stf = matRad_generateStf(ct,cst,pln,visMode)</a>
+0002 <span class="comment">% matRad steering information generation</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   stf = matRad_generateStf(ct,cst,pln,visMode)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   ct:         ct cube</span>
+0009 <span class="comment">%   cst:        matRad cst struct</span>
+0010 <span class="comment">%   pln:        matRad plan meta information struct</span>
+0011 <span class="comment">%   visMode:    toggle on/off different visualizations by setting this value to 1,2,3 (optional)</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">% output</span>
+0014 <span class="comment">%   stf:        matRad steering information struct</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% References</span>
+0017 <span class="comment">%   -</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0022 <span class="comment">%</span>
+0023 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0024 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0025 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0026 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0027 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0028 <span class="comment">% LICENSE file.</span>
+0029 <span class="comment">%</span>
+0030 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0031 
+0032 matRad_cfg = MatRad_Config.instance();
+0033 
+0034 matRad_cfg.dispInfo(<span class="string">'matRad: Generating stf struct... '</span>);
+0035 
+0036 <span class="keyword">if</span> nargin &lt; 4
+0037     visMode = 0;
+0038 <span class="keyword">end</span>
+0039 
+0040 <span class="keyword">if</span> numel(pln.propStf.gantryAngles) ~= numel(pln.propStf.couchAngles)
+0041     matRad_cfg.dispError(<span class="string">'Inconsistent number of gantry and couch angles.'</span>);
+0042 <span class="keyword">end</span>
+0043 
+0044 <span class="keyword">if</span> pln.propStf.bixelWidth &lt; 0 || ~isfinite(pln.propStf.bixelWidth)
+0045    matRad_cfg.dispError(<span class="string">'bixel width (spot distance) needs to be a real number [mm] larger than zero.'</span>);
+0046 <span class="keyword">end</span>
+0047 
+0048 <span class="comment">% find all target voxels from cst cell array</span>
+0049 V = [];
+0050 <span class="keyword">for</span> i=1:size(cst,1)
+0051     <span class="keyword">if</span> isequal(cst{i,3},<span class="string">'TARGET'</span>) &amp;&amp; ~isempty(cst{i,6})
+0052         V = [V;vertcat(cst{i,4}{:})];
+0053     <span class="keyword">end</span>
+0054 <span class="keyword">end</span>
+0055 
+0056 <span class="comment">% Remove double voxels</span>
+0057 V = unique(V);
+0058 <span class="comment">% generate voi cube for targets</span>
+0059 voiTarget    = zeros(ct.cubeDim);
+0060 voiTarget(V) = 1;
+0061     
+0062 <span class="comment">% add margin</span>
+0063 addmarginBool = matRad_cfg.propStf.defaultAddMargin;
+0064 <span class="keyword">if</span> isfield(pln,<span class="string">'propStf'</span>) &amp;&amp; isfield(pln.propStf,<span class="string">'addMargin'</span>)
+0065    addmarginBool = pln.propStf.addMargin; 
+0066 <span class="keyword">end</span>
+0067 
+0068 <span class="keyword">if</span> addmarginBool
+0069     voiTarget = <a href="matRad_addMargin.html" class="code" title="function mVOIEnlarged = matRad_addMargin(mVOI,cst,vResolution,vMargin,bDiaElem)">matRad_addMargin</a>(voiTarget,cst,ct.resolution,ct.resolution,true);
+0070     V   = find(voiTarget&gt;0);
+0071 <span class="keyword">end</span>
+0072 
+0073 <span class="comment">% throw error message if no target is found</span>
+0074 <span class="keyword">if</span> isempty(V)
+0075     matRad_cfg.dispError(<span class="string">'Could not find target.'</span>);
+0076 <span class="keyword">end</span>
+0077 
+0078 <span class="comment">% Convert linear indices to 3D voxel coordinates</span>
+0079 [coordsY_vox, coordsX_vox, coordsZ_vox] = ind2sub(ct.cubeDim,V);
+0080 
+0081 <span class="comment">% prepare structures necessary for particles</span>
+0082 fileName = [pln.radiationMode <span class="string">'_'</span> pln.machine];
+0083 <span class="keyword">try</span>
+0084    load([fileparts(mfilename(<span class="string">'fullpath'</span>)) filesep <span class="string">'basedata'</span> filesep fileName]);
+0085    SAD = machine.meta.SAD;
+0086 <span class="keyword">catch</span>
+0087    matRad_cfg.dispError(<span class="string">'Could not find the following machine file: %s'</span>,fileName); 
+0088 <span class="keyword">end</span>
+0089 
+0090 <span class="keyword">if</span> strcmp(pln.radiationMode,<span class="string">'protons'</span>) || strcmp(pln.radiationMode,<span class="string">'carbon'</span>)
+0091       
+0092     availableEnergies = [machine.data.energy];
+0093     availablePeakPos  = [machine.data.peakPos] + [machine.data.offset];
+0094     
+0095     <span class="keyword">if</span> sum(availablePeakPos&lt;0)&gt;0
+0096        matRad_cfg.dispError(<span class="string">'at least one available peak position is negative - inconsistent machine file'</span>) 
+0097     <span class="keyword">end</span>
+0098     <span class="comment">%clear machine;</span>
+0099 <span class="keyword">end</span>
+0100 
+0101 <span class="comment">% calculate rED or rSP from HU</span>
+0102 ct = <a href="../matRad/dicom/matRad_calcWaterEqD.html" class="code" title="function ct = matRad_calcWaterEqD(ct, pln)">matRad_calcWaterEqD</a>(ct, pln);
+0103 
+0104 <span class="comment">% take only voxels inside patient</span>
+0105 V = [cst{:,4}];
+0106 V = unique(vertcat(V{:}));
+0107 
+0108 <span class="comment">% ignore densities outside of contours</span>
+0109 eraseCtDensMask = ones(prod(ct.cubeDim),1);
+0110 eraseCtDensMask(V) = 0;
+0111 <span class="keyword">for</span> i = 1:ct.numOfCtScen
+0112     ct.cube{i}(eraseCtDensMask == 1) = 0;
+0113 <span class="keyword">end</span>
+0114 
+0115 <span class="comment">% Define steering file like struct. Prellocating for speed.</span>
+0116 stf = struct;
+0117 
+0118 <span class="comment">% loop over all angles</span>
+0119 <span class="keyword">for</span> i = 1:length(pln.propStf.gantryAngles)
+0120     
+0121     <span class="comment">% Correct for iso center position. Whit this correction Isocenter is</span>
+0122     <span class="comment">% (0,0,0) [mm]</span>
+0123     coordsX = coordsX_vox*ct.resolution.x - pln.propStf.isoCenter(i,1);
+0124     coordsY = coordsY_vox*ct.resolution.y - pln.propStf.isoCenter(i,2);
+0125     coordsZ = coordsZ_vox*ct.resolution.z - pln.propStf.isoCenter(i,3);
+0126 
+0127     <span class="comment">% Save meta information for treatment plan</span>
+0128     stf(i).gantryAngle   = pln.propStf.gantryAngles(i);
+0129     stf(i).couchAngle    = pln.propStf.couchAngles(i);
+0130     stf(i).bixelWidth    = pln.propStf.bixelWidth;
+0131     stf(i).radiationMode = pln.radiationMode;
+0132     stf(i).SAD           = SAD;
+0133     stf(i).isoCenter     = pln.propStf.isoCenter(i,:);
+0134         
+0135     <span class="comment">% Get the (active) rotation matrix. We perform a passive/system</span>
+0136     <span class="comment">% rotation with row vector coordinates, which would introduce two</span>
+0137     <span class="comment">% inversions / transpositions of the matrix, thus no changes to the</span>
+0138     <span class="comment">% rotation matrix are necessary</span>
+0139     rotMat_system_T = <a href="matRad_getRotationMatrix.html" class="code" title="function rotMat = matRad_getRotationMatrix(gantryAngle,couchAngle,system)">matRad_getRotationMatrix</a>(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i));
+0140     
+0141     rot_coords = [coordsX coordsY coordsZ]*rotMat_system_T;
+0142     
+0143     <span class="comment">% project x and z coordinates to isocenter</span>
+0144     coordsAtIsoCenterPlane(:,1) = (rot_coords(:,1)*SAD)./(SAD + rot_coords(:,2));
+0145     coordsAtIsoCenterPlane(:,2) = (rot_coords(:,3)*SAD)./(SAD + rot_coords(:,2));
+0146     
+0147     <span class="comment">% Take unique rows values for beamlets positions. Calculate position of</span>
+0148     <span class="comment">% central ray for every bixel</span>
+0149     rayPos = unique(pln.propStf.bixelWidth*round([           coordsAtIsoCenterPlane(:,1) <span class="keyword">...</span><span class="comment"> </span>
+0150                                                   zeros(size(coordsAtIsoCenterPlane,1),1) <span class="keyword">...</span>
+0151                                                              coordsAtIsoCenterPlane(:,2)]/pln.propStf.bixelWidth),<span class="string">'rows'</span>);
+0152                                                   
+0153     <span class="comment">% pad ray position array if resolution of target voxel grid not sufficient</span>
+0154     maxCtResolution = max([ct.resolution.x ct.resolution.y ct.resolution.z]);
+0155     <span class="keyword">if</span> pln.propStf.bixelWidth &lt; maxCtResolution
+0156         origRayPos = rayPos;
+0157         <span class="keyword">for</span> j = -floor(maxCtResolution/pln.propStf.bixelWidth):floor(maxCtResolution/pln.propStf.bixelWidth)
+0158             <span class="keyword">for</span> k = -floor(maxCtResolution/pln.propStf.bixelWidth):floor(maxCtResolution/pln.propStf.bixelWidth)
+0159                 <span class="keyword">if</span> abs(j)+abs(k)==0
+0160                     <span class="keyword">continue</span>;
+0161                 <span class="keyword">end</span>                
+0162                 rayPos = [rayPos; origRayPos(:,1)+j*pln.propStf.bixelWidth origRayPos(:,2) origRayPos(:,3)+k*pln.propStf.bixelWidth];
+0163             <span class="keyword">end</span>
+0164         <span class="keyword">end</span>
+0165      <span class="keyword">end</span>
+0166 
+0167      <span class="comment">% remove spaces within rows of bixels for DAO</span>
+0168      <span class="keyword">if</span> pln.propOpt.runDAO
+0169          <span class="comment">% create single x,y,z vectors</span>
+0170          x = rayPos(:,1);
+0171          y = rayPos(:,2);
+0172          z = rayPos(:,3);
+0173          uniZ = unique(z);
+0174          <span class="keyword">for</span> j = 1:numel(uniZ)
+0175              x_loc = x(z == uniZ(j));
+0176              x_min = min(x_loc);
+0177              x_max = max(x_loc);
+0178              x = [x; [x_min:pln.propStf.bixelWidth:x_max]'];
+0179              y = [y; zeros((x_max-x_min)/pln.propStf.bixelWidth+1,1)];
+0180              z = [z; uniZ(j)*ones((x_max-x_min)/pln.propStf.bixelWidth+1,1)];             
+0181          <span class="keyword">end</span>
+0182          
+0183          rayPos = [x,y,z];
+0184      <span class="keyword">end</span>
+0185     
+0186     <span class="comment">% remove double rays</span>
+0187     rayPos = unique(rayPos,<span class="string">'rows'</span>);
+0188     
+0189     <span class="comment">% Save the number of rays</span>
+0190     stf(i).numOfRays = size(rayPos,1);
+0191     
+0192     <span class="comment">% Save ray and target position in beam eye's view (bev)</span>
+0193     <span class="keyword">for</span> j = 1:stf(i).numOfRays
+0194         stf(i).ray(j).rayPos_bev = rayPos(j,:);
+0195         stf(i).ray(j).targetPoint_bev = [2*stf(i).ray(j).rayPos_bev(1) <span class="keyword">...</span>
+0196                                                                SAD <span class="keyword">...</span>
+0197                                          2*stf(i).ray(j).rayPos_bev(3)];
+0198     <span class="keyword">end</span>
+0199     
+0200     <span class="comment">% source position in bev</span>
+0201     stf(i).sourcePoint_bev = [0 -SAD 0];
+0202     
+0203     <span class="comment">% get (active) rotation matrix</span>
+0204     <span class="comment">% transpose matrix because we are working with row vectors</span>
+0205     rotMat_vectors_T = transpose(<a href="matRad_getRotationMatrix.html" class="code" title="function rotMat = matRad_getRotationMatrix(gantryAngle,couchAngle,system)">matRad_getRotationMatrix</a>(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i)));
+0206     
+0207     
+0208     stf(i).sourcePoint = stf(i).sourcePoint_bev*rotMat_vectors_T;
+0209     
+0210     <span class="comment">% Save ray and target position in lps system.</span>
+0211     <span class="keyword">for</span> j = 1:stf(i).numOfRays
+0212         stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMat_vectors_T;
+0213         stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMat_vectors_T;
+0214         <span class="keyword">if</span> strcmp(pln.radiationMode,<span class="string">'photons'</span>) 
+0215             stf(i).ray(j).beamletCornersAtIso = [rayPos(j,:) + [+stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];<span class="keyword">...</span>
+0216                                                  rayPos(j,:) + [-stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];<span class="keyword">...</span>
+0217                                                  rayPos(j,:) + [-stf(i).bixelWidth/2,0,-stf(i).bixelWidth/2];<span class="keyword">...</span>
+0218                                                  rayPos(j,:) + [+stf(i).bixelWidth/2,0,-stf(i).bixelWidth/2]]*rotMat_vectors_T;
+0219             stf(i).ray(j).rayCorners_SCD = (repmat([0, machine.meta.SCD - SAD, 0],4,1)+ (machine.meta.SCD/SAD) * <span class="keyword">...</span>
+0220                                                              [rayPos(j,:) + [+stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];<span class="keyword">...</span>
+0221                                                               rayPos(j,:) + [-stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];<span class="keyword">...</span>
+0222                                                               rayPos(j,:) + [-stf(i).bixelWidth/2,0,-stf(i).bixelWidth/2];<span class="keyword">...</span>
+0223                                                               rayPos(j,:) + [+stf(i).bixelWidth/2,0,-stf(i).bixelWidth/2]])*rotMat_vectors_T;
+0224         <span class="keyword">end</span>
+0225     <span class="keyword">end</span>
+0226     
+0227     <span class="comment">% loop over all rays to determine meta information for each ray</span>
+0228     stf(i).numOfBixelsPerRay = ones(1,stf(i).numOfRays);
+0229     
+0230     <span class="keyword">for</span> j = stf(i).numOfRays:-1:1
+0231 
+0232         <span class="comment">% ray tracing necessary to determine depth of the target</span>
+0233         [~,l,rho,~,~] = <a href="matRad_siddonRayTracer.html" class="code" title="function [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(isocenter,resolution,sourcePoint,targetPoint,cubes)">matRad_siddonRayTracer</a>(stf(i).isoCenter, <span class="keyword">...</span>
+0234                              ct.resolution, <span class="keyword">...</span>
+0235                              stf(i).sourcePoint, <span class="keyword">...</span>
+0236                              stf(i).ray(j).targetPoint, <span class="keyword">...</span>
+0237                              [{ct.cube{1}} {voiTarget}]);
+0238 
+0239         <span class="comment">% find appropriate energies for particles</span>
+0240        <span class="keyword">if</span> strcmp(stf(i).radiationMode,<span class="string">'protons'</span>) || strcmp(stf(i).radiationMode,<span class="string">'carbon'</span>)
+0241 
+0242            <span class="comment">% target hit</span>
+0243            <span class="keyword">if</span> sum(rho{2}) &gt; 0 
+0244 
+0245                 <span class="comment">% compute radiological depths</span>
+0246                 <span class="comment">% http://www.ncbi.nlm.nih.gov/pubmed/4000088, eq 14</span>
+0247                 radDepths = cumsum(l .* rho{1}); 
+0248 
+0249                 <span class="comment">% find target entry &amp; exit</span>
+0250                 diff_voi    = diff([rho{2}]);
+0251                 targetEntry = radDepths(diff_voi == 1);
+0252                 targetExit  = radDepths(diff_voi == -1);
+0253 
+0254                 <span class="keyword">if</span> numel(targetEntry) ~= numel(targetExit)
+0255                     matRad_cfg.dispError(<span class="string">'Inconsistency during ray tracing. Please check correct assignment and overlap priorities of structure types OAR &amp; TARGET.'</span>);
+0256                 <span class="keyword">end</span>
+0257 
+0258                 stf(i).ray(j).energy = [];
+0259 
+0260                 <span class="comment">% Save energies in stf struct</span>
+0261                 <span class="keyword">for</span> k = 1:numel(targetEntry)
+0262                     stf(i).ray(j).energy = [stf(i).ray(j).energy availableEnergies(availablePeakPos&gt;=targetEntry(k)&amp;availablePeakPos&lt;=targetExit(k))];
+0263                 <span class="keyword">end</span>
+0264   
+0265                 <span class="comment">% book keeping &amp; calculate focus index</span>
+0266                 stf(i).numOfBixelsPerRay(j) = numel([stf(i).ray(j).energy]);
+0267                 currentMinimumFWHM = <a href="matRad_interp1.html" class="code" title="function y = matRad_interp1(xi,yi,x,extrapolation)">matRad_interp1</a>(machine.meta.LUT_bxWidthminFWHM(1,:)',<span class="keyword">...</span>
+0268                                              machine.meta.LUT_bxWidthminFWHM(2,:)',<span class="keyword">...</span>
+0269                                              pln.propStf.bixelWidth);
+0270                 focusIx  =  ones(stf(i).numOfBixelsPerRay(j),1);
+0271                 [~, vEnergyIx] = min(abs(bsxfun(@minus,[machine.data.energy]',<span class="keyword">...</span>
+0272                                 repmat(stf(i).ray(j).energy,length([machine.data]),1))));
+0273 
+0274                 <span class="comment">% get for each spot the focus index</span>
+0275                 <span class="keyword">for</span> k = 1:stf(i).numOfBixelsPerRay(j)                    
+0276                     focusIx(k) = find(machine.data(vEnergyIx(k)).initFocus.SisFWHMAtIso &gt; currentMinimumFWHM,1,<span class="string">'first'</span>);
+0277                 <span class="keyword">end</span>
+0278 
+0279                 stf(i).ray(j).focusIx = focusIx';
+0280                  
+0281             <span class="keyword">else</span> <span class="comment">% target not hit</span>
+0282                 stf(i).ray(j)               = [];
+0283                 stf(i).numOfBixelsPerRay(j) = [];
+0284            <span class="keyword">end</span>
+0285            
+0286        <span class="keyword">elseif</span> strcmp(stf(i).radiationMode,<span class="string">'photons'</span>)
+0287            
+0288          <span class="comment">% book keeping for photons</span>
+0289          stf(i).ray(j).energy = machine.data.energy;
+0290          
+0291        <span class="keyword">else</span>
+0292           matRad_cfg.dispError(<span class="string">'Error generating stf struct: invalid radiation modality.'</span>);
+0293        <span class="keyword">end</span>
+0294        
+0295     <span class="keyword">end</span>
+0296     
+0297     <span class="comment">% store total number of rays for beam-i</span>
+0298     stf(i).numOfRays = size(stf(i).ray,2);
+0299      
+0300     <span class="comment">% post processing for particle remove energy slices</span>
+0301     <span class="keyword">if</span> strcmp(stf(i).radiationMode,<span class="string">'protons'</span>) || strcmp(stf(i).radiationMode,<span class="string">'carbon'</span>)
+0302         
+0303         <span class="comment">% get minimum energy per field</span>
+0304         minEnergy = min([stf(i).ray.energy]);
+0305         maxEnergy = max([stf(i).ray.energy]);
+0306         
+0307         <span class="comment">% get corresponding peak position</span>
+0308         availableEnergies = [machine.data.energy];
+0309         minPeakPos  = machine.data(minEnergy == availableEnergies).peakPos;
+0310         maxPeakPos  = machine.data(maxEnergy == availableEnergies).peakPos;
+0311         
+0312         <span class="comment">% find set of energyies with adequate spacing</span>
+0313         <span class="keyword">if</span> ~isfield(pln.propStf, <span class="string">'longitudinalSpotSpacing'</span>)
+0314             longitudinalSpotSpacing = matRad_cfg.propStf.defaultLongitudinalSpotSpacing;
+0315         <span class="keyword">else</span>
+0316             longitudinalSpotSpacing = pln.propStf.longitudinalSpotSpacing;
+0317         <span class="keyword">end</span>
+0318         
+0319         stf(i).longitudinalSpotSpacing = longitudinalSpotSpacing;
+0320         
+0321         tolerance              = longitudinalSpotSpacing/10;
+0322         availablePeakPos       = [machine.data.peakPos];
+0323         
+0324         useEnergyBool = availablePeakPos &gt;= minPeakPos &amp; availablePeakPos &lt;= maxPeakPos;
+0325         
+0326         ixCurr = find(useEnergyBool,1,<span class="string">'first'</span>);
+0327         ixRun  = ixCurr + 1;
+0328         ixEnd  = find(useEnergyBool,1,<span class="string">'last'</span>);
+0329 
+0330         <span class="keyword">while</span> ixRun &lt;= ixEnd
+0331             <span class="keyword">if</span> abs(availablePeakPos(ixRun)-availablePeakPos(ixCurr)) &lt; <span class="keyword">...</span>
+0332                                     longitudinalSpotSpacing - tolerance
+0333                 useEnergyBool(ixRun) = 0;
+0334             <span class="keyword">else</span>
+0335                 ixCurr = ixRun;
+0336             <span class="keyword">end</span>
+0337             ixRun = ixRun + 1;
+0338         <span class="keyword">end</span>
+0339         
+0340         <span class="keyword">for</span> j = stf(i).numOfRays:-1:1
+0341             <span class="keyword">for</span> k = stf(i).numOfBixelsPerRay(j):-1:1
+0342                 maskEnergy = stf(i).ray(j).energy(k) == availableEnergies;
+0343                 <span class="keyword">if</span> ~useEnergyBool(maskEnergy)
+0344                     stf(i).ray(j).energy(k)     = [];
+0345                     stf(i).ray(j).focusIx(k)    = [];
+0346                     stf(i).numOfBixelsPerRay(j) = stf(i).numOfBixelsPerRay(j) - 1;
+0347                 <span class="keyword">end</span>
+0348             <span class="keyword">end</span>
+0349             <span class="keyword">if</span> isempty(stf(i).ray(j).energy)
+0350                 stf(i).ray(j) = [];
+0351                 stf(i).numOfBixelsPerRay(j) = [];
+0352                 stf(i).numOfRays = stf(i).numOfRays - 1;
+0353             <span class="keyword">end</span>
+0354         <span class="keyword">end</span>
+0355         
+0356     <span class="keyword">end</span>
+0357     
+0358     <span class="comment">% save total number of bixels</span>
+0359     stf(i).totalNumOfBixels = sum(stf(i).numOfBixelsPerRay);
+0360     
+0361     <span class="comment">% Show progress</span>
+0362     <a href="matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>(i,length(pln.propStf.gantryAngles));
+0363 
+0364     <span class="comment">%% visualization</span>
+0365     <span class="keyword">if</span> visMode &gt; 0
+0366         
+0367         clf;
+0368         <span class="comment">% first subplot: visualization in bev</span>
+0369         subplot(1,2,1)
+0370         hold on
+0371         
+0372         <span class="comment">% plot rotated target coordinates</span>
+0373         plot3(rot_coords(:,1),rot_coords(:,2),rot_coords(:,3),<span class="string">'r.'</span>)
+0374         
+0375         <span class="comment">% surface rendering</span>
+0376         <span class="keyword">if</span> visMode == 2
+0377             
+0378             <span class="comment">% generate a 3D rectangular grid centered at isocenter in</span>
+0379             <span class="comment">% voxel coordinates</span>
+0380             [X,Y,Z] = meshgrid((1:ct.cubeDim(2))-stf(i).isoCenter(1)/ct.resolution.x, <span class="keyword">...</span>
+0381                                (1:ct.cubeDim(1))-stf(i).isoCenter(2)/ct.resolution.y, <span class="keyword">...</span>
+0382                                (1:ct.cubeDim(3))-stf(i).isoCenter(3)/ct.resolution.z);
+0383             
+0384             <span class="comment">% computes surface</span>
+0385             patSurfCube      = 0*ct.cube{1};
+0386             idx              = [cst{:,4}];
+0387             idx              = unique(vertcat(idx{:}));
+0388             patSurfCube(idx) = 1;
+0389             
+0390             [f,v] = isosurface(X,Y,Z,patSurfCube,.5);
+0391             
+0392             <span class="comment">% convert isosurface from voxel to [mm]</span>
+0393             v(:,1) = v(:,1)*ct.resolution.x;
+0394             v(:,2) = v(:,2)*ct.resolution.y;
+0395             v(:,3) = v(:,3)*ct.resolution.z;
+0396             
+0397             <span class="comment">% rotate surface</span>
+0398             rotated_surface = v*rotMat_system_T;
+0399             
+0400             <span class="comment">% surface rendering</span>
+0401             surface = patch(<span class="string">'Faces'</span>,f,<span class="string">'Vertices'</span>,rotated_surface);
+0402             set(surface,<span class="string">'FaceColor'</span>,[0 0 1],<span class="string">'EdgeColor'</span>,<span class="string">'none'</span>,<span class="string">'FaceAlpha'</span>,.4);
+0403             lighting gouraud;
+0404         
+0405         <span class="keyword">end</span>
+0406         
+0407         <span class="comment">% plot projection matrix: coordinates at isocenter</span>
+0408         plot3(rayPos(:,1),rayPos(:,2),rayPos(:,3),<span class="string">'k.'</span>);
+0409         
+0410         <span class="comment">% Plot matrix border of matrix at isocenter</span>
+0411         <span class="keyword">for</span> j = 1:stf(i).numOfRays
+0412             
+0413             <span class="comment">% Compute border for every bixels</span>
+0414             targetPoint_vox_X_1 = stf(i).ray(j).targetPoint_bev(:,1) + pln.propStf.bixelWidth;
+0415             targetPoint_vox_Y_1 = stf(i).ray(j).targetPoint_bev(:,2);
+0416             targetPoint_vox_Z_1 = stf(i).ray(j).targetPoint_bev(:,3) + pln.propStf.bixelWidth;
+0417             
+0418             targetPoint_vox_X_2 = stf(i).ray(j).targetPoint_bev(:,1) + pln.propStf.bixelWidth;
+0419             targetPoint_vox_Y_2 = stf(i).ray(j).targetPoint_bev(:,2);
+0420             targetPoint_vox_Z_2 = stf(i).ray(j).targetPoint_bev(:,3) - pln.propStf.bixelWidth;
+0421             
+0422             targetPoint_vox_X_3 = stf(i).ray(j).targetPoint_bev(:,1) - pln.propStf.bixelWidth;
+0423             targetPoint_vox_Y_3 = stf(i).ray(j).targetPoint_bev(:,2);
+0424             targetPoint_vox_Z_3 = stf(i).ray(j).targetPoint_bev(:,3) - pln.propStf.bixelWidth;
+0425             
+0426             targetPoint_vox_X_4 = stf(i).ray(j).targetPoint_bev(:,1) - pln.propStf.bixelWidth;
+0427             targetPoint_vox_Y_4 = stf(i).ray(j).targetPoint_bev(:,2);
+0428             targetPoint_vox_Z_4 = stf(i).ray(j).targetPoint_bev(:,3) + pln.propStf.bixelWidth;
+0429             
+0430             <span class="comment">% plot</span>
+0431             plot3([stf(i).sourcePoint_bev(1) targetPoint_vox_X_1],[stf(i).sourcePoint_bev(2) targetPoint_vox_Y_1],[stf(i).sourcePoint_bev(3) targetPoint_vox_Z_1],<span class="string">'g'</span>)
+0432             plot3([stf(i).sourcePoint_bev(1) targetPoint_vox_X_2],[stf(i).sourcePoint_bev(2) targetPoint_vox_Y_2],[stf(i).sourcePoint_bev(3) targetPoint_vox_Z_2],<span class="string">'g'</span>)
+0433             plot3([stf(i).sourcePoint_bev(1) targetPoint_vox_X_3],[stf(i).sourcePoint_bev(2) targetPoint_vox_Y_3],[stf(i).sourcePoint_bev(3) targetPoint_vox_Z_3],<span class="string">'g'</span>)
+0434             plot3([stf(i).sourcePoint_bev(1) targetPoint_vox_X_4],[stf(i).sourcePoint_bev(2) targetPoint_vox_Y_4],[stf(i).sourcePoint_bev(3) targetPoint_vox_Z_4],<span class="string">'g'</span>)
+0435             
+0436         <span class="keyword">end</span>
+0437         
+0438         <span class="comment">% Plot properties</span>
+0439         daspect([1 1 1]);
+0440         view(0,-90);
+0441         xlabel <span class="string">'X [mm]'</span>
+0442         ylabel <span class="string">'Y [mm]'</span>
+0443         zlabel <span class="string">'Z [mm]'</span>
+0444         title (<span class="string">'Beam''s eye view'</span>)
+0445         axis([-300 300 -300 300 -300 300]);
+0446         
+0447         <span class="comment">% second subplot: visualization in lps coordinate system</span>
+0448         subplot(1,2,2)
+0449         
+0450         <span class="comment">% Plot target coordinates whitout any rotation</span>
+0451         plot3(coordsX,coordsY,coordsZ,<span class="string">'r.'</span>)
+0452         hold on;
+0453         
+0454         <span class="comment">% Rotated projection matrix at isocenter</span>
+0455         isocenter_plane_coor = rayPos*rotMat_vectors_T;
+0456         
+0457         <span class="comment">% Plot isocenter plane</span>
+0458         plot3(isocenter_plane_coor(:,1),isocenter_plane_coor(:,2),isocenter_plane_coor(:,3),<span class="string">'y.'</span>);
+0459         
+0460         <span class="comment">% Plot rotated bixels border.</span>
+0461         <span class="keyword">for</span> j = 1:stf(i).numOfRays
+0462             <span class="comment">% Generate rotated projection target points.</span>
+0463             targetPoint_vox_1_rotated = [stf(i).ray(j).targetPoint_bev(:,1) + pln.propStf.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) + pln.propStf.bixelWidth]*rotMat_vectors_T;
+0464             targetPoint_vox_2_rotated = [stf(i).ray(j).targetPoint_bev(:,1) + pln.propStf.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) - pln.propStf.bixelWidth]*rotMat_vectors_T;
+0465             targetPoint_vox_3_rotated = [stf(i).ray(j).targetPoint_bev(:,1) - pln.propStf.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) - pln.propStf.bixelWidth]*rotMat_vectors_T;
+0466             targetPoint_vox_4_rotated = [stf(i).ray(j).targetPoint_bev(:,1) - pln.propStf.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) + pln.propStf.bixelWidth]*rotMat_vectors_T;
+0467             
+0468             <span class="comment">% Plot rotated target points.</span>
+0469             plot3([stf(i).sourcePoint(1) targetPoint_vox_1_rotated(:,1)],[stf(i).sourcePoint(2) targetPoint_vox_1_rotated(:,2)],[stf(i).sourcePoint(3) targetPoint_vox_1_rotated(:,3)],<span class="string">'g'</span>)
+0470             plot3([stf(i).sourcePoint(1) targetPoint_vox_2_rotated(:,1)],[stf(i).sourcePoint(2) targetPoint_vox_2_rotated(:,2)],[stf(i).sourcePoint(3) targetPoint_vox_2_rotated(:,3)],<span class="string">'g'</span>)
+0471             plot3([stf(i).sourcePoint(1) targetPoint_vox_3_rotated(:,1)],[stf(i).sourcePoint(2) targetPoint_vox_3_rotated(:,2)],[stf(i).sourcePoint(3) targetPoint_vox_3_rotated(:,3)],<span class="string">'g'</span>)
+0472             plot3([stf(i).sourcePoint(1) targetPoint_vox_4_rotated(:,1)],[stf(i).sourcePoint(2) targetPoint_vox_4_rotated(:,2)],[stf(i).sourcePoint(3) targetPoint_vox_4_rotated(:,3)],<span class="string">'g'</span>)
+0473         <span class="keyword">end</span>
+0474         
+0475         <span class="comment">% surface rendering</span>
+0476         <span class="keyword">if</span> visMode == 2
+0477             surface = patch(<span class="string">'Faces'</span>,f,<span class="string">'Vertices'</span>,v);
+0478             set(surface,<span class="string">'FaceColor'</span>,[0 0 1],<span class="string">'EdgeColor'</span>,<span class="string">'none'</span>,<span class="string">'FaceAlpha'</span>,.4);
+0479             lighting gouraud;
+0480         <span class="keyword">end</span>
+0481         
+0482         <span class="comment">% labels etc.</span>
+0483         daspect([1 1 1]);
+0484         view(0,-90);
+0485         xlabel <span class="string">'X [mm]'</span>
+0486         ylabel <span class="string">'Y [mm]'</span>
+0487         zlabel <span class="string">'Z [mm]'</span>
+0488         title <span class="string">'lps coordinate system'</span>
+0489         axis([-300 300 -300 300 -300 300]);
+0490         <span class="comment">%pause(1);</span>
+0491     <span class="keyword">end</span>
+0492     
+0493     <span class="comment">% include rangeshifter data if not yet available</span>
+0494     <span class="keyword">if</span> strcmp(pln.radiationMode, <span class="string">'protons'</span>) || strcmp(pln.radiationMode, <span class="string">'carbon'</span>)
+0495         <span class="keyword">for</span> j = 1:stf(i).numOfRays
+0496             <span class="keyword">for</span> k = 1:numel(stf(i).ray(j).energy)
+0497                 stf(i).ray(j).rangeShifter(k).ID = 0;
+0498                 stf(i).ray(j).rangeShifter(k).eqThickness = 0;
+0499                 stf(i).ray(j).rangeShifter(k).sourceRashiDistance = 0;
+0500             <span class="keyword">end</span>
+0501         <span class="keyword">end</span>
+0502     <span class="keyword">end</span>
+0503         
+0504 <span class="keyword">end</span>    
+0505 
+0506 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

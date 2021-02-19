@@ -1,0 +1,194 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_calcDoseInit</title>
+  <meta name="keywords" content="matRad_calcDoseInit">
+  <meta name="description" content="">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_calcDoseInit
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"></div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">This is a script file. </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"></pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="../matRad/dicom/matRad_calcWaterEqD.html" class="code" title="function ct = matRad_calcWaterEqD(ct, pln)">matRad_calcWaterEqD</a>	matRad function to calculate the equivalent densities from a dicom ct</li><li><a href="matRad_computeSSD.html" class="code" title="function stf = matRad_computeSSD(stf,ct,mode)">matRad_computeSSD</a>	matRad SSD calculation</li><li><a href="matRad_interp3.html" class="code" title="function y = matRad_interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal)">matRad_interp3</a>	interpolates 3-D data (table lookup)</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_calcParticleDose.html" class="code" title="function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcParticleDose</a>	matRad particle dose calculation wrapper</li><li><a href="matRad_calcParticleDoseMC.html" class="code" title="function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect)">matRad_calcParticleDoseMC</a>	matRad MCsqaure monte carlo photon dose calculation wrapper</li><li><a href="matRad_calcPhotonDose.html" class="code" title="function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcPhotonDose</a>	matRad photon dose calculation wrapper</li><li><a href="matRad_calcPhotonDoseMC.html" class="code" title="function dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst,nCasePerBixel,visBool)">matRad_calcPhotonDoseMC</a>	matRad ompMC monte carlo photon dose calculation wrapper</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 
+0002 matRad_cfg =  MatRad_Config.instance();
+0003 
+0004 <span class="comment">% default: dose influence matrix computation</span>
+0005 <span class="keyword">if</span> ~exist(<span class="string">'calcDoseDirect'</span>,<span class="string">'var'</span>)
+0006     calcDoseDirect = false;
+0007 <span class="keyword">end</span>
+0008 
+0009 <span class="comment">% to guarantee downwards compatibility with data that does not have</span>
+0010 <span class="comment">% ct.x/y/z</span>
+0011 <span class="keyword">if</span> ~any(isfield(ct,{<span class="string">'x'</span>,<span class="string">'y'</span>,<span class="string">'z'</span>}))
+0012     ct.x = ct.resolution.x*[0:ct.cubeDim(2)-1]-ct.resolution.x/2;
+0013     ct.y = ct.resolution.y*[0:ct.cubeDim(1)-1]-ct.resolution.y/2;
+0014     ct.z = ct.resolution.z*[0:ct.cubeDim(3)-1]-ct.resolution.z/2;
+0015 <span class="keyword">end</span>
+0016 
+0017 <span class="comment">% set grids</span>
+0018 <span class="keyword">if</span> ~isfield(pln,<span class="string">'propDoseCalc'</span>) || <span class="keyword">...</span>
+0019    ~isfield(pln.propDoseCalc,<span class="string">'doseGrid'</span>) || <span class="keyword">...</span>
+0020    ~isfield(pln.propDoseCalc.doseGrid,<span class="string">'resolution'</span>)
+0021     <span class="comment">% default values</span>
+0022     dij.doseGrid.resolution = matRad_cfg.propDoseCalc.defaultResolution;
+0023 <span class="keyword">else</span>
+0024     <span class="comment">% take values from pln strcut</span>
+0025     dij.doseGrid.resolution.x = pln.propDoseCalc.doseGrid.resolution.x;
+0026     dij.doseGrid.resolution.y = pln.propDoseCalc.doseGrid.resolution.y;
+0027     dij.doseGrid.resolution.z = pln.propDoseCalc.doseGrid.resolution.z;
+0028 <span class="keyword">end</span>
+0029 
+0030 dij.doseGrid.x = ct.x(1):dij.doseGrid.resolution.x:ct.x(end);
+0031 dij.doseGrid.y = ct.y(1):dij.doseGrid.resolution.y:ct.y(end);
+0032 dij.doseGrid.z = ct.z(1):dij.doseGrid.resolution.z:ct.z(end);
+0033 
+0034 dij.doseGrid.dimensions  = [numel(dij.doseGrid.y) numel(dij.doseGrid.x) numel(dij.doseGrid.z)];
+0035 dij.doseGrid.numOfVoxels = prod(dij.doseGrid.dimensions);
+0036 
+0037 dij.ctGrid.resolution.x = ct.resolution.x;
+0038 dij.ctGrid.resolution.y = ct.resolution.y;
+0039 dij.ctGrid.resolution.z = ct.resolution.z;
+0040 
+0041 dij.ctGrid.x = ct.x;
+0042 dij.ctGrid.y = ct.y;
+0043 dij.ctGrid.z = ct.z;
+0044 
+0045 dij.ctGrid.dimensions  = [numel(dij.ctGrid.y) numel(dij.ctGrid.x) numel(dij.ctGrid.z)];
+0046 dij.ctGrid.numOfVoxels = prod(dij.ctGrid.dimensions);
+0047 
+0048 <span class="comment">% adjust isocenter internally for different dose grid</span>
+0049 offset = [dij.doseGrid.resolution.x - dij.ctGrid.resolution.x <span class="keyword">...</span>
+0050           dij.doseGrid.resolution.y - dij.ctGrid.resolution.y <span class="keyword">...</span>
+0051           dij.doseGrid.resolution.z - dij.ctGrid.resolution.z];
+0052     
+0053 <span class="keyword">for</span> i = 1:numel(stf)
+0054     stf(i).isoCenter = stf(i).isoCenter + offset;
+0055 <span class="keyword">end</span>
+0056 
+0057 <span class="comment">%set up HU to rED or rSP conversion</span>
+0058 <span class="keyword">if</span> ~isfield(pln,<span class="string">'propDoseCalc'</span>) || ~isfield(pln.propDoseCalc,<span class="string">'useGivenEqDensityCube'</span>)
+0059     disableHUconversion = matRad_cfg.propDoseCalc.defaultUseGivenEqDensityCube;
+0060 <span class="keyword">else</span>
+0061     disableHUconversion = pln.propDoseCalc.useGivenEqDensityCube;
+0062 <span class="keyword">end</span>
+0063 
+0064 <span class="comment">%If we want to omit HU conversion check if we have a ct.cube ready</span>
+0065 <span class="keyword">if</span> disableHUconversion &amp;&amp; ~isfield(ct,<span class="string">'cube'</span>)
+0066     matRad_cfg.dispWarning(<span class="string">'HU Conversion requested to be omitted but no ct.cube exists! Will override and do the conversion anyway!'</span>);
+0067     disableHUconversion = false;
+0068 <span class="keyword">end</span>
+0069     
+0070 <span class="comment">% calculate rED or rSP from HU</span>
+0071 <span class="keyword">if</span> disableHUconversion
+0072     matRad_cfg.dispInfo(<span class="string">'Omitting HU to rED/rSP conversion and using existing ct.cube!\n'</span>);
+0073 <span class="keyword">else</span>
+0074     ct = <a href="../matRad/dicom/matRad_calcWaterEqD.html" class="code" title="function ct = matRad_calcWaterEqD(ct, pln)">matRad_calcWaterEqD</a>(ct, pln);
+0075 <span class="keyword">end</span>
+0076 
+0077 <span class="comment">% meta information for dij</span>
+0078 dij.numOfBeams         = pln.propStf.numOfBeams;
+0079 dij.numOfScenarios     = 1;
+0080 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
+0081 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
+0082 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
+0083 
+0084 <span class="comment">% check if full dose influence data is required</span>
+0085 <span class="keyword">if</span> calcDoseDirect 
+0086     numOfColumnsDij      = length(stf);
+0087     numOfBixelsContainer = 1;
+0088 <span class="keyword">else</span>
+0089     numOfColumnsDij      = dij.totalNumOfBixels;
+0090     numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
+0091 <span class="keyword">end</span>
+0092 
+0093 <span class="comment">% set up arrays for book keeping</span>
+0094 dij.bixelNum = NaN*ones(numOfColumnsDij,1);
+0095 dij.rayNum   = NaN*ones(numOfColumnsDij,1);
+0096 dij.beamNum  = NaN*ones(numOfColumnsDij,1);
+0097 
+0098 
+0099 <span class="comment">% Allocate space for dij.physicalDose sparse matrix</span>
+0100 <span class="keyword">for</span> i = 1:dij.numOfScenarios
+0101     dij.physicalDose{i} = spalloc(dij.doseGrid.numOfVoxels,numOfColumnsDij,1);
+0102 <span class="keyword">end</span>
+0103 
+0104 <span class="comment">% Allocate memory for dose_temp cell array</span>
+0105 doseTmpContainer     = cell(numOfBixelsContainer,dij.numOfScenarios);
+0106 
+0107 <span class="comment">% take only voxels inside patient</span>
+0108 VctGrid = [cst{:,4}];
+0109 VctGrid = unique(vertcat(VctGrid{:}));
+0110 
+0111 <span class="comment">% ignore densities outside of contours</span>
+0112 <span class="keyword">if</span> ~isfield(pln,<span class="string">'propDoseCalc'</span>) || ~isfield(pln.propDoseCalc,<span class="string">'ignoreOutsideDensities'</span>)
+0113     ignoreOutsideDensities = matRad_cfg.propDoseCalc.defaultIgnoreOutsideDensities;
+0114 <span class="keyword">else</span>
+0115     ignoreOutsideDensities = pln.propDoseCalc.ignoreOutsideDensities;
+0116 <span class="keyword">end</span>
+0117 
+0118 <span class="keyword">if</span> ignoreOutsideDensities
+0119     eraseCtDensMask = ones(prod(ct.cubeDim),1);
+0120     eraseCtDensMask(VctGrid) = 0;
+0121     <span class="keyword">for</span> i = 1:ct.numOfCtScen
+0122         ct.cube{i}(eraseCtDensMask == 1) = 0;
+0123     <span class="keyword">end</span>
+0124 <span class="keyword">end</span>
+0125 
+0126 <span class="comment">% Convert CT subscripts to linear indices.</span>
+0127 [yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(ct.cubeDim,VctGrid);
+0128 
+0129 <span class="comment">% receive linear indices and grid locations from the dose grid</span>
+0130 tmpCube    = zeros(ct.cubeDim);
+0131 tmpCube(VctGrid) = 1;
+0132 <span class="comment">% interpolate cube</span>
+0133 VdoseGrid = find(<a href="matRad_interp3.html" class="code" title="function y = matRad_interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal)">matRad_interp3</a>(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z,tmpCube, <span class="keyword">...</span>
+0134                                 dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,<span class="string">'nearest'</span>));
+0135 
+0136 <span class="comment">% Convert CT subscripts to coarse linear indices.</span>
+0137 [yCoordsV_voxDoseGrid, xCoordsV_voxDoseGrid, zCoordsV_voxDoseGrid] = ind2sub(dij.doseGrid.dimensions,VdoseGrid);
+0138 
+0139 <span class="comment">% load base data% load machine file</span>
+0140 fileName = [pln.radiationMode <span class="string">'_'</span> pln.machine];
+0141 <span class="keyword">try</span>
+0142    load([fileparts(mfilename(<span class="string">'fullpath'</span>)) filesep <span class="string">'basedata'</span> filesep fileName]);
+0143 <span class="keyword">catch</span>
+0144    matRad_cfg.dispError(<span class="string">'Could not find the following machine file: %s\n'</span>,fileName); 
+0145 <span class="keyword">end</span>
+0146 
+0147 <span class="comment">% compute SSDs</span>
+0148 stf = <a href="matRad_computeSSD.html" class="code" title="function stf = matRad_computeSSD(stf,ct,mode)">matRad_computeSSD</a>(stf,ct);</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

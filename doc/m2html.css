@@ -1,0 +1,116 @@
+body {
+  background: white;
+  color: #24292E;
+  font-family: Segoe UI Emoji;
+  margin: 0;
+  padding: 20px;
+}
+
+div.fragment { 
+	width: 98%;
+	border: none;
+	background-color: #F6F8Fa;
+	padding-top: 1px;
+	padding-bottom: 6px;
+	padding-left: 8px;
+	padding-right: 8px;
+	margin: 4px;
+	border-radius: 6px;
+}
+
+div.box { 
+	background-color: #F6F8Fa;
+	border: none;
+	color: #24292E;
+	padding: 8px;
+	border-radius: 6px;
+	font-family: Segoe UI Emoji;
+	font-size: 16px;
+	font-weight: lighter;
+}
+
+.comment {
+	color: #228B22;
+}
+.string {
+	color: #B20000;
+}
+.keyword { 
+	color: #0366D6;
+}
+
+.keywordtype { color: #604020; }
+.keywordflow { color: #e08000; }
+.preprocessor { color: #806020; }
+.stringliteral { color: #002080; }
+.charliteral { color: #008080; }
+
+a {
+	text-decoration: none; 
+	color: #0366D6;
+}
+
+a:hover {
+	background-color: transparent;
+	color:#0366D6;
+	text-decoration: underline;
+}
+
+
+a.code {
+	font-weight: normal; 
+	color: #0366D6;
+}
+
+a.code:hover {
+	background-color: transparent;
+	color:#0366D6;
+	text-decoration: underline
+}	
+
+h1 {
+	background: transparent;
+	color: #24292E;
+	font-size: 32px;
+	font-weight: 400;
+	text-align: left;
+	border-bottom: 1px solid #E1E4E8;
+	font-weight: narrower;
+}
+
+h2 {
+	background: transparent;
+	color: #24292E;
+	font-size: 24px;
+	font-weight: 600;
+	border-bottom: 1px solid #eaecef;
+}
+
+address {
+	font-size:12px;
+	color: #586069;
+	font-family: Segoe UI;
+	font-style: normal;
+}
+
+form.search {
+
+	margin-bottom: 0px;
+	margin-top: 0px;
+}
+input.search {
+	font-size: 75%;
+	color: #000080;
+	font-weight: normal;
+	background-color: #eeeeff;
+}
+
+li {
+    padding-left:5px;
+}
+
+hr {
+	 background: #E1E4E8; 
+	 height: 1px; 
+	 border: none;
+}

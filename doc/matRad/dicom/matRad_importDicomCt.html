@@ -1,0 +1,335 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_importDicomCt</title>
+  <meta name="keywords" content="matRad_importDicomCt">
+  <meta name="description" content="matRad function to import dicom ct data">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html dicom -->
+<h1>matRad_importDicomCt
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad function to import dicom ct data</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid, visBool) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to import dicom ct data
+ 
+ call
+   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool)
+   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid)
+   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, visBool)
+   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid, visBool)
+
+ input
+   ctList:         list of dicom ct files
+   resolution:       resolution of the imported ct cube, i.e. this function
+                   will interpolate to a different resolution if desired
+   dicomMetaBool:  store complete dicom information if true
+   grid:           optional: a priori grid specified for interpolation
+   visBool:        optional: turn on/off visualization
+
+ output
+   ct:             matRad ct struct. Note that this 3D matlab array 
+                   contains water euqivalent electron denisities.
+                   Hounsfield units are converted using a standard lookup
+                   table in matRad_calcWaterEqD
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_calcHU.html" class="code" title="function ct = matRad_calcHU(ct)">matRad_calcHU</a>	matRad function to calculate Hounsfield units from a dicom ct</li><li><a href="matRad_interpDicomCtCube.html" class="code" title="function interpCt = matRad_interpDicomCtCube(origCt, origCtInfo, resolution, grid)">matRad_interpDicomCtCube</a>	matRad function to interpolate a 3D ct cube to a different resolution</li><li><a href="matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>	matRad progress bar</li><li><a href="../../matRad/matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>	matRad progress bar</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_importDicom.html" class="code" title="function [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )">matRad_importDicom</a>	matRad wrapper function to import a predefined set of dicom files</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid, visBool)</a>
+0002 <span class="comment">% matRad function to import dicom ct data</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool)</span>
+0006 <span class="comment">%   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid)</span>
+0007 <span class="comment">%   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, visBool)</span>
+0008 <span class="comment">%   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid, visBool)</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% input</span>
+0011 <span class="comment">%   ctList:         list of dicom ct files</span>
+0012 <span class="comment">%   resolution:       resolution of the imported ct cube, i.e. this function</span>
+0013 <span class="comment">%                   will interpolate to a different resolution if desired</span>
+0014 <span class="comment">%   dicomMetaBool:  store complete dicom information if true</span>
+0015 <span class="comment">%   grid:           optional: a priori grid specified for interpolation</span>
+0016 <span class="comment">%   visBool:        optional: turn on/off visualization</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% output</span>
+0019 <span class="comment">%   ct:             matRad ct struct. Note that this 3D matlab array</span>
+0020 <span class="comment">%                   contains water euqivalent electron denisities.</span>
+0021 <span class="comment">%                   Hounsfield units are converted using a standard lookup</span>
+0022 <span class="comment">%                   table in matRad_calcWaterEqD</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% References</span>
+0025 <span class="comment">%   -</span>
+0026 <span class="comment">%</span>
+0027 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0028 <span class="comment">%</span>
+0029 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0030 <span class="comment">%</span>
+0031 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0032 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0033 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0034 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0035 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0036 <span class="comment">% LICENSE file.</span>
+0037 <span class="comment">%</span>
+0038 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0039 
+0040 matRad_cfg = MatRad_Config.instance();
+0041 
+0042 matRad_cfg.dispInfo(<span class="string">'\nimporting ct-cube...'</span>);
+0043 
+0044 <span class="comment">%% processing input variables</span>
+0045 <span class="keyword">if</span> ~exist(<span class="string">'visBool'</span>,<span class="string">'var'</span>)
+0046   visBool = 0;
+0047 <span class="keyword">end</span>
+0048 
+0049 <span class="comment">% creation of ctInfo list</span>
+0050 numOfSlices = size(ctList,1);
+0051 matRad_cfg.dispInfo(<span class="string">'\ncreating info...'</span>)
+0052 
+0053 sliceThicknessStandard = true;
+0054 <span class="keyword">for</span> i = 1:numOfSlices
+0055 
+0056     <span class="keyword">if</span> verLessThan(<span class="string">'matlab'</span>,<span class="string">'9'</span>)
+0057         tmpDicomInfo = dicominfo(ctList{i,1});
+0058     <span class="keyword">else</span>
+0059         tmpDicomInfo = dicominfo(ctList{i,1},<span class="string">'UseDictionaryVR'</span>,true);
+0060     <span class="keyword">end</span>
+0061     
+0062     <span class="comment">% remember relevant dicom info - do not record everything as some tags</span>
+0063     <span class="comment">% might not been defined for individual files</span>
+0064     ctInfo(i).PixelSpacing            = tmpDicomInfo.PixelSpacing;
+0065     ctInfo(i).ImagePositionPatient    = tmpDicomInfo.ImagePositionPatient;
+0066     ctInfo(i).SliceThickness          = tmpDicomInfo.SliceThickness;
+0067     ctInfo(i).ImageOrientationPatient = tmpDicomInfo.ImageOrientationPatient;
+0068     ctInfo(i).PatientPosition         = tmpDicomInfo.PatientPosition;
+0069     ctInfo(i).Rows                    = tmpDicomInfo.Rows;
+0070     ctInfo(i).Columns                 = tmpDicomInfo.Columns;
+0071     ctInfo(i).Width                   = tmpDicomInfo.Width;
+0072     ctInfo(i).Height                  = tmpDicomInfo.Height;
+0073     ctInfo(i).RescaleSlope            = tmpDicomInfo.RescaleSlope;
+0074     ctInfo(i).RescaleIntercept        = tmpDicomInfo.RescaleIntercept;
+0075     
+0076     <span class="comment">%Problem due to some CT files using non-standard SpacingBetweenSlices</span>
+0077     
+0078     <span class="keyword">if</span> isempty(ctInfo(i).SliceThickness)
+0079         <span class="comment">%Print warning ocne</span>
+0080         <span class="keyword">if</span> sliceThicknessStandard
+0081             matRad_cfg.dispWarning(<span class="string">'Non-standard use of SliceThickness Attribute (empty), trying to overwrite with SpacingBetweenSlices'</span>);
+0082             sliceThicknessStandard = false;
+0083         <span class="keyword">end</span>
+0084         ctInfo(i).SliceThickness = tmpDicomInfo.SpacingBetweenSlices;
+0085     <span class="keyword">end</span>
+0086     
+0087     <span class="keyword">if</span> i == 1
+0088         completeDicom = tmpDicomInfo;
+0089     <span class="keyword">end</span>
+0090     
+0091     <a href="matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>(i,numOfSlices);
+0092 <span class="keyword">end</span>
+0093 
+0094 <span class="comment">% adjusting sequence of slices (filenames may not be ordered propperly....</span>
+0095 <span class="comment">% e.g. CT1.dcm, CT10.dcm, CT100zCoordList = [ctInfo.ImagePositionPatient(1,3)]';.dcm, CT101.dcm,...</span>
+0096 CoordList = [ctInfo.ImagePositionPatient]';
+0097 [~, indexing] = sort(CoordList(:,3)); <span class="comment">% get sortation from z-coordinates</span>
+0098 
+0099 ctList = ctList(indexing);
+0100 ctInfo = ctInfo(indexing);
+0101 
+0102 <span class="comment">%% check data set for consistency</span>
+0103 <span class="keyword">if</span> size(unique([ctInfo.PixelSpacing]',<span class="string">'rows'</span>),1) &gt; 1
+0104     matRad_cfg.dispError(<span class="string">'Different pixel size in different CT slices'</span>);
+0105 <span class="keyword">end</span>
+0106 
+0107 coordsOfFirstPixel = [ctInfo.ImagePositionPatient];
+0108 <span class="keyword">if</span> numel(unique(coordsOfFirstPixel(1,:))) &gt; 1 || numel(unique(coordsOfFirstPixel(2,:))) &gt; 1
+0109     matRad_cfg.dispError(<span class="string">'Ct slices are not aligned'</span>);
+0110 <span class="keyword">end</span>
+0111 <span class="keyword">if</span> sum(diff(coordsOfFirstPixel(3,:))&lt;=0) &gt; 0
+0112     matRad_cfg.dispError(<span class="string">'Ct slices not monotonically increasing'</span>);
+0113 <span class="keyword">end</span>
+0114 <span class="keyword">if</span> numel(unique([ctInfo.Rows])) &gt; 1 || numel(unique([ctInfo.Columns])) &gt; 1
+0115     matRad_cfg.dispError(<span class="string">'Ct slice sizes inconsistent'</span>);
+0116 <span class="keyword">end</span>
+0117 
+0118 
+0119 <span class="comment">%% checking the patient position</span>
+0120 <span class="comment">% As of now, the matRad treatment planning system is only valid for</span>
+0121 <span class="comment">% patients in a supine position. Other orientations (e.g. prone, decubitus</span>
+0122 <span class="comment">% left/right) are not supported.</span>
+0123 <span class="comment">% Defined Terms:</span>
+0124 <span class="comment">% HFP     Head First-Prone                  (not supported)</span>
+0125 <span class="comment">% HFS     Head First-Supine                 (supported)</span>
+0126 <span class="comment">% HFDR    Head First-Decubitus Right        (not supported)</span>
+0127 <span class="comment">% HFDL    Head First-Decubitus Left         (not supported)</span>
+0128 <span class="comment">% FFDR    Feet First-Decubitus Right        (not supported)</span>
+0129 <span class="comment">% FFDL    Feet First-Decubitus Left         (not supported)</span>
+0130 <span class="comment">% FFP     Feet First-Prone                  (not supported)</span>
+0131 <span class="comment">% FFS     Feet First-Supine                 (supported)</span>
+0132 
+0133 <span class="keyword">if</span> isempty(regexp(ctInfo(1).PatientPosition,{<span class="string">'S'</span>,<span class="string">'P'</span>}, <span class="string">'once'</span>))
+0134     matRad_cfg.dispError([<span class="string">'This Patient Position is not supported by matRad.'</span><span class="keyword">...</span>
+0135         <span class="string">' As of now only ''HFS'' (Head First-Supine), ''FFS'''</span><span class="keyword">...</span>
+0136         <span class="string">' (Feet First-Supine), '</span><span class="keyword">...</span><span class="comment">    </span>
+0137         <span class="string">'''HFP'' (Head First-Prone), and ''FFP'''</span><span class="keyword">...</span>
+0138         <span class="string">' (Feet First-Prone) can be processed.'</span>])    
+0139 <span class="keyword">end</span>
+0140 
+0141 <span class="comment">%% creation of ct-cube</span>
+0142 matRad_cfg.dispInfo(<span class="string">'reading slices...'</span>)
+0143 origCt = zeros(ctInfo(1).Height, ctInfo(1).Width, numOfSlices);
+0144 <span class="keyword">for</span> i = 1:numOfSlices
+0145     currentFilename = ctList{i};
+0146     [currentImage, map] = dicomread(currentFilename);
+0147     origCt(:,:,i) = currentImage(:,:); <span class="comment">% creation of the ct cube</span>
+0148     
+0149     <span class="comment">% draw current ct-slice</span>
+0150     <span class="keyword">if</span> visBool
+0151         <span class="keyword">if</span> ~isempty(map)
+0152             image(ind2rgb(uint8(63*currentImage/max(currentImage(:))),map));
+0153             xlabel(<span class="string">'x [voxelnumber]'</span>)
+0154             ylabel(<span class="string">'y [voxelnumber]'</span>)
+0155             title([<span class="string">'Slice # '</span> int2str(i) <span class="string">' of '</span> int2str(numOfSlices)])
+0156         <span class="keyword">else</span>
+0157             image(ind2rgb(uint8(63*currentImage/max(currentImage(:))),bone));
+0158             xlabel(<span class="string">'x [voxelnumber]'</span>)
+0159             ylabel(<span class="string">'y [voxelnumber]'</span>)
+0160             title([<span class="string">'Slice # '</span> int2str(i) <span class="string">' of '</span> int2str(numOfSlices)])
+0161         <span class="keyword">end</span>
+0162         axis equal tight;
+0163         pause(0.1);
+0164     <span class="keyword">end</span>
+0165     <a href="matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>(i,numOfSlices);
+0166 <span class="keyword">end</span>
+0167 
+0168 <span class="comment">%% correction if not lps-coordinate-system</span>
+0169 <span class="comment">% when using the physical coordinates (ctInfo.ImagePositionPatient) to</span>
+0170 <span class="comment">% arrange the  slices in z-direction, there is no more need for mirroring</span>
+0171 <span class="comment">% in the z-direction</span>
+0172 matRad_cfg.dispInfo(<span class="string">'\nz-coordinates taken from ImagePositionPatient\n'</span>)
+0173 
+0174 <span class="comment">% The x- &amp; y-direction in lps-coordinates are specified in:</span>
+0175 <span class="comment">% ImageOrientationPatient</span>
+0176 xDir = ctInfo(1).ImageOrientationPatient(1:3); <span class="comment">% lps: [1;0;0]</span>
+0177 yDir = ctInfo(1).ImageOrientationPatient(4:6); <span class="comment">% lps: [0;1;0]</span>
+0178 nonStandardDirection = false;
+0179 
+0180 <span class="comment">% correct x- &amp; y-direction</span>
+0181 <span class="comment">%</span>
+0182 <span class="comment">% if xDir(1) == 1 &amp;&amp; xDir(2) == 0 &amp;&amp; xDir(3) == 0</span>
+0183 <span class="comment">%     matRad_cfg.dispInfo('x-direction OK\n')</span>
+0184 <span class="comment">% elseif xDir(1) == -1 &amp;&amp; xDir(2) == 0 &amp;&amp; xDir(3) == 0</span>
+0185 <span class="comment">%     matRad_cfg.dispInfo('\nMirroring x-direction...')</span>
+0186 <span class="comment">%     origCt = flip(origCt,1);</span>
+0187 <span class="comment">%     matRad_cfg.dispInfo('finished!\n')</span>
+0188 <span class="comment">% else</span>
+0189 <span class="comment">%     nonStandardDirection = true;</span>
+0190 <span class="comment">% end</span>
+0191 <span class="comment">%</span>
+0192 <span class="comment">% if yDir(1) == 0 &amp;&amp; yDir(2) == 1 &amp;&amp; yDir(3) == 0</span>
+0193 <span class="comment">%     matRad_cfg.dispInfo('y-direction OK\n')</span>
+0194 <span class="comment">% elseif yDir(1) == 0 &amp;&amp; yDir(2) == -1 &amp;&amp; yDir(3) == 0</span>
+0195 <span class="comment">%     matRad_cfg.dispInfo('\nMirroring y-direction...')</span>
+0196 <span class="comment">%     origCt = flip(origCt,2);</span>
+0197 <span class="comment">%     matRad_cfg.dispInfo('finished!\n')</span>
+0198 <span class="comment">% else</span>
+0199 <span class="comment">%     nonStandardDirection = true;</span>
+0200 <span class="comment">% end</span>
+0201 
+0202 <span class="keyword">if</span> nonStandardDirection
+0203     matRad_cfg.dispInfo([<span class="string">'Non-standard patient orientation.\n'</span><span class="keyword">...</span>
+0204         <span class="string">'CT might not fit to contoured structures\n'</span>])
+0205 <span class="keyword">end</span>
+0206 
+0207 <span class="comment">%% interpolate cube</span>
+0208 matRad_cfg.dispInfo(<span class="string">'\nInterpolating CT cube...'</span>);
+0209 <span class="keyword">if</span> exist(<span class="string">'grid'</span>,<span class="string">'var'</span>)
+0210     ct = <a href="matRad_interpDicomCtCube.html" class="code" title="function interpCt = matRad_interpDicomCtCube(origCt, origCtInfo, resolution, grid)">matRad_interpDicomCtCube</a>(origCt, ctInfo, resolution, grid);
+0211 <span class="keyword">else</span>
+0212     ct = <a href="matRad_interpDicomCtCube.html" class="code" title="function interpCt = matRad_interpDicomCtCube(origCt, origCtInfo, resolution, grid)">matRad_interpDicomCtCube</a>(origCt, ctInfo, resolution);
+0213 <span class="keyword">end</span>
+0214 matRad_cfg.dispInfo(<span class="string">'finished!\n'</span>);
+0215 
+0216 <span class="comment">%% remember some parameters of original dicom</span>
+0217 ct.dicomInfo.PixelSpacing            = ctInfo(1).PixelSpacing;
+0218                                        tmp = [ctInfo.ImagePositionPatient];
+0219 ct.dicomInfo.SlicePositions          = tmp(3,:);
+0220 ct.dicomInfo.SliceThickness          = [ctInfo.SliceThickness];
+0221 ct.dicomInfo.ImagePositionPatient    = ctInfo(1).ImagePositionPatient;
+0222 ct.dicomInfo.ImageOrientationPatient = ctInfo(1).ImageOrientationPatient;
+0223 ct.dicomInfo.PatientPosition         = ctInfo(1).PatientPosition;
+0224 ct.dicomInfo.Width                   = ctInfo(1).Width;
+0225 ct.dicomInfo.Height                  = ctInfo(1).Height;
+0226 ct.dicomInfo.RescaleSlope            = ctInfo(1).RescaleSlope;
+0227 ct.dicomInfo.RescaleIntercept        = ctInfo(1).RescaleIntercept;
+0228 <span class="keyword">if</span> isfield(completeDicom, <span class="string">'Manufacturer'</span>)
+0229 ct.dicomInfo.Manufacturer            = completeDicom.Manufacturer;
+0230 <span class="keyword">end</span>
+0231 <span class="keyword">if</span> isfield(completeDicom, <span class="string">'ManufacturerModelName'</span>)
+0232 ct.dicomInfo.ManufacturerModelName   = completeDicom.ManufacturerModelName;
+0233 <span class="keyword">end</span>
+0234 <span class="keyword">if</span> isfield(completeDicom, <span class="string">'ConvolutionKernel'</span>)
+0235 ct.dicomInfo.ConvolutionKernel       = completeDicom.ConvolutionKernel;
+0236 <span class="keyword">end</span>
+0237 
+0238 <span class="comment">% store patientName only if user wants to</span>
+0239 <span class="keyword">if</span> isfield(completeDicom,<span class="string">'PatientName'</span>) &amp;&amp; dicomMetaBool == true
+0240     ct.dicomInfo.PatientName         = completeDicom.PatientName;
+0241 <span class="keyword">end</span>
+0242 <span class="keyword">if</span> dicomMetaBool == true
+0243     ct.dicomMeta                     = completeDicom;
+0244 <span class="keyword">end</span>
+0245 
+0246 ct.timeStamp = datestr(clock);
+0247 
+0248 <span class="comment">% convert to Hounsfield units</span>
+0249 matRad_cfg.dispInfo(<span class="string">'\nconversion of ct-Cube to Hounsfield units...'</span>);
+0250 ct = <a href="matRad_calcHU.html" class="code" title="function ct = matRad_calcHU(ct)">matRad_calcHU</a>(ct);
+0251 matRad_cfg.dispInfo(<span class="string">'finished!\n'</span>);
+0252 
+0253 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

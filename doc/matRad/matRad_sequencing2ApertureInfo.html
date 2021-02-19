@@ -1,0 +1,252 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_sequencing2ApertureInfo</title>
+  <meta name="keywords" content="matRad_sequencing2ApertureInfo">
+  <meta name="description" content="matRad function to generate a shape info struct">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_sequencing2ApertureInfo
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">matRad function to generate a shape info struct</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function apertureInfo = matRad_sequencing2ApertureInfo(Sequencing,stf) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to generate a shape info struct 
+ based on the result of multileaf collimator sequencing
+
+ call
+   apertureInfo = matRad_sequencing2ApertureInfo(Sequencing,stf)
+
+ input
+   Sequencing: matRad sequencing result struct
+   stf:        matRad steering information struct
+
+ output
+   apertureInfo: matRad aperture weight and shape info struct
+
+ References
+   
+   -
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_engelLeafSequencing.html" class="code" title="function resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)">matRad_engelLeafSequencing</a>	multileaf collimator leaf sequencing algorithm</li><li><a href="matRad_siochiLeafSequencing.html" class="code" title="function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)">matRad_siochiLeafSequencing</a>	multileaf collimator leaf sequencing algorithm</li><li><a href="matRad_xiaLeafSequencing.html" class="code" title="function resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)">matRad_xiaLeafSequencing</a>	multileaf collimator leaf sequencing algorithm</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function apertureInfo = matRad_sequencing2ApertureInfo(Sequencing,stf)</a>
+0002 <span class="comment">% matRad function to generate a shape info struct</span>
+0003 <span class="comment">% based on the result of multileaf collimator sequencing</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% call</span>
+0006 <span class="comment">%   apertureInfo = matRad_sequencing2ApertureInfo(Sequencing,stf)</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% input</span>
+0009 <span class="comment">%   Sequencing: matRad sequencing result struct</span>
+0010 <span class="comment">%   stf:        matRad steering information struct</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% output</span>
+0013 <span class="comment">%   apertureInfo: matRad aperture weight and shape info struct</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% References</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">%   -</span>
+0018 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0023 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0024 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0025 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0026 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0027 <span class="comment">% LICENSE file.</span>
+0028 <span class="comment">%</span>
+0029 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0030 
+0031 <span class="comment">% MLC parameters:</span>
+0032 bixelWidth = stf(1).bixelWidth; <span class="comment">% [mm]</span>
+0033 numOfMLCLeafPairs = 80;
+0034 <span class="comment">%     define central leaf pair (here we want the 0mm position to be in the</span>
+0035 <span class="comment">%     center of a leaf pair (e.g. leaf 41 stretches from -2.5mm to 2.5mm</span>
+0036 <span class="comment">%     for a bixel/leafWidth of 5mm and 81 leaf pairs)</span>
+0037 centralLeafPair = ceil(numOfMLCLeafPairs/2);
+0038 
+0039 <span class="comment">% initializing variables</span>
+0040 bixelIndOffset = 0; <span class="comment">% used for creation of bixel index maps</span>
+0041 totalNumOfBixels = sum([stf(:).totalNumOfBixels]);
+0042 totalNumOfShapes = sum([Sequencing.beam.numOfShapes]);
+0043 vectorOffset = totalNumOfShapes + 1; <span class="comment">% used for bookkeeping in the vector for optimization</span>
+0044 
+0045 <span class="comment">% loop over all beams</span>
+0046 <span class="keyword">for</span> i=1:size(stf,2)
+0047     
+0048     <span class="comment">%% 1. read stf and create maps (Ray &amp; Bixelindex)</span>
+0049     
+0050     <span class="comment">% get x- and z-coordinates of bixels</span>
+0051     rayPos_bev = reshape([stf(i).ray.rayPos_bev],3,[]);
+0052     X = rayPos_bev(1,:)';
+0053     Z = rayPos_bev(3,:)';
+0054     
+0055     <span class="comment">% create ray-map</span>
+0056     maxX = max(X); minX = min(X);    
+0057     maxZ = max(Z); minZ = min(Z);
+0058     
+0059     dimX = (maxX-minX)/stf(i).bixelWidth + 1;
+0060     dimZ = (maxZ-minZ)/stf(i).bixelWidth + 1;
+0061 
+0062     rayMap = zeros(dimZ,dimX);
+0063     
+0064     <span class="comment">% get indices for x and z positions</span>
+0065     xPos = (X-minX)/stf(i).bixelWidth + 1;
+0066     zPos = (Z-minZ)/stf(i).bixelWidth + 1;
+0067     
+0068     <span class="comment">% get indices in the ray-map</span>
+0069     indInRay = zPos + (xPos-1)*dimZ;
+0070 
+0071     <span class="comment">% fill ray-map</span>
+0072     rayMap(indInRay) = 1;
+0073     
+0074     <span class="comment">% create map of bixel indices</span>
+0075     bixelIndMap = NaN * ones(dimZ,dimX);
+0076     bixelIndMap(indInRay) = [1:stf(i).numOfRays] + bixelIndOffset;
+0077     bixelIndOffset = bixelIndOffset + stf(i).numOfRays;
+0078     
+0079     <span class="comment">% store physical position of first entry in bixelIndMap</span>
+0080     posOfCornerBixel = [minX 0 minZ];
+0081     
+0082     <span class="comment">% get leaf limits from the leaf map</span>
+0083     lim_l = NaN * ones(dimZ,1);
+0084     lim_r = NaN * ones(dimZ,1);
+0085     <span class="comment">% looping oder leaf pairs</span>
+0086     <span class="keyword">for</span> l = 1:dimZ
+0087         lim_lInd = find(rayMap(l,:),1,<span class="string">'first'</span>);
+0088         lim_rInd = find(rayMap(l,:),1,<span class="string">'last'</span>);
+0089         <span class="comment">% the physical position [mm] can be calculated from the indices</span>
+0090         lim_l(l) = (lim_lInd-1)*bixelWidth + minX - 1/2*bixelWidth;
+0091         lim_r(l) = (lim_rInd-1)*bixelWidth + minX + 1/2*bixelWidth;
+0092     <span class="keyword">end</span>
+0093         
+0094     <span class="comment">% get leaf positions for all shapes</span>
+0095     <span class="comment">% leaf positions can be extracted from the shapes created in Sequencing</span>
+0096     <span class="keyword">for</span> m = 1:Sequencing.beam(i).numOfShapes
+0097         
+0098         <span class="comment">% loading shape from Sequencing result</span>
+0099         shapeMap = Sequencing.beam(i).shapes(:,:,m);
+0100         <span class="comment">% get left and right leaf indices from shapemap</span>
+0101         <span class="comment">% initializing limits</span>
+0102         leftLeafPos = NaN * ones(dimZ,1);
+0103         rightLeafPos = NaN * ones(dimZ,1);
+0104         <span class="comment">% looping over leaf pairs</span>
+0105         <span class="keyword">for</span> l = 1:dimZ
+0106             leftLeafPosInd  = find(shapeMap(l,:),1,<span class="string">'first'</span>);
+0107             rightLeafPosInd = find(shapeMap(l,:),1,<span class="string">'last'</span>);
+0108             
+0109             <span class="keyword">if</span> isempty(leftLeafPosInd) &amp;&amp; isempty(rightLeafPosInd) <span class="comment">% if no bixel is open, use limits from Ray positions</span>
+0110                 leftLeafPos(l) = (lim_l(l)+lim_r(l))/2;
+0111                 rightLeafPos(l) = leftLeafPos(l);
+0112             <span class="keyword">else</span>
+0113             <span class="comment">% the physical position [mm] can be calculated from the indices</span>
+0114                 leftLeafPos(l) = (leftLeafPosInd-1)*bixelWidth<span class="keyword">...</span>
+0115                                     + minX - 1/2*bixelWidth;
+0116                 rightLeafPos(l) = (rightLeafPosInd-1)*bixelWidth<span class="keyword">...</span>
+0117                                     + minX + 1/2*bixelWidth;
+0118                               
+0119             <span class="keyword">end</span>
+0120         <span class="keyword">end</span>
+0121         
+0122         <span class="comment">% save data for each shape of this beam</span>
+0123         apertureInfo.beam(i).shape(m).leftLeafPos = leftLeafPos;
+0124         apertureInfo.beam(i).shape(m).rightLeafPos = rightLeafPos;
+0125         apertureInfo.beam(i).shape(m).weight = Sequencing.beam(i).shapesWeight(m);
+0126         apertureInfo.beam(i).shape(m).shapeMap = shapeMap;
+0127         apertureInfo.beam(i).shape(m).vectorOffset = vectorOffset;
+0128         
+0129         <span class="comment">% update index for bookkeeping</span>
+0130         vectorOffset = vectorOffset + dimZ;
+0131            
+0132     <span class="keyword">end</span>
+0133         
+0134     <span class="comment">% z-coordinates of active leaf pairs</span>
+0135     <span class="comment">% get z-coordinates from bixel positions</span>
+0136     leafPairPos = unique(Z);
+0137         
+0138     <span class="comment">% find upmost and downmost leaf pair</span>
+0139     topLeafPairPos = maxZ;
+0140     bottomLeafPairPos = minZ;
+0141     
+0142     topLeafPair = centralLeafPair - topLeafPairPos/bixelWidth;
+0143     bottomLeafPair = centralLeafPair - bottomLeafPairPos/bixelWidth;
+0144         
+0145     <span class="comment">% create bool map of active leaf pairs</span>
+0146     isActiveLeafPair = zeros(numOfMLCLeafPairs,1);
+0147     isActiveLeafPair(topLeafPair:bottomLeafPair) = 1;
+0148         
+0149     <span class="comment">% create MLC window</span>
+0150     <span class="comment">% getting the dimensions of the MLC in order to be able to plot the</span>
+0151     <span class="comment">% shapes using physical coordinates</span>
+0152     MLCWindow = [minX-bixelWidth/2 maxX+bixelWidth/2 <span class="keyword">...</span>
+0153                     minZ-bixelWidth/2 maxZ+bixelWidth/2];
+0154     
+0155     <span class="comment">% save data for each beam</span>
+0156     apertureInfo.beam(i).numOfShapes = Sequencing.beam(i).numOfShapes;
+0157     apertureInfo.beam(i).numOfActiveLeafPairs = dimZ;
+0158     apertureInfo.beam(i).leafPairPos = leafPairPos;
+0159     apertureInfo.beam(i).isActiveLeafPair = isActiveLeafPair;
+0160     apertureInfo.beam(i).centralLeafPair = centralLeafPair;
+0161     apertureInfo.beam(i).lim_l = lim_l;
+0162     apertureInfo.beam(i).lim_r = lim_r;
+0163     apertureInfo.beam(i).bixelIndMap = bixelIndMap;
+0164     apertureInfo.beam(i).posOfCornerBixel = posOfCornerBixel;
+0165     apertureInfo.beam(i).MLCWindow = MLCWindow;
+0166     
+0167 <span class="keyword">end</span>
+0168 
+0169 <span class="comment">% save global data</span>
+0170 apertureInfo.bixelWidth = bixelWidth;
+0171 apertureInfo.numOfMLCLeafPairs = numOfMLCLeafPairs;
+0172 apertureInfo.totalNumOfBixels = totalNumOfBixels;
+0173 apertureInfo.totalNumOfShapes = sum([apertureInfo.beam.numOfShapes]);
+0174 apertureInfo.totalNumOfLeafPairs = sum([apertureInfo.beam.numOfShapes]*[apertureInfo.beam.numOfActiveLeafPairs]');
+0175 
+0176 <span class="comment">% create vectors for optimization</span>
+0177 [apertureInfo.apertureVector, apertureInfo.mappingMx, apertureInfo.limMx] = matRad_OptimizationProblemDAO.matRad_daoApertureInfo2Vec(apertureInfo);
+0178 
+0179 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

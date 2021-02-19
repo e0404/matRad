@@ -1,0 +1,372 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_importDicomSteeringParticles</title>
+  <meta name="keywords" content="matRad_importDicomSteeringParticles">
+  <meta name="description" content="matRad function to import a matRad stf struct from dicom RTPLAN data">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html dicom -->
+<h1>matRad_importDicomSteeringParticles
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad function to import a matRad stf struct from dicom RTPLAN data</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function [stf, pln] = matRad_importDicomSteeringParticles(ct, pln, rtPlanFile) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to import a matRad stf struct from dicom RTPLAN data
+ 
+ call
+   [stf, pln] = matRad_importDicomSteeringParticles(ct, pln, rtPlanFile)
+
+ input
+   ct:             ct imported by the matRad_importDicomCt function
+   pln:            matRad pln struct with meta information
+   rtPlanFile:       name of RTPLAN DICOM file
+
+ output
+   stf             matRad stf struct
+   pln:            matRad pln struct. 
+                   Note: pln is input and output since pln.bixelWidth is 
+                   determined here.
+
+ References
+   -
+ Note
+ not implemented - compensator. Fixed SAD.
+ 
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/matRad_getRotationMatrix.html" class="code" title="function rotMat = matRad_getRotationMatrix(gantryAngle,couchAngle,system)">matRad_getRotationMatrix</a>	matRad function to return the rotation / transformation matrix</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_importDicom.html" class="code" title="function [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )">matRad_importDicom</a>	matRad wrapper function to import a predefined set of dicom files</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [stf, pln] = matRad_importDicomSteeringParticles(ct, pln, rtPlanFile)</a>
+0002 <span class="comment">% matRad function to import a matRad stf struct from dicom RTPLAN data</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   [stf, pln] = matRad_importDicomSteeringParticles(ct, pln, rtPlanFile)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   ct:             ct imported by the matRad_importDicomCt function</span>
+0009 <span class="comment">%   pln:            matRad pln struct with meta information</span>
+0010 <span class="comment">%   rtPlanFile:       name of RTPLAN DICOM file</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% output</span>
+0013 <span class="comment">%   stf             matRad stf struct</span>
+0014 <span class="comment">%   pln:            matRad pln struct.</span>
+0015 <span class="comment">%                   Note: pln is input and output since pln.bixelWidth is</span>
+0016 <span class="comment">%                   determined here.</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% References</span>
+0019 <span class="comment">%   -</span>
+0020 <span class="comment">% Note</span>
+0021 <span class="comment">% not implemented - compensator. Fixed SAD.</span>
+0022 <span class="comment">%</span>
+0023 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0024 <span class="comment">%</span>
+0025 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0026 <span class="comment">%</span>
+0027 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0028 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0029 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0030 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0031 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0032 <span class="comment">% LICENSE file.</span>
+0033 <span class="comment">%</span>
+0034 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0035 
+0036 <span class="comment">%% load plan file</span>
+0037 <span class="comment">% load machine data</span>
+0038 
+0039 dlgBaseDataText = [<span class="string">'Import steering information from DICOM Plan.'</span>,<span class="string">'Choose corresponding matRad base data for '</span>, <span class="keyword">...</span>
+0040         pln.radiationMode, <span class="string">'.'</span>];
+0041 <span class="comment">% messagebox only necessary for non windows users</span>
+0042 <span class="keyword">if</span> ~ispc
+0043     uiwait(helpdlg(dlgBaseDataText,[<span class="string">'DICOM import - '</span>, pln.radiationMode, <span class="string">' base data'</span> ]));
+0044 <span class="keyword">end</span>
+0045 [fileName,pathName] = uigetfile(<span class="string">'*.mat'</span>, dlgBaseDataText);
+0046 load([pathName filesep fileName]);
+0047 
+0048 ix = find(fileName == <span class="string">'_'</span>);
+0049 pln.machine = fileName(ix(1)+1:end-4);
+0050 
+0051 <span class="comment">% RT Plan consists only on meta information</span>
+0052 <span class="keyword">if</span> verLessThan(<span class="string">'matlab'</span>,<span class="string">'9'</span>)
+0053     rtPlanInfo = dicominfo(rtPlanFile{1});
+0054 <span class="keyword">else</span>
+0055     rtPlanInfo = dicominfo(rtPlanFile{1},<span class="string">'UseDictionaryVR'</span>,true);
+0056 <span class="keyword">end</span>
+0057 BeamSeq = rtPlanInfo.IonBeamSequence;
+0058 BeamSeqNames = fieldnames(BeamSeq);
+0059 <span class="comment">% Number of Beams from plan</span>
+0060 numOfBeamsPlan = length(pln.propStf.gantryAngles);
+0061 
+0062 <span class="comment">% use only the treatment beams</span>
+0063 <span class="keyword">for</span> i = 1:length(BeamSeqNames)
+0064     currBeamSeq = BeamSeq.(BeamSeqNames{i});
+0065     <span class="keyword">try</span>
+0066         treatDelType = currBeamSeq.TreatmentDeliveryType;
+0067         <span class="keyword">if</span> ~strcmpi(treatDelType,<span class="string">'TREATMENT'</span>)
+0068             BeamSeq = rmfield(BeamSeq,BeamSeqNames{i});
+0069         <span class="keyword">end</span>
+0070     <span class="keyword">catch</span>
+0071         warning(<span class="string">'Something went wrong while determining the type of the beam.'</span>);
+0072     <span class="keyword">end</span>
+0073 <span class="keyword">end</span>
+0074 
+0075 <span class="comment">% reinitialize the BeamSeqNames and length, as the Seq itself is reduced.</span>
+0076 BeamSeqNames = fieldnames(BeamSeq);
+0077 
+0078 <span class="comment">% remove empty ControlPointSequences</span>
+0079 <span class="keyword">for</span> i = 1:length(BeamSeqNames)
+0080     currBeamSeq = BeamSeq.(BeamSeqNames{i});
+0081     ControlPointSeq      = currBeamSeq.IonControlPointSequence;
+0082     ControlPointSeqNames = fieldnames(ControlPointSeq);
+0083     numOfContrPointSeq = length(ControlPointSeqNames);
+0084     <span class="keyword">for</span> currContr = 1:numOfContrPointSeq
+0085         currContrSeq = ControlPointSeq.(ControlPointSeqNames{currContr});
+0086         <span class="keyword">if</span> sum(currContrSeq.ScanSpotMetersetWeights) == 0
+0087             ControlPointSeq = rmfield(ControlPointSeq,ControlPointSeqNames{currContr});
+0088         <span class="keyword">end</span>
+0089     <span class="keyword">end</span>
+0090     BeamSeq.(BeamSeqNames{i}).IonControlPointSequence = ControlPointSeq;
+0091 <span class="keyword">end</span>
+0092 
+0093 <span class="comment">% check if number of beams correspond</span>
+0094 <span class="keyword">if</span> ~isequal(length(BeamSeqNames),numOfBeamsPlan)
+0095     warning(<span class="string">'Number of beams from beamsequences do not correspond to number of Gantry Angles'</span>);
+0096 <span class="keyword">end</span>
+0097 
+0098 <span class="comment">%% generate stf struct</span>
+0099 <span class="comment">% surfaceEntry = BeamSeq.Item_1.IonControlPointSequence.Item_1.SurfaceEntryPoint;</span>
+0100 
+0101 <span class="comment">% Preallocate stf</span>
+0102 stf(length(BeamSeqNames)).gantryAngle = [];
+0103 stf(length(BeamSeqNames)).couchAngle = [];
+0104 stf(length(BeamSeqNames)).bixelWidth = [];
+0105 stf(length(BeamSeqNames)).radiationMode = [];
+0106 stf(length(BeamSeqNames)).SAD = [];
+0107 stf(length(BeamSeqNames)).isoCenter = [];
+0108 stf(length(BeamSeqNames)).sourcePoint_bev = [];
+0109 stf(length(BeamSeqNames)).numOfRays = [];
+0110 stf(length(BeamSeqNames)).numOfBixelsPerRay = [];
+0111 stf(length(BeamSeqNames)).totalNumOfBixels = [];
+0112 stf(length(BeamSeqNames)).ray = [];
+0113 
+0114 <span class="keyword">for</span> i = 1:length(BeamSeqNames)
+0115     currBeamSeq = BeamSeq.(BeamSeqNames{i});
+0116     ControlPointSeq      = currBeamSeq.IonControlPointSequence;
+0117     stf(i).gantryAngle   = pln.propStf.gantryAngles(i);
+0118     stf(i).couchAngle    = pln.propStf.couchAngles(i);
+0119     stf(i).bixelWidth    = pln.propStf.bixelWidth;
+0120     stf(i).radiationMode = pln.radiationMode;
+0121     <span class="comment">% there might be several SAD's, e.g. compensator?</span>
+0122     stf(i).SAD           = machine.meta.SAD;
+0123     stf(i).isoCenter     = pln.propStf.isoCenter(i,:);
+0124     stf(i).sourcePoint_bev = [0 -stf(i).SAD 0];
+0125         <span class="comment">% now loop over ControlPointSequences</span>
+0126     ControlPointSeqNames = fieldnames(ControlPointSeq);
+0127     numOfContrPointSeq = length(ControlPointSeqNames);
+0128     <span class="comment">% create empty helper matrix</span>
+0129     temporarySteering = zeros(0,8);
+0130     <span class="keyword">for</span> currContr = 1:numOfContrPointSeq
+0131         currContrSeq = ControlPointSeq.(ControlPointSeqNames{currContr});
+0132         <span class="comment">% get energy, equal for all coming elements in the next loop</span>
+0133         currEnergy = currContrSeq.NominalBeamEnergy;
+0134         <span class="comment">% get focusValue</span>
+0135         currFocus = unique(currContrSeq.ScanningSpotSize);
+0136         <span class="comment">% get the Spotpositions</span>
+0137         numOfScanSpots = currContrSeq.NumberOfScanSpotPositions;
+0138         <span class="comment">% x is 1, 3, 5 ...; y 2, 4, 6,</span>
+0139         c1_help = currContrSeq.ScanSpotPositionMap(1:2:(2 * numOfScanSpots));
+0140         c2_help = currContrSeq.ScanSpotPositionMap(2:2:(2 * numOfScanSpots));
+0141         weight_help = currContrSeq.ScanSpotMetersetWeights;
+0142         <span class="keyword">if</span> isfield(currContrSeq, <span class="string">'RangeShifterSettingsSequence'</span>)
+0143             <span class="comment">% rangeshifter identification</span>
+0144             rashiID = currContrSeq.RangeShifterSettingsSequence.Item_1.ReferencedRangeShifterNumber;
+0145             <span class="comment">% rangeshifter waterequivalent thickness</span>
+0146             rashiWeThickness = currContrSeq.RangeShifterSettingsSequence.Item_1.RangeShifterWaterEquivalentThickness;
+0147             <span class="comment">% rangeshifter isocenter to range shifter distance</span>
+0148             rashiIsoRangeDist = currContrSeq.RangeShifterSettingsSequence.Item_1.IsocenterToRangeShifterDistance;
+0149         <span class="keyword">elseif</span> currContr == 1
+0150             rashiID = 0;
+0151             rashiWeThickness = 0;
+0152             rashiIsoRangeDist = 0;            
+0153         <span class="keyword">else</span>
+0154             <span class="comment">% in this case range shifter settings has not changed between this</span>
+0155             <span class="comment">% and previous control sequence, so reuse values.</span>
+0156         <span class="keyword">end</span>
+0157         temporarySteering = [temporarySteering; c1_help c2_help <span class="keyword">...</span>
+0158             (currEnergy * ones(numOfScanSpots,1)) weight_help (currFocus * ones(numOfScanSpots,1)) <span class="keyword">...</span>
+0159             (rashiID * ones(numOfScanSpots,1)) (rashiWeThickness * ones(numOfScanSpots,1)) (rashiIsoRangeDist * ones(numOfScanSpots,1))];     
+0160     <span class="keyword">end</span>
+0161     
+0162     <span class="comment">% finds all unique rays and saves them in to the stf</span>
+0163     [RayPosTmp, ~, ic] = unique(temporarySteering(:,1:2), <span class="string">'rows'</span>);
+0164     clear ray;
+0165     <span class="keyword">for</span> j = 1:size(RayPosTmp,1)
+0166         stf(i).ray(j).rayPos_bev = double([RayPosTmp(j,1) 0 RayPosTmp(j,2)]);
+0167         stf(i).ray(j).energy = [];
+0168         stf(i).ray(j).focusFWHM = [];
+0169         stf(i).ray(j).focusIx = [];
+0170         stf(i).ray(j).weight = [];
+0171         stf(i).ray(j).rangeShifter = struct();
+0172         ray(j).ID = [];
+0173         ray(j).eqThickness = [];
+0174         ray(j).sourceRashiDistance = [];
+0175     <span class="keyword">end</span>
+0176     
+0177     <span class="comment">% saves all energies and weights to their corresponding ray</span>
+0178     <span class="keyword">for</span> j = 1:size(temporarySteering,1)
+0179         k = ic(j);
+0180         stf(i).ray(k).energy = [stf(i).ray(k).energy double(temporarySteering(j,3))];
+0181         stf(i).ray(k).focusFWHM = [stf(i).ray(k).focusFWHM double(temporarySteering(j,5))];
+0182         stf(i).ray(k).weight = [stf(i).ray(k).weight double(temporarySteering(j,4)) / 1e6];
+0183         <span class="comment">% helpers to construct something like a(:).b = c.b(:) after this</span>
+0184         <span class="comment">% loop</span>
+0185         ray(k).ID = [ray(k).ID double(temporarySteering(j,6))];
+0186         ray(k).eqThickness = [ray(k).eqThickness double(temporarySteering(j,7))];
+0187         ray(k).sourceRashiDistance = [ray(k).sourceRashiDistance double(temporarySteering(j,8))];
+0188     <span class="keyword">end</span>
+0189     
+0190     <span class="comment">% reassign to preserve data structure</span>
+0191     <span class="keyword">for</span> j = 1:numel(ray)
+0192         <span class="keyword">for</span> k = 1:numel(ray(j).ID)
+0193             stf(i).ray(j).rangeShifter(k).ID = ray(j).ID(k);
+0194             stf(i).ray(j).rangeShifter(k).eqThickness = ray(j).eqThickness(k);
+0195             stf(i).ray(j).rangeShifter(k).sourceRashiDistance = stf(i).SAD - ray(j).sourceRashiDistance(k);
+0196         <span class="keyword">end</span>
+0197     <span class="keyword">end</span>
+0198     
+0199     
+0200     <span class="comment">% getting some information of the rays</span>
+0201     <span class="comment">% clean up energies, so they appear only one time per energy</span>
+0202     numOfRays = size(stf(i).ray,2);
+0203     <span class="keyword">for</span> l = 1:numOfRays
+0204         stf(i).ray(l).energy = unique(stf(i).ray(l).energy);
+0205         stf(i).ray(l).targetPoint_bev = [2*stf(i).ray(l).rayPos_bev(1) <span class="keyword">...</span>
+0206                                          machine.meta.SAD <span class="keyword">...</span>
+0207                                          2*stf(i).ray(l).rayPos_bev(3)];
+0208     <span class="keyword">end</span>
+0209     stf(i).numOfRays = numel(stf(i).ray);  
+0210     
+0211     <span class="comment">% save total number of bixels</span>
+0212     numOfBixels = 0;
+0213     <span class="keyword">for</span> j = 1:numel(stf(i).ray)
+0214         numOfBixels = numOfBixels + numel(stf(i).ray(j).energy);
+0215         stf(i).numOfBixelsPerRay(j) = numel(stf(i).ray(j).energy);
+0216 <span class="comment">%         w = [w stf(currBeam).ray(j).weight];</span>
+0217     <span class="keyword">end</span>
+0218     
+0219     stf(i).totalNumOfBixels = numOfBixels;
+0220     
+0221     <span class="comment">% get bixelwidth</span>
+0222     bixelWidth_help = zeros(size(stf(i).ray,2),2);
+0223     <span class="keyword">for</span> j = 1:stf(i).numOfRays
+0224         bixelWidth_help(j,1) = stf(i).ray(j).rayPos_bev(1);
+0225         bixelWidth_help(j,2) = stf(i).ray(j).rayPos_bev(3);        
+0226     <span class="keyword">end</span>
+0227     bixelWidth_help1 = unique(round(1e3*bixelWidth_help(:,1))/1e3,<span class="string">'sorted'</span>);
+0228     bixelWidth_help2 = unique(round(1e3*bixelWidth_help(:,2))/1e3,<span class="string">'sorted'</span>);
+0229     
+0230     bixelWidth = unique([unique(diff(bixelWidth_help1))' unique(diff(bixelWidth_help2))']);
+0231     
+0232     <span class="keyword">if</span> numel(bixelWidth) == 1
+0233         stf(i).bixelWidth = bixelWidth;
+0234     <span class="keyword">else</span>
+0235         stf(i).bixelWidth = NaN;
+0236     <span class="keyword">end</span>
+0237     
+0238     <span class="comment">% coordinate transformation with rotation matrix.</span>
+0239     <span class="comment">% use transpose matrix because we are working with row vectors</span>
+0240     rotMat_vectors_T = transpose(<a href="../../matRad/matRad_getRotationMatrix.html" class="code" title="function rotMat = matRad_getRotationMatrix(gantryAngle,couchAngle,system)">matRad_getRotationMatrix</a>(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i)));
+0241 
+0242     <span class="comment">% Rotated Source point (1st gantry, 2nd couch)</span>
+0243     stf(i).sourcePoint = stf(i).sourcePoint_bev*rotMat_vectors_T;
+0244     
+0245     <span class="comment">% Save ray and target position in lps system.</span>
+0246     <span class="keyword">for</span> j = 1:stf(i).numOfRays
+0247         stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMat_vectors_T;
+0248         stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMat_vectors_T;   
+0249     <span class="keyword">end</span>
+0250     
+0251     <span class="comment">% book keeping &amp; calculate focus index</span>
+0252     <span class="keyword">for</span> j = 1:stf(i).numOfRays
+0253             stf(i).numOfBixelsPerRay(j) = numel([stf(i).ray(j).energy]);
+0254     <span class="keyword">end</span>
+0255     
+0256     <span class="comment">% use the original machine energies</span>
+0257     <span class="keyword">for</span> j = 1:stf(i).numOfRays
+0258         <span class="comment">% loop over all energies</span>
+0259         numOfEnergy = length(stf(i).ray(j).energy);
+0260         <span class="keyword">for</span> k = 1:numOfEnergy
+0261             energyIndex = find(abs([machine.data(:).energy]-stf(i).ray(j).energy(k))&lt;10^-2);
+0262             <span class="keyword">if</span> ~isempty(energyIndex)
+0263                 stf(i).ray(j).energy(k) = machine.data(energyIndex).energy;
+0264             <span class="keyword">else</span>
+0265                 error(<span class="string">'No match between imported and machine data. Maybe wrong machine loaded.'</span>);
+0266             <span class="keyword">end</span>
+0267         <span class="keyword">end</span>
+0268     <span class="keyword">end</span>
+0269     
+0270     <span class="comment">% get focusIx instead of focusFWHM</span>
+0271     <span class="keyword">for</span> j = 1:stf(i).numOfRays
+0272         <span class="comment">% loop over all energies</span>
+0273         numOfEnergy = length(stf(i).ray(j).energy);
+0274         <span class="keyword">for</span> k = 1:numOfEnergy
+0275             energyTemp = stf(i).ray(j).energy(k);
+0276             focusFWHM = stf(i).ray(j).focusFWHM(k);
+0277             energyIxTemp = find([machine.data.energy] == energyTemp);
+0278             focusIxTemp = find(abs([machine.data(energyIxTemp).initFocus.SisFWHMAtIso] - focusFWHM )&lt; 10^-3);
+0279             stf(i).ray(j).focusIx(k) = focusIxTemp;
+0280             stf(i).ray(j).focusFWHM(k) = machine.data(energyIxTemp).initFocus.SisFWHMAtIso(stf(i).ray(j).focusIx(k));
+0281         <span class="keyword">end</span>
+0282     <span class="keyword">end</span>
+0283     
+0284     stf(i).timeStamp = datestr(clock);
+0285     
+0286 <span class="keyword">end</span>
+0287 
+0288 <span class="keyword">if</span> any(isnan([stf(:).bixelWidth])) || numel(unique([stf(:).bixelWidth])) &gt; 1
+0289     pln.propStf.bixelWidth = NaN;
+0290 <span class="keyword">else</span>
+0291     pln.propStf.bixelWidth = stf(1).bixelWidth;
+0292 <span class="keyword">end</span>
+0293 
+0294 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

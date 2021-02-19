@@ -1,0 +1,175 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_compileOmpMCInterface</title>
+  <meta name="keywords" content="matRad_compileOmpMCInterface">
+  <meta name="description" content="Compiles the ompMC interface (integrated as submodule)">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html ompMC -->
+<h1>matRad_compileOmpMCInterface
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">Compiles the ompMC interface (integrated as submodule)</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function matRad_compileOmpMCInterface(dest,omcFolder) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> Compiles the ompMC interface (integrated as submodule)
+
+ call
+   matRad_compileOmpMCInterface()
+   matRad_compileOmpMCInterface(dest)
+   matRad_compileOmpMCInterface(dest,sourceFolder)
+
+ input:
+   dest:           (optional) destination for mex file. Default: location 
+                   of this file
+   sourceFolder:   (optional) path to ompMC . Default assumes its checked
+                   out in the submodules folder of matRad
+
+ References
+
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2020 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/tools/matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>	matRad function to get the software environment matRad is running on</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/matRad_calcPhotonDoseMC.html" class="code" title="function dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst,nCasePerBixel,visBool)">matRad_calcPhotonDoseMC</a>	matRad ompMC monte carlo photon dose calculation wrapper</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function matRad_compileOmpMCInterface(dest,omcFolder)</a>
+0002 <span class="comment">% Compiles the ompMC interface (integrated as submodule)</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   matRad_compileOmpMCInterface()</span>
+0006 <span class="comment">%   matRad_compileOmpMCInterface(dest)</span>
+0007 <span class="comment">%   matRad_compileOmpMCInterface(dest,sourceFolder)</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% input:</span>
+0010 <span class="comment">%   dest:           (optional) destination for mex file. Default: location</span>
+0011 <span class="comment">%                   of this file</span>
+0012 <span class="comment">%   sourceFolder:   (optional) path to ompMC . Default assumes its checked</span>
+0013 <span class="comment">%                   out in the submodules folder of matRad</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% References</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">% Copyright 2020 the matRad development team.</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0023 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0024 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0025 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0026 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0027 <span class="comment">% LICENSE file.</span>
+0028 <span class="comment">%</span>
+0029 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0030 
+0031  
+0032 matRad_cfg = MatRad_Config.instance();
+0033 
+0034 env = <a href="../../matRad/tools/matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>();
+0035 
+0036 <span class="keyword">if</span> nargin &lt; 1
+0037     dest = fileparts(mfilename(<span class="string">'fullpath'</span>));
+0038 <span class="keyword">end</span>
+0039 
+0040 <span class="keyword">if</span> nargin &lt; 2
+0041     omcFolder = [matRad_cfg.matRadRoot filesep <span class="string">'submodules'</span> filesep <span class="string">'ompMC'</span>];
+0042 <span class="keyword">end</span>
+0043 
+0044 sourceFolder = [omcFolder filesep <span class="string">'src'</span>];
+0045 interfaceFolder = [omcFolder filesep <span class="string">'ucodes'</span> filesep <span class="string">'omc_matrad'</span>];
+0046 
+0047 mainFile = [interfaceFolder filesep <span class="string">'omc_matrad.c'</span>];
+0048 
+0049 addFiles = {<span class="string">'ompmc.c'</span>,<span class="string">'omc_utilities.c'</span>,<span class="string">'omc_random.c'</span>};
+0050 addFiles = cellfun(@(f) fullfile(sourceFolder,f),addFiles,<span class="string">'UniformOutput'</span>,false);
+0051 
+0052 addFiles = strjoin(addFiles,<span class="string">' '</span>);
+0053 
+0054 <span class="keyword">if</span> exist (<span class="string">'OCTAVE_VERSION'</span>,<span class="string">'builtin'</span>)
+0055     ccName = eval(<span class="string">'mkoctfile -p CC'</span>);
+0056 <span class="keyword">else</span>
+0057     myCCompiler = mex.getCompilerConfigurations(<span class="string">'C'</span>,<span class="string">'Selected'</span>);
+0058     ccName = myCCompiler.ShortName;
+0059 <span class="keyword">end</span>
+0060 
+0061 <span class="comment">%These settings have only been tested for MSVC and g++. You may need to adapt for other compilers</span>
+0062 <span class="keyword">if</span> ~isempty(strfind(ccName,<span class="string">'MSVC'</span>)) <span class="comment">%Not use contains(...) because of octave</span>
+0063     flags{1,1} = <span class="string">'COMPFLAGS'</span>;
+0064     flags{1,2} = <span class="string">'/openmp'</span>;
+0065     flags{2,1} = <span class="string">'OPTIMFLAGS'</span>;
+0066     flags{2,2} = <span class="string">'/O2'</span>;
+0067 <span class="keyword">else</span>
+0068     flags{1,1} = <span class="string">'CFLAGS'</span>;
+0069     flags{1,2} = <span class="string">'-std=gnu99 -fopenmp -O3'</span>;
+0070     flags{2,1} = <span class="string">'LDFLAGS'</span>;
+0071     flags{2,2} = <span class="string">'-fopenmp'</span>;
+0072     
+0073 <span class="keyword">end</span>
+0074 
+0075 includestring =  [<span class="string">'-I'</span> sourceFolder];
+0076 
+0077 flagstring = <span class="string">''</span>;
+0078 
+0079 <span class="comment">%For Octave, the flags will be set in the environment, while they</span>
+0080 <span class="comment">%will be parsed as string arguments in MATLAB</span>
+0081 <span class="keyword">for</span> flag = 1:size(flags,1)
+0082     <span class="keyword">if</span> strcmp(env,<span class="string">'OCTAVE'</span>)
+0083         preFlagContent = eval([<span class="string">'mkoctfile -p '</span> flags{flag,1}]);
+0084         <span class="keyword">if</span> ~isempty(preFlagContent)
+0085             preFlagContent = preFlagContent(1:end-1); <span class="comment">%Strip newline</span>
+0086         <span class="keyword">end</span>
+0087         newContent = [preFlagContent <span class="string">' '</span> flags{flag,2}];
+0088         setenv(flags{flag,1},newContent);
+0089         matRad_cfg.dispDebug(<span class="string">'Set compiler flag %s to %s\n'</span>,flags{flag,1},newContent);
+0090     <span class="keyword">else</span>
+0091         flagstring = [flagstring flags{flag,1} <span class="string">'=&quot;$'</span> flags{flag,1} <span class="string">' '</span> flags{flag,2} <span class="string">'&quot; '</span>];
+0092     <span class="keyword">end</span>
+0093 <span class="keyword">end</span>
+0094 
+0095 mexCall = [<span class="string">'mex -largeArrayDims '</span> flagstring <span class="string">' '</span> includestring <span class="string">' '</span> mainFile <span class="string">' '</span> addFiles];
+0096 matRad_cfg.dispDebug(<span class="string">'Compiler call: %s\n'</span>,mexCall);
+0097 
+0098 currDir = pwd;
+0099 cd(dest);
+0100 eval(mexCall);
+0101 cd(currDir);
+0102 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

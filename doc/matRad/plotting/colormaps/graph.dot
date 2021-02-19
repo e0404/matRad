@@ -1,0 +1,6 @@
+/* Created by mdot for Matlab */
+digraph m2html {
+
+  diffMap [URL="diffMap.html"];
+  gammaIndex [URL="gammaIndex.html"];
+}

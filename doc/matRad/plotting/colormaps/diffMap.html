@@ -1,0 +1,163 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of diffMap</title>
+  <meta name="keywords" content="diffMap">
+  <meta name="description" content="matRad difference colormap">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../../menu.html matRad --><!-- ../menu.html plotting --><!-- menu.html colormaps -->
+<h1>diffMap
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">matRad difference colormap</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">function colorMap = diffMap(cMapSize) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad difference colormap 
+ 
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function colorMap = diffMap(cMapSize)</a>
+0002 <span class="comment">% matRad difference colormap</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0009 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0010 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0011 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0012 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0013 <span class="comment">% LICENSE file.</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0016 
+0017 colorMapData = <span class="keyword">...</span>
+0018     [0         0    1.0000
+0019     0.0323    0.0323    1.0000
+0020     0.0645    0.0645    1.0000
+0021     0.0968    0.0968    1.0000
+0022     0.1290    0.1290    1.0000
+0023     0.1613    0.1613    1.0000
+0024     0.1935    0.1935    1.0000
+0025     0.2258    0.2258    1.0000
+0026     0.2581    0.2581    1.0000
+0027     0.2903    0.2903    1.0000
+0028     0.3226    0.3226    1.0000
+0029     0.3548    0.3548    1.0000
+0030     0.3871    0.3871    1.0000
+0031     0.4194    0.4194    1.0000
+0032     0.4516    0.4516    1.0000
+0033     0.4839    0.4839    1.0000
+0034     0.5161    0.5161    1.0000
+0035     0.5484    0.5484    1.0000
+0036     0.5806    0.5806    1.0000
+0037     0.6129    0.6129    1.0000
+0038     0.6452    0.6452    1.0000
+0039     0.6774    0.6774    1.0000
+0040     0.7097    0.7097    1.0000
+0041     0.7419    0.7419    1.0000
+0042     0.7742    0.7742    1.0000
+0043     0.8065    0.8065    1.0000
+0044     0.8387    0.8387    1.0000
+0045     0.8710    0.8710    1.0000
+0046     0.9032    0.9032    1.0000
+0047     0.9355    0.9355    1.0000
+0048     0.9677    0.9677    1.0000
+0049     1.0000    1.0000    1.0000
+0050     1.0000    1.0000    1.0000
+0051     1.0000    0.9677    0.9677
+0052     1.0000    0.9355    0.9355
+0053     1.0000    0.9032    0.9032
+0054     1.0000    0.8710    0.8710
+0055     1.0000    0.8387    0.8387
+0056     1.0000    0.8065    0.8065
+0057     1.0000    0.7742    0.7742
+0058     1.0000    0.7419    0.7419
+0059     1.0000    0.7097    0.7097
+0060     1.0000    0.6774    0.6774
+0061     1.0000    0.6452    0.6452
+0062     1.0000    0.6129    0.6129
+0063     1.0000    0.5806    0.5806
+0064     1.0000    0.5484    0.5484
+0065     1.0000    0.5161    0.5161
+0066     1.0000    0.4839    0.4839
+0067     1.0000    0.4516    0.4516
+0068     1.0000    0.4194    0.4194
+0069     1.0000    0.3871    0.3871
+0070     1.0000    0.3548    0.3548
+0071     1.0000    0.3226    0.3226
+0072     1.0000    0.2903    0.2903
+0073     1.0000    0.2581    0.2581
+0074     1.0000    0.2258    0.2258
+0075     1.0000    0.1935    0.1935
+0076     1.0000    0.1613    0.1613
+0077     1.0000    0.1290    0.1290
+0078     1.0000    0.0968    0.0968
+0079     1.0000    0.0645    0.0645
+0080     1.0000    0.0323    0.0323
+0081     1.0000         0         0];
+0082 
+0083 <span class="keyword">if</span> nargin &lt; 1
+0084     colorMap = colorMapData;
+0085 <span class="keyword">elseif</span> size(colorMapData,1) == cMapSize
+0086     colorMap = colorMapData;
+0087 <span class="keyword">else</span>
+0088     <span class="comment">%We have to interpolate the colormap</span>
+0089     newX = linspace(1,64,cMapSize);
+0090     oldX = 1:64;
+0091     colorMap = interp1(oldX,colorMapData,newX);
+0092     <span class="comment">%{</span>
+0093     <span class="comment">%resample via HSV.. more color-true than above, but doesn't work with</span>
+0094     <span class="comment">%every colormap</span>
+0095     hsv                        = rgb2hsv(cm);
+0096     hsv(144:<span class="keyword">end</span>,1)             = hsv(144:<span class="keyword">end</span>,1)+1;
+0097     ColorMap                   = interp1(linspace(0,1,size(cm,1)),hsv,linspace(0,1,cMapSize));
+0098     ColorMap(cm(:,1)&gt;1,1) = ColorMap(cm(:,1)&gt;1,1)-1;
+0099     ColorMap                   = hsv2rgb(cm);
+0100     <span class="comment">%}</span>
+0101 <span class="keyword">end</span>
+0102 
+0103 <span class="keyword">end</span>
+0104</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

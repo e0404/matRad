@@ -1,0 +1,163 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_calcDoseDirect</title>
+  <meta name="keywords" content="matRad_calcDoseDirect">
+  <meta name="description" content="matRad dose calculation wrapper bypassing dij calculation">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_calcDoseDirect
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">matRad dose calculation wrapper bypassing dij calculation</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad dose calculation wrapper bypassing dij calculation
+ 
+ call
+   resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst)
+   resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w)
+
+ input
+   ct:         ct cube
+   stf:        matRad steering information struct
+   pln:        matRad plan meta information struct
+   cst:        matRad cst struct
+   w:          optional (if no weights available in stf): bixel weight
+               vector
+
+ output
+   resultGUI:  matRad result struct
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_calcCubes.html" class="code" title="function resultGUI = matRad_calcCubes(w,dij,scenNum)">matRad_calcCubes</a>	matRad computation of all cubes for the resultGUI struct</li><li><a href="matRad_calcParticleDose.html" class="code" title="function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcParticleDose</a>	matRad particle dose calculation wrapper</li><li><a href="matRad_calcPhotonDose.html" class="code" title="function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcPhotonDose</a>	matRad photon dose calculation wrapper</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../matRad/examples/matRad_example5_protons.html" class="code" title="">matRad_example5_protons</a>	% Example: Proton Treatment Plan with subsequent Isocenter shift</li><li><a href="../matRad/examples/matRad_example7_carbon.html" class="code" title="">matRad_example7_carbon</a>	% Example: Carbon Ion Treatment Plan</li><li><a href="../matRad/tools/matRad_SFUDoptimization.html" class="code" title="function [resultGUI] = matRad_SFUDoptimization(pln, cst, dij, ct, stf)">matRad_SFUDoptimization</a>	Calculation of single field uniform dose (SFUD) optimization</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w)</a>
+0002 <span class="comment">% matRad dose calculation wrapper bypassing dij calculation</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst)</span>
+0006 <span class="comment">%   resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w)</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% input</span>
+0009 <span class="comment">%   ct:         ct cube</span>
+0010 <span class="comment">%   stf:        matRad steering information struct</span>
+0011 <span class="comment">%   pln:        matRad plan meta information struct</span>
+0012 <span class="comment">%   cst:        matRad cst struct</span>
+0013 <span class="comment">%   w:          optional (if no weights available in stf): bixel weight</span>
+0014 <span class="comment">%               vector</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% output</span>
+0017 <span class="comment">%   resultGUI:  matRad result struct</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% References</span>
+0020 <span class="comment">%   -</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0025 <span class="comment">%</span>
+0026 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0027 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0028 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0029 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0030 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0031 <span class="comment">% LICENSE file.</span>
+0032 <span class="comment">%</span>
+0033 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0034 
+0035 calcDoseDirect = true;
+0036 
+0037 <span class="comment">% check if weight vector is available, either in function call or in stf - otherwise dose calculation not possible</span>
+0038 <span class="keyword">if</span> ~exist(<span class="string">'w'</span>,<span class="string">'var'</span>) &amp;&amp; ~isfield([stf.ray],<span class="string">'weight'</span>)
+0039      error(<span class="string">'No weight vector available. Please provide w or add info to stf'</span>)
+0040 <span class="keyword">end</span>
+0041 
+0042 <span class="comment">% copy bixel weight vector into stf struct</span>
+0043 <span class="keyword">if</span> exist(<span class="string">'w'</span>,<span class="string">'var'</span>)
+0044     <span class="keyword">if</span> sum([stf.totalNumOfBixels]) ~= numel(w)
+0045         error(<span class="string">'weighting does not match steering information'</span>)
+0046     <span class="keyword">end</span>
+0047     counter = 0;
+0048     <span class="keyword">for</span> i = 1:size(stf,2)
+0049         <span class="keyword">for</span> j = 1:stf(i).numOfRays
+0050             <span class="keyword">for</span> k = 1:stf(i).numOfBixelsPerRay(j)
+0051                 counter = counter + 1;
+0052                 stf(i).ray(j).weight(k) = w(counter);
+0053             <span class="keyword">end</span>
+0054         <span class="keyword">end</span>
+0055     <span class="keyword">end</span>
+0056 <span class="keyword">else</span> <span class="comment">% weights need to be in stf!</span>
+0057     w = NaN*ones(sum([stf.totalNumOfBixels]),1);
+0058     counter = 0;
+0059     <span class="keyword">for</span> i = 1:size(stf,2)
+0060         <span class="keyword">for</span> j = 1:stf(i).numOfRays
+0061             <span class="keyword">for</span> k = 1:stf(i).numOfBixelsPerRay(j)
+0062                 counter = counter + 1;
+0063                 w(counter) = stf(i).ray(j).weight(k);
+0064             <span class="keyword">end</span>
+0065         <span class="keyword">end</span>
+0066     <span class="keyword">end</span>    
+0067 <span class="keyword">end</span>
+0068 
+0069 <span class="comment">% dose calculation</span>
+0070 <span class="keyword">if</span> strcmp(pln.radiationMode,<span class="string">'photons'</span>)
+0071   dij = <a href="matRad_calcPhotonDose.html" class="code" title="function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcPhotonDose</a>(ct,stf,pln,cst,calcDoseDirect);
+0072   <span class="comment">%dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,5000,4,calcDoseDirect);</span>
+0073 <span class="keyword">elseif</span> strcmp(pln.radiationMode,<span class="string">'protons'</span>) || strcmp(pln.radiationMode,<span class="string">'carbon'</span>)
+0074   dij = <a href="matRad_calcParticleDose.html" class="code" title="function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcParticleDose</a>(ct,stf,pln,cst,calcDoseDirect);
+0075 <span class="keyword">end</span>
+0076 
+0077 <span class="comment">% calculate cubes; use uniform weights here, weighting with actual fluence</span>
+0078 <span class="comment">% already performed in dij construction</span>
+0079 resultGUI    = <a href="matRad_calcCubes.html" class="code" title="function resultGUI = matRad_calcCubes(w,dij,scenNum)">matRad_calcCubes</a>(ones(pln.propStf.numOfBeams,1),dij);
+0080 
+0081 <span class="comment">% remember original fluence weights</span>
+0082 resultGUI.w  = w; 
+0083 
+0084 
+0085 
+0086</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

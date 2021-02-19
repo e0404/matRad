@@ -1,0 +1,189 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_rayTracing</title>
+  <meta name="keywords" content="matRad_rayTracing">
+  <meta name="description" content="matRad visualization of two-dimensional dose distributions on ct">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_rayTracing
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">matRad visualization of two-dimensional dose distributions on ct</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function radDepthV = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCutoff) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad visualization of two-dimensional dose distributions on ct 
+ including segmentation
+ 
+ call
+   radDepthV = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCutoff)
+
+ input
+   stf:           matRad steering information struct of one beam
+   ct:            ct cube
+   V:             linear voxel indices e.g. of voxels inside patient.
+   rot_coordsV    coordinates in beams eye view inside the patient
+   lateralCutoff: lateral cut off used for ray tracing</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_getRotationMatrix.html" class="code" title="function rotMat = matRad_getRotationMatrix(gantryAngle,couchAngle,system)">matRad_getRotationMatrix</a>	matRad function to return the rotation / transformation matrix</li><li><a href="matRad_siddonRayTracer.html" class="code" title="function [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(isocenter,resolution,sourcePoint,targetPoint,cubes)">matRad_siddonRayTracer</a>	siddon ray tracing through 3D cube to calculate the radiological depth</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_calcDoseInitBeam.html" class="code" title="">matRad_calcDoseInitBeam</a>	</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function radDepthV = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCutoff)</a>
+0002 <span class="comment">% matRad visualization of two-dimensional dose distributions on ct</span>
+0003 <span class="comment">% including segmentation</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% call</span>
+0006 <span class="comment">%   radDepthV = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCutoff)</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% input</span>
+0009 <span class="comment">%   stf:           matRad steering information struct of one beam</span>
+0010 <span class="comment">%   ct:            ct cube</span>
+0011 <span class="comment">%   V:             linear voxel indices e.g. of voxels inside patient.</span>
+0012 <span class="comment">%   rot_coordsV    coordinates in beams eye view inside the patient</span>
+0013 <span class="comment">%   lateralCutoff: lateral cut off used for ray tracing</span>
+0014 
+0015 <span class="comment">%</span>
+0016 <span class="comment">% output</span>
+0017 <span class="comment">%   radDepthV:  radiological depth inside the patient</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% References</span>
+0020 <span class="comment">%   [1] http://www.sciencedirect.com/science/article/pii/S1120179711001359</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0025 <span class="comment">%</span>
+0026 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0027 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0028 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0029 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0030 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0031 <span class="comment">% LICENSE file.</span>
+0032 <span class="comment">%</span>
+0033 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0034 
+0035 <span class="comment">% set up rad depth cube for results</span>
+0036 radDepthCube = repmat({NaN*ones(ct.cubeDim)},ct.numOfCtScen);
+0037 
+0038 <span class="comment">% set up ray matrix direct behind last voxel</span>
+0039 rayMx_bev_y = max(rot_coordsV(:,2)) + max([ct.resolution.x ct.resolution.y ct.resolution.z]);
+0040 rayMx_bev_y = rayMx_bev_y + stf.sourcePoint_bev(2);
+0041 
+0042 <span class="comment">% set up list with bev coordinates for calculation of radiological depth</span>
+0043 coords = zeros(prod(ct.cubeDim),3);
+0044 coords(V,:) = rot_coordsV;
+0045 
+0046 <span class="comment">% calculate spacing of rays on ray matrix</span>
+0047 rayMxSpacing = 1/sqrt(2) * min([ct.resolution.x ct.resolution.y ct.resolution.z]);
+0048 
+0049 <span class="comment">% define candidate ray matrix covering 1000x1000mm^2</span>
+0050 numOfCandidateRays = 2 * ceil(500/rayMxSpacing) + 1;
+0051 candidateRayMx     = zeros(numOfCandidateRays);
+0052 
+0053 <span class="comment">% define coordinates</span>
+0054 [candidateRaysCoords_X,candidateRaysCoords_Z] = meshgrid(rayMxSpacing*[floor(-500/rayMxSpacing):ceil(500/rayMxSpacing)]);
+0055 
+0056 <span class="comment">% check which rays should be used</span>
+0057 <span class="keyword">for</span> i = 1:stf.numOfRays
+0058    
+0059     ix = (candidateRaysCoords_X(:) - (1+rayMx_bev_y/stf.SAD)*stf.ray(i).rayPos_bev(1)).^2 + <span class="keyword">...</span>
+0060          (candidateRaysCoords_Z(:) - (1+rayMx_bev_y/stf.SAD)*stf.ray(i).rayPos_bev(3)).^2 <span class="keyword">...</span>
+0061            &lt;= lateralCutoff^2;
+0062     
+0063     candidateRayMx(ix) = 1;
+0064     
+0065 <span class="keyword">end</span>
+0066 
+0067 <span class="comment">% set up ray matrix</span>
+0068 rayMx_bev = [candidateRaysCoords_X(logical(candidateRayMx(:))) <span class="keyword">...</span>
+0069              rayMx_bev_y*ones(sum(candidateRayMx(:)),1) <span class="keyword">...</span><span class="comment">  </span>
+0070              candidateRaysCoords_Z(logical(candidateRayMx(:)))];
+0071 
+0072 <span class="comment">%     figure,</span>
+0073 <span class="comment">%     for jj = 1:length(rayMx_bev)</span>
+0074 <span class="comment">%        plot(rayMx_bev(jj,1),rayMx_bev(jj,3),'rx'),hold on</span>
+0075 <span class="comment">%     end</span>
+0076 
+0077 <span class="comment">% Rotation matrix. Transposed because of row vectors</span>
+0078 rotMat_vectors_T = transpose(<a href="matRad_getRotationMatrix.html" class="code" title="function rotMat = matRad_getRotationMatrix(gantryAngle,couchAngle,system)">matRad_getRotationMatrix</a>(stf.gantryAngle,stf.couchAngle));
+0079 
+0080 <span class="comment">% rotate ray matrix from bev to world coordinates</span>
+0081 rayMx_world = rayMx_bev * rotMat_vectors_T;
+0082 
+0083 <span class="comment">% criterium for ray selection</span>
+0084 raySelection = rayMxSpacing/2;
+0085 
+0086 <span class="comment">% perform ray tracing over all rays</span>
+0087 <span class="keyword">for</span> i = 1:size(rayMx_world,1)
+0088 
+0089     <span class="comment">% run siddon ray tracing algorithm</span>
+0090     [~,l,rho,~,ixHitVoxel] = <a href="matRad_siddonRayTracer.html" class="code" title="function [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(isocenter,resolution,sourcePoint,targetPoint,cubes)">matRad_siddonRayTracer</a>(stf.isoCenter, <span class="keyword">...</span>
+0091                                 ct.resolution, <span class="keyword">...</span>
+0092                                 stf.sourcePoint, <span class="keyword">...</span>
+0093                                 rayMx_world(i,:), <span class="keyword">...</span>
+0094                                 ct.cube);
+0095 
+0096     <span class="comment">% find voxels for which we should remember this tracing because this is</span>
+0097     <span class="comment">% the closest ray by projecting the voxel coordinates to the</span>
+0098     <span class="comment">% intersection points with the ray matrix and checking if the distance</span>
+0099     <span class="comment">% in x and z direction is smaller than the resolution of the ray matrix</span>
+0100     scale_factor = (rayMx_bev_y - stf.sourcePoint_bev(2)) ./ <span class="keyword">...</span>
+0101                    coords(ixHitVoxel,2);
+0102 
+0103     x_dist = coords(ixHitVoxel,1).*scale_factor - rayMx_bev(i,1);
+0104     z_dist = coords(ixHitVoxel,3).*scale_factor - rayMx_bev(i,3);
+0105 
+0106     ixRememberFromCurrTracing = x_dist &gt; -raySelection &amp; x_dist &lt;= raySelection <span class="keyword">...</span>
+0107                               &amp; z_dist &gt; -raySelection &amp; z_dist &lt;= raySelection;
+0108 
+0109     <span class="keyword">if</span> any(ixRememberFromCurrTracing) &gt; 0
+0110 
+0111         <span class="keyword">for</span> j = 1:ct.numOfCtScen
+0112             <span class="comment">% calc radiological depths</span>
+0113 
+0114             <span class="comment">% eq 14</span>
+0115             <span class="comment">% It multiply voxel intersections with \rho values.</span>
+0116             d = l .* rho{j}; <span class="comment">%Note. It is not a number &quot;one&quot;; it is the letter &quot;l&quot;</span>
+0117 
+0118             <span class="comment">% Calculate accumulated d sum.</span>
+0119             dCum = cumsum(d)-d/2;
+0120 
+0121             <span class="comment">% write radiological depth for voxel which we want to remember</span>
+0122             radDepthCube{j}(ixHitVoxel(ixRememberFromCurrTracing)) = dCum(ixRememberFromCurrTracing);
+0123         <span class="keyword">end</span>
+0124     <span class="keyword">end</span>  
+0125     
+0126 <span class="keyword">end</span>
+0127 
+0128 <span class="comment">% only take voxel inside the patient</span>
+0129 <span class="keyword">for</span> i = 1:ct.numOfCtScen
+0130     radDepthV{i} = radDepthCube{i}(V);
+0131 <span class="keyword">end</span>
+0132</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

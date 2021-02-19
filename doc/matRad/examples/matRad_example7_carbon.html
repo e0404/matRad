@@ -1,0 +1,219 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_example7_carbon</title>
+  <meta name="keywords" content="matRad_example7_carbon">
+  <meta name="description" content="% Example: Carbon Ion Treatment Plan">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html examples -->
+<h1>matRad_example7_carbon
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">% Example: Carbon Ion Treatment Plan</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">This is a script file. </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment">% Example: Carbon Ion Treatment Plan
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2017 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/matRad_calcDoseDirect.html" class="code" title="function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w)">matRad_calcDoseDirect</a>	matRad dose calculation wrapper bypassing dij calculation</li><li><a href="../../matRad/matRad_calcParticleDose.html" class="code" title="function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcParticleDose</a>	matRad particle dose calculation wrapper</li><li><a href="../../matRad/matRad_fluenceOptimization.html" class="code" title="function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)">matRad_fluenceOptimization</a>	matRad inverse planning wrapper function</li><li><a href="../../matRad/matRad_generateStf.html" class="code" title="function stf = matRad_generateStf(ct,cst,pln,visMode)">matRad_generateStf</a>	matRad steering information generation</li><li><a href="../../matRad/matRad_getIsoCenter.html" class="code" title="function isoCenter = matRad_getIsoCenter(cst,ct,visBool)">matRad_getIsoCenter</a>	computes the isocenter [mm] as the joint center of gravity</li><li><a href="../../matRad/matRad_rc.html" class="code" title="">matRad_rc</a>	matRad rc script</li><li><a href="../../matRad/tools/matRad_compareDose.html" class="code" title="function [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst,enable , contours, pln, criteria, n,localglobal)">matRad_compareDose</a>	Comparison of two dose cubes in terms of gamma index, absolute and visual difference</li><li><a href="../../matRad/tools/matRad_plotSliceWrapper.html" class="code" title="function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,varargin)">matRad_plotSliceWrapper</a>	matRad tool function to directly plot a complete slice of a ct with dose</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <span class="comment">%% Example: Carbon Ion Treatment Plan</span>
+0002 <span class="comment">%</span>
+0003 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% Copyright 2017 the matRad development team.</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0008 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0009 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0010 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0011 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0012 <span class="comment">% LICENSE file.</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0015 
+0016 <span class="comment">%%</span>
+0017 <span class="comment">% In this example we will show</span>
+0018 <span class="comment">% (i) how to load patient data into matRad</span>
+0019 <span class="comment">% (ii) how to setup a carbon ion dose calculation plan including variable RBE optimization</span>
+0020 <span class="comment">% (iii) how to inversely optimize the pencil beam intensities based on the</span>
+0021 <span class="comment">% RBE-weighted dose</span>
+0022 <span class="comment">% (iv) how to inversely optimize the pencil beam intensities based on the</span>
+0023 <span class="comment">% biological effect</span>
+0024 <span class="comment">% (v) how to change the tissues' radiobiological characteristics</span>
+0025 <span class="comment">% (vi) how to recalculated the dose considering the previously optimized pencil beam intensities</span>
+0026 <span class="comment">% (vii) how to compare the two results</span>
+0027 
+0028 <span class="comment">%% Patient Data Import</span>
+0029 <span class="comment">% Let's begin with a clear Matlab environment and import the liver</span>
+0030 <span class="comment">% patient into your workspace.</span>
+0031 
+0032 <a href="../../matRad/matRad_rc.html" class="code" title="">matRad_rc</a>; <span class="comment">%If this throws an error, run it from the parent directory first to set the paths</span>
+0033 
+0034 load(<span class="string">'LIVER.mat'</span>);
+0035 
+0036 <span class="comment">%% Treatment Plan</span>
+0037 <span class="comment">% The next step is to define your treatment plan labeled as 'pln'. This</span>
+0038 <span class="comment">% structure requires input from the treatment planner and defines the most</span>
+0039 <span class="comment">% important cornerstones of your treatment plan.</span>
+0040 <span class="comment">%%</span>
+0041 <span class="comment">% First of all, we need to define what kind of radiation modality we would</span>
+0042 <span class="comment">% like to use. Possible values are photons, protons or carbon. In this</span>
+0043 <span class="comment">% example we would like to use carbon ions for treatment planning. Next, we</span>
+0044 <span class="comment">% need to define a treatment machine to correctly load the corresponding</span>
+0045 <span class="comment">% base data. matRad features generic base data in the file</span>
+0046 <span class="comment">% 'carbon_Generic.mat'; consequently the machine has to be set accordingly</span>
+0047 pln.radiationMode = <span class="string">'carbon'</span>;            
+0048 pln.machine       = <span class="string">'Generic'</span>;
+0049 
+0050 <span class="comment">%%</span>
+0051 <span class="comment">% Define the flavor of biological optimization for treatment planning along</span>
+0052 <span class="comment">% with the quantity that should be used for optimization. Possible values</span>
+0053 <span class="comment">% are (none: physical optimization; const_RBExD: constant RBE of 1.1;</span>
+0054 <span class="comment">% LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of</span>
+0055 <span class="comment">% RBE-weighted dose. As we use carbon ions, we decide to use base data from</span>
+0056 <span class="comment">% the local effect model IV and want to optimize the RBE-weighted dose.</span>
+0057 <span class="comment">% Therefore we set bioOptimization to LEMIV_RBExD</span>
+0058 pln.propOpt.bioOptimization = <span class="string">'LEMIV_RBExD'</span>;                                              
+0059 
+0060 <span class="comment">%%</span>
+0061 <span class="comment">% The remaining plan parameters are set like in the previous example files</span>
+0062 pln.numOfFractions        = 30;
+0063 pln.propStf.gantryAngles  = 315;
+0064 pln.propStf.couchAngles   = 0;
+0065 pln.propStf.bixelWidth    = 3;
+0066 pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
+0067 pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * <a href="../../matRad/matRad_getIsoCenter.html" class="code" title="function isoCenter = matRad_getIsoCenter(cst,ct,visBool)">matRad_getIsoCenter</a>(cst,ct,0);
+0068 pln.propOpt.runDAO        = 0;
+0069 pln.propOpt.runSequencing = 0;
+0070 
+0071 <span class="comment">% dose calculation settings</span>
+0072 pln.propDoseCalc.doseGrid.resolution.x = 3; <span class="comment">% [mm]</span>
+0073 pln.propDoseCalc.doseGrid.resolution.y = 3; <span class="comment">% [mm]</span>
+0074 pln.propDoseCalc.doseGrid.resolution.z = 3; <span class="comment">% [mm]</span>
+0075 
+0076 <span class="comment">%% Generate Beam Geometry STF</span>
+0077 stf = <a href="../../matRad/matRad_generateStf.html" class="code" title="function stf = matRad_generateStf(ct,cst,pln,visMode)">matRad_generateStf</a>(ct,cst,pln);
+0078 
+0079 <span class="comment">%%</span>
+0080 <span class="comment">% Let's have a closer look on the stf.ray sub-structure which contains the</span>
+0081 <span class="comment">% actual  beam/ray geometry information. For illustration purposes we want</span>
+0082 <span class="comment">% to show the last ray. Besides geometrical  information about the position</span>
+0083 <span class="comment">% and orientation of the ray, we can also find pencil beam information. If</span>
+0084 <span class="comment">% the ray coincides with the target, pencil beams were defined along the</span>
+0085 <span class="comment">% ray from target entry to target exit.</span>
+0086 display(stf.ray(end));
+0087 
+0088 <span class="comment">%%</span>
+0089 <span class="comment">% Here are the energies selected on the last ray:</span>
+0090 display(stf.ray(end).energy);
+0091 
+0092 <span class="comment">%% Dose Calculation</span>
+0093 dij = <a href="../../matRad/matRad_calcParticleDose.html" class="code" title="function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcParticleDose</a>(ct,stf,pln,cst);
+0094 
+0095 <span class="comment">%% Inverse Optimization  for IMPT based on RBE-weighted dose</span>
+0096 <span class="comment">% The goal of the fluence optimization is to find a set of bixel/spot</span>
+0097 <span class="comment">% weights which yield the best possible dose distribution according to the</span>
+0098 <span class="comment">% clinical objectives and constraints underlying the radiation treatment.</span>
+0099 resultGUI = <a href="../../matRad/matRad_fluenceOptimization.html" class="code" title="function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)">matRad_fluenceOptimization</a>(dij,cst,pln);
+0100 
+0101 <span class="comment">%% Plot the Resulting Dose Slice</span>
+0102 <span class="comment">% Let's plot the transversal iso-center dose slice</span>
+0103 slice = round(pln.propStf.isoCenter(3)./ct.resolution.z);
+0104 figure,
+0105 imagesc(resultGUI.RBExDose (:,:,slice)),colorbar, colormap(jet);
+0106 
+0107 <span class="comment">%% Inverse Optimization  for IMPT based on biological effect</span>
+0108 <span class="comment">% To perform a dose optimization for carbon ions we can also use the</span>
+0109 <span class="comment">% biological effect instead of the RBE-weighted dose. Therefore we have to</span>
+0110 <span class="comment">% change the optimization mode and restart the optimization</span>
+0111 pln.propOpt.bioOptimization = <span class="string">'LEMIV_effect'</span>; 
+0112 resultGUI_effect = <a href="../../matRad/matRad_fluenceOptimization.html" class="code" title="function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)">matRad_fluenceOptimization</a>(dij,cst,pln);
+0113 
+0114 <span class="comment">%% Visualize differences</span>
+0115 <span class="comment">% Through optimzation based on the biological effect we obtain a slightly</span>
+0116 <span class="comment">% different dose distribution as visualized by the following dose</span>
+0117 <span class="comment">% difference map</span>
+0118 figure;
+0119 imagesc(resultGUI.RBExDose (:,:,slice)-resultGUI_effect.RBExDose(:,:,slice));
+0120 colorbar;
+0121 colormap(jet);
+0122 
+0123 <span class="comment">%% Change Radiosensitivity</span>
+0124 <span class="comment">% The previous treatment plan was optimized using an photon alpha-beta</span>
+0125 <span class="comment">% ratio of 2 for all tissues. Now, Let's change the radiosensitivity by</span>
+0126 <span class="comment">% adapting alphaX. This will change the photon alpha-beta ratio</span>
+0127 <span class="comment">% from 2 to 10.</span>
+0128 <span class="keyword">for</span> i = 1:size(cst,1)
+0129     cst{i,5}.alphaX      = 0.5;
+0130     cst{i,5}.TissueClass = 2;
+0131 <span class="keyword">end</span>
+0132 
+0133 <span class="comment">%% Recalculate Plan</span>
+0134 <span class="comment">% Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose</span>
+0135 resultGUI_tissue = <a href="../../matRad/matRad_calcDoseDirect.html" class="code" title="function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w)">matRad_calcDoseDirect</a>(ct,stf,pln,cst,resultGUI.w);
+0136 
+0137 <span class="comment">%% Result Comparison</span>
+0138 <span class="comment">% Let's compare the new recalculation against the optimization result.</span>
+0139 plane = 3;
+0140 doseWindow = [0 max([resultGUI_effect.RBExDose(:); resultGUI_tissue.RBExDose(:)])];
+0141 
+0142 figure,
+0143 <a href="../../matRad/tools/matRad_plotSliceWrapper.html" class="code" title="function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,varargin)">matRad_plotSliceWrapper</a>(gca,ct,cst,1,resultGUI_effect.RBExDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
+0144 title(<span class="string">'original plan'</span>)
+0145 figure,
+0146 <a href="../../matRad/tools/matRad_plotSliceWrapper.html" class="code" title="function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,varargin)">matRad_plotSliceWrapper</a>(gca,ct,cst,1,resultGUI_tissue.RBExDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
+0147 title(<span class="string">'manipulated plan'</span>)
+0148 <span class="comment">%%</span>
+0149 <span class="comment">% At this point we would like to see the absolute difference of the original optimization and the</span>
+0150 <span class="comment">% recalculation.</span>
+0151 absDiffCube = resultGUI_effect.RBExDose-resultGUI_tissue.RBExDose;
+0152 figure,
+0153 <a href="../../matRad/tools/matRad_plotSliceWrapper.html" class="code" title="function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,varargin)">matRad_plotSliceWrapper</a>(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
+0154 title(<span class="string">'absolute difference'</span>)
+0155 <span class="comment">%%</span>
+0156 <span class="comment">% Plot both doses with absolute difference and gamma analysis</span>
+0157 [gammaCube,gammaPassRate,hfigure]=<a href="../../matRad/tools/matRad_compareDose.html" class="code" title="function [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst,enable , contours, pln, criteria, n,localglobal)">matRad_compareDose</a>(resultGUI_effect.RBExDose, resultGUI.RBExDose, ct, cst,[1 1 1],<span class="string">'on'</span>);
+0158 
+0159 
+0160</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_calcDVH</title>
+  <meta name="keywords" content="matRad_calcDVH">
+  <meta name="description" content="matRad dvh calculation">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_calcDVH
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">matRad dvh calculation</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function dvh = matRad_calcDVH(cst,doseCube,dvhType,doseGrid) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad dvh calculation
+ 
+ call
+   dvh = matRad_calcDVH(cst,doseCube)
+   dvh = matRad_calcDVH(cst,doseCube,dvhType)
+   dvh = matRad_calcDVH(cst,doseCube,doseGrid)
+   dvh = matRad_calcDVH(cst,doseCube,dvhType,doseGrid)
+
+ input
+   cst:        matRad cst struct
+   doseCube:   arbitrary doseCube (e.g. physicalDose)
+   dvhType:    (optional) string, 'cum' for cumulative, 'diff' for differential
+               dvh
+   doseGrid:   (optional) use predefined evaluation points. Useful when
+               comparing multiple realizations
+
+ output
+   dose volume histogram
+
+ References
+   van't Riet et. al., IJROBP, 1997 Feb 1;37(3):731-6.
+   Kataria et. al., J Med Phys. 2012 Oct-Dec; 37(4): 207�213.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2016 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_indicatorWrapper.html" class="code" title="function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)">matRad_indicatorWrapper</a>	matRad indictor wrapper</li><li><a href="../matRad/tools/matRad_compareDose.html" class="code" title="function [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst,enable , contours, pln, criteria, n,localglobal)">matRad_compareDose</a>	Comparison of two dose cubes in terms of gamma index, absolute and visual difference</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>Subfunctions <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<ul style="list-style-type:disc">
+<li><a href="#_sub1" class="code">function dvh = getDVHPoints(cst, sIx, doseCube, dvhPoints, dvhType)</a></li></ul>
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function dvh = matRad_calcDVH(cst,doseCube,dvhType,doseGrid)</a>
+0002 <span class="comment">% matRad dvh calculation</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   dvh = matRad_calcDVH(cst,doseCube)</span>
+0006 <span class="comment">%   dvh = matRad_calcDVH(cst,doseCube,dvhType)</span>
+0007 <span class="comment">%   dvh = matRad_calcDVH(cst,doseCube,doseGrid)</span>
+0008 <span class="comment">%   dvh = matRad_calcDVH(cst,doseCube,dvhType,doseGrid)</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% input</span>
+0011 <span class="comment">%   cst:        matRad cst struct</span>
+0012 <span class="comment">%   doseCube:   arbitrary doseCube (e.g. physicalDose)</span>
+0013 <span class="comment">%   dvhType:    (optional) string, 'cum' for cumulative, 'diff' for differential</span>
+0014 <span class="comment">%               dvh</span>
+0015 <span class="comment">%   doseGrid:   (optional) use predefined evaluation points. Useful when</span>
+0016 <span class="comment">%               comparing multiple realizations</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% output</span>
+0019 <span class="comment">%   dose volume histogram</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% References</span>
+0022 <span class="comment">%   van't Riet et. al., IJROBP, 1997 Feb 1;37(3):731-6.</span>
+0023 <span class="comment">%   Kataria et. al., J Med Phys. 2012 Oct-Dec; 37(4): 207�213.</span>
+0024 <span class="comment">%</span>
+0025 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0026 <span class="comment">%</span>
+0027 <span class="comment">% Copyright 2016 the matRad development team.</span>
+0028 <span class="comment">%</span>
+0029 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0030 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0031 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0032 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0033 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0034 <span class="comment">% LICENSE file.</span>
+0035 <span class="comment">%</span>
+0036 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0037 
+0038 <span class="keyword">if</span> ~exist(<span class="string">'dvhType'</span>,<span class="string">'var'</span>) || isempty(dvhType)
+0039     dvhType = <span class="string">'cum'</span>;
+0040 <span class="keyword">end</span>
+0041 
+0042 <span class="keyword">if</span> ~exist(<span class="string">'doseGrid'</span>, <span class="string">'var'</span>) || isempty(doseGrid)
+0043     maxDose = max(doseCube(:));
+0044     minDose = min(doseCube(:));
+0045 
+0046     <span class="comment">% get dvhPoints for every structure and every scenario the same</span>
+0047     n = 1000;
+0048     <span class="keyword">if</span> strcmp(dvhType, <span class="string">'cum'</span>)
+0049         doseGrid = linspace(0,maxDose*1.05,n);
+0050     <span class="keyword">elseif</span> strcmp(dvhType, <span class="string">'diff'</span>)
+0051         doseGrid = linspace(0.95*minDose,maxDose*1.05,n);
+0052     <span class="keyword">end</span>
+0053 <span class="keyword">end</span>
+0054 
+0055 numOfVois = size(cst,1);
+0056 dvh = struct;
+0057 <span class="keyword">for</span> i = 1:numOfVois
+0058     dvh(i).doseGrid     = doseGrid;
+0059     dvh(i).volumePoints = <a href="#_sub1" class="code" title="subfunction dvh = getDVHPoints(cst, sIx, doseCube, dvhPoints, dvhType)">getDVHPoints</a>(cst, i, doseCube, doseGrid, dvhType);
+0060     dvh(i).name         = cst{i,2};
+0061 <span class="keyword">end</span>
+0062 
+0063 <span class="keyword">end</span> <span class="comment">%eof</span>
+0064 
+0065 <a name="_sub1" href="#_subfunctions" class="code">function dvh = getDVHPoints(cst, sIx, doseCube, dvhPoints, dvhType)</a>
+0066 n = numel(dvhPoints);
+0067 dvh         = NaN * ones(1,n);
+0068 indices     = cst{sIx,4}{1};
+0069 numOfVoxels = numel(indices);
+0070 
+0071 doseInVoi   = doseCube(indices);
+0072 
+0073 <span class="keyword">switch</span> dvhType
+0074     <span class="keyword">case</span> <span class="string">'cum'</span> <span class="comment">% cummulative DVH</span>
+0075         <span class="keyword">for</span> j = 1:n
+0076             dvh(j) = sum(doseInVoi &gt;= dvhPoints(j));
+0077         <span class="keyword">end</span>
+0078 
+0079     <span class="keyword">case</span> <span class="string">'diff'</span> <span class="comment">% differential DVH</span>
+0080         binning = (dvhPoints(2) - dvhPoints(1))/2;
+0081         <span class="keyword">for</span> j = 1:n <span class="comment">% differential DVH</span>
+0082             dvh(j) = sum(dvhPoints(j) + binning &gt; doseInVoi &amp; doseInVoi &gt; dvhPoints(j) - binning);
+0083         <span class="keyword">end</span>
+0084 
+0085 <span class="keyword">end</span>
+0086 dvh = dvh ./ numOfVoxels * 100;
+0087 <span class="keyword">end</span> <span class="comment">%eof getDVHPoints</span>
+0088</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

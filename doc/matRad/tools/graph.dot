@@ -1,0 +1,21 @@
+/* Created by mdot for Matlab */
+digraph m2html {
+  matRad_checkMexFileExists -> matRad_getEnvironment;
+  matRad_compareDose -> matRad_calcIntEnergy;
+  matRad_compareDose -> matRad_gammaIndex;
+  matRad_compareDose -> matRad_plotSliceWrapper;
+  matRad_gammaIndex -> matRad_getEnvironment;
+  matRad_updatePatientDataCsts -> matRad_convertOldCstToNewCstObjectives;
+
+  matRad_SFUDoptimization [URL="matRad_SFUDoptimization.html"];
+  matRad_calcIntEnergy [URL="matRad_calcIntEnergy.html"];
+  matRad_checkMexFileExists [URL="matRad_checkMexFileExists.html"];
+  matRad_compareDose [URL="matRad_compareDose.html"];
+  matRad_convertOldCstToNewCstObjectives [URL="matRad_convertOldCstToNewCstObjectives.html"];
+  matRad_gammaIndex [URL="matRad_gammaIndex.html"];
+  matRad_getEnvironment [URL="matRad_getEnvironment.html"];
+  matRad_plotSliceWrapper [URL="matRad_plotSliceWrapper.html"];
+  matRad_updatePatientDataCsts [URL="matRad_updatePatientDataCsts.html"];
+  matRad_visPhotonFieldShapes [URL="matRad_visPhotonFieldShapes.html"];
+  matRad_visSpotWeights [URL="matRad_visSpotWeights.html"];
+}

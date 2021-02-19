@@ -1,0 +1,354 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of MatRad_Config</title>
+  <meta name="keywords" content="MatRad_Config">
+  <meta name="description" content="">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>MatRad_Config
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"></div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">This is a script file. </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"></pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="MatRad_Config.html" class="code" title="">MatRad_Config</a>	</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="MatRad_Config.html" class="code" title="">MatRad_Config</a>	</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>Subfunctions <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<ul style="list-style-type:disc">
+<li><a href="#_sub1" class="code">function obj = MatRad_Config()</a></li><li><a href="#_sub2" class="code">function displayToConsole(obj,type,formatSpec,varargin)</a></li><li><a href="#_sub3" class="code">function reset(obj)</a></li><li><a href="#_sub4" class="code">function setDefaultProperties(obj)</a></li><li><a href="#_sub5" class="code">function setDefaultPropertiesForTesting(obj)</a></li><li><a href="#_sub6" class="code">function dispDebug(obj,formatSpec,varargin)</a></li><li><a href="#_sub7" class="code">function dispInfo(obj,formatSpec,varargin)</a></li><li><a href="#_sub8" class="code">function dispError(obj,formatSpec,varargin)</a></li><li><a href="#_sub9" class="code">function dispWarning(obj,formatSpec,varargin)</a></li><li><a href="#_sub10" class="code">function dispDeprecationWarning(obj,formatSpec,varargin)</a></li><li><a href="#_sub11" class="code">function obj = writeLogToFile(obj,filename)</a></li><li><a href="#_sub12" class="code">function set.logLevel(obj,newLogLevel)</a></li><li><a href="#_sub13" class="code">function set.writeLog(obj,writeLog)</a></li><li><a href="#_sub14" class="code">function getEnvironment(obj)</a></li><li><a href="#_sub15" class="code">function obj = instance()</a></li></ul>
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 classdef <a href="MatRad_Config.html" class="code" title="">MatRad_Config</a> &lt; handle
+0002 <span class="comment">% MatRad_Config MatRad Configuration class</span>
+0003 <span class="comment">% This class is used globally through Matlab to handle default values and</span>
+0004 <span class="comment">% logging and is declared as global matRad_cfg.</span>
+0005 <span class="comment">% Usage:</span>
+0006 <span class="comment">%    matRad_cfg = MatRad_Config.instance();</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% Copyright 2019 the matRad development team.</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0013 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0014 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0015 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0016 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0017 <span class="comment">% LICENSE file.</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0020 
+0021     
+0022     properties
+0023 
+0024         <span class="comment">%Logging</span>
+0025         logLevel = 3; <span class="comment">%1 = only Errors, 2 = with Warnings, 3 = Info output, 4 = deprecation warnings, 5 = debug information</span>
+0026         keepLog = false; <span class="comment">%Stores the full log in memory</span>
+0027         writeLog = false; <span class="comment">%Writes the log to a file on-the-fly</span>
+0028         
+0029         <span class="comment">%Default Properties</span>
+0030         propDoseCalc;
+0031         propOpt;
+0032         propMC;
+0033         propStf;
+0034         
+0035         <span class="comment">%Disable GUI</span>
+0036         disableGUI = false;
+0037     <span class="keyword">end</span>
+0038     
+0039     properties (SetAccess = private)
+0040         messageLog = {};
+0041         logFileHandle;
+0042         
+0043         <span class="comment">%For storing the Environment &amp; its version</span>
+0044         env;
+0045         envVersion;
+0046         isOctave; <span class="comment">%Helper bool to check for Octave</span>
+0047         isMatlab; <span class="comment">%Helper bool to check for Matlab</span>
+0048     <span class="keyword">end</span>
+0049     
+0050     properties (Constant)
+0051         matRadRoot = fileparts(mfilename(<span class="string">'fullpath'</span>));
+0052     <span class="keyword">end</span>
+0053     
+0054     methods (Access = private)
+0055         <a name="_sub0" href="#_subfunctions" class="code">function obj = MatRad_Config()</a>
+0056             <span class="comment">%MatRad_Config Constructs an instance of this class.</span>
+0057             <span class="comment">%  The configuration is implemented as a singleton and used globally</span>
+0058             <span class="comment">%  Therefore its constructor is private</span>
+0059             <span class="comment">%  For instantiation, use the static MatRad_Config.instance();</span>
+0060             
+0061             <span class="comment">%Set Version</span>
+0062             obj.getEnvironment();
+0063             
+0064             <span class="comment">%Just to catch people messing with the properties in the file</span>
+0065             <span class="keyword">if</span> ~isempty(obj.writeLog) &amp;&amp; obj.writeLog
+0066                 logFile = [matRadRoot filesep <span class="string">'matRad.log'</span>];
+0067                 obj.logFileHandle = fopen(logFile,<span class="string">'a'</span>);
+0068             <span class="keyword">end</span>
+0069             
+0070             <span class="comment">%Call the reset function for remaining inatialization</span>
+0071             obj.reset();
+0072         <span class="keyword">end</span>
+0073         
+0074         <a name="_sub1" href="#_subfunctions" class="code">function displayToConsole(obj,type,formatSpec,varargin)</a>
+0075             <span class="comment">%displayToConsole lowest-level logging function for matRad.</span>
+0076             <span class="comment">%   Display to console will be called from the public wrapper</span>
+0077             <span class="comment">%   functions dispError, dispWarning, dispInfo, dispDebug</span>
+0078             <span class="comment">%</span>
+0079             <span class="comment">%  input</span>
+0080             <span class="comment">%    type:            type of the log information.</span>
+0081             <span class="comment">%                   Needs to be one of 'error', 'warning', 'info' or 'debug'.</span>
+0082             <span class="comment">%    formatSpec:     string to print using format specifications similar to fprintf</span>
+0083             <span class="comment">%    varargin:       variables according to formatSpec</span>
+0084             
+0085             <span class="keyword">if</span> nargin &lt; 4
+0086                 forwardArgs = {formatSpec};
+0087             <span class="keyword">else</span>
+0088                 forwardArgs = [{formatSpec},varargin(:)'];
+0089             <span class="keyword">end</span>
+0090             
+0091             <span class="keyword">if</span> obj.keepLog
+0092                 obj.messageLog{end+1,1} = upper(type);
+0093                 obj.messageLog{<span class="keyword">end</span>,2} = sprintf(forwardArgs{:});
+0094             <span class="keyword">end</span>
+0095             
+0096             <span class="keyword">switch</span> type
+0097                 <span class="keyword">case</span>{<span class="string">'info'</span>}
+0098                     <span class="keyword">if</span> obj.logLevel &gt;= 3
+0099                         fprintf(forwardArgs{:});
+0100                     <span class="keyword">end</span>
+0101                 <span class="keyword">case</span>{<span class="string">'debug'</span>}
+0102                     <span class="keyword">if</span> obj.logLevel &gt;= 5
+0103                         forwardArgs{1} = [<span class="string">'DEBUG: '</span> forwardArgs{1}];
+0104                         fprintf(forwardArgs{:});
+0105                     <span class="keyword">end</span>
+0106                 <span class="keyword">case</span>{<span class="string">'dep'</span>}
+0107                     <span class="keyword">if</span> obj.logLevel &gt;= 4
+0108                         forwardArgs{1} = [<span class="string">'DEPRECATION WARNING: '</span> forwardArgs{1}];
+0109                         warning(forwardArgs{:});
+0110                     <span class="keyword">end</span>
+0111                 <span class="keyword">case</span>{<span class="string">'warning'</span>}
+0112                     <span class="keyword">if</span> obj.logLevel &gt;= 2
+0113                         warning(forwardArgs{:});
+0114                     <span class="keyword">end</span>
+0115                 <span class="keyword">case</span> {<span class="string">'error'</span>}
+0116                     <span class="keyword">if</span> obj.logLevel &gt;= 1
+0117                         <span class="comment">%We create an error structure to later clean the</span>
+0118                         <span class="comment">%stack trace from the last two files/lines (i.e.,</span>
+0119                         <span class="comment">%this function / file)</span>
+0120                         
+0121                         err.message = sprintf(forwardArgs{:});
+0122                         err.identifier = <span class="string">'matRad:Error'</span>;
+0123                         err.stack = dbstack(2);
+0124                         error(err);
+0125                         
+0126                     <span class="keyword">end</span>
+0127                 <span class="keyword">otherwise</span>
+0128                     error(<span class="string">'Log type %s not defined!'</span>,type);
+0129             <span class="keyword">end</span>
+0130             
+0131             <span class="keyword">if</span> obj.writeLog
+0132                 fprintf(obj.logFileHandle,forwardArgs{:});
+0133             <span class="keyword">end</span>
+0134         <span class="keyword">end</span>
+0135         
+0136     <span class="keyword">end</span>
+0137     
+0138     methods
+0139         <a name="_sub2" href="#_subfunctions" class="code">function reset(obj)</a>
+0140             <span class="comment">%Set all default properties for matRad's computations</span>
+0141             obj.setDefaultProperties();
+0142         <span class="keyword">end</span>
+0143         
+0144         <a name="_sub3" href="#_subfunctions" class="code">function setDefaultProperties(obj)</a>
+0145             <span class="comment">%setDefaultProperties set matRad's default computation</span>
+0146             <span class="comment">%   properties</span>
+0147             <span class="comment">%  input</span>
+0148             
+0149             obj.propStf.defaultLongitudinalSpotSpacing = 3;
+0150             obj.propStf.defaultAddMargin = true; <span class="comment">%expand target for beamlet finding</span>
+0151             
+0152             obj.propDoseCalc.defaultResolution = struct(<span class="string">'x'</span>,3,<span class="string">'y'</span>,3,<span class="string">'z'</span>,3); <span class="comment">%[mm]</span>
+0153             obj.propDoseCalc.defaultLateralCutOff = 0.995; <span class="comment">%[rel.]</span>
+0154             obj.propDoseCalc.defaultGeometricCutOff = 50; <span class="comment">%[mm]</span>
+0155             obj.propDoseCalc.defaultSsdDensityThreshold = 0.05; <span class="comment">%[rel.]</span>
+0156             obj.propDoseCalc.defaultUseGivenEqDensityCube = false; <span class="comment">%Use the given density cube ct.cube and omit conversion from cubeHU.</span>
+0157             obj.propDoseCalc.defaultIgnoreOutsideDensities = true; <span class="comment">%Ignore densities outside of cst contours</span>
+0158             obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false; <span class="comment">%Use a custom primary photon fluence</span>
+0159             
+0160             obj.propOpt.defaultMaxIter = 500;
+0161             
+0162             obj.propMC.ompMC_defaultHistories = 1e6;
+0163             obj.propMC.ompMC_defaultOutputVariance = false;
+0164             obj.propMC.MCsquare_defaultHistories = 1e6;
+0165             obj.propMC.direct_defaultHistories = 2e4;
+0166             
+0167             obj.disableGUI = false;
+0168         <span class="keyword">end</span>
+0169         
+0170         <span class="comment">%%For testing</span>
+0171         <a name="_sub4" href="#_subfunctions" class="code">function setDefaultPropertiesForTesting(obj)</a>
+0172             <span class="comment">%setDefaultPropertiesForTesting sets matRad's default</span>
+0173             <span class="comment">%properties during testing to reduce computational load</span>
+0174             
+0175             obj.logLevel   = 1; <span class="comment">%Omit output except errors</span>
+0176             
+0177             obj.propStf.defaultLongitudinalSpotSpacing = 20;
+0178             obj.propStf.defaultAddMargin = true; <span class="comment">%expand target for beamlet finding</span>
+0179             
+0180             obj.propDoseCalc.defaultResolution = struct(<span class="string">'x'</span>,5,<span class="string">'y'</span>,6,<span class="string">'z'</span>,7); <span class="comment">%[mm]</span>
+0181             obj.propDoseCalc.defaultGeometricCutOff = 20;
+0182             obj.propDoseCalc.defaultLateralCutOff = 0.8;
+0183             obj.propDoseCalc.defaultSsdDensityThreshold = 0.05;
+0184             obj.propDoseCalc.defaultUseGivenEqDensityCube = false; <span class="comment">%Use the given density cube ct.cube and omit conversion from cubeHU.</span>
+0185             obj.propDoseCalc.defaultIgnoreOutsideDensities = true;
+0186             obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false; <span class="comment">%Use a custom primary photon fluence</span>
+0187             
+0188             obj.propOpt.defaultMaxIter = 10;
+0189             
+0190             obj.propMC.ompMC_defaultHistories = 100;
+0191             obj.propMC.ompMC_defaultOutputVariance = true;
+0192             obj.propMC.MCsquare_defaultHistories = 100;
+0193             obj.propMC.direct_defaultHistories = 100;
+0194             
+0195             obj.disableGUI = true;
+0196         <span class="keyword">end</span>
+0197         
+0198         <a name="_sub5" href="#_subfunctions" class="code">function dispDebug(obj,formatSpec,varargin)</a>
+0199             <span class="comment">%dispDebug print debug messages (log level &gt;= 4)</span>
+0200             <span class="comment">%  input</span>
+0201             <span class="comment">%    formatSpec:     string to print using format specifications similar to fprintf</span>
+0202             <span class="comment">%    varargin:       variables according to formatSpec</span>
+0203             
+0204             obj.displayToConsole(<span class="string">'debug'</span>,formatSpec,varargin{:});
+0205         <span class="keyword">end</span>
+0206         
+0207         <a name="_sub6" href="#_subfunctions" class="code">function dispInfo(obj,formatSpec,varargin)</a>
+0208             <span class="comment">%dispInfo print information console output (log level &gt;= 3)</span>
+0209             <span class="comment">%  input</span>
+0210             <span class="comment">%    formatSpec:     string to print using format specifications similar to fprintf</span>
+0211             <span class="comment">%    varargin:       variables according to formatSpec</span>
+0212             obj.displayToConsole(<span class="string">'info'</span>,formatSpec,varargin{:});
+0213         <span class="keyword">end</span>
+0214         
+0215         <a name="_sub7" href="#_subfunctions" class="code">function dispError(obj,formatSpec,varargin)</a>
+0216             <span class="comment">%dispError print errors (forwarded to &quot;error&quot; that will stop the program) (log level &gt;= 1)</span>
+0217             <span class="comment">%  input</span>
+0218             <span class="comment">%    formatSpec:     string to print using format specifications</span>
+0219             <span class="comment">%                   similar to 'error'</span>
+0220             <span class="comment">%    varargin:       variables according to formatSpec</span>
+0221             obj.displayToConsole(<span class="string">'error'</span>,formatSpec,varargin{:});
+0222         <span class="keyword">end</span>
+0223         
+0224         <a name="_sub8" href="#_subfunctions" class="code">function dispWarning(obj,formatSpec,varargin)</a>
+0225             <span class="comment">%dispError print warning (forwarded to 'warning') (log level &gt;= 2)</span>
+0226             <span class="comment">%  input</span>
+0227             <span class="comment">%    formatSpec:     string to print using format specifications</span>
+0228             <span class="comment">%                   similar to 'warning'</span>
+0229             <span class="comment">%    varargin:       variables according to formatSpec</span>
+0230             obj.displayToConsole(<span class="string">'warning'</span>,formatSpec,varargin{:});
+0231         <span class="keyword">end</span>
+0232         
+0233         <a name="_sub9" href="#_subfunctions" class="code">function dispDeprecationWarning(obj,formatSpec,varargin)</a>
+0234             <span class="comment">%dispDeprecationWarning wrapper for deprecation warnings forwarded to displayToConsole</span>
+0235             obj.displayToConsole(<span class="string">'dep'</span>,formatSpec,varargin{:});
+0236         <span class="keyword">end</span>
+0237         
+0238         <a name="_sub10" href="#_subfunctions" class="code">function obj = writeLogToFile(obj,filename)</a>
+0239             <span class="comment">%writeLogToFile writes the log kept in MatRad_Config to file.</span>
+0240             <span class="comment">%  Note that the switch keepLog must be enabled for MatRad_Config to store all logging output.</span>
+0241             
+0242             singleString = <span class="string">'%s: %s\n'</span>;
+0243             fID = fopen(filename,<span class="string">'w'</span>);
+0244             fprintf(fID,repmat(singleString,1,size(obj.messageLog,1)),obj.messageLog{:});
+0245             fclose(fID);
+0246         <span class="keyword">end</span>
+0247         
+0248         <a name="_sub11" href="#_subfunctions" class="code">function set.logLevel(obj,newLogLevel)</a>
+0249             <span class="comment">%%Property set methods for logLevel</span>
+0250             minLevel = 1;
+0251             maxLevel = 5;
+0252             <span class="keyword">if</span> newLogLevel &gt;= minLevel &amp;&amp; newLogLevel &lt;= maxLevel
+0253                 obj.logLevel = newLogLevel;
+0254             <span class="keyword">else</span>
+0255                 obj.dispError(<span class="string">'Invalid log level. Value must be between %d and %d'</span>,minLevel,maxLevel);
+0256             <span class="keyword">end</span>
+0257         <span class="keyword">end</span>
+0258         
+0259         <a name="_sub12" href="#_subfunctions" class="code">function set.writeLog(obj,writeLog)</a>
+0260             <span class="keyword">if</span> writeLog
+0261                 logFile = [obj.matRadRoot filesep <span class="string">'matRad.log'</span>];
+0262                 obj.logFileHandle = fopen(logFile,<span class="string">'a'</span>);
+0263                 obj.writeLog = true;
+0264             <span class="keyword">else</span>
+0265                 fclose(obj.logFileHandle);
+0266                 obj.writeLog = false;
+0267             <span class="keyword">end</span>
+0268         <span class="keyword">end</span>
+0269         
+0270         <a name="_sub13" href="#_subfunctions" class="code">function getEnvironment(obj)</a>
+0271             <span class="comment">% getEnvironment function to get the software environment</span>
+0272             <span class="comment">%   matRad is running on</span>
+0273             
+0274             obj.isOctave = exist(<span class="string">'OCTAVE_VERSION'</span>, <span class="string">'builtin'</span>) ~= 0;
+0275             obj.isMatlab = ~obj.isOctave;
+0276             
+0277             <span class="keyword">if</span> obj.isOctave
+0278                 obj.env = <span class="string">'OCTAVE'</span>;
+0279                 obj.envVersion = OCTAVE_VERSION;
+0280             <span class="keyword">else</span>
+0281                 obj.env = <span class="string">'MATLAB'</span>;
+0282                 vData = ver(obj.env);
+0283                 obj.envVersion = vData.Version;
+0284                 
+0285             <span class="keyword">end</span>
+0286         <span class="keyword">end</span>
+0287     <span class="keyword">end</span>
+0288     
+0289     methods(Static)
+0290         
+0291         <a name="_sub14" href="#_subfunctions" class="code">function obj = instance()</a>
+0292             <span class="comment">%instance creates a singleton instance of MatRad_Config</span>
+0293             <span class="comment">%  In MatRad_Config, the constructor is private to make sure only on global instance exists.</span>
+0294             <span class="comment">%  Call this static functino to get or create an instance of the matRad configuration class</span>
+0295             <span class="keyword">persistent</span> uniqueInstance;
+0296             
+0297             <span class="keyword">if</span> isempty(uniqueInstance)
+0298                 obj = <a href="MatRad_Config.html" class="code" title="">MatRad_Config</a>();
+0299                 uniqueInstance = obj;
+0300             <span class="keyword">else</span>
+0301                 obj = uniqueInstance;
+0302             <span class="keyword">end</span>
+0303         <span class="keyword">end</span>
+0304     <span class="keyword">end</span>
+0305 <span class="keyword">end</span>
+0306</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

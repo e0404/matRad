@@ -1,0 +1,152 @@
+---
+---
+
+@import "jekyll-theme-minimal";
+
+body {
+  padding:50px;
+  font: 14px/1.5 Lato, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color:#777;
+  font-weight:400;
+}
+
+header {
+  top:10px;
+  z-index: 2;
+  background-color: #fff;
+}
+
+footer {
+  z-index: 1;
+}
+
+ul.firstrow gith {
+    line-height: 1;
+    font-size: 14px;
+    color: #999;
+    display: block;
+    text-align: center;
+    padding-top: 7px;
+    height: 40px;
+}
+
+
+gith {
+    font-weight: 300;
+    text-decoration: none;
+}
+
+gith:-webkit-any-link {
+    cursor: pointer;
+}
+
+header ul li.makeGithubButton {
+    width: 100%;
+    padding: 0;
+}
+
+header ul {
+    list-style: none;
+    height: 40px;
+    padding: 0;
+    background: -webkit-linear-gradient(top, #f8f8f8 0%,#dddddd 100%);
+    border-radius: 5px;
+    border: 1px solid #d2d2d2;
+    box-shadow: inset #fff 0 1px 0, inset rgba(0,0,0,0.03) 0 -1px 0;
+    width: 270px;
+}
+
+ul.viewOnGitHub {
+  list-style:none;
+  height:40px;
+  background: #f4f4f4;
+  border-radius:5px;
+  border:1px solid #e0e0e0;
+  width:270px;
+  text-align: center;
+}
+
+.viewOnGitHub li {
+  float:center;
+  border-right:none;
+  height:40px;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
+
+.viewOnGitHub a {
+  line-height:1;
+  font-size:11px;
+  color:#676767;
+  display:block;
+  text-align:center;
+  padding-top:6px;
+  margin-left: auto;
+  margin-right: auto;
+  height:34px;
+  text-align: center;
+}
+
+.viewOnGitHub a strong {
+  font-size:14px;
+  display:block;
+  color:#222;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.viewOnGitHub a:hover, .downloads a:focus {
+  color:#675C5C;
+  font-weight:bold;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.viewOnGitHub ul a:active {
+  background-color:#f0f0f0;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+footer {
+  bottom:0px;
+}
+
+@media print, screen and (max-height: 480px){
+  body {
+    padding:15px;
+  }
+  
+  .viewOnGitHub {
+    text-align: center;
+    width:99%;
+	margin-left: auto;
+	margin-right: auto;
+	}
+	
+  .viewOnGitHub li, .viewOnGitHub li {
+    width:33%;	
+	text-align: center;
+	margin-left: auto;
+	margin-right: auto;
+	}
+	
+  .downloads {
+    width:99%;
+  }
+
+  .downloads li, .downloads li + li + li {
+    width:33%;
+  }
+}
+
+p.solid {
+border: none;
+border-bottom: 1px solid #e8e8e8;
+}

@@ -1,0 +1,270 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_MinMaxDose</title>
+  <meta name="keywords" content="matRad_MinMaxDose">
+  <meta name="description" content="">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../../menu.html matRad --><!-- ../menu.html optimization --><!-- menu.html +DoseConstraints -->
+<h1>matRad_MinMaxDose
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box"></div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">This is a script file. </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"></pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_MinMaxDose.html" class="code" title="">matRad_MinMaxDose</a>	</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_MinMaxDose.html" class="code" title="">matRad_MinMaxDose</a>	</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>Subfunctions <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<ul style="list-style-type:disc">
+<li><a href="#_sub1" class="code">function obj = matRad_MinMaxDose(minDose,maxDose,method)</a></li><li><a href="#_sub2" class="code">function s = struct(obj)</a></li><li><a href="#_sub3" class="code">function cu = upperBounds(obj,n)</a></li><li><a href="#_sub4" class="code">function cl = lowerBounds(obj,n)</a></li><li><a href="#_sub5" class="code">function jStruct = getDoseConstraintJacobianStructure(obj,n)</a></li><li><a href="#_sub6" class="code">function cDose = computeDoseConstraintFunction(obj,dose)</a></li><li><a href="#_sub7" class="code">function cDoseJacob  = computeDoseConstraintJacobian(obj,dose)</a></li><li><a href="#_sub8" class="code">function cDose = computeDoseConstraintFunctionLogSumExp(obj,dose)</a></li><li><a href="#_sub9" class="code">function cDoseJacob  = computeDoseConstraintJacobianLogSumExp(obj,dose)</a></li><li><a href="#_sub10" class="code">function cDose = computeDoseConstraintFunctionVoxelwise(obj,dose)</a></li><li><a href="#_sub11" class="code">function cDoseJacob  = computeDoseConstraintJacobianVoxelwise(obj,dose)</a></li></ul>
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre>0001 classdef <a href="matRad_MinMaxDose.html" class="code" title="">matRad_MinMaxDose</a> &lt; DoseConstraints.matRad_DoseConstraint
+0002     <span class="comment">% matRad_MinMaxDose Implements a MinMaxDose constraint</span>
+0003     <span class="comment">%   See matRad_DoseConstraint for interface description</span>
+0004     <span class="comment">%</span>
+0005     <span class="comment">% use log sum exp approximation, see appendix A in</span>
+0006     <span class="comment">% http://scitation.aip.org/content/aapm/journal/medphys/41/8/10.1118/1.4883837</span>
+0007     <span class="comment">%</span>
+0008     <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0009     <span class="comment">%</span>
+0010     <span class="comment">% Copyright 2020 the matRad development team.</span>
+0011     <span class="comment">%</span>
+0012     <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0013     <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0014     <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0015     <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0016     <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0017     <span class="comment">% LICENSE file.</span>
+0018     <span class="comment">%</span>
+0019     <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0020     
+0021     properties (Constant)
+0022         name = <span class="string">'Min/Max dose constraint'</span>;
+0023         parameterNames = {<span class="string">'d^{min}'</span>, <span class="string">'d^{max}'</span>,<span class="string">'method'</span>};
+0024         parameterTypes = {<span class="string">'dose'</span>,<span class="string">'dose'</span>,{<span class="string">'approx'</span>,<span class="string">'voxelwise'</span>}};
+0025     <span class="keyword">end</span>
+0026     
+0027     properties
+0028         parameters = {0,30,1};
+0029         epsilon = 1e-3; <span class="comment">%slack parameter for the logistic approximation</span>
+0030     <span class="keyword">end</span>
+0031     
+0032     methods
+0033         <a name="_sub0" href="#_subfunctions" class="code">function obj = matRad_MinMaxDose(minDose,maxDose,method)</a>
+0034             
+0035             <span class="comment">%If we have a struct in first argument</span>
+0036             <span class="keyword">if</span> nargin == 1 &amp;&amp; isstruct(minDose)
+0037                 inputStruct = minDose;
+0038                 initFromStruct = true;
+0039             <span class="keyword">else</span>
+0040                 initFromStruct = false;
+0041                 inputStruct = [];
+0042             <span class="keyword">end</span>
+0043             
+0044             <span class="comment">%Call Superclass Constructor (for struct initialization)</span>
+0045             obj@DoseConstraints.matRad_DoseConstraint(inputStruct);
+0046             
+0047             <span class="comment">%now handle initialization from other parameters</span>
+0048             <span class="keyword">if</span> ~initFromStruct
+0049                 
+0050                 <span class="keyword">if</span> nargin &lt; 3 || ~ischar(method)
+0051                     method = <span class="string">'approx'</span>;
+0052                 <span class="keyword">end</span>
+0053                 
+0054                 methodIx = find(strcmp(method,obj.parameterTypes{3}));
+0055                 
+0056                 <span class="keyword">if</span> isempty(methodIx) || numel(methodIx) &gt; 1
+0057                     methodIx = 1;
+0058                     msg = [<span class="string">'Dose Constraint method can only be '</span>, strjoin(obj.parameterTypes{3},<span class="string">' or '</span>), <span class="string">'! Using method '''</span>, obj.parameterTypes{3}{methodIx}, <span class="string">'''.'</span>];
+0059                     warning(msg);
+0060                 <span class="keyword">end</span>
+0061                 
+0062                 obj.parameters{3} = methodIx;
+0063                 
+0064                 <span class="keyword">if</span> nargin &gt;= 2 &amp;&amp; isscalar(maxDose)
+0065                     obj.parameters{2} = maxDose;
+0066                 <span class="keyword">end</span>
+0067                 
+0068                 <span class="keyword">if</span> nargin &gt;= 1 &amp;&amp; isscalar(minDose)
+0069                     obj.parameters{1} = minDose;
+0070                 <span class="keyword">end</span>
+0071             <span class="keyword">end</span>
+0072         <span class="keyword">end</span>
+0073         
+0074         <span class="comment">%Overloads the struct function to add constraint specific</span>
+0075         <span class="comment">%parameters</span>
+0076         <a name="_sub1" href="#_subfunctions" class="code">function s = struct(obj)</a>
+0077             s = <a href="#_sub2" class="code" title="subfunction s = struct(obj)">struct</a>@DoseConstraints.matRad_DoseConstraint(obj);
+0078             s.epsilon = obj.epsilon;
+0079         <span class="keyword">end</span>
+0080         
+0081         <a name="_sub2" href="#_subfunctions" class="code">function cu = upperBounds(obj,n)</a>
+0082             <span class="keyword">switch</span> obj.parameters{3}
+0083                 <span class="keyword">case</span> 1 <span class="comment">%logsumexp approx</span>
+0084                     <span class="comment">%Validate parameters</span>
+0085                     <span class="keyword">if</span> obj.parameters{1} &lt;= 0 &amp;&amp; isinf(obj.parameters{2}) <span class="comment">%Constraint doesn't make sense (min = 0 &amp; max = Inf)</span>
+0086                         cu = [];
+0087                     <span class="keyword">elseif</span> obj.parameters{2} == Inf <span class="comment">%Only min dose</span>
+0088                         cu = Inf;
+0089                     <span class="keyword">elseif</span> obj.parameters{1} &lt;= 0 <span class="comment">%Only max dose</span>
+0090                         cu = obj.parameters{2};
+0091                     <span class="keyword">else</span> <span class="comment">%both are set sensible</span>
+0092                         cu = [Inf; obj.parameters{2}];
+0093                     <span class="keyword">end</span>
+0094                 <span class="keyword">case</span> 2 <span class="comment">%voxelwise</span>
+0095                     cu = obj.parameters{2}*ones(n,1);
+0096                 <span class="keyword">otherwise</span>
+0097                     error([<span class="string">'Min/max dose constraint evaluation method not known!'</span>]);
+0098             <span class="keyword">end</span>
+0099             <span class="comment">%cu = [Inf; obj.parameters{2}];</span>
+0100         <span class="keyword">end</span>
+0101         <a name="_sub3" href="#_subfunctions" class="code">function cl = lowerBounds(obj,n)</a>
+0102             <span class="keyword">switch</span> obj.parameters{3}
+0103                 <span class="keyword">case</span> 1 <span class="comment">%logsumexp approx</span>
+0104                     <span class="keyword">if</span> obj.parameters{1} &lt;= 0 &amp;&amp; isinf(obj.parameters{2})
+0105                         cl = [];
+0106                     <span class="keyword">elseif</span> obj.parameters{2} == Inf
+0107                         cl = obj.parameters{1};
+0108                     <span class="keyword">elseif</span> obj.parameters{1} &lt;= 0
+0109                         cl = 0;
+0110                     <span class="keyword">else</span>
+0111                         cl = [obj.parameters{1}; 0];
+0112                     <span class="keyword">end</span>
+0113                 <span class="keyword">case</span> 2
+0114                     cl = obj.parameters{1}*ones(n,1);
+0115                 <span class="keyword">otherwise</span>
+0116                     matRad_cfg = MatRad_Config.instance();
+0117                     matRad_cfg.dispError(<span class="string">'Min/max dose constraint evaluation method not known!'</span>);
+0118             <span class="keyword">end</span>
+0119         <span class="keyword">end</span>
+0120         
+0121         <a name="_sub4" href="#_subfunctions" class="code">function jStruct = getDoseConstraintJacobianStructure(obj,n)</a>
+0122             <span class="keyword">switch</span> obj.parameters{3}
+0123                 <span class="keyword">case</span> 1 <span class="comment">%logsumexp approx</span>
+0124                     <span class="comment">%Validate parameters</span>
+0125                     <span class="keyword">if</span> obj.parameters{1} &lt;= 0 &amp;&amp; isinf(obj.parameters{2}) <span class="comment">%Constraint doesn't make sense (min = 0 &amp; max = Inf)</span>
+0126                         jStruct = ones(n,0);
+0127                     <span class="keyword">elseif</span> obj.parameters{1} &gt; 0 &amp;&amp; isfinite(obj.parameters{2}) <span class="comment">%both are set sensible</span>
+0128                         jStruct = ones(n,2);
+0129                     <span class="keyword">else</span> <span class="comment">%Only min or max dose</span>
+0130                         jStruct = ones(n,1);
+0131                     <span class="keyword">end</span>
+0132                     <span class="comment">%jStruct = ones(n,2);</span>
+0133                 <span class="keyword">case</span> 2
+0134                     jStruct = speye(n);
+0135                 <span class="keyword">otherwise</span>
+0136                     matRad_cfg = MatRad_Config.instance();
+0137                     matRad_cfg.dispError(<span class="string">'Min/max dose constraint evaluation method not known!'</span>);
+0138             <span class="keyword">end</span>
+0139             
+0140         <span class="keyword">end</span>
+0141         
+0142         <span class="comment">%% Calculates the Constraint Function value</span>
+0143         <a name="_sub5" href="#_subfunctions" class="code">function cDose = computeDoseConstraintFunction(obj,dose)</a>
+0144             <span class="comment">%cDose(2) = dose_max + obj.epsilon * log( sum(exp((dose - dose_max)/obj.epsilon)));</span>
+0145             <span class="comment">%cDose(1) = dose_min - obj.epsilon * log( sum(exp((dose_min - dose)/obj.epsilon)));</span>
+0146             <span class="keyword">switch</span> obj.parameters{3}
+0147                 <span class="keyword">case</span> 1 <span class="comment">%logsumexp approx</span>
+0148                     cDose = obj.computeDoseConstraintFunctionLogSumExp(dose);
+0149                 <span class="keyword">case</span> 2
+0150                     cDose = obj.computeDoseConstraintFunctionVoxelwise(dose);
+0151                 <span class="keyword">otherwise</span>
+0152                     matRad_cfg = MatRad_Config.instance();
+0153                     matRad_cfg.dispError(<span class="string">'Min/max dose constraint evaluation method not known!'</span>);
+0154             <span class="keyword">end</span>
+0155         <span class="keyword">end</span>
+0156         
+0157         <span class="comment">%% Calculates the Constraint jacobian</span>
+0158         <a name="_sub6" href="#_subfunctions" class="code">function cDoseJacob  = computeDoseConstraintJacobian(obj,dose)</a>
+0159             <span class="keyword">switch</span> obj.parameters{3}
+0160                 <span class="keyword">case</span> 1 <span class="comment">%logsumexp approx</span>
+0161                     cDoseJacob = obj.computeDoseConstraintJacobianLogSumExp(dose);
+0162                 <span class="keyword">case</span> 2
+0163                     cDoseJacob = obj.computeDoseConstraintJacobianVoxelwise(dose);
+0164                 <span class="keyword">otherwise</span>
+0165                     matRad_cfg = MatRad_Config.instance();
+0166                     matRad_cfg.dispError(<span class="string">'Min/max dose constraint evaluation method not known!'</span>);
+0167             <span class="keyword">end</span>
+0168         <span class="keyword">end</span>
+0169     <span class="keyword">end</span>
+0170     
+0171     methods (Access = private)
+0172         <span class="comment">% LogSumExp Approximation</span>
+0173         <a name="_sub7" href="#_subfunctions" class="code">function cDose = computeDoseConstraintFunctionLogSumExp(obj,dose)</a>
+0174             dose_min = min(dose);
+0175             dose_max = max(dose);
+0176             
+0177             <span class="comment">%Validate parameters</span>
+0178             <span class="keyword">if</span> obj.parameters{1} &lt;= 0 &amp;&amp; isinf(obj.parameters{2}) <span class="comment">%Constraint doesn't make sense (min = 0 &amp; max = Inf)</span>
+0179                 cDose = [];
+0180             <span class="keyword">elseif</span> obj.parameters{2} == Inf <span class="comment">%Only min dose</span>
+0181                 cDose = dose_min - obj.epsilon * log( sum(exp((dose_min - dose)/obj.epsilon)));
+0182             <span class="keyword">elseif</span> obj.parameters{1} &lt;= 0 <span class="comment">%Only max dose</span>
+0183                 cDose = dose_max + obj.epsilon * log( sum(exp((dose - dose_max)/obj.epsilon)));
+0184             <span class="keyword">else</span> <span class="comment">%both are set sensible</span>
+0185                 cDose(2,1) = dose_max + obj.epsilon * log( sum(exp((dose - dose_max)/obj.epsilon)));
+0186                 cDose(1,1) = dose_min - obj.epsilon * log( sum(exp((dose_min - dose)/obj.epsilon)));
+0187             <span class="keyword">end</span>
+0188             
+0189         <span class="keyword">end</span>
+0190         <a name="_sub8" href="#_subfunctions" class="code">function cDoseJacob  = computeDoseConstraintJacobianLogSumExp(obj,dose)</a>
+0191             <span class="comment">%Validate parameters</span>
+0192             <span class="keyword">if</span> obj.parameters{1} &lt;= 0 &amp;&amp; isinf(obj.parameters{2}) <span class="comment">%Constraint doesn't make sense (min = 0 &amp; max = Inf)</span>
+0193                 cDoseJacob = [];
+0194             <span class="keyword">elseif</span> obj.parameters{2} == Inf <span class="comment">%Only min dose</span>
+0195                 cDoseJacob(:,1) = exp( (min(dose)-dose)/obj.epsilon );
+0196                 cDoseJacob(:,1) = cDoseJacob(:,1)/sum(cDoseJacob(:,1));
+0197             <span class="keyword">elseif</span> obj.parameters{1} &lt;= 0 <span class="comment">%Only max dose</span>
+0198                 cDoseJacob(:,1) = exp( (dose-max(dose))/obj.epsilon );
+0199                 cDoseJacob(:,1) = cDoseJacob(:,1)/sum(cDoseJacob(:,1));
+0200             <span class="keyword">else</span> <span class="comment">%both are set sensible</span>
+0201                 cDoseJacob(:,1) = exp( (min(dose)-dose)/obj.epsilon );
+0202                 cDoseJacob(:,1) = cDoseJacob(:,1)/sum(cDoseJacob(:,1));
+0203                 
+0204                 cDoseJacob(:,2) = exp( (dose-max(dose))/obj.epsilon );
+0205                 cDoseJacob(:,2) = cDoseJacob(:,2)/sum(cDoseJacob(:,2));
+0206             <span class="keyword">end</span>
+0207             
+0208             
+0209         <span class="keyword">end</span>
+0210         
+0211         <span class="comment">%Exact voxel-wise</span>
+0212         <a name="_sub9" href="#_subfunctions" class="code">function cDose = computeDoseConstraintFunctionVoxelwise(obj,dose)</a>
+0213             cDose = dose;
+0214         <span class="keyword">end</span>
+0215         <a name="_sub10" href="#_subfunctions" class="code">function cDoseJacob  = computeDoseConstraintJacobianVoxelwise(obj,dose)</a>
+0216             cDoseJacob = speye(numel(dose),numel(dose));
+0217         <span class="keyword">end</span>
+0218     <span class="keyword">end</span>
+0219     
+0220 <span class="keyword">end</span>
+0221 
+0222</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

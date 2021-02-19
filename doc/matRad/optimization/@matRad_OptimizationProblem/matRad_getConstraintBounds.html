@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_getConstraintBounds</title>
+  <meta name="keywords" content="matRad_getConstraintBounds">
+  <meta name="description" content="matRad IPOPT get constraint bounds wrapper function">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../../menu.html matRad --><!-- ../menu.html optimization --><!-- menu.html @matRad_OptimizationProblem -->
+<h1>matRad_getConstraintBounds
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">matRad IPOPT get constraint bounds wrapper function</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">function [cl,cu] = matRad_getConstraintBounds(optiProb,cst) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad IPOPT get constraint bounds wrapper function
+ 
+ call
+   [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
+
+ input
+   cst:            matRad cst struct
+
+ output
+   cl: lower bounds on constraints
+   cu: lower bounds on constraints
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2016 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../../matRad/optimization/@matRad_OptimizationProblemDAO/matRad_getConstraintBounds.html" class="code" title="function [cl,cu] = matRad_getConstraintBounds(optiProb,cst)">matRad_getConstraintBounds</a>	matRad IPOPT get constraint bounds function for direct aperture optimization</li><li><a href="matRad_OptimizationProblem.html" class="code" title="">matRad_OptimizationProblem</a>	</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [cl,cu] = matRad_getConstraintBounds(optiProb,cst)</a>
+0002 <span class="comment">% matRad IPOPT get constraint bounds wrapper function</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   [cl,cu] = matRad_getConstraintBounds(optiProb,cst)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   cst:            matRad cst struct</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% output</span>
+0011 <span class="comment">%   cl: lower bounds on constraints</span>
+0012 <span class="comment">%   cu: lower bounds on constraints</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% References</span>
+0015 <span class="comment">%   -</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% Copyright 2016 the matRad development team.</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0022 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0023 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0024 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0025 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0026 <span class="comment">% LICENSE file.</span>
+0027 <span class="comment">%</span>
+0028 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0029 
+0030 
+0031 BPtype = class(optiProb.BP);
+0032 isEffectBP = strcmp(BPtype,<span class="string">'matRad_EffectProjection'</span>);
+0033 
+0034 <span class="comment">% Initialize bounds</span>
+0035 cl = [];
+0036 cu = [];
+0037 
+0038 <span class="comment">% compute objective function for every VOI.</span>
+0039 <span class="keyword">for</span>  i = 1:size(cst,1)
+0040 
+0041     <span class="comment">% Only take OAR or target VOI.</span>
+0042     <span class="keyword">if</span> ~isempty(cst{i,4}) &amp;&amp; ( isequal(cst{i,3},<span class="string">'OAR'</span>) || isequal(cst{i,3},<span class="string">'TARGET'</span>) )
+0043 
+0044         <span class="comment">% loop over the number of constraints for the current VOI</span>
+0045         <span class="keyword">for</span> j = 1:numel(cst{i,6})
+0046             
+0047             optiFunc = cst{i,6}{j};
+0048             
+0049             <span class="comment">% only perform computations for constraints</span>
+0050             <span class="comment">%if ~isempty(strfind(cst{i,6}{j}.type,'constraint'))</span>
+0051             <span class="keyword">if</span> isa(optiFunc,<span class="string">'DoseConstraints.matRad_DoseConstraint'</span>)
+0052                 
+0053                 
+0054                 <span class="keyword">if</span> isEffectBP
+0055                     doses = optiFunc.getDoseParameters();
+0056                 
+0057                     effect = cst{i,5}.alphaX*doses + cst{i,5}.betaX*doses.^2;
+0058                     
+0059                     optiFunc = optiFunc.setDoseParameters(effect);
+0060                 <span class="keyword">end</span>
+0061 
+0062                     
+0063                  cl = [cl;optiFunc.lowerBounds(numel(cst{i,4}{1}))];
+0064                  cu = [cu;optiFunc.upperBounds(numel(cst{i,4}{1}))];
+0065                     
+0066                 <span class="comment">%end</span>
+0067             <span class="keyword">end</span>
+0068 
+0069         <span class="keyword">end</span> <span class="comment">% over all objectives of structure</span>
+0070 
+0071     <span class="keyword">end</span> <span class="comment">% if structure not empty and target or oar</span>
+0072 
+0073 <span class="keyword">end</span> <span class="comment">% over all structures</span>
+0074    
+0075</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_interpDicomDoseCube</title>
+  <meta name="keywords" content="matRad_interpDicomDoseCube">
+  <meta name="description" content="matRad function to interpolate a given Dicom Dose Cube dicom RTDOSE data">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html dicom -->
+<h1>matRad_interpDicomDoseCube
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad function to interpolate a given Dicom Dose Cube dicom RTDOSE data</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function [ dose ] = matRad_interpDicomDoseCube( ct, currDose ) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to interpolate a given Dicom Dose Cube dicom RTDOSE data
+
+ call
+   [ dose ] = matRad_interpDicomDoseCube( ct, currDose )
+
+ input
+   ct:             ct imported by the matRad_importDicomCt function
+   currDose:       one (of several) dose cubes which should be interpolated
+
+ output
+   dose:           struct with different actual current dose cube and several
+                   meta data
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team.
+
+ This file is part of the matRad project. It is subject to the license
+ terms in the LICENSE file found in the top-level directory of this
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+ of the matRad project, including this file, may be copied, modified,
+ propagated, or distributed except according to the terms contained in the
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_importDicomRTDose.html" class="code" title="function [resultGUI] = matRad_importDicomRTDose(ct, rtDoseFiles, pln)">matRad_importDicomRTDose</a>	matRad function to import dicom RTDOSE data</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [ dose ] = matRad_interpDicomDoseCube( ct, currDose )</a>
+0002 <span class="comment">% matRad function to interpolate a given Dicom Dose Cube dicom RTDOSE data</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   [ dose ] = matRad_interpDicomDoseCube( ct, currDose )</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   ct:             ct imported by the matRad_importDicomCt function</span>
+0009 <span class="comment">%   currDose:       one (of several) dose cubes which should be interpolated</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% output</span>
+0012 <span class="comment">%   dose:           struct with different actual current dose cube and several</span>
+0013 <span class="comment">%                   meta data</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% References</span>
+0016 <span class="comment">%   -</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0023 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0024 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0025 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0026 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0027 <span class="comment">% LICENSE file.</span>
+0028 <span class="comment">%</span>
+0029 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0030 
+0031 <span class="comment">% read information out of the RT file</span>
+0032 dosefile = currDose{1};
+0033 <span class="keyword">if</span> verLessThan(<span class="string">'matlab'</span>,<span class="string">'9'</span>)
+0034     doseInfo = dicominfo(dosefile);
+0035 <span class="keyword">else</span>
+0036     doseInfo = dicominfo(dosefile,<span class="string">'UseDictionaryVR'</span>,true);
+0037 <span class="keyword">end</span>
+0038 
+0039 <span class="comment">% read the dosefile itself</span>
+0040 dosedata = dicomread(dosefile);
+0041 dose.cube = double(dosedata);
+0042 <span class="comment">% dose.cube = single(dosedata);</span>
+0043 
+0044 <span class="comment">% give it an internal name</span>
+0045 dose.internalName = currDose{12};
+0046 
+0047 <span class="comment">% read out the resolution</span>
+0048 dose.resolution.x = doseInfo.PixelSpacing(1);
+0049 dose.resolution.y = doseInfo.PixelSpacing(2);
+0050 dose.resolution.z = doseInfo.SliceThickness;
+0051 
+0052 <span class="comment">% target resolution is ct.resolution</span>
+0053 target_resolution = ct.resolution;
+0054 
+0055 <span class="comment">% convert dosedata to 3-D cube</span>
+0056 dose.cube = squeeze(dose.cube(:,:,1,:));
+0057 
+0058 <span class="comment">% ct resolution is target resolution, now convert to new cube;</span>
+0059 
+0060 <span class="comment">% generating grid vectors</span>
+0061 x = doseInfo.ImagePositionPatient(1) + doseInfo.ImageOrientationPatient(1) * <span class="keyword">...</span>
+0062                                        doseInfo.PixelSpacing(1) * double([0:doseInfo.Columns - 1]);
+0063 y = doseInfo.ImagePositionPatient(2) + doseInfo.ImageOrientationPatient(5) * <span class="keyword">...</span>
+0064                                        doseInfo.PixelSpacing(2) * double([0:doseInfo.Rows - 1]);
+0065 z = [doseInfo.ImagePositionPatient(3) + doseInfo.GridFrameOffsetVector];
+0066 
+0067 <span class="comment">% set up grid matrices - implicit dimension permuation (X Y Z-&gt; Y X Z)</span>
+0068 <span class="comment">% Matlab represents internally in the first matrix dimension the</span>
+0069 <span class="comment">% ordinate axis and in the second matrix dimension the abscissas axis</span>
+0070 [ X,  Y,  Z] = meshgrid(x,y,z);
+0071 [Xq, Yq, Zq] = meshgrid(ct.x,ct.y,ct.z);
+0072 
+0073 <span class="comment">% get GridScalingFactor</span>
+0074 gridScale = double(doseInfo.DoseGridScaling);
+0075 <span class="comment">% rescale dose.cube</span>
+0076 dose.cube = gridScale * dose.cube;
+0077 
+0078 <span class="comment">% interpolation to ct grid - cube is now stored in Y X Z</span>
+0079 dose.cube = interp3(X,Y,Z,dose.cube,Xq,Yq,Zq,<span class="string">'linear'</span>,0);
+0080 
+0081 <span class="comment">% write new parameters</span>
+0082 dose.resolution = ct.resolution;
+0083 dose.x = ct.x;
+0084 dose.y = ct.y;
+0085 dose.z = ct.z;
+0086 
+0087 <span class="comment">% write Dicom-Tags</span>
+0088 dose.dicomInfo.PixelSpacing            = [target_resolution.x; <span class="keyword">...</span>
+0089                                                 target_resolution.y];
+0090 dose.dicomInfo.ImagePositionPatient    = [min(dose.x); min(dose.y); min(dose.z)];
+0091 dose.dicomInfo.SliceThickness          = target_resolution.z;
+0092 dose.dicomInfo.ImageOrientationPatient = doseInfo.ImageOrientationPatient;
+0093 dose.dicomInfo.DoseType                = doseInfo.DoseType;
+0094 dose.dicomInfo.DoseSummationType       = doseInfo.DoseSummationType;
+0095 <span class="comment">%dose.dicomInfo.InstanceNumber          = doseInfo.InstanceNumber; %Not</span>
+0096 <span class="comment">%always given</span>
+0097 dose.dicomInfo.SOPClassUID             = doseInfo.SOPClassUID;
+0098 dose.dicomInfo.SOPInstanceUID          = doseInfo.SOPInstanceUID;
+0099 dose.dicomInfo.ReferencedRTPlanSequence = doseInfo.ReferencedRTPlanSequence;
+0100 
+0101 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

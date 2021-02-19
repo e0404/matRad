@@ -1,0 +1,19 @@
+/* Created by mdot for Matlab */
+digraph m2html {
+  matRad_DicomExporter -> matRad_DicomExporter;
+  matRad_DicomExporter -> matRad_exportDicom;
+  matRad_DicomExporter -> matRad_exportDicomCt;
+  matRad_DicomExporter -> matRad_exportDicomRTDoses;
+  matRad_DicomExporter -> matRad_exportDicomRTPlan;
+  matRad_DicomExporter -> matRad_exportDicomRTStruct;
+  matRad_exportDicom -> matRad_exportDicomCt;
+  matRad_exportDicom -> matRad_exportDicomRTDoses;
+  matRad_exportDicom -> matRad_exportDicomRTStruct;
+
+  matRad_DicomExporter [URL="matRad_DicomExporter.html"];
+  matRad_exportDicom [URL="matRad_exportDicom.html"];
+  matRad_exportDicomCt [URL="matRad_exportDicomCt.html"];
+  matRad_exportDicomRTDoses [URL="matRad_exportDicomRTDoses.html"];
+  matRad_exportDicomRTPlan [URL="matRad_exportDicomRTPlan.html"];
+  matRad_exportDicomRTStruct [URL="matRad_exportDicomRTStruct.html"];
+}

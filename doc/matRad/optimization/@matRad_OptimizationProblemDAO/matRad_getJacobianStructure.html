@@ -1,0 +1,153 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_getJacobianStructure</title>
+  <meta name="keywords" content="matRad_getJacobianStructure">
+  <meta name="description" content="matRad IPOPT callback: get jacobian structure for direct aperture optimization">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../../menu.html matRad --><!-- ../menu.html optimization --><!-- menu.html @matRad_OptimizationProblemDAO -->
+<h1>matRad_getJacobianStructure
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">matRad IPOPT callback: get jacobian structure for direct aperture optimization</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">function jacobStruct = matRad_getJacobianStructure(optiProb,apertureInfoVec,dij,cst) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad IPOPT callback: get jacobian structure for direct aperture optimization
+ 
+ call
+   jacobStruct = matRad_daoGetJacobStruct(optiProb,apertureInfoVec,dij,cst)
+
+ input
+   optiProb:           option struct defining the type of optimization
+   apertureInfoVect:   aperture weights and shapes parameterized as vector
+   dij:                dose influence matrix
+   cst:                matRad cst struct
+
+ output
+   jacobStruct: jacobian of constraint function
+
+ References
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_getJacobianStructure.html" class="code" title="function jacobStruct = matRad_getJacobianStructure(optiProb,apertureInfoVec,dij,cst)">matRad_getJacobianStructure</a>	matRad IPOPT callback: get jacobian structure for direct aperture optimization</li><li><a href="../../../matRad/optimization/@matRad_OptimizationProblem/matRad_OptimizationProblem.html" class="code" title="">matRad_OptimizationProblem</a>	</li><li><a href="../../../matRad/optimization/@matRad_OptimizationProblem/matRad_getJacobianStructure.html" class="code" title="function jacobStruct = matRad_getJacobianStructure(optiProb,w,dij,cst)">matRad_getJacobianStructure</a>	matRad IPOPT callback: jacobian structure function for inverse planning</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_getJacobianStructure.html" class="code" title="function jacobStruct = matRad_getJacobianStructure(optiProb,apertureInfoVec,dij,cst)">matRad_getJacobianStructure</a>	matRad IPOPT callback: get jacobian structure for direct aperture optimization</li><li><a href="../../../matRad/optimization/@matRad_OptimizationProblem/matRad_OptimizationProblem.html" class="code" title="">matRad_OptimizationProblem</a>	</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function jacobStruct = matRad_getJacobianStructure(optiProb,apertureInfoVec,dij,cst)</a>
+0002 <span class="comment">% matRad IPOPT callback: get jacobian structure for direct aperture optimization</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   jacobStruct = matRad_daoGetJacobStruct(optiProb,apertureInfoVec,dij,cst)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   optiProb:           option struct defining the type of optimization</span>
+0009 <span class="comment">%   apertureInfoVect:   aperture weights and shapes parameterized as vector</span>
+0010 <span class="comment">%   dij:                dose influence matrix</span>
+0011 <span class="comment">%   cst:                matRad cst struct</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">% output</span>
+0014 <span class="comment">%   jacobStruct: jacobian of constraint function</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% References</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0019 
+0020 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0025 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0026 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0027 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0028 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0029 <span class="comment">% LICENSE file.</span>
+0030 <span class="comment">%</span>
+0031 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0032 
+0033 apertureInfo = optiProb.apertureInfo;
+0034 
+0035 <span class="comment">% jacobian structure of the dao constraints</span>
+0036 <span class="comment">% row indices</span>
+0037 i = repmat(1:apertureInfo.totalNumOfLeafPairs,1,2);
+0038 <span class="comment">% column indices</span>
+0039 j = [apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs <span class="keyword">...</span>
+0040      apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs+1:apertureInfo.totalNumOfShapes+2*apertureInfo.totalNumOfLeafPairs];
+0041 
+0042 <span class="comment">% -1 for left leaves, 1 for right leaves</span>
+0043 s = ones(1,2*apertureInfo.totalNumOfLeafPairs);
+0044 
+0045 jacobStruct_dao = sparse(i,j,s, <span class="keyword">...</span>
+0046     apertureInfo.totalNumOfLeafPairs, <span class="keyword">...</span>
+0047     apertureInfo.totalNumOfShapes+2*apertureInfo.totalNumOfLeafPairs, <span class="keyword">...</span>
+0048     2*apertureInfo.totalNumOfLeafPairs);
+0049 
+0050 jacobStruct_dos_bixel = <a href="matRad_getJacobianStructure.html" class="code" title="function jacobStruct = matRad_getJacobianStructure(optiProb,apertureInfoVec,dij,cst)">matRad_getJacobianStructure</a>@<a href="../../../matRad/optimization/@matRad_OptimizationProblem/matRad_OptimizationProblem.html" class="code" title="">matRad_OptimizationProblem</a>(optiProb,apertureInfo.bixelWeights,dij,cst);
+0051 <span class="comment">% --&gt; gives me a matrix with number of rows = num of constraints and tells</span>
+0052 <span class="comment">% me in th columns if a beamlet has an influence on this constraint</span>
+0053 
+0054 <span class="comment">% for apertures I need to check if the very beam orientation of the aperture has a bixel</span>
+0055 <span class="comment">% that potentially influences the constraint</span>
+0056 
+0057 <span class="comment">% for leaves I need to check if that particular leaf row has bixels that</span>
+0058 <span class="comment">% potentially influence the objective which works via apertureInfo.beam(i).bixelIndMap</span>
+0059 
+0060 <span class="comment">% all stuff can be done per beam direction and then I use repmat to build</span>
+0061 <span class="comment">% up the big matrix</span>
+0062 
+0063 <span class="comment">% allocate</span>
+0064 jacobStruct_dos = sparse(size(jacobStruct_dos_bixel,1),size(jacobStruct_dao,2));
+0065 
+0066 <span class="keyword">if</span> ~isempty(jacobStruct_dos)
+0067     
+0068     <span class="comment">% first aperture weights</span>
+0069     <span class="keyword">for</span> i = 1:apertureInfo.totalNumOfShapes
+0070         currBeam             = apertureInfo.mappingMx(i,1);
+0071         currBixelIxInBeam    = dij.beamNum == currBeam;
+0072         jacobStruct_dos(:,i) = spones(sum(jacobStruct_dos_bixel(:,currBixelIxInBeam),2));
+0073     <span class="keyword">end</span>
+0074 
+0075     <span class="comment">% second leaves</span>
+0076     counter = 0;
+0077     <span class="keyword">for</span> i = 1:size(apertureInfo.beam,2)
+0078         <span class="keyword">for</span> j = 1:apertureInfo.beam(i).numOfShapes
+0079             <span class="keyword">for</span> k = 1:apertureInfo.beam(i).numOfActiveLeafPairs
+0080                 counter = counter + 1;
+0081                 bixelIxInCurrRow = ~isnan(apertureInfo.beam(i).bixelIndMap(k,:));
+0082                 jacobStruct_dos(:,counter+[0 apertureInfo.totalNumOfLeafPairs]) = <span class="keyword">...</span><span class="comment">     </span>
+0083                     repmat(spones(sum(jacobStruct_dos_bixel(:,bixelIxInCurrRow),2)),1,2);
+0084             <span class="keyword">end</span>
+0085         <span class="keyword">end</span>    
+0086     <span class="keyword">end</span>
+0087 
+0088 <span class="keyword">end</span>
+0089 
+0090 <span class="comment">% concatenate</span>
+0091 jacobStruct = [jacobStruct_dao; jacobStruct_dos];</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

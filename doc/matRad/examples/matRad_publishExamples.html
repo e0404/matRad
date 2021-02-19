@@ -1,0 +1,121 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_publishExamples</title>
+  <meta name="keywords" content="matRad_publishExamples">
+  <meta name="description" content="matRad publish examples script">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html examples -->
+<h1>matRad_publishExamples
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad publish examples script</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">This is a script file. </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad publish examples script
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2017 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <span class="comment">% matRad publish examples script</span>
+0002 <span class="comment">%</span>
+0003 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% Copyright 2017 the matRad development team.</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0008 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0009 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0010 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0011 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0012 <span class="comment">% LICENSE file.</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0015 
+0016 <span class="comment">%% This file will publish all examples</span>
+0017 
+0018 
+0019 <span class="comment">%% clear environment</span>
+0020 clc,clear,close all;
+0021 
+0022 <span class="comment">% make sure you are in the matRad root directory and have added the</span>
+0023 <span class="comment">% exampels folder to the matlab path</span>
+0024 
+0025 format     = {<span class="string">'pdf'</span>}; <span class="comment">%{'html','pdf'};</span>
+0026 matRadRoot = pwd;
+0027 folderInfo = dir([matRadRoot filesep <span class="string">'examples'</span>]);
+0028 
+0029    
+0030 <span class="keyword">for</span> ixFile = 1:size(folderInfo,1)
+0031       
+0032     <span class="keyword">for</span> ixFormat = 1:numel(format)
+0033         
+0034         <span class="comment">%make sure not to use auto saved files (*.asv)</span>
+0035         [pathstr,name,ext] = fileparts(folderInfo(ixFile).name);
+0036         
+0037        <span class="keyword">if</span> ~folderInfo(ixFile).isdir &amp;&amp; ~strcmp(name,mfilename) &amp;&amp; strcmp(ext,<span class="string">'.m'</span>) <span class="keyword">...</span>
+0038            
+0039            save(<span class="string">'workspace'</span>)
+0040            publish(folderInfo(ixFile).name,format{ixFormat});
+0041            clc,clear,close all
+0042            load(<span class="string">'workspace'</span>)
+0043            
+0044        <span class="keyword">end</span>
+0045     <span class="keyword">end</span>
+0046     
+0047 <span class="keyword">end</span>
+0048 
+0049 delete workspace.mat
+0050 
+0051 
+0052 
+0053 
+0054 
+0055 
+0056 
+0057 
+0058 
+0059 
+0060 
+0061 
+0062</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

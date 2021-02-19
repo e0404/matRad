@@ -1,0 +1,201 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_importPatient</title>
+  <meta name="keywords" content="matRad_importPatient">
+  <meta name="description" content="matRad patient import from binary files (CT and masks)">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html IO -->
+<h1>matRad_importPatient
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad patient import from binary files (CT and masks)</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function [ct,cst] = matRad_importPatient(ctFile,maskFiles,hlutFilename) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad patient import from binary files (CT and masks)
+ 
+ call
+   [ct,cst] = matRad_importPatient(cubeFile,maskFiles)
+   [ct,cst] = matRad_importPatient(cubeFile,maskFiles, hlutFilename)
+
+ input
+   ctFile:     path to CT file. If HLUT is not set, values are interpreted
+               as HU and interpolated to ED. 
+   maskFiles:  cell array with filenames to the masks
+               if maskFiels contains a folder, all contained and
+               recognized data files are treated as masks
+   hlutFilname:(optional) HLUT, (n,2) array. if set to 'default', we will
+               use a default HLUT
+ output
+   ct          ct struct for use with matlab
+   cst         cst struct for use with matlab
+
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_readCube.html" class="code" title="function [cube, metadata] = matRad_readCube(filename)">matRad_readCube</a>	matRad Cube read wrapper</li><li><a href="matRad_readHLUT.html" class="code" title="function hlut = matRad_readHLUT(filename)">matRad_readHLUT</a>	matRad function to read HLUT from filename</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_importGUI.html" class="code" title="function varargout = matRad_importGUI(varargin)">matRad_importGUI</a>	MATRAD_IMPORTGUI MATLAB code for matRad_importGUI.fig</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>Subfunctions <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<ul style="list-style-type:disc">
+<li><a href="#_sub1" class="code">function cstLine = importMaskToCstLine(maskId,mask,maskMeta)</a></li><li><a href="#_sub2" class="code">function type = tryToGetVoiTypeByName(voiName)</a></li></ul>
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [ct,cst] = matRad_importPatient(ctFile,maskFiles,hlutFilename)</a>
+0002 <span class="comment">% matRad patient import from binary files (CT and masks)</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   [ct,cst] = matRad_importPatient(cubeFile,maskFiles)</span>
+0006 <span class="comment">%   [ct,cst] = matRad_importPatient(cubeFile,maskFiles, hlutFilename)</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% input</span>
+0009 <span class="comment">%   ctFile:     path to CT file. If HLUT is not set, values are interpreted</span>
+0010 <span class="comment">%               as HU and interpolated to ED.</span>
+0011 <span class="comment">%   maskFiles:  cell array with filenames to the masks</span>
+0012 <span class="comment">%               if maskFiels contains a folder, all contained and</span>
+0013 <span class="comment">%               recognized data files are treated as masks</span>
+0014 <span class="comment">%   hlutFilname:(optional) HLUT, (n,2) array. if set to 'default', we will</span>
+0015 <span class="comment">%               use a default HLUT</span>
+0016 <span class="comment">% output</span>
+0017 <span class="comment">%   ct          ct struct for use with matlab</span>
+0018 <span class="comment">%   cst         cst struct for use with matlab</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0022 <span class="comment">%</span>
+0023 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0024 <span class="comment">%</span>
+0025 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0026 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0027 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0028 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0029 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0030 <span class="comment">% LICENSE file.</span>
+0031 <span class="comment">%</span>
+0032 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0033 
+0034 
+0035 [cube, metadata] = <a href="matRad_readCube.html" class="code" title="function [cube, metadata] = matRad_readCube(filename)">matRad_readCube</a>(ctFile);
+0036 
+0037 ct = struct();
+0038 cst = cell(0,6);
+0039 
+0040 ct.cubeHU{1} = cube;
+0041 
+0042 <span class="keyword">if</span> nargin == 3
+0043     HLUT = <a href="matRad_readHLUT.html" class="code" title="function hlut = matRad_readHLUT(filename)">matRad_readHLUT</a>(hlutFilename);
+0044     ct.cube{1} = interp1(HLUT(:,1),HLUT(:,2),double(cube));
+0045     ct.hlut = HLUT;
+0046 <span class="keyword">end</span>
+0047 
+0048 ct.cubeDim = metadata.cubeDim;
+0049 ct.resolution.x = metadata.resolution(1);
+0050 ct.resolution.y = metadata.resolution(2);
+0051 ct.resolution.z = metadata.resolution(3);
+0052     
+0053 ct.numOfCtScen = 1;
+0054 
+0055 maskId = 1;
+0056 hGlobalWaitbar = waitbar(0,<span class="string">'Importing Segmentations'</span>);
+0057 set(findall(hGlobalWaitbar,<span class="string">'type'</span>,<span class="string">'text'</span>),<span class="string">'Interpreter'</span>,<span class="string">'none'</span>);
+0058 
+0059 
+0060 
+0061 <span class="keyword">for</span> f=1:numel(maskFiles)
+0062     maskFile = maskFiles{f};
+0063     waitbar(f/numel(maskFiles),hGlobalWaitbar,[<span class="string">'Importing Segmentations: '</span> maskFiles{f}]);
+0064     <span class="keyword">if</span> exist(maskFile,<span class="string">'dir'</span>)
+0065         contents = dir(maskFile);
+0066         hFolderWaitbar = waitbar(0,<span class="string">'Importing Folder'</span>);
+0067         set(findall(hFolderWaitbar,<span class="string">'type'</span>,<span class="string">'text'</span>),<span class="string">'Interpreter'</span>,<span class="string">'none'</span>);
+0068         <span class="keyword">for</span> s=1:numel(contents)
+0069             waitbar(s/numel(contents),hFolderWaitbar,[<span class="string">'Importing Folder: '</span> contents(s).name]);            
+0070             <span class="keyword">if</span>(~contents(s).isdir)
+0071                 [mask, maskMeta] = <a href="matRad_readCube.html" class="code" title="function [cube, metadata] = matRad_readCube(filename)">matRad_readCube</a>(fullfile(maskFile,contents(s).name));
+0072                 cstLine = <a href="#_sub1" class="code" title="subfunction cstLine = importMaskToCstLine(maskId,mask,maskMeta)">importMaskToCstLine</a>(maskId,mask,maskMeta);
+0073                 cst = [cst; cstLine]; 
+0074                 maskId = maskId + 1;
+0075             <span class="keyword">end</span>            
+0076         <span class="keyword">end</span>
+0077         delete(hFolderWaitbar);
+0078     <span class="keyword">elseif</span> exist(maskFile,<span class="string">'file'</span>)
+0079         [mask,maskMeta] = <a href="matRad_readCube.html" class="code" title="function [cube, metadata] = matRad_readCube(filename)">matRad_readCube</a>(maskFile);  
+0080         cstLine = <a href="#_sub1" class="code" title="subfunction cstLine = importMaskToCstLine(maskId,mask,maskMeta)">importMaskToCstLine</a>(maskId,mask,maskMeta);
+0081         cst = [cst; cstLine];           
+0082         maskId = maskId + 1;
+0083     <span class="keyword">else</span>
+0084         disp([<span class="string">'Ignored file/dir '</span> maskFile <span class="string">'!'</span>]);
+0085     <span class="keyword">end</span>
+0086 <span class="keyword">end</span>
+0087 
+0088 delete(hGlobalWaitbar);
+0089 
+0090 
+0091 <span class="comment">%Assign default colors</span>
+0092 colors = colorcube(size(cst,1));
+0093 <span class="keyword">for</span> i = 1:size(cst,1)
+0094     cst{i,5}.visibleColor = colors(i,:);
+0095 <span class="keyword">end</span>
+0096 
+0097 <span class="keyword">end</span>
+0098 
+0099 <a name="_sub1" href="#_subfunctions" class="code">function cstLine = importMaskToCstLine(maskId,mask,maskMeta)  </a>
+0100     cstLine = cell(1,6);
+0101     cstLine{1} = maskId - 1;
+0102     cstLine{2} = maskMeta.name;
+0103     cstLine{3} = <a href="#_sub2" class="code" title="subfunction type = tryToGetVoiTypeByName(voiName)">tryToGetVoiTypeByName</a>(maskMeta.name);
+0104     cstLine{4}{1} = find(mask &gt; 0);
+0105     cstLine{5}.Priority = maskId;
+0106     cstLine{5}.alphaX = 0.1;
+0107     cstLine{5}.betaX = 0.05;
+0108     cstLine{5}.Visible = 1;
+0109 <span class="keyword">end</span>
+0110 
+0111 <a name="_sub2" href="#_subfunctions" class="code">function type = tryToGetVoiTypeByName(voiName)</a>
+0112     targetNames = {<span class="string">'target'</span>; <span class="string">'ptv'</span>; <span class="string">'ctv'</span>};
+0113     <span class="keyword">for</span> n=1:numel(targetNames)
+0114         found = strfind(lower(voiName),lower(targetNames{n}));
+0115         <span class="keyword">if</span> ~isempty(found)
+0116             type = <span class="string">'TARGET'</span>;
+0117             <span class="keyword">return</span>;
+0118         <span class="keyword">end</span>
+0119     <span class="keyword">end</span>
+0120     type = <span class="string">'OAR'</span>;
+0121 <span class="keyword">end</span>
+0122 
+0123</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

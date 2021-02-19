@@ -1,0 +1,380 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_OptimizerIPOPT</title>
+  <meta name="keywords" content="matRad_OptimizerIPOPT">
+  <meta name="description" content="">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../../menu.html matRad --><!-- ../menu.html optimization --><!-- menu.html optimizer -->
+<h1>matRad_OptimizerIPOPT
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box"></div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">This is a script file. </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"></pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="ipopt.html" class="code" title="">ipopt</a>	IPOPT Call the IPOPT constrained, nonlinear solver.</li><li><a href="matRad_Optimizer.html" class="code" title="">matRad_Optimizer</a>	</li><li><a href="matRad_OptimizerIPOPT.html" class="code" title="">matRad_OptimizerIPOPT</a>	</li><li><a href="../../../matRad/tools/matRad_checkMexFileExists.html" class="code" title="function fileExists = matRad_checkMexFileExists(filename,linkOctave)">matRad_checkMexFileExists</a>	Checks if a matching mex file exists, and can create a link</li><li><a href="../../../matRad/tools/matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>	matRad function to get the software environment matRad is running on</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../../matRad/matRad_directApertureOptimization.html" class="code" title="function [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln)">matRad_directApertureOptimization</a>	matRad function to run direct aperture optimization</li><li><a href="../../../matRad/matRad_fluenceOptimization.html" class="code" title="function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)">matRad_fluenceOptimization</a>	matRad inverse planning wrapper function</li><li><a href="matRad_OptimizerIPOPT.html" class="code" title="">matRad_OptimizerIPOPT</a>	</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>Subfunctions <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<ul style="list-style-type:disc">
+<li><a href="#_sub1" class="code">function obj = matRad_OptimizerIPOPT</a></li><li><a href="#_sub2" class="code">function obj = optimize(obj,w0,optiProb,dij,cst)</a></li><li><a href="#_sub3" class="code">function [statusmsg,statusflag] = GetStatus(obj)</a></li><li><a href="#_sub4" class="code">function flag = iterFunc(obj,iter,objective,~,~)</a></li><li><a href="#_sub5" class="code">function plotFunction(obj)</a></li><li><a href="#_sub6" class="code">function abortCallbackKey(obj,~,KeyEvent)</a></li><li><a href="#_sub7" class="code">function abortCallbackButton(obj,~,~,~)</a></li><li><a href="#_sub8" class="code">function available = IsAvailable()</a></li></ul>
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre>0001 classdef <a href="matRad_OptimizerIPOPT.html" class="code" title="">matRad_OptimizerIPOPT</a> &lt; <a href="matRad_Optimizer.html" class="code" title="">matRad_Optimizer</a>
+0002 <span class="comment">% matRad_OptimizerIPOPT implements the interface for ipopt</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">% Copyright 2019 the matRad development team.</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0009 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0010 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0011 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0012 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0013 <span class="comment">% LICENSE file.</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% References</span>
+0016 <span class="comment">%   -</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0019     
+0020     properties
+0021         options
+0022         wResult
+0023         resultInfo
+0024         env
+0025     <span class="keyword">end</span>
+0026     
+0027     properties (Access = private)
+0028         allObjectiveFunctionValues
+0029         axesHandle
+0030         plotHandle
+0031         abortRequested
+0032         plotFailed
+0033     <span class="keyword">end</span>
+0034     
+0035     methods
+0036         <a name="_sub0" href="#_subfunctions" class="code">function obj = matRad_OptimizerIPOPT</a>
+0037             <span class="comment">%matRad_OptimizerIPOPT</span>
+0038             <span class="comment">%   Construct an instance of the IPOPT optimizer (mex</span>
+0039             <span class="comment">%   interface)</span>
+0040             
+0041             matRad_cfg = MatRad_Config.instance();
+0042             
+0043             obj.wResult = [];
+0044             obj.resultInfo = [];
+0045             obj.axesHandle = [];
+0046             obj.allObjectiveFunctionValues = [];
+0047             obj.abortRequested = false;
+0048             
+0049             <span class="comment">%Set Default Options</span>
+0050             <span class="keyword">if</span> matRad_cfg.logLevel &lt;= 1
+0051                 lvl = 0;
+0052             <span class="keyword">elseif</span> matRad_cfg.logLevel &lt;= 2
+0053                 lvl = 2;
+0054             <span class="keyword">elseif</span> matRad_cfg.logLevel &lt;= 3
+0055                 lvl = 5;
+0056             <span class="keyword">else</span> 
+0057                 <span class="comment">%There seems to be a problem with higher log levels in</span>
+0058                 <span class="comment">%IPOPT!</span>
+0059                 lvl = 5;
+0060             <span class="keyword">end</span>
+0061                 
+0062             obj.options.print_level                   = lvl;
+0063             obj.options.print_user_options            = <span class="string">'no'</span>;
+0064             obj.options.print_options_documentation   = <span class="string">'no'</span>;
+0065             
+0066             <span class="comment">% Termination (C.2)</span>
+0067             obj.options.tol                           = 1e-8; <span class="comment">% (Opt1)</span>
+0068             obj.options.dual_inf_tol                  = 1;    <span class="comment">% (Opt2)</span>
+0069             obj.options.constr_viol_tol               = 1e-4; <span class="comment">% (Opt3)</span>
+0070             obj.options.compl_inf_tol                 = 1e-4; <span class="comment">% (Opt4), Optimal Solution Found if (Opt1),...,(Opt4) fullfiled</span>
+0071             
+0072             obj.options.acceptable_iter               = 3;    <span class="comment">% (Acc1)</span>
+0073             obj.options.acceptable_tol                = 1e10; <span class="comment">% (Acc2)</span>
+0074             obj.options.acceptable_constr_viol_tol    = 1e10; <span class="comment">% (Acc3)</span>
+0075             obj.options.acceptable_dual_inf_tol       = 1e10; <span class="comment">% (Acc4)</span>
+0076             obj.options.acceptable_compl_inf_tol      = 1e10; <span class="comment">% (Acc5)</span>
+0077             obj.options.acceptable_obj_change_tol     = 1e-3; <span class="comment">% (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled</span>
+0078             
+0079             obj.options.max_iter                      = matRad_cfg.propOpt.defaultMaxIter;
+0080             obj.options.max_cpu_time                  = 3000;
+0081             
+0082             <span class="comment">% Barrier Parameter (C.6)</span>
+0083             obj.options.mu_strategy = <span class="string">'adaptive'</span>;
+0084             
+0085             <span class="comment">% Line Sarch (C.8)</span>
+0086             <span class="comment">%obj.options.accept_every_trial_step = 'yes';</span>
+0087             <span class="comment">%obj.options.line_search_method = 'cg-penalty';</span>
+0088             
+0089             <span class="comment">% Restoration Phase (C.10)</span>
+0090             <span class="comment">%obj.options.soft_resto_pderror_reduction_factor = 100;</span>
+0091             <span class="comment">%obj.options.required_infeasibility_reduction    = 0.9999;</span>
+0092             
+0093             <span class="comment">% Quasi-Newton (C.13)</span>
+0094             obj.options.hessian_approximation         = <span class="string">'limited-memory'</span>;
+0095             obj.options.limited_memory_max_history    = 6;
+0096             obj.options.limited_memory_initialization = <span class="string">'scalar2'</span>;
+0097             
+0098             <span class="comment">% determine once if Matlab or Octave</span>
+0099             obj.env = <a href="../../../matRad/tools/matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>();
+0100             
+0101             <span class="comment">% for derivate checking</span>
+0102             <span class="comment">% obj.options.derivative_test              = 'first-order'; % none / first-order / second-order / only-second-order</span>
+0103             <span class="comment">% obj.options.derivative_test_perturbation = 1e-6; % default 1e-8</span>
+0104             <span class="comment">% obj.options.derivative_test_tol          = 1e-6;</span>
+0105             
+0106             <span class="keyword">if</span> ~<a href="../../../matRad/tools/matRad_checkMexFileExists.html" class="code" title="function fileExists = matRad_checkMexFileExists(filename,linkOctave)">matRad_checkMexFileExists</a>(<span class="string">'ipopt'</span>)
+0107                 matRad_cfg.dispError(<span class="string">'IPOPT mex interface not available for %s!'</span>,obj.env);
+0108             <span class="keyword">end</span>
+0109 
+0110         <span class="keyword">end</span>
+0111         
+0112         <a name="_sub1" href="#_subfunctions" class="code">function obj = optimize(obj,w0,optiProb,dij,cst)</a>
+0113             matRad_cfg = MatRad_Config.instance();
+0114             
+0115             <span class="comment">% set optimization options</span>
+0116             
+0117             <span class="comment">%Set up ipopt structure</span>
+0118             ipoptStruct = struct;
+0119             
+0120             <span class="comment">%optimizer options</span>
+0121             ipoptStruct.ipopt = obj.options;
+0122             
+0123             <span class="comment">%variable bounds</span>
+0124             ipoptStruct.lb = optiProb.lowerBounds(w0);
+0125             ipoptStruct.ub = optiProb.upperBounds(w0);
+0126             
+0127             <span class="comment">%constraint bounds;</span>
+0128             [ipoptStruct.cl,ipoptStruct.cu] = optiProb.matRad_getConstraintBounds(cst);
+0129             
+0130             <span class="comment">% set callback functions.</span>
+0131             
+0132             funcs.objective         = @(x) optiProb.matRad_objectiveFunction(x,dij,cst);
+0133             funcs.constraints       = @(x) optiProb.matRad_constraintFunctions(x,dij,cst);
+0134             funcs.gradient          = @(x) optiProb.matRad_objectiveGradient(x,dij,cst);
+0135             funcs.jacobian          = @(x) optiProb.matRad_constraintJacobian(x,dij,cst);
+0136             funcs.jacobianstructure = @( ) optiProb.matRad_getJacobianStructure(w0,dij,cst);
+0137             funcs.iterfunc          = @(iter,objective,paramter) obj.iterFunc(iter,objective,paramter,ipoptStruct.ipopt.max_iter);
+0138             
+0139             <span class="comment">% Informing user to press q to terminate optimization</span>
+0140             matRad_cfg.dispInfo(<span class="string">'\nOptimzation initiating...\n'</span>);
+0141             
+0142             <span class="comment">% set Callback</span>
+0143             qCallbackSet = false;
+0144             <span class="keyword">if</span> ~isdeployed <span class="comment">% only if _not_ running as standalone</span>
+0145                 <span class="keyword">switch</span> obj.env
+0146                     <span class="keyword">case</span> <span class="string">'MATLAB'</span>
+0147                         <span class="keyword">try</span>
+0148                             <span class="comment">% get handle to Matlab command window</span>
+0149                             mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
+0150                             cw          = mde.getClient(<span class="string">'Command Window'</span>);
+0151                             xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
+0152                             h_cw        = handle(xCmdWndView,<span class="string">'CallbackProperties'</span>);
+0153                         
+0154                             <span class="comment">% set Key Pressed Callback of Matlab command window</span>
+0155                             set(h_cw, <span class="string">'KeyPressedCallback'</span>, @(h,event) obj.abortCallbackKey(h,event));
+0156                             fprintf(<span class="string">'Press q to terminate the optimization...\n'</span>);
+0157                             qCallbackSet = true;
+0158                         <span class="keyword">catch</span>
+0159                             matRad_cfg.dispInfo(<span class="string">'Manual termination with q not possible due to failing callback setup.\n'</span>);
+0160                         <span class="keyword">end</span>
+0161                 <span class="keyword">end</span>                
+0162             <span class="keyword">end</span>
+0163             
+0164             <span class="comment">%ipoptStruct.options = obj.options;</span>
+0165             obj.abortRequested = false;
+0166             obj.plotFailed = false;
+0167             
+0168             <span class="comment">% Run IPOPT.</span>
+0169             <span class="keyword">try</span>
+0170                 [obj.wResult, obj.resultInfo] = <a href="ipopt.html" class="code" title="">ipopt</a>(w0,funcs,ipoptStruct);
+0171             <span class="keyword">catch</span> ME
+0172                 errorString = [ME.message <span class="string">'\nThis error was thrown by the MEX-interface of IPOPT.\nMex interfaces can raise compatability issues which may be resolved by compiling them by hand directly on your particular system.'</span>];
+0173                 matRad_cfg.dispError(errorString);
+0174             <span class="keyword">end</span>
+0175             
+0176             <span class="comment">% unset Key Pressed Callback of Matlab command window</span>
+0177             <span class="keyword">if</span> qCallbackSet
+0178                 set(h_cw, <span class="string">'KeyPressedCallback'</span>,<span class="string">' '</span>);
+0179             <span class="keyword">end</span>
+0180             
+0181             obj.abortRequested = false;
+0182             <span class="comment">% Empty the array of stored function values</span>
+0183             obj.allObjectiveFunctionValues = [];
+0184         <span class="keyword">end</span>
+0185         
+0186         <a name="_sub2" href="#_subfunctions" class="code">function [statusmsg,statusflag] = GetStatus(obj)</a>
+0187             <span class="keyword">try</span>
+0188                 <span class="keyword">switch</span> obj.resultInfo.status
+0189                     <span class="keyword">case</span> 0
+0190                         statusmsg = <span class="string">'solved'</span>;
+0191                     <span class="keyword">case</span> 1
+0192                         statusmsg = <span class="string">'solved to acceptable level'</span>;
+0193                     <span class="keyword">case</span> 2
+0194                         statusmsg = <span class="string">'infeasible problem detected'</span>;
+0195                     <span class="keyword">case</span> 3
+0196                         statusmsg = <span class="string">'search direction too small'</span>;
+0197                     <span class="keyword">case</span> 4
+0198                         statusmsg = <span class="string">'diverging iterates'</span>;
+0199                     <span class="keyword">case</span> 5
+0200                         statusmsg = <span class="string">'user requested stop'</span>;
+0201                     <span class="keyword">case</span> -1
+0202                         statusmsg = <span class="string">'maximum number of iterations'</span>;
+0203                     <span class="keyword">case</span> -2
+0204                         statusmsg = <span class="string">'restoration phase failed'</span>;
+0205                     <span class="keyword">case</span> -3
+0206                         statusmsg = <span class="string">'error in step computation'</span>;
+0207                     <span class="keyword">case</span> -4
+0208                         statusmsg = <span class="string">'maximum CPU time exceeded'</span>;
+0209                     <span class="keyword">case</span> -10
+0210                         statusmsg = <span class="string">'not enough degrees of freedom'</span>;
+0211                     <span class="keyword">case</span> -11
+0212                         statusmsg = <span class="string">'invalid problem definition'</span>;
+0213                     <span class="keyword">case</span> -12
+0214                         statusmsg = <span class="string">'invalid option'</span>;
+0215                     <span class="keyword">case</span> -13
+0216                         statusmsg = <span class="string">'invalid number detected'</span>;
+0217                     <span class="keyword">case</span> -100
+0218                         statusmsg = <span class="string">'unrecoverable exception'</span>;
+0219                     <span class="keyword">case</span> -101
+0220                         statusmsg = <span class="string">'non-IPOPT exception thrown'</span>;
+0221                     <span class="keyword">case</span> -102
+0222                         statusmsg = <span class="string">'insufficient memory'</span>;
+0223                     <span class="keyword">case</span> -199
+0224                         statusmsg = <span class="string">'IPOPT internal error'</span>;
+0225                     <span class="keyword">otherwise</span>
+0226                         statusmsg = <span class="string">'IPOPT returned unknown status'</span>;
+0227                 <span class="keyword">end</span>
+0228                 
+0229                 <span class="keyword">if</span> obj.resultInfo.status == 0
+0230                     statusflag = 0;
+0231                 <span class="keyword">elseif</span> obj.resultInfo.status &gt; 0
+0232                     statusflag = 1;
+0233                 <span class="keyword">else</span>
+0234                     statusflag = -1;
+0235                 <span class="keyword">end</span>
+0236             <span class="keyword">catch</span>
+0237                 statusmsg = <span class="string">'No Last IPOPT Status Available!'</span>;
+0238                 statusflag = -1;
+0239             <span class="keyword">end</span>
+0240         <span class="keyword">end</span>
+0241         
+0242         <a name="_sub3" href="#_subfunctions" class="code">function flag = iterFunc(obj,iter,objective,~,~)</a>
+0243              
+0244             obj.allObjectiveFunctionValues(iter + 1) = objective;
+0245             <span class="comment">%We don't want the optimization to crash because of drawing</span>
+0246             <span class="comment">%errors</span>
+0247             <span class="keyword">if</span> ~obj.plotFailed
+0248                 <span class="keyword">try</span>            
+0249                     obj.plotFunction();
+0250                 <span class="keyword">catch</span> ME
+0251                     matRad_cfg = MatRad_Config.instance();
+0252                     <span class="comment">%Put a warning at iteration 1 that plotting failed</span>
+0253                     matRad_cfg.dispWarning(<span class="string">'Objective Function plotting failed and thus disabled. Message:\n%s'</span>,ME.message);
+0254                     obj.plotFailed = true;
+0255                 <span class="keyword">end</span>                
+0256             <span class="keyword">end</span>
+0257             flag = ~obj.abortRequested;
+0258         <span class="keyword">end</span>
+0259         
+0260         <a name="_sub4" href="#_subfunctions" class="code">function plotFunction(obj)</a>
+0261             <span class="comment">% plot objective function output</span>
+0262             y = obj.allObjectiveFunctionValues;
+0263             x = 1:numel(y);
+0264             
+0265             <span class="keyword">if</span> isempty(obj.axesHandle) || ~isgraphics(obj.axesHandle,<span class="string">'axes'</span>)
+0266                 <span class="comment">%Create new Fiure and store axes handle</span>
+0267                 hFig = figure(<span class="string">'Name'</span>,<span class="string">'Progress of IPOPT Optimization'</span>,<span class="string">'NumberTitle'</span>,<span class="string">'off'</span>,<span class="string">'Color'</span>,[.5 .5 .5]);
+0268                 hAx = axes(hFig);
+0269                 hold(hAx,<span class="string">'on'</span>);
+0270                 grid(hAx,<span class="string">'on'</span>);
+0271                 grid(hAx,<span class="string">'minor'</span>);
+0272                 set(hAx,<span class="string">'YScale'</span>,<span class="string">'log'</span>);
+0273                  
+0274                 <span class="comment">%Add a Stop button with callback to change abort flag</span>
+0275                 c = uicontrol;
+0276                 cPos = get(c,<span class="string">'Position'</span>);
+0277                 cPos(1) = 5;
+0278                 cPos(2) = 5;
+0279                 set(c,  <span class="string">'String'</span>,<span class="string">'Stop'</span>,<span class="keyword">...</span>
+0280                         <span class="string">'Position'</span>,cPos,<span class="keyword">...</span>
+0281                         <span class="string">'Callback'</span>,@(~,~) <a href="#_sub7" class="code" title="subfunction abortCallbackButton(obj,~,~,~)">abortCallbackButton</a>(obj));                
+0282                 
+0283                 <span class="comment">%Set up the axes scaling &amp; labels</span>
+0284                 defaultFontSize = 14;
+0285                 set(hAx,<span class="string">'YScale'</span>,<span class="string">'log'</span>);
+0286                 title(hAx,<span class="string">'Progress of Optimization'</span>,<span class="string">'LineWidth'</span>,defaultFontSize);
+0287                 xlabel(hAx,<span class="string">'# iterations'</span>,<span class="string">'Fontsize'</span>,defaultFontSize),ylabel(hAx,<span class="string">'objective function value'</span>,<span class="string">'Fontsize'</span>,defaultFontSize);
+0288                 
+0289                 <span class="comment">%Create plot handle and link to data for faster update</span>
+0290                 hPlot = plot(hAx,x,y,<span class="string">'xb'</span>,<span class="string">'LineWidth'</span>,1.5,<span class="string">'XDataSource'</span>,<span class="string">'x'</span>,<span class="string">'YDataSource'</span>,<span class="string">'y'</span>);
+0291                 obj.plotHandle = hPlot;
+0292                 obj.axesHandle = hAx;
+0293                                 
+0294             <span class="keyword">else</span> <span class="comment">%Figure already exists, retreive from axes handle</span>
+0295                 hFig = get(obj.axesHandle,<span class="string">'Parent'</span>);
+0296                 hAx = obj.axesHandle;
+0297                 hPlot = obj.plotHandle;
+0298             <span class="keyword">end</span>
+0299             
+0300             <span class="comment">% draw updated axes by refreshing data of the plot handle (which is linked to y and y)</span>
+0301             <span class="comment">% in the caller workspace. Octave needs and works on figure handles, which</span>
+0302             <span class="comment">% is substantially (factor 10) slower, thus we check explicitly</span>
+0303             <span class="keyword">switch</span> obj.env
+0304                 <span class="keyword">case</span> <span class="string">'OCTAVE'</span>
+0305                     refreshdata(hFig,<span class="string">'caller'</span>);
+0306                 <span class="keyword">otherwise</span>
+0307                     refreshdata(hPlot,<span class="string">'caller'</span>);
+0308             <span class="keyword">end</span>
+0309             drawnow;
+0310             
+0311             <span class="comment">% ensure to bring optimization window to front</span>
+0312             figure(hFig);
+0313         <span class="keyword">end</span>
+0314         
+0315         <a name="_sub5" href="#_subfunctions" class="code">function abortCallbackKey(obj,~,KeyEvent)</a>
+0316             <span class="comment">% check if user pressed q</span>
+0317             <span class="keyword">if</span>  get(KeyEvent,<span class="string">'keyCode'</span>) == 81
+0318                 obj.abortRequested = true;
+0319             <span class="keyword">end</span>
+0320         <span class="keyword">end</span>
+0321         
+0322         <a name="_sub6" href="#_subfunctions" class="code">function abortCallbackButton(obj,~,~,~)</a>
+0323             obj.abortRequested = true;
+0324         <span class="keyword">end</span>        
+0325     <span class="keyword">end</span>
+0326     
+0327     methods (Static)
+0328         <a name="_sub7" href="#_subfunctions" class="code">function available = IsAvailable()</a>
+0329             available = <a href="../../../matRad/tools/matRad_checkMexFileExists.html" class="code" title="function fileExists = matRad_checkMexFileExists(filename,linkOctave)">matRad_checkMexFileExists</a>(<span class="string">'ipopt'</span>);                   
+0330         <span class="keyword">end</span>
+0331     <span class="keyword">end</span>
+0332 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

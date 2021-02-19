@@ -1,0 +1,426 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_compareDose</title>
+  <meta name="keywords" content="matRad_compareDose">
+  <meta name="description" content="Comparison of two dose cubes in terms of gamma index, absolute and visual difference">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html tools -->
+<h1>matRad_compareDose
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">Comparison of two dose cubes in terms of gamma index, absolute and visual difference</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst,enable , contours, pln, criteria, n,localglobal) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> Comparison of two dose cubes in terms of gamma index, absolute and visual difference
+
+ call
+   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct)
+   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst)
+   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, enable)
+   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, contours)
+   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, pln)
+   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, criteria)
+   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, n)
+   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, localglobal)
+   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst,enable)
+   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst, contours)
+   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst, pln)
+               ...
+   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst,enable , contours, pln, criteria, n,localglobal)
+
+ input
+   cube1:         dose cube 1 as an M x N x O array
+   cube2:         dose cube 2 as an M x N x O array
+   ct:            ct struct with ct cube
+   cst:           list of interesting volumes inside the patient as matRad
+                  struct (optional, does not calculate gamma and DVH)
+   enable         (optional) specify if all sections are evaluated
+                  boolean 3x1 array
+                  [1 0 0]: evaluate only basic plots
+                  [0 1 0]: evaluate only line profiles
+                  [0 0 1]: evaluate only DVH
+   contours       (optional) specify if contours are plotted,
+                  'on' or 'off'
+   pln            (optional) specify BioModel for DVH plot
+   criteria:      (optional)[1x2] vector specifying the distance to agreement
+                  criterion; first element is percentage difference,
+                  second element is distance [mm], default [3 3]
+   n:             (optional) number of interpolations. there will be 2^n-1
+                  interpolation points. The maximum suggested value is 3.
+                  default n=0
+   localglobal:   (optional) parameter to choose between 'global' and 'local'
+                  normalization 
+
+
+ output
+
+   gammaCube:      result of gamma index calculation
+   gammaPassRate:  rate of voxels passing the specified gamma criterion
+                   evaluated for every structure listed in 'cst'.
+                   note that only voxels exceeding the dose threshold are
+                   considered.
+   hfig:           Figure handle struct for all 3 figures and subplots,
+                   indexed by plane names
+
+ References gamma analysis:
+   [1]  http://www.ncbi.nlm.nih.gov/pubmed/9608475
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team.
+
+ This file is part of the matRad project. It is subject to the license
+ terms in the LICENSE file found in the top-level directory of this
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+ of the matRad project, including this file, may be copied, modified,
+ propagated, or distributed except according to the terms contained in the
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/matRad_calcDVH.html" class="code" title="function dvh = matRad_calcDVH(cst,doseCube,dvhType,doseGrid)">matRad_calcDVH</a>	matRad dvh calculation</li><li><a href="../../matRad/matRad_getIsoCenter.html" class="code" title="function isoCenter = matRad_getIsoCenter(cst,ct,visBool)">matRad_getIsoCenter</a>	computes the isocenter [mm] as the joint center of gravity</li><li><a href="../../matRad/matRad_showDVH.html" class="code" title="function matRad_showDVH(dvh,cst,pln,lineStyleIndicator)">matRad_showDVH</a>	matRad dvh visualizaion</li><li><a href="../../matRad/plotting/matRad_getColormap.html" class="code" title="function output = matRad_getColormap(name,size)">matRad_getColormap</a>	matRad function wrapper for getting a colormap</li><li><a href="../../matRad/plotting/matRad_plotAxisLabels.html" class="code" title="function  matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize,tickdist)">matRad_plotAxisLabels</a>	matRad function to plot x and y labels denoting the ct dimensions</li><li><a href="matRad_calcIntEnergy.html" class="code" title="function intDose = matRad_calcIntEnergy(dose,ct,pln)">matRad_calcIntEnergy</a>	matRad function to compute the integral energy in MeV for a dose cube</li><li><a href="matRad_gammaIndex.html" class="code" title="function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,n,localglobal,cst)">matRad_gammaIndex</a>	gamma index calculation</li><li><a href="matRad_plotSliceWrapper.html" class="code" title="function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,varargin)">matRad_plotSliceWrapper</a>	matRad tool function to directly plot a complete slice of a ct with dose</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/examples/matRad_example7_carbon.html" class="code" title="">matRad_example7_carbon</a>	% Example: Carbon Ion Treatment Plan</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst,enable , contours, pln, criteria, n,localglobal)</a>
+0002 <span class="comment">% Comparison of two dose cubes in terms of gamma index, absolute and visual difference</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct)</span>
+0006 <span class="comment">%   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst)</span>
+0007 <span class="comment">%   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, enable)</span>
+0008 <span class="comment">%   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, contours)</span>
+0009 <span class="comment">%   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, pln)</span>
+0010 <span class="comment">%   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, criteria)</span>
+0011 <span class="comment">%   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, n)</span>
+0012 <span class="comment">%   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, localglobal)</span>
+0013 <span class="comment">%   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst,enable)</span>
+0014 <span class="comment">%   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst, contours)</span>
+0015 <span class="comment">%   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst, pln)</span>
+0016 <span class="comment">%               ...</span>
+0017 <span class="comment">%   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst,enable , contours, pln, criteria, n,localglobal)</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% input</span>
+0020 <span class="comment">%   cube1:         dose cube 1 as an M x N x O array</span>
+0021 <span class="comment">%   cube2:         dose cube 2 as an M x N x O array</span>
+0022 <span class="comment">%   ct:            ct struct with ct cube</span>
+0023 <span class="comment">%   cst:           list of interesting volumes inside the patient as matRad</span>
+0024 <span class="comment">%                  struct (optional, does not calculate gamma and DVH)</span>
+0025 <span class="comment">%   enable         (optional) specify if all sections are evaluated</span>
+0026 <span class="comment">%                  boolean 3x1 array</span>
+0027 <span class="comment">%                  [1 0 0]: evaluate only basic plots</span>
+0028 <span class="comment">%                  [0 1 0]: evaluate only line profiles</span>
+0029 <span class="comment">%                  [0 0 1]: evaluate only DVH</span>
+0030 <span class="comment">%   contours       (optional) specify if contours are plotted,</span>
+0031 <span class="comment">%                  'on' or 'off'</span>
+0032 <span class="comment">%   pln            (optional) specify BioModel for DVH plot</span>
+0033 <span class="comment">%   criteria:      (optional)[1x2] vector specifying the distance to agreement</span>
+0034 <span class="comment">%                  criterion; first element is percentage difference,</span>
+0035 <span class="comment">%                  second element is distance [mm], default [3 3]</span>
+0036 <span class="comment">%   n:             (optional) number of interpolations. there will be 2^n-1</span>
+0037 <span class="comment">%                  interpolation points. The maximum suggested value is 3.</span>
+0038 <span class="comment">%                  default n=0</span>
+0039 <span class="comment">%   localglobal:   (optional) parameter to choose between 'global' and 'local'</span>
+0040 <span class="comment">%                  normalization</span>
+0041 <span class="comment">%</span>
+0042 <span class="comment">%</span>
+0043 <span class="comment">% output</span>
+0044 <span class="comment">%</span>
+0045 <span class="comment">%   gammaCube:      result of gamma index calculation</span>
+0046 <span class="comment">%   gammaPassRate:  rate of voxels passing the specified gamma criterion</span>
+0047 <span class="comment">%                   evaluated for every structure listed in 'cst'.</span>
+0048 <span class="comment">%                   note that only voxels exceeding the dose threshold are</span>
+0049 <span class="comment">%                   considered.</span>
+0050 <span class="comment">%   hfig:           Figure handle struct for all 3 figures and subplots,</span>
+0051 <span class="comment">%                   indexed by plane names</span>
+0052 <span class="comment">%</span>
+0053 <span class="comment">% References gamma analysis:</span>
+0054 <span class="comment">%   [1]  http://www.ncbi.nlm.nih.gov/pubmed/9608475</span>
+0055 <span class="comment">%</span>
+0056 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0057 <span class="comment">%</span>
+0058 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0059 <span class="comment">%</span>
+0060 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0061 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0062 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0063 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0064 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0065 <span class="comment">% LICENSE file.</span>
+0066 <span class="comment">%</span>
+0067 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0068 
+0069 matRad_cfg = MatRad_Config.instance();
+0070 
+0071 <span class="comment">%% check if cubes consistent</span>
+0072 <span class="keyword">if</span> ~isequal(size(cube1),size(cube2))
+0073     matRad_cfg.dispError(<span class="string">'dose cubes must be the same size\n'</span>);
+0074 <span class="keyword">end</span>
+0075 
+0076 <span class="keyword">if</span> ~exist(<span class="string">'localglobal'</span>,<span class="string">'var'</span>)
+0077     localglobal = <span class="string">'global'</span>;
+0078 <span class="keyword">end</span>
+0079 <span class="keyword">if</span> ~exist(<span class="string">'n'</span>,<span class="string">'var'</span>)
+0080     n = 0;
+0081 <span class="keyword">end</span>
+0082 <span class="keyword">if</span> ~exist(<span class="string">'criteria'</span>,<span class="string">'var'</span>)
+0083     criteria = [3 3];
+0084 <span class="keyword">end</span>
+0085 <span class="keyword">if</span> ~exist(<span class="string">'cst'</span>,<span class="string">'var'</span>) || isempty(cst)
+0086     cst = [];
+0087     skip = 1;
+0088     matRad_cfg.dispWarning(<span class="string">'cst not specified, skipping DVH, isocenter in the center of the doseCube'</span>);
+0089 <span class="keyword">else</span>
+0090     skip = 0;
+0091 <span class="keyword">end</span>
+0092 <span class="keyword">if</span> ~exist(<span class="string">'pln'</span>,<span class="string">'var'</span>) || isempty(pln)
+0093     pln = [];
+0094 <span class="keyword">end</span>
+0095 <span class="keyword">if</span> ~exist(<span class="string">'contours'</span>,<span class="string">'var'</span>) || isempty(contours)
+0096     contours = true;
+0097 <span class="keyword">end</span>
+0098 <span class="keyword">if</span> exist(<span class="string">'contours'</span>,<span class="string">'var'</span>) || ~isempty(contours)
+0099     <span class="keyword">if</span> strcmp(contours,<span class="string">'on'</span>)
+0100         contours = true;
+0101     <span class="keyword">else</span>
+0102         contours = false;
+0103     <span class="keyword">end</span>
+0104 <span class="keyword">end</span>
+0105 
+0106 <span class="keyword">if</span> (~exist(<span class="string">'enable'</span>,<span class="string">'var'</span>) || isempty(enable)) || strcmp(enable,<span class="string">'all'</span>)
+0107     enable = [1 1 1];
+0108 <span class="keyword">end</span>
+0109 <span class="keyword">if</span> enable(1)==0
+0110     gammaCube = [];
+0111     gammaPassRate = [];
+0112 <span class="keyword">end</span>
+0113 <span class="comment">% Load colormap for difference</span>
+0114 diffCMap = <a href="../../matRad/plotting/matRad_getColormap.html" class="code" title="function output = matRad_getColormap(name,size)">matRad_getColormap</a>(<span class="string">'diffMap'</span>);
+0115 
+0116 <span class="comment">%% Calculate iso-center slices and resolution</span>
+0117 <span class="keyword">if</span> isempty(cst)
+0118     [~,s(1)] = max(sum(sum(cube1,1),3));
+0119     [~,s(2)] = max(sum(sum(cube1,2),3));
+0120     [~,s(3)] = max(sum(sum(cube1,1),2));
+0121     isoCenter = [ct.resolution.y*s(1) ct.resolution.x*s(2) ct.resolution.z*s(3)];
+0122 <span class="keyword">else</span>
+0123     isoCenter = <a href="../../matRad/matRad_getIsoCenter.html" class="code" title="function isoCenter = matRad_getIsoCenter(cst,ct,visBool)">matRad_getIsoCenter</a>(cst,ct,0);
+0124 <span class="keyword">end</span>
+0125 
+0126 resolution = [ct.resolution.x ct.resolution.y ct.resolution.z];
+0127 
+0128 slicename = {round(isoCenter(2)./resolution(2)),round(isoCenter(1)./resolution(1)),round(isoCenter(3)./resolution(3))};
+0129 doseWindow = [0 max([cube1(:); cube2(:)])];
+0130 planename = {<span class="string">'coronal'</span>,<span class="string">'sagittal'</span>,<span class="string">'axial'</span>};
+0131 
+0132 <span class="comment">%% Integral Energy Output</span>
+0133 intEnergy1 = <a href="matRad_calcIntEnergy.html" class="code" title="function intDose = matRad_calcIntEnergy(dose,ct,pln)">matRad_calcIntEnergy</a>(cube1,ct,pln);
+0134 intEnergy2 = <a href="matRad_calcIntEnergy.html" class="code" title="function intDose = matRad_calcIntEnergy(dose,ct,pln)">matRad_calcIntEnergy</a>(cube2,ct,pln);
+0135 
+0136 matRad_cfg.dispInfo(<span class="string">'Integral energy comparison: Cube 1 = %1.4g MeV, Cube 2 = %1.4g MeV, difference = %1.4g Mev\n'</span>,intEnergy1,intEnergy2,intEnergy1-intEnergy2);
+0137 
+0138 <span class="comment">%% Colorwash images</span>
+0139 <span class="keyword">if</span> enable(1) == 1
+0140     
+0141     <span class="comment">% Get the gamma cube</span>
+0142     matRad_cfg.dispInfo(<span class="string">'Calculating gamma index cube...\n'</span>);
+0143     <span class="keyword">if</span> exist(<span class="string">'criteria'</span>,<span class="string">'var'</span>)
+0144         relDoseThreshold = criteria(1); <span class="comment">% in [%]</span>
+0145         dist2AgreeMm     = criteria(2); <span class="comment">% in [mm]</span>
+0146     <span class="keyword">else</span>
+0147         dist2AgreeMm     = 3; <span class="comment">% in [mm]</span>
+0148         relDoseThreshold = 3; <span class="comment">% in [%]</span>
+0149     <span class="keyword">end</span>
+0150     
+0151     [gammaCube,gammaPassRate] = <a href="matRad_gammaIndex.html" class="code" title="function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,n,localglobal,cst)">matRad_gammaIndex</a>(cube1,cube2,resolution,criteria,[],n,localglobal,cst);
+0152     
+0153     
+0154     <span class="comment">% Calculate absolute difference cube and dose windows for plots</span>
+0155     differenceCube  = cube1-cube2;
+0156     doseDiffWindow  = [-max(differenceCube(:)) max(differenceCube(:))];
+0157     <span class="comment">%doseGammaWindow = [0 max(gammaCube(:))];</span>
+0158     doseGammaWindow = [0 2]; <span class="comment">%We choose 2 as maximum value since the gamma colormap has a sharp cut in the middle</span>
+0159     
+0160     
+0161     <span class="comment">% Plot everything</span>
+0162     <span class="comment">% Plot dose slices</span>
+0163     <span class="keyword">if</span> contours == false
+0164         cstHandle = [];
+0165     <span class="keyword">else</span>
+0166         cstHandle = cst;
+0167     <span class="keyword">end</span>
+0168     
+0169     <span class="keyword">for</span> plane = 1:3
+0170         disp([<span class="string">'Plotting '</span>,planename{plane},<span class="string">' plane...'</span>]);
+0171         
+0172         <span class="comment">% Initialize Figure</span>
+0173         hfig.(planename{plane}).(<span class="string">'fig'</span>) = figure(<span class="string">'Renderer'</span>, <span class="string">'painters'</span>, <span class="string">'Position'</span>, [10 50 800 800]);
+0174         set(gcf,<span class="string">'Color'</span>,[1 1 1]);
+0175         
+0176         <span class="comment">% Plot Dose 1</span>
+0177         hfig.(planename{plane}).(<span class="string">'cube1'</span>).Axes = subplot(2,2,1);
+0178         [hfig.(planename{plane}).(<span class="string">'cube1'</span>).CMap,<span class="keyword">...</span>
+0179             hfig.(planename{plane}).(<span class="string">'cube1'</span>).Dose,<span class="keyword">...</span>
+0180             hfig.(planename{plane}).(<span class="string">'cube1'</span>).Ct,<span class="keyword">...</span>
+0181             hfig.(planename{plane}).(<span class="string">'cube1'</span>).Contour,<span class="keyword">...</span>
+0182             hfig.(planename{plane}).(<span class="string">'cube1'</span>).IsoDose] = <span class="keyword">...</span>
+0183             <a href="matRad_plotSliceWrapper.html" class="code" title="function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,varargin)">matRad_plotSliceWrapper</a>(gca,ct,cstHandle,1,cube1,plane,slicename{plane},[],[],colorcube,jet,doseWindow,[],100);
+0184         
+0185         <span class="comment">% Plot Dose 2</span>
+0186         hfig.(planename{plane}).(<span class="string">'cube2'</span>).Axes = subplot(2,2,2);
+0187         [hfig.(planename{plane}).(<span class="string">'cube2'</span>).CMap,<span class="keyword">...</span>
+0188             hfig.(planename{plane}).(<span class="string">'cube2'</span>).Dose,<span class="keyword">...</span>
+0189             hfig.(planename{plane}).(<span class="string">'cube2'</span>).Ct,<span class="keyword">...</span>
+0190             hfig.(planename{plane}).(<span class="string">'cube2'</span>).Contour,<span class="keyword">...</span>
+0191             hfig.(planename{plane}).(<span class="string">'cube2'</span>).IsoDose] = <span class="keyword">...</span>
+0192             <a href="matRad_plotSliceWrapper.html" class="code" title="function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,varargin)">matRad_plotSliceWrapper</a>(gca,ct,cstHandle,1,cube2,plane,slicename{plane},[],[],colorcube,jet,doseWindow,[],100);
+0193         
+0194         <span class="comment">% Plot absolute difference</span>
+0195         hfig.(planename{plane}).(<span class="string">'diff'</span>).Axes = subplot(2,2,3);
+0196         [hfig.(planename{plane}).(<span class="string">'diff'</span>).CMap,<span class="keyword">...</span>
+0197             hfig.(planename{plane}).(<span class="string">'diff'</span>).Dose,<span class="keyword">...</span>
+0198             hfig.(planename{plane}).(<span class="string">'diff'</span>).Ct,<span class="keyword">...</span>
+0199             hfig.(planename{plane}).(<span class="string">'diff'</span>).Contour,<span class="keyword">...</span>
+0200             hfig.(planename{plane}).(<span class="string">'diff'</span>).IsoDose] = <span class="keyword">...</span>
+0201             <a href="matRad_plotSliceWrapper.html" class="code" title="function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,varargin)">matRad_plotSliceWrapper</a>(gca,ct,cstHandle,1,differenceCube,plane,slicename{plane},[],[],colorcube,diffCMap,doseDiffWindow,[],100);
+0202         
+0203         <span class="comment">% Plot gamma analysis</span>
+0204         hfig.(planename{plane}).(<span class="string">'gamma'</span>).Axes = subplot(2,2,4);
+0205         gammaCMap = <a href="../../matRad/plotting/matRad_getColormap.html" class="code" title="function output = matRad_getColormap(name,size)">matRad_getColormap</a>(<span class="string">'gammaIndex'</span>);
+0206         [hfig.(planename{plane}).(<span class="string">'gamma'</span>).CMap,<span class="keyword">...</span>
+0207             hfig.(planename{plane}).(<span class="string">'gamma'</span>).Dose,<span class="keyword">...</span>
+0208             hfig.(planename{plane}).(<span class="string">'gamma'</span>).Ct,<span class="keyword">...</span>
+0209             hfig.(planename{plane}).(<span class="string">'gamma'</span>).Contour,<span class="keyword">...</span>
+0210             hfig.(planename{plane}).(<span class="string">'gamma'</span>).IsoDose]=<span class="keyword">...</span>
+0211             <a href="matRad_plotSliceWrapper.html" class="code" title="function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,varargin)">matRad_plotSliceWrapper</a>(gca,ct,cstHandle,1,gammaCube,plane,slicename{plane},[],[],colorcube,gammaCMap,doseGammaWindow,[],100);
+0212         
+0213         <span class="comment">% Adjusting axes</span>
+0214         <a href="../../matRad/plotting/matRad_plotAxisLabels.html" class="code" title="function  matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize,tickdist)">matRad_plotAxisLabels</a>(hfig.(planename{plane}).(<span class="string">'cube1'</span>).Axes,ct,plane,slicename{plane},[],100);
+0215         set(get(hfig.(planename{plane}).(<span class="string">'cube1'</span>).Axes, <span class="string">'title'</span>), <span class="string">'string'</span>, <span class="string">'Dose 1'</span>);
+0216         <a href="../../matRad/plotting/matRad_plotAxisLabels.html" class="code" title="function  matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize,tickdist)">matRad_plotAxisLabels</a>(hfig.(planename{plane}).(<span class="string">'cube2'</span>).Axes,ct,plane,slicename{plane},[],100);
+0217         set(get(hfig.(planename{plane}).(<span class="string">'cube2'</span>).Axes, <span class="string">'title'</span>), <span class="string">'string'</span>, <span class="string">'Dose 2'</span>);
+0218         <a href="../../matRad/plotting/matRad_plotAxisLabels.html" class="code" title="function  matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize,tickdist)">matRad_plotAxisLabels</a>(hfig.(planename{plane}).(<span class="string">'diff'</span>).Axes,ct,plane,slicename{plane},[],100);
+0219         set(get(hfig.(planename{plane}).(<span class="string">'diff'</span>).Axes, <span class="string">'title'</span>), <span class="string">'string'</span>, <span class="string">'Absolute difference'</span>);
+0220         <a href="../../matRad/plotting/matRad_plotAxisLabels.html" class="code" title="function  matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize,tickdist)">matRad_plotAxisLabels</a>(hfig.(planename{plane}).(<span class="string">'gamma'</span>).Axes,ct,plane,slicename{plane},[],100);
+0221         set(get(hfig.(planename{plane}).(<span class="string">'gamma'</span>).Axes, <span class="string">'title'</span>), <span class="string">'string'</span>, {[num2str(gammaPassRate{1,2},5) <span class="string">'% of points &gt; '</span> num2str(relDoseThreshold) <span class="string">'% pass gamma criterion ('</span> num2str(relDoseThreshold) <span class="string">'% / '</span> num2str(dist2AgreeMm) <span class="string">'mm)'</span>]; [<span class="string">'with '</span> num2str(2^n-1) <span class="string">' interpolation points'</span>]});
+0222         
+0223     <span class="keyword">end</span>
+0224 <span class="keyword">end</span>
+0225 
+0226 <span class="comment">%% Plot profiles through isoCenter</span>
+0227 centerAtIsocenter = false;
+0228 <span class="keyword">if</span> enable(2) == 1
+0229     matRad_cfg.dispInfo(<span class="string">'Plotting profiles...\n'</span>);
+0230     fontsize = 12;
+0231     profilex{1} = squeeze(cube1(slicename{1},:,slicename{3}));
+0232     profiley{1} = squeeze(cube1(:,slicename{2},slicename{3}));
+0233     profilez{1} = squeeze(cube1(slicename{1},slicename{2},:));
+0234 
+0235     profilex{2} = squeeze(cube2(slicename{1},:,slicename{3}));
+0236     profiley{2} = squeeze(cube2(:,slicename{2},slicename{3}));
+0237     profilez{2} = squeeze(cube2(slicename{1},slicename{2},:));
+0238     
+0239     posX = resolution(1)*(1:length(profilex{1}));
+0240     posY = resolution(2)*(1:length(profiley{1}));
+0241     posZ = resolution(3)*(1:length(profilez{1}));
+0242     <span class="keyword">if</span> centerAtIsocenter
+0243         posX = posX - isoCenter(1);
+0244         posY = posY - isoCenter(2);
+0245         posZ = posZ - isoCenter(3);
+0246     <span class="keyword">end</span>
+0247 
+0248     <span class="keyword">if</span> exist(<span class="string">'pln'</span>,<span class="string">'var'</span>) &amp;&amp; ~isempty(pln)
+0249         <span class="keyword">if</span> strcmp(pln.propOpt.bioOptimization,<span class="string">'none'</span>)
+0250             yLabelString = <span class="string">'Dose [Gy]'</span>;
+0251         <span class="keyword">else</span>
+0252             yLabelString = <span class="string">'RBE x Dose [Gy(RBE)]'</span>;
+0253         <span class="keyword">end</span>
+0254     <span class="keyword">else</span>
+0255         yLabelString = <span class="string">'Dose [Gy]'</span>;
+0256     <span class="keyword">end</span>
+0257     
+0258     hfig.profiles.fig = figure(<span class="string">'Renderer'</span>, <span class="string">'painters'</span>, <span class="string">'Position'</span>, [10 50 800 800]);
+0259     set(gcf,<span class="string">'Color'</span>,[1 1 1]);
+0260     
+0261     hfig.profiles.x = subplot(2,2,1);
+0262     plot(posX,profilex{1},<span class="string">'r'</span>)
+0263     hold on
+0264     plot(posX,profilex{2},<span class="string">'r--'</span>)
+0265     xlabel(<span class="string">'X [mm]'</span>,<span class="string">'FontSize'</span>,fontsize)
+0266     ylabel(yLabelString,<span class="string">'FontSize'</span>,fontsize);
+0267     title(<span class="string">'x-Profiles'</span>);
+0268     legend({<span class="string">'Dose 1'</span>,<span class="string">'Dose 2'</span>},<span class="string">'Location'</span>,<span class="string">'southeast'</span>)
+0269     legend boxoff
+0270     
+0271     hfig.profiles.y = subplot(2,2,2);
+0272     plot(posY,profiley{1},<span class="string">'r'</span>)
+0273     hold on
+0274     plot(posY,profiley{2},<span class="string">'r--'</span>)
+0275     xlabel(<span class="string">'Y [mm]'</span>,<span class="string">'FontSize'</span>,fontsize)
+0276     ylabel(yLabelString,<span class="string">'FontSize'</span>,fontsize);
+0277     title(<span class="string">'y-Profiles'</span>);
+0278     legend({<span class="string">'Dose 1'</span>,<span class="string">'Dose 2'</span>},<span class="string">'Location'</span>,<span class="string">'southeast'</span>)
+0279     legend boxoff
+0280     
+0281     hfig.profiles.z = subplot(2,2,3);
+0282     plot(posZ,profilez{1},<span class="string">'r'</span>)
+0283     hold on
+0284     plot(posZ,profilez{2},<span class="string">'r--'</span>)
+0285     xlabel(<span class="string">'Z [mm]'</span>,<span class="string">'FontSize'</span>,fontsize)
+0286     ylabel(yLabelString,<span class="string">'FontSize'</span>,fontsize);
+0287     title(<span class="string">'z-Profiles'</span>);
+0288     legend({<span class="string">'Dose 1'</span>,<span class="string">'Dose 2'</span>},<span class="string">'Location'</span>,<span class="string">'southeast'</span>)
+0289     legend boxoff
+0290     
+0291     set(hfig.profiles.fig,<span class="string">'name'</span>,[<span class="string">'Profiles:, x='</span>,num2str(slicename{1}),<span class="string">'mm, y='</span>,num2str(slicename{2}),<span class="string">'mm, z='</span>,num2str(slicename{3}),<span class="string">'mm'</span>]);
+0292     
+0293 <span class="keyword">end</span>
+0294 
+0295 <span class="comment">%% Calculate and plot DVH</span>
+0296 <span class="keyword">if</span> enable(3) == 1 &amp;&amp; ~isempty(cst)
+0297     matRad_cfg.dispInfo(<span class="string">'Calculating DVH...\n'</span>);
+0298     dvh1 = <a href="../../matRad/matRad_calcDVH.html" class="code" title="function dvh = matRad_calcDVH(cst,doseCube,dvhType,doseGrid)">matRad_calcDVH</a>(cst,cube1);
+0299     dvh2 = <a href="../../matRad/matRad_calcDVH.html" class="code" title="function dvh = matRad_calcDVH(cst,doseCube,dvhType,doseGrid)">matRad_calcDVH</a>(cst,cube2);
+0300     dvhWindow = max([dvh1(1).doseGrid dvh2(1).doseGrid]);
+0301     <span class="comment">% Plot DVH</span>
+0302     disp(<span class="string">'Plotting DVH...'</span>);
+0303     
+0304     hfig.dvh.fig = figure(<span class="string">'Renderer'</span>, <span class="string">'painters'</span>, <span class="string">'Position'</span>, [10 100 1000 700]);
+0305     set(gcf,<span class="string">'Color'</span>,[1 1 1]);
+0306     <a href="../../matRad/matRad_showDVH.html" class="code" title="function matRad_showDVH(dvh,cst,pln,lineStyleIndicator)">matRad_showDVH</a>(dvh1,cst,pln);
+0307     hold on
+0308     <a href="../../matRad/matRad_showDVH.html" class="code" title="function matRad_showDVH(dvh,cst,pln,lineStyleIndicator)">matRad_showDVH</a>(dvh2,cst,pln,2);
+0309     xlim([0 dvhWindow*1.2])
+0310     title(<span class="string">'Dose Volume Histrogram, Dose 1: solid, Dose 2: dashed'</span>)
+0311 <span class="keyword">end</span>
+0312 <span class="comment">%%</span>
+0313 matRad_cfg.dispInfo(<span class="string">'Done!'</span>);
+0314 
+0315 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

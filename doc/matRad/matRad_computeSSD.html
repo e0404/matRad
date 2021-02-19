@@ -1,0 +1,179 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_computeSSD</title>
+  <meta name="keywords" content="matRad_computeSSD">
+  <meta name="description" content="matRad SSD calculation">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_computeSSD
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">matRad SSD calculation</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function stf = matRad_computeSSD(stf,ct,mode) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad SSD calculation
+ 
+ call
+   stf = matRad_computeSSD(stf,ct)
+   stf = matRad_computeSSD(stf,ct,mode)
+
+ input
+   ct:     ct cube
+   stf:    matRad steering information struct
+   mode:   optional parameter specifying how to handle multiple
+           cubes to compute one SSD
+ output
+   stf:    matRad steering information struct
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2017 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_siddonRayTracer.html" class="code" title="function [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(isocenter,resolution,sourcePoint,targetPoint,cubes)">matRad_siddonRayTracer</a>	siddon ray tracing through 3D cube to calculate the radiological depth</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_calcDoseInit.html" class="code" title="">matRad_calcDoseInit</a>	</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>Subfunctions <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<ul style="list-style-type:disc">
+<li><a href="#_sub1" class="code">function bestSSD = matRad_closestNeighbourSSD(rayPos, SSD, currPos)</a></li></ul>
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function stf = matRad_computeSSD(stf,ct,mode)</a>
+0002 <span class="comment">% matRad SSD calculation</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   stf = matRad_computeSSD(stf,ct)</span>
+0006 <span class="comment">%   stf = matRad_computeSSD(stf,ct,mode)</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% input</span>
+0009 <span class="comment">%   ct:     ct cube</span>
+0010 <span class="comment">%   stf:    matRad steering information struct</span>
+0011 <span class="comment">%   mode:   optional parameter specifying how to handle multiple</span>
+0012 <span class="comment">%           cubes to compute one SSD</span>
+0013 <span class="comment">% output</span>
+0014 <span class="comment">%   stf:    matRad steering information struct</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% References</span>
+0017 <span class="comment">%   -</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% Copyright 2017 the matRad development team.</span>
+0022 <span class="comment">%</span>
+0023 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0024 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0025 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0026 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0027 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0028 <span class="comment">% LICENSE file.</span>
+0029 <span class="comment">%</span>
+0030 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0031 
+0032 
+0033 matRad_cfg = MatRad_Config.instance();
+0034 
+0035 <span class="keyword">if</span> nargin &lt; 3
+0036     mode = <span class="string">'first'</span>;
+0037 <span class="keyword">end</span>
+0038 
+0039 <span class="comment">% booleon to show warnings only once in the console</span>
+0040 boolShowWarning = true;
+0041 
+0042 <span class="comment">% set density threshold for SSD computation</span>
+0043 densityThreshold = matRad_cfg.propDoseCalc.defaultSsdDensityThreshold;
+0044 
+0045 <span class="keyword">if</span> strcmp(mode,<span class="string">'first'</span>)
+0046     
+0047     <span class="keyword">for</span> i = 1:size(stf,2)
+0048         SSD = cell(1,stf(i).numOfRays);
+0049         <span class="keyword">for</span> j = 1:stf(i).numOfRays
+0050             [alpha,~,rho,~,~] = <a href="matRad_siddonRayTracer.html" class="code" title="function [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(isocenter,resolution,sourcePoint,targetPoint,cubes)">matRad_siddonRayTracer</a>(stf(i).isoCenter, <span class="keyword">...</span>
+0051                                  ct.resolution, <span class="keyword">...</span>
+0052                                  stf(i).sourcePoint, <span class="keyword">...</span>
+0053                                  stf(i).ray(j).targetPoint, <span class="keyword">...</span>
+0054                                  {ct.cube{1}});
+0055             ixSSD = find(rho{1} &gt; densityThreshold,1,<span class="string">'first'</span>);
+0056 
+0057             <span class="keyword">if</span> boolShowWarning
+0058                 <span class="keyword">if</span> isempty(ixSSD)
+0059                     matRad_cfg.dispWarning(<span class="string">'ray does not hit patient. Trying to fix afterwards...'</span>);
+0060                     boolShowWarning = false;
+0061                 <span class="keyword">elseif</span> ixSSD(1) == 1
+0062                     matRad_cfg.dispWarning(<span class="string">'Surface for SSD calculation starts directly in first voxel of CT!'</span>);
+0063                     boolShowWarning = false;
+0064                 <span class="keyword">end</span>
+0065             <span class="keyword">end</span>
+0066             
+0067             <span class="comment">% calculate SSD</span>
+0068             SSD{j} = double(2 * stf(i).SAD * alpha(ixSSD));
+0069             stf(i).ray(j).SSD = SSD{j};            
+0070         <span class="keyword">end</span>
+0071         
+0072         <span class="comment">% try to fix SSD by using SSD of closest neighbouring ray</span>
+0073         SSDnotSet = find(cellfun(<span class="string">'isempty'</span>,SSD));
+0074         <span class="keyword">if</span> ~isempty(SSDnotSet)
+0075             rayPos_bev = reshape([stf(i).ray(:).rayPos_bev]',[3 stf(i).numOfRays])';
+0076             <span class="keyword">for</span> j = SSDnotSet
+0077                 stf(i).ray(j).SSD =  <a href="#_sub1" class="code" title="subfunction bestSSD = matRad_closestNeighbourSSD(rayPos, SSD, currPos)">matRad_closestNeighbourSSD</a>(rayPos_bev, SSD, rayPos_bev(j,:));
+0078             <span class="keyword">end</span>
+0079         <span class="keyword">end</span>
+0080     <span class="keyword">end</span>
+0081 <span class="keyword">else</span>
+0082     matRad_cfg.dispError(<span class="string">'mode not defined for SSD calculation'</span>);
+0083 <span class="keyword">end</span>
+0084 
+0085 <span class="keyword">end</span>
+0086 
+0087 <span class="comment">% default setting only use first cube</span>
+0088 <a name="_sub1" href="#_subfunctions" class="code">function bestSSD = matRad_closestNeighbourSSD(rayPos, SSD, currPos)</a>
+0089     vDistances = sum((rayPos - repmat(currPos,size(rayPos,1),1)).^2,2);
+0090     [~, vIdx]   = sort(vDistances);
+0091     <span class="keyword">for</span> ix = vIdx'
+0092         bestSSD = SSD{ix};
+0093         <span class="comment">% if SSD has been found, bestSSD is not empty</span>
+0094         <span class="keyword">if</span> ~any(isempty(bestSSD))
+0095             <span class="keyword">break</span>
+0096         <span class="keyword">end</span>
+0097     <span class="keyword">end</span>
+0098     <span class="keyword">if</span> any(isempty(bestSSD))
+0099         matRad_cfg = MatRad_Config.instance();
+0100         matRad_cfg.dispError(<span class="string">'Could not fix SSD calculation.'</span>);
+0101     <span class="keyword">end</span>
+0102 <span class="keyword">end</span>
+0103</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

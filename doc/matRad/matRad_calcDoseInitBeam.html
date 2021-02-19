@@ -1,0 +1,101 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_calcDoseInitBeam</title>
+  <meta name="keywords" content="matRad_calcDoseInitBeam">
+  <meta name="description" content="">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_calcDoseInitBeam
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"></div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">This is a script file. </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"></pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_getRotationMatrix.html" class="code" title="function rotMat = matRad_getRotationMatrix(gantryAngle,couchAngle,system)">matRad_getRotationMatrix</a>	matRad function to return the rotation / transformation matrix</li><li><a href="matRad_interpRadDepth.html" class="code" title="function radDepthVcoarse = matRad_interpRadDepth(ct,ctScenNum,V,Vcoarse,vXgrid,vYgrid,vZgrid,radDepthV)">matRad_interpRadDepth</a>	down/up sampling the radiological depth dose cubes</li><li><a href="matRad_rayTracing.html" class="code" title="function radDepthV = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCutoff)">matRad_rayTracing</a>	matRad visualization of two-dimensional dose distributions on ct</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_calcParticleDose.html" class="code" title="function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcParticleDose</a>	matRad particle dose calculation wrapper</li><li><a href="matRad_calcPhotonDose.html" class="code" title="function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcPhotonDose</a>	matRad photon dose calculation wrapper</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 matRad_cfg.dispInfo(<span class="string">'Beam %d of %d:\n'</span>,i,dij.numOfBeams);
+0002 
+0003 <span class="comment">% remember beam and bixel number</span>
+0004 <span class="keyword">if</span> calcDoseDirect
+0005     dij.beamNum(i)    = i;
+0006     dij.rayNum(i)     = i;
+0007     dij.bixelNum(i)   = i;
+0008 <span class="keyword">end</span>
+0009 
+0010 bixelsPerBeam = 0;
+0011 
+0012 <span class="comment">% convert voxel indices to real coordinates using iso center of beam i</span>
+0013 xCoordsV       = xCoordsV_vox(:)*ct.resolution.x-stf(i).isoCenter(1);
+0014 yCoordsV       = yCoordsV_vox(:)*ct.resolution.y-stf(i).isoCenter(2);
+0015 zCoordsV       = zCoordsV_vox(:)*ct.resolution.z-stf(i).isoCenter(3);
+0016 coordsV        = [xCoordsV yCoordsV zCoordsV];
+0017 
+0018 xCoordsVdoseGrid = xCoordsV_voxDoseGrid(:)*dij.doseGrid.resolution.x-stf(i).isoCenter(1);
+0019 yCoordsVdoseGrid = yCoordsV_voxDoseGrid(:)*dij.doseGrid.resolution.y-stf(i).isoCenter(2);
+0020 zCoordsVdoseGrid = zCoordsV_voxDoseGrid(:)*dij.doseGrid.resolution.z-stf(i).isoCenter(3);
+0021 coordsVdoseGrid  = [xCoordsVdoseGrid yCoordsVdoseGrid zCoordsVdoseGrid];
+0022 
+0023 <span class="comment">% Get Rotation Matrix</span>
+0024 <span class="comment">% Do not transpose matrix since we usage of row vectors &amp;</span>
+0025 <span class="comment">% transformation of the coordinate system need double transpose</span>
+0026 
+0027 rotMat_system_T = <a href="matRad_getRotationMatrix.html" class="code" title="function rotMat = matRad_getRotationMatrix(gantryAngle,couchAngle,system)">matRad_getRotationMatrix</a>(stf(i).gantryAngle,stf(i).couchAngle);
+0028 
+0029 <span class="comment">% Rotate coordinates (1st couch around Y axis, 2nd gantry movement)</span>
+0030 rot_coordsV         = coordsV*rotMat_system_T;
+0031 rot_coordsVdoseGrid = coordsVdoseGrid*rotMat_system_T;
+0032 
+0033 rot_coordsV(:,1) = rot_coordsV(:,1)-stf(i).sourcePoint_bev(1);
+0034 rot_coordsV(:,2) = rot_coordsV(:,2)-stf(i).sourcePoint_bev(2);
+0035 rot_coordsV(:,3) = rot_coordsV(:,3)-stf(i).sourcePoint_bev(3);
+0036 
+0037 rot_coordsVdoseGrid(:,1) = rot_coordsVdoseGrid(:,1)-stf(i).sourcePoint_bev(1);
+0038 rot_coordsVdoseGrid(:,2) = rot_coordsVdoseGrid(:,2)-stf(i).sourcePoint_bev(2);
+0039 rot_coordsVdoseGrid(:,3) = rot_coordsVdoseGrid(:,3)-stf(i).sourcePoint_bev(3);
+0040 
+0041 <span class="comment">% calculate geometric distances</span>
+0042 geoDistVdoseGrid{1}= sqrt(sum(rot_coordsVdoseGrid.^2,2));
+0043 
+0044 <span class="comment">% Calculate radiological depth cube</span>
+0045 matRad_cfg.dispInfo(<span class="string">'matRad: calculate radiological depth cube... '</span>);
+0046 radDepthVctGrid = <a href="matRad_rayTracing.html" class="code" title="function radDepthV = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCutoff)">matRad_rayTracing</a>(stf(i),ct,VctGrid,rot_coordsV,effectiveLateralCutoff);
+0047 matRad_cfg.dispInfo(<span class="string">'done.\n'</span>);
+0048 
+0049 <span class="comment">% interpolate radiological depth cube to dose grid resolution</span>
+0050 radDepthVdoseGrid = <a href="matRad_interpRadDepth.html" class="code" title="function radDepthVcoarse = matRad_interpRadDepth(ct,ctScenNum,V,Vcoarse,vXgrid,vYgrid,vZgrid,radDepthV)">matRad_interpRadDepth</a><span class="keyword">...</span>
+0051     (ct,1,VctGrid,VdoseGrid,dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z,radDepthVctGrid);
+0052  
+0053 <span class="comment">% limit rotated coordinates to positions where ray tracing is availabe</span>
+0054 rot_coordsVdoseGrid = rot_coordsVdoseGrid(~isnan(radDepthVdoseGrid{1}),:);
+0055</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

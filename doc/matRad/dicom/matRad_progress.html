@@ -1,0 +1,122 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_progress</title>
+  <meta name="keywords" content="matRad_progress">
+  <meta name="description" content="matRad progress bar">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html dicom -->
+<h1>matRad_progress
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad progress bar</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function matRad_progress(currentIndex, totalNumberOfEvaluations) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad progress bar
+ 
+ call
+   matRad_progress(currentIndex, totalNumberOfEvaluations)
+
+ input
+   currentIndex:               current iteration index
+   totalNumberOfEvaluations:   maximum iteration index
+
+ output
+   graphical display of progess. make sure there is no other output
+   written during the loop to prevent confusion
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/dicom/@matRad_DicomExporter/matRad_exportDicomCt.html" class="code" title="function obj = matRad_exportDicomCt(obj)">matRad_exportDicomCt</a>	matRad function to export ct to dicom.</li><li><a href="../../matRad/dicom/@matRad_DicomExporter/matRad_exportDicomRTDoses.html" class="code" title="function obj = matRad_exportDicomRTDoses(obj)">matRad_exportDicomRTDoses</a>	matRad function to exportt resultGUI to dicom RT dose.</li><li><a href="matRad_importDicomCt.html" class="code" title="function ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid, visBool)">matRad_importDicomCt</a>	matRad function to import dicom ct data</li><li><a href="matRad_scanDicomImportFolder.html" class="code" title="function [ fileList, patientList ] = matRad_scanDicomImportFolder( patDir )">matRad_scanDicomImportFolder</a>	matRad function to scan a folder for dicom data</li><li><a href="../../matRad/matRad_calcParticleDose.html" class="code" title="function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcParticleDose</a>	matRad particle dose calculation wrapper</li><li><a href="../../matRad/matRad_calcPhotonDose.html" class="code" title="function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcPhotonDose</a>	matRad photon dose calculation wrapper</li><li><a href="../../matRad/matRad_generateStf.html" class="code" title="function stf = matRad_generateStf(ct,cst,pln,visMode)">matRad_generateStf</a>	matRad steering information generation</li><li><a href="../../matRad/plotting/matRad_computeAllVoiSurfaces.html" class="code" title="function cst = matRad_computeAllVoiSurfaces(ct,cst)">matRad_computeAllVoiSurfaces</a>	matRad function that computes all VOI surfaces</li><li><a href="../../matRad/plotting/matRad_computeVoiContours.html" class="code" title="function cst = matRad_computeVoiContours(ct,cst)">matRad_computeVoiContours</a>	matRad function that computes all VOI contours</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function matRad_progress(currentIndex, totalNumberOfEvaluations)</a>
+0002 <span class="comment">% matRad progress bar</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   matRad_progress(currentIndex, totalNumberOfEvaluations)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   currentIndex:               current iteration index</span>
+0009 <span class="comment">%   totalNumberOfEvaluations:   maximum iteration index</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% output</span>
+0012 <span class="comment">%   graphical display of progess. make sure there is no other output</span>
+0013 <span class="comment">%   written during the loop to prevent confusion</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% References</span>
+0016 <span class="comment">%   -</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0023 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0024 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0025 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0026 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0027 <span class="comment">% LICENSE file.</span>
+0028 <span class="comment">%</span>
+0029 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0030  
+0031 <span class="comment">% If it's not the first step, erase the stuff printed before</span>
+0032 <span class="keyword">if</span> (currentIndex == 1 || nargin &gt; 2)
+0033     fprintf(<span class="string">'Progress: '</span>);
+0034 <span class="keyword">end</span>
+0035  
+0036 <span class="keyword">if</span> (currentIndex &gt; 1 &amp;&amp; nargin &lt; 3)
+0037   Length = numel(sprintf(<span class="string">'%3.2f %%'</span>,(currentIndex-1)/totalNumberOfEvaluations*100));
+0038   fprintf(repmat(<span class="string">'\b'</span>,1,Length));
+0039 <span class="keyword">end</span>
+0040  
+0041 <span class="comment">% Print the progress tool</span>
+0042 fprintf(<span class="string">'%3.2f %%'</span>,currentIndex/totalNumberOfEvaluations*100);
+0043  
+0044 <span class="comment">% After the last iteration print a newline command</span>
+0045 <span class="keyword">if</span> (currentIndex == totalNumberOfEvaluations)
+0046     fprintf(<span class="string">'\n'</span>);
+0047 <span class="keyword">end</span>
+0048  
+0049 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,22 @@
+/* Created by mdot for Matlab */
+digraph m2html {
+  matRad_exportGUI -> matRad_writeCube;
+  matRad_importGUI -> matRad_importPatient;
+  matRad_importPatient -> matRad_readCube;
+  matRad_importPatient -> matRad_readHLUT;
+  matRad_readCube -> matRad_readNRRD;
+  matRad_writeCube -> matRad_writeMHA;
+  matRad_writeCube -> matRad_writeNRRD;
+  matRad_writeCube -> matRad_writeVTK;
+
+  matRad_exportGUI [URL="matRad_exportGUI.html"];
+  matRad_importGUI [URL="matRad_importGUI.html"];
+  matRad_importPatient [URL="matRad_importPatient.html"];
+  matRad_readCube [URL="matRad_readCube.html"];
+  matRad_readHLUT [URL="matRad_readHLUT.html"];
+  matRad_readNRRD [URL="matRad_readNRRD.html"];
+  matRad_writeCube [URL="matRad_writeCube.html"];
+  matRad_writeMHA [URL="matRad_writeMHA.html"];
+  matRad_writeNRRD [URL="matRad_writeNRRD.html"];
+  matRad_writeVTK [URL="matRad_writeVTK.html"];
+}

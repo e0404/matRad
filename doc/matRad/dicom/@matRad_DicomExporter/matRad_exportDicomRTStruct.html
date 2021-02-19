@@ -1,0 +1,336 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_exportDicomRTStruct</title>
+  <meta name="keywords" content="matRad_exportDicomRTStruct">
+  <meta name="description" content="matRad function to export dicom RT structure set.">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../../menu.html matRad --><!-- ../menu.html dicom --><!-- menu.html @matRad_DicomExporter -->
+<h1>matRad_exportDicomRTStruct
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">matRad function to export dicom RT structure set.</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">function obj = matRad_exportDicomRTStruct(obj) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to export dicom RT structure set. 
+ Class method of matRad_DicomExporter
+ 
+ call
+   matRad_DicomExporter.matRad_exportDicomRTStruct()
+          
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="../../../matRad/plotting/matRad_computeVoiContoursWrapper.html" class="code" title="function cst = matRad_computeVoiContoursWrapper(cst,ct)">matRad_computeVoiContoursWrapper</a>	matRad computation of VOI contours if not precomputed</li><li><a href="../../../matRad/tools/matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>	matRad function to get the software environment matRad is running on</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_DicomExporter.html" class="code" title="">matRad_DicomExporter</a>	</li><li><a href="matRad_exportDicom.html" class="code" title="function obj = matRad_exportDicom(obj)">matRad_exportDicom</a>	matRad function to export current workspace to DICOM.</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>Subfunctions <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<ul style="list-style-type:disc">
+<li><a href="#_sub1" class="code">function c = addSlicePos(c,slicePos)</a></li></ul>
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function obj = matRad_exportDicomRTStruct(obj)</a>
+0002 <span class="comment">% matRad function to export dicom RT structure set.</span>
+0003 <span class="comment">% Class method of matRad_DicomExporter</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% call</span>
+0006 <span class="comment">%   matRad_DicomExporter.matRad_exportDicomRTStruct()</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% References</span>
+0010 <span class="comment">%   -</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0017 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0018 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0019 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0020 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0021 <span class="comment">% LICENSE file.</span>
+0022 <span class="comment">%</span>
+0023 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0024 
+0025  matRad_cfg = MatRad_Config.instance();
+0026 matRad_cfg.dispInfo(<span class="string">'Exporting DICOM RTStruct...\n'</span>);
+0027 
+0028 env = <a href="../../../matRad/tools/matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>();
+0029 isOctave = strcmp(env,<span class="string">'OCTAVE'</span>);
+0030 
+0031 <span class="keyword">if</span> isOctave
+0032     matRad_cfg.dispWarning(<span class="string">'RTStruct export currently not supported by matRad running in Octave due to crashing dicomwrite! Skipping...'</span>);
+0033     <span class="keyword">return</span>;
+0034 <span class="keyword">end</span>
+0035 
+0036 <span class="comment">%% Metadata</span>
+0037 <span class="comment">%Class UID</span>
+0038 ClassUID = <span class="string">'1.2.840.10008.5.1.4.1.1.481.3'</span>; <span class="comment">%RT Structure Set</span>
+0039 meta.MediaStorageSOPClassUID = ClassUID;
+0040 meta.SOPClassUID             = ClassUID;
+0041 <span class="comment">%TransferSyntaxUID = '1.2.840.10008.1.2.1'; %Explicit VR Little Endian - correct?</span>
+0042 <span class="comment">%meta.TransferSyntaxUID = TransferSyntaxUID;</span>
+0043 
+0044 <span class="comment">%Identifiers</span>
+0045 meta.SOPInstanceUID             = dicomuid;
+0046 meta.MediaStorageSOPInstanceUID = meta.SOPInstanceUID;
+0047 meta.SeriesInstanceUID          = dicomuid;
+0048 meta.SeriesNumber               = 1;
+0049 meta.InstanceNumber             = 1;
+0050 
+0051 <span class="comment">%Remaining Meta Data</span>
+0052 meta.Modality = <span class="string">'RTSTRUCT'</span>;
+0053 meta.Manufacturer = <span class="string">''</span>;
+0054 meta.ReferringPhysicianName = obj.dicomName();
+0055 meta.OperatorsName = obj.OperatorsName;
+0056 meta.StationName = <span class="string">''</span>;
+0057 meta = obj.assignDefaultMetaValue(meta,<span class="string">'ManufacturerModelName'</span>,<span class="string">'matRad DicomExport'</span>);
+0058 
+0059 meta.PatientName = obj.PatientName;
+0060 meta.PatientID = obj.PatientID;
+0061 meta.PatientBirthDate = obj.PatientBirthDate;
+0062 meta.PatientSex = obj.PatientSex;
+0063 
+0064 <span class="comment">%Name</span>
+0065 meta = matRad_DicomExporter.assignDefaultMetaValue(meta,<span class="string">'StructureSetLabel'</span>,<span class="string">'matRad_cst'</span>);
+0066 meta = matRad_DicomExporter.assignDefaultMetaValue(meta,<span class="string">'StructureSetName'</span>,<span class="string">'matRad exported cst'</span>);
+0067 
+0068 
+0069 
+0070 <span class="comment">%ID of the Study</span>
+0071 meta.StudyInstanceUID = obj.StudyInstanceUID;
+0072 meta.StudyID          = obj.StudyID; 
+0073 
+0074 <span class="comment">%Dates &amp; Times</span>
+0075 currDate = now;
+0076 currDateStr = datestr(currDate,<span class="string">'yyyymmdd'</span>);
+0077 currTimeStr = datestr(currDate,<span class="string">'HHMMSS'</span>);
+0078 meta.InstanceCreationDate = currDateStr;
+0079 meta.InstanceCreationTime = currTimeStr;
+0080 meta.StudyDate = obj.StudyDate;
+0081 meta.StudyTime = obj.StudyTime;
+0082 meta = matRad_DicomExporter.assignDefaultMetaValue(meta,<span class="string">'StructureSetDate'</span>,currDateStr);
+0083 meta = matRad_DicomExporter.assignDefaultMetaValue(meta,<span class="string">'StructureSetTime'</span>,currTimeStr);
+0084 
+0085 
+0086 <span class="comment">%Remaining stuff</span>
+0087 meta.AccessionNumber = <span class="string">''</span>;
+0088 
+0089 <span class="comment">%meta.PatientBirthDate = '';</span>
+0090 <span class="comment">%meta.PatientSex = 'O';</span>
+0091 <span class="comment">%meta.SoftwareVersion = '';</span>
+0092 
+0093 ct = obj.ct;
+0094 
+0095 <span class="comment">%Create X Y Z vectors if not present</span>
+0096 <span class="keyword">if</span> ~any(isfield(ct,{<span class="string">'x'</span>,<span class="string">'y'</span>,<span class="string">'z'</span>}))
+0097     <span class="comment">%positionOffset = transpose(ct.cubeDim ./ 2);</span>
+0098     positionOffset = ct.cubeDim ./ 2;
+0099     ct.x = ct.resolution.x*[0:ct.cubeDim(2)-1] - positionOffset(2);
+0100     ct.y = ct.resolution.y*[0:ct.cubeDim(1)-1] - positionOffset(1);
+0101     ct.z = ct.resolution.z*[0:ct.cubeDim(3)-1] - positionOffset(3);
+0102 <span class="keyword">end</span>
+0103 
+0104 
+0105 <span class="comment">%Since we are exporting HU directly --&gt; no rescaling in any case</span>
+0106 <span class="comment">%meta.SliceThickness = ct.resolution.z;</span>
+0107 <span class="comment">%meta.PixelSpacing = [ct.resolution.y; ct.resolution.x];</span>
+0108 <span class="comment">%meta.ImageOrientationPatient = [1;0;0;0;1;0]; %lps</span>
+0109 
+0110 <span class="comment">%meta.RescaleSlope = 1;</span>
+0111 <span class="comment">%meta.RescaleIntercept = 0;</span>
+0112 
+0113 obj.cst = <a href="../../../matRad/plotting/matRad_computeVoiContoursWrapper.html" class="code" title="function cst = matRad_computeVoiContoursWrapper(cst,ct)">matRad_computeVoiContoursWrapper</a>(obj.cst,ct);
+0114 
+0115 <span class="keyword">for</span> i = 1:size(obj.cst,1)
+0116    
+0117     fprintf(<span class="string">'Processinging VOI ''%s''...'</span>,obj.cst{i,2});
+0118    <span class="comment">%Select contours in axial slices</span>
+0119     contours        = obj.cst{i,7}(:,3);
+0120     contourSliceIx  = find(~cellfun(@isempty,contours));    
+0121     contourSlicePos = ct.z(contourSliceIx);
+0122     contours        = contours(contourSliceIx);
+0123         
+0124     <span class="comment">% consider multiple contours of the same object</span>
+0125     <span class="keyword">for</span> slice = 1:numel(contours)
+0126        
+0127        tmpContour = [];
+0128        lower         = 1; <span class="comment">% lower marks the beginning of a section</span>
+0129        cnt           = 0;
+0130        
+0131        <span class="keyword">while</span> lower-1 ~= size(contours{slice,1},2)
+0132          
+0133           steps = contours{slice,1}(2,lower); <span class="comment">% number of elements of current line section</span>
+0134           
+0135           tmpContour(:,lower-cnt:lower-cnt+steps-1) = contours{slice,1}(:,lower+1:lower+steps);
+0136           
+0137           lower = lower+steps+1;
+0138           cnt   = cnt + 1;
+0139        <span class="keyword">end</span>
+0140        
+0141        contours{slice,1} = tmpContour;
+0142        
+0143     <span class="keyword">end</span>
+0144     
+0145     contours = cellfun(@(c) [ct.resolution.x; ct.resolution.y].* c + [ct.x(1) - ct.resolution.x;<span class="keyword">...</span>
+0146                              ct.y(1) - ct.resolution.y],contours,<span class="string">'UniformOutput'</span>,false);
+0147       
+0148     
+0149     contours = cellfun(@(c,pos) <a href="#_sub1" class="code" title="subfunction c = addSlicePos(c,slicePos)">addSlicePos</a>(c,pos),contours,num2cell(contourSlicePos)',<span class="string">'UniformOutput'</span>,false);
+0150     <span class="comment">%contours = cellfun(@transpose,contours,'UniformOutput',false);</span>
+0151     
+0152     <span class="comment">%Structure Definition</span>
+0153     ROISequenceItem.ROINumber = i;    
+0154     ROISequenceItem.ReferencedFrameOfReferenceUID = obj.FrameOfReferenceUID;
+0155     ROISequenceItem.ROIName = obj.cst{i,2};
+0156     ROISequenceItem.ROIGenerationAlgorithm = <span class="string">''</span>;
+0157     
+0158     meta.StructureSetROISequence.([<span class="string">'Item_'</span> num2str(i)]) = ROISequenceItem;
+0159     
+0160     <span class="comment">%Contour Sequence</span>
+0161     <span class="keyword">if</span> ~isOctave
+0162         ROIContourSequenceItem.ROIDisplayColor = int32(round(255 * obj.cst{i,5}.visibleColor));
+0163     <span class="keyword">end</span>
+0164     
+0165     <span class="comment">%Now create Contour subitems</span>
+0166     ContourSequence = struct;
+0167     <span class="keyword">for</span> c = 1:numel(contours)
+0168         ContourItem = struct;
+0169         
+0170         <span class="comment">%First store Image Sequence</span>
+0171         currCtSliceMeta = obj.ctSliceMetas(contourSliceIx(c));
+0172         <span class="comment">%currCtSliceMeta = matRad_DicomExporter.assignDefaultMetaValue(currCtSliceMeta,'SOPClassUID','1.2.840.10008.5.1.4.1.1.2');</span>
+0173         
+0174         <span class="comment">%Not sure about this</span>
+0175         ContourItem.ContourImageSequence.Item_1.ReferencedSOPClassUID = currCtSliceMeta.SOPClassUID; <span class="comment">%We are referencing the CT</span>
+0176         ContourItem.ContourImageSequence.Item_1.ReferencedSOPInstanceUID = currCtSliceMeta.SOPInstanceUID; <span class="comment">%TODO: ID of the respective ctSlice</span>
+0177         
+0178         <span class="comment">%Now remaing data</span>
+0179         ContourItem.ContourGeometricType = <span class="string">'CLOSED_PLANAR'</span>;
+0180         ContourItem.NumberOfContourPoints = size(contours{c},2);
+0181         ContourItem.ContourData = contours{c}(:);
+0182         
+0183         
+0184         <span class="comment">%Now store Item</span>
+0185         ContourSequence.([<span class="string">'Item_'</span> num2str(c)]) = ContourItem;
+0186     <span class="keyword">end</span>
+0187     ROIContourSequenceItem.ContourSequence = ContourSequence;
+0188     
+0189     ROIContourSequenceItem.ReferencedROINumber = i;
+0190     
+0191     <span class="comment">%Store to meta data</span>
+0192     meta.ROIContourSequence.([<span class="string">'Item_'</span> num2str(i)]) = ROIContourSequenceItem;
+0193     
+0194     <span class="comment">%RTROI Observation Sequence</span>
+0195     RTROIObservationsSequenceItem.ObservationNumber = i;
+0196     RTROIObservationsSequenceItem.ReferencedROINumber = i;
+0197     RTROIObservationsSequenceItem.ROIObservationLabel = obj.cst{i,2};
+0198         
+0199     
+0200     <span class="keyword">if</span> strcmp(obj.cst{i,3},<span class="string">'TARGET'</span>)
+0201         <span class="keyword">if</span> ~isempty(regexpi(obj.cst{i,2},[<span class="string">'('</span> strjoin(obj.targetPtvDict) <span class="string">')'</span>]))
+0202             RTROIObservationsSequenceItem.RTROIInterpretedType = <span class="string">'PTV'</span>;
+0203             fprintf(<span class="string">'identified target type as PTV...'</span>);
+0204         <span class="keyword">elseif</span> ~isempty(regexpi(obj.cst{i,2},[<span class="string">'('</span> strjoin(obj.targetGtvDict) <span class="string">')'</span>]))
+0205             RTROIObservationsSequenceItem.RTROIInterpretedType = <span class="string">'GTV'</span>;
+0206             fprintf(<span class="string">'identified target type as GTV...'</span>);
+0207         <span class="keyword">elseif</span> ~isempty(regexpi(obj.cst{i,2},[<span class="string">'('</span> strjoin(obj.targetGtvDict) <span class="string">')'</span>]))
+0208             RTROIObservationsSequenceItem.RTROIInterpretedType = <span class="string">'CTV'</span>;
+0209             fprintf(<span class="string">'identified target type as CTV...'</span>);
+0210         <span class="keyword">else</span>
+0211             RTROIObservationsSequenceItem.RTROIInterpretedType = <span class="string">'CTV'</span>;
+0212             fprintf(<span class="string">'Defaulting target type to CTV...'</span>);
+0213         <span class="keyword">end</span>
+0214     <span class="keyword">else</span>
+0215         <span class="keyword">if</span> ~isempty(regexpi(obj.cst{i,2},[<span class="string">'('</span> strjoin(obj.externalContourDict) <span class="string">')'</span>]))
+0216             fprintf(<span class="string">'automatically identified as External Contour...'</span>);
+0217             RTROIObservationsSequenceItem.RTROIInterpretedType = <span class="string">'EXTERNAL'</span>;
+0218         <span class="keyword">else</span>
+0219             RTROIObservationsSequenceItem.RTROIInterpretedType = <span class="string">'AVOIDANCE'</span>;
+0220         <span class="keyword">end</span>
+0221     <span class="keyword">end</span>
+0222     
+0223     RTROIObservationsSequenceItem.ROIInterpreter = obj.dicomName();
+0224 
+0225     meta.RTROIObservationsSequence.([<span class="string">'Item_'</span> num2str(i)]) = RTROIObservationsSequenceItem;
+0226     
+0227     fprintf(<span class="string">'Done!\n'</span>);
+0228     <span class="comment">%matRad_progress(i,size(obj.cst,1));</span>
+0229 <span class="keyword">end</span>
+0230 
+0231 
+0232 
+0233 <span class="keyword">for</span> i = 1:numel(obj.ctSliceMetas)
+0234     ImageSequenceItem.ReferencedSOPClassUID = obj.ctSliceMetas(i).SOPClassUID;
+0235     ImageSequenceItem.ReferencedSOPInstanceUID = obj.ctSliceMetas(i).SOPInstanceUID;
+0236     ContourImageSequence.([<span class="string">'Item_'</span> num2str(i)]) = ImageSequenceItem;
+0237 <span class="keyword">end</span>
+0238 
+0239 RTReferencedSeriesSequenceItem.SeriesInstanceUID = obj.ctSliceMetas(1).SeriesInstanceUID;
+0240 RTReferencedSeriesSequenceItem.ContourImageSequence = ContourImageSequence;
+0241 
+0242 RTReferencedStudySequenceItem.ReferencedSOPClassUID = <span class="string">'1.2.840.10008.3.1.2.3.2'</span>; <span class="comment">%Apparently this class UID is deprecated in DICOM standard - what to use instead?</span>
+0243 RTReferencedStudySequenceItem.ReferencedSOPInstanceUID = obj.StudyInstanceUID;
+0244 RTReferencedStudySequenceItem.RTReferencedSeriesSequence.Item_1 = RTReferencedSeriesSequenceItem;
+0245 
+0246 meta.ReferencedFrameOfReferenceSequence.Item_1.FrameOfReferenceUID = obj.FrameOfReferenceUID;
+0247 meta.ReferencedFrameOfReferenceSequence.Item_1.RTReferencedStudySequence.Item_1 = RTReferencedStudySequenceItem;
+0248 
+0249 filename = <span class="string">'RTstruct.dcm'</span>;
+0250 filepath = obj.dicomDir;
+0251 filename = fullfile(filepath,filename);
+0252 
+0253 
+0254 <span class="keyword">if</span> isOctave
+0255     dicomwrite(int16(zeros(2)),filename,meta);
+0256 <span class="keyword">else</span>
+0257     obj.rtssExportStatus = dicomwrite([],filename,meta,<span class="string">'CreateMode'</span>,<span class="string">'copy'</span>);<span class="comment">%,'TransferSyntax',TransferSyntaxUID);</span>
+0258 <span class="keyword">end</span>
+0259 
+0260 obj.rtssMeta = meta;
+0261 <span class="keyword">end</span> 
+0262 
+0263 <a name="_sub1" href="#_subfunctions" class="code">function c = addSlicePos(c,slicePos)</a>
+0264     nPoints  = size(c,2);
+0265     slicePos = slicePos * ones(1,nPoints);
+0266     c(3,:)   = slicePos;
+0267 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

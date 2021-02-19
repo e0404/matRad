@@ -1,0 +1,447 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_siochiLeafSequencing</title>
+  <meta name="keywords" content="matRad_siochiLeafSequencing">
+  <meta name="description" content="multileaf collimator leaf sequencing algorithm">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_siochiLeafSequencing
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">multileaf collimator leaf sequencing algorithm</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> multileaf collimator leaf sequencing algorithm 
+ for intensity modulated beams with multiple static segments according to 
+ Siochi (1999)International Journal of Radiation Oncology * Biology * Physics,
+ originally implemented in PLUNC (https://sites.google.com/site/planunc/)
+
+ Implemented in matRad by Eric Christiansen, Emily Heath, and Tong Xu
+
+ call
+   resultGUI =
+   matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels)
+   resultGUI =
+   matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)
+
+ input
+   resultGUI:          resultGUI struct to which the output data will be
+                       added, if this field is empty resultGUI struct will
+                       be created
+   stf:                matRad steering information struct
+   dij:                matRad's dij matrix
+   numOfLevels:        number of stratification levels
+   visBool:            toggle on/off visualization (optional)
+
+ output
+   resultGUI:          matRad result struct containing the new dose cube
+                       as well as the corresponding weights
+
+ References
+   [1] https://www.ncbi.nlm.nih.gov/pubmed/10078655
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team.
+
+ This file is part of the matRad project. It is subject to the license
+ terms in the LICENSE file found in the top-level directory of this
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+ of the matRad project, including this file, may be copied, modified,
+ propagated, or distributed except according to the terms contained in the
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ if visBool not set toogle off visualization</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_interp3.html" class="code" title="function y = matRad_interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal)">matRad_interp3</a>	interpolates 3-D data (table lookup)</li><li><a href="matRad_sequencing2ApertureInfo.html" class="code" title="function apertureInfo = matRad_sequencing2ApertureInfo(Sequencing,stf)">matRad_sequencing2ApertureInfo</a>	matRad function to generate a shape info struct</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../matRad/examples/matRad_example3_photonsDAO.html" class="code" title="">matRad_example3_photonsDAO</a>	% Example: Photon Treatment Plan with Direct aperture optimization</li><li><a href="matRad.html" class="code" title="">matRad</a>	matRad script</li><li><a href="matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>Subfunctions <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<ul style="list-style-type:disc">
+<li><a href="#_sub1" class="code">function [tops, bases] = matRad_siochiDecomposePort(map,dimZ,dimX,minZ,maxZ,minX,maxX)</a></li><li><a href="#_sub2" class="code">function [shapes,shapesWeight,k,D_k] = matRad_siochiConvertToSegments(shapes,shapesWeight,k,tops,bases,visBool,i,D_k,numOfLevels,seqFig,seqSubPlots)</a></li><li><a href="#_sub3" class="code">function diffSlab = matRad_siochiDifferentSlab(tops,bases,level)</a></li></ul>
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)</a>
+0002 <span class="comment">% multileaf collimator leaf sequencing algorithm</span>
+0003 <span class="comment">% for intensity modulated beams with multiple static segments according to</span>
+0004 <span class="comment">% Siochi (1999)International Journal of Radiation Oncology * Biology * Physics,</span>
+0005 <span class="comment">% originally implemented in PLUNC (https://sites.google.com/site/planunc/)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% Implemented in matRad by Eric Christiansen, Emily Heath, and Tong Xu</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% call</span>
+0010 <span class="comment">%   resultGUI =</span>
+0011 <span class="comment">%   matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels)</span>
+0012 <span class="comment">%   resultGUI =</span>
+0013 <span class="comment">%   matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% input</span>
+0016 <span class="comment">%   resultGUI:          resultGUI struct to which the output data will be</span>
+0017 <span class="comment">%                       added, if this field is empty resultGUI struct will</span>
+0018 <span class="comment">%                       be created</span>
+0019 <span class="comment">%   stf:                matRad steering information struct</span>
+0020 <span class="comment">%   dij:                matRad's dij matrix</span>
+0021 <span class="comment">%   numOfLevels:        number of stratification levels</span>
+0022 <span class="comment">%   visBool:            toggle on/off visualization (optional)</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% output</span>
+0025 <span class="comment">%   resultGUI:          matRad result struct containing the new dose cube</span>
+0026 <span class="comment">%                       as well as the corresponding weights</span>
+0027 <span class="comment">%</span>
+0028 <span class="comment">% References</span>
+0029 <span class="comment">%   [1] https://www.ncbi.nlm.nih.gov/pubmed/10078655</span>
+0030 <span class="comment">%</span>
+0031 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0032 <span class="comment">%</span>
+0033 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0034 <span class="comment">%</span>
+0035 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0036 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0037 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0038 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0039 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0040 <span class="comment">% LICENSE file.</span>
+0041 <span class="comment">%</span>
+0042 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0043 <span class="comment">% if visBool not set toogle off visualization</span>
+0044 <span class="keyword">if</span> nargin &lt; 5
+0045     visBool = 0;
+0046 <span class="keyword">end</span>
+0047 
+0048 numOfBeams = numel(stf);
+0049 
+0050 <span class="keyword">if</span> visBool
+0051     <span class="comment">% create the sequencing figure</span>
+0052     sz = [800 1000]; <span class="comment">% figure size</span>
+0053     screensize = get(0,<span class="string">'ScreenSize'</span>);
+0054     xpos = ceil((screensize(3)-sz(2))/2); <span class="comment">% center the figure on the screen horizontally</span>
+0055     ypos = ceil((screensize(4)-sz(1))/2); <span class="comment">% center the figure on the screen vertically</span>
+0056     seqFig = figure(<span class="string">'position'</span>,[xpos,ypos,sz(2),sz(1)]);     
+0057 <span class="keyword">end</span>
+0058 
+0059 offset = 0;
+0060 
+0061 <span class="keyword">for</span> i = 1:numOfBeams
+0062     
+0063     numOfRaysPerBeam = stf(i).numOfRays;
+0064     
+0065     <span class="comment">% get relevant weights for current beam</span>
+0066     wOfCurrBeams = resultGUI.wUnsequenced(1+offset:numOfRaysPerBeam+offset);<span class="comment">%REVIEW OFFSET</span>
+0067     
+0068     X = ones(numOfRaysPerBeam,1)*NaN;
+0069     Z = ones(numOfRaysPerBeam,1)*NaN;
+0070     
+0071     <span class="keyword">for</span> j = 1:stf(i).numOfRays
+0072         X(j) = stf(i).ray(j).rayPos_bev(:,1);
+0073         Z(j) = stf(i).ray(j).rayPos_bev(:,3);
+0074     <span class="keyword">end</span>
+0075     
+0076     <span class="comment">% sort bixels into matrix</span>
+0077     minX = min(X);
+0078     maxX = max(X);
+0079     minZ = min(Z);
+0080     maxZ = max(Z);
+0081     
+0082     dimOfFluenceMxX = (maxX-minX)/stf(i).bixelWidth + 1;
+0083     dimOfFluenceMxZ = (maxZ-minZ)/stf(i).bixelWidth + 1;
+0084     
+0085     <span class="comment">%Create the fluence matrix.</span>
+0086     fluenceMx = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
+0087     
+0088     <span class="comment">% Calculate X and Z position of every fluence's matrix spot z axis =</span>
+0089     <span class="comment">% axis of leaf movement!</span>
+0090     xPos = (X-minX)/stf(i).bixelWidth+1;
+0091     zPos = (Z-minZ)/stf(i).bixelWidth+1;
+0092     
+0093     <span class="comment">% Make subscripts for fluence matrix</span>
+0094     indInFluenceMx = zPos + (xPos-1)*dimOfFluenceMxZ;
+0095     
+0096     <span class="comment">%Save weights in fluence matrix.</span>
+0097     fluenceMx(indInFluenceMx) = wOfCurrBeams;
+0098     
+0099     <span class="comment">% Stratification</span>
+0100     calFac = max(fluenceMx(:));
+0101     D_k = round(fluenceMx/calFac*numOfLevels);
+0102     
+0103     <span class="comment">% Save the stratification in the initial intensity matrix D_0.</span>
+0104     D_0 = D_k;
+0105     
+0106     <span class="comment">% container to remember generated shapes; allocate space for 10000</span>
+0107     <span class="comment">% shapes</span>
+0108     shapes = NaN*ones(dimOfFluenceMxZ,dimOfFluenceMxX,10000);
+0109     shapesWeight = zeros(10000,1);
+0110     k = 0;
+0111     
+0112     <span class="keyword">if</span> visBool
+0113         clf(seqFig);
+0114         colormap(seqFig,<span class="string">'jet'</span>);
+0115         
+0116         seqSubPlots(1) = subplot(2,2,1,<span class="string">'parent'</span>,seqFig);
+0117         imagesc(D_k,<span class="string">'parent'</span>,seqSubPlots(1));
+0118         set(seqSubPlots(1),<span class="string">'CLim'</span>,[0 numOfLevels],<span class="string">'YDir'</span>,<span class="string">'normal'</span>);
+0119         title(seqSubPlots(1),[<span class="string">'Beam # '</span> num2str(i) <span class="string">': max(D_0) = '</span> num2str(max(D_0(:))) <span class="string">' - '</span> num2str(numel(unique(D_0))) <span class="string">' intensity levels'</span>]);
+0120         xlabel(seqSubPlots(1),<span class="string">'x - direction parallel to leaf motion '</span>)
+0121         ylabel(seqSubPlots(1),<span class="string">'z - direction perpendicular to leaf motion '</span>)
+0122         colorbar;
+0123         drawnow
+0124     <span class="keyword">end</span>
+0125     
+0126     D_k_nonZero = (D_k~=0);
+0127     [D_k_Z, D_k_X] = ind2sub([dimOfFluenceMxZ,dimOfFluenceMxX],find(D_k_nonZero));
+0128     D_k_MinZ = min(D_k_Z);
+0129     D_k_MaxZ = max(D_k_Z);
+0130     D_k_MinX = min(D_k_X);
+0131     D_k_MaxX = max(D_k_X);
+0132     
+0133     <span class="comment">%Decompose the port, do rod pushing</span>
+0134     [tops, bases] = <a href="#_sub1" class="code" title="subfunction [tops, bases] = matRad_siochiDecomposePort(map,dimZ,dimX,minZ,maxZ,minX,maxX)">matRad_siochiDecomposePort</a>(D_k,dimOfFluenceMxZ,dimOfFluenceMxX,D_k_MinZ,D_k_MaxZ,D_k_MinX,D_k_MaxX);
+0135     <span class="comment">%Form segments with and without visualization</span>
+0136     <span class="keyword">if</span> visBool
+0137         [shapes,shapesWeight,k,D_k]=<a href="#_sub2" class="code" title="subfunction [shapes,shapesWeight,k,D_k] = matRad_siochiConvertToSegments(shapes,shapesWeight,k,tops,bases,visBool,i,D_k,numOfLevels,seqFig,seqSubPlots)">matRad_siochiConvertToSegments</a>(shapes,shapesWeight,k,tops,bases,visBool,i,D_k,numOfLevels,seqFig,seqSubPlots);
+0138     <span class="keyword">else</span>
+0139         [shapes,shapesWeight,k]=<a href="#_sub2" class="code" title="subfunction [shapes,shapesWeight,k,D_k] = matRad_siochiConvertToSegments(shapes,shapesWeight,k,tops,bases,visBool,i,D_k,numOfLevels,seqFig,seqSubPlots)">matRad_siochiConvertToSegments</a>(shapes,shapesWeight,k,tops,bases);
+0140     <span class="keyword">end</span>
+0141     
+0142     sequencing.beam(i).numOfShapes  = k;
+0143     sequencing.beam(i).shapes       = shapes(:,:,1:k);
+0144     sequencing.beam(i).shapesWeight = shapesWeight(1:k)/numOfLevels*calFac;
+0145     sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
+0146     sequencing.beam(i).fluence      = D_0;
+0147     sequencing.beam(i).sum          = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
+0148     
+0149     <span class="keyword">for</span> j = 1:k
+0150         sequencing.beam(i).sum = sequencing.beam(i).sum+sequencing.beam(i).shapes(:,:,j)*sequencing.beam(i).shapesWeight(j);
+0151     <span class="keyword">end</span>
+0152     sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = sequencing.beam(i).sum(indInFluenceMx);
+0153     
+0154     offset = offset + numOfRaysPerBeam;
+0155 
+0156 <span class="keyword">end</span>
+0157 
+0158 resultGUI.w          = sequencing.w;
+0159 resultGUI.wSequenced = sequencing.w;
+0160 
+0161 resultGUI.sequencing   = sequencing;
+0162 resultGUI.apertureInfo = <a href="matRad_sequencing2ApertureInfo.html" class="code" title="function apertureInfo = matRad_sequencing2ApertureInfo(Sequencing,stf)">matRad_sequencing2ApertureInfo</a>(sequencing,stf);
+0163 
+0164 doseSequencedDoseGrid = reshape(dij.physicalDose{1} * sequencing.w,dij.doseGrid.dimensions);
+0165 <span class="comment">% interpolate to ct grid for visualiation &amp; analysis</span>
+0166 resultGUI.physicalDose = <a href="matRad_interp3.html" class="code" title="function y = matRad_interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal)">matRad_interp3</a>(dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z, <span class="keyword">...</span>
+0167                                         doseSequencedDoseGrid, <span class="keyword">...</span>
+0168                                         dij.ctGrid.x,dij.ctGrid.y',dij.ctGrid.z);
+0169 
+0170 <span class="comment">% if weights exists from an former DAO remove it</span>
+0171 <span class="keyword">if</span> isfield(resultGUI,<span class="string">'wDao'</span>)
+0172     resultGUI = rmfield(resultGUI,<span class="string">'wDao'</span>);
+0173 <span class="keyword">end</span>
+0174 
+0175 <span class="keyword">end</span>
+0176 
+0177 <a name="_sub1" href="#_subfunctions" class="code">function [tops, bases] = matRad_siochiDecomposePort(map,dimZ,dimX,minZ,maxZ,minX,maxX)</a>
+0178 <span class="comment">%Returns tops and bases of a fluence matrix &quot;map&quot; for Siochi leaf</span>
+0179 <span class="comment">%sequencing algorithm (rod pushing part).  Accounts for collisions and</span>
+0180 <span class="comment">%tongue and groove (Tng) effects.</span>
+0181 
+0182 tops = zeros(dimZ, dimX);
+0183 bases = zeros(dimZ, dimX);
+0184 
+0185 <span class="keyword">for</span> i = minX:maxX
+0186     maxTop = -1;
+0187     TnG = 1;
+0188     <span class="keyword">for</span> j = minZ:maxZ
+0189         <span class="keyword">if</span> i == minX
+0190             bases(j,i) = 1;
+0191             tops(j,i) = bases(j,i)+map(j,i)-1;
+0192         <span class="keyword">else</span> <span class="comment">%assign trial base positions</span>
+0193             <span class="keyword">if</span> map(j,i) &gt;= map(j,i-1) <span class="comment">%current rod &gt;= previous, match the bases</span>
+0194                 bases(j,i) = bases(j,i-1);
+0195                 tops(j,i) = bases(j,i)+map(j,i)-1;
+0196             <span class="keyword">else</span> <span class="comment">%current rod &lt;previous</span>
+0197                 <span class="keyword">if</span> map(j,i) == 0 <span class="comment">%rod length=0, put in in next slab after top of previous</span>
+0198                     bases(j,i) = tops(j,i-1)+1;
+0199                     tops(j,i) = bases(j,i)-1;
+0200                 <span class="keyword">else</span> <span class="comment">%rod length~=0, match tops</span>
+0201                     tops(j,i) = tops(j,i-1);
+0202                     bases(j,i) = tops(j,i)-map(j,i)+1;
+0203                 <span class="keyword">end</span>
+0204             <span class="keyword">end</span>
+0205         <span class="keyword">end</span>
+0206         <span class="comment">%determine which rod has the highest top in column</span>
+0207         <span class="keyword">if</span> tops(j,i) &gt; maxTop
+0208             maxTop = tops(j,i);
+0209             maxRow = j;
+0210         <span class="keyword">end</span>
+0211     <span class="keyword">end</span>
+0212     
+0213     <span class="comment">%Correct for collision and tongue and groove error</span>
+0214     <span class="keyword">while</span>(TnG)
+0215         <span class="comment">%go from maxRow down checking for TnG.  This occurs when a shorter</span>
+0216         <span class="comment">%rod is &quot;peeking over&quot; a longer one in the direction transverse to</span>
+0217         <span class="comment">%the leaf motion.  To fix this, match either the tops or bases of</span>
+0218         <span class="comment">%the rods.</span>
+0219         <span class="keyword">for</span> j = (maxRow-1):-1:minZ
+0220             <span class="keyword">if</span> map(j,i) &lt; map(j+1,i)
+0221                 <span class="keyword">if</span> tops(j,i) &gt; tops(j+1,i)
+0222                     tops(j+1,i) = tops(j,i);
+0223                     bases(j+1,i) = tops(j+1,i)-map(j+1,i)+1;
+0224                 <span class="keyword">elseif</span> bases(j,i) &lt; bases(j+1,i)
+0225                     bases(j,i) = bases(j+1,i);
+0226                     tops(j,i) = bases(j,i)+map(j,i)-1;
+0227                 <span class="keyword">end</span>
+0228             <span class="keyword">else</span>
+0229                 <span class="keyword">if</span> tops(j,i) &lt; tops(j+1,i)
+0230                     tops(j,i) = tops(j+1,i);
+0231                     bases(j,i) = tops(j,i)-map(j,i)+1;
+0232                 <span class="keyword">elseif</span> bases(j,i) &gt; bases(j+1,i)
+0233                     bases(j+1,i) = bases(j,i);
+0234                     tops(j+1,i) = bases(j+1,i)+map(j+1,i)-1;
+0235                 <span class="keyword">end</span>
+0236             <span class="keyword">end</span>
+0237         <span class="keyword">end</span>
+0238         <span class="comment">%go from maxRow up checking for TnG</span>
+0239         <span class="keyword">for</span> j = (maxRow+1):maxZ
+0240             <span class="keyword">if</span> map(j,i) &lt; map(j-1,i)
+0241                 <span class="keyword">if</span> tops(j,i) &gt; tops(j-1,i)
+0242                     tops(j-1,i) = tops(j,i);
+0243                     bases(j-1,i) = tops(j-1,i)-map(j-1,i)+1;
+0244                 <span class="keyword">elseif</span> bases(j,i) &lt; bases(j-1,i)
+0245                     bases(j,i) = bases(j-1,i);
+0246                     tops(j,i) = bases(j,i)+map(j,i)-1;
+0247                 <span class="keyword">end</span>
+0248             <span class="keyword">else</span>
+0249                 <span class="keyword">if</span> tops(j,i) &lt; tops(j-1,i)
+0250                     tops(j,i) = tops(j-1,i);
+0251                     bases(j,i) = tops(j,i)-map(j,i)+1;
+0252                 <span class="keyword">elseif</span> bases(j,i) &gt; bases(j-1,i)
+0253                     bases(j-1,i) = bases(j,i);
+0254                     tops(j-1,i) = bases(j-1,i)+map(j-1,i)-1;
+0255                 <span class="keyword">end</span>
+0256             <span class="keyword">end</span>
+0257         <span class="keyword">end</span>
+0258         <span class="comment">%now check if all TnG conditions have been removed</span>
+0259         TnG = 0;
+0260         <span class="keyword">for</span> j = (minZ+1):maxZ
+0261             <span class="keyword">if</span> map(j,i) &lt; map(j-1,i);
+0262                 <span class="keyword">if</span> tops(j,i) &gt; tops(j-1,i)
+0263                     TnG = 1;
+0264                 <span class="keyword">elseif</span> bases(j,i) &lt; bases(j-1,i)
+0265                     TnG = 1;
+0266                 <span class="keyword">end</span>
+0267             <span class="keyword">else</span>
+0268                 <span class="keyword">if</span> tops(j,i) &lt; tops(j-1,i)
+0269                     TnG = 1;
+0270                 <span class="keyword">elseif</span> bases(j,i) &gt; bases(j-1,i)
+0271                     TnG = 1;
+0272                 <span class="keyword">end</span>
+0273             <span class="keyword">end</span>
+0274         <span class="keyword">end</span>
+0275     <span class="keyword">end</span>
+0276 <span class="keyword">end</span>
+0277 
+0278 <span class="keyword">end</span>
+0279 
+0280 <a name="_sub2" href="#_subfunctions" class="code">function [shapes,shapesWeight,k,D_k] = matRad_siochiConvertToSegments(shapes,shapesWeight,k,tops,bases,visBool,i,D_k,numOfLevels,seqFig,seqSubPlots)</a>
+0281 <span class="comment">%Convert tops and bases to shape matrices.  These are taken as to be the</span>
+0282 <span class="comment">%shapes of uniform level/elevation after the rods are pushed.</span>
+0283 <span class="keyword">if</span> nargin &lt; 6
+0284     visBool = 0;
+0285 <span class="keyword">end</span>
+0286 
+0287 
+0288 levels = max(tops(:));
+0289 
+0290 <span class="keyword">for</span> level = 1:levels
+0291     <span class="comment">%check if slab is new</span>
+0292     <span class="keyword">if</span> <a href="#_sub3" class="code" title="subfunction diffSlab = matRad_siochiDifferentSlab(tops,bases,level)">matRad_siochiDifferentSlab</a>(tops,bases,level)
+0293         k = k+1; <span class="comment">%increment number of unique slabs</span>
+0294         shape_k = (bases &lt;= level).*(level &lt;= tops); <span class="comment">%shape of current slab</span>
+0295         shapes(:,:,k) = shape_k;
+0296     <span class="keyword">end</span>
+0297     shapesWeight(k) = shapesWeight(k)+1; <span class="comment">%if slab is not unique, this increments weight again</span>
+0298     
+0299     <span class="keyword">if</span> visBool
+0300         <span class="comment">%show the leaf positions</span>
+0301         [dimZ,dimX] = size(tops);
+0302         seqSubPlots(4) = subplot(2,2,3.5,<span class="string">'parent'</span>,seqFig);
+0303         imagesc(shape_k,<span class="string">'parent'</span>,seqSubPlots(4));
+0304         hold(seqSubPlots(4),<span class="string">'on'</span>);
+0305         set(seqSubPlots(4),<span class="string">'YDir'</span>,<span class="string">'normal'</span>)
+0306         xlabel(seqSubPlots(4),<span class="string">'x - direction parallel to leaf motion '</span>)
+0307         ylabel(seqSubPlots(4),<span class="string">'z - direction perpendicular to leaf motion '</span>)
+0308         title(seqSubPlots(4),[<span class="string">'beam # '</span> num2str(i) <span class="string">' shape # '</span> num2str(k) <span class="string">' d_k = '</span> num2str(shapesWeight(k))]);
+0309         <span class="keyword">for</span> j = 1:dimZ
+0310             leftLeafIx = find(shape_k(j,:)&gt;0,1,<span class="string">'first'</span>);
+0311             rightLeafIx = find(shape_k(j,:)&gt;0,1,<span class="string">'last'</span>);
+0312             <span class="keyword">if</span> leftLeafIx &gt; 1
+0313                 plot(seqSubPlots(4),[.5 leftLeafIx-.5],j-[.5 .5] ,<span class="string">'w'</span>,<span class="string">'LineWidth'</span>,2)
+0314                 plot(seqSubPlots(4),[.5 leftLeafIx-.5],j+[.5 .5] ,<span class="string">'w'</span>,<span class="string">'LineWidth'</span>,2)
+0315                 plot(seqSubPlots(4),[ leftLeafIx-.5 leftLeafIx-.5],j+[.5 -.5] ,<span class="string">'w'</span>,<span class="string">'LineWidth'</span>,2)
+0316             <span class="keyword">end</span>
+0317             <span class="keyword">if</span> rightLeafIx&lt;dimX
+0318                 plot(seqSubPlots(4),[dimX+.5 rightLeafIx+.5],j-[.5 .5] ,<span class="string">'w'</span>,<span class="string">'LineWidth'</span>,2)
+0319                 plot(seqSubPlots(4),[dimX+.5 rightLeafIx+.5],j+[.5 .5] ,<span class="string">'w'</span>,<span class="string">'LineWidth'</span>,2)
+0320                 plot(seqSubPlots(4),[ rightLeafIx+.5 rightLeafIx+.5],j+[.5 -.5] ,<span class="string">'w'</span>,<span class="string">'LineWidth'</span>,2)
+0321             <span class="keyword">end</span>
+0322             <span class="keyword">if</span> isempty(rightLeafIx) &amp;&amp; isempty (leftLeafIx)
+0323                 plot(seqSubPlots(4),[dimX+.5 .5],j-[.5 .5] ,<span class="string">'w'</span>,<span class="string">'LineWidth'</span>,2)
+0324                 plot(seqSubPlots(4),[dimX+.5 .5],j+[.5 .5] ,<span class="string">'w'</span>,<span class="string">'LineWidth'</span>,2)
+0325                 plot(seqSubPlots(4),.5*dimX*[1 1]+[0.5],j+[.5 -.5] ,<span class="string">'w'</span>,<span class="string">'LineWidth'</span>,2)
+0326             <span class="keyword">end</span>
+0327         <span class="keyword">end</span>
+0328         pause(1);
+0329         
+0330         <span class="comment">%Plot residual intensity matrix.</span>
+0331         D_k = D_k-shape_k; <span class="comment">%residual intensity matrix for visualization</span>
+0332         seqSubPlots(2) = subplot(2,2,2,<span class="string">'parent'</span>,seqFig);
+0333         imagesc(D_k,<span class="string">'parent'</span>,seqSubPlots(2));
+0334         set(seqSubPlots(2),<span class="string">'CLim'</span>,[0 numOfLevels],<span class="string">'YDir'</span>,<span class="string">'normal'</span>);
+0335         title(seqSubPlots(2),[<span class="string">'k = '</span> num2str(k)]);
+0336         colorbar
+0337         drawnow
+0338         
+0339         axis tight
+0340         drawnow
+0341     <span class="keyword">end</span>
+0342 <span class="keyword">end</span>
+0343 
+0344 <span class="keyword">end</span>
+0345 
+0346 <a name="_sub3" href="#_subfunctions" class="code">function diffSlab = matRad_siochiDifferentSlab(tops,bases,level)</a>
+0347 <span class="comment">%Returns 1 if slab level is different than slab level-1 0 otherwise</span>
+0348 
+0349 <span class="keyword">if</span> level == 1 <span class="comment">%first slab is automatically different</span>
+0350     diffSlab = 1;
+0351 <span class="keyword">else</span>
+0352     shapeLevel = (bases &lt;= level).*(level &lt;= tops); <span class="comment">%shape of slab with current level</span>
+0353     shapeLevel_1 = (bases &lt;= level-1).*(level-1 &lt;= tops); <span class="comment">%shape of slab with previous level</span>
+0354     diffSlab = ~isequal(shapeLevel,shapeLevel_1); <span class="comment">%tests if slabs are equal; isequaln was not giving correct results</span>
+0355 <span class="keyword">end</span>
+0356 
+0357 <span class="keyword">end</span>
+0358</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

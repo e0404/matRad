@@ -1,0 +1,44 @@
+/* Created by mdot for Matlab */
+digraph m2html {
+  matRad_calcWaterEqD -> matRad_loadHLUT;
+  matRad_importDicom -> matRad_convRtssContours2Indices;
+  matRad_importDicom -> matRad_createCst;
+  matRad_importDicom -> matRad_dummyCst;
+  matRad_importDicom -> matRad_importDicomCt;
+  matRad_importDicom -> matRad_importDicomRTDose;
+  matRad_importDicom -> matRad_importDicomRTPlan;
+  matRad_importDicom -> matRad_importDicomRtss;
+  matRad_importDicom -> matRad_importDicomSteeringParticles;
+  matRad_importDicom -> matRad_importDicomSteeringPhotons;
+  matRad_importDicomCt -> matRad_calcHU;
+  matRad_importDicomCt -> matRad_interpDicomCtCube;
+  matRad_importDicomCt -> matRad_progress;
+  matRad_importDicomGUI -> matRad_importDicom;
+  matRad_importDicomGUI -> matRad_scanDicomImportFolder;
+  matRad_importDicomRTDose -> matRad_interpDicomDoseCube;
+  matRad_importDicomRTPlan -> matRad_importFieldShapes;
+  matRad_listAllFiles -> matRad_listAllFiles;
+  matRad_scanDicomImportFolder -> matRad_listAllFiles;
+  matRad_scanDicomImportFolder -> matRad_progress;
+
+  matRad_calcHU [URL="matRad_calcHU.html"];
+  matRad_calcWaterEqD [URL="matRad_calcWaterEqD.html"];
+  matRad_convRtssContours2Indices [URL="matRad_convRtssContours2Indices.html"];
+  matRad_createCst [URL="matRad_createCst.html"];
+  matRad_dummyCst [URL="matRad_dummyCst.html"];
+  matRad_importDicom [URL="matRad_importDicom.html"];
+  matRad_importDicomCt [URL="matRad_importDicomCt.html"];
+  matRad_importDicomGUI [URL="matRad_importDicomGUI.html"];
+  matRad_importDicomRTDose [URL="matRad_importDicomRTDose.html"];
+  matRad_importDicomRTPlan [URL="matRad_importDicomRTPlan.html"];
+  matRad_importDicomRtss [URL="matRad_importDicomRtss.html"];
+  matRad_importDicomSteeringParticles [URL="matRad_importDicomSteeringParticles.html"];
+  matRad_importDicomSteeringPhotons [URL="matRad_importDicomSteeringPhotons.html"];
+  matRad_importFieldShapes [URL="matRad_importFieldShapes.html"];
+  matRad_interpDicomCtCube [URL="matRad_interpDicomCtCube.html"];
+  matRad_interpDicomDoseCube [URL="matRad_interpDicomDoseCube.html"];
+  matRad_listAllFiles [URL="matRad_listAllFiles.html"];
+  matRad_loadHLUT [URL="matRad_loadHLUT.html"];
+  matRad_progress [URL="matRad_progress.html"];
+  matRad_scanDicomImportFolder [URL="matRad_scanDicomImportFolder.html"];
+}

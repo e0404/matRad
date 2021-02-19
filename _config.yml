@@ -1,0 +1,13 @@
+title: matRad by e040
+logo: /assets/img/logo.png
+description: matRad - an open source multi-modality radiation treatment planning system
+show_downloads: true
+google_analytics: UA-64247123-1
+theme: jekyll-theme-minimal
+baseurl: "/matRad"
+github: [metadata]
+
+
+
+
+

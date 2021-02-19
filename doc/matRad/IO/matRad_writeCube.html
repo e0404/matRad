@@ -1,0 +1,174 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_writeCube</title>
+  <meta name="keywords" content="matRad_writeCube">
+  <meta name="description" content="matRad wrapper for Cube export">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html IO -->
+<h1>matRad_writeCube
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad wrapper for Cube export</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function [saved_metadata] = matRad_writeCube(filepath,cube,datatype,metadata) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad wrapper for Cube export
+ 
+ call
+   [saved_metadata] = matRad_writeCube(filepath,cube,meta)
+
+ input
+   filepath:                   full output path. needs the right extension
+                               to choose the appropriate writer
+   cube:                       cube that is to be written
+   datatype:                   MATLAB numeric datatype
+   metadata:                   meta-information in struct. 
+                               Necessary fieldnames are:
+                               - resolution: [x y z]
+                               Optional:
+                               - axisPermutation (matRad default [2 1 3])
+                               - coordinateSystem (matRad default 'LPS')
+                               - imageOrigin (as used in DICOM)
+                               - dataUnit (i.e. Gy..)
+                               - dataName (i.e. dose, ED, ...)
+                               - compress (true/false)
+                                 (default chosen by writer)
+
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_writeMHA.html" class="code" title="function matRad_writeMHA(filepath,cube,metadata)">matRad_writeMHA</a>	matRad function to write mha files</li><li><a href="matRad_writeNRRD.html" class="code" title="function matRad_writeNRRD(filename,cube,metadata)">matRad_writeNRRD</a>	matRad NRRD writer</li><li><a href="matRad_writeVTK.html" class="code" title="function matRad_writeVTK(filepath,cube,metadata)">matRad_writeVTK</a>	matRad function to write vtk cubes</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_exportGUI.html" class="code" title="function varargout = matRad_exportGUI(varargin)">matRad_exportGUI</a>	MATRAD_EXPORTGUI MATLAB code for matRad_exportGUI.fig</li><li><a href="../../matRad/examples/matRad_example2_photons.html" class="code" title="">matRad_example2_photons</a>	% Example: Photon Treatment Plan</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [saved_metadata] = matRad_writeCube(filepath,cube,datatype,metadata)</a>
+0002 <span class="comment">% matRad wrapper for Cube export</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   [saved_metadata] = matRad_writeCube(filepath,cube,meta)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   filepath:                   full output path. needs the right extension</span>
+0009 <span class="comment">%                               to choose the appropriate writer</span>
+0010 <span class="comment">%   cube:                       cube that is to be written</span>
+0011 <span class="comment">%   datatype:                   MATLAB numeric datatype</span>
+0012 <span class="comment">%   metadata:                   meta-information in struct.</span>
+0013 <span class="comment">%                               Necessary fieldnames are:</span>
+0014 <span class="comment">%                               - resolution: [x y z]</span>
+0015 <span class="comment">%                               Optional:</span>
+0016 <span class="comment">%                               - axisPermutation (matRad default [2 1 3])</span>
+0017 <span class="comment">%                               - coordinateSystem (matRad default 'LPS')</span>
+0018 <span class="comment">%                               - imageOrigin (as used in DICOM)</span>
+0019 <span class="comment">%                               - dataUnit (i.e. Gy..)</span>
+0020 <span class="comment">%                               - dataName (i.e. dose, ED, ...)</span>
+0021 <span class="comment">%                               - compress (true/false)</span>
+0022 <span class="comment">%                                 (default chosen by writer)</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">%</span>
+0025 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0026 <span class="comment">%</span>
+0027 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0028 <span class="comment">%</span>
+0029 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0030 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0031 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0032 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0033 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0034 <span class="comment">% LICENSE file.</span>
+0035 <span class="comment">%</span>
+0036 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0037 
+0038 <span class="comment">%% Sanity checks</span>
+0039 [filedir,filename,ext] = fileparts(filepath);
+0040 <span class="keyword">if</span> ~exist(filedir,<span class="string">'dir'</span>)
+0041     error([<span class="string">'Directory '</span> filedir <span class="string">' does not exist!'</span>]);
+0042 <span class="keyword">end</span>
+0043 
+0044 <span class="comment">%No Special characters in filename (allow only _ and alphanumeric</span>
+0045 <span class="comment">%characters</span>
+0046 robustFileName = filename(isstrprop(filename,<span class="string">'alphanum'</span>) | filename == <span class="string">'_'</span>);
+0047 <span class="keyword">if</span> ~strcmp(robustFileName,filename)
+0048     warning([<span class="string">'Changing filename from '''</span> filename <span class="string">''' to '''</span> robustFileName <span class="string">''' to get rid of special characters!'</span>]);
+0049     filepath = fullfile(filedir,[robustFileName ext]);
+0050 <span class="keyword">end</span>
+0051 
+0052 <span class="comment">%% Prepare Metadata</span>
+0053 <span class="comment">%if the field is not set, we assume standard matRad x-y swap</span>
+0054 <span class="keyword">if</span> ~isfield(metadata,<span class="string">'axisPermutation'</span>)
+0055     <span class="comment">%cube = permute(cube,[2 1 3]); %This should be done in the writer based</span>
+0056     <span class="comment">%on the axis permutation field</span>
+0057     metadata.axisPermutation = [2 1 3]; <span class="comment">%Default Matlab axis permutation</span>
+0058 <span class="keyword">end</span>
+0059 <span class="comment">%use the matrad coordinate system</span>
+0060 <span class="keyword">if</span> ~isfield(metadata,<span class="string">'coordinateSystem'</span>)
+0061     metadata.coordinateSystem = <span class="string">'LPS'</span>;  <span class="comment">%Matlab coordinate system</span>
+0062 <span class="keyword">end</span>
+0063 <span class="comment">%If there is no image origin set, center the image</span>
+0064 imageExtent = metadata.resolution .* size(cube);
+0065 <span class="keyword">if</span> ~isfield(metadata,<span class="string">'imageOrigin'</span>)
+0066     metadata.imageOrigin = zeros(1,numel(imageExtent)) - (imageExtent/2);
+0067 <span class="keyword">end</span>
+0068 <span class="comment">%we can also store the center</span>
+0069 <span class="keyword">if</span> ~isfield(metadata,<span class="string">'imageCenter'</span>)
+0070     metadata.imageCenter = metadata.imageOrigin + (imageExtent/2);
+0071 <span class="keyword">end</span>
+0072 
+0073 
+0074 metadata.datatype = datatype;
+0075     
+0076 <span class="comment">%% Choose writer</span>
+0077 <span class="comment">%So far we only have an nrrd writer</span>
+0078 <span class="keyword">switch</span> ext
+0079     <span class="keyword">case</span> <span class="string">'.nrrd'</span>
+0080         <a href="matRad_writeNRRD.html" class="code" title="function matRad_writeNRRD(filename,cube,metadata)">matRad_writeNRRD</a>(filepath,cube,metadata);
+0081     <span class="keyword">case</span> <span class="string">'.vtk'</span>
+0082         <a href="matRad_writeVTK.html" class="code" title="function matRad_writeVTK(filepath,cube,metadata)">matRad_writeVTK</a>(filepath,cube,metadata);
+0083     <span class="keyword">case</span> <span class="string">'.mha'</span>
+0084         <a href="matRad_writeMHA.html" class="code" title="function matRad_writeMHA(filepath,cube,metadata)">matRad_writeMHA</a>(filepath,cube,metadata);
+0085     <span class="keyword">otherwise</span>
+0086         errordlg([<span class="string">'No writer found for extension &quot;'</span> ext <span class="string">'&quot;'</span>]);
+0087 <span class="keyword">end</span>
+0088 
+0089 fprintf(<span class="string">'File written to %s...\n'</span>,filepath);
+0090 saved_metadata = metadata;
+0091 
+0092 
+0093 <span class="keyword">end</span>
+0094</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

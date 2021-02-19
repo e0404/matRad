@@ -1,0 +1,363 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_calcPhotonDose</title>
+  <meta name="keywords" content="matRad_calcPhotonDose">
+  <meta name="description" content="matRad photon dose calculation wrapper">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_calcPhotonDose
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">matRad photon dose calculation wrapper</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad photon dose calculation wrapper
+ 
+ call
+   dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
+
+ input
+   ct:             ct cube
+   stf:            matRad steering information struct
+   pln:            matRad plan meta information struct
+   cst:            matRad cst struct
+   calcDoseDirect: boolian switch to bypass dose influence matrix
+                   computation and directly calculate dose; only makes
+                   sense in combination with matRad_calcDoseDirect.m
+
+ output
+   dij:            matRad dij struct
+
+ References
+   [1] http://www.ncbi.nlm.nih.gov/pubmed/8497215
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="../matRad/dicom/matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>	matRad progress bar</li><li><a href="matRad_DijSampling.html" class="code" title="function [ixNew,bixelDoseNew] =  matRad_DijSampling(ix,bixelDose,radDepthV,rad_distancesSq,sType,Param)">matRad_DijSampling</a>	matRad dij sampling function</li><li><a href="matRad_calcDoseFillDij.html" class="code" title="">matRad_calcDoseFillDij</a>	save computation time and memory</li><li><a href="matRad_calcDoseInit.html" class="code" title="">matRad_calcDoseInit</a>	</li><li><a href="matRad_calcDoseInitBeam.html" class="code" title="">matRad_calcDoseInitBeam</a>	</li><li><a href="matRad_calcGeoDists.html" class="code" title="function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] =matRad_calcGeoDists(rot_coords_bev,sourcePoint_bev,targetPoint_bev,SAD,radDepthIx,lateralCutOff)">matRad_calcGeoDists</a>	matRad calculation of lateral distances from central ray</li><li><a href="matRad_calcPhotonDoseBixel.html" class="code" title="function dose = matRad_calcPhotonDoseBixel(SAD,m,betas,Interp_kernel1,Interp_kernel2,Interp_kernel3,radDepths,geoDists,isoLatDistsX,isoLatDistsZ)">matRad_calcPhotonDoseBixel</a>	matRad photon dose calculation for an individual bixel</li><li><a href="matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>	matRad progress bar</li><li><a href="../matRad/tools/matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>	matRad function to get the software environment matRad is running on</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../matRad/examples/matRad_example1_phantom.html" class="code" title="">matRad_example1_phantom</a>	% Example: Generate your own phantom geometry</li><li><a href="../matRad/examples/matRad_example2_photons.html" class="code" title="">matRad_example2_photons</a>	% Example: Photon Treatment Plan</li><li><a href="../matRad/examples/matRad_example3_photonsDAO.html" class="code" title="">matRad_example3_photonsDAO</a>	% Example: Photon Treatment Plan with Direct aperture optimization</li><li><a href="matRad.html" class="code" title="">matRad</a>	matRad script</li><li><a href="matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li><li><a href="matRad_calcDoseDirect.html" class="code" title="function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w)">matRad_calcDoseDirect</a>	matRad dose calculation wrapper bypassing dij calculation</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)</a>
+0002 <span class="comment">% matRad photon dose calculation wrapper</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   ct:             ct cube</span>
+0009 <span class="comment">%   stf:            matRad steering information struct</span>
+0010 <span class="comment">%   pln:            matRad plan meta information struct</span>
+0011 <span class="comment">%   cst:            matRad cst struct</span>
+0012 <span class="comment">%   calcDoseDirect: boolian switch to bypass dose influence matrix</span>
+0013 <span class="comment">%                   computation and directly calculate dose; only makes</span>
+0014 <span class="comment">%                   sense in combination with matRad_calcDoseDirect.m</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% output</span>
+0017 <span class="comment">%   dij:            matRad dij struct</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% References</span>
+0020 <span class="comment">%   [1] http://www.ncbi.nlm.nih.gov/pubmed/8497215</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0025 <span class="comment">%</span>
+0026 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0027 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0028 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0029 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0030 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0031 <span class="comment">% LICENSE file.</span>
+0032 <span class="comment">%</span>
+0033 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0034 
+0035 
+0036 matRad_cfg =  MatRad_Config.instance();
+0037 
+0038 <span class="comment">% initialize</span>
+0039 <a href="matRad_calcDoseInit.html" class="code" title="">matRad_calcDoseInit</a>;
+0040 
+0041 [env, ~] = <a href="../matRad/tools/matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>();
+0042 
+0043 <span class="keyword">switch</span> env
+0044      <span class="keyword">case</span> <span class="string">'MATLAB'</span>
+0045           rng(<span class="string">'default'</span>);
+0046      <span class="keyword">case</span> <span class="string">'OCTAVE'</span>
+0047           rand(<span class="string">'seed'</span>,0)
+0048 <span class="keyword">end</span>
+0049 
+0050 <span class="comment">% issue warning if biological optimization not possible</span>
+0051 <span class="keyword">if</span> sum(strcmp(pln.propOpt.bioOptimization,{<span class="string">'effect'</span>,<span class="string">'RBExD'</span>}))&gt;0
+0052     warndlg(<span class="string">'Effect based and RBE optimization not available for photons - physical optimization is carried out instead.'</span>);
+0053     pln.bioOptimization = <span class="string">'none'</span>;
+0054 <span class="keyword">end</span>
+0055 
+0056 <span class="comment">% initialize waitbar</span>
+0057 figureWait = waitbar(0,<span class="string">'calculate dose influence matrix for photons...'</span>);
+0058 <span class="comment">% show busy state</span>
+0059 set(figureWait,<span class="string">'pointer'</span>,<span class="string">'watch'</span>);
+0060 
+0061 <span class="comment">% set lateral cutoff value</span>
+0062 lateralCutoff = matRad_cfg.propDoseCalc.defaultGeometricCutOff; <span class="comment">% [mm]</span>
+0063 
+0064 <span class="comment">% toggle custom primary fluence on/off. if 0 we assume a homogeneous</span>
+0065 <span class="comment">% primary fluence, if 1 we use measured radially symmetric data</span>
+0066 <span class="keyword">if</span> ~isfield(pln,<span class="string">'propDoseCalc'</span>) || ~isfield(pln.propDoseCalc,<span class="string">'useCustomPrimaryPhotonFluence'</span>)
+0067     useCustomPrimFluenceBool = matRad_cfg.propDoseCalc.defaultUseCustomPrimaryPhotonFluence;
+0068 <span class="keyword">else</span>
+0069     useCustomPrimFluenceBool = pln.propDoseCalc.useCustomPrimaryPhotonFluence;
+0070 <span class="keyword">end</span>
+0071 
+0072 
+0073 <span class="comment">% 0 if field calc is bixel based, 1 if dose calc is field based</span>
+0074 isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),<span class="string">'field'</span>);
+0075 
+0076 <span class="comment">%% kernel convolution</span>
+0077 <span class="comment">% set up convolution grid</span>
+0078 <span class="keyword">if</span> isFieldBasedDoseCalc
+0079     <span class="comment">% get data from DICOM import</span>
+0080     intConvResolution = pln.propStf.collimation.convResolution; 
+0081     fieldWidth = pln.propStf.collimation.fieldWidth;
+0082 <span class="keyword">else</span>
+0083     intConvResolution = .5; <span class="comment">% [mm]</span>
+0084     fieldWidth = pln.propStf.bixelWidth;
+0085 <span class="keyword">end</span>
+0086 
+0087 <span class="comment">% calculate field size and distances</span>
+0088 fieldLimit = ceil(fieldWidth/(2*intConvResolution));
+0089 [F_X,F_Z] = meshgrid(-fieldLimit*intConvResolution: <span class="keyword">...</span>
+0090                   intConvResolution: <span class="keyword">...</span>
+0091                   (fieldLimit-1)*intConvResolution);    
+0092 
+0093 <span class="comment">% gaussian filter to model penumbra</span>
+0094 sigmaGauss = 2.123; <span class="comment">% [mm] / see diploma thesis siggel 4.1.2</span>
+0095 <span class="comment">% use 5 times sigma as the limits for the gaussian convolution</span>
+0096 gaussLimit = ceil(5*sigmaGauss/intConvResolution);
+0097 [gaussFilterX,gaussFilterZ] = meshgrid(-gaussLimit*intConvResolution: <span class="keyword">...</span>
+0098                                     intConvResolution: <span class="keyword">...</span>
+0099                                     (gaussLimit-1)*intConvResolution);   
+0100 gaussFilter =  1/(2*pi*sigmaGauss^2/intConvResolution^2) * exp(-(gaussFilterX.^2+gaussFilterZ.^2)/(2*sigmaGauss^2) );
+0101 gaussConvSize = 2*(fieldLimit + gaussLimit);
+0102 
+0103 <span class="keyword">if</span> ~isFieldBasedDoseCalc   
+0104     <span class="comment">% Create fluence matrix</span>
+0105     F = ones(floor(fieldWidth/intConvResolution));
+0106     
+0107     <span class="keyword">if</span> ~useCustomPrimFluenceBool
+0108     <span class="comment">% gaussian convolution of field to model penumbra</span>
+0109         F = real(ifft2(fft2(F,gaussConvSize,gaussConvSize).*fft2(gaussFilter,gaussConvSize,gaussConvSize)));     
+0110     <span class="keyword">end</span>
+0111 <span class="keyword">end</span>
+0112 
+0113 <span class="comment">% get kernel size and distances</span>
+0114 kernelLimit = ceil(lateralCutoff/intConvResolution);
+0115 [kernelX, kernelZ] = meshgrid(-kernelLimit*intConvResolution: <span class="keyword">...</span>
+0116                             intConvResolution: <span class="keyword">...</span>
+0117                             (kernelLimit-1)*intConvResolution);
+0118 
+0119 <span class="comment">% precalculate convoluted kernel size and distances</span>
+0120 kernelConvLimit = fieldLimit + gaussLimit + kernelLimit;
+0121 [convMx_X, convMx_Z] = meshgrid(-kernelConvLimit*intConvResolution: <span class="keyword">...</span>
+0122                                 intConvResolution: <span class="keyword">...</span>
+0123                                 (kernelConvLimit-1)*intConvResolution);
+0124 <span class="comment">% calculate also the total size and distance as we need this during convolution extensively</span>
+0125 kernelConvSize = 2*kernelConvLimit;
+0126 
+0127 <span class="comment">% define an effective lateral cutoff where dose will be calculated. note</span>
+0128 <span class="comment">% that storage within the influence matrix may be subject to sampling</span>
+0129 effectiveLateralCutoff = lateralCutoff + fieldWidth/2;
+0130 
+0131 counter = 0;
+0132 matRad_cfg.dispInfo(<span class="string">'matRad: Photon dose calculation...\n'</span>);
+0133 
+0134 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0135 <span class="keyword">for</span> i = 1:dij.numOfBeams <span class="comment">% loop over all beams</span>
+0136     
+0137     <a href="matRad_calcDoseInitBeam.html" class="code" title="">matRad_calcDoseInitBeam</a>;
+0138     
+0139     <span class="comment">% get index of central ray or closest to the central ray</span>
+0140     [~,center] = min(sum(reshape([stf(i).ray.rayPos_bev],3,[]).^2));
+0141     
+0142     <span class="comment">% get correct kernel for given SSD at central ray (nearest neighbor approximation)</span>
+0143     [~,currSSDIx] = min(abs([machine.data.kernel.SSD]-stf(i).ray(center).SSD));
+0144     <span class="comment">% Display console message.</span>
+0145     matRad_cfg.dispInfo(<span class="string">'\tSSD = %g mm ...\n'</span>,machine.data.kernel(currSSDIx).SSD);
+0146     
+0147     kernelPos = machine.data.kernelPos;
+0148     kernel1 = machine.data.kernel(currSSDIx).kernel1;
+0149     kernel2 = machine.data.kernel(currSSDIx).kernel2;
+0150     kernel3 = machine.data.kernel(currSSDIx).kernel3;
+0151 
+0152     <span class="comment">% Evaluate kernels for all distances, interpolate between values</span>
+0153     kernel1Mx = interp1(kernelPos,kernel1,sqrt(kernelX.^2+kernelZ.^2),<span class="string">'linear'</span>,0);
+0154     kernel2Mx = interp1(kernelPos,kernel2,sqrt(kernelX.^2+kernelZ.^2),<span class="string">'linear'</span>,0);
+0155     kernel3Mx = interp1(kernelPos,kernel3,sqrt(kernelX.^2+kernelZ.^2),<span class="string">'linear'</span>,0);
+0156     
+0157     <span class="comment">% convolution here if no custom primary fluence and no field based dose calc</span>
+0158     <span class="keyword">if</span> ~useCustomPrimFluenceBool &amp;&amp; ~isFieldBasedDoseCalc
+0159         
+0160         <span class="comment">% Display console message.</span>
+0161         matRad_cfg.dispInfo(<span class="string">'\tUniform primary photon fluence -&gt; pre-compute kernel convolution...\n'</span>);   
+0162 
+0163         <span class="comment">% 2D convolution of Fluence and Kernels in fourier domain</span>
+0164         convMx1 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel1Mx,kernelConvSize,kernelConvSize)));
+0165         convMx2 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel2Mx,kernelConvSize,kernelConvSize)));
+0166         convMx3 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel3Mx,kernelConvSize,kernelConvSize)));
+0167 
+0168         <span class="comment">% Creates an interpolant for kernes from vectors position X and Z</span>
+0169         <span class="keyword">if</span> strcmp(env,<span class="string">'MATLAB'</span>)
+0170             Interp_kernel1 = griddedInterpolant(convMx_X',convMx_Z',convMx1',<span class="string">'linear'</span>,<span class="string">'none'</span>);
+0171             Interp_kernel2 = griddedInterpolant(convMx_X',convMx_Z',convMx2',<span class="string">'linear'</span>,<span class="string">'none'</span>);
+0172             Interp_kernel3 = griddedInterpolant(convMx_X',convMx_Z',convMx3',<span class="string">'linear'</span>,<span class="string">'none'</span>);
+0173         <span class="keyword">else</span>
+0174             Interp_kernel1 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx1,x,y,<span class="string">'linear'</span>,NaN);
+0175             Interp_kernel2 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx2,x,y,<span class="string">'linear'</span>,NaN);
+0176             Interp_kernel3 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx3,x,y,<span class="string">'linear'</span>,NaN);
+0177         <span class="keyword">end</span>
+0178     <span class="keyword">end</span>
+0179     
+0180     <span class="keyword">for</span> j = 1:stf(i).numOfRays <span class="comment">% loop over all rays / for photons we only have one bixel per ray!</span>
+0181 
+0182         counter = counter + 1;
+0183         bixelsPerBeam = bixelsPerBeam + 1;
+0184     
+0185         <span class="comment">% convolution here if custom primary fluence OR field based dose calc</span>
+0186         <span class="keyword">if</span> useCustomPrimFluenceBool || isFieldBasedDoseCalc
+0187             
+0188             <span class="comment">% overwrite field opening if necessary</span>
+0189             <span class="keyword">if</span> isFieldBasedDoseCalc
+0190                 F = stf(i).ray(j).shape;
+0191             <span class="keyword">end</span>
+0192             
+0193             <span class="comment">% prepare primary fluence array</span>
+0194             primaryFluence = machine.data.primaryFluence;
+0195             r     = sqrt( (F_X-stf(i).ray(j).rayPos(1)).^2 + (F_Z-stf(i).ray(j).rayPos(3)).^2 );
+0196             Psi   = interp1(primaryFluence(:,1)',primaryFluence(:,2)',r,<span class="string">'linear'</span>,0);
+0197                 
+0198             <span class="comment">% apply the primary fluence to the field</span>
+0199             Fx = F .* Psi;
+0200             
+0201             <span class="comment">% convolute with the gaussian</span>
+0202             Fx = real( ifft2(fft2(Fx,gaussConvSize,gaussConvSize).* fft2(gaussFilter,gaussConvSize,gaussConvSize)) );
+0203 
+0204             <span class="comment">% 2D convolution of Fluence and Kernels in fourier domain</span>
+0205             convMx1 = real( ifft2(fft2(Fx,kernelConvSize,kernelConvSize).* fft2(kernel1Mx,kernelConvSize,kernelConvSize)) );
+0206             convMx2 = real( ifft2(fft2(Fx,kernelConvSize,kernelConvSize).* fft2(kernel2Mx,kernelConvSize,kernelConvSize)) );
+0207             convMx3 = real( ifft2(fft2(Fx,kernelConvSize,kernelConvSize).* fft2(kernel3Mx,kernelConvSize,kernelConvSize)) );
+0208             
+0209             <span class="comment">% Creates an interpolant for kernes from vectors position X and Z</span>
+0210             <span class="keyword">if</span> strcmp(env,<span class="string">'MATLAB'</span>)
+0211                 Interp_kernel1 = griddedInterpolant(convMx_X',convMx_Z',convMx1',<span class="string">'linear'</span>,<span class="string">'none'</span>);
+0212                 Interp_kernel2 = griddedInterpolant(convMx_X',convMx_Z',convMx2',<span class="string">'linear'</span>,<span class="string">'none'</span>);
+0213                 Interp_kernel3 = griddedInterpolant(convMx_X',convMx_Z',convMx3',<span class="string">'linear'</span>,<span class="string">'none'</span>);
+0214             <span class="keyword">else</span>
+0215                 Interp_kernel1 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx1,x,y,<span class="string">'linear'</span>,NaN);
+0216                 Interp_kernel2 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx2,x,y,<span class="string">'linear'</span>,NaN);
+0217                 Interp_kernel3 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx3,x,y,<span class="string">'linear'</span>,NaN);
+0218             <span class="keyword">end</span>
+0219 
+0220         <span class="keyword">end</span>
+0221 
+0222         <span class="comment">% Display progress and update text only 200 times</span>
+0223         <span class="keyword">if</span> mod(bixelsPerBeam,max(1,round(stf(i).totalNumOfBixels/200))) == 0
+0224             <a href="matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>(bixelsPerBeam/max(1,round(stf(i).totalNumOfBixels/200)),<span class="keyword">...</span>
+0225                             floor(stf(i).totalNumOfBixels/max(1,round(stf(i).totalNumOfBixels/200))));
+0226         <span class="keyword">end</span>
+0227         <span class="comment">% update waitbar only 100 times</span>
+0228         <span class="keyword">if</span> mod(counter,round(dij.totalNumOfBixels/100)) == 0 &amp;&amp; ishandle(figureWait)
+0229             waitbar(counter/dij.totalNumOfBixels);
+0230         <span class="keyword">end</span>
+0231         
+0232         <span class="comment">% remember beam and bixel number</span>
+0233         <span class="keyword">if</span> ~calcDoseDirect
+0234            dij.beamNum(counter)  = i;
+0235            dij.rayNum(counter)   = j;
+0236            dij.bixelNum(counter) = 1;
+0237         <span class="keyword">else</span>
+0238             k = 1;
+0239         <span class="keyword">end</span>
+0240         
+0241         <span class="comment">% Ray tracing for beam i and bixel j</span>
+0242         [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = <a href="matRad_calcGeoDists.html" class="code" title="function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] =matRad_calcGeoDists(rot_coords_bev,sourcePoint_bev,targetPoint_bev,SAD,radDepthIx,lateralCutOff)">matRad_calcGeoDists</a>(rot_coordsVdoseGrid, <span class="keyword">...</span>
+0243                                                                stf(i).sourcePoint_bev, <span class="keyword">...</span>
+0244                                                                stf(i).ray(j).targetPoint_bev, <span class="keyword">...</span>
+0245                                                                machine.meta.SAD, <span class="keyword">...</span>
+0246                                                                find(~isnan(radDepthVdoseGrid{1})), <span class="keyword">...</span>
+0247                                                                effectiveLateralCutoff);
+0248 
+0249         <span class="comment">% empty bixels may happen during recalculation of error</span>
+0250         <span class="comment">% scenarios -&gt; skip to next bixel</span>
+0251         <span class="keyword">if</span> isempty(ix)
+0252             <span class="keyword">continue</span>;
+0253         <span class="keyword">end</span>
+0254 
+0255                 
+0256         <span class="comment">% calculate photon dose for beam i and bixel j</span>
+0257         bixelDose = <a href="matRad_calcPhotonDoseBixel.html" class="code" title="function dose = matRad_calcPhotonDoseBixel(SAD,m,betas,Interp_kernel1,Interp_kernel2,Interp_kernel3,radDepths,geoDists,isoLatDistsX,isoLatDistsZ)">matRad_calcPhotonDoseBixel</a>(machine.meta.SAD,machine.data.m,<span class="keyword">...</span>
+0258                                                    machine.data.betas, <span class="keyword">...</span>
+0259                                                    Interp_kernel1,<span class="keyword">...</span>
+0260                                                    Interp_kernel2,<span class="keyword">...</span>
+0261                                                    Interp_kernel3,<span class="keyword">...</span>
+0262                                                    radDepthVdoseGrid{1}(ix),<span class="keyword">...</span>
+0263                                                    geoDistVdoseGrid{1}(ix),<span class="keyword">...</span>
+0264                                                    isoLatDistsX,<span class="keyword">...</span>
+0265                                                    isoLatDistsZ);
+0266                                                
+0267         <span class="comment">% sample dose only for bixel based dose calculation</span>
+0268         <span class="keyword">if</span> ~isFieldBasedDoseCalc
+0269             r0   = 20 + stf(i).bixelWidth;   <span class="comment">% [mm] sample beyond the inner core</span>
+0270             Type = <span class="string">'radius'</span>;
+0271             [ix,bixelDose] = <a href="matRad_DijSampling.html" class="code" title="function [ixNew,bixelDoseNew] =  matRad_DijSampling(ix,bixelDose,radDepthV,rad_distancesSq,sType,Param)">matRad_DijSampling</a>(ix,bixelDose,radDepthVdoseGrid{1}(ix),rad_distancesSq,Type,r0);
+0272         <span class="keyword">end</span>
+0273         
+0274         <span class="comment">% Save dose for every bixel in cell array</span>
+0275         doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(VdoseGrid(ix),1,bixelDose,dij.doseGrid.numOfVoxels,1);
+0276 
+0277         <a href="matRad_calcDoseFillDij.html" class="code" title="">matRad_calcDoseFillDij</a>;
+0278                
+0279     <span class="keyword">end</span>
+0280 <span class="keyword">end</span>
+0281 
+0282 <span class="comment">%Close Waitbar</span>
+0283 <span class="keyword">if</span> ishandle(figureWait)
+0284     delete(figureWait);
+0285 <span class="keyword">end</span>
+0286</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

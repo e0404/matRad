@@ -1,0 +1,208 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_plotIsoDoseLines</title>
+  <meta name="keywords" content="matRad_plotIsoDoseLines">
+  <meta name="description" content="matRad function that plots isolines, by precomputed contourc data">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html plotting -->
+<h1>matRad_plotIsoDoseLines
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad function that plots isolines, by precomputed contourc data</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,cMap,window,varargin) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function that plots isolines, by precomputed contourc data 
+ computed by matRad_computeIsoDoseContours or manually by calling contourc
+ itself
+
+ call
+   isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,cMap)
+   isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,window)
+   isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,cMap,window)
+   isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,cMap,window, ...)
+
+ input
+   axesHandle  handle to axes the slice should be displayed in
+   doseCube    3D array of the corresponding dose cube
+   isoContours precomputed isodose contours in a cell array {maxDim,3}
+               if the parameter is empty, contours will be plotted the
+               slow way with MATLABs contour function
+   isoLevels   the levels of the isodose (same units as doseCube)
+   plotLabels  if set to true labels will be added to the contours
+   plane       plane view (coronal=1,sagittal=2,axial=3)
+   slice       slice in the selected plane of the 3D cube
+   cMap        optional argument defining the colormap, default is jet
+               if you want to use the default map with the window argument
+               you can use an empty array []
+   window      optional argument defining the displayed range. default is
+               [min(doseCube(:)) max(doseCube(:))]
+   varargin    Additional MATLAB Line-Property/Value-Pairs etc.
+
+ output
+   isoLineHandles: handle to the plotted isolines
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li><li><a href="../../matRad/tools/matRad_plotSliceWrapper.html" class="code" title="function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,varargin)">matRad_plotSliceWrapper</a>	matRad tool function to directly plot a complete slice of a ct with dose</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,cMap,window,varargin)</a>
+0002 <span class="comment">% matRad function that plots isolines, by precomputed contourc data</span>
+0003 <span class="comment">% computed by matRad_computeIsoDoseContours or manually by calling contourc</span>
+0004 <span class="comment">% itself</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">% call</span>
+0007 <span class="comment">%   isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,cMap)</span>
+0008 <span class="comment">%   isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,window)</span>
+0009 <span class="comment">%   isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,cMap,window)</span>
+0010 <span class="comment">%   isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,cMap,window, ...)</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% input</span>
+0013 <span class="comment">%   axesHandle  handle to axes the slice should be displayed in</span>
+0014 <span class="comment">%   doseCube    3D array of the corresponding dose cube</span>
+0015 <span class="comment">%   isoContours precomputed isodose contours in a cell array {maxDim,3}</span>
+0016 <span class="comment">%               if the parameter is empty, contours will be plotted the</span>
+0017 <span class="comment">%               slow way with MATLABs contour function</span>
+0018 <span class="comment">%   isoLevels   the levels of the isodose (same units as doseCube)</span>
+0019 <span class="comment">%   plotLabels  if set to true labels will be added to the contours</span>
+0020 <span class="comment">%   plane       plane view (coronal=1,sagittal=2,axial=3)</span>
+0021 <span class="comment">%   slice       slice in the selected plane of the 3D cube</span>
+0022 <span class="comment">%   cMap        optional argument defining the colormap, default is jet</span>
+0023 <span class="comment">%               if you want to use the default map with the window argument</span>
+0024 <span class="comment">%               you can use an empty array []</span>
+0025 <span class="comment">%   window      optional argument defining the displayed range. default is</span>
+0026 <span class="comment">%               [min(doseCube(:)) max(doseCube(:))]</span>
+0027 <span class="comment">%   varargin    Additional MATLAB Line-Property/Value-Pairs etc.</span>
+0028 <span class="comment">%</span>
+0029 <span class="comment">% output</span>
+0030 <span class="comment">%   isoLineHandles: handle to the plotted isolines</span>
+0031 <span class="comment">%</span>
+0032 <span class="comment">% References</span>
+0033 <span class="comment">%   -</span>
+0034 <span class="comment">%</span>
+0035 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0036 <span class="comment">%</span>
+0037 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0038 <span class="comment">%</span>
+0039 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0040 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0041 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0042 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0043 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0044 <span class="comment">% LICENSE file.</span>
+0045 <span class="comment">%</span>
+0046 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0047 
+0048 matRad_cfg = MatRad_Config.instance();
+0049 
+0050 <span class="comment">%% manage optional arguments</span>
+0051 <span class="comment">%Use default colormap?</span>
+0052 <span class="keyword">if</span> nargin &lt; 8 || isempty(cMap)
+0053     cMap = jet(64);
+0054 <span class="keyword">end</span>
+0055 <span class="keyword">if</span> nargin &lt; 9 || isempty(window)
+0056     window = [min(doseCube(:)) max(doseCube(:))];
+0057 <span class="keyword">end</span>
+0058 
+0059 <span class="comment">%Check if precomputed contours where passed, if not, calculate it on the</span>
+0060 <span class="comment">%fly</span>
+0061 <span class="keyword">if</span> isempty(isoContours)
+0062     <span class="keyword">if</span> plane == 1
+0063         C = contourc(doseCube(slice,:,:),isoLevels);
+0064     <span class="keyword">elseif</span> plane == 2
+0065         C = contourc(doseCube(:,slice,:),isoLevels);
+0066     <span class="keyword">elseif</span> plane == 3
+0067         C = contourc(doseCube(:,:,slice),isoLevels);
+0068     <span class="keyword">end</span>    
+0069     isoContours{slice,plane} = C;
+0070 <span class="keyword">end</span>
+0071 
+0072 <span class="comment">%% Plotting</span>
+0073 cMapScale = size(cMap,1) - 1;
+0074 
+0075 isoColorLevel = uint8(cMapScale*(isoLevels - window(1))./(window(2)-window(1)));
+0076 
+0077 <span class="comment">%This circumenvents a bug in Octave when the index in the image hase the maximum value of uint8</span>
+0078 <span class="keyword">if</span> matRad_cfg.isOctave
+0079     isoColorLevel(isoColorLevel == 255) = 254;
+0080     isoLineHandles = [];
+0081     
+0082 <span class="keyword">elseif</span> matRad_cfg.isMatlab
+0083     isoLineHandles = gobjects(0);
+0084 <span class="keyword">end</span>
+0085 
+0086 colors = squeeze(ind2rgb(isoColorLevel,cMap));
+0087 
+0088 axes(axesHandle);
+0089 hold on;
+0090 
+0091 <span class="comment">%Check if there is a contour in the plane</span>
+0092 <span class="keyword">if</span> any(isoContours{slice,plane}(:))
+0093     <span class="comment">% plot precalculated contourc data</span>
+0094     
+0095     lower = 1; <span class="comment">% lower marks the beginning of a section</span>
+0096     <span class="keyword">while</span> lower-1 ~= size(isoContours{slice,plane},2)
+0097         steps = isoContours{slice,plane}(2,lower); <span class="comment">% number of elements of current line section</span>
+0098         <span class="keyword">if</span> numel(unique(isoLevels)) &gt; 1
+0099             color = colors(isoLevels(:) == isoContours{slice,plane}(1,lower),:);
+0100         <span class="keyword">else</span>
+0101             color = unique(colors,<span class="string">'rows'</span>); 
+0102         <span class="keyword">end</span>
+0103         isoLineHandles(end+1) = line(isoContours{slice,plane}(1,lower+1:lower+steps),<span class="keyword">...</span>
+0104             isoContours{slice,plane}(2,lower+1:lower+steps),<span class="keyword">...</span>
+0105             <span class="string">'Color'</span>,color,<span class="string">'Parent'</span>,axesHandle,varargin{:});
+0106         <span class="keyword">if</span> plotLabels
+0107             text(isoContours{slice,plane}(1,lower+1),<span class="keyword">...</span>
+0108                 isoContours{slice,plane}(2,lower+1),<span class="keyword">...</span>
+0109                 num2str(isoContours{slice,plane}(1,lower)),<span class="string">'Parent'</span>,axesHandle)
+0110         <span class="keyword">end</span>
+0111         lower = lower+steps+1;
+0112         
+0113     <span class="keyword">end</span>
+0114 <span class="keyword">end</span>
+0115 
+0116 hold off;
+0117 
+0118 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

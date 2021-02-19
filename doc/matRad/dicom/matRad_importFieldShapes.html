@@ -1,0 +1,309 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_importFieldShapes</title>
+  <meta name="keywords" content="matRad_importFieldShapes">
+  <meta name="description" content="function to import collimator shapes from a DICOM RT plan">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html dicom -->
+<h1>matRad_importFieldShapes
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function to import collimator shapes from a DICOM RT plan</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function collimation = matRad_importFieldShapes(beamSequence, fractionSequence) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> function to import collimator shapes from a DICOM RT plan
+ 
+ call
+   collimation = matRad_importFieldShapes(beamSequence, fractionSequence)
+
+ input
+   beamSequence: struct containing the beamSequence elements from the RT plan    
+   fractionSequence: struct containing the fractionGroupSequence elements from the RT plan    
+
+ output
+   collimation: struct with all meta information about the collimators and
+   all field shape matrices 
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_importDicomRTPlan.html" class="code" title="function pln = matRad_importDicomRTPlan(ct, rtPlanFiles, dicomMetaBool)">matRad_importDicomRTPlan</a>	matRad function to import dicom RTPLAN data</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function collimation = matRad_importFieldShapes(beamSequence, fractionSequence)</a>
+0002 <span class="comment">% function to import collimator shapes from a DICOM RT plan</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   collimation = matRad_importFieldShapes(beamSequence, fractionSequence)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   beamSequence: struct containing the beamSequence elements from the RT plan</span>
+0009 <span class="comment">%   fractionSequence: struct containing the fractionGroupSequence elements from the RT plan</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% output</span>
+0012 <span class="comment">%   collimation: struct with all meta information about the collimators and</span>
+0013 <span class="comment">%   all field shape matrices</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% References</span>
+0016 <span class="comment">%   -</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0023 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0024 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0025 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0026 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0027 <span class="comment">% LICENSE file.</span>
+0028 <span class="comment">%</span>
+0029 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0030 
+0031 counter = 0;
+0032 maximumExtent = 0;
+0033 tmpCollimation.Fields = struct;
+0034 
+0035 <span class="comment">% check for following meta data in every control point sequence</span>
+0036 <span class="comment">% Format: 'DICOM Name Tag' 'Name in struct'; ...</span>
+0037 meta =  {<span class="string">'NominalBeamEnergy'</span> <span class="string">'Energy'</span>;<span class="string">'GantryAngle'</span> <span class="string">'GantryAngle'</span>;<span class="keyword">...</span>
+0038         <span class="string">'PatientSupportAngle'</span> <span class="string">'CouchAngle'</span>;<span class="string">'SourceToSurfaceDistance'</span> <span class="string">'SSD'</span>};
+0039 
+0040 <span class="comment">% extract field information</span>
+0041 beamSeqNames = fields(beamSequence);
+0042 <span class="keyword">for</span> i = 1:length(beamSeqNames)
+0043     
+0044     currBeamSeq = beamSequence.(beamSeqNames{i});
+0045     cumWeight = 0;
+0046     
+0047     <span class="comment">% get total MU applied by beam i</span>
+0048     tmpCollimation.beamMeterset(i) = fractionSequence.ReferencedBeamSequence.(beamSeqNames{i}).BeamMeterset;
+0049     
+0050     <span class="comment">% get collimator device types</span>
+0051     currDeviceSeq = beamSequence.(beamSeqNames{i}).BeamLimitingDeviceSequence;
+0052     currDeviceSeqNames = fieldnames(currDeviceSeq);
+0053     
+0054     <span class="comment">% set device specific parameters</span>
+0055     device = struct;
+0056     <span class="keyword">for</span> j = 1:length(currDeviceSeqNames)
+0057         currLimitsSeq = currDeviceSeq.(currDeviceSeqNames{j});
+0058         device(j).DeviceType = currLimitsSeq.RTBeamLimitingDeviceType;
+0059         device(j).NumOfLeafs = currLimitsSeq.NumberOfLeafJawPairs;
+0060         device(j).Direction = device(j).DeviceType(end); 
+0061         <span class="keyword">if</span> strncmpi(device(j).DeviceType,<span class="string">'MLC'</span>,3)
+0062            device(j).Limits = currLimitsSeq.LeafPositionBoundaries; 
+0063         <span class="keyword">end</span>
+0064     <span class="keyword">end</span>
+0065     tmpCollimation.Devices{i} = device;
+0066     
+0067     currControlPointSeqNames = fieldnames(currBeamSeq.ControlPointSequence);
+0068     <span class="comment">% all meta informations must be defined in the first control point sequence</span>
+0069     <span class="comment">% see DICOM Doc Sec. C.8.8.14.5</span>
+0070     <span class="comment">% http://dicom.nema.org/MEDICAL/Dicom/2015c/output/chtml/part03/sect_C.8.8.14.5.html</span>
+0071     <span class="keyword">for</span> j = 1:length(meta)
+0072         <span class="keyword">try</span>
+0073             FieldMeta.(meta{j,2}) = currBeamSeq.ControlPointSequence.(currControlPointSeqNames{1}).(meta{j,1});
+0074         <span class="keyword">catch</span>
+0075             warning([<span class="string">'Field '</span> meta{j,1} <span class="string">' not found on beam sequence '</span> beamSeqNames{i} <span class="keyword">...</span>
+0076                      <span class="string">'. No field shape import performed!'</span>]);
+0077             <span class="keyword">return</span>;
+0078         <span class="keyword">end</span>
+0079     <span class="keyword">end</span>
+0080     
+0081     <span class="keyword">for</span> j = 1:length(currControlPointSeqNames)
+0082        counter = counter + 1;
+0083        currControlPointElement = currBeamSeq.ControlPointSequence.(currControlPointSeqNames{j});      
+0084         
+0085        <span class="keyword">if</span> isfield(currControlPointElement, <span class="string">'BeamLimitingDevicePositionSequence'</span>)
+0086            <span class="comment">% get the leaf position for every device</span>
+0087            tmpCollimation.Fields(counter).LeafPos{length(currDeviceSeqNames),1} = [];
+0088 
+0089            <span class="comment">% beam limiting device position sequence has to be defined on</span>
+0090            <span class="comment">% the first control point and has to be defined on following</span>
+0091            <span class="comment">% points only if it changes -&gt; default initilation if counter &gt; 1</span>
+0092            <span class="keyword">if</span> counter &gt; 1
+0093                <span class="keyword">for</span> k = 1:length(currDeviceSeqNames)
+0094                    tmpCollimation.Fields(counter).LeafPos{k} = tmpCollimation.Fields(counter-1).LeafPos{k};
+0095                <span class="keyword">end</span>
+0096            <span class="keyword">end</span>
+0097 
+0098            <span class="keyword">for</span> k = 1:length(currDeviceSeqNames)
+0099 
+0100                <span class="keyword">if</span> isfield(currControlPointElement.BeamLimitingDevicePositionSequence,currDeviceSeqNames{k})
+0101                    currLeafPos = currControlPointElement.BeamLimitingDevicePositionSequence.(currDeviceSeqNames{k}).LeafJawPositions;          
+0102 
+0103                    deviceIx = find(strcmp({device(:).DeviceType}, <span class="keyword">...</span>
+0104                        currControlPointElement.BeamLimitingDevicePositionSequence.(currDeviceSeqNames{k}).RTBeamLimitingDeviceType));
+0105 
+0106                    <span class="keyword">if</span> (length(currLeafPos) ~= 2 * device(deviceIx).NumOfLeafs)
+0107                        warning([<span class="string">'Number of leafs/jaws does not match given number of leaf/jaw positions in control point sequence '</span> <span class="keyword">...</span>
+0108                                 currControlPointSeqNames{j} <span class="string">' on beam sequence '</span> beamSeqNames{i} <span class="string">' for device '</span> <span class="keyword">...</span>
+0109                                 device(deviceIx).DeviceType <span class="string">'. No field shape import performed!'</span>]);
+0110                        <span class="keyword">return</span>;
+0111                    <span class="keyword">end</span>
+0112                    
+0113                    <span class="comment">% set left and right leaf positions</span>
+0114                    tmpCollimation.Fields(counter).LeafPos{deviceIx}(:,1) = currLeafPos(1:device(deviceIx).NumOfLeafs);
+0115                    tmpCollimation.Fields(counter).LeafPos{deviceIx}(:,2) = currLeafPos(device(deviceIx).NumOfLeafs+1:end);
+0116                    <span class="comment">% find the total maximum extent of one beam (in any direction)</span>
+0117                    maximumExtent = max(maximumExtent, max(abs(currLeafPos))); <span class="comment">% check opening direction</span>
+0118                    <span class="comment">% check direction perpendicular to the openening for MLC</span>
+0119                    <span class="keyword">if</span> strncmpi(device(k).DeviceType,<span class="string">'MLC'</span>,3)
+0120                        maximumExtent = max(maximumExtent,max(abs(device(deviceIx).Limits)));
+0121                    <span class="keyword">end</span>
+0122                <span class="keyword">end</span>
+0123            <span class="keyword">end</span>
+0124        <span class="keyword">else</span>
+0125            tmpCollimation.Fields(counter) = tmpCollimation.Fields(counter - 1);
+0126        <span class="keyword">end</span>
+0127        
+0128        <span class="comment">% get field meta information</span>
+0129        <span class="keyword">if</span> isfield(currControlPointElement, <span class="string">'CumulativeMetersetWeight'</span>)      
+0130            newCumWeight = currControlPointElement.CumulativeMetersetWeight;
+0131            tmpCollimation.Fields(counter).Weight = (newCumWeight - cumWeight) / <span class="keyword">...</span>
+0132                                     currBeamSeq.FinalCumulativeMetersetWeight * <span class="keyword">...</span>
+0133                                     tmpCollimation.beamMeterset(i)/100;
+0134            cumWeight = newCumWeight;
+0135        <span class="keyword">else</span>
+0136            warning([<span class="string">'No CumulativeMetersetWeight found in control point sequence '</span> currControlPointSeqNames{j} <span class="keyword">...</span>
+0137                     <span class="string">' on beam '</span> beamSeqNames{i} <span class="string">'. No field shape import performed!'</span>]);
+0138            <span class="keyword">return</span>;
+0139        <span class="keyword">end</span>
+0140        tmpCollimation.Fields(counter).SAD = currBeamSeq.SourceAxisDistance;
+0141         
+0142        <span class="comment">% other meta information is only included in all control point</span>
+0143        <span class="comment">% sequences if it changes during treatment, otherwise use FieldMeta</span>
+0144        <span class="keyword">for</span> k = 1:length(meta)
+0145            <span class="keyword">if</span> isfield(currControlPointElement,meta{k,1})
+0146                tmpCollimation.Fields(counter).(meta{k,2}) = currControlPointElement.(meta{k,1});
+0147            <span class="keyword">else</span>
+0148                tmpCollimation.Fields(counter).(meta{k,2}) = FieldMeta.(meta{k,2});
+0149            <span class="keyword">end</span>
+0150        <span class="keyword">end</span>
+0151        <span class="comment">% save information which control point sequence belongs to which beam sequence</span>
+0152        tmpCollimation.Fields(counter).BeamIndex = i;
+0153     <span class="keyword">end</span>
+0154 <span class="keyword">end</span>
+0155 tmpCollimation.numOfFields = counter;
+0156 
+0157 <span class="comment">% field import works only if the leaf width is a multiple of the conv</span>
+0158 <span class="comment">% resolution</span>
+0159 convResolution = .5; <span class="comment">% [mm]</span>
+0160 tmpCollimation.convResolution = convResolution;
+0161 
+0162 <span class="comment">% get temporary shape limits to calculate the shapes</span>
+0163 shapeLimit = ceil(maximumExtent / convResolution);
+0164 
+0165 <span class="comment">% calculate field shapes from leaf positions</span>
+0166 maximumVoxelExtent = 0;
+0167 [X,Y] = meshgrid(-shapeLimit:shapeLimit-1);
+0168 <span class="keyword">for</span> i = 1:length(tmpCollimation.Fields)
+0169     shape = ones(2*shapeLimit); 
+0170     beamIndex = tmpCollimation.Fields(i).BeamIndex;
+0171     <span class="keyword">for</span> j = 1:length(tmpCollimation.Devices{beamIndex})
+0172         <span class="comment">% check for ASYM and SYM jaws == type 1</span>
+0173         <span class="keyword">if</span> strncmpi(tmpCollimation.Devices{beamIndex}(j).DeviceType,<span class="string">'ASYM'</span>,4)
+0174             type = 1;
+0175         <span class="keyword">elseif</span> (strcmpi(tmpCollimation.Devices{beamIndex}(j).DeviceType,<span class="string">'X'</span>) || <span class="keyword">...</span>
+0176                 strcmpi(tmpCollimation.Devices{beamIndex}(j).DeviceType,<span class="string">'Y'</span>))
+0177             type = 1;
+0178         <span class="comment">% MLC == type 2</span>
+0179         <span class="keyword">elseif</span> strncmpi(tmpCollimation.Devices{beamIndex}(j).DeviceType,<span class="string">'MLC'</span>,3)
+0180             type = 2;
+0181         <span class="keyword">else</span>
+0182             warning([<span class="string">'Device type '</span> tmpCollimation.Devices{beamIndex}(j).DeviceType <span class="keyword">...</span>
+0183                     <span class="string">' not supported. Field shapes could not be imported!'</span>]);
+0184             <span class="keyword">return</span>;
+0185         <span class="keyword">end</span>
+0186         <span class="keyword">for</span> k = 1:tmpCollimation.Devices{beamIndex}(j).NumOfLeafs
+0187             <span class="comment">% determine corner points of the open area</span>
+0188             p1 = ceil(tmpCollimation.Fields(i).LeafPos{j}(k,1)/convResolution)+shapeLimit;
+0189             p2 = ceil(tmpCollimation.Fields(i).LeafPos{j}(k,2)/convResolution)+shapeLimit+1;
+0190             <span class="keyword">if</span> type == 2
+0191                 p3 = ceil(tmpCollimation.Devices{beamIndex}(j).Limits(k)/convResolution)+shapeLimit+1;
+0192                 p4 = ceil(tmpCollimation.Devices{beamIndex}(j).Limits(k+1)/convResolution)+shapeLimit;
+0193             <span class="keyword">else</span> <span class="comment">% for one dimensional collimation (ASMX/Y) other direction is fully open</span>
+0194                 p3 = 1;
+0195                 p4 = 2*shapeLimit;
+0196             <span class="keyword">end</span>
+0197 
+0198             <span class="comment">% set elements covered by the collimator to 0</span>
+0199             <span class="comment">% differentiate between x and y direction</span>
+0200             <span class="keyword">if</span> (p1 &gt; 0) &amp;&amp; (p1 &lt;= 2*shapeLimit) &amp;&amp; <span class="keyword">...</span>
+0201                (p2 &gt; 0) &amp;&amp; (p2 &lt;= 2*shapeLimit) &amp;&amp; <span class="keyword">...</span>
+0202                (p3 &gt; 0) &amp;&amp; (p3 &lt;= 2*shapeLimit) &amp;&amp; <span class="keyword">...</span>
+0203                (p4 &gt; 0) &amp;&amp; (p4 &lt;= 2*shapeLimit)
+0204                 <span class="keyword">try</span>
+0205                     <span class="keyword">if</span> strcmpi(tmpCollimation.Devices{beamIndex}(j).Direction, <span class="string">'X'</span>)
+0206                         shape(p3:p4,1:p1) = 0;
+0207                         shape(p3:p4,p2:end) = 0;
+0208                     <span class="keyword">elseif</span> strcmpi(tmpCollimation.Devices{beamIndex}(j).Direction, <span class="string">'Y'</span>)
+0209                         shape(1:p1,p3:p4) = 0;
+0210                         shape(p2:<span class="keyword">end</span>,p3:p4) = 0;
+0211                     <span class="keyword">else</span>
+0212                         warning([<span class="string">'Wrong collimation direction '</span> tmpCollimation.Devices{beamIndex}(j).Direction <span class="keyword">...</span>
+0213                                  <span class="string">' given for device '</span> tmpCollimation.Devices{beamIndex}(j).DeviceType <span class="keyword">...</span>
+0214                                  <span class="string">'. Fields could not be imported.'</span>]);
+0215                         <span class="keyword">return</span>;
+0216                     <span class="keyword">end</span>
+0217                 <span class="keyword">catch</span>
+0218                     warning(<span class="string">'Error in setting field shapes. Field shapes could not be imported.'</span>)
+0219                     <span class="keyword">return</span>;
+0220                 <span class="keyword">end</span>
+0221             <span class="keyword">end</span>
+0222         <span class="keyword">end</span>
+0223     <span class="keyword">end</span>
+0224     openVoxelDistance = [X(shape == 1); Y(shape == 1)];
+0225     maximumVoxelExtent = max(maximumVoxelExtent, max(abs(openVoxelDistance)));
+0226     tmpCollimation.Fields(i).Shape = shape;
+0227 <span class="keyword">end</span>
+0228 
+0229 tmpCollimation.fieldWidth = 2 * maximumVoxelExtent * convResolution;
+0230 <span class="comment">% truncate field shapes to a symmetrical field with limits maximumVoxelExtent</span>
+0231 voxelRange = (-maximumVoxelExtent+1:maximumVoxelExtent) + shapeLimit;
+0232 <span class="keyword">for</span> i = 1:length(tmpCollimation.Fields) 
+0233      tmpCollimation.Fields(i).Shape = tmpCollimation.Fields(i).Shape(voxelRange, voxelRange);
+0234 <span class="keyword">end</span>
+0235 collimation = tmpCollimation;
+0236 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

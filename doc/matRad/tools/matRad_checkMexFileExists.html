@@ -1,0 +1,190 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_checkMexFileExists</title>
+  <meta name="keywords" content="matRad_checkMexFileExists">
+  <meta name="description" content="Checks if a matching mex file exists, and can create a link">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html tools -->
+<h1>matRad_checkMexFileExists
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">Checks if a matching mex file exists, and can create a link</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function fileExists = matRad_checkMexFileExists(filename,linkOctave) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> Checks if a matching mex file exists, and can create a link 
+ if a matching custom, system specific precompiled octave mex file is found
+
+ call
+   matRad_checkMexFileExists(filename)
+   matRad_checkMexFileExists(filename,linkOctave)
+ 
+ input:
+   filename:   name of the mex file (without extension)
+   linkOctave: (optional: default true) If set to true, the function will check 
+               for a custom build mex file for octave with our custom extension
+               mexoct&lt;system&gt;. If such a file exists, it will create a link to 
+               the file as filename.mex since octave not uses system-specific 
+               extensions by default. If false, the function will only check 
+               for an existing .mex file for octave.
+ output:
+   fileExists: true if the mex file exists (or can be linked), and false
+               otherwise
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2020 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>	matRad function to get the software environment matRad is running on</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/matRad_calcParticleDoseMC.html" class="code" title="function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect)">matRad_calcParticleDoseMC</a>	matRad MCsqaure monte carlo photon dose calculation wrapper</li><li><a href="../../matRad/matRad_calcPhotonDoseMC.html" class="code" title="function dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst,nCasePerBixel,visBool)">matRad_calcPhotonDoseMC</a>	matRad ompMC monte carlo photon dose calculation wrapper</li><li><a href="../../matRad/optimization/optimizer/matRad_OptimizerIPOPT.html" class="code" title="">matRad_OptimizerIPOPT</a>	</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function fileExists = matRad_checkMexFileExists(filename,linkOctave) </a>
+0002 <span class="comment">% Checks if a matching mex file exists, and can create a link</span>
+0003 <span class="comment">% if a matching custom, system specific precompiled octave mex file is found</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% call</span>
+0006 <span class="comment">%   matRad_checkMexFileExists(filename)</span>
+0007 <span class="comment">%   matRad_checkMexFileExists(filename,linkOctave)</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% input:</span>
+0010 <span class="comment">%   filename:   name of the mex file (without extension)</span>
+0011 <span class="comment">%   linkOctave: (optional: default true) If set to true, the function will check</span>
+0012 <span class="comment">%               for a custom build mex file for octave with our custom extension</span>
+0013 <span class="comment">%               mexoct&lt;system&gt;. If such a file exists, it will create a link to</span>
+0014 <span class="comment">%               the file as filename.mex since octave not uses system-specific</span>
+0015 <span class="comment">%               extensions by default. If false, the function will only check</span>
+0016 <span class="comment">%               for an existing .mex file for octave.</span>
+0017 <span class="comment">% output:</span>
+0018 <span class="comment">%   fileExists: true if the mex file exists (or can be linked), and false</span>
+0019 <span class="comment">%               otherwise</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% References</span>
+0022 <span class="comment">%   -</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0025 <span class="comment">%</span>
+0026 <span class="comment">% Copyright 2020 the matRad development team.</span>
+0027 <span class="comment">%</span>
+0028 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0029 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0030 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0031 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0032 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0033 <span class="comment">% LICENSE file.</span>
+0034 <span class="comment">%</span>
+0035 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0036 
+0037 matRad_cfg = MatRad_Config.instance();
+0038 
+0039 <span class="keyword">if</span> nargin &lt; 2
+0040     linkOctave = true;
+0041 <span class="keyword">end</span>
+0042   
+0043 <span class="comment">%Explicitly check for matching mex file (id 3)</span>
+0044 fileExists = (exist(filename,<span class="string">'file'</span>) == 3);
+0045 
+0046 <span class="comment">%For octave we have experimental precompiled files for Octave 5 64 bit</span>
+0047 [env,ver] = <a href="matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>();
+0048 
+0049 <span class="keyword">if</span> ~fileExists &amp;&amp; strcmp(env,<span class="string">'OCTAVE'</span>) &amp;&amp; linkOctave        
+0050      
+0051     <span class="comment">%Check Octave 5</span>
+0052     versplit = strsplit(ver,<span class="string">'.'</span>);
+0053     isOctave5 = str2double(versplit{1}) == 5;     
+0054   
+0055     <span class="keyword">if</span> ~isOctave5
+0056         fileExists = false;
+0057         <span class="keyword">return</span>;
+0058     <span class="keyword">end</span>
+0059     
+0060     <span class="comment">%Check Architecture</span>
+0061     [~,maxArraySize] = computer();
+0062     
+0063     <span class="keyword">if</span> maxArraySize &gt; 2^31
+0064         bitExt = <span class="string">'64'</span>;
+0065     <span class="keyword">else</span>
+0066         bitExt = <span class="string">'32'</span>;
+0067     <span class="keyword">end</span>
+0068        
+0069     <span class="keyword">if</span> ispc
+0070         systemext = <span class="string">'mexoctw'</span>;
+0071     <span class="keyword">elseif</span> ismac 
+0072         systemext = <span class="string">'mexoctmac'</span>;
+0073     <span class="keyword">elseif</span> isunix
+0074         systemext = <span class="string">'mexocta'</span>;
+0075     <span class="keyword">else</span>
+0076         <span class="comment">%No file for unknown operating system</span>
+0077         fileExists = false;
+0078         <span class="keyword">return</span>;
+0079     <span class="keyword">end</span>
+0080     
+0081     <span class="comment">%Build our octfilename</span>
+0082     octfilename = [filename <span class="string">'.'</span> systemext bitExt];
+0083 
+0084     <span class="comment">%Check if matching precompiled octave file exists</span>
+0085     fileExists = (exist(octfilename,<span class="string">'file'</span>) == 2);
+0086     
+0087     <span class="comment">%If it exists, we create a link with the ending &quot;mex&quot; which is used by octave</span>
+0088     <span class="keyword">if</span> fileExists
+0089         mexFileName = [filename <span class="string">'.'</span> mexext];
+0090       
+0091         <span class="comment">%Make the link in the right directory</span>
+0092         cFilePath = which(octfilename);
+0093         [MexFolder,~,~] = fileparts(cFilePath);
+0094         
+0095         oldpath = fullfile(MexFolder,octfilename);
+0096         linkpath = fullfile(MexFolder,mexFileName);
+0097         
+0098         <span class="comment">%Create link</span>
+0099         
+0100         [status,msg] = link(oldpath,linkpath);        
+0101         
+0102         <span class="keyword">if</span> status == 0
+0103             matRad_cfg.dispWarning(<span class="string">'Trying to use a precompiled mex for Octave 5. This is experimental!'</span>);
+0104             fileExists = true;
+0105         <span class="keyword">else</span>
+0106             matRad_cfg.dispWarning(<span class="string">'Could not link existing precompiled mex file %s to %s\n'</span>,octfilename,mexFileName);
+0107             fileExists = false;
+0108         <span class="keyword">end</span>
+0109     <span class="keyword">end</span>
+0110 <span class="keyword">end</span>
+0111</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

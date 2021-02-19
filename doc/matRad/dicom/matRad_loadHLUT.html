@@ -1,0 +1,154 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_loadHLUT</title>
+  <meta name="keywords" content="matRad_loadHLUT">
+  <meta name="description" content="matRad function to load HLUT file based on the provided ct">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html dicom -->
+<h1>matRad_loadHLUT
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad function to load HLUT file based on the provided ct</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function hlut = matRad_loadHLUT(ct, pln) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to load HLUT file based on the provided ct
+
+ call
+   hlut = matRad_loadHLUT(ct, pln)
+
+ input
+   ct:   unprocessed dicom ct data 
+   pln:  matRad pln struct
+
+ output
+   hlut: lookup table
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2018 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/IO/matRad_readHLUT.html" class="code" title="function hlut = matRad_readHLUT(filename)">matRad_readHLUT</a>	matRad function to read HLUT from filename</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_calcWaterEqD.html" class="code" title="function ct = matRad_calcWaterEqD(ct, pln)">matRad_calcWaterEqD</a>	matRad function to calculate the equivalent densities from a dicom ct</li><li><a href="../../matRad/matRad_electronDensitiesToHU.html" class="code" title="function ct = matRad_electronDensitiesToHU(ct)">matRad_electronDensitiesToHU</a>	matRad function to calculate recalculate HU values from equivalent densities</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function hlut = matRad_loadHLUT(ct, pln)</a>
+0002 <span class="comment">% matRad function to load HLUT file based on the provided ct</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   hlut = matRad_loadHLUT(ct, pln)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   ct:   unprocessed dicom ct data</span>
+0009 <span class="comment">%   pln:  matRad pln struct</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% output</span>
+0012 <span class="comment">%   hlut: lookup table</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% References</span>
+0015 <span class="comment">%   -</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% Copyright 2018 the matRad development team.</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0022 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0023 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0024 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0025 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0026 <span class="comment">% LICENSE file.</span>
+0027 <span class="comment">%</span>
+0028 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0029 
+0030 matRad_cfg = MatRad_Config.instance();
+0031   
+0032 <span class="comment">% directory with look up table files</span>
+0033 <span class="keyword">if</span> ~isdeployed
+0034     hlutDir = fullfile(fileparts(mfilename(<span class="string">'fullpath'</span>)),<span class="string">'hlutLibrary'</span>,filesep);
+0035 <span class="keyword">else</span>
+0036     hlutDir = [];
+0037 <span class="keyword">end</span>
+0038 
+0039 <span class="comment">% if possible -&gt; file standard out of dicom tags</span>
+0040 <span class="keyword">try</span>
+0041     
+0042     hlutFileName = <span class="string">''</span>;
+0043     particle     = pln.radiationMode;
+0044     manufacturer = ct.dicomInfo.Manufacturer;
+0045     model        = ct.dicomInfo.ManufacturerModelName;
+0046     convKernel   = ct.dicomInfo.ConvolutionKernel;
+0047     
+0048     hlutFileName = strcat(manufacturer, <span class="string">'-'</span>, model, <span class="string">'-ConvolutionKernel-'</span>,<span class="keyword">...</span>
+0049         convKernel, <span class="string">'_'</span>, particle, <span class="string">'.hlut'</span>);
+0050     
+0051     <span class="comment">% check whether fileNames used '-' or '_' instead of blanks</span>
+0052     hlutFileCell{1} = hlutFileName;
+0053     hlutFileCell{2} = regexprep(hlutFileName,<span class="string">' '</span>,<span class="string">'-'</span>);
+0054     hlutFileCell{3} = regexprep(hlutFileName,<span class="string">' '</span>,<span class="string">'_'</span>);
+0055     
+0056     <span class="comment">% add pathname</span>
+0057     hlutFileCell = strcat(hlutDir,hlutFileCell);
+0058 
+0059     <span class="comment">% check if files exist</span>
+0060     existIx = cellfun(@(x) exist(x,<span class="string">'file'</span>) == 2,hlutFileCell);
+0061     
+0062     <span class="keyword">if</span> sum(existIx) == 0
+0063         produce an error to enter <span class="keyword">catch</span> statment below :)
+0064     <span class="keyword">else</span>
+0065         hlutFileName = hlutFileCell{existIx};
+0066     <span class="keyword">end</span>
+0067 
+0068 <span class="keyword">catch</span>
+0069     
+0070     warnText = [<span class="string">'Could not find HLUT '</span> hlutFileName <span class="string">' in hlutLibrary folder.'</span> <span class="keyword">...</span>
+0071                 <span class="string">' matRad default HLUT loaded'</span>];
+0072     warning(<span class="string">'off'</span>,<span class="string">'backtrace'</span>)
+0073     matRad_cfg.dispWarning(warnText);
+0074     
+0075     <span class="comment">% load default HLUT</span>
+0076     hlutFileName = strcat(hlutDir,<span class="string">'matRad_default.hlut'</span>);
+0077 
+0078 <span class="keyword">end</span>
+0079 
+0080 hlut = <a href="../../matRad/IO/matRad_readHLUT.html" class="code" title="function hlut = matRad_readHLUT(filename)">matRad_readHLUT</a>(hlutFileName);
+0081 
+0082 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

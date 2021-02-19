@@ -1,0 +1,557 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_exportGUI</title>
+  <meta name="keywords" content="matRad_exportGUI">
+  <meta name="description" content="MATRAD_EXPORTGUI MATLAB code for matRad_exportGUI.fig">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html IO -->
+<h1>matRad_exportGUI
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">MATRAD_EXPORTGUI MATLAB code for matRad_exportGUI.fig</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function varargout = matRad_exportGUI(varargin) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> MATRAD_EXPORTGUI MATLAB code for matRad_exportGUI.fig
+      MATRAD_EXPORTGUI, by itself, creates a new MATRAD_EXPORTGUI or raises the existing
+      singleton*.
+
+      H = MATRAD_EXPORTGUI returns the handle to a new MATRAD_EXPORTGUI or the handle to
+      the existing singleton*.
+
+      MATRAD_EXPORTGUI('CALLBACK',hObject,eventData,handles,...) calls the local
+      function named CALLBACK in MATRAD_EXPORTGUI.M with the given input arguments.
+
+      MATRAD_EXPORTGUI('Property','Value',...) creates a new MATRAD_EXPORTGUI or raises
+      the existing singleton*.  Starting from the left, property value pairs are
+      applied to the GUI before matRad_exportGUI_OpeningFcn gets called.  An
+      unrecognized property name or invalid value makes property application
+      stop.  All inputs are passed to matRad_exportGUI_OpeningFcn via varargin.
+
+      *See GUI Options on GUIDE's Tools menu.  Choose &quot;GUI allows only one
+      instance to run (singleton)&quot;.
+
+ See also: GUIDE, GUIDATA, GUIHANDLES</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_writeCube.html" class="code" title="function [saved_metadata] = matRad_writeCube(filepath,cube,datatype,metadata)">matRad_writeCube</a>	matRad wrapper for Cube export</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>Subfunctions <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<ul style="list-style-type:disc">
+<li><a href="#_sub1" class="code">function matRad_exportGUI_OpeningFcn(hObject, eventdata, handles, varargin)</a></li><li><a href="#_sub2" class="code">function varargout = matRad_exportGUI_OutputFcn(hObject, eventdata, handles)</a></li><li><a href="#_sub3" class="code">function initialize_gui(fig_handle, handles, isreset)</a></li><li><a href="#_sub4" class="code">function checkbox_CT_Callback(hObject, eventdata, handles)</a></li><li><a href="#_sub5" class="code">function uitable_vois_Callback(hObject, eventdata, handles)</a></li><li><a href="#_sub6" class="code">function uitable_vois_CreateFcn(hObject, eventdata, handles)</a></li><li><a href="#_sub7" class="code">function checkbox_dose_Callback(hObject, eventdata, handles)</a></li><li><a href="#_sub8" class="code">function uitable_doseCubes_Callback(hObject, eventdata, handles)</a></li><li><a href="#_sub9" class="code">function listbox_dose_CreateFcn(hObject, eventdata, handles)</a></li><li><a href="#_sub10" class="code">function exportDir = pushbutton_dir_export_browse_Callback(hObject, eventdata, handles)</a></li><li><a href="#_sub11" class="code">function exportDir = edit_dir_export_Callback(hObject, eventdata, handles)</a></li><li><a href="#_sub12" class="code">function edit_dir_export_CreateFcn(hObject, eventdata, handles)</a></li><li><a href="#_sub13" class="code">function popupmenu_extension_Callback(hObject, eventdata, handles)</a></li><li><a href="#_sub14" class="code">function popupmenu_extension_CreateFcn(hObject, eventdata, handles)</a></li><li><a href="#_sub15" class="code">function btn_export_Callback(hObject, eventdata, handles)</a></li><li><a href="#_sub16" class="code">function btn_cancel_Callback(hObject, eventdata, handles)</a></li><li><a href="#_sub17" class="code">function btn_cancel_CreateFcn(hObject, eventdata, handles)</a></li><li><a href="#_sub18" class="code">function checkbox_compress_Callback(hObject, eventdata, handles)</a></li></ul>
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function varargout = matRad_exportGUI(varargin)</a>
+0002 <span class="comment">% MATRAD_EXPORTGUI MATLAB code for matRad_exportGUI.fig</span>
+0003 <span class="comment">%      MATRAD_EXPORTGUI, by itself, creates a new MATRAD_EXPORTGUI or raises the existing</span>
+0004 <span class="comment">%      singleton*.</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">%      H = MATRAD_EXPORTGUI returns the handle to a new MATRAD_EXPORTGUI or the handle to</span>
+0007 <span class="comment">%      the existing singleton*.</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">%      MATRAD_EXPORTGUI('CALLBACK',hObject,eventData,handles,...) calls the local</span>
+0010 <span class="comment">%      function named CALLBACK in MATRAD_EXPORTGUI.M with the given input arguments.</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">%      MATRAD_EXPORTGUI('Property','Value',...) creates a new MATRAD_EXPORTGUI or raises</span>
+0013 <span class="comment">%      the existing singleton*.  Starting from the left, property value pairs are</span>
+0014 <span class="comment">%      applied to the GUI before matRad_exportGUI_OpeningFcn gets called.  An</span>
+0015 <span class="comment">%      unrecognized property name or invalid value makes property application</span>
+0016 <span class="comment">%      stop.  All inputs are passed to matRad_exportGUI_OpeningFcn via varargin.</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">%      *See GUI Options on GUIDE's Tools menu.  Choose &quot;GUI allows only one</span>
+0019 <span class="comment">%      instance to run (singleton)&quot;.</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% See also: GUIDE, GUIDATA, GUIHANDLES</span>
+0022 
+0023 <span class="comment">% Edit the above text to modify the response to help matRad_exportGUI</span>
+0024 
+0025 <span class="comment">% Last Modified by GUIDE v2.5 07-Jul-2016 14:50:05</span>
+0026 <span class="comment">%</span>
+0027 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0028 <span class="comment">%</span>
+0029 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0030 <span class="comment">%</span>
+0031 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0032 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0033 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0034 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0035 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0036 <span class="comment">% LICENSE file.</span>
+0037 <span class="comment">%</span>
+0038 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0039 
+0040 <span class="comment">% Begin initialization code - DO NOT EDIT</span>
+0041 gui_Singleton = 1;
+0042 gui_State = struct(<span class="string">'gui_Name'</span>,       mfilename, <span class="keyword">...</span>
+0043                    <span class="string">'gui_Singleton'</span>,  gui_Singleton, <span class="keyword">...</span>
+0044                    <span class="string">'gui_OpeningFcn'</span>, @<a href="#_sub1" class="code" title="subfunction matRad_exportGUI_OpeningFcn(hObject, eventdata, handles, varargin)">matRad_exportGUI_OpeningFcn</a>, <span class="keyword">...</span>
+0045                    <span class="string">'gui_OutputFcn'</span>,  @<a href="#_sub2" class="code" title="subfunction varargout = matRad_exportGUI_OutputFcn(hObject, eventdata, handles)">matRad_exportGUI_OutputFcn</a>, <span class="keyword">...</span>
+0046                    <span class="string">'gui_LayoutFcn'</span>,  [] , <span class="keyword">...</span>
+0047                    <span class="string">'gui_Callback'</span>,   []);
+0048 <span class="keyword">if</span> nargin &amp;&amp; ischar(varargin{1})
+0049     gui_State.gui_Callback = str2func(varargin{1});
+0050 <span class="keyword">end</span>
+0051 
+0052 <span class="keyword">if</span> nargout
+0053     [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
+0054 <span class="keyword">else</span>
+0055     gui_mainfcn(gui_State, varargin{:});
+0056 <span class="keyword">end</span>
+0057 <span class="comment">% End initialization code - DO NOT EDIT</span>
+0058 
+0059 <span class="comment">% --- Executes just before matRad_exportGUI is made visible.</span>
+0060 <a name="_sub1" href="#_subfunctions" class="code">function matRad_exportGUI_OpeningFcn(hObject, eventdata, handles, varargin)</a>
+0061 <span class="comment">% This function has no output args, see OutputFcn.</span>
+0062 <span class="comment">% hObject    handle to figure</span>
+0063 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0064 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0065 <span class="comment">% varargin   command line arguments to matRad_exportGUI (see VARARGIN)</span>
+0066 
+0067 <span class="comment">% Choose default command line output for matRad_exportGUI</span>
+0068 handles.output = hObject;
+0069 
+0070 <span class="comment">%Fills structure export table</span>
+0071 <span class="keyword">if</span> evalin(<span class="string">'base'</span>,<span class="string">'exist(''cst'',''var'')'</span>) == 1
+0072     cst = evalin( <span class="string">'base'</span>, <span class="string">'cst'</span> );
+0073     tableData = cell(numel(cst(:,2)),2);
+0074     tableData(:,2) = cst(:,2);
+0075     tableData(:,1) = {true};
+0076 <span class="keyword">else</span>
+0077     tableData = cell(0);
+0078     set(handles.checkbox_CT,<span class="string">'Enable'</span>,<span class="string">'off'</span>);
+0079 <span class="keyword">end</span>
+0080 set(handles.uitable_vois,<span class="string">'data'</span>,tableData);
+0081 
+0082 <span class="comment">%Fills result cubes export table</span>
+0083 <span class="keyword">if</span> evalin(<span class="string">'base'</span>,<span class="string">'exist(''resultGUI'',''var'')'</span>)
+0084     result = evalin( <span class="string">'base'</span>, <span class="string">'resultGUI'</span> );
+0085     cubeNames = fieldnames(result);
+0086     cubeIx = 1;
+0087     <span class="keyword">for</span> f = 1:numel(cubeNames)
+0088         <span class="keyword">if</span> ndims(result.(cubeNames{f})) &lt; 3
+0089             <span class="keyword">continue</span>;
+0090         <span class="keyword">end</span>
+0091         cubes{cubeIx} = cubeNames{f};
+0092         cubeIx = cubeIx + 1;
+0093     <span class="keyword">end</span>    
+0094     numCubes = cubeIx - 1;
+0095     tableData = cell(numCubes,2);
+0096     tableData(:,2) = cubes;
+0097     tableData(:,1) = {true};
+0098 <span class="keyword">else</span>
+0099     tableData = cell(0);
+0100     set(handles.checkbox_dose,<span class="string">'Enable'</span>,<span class="string">'off'</span>);
+0101 <span class="keyword">end</span>
+0102 set(handles.uitable_doseCubes,<span class="string">'data'</span>,tableData);
+0103 
+0104 
+0105 <span class="comment">% Update handles structure</span>
+0106 guidata(hObject, handles);
+0107 
+0108 <a href="#_sub3" class="code" title="subfunction initialize_gui(fig_handle, handles, isreset)">initialize_gui</a>(hObject, handles, false);
+0109 
+0110 <span class="comment">% UIWAIT makes matRad_exportGUI wait for user response (see UIRESUME)</span>
+0111 <span class="comment">% uiwait(handles.figure1);</span>
+0112 
+0113 
+0114 <span class="comment">% --- Outputs from this function are returned to the command line.</span>
+0115 <a name="_sub2" href="#_subfunctions" class="code">function varargout = matRad_exportGUI_OutputFcn(hObject, eventdata, handles)</a>
+0116 <span class="comment">% varargout  cell array for returning output args (see VARARGOUT);</span>
+0117 <span class="comment">% hObject    handle to figure</span>
+0118 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0119 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0120 
+0121 <span class="comment">% Get default command line output from handles structure</span>
+0122 varargout{1} = handles.output;
+0123 
+0124 <span class="comment">% --------------------------------------------------------------------</span>
+0125 <a name="_sub3" href="#_subfunctions" class="code">function initialize_gui(fig_handle, handles, isreset)</a>
+0126 <span class="comment">% If the metricdata field is present and the btn_cancel flag is false, it means</span>
+0127 <span class="comment">% we are we are just re-initializing a GUI by calling it from the cmd line</span>
+0128 <span class="comment">% while it is up. So, bail out as we dont want to btn_cancel the data.</span>
+0129 <span class="keyword">if</span> isfield(handles, <span class="string">'metricdata'</span>) &amp;&amp; ~isreset
+0130     <span class="keyword">return</span>;
+0131 <span class="keyword">end</span>
+0132 
+0133 <span class="comment">%{</span>
+0134 handles.metricdata.density = 0;
+0135 handles.metricdata.volume  = 0;
+0136 
+0137 set(handles.density, <span class="string">'String'</span>, handles.metricdata.density);
+0138 set(handles.volume,  <span class="string">'String'</span>, handles.metricdata.volume);
+0139 set(handles.mass, <span class="string">'String'</span>, 0);
+0140 
+0141 set(handles.unitgroup, <span class="string">'SelectedObject'</span>, handles.english);
+0142 
+0143 set(handles.text4, <span class="string">'String'</span>, <span class="string">'lb/cu.in'</span>);
+0144 set(handles.text5, <span class="string">'String'</span>, <span class="string">'cu.in'</span>);
+0145 set(handles.text6, <span class="string">'String'</span>, <span class="string">'lb'</span>);
+0146 
+0147 <span class="comment">% Update handles structure</span>
+0148 guidata(handles.figure1, handles);
+0149 <span class="comment">%}</span>
+0150 
+0151 <span class="comment">% --- Executes on button press in checkbox_CT.</span>
+0152 <a name="_sub4" href="#_subfunctions" class="code">function checkbox_CT_Callback(hObject, eventdata, handles)</a>
+0153 <span class="comment">% hObject    handle to checkbox_CT (see GCBO)</span>
+0154 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0155 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0156 
+0157 saveCT = get(hObject,<span class="string">'Value'</span>);
+0158 
+0159 <span class="comment">%Show the VOI-table only if we want to save a CT</span>
+0160 <span class="keyword">if</span> (saveCT)
+0161     set(handles.uitable_vois,<span class="string">'Visible'</span>, <span class="string">'on'</span>, <span class="string">'Enable'</span>,<span class="string">'on'</span>);
+0162 <span class="keyword">else</span>
+0163     set(handles.uitable_vois,<span class="string">'Visible'</span>, <span class="string">'off'</span>, <span class="string">'Enable'</span>,<span class="string">'off'</span>);
+0164 <span class="keyword">end</span>    
+0165 
+0166 
+0167 <span class="comment">% --- Executes on selection change in listbox_vois.</span>
+0168 <a name="_sub5" href="#_subfunctions" class="code">function uitable_vois_Callback(hObject, eventdata, handles)</a>
+0169 <span class="comment">% hObject    handle to listbox_vois (see GCBO)</span>
+0170 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0171 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0172 
+0173 <span class="comment">% Hints: contents = cellstr(get(hObject,'String')) returns listbox_vois contents as cell array</span>
+0174 <span class="comment">%        contents{get(hObject,'Value')} returns selected item from listbox_vois</span>
+0175 
+0176 
+0177 <span class="comment">% --- Executes during object creation, after setting all properties.</span>
+0178 <a name="_sub6" href="#_subfunctions" class="code">function uitable_vois_CreateFcn(hObject, eventdata, handles)</a>
+0179 <span class="comment">% hObject    handle to listbox_vois (see GCBO)</span>
+0180 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0181 <span class="comment">% handles    empty - handles not created until after all CreateFcns called</span>
+0182 
+0183 <span class="comment">% Hint: listbox controls usually have a white background on Windows.</span>
+0184 <span class="comment">%       See ISPC and COMPUTER.</span>
+0185 <span class="keyword">if</span> ispc &amp;&amp; isequal(get(hObject,<span class="string">'BackgroundColor'</span>), get(0,<span class="string">'defaultUicontrolBackgroundColor'</span>))
+0186     set(hObject,<span class="string">'BackgroundColor'</span>,<span class="string">'white'</span>);
+0187 <span class="keyword">end</span>
+0188 
+0189 
+0190 <span class="comment">% --- Executes on button press in checkbox_dose.</span>
+0191 <a name="_sub7" href="#_subfunctions" class="code">function checkbox_dose_Callback(hObject, eventdata, handles)</a>
+0192 <span class="comment">% hObject    handle to checkbox_dose (see GCBO)</span>
+0193 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0194 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0195 
+0196 
+0197 <span class="comment">%Show the Result-table only if we want to save dose cubes</span>
+0198 saveDose = get(hObject,<span class="string">'Value'</span>);
+0199 <span class="keyword">if</span> (saveDose)
+0200     set(handles.uitable_doseCubes,<span class="string">'Visible'</span>, <span class="string">'on'</span>, <span class="string">'Enable'</span>,<span class="string">'on'</span>);
+0201 
+0202 <span class="keyword">else</span>
+0203     set(handles.uitable_doseCubes,<span class="string">'Visible'</span>, <span class="string">'off'</span>, <span class="string">'Enable'</span>,<span class="string">'off'</span>);
+0204     <span class="comment">%set(handles.uitable_vois,'data',cell(0));</span>
+0205 <span class="keyword">end</span>    
+0206 
+0207 
+0208 <span class="comment">% --- Executes on selection change in listbox_dose.</span>
+0209 <a name="_sub8" href="#_subfunctions" class="code">function uitable_doseCubes_Callback(hObject, eventdata, handles)</a>
+0210 <span class="comment">% hObject    handle to listbox_dose (see GCBO)</span>
+0211 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0212 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0213 
+0214 <span class="comment">% Hints: contents = cellstr(get(hObject,'String')) returns listbox_dose contents as cell array</span>
+0215 <span class="comment">%        contents{get(hObject,'Value')} returns selected item from listbox_dose</span>
+0216 
+0217 
+0218 <span class="comment">% --- Executes during object creation, after setting all properties.</span>
+0219 <a name="_sub9" href="#_subfunctions" class="code">function listbox_dose_CreateFcn(hObject, eventdata, handles)</a>
+0220 <span class="comment">% hObject    handle to listbox_dose (see GCBO)</span>
+0221 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0222 <span class="comment">% handles    empty - handles not created until after all CreateFcns called</span>
+0223 
+0224 <span class="comment">% Hint: listbox controls usually have a white background on Windows.</span>
+0225 <span class="comment">%       See ISPC and COMPUTER.</span>
+0226 <span class="keyword">if</span> ispc &amp;&amp; isequal(get(hObject,<span class="string">'BackgroundColor'</span>), get(0,<span class="string">'defaultUicontrolBackgroundColor'</span>))
+0227     set(hObject,<span class="string">'BackgroundColor'</span>,<span class="string">'white'</span>);
+0228 <span class="keyword">end</span>
+0229 
+0230 
+0231 <span class="comment">% --- Executes on button press in pushbutton_dir_export_browse.</span>
+0232 <a name="_sub10" href="#_subfunctions" class="code">function exportDir = pushbutton_dir_export_browse_Callback(hObject, eventdata, handles)</a>
+0233 <span class="comment">% hObject    handle to pushbutton_dir_export_browse (see GCBO)</span>
+0234 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0235 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0236 
+0237 exportDir = uigetdir(<span class="string">''</span>, <span class="string">'Choose the export directory...'</span>);
+0238 <span class="keyword">if</span> exportDir ~= 0
+0239     exportDir = [exportDir filesep];
+0240     set(handles.edit_dir_export,<span class="string">'String'</span>,exportDir);
+0241     <span class="comment">% Update handles structure</span>
+0242     guidata(hObject, handles);
+0243 <span class="keyword">end</span>
+0244 
+0245 
+0246 <a name="_sub11" href="#_subfunctions" class="code">function exportDir = edit_dir_export_Callback(hObject, eventdata, handles)</a>
+0247 <span class="comment">% hObject    handle to edit_dir_export (see GCBO)</span>
+0248 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0249 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0250 
+0251 <span class="comment">% Hints: get(hObject,'String') returns contents of edit_dir_export as text</span>
+0252 <span class="comment">%        str2double(get(hObject,'String')) returns contents of edit_dir_export as a double</span>
+0253 
+0254 exportDir = get(handles.edit_dir_export,<span class="string">'String'</span>);
+0255 
+0256 <span class="comment">%Add filesperator</span>
+0257 <span class="keyword">if</span> exportDir(end) ~= filesep;
+0258     exportDir = [exportDir filesep];
+0259 <span class="keyword">end</span>
+0260 
+0261 <span class="comment">%Check if the user specified an existing directory</span>
+0262 <span class="keyword">if</span> ~exist(exportDir,<span class="string">'dir'</span>)
+0263     warndlg([<span class="string">'Folder '</span> exportDir <span class="string">' does not exist!'</span>]);
+0264     exportDir = <span class="string">''</span>;
+0265 <span class="keyword">end</span>    
+0266 set(handles.edit_dir_export,<span class="string">'String'</span>,exportDir);
+0267 guidata(hObject, handles);
+0268 
+0269 <span class="comment">% --- Executes during object creation, after setting all properties.</span>
+0270 <a name="_sub12" href="#_subfunctions" class="code">function edit_dir_export_CreateFcn(hObject, eventdata, handles)</a>
+0271 <span class="comment">% hObject    handle to edit_dir_export (see GCBO)</span>
+0272 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0273 <span class="comment">% handles    empty - handles not created until after all CreateFcns called</span>
+0274 
+0275 <span class="comment">% Hint: edit controls usually have a white background on Windows.</span>
+0276 <span class="comment">%       See ISPC and COMPUTER.</span>
+0277 <span class="keyword">if</span> ispc &amp;&amp; isequal(get(hObject,<span class="string">'BackgroundColor'</span>), get(0,<span class="string">'defaultUicontrolBackgroundColor'</span>))
+0278     set(hObject,<span class="string">'BackgroundColor'</span>,<span class="string">'white'</span>);
+0279     
+0280 
+0281     
+0282 <span class="keyword">end</span>
+0283 
+0284 
+0285 <span class="comment">% --- Executes on selection change in popupmenu_extension.</span>
+0286 <a name="_sub13" href="#_subfunctions" class="code">function popupmenu_extension_Callback(hObject, eventdata, handles)</a>
+0287 <span class="comment">% hObject    handle to popupmenu_extension (see GCBO)</span>
+0288 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0289 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0290 
+0291 <span class="comment">% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu_extension contents as cell array</span>
+0292 <span class="comment">%        contents{get(hObject,'Value')} returns selected item from popupmenu_extension</span>
+0293 
+0294 
+0295 <span class="comment">% --- Executes during object creation, after setting all properties.</span>
+0296 <a name="_sub14" href="#_subfunctions" class="code">function popupmenu_extension_CreateFcn(hObject, eventdata, handles)</a>
+0297 <span class="comment">% hObject    handle to popupmenu_extension (see GCBO)</span>
+0298 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0299 <span class="comment">% handles    empty - handles not created until after all CreateFcns called</span>
+0300 
+0301 <span class="comment">%These sets up the available extensions</span>
+0302 extensions{1} = <span class="string">'*.nrrd'</span>;
+0303 extensions{2} = <span class="string">'*.vtk'</span>;
+0304 extensions{3} = <span class="string">'*.mha'</span>;
+0305 set(hObject,<span class="string">'String'</span>,extensions);
+0306 
+0307 <span class="comment">% Hint: popupmenu controls usually have a white background on Windows.</span>
+0308 <span class="comment">%       See ISPC and COMPUTER.</span>
+0309 <span class="keyword">if</span> ispc &amp;&amp; isequal(get(hObject,<span class="string">'BackgroundColor'</span>), get(0,<span class="string">'defaultUicontrolBackgroundColor'</span>))
+0310     set(hObject,<span class="string">'BackgroundColor'</span>,<span class="string">'white'</span>);
+0311 <span class="keyword">end</span>
+0312 
+0313 
+0314 <span class="comment">% --- Executes on button press in btn_export.</span>
+0315 <a name="_sub15" href="#_subfunctions" class="code">function btn_export_Callback(hObject, eventdata, handles)</a>
+0316 <span class="comment">% hObject    handle to btn_export (see GCBO)</span>
+0317 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0318 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0319 
+0320 <span class="comment">%Get the export dir</span>
+0321 exportDir = get(handles.edit_dir_export,<span class="string">'String'</span>);
+0322 
+0323 <span class="comment">%Sanity check</span>
+0324 <span class="keyword">if</span> numel(exportDir) == 0
+0325     errordlg(<span class="string">'No Export folder selected!'</span>);
+0326     <span class="keyword">return</span>;
+0327 <span class="keyword">elseif</span> ~exist(exportDir,<span class="string">'dir'</span>)
+0328     errordlg([<span class="string">'Folder '</span> exportDir <span class="string">' does not exist!'</span>]);
+0329     <span class="keyword">return</span>;
+0330 <span class="keyword">else</span>
+0331     <span class="comment">%Add file separator if necessary</span>
+0332     <span class="keyword">if</span> exportDir(end) ~= filesep;
+0333         exportDir = [exportDir filesep];
+0334     <span class="keyword">end</span> 
+0335 <span class="keyword">end</span>
+0336 
+0337 <span class="comment">%Get the file extension</span>
+0338 extensionIndex = get(handles.popupmenu_extension,<span class="string">'Value'</span>);
+0339 extensions = get(handles.popupmenu_extension,<span class="string">'String'</span>);
+0340 extension = extensions{extensionIndex};
+0341 extension = extension(2:end);
+0342 
+0343 saveCT = get(handles.checkbox_CT,<span class="string">'Value'</span>);
+0344 saveResults = get(handles.checkbox_dose,<span class="string">'Value'</span>);
+0345 
+0346 <span class="comment">%%Prepare for export</span>
+0347 <span class="comment">%If we export CT, try to create a subdirectory for VOIs</span>
+0348 <span class="keyword">if</span> (saveCT)
+0349     voiDir = [exportDir <span class="string">'/vois/'</span>];
+0350     <span class="keyword">if</span> ~exist(voiDir,<span class="string">'dir'</span>)
+0351         <span class="keyword">if</span> ~mkdir(voiDir)
+0352             warndlg(<span class="string">'Could not create subfolder for VOI masks. Masks will be stored in base folder.'</span>);
+0353             voiDir = exportDir;
+0354         <span class="keyword">end</span>
+0355     <span class="keyword">end</span>
+0356 <span class="keyword">end</span>
+0357 <span class="comment">%If we export results, try to create a subdirectory for VOIs</span>
+0358 <span class="keyword">if</span> (saveResults)
+0359     resultDir = [exportDir <span class="string">'/results/'</span>];
+0360     <span class="keyword">if</span> ~exist(resultDir,<span class="string">'dir'</span>)
+0361         <span class="keyword">if</span> ~mkdir(resultDir)
+0362             warndlg(<span class="string">'Could not create subfolder for resulting dose cubes. Cubes will be stored in base folder.'</span>);
+0363             resultDir = exportDir;
+0364         <span class="keyword">end</span>
+0365     <span class="keyword">end</span>
+0366 <span class="keyword">end</span>
+0367 
+0368 <span class="comment">%prepare metadata</span>
+0369 ct = evalin(<span class="string">'base'</span>,<span class="string">'ct'</span>);
+0370 
+0371 metadata.resolution = [ct.resolution.x ct.resolution.y ct.resolution.z];
+0372 metadata.compress = get(handles.checkbox_compress,<span class="string">'Value'</span>);
+0373 
+0374 <span class="comment">%Check if we have position information</span>
+0375 <span class="keyword">if</span> isfield(ct,<span class="string">'dicomInfo'</span>)
+0376     <span class="keyword">if</span> isfield(ct.dicomInfo,<span class="string">'ImagePositionPatient'</span>)
+0377        metadata.imageOrigin = ct.dicomInfo.ImagePositionPatient; 
+0378        <span class="keyword">if</span> ~isrow(metadata.imageOrigin)
+0379            metadata.imageOrigin = transpose(metadata.imageOrigin);
+0380        <span class="keyword">end</span>
+0381     <span class="keyword">end</span>    
+0382 <span class="keyword">end</span>
+0383 
+0384 <span class="comment">%This is only for the waitbar to get the number of cubes you wanna save</span>
+0385 numExportCubes = 0;
+0386 <span class="keyword">if</span> (saveCT)
+0387     <span class="keyword">if</span> isfield(ct,<span class="string">'cubeHU'</span>)
+0388         numExportCubes = numExportCubes + 1;
+0389     <span class="keyword">end</span>
+0390     
+0391     <span class="keyword">if</span> isfield(ct,<span class="string">'cube'</span>)
+0392         numExportCubes = numExportCubes + 1;
+0393     <span class="keyword">end</span>
+0394     voiNames = get(handles.uitable_vois,<span class="string">'Data'</span>);
+0395     voiIndices = find([voiNames{:,1}] == true);
+0396     numExportCubes = numExportCubes + numel(voiIndices);
+0397  
+0398 <span class="keyword">else</span>
+0399     numExportCubes = 0;
+0400 <span class="keyword">end</span>
+0401 
+0402 <span class="keyword">if</span> saveResults
+0403    cubeNames = get(handles.uitable_doseCubes,<span class="string">'data'</span>);
+0404    cubeIndices = find([cubeNames{:,1}] == true);
+0405    numExportCubes = numExportCubes + numel(cubeIndices);
+0406 <span class="keyword">end</span>
+0407 
+0408 <span class="comment">%Give an error if nothing was selected</span>
+0409 <span class="keyword">if</span> numExportCubes == 0
+0410     errordlg(<span class="string">'No data was selected for export!'</span>);
+0411     <span class="keyword">return</span>;
+0412 <span class="keyword">end</span>       
+0413 
+0414 currentCube = 0;
+0415 
+0416 hWaitbar = waitbar(0,<span class="string">'Exporting...'</span>,<span class="string">'WindowStyle'</span>, <span class="string">'modal'</span>);
+0417 cleanUp = onCleanup(@() close(hWaitbar));
+0418 
+0419 <span class="comment">%CT and Mask export</span>
+0420 <span class="keyword">if</span> saveCT   
+0421     
+0422     <span class="keyword">if</span> isfield(ct,<span class="string">'cube'</span>)
+0423         <span class="comment">%Export the CT (ED suffix to clarify it is not in HU)</span>
+0424         currentCube = currentCube + 1;
+0425         waitbar(currentCube/numExportCubes,hWaitbar,[<span class="string">'Exporting CT Intensity values ('</span> num2str(currentCube) <span class="string">'/'</span> num2str(numExportCubes) <span class="string">') ...'</span>]);
+0426         <a href="matRad_writeCube.html" class="code" title="function [saved_metadata] = matRad_writeCube(filepath,cube,datatype,metadata)">matRad_writeCube</a>(fullfile(exportDir,[<span class="string">'CT_ED'</span> extension]),ct.cube{1},<span class="string">'double'</span>,metadata);
+0427     <span class="keyword">end</span>
+0428     
+0429     <span class="keyword">if</span> isfield(ct,<span class="string">'cubeHU'</span>)
+0430         currentCube = currentCube + 1;
+0431         waitbar(currentCube/numExportCubes,hWaitbar,[<span class="string">'Exporting CT in HU ('</span> num2str(currentCube) <span class="string">'/'</span> num2str(numExportCubes) <span class="string">') ...'</span>]);
+0432         <a href="matRad_writeCube.html" class="code" title="function [saved_metadata] = matRad_writeCube(filepath,cube,datatype,metadata)">matRad_writeCube</a>(fullfile(exportDir,[<span class="string">'CT_HU'</span> extension]),ct.cubeHU{1},<span class="string">'double'</span>,metadata);
+0433     <span class="keyword">end</span>
+0434     
+0435     <span class="comment">%Export VOI masks</span>
+0436     cst = evalin(<span class="string">'base'</span>,<span class="string">'cst'</span>);
+0437     
+0438     <span class="keyword">for</span> voiIx = voiIndices
+0439         <span class="comment">%Waitbar</span>
+0440         currentCube = currentCube + 1;
+0441         waitbar(currentCube/numExportCubes,hWaitbar,[<span class="string">'Exporting Segmentation Mask ('</span> num2str(currentCube) <span class="string">'/'</span> num2str(numExportCubes) <span class="string">') ...'</span>]);
+0442         
+0443         <span class="comment">%Get the index list</span>
+0444         voiRow = find(strcmp(voiNames{voiIx,2},cst(:,2)));
+0445         voiIndexList = cst{voiRow,4}{1};
+0446         <span class="comment">%Set up the full mask</span>
+0447         voiMask = zeros(ct.cubeDim);
+0448         voiMask(voiIndexList) = 1;
+0449         <span class="comment">%Export...</span>
+0450         <a href="matRad_writeCube.html" class="code" title="function [saved_metadata] = matRad_writeCube(filepath,cube,datatype,metadata)">matRad_writeCube</a>(fullfile(voiDir,[voiNames{voiIx,2} extension]),voiMask,<span class="string">'uint8'</span>,metadata);
+0451     <span class="keyword">end</span>
+0452     
+0453 <span class="keyword">end</span>
+0454 
+0455 <span class="comment">%Results Export</span>
+0456 <span class="keyword">if</span> saveResults
+0457     results = evalin(<span class="string">'base'</span>,<span class="string">'resultGUI'</span>);    
+0458     cubeNames = get(handles.uitable_doseCubes,<span class="string">'data'</span>);
+0459        
+0460     <span class="keyword">for</span> cubeIx = cubeIndices
+0461         <span class="comment">%Export</span>
+0462         currentCube = currentCube + 1;
+0463         waitbar(currentCube/numExportCubes,hWaitbar,[<span class="string">'Exporting Results ('</span> num2str(currentCube) <span class="string">'/'</span> num2str(numExportCubes) <span class="string">') ...'</span>]);
+0464         <a href="matRad_writeCube.html" class="code" title="function [saved_metadata] = matRad_writeCube(filepath,cube,datatype,metadata)">matRad_writeCube</a>(fullfile(resultDir,[cubeNames{cubeIx,2} extension]),results.(cubeNames{cubeIx,2}),<span class="string">'double'</span>,metadata);
+0465     <span class="keyword">end</span>
+0466 <span class="keyword">end</span>
+0467 
+0468 close(handles.figure1);
+0469     
+0470 
+0471 <span class="comment">% --- Executes on button press in btn_cancel.</span>
+0472 <a name="_sub16" href="#_subfunctions" class="code">function btn_cancel_Callback(hObject, eventdata, handles)</a>
+0473 <span class="comment">% hObject    handle to btn_cancel (see GCBO)</span>
+0474 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0475 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0476 close(handles.figure1);
+0477 
+0478 <span class="comment">% --- Executes during object creation, after setting all properties.</span>
+0479 <a name="_sub17" href="#_subfunctions" class="code">function btn_cancel_CreateFcn(hObject, eventdata, handles)</a>
+0480 <span class="comment">% hObject    handle to btn_cancel (see GCBO)</span>
+0481 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0482 <span class="comment">% handles    empty - handles not created until after all CreateFcns called</span>
+0483 
+0484 <span class="comment">% --- Executes on button press in checkbox_compress.</span>
+0485 <a name="_sub18" href="#_subfunctions" class="code">function checkbox_compress_Callback(hObject, eventdata, handles)</a>
+0486 <span class="comment">% hObject    handle to checkbox_compress (see GCBO)</span>
+0487 <span class="comment">% eventdata  reserved - to be defined in a future version of MATLAB</span>
+0488 <span class="comment">% handles    structure with handles and user data (see GUIDATA)</span>
+0489 
+0490 <span class="comment">% Hint: get(hObject,'Value') returns toggle state of checkbox_compress</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

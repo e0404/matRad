@@ -1,0 +1,307 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_scanDicomImportFolder</title>
+  <meta name="keywords" content="matRad_scanDicomImportFolder">
+  <meta name="description" content="matRad function to scan a folder for dicom data">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html dicom -->
+<h1>matRad_scanDicomImportFolder
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad function to scan a folder for dicom data</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function [ fileList, patientList ] = matRad_scanDicomImportFolder( patDir ) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to scan a folder for dicom data
+ 
+ call
+   [ fileList, patientList ] = matRad_scanDicomImportFolder( patDir )
+
+ input
+   patDir:         folder to be scanned
+
+ output
+   fileList:       matlab struct with a list of dicom files including meta
+                   infomation (type, series number etc.)
+   patientList:    list of patients with dicom data in the folder
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_listAllFiles.html" class="code" title="function fileList = matRad_listAllFiles(dirPath,uiInput)">matRad_listAllFiles</a>	matRad function to get all files in arbitrary deep subfolders</li><li><a href="matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>	matRad progress bar</li><li><a href="../../matRad/matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>	matRad progress bar</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_importDicomGUI.html" class="code" title="function varargout = matRad_importDicomGUI(varargin)">matRad_importDicomGUI</a>	MATRAD_IMPORTDICOMGUI MATLAB code for matRad_importDicomGUI.fig</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>Subfunctions <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<ul style="list-style-type:disc">
+<li><a href="#_sub1" class="code">function fileList = parseDicomTag(fileList,info,tag,row,column,parsefcn)</a></li><li><a href="#_sub2" class="code">function value = seriesnum2str(value)</a></li></ul>
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [ fileList, patientList ] = matRad_scanDicomImportFolder( patDir )</a>
+0002 <span class="comment">% matRad function to scan a folder for dicom data</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   [ fileList, patientList ] = matRad_scanDicomImportFolder( patDir )</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   patDir:         folder to be scanned</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% output</span>
+0011 <span class="comment">%   fileList:       matlab struct with a list of dicom files including meta</span>
+0012 <span class="comment">%                   infomation (type, series number etc.)</span>
+0013 <span class="comment">%   patientList:    list of patients with dicom data in the folder</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% References</span>
+0016 <span class="comment">%   -</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0023 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0024 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0025 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0026 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0027 <span class="comment">% LICENSE file.</span>
+0028 <span class="comment">%</span>
+0029 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0030 
+0031 matRad_cfg = MatRad_Config.instance();
+0032 
+0033 <span class="comment">%% print current status of the import script</span>
+0034 matRad_cfg.dispInfo(<span class="string">'Dose series matched to the different plans are displayed and could be selected.\n'</span>);
+0035 matRad_cfg.dispInfo(<span class="string">'Rechecking of correct matching procedure is recommended.\n'</span>);
+0036 
+0037 <span class="keyword">global</span> warnDlgDICOMtagShown;
+0038 warnDlgDICOMtagShown = false;
+0039 
+0040 <span class="comment">%% get all files in search directory</span>
+0041 
+0042 <span class="comment">% dicom import needs image processing toolbox -&gt; check if available</span>
+0043 <span class="keyword">if</span> ~license(<span class="string">'checkout'</span>,<span class="string">'image_toolbox'</span>)
+0044     matRad_cfg.dispError(<span class="string">'image processing toolbox and/or corresponding licence not available'</span>);
+0045 <span class="keyword">end</span>
+0046 
+0047 fileList = <a href="matRad_listAllFiles.html" class="code" title="function fileList = matRad_listAllFiles(dirPath,uiInput)">matRad_listAllFiles</a>(patDir);
+0048 
+0049 <span class="keyword">if</span> ~isempty(fileList)
+0050     <span class="comment">%% check for dicom files and differentiate patients, types, and series</span>
+0051     numOfFiles = numel(fileList(:,1));
+0052     h = waitbar(0,<span class="string">'Please wait...'</span>);
+0053     <span class="comment">%h.WindowStyle = 'Modal';</span>
+0054     steps = numOfFiles;
+0055     <span class="keyword">for</span> i = numOfFiles:-1:1
+0056         waitbar((numOfFiles+1-i) / steps)
+0057         <span class="keyword">try</span> <span class="comment">% try to get DicomInfo</span>
+0058             <span class="keyword">if</span> verLessThan(<span class="string">'matlab'</span>,<span class="string">'9'</span>)
+0059                 info = dicominfo(fileList{i});
+0060             <span class="keyword">else</span>
+0061                 info = dicominfo(fileList{i},<span class="string">'UseDictionaryVR'</span>,true);
+0062             <span class="keyword">end</span>
+0063         <span class="keyword">catch</span>
+0064             fileList(i,:) = [];
+0065             <a href="matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>(numOfFiles+1-i, numOfFiles);
+0066             <span class="keyword">continue</span>;
+0067         <span class="keyword">end</span>
+0068         <span class="keyword">try</span>
+0069             fileList{i,2} = info.Modality;
+0070         <span class="keyword">catch</span>
+0071             fileList{i,2} = NaN;
+0072         <span class="keyword">end</span>
+0073         
+0074         fileList = <a href="#_sub1" class="code" title="subfunction fileList = parseDicomTag(fileList,info,tag,row,column,parsefcn)">parseDicomTag</a>(fileList,info,<span class="string">'PatientID'</span>,i,3);
+0075         
+0076         <span class="keyword">switch</span> fileList{i,2}
+0077             <span class="keyword">case</span> <span class="string">'CT'</span>
+0078                
+0079                fileList = <a href="#_sub1" class="code" title="subfunction fileList = parseDicomTag(fileList,info,tag,row,column,parsefcn)">parseDicomTag</a>(fileList,info,<span class="string">'SeriesInstanceUID'</span>,i,4);
+0080                 
+0081             <span class="keyword">case</span> {<span class="string">'RTPLAN'</span>,<span class="string">'RTDOSE'</span>,<span class="string">'RTSTRUCT'</span>}
+0082                
+0083                fileList = <a href="#_sub1" class="code" title="subfunction fileList = parseDicomTag(fileList,info,tag,row,column,parsefcn)">parseDicomTag</a>(fileList,info,<span class="string">'SOPInstanceUID'</span>,i,4);
+0084 
+0085            <span class="keyword">otherwise</span>
+0086                
+0087               fileList = <a href="#_sub1" class="code" title="subfunction fileList = parseDicomTag(fileList,info,tag,row,column,parsefcn)">parseDicomTag</a>(fileList,info,<span class="string">'SeriesInstanceUID'</span>,i,4);
+0088 
+0089         <span class="keyword">end</span>
+0090         
+0091         fileList = <a href="#_sub1" class="code" title="subfunction fileList = parseDicomTag(fileList,info,tag,row,column,parsefcn)">parseDicomTag</a>(fileList,info,<span class="string">'SeriesNumber'</span>,i,5,@<a href="#_sub2" class="code" title="subfunction value = seriesnum2str(value)">seriesnum2str</a>); <span class="comment">%We want to make sure the series number is stored as string</span>
+0092         fileList = <a href="#_sub1" class="code" title="subfunction fileList = parseDicomTag(fileList,info,tag,row,column,parsefcn)">parseDicomTag</a>(fileList,info,<span class="string">'FamilyName'</span>,i,6);
+0093         fileList = <a href="#_sub1" class="code" title="subfunction fileList = parseDicomTag(fileList,info,tag,row,column,parsefcn)">parseDicomTag</a>(fileList,info,<span class="string">'GivenName'</span>,i,7);
+0094         fileList = <a href="#_sub1" class="code" title="subfunction fileList = parseDicomTag(fileList,info,tag,row,column,parsefcn)">parseDicomTag</a>(fileList,info,<span class="string">'PatientBirthDate'</span>,i,8);
+0095 
+0096         <span class="keyword">try</span>
+0097             <span class="keyword">if</span> strcmp(info.Modality,<span class="string">'CT'</span>)
+0098                 fileList{i,9} = num2str(info.PixelSpacing(1));
+0099             <span class="keyword">else</span>
+0100                 fileList{i,9} = NaN;
+0101             <span class="keyword">end</span>
+0102         <span class="keyword">catch</span>
+0103             fileList{i,9} = NaN;
+0104         <span class="keyword">end</span>
+0105         <span class="keyword">try</span>
+0106             <span class="keyword">if</span> strcmp(info.Modality,<span class="string">'CT'</span>)
+0107                 fileList{i,10} = num2str(info.PixelSpacing(2));
+0108             <span class="keyword">else</span>
+0109                 fileList{i,10} = NaN;
+0110             <span class="keyword">end</span>
+0111         <span class="keyword">catch</span>
+0112             fileList{i,10} = NaN;
+0113         <span class="keyword">end</span>
+0114         <span class="keyword">try</span>
+0115             <span class="keyword">if</span> strcmp(info.Modality,<span class="string">'CT'</span>)
+0116                 <span class="comment">%usually the Attribute should be SliceThickness, but it</span>
+0117                 <span class="comment">%seems like some data uses &quot;SpacingBetweenSlices&quot; instead.</span>
+0118                 <span class="keyword">if</span> isfield(info,<span class="string">'SliceThickness'</span>) &amp;&amp; ~isempty(info.SliceThickness)
+0119                     fileList{i,11} = num2str(info.SliceThickness);
+0120                 <span class="keyword">elseif</span> isfield(info,<span class="string">'SpacingBetweenSlices'</span>)
+0121                     fileList{i,11} = num2str(info.SpacingBetweenSlices);
+0122                 <span class="keyword">else</span>
+0123                     matRad_cfg.dispError(<span class="string">'Could not identify spacing between slices since neither ''SliceThickness'' nor ''SpacingBetweenSlices'' are specified'</span>);
+0124                 <span class="keyword">end</span>
+0125             <span class="keyword">else</span>
+0126                 fileList{i,11} = NaN;
+0127             <span class="keyword">end</span>
+0128         <span class="keyword">catch</span>
+0129             fileList{i,11} = NaN;
+0130         <span class="keyword">end</span>
+0131         <span class="keyword">try</span>
+0132             <span class="keyword">if</span> strcmp(info.Modality,<span class="string">'RTDOSE'</span>)
+0133                 dosetext_helper = strcat(<span class="string">'Instance'</span>,<span class="string">'_'</span>, num2str(info.InstanceNumber),<span class="string">'_'</span>, <span class="keyword">...</span>
+0134                     info.DoseSummationType, <span class="string">'_'</span>, info.DoseType);
+0135                 fileList{i,12} = dosetext_helper;
+0136             <span class="keyword">else</span>
+0137                 fileList{i,12} = NaN;
+0138             <span class="keyword">end</span>
+0139         <span class="keyword">catch</span>
+0140             fileList{i,12} = NaN;
+0141         <span class="keyword">end</span>
+0142         <span class="comment">% writing corresponding dose dist.</span>
+0143         <span class="keyword">try</span>
+0144             <span class="keyword">if</span> strcmp(fileList{i,2},<span class="string">'RTPLAN'</span>)
+0145                 corrDose = [];
+0146                 numDose = length(fieldnames(info.ReferencedDoseSequence));
+0147                 <span class="keyword">for</span> j = 1:numDose
+0148                     fieldName = strcat(<span class="string">'Item_'</span>,num2str(j));
+0149                     corrDose{j} = info.ReferencedDoseSequence.(fieldName).ReferencedSOPInstanceUID;
+0150                 <span class="keyword">end</span>
+0151                 fileList{i,13} = corrDose;
+0152             <span class="keyword">else</span>
+0153                 fileList{i,13} = {<span class="string">'NaN'</span>};
+0154             <span class="keyword">end</span>
+0155 
+0156         <span class="keyword">catch</span>
+0157             fileList{i,13} = {<span class="string">'NaN'</span>};
+0158         <span class="keyword">end</span>
+0159         <a href="matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>(numOfFiles+1-i, numOfFiles);
+0160         
+0161     <span class="keyword">end</span>
+0162     close(h)
+0163     
+0164     <span class="keyword">if</span> ~isempty(fileList)
+0165         patientList = unique(fileList(:,3));
+0166         
+0167         <span class="keyword">if</span> isempty(patientList)
+0168             msgbox(<span class="string">'No patient found with DICOM CT _and_ RT structure set in patient directory!'</span>, <span class="string">'Error'</span>,<span class="string">'error'</span>);
+0169         <span class="keyword">end</span>
+0170     <span class="keyword">else</span>
+0171         msgbox(<span class="string">'No DICOM files found in patient directory!'</span>, <span class="string">'Error'</span>,<span class="string">'error'</span>);
+0172         <span class="comment">%h.WindowStyle = 'Modal';</span>
+0173         <span class="comment">%error('No DICOM files found in patient directory');</span>
+0174     <span class="keyword">end</span>
+0175 <span class="keyword">else</span>
+0176     msgbox(<span class="string">'Search folder empty!'</span>, <span class="string">'Error'</span>,<span class="string">'error'</span>);
+0177     
+0178 <span class="keyword">end</span>
+0179 
+0180 clear warnDlgDICOMtagShown;
+0181 
+0182 <span class="keyword">end</span>
+0183 
+0184 <a name="_sub1" href="#_subfunctions" class="code">function fileList = parseDicomTag(fileList,info,tag,row,column,parsefcn)</a>
+0185 
+0186 <span class="keyword">global</span> warnDlgDICOMtagShown;
+0187 
+0188 defaultPlaceHolder = <span class="string">'001'</span>;
+0189 
+0190 <span class="keyword">if</span> nargin &lt; 6
+0191     parsefcn = @(x) x;
+0192 <span class="keyword">end</span>
+0193 
+0194 <span class="keyword">try</span>
+0195    <span class="keyword">if</span> isfield(info,tag)
+0196       <span class="keyword">if</span> ~isempty(info.(tag))
+0197          fileList{row,column} = parsefcn(info.(tag));
+0198       <span class="keyword">else</span>
+0199          fileList{row,column} = defaultPlaceHolder;
+0200       <span class="keyword">end</span>
+0201    <span class="keyword">else</span>
+0202       fileList{row,column} = defaultPlaceHolder;
+0203    <span class="keyword">end</span>
+0204 <span class="keyword">catch</span>
+0205    fileList{row,column} = NaN;
+0206 <span class="keyword">end</span>
+0207 
+0208 <span class="keyword">if</span> ~warnDlgDICOMtagShown &amp;&amp; strcmp(fileList{row,column},defaultPlaceHolder) &amp;&amp; (column == 3 || column == 4)
+0209  
+0210    dlgTitle    = <span class="string">'Dicom Tag import'</span>;
+0211    dlgQuestion = [<span class="string">'matRad_scanDicomImportFolder: Could not parse dicom tag: '</span> tag <span class="string">'. Using placeholder '</span> defaultPlaceHolder <span class="string">' instead. Please check imported data carefully! Do you want to continue?'</span>];
+0212    answer      = questdlg(dlgQuestion,dlgTitle,<span class="string">'Yes'</span>,<span class="string">'No'</span>, <span class="string">'Yes'</span>);
+0213    
+0214    warnDlgDICOMtagShown = true;
+0215    
+0216    <span class="keyword">switch</span> answer
+0217       <span class="keyword">case</span> <span class="string">'No'</span>
+0218          matRad_cfg.dispError(<span class="string">'Inconsistency in DICOM tags'</span>)  
+0219    <span class="keyword">end</span>
+0220 <span class="keyword">end</span>
+0221 
+0222 <span class="keyword">end</span>
+0223 
+0224 <a name="_sub2" href="#_subfunctions" class="code">function value = seriesnum2str(value)</a>
+0225     <span class="keyword">if</span> isnumeric(value)
+0226         value = num2str(value);
+0227     <span class="keyword">end</span>
+0228 <span class="keyword">end</span>
+0229 
+0230 
+0231 
+0232</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

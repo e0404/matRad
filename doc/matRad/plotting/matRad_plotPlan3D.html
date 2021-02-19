@@ -1,0 +1,265 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_plotPlan3D</title>
+  <meta name="keywords" content="matRad_plotPlan3D">
+  <meta name="description" content="matRad function to visualize a plan in 3D">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html plotting -->
+<h1>matRad_plotPlan3D
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad function to visualize a plan in 3D</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function matRad_plotPlan3D(axesHandle,pln,stf) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to visualize a plan in 3D 
+ Stf is optional for plotting more detailed field contours in 
+ visualization of the impinging beams.
+ 
+ call
+  rotMat = matRad_plotPlan3D(axesHandle,pln)
+  rotMat = matRad_plotPlan3D(axesHandle,pln,stf)
+
+ input
+   axesHandle: handle to the axes the plan should be visualized in.
+   pln:        matRad plan meta information struct
+   stf:        optional steering information struct. if stf is passed and 
+               not empty, the function will use the ray position  
+               information to plot more detailed field contours than with 
+               pln only
+
+ output
+   -
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/matRad_getRotationMatrix.html" class="code" title="function rotMat = matRad_getRotationMatrix(gantryAngle,couchAngle,system)">matRad_getRotationMatrix</a>	matRad function to return the rotation / transformation matrix</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function matRad_plotPlan3D(axesHandle,pln,stf)</a>
+0002 <span class="comment">% matRad function to visualize a plan in 3D</span>
+0003 <span class="comment">% Stf is optional for plotting more detailed field contours in</span>
+0004 <span class="comment">% visualization of the impinging beams.</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">% call</span>
+0007 <span class="comment">%  rotMat = matRad_plotPlan3D(axesHandle,pln)</span>
+0008 <span class="comment">%  rotMat = matRad_plotPlan3D(axesHandle,pln,stf)</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% input</span>
+0011 <span class="comment">%   axesHandle: handle to the axes the plan should be visualized in.</span>
+0012 <span class="comment">%   pln:        matRad plan meta information struct</span>
+0013 <span class="comment">%   stf:        optional steering information struct. if stf is passed and</span>
+0014 <span class="comment">%               not empty, the function will use the ray position</span>
+0015 <span class="comment">%               information to plot more detailed field contours than with</span>
+0016 <span class="comment">%               pln only</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% output</span>
+0019 <span class="comment">%   -</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% References</span>
+0022 <span class="comment">%   -</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0025 <span class="comment">%</span>
+0026 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0027 <span class="comment">%</span>
+0028 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0029 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0030 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0031 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0032 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0033 <span class="comment">% LICENSE file.</span>
+0034 <span class="comment">%</span>
+0035 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0036 
+0037 <span class="keyword">if</span> ishold(axesHandle)
+0038     wasHold = true;
+0039 <span class="keyword">else</span>
+0040     wasHold = false;
+0041     hold(axesHandle,<span class="string">'on'</span>);
+0042 <span class="keyword">end</span>
+0043 
+0044 <span class="comment">%nice pink ;)</span>
+0045 beamColor = [255 20 147]/255;
+0046 
+0047 <span class="comment">%We perform a rudimentary visualization of the beam angles if there is no stf</span>
+0048 <span class="keyword">if</span> nargin &lt; 3 || isempty(stf)
+0049     visFieldExtent = 50;
+0050     visFieldPoints_bev = [-visFieldExtent 0 -visFieldExtent; <span class="keyword">...</span>
+0051         visFieldExtent  0 -visFieldExtent; <span class="keyword">...</span>
+0052         visFieldExtent  0  visFieldExtent; <span class="keyword">...</span>
+0053         -visFieldExtent 0  visFieldExtent;
+0054         -visFieldExtent 0 -visFieldExtent]; <span class="comment">%repeat the first value for closed contour</span>
+0055     
+0056     visFieldPoints_bev = visFieldPoints_bev ./ 2;
+0057     visFieldPoints_bev = visFieldPoints_bev';
+0058     
+0059     fileName = [pln.radiationMode <span class="string">'_'</span> pln.machine];
+0060     <span class="comment">%Get a SAD</span>
+0061     <span class="keyword">try</span>
+0062         load([fileparts(mfilename(<span class="string">'fullpath'</span>)) filesep <span class="string">'basedata'</span> filesep fileName]);
+0063         SAD = machine.meta.SAD;
+0064     <span class="keyword">catch</span>
+0065         <span class="keyword">if</span> strcmp(pln.radiationMode,<span class="string">'protons'</span>) || strcmp(pln.radiationMode,<span class="string">'carbon'</span>)
+0066             SAD = 10000;
+0067         <span class="keyword">else</span>
+0068             SAD = 1500;
+0069         <span class="keyword">end</span>
+0070     <span class="keyword">end</span>
+0071     
+0072     <span class="comment">% default beam vector</span>
+0073     beamVector = [0 SAD 0];
+0074    
+0075     
+0076     <span class="keyword">for</span> beamIx = 1:pln.propStf.numOfBeams
+0077         rotMat = <a href="../../matRad/matRad_getRotationMatrix.html" class="code" title="function rotMat = matRad_getRotationMatrix(gantryAngle,couchAngle,system)">matRad_getRotationMatrix</a>(pln.propStf.gantryAngles(beamIx),pln.propStf.couchAngles(beamIx));
+0078         beamIsoCenter = pln.propStf.isoCenter(beamIx,:);
+0079         currBeamVector = rotMat*beamVector';        
+0080         currBeamSource = beamIsoCenter - currBeamVector';
+0081         currBeamOuterTarget = beamIsoCenter + currBeamVector';
+0082         
+0083         <span class="comment">%Central ray</span>
+0084         line(<span class="string">'XData'</span>,[currBeamSource(1) beamIsoCenter(1)],<span class="string">'YData'</span>,[currBeamSource(2) beamIsoCenter(2)],<span class="string">'ZData'</span>,[currBeamSource(3) beamIsoCenter(3)],<span class="string">'Parent'</span>,axesHandle,<span class="string">'LineWidth'</span>,2,<span class="string">'Color'</span>,beamColor);
+0085         line(<span class="string">'XData'</span>,[currBeamOuterTarget(1) beamIsoCenter(1)],<span class="string">'YData'</span>,[currBeamOuterTarget(2) beamIsoCenter(2)],<span class="string">'ZData'</span>,[currBeamOuterTarget(3) beamIsoCenter(3)],<span class="string">'Parent'</span>,axesHandle,<span class="string">'LineWidth'</span>,2,<span class="string">'Color'</span>,beamColor,<span class="string">'LineStyle'</span>,<span class="string">':'</span>);
+0086         
+0087         <span class="comment">%Field rays</span>
+0088         <span class="keyword">for</span> v = 1:size(visFieldPoints_bev,2)
+0089             visFieldPoints_world(1:3,v) = rotMat*visFieldPoints_bev(1:3,v) + beamIsoCenter';
+0090             
+0091             <span class="comment">%skipt the drawing of the first vertex since it is there twice</span>
+0092             <span class="keyword">if</span> v==1 
+0093                 <span class="keyword">continue</span>;
+0094             <span class="keyword">end</span>
+0095             
+0096             
+0097             
+0098             <span class="comment">%Draw the lines from the source point to the contour point</span>
+0099             line(<span class="string">'XData'</span>,[currBeamSource(1) visFieldPoints_world(1,v)],<span class="string">'YData'</span>,[currBeamSource(2) visFieldPoints_world(2,v)],<span class="string">'ZData'</span>,[currBeamSource(3) visFieldPoints_world(3,v)],<span class="string">'Parent'</span>,axesHandle,<span class="string">'LineWidth'</span>,1,<span class="string">'Color'</span>,beamColor);
+0100             <span class="comment">%extend further</span>
+0101             currPointVector = visFieldPoints_world(1:3,v) - currBeamSource';
+0102             currPointOuterTarget = currPointVector + visFieldPoints_world(1:3,v);
+0103             line(<span class="string">'XData'</span>,[currPointOuterTarget(1) visFieldPoints_world(1,v)],<span class="string">'YData'</span>,[currPointOuterTarget(2) visFieldPoints_world(2,v)],<span class="string">'ZData'</span>,[currPointOuterTarget(3) visFieldPoints_world(3,v)],<span class="string">'Parent'</span>,axesHandle,<span class="string">'LineWidth'</span>,1,<span class="string">'Color'</span>,beamColor,<span class="string">'LineStyle'</span>,<span class="string">':'</span>);
+0104             
+0105             <span class="comment">%contour</span>
+0106             line(<span class="string">'XData'</span>,[visFieldPoints_world(1,v) visFieldPoints_world(1,v-1)],<span class="keyword">...</span>
+0107                 <span class="string">'YData'</span>,[visFieldPoints_world(2,v) visFieldPoints_world(2,v-1)],<span class="keyword">...</span>
+0108                 <span class="string">'ZData'</span>,[visFieldPoints_world(3,v) visFieldPoints_world(3,v-1)],<span class="keyword">...</span>
+0109                 <span class="string">'Parent'</span>,axesHandle,<span class="string">'LineWidth'</span>,2,<span class="string">'Color'</span>,beamColor);
+0110         <span class="keyword">end</span>
+0111     <span class="keyword">end</span>
+0112 <span class="keyword">else</span> <span class="comment">%We use the steering information to visualize the field contour</span>
+0113     <span class="keyword">for</span> fieldIx = 1:numel(stf)
+0114         beamTarget = stf(fieldIx).isoCenter;
+0115         beamSource = stf(fieldIx).sourcePoint + stf(fieldIx).isoCenter;
+0116         
+0117         rotMat = <a href="../../matRad/matRad_getRotationMatrix.html" class="code" title="function rotMat = matRad_getRotationMatrix(gantryAngle,couchAngle,system)">matRad_getRotationMatrix</a>(pln.propStf.gantryAngles(fieldIx),pln.propStf.couchAngles(fieldIx));
+0118         
+0119         bixelWidth = stf(fieldIx).bixelWidth;
+0120         <span class="comment">%Accumulate ray positions in matrix</span>
+0121         rayPos = [stf(fieldIx).ray(:).rayPos_bev];
+0122         rayPos = reshape(rayPos,[3 numel(rayPos)/3])';
+0123         
+0124         <span class="comment">%Compute a ray matrix with ones where a ray is</span>
+0125         <span class="comment">%Maximum absolute values give extent in one direction</span>
+0126         symmMaxExtent = max([abs(min(rayPos)); abs(max(rayPos))]);
+0127         <span class="comment">%we want to have indices and not mm</span>
+0128         symmMaxExtent = symmMaxExtent ./ bixelWidth;
+0129         <span class="comment">%now make it symmetric</span>
+0130         symmMaxExtent = 2*symmMaxExtent + [1 0 1];
+0131         <span class="comment">%extra padding of one element in each direction to handle contours right</span>
+0132         symmMaxExtent = symmMaxExtent + [2 0 2];
+0133         
+0134         <span class="comment">%Fill the ray matrix with ones at positions of rays</span>
+0135         rayMat = zeros(symmMaxExtent(1),symmMaxExtent(3));
+0136         <span class="keyword">for</span> rayIx = 1:size(rayPos,1)
+0137             centerMat = (size(rayMat)-1) ./ 2 + 1;
+0138             el2D = rayPos(rayIx,[1 3]);
+0139             el2D = el2D ./ bixelWidth;
+0140             el2DIx = centerMat + el2D;
+0141             rayMat(el2DIx(1),el2DIx(2)) = 1;
+0142         <span class="keyword">end</span>
+0143         <span class="comment">%Create contour of the field</span>
+0144         fieldContour2D = contourc(rayMat,1);
+0145         
+0146         <span class="comment">%Column in the contour matrix</span>
+0147         cColumn = 1;
+0148         contourIx = 0;
+0149         
+0150         <span class="comment">%Orientate the contour in 3D world space</span>
+0151         <span class="keyword">while</span> cColumn &lt;= size(fieldContour2D,2)
+0152             contourIx = contourIx + 1;
+0153             
+0154             <span class="comment">%Get contour data</span>
+0155             fieldContour3D(contourIx).level = fieldContour2D(1,cColumn);
+0156             fieldContour3D(contourIx).numVertices = fieldContour2D(2,cColumn);
+0157             fieldContour3D(contourIx).coord_bev = [ fieldContour2D(2,cColumn+1:cColumn+fieldContour3D(contourIx).numVertices); <span class="keyword">...</span><span class="comment"> x</span>
+0158                 zeros(1,fieldContour3D(contourIx).numVertices);
+0159                 fieldContour2D(1,cColumn+1:cColumn+fieldContour3D(contourIx).numVertices)]; <span class="keyword">...</span><span class="comment"> y];</span>
+0160                 
+0161             fieldContour3D(contourIx).coord_bev = bsxfun(@minus,fieldContour3D(contourIx).coord_bev,symmMaxExtent'./2) * bixelWidth;
+0162             
+0163             <span class="comment">% Transform to world space</span>
+0164             <span class="comment">% compute coordinates in lps coordinate system, i.e. rotate beam</span>
+0165             <span class="comment">% geometry around fixed patient;</span>
+0166             
+0167             <span class="keyword">for</span> v = 1:fieldContour3D(contourIx).numVertices
+0168                 fieldContour3D(contourIx).coord(1:3,v) = rotMat * fieldContour3D(contourIx).coord_bev(1:3,v) + beamTarget';
+0169                 <span class="comment">%Draw the lines from the source point to the contour point</span>
+0170                 line(<span class="string">'XData'</span>,[beamSource(1) fieldContour3D(contourIx).coord(1,v)],<span class="string">'YData'</span>,[beamSource(2) fieldContour3D(contourIx).coord(2,v)],<span class="string">'ZData'</span>,[beamSource(3) fieldContour3D(contourIx).coord(3,v)],<span class="string">'Parent'</span>,axesHandle,<span class="string">'LineWidth'</span>,1,<span class="string">'Color'</span>,beamColor);
+0171             <span class="keyword">end</span>
+0172             
+0173             <span class="comment">%Draw the contour in the isocenter (shows the field)</span>
+0174             line(<span class="string">'XData'</span>,fieldContour3D(contourIx).coord(1,:),<span class="string">'YData'</span>,fieldContour3D(contourIx).coord(2,:),<span class="string">'ZData'</span>,fieldContour3D(contourIx).coord(3,:),<span class="string">'Parent'</span>,axesHandle,<span class="string">'LineWidth'</span>,2,<span class="string">'Color'</span>,beamColor);
+0175             
+0176             cColumn = cColumn + fieldContour3D(contourIx).numVertices + 1;
+0177         <span class="keyword">end</span>
+0178         
+0179     <span class="keyword">end</span>
+0180 <span class="keyword">end</span>
+0181 
+0182 <span class="keyword">if</span> ~wasHold
+0183     hold(axesHandle,<span class="string">'off'</span>);
+0184 <span class="keyword">end</span>
+0185 
+0186 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

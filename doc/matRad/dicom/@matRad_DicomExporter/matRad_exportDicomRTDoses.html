@@ -1,0 +1,277 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_exportDicomRTDoses</title>
+  <meta name="keywords" content="matRad_exportDicomRTDoses">
+  <meta name="description" content="matRad function to exportt resultGUI to dicom RT dose.">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../../menu.html matRad --><!-- ../menu.html dicom --><!-- menu.html @matRad_DicomExporter -->
+<h1>matRad_exportDicomRTDoses
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">matRad function to exportt resultGUI to dicom RT dose.</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">function obj = matRad_exportDicomRTDoses(obj) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to exportt resultGUI to dicom RT dose. 
+ Function of matRad_DicomExporter
+ 
+ call
+   matRad_DicomExporter.matRad_exportDicomRTDoses()
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="../../../matRad/dicom/matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>	matRad progress bar</li><li><a href="../../../matRad/matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>	matRad progress bar</li><li><a href="../../../matRad/tools/matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>	matRad function to get the software environment matRad is running on</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_DicomExporter.html" class="code" title="">matRad_DicomExporter</a>	</li><li><a href="matRad_exportDicom.html" class="code" title="function obj = matRad_exportDicom(obj)">matRad_exportDicom</a>	matRad function to export current workspace to DICOM.</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function obj = matRad_exportDicomRTDoses(obj)</a>
+0002 <span class="comment">% matRad function to exportt resultGUI to dicom RT dose.</span>
+0003 <span class="comment">% Function of matRad_DicomExporter</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% call</span>
+0006 <span class="comment">%   matRad_DicomExporter.matRad_exportDicomRTDoses()</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% References</span>
+0009 <span class="comment">%   -</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0016 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0017 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0018 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0019 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0020 <span class="comment">% LICENSE file.</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0023 
+0024  matRad_cfg = MatRad_Config.instance();
+0025 matRad_cfg.dispInfo(<span class="string">'Exporting DICOM RTDose...\n'</span>);
+0026 
+0027 env = <a href="../../../matRad/tools/matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>();
+0028 isOctave = strcmp(env,<span class="string">'OCTAVE'</span>);
+0029 
+0030 <span class="keyword">if</span> isOctave
+0031     matRad_cfg.dispWarning(<span class="string">'RTDose export currently not supported by matRad running in Octave using the dicom package! Skipping...'</span>);
+0032     <span class="keyword">return</span>;
+0033 <span class="keyword">end</span>
+0034 
+0035 <span class="comment">%% CT check</span>
+0036 ct = obj.ct;
+0037 <span class="keyword">if</span> ~any(isfield(ct,{<span class="string">'x'</span>,<span class="string">'y'</span>,<span class="string">'z'</span>}))
+0038     <span class="comment">%positionOffset = transpose(ct.cubeDim ./ 2);</span>
+0039     positionOffset = ct.cubeDim ./ 2;
+0040     ct.x = ct.resolution.x*[0:ct.cubeDim(2)-1] - positionOffset(2);
+0041     ct.y = ct.resolution.y*[0:ct.cubeDim(1)-1] - positionOffset(1);
+0042     ct.z = ct.resolution.z*[0:ct.cubeDim(3)-1] - positionOffset(3);
+0043 <span class="keyword">end</span>
+0044 
+0045 <span class="comment">%% Meta data</span>
+0046 storageClass = <span class="string">'1.2.840.10008.5.1.4.1.1.481.2'</span>;
+0047 meta.MediaStorageSOPClassUID = storageClass;
+0048 meta.SOPClassUID = storageClass;
+0049 
+0050 <span class="comment">%TransferSyntaxUID = '1.2.840.10008.1.2.1'; %Explicit VR little endian?</span>
+0051 <span class="comment">%meta.TransferSyntaxUID = TransferSyntaxUID;</span>
+0052 
+0053 meta.Modality = <span class="string">'RTDOSE'</span>;
+0054 meta.Manufacturer = <span class="string">''</span>;
+0055 meta.DoseUnits = <span class="string">'GY'</span>;
+0056 
+0057 <span class="comment">%Reference</span>
+0058 <span class="comment">%ID of the CT</span>
+0059 meta.StudyInstanceUID = obj.StudyInstanceUID;
+0060 meta.StudyID = obj.StudyID; 
+0061 
+0062 
+0063 
+0064 <span class="comment">%Dates &amp; Times</span>
+0065 currDate = now;
+0066 currDateStr = datestr(currDate,<span class="string">'yyyymmdd'</span>);
+0067 currTimeStr = datestr(currDate,<span class="string">'HHMMSS'</span>);
+0068 meta.InstanceCreationDate = currDateStr;
+0069 meta.InstanceCreationTime = currTimeStr;
+0070 meta.StudyDate = obj.StudyDate;
+0071 meta.StudyTime = obj.StudyTime;
+0072 
+0073 meta.FrameOfReferenceUID = obj.FrameOfReferenceUID;
+0074 meta.PositionReferenceIndicator = <span class="string">''</span>;
+0075 
+0076 
+0077 <span class="comment">%Remaining stuff</span>
+0078 meta.AccessionNumber = <span class="string">''</span>;
+0079 meta.StationName = <span class="string">''</span>;
+0080 meta.OperatorsName = obj.OperatorsName;
+0081 meta.ReferringPhysicianName = obj.dicomName();
+0082 
+0083 meta.PatientName = obj.PatientName;
+0084 meta.PatientID = obj.PatientID;
+0085 meta.PatientBirthDate = obj.PatientBirthDate;
+0086 meta.PatientSex = obj.PatientSex;
+0087 
+0088 <span class="comment">%This RTDose series</span>
+0089 meta.SeriesInstanceUID = dicomuid;
+0090 
+0091 <span class="comment">%Now image meta</span>
+0092 resolution = ct.resolution;
+0093 meta.PixelSpacing = [resolution.y; resolution.x];
+0094 meta.SliceThickness = resolution.z;
+0095 
+0096 meta.ImagePositionPatient = [ct.x(1); ct.y(1); ct.z(1)];
+0097 meta.ImageOrientationPatient = [1;0;0;0;1;0];
+0098 
+0099 
+0100 <span class="comment">%No (Re)scaling</span>
+0101 meta.RescaleSlope = 1;
+0102 meta.RescaleIntercept = 0;
+0103 meta.RescaleType = <span class="string">'US'</span>;
+0104 
+0105 <span class="comment">%RTDose is stored as multiframe image</span>
+0106 meta.ImagesInAcquisition = ct.cubeDim(3);
+0107 meta.NumberOfFrames = ct.cubeDim(3);
+0108 meta.GridFrameOffsetVector = transpose(ct.z - ct.z(1));
+0109 
+0110 <span class="comment">%Referenced Plan</span>
+0111 <span class="keyword">try</span>
+0112     rtPlanUID = obj.rtPlanMeta.SOPInstanceUID;
+0113     rtPlanClassID = obj.rtPlanMeta.SOPClassUID;
+0114     meta.ReferencedRTPlanSequence.Item_1.ReferencedSOPClassUID = rtPlanClassID;
+0115     meta.ReferencedRTPlanSequence.Item_1.ReferencedSOPInstanceUID = rtPlanUID;
+0116 <span class="keyword">catch</span>
+0117     rtPlanUID = <span class="string">''</span>;
+0118     rtPlanClassID = <span class="string">''</span>;
+0119 <span class="keyword">end</span>
+0120     
+0121 
+0122 
+0123 <span class="keyword">if</span> nargin &lt; 4 || isempty(doseFieldNames)
+0124     doseFieldNames = cell(0);
+0125     fn = fieldnames(obj.resultGUI);
+0126     <span class="keyword">for</span> i = 1:numel(fn)
+0127         <span class="keyword">if</span> numel(size(obj.resultGUI.(fn{i}))) == 3
+0128             doseFieldNames{end+1} = fn{i};
+0129         <span class="keyword">end</span>
+0130     <span class="keyword">end</span>
+0131 <span class="keyword">end</span>
+0132 
+0133 
+0134 
+0135 
+0136 
+0137 obj.rtDoseMetas = struct([]);
+0138 obj.rtDoseExportStatus = struct([]);
+0139 
+0140 <span class="keyword">for</span> i = 1:numel(doseFieldNames)
+0141     doseName = doseFieldNames{i};
+0142     
+0143     <span class="comment">%Now check if we export physical or RBE weighted dose, they are known</span>
+0144     <span class="comment">%to dicom</span>
+0145     <span class="keyword">if</span> strncmp(doseName,<span class="string">'physicalDose'</span>,12)
+0146         doseType = <span class="string">'PHYSICAL'</span>;
+0147     <span class="keyword">elseif</span> strncmp(doseName,<span class="string">'RBExDose'</span>,8)
+0148         doseType = <span class="string">'EFFECTIVE'</span>;
+0149     <span class="keyword">else</span>
+0150         fprintf(<span class="string">'Dose Cube ''%s'' of unknown type for DICOM. Not exported!\n'</span>,doseName);
+0151         <span class="keyword">continue</span>;
+0152     <span class="keyword">end</span>
+0153     
+0154     <span class="comment">%Now check if we export a single beam</span>
+0155     <span class="keyword">if</span> ~isempty(regexp(doseName,<span class="string">'_beam(\d+)'</span>,<span class="string">'once'</span>))
+0156         <span class="comment">%We export a single beam fraction</span>
+0157         deliveryType = <span class="string">'BEAM_SESSION'</span>;
+0158     <span class="keyword">else</span>
+0159         deliveryType = <span class="string">'FRACTION'</span>;
+0160     <span class="keyword">end</span>
+0161     
+0162     
+0163     doseCube = zeros(ct.cubeDim(1),ct.cubeDim(2),1,ct.cubeDim(3));
+0164     doseCube(:,:,1,:) = obj.resultGUI.(doseFieldNames{i});
+0165     
+0166     minDose = min(doseCube(:));
+0167     maxDose = max(doseCube(:));
+0168     
+0169     <span class="keyword">if</span> minDose &lt; 0
+0170         fprintf(<span class="string">'Dose Cube ''%s'' has negative values. Not exported!\n'</span>,doseName);
+0171         <span class="keyword">continue</span>;
+0172     <span class="keyword">end</span>
+0173     
+0174     doseCubeFac = maxDose / double(uint16(Inf));   
+0175     doseCube = uint16(doseCube ./ doseCubeFac);
+0176          
+0177     metaCube = meta;
+0178     metaCube.DoseType = doseType;
+0179     metaCube.DoseSummationType = deliveryType;
+0180        
+0181     <span class="comment">%ID of the RTDose</span>
+0182     meta.SeriesInstanceUID = dicomuid;    
+0183     metaCube.SeriesNumber = i;
+0184     metaCube.InstanceNumber = 1;
+0185     metaCube.DoseGridScaling = doseCubeFac;
+0186     
+0187     meta.SOPInstanceUID = dicomuid;
+0188     meta.MediaStorageSOPInstanceUID = meta.SOPInstanceUID;
+0189     
+0190     fileName = [obj.rtDoseFilePrefix num2str(i) <span class="string">'_'</span> doseName <span class="string">'.dcm'</span>];
+0191     
+0192     env = <a href="../../../matRad/tools/matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>();
+0193     <span class="keyword">if</span> strcmp(env,<span class="string">'OCTAVE'</span>)
+0194         dicomwrite(doseCube,fullfile(obj.dicomDir,fileName),metaCube);
+0195     <span class="keyword">else</span>
+0196         status = dicomwrite(doseCube,fullfile(obj.dicomDir,fileName),metaCube,<span class="string">'CreateMode'</span>,<span class="string">'copy'</span>);<span class="comment">%,'TransferSyntax',TransferSyntaxUID);</span>
+0197         <span class="keyword">if</span> ~isempty(status)
+0198             obj.rtDoseExportStatus = obj.addStruct2StructArray(obj.rtDoseExportStatus,status,i);
+0199         <span class="keyword">end</span>
+0200     <span class="keyword">end</span>
+0201     
+0202     
+0203     obj.rtDoseMetas = obj.addStruct2StructArray(obj.rtDoseMetas,metaCube);
+0204     
+0205     obj.rtDoseNames{i} = doseFieldNames{i};
+0206     
+0207     <a href="../../../matRad/dicom/matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>(i,numel(doseFieldNames));
+0208 <span class="keyword">end</span>
+0209                
+0210 
+0211 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

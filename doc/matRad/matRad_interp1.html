@@ -1,0 +1,193 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_interp1</title>
+  <meta name="keywords" content="matRad_interp1">
+  <meta name="description" content="interpolates 1-D data (table lookup) and utilizes griddedInterpolant">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_interp1
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">interpolates 1-D data (table lookup) and utilizes griddedInterpolant</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function y = matRad_interp1(xi,yi,x,extrapolation) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> interpolates 1-D data (table lookup) and utilizes griddedInterpolant 
+ if availabe in the used MATLAB version
+
+ call
+   y = matRad_interp1(xi,yi,x)
+   y = matRad_interp1(xi,yi,x,extrapolation)
+
+ input
+   xi:             sample points 
+   yi:             corresponding data to sample points
+   x:              query points for interpolation
+   extrapolation:  (optional) strategy for extrapolation. Similar to 
+                   interp1. NaN is the default extrapolation value
+    
+ output
+   y:              interpolated data   
+
+ Note that all input data has to be given as column vectors for a correct
+ interpolation. yi can be a matrix consisting out of several 1-D datasets 
+ in each column, which will all be interpolated for the given query points.
+
+ Reference
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2020 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="../matRad/tools/matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>	matRad function to get the software environment matRad is running on</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../matRad/dicom/matRad_calcWaterEqD.html" class="code" title="function ct = matRad_calcWaterEqD(ct, pln)">matRad_calcWaterEqD</a>	matRad function to calculate the equivalent densities from a dicom ct</li><li><a href="matRad_calcLQParameter.html" class="code" title="function [vAlpha, vBeta] = matRad_calcLQParameter(vRadDepths,mTissueClass,baseData)">matRad_calcLQParameter</a>	matRad inverse planning wrapper function</li><li><a href="matRad_calcLateralParticleCutOff.html" class="code" title="function [ machine ] = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf,visBool)">matRad_calcLateralParticleCutOff</a>	matRad function to calculate a depth dependend lateral cutoff</li><li><a href="matRad_calcParticleDose.html" class="code" title="function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcParticleDose</a>	matRad particle dose calculation wrapper</li><li><a href="matRad_calcParticleDoseBixel.html" class="code" title="function dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData)">matRad_calcParticleDoseBixel</a>	matRad visualization of two-dimensional dose distributions</li><li><a href="matRad_calcQualityIndicators.html" class="code" title="function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol)">matRad_calcQualityIndicators</a>	matRad QI calculation</li><li><a href="matRad_generateStf.html" class="code" title="function stf = matRad_generateStf(ct,cst,pln,visMode)">matRad_generateStf</a>	matRad steering information generation</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function y = matRad_interp1(xi,yi,x,extrapolation)</a>
+0002 <span class="comment">% interpolates 1-D data (table lookup) and utilizes griddedInterpolant</span>
+0003 <span class="comment">% if availabe in the used MATLAB version</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% call</span>
+0006 <span class="comment">%   y = matRad_interp1(xi,yi,x)</span>
+0007 <span class="comment">%   y = matRad_interp1(xi,yi,x,extrapolation)</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% input</span>
+0010 <span class="comment">%   xi:             sample points</span>
+0011 <span class="comment">%   yi:             corresponding data to sample points</span>
+0012 <span class="comment">%   x:              query points for interpolation</span>
+0013 <span class="comment">%   extrapolation:  (optional) strategy for extrapolation. Similar to</span>
+0014 <span class="comment">%                   interp1. NaN is the default extrapolation value</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% output</span>
+0017 <span class="comment">%   y:              interpolated data</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% Note that all input data has to be given as column vectors for a correct</span>
+0020 <span class="comment">% interpolation. yi can be a matrix consisting out of several 1-D datasets</span>
+0021 <span class="comment">% in each column, which will all be interpolated for the given query points.</span>
+0022 <span class="comment">%</span>
+0023 <span class="comment">% Reference</span>
+0024 <span class="comment">%   -</span>
+0025 <span class="comment">%</span>
+0026 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0027 <span class="comment">%</span>
+0028 <span class="comment">% Copyright 2020 the matRad development team.</span>
+0029 <span class="comment">%</span>
+0030 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0031 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0032 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0033 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0034 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0035 <span class="comment">% LICENSE file.</span>
+0036 <span class="comment">%</span>
+0037 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0038 
+0039 <span class="keyword">persistent</span> isGriddedInterpolantAvailable;
+0040 
+0041 <span class="keyword">if</span> isempty(isGriddedInterpolantAvailable)
+0042     [env, ~] = <a href="../matRad/tools/matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>();
+0043     <span class="keyword">switch</span> env
+0044         <span class="keyword">case</span> <span class="string">'MATLAB'</span>
+0045             isGriddedInterpolantAvailable = exist(<span class="string">'griddedInterpolant'</span>,<span class="string">'class'</span>);
+0046         <span class="keyword">case</span> <span class="string">'OCTAVE'</span>
+0047             isGriddedInterpolantAvailable = exist(<span class="string">'griddedInterpolant'</span>);
+0048     <span class="keyword">end</span>
+0049 <span class="keyword">end</span>
+0050 
+0051 <span class="keyword">if</span> nargin &lt; 4
+0052     extrapolation = NaN;
+0053 <span class="keyword">end</span>
+0054 
+0055 
+0056 
+0057 <span class="comment">% manual interpolation for only one query point to save time</span>
+0058 <span class="keyword">if</span> numel(x) == 1
+0059     
+0060     ix1 = find((x &gt;= xi), 1, <span class="string">'last'</span>);
+0061     ix2 = find((x &lt;= xi), 1, <span class="string">'first'</span>);
+0062     
+0063     <span class="keyword">if</span> ix1 == ix2
+0064         y = yi(ix1,:);
+0065     <span class="keyword">elseif</span> ix2 == ix1 + 1
+0066         y = yi(ix1,:) + ( yi(ix2,:)-yi(ix1,:) ) * ( x - xi(ix1) ) / ( xi(ix2) - xi(ix1) );    
+0067     <span class="keyword">else</span>
+0068         <span class="keyword">if</span> isscalar(extrapolation)
+0069             y = extrapolation;
+0070         <span class="keyword">elseif</span> strcmp(extrapolation,<span class="string">'extrap'</span>)
+0071             <span class="comment">%In this unlikely event fall back to classic</span>
+0072             y = interp1(xi,yi,x,<span class="string">'linear'</span>,extrapolation);
+0073         <span class="keyword">else</span>
+0074             error(<span class="string">'Invalid extrapolation argument!'</span>);
+0075         <span class="keyword">end</span> 
+0076     <span class="keyword">end</span>
+0077         
+0078 <span class="keyword">elseif</span> isGriddedInterpolantAvailable
+0079     
+0080     <span class="keyword">if</span> isscalar(extrapolation)
+0081         extrapmethod = <span class="string">'none'</span>;
+0082     <span class="keyword">elseif</span> strcmp(extrapolation,<span class="string">'extrap'</span>)
+0083         extrapmethod = <span class="string">'linear'</span>;
+0084     <span class="keyword">else</span> 
+0085         error(<span class="string">'Invalid extrapolation argument!'</span>);
+0086     <span class="keyword">end</span>
+0087     
+0088     <span class="keyword">if</span> size(yi,2) &gt; 1
+0089         <span class="comment">% interpolation for multiple 1-D datasets</span>
+0090         samplePoints = {xi, 1:size(yi,2)};
+0091         queryPoints  = {x,  1:size(yi,2)};
+0092     <span class="keyword">else</span>
+0093         <span class="comment">% interpolation for a single 1-D dataset</span>
+0094         samplePoints = {xi};
+0095         queryPoints  = {x};
+0096     <span class="keyword">end</span>
+0097     
+0098     F = griddedInterpolant(samplePoints,yi,<span class="string">'linear'</span>,extrapmethod);
+0099 
+0100     y = F(queryPoints);
+0101     
+0102     <span class="keyword">if</span> isnumeric(extrapolation) &amp;&amp; ~isnan(extrapolation)
+0103         y(isnan(y)) = extrapolation;
+0104     <span class="keyword">end</span>
+0105         
+0106         
+0107 <span class="keyword">else</span>
+0108     
+0109     <span class="comment">% for older matlab versions use this code</span>
+0110     y = interp1(xi,yi,x,<span class="string">'linear'</span>,extrapolation);
+0111 
+0112 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

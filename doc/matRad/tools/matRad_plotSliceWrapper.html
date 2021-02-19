@@ -1,0 +1,275 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_plotSliceWrapper</title>
+  <meta name="keywords" content="matRad_plotSliceWrapper">
+  <meta name="description" content="matRad tool function to directly plot a complete slice of a ct with dose">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html tools -->
+<h1>matRad_plotSliceWrapper
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad tool function to directly plot a complete slice of a ct with dose</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,varargin) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad tool function to directly plot a complete slice of a ct with dose
+ including contours and isolines.
+
+ call
+ [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice)
+ [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh)
+ [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,alpha)
+ [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,contourColorMap)
+ [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,doseColorMap)
+ [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,doseWindow)
+ [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,doseIsoLevels)
+               ...
+ [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,...
+                                                                          doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,...)
+
+ input (required)
+   axesHandle      handle to axes the slice should be displayed in
+   ct              matRad ct struct
+   cst             matRad cst struct
+   cubeIdx         Index of the desired cube in the ct struct
+   dose            dose cube
+   plane           plane view (coronal=1,sagittal=2,axial=3)
+   slice           slice in the selected plane of the 3D cube
+
+ input (optional / empty)
+   thresh          threshold for display of dose values
+   alpha           alpha value for the dose overlay
+   contourColorMap colormap for the VOI contours
+   doseColorMap    colormap for the dose
+   doseWindow      dose value window
+   doseIsoLevels   levels defining the isodose contours
+   voiSelection    logicals defining the current selection of contours
+                   that should be plotted. Can be set to [] to plot
+                   all non-ignored contours.
+   colorBarLabel   string defining the yLabel of the colorBar
+   boolPlotLegend  boolean if legend should be plottet or not
+   varargin        additional input parameters that are passed on to
+                   individual plotting functions (e.g. 'LineWidth',1.5)
+   
+
+ output
+   hCMap       handle to the colormap
+   hDose       handle to the dose plot
+   hCt         handle to the ct plot
+   hContour    handle to the contour plot
+   hIsoDose    handle to iso dose contours
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/plotting/matRad_plotAxisLabels.html" class="code" title="function  matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize,tickdist)">matRad_plotAxisLabels</a>	matRad function to plot x and y labels denoting the ct dimensions</li><li><a href="../../matRad/plotting/matRad_plotColorbar.html" class="code" title="function cBarHandle = matRad_plotColorbar(axesHandle,cMap,window,varargin)">matRad_plotColorbar</a>	matRad function wrapper for plotting the colorbar</li><li><a href="../../matRad/plotting/matRad_plotCtSlice.html" class="code" title="function [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,plane,slice,cMap,window)">matRad_plotCtSlice</a>	matRad function that generates the plot for the CT in the GUI</li><li><a href="../../matRad/plotting/matRad_plotDoseSlice.html" class="code" title="function [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle,doseCube,plane,slice,threshold,alpha,cMap,window)">matRad_plotDoseSlice</a>	matRad function that generates a dose plot of a selected slice</li><li><a href="../../matRad/plotting/matRad_plotIsoDoseLines.html" class="code" title="function isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,cMap,window,varargin)">matRad_plotIsoDoseLines</a>	matRad function that plots isolines, by precomputed contourc data</li><li><a href="../../matRad/plotting/matRad_plotVoiContourSlice.html" class="code" title="function [voiContourHandles] = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIndex,selection,plane,slice,cMap,varargin)">matRad_plotVoiContourSlice</a>	matRad function that plots the contours of the segmentations given in cst</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/examples/matRad_example1_phantom.html" class="code" title="">matRad_example1_phantom</a>	% Example: Generate your own phantom geometry</li><li><a href="../../matRad/examples/matRad_example2_photons.html" class="code" title="">matRad_example2_photons</a>	% Example: Photon Treatment Plan</li><li><a href="../../matRad/examples/matRad_example5_protons.html" class="code" title="">matRad_example5_protons</a>	% Example: Proton Treatment Plan with subsequent Isocenter shift</li><li><a href="../../matRad/examples/matRad_example6_protonsNoise.html" class="code" title="">matRad_example6_protonsNoise</a>	% Example: Proton Treatment Plan with Manipulated CT values</li><li><a href="../../matRad/examples/matRad_example7_carbon.html" class="code" title="">matRad_example7_carbon</a>	% Example: Carbon Ion Treatment Plan</li><li><a href="matRad_compareDose.html" class="code" title="function [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst,enable , contours, pln, criteria, n,localglobal)">matRad_compareDose</a>	Comparison of two dose cubes in terms of gamma index, absolute and visual difference</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,</a><span class="keyword">...</span>
+0002                                                                           doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,varargin)
+0003 <span class="comment">% matRad tool function to directly plot a complete slice of a ct with dose</span>
+0004 <span class="comment">% including contours and isolines.</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">% call</span>
+0007 <span class="comment">% [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice)</span>
+0008 <span class="comment">% [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh)</span>
+0009 <span class="comment">% [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,alpha)</span>
+0010 <span class="comment">% [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,contourColorMap)</span>
+0011 <span class="comment">% [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,doseColorMap)</span>
+0012 <span class="comment">% [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,doseWindow)</span>
+0013 <span class="comment">% [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,doseIsoLevels)</span>
+0014 <span class="comment">%               ...</span>
+0015 <span class="comment">% [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,...</span>
+0016 <span class="comment">%                                                                          doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,...)</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% input (required)</span>
+0019 <span class="comment">%   axesHandle      handle to axes the slice should be displayed in</span>
+0020 <span class="comment">%   ct              matRad ct struct</span>
+0021 <span class="comment">%   cst             matRad cst struct</span>
+0022 <span class="comment">%   cubeIdx         Index of the desired cube in the ct struct</span>
+0023 <span class="comment">%   dose            dose cube</span>
+0024 <span class="comment">%   plane           plane view (coronal=1,sagittal=2,axial=3)</span>
+0025 <span class="comment">%   slice           slice in the selected plane of the 3D cube</span>
+0026 <span class="comment">%</span>
+0027 <span class="comment">% input (optional / empty)</span>
+0028 <span class="comment">%   thresh          threshold for display of dose values</span>
+0029 <span class="comment">%   alpha           alpha value for the dose overlay</span>
+0030 <span class="comment">%   contourColorMap colormap for the VOI contours</span>
+0031 <span class="comment">%   doseColorMap    colormap for the dose</span>
+0032 <span class="comment">%   doseWindow      dose value window</span>
+0033 <span class="comment">%   doseIsoLevels   levels defining the isodose contours</span>
+0034 <span class="comment">%   voiSelection    logicals defining the current selection of contours</span>
+0035 <span class="comment">%                   that should be plotted. Can be set to [] to plot</span>
+0036 <span class="comment">%                   all non-ignored contours.</span>
+0037 <span class="comment">%   colorBarLabel   string defining the yLabel of the colorBar</span>
+0038 <span class="comment">%   boolPlotLegend  boolean if legend should be plottet or not</span>
+0039 <span class="comment">%   varargin        additional input parameters that are passed on to</span>
+0040 <span class="comment">%                   individual plotting functions (e.g. 'LineWidth',1.5)</span>
+0041 <span class="comment">%</span>
+0042 <span class="comment">%</span>
+0043 <span class="comment">% output</span>
+0044 <span class="comment">%   hCMap       handle to the colormap</span>
+0045 <span class="comment">%   hDose       handle to the dose plot</span>
+0046 <span class="comment">%   hCt         handle to the ct plot</span>
+0047 <span class="comment">%   hContour    handle to the contour plot</span>
+0048 <span class="comment">%   hIsoDose    handle to iso dose contours</span>
+0049 <span class="comment">%</span>
+0050 <span class="comment">% References</span>
+0051 <span class="comment">%   -</span>
+0052 <span class="comment">%</span>
+0053 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0054 <span class="comment">%</span>
+0055 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0056 <span class="comment">%</span>
+0057 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0058 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0059 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0060 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0061 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0062 <span class="comment">% LICENSE file.</span>
+0063 <span class="comment">%</span>
+0064 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0065 
+0066 <span class="comment">% Handle the argument list</span>
+0067 <span class="keyword">if</span> ~exist(<span class="string">'thresh'</span>,<span class="string">'var'</span>) || isempty(thresh)
+0068     thresh = [];
+0069 <span class="keyword">end</span>
+0070 <span class="keyword">if</span> ~exist(<span class="string">'alpha'</span>,<span class="string">'var'</span>) || isempty(alpha)
+0071     alpha = [];
+0072 <span class="keyword">end</span>
+0073 <span class="keyword">if</span> ~exist(<span class="string">'contourColorMap'</span>,<span class="string">'var'</span>) || isempty(contourColorMap)
+0074    contourColorMap = [];
+0075 <span class="keyword">end</span>
+0076 <span class="keyword">if</span> ~exist(<span class="string">'doseColorMap'</span>,<span class="string">'var'</span>) || isempty(doseColorMap)
+0077    doseColorMap = [];
+0078 <span class="keyword">end</span>
+0079 <span class="keyword">if</span> ~exist(<span class="string">'doseWindow'</span>,<span class="string">'var'</span>) || isempty(doseWindow)
+0080    doseWindow = [];
+0081 <span class="keyword">end</span>
+0082 <span class="keyword">if</span> ~exist(<span class="string">'doseIsoLevels'</span>,<span class="string">'var'</span>) || isempty(doseIsoLevels)
+0083    doseIsoLevels = [];
+0084 <span class="keyword">end</span>
+0085 
+0086 <span class="keyword">if</span> ~exist(<span class="string">'voiSelection'</span>,<span class="string">'var'</span>) || isempty(voiSelection)
+0087    voiSelection = [];
+0088 <span class="keyword">end</span>
+0089 
+0090 <span class="keyword">if</span> ~exist(<span class="string">'colorBarLabel'</span>,<span class="string">'var'</span>) || isempty(colorBarLabel)
+0091    colorBarLabel = [];
+0092 <span class="keyword">end</span>
+0093 
+0094 <span class="keyword">if</span> ~exist(<span class="string">'boolPlotLegend'</span>,<span class="string">'var'</span>) || isempty(boolPlotLegend)
+0095    boolPlotLegend = false;
+0096 <span class="keyword">end</span>
+0097 
+0098 <span class="keyword">if</span> ~exist(<span class="string">'cst'</span>,<span class="string">'var'</span>) || isempty(cst)
+0099    cst = [];
+0100 <span class="keyword">end</span>
+0101 
+0102 set(axesHandle,<span class="string">'YDir'</span>,<span class="string">'Reverse'</span>);
+0103 <span class="comment">% plot ct slice</span>
+0104 hCt = <a href="../../matRad/plotting/matRad_plotCtSlice.html" class="code" title="function [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,plane,slice,cMap,window)">matRad_plotCtSlice</a>(axesHandle,ct.cubeHU,cubeIdx,plane,slice); 
+0105 hold on;
+0106 
+0107 <span class="comment">% plot dose</span>
+0108 [hDose,doseColorMap,doseWindow] = <a href="../../matRad/plotting/matRad_plotDoseSlice.html" class="code" title="function [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle,doseCube,plane,slice,threshold,alpha,cMap,window)">matRad_plotDoseSlice</a>(axesHandle,dose,plane,slice,thresh,alpha,doseColorMap,doseWindow);
+0109 
+0110 <span class="comment">% plot iso dose lines</span>
+0111 <span class="keyword">if</span> ~isempty(doseIsoLevels)
+0112     hIsoDose = <a href="../../matRad/plotting/matRad_plotIsoDoseLines.html" class="code" title="function isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,cMap,window,varargin)">matRad_plotIsoDoseLines</a>(axesHandle,dose,[],doseIsoLevels,false,plane,slice,doseColorMap,doseWindow,varargin{:});
+0113     hold on;
+0114 <span class="keyword">else</span>
+0115     hIsoDose = [];
+0116 <span class="keyword">end</span>
+0117 
+0118 <span class="comment">%plot VOI contours</span>
+0119 <span class="keyword">if</span>  ~isempty(cst)
+0120     hContour = <a href="../../matRad/plotting/matRad_plotVoiContourSlice.html" class="code" title="function [voiContourHandles] = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIndex,selection,plane,slice,cMap,varargin)">matRad_plotVoiContourSlice</a>(axesHandle,cst,ct.cubeHU,cubeIdx,voiSelection,plane,slice,contourColorMap,varargin{:});
+0121 
+0122 <span class="keyword">if</span> boolPlotLegend
+0123    visibleOnSlice = (~cellfun(@isempty,hContour));
+0124    ixLegend = find(voiSelection);
+0125    hContourTmp    = cellfun(@(X) X(1),hContour(visibleOnSlice),<span class="string">'UniformOutput'</span>,false);
+0126    <span class="keyword">if</span> ~isempty(voiSelection)
+0127        hLegend        =  legend(axesHandle,[hContourTmp{:}],[cst(ixLegend(visibleOnSlice),2)],<span class="string">'AutoUpdate'</span>,<span class="string">'off'</span>);
+0128    <span class="keyword">else</span>
+0129        hLegend        =  legend(axesHandle,[hContourTmp{:}],[cst(visibleOnSlice,2)],<span class="string">'AutoUpdate'</span>,<span class="string">'off'</span>);
+0130    <span class="keyword">end</span>
+0131    set(hLegend,<span class="string">'Box'</span>,<span class="string">'Off'</span>);
+0132    set(hLegend,<span class="string">'TextColor'</span>,[1 1 1]);
+0133    set(hLegend,<span class="string">'FontSize'</span>,12);
+0134 
+0135 <span class="keyword">end</span>
+0136 <span class="keyword">else</span>
+0137     hContour = [];
+0138 <span class="keyword">end</span>
+0139 
+0140 axis(axesHandle,<span class="string">'tight'</span>);
+0141 set(axesHandle,<span class="string">'xtick'</span>,[],<span class="string">'ytick'</span>,[]);
+0142 colormap(axesHandle,doseColorMap);
+0143 
+0144 <a href="../../matRad/plotting/matRad_plotAxisLabels.html" class="code" title="function  matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize,tickdist)">matRad_plotAxisLabels</a>(axesHandle,ct,plane,slice,[])
+0145 
+0146 <span class="comment">% set axis ratio</span>
+0147 
+0148 ratios = [1/ct.resolution.x 1/ct.resolution.y 1/ct.resolution.z];
+0149    
+0150 set(axesHandle,<span class="string">'DataAspectRatioMode'</span>,<span class="string">'manual'</span>);
+0151 <span class="keyword">if</span> plane == 1 
+0152       res = [ratios(3) ratios(2)]./max([ratios(3) ratios(2)]);  
+0153       set(axesHandle,<span class="string">'DataAspectRatio'</span>,[res 1])
+0154 <span class="keyword">elseif</span> plane == 2 <span class="comment">% sagittal plane</span>
+0155       res = [ratios(3) ratios(1)]./max([ratios(3) ratios(1)]);  
+0156       set(axesHandle,<span class="string">'DataAspectRatio'</span>,[res 1]) 
+0157 <span class="keyword">elseif</span>  plane == 3 <span class="comment">% Axial plane</span>
+0158       res = [ratios(2) ratios(1)]./max([ratios(2) ratios(1)]);  
+0159       set(axesHandle,<span class="string">'DataAspectRatio'</span>,[res 1])
+0160 <span class="keyword">end</span>
+0161 
+0162 hCMap = <a href="../../matRad/plotting/matRad_plotColorbar.html" class="code" title="function cBarHandle = matRad_plotColorbar(axesHandle,cMap,window,varargin)">matRad_plotColorbar</a>(axesHandle,doseColorMap,doseWindow,<span class="string">'Location'</span>,<span class="string">'EastOutside'</span>);
+0163 <span class="keyword">if</span> ~isempty(colorBarLabel)
+0164     set(get(hCMap,<span class="string">'YLabel'</span>),<span class="string">'String'</span>, colorBarLabel,<span class="string">'FontSize'</span>,14);
+0165 <span class="keyword">end</span>
+0166 
+0167 <span class="keyword">end</span>
+0168</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_SquaredOverdosing</title>
+  <meta name="keywords" content="matRad_SquaredOverdosing">
+  <meta name="description" content="">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../../menu.html matRad --><!-- ../menu.html optimization --><!-- menu.html +DoseObjectives -->
+<h1>matRad_SquaredOverdosing
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box"></div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">This is a script file. </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"></pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_SquaredOverdosing.html" class="code" title="">matRad_SquaredOverdosing</a>	</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_SquaredOverdosing.html" class="code" title="">matRad_SquaredOverdosing</a>	</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>Subfunctions <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<ul style="list-style-type:disc">
+<li><a href="#_sub1" class="code">function obj = matRad_SquaredOverdosing(penalty,dMax)</a></li><li><a href="#_sub2" class="code">function fDose = computeDoseObjectiveFunction(obj,dose)</a></li><li><a href="#_sub3" class="code">function fDoseGrad   = computeDoseObjectiveGradient(obj,dose)</a></li></ul>
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre>0001 classdef <a href="matRad_SquaredOverdosing.html" class="code" title="">matRad_SquaredOverdosing</a> &lt; DoseObjectives.matRad_DoseObjective
+0002 <span class="comment">% matRad_SquaredOverdosing Implements a penalized squared overdosing objective</span>
+0003 <span class="comment">%   See matRad_DoseObjective for interface description</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% References</span>
+0006 <span class="comment">%   -</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% Copyright 2020 the matRad development team.</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0013 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0014 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0015 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0016 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0017 <span class="comment">% LICENSE file.</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0020     
+0021     properties (Constant)
+0022         name = <span class="string">'Squared Overdosing'</span>;
+0023         parameterNames = {<span class="string">'d^{max}'</span>};
+0024         parameterTypes = {<span class="string">'dose'</span>};
+0025     <span class="keyword">end</span>
+0026     
+0027     properties
+0028         parameters = {30};
+0029         penalty = 1;
+0030     <span class="keyword">end</span>
+0031     
+0032     methods
+0033         <a name="_sub0" href="#_subfunctions" class="code">function obj = matRad_SquaredOverdosing(penalty,dMax)</a>
+0034             <span class="comment">%If we have a struct in first argument</span>
+0035             <span class="keyword">if</span> nargin == 1 &amp;&amp; isstruct(penalty)
+0036                 inputStruct = penalty;
+0037                 initFromStruct = true;
+0038             <span class="keyword">else</span>
+0039                 initFromStruct = false;
+0040                 inputStruct = [];
+0041             <span class="keyword">end</span>
+0042             
+0043             <span class="comment">%Call Superclass Constructor (for struct initialization)</span>
+0044             obj@DoseObjectives.matRad_DoseObjective(inputStruct);
+0045             
+0046             <span class="comment">%now handle initialization from other parameters</span>
+0047             <span class="keyword">if</span> ~initFromStruct
+0048                 <span class="keyword">if</span> nargin == 2 &amp;&amp; isscalar(dMax)
+0049                     obj.parameters{1} = dMax;
+0050                 <span class="keyword">end</span>
+0051                 
+0052                 <span class="keyword">if</span> nargin &gt;= 1 &amp;&amp; isscalar(penalty)
+0053                     obj.penalty = penalty;
+0054                 <span class="keyword">end</span>
+0055             <span class="keyword">end</span>
+0056         <span class="keyword">end</span>
+0057         
+0058         <span class="comment">%% Calculates the Objective Function value</span>
+0059         <a name="_sub1" href="#_subfunctions" class="code">function fDose = computeDoseObjectiveFunction(obj,dose)</a>
+0060             <span class="comment">% overdose : dose minus prefered dose</span>
+0061             overdose = dose - obj.parameters{1};
+0062             
+0063             <span class="comment">% apply positive operator</span>
+0064             overdose(overdose&lt;0) = 0;
+0065             
+0066             <span class="comment">% claculate objective function</span>
+0067             fDose = obj.penalty/numel(dose) * (overdose'*overdose);
+0068         <span class="keyword">end</span>
+0069         
+0070         <span class="comment">%% Calculates the Objective Function gradient</span>
+0071         <a name="_sub2" href="#_subfunctions" class="code">function fDoseGrad   = computeDoseObjectiveGradient(obj,dose)</a>
+0072             <span class="comment">% overdose : dose minus prefered dose</span>
+0073             overdose = dose - obj.parameters{1};
+0074             
+0075             <span class="comment">% apply positive operator</span>
+0076             overdose(overdose&lt;0) = 0;
+0077             
+0078             <span class="comment">% calculate delta</span>
+0079             fDoseGrad = 2 * obj.penalty/numel(dose) * overdose;
+0080         <span class="keyword">end</span>
+0081     <span class="keyword">end</span>
+0082     
+0083 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

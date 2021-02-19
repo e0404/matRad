@@ -1,0 +1,150 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_unitTestTextManipulation</title>
+  <meta name="keywords" content="matRad_unitTestTextManipulation">
+  <meta name="description" content="matRad function to decrease computational expense">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html unitTest -->
+<h1>matRad_unitTestTextManipulation
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad function to decrease computational expense</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function matRad_unitTestTextManipulation(filename, string1, string2, path) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to decrease computational expense
+ Manipulates certain parameters in matRad pipeline so that it would be 
+ less computational expensive when it's being used in continuous 
+ integration builds.
+
+ call
+   matRad_unitTestTextManipulation(filename, string1, string2)
+   matRad_unitTestTextManipulation(filename, string1, string2, path)
+
+ input
+     filename: file(s) to be manipulated, pass multiple files as cell array
+     string1:  string to be changed
+     string2:  string to be replaced
+     path:     (optional) path where the function is located. default is the
+               parent directory '../'
+
+ output
+   -
+
+ References
+   -   
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2018 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_runTests.html" class="code" title="">matRad_runTests</a>	% This file runs the complete matRad test suite.</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function matRad_unitTestTextManipulation(filename, string1, string2, path)</a>
+0002 <span class="comment">% matRad function to decrease computational expense</span>
+0003 <span class="comment">% Manipulates certain parameters in matRad pipeline so that it would be</span>
+0004 <span class="comment">% less computational expensive when it's being used in continuous</span>
+0005 <span class="comment">% integration builds.</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% call</span>
+0008 <span class="comment">%   matRad_unitTestTextManipulation(filename, string1, string2)</span>
+0009 <span class="comment">%   matRad_unitTestTextManipulation(filename, string1, string2, path)</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% input</span>
+0012 <span class="comment">%     filename: file(s) to be manipulated, pass multiple files as cell array</span>
+0013 <span class="comment">%     string1:  string to be changed</span>
+0014 <span class="comment">%     string2:  string to be replaced</span>
+0015 <span class="comment">%     path:     (optional) path where the function is located. default is the</span>
+0016 <span class="comment">%               parent directory '../'</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% output</span>
+0019 <span class="comment">%   -</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% References</span>
+0022 <span class="comment">%   -</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0025 <span class="comment">%</span>
+0026 <span class="comment">% Copyright 2018 the matRad development team.</span>
+0027 <span class="comment">%</span>
+0028 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0029 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0030 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0031 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0032 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0033 <span class="comment">% LICENSE file.</span>
+0034 <span class="comment">%</span>
+0035 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0036 
+0037 <span class="keyword">if</span> nargin &lt; 4
+0038     path = [<span class="string">'.'</span> filesep];
+0039 <span class="keyword">end</span>
+0040 
+0041 <span class="keyword">if</span> ~iscell(filename)
+0042     filename = {filename};
+0043 <span class="keyword">end</span>
+0044 
+0045 <span class="keyword">for</span> fIx = 1:numel(filename)
+0046     
+0047     currFilename = filename{fIx};
+0048     
+0049     fid=fopen([path currFilename]);
+0050     fo=fopen(<span class="string">'tempFile.m'</span>,<span class="string">'w'</span>);
+0051     tline = fgetl(fid);
+0052     
+0053     <span class="keyword">while</span> ischar(tline)
+0054         
+0055         <span class="keyword">if</span> strfind(tline, string1)
+0056             fprintf(fo, <span class="string">'%s\n'</span>, string2);
+0057         <span class="keyword">else</span>
+0058             fprintf(fo, <span class="string">'%s\n'</span>, tline);
+0059         <span class="keyword">end</span>
+0060         tline = fgetl(fid);
+0061     <span class="keyword">end</span>
+0062     
+0063     
+0064     fclose(fid);
+0065     fclose(fo);
+0066     
+0067     
+0068     movefile(<span class="string">'tempFile.m'</span>, [path currFilename], <span class="string">'f'</span>);
+0069 <span class="keyword">end</span>
+0070 <span class="keyword">end</span>
+0071</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

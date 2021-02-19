@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_convRtssContours2Indices</title>
+  <meta name="keywords" content="matRad_convRtssContours2Indices">
+  <meta name="description" content="matRad function to convert a polygon segmentation from an rt structure">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html dicom -->
+<h1>matRad_convRtssContours2Indices
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad function to convert a polygon segmentation from an rt structure</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function indices = matRad_convRtssContours2Indices(structure,ct) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to convert a polygon segmentation from an rt structure
+ set into a binary segmentation as required within matRad's cst struct
+ 
+ call
+   indices = matRad_convRtssContours2Indices(contPoints,ct)
+
+ input
+   structure:      information about a single structure
+   ct:             matRad ct struct where the binary segmentations will
+                   be aligned to
+
+ output
+   indicies:       indices of voxels of the ct cube that are inside the
+                   contour
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_importDicom.html" class="code" title="function [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )">matRad_importDicom</a>	matRad wrapper function to import a predefined set of dicom files</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function indices = matRad_convRtssContours2Indices(structure,ct)</a>
+0002 <span class="comment">% matRad function to convert a polygon segmentation from an rt structure</span>
+0003 <span class="comment">% set into a binary segmentation as required within matRad's cst struct</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% call</span>
+0006 <span class="comment">%   indices = matRad_convRtssContours2Indices(contPoints,ct)</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% input</span>
+0009 <span class="comment">%   structure:      information about a single structure</span>
+0010 <span class="comment">%   ct:             matRad ct struct where the binary segmentations will</span>
+0011 <span class="comment">%                   be aligned to</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">% output</span>
+0014 <span class="comment">%   indicies:       indices of voxels of the ct cube that are inside the</span>
+0015 <span class="comment">%                   contour</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">% References</span>
+0018 <span class="comment">%   -</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0025 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0026 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0027 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0028 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0029 <span class="comment">% LICENSE file.</span>
+0030 <span class="comment">%</span>
+0031 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0032 
+0033 voiCube = zeros(ct.cubeDim);
+0034 
+0035 <span class="comment">% loop over all closed contour items</span>
+0036 <span class="keyword">for</span> i = 1:size(structure.item,2)
+0037 
+0038     <span class="keyword">if</span> ~isempty(structure.item(i).points)
+0039 
+0040         dicomCtSlicePos = unique(structure.item(i).points(:,3));
+0041         
+0042         <span class="keyword">if</span> numel(dicomCtSlicePos) &gt; 1
+0043             error(<span class="string">'Contour defined over multiple planes\n'</span>);
+0044         <span class="keyword">end</span>
+0045     
+0046         round2 = @(a,b) round(a*10^b)/10^b;
+0047         dicomCtSliceThickness = ct.dicomInfo.SliceThickness(round2(ct.dicomInfo.SlicePositions,1)==round2(dicomCtSlicePos,1));
+0048         
+0049         coords1 = interp1(ct.x,1:ct.cubeDim(2),structure.item(i).points(:,1),<span class="string">'linear'</span>,<span class="string">'extrap'</span>);
+0050         coords2 = interp1(ct.y,1:ct.cubeDim(1),structure.item(i).points(:,2),<span class="string">'linear'</span>,<span class="string">'extrap'</span>);
+0051         
+0052         binIn = poly2mask(coords1,coords2,ct.cubeDim(1),ct.cubeDim(2));
+0053         
+0054         slicesInMatradCt = find(dicomCtSlicePos+dicomCtSliceThickness/2 &gt; ct.z &amp; dicomCtSlicePos-dicomCtSliceThickness/2 &lt;= ct.z);
+0055 
+0056         <span class="comment">% loop over all slices in matRad ct</span>
+0057         <span class="keyword">for</span> j = 1:numel(slicesInMatradCt)
+0058             voiCube(:,:,slicesInMatradCt(j)) = voiCube(:,:,slicesInMatradCt(j)) | binIn;
+0059         <span class="keyword">end</span>
+0060         
+0061     <span class="keyword">end</span>
+0062     
+0063 <span class="keyword">end</span>
+0064 
+0065 indices = find(voiCube(:));</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

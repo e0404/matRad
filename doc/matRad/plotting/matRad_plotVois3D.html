@@ -1,0 +1,159 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_plotVois3D</title>
+  <meta name="keywords" content="matRad_plotVois3D">
+  <meta name="description" content="matRad function that plots 3D structures of the volumes of interest">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html plotting -->
+<h1>matRad_plotVois3D
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad function that plots 3D structures of the volumes of interest</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function patches = matRad_plotVois3D(axesHandle,ct,cst,selection,cMap) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function that plots 3D structures of the volumes of interest
+ If the 3D-data is not stored in the CT, it will be commputed on the fly.
+
+ call
+   patches = matRad_plotVois3D(axesHandle,ct,cst,selection)
+   patches = matRad_plotVois3D(axesHandle,ct,cst,selection,cMap)
+
+ input
+   axesHandle  handle to axes the structures should be displayed in
+   ct          matRad ct struct which contains resolution
+   cst         matRad cst struct
+   selection   logicals defining the current selection of contours
+               that should be plotted. Can be set to [] to plot
+               all non-ignored contours.
+   cMap        optional argument defining the colormap, default are the
+               colors stored in the cst
+
+ output
+   patches     patch objects created by the matlab 3D visualization
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_computeAllVoiSurfaces.html" class="code" title="function cst = matRad_computeAllVoiSurfaces(ct,cst)">matRad_computeAllVoiSurfaces</a>	matRad function that computes all VOI surfaces</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function patches = matRad_plotVois3D(axesHandle,ct,cst,selection,cMap)</a>
+0002 <span class="comment">% matRad function that plots 3D structures of the volumes of interest</span>
+0003 <span class="comment">% If the 3D-data is not stored in the CT, it will be commputed on the fly.</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% call</span>
+0006 <span class="comment">%   patches = matRad_plotVois3D(axesHandle,ct,cst,selection)</span>
+0007 <span class="comment">%   patches = matRad_plotVois3D(axesHandle,ct,cst,selection,cMap)</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% input</span>
+0010 <span class="comment">%   axesHandle  handle to axes the structures should be displayed in</span>
+0011 <span class="comment">%   ct          matRad ct struct which contains resolution</span>
+0012 <span class="comment">%   cst         matRad cst struct</span>
+0013 <span class="comment">%   selection   logicals defining the current selection of contours</span>
+0014 <span class="comment">%               that should be plotted. Can be set to [] to plot</span>
+0015 <span class="comment">%               all non-ignored contours.</span>
+0016 <span class="comment">%   cMap        optional argument defining the colormap, default are the</span>
+0017 <span class="comment">%               colors stored in the cst</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% output</span>
+0020 <span class="comment">%   patches     patch objects created by the matlab 3D visualization</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% References</span>
+0023 <span class="comment">%   -</span>
+0024 <span class="comment">%</span>
+0025 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0026 <span class="comment">%</span>
+0027 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0028 <span class="comment">%</span>
+0029 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0030 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0031 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0032 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0033 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0034 <span class="comment">% LICENSE file.</span>
+0035 <span class="comment">%</span>
+0036 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0037 
+0038 <span class="keyword">if</span> size(cst,2) &lt; 8
+0039     cst = <a href="matRad_computeAllVoiSurfaces.html" class="code" title="function cst = matRad_computeAllVoiSurfaces(ct,cst)">matRad_computeAllVoiSurfaces</a>(ct,cst);
+0040 <span class="keyword">end</span>
+0041 
+0042 <span class="comment">%Use stored colors or colormap?</span>
+0043 <span class="keyword">if</span> nargin &lt; 5 || isempty(cMap)
+0044     cMapScale = size(cMap,1)-1;
+0045     <span class="comment">%determine colors</span>
+0046     voiColors = cMap(round(linspace(1,cMapScale,size(cst,1))),:);
+0047 <span class="keyword">else</span>
+0048     <span class="keyword">for</span> i = 1:size(cst,1)
+0049       voiColors(i,:) = cst{i,5}.visibleColor;
+0050     <span class="keyword">end</span>
+0051 <span class="keyword">end</span>
+0052 
+0053 <span class="keyword">if</span> nargin &lt; 4 || isempty(selection) || numel(selection) ~= size(cst,1)
+0054     selection = logical(ones(size(cst,1),1));
+0055 <span class="keyword">end</span>
+0056 
+0057 cMapScale = size(cMap,1)-1;
+0058 
+0059 axes(axesHandle);
+0060 wasHold = ishold();
+0061 
+0062 hold(axesHandle,<span class="string">'on'</span>);
+0063 
+0064 numVois = size(cst,1);
+0065 
+0066 patches = cell(0);
+0067 
+0068 <span class="keyword">for</span> voiIx = 1:numVois
+0069     <span class="keyword">if</span> selection(voiIx) &amp;&amp; ~strcmp(cst{voiIx,3},<span class="string">'IGNORED'</span>)
+0070         patches{voiIx} = patch(cst{voiIx,8}{1},<span class="string">'VertexNormals'</span>,cst{voiIx,8}{2},<span class="string">'FaceColor'</span>,voiColors(voiIx,:),<span class="string">'EdgeColor'</span>,<span class="string">'none'</span>,<span class="string">'FaceAlpha'</span>,0.4,<span class="string">'Parent'</span>,axesHandle);
+0071     <span class="keyword">end</span>
+0072 <span class="keyword">end</span>
+0073 
+0074 <span class="keyword">if</span> ~wasHold
+0075     hold(axesHandle,<span class="string">'off'</span>);
+0076 <span class="keyword">end</span>
+0077 
+0078 
+0079 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

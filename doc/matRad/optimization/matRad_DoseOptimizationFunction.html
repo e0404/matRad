@@ -1,0 +1,239 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_DoseOptimizationFunction</title>
+  <meta name="keywords" content="matRad_DoseOptimizationFunction">
+  <meta name="description" content="">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html optimization -->
+<h1>matRad_DoseOptimizationFunction
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"></div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">This is a script file. </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"></pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_DoseOptimizationFunction.html" class="code" title="">matRad_DoseOptimizationFunction</a>	</li><li><a href="../../matRad/tools/matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>	matRad function to get the software environment matRad is running on</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/optimization/+DoseConstraints/matRad_DoseConstraint.html" class="code" title="">matRad_DoseConstraint</a>	</li><li><a href="../../matRad/optimization/+DoseObjectives/matRad_DoseObjective.html" class="code" title="">matRad_DoseObjective</a>	</li><li><a href="matRad_DoseOptimizationFunction.html" class="code" title="">matRad_DoseOptimizationFunction</a>	</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>Subfunctions <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<ul style="list-style-type:disc">
+<li><a href="#_sub1" class="code">function obj = matRad_DoseOptimizationFunction(dataStruct)</a></li><li><a href="#_sub2" class="code">function s = struct(obj)</a></li><li><a href="#_sub3" class="code">function doseParams = getDoseParameters(obj)</a></li><li><a href="#_sub4" class="code">function obj = setDoseParameters(obj,doseParams)</a></li><li><a href="#_sub5" class="code">function obj = assignCommonPropertiesFromStruct(obj,s)</a></li><li><a href="#_sub6" class="code">function obj = createInstanceFromStruct(s)</a></li><li><a href="#_sub7" class="code">function s = convertOldOptimizationStruct(old_s)</a></li></ul>
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 classdef (Abstract) <a href="matRad_DoseOptimizationFunction.html" class="code" title="">matRad_DoseOptimizationFunction</a>
+0002 <span class="comment">% matRad_DoseOptimizationFunction. Superclass for objectives and constraints</span>
+0003 <span class="comment">% This is the superclass for all objectives and constraints to enable easy</span>
+0004 <span class="comment">% one-line identification.</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% Copyright 2019 the matRad development team.</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0011 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0012 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0013 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0014 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0015 <span class="comment">% LICENSE file.</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0018     
+0019     properties (Abstract, Constant)
+0020         name                <span class="comment">%Display name of the Objective. Needs to be implemented in sub-classes.</span>
+0021         parameterNames      <span class="comment">%Cell array of Display names of the parameters. Needs to be implemented in sub-classes.</span>
+0022         parameterTypes      <span class="comment">%Cell array of parameter types. Valid types are 'dose', 'numeric', or a cell list of string options. Needs to be implemented in sub-classes.</span>
+0023     <span class="keyword">end</span>
+0024     
+0025     properties (Abstract, Access = public)
+0026         parameters
+0027     <span class="keyword">end</span>
+0028     
+0029     methods
+0030         <a name="_sub0" href="#_subfunctions" class="code">function obj = matRad_DoseOptimizationFunction(dataStruct)</a>
+0031             <span class="keyword">if</span> nargin &gt; 0 &amp;&amp; ~isempty(dataStruct) &amp;&amp; isstruct(dataStruct)
+0032                 obj = <a href="#_sub5" class="code" title="subfunction obj = assignCommonPropertiesFromStruct(obj,s)">assignCommonPropertiesFromStruct</a>(obj,dataStruct);
+0033             <span class="keyword">end</span>
+0034         <span class="keyword">end</span>
+0035         
+0036         <span class="comment">% Overload the struct function to return a struct with general</span>
+0037         <span class="comment">% the objective / constraint</span>
+0038         <a name="_sub1" href="#_subfunctions" class="code">function s = struct(obj)</a>
+0039             s.className = class(obj);
+0040             s.parameters = obj.parameters;
+0041         <span class="keyword">end</span>
+0042     <span class="keyword">end</span>
+0043     
+0044     <span class="comment">% Helper methods</span>
+0045     methods (Access = public)
+0046         <a name="_sub2" href="#_subfunctions" class="code">function doseParams = getDoseParameters(obj)</a>
+0047             <span class="comment">% get only the dose related parameters.</span>
+0048             ix = cellfun(@(c) isequal(<span class="string">'dose'</span>,c),obj.parameterTypes);
+0049             doseParams = [obj.parameters{ix}];
+0050         <span class="keyword">end</span>
+0051         
+0052         <a name="_sub3" href="#_subfunctions" class="code">function obj = setDoseParameters(obj,doseParams)</a>
+0053             <span class="comment">% set only the dose related parameters.</span>
+0054             ix = cellfun(@(c) isequal(<span class="string">'dose'</span>,c),obj.parameterTypes);
+0055             obj.parameters(ix) = num2cell(doseParams);
+0056             
+0057         <span class="keyword">end</span>                
+0058     <span class="keyword">end</span>
+0059     
+0060     methods (Access = private)
+0061         <a name="_sub4" href="#_subfunctions" class="code">function obj = assignCommonPropertiesFromStruct(obj,s)</a>
+0062             <span class="keyword">for</span> fn = fieldnames(s)'    <span class="comment">%enumerat fields</span>
+0063                 <span class="keyword">try</span>
+0064                     obj.(fn{1}) = s.(fn{1});   <span class="comment">%and copy</span>
+0065                 <span class="keyword">catch</span>
+0066                     <span class="keyword">continue</span>;
+0067                     <span class="comment">%Do Nothing here</span>
+0068                     <span class="comment">%warning('Could not copy field %s', fn{1});</span>
+0069                 <span class="keyword">end</span>
+0070             <span class="keyword">end</span>
+0071         <span class="keyword">end</span>
+0072     <span class="keyword">end</span>
+0073         
+0074     
+0075     methods (Static)
+0076         <span class="comment">% creates an optimization function from a struct</span>
+0077         <a name="_sub5" href="#_subfunctions" class="code">function obj = createInstanceFromStruct(s)            </a>
+0078             <span class="keyword">try</span>
+0079                 <span class="comment">%Check vor old version of cst objectives / cosntraints and</span>
+0080                 <span class="comment">%convert if necessary</span>
+0081                 <span class="keyword">if</span> isfield(s,<span class="string">'type'</span>)
+0082                     s = matRad_DoseOptimizationFunction.convertOldOptimizationStruct(s);
+0083                 <span class="keyword">end</span>
+0084                 
+0085                 <span class="comment">%Create objective / constraint from class name</span>
+0086                 obj = eval([s.className <span class="string">'(s)'</span>]);       
+0087                 
+0088                 env = <a href="../../matRad/tools/matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>();
+0089                 
+0090                 <span class="comment">%Workaround for Octave which has a problem assigning</span>
+0091                 <span class="comment">%properties in superclass</span>
+0092                 <span class="keyword">if</span> strcmp(env,<span class="string">'OCTAVE'</span>)
+0093                     obj = <a href="#_sub5" class="code" title="subfunction obj = assignCommonPropertiesFromStruct(obj,s)">assignCommonPropertiesFromStruct</a>(obj,s);
+0094                 <span class="keyword">end</span>
+0095                 
+0096             <span class="keyword">catch</span> ME
+0097                 error([<span class="string">'Could not instantiate Optimization Function: '</span> ME.message]);
+0098             <span class="keyword">end</span>
+0099         <span class="keyword">end</span>
+0100                 
+0101         <a name="_sub6" href="#_subfunctions" class="code">function s = convertOldOptimizationStruct(old_s)</a>
+0102             <span class="comment">%Converts old version obejctives to current format</span>
+0103             <span class="keyword">switch</span> old_s.type
+0104                 <span class="comment">%Objectives</span>
+0105                 <span class="keyword">case</span> <span class="string">'square deviation'</span>
+0106                     s.className = <span class="string">'DoseObjectives.matRad_SquaredDeviation'</span>;
+0107                     s.penalty = old_s.penalty;
+0108                     s.parameters{1} = old_s.dose;
+0109                     
+0110                 <span class="keyword">case</span> <span class="string">'square overdosing'</span>
+0111                     s.className = <span class="string">'DoseObjectives.matRad_SquaredOverdosing'</span>;
+0112                     s.penalty = old_s.penalty;
+0113                     s.parameters{1} = old_s.dose;
+0114                     
+0115                 <span class="keyword">case</span> <span class="string">'square underdosing'</span>
+0116                     s.className = <span class="string">'DoseObjectives.matRad_SquaredUnderdosing'</span>;
+0117                     s.penalty = old_s.penalty;
+0118                     s.parameters{1} = old_s.dose;
+0119                     
+0120                 <span class="keyword">case</span> <span class="string">'min DVH objective'</span>
+0121                     s.className = <span class="string">'DoseObjectives.matRad_MinDVH'</span>;
+0122                     s.parameters{1} = old_s.dose;
+0123                     s.parameters{2} = old_s.volume;
+0124                         
+0125                 <span class="keyword">case</span> <span class="string">'max DVH objective'</span>
+0126                     s.className = <span class="string">'DoseObjectives.matRad_MaxDVH'</span>;
+0127                     s.parameters{1} = old_s.dose;
+0128                     s.parameters{2} = old_s.volume;
+0129                     
+0130                 <span class="keyword">case</span> <span class="string">'mean'</span>
+0131                     s.className = <span class="string">'DoseObjectives.matRad_MeanDose'</span>;
+0132                     s.parameters{1} = old_s.dose;
+0133                     
+0134                 <span class="keyword">case</span> <span class="string">'EUD'</span>
+0135                     s.className = <span class="string">'DoseObjectives.matRad_EUD'</span>;
+0136                     s.parameters{1} = old_s.dose;
+0137                     s.parameters{2} = old_s.EUD;
+0138                     
+0139                 <span class="comment">%Constraints</span>
+0140                 <span class="keyword">case</span>  <span class="string">'max dose constraint'</span>
+0141                     s.className = <span class="string">'DoseConstraints.matRad_MinMaxDose'</span>;
+0142                     s.parameters{1} = 0;
+0143                     s.parameters{2} = old_s.dose;
+0144                     
+0145                 <span class="keyword">case</span>  <span class="string">'min dose constraint'</span>
+0146                     s.className = <span class="string">'DoseConstraints.matRad_MinMaxDose'</span>;
+0147                     s.parameters{1} = old_s.dose;
+0148                     s.parameters{2} = Inf;
+0149                     
+0150                 <span class="keyword">case</span>  <span class="string">'min mean dose constraint'</span>
+0151                     s.className = <span class="string">'DoseConstraints.matRad_MinMaxMeanDose'</span>;
+0152                     s.parameters{1} = old_s.dose;
+0153                     s.parameters{2} = Inf;
+0154                     
+0155                 <span class="keyword">case</span>  <span class="string">'max mean dose constraint'</span>
+0156                     s.className = <span class="string">'DoseConstraints.matRad_MinMaxMeanDose'</span>;
+0157                     s.parameters{1} = 0;
+0158                     s.parameters{2} = old_s.dose;
+0159                     
+0160                     
+0161                 <span class="keyword">case</span>  <span class="string">'min EUD constraint'</span>
+0162                     s.className = <span class="string">'DoseConstraints.matRad_MinMaxEUD'</span>;
+0163                     s.parameters{1} = old_s.EUD;
+0164                     s.parameters{2} = old_s.dose;
+0165                     s.parameters{3} = Inf;
+0166                     
+0167                 <span class="keyword">case</span>  <span class="string">'max EUD constraint'</span>
+0168                     s.className = <span class="string">'DoseConstraints.matRad_MinMaxEUD'</span>;
+0169                     S.parameters{1} = old_s.EUD;
+0170                     s.parameters{2} = 0;
+0171                     s.parameters{3} = old_s.dose;
+0172                     
+0173                 <span class="keyword">case</span>  <span class="string">'max DVH constraint'</span>
+0174                     s.className = <span class="string">'DoseConstraints.matRad_MinMaxDVH'</span>;
+0175                     s.parameters{1} = old_s.dose;
+0176                     s.parameters{2} = 0;
+0177                     s.parameters{3} = old_s.volume;
+0178                     
+0179                 <span class="keyword">case</span>  <span class="string">'min DVH constraint'</span>
+0180                     s.className = <span class="string">'DoseConstraints.matRad_MinMaxDVH'</span>;
+0181                     s.parameters{1} = old_s.dose;
+0182                     s.parameters{2} = old_s.volume;
+0183                     s.parameters{3} = 100;
+0184                 <span class="keyword">otherwise</span>
+0185                     ME = MException(<span class="string">'optimization:ObjectCreationFailed'</span>,<span class="string">'Old versioned input struct / parameter invalid for creation of optimization function!'</span>);
+0186                     throw(ME);
+0187             <span class="keyword">end</span>
+0188         <span class="keyword">end</span>
+0189     <span class="keyword">end</span>
+0190 <span class="keyword">end</span>
+0191</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

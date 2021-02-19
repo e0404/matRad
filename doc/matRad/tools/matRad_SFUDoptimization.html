@@ -1,0 +1,232 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_SFUDoptimization</title>
+  <meta name="keywords" content="matRad_SFUDoptimization">
+  <meta name="description" content="Calculation of single field uniform dose (SFUD) optimization">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html tools -->
+<h1>matRad_SFUDoptimization
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">Calculation of single field uniform dose (SFUD) optimization</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function [resultGUI] = matRad_SFUDoptimization(pln, cst, dij, ct, stf) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> Calculation of single field uniform dose (SFUD) optimization
+ If provided the dij matrix is used for optimisation, otherwise single
+ beam dijs are calculated (memory saving).
+
+ call
+   [resultGUI] = matRad_SFUDoptimization(pln, cst, dij)
+   or
+   [resultGUI] = matRad_SFUDoptimization(pln, cst, [], ct, stf)
+
+
+ input
+   pln:         matRad pln struct
+   cst:         matRad cst struct
+   dij:         matRad dij struct (optional)
+                  
+   ct:          matRad ct struct (optional, only needed if no dij provided)
+   stf:         matRad stf struct (optional, only if needed no dij provided)
+
+ output
+   resultGUI:  struct containing optimized fluence vector, dose, and (for
+               biological optimization) RBE-weighted dose etc.
+   (info:      struct containing information about optimization)
+
+ References
+   [1]    https://ro-journal.biomedcentral.com/articles/10.1186/s13014-016-0705-8
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/matRad_calcCubes.html" class="code" title="function resultGUI = matRad_calcCubes(w,dij,scenNum)">matRad_calcCubes</a>	matRad computation of all cubes for the resultGUI struct</li><li><a href="../../matRad/matRad_calcDoseDirect.html" class="code" title="function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w)">matRad_calcDoseDirect</a>	matRad dose calculation wrapper bypassing dij calculation</li><li><a href="../../matRad/matRad_calcParticleDose.html" class="code" title="function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcParticleDose</a>	matRad particle dose calculation wrapper</li><li><a href="../../matRad/matRad_fluenceOptimization.html" class="code" title="function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)">matRad_fluenceOptimization</a>	matRad inverse planning wrapper function</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [resultGUI] = matRad_SFUDoptimization(pln, cst, dij, ct, stf)</a>
+0002 <span class="comment">% Calculation of single field uniform dose (SFUD) optimization</span>
+0003 <span class="comment">% If provided the dij matrix is used for optimisation, otherwise single</span>
+0004 <span class="comment">% beam dijs are calculated (memory saving).</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">% call</span>
+0007 <span class="comment">%   [resultGUI] = matRad_SFUDoptimization(pln, cst, dij)</span>
+0008 <span class="comment">%   or</span>
+0009 <span class="comment">%   [resultGUI] = matRad_SFUDoptimization(pln, cst, [], ct, stf)</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% input</span>
+0013 <span class="comment">%   pln:         matRad pln struct</span>
+0014 <span class="comment">%   cst:         matRad cst struct</span>
+0015 <span class="comment">%   dij:         matRad dij struct (optional)</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">%   ct:          matRad ct struct (optional, only needed if no dij provided)</span>
+0018 <span class="comment">%   stf:         matRad stf struct (optional, only if needed no dij provided)</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">% output</span>
+0021 <span class="comment">%   resultGUI:  struct containing optimized fluence vector, dose, and (for</span>
+0022 <span class="comment">%               biological optimization) RBE-weighted dose etc.</span>
+0023 <span class="comment">%   (info:      struct containing information about optimization)</span>
+0024 <span class="comment">%</span>
+0025 <span class="comment">% References</span>
+0026 <span class="comment">%   [1]    https://ro-journal.biomedcentral.com/articles/10.1186/s13014-016-0705-8</span>
+0027 <span class="comment">%</span>
+0028 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0029 <span class="comment">%</span>
+0030 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0031 <span class="comment">%</span>
+0032 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0033 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0034 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0035 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0036 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0037 <span class="comment">% LICENSE file.</span>
+0038 <span class="comment">%</span>
+0039 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0040 
+0041 <span class="comment">% adjust cst for single beams</span>
+0042 sb_cst = cst;
+0043 <span class="keyword">for</span> i=1:size(sb_cst,1)
+0044     <span class="keyword">for</span> j = 1:size(sb_cst{i,6},1)
+0045         <span class="comment">% biological dose splitting for carbon</span>
+0046         <span class="keyword">if</span> strcmp(pln.bioOptimization, <span class="string">'LEMIV_effect'</span>) || <span class="keyword">...</span>
+0047                         strcmp(pln.bioOptimization, <span class="string">'LEMIV_RBExD'</span>)
+0048             ab = sb_cst{i,5}.alphaX / sb_cst{i,5}.betaX;
+0049             <span class="comment">% dose per fraction</span>
+0050             fx_dose = sb_cst{i,6}(j).dose / pln.numOfFractions;
+0051             <span class="comment">% calculate dose per beam per fraction according to [1]</span>
+0052             fx_dose = -0.5*ab +sqrt( 0.25*ab^2 + <span class="keyword">...</span>
+0053                 fx_dose/pln.numOfBeams *(fx_dose + ab));
+0054             <span class="comment">% calculate pseudo total Dose per Beam</span>
+0055             sb_cst{i,6}(j).dose = fx_dose * pln.numOfFractions;
+0056             
+0057         <span class="comment">% physical dose splitting</span>
+0058         <span class="keyword">else</span>
+0059             sb_cst{i,6}(j).dose = sb_cst{i,6}(j).dose/pln.numOfBeams;
+0060         <span class="keyword">end</span>
+0061     <span class="keyword">end</span>
+0062 <span class="keyword">end</span>
+0063 
+0064 <span class="keyword">if</span> ~isempty(dij)
+0065     <span class="comment">% calculate dij with total dij being present</span>
+0066         
+0067     <span class="comment">% initialise total weight vector</span>
+0068     wTot = zeros(dij.totalNumOfBixels,1);
+0069 
+0070     <span class="keyword">for</span> i = 1:pln.numOfBeams
+0071         <span class="comment">% columns in total dij for single beam</span>
+0072         sb_col = find(dij.beamNum == i);
+0073         <span class="comment">% construct dij for single beam</span>
+0074         sb_dij.numOfBeams = 1;
+0075         sb_dij.doseGrid = dij.doseGrid;
+0076         sb_dij.ctGrid = dij.ctGrid;
+0077         sb_dij.numOfRaysPerBeam = dij.numOfRaysPerBeam(i);
+0078         sb_dij.totalNumOfRays = sb_dij.numOfRaysPerBeam;
+0079         sb_dij.totalNumOfBixels = size(sb_col, 1);
+0080         sb_dij.numOfScenarios = dij.numOfScenarios;
+0081         sb_dij.bixelNum = dij.bixelNum(sb_col);
+0082         sb_dij.rayNum = dij.rayNum(sb_col);
+0083         sb_dij.beamNum = dij.beamNum(sb_col);
+0084         sb_dij.physicalDose{1} = dij.physicalDose{1}(:, sb_col);
+0085         <span class="keyword">if</span> isfield(dij, <span class="string">'RBE'</span>)
+0086             sb_dij.RBE = dij.RBE;
+0087         <span class="keyword">end</span>
+0088         <span class="keyword">if</span> isfield(dij, <span class="string">'mLETDose'</span>)
+0089             sb_dij.mLETDose = dij.mLETDose(:, sb_col);
+0090         <span class="keyword">end</span>
+0091         <span class="keyword">if</span> isfield(dij,<span class="string">'mAlphaDose'</span>) &amp;&amp; isfield(dij,<span class="string">'mSqrtBetaDose'</span>)
+0092             sb_dij.mAlphaDose{1} = dij.mAlphaDose{1}(:, sb_col);
+0093             sb_dij.mSqrtBetaDose{1} = dij.mSqrtBetaDose{1}(:, sb_col);
+0094         <span class="keyword">end</span>
+0095 
+0096         <span class="comment">% adjust pln to one beam only</span>
+0097         sb_pln = pln;
+0098         sb_pln.gantryAngles = pln.gantryAngles(i);
+0099         sb_pln.couchAngles = pln.couchAngles(i);
+0100         sb_pln.numOfBeams = 1;
+0101         sb_pln.isoCenter = pln.isoCenter(i,:);
+0102         
+0103         <span class="comment">% optimize single beam</span>
+0104         sb_resultGUI = <a href="../../matRad/matRad_fluenceOptimization.html" class="code" title="function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)">matRad_fluenceOptimization</a>(sb_dij,sb_cst,sb_pln);    
+0105 
+0106         <span class="comment">% merge single beam weights into total weight vector</span>
+0107         wTot(sb_col) = sb_resultGUI.w;
+0108     <span class="keyword">end</span>
+0109 
+0110     <span class="comment">% calculate dose</span>
+0111     resultGUI = <a href="../../matRad/matRad_calcCubes.html" class="code" title="function resultGUI = matRad_calcCubes(w,dij,scenNum)">matRad_calcCubes</a>(wTot,dij,cst,1);
+0112 
+0113 <span class="keyword">else</span>
+0114     <span class="comment">% calculate SFUD without total dij</span>
+0115     
+0116     <span class="comment">% initialise total weight vector</span>
+0117     wTot = [];
+0118 
+0119     <span class="keyword">for</span> i = 1:pln.numOfBeams
+0120         fprintf([<span class="string">'optimizing beam '</span> num2str(i) <span class="string">'...\n'</span>]);
+0121         <span class="comment">% single beam stf</span>
+0122         sb_stf = stf(i);
+0123 
+0124         <span class="comment">% adjust pln to one beam only</span>
+0125         sb_pln = pln;
+0126         sb_pln.isoCenter = pln.isoCenter(i,:);
+0127         sb_pln.numOfBeams = 1;
+0128         sb_pln.gantryAngles = pln.gantryAngles(i);
+0129         sb_pln.couchAngles = pln.couchAngles(i);
+0130 
+0131         <span class="comment">% calculate single beam dij</span>
+0132         sb_dij = <a href="../../matRad/matRad_calcParticleDose.html" class="code" title="function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcParticleDose</a>(ct,sb_stf,sb_pln,sb_cst,false);
+0133 
+0134         <span class="comment">% optimize single beam</span>
+0135         sb_resultGUI = <a href="../../matRad/matRad_fluenceOptimization.html" class="code" title="function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)">matRad_fluenceOptimization</a>(sb_dij,sb_cst,sb_pln);    
+0136 
+0137         <span class="comment">% merge single beam weights into total weight vector</span>
+0138         wTot = cat(1,wTot,sb_resultGUI.w);
+0139 
+0140     <span class="keyword">end</span>
+0141 
+0142     fprintf(<span class="string">'Calculate total dose...\n'</span>);
+0143     <span class="comment">% calculate dose</span>
+0144     resultGUI = <a href="../../matRad/matRad_calcDoseDirect.html" class="code" title="function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w)">matRad_calcDoseDirect</a>(ct,stf,pln,cst,wTot);
+0145     resultGUI.w = wTot;
+0146 <span class="keyword">end</span>
+0147         
+0148 <span class="keyword">end</span> <span class="comment">%eof</span>
+0149</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

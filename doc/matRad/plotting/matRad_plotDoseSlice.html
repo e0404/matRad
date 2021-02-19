@@ -1,0 +1,202 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_plotDoseSlice</title>
+  <meta name="keywords" content="matRad_plotDoseSlice">
+  <meta name="description" content="matRad function that generates a dose plot of a selected slice">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html plotting -->
+<h1>matRad_plotDoseSlice
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad function that generates a dose plot of a selected slice</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle,doseCube,plane,slice,threshold,alpha,cMap,window) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function that generates a dose plot of a selected slice 
+ The function can also be used in personal matlab figures by passing the
+ corresponding axes handle.
+
+ call
+   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold)
+   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,alpha)
+   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,cMap)
+   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,window)
+   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,alpha,cMap)
+   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,alpha,window)
+   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,cMap,window)
+   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,alpha,cMap,window)
+
+ input
+   axesHandle  handle to axes the slice should be displayed in
+   doseCube    3D array of the dose to select the slice from
+   plane       plane view (coronal=1,sagittal=2,axial=3)
+   slice       slice in the selected plane of the 3D cube
+   threshold   threshold above which the dose shall be displayed
+               for negative values (i.e. difference maps), also the values
+               smaller than the negative threshold will be displayed
+               if empty, no threshold will be applied
+   alpha       optional argument defining the alpha value, default is 0.6.
+               To use the default when providing a custom culormap, put in
+               an empty array by [].
+   cMap        optional argument defining the colormap, default is jet
+               if you want to use the default map with the window argument
+               you can use an empty array []
+   window      optional argument defining the displayed range. default is
+               [min(doseCube(:)) max(doseCube(:))]
+
+ output
+   doseHandle: handle of the plotted dose axes
+   cMap        used colormap (same as input if set)
+   window      used window (same as input if set)
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li><li><a href="../../matRad/tools/matRad_plotSliceWrapper.html" class="code" title="function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,varargin)">matRad_plotSliceWrapper</a>	matRad tool function to directly plot a complete slice of a ct with dose</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle,doseCube,plane,slice,threshold,alpha,cMap,window)</a>
+0002 <span class="comment">% matRad function that generates a dose plot of a selected slice</span>
+0003 <span class="comment">% The function can also be used in personal matlab figures by passing the</span>
+0004 <span class="comment">% corresponding axes handle.</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">% call</span>
+0007 <span class="comment">%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold)</span>
+0008 <span class="comment">%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,alpha)</span>
+0009 <span class="comment">%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,cMap)</span>
+0010 <span class="comment">%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,window)</span>
+0011 <span class="comment">%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,alpha,cMap)</span>
+0012 <span class="comment">%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,alpha,window)</span>
+0013 <span class="comment">%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,cMap,window)</span>
+0014 <span class="comment">%   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,alpha,cMap,window)</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% input</span>
+0017 <span class="comment">%   axesHandle  handle to axes the slice should be displayed in</span>
+0018 <span class="comment">%   doseCube    3D array of the dose to select the slice from</span>
+0019 <span class="comment">%   plane       plane view (coronal=1,sagittal=2,axial=3)</span>
+0020 <span class="comment">%   slice       slice in the selected plane of the 3D cube</span>
+0021 <span class="comment">%   threshold   threshold above which the dose shall be displayed</span>
+0022 <span class="comment">%               for negative values (i.e. difference maps), also the values</span>
+0023 <span class="comment">%               smaller than the negative threshold will be displayed</span>
+0024 <span class="comment">%               if empty, no threshold will be applied</span>
+0025 <span class="comment">%   alpha       optional argument defining the alpha value, default is 0.6.</span>
+0026 <span class="comment">%               To use the default when providing a custom culormap, put in</span>
+0027 <span class="comment">%               an empty array by [].</span>
+0028 <span class="comment">%   cMap        optional argument defining the colormap, default is jet</span>
+0029 <span class="comment">%               if you want to use the default map with the window argument</span>
+0030 <span class="comment">%               you can use an empty array []</span>
+0031 <span class="comment">%   window      optional argument defining the displayed range. default is</span>
+0032 <span class="comment">%               [min(doseCube(:)) max(doseCube(:))]</span>
+0033 <span class="comment">%</span>
+0034 <span class="comment">% output</span>
+0035 <span class="comment">%   doseHandle: handle of the plotted dose axes</span>
+0036 <span class="comment">%   cMap        used colormap (same as input if set)</span>
+0037 <span class="comment">%   window      used window (same as input if set)</span>
+0038 <span class="comment">%</span>
+0039 <span class="comment">% References</span>
+0040 <span class="comment">%   -</span>
+0041 <span class="comment">%</span>
+0042 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0043 <span class="comment">%</span>
+0044 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0045 <span class="comment">%</span>
+0046 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0047 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0048 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0049 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0050 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0051 <span class="comment">% LICENSE file.</span>
+0052 <span class="comment">%</span>
+0053 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0054 
+0055 matRad_cfg = MatRad_Config.instance();
+0056 
+0057 <span class="comment">%Use default colormap?</span>
+0058 <span class="keyword">if</span> nargin &lt; 7 || isempty(cMap)
+0059     cMap = jet(64);
+0060 <span class="keyword">end</span>
+0061 <span class="keyword">if</span> nargin &lt; 6 || isempty(alpha)
+0062     alpha = 0.6;
+0063 <span class="keyword">end</span>
+0064 <span class="keyword">if</span> nargin &lt; 8 || isempty(window)
+0065     window = [min(doseCube(:)) max(doseCube(:))];
+0066 <span class="keyword">end</span>
+0067 
+0068 maxDose = max(doseCube(:));
+0069 
+0070 cMapScale = size(cMap,1) - 1;
+0071 
+0072 <span class="keyword">if</span> plane == 1  <span class="comment">% Coronal plane</span>
+0073     dose_slice = squeeze(doseCube(slice,:,:));
+0074 <span class="keyword">elseif</span> plane == 2 <span class="comment">% sagittal plane</span>
+0075     dose_slice = squeeze(doseCube(:,slice,:));
+0076 <span class="keyword">elseif</span> plane == 3 <span class="comment">% Axial plane</span>
+0077     dose_slice = squeeze(doseCube(:,:,slice));
+0078 <span class="keyword">else</span>
+0079     matRad_cfg.dispError(<span class="string">'Invalid plane ''%d'' selected for visualization!'</span>,plane);
+0080 <span class="keyword">end</span>
+0081 
+0082 <span class="keyword">if</span> ~isempty(threshold)
+0083     mask = alpha * (dose_slice &lt; window(2) &amp; dose_slice &gt; window(1) &amp; dose_slice &gt; threshold*maxDose);
+0084 <span class="keyword">else</span>
+0085     mask = alpha * (dose_slice &lt; window(2) &amp; dose_slice &gt; window(1));
+0086 <span class="keyword">end</span>
+0087 
+0088 dose_slice = uint8(cMapScale*(dose_slice - window(1))/(window(2)-window(1)));
+0089 
+0090 <span class="comment">%This circumenvents a bug in Octave when the index in the image hase the maximum value of uint8</span>
+0091 <span class="keyword">if</span> matRad_cfg.isOctave
+0092     dose_slice(dose_slice == 255) = 254;
+0093 <span class="keyword">end</span>
+0094 
+0095 dose_rgb = ind2rgb(dose_slice,cMap);
+0096 
+0097 <span class="comment">% plot dose distribution</span>
+0098 doseHandle = image(<span class="string">'CData'</span>,dose_rgb,<span class="string">'Parent'</span>,axesHandle);
+0099 
+0100 <span class="comment">% alphadata for image objects is not yet implemented in Octave</span>
+0101 set(doseHandle,<span class="string">'AlphaData'</span>,mask);
+0102 
+0103 <span class="keyword">end</span>
+0104 
+0105</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

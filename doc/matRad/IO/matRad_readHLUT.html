@@ -1,0 +1,120 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_readHLUT</title>
+  <meta name="keywords" content="matRad_readHLUT">
+  <meta name="description" content="matRad function to read HLUT from filename">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html IO -->
+<h1>matRad_readHLUT
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad function to read HLUT from filename</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function hlut = matRad_readHLUT(filename) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to read HLUT from filename
+
+ call
+   hlut = matRad_readHLUT(filename)
+
+ input
+   filename: hlut filename
+
+ output
+   hlut:     lookup table
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2018 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_importPatient.html" class="code" title="function [ct,cst] = matRad_importPatient(ctFile,maskFiles,hlutFilename)">matRad_importPatient</a>	matRad patient import from binary files (CT and masks)</li><li><a href="../../matRad/dicom/matRad_loadHLUT.html" class="code" title="function hlut = matRad_loadHLUT(ct, pln)">matRad_loadHLUT</a>	matRad function to load HLUT file based on the provided ct</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function hlut = matRad_readHLUT(filename)</a>
+0002 <span class="comment">% matRad function to read HLUT from filename</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   hlut = matRad_readHLUT(filename)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   filename: hlut filename</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% output</span>
+0011 <span class="comment">%   hlut:     lookup table</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">% References</span>
+0014 <span class="comment">%   -</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% Copyright 2018 the matRad development team.</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0021 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0022 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0023 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0024 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0025 <span class="comment">% LICENSE file.</span>
+0026 <span class="comment">%</span>
+0027 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0028 
+0029   <span class="comment">% Check the extension</span>
+0030   [~,~,ext] = fileparts(filename);
+0031   
+0032   <span class="keyword">try</span>
+0033   <span class="keyword">switch</span> ext
+0034       <span class="comment">%% Iterate through supported extensions</span>
+0035       <span class="keyword">case</span> <span class="string">'.hlut'</span>
+0036           hlutFile = fopen(filename,<span class="string">'r'</span>);
+0037           hlut = cell2mat(textscan(hlutFile,<span class="string">'%f %f'</span>,<span class="string">'CollectOutput'</span>,1,<span class="string">'commentStyle'</span>,<span class="string">'#'</span>));
+0038           fclose(hlutFile);
+0039           
+0040       <span class="keyword">otherwise</span> 
+0041             error([<span class="string">'HLUT extension '''</span> ext <span class="string">''' not supported!'</span>]);
+0042   <span class="keyword">end</span>
+0043   <span class="keyword">catch</span> ME
+0044       hlut = [];
+0045       error(getReport(ME));      
+0046   <span class="keyword">end</span>
+0047 
+0048 <span class="keyword">end</span>
+0049</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

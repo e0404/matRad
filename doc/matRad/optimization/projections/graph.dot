@@ -1,0 +1,18 @@
+/* Created by mdot for Matlab */
+digraph m2html {
+  matRad_BackProjection -> matRad_BackProjection;
+  matRad_ConstantRBEProjection -> matRad_BackProjection;
+  matRad_ConstantRBEProjection -> matRad_ConstantRBEProjection;
+  matRad_DoseProjection -> matRad_BackProjection;
+  matRad_DoseProjection -> matRad_DoseProjection;
+  matRad_EffectProjection -> matRad_BackProjection;
+  matRad_EffectProjection -> matRad_EffectProjection;
+  matRad_VariableRBEProjection -> matRad_EffectProjection;
+  matRad_VariableRBEProjection -> matRad_VariableRBEProjection;
+
+  matRad_BackProjection [URL="matRad_BackProjection.html"];
+  matRad_ConstantRBEProjection [URL="matRad_ConstantRBEProjection.html"];
+  matRad_DoseProjection [URL="matRad_DoseProjection.html"];
+  matRad_EffectProjection [URL="matRad_EffectProjection.html"];
+  matRad_VariableRBEProjection [URL="matRad_VariableRBEProjection.html"];
+}

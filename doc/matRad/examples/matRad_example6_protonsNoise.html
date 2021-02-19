@@ -1,0 +1,192 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_example6_protonsNoise</title>
+  <meta name="keywords" content="matRad_example6_protonsNoise">
+  <meta name="description" content="% Example: Proton Treatment Plan with Manipulated CT values">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html examples -->
+<h1>matRad_example6_protonsNoise
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">% Example: Proton Treatment Plan with Manipulated CT values</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">This is a script file. </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment">% Example: Proton Treatment Plan with Manipulated CT values
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2017 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/matRad_calcDoseDirectMC.html" class="code" title="function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)">matRad_calcDoseDirectMC</a>	matRad function to bypass dij calculation for MC dose calculation</li><li><a href="../../matRad/matRad_calcParticleDoseMC.html" class="code" title="function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect)">matRad_calcParticleDoseMC</a>	matRad MCsqaure monte carlo photon dose calculation wrapper</li><li><a href="../../matRad/matRad_fluenceOptimization.html" class="code" title="function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)">matRad_fluenceOptimization</a>	matRad inverse planning wrapper function</li><li><a href="../../matRad/matRad_generateStf.html" class="code" title="function stf = matRad_generateStf(ct,cst,pln,visMode)">matRad_generateStf</a>	matRad steering information generation</li><li><a href="../../matRad/matRad_getIsoCenter.html" class="code" title="function isoCenter = matRad_getIsoCenter(cst,ct,visBool)">matRad_getIsoCenter</a>	computes the isocenter [mm] as the joint center of gravity</li><li><a href="../../matRad/matRad_indicatorWrapper.html" class="code" title="function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)">matRad_indicatorWrapper</a>	matRad indictor wrapper</li><li><a href="../../matRad/matRad_rc.html" class="code" title="">matRad_rc</a>	matRad rc script</li><li><a href="../../matRad/tools/matRad_gammaIndex.html" class="code" title="function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,n,localglobal,cst)">matRad_gammaIndex</a>	gamma index calculation</li><li><a href="../../matRad/tools/matRad_plotSliceWrapper.html" class="code" title="function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,varargin)">matRad_plotSliceWrapper</a>	matRad tool function to directly plot a complete slice of a ct with dose</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <span class="comment">%% Example: Proton Treatment Plan with Manipulated CT values</span>
+0002 <span class="comment">%</span>
+0003 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% Copyright 2017 the matRad development team.</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0008 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0009 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0010 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0011 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0012 <span class="comment">% LICENSE file.</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0015 
+0016 <span class="comment">%%</span>
+0017 <span class="comment">% In this example we will show</span>
+0018 <span class="comment">% (i) how to load patient data into matRad</span>
+0019 <span class="comment">% (ii) how to setup a proton dose calculation</span>
+0020 <span class="comment">% (iii) how to inversely optimize the pencil beam intensities directly from command window in MATLAB.</span>
+0021 <span class="comment">% (iv) how to re-optimize a treatment plan</span>
+0022 <span class="comment">% (v) how to manipulate the CT cube by adding noise to the cube</span>
+0023 <span class="comment">% (vi) how to recalculate the dose considering the manipulated CT cube and the previously optimized pencil beam intensities</span>
+0024 <span class="comment">% (vii) how to compare the two results</span>
+0025 
+0026 <span class="comment">%% Patient Data Import</span>
+0027 <span class="comment">% Let's begin with a clear Matlab environment and import the prostate</span>
+0028 <span class="comment">% patient into your workspace.</span>
+0029 
+0030 <a href="../../matRad/matRad_rc.html" class="code" title="">matRad_rc</a>; <span class="comment">%If this throws an error, run it from the parent directory first to set the paths</span>
+0031 
+0032 load(<span class="string">'PROSTATE.mat'</span>);
+0033 
+0034 <span class="comment">%% Treatment Plan</span>
+0035 <span class="comment">% The next step is to define your treatment plan labeled as 'pln'. This</span>
+0036 <span class="comment">% structure requires input from the treatment planner and defines</span>
+0037 <span class="comment">% the most important cornerstones of your treatment plan.</span>
+0038 
+0039 pln.radiationMode           = <span class="string">'protons'</span>;           
+0040 pln.machine                 = <span class="string">'generic_MCsquare'</span>;
+0041 pln.numOfFractions          = 30;
+0042 pln.propOpt.bioOptimization = <span class="string">'const_RBExD'</span>;     
+0043 pln.propStf.gantryAngles    = [90 270];
+0044 pln.propStf.couchAngles     = [0 0];
+0045 pln.propStf.bixelWidth      = 3;
+0046 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
+0047 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * <a href="../../matRad/matRad_getIsoCenter.html" class="code" title="function isoCenter = matRad_getIsoCenter(cst,ct,visBool)">matRad_getIsoCenter</a>(cst,ct,0);
+0048 pln.propOpt.runDAO          = 0;
+0049 pln.propOpt.runSequencing   = 0;
+0050 
+0051 <span class="comment">% dose calculation settings</span>
+0052 pln.propDoseCalc.doseGrid.resolution.x = 3; <span class="comment">% [mm]</span>
+0053 pln.propDoseCalc.doseGrid.resolution.y = 3; <span class="comment">% [mm]</span>
+0054 pln.propDoseCalc.doseGrid.resolution.z = 3; <span class="comment">% [mm]</span>
+0055 
+0056 <span class="comment">%% Generate Beam Geometry STF</span>
+0057 stf = <a href="../../matRad/matRad_generateStf.html" class="code" title="function stf = matRad_generateStf(ct,cst,pln,visMode)">matRad_generateStf</a>(ct,cst,pln);
+0058 
+0059 <span class="comment">%% Dose Calculation</span>
+0060 dij = <a href="../../matRad/matRad_calcParticleDoseMC.html" class="code" title="function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect)">matRad_calcParticleDoseMC</a>(ct,stf,pln,cst);
+0061 
+0062 <span class="comment">%% Inverse Optimization for IMPT</span>
+0063 resultGUI = <a href="../../matRad/matRad_fluenceOptimization.html" class="code" title="function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)">matRad_fluenceOptimization</a>(dij,cst,pln);
+0064 
+0065 <span class="comment">%% Calculate quality indicators</span>
+0066 [dvh,qi]       = <a href="../../matRad/matRad_indicatorWrapper.html" class="code" title="function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)">matRad_indicatorWrapper</a>(cst,pln,resultGUI);
+0067 ixRectum       = 1;
+0068 display(qi(ixRectum).D_5);
+0069 
+0070 <span class="comment">%%</span>
+0071 <span class="comment">% Let's change the optimization parameter of the rectum in such a way that it</span>
+0072 <span class="comment">% will be better spared. We increase the penalty and lower the threshold</span>
+0073 <span class="comment">% of the squared overdose objective function. Afterwards we re-optimize</span>
+0074 <span class="comment">% the treatment plan and evaluate dose statistics one more time.</span>
+0075 
+0076 objective = cst{ixRectum,6}{1}; <span class="comment">%This gives a struct</span>
+0077 objective = matRad_DoseOptimizationFunction.createInstanceFromStruct(objective); <span class="comment">%Now we turn it into a class</span>
+0078 objective = objective.setDoseParameters(40); <span class="comment">%We can simply call this function to change the/all dose parameter(s)</span>
+0079 cst{ixRectum,6}{1} = struct(objective); <span class="comment">% We put it back as struct</span>
+0080 
+0081 cst{ixRectum,6}{1}.parameters{1} = 40;
+0082 cst{ixRectum,6}{1}.penalty = 500;
+0083 resultGUI               = <a href="../../matRad/matRad_fluenceOptimization.html" class="code" title="function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)">matRad_fluenceOptimization</a>(dij,cst,pln);
+0084 [dvh2,qi2]              = <a href="../../matRad/matRad_indicatorWrapper.html" class="code" title="function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)">matRad_indicatorWrapper</a>(cst,pln,resultGUI);
+0085 display(qi2(ixRectum).D_5);
+0086 
+0087 <span class="comment">%% Plot the Resulting Dose Slice</span>
+0088 <span class="comment">% Let's plot the transversal iso-center dose slice</span>
+0089 slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
+0090 figure
+0091 imagesc(resultGUI.RBExDose(:,:,slice)),colorbar, colormap(jet)
+0092 
+0093 <span class="comment">%%</span>
+0094 <span class="comment">% Now let's simulate a range undershoot by scaling the relative stopping power cube by 3.5% percent</span>
+0095 ct_manip         = ct;
+0096 ct_manip.cubeHU{1} = 1.035*ct_manip.cubeHU{1};
+0097 
+0098 <span class="comment">%% Recalculate Plan with MC square</span>
+0099 <span class="comment">% Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose</span>
+0100 resultGUI_noise = <a href="../../matRad/matRad_calcDoseDirectMC.html" class="code" title="function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)">matRad_calcDoseDirectMC</a>(ct_manip,stf,pln,cst,resultGUI.w);
+0101 
+0102 <span class="comment">%%  Visual Comparison of results</span>
+0103 <span class="comment">% Let's compare the new recalculation against the optimization result.</span>
+0104 plane      = 3;
+0105 doseWindow = [0 max([resultGUI.RBExDose(:); resultGUI_noise.RBExDose(:)])];
+0106 
+0107 figure,title(<span class="string">'original plan'</span>)
+0108 <a href="../../matRad/tools/matRad_plotSliceWrapper.html" class="code" title="function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,varargin)">matRad_plotSliceWrapper</a>(gca,ct,cst,1,resultGUI.RBExDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
+0109 figure,title(<span class="string">'manipulated plan'</span>)
+0110 <a href="../../matRad/tools/matRad_plotSliceWrapper.html" class="code" title="function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,varargin)">matRad_plotSliceWrapper</a>(gca,ct_manip,cst,1,resultGUI_noise.RBExDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
+0111 
+0112 <span class="comment">% Let's plot single profiles along the beam direction</span>
+0113 ixProfileY = round(pln.propStf.isoCenter(1,1)./ct.resolution.x);
+0114 
+0115 profileOrginal = resultGUI.RBExDose(:,ixProfileY,slice);
+0116 profileNoise   = resultGUI_noise.RBExDose(:,ixProfileY,slice);
+0117 
+0118 figure,plot(profileOrginal,<span class="string">'LineWidth'</span>,2),grid on,hold on, 
+0119        plot(profileNoise,<span class="string">'LineWidth'</span>,2),legend({<span class="string">'original profile'</span>,<span class="string">'noise profile'</span>}),
+0120        xlabel(<span class="string">'mm'</span>),ylabel(<span class="string">'Gy(RBE)'</span>),title(<span class="string">'profile plot'</span>)
+0121        
+0122 <span class="comment">%% Quantitative Comparison of results</span>
+0123 <span class="comment">% Compare the two dose cubes using a gamma-index analysis.</span>
+0124 
+0125 doseDifference   = 2;
+0126 distToAgreement  = 2;
+0127 n                = 1;
+0128 
+0129 [gammaCube,gammaPassRateCell] = <a href="../../matRad/tools/matRad_gammaIndex.html" class="code" title="function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,n,localglobal,cst)">matRad_gammaIndex</a>(<span class="keyword">...</span>
+0130     resultGUI_noise.RBExDose,resultGUI.RBExDose,<span class="keyword">...</span>
+0131     [ct.resolution.x, ct.resolution.y, ct.resolution.z],<span class="keyword">...</span>
+0132     [doseDifference distToAgreement],slice,n,<span class="string">'global'</span>,cst);
+0133</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

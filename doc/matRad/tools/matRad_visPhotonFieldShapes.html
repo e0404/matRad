@@ -1,0 +1,135 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_visPhotonFieldShapes</title>
+  <meta name="keywords" content="matRad_visPhotonFieldShapes">
+  <meta name="description" content="matRad function to visualize imported field shapes from a dicom RTPLAN">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html tools -->
+<h1>matRad_visPhotonFieldShapes
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad function to visualize imported field shapes from a dicom RTPLAN</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function matRad_visPhotonFieldShapes(pln) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to visualize imported field shapes from a dicom RTPLAN
+ data. Note that this only works with pln structures that were generated
+ with matRad's dicom import tool and feature the appropriate field shape
+ information
+ 
+ call
+   matRad_visPhotonFieldShapes(pln)
+
+ input
+   pln: matRad plan struct
+
+ output
+   -
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2020 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function matRad_visPhotonFieldShapes(pln)</a>
+0002 <span class="comment">% matRad function to visualize imported field shapes from a dicom RTPLAN</span>
+0003 <span class="comment">% data. Note that this only works with pln structures that were generated</span>
+0004 <span class="comment">% with matRad's dicom import tool and feature the appropriate field shape</span>
+0005 <span class="comment">% information</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% call</span>
+0008 <span class="comment">%   matRad_visPhotonFieldShapes(pln)</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% input</span>
+0011 <span class="comment">%   pln: matRad plan struct</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">% output</span>
+0014 <span class="comment">%   -</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% References</span>
+0017 <span class="comment">%   -</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% Copyright 2020 the matRad development team.</span>
+0022 <span class="comment">%</span>
+0023 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0024 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0025 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0026 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0027 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0028 <span class="comment">% LICENSE file.</span>
+0029 <span class="comment">%</span>
+0030 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0031 
+0032 <span class="keyword">if</span> ~isfield(pln, <span class="string">'propStf'</span>) || ~isfield(pln.propStf, <span class="string">'collimation'</span>)
+0033     error([<span class="string">'This function only works with field shapes stemming from a DICOM '</span> <span class="keyword">...</span>
+0034            <span class="string">'photon plan import. For matRad''s native aperture info struct you '</span> <span class="keyword">...</span>
+0035            <span class="string">'may want to check out https://github.com/e0404/matRad/blob/master/matRad_visApertureInfo.m '</span><span class="keyword">...</span>
+0036            <span class="string">'as shown in https://github.com/e0404/matRad/blob/master/examples/matRad_example3_photonsDAO.m'</span>]);
+0037 <span class="keyword">end</span>
+0038 
+0039 coords = [-pln.propStf.collimation.fieldWidth/2 <span class="keyword">...</span>
+0040          :pln.propStf.collimation.convResolution <span class="keyword">...</span>
+0041          :pln.propStf.collimation.fieldWidth/2-pln.propStf.collimation.convResolution];
+0042 
+0043 fieldShapeFigureHandle = figure; 
+0044 fieldShapeAxisHandle = axes(fieldShapeFigureHandle);
+0045 
+0046 <span class="keyword">for</span> i = 1: pln.propStf.collimation.numOfFields
+0047 
+0048     cla(fieldShapeAxisHandle)
+0049     
+0050     imagesc(fieldShapeAxisHandle, coords, coords, pln.propStf.collimation.Fields(i).Shape)
+0051     
+0052     xlabel(fieldShapeAxisHandle, <span class="string">'[mm]'</span>)
+0053     ylabel(fieldShapeAxisHandle, <span class="string">'[mm]'</span>)
+0054 
+0055     title(fieldShapeAxisHandle, [<span class="string">'field shape i: '</span> num2str(i) <span class="string">' @ gantry = '</span> num2str(pln.propStf.collimation.Fields(i).GantryAngle) <span class="string">'° and couch = '</span> num2str(pln.propStf.collimation.Fields(i).CouchAngle) <span class="string">'°'</span>])
+0056     axis(fieldShapeAxisHandle, <span class="string">'equal'</span>, <span class="string">'tight'</span>)
+0057     
+0058     drawnow
+0059     pause(.1)
+0060     
+0061 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

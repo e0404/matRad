@@ -1,0 +1,7 @@
+/* Created by mdot for Matlab */
+digraph m2html {
+  matRad_runTests -> matRad_unitTestTextManipulation;
+
+  matRad_runTests [URL="matRad_runTests.html"];
+  matRad_unitTestTextManipulation [URL="matRad_unitTestTextManipulation.html"];
+}

@@ -1,0 +1,162 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_backProjection</title>
+  <meta name="keywords" content="matRad_backProjection">
+  <meta name="Description" content="matRad back projection function to calculate the current dose-,effect- or">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html optimization -->
+<h1>matRad_backProjection
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top">  </a></h2>
+<div class="box"> matRad back projection function to calculate the current dose-,effect- or</strong></div>
+
+<h2><a name="_Synopsis"></a>Synopsis <a href="#_top">  </a></h2>
+<div class="box"> function d = matRad_backProjection(w,dij,options) </strong></div>
+
+<h2><a name="_Description"></a>Description <a href="#_top">  </a></h2>
+<div class="fragment"><pre class="comment"> matRad back projection function to calculate the current dose-,effect- or
+ RBExDose- vector based on the dij struct.
+ 
+ call
+   d = matRad_backProjection(w,dij,options)
+
+ input
+   w:       bixel weight vector
+   dij:     dose influence matrix
+   options: option struct defining the type of optimization
+
+ output
+   d:       dose vector, effect vector or RBExDose vector 
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2016 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top">  </a></h2>
+This function calls:
+<ul style="list-style-none">
+</ul>
+This function is called by:
+<ul style="list-style-none">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top">  </a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function d = matRad_backProjection(w,dij,options)</a>
+0002 <span class="comment">% matRad back projection function to calculate the current dose-,effect- or</span>
+0003 <span class="comment">% RBExDose- vector based on the dij struct.</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% call</span>
+0006 <span class="comment">%   d = matRad_backProjection(w,dij,options)</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% input</span>
+0009 <span class="comment">%   w:       bixel weight vector</span>
+0010 <span class="comment">%   dij:     dose influence matrix</span>
+0011 <span class="comment">%   options: option struct defining the type of optimization</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">% output</span>
+0014 <span class="comment">%   d:       dose vector, effect vector or RBExDose vector</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% References</span>
+0017 <span class="comment">%   -</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% Copyright 2016 the matRad development team.</span>
+0022 <span class="comment">%</span>
+0023 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0024 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0025 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0026 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0027 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0028 <span class="comment">% LICENSE file.</span>
+0029 <span class="comment">%</span>
+0030 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0031 
+0032 <span class="keyword">global</span> matRad_global_x;
+0033 <span class="keyword">global</span> matRad_global_d;
+0034 
+0035 <span class="keyword">if</span> isequal(w,matRad_global_x)
+0036     
+0037     <span class="comment">% get dose from global variable</span>
+0038     d = matRad_global_d;
+0039     
+0040 <span class="keyword">else</span>
+0041     
+0042     matRad_global_x = w;
+0043     
+0044     <span class="comment">% pre-allocation</span>
+0045     d = cell(options.numOfScenarios,1);
+0046     
+0047     <span class="comment">% Calculate dose vector</span>
+0048     <span class="keyword">if</span> isequal(options.bioOpt,<span class="string">'none'</span>)
+0049         
+0050         <span class="keyword">for</span> i = 1:options.numOfScenarios
+0051             d{i} = dij.physicalDose{i} * w;
+0052         <span class="keyword">end</span>
+0053         
+0054     <span class="keyword">elseif</span>  isequal(options.ID,<span class="string">'protons_const_RBExD'</span>)
+0055         
+0056         <span class="keyword">for</span> i = 1:options.numOfScenarios
+0057              d{i} =  dij.physicalDose{i} * (w * dij.RBE );
+0058         <span class="keyword">end</span>
+0059         
+0060     <span class="keyword">elseif</span> (isequal(options.bioOpt,<span class="string">'LEMIV_effect'</span>) || isequal(options.bioOpt,<span class="string">'LEMIV_RBExD'</span>))
+0061         
+0062         <span class="keyword">for</span> i = 1:options.numOfScenarios
+0063             
+0064             <span class="comment">% calculate effect</span>
+0065             linTerm  = dij.mAlphaDose{i} * w;
+0066             quadTerm = dij.mSqrtBetaDose{i} * w;
+0067             e        = linTerm + quadTerm.^2;   
+0068 
+0069             <span class="keyword">if</span> isequal(options.bioOpt,<span class="string">'LEMIV_effect'</span>)
+0070                 d{i} = e;
+0071             <span class="keyword">else</span>
+0072                 <span class="comment">% calculate RBX x dose</span>
+0073                 d{i}             = zeros(dij.doseGrid.numOfVoxels,1);
+0074                 d{i}(dij.ixDose) = sqrt((e(dij.ixDose)./dij.bx(dij.ixDose))+(dij.gamma(dij.ixDose).^2)) <span class="keyword">...</span>
+0075                                     - dij.gamma(dij.ixDose);
+0076                
+0077             <span class="keyword">end</span>
+0078             
+0079         <span class="keyword">end</span>       
+0080        
+0081     <span class="keyword">end</span>   
+0082     
+0083     matRad_global_d = d;
+0084     
+0085 <span class="keyword">end</span>
+0086 
+0087 <span class="keyword">end</span>
+0088</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated on Tue 13-Oct-2020 16:38:50 by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_calcCubes</title>
+  <meta name="keywords" content="matRad_calcCubes">
+  <meta name="description" content="matRad computation of all cubes for the resultGUI struct">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_calcCubes
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">matRad computation of all cubes for the resultGUI struct</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function resultGUI = matRad_calcCubes(w,dij,scenNum) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad computation of all cubes for the resultGUI struct 
+ which is used as result container and for visualization in matRad's GUI
+
+ call
+   resultGUI = matRad_calcCubes(w,dij)
+   resultGUI = matRad_calcCubes(w,dij,scenNum)
+
+ input
+   w:       bixel weight vector
+   dij:     dose influence matrix
+   scenNum: optional: number of scenario to calculated (default 1)
+
+ output
+   resultGUI: matRad result struct
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_interp3.html" class="code" title="function y = matRad_interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal)">matRad_interp3</a>	interpolates 3-D data (table lookup)</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li><li><a href="matRad_calcDoseDirect.html" class="code" title="function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w)">matRad_calcDoseDirect</a>	matRad dose calculation wrapper bypassing dij calculation</li><li><a href="matRad_calcDoseDirectMC.html" class="code" title="function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)">matRad_calcDoseDirectMC</a>	matRad function to bypass dij calculation for MC dose calculation</li><li><a href="matRad_directApertureOptimization.html" class="code" title="function [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln)">matRad_directApertureOptimization</a>	matRad function to run direct aperture optimization</li><li><a href="matRad_fluenceOptimization.html" class="code" title="function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)">matRad_fluenceOptimization</a>	matRad inverse planning wrapper function</li><li><a href="../matRad/tools/matRad_SFUDoptimization.html" class="code" title="function [resultGUI] = matRad_SFUDoptimization(pln, cst, dij, ct, stf)">matRad_SFUDoptimization</a>	Calculation of single field uniform dose (SFUD) optimization</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function resultGUI = matRad_calcCubes(w,dij,scenNum)</a>
+0002 <span class="comment">% matRad computation of all cubes for the resultGUI struct</span>
+0003 <span class="comment">% which is used as result container and for visualization in matRad's GUI</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% call</span>
+0006 <span class="comment">%   resultGUI = matRad_calcCubes(w,dij)</span>
+0007 <span class="comment">%   resultGUI = matRad_calcCubes(w,dij,scenNum)</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% input</span>
+0010 <span class="comment">%   w:       bixel weight vector</span>
+0011 <span class="comment">%   dij:     dose influence matrix</span>
+0012 <span class="comment">%   scenNum: optional: number of scenario to calculated (default 1)</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% output</span>
+0015 <span class="comment">%   resultGUI: matRad result struct</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">% References</span>
+0018 <span class="comment">%   -</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0025 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0026 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0027 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0028 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0029 <span class="comment">% LICENSE file.</span>
+0030 <span class="comment">%</span>
+0031 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0032 
+0033 <span class="keyword">if</span> nargin &lt; 3
+0034     scenNum = 1;
+0035 <span class="keyword">end</span>
+0036 
+0037 resultGUI.w = w;
+0038 
+0039 <span class="comment">% get bixel - beam correspondence</span>
+0040 <span class="keyword">for</span> i = 1:dij.numOfBeams
+0041     beamInfo(i).suffix = [<span class="string">'_beam'</span>, num2str(i)];
+0042     beamInfo(i).logIx  = (dij.beamNum == i);      
+0043 <span class="keyword">end</span>
+0044 beamInfo(dij.numOfBeams+1).suffix = <span class="string">''</span>;
+0045 beamInfo(dij.numOfBeams+1).logIx  = true(size(w));
+0046 <span class="comment">%</span>
+0047 
+0048 <span class="comment">% compute physical dose for all beams individually and together</span>
+0049 <span class="keyword">for</span> i = 1:length(beamInfo)
+0050     resultGUI.([<span class="string">'physicalDose'</span>, beamInfo(i).suffix]) = reshape(full(dij.physicalDose{scenNum} * (resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
+0051 <span class="keyword">end</span>
+0052 
+0053 <span class="comment">% consider RBE for protons</span>
+0054 <span class="keyword">if</span> isfield(dij,<span class="string">'RBE'</span>)
+0055    fprintf([<span class="string">'matRad: applying a constant RBE of '</span> num2str(dij.RBE) <span class="string">' \n'</span>]);
+0056    <span class="keyword">for</span> i = 1:length(beamInfo)
+0057         resultGUI.([<span class="string">'RBExDose'</span>, beamInfo(i).suffix]) = resultGUI.([<span class="string">'physicalDose'</span>, beamInfo(i).suffix]) * dij.RBE;
+0058    <span class="keyword">end</span>
+0059 <span class="keyword">end</span>
+0060 
+0061 <span class="comment">% consider LET</span>
+0062 <span class="keyword">if</span> isfield(dij,<span class="string">'mLETDose'</span>)
+0063     <span class="keyword">for</span> i = 1:length(beamInfo)
+0064         LETDoseCube                                 = dij.mLETDose{scenNum} * (resultGUI.w .* beamInfo(i).logIx);
+0065         resultGUI.([<span class="string">'LET'</span>, beamInfo(i).suffix])     = zeros(dij.doseGrid.dimensions);
+0066         ix                                          = resultGUI.([<span class="string">'physicalDose'</span>, beamInfo(i).suffix]) &gt; 0;
+0067         resultGUI.([<span class="string">'LET'</span>, beamInfo(i).suffix])(ix) = LETDoseCube(ix)./resultGUI.([<span class="string">'physicalDose'</span>, beamInfo(i).suffix])(ix);
+0068     <span class="keyword">end</span>
+0069 <span class="keyword">end</span>
+0070 
+0071 <span class="keyword">if</span> isfield(dij,<span class="string">'physicalDose_MCvar'</span>)
+0072     resultGUI.physicalDose_MCvar = reshape(full(dij.physicalDose_MCvar{scenNum} * (resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
+0073     resultGUI.physicalDose_MCstd = sqrt(resultGUI.physicalDose_MCvar);
+0074     resultGUI.physicalDose_MCstdRel = resultGUI.physicalDose_MCstd ./ resultGUI.physicalDose;
+0075 <span class="keyword">end</span>
+0076 
+0077 <span class="comment">% consider biological optimization for carbon ions</span>
+0078 <span class="keyword">if</span> isfield(dij,<span class="string">'mAlphaDose'</span>) &amp;&amp; isfield(dij,<span class="string">'mSqrtBetaDose'</span>)
+0079    
+0080     ix = dij.bx~=0;
+0081 
+0082     <span class="keyword">for</span> i = 1:length(beamInfo)  
+0083        wBeam = (resultGUI.w .* beamInfo(i).logIx);
+0084        resultGUI.([<span class="string">'effect'</span>, beamInfo(i).suffix])       = full(dij.mAlphaDose{scenNum} * wBeam + (dij.mSqrtBetaDose{scenNum} * wBeam).^2);
+0085        resultGUI.([<span class="string">'effect'</span>, beamInfo(i).suffix])       = reshape(resultGUI.([<span class="string">'effect'</span>, beamInfo(i).suffix]),dij.doseGrid.dimensions);
+0086     
+0087        resultGUI.([<span class="string">'RBExDose'</span>, beamInfo(i).suffix])     = zeros(size(resultGUI.([<span class="string">'effect'</span>, beamInfo(i).suffix])));
+0088        resultGUI.([<span class="string">'RBExDose'</span>, beamInfo(i).suffix])(ix) = (sqrt(dij.ax(ix).^2 + 4 .* dij.bx(ix) .* resultGUI.([<span class="string">'effect'</span>, beamInfo(i).suffix])(ix)) - dij.ax(ix))./(2.*dij.bx(ix));
+0089 
+0090        resultGUI.([<span class="string">'RBE'</span>, beamInfo(i).suffix])          = resultGUI.([<span class="string">'RBExDose'</span>, beamInfo(i).suffix])./resultGUI.([<span class="string">'physicalDose'</span>, beamInfo(i).suffix]);
+0091 
+0092        resultGUI.([<span class="string">'alpha'</span>, beamInfo(i).suffix])        = zeros(dij.doseGrid.dimensions);
+0093        resultGUI.([<span class="string">'beta'</span>,  beamInfo(i).suffix])        = zeros(dij.doseGrid.dimensions);
+0094 
+0095        AlphaDoseCube                                    = full(dij.mAlphaDose{scenNum} * wBeam);
+0096        resultGUI.([<span class="string">'alpha'</span>, beamInfo(i).suffix])(ix)    = AlphaDoseCube(ix)./resultGUI.([<span class="string">'physicalDose'</span>, beamInfo(i).suffix])(ix);
+0097 
+0098        SqrtBetaDoseCube                                 = full(dij.mSqrtBetaDose{scenNum} * wBeam);
+0099        resultGUI.([<span class="string">'beta'</span>, beamInfo(i).suffix])(ix)     = (SqrtBetaDoseCube(ix)./resultGUI.([<span class="string">'physicalDose'</span>, beamInfo(i).suffix])(ix)).^2;
+0100     <span class="keyword">end</span>
+0101 <span class="keyword">end</span>
+0102 
+0103 <span class="comment">% group similar fields together</span>
+0104 resultGUI = orderfields(resultGUI);
+0105 
+0106 <span class="comment">% interpolation if dose grid does not match ct grid</span>
+0107 <span class="keyword">if</span> any(dij.ctGrid.dimensions~=dij.doseGrid.dimensions)
+0108    myFields = fieldnames(resultGUI);
+0109    <span class="keyword">for</span> i = 1:numel(myFields)
+0110       
+0111        <span class="keyword">if</span> numel(resultGUI.(myFields{i})) == dij.doseGrid.numOfVoxels
+0112            
+0113            <span class="comment">% interpolate!</span>
+0114            resultGUI.(myFields{i}) = <a href="matRad_interp3.html" class="code" title="function y = matRad_interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal)">matRad_interp3</a>(dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z, <span class="keyword">...</span>
+0115                                              resultGUI.(myFields{i}), <span class="keyword">...</span>
+0116                                              dij.ctGrid.x,dij.ctGrid.y',dij.ctGrid.z,<span class="string">'linear'</span>,0);
+0117            
+0118        <span class="keyword">end</span>
+0119        
+0120    <span class="keyword">end</span>   
+0121 <span class="keyword">end</span>
+0122 
+0123 <span class="keyword">end</span>
+0124 
+0125 
+0126</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

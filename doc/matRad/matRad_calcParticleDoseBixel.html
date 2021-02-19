@@ -1,0 +1,148 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_calcParticleDoseBixel</title>
+  <meta name="keywords" content="matRad_calcParticleDoseBixel">
+  <meta name="description" content="matRad visualization of two-dimensional dose distributions">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_calcParticleDoseBixel
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">matRad visualization of two-dimensional dose distributions</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad visualization of two-dimensional dose distributions 
+ on ct including segmentation
+ 
+ call
+   dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData)
+
+ input
+   radDepths:      radiological depths
+   radialDist_sq:  squared radial distance in BEV from central ray
+   sigmaIni_sq:    initial Gaussian sigma^2 of beam at patient surface
+   baseData:       base data required for particle dose calculation
+
+ output
+   dose:   particle dose at specified locations as linear vector
+
+ References
+   [1] http://iopscience.iop.org/0031-9155/41/8/005
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_interp1.html" class="code" title="function y = matRad_interp1(xi,yi,x,extrapolation)">matRad_interp1</a>	interpolates 1-D data (table lookup) and utilizes griddedInterpolant</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_calcLateralParticleCutOff.html" class="code" title="function [ machine ] = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf,visBool)">matRad_calcLateralParticleCutOff</a>	matRad function to calculate a depth dependend lateral cutoff</li><li><a href="matRad_calcParticleDose.html" class="code" title="function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcParticleDose</a>	matRad particle dose calculation wrapper</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData)</a>
+0002 <span class="comment">% matRad visualization of two-dimensional dose distributions</span>
+0003 <span class="comment">% on ct including segmentation</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% call</span>
+0006 <span class="comment">%   dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData)</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% input</span>
+0009 <span class="comment">%   radDepths:      radiological depths</span>
+0010 <span class="comment">%   radialDist_sq:  squared radial distance in BEV from central ray</span>
+0011 <span class="comment">%   sigmaIni_sq:    initial Gaussian sigma^2 of beam at patient surface</span>
+0012 <span class="comment">%   baseData:       base data required for particle dose calculation</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% output</span>
+0015 <span class="comment">%   dose:   particle dose at specified locations as linear vector</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">% References</span>
+0018 <span class="comment">%   [1] http://iopscience.iop.org/0031-9155/41/8/005</span>
+0019 <span class="comment">%</span>
+0020 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0025 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0026 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0027 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0028 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0029 <span class="comment">% LICENSE file.</span>
+0030 <span class="comment">%</span>
+0031 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0032 
+0033 <span class="comment">% add potential offset</span>
+0034 depths = baseData.depths + baseData.offset;
+0035 
+0036 <span class="comment">% convert from MeV cm^2/g per primary to Gy mm^2 per 1e6 primaries</span>
+0037 conversionFactor = 1.6021766208e-02;
+0038 
+0039 <span class="keyword">if</span> ~isfield(baseData,<span class="string">'sigma'</span>)
+0040     
+0041     <span class="comment">% interpolate depth dose, sigmas, and weights</span>
+0042     X = <a href="matRad_interp1.html" class="code" title="function y = matRad_interp1(xi,yi,x,extrapolation)">matRad_interp1</a>(depths,[conversionFactor*baseData.Z baseData.sigma1 baseData.weight baseData.sigma2],radDepths);
+0043     
+0044     <span class="comment">% set dose for query &gt; tabulated depth dose values to zero</span>
+0045     X(radDepths &gt; max(depths),1) = 0;
+0046         
+0047     <span class="comment">% compute lateral sigmas</span>
+0048     sigmaSq_Narr = X(:,2).^2 + sigmaIni_sq;
+0049     sigmaSq_Bro  = X(:,4).^2 + sigmaIni_sq;
+0050     
+0051     <span class="comment">% calculate lateral profile</span>
+0052     L_Narr =  exp( -radialDist_sq ./ (2*sigmaSq_Narr))./(2*pi*sigmaSq_Narr);
+0053     L_Bro  =  exp( -radialDist_sq ./ (2*sigmaSq_Bro ))./(2*pi*sigmaSq_Bro );
+0054     L = baseData.LatCutOff.CompFac * ((1-X(:,3)).*L_Narr + X(:,3).*L_Bro);
+0055 
+0056     dose = X(:,1).*L;
+0057 <span class="keyword">else</span>
+0058     
+0059     <span class="comment">% interpolate depth dose and sigma</span>
+0060     X = <a href="matRad_interp1.html" class="code" title="function y = matRad_interp1(xi,yi,x,extrapolation)">matRad_interp1</a>(depths,[conversionFactor*baseData.Z baseData.sigma],radDepths);
+0061 
+0062     <span class="comment">%compute lateral sigma</span>
+0063     sigmaSq = X(:,2).^2 + sigmaIni_sq;
+0064     
+0065     <span class="comment">% calculate dose</span>
+0066     dose = baseData.LatCutOff.CompFac * exp( -radialDist_sq ./ (2*sigmaSq)) .* X(:,1) ./(2*pi*sigmaSq);
+0067     
+0068  <span class="keyword">end</span>
+0069  
+0070 <span class="comment">% check if we have valid dose values</span>
+0071 <span class="keyword">if</span> any(isnan(dose)) || any(dose&lt;0)
+0072    error(<span class="string">'Error in particle dose calculation.'</span>);
+0073 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

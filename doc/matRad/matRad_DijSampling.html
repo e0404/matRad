@@ -1,0 +1,218 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_DijSampling</title>
+  <meta name="keywords" content="matRad_DijSampling">
+  <meta name="description" content="matRad dij sampling function">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_DijSampling
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">matRad dij sampling function</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function [ixNew,bixelDoseNew] =  matRad_DijSampling(ix,bixelDose,radDepthV,rad_distancesSq,sType,Param) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad dij sampling function 
+ This function samples. 
+ 
+ call
+   [ixNew,bixelDoseNew] =
+   matRad_DijSampling(ix,bixelDose,radDepthV,rad_distancesSq,sType,Param)
+
+ input
+   ix:               indices of voxels where we want to compute dose influence data
+   bixelDose:        dose at specified locations as linear vector
+   radDepthV:        radiological depth vector
+   rad_distancesSq:  squared radial distance to the central ray
+   sType:            can either be set to 'radius' or 'dose'. These are two different ways 
+                     to determine dose values that are keept as they are and dose values used for sampling
+   Param:            In the case of radius based sampling, dose values having a radial 
+                     distance below r0 [mm] are keept anyway and sampling is only done beyond r0. 
+                     In the case of dose based sampling, dose values having a relative dose greater 
+                     the threshold [0...1] are keept and sampling is done for dose values below the relative threshold  
+
+ output
+   ixNew:            reduced indices of voxels where we want to compute dose influence data
+   bixelDoseNew      reduced dose at specified locations as linear vector
+
+ References
+   [1] http://dx.doi.org/10.1118/1.1469633
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2016 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_calcPhotonDose.html" class="code" title="function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcPhotonDose</a>	matRad photon dose calculation wrapper</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [ixNew,bixelDoseNew] =  matRad_DijSampling(ix,bixelDose,radDepthV,rad_distancesSq,sType,Param)</a>
+0002 <span class="comment">% matRad dij sampling function</span>
+0003 <span class="comment">% This function samples.</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% call</span>
+0006 <span class="comment">%   [ixNew,bixelDoseNew] =</span>
+0007 <span class="comment">%   matRad_DijSampling(ix,bixelDose,radDepthV,rad_distancesSq,sType,Param)</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% input</span>
+0010 <span class="comment">%   ix:               indices of voxels where we want to compute dose influence data</span>
+0011 <span class="comment">%   bixelDose:        dose at specified locations as linear vector</span>
+0012 <span class="comment">%   radDepthV:        radiological depth vector</span>
+0013 <span class="comment">%   rad_distancesSq:  squared radial distance to the central ray</span>
+0014 <span class="comment">%   sType:            can either be set to 'radius' or 'dose'. These are two different ways</span>
+0015 <span class="comment">%                     to determine dose values that are keept as they are and dose values used for sampling</span>
+0016 <span class="comment">%   Param:            In the case of radius based sampling, dose values having a radial</span>
+0017 <span class="comment">%                     distance below r0 [mm] are keept anyway and sampling is only done beyond r0.</span>
+0018 <span class="comment">%                     In the case of dose based sampling, dose values having a relative dose greater</span>
+0019 <span class="comment">%                     the threshold [0...1] are keept and sampling is done for dose values below the relative threshold</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% output</span>
+0022 <span class="comment">%   ixNew:            reduced indices of voxels where we want to compute dose influence data</span>
+0023 <span class="comment">%   bixelDoseNew      reduced dose at specified locations as linear vector</span>
+0024 <span class="comment">%</span>
+0025 <span class="comment">% References</span>
+0026 <span class="comment">%   [1] http://dx.doi.org/10.1118/1.1469633</span>
+0027 <span class="comment">%</span>
+0028 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0029 <span class="comment">%</span>
+0030 <span class="comment">% Copyright 2016 the matRad development team.</span>
+0031 <span class="comment">%</span>
+0032 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0033 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0034 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0035 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0036 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0037 <span class="comment">% LICENSE file.</span>
+0038 <span class="comment">%</span>
+0039 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0040 
+0041 <span class="comment">%% define default parameters as a fallback</span>
+0042 defaultType                = <span class="string">'radius'</span>;
+0043 deltaRadDepth              = 5;                       <span class="comment">% step size of radiological depth</span>
+0044 defaultLatCutOff           = 25;                      <span class="comment">% default lateral cut off</span>
+0045 defaultrelDoseThreshold    = 0.01;                    <span class="comment">% default relative dose threshold</span>
+0046 
+0047 relDoseThreshold           = defaultrelDoseThreshold;
+0048 LatCutOff                  = defaultLatCutOff;
+0049 Type                       = sType;
+0050 
+0051 <span class="comment">% if the input index vector is of type logical convert it to linear indices</span>
+0052 <span class="keyword">if</span> islogical(ix)
+0053    ix = find(ix); 
+0054 <span class="keyword">end</span>
+0055 
+0056 <span class="comment">%% parse inputs</span>
+0057 <span class="keyword">if</span> sum(strcmp(sType,{<span class="string">'radius'</span>,<span class="string">'dose'</span>})) == 0
+0058    Type = defaultType;
+0059 <span class="keyword">end</span>
+0060 
+0061 <span class="comment">% if an parameter is provided then use it</span>
+0062 <span class="keyword">if</span> nargin&gt;5   
+0063     <span class="keyword">if</span> exist(<span class="string">'Param'</span>,<span class="string">'var'</span>)
+0064          <span class="keyword">if</span> strcmp(sType,<span class="string">'radius'</span>)
+0065            LatCutOff = Param;
+0066         <span class="keyword">elseif</span> strcmp(sType,<span class="string">'dose'</span>)
+0067            relDoseThreshold = Param;
+0068         <span class="keyword">end</span>
+0069     <span class="keyword">end</span>
+0070 <span class="keyword">end</span>
+0071 
+0072 <span class="comment">%% remember dose values inside the inner core</span>
+0073 <span class="keyword">switch</span>  Type
+0074     <span class="keyword">case</span> {<span class="string">'radius'</span>}
+0075     ixCore      = rad_distancesSq &lt; LatCutOff^2;                 <span class="comment">% get voxels indices having a smaller radial distance than r0</span>
+0076     <span class="keyword">case</span> {<span class="string">'dose'</span>}
+0077     ixCore      = bixelDose &gt; relDoseThreshold * max(bixelDose); <span class="comment">% get voxels indices having a greater dose than the thresholdDose</span>
+0078 <span class="keyword">end</span>
+0079 
+0080 bixelDoseCore       = bixelDose(ixCore);                         <span class="comment">% save dose values that are not affected by sampling</span>
+0081 
+0082 <span class="keyword">if</span> all(ixCore)
+0083     <span class="comment">%% all bixels are in the core</span>
+0084     <span class="comment">%exit function with core dose only</span>
+0085     ixNew = ix;
+0086     bixelDoseNew = bixelDoseCore;
+0087 <span class="keyword">else</span>
+0088     logIxTail           = ~ixCore;                                   <span class="comment">% get voxels indices beyond r0</span>
+0089     linIxTail           = find(logIxTail);                           <span class="comment">% convert logical index to linear index</span>
+0090     numTail             = numel(linIxTail);
+0091     bixelDoseTail       = bixelDose(linIxTail);                      <span class="comment">% dose values that are going to be reduced by sampling</span>
+0092     ixTail              = ix(linIxTail);                             <span class="comment">% indices that are going to be reduced by sampling</span>
+0093     
+0094     <span class="comment">%% sample for each radiological depth the lateral halo dose</span>
+0095     radDepthTail        = (radDepthV(linIxTail));                    <span class="comment">% get radiological depth in the tail</span>
+0096     
+0097     <span class="comment">% cluster radiological dephts to reduce computations</span>
+0098     B_r                 = int32(ceil(radDepthTail));                 <span class="comment">% cluster radiological depths;</span>
+0099     maxRadDepth         = double(max(B_r));
+0100     C                   = int32(linspace(0,maxRadDepth,round(maxRadDepth)/deltaRadDepth));     <span class="comment">% coarse clustering of rad depths</span>
+0101     
+0102     ixNew               = zeros(numTail,1);                          <span class="comment">% inizialize new index vector</span>
+0103     bixelDoseNew        = zeros(numTail,1);                          <span class="comment">% inizialize new dose vector</span>
+0104     linIx               = int32(1:1:numTail)';
+0105     IxCnt               = 1;
+0106     
+0107     <span class="comment">%% loop over clustered radiological depths</span>
+0108     <span class="keyword">for</span> i = 1:numel(C)-1
+0109         ixTmp              = linIx(B_r &gt;= C(i) &amp; B_r &lt; C(i+1));      <span class="comment">% extracting sub indices</span>
+0110         <span class="keyword">if</span> isempty(ixTmp)
+0111             <span class="keyword">continue</span>
+0112         <span class="keyword">end</span>
+0113         subDose            = bixelDoseTail(ixTmp);                   <span class="comment">% get tail dose in current cluster</span>
+0114         subIx              = ixTail(ixTmp);                          <span class="comment">% get indices in current cluster</span>
+0115         thresholdDose      = max(subDose);
+0116         r                  = rand(numel(subDose),1);                 <span class="comment">% get random samples</span>
+0117         ixSamp             = r&lt;=(subDose/thresholdDose);
+0118         NumSamples         = sum(ixSamp);
+0119         
+0120         ixNew(IxCnt:IxCnt+NumSamples-1,1)        = subIx(ixSamp);    <span class="comment">% save new indices</span>
+0121         bixelDoseNew(IxCnt:IxCnt+NumSamples-1,1) = thresholdDose;    <span class="comment">% set the dose</span>
+0122         IxCnt = IxCnt + NumSamples;
+0123     <span class="keyword">end</span>
+0124     
+0125     
+0126     <span class="comment">% cut new vectors and add inner core values</span>
+0127     ixNew        = [ix(ixCore);    ixNew(1:IxCnt-1)];
+0128     bixelDoseNew = [bixelDoseCore; bixelDoseNew(1:IxCnt-1)];
+0129 <span class="keyword">end</span>
+0130 
+0131 
+0132 
+0133 <span class="keyword">end</span>
+0134 
+0135</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

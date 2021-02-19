@@ -1,0 +1,14 @@
+/* Created by mdot for Matlab */
+digraph m2html {
+  matRad_Optimizer -> matRad_Optimizer;
+  matRad_OptimizerFmincon -> matRad_Optimizer;
+  matRad_OptimizerFmincon -> matRad_OptimizerFmincon;
+  matRad_OptimizerIPOPT -> ipopt;
+  matRad_OptimizerIPOPT -> matRad_Optimizer;
+  matRad_OptimizerIPOPT -> matRad_OptimizerIPOPT;
+
+  ipopt [URL="ipopt.html"];
+  matRad_Optimizer [URL="matRad_Optimizer.html"];
+  matRad_OptimizerFmincon [URL="matRad_OptimizerFmincon.html"];
+  matRad_OptimizerIPOPT [URL="matRad_OptimizerIPOPT.html"];
+}

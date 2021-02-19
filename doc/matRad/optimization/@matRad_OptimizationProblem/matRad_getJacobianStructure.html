@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_getJacobianStructure</title>
+  <meta name="keywords" content="matRad_getJacobianStructure">
+  <meta name="description" content="matRad IPOPT callback: jacobian structure function for inverse planning">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../../menu.html matRad --><!-- ../menu.html optimization --><!-- menu.html @matRad_OptimizationProblem -->
+<h1>matRad_getJacobianStructure
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">matRad IPOPT callback: jacobian structure function for inverse planning</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">function jacobStruct = matRad_getJacobianStructure(optiProb,w,dij,cst) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad IPOPT callback: jacobian structure function for inverse planning 
+ supporting max dose constraint, min dose constraint, min mean dose constraint, 
+ max mean dose constraint, min EUD constraint, max EUD constraint, max DVH 
+ constraint, min DVH constraint     
+     
+ call    
+   jacobStruct = matRad_getJacobStruct(optiProb,w,dij,cst)    
+    
+ input    
+   optiProb: matRad optimization problem
+   w:        beamlet/ pencil beam weight vector
+   dij: dose influence matrix    
+   cst: matRad cst struct    
+    
+ output    
+   jacobStruct: jacobian of constraint function    
+    
+ References    
+    
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    
+ Copyright 2016 the matRad development team.     
+     
+ This file is part of the matRad project. It is subject to the license     
+ terms in the LICENSE file found in the top-level directory of this     
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part     
+ of the matRad project, including this file, may be copied, modified,     
+ propagated, or distributed except according to the terms contained in the     
+ LICENSE file.    
+    
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+ Initializes constraints</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../../matRad/optimization/@matRad_OptimizationProblemDAO/matRad_getJacobianStructure.html" class="code" title="function jacobStruct = matRad_getJacobianStructure(optiProb,apertureInfoVec,dij,cst)">matRad_getJacobianStructure</a>	matRad IPOPT callback: get jacobian structure for direct aperture optimization</li><li><a href="matRad_OptimizationProblem.html" class="code" title="">matRad_OptimizationProblem</a>	</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function jacobStruct = matRad_getJacobianStructure(optiProb,w,dij,cst)    </a>
+0002 <span class="comment">% matRad IPOPT callback: jacobian structure function for inverse planning</span>
+0003 <span class="comment">% supporting max dose constraint, min dose constraint, min mean dose constraint,</span>
+0004 <span class="comment">% max mean dose constraint, min EUD constraint, max EUD constraint, max DVH</span>
+0005 <span class="comment">% constraint, min DVH constraint</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% call</span>
+0008 <span class="comment">%   jacobStruct = matRad_getJacobStruct(optiProb,w,dij,cst)</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% input</span>
+0011 <span class="comment">%   optiProb: matRad optimization problem</span>
+0012 <span class="comment">%   w:        beamlet/ pencil beam weight vector</span>
+0013 <span class="comment">%   dij: dose influence matrix</span>
+0014 <span class="comment">%   cst: matRad cst struct</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% output</span>
+0017 <span class="comment">%   jacobStruct: jacobian of constraint function</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% References</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0022  <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% Copyright 2016 the matRad development team.</span>
+0025 <span class="comment">%</span>
+0026 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0027 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0028 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0029 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0030 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0031 <span class="comment">% LICENSE file.</span>
+0032 <span class="comment">%</span>
+0033 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0034  <span class="comment">% Initializes constraints</span>
+0035 jacobStruct = sparse([]);    
+0036  <span class="comment">% compute objective function for every VOI.</span>
+0037 <span class="keyword">for</span> i = 1:size(cst,1)    
+0038      <span class="comment">% Only take OAR or target VOI.</span>
+0039     <span class="keyword">if</span> ~isempty(cst{i,4}{1}) &amp;&amp; ( isequal(cst{i,3},<span class="string">'OAR'</span>) || isequal(cst{i,3},<span class="string">'TARGET'</span>) )    
+0040          <span class="comment">% loop over the number of constraints for the current VOI</span>
+0041         <span class="keyword">for</span> j = 1:numel(cst{i,6})    
+0042                 
+0043             obj = cst{i,6}{j};    
+0044                 
+0045             <span class="comment">% only perform computations for constraints</span>
+0046               <span class="keyword">if</span> isa(obj,<span class="string">'DoseConstraints.matRad_DoseConstraint'</span>)    
+0047                     
+0048                 <span class="comment">% get the jacobian structure depending on dose</span>
+0049                 jacobDoseStruct = obj.getDoseConstraintJacobianStructure(numel(cst{i,4}{1}));    
+0050                 nRows = size(jacobDoseStruct,2);    
+0051                 jacobStruct = [jacobStruct; repmat(spones(mean(dij.physicalDose{1}(cst{i,4}{1},:))),nRows,1)];    
+0052                  
+0053              <span class="keyword">end</span>    
+0054          <span class="keyword">end</span>    
+0055      <span class="keyword">end</span>    
+0056  <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

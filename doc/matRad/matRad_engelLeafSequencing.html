@@ -1,0 +1,465 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_engelLeafSequencing</title>
+  <meta name="keywords" content="matRad_engelLeafSequencing">
+  <meta name="description" content="multileaf collimator leaf sequencing algorithm">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_engelLeafSequencing
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">multileaf collimator leaf sequencing algorithm</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> multileaf collimator leaf sequencing algorithm 
+ for intensity modulated beams with multiple static segments accroding 
+ to Engel et al. 2005 Discrete Applied Mathematics
+ 
+ call
+   resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)
+
+ input
+   resultGUI:          resultGUI struct to which the output data will be added, if
+                       this field is empty resultGUI struct will be created
+   stf:                matRad steering information struct
+   dij:                matRad's dij matrix
+   numOfLevels:        number of stratification levels
+   visBool:            toggle on/off visualization (optional)
+
+ output
+   resultGUI:          matRad result struct containing the new dose cube
+                       as well as the corresponding weights
+
+ References
+   [1] http://www.sciencedirect.com/science/article/pii/S0166218X05001411
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_interp3.html" class="code" title="function y = matRad_interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal)">matRad_interp3</a>	interpolates 3-D data (table lookup)</li><li><a href="matRad_sequencing2ApertureInfo.html" class="code" title="function apertureInfo = matRad_sequencing2ApertureInfo(Sequencing,stf)">matRad_sequencing2ApertureInfo</a>	matRad function to generate a shape info struct</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)</a>
+0002 <span class="comment">% multileaf collimator leaf sequencing algorithm</span>
+0003 <span class="comment">% for intensity modulated beams with multiple static segments accroding</span>
+0004 <span class="comment">% to Engel et al. 2005 Discrete Applied Mathematics</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">% call</span>
+0007 <span class="comment">%   resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% input</span>
+0010 <span class="comment">%   resultGUI:          resultGUI struct to which the output data will be added, if</span>
+0011 <span class="comment">%                       this field is empty resultGUI struct will be created</span>
+0012 <span class="comment">%   stf:                matRad steering information struct</span>
+0013 <span class="comment">%   dij:                matRad's dij matrix</span>
+0014 <span class="comment">%   numOfLevels:        number of stratification levels</span>
+0015 <span class="comment">%   visBool:            toggle on/off visualization (optional)</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">% output</span>
+0018 <span class="comment">%   resultGUI:          matRad result struct containing the new dose cube</span>
+0019 <span class="comment">%                       as well as the corresponding weights</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% References</span>
+0022 <span class="comment">%   [1] http://www.sciencedirect.com/science/article/pii/S0166218X05001411</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0025 <span class="comment">%</span>
+0026 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0027 <span class="comment">%</span>
+0028 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0029 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0030 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0031 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0032 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0033 <span class="comment">% LICENSE file.</span>
+0034 <span class="comment">%</span>
+0035 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0036 
+0037 <span class="comment">% if visBool not set toogle off visualization</span>
+0038 <span class="keyword">if</span> nargin &lt; 5
+0039     visBool = 0;
+0040 <span class="keyword">end</span>
+0041 
+0042 numOfBeams = numel(stf);
+0043 
+0044 <span class="keyword">if</span> visBool
+0045     <span class="comment">% create the sequencing figure</span>
+0046     sz = [800 1000]; <span class="comment">% figure size</span>
+0047     screensize = get(0,<span class="string">'ScreenSize'</span>);
+0048     xpos = ceil((screensize(3)-sz(2))/2); <span class="comment">% center the figure on the screen horizontally</span>
+0049     ypos = ceil((screensize(4)-sz(1))/2); <span class="comment">% center the figure on the screen vertically</span>
+0050     seqFig = figure(<span class="string">'position'</span>,[xpos,ypos,sz(2),sz(1)]);     
+0051 <span class="keyword">end</span>
+0052 
+0053 offset = 0;
+0054 
+0055 <span class="keyword">for</span> i = 1:numOfBeams
+0056     
+0057     numOfRaysPerBeam = stf(i).numOfRays; 
+0058     
+0059     <span class="comment">% get relevant weights for current beam</span>
+0060     wOfCurrBeams = resultGUI.w(1+offset:numOfRaysPerBeam+offset);
+0061     
+0062     X = ones(numOfRaysPerBeam,1)*NaN;
+0063     Z = ones(numOfRaysPerBeam,1)*NaN;
+0064         
+0065     <span class="keyword">for</span> j=1:stf(i).numOfRays
+0066       X(j) = stf(i).ray(j).rayPos_bev(:,1);
+0067       Z(j) = stf(i).ray(j).rayPos_bev(:,3);
+0068     <span class="keyword">end</span>
+0069         
+0070     <span class="comment">% sort bixels into matrix</span>
+0071     minX = min(X);
+0072     maxX = max(X);
+0073     minZ = min(Z);
+0074     maxZ = max(Z);
+0075     
+0076     dimOfFluenceMxX = (maxX-minX)/stf(i).bixelWidth + 1;
+0077     dimOfFluenceMxZ = (maxZ-minZ)/stf(i).bixelWidth + 1;
+0078     
+0079     <span class="comment">%Create the fluence matrix.</span>
+0080     fluenceMx = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
+0081     
+0082     <span class="comment">% Calculate X and Z position of every fluence's matrix spot</span>
+0083     <span class="comment">% z axis = axis of leaf movement!</span>
+0084     xPos = (X-minX)/stf(i).bixelWidth+1;
+0085     zPos = (Z-minZ)/stf(i).bixelWidth+1;
+0086     
+0087     <span class="comment">% Make subscripts for fluence matrix</span>
+0088     indInFluenceMx = zPos + (xPos-1)*dimOfFluenceMxZ;
+0089     
+0090     <span class="comment">%Save weights in fluence matrix.</span>
+0091     fluenceMx(indInFluenceMx) = wOfCurrBeams;
+0092     
+0093     <span class="comment">% Stratification</span>
+0094     calFac = max(fluenceMx(:));
+0095     D_k = round(fluenceMx/calFac*numOfLevels); 
+0096     
+0097     <span class="comment">% Save the stratification in the initial intensity matrix D_0.</span>
+0098     D_0 = D_k;
+0099     
+0100     <span class="comment">% container to remember generated shapes; allocate space for 10000 shapes</span>
+0101     shapes = NaN*ones(dimOfFluenceMxZ,dimOfFluenceMxX,10000);
+0102   
+0103     k = 0;
+0104     
+0105     <span class="keyword">if</span> visBool
+0106         clf(seqFig);
+0107         colormap(seqFig,<span class="string">'jet'</span>);
+0108         
+0109         seqSubPlots(1) = subplot(2,2,1,<span class="string">'parent'</span>,seqFig);
+0110         imagesc(D_k,<span class="string">'parent'</span>,seqSubPlots(1));
+0111         set(seqSubPlots(1),<span class="string">'CLim'</span>,[0 numOfLevels],<span class="string">'YDir'</span>,<span class="string">'normal'</span>);
+0112         title(seqSubPlots(1),[<span class="string">'Beam # '</span> num2str(i) <span class="string">': max(D_0) = '</span> num2str(max(D_0(:))) <span class="string">' - '</span> num2str(numel(unique(D_0))) <span class="string">' intensity levels'</span>]);
+0113         xlabel(seqSubPlots(1),<span class="string">'x - direction parallel to leaf motion '</span>)
+0114         ylabel(seqSubPlots(1),<span class="string">'z - direction perpendicular to leaf motion '</span>)
+0115         colorbar;
+0116         drawnow
+0117     <span class="keyword">end</span>
+0118     
+0119     <span class="comment">% start sequencer</span>
+0120     <span class="keyword">while</span> max(D_k(:) &gt; 0)
+0121         
+0122         <span class="comment">%calculate the difference matrix diffMat</span>
+0123         diffMat = diff([zeros(size(D_k,1),1) D_k zeros(size(D_k,1),1)],[],2);
+0124         
+0125         <span class="comment">%calculate complexities</span>
+0126         c = sum(max(0,diffMat),2); <span class="comment">%TNMU-row-complexity</span>
+0127         com = max(c); <span class="comment">%TNMU complexity</span>
+0128         g = com - c; <span class="comment">%row complexity gap</span>
+0129         
+0130         <span class="comment">%initialize segment</span>
+0131         segment = zeros(size(D_k));
+0132         
+0133         k = k + 1;
+0134         
+0135         <span class="comment">%Plot residual intensity matrix.</span>
+0136         <span class="keyword">if</span> visBool
+0137             seqSubPlots(2) = subplot(2,2,2,<span class="string">'parent'</span>,seqFig);
+0138             imagesc(D_k,<span class="string">'parent'</span>,seqSubPlots(2));
+0139             set(seqSubPlots(2),<span class="string">'CLim'</span>,[0 numOfLevels],<span class="string">'YDir'</span>,<span class="string">'normal'</span>);
+0140             title(seqSubPlots(2),[<span class="string">'k = '</span> num2str(k)]);
+0141             colorbar
+0142             drawnow
+0143         <span class="keyword">end</span>
+0144        
+0145         
+0146         <span class="comment">%loop over all rows</span>
+0147         <span class="keyword">for</span> j=1:size(D_0,1)
+0148             
+0149             <span class="comment">%determine essential intervals</span>
+0150             data(j).left(1) = 0; <span class="comment">%left interval limit, actual for an empty interval</span>
+0151             data(j).right(1) = 0; <span class="comment">%right interal limit, actual for an empty interval</span>
+0152             data(j).v(1) = g(j);  <span class="comment">%greatest number such that the inequalities (6) resp. (7) is satisfied with u=v</span>
+0153             data(j).w(1) = inf; <span class="comment">%smallest number in the interval</span>
+0154             data(j).u(1) = data(j).v(1); <span class="comment">%min(v,w)</span>
+0155             
+0156             [~, pos, ~] = find(diffMat(j,:) &gt; 0); <span class="comment">% indices of all positive elements in the j. row of diffmat</span>
+0157             [~, neg, ~] = find(diffMat(j,:) &lt; 0); <span class="comment">% indices of all negative elements in the j. row of diffMat</span>
+0158             
+0159             n=2;
+0160             
+0161             <span class="comment">%loop over the positive elements in the j. row of diffmat -&gt;</span>
+0162             <span class="comment">%possible left interval limits</span>
+0163             <span class="keyword">for</span> m=1:size(pos,2)
+0164                 
+0165                 <span class="comment">%loop over the negative elements in the j. row of diffMat -&gt;</span>
+0166                 <span class="comment">%possible right interval limit</span>
+0167                 <span class="keyword">for</span> l=1:size(neg,2)
+0168                     
+0169                     <span class="comment">%take only intervals I=[l,r] with l&lt;=r</span>
+0170                     <span class="keyword">if</span> pos(m) &lt;= neg(l)-1
+0171                         
+0172                         <span class="comment">%set interval limits</span>
+0173                         data(j).left(n) = pos(m);
+0174                         data(j).right(n) = neg(l)-1;
+0175                         
+0176                         <span class="comment">%calculate v according to Lemma 8</span>
+0177                         <span class="keyword">if</span> g(j) &lt;= abs( diffMat(j,pos(m)) + diffMat(j,neg(l)) )
+0178                             data(j).v(n) = min( diffMat(j,pos(m)), -diffMat(j,neg(l)) ) + g(j);
+0179                         <span class="keyword">else</span>
+0180                             data(j).v(n) = ( diffMat(j, pos(m)) - diffMat(j, neg(l)) + g(j)) / 2;
+0181                         <span class="keyword">end</span>
+0182                         
+0183                         <span class="comment">%calculate w and u according to equality (11) and</span>
+0184                         <span class="comment">%(12)</span>
+0185                         data(j).w(n) = min(D_k(j,pos(m):(neg(l)-1)));
+0186                         data(j).u(n) = min(data(j).v(n), data(j).w(n));
+0187                         
+0188                         n = n+1;
+0189                     <span class="keyword">end</span>
+0190                 <span class="keyword">end</span>
+0191             <span class="keyword">end</span>
+0192             
+0193             u(j) = max(data(j).u);
+0194             
+0195         <span class="keyword">end</span>
+0196         
+0197         <span class="comment">%calculate u_max from theorem 9</span>
+0198         d_k = min(u);
+0199         
+0200         <span class="comment">%loop over all rows</span>
+0201         <span class="keyword">for</span> j=1:size(D_0,1)
+0202  
+0203             <span class="comment">%find all possible (and essential) intervals</span>
+0204             candidate = find(data(j).u &gt;= d_k); 
+0205             
+0206             <span class="comment">%calculate the potential of the possible intervals</span>
+0207             
+0208             <span class="comment">%initialize p as -Inf</span>
+0209             data(j).p(1:length(data(j).left)) = -Inf;
+0210             
+0211             <span class="comment">%loop over all possible intervals</span>
+0212             <span class="keyword">for</span> s=1:size(candidate,2)
+0213                 
+0214                 <span class="keyword">if</span> (s==1 &amp;&amp; data(j).left(candidate(s)) == 0)
+0215                     data(j).p(candidate(1)) = 0;
+0216                     
+0217                     
+0218                 <span class="keyword">else</span>
+0219                     <span class="comment">%calculate p1 according to equality (17)</span>
+0220                     <span class="keyword">if</span> (d_k == diffMat(j, data(j).left(candidate(s))) &amp;&amp; d_k ~= D_k(j, data(j).left(candidate(s))))
+0221                         p1 = 1;
+0222                
+0223                     <span class="keyword">else</span>
+0224                         p1 = 0;
+0225                     
+0226                     <span class="keyword">end</span>
+0227                     
+0228                     <span class="comment">%calculate p2 according to equalitiy (18)</span>
+0229                    <span class="comment">% if data(j).right(candidate(s)) &lt; size(D_0, 2)</span>
+0230                         
+0231                         <span class="keyword">if</span> (d_k == -diffMat(j, data(j).right(candidate(s))+1) &amp;&amp; d_k ~= D_k(j, data(j).right(candidate(s))))
+0232                             p2 = 1;
+0233                         <span class="keyword">else</span>
+0234                             p2 = 0;
+0235                         <span class="keyword">end</span>
+0236                         
+0237 <span class="comment">%                     else</span>
+0238 <span class="comment">%</span>
+0239 <span class="comment">%                         if d_k == -diffMat(j, data(j).right(candidate(s))+1)</span>
+0240 <span class="comment">%                             p2 = 1;</span>
+0241 <span class="comment">%                         else</span>
+0242 <span class="comment">%                             p2 = 0;</span>
+0243 <span class="comment">%                         end</span>
+0244 <span class="comment">%</span>
+0245 <span class="comment">%                     end</span>
+0246                     
+0247                     <span class="comment">%calculate p3 according to equality (19)</span>
+0248                     p3 = size(find(D_k(j, data(j).left(candidate(s)):data(j).right(candidate(s))) == d_k),2);
+0249                     
+0250                     data(j).p(candidate(s)) = p1 + p2+ p3;
+0251                     
+0252                 <span class="keyword">end</span>
+0253                 
+0254             <span class="keyword">end</span>
+0255                 
+0256                 <span class="comment">%determinate intervals with maximum potential</span>
+0257                 maxPot = find(data(j).p == max(data(j).p));
+0258                 
+0259                 <span class="comment">%if several intervals have maximum potential, select</span>
+0260                 <span class="comment">%the interval which has maximum length</span>
+0261                 <span class="keyword">if</span> size(maxPot,2) &gt; 1
+0262 
+0263                     <span class="keyword">for</span> t=1:size(maxPot,2)
+0264                         <span class="keyword">if</span> t==1 &amp;&amp; data(j).left(maxPot(t)) == 0
+0265                             data(j).l(1) = 0;
+0266                         <span class="keyword">else</span>
+0267                             data(j).l(maxPot(t)) = data(j).right(maxPot(t)) - data(j).left(maxPot(t)) + 1;
+0268                         <span class="keyword">end</span>
+0269                     <span class="keyword">end</span>
+0270                     
+0271                     <span class="comment">%data(j).l(maxPot) = data(j).right(maxPot) - data(j).left(maxPot) + 1;</span>
+0272                     
+0273                     maxLength = find(data(j).l == max(data(j).l));
+0274                      
+0275                     <span class="comment">%left and right interval limits of the selected</span>
+0276                     <span class="comment">%interval</span>
+0277                     leftIntLimit(j) = data(j).left(maxLength(1));
+0278                     rightIntLimit(j) = data(j).right(maxLength(1));
+0279                     
+0280  
+0281                 <span class="keyword">else</span>
+0282                     
+0283                     <span class="comment">%left and right interval limits of the selected</span>
+0284                     <span class="comment">%interval</span>
+0285                     leftIntLimit(j) = data(j).left(maxPot);
+0286                     rightIntLimit(j) = data(j).right(maxPot);
+0287                     
+0288                     
+0289                 <span class="keyword">end</span>
+0290                 
+0291                 <span class="comment">%create segment associated by the selected interval</span>
+0292                 <span class="keyword">if</span> leftIntLimit(j) ~= 0 
+0293                     
+0294                     segment(j,leftIntLimit(j):rightIntLimit(j)) = 1;
+0295  
+0296                 <span class="keyword">end</span>
+0297 
+0298         <span class="keyword">end</span>
+0299         
+0300         <span class="comment">%write the segment in shape_k</span>
+0301         shape_k = segment;
+0302 
+0303         <span class="comment">%show the leaf positions</span>
+0304         <span class="keyword">if</span> visBool
+0305             seqSubPlots(4) = subplot(2,2,3.5,<span class="string">'parent'</span>,seqFig);
+0306             imagesc(shape_k,<span class="string">'parent'</span>,seqSubPlots(4));
+0307             hold(seqSubPlots(4),<span class="string">'on'</span>);
+0308             set(seqSubPlots(4),<span class="string">'YDir'</span>,<span class="string">'normal'</span>)
+0309             xlabel(seqSubPlots(4),<span class="string">'x - direction parallel to leaf motion '</span>)
+0310             ylabel(seqSubPlots(4),<span class="string">'z - direction perpendicular to leaf motion '</span>)
+0311             title(seqSubPlots(4),[<span class="string">'beam # '</span> num2str(i) <span class="string">' shape # '</span> num2str(k) <span class="string">' d_k = '</span> num2str(d_k)]);
+0312             <span class="keyword">for</span> j = 1:dimOfFluenceMxZ
+0313                 leftLeafIx = find(shape_k(j,:)&gt;0,1,<span class="string">'first'</span>);
+0314                 rightLeafIx = find(shape_k(j,:)&gt;0,1,<span class="string">'last'</span>);
+0315                 <span class="keyword">if</span> leftLeafIx &gt; 1
+0316                     plot(seqSubPlots(4),[.5 leftLeafIx-.5],j-[.5 .5] ,<span class="string">'w'</span>,<span class="string">'LineWidth'</span>,2)
+0317                     plot(seqSubPlots(4),[.5 leftLeafIx-.5],j+[.5 .5] ,<span class="string">'w'</span>,<span class="string">'LineWidth'</span>,2)
+0318                     plot(seqSubPlots(4),[ leftLeafIx-.5 leftLeafIx-.5],j+[.5 -.5] ,<span class="string">'w'</span>,<span class="string">'LineWidth'</span>,2)
+0319                 <span class="keyword">end</span>
+0320                 <span class="keyword">if</span> rightLeafIx&lt;dimOfFluenceMxX
+0321                     plot(seqSubPlots(4),[dimOfFluenceMxX+.5 rightLeafIx+.5],j-[.5 .5] ,<span class="string">'w'</span>,<span class="string">'LineWidth'</span>,2)
+0322                     plot(seqSubPlots(4),[dimOfFluenceMxX+.5 rightLeafIx+.5],j+[.5 .5] ,<span class="string">'w'</span>,<span class="string">'LineWidth'</span>,2)
+0323                     plot(seqSubPlots(4),[ rightLeafIx+.5 rightLeafIx+.5],j+[.5 -.5] ,<span class="string">'w'</span>,<span class="string">'LineWidth'</span>,2)
+0324                 <span class="keyword">end</span>
+0325                 <span class="keyword">if</span> isempty(rightLeafIx) &amp;&amp; isempty (leftLeafIx)
+0326                     plot(seqSubPlots(4),[dimOfFluenceMxX+.5 .5],j-[.5 .5] ,<span class="string">'w'</span>,<span class="string">'LineWidth'</span>,2)
+0327                     plot(seqSubPlots(4),[dimOfFluenceMxX+.5 .5],j+[.5 .5] ,<span class="string">'w'</span>,<span class="string">'LineWidth'</span>,2)
+0328                     plot(seqSubPlots(4),.5*dimOfFluenceMxX*[1 1]+[0.5],j+[.5 -.5] ,<span class="string">'w'</span>,<span class="string">'LineWidth'</span>,2)
+0329                 <span class="keyword">end</span>
+0330             <span class="keyword">end</span>
+0331             
+0332             axis tight
+0333             drawnow
+0334             pause(1);
+0335         <span class="keyword">end</span>
+0336     
+0337 
+0338         <span class="comment">%save shape_k in container</span>
+0339         shapes(:,:,k) =  shape_k;
+0340         
+0341         <span class="comment">%save the calculated MU</span>
+0342         shapesWeight(k) = d_k; 
+0343         
+0344         <span class="comment">%calculate  new matrix, the  diference matrix and complexities</span>
+0345         D_k = D_k - d_k*shape_k; 
+0346         
+0347         <span class="comment">%delete variables</span>
+0348         clear data;
+0349         clear segment;
+0350         clear u;
+0351         clear leftIntLimit;
+0352         clear rightIntLimit;
+0353        
+0354     <span class="keyword">end</span>
+0355     
+0356     sequencing.beam(i).numOfShapes  = k;
+0357     sequencing.beam(i).shapes       = shapes(:,:,1:k);
+0358     sequencing.beam(i).shapesWeight = shapesWeight(1:k)/numOfLevels*calFac;
+0359     sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
+0360     sequencing.beam(i).fluence      = D_0;
+0361     
+0362     sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = D_0(indInFluenceMx)/numOfLevels*calFac;
+0363 
+0364     offset = offset + numOfRaysPerBeam;
+0365 
+0366 <span class="keyword">end</span>
+0367 
+0368 resultGUI.w          = sequencing.w;
+0369 resultGUI.wSequenced = sequencing.w;
+0370 
+0371 resultGUI.sequencing   = sequencing;
+0372 resultGUI.apertureInfo = <a href="matRad_sequencing2ApertureInfo.html" class="code" title="function apertureInfo = matRad_sequencing2ApertureInfo(Sequencing,stf)">matRad_sequencing2ApertureInfo</a>(sequencing,stf);
+0373 
+0374 doseSequencedDoseGrid = reshape(dij.physicalDose{1} * sequencing.w,dij.doseGrid.dimensions);
+0375 <span class="comment">% interpolate to ct grid for visualiation &amp; analysis</span>
+0376 resultGUI.physicalDose = <a href="matRad_interp3.html" class="code" title="function y = matRad_interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal)">matRad_interp3</a>(dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z, <span class="keyword">...</span>
+0377                                         doseSequencedDoseGrid, <span class="keyword">...</span>
+0378                                         dij.ctGrid.x,dij.ctGrid.y',dij.ctGrid.z);
+0379 
+0380 <span class="comment">% if weights exists from an former DAO remove it</span>
+0381 <span class="keyword">if</span> isfield(resultGUI,<span class="string">'wDao'</span>)
+0382     resultGUI = rmfield(resultGUI,<span class="string">'wDao'</span>);
+0383 <span class="keyword">end</span>
+0384 
+0385 <span class="keyword">end</span>
+0386</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

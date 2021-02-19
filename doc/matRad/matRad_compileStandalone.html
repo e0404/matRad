@@ -1,0 +1,261 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_compileStandalone</title>
+  <meta name="keywords" content="matRad_compileStandalone">
+  <meta name="description" content="References">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_compileStandalone
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">References</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function matRad_compileStandalone(isRelease) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2020 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_version.html" class="code" title="function [versionString,matRadVer] = matRad_version()">matRad_version</a>	matRad function to get the current matRad version</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function matRad_compileStandalone(isRelease)</a>
+0002 
+0003 
+0004 <span class="comment">% References</span>
+0005 <span class="comment">%   -</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% Copyright 2020 the matRad development team.</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0012 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0013 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0014 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0015 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0016 <span class="comment">% LICENSE file.</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0019 
+0020 <span class="keyword">if</span> nargin &lt; 1
+0021     isRelease = false;
+0022 <span class="keyword">end</span>
+0023 
+0024 compileWithRT = false;
+0025 compileWithoutRT = true;
+0026 
+0027 
+0028 <span class="keyword">if</span> ~compileWithRT &amp;&amp; ~compileWithoutRT
+0029     error(<span class="string">'No target specified!'</span>);
+0030     <span class="keyword">return</span>;
+0031 <span class="keyword">end</span>
+0032 
+0033 [versionString,versionFull] = <a href="matRad_version.html" class="code" title="function [versionString,matRadVer] = matRad_version()">matRad_version</a>();
+0034 
+0035 <span class="comment">%Create Standalone with and without runtime</span>
+0036 FileName=<span class="string">'matRad.prj'</span>;
+0037 xDoc = xmlread(FileName);
+0038 
+0039 <span class="keyword">if</span> ismac <span class="comment">% Mac platform</span>
+0040     suffix = <span class="string">'Mac'</span>;
+0041     installSuffix = <span class="string">'app'</span>;
+0042     xDoc.getElementsByTagName(<span class="string">'unix'</span>).item(0).getFirstChild.setData(<span class="string">'true'</span>);
+0043     xDoc.getElementsByTagName(<span class="string">'mac'</span>).item(0).getFirstChild.setData(<span class="string">'true'</span>);
+0044     xDoc.getElementsByTagName(<span class="string">'windows'</span>).item(0).getFirstChild.setData(<span class="string">'false'</span>);
+0045     xDoc.getElementsByTagName(<span class="string">'linux'</span>).item(0).getFirstChild.setData(<span class="string">'false'</span>);
+0046     xDoc.getElementsByTagName(<span class="string">'arch'</span>).item(0).getFirstChild.setData(<span class="string">'maci64'</span>);
+0047     
+0048 <span class="keyword">elseif</span> isunix <span class="comment">% Linux platform</span>
+0049     suffix = <span class="string">'Linux'</span>;
+0050     installSuffix = <span class="string">'install'</span>;
+0051     xDoc.getElementsByTagName(<span class="string">'unix'</span>).item(0).getFirstChild.setData(<span class="string">'true'</span>);
+0052     xDoc.getElementsByTagName(<span class="string">'mac'</span>).item(0).getFirstChild.setData(<span class="string">'false'</span>);
+0053     xDoc.getElementsByTagName(<span class="string">'windows'</span>).item(0).getFirstChild.setData(<span class="string">'false'</span>);
+0054     xDoc.getElementsByTagName(<span class="string">'linux'</span>).item(0).getFirstChild.setData(<span class="string">'true'</span>);
+0055     xDoc.getElementsByTagName(<span class="string">'arch'</span>).item(0).getFirstChild.setData(<span class="string">'glnxa64'</span>);
+0056     
+0057 <span class="keyword">elseif</span> ispc <span class="comment">% Windows platform</span>
+0058     suffix = <span class="string">'Win'</span>;
+0059     installSuffix = <span class="string">'exe'</span>;
+0060     xDoc.getElementsByTagName(<span class="string">'unix'</span>).item(0).getFirstChild.setData(<span class="string">'false'</span>);
+0061     xDoc.getElementsByTagName(<span class="string">'mac'</span>).item(0).getFirstChild.setData(<span class="string">'false'</span>);
+0062     xDoc.getElementsByTagName(<span class="string">'windows'</span>).item(0).getFirstChild.setData(<span class="string">'true'</span>);
+0063     xDoc.getElementsByTagName(<span class="string">'linux'</span>).item(0).getFirstChild.setData(<span class="string">'false'</span>);
+0064     xDoc.getElementsByTagName(<span class="string">'arch'</span>).item(0).getFirstChild.setData(<span class="string">'Win64'</span>);
+0065 <span class="keyword">else</span>
+0066     error(<span class="string">'Platform not supported'</span>)
+0067 <span class="keyword">end</span>
+0068 
+0069 <span class="comment">%Set MATLAB root</span>
+0070 xDoc.getElementsByTagName(<span class="string">'root'</span>).item(0).getFirstChild.setData(matlabroot);
+0071 
+0072 <span class="comment">%Replace the file separator in the file tags</span>
+0073 files = xDoc.getElementsByTagName(<span class="string">'file'</span>);
+0074 <span class="keyword">for</span> i=0:files.getLength - 1
+0075     fileName=strrep(strrep(files.item(i).getFirstChild.getData().toCharArray()',<span class="string">'/'</span>,filesep),<span class="string">'\'</span>,filesep);
+0076     files.item(i).getFirstChild.setData(fileName);
+0077     
+0078     <span class="comment">%change the file separator in the 'location' attribute of the file tag</span>
+0079     <span class="comment">%(if it exists)</span>
+0080     <span class="keyword">if</span> hasAttributes(files.item(i))
+0081         location=strrep(strrep(files.item(i).getAttribute(<span class="string">'location'</span>).toCharArray()',<span class="string">'/'</span>,filesep),<span class="string">'\'</span>,filesep);
+0082         files.item(i).setAttribute(<span class="string">'location'</span>,location);
+0083     <span class="keyword">end</span>
+0084 <span class="keyword">end</span>
+0085 
+0086 <span class="comment">%Replace the file separator in the attributes and children tags of configuration</span>
+0087 config = xDoc.getElementsByTagName(<span class="string">'configuration'</span>);
+0088 config.item(0).setAttribute(<span class="string">'file'</span>,[<span class="string">'${PROJECT_ROOT}'</span> filesep FileName]);
+0089 config.item(0).setAttribute(<span class="string">'location'</span>,<span class="string">'${PROJECT_ROOT}'</span>);
+0090 config.item(0).setAttribute(<span class="string">'preferred-package-location'</span>,[<span class="string">'${PROJECT_ROOT}'</span> filesep <span class="string">'standalone'</span> filesep <span class="string">'for_redistribution'</span>]);
+0091 
+0092 tags = config.item(0).getChildNodes;
+0093 
+0094 <span class="keyword">for</span> i=0:tags.getLength - 1
+0095     <span class="keyword">if</span> ~isempty(tags.item(i).getFirstChild)
+0096         fileName=strrep(strrep(tags.item(i).getFirstChild.getData().toCharArray()',<span class="string">'/'</span>,filesep),<span class="string">'\'</span>,filesep);
+0097         tags.item(i).getFirstChild.setData(java.lang.String(fileName));
+0098     <span class="keyword">end</span>
+0099 <span class="keyword">end</span>
+0100 
+0101 <span class="comment">%Get version and Filenames</span>
+0102 <span class="comment">%version= replace(xDoc.getElementsByTagName('param.version').item(0).getFirstChild.getData().toCharArray()','.','_');</span>
+0103 
+0104 vernum = sprintf(<span class="string">'%d.%d.%d'</span>,versionFull.major,versionFull.minor,versionFull.patch);
+0105 
+0106 tmp_verstr = [<span class="string">'v'</span> vernum];
+0107 <span class="keyword">if</span> ~isRelease &amp;&amp; ~isempty(versionFull.commitID) &amp;&amp; ~isempty(versionFull.branch)
+0108     branchinfo = [versionFull.branch <span class="string">'-'</span> versionFull.commitID(1:8)];
+0109     tmp_verstr = [tmp_verstr <span class="string">'_'</span> branchinfo];
+0110     addDescription = [<span class="string">'!!!matRad development version build from branch/commit '</span> branchinfo <span class="string">'!!!'</span>];
+0111     desc = xDoc.getElementsByTagName(<span class="string">'param.description'</span>).item(0).getFirstChild.getData().toCharArray()';
+0112     desc = [addDescription <span class="string">' '</span> desc];
+0113     xDoc.getElementsByTagName(<span class="string">'param.description'</span>).item(0).getFirstChild.setData(desc);
+0114 <span class="keyword">end</span>
+0115 
+0116 <span class="comment">%The Application compiler only allows major and minor version number</span>
+0117 vernum_appCompiler = sprintf(<span class="string">'%d.%d'</span>,versionFull.major,versionFull.minor);
+0118 
+0119 filename_webRT =[<span class="string">'matRad_installer'</span> suffix <span class="string">'64_'</span> tmp_verstr];
+0120 filename_withRT =[<span class="string">'matRad_installer'</span> suffix <span class="string">'64_wRT_'</span> tmp_verstr];
+0121 xDoc.getElementsByTagName(<span class="string">'param.web.mcr.name'</span>).item(0).getFirstChild.setData(filename_webRT);
+0122 xDoc.getElementsByTagName(<span class="string">'param.package.mcr.name'</span>).item(0).getFirstChild.setData(filename_withRT);
+0123 xDoc.getElementsByTagName(<span class="string">'param.version'</span>).item(0).getFirstChild.setData(vernum_appCompiler);
+0124 
+0125 
+0126 
+0127 <span class="comment">%check if the files exist, and delete them</span>
+0128 <span class="keyword">if</span> isfolder([<span class="string">'standalone'</span> filesep <span class="string">'for_redistribution'</span> filesep  filename_withRT <span class="string">'.'</span> installSuffix])
+0129     rmdir([<span class="string">'standalone'</span> filesep <span class="string">'for_redistribution'</span> filesep  filename_withRT <span class="string">'.'</span> installSuffix],<span class="string">'s'</span>)
+0130     rehash
+0131 <span class="keyword">end</span>
+0132 
+0133 <span class="keyword">if</span> isfile([<span class="string">'standalone'</span> filesep <span class="string">'for_redistribution'</span> filesep  filename_withRT <span class="string">'.'</span> installSuffix])
+0134     delete([<span class="string">'standalone'</span> filesep <span class="string">'for_redistribution'</span> filesep  filename_withRT <span class="string">'.'</span> installSuffix]);
+0135 <span class="keyword">end</span>
+0136 
+0137 <span class="keyword">if</span> isfolder([<span class="string">'standalone'</span> filesep <span class="string">'for_redistribution'</span> filesep  filename_webRT <span class="string">'.'</span> installSuffix])
+0138     rmdir([<span class="string">'standalone'</span> filesep <span class="string">'for_redistribution'</span> filesep  filename_webRT <span class="string">'.'</span> installSuffix],<span class="string">'s'</span>)
+0139     rehash
+0140 <span class="keyword">end</span>
+0141 <span class="keyword">if</span> isfile([<span class="string">'standalone'</span> filesep <span class="string">'for_redistribution'</span> filesep  filename_webRT <span class="string">'.'</span> installSuffix])
+0142     delete([<span class="string">'standalone'</span> filesep <span class="string">'for_redistribution'</span> filesep  filename_webRT <span class="string">'.'</span> installSuffix]);
+0143 <span class="keyword">end</span>
+0144 
+0145 <span class="comment">%compile with runtime</span>
+0146 <span class="keyword">if</span> compileWithRT
+0147     xDoc.getElementsByTagName(<span class="string">'param.web.mcr'</span>).item(0).getFirstChild.setData(<span class="string">'false'</span>);
+0148     xDoc.getElementsByTagName(<span class="string">'param.package.mcr'</span>).item(0).getFirstChild.setData(<span class="string">'true'</span>);
+0149     
+0150     xmlwrite(FileName,xDoc);
+0151     
+0152     applicationCompiler(<span class="string">'-package'</span>,FileName);
+0153     
+0154     <span class="comment">% loop until the file is created</span>
+0155     tic
+0156     worked = false;
+0157     <span class="keyword">while</span> toc&lt;500
+0158         pause ( 2 )
+0159         <span class="keyword">if</span> isfolder([<span class="string">'standalone'</span> filesep <span class="string">'for_redistribution'</span> filesep  filename_withRT <span class="string">'.'</span> installSuffix]) || <span class="keyword">...</span>
+0160                 isfile([<span class="string">'standalone'</span> filesep <span class="string">'for_redistribution'</span> filesep  filename_withRT <span class="string">'.'</span> installSuffix])
+0161             worked = true;
+0162             <span class="keyword">break</span>
+0163         <span class="keyword">end</span>
+0164     <span class="keyword">end</span>
+0165     <span class="keyword">if</span> worked == false
+0166         error(<span class="string">'Packaging Failed!'</span>);
+0167     <span class="keyword">end</span>
+0168     disp(<span class="string">'Packaged compiler with runtime'</span>);
+0169 <span class="keyword">end</span>
+0170 
+0171 <span class="keyword">if</span> compileWithoutRT
+0172     <span class="comment">%compile without runtime</span>
+0173     xDoc.getElementsByTagName(<span class="string">'param.web.mcr'</span>).item(0).getFirstChild.setData(<span class="string">'true'</span>);
+0174     xDoc.getElementsByTagName(<span class="string">'param.package.mcr'</span>).item(0).getFirstChild.setData(<span class="string">'false'</span>);
+0175     
+0176     xmlwrite(FileName,xDoc);
+0177     
+0178     applicationCompiler(<span class="string">'-package'</span>,FileName);
+0179     
+0180     <span class="comment">% loop until the file is created</span>
+0181     tic
+0182     worked = false;
+0183     <span class="keyword">while</span> toc&lt;500
+0184         pause ( 2 )
+0185         <span class="keyword">if</span> isfolder([<span class="string">'standalone'</span> filesep <span class="string">'for_redistribution'</span> filesep  filename_webRT <span class="string">'.'</span> installSuffix]) || <span class="keyword">...</span>
+0186                 isfile([<span class="string">'standalone'</span> filesep <span class="string">'for_redistribution'</span> filesep  filename_webRT <span class="string">'.'</span> installSuffix])
+0187             worked = true;
+0188             <span class="keyword">break</span>
+0189         <span class="keyword">end</span>
+0190     <span class="keyword">end</span>
+0191     
+0192     <span class="keyword">if</span> worked == false
+0193         error(<span class="string">'Packaging Failed!'</span>);
+0194     <span class="keyword">end</span>
+0195     disp(<span class="string">'Packaged compiler without runtime'</span>);
+0196 <span class="keyword">end</span>
+0197     
+0198  
+0199 disp(<span class="string">'Done'</span>);
+0200     
+0201</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_setOverlapPriorities</title>
+  <meta name="keywords" content="matRad_setOverlapPriorities">
+  <meta name="description" content="function to handle overlap priorities">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_setOverlapPriorities
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function to handle overlap priorities</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function [cst,overlapPriorityCube] = matRad_setOverlapPriorities(cst,ctDim) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> function to handle overlap priorities 
+ during fluence optimization and dose calculation. If you have overlapping 
+ volumes of interest you need to inform matRad to which volume(s) the 
+ intersection voxels belong.
+ 
+ call
+   cst = matRad_considerOverlap(cst)
+   [cst, overlapPriorityCube] = matRad_setOverlapPriorities(cst,ctDim)
+
+ input
+   cst:        cst file
+   ctDim:      (optional) dimension of the ct for overlap cube claculation 
+
+ output
+   cst:                updated cst file considering overlap priorities
+   overlapPriorityCube:(optional) cube visualizing the overlap priority 
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_calcParticleDose.html" class="code" title="function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcParticleDose</a>	matRad particle dose calculation wrapper</li><li><a href="matRad_directApertureOptimization.html" class="code" title="function [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln)">matRad_directApertureOptimization</a>	matRad function to run direct aperture optimization</li><li><a href="matRad_fluenceOptimization.html" class="code" title="function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)">matRad_fluenceOptimization</a>	matRad inverse planning wrapper function</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [cst,overlapPriorityCube] = matRad_setOverlapPriorities(cst,ctDim)</a>
+0002 <span class="comment">% function to handle overlap priorities</span>
+0003 <span class="comment">% during fluence optimization and dose calculation. If you have overlapping</span>
+0004 <span class="comment">% volumes of interest you need to inform matRad to which volume(s) the</span>
+0005 <span class="comment">% intersection voxels belong.</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% call</span>
+0008 <span class="comment">%   cst = matRad_considerOverlap(cst)</span>
+0009 <span class="comment">%   [cst, overlapPriorityCube] = matRad_setOverlapPriorities(cst,ctDim)</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% input</span>
+0012 <span class="comment">%   cst:        cst file</span>
+0013 <span class="comment">%   ctDim:      (optional) dimension of the ct for overlap cube claculation</span>
+0014 <span class="comment">%</span>
+0015 <span class="comment">% output</span>
+0016 <span class="comment">%   cst:                updated cst file considering overlap priorities</span>
+0017 <span class="comment">%   overlapPriorityCube:(optional) cube visualizing the overlap priority</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% References</span>
+0020 <span class="comment">%   -</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0025 <span class="comment">%</span>
+0026 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0027 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0028 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0029 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0030 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0031 <span class="comment">% LICENSE file.</span>
+0032 <span class="comment">%</span>
+0033 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0034 
+0035 numOfCtScenarios = unique(cellfun(@(x)numel(x),cst(:,4)));
+0036 
+0037 <span class="keyword">if</span> numel(numOfCtScenarios) &gt; 1
+0038     error(<span class="string">'Inconsistent number of segmentations in cst struct.'</span>);
+0039 <span class="keyword">end</span>  
+0040 
+0041 <span class="keyword">for</span> i = 1:numOfCtScenarios
+0042     
+0043     <span class="comment">% consider VOI priorities</span>
+0044     <span class="keyword">for</span> j = 1:size(cst,1)
+0045          
+0046         idx = cst{j,4}{i};          
+0047         
+0048         <span class="keyword">for</span> k = 1:size(cst,1)
+0049             <span class="keyword">if</span> cst{k,5}.Priority &lt; cst{j,5}.Priority &amp;&amp; ~(j==k) &amp;&amp; ~isempty(cst{k,6})
+0050                 <span class="comment">% remove indices from VOI with higher priority from current VOI</span>
+0051                 <span class="comment">% if an objective has been defined</span>
+0052                 idx = setdiff(idx,cst{k,4}{i});
+0053             <span class="keyword">end</span>
+0054         <span class="keyword">end</span>
+0055         
+0056         cst{j,4}{i} = idx;
+0057         
+0058         <span class="keyword">if</span> isempty(cst{j,4}{i}) &amp;&amp; ~isempty(cst{j,6})
+0059             error([cst{j,2} <span class="string">': Objective(s) and/or constraints for inverse planning defined '</span> <span class="keyword">...</span>
+0060                  <span class="string">'but structure overlapped by structure with higher overlap priority.'</span> <span class="keyword">...</span>
+0061                  <span class="string">'Objective(s) will not be considered during optimization'</span>]); 
+0062         <span class="keyword">end</span>
+0063          
+0064     <span class="keyword">end</span>
+0065 <span class="keyword">end</span>
+0066 
+0067 <span class="comment">%Calculate the overlap cube if requested</span>
+0068 <span class="keyword">if</span> nargout == 2 &amp;&amp; nargin == 2
+0069    overlapPriorityCube = zeros(ctDim);
+0070     <span class="keyword">for</span> i = 1:size(cst,1)
+0071         overlapPriorityCube(cst{i,4}{1}) = cst{i,5}.Priority;
+0072     <span class="keyword">end</span>
+0073 <span class="keyword">end</span>
+0074     
+0075 
+0076 <span class="keyword">end</span>
+0077</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

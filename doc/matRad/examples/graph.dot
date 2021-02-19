@@ -1,0 +1,12 @@
+/* Created by mdot for Matlab */
+digraph m2html {
+
+  matRad_example1_phantom [URL="matRad_example1_phantom.html"];
+  matRad_example2_photons [URL="matRad_example2_photons.html"];
+  matRad_example3_photonsDAO [URL="matRad_example3_photonsDAO.html"];
+  matRad_example4_photonsMC [URL="matRad_example4_photonsMC.html"];
+  matRad_example5_protons [URL="matRad_example5_protons.html"];
+  matRad_example6_protonsNoise [URL="matRad_example6_protonsNoise.html"];
+  matRad_example7_carbon [URL="matRad_example7_carbon.html"];
+  matRad_publishExamples [URL="matRad_publishExamples.html"];
+}

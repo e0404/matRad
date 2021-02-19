@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_computeVoiContours</title>
+  <meta name="keywords" content="matRad_computeVoiContours">
+  <meta name="description" content="matRad function that computes all VOI contours">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html plotting -->
+<h1>matRad_computeVoiContours
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad function that computes all VOI contours</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function cst = matRad_computeVoiContours(ct,cst) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function that computes all VOI contours
+
+ call
+   cst = matRad_computeVoiContours(ct,cst)
+
+ input
+   ct  matRad ct struct
+   cst matRad cst struct
+
+ output
+   cst the new cst with the column containing the precomputed contours
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/dicom/matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>	matRad progress bar</li><li><a href="../../matRad/matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>	matRad progress bar</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_computeVoiContoursWrapper.html" class="code" title="function cst = matRad_computeVoiContoursWrapper(cst,ct)">matRad_computeVoiContoursWrapper</a>	matRad computation of VOI contours if not precomputed</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function cst = matRad_computeVoiContours(ct,cst)</a>
+0002 <span class="comment">% matRad function that computes all VOI contours</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   cst = matRad_computeVoiContours(ct,cst)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   ct  matRad ct struct</span>
+0009 <span class="comment">%   cst matRad cst struct</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% output</span>
+0012 <span class="comment">%   cst the new cst with the column containing the precomputed contours</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% References</span>
+0015 <span class="comment">%   -</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0022 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0023 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0024 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0025 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0026 <span class="comment">% LICENSE file.</span>
+0027 <span class="comment">%</span>
+0028 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0029 
+0030 matRad_cfg = MatRad_Config.instance();
+0031 matRad_cfg.dispInfo(<span class="string">'Precomputing Contours for Display... '</span>);
+0032 
+0033 mask = zeros(ct.cubeDim); <span class="comment">% create zero cube with same dimeonsions like dose cube</span>
+0034 <span class="keyword">for</span> s = 1:size(cst,1)
+0035     <a href="../../matRad/dicom/matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>(s,size(cst,1));
+0036     cst{s,7} = cell(max(ct.cubeDim(:)),3);
+0037     mask(:) = 0;
+0038     mask(cst{s,4}{1}) = 1;    
+0039     <span class="keyword">for</span> slice = 1:ct.cubeDim(1)
+0040         <span class="keyword">if</span> any(any(mask(slice,:,:) &gt; 0))
+0041              cst{s,7}{slice,1} = contourc(squeeze(mask(slice,:,:)),.5*[1 1]);
+0042         <span class="keyword">end</span>
+0043     <span class="keyword">end</span>
+0044     <span class="keyword">for</span> slice = 1:ct.cubeDim(2)
+0045         <span class="keyword">if</span> any(any(mask(:,slice,:) &gt; 0))
+0046              cst{s,7}{slice,2} = contourc(squeeze(mask(:,slice,:)),.5*[1 1]);
+0047         <span class="keyword">end</span>
+0048     <span class="keyword">end</span>
+0049     <span class="keyword">for</span> slice = 1:ct.cubeDim(3)
+0050         <span class="keyword">if</span> any(any(mask(:,:,slice) &gt; 0))
+0051              cst{s,7}{slice,3} = contourc(squeeze(mask(:,:,slice)),.5*[1 1]);
+0052         <span class="keyword">end</span>
+0053     <span class="keyword">end</span>
+0054 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

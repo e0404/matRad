@@ -1,0 +1,8 @@
+/* Created by mdot for Matlab */
+digraph m2html {
+  matRad_DoseOptimizationFunction -> matRad_DoseOptimizationFunction;
+
+  matRad_DoseOptimizationFunction [URL="matRad_DoseOptimizationFunction.html"];
+  matRad_calcInversDVH [URL="matRad_calcInversDVH.html"];
+  matRad_collapseDij [URL="matRad_collapseDij.html"];
+}

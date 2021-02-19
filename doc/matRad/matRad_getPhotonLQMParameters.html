@@ -1,0 +1,132 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_getPhotonLQMParameters</title>
+  <meta name="keywords" content="matRad_getPhotonLQMParameters">
+  <meta name="description" content="matRad function to receive the photon LQM reference parameter">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_getPhotonLQMParameters
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">matRad function to receive the photon LQM reference parameter</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function [ax,bx] = matRad_getPhotonLQMParameters(cst,numVoxel,ctScen,VdoseGrid) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to receive the photon LQM reference parameter 
+ 
+ call
+   [ax,bx] = matRad_getPhotonLQMParameters(cst,numVoxel,ctScen,VdoseGrid)
+
+ input
+   cst:        matRad cst struct
+   numVoxel:   number of voxels of the dose cube
+   ctScen:     CT scenarios for alpha_x and beta_x should be calculated
+   VdoseGrid:  optional linear index vector that allows to specify subindices
+               for which ax and bx will be computed
+
+ output
+   ax:         vector containing for each linear voxel index alpha_x
+   bx:         vector containing for each linear voxel index beta_x
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2018 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_calcParticleDose.html" class="code" title="function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcParticleDose</a>	matRad particle dose calculation wrapper</li><li><a href="matRad_fluenceOptimization.html" class="code" title="function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)">matRad_fluenceOptimization</a>	matRad inverse planning wrapper function</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [ax,bx] = matRad_getPhotonLQMParameters(cst,numVoxel,ctScen,VdoseGrid)</a>
+0002 <span class="comment">% matRad function to receive the photon LQM reference parameter</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   [ax,bx] = matRad_getPhotonLQMParameters(cst,numVoxel,ctScen,VdoseGrid)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   cst:        matRad cst struct</span>
+0009 <span class="comment">%   numVoxel:   number of voxels of the dose cube</span>
+0010 <span class="comment">%   ctScen:     CT scenarios for alpha_x and beta_x should be calculated</span>
+0011 <span class="comment">%   VdoseGrid:  optional linear index vector that allows to specify subindices</span>
+0012 <span class="comment">%               for which ax and bx will be computed</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% output</span>
+0015 <span class="comment">%   ax:         vector containing for each linear voxel index alpha_x</span>
+0016 <span class="comment">%   bx:         vector containing for each linear voxel index beta_x</span>
+0017 <span class="comment">%</span>
+0018 <span class="comment">% References</span>
+0019 <span class="comment">%   -</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0022 <span class="comment">%</span>
+0023 <span class="comment">% Copyright 2018 the matRad development team.</span>
+0024 <span class="comment">%</span>
+0025 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0026 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0027 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0028 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0029 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0030 <span class="comment">% LICENSE file.</span>
+0031 <span class="comment">%</span>
+0032 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0033 
+0034 ax = zeros(numVoxel,ctScen);
+0035 bx = zeros(numVoxel,ctScen);
+0036 
+0037 <span class="keyword">for</span> i = 1:size(cst,1)
+0038    <span class="keyword">if</span> isequal(cst{i,3},<span class="string">'OAR'</span>) || isequal(cst{i,3},<span class="string">'TARGET'</span>)
+0039       <span class="keyword">for</span> ctScen = 1:numel(cst{i,4})
+0040          
+0041          <span class="keyword">if</span> exist(<span class="string">'VdoseGrid'</span>,<span class="string">'var'</span>)
+0042             isInVdoseGrid = ismember(VdoseGrid,cst{i,4}{ctScen});
+0043             ax(VdoseGrid(isInVdoseGrid)) = cst{i,5}.alphaX;
+0044             bx(VdoseGrid(isInVdoseGrid)) = cst{i,5}.betaX;
+0045          <span class="keyword">else</span>
+0046             ax(cst{i,4}{ctScen},ctScen) = cst{i,5}.alphaX;
+0047             bx(cst{i,4}{ctScen},ctScen) = cst{i,5}.betaX;
+0048          <span class="keyword">end</span>
+0049          
+0050       <span class="keyword">end</span>
+0051    <span class="keyword">end</span>
+0052 <span class="keyword">end</span>
+0053 
+0054 
+0055 
+0056</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

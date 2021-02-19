@@ -1,0 +1,279 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_example2_photons</title>
+  <meta name="keywords" content="matRad_example2_photons">
+  <meta name="description" content="% Example: Photon Treatment Plan">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html examples -->
+<h1>matRad_example2_photons
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">% Example: Photon Treatment Plan</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">This is a script file. </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment">% Example: Photon Treatment Plan
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2017 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/IO/matRad_writeCube.html" class="code" title="function [saved_metadata] = matRad_writeCube(filepath,cube,datatype,metadata)">matRad_writeCube</a>	matRad wrapper for Cube export</li><li><a href="../../matRad/matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li><li><a href="../../matRad/matRad_calcPhotonDose.html" class="code" title="function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcPhotonDose</a>	matRad photon dose calculation wrapper</li><li><a href="../../matRad/matRad_fluenceOptimization.html" class="code" title="function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)">matRad_fluenceOptimization</a>	matRad inverse planning wrapper function</li><li><a href="../../matRad/matRad_generateStf.html" class="code" title="function stf = matRad_generateStf(ct,cst,pln,visMode)">matRad_generateStf</a>	matRad steering information generation</li><li><a href="../../matRad/matRad_getIsoCenter.html" class="code" title="function isoCenter = matRad_getIsoCenter(cst,ct,visBool)">matRad_getIsoCenter</a>	computes the isocenter [mm] as the joint center of gravity</li><li><a href="../../matRad/matRad_indicatorWrapper.html" class="code" title="function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)">matRad_indicatorWrapper</a>	matRad indictor wrapper</li><li><a href="../../matRad/matRad_rc.html" class="code" title="">matRad_rc</a>	matRad rc script</li><li><a href="../../matRad/tools/matRad_plotSliceWrapper.html" class="code" title="function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,varargin)">matRad_plotSliceWrapper</a>	matRad tool function to directly plot a complete slice of a ct with dose</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <span class="comment">%% Example: Photon Treatment Plan</span>
+0002 <span class="comment">%</span>
+0003 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% Copyright 2017 the matRad development team.</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0008 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0009 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0010 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0011 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0012 <span class="comment">% LICENSE file.</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0015 
+0016 <span class="comment">%%</span>
+0017 <span class="comment">% In this example we will show</span>
+0018 <span class="comment">% (i) how to load patient data into matRad</span>
+0019 <span class="comment">% (ii) how to setup a photon dose calculation and</span>
+0020 <span class="comment">% (iii) how to inversely optimize beamlet intensities</span>
+0021 <span class="comment">% (iv) how to visually and quantitatively evaluate the result</span>
+0022 
+0023 <span class="comment">%% Patient Data Import</span>
+0024 <span class="comment">% Let's begin with a clear Matlab environment. Then, import the TG119</span>
+0025 <span class="comment">% phantom into your workspace. The phantom is comprised of a 'ct' and 'cst'</span>
+0026 <span class="comment">% structure defining the CT images and the structure set. Make sure the</span>
+0027 <span class="comment">% matRad root directory with all its subdirectories is added to the Matlab</span>
+0028 <span class="comment">% search path.</span>
+0029 
+0030 <a href="../../matRad/matRad_rc.html" class="code" title="">matRad_rc</a>; <span class="comment">%If this throws an error, run it from the parent directory first to set the paths</span>
+0031 
+0032 load(<span class="string">'TG119.mat'</span>);
+0033 
+0034 <span class="comment">%%</span>
+0035 <span class="comment">% The file TG119.mat contains two Matlab variables. Let's check what we</span>
+0036 <span class="comment">% have just imported. First, the 'ct' variable comprises the ct cube along</span>
+0037 <span class="comment">%with some meta information describing properties of the ct cube (cube</span>
+0038 <span class="comment">% dimensions, resolution, number of CT scenarios). Please note that</span>
+0039 <span class="comment">%multiple ct cubes (e.g. 4D CT) can be stored in the cell array ct.cube{}</span>
+0040 display(ct);
+0041 
+0042 <span class="comment">%%</span>
+0043 <span class="comment">% The 'cst' cell array defines volumes of interests along with information</span>
+0044 <span class="comment">% required for optimization. Each row belongs to one certain volume of</span>
+0045 <span class="comment">% interest (VOI), whereas each column defines different properties.</span>
+0046 <span class="comment">% Specifically, the second and third column  show the name and the type of</span>
+0047 <span class="comment">% the structure. The type can be set to OAR, TARGET or IGNORED. The fourth</span>
+0048 <span class="comment">% column contains a linear index vector that lists all voxels belonging to</span>
+0049 <span class="comment">% a certain VOI.</span>
+0050 display(cst);
+0051 
+0052 <span class="comment">%%</span>
+0053 <span class="comment">% The fifth column represents meta parameters for optimization. The overlap</span>
+0054 <span class="comment">% priority is used to resolve ambiguities of overlapping structures (voxels</span>
+0055 <span class="comment">% belonging to multiple structures will only be assigned to the VOI(s) with</span>
+0056 <span class="comment">% the highest overlap priority, i.e.. the lowest value). The parameters</span>
+0057 <span class="comment">% alphaX and betaX correspond to the tissue's photon-radiosensitivity</span>
+0058 <span class="comment">% parameter of the linear quadratic model. These parameter are required for</span>
+0059 <span class="comment">% biological treatment planning using a variable RBE. Let's output the meta</span>
+0060 <span class="comment">% optimization parameter of the target, which is stored in the thrid row:</span>
+0061 ixTarget = 3;
+0062 display(cst{ixTarget,5});
+0063 
+0064 <span class="comment">%%</span>
+0065 <span class="comment">% The sixth column contains optimization information such as objectives and</span>
+0066 <span class="comment">% constraints which are required to calculate the objective function value.</span>
+0067 <span class="comment">% Please note, that multiple objectives/constraints can be defined for</span>
+0068 <span class="comment">% individual structures. Here, we have defined a squared deviation</span>
+0069 <span class="comment">% objective making it 'expensive/costly' for the optimizer to over- and</span>
+0070 <span class="comment">% underdose the target structure (both are equally important).</span>
+0071 display(cst{ixTarget,6});
+0072 
+0073 <span class="comment">%% Treatment Plan</span>
+0074 <span class="comment">% The next step is to define your treatment plan labeled as 'pln'. This</span>
+0075 <span class="comment">% matlab structure requires input from the treatment planner and defines</span>
+0076 <span class="comment">% the most important cornerstones of your treatment plan.</span>
+0077 
+0078 <span class="comment">%%</span>
+0079 <span class="comment">% First of all, we need to define what kind of radiation modality we would</span>
+0080 <span class="comment">% like to use. Possible values are photons, protons or carbon. In this case</span>
+0081 <span class="comment">% we want to use photons. Then, we need to define a treatment machine to</span>
+0082 <span class="comment">% correctly load the corresponding base data. matRad includes base data for</span>
+0083 <span class="comment">% generic photon linear accelerator called 'Generic'. By this means matRad</span>
+0084 <span class="comment">% will look for 'photons_Generic.mat' in our root directory and will use</span>
+0085 <span class="comment">% the data provided in there for dose calculation</span>
+0086 pln.radiationMode = <span class="string">'photons'</span>;  
+0087 pln.machine       = <span class="string">'Generic'</span>;
+0088 
+0089 <span class="comment">%%</span>
+0090 <span class="comment">% Define the flavor of optimization along with the quantity that should be</span>
+0091 <span class="comment">% used for optimization. Possible values are (none: physical optimization;</span>
+0092 <span class="comment">% const_RBExD: constant RBE of 1.1; LEMIV_effect: effect-based</span>
+0093 <span class="comment">% optimization; LEMIV_RBExD: optimization of RBE-weighted dose. As we are</span>
+0094 <span class="comment">% using photons, we simply set the parameter to 'none' thereby indicating</span>
+0095 <span class="comment">% the physical dose should be optimized.</span>
+0096 pln.propOpt.bioOptimization = <span class="string">'none'</span>;    
+0097 
+0098 <span class="comment">%%</span>
+0099 <span class="comment">% Now we have to set some beam parameters. We can define multiple beam</span>
+0100 <span class="comment">% angles for the treatment and pass these to the plan as a vector. matRad</span>
+0101 <span class="comment">% will then interpret the vector as multiple beams. In this case, we define</span>
+0102 <span class="comment">% linear spaced beams from 0 degree to 359 degree in 40 degree steps. This</span>
+0103 <span class="comment">% results in 9 beams. All corresponding couch angles are set to 0 at this</span>
+0104 <span class="comment">% point. Moreover, we set the bixelWidth to 5, which results in a beamlet</span>
+0105 <span class="comment">% size of 5 x 5 mm in the isocenter plane. The number of fractions is set</span>
+0106 <span class="comment">% to 30. Internally, matRad considers the fraction dose for optimization,</span>
+0107 <span class="comment">% however, objetives and constraints are defined for the entire treatment.</span>
+0108 pln.numOfFractions         = 30;
+0109 pln.propStf.gantryAngles   = [0:40:359];
+0110 pln.propStf.couchAngles    = zeros(1,numel(pln.propStf.gantryAngles));
+0111 pln.propStf.bixelWidth     = 5;
+0112 
+0113 <span class="comment">%%</span>
+0114 <span class="comment">% Obtain the number of beams and voxels from the existing variables and</span>
+0115 <span class="comment">% calculate the iso-center which is per default the center of gravity of</span>
+0116 <span class="comment">% all target voxels.</span>
+0117 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
+0118 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * <a href="../../matRad/matRad_getIsoCenter.html" class="code" title="function isoCenter = matRad_getIsoCenter(cst,ct,visBool)">matRad_getIsoCenter</a>(cst,ct,0);
+0119 
+0120 <span class="comment">%% dose calculation settings</span>
+0121 <span class="comment">% set resolution of dose calculation and optimization</span>
+0122 pln.propDoseCalc.doseGrid.resolution.x = 3; <span class="comment">% [mm]</span>
+0123 pln.propDoseCalc.doseGrid.resolution.y = 3; <span class="comment">% [mm]</span>
+0124 pln.propDoseCalc.doseGrid.resolution.z = 3; <span class="comment">% [mm]</span>
+0125 
+0126 <span class="comment">%%</span>
+0127 <span class="comment">% Enable sequencing and disable direct aperture optimization (DAO) for now.</span>
+0128 <span class="comment">% A DAO optimization is shown in a seperate example.</span>
+0129 pln.propOpt.runSequencing = 1;
+0130 pln.propOpt.runDAO        = 0;
+0131 
+0132 <span class="comment">%%</span>
+0133 <span class="comment">% and et voila our treatment plan structure is ready. Lets have a look:</span>
+0134 display(pln);
+0135 
+0136 <span class="comment">%% Generate Beam Geometry STF</span>
+0137 <span class="comment">% The steering file struct comprises the complete beam geometry along with</span>
+0138 <span class="comment">% ray position, pencil beam positions and energies, source to axis distance (SAD) etc.</span>
+0139 stf = <a href="../../matRad/matRad_generateStf.html" class="code" title="function stf = matRad_generateStf(ct,cst,pln,visMode)">matRad_generateStf</a>(ct,cst,pln);
+0140 
+0141 <span class="comment">%%</span>
+0142 <span class="comment">% Let's display the beam geometry information of the 6th beam</span>
+0143 display(stf(6));
+0144 
+0145 <span class="comment">%% Dose Calculation</span>
+0146 <span class="comment">% Let's generate dosimetric information by pre-computing dose influence</span>
+0147 <span class="comment">% matrices for unit beamlet intensities. Having dose influences available</span>
+0148 <span class="comment">% allows subsequent inverse optimization.</span>
+0149 dij = <a href="../../matRad/matRad_calcPhotonDose.html" class="code" title="function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcPhotonDose</a>(ct,stf,pln,cst);
+0150 
+0151 <span class="comment">%% Inverse Optimization for IMRT</span>
+0152 <span class="comment">% The goal of the fluence optimization is to find a set of beamlet/pencil</span>
+0153 <span class="comment">% beam weights which yield the best possible dose distribution according to</span>
+0154 <span class="comment">% the clinical objectives and constraints underlying the radiation</span>
+0155 <span class="comment">% treatment. Once the optimization has finished, trigger once the GUI to</span>
+0156 <span class="comment">% visualize the optimized dose cubes.</span>
+0157 resultGUI = <a href="../../matRad/matRad_fluenceOptimization.html" class="code" title="function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)">matRad_fluenceOptimization</a>(dij,cst,pln);
+0158 <a href="../../matRad/matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>;
+0159 
+0160 <span class="comment">%% Plot the Resulting Dose Slice</span>
+0161 <span class="comment">% Let's plot the transversal iso-center dose slice</span>
+0162 slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
+0163 figure
+0164 imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet);
+0165 
+0166 <span class="comment">%% Now let's create another treatment plan but this time use a coarser beam spacing.</span>
+0167 <span class="comment">% Instead of 40 degree spacing use a 50 degree geantry beam spacing</span>
+0168 pln.propStf.gantryAngles = [0:50:359];
+0169 pln.propStf.couchAngles  = zeros(1,numel(pln.propStf.gantryAngles));
+0170 pln.propStf.numOfBeams   = numel(pln.propStf.gantryAngles);
+0171 stf                      = <a href="../../matRad/matRad_generateStf.html" class="code" title="function stf = matRad_generateStf(ct,cst,pln,visMode)">matRad_generateStf</a>(ct,cst,pln);
+0172 pln.propStf.isoCenter    = vertcat(stf.isoCenter);
+0173 dij                      = <a href="../../matRad/matRad_calcPhotonDose.html" class="code" title="function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcPhotonDose</a>(ct,stf,pln,cst);
+0174 resultGUI_coarse         = <a href="../../matRad/matRad_fluenceOptimization.html" class="code" title="function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)">matRad_fluenceOptimization</a>(dij,cst,pln);
+0175 
+0176 <span class="comment">%%  Visual Comparison of results</span>
+0177 <span class="comment">% Let's compare the new recalculation against the optimization result.</span>
+0178 <span class="comment">% Check if you have added all subdirectories to the Matlab search path,</span>
+0179 <span class="comment">% otherwise it will not find the plotting function</span>
+0180 plane      = 3;
+0181 doseWindow = [0 max([resultGUI.physicalDose(:); resultGUI_coarse.physicalDose(:)])];
+0182 
+0183 figure,title(<span class="string">'original plan - fine beam spacing'</span>)
+0184 <a href="../../matRad/tools/matRad_plotSliceWrapper.html" class="code" title="function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,varargin)">matRad_plotSliceWrapper</a>(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
+0185 figure,title(<span class="string">'modified plan - coarse beam spacing'</span>)
+0186 <a href="../../matRad/tools/matRad_plotSliceWrapper.html" class="code" title="function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,varargin)">matRad_plotSliceWrapper</a>(gca,ct,cst,1,resultGUI_coarse.physicalDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
+0187 
+0188 <span class="comment">%%</span>
+0189 <span class="comment">% At this point we would like to see the absolute difference of the first</span>
+0190 <span class="comment">% optimization (finer beam spacing) and the second optimization (coarser</span>
+0191 <span class="comment">% beam spacing)</span>
+0192 absDiffCube = resultGUI.physicalDose-resultGUI_coarse.physicalDose;
+0193 figure,title( <span class="string">'fine beam spacing plan - coarse beam spacing plan'</span>)
+0194 <a href="../../matRad/tools/matRad_plotSliceWrapper.html" class="code" title="function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,varargin)">matRad_plotSliceWrapper</a>(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
+0195 
+0196 <span class="comment">%% Obtain dose statistics</span>
+0197 <span class="comment">% Two more columns will be added to the cst structure depicting the DVH and</span>
+0198 <span class="comment">% standard dose statistics such as D95,D98, mean dose, max dose etc.</span>
+0199 [dvh,qi]               = <a href="../../matRad/matRad_indicatorWrapper.html" class="code" title="function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)">matRad_indicatorWrapper</a>(cst,pln,resultGUI);
+0200 [dvh_coarse,qi_coarse] = <a href="../../matRad/matRad_indicatorWrapper.html" class="code" title="function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)">matRad_indicatorWrapper</a>(cst,pln,resultGUI_coarse);
+0201 
+0202 <span class="comment">%%</span>
+0203 <span class="comment">% The treatment plan using more beams should in principle result in a</span>
+0204 <span class="comment">% better OAR sparing. Therefore lets have a look at the D95 of the OAR of</span>
+0205 <span class="comment">% both plans</span>
+0206 ixOAR = 2;
+0207 display(qi(ixOAR).D_95);
+0208 display(qi_coarse(ixOAR).D_95);
+0209 
+0210 
+0211 <span class="comment">%%</span>
+0212 <span class="comment">% Export the dose in binary format. matRad can write multiple formats, here we</span>
+0213 <span class="comment">% choose to export in nrrd format using the matRad_writeCube function, which</span>
+0214 <span class="comment">% chooses the appropriate subroutine from the extension. The metadata struct can</span>
+0215 <span class="comment">% also store more optional parameters, but requires only the resolution to be s</span>
+0216 <span class="comment">% set.</span>
+0217 metadata = struct(<span class="string">'resolution'</span>,[ct.resolution.x ct.resolution.y ct.resolution.z]);
+0218 <a href="../../matRad/IO/matRad_writeCube.html" class="code" title="function [saved_metadata] = matRad_writeCube(filepath,cube,datatype,metadata)">matRad_writeCube</a>([pwd filesep <span class="string">'photonDose_example2.nrrd'</span>],resultGUI.physicalDose,<span class="string">'double'</span>,metadata);
+0219 
+0220</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

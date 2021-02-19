@@ -1,0 +1,149 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_writeVTK</title>
+  <meta name="keywords" content="matRad_writeVTK">
+  <meta name="description" content="matRad function to write vtk cubes">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html IO -->
+<h1>matRad_writeVTK
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad function to write vtk cubes</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function matRad_writeVTK(filepath,cube,metadata) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to write vtk cubes
+ 
+ call
+   matRad_writeVTK(filepath,cube,metadata)
+
+ input
+   filepath:   full filename (with extension)
+   cube:       3D array to be written into file
+   metadata:   struct of metadata. Writer will wrap the existing metadata 
+               to VTK standard-specific fields 
+               Necessary fieldnames are:
+               - resolution: [x y z]
+               - datatype: numeric MATLAB-Datatype
+
+ output
+   file will be written to disk
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_writeCube.html" class="code" title="function [saved_metadata] = matRad_writeCube(filepath,cube,datatype,metadata)">matRad_writeCube</a>	matRad wrapper for Cube export</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function matRad_writeVTK(filepath,cube,metadata)</a>
+0002 <span class="comment">% matRad function to write vtk cubes</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   matRad_writeVTK(filepath,cube,metadata)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   filepath:   full filename (with extension)</span>
+0009 <span class="comment">%   cube:       3D array to be written into file</span>
+0010 <span class="comment">%   metadata:   struct of metadata. Writer will wrap the existing metadata</span>
+0011 <span class="comment">%               to VTK standard-specific fields</span>
+0012 <span class="comment">%               Necessary fieldnames are:</span>
+0013 <span class="comment">%               - resolution: [x y z]</span>
+0014 <span class="comment">%               - datatype: numeric MATLAB-Datatype</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% output</span>
+0017 <span class="comment">%   file will be written to disk</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% References</span>
+0020 <span class="comment">%   -</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0025 <span class="comment">%</span>
+0026 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0027 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0028 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0029 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0030 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0031 <span class="comment">% LICENSE file.</span>
+0032 <span class="comment">%</span>
+0033 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0034 
+0035 <span class="comment">% Sanity checks and restrictions</span>
+0036 dimensions = size(cube);
+0037 <span class="keyword">if</span> numel(dimensions) ~= 3
+0038     error(<span class="string">'Sorry! matRad only supports 3-dimensional VTK output'</span>);
+0039 <span class="keyword">end</span>
+0040 
+0041 fid = fopen(filepath, <span class="string">'wb'</span>);
+0042 <span class="keyword">if</span> fid &lt;= 0
+0043     error(<span class="string">'Could not open VTK destination file!'</span>);
+0044 <span class="keyword">end</span>
+0045 cleaner = onCleanup(@() fclose(fid));
+0046 
+0047 <span class="comment">%We perform</span>
+0048 <span class="keyword">if</span> isfield(metadata,<span class="string">'axisPermutation'</span>)
+0049     cube = permute(cube,metadata.axisPermutation);
+0050 <span class="keyword">end</span>
+0051 
+0052 
+0053 fprintf(fid, <span class="string">'# vtk DataFile Version 3.0\n'</span>);
+0054 fprintf(fid, <span class="string">'vtk output\n'</span>);
+0055 fprintf(fid, <span class="string">'BINARY\n'</span>);
+0056 fprintf(fid, <span class="string">'DATASET STRUCTURED_POINTS\n'</span>);
+0057 fprintf(fid, <span class="string">'DIMENSIONS    %d   %d   %d\n'</span>, dimensions(1),dimensions(2),dimensions(3));
+0058 fprintf(fid, <span class="string">'SPACING    %f   %f   %f\n'</span>,metadata.resolution(1),metadata.resolution(2),metadata.resolution(3));
+0059 fprintf(fid, <span class="string">'ORIGIN    %f   %f   %f\n'</span>,metadata.imageOrigin(1),metadata.imageOrigin(2),metadata.imageOrigin(3));
+0060 fprintf(fid, <span class="string">'POINT_DATA   %d\n'</span>,prod(dimensions));
+0061 <span class="keyword">if</span> isfield(metadata,<span class="string">'dataName'</span>)
+0062     dataName = metadata.dataName;
+0063 <span class="keyword">else</span>
+0064     dataName = <span class="string">'scalars'</span>;
+0065 <span class="keyword">end</span>
+0066 fprintf(fid, <span class="string">'SCALARS %s %s\n'</span>,dataName,metadata.datatype);
+0067 fprintf(fid, <span class="string">'LOOKUP_TABLE default\n'</span>);
+0068 fwrite(fid,cube,metadata.datatype,<span class="string">'b'</span>);
+0069 
+0070 <span class="keyword">end</span>
+0071 
+0072</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

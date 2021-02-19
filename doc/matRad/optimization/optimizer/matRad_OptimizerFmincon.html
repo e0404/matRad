@@ -1,0 +1,195 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_OptimizerFmincon</title>
+  <meta name="keywords" content="matRad_OptimizerFmincon">
+  <meta name="description" content="">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../../menu.html matRad --><!-- ../menu.html optimization --><!-- menu.html optimizer -->
+<h1>matRad_OptimizerFmincon
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box"></div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="box">This is a script file. </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"></pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRad_Optimizer.html" class="code" title="">matRad_Optimizer</a>	</li><li><a href="matRad_OptimizerFmincon.html" class="code" title="">matRad_OptimizerFmincon</a>	</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../../matRad/matRad_directApertureOptimization.html" class="code" title="function [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln)">matRad_directApertureOptimization</a>	matRad function to run direct aperture optimization</li><li><a href="../../../matRad/matRad_fluenceOptimization.html" class="code" title="function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)">matRad_fluenceOptimization</a>	matRad inverse planning wrapper function</li><li><a href="matRad_OptimizerFmincon.html" class="code" title="">matRad_OptimizerFmincon</a>	</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>Subfunctions <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<ul style="list-style-type:disc">
+<li><a href="#_sub1" class="code">function obj = matRad_OptimizerFmincon</a></li><li><a href="#_sub2" class="code">function obj = optimize(obj,w0,optiProb,dij,cst)</a></li><li><a href="#_sub3" class="code">function [f, fGrad] = fmincon_objAndGradWrapper(obj,x,optiProb,dij,cst)</a></li><li><a href="#_sub4" class="code">function [c,cEq,cJacob,cEqJacob] = fmincon_nonlconWrapper(obj,x,optiProb,dij,cst)</a></li><li><a href="#_sub5" class="code">function [statusmsg,statusflag] = GetStatus(obj)</a></li><li><a href="#_sub6" class="code">function available = IsAvailable()</a></li></ul>
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../../up.png"></a></h2>
+<div class="fragment"><pre>0001 classdef <a href="matRad_OptimizerFmincon.html" class="code" title="">matRad_OptimizerFmincon</a> &lt; <a href="matRad_Optimizer.html" class="code" title="">matRad_Optimizer</a>
+0002 <span class="comment">% matRad_OptimizerFmincon implements the interface for the fmincon optimizer</span>
+0003 <span class="comment">% of the MATLAB Optiization toolbox</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% References</span>
+0006 <span class="comment">%   -</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% Copyright 2019 the matRad development team.</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0013 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0014 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0015 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0016 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0017 <span class="comment">% LICENSE file.</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0020 
+0021     
+0022     properties
+0023         options     <span class="comment">%the optimoptions for fmincon</span>
+0024         wResult     <span class="comment">%last optimization result</span>
+0025         resultInfo  <span class="comment">%info struct about last results</span>
+0026     <span class="keyword">end</span>
+0027     
+0028     methods
+0029         <a name="_sub0" href="#_subfunctions" class="code">function obj = matRad_OptimizerFmincon</a>
+0030             <span class="comment">%matRad_OptimizerFmincon</span>
+0031             <span class="comment">%   Construct an instance of the fmincon optimizer from the Optimization Toolbox</span>
+0032             matRad_cfg = MatRad_Config.instance();
+0033             
+0034             obj.wResult = [];
+0035             obj.resultInfo = [];
+0036             
+0037             <span class="comment">%createDefaultOptimizerOptions Constructs a set of default</span>
+0038             <span class="comment">%options for the optimizer to use</span>
+0039             obj.options = optimoptions(<span class="string">'fmincon'</span>,<span class="keyword">...</span>
+0040                 <span class="string">'Algorithm'</span>,<span class="string">'interior-point'</span>,<span class="keyword">...</span>
+0041                 <span class="string">'Display'</span>,<span class="string">'iter-detailed'</span>,<span class="keyword">...</span>
+0042                 <span class="string">'SpecifyObjectiveGradient'</span>,true,<span class="keyword">...</span>
+0043                 <span class="string">'SpecifyConstraintGradient'</span>,true,<span class="keyword">...</span>
+0044                 <span class="string">'AlwaysHonorConstraints'</span>, <span class="string">'bounds'</span>,<span class="keyword">...</span>
+0045                 <span class="string">'MaxIterations'</span>,matRad_cfg.propOpt.defaultMaxIter,<span class="keyword">...</span>
+0046                 <span class="string">'MaxFunctionEvaluations'</span>,3000,<span class="keyword">...</span>
+0047                 <span class="string">'CheckGradients'</span>,false,<span class="keyword">...</span>
+0048                 <span class="string">'HessianApproximation'</span>,{<span class="string">'lbfgs'</span>,6},<span class="keyword">...</span>
+0049                 <span class="string">'UseParallel'</span>,true,<span class="keyword">...</span>
+0050                 <span class="string">'Diagnostics'</span>,<span class="string">'on'</span>,<span class="keyword">...</span>
+0051                 <span class="string">'ScaleProblem'</span>,true,<span class="keyword">...</span>
+0052                 <span class="string">'PlotFcn'</span>,{@optimplotfval,@optimplotx,@optimplotfunccount,@optimplotconstrviolation,@optimplotstepsize,@optimplotfirstorderopt});                    
+0053         <span class="keyword">end</span>
+0054                 
+0055         <a name="_sub1" href="#_subfunctions" class="code">function obj = optimize(obj,w0,optiProb,dij,cst)</a>
+0056             <span class="comment">%optimize Carries Out the optimization</span>
+0057             
+0058             <span class="comment">% obtain lower and upper variable bounds</span>
+0059             lb = optiProb.lowerBounds(w0);
+0060             ub = optiProb.upperBounds(w0);
+0061                         
+0062             <span class="comment">% Informing user to press q to terminate optimization</span>
+0063             <span class="comment">%fprintf('\nOptimzation initiating...\n');</span>
+0064             <span class="comment">%fprintf('Press q to terminate the optimization...\n');</span>
+0065             
+0066             <span class="comment">% Run fmincon.</span>
+0067             [obj.wResult,fVal,exitflag,info] = fmincon(@(x) obj.fmincon_objAndGradWrapper(x,optiProb,dij,cst),<span class="keyword">...</span>
+0068                 w0,<span class="keyword">...</span><span class="comment"> % Starting Point</span>
+0069                 [],[],<span class="keyword">...</span><span class="comment"> % Linear Constraints we do not explicitly use</span>
+0070                 [],[],<span class="keyword">...</span><span class="comment"> % Also no linear inequality constraints</span>
+0071                 lb,ub,<span class="keyword">...</span><span class="comment"> % Lower and upper bounds for optimization variable</span>
+0072                 @(x) obj.fmincon_nonlconWrapper(x,optiProb,dij,cst),<span class="keyword">...</span>
+0073                 obj.options); <span class="comment">% Non linear constraint structure);</span>
+0074             
+0075             obj.resultInfo = info;
+0076             obj.resultInfo.fVal = fVal;
+0077             obj.resultInfo.exitflag = exitflag;
+0078         <span class="keyword">end</span>
+0079         
+0080         <a name="_sub2" href="#_subfunctions" class="code">function [f, fGrad] = fmincon_objAndGradWrapper(obj,x,optiProb,dij,cst)</a>
+0081             f = optiProb.matRad_objectiveFunction(x,dij,cst);
+0082             fGrad = optiProb.matRad_objectiveGradient(x,dij,cst);
+0083         <span class="keyword">end</span>
+0084         
+0085         <a name="_sub3" href="#_subfunctions" class="code">function [c,cEq,cJacob,cEqJacob] = fmincon_nonlconWrapper(obj,x,optiProb,dij,cst)</a>
+0086             <span class="comment">%Get the bounds of the constraint</span>
+0087             [cl,cu] = optiProb.matRad_getConstraintBounds(cst);
+0088                     
+0089             <span class="comment">%Get finite bounds</span>
+0090             clFinIx = isfinite(cl);
+0091             cuFinIx = isfinite(cu);
+0092             
+0093             <span class="comment">% Some checks</span>
+0094             assert(isequal(size(cl),size(cu)));
+0095             assert(all(cl &lt;= cu));
+0096             
+0097             <span class="comment">%For fmincon we need to separate into equalty and inequality</span>
+0098             <span class="comment">%constraints</span>
+0099             isEqConstr = (cl == cu);
+0100             eqIx = isEqConstr;
+0101             ineqIx = ~isEqConstr;
+0102             
+0103             <span class="comment">%Obtain all constraint functions and derivatives</span>
+0104             cVals = optiProb.matRad_constraintFunctions(x,dij,cst);
+0105             cJacob = optiProb.matRad_constraintJacobian(x,dij,cst);
+0106             
+0107             <span class="comment">%Subselection of equality constraints</span>
+0108             cEq = cVals(eqIx &amp; clFinIx); <span class="comment">%We can only rely on cl indices here due to the equality index</span>
+0109             cEqJacob = cJacob(eqIx &amp; clFinIx,:)';
+0110             
+0111             <span class="comment">%Prepare inequality constraints:</span>
+0112             <span class="comment">%We need to separate upper and lower bound constraints for</span>
+0113             <span class="comment">%fmincon</span>
+0114             cL = cl(ineqIx &amp; clFinIx) - cVals(ineqIx &amp; clFinIx);
+0115             cU = cVals(ineqIx &amp; cuFinIx) - cu(ineqIx &amp; cuFinIx);
+0116             cJacobL = -cJacob(ineqIx &amp; clFinIx,:);
+0117             cJacobU = cJacob(ineqIx &amp; cuFinIx,:);
+0118             
+0119             <span class="comment">%build the inequality jacobian</span>
+0120             c = [cL; cU];
+0121             cJacob = transpose([cJacobL; cJacobU]);
+0122         <span class="keyword">end</span>
+0123         
+0124         <a name="_sub4" href="#_subfunctions" class="code">function [statusmsg,statusflag] = GetStatus(obj)</a>
+0125             <span class="keyword">try</span> 
+0126                 statusmsg = obj.resultInfo.message;
+0127                 <span class="keyword">if</span> obj.resultInfo.exitflag == 0
+0128                     statusflag = 0;
+0129                 <span class="keyword">elseif</span> obj.resultInfo.exitflag &gt; 0
+0130                     statusflag = 1;
+0131                 <span class="keyword">else</span> 
+0132                     statusflag = -1;
+0133                 <span class="keyword">end</span>
+0134             <span class="keyword">catch</span>
+0135                 statusmsg = <span class="string">'No Last Optimizer Status Available!'</span>;
+0136                 statusflag = -1;
+0137             <span class="keyword">end</span>
+0138         <span class="keyword">end</span>
+0139     <span class="keyword">end</span>
+0140     
+0141     methods (Static)    
+0142         <a name="_sub5" href="#_subfunctions" class="code">function available = IsAvailable()</a>
+0143             <span class="comment">%'fmincon' is a p-code file in the optimization toolbox</span>
+0144             available = exist(<span class="string">'fmincon'</span>) == 6;
+0145         <span class="keyword">end</span>
+0146     <span class="keyword">end</span>
+0147 <span class="keyword">end</span></pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

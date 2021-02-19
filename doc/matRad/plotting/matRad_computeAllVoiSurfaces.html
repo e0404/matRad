@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_computeAllVoiSurfaces</title>
+  <meta name="keywords" content="matRad_computeAllVoiSurfaces">
+  <meta name="description" content="matRad function that computes all VOI surfaces">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- ../menu.html matRad --><!-- menu.html plotting -->
+<h1>matRad_computeAllVoiSurfaces
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">matRad function that computes all VOI surfaces</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box">function cst = matRad_computeAllVoiSurfaces(ct,cst) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function that computes all VOI surfaces
+
+ call
+   cst = matRad_computeAllVoiSurfaces(ct,cst)
+
+ input
+   ct  matRad ct struct
+   cst matRad cst struct
+
+ output
+   cst the new cst with the column containing the precomputed surface
+
+ References
+   -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/dicom/matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>	matRad progress bar</li><li><a href="../../matRad/matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>	matRad progress bar</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../../matRad/matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li><li><a href="matRad_plotVois3D.html" class="code" title="function patches = matRad_plotVois3D(axesHandle,ct,cst,selection,cMap)">matRad_plotVois3D</a>	matRad function that plots 3D structures of the volumes of interest</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function cst = matRad_computeAllVoiSurfaces(ct,cst)</a>
+0002 <span class="comment">% matRad function that computes all VOI surfaces</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   cst = matRad_computeAllVoiSurfaces(ct,cst)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% input</span>
+0008 <span class="comment">%   ct  matRad ct struct</span>
+0009 <span class="comment">%   cst matRad cst struct</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% output</span>
+0012 <span class="comment">%   cst the new cst with the column containing the precomputed surface</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% References</span>
+0015 <span class="comment">%   -</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0022 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0023 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0024 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0025 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0026 <span class="comment">% LICENSE file.</span>
+0027 <span class="comment">%</span>
+0028 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0029 
+0030 disp(<span class="string">'Computing 3D Surfaces...'</span>);
+0031 
+0032     <span class="comment">% initialize waitbar</span>
+0033     figureWait = waitbar(0,<span class="string">'Computing 3D Surfaces...'</span>);
+0034     <span class="comment">% prevent closure of waitbar and show busy state</span>
+0035     set(figureWait,<span class="string">'pointer'</span>,<span class="string">'watch'</span>);
+0036     
+0037     xCoord = ct.resolution.x * double(1:ct.cubeDim(2));
+0038     yCoord = ct.resolution.y * double(1:ct.cubeDim(1));
+0039     zCoord = ct.resolution.z * double(1:ct.cubeDim(3));
+0040     
+0041     [xMesh,yMesh,zMesh] = meshgrid(xCoord,yCoord,zCoord);
+0042 
+0043     numVois = size(cst,1);
+0044     
+0045 
+0046     
+0047     <span class="keyword">for</span> s = 1:numVois
+0048         mask = zeros(ct.cubeDim); <span class="comment">% create zero cube with same dimeonsions like dose cube</span>
+0049         mask(cst{s,4}{1}) = 1;
+0050         
+0051         <span class="comment">%Smooth the VOI</span>
+0052         v = smooth3(mask,<span class="string">'gaussian'</span>,[5 5 5],2);
+0053         isoSurface = isosurface(xMesh,yMesh,zMesh,v,0.5);
+0054         
+0055         <span class="comment">%reduce the complexity</span>
+0056         isoSurface = reducepatch(isoSurface,0.05);
+0057     
+0058         <span class="comment">%compute isonormals</span>
+0059         isoNormals = isonormals(xMesh,yMesh,zMesh,v,isoSurface.vertices);
+0060         
+0061         cst{s,8}{1} = isoSurface;
+0062         cst{s,8}{2} = isoNormals;
+0063         <a href="../../matRad/dicom/matRad_progress.html" class="code" title="function matRad_progress(currentIndex, totalNumberOfEvaluations)">matRad_progress</a>(s,numVois);
+0064         waitbar(s/numVois,figureWait);
+0065     <span class="keyword">end</span>    
+0066     <span class="keyword">try</span>
+0067     <span class="comment">% wait 0.1s for closing all waitbars</span>
+0068     allWaitBarFigures = findall(0,<span class="string">'type'</span>,<span class="string">'figure'</span>,<span class="string">'tag'</span>,<span class="string">'TMWWaitbar'</span>); 
+0069     delete(allWaitBarFigures);
+0070     pause(0.1); 
+0071     <span class="keyword">catch</span>
+0072         
+0073     <span class="keyword">end</span>
+0074 <span class="keyword">end</span>
+0075</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

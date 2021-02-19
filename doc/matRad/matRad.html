@@ -1,0 +1,146 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad</title>
+  <meta name="keywords" content="matRad">
+  <meta name="description" content="matRad script">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">matRad script</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">This is a script file. </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad script
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li><li><a href="matRad_calcParticleDose.html" class="code" title="function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcParticleDose</a>	matRad particle dose calculation wrapper</li><li><a href="matRad_calcPhotonDose.html" class="code" title="function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcPhotonDose</a>	matRad photon dose calculation wrapper</li><li><a href="matRad_directApertureOptimization.html" class="code" title="function [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln)">matRad_directApertureOptimization</a>	matRad function to run direct aperture optimization</li><li><a href="matRad_fluenceOptimization.html" class="code" title="function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)">matRad_fluenceOptimization</a>	matRad inverse planning wrapper function</li><li><a href="matRad_generateStf.html" class="code" title="function stf = matRad_generateStf(ct,cst,pln,visMode)">matRad_generateStf</a>	matRad steering information generation</li><li><a href="matRad_getIsoCenter.html" class="code" title="function isoCenter = matRad_getIsoCenter(cst,ct,visBool)">matRad_getIsoCenter</a>	computes the isocenter [mm] as the joint center of gravity</li><li><a href="matRad_indicatorWrapper.html" class="code" title="function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)">matRad_indicatorWrapper</a>	matRad indictor wrapper</li><li><a href="matRad_rc.html" class="code" title="">matRad_rc</a>	matRad rc script</li><li><a href="matRad_siochiLeafSequencing.html" class="code" title="function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)">matRad_siochiLeafSequencing</a>	multileaf collimator leaf sequencing algorithm</li><li><a href="matRad_visApertureInfo.html" class="code" title="function matRad_visApertureInfo(apertureInfo,mode)">matRad_visApertureInfo</a>	matRad function to visualize aperture shapes stored as struct</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <span class="comment">% matRad script</span>
+0002 <span class="comment">%</span>
+0003 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0008 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0009 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0010 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0011 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0012 <span class="comment">% LICENSE file.</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0015 
+0016 <a href="matRad_rc.html" class="code" title="">matRad_rc</a>
+0017 
+0018 <span class="comment">% load patient data, i.e. ct, voi, cst</span>
+0019 
+0020 <span class="comment">%load HEAD_AND_NECK</span>
+0021 load TG119.mat
+0022 <span class="comment">%load PROSTATE.mat</span>
+0023 <span class="comment">%load LIVER.mat</span>
+0024 <span class="comment">%load BOXPHANTOM.mat</span>
+0025 
+0026 <span class="comment">% meta information for treatment plan</span>
+0027 
+0028 pln.radiationMode   = <span class="string">'photons'</span>;     <span class="comment">% either photons / protons / carbon</span>
+0029 pln.machine         = <span class="string">'Generic'</span>;
+0030 
+0031 pln.numOfFractions  = 30;
+0032 
+0033 <span class="comment">% beam geometry settings</span>
+0034 pln.propStf.bixelWidth      = 5; <span class="comment">% [mm] / also corresponds to lateral spot spacing for particles</span>
+0035 pln.propStf.gantryAngles    = [0:72:359]; <span class="comment">% [?]</span>
+0036 pln.propStf.couchAngles     = [0 0 0 0 0]; <span class="comment">% [?]</span>
+0037 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
+0038 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * <a href="matRad_getIsoCenter.html" class="code" title="function isoCenter = matRad_getIsoCenter(cst,ct,visBool)">matRad_getIsoCenter</a>(cst,ct,0);
+0039 
+0040 <span class="comment">% dose calculation settings</span>
+0041 pln.propDoseCalc.doseGrid.resolution.x = 5; <span class="comment">% [mm]</span>
+0042 pln.propDoseCalc.doseGrid.resolution.y = 5; <span class="comment">% [mm]</span>
+0043 pln.propDoseCalc.doseGrid.resolution.z = 5; <span class="comment">% [mm]</span>
+0044 
+0045 <span class="comment">% optimization settings</span>
+0046 pln.propOpt.optimizer       = <span class="string">'IPOPT'</span>;
+0047 pln.propOpt.bioOptimization = <span class="string">'none'</span>; <span class="comment">% none: physical optimization;             const_RBExD; constant RBE of 1.1;</span>
+0048                                       <span class="comment">% LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose</span>
+0049 pln.propOpt.runDAO          = false;  <span class="comment">% 1/true: run DAO, 0/false: don't / will be ignored for particles</span>
+0050 pln.propOpt.runSequencing   = false;  <span class="comment">% 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below</span>
+0051 
+0052 <span class="comment">%% initial visualization and change objective function settings if desired</span>
+0053 <a href="matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>
+0054 
+0055 <span class="comment">%% generate steering file</span>
+0056 stf = <a href="matRad_generateStf.html" class="code" title="function stf = matRad_generateStf(ct,cst,pln,visMode)">matRad_generateStf</a>(ct,cst,pln);
+0057 
+0058 <span class="comment">%% dose calculation</span>
+0059 <span class="keyword">if</span> strcmp(pln.radiationMode,<span class="string">'photons'</span>)
+0060     dij = <a href="matRad_calcPhotonDose.html" class="code" title="function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcPhotonDose</a>(ct,stf,pln,cst);
+0061     <span class="comment">%dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst);</span>
+0062 <span class="keyword">elseif</span> strcmp(pln.radiationMode,<span class="string">'protons'</span>) || strcmp(pln.radiationMode,<span class="string">'carbon'</span>)
+0063     dij = <a href="matRad_calcParticleDose.html" class="code" title="function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)">matRad_calcParticleDose</a>(ct,stf,pln,cst);
+0064 <span class="keyword">end</span>
+0065 
+0066 <span class="comment">%% inverse planning for imrt</span>
+0067 resultGUI = <a href="matRad_fluenceOptimization.html" class="code" title="function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)">matRad_fluenceOptimization</a>(dij,cst,pln);
+0068 
+0069 <span class="comment">%% sequencing</span>
+0070 <span class="keyword">if</span> strcmp(pln.radiationMode,<span class="string">'photons'</span>) &amp;&amp; (pln.propOpt.runSequencing || pln.propOpt.runDAO)
+0071     <span class="comment">%resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,5);</span>
+0072     <span class="comment">%resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,5);</span>
+0073     resultGUI = <a href="matRad_siochiLeafSequencing.html" class="code" title="function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)">matRad_siochiLeafSequencing</a>(resultGUI,stf,dij,5);
+0074 <span class="keyword">end</span>
+0075 
+0076 <span class="comment">%% DAO</span>
+0077 <span class="keyword">if</span> strcmp(pln.radiationMode,<span class="string">'photons'</span>) &amp;&amp; pln.propOpt.runDAO
+0078    resultGUI = <a href="matRad_directApertureOptimization.html" class="code" title="function [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln)">matRad_directApertureOptimization</a>(dij,cst,resultGUI.apertureInfo,resultGUI,pln);
+0079    <a href="matRad_visApertureInfo.html" class="code" title="function matRad_visApertureInfo(apertureInfo,mode)">matRad_visApertureInfo</a>(resultGUI.apertureInfo);
+0080 <span class="keyword">end</span>
+0081 
+0082 <span class="comment">%% start gui for visualization of result</span>
+0083 <a href="matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>
+0084 
+0085 <span class="comment">%% indicator calculation and show DVH and QI</span>
+0086 [dvh,qi] = <a href="matRad_indicatorWrapper.html" class="code" title="function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol,param)">matRad_indicatorWrapper</a>(cst,pln,resultGUI);
+0087</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

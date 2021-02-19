@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_interp3</title>
+  <meta name="keywords" content="matRad_interp3">
+  <meta name="description" content="interpolates 3-D data (table lookup)">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_interp3
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">interpolates 3-D data (table lookup)</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function y = matRad_interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> interpolates 3-D data (table lookup) 
+
+ call
+   y = matRad_interp3(xi,yi,zi,x,xq,yq,zy)
+   y = matRad_interp3(xi,yi,zi,x,xq,yq,zy,mode)
+   y = matRad_interp3(xi,yi,zi,x,xq,yq,zy,mode,extrapVal)
+
+ input
+   xi,yi,zi:   grid vectors 
+   x:          data
+   xq,yq,zq:   coordinates of quer points as a grid
+   mode:       optional interpolation mode (default linear)
+   extrapVal:  (optional) value for extrapolation
+    
+ output
+   y: interpolated data   
+
+   References
+     -
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2019 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+<li><a href="../matRad/tools/matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>	matRad function to get the software environment matRad is running on</li></ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="matRad_calcCubes.html" class="code" title="function resultGUI = matRad_calcCubes(w,dij,scenNum)">matRad_calcCubes</a>	matRad computation of all cubes for the resultGUI struct</li><li><a href="matRad_calcDoseInit.html" class="code" title="">matRad_calcDoseInit</a>	</li><li><a href="matRad_calcParticleDoseMC.html" class="code" title="function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect)">matRad_calcParticleDoseMC</a>	matRad MCsqaure monte carlo photon dose calculation wrapper</li><li><a href="matRad_calcPhotonDoseMC.html" class="code" title="function dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst,nCasePerBixel,visBool)">matRad_calcPhotonDoseMC</a>	matRad ompMC monte carlo photon dose calculation wrapper</li><li><a href="matRad_engelLeafSequencing.html" class="code" title="function resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)">matRad_engelLeafSequencing</a>	multileaf collimator leaf sequencing algorithm</li><li><a href="matRad_interpRadDepth.html" class="code" title="function radDepthVcoarse = matRad_interpRadDepth(ct,ctScenNum,V,Vcoarse,vXgrid,vYgrid,vZgrid,radDepthV)">matRad_interpRadDepth</a>	down/up sampling the radiological depth dose cubes</li><li><a href="matRad_resizeCstToGrid.html" class="code" title="function cst = matRad_resizeCstToGrid(cst,vXgridOld,vYgridOld,vZgridOld,vXgridNew,vYgridNew,vZgridNew)">matRad_resizeCstToGrid</a>	matRad function to resize the ct to a given resolution</li><li><a href="matRad_siochiLeafSequencing.html" class="code" title="function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)">matRad_siochiLeafSequencing</a>	multileaf collimator leaf sequencing algorithm</li><li><a href="matRad_xiaLeafSequencing.html" class="code" title="function resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)">matRad_xiaLeafSequencing</a>	multileaf collimator leaf sequencing algorithm</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function y = matRad_interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal)</a>
+0002 <span class="comment">% interpolates 3-D data (table lookup)</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% call</span>
+0005 <span class="comment">%   y = matRad_interp3(xi,yi,zi,x,xq,yq,zy)</span>
+0006 <span class="comment">%   y = matRad_interp3(xi,yi,zi,x,xq,yq,zy,mode)</span>
+0007 <span class="comment">%   y = matRad_interp3(xi,yi,zi,x,xq,yq,zy,mode,extrapVal)</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% input</span>
+0010 <span class="comment">%   xi,yi,zi:   grid vectors</span>
+0011 <span class="comment">%   x:          data</span>
+0012 <span class="comment">%   xq,yq,zq:   coordinates of quer points as a grid</span>
+0013 <span class="comment">%   mode:       optional interpolation mode (default linear)</span>
+0014 <span class="comment">%   extrapVal:  (optional) value for extrapolation</span>
+0015 <span class="comment">%</span>
+0016 <span class="comment">% output</span>
+0017 <span class="comment">%   y: interpolated data</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">%   References</span>
+0020 <span class="comment">%     -</span>
+0021 <span class="comment">%</span>
+0022 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% Copyright 2019 the matRad development team.</span>
+0025 <span class="comment">%</span>
+0026 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0027 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0028 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0029 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0030 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0031 <span class="comment">% LICENSE file.</span>
+0032 <span class="comment">%</span>
+0033 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0034 
+0035 
+0036 [env, ~] = <a href="../matRad/tools/matRad_getEnvironment.html" class="code" title="function [env, versionString] = matRad_getEnvironment()">matRad_getEnvironment</a>();
+0037 
+0038 
+0039 <span class="keyword">if</span> nargin &lt; 8
+0040     mode = <span class="string">'linear'</span>;
+0041 <span class="keyword">end</span>
+0042 
+0043 <span class="keyword">if</span> nargin &lt; 9
+0044     extrapVal = NaN;
+0045 <span class="keyword">end</span>
+0046 
+0047 <span class="keyword">switch</span> env
+0048     <span class="keyword">case</span> <span class="string">'MATLAB'</span>
+0049         y = interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal);
+0050     <span class="keyword">case</span> <span class="string">'OCTAVE'</span>
+0051         [xqMesh,yqMesh,zqMesh] = meshgrid(xq,yq,zq);
+0052         y = interp3(xi,yi,zi,x,xqMesh,yqMesh,zqMesh,mode,extrapVal);
+0053 <span class="keyword">end</span>
+0054</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

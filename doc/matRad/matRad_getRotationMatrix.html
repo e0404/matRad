@@ -1,0 +1,162 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of matRad_getRotationMatrix</title>
+  <meta name="keywords" content="matRad_getRotationMatrix">
+  <meta name="description" content="matRad function to return the rotation / transformation matrix">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+  <script type="text/javascript">
+    if (top.frames.length == 0) { top.location = "../index.html"; };
+  </script>
+</head>
+<body>
+<a name="_top"></a>
+<!-- menu.html matRad -->
+<h1>matRad_getRotationMatrix
+</h1>
+
+<h2><a name="_name"></a>Purpose <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">matRad function to return the rotation / transformation matrix</div>
+
+<h2><a name="_synopsis"></a>Synopsis <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box">function rotMat = matRad_getRotationMatrix(gantryAngle,couchAngle,system) </div>
+
+<h2><a name="_description"></a>Description <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> matRad function to return the rotation / transformation matrix 
+ for gantry and/or couch rotation. The Rotation matrix stands for a (1)
+ counter-clockwise, (2) active rotation in the patient coordinate system
+ that is performed on a (4) column vector (by premultiplying the matrix). 
+ Per change of one of these directions a matrix transpose of the returned 
+ matrix is required.
+ 
+ 
+ call
+  rotMat = matRad_getRotationMatrix(gantryAngle,couchAngle,type,system)
+
+ input
+   gantryAngle:    beam/gantry angle
+   couchAngle:     couch angle 
+
+   system:         optional coordinate system the transformation matrix is
+                   requested for. So far, only the default option 'LPS' is
+                   supported (right handed system).
+
+ output
+   rotMat:         3x3 matrix that performs an active rotation around the 
+                   patient system origin via rotMat * x
+
+ References
+   https://en.wikipedia.org/wiki/Rotation_matrix (2017, Mar 1)
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ Copyright 2015 the matRad development team. 
+ 
+ This file is part of the matRad project. It is subject to the license 
+ terms in the LICENSE file found in the top-level directory of this 
+ distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+ of the matRad project, including this file, may be copied, modified, 
+ propagated, or distributed except according to the terms contained in the 
+ LICENSE file.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>Cross-reference information <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-type:disc">
+</ul>
+This function is called by:
+<ul style="list-style-type:disc">
+<li><a href="../matRad/dicom/matRad_importDicomSteeringParticles.html" class="code" title="function [stf, pln] = matRad_importDicomSteeringParticles(ct, pln, rtPlanFile)">matRad_importDicomSteeringParticles</a>	matRad function to import a matRad stf struct from dicom RTPLAN data</li><li><a href="../matRad/dicom/matRad_importDicomSteeringPhotons.html" class="code" title="function [stf, pln] = matRad_importDicomSteeringPhotons(pln)">matRad_importDicomSteeringPhotons</a>	matRad function to import a matRad stf struct from dicom RTPLAN data</li><li><a href="matRadGUI.html" class="code" title="function varargout = matRadGUI(varargin)">matRadGUI</a>	matRad GUI</li><li><a href="matRad_calcDoseInitBeam.html" class="code" title="">matRad_calcDoseInitBeam</a>	</li><li><a href="matRad_generateStf.html" class="code" title="function stf = matRad_generateStf(ct,cst,pln,visMode)">matRad_generateStf</a>	matRad steering information generation</li><li><a href="matRad_rayTracing.html" class="code" title="function radDepthV = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCutoff)">matRad_rayTracing</a>	matRad visualization of two-dimensional dose distributions on ct</li><li><a href="../matRad/plotting/matRad_plotPlan3D.html" class="code" title="function matRad_plotPlan3D(axesHandle,pln,stf)">matRad_plotPlan3D</a>	matRad function to visualize a plan in 3D</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>Source code <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function rotMat = matRad_getRotationMatrix(gantryAngle,couchAngle,system)</a>
+0002 <span class="comment">% matRad function to return the rotation / transformation matrix</span>
+0003 <span class="comment">% for gantry and/or couch rotation. The Rotation matrix stands for a (1)</span>
+0004 <span class="comment">% counter-clockwise, (2) active rotation in the patient coordinate system</span>
+0005 <span class="comment">% that is performed on a (4) column vector (by premultiplying the matrix).</span>
+0006 <span class="comment">% Per change of one of these directions a matrix transpose of the returned</span>
+0007 <span class="comment">% matrix is required.</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% call</span>
+0011 <span class="comment">%  rotMat = matRad_getRotationMatrix(gantryAngle,couchAngle,type,system)</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">% input</span>
+0014 <span class="comment">%   gantryAngle:    beam/gantry angle</span>
+0015 <span class="comment">%   couchAngle:     couch angle</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">%   system:         optional coordinate system the transformation matrix is</span>
+0018 <span class="comment">%                   requested for. So far, only the default option 'LPS' is</span>
+0019 <span class="comment">%                   supported (right handed system).</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">% output</span>
+0022 <span class="comment">%   rotMat:         3x3 matrix that performs an active rotation around the</span>
+0023 <span class="comment">%                   patient system origin via rotMat * x</span>
+0024 <span class="comment">%</span>
+0025 <span class="comment">% References</span>
+0026 <span class="comment">%   https://en.wikipedia.org/wiki/Rotation_matrix (2017, Mar 1)</span>
+0027 <span class="comment">%</span>
+0028 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0029 <span class="comment">%</span>
+0030 <span class="comment">% Copyright 2015 the matRad development team.</span>
+0031 <span class="comment">%</span>
+0032 <span class="comment">% This file is part of the matRad project. It is subject to the license</span>
+0033 <span class="comment">% terms in the LICENSE file found in the top-level directory of this</span>
+0034 <span class="comment">% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part</span>
+0035 <span class="comment">% of the matRad project, including this file, may be copied, modified,</span>
+0036 <span class="comment">% propagated, or distributed except according to the terms contained in the</span>
+0037 <span class="comment">% LICENSE file.</span>
+0038 <span class="comment">%</span>
+0039 <span class="comment">% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0040 
+0041 <span class="comment">%% Parse arguments</span>
+0042 <span class="comment">%We need at least two and max 3 input arguments</span>
+0043 narginchk(2,3);
+0044 
+0045 <span class="comment">% Coordinate System (only LPS so far)</span>
+0046 <span class="keyword">if</span> nargin &lt; 3
+0047     system = <span class="string">'LPS'</span>;
+0048 <span class="keyword">end</span>
+0049 
+0050 <span class="comment">%% Set Up requested Rotation Matrix</span>
+0051 <span class="keyword">switch</span> system
+0052     <span class="keyword">case</span> <span class="string">'LPS'</span>
+0053         <span class="comment">%The LPS system is right-handed, gantry rotates counter-clockwise</span>
+0054         <span class="comment">%around z and couch rotates counter-clockwise around y</span>
+0055         
+0056         <span class="comment">%active, counter-clockwise rotation Matrix for Gantry around z</span>
+0057         <span class="comment">%with pre-multiplication of the matrix (R*x)</span>
+0058         <span class="comment">%Note: Gantry rotation is physically an active rotation of a beam</span>
+0059         <span class="comment">%vector around the target / isocenterin the patient coordinate</span>
+0060         <span class="comment">%system</span>
+0061         R_Gantry = [cosd(gantryAngle)  -sind(gantryAngle)  0; <span class="keyword">...</span>
+0062             sind(gantryAngle)    cosd(gantryAngle)  0; <span class="keyword">...</span>
+0063             0                            0           1];
+0064         
+0065         <span class="comment">%active, counter-clockwise rotation for couch around y</span>
+0066         <span class="comment">%with pre-multiplication of the matrix (R*x)</span>
+0067         <span class="comment">%Note: Couch rotation is physically a passive rotation of the</span>
+0068         <span class="comment">%patient system around the beam target point / isocenter</span>
+0069         R_Couch = [cosd(couchAngle) 0 sind(couchAngle); <span class="keyword">...</span>
+0070             0 1 0; <span class="keyword">...</span>
+0071             -sind(couchAngle)    0    cosd(couchAngle)];
+0072     <span class="keyword">otherwise</span>
+0073         error(<span class="string">'matRad only supports LPS system so far'</span>);
+0074 <span class="keyword">end</span>
+0075 
+0076 rotMat = R_Couch*R_Gantry;
+0077 
+0078 <span class="keyword">end</span>
+0079</pre></div>
+<hr><address><a href="https://e0404.github.io/matRad/" target="_parent"><img src="https://camo.githubusercontent.com/0a593ef6a04757c975b9f4634f6731ea0b019bbd/68747470733a2f2f7261776769742e636f6d2f77696b692f65303430342f6d61745261642f696d616765732f6d61747261645f626c616e6b2e737667" height="12px"/></a> | Generated by  <a href="http://www.artefact.tk/software/matlab/m2html/" target="_parent">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>
