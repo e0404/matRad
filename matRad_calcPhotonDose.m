@@ -124,7 +124,7 @@ kernelLimit = ceil(lateralCutoff/intConvResolution);
                             intConvResolution: ...
                             (kernelLimit-1)*intConvResolution);
 
-% precalculate convoluted kernel size and distances
+% precalculate convolved kernel size and distances
 kernelConvLimit = fieldLimit + gaussLimit + kernelLimit;
 [convMx_X, convMx_Z] = meshgrid(-kernelConvLimit*intConvResolution: ...
                                 intConvResolution: ...
@@ -134,7 +134,7 @@ kernelConvSize = 2*kernelConvLimit;
 
 % define an effective lateral cutoff where dose will be calculated. note
 % that storage within the influence matrix may be subject to sampling
-effectiveLateralCutoff = lateralCutoff + fieldWidth/2;
+effectiveLateralCutoff = lateralCutoff + fieldWidth/sqrt(2);
 
 counter = 0;
 matRad_cfg.dispInfo('matRad: Photon dose calculation...\n');
@@ -206,7 +206,7 @@ for i = 1:dij.numOfBeams % loop over all beams
             % apply the primary fluence to the field
             Fx = F .* Psi;
             
-            % convolute with the gaussian
+            % convolve with the gaussian
             Fx = real( ifft2(fft2(Fx,gaussConvSize,gaussConvSize).* fft2(gaussFilter,gaussConvSize,gaussConvSize)) );
 
             % 2D convolution of Fluence and Kernels in fourier domain
