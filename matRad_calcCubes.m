@@ -42,7 +42,7 @@ if all(w == 1)
         beamInfo(i).suffix = ['_beam', num2str(i)];
         beamInfo(i).logIx  = 1;
     end
-    resultGUI.w = 1;
+    resultGUI.w = ones(dij.numOfBeams,1);
 else
     for i = 1:dij.numOfBeams
         beamInfo(i).suffix = ['_beam', num2str(i)];
