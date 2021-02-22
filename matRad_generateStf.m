@@ -416,7 +416,7 @@ for i = 1:length(pln.propStf.gantryAngles)
                 stf(i).ray(j)               = [];
                 stf(i).numOfBixelsPerRay(j) = [];
                 
-                if ~isfield(stf.ray,'energy')
+                if ~isfield(stf(i).ray,'energy')
                     matRad_cfg.dispError('Error generating stf struct: no suitable energies found. Check if bixelwidth is too large.');
                 end
            end
