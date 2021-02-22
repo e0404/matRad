@@ -82,7 +82,7 @@ end
 % initialize HeteroCorrStruct and adjust base data if needed
 if pln.propHeterogeneity.calcHetero
     
-    lungVoxel = unique(cell2mat([cst{contains(cst(:,2),'lung','IgnoreCase',true),4}]),'rows'); % get all lung voxel indices
+    lungVoxel = unique(cell2mat([cst{contains(cst(:,2),'lung','IgnoreCase',true),7}]'),'rows'); % get all lung voxel indices
     calcHeteroCorrStruct.cubeDim = ct.cubeDim;
     calcHeteroCorrStruct.numOfCtScen = pln.multScen.numOfCtScen;
     calcHeteroCorrStruct.resolution = ct.resolution;
