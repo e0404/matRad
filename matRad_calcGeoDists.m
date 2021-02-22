@@ -108,8 +108,15 @@ rad_distancesSq = rad_distancesSq(subsetMask);
 
 
 % latDists
-isoLatDistsX = latDistsX(subsetMask)./rot_coords_temp(subsetMask,2)*SAD;
-isoLatDistsZ = latDistsZ(subsetMask)./rot_coords_temp(subsetMask,2)*SAD; 
-latDistsX = latDistsX(subsetMask);
-latDistsZ = latDistsZ(subsetMask);  
+if nargout > 4
+    % latDists
+    latDistsX = latDistsX(subsetMask);
+    latDistsZ = latDistsZ(subsetMask);
+    isoLatDistsX = latDistsX./rot_coords_temp(subsetMask,2)*SAD;
+    isoLatDistsZ = latDistsZ./rot_coords_temp(subsetMask,2)*SAD; 
+else
+    % lateral distances projected to iso center plane
+    isoLatDistsX = latDistsX(subsetMask)./rot_coords_temp(subsetMask,2)*SAD;
+    isoLatDistsZ = latDistsZ(subsetMask)./rot_coords_temp(subsetMask,2)*SAD; 
+end
 

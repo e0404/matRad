@@ -3,7 +3,7 @@ function [radDepthV, radDepthCube] = matRad_rayTracing(stf,ct,V,rot_coordsV,late
 % segmentation
 % 
 % call
-%   [radDepthV, radDepthsMat] = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCutoff)
+%   [radDepthV, radDepthCube] = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCutoff)
 %
 % input
 %   stf:           matRad steering information struct of one beam
@@ -15,7 +15,7 @@ function [radDepthV, radDepthCube] = matRad_rayTracing(stf,ct,V,rot_coordsV,late
 %
 % output
 %   radDepthV:      radiological depth inside the patient
-%   radDepthsMat:   radiological depth in whole ct
+%   radDepthCube:   radiological depth in whole ct
 %
 % References
 %   [1] http://www.sciencedirect.com/science/article/pii/S1120179711001359
