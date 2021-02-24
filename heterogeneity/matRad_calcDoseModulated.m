@@ -27,12 +27,13 @@ for i = 1:samples
     else %case matRad
         resultGUI_mod = matRad_calcDoseDirect(ct_mod,stf,pln,cst,weights);
     end
-    
-    %     resultGUI.(['physicalDose',num2str(s)]) = resultGUI.(['physicalDose',num2str(s)]) + resultGUI_mod.physicalDose/s;
-    if strcmp(pln.bioParam.quantityOpt,'RBExD')
-        resultGUI.RBExD = resultGUI.RBExD + resultGUI_mod.RBExD/samples;
+    if ~mode{3}
+        %     resultGUI.(['physicalDose',num2str(s)]) = resultGUI.(['physicalDose',num2str(s)]) + resultGUI_mod.physicalDose/s;
+        if strcmp(pln.bioParam.quantityOpt,'RBExD')
+            resultGUI.RBExD = resultGUI.RBExD + resultGUI_mod.RBExD/samples;
+        end
+        resultGUI.physicalDose = resultGUI.physicalDose + resultGUI_mod.physicalDose/samples;
     end
-    resultGUI.physicalDose = resultGUI.physicalDose + resultGUI_mod.physicalDose/samples;
 end
 
 end
