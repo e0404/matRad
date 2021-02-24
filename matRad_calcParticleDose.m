@@ -41,9 +41,6 @@ set(figureWait,'pointer','watch');
 
 matRad_cfg.dispInfo('matRad: Particle dose calculation... \n');
 
-% init dose calc
-matRad_calcDoseInit;
-
 if ~isfield(pln,'propHeterogeneity')
     pln.propHeterogeneity.calcHetero = false;
 else
@@ -60,6 +57,13 @@ else
         pln.propHeterogeneity.modulateBioDose = matRad_cfg.propHeterogeneity.defaultModulateBioDose;
     end
 end
+
+if pln.propHeterogeneity.calcHetero
+   cstOriginal = cst; 
+end
+
+% init dose calc
+matRad_calcDoseInit;
     
 % initialize lung heterogeneity correction and turn off if necessary files are missing
 if pln.propHeterogeneity.calcHetero
@@ -82,7 +86,7 @@ end
 % initialize HeteroCorrStruct and adjust base data if needed
 if pln.propHeterogeneity.calcHetero
     
-    lungVoxel = unique(cell2mat([cst{contains(cst(:,2),'lung','IgnoreCase',true),7}]'),'rows'); % get all lung voxel indices
+    lungVoxel = unique(cell2mat([cstOriginal{contains(cst(:,2),'lung','IgnoreCase',true),4}]'),'rows'); % get all lung voxel indices
     calcHeteroCorrStruct.cubeDim = ct.cubeDim;
     calcHeteroCorrStruct.numOfCtScen = pln.multScen.numOfCtScen;
     calcHeteroCorrStruct.resolution = ct.resolution;
