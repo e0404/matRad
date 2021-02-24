@@ -160,8 +160,11 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 ctR.cubeHU = cubeHUresampled(ctScen);
                 ctR.cube = cubeResampled(ctScen);
                 %Delete previous topas files
-                delete([topasConfig.workingDir,'score*'])
-                delete([topasConfig.workingDir,'matRad_plan*'])
+                files = dir([topasConfig.workingDir,'*']);
+                files = {files(~[files.isdir]).name};
+                for i = 1:length(files)
+                    delete([topasConfig.workingDir,files{i}])
+                end
 
                 if calcDoseDirect
                     topasConfig.writeAllFiles(ctR,pln,stf,topasBaseData,w(:,ctScen));
@@ -226,7 +229,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                     dij.MC_tallies = fnames;
                     
                     if calcDoseDirect
-                        if ~isfield(topasCubes,'RBE_beam1')
+                        if ~isfield(topasCubes,'alpha_beam1')
                             for f = 1:numel(fnames)
                                 dij.(fnames{f}){ctScen,1} = sum(w(:,ctScen))*reshape(topasCubes.(fnames{f}),[],1);
                             end
