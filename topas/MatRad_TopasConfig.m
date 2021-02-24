@@ -80,6 +80,7 @@ classdef MatRad_TopasConfig < handle
         
         %Physics 
         electronProductionCut = 0.5; %in mm
+        radiationMode;
         modules_protons     = {'g4em-standard_opt4','g4h-phy_QGSP_BIC_HP','g4decay','g4h-elastic_HP','g4stopping','g4ion-QMD','g4radioactivedecay'};
         modules_GenericIon  = {'g4em-standard_opt4','g4h-phy_QGSP_BIC_HP','g4decay','g4h-elastic_HP','g4stopping','g4ion-QMD','g4radioactivedecay'};
         modules_gamma       = {'g4em-standard_opt4','g4h-phy_QGSP_BIC_HP','g4decay'};
@@ -140,6 +141,7 @@ classdef MatRad_TopasConfig < handle
             
             if isfield(pln,'bioParam') && strcmp(pln.bioParam.quantityOpt,'RBExD')
                obj.scoreRBE = true;
+               obj.radiationMode = stf.radiationMode;
             end
             
             obj.MCparam.nbRuns = obj.numOfRuns;
@@ -227,7 +229,15 @@ classdef MatRad_TopasConfig < handle
             
             if obj.scoreDose
                 if obj.scoreRBE
-                    fname = fullfile(obj.thisFolder,obj.infilenames.doseScorerRBE);
+                    if strcmp(obj.radiationMode,'protons')
+                        fname = fullfile(obj.thisFolder,obj.infilenames.doseScorerRBE_MCN);
+                    elseif strcmp(obj.radiationMode,'carbon') || strcmp(obj.radiationMode,'helium')
+                        fname = fullfile(obj.thisFolder,obj.infilenames.doseScorerRBE);
+                    else
+                        obj.matRad_cfg.dispWarning('No specific RBE model available, using custom LEM scorer.'); 
+                        fname = fullfile(obj.thisFolder,obj.infilenames.doseScorerRBE);
+                        
+                    end
                 else
                     fname = fullfile(obj.thisFolder,obj.infilenames.doseScorer);
                 end
@@ -235,7 +245,8 @@ classdef MatRad_TopasConfig < handle
                 scorer = fileread(fname);
                 fprintf(fID,'%s\n',scorer);
                 if obj.scoreRBE
-                   obj.MCparam.tallies = {'physicalDose','alpha','beta','RBE'}; 
+%                    obj.MCparam.tallies = {'physicalDose','alpha','beta','RBE'}; 
+                   obj.MCparam.tallies = {'physicalDose','alpha','beta'}; 
                 end
                 if ~any(strcmp(obj.MCparam.tallies,'physicalDose'))
                     obj.MCparam.tallies{end+1} = 'physicalDose';
@@ -439,19 +450,19 @@ classdef MatRad_TopasConfig < handle
                     obj.matRad_cfg.dispError('Insufficient number of histories!')
                 end
                 
-                while sum([dataTOPAS.current]) ~= historyCount(beamIx)
-                    randIx = randi([1 length(dataTOPAS)],1,abs(sum([dataTOPAS(:).current]) - historyCount(beamIx)));
-
-                    if (sum([dataTOPAS(:).current]) > historyCount(beamIx))
-                        for i = randIx
-                            dataTOPAS(i).current = dataTOPAS(i).current - 1;
-                        end
-                    else
-                        for i = randIx
-                            dataTOPAS(i).current = dataTOPAS(i).current + 1;
-                        end
-                    end                   
-                end
+%                 while sum([dataTOPAS.current]) ~= historyCount(beamIx)
+%                     randIx = randi([1 length(dataTOPAS)],1,abs(sum([dataTOPAS(:).current]) - historyCount(beamIx)));
+% 
+%                     if (sum([dataTOPAS(:).current]) > historyCount(beamIx))
+%                         for i = randIx
+%                             dataTOPAS(i).current = dataTOPAS(i).current - 1;
+%                         end
+%                     else
+%                         for i = randIx
+%                             dataTOPAS(i).current = dataTOPAS(i).current + 1;
+%                         end
+%                     end                   
+%                 end
                 
                 while sum([dataTOPAS.current]) ~= historyCount(beamIx)
                     % Randomly pick an index with the weigth given by the current

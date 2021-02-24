@@ -25,16 +25,16 @@ s:Sc/betaTabulated/IfOutputFileAlreadyExists  = "Overwrite"
 s:Sc/betaTabulated/ReferencedSubScorer_Dose   = "PhysDose"
 s:Sc/betaTabulated/ModelName                  = "HCP"
 
-s:Sc/RBE/Quantity                   = "RBE_TabulatedAlphaBeta"
-s:Sc/RBE/Component                  = "Patient"
-s:Sc/RBE/OutputQuantity             = "rbe"
-d:Sc/RBE/PrescribedDose             = Sc/PrescribedDose Gy
-sv:Sc/RBE/CellLines                 = Sc/CellLines
-s:Sc/RBE/OutputType                 = Sim/DoseScorerOutputType
-s:Sc/RBE/OutputFile                 = Sim/ScoreLabel + "_RBE"
-s:Sc/RBE/IfOutputFileAlreadyExists  = "Overwrite"
-s:Sc/RBE/ReferencedSubScorer_Dose   = "PhysDose"
-s:Sc/RBE/ModelName                  = "HCP"
+#s:Sc/RBE/Quantity                   = "RBE_TabulatedAlphaBeta"
+#s:Sc/RBE/Component                  = "Patient"
+#s:Sc/RBE/OutputQuantity             = "rbe"
+#d:Sc/RBE/PrescribedDose             = Sc/PrescribedDose Gy
+#sv:Sc/RBE/CellLines                 = Sc/CellLines
+#s:Sc/RBE/OutputType                 = Sim/DoseScorerOutputType
+#s:Sc/RBE/OutputFile                 = Sim/ScoreLabel + "_RBE"
+#s:Sc/RBE/IfOutputFileAlreadyExists  = "Overwrite"
+#s:Sc/RBE/ReferencedSubScorer_Dose   = "PhysDose"
+#s:Sc/RBE/ModelName                  = "HCP"
 
 ### HCP Tabulated ###
 d:Sc/CellGeneric_abR2/Alphax = 0.10 /Gy
