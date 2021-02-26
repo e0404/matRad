@@ -175,7 +175,12 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 % Run simulation for current scenario
                 cd(topasConfig.workingDir);
                 
+                
                 if openStack
+                    if topasConfig.scoreRBE
+                        [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,prod(ct.cubeDim),1);
+                        dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
+                    end
                     save('dij.mat','dij')
                     save('weights.mat','w')
                     matRad_cfg.dispInfo('TOPAS simulation skipped for external calculation\n');
