@@ -159,7 +159,10 @@ for i = 1:length(stf) % loop over all beams
             energyIx = max(round2(stf(i).ray(j).energy,4)) == round2([machine.data.energy],4);
 
             maxLateralCutoffDoseCalc = max(machine.data(energyIx).LatCutOff.CutOff);
-
+    
+            % calculate initial sigma for all bixel on current ray
+            sigmaIniRay = matRad_calcSigmaIni(machine.data,stf(i).ray(j),stf(i).ray(j).SSD);
+            
             if strcmp(pbCalcMode, 'fineSampling')
                 % Ray tracing for beam i and ray j
                 [ix,~,~,~,latDistsX,latDistsZ] = matRad_calcGeoDists(rot_coordsVdoseGrid, ...
@@ -168,22 +171,18 @@ for i = 1:length(stf) % loop over all beams
                                                      machine.meta.SAD, ...
                                                      find(~isnan(radDepthVdoseGrid{1})), ...
                                                      maxLateralCutoffDoseCalc);
-                                                 
-                                                 
-                % evaluate initial sigma for every energy in ray
-                sigmaIni = matRad_calcSigmaIni(machine.data,stf(i).ray(j),stf(i).ray(j).SSD);
-
+                                                                  
                 % Given the initial sigmas of the sampling ray, this
                 % function provides the weights for the sub-pencil beams,
                 % their positions and their sigma used for dose calculation
                 for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
-                    if (fineSamplingSigmaSub < sigmaIni(k)) && (fineSamplingSigmaSub > 0)
+                    if (fineSamplingSigmaSub < sigmaIniRay(k)) && (fineSamplingSigmaSub > 0)
                         [finalWeight(:,k), sigmaSub(:,k), posX(:,k), posZ(:,k), numOfSub(:,k)] = ...
-                                  matRad_calcWeights(sigmaIni(k), fineSamplingMethod, fineSamplingN, fineSamplingSigmaSub);
+                                  matRad_calcWeights(sigmaIniRay(k), fineSamplingMethod, fineSamplingN, fineSamplingSigmaSub);
                     else
                         if (fineSamplingSigmaSub < 0)
                             matRad_cfg.dispError('Chosen fine sampling sigma cannot be negative!');
-                        elseif (fineSamplingSigmaSub > sigmaIni(k))
+                        elseif (fineSamplingSigmaSub > sigmaIniRay(k))
                             matRad_cfg.dispError('Chosen fine sampling sigma is too high for defined plan!');
                         end                          
                     end
@@ -206,8 +205,7 @@ for i = 1:length(stf) % loop over all beams
                     vTissueIndex_j = vTissueIndex(ix,:);
             end
             
-            % calculate initial sigma for all bixel on current ray
-            sigmaIniRay = matRad_calcSigmaIni(machine.data,stf(i).ray(j),stf(i).ray(j).SSD);
+            
 
             for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
 
@@ -351,16 +349,18 @@ for i = 1:length(stf) % loop over all beams
 
                     % Save dose for every bixel in cell array
                     doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(VdoseGrid(ix(currIx)),1,bixelDose,dij.doseGrid.numOfVoxels,1);
+                
+                    if isfield(dij,'mLETDose')
+                      % calculate particle LET for bixel k on ray j of beam i
+                      depths = machine.data(energyIx).depths + machine.data(energyIx).offset; 
+                      bixelLET = matRad_interp1(depths,machine.data(energyIx).LET,currRadDepths); 
+
+                      % Save LET for every bixel in cell array
+                      letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(VdoseGrid(ix(currIx)),1,bixelLET.*bixelDose,dij.doseGrid.numOfVoxels,1);
+                    end
                 end
 
-                if isfield(dij,'mLETDose') && ~strcmp(pbCalcMode, 'fineSampling')
-                  % calculate particle LET for bixel k on ray j of beam i
-                  depths = machine.data(energyIx).depths + machine.data(energyIx).offset; 
-                  bixelLET = matRad_interp1(depths,machine.data(energyIx).LET,currRadDepths); 
-
-                  % Save LET for every bixel in cell array
-                  letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,1} = sparse(VdoseGrid(ix(currIx)),1,bixelLET.*bixelDose,dij.doseGrid.numOfVoxels,1);
-                end
+                
                              
                 if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
                     && strcmp(pln.radiationMode,'carbon')
