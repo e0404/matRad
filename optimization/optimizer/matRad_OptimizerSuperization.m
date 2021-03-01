@@ -11,6 +11,9 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
         lambda {mustBeNumeric, mustBePositive, mustBeLessThan(lambda, 200)} = 1.9;
         feasibility_seeker {mustBeMember(feasibility_seeker, {'AMS_sim', 'AMS_sequential'})} = 'AMS_sim';
         control_sequence {mustBeMember(control_sequence, {'sequential', 'random', 'weight', 'weight_inv'})} = 'random';
+        weight_decay = 0.99;
+        temp_weight_decay = 1;
+        
         tol_obj {mustBeNumeric}            = 1e-6;
         tol_violation {mustBeNumeric}      = 1e-6;
         tol_max_violation {mustBeNumeric}   = 1e-3;
@@ -156,6 +159,9 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
                 n=0;
                 supStart = tic;
                 f_evals = 0;
+                
+                
+                
                 if ~obj.ignoreObjective
                     while n<obj.num_reductions
                         
@@ -383,13 +389,14 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
                 res_c=A_x-c(i);
                 
                 if res_b < 0
-                    x=x+obj.M(:, i)*res_b;
+                    x=x+obj.temp_weight_decay*obj.M(:, i)*res_b;
                 elseif res_c <0
-                    x=x-obj.M(:, i)*res_c;
+                    x=x-obj.temp_weight_decay*obj.M(:, i)*res_c;
                 end
             end
             
             x(x<0) = 0;
+            obj.temp_weight_decay = obj.temp_weight_decay* obj.weight_decay;
         end
         
         function plotFunction(obj)
