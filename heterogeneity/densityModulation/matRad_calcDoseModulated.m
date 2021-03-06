@@ -20,20 +20,27 @@ for i = 1:samples
             else
                 pln.propMC.materialConverter = 'HUToWaterSchneider';
             end
-            resultGUI_mod = matRad_calcDoseDirectMC(ct_mod,stf,pln,cst,weights,mode{2},mode{3});
+            resultGUI_mod = matRad_calcDoseDirectMC(ct_mod,stf,pln,cst,weights,mode{2}/samples,mode{3});
+            
+            if ~mode{3}
+                %     resultGUI.(['physicalDose',num2str(s)]) = resultGUI.(['physicalDose',num2str(s)]) + resultGUI_mod.physicalDose/s;
+                if strcmp(pln.bioParam.quantityOpt,'RBExD')
+                    resultGUI.RBExD = resultGUI.RBExD + resultGUI_mod.RBExD/samples;
+                end
+                resultGUI.physicalDose = resultGUI.physicalDose + resultGUI_mod.physicalDose/samples;
+            end
         else
             error('error')
         end
     else %case matRad
         resultGUI_mod = matRad_calcDoseDirect(ct_mod,stf,pln,cst,weights);
-    end
-    if ~mode{3}
-        %     resultGUI.(['physicalDose',num2str(s)]) = resultGUI.(['physicalDose',num2str(s)]) + resultGUI_mod.physicalDose/s;
+        
         if strcmp(pln.bioParam.quantityOpt,'RBExD')
-            resultGUI.RBExD = resultGUI.RBExD + resultGUI_mod.RBExD/samples;
+            resultGUI.RBExD = resultGUI.RBExD + resultGUI_mod.RBExD;
         end
         resultGUI.physicalDose = resultGUI.physicalDose + resultGUI_mod.physicalDose/samples;
     end
+
 end
 
 end
