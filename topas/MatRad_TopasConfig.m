@@ -920,7 +920,7 @@ classdef MatRad_TopasConfig < handle
                         end
                     end
                     
-                case 'HUToWaterSchneider'
+                case {'HUToWaterSchneider','HUToWaterSchneider_Lung'}
                     huCube = int32(permute(ct.cubeHU{1},permutation));
                     
                     rspHlut = matRad_readHLUT('matRad_default.hlut');
@@ -947,12 +947,20 @@ classdef MatRad_TopasConfig < handle
                     %fprintf(h,'uv:Ge/Patient/SchneiderMaterialsWeight1 = 2 0.111894 0.888106\n');
                     
                     %At least include air?
-                    fprintf(fID,'iv:Ge/Patient/SchneiderHUToMaterialSections = 3 %d %d %d\n',rspHlut(1,1),rspHlut(2,1),rspHlut(end,1)+1);
-                    fprintf(fID,'sv:Ge/Patient/SchneiderElements = 4 "Hydrogen" "Oxygen" "Nitrogen" "Carbon"\n');
-                    fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight1 = 4 0.0 0.23479269 0.76508170 0.00012561\n');
-                    fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight2 = 4 0.111894 0.888106 0.0 0.0\n');
-                    fprintf(fID,'dv:Ge/Patient/SchneiderMaterialMeanExcitationEnergy = 2 85.7 78.0 eV\n');
-                    
+                    if contains(cubeExport,'Lung')
+                        fprintf(fID,'iv:Ge/Patient/SchneiderHUToMaterialSections = 4 -1024 -999 0 3072\n');
+                        fprintf(fID,'sv:Ge/Patient/SchneiderElements = 5 "Hydrogen" "Oxygen" "Nitrogen" "Carbon" "Phosphorus"\n');
+                        fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight1 = 5 0.0 0.23479269 0.76508170 0.00012561 0.0\n');
+                        fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight2 = 5 0.10404040 0.75656566 0.03131313 0.10606061 0.00202020\n');
+                        fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight3 = 5 0.111894 0.888106 0.0 0.0 0.0\n');
+                        fprintf(fID,'dv:Ge/Patient/SchneiderMaterialMeanExcitationEnergy = 3 85.7 75.300000 78.0 eV\n');
+                    else
+                        fprintf(fID,'iv:Ge/Patient/SchneiderHUToMaterialSections = 3 %d %d %d\n',rspHlut(1,1),rspHlut(2,1),rspHlut(end,1)+1);
+                        fprintf(fID,'sv:Ge/Patient/SchneiderElements = 4 "Hydrogen" "Oxygen" "Nitrogen" "Carbon"\n');
+                        fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight1 = 4 0.0 0.23479269 0.76508170 0.00012561\n');
+                        fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight2 = 4 0.111894 0.888106 0.0 0.0\n');
+                        fprintf(fID,'dv:Ge/Patient/SchneiderMaterialMeanExcitationEnergy = 2 85.7 78.0 eV\n');
+                    end
                     
                     %Write the Patient
                     fprintf(fID,'s:Ge/Patient/Parent="World"\n');
