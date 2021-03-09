@@ -80,7 +80,7 @@ if ~exist('n','var')
     n = 0;
 end
 if ~exist('criteria','var')
-    criteria = [2 2];
+    criteria = [3 3];
 end
 if ~exist('cst','var') || isempty(cst)
     cst = [];
