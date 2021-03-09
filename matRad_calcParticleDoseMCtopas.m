@@ -178,7 +178,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 
                 if openStack
                     if topasConfig.scoreRBE
-                        [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,prod(ct.cubeDim),1);
+                        [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
                         dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
                     end
                     save('dij.mat','dij')
