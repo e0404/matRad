@@ -667,8 +667,7 @@ classdef MatRad_TopasConfig < handle
 
             switch cubeExport
                 case 'RSP'
-
-                    rspHlut = matRad_readHLUT('matRad_default.hlut');
+                    rspHlut = matRad_loadHLUT(ct,pln);
                     min_HU = rspHlut(1,1);
                     max_HU = rspHlut(end,1);
 
@@ -721,8 +720,8 @@ classdef MatRad_TopasConfig < handle
                     
                 case 'HUToWaterSchneider'
                     huCube = int32(permute(ct.cubeHU{1},permutation));
+                    rspHlut = matRad_loadHLUT(ct,pln);
                     
-                    rspHlut = matRad_readHLUT('matRad_default.hlut');
                     densityCorrection = [];
                     for i = 1:size(rspHlut,1)-1
                         startVal = rspHlut(i,1);
