@@ -59,10 +59,6 @@ if isfield(pln.propStf,'useRangeShifter')
     pln.propStf.useRangeShifter = false;
 end
 
-if pln.propStf.useRangeShifter
-    matRad_cfg.dispError('matRad''s TOPAS interface does not support range shifters yet!\n');
-end
-
 env = matRad_getEnvironment();
 
 %% Initialize dose Grid as usual
