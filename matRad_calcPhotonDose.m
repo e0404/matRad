@@ -59,7 +59,24 @@ figureWait = waitbar(0,'calculate dose influence matrix for photons...');
 set(figureWait,'pointer','watch');
 
 % set lateral cutoff value
-lateralCutoff = matRad_cfg.propDoseCalc.defaultGeometricCutOff; % [mm]
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'geometricCutOff')
+    pln.propDoseCalc.geometricCutOff =  matRad_cfg.propDoseCalc.defaultGeometricCutOff; % [mm]
+end
+
+lateralCutoff = pln.propDoseCalc.geometricCutOff;
+
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'kernelCutOff')
+    pln.propDoseCalc.kernelCutOff =  matRad_cfg.propDoseCalc.defaultKernelCutOff; % [mm]
+end
+
+% set kernel cutoff value (determines how much of the kernel is used. This
+% value is separated from lateralCutOff to obtain accurate large open fields)
+kernelCutoff = pln.propDoseCalc.kernelCutOff;
+
+if kernelCutoff < lateralCutoff
+    matRad_cfg.dispWarning('Kernel Cut-Off ''%f mm'' cannot be smaller than geometric lateral cutoff ''%f mm''. Using ''%f mm''!',kernelCutoff,lateralCutoff,lateralCutoff);
+    kernelCutoff = lateralCutoff;
+end
 
 % toggle custom primary fluence on/off. if 0 we assume a homogeneous
 % primary fluence, if 1 we use measured radially symmetric data
@@ -119,7 +136,11 @@ if ~isFieldBasedDoseCalc
 end
 
 % get kernel size and distances
-kernelLimit = ceil(lateralCutoff/intConvResolution);
+if kernelCutoff > machine.data.kernelPos(end)
+    kernelCutoff = machine.data.kernelPos(end);
+end
+
+kernelLimit = ceil(kernelCutoff/intConvResolution);
 [kernelX, kernelZ] = meshgrid(-kernelLimit*intConvResolution: ...
                             intConvResolution: ...
                             (kernelLimit-1)*intConvResolution);
