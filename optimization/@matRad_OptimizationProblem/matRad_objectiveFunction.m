@@ -190,7 +190,18 @@ for  i = 1:size(cst,1)
                             
                         end
                         
-                        f = f + max(f_OWC);
+                        fMax = max(f_OWC);
+                        
+                        if optiProb.useLogSumExpForRobOpt
+                            if fMax > 10
+                                t = round(log10(fMax));
+                            else
+                                t = 1;
+                            end
+                            tmp = (f_OWC - fMax)./t;
+                            fMax = fMax + t*log(sum(exp(tmp(:))));
+                        end
+                        f = f + fMax;
                         
                     otherwise
                         matRad_cfg.dispError('Robustness setting %s not supported!',objective.robustness);
@@ -202,6 +213,18 @@ for  i = 1:size(cst,1)
     end
     
 end
+      
+%Approximate the maximum gradient using the softmax function
 
+fMax = max(f_COWC(:));
+if optiProb.useLogSumExpForRobOpt && fMax > 0
+    if fMax > 10
+        t = round(log10(fMax));
+    else
+        t = 1;
+    end
+    tmp = (f_COWC - fMax)./t;
+    fMax = fMax + t*log(sum(exp(tmp(:))));
+end
 %Sum up max of composite worst case part
-f = f + max(f_COWC);
+f = f + fMax;

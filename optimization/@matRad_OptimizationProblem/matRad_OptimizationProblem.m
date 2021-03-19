@@ -24,6 +24,7 @@ classdef matRad_OptimizationProblem < handle
     properties
         BP
         quantityOpt = '';
+        useLogSumExpForRobOpt = true;
     end
     
     methods
