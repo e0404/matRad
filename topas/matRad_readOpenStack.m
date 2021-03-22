@@ -3,20 +3,24 @@ function resultGUI = matRad_readOpenStack(folder)
 if contains(folder,'*')% && all(modulation ~= false)
     folder = dir(folder);
     for i = 1:length(folder)
-        folders{i} = [folder(i).folder filesep folder(i).name];
+        if any(isstrprop(folder(i).name,'digit'))
+            folders{i} = [folder(i).folder filesep folder(i).name];
+        end
     end
 else
     folders{1} = folder;
 end
-
+folders = folders(~cellfun('isempty',folders));
 
 for f = 1:length(folders)
     currFolder = folders{f};
     topasConfig = MatRad_TopasConfig();
     topasCubes = matRad_readTopasData(currFolder);
     
-    load([currFolder filesep 'dij.mat']);
-    load([currFolder filesep 'weights.mat']);
+    loadedVars = load([currFolder filesep 'dij.mat'],'dij');
+    dij = loadedVars.dij;
+    loadedVars = load([currFolder filesep 'weights.mat'],'w');
+    w = loadedVars.w;
     
     ctScen = 1;
     fnames = fieldnames(topasCubes);
