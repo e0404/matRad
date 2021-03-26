@@ -71,6 +71,8 @@ end
 
 
 % 0 if field calc is bixel based, 1 if dose calc is field based
+% num2str is only used to prevent failure of strcmp when bixelWidth
+% contains a number and not a string
 isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
 
 %% kernel convolution

@@ -45,6 +45,7 @@ classdef MatRad_Config < handle
         envVersion;
         isOctave; %Helper bool to check for Octave
         isMatlab; %Helper bool to check for Matlab
+        matRad_version; %MatRad version string
     end
     
     properties (Constant)
@@ -60,10 +61,11 @@ classdef MatRad_Config < handle
             
             %Set Version
             obj.getEnvironment();
+            obj.matRad_version = matRad_version();
             
             %Just to catch people messing with the properties in the file
             if ~isempty(obj.writeLog) && obj.writeLog
-                logFile = [matRadRoot filesep 'matRad.log'];
+                logFile = [obj.matRadRoot filesep 'matRad.log'];
                 obj.logFileHandle = fopen(logFile,'a');
             end
             
@@ -131,8 +133,7 @@ classdef MatRad_Config < handle
             if obj.writeLog
                 fprintf(obj.logFileHandle,forwardArgs{:});
             end
-        end
-        
+        end 
     end
     
     methods
@@ -311,6 +312,69 @@ classdef MatRad_Config < handle
                 obj = uniqueInstance;
             end
         end
+               
+        function obj = loadobj(sobj)
+        % Overload the loadobj function to allow downward compatibility
+        % with workspaces which where saved as an older version of this class
+        
+            function basic_struct = mergeStructs(basic_struct, changed_struct)
+                % nested function for merging the properties of the loaded obj into a new obj
+                % merges two structs, including nestes structs, by overwriting 
+                % the properties of basic_struct with the changed properties in changed_struct
+                fields = fieldnames(basic_struct);
+                for k = 1:length(fields)  
+                    disp(fields{k});
+                    if(isfield(changed_struct, fields{k}))                 
+                        if isstruct(changed_struct.(fields{k})) && isstruct(basic_struct.(fields{i}))        
+                            basic_struct.(fields{k}) = mergeStructs(basic_struct.(fields{k}), changed_struct.(fields{i}));
+                        else
+                            basic_struct.(fields{k}) = changed_struct.(fields{k});
+                        end
+                    end
+                end
+            end
+            
+            % if the saved object is loaded as a struct there was a problem
+            % with the generic loading process most likly a version
+            % conflict regarding the structs, in order to fix this do a custom 
+            % loading process including recursivly copying the conflicting structs 
+            if isstruct(sobj)
+                warning("The  loaded object differs from the current MatRad_Config class, resuming the loading process with the overloaded loadobj function!");
+                obj = MatRad_Config(); 
+                p =  properties(obj);
+                % throw warning if the version differ and remove the
+                % matRad_version field from the loaded struct, in order to
+                % not overwrite the version later
+                if (isfield(sobj, "matRad_version") && ~(strcmp(obj.matRad_version, sobj.matRad_version)))
+                    warning("MatRad version or git Branch of the loaded object differs from the curret version!");
+                    sobj = rmfield(sobj, "matRad_version");
+                end
+                % itterate over properties of a MatRad_Config object
+                for i = 1:length(p)
+                    % check if the field exists in the loaded object
+                    if(isfield(sobj,p{i}))
+                        objField = obj.(p{i});
+                        sobjField = sobj.(p{i});
+                        % if field from loaded object and from the newly
+                        % created object are equal skip it, else copy the
+                        % value of the loaded one ore recursivly itterate
+                        % over the struct
+                        if ~(isequal(sobjField, objField))
+                            if (isstruct(sobjField) && isstruct(objField))
+                                retStruct = mergeStructs(objField,sobjField);
+                                obj.(p{i}) = retStruct;
+                            else
+                                obj.(p{i}) = sobjField;
+                            end
+                        end
+                    end
+                end
+            else
+                obj = sobj;
+            end     
+        end
+        
+        
     end
 end
 
