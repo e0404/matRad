@@ -318,8 +318,9 @@ classdef MatRad_Config < handle
         % with workspaces which where saved as an older version of this class
         
             function basic_struct = mergeStructs(basic_struct, changed_struct)
-                % nested function for merging the properties of the loaded obj into a new obj
-                % merges two structs, including nestes structs, by overwriting 
+                % nested function for merging the properties of the loaded
+                % obj into a new obj.
+                % Merges two structs, including nestes structs, by overwriting 
                 % the properties of basic_struct with the changed properties in changed_struct
                 fields = fieldnames(basic_struct);
                 for k = 1:length(fields)  
@@ -334,31 +335,31 @@ classdef MatRad_Config < handle
                 end
             end
             
-            % if the saved object is loaded as a struct there was a problem
-            % with the generic loading process most likly a version
-            % conflict regarding the structs, in order to fix this do a custom 
+            % If the saved object is loaded as a struct there was a problem
+            % with the generic loading process most likly a version-conflict
+            % regarding the structs, in order to fix this, do a custom 
             % loading process including recursivly copying the conflicting structs 
             if isstruct(sobj)
                 warning("The  loaded object differs from the current MatRad_Config class, resuming the loading process with the overloaded loadobj function!");
                 obj = MatRad_Config(); 
                 p =  properties(obj);
-                % throw warning if the version differ and remove the
+                % Throw warning if the version differ and remove the
                 % matRad_version field from the loaded struct, in order to
                 % not overwrite the version later
                 if (isfield(sobj, "matRad_version") && ~(strcmp(obj.matRad_version, sobj.matRad_version)))
                     warning("MatRad version or git Branch of the loaded object differs from the curret version!");
                     sobj = rmfield(sobj, "matRad_version");
                 end
-                % itterate over properties of a MatRad_Config object
+                % Itterate over the properties of the newly created MatRad_Config object
                 for i = 1:length(p)
                     % check if the field exists in the loaded object
                     if(isfield(sobj,p{i}))
                         objField = obj.(p{i});
                         sobjField = sobj.(p{i});
-                        % if field from loaded object and from the newly
+                        % If field from loaded object and from the newly
                         % created object are equal skip it, else copy the
-                        % value of the loaded one ore recursivly itterate
-                        % over the struct
+                        % value of the loaded object and if it's a struct
+                        % check it's field recursively
                         if ~(isequal(sobjField, objField))
                             if (isstruct(sobjField) && isstruct(objField))
                                 retStruct = mergeStructs(objField,sobjField);
