@@ -18,7 +18,11 @@ classdef MatRad_MCsquareBaseData < MatRad_MCemittanceBaseData
     methods (Access = public)
         function obj = MatRad_MCsquareBaseData(machine,stf)
             %Call MatRad_MCemmitanceBaseData constructor
-            obj = obj@MatRad_MCemittanceBaseData(machine,stf);             
+            if nargin < 2
+                stf = [];
+            end
+            
+            obj = obj@MatRad_MCemittanceBaseData(machine, stf);
         end
                 
         function obj = writeMCsquareData(obj,filepath)
@@ -35,7 +39,7 @@ classdef MatRad_MCsquareBaseData < MatRad_MCemittanceBaseData
             end
             
             %remove field not needed for MCsquare base data
-            selectedData = rmfield(selectedData, 'FWHMatIso');
+%             selectedData = rmfield(selectedData, 'FWHMatIso');
             
             %write MCsqaure data base file
             try
@@ -77,9 +81,11 @@ classdef MatRad_MCsquareBaseData < MatRad_MCemittanceBaseData
                 end
                 fprintf(fileID, '\n');
                 
+                indices = obj.selectedFocus(obj.energyIndex);
                 for k = 1:size(selectedData,2)
                     for m = 1:numel(fn)
-                        fprintf(fileID, '%g', selectedData(k).(fn{m}));
+                        tmp = selectedData(k).(fn{m});
+                        fprintf(fileID, '%g ', tmp(indices(k)));
                         fprintf(fileID, '\t');
                     end
                     fprintf(fileID, '\n');

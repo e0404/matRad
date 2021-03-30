@@ -222,12 +222,12 @@ MCsquareConfigFile = 'MCsquareConfig.txt';
 bdFile = [machine.meta.machine '.txt'];
 
 % bdFile = 'BDL_matRad.txt'; %use for baseData fit 
-MCsquareBDL = MatRad_MCsquareBaseData(machine,stf);
+MCsquareBDL = MatRad_MCsquareBaseData(machine, stf);
 %matRad_createMCsquareBaseDataFile(bdFile,machine,1);
 % MCsquareBDL = MCsquareBDL.saveMatradMachine('test');
 MCsquareBDL = MCsquareBDL.writeMCsquareData([MCsquareFolder filesep 'BDL' filesep bdFile]);
 %movefile(bdFile,[MCsquareFolder filesep 'BDL/' bdFile]);
-% MCsquareBDL = MCsquareBDL.saveMatradMachine('testMachine');
+% MCsquareBDL = MCsquareBDL.saveMatradMachine('savedMatRadMachine');
 
 MCsquareConfig.BDL_Machine_Parameter_File = ['BDL/' bdFile];
 MCsquareConfig.BDL_Plan_File = 'currBixels.txt';
