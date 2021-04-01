@@ -340,22 +340,24 @@ classdef MatRad_Config < handle
             % regarding the structs, in order to fix this, do a custom 
             % loading process including recursivly copying the conflicting structs 
             if isstruct(sobj)
-                warning("The  loaded object differs from the current MatRad_Config class, resuming the loading process with the overloaded loadobj function!");
+                warning('The  loaded object differs from the current MatRad_Config class, resuming the loading process with the overloaded loadobj function!');
                 obj = MatRad_Config(); 
-                p =  properties(obj);
-                % Throw warning if the version differ and remove the
+                % Use a metaclass object to get the properties because
+                % Octave <= 5.2 doesn't have a properties function
+                props = {metaclass(obj).PropertyList.Name};
+                % Throw warning if the version differs and remove the
                 % matRad_version field from the loaded struct, in order to
                 % not overwrite the version later
-                if (isfield(sobj, "matRad_version") && ~(strcmp(obj.matRad_version, sobj.matRad_version)))
-                    warning("MatRad version or git Branch of the loaded object differs from the curret version!");
-                    sobj = rmfield(sobj, "matRad_version");
+                if (isfield(sobj, 'matRad_version') && ~(strcmp(obj.matRad_version, sobj.matRad_version)))
+                    warning('MatRad version or git Branch of the loaded object differs from the curret version!');
+                    sobj = rmfield(sobj, 'matRad_version');
                 end
                 % Itterate over the properties of the newly created MatRad_Config object
-                for i = 1:length(p)
+                for i = 1:length(props)
                     % check if the field exists in the loaded object
-                    if(isfield(sobj,p{i}))
-                        objField = obj.(p{i});
-                        sobjField = sobj.(p{i});
+                    if(isfield(sobj,props{i}))
+                        objField = obj.(props{i});
+                        sobjField = sobj.(props{i});
                         % If field from loaded object and from the newly
                         % created object are equal skip it, else copy the
                         % value of the loaded object and if it's a struct
@@ -363,9 +365,9 @@ classdef MatRad_Config < handle
                         if ~(isequal(sobjField, objField))
                             if (isstruct(sobjField) && isstruct(objField))
                                 retStruct = mergeStructs(objField,sobjField);
-                                obj.(p{i}) = retStruct;
+                                obj.(props{i}) = retStruct;
                             else
-                                obj.(p{i}) = sobjField;
+                                obj.(props{i}) = sobjField;
                             end
                         end
                     end
