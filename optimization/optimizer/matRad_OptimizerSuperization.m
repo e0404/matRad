@@ -36,12 +36,15 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
         timeInit;
         timeStart;
         timeIter;
+        
+        abortRequested = false;
     end
     
     properties (Access = private)
         M; % temp variables for the feasibility seeker
-        axesHandle;
-        plotHandle;
+        axesHandles;
+        plotHandles;
+        figHandle;
     end
     
     
@@ -251,16 +254,20 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
                     
                    terminated = true;
                    obj.resultInfo.stoppedby = "acceptable_solution_found";
-                   fprintf('Acceptable solution found. Terminating now... \n')
+                   fprintf('Acceptable solution found. Terminating now... \n');
                    
                 elseif toc(obj.timeStart) > obj.max_time
                     terminated = true;
                     obj.resultInfo.stoppedby = "time_exceeded";
-                    fprintf('Time exceeded. Terminating now...\n')
+                    fprintf('Time exceeded. Terminating now...\n');
                 elseif i == obj.max_iter
                     terminated = true;
                     obj.resultInfo.stoppedby = "max_iter";
-                    fprintf('Max number of iterations exceeded. Terminating now...\n')
+                    fprintf('Max number of iterations exceeded. Terminating now...\n');
+                elseif obj.abortRequested
+                    terminated = true;
+                    obj.resultInfo.stoppedby = "user";
+                    fprintf('Abort requested by user. Terminating now...\n');
                 end
                 
                 % Stopping and returns
@@ -357,6 +364,7 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
             x=x+(1/max(1, sum(res_b<0)+sum(res_c<0)))*(obj.M(:, res_b<0)*res_b(res_b<0)-obj.M(:, res_c<0)*res_c(res_c<0));
             x(x<0)=0;
         end
+                
         
         
         function [x] = AMS_sequential(obj, x, A, b, c, A_norm, weights)
@@ -401,18 +409,39 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
         
         function plotFunction(obj)
             % plot objective function output
-            y = obj.allObjectiveFunctionValues;
-            x = 1:numel(y);
+            yF = obj.allObjectiveFunctionValues;
+            yViol = obj.allConstraintViolations;
+            yProx = obj.allOptVars.norm2_violations;
+            x = 1:numel(yF);
             
-            if isempty(obj.axesHandle) || ~isgraphics(obj.axesHandle,'axes')
+            if isempty(obj.figHandle) || ~isgraphics(obj.figHandle,'figure')
                 %Create new Fiure and store axes handle
-                hFig = figure('Name','Progress of Superiorization','NumberTitle','off','Color',[.5 .5 .5]);
-                hAx = axes(hFig);
-                hold(hAx,'on');
-                grid(hAx,'on');
-                grid(hAx,'minor');
-                set(hAx,'YScale','log');
+                obj.figHandle = figure('Name','Progress of Superiorization','NumberTitle','off','Color',[.5 .5 .5]);
+                hFig = obj.figHandle;
+                               
+                titles = {'Objective Function','Max. constr. violation','Proximity'};
+                yscale = {'log','log','log'};
+                ylabels = {'Objective Function','Max. constr. violation','Proximity'};
                 
+                defaultFontSize = 14;
+                               
+                for p = 1:3
+                    hAx(p) = subplot(1,3,p,'Parent',hFig);
+                    hold(hAx(p),'on');
+                    grid(hAx(p),'on');
+                    grid(hAx(p),'minor');
+                    set(hAx(p),'YScale',yscale{p});
+                    title(hAx(p),titles{p},'LineWidth',defaultFontSize);
+                    xlabel(hAx(p),'# iterations','Fontsize',defaultFontSize);
+                    ylabel(hAx(p),ylabels{p},'Fontsize',defaultFontSize);
+                   
+                end
+                   
+                %Create plot handle and link to data for faster update
+                hPlot(1) = plot(hAx(1),x,yF,'xb','LineWidth',1.5,'XDataSource','x','YDataSource','yF');
+                hPlot(2) = plot(hAx(2),x,yViol,'xb','LineWidth',1.5,'XDataSource','x','YDataSource','yViol');
+                hPlot(3) = plot(hAx(3),x,yProx,'xb','LineWidth',1.5,'XDataSource','x','YDataSource','yProx');
+                               
                 %Add a Stop button with callback to change abort flag
                 c = uicontrol;
                 cPos = get(c,'Position');
@@ -421,33 +450,29 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
                 set(c,  'String','Stop',...
                     'Position',cPos,...
                     'Callback',@(~,~) abortCallbackButton(obj));
-                
-                %Set up the axes scaling & labels
-                defaultFontSize = 14;
-                set(hAx,'YScale','log');
-                title(hAx,'Progress of Superiorization','LineWidth',defaultFontSize);
-                xlabel(hAx,'# iterations','Fontsize',defaultFontSize),ylabel(hAx,'objective function value','Fontsize',defaultFontSize);
-                
-                %Create plot handle and link to data for faster update
-                hPlot = plot(hAx,x,y,'xb','LineWidth',1.5,'XDataSource','x','YDataSource','y');
-                obj.plotHandle = hPlot;
-                obj.axesHandle = hAx;
+
+                obj.plotHandles = hPlot;
+                obj.axesHandles = hAx;
                 
             else %Figure already exists, retreive from axes handle
-                hFig = get(obj.axesHandle,'Parent');
-                hAx = obj.axesHandle;
-                hPlot = obj.plotHandle;
+                hFig = obj.figHandle;
+                hAx = obj.axesHandles;
+                hPlot = obj.plotHandles;
             end
             
             % draw updated axes by refreshing data of the plot handle (which is linked to y and y)
             % in the caller workspace. Octave needs and works on figure handles, which
             % is substantially (factor 10) slower, thus we check explicitly
             matRad_cfg = MatRad_Config.instance();
+            
             if matRad_cfg.isOctave
                 refreshdata(hFig,'caller');
             else
-                refreshdata(hPlot,'caller');
+                for p = 1:3
+                    refreshdata(hPlot(p),'caller');
+                end
             end
+            
             drawnow;
         end
         
