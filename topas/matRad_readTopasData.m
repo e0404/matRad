@@ -21,29 +21,41 @@ if calcDoseDirect
         
         for f = 1:MCparam.nbFields
             topasSum = zeros(cubeDim(1),cubeDim(2),cubeDim(3));
+            topasStd = zeros(cubeDim(1),cubeDim(2),cubeDim(3));
             for k = 1:MCparam.nbRuns
                 genFileName = sprintf('score_%s_field%d_run%d_%s',MCparam.simLabel,f,k,tname);
                 switch MCparam.outputType
                     case 'csv'
                         genFullFile = fullfile(folder,[genFileName '.csv']);
-                        data = readCsvData(genFullFile,cubeDim);
+                        data{k} = readCsvData(genFullFile,cubeDim);
                     case 'binary'
                         genFullFile = fullfile(folder,[genFileName '.bin']);
-                        [data,std] = readBinData(genFullFile,cubeDim,numel(MCparam.scoreReportQuantity));
+                        if iscell(MCparam.scoreReportQuantity)
+                            [data{k},topasStd] = readBinData(genFullFile,cubeDim,numel(MCparam.scoreReportQuantity));
+                        else
+                            data{k} = readBinData(genFullFile,cubeDim,1);
+                        end
                     otherwise
                         error('Not implemented!');
                 end
-                topasSum = topasSum + data;
+                topasSum = topasSum + data{k};
             end
-            
+                      
             if strcmp(tname,'physicalDose')
                 topasSum = correctionFactor.*topasSum;
             elseif strcmp(tname,'alpha') || strcmp(tname,'beta') || strcmp(tname,'RBE')
                 topasSum = topasSum./ MCparam.nbRuns;
             end
             
+            % Calculate Standard Deviation from batches
+            for k = 1:MCparam.nbRuns
+                topasStd = topasStd + sum((data{k} - topasSum./MCparam.nbRuns).^2);
+            end
+            topasStd = sqrt(topasStd./MCparam.nbRuns);
+            
             % Tally per field
             topasCube.([tname '_beam' num2str(f)]) = topasSum;
+            topasCube.std = topasStd;
             
             % Accumulate over the fields
             topasTally = topasTally + topasSum;
@@ -53,10 +65,6 @@ if calcDoseDirect
         if ~(strcmp(tname,'alpha') || strcmp(tname,'beta') || strcmp(tname,'RBE'))
             topasCube.(tname) = topasTally;
         end
-    end
-    if any(std(:))
-        topasCube.std = zeros(cubeDim(1),cubeDim(2),cubeDim(3));
-        topasCube.std = std;
     end
     
 else % if topas dij calculation

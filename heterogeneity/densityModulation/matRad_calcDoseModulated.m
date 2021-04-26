@@ -30,6 +30,7 @@ for i = 1:samples
                     resultGUI.RBExD = resultGUI.RBExD + resultGUI_mod.RBExD/samples;
                 end
                 resultGUI.physicalDose = resultGUI.physicalDose + resultGUI_mod.physicalDose/samples;
+                std{i} = resultGUI_mod.std;
             end
         else
             error('error')
@@ -41,8 +42,16 @@ for i = 1:samples
             resultGUI.RBExD = resultGUI.RBExD + resultGUI_mod.RBExD;
         end
         resultGUI.physicalDose = resultGUI.physicalDose + resultGUI_mod.physicalDose/samples;
-    end
-
+    end  
+end
+if iscell(mode) %case TOPAS
+       % Calculate combined standard deviation for TOPAS
+       resultGUI.std = [];
+       stdSq = 0;
+       for i = 1:samples
+          stdSq = stdSq + std{i}.^2;
+       end
+       resultGUI.std = sqrt(stdSq);
 end
 
 end
