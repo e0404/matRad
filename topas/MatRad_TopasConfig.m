@@ -75,6 +75,7 @@ classdef MatRad_TopasConfig < handle
         scoreDij = false;
         scoreRBE = false;
         %scoreLET = true;
+%         scoreReportQuantity = {'Sum','Standard_Deviation'}; 
         scoreReportQuantity = 'Sum'; 
         outputType = 'binary'; %'csv'; 'binary';%             
         
@@ -146,6 +147,7 @@ classdef MatRad_TopasConfig < handle
             
             obj.MCparam.nbRuns = obj.numOfRuns;
             obj.MCparam.simLabel = obj.label;
+            obj.MCparam.scoreReportQuantity = obj.scoreReportQuantity;
             
                         
             if ~exist(obj.workingDir,'dir')
@@ -196,7 +198,13 @@ classdef MatRad_TopasConfig < handle
            
            
            fprintf(fID,'s:Sim/DoseScorerOutputType = "%s"\n',obj.outputType);
-           fprintf(fID,'sv:Sim/DoseScorerReport = 1 "%s"\n',obj.scoreReportQuantity);           
+           if iscell(obj.scoreReportQuantity)
+                fprintf(fID,'sv:Sim/DoseScorerReport = %i ',length(obj.scoreReportQuantity));  
+                fprintf(fID,'"%s" ',obj.scoreReportQuantity{:});  
+                fprintf(fID,'\n');
+           else
+                fprintf(fID,'sv:Sim/DoseScorerReport = 1 "%s"\n',obj.scoreReportQuantity);  
+           end
            fprintf(fID,'\n');
            
            %fprintf(fID,'includeFile = %s/TOPAS_Simulation_Setup.txt\n',obj.thisFolder);
