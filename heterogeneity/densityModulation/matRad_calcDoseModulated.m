@@ -18,7 +18,9 @@ for i = 1:samples
             if strcmp(modulation,'poisson')
                 pln.propMC.materialConverter = 'HUToWaterSchneider_mod';
             else
-                pln.propMC.materialConverter = 'HUToWaterSchneider';
+                if ~isfield(pln.propMC,'materialConverter')
+                    pln.propMC.materialConverter = 'HUToWaterSchneider';
+                end
             end
             resultGUI_mod = matRad_calcDoseDirectMC(ct_mod,stf,pln,cst,weights,mode{2}/samples,mode{3});
             
