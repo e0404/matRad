@@ -162,6 +162,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 %Delete previous topas files
                 files = dir([topasConfig.workingDir,'*']);
                 files = {files(~[files.isdir]).name};
+                fclose('all');
                 for i = 1:length(files)
                     delete([topasConfig.workingDir,files{i}])
                 end
