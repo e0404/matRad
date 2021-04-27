@@ -21,7 +21,7 @@ if calcDoseDirect
         
         for f = 1:MCparam.nbFields
             topasSum = zeros(cubeDim(1),cubeDim(2),cubeDim(3));
-            topasStd = zeros(cubeDim(1),cubeDim(2),cubeDim(3));
+            topasMeanDiff = zeros(cubeDim(1),cubeDim(2),cubeDim(3));
             for k = 1:MCparam.nbRuns
                 genFileName = sprintf('score_%s_field%d_run%d_%s',MCparam.simLabel,f,k,tname);
                 switch MCparam.outputType
@@ -30,11 +30,11 @@ if calcDoseDirect
                         data{k} = readCsvData(genFullFile,cubeDim);
                     case 'binary'
                         genFullFile = fullfile(folder,[genFileName '.bin']);
-                        if iscell(MCparam.scoreReportQuantity)
-                            [data{k},topasStd] = readBinData(genFullFile,cubeDim,numel(MCparam.scoreReportQuantity));
-                        else
-                            data{k} = readBinData(genFullFile,cubeDim,1);
-                        end
+%                         if iscell(MCparam.scoreReportQuantity)
+%                             [data{k},topasStd] = readBinData(genFullFile,cubeDim,numel(MCparam.scoreReportQuantity));
+%                         else
+                            data{k} = readBinData(genFullFile,cubeDim);
+%                         end
                     otherwise
                         error('Not implemented!');
                 end
@@ -49,13 +49,17 @@ if calcDoseDirect
             
             % Calculate Standard Deviation from batches
             for k = 1:MCparam.nbRuns
-                topasStd = topasStd + sum((data{k} - topasSum./MCparam.nbRuns).^2);
+                topasMeanDiff = topasMeanDiff + (data{k} - topasSum./MCparam.nbRuns).^2;
             end
-            topasStd = sqrt(topasStd./MCparam.nbRuns);
+            topasVarMean = topasStd./(MCparam.nbRuns - 1);
+            topasStdMean = sqrt(topasVar);
+            topasVarSum = topasVarMean * n;
+            topasStdSum = topasStdMean * sqrt(n);
             
             % Tally per field
             topasCube.([tname '_beam' num2str(f)]) = topasSum;
-            topasCube.std = topasStd;
+            topasCube.std = topasStdSum;
+            topasCube.var = topasVarSum;
             
             % Accumulate over the fields
             topasTally = topasTally + topasSum;
@@ -114,15 +118,16 @@ ix = sub2ind([cubeDim(1) cubeDim(2) cubeDim(3)],dataCsv{1}(:,2)+1,dataCsv{1}(:,1
 data(ix) = dataCsv{2};
 end
 
-function [data,std] = readBinData(binFile,cubeDim,numOfQuantities)
+function data = readBinData(binFile,cubeDim)
 fID = fopen(binFile);
+numOfQuantities = 1;
 dataRead = fread(fID,[numOfQuantities,prod(cubeDim)],'double');
 data = dataRead(1,:);
-if numOfQuantities ~= 1
-    std = dataRead(2,:);
-    std = reshape(std,cubeDim(2),cubeDim(1),cubeDim(3));
-    std = permute(std,[2 1 3]);
-end
+% if numOfQuantities ~= 1
+%     std = dataRead(2,:);
+%     std = reshape(std,cubeDim(2),cubeDim(1),cubeDim(3));
+%     std = permute(std,[2 1 3]);
+% end
 fclose(fID);
 data = reshape(data,cubeDim(2),cubeDim(1),cubeDim(3));
 data = permute(data,[2 1 3]);
