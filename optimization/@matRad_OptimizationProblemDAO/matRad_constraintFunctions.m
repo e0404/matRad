@@ -34,6 +34,9 @@ function c = matRad_constraintFunctions(optiProb,apertureInfoVec,dij,cst)
 
 apertureInfo = optiProb.apertureInfo;
 
+% update apertureInfo, bixel weight vector an mapping of leafes to bixels
+apertureInfo = optiProb.matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVec);
+
 % value of constraints for leaves
 leftLeafPos  = apertureInfoVec([1:apertureInfo.totalNumOfLeafPairs]+apertureInfo.totalNumOfShapes);
 rightLeafPos = apertureInfoVec(1+apertureInfo.totalNumOfLeafPairs+apertureInfo.totalNumOfShapes:end);
