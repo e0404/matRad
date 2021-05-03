@@ -95,7 +95,7 @@ if ~isempty(fileList)
 
         try
             if strcmp(info.Modality,'CT')
-                fileList{i,9} = num2str(info.PixelSpacing(1));
+                fileList{i,9} = num2str(info.PixelSpacing(1),15);
             else
                 fileList{i,9} = NaN;
             end
@@ -104,7 +104,7 @@ if ~isempty(fileList)
         end
         try
             if strcmp(info.Modality,'CT')
-                fileList{i,10} = num2str(info.PixelSpacing(2));
+                fileList{i,10} = num2str(info.PixelSpacing(2),15);
             else
                 fileList{i,10} = NaN;
             end
@@ -116,9 +116,9 @@ if ~isempty(fileList)
                 %usually the Attribute should be SliceThickness, but it
                 %seems like some data uses "SpacingBetweenSlices" instead.
                 if isfield(info,'SliceThickness') && ~isempty(info.SliceThickness)
-                    fileList{i,11} = num2str(info.SliceThickness);
+                    fileList{i,11} = num2str(info.SliceThickness,15);
                 elseif isfield(info,'SpacingBetweenSlices')
-                    fileList{i,11} = num2str(info.SpacingBetweenSlices);
+                    fileList{i,11} = num2str(info.SpacingBetweenSlices,15);
                 else
                     matRad_cfg.dispError('Could not identify spacing between slices since neither ''SliceThickness'' nor ''SpacingBetweenSlices'' are specified');
                 end

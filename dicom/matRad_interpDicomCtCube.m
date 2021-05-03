@@ -67,14 +67,20 @@ else
     zq = coordsOfFirstPixel(3,1):resolution.z: coordsOfFirstPixel(3,end);
 end
 
-% set up grid matrices - implicit dimension permuation (X Y Z-> Y X Z)
-% Matlab represents internally in the first matrix dimension the
-% ordinate axis and in the second matrix dimension the abscissas axis
-[ X,  Y,  Z] = meshgrid(x,y,z);
-[Xq, Yq, Zq] = meshgrid(xq,yq,zq);
 
-% interpolate cube - cube is now stored in Y X Z 
-interpCt.cubeIV{1} = interp3(X,Y,Z,double(origCt),Xq,Yq,Zq);
+% skip interpolation if the given resolution is equal to the orignal resolution
+tmpCmp = abs([origCtInfo(1).PixelSpacing(1),origCtInfo(1).PixelSpacing(2),origCtInfo(1).SliceThickness] - [resolution.x,resolution.y,resolution.z]);
+if(all(tmpCmp < 1e-6))    
+    interpCt.cubeIV{1} = origCt;
+else
+    % set up grid matrices - implicit dimension permuation (X Y Z-> Y X Z)
+    % Matlab represents internally in the first matrix dimension the
+    % ordinate axis and in the second matrix dimension the abscissas axis
+    [ X,  Y,  Z] = meshgrid(x,y,z);
+    [Xq, Yq, Zq] = meshgrid(xq,yq,zq);
+    % interpolate cube - cube is now stored in Y X Z 
+    interpCt.cubeIV{1} = round(interp3(X,Y,Z,double(origCt),Xq,Yq,Zq));
+end
 
 % some meta information
 interpCt.resolution = resolution;

@@ -76,7 +76,7 @@ for i = 1:numOfSlices
     %Problem due to some CT files using non-standard SpacingBetweenSlices
     
     if isempty(ctInfo(i).SliceThickness)
-        %Print warning ocne
+        %Print warning once
         if sliceThicknessStandard
             matRad_cfg.dispWarning('Non-standard use of SliceThickness Attribute (empty), trying to overwrite with SpacingBetweenSlices');
             sliceThicknessStandard = false;
