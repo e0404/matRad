@@ -32,6 +32,11 @@ function jacob = matRad_constraintJacobian(optiProb,apertureInfoVec,dij,cst)
 %Calculate jacobian for dosimetric and leaf constraints
 jacob_dos_dao = matRad_constraintJacobian@matRad_OptimizationProblemDAO(optiProb,apertureInfoVec,dij,cst);
 
+% update apertureInfo, bixel weight vector an mapping of leafes to bixels
+% This update should have taken place if necessary in the call above
+%if ~isequal(apertureInfoVec,optiProb.apertureInfo.apertureVector)
+%    optiProb.apertureInfo = matRad_daoVec2ApertureInfo(optiProb.apertureInfo,apertureInfoVec);
+%end
 apertureInfo = optiProb.apertureInfo;
 
 %VMAT

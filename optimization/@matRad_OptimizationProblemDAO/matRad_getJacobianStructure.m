@@ -71,11 +71,13 @@ if ~isempty(jacobStruct_dos_bixel)
 
     jacobStructSparseVec = zeros(numOfConstraints*numel(apertureInfo.apertureVector),1);
     
+    %counter = apertureInfo.totalNumOfShapes;
     for i = 1:numel(apertureInfo.beam)
+    %for i = 1:size(apertureInfo.beam,2)
         
         % get used bixels in beam
         ixWeight = ~isnan(apertureInfo.beam(i).bixelIndMap);
-        
+
         for j = 1:apertureInfo.beam(i).numOfShapes
             % first weight
             jacobStructSparseVec(offset+j == j_sparse) = jacobStructSparseVec(offset+j == j_sparse)+sum(jacobStruct_dos_bixel(:,apertureInfo.beam(i).bixelIndMap(ixWeight)),2);

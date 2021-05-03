@@ -30,12 +30,11 @@ function jacob = matRad_constraintJacobian(optiProb,apertureInfoVec,dij,cst)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-apertureInfo = optiProb.apertureInfo;
-
-% update apertureInfo if necessary
-if ~isequal(apertureInfoVec,apertureInfo.apertureVector)
-    apertureInfo = optiProb.matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVec);
+% update apertureInfo, bixel weight vector an mapping of leafes to bixels
+if ~isequal(apertureInfoVec,optiProb.apertureInfo.apertureVector)
+    optiProb.apertureInfo = optiProb.matRad_daoVec2ApertureInfo(optiProb.apertureInfo,apertureInfoVec);
 end
+apertureInfo = optiProb.apertureInfo;
 
 % jacobian of the dao constraints
 
