@@ -138,15 +138,6 @@ if pln.propOpt.preconditioner
     wOpt(1:apertureInfo.totalNumOfShapes) = wOpt(1:apertureInfo.totalNumOfShapes).*dij.scaleFactor;
 end
 
-% logging final results
-matRad_cfg.dispInfo('Calculating final cubes...\n');
-resultGUI = matRad_calcCubes(apertureInfo.bixelWeights,dij);
-resultGUI.w    = apertureInfo.bixelWeights;
-resultGUI.wDAO = apertureInfo.bixelWeights;
-resultGUI.apertureInfo = apertureInfo;
-
-
-
 % update the apertureInfoStruct and calculate bixel weights
 resultGUI.apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,wOpt);
 
@@ -157,6 +148,13 @@ resultGUI.wDao = resultGUI.apertureInfo.bixelWeights;
 %dij.scaleFactor = 1;
 
 resultGUI.apertureInfo = matRad_preconditionFactors(resultGUI.apertureInfo);
+
+% logging final results
+matRad_cfg.dispInfo('Calculating final cubes...\n');
+resultGUI = matRad_calcCubes(apertureInfo.bixelWeights,dij);
+resultGUI.w    = apertureInfo.bixelWeights;
+resultGUI.wDAO = apertureInfo.bixelWeights;
+resultGUI.apertureInfo = apertureInfo;
 
 if isfield(pln,'scaleDRx') && pln.scaleDRx
     %Scale D95 in target to RXDose
