@@ -79,7 +79,7 @@ else
     [ X,  Y,  Z] = meshgrid(x,y,z);
     [Xq, Yq, Zq] = meshgrid(xq,yq,zq);
     % interpolate cube - cube is now stored in Y X Z 
-    interpCt.cubeIV{1} = round(interp3(X,Y,Z,double(origCt),Xq,Yq,Zq));
+    interpCt.cubeIV{1} = interp3(X,Y,Z,double(origCt),Xq,Yq,Zq);
 end
 
 % some meta information
