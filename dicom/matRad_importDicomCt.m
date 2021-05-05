@@ -4,7 +4,6 @@ function ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid, visB
 % call
 %   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool)
 %   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid)
-%   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, visBool)
 %   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid, visBool)
 %
 % input
