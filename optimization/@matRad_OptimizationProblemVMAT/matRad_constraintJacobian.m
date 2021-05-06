@@ -29,15 +29,39 @@ function jacob = matRad_constraintJacobian(optiProb,apertureInfoVec,dij,cst)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%Calculate jacobian for dosimetric and leaf constraints
-jacob_dos_dao = matRad_constraintJacobian@matRad_OptimizationProblemDAO(optiProb,apertureInfoVec,dij,cst);
-
 % update apertureInfo, bixel weight vector an mapping of leafes to bixels
-% This update should have taken place if necessary in the call above
-%if ~isequal(apertureInfoVec,optiProb.apertureInfo.apertureVector)
-%    optiProb.apertureInfo = matRad_daoVec2ApertureInfo(optiProb.apertureInfo,apertureInfoVec);
-%end
+if ~isequal(apertureInfoVec,optiProb.apertureInfo.apertureVector)
+    optiProb.apertureInfo = optiProb.matRad_daoVec2ApertureInfo(optiProb.apertureInfo,apertureInfoVec);
+end
 apertureInfo = optiProb.apertureInfo;
+
+% jacobian of the dao constraints
+
+% row indices
+i = repmat(1:apertureInfo.totalNumOfLeafPairs,1,2);
+% column indices
+j = [(apertureInfo.totalNumOfShapes+1):(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs) ...
+     ((apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs)+1):(apertureInfo.totalNumOfShapes+2*apertureInfo.totalNumOfLeafPairs)];
+    
+% -1 for left leaves, 1 for right leaves
+s = [-1*ones(1,apertureInfo.totalNumOfLeafPairs) ones(1,apertureInfo.totalNumOfLeafPairs)];
+
+jacob_dao = sparse(i,j,s, ...
+    apertureInfo.totalNumOfLeafPairs, ...
+    numel(apertureInfoVec), ...
+    2*apertureInfo.totalNumOfLeafPairs);
+
+% compute jacobian of dosimetric constrainst
+
+% dosimetric jacobian in bixel space
+jacob_dos_bixel = matRad_constraintJacobian@matRad_OptimizationProblem(optiProb,apertureInfo.bixelWeights,dij,cst);
+
+if ~isempty(jacob_dos_bixel)
+    %Use pre-computed bixelAperture-Jacobian
+    jacob_dos = jacob_dos_bixel*apertureInfo.bixelJApVec';
+else
+    jacob_dos = sparse(0,0);
+end
 
 %VMAT
 % values of times spent in an arc surrounding the optimized angles (full
@@ -254,6 +278,6 @@ jacob_dosrt = sparse(i,j,s,apertureInfo.totalNumOfShapes,numel(apertureInfoVec),
 
 
 % concatenate
-jacob = [jacob_dos_dao; jacob_lfspd; jacob_dosrt];
+jacob = [jacob_dos; jacob_dao; jacob_lfspd; jacob_dosrt];
 
 

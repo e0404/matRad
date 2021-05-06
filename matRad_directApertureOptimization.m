@@ -98,6 +98,7 @@ end
 % update aperture info vector
 
 apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(apertureInfo,apertureInfo.apertureVector);
+apertureInfo.newIteration = true; %do we need this?
 
 %Use Dose Projection only
 backProjection = matRad_DoseProjection();
@@ -124,10 +125,8 @@ end
 
 % Run IPOPT.
 optimizer = optimizer.optimize(apertureInfo.apertureVector,optiProb,dij,cst);
-wOpt = optimizer.wResult;
+optApertureInfoVec = optimizer.wResult;
 
-% update the apertureInfoStruct and calculate bixel weights
-apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(apertureInfo,wOpt);
 
 %Additional VMAT stuff
 if pln.propOpt.preconditioner
@@ -135,26 +134,29 @@ if pln.propOpt.preconditioner
     
     dij.weightToMU = dij.weightToMU./dij.scaleFactor;
     resultGUI.apertureInfo.weightToMU = resultGUI.apertureInfo.weightToMU./dij.scaleFactor;
-    wOpt(1:apertureInfo.totalNumOfShapes) = wOpt(1:apertureInfo.totalNumOfShapes).*dij.scaleFactor;
+    optApertureInfoVec(1:apertureInfo.totalNumOfShapes) = optApertureInfoVec(1:apertureInfo.totalNumOfShapes).*dij.scaleFactor;
 end
 
+
+
 % update the apertureInfoStruct and calculate bixel weights
-resultGUI.apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,wOpt);
+newApertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,optApertureInfoVec);
 
 % override also bixel weight vector in optResult struct
-resultGUI.w    = resultGUI.apertureInfo.bixelWeights;
-resultGUI.wDao = resultGUI.apertureInfo.bixelWeights;
+w    = newApertureInfo.bixelWeights;
+wDao = newApertureInfo.bixelWeights;
 
-%dij.scaleFactor = 1;
+dij.scaleFactor = 1;
 
-resultGUI.apertureInfo = matRad_preconditionFactors(resultGUI.apertureInfo);
+newApertureInfo = matRad_preconditionFactors(newApertureInfo);
 
 % logging final results
 matRad_cfg.dispInfo('Calculating final cubes...\n');
-resultGUI = matRad_calcCubes(apertureInfo.bixelWeights,dij);
-resultGUI.w    = apertureInfo.bixelWeights;
-resultGUI.wDAO = apertureInfo.bixelWeights;
-resultGUI.apertureInfo = apertureInfo;
+
+resultGUI = matRad_calcCubes(w,dij);
+resultGUI.w    = w;
+resultGUI.wDAO = wDao;
+resultGUI.apertureInfo = newApertureInfo;
 
 if isfield(pln,'scaleDRx') && pln.scaleDRx
     %Scale D95 in target to RXDose
@@ -179,6 +181,7 @@ if pln.propOpt.runVMAT
     
     %optimize delivery
     resultGUI = matRad_optDelivery(resultGUI,1);
+    %resultGUI = matRad_calcDeliveryMetrics(resultGUI,pln,stf);
 end
 
 

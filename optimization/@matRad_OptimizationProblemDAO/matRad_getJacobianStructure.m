@@ -60,6 +60,8 @@ jacobStruct_dos_bixel = matRad_getJacobianStructure@matRad_OptimizationProblem(o
 % all stuff can be done per beam direction and then I use repmat to build
 % up the big matrix
 
+offset = 1;
+
 if ~isempty(jacobStruct_dos_bixel)
     numOfConstraints = size(jacobStruct_dos_bixel,1);
 

@@ -58,6 +58,9 @@ jacob_dao = sparse(i,j,s, ...
 jacob_dos_bixel = matRad_constraintJacobian@matRad_OptimizationProblem(optiProb,apertureInfo.bixelWeights,dij,cst);
 
 if ~isempty(jacob_dos_bixel)
+    %If we would have the apertureInfo.bixelJApVec in DAO, we could use
+    %this instead of the full if branch
+    %jacob_dos = jacob_dos_bixel*apertureInfo.bixelJApVec';
     
     numOfConstraints = size(jacob_dos_bixel,1);
     
@@ -107,8 +110,7 @@ if ~isempty(jacob_dos_bixel)
     
     jacobSparseVec(indInSparseVec) = -jacobSparseVec(indInSparseVec);
     
-    jacob_dos = sparse(i_sparse,j_sparse,jacobSparseVec,numOfConstraints,numel(apertureInfoVec));
-    
+    jacob_dos = sparse(i_sparse,j_sparse,jacobSparseVec,numOfConstraints,numel(apertureInfoVec));    
 else
     jacob_dos = sparse(0,0);
 end
