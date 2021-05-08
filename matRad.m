@@ -18,14 +18,14 @@ matRad_rc
 % load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-load TG119.mat
-%load PROSTATE.mat
+%load TG119.mat
+load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat
 
 % meta information for treatment plan
 
-pln.radiationMode   = 'photons';     % either photons / protons / carbon
+pln.radiationMode   = 'brachy';     % either photons / protons / carbon
 pln.machine         = 'Generic';
 
 pln.numOfFractions  = 30;
@@ -53,8 +53,12 @@ pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't /
 matRadGUI
 
 %% generate steering file
-stf = matRad_generateStf(ct,cst,pln);
-
+switch pln.radiationMode
+    case {'photon','proton','carbon'}
+        stf = matRad_generateStf(ct,cst,pln);
+    case 'brachy'
+        stf = matRadBrachy_generateStf(ct,cst,pln);
+end        
 %% dose calculation
 if strcmp(pln.radiationMode,'photons')
     dij = matRad_calcPhotonDose(ct,stf,pln,cst);
