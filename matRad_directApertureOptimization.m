@@ -97,15 +97,18 @@ end
                              
 % update aperture info vector
 
-apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(apertureInfo,apertureInfo.apertureVector);
-apertureInfo.newIteration = true; %do we need this?
+
 
 %Use Dose Projection only
 backProjection = matRad_DoseProjection();
 
 if pln.propOpt.runVMAT
+    apertureInfo = matRad_OptimizationProblemVMAT.matRad_daoVec2ApertureInfo(apertureInfo,apertureInfo.apertureVector);
+    apertureInfo.newIteration = true; %do we need this?
     optiProb = matRad_OptimizationProblemVMAT(backProjection,apertureInfo);
 else
+    apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(apertureInfo,apertureInfo.apertureVector);
+    apertureInfo.newIteration = true; %do we need this?
     optiProb = matRad_OptimizationProblemDAO(backProjection,apertureInfo);
 end
 
@@ -140,7 +143,7 @@ end
 
 
 % update the apertureInfoStruct and calculate bixel weights
-newApertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,optApertureInfoVec);
+newApertureInfo = optiProb.matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,optApertureInfoVec); %Use optiprob here to automatically choose VMAT / DAO code
 
 % override also bixel weight vector in optResult struct
 w    = newApertureInfo.bixelWeights;

@@ -97,10 +97,10 @@ end
 %recalculate vector with new times
 
 %%%LOOK PAST THIS
-[apertureInfo.apertureVector,~,~] = matRad_OptimizationProblemDAO.matRad_daoApertureInfo2Vec(apertureInfo);
+[apertureInfo.apertureVector,~,~] = matRad_OptimizationProblemVMAT.matRad_daoApertureInfo2Vec(apertureInfo);
 
 %redo interpolation
-apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(apertureInfo,apertureInfo.apertureVector);
+apertureInfo = matRad_OptimizationProblemVMAT.matRad_daoVec2ApertureInfo(apertureInfo,apertureInfo.apertureVector);
 
 if doInterp
     fprintf('\n\nWE ARE REDOING INTERPOLATION\n\n');

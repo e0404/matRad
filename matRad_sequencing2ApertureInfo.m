@@ -324,14 +324,19 @@ if pln.propOpt.runVMAT
         end
     end
     
+    % create vectors for optimization
+    [apertureInfo.apertureVector, apertureInfo.mappingMx, apertureInfo.limMx] = matRad_OptimizationProblemVMAT.matRad_daoApertureInfo2Vec(apertureInfo);
+    
 else
     apertureInfo.totalNumOfOptBixels = sum(stf(i).totalNumOfBixels);
     apertureInfo.totalNumOfLeafPairs = sum([apertureInfo.beam.numOfShapes]*[apertureInfo.beam.numOfActiveLeafPairs]');
     apertureInfo.doseTotalNumOfLeafPairs = apertureInfo.totalNumOfLeafPairs;
+    
+    % create vectors for optimization
+    [apertureInfo.apertureVector, apertureInfo.mappingMx, apertureInfo.limMx] = matRad_OptimizationProblemDAO.matRad_daoApertureInfo2Vec(apertureInfo);
 end
 
-% create vectors for optimization
-[apertureInfo.apertureVector, apertureInfo.mappingMx, apertureInfo.limMx] = matRad_OptimizationProblemDAO.matRad_daoApertureInfo2Vec(apertureInfo);
+
 
 end
 
