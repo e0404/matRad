@@ -57,6 +57,7 @@ jacob_dao = sparse(i,j,s, ...
 % dosimetric jacobian in bixel space
 jacob_dos_bixel = matRad_constraintJacobian@matRad_OptimizationProblem(optiProb,apertureInfo.bixelWeights,dij,cst);
 
+
 if ~isempty(jacob_dos_bixel)
     %If we would have the apertureInfo.bixelJApVec in DAO, we could use
     %this instead of the full if branch
@@ -92,20 +93,24 @@ if ~isempty(jacob_dos_bixel)
         conOffset = conOffset + apertureInfo.beam(i).numOfShapes;
         
     end
-    
+        
     % 2. find corresponding bixel to the leaf Positions and aperture
     % weights to calculate the jacobian
-    indInSparseVec = repmat(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,1,numOfConstraints) ...
+    
+    ixAperturesOnly = apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2; %The first entries in most of the vectors denote shape weights
+    
+    indInSparseVec = repmat(ixAperturesOnly,1,numOfConstraints) ...
         +kron((0:numOfConstraints-1)*numel(apertureInfoVec),ones(1,apertureInfo.totalNumOfLeafPairs*2));
     
     jacobSparseVec(indInSparseVec) = ...
-        reshape(transpose(( ones(numOfConstraints,1) * apertureInfoVec(apertureInfo.mappingMx(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,2))' ) ...
-        .* jacob_dos_bixel(:,apertureInfo.bixelIndices(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2)) ./ ...
-        (ones(numOfConstraints,1) * (apertureInfo.bixelWidth.*apertureInfo.jacobiScale(apertureInfo.mappingMx(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2,2)))')),[],1);
+        reshape(transpose(( ones(numOfConstraints,1) * apertureInfoVec(apertureInfo.mappingMx(ixAperturesOnly,2))' ) ...
+        .* jacob_dos_bixel(:,apertureInfo.bixelIndices) ./ ...
+        (ones(numOfConstraints,1) * (apertureInfo.bixelWidth.*apertureInfo.jacobiScale(apertureInfo.mappingMx(ixAperturesOnly,2)))')),[],1);
     
     
     % correct the sign for the left leaf positions
-    indInSparseVec = repmat(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs,1,numOfConstraints) ...
+    %indInSparseVec = repmat(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs,1,numOfConstraints) ...
+    indInSparseVec = repmat(ixAperturesOnly(1:apertureInfo.totalNumOfLeafPairs),1,numOfConstraints) ...
         +kron((0:numOfConstraints-1)*numel(apertureInfoVec),ones(1,apertureInfo.totalNumOfLeafPairs));
     
     jacobSparseVec(indInSparseVec) = -jacobSparseVec(indInSparseVec);
@@ -114,6 +119,7 @@ if ~isempty(jacob_dos_bixel)
 else
     jacob_dos = sparse(0,0);
 end
+
 
 % concatenate
 jacob = [jacob_dos; jacob_dao];
