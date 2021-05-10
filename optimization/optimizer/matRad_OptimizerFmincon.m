@@ -141,7 +141,8 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
     methods (Static)    
         function available = IsAvailable()
             %'fmincon' is a p-code file in the optimization toolbox
-            available = exist('fmincon') == 6;
+            exVar = exist('fmincon');
+            available = exVar == 6 || exVar == 2; %p-code file or file
         end
     end
 end

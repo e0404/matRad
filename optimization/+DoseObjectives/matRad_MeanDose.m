@@ -51,7 +51,7 @@ classdef matRad_MeanDose < DoseObjectives.matRad_DoseObjective
                     obj.parameters{1} = dMeanRef;
                 end
 
-                if nargin >= 1 && isscalar(s)
+                if nargin >= 1 && isscalar(penalty)
                     obj.penalty = penalty;
                 end
             end

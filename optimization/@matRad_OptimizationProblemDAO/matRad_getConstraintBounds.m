@@ -30,16 +30,16 @@ function [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% get dosimetric bounds from cst (just like for conv opt) by call to
+% superclass method
+[cl_dos,cu_dos] = matRad_getConstraintBounds@matRad_OptimizationProblem(optiProb,cst);
+
 apertureInfo = optiProb.apertureInfo;
 
 % Initialize bounds
 cl_dao = zeros(apertureInfo.totalNumOfLeafPairs,1);
 cu_dao = inf*ones(apertureInfo.totalNumOfLeafPairs,1);
 
-% get dosimetric bounds from cst (just like for conv opt) by call to
-% superclass method
-[cl_dos,cu_dos] = matRad_getConstraintBounds@matRad_OptimizationProblem(optiProb,cst);
-
 % concatenate
-cl = [cl_dao; cl_dos];
-cu = [cu_dao; cu_dos];
+cl = [cl_dos; cl_dao];
+cu = [cu_dos; cu_dao];

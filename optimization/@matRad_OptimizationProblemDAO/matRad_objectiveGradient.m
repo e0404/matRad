@@ -31,12 +31,11 @@ function g = matRad_objectiveGradient(optiProb,apertureInfoVec,dij,cst)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-apertureInfo = optiProb.apertureInfo;
-
 % update apertureInfo, bixel weight vector an mapping of leafes to bixels
-if ~isequal(apertureInfoVec,apertureInfo.apertureVector)
-    apertureInfo = optiProb.matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVec);
+if ~isequal(apertureInfoVec,optiProb.apertureInfo.apertureVector)
+    optiProb.apertureInfo = optiProb.matRad_daoVec2ApertureInfo(optiProb.apertureInfo,apertureInfoVec);
 end
+apertureInfo = optiProb.apertureInfo;
 
 % bixel based gradient calculation
 bixelG = matRad_objectiveGradient@matRad_OptimizationProblem(optiProb,apertureInfo.bixelWeights,dij,cst);
@@ -54,7 +53,7 @@ for i = 1:numel(apertureInfo.beam)
 
     % loop over all shapes and add up the gradients x openingFrac for this shape
     for j = 1:apertureInfo.beam(i).numOfShapes            
-        g(j+offset) = apertureInfo.beam(i).shape(j).shapeMap(ix)' ...
+        g(j+offset) = apertureInfo.beam(i).shape(j).shapeMap(ix)' ./apertureInfo.beam(i).shape(j).jacobiScale ...
                         * bixelG(apertureInfo.beam(i).bixelIndMap(ix));
     end
 
@@ -63,12 +62,15 @@ for i = 1:numel(apertureInfo.beam)
 
 end
 
+ixAperturesOnly = apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2; %The first entries in most of the vectors denote shape weights
+
 % 2. find corresponding bixel to the leaf Positions and aperture 
 % weights to calculate the gradient
-g(apertureInfo.totalNumOfShapes+1:end) = ...
-        apertureInfoVec(apertureInfo.mappingMx(apertureInfo.totalNumOfShapes+1:end,2)) ...
-     .* bixelG(apertureInfo.bixelIndices(apertureInfo.totalNumOfShapes+1:end)) / apertureInfo.bixelWidth;
-
-% correct the sign for the left leaf positions
-g(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs) = ...
-    -g(apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs);
+g(ixAperturesOnly) = ...
+        apertureInfoVec(apertureInfo.mappingMx(ixAperturesOnly,2)) ...
+        .* bixelG(apertureInfo.bixelIndices) ./ ...
+        (apertureInfo.bixelWidth.*apertureInfo.jacobiScale(apertureInfo.mappingMx(ixAperturesOnly,2)));
+    
+    % correct the sign for the left leaf positions
+    g(apertureInfo.totalNumOfShapes+(1:(apertureInfo.totalNumOfLeafPairs))) = ...
+        -g(apertureInfo.totalNumOfShapes+(1:(apertureInfo.totalNumOfLeafPairs)));
