@@ -76,7 +76,7 @@ try
             lastdot_pos = find(filename == '.', 1, 'last');
             
             filename_ith = filename(1:lastdot_pos-1);
-            filename_ith = filename_ith+"_"+i;
+            filename_ith = [filename_ith "_" i];
             
             %Add gantryAngle field to i-th beam header
             header_ith = header_addIntField(header,'gantry angle',stf(i).gantryAngle);
@@ -85,7 +85,7 @@ try
             %Add totalNumOfBixels field to i-th beam header
             header_ith = header_addIntField(header_ith,'total number of bixels', stf(i).totalNumOfBixels);
             %Add dimensions of dose grid field to i-th beam header
-            dimensions = dij.doseGrid.dimensions(1)+" "+dij.doseGrid.dimensions(2)+" "+dij.doseGrid.dimensions(3);
+            dimensions = [dij.doseGrid.dimensions(1) " " dij.doseGrid.dimensions(2) " " dij.doseGrid.dimensions(3)];
             header_ith = header_addStringField(header_ith,'dose grid dimensions', dimensions);
             %Add column headers
             header_ith = header_addComment(header_ith,'voxelID bixelID physicalDose[Gy]');
@@ -103,26 +103,26 @@ try
             if strcmp(metadata.extension,'txt')
                 
                 %Write Header to file with the separating blank line to i-th beam
-                fileHandle = fopen(filename_ith+"."+metadata.extension,'w');
+                fileHandle = fopen([filename_ith "." metadata.extension],'w');
                 fprintf(fileHandle,'%s\n',header_ith);
                 
                 %Append data to file to i-th beam
                 %writematrix(data,filename_tmp,'Delimiter',metadata.delimiter,'-append'); % If you use r2019b matlab version
-                dlmwrite(filename_ith+"."+metadata.extension,data,'delimiter',metadata.delimiter,'-append');
+                dlmwrite([filename_ith "." metadata.extension],data,'delimiter',metadata.delimiter,'-append');
                 
                 fclose(fileHandle);
                 
             elseif strcmp(metadata.extension,'bin')
                 
                 %Append data to file to i-th beam
-                fileHandle = fopen(filename_ith+"."+metadata.extension,'w');
+                fileHandle = fopen([filename_ith "." metadata.extension],'w');
                 fwrite(fileHandle,uint32(ix),'uint32');
                 fwrite(fileHandle,uint32(iy),'uint32');
                 fwrite(fileHandle,vals,'double');
                 fclose(fileHandle);
                 
                 %Write an additional header file
-                headerHandle = fopen(filename_ith+"_header.txt",'w');
+                headerHandle = fopen([filename_ith "_header.txt"],'w');
                 fprintf(headerHandle,'%s\n',header_ith);
                 fclose(headerHandle);
                 
@@ -145,7 +145,7 @@ try
             %Add totalNumOfBixels field to i-th beam header
             header = header_addIntField(header,'total number of bixels', stf(i).totalNumOfBixels);
             %Add dimensions of dose grid field to header
-            dimensions = dij.doseGrid.dimensions(1)+" "+dij.doseGrid.dimensions(2)+" "+dij.doseGrid.dimensions(3);
+            dimensions = [dij.doseGrid.dimensions(1) " " dij.doseGrid.dimensions(2) " " dij.doseGrid.dimensions(3)];
             header = header_addStringField(header,'dose grid dimensions', dimensions);
         end
         
@@ -164,26 +164,26 @@ try
         if strcmp(metadata.extension,'txt')
             
             %Write Header to file with the separating blank line to i-th beam
-            fileHandle = fopen(filename+"."+metadata.extension,'w');
+            fileHandle = fopen([filename "." metadata.extension],'w');
             fprintf(fileHandle,'%s\n',header);
             
             %Append data to file
             %writematrix(data,filename,'Delimiter',metadata.delimiter,'-append'); % If you use r2019b matlab version
-            dlmwrite(filename+"."+metadata.extension,data,'delimiter',metadata.delimiter,'-append');
+            dlmwrite([filename "." metadata.extension],data,'delimiter',metadata.delimiter,'-append');
             
             fclose(fileHandle);
             
         elseif strcmp(metadata.extension,'bin')
             
             %Append data to file
-            fileHandle = fopen(filename+"."+metadata.extension,'w');
+            fileHandle = fopen([filename '.' metadata.extension],'w');
             fwrite(fileHandle,uint32(ix),'uint32');
             fwrite(fileHandle,uint32(iy),'uint32');
             fwrite(fileHandle,vals,'double');
             fclose(fileHandle);
             
             %Write an additional header file
-            headerHandle = fopen(filename+"_header.txt",'w');
+            headerHandle = fopen([filename '_header.txt'],'w');
             fprintf(headerHandle,'%s\n',header);
             fclose(headerHandle);
             
@@ -194,10 +194,13 @@ try
     end
     
 catch MExc
+    %if something failed while writing, close all files and display error
     fclose('all');
-    error(sprintf('File %s could not be written!\n%s',filename,getReport(MExc)));
-    
+    fprintf(2,'File %s could not be written!\n',filename);
+    error(MExc);  
 end
+
+fprintf(1,'Dij exported successfully into %s!\n',filename);
 
 %Used to add comments to the header
     function newHeader = header_addComment(header,comment)
