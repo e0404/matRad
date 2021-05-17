@@ -7,6 +7,8 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
         %Set default options
         max_iter {mustBeInteger} = 500;
         max_time {mustBeNumeric, mustBePositive} = 3000; %second
+        warm_start = true;
+        warm_start_step_size = 25;
         alpha {mustBeNumeric, mustBePositive, mustBeLessThan(alpha, 1)} = 0.99;
         lambda {mustBeNumeric, mustBePositive, mustBeLessThan(lambda, 200)} = 1.9;
         feasibility_seeker {mustBeMember(feasibility_seeker, {'AMS_sim', 'AMS_sequential'})} = 'AMS_sim';
@@ -163,8 +165,6 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
                 supStart = tic;
                 f_evals = 0;
                 
-                
-                
                 if ~obj.ignoreObjective
                     while n<obj.num_reductions
                         
@@ -172,7 +172,13 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
                         
                         loop = true;
                         while loop
-                            l=l+1;
+                            
+                            if obj.warm_start
+                                l=l+obj.warm_start_step_size;
+                            else
+                                l=l+1;
+                            end
+                            
                             beta=(obj.alpha)^l;
                             z=x-beta*v;
                             
@@ -180,6 +186,7 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
                                 n=n+1;
                                 x=z;
                                 loop=false;
+                                obj.warm_start=false;
                             end
                             f_evals = f_evals + 1;
                         end
