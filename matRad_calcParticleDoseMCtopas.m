@@ -123,6 +123,9 @@ end
 topasBaseData = MatRad_TopasBaseData(machine,stf);%,TopasConfig);
 
 topasConfig.numHistories = nCasePerBixel;
+if isfield(pln.propMC,'numOfRuns')
+    topasConfig.numOfRuns = pln.propMC.numOfRuns;
+end
 if openStack
     topasConfig.workingDir = [topasConfig.thisFolder filesep 'MCrun' filesep [pln.machine,'_',pln.radiationMode,'_']];
     topasConfig.workingDir = [topasConfig.workingDir num2str(length(dir([topasConfig.workingDir,'*'])) + 1) filesep];
@@ -176,12 +179,12 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 % Run simulation for current scenario
                 cd(topasConfig.workingDir);
                 
+                if topasConfig.scoreRBE
+                    [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
+                    dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
+                end
                 
                 if openStack
-                    if topasConfig.scoreRBE
-                        [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
-                        dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
-                    end
                     save('dij.mat','dij')
                     save('weights.mat','w')
                     matRad_cfg.dispInfo('TOPAS simulation skipped for external calculation\n');
