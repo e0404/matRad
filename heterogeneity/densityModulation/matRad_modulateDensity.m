@@ -77,8 +77,14 @@ if strcmp(mode, 'binomial')
     
     n = round(D./d);
     
-    ct.cube{1}(lungIdx) =  matRad_sampleLungBino(n,pLung,rhoLung,length(lungIdx));
+    % Don't modulate voxel with less than 1 substructures
+    lungIdx = lungIdx(n~=0);
+    pLung = pLung(n~=0);
+    n = n(n~=0);
     
+    ct.cube{1}(lungIdx) =  matRad_sampleLungBino(n,pLung,rhoLung,length(lungIdx));
+    ct.cubeHU{1}(lungIdx) = 1024*(ct.cube{1}(lungIdx)-1);
+        
 elseif strcmp(mode, 'poisson')
     
     DensMod = matRad_loadModDist(Pmod);
@@ -91,22 +97,54 @@ elseif strcmp(mode, 'poisson')
     
     %Connect each density-probability-couple with a number that will later be transformed the HU-Value:
     %The maximum HU-Value of the HU set by Schneider etal is 2995: So the HU of the modulated density must be at least 2995+1=2996 ; This values is prerocessed with the later used RescaleIntercept and RescaleSlope. See also calculation for Threshold_HU_Value_to_double.
-%     Min_HU_for_DensMod_in_double=((2995+1000)/1);
+    Min_HU_for_DensMod_in_double=((2995+1000)/1);
     
     %HU as double in row 2:
-%     DensMod(:,2) = (Min_HU_for_DensMod_in_double+1:Min_HU_for_DensMod_in_double+length(DensMod))';
+    DensMod(:,2) = (Min_HU_for_DensMod_in_double+1:Min_HU_for_DensMod_in_double+length(DensMod))';
     %Real HU values in row 3:
-%     DensMod(:,3) = (Min_HU_for_DensMod_in_double+1:Min_HU_for_DensMod_in_double+length(DensMod))'-1000;
+    DensMod(:,3) = (Min_HU_for_DensMod_in_double+1:Min_HU_for_DensMod_in_double+length(DensMod))'-1000;
     
-    % descrete sampling of the density distribution
-    P = [0; cumsum(DensMod(:,4))];
+
+    Z_mod = ct.cubeHU{1};
+
+    numOfSamples = 50*length(lungIdx);
     
-    samples = discretize(rand(numel(lungIdx),1),P);
-    ct.cube{1}(lungIdx) = samples / max(samples);
+    zz1 = ceil(rand(numOfSamples,1)*length(DensMod));
+    zz2 = rand(numOfSamples,1);
+    ix = zz2 <= DensMod(zz1,4);
+    newDist = zz1(ix);
+    Z_mod(lungIdx) = DensMod(newDist(1:numel(lungIdx)),3);
+    
+    ct.cubeHU{1} = Z_mod;
+    
+%     ct.cube{1}(lungIdx) = (ct.cubeHU{1}(lungIdx)+1)/1024;
+
+%     % descrete sampling of the density distribution
+%     P = [0; cumsum(DensMod(:,4))];  
+%     samples = discretize(rand(numel(lungIdx),1),P);
+%     ct.cube{1}(lungIdx) = samples / max(samples);
 end
 
-ct.cubeHU{1}(lungIdx) = 1024*(ct.cube{1}(lungIdx)-1);
+if strcmp(pln.propHeterogeneity.mode,'TOPAS') && strcmp(mode, 'binomial')
+    lung = ct.cube{1}(lungIdx);
+    sampledDensities = unique(lung);
+    if strcmp(pln.propMC.materialConverter,'HUToWaterSchneider_Lung')
+        ct.cubeHU{1}(lungIdx(lung == 1.05)) = 0;
+        ct.cubeHU{1}(lungIdx(lung == 0)) = -999;
+    elseif strcmp(pln.propMC.materialConverter,'HUToWaterSchneider_mod')
+        ct.cubeHU{1}(lungIdx(lung == 1.05)) = 3020;
+        ct.cubeHU{1}(lungIdx(lung == 0)) = 2997;
+    elseif strcmp(pln.propMC.materialConverter,'HUToWaterSchneider_custom')
+        for i = 1:numel(sampledDensities)
+            ct.cubeHU{1}(lungIdx(lung == sampledDensities(i))) = 2995 + i;
+        end
+    end
+    
+    sampledDensities(1) = 0.001225;
+    ct.sampledDensities = sampledDensities;
+end
 
+ct.modulated = 1;
 % plot histogram of the the lung density distribution
 % figure, histogram(ct.cube{1}(lungIdx))
 end

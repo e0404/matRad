@@ -4,6 +4,20 @@ if nargin < 9
     modulation = 'binomial';
 end
 
+if iscell(mode)
+    pln.propHeterogeneity.mode = 'TOPAS';
+    if strcmp(modulation,'poisson')
+        pln.propMC.materialConverter = 'HUToWaterSchneider_mod';
+    else
+        if ~isfield(pln.propMC,'materialConverter')
+            pln.propMC.materialConverter = 'HUToWaterSchneider_custom';
+        end
+    end
+    pln.propMC.materialConverter = 'HUToWaterSchneider_custom';
+else
+    pln.propHeterogeneity.mode = 'matRad';
+end
+
 resultGUI.physicalDose = zeros(ct.cubeDim);
 if strcmp(pln.bioParam.quantityOpt,'RBExD')
     resultGUI.RBExD = zeros(ct.cubeDim);
@@ -48,13 +62,7 @@ for i = 1:samples
     if iscell(mode) %case TOPAS
         if strcmp(mode{1},'TOPAS')
             pln.propMC.proton_engine = 'TOPAS';
-            if strcmp(modulation,'poisson')
-                pln.propMC.materialConverter = 'HUToWaterSchneider_mod';
-            else
-                if ~isfield(pln.propMC,'materialConverter')
-                    pln.propMC.materialConverter = 'HUToWaterSchneider';
-                end
-            end
+            pln.propMC.numOfRuns = 1;
             resultGUI_mod = matRad_calcDoseDirectMC(ct_mod,stf,pln,cst,weights,mode{2}/samples,mode{3});
             
             if ~mode{3}
