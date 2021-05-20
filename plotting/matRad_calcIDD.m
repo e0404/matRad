@@ -24,6 +24,9 @@ function IDD = matRad_calcIDD(doseCube,calcProfile,direction)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+if isstruct(doseCube)
+   error('Cube was entered as struct.')
+end
 if nargin < 3
     direction = 'y';
 end
