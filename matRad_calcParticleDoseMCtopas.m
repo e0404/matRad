@@ -191,7 +191,12 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                         
                         for runIx = 1:topasConfig.numOfRuns
                             fname = sprintf('%s_field%d_run%d',topasConfig.label,beamIx,runIx);
-                            topasCall = sprintf('%s %s.txt > %s.out > %s.err',topasConfig.topasExecCommand,fname,fname,fname);
+                            if isfield(pln.propMC,'verbosity') && strcmp(pln.propMC.verbosity,'full')
+                                topasCall = sprintf('%s %s.txt',topasConfig.topasExecCommand,fname);
+                            else
+                                topasCall = sprintf('%s %s.txt > %s.out > %s.err',topasConfig.topasExecCommand,fname,fname,fname);
+                            end
+
                             if topasConfig.parallelRuns
                                 finishedFiles{runIx} = sprintf('%s.finished',fname);
                                 delete(finishedFiles{runIx});
