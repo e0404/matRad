@@ -1,0 +1,35 @@
+
+# Scorers
+d:Sc/PrescribedDose = 2 Gy
+sv:Sc/CellLines     = 1 "CellGeneric_abR2"
+
+# s:Sim/DoseScorerOutputType                                = "bin"
+# sv:Sim/DoseScorerReport                                   = 1 "Sum"
+s:Sc/Tally_DoseToMedium/Quantity                    = "DoseToWater"
+d:Sc/Tally_DoseToMedium/PrescribedDose              = Sc/PrescribedDose Gy
+s:Sc/Tally_DoseToMedium/OutputType                  = Sim/DoseScorerOutputType # "csv" "binary" "Root" "Xml" or "DICOM"
+s:Sc/Tally_DoseToMedium/Component                   = "Patient"
+sv:Sc/Tally_DoseToMedium/Report                     = Sim/DoseScorerReport
+s:Sc/Tally_DoseToMedium/IfOutputFileAlreadyExists   = "Overwrite" # "Exit" "Overwrite" or "Increment"
+b:Sc/Tally_DoseToMedium/OutputToConsole             = "False"
+s:Sc/Tally_DoseToMedium/OutputFile                  = Sim/ScoreLabel + "_physicalDose"
+
+#-- shared sub-scorers
+s:Sc/McNamara/Quantity                   = "RBE_McNamara"
+s:Sc/McNamara/OutputQuantity             = "rbe_x_dose"
+sv:Sc/McNamara/CellLines                 = 1 "CellLineV79"
+d:Sc/McNamara/PrescribedDose             = 2 Gy
+s:Sc/McNamara/OutputType                  = Sim/DoseScorerOutputType # "csv" "binary" "Root" "Xml" or "DICOM"
+s:Sc/McNamara/Component                   = "Patient"
+sv:Sc/McNamara/Report                     = Sim/DoseScorerReport
+s:Sc/McNamara/IfOutputFileAlreadyExists   = "Overwrite" # "Exit" "Overwrite" or "Increment"
+b:Sc/McNamara/OutputToConsole             = "False"
+s:Sc/McNamara/OutputFile                  = Sim/ScoreLabel + "_RBExD"
+d:Sc/CellLineV79/AlphaBetaRatiox = 2 Gy
+
+# s:Sc/PhysDose/OutputQuantity                    = "RBE"
+# s:Sc/PhysDose/Component                         = "Patient"
+# b:Sc/PhysDose/PreCalculateStoppingPowerRatios   = "True"
+# s:Sc/PhysDose/IfOutputFileAlreadyExists         = "Overwrite"
+# s:Sc/PhysDose/OutputType                        = Sim/DoseScorerOutputType
+# s:Sc/PhysDose/OutputFile                        = Sim/ScoreLabel + "_physicalDoseRBE"
