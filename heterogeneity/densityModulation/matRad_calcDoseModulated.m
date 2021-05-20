@@ -9,6 +9,39 @@ if strcmp(pln.bioParam.quantityOpt,'RBExD')
     resultGUI.RBExD = zeros(ct.cubeDim);
 end
 
+% parallelComputationTOPAS =1;
+% if parallelComputationTOPAS
+%
+%     for i = 1:samples
+%         ct_mod{i} = matRad_modulateDensity(ct,cst,pln,Pmod,modulation);
+%     end
+%
+%     pln.propMC.proton_engine = 'TOPAS';
+%         if strcmp(modulation,'poisson')
+%             pln.propMC.materialConverter = 'HUToWaterSchneider_mod';
+%         else
+%             if ~isfield(pln.propMC,'materialConverter')
+%                 pln.propMC.materialConverter = 'HUToWaterSchneider';
+%             end
+%         end
+%
+%         resultGUI_mod = matRad_calcDoseDirectMC(ct_mod,stf,pln,cst,weights,mode{2}/samples,mode{3});
+%
+%         if ~mode{3}
+%             %     resultGUI.(['physicalDose',num2str(s)]) = resultGUI.(['physicalDose',num2str(s)]) + resultGUI_mod.physicalDose/s;
+%             if strcmp(pln.bioParam.quantityOpt,'RBExD')
+%                 resultGUI.RBExD = resultGUI.RBExD + resultGUI_mod.RBExD/samples;
+%             end
+%             resultGUI.physicalDose = resultGUI.physicalDose + resultGUI_mod.physicalDose/samples;
+%             std{i} = resultGUI_mod.std;
+%         end
+%
+%
+%
+% else
+
+
+
 for i = 1:samples
     ct_mod = matRad_modulateDensity(ct,cst,pln,Pmod,modulation);
     
@@ -30,7 +63,7 @@ for i = 1:samples
                     resultGUI.RBExD = resultGUI.RBExD + resultGUI_mod.RBExD/samples;
                 end
                 resultGUI.physicalDose = resultGUI.physicalDose + resultGUI_mod.physicalDose/samples;
-                std{i} = resultGUI_mod.std;
+                std{i} = resultGUI_mod.physicalDose_std;
             end
         else
             error('error')
@@ -39,20 +72,28 @@ for i = 1:samples
         resultGUI_mod = matRad_calcDoseDirect(ct_mod,stf,pln,cst,weights);
         
         if strcmp(pln.bioParam.quantityOpt,'RBExD')
-            resultGUI.RBExD = resultGUI.RBExD + resultGUI_mod.RBExD;
+            resultGUI.RBExD = resultGUI.RBExD + resultGUI_mod.RBExD/samples;
         end
         resultGUI.physicalDose = resultGUI.physicalDose + resultGUI_mod.physicalDose/samples;
-    end  
-end
-if iscell(mode) %case TOPAS
-       % Calculate combined standard deviation for TOPAS
-       resultGUI.std = [];
-       stdSq = 0;
-       for i = 1:samples
-          stdSq = stdSq + std{i}.^2;
-       end
-       resultGUI.std = sqrt(stdSq);
+    end
+    data{i} = resultGUI_mod.physicalDose;
+    
 end
 
+% Calculate Standard deviation
+topasMeanDiff = 0;
+for k = 1:samples
+    topasMeanDiff = topasMeanDiff + (data{k} - resultGUI.physicalDose).^2;
+end
+topasVarMean = topasMeanDiff./(samples - 1)./samples;
+topasVarMean = topasMeanDiff./(samples - 1)./samples;
+topasStdMean = sqrt(topasVarMean);
+
+topasStdSum = topasStdMean * samples;
+topasVarSum = topasStdSum.^2;
+
+resultGUI.physicalDose_std = sqrt(topasVarSum);
+
+% end
 end
 

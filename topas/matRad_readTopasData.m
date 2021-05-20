@@ -18,6 +18,7 @@ if calcDoseDirect
     for t = 1:length(MCparam.tallies)
         tname = MCparam.tallies{t};
         topasTally = zeros(cubeDim(1),cubeDim(2),cubeDim(3));
+        SumVarOverFields = zeros(cubeDim(1),cubeDim(2),cubeDim(3));
         
         for f = 1:MCparam.nbFields
             topasSum = zeros(cubeDim(1),cubeDim(2),cubeDim(3));
@@ -30,41 +31,46 @@ if calcDoseDirect
                         data{k} = readCsvData(genFullFile,cubeDim);
                     case 'binary'
                         genFullFile = fullfile(folder,[genFileName '.bin']);
-%                         if iscell(MCparam.scoreReportQuantity)
-%                             [data{k},topasStd] = readBinData(genFullFile,cubeDim,numel(MCparam.scoreReportQuantity));
-%                         else
-                            data{k} = readBinData(genFullFile,cubeDim);
-%                         end
+                        %                         if iscell(MCparam.scoreReportQuantity)
+                        %                             [data{k},topasStd] = readBinData(genFullFile,cubeDim,numel(MCparam.scoreReportQuantity));
+                        %                         else
+                        data{k} = readBinData(genFullFile,cubeDim);
+                        %                         end
                     otherwise
                         error('Not implemented!');
                 end
                 topasSum = topasSum + data{k};
             end
-                      
+            
             if strcmp(tname,'physicalDose')
                 topasSum = correctionFactor.*topasSum;
+                
+                % Calculate Standard Deviation from batches
+                for k = 1:MCparam.nbRuns
+                    topasMeanDiff = topasMeanDiff + (data{k} - topasSum./MCparam.nbRuns).^2;
+                end
+                % variance of the mean
+                topasVarMean = topasMeanDiff./(MCparam.nbRuns - 1)./MCparam.nbRuns;
+                % std of the MEAN!
+                topasStdMean = sqrt(topasVarMean);
+                % std of the SUM
+                topasStdSum = topasStdMean * MCparam.nbRuns;
+                topasVarSum = topasStdSum.^2;
+                
+                topasCube.([tname '_std_beam' num2str(f)]) = topasStdSum;
+                
+                SumVarOverFields = SumVarOverFields + topasVarSum;
             elseif strcmp(tname,'alpha') || strcmp(tname,'beta') || strcmp(tname,'RBE')
                 topasSum = topasSum./ MCparam.nbRuns;
             end
             
-            % Calculate Standard Deviation from batches
-            for k = 1:MCparam.nbRuns
-                topasMeanDiff = topasMeanDiff + (data{k} - topasSum./MCparam.nbRuns).^2;
-            end
-            topasVarMean = topasStd./(MCparam.nbRuns - 1);
-            topasStdMean = sqrt(topasVar);
-            topasVarSum = topasVarMean * n;
-            topasStdSum = topasStdMean * sqrt(n);
-            
-            % Tally per field
-            topasCube.([tname '_beam' num2str(f)]) = topasSum;
-            topasCube.std = topasStdSum;
-            topasCube.var = topasVarSum;
-            
             % Accumulate over the fields
             topasTally = topasTally + topasSum;
+            % Tally per field
+            topasCube.([tname '_beam' num2str(f)]) = topasSum;
             
         end
+        topasCube.physicalDose_std = sqrt(SumVarOverFields);
         
         if ~(strcmp(tname,'alpha') || strcmp(tname,'beta') || strcmp(tname,'RBE'))
             topasCube.(tname) = topasTally;

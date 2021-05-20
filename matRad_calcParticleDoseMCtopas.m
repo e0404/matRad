@@ -245,10 +245,9 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                 dij.alpha{ctScen,1}(:,d)           = reshape(topasCubes.(['alpha_beam',num2str(d)]),[],1);
                                 dij.beta{ctScen,1}(:,d)            = reshape(topasCubes.(['beta_beam',num2str(d)]),[],1);
                                 %                             dij.RBE{1}(:,d)             = reshape(topasCubes.(['RBE_beam',num2str(d)]),[],1);
-                                
-                                [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,prod(ct.cubeDim),1);
-                                %                             dij.ax = full(reshape(ax,ct.cubeDim));
-                                %                             dij.bx = full(reshape(bx,ct.cubeDim));
+                                dij.physicalDose_std{ctScen,1}(:,d)    = sum(w)*reshape(topasCubes.(['physicalDose_std_beam',num2str(d)]),[],1);
+%                                 [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,prod(ct.cubeDim),1);
+                                [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
                                 dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
                                 
                                 dij.mAlphaDose{ctScen,1}(:,d)      = dij.physicalDose{ctScen,1}(:,d) .* dij.alpha{ctScen,1}(:,d);

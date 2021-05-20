@@ -81,6 +81,12 @@ if isfield(dij,'physicalDose_MCvar')
     resultGUI.physicalDose_MCstdRel = resultGUI.physicalDose_MCstd ./ resultGUI.physicalDose;
 end
 
+if isfield(dij,'physicalDose_std')
+    for i = 1:length(beamInfo)
+        resultGUI.(['physicalDose_std', beamInfo(i).suffix]) = sqrt(reshape(full(dij.physicalDose_std{scenNum}.^2 * (resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions));
+    end
+end
+
 % consider biological optimization for carbon ions
 if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
 
