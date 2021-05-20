@@ -90,6 +90,8 @@ classdef MatRad_TopasConfig < handle
         worldMaterial = 'G4_AIR';
         
         %filenames
+        converterFolder = 'materialConverter';
+        scorerFolder = 'scorer';
         outfilenames = struct(  'patientParam','matRad_cube.txt',...
             'patientCube','matRad_cube.dat');
         
@@ -144,6 +146,9 @@ classdef MatRad_TopasConfig < handle
             if isfield(pln,'bioParam') && strcmp(pln.bioParam.quantityOpt,'RBExD')
                 obj.scoreRBE = true;
                 obj.radiationMode = stf.radiationMode;
+            end
+            if isfield(pln.propMC,'calcDij') && pln.propMC.calcDij
+                obj.scoreDij = true;
             end
             
             obj.MCparam.nbRuns = obj.numOfRuns;
@@ -239,16 +244,16 @@ classdef MatRad_TopasConfig < handle
             if obj.scoreDose
                 if obj.scoreRBE
                     if strcmp(obj.radiationMode,'protons')
-                        fname = fullfile(obj.thisFolder,obj.infilenames.doseScorerRBE_MCN);
+                        fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.doseScorerRBE_MCN);
                     elseif strcmp(obj.radiationMode,'carbon') || strcmp(obj.radiationMode,'helium')
-                        fname = fullfile(obj.thisFolder,obj.infilenames.doseScorerRBE);
+                        fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.doseScorerRBE);
                     else
                         obj.matRad_cfg.dispWarning('No specific RBE model available, using custom LEM scorer.');
-                        fname = fullfile(obj.thisFolder,obj.infilenames.doseScorerRBE);
+                        fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.doseScorerRBE);
                         
                     end
                 else
-                    fname = fullfile(obj.thisFolder,obj.infilenames.doseScorer);
+                    fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.doseScorer);
                 end
                 obj.matRad_cfg.dispDebug('Reading Dose Scorer from %s\n',fname);
                 scorer = fileread(fname);
@@ -263,7 +268,7 @@ classdef MatRad_TopasConfig < handle
             end
             
             if obj.addVolumeScorers
-                fileList = dir(fullfile(obj.thisFolder,'TOPAS_scorer_volume_*.in'));
+                fileList = dir(fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,'TOPAS_scorer_volume_*.in'));
                 for fileIx=1:length(fileList)
                     fname = fullfile(obj.thisFolder,fileList(fileIx).name);
                     obj.matRad_cfg.dispDebug('Reading Volume Scorer from %s\n',fname);
@@ -276,7 +281,7 @@ classdef MatRad_TopasConfig < handle
             end
             
             if obj.scoreTrackCount
-                fname = fullfile(obj.thisFolder,obj.infilenames.surfaceScorer);
+                fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.surfaceScorer);
                 obj.matRad_cfg.dispDebug('Reading surface scorer from %s\n',fname);
                 scorer = fileread(fname);
                 fprintf(fID,'%s\n',scorer);
@@ -1020,9 +1025,9 @@ classdef MatRad_TopasConfig < handle
                     %                     fprintf(fID,'i:Ge/Patient/MinImagingValue = %d\n',-1000);
                     
                     if strcmp(cubeExport,'HUToWaterSchneider_custom')
-                        fname = fullfile(obj.thisFolder,obj.infilenames.matConv_Schneider_custom);
+                        fname = fullfile(obj.thisFolder,filesep,obj.converterFolder,filesep,obj.infilenames.matConv_Schneider_custom);
                     else
-                        fname = fullfile(obj.thisFolder,obj.infilenames.matConv_Schneider_mod);
+                        fname = fullfile(obj.thisFolder,filesep,obj.converterFolder,filesep,obj.infilenames.matConv_Schneider_mod);
                     end
                     obj.matRad_cfg.dispInfo('Reading modulation Schneider Converter from %s\n',fname);
                     matConv_mod = fileread(fname);

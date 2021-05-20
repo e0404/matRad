@@ -58,6 +58,7 @@ end
 if ~calcDoseDirect
     %     matRad_cfg.dispError('matRad so far only supports direct dose calculation for TOPAS!\n');
     matRad_cfg.dispWarning('You have selected TOPAS dij calculation, this may take a while ^^');
+    pln.propMC.calcDij = 1;
 end
 
 if ~isfield(pln.propStf,'useRangeShifter') 
