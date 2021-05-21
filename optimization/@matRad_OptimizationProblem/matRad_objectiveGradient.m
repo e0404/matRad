@@ -38,7 +38,7 @@ matRad_cfg = MatRad_Config.instance();
 
 % get current dose / effect / RBExDose vector
 %d = matRad_backProjection(w,dij,optiProb);
-optiProb.BP = optiProb.BP.compute(dij,w);
+optiProb.BP.compute(dij,w);
 d = optiProb.BP.GetResult();
 
 %Also get probabilistic quantities (nearly no overhead if empty)
@@ -238,31 +238,31 @@ for  i = 1:size(cst,1)
                             
                         end
                         
-                        [fMax,ix] = max(f_OWC(:));
                         
-                        if optiProb.useLogSumExpForRobOpt  %Approximate the maximum gradient using the softmax function
-                            
-                            %Dynamic scaling for large values to avoid
-                            %overflow (incl. LogSumExp-"Trick")
-                            if fMax > 10
-                                t = round(log10(fMax));
-                            else
-                                t = 1;
+                        
+                        switch optiProb.useMaxApprox
+                            case 'logsumexp'
+                                [~,fGrad] = optiProb.logSumExp(f_OWC);
+                            case 'pnorm'
+                                [~,fGrad] = optiProb.pNorm(f_OWC,numel(useScen));
+                            case 'none'
+                                [~,ix] = max(f_OWC(:));
+                                fGrad = zeros(size(f_OWC));
+                                fGrad(ix) = 1;
+                            case 'otherwise'
+                                matRad_cfg.dispWarning('Unknown maximum approximation desired. Using ''none'' instead.');           
+                                [~,ix] = max(f_OWC(:));
+                                fGrad = zeros(size(f_OWC));
+                                fGrad(ix) = 1;
+                        end 
+                        
+                        for s = 1:numel(useScen)
+                            ixScen = useScen(s);
+                            ixContour = contourScen(s);
+                            if fGrad(ixScen ) ~= 0
+                                doseGradient{ixScen}(cst{i,4}{ixContour}) = doseGradient{ixScen}(cst{i,4}{ixContour}) + fGrad(ixScen)*delta_OWC{ixScen}(cst{i,4}{ixContour});
                             end
-                            tmp = (f_OWC - fMax)./t;
-                            fGrad = exp(tmp) ./ sum(exp(tmp(:)));
-                            
-                            for s = 1:numel(useScen)
-                                ixScen = useScen(s);
-                                ixContour = contourScen(s);
-                                doseGradient{ixScen}(cst{i,4}{ixContour}) = doseGradient{ixScen}(cst{i,4}{ixContour}) + fGrad(ixScen)*delta_OWC{ixScen}(cst{i,4}{ixContour}); 
-                            end
-                        else %Gradient uses only maximum scenario
-                            doseGradient{1}(cst{i,4}{ixContour}) = doseGradient{1}(cst{i,4}{ixContour}) + delta_OWC{ix}(cst{i,4}{ixContour});
                         end
-                        
-                        
-                        
                     otherwise
                         matRad_cfg.dispError('Robustness setting %s not supported!',objective.robustness);
                         
@@ -272,34 +272,34 @@ for  i = 1:size(cst,1)
     end
 end
 
-if exist('delta_COWC','var')
-    [fMax,ixCurrWC] = max(f_COWC(:));
+if exist('delta_COWC','var')   
+    switch optiProb.useMaxApprox
+        case 'logsumexp'
+            [~,fGrad] = optiProb.logSumExp(f_COWC);
+        case 'pnorm'
+            [~,fGrad] = optiProb.pNorm(f_COWC,numel(useScen));
+        case 'none'
+            [~,ixCurrWC] = max(f_COWC(:));
+            fGrad = zeros(size(f_COWC));
+            fGrad(ixCurrWC) = 1;
+        case 'otherwise'
+            matRad_cfg.dispWarning('Unknown maximum approximation desired. Using ''none'' instead.');
+            [~,ixCurrWC] = max(f_COWC(:));
+            fGrad = zeros(size(f_COWC));
+            fGrad(ixCurrWC) = 1;
+    end
     
-    if optiProb.useLogSumExpForRobOpt %Approximate the maximum gradient using the softmax function
-        
-        %Dynamic scaling for large values to avoid
-        %overflow (incl. LogSumExp-"Trick")
-        if fMax > 10
-            t = round(log10(fMax));
-        else
-            t = 1;
-        end
-        tmp = (f_COWC - fMax)./t;
-        fGrad = exp(tmp) ./ sum(exp(tmp(:)));
-        
-        for s = 1:numel(useScen)
-            ixScen = useScen(s);
+    for s = 1:numel(useScen)
+        ixScen = useScen(s);
+        if fGrad(ixScen) ~= 0
             doseGradient{ixScen} = doseGradient{ixScen} + fGrad(ixScen)*delta_COWC{ixScen};
         end
-        
-    else %Gradient uses only maximum scenario
-        doseGradient{ixCurrWC} = delta_COWC{ixCurrWC};
     end
 end
 
 weightGradient = zeros(dij.totalNumOfBixels,1);
 
-optiProb.BP = optiProb.BP.computeGradient(dij,doseGradient,w);
+optiProb.BP.computeGradient(dij,doseGradient,w);
 g = optiProb.BP.GetGradient();
 
 for s = 1:numel(useScen)
@@ -307,7 +307,7 @@ for s = 1:numel(useScen)
 end
 
 if vOmega ~= 0
-    optiProb.BP = optiProb.BP.computeGradientProb(dij,doseGradient,vOmega,w);
+    optiProb.BP.computeGradientProb(dij,doseGradient,vOmega,w);
     gProb = optiProb.BP.GetGradientProb();
     
     %Only implemented for first scenario now

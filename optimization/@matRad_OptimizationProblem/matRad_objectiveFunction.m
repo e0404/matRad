@@ -35,7 +35,7 @@ matRad_cfg = MatRad_Config.instance();
 % get current dose / effect / RBExDose vector
 %d = optiProb.matRad_backProjection(w,dij);
 
-optiProb.BP = optiProb.BP.compute(dij,w);
+optiProb.BP.compute(dij,w);
 d = optiProb.BP.GetResult();
 
 %Also get probabilistic quantities (nearly no overhead if empty)
@@ -190,16 +190,16 @@ for  i = 1:size(cst,1)
                             
                         end
                         
-                        fMax = max(f_OWC);
-                        
-                        if optiProb.useLogSumExpForRobOpt
-                            if fMax > 10
-                                t = round(log10(fMax));
-                            else
-                                t = 1;
-                            end
-                            tmp = (f_OWC - fMax)./t;
-                            fMax = fMax + t*log(sum(exp(tmp(:))));
+                        switch optiProb.useMaxApprox
+                            case 'logsumexp'
+                                fMax = optiProb.logSumExp(f_OWC);
+                            case 'pnorm'
+                                fMax = optiProb.pNorm(f_OWC,numel(useScen));
+                            case 'none'
+                                fMax = max(f_OWC);
+                            case 'otherwise'
+                                matRad_cfg.dispWarning('Unknown maximum approximation desired. Using ''none'' instead.');           
+                                fMax = max(f_OWC);
                         end
                         f = f + fMax;
                         
@@ -213,18 +213,22 @@ for  i = 1:size(cst,1)
     end
     
 end
-      
-%Approximate the maximum gradient using the softmax function
 
 fMax = max(f_COWC(:));
-if optiProb.useLogSumExpForRobOpt && fMax > 0
-    if fMax > 10
-        t = round(log10(fMax));
-    else
-        t = 1;
+
+
+if fMax > 0
+    switch optiProb.useMaxApprox
+        case 'logsumexp'
+            fMax = optiProb.logSumExp(f_COWC);
+        case 'pnorm'
+            fMax = optiProb.pNorm(f_COWC,numel(useScen));
+        case 'none'
+            fMax = max(f_COWC);
+        case 'otherwise'
+            matRad_cfg.dispWarning('Unknown maximum approximation desired. Using ''none'' instead.');
+            fMax = max(f_COWC);
     end
-    tmp = (f_COWC - fMax)./t;
-    fMax = fMax + t*log(sum(exp(tmp(:))));
 end
 %Sum up max of composite worst case part
 f = f + fMax;
