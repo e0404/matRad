@@ -67,7 +67,7 @@ else
     else
         samples = zeros(numel(n),1);
         for i = 1:numel(n)
-            samples(i) = sum(rand([numOfVoxels,n(i)]) < p(i), 2);
+            samples(i) = sum(rand([1,n(i)]) < p(i), 2);
         end
     end
     
