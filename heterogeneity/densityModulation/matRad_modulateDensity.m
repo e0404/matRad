@@ -78,11 +78,21 @@ if strcmp(mode, 'binomial')
     n = round(D./d);
     
     % Don't modulate voxel with less than 1 substructures
-    lungIdx = lungIdx(n~=0);
-    pLung = pLung(n~=0);
-    n = n(n~=0);
+    notModulated = (n~=0);
+    lungIdx = lungIdx(notModulated);
+    pLung = pLung(notModulated);
+    n = n(notModulated);
     
-    ct.cube{1}(lungIdx) =  matRad_sampleLungBino(n,pLung,rhoLung,length(lungIdx));
+%     discrete = matRad_sampleLungBino(n,pLung,rhoLung,length(lungIdx));
+%     cont = matRad_sampleLungBino(n,pLung,rhoLung,length(lungIdx),1);
+%     figure
+%     map = brewermap(2,'Set1'); 
+%     h1 = histogram(cont,'facecolor',map(1,:),'facealpha',.5);
+%     figure
+%     h2 = histogram(discrete,'facecolor',map(2,:),'facealpha',.5);
+%     
+    continuous = 1;
+    ct.cube{1}(lungIdx) =  matRad_sampleLungBino(n,pLung,rhoLung,length(lungIdx),continuous);
     ct.cubeHU{1}(lungIdx) = 1024*(ct.cube{1}(lungIdx)-1);
         
 elseif strcmp(mode, 'poisson')

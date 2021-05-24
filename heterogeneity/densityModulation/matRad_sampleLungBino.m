@@ -1,4 +1,4 @@
-function X = matRad_sampleLungBino(n,p,lungDensity,numOfLungVoxels)
+function samples = matRad_sampleLungBino(n,p,lungDensity,numOfVoxels,continuous)
 % matRad function for binomial sampling
 %
 % call
@@ -29,33 +29,49 @@ function X = matRad_sampleLungBino(n,p,lungDensity,numOfLungVoxels)
 % global matRad_cfg;
 % matRad_cfg =  MatRad_Config.instance();
 
-if ~isscalar(numOfLungVoxels)
-    sampleOut1 = numOfLungVoxels(1);
-    sampleOut2 = numOfLungVoxels(2);
-else
-    sampleOut1 = numOfLungVoxels(1);
-    sampleOut2 = 1;
+if nargin < 5
+    continuous = false;
 end
 
+%sanity check
 if ~mod(n,1) == 0
     error('n has to be integer');
 elseif ~(all(p <= 1) && all(p >= 0))
     error('p must be between 0 and 1');
-elseif ~isscalar(p) && ~(sampleOut1 == numel(p))
+elseif ~isscalar(p) && ~(numOfVoxels == numel(p))
     error('p array must have numOfSamples entries')
-elseif ~isscalar(n) && ~(sampleOut1 == numel(n))
+elseif ~isscalar(n) && ~(numOfVoxels == numel(n))
     error('n array must have numOfSamples entries')
 end
 
-if isscalar(n)
-    X = sum(rand([sampleOut1,sampleOut2,n]) < p, 3);
-else
-    X = zeros(numel(n),1);
-    for i = 1:numel(n)
-        X(i) = sum(rand([sampleOut2,n(i)]) < p(i), 2);
+nVal = unique(n);
+pVal = unique(p);
+
+if continuous
+    numOfDataPoints = 1e3;
+    if isscalar(nVal) && isscalar(pVal)
+        input = linspace(0,nVal,numOfDataPoints);
+        [~,pmf,~] = matRad_continuousBino(input,nVal,pVal);
+        samples = cast(discretize(rand(numOfVoxels,1), [0,pmf]),'double')/numel(input);
+    else
+        input = n.*linspace(0,1,numOfDataPoints);
+        [~,pmf,~] = matRad_continuousBino(input,n,p);
+        samples = zeros(numOfVoxels,1);
+        for i = 1:numOfVoxels
+            samples(i) = cast(discretize(rand(1), [0,pmf(i,:)]),'double')/numel(pmf(i,:));
+        end
     end
+else
+    if isscalar(nVal) && isscalar(pVal)
+        samples = sum(rand([numOfVoxels,1,nVal]) < pVal, 3);
+    else
+        samples = zeros(numel(n),1);
+        for i = 1:numel(n)
+            samples(i) = sum(rand([numOfVoxels,n(i)]) < p(i), 2);
+        end
+    end
+    
+    samples = samples ./ n;
 end
-
-X = X ./ n * lungDensity;
-
+samples = samples * lungDensity;
 end
