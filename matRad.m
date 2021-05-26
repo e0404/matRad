@@ -25,7 +25,8 @@ load PROSTATE.mat
 
 % meta information for treatment plan
 
-pln.radiationMode   = 'brachy';     % either photons / protons / carbon
+pln.radiationMode   = 'brachy';     % either photons / protons / carbon / brachy
+%pln.radiationMode   = 'photons';  
 pln.machine         = 'Generic';
 
 pln.numOfFractions  = 30;
@@ -54,7 +55,7 @@ matRadGUI
 
 %% generate steering file
 switch pln.radiationMode
-    case {'photon','proton','carbon'}
+    case {'photons','protons','carbon'}
         stf = matRad_generateStf(ct,cst,pln);
     case 'brachy'
         stf = matRadBrachy_generateStf(ct,cst,pln);
@@ -65,7 +66,11 @@ if strcmp(pln.radiationMode,'photons')
     %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
     dij = matRad_calcParticleDose(ct,stf,pln,cst);
+elseif strcmp(pln.radiationMode,'brachy')
+    dij = matRadBrachy_calcDose(ct,stf,pln,cst);
 end
+%% plot dose
+%slice = 4
 
 %% inverse planning for imrt
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);

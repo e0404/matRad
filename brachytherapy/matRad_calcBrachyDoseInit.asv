@@ -1,12 +1,8 @@
 matRad_cfg =  MatRad_Config.instance();
 
-% default: dose influence matrix computation
-if ~exist('calcDoseDirect','var')
-    calcDoseDirect = false;
-end
-
 % to guarantee downwards compatibility with data that does not have
 % ct.x/y/z
+cd brac
 if ~any(isfield(ct,{'x','y','z'}))
     ct.x = ct.resolution.x*[0:ct.cubeDim(2)-1]-ct.resolution.x/2;
     ct.y = ct.resolution.y*[0:ct.cubeDim(1)-1]-ct.resolution.y/2;
@@ -48,60 +44,26 @@ dij.ctGrid.numOfVoxels = prod(dij.ctGrid.dimensions);
 offset = [dij.doseGrid.resolution.x - dij.ctGrid.resolution.x ...
           dij.doseGrid.resolution.y - dij.ctGrid.resolution.y ...
           dij.doseGrid.resolution.z - dij.ctGrid.resolution.z];
-    
-for i = 1:numel(stf)
-    stf(i).isoCenter = stf(i).isoCenter + offset;
-end
-
-%set up HU to rED or rSP conversion
-if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'useGivenEqDensityCube')
-    disableHUconversion = matRad_cfg.propDoseCalc.defaultUseGivenEqDensityCube;
-else
-    disableHUconversion = pln.propDoseCalc.useGivenEqDensityCube;
-end
-
-%If we want to omit HU conversion check if we have a ct.cube ready
-if disableHUconversion && ~isfield(ct,'cube')
-    matRad_cfg.dispWarning('HU Conversion requested to be omitted but no ct.cube exists! Will override and do the conversion anyway!');
-    disableHUconversion = false;
-end
-    
-% calculate rED or rSP from HU
-if disableHUconversion
-    matRad_cfg.dispInfo('Omitting HU to rED/rSP conversion and using existing ct.cube!\n');
-else
-    ct = matRad_calcWaterEqD(ct, pln);
-end
-
+   
 % meta information for dij
-dij.numOfBeams         = pln.propStf.numOfBeams;
-dij.numOfScenarios     = 1;
-dij.numOfRaysPerBeam   = [stf(:).numOfRays];
-dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
-dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
+switch pln.radiationMode
+    case {'photons','protons','carbon'}
 
-% check if full dose influence data is required
-if calcDoseDirect 
-    numOfColumnsDij      = length(stf);
-    numOfBixelsContainer = 1;
-else
-    numOfColumnsDij      = dij.totalNumOfBixels;
-    numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
+        dij.numOfBeams         = pln.propStf.numOfBeams;
+        dij.numOfScenarios     = 1;
+        dij.numOfRaysPerBeam   = [stf(:).numOfRays];
+        dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
+        dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
+    case 'brachy'
+        dij.numOfNeedles       = size(stf.seedPos,1);
+        dij.numOfSeedsPerNeedle= stf.needle.seedsNo;
+        dij.totaNumOfSeeds     = dij.numOfNeedles*dij.numOfSeedsPerNeedle;
 end
-
-% set up arrays for book keeping
-dij.bixelNum = NaN*ones(numOfColumnsDij,1);
-dij.rayNum   = NaN*ones(numOfColumnsDij,1);
-dij.beamNum  = NaN*ones(numOfColumnsDij,1);
 
 
 % Allocate space for dij.physicalDose sparse matrix
-for i = 1:dij.numOfScenarios
-    dij.physicalDose{i} = spalloc(dij.doseGrid.numOfVoxels,numOfColumnsDij,1);
-end
+dij.physicalDose = spalloc(dij.doseGrid.numOfVoxels,dij.totaNumOfSeeds,1);
 
-% Allocate memory for dose_temp cell array
-doseTmpContainer     = cell(numOfBixelsContainer,dij.numOfScenarios);
 
 % take only voxels inside patient
 VctGrid = [cst{:,4}];
