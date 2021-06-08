@@ -24,6 +24,8 @@ classdef matRad_OptimizationProblem < handle
     properties
         BP
         quantityOpt = '';
+        useMaxApprox = 'logsumexp'; %'pnorm'; %'logsumexp'; %'none';
+        p = 30; %Can be chosen larger (closer to maximum) or smaller (closer to mean). Only tested 20 >= p >= 1
     end
     
     methods
@@ -54,6 +56,41 @@ classdef matRad_OptimizationProblem < handle
         
         function ub = upperBounds(optiProb,w)
             ub = Inf * ones(size(w));
+        end
+    end
+    
+    methods (Access = protected)
+        function [val,grad] = logSumExp(optiProb,fVals)
+            % https://doi.org/10.1093/imanum/draa038
+            [fMax,ixMax] = max(fVals(:));
+            
+            ix = true(numel(fVals),1);
+            ix(ixMax) = 0;
+
+            tmp = exp(fVals - fMax);
+                       
+            expSum = sum(tmp(ix));
+            val = fMax + log1p(expSum); %log1p(x) = Matlab's numerically accurate log(1+x) 
+            
+            grad = tmp ./ (1 + expSum);
+        end
+        
+        function [val,grad] = pNorm(optiProb,fVals,n)
+            if nargout < 3
+                n = numel(fVals);
+            end
+            
+            p = optiProb.p;
+            
+            valMax = max(fVals(:));            
+            tmp = fVals./valMax;            
+            
+            pNormVal = sum(tmp(:).^p)^(1/p);
+            
+            fac = (1/n)^(1/p);
+            val = valMax*fac*pNormVal;
+
+            grad = fac * (tmp ./ pNormVal).^(p-1);
         end
     end                
 end

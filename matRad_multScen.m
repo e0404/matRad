@@ -581,23 +581,38 @@ classdef matRad_multScen
                 
                 case 'individual' % combine setup and range scenarios individually
                     
-                    % range errors should come first
+                    nIso = size(this.isoShift,1);
+                    nRange = size(rangeShift,1);                                        
+                   
+                    
+                    % range errors should come last
                     if this.includeNomScen
-                        this.scenForProb                                = zeros(size(this.isoShift,1)-1 + size(rangeShift,1),5);
-                        this.scenForProb(1:size(rangeShift,1),4:5)      = rangeShift;
-                        this.scenForProb(size(rangeShift,1)+1:end,1:3)  = this.isoShift(2:end,:);
-                    else
-                        this.scenForProb                               = zeros(size(this.isoShift,1) + size(rangeShift,1),5);
-                        this.scenForProb(1:size(rangeShift,1),4:5)     = rangeShift;
-                        this.scenForProb(size(rangeShift,1)+1:end,1:3) = this.isoShift;
+                        nIso = nIso - 1;
+                        nRange = nRange -1;
+                        
+                        this.scenForProb = zeros(1,5);  %Nominal Scenario
+                        
+                        rangeScen = zeros(nRange,5);
+                        rangeScen(:,4:5) = rangeShift(2:end,:);
+                        
+                        isoScen = zeros(nIso,5);
+                        isoScen(:,1:3) = this.isoShift(2:end,:);
+                        this.scenForProb = [this.scenForProb; isoScen; rangeScen];
+                    else                       
+                        rangeScen = zeros(nRange,5);
+                        isoScen = zeros(nIso,5);
+                        rangeScen(:,4:5) = rangeShift;
+                        isoScen(:,1:3) = this.isoShift;
+                        
+                        this.scenForProb = [isoScen; rangeScen];
                     end
                     
                 case 'permuted'
                     
                     this.scenForProb  = zeros(size(this.isoShift,1) * size(rangeShift,1),5);
                     Cnt = 1;
-                    for i = 1:size(this.isoShift,1)
-                        for j = 1:size(rangeShift,1)
+                    for j = 1:size(rangeShift,1)
+                        for i = 1:size(this.isoShift,1)
                             this.scenForProb(Cnt,:)   = [this.isoShift(i,:) rangeShift(j,:)];
                             Cnt = Cnt + 1;
                         end

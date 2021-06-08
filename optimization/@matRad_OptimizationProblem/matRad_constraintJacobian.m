@@ -36,7 +36,7 @@ function jacob = matRad_constraintJacobian(optiProb,w,dij,cst)
 % get current dose / effect / RBExDose vector
 %d = matRad_backProjection(w,dij,optiProb);
 %d = optiProb.matRad_backProjection(w,dij);
-optiProb.BP = optiProb.BP.compute(dij,w);
+optiProb.BP.compute(dij,w);
 d = optiProb.BP.GetResult();
 
 % initialize jacobian (only single scenario supported in optimization)
