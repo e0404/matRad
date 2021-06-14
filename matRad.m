@@ -12,7 +12,7 @@
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+addpath('../matRad')
 matRad_rc
 
 % load patient data, i.e. ct, voi, cst
@@ -23,32 +23,66 @@ load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat
 
-% meta information for treatment plan
+%% meta information for treatment plan
 
 pln.radiationMode   = 'brachy';     % either photons / protons / carbon / brachy
-%pln.radiationMode   = 'photons';  
+%pln.radiationMode   = 'protons';  
 pln.machine         = 'Generic';
 
-pln.numOfFractions  = 30;
-
-% beam geometry settings
-pln.propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.propStf.gantryAngles    = [0:72:359]; % [?]
-pln.propStf.couchAngles     = [0 0 0 0 0]; % [?]
-pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
-pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
-
-% dose calculation settings
-pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]
-pln.propDoseCalc.doseGrid.resolution.y = 5; % [mm]
-pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
-
-% optimization settings
-pln.propOpt.optimizer       = 'IPOPT';
-pln.propOpt.bioOptimization = 'none'; % none: physical optimization;             const_RBExD; constant RBE of 1.1;
+switch pln.radiationMode
+    case {'photons','protons','carbon'}
+        
+        pln.numOfFractions  = 30;
+        
+        % beam geometry settings
+        pln.propStf.bixelWidth       = 5; % [mm] / also corresponds to lateral spot spacing for particles
+        pln.propStf.gantryAngles     = [0:72:359]; % [?]
+        pln.propStf.couchAngles      = [0 0 0 0 0]; % [?]
+        pln.propStf.numOfBeams       = numel(pln.propStf.gantryAngles);
+        pln.propStf.isoCenter        = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+        
+        % dose calculation settings
+        pln.propDoseCalc.doseGrid.resolution.x = 10; % [mm]
+        pln.propDoseCalc.doseGrid.resolution.y = 10; % [mm]
+        pln.propDoseCalc.doseGrid.resolution.z = 10; % [mm]
+        
+        % optimization settings
+        pln.propOpt.optimizer       = 'IPOPT';
+        pln.propOpt.bioOptimization = 'none'; % none: physical optimization;             const_RBExD; constant RBE of 1.1;
                                       % LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose
-pln.propOpt.runDAO          = false;  % 1/true: run DAO, 0/false: don't / will be ignored for particles
-pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
+        pln.propOpt.runDAO          = false;  % 1/true: run DAO, 0/false: don't / will be ignored for particles
+        pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
+
+    case 'brachy'
+        % template geometry settings
+        pln.numOfFractions                   = 1;
+        pln.propStf.template.numOfHorPoints  = 10;
+        pln.propStf.template.numOfVertPoints = 10;
+        pln.propStf.template.Xscale          = 15; % [mm]
+        pln.propStf.template.Yscale          = 10; % [mm]
+        pln.propStf.needle.seedDistance      = 10; % [mm]
+        pln.propStf.needle.seedsNo           = 11; 
+            %unit vectors of displaced, rotated template coordinate system
+        pln.propStf.orientation.Xdir = normalize([1,0,0],'norm');
+        pln.propStf.orientation.Ydir = normalize([0,1,0],'norm');
+        pln.propStf.orientation.Zdir = cross(pln.propStf.orientation.Xdir,pln.propStf.orientation.Ydir);
+        pln.propStf.orientation.offset = [-83,-408,50]; % [mm]
+        assert(pln.propStf.orientation.Xdir*pln.propStf.orientation.Ydir' == 0,'Xdir and Ydir are not orthogonal') %throw error if directions are not orthogonal
+        
+        % dose calculation settings
+        pln.propDoseCalc.durationImplanted = Inf;
+        pln.propDoseCalc.doseGrid.resolution.x = 10; % [mm]
+        pln.propDoseCalc.doseGrid.resolution.y = 10; % [mm]
+        pln.propDoseCalc.doseGrid.resolution.z = 10; % [mm]
+        
+        % optimization settings
+        pln.propOpt.optimizer           = 'IPOPT';
+        pln.propOpt.bioOptimization     = 'none';
+        pln.propOpt.runDAO              = false;
+        pln.propOpt.runSequencing       = false;
+        pln.propOpt.lowerWeightBounds   = 0;
+        pln.propOpt.upperWeightBounds   = 1;
+end
 
 %% initial visualization and change objective function settings if desired
 matRadGUI
@@ -59,18 +93,19 @@ switch pln.radiationMode
         stf = matRad_generateStf(ct,cst,pln);
     case 'brachy'
         stf = matRadBrachy_generateStf(ct,cst,pln);
-end        
+end
+
+
 %% dose calculation
-if strcmp(pln.radiationMode,'photons')
+switch pln.radiationMode
+    case 'photons'
     dij = matRad_calcPhotonDose(ct,stf,pln,cst);
     %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst);
-elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
+    case {'protons','carbon'}
     dij = matRad_calcParticleDose(ct,stf,pln,cst);
-elseif strcmp(pln.radiationMode,'brachy')
-    dij = matRadBrachy_calcDose(ct,stf,pln,cst);
+    case 'brachy'
+    dij = matRad_calcBrachyDose(ct,stf,pln,cst);
 end
-%% plot dose
-%slice = 4
 
 %% inverse planning for imrt
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);

@@ -43,7 +43,7 @@ classdef Source < matlab.mixin.Copyable
         %%% 2D anisotropy function
         % AnisotropyRadialDistances: Vector of radial distance
         % AnisotropyPolarAngles: Vector of polar angles
-        % AnisotropyFunctionValue: ???
+        % AnisotropyFunctionValue: Anisotropy matric on 1D array form
         % AnisotropyMatrix: Matrix of tabulated values of the 2D anisotropy function
         AnisotropyRadialDistances
         AnisotropyPolarAngles
@@ -60,7 +60,7 @@ classdef Source < matlab.mixin.Copyable
     end
     
     methods
-        
+        %construction function
         function obj = Source(input,var1,var2)
             
             if isa(input,'Source')

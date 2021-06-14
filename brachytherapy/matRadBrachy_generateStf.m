@@ -45,9 +45,9 @@ end
 
 %translate to geometrix coordinates and save in stf
 
-stf.targetVolume.Xvox = coordsX_vox; %hier fehlt noch eine Skalierung vo Vox auf realWorld-Koordinaten!
-stf.targetVolume.Yvox = coordsY_vox;
-stf.targetVolume.Zvox = coordsZ_vox;
+stf.targetVolume.Xvox = ct.x(coordsX_vox); % angabe in mm
+stf.targetVolume.Yvox = ct.y(coordsY_vox);
+stf.targetVolume.Zvox = ct.z(coordsZ_vox);
 
 
 % calculate rED or rSP from HU
@@ -67,38 +67,13 @@ end
 %% generate 2D template shape
 % Define steering file like struct.
 
-[templXmesh,templYmesh] = meshgrid(0:8,0:6);
+[templXmesh,templYmesh] = meshgrid(0:pln.propStf.template.numOfHorPoints-1,0:pln.propStf.template.numOfVertPoints-1);
  
 templX = reshape(templXmesh,[],1);
 templY = reshape(templYmesh,[],1);
 templZ = zeros(length(templX),1);
 
 stf.template.template2D(:,:,1) = [templX';templY';templZ'];
-stf.template.Xscale = 5; %mm
-stf.template.Yscale = 5; %mm
-
-%% needle
-stf.needle.seedDistance = 20; %mm
-stf.needle.seedsNo = 10;
-
-%% oriention of template
-%unit vectors of displaced, rotated template coordinate system
-stf.orientation.Xdir = normalize([10,0,1],'norm');
-stf.orientation.Ydir = normalize([0.02,1,-0.2],'norm');
-stf.orientation.Zdir = cross(stf.orientation.Xdir,stf.orientation.Ydir);
-stf.orientation.offset = [0,0,0]; %mm --> hier könnte das isocenter hin
-%scale of X and Y direction in template
-
-
-%throw error if directions are not orthogonal
-assert(stf.orientation.Xdir*stf.orientation.Ydir' == 0,'Xdir and Ydir are not orthogonal')
-
-% %% template rotation given by euler angles
-% eulerPhi = 0;
-% eulerTheta = 0;
-% eulerPsi = 0;
-% stf.template.rotAngles = [eulerPhi,eulerTheta,eulerPsi];
-% stf.template.rotMatrix = eulerRot(eulerPhi,eulerTheta,eulerPsi);
 
 %% generate seed positions
 % seed positions can be generated from neeldes, template and oriantation
@@ -106,25 +81,27 @@ assert(stf.orientation.Xdir*stf.orientation.Ydir' == 0,'Xdir and Ydir are not or
 
 % transformed template
 temp2D = stf.template.template2D; %zur Verbesserung der Codeleserlichkeit...
-Xdir = stf.orientation.Xdir;
-Ydir = stf.orientation.Ydir;
-Zdir = stf.orientation.Zdir;
-offs = stf.orientation.offset;
-Xsc = stf.template.Xscale;
-Ysc = stf.template.Yscale;
+Xdir = pln.propStf.orientation.Xdir;
+Ydir = pln.propStf.orientation.Ydir;
+Zdir = pln.propStf.orientation.Zdir;
+offs = pln.propStf.orientation.offset;
+Xsc = pln.propStf.template.Xscale;
+Ysc = pln.propStf.template.Yscale;
 
-template3D = Xsc.*Xdir'*temp2D(1,:) + Ysc.*Ydir'*temp2D(2,:) + Zdir'*temp2D(3,:);
+template3D = Xsc.*Xdir'*temp2D(1,:) + Ysc.*Ydir'*temp2D(2,:) + Zdir'*temp2D(3,:)+ offs';
 stf.template.template3D = template3D;
 
 %needle position
-d = stf.needle.seedDistance;
-nNo = stf.needle.seedsNo;
+d = pln.propStf.needle.seedDistance;
+nNo = pln.propStf.needle.seedsNo;
 needleDist(1,1,:) = d.*[1:nNo]';
 needleDir = needleDist.*Zdir';
 
 seedPos_coord_need_seed = needleDir + template3D;
 seedPos_need_seed_coord = shiftdim(seedPos_coord_need_seed,1);
-stf.seedPos = seedPos_need_seed_coord;
+stf.seedPosX = seedPos_need_seed_coord(:,:,1);
+stf.seedPosY = seedPos_need_seed_coord(:,:,2);
+stf.seedPosZ = seedPos_need_seed_coord(:,:,3);
 % the output array has the dimentions (needleNo,seedNo,coordinates)
 matRad_cfg.dispInfo('...100% ');
 end

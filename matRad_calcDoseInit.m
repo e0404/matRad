@@ -1,3 +1,4 @@
+
 matRad_cfg =  MatRad_Config.instance();
 
 % default: dose influence matrix computation
@@ -144,4 +145,4 @@ catch
 end
 
 % compute SSDs
-% stf = matRad_computeSSD(stf,ct); 
+stf = matRad_computeSSD(stf,ct);

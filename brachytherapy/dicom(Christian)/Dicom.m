@@ -54,7 +54,7 @@ classdef Dicom < handle
             if all([files(:).isdir])
                 for i=1:length(files)
                     actFolder = [foldername,'/',files(i).name];
-                    if i==1;
+                    if i==1
                         obj.analyzeFolder(actFolder,useOnly);
                     else
                         obj.addNewFolder(actFolder);

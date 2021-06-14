@@ -198,6 +198,7 @@ end
 
 optiProb = matRad_OptimizationProblem(backProjection);
 
+
 %optimizer = matRad_OptimizerIPOPT;
 
 if ~isfield(pln.propOpt,'optimizer')
@@ -209,6 +210,8 @@ switch pln.propOpt.optimizer
         optimizer = matRad_OptimizerIPOPT;
     case 'fmincon'
         optimizer = matRad_OptimizerFmincon;
+    case 'linear'
+        optimizer = matRad_OptimizerLinProg;
     otherwise
         warning(['Optimizer ''' pln.propOpt.optimizer ''' not known! Fallback to IPOPT!']);
         optimizer = matRad_OptimizerIPOPT;
@@ -221,7 +224,7 @@ optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
 wOpt = optimizer.wResult;
 info = optimizer.resultInfo;
 
-resultGUI = matRad_calcCubes(wOpt,dij);
+%resultGUI = matRad_calcCubes(wOpt,dij);
 resultGUI.wUnsequenced = wOpt;
 resultGUI.usedOptimizer = optimizer;
 resultGUI.info = info;

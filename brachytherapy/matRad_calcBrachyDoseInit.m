@@ -55,14 +55,16 @@ switch pln.radiationMode
         dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
         dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
     case 'brachy'
-        dij.numOfNeedles       = size(stf.seedPos,1);
-        dij.numOfSeedsPerNeedle= stf.needle.seedsNo;
-        dij.totaNumOfSeeds     = dij.numOfNeedles*dij.numOfSeedsPerNeedle;
+        dij.numOfScenarios     = 1;
+        dij.numOfNeedles       = size(stf.seedPosX,1);
+        dij.numOfSeedsPerNeedle= pln.propStf.needle.seedsNo;
+        dij.totalNumOfSeeds     = dij.numOfNeedles*dij.numOfSeedsPerNeedle;
+        dij.totalNumOfBixels    = dij.totalNumOfSeeds;
 end
 
 
 % Allocate space for dij.physicalDose sparse matrix
-dij.physicalDose = spalloc(dij.doseGrid.numOfVoxels,dij.totaNumOfSeeds,1);
+dij.physicalDose = spalloc(dij.doseGrid.numOfVoxels,dij.totalNumOfBixels,1);
 
 
 % take only voxels inside patient
