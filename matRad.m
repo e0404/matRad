@@ -12,7 +12,6 @@
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-addpath('../matRad')
 matRad_rc
 
 % load patient data, i.e. ct, voi, cst
@@ -27,7 +26,7 @@ load PROSTATE.mat
 
 pln.radiationMode   = 'brachy';     % either photons / protons / carbon / brachy
 %pln.radiationMode   = 'protons';  
-pln.machine         = 'Generic';
+pln.machine         = 'LDR';
 
 switch pln.radiationMode
     case {'photons','protons','carbon'}
@@ -56,11 +55,11 @@ switch pln.radiationMode
     case 'brachy'
         % template geometry settings
         pln.numOfFractions                   = 1;
-        pln.propStf.template.numOfHorPoints  = 10;
-        pln.propStf.template.numOfVertPoints = 10;
-        pln.propStf.template.Xscale          = 15; % [mm]
-        pln.propStf.template.Yscale          = 10; % [mm]
-        pln.propStf.needle.seedDistance      = 10; % [mm]
+        pln.propStf.template.numOfHorPoints  = 8;
+        pln.propStf.template.numOfVertPoints = 6;
+        pln.propStf.template.Xscale          = 20; % [mm]
+        pln.propStf.template.Yscale          = 20; % [mm]
+        pln.propStf.needle.seedDistance      = 12; % [mm]
         pln.propStf.needle.seedsNo           = 11; 
             %unit vectors of displaced, rotated template coordinate system
         pln.propStf.orientation.Xdir = normalize([1,0,0],'norm');
@@ -71,6 +70,7 @@ switch pln.radiationMode
         
         % dose calculation settings
         pln.propDoseCalc.durationImplanted = Inf;
+        pln.propDoseCalc.TG43approximation = '1D'; %'1D' or '2D'
         pln.propDoseCalc.doseGrid.resolution.x = 10; % [mm]
         pln.propDoseCalc.doseGrid.resolution.y = 10; % [mm]
         pln.propDoseCalc.doseGrid.resolution.z = 10; % [mm]
@@ -92,7 +92,7 @@ switch pln.radiationMode
     case {'photons','protons','carbon'}
         stf = matRad_generateStf(ct,cst,pln);
     case 'brachy'
-        stf = matRadBrachy_generateStf(ct,cst,pln);
+        stf = matRad_generateBrachyStf(ct,cst,pln);
 end
 
 

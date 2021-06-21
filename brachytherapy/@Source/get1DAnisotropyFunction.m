@@ -61,7 +61,8 @@ diffInd = ~sameInd;
 
 Phi_an(ind(sameInd)) = obj.AnisotropyFactorValue(indMinR(sameInd));
 Phi_an(ind(diffInd)) = obj.AnisotropyFactorValue(indMinR(diffInd)).*exp(...
-             (r(ind(diffInd))-obj.AnisotropyFactorRadialDistance(indMinR(diffInd)))./(obj.AnisotropyFactorRadialDistance(indMaxR(diffInd))-obj.AnisotropyFactorRadialDistance(indMinR(diffInd)))...
+             (r(ind(diffInd))-obj.AnisotropyFactorRadialDistance(indMinR(diffInd)))./...
+             (obj.AnisotropyFactorRadialDistance(indMaxR(diffInd))-obj.AnisotropyFactorRadialDistance(indMinR(diffInd)))...
              .*(log(obj.AnisotropyFactorValue(indMaxR(diffInd)))-log(obj.AnisotropyFactorValue(indMinR(diffInd)))));
 
 
@@ -71,7 +72,7 @@ Phi_an(ind(diffInd)) = obj.AnisotropyFactorValue(indMinR(diffInd)).*exp(...
 ind      = r>rMax;
 Phi_an(ind) = obj.AnisotropyFactorValue(indMax);
 
-% function value for distances smaller than rMax, 
+% function value for distances smaller than rMin, 
 % Eq. 2 (Rivard et al. (2007): Supplement to AAPM TG-43 update, p.
 % 2195): Integral solved since the 1D function is independet of theta
 ind      = r<rMin;

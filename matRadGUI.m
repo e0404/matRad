@@ -156,7 +156,7 @@ if isfield(handles,'VOIPlotFlag')
 end
 
 %seach for availabes machines
-handles.Modalities = {'photons','protons','carbon'};
+handles.Modalities = {'photons','protons','carbon','brachy'};
 for i = 1:length(handles.Modalities)
   pattern = [handles.Modalities{1,i} '_*'];
   if isdeployed
@@ -299,7 +299,7 @@ try
          setPln(handles);
     end
         
-catch
+%catch
        handles.State = 0;
        handles = showError(handles,'GUI OpeningFunc: Could not set or get pln');
 end

@@ -1,12 +1,32 @@
-function stf = matRadBrachy_generateStf(ct,cst,pln)
+function stf = matRad_generateBrachyStf(ct,cst,pln)
+% matRad steering information generation for brachy
+% 
+% call
+%   stf = matRadBrachy_generateStf(ct,cst,pln,visMode)
+%
+% input
+%   ct:         ct cube
+%   cst:        matRad cst struct (positions and constraints of patient structures)
+%   pln:        matRad plan meta information struct
+%   visMode:    toggle on/off different visualizations by setting this value to 1,2,3 (optional)
+%
+% output
+%   stf:        matRad steering information struct  
 %% config
 matRad_cfg = MatRad_Config.instance();
-
+addpath(fullfile( matRad_cfg.matRadRoot));
 matRad_cfg.dispInfo('matRad: Generating stf struct... ');
+
+if ~isfield(pln,'propStf')
+matRad_cfg.dispError('no applicator information in pln struct');
+end
 
 %% general stf information
 stf = struct;
-stf.radiationMode = 'brachy'; %pln.radiationMode
+stf.radiationMode = pln.radiationMode;
+stf.numOfSeedsPerNeedle = pln.propStf.needle.seedsNo;
+stf.numOfNeedles = pln.propStf.template.numOfHorPoints*pln.propStf.template.numOfVertPoints; %might be changed for coordinate based pln input
+%needle Index On template
 
 %% generate image coordinates
 
@@ -50,8 +70,8 @@ stf.targetVolume.Yvox = ct.y(coordsY_vox);
 stf.targetVolume.Zvox = ct.z(coordsZ_vox);
 
 
-% calculate rED or rSP from HU
-ct = matRad_calcWaterEqD(ct, pln);
+% % calculate rED or rSP from HU
+% ct = matRad_calcWaterEqD(ct, pln);
 
 % take only voxels inside patient
 V = [cst{:,4}];
@@ -74,7 +94,6 @@ templY = reshape(templYmesh,[],1);
 templZ = zeros(length(templX),1);
 
 stf.template.template2D(:,:,1) = [templX';templY';templZ'];
-
 %% generate seed positions
 % seed positions can be generated from neeldes, template and oriantation
 
@@ -93,8 +112,8 @@ stf.template.template3D = template3D;
 
 %needle position
 d = pln.propStf.needle.seedDistance;
-nNo = pln.propStf.needle.seedsNo;
-needleDist(1,1,:) = d.*[1:nNo]';
+sNo = pln.propStf.needle.seedsNo;
+needleDist(1,1,:) = d.*[1:sNo]';
 needleDir = needleDist.*Zdir';
 
 seedPos_coord_need_seed = needleDir + template3D;
@@ -104,5 +123,17 @@ stf.seedPosY = seedPos_need_seed_coord(:,:,2);
 stf.seedPosZ = seedPos_need_seed_coord(:,:,3);
 % the output array has the dimentions (needleNo,seedNo,coordinates)
 matRad_cfg.dispInfo('...100% ');
+
+
+if (max(stf.seedPosX,[],'all') >= max(ct.x,[],'all') || min(stf.seedPosX,[],'all') <= min(ct.x,[],'all') ||...
+    max(stf.seedPosY,[],'all') >= max(ct.y,[],'all') || min(stf.seedPosY,[],'all') <= min(ct.y,[],'all') || ...
+    max(stf.seedPosZ,[],'all') >= max(ct.z,[],'all') || min(stf.seedPosZ,[],'all') <= min(ct.z,[],'all'))
+    matRad_cfg.dispError('Seeds outside of ct cube');
+    
+if (max(stf.targetVolume.Xvox) <= min(stf.seedPosX,[],'all') || min(stf.targetVolume.Xvox) >= max(stf.seedPosX,[],'all') ||...
+    max(stf.targetVolume.Yvox) <= min(stf.seedPosY,[],'all') || min(stf.targetVolume.Yvox) >= max(stf.seedPosY,[],'all') ||...
+    max(stf.targetVolume.Zvox) <= min(stf.seedPosZ,[],'all') || min(stf.targetVolume.Zvox) >= max(stf.seedPosZ,[],'all'))
+    matRad_cfg.dispWarning('no seed points in VOI')
+end
 end
 

@@ -15,6 +15,7 @@ function [DoseRate] = getDoseRate1D(obj,r)
 % time:     treatment time
 
 global cm
+cm = 1;
 
 if size(r,1)==1 && size(r,2)>1
     r = r(:); 
