@@ -1,7 +1,13 @@
-function resultGUI = matRad_calcDoseModulated(ct,stf,pln,cst,mode,weights,samples,Pmod,modulation)
+function resultGUI = matRad_calcDoseModulated(ct,stf,pln,cst,mode,weights,samples,Pmod,modulation,continuous)
+
+global matRad_cfg;
+matRad_cfg =  MatRad_Config.instance();
 
 if nargin < 9
     modulation = 'binomial';
+    continuous = false;
+elseif nargin < 10
+    continuous = false;
 end
 
 if iscell(mode)
@@ -54,10 +60,13 @@ end
 %
 % else
 
-
+% Turn info and warning messages off for modulation
+logLevel = matRad_cfg.logLevel;
+matRad_cfg.logLevel = 1;
 
 for i = 1:samples
-    ct_mod = matRad_modulateDensity(ct,cst,pln,Pmod,modulation);
+    fprintf('Dose calculation for CT %i/%i \n',i,samples)
+    ct_mod = matRad_modulateDensity(ct,cst,pln,Pmod,modulation,continuous);
     
     if iscell(mode) %case TOPAS
         if strcmp(mode{1},'TOPAS')
@@ -94,7 +103,6 @@ for k = 1:samples
     topasMeanDiff = topasMeanDiff + (data{k} - resultGUI.physicalDose).^2;
 end
 topasVarMean = topasMeanDiff./(samples - 1)./samples;
-topasVarMean = topasMeanDiff./(samples - 1)./samples;
 topasStdMean = sqrt(topasVarMean);
 
 topasStdSum = topasStdMean * samples;
@@ -102,6 +110,8 @@ topasVarSum = topasStdSum.^2;
 
 resultGUI.physicalDose_std = sqrt(topasVarSum);
 
-% end
+%Change loglevel back to default;
+matRad_cfg.logLevel = logLevel;
+
 end
 

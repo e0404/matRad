@@ -194,7 +194,7 @@ classdef MatRad_Config < handle
             %setDefaultPropertiesForTesting sets matRad's default
             %properties during testing to reduce computational load
             
-            obj.logLevel   = 1; %Omit output except errors
+            obj.logLevel   = 3; %Omit output except errors
             
             obj.propStf.defaultLongitudinalSpotSpacing = 20;
             obj.propStf.defaultAddMargin = true; %expand target for beamlet finding

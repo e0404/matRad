@@ -34,10 +34,11 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 matRad_cfg =  MatRad_Config.instance();
 
 % initialize waitbar
-figureWait = waitbar(0,'calculate dose influence matrix for particles...');
-% prevent closure of waitbar and show busy state
-set(figureWait,'pointer','watch');
-
+if matRad_cfg.logLevel > 1
+    figureWait = waitbar(0,'calculate dose influence matrix for particles...');
+    % prevent closure of waitbar and show busy state
+    set(figureWait,'pointer','watch');
+end
 
 matRad_cfg.dispInfo('matRad: Particle dose calculation... \n');
 
@@ -59,12 +60,12 @@ else
 end
 
 if pln.propHeterogeneity.calcHetero
-   cstOriginal = cst; 
+    cstOriginal = cst;
 end
 
 % init dose calc
 matRad_calcDoseInit;
-    
+
 % initialize lung heterogeneity correction and turn off if necessary files are missing
 if pln.propHeterogeneity.calcHetero
     matRad_cfg.dispInfo('Heterogeneity correction enabled. \n');
@@ -72,12 +73,12 @@ if pln.propHeterogeneity.calcHetero
     for i = 1:length(cst(:,1)) % scan cst for segmentation flagged for correction
         if isfield(cst{i,5},'HeterogeneityCorrection')
             heteroCST = true;
-            break
+            continue
         end
     end
     if ~isstruct(machine.data(1).Z) || ~heteroCST
-       matRad_cfg.dispWarning('Heterogeneity correction enabled but no usable data in cst or unsuitable base data. Correction cannot be applied.'); 
-       pln.propHeterogeneity.calcHetero = false;
+        matRad_cfg.dispWarning('Heterogeneity correction enabled but no usable data in cst or unsuitable base data. Correction cannot be applied.');
+        pln.propHeterogeneity.calcHetero = false;
     end
 else
     matRad_cfg.dispInfo('Heterogeneity correction disabled. \n');
@@ -101,15 +102,6 @@ if pln.propHeterogeneity.calcHetero
     
     if pln.propHeterogeneity.useOriginalDepths
         machine.data = matRad_checkBaseData(machine.data);
-        if isstruct(machine.data(1).Z) && isfield(machine.data(1).Z,'profileORG')
-            for i = 1:length(machine.data)
-                machine.data(i).Z = machine.data(i).Z.profileORG;
-            end
-        elseif isstruct(machine.data(1).Z) && ~isfield(machine.data(1).Z,'profileORG')
-            matRad_cfg.dispWarning('No original depths available in base data. Nothing changed.');
-        else
-            matRad_cfg.dispWarning('Base data depths are already in the desired format.');
-        end
     end
     
 end
@@ -140,7 +132,7 @@ if pln.bioParam.bioOpt
     
 end
 
-if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'calcLET') 
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'calcLET')
     pln.propDoseCalc.calcLET = matRad_cfg.propDoseCalc.defaultCalcLET;
 end
 
@@ -168,7 +160,7 @@ end
 
 %Toggles correction of small difference of current SSD to distance used
 %in generation of base data (e.g. phantom surface at isocenter)
-if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc, 'airOffsetCorrection') 
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc, 'airOffsetCorrection')
     pln.propDoseCalc.airOffsetCorrection = true;
     
     if ~isfield(machine.meta, 'fitAirOffset')
@@ -176,8 +168,8 @@ if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc, 'airOffsetCorrecti
         matRad_cfg.dispDebug('Asked for correction of Base Data Air Offset, but no value found. Using default value of %f mm.\n',fitAirOffset);
     else
         fitAirOffset = machine.meta.fitAirOffset;
-    end    
-else 
+    end
+else
     fitAirOffset = 0;
 end
 
@@ -204,9 +196,9 @@ if pln.bioParam.bioOpt
     dij.abx      = zeros(dij.doseGrid.numOfVoxels,ct.numOfCtScen);  % alpha beta ratio
     
     % retrieve photon LQM parameter for the current dose grid voxels
-%     [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,ct.numOfCtScen,VdoseGrid);
+    %     [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,ct.numOfCtScen,VdoseGrid);
     [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,ct.numOfCtScen);
-
+    
     
     dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
     
@@ -250,7 +242,7 @@ if pln.bioParam.bioOpt
         if ~isfield(machine.data,'LET')
             matRad_cfg.dispError('base data is incomplement - LET is missing');
         end
-    end %  end is LEM model  
+    end %  end is LEM model
 end
 
 
@@ -335,7 +327,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 end
                 
                 for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
-                                    
+                    
                     counter       = counter + 1;
                     bixelsPerBeam = bixelsPerBeam + 1;
                     
@@ -420,7 +412,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                     doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(dij.doseGrid.numOfVoxels,1);
                                     continue;
                                 end
-
+                                
                                 % adjust radDepth according to range shifter
                                 if  pln.propDoseCalc.airOffsetCorrection
                                     currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness + dR;
@@ -434,7 +426,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                 if pln.propHeterogeneity.calcHetero
                                     currHeteroCorrDepths = heteroCorrDepths(currIx);
                                 end
-                                    
+                                
                                 % calculate initial focus sigma
                                 sigmaIni = matRad_interp1(machine.data(energyIx).initFocus.dist(stf(i).ray(j).focusIx(k),:)', ...
                                     machine.data(energyIx).initFocus.sigma(stf(i).ray(j).focusIx(k),:)',stf(i).ray(j).SSD);
@@ -470,7 +462,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                         sigmaIni_sq, ...
                                         machine.data(energyIx));
                                 end
-
+                                
                                 
                                 % dij sampling is exluded for particles until we investigated the influence of voxel sampling for particles
                                 %relDoseThreshold   =  0.02;   % sample dose values beyond the relative dose
@@ -497,13 +489,13 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                         bixelAlphaDose =  bixelDose.L .* bixelDose.Z_Aij;
                                         bixelBetaDose  =  bixelDose.L .* bixelDose.Z_Bij;
                                     else
-                                    [bixelAlpha,bixelBeta] = pln.bioParam.calcLQParameter(currRadDepths,machine.data(energyIx),vTissueIndex_j(currIx,:),dij.ax(VdoseGrid(ix(currIx))),...
-                                        dij.bx(VdoseGrid(ix(currIx))),dij.abx(VdoseGrid(ix(currIx))));
-                                    
-                                    bixelAlphaDose =  bixelDose.physDose .* bixelAlpha;
-                                    bixelBetaDose  =  bixelDose.physDose .* sqrt(bixelBeta);
+                                        [bixelAlpha,bixelBeta] = pln.bioParam.calcLQParameter(currRadDepths,machine.data(energyIx),vTissueIndex_j(currIx,:),dij.ax(VdoseGrid(ix(currIx))),...
+                                            dij.bx(VdoseGrid(ix(currIx))),dij.abx(VdoseGrid(ix(currIx))));
+                                        
+                                        bixelAlphaDose =  bixelDose.physDose .* bixelAlpha;
+                                        bixelBetaDose  =  bixelDose.physDose .* sqrt(bixelBeta);
                                     end
-
+                                    
                                     bixelAlpha(isnan(bixelAlpha)) = 0;
                                     bixelBeta(isnan(bixelBeta)) = 0;
                                     
@@ -540,7 +532,7 @@ end % end shift scenario loop
 
 dij = matRad_cleanDijScenarios(dij,pln,cst);
 
-%Close Waitbar
-if ishandle(figureWait)
+% Close Waitbar
+if exist('figureWait') && ishandle(figureWait)
     delete(figureWait);
 end
