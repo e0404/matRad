@@ -1,4 +1,4 @@
-function [ct] = matRad_modulateDensity(ct,cst,pln,Pmod,mode)
+function [ct] = matRad_modulateDensity(ct,cst,pln,Pmod,mode,continuous,voxelsize)
 % matRad density modulation function
 %
 % call
@@ -36,6 +36,7 @@ matRad_cfg =  MatRad_Config.instance();
 
 if nargin < 5
     mode = 'binomial';
+    continuous = false;
 end
 
 % get all unique tumor indices from PTV segmentations
@@ -51,6 +52,18 @@ end
 lungIdx = [cst{idx,4}];
 lungIdx = unique(vertcat(lungIdx{:}));
 
+
+idxTemp = zeros(length(10:voxelsize:59),length(1:voxelsize:100),length(1:voxelsize:100));
+counter = 2;
+for e = 1:size(idxTemp,1)
+    for r = 1:size(idxTemp,2)
+        for t = 1:size(idxTemp,3)
+            idxTemp(e,r,t) = counter;
+            counter = counter +1;
+        end
+    end
+end
+
 % setting overlaps
 %lungIdx = lungIdx(~ismember(lungIdx,tumorIdx));
 
@@ -60,28 +73,33 @@ if ~isfield(ct,'cube')
 end
 
 if strcmp(mode, 'binomial')
-     
-    %pLung = 0.26;
-    %pLung = 0.4;
-     rhoLung = 1.05;
-%    rhoLung = 1;
+    rhoLung = 1.05;
     
     pLung = ct.cube{1}(lungIdx) / rhoLung;
     if any(pLung > 1)
         lungIdx = lungIdx(pLung <= 1);
         pLung = ct.cube{1}(lungIdx) / rhoLung;
     end
-    
+      
     d = Pmod/1000 ./ (1-pLung) / rhoLung; % [1] eq.8: Pmod = d*(1-pLung) * rhoLung
-    D = ct.resolution.y;
     
-    n = round(D./d);
+    if (pln.propStf.gantryAngles == 0 || pln.propStf.couchAngles == 0) && pln.propStf.numOfBeams == 1 && (isfield(pln.propHeterogeneity,'angleCorrection') && pln.propHeterogeneity.angleCorrection)
+        angleCorrection = 1/cosd(pln.propStf.gantryAngles);
+    else
+        angleCorrection = 1;
+    end
+    D = ct.resolution.y*voxelsize*angleCorrection;
+    
+    if continuous
+       n = D./d;
+    else
+       n = round(D./d);
+    end
     
     % Don't modulate voxel with less than 1 substructures
-    notModulated = (n~=0);
-    lungIdx = lungIdx(notModulated);
-    pLung = pLung(notModulated);
-    n = n(notModulated);
+    lungIdx = lungIdx(n>=1);
+    pLung = pLung(n>=1);
+    n = n(n>=1);
     
 %     discrete = matRad_sampleLungBino(n,pLung,rhoLung,length(lungIdx));
 %     cont = matRad_sampleLungBino(n,pLung,rhoLung,length(lungIdx),1);
@@ -89,10 +107,12 @@ if strcmp(mode, 'binomial')
 %     map = brewermap(2,'Set1'); 
 %     h1 = histogram(cont,'facecolor',map(1,:),'facealpha',.5);
 %     figure
-%     h2 = histogram(discrete,'facecolor',map(2,:),'facealpha',.5);
-%     
-    continuous = 1;
-    ct.cube{1}(lungIdx) =  matRad_sampleLungBino(n,pLung,rhoLung,length(lungIdx),continuous);
+%     h2 = histogram(discrete,'facecolor',map(2,:),'facealpha',.5);   
+    lungVoxNew = numel(unique(idxTemp(:)));
+    samplesTmp = matRad_sampleLungBino(unique(n),unique(pLung),rhoLung,lungVoxNew,continuous);
+    samplesTmp = reshape(samplesTmp,[size(idxTemp,1),size(idxTemp,2),size(idxTemp,3)]);
+    samples = imresize3(samplesTmp, voxelsize, 'nearest');
+    ct.cube{1}(lungIdx) = samples(1:50,1:100,1:100);
     ct.cubeHU{1}(lungIdx) = 1024*(ct.cube{1}(lungIdx)-1);
         
 elseif strcmp(mode, 'poisson')
