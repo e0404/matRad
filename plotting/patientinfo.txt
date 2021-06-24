@@ -1,0 +1,1 @@
+Name	NumOfFractions	gantryAngle	couchAngle	numOfBeams	CTresX	CTresY	CTresZ	cubeDim	sizePTV	sizeGTV

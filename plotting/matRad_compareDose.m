@@ -80,7 +80,7 @@ if ~exist('n','var')
     n = 0;
 end
 if ~exist('criteria','var')
-    criteria = [3 3];
+    criteria = [1 1];
 end
 if ~exist('cst','var') || isempty(cst)
     cst = [];
@@ -144,8 +144,8 @@ if enable(1) == 1
         relDoseThreshold = criteria(1); % in [%]
         dist2AgreeMm     = criteria(2); % in [mm]
     else
-        dist2AgreeMm     = 3; % in [mm]
-        relDoseThreshold = 3; % in [%]
+        dist2AgreeMm     = 1; % in [mm]
+        relDoseThreshold = 1; % in [%]
     end
     
     [gammaCube,gammaPassRate] = matRad_gammaIndex(cube1,cube2,resolution,criteria,[],n,localglobal,cst);
