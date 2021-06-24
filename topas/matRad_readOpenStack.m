@@ -28,8 +28,8 @@ for f = 1:length(folders)
         dij.MC_tallies = fnames;
         
         if ~isfield(topasCubes,'alpha_beam1')
-            for f = 1:numel(fnames)
-                dij.(fnames{f}){ctScen,1} = sum(w(:,ctScen))*reshape(topasCubes.(fnames{f}),[],1);
+            for c = 1:numel(fnames)
+                dij.(fnames{c}){ctScen,1} = sum(w(:,ctScen))*reshape(topasCubes.(fnames{c}),[],1);
             end
         else
             for d = 1:dij.numOfBeams
