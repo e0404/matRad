@@ -122,7 +122,7 @@ if isfield(dij,'MC_tallies')
     for f = 1:numel(dij.MC_tallies)
         tally = dij.MC_tallies{f};
         % skip tallies processed above
-        if ~isfield(resultGUI,tally)
+        if ~isfield(resultGUI,tally) && ~contains(tally,'std')
             resultGUI.(tally) = reshape(full(dij.(tally){scenNum}),dij.doseGrid.dimensions);
         end
     end
