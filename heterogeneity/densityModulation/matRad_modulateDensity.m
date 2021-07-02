@@ -92,14 +92,16 @@ if strcmp(mode, 'binomial')
     
     if continuous
        n = D./d;
+       tooSmall = n>1;
     else
        n = round(D./d);
+       tooSmall = n>1;
     end
     
     % Don't modulate voxel with less than 1 substructures
-    lungIdx = lungIdx(n>=1);
-    pLung = pLung(n>=1);
-    n = n(n>=1);
+    lungIdx = lungIdx(tooSmall);
+    pLung = pLung(tooSmall);
+    n = n(tooSmall);
     
 %     discrete = matRad_sampleLungBino(n,pLung,rhoLung,length(lungIdx));
 %     cont = matRad_sampleLungBino(n,pLung,rhoLung,length(lungIdx),1);
