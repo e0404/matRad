@@ -95,7 +95,7 @@ if strcmp(mode, 'binomial')
        tooSmall = n>1;
     else
        n = round(D./d);
-       tooSmall = n>1;
+       tooSmall = n>=1;
     end
     
     % Don't modulate voxel with less than 1 substructures
