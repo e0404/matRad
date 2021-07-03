@@ -62,9 +62,6 @@ if continuous
             samples(i) = betaincinv(rand(1),a(i),b(i));
         end
     end
-%     figure
-% h = histogram(samples);
-% h.Normalization = 'probability';
 
 else
     % sample discrete binomial distribution
@@ -81,14 +78,4 @@ end
 
 samples = samples * lungDensity;
 
-% figure
-% h = histogram(samples,n);
-% hold on
-% X = linspace(0,1,1e3);
-% plot(X,betainc(X,a,b),'Linewidth',1.5)
-% % h2 = histogram(samples2);
-% h.Normalization = 'cdf';
-% % h2.Normalization = 'cdf';
-
-% title(['Var = ',num2str(round(var(samples),4)),', mean = ',num2str(round(mean(samples),4))])
 end
