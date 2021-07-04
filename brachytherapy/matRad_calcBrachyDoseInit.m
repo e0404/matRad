@@ -49,17 +49,20 @@ offset = [dij.doseGrid.resolution.x - dij.ctGrid.resolution.x ...
 switch pln.radiationMode
     case {'photons','protons','carbon'}
 
-        dij.numOfBeams         = pln.propStf.numOfBeams;
-        dij.numOfScenarios     = 1;
-        dij.numOfRaysPerBeam   = [stf(:).numOfRays];
-        dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
-        dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
+        dij.numOfBeams          = pln.propStf.numOfBeams;
+        dij.numOfScenarios      = 1;
+        dij.numOfRaysPerBeam    = [stf(:).numOfRays];
+        dij.totalNumOfBixels    = sum([stf(:).totalNumOfBixels]);
+        dij.totalNumOfRays      = sum(dij.numOfRaysPerBeam);
     case 'brachy'
-        dij.numOfScenarios     = 1;
-        dij.numOfNeedles       = size(stf.seedPosX,1);
-        dij.numOfSeedsPerNeedle= pln.propStf.needle.seedsNo;
+        dij.numOfScenarios      = 1;
+        dij.numOfBeams          = 1;
+        dij.beamNum             = 1;
+        dij.numOfNeedles        = stf.numOfNeedles;
+        dij.numOfSeedsPerNeedle = stf.numOfSeedsPerNeedle;
         dij.totalNumOfSeeds     = dij.numOfNeedles*dij.numOfSeedsPerNeedle;
         dij.totalNumOfBixels    = dij.totalNumOfSeeds;
+        
 end
 
 

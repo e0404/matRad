@@ -36,7 +36,7 @@ end
 
 resultGUI.w = w;
 
-% get bixel - beam correspondence  
+% get bixel - beam correspondence
 for i = 1:dij.numOfBeams
     beamInfo(i).suffix = ['_beam', num2str(i)];
     beamInfo(i).logIx  = (dij.beamNum == i);      

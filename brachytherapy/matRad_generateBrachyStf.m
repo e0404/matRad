@@ -1,17 +1,18 @@
 function stf = matRad_generateBrachyStf(ct,cst,pln)
-% matRad steering information generation for brachy
+% matRad_generateBrachyStf generates matRad steering information generation for brachy
 % 
 % call
-%   stf = matRadBrachy_generateStf(ct,cst,pln,visMode)
+%   stf = matRad_generateStf(ct,cst,pln,visMode)
 %
 % input
 %   ct:         ct cube
-%   cst:        matRad cst struct (positions and constraints of patient structures)
+%   cst:        matRad cst struct
 %   pln:        matRad plan meta information struct
 %   visMode:    toggle on/off different visualizations by setting this value to 1,2,3 (optional)
 %
 % output
-%   stf:        matRad steering information struct  
+%   stf:        matRad steering information struct
+
 %% config
 matRad_cfg = MatRad_Config.instance();
 addpath(fullfile( matRad_cfg.matRadRoot));
@@ -21,12 +22,7 @@ if ~isfield(pln,'propStf')
 matRad_cfg.dispError('no applicator information in pln struct');
 end
 
-%% general stf information
-stf = struct;
-stf.radiationMode = pln.radiationMode;
-stf.numOfSeedsPerNeedle = pln.propStf.needle.seedsNo;
-stf.numOfNeedles = pln.propStf.template.numOfHorPoints*pln.propStf.template.numOfVertPoints; %might be changed for coordinate based pln input
-%needle Index On template
+
 
 %% generate image coordinates
 
@@ -63,7 +59,7 @@ end
 % Convert linear indices to 3D voxel coordinates
 [coordsY_vox, coordsX_vox, coordsZ_vox] = ind2sub(ct.cubeDim,V);
 
-%translate to geometrix coordinates and save in stf
+%translate to geometric coordinates and save in stf
 
 stf.targetVolume.Xvox = ct.x(coordsX_vox); % angabe in mm
 stf.targetVolume.Yvox = ct.y(coordsY_vox);
@@ -84,56 +80,77 @@ for i = 1:ct.numOfCtScen
     ct.cube{i}(eraseCtDensMask == 1) = 0;
 end
 
-%% generate 2D template shape
-% Define steering file like struct.
+        %% save VOI coordinates
+        %translate to geometric coordinates and save in stf
+        stf.targetVolume.Xvox = ct.x(coordsX_vox);
+        stf.targetVolume.Yvox = ct.y(coordsY_vox);
+        stf.targetVolume.Zvox = ct.z(coordsZ_vox);
+%         stf.targetVolume.Xvox = ct.x(coordsX_vox); % given in mm
+%         stf.targetVolume.Yvox = ct.y(coordsY_vox);
+%         stf.targetVolume.Zvox = ct.z(coordsZ_vox);
+        %% copy meta info from pln
+        stf.radiationMode = pln.radiationMode;
+        stf.numOfSeedsPerNeedle = pln.propStf.needle.seedsNo;
+        stf.numOfNeedles = pln.propStf.template.numOfXPoints*pln.propStf.template.numOfYPoints; %might be changed for coordinate based pln input
+        stf.totalNumOfBixels = stf.numOfSeedsPerNeedle*stf.numOfNeedles; % means total number of seeds 
 
-[templXmesh,templYmesh] = meshgrid(0:pln.propStf.template.numOfHorPoints-1,0:pln.propStf.template.numOfVertPoints-1);
- 
-templX = reshape(templXmesh,[],1);
-templY = reshape(templYmesh,[],1);
-templZ = zeros(length(templX),1);
+        %% generate 2D template shape
+        % in case, the template was defined as grid, 4xN position matrix is
+        % produced. Each column is the 3+1 vector of one template hole (fourth entry always one, z coord - third entry zero)
+        % the template origin is set at its center.
+        if strcmp(pln.propStf.templateDirect, 'none')
+            xNum = pln.propStf.template.numOfXPoints;
+            yNum = pln.propStf.template.numOfYPoints;
+            xSc = pln.propStf.template.xScale;
+            ySc = pln.propStf.template.yScale;
+            [templXmesh,templYmesh] = meshgrid(-(xNum-1)/2:(xNum-1)/2,-(yNum-1)/2:(yNum-1)/2);
+            templX = xSc*reshape(templXmesh,[],1);
+            templY = ySc*reshape(templYmesh,[],1);
+            templZ = zeros(length(templX),1);
+            templ1 = ones(length(templX),1);
+            stf.template.template2D = [templX';templY';templZ';templ1'];
+        else
+            stf.template.template2D = pln.propStf.templateDirect;
+        end
+        
+        %% generate seed positions
+        % seed positions can be generated from neeldes, template and oriantation
+        % needles are assumed to go trough the template vertically
+        
+        % transformed template
+        stf.template.template3D = pln.propStf.shiftRotMtx*stf.template.template2D;
 
-stf.template.template2D(:,:,1) = [templX';templY';templZ'];
-%% generate seed positions
-% seed positions can be generated from neeldes, template and oriantation
+        % needle position
+        d = pln.propStf.needle.seedDistance;
+        seedsNo = pln.propStf.needle.seedsNo;
+        needleDist(1,1,:) = d.*[1:seedsNo]'; % 1x1xN Array with seed positions on needle
+        needleDir = needleDist.*pln.propStf.shiftRotMtx(1:3,3);
+        seedPos_coord_need_seed = needleDir + stf.template.template3D(1:3,:);
+        seedPos_need_seed_coord = shiftdim(seedPos_coord_need_seed,1);
+        % the output array has the dimentions (needleNo,seedNo,coordinates)
+        X = seedPos_need_seed_coord(:,:,1);
+        Y = seedPos_need_seed_coord(:,:,2);
+        Z = seedPos_need_seed_coord(:,:,3);
+        
+        stf.seedPoints.x = reshape(X,1,[]);
+        stf.seedPoints.y = reshape(Y,1,[]);
+        stf.seedPoints.z = reshape(Z,1,[]);
+        
+        matRad_cfg.dispInfo('...100% ');
 
-
-% transformed template
-temp2D = stf.template.template2D; %zur Verbesserung der Codeleserlichkeit...
-Xdir = pln.propStf.orientation.Xdir;
-Ydir = pln.propStf.orientation.Ydir;
-Zdir = pln.propStf.orientation.Zdir;
-offs = pln.propStf.orientation.offset;
-Xsc = pln.propStf.template.Xscale;
-Ysc = pln.propStf.template.Yscale;
-
-template3D = Xsc.*Xdir'*temp2D(1,:) + Ysc.*Ydir'*temp2D(2,:) + Zdir'*temp2D(3,:)+ offs';
-stf.template.template3D = template3D;
-
-%needle position
-d = pln.propStf.needle.seedDistance;
-sNo = pln.propStf.needle.seedsNo;
-needleDist(1,1,:) = d.*[1:sNo]';
-needleDir = needleDist.*Zdir';
-
-seedPos_coord_need_seed = needleDir + template3D;
-seedPos_need_seed_coord = shiftdim(seedPos_coord_need_seed,1);
-stf.seedPosX = seedPos_need_seed_coord(:,:,1);
-stf.seedPosY = seedPos_need_seed_coord(:,:,2);
-stf.seedPosZ = seedPos_need_seed_coord(:,:,3);
-% the output array has the dimentions (needleNo,seedNo,coordinates)
-matRad_cfg.dispInfo('...100% ');
-
-
-if (max(stf.seedPosX,[],'all') >= max(ct.x,[],'all') || min(stf.seedPosX,[],'all') <= min(ct.x,[],'all') ||...
-    max(stf.seedPosY,[],'all') >= max(ct.y,[],'all') || min(stf.seedPosY,[],'all') <= min(ct.y,[],'all') || ...
-    max(stf.seedPosZ,[],'all') >= max(ct.z,[],'all') || min(stf.seedPosZ,[],'all') <= min(ct.z,[],'all'))
-    matRad_cfg.dispError('Seeds outside of ct cube');
-    
-if (max(stf.targetVolume.Xvox) <= min(stf.seedPosX,[],'all') || min(stf.targetVolume.Xvox) >= max(stf.seedPosX,[],'all') ||...
-    max(stf.targetVolume.Yvox) <= min(stf.seedPosY,[],'all') || min(stf.targetVolume.Yvox) >= max(stf.seedPosY,[],'all') ||...
-    max(stf.targetVolume.Zvox) <= min(stf.seedPosZ,[],'all') || min(stf.targetVolume.Zvox) >= max(stf.seedPosZ,[],'all'))
-    matRad_cfg.dispWarning('no seed points in VOI')
-end
+        % trow warning if seed points are more then twice the central
+        % distange outsidethe TARGET volume or if no sed points are in the
+        % target volume
+        
+        if (max(stf.seedPoints.x) >= 2*max(stf.targetVolume.Xvox) || min(stf.seedPoints.x) <= 2*min(stf.targetVolume.Xvox) ||...
+            max(stf.seedPoints.y) >= 2*max(stf.targetVolume.Yvox) || min(stf.seedPoints.y) <= 2*min(stf.targetVolume.Yvox) || ...
+            max(stf.seedPoints.z) >= 2*max(stf.targetVolume.Zvox) || min(stf.seedPoints.z) <= 2*min(stf.targetVolume.Zvox))
+                matRad_cfg.dispWarning('Seeds far outside the target volume');
+        end
+        if (max(stf.targetVolume.Xvox) <= min(stf.seedPoints.x) || min(stf.targetVolume.Xvox) >= max(stf.seedPoints.x) ||...
+            max(stf.targetVolume.Yvox) <= min(stf.seedPoints.y) || min(stf.targetVolume.Yvox) >= max(stf.seedPoints.y) ||...
+            max(stf.targetVolume.Zvox) <= min(stf.seedPoints.z) || min(stf.targetVolume.Zvox) >= max(stf.seedPoints.z))
+                matRad_cfg.dispWarning('no seed points in VOI')
+        end    
 end
 

@@ -12,7 +12,7 @@ function Phi_an = get2DAnisotropyFunction(obj,r,theta)
 % r:        Vector containing the (radial) distance from the source center to
 %           P(r,theta), with units of cm.
 % theta:    Vector of polar angles between the longitudinal axis of the source
-%           and the ray from the ac- tive source center to the calculation point
+%           and the ray from the active source center to the calculation point
 
 prec =1e-5;
 
@@ -40,7 +40,7 @@ for ir=1:length(indInsideR)
     else
         it1(ir) = find(obj.AnisotropyPolarAngles<=theta(indInsideR(ir)),1, 'last' );
     end
-    it2(ir) = find(obj.AnisotropyPolarAngles>=theta(indInsideR(ir)),1, 'first' );
+        it2(ir) = find(obj.AnisotropyPolarAngles>=theta(indInsideR(ir)),1, 'first' );
 
 end
 
@@ -89,7 +89,7 @@ if any(remaining)
     Phi_an(indInsideR(remaining)) = obj.AnisotropyMatrix(sub2ind(size(obj.AnisotropyMatrix),it1(remaining),ir1(remaining)));
 end
 
-% r < rmin and r > rmax nearest-neighbor or zeroth-order approach
+% For r < rmin and r > rmax use nearest-neighbor and zeroth-order approach
 ir1 = zeros(length(indOutsideR),1);
 it1 = ir1;
 it2 = ir1;
@@ -99,7 +99,7 @@ for ir=1:length(indOutsideR)
     else
     it1(ir) = find(obj.AnisotropyPolarAngles<=theta(indOutsideR(ir)),1, 'last' );
     end
-    it2(ir) = find(obj.AnisotropyPolarAngles>=theta(indOutsideR(ir)),1, 'first' );
+        it2(ir) = find(obj.AnisotropyPolarAngles>=theta(indOutsideR(ir)),1, 'first' );
 end
 
 indSmallerR      = r(indOutsideR)<min(obj.AnisotropyRadialDistances);

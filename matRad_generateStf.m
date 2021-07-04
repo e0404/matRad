@@ -115,7 +115,6 @@ end
 % Define steering file like struct. Prellocating for speed.
 stf = struct;
 
-
 % loop over all angles
 for i = 1:length(pln.propStf.gantryAngles)
     
@@ -355,7 +354,6 @@ for i = 1:length(pln.propStf.gantryAngles)
         end
         
     end
-
     
     % save total number of bixels
     stf(i).totalNumOfBixels = sum(stf(i).numOfBixelsPerRay);
@@ -504,4 +502,5 @@ for i = 1:length(pln.propStf.gantryAngles)
     end
         
 end    
+
 end

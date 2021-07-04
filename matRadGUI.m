@@ -299,7 +299,7 @@ try
          setPln(handles);
     end
         
-%catch
+catch
        handles.State = 0;
        handles = showError(handles,'GUI OpeningFunc: Could not set or get pln');
 end
@@ -727,6 +727,19 @@ switch RadIdentifier
         set(handles.txtSequencing,'Enable','on');
         set(handles.editSequencingLevel,'Enable','on');
         
+    case 'brachy'
+        
+                set(handles.popMenuBioOpt,'Enable','off');
+        ix = find(strcmp(contentPopUp,'none'));
+        set(handles.popMenuBioOpt,'Value',ix);
+        set(handles.btnSetTissue,'Enable','off');
+        
+        set(handles.btnRunSequencing,'Enable','on');
+        set(handles.btnRunDAO,'Enable','on');
+        set(handles.radiobutton3Dconf,'Enable','on');
+        set(handles.txtSequencing,'Enable','on');
+        set(handles.editSequencingLevel,'Enable','on');
+        
     case 'protons'
         
         set(handles.popMenuBioOpt,'Enable','on');
@@ -760,7 +773,8 @@ if handles.State > 0
     if handles.State > 0 && ~strcmp(contents(get(hObject,'Value')),pln.radiationMode)
         
         % new radiation modality is photons -> just keep physicalDose
-        if strcmp(contents(get(hObject,'Value')),'photons')
+        if strcmp(contents(get(hObject,'Value')),'photons') ||...
+           strcmp(contents(get(hObject,'Value')),'brachy')
             try  
             AllVarNames = evalin('base','who');
                if  ismember('resultGUI',AllVarNames)
@@ -885,12 +899,14 @@ end
 
 % carry out dose calculation
 try
-    if strcmp(pln.radiationMode,'photons')
-        dij = matRad_calcPhotonDose(evalin('base','ct'),stf,pln,evalin('base','cst'));
-    elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-        dij = matRad_calcParticleDose(evalin('base','ct'),stf,pln,evalin('base','cst'));
+    switch pln.radiationMode
+        case 'photons'
+            dij = matRad_calcPhotonDose(evalin('base','ct'),stf,pln,evalin('base','cst'));
+        case 'brachy'
+            dij = matRad_calcBrachyDose(evalin('base','ct'),stf,pln,evalin('base','cst'));
+        case {'protons','carbon'}
+        	dij = matRad_calcParticleDose(evalin('base','ct'),stf,pln,evalin('base','cst'));
     end
-
     % assign results to base worksapce
     assignin('base','dij',dij);
     handles.State = 2;
@@ -1991,39 +2007,43 @@ function setPln(handles)
 matRad_cfg = MatRad_Config.instance();
 
 pln = evalin('base','pln');
-% sanity check of isoCenter
-if size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) == 1
-  pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * pln.propStf.isoCenter(1,:);
-elseif size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) ~= 1
-  matRad_cfg.dispError('Isocenter in plan file are incosistent.');
-end
 
-%Sanity check for the bixelWidth field
-bixelWidth = pln.propStf.bixelWidth;
-
-if isnumeric(bixelWidth) && isscalar(bixelWidth)
-    bixelWidth = num2str(pln.propStf.bixelWidth);
-elseif ~isnumeric(bixelWidth) && ~strcmp(bixelWidth,'field')
-    matRad_cfg.dispError('Invalid bixel width! Must be a scalar number or ''field'' for field-based dose calculation with shapes stored in stf!');
-end   
-
-set(handles.editBixelWidth,'String',bixelWidth);
-set(handles.editFraction,'String',num2str(pln.numOfFractions));
-
-if isfield(pln.propStf,'isoCenter')
-    if size(unique(pln.propStf.isoCenter,'rows'),1) == 1
-        set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.propStf.isoCenter(1,:)*10))./10), '\s+', ' '));
-        set(handles.editIsoCenter,'Enable','on');
-        set(handles.checkIsoCenter,'Enable','on');
-    else
-        set(handles.editIsoCenter,'String','multiple isoCenter');
-        set(handles.editIsoCenter,'Enable','off');
-        set(handles.checkIsoCenter,'Value',0);
-        set(handles.checkIsoCenter,'Enable','off');
+if ~strcmp(pln.radiationMode,'brachy')
+    % sanity check of isoCenter
+    if size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) == 1
+      pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * pln.propStf.isoCenter(1,:);
+    elseif size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) ~= 1
+      matRad_cfg.dispError('Isocenter in plan file are incosistent.');
     end
+
+    %Sanity check for the bixelWidth field
+    bixelWidth = pln.propStf.bixelWidth;
+
+    if isnumeric(bixelWidth) && isscalar(bixelWidth)
+        bixelWidth = num2str(pln.propStf.bixelWidth);
+    elseif ~isnumeric(bixelWidth) && ~strcmp(bixelWidth,'field')
+        matRad_cfg.dispError('Invalid bixel width! Must be a scalar number or ''field'' for field-based dose calculation with shapes stored in stf!');
+    end   
+
+    set(handles.editBixelWidth,'String',bixelWidth);
+    set(handles.editFraction,'String',num2str(pln.numOfFractions));
+
+    if isfield(pln.propStf,'isoCenter')
+        if size(unique(pln.propStf.isoCenter,'rows'),1) == 1
+            set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.propStf.isoCenter(1,:)*10))./10), '\s+', ' '));
+            set(handles.editIsoCenter,'Enable','on');
+            set(handles.checkIsoCenter,'Enable','on');
+        else
+            set(handles.editIsoCenter,'String','multiple isoCenter');
+            set(handles.editIsoCenter,'Enable','off');
+            set(handles.checkIsoCenter,'Value',0);
+            set(handles.checkIsoCenter,'Enable','off');
+        end
+    end
+    set(handles.editGantryAngle,'String',num2str((pln.propStf.gantryAngles)));
+    set(handles.editCouchAngle,'String',num2str((pln.propStf.couchAngles)));
 end
-set(handles.editGantryAngle,'String',num2str((pln.propStf.gantryAngles)));
-set(handles.editCouchAngle,'String',num2str((pln.propStf.couchAngles)));
+    
 set(handles.popupRadMode,'Value',find(strcmp(get(handles.popupRadMode,'String'),pln.radiationMode)));
 set(handles.popUpMachine,'Value',find(strcmp(get(handles.popUpMachine,'String'),pln.machine)));
 
@@ -2058,7 +2078,7 @@ else
     set(handles.btnRunDAO,'Enable','off');
 end
 %% enable stratification level input if radiation mode is set to photons
-if strcmp(pln.radiationMode,'photons')
+if strcmp(pln.radiationMode,'photons') || strcmp(pln.radiationMode,'brachy')
     set(handles.txtSequencing,'Enable','on');
     set(handles.radiobutton3Dconf,'Enable','on');
     set(handles.editSequencingLevel,'Enable','on');
@@ -2171,7 +2191,7 @@ catch
 end
 pln.numOfFractions  = parseStringAsNum(get(handles.editFraction,'String'),false);
 contents            = get(handles.popupRadMode,'String'); 
-pln.radiationMode   = contents{get(handles.popupRadMode,'Value')}; % either photons / protons / carbon
+pln.radiationMode   = contents{get(handles.popupRadMode,'Value')}; % either photons / brachy / protons / carbon
 contents            = get(handles.popUpMachine,'String'); 
 pln.machine         = contents{get(handles.popUpMachine,'Value')}; 
 
@@ -2628,10 +2648,13 @@ try
     end
 
     % recalculate influence matrix
-    if strcmp(pln.radiationMode,'photons')
-        dij = matRad_calcPhotonDose(ct,stf,pln,cst);
-    elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-        dij = matRad_calcParticleDose(ct,stf,pln,cst);
+    switch pln.radiationMode
+        case 'photons'
+            dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+        case 'brachy'
+            dij = matRad_calcBrachyDose(ct,stf,pln,cst);
+        case {'protons','carbon'}
+        	dij = matRad_calcParticleDose(ct,stf,pln,cst);
     end
 
     % recalculate cubes in resultGUI

@@ -1,4 +1,4 @@
-classdef matRad_generateBrachyStfTest < matlab.unittest.TestCase
+classdef matRad_generateStfTest < matlab.unittest.TestCase
     properties
         OriginalPath
     end
@@ -26,10 +26,10 @@ classdef matRad_generateBrachyStfTest < matlab.unittest.TestCase
             load PROSTATE.mat ct cst;
             load plnSimpleTestStruct.mat pln;
             
-            stf = matRad_generateBrachyStf(ct, cst, pln);
-            actSolutionX = stf.seedPosX;
-            actSolutionY = stf.seedPosY;
-            actSolutionZ = stf.seedPosZ;
+            stf = matRad_generateStf(ct, cst, pln);
+            actSolutionX = stf.seedPoints.x;
+            actSolutionY = stf.seedPoints.y;
+            actSolutionZ = stf.seedPoints.z;
             expSolutionX = [0, 0; 0, 0; 1, 1; 1, 1];
             expSolutionY = [-100, -100; -99, -99; -100, -100; -99, -99];
             expSolutionZ = [1, 2; 1, 2; 1, 2; 1, 2];
@@ -43,8 +43,8 @@ classdef matRad_generateBrachyStfTest < matlab.unittest.TestCase
             % the ct bounds
             load PROSTATE.mat ct cst;
             load plnSimpleTestStruct.mat pln;
-            pln.propStf.orientation.offset = [500,500,500];
-            [~] = verifyError(testCase,@()matRad_generateBrachyStf(ct, cst, pln), ...
+            pln.propStf.shiftRotMtx(1:3,3) = [500,500,500];
+            [~] = verifyError(testCase,@()matRad_generateStf(ct, cst, pln), ...
                 'matRad:Error');
         end
          

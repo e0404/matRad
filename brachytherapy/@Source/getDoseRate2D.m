@@ -12,9 +12,10 @@ function [DoseRate] = getDoseRate2D(obj,r,theta)
 % obj:      object of class Source.m
 % r:        Vector containing the (radial) distance from the source center to 
 %           P(r,theta), with units of cm.
-% theta:    Vector of polar angles between the longitudinal axis of the source 
-%           and the ray from the ac- tive source center to the calculation point
-% time:     treatment time
+% theta:    column vector of polar angles between the longitudinal axis of the source 
+%           and the ray from the active source center to the calculation
+%           point, units of 
+% time:     treatment time in s
 
 global cm
 cm = 1;

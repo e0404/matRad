@@ -6,7 +6,7 @@ matRad_rc;
 end
 
 %% run test for stf
-testStf = matRad_generateBrachyStfTest;
+testStf = matRad_generateStfTest;
 testResultStf = run(testStf)
 
 %% run test for CalsDose
