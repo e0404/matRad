@@ -1,27 +1,61 @@
-classdef matRad_PhotonMonteCarloEngineOmpMC < DoseCalcEngines.matRad_MonteCarloEngine
+classdef matRad_PhotonMonteCarloEngineOmpMC < DoseEngines.matRad_MonteCarloEngine
     % Engine for photon dose calculation based on monte carlo
     % for more informations see superclass
-    % DoseCalcEngines.matRad_DoseCalcEngine
+    % DoseEngines.matRad_DoseEngine
     
-    properties (Constant)   
+    properties (Constant) 
+        
         possibleRadiationModes = "photons";
-        name = "monte carlo photon dose engine";  
+        name = 'monte carlo photon dose engine';  
+        
     end
     
-    properties 
+    properties (SetAccess = public, GetAccess = public)
+        
        visBool; %binary switch to en/disable visualitzation
+       
     end
         
     methods
         
         function obj = matRad_PhotonMonteCarloEngineOmpMC(ct,stf,pln,cst,nCasePerBixel,visBool)
+            % Constructor
+            %
+            % call
+            %   engine = matRad_calcPhotonDoseMc(ct,stf,pln,cst,visBool)
+            %
+            % input
+            %   ct:                         matRad ct struct
+            %   stf:                        matRad steering information struct
+            %   pln:                        matRad plan meta information struct
+            %   cst:                        matRad cst struct
+            % output
+            %   dij:                        matRad dij struct
+            %   nCasePerBixel:              number of histories per beamlet
+            %   visBool:                    binary switch to enable visualization
+            
+            matRad_cfg = MatRad_Config.instance;
             
             % call superclass constructor   
-            obj = obj@DoseCalcEngines.matRad_MonteCarloEngine();    
+            obj = obj@DoseEngines.matRad_MonteCarloEngine();    
+            
+            if ~exist('nCasePerBixel','Var')
+                obj.nCasePerBixel = matRad_cfg.propMC.ompMC_defaultHistories;
+                matRad_cfg.dispInfo('Using default number of Histories per Bixel: %d\n',obj.nCasePerBixel);
+            else
+                obj.nCasePerBixel = nCasePerBixel;
+            end
+            
+            % disable visualiazation by default
+            if ~exist('visBool','Var')
+                obj.visBool = false;
+            else
+                obj.visBool = visBool;
+            end
             
         end
         
-        function dij = calculateDose(obj,ct,stf,pln,cst,nCasePerBixel,visBool)
+        function dij = calculateDose(obj,ct,stf,pln,cst)
             % matRad ompMC monte carlo photon dose calculation wrapper
             %
             % call
@@ -32,8 +66,6 @@ classdef matRad_PhotonMonteCarloEngineOmpMC < DoseCalcEngines.matRad_MonteCarloE
             %   stf:                        matRad steering information struct
             %   pln:                        matRad plan meta information struct
             %   cst:                        matRad cst struct
-            %   nCasePerBixel:              number of histories per beamlet
-            %   visBool:                    binary switch to enable visualization
             % output
             %   dij:                        matRad dij struct
             %
@@ -58,20 +90,6 @@ classdef matRad_PhotonMonteCarloEngineOmpMC < DoseCalcEngines.matRad_MonteCarloE
             
             %start evaluation timer
             tic
-            
-            if ~exist('nCasePerBixel','Var')
-                obj.nCasePerBixel = matRad_cfg.propMC.ompMC_defaultHistories;
-                matRad_cfg.dispInfo('Using default number of Histories per Bixel: %d\n',obj.nCasePerBixel);
-            else
-                obj.nCasePerBixel = nCasePerBixel
-            end
-            
-            % disable visualiazation by default
-            if ~exist('visBool','Var')
-                obj.visBool = false;
-            else
-                obj.visBool = visBool;
-            end
 
             fileFolder = fileparts(mfilename('fullpath'));
 
@@ -381,7 +399,7 @@ classdef matRad_PhotonMonteCarloEngineOmpMC < DoseCalcEngines.matRad_MonteCarloE
      methods (Static)
       
         function ret = isAvailable(pln)
-            ret = any(strcmp(DoseCalcEngines.matRad_PhotonMonteCarloEngineOmpMC.possibleRadiationModes, pln.radiationMode));
+            ret = any(strcmp(DoseEngines.matRad_PhotonMonteCarloEngineOmpMC.possibleRadiationModes, pln.radiationMode));
         end
         
     end

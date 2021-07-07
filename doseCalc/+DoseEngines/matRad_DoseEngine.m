@@ -1,10 +1,10 @@
-classdef (Abstract) matRad_DoseCalcEngine < handle
-% matRad_DoseCalcEngine: Interface for dose calculation
+classdef (Abstract) matRad_DoseEngine < handle
+% matRad_DoseEngine: Interface for dose calculation
 %   This base class provides the structure for the basic initialization 
 %   functions and corresponding properties for e.g. particle and photon
 %   based dose calc.
 %   Implementations like particle, photon based dose calculation can be
-%   found in the DoseCalcEngine package
+%   found in the DoseEngine package
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
@@ -27,12 +27,9 @@ classdef (Abstract) matRad_DoseCalcEngine < handle
     
     properties (SetAccess = protected, GetAccess = public)
         
-        calcDoseDirect; % analytical mode
-        
         numOfBixelsContainer;   % number of used bixel container
         numOfColumnsDij;    % number of columns in the dij struct
-        doseTmpContainer;   % temporary container for dose calculation results
-        
+                                          
         yCoordsV_vox;   % y-coordinate voxel
         xCoordsV_vox;   % x-coordinate voxel
         zCoordsV_vox;   % z-coordinate voxel
@@ -41,10 +38,14 @@ classdef (Abstract) matRad_DoseCalcEngine < handle
         xCoordsV_voxDoseGrid;   % converted voxel indices to real grid
         zCoordsV_voxDoseGrid;   % converted voxel indices to real grid
         
+        VctGrid; %voxel grid inside patient
         VdoseGrid;  % voxel dose grid 
-        VctGrid;    % voxel grid
         
-  end
+    end
+  
+    properties (SetAccess = public, GetAccess = public)
+        calcDoseDirect = false; % analytical mode
+    end
     
     properties (Constant)
         isDoseEngine = true; % const boolean for checking inheritance
@@ -56,12 +57,14 @@ classdef (Abstract) matRad_DoseCalcEngine < handle
     end
     
     methods      
-        %Constructor TODO 
-        function obj = matRad_DoseCalcEngine(calcDoseDirect)
+        %Constructor  
+        function obj = matRad_DoseEngine(calcDoseDirect)
+            
+            matRad_cfg = MatRad_Config.instance();
             if nargin == 0 || ~exist('calcDoseDirect','var')
                 calcDoseDirect = false;
             else
-                % future code here
+                matRad_cfg.dispInfo('No calc Dose Direct given. Using default: false\n');
             end
             
             obj.calcDoseDirect = calcDoseDirect;
@@ -71,7 +74,8 @@ classdef (Abstract) matRad_DoseCalcEngine < handle
     methods(Access  =  protected)
         
         function [ct,stf,pln,dij] = calcDoseInit(obj,ct,stf,pln,cst)
-
+            
+            %TODO minimze calcDoseInit funktion and @overload it in the subclasses 
             matRad_cfg =  MatRad_Config.instance();
 
             % to guarantee downwards compatibility with data that does not have
@@ -147,8 +151,8 @@ classdef (Abstract) matRad_DoseCalcEngine < handle
             dij.numOfScenarios     = 1;
             dij.numOfRaysPerBeam   = [stf(:).numOfRays];
             dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
-            dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
-
+            dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam); 
+            
             % check if full dose influence data is required
             if obj.calcDoseDirect 
                 obj.numOfColumnsDij      = length(stf);
@@ -169,12 +173,9 @@ classdef (Abstract) matRad_DoseCalcEngine < handle
                 dij.physicalDose{i} = spalloc(dij.doseGrid.numOfVoxels,obj.numOfColumnsDij,1);
             end
 
-            % Allocate memory for dose_temp cell array
-            obj.doseTmpContainer     = cell(obj.numOfBixelsContainer,dij.numOfScenarios);
-
             % take only voxels inside patient
-            obj.VctGrid = [cst{:,4}];
-            obj.VctGrid = unique(vertcat(obj.VctGrid{:}));
+            VctGrid = [cst{:,4}];
+            VctGrid = unique(vertcat(VctGrid{:}));
 
             % ignore densities outside of contours
             if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'ignoreOutsideDensities')
@@ -185,22 +186,29 @@ classdef (Abstract) matRad_DoseCalcEngine < handle
 
             if ignoreOutsideDensities
                 eraseCtDensMask = ones(prod(ct.cubeDim),1);
-                eraseCtDensMask(obj.VctGrid) = 0;
+                eraseCtDensMask(VctGrid) = 0;
                 for i = 1:ct.numOfCtScen
                     ct.cube{i}(eraseCtDensMask == 1) = 0;
                 end
             end
-
-            % Convert CT subscripts to linear indices.
-            [obj.yCoordsV_vox, obj.xCoordsV_vox, obj.zCoordsV_vox] = ind2sub(ct.cubeDim,obj.VctGrid);
-
+            
+            
+            
             % receive linear indices and grid locations from the dose grid
             tmpCube    = zeros(ct.cubeDim);
-            tmpCube(obj.VctGrid) = 1;
+            tmpCube(VctGrid) = 1;
             % interpolate cube
             obj.VdoseGrid = find(matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z,tmpCube, ...
                                             dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest'));
-
+                                                                              
+            % save vct grid as own property in order to allow sub-classes
+            % to access it
+            obj.VctGrid = VctGrid;
+            
+            % Convert CT subscripts to linear indices.
+            [obj.yCoordsV_vox, obj.xCoordsV_vox, obj.zCoordsV_vox] = ind2sub(ct.cubeDim,obj.VctGrid);
+            
+            
             % Convert CT subscripts to coarse linear indices.
             [obj.yCoordsV_voxDoseGrid, obj.xCoordsV_voxDoseGrid, obj.zCoordsV_voxDoseGrid] = ind2sub(dij.doseGrid.dimensions,obj.VdoseGrid);
 
@@ -243,28 +251,30 @@ classdef (Abstract) matRad_DoseCalcEngine < handle
         end
         
         
-        function [nameList, handleList] = getAvailableEngines(pln,optionalPath)
+        function [nameList, classList, handleList] = getAvailableEngines(pln,optionalPath)
             % Returns a list of names and coresponding handle for available dose calc engines
             %   Returns all dose calc engines in the package when no arg is
             %   given. If no engines are found return gonna be empty.
             %
             % call:
-            %   [nameList, handleList] = doseCalcEngines.matRad_DoseCalcEngine.getAvailableEngines(pln,optional_path)  
+            %   [nameList, handleList] = DoseEngines.matRad_DoseEngine.getAvailableEngines(pln,optional_path)  
             %
             % input:
             %   pln: containing proposed dose calc and machine file informations
             %   optionalPath: searches for dose calc engines in given    
             %
             % returns:
-            %   nameList: cell-array conatining full classnamens for available engines 
+            %   nameList: cell-array conatining readable names for engines
+            %   classList: cell-array conatining full classnamens for available engines 
             %   handleList: cell-array containing function-handles to
             %                  available engines constructor (call the included handle by adding Parentheses e.g. handleList{1}())
             nameList = {};
+            classList = {};
             handleList = {};
             switch nargin
                 
                 case 0
-                    mp = meta.package.fromName('DoseCalcEngines');
+                    mp = meta.package.fromName('DoseEngines');
                     mc_list = mp.ClassList;
                     % itterate through the meta classes in the package
                     for i = 1:length(mc_list)
@@ -274,17 +284,28 @@ classdef (Abstract) matRad_DoseCalcEngine < handle
                         % could be done cleaner with the superclasses method
                         % which sadly isn't available in octave
                         [~,mc_isEngineIdx] = ismember('isDoseEngine', {mc.PropertyList.Name});
-                        if ((~isempty(mc.SuperclassList) && any(strcmp(mc.SuperclassList.Name, 'DoseCalcEngines.matRad_DoseCalcEngine'))) || ...
+                        if ((~isempty(mc.SuperclassList) && any(strcmp(mc.SuperclassList.Name, 'DoseEngines.matRad_DoseEngine'))) || ...
                             (mc_isEngineIdx && mc.PropertyList(mc_isEngineIdx).DefaultValue))
                             
                             handleList{end+1} = str2func(mc.Name);
-                            nameList{end+1} = mc.Name;
+                            classList{end+1} = mc.Name;
+                            
+                            %get readable name from metaclass properties
+                            nameProp = mc.PropertyList(strcmp({mc.PropertyList.Name}, 'name'));
+                            if (nameProp.Abstract)
+                                % ND -> not defined meaning abstract class
+                                % without a name
+                                nameList{end+1} = 'ND';
+                            else
+                                nameList{end+1} = nameProp.DefaultValue;
+                            end
+                            
                                   
                         end                     
                         
                     end
                 case 1
-                    mp = meta.package.fromName('DoseCalcEngines');
+                    mp = meta.package.fromName('DoseEngines');
                     mc_list = mp.ClassList;
                     % itterate through the meta classes in the package
                     for i = 1:length(mc_list)                        
@@ -296,7 +317,7 @@ classdef (Abstract) matRad_DoseCalcEngine < handle
                             % could be done cleaner with the superclasses method
                             % which sadly isn't available in octave
                             [~,mc_isEngineIdx] = ismember('isDoseEngine', {mc.PropertyList.Name});
-                            if ((~isempty(mc.SuperclassList) && any(strcmp(mc.SuperclassList.Name, 'DoseCalcEngines.matRad_DoseCalcEngine'))) || ...
+                            if ((~isempty(mc.SuperclassList) && any(strcmp(mc.SuperclassList.Name, 'DoseEngines.matRad_DoseEngine'))) || ...
                                     (mc_isEngineIdx && mc.PropertyList(mc_isEngineIdx).DefaultValue))
 
                                 % get radiation mode from meta class property
@@ -305,13 +326,24 @@ classdef (Abstract) matRad_DoseCalcEngine < handle
                                 
                                 if(any(strcmp(propValue, pln.radiationMode)))
                                     % get radiation mode from the in pln proposed basedata machine file
-                                    machineMode = DoseCalcEngines.matRad_DoseCalcEngine.loadMachine(pln).meta.radiationMode;
+                                    machineMode = DoseEngines.matRad_DoseEngine.loadMachine(pln).meta.radiationMode;
 
                                     % add current class to return lists if the
                                     % radiation mode is compatible
                                     if(any(strcmp(propValue, machineMode)))
                                         handleList{end+1} = str2func(mc.Name);
-                                        nameList{end+1} = mc.Name;
+                                        classList{end+1} = mc.Name;
+                            
+                                        %get readable name from metaclass properties
+                                        nameProp = mc.PropertyList(strcmp({mc.PropertyList.Name}, 'name'));
+                                        if (nameProp.Abstract)
+                                            % ND -> not defined meaning abstract class
+                                            % without a name
+                                            nameList{end+1} = 'ND';
+                                        else
+                                            nameList{end+1} = nameProp.DefaultValue;
+                                        end
+                                        
                                     end
                                     
                                 end
@@ -341,7 +373,7 @@ classdef (Abstract) matRad_DoseCalcEngine < handle
                             % get the index of the is engine property
                             [~,mc_isEngineIdx] = ismember('isDoseEngine', {mc.PropertyList.Name});
                             
-                            if ((~isempty(mc.SuperclassList) && any(strcmp(mc.SuperclassList.Name, 'DoseCalcEngines.matRad_DoseCalcEngine'))) || ...
+                            if ((~isempty(mc.SuperclassList) && any(strcmp(mc.SuperclassList.Name, 'DoseEngines.matRad_DoseEngine'))) || ...
                                     (mc_isEngineIdx && mc.PropertyList(mc_isEngineIdx).DefaultValue))
                                 
                                 % get radiation mode from meta class property
@@ -350,13 +382,23 @@ classdef (Abstract) matRad_DoseCalcEngine < handle
                                 
                                 if(any(strcmp(propValue, pln.radiationMode)))
                                     % get radiation mode from the in pln proposed basedata machine file
-                                    machineMode = DoseCalcEngines.matRad_DoseCalcEngine.loadMachine(pln).meta.radiationMode;
+                                    machineMode = DoseEngines.matRad_DoseEngine.loadMachine(pln).meta.radiationMode;
 
                                     % add current class to return lists if the
                                     % radiation mode is compatible
                                     if(any(strcmp(propValue, machineMode)))
                                         handleList{end+1} = str2func(mc.Name);
-                                        nameList{end+1} = mc.Name;
+                                        classList{end+1} = mc.Name;
+                            
+                                        %get readable name from metaclass properties
+                                        nameProp = mc.PropertyList(strcmp({mc.PropertyList.Name}, 'name'));
+                                        if (nameProp.Abstract)
+                                            % ND -> not defined meaning abstract class
+                                            % without a name
+                                            nameList{end+1} = 'ND';
+                                        else
+                                            nameList{end+1} = nameProp.DefaultValue;
+                                        end
                                     end
                                     
                                 end

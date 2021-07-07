@@ -1,13 +1,15 @@
-classdef (Abstract) matRad_AnalyticalPencilBeamEngine < DoseCalcEngines.matRad_DoseCalcEngine
+classdef (Abstract) matRad_AnalyticalPencilBeamEngine < DoseEngines.matRad_DoseEngine
     % Superclass for all dose calculation engines which are based on 
     % analytical pencil beam calculation 
     % for more informations see superclass
-    % DoseCalcEngines.matRad_DoseCalcEngine
+    % DoseEngines.matRad_DoseEngine
     
     properties (SetAccess = protected, GetAccess = public)
         
         pbCalcMode; % fine sampling mode
-  
+        
+        doseTmpContainer;   % temporary container for dose calculation results
+          
         geoDistVdoseGrid;   % geometric distance in dose grid
         rot_coordsVdoseGrid;    % Rotate coordinates for gantry movement
         radDepthsMat;   % radiological depth cube container
@@ -16,6 +18,12 @@ classdef (Abstract) matRad_AnalyticalPencilBeamEngine < DoseCalcEngines.matRad_D
         effectiveLateralCutoff; % lateral cutoff for raytracing and geo calculations
         
         bixelsPerBeam;  % number of bixel per energy beam
+        
+    end
+    
+    properties (Constant)
+        
+        isPencilBeamEngine = true;
         
     end
     
@@ -29,7 +37,21 @@ classdef (Abstract) matRad_AnalyticalPencilBeamEngine < DoseCalcEngines.matRad_D
     
     methods (Access = protected)
         
-         function dij = calcDoseInitBeam(obj,ct,stf,dij,i)
+        function [ct,stf,pln,dij] = calcDoseInit(obj,ct,stf,pln,cst)
+            % modified inherited method of the superclass DoseEngine,
+            % containing intialization which are specificly needed for
+            % pencil beam calculation and not for other engines
+            
+            [ct,stf,pln,dij] = calcDoseInit@DoseEngines.matRad_DoseEngine(obj,ct,stf,pln,cst);
+            
+            % Allocate memory for dose_temp cell array
+            obj.doseTmpContainer     = cell(obj.numOfBixelsContainer,dij.numOfScenarios);
+            
+            
+            
+        end
+        
+        function dij = calcDoseInitBeam(obj,ct,stf,dij,i)
             
             matRad_cfg = MatRad_Config.instance();
             matRad_cfg.dispInfo('Beam %d of %d:\n',i,dij.numOfBeams);
@@ -95,8 +117,8 @@ classdef (Abstract) matRad_AnalyticalPencilBeamEngine < DoseCalcEngines.matRad_D
 
             % limit rotated coordinates to positions where ray tracing is availabe
             obj.rot_coordsVdoseGrid = rot_coordsVdoseGrid(~isnan(obj.radDepthVdoseGrid{1}),:);
-
-         end
+            
+        end
     end
     
     methods (Static)

@@ -1,6 +1,6 @@
-classdef matRad_PhotonSVDPencilBeamDoseEngine < DoseCalcEngines.matRad_AnalyticalPencilBeamEngine
+classdef matRad_PhotonSVDPencilBeamDoseEngine < DoseEngines.matRad_AnalyticalPencilBeamEngine
 % matRad_PhotonDoseEngine: Implements an engine for photon based dose calculation
-%   For detailed information see superclass matRad_DoseCalcEngine
+%   For detailed information see superclass matRad_DoseEngine
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -18,11 +18,13 @@ classdef matRad_PhotonSVDPencilBeamDoseEngine < DoseCalcEngines.matRad_Analytica
     
     properties (Constant)
        possibleRadiationModes = "photons" %constant which represent available radiation modes
-       name = "photon dose calculation";
+       name = 'photon dose calculation';
     end
     
     properties (SetAccess = private, GetAccess = public)
+        
         isFieldBasedDoseCalc;
+        
     end
     
    
@@ -32,17 +34,17 @@ classdef matRad_PhotonSVDPencilBeamDoseEngine < DoseCalcEngines.matRad_Analytica
             
             if nargin == 0 || ~exist('calcDoseDirect','var')
                 calcDoseDirect = false;
-            else
-                % future code here 
             end
             
             % create obj of superclass
-            obj = obj@DoseCalcEngines.matRad_AnalyticalPencilBeamEngine(calcDoseDirect);
+            obj = obj@DoseEngines.matRad_AnalyticalPencilBeamEngine(calcDoseDirect);
             
-            % 0 if field calc is bixel based, 1 if dose calc is field based
-            % num2str is only used to prevent failure of strcmp when bixelWidth
-            % contains a number and not a string
-            obj.isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
+            if exist('pln','var')
+                % 0 if field calc is bixel based, 1 if dose calc is field based
+                % num2str is only used to prevent failure of strcmp when bixelWidth
+                % contains a number and not a string
+                obj.isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
+            end
         end
         
         function dij = calculateDose(obj,ct,stf,pln,cst)
@@ -106,7 +108,24 @@ classdef matRad_PhotonSVDPencilBeamDoseEngine < DoseCalcEngines.matRad_Analytica
             set(figureWait,'pointer','watch');
 
             % set lateral cutoff value
-            lateralCutoff = matRad_cfg.propDoseCalc.defaultGeometricCutOff; % [mm]
+            if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'geometricCutOff')
+                pln.propDoseCalc.geometricCutOff =  matRad_cfg.propDoseCalc.defaultGeometricCutOff; % [mm]
+            end
+
+            lateralCutoff = pln.propDoseCalc.geometricCutOff;
+
+            if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'kernelCutOff')
+                pln.propDoseCalc.kernelCutOff =  matRad_cfg.propDoseCalc.defaultKernelCutOff; % [mm]
+            end
+
+            % set kernel cutoff value (determines how much of the kernel is used. This
+            % value is separated from lateralCutOff to obtain accurate large open fields)
+            kernelCutoff = pln.propDoseCalc.kernelCutOff;
+
+            if kernelCutoff < lateralCutoff
+                matRad_cfg.dispWarning('Kernel Cut-Off ''%f mm'' cannot be smaller than geometric lateral cutoff ''%f mm''. Using ''%f mm''!',kernelCutoff,lateralCutoff,lateralCutoff);
+                kernelCutoff = lateralCutoff;
+            end
 
             % toggle custom primary fluence on/off. if 0 we assume a homogeneous
             % primary fluence, if 1 we use measured radially symmetric data
@@ -168,12 +187,16 @@ classdef matRad_PhotonSVDPencilBeamDoseEngine < DoseCalcEngines.matRad_Analytica
             end
 
             % get kernel size and distances
-            kernelLimit = ceil(lateralCutoff/intConvResolution);
+            if kernelCutoff > obj.machine.data.kernelPos(end)
+                kernelCutoff = obj.machine.data.kernelPos(end);
+            end
+
+            kernelLimit = ceil(kernelCutoff/intConvResolution);     
             [kernelX, kernelZ] = meshgrid(-kernelLimit*intConvResolution: ...
                                         intConvResolution: ...
                                         (kernelLimit-1)*intConvResolution);
 
-            % precalculate convoluted kernel size and distances
+            % precalculate convolved kernel size and distances
             kernelConvLimit = fieldLimit + gaussLimit + kernelLimit;
             [convMx_X, convMx_Z] = meshgrid(-kernelConvLimit*intConvResolution: ...
                                             intConvResolution: ...
@@ -183,7 +206,7 @@ classdef matRad_PhotonSVDPencilBeamDoseEngine < DoseCalcEngines.matRad_Analytica
 
             % define an effective lateral cutoff where dose will be calculated. note
             % that storage within the influence matrix may be subject to sampling
-            obj.effectiveLateralCutoff = lateralCutoff + fieldWidth/2;
+            obj.effectiveLateralCutoff = lateralCutoff + fieldWidth/sqrt(2);
 
             counter = 0;
             matRad_cfg.dispInfo('matRad: Photon dose calculation...\n');
@@ -254,7 +277,7 @@ classdef matRad_PhotonSVDPencilBeamDoseEngine < DoseCalcEngines.matRad_Analytica
                         % apply the primary fluence to the field
                         Fx = F .* Psi;
 
-                        % convolute with the gaussian
+                        % convolve with the gaussian
                         Fx = real( ifft2(fft2(Fx,gaussConvSize,gaussConvSize).* fft2(gaussFilter,gaussConvSize,gaussConvSize)) );
 
                         % 2D convolution of Fluence and Kernels in fourier domain
@@ -399,7 +422,7 @@ classdef matRad_PhotonSVDPencilBeamDoseEngine < DoseCalcEngines.matRad_Analytica
             % matRad photon dose calculation for an individual bixel
             % 
             % call
-            %   dose = onj.calcPhotonDoseBixel(SAD,m,betas,Interp_kernel1,...
+            %   dose = obj.calcPhotonDoseBixel(SAD,m,betas,Interp_kernel1,...
             %                  Interp_kernel2,Interp_kernel3,radDepths,geoDists,...
             %                  isoLatDistsX,isoLatDistsZ)
             %
@@ -599,7 +622,7 @@ classdef matRad_PhotonSVDPencilBeamDoseEngine < DoseCalcEngines.matRad_Analytica
     methods (Static)
 
         function ret = isAvailable(pln)
-            ret = any(strcmp(DoseCalcEngines.matRad_PhotonSVDPencilBeamDoseEngine.possibleRadiationModes, pln.radiationMode));
+            ret = any(strcmp(DoseEngines.matRad_PhotonSVDPencilBeamDoseEngine.possibleRadiationModes, pln.radiationMode));
         end
 
     end
