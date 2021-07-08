@@ -14,7 +14,19 @@ jobs:
       - name: Install MATLAB
         uses: matlab-actions/setup-matlab@v1        
       # Runs test command
-      - name: Run Testscript
+      - name: Run Tests
         uses: matlab-actions/run-command@v1
         with:
           command: cd unitTest; matRad_runTests
+  test-octave:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2 # Checks-out repository under $GITHUB_WORKSPACE
+      - name: Install OCTAVE
+        run: sudo apt-get install -y gdb gfortran fonts-freefont-otf gnuplot-x11 libgdcm-dev octave liboctave-dev
+      - name: Prepare Test Environment
+        run: |
+          sudo chmod +x .travis/before_install_linux.sh
+          sudo .travis/before_install_linux.sh
+      - name: Run Tests
+        run: .travis/runtests.sh octave-cli
