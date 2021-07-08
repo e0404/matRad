@@ -1,32 +1,20 @@
 # This is a basic workflow to help you get started with Actions
 name: Testing
-
 # Controls when the action will run. 
 on:
-  # Triggers the workflow on push or pull request events but only for the master branch
-  push:
+  push: #Triggers the workflow on push or pull request events
+  workflow_dispatch: # Allows manual trigger
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   test-matlab:
-    # The type of runner that the job will run on
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-
+      - uses: actions/checkout@v2 # Checks-out repository under $GITHUB_WORKSPACE
       # Install MATLAB
       - name: Install MATLAB
-        uses: matlab-actions/setup-matlab@v0
-        
-      # Runs a set of commands using the runners shell
+        uses: matlab-actions/setup-matlab@v1        
+      # Runs test command
       - name: Run Testscript
-        uses: matlab-actions/run-command@v0
+        uses: matlab-actions/run-command@v1
         with:
           command: cd unitTest; matRad_runTests
