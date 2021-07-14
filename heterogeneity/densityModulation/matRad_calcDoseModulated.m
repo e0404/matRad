@@ -67,6 +67,7 @@ matRad_cfg.logLevel = 1;
 for i = 1:samples
     fprintf('Dose calculation for CT %i/%i \n',i,samples)
     ct_mod = matRad_modulateDensity(ct,cst,pln,Pmod,modulation,continuous);
+    ct_mod.sampleIdx = i;
     
     if iscell(mode) %case TOPAS
         if strcmp(mode{1},'TOPAS')

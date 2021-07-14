@@ -128,8 +128,14 @@ if isfield(pln.propMC,'numOfRuns')
     topasConfig.numOfRuns = pln.propMC.numOfRuns;
 end
 if openStack
-    topasConfig.workingDir = [topasConfig.thisFolder filesep 'MCrun' filesep [pln.machine,'_',pln.radiationMode,'_']];
-    topasConfig.workingDir = [topasConfig.workingDir num2str(length(dir([topasConfig.workingDir,'*'])) + 1) filesep];
+    topasConfig.workingDir = [topasConfig.thisFolder filesep 'MCrun' filesep];
+    if isfield(pln,'patientID')
+        topasConfig.workingDir = [topasConfig.workingDir pln.patientID '_'];
+    end
+    topasConfig.workingDir = [topasConfig.workingDir pln.machine,'_',pln.radiationMode,'_'];
+    if isfield(ct,'sampleIdx')
+        topasConfig.workingDir = [topasConfig.workingDir num2str(ct.sampleIdx) filesep];
+    end
 end
 % topasConfig.numOfRuns = matRad_cfg.propMC.topas_defaultNumBatches;
 
