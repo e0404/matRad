@@ -75,16 +75,16 @@ if strcmp(mode, 'binomial')
     
     if continuous
         n = D./d;
-        tooSmall = n>1;
+        largeEnough = n>1;
     else
         n = round(D./d);
-        tooSmall = n>=1;
+        largeEnough = n>=1;
     end
     
     % Don't modulate voxel with less than 1 substructures
-    lungIdx = lungIdx(tooSmall);
-    pLung = pLung(tooSmall);
-    n = n(tooSmall);
+    lungIdx = lungIdx(largeEnough);
+    pLung = pLung(largeEnough);
+    n = n(largeEnough);
     
     samples = matRad_sampleLungBino(n,pLung,rhoLung,length(lungIdx),continuous);
 
@@ -132,8 +132,10 @@ elseif strcmp(mode, 'poisson')
 end
 
 if strcmp(pln.propHeterogeneity.mode,'TOPAS') && strcmp(mode, 'binomial')
-    lung = ct.cube{1}(lungIdx);
-    sampledDensities = unique(lung);
+    % only include different densities that are significantly different
+    % (6th digit)
+    lung = round(ct.cube{1}(lungIdx),6);
+    [numOfOccurences,sampledDensities] = groupcounts(lung);
     if strcmp(pln.propMC.materialConverter,'HUToWaterSchneider_Lung')
         ct.cubeHU{1}(lungIdx(lung == 1.05)) = 0;
         ct.cubeHU{1}(lungIdx(lung == 0)) = -999;
@@ -141,9 +143,9 @@ if strcmp(pln.propHeterogeneity.mode,'TOPAS') && strcmp(mode, 'binomial')
         ct.cubeHU{1}(lungIdx(lung == 1.05)) = 3020;
         ct.cubeHU{1}(lungIdx(lung == 0)) = 2997;
     elseif strcmp(pln.propMC.materialConverter,'HUToWaterSchneider_custom')
-        for i = 1:numel(sampledDensities)
-            ct.cubeHU{1}(lungIdx(lung == sampledDensities(i))) = 2995 + i;
-        end
+        [~,sortIdx] = sort(lung);
+        lungDensitiesNewSorted = repelem([2996:2995+numel(numOfOccurences)],1,numOfOccurences);
+        ct.cubeHU{1}(lungIdx(sortIdx)) = lungDensitiesNewSorted;
     end
     
     sampledDensities(1) = 0.001225;

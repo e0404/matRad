@@ -46,8 +46,8 @@ end
 
 if continuous
     % sample continuous beta distribution   
-    a = p*(n-1);
-    b = (1-p)*(n-1);
+    a = p.*(n-1);
+    b = (1-p).*(n-1);
     
     if isscalar(n)
         samples = betaincinv(rand([numOfLungVoxels,1]),a,b);
