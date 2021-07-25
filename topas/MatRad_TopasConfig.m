@@ -787,10 +787,14 @@ classdef MatRad_TopasConfig < handle
             vecRSPlength=obj.rsp_vecLength;
             
             if isequal(obj.arrayOrdering,'C')
-                disp('Exporting cube in C ordering...')
+                if obj.matRad_cfg.logLevel > 2
+                	disp('Exporting cube in C ordering...')
+                end
                 permutation = [3 1 2];
             else
-                disp('Exporting cube in FORTRAN ordering...')
+                if obj.matRad_cfg.logLevel > 2
+                    disp('Exporting cube in FORTRAN ordering...')
+                end
                 permutation = [2 1 3];
             end
             
