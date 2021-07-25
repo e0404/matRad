@@ -1,16 +1,16 @@
-function resultGUI = matRad_calcDoseModulated(ct,stf,pln,cst,mode,weights,samples,Pmod,modulation,continuous)
+function resultGUI = matRad_calcDoseModulated(ct,stf,pln,cst,param,weights,samples,Pmod,modulation,continuous)
 
 global matRad_cfg;
 matRad_cfg =  MatRad_Config.instance();
 
 if nargin < 9
     modulation = 'binomial';
-    continuous = false;
+    continuous = true;
 elseif nargin < 10
-    continuous = false;
+    continuous = true;
 end
 
-if iscell(mode)
+if iscell(param)
     pln.propHeterogeneity.mode = 'TOPAS';
     if strcmp(modulation,'poisson')
         pln.propMC.materialConverter = 'HUToWaterSchneider_mod';
@@ -69,13 +69,13 @@ for i = 1:samples
     ct_mod = matRad_modulateDensity(ct,cst,pln,Pmod,modulation,continuous);
     ct_mod.sampleIdx = i;
     
-    if iscell(mode) %case TOPAS
-        if strcmp(mode{1},'TOPAS')
+    if iscell(param) %case TOPAS
+        if strcmp(param{1},'TOPAS')
             pln.propMC.proton_engine = 'TOPAS';
             pln.propMC.numOfRuns = 1;
-            resultGUI_mod = matRad_calcDoseDirectMC(ct_mod,stf,pln,cst,weights,mode{2}/samples,mode{3});
+            resultGUI_mod = matRad_calcDoseDirectMC(ct_mod,stf,pln,cst,weights,param{2}/samples,param{3});
             
-            if ~mode{3}
+            if ~param{3}
                 %     resultGUI.(['physicalDose',num2str(s)]) = resultGUI.(['physicalDose',num2str(s)]) + resultGUI_mod.physicalDose/s;
                 if strcmp(pln.bioParam.quantityOpt,'RBExD')
                     resultGUI.RBExD = resultGUI.RBExD + resultGUI_mod.RBExD/samples;

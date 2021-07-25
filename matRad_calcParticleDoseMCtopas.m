@@ -130,7 +130,7 @@ end
 if openStack
     topasConfig.workingDir = [topasConfig.thisFolder filesep 'MCrun' filesep];
     if isfield(pln,'patientID')
-        topasConfig.workingDir = [topasConfig.workingDir pln.patientID '_'];
+        topasConfig.workingDir = [topasConfig.workingDir pln.radiationMode filesep pln.patientID '_'];
     end
     topasConfig.workingDir = [topasConfig.workingDir pln.machine,'_',pln.radiationMode,'_'];
     if isfield(ct,'sampleIdx')
