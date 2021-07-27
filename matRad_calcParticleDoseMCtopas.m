@@ -128,7 +128,6 @@ if isfield(pln.propMC,'numOfRuns')
     topasConfig.numOfRuns = pln.propMC.numOfRuns;
 end
 if openStack
-    topasConfig.workingDir = [topasConfig.thisFolder filesep 'MCrun' filesep];
     if isfield(pln,'patientID')
         topasConfig.workingDir = [topasConfig.workingDir pln.radiationMode filesep pln.patientID '_'];
     end
