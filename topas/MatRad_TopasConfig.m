@@ -464,38 +464,33 @@ classdef MatRad_TopasConfig < handle
                     obj.matRad_cfg.dispError('Insufficient number of histories!')
                 end
                 
-                %                 while sum([dataTOPAS.current]) ~= historyCount(beamIx)
-                %                     randIx = randi([1 length(dataTOPAS)],1,abs(sum([dataTOPAS(:).current]) - historyCount(beamIx)));
-                %
-                %                     if (sum([dataTOPAS(:).current]) > historyCount(beamIx))
-                %                         for i = randIx
-                %                             dataTOPAS(i).current = dataTOPAS(i).current - 1;
-                %                         end
-                %                     else
-                %                         for i = randIx
-                %                             dataTOPAS(i).current = dataTOPAS(i).current + 1;
-                %                         end
-                %                     end
-                %                 end
-                
-                while sum([dataTOPAS.current]) ~= historyCount(beamIx)
-                    % Randomly pick an index with the weigth given by the current
+%                 while sum([dataTOPAS.current]) ~= historyCount(beamIx)
+%                     randIx = randi([1 length(dataTOPAS)],1,abs(sum([dataTOPAS(:).current]) - historyCount(beamIx)));
+%                     
+%                     if (sum([dataTOPAS(:).current]) > historyCount(beamIx))
+%                         for i = randIx
+%                             dataTOPAS(i).current = dataTOPAS(i).current - 1;
+%                         end
+%                     else
+%                         for i = randIx
+%                             dataTOPAS(i).current = dataTOPAS(i).current + 1;
+%                         end
+%                     end
+%                 end
+%                 
+                %adjust current to actual histories (by adding/subtracting
+                %from random rays)
+                while sum([dataTOPAS(:).current]) ~= historyCount(beamIx)
+                    
+                    diff = sum([dataTOPAS.current]) - sum(historyCount(beamIx));                  
+                    [~,R] = histc(rand(abs(diff),1),cumsum([0;double(transpose([dataTOPAS(:).current]))./double(sum([dataTOPAS(:).current]))]));           
                     idx = 1:length(dataTOPAS);
-                    % Note: as of Octave version 5.1.0, histcounts is not yet implemented
-                    %       using histc instead for compatibility with MATLAB and Octave
-                    %[~,~,R] = histcounts(rand(1),cumsum([0;double(transpose([dataTOPAS(:).current]))./double(sum([dataTOPAS(:).current]))]));
-                    [~,R] = histc(rand(1),cumsum([0;double(transpose([dataTOPAS(:).current]))./double(sum([dataTOPAS(:).current]))]));
                     randIx = idx(R);
                     
-                    if (sum([dataTOPAS(:).current]) > historyCount(beamIx))
-                        if dataTOPAS(randIx).current > 1
-                            dataTOPAS(randIx).current = dataTOPAS(randIx).current-1;
-                        end
-                    else
-                        dataTOPAS(randIx).current = dataTOPAS(randIx).current+1;
-                    end
+                    newCurr = num2cell(arrayfun(@plus,double([dataTOPAS(randIx).current]),-1*sign(diff)*ones(1,abs(diff))),1);
+                    [dataTOPAS(randIx).current] = newCurr{:};
                 end
-                
+
                 historyCount(beamIx) = historyCount(beamIx) * obj.numOfRuns;
                 
                 

@@ -48,16 +48,8 @@ if continuous
     % sample continuous beta distribution   
     a = p.*(n-1);
     b = (1-p).*(n-1);
-    
-    if isscalar(n)
-        samples = betaincinv(rand([numOfLungVoxels,1]),a,b);
-    else
-        samples = zeros(numOfLungVoxels,1);
-        for i = 1:numel(n)
-            samples(i) = betaincinv(rand(1),a(i),b(i));
-        end
-    end
 
+    samples = betaincinv(rand([numOfLungVoxels,1]),a,b);
 else
     % sample discrete binomial distribution
     if isscalar(n)
