@@ -1,28 +1,28 @@
 classdef (Abstract) matRad_DoseEngine < handle
-% matRad_DoseEngine: Interface for dose calculation
-%   This base class provides the structure for the basic initialization 
-%   functions and corresponding properties for e.g. particle and photon
-%   based dose calc.
-%   Implementations like particle, photon based dose calculation can be
-%   found in the DoseEngine package
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% Copyright 2015 the matRad development team.
-%
-% This file is part of the matRad project. It is subject to the license
-% terms in the LICENSE file found in the top-level directory of this
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
-% of the matRad project, including this file, may be copied, modified,
-% propagated, or distributed except according to the terms contained in the
-% LICENSE file.
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % matRad_DoseEngine: Interface for dose calculation
+    %   This base class provides the structure for the basic initialization 
+    %   functions and corresponding properties for e.g. particle and photon
+    %   based dose calc.
+    %   Implementations like particle, photon based dose calculation can be
+    %   found in the DoseEngine package
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %
+    % Copyright 2015 the matRad development team.
+    %
+    % This file is part of the matRad project. It is subject to the license
+    % terms in the LICENSE file found in the top-level directory of this
+    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+    % of the matRad project, including this file, may be copied, modified,
+    % propagated, or distributed except according to the terms contained in the
+    % LICENSE file.
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties
-        machine;
+        machine; % base data defined in machine file
     end
     
     properties (SetAccess = protected, GetAccess = public)
@@ -38,7 +38,7 @@ classdef (Abstract) matRad_DoseEngine < handle
         xCoordsV_voxDoseGrid;   % converted voxel indices to real grid
         zCoordsV_voxDoseGrid;   % converted voxel indices to real grid
         
-        VctGrid; %voxel grid inside patient
+        VctGrid; % voxel grid inside patient
         VdoseGrid;  % voxel dose grid 
         
     end
@@ -52,30 +52,26 @@ classdef (Abstract) matRad_DoseEngine < handle
     end
     
     properties (Constant, Abstract)
-       name;
-       possibleRadiationModes;
+       name; % readable name for dose engine
+       possibleRadiationModes; % radiation modes the engine is meant to process
     end
     
     methods      
         %Constructor  
-        function obj = matRad_DoseEngine(calcDoseDirect)
-            
-            matRad_cfg = MatRad_Config.instance();
-            if nargin == 0 || ~exist('calcDoseDirect','var')
-                calcDoseDirect = false;
-            else
-                matRad_cfg.dispInfo('No calc Dose Direct given. Using default: false\n');
-            end
-            
-            obj.calcDoseDirect = calcDoseDirect;
+        function obj = matRad_DoseEngine()
+        % future code for property validation on creation here
         end
     end
     
     methods(Access  =  protected)
         
         function [ct,stf,pln,dij] = calcDoseInit(obj,ct,stf,pln,cst)
-            
-            %TODO minimze calcDoseInit funktion and @overload it in the subclasses 
+        % method for setting and preparing the inition parameters for the 
+        % dose calculation.
+        % Shoulb be called at the beginning of calcDose method.
+        % Can be expanded or changed by overwriting this method and calling
+        % the superclass method inside of it
+       
             matRad_cfg =  MatRad_Config.instance();
 
             % to guarantee downwards compatibility with data that does not have
@@ -222,20 +218,50 @@ classdef (Abstract) matRad_DoseEngine < handle
                 
     end
     
-    methods(Abstract)
+    methods
         
-        ret = isAvailable(pln)  
+        function set.calcDoseDirect(obj,calcDoseDirect)
+%             %SETTER with argument validation for calcDoseDirect property
+%             Sadly we can't use the argument validation of matlab because
+%             octave doesn't support this
+%             arguments     
+%                 obj
+%                 calcDoseDirect {mustBeOfClass(calcDoseDirect, 'logical')}           
+%             end  
+%            
+            
+            obj.calcDoseDirect = calcDoseDirect;
+        end
         
-        dij = calculateDose(obj,ct,stf,pln,cst) 
+    end
+    
+    % Should be abstract methods but in order to satisfy the compatibility
+    % with OCTAVE we can't use abstract methods. If OCTAVE at some point 
+    % in the far future implements this feature this should be abstract again.
+    methods %(Abstract)
+        
+       
+        function ret = isAvailable(pln)   
+        % return a boolean if the engine is is available for the given pln
+        % struct. Needs to be implemented in non abstract subclasses
+            error('Funktion needs to be implemented!');
+        end
+        
+        % the actual calculation method wich returns the final dij struct.
+        % Needs to be implemented in non abstract subclasses. 
+        %(Internal logic is often split into multiple methods in order to make the whole calculation more modular)
+        function dij = calcDose(obj,ct,stf,pln,cst)
+            error('Funktion needs to be implemented!');
+        end
         
     end 
     
     methods(Static)
         
         function machine = loadMachine(pln, filepath)
-            %METHOD1 Summary of this method goes here
-            %   Detailed explanation goes here
-            
+            %load the machine mode for the specific dose calculation
+            %static so it can be used outside e.g. to validate the machine,
+            %pre the dose calculation
             matRad_cfg = MatRad_Config.instance();
             fileName = [pln.radiationMode '_' pln.machine];
             if ~exist('filepath','var')
@@ -413,4 +439,3 @@ classdef (Abstract) matRad_DoseEngine < handle
         
     end
 end
-

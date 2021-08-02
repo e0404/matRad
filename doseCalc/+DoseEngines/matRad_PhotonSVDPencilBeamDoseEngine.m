@@ -1,27 +1,28 @@
 classdef matRad_PhotonSVDPencilBeamDoseEngine < DoseEngines.matRad_AnalyticalPencilBeamEngine
-% matRad_PhotonDoseEngine: Implements an engine for photon based dose calculation
-%   For detailed information see superclass matRad_DoseEngine
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% Copyright 2015 the matRad development team. 
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
-% LICENSE file.
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % matRad_PhotonDoseEngine: Implements an engine for photon based dose calculation
+    %   For detailed information see superclass matRad_DoseEngine
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %
+    % Copyright 2015 the matRad development team. 
+    % 
+    % This file is part of the matRad project. It is subject to the license 
+    % terms in the LICENSE file found in the top-level directory of this 
+    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+    % of the matRad project, including this file, may be copied, modified, 
+    % propagated, or distributed except according to the terms contained in the 
+    % LICENSE file.
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (Constant)
        possibleRadiationModes = "photons" %constant which represent available radiation modes
-       name = 'photon dose calculation';
+       name = 'pencil beam photon';
     end
     
-    properties (SetAccess = private, GetAccess = public)
+    properties (SetAccess = public, GetAccess = public)
         
         isFieldBasedDoseCalc;
         
@@ -30,14 +31,10 @@ classdef matRad_PhotonSVDPencilBeamDoseEngine < DoseEngines.matRad_AnalyticalPen
    
     methods
         
-        function obj = matRad_PhotonSVDPencilBeamDoseEngine(ct,stf,pln,cst,calcDoseDirect)
-            
-            if nargin == 0 || ~exist('calcDoseDirect','var')
-                calcDoseDirect = false;
-            end
-            
+        function obj = matRad_PhotonSVDPencilBeamDoseEngine(ct,stf,pln,cst)
+                        
             % create obj of superclass
-            obj = obj@DoseEngines.matRad_AnalyticalPencilBeamEngine(calcDoseDirect);
+            obj = obj@DoseEngines.matRad_AnalyticalPencilBeamEngine();
             
             if exist('pln','var')
                 % 0 if field calc is bixel based, 1 if dose calc is field based
@@ -47,7 +44,7 @@ classdef matRad_PhotonSVDPencilBeamDoseEngine < DoseEngines.matRad_AnalyticalPen
             end
         end
         
-        function dij = calculateDose(obj,ct,stf,pln,cst)
+        function dij = calcDose(obj,ct,stf,pln,cst)
             % matRad photon dose calculation wrapper
             % 
             % call
@@ -318,7 +315,7 @@ classdef matRad_PhotonSVDPencilBeamDoseEngine < DoseEngines.matRad_AnalyticalPen
                     end
 
                     % Ray tracing for beam i and bixel j
-                    [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = matRad_calcGeoDists(obj.rot_coordsVdoseGrid, ...
+                    [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = obj.calcGeoDists(obj.rot_coordsVdoseGrid, ...
                                                                            stf(i).sourcePoint_bev, ...
                                                                            stf(i).ray(j).targetPoint_bev, ...
                                                                            obj.machine.meta.SAD, ...

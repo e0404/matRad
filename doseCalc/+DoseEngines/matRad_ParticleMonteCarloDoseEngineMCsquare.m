@@ -2,7 +2,20 @@ classdef matRad_ParticleMonteCarloDoseEngineMCsquare < DoseEngines.matRad_MonteC
     % Engine for particle dose calculation using monte carlo calculation
     % specificly the mc square method
     % for more informations see superclass
-    % DoseEngines.matRad_DoseEngine
+    % DoseEngines.matRad_MonteCarloEngine
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %
+    % Copyright 2019 the matRad development team.
+    %
+    % This file is part of the matRad project. It is subject to the license
+    % terms in the LICENSE file found in the top-level directory of this
+    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+    % of the matRad project, including this file, may be copied, modified,
+    % propagated, or distributed except according to the terms contained in the
+    % LICENSE file.
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
    
     properties (Constant)  
         
@@ -26,39 +39,24 @@ classdef matRad_ParticleMonteCarloDoseEngineMCsquare < DoseEngines.matRad_MonteC
     
     methods
         
-        function obj = matRad_ParticleMonteCarloDoseEngineMCsquare(ct,stf,pln,nCasePerBixel,calcDoseDirect)
-            
-            % make sure calcDoseDirect exist because it's needed to call
-            % superclass constructor
-            if nargin == 0 || ~exist('calcDoseDirect','var')
-                calcDoseDirect = false;
-            end
+        function obj = matRad_ParticleMonteCarloDoseEngineMCsquare(ct,stf,pln,cst)
             
             % call superclass constructor
-            obj = obj@DoseEngines.matRad_MonteCarloEngine(calcDoseDirect);
+            obj = obj@DoseEngines.matRad_MonteCarloEngine();
    
             % create config instance
             matRad_cfg = MatRad_Config.instance();
             
             % check pln values if struct is given
-            if exist('pln', 'Var')            
+            if exist('pln', 'var')            
                 obj.checkPln(pln);  
             else
-                matRad_cfg.dispInfo('No pln struct given. Base properties will have to be set later.')
+                matRad_cfg.dispInfo('No pln struct given. Base properties will have to be set later.\n')
             end
-            
-            % set nCasePerBixel if given, else use the matRad_Config value
-           if (exist('nCasePerBixel','Var') && isa(nCasePerBixel,'numeric'))    
-                obj.nCasePerBixel = nCasePerBixel;
-            else
-                %set number of particles simulated per pencil beam
-                obj.nCasePerBixel = matRad_cfg.propMC.MCsquare_defaultHistories;
-                matRad_cfg.dispInfo('No number of Histories given or wrong type given. Using default number of Histories per Bixel: %d\n',obj.nCasePerBixel);
-            end
-                
+       
         end
         
-        function dij = calculateDose(obj,ct,stf,pln,cst)
+        function dij = calcDose(obj,ct,stf,pln,cst)
             % matRad MCsqaure monte carlo photon dose calculation wrapper
             %
             % call
@@ -346,9 +344,10 @@ classdef matRad_ParticleMonteCarloDoseEngineMCsquare < DoseEngines.matRad_MonteC
     methods(Access = protected)
         
         function checkPln(obj,pln)
-        % CHECKPLN Check pln fields TODO maybe as static method obl isnt needed
+        % CHECKPLN Check pln fields,
         %   Checking if the properties defined in pln are
-        %   supported for this specific dose calc engine
+        %   supported for this specific dose calc engine 
+        %   could be set as static method, because obj isn't needed
             
             disp(nargin);
 

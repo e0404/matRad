@@ -1,7 +1,20 @@
 classdef matRad_PhotonMonteCarloEngineOmpMC < DoseEngines.matRad_MonteCarloEngine
     % Engine for photon dose calculation based on monte carlo
     % for more informations see superclass
-    % DoseEngines.matRad_DoseEngine
+    % DoseEngines.matRad_MonteCarloEngine
+     %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %
+    % Copyright 2019 the matRad development team.
+    %
+    % This file is part of the matRad project. It is subject to the license
+    % terms in the LICENSE file found in the top-level directory of this
+    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+    % of the matRad project, including this file, may be copied, modified,
+    % propagated, or distributed except according to the terms contained in the
+    % LICENSE file.
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (Constant) 
         
@@ -12,13 +25,13 @@ classdef matRad_PhotonMonteCarloEngineOmpMC < DoseEngines.matRad_MonteCarloEngin
     
     properties (SetAccess = public, GetAccess = public)
         
-       visBool; %binary switch to en/disable visualitzation
+       visBool = false; %binary switch to en/disable visualitzation
        
     end
         
     methods
         
-        function obj = matRad_PhotonMonteCarloEngineOmpMC(ct,stf,pln,cst,nCasePerBixel,visBool)
+        function obj = matRad_PhotonMonteCarloEngineOmpMC(ct,stf,pln,cst)
             % Constructor
             %
             % call
@@ -33,29 +46,13 @@ classdef matRad_PhotonMonteCarloEngineOmpMC < DoseEngines.matRad_MonteCarloEngin
             %   dij:                        matRad dij struct
             %   nCasePerBixel:              number of histories per beamlet
             %   visBool:                    binary switch to enable visualization
-            
-            matRad_cfg = MatRad_Config.instance;
-            
+                        
             % call superclass constructor   
             obj = obj@DoseEngines.matRad_MonteCarloEngine();    
             
-            if ~exist('nCasePerBixel','Var')
-                obj.nCasePerBixel = matRad_cfg.propMC.ompMC_defaultHistories;
-                matRad_cfg.dispInfo('Using default number of Histories per Bixel: %d\n',obj.nCasePerBixel);
-            else
-                obj.nCasePerBixel = nCasePerBixel;
-            end
-            
-            % disable visualiazation by default
-            if ~exist('visBool','Var')
-                obj.visBool = false;
-            else
-                obj.visBool = visBool;
-            end
-            
         end
         
-        function dij = calculateDose(obj,ct,stf,pln,cst)
+        function dij = calcDose(obj,ct,stf,pln,cst)
             % matRad ompMC monte carlo photon dose calculation wrapper
             %
             % call

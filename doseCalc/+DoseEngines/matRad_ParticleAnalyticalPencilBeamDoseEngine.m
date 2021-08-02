@@ -1,54 +1,52 @@
 classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_AnalyticalPencilBeamEngine
-% matRad_ParticleDoseEngine: 
-%   Implements an engine for particle based dose calculation 
-%   For detailed information see superclass matRad_DoseEngine
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % matRad_ParticleDoseEngine: 
+    %   Implements an engine for particle based dose calculation 
+    %   For detailed information see superclass matRad_DoseEngine
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% Copyright 2015 the matRad development team. 
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the
-% help edit
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %
+    % Copyright 2015 the matRad development team. 
+    % 
+    % This file is part of the matRad project. It is subject to the license 
+    % terms in the LICENSE file found in the top-level directory of this 
+    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+    % of the matRad project, including this file, may be copied, modified, 
+    % propagated, or distributed except according to the terms contained in the
+    % help edit
 
-% LICENSE file.
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % LICENSE file.
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (Constant)
            possibleRadiationModes = ["protons"; "carbon"]
-           name = 'particle dose calculation';
+           name = 'pencil beam particle';
     end
     
     properties (SetAccess = private, GetAccess = public)
-        % TODO set these inside the constructor to basic values from and
-        % write comments for all properties
-        fineSamplingN;
-        fineSamplingSigmaSub;
-        fineSamplingMethod;
         
-        letDoseTmpContainer;
-        alphaDoseTmpContainer;
-        betaDoseTmpContainer;
+        
+        
+        letDoseTmpContainer; % temporary dose LET container
+        alphaDoseTmpContainer; % temporary dose alpha dose container
+        betaDoseTmpContainer; % temporary dose beta dose container
         
         calcLET = false; % Boolean which defines if LET should be calculated
         calcBioDose = false; % Boolean which defines if calculation should account for bio optimization
-        fineSampling;
+        
+        fineSampling; % Boolean switch if using fineSampling  
+        fineSamplingN; % number of subsample beams shells, see matRad_calcWeights
+        fineSamplingSigmaSub; % gaussian of the sub-beams , see matRad_calcWeights
+        fineSamplingMethod; % method used for fine sampling
         
     end
          
     methods 
         
-        function obj = matRad_ParticleAnalyticalPencilBeamDoseEngine(ct,stf,pln,cst,calcDoseDirect)
+        function obj = matRad_ParticleAnalyticalPencilBeamDoseEngine(ct,stf,pln,cst)
              
-            if nargin == 0 || ~exist('calcDoseDirect','var')
-                calcDoseDirect = false;
-            end
-            obj = obj@DoseEngines.matRad_AnalyticalPencilBeamEngine(calcDoseDirect);
+            obj = obj@DoseEngines.matRad_AnalyticalPencilBeamEngine();
             
             if exist('pln','var')
                 % check if bio optimization is needed and set the
@@ -69,11 +67,11 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
             end
         end
         
-        function dij = calculateDose(obj,ct,stf,pln,cst)
+        function dij = calcDose(obj,ct,stf,pln,cst)
             % matRad particle dose calculation wrapper
             % 
             % call
-            %   dij = DoseEngines.ParticleDoseEngine.matRad_calcParticleDose(ct,stf,pln,cst)
+            %   dij = obj.matRad_calcParticleDose(ct,stf,pln,cst)
             %
             % input
             %   ct:             ct cube
@@ -193,7 +191,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
                 matRad_cfg.dispInfo('matRad: calculate lateral cutoff...');
                 cutOffLevel = matRad_cfg.propDoseCalc.defaultLateralCutOff;
                 visBoolLateralCutOff = 0;
-                obj.calcLateralParticleCutOff(obj,cutOffLevel,stf(i),visBoolLateralCutOff);
+                obj.calcLateralParticleCutOff(cutOffLevel,stf(i),visBoolLateralCutOff);
                 matRad_cfg.dispInfo('done.\n');    
 
                 for j = 1:stf(i).numOfRays % loop over all rays
@@ -211,7 +209,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
 
                         if strcmp(obj.pbCalcMode, 'fineSampling')
                             % Ray tracing for beam i and ray j
-                            [ix,~,~,~,latDistsX,latDistsZ] = obj.matRad_calcGeoDists(obj.rot_coordsVdoseGrid, ...
+                            [ix,~,~,~,latDistsX,latDistsZ] = obj.calcGeoDists(obj.rot_coordsVdoseGrid, ...
                                                                  stf(i).sourcePoint_bev, ...
                                                                  stf(i).ray(j).targetPoint_bev, ...
                                                                  obj.machine.meta.SAD, ...
@@ -235,7 +233,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
                             end
                         else
                             % Ray tracing for beam i and ray j
-                            [ix,currRadialDist_sq,~,~,~,~] = obj.matRad_calcGeoDists(obj.rot_coordsVdoseGrid, ...
+                            [ix,currRadialDist_sq,~,~,~,~] = obj.calcGeoDists(obj.rot_coordsVdoseGrid, ...
                                                                  stf(i).sourcePoint_bev, ...
                                                                  stf(i).ray(j).targetPoint_bev, ...
                                                                  obj.machine.meta.SAD, ...
@@ -594,7 +592,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
                     % score physical dose
                     dij.physicalDose{1}(:,currBeamIdx) = dij.physicalDose{1}(:,currBeamIdx) + stf(currBeamIdx).ray(currRayIdx).weight(currBixelIdx) * obj.doseTmpContainer{1,1};
                     
-                    % TODO write property for mLETDose
+                    % write property for mLETDose
                     if isfield(dij,'mLETDose')
                         dij.mLETDose{1}(:,currBeamIdx) = dij.mLETDose{1}(:,currBeamIdx) + stf(currBeamIdx).ray(currRayIdx).weight(currBixelIdx) * obj.letDoseTmpContainer{1,1}; 
                     end

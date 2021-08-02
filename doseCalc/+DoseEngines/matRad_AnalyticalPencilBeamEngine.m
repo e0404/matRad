@@ -1,8 +1,22 @@
 classdef (Abstract) matRad_AnalyticalPencilBeamEngine < DoseEngines.matRad_DoseEngine
-    % Superclass for all dose calculation engines which are based on 
-    % analytical pencil beam calculation 
-    % for more informations see superclass
-    % DoseEngines.matRad_DoseEngine
+    % matRad_AnalyticalPencilBeamEngine: abstract superclass for all dose calculation engines which are based on 
+    %   analytical pencil beam calculation 
+    %   for more informations see superclass
+    %   DoseEngines.matRad_DoseEngine
+    %   MatRad_Config MatRad Configuration class
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %
+    % Copyright 2019 the matRad development team.
+    %
+    % This file is part of the matRad project. It is subject to the license
+    % terms in the LICENSE file found in the top-level directory of this
+    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+    % of the matRad project, including this file, may be copied, modified,
+    % propagated, or distributed except according to the terms contained in the
+    % LICENSE file.
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (SetAccess = protected, GetAccess = public)
         
@@ -21,17 +35,27 @@ classdef (Abstract) matRad_AnalyticalPencilBeamEngine < DoseEngines.matRad_DoseE
         
     end
     
-    properties (Constant)
-        
-        isPencilBeamEngine = true;
-        
-    end
-    
-    methods (Abstract, Access = protected)
+    % Should be abstract methods but in order to satisfy the compatibility
+    % with OCTAVE we can't use abstract methods. If OCTAVE at some point 
+    % in the far future implements this feature this should be abstract again.
+    methods (Access = protected) %Abstract
 
-        dij = fillDij(obj,dij,stf,counter) %Docs TODO
+        
+        function dij = fillDij(obj,dij,stf,counter) 
+        % method for filling the dij struct with the computed dose cube
+        % last step in dose calculation
+        % Needs to be implemented in non abstract subclasses.  
+            error('Funktion needs to be implemented!');
+        end
 
-        dij = fillDijDirect(obj,dij,stf,currBeamIdx,currRayIdx,currBixelIdx) %Docs TODO      
+        
+        function dij = fillDijDirect(obj,dij,stf,currBeamIdx,currRayIdx,currBixelIdx)
+        % method for filling the dij struct, when using a direct dose
+        % calcultion
+        % Needs to be implemented in non abstract subclasses, 
+        % when direct calc shoulb be utilizable.    
+            error('Funktion needs to be implemented!');
+        end
 
     end
     
@@ -124,13 +148,13 @@ classdef (Abstract) matRad_AnalyticalPencilBeamEngine < DoseEngines.matRad_DoseE
     methods (Static)
         
         function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ,latDistsX,latDistsZ] = ...
-              matRad_calcGeoDists(rot_coords_bev, sourcePoint_bev, targetPoint_bev, SAD, radDepthIx, lateralCutOff)
+              calcGeoDists(rot_coords_bev, sourcePoint_bev, targetPoint_bev, SAD, radDepthIx, lateralCutOff)
             % matRad calculation of lateral distances from central ray 
             % used for dose calcultion
             % 
             % call
             %   [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = ...
-            %           matRad_calcGeoDists(rot_coords_bev, ...
+            %           obj.calcGeoDists(rot_coords_bev, ...
             %                               sourcePoint_bev, ...
             %                               targetPoint_bev, ...
             %                               SAD, ...
