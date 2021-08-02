@@ -45,37 +45,38 @@ if isfield(pln,'propDoseCalc')
         if~isstruct(pln.propDoseCalc.engine)        
                      
             %check if it is a dose calc engine and not some other oject
-            if pln.propDoseCalc.engine.isDoseEngine
-                %call the calculateDose funktion 
-                dij = pln.propDoseCalc.engine.calculateDose(ct,stf,pln,cst);
+            if isa(pln.propDoseCalc.engine, 'DoseEngines.matRad_DoseEngine')
+                %call the calcDose funktion 
+                dij = pln.propDoseCalc.engine.calcDose(ct,stf,pln,cst);
             else
                 matRad_cfg.dispError('Pln struct contains non valid dose engine: %s', pln.propDoseCalc.engine.name);
             end
                    
         else
-            
+            %engine field is a struct
             if (isfield(pln.propDoseCalc.engine ,'name') && any(strcmpi(nameList,pln.propDoseCalc.engine.name)))
                 
-               engineHandle = handleList{strcmpi(nameList,pln.propDoseCalc.engine.name)};
-            
-                %check for monte carlo or pencil beam engine
-                if( isfield(pln.propDoseCalc.engine, 'isMCEngine'))
+                engineHandle = handleList{strcmpi(nameList,pln.propDoseCalc.engine.name)};
+                engine = engineHandle(ct,stf,pln,cst);
+                fields = fieldnames(pln.propDoseCalc.engine);
+                for i = 1:length(fields)
                     
-                    %TODO wanted to check for ncaseperbixel in pln struct
-                    %but because its optional need to look into it again
-                    %because i want to solve this without hardcoding a ton of if
-                    %statements
-                    engine = engineHandle(ct,stf,pln,cst);
-                    dij = engine.calculateDose(ct,stf,pln,cst);
+                    try
+                        engine.(fields{i}) = pln.propDoseCalc.engine.(fields{i});
+                        
+                    catch ME
+                        switch Me.identifier
+                            case 'MATALB:UndefinedProperty' 
+                                matRad_cfg.dispWarning('ME field:%s %s',fields{i},ME.identifier);
+                            otherwise
+                                rethrow(ME);
+                        end
+                    end         
                     
-                elseif( isfield(pln.propDoseCalc.engine, 'isPencilBeamEngine'))
-                    
-                   engine = engineHandle(ct,stf,pln,cst);
-                   dij = engine.calculateDose(ct,stf,pln,cst);
-
-                else
-                    matRad_cfg.dispError('No valid engine mode found');
                 end
+                
+                dij = engine.calcDose(ct,stf,pln,cst);
+                
                                 
             else
                 matRad_cfg.dispError('No valid engine name given in pln.propDoseCalc struct');
@@ -89,6 +90,9 @@ if isfield(pln,'propDoseCalc')
         
     end
 
+else
+    
+    matRad_rc.dispError('No propDoseCalc field inside given pln struc.');
 
 end
 
