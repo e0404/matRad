@@ -30,8 +30,8 @@ pln.propDoseCalc.TG43approximation = '2D'; %'1D' or '2D'
 
 
 % needle settings
-pln.propStf.needle.seedDistance      = 30; % [mm] seed distance on needle
-pln.propStf.needle.seedsNo           = 3; % number of seeds per needle
+pln.propStf.needle.seedDistance      = 10; % [mm] seed distance on needle
+pln.propStf.needle.seedsNo           = 6; % number of seeds per needle
 
 %template grid definition (standard 13 x 13 grid with individual distances)
 pln.propStf.template.activeNeedles = [0 0 0 1 0 1 0 1 0 1 0 0 0;... % 7.0
@@ -59,9 +59,9 @@ pln.propStf.templateRoot = matRad_getTemplateRoot(ct,cst); % mass center of
 %target in x and y and bottom in z
 
 % dose calculation settings
-pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
-pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
-pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]
+pln.propDoseCalc.doseGrid.resolution.y = 5; % [mm]
+pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
 
 pln.propDoseCalc.DistanceCutoff    = 130; %[mm] % sets the maximum distance
 % to which dose is calculated. 
