@@ -73,18 +73,18 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             
             % Termination (C.2)
             obj.options.tol                           = 1e-8; % (Opt1)
-            obj.options.dual_inf_tol                  = 1;    % (Opt2)
-            obj.options.constr_viol_tol               = 1e-4; % (Opt3)
+            obj.options.dual_inf_tol                  = 1e-2;    % (Opt2)
+            obj.options.constr_viol_tol               = 1e-2; % (Opt3)
             obj.options.compl_inf_tol                 = 1e-4; % (Opt4), Optimal Solution Found if (Opt1),...,(Opt4) fullfiled
             
-            obj.options.acceptable_iter               = 3;    % (Acc1)
-            obj.options.acceptable_tol                = 1e10; % (Acc2)
+            obj.options.acceptable_iter               = 5;    % (Acc1)
+            obj.options.acceptable_tol                = 1e10; % (Acc2) %The scale of our objective function is variable, so we relax this tolerance
             obj.options.acceptable_constr_viol_tol    = 1e-2; % (Acc3)
             obj.options.acceptable_dual_inf_tol       = 1e10; % (Acc4)
             obj.options.acceptable_compl_inf_tol      = 1e10; % (Acc5)
-            obj.options.acceptable_obj_change_tol     = 1e-3; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
+            obj.options.acceptable_obj_change_tol     = 1e-4; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
             
-            obj.options.max_iter                      = matRad_cfg.propOpt.defaultMaxIter;
+            obj.options.max_iter                      = 1000;
             obj.options.max_cpu_time                  = 3600;
             
             % Barrier Parameter (C.6)

@@ -20,10 +20,10 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
         tol_violation {mustBeNumeric}      = 1e-6;
         tol_max_violation {mustBeNumeric}   = 1e-3;
         
-        accepted_tol_change {mustBeNumeric} = 1e-3;
+        accepted_tol_change {mustBeNumeric} = 1e-4;
         accepted_violation {mustBeNumeric} = 1e-5;
         accepted_max_violation {mustBeNumeric} = 1e-2;
-        accepted_iter = 3;
+        accepted_iter = 5;
         
         num_reductions {mustBeInteger}  = 2;
         weighted = false;
@@ -143,9 +143,9 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
             obj.allOptVars.supTime(1) = 0;
             obj.allOptVars.relObjChange(1) = Inf;
             
-                    fprintf('iter \t objective \t ||res|| \t max(res) \t beta \t #f_red \t #f_evals \t t_Seek \t t_Sup \n');
-                
-                fprintf('%i \t %0.4f \t %0.6f \t %0.4f \t %0.4f \t %d \t %d \t %0.4f \t %0.4f \n', ...
+            fprintf('iter \t objective \t ||res|| \t max(res) \t beta \t #f_red \t #f_evals \t t_Seek \t t_Sup \n');
+            
+            fprintf('%i \t %0.4f \t %0.6f \t %0.4f \t %0.4f \t %d \t %d \t %0.4f \t %0.4f \n', ...
                 0, ...
                 obj.allOptVars.obj_values(1), ...
                 obj.allOptVars.norm2_violations(1), ...
