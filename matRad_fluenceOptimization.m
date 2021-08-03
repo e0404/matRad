@@ -204,18 +204,22 @@ if ~isfield(pln.propOpt,'optimizer')
     pln.propOpt.optimizer = 'IPOPT';
 end
 
-switch pln.propOpt.optimizer
-    case 'IPOPT'
-        optimizer = matRad_OptimizerIPOPT;
-    case 'fmincon'
-        optimizer = matRad_OptimizerFmincon;
-    case 'Superization'
-        optimizer = matRad_OptimizerSuperization(pln);
-    case 'FS'
-        optimizer = matRad_OptimizerFS(pln);
-    otherwise
-        warning(['Optimizer ''' pln.propOpt.optimizer ''' not known! Fallback to IPOPT!']);
-        optimizer = matRad_OptimizerIPOPT;
+if isa(pln.propOpt.optimizer,'matRad_Optimizer')
+   optimizer = pln.propOpt.optimizer;
+else
+    switch pln.propOpt.optimizer
+        case 'IPOPT'
+            optimizer = matRad_OptimizerIPOPT;
+        case 'fmincon'
+            optimizer = matRad_OptimizerFmincon;
+        case 'Superization'
+            optimizer = matRad_OptimizerSuperization(pln);
+        case 'FS'
+            optimizer = matRad_OptimizerFS(pln);
+        otherwise
+            warning(['Optimizer ''' pln.propOpt.optimizer ''' not known! Fallback to IPOPT!']);
+            optimizer = matRad_OptimizerIPOPT;
+    end
 end
         
 %optimizer = matRad_OptimizerFmincon;
