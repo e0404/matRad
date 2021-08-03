@@ -1,17 +1,18 @@
 function templateRoot = matRad_getTemplateRoot(ct,cst)
-%MATRADGETTEMPLATEROOT calculates origin position for template
-% INPUT
+%matRad_getTemplateRoot calculates origin position for template
+%
+% call
+%   matRad_getTemplateRoot(ct,cst)
+%
+% input
 %   ct:         ct cube
 %   cst:        matRad cst struct
-% OUTPUT
+%
+% output
 %   templateRoot: 
 %               1x3 column vector with root position
 %               x,y : center \\ z : bottom of target VOI
 
-% if visBool not set toogle off visualization
-if nargin < 3
-    visBool = 0;
-end
 %% Initializes V variable.
 V = [];
 

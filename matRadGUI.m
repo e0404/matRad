@@ -1625,12 +1625,22 @@ try
 
     % set some values
     if handles.plane == 1
-        set(handles.sliderSlice,'Value',ceil(pln.propStf.isoCenter(1,2)/ct.resolution.x));
+        slice = ceil(pln.propStf.isoCenter(1,2)/ct.resolution.x);
+        if slice < 1 || slice > ct.cubeDim(2)
+            slice = round(ct.cubeDim(2)/2);
+        end
     elseif handles.plane == 2
-        set(handles.sliderSlice,'Value',ceil(pln.propStf.isoCenter(1,1)/ct.resolution.y));
+        slice = ceil(pln.propStf.isoCenter(1,1)/ct.resolution.y);
+        if slice < 1 || slice > ct.cubeDim(1)
+            slice = round(ct.cubeDim(1)/2);
+        end
     elseif handles.plane == 3
-        set(handles.sliderSlice,'Value',ceil(pln.propStf.isoCenter(1,3)/ct.resolution.z));
+        slice = ceil(pln.propStf.isoCenter(1,3)/ct.resolution.z);
+        if slice < 1 || slice > ct.cubeDim(3)
+            slice = round(ct.cubeDim(3)/2);
+        end
     end
+    set(handles.sliderSlice,'Value',slice);
 
     handles.State = 3;
     handles.SelectedDisplayOptionIdx = 1;
@@ -2190,8 +2200,14 @@ try
 catch
 end
 pln.numOfFractions  = parseStringAsNum(get(handles.editFraction,'String'),false);
-contents            = get(handles.popupRadMode,'String'); 
-pln.radiationMode   = contents{get(handles.popupRadMode,'Value')}; % either photons / brachy / protons / carbon
+contents            = get(handles.popupRadMode,'String');
+
+% quick fix, needs to be implemented properly through GUI editor
+if ~isempty(get(handles.popupRadMode,'Value'))       
+    pln.radiationMode   = contents{get(handles.popupRadMode,'Value')}; % either photons / brachy / protons / carbon
+else
+    pln.radiationMode   = 'brachy';
+end
 contents            = get(handles.popUpMachine,'String'); 
 pln.machine         = contents{get(handles.popUpMachine,'Value')}; 
 

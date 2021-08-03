@@ -1,8 +1,9 @@
-function stf = matRad_generateBrachyStf(ct,cst,pln)
+function stf = matRad_generateBrachyStf(ct,cst,pln, visMode)
 % matRad_generateBrachyStf generates matRad steering information generation for brachy
 % 
 % call
-%   stf = matRad_generateStf(ct,cst,pln,visMode)
+%   stf = matRad_generateStf(ct,cst,pln,visMode) 
+%   (automatically calls this function if radiation mode is brachy)
 %
 % input
 %   ct:         ct cube
@@ -80,77 +81,99 @@ for i = 1:ct.numOfCtScen
     ct.cube{i}(eraseCtDensMask == 1) = 0;
 end
 
-        %% save VOI coordinates
-        %translate to geometric coordinates and save in stf
-        stf.targetVolume.Xvox = ct.x(coordsX_vox);
-        stf.targetVolume.Yvox = ct.y(coordsY_vox);
-        stf.targetVolume.Zvox = ct.z(coordsZ_vox);
+%% save VOI coordinates
+%translate to geometric coordinates and save in stf
+stf.targetVolume.Xvox = ct.x(coordsX_vox);
+stf.targetVolume.Yvox = ct.y(coordsY_vox);
+stf.targetVolume.Zvox = ct.z(coordsZ_vox);
 %         stf.targetVolume.Xvox = ct.x(coordsX_vox); % given in mm
 %         stf.targetVolume.Yvox = ct.y(coordsY_vox);
 %         stf.targetVolume.Zvox = ct.z(coordsZ_vox);
-        %% copy meta info from pln
-        stf.radiationMode = pln.radiationMode;
-        stf.numOfSeedsPerNeedle = pln.propStf.needle.seedsNo;
-        stf.numOfNeedles = pln.propStf.template.numOfXPoints*pln.propStf.template.numOfYPoints; %might be changed for coordinate based pln input
-        stf.totalNumOfBixels = stf.numOfSeedsPerNeedle*stf.numOfNeedles; % means total number of seeds 
+%% meta info from pln
+stf.radiationMode = pln.radiationMode;
+stf.numOfSeedsPerNeedle = pln.propStf.needle.seedsNo;
+stf.numOfNeedles = nnz(pln.propStf.template.activeNeedles);
+stf.totalNumOfBixels = stf.numOfSeedsPerNeedle*stf.numOfNeedles; % means total number of seeds 
 
-        %% generate 2D template shape
-        % in case, the template was defined as grid, 4xN position matrix is
-        % produced. Each column is the 3+1 vector of one template hole (fourth entry always one, z coord - third entry zero)
-        % the template origin is set at its center.
-        if strcmp(pln.propStf.templateDirect, 'none')
-            xNum = pln.propStf.template.numOfXPoints;
-            yNum = pln.propStf.template.numOfYPoints;
-            xSc = pln.propStf.template.xScale;
-            ySc = pln.propStf.template.yScale;
-            [templXmesh,templYmesh] = meshgrid(-(xNum-1)/2:(xNum-1)/2,-(yNum-1)/2:(yNum-1)/2);
-            templX = xSc*reshape(templXmesh,[],1);
-            templY = ySc*reshape(templYmesh,[],1);
-            templZ = zeros(length(templX),1);
-            templ1 = ones(length(templX),1);
-            stf.template.template2D = [templX';templY';templZ';templ1'];
-        else
-            stf.template.template2D = pln.propStf.templateDirect;
-        end
-        
-        %% generate seed positions
-        % seed positions can be generated from neeldes, template and oriantation
-        % needles are assumed to go trough the template vertically
-        
-        % transformed template
-        stf.template.template3D = pln.propStf.shiftRotMtx*stf.template.template2D;
+%% generate 2D template points
+% the template origin is set at its center. In the image coordinate system,
+% the center will be positioned at the bottom of the volume of interest.
 
-        % needle position
-        d = pln.propStf.needle.seedDistance;
-        seedsNo = pln.propStf.needle.seedsNo;
-        needleDist(1,1,:) = d.*[1:seedsNo]'; % 1x1xN Array with seed positions on needle
-        needleDir = needleDist.*pln.propStf.shiftRotMtx(1:3,3);
-        seedPos_coord_need_seed = needleDir + stf.template.template3D(1:3,:);
-        seedPos_need_seed_coord = shiftdim(seedPos_coord_need_seed,1);
-        % the output array has the dimentions (needleNo,seedNo,coordinates)
-        X = seedPos_need_seed_coord(:,:,1);
-        Y = seedPos_need_seed_coord(:,:,2);
-        Z = seedPos_need_seed_coord(:,:,3);
-        
-        stf.seedPoints.x = reshape(X,1,[]);
-        stf.seedPoints.y = reshape(Y,1,[]);
-        stf.seedPoints.z = reshape(Z,1,[]);
-        
-        matRad_cfg.dispInfo('...100% ');
+[row,col] = find(pln.propStf.template.activeNeedles);
+templX = col*pln.propStf.bixelWidth + pln.propStf.templateRoot(1) - (13+1)/2*pln.propStf.bixelWidth;
+templY = row*pln.propStf.bixelWidth + pln.propStf.templateRoot(2) - (13+1)/2*pln.propStf.bixelWidth;
+templZ = ones(size(col))                 + pln.propStf.templateRoot(3);
 
-        % trow warning if seed points are more then twice the central
-        % distange outsidethe TARGET volume or if no sed points are in the
-        % target volume
+
+stf.template = [templX';templY';templZ'];
+
+
+
         
-        if (max(stf.seedPoints.x) >= 2*max(stf.targetVolume.Xvox) || min(stf.seedPoints.x) <= 2*min(stf.targetVolume.Xvox) ||...
-            max(stf.seedPoints.y) >= 2*max(stf.targetVolume.Yvox) || min(stf.seedPoints.y) <= 2*min(stf.targetVolume.Yvox) || ...
-            max(stf.seedPoints.z) >= 2*max(stf.targetVolume.Zvox) || min(stf.seedPoints.z) <= 2*min(stf.targetVolume.Zvox))
-                matRad_cfg.dispWarning('Seeds far outside the target volume');
-        end
-        if (max(stf.targetVolume.Xvox) <= min(stf.seedPoints.x) || min(stf.targetVolume.Xvox) >= max(stf.seedPoints.x) ||...
-            max(stf.targetVolume.Yvox) <= min(stf.seedPoints.y) || min(stf.targetVolume.Yvox) >= max(stf.seedPoints.y) ||...
-            max(stf.targetVolume.Zvox) <= min(stf.seedPoints.z) || min(stf.targetVolume.Zvox) >= max(stf.seedPoints.z))
-                matRad_cfg.dispWarning('no seed points in VOI')
-        end    
+%% generate seed positions
+% seed positions can be generated from neeldes, template and oriantation
+% needles are assumed to go trough the template vertically
+
+% needle position
+d = pln.propStf.needle.seedDistance;
+seedsNo = pln.propStf.needle.seedsNo;
+needleDist(1,1,:) = d.*[0:seedsNo-1]'; % 1x1xN Array with seed positions on needle
+needleDir = needleDist.*[0;0;1];
+seedPos_coord_need_seed = needleDir + stf.template;
+seedPos_need_seed_coord = shiftdim(seedPos_coord_need_seed,1);
+% the output array has the dimentions (needleNo,seedNo,coordinates)
+X = seedPos_need_seed_coord(:,:,1);
+Y = seedPos_need_seed_coord(:,:,2);
+Z = seedPos_need_seed_coord(:,:,3);
+
+stf.seedPoints.x = reshape(X,1,[]);
+stf.seedPoints.y = reshape(Y,1,[]);
+stf.seedPoints.z = reshape(Z,1,[]);
+
+matRad_cfg.dispInfo('...100% ');
+
+%%visualize results of visMode is nonzero
+% plot 3D seed positions
+if visMode > 0
+    clf
+    SeedPoints = plot3(stf.seedPoints.x,stf.seedPoints.y,stf.seedPoints.z,'.','DisplayName', 'seed points','Color','black','markersize',5);
+    title( '3D Visualization of seed points')
+    xlabel('X (left) [mm]')
+    ylabel('Y (posterior) [mm]')
+    zlabel('Z (superior) [mm]')
+    hold on
+    
+
+    % plot 3d VOI points
+    TargX = stf.targetVolume.Xvox;
+    TargY = stf.targetVolume.Yvox;
+    TargZ = stf.targetVolume.Zvox;
+    %Prostate = plot3(TargX,TargY,TargZ,'.', 'Color','b','DisplayName', 'prostate');
+    
+    P = [TargX',TargY',TargZ'];
+    k = boundary(P,1);
+    trisurf(k,P(:,1),P(:,2),P(:,3),'FaceColor','red','FaceAlpha',0.1,'LineStyle','none')
+    hold off;
+end
+
+
+% trow warning if seed points are more then twice the central
+% distange outsidethe TARGET volume or if no sed points are in the
+% target volume
+
+if (max(stf.seedPoints.x-pln.propStf.templateRoot(1)) >= 4*max(stf.targetVolume.Xvox-pln.propStf.templateRoot(1)) ||...
+        min(stf.seedPoints.x-pln.propStf.templateRoot(1)) <= 4*min(stf.targetVolume.Xvox-pln.propStf.templateRoot(1)) ||...
+    max(stf.seedPoints.y-pln.propStf.templateRoot(2)) >= 4*max(stf.targetVolume.Yvox-pln.propStf.templateRoot(2)) ||...
+        min(stf.seedPoints.y-pln.propStf.templateRoot(2)) <= 4*min(stf.targetVolume.Yvox-pln.propStf.templateRoot(2)) || ...
+    max(stf.seedPoints.z-pln.propStf.templateRoot(3)) >= 4*max(stf.targetVolume.Zvox-pln.propStf.templateRoot(3)) ||...
+        min(stf.seedPoints.z-pln.propStf.templateRoot(3)) <= 4*min(stf.targetVolume.Zvox-pln.propStf.templateRoot(3)))
+        matRad_cfg.dispWarning('Seeds far outside the target volume');
+end
+if (max(stf.targetVolume.Xvox) <= min(stf.seedPoints.x) || min(stf.targetVolume.Xvox) >= max(stf.seedPoints.x) ||...
+    max(stf.targetVolume.Yvox) <= min(stf.seedPoints.y) || min(stf.targetVolume.Yvox) >= max(stf.seedPoints.y) ||...
+    max(stf.targetVolume.Zvox) <= min(stf.seedPoints.z) || min(stf.targetVolume.Zvox) >= max(stf.seedPoints.z))
+        matRad_cfg.dispWarning('no seed points in VOI')
+end    
+
 end
 
