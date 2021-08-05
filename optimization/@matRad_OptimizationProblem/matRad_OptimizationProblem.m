@@ -6,7 +6,8 @@ classdef matRad_OptimizationProblem < handle
     % related quantity
     %
     % References
-    %   -
+    %   [1] https://doi.org/10.1093/imanum/draa038
+    %   [2] https://doi.org/10.1002/mp.14148
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
@@ -61,7 +62,7 @@ classdef matRad_OptimizationProblem < handle
     
     methods (Access = protected)
         function [val,grad] = logSumExp(optiProb,fVals)
-            % https://doi.org/10.1093/imanum/draa038
+            % [1] stable log sum exp trick
             [fMax,ixMax] = max(fVals(:));
             
             ix = true(numel(fVals),1);
@@ -76,6 +77,7 @@ classdef matRad_OptimizationProblem < handle
         end
         
         function [val,grad] = pNorm(optiProb,fVals,n)
+            % Implemented as proposed in [2] including a normalization for stability of the exponent.
             if nargout < 3
                 n = numel(fVals);
             end
