@@ -116,7 +116,7 @@ ctR.z = dij.doseGrid.z;
 load([pln.radiationMode,'_',pln.machine]);
 topasConfig = MatRad_TopasConfig();
 % Create Base Data
-if isstruct(machine.data(i).Z)
+if isstruct(machine.data(1).Z)
     for i = 1:length(machine.data)
         machine.data(i).Z = machine.data(i).Z.doseORG;
     end
