@@ -32,6 +32,16 @@ classdef matRad_PhotonSVDPencilBeamDoseEngine < DoseEngines.matRad_AnalyticalPen
     methods
         
         function obj = matRad_PhotonSVDPencilBeamDoseEngine(ct,stf,pln,cst)
+            % Constructor
+            % 
+            % call
+            %   engine = DoseEngines.matRad_PhotonSVDPencilBeamDoseEngine(ct,stf,pln,cst)
+            %
+            % input
+            %   ct:                         matRad ct struct
+            %   stf:                        matRad steering information struct
+            %   pln:                        matRad plan meta information struct
+            %   cst:                        matRad cst struct
                         
             % create obj of superclass
             obj = obj@DoseEngines.matRad_AnalyticalPencilBeamEngine();
@@ -46,6 +56,8 @@ classdef matRad_PhotonSVDPencilBeamDoseEngine < DoseEngines.matRad_AnalyticalPen
         
         function dij = calcDose(obj,ct,stf,pln,cst)
             % matRad photon dose calculation wrapper
+            % can be automaticly called through matRad_calcDose or
+            % matRad_calcPhotonDose
             % 
             % call
             %   dij = calcDose(ct,stf,pln,cst)
@@ -341,7 +353,7 @@ classdef matRad_PhotonSVDPencilBeamDoseEngine < DoseEngines.matRad_AnalyticalPen
                     if ~obj.isFieldBasedDoseCalc
                         r0   = 20 + stf(i).bixelWidth;   % [mm] sample beyond the inner core
                         Type = 'radius';
-                        [ix,bixelDose] = obj.DijSampling(ix,bixelDose,obj.radDepthVdoseGrid{1}(ix),rad_distancesSq,Type,r0);
+                        [ix,bixelDose] = obj.dijSampling(ix,bixelDose,obj.radDepthVdoseGrid{1}(ix),rad_distancesSq,Type,r0);
                     end
 
                     % Save dose for every bixel in cell array
@@ -378,9 +390,7 @@ classdef matRad_PhotonSVDPencilBeamDoseEngine < DoseEngines.matRad_AnalyticalPen
     methods (Access = protected)
         
         function dij = fillDij(obj,dij,stf,pln,counter)
-        % Sequentially fill the sparse matrix dij from the tmpContainer cell array
-        %
-        %
+        % Sequentially fill the sparse matrix dij from the tmpContainer cell arra
         %
         %   see also fillDijDirect
             
@@ -482,13 +492,13 @@ classdef matRad_PhotonSVDPencilBeamDoseEngine < DoseEngines.matRad_AnalyticalPen
             end
         end
         
-        function [ixNew,bixelDoseNew] =  DijSampling(~,ix,bixelDose,radDepthV,rad_distancesSq,sType,Param)
+        function [ixNew,bixelDoseNew] =  dijSampling(~,ix,bixelDose,radDepthV,rad_distancesSq,sType,Param)
             % matRad dij sampling function 
             % This function samples. 
             % 
             % call
             %   [ixNew,bixelDoseNew] =
-            %   matRad_DijSampling(ix,bixelDose,radDepthV,rad_distancesSq,sType,Param)
+            %   obj.dijSampling(ix,bixelDose,radDepthV,rad_distancesSq,sType,Param)
             %
             % input
             %   ix:               indices of voxels where we want to compute dose influence data
@@ -619,6 +629,7 @@ classdef matRad_PhotonSVDPencilBeamDoseEngine < DoseEngines.matRad_AnalyticalPen
     methods (Static)
 
         function ret = isAvailable(pln)
+            % see superclass for information
             ret = any(strcmp(DoseEngines.matRad_PhotonSVDPencilBeamDoseEngine.possibleRadiationModes, pln.radiationMode));
         end
 

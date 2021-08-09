@@ -43,6 +43,16 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
     methods 
         
         function obj = matRad_ParticleAnalyticalPencilBeamDoseEngine(ct,stf,pln,cst)
+            % Constructor
+            %
+            % call
+            %   engine = DoseEngines.matRad_ParticleAnalyticalPencilBeamDoseEngine(ct,stf,pln,cst)
+            %
+            % input
+            %   ct:                         matRad ct struct
+            %   stf:                        matRad steering information struct
+            %   pln:                        matRad plan meta information struct
+            %   cst:                        matRad cst struct
              
             obj = obj@DoseEngines.matRad_AnalyticalPencilBeamEngine();
             
@@ -67,9 +77,11 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
         
         function dij = calcDose(obj,ct,stf,pln,cst)
             % matRad particle dose calculation wrapper
-            % 
+            % can be automaticly called through matRad_calcDose or
+            % matRad_calcParticleDose
+            %
             % call
-            %   dij = obj.matRad_calcParticleDose(ct,stf,pln,cst)
+            %   dij = obj.calcDose(ct,stf,pln,cst)
             %
             % input
             %   ct:             ct cube
@@ -444,6 +456,8 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
     methods (Access = protected)
         
         function [ct,stf,pln,dij] = calcDoseInit(obj,ct,stf,pln,cst)
+            % Extended version of the calcDoseInit method of
+            % @matRad_DoseEngine method. See superclass for more information 
 
             matRad_cfg =  MatRad_Config.instance();
                         
@@ -662,7 +676,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
             % for each pristine particle beam
             % 
             % call
-            %   obj.matRad_calcLateralParticleCutOff(cutOffLevel,stf,visBool )
+            %   obj.calcLateralParticleCutOff(cutOffLevel,stf,visBool)
             %
             % input
             %   obj:        current engine object includes machine base data file
@@ -1001,6 +1015,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
     methods (Static)
         
         function ret = isAvailable(pln)
+            % see superclass for information
             ret = any(strcmp(DoseEngines.matRad_ParticleAnalyticalPencilBeamDoseEngine.possibleRadiationModes, pln.radiationMode));
         end
     end

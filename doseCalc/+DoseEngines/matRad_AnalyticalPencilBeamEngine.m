@@ -78,6 +78,20 @@ classdef (Abstract) matRad_AnalyticalPencilBeamEngine < DoseEngines.matRad_DoseE
         end
         
         function dij = calcDoseInitBeam(obj,ct,stf,dij,i)
+            % Method for initializing the beams for analytical pencil beam
+            % dose calculation
+            %
+            % call
+            %   obj.calcDoseInitBeam(ct,stf,dij,i)
+            %
+            % input
+            %   ct:                         matRad ct struct
+            %   stf:                        matRad steering information struct
+            %   dij:                        matRad dij struct
+            %   i:                          index of beam
+            %
+            % output
+            %   dij:                        updated dij struct
             
             matRad_cfg = MatRad_Config.instance();
             matRad_cfg.dispInfo('Beam %d of %d:\n',i,dij.numOfBeams);
@@ -152,7 +166,7 @@ classdef (Abstract) matRad_AnalyticalPencilBeamEngine < DoseEngines.matRad_DoseE
         function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ,latDistsX,latDistsZ] = ...
               calcGeoDists(rot_coords_bev, sourcePoint_bev, targetPoint_bev, SAD, radDepthIx, lateralCutOff)
             % matRad calculation of lateral distances from central ray 
-            % used for dose calcultion
+            % used for dose calculation
             % 
             % call
             %   [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = ...

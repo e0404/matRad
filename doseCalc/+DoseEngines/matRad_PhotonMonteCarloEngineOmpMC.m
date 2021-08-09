@@ -26,6 +26,7 @@ classdef matRad_PhotonMonteCarloEngineOmpMC < DoseEngines.matRad_MonteCarloEngin
     properties (SetAccess = public, GetAccess = public)
         
        visBool = false; %binary switch to en/disable visualitzation
+       useCornersSCD = true; %false -> use ISO corners
        
     end
         
@@ -35,17 +36,13 @@ classdef matRad_PhotonMonteCarloEngineOmpMC < DoseEngines.matRad_MonteCarloEngin
             % Constructor
             %
             % call
-            %   engine = matRad_calcPhotonDoseMc(ct,stf,pln,cst,visBool)
+            %   engine = DoseEngines.matRad_PhotonMonteCarloEngineOmpMCct,stf,pln,cst)
             %
             % input
             %   ct:                         matRad ct struct
             %   stf:                        matRad steering information struct
             %   pln:                        matRad plan meta information struct
             %   cst:                        matRad cst struct
-            % output
-            %   dij:                        matRad dij struct
-            %   nCasePerBixel:              number of histories per beamlet
-            %   visBool:                    binary switch to enable visualization
                         
             % call superclass constructor   
             obj = obj@DoseEngines.matRad_MonteCarloEngine();    
@@ -54,9 +51,11 @@ classdef matRad_PhotonMonteCarloEngineOmpMC < DoseEngines.matRad_MonteCarloEngin
         
         function dij = calcDose(obj,ct,stf,pln,cst)
             % matRad ompMC monte carlo photon dose calculation wrapper
+            % can be automaticly called through matRad_calcDose or
+            % matRad_calcPhotonDoseMC
             %
             % call
-            %   dij = matRad_calcPhotonDoseMc(ct,stf,pln,cst,visBool)
+            %   dij = obj.calcDose(ct,stf,pln,cst)
             %
             % input
             %   ct:                         matRad ct struct
@@ -251,7 +250,7 @@ classdef matRad_PhotonMonteCarloEngineOmpMC < DoseEngines.matRad_MonteCarloEngin
             end
 
             %% Create beamlet source
-            useCornersSCD = true; %false -> use ISO corners
+            obj.useCornersSCD = true; %false -> use ISO corners
 
             numOfBixels = [stf(:).numOfRays];
             beamSource = zeros(dij.numOfBeams, 3);
@@ -275,7 +274,7 @@ classdef matRad_PhotonMonteCarloEngineOmpMC < DoseEngines.matRad_MonteCarloEngin
                     dij.rayNum(counter)   = j;
                     dij.bixelNum(counter) = j;
 
-                    if useCornersSCD
+                    if obj.useCornersSCD
                         beamletCorners = stf(i).ray(j).rayCorners_SCD;
                     else    
                         beamletCorners = stf(i).ray(j).beamletCornersAtIso;
@@ -389,13 +388,10 @@ classdef matRad_PhotonMonteCarloEngineOmpMC < DoseEngines.matRad_MonteCarloEngin
         
     end
     
-    methods (Access = protected)
-        
-    end
-    
      methods (Static)
       
         function ret = isAvailable(pln)
+            % see superclass for information
             ret = any(strcmp(DoseEngines.matRad_PhotonMonteCarloEngineOmpMC.possibleRadiationModes, pln.radiationMode));
         end
         

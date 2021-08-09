@@ -40,6 +40,16 @@ classdef matRad_ParticleMonteCarloDoseEngineMCsquare < DoseEngines.matRad_MonteC
     methods
         
         function obj = matRad_ParticleMonteCarloDoseEngineMCsquare(ct,stf,pln,cst)
+            % Constructor
+            %
+            % call
+            %   engine = DoseEngines.matRad_ParticleMonteCarloDoseEngineMCsquare(ct,stf,pln,cst)
+            %
+            % input
+            %   ct:                         matRad ct struct
+            %   stf:                        matRad steering information struct
+            %   pln:                        matRad plan meta information struct
+            %   cst:                        matRad cst struct
             
             % call superclass constructor
             obj = obj@DoseEngines.matRad_MonteCarloEngine();
@@ -58,9 +68,11 @@ classdef matRad_ParticleMonteCarloDoseEngineMCsquare < DoseEngines.matRad_MonteC
         
         function dij = calcDose(obj,ct,stf,pln,cst)
             % matRad MCsqaure monte carlo photon dose calculation wrapper
+            % can be automaticly called through matRad_calcDose or
+            % matRad_calcParticleDoseMC
             %
             % call
-            %   dij = matRad_calcParticleDoseMc(ct,stf,pln,cst,calcDoseDirect)
+            %   dij = obj.calcDose(ct,stf,pln,cst)
             %
             % input
             %   ct:          	matRad ct struct
@@ -69,6 +81,7 @@ classdef matRad_ParticleMonteCarloDoseEngineMCsquare < DoseEngines.matRad_MonteC
             %   cst:            matRad cst struct
             %   nCasePerBixel:  number of histories per beamlet
             %´  calcDoseDirect: binary switch to enable forward dose calculation
+            %
             % output
             %   dij:            matRad dij struct
             %
@@ -364,8 +377,7 @@ classdef matRad_ParticleMonteCarloDoseEngineMCsquare < DoseEngines.matRad_MonteC
             end
             
         end
-
-        
+       
         function setUp(obj,nCasePerBixel,calcDoseDirect)    
         % SETUP Set up obj properties used for dose calculation
         %
@@ -425,6 +437,7 @@ classdef matRad_ParticleMonteCarloDoseEngineMCsquare < DoseEngines.matRad_MonteC
     methods (Static)
       
         function ret = isAvailable(pln)
+            % see superclass for information
             ret = any(strcmp(DoseEngines.matRad_ParticleMonteCarloDoseEngineMCsquare.possibleRadiationModes, pln.radiationMode));
         end
         
