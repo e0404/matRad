@@ -33,6 +33,8 @@ classdef (Abstract) matRad_AnalyticalPencilBeamEngine < DoseEngines.matRad_DoseE
         
         bixelsPerBeam;  % number of bixel per energy beam
         
+        rotMat_system_T; % rotation matrix
+        
     end
     
     % Should be abstract methods but in order to satisfy the compatibility
@@ -104,11 +106,11 @@ classdef (Abstract) matRad_AnalyticalPencilBeamEngine < DoseEngines.matRad_DoseE
             % Do not transpose matrix since we usage of row vectors &
             % transformation of the coordinate system need double transpose
 
-            rotMat_system_T = matRad_getRotationMatrix(stf(i).gantryAngle,stf(i).couchAngle);
+            obj.rotMat_system_T = matRad_getRotationMatrix(stf(i).gantryAngle,stf(i).couchAngle);
 
             % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
-            rot_coordsV         = coordsV*rotMat_system_T;
-            rot_coordsVdoseGrid = coordsVdoseGrid*rotMat_system_T;
+            rot_coordsV         = coordsV*obj.rotMat_system_T;
+            rot_coordsVdoseGrid = coordsVdoseGrid*obj.rotMat_system_T;
 
             rot_coordsV(:,1) = rot_coordsV(:,1)-stf(i).sourcePoint_bev(1);
             rot_coordsV(:,2) = rot_coordsV(:,2)-stf(i).sourcePoint_bev(2);

@@ -19,8 +19,8 @@ classdef matRad_ParticleMonteCarloDoseEngineMCsquare < DoseEngines.matRad_MonteC
    
     properties (Constant)  
         
-        possibleRadiationModes = ["protons"; "carbon"]
-        name = 'monte carlo particle dose engine';
+        possibleRadiationModes = {'protons', 'carbon'}
+        name = 'monte carlo particle';
         
     end
     
@@ -94,8 +94,8 @@ classdef matRad_ParticleMonteCarloDoseEngineMCsquare < DoseEngines.matRad_MonteC
             
             obj.checkPln(pln);
             
-            if exist('nCasePerBixel','Var')
-                if exist('calcDoseDirect','Var')
+            if exist('nCasePerBixel','var')
+                if exist('calcDoseDirect','var')
                     obj.setUp(nCasePerBixel,calcDoseDirect);
                 else
                     obj.setUp(nCasePerBixel);
@@ -119,7 +119,7 @@ classdef matRad_ParticleMonteCarloDoseEngineMCsquare < DoseEngines.matRad_MonteC
             % set and change to MCsquare binary folder
             obj.currFolder = pwd;
             fullfilename = mfilename('fullpath');
-            MCsquareFolder = [fullfilename(1:find(fullfilename==filesep,1,'last')) 'MCsquare' filesep 'bin'];
+            MCsquareFolder = [matRad_cfg.matRadRoot filesep 'MCsquare' filesep 'bin'];
 
             % cd to MCsquare folder (necessary for binary)
             cd(MCsquareFolder);
@@ -164,7 +164,7 @@ classdef matRad_ParticleMonteCarloDoseEngineMCsquare < DoseEngines.matRad_MonteC
             % We need to adjust the offset used in matRad_calcDoseInit
             mcSquareAddIsoCenterOffset = [dij.doseGrid.resolution.x/2 dij.doseGrid.resolution.y/2 dij.doseGrid.resolution.z/2] ...
                             - [dij.ctGrid.resolution.x   dij.ctGrid.resolution.y   dij.ctGrid.resolution.z];
-            mcSquareAddIsoCenterOffset = mcSquareAddIsoCenterOffset - offset;
+            mcSquareAddIsoCenterOffset = mcSquareAddIsoCenterOffset - obj.offset;
 
             % for MCsquare we explicitly downsample the ct to the dose grid (might not
             % be necessary in future MCsquare versions with separated grids)
@@ -195,7 +195,7 @@ classdef matRad_ParticleMonteCarloDoseEngineMCsquare < DoseEngines.matRad_MonteC
 
             MCsquareConfig.BDL_Plan_File = 'currBixels.txt';
             MCsquareConfig.CT_File       = 'MC2patientCT.mhd';
-            MCsquareConfig.Num_Threads   = nbThreads;
+            MCsquareConfig.Num_Threads   = obj.nbThreads;
             MCsquareConfig.RNG_Seed      = 1234;
             MCsquareConfig.Num_Primaries = obj.nCasePerBixel;
 
@@ -284,7 +284,7 @@ classdef matRad_ParticleMonteCarloDoseEngineMCsquare < DoseEngines.matRad_MonteC
             matRad_writeMCsquareinputAllFiles(MCsquareConfigFile,MCsquareConfig,stfMCsquare);
 
             % run MCsquare
-            [status,cmdout] = system([mcSquareBinary ' ' MCsquareConfigFile],'-echo');
+            [status,cmdout] = system([obj.mcSquareBinary ' ' MCsquareConfigFile],'-echo');
 
             mask = false(dij.doseGrid.numOfVoxels,1);
             mask(obj.VdoseGrid) = true;
@@ -335,7 +335,7 @@ classdef matRad_ParticleMonteCarloDoseEngineMCsquare < DoseEngines.matRad_MonteC
             end
 
             % cd back
-            cd(currFolder);
+            cd(obj.currFolder);
 
         end
         
@@ -377,7 +377,7 @@ classdef matRad_ParticleMonteCarloDoseEngineMCsquare < DoseEngines.matRad_MonteC
             matRad_cfg = MatRad_Config.instance();
             
             % first argument should be nCasePerBixel
-            if (exist('nCasePerBixel','Var') && isa(nCasePerBixel,'numeric'))    
+            if (exist('nCasePerBixel','var') && isa(nCasePerBixel,'numeric'))    
                 obj.nCasePerBixel = nCasePerBixel;
             else
                 %set number of particles simulated per pencil beam

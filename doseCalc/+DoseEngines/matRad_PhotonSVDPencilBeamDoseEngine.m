@@ -18,8 +18,8 @@ classdef matRad_PhotonSVDPencilBeamDoseEngine < DoseEngines.matRad_AnalyticalPen
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (Constant)
-       possibleRadiationModes = "photons" %constant which represent available radiation modes
-       name = 'pencil beam photon';
+       possibleRadiationModes = 'photons' %constant which represent available radiation modes
+       name = 'pencil beam photon'; 
     end
     
     properties (SetAccess = public, GetAccess = public)
@@ -48,7 +48,7 @@ classdef matRad_PhotonSVDPencilBeamDoseEngine < DoseEngines.matRad_AnalyticalPen
             % matRad photon dose calculation wrapper
             % 
             % call
-            %   dij = matRad_calcPhotonDose(ct,stf,pln,cst)
+            %   dij = calcDose(ct,stf,pln,cst)
             %
             % input
             %   ct:             ct cube

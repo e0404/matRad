@@ -20,13 +20,11 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (Constant)
-           possibleRadiationModes = ["protons"; "carbon"]
+           possibleRadiationModes = {'protons', 'carbon'}
            name = 'pencil beam particle';
     end
     
-    properties (SetAccess = private, GetAccess = public)
-        
-        
+    properties (SetAccess = private, GetAccess = public)  
         
         letDoseTmpContainer; % temporary dose LET container
         alphaDoseTmpContainer; % temporary dose alpha dose container
@@ -51,7 +49,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
             if exist('pln','var')
                 % check if bio optimization is needed and set the
                 % coresponding boolean accordingly
-                 if (isfield(pln,'propOpt')&& isfield(pln,'bioOptimization')&& ...
+                 if (isfield(pln,'propOpt')&& isfield(pln.propOpt,'bioOptimization')&& ...
                     (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') ||... 
                     isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) && ... 
                     strcmp(pln.radiationMode,'carbon'))
@@ -284,7 +282,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
                                     projCoords = matRad_projectOnComponents(obj.VdoseGrid(ix), size(obj.radDepthsMat{1}), stf(i).sourcePoint_bev,...
                                                     stf(i).ray(j).targetPoint_bev, stf(i).isoCenter,...
                                                     [dij.doseGrid.resolution.x dij.doseGrid.resolution.y dij.doseGrid.resolution.z],...
-                                                    -posX(:,k), -posZ(:,k), rotMat_system_T);
+                                                    -posX(:,k), -posZ(:,k), obj.rotMat_system_T);
 
                                     % interpolate radiological depths at projected
                                     % coordinates
@@ -513,36 +511,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
               end
             
         end
-         
-        %TODO
-        function currIx = findLateralCutOff(obj,cutOffLevel,eqThickness,energyIx,radDepths)
-            
-            % create offset vector to account for additional offsets modelled in the base data and a potential 
-            % range shifter. In the following, we only perform dose calculation for voxels having a radiological depth
-            % that is within the limits of the base data set (-> machine.data(i).dephts). By this means, we only allow  
-            % interpolations in obj.calcParticleDoseBixel() and avoid extrapolations.
-            offsetRadDepth = obj.machine.data(energyIx).offset - stf(i).ray(j).rangeShifter(k).eqThickness;
-                                
-            matRad_cfg = MatRad_Config.instance();
-            % find depth depended lateral cut off
-            if cutOffLevel >= 1
-                currIx = radDepths <= obj.machine.data(energyIx).depths(end) + offsetRadDepth;
-            elseif cutOffLevel < 1 && cutOffLevel > 0
-                % perform rough 2D clipping
-                currIx = radDepths <= obj.machine.data(energyIx).depths(end) + offsetRadDepth & ...
-                currRadialDist_sq <= max(obj.machine.data(energyIx).LatCutOff.CutOff.^2);
-
-                % peform fine 2D clipping  
-                if length(obj.machine.data(energyIx).LatCutOff.CutOff) > 1
-                    currIx(currIx) = matRad_interp1((obj.machine.data(energyIx).LatCutOff.depths + offsetRadDepth)',...
-                        (obj.machine.data(energyIx).LatCutOff.CutOff.^2)', radDepths(currIx)) >= currRadialDist_sq(currIx);
-                end
-            else
-                matRad_cfg.dispError('Cutoff must be a value between 0 and 1!')
-            end
-            
-        end
-        
+                 
         function dij = fillDij(obj,dij,stf,pln,counter)
         % Sequentially fill the sparse matrix dij from the tmpContainer cell array
         %

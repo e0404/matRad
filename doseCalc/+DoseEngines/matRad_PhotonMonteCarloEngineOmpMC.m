@@ -18,8 +18,8 @@ classdef matRad_PhotonMonteCarloEngineOmpMC < DoseEngines.matRad_MonteCarloEngin
     
     properties (Constant) 
         
-        possibleRadiationModes = "photons";
-        name = 'monte carlo photon dose engine';  
+        possibleRadiationModes = 'photons';
+        name = 'monte carlo photon';  
         
     end
     
