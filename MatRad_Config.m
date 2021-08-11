@@ -25,7 +25,7 @@ classdef MatRad_Config < handle
         logLevel = 3; %1 = only Errors, 2 = with Warnings, 3 = Info output, 4 = deprecation warnings, 5 = debug information
         keepLog = false; %Stores the full log in memory
         writeLog = false; %Writes the log to a file on-the-fly
-        
+                
         %Default Properties
         propDoseCalc;
         propOpt;
@@ -34,6 +34,10 @@ classdef MatRad_Config < handle
         
         %Disable GUI
         disableGUI = false;
+        
+        %full root path to matRad
+        matRadRoot;
+        
     end
     
     properties (SetAccess = private)
@@ -48,10 +52,6 @@ classdef MatRad_Config < handle
         matRad_version; %MatRad version string
     end
     
-    properties (Constant)
-        matRadRoot = fileparts(mfilename('fullpath'));
-    end
-    
     methods (Access = private)
         function obj = MatRad_Config()
             %MatRad_Config Constructs an instance of this class.
@@ -62,6 +62,8 @@ classdef MatRad_Config < handle
             %Set Version
             obj.getEnvironment();
             obj.matRad_version = matRad_version();
+            
+            obj.matRadRoot = fileparts(mfilename('fullpath'));
             
             %Just to catch people messing with the properties in the file
             if ~isempty(obj.writeLog) && obj.writeLog
@@ -158,6 +160,7 @@ classdef MatRad_Config < handle
             obj.propDoseCalc.defaultUseGivenEqDensityCube = false; %Use the given density cube ct.cube and omit conversion from cubeHU.
             obj.propDoseCalc.defaultIgnoreOutsideDensities = true; %Ignore densities outside of cst contours
             obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
+            obj.propDoseCalc.defaultDoseEngines = {'pencil beam photon','pencil beam particle'}; %Names for default engines used when no other is given
             
             % default properties for fine sampling calculation
             obj.propDoseCalc.defaultFineSamplingProperties.sigmaSub = 1;
@@ -192,6 +195,7 @@ classdef MatRad_Config < handle
             obj.propDoseCalc.defaultUseGivenEqDensityCube = false; %Use the given density cube ct.cube and omit conversion from cubeHU.
             obj.propDoseCalc.defaultIgnoreOutsideDensities = true;
             obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
+            obj.propDoseCalc.defaultDoseEngines = {'pencil beam photon','pencil beam particle'}; %Names for default engines used when no other is given
             
             % default properties for fine sampling calculation
             obj.propDoseCalc.defaultFineSamplingProperties.sigmaSub = 2;
