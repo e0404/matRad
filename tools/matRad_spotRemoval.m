@@ -1,4 +1,4 @@
-function [dij,stf] = matRad_spotRemoval(dij,w,stf)
+function [dij,stf] = matRad_spotRemoval(dij,w,stf,thres)
 % matRad postprosseing function accounting for
 %       minimum number of particles per spot
 %       minimum number of particles per iso-energy slice
@@ -36,8 +36,10 @@ if nargin < 3 && nargout > 1
     matRad_cfg.dispError('stf is missing as input')
 end
 
-% set threshold for spot removal to 0.5% of the maximum weight.
-thres = 0.005;
+% set threshold for spot removal to 5% of the maximum weight.
+if ~exist('thres','var')
+    thres = 0.05;
+end
 newSpots = w>thres*max(w);
 
 if (sum(newSpots) ~= numel(w)) && sum(newSpots) ~= dij.totalNumOfBixels
@@ -83,7 +85,8 @@ if (sum(newSpots) ~= numel(w)) && sum(newSpots) ~= dij.totalNumOfBixels
     end
     
     dij.totalNumOfRays = sum(dij.numOfRaysPerBeam);
-    matRad_cfg.dispInfo([num2str(sum(~newSpots)),' spots have been removed below ',num2str(100*thres),'%%.\n'])
+    dij.numOfRemovedSpots = sum(~newSpots);
+    matRad_cfg.dispInfo([num2str(sum(~newSpots)),'/',num2str(numel(newSpots)) ,' spots have been removed below ',num2str(100*thres),'%%.\n'])
 else
     matRad_cfg.dispWarning('no spots have been removed.')
     dij.cutWeights = w;
