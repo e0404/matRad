@@ -176,6 +176,17 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                     delete([topasConfig.workingDir,files{i}])
                 end
 
+                if isfield(pln,'bioParam') && strcmp(pln.bioParam.quantityOpt,'RBExD')
+                    topasConfig.scoreRBE = true;    
+                    [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
+                    dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
+                    
+                    if numel(unique(dij.ax))==1 && numel(unique(dij.bx))==1
+                        pln.propMC.AlphaX = unique(dij.ax);
+                        pln.propMC.BetaX = unique(dij.bx);
+                    end
+                end
+                
                 if calcDoseDirect
                     topasConfig.writeAllFiles(ctR,pln,stf,topasBaseData,w(:,ctScen));
                 else
@@ -184,12 +195,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 
                 % Run simulation for current scenario
                 cd(topasConfig.workingDir);
-                
-                if topasConfig.scoreRBE
-                    [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
-                    dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
-                end
-                
+                              
                 if openStack
                     save('dij.mat','dij')
                     save('weights.mat','w')
@@ -203,7 +209,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                             if isfield(pln.propMC,'verbosity') && strcmp(pln.propMC.verbosity,'full')
                                 topasCall = sprintf('%s %s.txt',topasConfig.topasExecCommand,fname);
                             else
-                                topasCall = sprintf('%s %s.txt > %s.out > %s.err',topasConfig.topasExecCommand,fname,fname,fname);
+                                topasCall = sprintf('%s %s.txt > %s.out > %s.log',topasConfig.topasExecCommand,fname,fname,fname);
                             end
 
                             if topasConfig.parallelRuns

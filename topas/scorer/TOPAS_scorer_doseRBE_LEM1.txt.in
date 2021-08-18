@@ -1,6 +1,5 @@
 
 # Scorers
-d:Sc/PrescribedDose = 2 Gy
 sv:Sc/CellLines     = 1 "CellGeneric_abR2"
 
 s:Sc/alphaTabulated/Quantity                   = "RBE_TabulatedAlphaBeta"
@@ -37,9 +36,9 @@ s:Sc/betaTabulated/ModelName                  = "HCP"
 #s:Sc/RBE/ModelName                  = "HCP"
 
 ### HCP Tabulated ###
-d:Sc/CellGeneric_abR2/Alphax = 0.10 /Gy
-d:Sc/CellGeneric_abR2/Betax = 0.05 /Gy2
-#d:Sc/CellGeneric_abR2/AlphaBetaRatiox = 2 Gy
+d:Sc/CellGeneric_abR2/Alphax = Sc/AlphaX /Gy
+d:Sc/CellGeneric_abR2/Betax = Sc/BetaX /Gy2
+#d:Sc/CellGeneric_abR2/AlphaBetaRatiox = Sc/AlphaBetaX Gy
 
 
 sv:Sc/CellGeneric_abR2/HCP/ParticleName = 6 "Proton" "Helium" "Lithium" "Beryllium" "Boron" "Carbon"
@@ -61,7 +60,7 @@ dv:Sc/CellGeneric_abR2/HCP/Boron/Beta = 47 0.00016197 9.7368e-06 1.6423e-05 4.32
 dv:Sc/CellGeneric_abR2/HCP/Carbon/Beta = 47 0.00013133 7.5091e-06 1.2318e-05 3.1613e-05 3.0505e-05 1.2878e-06 -3.0592e-05 -1.3569e-05 2.4024e-07 4.2428e-05 0.00022925 0.00067252 0.0016786 0.0049503 0.0083909 0.011468 0.014129 0.016418 0.020118 0.022964 0.026181 0.029878 0.032484 0.0344 0.037071 0.038881 0.040211 0.041241 0.042072 0.04276 0.043347 0.044291 0.044679 0.044856 0.045334 0.046417 0.046515 0.047317 0.047572 0.047906 0.048191 0.048721 0.049267 0.04966 0.049958 0.050193 0.050542 /Gy2
 
 #-- shared sub-scorers
-s:Sc/PhysDose/Quantity   = "DoseToWater"
+s:Sc/PhysDose/Quantity   = "DoseToMedium"
 s:Sc/PhysDose/Component  = "Patient"
 b:Sc/PhysDose/PreCalculateStoppingPowerRatios = "True"
 s:Sc/PhysDose/IfOutputFileAlreadyExists = "Overwrite"

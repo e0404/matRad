@@ -78,6 +78,9 @@ classdef MatRad_TopasConfig < handle
         %         scoreReportQuantity = {'Sum','Standard_Deviation'};
         scoreReportQuantity = 'Sum';
         outputType = 'binary'; %'csv'; 'binary';%
+        bioParam = struct( 'PrescribedDose',2,...
+            'AlphaX',0.1,...
+            'BetaX',0.05);       
         
         %Physics
         electronProductionCut = 0.5; %in mm
@@ -101,7 +104,7 @@ classdef MatRad_TopasConfig < handle
             'surfaceScorer','TOPAS_scorer_surfaceIC.txt.in',...
             'doseScorer','TOPAS_scorer_dose.txt.in',...
             'doseScorerRBE','TOPAS_scorer_doseRBE_LEM1.txt.in',...
-            'doseScorerRBE_MCN','TOPAS_scorer_doseRBE_proton.txt.in');
+            'doseScorerRBE_MCN','TOPAS_scorer_doseRBE_McNamara.txt.in');
         
         
     end
@@ -118,8 +121,8 @@ classdef MatRad_TopasConfig < handle
             %   Default execution paths are set here
             
             obj.thisFolder = fileparts(mfilename('fullpath'));
-            
-            obj.workingDir = [obj.thisFolder filesep 'MCrun' filesep];
+            obj.workingDir = ['E:/Paper/results/patients/narrowSOPB/' filesep];
+%             obj.workingDir = [obj.thisFolder filesep 'MCrun' filesep];
             
             %Let's set some default commands taken from topas installation
             %instructions for mac & debain/ubuntu
@@ -143,14 +146,28 @@ classdef MatRad_TopasConfig < handle
             obj.MCparam = struct();
             obj.MCparam.tallies = {};
             
-            if isfield(pln,'bioParam') && strcmp(pln.bioParam.quantityOpt,'RBExD')
-                obj.scoreRBE = true;
+            if isfield(pln,'prescribedDose')
+                obj.bioParam.PrescribedDose = pln.prescribedDose;
+            end
+            if obj.scoreRBE
                 obj.radiationMode = stf.radiationMode;
+                if all(isfield(pln.propMC,{'AlphaX','BetaX'}))
+                   obj.bioParam.AlphaX = pln.propMC.AlphaX;
+                   obj.bioParam.BetaX = pln.propMC.BetaX;                
+                else
+                   for i = 1:length(pln.bioParam.AvailableAlphaXBetaX)
+                       if contains(pln.bioParam.AvailableAlphaXBetaX{i,2},'default')
+                           break
+                       end
+                   end
+                   obj.bioParam.AlphaX = pln.bioParam.AvailableAlphaXBetaX{5,1}(1);
+                   obj.bioParam.BetaX = pln.bioParam.AvailableAlphaXBetaX{5,1}(2);
+                end
             end
             if isfield(pln.propMC,'calcDij') && pln.propMC.calcDij
                 obj.scoreDij = true;
             end
-            
+
             obj.MCparam.nbRuns = obj.numOfRuns;
             obj.MCparam.simLabel = obj.label;
             obj.MCparam.scoreReportQuantity = obj.scoreReportQuantity;
@@ -255,6 +272,13 @@ classdef MatRad_TopasConfig < handle
                 else
                     fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.doseScorer);
                 end
+                
+                obj.matRad_cfg.dispDebug('Writing Biologial Scorer components.\n');
+                fprintf(fID,'d:Sc/PrescribedDose = %.4f Gy\n',obj.bioParam.PrescribedDose);
+                fprintf(fID,'d:Sc/AlphaX = %.4f /Gy\n',obj.bioParam.AlphaX);
+                fprintf(fID,'d:Sc/BetaX = %.4f /Gy2\n',obj.bioParam.BetaX);
+                fprintf(fID,'d:Sc/AlphaBetaX = %.4f Gy\n',obj.bioParam.AlphaX/obj.bioParam.BetaX);
+                
                 obj.matRad_cfg.dispDebug('Reading Dose Scorer from %s\n',fname);
                 scorer = fileread(fname);
                 fprintf(fID,'%s\n',scorer);
@@ -264,7 +288,7 @@ classdef MatRad_TopasConfig < handle
                 end
                 if ~any(strcmp(obj.MCparam.tallies,'physicalDose'))
                     obj.MCparam.tallies{end+1} = 'physicalDose';
-                end
+                end               
             end
             
             if obj.addVolumeScorers
