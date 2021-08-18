@@ -104,7 +104,7 @@ if  strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'protons')
         dij.RBE = 1.1;
     end
     
-    if exist('wInitIn')
+    if exist('wInit','var')
         matRad_cfg.dispInfo('Initial weights found as input...\n');
     else
         bixelWeight =  (doseTarget)/(dij.RBE * mean(dij.physicalDose{1}(V,:)*wOnes));
@@ -151,7 +151,7 @@ elseif pln.bioParam.bioOpt
         dij.gamma             = zeros(dij.doseGrid.numOfVoxels,dij.numOfScenarios);
         dij.gamma(dij.ixDose) = dij.ax(dij.ixDose)./(2*dij.bx(dij.ixDose));
         
-        if exist('wInit')
+        if exist('wInit','var')
             matRad_cfg.dispInfo('Initial weights found as input...\n');
         else
             % calculate current in target
@@ -166,7 +166,7 @@ elseif pln.bioParam.bioOpt
     end
     
 else
-    if exist('wInitIn')
+    if exist('wInit','var')
         matRad_cfg.dispInfo('Initial weights found as input...\n');
     else
         bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes));
