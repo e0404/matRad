@@ -159,6 +159,12 @@ if isfield(pln.propMC,'scoreDose')
     topasConfig.scoreDose = pln.propMC.scoreDose;
 end
 
+if isfield(pln,'bioParam') && strcmp(pln.bioParam.quantityOpt,'RBExD')
+    topasConfig.scoreRBE = true;
+    [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
+    dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
+end
+
 currDir = cd;
 
 for shiftScen = 1:pln.multScen.totNumShiftScen
@@ -183,18 +189,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 for i = 1:length(files)
                     delete([topasConfig.workingDir,files{i}])
                 end
-
-                if isfield(pln,'bioParam') && strcmp(pln.bioParam.quantityOpt,'RBExD')
-                    topasConfig.scoreRBE = true;    
-                    [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
-                    dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
-                    
-                    if numel(unique(dij.ax))==1 && numel(unique(dij.bx))==1
-                        pln.propMC.AlphaX = unique(dij.ax);
-                        pln.propMC.BetaX = unique(dij.bx);
-                    end
-                end
-                
+               
                 if calcDoseDirect
                     topasConfig.writeAllFiles(ctR,pln,stf,topasBaseData,w(:,ctScen));
                 else
