@@ -1,0 +1,7 @@
+
+s:Sc/Patient/ProtonLET/Quantity   = "ProtonLET"
+s:Sc/Patient/ProtonLET/Component  = "Patient"
+s:Sc/Patient/ProtonLET/IfOutputFileAlreadyExists = "Overwrite" # "Exit" "Overwrite" or "Increment"
+s:Sc/Patient/ProtonLET/OutputType = Sim/DoseScorerOutputType # "csv" "binary" "Root" "Xml" or "DICOM"
+s:Sc/Patient/ProtonLET/OutputFile = Sim/ScoreLabel + "_LET"
+b:Sc/Patient/ProtonLET/OutputToConsole = "False"

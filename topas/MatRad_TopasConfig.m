@@ -69,12 +69,12 @@ classdef MatRad_TopasConfig < handle
         
         
         %Scoring
-        addVolumeScorers = true
+        addVolumeScorers = false;
         scoreDose = true;
         scoreTrackCount = false;
         scoreDij = false;
         scoreRBE = false;
-        %scoreLET = true;
+        scoreLET = false;
         %         scoreReportQuantity = {'Sum','Standard_Deviation'};
         scoreReportQuantity = 'Sum';
         outputType = 'binary'; %'csv'; 'binary';%
@@ -103,6 +103,7 @@ classdef MatRad_TopasConfig < handle
             'matConv_Schneider_custom','TOPAS_materialConverter_Schneider_CustomLung.txt.in',...
             'surfaceScorer','TOPAS_scorer_surfaceIC.txt.in',...
             'doseScorer','TOPAS_scorer_dose.txt.in',...
+            'doseScorerLET','TOPAS_scorer_doseLET.txt.in',...
             'doseScorerRBE','TOPAS_scorer_doseRBE_LEM1.txt.in',...
             'doseScorerRBE_MCN','TOPAS_scorer_doseRBE_McNamara.txt.in');
         
@@ -146,11 +147,12 @@ classdef MatRad_TopasConfig < handle
             obj.MCparam = struct();
             obj.MCparam.tallies = {};
             
+            obj.radiationMode = stf.radiationMode;
+            
             if isfield(pln,'prescribedDose')
                 obj.bioParam.PrescribedDose = pln.prescribedDose;
             end
             if obj.scoreRBE
-                obj.radiationMode = stf.radiationMode;
                 if all(isfield(pln.propMC,{'AlphaX','BetaX'}))
                    obj.bioParam.AlphaX = pln.propMC.AlphaX;
                    obj.bioParam.BetaX = pln.propMC.BetaX;                
@@ -289,6 +291,18 @@ classdef MatRad_TopasConfig < handle
                 if ~any(strcmp(obj.MCparam.tallies,'physicalDose'))
                     obj.MCparam.tallies{end+1} = 'physicalDose';
                 end               
+            end
+            
+            if obj.scoreLET
+                if strcmp(obj.radiationMode,'protons')
+                    fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.doseScorerLET);
+                    
+                    obj.matRad_cfg.dispInfo('Reading LET Scorer from %s\n',fname);
+                    LETscorer = fileread(fname);
+                    fprintf(fID,'%s\n',LETscorer);
+                else
+                    obj.matRad_cfg.dispError('LET only for protons!\n');
+                end
             end
             
             if obj.addVolumeScorers

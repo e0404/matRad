@@ -151,6 +151,14 @@ if calcDoseDirect
     end
 end
 
+if isfield(pln.propMC,'scoreLET')
+    topasConfig.scoreLET = pln.propMC.scoreLET;
+end
+
+if isfield(pln.propMC,'scoreDose')
+    topasConfig.scoreDose = pln.propMC.scoreDose;
+end
+
 currDir = cd;
 
 for shiftScen = 1:pln.multScen.totNumShiftScen
