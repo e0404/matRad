@@ -122,8 +122,8 @@ classdef MatRad_TopasConfig < handle
             %   Default execution paths are set here
             
             obj.thisFolder = fileparts(mfilename('fullpath'));
-            obj.workingDir = ['E:/Paper/results/patients/narrowSOPB/' filesep];
-%             obj.workingDir = [obj.thisFolder filesep 'MCrun' filesep];
+            obj.workingDir = ['E:/Paper/results/AugustTesting/' filesep];
+            %             obj.workingDir = [obj.thisFolder filesep 'MCrun' filesep];
             
             %Let's set some default commands taken from topas installation
             %instructions for mac & debain/ubuntu
@@ -281,9 +281,10 @@ classdef MatRad_TopasConfig < handle
                 fprintf(fID,'d:Sc/BetaX = %.4f /Gy2\n',obj.bioParam.BetaX);
                 fprintf(fID,'d:Sc/AlphaBetaX = %.4f Gy\n',obj.bioParam.AlphaX/obj.bioParam.BetaX);
                 
-                obj.matRad_cfg.dispDebug('Reading Dose Scorer from %s\n',fname);
+                obj.matRad_cfg.dispInfo('Reading Dose Scorer from %s\n',fname);
                 scorer = fileread(fname);
                 fprintf(fID,'%s\n',scorer);
+              
                 if obj.scoreRBE
                     %                    obj.MCparam.tallies = {'physicalDose','alpha','beta','RBE'};
                     obj.MCparam.tallies = {'physicalDose','alpha','beta'};
@@ -295,6 +296,11 @@ classdef MatRad_TopasConfig < handle
             
             if obj.scoreLET
                 if strcmp(obj.radiationMode,'protons')
+                    if obj.scoreRBE
+                        fprintf(fID,'\ns:Sc/McNamaraAlpha/ReferencedSubScorer_LET    = "ProtonLET"\n');
+                        fprintf(fID,'s:Sc/McNamaraBeta/ReferencedSubScorer_LET    = "ProtonLET"\n');
+                    end
+                    
                     fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.doseScorerLET);
                     
                     obj.matRad_cfg.dispInfo('Reading LET Scorer from %s\n',fname);
