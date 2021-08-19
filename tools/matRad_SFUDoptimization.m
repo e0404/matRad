@@ -38,26 +38,52 @@ function [resultGUI] = matRad_SFUDoptimization(pln, cst, dij, ct, stf)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% adjust cst for single beams
+matRad_cfg = MatRad_Config.instance();
+
 sb_cst = cst;
-for i=1:size(sb_cst,1)
-    for j = 1:size(sb_cst{i,6},1)
+
+% check & adjust objectives and constraints internally for fractionation
+% & adjust for single beams
+for i = 1:size(cst,1)
+    %Compatibility Layer for old objective format
+    if isstruct(sb_cst{i,6})
+        sb_cst{i,6} = arrayfun(@matRad_DoseOptimizationFunction.convertOldOptimizationStruct,sb_cst{i,6},'UniformOutput',false);
+    end
+    for j = 1:numel(sb_cst{i,6})
+        
+        obj = sb_cst{i,6}{j};        
+        
+        %In case it is a default saved struct, convert to object
+        %Also intrinsically checks that we have a valid optimization
+        %objective or constraint function in the end
+        if ~isa(obj,'matRad_DoseOptimizationFunction')
+            try
+                obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
+            catch
+                matRad_cfg.dispError('cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!',i,j);
+            end
+        end
+        
         % biological dose splitting for carbon
-        if strcmp(pln.bioOptimization, 'LEMIV_effect') || ...
-                        strcmp(pln.bioOptimization, 'LEMIV_RBExD')
-            ab = sb_cst{i,5}.alphaX / sb_cst{i,5}.betaX;
+        if strcmp(pln.propOpt.bioOptimization, 'LEMIV_effect') || ...
+                        strcmp(pln.propOpt.bioOptimization, 'LEMIV_RBExD')
+            
             % dose per fraction
-            fx_dose = sb_cst{i,6}(j).dose / pln.numOfFractions;
+            fx_dose = obj.getDoseParameters()/pln.numOfFractions;
+            
             % calculate dose per beam per fraction according to [1]
-            fx_dose = -0.5*ab +sqrt( 0.25*ab^2 + ...
-                fx_dose/pln.numOfBeams *(fx_dose + ab));
+            ab = sb_cst{i,5}.alphaX / sb_cst{i,5}.betaX;
+            fx_dose = -0.5*ab + sqrt( 0.25*ab^2 + fx_dose./pln.propStf.numOfBeams .* (fx_dose + ab));
+            
             % calculate pseudo total Dose per Beam
-            sb_cst{i,6}(j).dose = fx_dose * pln.numOfFractions;
+            obj.setDoseParameters = fx_dose * pln.numOfFractions;
             
         % physical dose splitting
         else
-            sb_cst{i,6}(j).dose = sb_cst{i,6}(j).dose/pln.numOfBeams;
+            obj = obj.setDoseParameters(obj.getDoseParameters()/pln.propStf.numOfBeams);
         end
+        
+        sb_cst{i,6}{j} = obj;
     end
 end
 
@@ -67,7 +93,9 @@ if ~isempty(dij)
     % initialise total weight vector
     wTot = zeros(dij.totalNumOfBixels,1);
 
-    for i = 1:pln.numOfBeams
+    for i = 1:pln.propStf.numOfBeams
+        matRad_cfg.dispInfo('optimizing beam %d...\n',i);
+        
         % columns in total dij for single beam
         sb_col = find(dij.beamNum == i);
         % construct dij for single beam
@@ -95,10 +123,10 @@ if ~isempty(dij)
 
         % adjust pln to one beam only
         sb_pln = pln;
-        sb_pln.gantryAngles = pln.gantryAngles(i);
-        sb_pln.couchAngles = pln.couchAngles(i);
-        sb_pln.numOfBeams = 1;
-        sb_pln.isoCenter = pln.isoCenter(i,:);
+        sb_pln.propStf.gantryAngles = pln.propStf.gantryAngles(i);
+        sb_pln.propStf.couchAngles = pln.propStf.couchAngles(i);
+        sb_pln.propStf.numOfBeams = 1;
+        sb_pln.propStf.isoCenter = pln.propStf.isoCenter(i,:);
         
         % optimize single beam
         sb_resultGUI = matRad_fluenceOptimization(sb_dij,sb_cst,sb_pln);    
@@ -108,7 +136,7 @@ if ~isempty(dij)
     end
 
     % calculate dose
-    resultGUI = matRad_calcCubes(wTot,dij,cst,1);
+    resultGUI = matRad_calcCubes(wTot,dij);
 
 else
     % calculate SFUD without total dij
@@ -116,17 +144,17 @@ else
     % initialise total weight vector
     wTot = [];
 
-    for i = 1:pln.numOfBeams
-        fprintf(['optimizing beam ' num2str(i) '...\n']);
+    for i = 1:pln.propStf.numOfBeams
+        matRad_cfg.dispInfo('optimizing beam %d...\n',i);
         % single beam stf
         sb_stf = stf(i);
 
         % adjust pln to one beam only
         sb_pln = pln;
-        sb_pln.isoCenter = pln.isoCenter(i,:);
-        sb_pln.numOfBeams = 1;
-        sb_pln.gantryAngles = pln.gantryAngles(i);
-        sb_pln.couchAngles = pln.couchAngles(i);
+        sb_pln.propStf.isoCenter = pln.propStf.isoCenter(i,:);
+        sb_pln.propStf.numOfBeams = 1;
+        sb_pln.propStf.gantryAngles = pln.propStf.gantryAngles(i);
+        sb_pln.propStf.couchAngles = pln.propStf.couchAngles(i);
 
         % calculate single beam dij
         sb_dij = matRad_calcParticleDose(ct,sb_stf,sb_pln,sb_cst,false);
@@ -139,7 +167,7 @@ else
 
     end
 
-    fprintf('Calculate total dose...\n');
+    matRad_cfg.dispInfo('Calculate total dose...\n');
     % calculate dose
     resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,wTot);
     resultGUI.w = wTot;

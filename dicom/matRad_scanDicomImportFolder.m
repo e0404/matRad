@@ -50,6 +50,8 @@ if ~isempty(fileList)
     %% check for dicom files and differentiate patients, types, and series
     numOfFiles = numel(fileList(:,1));
     h = waitbar(0,'Please wait...');
+    % precision value for double to string conversion
+    str2numPrc = 10;
     %h.WindowStyle = 'Modal';
     steps = numOfFiles;
     for i = numOfFiles:-1:1
@@ -95,7 +97,7 @@ if ~isempty(fileList)
 
         try
             if strcmp(info.Modality,'CT')
-                fileList{i,9} = num2str(info.PixelSpacing(1));
+                fileList{i,9} = num2str(info.PixelSpacing(1),str2numPrc);
             else
                 fileList{i,9} = NaN;
             end
@@ -104,7 +106,7 @@ if ~isempty(fileList)
         end
         try
             if strcmp(info.Modality,'CT')
-                fileList{i,10} = num2str(info.PixelSpacing(2));
+                fileList{i,10} = num2str(info.PixelSpacing(2),str2numPrc);
             else
                 fileList{i,10} = NaN;
             end
@@ -116,9 +118,9 @@ if ~isempty(fileList)
                 %usually the Attribute should be SliceThickness, but it
                 %seems like some data uses "SpacingBetweenSlices" instead.
                 if isfield(info,'SliceThickness') && ~isempty(info.SliceThickness)
-                    fileList{i,11} = num2str(info.SliceThickness);
+                    fileList{i,11} = num2str(info.SliceThickness,str2numPrc);
                 elseif isfield(info,'SpacingBetweenSlices')
-                    fileList{i,11} = num2str(info.SpacingBetweenSlices);
+                    fileList{i,11} = num2str(info.SpacingBetweenSlices,str2numPrc);
                 else
                     matRad_cfg.dispError('Could not identify spacing between slices since neither ''SliceThickness'' nor ''SpacingBetweenSlices'' are specified');
                 end
