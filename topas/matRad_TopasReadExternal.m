@@ -3,7 +3,7 @@ function resultGUI = matRad_readOpenStack(folder)
 if contains(folder,'*')% && all(modulation ~= false)
     folder = dir(folder);
     for i = 1:length(folder)
-        if any(isstrprop(folder(i).name,'digit'))
+        if any(isstrprop(folder(i).name(end-4:end),'digit'))
             folders{i} = [folder(i).folder filesep folder(i).name];
         end
     end
