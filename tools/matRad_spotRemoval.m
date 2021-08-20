@@ -55,7 +55,9 @@ if (sum(newSpots) ~= numel(w)) && sum(newSpots) ~= dij.totalNumOfBixels
         dij.mAlphaDose{1} = dij.mAlphaDose{1}(:,newSpots);
         dij.mSqrtBetaDose{1} = dij.mSqrtBetaDose{1}(:,newSpots);
     end
-    
+    if isfield(dij,'mLETDose')
+        dij.mLETDose{1} = dij.mLETDose{1}(:,newSpots);
+    end
     [~,beamNumIdx] = unique(dij.beamNum);
     beamNumIdx = [0;beamNumIdx(2:end)-1;dij.totalNumOfBixels];
     

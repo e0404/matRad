@@ -1,22 +1,10 @@
 
-# Scorers
-
-# s:Sim/DoseScorerOutputType                                = "bin"
-# sv:Sim/DoseScorerReport                                   = 1 "Sum"
-s:Sc/Tally_DoseToMedium/Quantity                    = "DoseToMedium"
-d:Sc/Tally_DoseToMedium/PrescribedDose              = Sc/PrescribedDose Gy
-s:Sc/Tally_DoseToMedium/OutputType                  = Sim/DoseScorerOutputType # "csv" "binary" "Root" "Xml" or "DICOM"
-s:Sc/Tally_DoseToMedium/Component                   = "Patient"
-sv:Sc/Tally_DoseToMedium/Report                     = Sim/DoseScorerReport
-s:Sc/Tally_DoseToMedium/IfOutputFileAlreadyExists   = "Overwrite" # "Exit" "Overwrite" or "Increment"
-b:Sc/Tally_DoseToMedium/OutputToConsole             = "False"
-s:Sc/Tally_DoseToMedium/OutputFile                  = Sim/ScoreLabel + "_physicalDose"
-
-sv:Sc/CellLines     = 1 "CellLineV79"
-b:Sc/SimultaneousExposure = "True"
+# Wedenberg proton RBE scorer
+sv:Sc/CellLines     		= 1 "CellLineGeneric"
+b:Sc/SimultaneousExposure 	= "True"
 
 s:Sc/McNamaraAlpha/Quantity                   = "RBE_McNamara"
-s:Sc/McNamaraAlpha/Component                  = "patient"
+s:Sc/McNamaraAlpha/Component                  = "Patient"
 s:Sc/McNamaraAlpha/OutputQuantity             = "alpha"
 d:Sc/McNamaraAlpha/PrescribedDose             = Sc/PrescribedDose Gy
 sv:Sc/McNamaraAlpha/CellLines                 = Sc/CellLines
@@ -26,7 +14,7 @@ s:Sc/McNamaraAlpha/OutputFile                 = Sim/ScoreLabel + "_alpha"
 s:Sc/McNamaraAlpha/IfOutputFileAlreadyExists  = "Overwrite"
 
 s:Sc/McNamaraBeta/Quantity                   = "RBE_McNamara"
-s:Sc/McNamaraBeta/Component                  = "patient"
+s:Sc/McNamaraBeta/Component                  = "Patient"
 s:Sc/McNamaraBeta/OutputQuantity             = "beta"
 d:Sc/McNamaraBeta/PrescribedDose             = Sc/PrescribedDose Gy
 sv:Sc/McNamaraBeta/CellLines                 = Sc/CellLines
@@ -37,6 +25,6 @@ s:Sc/McNamaraBeta/IfOutputFileAlreadyExists  = "Overwrite"
 
 
 ### Biological Parameters ###
-d:Sc/CellLineV79/Alphax = Sc/AlphaX /Gy
-d:Sc/CellLineV79/Betax = Sc/BetaX /Gy2
-d:Sc/CellLineV79/AlphaBetaRatiox = Sc/AlphaBetaX Gy
+d:Sc/CellLineGeneric/Alphax 		= Sc/AlphaX /Gy
+d:Sc/CellLineGeneric/Betax 		= Sc/BetaX /Gy2
+d:Sc/CellLineGeneric/AlphaBetaRatiox 	= Sc/AlphaBetaX Gy

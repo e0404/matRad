@@ -55,8 +55,7 @@ classdef MatRad_TopasConfig < handle
         
         pencilBeamScanning = true; %This should be always true (enables deflection)
         
-        
-        
+
         %Image
         materialConversion = 'HUToWaterSchneider'; %'CustomWaterRSP';
         %materialConversion = 'CustomWaterRSP';
@@ -65,19 +64,21 @@ classdef MatRad_TopasConfig < handle
         rsp_vecLength = 10000; %Bins for RSP values when using RSP conversion with custom image converter
         rsp_methodCube = 2; %1: TsBox with variable voxels, 2: TsImageCube with Density Bins and Custom Image converter
         
-        
-        
-        
         %Scoring
-        addVolumeScorers = false;
-        scoreDose = true;
-        scoreTrackCount = false;
-        scoreDij = false;
-        scoreRBE = false;
-        scoreLET = false;
+        scorer = struct('volume',false,...
+            'doseToMedium',true,...
+            'doseToWater',false,...
+            'surfaceTrackCount',false,...
+            'Dij',false,...
+            'RBE',false,...
+            'RBE_model','default',... % default is MCN for protons and LEM1 for ions
+            'defaultModelProtons','MCN',...
+            'defaultModelCarbon','LEM',...
+            'LET',false,...
+            'sharedSubscorers',true,...
+            'outputType','binary',... %'csv'; 'binary';%
+            'reportQuantity','Sum');
         %         scoreReportQuantity = {'Sum','Standard_Deviation'};
-        scoreReportQuantity = 'Sum';
-        outputType = 'binary'; %'csv'; 'binary';%
         bioParam = struct( 'PrescribedDose',2,...
             'AlphaX',0.1,...
             'BetaX',0.05);       
@@ -101,13 +102,15 @@ classdef MatRad_TopasConfig < handle
         infilenames = struct(   'geometry','TOPAS_matRad_geometry.txt.in',...
             'matConv_Schneider_mod','TOPAS_materialConverter_SchneiderModulation.txt.in',...
             'matConv_Schneider_custom','TOPAS_materialConverter_Schneider_CustomLung.txt.in',...
-            'surfaceScorer','TOPAS_scorer_surfaceIC.txt.in',...
-            'doseScorer','TOPAS_scorer_dose.txt.in',...
-            'doseScorerLET','TOPAS_scorer_doseLET.txt.in',...
-            'doseScorerRBE','TOPAS_scorer_doseRBE_LEM1.txt.in',...
-            'doseScorerRBE_MCN','TOPAS_scorer_doseRBE_McNamara.txt.in');
-        
-        
+            'Scorer_surfaceTrackCount','TOPAS_scorer_surfaceIC.txt.in',...
+            'Scorer_doseToMedium','TOPAS_scorer_doseToMedium.txt.in',...
+            'Scorer_LET','TOPAS_subscorer_LET.txt.in',...
+            'Scorer_doseToWater','TOPAS_scorer_doseToWater.txt.in',...
+            'Scorer_RBE_libamtrack','TOPAS_scorer_doseRBE_libamtrack.txt.in',...
+            'Scorer_RBE_LEM1','TOPAS_scorer_doseRBE_LEM1.txt.in',...
+            'Scorer_RBE_WED','TOPAS_scorer_doseRBE_Wedenberg.txt.in',...
+            'Scorer_RBE_MCN','TOPAS_scorer_doseRBE_McNamara.txt.in');
+ 
     end
     
     properties (SetAccess = private)
@@ -143,16 +146,15 @@ classdef MatRad_TopasConfig < handle
         
         function writeAllFiles(obj,ct,pln,stf,topasBaseData,w)
             
-            %Reset MCparam structure
+            % Reset MCparam structure
             obj.MCparam = struct();
             obj.MCparam.tallies = {};
             
-            obj.radiationMode = stf.radiationMode;
-            
+            % prepare biological parameters
             if isfield(pln,'prescribedDose')
                 obj.bioParam.PrescribedDose = pln.prescribedDose;
             end
-            if obj.scoreRBE
+            if obj.scorer.RBE
                 if all(isfield(pln.propMC,{'AlphaX','BetaX'}))
                    obj.bioParam.AlphaX = pln.propMC.AlphaX;
                    obj.bioParam.BetaX = pln.propMC.BetaX;                
@@ -166,13 +168,10 @@ classdef MatRad_TopasConfig < handle
                    obj.bioParam.BetaX = pln.bioParam.AvailableAlphaXBetaX{5,1}(2);
                 end
             end
-            if isfield(pln.propMC,'calcDij') && pln.propMC.calcDij
-                obj.scoreDij = true;
-            end
 
             obj.MCparam.nbRuns = obj.numOfRuns;
             obj.MCparam.simLabel = obj.label;
-            obj.MCparam.scoreReportQuantity = obj.scoreReportQuantity;
+            obj.MCparam.scoreReportQuantity = obj.scorer.reportQuantity;
             
             
             if ~exist(obj.workingDir,'dir')
@@ -222,13 +221,13 @@ classdef MatRad_TopasConfig < handle
             fprintf(fID,'\n');
             
             
-            fprintf(fID,'s:Sim/DoseScorerOutputType = "%s"\n',obj.outputType);
-            if iscell(obj.scoreReportQuantity)
-                fprintf(fID,'sv:Sim/DoseScorerReport = %i ',length(obj.scoreReportQuantity));
-                fprintf(fID,'"%s" ',obj.scoreReportQuantity{:});
+            fprintf(fID,'s:Sim/DoseScorerOutputType = "%s"\n',obj.scorer.outputType);
+            if iscell(obj.scorer.reportQuantity)
+                fprintf(fID,'sv:Sim/DoseScorerReport = %i ',length(obj.scorer.reportQuantity));
+                fprintf(fID,'"%s" ',obj.scorer.reportQuantity{:});
                 fprintf(fID,'\n');
             else
-                fprintf(fID,'sv:Sim/DoseScorerReport = 1 "%s"\n',obj.scoreReportQuantity);
+                fprintf(fID,'sv:Sim/DoseScorerReport = 1 "%s"\n',obj.scorer.reportQuantity);
             end
             fprintf(fID,'\n');
             
@@ -258,77 +257,121 @@ classdef MatRad_TopasConfig < handle
         
         function writeScorers(obj,fID)
             
-            obj.MCparam.outputType = obj.outputType;
+            obj.MCparam.outputType = obj.scorer.outputType;
             
-            if obj.scoreDose
-                if obj.scoreRBE
-                    if strcmp(obj.radiationMode,'protons')
-                        fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.doseScorerRBE_MCN);
-                    elseif strcmp(obj.radiationMode,'carbon') || strcmp(obj.radiationMode,'helium')
-                        fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.doseScorerRBE);
+            % write dose to medium scorer
+            if obj.scorer.doseToMedium
+                fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_doseToMedium);
+                obj.matRad_cfg.dispDebug('Reading doseToMedium scorer from %s\n',fname);
+                scorerName = fileread(fname);
+                fprintf(fID,'%s\n',scorerName);
+                obj.MCparam.tallies = [obj.MCparam.tallies,{'physicalDose'}];
+            end
+            
+            % write RBE scorer
+            if obj.scorer.RBE
+                if strcmp(obj.radiationMode,'protons')
+                    if strcmp(obj.scorer.RBE_model,'MCN')
+                        fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_RBE_MCN);
+                    elseif strcmp(obj.scorer.RBE_model,'WED')
+                        fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_RBE_WED);
                     else
-                        obj.matRad_cfg.dispWarning('No specific RBE model available, using custom LEM scorer.');
-                        fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.doseScorerRBE);
-                        
+                        obj.matRad_cfg.dispError(['Model ',obj.scorer.RBE_model,' not implemented for ',obj.radiationMode]);
+                    end
+                elseif strcmp(obj.radiationMode,'carbon') || strcmp(obj.radiationMode,'helium')
+                    if strcmp(obj.scorer.RBE_model,'libamtrack')
+                        fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_RBE_libamtrack);
+                    elseif contains(obj.scorer.RBE_model,'LEM')
+                        fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_RBE_LEM1);
+                    else
+                        obj.matRad_cfg.dispError(['Model ',obj.scorer.RBE_model,' not implemented for ',obj.radiationMode]);
                     end
                 else
-                    fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.doseScorer);
+                    obj.matRad_cfg.dispError(['Model ',obj.scorer.RBE_model,' not implemented for ',obj.radiationMode]);
                 end
                 
+                % write biological scorer components.
                 obj.matRad_cfg.dispDebug('Writing Biologial Scorer components.\n');
                 fprintf(fID,'d:Sc/PrescribedDose = %.4f Gy\n',obj.bioParam.PrescribedDose);
                 fprintf(fID,'d:Sc/AlphaX = %.4f /Gy\n',obj.bioParam.AlphaX);
                 fprintf(fID,'d:Sc/BetaX = %.4f /Gy2\n',obj.bioParam.BetaX);
                 fprintf(fID,'d:Sc/AlphaBetaX = %.4f Gy\n',obj.bioParam.AlphaX/obj.bioParam.BetaX);
                 
-                obj.matRad_cfg.dispInfo('Reading Dose Scorer from %s\n',fname);
-                scorer = fileread(fname);
-                fprintf(fID,'%s\n',scorer);
-              
-                if obj.scoreRBE
-                    %                    obj.MCparam.tallies = {'physicalDose','alpha','beta','RBE'};
-                    obj.MCparam.tallies = {'physicalDose','alpha','beta'};
-                end
-                if ~any(strcmp(obj.MCparam.tallies,'physicalDose'))
-                    obj.MCparam.tallies{end+1} = 'physicalDose';
-                end               
+                obj.matRad_cfg.dispDebug('Reading RBE Scorer from %s\n',fname);
+                scorerName = fileread(fname);
+                fprintf(fID,'%s\n',scorerName);
+                
+                % obj.MCparam.tallies = [obj.MCparam.tallies,{'alpha','beta','RBE'}];
+                obj.MCparam.tallies = [obj.MCparam.tallies,{'alpha','beta'}];
             end
             
-            if obj.scoreLET
-                if strcmp(obj.radiationMode,'protons')
-                    if obj.scoreRBE
-                        fprintf(fID,'\ns:Sc/McNamaraAlpha/ReferencedSubScorer_LET    = "ProtonLET"\n');
-                        fprintf(fID,'s:Sc/McNamaraBeta/ReferencedSubScorer_LET    = "ProtonLET"\n');
+            % write share sub-scorer
+            if obj.scorer.sharedSubscorers && obj.scorer.RBE
+                scorerNames = {'Alpha','Beta'};
+                if strcmp(obj.scorer.RBE_model,'MCN')
+                    obj.scorer.LET = true;
+                    obj.scorer.doseToWater = true;
+                    scorerPrefix = 'McNamara';
+                elseif strcmp(obj.scorer.RBE_model,'WED')
+                    obj.scorer.LET = true;
+                    obj.scorer.doseToWater = true;
+                    scorerPrefix = 'Wedenberg';
+                elseif contains(obj.scorer.RBE_model,'LEM') || strcmp(obj.scorer.RBE_model,'libamtrack')
+                    obj.scorer.doseToWater = true;
+                    scorerPrefix = 'tabulated';
+                end
+                
+                for s = 1:length(scorerNames)
+                    if strcmp(obj.radiationMode,'protons')
+                        fprintf(fID,'s:Sc/%s%s/ReferencedSubScorer_LET      = "ProtonLET"\n',scorerPrefix,scorerNames{s});
                     end
-                    
-                    fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.doseScorerLET);
-                    
-                    obj.matRad_cfg.dispInfo('Reading LET Scorer from %s\n',fname);
-                    LETscorer = fileread(fname);
-                    fprintf(fID,'%s\n',LETscorer);
-                else
-                    obj.matRad_cfg.dispError('LET only for protons!\n');
+                    fprintf(fID,'s:Sc/%s%s/ReferencedSubScorer_Dose     = "Tally_DoseToWater"\n',scorerPrefix,scorerNames{s});
                 end
             end
             
-            if obj.addVolumeScorers
+            % write dose to water scorer
+            if obj.scorer.doseToWater
+                fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_doseToWater);
+                obj.matRad_cfg.dispDebug('Reading doseToWater scorer from %s\n',fname);
+                scorerName = fileread(fname);
+                fprintf(fID,'%s\n',scorerName);
+                obj.MCparam.tallies = [obj.MCparam.tallies,{'doseToWater'}];
+            end
+            
+            % write LET scorer
+            if obj.scorer.LET
+                if strcmp(obj.radiationMode,'protons')
+                    fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_LET);
+                    obj.matRad_cfg.dispDebug('Reading LET Scorer from %s\n',fname);
+                    scorerName = fileread(fname);
+                    fprintf(fID,'%s\n',scorerName);
+                    obj.MCparam.tallies = [obj.MCparam.tallies,{'LET'}];
+                else
+                    obj.matRad_cfg.dispError('LET in TOPAS only for protons!\n');
+                end
+            end
+            
+            % write volume scorer
+            if obj.scorer.volume
                 fileList = dir(fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,'TOPAS_scorer_volume_*.in'));
                 for fileIx=1:length(fileList)
                     fname = fullfile(obj.thisFolder,fileList(fileIx).name);
                     obj.matRad_cfg.dispDebug('Reading Volume Scorer from %s\n',fname);
-                    scorer = fileread(fname);
-                    fprintf(fID,'%s\n',scorer);
+                    scorerName = fileread(fname);
+                    fprintf(fID,'%s\n',scorerName);
                     tallyLabel = regexprep(fileList(fileIx).name,'TOPAS_scorer_volume_','');
                     tallyLabel = regexprep(tallyLabel,'.txt.in','');
-                    obj.MCparam.tallies{end+1} = tallyLabel;
+                    obj.MCparam.tallies = [obj.MCparam.tallies,{tallyLabel}];
                 end
             end
             
-            if obj.scoreTrackCount
-                fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.surfaceScorer);
+            % write surface track count
+            if obj.scorer.surfaceTrackCount
+                fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_surfaceTrackCount);
                 obj.matRad_cfg.dispDebug('Reading surface scorer from %s\n',fname);
-                scorer = fileread(fname);
-                fprintf(fID,'%s\n',scorer);
+                scorerName = fileread(fname);
+                fprintf(fID,'%s\n',scorerName);
+                obj.MCparam.tallies = [obj.MCparam.tallies,{'IC'}];
             end
         end
         
@@ -430,7 +473,7 @@ classdef MatRad_TopasConfig < handle
                             dataTOPAS(cutNumOfBixel).posX = -1.*voxel_x;
                             dataTOPAS(cutNumOfBixel).posY = voxel_y;
                             
-                            if obj.scoreDij
+                            if obj.scorer.Dij
                                 % write particles directly to every beamlet for dij calculation (each bixel
                                 % calculated separately with full numParticles
                                 dataTOPAS(cutNumOfBixel).current = uint32(nCurrentParticles / obj.numOfRuns);
@@ -462,7 +505,7 @@ classdef MatRad_TopasConfig < handle
                                 dataTOPAS(cutNumOfBixel).focusFWHM = selectedData(ixTmp).FWHMatIso;
                             end
                             
-                            if obj.scoreDij
+                            if obj.scorer.Dij
                                 % remember beam and bixel number
                                 dataTOPAS(cutNumOfBixel).beam           = beamIx;
                                 dataTOPAS(cutNumOfBixel).ray            = rayIx;
@@ -498,7 +541,7 @@ classdef MatRad_TopasConfig < handle
                 idx = find([dataTOPAS.current] < 1);
                 dataTOPAS(idx) = [];
                 cutNumOfBixel = length(dataTOPAS(:));
-                if obj.scoreDij
+                if obj.scorer.Dij
                     historyCount(beamIx) = uint32(nBeamParticlesTotal(beamIx) / obj.numOfRuns);
                 else
                     historyCount(beamIx) = uint32(obj.fracHistories * nBeamParticlesTotal(beamIx) / obj.numOfRuns);
@@ -767,7 +810,7 @@ classdef MatRad_TopasConfig < handle
                     fprintf(fileID,['i:Ts/Seed = ',num2str(runIx),'\n']);
                     fprintf(fileID,'includeFile = ./%s\n',fieldSetupFileName);
                     obj.writeScorers(fileID);
-                    if obj.scoreDij
+                    if obj.scorer.Dij
                         fprintf(fileID,'s:Tf/ImageName/Function = "Step"\n');
                         % create time feature scorer and save with original rays and bixel names
                         imageName = ['sv:Tf/ImageName/Values = ',num2str(cutNumOfBixel),strcat(' "ray',string([dataTOPAS.ray]))+strcat('_bixel',string([dataTOPAS.bixel]),'"')];

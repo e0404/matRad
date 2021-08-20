@@ -123,7 +123,13 @@ if isfield(dij,'MC_tallies')
         tally = dij.MC_tallies{f};
         % skip tallies processed above
         if ~isfield(resultGUI,tally) && ~contains(tally,'std')
-            resultGUI.(tally) = reshape(full(dij.(tally){scenNum}),dij.doseGrid.dimensions);
+            if size(strsplit(tally,'_'),2) > 1
+                beamNum = str2num(cell2mat(regexp(tally,'\d','Match')));
+                tallyCut = strsplit(tally,'_');
+                resultGUI.(tally) = reshape(full(dij.(tallyCut{1}){scenNum,beamNum}),dij.doseGrid.dimensions);
+            else
+                resultGUI.(tally) = reshape(full(dij.(tally){scenNum}),dij.doseGrid.dimensions);
+            end
         end
     end
 end

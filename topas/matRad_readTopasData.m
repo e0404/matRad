@@ -60,7 +60,7 @@ if calcDoseDirect
                 topasCube.([tname '_std_beam' num2str(f)]) = topasStdSum;
                 
                 SumVarOverFields = SumVarOverFields + topasVarSum;
-            elseif strcmp(tname,'alpha') || strcmp(tname,'beta') || strcmp(tname,'RBE')
+            elseif strcmp(tname,'alpha') || strcmp(tname,'beta') || strcmp(tname,'RBE') || strcmp(tname,'LET')
                 topasSum = topasSum./ MCparam.nbRuns;
             end
             
@@ -70,8 +70,9 @@ if calcDoseDirect
             topasCube.([tname '_beam' num2str(f)]) = topasSum;
             
         end
-        topasCube.physicalDose_std = sqrt(SumVarOverFields);
-        
+        if strcmp(tname,'physicalDose')
+            topasCube.physicalDose_std = sqrt(SumVarOverFields);
+        end
         if ~(strcmp(tname,'alpha') || strcmp(tname,'beta') || strcmp(tname,'RBE'))
             topasCube.(tname) = topasTally;
         end

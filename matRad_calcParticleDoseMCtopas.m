@@ -116,6 +116,8 @@ ctR.z = dij.doseGrid.z;
 load([pln.radiationMode,'_',pln.machine]);
 topasConfig = MatRad_TopasConfig();
 % Create Base Data
+topasConfig.radiationMode = stf.radiationMode;
+
 if isstruct(machine.data(1).Z)
     for i = 1:length(machine.data)
         machine.data(i).Z = machine.data(i).Z.doseORG;
@@ -151,18 +153,34 @@ if calcDoseDirect
     end
 end
 
-if isfield(pln.propMC,'scoreLET')
-    topasConfig.scoreLET = pln.propMC.scoreLET;
-end
-
-if isfield(pln.propMC,'scoreDose')
-    topasConfig.scoreDose = pln.propMC.scoreDose;
-end
-
 if isfield(pln,'bioParam') && strcmp(pln.bioParam.quantityOpt,'RBExD')
-    topasConfig.scoreRBE = true;
+    topasConfig.scorer.RBE = true;
     [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
     dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
+end
+
+if isfield(pln.propMC,'scorer')  
+    fnames = fieldnames(pln.propMC.scorer);
+    for f = 1:length(fnames)
+        topasConfig.scorer.(fnames{f}) = pln.propMC.scorer.(fnames{f});
+    end
+    
+    if topasConfig.scorer.RBE
+        topasConfig.scorer.doseToMedium = true;
+        if strcmp(topasConfig.scorer.RBE_model,'default')
+            if strcmp(topasConfig.radiationMode,'protons')
+                topasConfig.scorer.RBE_model = topasConfig.scorer.defaultModelProtons;
+            elseif strcmp(topasConfig.radiationMode,'carbon') || strcmp(topasConfig.radiationMode,'helium')
+                topasConfig.scorer.RBE_model = topasConfig.scorer.defaultModelCarbon;
+            else
+                matRad_cfg.dispError(['No model implemented for ',topasConfig.radiationMode]);
+            end
+        end
+    end
+end
+
+if topasConfig.scorer.LET
+    topasConfig.scorer.doseToMedium = true;
 end
 
 currDir = cd;
@@ -258,18 +276,21 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                     dij.MC_tallies = fnames;
                     
                     if calcDoseDirect
-                        if ~isfield(topasCubes,'alpha_beam1')
-                            for f = 1:numel(fnames)
-                                dij.(fnames{f}){ctScen,1} = sum(w(:,ctScen))*reshape(topasCubes.(fnames{f}),[],1);
-                            end
-                        else
+                        if isfield(topasCubes,'physicalDose')
                             for d = 1:length(stf)
                                 dij.physicalDose{ctScen,1}(:,d)    = sum(w)*reshape(topasCubes.(['physicalDose_beam',num2str(d)]),[],1);
+                            end
+                        end
+                        if isfield(topasCubes,'doseToWater')
+                            for d = 1:length(stf)
+                                dij.doseToWater{ctScen,1}(:,d)    = sum(w)*reshape(topasCubes.(['doseToWater_beam',num2str(d)]),[],1);
+                            end
+                        end    
+                        if isfield(topasCubes,'alpha_beam1')
+                            for d = 1:length(stf)
                                 dij.alpha{ctScen,1}(:,d)           = reshape(topasCubes.(['alpha_beam',num2str(d)]),[],1);
                                 dij.beta{ctScen,1}(:,d)            = reshape(topasCubes.(['beta_beam',num2str(d)]),[],1);
-                                %                             dij.RBE{1}(:,d)             = reshape(topasCubes.(['RBE_beam',num2str(d)]),[],1);
-                                dij.physicalDose_std{ctScen,1}(:,d)    = sum(w)*reshape(topasCubes.(['physicalDose_std_beam',num2str(d)]),[],1);
-%                                 [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,prod(ct.cubeDim),1);
+                                
                                 [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
                                 dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
                                 
@@ -277,6 +298,17 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                 dij.mSqrtBetaDose{ctScen,1}(:,d)   = sqrt(dij.physicalDose{ctScen,1}(:,d)) .* dij.beta{ctScen,1}(:,d);
                             end
                         end
+                        if isfield(topasCubes,'physicalDose_std_beam1')
+                            for d = 1:length(stf)
+                                dij.physicalDose_std{ctScen,1}(:,d)    = sum(w)*reshape(topasCubes.(['physicalDose_std_beam',num2str(d)]),[],1);
+                            end
+                        end        
+                        if isfield(topasCubes,'LET')
+                            for d = 1:length(stf)
+                                dij.LET{ctScen,1}(:,d)    = reshape(topasCubes.(['LET_beam',num2str(d)]),[],1);
+                                dij.mLETDose{ctScen,1}(:,d) = dij.physicalDose{ctScen,1}(:,d) .*  dij.LET{ctScen,1}(:,d);
+                            end
+                        end   
                     else
                         for f = 1:numel(fnames)
                             for d = 1:stf(f).totalNumOfBixels
