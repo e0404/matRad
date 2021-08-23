@@ -42,7 +42,7 @@ if ~exist('thres','var')
 end
 newSpots = w>thres*max(w);
 
-if (sum(newSpots) ~= numel(w)) && sum(newSpots) ~= dij.totalNumOfBixels
+if ((sum(newSpots) ~= numel(w)) && sum(newSpots) ~= dij.totalNumOfBixels) && any(size(w)>1)
     dij.cutWeights = w(newSpots);
     
     dij.bixelNum = dij.bixelNum(newSpots);
