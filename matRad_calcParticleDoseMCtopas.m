@@ -159,30 +159,6 @@ if isfield(pln,'bioParam') && strcmp(pln.bioParam.quantityOpt,'RBExD')
     dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
 end
 
-if isfield(pln.propMC,'scorer')  
-    fnames = fieldnames(pln.propMC.scorer);
-    for f = 1:length(fnames)
-        topasConfig.scorer.(fnames{f}) = pln.propMC.scorer.(fnames{f});
-    end
-    
-    if topasConfig.scorer.RBE
-        topasConfig.scorer.doseToMedium = true;
-        if strcmp(topasConfig.scorer.RBE_model,'default')
-            if strcmp(topasConfig.radiationMode,'protons')
-                topasConfig.scorer.RBE_model = topasConfig.scorer.defaultModelProtons;
-            elseif strcmp(topasConfig.radiationMode,'carbon') || strcmp(topasConfig.radiationMode,'helium')
-                topasConfig.scorer.RBE_model = topasConfig.scorer.defaultModelCarbon;
-            else
-                matRad_cfg.dispError(['No model implemented for ',topasConfig.radiationMode]);
-            end
-        end
-    end
-end
-
-if topasConfig.scorer.LET
-    topasConfig.scorer.doseToMedium = true;
-end
-
 currDir = cd;
 
 for shiftScen = 1:pln.multScen.totNumShiftScen
@@ -247,9 +223,6 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                 matRad_cfg.dispError('TOPAS simulation exited with error code %d\n',status);
                             end
                         end
-                        
-                        
-                        
                         
                         if topasConfig.parallelRuns
                             runsFinished = false;
