@@ -88,7 +88,7 @@ if ((sum(newSpots) ~= numel(w)) && sum(newSpots) ~= dij.totalNumOfBixels) && any
     
     dij.totalNumOfRays = sum(dij.numOfRaysPerBeam);
     dij.numOfRemovedSpots = sum(~newSpots);
-    matRad_cfg.dispInfo([num2str(sum(~newSpots)),'/',num2str(numel(newSpots)) ,' spots have been removed below ',num2str(100*thres),'%%.\n'])
+    matRad_cfg.dispWarning([num2str(sum(~newSpots)),'/',num2str(numel(newSpots)) ,' spots have been removed below ',num2str(100*thres),'%.\n'])
 else
     matRad_cfg.dispWarning('no spots have been removed.')
     dij.cutWeights = w;

@@ -220,7 +220,11 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                             if status == 0
                                 matRad_cfg.dispInfo('TOPAS simulation completed succesfully\n');
                             else
-                                matRad_cfg.dispError('TOPAS simulation exited with error code %d\n',status);
+                                if status == 139
+                                    matRad_cfg.dispError('TOPAS segmentation fault might be caused from an outdated TOPAS version or Linux distribution');
+                                else
+                                    matRad_cfg.dispError('TOPAS simulation exited with error code %d\n',status);
+                                end
                             end
                         end
                         
