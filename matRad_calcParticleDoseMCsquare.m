@@ -182,16 +182,35 @@ for s = 1:ct.numOfCtScen
         dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
 end
 
-%BDL File
-bdFile = [machine.meta.machine '.txt'];
 
-% bdFile = 'BDL_matRad.txt'; %use for baseData fit 
-MCsquareBDL = MatRad_MCsquareBaseData(machine,stf);
-%matRad_createMCsquareBaseDataFile(bdFile,machine,1);
-% MCsquareBDL = MCsquareBDL.saveMatradMachine('test');
-MCsquareBDL = MCsquareBDL.writeMCsquareData([MCsquareFolder filesep 'BDL' filesep bdFile]);
-%movefile(bdFile,[MCsquareFolder filesep 'BDL/' bdFile]);
-% MCsquareBDL = MCsquareBDL.saveMatradMachine('testMachine');
+% switch for using extising BDL file, or fit one using MCsquareBDL
+useExisting = 1;
+
+if useExisting
+% use existing BDL file (e.g. when fitting base data file)
+    bdFile = 'BDL_matRad.txt'; %use for baseData fit 
+    
+else
+% fit BDL file using existing machine file
+  
+    bdFile = [machine.meta.machine '.txt'];
+    
+    MCsquareBDL = MatRad_MCsquareBaseData(machine,stf);
+    %matRad_createMCsquareBaseDataFile(bdFile,machine,1);
+    % MCsquareBDL = MCsquareBDL.saveMatradMachine('test');
+    MCsquareBDL = MCsquareBDL.writeMCsquareData([MCsquareFolder filesep 'BDL' filesep bdFile]);
+    %movefile(bdFile,[MCsquareFolder filesep 'BDL/' bdFile]);
+    % MCsquareBDL = MCsquareBDL.saveMatradMachine('testMachine');  
+    
+end
+
+
+
+
+
+
+
+
 
 for shiftScen = 1:pln.multScen.totNumShiftScen
     

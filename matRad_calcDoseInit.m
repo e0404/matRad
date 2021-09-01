@@ -6,6 +6,11 @@ if ~exist('calcDoseDirect','var')
     calcDoseDirect = false;
 end
 
+% check whether base data fitting without machine file is in progress
+if ~isfield(pln, 'withoutMachineFile')
+    pln.withoutMachineFile = 0;
+end
+
 % to guarantee downwards compatibility with data that does not have
 % ct.x/y/z
 if ~any(isfield(ct,{'x','y','z'}))
@@ -160,13 +165,17 @@ VdoseGrid = find(matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z,tmpC
 % Convert CT subscripts to coarse linear indices.
 [yCoordsV_voxDoseGrid, xCoordsV_voxDoseGrid, zCoordsV_voxDoseGrid] = ind2sub(dij.doseGrid.dimensions,VdoseGrid);
 
-% load base data% load machine file
-fileName = [pln.radiationMode '_' pln.machine];
-try
-   load([fileparts(mfilename('fullpath')) filesep 'basedata' filesep fileName '.mat']);
-catch
-   matRad_cfg.dispError('Could not find the following machine file: %s\n',fileName); 
+if pln.withoutMachineFile == 0
+% load base data (skip if in fitting process)
+    
+    fileName = [pln.radiationMode '_' pln.machine];
+    try
+       load([fileparts(mfilename('fullpath')) filesep 'basedata' filesep fileName '.mat']);
+    catch
+       matRad_cfg.dispError('Could not find the following machine file: %s\n',fileName); 
+    end
 end
+
 
 % compute SSDs -> Removed for now because it is scenario-dependent
 % stf = matRad_computeSSD(stf,ct);

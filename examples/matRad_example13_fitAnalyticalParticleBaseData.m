@@ -2,6 +2,7 @@
 %%%%%%% Expample script for baseData fitting to mcSquare simulation %%%%%%%
 
  %% 1) CT & CST creation
+clear
 matRad_rc
 
 ixOAR = 1;
@@ -99,6 +100,9 @@ pln.radiationMode   = 'protons';     % either photons / protons / carbon
 pln.machine         = 'matRadBDLold';
 
 pln.numOfFractions  = 30;
+
+pln.withoutMachineFile  = 1;
+
  
 % beam geometry settings
 pln.propStf.bixelWidth      = 50; % [mm] / also corresponds to lateral spot spacing for particles
@@ -124,25 +128,44 @@ pln.propOpt.bioOptimization = 'none'; % none: physical optimization;            
 pln.propOpt.runDAO          = false;  % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 
+% retrieve scenarios for dose calculation and optimziation
+pln.multScen = matRad_multScen(ct,'nomScen');
+
+
+quantityOpt   = 'RBExD';            % either  physicalDose / effect / RBExD
+modelName     = 'constRBE';         % none: for photons, protons, carbon                                    constRBE: constant RBE model
+                                    % MCN: McNamara-variable RBE model for protons                          WED: Wedenberg-variable RBE model for protons 
+                                    % LEM: Local Effect Model for carbon ions
+% retrieve bio model parameters
+pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
+
+
+% save meta data in machine
+machine.meta.radiationMode = 'protons';
+machine.meta.dataType = 'singleGauss';
+machine.meta.created_on = date;
+machine.meta.created_by = 'Paul Anton Meder';
+machine.meta.SAD = (2218 + 1839) / 2;
+machine.meta.BAMStoIsoDist = 420.0;
+machine.meta.machine = 'Generic';
+machine.meta.LUT_bxWidthminFWHM = [1, Inf; 8 ,8];
+machine.meta.fitAirOffset = 420.0;
+
+
 %% generate steering file
-stf = matRad_generateStf(ct,cst,pln);
- 
+stf = matRad_generateStfSinglePencilBeam(ct,cst,pln,machine.meta.SAD);
+
 %read MC phase space data
-dataMC = readtable('BDL_matrad.txt');             
-dataMC = dataMC{11:end,:};
-tmp = [];
-for i = 1:size(dataMC,1)    
-    tmp = [tmp; strsplit(dataMC{i})];
-end
-energyMC    = str2double(tmp(:,1));
-spotMC      = (str2double(tmp(:,6)) + str2double(tmp(:,9)))  / 2;
-divMC       = (str2double(tmp(:,7)) + str2double(tmp(:,10))) / 2;
-corMC       = (str2double(tmp(:,8)) + str2double(tmp(:,11))) / 2;
-  
+dataMC = importdata('BDL_matrad.txt', ' ', 16);       
+energyMC = dataMC.data(:, 1);
+spotMC   = (dataMC.data(:, 6) + dataMC.data(:, 9)) / 2;
+divMC    = (dataMC.data(:, 7) + dataMC.data(:,10)) / 2;
+corMC    = (dataMC.data(:, 8) + dataMC.data(:,11)) / 2;
+
 % define energy range
 minEnergy = 70;
 maxEnergy = 225;
-nEnergy   = 88;  
+nEnergy   = 75;  
 
 count = 1;
 for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
@@ -163,7 +186,7 @@ for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
     stf.ray.energy = currentEnergy;
     
     %% needs to use correct BDL file in calcParticleDoseMC
-    resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1),1000000);          
+    resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,1,10000);          
     
     machine.data(count) = matRad_fitBaseData(resultGUI.physicalDose, ct.resolution, currentEnergy, mcData);
 
@@ -171,16 +194,7 @@ for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
     count = count + 1;
 end
 
-% save data in machine
-machine.meta.radiationMode = 'protons';
-machine.meta.dataType = 'singleGauss';
-machine.meta.created_on = date;
-machine.meta.created_by = 'Paul Anton Meder';
-machine.meta.SAD = (2218 + 1839) / 2;
-machine.meta.BAMStoIsoDist = 420.0;
-machine.meta.machine = 'Generic';
-machine.meta.LUT_bxWidthminFWHM = [1, Inf; 8 ,8];
-machine.meta.fitAirOffset = 420.0;
+
   
 % save machine
 save('protons_fitMachine.mat', 'machine');
