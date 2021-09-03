@@ -31,8 +31,8 @@ yDim = 120;
 zDim = 60;
 
 ct.cubeDim      = [xDim yDim zDim];
-ct.resolution.x = 2; % mm
-ct.resolution.y = 2; % mm
+ct.resolution.x = 3; % mm
+ct.resolution.y = 3; % mm
 ct.resolution.z = 3; % mm
 ct.numOfCtScen  = 1;
  
@@ -195,7 +195,7 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 %% Trigger robust optimization
 % Make the objective to a composite worst case objective
 
-ROBUST_OPT = {'none','STOCH','VWWC','VWWC_INV','COWC','OWC','PROB'};
+ROBUST_OPT = {'COWC'}; %{'STOCH','VWWC','VWWC_INV','COWC','OWC','PROB'};
 
 for ixRob = 1:numel(ROBUST_OPT)
    cst{ixTarget,6}{1}.robustness  = ROBUST_OPT{1,ixRob};

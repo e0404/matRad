@@ -228,6 +228,10 @@ backProjection.scenarioProb = pln.multScen.scenProb;
 
 optiProb = matRad_OptimizationProblem(backProjection);
 optiProb.quantityOpt = pln.bioParam.quantityOpt;
+if isfield(pln,'propOpt') && isfield(pln.propOpt,'useLogSumExpForRobOpt')
+    optiProb.useLogSumExpForRobOpt = pln.propOpt.useLogSumExpForRobOpt;
+end
+
 
 if ~isfield(pln.propOpt,'optimizer')
     pln.propOpt.optimizer = 'IPOPT';

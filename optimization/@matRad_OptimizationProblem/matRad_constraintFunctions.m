@@ -34,7 +34,7 @@ function c = matRad_constraintFunctions(optiProb,w,dij,cst)
 
 
 % get current dose / effect / RBExDose vector
-optiProb.BP = optiProb.BP.compute(dij,w);
+optiProb.BP.compute(dij,w);
 d = optiProb.BP.GetResult();
 
 % get the used scenarios
@@ -128,15 +128,9 @@ for  i = 1:size(cst,1)
                      d_i = d_max;
                   end
                   
-                  c = [c; constraint.computeDoseConstraintFunction(d_i)];
-                  
-               case 'COWC'
-                  matRad_cfg.dispError('not supported');
-               case 'OWC'
-                  matRad_cfg.dispError('not supported');
-                  
+                  c = [c; constraint.computeDoseConstraintFunction(d_i)];   
                otherwise
-                  matRad_cfg.dispError('Robustness setting %s not supported!',objective.robustness);
+                  matRad_cfg.dispError('Robustness setting %s not yet supported!',constraint.robustness);
             end
             
             

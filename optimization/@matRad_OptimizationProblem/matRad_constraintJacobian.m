@@ -36,7 +36,7 @@ function jacob = matRad_constraintJacobian(optiProb,w,dij,cst)
 % get current dose / effect / RBExDose vector
 %d = matRad_backProjection(w,dij,optiProb);
 %d = optiProb.matRad_backProjection(w,dij);
-optiProb.BP = optiProb.BP.compute(dij,w);
+optiProb.BP.compute(dij,w);
 d = optiProb.BP.GetResult();
 
 % initialize jacobian (only single scenario supported in optimization)
@@ -124,7 +124,7 @@ for i = 1:size(cst,1)
                   
                   % prepare min/max dose vector
                   if ~exist('d_tmp','var')
-                     d_tmp = [d{:}];
+                     d_tmp = [d{useScen}];
                   end
                   
                   d_Scen = d_tmp(cst{i,4}{contourIx},:);
@@ -139,10 +139,8 @@ for i = 1:size(cst,1)
                   end
                   jacobSub = constraint.computeDoseConstraintJacobian(d_i);
                   
-               case 'COWC'
-                  matRad_cfg.dispError('not supported');
-               case 'OWC'
-                  matRad_cfg.dispError('not supported');
+               otherwise
+                  matRad_cfg.dispError('Robustness setting %s not yet supported!',constraint.robustness);
             end
             
             nConst = size(jacobSub,2);
