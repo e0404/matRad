@@ -59,7 +59,24 @@ figureWait = waitbar(0,'calculate dose influence matrix for photons...');
 set(figureWait,'pointer','watch');
 
 % set lateral cutoff value
-lateralCutoff = matRad_cfg.propDoseCalc.defaultGeometricCutOff; % [mm]
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'geometricCutOff')
+    pln.propDoseCalc.geometricCutOff =  matRad_cfg.propDoseCalc.defaultGeometricCutOff; % [mm]
+end
+
+lateralCutoff = pln.propDoseCalc.geometricCutOff;
+
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'kernelCutOff')
+    pln.propDoseCalc.kernelCutOff =  matRad_cfg.propDoseCalc.defaultKernelCutOff; % [mm]
+end
+
+% set kernel cutoff value (determines how much of the kernel is used. This
+% value is separated from lateralCutOff to obtain accurate large open fields)
+kernelCutoff = pln.propDoseCalc.kernelCutOff;
+
+if kernelCutoff < lateralCutoff
+    matRad_cfg.dispWarning('Kernel Cut-Off ''%f mm'' cannot be smaller than geometric lateral cutoff ''%f mm''. Using ''%f mm''!',kernelCutoff,lateralCutoff,lateralCutoff);
+    kernelCutoff = lateralCutoff;
+end
 
 % toggle custom primary fluence on/off. if 0 we assume a homogeneous
 % primary fluence, if 1 we use measured radially symmetric data
@@ -121,12 +138,16 @@ if ~isFieldBasedDoseCalc
 end
 
 % get kernel size and distances
-kernelLimit = ceil(lateralCutoff/intConvResolution);
+if kernelCutoff > machine.data.kernelPos(end)
+    kernelCutoff = machine.data.kernelPos(end);
+end
+
+kernelLimit = ceil(kernelCutoff/intConvResolution);
 [kernelX, kernelZ] = meshgrid(-kernelLimit*intConvResolution: ...
                             intConvResolution: ...
                             (kernelLimit-1)*intConvResolution);
 
-% precalculate convoluted kernel size and distances
+% precalculate convolved kernel size and distances
 kernelConvLimit = fieldLimit + gaussLimit + kernelLimit;
 [convMx_X, convMx_Z] = meshgrid(-kernelConvLimit*intConvResolution: ...
                                 intConvResolution: ...
@@ -136,7 +157,7 @@ kernelConvSize = 2*kernelConvLimit;
 
 % define an effective lateral cutoff where dose will be calculated. note
 % that storage within the influence matrix may be subject to sampling
-effectiveLateralCutoff = lateralCutoff + fieldWidth/2;
+effectiveLateralCutoff = lateralCutoff + fieldWidth/sqrt(2);
 
 counter = 0;
 matRad_cfg.dispInfo('matRad: Photon dose calculation...\n');
@@ -208,7 +229,7 @@ for i = 1:dij.numOfBeams % loop over all beams
             % apply the primary fluence to the field
             Fx = F .* Psi;
             
-            % convolute with the gaussian
+            % convolve with the gaussian
             Fx = real( ifft2(fft2(Fx,gaussConvSize,gaussConvSize).* fft2(gaussFilter,gaussConvSize,gaussConvSize)) );
 
             % 2D convolution of Fluence and Kernels in fourier domain
