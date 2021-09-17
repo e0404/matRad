@@ -48,8 +48,8 @@ classdef MatRad_Config < handle
         matRad_version; %MatRad version string
     end
     
-    properties (Constant)
-        matRadRoot = fileparts(mfilename('fullpath'));
+    properties (SetAccess = private)
+        matRadRoot;
     end
     
     methods (Access = private)
@@ -62,6 +62,8 @@ classdef MatRad_Config < handle
             %Set Version
             obj.getEnvironment();
             obj.matRad_version = matRad_version();
+            
+            obj.matRadRoot = fileparts(mfilename('fullpath'));
             
             %Just to catch people messing with the properties in the file
             if ~isempty(obj.writeLog) && obj.writeLog
