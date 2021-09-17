@@ -40,7 +40,7 @@ classdef matRad_RayTracerSiddon < matRad_RayTracer
                 matRad_cfg.dispError('Number of target Points and source points needs to be equal to one! If you want to trace multiple rays at once, use traceRays instead!',nSources,nRays);
             end
             
-            this.traceRays(this,isocenter,resolution,sourcePoint,targetPoint,cubes);             
+            [alphas,l,rho,d12,ix] = this.traceRays(isocenter,resolution,sourcePoint,targetPoint,cubes);             
         end        
         
         function [alphas,l,rho,d12,ix] = traceRays(this,...
