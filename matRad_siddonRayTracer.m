@@ -46,6 +46,17 @@ function [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(isocenter, ...
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+matRad_cfg = MatRad_Config.instance();
+matRad_cfg.dispDeprecationWarning('Calls to matRad_siddonRayTracer will be replaced by usage of the matRad_RayTracerSiddon class in the future!');
+
+% At the moment we only implement the Siddon ray-tracer in [1]
+hTracer = matRad_RayTracerSiddon();
+
+[alphas,l,rho,d12,ix] = hTracer.traceRay(isocenter,resolution,sourcePoint,targetPoint,cubes);
+
+%{
+
 % Add isocenter to source and target point. Because the algorithm does not
 % works with negatives values. This put (resolution.x,resolution.y,resolution.z)
 % in the center of first voxel
@@ -217,3 +228,5 @@ rho = cell(numel(cubes),1);
 for i = 1:numel(cubes)
     rho{i} = cubes{i}(ix);
 end
+
+%}
