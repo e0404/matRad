@@ -72,44 +72,25 @@ end
 env = matRad_getEnvironment();
 
 %% Initialize dose Grid as usual
+% for TOPAS we explicitly downsample the ct to the dose grid (might not
+% be necessary in future versions with separated grids)
 matRad_calcDoseInit;
+[ctR,cst] = matRad_resampleTopasGrid(ct,cst,pln,stf);
 
 % fill bixels, rays and beams in case of dij calculation
 %if ~calcDoseDirect
-    counter = 1;
-    for f = 1:dij.numOfBeams
-        for r = 1:stf(f).numOfRays
-            for b = 1:stf(f).numOfBixelsPerRay(r)
-                dij.bixelNum(counter) = b;
-                dij.rayNum(counter)   = r;
-                dij.beamNum(counter)  = f;
-                counter = counter + 1;
-            end
+counter = 1;
+for f = 1:dij.numOfBeams
+    for r = 1:stf(f).numOfRays
+        for b = 1:stf(f).numOfBixelsPerRay(r)
+            dij.bixelNum(counter) = b;
+            dij.rayNum(counter)   = r;
+            dij.beamNum(counter)  = f;
+            counter = counter + 1;
         end
     end
-%end
-
-% for TOPAS we explicitly downsample the ct to the dose grid (might not
-% be necessary in future versions with separated grids)
-
-
-for s = 1:ct.numOfCtScen
-    cubeHUresampled{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{s}, ...
-                                dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
-    cubeResampled{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cube{s}, ...
-                                dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');                        
 end
-
-%Allocate temporary resampled CT
-ctR = ct;
-ctR.cube = cell(1);
-ctR.cubeHU = cell(1);
-ctR.numOfCtScen = 1;
-ctR.resolution = dij.doseGrid.resolution;
-ctR.cubeDim = dij.doseGrid.dimensions;
-ctR.x = dij.doseGrid.x;
-ctR.y = dij.doseGrid.y;
-ctR.z = dij.doseGrid.z;
+%end
 
 %% sending data to topas
 
@@ -134,15 +115,15 @@ if openStack
         topasConfig.workingDir = [topasConfig.workingDir pln.radiationMode filesep pln.patientID '_'];
     end
     topasConfig.workingDir = [topasConfig.workingDir pln.machine,'_',pln.radiationMode,'_'];
-    if isfield(ct,'sampleIdx')
-        topasConfig.workingDir = [topasConfig.workingDir num2str(ct.sampleIdx) filesep];
+    if isfield(ctR,'sampleIdx')
+        topasConfig.workingDir = [topasConfig.workingDir num2str(ctR.sampleIdx) filesep];
     end
 end
 % topasConfig.numOfRuns = matRad_cfg.propMC.topas_defaultNumBatches;
 
 %Collect weights
 if calcDoseDirect
-    w = zeros(sum([stf(:).totalNumOfBixels]),ct.numOfCtScen);
+    w = zeros(sum([stf(:).totalNumOfBixels]),ctR.numOfCtScen);
     counter = 1;
     for i = 1:length(stf)
         for j = 1:stf(i).numOfRays
@@ -174,8 +155,8 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 
                 %Overwrite CT (TEMPORARY - we should use 4D calculation in
                 %TOPAS here)
-                ctR.cubeHU = cubeHUresampled(ctScen);
-                ctR.cube = cubeResampled(ctScen);
+%                 ctR.cubeHU = cubeHUresampled(ctScen);
+%                 ctR.cube = cubeResampled(ctScen);
                 %Delete previous topas files
                 files = dir([topasConfig.workingDir,'*']);
                 files = {files(~[files.isdir]).name};

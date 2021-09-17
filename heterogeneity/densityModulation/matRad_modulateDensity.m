@@ -1,4 +1,4 @@
-function [ct] = matRad_modulateDensity(ct,cst,pln,Pmod,mode,continuous)
+function ct = matRad_modulateDensity(ct,cst,pln,Pmod,mode,continuous)
 % matRad density modulation function
 %
 % call
@@ -56,9 +56,9 @@ lungIdx = unique(vertcat(lungIdx{:}));
 %lungIdx = lungIdx(~ismember(lungIdx,tumorIdx));
 
 % calculate ct cube from cubeHU if not specified
-if ~isfield(ct,'cube')
-    ct = matRad_calcWaterEqD(ct,pln);
-end
+% if ~isfield(ct,'cube')
+%     ct = matRad_calcWaterEqD(ct,pln);
+% end
 
 if strcmp(mode, 'binomial')
     rhoLung = 1.05;
@@ -66,7 +66,7 @@ if strcmp(mode, 'binomial')
     pLung = ct.cube{1}(lungIdx) / rhoLung;
     if any(pLung > 1)
         lungIdx = lungIdx(pLung <= 1);
-        pLung = ct.cube{1}(lungIdx) / rhoLung;
+        pLung = cctt.cube{1}(lungIdx) / rhoLung;
     end
       
     d = Pmod/1000 ./ (1-pLung) / rhoLung; % [1] eq.8: Pmod = d*(1-pLung) * rhoLung
@@ -133,23 +133,28 @@ end
 
 if strcmp(pln.propHeterogeneity.mode,'TOPAS') && strcmp(mode, 'binomial')
     % only include different densities that are significantly different
-    % (6th digit)
-    lung = round(ct.cube{1}(lungIdx),6);
+    % (5th digit)
+    lung = round(ct.cube{1}(lungIdx),5);
     [numOfOccurences,sampledDensities] = groupcounts(lung);
-    if strcmp(pln.propMC.materialConverter,'HUToWaterSchneider_Lung')
-        ct.cubeHU{1}(lungIdx(lung == 1.05)) = 0;
-        ct.cubeHU{1}(lungIdx(lung == 0)) = -999;
-    elseif strcmp(pln.propMC.materialConverter,'HUToWaterSchneider_mod')
-        ct.cubeHU{1}(lungIdx(lung == 1.05)) = 3020;
-        ct.cubeHU{1}(lungIdx(lung == 0)) = 2997;
-    elseif strcmp(pln.propMC.materialConverter,'HUToWaterSchneider_custom')
-        [~,sortIdx] = sort(lung);
-        lungDensitiesNewSorted = repelem([2996:2995+numel(numOfOccurences)],1,numOfOccurences);
-        ct.cubeHU{1}(lungIdx(sortIdx)) = lungDensitiesNewSorted;
+    switch pln.propMC.materialConverter.densityCorrection.addSection
+        case 'lung'
+            ct.cubeHU{1}(lungIdx(lung == 1.05)) = 0;
+            ct.cubeHU{1}(lungIdx(lung == 0)) = -999;
+        case 'poisson'
+            ct.cubeHU{1}(lungIdx(lung == 1.05)) = 3020;
+            ct.cubeHU{1}(lungIdx(lung == 0)) = 2997;
+        case 'sampledDensities'
+            [~,sortIdx] = sort(lung);
+            lungDensitiesNewSorted = repelem(5000:4999+numel(numOfOccurences),1,numOfOccurences);
+            ct.cubeHU{1}(lungIdx(sortIdx)) = lungDensitiesNewSorted;
+        otherwise
+            matRad_cfg.dispWarning('Lung modulation should be used with a separate section in the Schneider converter.\n');
     end
     
     sampledDensities(1) = 0.001225;
+%     sampledDensities(sampledDensities<0.001225) = 0.001225;
     ct.sampledDensities = sampledDensities;
+    ct.sampledLungIndices = lungIdx(sortIdx);
 end
 
 ct.modulated = 1;
