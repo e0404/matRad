@@ -42,7 +42,8 @@ classdef MatRad_TopasConfig < handle
             'event',0,...
             'tracking',0,...
             'material',0,...
-            'maxinterruptedhistories',1000);
+            'maxinterruptedhistories',1000,...
+            'maxDetailedErrorReports',1);
         
         minRelWeight = .00001; %Threshold for discarding beamlets. 0 means all weights are being considered, can otherwise be assigned to min(w)
         
@@ -266,6 +267,7 @@ classdef MatRad_TopasConfig < handle
             fprintf(fID,'i:Tf/Verbosity = %d\n',obj.verbosity.timefeatures);
             fprintf(fID,'i:Ts/MaxInterruptedHistories = %d\n',obj.verbosity.maxinterruptedhistories);
             fprintf(fID,'Ts/NumberOfThreads = %d\n',obj.numThreads);
+            fprintf(fID,'Ts/MaximumNumberOfDetailedErrorReports = %i\n',obj.verbosity.maxDetailedErrorReports);
             fprintf(fID,'i:Ts/ShowHistoryCountAtInterval = %d\n',10^(floor(log10(1/obj.numOfRuns * obj.numHistories))-1));
             fprintf(fID,'\n');
             
