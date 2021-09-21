@@ -76,6 +76,10 @@ env = matRad_getEnvironment();
 % be necessary in future versions with separated grids)
 matRad_calcDoseInit;
 [ctR,cst] = matRad_resampleTopasGrid(ct,cst,pln,stf);
+% overwrite CT grid in dij in case of modulation.
+if isfield(ctR,'ctGrid')
+    dij.ctGrid = ctR.ctGrid;
+end
 
 % fill bixels, rays and beams in case of dij calculation
 %if ~calcDoseDirect

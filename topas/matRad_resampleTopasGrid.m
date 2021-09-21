@@ -33,6 +33,7 @@ if ~isfield(ct,'resampled')
 
     %Set flag for complete resampling
     ctR.resampled = 1;
+    ctR.ctGrid = dij.ctGrid;
 else
     ctR = ct;
     matRad_cfg.dispWarning('CT already resampled.');
