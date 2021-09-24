@@ -74,6 +74,9 @@ if strcmp(pln.bioParam.quantityOpt,'RBExD')
     resultGUI.RBExD = zeros(ct.cubeDim);
 end
 
+% set this flag so that the modulated cube is not overwritten in matRad_calcDoseInit
+pln.propDoseCalc.useGivenEqDensityCube = true;
+
 for i = 1:samples
     fprintf('Dose calculation for CT %i/%i \n',i,samples)
     ct_mod = matRad_modulateDensity(ctR,cstR,pln,Pmod,modulation,continuous);
