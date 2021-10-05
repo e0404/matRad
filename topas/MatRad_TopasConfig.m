@@ -60,6 +60,7 @@ classdef MatRad_TopasConfig < handle
         materialConverter = struct('mode','HUToWaterSchneider',...    %'CustomWaterRSP';
             'densityCorrection',struct('mode','default',... %'default','TOPAS1','TOPAS2'
             'addSection','none'),... %'none','lung','poisson','sampledDensities' (the last 2 only with modulation)
+            'addTitanium',false,... %'false','true' (can only be used with advanced HUsections)
             'HUSection','default',... %'default','advanced'
             'HUToMaterial','default'); %'default','simpleLung','advanced'
 
@@ -213,6 +214,9 @@ classdef MatRad_TopasConfig < handle
                 end
                 if isfield(pln.propMC.materialConverter,'HUSection')
                     obj.materialConverter.HUSection = pln.propMC.materialConverter.HUSection;
+                end
+                if isfield(pln.propMC.materialConverter,'addTitanium')
+                    obj.materialConverter.addTitanium = pln.propMC.materialConverter.addTitanium;
                 end
                 if isfield(pln.propMC.materialConverter,'HUToMaterial')
                     obj.materialConverter.HUToMaterial = pln.propMC.materialConverter.HUToMaterial;
@@ -1106,18 +1110,28 @@ classdef MatRad_TopasConfig < handle
                                 densityCorrection.offset = 1;
                                 densityCorrection.factor = 0;
                                 densityCorrection.factorOffset = -rspHlut(1,1);
+                                    
                             case 'advanced'
+                                densityCorrection.offset = [0.00121 1.018 1.03 1.003 1.017 2.201];
+                                densityCorrection.factor = [0.001029700665188 0.000893 0 0.001169 0.000592 0.0005];
+                                densityCorrection.factorOffset = [1000 0 1000 0 0 -2000];
+                                
+                                if isfield(obj.materialConverter,'addTitanium') && obj.materialConverter.addTitanium
+                                    densityCorrection.density(end+1) = 1.00275;
+                                    densityCorrection.boundaries(end+1) = densityCorrection.boundaries(end)+1;
+                                    densityCorrection.offset(end+1) = 4.54;
+                                    densityCorrection.factor(end+1) = 0;
+                                    densityCorrection.factorOffset(end+1) = 0;
+                                end
+                                
                                 densityCorrection.unitSections = [densityCorrection.boundaries(1) -98 15 23 101 2001 densityCorrection.boundaries(2:end)];
-                                densityCorrection.offset = [0.00121 1.018 1.03 1.003 1.017 2.201 4.54];
-                                densityCorrection.factor = [0.001029700665188 0.000893 0 0.001169 0.000592 0.0005 0];
-                                densityCorrection.factorOffset = [1000 0 1000 0 0 -2000 0];
                         end
                         for i = numel(densityCorrection.offset)+1:numel(densityCorrection.unitSections)-1
                             densityCorrection.offset(i) = 1;
                             densityCorrection.factor(i) = 0;
                             densityCorrection.factorOffset(i) = 0;
                         end
-
+                        
                         % write density correction
                         fprintf(fID,['dv:Ge/Patient/DensityCorrection = %i',repmat(' %.6g',1,numel(densityCorrection.density)),' g/cm3\n'],numel(densityCorrection.density),densityCorrection.density);
                         fprintf(fID,['iv:Ge/Patient/SchneiderHounsfieldUnitSections = %i',repmat(' %g',1,numel(densityCorrection.unitSections)),'\n'],numel(densityCorrection.unitSections),densityCorrection.unitSections);
