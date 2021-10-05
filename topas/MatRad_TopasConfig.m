@@ -43,7 +43,7 @@ classdef MatRad_TopasConfig < handle
             'tracking',0,...
             'material',0,...
             'maxinterruptedhistories',1000,...
-            'maxDetailedErrorReports',1);
+            'maxDetailedErrorReports',0);
         
         minRelWeight = .00001; %Threshold for discarding beamlets. 0 means all weights are being considered, can otherwise be assigned to min(w)
         
@@ -106,7 +106,7 @@ classdef MatRad_TopasConfig < handle
         
         infilenames = struct(   'geometry','TOPAS_matRad_geometry.txt.in',...
             'matConv_Schneider_definedMaterials',struct('default','definedMaterials/default.txt.in',...
-            'simpleLung','definedMaterials/simpleLung.txt.in',...
+            'simple','definedMaterials/simple.txt.in',...
             'advanced','definedMaterials/advanced.txt.in'),...
             'matConv_Schneider_densityCorr_TOPAS1','densityCorrection/TOPAS1.dat',...
             'matConv_Schneider_densityCorr_TOPAS2','densityCorrection/TOPAS2.dat',...
@@ -1078,7 +1078,7 @@ classdef MatRad_TopasConfig < handle
                                 densityFile = fopen(fname);
                                 densityCorrection.density = fscanf(densityFile,'%f');
                                 fclose(densityFile);
-                                densityCorrection.boundaries = [-1000 numel(densityCorrection.density)-1001 numel(densityCorrection.density)-1000];
+                                densityCorrection.boundaries = [-1000 numel(densityCorrection.density)-1000];
 
                         end
                         % define additional density sections
@@ -1098,7 +1098,7 @@ classdef MatRad_TopasConfig < handle
                         end
                         if ~isempty(addSection)
                             densityCorrection.density(end+1:end+numel(addSection)) = addSection;
-                            densityCorrection.boundaries(end+1) = densityCorrection.boundaries(2)+numel(addSection)+1;
+                            densityCorrection.boundaries(end+1) = densityCorrection.boundaries(end)+numel(addSection);
                         end
                         % define Hounsfield Unit Sections
                         if ~(isfield(ct,'modulated') && ct.modulated)
@@ -1150,7 +1150,7 @@ classdef MatRad_TopasConfig < handle
                         switch obj.materialConverter.HUToMaterial
                             case 'default'
                                 HUToMaterial.sections = rspHlut(2,1);
-                            case 'simpleLung'
+                            case 'simple'
                                 if strcmp(obj.materialConverter.densityCorrection.addSection,'poisson')
                                     HUToMaterial.sections = rspHlut(2,1);
                                 else
@@ -1167,6 +1167,18 @@ classdef MatRad_TopasConfig < handle
                         fname = fullfile(obj.thisFolder,filesep,obj.converterFolder,filesep,obj.infilenames.matConv_Schneider_definedMaterials.(obj.materialConverter.HUToMaterial));
                         materials = fileread(fname);
                         fprintf(fID,'\n%s\n',materials);
+                        
+                        switch obj.materialConverter.HUToMaterial
+                            case 'advanced'
+                                counter = 25;
+                                if isfield(obj.materialConverter,'addTitanium') && obj.materialConverter.addTitanium
+                                    fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight%i = 15 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0',counter);
+                                    counter = counter + 1;
+                                end
+%                                 fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight%i = 15 0.10404040 0.10606061 0.75656566 0.03131313 0.0 0.00202020 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0',counter);
+                                fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight%i = 15 0.101278 0.102310 0.028650 0.757072 0.000730 0.000800 0.002250 0.002660 0.0 0.000090 0.001840 0.001940 0.0 0.000370 0.000010',counter);
+                        end
+                        
                         
                         % write patient environment
                         obj.matRad_cfg.dispInfo('TOPAS: Writing patient environment\n',fname);
