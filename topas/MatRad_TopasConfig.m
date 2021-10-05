@@ -1190,7 +1190,7 @@ classdef MatRad_TopasConfig < handle
                         % write HU data
                         obj.matRad_cfg.dispInfo('TOPAS: Export patient cube\n',fname);
                         if strcmp(obj.materialConverter.densityCorrection.addSection,'sampledDensities') && isfield(ct,'sampledLungIndices')
-                            ct.cubeHU{1}(ct.sampledLungIndices) = ct.cubeHU{1}(ct.sampledLungIndices)-densityCorrection.boundaries(end-1);
+                            ct.cubeHU{1}(ct.sampledLungIndices) = ct.cubeHU{1}(ct.sampledLungIndices)-4999+densityCorrection.boundaries(end-1);
                         end
                         huCube = int32(permute(ct.cubeHU{1},permutation));
                         fID = fopen(fullfile(obj.workingDir, dataFile),'w');
