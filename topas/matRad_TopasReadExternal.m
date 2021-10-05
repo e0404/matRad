@@ -62,12 +62,13 @@ for f = 1:length(folders)
             
             for i = 1:length(beamInfo)
                 resultGUI.(['physicalDose', beamInfo(i).suffix]) = resultGUI.(['physicalDose', beamInfo(i).suffix]) + outDose.(['physicalDose', beamInfo(i).suffix])/length(folders);
-                resultGUI.(['RBExD', beamInfo(i).suffix]) = resultGUI.(['RBExD', beamInfo(i).suffix]) + outDose.(['RBExD', beamInfo(i).suffix])/length(folders);
-                
-                resultGUI.(['alpha', beamInfo(i).suffix]){f} = outDose.(['alpha', beamInfo(i).suffix]);
-                resultGUI.(['beta', beamInfo(i).suffix]){f} = outDose.(['beta', beamInfo(i).suffix]);
-                resultGUI.(['RBE', beamInfo(i).suffix]){f} = outDose.(['RBE', beamInfo(i).suffix]);
-                resultGUI.(['effect', beamInfo(i).suffix]){f} = outDose.(['effect', beamInfo(i).suffix]);
+                if isfield(outDose,'alpha')
+                    resultGUI.(['RBExD', beamInfo(i).suffix]) = resultGUI.(['RBExD', beamInfo(i).suffix]) + outDose.(['RBExD', beamInfo(i).suffix])/length(folders);                  
+                    resultGUI.(['alpha', beamInfo(i).suffix]){f} = outDose.(['alpha', beamInfo(i).suffix]);
+                    resultGUI.(['beta', beamInfo(i).suffix]){f} = outDose.(['beta', beamInfo(i).suffix]);
+                    resultGUI.(['RBE', beamInfo(i).suffix]){f} = outDose.(['RBE', beamInfo(i).suffix]);
+                    resultGUI.(['effect', beamInfo(i).suffix]){f} = outDose.(['effect', beamInfo(i).suffix]);
+                end
                 resultGUI.samples = f;
             end
         else
