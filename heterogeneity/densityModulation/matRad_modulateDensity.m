@@ -151,7 +151,7 @@ if strcmp(pln.propHeterogeneity.mode,'TOPAS') && strcmp(mode, 'binomial')
             matRad_cfg.dispWarning('Lung modulation should be used with a separate section in the Schneider converter.\n');
     end
     
-    sampledDensities(1) = 0.001225;
+%     sampledDensities(1) = 0.001225;
 %     sampledDensities(sampledDensities<0.001225) = 0.001225;
     ct.sampledDensities = sampledDensities;
     ct.sampledLungIndices = lungIdx(sortIdx);
