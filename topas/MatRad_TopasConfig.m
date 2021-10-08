@@ -58,12 +58,12 @@ classdef MatRad_TopasConfig < handle
         
         %Image
         materialConverter = struct('mode','HUToWaterSchneider',...    %'CustomWaterRSP';
-            'densityCorrection',struct('mode','default',... %'default','TOPAS1','TOPAS2'
+            'densityCorrection',struct('mode','TOPAS1',... %'default','TOPAS1','TOPAS2'
             'addSection','none'),... %'none','lung','poisson','sampledDensities' (the last 2 only with modulation)
             'addTitanium',false,... %'false','true' (can only be used with advanced HUsections)
-            'HUSection','default',... %'default','advanced'
+            'HUSection','advanced',... %'default','advanced'
             'HUToMaterial','default'); %'default','simpleLung','advanced'
-
+        
         arrayOrdering = 'F'; %'C';
         rsp_basematerial = 'Water';
         rsp_vecLength = 10000; %Bins for RSP values when using RSP conversion with custom image converter
@@ -1142,31 +1142,55 @@ classdef MatRad_TopasConfig < handle
                         fprintf(fID,strjoin(['uv:Ge/Patient/SchneiderDensityFactor = %i',convertCharsToStrings(char('%1.01f '.*TOPASisFloat' + '%1.15g '.*~TOPASisFloat')'),'\n']),numel(densityCorrection.factor),densityCorrection.factor);
                         TOPASisFloat = mod(densityCorrection.factorOffset,1)==0;
                         fprintf(fID,strjoin(['uv:Ge/Patient/SchneiderDensityFactorOffset = %i',convertCharsToStrings(char('%1.01f '.*TOPASisFloat' + '%1.15g '.*~TOPASisFloat')'),'\n\n']),numel(densityCorrection.factorOffset),densityCorrection.factorOffset);
-%                         fprintf(fID,'uv:Ge/Patient/SchneiderDensityFactor = 8 0.001029700665188 0.000893 0.0 0.001169 0.000592 0.0005 0.0 0.0\n');                        
-%                         fprintf(fID,'uv:Ge/Patient/SchneiderDensityFactorOffset = 8 1000. 0. 1000. 0. 0. -2000. 0. 0.0\n\n');
-
+                        %                         fprintf(fID,'uv:Ge/Patient/SchneiderDensityFactor = 8 0.001029700665188 0.000893 0.0 0.001169 0.000592 0.0005 0.0 0.0\n');
+                        %                         fprintf(fID,'uv:Ge/Patient/SchneiderDensityFactorOffset = 8 1000. 0. 1000. 0. 0. -2000. 0. 0.0\n\n');
+                        
                         % define HU to material sections
                         obj.matRad_cfg.dispInfo('TOPAS: Writing HU to material sections\n');
                         switch obj.materialConverter.HUToMaterial
                             case 'default'
                                 HUToMaterial.sections = rspHlut(2,1);
                             case 'simple'
-                                if strcmp(obj.materialConverter.densityCorrection.addSection,'poisson')
-                                    HUToMaterial.sections = rspHlut(2,1);
-                                else
-                                    HUToMaterial.sections = [rspHlut(2,1) 0];
-                                end
+                                HUToMaterial.sections = [rspHlut(2,1) 0];
                             case 'advanced'
                                 HUToMaterial.sections = [-950 -120 -83 -53 -23 7 18 80 120 200 300 400 500 600 700 800 900 1000 1100 1200 1300 1400 1500];
                         end
                         HUToMaterial.sections = [densityCorrection.boundaries(1) HUToMaterial.sections densityCorrection.boundaries(2:end)];
                         % write HU to material sections
-%                         fprintf(fID,'i:Ge/Patient/MinImagingValue = %d\n',densityCorrection.boundaries(1));
+                        %                         fprintf(fID,'i:Ge/Patient/MinImagingValue = %d\n',densityCorrection.boundaries(1));
                         fprintf(fID,['iv:Ge/Patient/SchneiderHUToMaterialSections = %i ',repmat('%d ',1,numel(HUToMaterial.sections)),'\n'],numel(HUToMaterial.sections),HUToMaterial.sections);
                         % load defined material based on materialConverter.HUToMaterial
-                        fname = fullfile(obj.thisFolder,filesep,obj.converterFolder,filesep,obj.infilenames.matConv_Schneider_definedMaterials.(obj.materialConverter.HUToMaterial));
-                        materials = fileread(fname);
-                        fprintf(fID,'\n%s\n',materials);
+                        
+                        
+                        switch obj.materialConverter.HUToMaterial
+                            case 'default'
+                                fprintf(fID,'sv:Ge/Patient/SchneiderElements = 5 "Hydrogen" "Oxygen" "Nitrogen" "Carbon" "Phosphorus"\n');
+                                fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight1 = 5 0.0 0.23479269 0.76508170 0.00012561 0.0\n');
+                                fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight2 = 5 0.111894 0.888106 0.0 0.0 0.0\n');
+                                ExcitationEnergies = [85.7 78.0];
+                                if strcmp(obj.materialConverter.densityCorrection.addSection,'lung')
+                                    fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight3 = 5 0.10404040 0.75656566 0.03131313 0.10606061 0.00202020\n');
+                                    ExcitationEnergies = [ExcitationEnergies 75.3];
+                                end
+                                fprintf(fID,['dv:Ge/Patient/SchneiderMaterialMeanExcitationEnergy = %i',repmat(' %.6g',1,numel(ExcitationEnergies)),' eV\n'],numel(ExcitationEnergies),ExcitationEnergies);
+                                
+                            case 'simple'
+                                fprintf(fID,'sv:Ge/Patient/SchneiderElements = 5 "Hydrogen" "Oxygen" "Nitrogen" "Carbon" "Phosphorus"\n');
+                                fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight1 = 5 0.0 0.23479269 0.76508170 0.00012561 0.0\n');
+                                fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight2 = 5 0.10404040 0.75656566 0.03131313 0.10606061 0.00202020\n');
+                                fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight3 = 5 0.111894 0.888106 0.0 0.0 0.0\n');
+                                ExcitationEnergies = [85.7 75.3 78.0];
+                                if strcmp(obj.materialConverter.densityCorrection.addSection,'lung')
+                                    fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight4 = 5 0.10404040 0.75656566 0.03131313 0.10606061 0.00202020\n');
+                                    ExcitationEnergies = [ExcitationEnergies 75.3];
+                                end
+                                fprintf(fID,['dv:Ge/Patient/SchneiderMaterialMeanExcitationEnergy = %i',repmat(' %.6g',1,numel(ExcitationEnergies)),' eV\n'],numel(ExcitationEnergies),ExcitationEnergies);
+                                
+                            case 'advanced'
+                                fname = fullfile(obj.thisFolder,filesep,obj.converterFolder,filesep,obj.infilenames.matConv_Schneider_definedMaterials.advanced);
+                                materials = fileread(fname);
+                                fprintf(fID,'\n%s\n',materials);
+                        end
                         
                         switch obj.materialConverter.HUToMaterial
                             case 'advanced'
@@ -1175,13 +1199,13 @@ classdef MatRad_TopasConfig < handle
                                     fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight%i = 15 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0',counter);
                                     counter = counter + 1;
                                 end
-%                                 fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight%i = 15 0.10404040 0.10606061 0.75656566 0.03131313 0.0 0.00202020 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0',counter);
+                                %                                 fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight%i = 15 0.10404040 0.10606061 0.75656566 0.03131313 0.0 0.00202020 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0',counter);
                                 fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight%i = 15 0.101278 0.102310 0.028650 0.757072 0.000730 0.000800 0.002250 0.002660 0.0 0.000090 0.001840 0.001940 0.0 0.000370 0.000010',counter);
                         end
                         
                         
                         % write patient environment
-                        obj.matRad_cfg.dispInfo('TOPAS: Writing patient environment\n',fname);
+                        obj.matRad_cfg.dispInfo('TOPAS: Writing patient environment\n');
                         fprintf(fID,'\n# -- Patient parameters\n');
                         fprintf(fID,'s:Ge/Patient/Parent="World"\n');
                         fprintf(fID,'s:Ge/Patient/Type = "TsImageCube"\n');
@@ -1200,7 +1224,7 @@ classdef MatRad_TopasConfig < handle
                         fclose(fID);
                         
                         % write HU data
-                        obj.matRad_cfg.dispInfo('TOPAS: Export patient cube\n',fname);
+                        obj.matRad_cfg.dispInfo('TOPAS: Export patient cube\n');
                         if strcmp(obj.materialConverter.densityCorrection.addSection,'sampledDensities') && isfield(ct,'sampledLungIndices')
                             ct.cubeHU{1}(ct.sampledLungIndices) = ct.cubeHU{1}(ct.sampledLungIndices)-4999+densityCorrection.boundaries(end-1);
                         end
