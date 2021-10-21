@@ -131,7 +131,7 @@ elseif strcmp(mode, 'poisson')
 %     ct.cube{1}(lungIdx) = samples / max(samples);
 end
 
-if strcmp(pln.propHeterogeneity.mode,'TOPAS') && strcmp(mode, 'binomial')
+if strcmp(pln.propHeterogeneity.mode,'TOPAS') && strcmp(mode, 'binomial') && ~contains(pln.propMC.materialConverter.densityCorrection.addSection,'none')
     % only include different densities that are significantly different
     % (5th digit)
     lung = round(ct.cube{1}(lungIdx),5);

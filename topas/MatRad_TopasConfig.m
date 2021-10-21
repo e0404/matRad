@@ -135,7 +135,7 @@ classdef MatRad_TopasConfig < handle
             %   Default execution paths are set here
             
             obj.thisFolder = fileparts(mfilename('fullpath'));
-            obj.workingDir = ['E:/Paper/results/AugustTesting/' filesep];
+            obj.workingDir = ['E:/Paper/results/AugustTesting' filesep];
             %             obj.workingDir = [obj.thisFolder filesep 'MCrun' filesep];
             
             %Let's set some default commands taken from topas installation
@@ -1057,7 +1057,7 @@ classdef MatRad_TopasConfig < handle
                     end
                     
                 case 'HUToWaterSchneider'
-                    rspHlut = matRad_readHLUT('matRad_default.hlut');
+                    rspHlut = matRad_loadHLUT(ct,pln);
                     try
                         % define density correction
                         obj.matRad_cfg.dispInfo('TOPAS: Writing density correction\n');
@@ -1168,7 +1168,7 @@ classdef MatRad_TopasConfig < handle
                                 fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight1 = 5 0.0 0.23479269 0.76508170 0.00012561 0.0\n');
                                 fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight2 = 5 0.111894 0.888106 0.0 0.0 0.0\n');
                                 ExcitationEnergies = [85.7 78.0];
-                                if strcmp(obj.materialConverter.densityCorrection.addSection,'lung')
+                                if contains(obj.materialConverter.densityCorrection.addSection,{'lung','sampledDensities'})
                                     fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight3 = 5 0.10404040 0.75656566 0.03131313 0.10606061 0.00202020\n');
                                     ExcitationEnergies = [ExcitationEnergies 75.3];
                                 end
@@ -1226,7 +1226,7 @@ classdef MatRad_TopasConfig < handle
                         % write HU data
                         obj.matRad_cfg.dispInfo('TOPAS: Export patient cube\n');
                         if strcmp(obj.materialConverter.densityCorrection.addSection,'sampledDensities') && isfield(ct,'sampledLungIndices')
-                            ct.cubeHU{1}(ct.sampledLungIndices) = ct.cubeHU{1}(ct.sampledLungIndices)-4999+densityCorrection.boundaries(end-1);
+                            ct.cubeHU{1}(ct.sampledLungIndices) = ct.cubeHU{1}(ct.sampledLungIndices)-5000+densityCorrection.boundaries(end-1);
                         end
                         huCube = int32(permute(ct.cubeHU{1},permutation));
                         fID = fopen(fullfile(obj.workingDir, dataFile),'w');

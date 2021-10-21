@@ -3,11 +3,17 @@ function resultGUI = matRad_calcDoseModulated(ct,stf,pln,cst,param,weights,sampl
 global matRad_cfg;
 matRad_cfg =  MatRad_Config.instance();
 
+if nargin < 10
+    continuous = true;
+end
 if nargin < 9
     modulation = 'binomial';
-    continuous = true;
-elseif nargin < 10
-    continuous = true;
+end
+if nargin < 7
+    samples = 50;
+end
+if nargin < 8
+    Pmod = 800;
 end
 
 if iscell(param)
@@ -88,7 +94,7 @@ for i = 1:samples
             pln.propMC.numOfRuns = 1;
             resultGUI_mod = matRad_calcDoseDirectMC(ct_mod,stf,pln,cstR,weights,histories/samples,calcOpenstack);
             
-            if ~param{3}
+            if ~calcOpenstack
                 %     resultGUI.(['physicalDose',num2str(s)]) = resultGUI.(['physicalDose',num2str(s)]) + resultGUI_mod.physicalDose/s;
                 if strcmp(pln.bioParam.quantityOpt,'RBExD')
                     resultGUI.RBExD = resultGUI.RBExD + resultGUI_mod.RBExD/samples;
@@ -97,7 +103,7 @@ for i = 1:samples
                 std{i} = resultGUI_mod.physicalDose_std;
             end
         else
-            error('error')
+            error('Make sure you selected the correct environment for modulation.')
         end
     else %case matRad
         resultGUI_mod = matRad_calcDoseDirect(ct_mod,stf,pln,cstR,weights);
