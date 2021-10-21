@@ -74,7 +74,12 @@ end
 logLevel = matRad_cfg.logLevel;
 matRad_cfg.logLevel = 3;
     
-[ctR,cstR] = matRad_resampleTopasGrid(ct,cst,pln,stf);
+if iscell(param) %case TOPAS
+    [ctR,cstR] = matRad_resampleTopasGrid(ct,cst,pln,stf);
+else %case matRad
+    ctR = ct;
+    cstR = cst;
+end
 resultGUI.physicalDose = zeros(ct.cubeDim);
 if strcmp(pln.bioParam.quantityOpt,'RBExD')
     resultGUI.RBExD = zeros(ct.cubeDim);
