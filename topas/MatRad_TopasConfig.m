@@ -58,8 +58,8 @@ classdef MatRad_TopasConfig < handle
         
         %Image
         materialConverter = struct('mode','HUToWaterSchneider',...    %'CustomWaterRSP';
-            'densityCorrection',struct('mode','TOPAS1',... %'default','TOPAS1','TOPAS2'
-            'addSection','none'),... %'none','lung','poisson','sampledDensities' (the last 2 only with modulation)
+            'densityCorrection','TOPAS2',... %'default','TOPAS1','TOPAS2'
+            'addSection','none',... %'none','lung','poisson','sampledDensities' (the last 2 only with modulation)
             'addTitanium',false,... %'false','true' (can only be used with advanced HUsections)
             'HUSection','advanced',... %'default','advanced'
             'HUToMaterial','default'); %'default','simpleLung','advanced'
@@ -206,11 +206,11 @@ classdef MatRad_TopasConfig < handle
                 if isfield(pln.propMC.materialConverter,'mode')
                     obj.materialConverter.mode = pln.propMC.materialConverter.mode;
                 end
-                if isfield(pln.propMC.materialConverter,'densityCorrection') && isfield(pln.propMC.materialConverter.densityCorrection,'mode')
-                    obj.materialConverter.densityCorrection.mode = pln.propMC.materialConverter.densityCorrection.mode;
+                if isfield(pln.propMC.materialConverter,'densityCorrection')
+                    obj.materialConverter.densityCorrection = pln.propMC.materialConverter.densityCorrection;
                 end
-                if isfield(pln.propMC.materialConverter,'densityCorrection') && isfield(pln.propMC.materialConverter.densityCorrection,'addSection')
-                    obj.materialConverter.densityCorrection.addSection = pln.propMC.materialConverter.densityCorrection.addSection;
+                if isfield(pln.propMC.materialConverter,'addSection')
+                    obj.materialConverter.addSection = pln.propMC.materialConverter.addSection;
                 end
                 if isfield(pln.propMC.materialConverter,'HUSection')
                     obj.materialConverter.HUSection = pln.propMC.materialConverter.HUSection;
@@ -1061,7 +1061,7 @@ classdef MatRad_TopasConfig < handle
                     try
                         % define density correction
                         obj.matRad_cfg.dispInfo('TOPAS: Writing density correction\n');
-                        switch obj.materialConverter.densityCorrection.mode
+                        switch obj.materialConverter.densityCorrection
                             case 'default'
                                 densityCorrection.density = [];
                                 for i = 1:size(rspHlut,1)-1
@@ -1074,7 +1074,7 @@ classdef MatRad_TopasConfig < handle
                                 densityCorrection.boundaries = [rspHlut(1,1) numel(densityCorrection.density)-abs(rspHlut(1,1))];
                                 
                             case {'TOPAS1','TOPAS2'}
-                                fname = fullfile(obj.thisFolder,filesep,obj.converterFolder,filesep,obj.infilenames.(['matConv_Schneider_densityCorr_',obj.materialConverter.densityCorrection.mode]));
+                                fname = fullfile(obj.thisFolder,filesep,obj.converterFolder,filesep,obj.infilenames.(['matConv_Schneider_densityCorr_',obj.materialConverter.densityCorrection]));
                                 densityFile = fopen(fname);
                                 densityCorrection.density = fscanf(densityFile,'%f');
                                 fclose(densityFile);
@@ -1082,7 +1082,7 @@ classdef MatRad_TopasConfig < handle
 
                         end
                         % define additional density sections
-                        switch obj.materialConverter.densityCorrection.addSection
+                        switch obj.materialConverter.addSection
                             case 'lung'
                                 addSection = [0.00012 1.05];
                             case 'poisson'
@@ -1116,7 +1116,7 @@ classdef MatRad_TopasConfig < handle
                                 densityCorrection.factor = [0.001029700665188 0.000893 0 0.001169 0.000592 0.0005];
                                 densityCorrection.factorOffset = [1000 0 1000 0 0 -2000];
                                 
-                                if isfield(obj.materialConverter,'addTitanium') && obj.materialConverter.addTitanium
+                                if isfield(obj.materialConverter,'addTitanium') && obj.materialConverter.addTitanium %Titanium independent of set hounsfield unit!
                                     densityCorrection.density(end+1) = 1.00275;
                                     densityCorrection.boundaries(end+1) = densityCorrection.boundaries(end)+1;
                                     densityCorrection.offset(end+1) = 4.54;
@@ -1168,7 +1168,7 @@ classdef MatRad_TopasConfig < handle
                                 fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight1 = 5 0.0 0.23479269 0.76508170 0.00012561 0.0\n');
                                 fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight2 = 5 0.111894 0.888106 0.0 0.0 0.0\n');
                                 ExcitationEnergies = [85.7 78.0];
-                                if contains(obj.materialConverter.densityCorrection.addSection,{'lung','sampledDensities'})
+                                if contains(obj.materialConverter.addSection,{'lung','sampledDensities'})
                                     fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight3 = 5 0.10404040 0.75656566 0.03131313 0.10606061 0.00202020\n');
                                     ExcitationEnergies = [ExcitationEnergies 75.3];
                                 end
@@ -1180,7 +1180,7 @@ classdef MatRad_TopasConfig < handle
                                 fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight2 = 5 0.10404040 0.75656566 0.03131313 0.10606061 0.00202020\n');
                                 fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight3 = 5 0.111894 0.888106 0.0 0.0 0.0\n');
                                 ExcitationEnergies = [85.7 75.3 78.0];
-                                if strcmp(obj.materialConverter.densityCorrection.addSection,'lung')
+                                if strcmp(obj.materialConverter.addSection,'lung')
                                     fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight4 = 5 0.10404040 0.75656566 0.03131313 0.10606061 0.00202020\n');
                                     ExcitationEnergies = [ExcitationEnergies 75.3];
                                 end
@@ -1225,7 +1225,7 @@ classdef MatRad_TopasConfig < handle
                         
                         % write HU data
                         obj.matRad_cfg.dispInfo('TOPAS: Export patient cube\n');
-                        if strcmp(obj.materialConverter.densityCorrection.addSection,'sampledDensities') && isfield(ct,'sampledLungIndices')
+                        if strcmp(obj.materialConverter.addSection,'sampledDensities') && isfield(ct,'sampledLungIndices')
                             ct.cubeHU{1}(ct.sampledLungIndices) = ct.cubeHU{1}(ct.sampledLungIndices)-5000+densityCorrection.boundaries(end-1);
                         end
                         huCube = int32(permute(ct.cubeHU{1},permutation));

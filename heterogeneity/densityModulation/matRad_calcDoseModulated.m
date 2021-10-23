@@ -22,15 +22,16 @@ if iscell(param)
     calcOpenstack = param{3};
     
     if strcmp(pln.propHeterogeneity.mode,'TOPAS')
-        
-        pln.propHeterogeneity.mode = 'TOPAS';
-        pln.propMC.materialConverter.densityCorrection.mode = 'TOPAS2'; %'default','TOPAS1','TOPAS2'
+        %         pln.propMC.materialConverter.densityCorrection = 'TOPAS2'; %'default','TOPAS1','TOPAS2'
         pln.propMC.materialConverter.HUSection = 'advanced'; %'default','advanced'
-        pln.propMC.materialConverter.HUToMaterial = 'advanced'; %'default','simpleLung','advanced'
-        if strcmp(modulation,'poisson')
-            pln.propMC.materialConverter.densityCorrection.addSection = 'poisson';
-        else
-            pln.propMC.materialConverter.densityCorrection.addSection = 'sampledDensities'; %'none','lung','poisson','sampledDensities' (the last 2 only with modulation)
+        pln.propMC.materialConverter.HUToMaterial = 'default'; %'default','simpleLung','advanced'
+        if ~isfield(pln.propMC.materialConverter,'addSection')
+            if strcmp(modulation,'poisson')
+                pln.propMC.materialConverter.addSection = 'poisson';
+            else
+                pln.propMC.materialConverter.addSection = 'none'; %'none','lung','poisson','sampledDensities' (the last 2 only with modulation)
+                %             pln.propMC.materialConverter.densityCorrection.addSection = 'sampledDensities'; %'none','lung','poisson','sampledDensities' (the last 2 only with modulation)
+            end
         end
     else
         matRad_cfg.dispError('No sampling mode other than TOPAS implemented');

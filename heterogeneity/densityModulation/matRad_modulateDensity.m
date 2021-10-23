@@ -131,12 +131,12 @@ elseif strcmp(mode, 'poisson')
 %     ct.cube{1}(lungIdx) = samples / max(samples);
 end
 
-if strcmp(pln.propHeterogeneity.mode,'TOPAS') && strcmp(mode, 'binomial') && ~contains(pln.propMC.materialConverter.densityCorrection.addSection,'none')
+if strcmp(pln.propHeterogeneity.mode,'TOPAS') && strcmp(mode, 'binomial') && ~contains(pln.propMC.materialConverter.addSection,'none')
     % only include different densities that are significantly different
     % (5th digit)
     lung = round(ct.cube{1}(lungIdx),3);
     [numOfOccurences,sampledDensities] = groupcounts(lung);
-    switch pln.propMC.materialConverter.densityCorrection.addSection
+    switch pln.propMC.materialConverter.addSection
         case 'lung'
             ct.cubeHU{1}(lungIdx(lung == 1.05)) = 0;
             ct.cubeHU{1}(lungIdx(lung == 0)) = -999;
