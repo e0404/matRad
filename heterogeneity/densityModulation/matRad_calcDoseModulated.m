@@ -1,4 +1,4 @@
-function resultGUI = matRad_calcDoseModulated(ct,stf,pln,cst,param,weights,samples,Pmod,modulation,continuous)
+function [resultGUI,pln] = matRad_calcDoseModulated(ct,stf,pln,cst,param,weights,samples,Pmod,modulation,continuous)
 
 global matRad_cfg;
 matRad_cfg =  MatRad_Config.instance();
