@@ -153,8 +153,10 @@ if strcmp(pln.propHeterogeneity.mode,'TOPAS') && strcmp(mode, 'binomial') && ~co
     
 %     sampledDensities(1) = 0.001225;
     sampledDensities(sampledDensities<0.001225) = 0.001225;
-    ct.sampledDensities = sampledDensities;
-    ct.sampledLungIndices = lungIdx(sortIdx);
+    if strcmp(pln.propMC.materialConverter.addSection,'sampledDensities')
+        ct.sampledDensities = sampledDensities;
+        ct.sampledLungIndices = lungIdx(sortIdx);
+    end
 end
 
 ct.modulated = 1;
