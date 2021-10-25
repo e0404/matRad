@@ -75,7 +75,7 @@ env = matRad_getEnvironment();
 % for TOPAS we explicitly downsample the ct to the dose grid (might not
 % be necessary in future versions with separated grids)
 matRad_calcDoseInit;
-[ctR,cst] = matRad_resampleTopasGrid(ct,cst,pln,stf);
+[ctR,~] = matRad_resampleTopasGrid(ct,cst,pln,stf);
 % overwrite CT grid in dij in case of modulation.
 if isfield(ctR,'ctGrid')
     dij.ctGrid = ctR.ctGrid;
