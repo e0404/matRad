@@ -1,4 +1,4 @@
-function resultGUI = matRad_readOpenStack(folder)
+function resultGUI = matRad_TopasReadExternal(folder)
 
 if contains(folder,'*')% && all(modulation ~= false)
     folder = dir(folder);
@@ -33,12 +33,18 @@ for f = 1:length(folders)
             end
         else
             for d = 1:dij.numOfBeams
-                dij.physicalDose{ctScen,1}(:,d)    = sum(w)*reshape(topasCubes.(['physicalDose_beam',num2str(d)]),[],1);
-                dij.alpha{ctScen,1}(:,d)           = reshape(topasCubes.(['alpha_beam',num2str(d)]),[],1);
-                dij.beta{ctScen,1}(:,d)            = reshape(topasCubes.(['beta_beam',num2str(d)]),[],1);
+                dij.physicalDose{ctScen,1}(:,d)         = sum(w)*reshape(topasCubes.(['physicalDose_beam',num2str(d)]),[],1);
+                dij.alpha{ctScen,1}(:,d)                = reshape(topasCubes.(['alpha_beam',num2str(d)]),[],1);
+                dij.beta{ctScen,1}(:,d)                 = reshape(topasCubes.(['beta_beam',num2str(d)]),[],1);
+                if isfield(topasCubes,'doseToWater')
+                    dij.doseToWater{ctScen,1}(:,d)      = sum(w)*reshape(topasCubes.(['doseToWater_beam',num2str(d)]),[],1);
+                end
+                if isfield(topasCubes,'LET')
+                    dij.LET{ctScen,1}(:,d)              = reshape(topasCubes.(['LET_beam',num2str(d)]),[],1);
+                end
                 
-                dij.mAlphaDose{ctScen,1}(:,d)      = dij.physicalDose{ctScen,1}(:,d) .* dij.alpha{ctScen,1}(:,d);
-                dij.mSqrtBetaDose{ctScen,1}(:,d)   = sqrt(dij.physicalDose{ctScen,1}(:,d)) .* dij.beta{ctScen,1}(:,d);
+                dij.mAlphaDose{ctScen,1}(:,d)           = dij.physicalDose{ctScen,1}(:,d) .* dij.alpha{ctScen,1}(:,d);
+                dij.mSqrtBetaDose{ctScen,1}(:,d)        = sqrt(dij.physicalDose{ctScen,1}(:,d)) .* dij.beta{ctScen,1}(:,d);
             end
         end
         
