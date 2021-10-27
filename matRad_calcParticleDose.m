@@ -103,7 +103,13 @@ if pln.propHeterogeneity.calcHetero
     if pln.propHeterogeneity.useOriginalDepths
         machine.data = matRad_checkBaseData(machine.data);
     end
-    
+else
+    if isstruct(machine.data(1).Z)
+        matRad_cfg.dispWarning('Overriding fitted APM data with original depth dose.');
+        for k = 1:length(machine.data)
+            machine.data(k).Z = machine.data(k).Z.doseORG;
+        end
+    end
 end
 
 % helper function for energy selection
