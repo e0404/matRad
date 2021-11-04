@@ -27,6 +27,6 @@ close all;
 vString = matRad_version();
 
 matRad_cfg.dispInfo('You are running matRad %s with %s %s\n',vString,env,envver);
-clear vString env envver;
+clear env envver vString;
 
 
