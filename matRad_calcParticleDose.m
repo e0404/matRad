@@ -495,9 +495,13 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                         bixelAlphaDose =  bixelDose.L .* bixelDose.Z_Aij;
                                         bixelBetaDose  =  bixelDose.L .* bixelDose.Z_Bij;
                                     else
-                                        [bixelAlpha,bixelBeta] = pln.bioParam.calcLQParameter(currRadDepths,machine.data(energyIx),vTissueIndex_j(currIx,:),dij.ax(VdoseGrid(ix(currIx))),...
-                                            dij.bx(VdoseGrid(ix(currIx))),dij.abx(VdoseGrid(ix(currIx))));
-                                        
+                                        if isfield(bixelDose,'LET')
+                                            [bixelAlpha,bixelBeta] = pln.bioParam.calcLQParameter(currRadDepths,machine.data(energyIx),vTissueIndex_j(currIx,:),dij.ax(VdoseGrid(ix(currIx))),...
+                                                dij.bx(VdoseGrid(ix(currIx))),dij.abx(VdoseGrid(ix(currIx))),bixelDose.LET);
+                                        else
+                                            [bixelAlpha,bixelBeta] = pln.bioParam.calcLQParameter(currRadDepths,machine.data(energyIx),vTissueIndex_j(currIx,:),dij.ax(VdoseGrid(ix(currIx))),...
+                                                dij.bx(VdoseGrid(ix(currIx))),dij.abx(VdoseGrid(ix(currIx))));
+                                        end
                                         bixelAlphaDose =  bixelDose.physDose .* bixelAlpha;
                                         bixelBetaDose  =  bixelDose.physDose .* sqrt(bixelBeta);
                                     end

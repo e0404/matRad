@@ -184,6 +184,31 @@ if ~isempty(heteroCorrDepths) && modulateBioDose
     end
 end
 
+% LET convolution
+if ~isempty(heteroCorrDepths)
+    [~,lungDepthAtBraggPeakIx] = min(abs(radialDist_sq+(radDepths-baseData.peakPos).^2));
+    lungDepthAtBraggPeak = heteroCorrDepths(lungDepthAtBraggPeakIx);
+    heteroCorrSigmaSq = matRad_getHeterogeneityCorrSigmaSq(lungDepthAtBraggPeak);
+    
+    % define Gaussian around zero
+    resolution   = min(diff(baseData.depths));
+    gaussNumOfPoints = round(6*sqrt(heteroCorrSigmaSq)/resolution);
+    gaussWidth = linspace(-resolution*fix(gaussNumOfPoints/2), resolution*fix(gaussNumOfPoints/2), gaussNumOfPoints);
+    g = Gauss(gaussWidth,0,heteroCorrSigmaSq);
+        
+    % LET extrapolation to finer grid
+    x = min(baseData.depths)-3*sqrt(heteroCorrSigmaSq):resolution:max(baseData.depths)+3*sqrt(heteroCorrSigmaSq);
+    LET = matRad_interp1(baseData.depths,baseData.LET,x,'extrap');
+
+    % Convolution
+    bixel.LET = conv(LET,g/sum(g),'same');
+
+    % set resolution to original
+    bixel.LET = matRad_interp1(x,bixel.LET,baseData.depths);
+    
+    %      figure, plot(x,LET), hold on, plot(x,bixel.LET)
+end
+
 % check if we have valid dose values
 if any(isnan(bixel.physDose)) || any(bixel.physDose<0)
    error('Error in particle dose calculation.');
