@@ -98,16 +98,12 @@ end
 
 %% sending data to topas
 
-load([pln.radiationMode,'_',pln.machine]);
+load([pln.radiationMode,'_',pln.machine],'machine');
 topasConfig = MatRad_TopasConfig();
 % Create Base Data
 topasConfig.radiationMode = stf.radiationMode;
 
-if isstruct(machine.data(1).Z)
-    for i = 1:length(machine.data)
-        machine.data(i).Z = machine.data(i).Z.doseORG;
-    end
-end
+machine.data = matRad_overrideBaseData(machine.data);
 topasBaseData = MatRad_TopasBaseData(machine,stf);%,TopasConfig);
 
 topasConfig.numHistories = nCasePerBixel;

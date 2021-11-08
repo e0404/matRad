@@ -98,18 +98,10 @@ if pln.propHeterogeneity.calcHetero
     for shiftScen = 1:pln.multScen.numOfCtScen
         calcHeteroCorrStruct.cube{shiftScen}(lungVoxel(:,shiftScen)) = ct.cube{shiftScen}(lungVoxel(:,shiftScen));
     end
-    
-    
-    if pln.propHeterogeneity.useOriginalDepths
-        machine.data = matRad_checkBaseData(machine.data);
-    end
-else
-    if isstruct(machine.data(1).Z)
-        matRad_cfg.dispWarning('Overriding fitted APM data with original depth dose.');
-        for k = 1:length(machine.data)
-            machine.data(k).Z = machine.data(k).Z.doseORG;
-        end
-    end
+end
+
+if pln.propHeterogeneity.useOriginalDepths || ~pln.propHeterogeneity.calcHetero
+    machine.data = matRad_overrideBaseData(machine.data);
 end
 
 % helper function for energy selection
@@ -212,7 +204,7 @@ if pln.bioParam.bioOpt
     if strcmp(pln.bioParam.model,'LEM')
         if isfield(machine.data,'alphaX') && isfield(machine.data,'betaX')
             
-            matRad_cfg.dispInfo('\tloading biological base data...');
+            matRad_cfg.dispInfo('loading biological base data...');
             
             for i = 1:size(cst,1)
                 
@@ -237,7 +229,7 @@ if pln.bioParam.bioOpt
                 end
             end
             
-            matRad_cfg.dispInfo(' done.\n');
+            matRad_cfg.dispInfo('done.\n');
             
         else
             matRad_cfg.dispError('base data is incomplement - alphaX and/or betaX is missing');

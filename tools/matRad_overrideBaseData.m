@@ -1,9 +1,9 @@
-function baseData = matRad_checkBaseData(baseData)
+function baseData = matRad_overrideBaseData(baseData)
 % script to switch from APM (machine.data.Z is a struct) to "original"
 % calculation (machine.data.Z is double)
 %
 % call
-%   baseData = matRad_checkBaseData(baseData)
+%   baseData = matRad_overrideBaseData(baseData)
 %
 % input
 %   baseData:       matRad machine base data
@@ -25,10 +25,12 @@ function baseData = matRad_checkBaseData(baseData)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if isstruct(baseData(1).Z) && isfield(baseData(1).Z,'profileORG')
+    matRad_cfg.dispInfo('Overriding fitted APM data with original depth dose.');
     for i = 1:length(baseData)
         baseData(i).Z = baseData(i).Z.profileORG;
     end
 elseif isstruct(baseData(1).Z) && isfield(baseData(1).Z,'doseORG')
+    matRad_cfg.dispInfo('Overriding fitted APM data with original depth dose.');
     for i = 1:length(baseData)
         baseData(i).Z = baseData(i).Z.doseORG;
     end
@@ -38,3 +40,4 @@ else
     warning('Base data depths are already in the desired format.');
 end
 end
+
