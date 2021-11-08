@@ -121,7 +121,7 @@ cd(MCsquareFolder);
 if ~exist([MCsquareFolder filesep 'Materials'],'dir') || ~exist(fullfile(MCsquareFolder,'Materials','list.dat'),'file')
     matRad_cfg.dispInfo('First call of MCsquare: unzipping Materials...');
     unzip('Materials.zip');
-    matRad_cfg.dispInfo('Done');
+    matRad_cfg.dispInfo('Done!\n');
 end
 
 % Since MCsquare 1.1 only allows similar resolution in x&y, we do some

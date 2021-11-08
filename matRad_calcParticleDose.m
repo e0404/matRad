@@ -173,7 +173,7 @@ end
 
 if ~isfield(machine.meta, 'BAMStoIsoDist')
     BAMStoIsoDist = 1000;
-    matRad_cfg.dispWarning('Machine data does not contain BAMStoIsoDist. Using default value of %f mm\n.',BAMStoIsoDist);
+    matRad_cfg.dispWarning('Machine data does not contain BAMStoIsoDist. Using default value of %f mm.',BAMStoIsoDist);
 else
     BAMStoIsoDist = machine.meta.BAMStoIsoDist;
 end
@@ -229,7 +229,7 @@ if pln.bioParam.bioOpt
                 end
             end
             
-            matRad_cfg.dispInfo('done.\n');
+            matRad_cfg.dispInfo('Done!\n');
             
         else
             matRad_cfg.dispError('base data is incomplement - alphaX and/or betaX is missing');
@@ -285,15 +285,15 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
             % HETERO interpolate hetero depth cube to dose grid resolution
             heteroCorrDepthV = matRad_interpRadDepth...
                 (ct,VctGrid,VdoseGrid,dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z,heteroCorrDepthV);
-            matRad_cfg.dispInfo('done.\n');
+            matRad_cfg.dispInfo('Done!\n');
         end
         
         % Determine lateral cutoff
-        matRad_cfg.dispInfo('\tmatRad: calculate lateral cutoff...');
+        matRad_cfg.dispInfo('matRad: calculate lateral cutoff...');
         cutOffLevel = pln.propDoseCalc.lateralCutOff;
         visBoolLateralCutOff = 0;
         machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
-        matRad_cfg.dispInfo('done.\n');
+        matRad_cfg.dispInfo('Done!\n');
         
         for j = 1:stf(i).numOfRays % loop over all rays
             

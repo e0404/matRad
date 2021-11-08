@@ -24,13 +24,15 @@ function baseData = matRad_overrideBaseData(baseData)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+
 if isstruct(baseData(1).Z) && isfield(baseData(1).Z,'profileORG')
-    matRad_cfg.dispInfo('Overriding fitted APM data with original depth dose.');
+    matRad_cfg.dispInfo('Overriding fitted APM data with original depth dose.\n');
     for i = 1:length(baseData)
         baseData(i).Z = baseData(i).Z.profileORG;
     end
 elseif isstruct(baseData(1).Z) && isfield(baseData(1).Z,'doseORG')
-    matRad_cfg.dispInfo('Overriding fitted APM data with original depth dose.');
+    matRad_cfg.dispInfo('Overriding fitted APM data with original depth dose.\n');
     for i = 1:length(baseData)
         baseData(i).Z = baseData(i).Z.doseORG;
     end

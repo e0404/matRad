@@ -46,4 +46,4 @@ for i = 1:size(cst,1)            % loop over all structures
    end
 end
 
-matRad_cfg.dispInfo('done!\n');
+matRad_cfg.dispInfo('Done!\n');

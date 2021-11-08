@@ -44,7 +44,7 @@ geoDistVdoseGrid{1}= sqrt(sum(rot_coordsVdoseGrid.^2,2));
 % Calculate radiological depth cube
 matRad_cfg.dispInfo('matRad: calculate radiological depth cube... ');
 radDepthVctGrid = matRad_rayTracing(stf(i),ct,VctGrid,rot_coordsV,effectiveLateralCutoff);
-matRad_cfg.dispInfo('done.\n');
+matRad_cfg.dispInfo('Done!\n');
 
 % interpolate radiological depth cube to dose grid resolution
 radDepthVdoseGrid = matRad_interpRadDepth...
