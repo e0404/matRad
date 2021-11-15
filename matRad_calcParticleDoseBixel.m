@@ -1,7 +1,7 @@
-function bixel = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData, heteroCorrDepths, heteroCorrType, modulateBioDose, vTissueIndex)
-% matRad visualization of two-dimensional dose distributions 
+function bixel = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData, heteroCorrDepths, propHeterogeneity , vTissueIndex)
+% matRad visualization of two-dimensional dose distributions
 % on ct including segmentation
-% 
+%
 % call
 %   dose = matRad_calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData)
 %
@@ -43,6 +43,7 @@ sumGauss = @(x,mu,SqSigma,w) (1./sqrt(2*pi*ones(numel(x),1) .* SqSigma') .* ...
 % skip heterogeneity correction for other functions
 if nargin < 5
     heteroCorrDepths = [];
+    propHeterogeneity = [];
 end
 
 % add potential offset
@@ -118,7 +119,7 @@ if isstruct(baseData.Z)
     
     % add sigma if heterogeneity correction wanted
     if ~isempty(heteroCorrDepths)
-        switch heteroCorrType
+        switch propHeterogeneity.type
             case 'complete'
                 [~,lungDepthAtBraggPeakIx] = min(abs(radialDist_sq+(radDepths-baseData.peakPos).^2));
                 lungDepthAtBraggPeak = heteroCorrDepths(lungDepthAtBraggPeakIx);
@@ -160,7 +161,7 @@ end
 bixel.physDose = conversionFactor * bixel.L .* bixel.Z;
 
 %%
-if ~isempty(heteroCorrDepths) && modulateBioDose
+if ~isempty(heteroCorrDepths) && propHeterogeneity.modulateBioDose
     if isfield(baseData,'alphaDose')
         % preallocate space for alpha beta
         tissueClasses = unique(vTissueIndex);
@@ -180,36 +181,41 @@ if ~isempty(heteroCorrDepths) && modulateBioDose
             
         end
     else
-        error('No alpha dose defined in base data, use fitted APM file with pln.propHeterogeneity.useDoseCurves')
+        matRad_cfg.dispWarning('No alpha dose defined in base data, use fitted APM file with pln.propHeterogeneity.useDoseCurves');
     end
 end
 
-% LET convolution
-if ~isempty(heteroCorrDepths)
+if (~isempty(heteroCorrDepths) && propHeterogeneity.modulateLET) || (~isempty(propHeterogeneity) && propHeterogeneity.modulateBioDose)
+    
     [~,lungDepthAtBraggPeakIx] = min(abs(radialDist_sq+(radDepths-baseData.peakPos).^2));
     lungDepthAtBraggPeak = heteroCorrDepths(lungDepthAtBraggPeakIx);
-    heteroCorrSigmaSq = matRad_getHeterogeneityCorrSigmaSq(lungDepthAtBraggPeak);
+    bixel.heteroCorr.SigmaSq = matRad_getHeterogeneityCorrSigmaSq(lungDepthAtBraggPeak);
     
     % define Gaussian around zero
     resolution   = min(diff(baseData.depths));
-    gaussNumOfPoints = round(6*sqrt(heteroCorrSigmaSq)/resolution);
+    gaussNumOfPoints = round(6*sqrt(bixel.heteroCorr.SigmaSq)/resolution);
     gaussWidth = linspace(-resolution*fix(gaussNumOfPoints/2), resolution*fix(gaussNumOfPoints/2), gaussNumOfPoints);
-    g = Gauss(gaussWidth,0,heteroCorrSigmaSq);
-        
-    % LET extrapolation to finer grid
-    x = min(baseData.depths)-3*sqrt(heteroCorrSigmaSq):resolution:max(baseData.depths)+3*sqrt(heteroCorrSigmaSq);
-    LET = matRad_interp1(baseData.depths,baseData.LET,x,'extrap');
-
-    % Convolution
-    bixel.LET = conv(LET,g/sum(g),'same');
-
-    % set resolution to original
-    bixel.LET = matRad_interp1(x,bixel.LET,baseData.depths);
+    bixel.heteroCorr.Gauss = Gauss(gaussWidth,0,bixel.heteroCorr.SigmaSq);
+    bixel.heteroCorr.fineGrid = min(baseData.depths)-3*sqrt(bixel.heteroCorr.SigmaSq):resolution:max(baseData.depths)+3*sqrt(bixel.heteroCorr.SigmaSq);
+    bixel.heteroCorr.coarseGrid = baseData.depths;
     
+end
+
+% LET convolution
+if ~isempty(heteroCorrDepths) && propHeterogeneity.modulateLET   
+
+    % LET extrapolation to finer grid
+    LET = matRad_interp1(bixel.heteroCorr.coarseGrid,baseData.LET,bixel.heteroCorr.fineGrid,'extrap');
+    
+    % Convolution
+    bixel.LET = conv(LET,bixel.heteroCorr.Gauss/sum(bixel.heteroCorr.Gauss),'same');
+    
+    % set resolution to original
+    bixel.LET = matRad_interp1(bixel.heteroCorr.fineGrid,bixel.LET,bixel.heteroCorr.coarseGrid);
     %      figure, plot(x,LET), hold on, plot(x,bixel.LET)
 end
 
 % check if we have valid dose values
 if any(isnan(bixel.physDose)) || any(bixel.physDose<0)
-   error('Error in particle dose calculation.');
-end 
+    error('Error in particle dose calculation.');
+end

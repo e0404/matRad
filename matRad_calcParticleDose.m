@@ -57,6 +57,12 @@ else
     if ~isfield(pln.propHeterogeneity,'modulateBioDose')
         pln.propHeterogeneity.modulateBioDose = matRad_cfg.propHeterogeneity.defaultModulateBioDose;
     end
+    if ~isfield(pln.propHeterogeneity,'modulateLET')
+        pln.propHeterogeneity.modulateLET = matRad_cfg.propHeterogeneity.defaultModulateLET;
+        if ~pln.bioParam.bioOpt
+            pln.propHeterogeneity.modulateLET = false;
+        end
+    end
 end
 
 if pln.propHeterogeneity.calcHetero
@@ -451,8 +457,8 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                         sigmaIni_sq, ...
                                         machine.data(energyIx), ...
                                         currHeteroCorrDepths, ...
-                                        pln.propHeterogeneity.type, ...
-                                        pln.propHeterogeneity.modulateBioDose, vTissueIndex_j(currIx));
+                                        pln.propHeterogeneity, ...
+                                        vTissueIndex_j(currIx));
                                 else
                                     bixelDose = matRad_calcParticleDoseBixel(...
                                         currRadDepths, ...
@@ -487,7 +493,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                         bixelAlphaDose =  bixelDose.L .* bixelDose.Z_Aij;
                                         bixelBetaDose  =  bixelDose.L .* bixelDose.Z_Bij;
                                     else
-                                        if isfield(bixelDose,'LET')
+                                        if isfield(bixelDose,'LET') && pln.propHeterogeneity.modulateLET
                                             [bixelAlpha,bixelBeta] = pln.bioParam.calcLQParameter(currRadDepths,machine.data(energyIx),vTissueIndex_j(currIx,:),dij.ax(VdoseGrid(ix(currIx))),...
                                                 dij.bx(VdoseGrid(ix(currIx))),dij.abx(VdoseGrid(ix(currIx))),bixelDose.LET);
                                         else
@@ -498,6 +504,20 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                         bixelBetaDose  =  bixelDose.physDose .* sqrt(bixelBeta);
                                     end
                                     
+                                    if pln.propHeterogeneity.modulateBioDose
+                                        % extrapolation to finer grid
+                                        alphaDoseFine = matRad_interp1(bixelDose.heteroCorr.coarseGrid,bixelAlphaDose,bixelDose.heteroCorr.fineGrid,'extrap');
+                                        betaDoseFine = matRad_interp1(bixelDose.heteroCorr.coarseGrid,bixelAlphaDose,bixelDose.heteroCorr.fineGrid,'extrap');
+                                        
+                                        % Convolution
+                                        alphaDoseConv = conv(alphaDoseFine,bixelDose.heteroCorr.Gauss/sum(bixelDose.heteroCorr.Gauss),'same');
+                                        betaDoseConv = conv(betaDoseFine,bixelDose.heteroCorr.Gauss/sum(bixelDose.heteroCorr.Gauss),'same');
+                                        
+                                        % set resolution to original
+                                        bixelAlphaDose = matRad_interp1(bixelDose.heteroCorr.fineGrid,alphaDoseConv,bixelDose.heteroCorr.coarseGrid);
+                                        bixelBetaDose = matRad_interp1(bixelDose.heteroCorr.fineGrid,betaDoseConv,bixelDose.heteroCorr.coarseGrid);
+                                    end
+                                        
                                     bixelAlpha(isnan(bixelAlpha)) = 0;
                                     bixelBeta(isnan(bixelBeta)) = 0;
                                     

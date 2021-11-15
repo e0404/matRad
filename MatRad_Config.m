@@ -180,7 +180,8 @@ classdef MatRad_Config < handle
             obj.propHeterogeneity.defaultType = 'complete'; % 'depthBased','voxelwise'
             obj.propHeterogeneity.defaultCalcHetero = true;
             obj.propHeterogeneity.defaultUseOriginalDepths = false; % use original base data depths instead of fitted ones
-            obj.propHeterogeneity.defaultModulateBioDose = false; % use alpha beta curves for RBE
+            obj.propHeterogeneity.defaultModulateBioDose = false; % directly modulate alpha beta curves for RBE
+            obj.propHeterogeneity.defaultModulateLET = true;
 
             obj.defaults.samplingScenarios = 25;
             
