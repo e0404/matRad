@@ -62,28 +62,30 @@ if ((sum(newSpots) ~= numel(w)) && sum(newSpots) ~= dij.totalNumOfBixels) && any
     beamNumIdx = [0;beamNumIdx(2:end)-1;dij.totalNumOfBixels];
     
     for b = 1:dij.numOfBeams
-        [rayCnt,rayIdx] = unique(dij.rayNum(beamNumIdx(b)+1:beamNumIdx(b+1)));
-        dij.numOfRaysPerBeam(b) = numel(rayCnt);
+        currRaysInBeam = dij.rayNum(beamNumIdx(b)+1:beamNumIdx(b+1));
+        currBixelsInRay = dij.bixelNum(beamNumIdx(b)+1:beamNumIdx(b+1));
+        [rayCnt,rayIdx] = unique(currRaysInBeam);
         
         if exist('stf')
-            numOfBixelsPerRay = groupcounts(dij.rayNum(beamNumIdx(b)+1:beamNumIdx(b+1)));
+            numOfBixelsPerRay = groupcounts(currRaysInBeam);
             cutRays = ismember([1:dij.numOfRaysPerBeam(b)]',rayCnt);
             if any(~cutRays)
                 stf(b).ray = stf(b).ray(cutRays);
                 stf(b).numOfRays = sum(cutRays);
+                stf(b).numOfBixelsPerRay = numOfBixelsPerRay;
             end
-            bixelsCurrRay = dij.bixelNum(beamNumIdx(b)+1:beamNumIdx(b+1));
             for i = 1:stf(b).numOfRays
-                bixelCurrRay{i} = bixelsCurrRay(rayIdx(i):rayIdx(i)+numOfBixelsPerRay(i)-1);
+                bixelCurrRay{i} = currBixelsInRay(rayIdx(i):rayIdx(i)+numOfBixelsPerRay(i)-1);
             end
             for f = 1:stf(b).numOfRays
                 stf(b).ray(f).energy = stf(b).ray(f).energy(bixelCurrRay{f});
                 stf(b).ray(f).focusIx = stf(b).ray(f).focusIx(bixelCurrRay{f});
                 stf(b).ray(f).rangeShifter = stf(b).ray(f).rangeShifter(bixelCurrRay{f});
             end
-            stf(b).numOfBixelsPerRay = numOfBixelsPerRay';
-            stf(b).totalNumOfBixels = sum(numOfBixelsPerRay);
+            stf(b).totalNumOfBixels = sum(stf(b).numOfBixelsPerRay);
         end
+        
+        dij.numOfRaysPerBeam(b) = numel(rayCnt);
     end
     
     dij.totalNumOfRays = sum(dij.numOfRaysPerBeam);
