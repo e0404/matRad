@@ -261,9 +261,9 @@ classdef matRad_PhotonSVDPencilBeamDoseEngine < DoseEngines.matRad_AnalyticalPen
                     else
                         %For some reason the use of interpn here is much faster
                         %than using interp2 in Octave
-                        Interp_kernel1 = @(x,y) interpn(convMx_X(1,:),convMx_Z(:,1),convMx1,x,y,'linear',NaN);
-                        Interp_kernel2 = @(x,y) interpn(convMx_X(1,:),convMx_Z(:,1),convMx2,x,y,'linear',NaN);
-                        Interp_kernel3 = @(x,y) interpn(convMx_X(1,:),convMx_Z(:,1),convMx3,x,y,'linear',NaN);
+                        Interp_kernel1 = @(x,y) interpn(convMx_X(1,:),convMx_Z(:,1),convMx1',x,y,'linear',NaN);
+                        Interp_kernel2 = @(x,y) interpn(convMx_X(1,:),convMx_Z(:,1),convMx2',x,y,'linear',NaN);
+                        Interp_kernel3 = @(x,y) interpn(convMx_X(1,:),convMx_Z(:,1),convMx3',x,y,'linear',NaN);
                     end
                 end
 
@@ -304,9 +304,9 @@ classdef matRad_PhotonSVDPencilBeamDoseEngine < DoseEngines.matRad_AnalyticalPen
                         else
                             %For some reason the use of interpn here is much faster
                             %than using interp2 in Octave
-                            Interp_kernel1 = @(x,y) interpn(convMx_X(1,:),convMx_Z(:,1),convMx1,x,y,'linear',NaN);
-                            Interp_kernel2 = @(x,y) interpn(convMx_X(1,:),convMx_Z(:,1),convMx2,x,y,'linear',NaN);
-                            Interp_kernel3 = @(x,y) interpn(convMx_X(1,:),convMx_Z(:,1),convMx3,x,y,'linear',NaN);
+                            Interp_kernel1 = @(x,y) interpn(convMx_X(1,:),convMx_Z(:,1),convMx1',x,y,'linear',NaN);
+                            Interp_kernel2 = @(x,y) interpn(convMx_X(1,:),convMx_Z(:,1),convMx2',x,y,'linear',NaN);
+                            Interp_kernel3 = @(x,y) interpn(convMx_X(1,:),convMx_Z(:,1),convMx3',x,y,'linear',NaN);
                         end
 
                     end
