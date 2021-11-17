@@ -34,10 +34,7 @@ classdef MatRad_Config < handle
         
         %Disable GUI
         disableGUI = false;
-        
-        %full root path to matRad
-        matRadRoot;
-        
+                
     end
     
     properties (SetAccess = private)
@@ -50,6 +47,12 @@ classdef MatRad_Config < handle
         isOctave; %Helper bool to check for Octave
         isMatlab; %Helper bool to check for Matlab
         matRad_version; %MatRad version string
+
+        matRadRoot; %Path to matRadRoot
+    end
+    
+    properties (SetAccess = private)
+        
     end
     
     methods (Access = private)
