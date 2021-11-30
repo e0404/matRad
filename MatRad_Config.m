@@ -49,9 +49,9 @@ classdef MatRad_Config < handle
         isMatlab; %Helper bool to check for Matlab
     end
     
-    properties (Constant)
-        matRadRoot = fileparts(mfilename('fullpath'));
-    end
+    properties (SetAccess = private)
+        matRadRoot;
+    end    
     
     methods (Access = private)
         function obj = MatRad_Config()
@@ -59,6 +59,9 @@ classdef MatRad_Config < handle
             %  The configuration is implemented as a singleton and used globally
             %  Therefore its constructor is private
             %  For instantiation, use the static MatRad_Config.instance();
+            
+            obj.matRadRoot = fileparts(mfilename('fullpath'));
+            addpath(genpath(obj.matRadRoot));
             
             %Set Version
             obj.getEnvironment();
@@ -307,6 +310,7 @@ classdef MatRad_Config < handle
                 
             end
         end
+        
     end
     
     methods(Static)
