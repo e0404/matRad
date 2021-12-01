@@ -18,23 +18,27 @@ classdef (Abstract) matRad_AnalyticalPencilBeamEngine < DoseEngines.matRad_DoseE
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
+    properties
+       keepRadDepthCubes = false; 
+    end
+    
     properties (SetAccess = protected, GetAccess = public)
-        
         pbCalcMode; % fine sampling mode
         
         doseTmpContainer;   % temporary container for dose calculation results
-          
-        geoDistVdoseGrid;   % geometric distance in dose grid
-        rot_coordsVdoseGrid;    % Rotate coordinates for gantry movement
-        radDepthsMat;   % radiological depth cube container
-        radDepthVdoseGrid;  % grid for radiologica depth cube
-       
+  
         effectiveLateralCutoff; % lateral cutoff for raytracing and geo calculations
-        
         bixelsPerBeam;  % number of bixel per energy beam
-        
-        rotMat_system_T; % rotation matrix
-        
+                
+        radDepthCubes; %only stored if property set accordingly)
+    end
+    
+    properties (Access = protected)
+        rotMat_system_T; % rotation matrix for current beam
+        geoDistVdoseGrid;   % geometric distance in dose grid for current beam
+        rot_coordsVdoseGrid;    % Rotate coordinates for gantry movement for current beam
+        radDepthVdoseGrid;  % grid for radiologica depth cube for current beam
+        radDepthCube;   % radiological depth cube for current beam
     end
     
     % Should be abstract methods but in order to satisfy the compatibility
@@ -138,21 +142,23 @@ classdef (Abstract) matRad_AnalyticalPencilBeamEngine < DoseEngines.matRad_DoseE
             obj.geoDistVdoseGrid{1}= sqrt(sum(rot_coordsVdoseGrid.^2,2));
             % Calculate radiological depth cube
             matRad_cfg.dispInfo('matRad: calculate radiological depth cube... ');
-            if strcmp(obj.pbCalcMode, 'fineSampling')
-                [radDepthVctGrid, obj.radDepthsMat] = matRad_rayTracing(stf(i),ct,obj.VctGrid,rot_coordsV,obj.effectiveLateralCutoff);
+            if strcmp(obj.pbCalcMode, 'fineSampling') || obj.keepRadDepthCubes
+                [radDepthVctGrid, obj.radDepthCube] = matRad_rayTracing(stf(i),ct,obj.VctGrid,rot_coordsV,obj.effectiveLateralCutoff);
+                obj.radDepthCube{1} = matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z, obj.radDepthCube{1}, ...
+                                                dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest');
             else
                 radDepthVctGrid = matRad_rayTracing(stf(i),ct,obj.VctGrid,rot_coordsV,obj.effectiveLateralCutoff);
             end
-            matRad_cfg.dispInfo('done.\n');
-
+            
             % interpolate radiological depth cube to dose grid resolution
             obj.radDepthVdoseGrid = matRad_interpRadDepth...
                 (ct,1,obj.VctGrid,obj.VdoseGrid,dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z,radDepthVctGrid);
+            
+            matRad_cfg.dispInfo('done.\n');
 
-            if exist('radDepthsMat', 'var')
-                % interpolate radiological depth cube used for fine sampling to dose grid resolution
-                obj.radDepthsMat{1} = matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z, obj.radDepthsMat{1}, ...
-                                                dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest');
+            %Keep rad depth cube if desired
+            if obj.keepRadDepthCubes
+                obj.radDepthCubes{i} = obj.radDepthCube;
             end
 
             % limit rotated coordinates to positions where ray tracing is availabe
