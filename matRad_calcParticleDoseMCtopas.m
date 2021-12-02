@@ -51,6 +51,43 @@ if isfield(pln,'propMC') && isfield(pln.propMC,'outputVariance')
     matRad_cfg.dispWarning('Variance scoring for TOPAS not yet supported.');
 end
 
+if isfield(pln,'propMC') && isfield(pln.propMC,'config')        
+    if isa(pln.propMC.config,'MatRad_TopasConfig')
+        matRad_cfg.dispInfo('Using given Topas Configuration in pln.propMC.config!\n');
+        topasConfig = pln.propMC.config;
+    else 
+        %Create a default instance of the configuration
+        topasConfig = MatRad_TopasConfig();
+        
+        %Overwrite parameters
+        %mc = metaclass(topasConfig); %get metaclass information to check if we can overwrite properties
+        
+        if isstruct(pln.propMC.config)
+            props = fieldnames(pln.propMC.config);
+            for fIx = 1:numel(props)
+                fName = props{fIx};
+                if isprop(topasConfig,fName)
+                    %We use a try catch block to catch errors when trying
+                    %to overwrite protected/private properties instead of a
+                    %metaclass approach
+                    try 
+                        topasConfig.(fName) = pln.propMC.config.(fName);
+                    catch
+                        matRad_cfg.dispWarning('Property ''%s'' for MatRad_TopasConfig will be omitted due to protected/private access or invalid value.',fName);
+                    end
+                else
+                    matRad_cfg.dispWarning('Unkown property ''%s'' for MatRad_TopasConfig will be omitted.',fName);
+                end
+            end
+        else
+            matRad_cfg.dispError('Invalid Configuration in pln.propMC.config');
+        end
+    end
+else
+    topasConfig = MatRad_TopasConfig();
+end
+        
+
 if ~calcDoseDirect
     matRad_cfg.dispError('matRad so far only supports direct dose calculation for TOPAS!\n');
 end
@@ -58,10 +95,6 @@ end
 if ~isfield(pln.propStf,'useRangeShifter') 
     pln.propStf.useRangeShifter = false;
 end
-
-%if pln.propStf.useRangeShifter
-%    matRad_cfg.dispError('matRad''s TOPAS interface does not support range shifters yet!\n');
-%end
 
 env = matRad_getEnvironment();
 
@@ -93,8 +126,7 @@ ctR.z = dij.doseGrid.z;
 %% sending data to topas
 
 load([pln.radiationMode,'_',pln.machine]);
-topasConfig = MatRad_TopasConfig();
-% Create Base Data
+
 topasBaseData = MatRad_TopasBaseData(machine,stf);%,TopasConfig);
 
 topasConfig.numHistories = nCasePerBixel;
