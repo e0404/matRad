@@ -31,7 +31,7 @@ classdef MatRad_MCemittanceBaseData
         monteCarloData  %MC Phase space data struct
         selectedFocus   %array containing selected focus indices per energy
         FWHMatIso       %array containing FWHM values at iscenter for every energy
-        
+        matRad_cfg      %matRad config
         rangeShifters   %Stores range shifters
     end
     
@@ -57,7 +57,7 @@ classdef MatRad_MCemittanceBaseData
                 obj = obj.getRangeShiftersFromStf(stf);
             end
             
-            matRad_cfg = MatRad_Config.instance();
+            obj.matRad_cfg = MatRad_Config.instance();
             
             obj.machine = machine;
             obj.problemSigma = false;
@@ -66,7 +66,7 @@ classdef MatRad_MCemittanceBaseData
             if isfield(machine.meta,'BAMStoIsoDist')
                 obj.nozzleToIso = machine.meta.BAMStoIsoDist;
             else
-                matRad_cfg.dispWarning('No information on BAMS to isocenter distance. Using generic value of 500mm');
+                obj.matRad_cfg.dispWarning('No information on BAMS to isocenter distance. Using generic value of 500mm');
                 obj.nozzleToIso = 500;
             end
             
@@ -116,7 +116,7 @@ classdef MatRad_MCemittanceBaseData
                     
                 if isfield(machine.data(i).initFocus,'Emittance') 
                     data = [];
-                    opticsData.ProtonsMU        = ones(1,4) * 1e6;   
+                    opticsData.ProtonsMU        = ones(size(machine.data(i).initFocus.Emittance.weight.first)) * 1e6;   
                     opticsData.Weight1          = machine.data(i).initFocus.Emittance.weight.first(:);
                     opticsData.SpotSize1x       = machine.data(i).initFocus.Emittance.spotsize.x1(:);
                     opticsData.Divergence1x     = machine.data(i).initFocus.Emittance.divergence.x1(:);
@@ -168,9 +168,10 @@ classdef MatRad_MCemittanceBaseData
             %throw out warning if there was a problem in calculating the
             %width of the Bragg peak in obj.fitBeamOpticsForEnergy
             if obj.problemSigma
-                matRad_cfg.dispWarning('Calculation of FWHM of bragg peak in base data not possible! Using simple approximation for energy spread');
+                obj.matRad_cfg.dispWarning('Calculation of FWHM of bragg peak in base data not possible! Using simple approximation for energy spread');
             end
         end
+        
         
         function mcDataEnergy = fitPhaseSpaceForEnergy(obj,energyIx)
             %function to calculate mean energy and energy spread used by
@@ -249,6 +250,9 @@ classdef MatRad_MCemittanceBaseData
             mcDataEnergy.EnergySpread = ones(1, size(obj.machine.data(1).initFocus.dist,1)) * sqrt(energySpread);
         end
         
+        
+        
+        
         function mcDataOptics = fitBeamOpticsForEnergy(obj,energyIx, focusIndex)
             %function to calculate beam optics used by mcSquare for given
             %energy
@@ -261,27 +265,53 @@ classdef MatRad_MCemittanceBaseData
             sigma = obj.machine.data(i).initFocus.sigma(focusIndex,:);
             sigmaSq = sigma.^2;                        
             
-            %fit Courant-Synder equation to data using ipopt, formulae
-            %given in mcSquare documentation
-            sigmaNull = sqrt(interp1(z,sigmaSq,0));
             
-            qRes = @(rho, sigmaT) (sigmaSq -  (sigmaNull^2 - 2*sigmaNull*rho*sigmaT.*z + sigmaT^2.*z.^2));
+            % fitting for either matlab or octave_core_file_limit
+            if ~obj.matRad_cfg.isOctave
+      
+                %fit Courant-Synder equation to data using ipopt, formulae
+                %given in mcSquare documentation
+                sigmaNull = sqrt(interp1(z,sigmaSq,0));
+                
+                qRes = @(rho, sigmaT) (sigmaSq -  (sigmaNull^2 - 2*sigmaNull*rho*sigmaT.*z + sigmaT^2.*z.^2));
+                
+                funcs.objective = @(x) sum(qRes(x(1), x(2)).^2);
+                funcs.gradient  = @(x) [  2 * sum(qRes(x(1), x(2)) .* (2 * sigmaNull * x(2) * z));
+                    2 * sum(qRes(x(1), x(2)) .* (2 * sigmaNull * x(1) * z  - 2 * x(2) * z.^2))];
+                
+                options.lb = [-0.99, -Inf];
+                options.ub = [ 0.99,  Inf];
+                
+                options.ipopt.hessian_approximation = 'limited-memory';
+                options.ipopt.limited_memory_update_type = 'bfgs';
+                options.ipopt.print_level = 1;
+                
+                start = [0.9; 0.1];
+                [result, ~] = ipopt (start, funcs, options);
+                rho    = result(1);
+                sigmaT = result(2);
             
-            funcs.objective = @(x) sum(qRes(x(1), x(2)).^2);
-            funcs.gradient  = @(x) [  2 * sum(qRes(x(1), x(2)) .* (2 * sigmaNull * x(2) * z));
-                2 * sum(qRes(x(1), x(2)) .* (2 * sigmaNull * x(1) * z  - 2 * x(2) * z.^2))];
+            else
             
-            options.lb = [-0.99, -Inf];
-            options.ub = [ 0.99,  Inf];
-            
-            options.ipopt.hessian_approximation = 'limited-memory';
-            options.ipopt.limited_memory_update_type = 'bfgs';
-            options.ipopt.print_level = 1;
-            
-            start = [0.9; 0.1];
-            [result, ~] = ipopt (start, funcs, options);
-            rho    = result(1);
-            sigmaT = result(2);
+                %fit Courant-Synder equation to data using ipopt, formulae
+                %given in mcSquare documentation
+                sigmaNull = sqrt(interp1(z,sigmaSq,0));
+                
+                qRes = @(rho, sigmaT) (sigmaSq -  (sigmaNull^2 - 2*sigmaNull*rho*sigmaT.*z + sigmaT^2.*z.^2));
+                
+                phi{1} = @(x) sum(qRes(x(1), x(2)).^2);
+                phi{2} = @(x) [  2 * sum(qRes(x(1), x(2)) .* (2 * sigmaNull * x(2) * z));
+                    2 * sum(qRes(x(1), x(2)) .* (2 * sigmaNull * x(1) * z  - 2 * x(2) * z.^2))];
+                
+                lb = [-0.99, -Inf];
+                ub = [ 0.99,  Inf];
+                     
+                start = [0.9; 0.1];
+                [result, ~] = sqp (start, phi, [], [], lb, ub);
+                rho    = result(1);
+                sigmaT = result(2);
+              
+            end
             
             %calculate divergence, spotsize and correlation at nozzle
             DivergenceAtNozzle  = sigmaT;
@@ -318,6 +348,8 @@ classdef MatRad_MCemittanceBaseData
             mcDataOptics.Correlation2y = 0;
 %             mcDataOptics.FWHMatIso = 2.355 * sigmaNull;
         end
+        
+        
         
         function obj = saveMatradMachine(obj,name)
             %save previously calculated monteCarloData in new baseData file
