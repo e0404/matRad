@@ -29,30 +29,10 @@
 % matRad root directory with all its subdirectories is added to the Matlab 
 % search path.
 
-addpath(fileparts(pwd));
 matRad_rc;
-
 load('PROSTATE.mat');
 
-%% I - view ct
-% The file PROSTATE.mat contains two Matlab variables. Let's check what we 
-% have just imported. First, the 'ct' variable comprises the ct cube along
-% with some meta information describing properties of the ct cube (cube 
-% dimensions, resolution, number of CT scenarios). Please note that 
-%multiple ct cubes (e.g. 4D CT) can be stored in the cell array ct.cube{}
-display(ct);
-
-%% I - view cst
-% The 'cst' cell array defines volumes of interests along with information 
-% required for optimization. Each row belongs to one certain volume of 
-% interest (VOI), whereas each column defines different properties. 
-% Specifically, the second and third column  show the name and the type of 
-% the structure. The type can be set to OAR, TARGET or IGNORED. The fourth 
-% column contains a linear index vector that lists all voxels belonging to 
-% a certain VOI.
-display(cst);
-
-%% I - update dose objectoves for brachytherapy
+%% I - update/set dose objectives for brachytherapy
 % The sixth column represents dose objectives and constraints for
 % optimization: First, the objective function for the individual structure
 % is chosen, its parameters denote doses that should not be tranceeded
@@ -62,24 +42,30 @@ display(cst);
 display(cst{6,6}{1});
 
 % Following frequently prescribed planning doses of 15 Gy
-% (Med Phys 39.5, pp. 2904–2929) objectives can be updated to:
-
-cst{6,6}{1}.parameters =  {15};
-cst{6,6}{1}.className  =  'DoseObjectives.matRad_SquaredUnderdosing';
-cst{8,6}{1}.parameters =  {7.5};
-cst{9,6}{1}.parameters =  {7.5};
-cst{1,6}{1}.parameters =  {7.5};
-
-cst{5,6}{1}            =  cst{6,6}{1};
-cst{5,3}               =  'TARGET';
-cst{6,6}               =  [];
-cst{6,3}               =  'OAR';
+% (https://pubmed.ncbi.nlm.nih.gov/22559663/) objectives can be updated to:
 
 % the planning target was changed to the clinical segmentation of the
 % prostate bed.
+cst{5,3}               =  'TARGET';
+cst{5,6}{1} = struct(DoseObjectives.matRad_SquaredUnderdosing(100,15));
+cst{5,6}{2} = struct(DoseObjectives.matRad_SquaredOverdosing(100,17.5));
+
 % In this example, the lymph nodes will not be part of the treatment:
 cst{7,6}               =  [];
 cst{7,3}               =  'OAR';
+
+%Remove objectives on PTV
+cst{6,3}               =  'OAR';
+cst{6,6}               =  [];
+
+% Rectum Objective
+cst{1,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(10,7.5));
+
+% Bladder Objective
+cst{8,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(10,7.5));
+
+% Body NT objective
+cst{9,6}{1} = struct(DoseObjectives.matRad_MeanDose(1));
 
 
 %% II.1 Treatment Plan
@@ -156,9 +142,9 @@ pln.propStf.template.activeNeedles = [0 0 0 1 0 1 0 1 0 1 0 0 0;... % 7.0
 
 pln.propDoseCalc.TG43approximation = '2D'; %'1D' or '2D' 
 
-pln.propDoseCalc.doseGrid.resolution.x = 10; % [mm]
-pln.propDoseCalc.doseGrid.resolution.y = 10; % [mm]
-pln.propDoseCalc.doseGrid.resolution.z = 10; % [mm]
+pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]
+pln.propDoseCalc.doseGrid.resolution.y = 5; % [mm]
+pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
 
 pln.propDoseCalc.DistanceCutoff    = 130; %[mm] sets the maximum distance
                                             %to which dose is calculated. 
