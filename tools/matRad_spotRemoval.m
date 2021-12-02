@@ -38,7 +38,7 @@ end
 
 % set threshold for spot removal to 5% of the maximum weight.
 if ~exist('thres','var')
-    thres = 0.05;
+    thres = 0.03;
 end
 newSpots = w>thres*max(w);
 
@@ -72,7 +72,6 @@ if ((sum(newSpots) ~= numel(w)) && sum(newSpots) ~= dij.totalNumOfBixels) && any
             if any(~cutRays)
                 stf(b).ray = stf(b).ray(cutRays);
                 stf(b).numOfRays = sum(cutRays);
-                stf(b).numOfBixelsPerRay = numOfBixelsPerRay;
             end
             for i = 1:stf(b).numOfRays
                 bixelCurrRay{i} = currBixelsInRay(rayIdx(i):rayIdx(i)+numOfBixelsPerRay(i)-1);
@@ -82,6 +81,7 @@ if ((sum(newSpots) ~= numel(w)) && sum(newSpots) ~= dij.totalNumOfBixels) && any
                 stf(b).ray(f).focusIx = stf(b).ray(f).focusIx(bixelCurrRay{f});
                 stf(b).ray(f).rangeShifter = stf(b).ray(f).rangeShifter(bixelCurrRay{f});
             end
+            stf(b).numOfBixelsPerRay = numOfBixelsPerRay';
             stf(b).totalNumOfBixels = sum(stf(b).numOfBixelsPerRay);
         end
         
