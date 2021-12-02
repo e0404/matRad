@@ -92,6 +92,11 @@ end
 
 % initialize HeteroCorrStruct and adjust base data if needed
 if pln.propHeterogeneity.calcHetero
+    if pln.bioParam.bioOpt && ~isfield(machine.data,'alpha')
+        matRad_cfg.dispInfo('Calculating alpha-beta curves for baseData ... ');
+        machine.data = matRad_getAlphaBetaCurves(cst,pln,machine.data);
+        matRad_cfg.dispInfo('Done!\n');
+    end
     
     lungVoxel = unique(cell2mat([cstOriginal{contains(cst(:,2),'lung','IgnoreCase',true),4}]'),'rows'); % get all lung voxel indices
     calcHeteroCorrStruct.cubeDim = ct.cubeDim;
@@ -207,7 +212,7 @@ if pln.bioParam.bioOpt
     dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
     
     % only if LEM is used corresponding bio data must be available in the base data set
-    if strcmp(pln.bioParam.model,'LEM')
+    if strcmp(pln.bioParam.model,'LEM') || pln.propHeterogeneity.calcHetero
         if isfield(machine.data,'alphaX') && isfield(machine.data,'betaX')
             
             matRad_cfg.dispInfo('loading biological base data...');
@@ -476,12 +481,16 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                 % save dose for every bixel in cell array
                                 doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix(currIx)),1,bixelDose.physDose,dij.doseGrid.numOfVoxels,1);
                                 
-                                
                                 if isfield(dij,'mLETDose')
-                                    % calculate particle LET for bixel k on ray j of beam i
-                                    depths   = machine.data(energyIx).depths + machine.data(energyIx).offset;
-                                    bixelLET = matRad_interp1(depths,machine.data(energyIx).LET,currRadDepths);
-                                    bixelLET(isnan(bixelLET)) = 0;
+                                    if isfield(bixelDose,'LET')
+                                        bixelLET = bixelDose.LET;
+                                    else
+                                        % calculate particle LET for bixel k on ray j of beam i
+                                        depths   = machine.data(energyIx).depths + machine.data(energyIx).offset;
+                                        bixelLET = matRad_interp1(depths,machine.data(energyIx).LET,currRadDepths);
+                                        bixelLET(isnan(bixelLET)) = 0;
+                                    end
+                                    
                                     % save LET for every bixel in cell array
                                     letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix(currIx)),1,bixelLET.*bixelDose.physDose,dij.doseGrid.numOfVoxels,1);
                                 end
@@ -500,26 +509,12 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                             [bixelAlpha,bixelBeta] = pln.bioParam.calcLQParameter(currRadDepths,machine.data(energyIx),vTissueIndex_j(currIx,:),dij.ax(VdoseGrid(ix(currIx))),...
                                                 dij.bx(VdoseGrid(ix(currIx))),dij.abx(VdoseGrid(ix(currIx))));
                                         end
+                                        bixelAlpha(isnan(bixelAlpha)) = 0;
+                                        bixelBeta(isnan(bixelBeta)) = 0;
+                                        
                                         bixelAlphaDose =  bixelDose.physDose .* bixelAlpha;
                                         bixelBetaDose  =  bixelDose.physDose .* sqrt(bixelBeta);
                                     end
-                                    
-                                    if pln.propHeterogeneity.modulateBioDose
-                                        % extrapolation to finer grid
-                                        alphaDoseFine = matRad_interp1(bixelDose.heteroCorr.coarseGrid,bixelAlphaDose,bixelDose.heteroCorr.fineGrid,'extrap');
-                                        betaDoseFine = matRad_interp1(bixelDose.heteroCorr.coarseGrid,bixelAlphaDose,bixelDose.heteroCorr.fineGrid,'extrap');
-                                        
-                                        % Convolution
-                                        alphaDoseConv = conv(alphaDoseFine,bixelDose.heteroCorr.Gauss/sum(bixelDose.heteroCorr.Gauss),'same');
-                                        betaDoseConv = conv(betaDoseFine,bixelDose.heteroCorr.Gauss/sum(bixelDose.heteroCorr.Gauss),'same');
-                                        
-                                        % set resolution to original
-                                        bixelAlphaDose = matRad_interp1(bixelDose.heteroCorr.fineGrid,alphaDoseConv,bixelDose.heteroCorr.coarseGrid);
-                                        bixelBetaDose = matRad_interp1(bixelDose.heteroCorr.fineGrid,betaDoseConv,bixelDose.heteroCorr.coarseGrid);
-                                    end
-                                        
-                                    bixelAlpha(isnan(bixelAlpha)) = 0;
-                                    bixelBeta(isnan(bixelBeta)) = 0;
                                     
                                     alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix(currIx)),1,bixelAlphaDose,dij.doseGrid.numOfVoxels,1);
                                     betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen}  = sparse(VdoseGrid(ix(currIx)),1,bixelBetaDose,dij.doseGrid.numOfVoxels,1);
