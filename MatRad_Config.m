@@ -174,13 +174,14 @@ classdef MatRad_Config < handle
 
             %obj.propMC.default_photon_engine = 'ompMC';
             obj.propMC.default_proton_engine = 'MCsquare';
-            obj.propMC.topas_defaultNumBatches = 5;
-            
-            obj.defaults.samplingScenarios = 25;
+            % Default settings for TOPAS
+            obj.propMC.topas_defaultNumBatches = 5;           
+            obj.propMC.topas_materialConversion = 'RSP';
+            obj.propMC.topas_rsp_basematerial = 'G4_WATER';
             
             obj.disableGUI = false;
             
-            
+            obj.defaults.samplingScenarios = 25;
         end
         
         %%For testing
@@ -214,7 +215,10 @@ classdef MatRad_Config < handle
 
             %obj.propMC.default_photon_engine = 'ompMC';
             obj.propMC.default_proton_engine = 'MCsquare'; 
+            % Default settings for TOPAS
             obj.propMC.topas_defaultNumBatches = 5;
+            obj.propMC.topas_materialConversion = 'RSP';
+            obj.propMC.topas_rsp_basematerial = 'G4_WATER';
             
             obj.defaults.samplingScenarios = 2;
             

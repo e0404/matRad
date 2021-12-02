@@ -73,6 +73,41 @@ if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'calcLET')
     pln.propDoseCalc.calcLET = matRad_cfg.propDoseCalc.defaultCalcLET;
 end
 
+if isfield(pln,'propMC') && isfield(pln.propMC,'config')        
+    if isa(pln.propMC.config,'MatRad_MCsquareConfig')
+        matRad_cfg.dispInfo('Using given MCSquare Configuration in pln.propMC.config!\n');
+        MCsquareConfig = pln.propMC.config;
+    else 
+        %Create a default instance of the configuration
+        MCsquareConfig = MatRad_MCsquareConfig();
+        
+        %Overwrite parameters
+        %mc = metaclass(topasConfig); %get metaclass information to check if we can overwrite properties
+        
+        if isstruct(pln.propMC.config)
+            props = fieldnames(pln.propMC.config);
+            for fIx = 1:numel(props)
+                fName = props{fIx};
+                if isprop(MCsquareConfig,fName)
+                    %We use a try catch block to catch errors when trying
+                    %to overwrite protected/private properties instead of a
+                    %metaclass approach
+                    try 
+                        MCsquareConfig.(fName) = pln.propMC.config.(fName);
+                    catch
+                        matRad_cfg.dispWarning('Property ''%s'' for MatRad_MCsquareConfig will be omitted due to protected/private access or invalid value.',fName);
+                    end
+                else
+                    matRad_cfg.dispWarning('Unkown property ''%s'' for MatRad_MCsquareConfig will be omitted.',fName);
+                end
+            end
+        else
+            matRad_cfg.dispError('Invalid Configuration in pln.propMC.config');
+        end
+    end
+else
+    MCsquareConfig = MatRad_MCsquareConfig
+end
 
 env = matRad_getEnvironment();
 
