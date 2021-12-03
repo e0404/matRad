@@ -1,6 +1,6 @@
-%% Euler Rotation
-% Given the euler angles, this function generates the euler rotation
-% matrix.
+function RotMtx = matRad_eulerRot(phi,theta,psi)
+% matRad_eulerRot Given the euler angles, this function generates the euler 
+% rotation matrix.
 % Explanation of euler angles: https://en.wikipedia.org/wiki/Euler_angles
 % In short, the system is turned around the z then x' then z'' axis.
 %
@@ -11,14 +11,22 @@
 %   RotMtx = eulerRot(phi,theta,psi)
 %
 % input
-%   phi, theta, psi: radian angles according to above definition
+%   phi, theta, psi:    radian angles according to above definition
 %
 % output:
-%   3x3 rotation matrix that performs euler rotation
-
-
-
-function RotMtx = eulerRot(phi,theta,psi)
+%   RotMx:              3x3 rotation matrix that performs euler rotation
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2021 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if nargin == 1 % in that case, the angles are probably given as vector
     theta = phi(2);

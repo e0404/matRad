@@ -1,23 +1,36 @@
 function DoseRate = matRad_getDoseRate1D_poly(machine,r_mm)
 % Calculation of radial dose Rate, interpolating using polynomes
-%       1D dose rate formalism from Rivard et al. (2004): AAPM TG-43 update, 
-%       page 639, Eq. 11:
+%   1D dose rate formalism from Rivard et al. (2004): AAPM TG-43 update, 
+%   page 639, Eq. 11:
 %
 % call 
 %   DoseRate = matRad_getDoseRate1D_poly(machine,r_mm)
 %
 % input
-%   machine: TG43 information about the used seeds
-%   r: radial distance array, given in mm!
+%   machine:    TG43 information about the used seeds
+%   r:          radial distance array, given in mm!
 %
 % output 
-%   DoseRate: size(r) array of dose Rate in cGy/h
+%   DoseRate:   size(r) array of dose Rate in cGy/h
 %
-% DIMENSIONS
+% comment on dimensions / units
 %   TG43 consensus data   cm, cGy, s
 %   matRad                mm, Gy, s
 %   output dimensions depend on the dimensions of air kerma strength
 %   Sk, normallyi in cGy*cm^2/h)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2021 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 %% validate/ complete input arguments
 if ~isfield(machine.data,'AnisotropyFactorRadialDistance')

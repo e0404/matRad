@@ -1,24 +1,36 @@
-function DoseRate = matRad_getDoseRate2D_poly(machine,r_mm,thet)
+function DoseRate = matRad_getDoseRate2D_poly(machine,r_mm,theta)
 % Calculation of radial dose Rate, interpolating using polynomes
-%       2D dose rate formalism from Rivard et al. (2004): AAPM TG-43 update, 
-%       page 637, eq. 1
+%   2D dose rate formalism from Rivard et al. (2004): AAPM TG-43 update, 
+%   page 637, eq. 1
 %
-% call
-%   DoseRate = matRad_getDoseRate2D_poly(machine,r_mm,thet)
+% call 
+%   DoseRate = matRad_getDoseRate2D_poly(machine,r_mm)
 %
 % input
-%   machine: TG43 information about the used seeds
-%   r_mm: radial distance array, given in mm!
-%   thet: polar angle in degree
+%   machine:    TG43 information about the used seeds
+%   r:          radial distance array, given in mm!
+%   theta:      polar angle in degree
 %
 % output 
-%   DoseRate: size(r) array of dose Rate in Gy/s
+%   DoseRate:   size(r) array of dose Rate in cGy/h
 %
-% DIMENSIONS
-%   TG43 consensus data   cm, cGy/h
+% comment on dimensions / units
+%   TG43 consensus data   cm, cGy, s
 %   matRad                mm, Gy, s
 %   output dimensions depend on the dimensions of air kerma strength
 %   Sk, normallyi in cGy*cm^2/h)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2021 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 matRad_cfg = MatRad_Config.instance();
 
@@ -92,9 +104,9 @@ FTab{3} = machine.data.AnisotropyFunctionValue;
 % according to Rivard et al.: AAPM TG-43 update p. 637 eq. (1)
 % call interpolate functions and calculate formalism
 gL = matRad_radialDoseFunction(r,gLTab);
-GL = matRad_geometryFunction(r,thet,L);
+GL = matRad_geometryFunction(r,theta,L);
 GL0 = matRad_geometryFunction(r0,theta0,L);
-F = matRad_anisotropyFunction2D(r,thet,FTab);
+F = matRad_anisotropyFunction2D(r,theta,FTab);
 
 DoseRate = Sk * lambda * GL./GL0.*gL.*F;
 end
