@@ -95,7 +95,9 @@ clearvars -except ct cst
 
 %% 2) MCsquare computation and baseData fitting
 
-%% 
+%% In order to fit to the correct Monte Carlo simulation, the "useExisting" 
+%% switch in calcParticleDoseMCsquare has to be set to 1, and the correct BDL
+%% file has to be stated there
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon

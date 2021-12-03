@@ -184,7 +184,7 @@ end
 
 
 % switch for using extising BDL file, or fit one using MCsquareBDL
-useExisting = 1;
+useExisting = 0;
 
 if useExisting
 % use existing BDL file (e.g. when fitting base data file)
