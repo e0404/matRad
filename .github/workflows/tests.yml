@@ -20,7 +20,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2 # Checks-out repository under $GITHUB_WORKSPACE
       - name: Install OCTAVE
-        run: sudo apt-get install -y gdb gfortran fonts-freefont-otf gnuplot-x11 libgdcm-dev octave liboctave-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gdb gfortran fonts-freefont-otf gnuplot-x11 libgdcm-dev octave liboctave-dev
       - name: Prepare Test Environment
         run: |
           sudo chmod +x .travis/before_install_linux.sh
