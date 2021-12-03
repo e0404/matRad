@@ -96,6 +96,8 @@ ylabel('Volume [%]','FontSize',fontSizeValue)
 if exist('pln','var') && ~isempty(pln)
     if strcmp(pln.propOpt.bioOptimization,'none')
         xlabel('Dose [Gy]','FontSize',fontSizeValue);
+    elseif strcmp(pln.propOpt.bioOptimization,'BED')
+        xlabel('Dose Gy]','FontSize',fontSizeValue);
     else
         xlabel('RBE x Dose [Gy(RBE)]','FontSize',fontSizeValue);
     end

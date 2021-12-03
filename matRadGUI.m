@@ -182,6 +182,10 @@ for i = 1:length(handles.Modalities)
 end
 set(handles.popUpMachine,'String',handles.Machines);
 
+%Add Bed as Biogical Optimization method
+stringBioOpt = get(handles.popMenuBioOpt, 'String');
+stringBioOpt{5} = 'BED';
+set(handles.popMenuBioOpt, 'String', stringBioOpt);
 
 vChar = get(handles.editGantryAngle,'String');
 if strcmp(vChar(1,1),'0') && length(vChar)==6
@@ -2178,6 +2182,8 @@ pln.machine         = contents{get(handles.popUpMachine,'Value')};
 if (~strcmp(pln.radiationMode,'photons'))
     contentBioOpt = get(handles.popMenuBioOpt,'String');
     pln.propOpt.bioOptimization = contentBioOpt{get(handles.popMenuBioOpt,'Value'),:};
+elseif strcmp(pln.propOpt.bioOptimization, 'BED')
+    pln.propOpt.bioOptimization = 'BED';
 else
     pln.propOpt.bioOptimization = 'none';
 end
@@ -2322,7 +2328,12 @@ if ~strcmp(pln.propOpt.bioOptimization,'none')
     %check if one of the default fields is selected
     if sum(strcmp(SelectedCube,{'physicalDose','effect','RBE,','RBExDose','alpha','beta'})) > 0
         resultGUI_SelectedCube.physicalDose = resultGUI.physicalDose;
-        resultGUI_SelectedCube.RBExDose     = resultGUI.RBExDose;
+        if isfield(resultGUI,'RBExDose')
+            resultGUI_SelectedCube.RBExDose = resultGUI.RBExDose;
+        end
+    elseif strcmp(SelectedCube,'BED')
+        resultGUI_SelectedCube.physicalDose = resultGUI.physicalDose;
+        resultGUI_SelectedCube.BED = resultGUI.BED;
     else
         Idx    = find(SelectedCube == '_');
         SelectedSuffix = SelectedCube(Idx(1):end);
