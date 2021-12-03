@@ -64,6 +64,7 @@ for i = 1:size(cst,1)
         end
         
         obj = obj.setDoseParameters(obj.getDoseParameters()/pln.numOfFractions);
+        obj.numOfFractions = pln.numOfFractions;
         
         cst{i,6}{j} = obj;        
     end
@@ -164,7 +165,22 @@ elseif (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') || strcmp(pln.propOpt
                         4*cst{ixTarget,5}.betaX.*CurrEffectTarget)./(2*cst{ixTarget,5}.betaX*(dij.physicalDose{1}(V,:)*wOnes)));
            wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(dij.physicalDose{1}(V,:)*wOnes)))* wOnes;
     end
-    
+elseif strcmp(pln.propOpt.bioOptimization, 'BED')
+    if isfield(dij, 'mAlphaDose') && isfield(dij, 'mSqrtBetaDose')
+        abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
+        meanBED = mean(pln.numOfFractions.*(dij.mAlphaDose{1}(V,:)*wOnes + (dij.mSqrtBetaDose{1}(V,:)*wOnes).^2)./cst{ixTarget,5}.alphaX);
+        BEDTarget = pln.numOfFractions.*doseTarget.*(1 + doseTarget./abr);
+    elseif isfield(dij, 'RBE')
+        abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
+        meanBED = mean(pln.numOfFractions.*dij.RBE.*dij.physicalDose{1}(V,:)*wOnes.*(1+dij.RBE.*dij.physicalDose{1}(V,:)*wOnes./abr));
+        BEDTarget = pln.numOfFractions.*dij.RBE.*doseTarget.*(1 + dij.RBE.*doseTarget./abr);
+    else
+        abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
+        meanBED = mean(pln.numOfFractions.*dij.physicalDose{1}(V,:)*wOnes.*(1+dij.physicalDose{1}(V,:)*wOnes./abr));
+        BEDTarget = pln.numOfFractions.*doseTarget.*(1 + doseTarget./abr);
+    end
+    bixelWeight =  BEDTarget/meanBED; 
+    wInit       = wOnes * bixelWeight;    
 else 
     bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
     wInit       = wOnes * bixelWeight;
@@ -186,6 +202,8 @@ switch pln.propOpt.bioOptimization
         backProjection = matRad_ConstantRBEProjection;
     case 'LEMIV_RBExD'
         backProjection = matRad_VariableRBEProjection;
+    case 'BED'
+        backProjection = matRad_BEDProjection;
     case 'none'
         backProjection = matRad_DoseProjection;
     otherwise
@@ -193,7 +211,7 @@ switch pln.propOpt.bioOptimization
         backProjection = matRad_DoseProjection;
 end
         
-
+backProjection.numOfFractions = pln.numOfFractions;
 %backProjection = matRad_DoseProjection();
 
 optiProb = matRad_OptimizationProblem(backProjection);
@@ -221,7 +239,7 @@ optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
 wOpt = optimizer.wResult;
 info = optimizer.resultInfo;
 
-resultGUI = matRad_calcCubes(wOpt,dij);
+resultGUI = matRad_calcCubes(wOpt,dij,pln);
 resultGUI.wUnsequenced = wOpt;
 resultGUI.usedOptimizer = optimizer;
 resultGUI.info = info;
