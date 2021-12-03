@@ -27,6 +27,7 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
     properties
         parameters = {0,30,1};
         epsilon = 1e-3; %slack parameter for the logistic approximation
+        numOfFractions = NaN;
     end
     
     methods
