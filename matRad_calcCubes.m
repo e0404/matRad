@@ -1,4 +1,4 @@
-function resultGUI = matRad_calcCubes(w,dij,scenNum)
+function resultGUI = matRad_calcCubes(w,dij,pln,scenNum)
 % matRad computation of all cubes for the resultGUI struct 
 % which is used as result container and for visualization in matRad's GUI
 %
@@ -30,7 +30,7 @@ function resultGUI = matRad_calcCubes(w,dij,scenNum)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if nargin < 3
+if ~exist('sceneNum', 'var')
     scenNum = 1;
 end
 
@@ -100,6 +100,37 @@ if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
     end
 end
 
+% CACLCULATE BED (biological effective dose) BED
+if exist('pln','var')
+    % When depth Dependent alpha beta values are calculated in dij calculation
+    alphax = reshape(dij.ax, dij.doseGrid.dimensions);
+    ix = ~(alphax == 0);
+    if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
+        for i = 1:length(beamInfo) 
+           % photon equivaluent BED = n * effect / alphax
+           resultGUI.(['BED', beamInfo(i).suffix]) = zeros(dij.doseGrid.dimensions);
+           resultGUI.(['BED', beamInfo(i).suffix])(ix) = full(pln.numOfFractions.*resultGUI.(['effect', beamInfo(i).suffix])(ix) ./alphax(ix));
+           resultGUI.(['BED', beamInfo(i).suffix]) = reshape(resultGUI.(['BED', beamInfo(i).suffix]), dij.doseGrid.dimensions);     
+        end
+    
+    else
+        % Get Alpha and Beta Values form dij.ax and dij.bx
+        alphax = reshape(dij.ax, dij.doseGrid.dimensions);
+        betax = reshape(dij.bx, dij.doseGrid.dimensions);
+        for i = 1:length(beamInfo)
+           ix = ~isnan(dij.ax./dij.bx);
+           if isfield(resultGUI, 'RBExDose')
+               Dose = resultGUI.(['RBExDose', beamInfo(i).suffix]);
+           else
+               Dose = resultGUI.(['physicalDose', beamInfo(i).suffix]);
+           end
+           effect = alphax.* Dose + betax.*Dose.^2;
+           resultGUI.(['BED', beamInfo(i).suffix]) = zeros(dij.doseGrid.dimensions);
+           resultGUI.(['BED', beamInfo(i).suffix])(ix) = full(pln.numOfFractions.*effect(ix)./alphax(ix));
+           resultGUI.(['BED', beamInfo(i).suffix]) = reshape(resultGUI.(['BED', beamInfo(i).suffix]), dij.doseGrid.dimensions);
+        end
+    end
+end
 % group similar fields together
 resultGUI = orderfields(resultGUI);
 
