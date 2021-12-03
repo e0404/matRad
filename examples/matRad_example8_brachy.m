@@ -30,7 +30,7 @@
 % search path.
 
 matRad_rc;
-load('PROSTATE.mat');
+load 'PROSTATE.mat';
 
 %% I - update/set dose objectives for brachytherapy
 % The sixth column represents dose objectives and constraints for
@@ -39,24 +39,26 @@ load('PROSTATE.mat');
 % towards higher or lower doses (SquaredOverdose, SquaredUnderdose) or
 % doses that are particularly aimed for (SquaredUnderDose).
 
-display(cst{6,6}{1});
+disp(cst{6,6}{1});
 
 % Following frequently prescribed planning doses of 15 Gy
 % (https://pubmed.ncbi.nlm.nih.gov/22559663/) objectives can be updated to:
 
 % the planning target was changed to the clinical segmentation of the
 % prostate bed.
-cst{5,3}               =  'TARGET';
+cst{5,3}    = 'TARGET';
 cst{5,6}{1} = struct(DoseObjectives.matRad_SquaredUnderdosing(100,15));
 cst{5,6}{2} = struct(DoseObjectives.matRad_SquaredOverdosing(100,17.5));
+cst{6,5}.Priority = 1;
 
 % In this example, the lymph nodes will not be part of the treatment:
-cst{7,6}               =  [];
-cst{7,3}               =  'OAR';
+cst{7,6}    =  [];
+cst{7,3}    =  'OAR';
 
-%Remove objectives on PTV
-cst{6,3}               =  'OAR';
-cst{6,6}               =  [];
+%A PTV is not needed, but we will use it to control the dose fall off
+cst{6,3}    =  'OAR';
+cst{6,6}{1} =  struct(DoseObjectives.matRad_SquaredOverdosing(100,12));
+cst{6,5}.Priority = 2;
 
 % Rectum Objective
 cst{1,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(10,7.5));
@@ -106,7 +108,6 @@ pln.propStf.needle.seedsNo           = 6;
 
 pln.propStf.template.normal      = [0,0,1];
 pln.propStf.bixelWidth   = 5; % [mm] template grid distance
-pln.propStf.isoCenter    = matRad_getIsoCenter(cst,ct,0); %  target center
 pln.propStf.templateRoot = matRad_getTemplateRoot(ct,cst); % mass center of
 % target in x and y and bottom in z
 
@@ -129,7 +130,11 @@ pln.propStf.template.activeNeedles = [0 0 0 1 0 1 0 1 0 1 0 0 0;... % 7.0
                                       1 0 1 0 1 0 0 0 0 0 1 0 1;... % 1.5
                                       0 0 0 0 0 0 0 0 0 0 0 0 0];   % 1.0
                                      %A a B b C c D d E e F f G
-                       
+
+pln.propStf.isoCenter    = matRad_getIsoCenter(cst,ct,0); %  target center
+
+
+
 %% II.1 - dose calculation options
 % for dose calculation we use eather the 2D or the 1D formalism proposed by
 % TG 43. Also, set resolution of dose calculation and optimization.
@@ -158,14 +163,14 @@ pln.propOpt.optimizer       = 'IPOPT';
 pln.propOpt.bioOptimization = 'none';
 pln.propOpt.runDAO          = false;  
 pln.propOpt.runSequencing   = false; 
-pln.propStf.gantryAngles    = [0:72:359]; 
-pln.propStf.couchAngles     = [0 0 0 0 0]; 
-pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
-pln.numOfFractions          = 1;
+pln.propStf.gantryAngles    = []; 
+pln.propStf.couchAngles     = []; 
+pln.propStf.numOfBeams      = 0;
+pln.numOfFractions          = 1; 
 
 %% II.1 - view plan
 % Et voila! Our treatment plan structure is ready. Lets have a look:
-display(pln);
+disp(pln);
 
 
 %% II.2 Steering Seed Positions From STF
@@ -179,7 +184,7 @@ stf = matRad_generateStf(ct,cst,pln,1);
 % The 3D view is interesting, but we also want to know how the stf struct
 % looks like.
 
-display(stf)
+disp(stf)
 
 %% II.3 - Dose Calculation
 % Let's generate dosimetric information by pre-computing a dose influence 

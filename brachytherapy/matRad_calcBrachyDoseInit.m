@@ -2,7 +2,6 @@ matRad_cfg =  MatRad_Config.instance();
 
 % to guarantee downwards compatibility with data that does not have
 % ct.x/y/z
-cd
 if ~any(isfield(ct,{'x','y','z'}))
     ct.x = ct.resolution.x*[0:ct.cubeDim(2)-1]-ct.resolution.x/2;
     ct.y = ct.resolution.y*[0:ct.cubeDim(1)-1]-ct.resolution.y/2;
@@ -104,9 +103,8 @@ VdoseGrid = find(matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z,tmpC
 
 % load base data% load machine file
 fileName = [pln.radiationMode '_' pln.machine '.mat'];
-cd
 try
-   load(fileName);
+   load(fullfile(matRad_cfg.matRadRoot,'basedata',fileName));
 catch
    matRad_cfg.dispError('Could not find the following machine file: %s\n',fileName); 
 end

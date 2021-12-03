@@ -36,10 +36,10 @@ matRad_cfg =  MatRad_Config.instance();
 matRad_calcBrachyDoseInit;
 
 % initialize waitbar (always indented to seperate from important code)
-        figureWait = waitbar...
-            (0,'calculating dose inlfluence matrix for brachytherapy...');
-        display('Starting calculation');
-        tic;
+figureWait = waitbar...
+    (0,'calculating dose inlfluence matrix for brachytherapy...');
+matRad_cfg.dispInfo('Starting  brachytherapy dose calculation...\n');
+startTime = tic;
 
 %% get dose points and seedpoints
 % "dosePoints" and "seedPoints" are both structs with fields x,y,z:
@@ -54,16 +54,13 @@ dosePoints.x = single(reshape(XGrid,1,[]));
 dosePoints.y = single(reshape(YGrid,1,[]));
 dosePoints.z = single(reshape(ZGrid,1,[]));
 
+matRad_cfg.dispInfo('\t computing distance transform... ');
+
 
 %% get seed dosepoint distance matrix
 % [seedPoint x dosePoint] matrix with relative distance as entries
 % detailed documentation in function
 DistanceMatrix = matRad_getDistanceMatrix(seedPoints,dosePoints);
-        
-        % update waitbar
-        waitbar(0.125);
-        display('Finished calculating distances after')
-        toc;
 
 % ignore all distances > Cutoff for the following calculations to save time
 Ignore = DistanceMatrix.dist > pln.propDoseCalc.DistanceCutoff;
@@ -71,46 +68,56 @@ calcDistanceMatrix.x = DistanceMatrix.x(~Ignore);
 calcDistanceMatrix.y = DistanceMatrix.y(~Ignore);
 calcDistanceMatrix.z = DistanceMatrix.z(~Ignore);
 calcDistanceMatrix.dist = DistanceMatrix.dist(~Ignore);
-clear DistanceMatrix
+
 % now all fields of calcDistanceMatrix are n x 1 arrays!
 
+% update waitbar
+waitbar(0.125);
+matRad_cfg.dispInfo('done in %f s!\n',toc(startTime));
 
 %% seed dosepoint angle matrix
 % [seedPoint x dosePoint] matrix with relative theta angle as entries
 % detailed documentation in function
 % only call for 2D formalism
-if strcmp(pln.propDoseCalc.TG43approximation,'2D')
-    [ThetaMatrix,ThetaVector] = ...
-    matRad_getThetaMatrix(pln.propStf.template.normal,calcDistanceMatrix);
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'TG43approximation')
+    pln.propDoseCalc.TG43approximation = '2D';
 end
 
-        % update waitbar
-        waitbar(0.25);
-        display('Finished calculating angles after')
-toc;
-%% Calculate Dose Rate matrix
-% Calculation according to  Rivard et al. (2004): AAPM TG-43 update
+if strcmp(pln.propDoseCalc.TG43approximation,'2D')
+    matRad_cfg.dispInfo('\t computing angle for TG43-2D... ');
+    tmpTimer = tic;
+    [ThetaMatrix,~] = matRad_getThetaMatrix(pln.propStf.template.normal,calcDistanceMatrix);
+    matRad_cfg.dispInfo('done in %f s!\n',toc(tmpTimer));
+end
 
+% update waitbar
+waitbar(0.25);
+%% Calculate Dose Rate matrix
+% Calculation according to [1]
+
+matRad_cfg.dispInfo('\t computing dose-rate for TG43-%s... ',pln.propDoseCalc.TG43approximation);
+tmpTimer = tic;
 DoseRate = zeros(length(dosePoints.x),length(seedPoints.x));
 switch pln.propDoseCalc.TG43approximation
-    case '1D'
+    case '1D'        
         DoseRate(~Ignore) = ...
         matRad_getDoseRate1D_poly(machine,calcDistanceMatrix.dist);
     case '2D'
         DoseRate(~Ignore) = ...
         matRad_getDoseRate2D_poly(machine,calcDistanceMatrix.dist,ThetaMatrix);
+    otherwise
+        matRad_cfg.dispError('TG43 Approximation ''%s'' not known!',pln.propDoseCalc.TG43approximation);
 end
-        
-
-        % update waitbar, delete waitbar
-        waitbar(1);
-        display('Finished calculating Doses after')
-        toc;
-        pause(1);
-        delete(figureWait);
-
+matRad_cfg.dispInfo('done in %f s!\n',toc(tmpTimer));
 
 dij.physicalDose = {DoseRate};
+
+% update waitbar, delete waitbar
+waitbar(1);
+matRad_cfg.dispInfo('Brachytherapy dose calculation finished in %f s!\n',toc(startTime));
+delete(figureWait);
+
+
 end
 
 
