@@ -7,7 +7,7 @@ if ~exist('calcDoseDirect','var')
 end
 
 % assign analytical mode
-if isfield(pln.propDoseCalc,'fineSampling') && strcmp(pln.radiationMode, 'protons')
+if isfield(pln,'propDoseCalc')  && isfield(pln.propDoseCalc,'fineSampling') && strcmp(pln.radiationMode, 'protons')
     pbCalcMode = 'fineSampling';
     defaultFineSampling = matRad_cfg.propDoseCalc.defaultFineSamplingProperties;    
     if isfield(pln.propDoseCalc.fineSampling,'N')
