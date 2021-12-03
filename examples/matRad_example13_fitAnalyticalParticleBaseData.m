@@ -93,15 +93,39 @@ disp('CT creation done!');
 clearvars -except ct cst
 
 
- %% 2) MCsquare computation and baseData fitting
+%% 2) MCsquare computation and baseData fitting
+
+%% 
+
+matRad_cfg =  MatRad_Config.instance();
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.machine         = 'matRadBDLold';
+pln.machine = "dummyMachine";
 
-pln.numOfFractions  = 30;
 
-pln.withoutMachineFile  = 1;
+% create a dummy machine file 
+% save meta data in machine
+machine.meta.radiationMode = 'protons';
+machine.meta.dataType = 'singleGauss';
+machine.meta.created_on = date;
+machine.meta.created_by = 'Paul Anton Meder';
+machine.meta.SAD = (2218 + 1839) / 2;
+machine.meta.BAMStoIsoDist = 420.0;
+machine.meta.machine = 'Generic';
+machine.meta.LUT_bxWidthminFWHM = [1, Inf; 8 ,8];
+machine.meta.fitAirOffset = 420.0;
+
+fileName = [pln.radiationMode '_' pln.machine];
+
+%[matRad_cfg.matRadRoot filesep 'basedata' filesep fileName ".mat"]
+%fileparts(mfilename("fullpath"))
+
+save(['basedata' filesep fileName ".mat"], "machine");
+#save(["basedata" filesep "protons_dummyMachine.mat"], "machine");
+#save("baseData/protons_dummyMachine", "machine")
+clear machine 
+
 
  
 % beam geometry settings
@@ -132,28 +156,16 @@ pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't /
 pln.multScen = matRad_multScen(ct,'nomScen');
 
 
-quantityOpt   = 'RBExD';            % either  physicalDose / effect / RBExD
-modelName     = 'constRBE';         % none: for photons, protons, carbon                                    constRBE: constant RBE model
+quantityOpt   = 'physicalDose';            % either  physicalDose / effect / RBExD
+modelName     = 'none';         % none: for photons, protons, carbon                                    constRBE: constant RBE model
                                     % MCN: McNamara-variable RBE model for protons                          WED: Wedenberg-variable RBE model for protons 
                                     % LEM: Local Effect Model for carbon ions
 % retrieve bio model parameters
 pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 
 
-% save meta data in machine
-machine.meta.radiationMode = 'protons';
-machine.meta.dataType = 'singleGauss';
-machine.meta.created_on = date;
-machine.meta.created_by = 'Paul Anton Meder';
-machine.meta.SAD = (2218 + 1839) / 2;
-machine.meta.BAMStoIsoDist = 420.0;
-machine.meta.machine = 'Generic';
-machine.meta.LUT_bxWidthminFWHM = [1, Inf; 8 ,8];
-machine.meta.fitAirOffset = 420.0;
-
-
 %% generate steering file
-stf = matRad_generateStfSinglePencilBeam(ct,cst,pln,machine.meta.SAD);
+stf = matRad_generateStfSinglePencilBeam(ct,cst,pln);
 
 %read MC phase space data
 dataMC = importdata('BDL_matrad.txt', ' ', 16);       
@@ -193,7 +205,6 @@ for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
     disp(['baseData Progress :', ' ', num2str(round(count/nEnergy*100)), '%']);
     count = count + 1;
 end
-
 
   
 % save machine

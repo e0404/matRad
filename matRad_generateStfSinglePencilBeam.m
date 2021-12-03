@@ -1,4 +1,4 @@
-function stf = matRad_generateStfSinglePencilBeam(ct,cst,pln,SAD)
+function stf = matRad_generateStfSinglePencilBeam(ct,cst,pln)
 % matRad steering information generation
 % 
 % call
@@ -35,6 +35,15 @@ matRad_cfg.dispInfo('matRad: Generating a single pencil beam stf struct...\n');
 
 if (numel(pln.propStf.gantryAngles) ~= numel(pln.propStf.couchAngles)) && (numel(pln.propStf.gantryAngles) > 1)
     matRad_cfg.dispError('Inconsistent number of gantry and couch angles.');
+end
+
+% prepare structures necessary for particles
+fileName = [pln.radiationMode '_' pln.machine];
+try
+   load([matRad_cfg.matRadRoot filesep 'basedata' filesep fileName]);
+   SAD = machine.meta.SAD;
+catch
+   matRad_cfg.dispError('Could not find the following machine file: %s',fileName); 
 end
     
 % Define steering file like struct. Prellocating for speed.
