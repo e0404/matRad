@@ -12,8 +12,8 @@ if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
                 dij.mLETDose{1}(:,i) = dij.mLETDose{1}(:,i) + stf(i).ray(j).weight(k) * letDoseTmpContainer{1,1};
             end
 
-            if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
-                && strcmp(pln.radiationMode,'carbon')
+            if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD') ... 
+                ||isequal(pln.propOpt.bioOptimization,'BED') ) && strcmp(pln.radiationMode,'carbon')
 
                 % score alpha and beta matrices
                 dij.mAlphaDose{1}(:,i)    = dij.mAlphaDose{1}(:,i) + stf(i).ray(j).weight(k) * alphaDoseTmpContainer{1,1};
@@ -33,8 +33,8 @@ if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
             dij.mLETDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [letDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
         end
 
-        if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
-            && strcmp(pln.radiationMode,'carbon')
+        if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD') ... 
+             ||isequal(pln.propOpt.bioOptimization,'BED') )&& strcmp(pln.radiationMode,'carbon')
 
             dij.mAlphaDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [alphaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
             dij.mSqrtBetaDose{1}(:,(ceil(counter/numOfBixelsContainer)-1)*numOfBixelsContainer+1:counter) = [betaDoseTmpContainer{1:mod(counter-1,numOfBixelsContainer)+1,1}];
