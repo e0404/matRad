@@ -28,6 +28,10 @@ function [machine] = matRad_getAlphaBetaCurves(machine,varargin)
 
 matRad_cfg =  MatRad_Config.instance();
 
+if contains(machine.meta.radiationMode,{'car','hel'})
+   matRad_cfg.dispError('alphaBetaCurves cannot be calculated for carbon or helium ions.'); 
+end
+
 if ~isempty(varargin)
     for i = 1:nargin-1
         if iscell(varargin{i})
@@ -43,8 +47,6 @@ pln.radiationMode   = machine.meta.radiationMode;     % either photons / protons
 if ~exist('modelName','var')
     if contains(pln.radiationMode,'proton')
         modelName = 'MCN'; % Use McNamara model as default for protons
-    elseif contains(pln.radiationMode,{'carb','hel'})
-        modelName = 'LEM'; % Use LEM model as default for carbon and helium
     end
 end
 pln.bioParam = matRad_bioModel(pln.radiationMode,'RBExD',modelName);
@@ -54,8 +56,8 @@ if isfield(machine.data,'alphaX')
     fieldnames = {'alphaX','betaX','alphaBetaRatio','alpha','beta'};
     for k=1:numel(fieldnames)
         [machine.data.([fieldnames{k} '_org'])] = deal(machine.data.(fieldnames{k}));
-        machine.data = rmfield(machine.data,fieldnames);
     end
+    machine.data = rmfield(machine.data,fieldnames);
 end
 
 %% get unique combinations of alpha/beta from cst or use default alpha/beta values
