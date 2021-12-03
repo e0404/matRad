@@ -70,15 +70,22 @@ for i = 1:size(cst,1)
                 if (~isequal(obj.name, 'max dose constraint')      && ~isequal(obj.name, 'min dose constraint')      &&...
                         ~isequal(obj.name, 'max mean dose constraint') && ~isequal(obj.name, 'min mean dose constraint') && ...
                         ~isequal(obj.name, 'min EUD constraint')       && ~isequal(obj.name, 'max EUD constraint'))      && ...
-                        (isa(optiProb.BP,'matRad_EffectProjection') && ~isa(optiProb.BP,'matRad_VariableRBEProjection'))
+                        (isa(optiProb.BP,'matRad_EffectProjection') && ~isa(optiProb.BP,'matRad_VariableRBEProjection')...
+                         && ~isa(optiProb.BP, 'matRad_BEDProjection')) 
                     
                     doses = obj.getDoseParameters();
-                    
                     effect = cst{i,5}.alphaX*doses + cst{i,5}.betaX*doses.^2;
-                    
                     obj = obj.setDoseParameters(effect);
                 end
-                
+                % if we have BED optimization, temporarily replace doses with BED
+                if (~isequal(obj.name, 'min EUD constraint') && ~isequal(obj.name, 'max EUD constraint'))     && ...
+                    (isa(optiProb.BP,'matRad_BEDProjection'))
+                    
+                    doses = obj.getDoseParameters();
+                    abr = cst{i,5}.alphaX ./ cst{i,5}.betaX;
+                    BED = optiProb.BP.numOfFractions.*doses.*(1+doses./abr);
+                    obj = obj.setDoseParameters(BED);
+                end
                 % if conventional opt: just add constraints of nominal dose
                 %if strcmp(cst{i,6}{j}.robustness,'none')
                 
@@ -94,7 +101,8 @@ for i = 1:size(cst,1)
                 %Iterate through columns of the sub-jacobian
                 %TODO: Maybe this could all be function of the projection
                 %Objects???
-                if isa(optiProb.BP,'matRad_DoseProjection') && ~isempty(jacobSub) || isa(optiProb.BP,'matRad_ConstantRBEProjection')
+                if isa(optiProb.BP,'matRad_DoseProjection') && ~isempty(jacobSub) || isa(optiProb.BP,'matRad_ConstantRBEProjection')...
+                        || (isa(optiProb.BP, 'matRad_BEDProjection') && ~isfield(dij, 'mAlphaDose') && ~isfield(dij, 'mSqrtBetaDose'))
                     
                     startIx = size(DoseProjection{1},2) + 1;
                     %First append the Projection matrix with sparse zeros
@@ -188,7 +196,7 @@ elseif isa(optiProb.BP,'matRad_ConstantRBEProjection')
         jacob = DoseProjection{1}' * dij.RBE * dij.physicalDose{1};
     end
     
-elseif isa(optiProb.BP,'matRad_EffectProjection')
+elseif isa(optiProb.BP,'matRad_EffectProjection')&& ~isa(optiProb.BP,'matRad_BEDProjection')
     
     if ~isempty(mSqrtBetaDoseProjection{1}) && ~isempty(mAlphaDoseProjection{1})
         mSqrtBetaDoseProjection{1} = mSqrtBetaDoseProjection{1}' * dij.mSqrtBetaDose{1} * w;
@@ -198,6 +206,24 @@ elseif isa(optiProb.BP,'matRad_EffectProjection')
         jacob   = mAlphaDoseProjection{1}' * dij.mAlphaDose{1} +...
             mSqrtBetaDoseProjection{1}' * dij.mSqrtBetaDose{1};
         
+    end
+elseif isa(optiProb.BP,'matRad_BEDProjection')
+     if isfield(dij, 'mAlphaDose') && isfield(dij, 'mSqrtBetaDose') ...
+             &&~isempty(mSqrtBetaDoseProjection{1}) && ~isempty(mAlphaDoseProjection{1})
+         mSqrtBetaDoseProjection{1} = mSqrtBetaDoseProjection{1}' * dij.mSqrtBetaDose{1} * w;
+         mSqrtBetaDoseProjection{1} = sparse(voxelID,constraintID,mSqrtBetaDoseProjection{1},...
+             size(mAlphaDoseProjection{1},1),size(mAlphaDoseProjection{1},2));
+         
+         jacob   = obj.numOfFractions.*((mAlphaDoseProjection{1}./dij.ax)' * dij.mAlphaDose{1} +...
+             (mSqrtBetaDoseProjection{1}./dij.ax)' * dij.mSqrtBetaDose{1});
+     elseif isfield(dij, 'RBE') && ~isempty(DoseProjection{1})
+             dose = dij.physicalDose{1}*w;
+             jacob = obj.numOfFractions.*((DoseProjection{1}.*dij.RBE.*(1 + 2*dij.RBE.*(dij.bx./dij.ax).*dose))'*dij.physicalDose{1});
+     else
+         if ~isempty(DoseProjection{1})
+            dose = dij.physicalDose{1}*w;
+            jacob = obj.numOfFractions.*((DoseProjection{1}.*(1+ 2*(dij.bx./dij.ax).*dose))'*dij.physicalDose{1});
+         end
     end
 end
 end

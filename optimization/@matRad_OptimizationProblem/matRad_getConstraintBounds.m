@@ -30,6 +30,7 @@ function [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
 
 BPtype = class(optiProb.BP);
 isEffectBP = strcmp(BPtype,'matRad_EffectProjection');
+isBEDBP = strcmp(BPtype,'matRad_BEDProjection');
 
 % Initialize bounds
 cl = [];
@@ -53,10 +54,14 @@ for  i = 1:size(cst,1)
                 
                 if isEffectBP
                     doses = optiFunc.getDoseParameters();
-                
                     effect = cst{i,5}.alphaX*doses + cst{i,5}.betaX*doses.^2;
-                    
                     optiFunc = optiFunc.setDoseParameters(effect);
+                end
+                if isBEDBP
+                    doses = optiFunc.getDoseParameters();
+                    abr = cst{i,5}.alphaX ./ cst{i,5}.betaX;
+                    BED = optiProb.BP.numOfFractions.*doses.*(1+doses./abr);
+                    optiFunc = optiFunc.setDoseParameters(BED);
                 end
 
                     
