@@ -97,8 +97,6 @@ clearvars -except ct cst
 
 %% 
 
-matRad_cfg =  MatRad_Config.instance();
-
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
 pln.machine = "dummyMachine";
@@ -116,16 +114,10 @@ machine.meta.machine = 'Generic';
 machine.meta.LUT_bxWidthminFWHM = [1, Inf; 8 ,8];
 machine.meta.fitAirOffset = 420.0;
 
+
 fileName = [pln.radiationMode '_' pln.machine];
-
-%[matRad_cfg.matRadRoot filesep 'basedata' filesep fileName ".mat"]
-%fileparts(mfilename("fullpath"))
-
 save(['basedata' filesep fileName ".mat"], "machine");
-#save(["basedata" filesep "protons_dummyMachine.mat"], "machine");
-#save("baseData/protons_dummyMachine", "machine")
 clear machine 
-
 
  
 % beam geometry settings
@@ -208,4 +200,4 @@ end
 
   
 % save machine
-save('protons_fitMachine.mat', 'machine');
+save(['basedata' filesep 'protons_fitMachine.mat'], "machine");
