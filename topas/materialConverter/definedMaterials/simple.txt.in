@@ -1,0 +1,5 @@
+sv:Ge/Patient/SchneiderElements = 5 "Hydrogen" "Oxygen" "Nitrogen" "Carbon" "Phosphorus"
+uv:Ge/Patient/SchneiderMaterialsWeight1 = 5 0.0 0.23479269 0.76508170 0.00012561 0.0
+uv:Ge/Patient/SchneiderMaterialsWeight2 = 5 0.111894 0.888106 0.0 0.0 0.0
+uv:Ge/Patient/SchneiderMaterialsWeight3 = 5 0.10404040  0.75656566  0.03131313  0.10606061 0.00202020 
+dv:Ge/Patient/SchneiderMaterialMeanExcitationEnergy = 3 85.7 75.300000 78.0 eV

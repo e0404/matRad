@@ -31,7 +31,7 @@ classdef MatRad_MCemittanceBaseData
         monteCarloData  %MC Phase space data struct
         selectedFocus   %array containing selected focus indices per energy
         FWHMatIso       %array containing FWHM values at iscenter for every energy
-        
+        energyspread    %custom energy spread
         rangeShifters   %Stores range shifters
     end
     
@@ -58,6 +58,7 @@ classdef MatRad_MCemittanceBaseData
             end
             
             matRad_cfg = MatRad_Config.instance();
+            obj.energyspread = matRad_cfg.propMC.defaultCarbonEnergySpread;
             
             obj.machine = machine;
             obj.problemSigma = false;
@@ -163,7 +164,6 @@ classdef MatRad_MCemittanceBaseData
             mcDataEnergy.NominalEnergy = obj.machine.data(i).energy;
             
             newDepths = linspace(0,obj.machine.data(i).depths(end),numel(obj.machine.data(i).depths) * 100);
-            newDepths = newDepths;
             newDose   = interp1(obj.machine.data(i).depths, obj.machine.data(i).Z, newDepths, 'spline');
             
             %find FWHM w50 of bragg peak and range of 80% does fall off
@@ -196,28 +196,41 @@ classdef MatRad_MCemittanceBaseData
             
             %calcualte mean energy used my mcSquare with a formula fitted
             %to TOPAS data
-            meanEnergy = @(x) 5.762374661332111e-20 * x^9 - 9.645413625310569e-17 * x^8 + 7.073049219034644e-14 * x^7 ...
-                - 2.992344292008054e-11 * x^6 + 8.104111934547256e-09 * x^5 - 1.477860913846939e-06 * x^4 ...
-                + 1.873625800704108e-04 * x^3 - 1.739424343114980e-02 * x^2 + 1.743224692623838e+00 * x ...
-                + 1.827112816899668e+01;
-            mcDataEnergy.MeanEnergy = meanEnergy(r80);
-            
-            %calculate energy straggling using formulae deducted from paper
-            %"An analytical approximation of the Bragg curve for therapeutic
-            %proton beams" by T. Bortfeld et al.
-            totalSigmaSq = ((w50) / 6.14)^2;
-            
-            totalSpreadSq = @(x) 2.713311945114106e-20 * x^9 - 4.267890251195303e-17 * x^8 + 2.879118523083018e-14 * x^7 ...
-                - 1.084418008735459e-11 * x^6 + 2.491796224784373e-09 * x^5 - 3.591462823163767e-07 * x^4 ...
-                + 3.232810400304542e-05 * x^3 - 1.584729282376364e-03 * x^2 + 5.228413840446568e-02 * x ...
-                - 6.547482267336220e-01;
-            
-            % use formula deducted from Bragg Kleeman rule to calcuate
-            % energy straggling given the total sigma and the range
-            % straggling
-            energySpread = (totalSigmaSq - totalSpreadSq(r80)) / (0.022^2 * 1.77^2 * mcDataEnergy.MeanEnergy^(2*1.77-2));
-            energySpread(energySpread < 0) = 0;
-            mcDataEnergy.EnergySpread = sqrt(energySpread);
+            switch obj.machine.meta.radiationMode
+                case 'protons'
+                    meanEnergy = @(x) 5.762374661332111e-20 * x^9 - 9.645413625310569e-17 * x^8 + 7.073049219034644e-14 * x^7 ...
+                        - 2.992344292008054e-11 * x^6 + 8.104111934547256e-09 * x^5 - 1.477860913846939e-06 * x^4 ...
+                        + 1.873625800704108e-04 * x^3 - 1.739424343114980e-02 * x^2 + 1.743224692623838e+00 * x ...
+                        + 1.827112816899668e+01;
+                    mcDataEnergy.MeanEnergy = meanEnergy(r80);
+                    
+                    %calculate energy straggling using formulae deducted from paper
+                    %"An analytical approximation of the Bragg curve for therapeutic
+                    %proton beams" by T. Bortfeld et al.
+                    totalSigmaSq = ((w50) / 6.14)^2;
+                    
+                    totalSpreadSq = @(x) 2.713311945114106e-20 * x^9 - 4.267890251195303e-17 * x^8 + 2.879118523083018e-14 * x^7 ...
+                        - 1.084418008735459e-11 * x^6 + 2.491796224784373e-09 * x^5 - 3.591462823163767e-07 * x^4 ...
+                        + 3.232810400304542e-05 * x^3 - 1.584729282376364e-03 * x^2 + 5.228413840446568e-02 * x ...
+                        - 6.547482267336220e-01;
+                    
+                    % use formula deducted from Bragg Kleeman rule to calcuate
+                    % energy straggling given the total sigma and the range
+                    % straggling
+                    energySpread = (totalSigmaSq - totalSpreadSq(r80)) / (0.022^2 * 1.77^2 * mcDataEnergy.MeanEnergy^(2*1.77-2));
+                    energySpread(energySpread < 0) = 0;
+                    mcDataEnergy.EnergySpread = sqrt(energySpread);
+                case 'carbon'
+                    meanEnergy = @(x) 10.55 * x^0.6409 + 14.14;
+                    mcDataEnergy.MeanEnergy = meanEnergy(r80);                 
+                    mcDataEnergy.EnergySpread = obj.energyspread; 
+                case 'helium'
+                    meanEnergy = @(x) 7.466* x.^0.5879 + 3.087;
+                    mcDataEnergy.MeanEnergy = meanEnergy(r80);  
+                    mcDataEnergy.EnergySpread = obj.energyspread; 
+                otherwise
+                    error('not implemented')
+            end
         end
         
         function mcDataOptics = fitBeamOpticsForEnergy(obj,energyIx, focusIndex)

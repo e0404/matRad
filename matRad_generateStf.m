@@ -412,9 +412,9 @@ for i = 1:length(pln.propStf.gantryAngles)
 
                 stf(i).ray(j).focusIx = focusIx';
                  
-            else % target not hit
-                stf(i).ray(j)               = [];
-                stf(i).numOfBixelsPerRay(j) = [];
+           else % target not hit
+               stf(i).ray(j)               = [];
+               stf(i).numOfBixelsPerRay(j) = [];
            end
            
        elseif strcmp(stf(i).radiationMode,'photons')
@@ -428,6 +428,9 @@ for i = 1:length(pln.propStf.gantryAngles)
        
     end
     
+    if ~isfield(stf(i).ray,'energy')
+        matRad_cfg.dispError('Error generating stf struct: no suitable energies found. Check if bixelwidth is too large.');
+    end
     % store total number of rays for beam-i
     stf(i).numOfRays = size(stf(i).ray,2);
      

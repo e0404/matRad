@@ -1,4 +1,4 @@
-function dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect)
+function dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect,exportForExternalCalculation)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad TOPAS Monte Carlo proton dose calculation wrapper
 %   This calls a TOPAS installation (not included in matRad due to
@@ -47,6 +47,10 @@ if nargin < 6
     calcDoseDirect = false;
 end
 
+if nargin < 7
+    exportForExternalCalculation = false;
+end
+
 if isfield(pln,'propMC') && isfield(pln.propMC,'outputVariance')
     matRad_cfg.dispWarning('Variance scoring for TOPAS not yet supported.');
 end
@@ -89,7 +93,8 @@ end
         
 
 if ~calcDoseDirect
-    matRad_cfg.dispError('matRad so far only supports direct dose calculation for TOPAS!\n');
+    matRad_cfg.dispWarning('You have selected TOPAS dij calculation, this may take a while ^^');
+    pln.propMC.calcDij = true;
 end
 
 if ~isfield(pln.propStf,'useRangeShifter') 
@@ -99,48 +104,68 @@ end
 env = matRad_getEnvironment();
 
 %% Initialize dose Grid as usual
-matRad_calcDoseInit;
-
 % for TOPAS we explicitly downsample the ct to the dose grid (might not
 % be necessary in future versions with separated grids)
-
-
-for s = 1:ct.numOfCtScen
-    cubeHUresampled{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{s}, ...
-                                dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
-    cubeResampled{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cube{s}, ...
-                                dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');                        
+matRad_calcDoseInit;
+[ctR,~] = matRad_resampleTopasGrid(ct,cst,pln,stf);
+% overwrite CT grid in dij in case of modulation.
+if isfield(ctR,'ctGrid')
+    dij.ctGrid = ctR.ctGrid;
 end
 
-%Allocate temporary resampled CT
-ctR = ct;
-ctR.cube = cell(1);
-ctR.cubeHU = cell(1);
-ctR.numOfCtScen = 1;
-ctR.resolution = dij.doseGrid.resolution;
-ctR.cubeDim = dij.doseGrid.dimensions;
-ctR.x = dij.doseGrid.x;
-ctR.y = dij.doseGrid.y;
-ctR.z = dij.doseGrid.z;
+% fill bixels, rays and beams in case of dij calculation
+%if ~calcDoseDirect
+counter = 1;
+for f = 1:dij.numOfBeams
+    for r = 1:stf(f).numOfRays
+        for b = 1:stf(f).numOfBixelsPerRay(r)
+            dij.bixelNum(counter) = b;
+            dij.rayNum(counter)   = r;
+            dij.beamNum(counter)  = f;
+            counter = counter + 1;
+        end
+    end
+end
+%end
 
 %% sending data to topas
 
-load([pln.radiationMode,'_',pln.machine]);
+load([pln.radiationMode,'_',pln.machine],'machine');
+topasConfig = MatRad_TopasConfig();
+% Create Base Data
+topasConfig.radiationMode = stf.radiationMode;
 
 topasBaseData = MatRad_TopasBaseData(machine,stf);%,TopasConfig);
 
 topasConfig.numHistories = nCasePerBixel;
-topasConfig.numOfRuns = matRad_cfg.propMC.topas_defaultNumBatches;
+if isfield(pln.propMC,'numOfRuns')
+    topasConfig.numOfRuns = pln.propMC.numOfRuns;
+end
+if exportForExternalCalculation
+    if isfield(pln,'patientID')
+        topasConfig.workingDir = [topasConfig.workingDir pln.radiationMode filesep pln.patientID '_'];
+    end
+    topasConfig.workingDir = [topasConfig.workingDir pln.machine,'_',pln.radiationMode];
+end
+% topasConfig.numOfRuns = matRad_cfg.propMC.topas_defaultNumBatches;
 
 %Collect weights
-w = zeros(sum([stf(:).totalNumOfBixels]),1);
-ct = 1;
-for i = 1:length(stf)
-    for j = 1:stf(i).numOfRays
-        rayBix = stf(i).numOfBixelsPerRay(j);
-        w(ct:ct+rayBix-1) = stf(i).ray(j).weight;
-        ct = ct + rayBix;
+if calcDoseDirect
+    w = zeros(sum([stf(:).totalNumOfBixels]),ctR.numOfCtScen);
+    counter = 1;
+    for i = 1:length(stf)
+        for j = 1:stf(i).numOfRays
+            rayBix = stf(i).numOfBixelsPerRay(j);
+            w(counter:counter+rayBix-1,:) = stf(i).ray(j).weight;
+            counter = counter + rayBix;
+        end
     end
+end
+
+if isfield(pln,'bioParam') && strcmp(pln.bioParam.quantityOpt,'RBExD')
+    topasConfig.scorer.RBE = true;
+    [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
+    dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
 end
 
 currDir = cd;
@@ -158,58 +183,130 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 
                 %Overwrite CT (TEMPORARY - we should use 4D calculation in
                 %TOPAS here)
-                ctR.cubeHU = cubeHUresampled(ctScen);
-                ctR.cube = cubeResampled(ctScen);
-                                
-                topasConfig.writeAllFiles(ctR,pln,stf,topasBaseData,w);                
+%                 ctR.cubeHU = cubeHUresampled(ctScen);
+%                 ctR.cube = cubeResampled(ctScen);
+                %Delete previous topas files
+                files = dir([topasConfig.workingDir,'*']);
+                files = {files(~[files.isdir]).name};
+                fclose('all');
+                for i = 1:length(files)
+                    delete([topasConfig.workingDir,files{i}])
+                end
+               
+                if calcDoseDirect
+                    topasConfig.writeAllFiles(ctR,pln,stf,topasBaseData,w(:,ctScen));
+                else
+                    topasConfig.writeAllFiles(ctR,pln,stf,topasBaseData);
+                end
                 
                 % Run simulation for current scenario
                 cd(topasConfig.workingDir);
-                
-                for beamIx = 1:numel(stf)
-                    for runIx = 1:topasConfig.numOfRuns       
-                        fname = sprintf('%s_field%d_run%d',topasConfig.label,beamIx,runIx);
-                        topasCall = sprintf('%s %s.txt > %s.out 2> %s.err',topasConfig.topasExecCommand,fname,fname,fname);
+                              
+                if exportForExternalCalculation
+                    save('dij.mat','dij')
+                    save('weights.mat','w')
+                    matRad_cfg.dispInfo('TOPAS simulation skipped for external calculation\n');
+                else
+                    
+                    for beamIx = 1:numel(stf)
+                        
+                        for runIx = 1:topasConfig.numOfRuns
+                            fname = sprintf('%s_field%d_run%d',topasConfig.label,beamIx,runIx);
+                            if isfield(pln.propMC,'verbosity') && strcmp(pln.propMC.verbosity,'full')
+                                topasCall = sprintf('%s %s.txt',topasConfig.topasExecCommand,fname);
+                            else
+                                topasCall = sprintf('%s %s.txt > %s.out > %s.log',topasConfig.topasExecCommand,fname,fname,fname);
+                            end
+
+                            if topasConfig.parallelRuns
+                                finishedFiles{runIx} = sprintf('%s.finished',fname);
+                                delete(finishedFiles{runIx});
+                                topasCall = [topasCall '; touch ' finishedFiles{runIx} ' &'];
+                            end
+                            
+                            matRad_cfg.dispInfo('Calling TOPAS: %s\n',topasCall);
+                            [status,cmdout] = system(topasCall,'-echo');
+                            if status == 0
+                                matRad_cfg.dispInfo('TOPAS simulation completed succesfully\n');
+                            else
+                                if status == 139
+                                    matRad_cfg.dispError('TOPAS segmentation fault might be caused from an outdated TOPAS version or Linux distribution');
+                                else
+                                    matRad_cfg.dispError('TOPAS simulation exited with error code %d\n',status);
+                                end
+                            end
+                        end
+                        
                         if topasConfig.parallelRuns
-                            finishedFiles{runIx} = sprintf('%s.finished',fname);
-                            delete(finishedFiles{runIx});
-                            topasCall = [topasCall '; touch ' finishedFiles{runIx} ' &'];
+                            runsFinished = false;
+                            pause('on');
+                            while ~runsFinished
+                                pause(1);
+                                fin = cellfun(@(f) exist(f,'file'),finishedFiles);
+                                runsFinished = all(fin);
+                            end
                         end
-                        matRad_cfg.dispInfo('Calling TOPAS: %s\n',topasCall);
-                        [status,cmdout] = system(topasCall,'-echo');
-                        if status == 0
-                            matRad_cfg.dispInfo('TOPAS simulation completed succesfully\n');
-                        else
-                            matRad_cfg.dispError('TOPAS simulation exited with error code %d\n',status);
+                        
+                    end
+                    
+                    cd(currDir);
+                    
+                    %% Simulation finished - read out volume scorers from topas simulation
+                    if calcDoseDirect
+                        topasCubes = matRad_readTopasData(topasConfig.workingDir);
+                    else
+                        topasCubes = matRad_readTopasData(topasConfig.workingDir,dij);
+                    end
+                    
+                    fnames = fieldnames(topasCubes);
+                    dij.MC_tallies = fnames;
+                    
+                    if calcDoseDirect
+                        if isfield(topasCubes,'physicalDose')
+                            for d = 1:length(stf)
+                                dij.physicalDose{ctScen,1}(:,d)    = sum(w)*reshape(topasCubes.(['physicalDose_beam',num2str(d)]),[],1);
+                            end
+                        end
+                        if isfield(topasCubes,'doseToWater')
+                            for d = 1:length(stf)
+                                dij.doseToWater{ctScen,1}(:,d)    = sum(w)*reshape(topasCubes.(['doseToWater_beam',num2str(d)]),[],1);
+                            end
+                        end    
+                        if isfield(topasCubes,'alpha_beam1')
+                            for d = 1:length(stf)
+                                dij.alpha{ctScen,1}(:,d)           = reshape(topasCubes.(['alpha_beam',num2str(d)]),[],1);
+                                dij.beta{ctScen,1}(:,d)            = reshape(topasCubes.(['beta_beam',num2str(d)]),[],1);
+                                
+                                [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
+                                dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
+                                
+                                dij.mAlphaDose{ctScen,1}(:,d)      = dij.physicalDose{ctScen,1}(:,d) .* dij.alpha{ctScen,1}(:,d);
+                                dij.mSqrtBetaDose{ctScen,1}(:,d)   = sqrt(dij.physicalDose{ctScen,1}(:,d)) .* dij.beta{ctScen,1}(:,d);
+                            end
+                        end
+                        if isfield(topasCubes,'physicalDose_std_beam1')
+                            for d = 1:length(stf)
+                                dij.physicalDose_std{ctScen,1}(:,d)    = sum(w)*reshape(topasCubes.(['physicalDose_std_beam',num2str(d)]),[],1);
+                            end
+                        end        
+                        if isfield(topasCubes,'LET')
+                            for d = 1:length(stf)
+                                dij.LET{ctScen,1}(:,d)    = reshape(topasCubes.(['LET_beam',num2str(d)]),[],1);
+                                dij.mLETDose{ctScen,1}(:,d) = dij.physicalDose{ctScen,1}(:,d) .*  dij.LET{ctScen,1}(:,d);
+                            end
+                        end   
+                    else
+                        for f = 1:numel(fnames)
+                            for d = 1:stf(f).totalNumOfBixels
+                                dij.physicalDose{1}(:,d) = reshape(topasCubes.(fnames{f}){d},[],1);
+                            end
                         end
                     end
-
-                    if topasConfig.parallelRuns
-                        runsFinished = false;
-                        pause('on');
-                        while ~runsFinished
-                            pause(1);
-                            fin = cellfun(@(f) exist(f,'file'),finishedFiles);
-                            runsFinished = all(fin);
-                        end
-                    end
-
-                end
-                
-                cd(currDir);
-                
-                %% Simulation finished - read out volume scorers from topas simulation
-                
-                topasCubes = matRad_readTopasData(topasConfig.workingDir);
-
-                fnames = fieldnames(topasCubes);
-                dij.MC_tallies = fnames;
-                for f = 1:numel(fnames)
-                    dij.(fnames{f}){1} = sum(w)*reshape(topasCubes.(fnames{f}),[],1);
                 end
             end
         end
     end
+end
     
     % manipulate isocenter back
     for k = 1:length(stf)

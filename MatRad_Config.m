@@ -31,6 +31,7 @@ classdef MatRad_Config < handle
         propOpt;
         propMC;
         propStf;
+        propHeterogeneity;
         
         defaults;
                 
@@ -166,14 +167,18 @@ classdef MatRad_Config < handle
             
             obj.propOpt.defaultMaxIter = 500;
             
+            obj.propMC.defaultCarbonEnergySpread = 0; %[%]
+                        
             obj.propMC.ompMC_defaultHistories = 1e6;
             obj.propMC.ompMC_defaultOutputVariance = false;          
             
             obj.propMC.direct_defaultHistories = 1e7;
             obj.propMC.particles_defaultHistories = 2e4;
-
+           
             %obj.propMC.default_photon_engine = 'ompMC';
             obj.propMC.default_proton_engine = 'MCsquare';
+            obj.propMC.default_carbon_engine = 'TOPAS';
+
             % Default settings for TOPAS
             obj.propMC.topas_defaultNumBatches = 5;           
             obj.propMC.topas_materialConversion = 'RSP';

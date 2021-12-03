@@ -38,7 +38,6 @@ figureWait = waitbar(0,'calculate dose influence matrix for particles...');
 % prevent closure of waitbar and show busy state
 set(figureWait,'pointer','watch');
 
-
 matRad_cfg.dispInfo('matRad: Particle dose calculation... \n');
 
 % init dose calc
@@ -70,7 +69,7 @@ if pln.bioParam.bioOpt
     
 end
 
-if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'calcLET') 
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'calcLET')
     pln.propDoseCalc.calcLET = matRad_cfg.propDoseCalc.defaultCalcLET;
 end
 
@@ -98,7 +97,7 @@ end
 
 %Toggles correction of small difference of current SSD to distance used
 %in generation of base data (e.g. phantom surface at isocenter)
-if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc, 'airOffsetCorrection') 
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc, 'airOffsetCorrection')
     pln.propDoseCalc.airOffsetCorrection = true;
     
     if ~isfield(machine.meta, 'fitAirOffset')
@@ -106,8 +105,8 @@ if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc, 'airOffsetCorrecti
         matRad_cfg.dispDebug('Asked for correction of Base Data Air Offset, but no value found. Using default value of %f mm.\n',fitAirOffset);
     else
         fitAirOffset = machine.meta.fitAirOffset;
-    end    
-else 
+    end
+else
     fitAirOffset = 0;
 end
 
@@ -129,12 +128,12 @@ end
 if pln.bioParam.bioOpt
     
     vTissueIndex = zeros(size(VdoseGrid,1),1);
-    dij.ax       = zeros(dij.doseGrid.numOfVoxels,1);
-    dij.bx       = zeros(dij.doseGrid.numOfVoxels,1);
-    dij.abx      = zeros(dij.doseGrid.numOfVoxels,1);  % alpha beta ratio
+    dij.ax       = zeros(dij.doseGrid.numOfVoxels,ct.numOfCtScen);
+    dij.bx       = zeros(dij.doseGrid.numOfVoxels,ct.numOfCtScen);
+    dij.abx      = zeros(dij.doseGrid.numOfVoxels,ct.numOfCtScen);  % alpha beta ratio
     
     % retrieve photon LQM parameter for the current dose grid voxels
-    [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
+    [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,ct.numOfCtScen,VdoseGrid);
     
     dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
     
@@ -142,7 +141,7 @@ if pln.bioParam.bioOpt
     if strcmp(pln.bioParam.model,'LEM')
         if isfield(machine.data,'alphaX') && isfield(machine.data,'betaX')
             
-            matRad_cfg.dispInfo('\tloading biological base data...');
+            matRad_cfg.dispInfo('loading biological base data...');
             
             for i = 1:size(cst,1)
                 
@@ -178,7 +177,7 @@ if pln.bioParam.bioOpt
         if ~isfield(machine.data,'LET')
             matRad_cfg.dispError('base data is incomplement - LET is missing');
         end
-    end %  end is LEM model  
+    end %  end is LEM model
 end
 
 
@@ -217,7 +216,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
         matRad_calcDoseInitBeam;
         
         % Determine lateral cutoff
-        matRad_cfg.dispInfo('\tmatRad: calculate lateral cutoff...');
+        matRad_cfg.dispInfo('matRad: calculate lateral cutoff...');
         cutOffLevel = pln.propDoseCalc.lateralCutOff;
         visBoolLateralCutOff = 0;
         machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
@@ -240,14 +239,14 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                     machine.meta.SAD, ...
                     find(~isnan(radDepthVdoseGrid{1})), ...
                     maxLateralCutoffDoseCalc);
-
+                
                 % just use tissue classes of voxels found by ray tracer
                 if pln.bioParam.bioOpt
                     vTissueIndex_j = vTissueIndex(ix,:);
                 end
                 
                 for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
-                                    
+                    
                     counter       = counter + 1;
                     bixelsPerBeam = bixelsPerBeam + 1;
                     
@@ -333,6 +332,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                     continue;
                                 end
                                 
+                                % adjust radDepth according to range shifter
                                 if  pln.propDoseCalc.airOffsetCorrection
                                     currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness + dR;
                                     
@@ -391,7 +391,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                     
                                     [bixelAlpha,bixelBeta] = pln.bioParam.calcLQParameter(currRadDepths,machine.data(energyIx),vTissueIndex_j(currIx,:),dij.ax(VdoseGrid(ix(currIx))),...
                                         dij.bx(VdoseGrid(ix(currIx))),...
-                                        dij.abx(VdoseGrid(ix(currIx))));  
+                                        dij.abx(VdoseGrid(ix(currIx))));
                                     
                                     bixelAlpha(isnan(bixelAlpha)) = 0;
                                     bixelBeta(isnan(bixelBeta)) = 0;
@@ -429,7 +429,7 @@ end % end shift scenario loop
 
 dij = matRad_cleanDijScenarios(dij,pln,cst);
 
-%Close Waitbar
+% Close Waitbar
 if ishandle(figureWait)
     delete(figureWait);
 end

@@ -1,4 +1,4 @@
-function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)
+function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories,exportForExternalCalculation)
 % matRad function to bypass dij calculation for MC dose calculation 
 % matRad dose calculation wrapper for MC dose calculation algorithms
 % bypassing dij calculation for MC dose calculation algorithms.
@@ -46,6 +46,10 @@ if nargin < 6 || ~exist('nHistories')
   matRad_cfg.dispInfo('Using default number of Histories: %d\n',nHistories);
 end
 
+if nargin < 7
+    exportForExternalCalculation = false;
+end
+
 % check if weight vector is available, either in function call or in stf - otherwise dose calculation not possible
 if ~exist('w','var') && ~isfield([stf.ray],'weight')
      matRad_cfg.dispError('No weight vector available. Please provide w or add info to stf');
@@ -53,7 +57,7 @@ end
 
 % copy bixel weight vector into stf struct
 if exist('w','var')
-    if sum([stf.totalNumOfBixels]) ~= numel(w)
+    if sum([stf.totalNumOfBixels]) ~= size(w,1)
         matRad_cfg.dispError('weighting does not match steering information');
     end
     counter = 0;
@@ -61,7 +65,7 @@ if exist('w','var')
         for j = 1:stf(i).numOfRays
             for k = 1:stf(i).numOfBixelsPerRay(j)
                 counter = counter + 1;
-                stf(i).ray(j).weight(k) = w(counter);
+                stf(i).ray(j).weight(k,:) = w(counter,:);
             end
         end
     end
@@ -90,10 +94,15 @@ if strcmp(pln.radiationMode,'protons')
         case 'MCsquare'
         dij = matRad_calcParticleDoseMCsquare(ct,stf,pln,cst,nHistories,calcDoseDirect);
         case 'TOPAS'
-        dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,nHistories,calcDoseDirect);
+        dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,nHistories,calcDoseDirect,exportForExternalCalculation);
     end
+elseif strcmp(pln.radiationMode,'carbon') || strcmp(pln.radiationMode,'helium')
+    if ~isfield(pln,'propMC') || ~isfield(pln.propMC,'carbon_engine')
+        pln.propMC.carbon_engine = matRad_cfg.propMC.default_carbon_engine;
+    end
+        dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,nHistories,calcDoseDirect,exportForExternalCalculation);
 else
-    matRad_cfg.dispError('Forward MC only implemented for protons.');
+    matRad_cfg.dispError('MC only implemented for protons and carbon ions (only TOPAS).');
 end
 
 
@@ -104,7 +113,7 @@ dij.beamNum = 1:size(dij.physicalDose{1},2);
 if pln.multScen.totNumScen == 1
     % calculate cubes; use uniform weights here, weighting with actual fluence 
     % already performed in dij construction
-    resultGUI    = matRad_calcCubes(ones(size(dij.physicalDose{1},2),1),dij,1);
+    resultGUI    = matRad_calcCubes(ones(dij.numOfBeams,1),dij,1);
     
 % calc individual scenarios    
 else    
@@ -116,11 +125,18 @@ else
          resultGUI.([pln.bioParam.quantityVis]) = tmpResultGUI.(pln.bioParam.quantityVis);
       end
       resultGUI.([pln.bioParam.quantityVis '_' num2str(Cnt,'%d')]) = tmpResultGUI.(pln.bioParam.quantityVis);
+      resultGUI.phaseDose{1,i} = tmpResultGUI.(pln.bioParam.quantityVis);
       Cnt = Cnt + 1;
    end 
     
 end
 
+if pln.multScen.totNumScen ~= 1
+    resultGUI.accPhysicalDose = zeros(size(resultGUI.phaseDose{1}));
+    for i = 1:pln.multScen.totNumScen
+        resultGUI.accPhysicalDose = resultGUI.accPhysicalDose + resultGUI.phaseDose{i};
+    end
+end
 % remember original fluence weights
 resultGUI.w  = w; 
 
