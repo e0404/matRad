@@ -1,4 +1,21 @@
-Version 2.10.0 "Blaise"
+Version 2.10.1 - Patch release for "Blaise" 
+	Release with small updates, clean-ups and bugfixes    
+    - Bugfix in 3D view due to inconsistent angles in pln & stf
+    - Bugfix for using incorrect dicom UID's and wrong writing order in the dicom export
+    - Bugfix for weird colormap issue in plotting
+    - New handling of environment checking with matRad_cfg (old function is still working)
+    - Code documentation update
+    - Remove hardcoded penumbra width in photon dose calculation -> can now be stored in machine file (machine.data.penumbraFWHMatIso)
+    - Update to ompMC to use virtual Gaussian source (uses measured penumbra value) incld precompiled mex files
+    - remove useless global statements before matRad_cfg
+    - add blue/white/red difference map to colormaps (in the correct way)
+    - Updated TravisCI testing (Sped up by using pre-compiled mex interfaces and including testing with Matlab (on Ubuntu), Azure DevOps as fallback
+    - Github gimmicks added: Stalebot, Issue & PR Templates
+	- code optimization for jacobian evaluation (x10-100 speedup)
+	- New option pln.propDoseCalc.useGivenEqDensityCube (default false) to directly use the literal values from ct.cube and omit HU to WEQ conversion from ct.cubeHU
+	- New option pln.propDoseCalc.ignoreOutsideDensities (default true) to disable/enable inclusion of WEPL outside the patient contour in ray-tracing
+
+Version 2.10.0 - "Blaise"
 	Second Release of matRad. Note that despite major incompatibilities with "Alan" we still chose major version number "2" to have a consistent versioning in the future.
 	we want to thank all new contributing authors (see AUTHORS.txt)
 	The new release contains:

@@ -318,7 +318,7 @@ classdef MatRad_MCemittanceBaseData
                 
                 count = count + 1;
             end
-            
+            machine = obj.machine;
             save(strcat('../../', machineName, '.mat'),'machine');
         end
     end 

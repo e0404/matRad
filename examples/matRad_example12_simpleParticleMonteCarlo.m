@@ -65,6 +65,10 @@ pln.multScen = matRad_multScen(ct,'nomScen'); % optimize on the nominal scenario
 pln.propMC.proton_engine = 'MCsquare';
 %pln.propMC.proton_engine = 'TOPAS';
 
+%Enable/Disable use of range shifter (has effect only when we need to fill 
+%up the low-range region)
+pln.propStf.useRangeShifter = true;  
+
 
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
@@ -84,6 +88,13 @@ resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,resultGUI.w,1e5);
 %% Compare Dose
 resultGUI = matRad_appendResultGUI(resultGUI,resultGUI_MC,0,'MC');
 matRad_compareDose(resultGUI.physicalDose, resultGUI.physicalDose_MC, ct, cst, [1, 1, 0] , 'off', pln, [2, 2], 1, 'global');
+
+
+%% Compare LET
+if isfield(resultGUI,'LET') && isfield(resultGUI_recalc,'LET')
+    matRad_compareDose(resultGUI.LET, resultGUI_recalc.LET, ct, cst, [1, 1, 0] , 'off', pln, [2, 2], 1, 'global');
+    resultGUI.LET_MC = resultGUI_recalc.LET;
+end
 
 %% GUI
 matRadGUI

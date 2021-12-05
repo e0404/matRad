@@ -16,9 +16,6 @@ classdef MatRad_TopasConfig < handle
     % LICENSE file.
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-    
-    
     properties
         matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
         
@@ -57,7 +54,7 @@ classdef MatRad_TopasConfig < handle
         pencilBeamScanning = true; %This should be always true (enables deflection)
         
         %Image
-        materialConverter = struct('mode','HUToWaterSchneider',...    %'CustomWaterRSP';
+        materialConverter = struct('mode','HUToWaterSchneider',...    %'RSP';
             'densityCorrection','TOPAS2',... %'default','TOPAS1','TOPAS2'
             'addSection','none',... %'none','lung','poisson','sampledDensities' (the last 2 only with modulation)
             'addTitanium',false,... %'false','true' (can only be used with advanced HUsections)
@@ -65,6 +62,7 @@ classdef MatRad_TopasConfig < handle
             'HUToMaterial','default'); %'default','simpleLung','advanced'
         
         arrayOrdering = 'F'; %'C';
+                
         rsp_basematerial = 'Water';
         rsp_vecLength = 10000; %Bins for RSP values when using RSP conversion with custom image converter
         rsp_methodCube = 2; %1: TsBox with variable voxels, 2: TsImageCube with Density Bins and Custom Image converter
@@ -149,13 +147,13 @@ classdef MatRad_TopasConfig < handle
                 obj.topasExecCommand = 'export TOPAS_G4_DATA_DIR=~/G4Data; ~/topas/bin/topas';
             else
                 obj.topasExecCommand = '';
-            end
-            
+            end            
         end
         
         
         
         function writeAllFiles(obj,ct,pln,stf,topasBaseData,w)
+            obj.matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
             
             % Reset MCparam structure
             obj.MCparam = struct();
@@ -200,9 +198,6 @@ classdef MatRad_TopasConfig < handle
                 obj.scorer.doseToMedium = true;
             end
             
-            
-            
-            
             if isfield(pln,'propMC') && isfield(pln.propMC,'materialConverter')
                 if isfield(pln.propMC.materialConverter,'mode')
                     obj.materialConverter.mode = pln.propMC.materialConverter.mode;
@@ -237,8 +232,8 @@ classdef MatRad_TopasConfig < handle
             obj.MCparam.workingDir = obj.workingDir;
             
             obj.matRad_cfg.dispInfo('Writing parameter files to %s\n',obj.workingDir);
-            
             obj.writePatient(ct,pln);
+
             if ~exist('w','var')
                 numBixels = sum([stf(:).totalNumOfBixels]);
                 w = ones(numBixels,1);
@@ -246,10 +241,9 @@ classdef MatRad_TopasConfig < handle
             obj.writeStfFields(ct,stf,topasBaseData,w);
             
             obj.matRad_cfg.dispInfo('Successfully written TOPAS setup files!\n')
-            
             obj.writeMCparam();
         end
-        
+
     end
     
     %Private sub functions for writing (private so the state of the configuration
@@ -420,7 +414,7 @@ classdef MatRad_TopasConfig < handle
                     obj.MCparam.tallies = [obj.MCparam.tallies,{tallyLabel}];
                 end
             end
-            
+
             % write surface track count
             if obj.scorer.surfaceTrackCount
                 fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_surfaceTrackCount);
@@ -432,7 +426,7 @@ classdef MatRad_TopasConfig < handle
         end
         
         function writeStfFields(obj,ct,stf,baseData,w)
-            
+
             %Bookkeeping
             obj.MCparam.nbFields = length(stf);
             
@@ -458,6 +452,18 @@ classdef MatRad_TopasConfig < handle
             end
             
             nParticlesTotal = 0;
+            
+            %Preread beam setup
+            switch obj.beamProfile
+                case 'biGaussian'
+                    fname = fullfile(obj.thisFolder,obj.infilenames.beam_biGaussian);
+                    TOPAS_beamSetup = fileread(fname);
+                    obj.matRad_cfg.dispInfo('Reading ''%s'' Beam Characteristics from ''%s''\n',obj.beamProfile,fname);
+                case 'simple'
+                    fname = fullfile(obj.thisFolder,obj.infilenames.beam_generic);
+                    TOPAS_beamSetup = fileread(fname);
+                    obj.matRad_cfg.dispInfo('Reading ''%s'' Beam Characteristics from ''%s''\n',obj.beamProfile,fname);
+            end
             
             for beamIx = 1:length(stf)
                 
@@ -889,9 +895,6 @@ classdef MatRad_TopasConfig < handle
             %   basematerial:   base material to be scaled to corresponding RSP
             %
             % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            
-            
-            
             % the image cube contains the indexing of materials
             % since at the moment TOPAS does not support ushort
             % the materials should have indexes between 0 and 32767
@@ -908,16 +911,15 @@ classdef MatRad_TopasConfig < handle
             %end
             
             medium = obj.rsp_basematerial;
-            vecRSPlength=obj.rsp_vecLength;
             
             if isequal(obj.arrayOrdering,'C')
                 if obj.matRad_cfg.logLevel > 2
-                	disp('Exporting cube in C ordering...')
+                	obj.matRad_cfg.dispInfo('Exporting cube in C ordering...')
                 end
                 permutation = [3 1 2];
             else
                 if obj.matRad_cfg.logLevel > 2
-                    disp('Exporting cube in FORTRAN ordering...')
+                    obj.matRad_cfg.dispInfo('Exporting cube in FORTRAN ordering...')
                 end
                 permutation = [2 1 3];
             end
@@ -930,26 +932,30 @@ classdef MatRad_TopasConfig < handle
             
             paramFile = obj.outfilenames.patientParam;
             dataFile = obj.outfilenames.patientCube;
-            
+
             %Bookkeeping
             obj.MCparam.imageCubeOrdering = obj.arrayOrdering;
             obj.MCparam.imageCubeConversionType = obj.materialConverter.mode;
             obj.MCparam.imageCubeFile = obj.outfilenames.patientCube;
             obj.MCparam.imageCubeDim = ct.cubeDim;
             obj.MCparam.imageVoxelDimension = ct.resolution;
-            
             nbVoxels = prod(ct.cubeDim);
-            
             outfile = fullfile(obj.workingDir, paramFile);
             obj.matRad_cfg.dispInfo('Writing data to %s\n',outfile)
             fID = fopen(outfile,'w+');
-            
-            
+
             switch obj.materialConverter.mode
-                case 'CustomWaterRSP'
-                    rspCube = ct.cube{1};
-                    rspCube = permute(rspCube,permutation); %  X,Y,Z ordering
-                    
+                case 'RSP'
+                    rspHlut = matRad_loadHLUT(ct,pln);
+                    min_HU = rspHlut(1,1);
+                    max_HU = rspHlut(end,1);
+
+                    huCube = int32(permute(ct.cubeHU{1},permutation)); %  X,Y,Z ordering
+                    huCube(huCube < min_HU) = min_HU;
+                    huCube(huCube > max_HU) = max_HU;
+
+                    unique_hu = unique(huCube(:));
+                    unique_rsp = matRad_interp1(rspHlut(:,1),rspHlut(:,2),double(unique_hu));
                     fbase = fopen(['materials/' medium '.txt'],'r');
                     while ~feof(fbase)
                         strLine = fgets(fbase); %# read line by line
@@ -957,105 +963,39 @@ classdef MatRad_TopasConfig < handle
                     end
                     fclose(fbase);
                     
-                    minRSP = min(rspCube(:));
-                    maxRSP = max(rspCube(:));
-                    
-                    % to avoid zero density
-                    if minRSP<1.e-6
-                        minRSP=1.e-6;
+                    unique_materials = [];
+                    for ix=1:length(unique_hu)
+                        unique_materials{ix} = strrep(['Material_HU_',num2str(unique_hu(ix))],'-','m');
+                        fprintf(fID,'s:Ma/%s/BaseMaterial = "%s"\n',unique_materials{ix},medium);
+                        fprintf(fID,'d:Ma/%s/Density = %f g/cm3\n',unique_materials{ix},unique_rsp(ix));
                     end
-                    
-                    % case of homogenous water medium (i.e., RSP=1)
-                    if (length(unique(ct.cube{1})) == 1) && (unique(ct.cube{1} == 1))
-                        fprintf(fID,'s:Ge/Patient/Parent="World"\n');
-                        fprintf(fID,'s:Ge/Patient/Type= "TsBox"\n');
-                        fprintf(fID,'s:Ge/Patient/Material = "%s"\n',medium);
-                        fprintf(fID,'d:Ge/Patient/HLX      = %f mm\n',0.5*ct.cubeDim(2)*ct.resolution.x);
-                        fprintf(fID,'d:Ge/Patient/HLY      = %f mm\n',0.5*ct.cubeDim(1)*ct.resolution.y);
-                        fprintf(fID,'d:Ge/Patient/HLZ      = %f mm\n',0.5*ct.cubeDim(3)*ct.resolution.z);
-                        fprintf(fID,'i:Ge/Patient/XBins    = %d\n',ct.cubeDim(2));
-                        fprintf(fID,'i:Ge/Patient/YBins    = %d\n',ct.cubeDim(1));
-                        fprintf(fID,'i:Ge/Patient/ZBins    = %d\n',ct.cubeDim(3));
-                        
-                        cube = NaN;
-                        % otherwise
-                    else
-                        
-                        % to avoid issues with homogenous media
-                        if minRSP+1.e-6>maxRSP
-                            warning('Use only one RSP value')
-                            vecRSPlength = 2;
-                            minRSP = 0.5*maxRSP;
-                        end
-                        
-                        dRSP = (maxRSP-minRSP)/(vecRSPlength-1);
-                        upperRSP = maxRSP+dRSP;
-                        
-                        ixRSP = round((rspCube-minRSP)/dRSP)+1;
-                        
-                        fprintf(fID,'s:Ge/Patient/Parent="World"\n');
-                        fprintf(fID,'i:Ma/%s/VariableDensityBins = %d\n',medium,vecRSPlength);
-                        fprintf(fID,'u:Ma/%s/VariableDensityMin = %f\n',medium,minRSP);
-                        fprintf(fID,'u:Ma/%s/VariableDensityMax = %f\n',medium,upperRSP);
-                        
-                        if rspCubeMethod == 1
-                            fprintf(fID,'s:Ge/Patient/Type= "TsBox"\n');
-                            fprintf(fID,'s:Ge/Patient/Material = "%s"\n',medium);
-                            fprintf(fID,'d:Ge/Patient/HLX      = %f mm\n',0.5*ct.cubeDim(2)*ct.resolution.x);
-                            fprintf(fID,'d:Ge/Patient/HLY      = %f mm\n',0.5*ct.cubeDim(1)*ct.resolution.y);
-                            fprintf(fID,'d:Ge/Patient/HLZ      = %f mm\n',0.5*ct.cubeDim(3)*ct.resolution.z);
-                            fprintf(fID,'i:Ge/Patient/XBins    = %d\n',ct.cubeDim(2));
-                            fprintf(fID,'i:Ge/Patient/YBins    = %d\n',ct.cubeDim(1));
-                            fprintf(fID,'i:Ge/Patient/ZBins    = %d\n',ct.cubeDim(3));
-                            fprintf(fID,'sv:Ge/Patient/VoxelMaterials = %d\n',nbVoxels);
-                            
-                            voxelString = num2str(ixRSP(:)'-1,['"' medium '_VariableDensityBin_%d"\n']);
-                            
-                            %for ix=1:nbVoxels
-                            %    fprintf(h,'"%s"\n',[ medium '_VariableDensityBin_' num2str(ixRSP(ix)-1)]);
-                            %end
-                            fprintf(fID,voxelString);
-                            
-                            if checkMaterial
-                                for ix=1:nbVoxels
-                                    rspMaterial{ix} = [ medium '_VariableDensityBin_' num2str(ixRSP(ix)-1)];
-                                end
-                                materialsUsed = unique(rspMaterial);
-                                
-                                %      fprintf(h,'sv:Sc/ExtractData/Material = %d ',length(materialsUsed))
-                                %      for ix=1:length(materialsUsed)
-                                %      fprintf(h,'"%s" ',materialsUsed{ix});
-                                %      end
-                                %      fprintf(h,'\n')
-                            end
-                            fclose(fID);
-                            cube = rspCube;
-                            
-                        elseif rspCubeMethod == 2
-                            fprintf(fID,'s:Ge/Patient/Type = "TsImageCube"\n');
-                            fprintf(fID,'b:Ge/Patient/DumpImagingValues = "True"\n');
-                            fprintf(fID,'s:Ge/Patient/BaseMaterial = "%s"\n',medium);
-                            fprintf(fID,'i:Ge/Patient/MaterialIxMax = %d\n',vecRSPlength);
-                            fprintf(fID,'s:Ge/Patient/InputDirectory = "./"\n');
-                            fprintf(fID,'s:Ge/Patient/InputFile = "%s"\n',dataFile);
-                            fprintf(fID,'s:Ge/Patient/ImagingtoMaterialConverter = "matrad"\n');
-                            fprintf(fID,'i:Ge/Patient/NumberOfVoxelsX = %d\n',ct.cubeDim(2));
-                            fprintf(fID,'i:Ge/Patient/NumberOfVoxelsY = %d\n',ct.cubeDim(1));
-                            fprintf(fID,'iv:Ge/Patient/NumberOfVoxelsZ = 1 %d\n',ct.cubeDim(3));
-                            fprintf(fID,'d:Ge/Patient/VoxelSizeX       = %.3f mm\n',ct.resolution.x);
-                            fprintf(fID,'d:Ge/Patient/VoxelSizeY       = %.3f mm\n',ct.resolution.y);
-                            fprintf(fID,'dv:Ge/Patient/VoxelSizeZ       = 1 %.3f mm\n',ct.resolution.z);
-                            fprintf(fID,'s:Ge/Patient/DataType  = "SHORT"\n');
-                            fclose(fID);
-                            
-                            % write data
-                            fID = fopen(fullfile(obj.workingDir, dataFile),'w');
-                            fwrite(fID,ixRSP(:)-1,'short');
-                            fclose(fID);
-                            cube = rspCube;
-                            
-                        end
-                    end
+
+                    fprintf(fID,'s:Ge/Patient/Parent="World"\n');
+                    fprintf(fID,'s:Ge/Patient/Type = "TsImageCube"\n');
+                    fprintf(fID,'s:Ge/Patient/InputDirectory = "./"\n');
+                    fprintf(fID,'s:Ge/Patient/InputFile = "%s"\n',dataFile);
+                    fprintf(fID,'s:Ge/Patient/ImagingtoMaterialConverter = "MaterialTagNumber"\n');
+                    fprintf(fID,'i:Ge/Patient/NumberOfVoxelsX = %d\n',ct.cubeDim(2));
+                    fprintf(fID,'i:Ge/Patient/NumberOfVoxelsY = %d\n',ct.cubeDim(1));
+                    fprintf(fID,'iv:Ge/Patient/NumberOfVoxelsZ = 1 %d\n',ct.cubeDim(3));
+                    fprintf(fID,'d:Ge/Patient/VoxelSizeX       = %.3f mm\n',ct.resolution.x);
+                    fprintf(fID,'d:Ge/Patient/VoxelSizeY       = %.3f mm\n',ct.resolution.y);
+                    fprintf(fID,'dv:Ge/Patient/VoxelSizeZ       = 1 %.3f mm\n',ct.resolution.z);
+                    fprintf(fID,'s:Ge/Patient/DataType  = "SHORT"\n');
+                    fprintf(fID,'iv:Ge/Patient/MaterialTagNumbers = %d ',length(unique_hu));
+                    fprintf(fID,num2str(unique_hu','%d '));
+                    fprintf(fID,'\n');
+                    fprintf(fID,'sv:Ge/Patient/MaterialNames = %d ',length(unique_hu));
+                    fprintf(fID,'"%s"',strjoin(unique_materials,'" "'));
+                    fprintf(fID,'\n');
+                    fclose(fID);    
+
+                    % write data
+                    fID = fopen(fullfile(obj.workingDir, dataFile),'w');
+                    fwrite(fID,huCube,'short');
+                    fclose(fID);
+                    cube = huCube;
+
                     
                 case 'HUToWaterSchneider'
                     rspHlut = matRad_loadHLUT(ct,pln);
@@ -1097,7 +1037,7 @@ classdef MatRad_TopasConfig < handle
                             otherwise
                                 addSection = [];
                         end
-                        if ~isempty(addSection)
+                        if exist('addSection','var') && ~isempty(addSection)
                             densityCorrection.density(end+1:end+numel(addSection)) = addSection;
                             densityCorrection.boundaries(end+1) = densityCorrection.boundaries(end)+numel(addSection);
                         end
@@ -1181,7 +1121,7 @@ classdef MatRad_TopasConfig < handle
                                 fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight2 = 5 0.10404040 0.75656566 0.03131313 0.10606061 0.00202020\n');
                                 fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight3 = 5 0.111894 0.888106 0.0 0.0 0.0\n');
                                 ExcitationEnergies = [85.7 75.3 78.0];
-                                if strcmp(obj.materialConverter.addSection,'lung')
+                                if contains(obj.materialConverter.addSection,'lung')
                                     fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight4 = 5 0.10404040 0.75656566 0.03131313 0.10606061 0.00202020\n');
                                     ExcitationEnergies = [ExcitationEnergies 75.3];
                                 end

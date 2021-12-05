@@ -449,15 +449,18 @@ classdef matRad_multScen
                     isoShiftVec{3} = [0 linspace(-this.shiftSize(3), this.shiftSize(3), this.numOfShiftScen(3))];
                 case 'sampled'
                     meanP = zeros(1,3); % mean (parameter)
-                    if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
+                    if matRad_cfg.isMatlab
+                        rng('shuffle');
+                    end
                     isoShiftVec{1} = [0 this.shiftSD(1) .* randn(1, this.numOfShiftScen(1)) + meanP(1)];
-                    if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
                     isoShiftVec{2} = [0 this.shiftSD(2) .* randn(1, this.numOfShiftScen(2)) + meanP(2)];
-                    if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
                     isoShiftVec{3} = [0 this.shiftSD(3) .* randn(1, this.numOfShiftScen(3)) + meanP(3)];
                 otherwise
                     matRad_cfg.dispError('did not expect that!');
             end
+            
+            %Remove double shifts
+            isoShiftVec = cellfun(@unique,isoShiftVec,'UniformOutput',false);
             
             % create scenMaskIso for isoShifts
             numIso(1) = numel(isoShiftVec{1});
@@ -528,11 +531,12 @@ classdef matRad_multScen
                 case 'sampled'
                     % relRange
                     std = this.rangeRelSD; meanP = 0;
-                    if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
+                    if matRad_cfg.isMatlab
+                        rng('shuffle');
+                    end
                     this.relRangeShift = [nomScen std .* randn(1, this.numOfRangeShiftScen) + meanP];
                     % absRange
                     std = this.rangeAbsSD; meanP = 0;
-                    if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
                     this.absRangeShift = [nomScen std .* randn(1, this.numOfRangeShiftScen) + meanP];
                 otherwise
                     matRad_cfg.dispError('Not a valid type of generating data.');
@@ -577,23 +581,38 @@ classdef matRad_multScen
                 
                 case 'individual' % combine setup and range scenarios individually
                     
-                    % range errors should come first
+                    nIso = size(this.isoShift,1);
+                    nRange = size(rangeShift,1);                                        
+                   
+                    
+                    % range errors should come last
                     if this.includeNomScen
-                        this.scenForProb                                = zeros(size(this.isoShift,1)-1 + size(rangeShift,1),5);
-                        this.scenForProb(1:size(rangeShift,1),4:5)      = rangeShift;
-                        this.scenForProb(size(rangeShift,1)+1:end,1:3)  = this.isoShift(2:end,:);
-                    else
-                        this.scenForProb                               = zeros(size(this.isoShift,1) + size(rangeShift,1),5);
-                        this.scenForProb(1:size(rangeShift,1),4:5)     = rangeShift;
-                        this.scenForProb(size(rangeShift,1)+1:end,1:3) = this.isoShift;
+                        nIso = nIso - 1;
+                        nRange = nRange -1;
+                        
+                        this.scenForProb = zeros(1,5);  %Nominal Scenario
+                        
+                        rangeScen = zeros(nRange,5);
+                        rangeScen(:,4:5) = rangeShift(2:end,:);
+                        
+                        isoScen = zeros(nIso,5);
+                        isoScen(:,1:3) = this.isoShift(2:end,:);
+                        this.scenForProb = [this.scenForProb; isoScen; rangeScen];
+                    else                       
+                        rangeScen = zeros(nRange,5);
+                        isoScen = zeros(nIso,5);
+                        rangeScen(:,4:5) = rangeShift;
+                        isoScen(:,1:3) = this.isoShift;
+                        
+                        this.scenForProb = [isoScen; rangeScen];
                     end
                     
                 case 'permuted'
                     
                     this.scenForProb  = zeros(size(this.isoShift,1) * size(rangeShift,1),5);
                     Cnt = 1;
-                    for i = 1:size(this.isoShift,1)
-                        for j = 1:size(rangeShift,1)
+                    for j = 1:size(rangeShift,1)
+                        for i = 1:size(this.isoShift,1)
                             this.scenForProb(Cnt,:)   = [this.isoShift(i,:) rangeShift(j,:)];
                             Cnt = Cnt + 1;
                         end
@@ -665,7 +684,12 @@ classdef matRad_multScen
                             this = setMultScen(this);
                         end
                 end
+            elseif this.totNumShiftScen == 0 
+                this.scenMask(:,1,:) = true;
+            elseif this.totNumRangeScen == 0
+                this.scenMask(:,:,1) = true;
             end
+                
             
             
             % create linearalized mask where the i row points to the indexes of scenMask
