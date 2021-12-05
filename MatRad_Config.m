@@ -1,26 +1,26 @@
 classdef MatRad_Config < handle
-% MatRad_Config MatRad Configuration class
-% This class is used globally through Matlab to handle default values and 
-% logging and is declared as global matRad_cfg.
-% Usage:
-%    matRad_cfg = MatRad_Config.instance();    
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% Copyright 2019 the matRad development team.
-%
-% This file is part of the matRad project. It is subject to the license
-% terms in the LICENSE file found in the top-level directory of this
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
-% of the matRad project, including this file, may be copied, modified,
-% propagated, or distributed except according to the terms contained in the
-% LICENSE file.
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+    % MatRad_Config MatRad Configuration class
+    % This class is used globally through Matlab to handle default values and
+    % logging and is declared as global matRad_cfg.
+    % Usage:
+    %    matRad_cfg = MatRad_Config.instance();
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %
+    % Copyright 2019 the matRad development team.
+    %
+    % This file is part of the matRad project. It is subject to the license
+    % terms in the LICENSE file found in the top-level directory of this
+    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+    % of the matRad project, including this file, may be copied, modified,
+    % propagated, or distributed except according to the terms contained in the
+    % LICENSE file.
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
     
     properties
-
+        
         %Logging
         logLevel = 3; %1 = only Errors, 2 = with Warnings, 3 = Info output, 4 = deprecation warnings, 5 = debug information
         keepLog = false; %Stores the full log in memory
@@ -31,9 +31,10 @@ classdef MatRad_Config < handle
         propOpt;
         propMC;
         propStf;
+        propHeterogeneity;
         
         defaults;
-                
+        
         %Disable GUI
         disableGUI = false;
     end
@@ -51,7 +52,7 @@ classdef MatRad_Config < handle
     
     properties (SetAccess = private)
         matRadRoot;
-    end    
+    end
     
     methods (Access = private)
         function obj = MatRad_Config()
@@ -166,18 +167,20 @@ classdef MatRad_Config < handle
             
             obj.propOpt.defaultMaxIter = 500;
             
+            obj.propMC.defaultCarbonEnergySpread = 0; %[%]
+            
             obj.propMC.ompMC_defaultHistories = 1e6;
-            obj.propMC.ompMC_defaultOutputVariance = false;          
+            obj.propMC.ompMC_defaultOutputVariance = false;
             
             obj.propMC.direct_defaultHistories = 1e7;
             obj.propMC.particles_defaultHistories = 2e4;
-
+            
             %obj.propMC.default_photon_engine = 'ompMC';
             obj.propMC.default_proton_engine = 'MCsquare';
+            obj.propMC.default_carbon_engine = 'TOPAS';
+            
             % Default settings for TOPAS
-            obj.propMC.topas_defaultNumBatches = 5;           
-            obj.propMC.topas_materialConversion = 'RSP';
-            obj.propMC.topas_rsp_basematerial = 'G4_WATER';
+            obj.propMC.topas_defaultNumBatches = 5;
             
             obj.disableGUI = false;
             
@@ -197,7 +200,7 @@ classdef MatRad_Config < handle
             obj.propDoseCalc.defaultResolution = struct('x',5,'y',6,'z',7); %[mm]
             obj.propDoseCalc.defaultGeometricCutOff = 20;
             obj.propDoseCalc.defaultLateralCutOff = 0.8;
-
+            
             obj.propDoseCalc.defaultSsdDensityThreshold = 0.05;
             obj.propDoseCalc.defaultUseGivenEqDensityCube = false; %Use the given density cube ct.cube and omit conversion from cubeHU.
             obj.propDoseCalc.defaultIgnoreOutsideDensities = true;
@@ -211,14 +214,13 @@ classdef MatRad_Config < handle
             obj.propMC.ompMC_defaultOutputVariance = true;
             
             obj.propMC.particles_defaultHistories = 100;
-            obj.propMC.direct_defaultHistories = 100;           
-
+            obj.propMC.direct_defaultHistories = 100;
+            
             %obj.propMC.default_photon_engine = 'ompMC';
-            obj.propMC.default_proton_engine = 'MCsquare'; 
+            obj.propMC.default_proton_engine = 'MCsquare';
+            obj.propMC.default_carbon_engine = 'TOPAS';
             % Default settings for TOPAS
             obj.propMC.topas_defaultNumBatches = 5;
-            obj.propMC.topas_materialConversion = 'RSP';
-            obj.propMC.topas_rsp_basematerial = 'G4_WATER';
             
             obj.defaults.samplingScenarios = 2;
             

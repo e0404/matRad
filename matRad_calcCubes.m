@@ -1,5 +1,5 @@
 function resultGUI = matRad_calcCubes(w,dij,scenNum)
-% matRad computation of all cubes for the resultGUI struct 
+% matRad computation of all cubes for the resultGUI struct
 % which is used as result container and for visualization in matRad's GUI
 %
 % call
@@ -19,13 +19,13 @@ function resultGUI = matRad_calcCubes(w,dij,scenNum)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
+% Copyright 2015 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -36,25 +36,33 @@ end
 
 resultGUI.w = w;
 
-% get bixel - beam correspondence  
-for i = 1:dij.numOfBeams
-    beamInfo(i).suffix = ['_beam', num2str(i)];
-    beamInfo(i).logIx  = (dij.beamNum == i);      
+% get bixel - beam correspondence
+if all(w == 1)
+    for i = 1:dij.numOfBeams
+        beamInfo(i).suffix = ['_beam', num2str(i)];
+        beamInfo(i).logIx  = 1;
+    end
+    resultGUI.w = ones(dij.numOfBeams,1);
+else
+    for i = 1:dij.numOfBeams
+        beamInfo(i).suffix = ['_beam', num2str(i)];
+        beamInfo(i).logIx  = (dij.beamNum == i);
+    end
 end
 beamInfo(dij.numOfBeams+1).suffix = '';
-beamInfo(dij.numOfBeams+1).logIx  = true(size(w));
+beamInfo(dij.numOfBeams+1).logIx  = true(size(resultGUI.w));
 %
 
 % compute physical dose for all beams individually and together
 for i = 1:length(beamInfo)
-   resultGUI.(['physicalDose', beamInfo(i).suffix]) = reshape(full(dij.physicalDose{scenNum} * (resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
+    resultGUI.(['physicalDose', beamInfo(i).suffix]) = reshape(full(dij.physicalDose{scenNum} * (resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
 end
 
 % consider RBE for protons
-if isfield(dij,'RBE')
-   for i = 1:length(beamInfo)
+if isfield(dij,'RBE') && ~isfield(dij,'MC_tallies')
+    for i = 1:length(beamInfo)
         resultGUI.(['RBExD', beamInfo(i).suffix]) = resultGUI.(['physicalDose', beamInfo(i).suffix]) * dij.RBE;
-   end
+    end
 end
 
 % consider LET
@@ -73,31 +81,37 @@ if isfield(dij,'physicalDose_MCvar')
     resultGUI.physicalDose_MCstdRel = resultGUI.physicalDose_MCstd ./ resultGUI.physicalDose;
 end
 
+if isfield(dij,'physicalDose_std')
+    for i = 1:length(beamInfo)
+        resultGUI.(['physicalDose_std', beamInfo(i).suffix]) = sqrt(reshape(full(dij.physicalDose_std{scenNum}.^2 * (resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions));
+    end
+end
+
 % consider biological optimization for carbon ions
 if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
-
-    for i = 1:length(beamInfo)  
-   
-       wBeam = (resultGUI.w .* beamInfo(i).logIx);
-       
-       ix = dij.bx~=0 & resultGUI.(['physicalDose', beamInfo(i).suffix])(:) > 0;
-
-       resultGUI.(['effect', beamInfo(i).suffix])       = full(dij.mAlphaDose{scenNum} * wBeam + (dij.mSqrtBetaDose{scenNum} * wBeam).^2);
-       resultGUI.(['effect', beamInfo(i).suffix])       = reshape(resultGUI.(['effect', beamInfo(i).suffix]),dij.doseGrid.dimensions);
     
-       resultGUI.(['RBExD', beamInfo(i).suffix])        = zeros(size(resultGUI.(['effect', beamInfo(i).suffix])));
-       resultGUI.(['RBExD', beamInfo(i).suffix])(ix)    = (sqrt(dij.ax(ix).^2 + 4 .* dij.bx(ix) .* resultGUI.(['effect', beamInfo(i).suffix])(ix)) - dij.ax(ix))./(2.*dij.bx(ix));
-
-       resultGUI.(['RBE', beamInfo(i).suffix])          = resultGUI.(['RBExD', beamInfo(i).suffix])./resultGUI.(['physicalDose', beamInfo(i).suffix]);
-
-       resultGUI.(['alpha', beamInfo(i).suffix])        = zeros(dij.doseGrid.dimensions);
-       resultGUI.(['beta',  beamInfo(i).suffix])        = zeros(dij.doseGrid.dimensions);
-
-       AlphaDoseCube                                    = full(dij.mAlphaDose{scenNum} * wBeam);
-       resultGUI.(['alpha', beamInfo(i).suffix])(ix)    = AlphaDoseCube(ix)./resultGUI.(['physicalDose', beamInfo(i).suffix])(ix);
-
-       SqrtBetaDoseCube                                 = full(dij.mSqrtBetaDose{scenNum} * wBeam);
-       resultGUI.(['beta', beamInfo(i).suffix])(ix)     = (SqrtBetaDoseCube(ix)./resultGUI.(['physicalDose', beamInfo(i).suffix])(ix)).^2;
+    for i = 1:length(beamInfo)
+        
+        wBeam = (resultGUI.w .* beamInfo(i).logIx);
+        
+        ix = dij.bx(:,scenNum)~=0 & resultGUI.(['physicalDose', beamInfo(i).suffix])(:) > 0;
+        
+        resultGUI.(['effect', beamInfo(i).suffix])       = full(dij.mAlphaDose{scenNum} * wBeam + (dij.mSqrtBetaDose{scenNum} * wBeam).^2);
+        resultGUI.(['effect', beamInfo(i).suffix])       = reshape(resultGUI.(['effect', beamInfo(i).suffix]),dij.doseGrid.dimensions);
+        
+        resultGUI.(['RBExD', beamInfo(i).suffix])        = zeros(size(resultGUI.(['effect', beamInfo(i).suffix])));
+        resultGUI.(['RBExD', beamInfo(i).suffix])(ix)    = (sqrt(dij.ax(ix).^2 + 4 .* dij.bx(ix) .* resultGUI.(['effect', beamInfo(i).suffix])(ix)) - dij.ax(ix))./(2.*dij.bx(ix));
+        
+        resultGUI.(['RBE', beamInfo(i).suffix])          = resultGUI.(['RBExD', beamInfo(i).suffix])./resultGUI.(['physicalDose', beamInfo(i).suffix]);
+        
+        resultGUI.(['alpha', beamInfo(i).suffix])        = zeros(dij.doseGrid.dimensions);
+        resultGUI.(['beta',  beamInfo(i).suffix])        = zeros(dij.doseGrid.dimensions);
+        
+        AlphaDoseCube                                    = full(dij.mAlphaDose{scenNum} * wBeam);
+        resultGUI.(['alpha', beamInfo(i).suffix])(ix)    = AlphaDoseCube(ix)./resultGUI.(['physicalDose', beamInfo(i).suffix])(ix);
+        
+        SqrtBetaDoseCube                                 = full(dij.mSqrtBetaDose{scenNum} * wBeam);
+        resultGUI.(['beta', beamInfo(i).suffix])(ix)     = (SqrtBetaDoseCube(ix)./resultGUI.(['physicalDose', beamInfo(i).suffix])(ix)).^2;
     end
 end
 
@@ -107,8 +121,14 @@ if isfield(dij,'MC_tallies')
     for f = 1:numel(dij.MC_tallies)
         tally = dij.MC_tallies{f};
         % skip tallies processed above
-        if ~isfield(resultGUI,tally)
-            resultGUI.(tally) = reshape(full(dij.(tally){scenNum}),dij.doseGrid.dimensions);
+        if ~isfield(resultGUI,tally) && ~contains(tally,'std')
+            tallyCut = strsplit(tally,'_');
+            if size(tallyCut,2) > 1
+                beamNum = str2num(cell2mat(regexp(tally,'\d','Match')));
+                resultGUI.(tally) = reshape(full(dij.(tallyCut{1}){scenNum,beamNum}),dij.doseGrid.dimensions);
+            else
+                resultGUI.(tally) = reshape(full(dij.(tally){scenNum}),dij.doseGrid.dimensions);
+            end
         end
     end
 end
@@ -118,19 +138,19 @@ resultGUI = orderfields(resultGUI);
 
 % interpolation if dose grid does not match ct grid
 if any(dij.ctGrid.dimensions~=dij.doseGrid.dimensions)
-   myFields = fieldnames(resultGUI);
-   for i = 1:numel(myFields)
-      
-       if numel(resultGUI.(myFields{i})) == dij.doseGrid.numOfVoxels
-           
-           % interpolate!
-           resultGUI.(myFields{i}) = matRad_interp3(dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z, ...
-                                             resultGUI.(myFields{i}), ...
-                                             dij.ctGrid.x,dij.ctGrid.y',dij.ctGrid.z,'linear',0);
-           
-       end
-       
-   end   
+    myFields = fieldnames(resultGUI);
+    for i = 1:numel(myFields)
+        
+        if numel(resultGUI.(myFields{i})) == dij.doseGrid.numOfVoxels
+            
+            % interpolate!
+            resultGUI.(myFields{i}) = matRad_interp3(dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z, ...
+                resultGUI.(myFields{i}), ...
+                dij.ctGrid.x,dij.ctGrid.y',dij.ctGrid.z,'linear',0);
+            
+        end
+        
+    end
 end
 
 end

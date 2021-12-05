@@ -1,6 +1,6 @@
-function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
+function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
 % matRad inverse planning wrapper function
-% 
+%
 % call
 %   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
 %
@@ -8,8 +8,7 @@ function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
 %   dij:        matRad dij struct
 %   cst:        matRad cst struct
 %   pln:        matRad pln struct
-%   param:      (optional) structure defining additional parameter            
-%               e.g. param.logLevel defines the log level
+%   wInit:      (optional)initial weights where optimizer starts
 %
 % output
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
@@ -103,66 +102,81 @@ if  strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'protons')
     if ~isfield(dij,'RBE')
         dij.RBE = 1.1;
     end
-    bixelWeight =  (doseTarget)/(dij.RBE * mean(dij.physicalDose{1}(V,:)*wOnes)); 
-    wInit       = bixelWeight * wOnes;
-    matRad_cfg.dispInfo('chosen uniform weight of %f!\n',bixelWeight);    
+    
+    if exist('wInit','var')
+        matRad_cfg.dispInfo('Initial weights found as input...\n');
+    else
+        bixelWeight =  (doseTarget)/(dij.RBE * mean(dij.physicalDose{1}(V,:)*wOnes));
+        wInit       = bixelWeight * wOnes;
+        matRad_cfg.dispInfo('chosen uniform weight of %f!\n',bixelWeight);
+    end
 elseif pln.bioParam.bioOpt
     
     % retrieve photon LQM parameter
-    [ax,bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1);
-
+    [ax,bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,dij.numOfScenarios);
+    
     if ~isequal(dij.ax(dij.ax~=0),ax(dij.ax~=0)) || ...
-       ~isequal(dij.bx(dij.bx~=0),bx(dij.bx~=0))
-         matRad_cfg.dispError('Inconsistent biological parameter - please recalculate dose influence matrix!\n');
+            ~isequal(dij.bx(dij.bx~=0),bx(dij.bx~=0))
+        matRad_cfg.dispError('Inconsistent biological parameter - please recalculate dose influence matrix!\n');
     end
     
     for i = 1:size(cst,1)
-
+        
         for j = 1:size(cst{i,6},2)
             % check if prescribed doses are in a valid domain
             if any(cst{i,6}{j}.getDoseParameters() > 5) && isequal(cst{i,3},'TARGET')
-                matRad_cfg.dispError('Reference dose > 10 Gy[RBE] for target. Biological optimization outside the valid domain of the base data. Reduce dose prescription or use more fractions.\n');
+                matRad_cfg.dispError('Reference dose > 5 Gy[RBE] for target. Biological optimization outside the valid domain of the base data. Reduce dose prescription or use more fractions.\n');
             end
             
         end
     end
     
-    dij.ixDose  = dij.bx~=0; 
-        
+    dij.ixDose  = dij.bx~=0;
+    
     if isequal(pln.bioParam.quantityOpt,'effect')
-
-           effectTarget = cst{ixTarget,5}.alphaX * doseTarget + cst{ixTarget,5}.betaX * doseTarget^2;
-           p            = (sum(dij.mAlphaDose{1}(V,:)*wOnes)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
-           q            = -(effectTarget * length(V)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
-           wInit        = -(p/2) + sqrt((p^2)/4 -q) * wOnes;
-
+        
+        if exist('wInitIn')
+            matRad_cfg.dispInfo('Initial weights found as input...\n');
+        else
+            effectTarget = cst{ixTarget,5}.alphaX * doseTarget + cst{ixTarget,5}.betaX * doseTarget^2;
+            p            = (sum(dij.mAlphaDose{1}(V,:)*wOnes)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
+            q            = -(effectTarget * length(V)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
+            wInit        = -(p/2) + sqrt((p^2)/4 -q) * wOnes;
+        end
+        
     elseif isequal(pln.bioParam.quantityOpt,'RBExD')
-
-           %pre-calculations
-           dij.gamma             = zeros(dij.doseGrid.numOfVoxels,1);   
-           dij.gamma(dij.ixDose) = dij.ax(dij.ixDose)./(2*dij.bx(dij.ixDose)); 
-
-            
-           % calculate current in target
-           CurrEffectTarget = (dij.mAlphaDose{1}(V,:)*wOnes + (dij.mSqrtBetaDose{1}(V,:)*wOnes).^2);
-           % ensure a underestimated biological effective dose 
-           TolEstBio        = 1.2;
-           % calculate maximal RBE in target
-           maxCurrRBE = max(-cst{ixTarget,5}.alphaX + sqrt(cst{ixTarget,5}.alphaX^2 + ...
-                        4*cst{ixTarget,5}.betaX.*CurrEffectTarget)./(2*cst{ixTarget,5}.betaX*(dij.physicalDose{1}(V,:)*wOnes)));
-           wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(dij.physicalDose{1}(V,:)*wOnes)))* wOnes;
+        
+        %pre-calculations
+        dij.gamma             = zeros(dij.doseGrid.numOfVoxels,dij.numOfScenarios);
+        dij.gamma(dij.ixDose) = dij.ax(dij.ixDose)./(2*dij.bx(dij.ixDose));
+        
+        if exist('wInit','var')
+            matRad_cfg.dispInfo('Initial weights found as input...\n');
+        else
+            % calculate current in target
+            CurrEffectTarget = (dij.mAlphaDose{1}(V,:)*wOnes + (dij.mSqrtBetaDose{1}(V,:)*wOnes).^2);
+            % ensure a underestimated biological effective dose
+            TolEstBio        = 1.2;
+            % calculate maximal RBE in target
+            maxCurrRBE = max(-cst{ixTarget,5}.alphaX + sqrt(cst{ixTarget,5}.alphaX^2 + ...
+                4*cst{ixTarget,5}.betaX.*CurrEffectTarget)./(2*cst{ixTarget,5}.betaX*(dij.physicalDose{1}(V,:)*wOnes)));
+            wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(dij.physicalDose{1}(V,:)*wOnes)))* wOnes;
+        end
     end
     
-else 
-    bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
-    wInit       = wOnes * bixelWeight;
-    matRad_cfg.dispInfo('chosen uniform weight of %f!\n',bixelWeight);   
+else
+    if exist('wInit','var')
+        matRad_cfg.dispInfo('Initial weights found as input...\n');
+    else
+        bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes));
+        wInit       = wOnes * bixelWeight;
+        matRad_cfg.dispInfo('chosen uniform weight of %f!\n',bixelWeight);
+    end
 end
-    
 
 
 %% calculate probabilistic quantities for probabilistic optimization if at least
-% one robust objective is defined 
+% one robust objective is defined
 
 %Check how to use 4D data
 if isfield(pln,'propOpt') && isfield(pln.propOpt,'scen4D')
