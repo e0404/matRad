@@ -59,7 +59,7 @@ classdef MatRad_TopasConfig < handle
             'addSection','none',... %'none','lung','poisson','sampledDensities' (the last 2 only with modulation)
             'addTitanium',false,... %'false','true' (can only be used with advanced HUsections)
             'HUSection','advanced',... %'default','advanced'
-            'HUToMaterial','default',... %'default','simpleLung','advanced'
+            'HUToMaterial','default',... %'default',','advanced','MCsquare'
             'loadConverterFromFile','false'); % set true if you want to use your own SchneiderConverter written in "TOPAS_SchneiderConverter"
         
         arrayOrdering = 'F'; %'C';
@@ -110,7 +110,7 @@ classdef MatRad_TopasConfig < handle
             ... % Schneier Converter
                 ... % Defined Materials
                 'matConv_Schneider_definedMaterials',struct('default','definedMaterials/default.txt.in',...
-                'simple','definedMaterials/simple.txt.in',...
+                'MCsquare','definedMaterials/MCsquare.txt.in',...
                 'advanced','definedMaterials/advanced.txt.in'),...
                 ... % Density Correction
                 'matConv_Schneider_densityCorr_TOPAS1','densityCorrection/TOPAS1.dat',...
@@ -1111,35 +1111,21 @@ classdef MatRad_TopasConfig < handle
                             fprintf(fID,['iv:Ge/Patient/SchneiderHUToMaterialSections = %i ',repmat('%d ',1,numel(HUToMaterial.sections)),'\n'],numel(HUToMaterial.sections),HUToMaterial.sections);
                             % load defined material based on materialConverter.HUToMaterial
                             
-                            
+                            fname = fullfile(obj.thisFolder,filesep,obj.converterFolder,filesep,obj.infilenames.matConv_Schneider_definedMaterials.('obj.materialConverter.HUToMaterial'));
+                            materials = splitlines(fileread(fname));
                             switch obj.materialConverter.HUToMaterial
                                 case 'default'
-                                    fprintf(fID,'sv:Ge/Patient/SchneiderElements = 5 "Hydrogen" "Oxygen" "Nitrogen" "Carbon" "Phosphorus"\n');
-                                    fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight1 = 5 0.0 0.23479269 0.76508170 0.00012561 0.0\n');
-                                    fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight2 = 5 0.111894 0.888106 0.0 0.0 0.0\n');
-                                    ExcitationEnergies = [85.7 78.0];
+                                    fprintf(fID,'\n%s\n',materials{1:3});
+                                    ExcitationEnergies = str2double(split(string(materials{end}(strfind(string(materials{end}),'=')+4:end-3))));
                                     if contains(obj.materialConverter.addSection,{'lung','sampledDensities'})
-                                        fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight3 = 5 0.10404040 0.75656566 0.03131313 0.10606061 0.00202020\n');
+                                        fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight%i = 5 0.10404040 0.75656566 0.03131313 0.10606061 0.00202020\n',length(materials)-1);
                                         ExcitationEnergies = [ExcitationEnergies 75.3];
                                     end
                                     fprintf(fID,['dv:Ge/Patient/SchneiderMaterialMeanExcitationEnergy = %i',repmat(' %.6g',1,numel(ExcitationEnergies)),' eV\n'],numel(ExcitationEnergies),ExcitationEnergies);
-                                    
-                                case 'simple'
-                                    fprintf(fID,'sv:Ge/Patient/SchneiderElements = 5 "Hydrogen" "Oxygen" "Nitrogen" "Carbon" "Phosphorus"\n');
-                                    fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight1 = 5 0.0 0.23479269 0.76508170 0.00012561 0.0\n');
-                                    fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight2 = 5 0.10404040 0.75656566 0.03131313 0.10606061 0.00202020\n');
-                                    fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight3 = 5 0.111894 0.888106 0.0 0.0 0.0\n');
-                                    ExcitationEnergies = [85.7 75.3 78.0];
-                                    if contains(obj.materialConverter.addSection,'lung')
-                                        fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight4 = 5 0.10404040 0.75656566 0.03131313 0.10606061 0.00202020\n');
-                                        ExcitationEnergies = [ExcitationEnergies 75.3];
-                                    end
-                                    fprintf(fID,['dv:Ge/Patient/SchneiderMaterialMeanExcitationEnergy = %i',repmat(' %.6g',1,numel(ExcitationEnergies)),' eV\n'],numel(ExcitationEnergies),ExcitationEnergies);
-                                    
                                 case 'advanced'
-                                    fname = fullfile(obj.thisFolder,filesep,obj.converterFolder,filesep,obj.infilenames.matConv_Schneider_definedMaterials.advanced);
-                                    materials = fileread(fname);
-                                    fprintf(fID,'\n%s\n',materials);
+                                    fprintf(fID,'\n%s\n',materials{:});
+                                case 'MCsquare'
+                                    fprintf(fID,'\n%s\n',materials{:});
                             end
                             
                             switch obj.materialConverter.HUToMaterial
