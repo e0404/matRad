@@ -311,6 +311,17 @@ classdef matRad_importWidget < matRad_Widget
             
             cst = this.showCheckDialog(cst);
             
+            % delete existing workspace - parse variables from base workspace
+            %set(handles.popupDisplayOption,'String','no option available');
+            AllVarNames = evalin('base','who');
+            RefVarNames = {'ct','cst','pln','stf','dij','resultGUI'};
+            ChangedVarNames = {};
+            for i = 1:length(RefVarNames)
+                if sum(ismember(AllVarNames,RefVarNames{i}))>0
+                    evalin('base',['clear ', RefVarNames{i}]);
+                end
+            end
+            
             assignin('base', 'ct', ct);
             assignin('base', 'cst', cst);
             

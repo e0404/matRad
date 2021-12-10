@@ -556,32 +556,6 @@ classdef matRad_WorkflowWidget < matRad_Widget
         function btnRefresh_Callback(this, hObject, event)
             % notify so all widgets refresh
             this.changedWorkspace();
-            %getFromWorkspace(this);
-            
-            %                 handles = this.handles;
-            %
-            %                 %% parse variables from base workspace
-            %                 AllVarNames = evalin('base','who');
-            %                 try
-            %                     if  ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
-            %                         ct  = evalin('base','ct');
-            %                         cst = evalin('base','cst');
-            %                         cst=generateCstTable(this,cst);
-            %                         cst = matRad_computeVoiContoursWrapper(cst,ct);
-            %                         assignin('base','cst',cst);
-            %
-            %                         changeWorkspace(this);
-            %
-            %                     elseif ismember('ct',AllVarNames) &&  ~ismember('cst',AllVarNames)
-            %                         handles = showError(this,'GUI OpeningFunc: could not find cst file');
-            %                     elseif ~ismember('ct',AllVarNames) &&  ismember('cst',AllVarNames)
-            %                         handles = showError(this,'GUI OpeningFunc: could not find ct file');
-            %                     end
-            %                 catch ME
-            %                    handles = showError(this,'GUI OpeningFunc: Could not load ct and cst file. Reason: ', ME);
-            %                 end
-            %
-            %                 this.handles = handles;
         end
         
         
@@ -809,6 +783,12 @@ classdef matRad_WorkflowWidget < matRad_Widget
             extensions{1} = '*.nrrd';
             [filenames,filepath,~] = uigetfile(extensions,'MultiSelect','on');
             
+            %Import aborted
+            if filenames == 0
+                return;
+            end
+            
+            %Something was selected
             try
                 if ~iscell(filenames)
                     tmp = filenames;
@@ -849,18 +829,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
             % handles    structure with handles and user data (see GUIDATA)
             handles = this.handles;
             
-            try
-                % delete existing workspace - parse variables from base workspace
-                %set(handles.popupDisplayOption,'String','no option available');
-                AllVarNames = evalin('base','who');
-                RefVarNames = {'ct','cst','pln','stf','dij','resultGUI'};
-                ChangedVarNames = {};
-                for i = 1:length(RefVarNames)
-                    if sum(ismember(AllVarNames,RefVarNames{i}))>0
-                        evalin('base',['clear ', RefVarNames{i}]);
-                    end
-                end
-                
+            try               
                 %call the gui
                 h=matRad_importWidget;
                 uiwait(h.widgetHandle);

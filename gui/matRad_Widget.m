@@ -79,7 +79,7 @@ classdef matRad_Widget <  handle
                 end
             end
             matRad_cfg.dispError(Message);
-            %handles.ErrorDlg = errordlg(Message);
+            errordlg(Message);
             this.handles = handles;
         end
         

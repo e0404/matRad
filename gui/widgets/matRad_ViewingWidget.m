@@ -728,21 +728,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 d = [0 l .* rho{1}];
                 % Calculate accumulated d sum.
                 vX = cumsum(d(1:end-1));
-                
-                % this step is necessary if visualization is set to profile plot
-                % and another optimization is carried out - set focus on GUI
-                figHandles = allchild(0); % get(0,'Children'); does not work in octave
-                idxHandle = [];
-                if ~isempty(figHandles)
-                    v=version;
-                    if str2double(v(1:3))>= 8.5
-                        idxHandle = strcmp({figHandles(:).Name},'matRadGUI');
-                    else
-                        idxHandle = strcmp(get(figHandles,'Name'),'matRadGUI');
-                    end
-                end
-                figure(figHandles(idxHandle));
-                
+               
                 % plot physical dose
                 %Content =this.SelectedDisplayOption; %get(this.popupDisplayOption,'String');
                 SelectedCube = this.SelectedDisplayOption; %Content{get(this.popupDisplayOption,'Value')};

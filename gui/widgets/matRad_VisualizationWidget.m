@@ -31,7 +31,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
             else
                 set(handles.btnDVH,'Enable','off');
                 set(handles.popupDisplayOption,'Enable','off');
-                set(handles.btnProfileType,'Enable','off');
+                set(handles.popupProfileType,'Enable','off');
                 set(handles.popupTypeOfPlot,'Enable','off');
                 set(handles.popupPlane,'Enable','off');
                 set(handles.radiobtnCT,'Enable','off');
@@ -62,7 +62,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 handles=this.handles;
                 % disable all buttons
                 set(handles.popupDisplayOption,'Enable','off');
-                set(handles.btnProfileType,'Enable','off');
+                set(handles.popupProfileType,'Enable','off');
                 set(handles.popupTypeOfPlot,'Enable','off');
                 set(handles.popupPlane,'Enable','off');
                 set(handles.radiobtnCT,'Enable','off');
@@ -92,7 +92,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 handles=this.handles;
                 % disable all buttons
                 set(handles.popupDisplayOption,'Enable','off');
-                set(handles.btnProfileType,'Enable','off');
+                set(handles.popupProfileType,'Enable','off');
                 set(handles.popupTypeOfPlot,'Enable','off');
                 set(handles.popupPlane,'Enable','off');
                 set(handles.radiobtnCT,'Enable','off');
@@ -313,6 +313,24 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 'FontWeight',matRad_cfg.gui.fontWeight);
             
             %Fifth Column
+            h50 = uicontrol(...
+                'Parent',h36,...
+                'Units','normalized',...
+                'String',{'depth','lateral'},...
+                'Tooltip','Select which 1D profile through the isocenter you would like to see',...
+                'Style','popupmenu',...
+                'Value',1,...
+                'Position',gridPos{5,1},...
+                'Callback',@(hObject,eventdata) popupProfileType_Callback(this,hObject,eventdata),...
+                'Tag','popupProfileType',...
+                'BackgroundColor',matRad_cfg.gui.elementColor,...
+                'ForegroundColor',matRad_cfg.gui.textColor,...
+                'FontSize',matRad_cfg.gui.fontSize,...
+                'FontName',matRad_cfg.gui.fontName,...
+                'FontWeight',matRad_cfg.gui.fontWeight);
+            
+            %{
+            %Old display with button
             pos = gridPos{5,1};
             pos(3) = pos(3)*0.4975;
             h51 = uicontrol(...
@@ -339,14 +357,15 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 'String','lateral',...
                 'Tooltip','Display depth or lateral profile',...
                 'Position',pos,...
-                'Callback',@(hObject,eventdata) btnProfileType_Callback(this,hObject,eventdata),...
+                'Callback',@(hObject,eventdata) popupProfileType_Callback(this,hObject,eventdata),...
                 'Enable','off',...
-                'Tag','btnProfileType',...
+                'Tag','popupProfileType',...
                 'BackgroundColor',matRad_cfg.gui.elementColor,...
                 'ForegroundColor',matRad_cfg.gui.textColor,...
                 'FontSize',matRad_cfg.gui.fontSize,...
                 'FontName',matRad_cfg.gui.fontName,...
                 'FontWeight',matRad_cfg.gui.fontWeight);
+            %}
             
             
             h57 = uicontrol(...
@@ -511,9 +530,9 @@ classdef matRad_VisualizationWidget < matRad_Widget
         function getFromViewingWidget(this)
             handles=this.handles;
             if strcmp(this.viewingWidgetHandle.ProfileType,'lateral')
-                set(handles.btnProfileType,'String','depth');
+                set(handles.popupProfileType,'Value',2);
             else
-                set(handles.btnProfileType,'String','lateral');
+                set(handles.popupProfileType,'Value',1);
             end
             
             set(handles.popupTypeOfPlot,'Value',this.viewingWidgetHandle.typeOfPlot);
@@ -567,7 +586,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
                     set(handles.sliderBeamSelection,'Enable','off')
                     set(handles.sliderOffset,'Enable','off')
                     set(handles.popupDisplayOption,'Enable','on')
-                    set(handles.btnProfileType,'Enable','off');
+                    set(handles.popupProfileType,'Enable','off');
                     set(handles.popupPlane,'Enable','on');
                     set(handles.radiobtnCT,'Enable','on');
                     set(handles.radiobtnContour,'Enable','on');
@@ -580,7 +599,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 elseif this.viewingWidgetHandle.typeOfPlot == 2
                     
                     set(handles.popupDisplayOption,'Enable','on');
-                    set(handles.btnProfileType,'Enable','on');
+                    set(handles.popupProfileType,'Enable','on');
                     set(handles.popupPlane,'Enable','off');
                     set(handles.radiobtnCT,'Enable','off');
                     set(handles.radiobtnContour,'Enable','off');
@@ -588,7 +607,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
                     set(handles.radiobtnIsoDoseLines,'Enable','off');
                     set(handles.sliderSlice,'Enable','off');
                     set(handles.radiobtnIsoDoseLinesLabels,'Enable','off');
-                    set(handles.btnProfileType,'Enable','on')
+                    set(handles.popupProfileType,'Enable','on')
                     
                 end
                 
@@ -622,7 +641,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 set(handles.sliderBeamSelection,'Enable','off')
                 set(handles.sliderOffset,'Enable','off')
                 set(handles.popupDisplayOption,'Enable','on')
-                set(handles.btnProfileType,'Enable','off');
+                set(handles.popupProfileType,'Enable','off');
                 set(handles.popupPlane,'Enable','on');
                 set(handles.radiobtnCT,'Enable','on');
                 set(handles.radiobtnContour,'Enable','on');
@@ -642,7 +661,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 end
                                 
                 set(handles.popupDisplayOption,'Enable','on');
-                set(handles.btnProfileType,'Enable','on');
+                set(handles.popupProfileType,'Enable','on');
                 set(handles.popupPlane,'Enable','off');
                 set(handles.radiobtnCT,'Enable','off');
                 set(handles.radiobtnContour,'Enable','off');
@@ -651,7 +670,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 set(handles.sliderSlice,'Enable','off');
                 set(handles.radiobtnIsoDoseLinesLabels,'Enable','off');
                   
-                set(handles.btnProfileType,'Enable','on')
+                set(handles.popupProfileType,'Enable','on')
 
 %                 end
             end
@@ -699,24 +718,21 @@ classdef matRad_VisualizationWidget < matRad_Widget
         end
          
          % 50 Callback
-        function btnProfileType_Callback(this, hObject, event)
-            % hObject    handle to btnProfileType (see GCBO)
+        function popupProfileType_Callback(this, hObject, event)
+            % hObject    handle to popupProfileType (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
             %handles = this.handles;
             
-            if strcmp(get(hObject,'Enable') ,'on')
-                if strcmp(this.viewingWidgetHandle.ProfileType,'lateral')
+            val = get(hObject,'Value');
+            
+            switch val
+                case 1
                     this.viewingWidgetHandle.ProfileType = 'longitudinal';
-                    set(hObject,'String','lateral');
-                else
+                case 2
                     this.viewingWidgetHandle.ProfileType = 'lateral';
-                    set(hObject,'String','longitudinal');
-                end
-                
-%                 handles.rememberCurrAxes = false;
-%                 UpdatePlot(handles);
-%                 handles.rememberCurrAxes = true;
+                otherwise
+                    this.showError('Invalid selection for Profile Plot!');                
             end
             %this.handles = handles;
         end
