@@ -85,8 +85,14 @@ if ~isempty(files.rtss)
     for i = 1:numel(structures)
         % computations take place here
         waitbar(i / steps)
-        fprintf('creating cube for %s volume...\n', structures(i).structName);
-        structures(i).indices = matRad_convRtssContours2Indices(structures(i),ct);
+        fprintf('creating cube for %s volume... ', structures(i).structName);
+        try
+            structures(i).indices = matRad_convRtssContours2Indices(structures(i),ct);
+            fprintf('\n');
+        catch ME
+            warning('matRad:dicomImport','could not be imported: %s',ME.message);
+            structures(i).indices = [];
+        end      
     end
     fprintf('finished!\n');
     close(h)
