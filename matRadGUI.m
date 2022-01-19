@@ -3668,8 +3668,8 @@ if get(handles.popupTypeOfPlot,'Value')==1 %Image view
             cursorText{end+1,1} = ['Cube Index: ' mat2str(cubeIx)];
             %Space Coordinates
             coords = zeros(1,3);
-            coords(1) = cubePos(2)*ct.resolution.y;
-            coords(2) = cubePos(1)*ct.resolution.x;
+            coords(1) = cubePos(2)*ct.resolution.x;
+            coords(2) = cubePos(1)*ct.resolution.y;
             coords(3) = cubePos(3)*ct.resolution.z;            
             cursorText{end+1,1} = ['Space Coordinates: ' mat2str(coords,5) ' mm'];
             
