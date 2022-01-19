@@ -14,7 +14,9 @@ List of all matRad developers that contributed code (alphabetical)
 * Cindy Hermann
 * Noa Homolka
 * Fabian Jäger
+* Navid Khaledi
 * Thomas Klinge
+* Jeremias Kunz
 * Paul Anton Meder
 * Henning Mescher
 * Lucas-Raphael Müller
@@ -23,6 +25,7 @@ List of all matRad developers that contributed code (alphabetical)
 * Giuseppe Pezzano
 * Daniel Ramirez
 * Carsten Scholz
+* Camilo Sevilla
 * Alexander Stadler
 * Uwe Titt
 * Niklas Wahl

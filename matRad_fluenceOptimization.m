@@ -1,15 +1,15 @@
-function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
+function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
 % matRad inverse planning wrapper function
 % 
 % call
 %   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
+%   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
 %
 % input
 %   dij:        matRad dij struct
 %   cst:        matRad cst struct
 %   pln:        matRad pln struct
-%   param:      (optional) structure defining additional parameter            
-%               e.g. param.logLevel defines the log level
+%   wInit:      (optional) custom weights to initialize problems
 %
 % output
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
@@ -98,7 +98,9 @@ wOnes          = ones(dij.totalNumOfBixels,1);
    
 % calculate initial beam intensities wInit
 matRad_cfg.dispInfo('Estimating initial weights... ');
-if  strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'protons')
+if exist('wInit','var')
+    matRad_cfg.dispInfo('chosen provided wInit!\n');   
+elseif strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'protons')
     % check if a constant RBE is defined - if not use 1.1
     if ~isfield(dij,'RBE')
         dij.RBE = 1.1;
@@ -152,7 +154,7 @@ elseif pln.bioParam.bioOpt
                         4*cst{ixTarget,5}.betaX.*CurrEffectTarget)./(2*cst{ixTarget,5}.betaX*(dij.physicalDose{1}(V,:)*wOnes)));
            wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(dij.physicalDose{1}(V,:)*wOnes)))* wOnes;
     end
-    
+    matRad_cfg.dispInfo('chosen weights adapted to biological dose calculation!\n'); 
 else 
     bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
     wInit       = wOnes * bixelWeight;

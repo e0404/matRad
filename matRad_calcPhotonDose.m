@@ -47,13 +47,34 @@ switch env
           rand('seed',0)
 end
 
+%We check here explicitly for the griddedInterpolant class
+haveGriddedInterpolant = exist('griddedInterpolant','class');
+
+
 % initialize waitbar
 figureWait = waitbar(0,'calculate dose influence matrix for photons...');
 % show busy state
 set(figureWait,'pointer','watch');
 
 % set lateral cutoff value
-lateralCutoff = matRad_cfg.propDoseCalc.defaultGeometricCutOff; % [mm]
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'geometricCutOff')
+    pln.propDoseCalc.geometricCutOff =  matRad_cfg.propDoseCalc.defaultGeometricCutOff; % [mm]
+end
+
+lateralCutoff = pln.propDoseCalc.geometricCutOff;
+
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'kernelCutOff')
+    pln.propDoseCalc.kernelCutOff =  matRad_cfg.propDoseCalc.defaultKernelCutOff; % [mm]
+end
+
+% set kernel cutoff value (determines how much of the kernel is used. This
+% value is separated from lateralCutOff to obtain accurate large open fields)
+kernelCutoff = pln.propDoseCalc.kernelCutOff;
+
+if kernelCutoff < lateralCutoff
+    matRad_cfg.dispWarning('Kernel Cut-Off ''%f mm'' cannot be smaller than geometric lateral cutoff ''%f mm''. Using ''%f mm''!',kernelCutoff,lateralCutoff,lateralCutoff);
+    kernelCutoff = lateralCutoff;
+end
 
 % toggle custom primary fluence on/off. if 0 we assume a homogeneous
 % primary fluence, if 1 we use measured radially symmetric data
@@ -64,6 +85,8 @@ else
 end
 
 % 0 if field calc is bixel based, 1 if dose calc is field based
+% num2str is only used to prevent failure of strcmp when bixelWidth
+% contains a number and not a string
 isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
 
 %% kernel convolution
@@ -112,12 +135,16 @@ if ~isFieldBasedDoseCalc
 end
 
 % get kernel size and distances
-kernelLimit = ceil(lateralCutoff/intConvResolution);
+if kernelCutoff > machine.data.kernelPos(end)
+    kernelCutoff = machine.data.kernelPos(end);
+end
+
+kernelLimit = ceil(kernelCutoff/intConvResolution);
 [kernelX, kernelZ] = meshgrid(-kernelLimit*intConvResolution: ...
    intConvResolution: ...
    (kernelLimit-1)*intConvResolution);
 
-% precalculate convoluted kernel size and distances
+% precalculate convolved kernel size and distances
 kernelConvLimit = fieldLimit + gaussLimit + kernelLimit;
 [convMx_X, convMx_Z] = meshgrid(-kernelConvLimit*intConvResolution: ...
    intConvResolution: ...
@@ -127,7 +154,7 @@ kernelConvSize = 2*kernelConvLimit;
 
 % define an effective lateral cutoff where dose will be calculated. note
 % that storage within the influence matrix may be subject to sampling
-effectiveLateralCutoff = lateralCutoff + fieldWidth/2;
+effectiveLateralCutoff = lateralCutoff + fieldWidth/sqrt(2);
 
 % book keeping - this is necessary since pln is not used in optimization or
 % matRad_calcCubes
@@ -144,13 +171,12 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
     end
     
     counter = 0;
-    
+
     % compute SSDs
     stf = matRad_computeSSD(stf,ct);
     if pln.multScen.totNumShiftScen > 1
         matRad_cfg.dispInfo('\tShift scenario %d of %d: \n',shiftScen,pln.multScen.totNumShiftScen);
-    end
-    
+    end    
     
     for i = 1:numel(stf) % loop over all beams
         matRad_calcDoseInitBeam;
@@ -175,24 +201,26 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
         
         % convolution here if no custom primary fluence and no field based dose calc
         if ~useCustomPrimFluenceBool && ~isFieldBasedDoseCalc
-            
-            % Display console message
+
+            % Display console message.
             matRad_cfg.dispInfo('\tUniform primary photon fluence -> pre-compute kernel convolution...\n');
-            
+
             % 2D convolution of Fluence and Kernels in fourier domain
             convMx1 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel1Mx,kernelConvSize,kernelConvSize)));
             convMx2 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel2Mx,kernelConvSize,kernelConvSize)));
             convMx3 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel3Mx,kernelConvSize,kernelConvSize)));
-            
+
             % Creates an interpolant for kernes from vectors position X and Z
-            if strcmp(env,'MATLAB')
+            if haveGriddedInterpolant
                 Interp_kernel1 = griddedInterpolant(convMx_X',convMx_Z',convMx1','linear','none');
                 Interp_kernel2 = griddedInterpolant(convMx_X',convMx_Z',convMx2','linear','none');
                 Interp_kernel3 = griddedInterpolant(convMx_X',convMx_Z',convMx3','linear','none');
             else
-                Interp_kernel1 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx1,x,y,'linear',NaN);
-                Interp_kernel2 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx2,x,y,'linear',NaN);
-                Interp_kernel3 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx3,x,y,'linear',NaN);
+                %For some reason the use of interpn here is much faster
+                %than using interp2 in Octave
+                Interp_kernel1 = @(x,y)interpn(convMx_X(1,:),convMx_Z(:,1),convMx1',x,y,'linear',NaN);
+                Interp_kernel2 = @(x,y)interpn(convMx_X(1,:),convMx_Z(:,1),convMx2',x,y,'linear',NaN);
+                Interp_kernel3 = @(x,y)interpn(convMx_X(1,:),convMx_Z(:,1),convMx3',x,y,'linear',NaN);
             end
         end
         
@@ -217,7 +245,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 % apply the primary fluence to the field
                 Fx = F .* Psi;
                 
-                % convolute with the gaussian
+                % convolve with the gaussian
                 Fx = real( ifft2(fft2(Fx,gaussConvSize,gaussConvSize).* fft2(gaussFilter,gaussConvSize,gaussConvSize)) );
                 
                 % 2D convolution of Fluence and Kernels in fourier domain
@@ -226,14 +254,16 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 convMx3 = real( ifft2(fft2(Fx,kernelConvSize,kernelConvSize).* fft2(kernel3Mx,kernelConvSize,kernelConvSize)) );
                 
                 % Creates an interpolant for kernes from vectors position X and Z
-                if exist('griddedInterpolant','class') % use griddedInterpoland class when available
+                if haveGriddedInterpolant % use griddedInterpoland class when available
                     Interp_kernel1 = griddedInterpolant(convMx_X',convMx_Z',convMx1','linear','none');
                     Interp_kernel2 = griddedInterpolant(convMx_X',convMx_Z',convMx2','linear','none');
                     Interp_kernel3 = griddedInterpolant(convMx_X',convMx_Z',convMx3','linear','none');
                 else
-                    Interp_kernel1 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx1,x,y,'linear',NaN);
-                    Interp_kernel2 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx2,x,y,'linear',NaN);
-                    Interp_kernel3 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx3,x,y,'linear',NaN);
+                    %For some reason the use of interpn here is much faster
+                    %than using interp2 in Octave
+                    Interp_kernel1 = @(x,y)interpn(convMx_X(1,:),convMx_Z(:,1),convMx1',x,y,'linear',NaN);
+                    Interp_kernel2 = @(x,y)interpn(convMx_X(1,:),convMx_Z(:,1),convMx2',x,y,'linear',NaN);
+                    Interp_kernel3 = @(x,y)interpn(convMx_X(1,:),convMx_Z(:,1),convMx3',x,y,'linear',NaN);
                 end
                 
             end
