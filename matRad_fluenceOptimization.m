@@ -121,7 +121,7 @@ elseif pln.bioParam.bioOpt
         for j = 1:size(cst{i,6},2)
             % check if prescribed doses are in a valid domain
             if any(cst{i,6}{j}.getDoseParameters() > 5) && isequal(cst{i,3},'TARGET')
-                matRad_cfg.dispError('Reference dose > 10 Gy[RBE] for target. Biological optimization outside the valid domain of the base data. Reduce dose prescription or use more fractions.\n');
+                matRad_cfg.dispWarning('Reference dose > 10 Gy[RBE] for target. Biological optimization outside the valid domain of the base data. Reduce dose prescription or use more fractions.\n');
             end
             
         end
