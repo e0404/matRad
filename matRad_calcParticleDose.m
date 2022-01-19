@@ -278,7 +278,7 @@ for i = 1:length(stf) % loop over all beams
 
                     % empty bixels may happen during recalculation of error
                     % scenarios -> skip to next bixel
-                    if ~any(currIx)
+                    if ~any(currIx,'all')
                         continue;
                     end
 
@@ -312,7 +312,7 @@ for i = 1:length(stf) % loop over all beams
                     end
                     
                     % run over components
-                    for c = 1:numOfSub
+                    for c = 1:numOfSub(k)
                         tmpDose = zeros(size(currIx,1),1);
                         bixelDose = finalWeight(c,k).*matRad_calcParticleDoseBixel(...
                                 radDepths(currIx(:,:,c),1,c), ...
