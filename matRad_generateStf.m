@@ -432,7 +432,7 @@ for i = 1:length(pln.propStf.gantryAngles)
     stf(i).numOfRays = size(stf(i).ray,2);
      
     % post processing for particle remove energy slices
-    if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')
+    if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'helium') || strcmp(stf(i).radiationMode,'carbon')
         
         % get minimum energy per field
         minEnergy = min([stf(i).ray.energy]);
