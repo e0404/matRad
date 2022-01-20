@@ -278,7 +278,7 @@ for i = 1:length(stf) % loop over all beams
 
                     % empty bixels may happen during recalculation of error
                     % scenarios -> skip to next bixel
-                    if ~any(currIx,'all')
+                    if ~(any(any(currIx)))
                         continue;
                     end
 
