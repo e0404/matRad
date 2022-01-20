@@ -46,7 +46,7 @@ classdef (Abstract) matRad_DoseEngine < handle
     end
   
     properties (SetAccess = public, GetAccess = public)
-        calcDoseDirect = false; % analytical mode
+        calcDoseDirect = false; % switch for direct cube / dij calculation 
     end
     
     properties (Constant)
