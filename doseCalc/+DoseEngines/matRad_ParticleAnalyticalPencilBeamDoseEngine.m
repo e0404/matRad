@@ -24,11 +24,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
            name = 'pencil beam particle';
     end
     
-    properties (SetAccess = private, GetAccess = public)  
-        
-        letDoseTmpContainer; % temporary dose LET container
-        alphaDoseTmpContainer; % temporary dose alpha dose container
-        betaDoseTmpContainer; % temporary dose beta dose container
+    properties (SetAccess = public, GetAccess = public)
         
         calcLET = false; % Boolean which defines if LET should be calculated
         calcBioDose = false; % Boolean which defines if calculation should account for bio optimization
@@ -37,9 +33,20 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
         fineSamplingN; % number of subsample beams shells, see matRad_calcWeights
         fineSamplingSigmaSub; % gaussian of the sub-beams , see matRad_calcWeights
         fineSamplingMethod; % method used for fine sampling
+        geometricCutOff; % effective leteral cutoff
+        
+        visBoolLateralCutOff = true; % Boolean switch for visualization during+ LeteralCutOff calculation
         
     end
-         
+    
+    properties (SetAccess = protected, GetAccess = public)  
+        
+        letDoseTmpContainer; % temporary dose LET container
+        alphaDoseTmpContainer; % temporary dose alpha dose container
+        betaDoseTmpContainer; % temporary dose beta dose container
+        
+    end
+             
     methods 
         
         function obj = matRad_ParticleAnalyticalPencilBeamDoseEngine(ct,stf,pln,cst)
@@ -56,23 +63,23 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
              
             obj = obj@DoseEngines.matRad_AnalyticalPencilBeamEngine();
             
-            if exist('pln','var')
-                % check if bio optimization is needed and set the
-                % coresponding boolean accordingly
-                 if (isfield(pln,'propOpt')&& isfield(pln.propOpt,'bioOptimization')&& ...
-                    (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') ||... 
-                    isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) && ... 
-                    strcmp(pln.radiationMode,'carbon'))
-                    obj.calcBioDose = true;
-                 end
-                 
-                 if isfield(pln,'propDoseCalc') && ...
-                    isfield(pln.propDoseCalc,'calcLET') && ...
-                    pln.propDoseCalc.calcLET
-                    obj.calcLET = true;
-                 end
-                    
-            end
+%             if exist('pln','var')
+%                 % check if bio optimization is needed and set the
+%                 % coresponding boolean accordingly
+%                  if (isfield(pln,'propOpt')&& isfield(pln.propOpt,'bioOptimization')&& ...
+%                     (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') ||... 
+%                     isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) && ... 
+%                     strcmp(pln.radiationMode,'carbon'))
+%                     obj.calcBioDose = true;
+%                  end
+%                  
+%                  if isfield(pln,'propDoseCalc') && ...
+%                     isfield(pln.propDoseCalc,'calcLET') && ...
+%                     pln.propDoseCalc.calcLET
+%                     obj.calcLET = true;
+%                  end
+%                     
+%             end
         end
         
         function dij = calcDose(obj,ct,stf,pln,cst)
@@ -187,7 +194,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
 
             % lateral cutoff for raytracing and geo calculations
             obj.effectiveLateralCutoff = matRad_cfg.propDoseCalc.defaultGeometricCutOff;
-
+            
             matRad_cfg.dispInfo('matRad: Particle dose calculation...\n');
             counter = 0;
 
@@ -200,8 +207,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
                 % Determine lateral cutoff
                 matRad_cfg.dispInfo('matRad: calculate lateral cutoff...');
                 cutOffLevel = matRad_cfg.propDoseCalc.defaultLateralCutOff;
-                visBoolLateralCutOff = 0;
-                obj.calcLateralParticleCutOff(cutOffLevel,stf(i),visBoolLateralCutOff);
+                obj.calcLateralParticleCutOff(cutOffLevel,stf(i));
                 matRad_cfg.dispInfo('done.\n');    
 
                 for j = 1:stf(i).numOfRays % loop over all rays
@@ -483,7 +489,33 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
             else
                 obj.pbCalcMode = 'standard';
             end
-
+            
+            
+            % check if bio optimization is needed and set the
+            % coresponding boolean accordingly
+            if (isfield(pln,'propOpt')&& isfield(pln.propOpt,'bioOptimization')&& ...
+                (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') ||... 
+                isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) && ... 
+                strcmp(pln.radiationMode,'carbon'))
+                obj.calcBioDose = true;
+            end
+            
+            % check for calcLET in pln
+            if isfield(pln,'propDoseCalc') && ...
+                isfield(pln.propDoseCalc,'calcLET') && ...
+                pln.propDoseCalc.calcLET
+                obj.calcLET = true;
+            end
+            
+            % set lateral cutoff for raytracing and geo calculations (not used in calculation right now)
+            if isfield(pln, 'propDoseCalc') && isfield(pln.propDoseCalc, 'geometricCutOff')
+                obj.geometricCutOff = pln.propDoseCalc.geometricCutOff;
+            else
+                obj.geometricCutOff = matRad_cfg.propDoseCalc.defaultGeometricCutOff;
+                pln.propDoseCalc.geometricCutOff = matRad_cfg.propDoseCalc.defaultGeometricCutOff;
+            end 
+                        
+            % call superclass constructor
             [ct,stf,pln,dij] = calcDoseInit@DoseEngines.matRad_DoseEngine(obj,ct,stf,pln,cst);
             
         end
@@ -596,7 +628,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
             end
         end
         
-        function dose = calcParticleDoseBixel(obj, radDepths, radialDist_sq, sigmaIni_sq, baseData)
+        function dose = calcParticleDoseBixel(~, radDepths, radialDist_sq, sigmaIni_sq, baseData)
         % matRad visualization of two-dimensional dose distributions 
         % on ct including segmentation
         % 
@@ -671,18 +703,17 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
         end 
         end
         
-        function calcLateralParticleCutOff(obj,cutOffLevel,stf,visBool)
+        function calcLateralParticleCutOff(obj,cutOffLevel,stf)
             % matRad function to calculate a depth dependend lateral cutoff 
             % for each pristine particle beam
             % 
             % call
-            %   obj.calcLateralParticleCutOff(cutOffLevel,stf,visBool)
+            %   obj.calcLateralParticleCutOff(cutOffLevel,stf)
             %
             % input
             %   obj:        current engine object includes machine base data file
             %   cutOffLevel:    cut off level - number between 0 and 1
             %   stf:          	matRad steering information struct
-            %   visBool:     	toggle visualization (optional)
             %
             % output
             %   machine:    	changes in the object property machine base data file including an additional field representing the lateral
@@ -867,7 +898,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
             end    
 
             %% visualization
-            if visBool
+            if obj.visBoolLateralCutOff
 
                 % determine which pencil beam should be plotted
                 subIx    = ceil(numel(vEnergiesIx)/2);
