@@ -35,7 +35,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
         fineSamplingMethod; % method used for fine sampling
         geometricCutOff; % effective leteral cutoff
         
-        visBoolLateralCutOff = true; % Boolean switch for visualization during+ LeteralCutOff calculation
+        visBoolLateralCutOff = 1; % Boolean switch for visualization during+ LeteralCutOff calculation
         
     end
     
@@ -207,6 +207,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
                 % Determine lateral cutoff
                 matRad_cfg.dispInfo('matRad: calculate lateral cutoff...');
                 cutOffLevel = matRad_cfg.propDoseCalc.defaultLateralCutOff;
+                obj.visBoolLateralCutOff = 0;
                 obj.calcLateralParticleCutOff(cutOffLevel,stf(i));
                 matRad_cfg.dispInfo('done.\n');    
 
