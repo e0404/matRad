@@ -106,7 +106,7 @@ doseTarget = [];
 ixTarget   = [];
 
 for i = 1:size(cst,1)
-    for j = 1:size(cst{2,6},2)
+    for j = 1:size(cst{i,6},2)
         if isequal(cst{i,3},'TARGET') && ~isempty(cst{i,6}{j}) && isa(cst{i,6}{j},'matRad_DoseOptimizationFunction')
             V = [V;cst{i,4}{1}];
 
@@ -151,7 +151,7 @@ for i = 1:size(cst,1)
                 fLETs = [fLETs LETParams];
             end 
 
-            doseTarget = [0.0667 0.0667];
+            doseTarget = [doseTarget 1];
             ixTarget   = [ixTarget i*ones(1,length(fLETs))];        
         end
     end
