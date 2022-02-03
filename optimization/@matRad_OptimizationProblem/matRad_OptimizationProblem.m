@@ -23,7 +23,8 @@ classdef matRad_OptimizationProblem < handle
     
     properties
         BP              %matRad_BackProjection object for mapping & backprojection
-        bioOpt = '';    
+        bioOpt = '';   
+        BP_LET
     end
     
     methods

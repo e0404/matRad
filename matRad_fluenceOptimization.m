@@ -41,6 +41,8 @@ end
 % consider VOI priorities
 cst  = matRad_setOverlapPriorities(cst);
 
+haveDoseObjectives = false;
+haveLETobjectives = false;
 
 % check & adjust objectives and constraints internally for fractionation 
 for i = 1:size(cst,1)
@@ -50,29 +52,51 @@ for i = 1:size(cst,1)
     end
     for j = 1:numel(cst{i,6})
         
-        obj = cst{i,6}{j};        
+        obj = cst{i,6}{j};              
+  
         
         %In case it is a default saved struct, convert to object
         %Also intrinsically checks that we have a valid optimization
         %objective or constraint function in the end
-        if ~isa(obj,'matRad_DoseOptimizationFunction')
-            try
-                obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
-            catch
-                matRad_cfg.dispError('cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!',i,j);
+        if isstruct(obj)
+            if strncmp(obj.className,'DoseObjective',13)
+                try
+                    obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
+                    haveDoseObjectives = true;
+                catch
+                    matRad_cfg.dispError('cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!',i,j);
+                end           
+            
+            
+             elseif strncmp(obj.className,'LETObjective',12)
+                try
+                    obj = matRad_LETOptimizationFunction.createInstanceFromStruct(obj);
+                    haveLETobjectives = true;
+                catch
+                    matRad_cfg.dispError('cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!',i,j);
+                end
             end
         end
         
-        obj = obj.setDoseParameters(obj.getDoseParameters()/pln.numOfFractions);
+        if isa(obj,'matRad_DoseOptimizationFunction')
+            obj = obj.setDoseParameters(obj.getDoseParameters()/pln.numOfFractions);
+        elseif isa(obj,'matRad_LETOptimizationFunction') 
+            obj = obj.setLETdParameters(obj.getLETdParameters()/pln.numOfFractions); %If it is an LET*d parameter, we need to scale it with fractions
+        end
         
         cst{i,6}{j} = obj;        
     end
 end
 
+% Quantity availability check
+if haveLETobjectives && ~isfield(dij,'mLETDose')
+    matRad_cfg.dispError('LET objectives set, but no LET available in dij!');
+end
+
 % resizing cst to dose cube resolution 
 cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
-                                 dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
-
+                                 dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);                             
+                                                                                     
 % find target indices and described dose(s) for weight vector
 % initialization
 V          = [];
@@ -80,28 +104,61 @@ doseTarget = [];
 ixTarget   = [];
 
 for i = 1:size(cst,1)
-    if isequal(cst{i,3},'TARGET') && ~isempty(cst{i,6})
-        V = [V;cst{i,4}{1}];
+    for j = 1:size(cst{2,6},2)
+        if isequal(cst{i,3},'TARGET') && ~isempty(cst{i,6}{j}) && isa(cst{i,6}{j},'matRad_DoseOptimizationFunction')
+            V = [V;cst{i,4}{1}];
+
+            %Iterate through objectives/constraints
+            fDoses = [];
+            for fObjCell = cst{i,6}{j}
+                dParams = fObjCell.getDoseParameters();
+                %Don't care for Inf constraints
+                dParams = dParams(isfinite(dParams));
+                %Add do dose list
+                fDoses = [fDoses dParams];
+            end  
+
+            for fObjCell = cst{i,6}{j}
+                dParams = fObjCell.getDoseParameters();
+                %Don't care for Inf constraints
+                dParams = dParams(isfinite(dParams));
+                %Add do dose list
+                fDoses = [fDoses dParams];
+            end 
+
+            doseTarget = [doseTarget fDoses];
+            ixTarget   = [ixTarget i*ones(1,length(fDoses))];
         
-        %Iterate through objectives/constraints
-        fDoses = [];
-        for fObjCell = cst{i,6}
-            dParams = fObjCell{1}.getDoseParameters();
-            %Don't care for Inf constraints
-            dParams = dParams(isfinite(dParams));
-            %Add do dose list
-            fDoses = [fDoses dParams];
+        elseif isequal(cst{i,3},'TARGET') && ~isempty(cst{i,6}{j}) && isa(cst{i,6}{j},'matRad_LETOptimizationFunction')
+            V = [V;cst{i,4}{1}];
+            %Iterate through objectives/constraints
+            fLETs = [];
+            for fObjCell = cst{i,6}{j}
+                LETParams = fObjCell.getLETdParameters();
+                %Don't care for Inf constraints
+                LETParams = LETParams(isfinite(LETParams));
+                %Add do dose list
+                fLETs = [fLETs LETParams];
+            end  
+
+            for fObjCell = cst{i,6}{j}
+                LETParams = fObjCell.getLETdParameters();
+                %Don't care for Inf constraints
+                LETParams = LETParams(isfinite(LETParams));
+                %Add do dose list
+                fLETs = [fLETs LETParams];
+            end 
+
+            doseTarget = [0.0667 0.0667];
+            ixTarget   = [ixTarget i*ones(1,length(fLETs))];        
         end
-                
-        
-        doseTarget = [doseTarget fDoses];
-        ixTarget   = [ixTarget i*ones(1,length(fDoses))];
     end
 end
 [doseTarget,i] = max(doseTarget);
 ixTarget       = ixTarget(i);
 wOnes          = ones(dij.totalNumOfBixels,1);
 
+                                                         
 % modified settings for photon dao
 if pln.propOpt.runDAO && strcmp(pln.radiationMode,'photons')
 %    options.ipopt.max_iter = 50;
@@ -116,6 +173,7 @@ if  strcmp(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiationMod
         dij.RBE = 1.1;
     end
     bixelWeight =  (doseTarget)/(dij.RBE * mean(dij.physicalDose{1}(V,:)*wOnes)); 
+%    bixelWeight =  (LETTarget)/(dij.RBE * mean(dij.physicalDose{1}(V,:)*wOnes)); 
     wInit       = wOnes * bixelWeight;
         
 elseif (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') || strcmp(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
@@ -177,8 +235,7 @@ options.bioOpt          = pln.propOpt.bioOptimization;
 options.ID              = [pln.radiationMode '_' pln.propOpt.bioOptimization];
 options.numOfScenarios  = dij.numOfScenarios;
 
-%Select Projection
-
+%% Select Projections (i.e., quantities that are optimized)
 switch pln.propOpt.bioOptimization
     case 'LEMIV_effect'
         backProjection = matRad_EffectProjection;
@@ -192,14 +249,16 @@ switch pln.propOpt.bioOptimization
         warning(['Did not recognize bioloigcal setting ''' pln.probOpt.bioOptimization '''!\nUsing physical dose optimization!']);
         backProjection = matRad_DoseProjection;
 end
-        
-
-%backProjection = matRad_DoseProjection();
 
 optiProb = matRad_OptimizationProblem(backProjection);
 
-%optimizer = matRad_OptimizerIPOPT;
+%If LET objectives are present, also add an LET projection
+if haveLETobjectives
+    optiProb.BP_LET = matRad_LETProjection();
+end
 
+
+%% Handle Optimizer
 if ~isfield(pln.propOpt,'optimizer')
     pln.propOpt.optimizer = 'IPOPT';
 end

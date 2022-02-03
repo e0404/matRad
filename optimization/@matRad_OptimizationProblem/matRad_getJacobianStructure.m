@@ -50,6 +50,16 @@ for i = 1:size(cst,1)
                 nRows = size(jacobDoseStruct,2);	
                 jacobStruct = [jacobStruct; repmat(spones(mean(dij.physicalDose{1}(cst{i,4}{1},:))),nRows,1)];	
                  
+              end	
+             
+               % only perform computations for constraints	
+              if isa(obj,'LETConstraints.matRad_LETConstraint')	
+                	
+                % get the jacobian structure depending on LET	
+                jacobLETStruct = obj.getLETConstraintJacobianStructure(numel(cst{i,4}{1}));	
+                nRows = size(jacobLETStruct,2);	
+                jacobStruct = [jacobStruct; repmat(spones(mean(dij.physicalDose{1}(cst{i,4}{1},:))),nRows,1)];	
+                 
              end	
          end	
      end	

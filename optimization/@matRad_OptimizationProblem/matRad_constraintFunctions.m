@@ -38,6 +38,11 @@ function c = matRad_constraintFunctions(optiProb,w,dij,cst)
 optiProb.BP = optiProb.BP.compute(dij,w);
 d = optiProb.BP.GetResult();
 
+if ~isempty(optiProb.BP_LET)
+    optiProb.BP_LET = optiProb.BP_LET.compute(dij,w);
+    LET = optiProb.BP_LET.GetResult();
+end
+
 % Initializes constraints
 c = [];
 

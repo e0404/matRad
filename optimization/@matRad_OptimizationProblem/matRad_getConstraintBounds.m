@@ -65,6 +65,26 @@ for  i = 1:size(cst,1)
                     
                 %end
             end
+            
+             % only perform computations for constraints
+            %if ~isempty(strfind(cst{i,6}{j}.type,'constraint'))
+            if isa(optiFunc,'LETConstraints.matRad_LETConstraint')
+                
+                
+                if isEffectBP
+                    LETs = optiFunc.getDoseParameters();
+                
+                    effect = cst{i,5}.alphaX*LETs + cst{i,5}.betaX*LETs.^2;
+                    
+                    optiFunc = optiFunc.setLETParameters(effect);
+                end
+
+                    
+                 cl = [cl;optiFunc.lowerBounds(numel(cst{i,4}{1}))];
+                 cu = [cu;optiFunc.upperBounds(numel(cst{i,4}{1}))];
+                    
+                %end
+            end
 
         end % over all objectives of structure
 

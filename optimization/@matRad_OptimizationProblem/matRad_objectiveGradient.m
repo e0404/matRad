@@ -38,9 +38,15 @@ function weightGradient = matRad_objectiveGradient(optiProb,w,dij,cst)
 %d = matRad_backProjection(w,dij,optiProb);
 optiProb.BP = optiProb.BP.compute(dij,w);
 d = optiProb.BP.GetResult();
+doseGradient{1} = zeros(dij.doseGrid.numOfVoxels,1); % Initializes dose gradient
 
-% Initializes dose gradient
-doseGradient{1} = zeros(dij.doseGrid.numOfVoxels,1);
+if ~isempty(optiProb.BP_LET)
+    optiProb.BP_LET = optiProb.BP_LET.compute(dij,w);
+    LET = optiProb.BP_LET.GetResult();
+    LETGradient{1} = zeros(dij.doseGrid.numOfVoxels,1); %Initializes LET gradient
+end
+
+
 
 % compute objective function for every VOI.
 for  i = 1:size(cst,1)    
@@ -72,7 +78,18 @@ for  i = 1:size(cst,1)
                 
                 %add to dose gradient
                 doseGradient{1}(cst{i,4}{1}) = doseGradient{1}(cst{i,4}{1}) + objective.computeDoseObjectiveGradient(d_i);                
-            end       
+            end   
+            
+             % only perform gradient computations for objectives
+            if isa(objective,'LETObjectives.matRad_LETObjective')
+                
+                %dose in VOI
+                LET_i = LET{1}(cst{i,4}{1});
+                
+                %add to LET gradient
+                LETGradient{1}(cst{i,4}{1}) = LETGradient{1}(cst{i,4}{1}) + objective.computeLETObjectiveGradient(LET_i);                
+            end
+            
         end           
     end    
 end
@@ -81,5 +98,13 @@ end
 optiProb.BP = optiProb.BP.computeGradient(dij,doseGradient,w);
 g = optiProb.BP.GetGradient();
 weightGradient = g{1};
+
+%Handle LET
+if ~isempty(optiProb.BP_LET)
+    optiProb.BP_LET = optiProb.BP_LET.computeGradient(dij,LETGradient,w);
+    g_LET =  optiProb.BP_LET.GetGradient();
+
+    weightGradient = weightGradient + g_LET{1};
+end
 
 end

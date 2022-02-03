@@ -34,6 +34,11 @@ function f = matRad_objectiveFunction(optiProb,w,dij,cst)
 optiProb.BP = optiProb.BP.compute(dij,w);
 d = optiProb.BP.GetResult();
 
+if ~isempty(optiProb.BP_LET)
+    optiProb.BP_LET = optiProb.BP_LET.compute(dij,w);
+    LET = optiProb.BP_LET.GetResult();
+end
+
 
 % Initialize f
 f = 0;
@@ -70,6 +75,21 @@ for  i = 1:size(cst,1)
                     d_i = d{1}(cst{i,4}{1});
 
                     f = f + objective.computeDoseObjectiveFunction(d_i);
+                    
+                %end
+            
+            end
+            
+            % only perform gradient computations for objectiveectives
+            %if isempty(strfind(objective.type,'constraint'))
+            if isa(objective,'LETObjectives.matRad_LETObjective')
+              
+                % if conventional opt: just sum objectiveectives of nominal LET
+                %if strcmp(cst{i,6}{j}.robustness,'none')
+
+                    LET_i = LET{1}(cst{i,4}{1});
+
+                    f = f + objective.computeLETObjectiveFunction(LET_i);
                     
                 %end
             
