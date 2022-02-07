@@ -96,9 +96,10 @@ matRad_plotSliceWrapper(pDADR,ct,cst,1,resultGUI.DADR,3,65); %unit should be Gy/
 %% Run DADR optimization
 %Add Dose-Rate objective on Core
 FLASH_doseRate = 40; % Gy/s
-cst{1,6}{2} = struct(DADRObjectives.matRad_SquaredUnderDADR(1000, FLASH_doseRate));
+%cst{1,6}{2} = struct(DADRObjectives.matRad_SquaredUnderDADR(1000, FLASH_doseRate));
+cst{1,6}{2} = struct(DADRObjectives.matRad_SquaredDeviationDADR(1000, FLASH_doseRate));
 %RUn optimization
-resultGUI = matRad_DADROptimization(dij,cst,pln);
+resultGUI = matRad_DADROptimization(dij,cst,pln,[resultGUI.w; resultGUI.I]);
 
 %% Plot dose and DADR
 figure(plotF);

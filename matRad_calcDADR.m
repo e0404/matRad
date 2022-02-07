@@ -59,5 +59,10 @@ doseRate(dose > 0) = doseRate(dose > 0) ./ dose(dose > 0);
 resultGUI.DADR = matRad_interp3(dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z, ...
     doseRate, ...
     dij.ctGrid.x,dij.ctGrid.y',dij.ctGrid.z,'linear',0);
+
+resultGUI.I = I;
+
 end
+
+
            
