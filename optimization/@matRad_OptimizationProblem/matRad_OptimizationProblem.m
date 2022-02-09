@@ -26,6 +26,8 @@ classdef matRad_OptimizationProblem < handle
         bioOpt = '';   
         BP_LET
         BP_DADRfixed
+        minWeights
+        maxWeights
     end
     
     methods
@@ -51,11 +53,23 @@ classdef matRad_OptimizationProblem < handle
         [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
         
         function lb = lowerBounds(optiProb,w)
-            lb = zeros(size(w));
+            if isempty(optiProb.minWeights)
+                lb = zeros(size(w));
+            elseif isscalar(optiProb.minWeights)
+                lb = optiProb.minWeights * ones(size(w));
+            else 
+                lb = optiProb.minWeights;
+            end
         end
         
         function ub = upperBounds(optiProb,w)
-            ub = Inf * ones(size(w));
+            if isempty(optiProb.maxWeights)
+                ub = Inf*ones(size(w));
+            elseif isscalar(optiProb.maxWeights)
+                ub = optiProb.maxWeights * ones(size(w));
+            else 
+                ub = optiProb.maxWeights;
+            end
         end
     end
 end

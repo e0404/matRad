@@ -82,9 +82,12 @@ pln.propDoseCalc.calcLET = true;
 % allows for subsequent inverse optimization. 
 dij = matRad_calcParticleDose(ct,stf,pln,cst);
 
+%Set a fixed current in the dij
 dij.fixedCurrent = 300;
-%dij.minMU = 300; % minimum MU to be produced
-%dij.MU = 10; %factor MU -> w
+
+%Set some MU data
+dij.minMU = 300; % minimum MU to be produced
+dij.MU = 0.16; %factor MU -> w (now means 1 MU = 0.16 * w = 0.16*1e6 particles)
 
 %% Initial optimization without DADR objectives
 cst{1,6}{1}.parameters{1} = 4;

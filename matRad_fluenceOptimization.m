@@ -272,6 +272,18 @@ end
 
 optiProb = matRad_OptimizationProblem(backProjection);
 
+if ~isfield(dij,'MU')
+    dij.MU = 1;
+end
+
+if isfield(dij,'minMU')
+    optiProb.minWeights = dij.MU .* dij.minMU;
+end
+
+if isfield(dij,'maxMU')
+    optiProb.maxWeights = dij.MU .* dij.maxMU;
+end
+
 %If LET objectives are present, also add an LET projection
 if haveLETobjectives
     optiProb.BP_LET = matRad_LETProjection();
