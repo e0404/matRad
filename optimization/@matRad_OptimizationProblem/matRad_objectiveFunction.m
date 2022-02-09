@@ -39,6 +39,11 @@ if ~isempty(optiProb.BP_LET)
     LET = optiProb.BP_LET.GetResult();
 end
 
+if ~isempty(optiProb.BP_DADRfixed)
+    optiProb.BP_DADRfixed = optiProb.BP_DADRfixed.compute(dij,w);
+    DADR = optiProb.BP_DADRfixed.GetResult();
+end
+
 
 % Initialize f
 f = 0;
@@ -90,6 +95,19 @@ for  i = 1:size(cst,1)
                     LET_i = LET{1}(cst{i,4}{1});
 
                     f = f + objective.computeLETObjectiveFunction(LET_i);
+                    
+                %end
+            
+            end
+
+            if isa(objective,'DADRObjectives.matRad_DADRObjective')
+              
+                % if conventional opt: just sum objectiveectives of nominal LET
+                %if strcmp(cst{i,6}{j}.robustness,'none')
+
+                    DADR_i = DADR{1}(cst{i,4}{1});
+
+                    f = f + objective.computeDADRObjectiveFunction(DADR_i);
                     
                 %end
             

@@ -45,6 +45,7 @@ cst  = matRad_setOverlapPriorities(cst);
 
 haveDoseObjectives = false;
 haveLETobjectives = false;
+haveDADRobjectives = false;
 
 % check & adjust objectives and constraints internally for fractionation 
 for i = 1:size(cst,1)
@@ -77,6 +78,13 @@ for i = 1:size(cst,1)
                 catch
                     matRad_cfg.dispError('cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!',i,j);
                 end
+            elseif strncmp(obj.className,'DADRObjective',13)
+                try
+                    obj = matRad_DADROptimizationFunction.createInstanceFromStruct(obj);
+                    haveDADRobjectives = true;
+                catch
+                    matRad_cfg.dispError('cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!',i,j);
+                end
             end
         end
         
@@ -84,8 +92,11 @@ for i = 1:size(cst,1)
             obj = obj.setDoseParameters(obj.getDoseParameters()/pln.numOfFractions);
         elseif isa(obj,'matRad_LETOptimizationFunction') 
             obj = obj.setLETdParameters(obj.getLETdParameters()/pln.numOfFractions); %If it is an LET*d parameter, we need to scale it with fractions
+        elseif isa(obj,'matRad_DADROptimizationFunction')
+            obj = obj.setDoseParameters(obj.getDoseParameters()/pln.numOfFractions);            
+        else
+            matRad_cfg.dispError('Unknown objective of type %s!',class(obj));
         end
-        
         cst{i,6}{j} = obj;        
     end
 end
@@ -93,6 +104,11 @@ end
 % Quantity availability check
 if haveLETobjectives && ~isfield(dij,'mLETDose')
     matRad_cfg.dispError('LET objectives set, but no LET available in dij!');
+end
+
+if haveDADRobjectives && ~isfield(dij,'fixedCurrent')
+    dij.fixedCurrent = 300; %nA
+    matRad_cfg.dispWarning('DADR objectives set, but no current given in dij.fixedCurrent. Using current of %f nA!',dij.fixedCurrent);
 end
 
 % resizing cst to dose cube resolution 
@@ -259,6 +275,10 @@ optiProb = matRad_OptimizationProblem(backProjection);
 %If LET objectives are present, also add an LET projection
 if haveLETobjectives
     optiProb.BP_LET = matRad_LETProjection();
+end
+
+if haveDADRobjectives
+    optiProb.BP_DADRfixed = matRad_DADRProjectionFixedCurrent();
 end
 
 

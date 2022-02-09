@@ -25,6 +25,7 @@ classdef matRad_OptimizationProblem < handle
         BP              %matRad_BackProjection object for mapping & backprojection
         bioOpt = '';   
         BP_LET
+        BP_DADRfixed
     end
     
     methods

@@ -46,6 +46,12 @@ if ~isempty(optiProb.BP_LET)
     LETGradient{1} = zeros(dij.doseGrid.numOfVoxels,1); %Initializes LET gradient
 end
 
+if ~isempty(optiProb.BP_DADRfixed)
+    optiProb.BP_DADRfixed = optiProb.BP_DADRfixed.compute(dij,w);
+    DADR = optiProb.BP_DADRfixed.GetResult();
+    DADRGradient{1} = zeros(dij.doseGrid.numOfVoxels,1); %Initializes LET gradient
+end
+
 
 
 % compute objective function for every VOI.
@@ -89,6 +95,18 @@ for  i = 1:size(cst,1)
                 %add to LET gradient
                 LETGradient{1}(cst{i,4}{1}) = LETGradient{1}(cst{i,4}{1}) + objective.computeLETObjectiveGradient(LET_i);                
             end
+
+            if isa(objective,'DADRObjectives.matRad_DADRObjective')
+              
+                % if conventional opt: just sum objectiveectives of nominal LET
+                %if strcmp(cst{i,6}{j}.robustness,'none')
+
+                DADR_i = DADR{1}(cst{i,4}{1});
+
+                %add to DADR gradient
+                DADRGradient{1}(cst{i,4}{1}) = DADRGradient{1}(cst{i,4}{1}) + objective.computeDADRObjectiveGradient(DADR_i);     
+            
+            end
             
         end           
     end    
@@ -105,6 +123,13 @@ if ~isempty(optiProb.BP_LET)
     g_LET =  optiProb.BP_LET.GetGradient();
 
     weightGradient = weightGradient + g_LET{1};
+end
+
+if ~isempty(optiProb.BP_LET)
+    optiProb.BP_DADRfixed = optiProb.BP_DADRfixed.computeGradient(dij,DADRGradient,w);
+    g_DADR =  optiProb.BP_DADRfixed.GetGradient();
+
+    weightGradient = weightGradient + g_DADR{1};
 end
 
 end

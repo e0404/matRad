@@ -16,12 +16,18 @@ function  resultGUI = matRad_calcDADR(dij,resultGUI,I)
 matRad_cfg = MatRad_Config.instance();
 w = resultGUI.w;
 
-if nargin < 3
-    defaultIntensity = 3e9/1e6; %default intensity noramlized for 1e6 particles
+if nargin < 3 && ~isfield(dij,'fixedCurrent')
+    defaultIntensity = 300; %nA         3e9/1e6; %default intensity noramlized for 1e6 particles
     I = ones(length(w), 1)*defaultIntensity; 
-    matRad_cfg.dispInfo('Using default Intensity of %g particles/s for each beamlet!\n',defaultIntensity)
+    matRad_cfg.dispInfo('Using default Intensity of %g nA for each beamlet!\n',defaultIntensity);
+elseif nargin < 3 && isfield(dij,'fixedCurrent')
+    I = ones(length(w),1)*dij.fixedCurrent;
+    matRad_cfg.dispInfo('Using fixed current  of %g nA for each beamlet!\n',dij.fixedCurrent);
 end
-%I = I ; %This is for the normalization of w which is 1e6 particles
+
+%We assume I to be in nA
+nA2particles = 1e-9 ./ 1.602176634e-19 ./ 1e6; %
+I = nA2particles * I;
 
 scenNum = 1;
 
