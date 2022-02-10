@@ -59,20 +59,24 @@ if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.b
 elseif isequal(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
             dij.RBE = 1.1;
             matRad_cfg.dispInfo('matRad: Using a constant RBE of %g\n',dij.RBE);   
+elseif isequal(pln.propOpt.bioOptimization,'XBD_LET') && strcmp(pln.radiationMode,'protons')
+    dij.c = 0.04;
+    pln.propDoseCalc.calcLET = true;
+    matRad_cfg.dispInfo('Computing LET for XBD model...\n');
 end
 
 if isfield(pln,'propDoseCalc') && ...
-   isfield(pln.propDoseCalc,'calcLET') && ...
-   pln.propDoseCalc.calcLET
-  if isfield(machine.data,'LET')
-    letDoseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
-    % Allocate space for dij.dosexLET sparse matrix
-    for i = 1:dij.numOfScenarios
-        dij.mLETDose{i} = spalloc(dij.doseGrid.numOfVoxels,numOfColumnsDij,1);
+        isfield(pln.propDoseCalc,'calcLET') && ...
+        pln.propDoseCalc.calcLET
+    if isfield(machine.data,'LET')
+        letDoseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
+        % Allocate space for dij.dosexLET sparse matrix
+        for i = 1:dij.numOfScenarios
+            dij.mLETDose{i} = spalloc(dij.doseGrid.numOfVoxels,numOfColumnsDij,1);
+        end
+    else
+        matRad_cfg.dispWarning('LET computation requested but not available in the machine data. LET will not be available!');
     end
-  else
-    matRad_cfg.dispWarning('LET not available in the machine data. LET will not be calculated.');
-  end
 end
 
 % generates tissue class matrix for biological optimization

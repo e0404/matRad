@@ -68,6 +68,13 @@ if isfield(dij,'mLETDose')
     end
 end
 
+%XBD
+if isfield(dij,'c') && isfield(dij,'mLETDose')
+    for i = 1:length(beamInfo)
+        resultGUI.(['XBD_LET', beamInfo(i).suffix])    = reshape(full(dij.physicalDose{scenNum}*(resultGUI.w .* beamInfo(i).logIx) + dij.c * (dij.mLETDose{scenNum} * (resultGUI.w .* beamInfo(i).logIx))),dij.doseGrid.dimensions);
+    end
+end
+
 if isfield(dij,'physicalDose_MCvar')
     resultGUI.physicalDose_MCvar = reshape(full(dij.physicalDose_MCvar{scenNum} * (resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
     resultGUI.physicalDose_MCstd = sqrt(resultGUI.physicalDose_MCvar);

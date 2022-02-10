@@ -40,6 +40,20 @@ if sum(strcmp(pln.propOpt.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0 && 
     pln.propOpt.bioOptimization = 'none';
 end
 
+%Check XBD optimization
+if strcmp(pln.propOpt.bioOptimization,'XBD_LET')
+    if ~isfield(dij,'mLETDose')
+        matRad_cfg.dispError('LET required for XBD_LET optimization!');
+    end
+
+    if ~isfield(dij,'c')
+        dij.c = 0.04; %Standard value
+        matRad_cfg.dispWarning('Standard value of c=0.04 used for XBD_LET optimizaiton!');
+    else
+        matRad_cfg.dispInfo('XBD Optimization uses c=%g\n',dij.c);
+    end
+end
+
 % consider VOI priorities
 cst  = matRad_setOverlapPriorities(cst);
 
@@ -195,6 +209,15 @@ elseif  strcmp(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiatio
     bixelWeight =  (doseTarget)/(dij.RBE * mean(dij.physicalDose{1}(V,:)*wOnes)); 
 %    bixelWeight =  (LETTarget)/(dij.RBE * mean(dij.physicalDose{1}(V,:)*wOnes)); 
     wInit       = wOnes * bixelWeight;
+
+elseif  strcmp(pln.propOpt.bioOptimization,'XBD_LET') && strcmp(pln.radiationMode,'protons')
+    
+    % check if a constant RBE is defined - if not use 1.1
+    if ~isfield(dij,'RBE')
+        dij.RBE = 1.1;
+    end
+    bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes + dij.c*dij.mLETDose{1}(V,:)*wOnes));
+    wInit       = wOnes * bixelWeight;
         
 elseif (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') || strcmp(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
                                 && strcmp(pln.radiationMode,'carbon')
@@ -263,6 +286,8 @@ switch pln.propOpt.bioOptimization
         backProjection = matRad_ConstantRBEProjection;
     case 'LEMIV_RBExD'
         backProjection = matRad_VariableRBEProjection;
+    case 'XBD_LET'
+        backProjection = matRad_XBDLETProjection;
     case 'none'
         backProjection = matRad_DoseProjection;
     otherwise
