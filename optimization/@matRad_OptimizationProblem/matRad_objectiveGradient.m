@@ -125,7 +125,7 @@ if ~isempty(optiProb.BP_LET)
     weightGradient = weightGradient + g_LET{1};
 end
 
-if ~isempty(optiProb.BP_LET)
+if ~isempty(optiProb.BP_DADRfixed)
     optiProb.BP_DADRfixed = optiProb.BP_DADRfixed.computeGradient(dij,DADRGradient,w);
     g_DADR =  optiProb.BP_DADRfixed.GetGradient();
 

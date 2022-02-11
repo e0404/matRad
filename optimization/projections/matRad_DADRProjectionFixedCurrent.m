@@ -36,7 +36,7 @@ classdef matRad_DADRProjectionFixedCurrent < matRad_BackProjection
                 %
                 % Computation of the DADR
                 DADR = dij.physicalDose{scen}.^2 * (I*w); %computes the nominator quickly (should be correct)
-                DADR(d > 0,1) = DADR(d > 0)./d(d > 0); %dose averging -> avoid div by zero                                             
+                DADR(d > 0) = DADR(d > 0)./d(d > 0); %dose averging -> avoid div by zero                                             
             else
                 dCombined = [];
                 matRad_cfg = MatRad_Config.instance();
@@ -50,6 +50,7 @@ classdef matRad_DADRProjectionFixedCurrent < matRad_BackProjection
                 
                 %dadr = this.computeSingleScenario(dij,scen,w);
                 dose = dij.physicalDose{scen}*w;
+                dijSqW = dij.physicalDose{scen}.^2*w;
                 %DADR = dij.physicalDose{scen}.^2 * (w.*I); %computes the nominator quickly (should be correct)
                 %DADR(dose > 0,1) = DADR(dose > 0)./dose(dose > 0); %dose averging -> avoid div by zero  
                 
@@ -57,7 +58,8 @@ classdef matRad_DADRProjectionFixedCurrent < matRad_BackProjection
                 nA2particles = 1e-9 ./ 1.602176634e-19 ./ 1e6;
                 I = nA2particles * I;
                 
-                %Gradient computation
+                %{
+                %Gradient computation (v1)
                 ix = dose > 0;
                 tmp = zeros(size(dose));
                 tmp(ix) = dadrGrad{1}(ix) ./ dose(ix).^2;
@@ -65,24 +67,18 @@ classdef matRad_DADRProjectionFixedCurrent < matRad_BackProjection
                 wGrad = tmp' * (dij.physicalDose{scen}.^2 .* dose - (dij.physicalDose{scen}.^2*w).*dij.physicalDose{scen});
 
                 wGrad = I*wGrad';              
-
-                %{
-                tmp = zeros(size(dose));
-                tmp(ix) = dadrGrad(ix) ./ dose(ix);
-                tmpForW = zeros(size(tmp));
-                tmpForW(ix) = tmp(ix) ./ dose(ix);
-
-                %wGrad= (doseGrad' * dij.physicalDose{scen})' + dadrGradPart.*w;
-                wGradPart1 = ((tmpForW.*dose)'  * dij.physicalDose{scen}.^2)' .* I; %u'v/v^2
-                wGradPart2 = ((tmpForW.*doseRate)' * dij.physicalDose{scen})'; %uv'/v^2 
-
-                wGrad = wGradPart1 - wGradPart2;
-
-                dadrGradPart = (tmp' * dij.physicalDose{scen}.^2)';                                
-                IGrad = dadrGradPart;               
-                
-                wTildaGrad = [wGrad; IGrad];
                 %}
+
+                %Gradient computation (v2)
+                ix = dose > 0;
+                tmp = zeros(size(dose));
+                tmp(ix) = dadrGrad{1}(ix) ./ dose(ix).^2;                
+
+                %wGrad = tmp' * ( (dij.physicalDose{scen} .* dose - dijSqW).*dij.physicalDose{scen});
+
+                wGrad = (tmp.*dose)' * dij.physicalDose{scen}.^2 - (tmp.*dijSqW)' * dij.physicalDose{scen};
+
+                wGrad = I*wGrad'; 
             else
                 wGrad = [];
                 matRad_cfg = MatRad_Config.instance();
