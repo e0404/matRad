@@ -82,6 +82,14 @@ dij = matRad_calcParticleDose(ct,stf,pln,cst);
 %% Add the factor for XBD
 dij.c = 0.04;
 
+%% Add the dose rate / MU settings
+%Set a fixed current in the dij
+dij.fixedCurrent = 300;
+
+%Set some MU data
+dij.minMU = 300; % minimum MU to be produced
+dij.MU = 5; %factor MU -> w (now means 1 MU = 0.16 * w = 0.16*1e6 particles)
+
 %% Prescriptions for single fraction treatment
 cst{1,6}{1}.parameters{1} = 2;
 cst{2,6}{1}.parameters{1} = 5;
@@ -110,6 +118,8 @@ title(pDose,'LET');
 %%
 % Now compare with XBD_LET optimization
 pln.propOpt.bioOptimization = 'XBD_LET';
+FLASH_doseRate = 40; % Gy/s
+cst{1,6}{2} = struct(DADRObjectives.matRad_SquaredUnderDADR(1e6, FLASH_doseRate));
 
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
