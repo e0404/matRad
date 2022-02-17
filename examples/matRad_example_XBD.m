@@ -41,14 +41,9 @@ pln.radiationMode = 'protons';
 pln.machine       = 'Generic';
 
 %%
-% Define the flavor of biological optimization for treatment planning along
-% with the quantity that should be used for optimization. Possible values 
-% are (none: physical optimization; const_RBExD: constant RBE of 1.1; 
-% LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of 
-% RBE-weighted dose. As we use protons, we follow here the clinical 
-% standard and use a constant relative biological effectiveness of 1.1. 
-% Therefore we set bioOptimization to const_RBExD
-pln.propOpt.bioOptimization = 'const_RBExD';
+% We use no biological optimization (to combine physical dose, XBD(LET) and
+% XBD(DADR) sensibly
+pln.propOpt.bioOptimization = 'none';
 
   
 %%
@@ -89,6 +84,16 @@ dij.fixedCurrent = 5;
 dij.minMU = 0; % minimum MU to be produced
 dij.MU = 5; %factor MU -> w (now means 1 MU = 0.16 * w = 0.16*1e6 particles)
 
+%If you want to output RBE-weighted dose as well:
+dij.RBE = 1.1;
+
+%% Here you can modify values used in the computation of XBD(DADR) and
+% XBD(LET);
+%dij.c = 0.04; %FOr XBD(LET)
+%dij.xbd_DADR_k = 0.5;
+%dij.xbd_DADR_t = 40;
+%dij.xbd_DADR_a_num = 4; %a = a_num / DADR_t
+
 %% Initial optimization without DADR objectives
 cst{1,6}{1}.parameters{1} = 4;
 cst{2,6}{1}.parameters{1} = 10;
@@ -100,7 +105,7 @@ resultGUI = matRad_calcDADR(dij,resultGUI);
 %% Plot dose and DADR
 plotF = figure;
 pDose = subplot(2,3,1);
-matRad_plotSliceWrapper(pDose,ct,cst,1,resultGUI.RBExDose,3,65);
+matRad_plotSliceWrapper(pDose,ct,cst,1,resultGUI.physicalDose,3,65);
 
 pDADR = subplot(2,3,2);
 matRad_plotSliceWrapper(pDADR,ct,cst,1,resultGUI.DADR,3,65); %unit should be Gy/s
@@ -108,12 +113,16 @@ matRad_plotSliceWrapper(pDADR,ct,cst,1,resultGUI.DADR,3,65); %unit should be Gy/
 pLET = subplot(2,3,3);
 matRad_plotSliceWrapper(pLET,ct,cst,1,resultGUI.LET,3,65);
 
+dvh_opt1 = matRad_calcDVH(cst,resultGUI.DADR);
+
+
 %% Run DADR optimization
 %Add Dose-Rate objective on Core
-FLASH_doseRate = 40; % Gy/s
-%cst{1,6}{2} = struct(DADRObjectives.matRad_SquaredUnderDADR(1000, FLASH_doseRate));
-%cst{1,6}{3} = struct(LETObjectives.matRad_SquaredOverLET(100,0));
-cst{1,6}{2} = struct(DADRConstraints.matRad_MinMaxDADR(FLASH_doseRate, Inf));
+XBD_DADR_ref = 0.5*cst{1,6}{1}.parameters{1}; %Half of the dose prescribed above
+cst{1,6}{2} = struct(XBDDADRObjectives.matRad_SquaredUnderXBDDADR(10000, XBD_DADR_ref));
+
+XBD_LET_ref = cst{2,6}{1}.parameters{1} * 1.1; %GO towards an RBE of 1.1
+cst{2,6}{2} = struct(XBDLETObjectives.matRad_SquaredDeviationXBDLET(5000, XBD_LET_ref));
 
 %RUn optimization
 resultGUI = matRad_fluenceOptimization(dij,cst,pln,resultGUI.w);
@@ -122,13 +131,19 @@ resultGUI = matRad_calcDADR(dij,resultGUI);
 %% Plot dose and DADR
 figure(plotF);
 pDose = subplot(2,3,4);
-matRad_plotSliceWrapper(pDose,ct,cst,1,resultGUI.RBExDose,3,65);
+matRad_plotSliceWrapper(pDose,ct,cst,1,resultGUI.physicalDose,3,65);
 
 pDADR = subplot(2,3,5);
 matRad_plotSliceWrapper(pDADR,ct,cst,1,resultGUI.DADR,3,65); %unit should be Gy/s
 
 pLET = subplot(2,3,6);
 matRad_plotSliceWrapper(pLET,ct,cst,1,resultGUI.LET,3,65);
+
+%% DADRs
+dvh_opt2 = matRad_calcDVH(cst,resultGUI.DADR);
+figure;
+matRad_showDVH(dvh_opt1,cst,pln); hold on;
+matRad_showDVH(dvh_opt2,cst,pln,2);
 
 %% Inverse Optimization for IMPT
 matRadGUI

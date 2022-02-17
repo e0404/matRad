@@ -14,15 +14,19 @@ classdef matRad_XBDLETProjection < matRad_BackProjection
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
        
+    properties
+        c = 0.04; %LET scaling parameter default value
+    end
+    
     methods
         function obj = matRad_XBDLETProjection()
         end   
     end
     
     methods 
-        function XBD = computeSingleScenario(~,dij,scen,w)
+        function XBD = computeSingleScenario(proj,dij,scen,w)
             if ~isempty(dij.physicalDose{scen})
-                XBD = (dij.physicalDose{scen}*w + dij.c*dij.mLETDose{scen}*w);
+                XBD = (dij.physicalDose{scen}*w + proj.c*dij.mLETDose{scen}*w);
             else
                 XBD = [];
                 matRad_cfg = MatRad_Config.instance();
@@ -30,10 +34,10 @@ classdef matRad_XBDLETProjection < matRad_BackProjection
             end 
         end
         
-        function wGrad = projectSingleScenarioGradient(~,dij,xbdGrad,scen,~)
+        function wGrad = projectSingleScenarioGradient(proj,dij,xbdGrad,scen,~)
             if ~isempty(dij.physicalDose{scen})
                 %wGrad = dij.physicalDose{scen}' * xbdGrad{scen} +  dij.c*dij.mLETDose{scen}' * xbdGrad{scen};                   
-                wGrad = (xbdGrad{scen}' * dij.physicalDose{scen} + dij.c*(xbdGrad{scen}' * dij.mLETDose{scen}))';                 
+                wGrad = (xbdGrad{scen}' * dij.physicalDose{scen} + proj.c*(xbdGrad{scen}' * dij.mLETDose{scen}))';                 
             else
                 wGrad = [];
                 matRad_cfg = MatRad_Config.instance();

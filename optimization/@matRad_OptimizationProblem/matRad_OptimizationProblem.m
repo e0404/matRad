@@ -26,6 +26,8 @@ classdef matRad_OptimizationProblem < handle
         bioOpt = '';   
         BP_LET
         BP_DADRfixed
+        BP_XBDDADR
+        BP_XBDLET
         minWeights
         maxWeights
     end

@@ -38,7 +38,7 @@ classdef matRad_DADRProjectionFixedCurrent < matRad_BackProjection
                 DADR = dij.physicalDose{scen}.^2 * (I*w); %computes the nominator quickly (should be correct)
                 DADR(d > 0) = DADR(d > 0)./d(d > 0); %dose averging -> avoid div by zero                                             
             else
-                dCombined = [];
+                DADR = [];
                 matRad_cfg = MatRad_Config.instance();
                 matRad_cfg.dispWarning('Empty scenario in optimization detected! This should not happen...\n');
             end

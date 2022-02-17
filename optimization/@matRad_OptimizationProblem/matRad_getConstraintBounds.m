@@ -86,6 +86,16 @@ for  i = 1:size(cst,1)
                 %end
             end
 
+            if isa(optiFunc,'DADRConstraints.matRad_DADRConstraint')
+                % if conventional opt: just sum objectiveectives of nominal LET
+                %if strcmp(cst{i,6}{j}.robustness,'none')
+
+                cl = [cl;optiFunc.lowerBounds(numel(cst{i,4}{1}))];
+                cu = [cu;optiFunc.upperBounds(numel(cst{i,4}{1}))];
+
+                %end
+            end
+
         end % over all objectives of structure
 
     end % if structure not empty and target or oar

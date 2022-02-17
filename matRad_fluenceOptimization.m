@@ -45,21 +45,16 @@ if strcmp(pln.propOpt.bioOptimization,'XBD_LET')
     if ~isfield(dij,'mLETDose')
         matRad_cfg.dispError('LET required for XBD_LET optimization!');
     end
-
-    if ~isfield(dij,'c')
-        dij.c = 0.04; %Standard value
-        matRad_cfg.dispWarning('Standard value of c=0.04 used for XBD_LET optimizaiton!');
-    else
-        matRad_cfg.dispInfo('XBD Optimization uses c=%g\n',dij.c);
-    end
 end
 
 % consider VOI priorities
 cst  = matRad_setOverlapPriorities(cst);
 
-haveDoseObjectives = false;
-haveLETobjectives = false;
-haveDADRobjectives = false;
+haveDoseOptimizationFunctions = false;
+haveLETOptimizationFunctions = false;
+haveDADROptimizationFunctions = false;
+haveXBDDADROptimizationFunctions = false;
+haveXBDLETOptimizationFunctions = false;
 
 % check & adjust objectives and constraints internally for fractionation 
 for i = 1:size(cst,1)
@@ -76,10 +71,9 @@ for i = 1:size(cst,1)
         %Also intrinsically checks that we have a valid optimization
         %objective or constraint function in the end
         if isstruct(obj)
-            if strncmp(obj.className,'DoseObjective',13)
+            if strncmp(obj.className,'DoseObjective',13) || strncmp(obj.className,'DoseConstraint',14)
                 try
                     obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
-                    haveDoseObjectives = true;
                 catch
                     matRad_cfg.dispError('cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!',i,j);
                 end           
@@ -88,14 +82,24 @@ for i = 1:size(cst,1)
              elseif strncmp(obj.className,'LETObjective',12)
                 try
                     obj = matRad_LETOptimizationFunction.createInstanceFromStruct(obj);
-                    haveLETobjectives = true;
                 catch
                     matRad_cfg.dispError('cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!',i,j);
                 end
-            elseif strncmp(obj.className,'DADRObjective',13)
+            elseif strncmp(obj.className,'DADRObjective',13) || strncmp(obj.className,'DADRConstraint',14)
                 try
                     obj = matRad_DADROptimizationFunction.createInstanceFromStruct(obj);
-                    haveDADRobjectives = true;
+                catch
+                    matRad_cfg.dispError('cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!',i,j);
+                end
+            elseif strncmp(obj.className,'XBDDADRObjective',16)
+                try
+                    obj = matRad_XBDDADROptimizationFunction.createInstanceFromStruct(obj);
+                catch
+                    matRad_cfg.dispError('cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!',i,j);
+                end
+            elseif strncmp(obj.className,'XBDLETObjective',15)
+                try
+                    obj = matRad_XBDLETOptimizationFunction.createInstanceFromStruct(obj);
                 catch
                     matRad_cfg.dispError('cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!',i,j);
                 end
@@ -104,10 +108,19 @@ for i = 1:size(cst,1)
         
         if isa(obj,'matRad_DoseOptimizationFunction')
             obj = obj.setDoseParameters(obj.getDoseParameters()/pln.numOfFractions);
+            haveDoseOptimizationFunctions = true;
         elseif isa(obj,'matRad_LETOptimizationFunction') 
+            haveLETOptimizationFunctions = true;
             obj = obj.setLETdParameters(obj.getLETdParameters()/pln.numOfFractions); %If it is an LET*d parameter, we need to scale it with fractions
         elseif isa(obj,'matRad_DADROptimizationFunction')
-            obj = obj.setDoseParameters(obj.getDoseParameters()/pln.numOfFractions);            
+            haveDADROptimizationFunctions = true;
+            obj = obj.setDADRParameters(obj.getDADRParameters()/pln.numOfFractions);            
+        elseif isa(obj,'matRad_XBDDADROptimizationFunction')
+            haveXBDDADROptimizationFunctions = true;
+            obj = obj.setXBDDADRParameters(obj.getXBDDADRParameters()/pln.numOfFractions);            
+        elseif isa(obj,'matRad_XBDLETOptimizationFunction')
+            haveXBDLETOptimizationFunctions = true;
+            obj = obj.setXBDLETParameters(obj.getXBDLETParameters()/pln.numOfFractions);            
         else
             matRad_cfg.dispError('Unknown objective of type %s!',class(obj));
         end
@@ -116,11 +129,11 @@ for i = 1:size(cst,1)
 end
 
 % Quantity availability check
-if haveLETobjectives && ~isfield(dij,'mLETDose')
+if haveLETOptimizationFunctions && ~isfield(dij,'mLETDose')
     matRad_cfg.dispError('LET objectives set, but no LET available in dij!');
 end
 
-if haveDADRobjectives && ~isfield(dij,'fixedCurrent')
+if haveDADROptimizationFunctions && ~isfield(dij,'fixedCurrent')
     dij.fixedCurrent = 300; %nA
     matRad_cfg.dispWarning('DADR objectives set, but no current given in dij.fixedCurrent. Using current of %f nA!',dij.fixedCurrent);
 end
@@ -288,6 +301,10 @@ switch pln.propOpt.bioOptimization
         backProjection = matRad_VariableRBEProjection;
     case 'XBD_LET'
         backProjection = matRad_XBDLETProjection;
+        if isfield(dij,'c')
+            backProjection.c = dij.c; %Standard value
+            matRad_cfg.dispInfo('XBD Optimization uses c=%g\n',dij.c);
+        end
     case 'none'
         backProjection = matRad_DoseProjection;
     otherwise
@@ -310,12 +327,33 @@ if isfield(dij,'maxMU')
 end
 
 %If LET objectives are present, also add an LET projection
-if haveLETobjectives
+if haveLETOptimizationFunctions
     optiProb.BP_LET = matRad_LETProjection();
 end
 
-if haveDADRobjectives
+if haveDADROptimizationFunctions
     optiProb.BP_DADRfixed = matRad_DADRProjectionFixedCurrent();
+end
+
+if haveXBDDADROptimizationFunctions 
+    optiProb.BP_XBDDADR = matRad_XBDDADRProjection();
+    if isfield(dij,'xbd_DADR_k')
+        optiProb.BP_XBDDADR.k = dij.xbd_DADR_k;
+    end
+    if isfield(dij,'xbd_DADR_t')
+        optiProb.BP_XBDDADR.DADR_t = dij.xbd_DADR_t;
+    end
+    if isfield(dij,'xbd_DADR_a_num')
+        optiProb.BP_XBDDADR.a_num = dij.xbd_DADR_a_num;
+    end
+end
+
+if haveXBDLETOptimizationFunctions
+    optiProb.BP_XBDLET = matRad_XBDLETProjection();
+    if isfield(dij,'c')
+        optiProb.BP_XBDLET.c = dij.c; %Standard value
+        matRad_cfg.dispInfo('XBD Optimization uses c=%g\n',dij.c);
+    end
 end
 
 

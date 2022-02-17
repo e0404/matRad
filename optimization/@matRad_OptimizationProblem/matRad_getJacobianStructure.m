@@ -60,7 +60,16 @@ for i = 1:size(cst,1)
                 nRows = size(jacobLETStruct,2);	
                 jacobStruct = [jacobStruct; repmat(spones(mean(dij.physicalDose{1}(cst{i,4}{1},:))),nRows,1)];	
                  
-             end	
+              end
+
+              if isa(obj,'DADRConstraints.matRad_DADRConstraint')	
+                	
+                % get the jacobian structure depending on LET	
+                jacobDADRStruct = obj.getDADRConstraintJacobianStructure(numel(cst{i,4}{1}));	
+                nRows = size(jacobDADRStruct,2);	
+                jacobStruct = [jacobStruct; repmat(spones(mean(dij.physicalDose{1}(cst{i,4}{1},:))),nRows,1)];	
+                 
+             end
          end	
      end	
  end

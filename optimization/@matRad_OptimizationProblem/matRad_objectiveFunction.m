@@ -44,6 +44,16 @@ if ~isempty(optiProb.BP_DADRfixed)
     DADR = optiProb.BP_DADRfixed.GetResult();
 end
 
+if ~isempty(optiProb.BP_XBDDADR)
+    optiProb.BP_XBDDADR = optiProb.BP_XBDDADR.compute(dij,w);
+    XBDDADR = optiProb.BP_XBDDADR.GetResult();
+end
+
+if ~isempty(optiProb.BP_XBDLET)
+    optiProb.BP_XBDLET = optiProb.BP_XBDLET.compute(dij,w);
+    XBDLET = optiProb.BP_XBDLET.GetResult();
+end
+
 
 % Initialize f
 f = 0;
@@ -108,6 +118,32 @@ for  i = 1:size(cst,1)
                     DADR_i = DADR{1}(cst{i,4}{1});
 
                     f = f + objective.computeDADRObjectiveFunction(DADR_i);
+                    
+                %end
+            
+            end
+
+            if isa(objective,'XBDDADRObjectives.matRad_XBDDADRObjective')
+              
+                % if conventional opt: just sum objectiveectives of nominal LET
+                %if strcmp(cst{i,6}{j}.robustness,'none')
+
+                    XBDDADR_i = XBDDADR{1}(cst{i,4}{1});
+
+                    f = f + objective.computeXBDDADRObjectiveFunction(XBDDADR_i);
+                    
+                %end
+            
+            end
+
+            if isa(objective,'XBDLETObjectives.matRad_XBDLETObjective')
+              
+                % if conventional opt: just sum objectiveectives of nominal LET
+                %if strcmp(cst{i,6}{j}.robustness,'none')
+
+                    XBDLET_i = XBDLET{1}(cst{i,4}{1});
+
+                    f = f + objective.computeXBDLETObjectiveFunction(XBDLET_i);
                     
                 %end
             

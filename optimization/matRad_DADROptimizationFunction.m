@@ -43,15 +43,15 @@ classdef (Abstract) matRad_DADROptimizationFunction
     
     % Helper methods
     methods (Access = public)
-        function doseParams = getDoseParameters(obj)
+        function doseParams = getDADRParameters(obj)
             % get only the dose related parameters.
-            ix = cellfun(@(c) isequal('dose',c),obj.parameterTypes);
+            ix = cellfun(@(c) isequal('DADR',c),obj.parameterTypes);
             doseParams = [obj.parameters{ix}];
         end
         
-        function obj = setDoseParameters(obj,doseParams)
+        function obj = setDADRParameters(obj,doseParams)
             % set only the dose related parameters.
-            ix = cellfun(@(c) isequal('dose',c),obj.parameterTypes);
+            ix = cellfun(@(c) isequal('DADR',c),obj.parameterTypes);
             obj.parameters(ix) = num2cell(doseParams);
             
         end                
