@@ -66,6 +66,50 @@ resultGUI.DADR = matRad_interp3(dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z, .
     doseRate, ...
     dij.ctGrid.x,dij.ctGrid.y',dij.ctGrid.z,'linear',0);
 
+
+%% XBD_LET
+tmp = matRad_XBDLETProjection();
+
+if isfield(dij,'c')
+    tmp.c = dij.c; %Standard value
+end
+
+
+tmp = tmp.compute(dij,w);
+
+XBD_LET = tmp.GetResult();
+XBD_LET = reshape(XBD_LET{1},dij.doseGrid.dimensions);
+
+resultGUI.XBD_LET = matRad_interp3(dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z, ...
+    XBD_LET, ...
+    dij.ctGrid.x,dij.ctGrid.y',dij.ctGrid.z,'linear',0);
+
+%% XBD_DADR
+tmp = matRad_XBDDADRProjection();
+
+if isfield(dij,'xbd_DADR_k')
+    tmp.k = dij.xbd_DADR_k;
+end
+if isfield(dij,'xbd_DADR_t')
+    tmp.DADR_t = dij.xbd_DADR_t;
+end
+if isfield(dij,'xbd_DADR_a_num')
+    tmp.a_num = dij.xbd_DADR_a_num;
+end
+
+
+tmp = tmp.compute(dij,w);
+
+XBD_DADR = tmp.GetResult();
+XBD_DADR = reshape(XBD_DADR{1},dij.doseGrid.dimensions);
+
+
+
+resultGUI.XBD_DADR = matRad_interp3(dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z, ...
+    XBD_DADR, ...
+    dij.ctGrid.x,dij.ctGrid.y',dij.ctGrid.z,'linear',0);
+
+
 resultGUI.I = I;
 
 end
