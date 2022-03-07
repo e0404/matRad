@@ -64,23 +64,44 @@ classdef matRad_XBDDADRProjection < matRad_BackProjection
                 %Parameter a
                 a = obj.a_num/obj.DADR_t;  
                 
+                %{
+                %%THis tries to compute the derivative of XBD = d*(1-logistic(DADR))               
                 %Product rule components
-                %1) Logistic part - dDADR                
-                
+                %1) this should be the derivative of the dose part w.r.t. w multiplied with the logistic DADR function
                 logTerm = 1 - obj.k./(1+exp(-a*(DADR - obj.DADR_t)));
                 tmp = xbdGrad{scen}.*logTerm;
-                duv = tmp'*(dij.physicalDose{scen});
-
+                duv = tmp'*(dij.physicalDose{scen}); 
+                
+                %2) This should compute the derivative of the logistic function 
                 ix = dose > 0;
                 tmp = tmp.*(dose.*(1 - logTerm));
                 tmp(ix) = tmp(ix) * I ./ dose(ix).^2;    
                 %uvd =tmp' * (dij.physicalDose{scen}.^2 .* dose - dij.physicalDose{scen} .* dijSqW);
                 uvd = (tmp .* dose)' * dij.physicalDose{scen}.^2 - (tmp .* dijSqW)' * dij.physicalDose{scen};
-
+                
                 wGrad = (duv + uvd)';
+                %wGrad = (duv + uvd)';                
 
                 %u'v + uv'
                 %wGrad = xbdGrad{scen}' * ( (logTerm .* dij.physicalDose{scen}) * logTermGradW )
+                %}
+
+
+                %%THis tries to compute the derivative of XBD = d - d*(logistic(DADR))  
+                %Product rule components
+                %1) this should be the derivative of the dose part w.r.t. w multiplied with the logistic DADR function
+                logTerm = obj.k./(1+exp(-a*(DADR - obj.DADR_t)));
+                tmp = xbdGrad{scen}.*logTerm;
+                duv = tmp'*(dij.physicalDose{scen}); 
+                
+                %2) This should compute the derivative of the logistic function 
+                ix = dose > 0;
+                tmp = a*tmp.*(dose.*(1 - logTerm));
+                tmp(ix) = tmp(ix) * I ./ dose(ix).^2;    
+                %uvd =tmp' * (dij.physicalDose{scen}.^2 .* dose - dij.physicalDose{scen} .* dijSqW);
+                uvd = (tmp .* dose)' * dij.physicalDose{scen}.^2 - (tmp .* dijSqW)' * dij.physicalDose{scen};
+                
+                wGrad = (xbdGrad{scen}' * dij.physicalDose{scen} - duv - uvd)';
 
             else
                 wGrad = [];
