@@ -365,7 +365,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
                                 end
 
                                 % run over components
-                                for c = 1:numOfSub
+                                for c = 1:numOfSub(k)
                                     tmpDose = zeros(size(currIx,1),1);
                                     bixelDose = finalWeight(c,k).*obj.calcParticleDoseBixel(...
                                             radDepths(currIx(:,:,c),1,c), ...
