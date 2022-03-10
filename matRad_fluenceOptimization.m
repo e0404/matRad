@@ -1,13 +1,15 @@
-function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
+function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
 % matRad inverse planning wrapper function
 % 
 % call
 %   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
+%   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
 %
 % input
 %   dij:        matRad dij struct
 %   cst:        matRad cst struct
 %   pln:        matRad pln struct
+%   wInit:      (optional) custom weights to initialize problems
 %
 % output
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
@@ -110,7 +112,9 @@ if pln.propOpt.runDAO && strcmp(pln.radiationMode,'photons')
 
 end
 % calculate initial beam intensities wInit
-if  strcmp(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
+if exist('wInit','var')
+    %do Nothing
+elseif  strcmp(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
     
     % check if a constant RBE is defined - if not use 1.1
     if ~isfield(dij,'RBE')

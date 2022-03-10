@@ -88,6 +88,8 @@ end
 
 
 % 0 if field calc is bixel based, 1 if dose calc is field based
+% num2str is only used to prevent failure of strcmp when bixelWidth
+% contains a number and not a string
 isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
 
 %% kernel convolution
@@ -200,9 +202,11 @@ for i = 1:dij.numOfBeams % loop over all beams
             Interp_kernel2 = griddedInterpolant(convMx_X',convMx_Z',convMx2','linear','none');
             Interp_kernel3 = griddedInterpolant(convMx_X',convMx_Z',convMx3','linear','none');
         else
-            Interp_kernel1 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx1,x,y,'linear',NaN);
-            Interp_kernel2 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx2,x,y,'linear',NaN);
-            Interp_kernel3 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx3,x,y,'linear',NaN);
+            %For some reason the use of interpn here is much faster
+            %than using interp2 in Octave
+            Interp_kernel1 = @(x,y)interpn(convMx_X(1,:),convMx_Z(:,1),convMx1',x,y,'linear',NaN);
+            Interp_kernel2 = @(x,y)interpn(convMx_X(1,:),convMx_Z(:,1),convMx2',x,y,'linear',NaN);
+            Interp_kernel3 = @(x,y)interpn(convMx_X(1,:),convMx_Z(:,1),convMx3',x,y,'linear',NaN);
         end
     end
     
@@ -241,9 +245,11 @@ for i = 1:dij.numOfBeams % loop over all beams
                 Interp_kernel2 = griddedInterpolant(convMx_X',convMx_Z',convMx2','linear','none');
                 Interp_kernel3 = griddedInterpolant(convMx_X',convMx_Z',convMx3','linear','none');
             else
-                Interp_kernel1 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx1,x,y,'linear',NaN);
-                Interp_kernel2 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx2,x,y,'linear',NaN);
-                Interp_kernel3 = @(x,y)interp2(convMx_X(1,:),convMx_Z(:,1),convMx3,x,y,'linear',NaN);
+                %For some reason the use of interpn here is much faster
+                %than using interp2 in Octave
+                Interp_kernel1 = @(x,y)interpn(convMx_X(1,:),convMx_Z(:,1),convMx1',x,y,'linear',NaN);
+                Interp_kernel2 = @(x,y)interpn(convMx_X(1,:),convMx_Z(:,1),convMx2',x,y,'linear',NaN);
+                Interp_kernel3 = @(x,y)interpn(convMx_X(1,:),convMx_Z(:,1),convMx3',x,y,'linear',NaN);
             end
 
         end

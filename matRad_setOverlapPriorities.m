@@ -32,6 +32,7 @@ function [cst,overlapPriorityCube] = matRad_setOverlapPriorities(cst,ctDim)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
 numOfCtScenarios = unique(cellfun(@(x)numel(x),cst(:,4)));
 
 if numel(numOfCtScenarios) > 1
@@ -56,7 +57,7 @@ for i = 1:numOfCtScenarios
         cst{j,4}{i} = idx;
         
         if isempty(cst{j,4}{i}) && ~isempty(cst{j,6})
-            error([cst{j,2} ': Objective(s) and/or constraints for inverse planning defined ' ...
+            matRad_cfg.dispWarning([cst{j,2} ': Objective(s) and/or constraints for inverse planning defined ' ...
                  'but structure overlapped by structure with higher overlap priority.' ...
                  'Objective(s) will not be considered during optimization']); 
         end

@@ -1,10 +1,10 @@
-function [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )
+function [ct,cst,pln,stf,resultGUI] = matRad_importDicom( files, dicomMetaBool )
 % matRad wrapper function to import a predefined set of dicom files 
 % into matRad's native data formats
 % 
 % call
-% [ct, cst, pln, resultGUI] = matRad_importDicom( files )  
-% [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )
+% [ct, cst, pln, stf, resultGUI] = matRad_importDicom( files )  
+% [ct, cst, pln, stf, resultGUI] = matRad_importDicom( files, dicomMetaBool )
 %
 % input
 %   files:          list of files to be imported (will contain cts and rt
@@ -16,6 +16,7 @@ function [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )
 %   ct:        matRad ct struct
 %   cst:       matRad cst struct
 %   pln:       matRad plan struct
+%   stf:       matRad stf struct
 %   resultGUI: matRad result struct holding data for visualization in GUI
 %
 % References
@@ -34,7 +35,7 @@ function [ct, cst, pln, resultGUI] = matRad_importDicom( files, dicomMetaBool )
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-[env, ~] = matRad_getEnvironment();
+%[env, ~] = matRad_getEnvironment();
     
 %%
 if ~exist('dicomMetaBool','var')
@@ -85,8 +86,14 @@ if ~isempty(files.rtss)
     for i = 1:numel(structures)
         % computations take place here
         waitbar(i / steps)
-        fprintf('creating cube for %s volume...\n', structures(i).structName);
-        structures(i).indices = matRad_convRtssContours2Indices(structures(i),ct);
+        fprintf('creating cube for %s volume... ', structures(i).structName);
+        try
+            structures(i).indices = matRad_convRtssContours2Indices(structures(i),ct);
+            fprintf('\n');
+        catch ME
+            warning('matRad:dicomImport','could not be imported: %s',ME.message);
+            structures(i).indices = [];
+        end      
     end
     fprintf('finished!\n');
     close(h)
@@ -105,6 +112,8 @@ if isfield(files,'rtplan')
     if ~(cellfun(@isempty,files.rtplan(1,:)))
         pln = matRad_importDicomRTPlan(ct, files.rtplan, dicomMetaBool);
     end
+else
+    pln = struct([]);
 end
 
 %% import stf
@@ -121,6 +130,8 @@ if isfield(files,'rtplan')
             warning('No support for DICOM import of steering information for this modality.');
         end
     end
+else
+    stf = struct([]);
 end
 
 %% import dose cube
@@ -138,30 +149,17 @@ if isfield(files,'rtdose')
             resultGUI = matRad_importDicomRTDose(ct, files.rtdose);
         end
         if size(resultGUI) == 0
-           clear resultGUI;
+           resultGUI = struct([]);
         end
     end
+else
+    resultGUI = struct([]);
 end
 
 %% put weight also into resultGUI
-if exist('stf','var') && exist('resultGUI','var')
+if ~isempty(stf) && ~isempty(resultGUI)
     resultGUI.w = [];
     for i = 1:size(stf,2)
         resultGUI.w = [resultGUI.w; [stf(i).ray.weight]'];
     end
-end
-
-%% save ct, cst, pln, dose
-matRadFileName = [files.ct{1,3} '.mat']; % use default from dicom
-[FileName,PathName] = uiputfile('*','Save as...',matRadFileName);
-if ischar(FileName)
-    % delete unnecessary variables
-    switch env
-    case 'MATLAB'
-        clearvars -except ct cst pln stf resultGUI FileName PathName;
-    case 'OCTAVE' 
-        clear -x ct cst pln stf resultGUI FileName PathName;
-    end
-    % save all except FileName and PathName
-    save([PathName, FileName], '-regexp', '^(?!(FileName|PathName)$).','-v7.3');
 end
