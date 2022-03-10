@@ -309,7 +309,7 @@ classdef matRad_PhotonSVDPencilBeamDoseEngine < DoseEngines.matRad_AnalyticalPen
             % contains a number and not a string
             obj.isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
             
-            %% Call Superclass constructor
+            %% Call Superclass init
             [ct,stf,pln,dij] = calcDoseInit@DoseEngines.matRad_AnalyticalPencilBeamEngine(obj,ct,stf,pln,cst);                        
             
             %% Validate some properties

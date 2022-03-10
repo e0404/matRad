@@ -23,6 +23,7 @@ classdef (Abstract) matRad_AnalyticalPencilBeamEngine < DoseEngines.matRad_DoseE
     end
     
     properties (SetAccess = protected, GetAccess = public)
+        
         pbCalcMode; % fine sampling mode
         
         doseTmpContainer;   % temporary container for dose calculation results

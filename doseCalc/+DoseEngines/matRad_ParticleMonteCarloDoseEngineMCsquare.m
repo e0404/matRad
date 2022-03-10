@@ -24,12 +24,13 @@ classdef matRad_ParticleMonteCarloDoseEngineMCsquare < DoseEngines.matRad_MonteC
         
     end
     
-    properties (SetAccess = private, GetAccess = public)
+    properties (SetAccess = protected, GetAccess = public)
         
         currFolder = pwd; %folder path when set
         
         mcSquareBinary; %Executable for mcSquare simulation
         nbThreads; %number of threads for MCsquare, 0 is all available
+        relDoseCutoff;
         
     end
     
@@ -71,6 +72,10 @@ classdef matRad_ParticleMonteCarloDoseEngineMCsquare < DoseEngines.matRad_MonteC
             % can be automaticly called through matRad_calcDose or
             % matRad_calcParticleDoseMC
             %
+            % nCase per Bixel and be either set by hand after creating the
+            % engine or over the matRad_calcPhotonDoseMC function while
+            % calling the calculation
+            %
             % call
             %   dij = obj.calcDose(ct,stf,pln,cst)
             %
@@ -79,9 +84,7 @@ classdef matRad_ParticleMonteCarloDoseEngineMCsquare < DoseEngines.matRad_MonteC
             %   stf:         	atRad steering information struct
             %   pln:            matRad plan meta information struct
             %   cst:            matRad cst struct
-            %   nCasePerBixel:  number of histories per beamlet
-            %´  calcDoseDirect: binary switch to enable forward dose calculation
-            %
+            %   
             % output
             %   dij:            matRad dij struct
             %
@@ -107,13 +110,13 @@ classdef matRad_ParticleMonteCarloDoseEngineMCsquare < DoseEngines.matRad_MonteC
             
             obj.checkPln(pln);
             
-            if exist('nCasePerBixel','var')
-                if exist('calcDoseDirect','var')
-                    obj.setUp(nCasePerBixel,calcDoseDirect);
-                else
-                    obj.setUp(nCasePerBixel);
-                end
-            end
+%             if exist('nCasePerBixel','var')
+%                 if exist('calcDoseDirect','var')
+%                     obj.setUp(nCasePerBixel,calcDoseDirect);
+%                 else
+%                     obj.setUp(nCasePerBixel);
+%                 end
+%             end
 
             %% check if binaries are available
             % Executables for simulation
@@ -144,35 +147,9 @@ classdef matRad_ParticleMonteCarloDoseEngineMCsquare < DoseEngines.matRad_MonteC
                 matRad_cfg.dispInfo('Done');
             end
 
-            % Since MCsquare 1.1 only allows similar resolution in x&y, we do some
-            % extra checks on that before calling calcDoseInit. First, we make sure a
-            % dose grid resolution is set in the pln struct
-            if ~isfield(pln,'propDoseCalc') ...
-                    || ~isfield(pln.propDoseCalc,'doseGrid') ...
-                    || ~isfield(pln.propDoseCalc.doseGrid,'resolution') ...
-                    || ~all(isfield(pln.propDoseCalc.doseGrid.resolution,{'x','y','z'}))
-
-                %Take default values
-                pln.propDoseCalc.doseGrid.resolution = matRad_cfg.propDoseCalc.defaultResolution;
-            end
-
-            % Now we check for different x/y
-            if pln.propDoseCalc.doseGrid.resolution.x ~= pln.propDoseCalc.doseGrid.resolution.y
-                pln.propDoseCalc.doseGrid.resolution.x = mean([pln.propDoseCalc.doseGrid.resolution.x pln.propDoseCalc.doseGrid.resolution.y]);
-                pln.propDoseCalc.doseGrid.resolution.y = pln.propDoseCalc.doseGrid.resolution.x;
-                matRad_cfg.dispWarning('Anisotropic resolution in axial plane for dose calculation with MCsquare not possible\nUsing average x = y = %g mm\n',pln.propDoseCalc.doseGrid.resolution.x);
-            end
 
             %Now we can run calcDoseInit as usual
             [ct,stf,pln,dij] = obj.calcDoseInit(ct,stf,pln,cst);
-
-            %Issue a warning when we have more than 1 scenario
-            if dij.numOfScenarios ~= 1
-                matRad_cfg.dispWarning('MCsquare is only implemented for single scenario use at the moment. Will only use the first Scenario for Monte Carlo calculation!');
-            end
-
-            % prefill ordering of MCsquare bixels
-            dij.MCsquareCalcOrder = NaN*ones(dij.totalNumOfBixels,1);
 
             % We need to adjust the offset used in matRad_calcDoseInit
             mcSquareAddIsoCenterOffset = [dij.doseGrid.resolution.x/2 dij.doseGrid.resolution.y/2 dij.doseGrid.resolution.z/2] ...
@@ -185,13 +162,7 @@ classdef matRad_ParticleMonteCarloDoseEngineMCsquare < DoseEngines.matRad_MonteC
                 HUcube{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{s}, ...
                                             dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
             end
-
-            % Explicitly setting the number of threads for MCsquare, 0 is all available
-            obj.nbThreads = 0;
-
-            % set relative dose cutoff for storage in dose influence matrix, we use the
-            % default value for the lateral cutoff here
-            relDoseCutoff = 1 - matRad_cfg.propDoseCalc.defaultLateralCutOff;
+           
             % set absolute calibration factor
             % convert from eV/g/primary to Gy 1e6 primaries
             absCalibrationFactorMC2 = 1.602176e-19 * 1.0e+9;
@@ -219,7 +190,7 @@ classdef matRad_ParticleMonteCarloDoseEngineMCsquare < DoseEngines.matRad_MonteC
             % turn on sparse output
             MCsquareConfig.Dose_Sparse_Output = ~obj.calcDoseDirect;
             % set threshold of sparse matrix generation
-            MCsquareConfig.Dose_Sparse_Threshold = relDoseCutoff;
+            MCsquareConfig.Dose_Sparse_Threshold = obj.relDoseCutoff;
 
             % write patient data
             MCsquareBinCubeResolution = [dij.doseGrid.resolution.x ...
@@ -387,7 +358,7 @@ classdef matRad_ParticleMonteCarloDoseEngineMCsquare < DoseEngines.matRad_MonteC
         %
    
             matRad_cfg = MatRad_Config.instance();
-            
+
             % first argument should be nCasePerBixel
             if (exist('nCasePerBixel','var') && isa(nCasePerBixel,'numeric'))    
                 obj.nCasePerBixel = nCasePerBixel;
@@ -396,9 +367,10 @@ classdef matRad_ParticleMonteCarloDoseEngineMCsquare < DoseEngines.matRad_MonteC
                 obj.nCasePerBixel = matRad_cfg.propMC.MCsquare_defaultHistories;
                 matRad_cfg.dispInfo('No number of Histories given or wrong type given. Using default number of Histories per Bixel: %d\n',obj.nCasePerBixel);
             end
-            
-         
 
+            if (exist('calcDoseDirect', 'var'))
+                obj.calcDoseDirect = true;
+            end       
             
         end
         
@@ -429,6 +401,51 @@ classdef matRad_ParticleMonteCarloDoseEngineMCsquare < DoseEngines.matRad_MonteC
                     obj.mcSquareBinary = './MCsquare_linux';
                 end
             end
+        end
+        
+        function [ct,stf,pln,dij] = calcDoseInit(obj,ct,stf,pln,cst)
+            %% Assingn and check parameters
+            
+            matRad_cfg = MatRad_Config.instance();
+            
+            % Since MCsquare 1.1 only allows similar resolution in x&y, we do some
+            % extra checks on that before calling the normal calcDoseInit. First, we make sure a
+            % dose grid resolution is set in the pln struct
+            if ~isfield(pln,'propDoseCalc') ...
+                    || ~isfield(pln.propDoseCalc,'doseGrid') ...
+                    || ~isfield(pln.propDoseCalc.doseGrid,'resolution') ...
+                    || ~all(isfield(pln.propDoseCalc.doseGrid.resolution,{'x','y','z'}))
+
+                %Take default values
+                pln.propDoseCalc.doseGrid.resolution = matRad_cfg.propDoseCalc.defaultResolution;
+            end
+
+            % Now we check for different x/y
+            if pln.propDoseCalc.doseGrid.resolution.x ~= pln.propDoseCalc.doseGrid.resolution.y
+                pln.propDoseCalc.doseGrid.resolution.x = mean([pln.propDoseCalc.doseGrid.resolution.x pln.propDoseCalc.doseGrid.resolution.y]);
+                pln.propDoseCalc.doseGrid.resolution.y = pln.propDoseCalc.doseGrid.resolution.x;
+                matRad_cfg.dispWarning('Anisotropic resolution in axial plane for dose calculation with MCsquare not possible\nUsing average x = y = %g mm\n',pln.propDoseCalc.doseGrid.resolution.x);
+            end
+            
+            %% Call Superclass init function
+            [ct,stf,pln,dij] = calcDoseInit@DoseEngines.matRad_MonteCarloEngine(obj,ct,stf,pln,cst); 
+            
+            %% Validate and preset some additional dij variables
+            
+            % Explicitly setting the number of threads for MCsquare, 0 is all available
+            obj.nbThreads = 0;
+            
+            %Issue a warning when we have more than 1 scenario
+            if dij.numOfScenarios ~= 1
+                matRad_cfg.dispWarning('MCsquare is only implemented for single scenario use at the moment. Will only use the first Scenario for Monte Carlo calculation!');
+            end
+            
+            % prefill ordering of MCsquare bixels
+            dij.MCsquareCalcOrder = NaN*ones(dij.totalNumOfBixels,1);
+            
+            % set relative dose cutoff for storage in dose influence matrix, we use the
+            % default value for the lateral cutoff here
+            obj.relDoseCutoff = 1 - matRad_cfg.propDoseCalc.defaultLateralCutOff;
         end
         
         
