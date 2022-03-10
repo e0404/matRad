@@ -327,7 +327,23 @@ files.useDoseGrid = get(handles.checkbox3,'Value');
 
 % dicomMetaBool: store complete DICOM information and patientName or not
 dicomMetaBool = logical(get(handles.checkPatientName,'Value'));
-matRad_importDicom(files, dicomMetaBool);
+[ct,cst,pln,stf,resultGUI] = matRad_importDicom(files, dicomMetaBool);
+
+
+% Save file
+matRadFileName = [files.ct{1,3} '.mat']; % use default from dicom
+[FileName,PathName] = uiputfile('*','Save as...',matRadFileName);
+if ischar(FileName)
+    %Hack to get non-empty variables
+    varNames = {'ct','cst','pln','stf','resultGUI'};
+    ix = cellfun(@(s) ~isempty(evalin('caller',s)),varNames);
+    varNames = varNames(ix);
+
+    FileName = fullfile(PathName,FileName);
+
+    % save all non-empty variables imported
+    save(FileName,'-v7.3',varNames{:});
+end
 
 
 % --- Executes on button press in cancel_button.

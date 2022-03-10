@@ -68,6 +68,16 @@ classdef matRad_MeanDose < DoseObjectives.matRad_DoseObjective
                     obj.penalty = penalty;
                 end
             end
+
+            %% Downwards compatability / set default values
+            %TODO: maybe move into set method for parameters
+            if numel(obj.parameters) < 1
+                obj.parameters{1} = 0;
+            end
+
+            if numel(obj.parameters) < 2
+                obj.parameters{2} = 1;
+            end
             
         end       
         
