@@ -96,7 +96,7 @@ classdef matRad_XBDDADRProjection < matRad_BackProjection
                 
                 %2) This should compute the derivative of the logistic function 
                 ix = dose > 0;
-                tmp = a*tmp.*(dose.*(1 - logTerm));
+                tmp = a*tmp.*(dose.*(1 - logTerm./obj.k));
                 tmp(ix) = tmp(ix) * I ./ dose(ix).^2;    
                 %uvd =tmp' * (dij.physicalDose{scen}.^2 .* dose - dij.physicalDose{scen} .* dijSqW);
                 uvd = (tmp .* dose)' * dij.physicalDose{scen}.^2 - (tmp .* dijSqW)' * dij.physicalDose{scen};
