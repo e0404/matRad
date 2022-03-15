@@ -4008,7 +4008,11 @@ for clIx = 1:numel(classList)
     classNames(:,clIx) = {cl.Name; pName}; %Store class name and display name
 end
 
-numOfObjectives = sum(cellfun(@numel,cst(:,6)));
+if size(cst,2) < 6
+    numOfObjectives = 0;
+else 
+    numOfObjectives = sum(cellfun(@numel,cst(:,6)));
+end
 
 cnt = 0;
 
@@ -4044,7 +4048,12 @@ xPos = xPos + tmp_pos(3) + fieldSep;
 cnt = cnt + 1;
 
 %Create Objectives / Constraints controls
-for i = 1:size(cst,1)   
+for i = 1:size(cst,1)
+    %Safety break in case the 6th column is empty, because it allows us to
+    %run less checks afterwards
+    if numOfObjectives == 0
+        break;
+    end
     if strcmp(cst(i,3),'IGNORED')~=1
         %Compatibility Layer for old objective format
         if isstruct(cst{i,6})

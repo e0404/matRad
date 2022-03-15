@@ -73,7 +73,7 @@ if ~isempty(jacobStruct_dos)
     end
 
     % second leaves
-    counter = 0;
+    counter = apertureInfo.totalNumOfShapes;
     for i = 1:size(apertureInfo.beam,2)
         for j = 1:apertureInfo.beam(i).numOfShapes
             for k = 1:apertureInfo.beam(i).numOfActiveLeafPairs
