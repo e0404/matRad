@@ -1,0 +1,40 @@
+# This is a basic workflow to help you get started with Actions
+name: Testing
+# Controls when the action will run. 
+on: [push, pull_request, workflow_dispatch]  
+jobs:
+  test-matlab: #Matlab test Job
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2 # Checks-out repository under $GITHUB_WORKSPACE
+      # Install MATLAB
+      - name: Install MATLAB
+        uses: matlab-actions/setup-matlab@v1        
+      # Runs test command
+      - name: Run Tests
+        uses: matlab-actions/run-command@v1
+        with:
+          command: cd test; matRad_runTests
+  test-octave: #Octave test Job
+    runs-on: ubuntu-20.04 # We use Ubuntu-20.04 because it has Octave 5.2
+    steps:
+      - uses: actions/checkout@v2 # Checks-out repository under $GITHUB_WORKSPACE
+      - name: Install OCTAVE
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gdb gfortran fonts-freefont-otf gnuplot-x11 libgdcm-dev octave liboctave-dev
+      - name: Prepare Test Environment
+        run: |
+          sudo chmod +x .travis/before_install_linux.sh
+          sudo .travis/before_install_linux.sh
+      - name: Run Tests
+        uses: GabrielBB/xvfb-action@v1 #For Headless tests
+        with:
+          run: .travis/runtests.sh octave-cli
+      - name: Upload Logs if failure
+        uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: Test Log
+          path: runtests.log
+            
