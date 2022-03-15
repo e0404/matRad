@@ -39,20 +39,26 @@ for i = 1:size(structure.item,2)
 
         dicomCtSlicePos = unique(structure.item(i).points(:,3));
         
-        if numel(dicomCtSlicePos) > 1
-            error('Contour defined over multiple planes\n');
+        if numel(dicomCtSlicePos) > 1 || isempty(dicomCtSlicePos)
+            error('Contour defined over multiple planes!');
         end
     
         round2 = @(a,b) round(a*10^b)/10^b;
         dicomCtSliceThickness = ct.dicomInfo.SliceThickness(round2(ct.dicomInfo.SlicePositions,1)==round2(dicomCtSlicePos,1));
+        
+        %Sanity check
+        msg = checkSliceThickness(dicomCtSliceThickness);
+        if ~isempty(msg)
+            error('Slice Thickness of slice at %f could not be identified: %s',dicomCtSlicePos,msg);
+        end
+        
+        slicesInMatradCt = find(dicomCtSlicePos+dicomCtSliceThickness/2 > ct.z & dicomCtSlicePos-dicomCtSliceThickness/2 <= ct.z);
         
         coords1 = interp1(ct.x,1:ct.cubeDim(2),structure.item(i).points(:,1),'linear','extrap');
         coords2 = interp1(ct.y,1:ct.cubeDim(1),structure.item(i).points(:,2),'linear','extrap');
         
         binIn = poly2mask(coords1,coords2,ct.cubeDim(1),ct.cubeDim(2));
         
-        slicesInMatradCt = find(dicomCtSlicePos+dicomCtSliceThickness/2 > ct.z & dicomCtSlicePos-dicomCtSliceThickness/2 <= ct.z);
-
         % loop over all slices in matRad ct
         for j = 1:numel(slicesInMatradCt)
             voiCube(:,:,slicesInMatradCt(j)) = voiCube(:,:,slicesInMatradCt(j)) | binIn;
@@ -63,3 +69,17 @@ for i = 1:size(structure.item,2)
 end
 
 indices = find(voiCube(:));
+
+end
+
+function msg = checkSliceThickness(dicomCtSliceThickness)
+    if isempty(dicomCtSliceThickness)
+        msg = 'Slice could not be identified (empty)';
+    elseif ~isscalar(dicomCtSliceThickness)
+        msg = 'Slice thickness not unique';
+    elseif ~isnumeric(dicomCtSliceThickness)
+        msg = 'unexpected value';
+    else
+        msg = '';
+    end
+end

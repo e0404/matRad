@@ -230,6 +230,9 @@ stf = matRad_generateStf(ct,cst,pln);
 %% Dose Calculation
 dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 
+%% Export dij matrix
+matRad_exportDij('dij.bin',dij,stf);
+
 %% Inverse Optimization for intensity-modulated photon therapy
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
