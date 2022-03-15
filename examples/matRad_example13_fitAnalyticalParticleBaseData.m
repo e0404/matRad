@@ -90,36 +90,35 @@ end
 cst{2,4}{1} = find(mask == 1);
 
 disp('CT creation done!');
-clearvars -except ct cst
+clearvars -except ct cst matRad_cfg
 
 
 %% 2) MCsquare computation and baseData fitting
 
-%% In order to fit to the correct Monte Carlo simulation, the "useExisting" 
-%% switch in calcParticleDoseMCsquare has to be set to 1, and the correct BDL
-%% file has to be stated there
 
 % meta information for treatment plan
-pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.machine = "dummyMachine";
+pln.radiationMode   = 'protons'; 
 
-
-% create a dummy machine file 
-% save meta data in machine
-machine.meta.radiationMode = 'protons';
-machine.meta.dataType = 'singleGauss';
+% create meta machine data
+machine.meta.machine = 'example'; %name of the machine
+machine.meta.radiationMode = 'protons'; %modality
+machine.meta.dataType = 'singleGauss'; %singleGauss or doubleGauss
 machine.meta.created_on = date;
-machine.meta.created_by = 'Paul Anton Meder';
-machine.meta.SAD = (2218 + 1839) / 2;
-machine.meta.BAMStoIsoDist = 420.0;
-machine.meta.machine = 'Generic';
-machine.meta.LUT_bxWidthminFWHM = [1, Inf; 8 ,8];
-machine.meta.fitAirOffset = 420.0;
+machine.meta.created_by = 'matRad_example';
+machine.meta.SAD = (2218 + 1839) / 2; %This is the (virtual) source to axis distance
+machine.meta.BAMStoIsoDist = 420.0; %distance from beam nozzle ot isocenter
+machine.meta.LUT_bxWidthminFWHM = [0, Inf; 5 ,5]; %Specifies which minimum FWHM to use as spot sice for which ranges of lateral spot distance (here, each spot distance of 0 to to Inf gets at least 5mm wide spots
+machine.meta.fitAirOffset = 420.0; %Tells matRad how much "air" was considered during fitting. Set this to 0 if the fit is obtained in vacuum and no air transport is simulated up to the phantom. matRad assumes that the phantom starts at the isocenter.
 
-
+%Now add the example machine to the pln and then save it
+pln.machine = machine.meta.machine;
+pln.radiationMode = machine.meta.radiationMode;
 fileName = [pln.radiationMode '_' pln.machine];
-save(['basedata' filesep fileName ".mat"], "machine");
-clear machine 
+filePath = fullfile(matRad_cfg.matRadRoot,'basedata',[fileName '.mat']);
+
+matRad_cfg.dispInfo('Saving temporary machine %s to %s\n',fileName,filePath);
+save(filePath,'machine','-v7');
+clear machine; 
 
  
 % beam geometry settings
@@ -168,11 +167,20 @@ spotMC   = (dataMC.data(:, 6) + dataMC.data(:, 9)) / 2;
 divMC    = (dataMC.data(:, 7) + dataMC.data(:,10)) / 2;
 corMC    = (dataMC.data(:, 8) + dataMC.data(:,11)) / 2;
 
+%% Run Base Data Fitting
+
 % define energy range
 minEnergy = 70;
 maxEnergy = 225;
-nEnergy   = 75;  
+nEnergy   = 75;
 
+%Number of histories for the MC simulation
+nHistoriesMC = 1e5;
+
+% We create a figure to display the fit
+hf = figure();
+
+%Here we loop over all energies we want to fit
 count = 1;
 for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
     
@@ -192,14 +200,15 @@ for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
     stf.ray.energy = currentEnergy;
     
     %% needs to use correct BDL file in calcParticleDoseMC
-    resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,1,10000);          
+    resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,1,nHistoriesMC);          
     
     machine.data(count) = matRad_fitBaseData(resultGUI.physicalDose, ct.resolution, currentEnergy, mcData);
-
-    disp(['baseData Progress :', ' ', num2str(round(count/nEnergy*100)), '%']);
+    
+    matRad_plotParticleBaseDataEntry(machine,count,hf);
     count = count + 1;
 end
 
-  
-% save machine
-save(['basedata' filesep 'protons_fitMachine.mat'], "machine");
+%% save final machine  
+matRad_cfg.dispInfo('Saving final machine %s to %s\n',fileName,filePath);
+save(filePath,'machine','-v7');
+clear machine; 
