@@ -14,7 +14,7 @@ jobs:
       - name: Run Tests
         uses: matlab-actions/run-command@v1
         with:
-          command: cd unitTest; matRad_runTests
+          command: cd test; matRad_runTests
   test-octave: #Octave test Job
     runs-on: ubuntu-20.04 # We use Ubuntu-20.04 because it has Octave 5.2
     steps:
