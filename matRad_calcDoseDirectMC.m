@@ -1,18 +1,21 @@
 function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)
-% matRad dose calculation wrapper bypassing dij calculation for MC dose
-% calculation algorithms
+% matRad function to bypass dij calculation for MC dose calculation 
+% matRad dose calculation wrapper for MC dose calculation algorithms
+% bypassing dij calculation for MC dose calculation algorithms.
 % 
 % call
-%   resultGUI = matRad_calcDoseDirecMC(ct,stf,pln,cst,w,nHistories)
+%   resultGUI = matRad_calcDoseDirecMC(ct,stf,pln,cst)
+%   resultGUI = matRad_calcDoseDirecMC(ct,stf,pln,cst,w)
+%   resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)
 %
 % input
 %   ct:         ct cube
 %   stf:        matRad steering information struct
 %   pln:        matRad plan meta information struct
 %   cst:        matRad cst struct
-%   w:          optional (if no weights available in stf): bixel weight
+%   w:          (optional, if no weights available in stf): bixel weight
 %               vector
-%   nHistories: number of histories
+%   nHistories: (optional) number of histories
 %
 % output
 %   resultGUI:  matRad result struct
@@ -93,13 +96,30 @@ else
     matRad_cfg.dispError('Forward MC only implemented for protons.');
 end
 
-% hack dij struct
-dij.numOfBeams = 1;
-dij.beamNum = 1;
 
-% calculate cubes; use uniform weights here, weighting with actual fluence 
-% already performed in dij construction 
-resultGUI    = matRad_calcCubes(sum(w),dij);
+dij.numOfBeams = size(dij.physicalDose{1},2);
+dij.beamNum = 1:size(dij.physicalDose{1},2);
+
+% calc resulting dose
+if pln.multScen.totNumScen == 1
+    % calculate cubes; use uniform weights here, weighting with actual fluence 
+    % already performed in dij construction
+    resultGUI    = matRad_calcCubes(ones(size(dij.physicalDose{1},2),1),dij,1);
+    
+% calc individual scenarios    
+else    
+   Cnt          = 1;
+   ixForOpt     = find(~cellfun(@isempty, dij.physicalDose))';
+   for i = ixForOpt
+      tmpResultGUI = matRad_calcCubes(ones(size(dij.physicalDose{i},2),1),dij,i);
+      if i == 1
+         resultGUI.([pln.bioParam.quantityVis]) = tmpResultGUI.(pln.bioParam.quantityVis);
+      end
+      resultGUI.([pln.bioParam.quantityVis '_' num2str(Cnt,'%d')]) = tmpResultGUI.(pln.bioParam.quantityVis);
+      Cnt = Cnt + 1;
+   end 
+    
+end
 
 % remember original fluence weights
 resultGUI.w  = w; 

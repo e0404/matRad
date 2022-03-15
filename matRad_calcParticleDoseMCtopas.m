@@ -1,6 +1,8 @@
 function dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad TOPAS Monte Carlo proton dose calculation wrapper
+%   This calls a TOPAS installation (not included in matRad due to
+%   licensing model of TOPAS) for MC simulation
 %
 % call
 %   dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect)
@@ -19,8 +21,6 @@ function dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,nCasePerBixel,calcD
 %
 % References
 %
-%   https://aapm.onlinelibrary.wiley.com/doi/abs/10.1118/1.4943377
-%   http://www.openmcsquare.org/
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -51,16 +51,49 @@ if isfield(pln,'propMC') && isfield(pln.propMC,'outputVariance')
     matRad_cfg.dispWarning('Variance scoring for TOPAS not yet supported.');
 end
 
+if isfield(pln,'propMC') && isfield(pln.propMC,'config')        
+    if isa(pln.propMC.config,'MatRad_TopasConfig')
+        matRad_cfg.dispInfo('Using given Topas Configuration in pln.propMC.config!\n');
+        topasConfig = pln.propMC.config;
+    else 
+        %Create a default instance of the configuration
+        topasConfig = MatRad_TopasConfig();
+        
+        %Overwrite parameters
+        %mc = metaclass(topasConfig); %get metaclass information to check if we can overwrite properties
+        
+        if isstruct(pln.propMC.config)
+            props = fieldnames(pln.propMC.config);
+            for fIx = 1:numel(props)
+                fName = props{fIx};
+                if isprop(topasConfig,fName)
+                    %We use a try catch block to catch errors when trying
+                    %to overwrite protected/private properties instead of a
+                    %metaclass approach
+                    try 
+                        topasConfig.(fName) = pln.propMC.config.(fName);
+                    catch
+                        matRad_cfg.dispWarning('Property ''%s'' for MatRad_TopasConfig will be omitted due to protected/private access or invalid value.',fName);
+                    end
+                else
+                    matRad_cfg.dispWarning('Unkown property ''%s'' for MatRad_TopasConfig will be omitted.',fName);
+                end
+            end
+        else
+            matRad_cfg.dispError('Invalid Configuration in pln.propMC.config');
+        end
+    end
+else
+    topasConfig = MatRad_TopasConfig();
+end
+        
+
 if ~calcDoseDirect
     matRad_cfg.dispError('matRad so far only supports direct dose calculation for TOPAS!\n');
 end
 
-if isfield(pln.propStf,'useRangeShifter') 
+if ~isfield(pln.propStf,'useRangeShifter') 
     pln.propStf.useRangeShifter = false;
-end
-
-if pln.propStf.useRangeShifter
-    matRad_cfg.dispError('matRad''s TOPAS interface does not support range shifters yet!\n');
 end
 
 env = matRad_getEnvironment();
@@ -70,22 +103,34 @@ matRad_calcDoseInit;
 
 % for TOPAS we explicitly downsample the ct to the dose grid (might not
 % be necessary in future versions with separated grids)
-for s = 1:dij.numOfScenarios
-    ctResampled = ct;
-    ctResampled.cubeHU{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{s}, ...
+
+
+for s = 1:ct.numOfCtScen
+    cubeHUresampled{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{s}, ...
                                 dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
-    ctResampled.resolution = dij.doseGrid.resolution;
-    ctResampled.cubeDim = dij.doseGrid.dimensions;
-    ctResampled.x = dij.doseGrid.x;
-    ctResampled.y = dij.doseGrid.y;
-    ctResampled.z = dij.doseGrid.z;
+    cubeResampled{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cube{s}, ...
+                                dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');                        
 end
+
+%Allocate temporary resampled CT
+ctR = ct;
+ctR.cube = cell(1);
+ctR.cubeHU = cell(1);
+ctR.numOfCtScen = 1;
+ctR.resolution = dij.doseGrid.resolution;
+ctR.cubeDim = dij.doseGrid.dimensions;
+ctR.x = dij.doseGrid.x;
+ctR.y = dij.doseGrid.y;
+ctR.z = dij.doseGrid.z;
 
 %% sending data to topas
 
 load([pln.radiationMode,'_',pln.machine]);
-topasConfig = MatRad_TopasConfig();
+
 topasBaseData = MatRad_TopasBaseData(machine,stf);%,TopasConfig);
+
+topasConfig.numHistories = nCasePerBixel;
+topasConfig.numOfRuns = matRad_cfg.propMC.topas_defaultNumBatches;
 
 %Collect weights
 w = zeros(sum([stf(:).totalNumOfBixels]),1);
@@ -98,53 +143,76 @@ for i = 1:length(stf)
     end
 end
 
-topasConfig.numHistories = nCasePerBixel;
-topasConfig.numOfRuns = matRad_cfg.propMC.topas_defaultNumBatches;
-topasConfig.writeAllFiles(ctResampled,pln,stf,topasBaseData,w);
-
-%topasConfig.parallelRuns = true;
-%topasConfig.numThreads = 20 / topasConfig.numOfRuns;
-
-%Run Simulation
 currDir = cd;
-cd(topasConfig.workingDir);
-for beamIx = 1:numel(stf)
-    for runIx = 1:topasConfig.numOfRuns       
-        fname = sprintf('%s_field%d_run%d',topasConfig.label,beamIx,runIx);
-        topasCall = sprintf('%s %s.txt > %s.out 2> %s.err',topasConfig.topasExecCommand,fname,fname,fname);
-        if topasConfig.parallelRuns
-            finishedFiles{runIx} = sprintf('%s.finished',fname);
-            delete(finishedFiles{runIx});
-            topasCall = [topasCall '; touch ' finishedFiles{runIx} ' &'];
-        end
-        matRad_cfg.dispInfo('Calling TOPAS: %s\n',topasCall);
-        [status,cmdout] = system(topasCall,'-echo');
-        if status == 0
-            matRad_cfg.dispInfo('TOPAS simulation completed succesfully\n');
-        else
-            matRad_cfg.dispError('TOPAS simulation exited with error code %d\n',status);
+
+for shiftScen = 1:pln.multScen.totNumShiftScen
+    
+    % manipulate isocenter
+    for k = 1:length(stf)
+        stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(shiftScen,:);
+    end    
+    
+    for ctScen = 1:pln.multScen.numOfCtScen
+        for rangeShiftScen = 1:pln.multScen.totNumRangeScen
+            if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
+                
+                %Overwrite CT (TEMPORARY - we should use 4D calculation in
+                %TOPAS here)
+                ctR.cubeHU = cubeHUresampled(ctScen);
+                ctR.cube = cubeResampled(ctScen);
+                                
+                topasConfig.writeAllFiles(ctR,pln,stf,topasBaseData,w);                
+                
+                % Run simulation for current scenario
+                cd(topasConfig.workingDir);
+                
+                for beamIx = 1:numel(stf)
+                    for runIx = 1:topasConfig.numOfRuns       
+                        fname = sprintf('%s_field%d_run%d',topasConfig.label,beamIx,runIx);
+                        topasCall = sprintf('%s %s.txt > %s.out 2> %s.err',topasConfig.topasExecCommand,fname,fname,fname);
+                        if topasConfig.parallelRuns
+                            finishedFiles{runIx} = sprintf('%s.finished',fname);
+                            delete(finishedFiles{runIx});
+                            topasCall = [topasCall '; touch ' finishedFiles{runIx} ' &'];
+                        end
+                        matRad_cfg.dispInfo('Calling TOPAS: %s\n',topasCall);
+                        [status,cmdout] = system(topasCall,'-echo');
+                        if status == 0
+                            matRad_cfg.dispInfo('TOPAS simulation completed succesfully\n');
+                        else
+                            matRad_cfg.dispError('TOPAS simulation exited with error code %d\n',status);
+                        end
+                    end
+
+                    if topasConfig.parallelRuns
+                        runsFinished = false;
+                        pause('on');
+                        while ~runsFinished
+                            pause(1);
+                            fin = cellfun(@(f) exist(f,'file'),finishedFiles);
+                            runsFinished = all(fin);
+                        end
+                    end
+
+                end
+                
+                cd(currDir);
+                
+                %% Simulation finished - read out volume scorers from topas simulation
+                
+                topasCubes = matRad_readTopasData(topasConfig.workingDir);
+
+                fnames = fieldnames(topasCubes);
+                dij.MC_tallies = fnames;
+                for f = 1:numel(fnames)
+                    dij.(fnames{f}){1} = sum(w)*reshape(topasCubes.(fnames{f}),[],1);
+                end
+            end
         end
     end
     
-    if topasConfig.parallelRuns
-        runsFinished = false;
-        pause('on');
-        while ~runsFinished
-            pause(1);
-            runsFinished = true;
-            fin = cellfun(@(f) exist(f,'file'),finishedFiles);
-            runsFinished = all(fin);
-        end
+    % manipulate isocenter back
+    for k = 1:length(stf)
+        stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(shiftScen,:);
     end
-        
-end
-cd(currDir);
-
-%% read out volume scorers from topas simulation
-topasCubes = matRad_readTopasData(topasConfig.workingDir);
-
-fnames = fieldnames(topasCubes);
-dij.MC_tallies = fnames;
-for f = 1:numel(fnames)
-    dij.(fnames{f}){1} = topasCubes.(fnames{f});    
 end

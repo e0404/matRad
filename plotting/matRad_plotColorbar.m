@@ -1,20 +1,23 @@
 function cBarHandle = matRad_plotColorbar(axesHandle,cMap,window,varargin)
-% matRad function wrapper for plotting the colorbar. This is necessary
-% since the rgb colors are manually mapped within the ct and the dose
-% plotting, and MATLAB attaches colorbars to axes.
+% matRad function wrapper for plotting the colorbar 
+% This is necessary since the rgb colors are manually mapped within the ct 
+% and the dose plotting, and MATLAB attaches colorbars to axes.
 %
 % call
 %   cBarHandle = matRad_plotColorbar(axesHandle,cMap,window,varargin)
 %
 % input
 %   axesHandle  handle to axes the colorbar will be attached to
-%   ctCube      corresponding colormap
+%   cMap        corresponding colormap
 %   window      colormap window (corresponds to clim)
 %   varargin    additional key-value pairs that will be forwarded to the
 %               MATLAB colorbar(__) call
 %
 % output
 %   cBarHandle  handle of the colorbar object
+%
+% References
+%   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -29,20 +32,29 @@ function cBarHandle = matRad_plotColorbar(axesHandle,cMap,window,varargin)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-v=version;
+[env,envver] = matRad_getEnvironment();
 
 colormap(axesHandle,cMap);
-caxis(window);
 
-if str2double(v(1:3))>=8.5
-    cBarHandle = colorbar(axesHandle,varargin{:});
+%sanity check to avoid a crash
+if window(1) < window(2)
+    caxis(window);
 else
-    cBarHandle = colorbar('peer',axesHandle,varargin{:});
-end
+    matRad_cfg = MatRad_Config.instance();
+    matRad_cfg.dispWarning('Unsuitable display window [%d,%d] for color axis!',window(1),window(2));
+end 
 
 
-
-
-
+switch env
+    case 'MATLAB'
+        if str2double(envver(1:3))>=8.5
+            cBarHandle = colorbar(axesHandle,varargin{:});
+        else
+            cBarHandle = colorbar('peer',axesHandle,varargin{:});
+        end
+    case 'OCTAVE'
+        cBarHandle = colorbar(axesHandle,varargin{:});
+    otherwise
+        cBarHandle = colorbar(axesHandle,varargin{:});
 end
 

@@ -1,6 +1,6 @@
 function obj = matRad_exportDicomRTDoses(obj)
-% matRad function to exportt resultGUI to dicom RT dose. Function of
-% matRad_DicomExporter
+% matRad function to exportt resultGUI to dicom RT dose. 
+% Function of matRad_DicomExporter
 % 
 % call
 %   matRad_DicomExporter.matRad_exportDicomRTDoses()

@@ -54,11 +54,10 @@ if nargin < 5
         nHistories = matRad_cfg.propMC.particles_defaultHistories;
         matRad_cfg.dispInfo('Using default number of Histories per bixel: %d\n',nHistories);
     else
-        nHistories = matRad_cfg.propMMC.direct_defaultHistories;
+        nHistories = matRad_cfg.propMC.direct_defaultHistories;
         matRad_cfg.dispInfo('Using default number of Histories for forward dose calculation: %d\n',nHistories);
     end
 end
-
 
 switch engine
     case 'MCsquare'

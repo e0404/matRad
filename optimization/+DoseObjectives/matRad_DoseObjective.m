@@ -1,27 +1,32 @@
 classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % matRad_DoseObjective: Interface for optimization objectives
-    %   This abstract base class provides the structure of optimization
-    %   objectives like mean dose, squared deviation, EUD, dose-volume etc.
-    %   Implementations can be found in the DoseObjectives package
-    %
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad_DoseObjective: Interface for optimization objectives
+%   This abstract base class provides the structure of optimization
+%   objectives like mean dose, squared deviation, EUD, dose-volume etc.
+%   Implementations can be found in the DoseObjectives package
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %
-    % Copyright 2015 the matRad development team.
-    %
-    % This file is part of the matRad project. It is subject to the license
-    % terms in the LICENSE file found in the top-level directory of this
-    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
-    % of the matRad project, including this file, may be copied, modified,
-    % propagated, or distributed except according to the terms contained in the
-    % LICENSE file.
-    %
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2015 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (Abstract, Access = public)
-        penalty             %Optimization penalty
+        penalty                 %Optimization penalty
+    end
+       
+    methods (Static)
+        function rob = availableRobustness()
+            rob = {'none','STOCH','PROB','VWWC','VWWC_INV','COWC','OWC'}; %By default, no robustness is available
+        end 
     end
     
     %These should be abstract methods, however Octave can't parse them. As soon
@@ -55,6 +60,6 @@ classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
             s = struct@matRad_DoseOptimizationFunction(obj);
             s.penalty = obj.penalty;
         end
-    end 
+    end   
 end
 

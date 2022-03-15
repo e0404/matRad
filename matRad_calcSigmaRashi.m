@@ -1,13 +1,14 @@
-function sigmaRashi = matRad_calcSigmaRashi(energy,rangeShifter,SSD)
-% calculation of additional beam broadening due to the use of range shifters (only for protons)
+function sigmaRashi = matRad_calcSigmaRashi(bdEntry,rangeShifter,SSD)
+% calculation of additional beam broadening due to the use of range shifters 
+% (only for protons)
 % 
 % call
-%   sigmaRashi = matRad_calcSigmaRashi(rangeShifter,SSD)
+%   sigmaRashi = matRad_calcSigmaRashi(bdEntry,rangeShifter,SSD)
 %
 % input
-%   energy:       initial particle energy
-%   rangeShifter: structure defining range shifter geometry
-%   SSD:          source to surface distance
+%   bdEntry:        base data entry for energy
+%   rangeShifter: 	structure defining range shifter geometry
+%   SSD:          	source to surface distance
 %
 % output
 %   sigmaRashi:   sigma of range shifter (to be added ^2) in mm
@@ -45,8 +46,12 @@ c1 = 0.0204539; % [1]
 alpha = 0.0022; % [cm MeV ^ (-p)] %
 p = 1.77; % [1] % Exponent of range-energy relation
 
-% convert energy to range
-R = alpha * (energy ^ p);
+if isfield(bdEntry,'range')
+	R = bdEntry.range;
+else % convert energy to range
+	energy = bdEntry.energy;
+	R = alpha * (energy ^ p);
+end
 
 % check if valid computation possible or range shifter to thick
 if t / R >= 0.95

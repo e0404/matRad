@@ -13,12 +13,12 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% 
-% In this example we will show
+%% In this example we will show
 % (i) how to create arbitrary ct data (resolution, ct numbers)
 % (ii) how to create a cst structure containing the volume of interests of the phantom
 % (iii) generate a treatment plan for this phantom
 
+%% set matRad runtime configuration
 matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
 
 %% Create a CT image series
@@ -33,7 +33,7 @@ ct.resolution.z = 3;
 ct.numOfCtScen  = 1;
  
 % create an ct image series with zeros - it will be filled later
-ct.cubeHU{1} = ones(ct.cubeDim) * -1000; % assign HU of Air
+ct.cubeHU{1} = ones(ct.cubeDim) * -1000;
 
 %% Create the VOI data for the phantom
 % Now we define structures a contour for the phantom and a target
@@ -72,7 +72,6 @@ cst{ixPTV,5}.visibleColor = [1 1 1];
 cst{ixPTV,6}{1} = struct(DoseObjectives.matRad_SquaredDeviation(800,60));
 
 %% Lets create either a cubic or a spheric phantom
-
 TYPE = 'spheric';   % either 'cubic' or 'spheric'
 
 % first the OAR
@@ -169,13 +168,13 @@ cst{ixPTV,4}{1} = find(cubeHelper);
 display(ct);
 display(cst);
 
+
 %% Assign relative electron densities
 vIxOAR = cst{ixOAR,4}{1};
 vIxPTV = cst{ixPTV,4}{1};
 
-ct.cubeHU{1}(vIxOAR) = 0;
-ct.cubeHU{1}(vIxPTV) = 0;
-
+ct.cubeHU{1}(vIxOAR) = 0; % assign HU of water
+ct.cubeHU{1}(vIxPTV) = 0; % assign HU of water
 %% Treatment Plan
 % The next step is to define your treatment plan labeled as 'pln'. This 
 % structure requires input from the treatment planner and defines the most
@@ -191,13 +190,17 @@ pln.radiationMode = 'photons';
 pln.machine       = 'Generic';
 
 %%
-% Define the flavor of biological optimization for treatment planning along
-% with the quantity that should be used for optimization. Possible values 
-% are (none: physical dose based optimization; const_RBExD: constant RBE of 1.1; 
-% LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of 
-% RBE-weighted dose. As we use photons, we select 'none' as we want to optimize the 
-% physical dose.
-pln.propOpt.bioOptimization = 'none';                                              
+% Define the biological optimization model for treatment planning along
+% with the quantity that should be used for optimization. Possible model values 
+% are:
+% 'none':     physical optimization;
+% 'constRBE': constant RBE of 1.1; 
+% 'MCN':      McNamara-variable RBE model for protons; 
+% 'WED':      Wedenberg-variable RBE model for protons
+% 'LEM':      Local Effect Model 
+% and possible quantityOpt are 'physicalDose', 'effect' or 'RBExD'.
+modelName    = 'none';
+quantityOpt  = 'physicalDose';                                             
 
 %%
 % The remaining plan parameters are set like in the previous example files
@@ -210,6 +213,12 @@ pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter
 pln.propOpt.runDAO        = 0;
 pln.propOpt.runSequencing = 0;
 
+% retrieve bio model parameters
+pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
+
+% retrieve nominal scenario for dose calculation and optimziation
+pln.multScen = matRad_multScen(ct,'nomScen'); 
+
 % dose calculation settings
 pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
@@ -220,6 +229,9 @@ stf = matRad_generateStf(ct,cst,pln);
 
 %% Dose Calculation
 dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+
+%% Export dij matrix
+matRad_exportDij('dij.bin',dij,stf);
 
 %% Inverse Optimization for intensity-modulated photon therapy
 % The goal of the fluence optimization is to find a set of bixel/spot 
@@ -234,6 +246,7 @@ doseWindow = [0 max([resultGUI.physicalDose(:)])];
 
 figure,title('phantom plan')
 matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
+
 
 %% 
 % We export the the created phantom & dose as dicom. This is handled by the 

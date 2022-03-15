@@ -1,19 +1,20 @@
 classdef (Abstract) matRad_DoseOptimizationFunction
-    % matRad_DoseOptimizationFunction This is the superclass for all
-    % objectives and constraints to enable easy one-line identification
-    %
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %
-    % Copyright 2019 the matRad development team.
-    %
-    % This file is part of the matRad project. It is subject to the license
-    % terms in the LICENSE file found in the top-level directory of this
-    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
-    % of the matRad project, including this file, may be copied, modified,
-    % propagated, or distributed except according to the terms contained in the
-    % LICENSE file.
-    %
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad_DoseOptimizationFunction. Superclass for objectives and constraints
+% This is the superclass for all objectives and constraints to enable easy 
+% one-line identification.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2019 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (Abstract, Constant)
         name                %Display name of the Objective. Needs to be implemented in sub-classes.
@@ -23,6 +24,10 @@ classdef (Abstract) matRad_DoseOptimizationFunction
     
     properties (Abstract, Access = public)
         parameters
+    end
+    
+    properties
+        robustness = 'none';    %Robustness setting -> may be removed from the DoseObjective class in a future release
     end
     
     methods
@@ -38,6 +43,15 @@ classdef (Abstract) matRad_DoseOptimizationFunction
             s.className = class(obj);
             s.parameters = obj.parameters;
         end
+        
+        function obj = set.robustness(obj,robustness)
+            matRad_cfg = MatRad_Config.instance();
+            if ischar(robustness) && any(strcmp(robustness,obj.availableRobustness()))
+                obj.robustness = robustness;
+            else
+                matRad_cfg.dispError('Invalid robustness setting!');
+            end                        
+        end        
     end
     
     % Helper methods
@@ -51,9 +65,8 @@ classdef (Abstract) matRad_DoseOptimizationFunction
         function obj = setDoseParameters(obj,doseParams)
             % set only the dose related parameters.
             ix = cellfun(@(c) isequal('dose',c),obj.parameterTypes);
-            obj.parameters(ix) = num2cell(doseParams);
-            
-        end                
+            obj.parameters(ix) = num2cell(doseParams);            
+        end        
     end
     
     methods (Access = private)
@@ -68,7 +81,7 @@ classdef (Abstract) matRad_DoseOptimizationFunction
                 end
             end
         end
-    end
+    end    
         
     
     methods (Static)
@@ -95,6 +108,10 @@ classdef (Abstract) matRad_DoseOptimizationFunction
             catch ME
                 error(['Could not instantiate Optimization Function: ' ME.message]);
             end
+        end
+        
+        function rob = availableRobustness()
+            rob = {'none'}; %By default, no robustness is available
         end
                 
         function s = convertOldOptimizationStruct(old_s)

@@ -1,5 +1,4 @@
 classdef (Abstract) matRad_DoseConstraint < matRad_DoseOptimizationFunction
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad_DoseConstraint: Interface for optimization constraints.
 %   This abstract base class provides the interface of constraints for
 %   non-linear optimization.
@@ -47,6 +46,12 @@ classdef (Abstract) matRad_DoseConstraint < matRad_DoseOptimizationFunction
         end
     end
 
+    methods (Static)
+        function rob = availableRobustness()
+            rob = {'none','PROB','VWWC','VWWC_INV',}; %By default, no robustness is available
+        end 
+    end
+    
     methods (Access = public)
        
         % default constructor of matRad_DoseConstraint

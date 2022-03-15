@@ -2,14 +2,13 @@ function c = matRad_constraintFunctions(optiProb,apertureInfoVec,dij,cst)
 % matRad IPOPT callback: constraint function for direct aperture optimization
 % 
 % call
-%   c = matRad_daoObjFunc(apertueInfoVec,dij,cst)
+%   c = matRad_constraintFunctions(optiProb,apertureInfoVec,dij,cst)
 %
 % input
+%   optiProb:       option struct defining the type of optimization
 %   apertueInfoVec: aperture info vector
-%   apertureInfo:   aperture info struct
 %   dij:            dose influence matrix
 %   cst:            matRad cst struct
-%   options:        option struct defining the type of optimization
 %
 % output
 %   c:              value of constraints
@@ -33,6 +32,10 @@ function c = matRad_constraintFunctions(optiProb,apertureInfoVec,dij,cst)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% update apertureInfo, bixel weight vector an mapping of leafes to bixels
+if ~isequal(apertureInfoVec,optiProb.apertureInfo.apertureVector)
+    optiProb.apertureInfo = optiProb.matRad_daoVec2ApertureInfo(optiProb.apertureInfo,apertureInfoVec);
+end
 apertureInfo = optiProb.apertureInfo;
 
 % value of constraints for leaves

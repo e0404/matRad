@@ -2,7 +2,9 @@ function [voiContourHandles] = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIn
 % matRad function that plots the contours of the segmentations given in cst
 %
 % call
-%   voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,plane,slice,cMap)
+% voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIndex,selection,plane,slice) 
+% voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIndex,selection,plane,slice,cMap) 
+% voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIndex,selection,plane,slice,cMap,...) 
 %
 % input
 %   axesHandle          handle to axes the slice should be displayed in
@@ -22,6 +24,9 @@ function [voiContourHandles] = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIn
 %   voiContourHandles:  handles of the plotted contours
 %   visibleOnSlice:     logicals defining if the contour is actually
 %                       visible on the current slice
+%
+% References
+%   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -72,7 +77,7 @@ for s = 1:size(cst,1)
         %Check for precalculated contours
         C =[];
         if size(cst,2) >= 7 && ~isempty(cst{s,7})
-            C = cst{s,7}{slice,plane};
+            C = cst{s,7}{ctIndex}{slice,plane};
         else
             %If we do not have precomputed contours available, then compute them
             mask = zeros(size(ct{ctIndex}));

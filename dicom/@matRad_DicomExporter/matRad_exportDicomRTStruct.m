@@ -1,13 +1,12 @@
 function obj = matRad_exportDicomRTStruct(obj)
-% matRad function to export dicom RT structure set. Class method of
-% matRad_DicomExporter
+% matRad function to export dicom RT structure set. 
+% Class method of matRad_DicomExporter
 % 
 % call
 %   matRad_DicomExporter.matRad_exportDicomRTStruct()
 %          
 %
 % References
-%   -
 %   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -23,7 +22,7 @@ function obj = matRad_exportDicomRTStruct(obj)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
- matRad_cfg = MatRad_Config.instance();
+matRad_cfg = MatRad_Config.instance();
 matRad_cfg.dispInfo('Exporting DICOM RTStruct...\n');
 
 env = matRad_getEnvironment();
@@ -117,7 +116,7 @@ for i = 1:size(obj.cst,1)
    
     fprintf('Processinging VOI ''%s''...',obj.cst{i,2});
    %Select contours in axial slices
-    contours        = obj.cst{i,7}(:,3);
+    contours        = obj.cst{i,7}{obj.exportScenario}(:,3);
     contourSliceIx  = find(~cellfun(@isempty,contours));    
     contourSlicePos = ct.z(contourSliceIx);
     contours        = contours(contourSliceIx);

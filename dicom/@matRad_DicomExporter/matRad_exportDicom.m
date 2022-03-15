@@ -1,6 +1,6 @@
 function obj = matRad_exportDicom(obj)
-% matRad function to export current workspace to DICOM. Function of
-% matRad_DicomExporter
+% matRad function to export current workspace to DICOM. 
+% Function of matRad_DicomExporter
 % 
 % call
 %   matRad_DicomExporter.matRad_exportDicom()
@@ -24,6 +24,9 @@ function obj = matRad_exportDicom(obj)
 if ~exist(obj.dicomDir)
     mkdir(obj.dicomDir);
 end
+
+matRad_cfg = MatRad_Config.instance();
+matRad_cfg.dispInfo('Exporting DICOM for scenario %d to %s:\n',obj.exportScenario,obj.dicomDir);
 
 %Name of Patient & Study
 %CT Series

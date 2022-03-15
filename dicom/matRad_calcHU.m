@@ -1,6 +1,6 @@
 function ct = matRad_calcHU(ct)
-% matRad function to calculate Hounsfield units from a 
-% dicom ct that originally uses intensity values
+% matRad function to calculate Hounsfield units from a dicom ct 
+% that originally uses intensity values
 %
 % call
 %   ct = matRad_calcHU(ct)

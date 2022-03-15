@@ -1,15 +1,16 @@
 function structures = matRad_importDicomRtss(filename,dicomInfo,visBool)
-% matRad function to read the data of the selected dicomRT structure set 
-% file into a matlab struct
+% matRad function to read the data of the selected dicomRT structure set file 
+% into a matlab struct
 % 
 % call
+%   structures = matRad_importDicomRtss(filename,dicomInfo)
 %   structures = matRad_importDicomRtss(filename,dicomInfo,visBool)
 %
 % input
 %   filename:       name of the rtss file
 %   dicomInfo:      meta information from the dicom ct files for sanity
 %                   checks
-%   visBool:        optional: turn on/off visualization
+%   visBool:        (optional) turn on/off visualization
 %
 % output
 %   structures:     struct containing names, numbers, colors, and
@@ -63,8 +64,9 @@ for i = 1:numOfContStructs % loop over every structure
             break;
         end
     end    
-    structures(i).structName   = structInfo.StructureSetROISequence.(...
-                                 listOfDefStructs{j}).ROIName;
+    structures(i).structName   = regexprep(...  % replace nonregular characters by whitespace
+        structInfo.StructureSetROISequence.(listOfDefStructs{j}).ROIName,...
+        '[^a-zA-Z0-9]',' ');
                              
     structures(i).structNumber = structInfo.ROIContourSequence.(...
                                  listOfContStructs{i}).ReferencedROINumber;
