@@ -288,6 +288,17 @@ if MCsquareConfig.Beamlet_Mode
     dij.physicalDose{1} = dij.physicalDose{1}(:,MCsquareOrder);            
 end        
 
+% calculate Alpha and Beta Values for BED projection
+dij.ax       = zeros(dij.doseGrid.numOfVoxels,1);
+dij.bx       = zeros(dij.doseGrid.numOfVoxels,1);
+cst = matRad_setOverlapPriorities(cst);
+% resizing cst to dose cube resolution 
+cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
+                                 dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
+% retrieve photon LQM parameter for the current dose grid voxels
+[dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
+
+
 matRad_cfg.dispInfo('matRad: done!\n');
 
 try
