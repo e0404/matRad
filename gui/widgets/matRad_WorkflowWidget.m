@@ -238,10 +238,14 @@ classdef matRad_WorkflowWidget < matRad_Widget
             set(handles.btn_export,'Enable','off');
             set(handles.exportDicomButton,'Enable','off');
             
-            if evalin('base','exist(''pln'')')
-                
-                if evalin('base','exist(''ct'')') && ...
+            if evalin('base','exist(''ct'')') && ...
                         evalin('base','exist(''cst'')')
+                    
+                set(handles.txtInfo,'String','loaded and ready');
+                
+                if evalin('base','exist(''pln'')')
+                
+                
                     
                     % ct cst and pln available; ready for dose calculation
                     set(handles.txtInfo,'String','ready for dose calculation');
@@ -403,11 +407,11 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 
                 pln = evalin('base','pln');
                 ct  = evalin('base','ct');
-                
+                dij = evalin('base','dij');
                 % optimize
                 [resultGUIcurrentRun,usedOptimizer] = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln);
                 if pln.propOpt.conf3D && strcmp(pln.radiationMode,'photons')
-                    resultGUIcurrentRun.w = resultGUIcurrentRun.w * ones(dij.totalNumOfBixels,1);
+                    resultGUIcurrentRun.w = resultGUIcurrentRun.w .* ones(dij.totalNumOfBixels,1); % what and why ? 
                     resultGUIcurrentRun.wUnsequenced = resultGUIcurrentRun.w;
                 end
                 
