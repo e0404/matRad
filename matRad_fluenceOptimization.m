@@ -119,7 +119,8 @@ elseif  strcmp(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiatio
     if ~isfield(dij,'RBE')
         dij.RBE = 1.1;
     end
-    bixelWeight =  (doseTarget)/(dij.RBE * mean(dij.physicalDose{1}(V,:)*wOnes)); 
+    doseTmp = dij.physicalDose{1}*wOnes;
+    bixelWeight =  (doseTarget)/(dij.RBE * mean(doseTmp(V)));     
     wInit       = wOnes * bixelWeight;
         
 elseif (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') || strcmp(pln.propOpt.bioOptimization,'LEMIV_RBExD')) ... 
@@ -149,8 +150,11 @@ elseif (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') || strcmp(pln.propOpt
     if isequal(pln.propOpt.bioOptimization,'LEMIV_effect')
         
            effectTarget = cst{ixTarget,5}.alphaX * doseTarget + cst{ixTarget,5}.betaX * doseTarget^2;
-           p            = (sum(dij.mAlphaDose{1}(V,:)*wOnes)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
-           q            = -(effectTarget * length(V)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
+           aTmp = dij.mAlphaDose{1}*wOnes;
+           bTmp = dij.mSqrtBetaDose{1} * wOnes;
+           p = sum(aTmp(V)) / sum(bTmp(V).^2);
+           q = -(effectTarget * length(V)) / sum(bTmp(V).^2);
+           
            wInit        = -(p/2) + sqrt((p^2)/4 -q) * wOnes;
 
     elseif isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')
@@ -159,14 +163,18 @@ elseif (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') || strcmp(pln.propOpt
            dij.gamma              = zeros(dij.doseGrid.numOfVoxels,1);   
            dij.gamma(dij.ixDose) = dij.ax(dij.ixDose)./(2*dij.bx(dij.ixDose)); 
             
-           % calculate current in target
-           CurrEffectTarget = (dij.mAlphaDose{1}(V,:)*wOnes + (dij.mSqrtBetaDose{1}(V,:)*wOnes).^2);
+           % calculate current effect in target
+           aTmp = dij.mAlphaDose{1}*wOnes;
+           bTmp = dij.mSqrtBetaDose{1} * wOnes;
+           doseTmp = dij.physicalDose{1}*wOnes;
+
+           CurrEffectTarget = aTmp(V) + bTmp(V).^2;
            % ensure a underestimated biological effective dose 
            TolEstBio        = 1.2;
            % calculate maximal RBE in target
            maxCurrRBE = max(-cst{ixTarget,5}.alphaX + sqrt(cst{ixTarget,5}.alphaX^2 + ...
-                        4*cst{ixTarget,5}.betaX.*CurrEffectTarget)./(2*cst{ixTarget,5}.betaX*(dij.physicalDose{1}(V,:)*wOnes)));
-           wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(dij.physicalDose{1}(V,:)*wOnes)))* wOnes;
+                        4*cst{ixTarget,5}.betaX.*CurrEffectTarget)./(2*cst{ixTarget,5}.betaX*doseTmp(V)));
+           wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(doseTmp(V))))* wOnes;
     end
     
 else 
