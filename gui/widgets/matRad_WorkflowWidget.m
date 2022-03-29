@@ -472,12 +472,10 @@ classdef matRad_WorkflowWidget < matRad_Widget
             try
                 
                 %% sequencing
-                if strcmp(pln.radiationMode,'photons') && (pln.propOpt.runSequencing || pln.propOpt.runDAO)
-                    resultGUI = matRad_siochiLeafSequencing(resultGUI,evalin('base','stf'),evalin('base','dij')...
-                        ,str2double(get(handles.editSequencingLevel,'String')));
-                    
-                    assignin('base','resultGUI',resultGUI);
-                end
+                
+                resultGUI = matRad_sequencing(resultGUI,evalin('base','stf'),evalin('base','dij'),evalin('base','pln'));
+                assignin('base','resultGUI',resultGUI);
+                
                 
             catch ME
                 % change state from busy to normal
@@ -491,7 +489,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
             try
                 %% DAO
                 if strcmp(pln.radiationMode,'photons') && pln.propOpt.runDAO
-                    handles = showWarning(handles,['Observe: You are running direct aperture optimization' filesep 'This is experimental code that has not been thoroughly debugged - especially in combination with constrained optimization.']);
+                    showWarning(this,['Observe: You are running direct aperture optimization' filesep 'This is experimental code that has not been thoroughly debugged - especially in combination with constrained optimization.']); % was assigned to handles WHY ? 
                     [resultGUI,usedOptimizer] = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst'),...
                         resultGUI.apertureInfo,resultGUI,pln);
                     assignin('base','resultGUI',resultGUI);
@@ -499,7 +497,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     CheckOptimizerStatus(this,usedOptimizer,'DAO');
                 end
                 
-                if strcmp(pln.radiationMode,'photons') && (pln.propOpt.runSequencing || pln.propOpt.runDAO)
+                if strcmp(pln.radiationMode,'photons') && (pln.propSeq.runSequencing || pln.propOpt.runDAO)
                     matRad_visApertureInfo(resultGUI.apertureInfo);
                 end
                 

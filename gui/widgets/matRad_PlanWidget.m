@@ -626,7 +626,8 @@ classdef matRad_PlanWidget < matRad_Widget
             ix = find(strcmp(pln.propOpt.bioOptimization,contentPopUp));
             set(handles.popMenuBioOpt,'Value',ix);
             
-            set(handles.btnRunSequencing,'Value',pln.propOpt.runSequencing);
+            set(handles.btnRunSequencing,'Value',pln.propSeq.runSequencing);      
+            set(handles.editSequencingLevel,'String',num2str(pln.propSeq.sequencingLevel));
             set(handles.btnRunDAO,'Value',pln.propOpt.runDAO);
             set(handles.radiobutton3Dconf,'Value',pln.propOpt.conf3D);
             
@@ -683,7 +684,8 @@ classdef matRad_PlanWidget < matRad_Widget
                 pln.propOpt.bioOptimization = 'none';
             end
             
-            pln.propOpt.runSequencing = logical(get(handles.btnRunSequencing,'Value'));
+            pln.propSeq.runSequencing = logical(get(handles.btnRunSequencing,'Value'));
+            pln.propSeq.sequencingLevel = this.parseStringAsNum(get(handles.editSequencingLevel,'String'),false);
             pln.propOpt.runDAO = logical(get(handles.btnRunDAO,'Value'));
             pln.propOpt.conf3D = logical(get(handles.radiobutton3Dconf,'Value'));
             
@@ -741,7 +743,7 @@ classdef matRad_PlanWidget < matRad_Widget
                         end
                     end
                 catch ME
-                    warning(ME.identifier,'couldn''t set isocenter in pln update! Reason: %s\n',ME.message)
+                    showWarning(this,'couldn''t set isocenter in pln update! Reason: %s\n',ME.message)  %% showWarning vs warning 
                 end
             end
             
