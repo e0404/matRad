@@ -41,12 +41,12 @@ if strcmp(pln.radiationMode,'photons') && (pln.propSeq.runSequencing || pln.prop
     
     if ~isfield(pln.propSeq, 'sequencer')
         pln.propSeq.sequencer = 'siochi'; % default: siochi sequencing algorithm
-        matRad_cfg.dispWarning ('No specified sequencing algorithm. Using siochi leaf sequencing (default)')
+        matRad_cfg.dispWarning ('pln.propSeq.sequencer not specified. Using siochi leaf sequencing (default)')
     end
     
     if ~isfield(pln.propSeq, 'sequencingLevel')
         pln.propSeq.sequencingLevel = 5;
-         matRad_cfg.dispWarning ('No specified sequencing levels. Using 5 sequencing levels (default)')
+         matRad_cfg.dispWarning ('pln.propSeq.sequencingLevel not specified. Using 5 sequencing levels (default)')
     end
     
     switch pln.propSeq.sequencer
