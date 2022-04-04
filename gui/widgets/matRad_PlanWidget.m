@@ -282,7 +282,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 'Tag','checkIsoCenter');
             
             
-            pos = gridPos{4,3};
+            pos = gridPos{4,2};
             pos(3) = pos(3)*2;
             
               txt = sprintf('Check this if you want to run a MLC sequencing\nThe number of stratification levels can be adjusted below');
@@ -321,7 +321,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 'Enable','off',...
                 'Tag','btnRunDAO' );
             
-            pos = gridPos{4,4};
+            pos = gridPos{4,3};
             pos(3) = pos(3) * 1.5;
 
             h28 = uicontrol(...
@@ -339,7 +339,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 'FontWeight',matRad_cfg.gui.fontWeight,...
                 'Tag','txtSequencing' );
             
-            pos = gridPos{4,5};
+            pos = gridPos{5,3};
             pos(3) = pos(3) / 2;
             %pos(1) = pos(1) + pos(3);
             
@@ -460,7 +460,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 'FontName',matRad_cfg.gui.fontName,...
                 'FontWeight',matRad_cfg.gui.fontWeight);
             
-            pos = gridPos{4,2};
+            pos = gridPos{4,1};
             pos(3) = pos(3)*2;
             
             h36 = uicontrol(...
@@ -549,8 +549,42 @@ classdef matRad_PlanWidget < matRad_Widget
                 'FontName',matRad_cfg.gui.fontName,...
                 'FontWeight',matRad_cfg.gui.fontWeight);
             
-            this.createHandles();
+            
+             h40 = uicontrol(...
+                'Parent',h12,...
+                'Units','normalized',...
+                'String','Sequencer : ',...
+                'Tooltip','Set the sequencing algorithm',... 
+                'HorizontalAlignment','left',...
+                'Style','text',...
+                'Position',gridPos{4,4},...
+                'BackgroundColor',matRad_cfg.gui.backgroundColor,...
+                'ForegroundColor',matRad_cfg.gui.textColor,....
+                'Interruptible','off',...
+                'Tag','txtSequencer',...
+                'FontSize',matRad_cfg.gui.fontSize,...
+                'FontName',matRad_cfg.gui.fontName,...
+                'FontWeight',matRad_cfg.gui.fontWeight);
+            
+            txt = sprintf('Choose a sequencing algorithm (siochi, xia or engel)');
+            h41 = uicontrol(...
+                'Parent',h12,...
+                'Units','normalized',...
+                'String',{  'siochi','xia','engel' },...
+                'Tooltip',txt,...
+                'Style','popupmenu',...
+                'Value',1,...
+                'Position',gridPos{5,4},...
+                'BackgroundColor',matRad_cfg.gui.elementColor,...
+                'ForegroundColor',matRad_cfg.gui.textColor,....
+                'Callback',@(hObject,eventdata) popUpMenuSequencer_Callback(this,hObject,eventdata),...
+                'Tag','popUpMenuSequencer',...
+                'Enable', 'off',...
+                'FontSize',matRad_cfg.gui.fontSize,...
+                'FontName',matRad_cfg.gui.fontName,...
+                'FontWeight',matRad_cfg.gui.fontWeight);
              
+            this.createHandles();
         end
        
         function this = setPlnDefaultValues(this)
@@ -626,6 +660,10 @@ classdef matRad_PlanWidget < matRad_Widget
             ix = find(strcmp(pln.propOpt.bioOptimization,contentPopUp));
             set(handles.popMenuBioOpt,'Value',ix);
             
+%             contentPopUp = get(handles.popUpMenuSequencer,'String');
+%             seqIx = find(strcmp(pln.propSeq.sequencer,contentPopUp));
+%             set(handles.popUpMenuSequencer,'Value',seqIx);
+            
             set(handles.btnRunSequencing,'Value',pln.propSeq.runSequencing);      
             set(handles.editSequencingLevel,'String',num2str(pln.propSeq.sequencingLevel));
             set(handles.btnRunDAO,'Value',pln.propOpt.runDAO);
@@ -684,6 +722,8 @@ classdef matRad_PlanWidget < matRad_Widget
                 pln.propOpt.bioOptimization = 'none';
             end
             
+            contents   = get(handles.popUpMenuSequencer,'String');
+            pln.propSeq.sequencer = contents{get(handles.popUpMenuSequencer,'Value')};
             pln.propSeq.runSequencing = logical(get(handles.btnRunSequencing,'Value'));
             pln.propSeq.sequencingLevel = this.parseStringAsNum(get(handles.editSequencingLevel,'String'),false);
             pln.propOpt.runDAO = logical(get(handles.btnRunDAO,'Value'));
@@ -783,8 +823,9 @@ classdef matRad_PlanWidget < matRad_Widget
                     set(handles.btnRunDAO,'Enable','on');
                     set(handles.radiobutton3Dconf,'Enable','on');
                     set(handles.txtSequencing,'Enable','on');
-                    set(handles.editSequencingLevel,'Enable','on');                                           
-                    
+                    set(handles.editSequencingLevel,'Enable','on');    
+                    set(handles.popUpMenuSequencer,'Enable','on');
+                    set(handles.txtSequencer,'Enable','on');
                 case 'protons'                    
                     set(handles.popMenuBioOpt,'Enable','on');
                     set(handles.btnSetTissue,'Enable','on');
@@ -794,6 +835,8 @@ classdef matRad_PlanWidget < matRad_Widget
                     set(handles.radiobutton3Dconf,'Enable','off');
                     set(handles.txtSequencing,'Enable','off');
                     set(handles.editSequencingLevel,'Enable','off');
+                    set(handles.popUpMenuSequencer,'Enable','off');
+                    set(handles.txtSequencer,'Enable','off');
                     
                 case 'carbon'
                     
@@ -804,7 +847,9 @@ classdef matRad_PlanWidget < matRad_Widget
                     set(handles.btnRunDAO,'Enable','off');
                     set(handles.radiobutton3Dconf,'Enable','off');
                     set(handles.txtSequencing,'Enable','off');
-                    set(handles.editSequencingLevel,'Enable','off');                    
+                    set(handles.editSequencingLevel,'Enable','off');  
+                    set(handles.popUpMenuSequencer,'Enable','off');
+                    set(handles.txtSequencer,'Enable','off');
             end
             
             selectedBioOpt = get(handles.popMenuBioOpt,'Value');
@@ -814,6 +859,20 @@ classdef matRad_PlanWidget < matRad_Widget
             else
                 set(handles.btnSetTissue,'Enable','on');
             end
+            
+            if ~(get(handles.btnRunSequencing,'Value') || get(handles.btnRunDAO,'Value'))
+                    
+                set(handles.txtSequencing,'Enable','off');
+                set(handles.editSequencingLevel,'Enable','off');    
+                set(handles.popUpMenuSequencer,'Enable','off');
+                set(handles.txtSequencer,'Enable','off');
+            else 
+                set(handles.txtSequencing,'Enable','on');
+                set(handles.editSequencingLevel,'Enable','on');    
+                set(handles.popUpMenuSequencer,'Enable','on');
+                set(handles.txtSequencer,'Enable','on');
+            end
+           
             this.handles = handles;
         end
         
@@ -875,8 +934,34 @@ classdef matRad_PlanWidget < matRad_Widget
             updatePlnInWorkspace(this);
         end
         
+        function popUpMenuSequencer_Callback(this, hObject, eventdata)
+            handles = this.handles;
+            contents      = cellstr(get(hObject,'String'));
+            SeqIdentifier = contents{get(hObject,'Value')};
+            contentPopUp  = get(handles.popUpMenuSequencer,'String');
+            
+            switch SeqIdentifier
+                case 'siochi'
+                    ix = find(strcmp(contentPopUp,'siochi'));
+                    set(handles.popUpMenuSequencer,'Value',ix);
+                    
+                case 'xia'
+                    ix = find(strcmp(contentPopUp,'xia'));
+                    set(handles.popUpMenuSequencer,'Value',ix);
+                case 'engel'
+                    ix = find(strcmp(contentPopUp,'engel'));
+                    set(handles.popUpMenuSequencer,'Value',ix);
+            end
+            
+            pln = evalin('base','pln');
+            
+            
+            this.handles = handles;
+            updatePlnInWorkspace(this);
+        end
+        
         function popUpMachine_Callback(this, hObject, eventdata)
-            % M�GLICHER FEHLER WEGEN VALUE WERT!
+            % M???GLICHER FEHLER WEGEN VALUE WERT!
             handles = this.handles;
              contents = cellstr(get(hObject,'String'));
              MachineIdentifier = contents{get(hObject,'Value')};
