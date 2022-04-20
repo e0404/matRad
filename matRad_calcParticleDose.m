@@ -206,6 +206,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
     
     for i = 1:numel(stf) % loop over all beams
         
+        % init beam
         matRad_calcDoseInitBeam;
         
         % Determine lateral cutoff
@@ -320,7 +321,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                             stf(i).ray(j).targetPoint_bev, stf(i).isoCenter,...
                             [dij.doseGrid.resolution.x dij.doseGrid.resolution.y dij.doseGrid.resolution.z],...
                             -posX(:,k), -posZ(:,k), rotMat_system_T);
-                    end
+                    end                    
                     
                     % We do now loop over scenarios that alter voxel
                     % values, e.g. range scenarios or ct phases, as we can
@@ -343,11 +344,11 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                             end
                         end
                         for rangeShiftScen = 1:pln.multScen.totNumRangeScen
-                            if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
+                            if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)                              
 
                                 % manipulate radDepthCube for range scenarios
                                 if pln.multScen.relRangeShift(rangeShiftScen) ~= 0 || pln.multScen.absRangeShift(rangeShiftScen) ~= 0
-                                    currRadDepths = radDepths +...                                                       % original cube
+                                    currRadDepths = radDepths + ...
                                         radDepths*pln.multScen.relRangeShift(rangeShiftScen) +... % rel range shift
                                         pln.multScen.absRangeShift(rangeShiftScen);                                   % absolute range shift
                                     currRadDepths(currRadDepths < 0) = 0;
@@ -398,10 +399,11 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                 else
                                     currRadDepths(currIx) = currRadDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness;
                                 end
-
-                                % select correct initial focus sigma squared
+                                
+                                % select correct initial focus sigma
+                                % squared
                                 sigmaIni_sq = sigmaIniRay(k)^2;
-
+                                
                                 % consider range shifter for protons if applicable
                                 if stf(i).ray(j).rangeShifter(k).eqThickness > 0 && strcmp(pln.radiationMode,'protons')
                                     

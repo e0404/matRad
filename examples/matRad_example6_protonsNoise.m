@@ -164,44 +164,6 @@ pln.propDoseCalc.fineSampling.method = 'russo';
 % Direct call for fine sampling dose calculation:
 resultGUI_FS = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
 
-%%  Visual Comparison of results
-% Let's compare the new recalculation against the optimization result.
-plane      = 3;
-doseWindow = [0 max([resultGUI.RBExD(:); resultGUI_noise.RBExD(:)])];
-
-figure,title('original plan')
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExD,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
-figure,title('manipulated plan MC')
-matRad_plotSliceWrapper(gca,ct_manip,cst,1,resultGUI_noise.RBExD,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
-figure,title('manipulated plan FS')
-matRad_plotSliceWrapper(gca,ct_manip,cst,1,resultGUI_FS.RBExD,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
-
-% Let's plot single profiles along the beam direction
-ixProfileY = round(pln.propStf.isoCenter(1,1)./ct.resolution.x);
-
-profileOrginal = resultGUI.RBExD(:,ixProfileY,slice);
-profileNoiseMC   = resultGUI_noise.RBExD(:,ixProfileY,slice);
-profileNoiseFS   = resultGUI_FS.RBExD(:,ixProfileY,slice);
-
-figure,plot(profileOrginal,'LineWidth',2),grid on,hold on, 
-       plot(profileNoiseMC,'LineWidth',2),plot(profileNoiseFS,'LineWidth',2),
-       legend({'original profile','noise profile MC','noise profile FS'}),
-       xlabel('mm'),ylabel('Gy(RBE)'),title('profile plot')
-       
-%% Quantitative Comparison of results
-% Compare the two dose cubes using a gamma-index analysis.
-
-doseDifference   = 2;
-distToAgreement  = 2;
-n                = 1;
-
-[gammaCubeMC,gammaPassRateCellMC] = matRad_gammaIndex(...
-    resultGUI_noise.RBExD,resultGUI.RBExD,...
-    [ct.resolution.x, ct.resolution.y, ct.resolution.z],...
-    [doseDifference distToAgreement],slice,n,'global',cst);
-
-[gammaCubeFS,gammaPassRateCellFS] = matRad_gammaIndex(...
-    resultGUI_FS.RBExD,resultGUI.RBExD,...
-    [ct.resolution.x, ct.resolution.y, ct.resolution.z],...
-    [doseDifference distToAgreement],slice,n,'global',cst);
-
+%%  Visual Comparison of results using the "compareDose" helper function
+matRad_compareDose(resultGUI_noise.RBExD,resultGUI.RBExD,ct,cst);
+matRad_compareDose(resultGUI_FS.RBExD,resultGUI.RBExD,ct,cst);

@@ -176,8 +176,8 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
     stf = matRad_computeSSD(stf,ct);
     if pln.multScen.totNumShiftScen > 1
         matRad_cfg.dispInfo('\tShift scenario %d of %d: \n',shiftScen,pln.multScen.totNumShiftScen);
-    end    
-    
+    end
+
     for i = 1:numel(stf) % loop over all beams
         matRad_calcDoseInitBeam;
         

@@ -40,7 +40,7 @@ for i = 1:size(structure.item,2)
         dicomCtSlicePos = unique(structure.item(i).points(:,3));
         
         if numel(dicomCtSlicePos) > 1 || isempty(dicomCtSlicePos)
-            error('Contour defined over multiple planes\n');
+            error('Contour defined over multiple planes!');
         end
     
         round2 = @(a,b) round(a*10^b)/10^b;
@@ -69,6 +69,8 @@ for i = 1:size(structure.item,2)
 end
 
 indices = find(voiCube(:));
+
+end
 
 function msg = checkSliceThickness(dicomCtSliceThickness)
     if isempty(dicomCtSliceThickness)

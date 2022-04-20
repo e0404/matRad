@@ -97,9 +97,10 @@ ixTarget       = ixTarget(i);
 wOnes          = ones(dij.totalNumOfBixels,1);
    
 % calculate initial beam intensities wInit
-matRad_cfg.dispInfo('Estimating initial weights... ');
+matRad_cfg.dispInfo('Getting initial weights... ');
 if exist('wInit','var')
-    matRad_cfg.dispInfo('chosen provided wInit!\n');   
+    %do nothing as wInit was passed to the function
+    matRad_cfg.dispInfo('use as given!\n');      
 elseif strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'protons')
     % check if a constant RBE is defined - if not use 1.1
     if ~isfield(dij,'RBE')
