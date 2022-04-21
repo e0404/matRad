@@ -826,6 +826,20 @@ classdef matRad_PlanWidget < matRad_Widget
                     set(handles.editSequencingLevel,'Enable','on');    
                     set(handles.popUpMenuSequencer,'Enable','on');
                     set(handles.txtSequencer,'Enable','on');
+                    
+                    if ~(get(handles.btnRunSequencing,'Value') || get(handles.btnRunDAO,'Value'))
+                    
+                        set(handles.txtSequencing,'Enable','off');
+                        set(handles.editSequencingLevel,'Enable','off');    
+                        set(handles.popUpMenuSequencer,'Enable','off');
+                        set(handles.txtSequencer,'Enable','off');
+                    else 
+                        set(handles.txtSequencing,'Enable','on');
+                        set(handles.editSequencingLevel,'Enable','on');    
+                        set(handles.popUpMenuSequencer,'Enable','on');
+                        set(handles.txtSequencer,'Enable','on');
+                    end
+                    
                 case 'protons'                    
                     set(handles.popMenuBioOpt,'Enable','on');
                     set(handles.btnSetTissue,'Enable','on');
@@ -860,19 +874,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 set(handles.btnSetTissue,'Enable','on');
             end
             
-            if ~(get(handles.btnRunSequencing,'Value') || get(handles.btnRunDAO,'Value'))
-                    
-                set(handles.txtSequencing,'Enable','off');
-                set(handles.editSequencingLevel,'Enable','off');    
-                set(handles.popUpMenuSequencer,'Enable','off');
-                set(handles.txtSequencer,'Enable','off');
-            else 
-                set(handles.txtSequencing,'Enable','on');
-                set(handles.editSequencingLevel,'Enable','on');    
-                set(handles.popUpMenuSequencer,'Enable','on');
-                set(handles.txtSequencer,'Enable','on');
-            end
-           
+                       
             this.handles = handles;
         end
         
