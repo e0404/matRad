@@ -1287,12 +1287,12 @@ classdef matRad_ViewingWidget < matRad_Widget
                     minMaxRange = this.dispWindow{2,1};
                     
                     
-                    if (length(this.IsoDose_Levels) == 1 && this.IsoDose_Levels(1,1) == 0)
+%                     if (length(this.IsoDose_Levels) == 1 && this.IsoDose_Levels(1,1) == 0)
                         vLevels                  = [0.1:0.1:0.9 0.95:0.05:upperMargin];
                         referenceDose            = (minMaxRange(1,2))/(upperMargin);
                         this.IsoDose_Levels   = minMaxRange(1,1) + (referenceDose-minMaxRange(1,1)) * vLevels;
                         this.IsoDose_Contours = matRad_computeIsoDoseContours(dose,this.IsoDose_Levels);
-                    end
+%                     end
                 end
             end
              
