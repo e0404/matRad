@@ -9,8 +9,14 @@ classdef matRad_StatisticsWidget < matRad_Widget
     end
     
     methods
-        function this = matRad_StatisticsWidget(handleParent)
-            if nargin < 1
+        function this = matRad_StatisticsWidget(varargin)
+            
+            p = inputParser;
+            p.addOptional('handleParent',[], @ishandle);
+            p.addParameter('SelectedCube','physicalDose', @ischar);
+            p.parse(varargin{:});
+            
+            if isempty(p.Results.handleParent)
                 handleParent = figure(...
                     'Units','normalized',...
                     'Position',[0.005 0.05 0.495 0.45],...
@@ -24,10 +30,13 @@ classdef matRad_StatisticsWidget < matRad_Widget
                     'HandleVisibility','callback',...
                     'Tag','figure1',...
                     'PaperSize',[20.99999864 29.69999902]);
+            else 
+                handleParent  = p.Results.handleParent;               
                 
             end
             
             this = this@matRad_Widget(handleParent);   
+            this.SelectedCube = p.Results.SelectedCube;
 
         end
 
