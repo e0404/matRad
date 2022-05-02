@@ -720,10 +720,10 @@ contentPopUp  = get(handles.popMenuBioOpt,'String');
 switch RadIdentifier
     case 'photons'
 
-        set(handles.popMenuBioOpt,'Enable','off');
+        set(handles.popMenuBioOpt,'Enable','on');
         ix = find(strcmp(contentPopUp,'none'));
         set(handles.popMenuBioOpt,'Value',ix);
-        set(handles.btnSetTissue,'Enable','off');
+        set(handles.btnSetTissue,'Enable','on');
         
         set(handles.btnRunSequencing,'Enable','on');
         set(handles.btnRunDAO,'Enable','on');
@@ -1876,10 +1876,10 @@ if handles.State > 0
         set(handles.btnSetTissue,'Enable','on');
     elseif strcmp(pln.radiationMode,'protons')
         set(handles.popMenuBioOpt,'Enable','on');
-        set(handles.btnSetTissue,'Enable','off');
+        set(handles.btnSetTissue,'Enable','on');
     else
-        set(handles.popMenuBioOpt,'Enable','off');
-        set(handles.btnSetTissue,'Enable','off'); 
+        set(handles.popMenuBioOpt,'Enable','on');
+        set(handles.btnSetTissue,'Enable','on'); 
     end
     
     cMapControls = allchild(handles.uipanel_colormapOptions);
@@ -2031,6 +2031,7 @@ set(handles.editCouchAngle,'String',num2str((pln.propStf.couchAngles)));
 set(handles.popupRadMode,'Value',find(strcmp(get(handles.popupRadMode,'String'),pln.radiationMode)));
 set(handles.popUpMachine,'Value',find(strcmp(get(handles.popUpMachine,'String'),pln.machine)));
 
+
 if ~strcmp(pln.propOpt.bioOptimization,'none')  
     set(handles.popMenuBioOpt,'Enable','on');
     contentPopUp = get(handles.popMenuBioOpt,'String');
@@ -2038,9 +2039,10 @@ if ~strcmp(pln.propOpt.bioOptimization,'none')
     set(handles.popMenuBioOpt,'Value',ix);
     set(handles.btnSetTissue,'Enable','on');
 else
-    set(handles.popMenuBioOpt,'Enable','off');
-    set(handles.btnSetTissue,'Enable','off');
+    set(handles.popMenuBioOpt,'Enable','on');
+    set(handles.btnSetTissue,'Enable','on');
 end
+
 %% enable sequencing and DAO button if radiation mode is set to photons
 if strcmp(pln.radiationMode,'photons') && pln.propOpt.runSequencing
     set(handles.btnRunSequencing,'Enable','on');
@@ -2179,14 +2181,19 @@ pln.radiationMode   = contents{get(handles.popupRadMode,'Value')}; % either phot
 contents            = get(handles.popUpMachine,'String'); 
 pln.machine         = contents{get(handles.popUpMachine,'Value')}; 
 
+%{
 if (~strcmp(pln.radiationMode,'photons'))
     contentBioOpt = get(handles.popMenuBioOpt,'String');
     pln.propOpt.bioOptimization = contentBioOpt{get(handles.popMenuBioOpt,'Value'),:};
-elseif strcmp(pln.propOpt.bioOptimization, 'BED')
+elseif isfield(pln, 'propOpt') && strcmp(pln.propOpt.bioOptimization, 'BED')
     pln.propOpt.bioOptimization = 'BED';
 else
     pln.propOpt.bioOptimization = 'none';
 end
+%}
+
+contentBioOpt = get(handles.popMenuBioOpt,'String');
+pln.propOpt.bioOptimization = contentBioOpt{get(handles.popMenuBioOpt,'Value'),:};
 
 pln.propOpt.runSequencing = logical(get(handles.btnRunSequencing,'Value'));
 pln.propOpt.runDAO = logical(get(handles.btnRunDAO,'Value'));
@@ -2887,6 +2894,10 @@ if ~strcmp(pln.propOpt.bioOptimization,'none')
     if isfield(resultGUI,'RBExDose')
          resultGUI.(['RBExDose' Suffix]) = resultGUI.RBExDose; 
     end
+    if isfield(resultGUI,'BED')
+         resultGUI.(['BED' Suffix]) = resultGUI.BED; 
+    end
+    
     
     if strcmp(pln.radiationMode,'carbon') == 1 
         if isfield(resultGUI,'effect')
