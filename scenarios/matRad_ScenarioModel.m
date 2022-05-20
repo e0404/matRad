@@ -92,33 +92,21 @@ classdef matRad_ScenarioModel < handle
            
 
         function scenarios = updateScenarios(this)            
+            %This is an abstract function
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispError('This abstract function needs to be implemented!');
         end
 
         function newInstance = extractSingleScenario(this,scenIdx)
-
-            newInstance = matRad_NominalScenario();
-           
-
-
-            %%%%%%%%%%%%%%%%%%%%%%%%%% OLD CODE %%%%%%%%%%%%%%%%%%%%%%%%%%%
-            newInstance = this;
-            newInstance.TYPE = 'nomScen';
-            newInstance.lockInit = true;
-            newInstance.lockUpdate = true;
+            newInstance = matRad_SingleScenario();
                         
-            newInstance.scenForProb         = this.scenForProb(i,:);
-            newInstance.relRangeShift       = this.scenForProb(i,5);
-            newInstance.absRangeShift       = this.scenForProb(i,4);
-            newInstance.isoShift            = this.scenForProb(i,1:3);
-            newInstance.totNumShiftScen     = 1;
-            newInstance.totNumRangeScen     = 1;
-            newInstance.numOfCtScen         = ctScen;
-            newInstance.scenMask            = 1;
-            newInstance.linearMask          = 1;
-            newInstance.scenProb            = 1;
-            
-            newInstance.lockInit = false;
-            newInstance.lockUpdate = false;
+            newInstance.scenForProb         = this.scenForProb(scenIdx,:);
+            newInstance.relRangeShift       = this.scenForProb(scenIdx,5);
+            newInstance.absRangeShift       = this.scenForProb(scenIdx,4);
+            newInstance.isoShift            = this.scenForProb(scenIdx,1:3);
+            newInstance.scenProb            = this.scenProb(scenIdx);
+            newInstance.scenWeight          = this.scenWeight(scenIdx);
+            newInstance.numOfCtScen         = this.numOfCtScen;
         end
 
         function t = TYPE(this)
