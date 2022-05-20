@@ -4,6 +4,9 @@ classdef matRad_WorstCaseScenarios < matRad_ScenarioModel
     
     properties
         includeNominalScenario = true;
+    end
+
+    properties (SetAccess=protected)
         name = 'wcScen';
     end
 

@@ -3,7 +3,10 @@ classdef matRad_RandomScenarios < matRad_ScenarioModel
     %   Detailed explanation goes here
     
     properties
-        includeNominalScenario = false;
+        includeNominalScenario = false;        
+    end
+
+    properties (SetAccess=protected)
         name = 'rndScen';
     end
 

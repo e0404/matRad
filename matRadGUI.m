@@ -4301,7 +4301,7 @@ function popupmenuScenGen_Callback(hObject, eventdata, handles)
 % hObject    handle to popupmenuScenGen (see GCBO)
 contents = cellstr(get(hObject,'String'));
 
-if handles.State > 1
+if handles.State >= 1
     ct = evalin('base','ct');
     pln = evalin('base','pln');
     pln.scenGenType = contents{get(hObject,'Value')};

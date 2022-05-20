@@ -2,7 +2,7 @@ classdef matRad_SingleScenario < matRad_ScenarioModel
     %UNTITLED2 Summary of this class goes here
     %   Detailed explanation goes here
     
-    properties
+    properties (SetAccess = protected)
         name = 'nomScen';
     end
 
