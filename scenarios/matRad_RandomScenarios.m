@@ -4,14 +4,11 @@ classdef matRad_RandomScenarios < matRad_ScenarioModel
     
     properties
         includeNominalScenario = false;        
+        nSamples = 10;
     end
 
     properties (SetAccess=protected)
         name = 'rndScen';
-    end
-
-    properties (Access = private)
-        nSamplesDefault = 10;
     end
     
     methods
@@ -24,10 +21,21 @@ classdef matRad_RandomScenarios < matRad_ScenarioModel
             
             this@matRad_ScenarioModel(superclassArgs{:});
         end
+
+        %% Setters & Update
+        function set.nSamples(this,nSamples)
+            valid = isnumeric(nSamples) && isscalar(nSamples) && mod(nSamples,1) == 0 && nSamples > 0;
+            if ~valid 
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid value for nSamples! Needs to be a positive integer!');
+            end
+            this.nSamples = nSamples;
+            this.updateScenarios();
+        end
+
         
         function scenarios = updateScenarios(this)
             matRad_cfg = MatRad_Config.instance();
-            nSamples = this.nSamplesDefault;
             
             %Multivariate Normal Sampling
             Sigma = diag([this.shiftSD,this.rangeAbsSD,this.rangeRelSD./100].^2);
@@ -41,7 +49,7 @@ classdef matRad_RandomScenarios < matRad_ScenarioModel
             %      cs = sqrt(L) * V';
             %end
             %transform normal samples, mean is always zero
-            scenarios = randn(nSamples,d) * cs;
+            scenarios = randn(this.nSamples,d) * cs;
 
             if this.includeNominalScenario
                 %We include the nominal scenario by just replacing the  
@@ -54,12 +62,12 @@ classdef matRad_RandomScenarios < matRad_ScenarioModel
             this.scenProb = (2*pi)^(-d/2) * exp(-0.5*sum((scenarios/cs).^2, 2)) / prod(diag(cs));
 
             %Scenario weight
-            this.scenWeight = ones(nSamples,1)./nSamples; %equal weights since they have been randomly sampled (not entirely true if the Nominal scenario was forced) 
+            this.scenWeight = ones(this.nSamples,1)./this.nSamples; %equal weights since they have been randomly sampled (not entirely true if the Nominal scenario was forced) 
 
             %set variables
-            this.totNumShiftScen = nSamples;
-            this.totNumRangeScen = nSamples;
-            this.totNumScen = nSamples; %check because of CT scenarios
+            this.totNumShiftScen = this.nSamples;
+            this.totNumRangeScen = this.nSamples;
+            this.totNumScen = this.nSamples; %check because of CT scenarios
             %this.totNumCtScen = 
             %this.numOfShiftScen = [nSamples,nSamples,nSamples];
             %this.numOfRangeShiftScen = nSamples;
@@ -76,7 +84,7 @@ classdef matRad_RandomScenarios < matRad_ScenarioModel
             this.scenMask = false(this.numOfCtScen,this.totNumShiftScen,this.totNumRangeScen);
 
             for sCt = 1:this.numOfCtScen
-                this.scenMask(sCt,:,:) = diag(true(nSamples,1));
+                this.scenMask(sCt,:,:) = diag(true(this.nSamples,1));
             end
             
             [x{1}, x{2}, x{3}] = ind2sub(size(this.scenMask),find(this.scenMask));

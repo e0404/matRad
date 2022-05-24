@@ -108,10 +108,17 @@ classdef matRad_ScenarioModel < handle
             newInstance.scenWeight          = this.scenWeight(scenIdx);
             newInstance.numOfCtScen         = this.numOfCtScen;
         end
+        
+        %% Deprecated functions / properties
+        function newInstance = extractSingleNomScen(this,~,scenIdx)
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispDeprecationWarning('The function extractSingleNomScen of the scenario class will soon be deprecated! Use extractSingleScenario instead!');
+            newInstance = this.extractSingleScenario(scenIdx);
+        end
 
         function t = TYPE(this)
             matRad_cfg = MatRad_Config.instance();
-            matRad_cfg.dispWarning('The property TYPE of the scenario class will soon be deprecated!');
+            matRad_cfg.dispDeprecationWarning('The property TYPE of the scenario class will soon be deprecated!');
             t = this.name;
         end
     end
@@ -128,7 +135,7 @@ classdef matRad_ScenarioModel < handle
 
         function types = AvailableScenCreationTYPE()
             matRad_cfg = MatRad_Config.instance();
-            matRad_cfg.dispWarning('The function/property AvailableScenarioCreationTYPE of the scenario class will soon be deprecated!');
+            matRad_cfg.dispDeprecationWarning('The function/property AvailableScenarioCreationTYPE of the scenario class will soon be deprecated!');
             %Hardcoded for compatability with matRad_multScen
             types = {'nomScen','wcScen','impScen','rndScen'};
         end
