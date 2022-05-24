@@ -98,7 +98,7 @@ classdef matRad_ScenarioModel < handle
         end
 
         function newInstance = extractSingleScenario(this,scenIdx)
-            newInstance = matRad_SingleScenario();
+            newInstance = matRad_NominalScenario();
                         
             newInstance.scenForProb         = this.scenForProb(scenIdx,:);
             newInstance.relRangeShift       = this.scenForProb(scenIdx,5);

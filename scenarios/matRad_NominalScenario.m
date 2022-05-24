@@ -1,4 +1,4 @@
-classdef matRad_SingleScenario < matRad_ScenarioModel
+classdef matRad_NominalScenario < matRad_ScenarioModel
     %UNTITLED2 Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -7,7 +7,7 @@ classdef matRad_SingleScenario < matRad_ScenarioModel
     end
 
     methods
-        function this = matRad_SingleScenario(ct)
+        function this = matRad_NominalScenario(ct)
             if nargin == 0 
                 superclassArgs = {};
             else
@@ -32,7 +32,7 @@ classdef matRad_SingleScenario < matRad_ScenarioModel
             %set variables
             this.totNumShiftScen = 1;
             this.totNumRangeScen = 1;
-            this.totNumScen = 1; %check because of CT scenarios            
+            this.totNumScen = this.numOfCtScen; 
             
             %Individual shifts
             this.relRangeShift = 0;
@@ -51,6 +51,7 @@ classdef matRad_SingleScenario < matRad_ScenarioModel
             totNumScen    = sum(this.scenMask(:));
 
             if totNumScen ~= this.totNumScen
+                matRad_cfg = MatRad_Config.instance();
                 matRad_cfg.dispWarning('Check Implementation of Total Scenario computation - given %d but found %d!',this.totNumScen,totNumScen);
                 this.totNumScen = totNumScen;
             end

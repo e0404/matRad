@@ -7,6 +7,12 @@ classdef matRad_RandomScenarios < matRad_ScenarioModel
         nSamples = 10;
     end
 
+    %Deprecated Properties that were used
+    properties (Dependent)
+        numOfShiftScen;
+        numOfRangeShiftScen;
+    end
+
     properties (SetAccess=protected)
         name = 'rndScen';
     end
@@ -32,7 +38,30 @@ classdef matRad_RandomScenarios < matRad_ScenarioModel
             this.nSamples = nSamples;
             this.updateScenarios();
         end
+        
+        function set.numOfShiftScen(this,numOfShiftScen)
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispDeprecationWarning('The property numOfShiftScen of the scenario class will soon be deprecated! Use nSamples instead');
+            this.nSamples = numOfShiftScen;
+        end
 
+        function  value = get.numOfShiftScen(this)
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispDeprecationWarning('The property numOfShiftScen of the scenario class will soon be deprecated! Use nSamples instead');
+            value = this.nSamples;
+        end
+
+        function set.numOfRangeShiftScen(this,numOfRangeShiftScen)
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispDeprecationWarning('The property numOfRangeShiftScen of the scenario class will soon be deprecated! Use nSamples instead');
+            this.nSamples = numOfRangeShiftScen;
+        end
+
+        function  value = get.numOfRangeShiftScen(this)
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispDeprecationWarning('The property numOfRangeShiftScen of the scenario class will soon be deprecated! Use nSamples instead');
+            value = this.nSamples;
+        end
         
         function scenarios = updateScenarios(this)
             matRad_cfg = MatRad_Config.instance();

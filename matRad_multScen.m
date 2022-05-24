@@ -35,7 +35,7 @@ matRad_cfg.dispWarning('The matRad_multScen function will be deprecated soon!\nC
 
 switch scenarioModel
     case 'nomScen'
-        multScen = matRad_SingleScenario(ct);
+        multScen = matRad_NominalScenario(ct);
     case 'wcScen'
         multScen = matRad_WorstCaseScenarios(ct);
     case 'impScen'
