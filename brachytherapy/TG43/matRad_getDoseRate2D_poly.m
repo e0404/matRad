@@ -106,7 +106,7 @@ FTab{3} = machine.data.AnisotropyFunctionValue;
 gL = matRad_radialDoseFunction(r,gLTab);
 GL = matRad_geometryFunction(r,theta,L);
 GL0 = matRad_geometryFunction(r0,theta0,L);
-F = matRad_anisotropyFunction2D(r,theta,FTab);
-
+% F = matRad_anisotropyFunction2D(r,theta,FTab);   % uses the 5th order polynomial for estimation of Anisotropy function 
+F = matRad_anisotropyFunction2DInterp(r,theta,FTab);   % uses the Interp2 function for estimation of Anisotropy function ( Gamma(1mm,1%) pass rate 99.5%)
 DoseRate = Sk * lambda * GL./GL0.*gL.*F;
 end
