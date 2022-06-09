@@ -9,8 +9,15 @@ classdef matRad_DVHWidget < matRad_Widget
     end
     
     methods
-        function this = matRad_DVHWidget(handleParent)
-            if nargin < 1
+        function this = matRad_DVHWidget(varargin)    
+            
+            p = inputParser;
+            p.addOptional('handleParent',[], @ishandle);
+            p.addParameter('SelectedCube','physicalDose', @ischar);
+            p.parse(varargin{:});
+            
+            
+            if isempty(p.Results.handleParent)
                 handleParent = figure(...
                     'Units','normalized',...
                     'Position',[0.005 0.5 0.495 0.45],...
@@ -24,14 +31,17 @@ classdef matRad_DVHWidget < matRad_Widget
                     'HandleVisibility','callback',...
                     'Tag','figure1',...
                     'PaperSize',[20.99999864 29.69999902]);
+            else
+                handleParent  = p.Results.handleParent;
                 
             end
             
             this = this@matRad_Widget(handleParent);   
+            this.SelectedCube = p.Results.SelectedCube;
 
-            if evalin('base','exist(''resultGUI'')')
-                this.showDVH();
-            end
+%             if evalin('base','exist(''resultGUI'')')
+%                 this.showDVH();
+%             end
         end
         
         function this=initialize(this)
@@ -96,8 +106,9 @@ classdef matRad_DVHWidget < matRad_Widget
             end
             
             dvh = matRad_calcDVH(cst,doseCube,'cum');
-            
             matRad_showDVH(axes(this.widgetHandle),dvh,cst,pln);
+            title(this.SelectedCube);
+%             this.widgetHandle.Title = this.SelectedCube;
 
          end
         

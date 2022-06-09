@@ -12,9 +12,15 @@ classdef matRad_DVHStatsWidget < matRad_Widget
     end
     
     methods
-        function this = matRad_DVHStatsWidget(handleParent)    
+        function this = matRad_DVHStatsWidget(varargin)    
+            
+            p = inputParser;
+            p.addOptional('handleParent',[], @ishandle);
+            p.addParameter('SelectedCube','physicalDose', @ischar);
+            p.parse(varargin{:});
+            
             matRad_cfg = MatRad_Config.instance();
-            if nargin < 1
+            if isempty(p.Results.handleParent)
                 handleParent = figure(...
                     'Units','normalized',...
                     'Position',[0.005 0.05 0.495 0.9],...
@@ -31,6 +37,10 @@ classdef matRad_DVHStatsWidget < matRad_Widget
             end
             
             this = this@matRad_Widget(handleParent);   
+            this.SelectedCube = p.Results.SelectedCube;    
+            this.dvhWidgetHandle.SelectedCube = this.SelectedCube;
+            this.statWidgetHandle.SelectedCube = this.SelectedCube;
+            this.showDVHstat();
         end        
         
         function this=update(this,evt)
@@ -83,5 +93,10 @@ classdef matRad_DVHStatsWidget < matRad_Widget
             this.createHandles();
             
         end
+        
+        function this = showDVHstat(this)
+            this.dvhWidgetHandle.showDVH();
+            this.statWidgetHandle.showStatistics();
+        end 
     end
 end

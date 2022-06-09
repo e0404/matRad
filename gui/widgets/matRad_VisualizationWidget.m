@@ -739,7 +739,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
          
         % 52 Callback
         function btnDVH_Callback(this, hObject, event)
-            matRad_DVHStatsWidget();
+            matRad_DVHStatsWidget('SelectedCube',this.viewingWidgetHandle.SelectedDisplayOption); % pass fieldname in resultGUI
         end
         
         %H55 Callback
