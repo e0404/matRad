@@ -27,14 +27,14 @@ classdef matRad_OptimizationProblem < handle
         quantityOpt = '';
         
         % Maximum approximation
-        useMaxApprox = 'cheapCOWC'; %'pnorm'; %'cheapCOWC'; %'logsumexp'; %'none';
+        useMaxApprox = 'logsumexp'; %'pnorm'; %'cheapCOWC'; %'logsumexp'; %'none';
         
         % Parameters for pnorm approximation
         p = 30; %Can be chosen larger (closer to maximum) or smaller (closer to mean). Only tested 20 >= p >= 1
         
         % Paremeters for CheapCOWC
         p1=1; %
-        p2=4; %
+        p2=1; %
         
     end
     

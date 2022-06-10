@@ -1,4 +1,4 @@
-classdef matRad_multScen2
+classdef matRad_multScen
     %  matRad_multScen
     %  This class creates all required biological model parameters according to
     % a given radiation modatlity and a given bio model identifier string.
@@ -189,7 +189,7 @@ classdef matRad_multScen2
         end
         
         % default constructor
-        function this = matRad_multScen2(ct,TYPE)
+        function this = matRad_multScen(ct,TYPE)
             
             matRad_cfg = MatRad_Config.instance();
             

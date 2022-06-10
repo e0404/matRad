@@ -203,10 +203,10 @@ if exist('slice','var') && ~isempty(slice)
     mMap1=round((1-maxPrice/(maxPrice-minPrice))*256);
     mMap2=(256-mMap1);
     
-    colormap1 = matRad_getColormap('priceOfRobustnessIndex',2*mMap1);
-    colormap2 = matRad_getColormap('priceOfRobustnessIndex',2*mMap2);
-    myColormap = [colormap1(1:mMap1,:); colormap2(mMap2+1:end,:)];
-    matRad_plotSliceWrapper2(gca,ct,cst,refScen,priceCube.*OARMask,plane,slice,[],[],colorcube,myColormap,doseWindow,[],[],'Price of robustness index');
+    colormap1 = matRad_getColormap('gammaIndex',2*mMap1);
+    colormap2 = matRad_getColormap('gammaIndex',2*mMap2);
+    myColormap = [colormap1(1:mMap1-1,:); colormap2(mMap2+1:end-1,:)];
+    matRad_plotSliceWrapper(gca,ct,cst,refScen,priceCube.*OARMask,plane,slice,[],[],colorcube,myColormap,doseWindow,[],[],'Price of robustness index');
     ax=gca;
     ax.Colorbar.TickLabels{1}=['<=' num2str(priceWindow(1))];
     ax.Colorbar.TickLabels{end}=['>=' num2str(priceWindow(2))];

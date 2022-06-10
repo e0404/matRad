@@ -196,10 +196,10 @@ for  i = 1:size(cst,1)
                     otherwise
                         matRad_cfg.dispError('Robustness setting %s not supported!',objective.robustness);
                         
-                end  %robustness type                              
-            end  % objective check         
-        end %objective loop       
-    end %empty check    
+                end  %robustness type
+            end  % objective check
+        end %objective loop
+    end %empty check
 end %cst structure loop
 
 
@@ -211,6 +211,12 @@ if fMax > 0
             fMax = optiProb.logSumExp(f_COWC);
         case 'pnorm'
             fMax = optiProb.pNorm(f_COWC,numel(useScen));
+        case 'cheapCOWC'
+            fScenProb = zeros(size(dij.physicalDose));
+            fScenProb(useScen) = scenProb;
+            f_COWC_tmp = zeros(size(dij.physicalDose));
+            f_COWC_tmp(useScen) = f_COWC;
+            fMax = optiProb.cheapCOWC(f_COWC_tmp,fScenProb);
         case 'none'
             fMax = max(f_COWC);
         case 'otherwise'

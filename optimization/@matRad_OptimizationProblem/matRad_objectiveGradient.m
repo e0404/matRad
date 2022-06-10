@@ -278,6 +278,10 @@ if exist('delta_COWC','var')
             [~,fGrad] = optiProb.logSumExp(f_COWC);
         case 'pnorm'
             [~,fGrad] = optiProb.pNorm(f_COWC,numel(useScen));
+        case 'cheapCOWC'
+            fScenProb = zeros(size(dij.physicalDose));
+            fScenProb(useScen) = scenProb;
+            [~,fGrad] = optiProb.cheapCOWC(f_COWC,fScenProb);
         case 'none'
             [~,ixCurrWC] = max(f_COWC(:));
             fGrad = zeros(size(f_COWC));

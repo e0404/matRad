@@ -93,13 +93,13 @@ if exist('slice','var') && ~isempty(slice)
     
     subplot(2,2,1);
     set(gcf,'Color',[1 1 1]);
-    matRad_plotSliceWrapper2(gca,ct,cst,refScen,stdCube/refDose,plane,slice,[],[],colorcube,[]);
+    matRad_plotSliceWrapper(gca,ct,cst,refScen,stdCube/refDose,plane,slice,[],[],colorcube,[]);
     hold off;
     title('Relative uncertainty');
     
     subplot(2,2,2);
     set(gcf,'Color',[1 1 1]);
-    matRad_plotSliceWrapper2(gca,ct,cst,refScen,abs(meanCube-refDose*(meanCube>0))/refDose,plane,slice,[],[],colorcube,[]);
+    matRad_plotSliceWrapper(gca,ct,cst,refScen,abs(meanCube-refDose*(meanCube>0))/refDose,plane,slice,[],[],colorcube,[]);
     hold off;
     title('Relative mean and prescription dose difference');
     
@@ -109,21 +109,21 @@ if exist('slice','var') && ~isempty(slice)
     mMap1=round(1/(maxRob)*256);
     mMap2=(256-mMap1);
     
-    colormap1 = matRad_getColormap('priceOfRobustnessIndex',2*mMap1);
-    colormap2 = matRad_getColormap('priceOfRobustnessIndex',2*mMap2);
+    colormap1 = matRad_getColormap('gammaIndex',2*mMap1);
+    colormap2 = matRad_getColormap('gammaIndex',2*mMap2);
     myColormap = [colormap1(1:mMap1,:); colormap2(mMap2+1:end,:)];
     
     subplot(2,2,3);
     set(gcf,'Color',[1 1 1]);
     
-    matRad_plotSliceWrapper2(gca,ct,cst,refScen,robCube,plane,slice,[],[],colorcube,myColormap,doseWindow);
+    matRad_plotSliceWrapper(gca,ct,cst,refScen,robCube,plane,slice,[],[],colorcube,myColormap,doseWindow);
     hold off;
     title('Robustness metric');
 
     subplot(2,2,4);
     set(gcf,'Color',[1 1 1]);
     
-    matRad_plotSliceWrapper2(gca,ct,cst,refScen,(robCube<=1).*doseMask,plane,slice,[],[],colorcube,[],[0 2.01]);
+    matRad_plotSliceWrapper(gca,ct,cst,refScen,(robCube<=1).*doseMask,plane,slice,[],[],colorcube,[],[0 2.01]);
     hold off;
     title({[num2str(robPassRate,5) '% of points ' ...
         'pass robustness criterion (' num2str(meanDoseThreshold) '% / ' ...
@@ -135,14 +135,13 @@ if exist('slice','var') && ~isempty(slice)
     mMap1=round(1/(maxRob)*256);
     mMap2=(256-mMap1);
     
-    colormap1 = matRad_getColormap('priceOfRobustnessIndex',2*mMap1);
-    colormap2 = matRad_getColormap('priceOfRobustnessIndex',2*mMap2);
-    myColormap = [colormap1(1:mMap1,:); colormap2(mMap2+1:end,:)];
+    colormap1 = matRad_getColormap('gammaIndex',2*mMap1);
+    colormap2 = matRad_getColormap('gammaIndex',2*mMap2);
+    myColormap = [colormap1(1:mMap1-1,:); colormap2(mMap2+1:end-1,:)];
     
     f = figure;
     numSlices = ct.cubeDim(3);
-    %myColormap = matRad_getColormap('gammaIndex');
-    matRad_plotSliceWrapper2(gca,ct,cst,refScen,robCube.*targetMask,plane,slice,[],[],colorcube,myColormap,doseWindow);
+    matRad_plotSliceWrapper(gca,ct,cst,refScen,robCube.*targetMask,plane,slice,[],[],colorcube,myColormap,doseWindow);
     title({[num2str(robPassRate,5) '% of points ' ...
         'pass robustness criterion (' num2str(meanDoseThreshold) '% / ' ...
         num2str(stdThreshold) '%)']});
