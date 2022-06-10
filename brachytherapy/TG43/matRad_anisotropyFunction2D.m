@@ -4,6 +4,8 @@ function F = matRad_anisotropyFunction2D(r,thet,FTab)
 %   distances according to Rivard et al.: AAPM TG-43 update Eq. (C1).
 %   Normally called within matRad_getDoseRate(...)
 %
+%   This function requires the multiPolyRegress code : https://de.mathworks.com/matlabcentral/fileexchange/34918-multivariate-polynomial-regression
+%
 % call
 %   F = matRad_anisotropyFunction2D(r,thet,FTab)
 %
