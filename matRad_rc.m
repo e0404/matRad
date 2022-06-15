@@ -13,10 +13,9 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% set search path
-
+% set search path and clear other instances of matRad
+clear matRad_cfg MatRad_Config persistent global;
 matRad_cfg = MatRad_Config.instance();
-
 addpath(genpath(matRad_cfg.matRadRoot));
 
 %clear command window and close all figures

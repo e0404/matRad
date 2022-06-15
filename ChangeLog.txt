@@ -1,3 +1,7 @@
+Development Changes
+	- Bugfixes:
+		- Fix SFUD wrapper for new pln & cst format
+
 Version 2.10.1 - Patch release for "Blaise" 
 	Release with small updates, clean-ups and bugfixes    
     - Bugfix in 3D view due to inconsistent angles in pln & stf
