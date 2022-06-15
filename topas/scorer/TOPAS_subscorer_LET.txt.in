@@ -1,4 +1,3 @@
-
 #-- shared LET sub-scorer
 s:Sc/ProtonLET/Quantity   			= "ProtonLET"
 s:Sc/ProtonLET/Component  			= "Patient"

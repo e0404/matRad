@@ -1,4 +1,3 @@
-
 #-- physical DoseToMedium scorer
 s:Sc/Patient/Tally_DoseToMedium/Quantity 			= "DoseToMedium"
 s:Sc/Patient/Tally_DoseToMedium/OutputType 			= Sim/DoseScorerOutputType # "csv" "binary" "Root" "Xml" or "DICOM"
@@ -7,4 +6,3 @@ sv:Sc/Patient/Tally_DoseToMedium/Report 			= Sim/DoseScorerReport
 s:Sc/Patient/Tally_DoseToMedium/IfOutputFileAlreadyExists 	= "Overwrite" # "Exit" "Overwrite" or "Increment"
 b:Sc/Patient/Tally_DoseToMedium/OutputToConsole 		= "False"
 s:Sc/Patient/Tally_DoseToMedium/OutputFile 			= Sim/ScoreLabel + "_physicalDose"
-

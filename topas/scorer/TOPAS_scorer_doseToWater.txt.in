@@ -1,4 +1,3 @@
-
 #-- shared physDose sub-scorer
 s:Sc/Tally_DoseToWater/Quantity   			= "DoseToWater"
 s:Sc/Tally_DoseToWater/OutputType 			= Sim/DoseScorerOutputType

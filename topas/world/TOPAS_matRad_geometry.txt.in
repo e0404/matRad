@@ -9,9 +9,6 @@ s:Ge/BeamSpot/Type = "Group"
 d:Ge/BeamSpot/TransX = Tf/Beam/PosX/Value mm
 d:Ge/BeamSpot/TransY = Tf/Beam/PosY/Value mm
 
-s:Ge/Nozzle/Parent = "Isocenter"
-s:Ge/Nozzle/Type = "Group"
-
 s:Ge/Isocenter/Parent = "Gantry"
 s:Ge/Isocenter/Type = "Group"
 d:Ge/Isocenter/RotX = +90. deg
@@ -32,3 +29,6 @@ d:Ge/Couch/TransZ = 0. cm
 d:Ge/Couch/RotX = 0. deg
 d:Ge/Couch/RotY = -1 * Sim/CouchAngle deg
 d:Ge/Couch/RotZ = 0. deg
+
+s:Ge/Nozzle/Parent = "Isocenter"
+s:Ge/Nozzle/Type = "Group"

@@ -1,4 +1,3 @@
-
 # -- surface track count scorer
 s:Sc/IC/Quantity 				= "SurfaceTrackCount"
 s:Sc/IC/OutputType 				= "csv" # "csv" "binary" "Root" "Xml" or "DICOM"

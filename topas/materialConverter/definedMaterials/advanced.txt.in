@@ -1,4 +1,4 @@
-# Define Materials used for HU
+# -- Define Materials used for HU
 sv:Ge/Patient/SchneiderElements = 15            "Hydrogen"  "Carbon"    "Nitrogen"  "Oxygen"    "Magnesium" "Phosphorus"    "Sulfur"    "Chlorine"  "Argon" "Calcium"   "Sodium"    "Potassium" "Titanium"  "Iron"  "Zinc"
 uv:Ge/Patient/SchneiderMaterialsWeight1  = 15   0.0         0.0         0.755       0.232       0.0         0.0             0.0         0.0         0.013   0.0         0.0         0.0         0.0         0.0     0.0
 uv:Ge/Patient/SchneiderMaterialsWeight2  = 15   0.103       0.105       0.031       0.749       0.0         0.002           0.003       0.003       0.0     0.0         0.002       0.002       0.0         0.0     0.0

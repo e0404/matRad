@@ -1,6 +1,4 @@
-
 # LEM1 RBE scorer
-sv:Sc/CellLines     = 1 "CellGeneric_abR2"
 
 s:Sc/tabulatedAlpha/Quantity                   = "RBE_TabulatedAlphaBeta"
 s:Sc/tabulatedAlpha/Component                  = "Patient"
@@ -8,7 +6,7 @@ s:Sc/tabulatedAlpha/OutputQuantity             = "alpha"
 d:Sc/tabulatedAlpha/PrescribedDose             = Sc/PrescribedDose Gy
 sv:Sc/tabulatedAlpha/CellLines                 = Sc/CellLines
 s:Sc/tabulatedAlpha/OutputType                 = Sim/DoseScorerOutputType
-s:Sc/tabulatedAlpha/OutputFile                 = Sim/ScoreLabel + "_alpha"
+s:Sc/tabulatedAlpha/OutputFile                 = Sim/ScoreLabel + "_alpha_LEM"
 s:Sc/tabulatedAlpha/IfOutputFileAlreadyExists  = "Overwrite"
 s:Sc/tabulatedAlpha/ModelName                  = "HCP"
 
@@ -18,7 +16,7 @@ s:Sc/tabulatedBeta/OutputQuantity             = "beta"
 d:Sc/tabulatedBeta/PrescribedDose             = Sc/PrescribedDose Gy
 sv:Sc/tabulatedBeta/CellLines                 = Sc/CellLines
 s:Sc/tabulatedBeta/OutputType                 = Sim/DoseScorerOutputType
-s:Sc/tabulatedBeta/OutputFile                 = Sim/ScoreLabel + "_beta"
+s:Sc/tabulatedBeta/OutputFile                 = Sim/ScoreLabel + "_beta_LEM"
 s:Sc/tabulatedBeta/IfOutputFileAlreadyExists  = "Overwrite"
 s:Sc/tabulatedBeta/ModelName                  = "HCP"
 
@@ -28,15 +26,11 @@ s:Sc/tabulatedBeta/ModelName                  = "HCP"
 #d:Sc/RBE/PrescribedDose             = Sc/PrescribedDose Gy
 #sv:Sc/RBE/CellLines                 = Sc/CellLines
 #s:Sc/RBE/OutputType                 = Sim/DoseScorerOutputType
-#s:Sc/RBE/OutputFile                 = Sim/ScoreLabel + "_RBE"
+#s:Sc/RBE/OutputFile                 = Sim/ScoreLabel + "_RBE_LEM"
 #s:Sc/RBE/IfOutputFileAlreadyExists  = "Overwrite"
 #s:Sc/RBE/ModelName                  = "HCP"
 
 ### HCP Tabulated ###
-d:Sc/CellGeneric_abR2/Alphax 		= Sc/AlphaX /Gy
-d:Sc/CellGeneric_abR2/Betax 		= Sc/BetaX /Gy2
-#d:Sc/CellGeneric_abR2/AlphaBetaRatiox 	= Sc/AlphaBetaX Gy
-
 sv:Sc/CellGeneric_abR2/HCP/ParticleName 		= 6 "Proton" "Helium" "Lithium" "Beryllium" "Boron" "Carbon"
 iv:Sc/CellGeneric_abR2/HCP/ParticleZ    		= 6 1 2 3 4 5 6
 dv:Sc/CellGeneric_abR2/HCP/KineticEnergyPerNucleon 	= 47 0.1 0.15 0.2 0.3 0.4 0.5 0.7 1 1.2 1.5 2 2.5 3 4 5 6 7 8 10 12 15 20 25 30 40 50 60 70 80 90 100 120 130 135 150 195 200 250 270 300 330 400 500 600 700 800 1000 MeV
@@ -54,20 +48,3 @@ dv:Sc/CellGeneric_abR2/HCP/Lithium/Beta 	= 47 0.00026055 1.7964e-05 3.1976e-05 8
 dv:Sc/CellGeneric_abR2/HCP/Beryllium/Beta 	= 47 0.00020389 1.2956e-05 2.2506e-05 6.0656e-05 5.9727e-05 4.0152e-06 -5.3261e-05 6.6391e-07 5.7807e-05 0.00022712 0.00092829 0.0025761 0.0052711 0.010612 0.014921 0.018297 0.020987 0.023179 0.026546 0.029026 0.031751 0.034816 0.03697 0.03855 0.040757 0.042261 0.043373 0.04424 0.044942 0.045526 0.046026 0.046834 0.047166 0.047319 0.047731 0.048669 0.048753 0.04945 0.049672 0.049962 0.05021 0.050671 0.051144 0.051484 0.05174 0.05194 0.052237 /Gy2
 dv:Sc/CellGeneric_abR2/HCP/Boron/Beta 		= 47 0.00016197 9.7368e-06 1.6423e-05 4.3258e-05 4.2208e-05 2.1754e-06 -4.0827e-05 -1.1801e-05 1.538e-05 9.7247e-05 0.00044774 0.0012787 0.0029941 0.0073206 0.011284 0.014587 0.017321 0.019605 0.023191 0.025882 0.028874 0.032267 0.034649 0.036396 0.038833 0.040488 0.041707 0.042655 0.04342 0.044056 0.044599 0.045474 0.045835 0.046 0.046444 0.047456 0.047547 0.048297 0.048537 0.048849 0.049116 0.049613 0.050124 0.050492 0.05077 0.050989 0.051314 /Gy2
 dv:Sc/CellGeneric_abR2/HCP/Carbon/Beta 		= 47 0.00013133 7.5091e-06 1.2318e-05 3.1613e-05 3.0505e-05 1.2878e-06 -3.0592e-05 -1.3569e-05 2.4024e-07 4.2428e-05 0.00022925 0.00067252 0.0016786 0.0049503 0.0083909 0.011468 0.014129 0.016418 0.020118 0.022964 0.026181 0.029878 0.032484 0.0344 0.037071 0.038881 0.040211 0.041241 0.042072 0.04276 0.043347 0.044291 0.044679 0.044856 0.045334 0.046417 0.046515 0.047317 0.047572 0.047906 0.048191 0.048721 0.049267 0.04966 0.049958 0.050193 0.050542 /Gy2
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

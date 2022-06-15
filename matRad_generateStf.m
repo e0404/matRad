@@ -29,10 +29,13 @@ function stf = matRad_generateStf(ct,cst,pln,visMode)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
+% Instance of MatRad_Config class
 matRad_cfg = MatRad_Config.instance();
 
 matRad_cfg.dispInfo('matRad: Generating stf struct...\n');
+
+% load default parameters if not set
+pln = matRad_cfg.getDefaultProperties(pln,{'propOpt','propStf'});
 
 if nargin < 4
     visMode = 0;

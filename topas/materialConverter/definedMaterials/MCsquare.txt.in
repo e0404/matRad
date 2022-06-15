@@ -1,8 +1,7 @@
-# These Materials recreate the Material lookup as defined by MCsquare for 100% compatability. Note that the reference does some approximations (e.g., no Argon in Air) to spare Material overhead.
+# -- These Materials recreate the Material lookup as defined by MCsquare for 100% compatability. Note that the reference does some approximations (e.g., no Argon in Air) to spare Material overhead.
 sv:Ge/Patient/SchneiderElements = 7 "Hydrogen" "Carbon" "Nitrogen" "Oxygen" "Phosphorus" "Calcium" "Titanium"
-iv:Ge/Patient/SchneiderHUToMaterialSections = 26 -1000 -950 -120 -82 -52 -22 8 19 80 120 200 300 400 500 600 700 800 900 1000 1100 1200 1300 1400 1500 2995 2996
 uv:Ge/Patient/SchneiderMaterialsWeight1  = 7 0.0     0.0001 0.7650   0.2349  0.0    0.0	0.0
-uv:Ge/Patient/SchneiderMaterialsWeight2  = 7 0.104   0.106  0.031    0.757   0.002  0.0	0.0
+uv:Ge/Patient/SchneiderMaterialsWeight2  = 7 0.1040  0.1061 0.0313   0.7566  0.002  0.0	0.0
 uv:Ge/Patient/SchneiderMaterialsWeight3  = 7 0.116   0.683  0.002    0.199   0.0    0.0	0.0
 uv:Ge/Patient/SchneiderMaterialsWeight4  = 7 0.113   0.569  0.009    0.309   0.0    0.0	0.0
 uv:Ge/Patient/SchneiderMaterialsWeight5  = 7 0.111   0.460  0.015    0.413   0.001  0.0    0.0
@@ -14,7 +13,7 @@ uv:Ge/Patient/SchneiderMaterialsWeight10 = 7 0.095   0.457  0.025    0.357   0.0
 uv:Ge/Patient/SchneiderMaterialsWeight11 = 7 0.089   0.425  0.027    0.365   0.030	 0.064  0.0
 uv:Ge/Patient/SchneiderMaterialsWeight12 = 7 0.082   0.393  0.029    0.374   0.039	 0.083  0.0
 uv:Ge/Patient/SchneiderMaterialsWeight13 = 7 0.076   0.363  0.030    0.382   0.047	 0.102  0.0
-uv:Ge/Patient/SchneiderMaterialsWeight14 = 7 0.071   0.336  0.032    0.3885  0.054	 0.1175 0.0
+uv:Ge/Patient/SchneiderMaterialsWeight14 = 7 0.0713  0.3363 0.0321   0.3886  0.0542  0.1175 0.0
 uv:Ge/Patient/SchneiderMaterialsWeight15 = 7 0.066   0.311  0.033    0.396   0.061	 0.133  0.0
 uv:Ge/Patient/SchneiderMaterialsWeight16 = 7 0.061   0.288  0.035    0.402   0.067	 0.147  0.0
 uv:Ge/Patient/SchneiderMaterialsWeight17 = 7 0.056   0.267  0.036    0.4075  0.0735 0.160  0.0
