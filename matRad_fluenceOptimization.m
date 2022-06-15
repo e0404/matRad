@@ -210,6 +210,32 @@ end
 
 optiProb = matRad_OptimizationProblem(backProjection);
 
+%Get Bounds
+if ~isfield(pln.propOpt,'boundMU')
+    pln.propOpt.boundMU = false;
+end 
+
+if pln.propOpt.boundMU
+    if (isfield(dij,'minMU') || isfield(dij,'maxMU')) && ~isfield(dij,'numParticlesPerMU')
+        matRad_cfg.dispWarning('Requested MU bounds but number of particles per MU not set! Bounds will not be enforced and standard [0,Inf] will be used instead!');
+    elseif ~isfield(dij,'minMU') && ~isfield(dij,'maxMU')
+        matRad_cfg.dispWarning('Requested MU bounds but machine bounds not defined in dij.minMU & dij.maxMU! Bounds will not be enforced and standard [0,Inf] will be used instead!');
+    else
+        if isfield(dij,'minMU')
+            optiProb.minimumW = dij.numParticlesPerMU .* dij.minMU / 1e6;
+            matRad_cfg.dispInfo('Using lower MU bounds provided in dij!\n')
+        end
+
+        if isfield(dij,'maxMU')
+            optiProb.maximumW = dij.numParticlesPerMU .* dij.maxMU / 1e6;
+            matRad_cfg.dispInfo('Using upper MU bounds provided in dij!\n')
+        end
+    end
+else
+    matRad_cfg.dispInfo('Using standard MU bounds of [0,Inf]!\n')
+end
+
+
 %optimizer = matRad_OptimizerIPOPT;
 
 if ~isfield(pln.propOpt,'optimizer')
