@@ -26,7 +26,9 @@ classdef MatRad_MCsquareConfig
         %%% Simulation parameters:
         Num_Threads   =	0;		% Number of parallel calculation threads. Default: 0 = max available threads
         RNG_Seed      =	0;		% Seed for the random number generator (deterministic result only with single thread). Default: 0 = seed based on the time
-        numHistories  = 1e6;		% Number of primary protons to simulate. Default: 1e7
+        
+        % This parameter can be overwritten through MatRad_Config default parameters
+        Num_Primaries  = 1e6;		% Number of primary protons to simulate. Default: 1e7
         E_Cut_Pro     =	0.5;		% Energy cut (in MeV) below which heavy charged particles are locally absorbed. Default: 0.5
         D_Max	      =	0.2;		% Maximum distance between two step (cm). Default: 0.2
         Epsilon_Max   =	0.25;		% Fractional energy loss (dE/T) per step. Default: 0.25
@@ -116,7 +118,13 @@ classdef MatRad_MCsquareConfig
     
     methods
         function obj = MatRad_MCsquareConfig()
-            %MatRad_MCsquareConfig Configuration Class for MCsquare           
+            %MatRad_MCsquareConfig Configuration Class for MCsquare   
+            matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
+            
+            % Set default histories from MatRad_Config
+            if isfield(matRad_cfg.propMC,'defaultNumHistories')
+                obj.Num_Primaries = matRad_cfg.propMC.defaultNumHistories;
+            end
         end
 
         function writeMCsquareinputAllFiles(obj,filename,stf)

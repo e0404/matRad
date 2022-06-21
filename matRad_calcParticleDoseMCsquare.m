@@ -279,12 +279,12 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                  %Number of primaries depending on beamlet-wise or field-based compuation (direct dose calculation)                    
                                  if calcDoseDirect
                                      stfMCsquare(i).energyLayer(k).numOfPrimaries = [stfMCsquare(i).energyLayer(k).numOfPrimaries ...
-                                         round(stf(i).ray(j).weight(stf(i).ray(j).energy == stfMCsquare(i).energies(k))*pln.propMC.numHistories)];
+                                         round(stf(i).ray(j).weight(stf(i).ray(j).energy == stfMCsquare(i).energies(k))*pln.propMC.Num_Primaries)];
                                      
                                      totalWeights = totalWeights + stf(i).ray(j).weight(stf(i).ray(j).energy == stfMCsquare(i).energies(k));
                                  else
                                      stfMCsquare(i).energyLayer(k).numOfPrimaries = [stfMCsquare(i).energyLayer(k).numOfPrimaries ...
-                                         pln.propMC.numHistories];
+                                         pln.propMC.Num_Primaries];
                                  end
                                  
                                  %Now add the range shifter
