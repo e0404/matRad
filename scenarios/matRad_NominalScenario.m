@@ -49,6 +49,13 @@ classdef matRad_NominalScenario < matRad_ScenarioModel
             [x{1}, x{2}, x{3}] = ind2sub(size(this.scenMask),find(this.scenMask));
             this.linearMask    = cell2mat(x);
             totNumScen    = sum(this.scenMask(:));
+            
+            %Get Scenario probability
+            Sigma = diag([this.shiftSD,this.rangeAbsSD,this.rangeRelSD./100].^2);
+            d = size(Sigma,1);
+            [cs,p] = chol(Sigma);
+            this.scenProb = (2*pi)^(-d/2) * exp(-0.5*sum((this.scenForProb/cs).^2, 2)) / prod(diag(cs));
+            this.scenWeight = this.scenProb./sum(this.scenProb); 
 
             if totNumScen ~= this.totNumScen
                 matRad_cfg = MatRad_Config.instance();
