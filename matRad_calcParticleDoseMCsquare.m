@@ -383,6 +383,15 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                         
                         dij.MC_tallies{1} = 'LET';
                     end
+
+                    % Postprocessing for dij: Remove fields since this is already the combined dose over all bixels
+                    fields = {'MCsquareCalcOrder','bixelNum','rayNum','totalNumOfRays','totalNumOfBixels','numOfRaysPerBeam','numOfBeams'};
+                    for f = 1:length(fields)
+                        if isfield(dij,fields{f})
+                            dij = rmfield(dij,fields{f});
+                        end
+                    end
+                    dij.beamNum = 1;
                 end
                 
                 % reorder influence matrix to comply with matRad default ordering

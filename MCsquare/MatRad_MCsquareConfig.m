@@ -346,7 +346,7 @@ classdef MatRad_MCsquareConfig
             fclose(dataFileHandle);
         end
 
-        function cube = readMhd(~,filename)
+        function cube = readMhd(obj,filename)
             % matRad mhd file reader
             %
             % call
