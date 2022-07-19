@@ -34,11 +34,18 @@ classdef matRad_multScen
     % public properties which can be changed outside this class
     properties
         
-        TYPE;                   % denotes the sampling type which cen be one of the following
+        TYPE;                   % denotes the sampling type which can be one of the following
         % 'nomScen'   create only the nominal scenario
         % 'wcScen'    create worst case scenarios
         % 'impScen'   create important/grid scenarios
         % 'rndScen'   create random scenarios
+        
+        
+        probDist;               % denotes probability distrubtion which can be one of the following
+        % 'normDist': normal probability distrubtion
+        % 'equalProb' for uniform probability distribution
+        
+        typeProp;
         
         % Uncertainty Model
         rangeRelSD  = 3.5;                % given in %
@@ -74,7 +81,7 @@ classdef matRad_multScen
         
         % shift scenarios
         
-        shiftSize;              % 3x1 vector to define maximal shift in [mm]  % (e.g. abdominal cases 5mm otherwise 3mm)        
+        shiftSize;              % 3x1 vector to define maximal shift in [mm]  % (e.g. abdominal cases 5mm otherwise 3mm)
         
         % b) define range error scenarios
         
@@ -102,6 +109,9 @@ classdef matRad_multScen
     properties(Constant = true)
         
         AvailableScenCreationTYPE = {'nomScen','wcScen','impScen','rndScen'};
+        AvailableProbDist = {'normDist','equalProb'};
+        AvailableTypeProp = {'probBins','pointwise'};
+        
     end
     
     % constant deafult properties which are only visible within matRad_multScen
@@ -182,6 +192,7 @@ classdef matRad_multScen
         function this = matRad_multScen(ct,TYPE)
             
             matRad_cfg = MatRad_Config.instance();
+            
             if isempty(ct)
                 this.numOfCtScen = 1;
             else
@@ -199,8 +210,31 @@ classdef matRad_multScen
             else
                 this.TYPE = this.DEFAULT_TYPE;
             end
+            
+            if exist('probDist','var') && ~isempty(probDist)
+                if sum(strcmp(this.AvailableProbDist,probDist))>0
+                    this.probDist = probDist;
+                else
+                    matRad_cfg.dispWarning('matRad_multScen: Unknown probability distribution - using normal distribution now');
+                    this.probDist = this.DEFAULT_probDist;
+                end
+            else
+                this.probDist = this.DEFAULT_probDist;
+            end
+            
+            if exist('typeProp','var') && ~isempty(typeProp)
+                if sum(strcmp(this.AvailableTypeProp,typeProp))>0
+                    this.typeProp = typeProp;
+                else
+                    matRad_cfg.dispWarning('matRad_multScen: Unknown type prop - using the probBins now');
+                    this.typeProp = this.DEFAULT_TypeProp;
+                end
+            else
+                this.typeProp = this.DEFAULT_TypeProp;
+            end
+            
             this.lockInit = false;
-                       
+            
             this      = this.initialize();
             
         end % end constructor
@@ -210,7 +244,7 @@ classdef matRad_multScen
             newInstance.TYPE = 'nomScen';
             newInstance.lockInit = true;
             newInstance.lockUpdate = true;
-                        
+            
             newInstance.scenForProb         = this.scenForProb(i,:);
             newInstance.relRangeShift       = this.scenForProb(i,5);
             newInstance.absRangeShift       = this.scenForProb(i,4);
@@ -240,6 +274,26 @@ classdef matRad_multScen
             else
                 matRad_cfg = MatRad_Config.instance();
                 matRad_cfg.dispError('Invalid scenario TYPE!');
+            end
+        end
+        
+        function this = set.probDist(this,value)
+            if ischar(value) && any(strcmp(value,this.AvailableProbDist))
+                this.probDist = value;
+                this = this.initialize();
+            else
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid probability distribution!');
+            end
+        end
+         
+        function this = set.typeProp(this,value)
+            if ischar(value) && any(strcmp(value,this.AvailableTypeProp))
+                this.typeProp = value;
+                this = this.initialize();
+            else
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid scenario type prop!');
             end
         end
         
@@ -288,9 +342,9 @@ classdef matRad_multScen
                 this.numOfShiftScen = value;
                 this = this.updateScenariosFromUncertainties();
             else
-               matRad_cfg = MatRad_Config.instance();
-                matRad_cfg.dispError('Invalid value for shift scenario number!'); 
-            end 
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid value for shift scenario number!');
+            end
         end
         
         function this = set.numOfRangeShiftScen(this,value)
@@ -298,39 +352,39 @@ classdef matRad_multScen
                 this.numOfRangeShiftScen = value;
                 this = this.updateScenariosFromUncertainties();
             else
-               matRad_cfg = MatRad_Config.instance();
-                matRad_cfg.dispError('Invalid value for number of range over/undershoots!'); 
-            end 
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid value for number of range over/undershoots!');
+            end
         end
         
         function this = set.shiftGenType(this,value)
-            if ischar(value) && any(strcmp(value,{'equidistant','sampled'}))
+            if ischar(value) && any(strcmp(value,{'equidistant','sampled','sampled_truncated'}))
                 this.shiftGenType = value;
                 this = this.updateScenariosFromUncertainties();
             else
-               matRad_cfg = MatRad_Config.instance();
-                matRad_cfg.dispError('Invalid value for shift generation type!'); 
-            end 
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid value for shift generation type!');
+            end
         end
         
         function this = set.rangeGenType(this,value)
-            if ischar(value) && any(strcmp(value,{'equidistant','sampled'}))
+            if ischar(value) && any(strcmp(value,{'equidistant','sampled','sampled_truncated'}))
                 this.rangeGenType = value;
                 this = this.updateScenariosFromUncertainties();
             else
-               matRad_cfg = MatRad_Config.instance();
-                matRad_cfg.dispError('Invalid value for range shift generation type!'); 
-            end 
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid value for range shift generation type!');
+            end
         end
         
         function this = set.shiftCombType(this,value)
-            if ischar(value) && any(strcmp(value,{'individual','combined','permuted'}))
+            if ischar(value) && any(strcmp(value,{'individual','combined','permuted','permuted_truncated'}))
                 this.shiftCombType = value;
                 this = this.updateScenariosFromUncertainties();
             else
                 matRad_cfg = MatRad_Config.instance();
-                matRad_cfg.dispError('Invalid value for shift combination!'); 
-            end 
+                matRad_cfg.dispError('Invalid value for shift combination!');
+            end
         end
         
         function this = set.scenCombType(this,value)
@@ -339,8 +393,8 @@ classdef matRad_multScen
                 this = this.updateScenariosFromUncertainties();
             else
                 matRad_cfg = MatRad_Config.instance();
-                matRad_cfg.dispError('Invalid value for scenario combination!'); 
-            end 
+                matRad_cfg.dispError('Invalid value for scenario combination!');
+            end
         end
         
         function this = set.rangeCombType(this,value)
@@ -349,8 +403,8 @@ classdef matRad_multScen
                 this = this.updateScenariosFromUncertainties();
             else
                 matRad_cfg = MatRad_Config.instance();
-                matRad_cfg.dispError('Invalid value for absolute & relative range combination!'); 
-            end 
+                matRad_cfg.dispError('Invalid value for absolute & relative range combination!');
+            end
         end
         
         function this = set.includeNomScen(this,value)
@@ -359,8 +413,8 @@ classdef matRad_multScen
                 this = this.updateScenariosFromUncertainties();
             else
                 matRad_cfg = MatRad_Config.instance();
-                matRad_cfg.dispError('Invalid value for inclusion of nominal scenario!'); 
-            end 
+                matRad_cfg.dispError('Invalid value for inclusion of nominal scenario!');
+            end
         end
         
         function listAllScenarios(this)
@@ -398,8 +452,8 @@ classdef matRad_multScen
             this.includeNomScen       = this.(['includeNomScen_' this.TYPE]);
             
             this.lockUpdate = false;
-                        
-            this = this.updateScenariosFromUncertainties();            
+            
+            this = this.updateScenariosFromUncertainties();
         end
         
         %%
@@ -424,6 +478,7 @@ classdef matRad_multScen
                     this.shiftSize = [NaN NaN NaN];
                     this.maxAbsRangeShift = this.rangeAbsSD * 3;
                     this.maxRelRangeShift = this.rangeRelSD * 3;
+                    
             end
             
             this = this.setMultScen();
@@ -444,23 +499,53 @@ classdef matRad_multScen
             switch this.shiftGenType
                 case 'equidistant'
                     % create grid vectors
-                    isoShiftVec{1} = [0 linspace(-this.shiftSize(1), this.shiftSize(1), this.numOfShiftScen(1))];
-                    isoShiftVec{2} = [0 linspace(-this.shiftSize(2), this.shiftSize(2), this.numOfShiftScen(2))];
-                    isoShiftVec{3} = [0 linspace(-this.shiftSize(3), this.shiftSize(3), this.numOfShiftScen(3))];
+                    if(this.numOfShiftScen(1)>0)
+                        xVec = linspace(0, this.shiftSize(1), (this.numOfShiftScen(1)+1)/2);
+                        xVec(1)=[];
+                        isoShiftVec{1} = [0 -xVec xVec];
+                    else
+                        isoShiftVec{1}=0;
+                    end
+                    if(this.numOfShiftScen(2)>0)
+                        yVec = linspace(0, this.shiftSize(2), (this.numOfShiftScen(2)+1)/2);
+                        yVec(1)=[];
+                        isoShiftVec{2} = [0 -yVec yVec];
+                    else
+                        isoShiftVec{2}=0;
+                    end
+                    if(this.numOfShiftScen(3)>0)
+                        zVec = linspace(0, this.shiftSize(3), (this.numOfShiftScen(3)+1)/2);
+                        zVec(1)=[];
+                        isoShiftVec{3} = [0 -zVec zVec];
+                    else
+                        isoShiftVec{3}=0;
+                    end
                 case 'sampled'
                     meanP = zeros(1,3); % mean (parameter)
-                    if matRad_cfg.isMatlab
-                        rng('shuffle');
-                    end
+                    if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
                     isoShiftVec{1} = [0 this.shiftSD(1) .* randn(1, this.numOfShiftScen(1)) + meanP(1)];
+                    if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
                     isoShiftVec{2} = [0 this.shiftSD(2) .* randn(1, this.numOfShiftScen(2)) + meanP(2)];
+                    if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
                     isoShiftVec{3} = [0 this.shiftSD(3) .* randn(1, this.numOfShiftScen(3)) + meanP(3)];
+                case 'sampled_truncated'
+                    meanP = zeros(1,3); % mean (parameter)
+                    if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
+                    pd{1} = makedist('Normal','mu',meanP(1),'sigma',this.shiftSD(1));
+                    t{1} = truncate(pd{1},-this.shiftSD(1) * this.wcFactor,this.shiftSD(1) * this.wcFactor);
+                    isoShiftVec{1} = [0 transpose(random(t{1},this.numOfShiftScen(1),1))];
+                    if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
+                    pd{2} = makedist('Normal','mu',meanP(2),'sigma',this.shiftSD(2));
+                    t{2} = truncate(pd{2},-this.shiftSD(2) * this.wcFactor,this.shiftSD(2) * this.wcFactor);
+                    isoShiftVec{2} = [0 transpose(random(t{2},this.numOfShiftScen(2),1))];
+                    if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
+                    pd{3} = makedist('Normal','mu',meanP(3),'sigma',this.shiftSD(3));
+                    t{3} = truncate(pd{3},-this.shiftSD(3) * this.wcFactor,this.shiftSD(3) * this.wcFactor);
+                    isoShiftVec{3} = [0 transpose(random(t{3},this.numOfShiftScen(3),1))];
+                    
                 otherwise
                     matRad_cfg.dispError('did not expect that!');
             end
-            
-            %Remove double shifts
-            isoShiftVec = cellfun(@unique,isoShiftVec,'UniformOutput',false);
             
             % create scenMaskIso for isoShifts
             numIso(1) = numel(isoShiftVec{1});
@@ -476,6 +561,16 @@ classdef matRad_multScen
                     scenMaskIso(1,1,:) = true; % z shifts
                 case 'permuted'
                     scenMaskIso(:,:,:) = true;
+                case 'permuted_truncated'
+                    for ix=1:numel(isoShiftVec{1})
+                        for iy=1:numel(isoShiftVec{2})
+                            for iz=1:numel(isoShiftVec{3})
+                                if isoShiftVec{1}(ix)^2/this.shiftSD(1)^2+isoShiftVec{2}(iy)^2/this.shiftSD(2)^2+isoShiftVec{3}(iz)^2/this.shiftSD(3)^2<=this.wcFactor^2;
+                                    scenMaskIso(ix,iy,iz) = true;
+                                end
+                            end
+                        end
+                    end
                 case 'combined'
                     % determine that matrix is cubic
                     if isequal(numIso(1), numIso(2), numIso(3))
@@ -531,13 +626,24 @@ classdef matRad_multScen
                 case 'sampled'
                     % relRange
                     std = this.rangeRelSD; meanP = 0;
-                    if matRad_cfg.isMatlab
-                        rng('shuffle');
-                    end
+                    if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
                     this.relRangeShift = [nomScen std .* randn(1, this.numOfRangeShiftScen) + meanP];
                     % absRange
                     std = this.rangeAbsSD; meanP = 0;
+                    if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
                     this.absRangeShift = [nomScen std .* randn(1, this.numOfRangeShiftScen) + meanP];
+                case 'sampled_truncated'
+                    std = this.rangeRelSD; meanP = 0;
+                    % relRange
+                    if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
+                    pd{1} = makedist('Normal','mu',meanP(1),'sigma',std);
+                    t{1} = truncate(pd{1},-std * this.wcFactor,std * this.wcFactor);
+                    this.relRangeShift = [nomScen random(t{1},this.numOfShiftScen(1),1)];
+                    % absRange
+                    if matRad_getEnvironment == 'MATLAB' rng('shuffle'), end;
+                    pd{2} = makedist('Normal','mu',meanP(1),'sigma',std);
+                    t{2} = truncate(pd{2},-std * this.wcFactor,std * this.wcFactor);
+                    this.absRangeShift = [nomScen random(t{1},this.numOfShiftScen(1),1)];
                 otherwise
                     matRad_cfg.dispError('Not a valid type of generating data.');
             end
@@ -582,8 +688,8 @@ classdef matRad_multScen
                 case 'individual' % combine setup and range scenarios individually
                     
                     nIso = size(this.isoShift,1);
-                    nRange = size(rangeShift,1);                                        
-                   
+                    nRange = size(rangeShift,1);
+                    
                     
                     % range errors should come last
                     if this.includeNomScen
@@ -598,7 +704,7 @@ classdef matRad_multScen
                         isoScen = zeros(nIso,5);
                         isoScen(:,1:3) = this.isoShift(2:end,:);
                         this.scenForProb = [this.scenForProb; isoScen; rangeScen];
-                    else                       
+                    else
                         rangeScen = zeros(nRange,5);
                         isoScen = zeros(nIso,5);
                         rangeScen(:,4:5) = rangeShift;
@@ -684,12 +790,7 @@ classdef matRad_multScen
                             this = setMultScen(this);
                         end
                 end
-            elseif this.totNumShiftScen == 0 
-                this.scenMask(:,1,:) = true;
-            elseif this.totNumRangeScen == 0
-                this.scenMask(:,:,1) = true;
             end
-                
             
             
             % create linearalized mask where the i row points to the indexes of scenMask
@@ -708,11 +809,11 @@ classdef matRad_multScen
             mu    = [0 0 0 0 0];
             sigma = [this.shiftSD this.rangeAbsSD this.rangeRelSD/100];
             
-            if isequal(this.DEFAULT_probDist,'normDist')
+            if isequal(this.probDist,'normDist')
                 
                 this.scenProb = 1;
                 
-                if isequal(this.DEFAULT_TypeProp,'probBins')
+                if isequal(this.typeProp,'probBins')
                     
                     for i = 1:length(mu)
                         samplePosSorted = sort(unique(this.scenForProb(:,i)));
@@ -726,7 +827,7 @@ classdef matRad_multScen
                         this.scenProb   = this.scenProb.*0.5.*(erf((upperBinLevel-mu(i))/(sqrt(2)*sigma(i)))-erf((lowerBinLevel-mu(i))/(sqrt(2)*sigma(i))));
                     end
                     
-                elseif isequal(this.DEFAULT_TypeProp,'pointwise')
+                elseif isequal(this.typeProp,'pointwise')
                     for i = 1:length(mu)
                         this.scenProb = this.scenProb .* (1/sqrt(2*pi*sigma(i)^2)*exp(-((this.scenForProb(:,i)-mu(i)).^2./(2*sigma(i)^2))));
                     end
@@ -736,10 +837,8 @@ classdef matRad_multScen
                 % the 3D grid
                 this.scenProb = this.scenProb./sum(this.scenProb);
                 
-            elseif isequal(probDist,'equalProb')
-                
-                numScen  = size(samplePos,1);
-                this.scenProb = repmat(1/numScen,1,numScen);
+            elseif isequal(this.probDist,'equalProb')
+                this.scenProb = repmat(1/this.totNumScen,1,this.totNumScen);
                 
             else
                 matRad_cfg = MatRad_Config.instance();
@@ -757,7 +856,6 @@ classdef matRad_multScen
     
     
 end  % end of matRad_multScen class
-
 
 
 

@@ -1,7 +1,7 @@
-function [cstStat, doseStat, meta] = matRad_samplingAnalysis(ct,cst,pln,caSampRes,mSampDose,resultGUInomScen,varargin)
+function [cstStat, doseStat, meta] = matRad_samplingAnalysis(ct,cst,pln,caSampRes,mSampDose, resultGUInomScen,phaseProb,varargin)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad uncertainty sampling analysis function
-% 
+%
 % call
 %   [structureStat, doseStat] = samplingAnalysis(ct,cst,subIx,mSampDose,w)
 %
@@ -9,17 +9,17 @@ function [cstStat, doseStat, meta] = matRad_samplingAnalysis(ct,cst,pln,caSampRe
 %   ct:                 ct cube
 %   cst:                matRad cst struct
 %   pln:                matRad's pln struct
-%   caSampRes:          cell array of sampling results depicting plan 
+%   caSampRes:          cell array of sampling results depicting plan
 %                       parameter
-%   mSampDose:          matrix holding the sampled doses, each row 
-%                       corresponds to one dose sample                      
+%   mSampDose:          matrix holding the sampled doses, each row
+%                       corresponds to one dose sample
 %   resultGUInomScen:   resultGUI struct of the nominal plan
 %   varargin:           optional Name/Value pairs for additional custom
 %                       settings
-%                       - 'GammaCriterion': 1x2 vector [%  mm] 
+%                       - 'GammaCriterion': 1x2 vector [%  mm]
 %                       - 'Percentiles':    vector with desired percentiles
 %                                           between (0,1)
-%   
+%
 %
 % output
 %   cstStat         structure-wise statistics (mean, max, percentiles, ...)
@@ -29,13 +29,13 @@ function [cstStat, doseStat, meta] = matRad_samplingAnalysis(ct,cst,pln,caSampRe
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2017 the matRad development team. 
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
+% Copyright 2017 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -45,7 +45,9 @@ matRad_cfg = MatRad_Config.instance();
 
 p = inputParser;
 p.addParameter('gammaCriterion',[2 2],@(g) numel(g) == 2 && isnumeric(g) && all(g > 0));
-p.addParameter('percentiles',[0.01 0.05 0.125 0.25 0.5 0.75 0.875 0.95 0.99],@(p) (isscalar(p) || isvector(p)) && isnumeric(p) && all(p > 0 & p < 1)); 
+p.addParameter('robustnessCriterion',[5 5],@(r) numel(r) == 2 && isnumeric(r) && all(r > 0));
+p.addParameter('percentiles',[0.01 0.05 0.125 0.25 0.5 0.75 0.875 0.95 0.99],@(p) (isscalar(p) || isvector(p)) && isnumeric(p) && all(p > 0 & p < 1));
+p.addParameter('slice',[],@(slice) assert(isnumeric(slice) && isscalar(slice) && (slice >= 0)));
 
 parse(p,varargin{:});
 
@@ -54,7 +56,24 @@ meta = p.Results;
 meta.sufficientStatistics = matRad_checkSampIntegrity(pln.multScen);
 
 ix    = pln.subIx;
-vProb = pln.multScen.scenProb;
+
+%%
+
+vProb = zeros(numel(caSampRes),1);
+
+for l = 1:numel(caSampRes)
+    
+    [ctScen,shiftScen,RangeScen] = deal(pln.multScen.linearMask(l,1),pln.multScen.linearMask(l,2),pln.multScen.linearMask(l,3));
+    shiftScenMask = find(squeeze(pln.multScen.scenMask(1,:,:)));
+    indProb = sub2ind([pln.multScen.totNumShiftScen pln.multScen.totNumRangeScen],shiftScen,RangeScen);
+    
+    numCtScen = nnz(pln.multScen.scenMask(:,shiftScen,RangeScen));
+    if(numCtScen>1)
+        vProb(l)=pln.multScen.scenProb(find(shiftScenMask==indProb))/phaseProb(ctScen);
+    else
+        vProb(l)=pln.multScen.scenProb(find(shiftScenMask==indProb));
+    end
+end
 
 %% generate structurewise statistics
 cstStat = struct();
@@ -70,8 +89,44 @@ for i = 1:size(resultGUInomScen.cst,1)
         cstStat(i).dvh(l).volumePoints = caSampRes(l).dvh(i).volumePoints;
         cstStat(i).qi(l)               = caSampRes(l).qi(i);
         cstStat(i).w(l)                = vProb(l)';
-    end  
+    end
 end
+
+%%
+for  i = 1:size(cst,1)
+    if isequal(cst{i,3},'TARGET')
+        
+        % loop over target objectives and get the lowest dose objective
+        refDose = inf;
+        
+        if isstruct(cst{i,6})
+            cst{i,6} = num2cell(arrayfun(@matRad_DoseOptimizationFunction.convertOldOptimizationStruct,cst{i,6}));
+        end
+        
+        for runObjective = 1:numel(cst{i,6})
+            % check if this is an objective that penalizes underdosing
+            obj = cst{i,6}{runObjective};
+            if ~isa(obj,'matRad_DoseOptimizationFunction')
+                try
+                    obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
+                catch ME
+                    matRad_cfg.dispWarning('Objective/Constraint not valid!\n%s',ME.message)
+                    continue;
+                end
+            end
+            
+            if isa(obj,'DoseObjectives.matRad_SquaredDeviation') || isa(obj,'DoseObjectives.matRad_SquaredUnderdosing')
+                refDose = (min(obj.getDoseParameters(),refDose))/pln.numOfFractions;
+            end
+        end
+        
+        if refDose == inf
+            sprintf('%s%s',i,'Warning: target has no objective that penalizes underdosage, ');
+        end
+        
+    end
+end
+
 %% calculate mean and std cube
 % compute doseMatrix with columns correspond to scenarios
 
@@ -84,32 +139,32 @@ doseStat.stdCube               = zeros(ct.cubeDim);
 doseStat.meanCubeW             = zeros(ct.cubeDim);
 doseStat.stdCubeW              = zeros(ct.cubeDim);
 
-doseStat.meanCube(ix)  = mean(mSampDose,2);   
+doseStat.meanCube(ix)  = mean(mSampDose,2);
 doseStat.stdCube(ix)   = std(mSampDose,1,2);
-doseStat.meanCubeW(ix) = (sum(mSampDose * diag(vProb),2)); 
+doseStat.meanCubeW(ix) = (sum(mSampDose * diag(vProb),2));
 
 %Weighting of std is not similar in Octave & Matlab
 switch env
     case 'MATLAB'
- 
-    doseStat.meanCubeW(ix) = (sum(mSampDose * diag(vProb),2));
-    doseStat.stdCubeW(ix)  = std(mSampDose,vProb,2);
+        
+        doseStat.meanCubeW(ix) = (sum(mSampDose * diag(vProb),2));
+        doseStat.stdCubeW(ix)  = std(mSampDose,vProb,2);
     case 'OCTAVE'
-    try
-        pkg load nan;
-        nanLoaded = true;
-    catch
-        nanLoaded = false;
-        matRad_cfg.dispWarning('Weighted std not possible due to missing ''nan'' package!');
-    end
-    
-    if nanLoaded
-        doseStat.stdCubeW(ix)  = std(mSampDose,[],2,vProb);
-     else
-        doseStat.stdCubeW(ix)  = doseStat.stdCube(ix);
-     end
+        try
+            pkg load nan;
+            nanLoaded = true;
+        catch
+            nanLoaded = false;
+            matRad_cfg.dispWarning('Weighted std not possible due to missing ''nan'' package!');
+        end
+        
+        if nanLoaded
+            doseStat.stdCubeW(ix)  = std(mSampDose,[],2,vProb);
+        else
+            doseStat.stdCubeW(ix)  = doseStat.stdCube(ix);
+        end
 end
-    
+
 
 % gamma cube
 doseCube = resultGUInomScen.(pln.bioParam.quantityVis);
@@ -123,11 +178,29 @@ doseStat.gammaAnalysis.cube1 = doseCube;
 doseStat.gammaAnalysis.cube2 = doseStat.meanCubeW;
 doseStat.gammaAnalysis.cube2Name = 'doseStat.meanCubeW';
 
-matRad_cfg.dispInfo(['matRad: Performing gamma index analysis with parameters', num2str(meta.gammaCriterion), '[% mm] \n']);
+matRad_cfg.dispInfo(['matRad: Performing gamma index analysis with parameters ', num2str(meta.gammaCriterion), ' [% mm] \n']);
 doseStat.gammaAnalysis.doseAgreement = meta.gammaCriterion(1);
 doseStat.gammaAnalysis.distAgreement = meta.gammaCriterion(2);
 
-doseStat.gammaAnalysis.gammaCube = matRad_gammaIndex(doseCube,doseStat.meanCubeW,[ct.resolution.x ct.resolution.y ct.resolution.z],meta.gammaCriterion);
+doseStat.gammaAnalysis.gammaCube = matRad_gammaIndex(doseCube,doseStat.meanCubeW,[ct.resolution.x ct.resolution.y ct.resolution.z],meta.gammaCriterion,meta.slice);
+
+% robustness cube
+if strncmp(pln.bioParam.quantityVis,'RBExD', 5)
+    doseStat.robustnessAnalysis.cubeName = 'resultGUInomScen.RBExD';
+else
+    doseStat.robustnessAnalysis.cubeName = 'resultGUInomScen.physicalDose';
+end
+
+doseStat.robustnessAnalysis.meanCubeW = doseStat.meanCubeW;
+doseStat.robustnessAnalysis.stdCubeW = doseStat.stdCubeW;
+
+matRad_cfg.dispInfo(['matRad: Performing standard deviation analysis with parameter ', num2str(meta.robustnessCriterion(2)), '% \n']);
+
+doseStat.robustnessAnalysis.refDose = refDose;
+doseStat.gammaAnalysis.distAgreement = meta.robustnessCriterion(1);
+doseStat.gammaAnalysis.distAgreement = meta.robustnessCriterion(2);
+
+[doseStat.robustnessAnalysis.robustnessCube, doseStat.robustnessAnalysis.robPassRate] = matRad_robustnessIndex(doseStat.meanCubeW,doseStat.stdCubeW,refDose,meta.robustnessCriterion,meta.slice,ct,cst,pln);
 
 %% percentiles
 percentiles     = meta.percentiles;
@@ -153,7 +226,7 @@ end
         doseGrid = dvh(1).doseGrid;
         dvhMat = NaN * ones(numel(dvh),numel(dvh(1).volumePoints));
         for j = 1:numel(dvh)
-            dvhMat(j,:) = dvh(j).volumePoints;            
+            dvhMat(j,:) = dvh(j).volumePoints;
         end
         % for statistical reasons, treat NaN as 0
         dvhMat(isnan(dvhMat)) = 0;
@@ -175,17 +248,17 @@ end
         
         dvhStat.std.doseGrid     = doseGrid;
         dvhStat.std.volumePoints = std(dvhMat,w);
-
+        
         dvhStat.percDVH = NaN * ones(numel(percentiles),numel(doseGrid));
         
         for j = 1:size(dvhMat,2)
             wQ =  matRad_weightedQuantile(dvhMat(:,j), percentiles, w', false);
             dvhStat.percDVH(:,j) = wQ;
         end
-
+        
     end % eof calcDVHStat
 
-    % qi statistics
+% qi statistics
     function qiStat = calcQiStat(qi,percentiles,w)
         fields = fieldnames(qi);
         % remove name field
@@ -229,17 +302,17 @@ end
                 S = reshape(w,1,[]) * reshape(X,[],1) / sum(w);
             else
                 % row-wise
-                S = reshape(w,1,[]) * X ./ sum(w);        
+                S = reshape(w,1,[]) * X ./ sum(w);
             end
-
+            
         else
             S = mean(X);
         end
     end
 
-    % check integrity of scenario analysis (i.e. check number of scenarios)
+% check integrity of scenario analysis (i.e. check number of scenarios)
     function statCheck = matRad_checkSampIntegrity(multScen)
-       
+        
         if multScen.totNumScen > 20
             totalNum = true;
         else
