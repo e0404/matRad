@@ -27,9 +27,9 @@ classdef MatRad_TopasConfig < handle
 
         workingDir; %working directory for the simulation
 
-        label = 'matRad_plan';
+        engine = 'TOPAS'; %parameter for continuity
 
-        engine = 'TOPAS';
+        label = 'matRad_plan';
 
         %Simulation parameters
         numThreads = 0; %number of used threads, 0 = max number of threads (= num cores)
@@ -227,9 +227,10 @@ classdef MatRad_TopasConfig < handle
                             break
                         end
                     end
-                    obj.bioParam.AlphaX = pln.bioParam.AvailableAlphaXBetaX{5,1}(1);
-                    obj.bioParam.BetaX = pln.bioParam.AvailableAlphaXBetaX{5,1}(2);
                 end
+                obj.bioParam.AlphaX = pln.bioParam.AvailableAlphaXBetaX{5,1}(1);
+                obj.bioParam.BetaX = pln.bioParam.AvailableAlphaXBetaX{5,1}(2);
+
             end
             if obj.scorer.LET
                 obj.scorer.doseToMedium = true;
@@ -1257,7 +1258,7 @@ classdef MatRad_TopasConfig < handle
                             dataTOPAS(cutNumOfBixel).posX = stf(beamIx).ray(rayIx).rayPos_bev(3);
                             dataTOPAS(cutNumOfBixel).posY = stf(beamIx).ray(rayIx).rayPos_bev(1);
 
-                                dataTOPAS(cutNumOfBixel).current = uint32(obj.fracHistories * nCurrentParticles / obj.numOfRuns);
+                            dataTOPAS(cutNumOfBixel).current = uint32(obj.fracHistories * nCurrentParticles / obj.numOfRuns);
 
                             if obj.pencilBeamScanning
                                 % angleX corresponds to the rotation around the X axis necessary to move the spot in the Y direction
@@ -1653,10 +1654,6 @@ classdef MatRad_TopasConfig < handle
                     matRad_cfg.dispInfo('Exporting cube in FORTRAN ordering...\n')
                 end
                 permutation = [2 1 3];
-            end
-
-            if isfield(pln.propMC,'materialConverter') && isfield(pln.propMC.materialConverter,'mode')
-                obj.materialConverter.mode = pln.propMC.materialConverter.mode;
             end
 
             % Bookkeeping

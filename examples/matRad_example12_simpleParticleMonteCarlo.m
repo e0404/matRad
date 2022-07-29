@@ -61,20 +61,27 @@ pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't /
 
 % retrieve scenarios for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,'nomScen'); % optimize on the nominal scenario     
- 
-pln.propMC.proton_engine = 'MCsquare';
-%pln.propMC.proton_engine = 'TOPAS';
+
+% select Monte Carlo engine ('MCsquare' very fast for physical protons, 'TOPAS' slow but versatile for everything else)
+pln.propMC.engine = 'MCsquare';
+% pln.propMC.engine = 'TOPAS';
+
+% set number of histories lower than default for this example (default: 1e8)
+pln.propMC.numHistories = 1e5;
 
 %Enable/Disable use of range shifter (has effect only when we need to fill 
 %up the low-range region)
 pln.propStf.useRangeShifter = true;  
 
+% Enable/Disable local computation with TOPAS. Enabling this will generate
+% the necessary TOPAS files to run the simulation on any machine or server.
+% pln.propMC.externalCalculation = true;
 
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
 %stf = matRad_generateSingleBixelStf(ct,cst,pln); %Example to create a single beamlet stf
 
-%% dose calculation
+%% analytical dose calculation
 dij = matRad_calcParticleDose(ct, stf, pln, cst); %Calculate particle dose influence matrix (dij) with analytical algorithm
 %dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,1e4); %Calculate particle dose influence matrix (dij) with MC algorithm (slow!!)
 
@@ -82,10 +89,11 @@ dij = matRad_calcParticleDose(ct, stf, pln, cst); %Calculate particle dose influ
 resultGUI = matRad_fluenceOptimization(dij,cst,pln); %Optimize
 %resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij); %Use uniform weights
 
+%% Monte Carlo dose calculation
 %resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
-resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,resultGUI.w,1e5);
+resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,resultGUI.w);
 
-%% Compare Dose
+%% Compare Dose (number of histories not sufficient for accurate representation)
 resultGUI = matRad_appendResultGUI(resultGUI,resultGUI_MC,0,'MC');
 matRad_compareDose(resultGUI.physicalDose, resultGUI.physicalDose_MC, ct, cst, [1, 1, 0] , 'off', pln, [2, 2], 1, 'global');
 
