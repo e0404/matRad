@@ -1,4 +1,5 @@
-%% Example: Proton Treatment Plan with Manipulated CT values
+%% Example: Proton Treatment Plan with Manipulated CT values including fine
+%           sampling algorithm
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -99,6 +100,37 @@ ct_manip.cubeHU{1} = 1.035*ct_manip.cubeHU{1};
 % Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose
 resultGUI_noise = matRad_calcDoseDirectMC(ct_manip,stf,pln,cst,resultGUI.w);
 
+%% Recalculate Plan with analytical fine sampling algorithm
+% Again use the existing optimized pencil beam weights and recalculate the 
+% RBE weighted dose, now using the fine sampling algorithm instead of MC
+
+% pln.propDoseCalc.fineSampling stores parameters defining the fine 
+% sampling simulation
+
+pln.propDoseCalc.fineSampling.method = 'russo'; 
+    % method for weight calculation, availabe methods:
+    %   'russo'
+    %   'fitCircle', supports N = 2,3 and 8
+    %   'fitSquare', supports N = 2 and 3
+
+    % pln.propDoseCalc.fineSampling.N = n sets the number of used fine
+    % sampling sub beams, default is N = 21
+    % parameter to modify number of calculated FS sub beams
+    %   'russo',        total number of beams = N^2
+    %   'fitCircle',    total number of beams = (2*N + 1)^2
+    %   'fitSquare',    total number of beams = (2^N - 1) * 6 + 1
+
+    % pln.propDoseCalc.fineSampling.sigmaSub = s set the Gaussian standard 
+    % deviation of the sub Gaussian beams, only used when fine sampling 
+    % method 'russo' is selected', default is s = 1;
+
+% Indirect call for fine sampling dose calculation:    
+% dijFS = matRad_calcParticleDose(ct,stf,pln,cst,false);
+% resultGUI_FS = matRad_calcCubes(resultGUI.w,dijFS);
+
+% Direct call for fine sampling dose calculation:
+resultGUI_FS = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
+
 %%  Visual Comparison of results
 % Let's compare the new recalculation against the optimization result.
 plane      = 3;
@@ -106,17 +138,21 @@ doseWindow = [0 max([resultGUI.RBExDose(:); resultGUI_noise.RBExDose(:)])];
 
 figure,title('original plan')
 matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
-figure,title('manipulated plan')
+figure,title('manipulated plan MC')
 matRad_plotSliceWrapper(gca,ct_manip,cst,1,resultGUI_noise.RBExDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
+figure,title('manipulated plan FS')
+matRad_plotSliceWrapper(gca,ct_manip,cst,1,resultGUI_FS.RBExDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
 
 % Let's plot single profiles along the beam direction
 ixProfileY = round(pln.propStf.isoCenter(1,1)./ct.resolution.x);
 
 profileOrginal = resultGUI.RBExDose(:,ixProfileY,slice);
-profileNoise   = resultGUI_noise.RBExDose(:,ixProfileY,slice);
+profileNoiseMC   = resultGUI_noise.RBExDose(:,ixProfileY,slice);
+profileNoiseFS   = resultGUI_FS.RBExDose(:,ixProfileY,slice);
 
 figure,plot(profileOrginal,'LineWidth',2),grid on,hold on, 
-       plot(profileNoise,'LineWidth',2),legend({'original profile','noise profile'}),
+       plot(profileNoiseMC,'LineWidth',2),plot(profileNoiseFS,'LineWidth',2),
+       legend({'original profile','noise profile MC','noise profile FS'}),
        xlabel('mm'),ylabel('Gy(RBE)'),title('profile plot')
        
 %% Quantitative Comparison of results
@@ -126,8 +162,13 @@ doseDifference   = 2;
 distToAgreement  = 2;
 n                = 1;
 
-[gammaCube,gammaPassRateCell] = matRad_gammaIndex(...
+[gammaCubeMC,gammaPassRateCellMC] = matRad_gammaIndex(...
     resultGUI_noise.RBExDose,resultGUI.RBExDose,...
+    [ct.resolution.x, ct.resolution.y, ct.resolution.z],...
+    [doseDifference distToAgreement],slice,n,'global',cst);
+
+[gammaCubeFS,gammaPassRateCellFS] = matRad_gammaIndex(...
+    resultGUI_FS.RBExDose,resultGUI.RBExDose,...
     [ct.resolution.x, ct.resolution.y, ct.resolution.z],...
     [doseDifference distToAgreement],slice,n,'global',cst);
 

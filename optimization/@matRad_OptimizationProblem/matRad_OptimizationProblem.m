@@ -23,7 +23,10 @@ classdef matRad_OptimizationProblem < handle
     
     properties
         BP              %matRad_BackProjection object for mapping & backprojection
-        bioOpt = '';    
+        bioOpt = '';
+
+        minimumW = NaN;
+        maximumW = NaN;
     end
     
     methods
@@ -49,11 +52,31 @@ classdef matRad_OptimizationProblem < handle
         [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
         
         function lb = lowerBounds(optiProb,w)
-            lb = zeros(size(w));
+            minW = optiProb.minimumW;
+            if isnan(minW)
+                lb = zeros(size(w));
+            elseif isscalar(minW)
+                lb = minW*ones(size(w));
+            elseif isvector(minW) && all(size(minW) == size(w))
+                lb = minW;
+            else
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Minimum Bounds for Optimization Problem could not be set!');
+            end
         end
         
         function ub = upperBounds(optiProb,w)
-            ub = Inf * ones(size(w));
+            maxW = optiProb.maximumW;
+            if isnan(maxW)
+                ub = Inf(size(w));
+            elseif isscalar(maxW)
+                ub = maxW*ones(size(w));
+            elseif isvector(maxW) && all(size(maxW) == size(w))
+                ub = maxW;
+            else
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Maximum Bounds for Optimization Problem could not be set!');
+            end
         end
     end
 end

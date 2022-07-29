@@ -134,39 +134,6 @@ for i = 1:size(cst,1)
                     
                 end
                 
-                      
-                %Old implementation with for loop
-                %{
-                for c = 1:size(jacobSub,2)
-                    jacobVec = jacobSub(:,c);
-                    
-                    if isa(optiProb.BP,'matRad_DoseProjection') && ~isempty(jacobVec) || isa(optiProb.BP,'matRad_ConstantRBEProjection')
-                        
-                        DoseProjection{1}          = [DoseProjection{1},sparse(cst{i,4}{1},1,jacobVec,dij.doseGrid.numOfVoxels,1)];
-                        
-                    elseif isa(optiProb.BP,'matRad_EffectProjection') && ~isempty(jacobVec)
-                        
-                        if isa(optiProb.BP,'matRad_VariableRBEProjection')
-                            scaledEffect = (dij.gamma(cst{i,4}{1}) + d_i);
-                            jacobVec = jacobVec./(2*dij.bx(cst{i,4}{1}).*scaledEffect);
-                        end
-                        
-                        mAlphaDoseProjection{1}    = [mAlphaDoseProjection{1},sparse(cst{i,4}{1},1,jacobVec,dij.doseGrid.numOfVoxels,1)];
-                        mSqrtBetaDoseProjection{1} = [mSqrtBetaDoseProjection{1},...
-                            sparse(cst{i,4}{1},1:numel(cst{i,4}{1}),2*jacobVec,dij.doseGrid.numOfVoxels,numel(cst{i,4}{1}))];
-                        
-                        voxelID                 = [voxelID ;cst{i,4}{1}];   %list of voxels relevant for constraints to enable faster computations
-                        
-                        if isempty(constraintID)
-                            lastID = 0;
-                        else
-                            lastID = constraintID(end);
-                        end
-                        constraintID            = [constraintID, repmat(1 + lastID,1,numel(cst{i,4}{1}))]; %Maps constraints to voxels
-                        
-                    end
-                end
-                %}             
             end
             
         end

@@ -49,10 +49,12 @@ classdef MatRad_Config < handle
         envVersion;
         isOctave; %Helper bool to check for Octave
         isMatlab; %Helper bool to check for Matlab
-        
+        matRad_version; %MatRad version string
+    end
+    
+    properties (SetAccess = private)
         matRadRoot;
     end
-        
     
     methods (Access = private)
         function obj = MatRad_Config()
@@ -62,18 +64,25 @@ classdef MatRad_Config < handle
             %  For instantiation, use the static MatRad_Config.instance();
             
             obj.matRadRoot = fileparts(mfilename('fullpath'));
-            
+            addpath(genpath(obj.matRadRoot));
+
             %Set Version
             obj.getEnvironment();
+            obj.matRad_version = matRad_version();            
             
             %Just to catch people messing with the properties in the file
             if ~isempty(obj.writeLog) && obj.writeLog
-                logFile = [matRadRoot filesep 'matRad.log'];
+                logFile = [obj.matRadRoot filesep 'matRad.log'];
                 obj.logFileHandle = fopen(logFile,'a');
             end
             
             %Call the reset function for remaining inatialization
             obj.reset();
+        end
+
+        function delete(~)
+            %might not be desired by users
+            %rmpath(genpath(matRad_cfg.matRadRoot));
         end
         
         function displayToConsole(obj,type,formatSpec,varargin)
@@ -136,8 +145,7 @@ classdef MatRad_Config < handle
             if obj.writeLog
                 fprintf(obj.logFileHandle,forwardArgs{:});
             end
-        end
-        
+        end 
     end
     
     methods
@@ -159,10 +167,16 @@ classdef MatRad_Config < handle
             obj.propDoseCalc.defaultResolution = struct('x',3,'y',3,'z',3); %[mm]
             obj.propDoseCalc.defaultLateralCutOff = 0.995; %[rel.]
             obj.propDoseCalc.defaultGeometricCutOff = 50; %[mm]
+            obj.propDoseCalc.defaultKernelCutOff = Inf; %[mm]
             obj.propDoseCalc.defaultSsdDensityThreshold = 0.05; %[rel.]
             obj.propDoseCalc.defaultUseGivenEqDensityCube = false; %Use the given density cube ct.cube and omit conversion from cubeHU.
             obj.propDoseCalc.defaultIgnoreOutsideDensities = true; %Ignore densities outside of cst contours
             obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
+            
+            % default properties for fine sampling calculation
+            obj.propDoseCalc.defaultFineSamplingProperties.sigmaSub = 1;
+            obj.propDoseCalc.defaultFineSamplingProperties.N = 21;
+            obj.propDoseCalc.defaultFineSamplingProperties.method = 'russo';
             
             obj.propOpt.defaultMaxIter = 500;
             
@@ -172,9 +186,6 @@ classdef MatRad_Config < handle
             obj.propMC.direct_defaultHistories = 2e4;
             
             obj.disableGUI = false;
-            
-            obj.devMode = false;
-            obj.eduMode = false;
         end
         
         %%For testing
@@ -191,10 +202,16 @@ classdef MatRad_Config < handle
             obj.propDoseCalc.defaultResolution = struct('x',5,'y',6,'z',7); %[mm]
             obj.propDoseCalc.defaultGeometricCutOff = 20;
             obj.propDoseCalc.defaultLateralCutOff = 0.8;
+            obj.propDoseCalc.defaultKernelCutOff = 20; %[mm]
             obj.propDoseCalc.defaultSsdDensityThreshold = 0.05;
             obj.propDoseCalc.defaultUseGivenEqDensityCube = false; %Use the given density cube ct.cube and omit conversion from cubeHU.
             obj.propDoseCalc.defaultIgnoreOutsideDensities = true;
             obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
+            
+            % default properties for fine sampling calculation
+            obj.propDoseCalc.defaultFineSamplingProperties.sigmaSub = 2;
+            obj.propDoseCalc.defaultFineSamplingProperties.N = 5;
+            obj.propDoseCalc.defaultFineSamplingProperties.method = 'russo';
             
             obj.propOpt.defaultMaxIter = 10;
             
@@ -204,7 +221,6 @@ classdef MatRad_Config < handle
             obj.propMC.direct_defaultHistories = 100;
             
             obj.disableGUI = true;
-
             obj.devMode = true;
             obj.eduMode = false;
         end  
@@ -237,7 +253,7 @@ classdef MatRad_Config < handle
             obj.devMode = false;
             obj.eduMode = true;
         end
-        
+
         function setDefaultGUIProperties(obj)
            obj.gui.backgroundColor = [0.5 0.5 0.5];
            obj.gui.elementColor = [0.75 0.75 0.75];
@@ -247,7 +263,7 @@ classdef MatRad_Config < handle
            obj.gui.fontWeight = 'bold';
            obj.gui.fontName = 'Helvetica';
         end
-
+        
         function dispDebug(obj,formatSpec,varargin)
             %dispDebug print debug messages (log level >= 4)
             %  input
@@ -354,6 +370,72 @@ classdef MatRad_Config < handle
                 obj = uniqueInstance;
             end
         end
+               
+        function obj = loadobj(sobj)
+        % Overload the loadobj function to allow downward compatibility
+        % with workspaces which where saved as an older version of this class
+        
+            function basic_struct = mergeStructs(basic_struct, changed_struct)
+                % nested function for merging the properties of the loaded
+                % obj into a new obj.
+                % Merges two structs, including nestes structs, by overwriting 
+                % the properties of basic_struct with the changed properties in changed_struct
+                fields = fieldnames(basic_struct);
+                for k = 1:length(fields)  
+                    disp(fields{k});
+                    if(isfield(changed_struct, fields{k}))                 
+                        if isstruct(changed_struct.(fields{k})) && isstruct(basic_struct.(fields{i}))        
+                            basic_struct.(fields{k}) = mergeStructs(basic_struct.(fields{k}), changed_struct.(fields{i}));
+                        else
+                            basic_struct.(fields{k}) = changed_struct.(fields{k});
+                        end
+                    end
+                end
+            end
+            
+            % If the saved object is loaded as a struct there was a problem
+            % with the generic loading process most likly a version-conflict
+            % regarding the structs, in order to fix this, do a custom 
+            % loading process including recursivly copying the conflicting structs 
+            if isstruct(sobj)
+                warning('The  loaded object differs from the current MatRad_Config class, resuming the loading process with the overloaded loadobj function!');
+                obj = MatRad_Config(); 
+                % Use a metaclass object to get the properties because
+                % Octave <= 5.2 doesn't have a properties function
+                props = {metaclass(obj).PropertyList.Name};
+                % Throw warning if the version differs and remove the
+                % matRad_version field from the loaded struct, in order to
+                % not overwrite the version later
+                if (isfield(sobj, 'matRad_version') && ~(strcmp(obj.matRad_version, sobj.matRad_version)))
+                    warning('MatRad version or git Branch of the loaded object differs from the curret version!');
+                    sobj = rmfield(sobj, 'matRad_version');
+                end
+                % Itterate over the properties of the newly created MatRad_Config object
+                for i = 1:length(props)
+                    % check if the field exists in the loaded object
+                    if(isfield(sobj,props{i}))
+                        objField = obj.(props{i});
+                        sobjField = sobj.(props{i});
+                        % If field from loaded object and from the newly
+                        % created object are equal skip it, else copy the
+                        % value of the loaded object and if it's a struct
+                        % check it's field recursively
+                        if ~(isequal(sobjField, objField))
+                            if (isstruct(sobjField) && isstruct(objField))
+                                retStruct = mergeStructs(objField,sobjField);
+                                obj.(props{i}) = retStruct;
+                            else
+                                obj.(props{i}) = sobjField;
+                            end
+                        end
+                    end
+                end
+            else
+                obj = sobj;
+            end     
+        end
+        
+        
     end
 end
 

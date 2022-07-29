@@ -31,12 +31,11 @@ function g = matRad_objectiveGradient(optiProb,apertureInfoVec,dij,cst)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-apertureInfo = optiProb.apertureInfo;
-
 % update apertureInfo, bixel weight vector an mapping of leafes to bixels
-if ~isequal(apertureInfoVec,apertureInfo.apertureVector)
-    apertureInfo = optiProb.matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVec);
+if ~isequal(apertureInfoVec,optiProb.apertureInfo.apertureVector)
+    optiProb.apertureInfo = optiProb.matRad_daoVec2ApertureInfo(optiProb.apertureInfo,apertureInfoVec);
 end
+apertureInfo = optiProb.apertureInfo;
 
 % bixel based gradient calculation
 bixelG = matRad_objectiveGradient@matRad_OptimizationProblem(optiProb,apertureInfo.bixelWeights,dij,cst);

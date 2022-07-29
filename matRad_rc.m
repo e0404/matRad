@@ -17,15 +17,18 @@ function matRad_rc(clearWindow)
 if nargin < 1
     clearWindow = true;
 end
-  
-% set search path
 
+% Initialize matRad
 matRad_cfg = MatRad_Config.instance();
+if ~strcmp(matRad_cfg.matRadRoot,fileparts(mfilename("fullpath")))
+    matRad_cfg.dispWarning('Called matRad_rc in folder %s but matRad initialized in folder %s!\n Removing old matRad from path and using new installation!',fileparts(mfilename("fullpath")),matRad_cfg.matRadRoot); 
+    rmpath(genpath(matRad_cfg.matRadRoot));
+    clear matRad_cfg MatRad_Config;
+    matRad_cfg = MatRad_Config.instance();
+end
 
-addpath(genpath(matRad_cfg.matRadRoot));
-
+%clear command window and close all figures
 if clearWindow
-    %clear command window and close all figures
     clc;
     close all;
 end
@@ -38,3 +41,4 @@ matRad_cfg.dispInfo('You are running matRad %s with %s %s\n',vString,env,envver)
 clear env envver vString;
 
 
+end

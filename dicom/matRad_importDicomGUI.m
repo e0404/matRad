@@ -20,8 +20,10 @@ function hGUI = matRad_importDicomGUI()
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
 if nargout > 0
     hGUI = matRad_importDicomWidget();
+
 else
     matRad_importDicomWidget();
 end
