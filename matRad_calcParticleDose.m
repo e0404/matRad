@@ -328,7 +328,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                     % vectorize computations more efficiently than when
                     % making this an outer loop
                     for ctScen = 1:pln.multScen.numOfCtScen
-                        if any(pln.multScen.scenMask(ctScen,:,:),'all') %We don't need it if no scenario for this ct scenario is relevant
+                        if any(any(pln.multScen.scenMask(ctScen,:,:))) %We don't need it if no scenario for this ct scenario is relevant
                             % precomputations for fine-sampling
                             if strcmp(pbCalcMode, 'fineSampling')   
                                 % compute radial distances relative to pencil beam
