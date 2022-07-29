@@ -160,7 +160,7 @@ VdoseGrid = find(matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z,tmpC
 % Convert CT subscripts to coarse linear indices.
 [yCoordsV_voxDoseGrid, xCoordsV_voxDoseGrid, zCoordsV_voxDoseGrid] = ind2sub(dij.doseGrid.dimensions,VdoseGrid);
 
-% load base data% load machine file
+% load base data
 fileName = [pln.radiationMode '_' pln.machine];
 try
    load([fileparts(mfilename('fullpath')) filesep 'basedata' filesep fileName '.mat']);

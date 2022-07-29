@@ -3,7 +3,7 @@ function dij = matRad_calcParticleDoseMCsquare(ct,stf,pln,cst,calcDoseDirect)
 % matRad MCsquare Monte Carlo proton dose calculation wrapper
 %
 % call
-%   dij = matRad_calcParticleDoseMc(ct,stf,pln,cst,calcDoseDirect)
+%   dij = matRad_calcParticleDoseMCsquare(ct,stf,pln,cst,calcDoseDirect)
 %
 % input
 %   ct:                         matRad ct struct
@@ -52,6 +52,7 @@ if ~strcmp(pln.radiationMode,'protons')
 end
 
 % Load class variables in pln
+% for calcDoseDirect, this is already done in superior function
 if ~calcDoseDirect
     pln = matRad_cfg.getDefaultClass(pln,'propMC','MatRad_MCsquareConfig');
 end
@@ -126,11 +127,8 @@ if dij.numOfScenarios ~= 1
     matRad_cfg.dispWarning('MCsquare is only implemented for single scenario use at the moment. Will only use the first Scenario for Monte Carlo calculation!');
 end
 
-
-
 % prefill ordering of MCsquare bixels
 dij.MCsquareCalcOrder = NaN*ones(dij.totalNumOfBixels,1);
-
 
 % Explicitly setting the number of threads for MCsquare, 0 is all available
 nbThreads = 0;
@@ -157,18 +155,25 @@ for s = 1:ct.numOfCtScen
         dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
 end
 
-%BDL File
-bdFile = [machine.meta.machine '.txt'];
+% switch for using existing BDL file (e.g. to fit matRad basedata), 
+% or generate BDL file from matRad base data using MCsquareBDL
+if isfield(pln,'loadExistingBDL') && ~isempty(pln.loadExistingBDL)
+    % use existing BDL file
+    bdFile = pln.loadExistingBDL;
+    
+else
+    % fit and create BDL file using selected machine file
+    bdFile = [machine.meta.machine '.txt'];
 
-% bdFile = 'BDL_matRad.txt'; %use for baseData fit 
+    % Calculate MCsquare base data
+    % Argument stf is optional, if given, calculation only for energies given in stf
+    MCsquareBDL = MatRad_MCsquareBaseData(machine);
 
-% Argument stf is optional, if given, calculation only for energies given in stf
-% MCsquareBDL = MatRad_MCsquareBaseData(machine, stf);
-MCsquareBDL = MatRad_MCsquareBaseData(machine);
-
-%matRad_createMCsquareBaseDataFile(bdFile,machine,1);
-MCsquareBDL = MCsquareBDL.writeMCsquareData([MCsquareFolder filesep 'BDL' filesep bdFile]);
-MCsquareBDL = MCsquareBDL.saveMatradMachine('savedMatRadMachine');
+    %matRad_createMCsquareBaseDataFile(bdFile,machine,1);
+    MCsquareBDL = MCsquareBDL.writeMCsquareData([MCsquareFolder filesep 'BDL' filesep bdFile]);
+    MCsquareBDL = MCsquareBDL.saveMatradMachine('savedMatRadMachine');
+    
+end
 
 for shiftScen = 1:pln.multScen.totNumShiftScen
     
@@ -281,12 +286,12 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                  %Number of primaries depending on beamlet-wise or field-based compuation (direct dose calculation)                    
                                  if calcDoseDirect
                                      stfMCsquare(i).energyLayer(k).numOfPrimaries = [stfMCsquare(i).energyLayer(k).numOfPrimaries ...
-                                         round(stf(i).ray(j).weight(stf(i).ray(j).energy == stfMCsquare(i).energies(k))*pln.propMC.Num_Primaries)];
+                                         round(stf(i).ray(j).weight(stf(i).ray(j).energy == stfMCsquare(i).energies(k))*pln.propMC.numHistories)];
                                      
                                      totalWeights = totalWeights + stf(i).ray(j).weight(stf(i).ray(j).energy == stfMCsquare(i).energies(k));
                                  else
                                      stfMCsquare(i).energyLayer(k).numOfPrimaries = [stfMCsquare(i).energyLayer(k).numOfPrimaries ...
-                                         pln.propMC.Num_Primaries];
+                                         pln.propMC.numHistories];
                                  end
                                  
                                  %Now add the range shifter
@@ -393,7 +398,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                             dij = rmfield(dij,fields{f});
                         end
                     end
-                    dij.beamNum = 1;
+                    dij.numOfBeams = 1;
                 end
                 
                 % reorder influence matrix to comply with matRad default ordering

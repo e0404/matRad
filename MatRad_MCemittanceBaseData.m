@@ -58,9 +58,9 @@ classdef MatRad_MCemittanceBaseData
                 obj = obj.getRangeShiftersFromStf(stf);
             end
             
-            obj.energyspread = matRad_cfg.propMC.defaultCarbonEnergySpread;
             obj.matRad_cfg = MatRad_Config.instance();
-            
+            obj.energyspread = obj.matRad_cfg.propMC.defaultCarbonEnergySpread;
+                        
             obj.machine = machine;
             obj.problemSigma = false;
             obj.selectedFocus = ones(numel(machine.data),1) * NaN;
@@ -220,7 +220,7 @@ classdef MatRad_MCemittanceBaseData
                 w50 = d50_r - d50_l;
                 %if width left of peak cannot be determined use r80 as width
             else
-                d50_l = newDepths(maxI);
+                % d50_l = newDepths(maxI);
                 w50 = r80;
                 obj.problemSigma = true;
             end
@@ -406,7 +406,8 @@ classdef MatRad_MCemittanceBaseData
                 count = count + 1;
             end
             machine = obj.machine;
-            save(strcat('../../', machineName, '.mat'),'machine');
+            save(strcat('../../baseData/', machineName, '.mat'),'machine');
+            obj.matRad_cfg.dispInfo(['Saved Emittance to matRad base data in /baseData/' machineName '.mat\n']);
         end
     end
     

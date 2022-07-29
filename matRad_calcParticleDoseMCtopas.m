@@ -51,6 +51,7 @@ if ~calcDoseDirect
     pln.propMC.numOfRuns = 1;
 
     % Load class variables in pln
+    % for calcDoseDirect, this is already done in superior function
     pln = matRad_cfg.getDefaultClass(pln,'propMC','MatRad_TopasConfig');
 
     if pln.propMC.numHistories  < 1e10

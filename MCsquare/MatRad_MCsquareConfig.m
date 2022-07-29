@@ -28,12 +28,12 @@ classdef MatRad_MCsquareConfig
         RNG_Seed      =	0;		% Seed for the random number generator (deterministic result only with single thread). Default: 0 = seed based on the time
         
         % This parameter can be overwritten through MatRad_Config default parameters
-        Num_Primaries  = 1e6;		% Number of primary protons to simulate. Default: 1e7
+        numHistories  = 1e6;		% Number of primary protons to simulate. Default: 1e7
         E_Cut_Pro     =	0.5;		% Energy cut (in MeV) below which heavy charged particles are locally absorbed. Default: 0.5
         D_Max	      =	0.2;		% Maximum distance between two step (cm). Default: 0.2
         Epsilon_Max   =	0.25;		% Fractional energy loss (dE/T) per step. Default: 0.25
         Te_Min	      =	0.05;		% Threshold energy (MeV) for the production of secondary electrons (currently locally absorbed). Default: 0.05
-        Stat_uncertainty    = 0.0	% Maximum statistical uncertainty (in percent). Default: 0.0 = no maximum uncertainty (number of proton = Num_Primaries)
+        Stat_uncertainty    = 0.0	% Maximum statistical uncertainty (in percent). Default: 0.0 = no maximum uncertainty (number of proton = numHistories)
         % As a reference: 200 MeV protons can transfer a maximum energy of 0.5 MeV to ?-electrons which correspond to a range of 7 mm in lung tissues.
         
         %%% Input files
@@ -123,7 +123,7 @@ classdef MatRad_MCsquareConfig
             
             % Set default histories from MatRad_Config
             if isfield(matRad_cfg.propMC,'defaultNumHistories')
-                obj.Num_Primaries = matRad_cfg.propMC.defaultNumHistories;
+                obj.numHistories = matRad_cfg.propMC.defaultNumHistories;
             end
         end
 
@@ -415,10 +415,12 @@ classdef MatRad_MCsquareConfig
                 % modify fieldnames beginning with "4D"
                 if strncmp(MCsquareProperties{i},'fourD',5)
                     writeString = ['4D' MCsquareProperties{i}(6:end)];
+                elseif strncmp(MCsquareProperties{i},'numHistories',5)
+                    writeString = 'Num_Primaries';
                 else
                     writeString = MCsquareProperties{i};
                 end
-
+                
                 if isa(obj.(MCsquareProperties{i}),'logical')
                     fprintf(fid,[writeString ' ' logicalString{obj.(MCsquareProperties{i})+1} '\n']);
                 elseif isa(obj.(MCsquareProperties{i}),'double')
