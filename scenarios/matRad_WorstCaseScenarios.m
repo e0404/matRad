@@ -4,15 +4,16 @@ classdef matRad_WorstCaseScenarios < matRad_ScenarioModel
     
     properties
         includeNominalScenario = true;
+        combinations = 'none'; %Can be 'none', 'shift', 'all' to ontrol creation of worst case combinations 
+        combineRange = true; %Wether to treat absolute & relative range as one shift or as separate scenarios
     end
 
     properties (SetAccess=protected)
         name = 'wcScen';
     end
 
-    properties (Access = private)
-        combinations = 'none'; %Can be 'none', 'shift', 'all' to ontrol creation of worst case combinations 
-        combineRange = true; %Wether to treat absolute & relative range as one shift or as separate scenarios
+    properties (Constant)
+        validCombinationTypes = {'all','none','shift'};
     end
     
     methods
@@ -35,6 +36,26 @@ classdef matRad_WorstCaseScenarios < matRad_ScenarioModel
             this.includeNominalScenario = includeNomScen;
             this.updateScenarios();
         end
+
+        function set.combineRange(this,combineRange_)
+            valid = isscalar(combineRange_) && (isnumeric(combineRange_) || islogical(combineRange_));
+            if ~valid 
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid value for combineRange! Needs to be a boolean / logical value!');
+            end
+            this.combineRange = combineRange_;
+            this.updateScenarios();
+        end
+
+        function set.combinations(this,combinations_)
+            valid = any(strcmp(combinations_,this.validCombinationTypes));
+            if ~valid 
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid value for combinations! Needs to be one of the strings %s!',strjoin(this.validCombinationTypes,' / '));
+            end
+            this.combinations = combinations_;
+            this.updateScenarios();
+        end
         
         function scenarios = updateScenarios(this)
             matRad_cfg = MatRad_Config.instance();
@@ -46,7 +67,15 @@ classdef matRad_WorstCaseScenarios < matRad_ScenarioModel
                     %Create independent shifts
                     wcSetupShifts = wcSetupShifts.*[eye(3); -eye(3)];
                 case 'shift'
-                    error('Not implemented!');
+                    %error('Not implemented!');
+                    if this.includeNominalScenario
+                        wcSetupShifts = [wcSetupShifts; zeros(1,numel(wcSetupShifts))];
+                    end
+                    wcSetupShifts = [wcSetupShifts; -wcSetupShifts(1,:)];
+                    
+                    [X,Y,Z] = meshgrid(wcSetupShifts(:,1),wcSetupShifts(:,2),wcSetupShifts(:,3));
+                    wcSetupShifts = [X(:), Y(:), Z(:)];
+
                 case 'all'
                     error('Not implemented!');
             end
@@ -76,8 +105,11 @@ classdef matRad_WorstCaseScenarios < matRad_ScenarioModel
                 if strcmp(this.combinations,'none')
                     linearMask(1:this.totNumShiftScen,2) = (1:this.totNumShiftScen)' + this.includeNominalScenario;
                     linearMask(this.totNumShiftScen+1:this.totNumShiftScen+this.totNumRangeScen,3) = (1:this.totNumRangeScen)' + this.includeNominalScenario;
+                elseif strcmp(this.combinations,'shift')
+                    linearMask(1:this.totNumShiftScen,2) = (1:this.totNumShiftScen)' + this.includeNominalScenario;
+                    linearMask(this.totNumShiftScen+1:this.totNumShiftScen+this.totNumRangeScen,3) = (1:this.totNumRangeScen)' + this.includeNominalScenario;
                 else
-                    error('Not implemented yet!');
+                    matRad_cfg.dispError('This sanity check should never be reached!');
                 end
             
             else
@@ -123,4 +155,3 @@ classdef matRad_WorstCaseScenarios < matRad_ScenarioModel
 
 
 end
-

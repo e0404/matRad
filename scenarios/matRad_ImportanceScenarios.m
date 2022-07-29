@@ -4,6 +4,8 @@ classdef matRad_ImportanceScenarios < matRad_ScenarioModel
     
     properties
         includeNominalScenario = true;        
+        combinations = 'none'; %Can be 'none', 'shift', 'all' to ontrol creation of worst case combinations 
+        combineRange = true; %Wether to treat absolute & relative range as one shift or as separate scenarios
 
         numOfSetupGridPoints = 9;
         numOfRangeGridPoints = 9;
@@ -13,9 +15,8 @@ classdef matRad_ImportanceScenarios < matRad_ScenarioModel
         name = 'impScen';
     end
 
-    properties (Access = private)
-        combinations = 'none'; %Can be 'none', 'shift', 'all' to ontrol creation of worst case combinations 
-        combineRange = true; %Wether to treat absolute & relative range as one shift or as separate scenarios
+    properties (Constant)
+        validCombinationTypes = {'all','none','shift'};
     end
     
     methods
@@ -27,6 +28,16 @@ classdef matRad_ImportanceScenarios < matRad_ScenarioModel
             end
             
             this@matRad_ScenarioModel(superclassArgs{:});
+        end
+
+        function set.combineRange(this,combineRange_)
+            valid = isscalar(combineRange_) && (isnumeric(combineRange_) || islogical(combineRange_));
+            if ~valid 
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid value for combineRange! Needs to be a boolean / logical value!');
+            end
+            this.combineRange = combineRange_;
+            this.updateScenarios();
         end
         
         function scenarios = updateScenarios(this)
@@ -63,9 +74,8 @@ classdef matRad_ImportanceScenarios < matRad_ScenarioModel
                         griddedSetupShifts = [griddedSetupShifts; tmpGrid];
                     end                    
                 case 'shift'
-                    error('Not implemented!');
-                    %Remove duplicate scenarios and update number of shifts
-                    %griddedSetupShifts = unique(griddedSetupShifts,'rows','stable');    
+                    [X,Y,Z] = meshgrid(setupShiftGrid(:,1),setupShiftGrid(:,2),setupShiftGrid(:,3));
+                    griddedSetupShifts = [X(:), Y(:), Z(:)];    
                 case 'all'
                     error('Not implemented!');
             end
@@ -102,15 +112,9 @@ classdef matRad_ImportanceScenarios < matRad_ScenarioModel
 
             if this.combineRange
                 griddedRangeShifts = rangeShiftGrid;
-            else
-                matRad_cfg.dispError('Range Shift Permutations are not yet implemented!');
-                
-                %Preliminary code
-                for i=1:size(setupShiftGrid,2)
-                    tmpGrid = zeros(size(setupShiftGrid,1),3);
-                    tmpGrid(:,i) = setupShiftGrid(:,i);
-                    griddedRangeShifts = [griddedRangeShifts; tmpGrid];
-                end
+            else                
+                [rngAbs,rngRel] = meshgrid(rangeShiftGrid(:,1),rangeShiftGrid(:,2));
+                griddedRangeShifts = [rngAbs(:),rngRel(:)];
             end
 
             %Remove duplicate scenarios and update number of shifts
@@ -130,7 +134,7 @@ classdef matRad_ImportanceScenarios < matRad_ScenarioModel
             
             %Aggregate scenarios
 
-            if strcmp(this.combinations,'none')
+            if any(strcmp(this.combinations,{'none','shift'}))
                 scenarios = zeros(this.totNumShiftScen + this.totNumRangeScen,5);
                 scenarios(1:this.totNumShiftScen,1:3) = griddedSetupShifts;
                 scenarios(this.totNumShiftScen+1:this.totNumShiftScen+this.totNumRangeScen,4:5) = griddedRangeShifts;
@@ -177,14 +181,24 @@ classdef matRad_ImportanceScenarios < matRad_ScenarioModel
         end
     
         %% set methods
-        function set.includeNominalScenario(this,value)
-            arguments
-                this
-                value (1,1) {mustBeNumericOrLogical}
+        function set.includeNominalScenario(this,includeNomScen)
+            valid = isscalar(includeNomScen) && (isnumeric(includeNomScen) || islogical(includeNomScen));
+            if ~valid 
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid value for includeNominalScenario! Needs to be a boolean / logical value!');
             end
+            this.includeNominalScenario = includeNomScen;
+            this.updateScenarios();
+        end
 
-            this.includeNominalScenario = value;
-            this.update();
+        function set.combinations(this,combinations_)
+            valid = any(strcmp(combinations_,this.validCombinationTypes));
+            if ~valid 
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid value for combinations! Needs to be one of the strings %s!',strjoin(this.validCombinationTypes,' / '));
+            end
+            this.combinations = combinations_;
+            this.updateScenarios();
         end
     end
 
