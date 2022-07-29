@@ -25,6 +25,16 @@ classdef matRad_WorstCaseScenarios < matRad_ScenarioModel
             
             this@matRad_ScenarioModel(superclassArgs{:});
         end
+
+        function set.includeNominalScenario(this,includeNomScen)
+            valid = isscalar(includeNomScen) && (isnumeric(includeNomScen) || islogical(includeNomScen));
+            if ~valid 
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid value for includeNominalScenario! Needs to be a boolean / logical value!');
+            end
+            this.includeNominalScenario = includeNomScen;
+            this.updateScenarios();
+        end
         
         function scenarios = updateScenarios(this)
             matRad_cfg = MatRad_Config.instance();
