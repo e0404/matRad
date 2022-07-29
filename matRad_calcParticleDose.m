@@ -206,6 +206,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
     
     for i = 1:numel(stf) % loop over all beams
         
+        % init beam
         matRad_calcDoseInitBeam;
         
         % Determine lateral cutoff
@@ -347,8 +348,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
 
                                 % manipulate radDepthCube for range scenarios
                                 if pln.multScen.relRangeShift(rangeShiftScen) ~= 0 || pln.multScen.absRangeShift(rangeShiftScen) ~= 0
-                                    currRadDepths = radDepths +...                                                       % original cube
-                                        radDepths*pln.multScen.relRangeShift(rangeShiftScen) +... % rel range shift
+                                    currRadDepths = radDepths * (1+pln.multScen.relRangeShift(rangeShiftScen)) +... % rel range shift
                                         pln.multScen.absRangeShift(rangeShiftScen);                                   % absolute range shift
                                     currRadDepths(currRadDepths < 0) = 0;
                                 else
