@@ -9,14 +9,11 @@ end
 
 execFunc = sprintf('%s = %s(%s);', outputName, functionName, strjoin(functionVars,','));
 
-if functionName=='matRadGUI'
-    execFunc = 'matRadGUI';
-end
+%if functionName=='matRadGUI'
+%    execFunc = 'matRadGUI';
+%end
 
 eval(execFunc);
-
-if execFunc ~= 'matRadGUI'
-    save(strcat(outputName,'.mat'), outputName);
-end
+save(strcat(outputName,'.mat'), outputName);
 
 end
