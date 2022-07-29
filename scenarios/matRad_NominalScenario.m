@@ -1,6 +1,26 @@
 classdef matRad_NominalScenario < matRad_ScenarioModel
-    %UNTITLED2 Summary of this class goes here
-    %   Detailed explanation goes here
+%  matRad_RandomScenarios
+%  Implements a single nominal planning scenario
+%
+% constructor
+%   matRad_NominalScenario()
+%   matRad_NominalScenario(ct)
+%
+% input
+%   ct:                 ct cube
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2022 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (SetAccess = protected)
         name = 'nomScen';
@@ -14,6 +34,10 @@ classdef matRad_NominalScenario < matRad_ScenarioModel
                 superclassArgs = {ct};
             end            
             this@matRad_ScenarioModel(superclassArgs{:});
+
+            %TODO: We could do this automatically in the superclass
+            %Octave 5 has a bug there and throws an error
+            this.updateScenarios();
         end
         
         function scenarios = updateScenarios(this)

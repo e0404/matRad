@@ -1,6 +1,29 @@
 classdef matRad_ScenarioModel < handle
-    %UNTITLED Summary of this class goes here
-    %   Detailed explanation goes here
+%  matRad_ScenarioModel
+%  This is an abstract interface class to define Scenario Models for use in
+%  robust treatment planning and uncertainty analysis.
+%  Subclasses should at least implement the update() function to generate
+%  their own scenarios.
+%
+% constructor (Abstract)
+%   matRad_ScenarioModel()
+%   matRad_ScenarioModel(ct)
+%
+% input
+%   ct:                 ct cube
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2022 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (AbortSet = true) %We use AbortSet = true here to avoid updates when 
         %Uncertainty model
@@ -44,8 +67,10 @@ classdef matRad_ScenarioModel < handle
             else
                 this.numOfCtScen = ct.numOfCtScen;
             end
-
-            this.updateScenarios();
+            
+            %TODO: We could do this here automatically in the constructur, but
+            %Octave 5 has a bug here and throws an error
+            %this.updateScenarios();
         end  
 
         %% SETTERS & UPDATE

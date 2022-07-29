@@ -25,6 +25,10 @@ classdef matRad_WorstCaseScenarios < matRad_ScenarioModel
             end
             
             this@matRad_ScenarioModel(superclassArgs{:});
+
+            %TODO: We could do this automatically in the superclass
+            %Octave 5 has a bug there and throws an error
+            this.updateScenarios();
         end
 
         function set.includeNominalScenario(this,includeNomScen)

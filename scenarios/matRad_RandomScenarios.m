@@ -1,10 +1,30 @@
 classdef matRad_RandomScenarios < matRad_ScenarioModel
-    %UNTITLED2 Summary of this class goes here
-    %   Detailed explanation goes here
+%  matRad_RandomScenarios
+%  Implements randomly sampled scenarios
+%
+% constructor
+%   matRad_RandomScenarios()
+%   matRad_RandomScenarios(ct)
+%
+% input
+%   ct:                 ct cube
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2022 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties
-        includeNominalScenario = false;        
-        nSamples = 10;
+        includeNominalScenario = false; %Forces inclusion of the nominal scenario        
+        nSamples = 10;                  %Standard number of random samples
     end
 
     %Deprecated Properties that were used
@@ -26,6 +46,10 @@ classdef matRad_RandomScenarios < matRad_ScenarioModel
             end
             
             this@matRad_ScenarioModel(superclassArgs{:});
+
+            %TODO: We could do this automatically in the superclass
+            %Octave 5 has a bug there and throws an error
+            this.updateScenarios();
         end
 
         %% Setters & Update
