@@ -1,7 +1,7 @@
 classdef matRad_StatisticsWidget < matRad_Widget
     
     properties
-        SelectedCube='physicalDose';
+        SelectedCube;
     end
     
     events
@@ -51,9 +51,9 @@ classdef matRad_StatisticsWidget < matRad_Widget
                 return;
             end
             
-            if evalin('base','exist(''resultGUI'')')
-                this.showStatistics();
-            end
+%             if evalin('base','exist(''resultGUI'')')
+%                 this.showStatistics();
+%             end
         end
         
     end
