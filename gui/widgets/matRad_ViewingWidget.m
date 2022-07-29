@@ -25,7 +25,7 @@ classdef matRad_ViewingWidget < matRad_Widget
         plotLegend = true;
         plotColorBar = true;
         ProfileType = 'lateral';
-        SelectedDisplayOption ='';
+        SelectedDisplayOption ='physicalDose';
         SelectedDisplayAllOptions='';
         CutOffLevel= 0.01;
         dispWindow= cell(3,2);

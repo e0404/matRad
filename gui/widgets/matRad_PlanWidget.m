@@ -664,11 +664,14 @@ classdef matRad_PlanWidget < matRad_Widget
 %             seqIx = find(strcmp(pln.propSeq.sequencer,contentPopUp));
 %             set(handles.popUpMenuSequencer,'Value',seqIx);
             
-            set(handles.btnRunSequencing,'Value',pln.propSeq.runSequencing);      
-            set(handles.editSequencingLevel,'String',num2str(pln.propSeq.sequencingLevel));
+            set(handles.btnRunSequencing,'Value',pln.propSeq.runSequencing);
             set(handles.btnRunDAO,'Value',pln.propOpt.runDAO);
-            set(handles.radiobutton3Dconf,'Value',pln.propOpt.conf3D);
-            
+            if isfield(pln.propSeq, 'sequencingLevel')
+                set(handles.editSequencingLevel,'String',num2str(pln.propSeq.sequencingLevel));
+            end
+            if isfield (pln.propOpt, 'conf3D')
+                set(handles.radiobutton3Dconf,'Value',pln.propOpt.conf3D);
+            end 
             set(handles.editDoseX,'String',num2str(pln.propDoseCalc.doseGrid.resolution.x));
             set(handles.editDoseY,'String',num2str(pln.propDoseCalc.doseGrid.resolution.y));
             set(handles.editDoseZ,'String',num2str(pln.propDoseCalc.doseGrid.resolution.z));
