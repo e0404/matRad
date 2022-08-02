@@ -1,5 +1,5 @@
 classdef matRad_ImportanceScenarios < matRad_ScenarioModel
-%  matRad_RandomScenarios
+%  matRad_ImportanceScenarios
 %  Implements gridded importance scenarios, i.e., weighted according to a
 %  probability distribution. It is not advised to create "combined" grids
 %  with a large number of grid-points as the curse of dimensionality will
