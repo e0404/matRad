@@ -18,7 +18,7 @@ classdef MatRad_TopasConfig < handle
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties
         % This parameter can be overwritten through MatRad_Config default parameters
-        numHistories = 1e6; %Number of histories to compute 
+        numHistories = 1e6; %Number of histories to compute
 
         topasExecCommand; %Defaults will be set during construction according to TOPAS installation instructions and used system
 
@@ -36,7 +36,7 @@ classdef MatRad_TopasConfig < handle
         numOfRuns = 5; %Default number of runs / batches
         modeHistories = 'num'; %'frac';
         fracHistories = 1e-4; %Fraction of histories to compute
-        
+
         numParticlesPerHistory = 1e6;
         verbosity = struct( 'timefeatures',0,...
             'cputime',true,...
@@ -254,7 +254,7 @@ classdef MatRad_TopasConfig < handle
             matRad_cfg.dispInfo('Writing parameter files to %s\n',obj.workingDir);
             obj.writePatient(ct,pln);
 
-            % Generate uniform weights in case of calcDoseDirect (for later optimization)
+            % Generate uniform weights in case of dij calculation (for later optimization)
             if ~exist('w','var')
                 numBixels = sum([stf(:).totalNumOfBixels]);
                 w = ones(numBixels,1);
@@ -284,16 +284,23 @@ classdef MatRad_TopasConfig < handle
             end
 
             % fill in bixels, rays and beams in case of dij calculation or external calculation
-            counter = 1;
-            for f = 1:length(stf)
-                for r = 1:stf(f).numOfRays
-                    for b = 1:stf(f).numOfBixelsPerRay(r)
-                        obj.MCparam.bixelNum(counter) = b;
-                        obj.MCparam.rayNum(counter)   = r;
-                        obj.MCparam.beamNum(counter)  = f;
-                        counter = counter + 1;
+            if obj.scorer.calcDij
+                counter = 1;
+                for f = 1:length(stf)
+                    for r = 1:stf(f).numOfRays
+                        for b = 1:stf(f).numOfBixelsPerRay(r)
+                            obj.MCparam.bixelNum(counter) = b;
+                            obj.MCparam.rayNum(counter)   = r;
+                            obj.MCparam.beamNum(counter)  = f;
+                            counter = counter + 1;
+                        end
                     end
                 end
+            else
+                % In case of calcDoseDirect, you only need beamNum
+                obj.MCparam.bixelNum = 1;
+                obj.MCparam.rayNum   = 1;
+                obj.MCparam.beamNum  = 1:length(stf);
             end
             obj.MCparam.numOfRaysPerBeam   = [stf(:).numOfRays];
 
@@ -568,94 +575,107 @@ classdef MatRad_TopasConfig < handle
             correctionFactor = obj.numParticlesPerHistory / double(obj.MCparam.nbHistoriesTotal);
 
             % Get all saved quantities
+            % Make sure that the filename always ends on 'run1_tally'
             switch obj.MCparam.outputType
                 case 'csv'
                     files = dir([folder filesep 'score_matRad_plan_field1_run1_*.csv']);
-                    obj.MCparam.tallies = cellfun(@(x) erase(x,{'score_matRad_plan_field1_run1_','.csv'}) ,{files(:).name} ,'UniformOutput' ,false);
+                    obj.MCparam.tallies = cellfun(@(x) extractBetween(x,'run1_','.csv') ,{files(:).name});
                 case 'binary'
-                    files = dir([folder filesep 'score_matRad_plan_field1_run1_*.bin']);
-                    obj.MCparam.tallies = cellfun(@(x) erase(x,{'score_matRad_plan_field1_run1_','.bin'}) ,{files(:).name} ,'UniformOutput' ,false);
+                    files = dir([folder filesep 'score_matRad_plan_field1_*run1_*.bin']);
+                    obj.MCparam.tallies = cellfun(@(x) extractBetween(x,'run1_','.bin') ,{files(:).name});
             end
 
+            obj.MCparam.tallies = unique(obj.MCparam.tallies);
             talliesCut = replace(obj.MCparam.tallies,'-','_');
+
             % Load data for each tally individually
             for t = 1:length(obj.MCparam.tallies)
                 tnameFile = obj.MCparam.tallies{t};
                 tname = talliesCut{t};
-                % Loop over all beams/fields
+                % Loop over all beams/fields and ctScenarios
                 for f = 1:obj.MCparam.nbFields
-                    % Loop over all batches/runs
-                    for k = 1:obj.MCparam.nbRuns
-                        genFileName = sprintf('score_%s_field%d_run%d_%s',obj.MCparam.simLabel,f,k,tnameFile);
-                        switch obj.MCparam.outputType
-                            case 'csv'
-                                % Generate csv file path to load
-                                genFullFile = fullfile(folder,[genFileName '.csv']);
-                            case 'binary'
-                                % Generate bin file path to load
-                                genFullFile = fullfile(folder,[genFileName '.bin']);
-                            otherwise
-                                matRad_cfg.dispError('Not implemented!');
-                        end
+                    for ctScen = 1:obj.MCparam.numOfCtScen
 
-                        % Read data from scored TOPAS files
-                        dataRead = obj.readBinCsvData(genFullFile);
-
-                        for i = 1:numel(dataRead)
-                            data.(obj.MCparam.scoreReportQuantity{i}){k} = dataRead{i};
-                        end
-
-                        % for example the standard deviation is not calculated for alpha/beta so a loop through all
-                        % reportQuantities does not work here
-                        currNumOfQuantities = numel(dataRead);
-                    end
-
-                    % Set dimensions of output cube
-                    cubeDim = size(dataRead{1});
-
-                    % add STD quadratically
-                    for i = 1:currNumOfQuantities
-                        if contains(obj.MCparam.scoreReportQuantity{i},'standard_deviation','IgnoreCase',true)
-                            topasSum.(obj.MCparam.scoreReportQuantity{i}) = sqrt(double(obj.MCparam.nbHistoriesTotal)) * sqrt(sum(cat(4,data.(obj.MCparam.scoreReportQuantity{i}){:}).^2,4));
-                        else
-                            topasSum.(obj.MCparam.scoreReportQuantity{i}) = sum(cat(4,data.(obj.MCparam.scoreReportQuantity{i}){:}),4);
-                        end
-                    end
-
-                    if contains(tnameFile,'dose','IgnoreCase',true)
-                        if obj.MCparam.nbRuns > 1
-                            % Calculate Standard Deviation from batches
-                            topasMeanDiff = zeros(cubeDim(1),cubeDim(2),cubeDim(3));
-                            for k = 1:obj.MCparam.nbRuns
-                                topasMeanDiff = topasMeanDiff + (data.Sum{k} - topasSum.Sum / obj.MCparam.nbRuns).^2;
+                        % Loop over all batches/runs
+                        for k = 1:obj.MCparam.nbRuns
+                            % Get file name of current field, run and tally (and ct, if applicable)
+                            if obj.MCparam.numOfCtScen > 1
+                                genFileName = sprintf('score_%s_field%d_ct%d_run%d_%s',obj.MCparam.simLabel,f,ctScen,k,tnameFile);
+                            else
+                                genFileName = sprintf('score_%s_field%d_run%d_%s',obj.MCparam.simLabel,f,k,tnameFile);
                             end
-                            % variance of the mean
-                            topasVarMean = topasMeanDiff./(obj.MCparam.nbRuns - 1)./obj.MCparam.nbRuns;
-                            % std of the MEAN!
-                            topasStdMean = sqrt(topasVarMean);
-                            % std of the SUM
-                            topasStdSum = topasStdMean * correctionFactor * obj.MCparam.nbRuns;
 
-                            % Save std to topasCube
-                            topasCube.([tname '_batchStd_beam' num2str(f)]) = topasStdSum;
+
+                            switch obj.MCparam.outputType
+                                case 'csv'
+                                    % Generate csv file path to load
+                                    genFullFile = fullfile(folder,[genFileName '.csv']);
+                                case 'binary'
+                                    % Generate bin file path to load
+                                    genFullFile = fullfile(folder,[genFileName '.bin']);
+                                otherwise
+                                    matRad_cfg.dispError('Not implemented!');
+                            end
+
+                            % Read data from scored TOPAS files
+                            dataRead = obj.readBinCsvData(genFullFile);
+
+                            for i = 1:numel(dataRead)
+                                data.(obj.MCparam.scoreReportQuantity{i}){k} = dataRead{i};
+                            end
+
+                            % for example the standard deviation is not calculated for alpha/beta so a loop through all
+                            % reportQuantities does not work here
+                            currNumOfQuantities = numel(dataRead);
                         end
 
+                        % Set dimensions of output cube
+                        cubeDim = size(dataRead{1});
+
+                        % add STD quadratically
                         for i = 1:currNumOfQuantities
-                            topasSum.(obj.MCparam.scoreReportQuantity{i}) = correctionFactor .* topasSum.(obj.MCparam.scoreReportQuantity{i});
+                            if contains(obj.MCparam.scoreReportQuantity{i},'standard_deviation','IgnoreCase',true)
+                                topasSum.(obj.MCparam.scoreReportQuantity{i}) = sqrt(double(obj.MCparam.nbHistoriesTotal)) * sqrt(sum(cat(4,data.(obj.MCparam.scoreReportQuantity{i}){:}).^2,4));
+                            else
+                                topasSum.(obj.MCparam.scoreReportQuantity{i}) = sum(cat(4,data.(obj.MCparam.scoreReportQuantity{i}){:}),4);
+                            end
                         end
 
-                    elseif contains(tname,'alpha','IgnoreCase',true) || contains(tname,'beta','IgnoreCase',true) || contains(tname,'RBE','IgnoreCase',true) || contains(tname,'LET','IgnoreCase',true)
-                        for i = 1:currNumOfQuantities
-                            topasSum.(obj.MCparam.scoreReportQuantity{i}) = topasSum.(obj.MCparam.scoreReportQuantity{i}) ./ obj.MCparam.nbRuns;
-                        end
-                    end
+                        if contains(tnameFile,'dose','IgnoreCase',true)
+                            if obj.MCparam.nbRuns > 1
+                                % Calculate Standard Deviation from batches
+                                topasMeanDiff = zeros(cubeDim(1),cubeDim(2),cubeDim(3));
+                                for k = 1:obj.MCparam.nbRuns
+                                    topasMeanDiff = topasMeanDiff + (data.Sum{k} - topasSum.Sum / obj.MCparam.nbRuns).^2;
+                                end
+                                % variance of the mean
+                                topasVarMean = topasMeanDiff./(obj.MCparam.nbRuns - 1)./obj.MCparam.nbRuns;
+                                % std of the MEAN!
+                                topasStdMean = sqrt(topasVarMean);
+                                % std of the SUM
+                                topasStdSum = topasStdMean * correctionFactor * obj.MCparam.nbRuns;
 
-                    % Tally per field
-                    if isfield(topasSum,'Sum')
-                        topasCube.([tname '_beam' num2str(f)]) = topasSum.Sum;
-                    end
-                    if isfield(topasSum,'Standard_Deviation')
-                        topasCube.([tname '_std_beam' num2str(f)]) = topasSum.Standard_Deviation;
+                                % Save std to topasCube
+                                topasCube.([tname '_batchStd_beam' num2str(f)]){ctScen} = topasStdSum;
+                            end
+
+                            for i = 1:currNumOfQuantities
+                                topasSum.(obj.MCparam.scoreReportQuantity{i}) = correctionFactor .* topasSum.(obj.MCparam.scoreReportQuantity{i});
+                            end
+
+                        elseif contains(tname,'alpha','IgnoreCase',true) || contains(tname,'beta','IgnoreCase',true) || contains(tname,'RBE','IgnoreCase',true) || contains(tname,'LET','IgnoreCase',true)
+                            for i = 1:currNumOfQuantities
+                                topasSum.(obj.MCparam.scoreReportQuantity{i}) = topasSum.(obj.MCparam.scoreReportQuantity{i}) ./ obj.MCparam.nbRuns;
+                            end
+                        end
+
+                        % Tally per field
+                        if isfield(topasSum,'Sum')
+                            topasCube.([tname '_beam' num2str(f)]){ctScen} = topasSum.Sum;
+                        end
+                        if isfield(topasSum,'Standard_Deviation')
+                            topasCube.([tname '_std_beam' num2str(f)]){ctScen} = topasSum.Standard_Deviation;
+                        end
                     end
                 end
             end
@@ -664,7 +684,7 @@ classdef MatRad_TopasConfig < handle
         function dataOut = readBinCsvData(~,genFullFile)
 
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
-            
+
             if contains(genFullFile,'.csv')
                 % Read csv header file to get cubeDim and number of scorers automatically
                 fid = fopen(genFullFile);
@@ -707,9 +727,9 @@ classdef MatRad_TopasConfig < handle
         end
 
         function dij = prepareDij(obj,topasCubes)
-           
+
             % Load ctScen variable
-            ctScen = obj.MCparam.numOfCtScen;
+            numOfScenarios = obj.MCparam.numOfCtScen;
 
             % Set flag for RBE and LET
             if any(contains(fieldnames(topasCubes),'alpha','IgnoreCase',true))
@@ -720,7 +740,7 @@ classdef MatRad_TopasConfig < handle
             end
 
             % Create empty dij
-            dij.numOfScenarios = ctScen;
+            dij.numOfScenarios = numOfScenarios;
             dij.numOfBeams = max(obj.MCparam.beamNum);
             dij.numOfRaysPerBeam = obj.MCparam.numOfRaysPerBeam;
             dij.totalNumOfRays = sum(dij.numOfRaysPerBeam);
@@ -775,10 +795,12 @@ classdef MatRad_TopasConfig < handle
             % Create empty sparse matrices
             % Note that for MonteCarlo, there are no individual bixels, but only 2 beams
             for t = 1:length(dijTallies)
-                if obj.scorer.calcDij
-                    dij.(dijTallies{t}){ctScen} = spalloc(obj.MCparam.ctGrid.numOfVoxels,dij.totalNumOfBixels,1);
-                else
-                    dij.(dijTallies{t}){ctScen} = spalloc(obj.MCparam.ctGrid.numOfVoxels,dij.numOfBeams,1);
+                for ctScen = 1:dij.numOfScenarios
+                    if obj.scorer.calcDij
+                        dij.(dijTallies{t}){ctScen,1} = spalloc(obj.MCparam.ctGrid.numOfVoxels,dij.totalNumOfBixels,1);
+                    else
+                        dij.(dijTallies{t}){ctScen,1} = spalloc(obj.MCparam.ctGrid.numOfVoxels,dij.numOfBeams,1);
+                    end
                 end
             end
 
@@ -787,9 +809,6 @@ classdef MatRad_TopasConfig < handle
         function dij = fillDij(obj,topasCubes,dij)
 
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
-
-            % Load ctScen variable
-            ctScen = obj.MCparam.numOfCtScen;
 
             % Load weights from parameter variable
             w = obj.MCparam.weights;
@@ -809,85 +828,95 @@ classdef MatRad_TopasConfig < handle
             % Allocate possible scored quantities
             processedQuantities = {'','_std','_batchStd'};
 
-            % Process physicalDose and doseToWater fields
-            if obj.scorer.calcDij
-                for d = 1:dij.totalNumOfBixels
-                    for j = 1:numel(topasCubesTallies)
-                        % Handle dose to medium and dose to water
-                        if contains(topasCubesTallies{j},'dose','IgnoreCase',true)
-                            % loop through possible quantities
-                            for p = 1:length(processedQuantities)
-                                % Check if current quantity is available and write to dij
-                                if isfield(topasCubes,[topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))])
-                                    dij.([topasCubesTallies{j} processedQuantities{p}]){ctScen,1}(:,d) = sum(w)*reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]),[],1);
-                                end
-                            end
-                            % Handle RBE-related quantities (not multiplied by sum(w)!)
-                        elseif contains(topasCubesTallies{j},'alpha','IgnoreCase',true)
-                                modelName = strsplit(topasCubesTallies{j},'_');
-                                modelName = modelName{end};
-                                if isfield(topasCubes,[topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))])
-                                    dij.(['mAlphaDose_' modelName]){ctScen,1}(:,d) = reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]),[],1) .* dij.physicalDose{ctScen,1}(:,d);
-                                end
-                       elseif contains(topasCubesTallies{j},'beta','IgnoreCase',true)
-                                modelName = strsplit(topasCubesTallies{j},'_');
-                                modelName = modelName{end};
-                                if isfield(topasCubes,[topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))])
-                                    dij.(['mSqrtBetaDose_' modelName]){ctScen,1}(:,d) = sqrt(reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]),[],1)) .* dij.physicalDose{ctScen,1}(:,d);
-                                end
-                        elseif contains(topasCubesTallies{j},'LET','IgnoreCase',true)
-                                if isfield(topasCubes,[topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))])
-                                    dij.mLETDose{ctScen,1}(:,d) = reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]),[],1) .* dij.physicalDose{ctScen,1}(:,d);
-                                end
-                        else
-                            matRad_cfg.dispError('Postprocessing error: Tallies handles incorrectly')
-                        end
-                    end
-                end
-            else
-                for d = 1:dij.numOfBeams
-                    for j = 1:numel(topasCubesTallies)
-                        % Handle dose to medium and dose to water
-                        if contains(topasCubesTallies{j},'dose','IgnoreCase',true)
-                            % loop through possible quantities
-                            for p = 1:length(processedQuantities)
-                                % Check if current quantity is available and write to dij
-                                if isfield(topasCubes,[topasCubesTallies{j} processedQuantities{p} '_beam' num2str(d)])
-                                    dij.([topasCubesTallies{j} processedQuantities{p}]){ctScen,1}(:,d) = sum(w)*reshape(topasCubes.([topasCubesTallies{j} processedQuantities{p} '_beam',num2str(d)]),[],1);
-                                end
-                            end
-                            % Handle RBE-related quantities (not multiplied by sum(w)!)
-                        elseif contains(topasCubesTallies{j},{'alpha','beta','LET'},'IgnoreCase',true)
-                            if isfield(topasCubes,[topasCubesTallies{j} '_beam' num2str(d)])
-                                dij.(topasCubesTallies{j}){ctScen,1}(:,d)        = reshape(topasCubes.([topasCubesTallies{j} '_beam',num2str(d)]),[],1);
-                            end
-                        else
-                            matRad_cfg.dispError('Postprocessing error: Tallies handles incorrectly')
-                        end
-                    end
+            % Loop through 4C scenarios
+            for ctScen = 1:dij.numOfScenarios
 
-                    % Handle alphaDose, sqrtBetaDose and LETDose
-                    if any(contains(fieldnames(dij),'mAlphaDose','IgnoreCase',true))
-                        for r = 1:length(obj.MCparam.RBE_models)
-                            dij.(['mAlphaDose_' obj.MCparam.RBE_models{r}]){ctScen,1}(:,d)           = dij.(['alpha_' obj.MCparam.RBE_models{r}]){ctScen,1}(:,d) .* dij.physicalDose{ctScen,1}(:,d);
-                            dij.(['mSqrtBetaDose_' obj.MCparam.RBE_models{r}]){ctScen,1}(:,d)        = sqrt(dij.(['beta_' obj.MCparam.RBE_models{r}]){ctScen,1}(:,d)) .* dij.physicalDose{ctScen,1}(:,d);
+                % Process physicalDose and doseToWater fields
+                if obj.scorer.calcDij
+                    for d = 1:dij.totalNumOfBixels
+                        for j = 1:numel(topasCubesTallies)
+                            % Handle dose to medium and dose to water
+                            if contains(topasCubesTallies{j},'dose','IgnoreCase',true)
+                                % loop through possible quantities
+                                for p = 1:length(processedQuantities)
+                                    % Check if current quantity is available and write to dij
+                                    if isfield(topasCubes,[topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))])
+                                        dij.([topasCubesTallies{j} processedQuantities{p}]){ctScen,1}(:,d) = sum(w)*reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]){ctScen},[],1);
+                                    end
+                                end
+                                % Handle RBE-related quantities (not multiplied by sum(w)!)
+                            elseif contains(topasCubesTallies{j},'alpha','IgnoreCase',true)
+                                modelName = strsplit(topasCubesTallies{j},'_');
+                                modelName = modelName{end};
+                                if isfield(topasCubes,[topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))])
+                                    dij.(['mAlphaDose_' modelName]){ctScen,1}(:,d) = reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]){ctScen},[],1) .* dij.physicalDose{ctScen,1}(:,d);
+                                end
+                            elseif contains(topasCubesTallies{j},'beta','IgnoreCase',true)
+                                modelName = strsplit(topasCubesTallies{j},'_');
+                                modelName = modelName{end};
+                                if isfield(topasCubes,[topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))])
+                                    dij.(['mSqrtBetaDose_' modelName]){ctScen,1}(:,d) = sqrt(reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]){ctScen},[],1)) .* dij.physicalDose{ctScen,1}(:,d);
+                                end
+                            elseif contains(topasCubesTallies{j},'LET','IgnoreCase',true)
+                                if isfield(topasCubes,[topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))])
+                                    dij.mLETDose{ctScen,1}(:,d) = reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]){ctScen},[],1) .* dij.physicalDose{ctScen,1}(:,d);
+                                end
+                            else
+                                matRad_cfg.dispError('Postprocessing error: Tallies handles incorrectly')
+                            end
                         end
                     end
-                    if obj.scorer.LET
-                        dij.mLETDose{ctScen,1}(:,d)           = dij.LET{ctScen,1}(:,d) .* dij.physicalDose{ctScen,1}(:,d);
+                else
+                    for d = 1:dij.numOfBeams
+                        for j = 1:numel(topasCubesTallies)
+                            % Handle dose to medium and dose to water
+                            if contains(topasCubesTallies{j},'dose','IgnoreCase',true)
+                                % loop through possible quantities
+                                for p = 1:length(processedQuantities)
+                                    % Check if current quantity is available and write to dij
+                                    if isfield(topasCubes,[topasCubesTallies{j} processedQuantities{p} '_beam' num2str(d)])
+                                        dij.([topasCubesTallies{j} processedQuantities{p}]){ctScen}(:,d) = sum(w)*reshape(topasCubes.([topasCubesTallies{j} processedQuantities{p} '_beam',num2str(d)]){ctScen},[],1);
+                                    end
+                                end
+                                % Handle RBE-related quantities (not multiplied by sum(w)!)
+                            elseif contains(topasCubesTallies{j},'alpha','IgnoreCase',true)
+                                modelName = strsplit(topasCubesTallies{j},'_');
+                                modelName = modelName{end};
+                                if isfield(topasCubes,[topasCubesTallies{j} '_beam' num2str(d)])
+                                    dij.(['mAlphaDose_' modelName]){ctScen}(:,d)        = reshape(topasCubes.([topasCubesTallies{j} '_beam',num2str(d)]){ctScen},[],1) .* dij.physicalDose{ctScen}(:,d);
+                                end
+                            elseif contains(topasCubesTallies{j},'beta','IgnoreCase',true)
+                                modelName = strsplit(topasCubesTallies{j},'_');
+                                modelName = modelName{end};
+                                if isfield(topasCubes,[topasCubesTallies{j} '_beam' num2str(d)])
+                                    dij.(['mSqrtBetaDose_' modelName]){ctScen}(:,d)        = sqrt(reshape(topasCubes.([topasCubesTallies{j} '_beam',num2str(d)]){ctScen},[],1)) .* dij.physicalDose{ctScen}(:,d);
+                                end
+                            elseif contains(topasCubesTallies{j},'LET','IgnoreCase',true)
+                                if isfield(topasCubes,[topasCubesTallies{j} '_beam' num2str(d)])
+                                    dij.mLETDose{ctScen}(:,d)        = reshape(topasCubes.([topasCubesTallies{j} '_beam',num2str(d)]){ctScen},[],1) .* dij.physicalDose{ctScen}(:,d);
+                                end
+                            else
+                                matRad_cfg.dispError('Postprocessing error: Tallies handles incorrectly')
+                            end
+                        end
                     end
                 end
             end
+
             % Save number of histories and particles to Dij
             dij.nbHistoriesTotal = obj.MCparam.nbHistoriesTotal;
             dij.nbParticlesTotal = obj.MCparam.nbParticlesTotal;
 
         end
 
-        function writeRunHeader(obj,fID,fieldIx,runIx)
+        function writeRunHeader(obj,fID,fieldIx,runIx,ctScen)
 
             fprintf(fID,'s:Sim/PlanLabel = "%s"\n',obj.label);
-            fprintf(fID,'s:Sim/ScoreLabel = "score_%s_field%d_run%d"\n',obj.label,fieldIx,runIx);
+            if exist('ctScen','var')
+                fprintf(fID,'s:Sim/ScoreLabel = "score_%s_field%d_ct%d_run%d"\n',obj.label,fieldIx,ctScen,runIx);
+            else
+                fprintf(fID,'s:Sim/ScoreLabel = "score_%s_field%d_run%d"\n',obj.label,fieldIx,runIx);
+            end
             fprintf(fID,'\n');
 
             logicalString = {'"False"', '"True"'};
@@ -921,7 +950,7 @@ classdef MatRad_TopasConfig < handle
             %fprintf(fID,'includeFile = %s/TOPAS_scorer_surfaceIC.txt\n',obj.thisFolder);
         end
 
-        function writeFieldHeader(obj,fID)
+        function writeFieldHeader(obj,fID,ctScen)
 
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
 
@@ -934,7 +963,15 @@ classdef MatRad_TopasConfig < handle
             fprintf(fID,'s:Sim/WorldMaterial = "%s"\n',obj.worldMaterial);
             fprintf(fID,'\n');
 
-            fprintf(fID,'includeFile = %s\n',obj.outfilenames.patientParam);
+            % Add ctScen number to filenames
+            if exist('ctScen','var')
+                paramFile = strsplit(obj.outfilenames.patientParam,'.');
+                paramFile = strjoin(paramFile,[num2str(ctScen) '.']);
+            else
+                paramFile = obj.outfilenames.patientParam;
+            end
+
+            fprintf(fID,'includeFile = %s\n',paramFile);
             fprintf(fID,'\n');
 
             fname = fullfile(obj.thisFolder,obj.infilenames.geometry);
@@ -1352,9 +1389,16 @@ classdef MatRad_TopasConfig < handle
                 dataTOPAS = dataTOPAS(ixSorted);
 
                 % Write TOPAS data base file
-                fieldSetupFileName = sprintf('beamSetup_%s_field%d.txt',obj.label,beamIx);
-                fileID = fopen(fullfile(obj.workingDir,fieldSetupFileName),'w');
-                obj.writeFieldHeader(fileID);
+                if isfield(ct,'currCtScen')
+                    % 4D case
+                    fieldSetupFileName = sprintf('beamSetup_%s_field%d_ct%d.txt',obj.label,beamIx,ct.currCtScen);
+                    fileID = fopen(fullfile(obj.workingDir,fieldSetupFileName),'w');
+                    obj.writeFieldHeader(fileID,ct.currCtScen);
+                else
+                    fieldSetupFileName = sprintf('beamSetup_%s_field%d.txt',obj.label,beamIx);
+                    fileID = fopen(fullfile(obj.workingDir,fieldSetupFileName),'w');
+                    obj.writeFieldHeader(fileID);
+                end
 
                 % NozzleAxialDistance
                 fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', nozzleToAxisDistance);
@@ -1555,7 +1599,7 @@ classdef MatRad_TopasConfig < handle
                     obj.writeRangeShifter(fileID,raShis(r),sourceToNozzleDistance);
                 end
 
-                % Select and write beam profile 
+                % Select and write beam profile
                 switch obj.beamProfile
                     case 'biGaussian'
                         TOPAS_beamSetup = fileread('TOPAS_beamSetup_biGaussian.txt.in');
@@ -1580,11 +1624,19 @@ classdef MatRad_TopasConfig < handle
                 fclose(fileID);
                 % Write run scripts for TOPAS
                 for runIx = 1:obj.numOfRuns
-                    runFileName = sprintf('%s_field%d_run%d.txt',obj.label,beamIx,runIx);
+                    if isfield(ct,'currCtScen')
+                        runFileName = sprintf('%s_field%d_ct%d_run%d.txt',obj.label,beamIx,ct.currCtScen,runIx);
+                    else
+                        runFileName = sprintf('%s_field%d_run%d.txt',obj.label,beamIx,runIx);
+                    end
                     fileID = fopen(fullfile(obj.workingDir,runFileName),'w');
 
                     % Write header
-                    obj.writeRunHeader(fileID,beamIx,runIx);
+                    if isfield(ct,'currCtScen')
+                        obj.writeRunHeader(fileID,beamIx,runIx,ct.currCtScen);
+                    else
+                        obj.writeRunHeader(fileID,beamIx,runIx);
+                    end
 
                     % Include path to beamSetup file
                     fprintf(fileID,'includeFile = ./%s\n',fieldSetupFileName);
@@ -1618,12 +1670,11 @@ classdef MatRad_TopasConfig < handle
             % matRad export CT RSP data for TOPAS simulation
             %
             % call
-            %   matRad_exportCtTOPAS(ct, path, material)
+            %   obj.writePatient(ct, path, material)
             %
             % input
-            %   ct:             ct cube
-            %   runsPath:       path where to save the files for MC simulation
-            %   basematerial:   base material to be scaled to corresponding RSP
+            %   ct:                 ct cube
+            %   pln:                plan structure containing doseCalc classes
             %
             % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % the image cube contains the indexing of materials
@@ -1667,6 +1718,18 @@ classdef MatRad_TopasConfig < handle
             paramFile = obj.outfilenames.patientParam;
             dataFile = obj.outfilenames.patientCube;
 
+            % Add ctScen number to filenames
+            if isfield(ct,'currCtScen')
+                ctScen = ct.currCtScen;
+                paramFile = strsplit(paramFile,'.');
+                paramFile = strjoin(paramFile,[num2str(ct.currCtScen) '.']);
+
+                dataFile = strsplit(dataFile,'.');
+                dataFile = strjoin(dataFile,[num2str(ct.currCtScen) '.']);
+            else
+                ctScen = 1;
+            end
+
             % Open file to write in data
             outfile = fullfile(obj.workingDir, paramFile);
             matRad_cfg.dispInfo('Writing data to %s\n',outfile)
@@ -1679,7 +1742,7 @@ classdef MatRad_TopasConfig < handle
                     min_HU = rspHlut(1,1);
                     max_HU = rspHlut(end,1);
 
-                    huCube = int32(permute(ct.cubeHU{1},permutation)); %  X,Y,Z ordering
+                    huCube = int32(permute(ct.cubeHU{ctScen},permutation)); %  X,Y,Z ordering
                     huCube(huCube < min_HU) = min_HU;
                     huCube(huCube > max_HU) = max_HU;
 
@@ -1725,7 +1788,7 @@ classdef MatRad_TopasConfig < handle
                     fclose(fID);
                     cube = huCube;
 
-                
+
                 case 'HUToWaterSchneider' % Schneider converter
                     rspHlut = matRad_loadHLUT(ct,pln);
                     try
@@ -1877,7 +1940,7 @@ classdef MatRad_TopasConfig < handle
 
                         % write HU data
                         matRad_cfg.dispInfo('TOPAS: Export patient cube\n');
-                        huCube = int32(permute(ct.cubeHU{1},permutation));
+                        huCube = int32(permute(ct.cubeHU{ctScen},permutation));
                         fID = fopen(fullfile(obj.workingDir, dataFile),'w');
                         fwrite(fID,huCube,'short');
                         fclose(fID);
@@ -1890,7 +1953,7 @@ classdef MatRad_TopasConfig < handle
                     matRad_cfg.dispError('Material Conversion rule "%s" not implemented (yet)!\n',obj.materialConverter.mode);
             end
 
-            obj.MCparam.imageCube = cube;
+            obj.MCparam.imageCube{ctScen} = cube;
 
 
         end

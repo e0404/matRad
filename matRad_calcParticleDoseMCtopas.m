@@ -100,7 +100,8 @@ load([pln.radiationMode,'_',pln.machine],'machine');
 
 % Collect given weights
 if calcDoseDirect
-    w = zeros(sum([stf(:).totalNumOfBixels]),ctR.numOfCtScen);
+    %     w = zeros(sum([stf(:).totalNumOfBixels]),ctR.numOfCtScen);
+    w = zeros(sum([stf(:).totalNumOfBixels]),1);
     counter = 1;
     for i = 1:length(stf)
         for j = 1:stf(i).numOfRays
@@ -128,87 +129,99 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
         stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(shiftScen,:);
     end
 
+    % Delete previous topas files so there is no mix-up
+    files = dir([pln.propMC.workingDir,'*']);
+    files = {files(~[files.isdir]).name};
+    fclose('all');
+    for i = 1:length(files)
+        delete([pln.propMC.workingDir,files{i}])
+    end
+
     % Run simulations for each scenario
     for ctScen = 1:pln.multScen.numOfCtScen
         for rangeShiftScen = 1:pln.multScen.totNumRangeScen
             if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
 
-                % Delete previous topas files so there is no mix-up
-                files = dir([pln.propMC.workingDir,'*']);
-                files = {files(~[files.isdir]).name};
-                fclose('all');
-                for i = 1:length(files)
-                    delete([pln.propMC.workingDir,files{i}])
+                % Save ctScen and rangeShiftScen for file constructor
+                if ct.numOfCtScen > 1
+                    ctR.currCtScen = ctScen;
+                    ctR.currRangeShiftScen = rangeShiftScen;
                 end
 
                 % actually write TOPAS files
                 if calcDoseDirect
-                    pln.propMC.writeAllFiles(ctR,cst,pln,stf,machine,w(:,ctScen));
+                    pln.propMC.writeAllFiles(ctR,cst,pln,stf,machine,w);
                 else
                     pln.propMC.writeAllFiles(ctR,cst,pln,stf,machine);
                 end
-
-                % change director back to original directory
-                cd(pln.propMC.workingDir);
-
-                % save dij and weights, they are needed for later reading the data back in
-                if pln.propMC.externalCalculation
-                    matRad_cfg.dispInfo('TOPAS simulation skipped for external calculation\n');
-                else
-                    for beamIx = 1:numel(stf)
-                        for runIx = 1:pln.propMC.numOfRuns
-                            fname = sprintf('%s_field%d_run%d',pln.propMC.label,beamIx,runIx);
-                            if isfield(pln.propMC,'verbosity') && strcmp(pln.propMC.verbosity,'full')
-                                topasCall = sprintf('%s %s.txt',pln.propMC.topasExecCommand,fname);
-                            else
-                                topasCall = sprintf('%s %s.txt > %s.out > %s.log',pln.propMC.topasExecCommand,fname,fname,fname);
-                            end
-
-                            % initiate parallel runs and delete previous files
-                            if pln.propMC.parallelRuns
-                                finishedFiles{runIx} = sprintf('%s.finished',fname);
-                                topasCall = [topasCall '; touch ' finishedFiles{runIx} ' &'];
-                            end
-
-                            % Actual simulation happening here
-                            matRad_cfg.dispInfo('Calling TOPAS: %s\n',topasCall);
-                            [status,cmdout] = system(topasCall,'-echo');
-
-                            % Process TOPAS output and potential errors
-                            cout = splitlines(string(cmdout));
-                            if status == 0
-                                matRad_cfg.dispInfo('TOPAS simulation completed succesfully\n');
-                            else
-                                if status == 139
-                                    matRad_cfg.dispError('TOPAS segmentation fault: might be caused from an outdated TOPAS version or Linux distribution');
-                                else
-                                    matRad_cfg.dispError('TOPAS simulation exited with error code %d\n "%s"',status,cout(2:end-1));
-                                end
-                            end
-                        end
-
-                        % wait for parallel runs to finish and process
-                        if pln.propMC.parallelRuns
-                            runsFinished = false;
-                            pause('on');
-                            while ~runsFinished
-                                pause(1);
-                                fin = cellfun(@(f) exist(f,'file'),finishedFiles);
-                                runsFinished = all(fin);
-                            end
-                            % Delete marker files
-                            delete(finishedFiles{:});
-                        end
-
-                    end
-                end
-
-                % revert back to original directory
-                cd(currDir);
-
             end
         end
     end
+
+    % change director back to original directory
+    cd(pln.propMC.workingDir);
+
+    % save dij and weights, they are needed for later reading the data back in
+    if pln.propMC.externalCalculation
+        matRad_cfg.dispInfo('TOPAS simulation skipped for external calculation\n');
+    else
+        for ctScen = 1:ct.numOfCtScen
+            for beamIx = 1:numel(stf)
+                for runIx = 1:pln.propMC.numOfRuns
+                    if ct.numOfCtScen > 1
+                        fname = sprintf('%s_field%d_ct%d_run%d',pln.propMC.label,beamIx,ctScen,runIx);
+                    else
+                        fname = sprintf('%s_field%d_run%d',pln.propMC.label,beamIx,runIx);
+                    end
+
+                    if isfield(pln.propMC,'verbosity') && strcmp(pln.propMC.verbosity,'full')
+                        topasCall = sprintf('%s %s.txt',pln.propMC.topasExecCommand,fname);
+                    else
+                        topasCall = sprintf('%s %s.txt > %s.out > %s.log',pln.propMC.topasExecCommand,fname,fname,fname);
+                    end
+
+                    % initiate parallel runs and delete previous files
+                    if pln.propMC.parallelRuns
+                        finishedFiles{runIx} = sprintf('%s.finished',fname);
+                        topasCall = [topasCall '; touch ' finishedFiles{runIx} ' &'];
+                    end
+
+                    % Actual simulation happening here
+                    matRad_cfg.dispInfo('Calling TOPAS: %s\n',topasCall);
+                    [status,cmdout] = system(topasCall,'-echo');
+
+                    % Process TOPAS output and potential errors
+                    cout = splitlines(string(cmdout));
+                    if status == 0
+                        matRad_cfg.dispInfo('TOPAS simulation completed succesfully\n');
+                    else
+                        if status == 139
+                            matRad_cfg.dispError('TOPAS segmentation fault: might be caused from an outdated TOPAS version or Linux distribution');
+                        else
+                            matRad_cfg.dispError('TOPAS simulation exited with error code %d\n "%s"',status,cout(2:end-1));
+                        end
+                    end
+                end
+
+                % wait for parallel runs to finish and process
+                if pln.propMC.parallelRuns
+                    runsFinished = false;
+                    pause('on');
+                    while ~runsFinished
+                        pause(1);
+                        fin = cellfun(@(f) exist(f,'file'),finishedFiles);
+                        runsFinished = all(fin);
+                    end
+                    % Delete marker files
+                    delete(finishedFiles{:});
+                end
+            end
+        end
+    end
+
+    % revert back to original directory
+    cd(currDir);
+
 end
 
 %% Simulation(s) finished - read out volume scorers from topas simulation

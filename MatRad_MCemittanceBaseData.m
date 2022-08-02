@@ -30,7 +30,6 @@ classdef MatRad_MCemittanceBaseData
         smy             %Scanning magnet y to isocenter Distance
         monteCarloData  %MC Phase space data struct
         selectedFocus   %array containing selected focus indices per energy
-        FWHMatIso       %array containing FWHM values at iscenter for every energy
         energyspread    %custom energy spread
         matRad_cfg      %matRad config
         rangeShifters   %Stores range shifters
@@ -368,7 +367,7 @@ classdef MatRad_MCemittanceBaseData
             mcDataOptics.SpotSize2y    = 0;
             mcDataOptics.Divergence2y  = 0;
             mcDataOptics.Correlation2y = 0;
-            %             mcDataOptics.FWHMatIso = 2.355 * sigmaNull;
+            mcDataOptics.FWHMatIso = 2.355 * sigmaNull;
         end
         
         
