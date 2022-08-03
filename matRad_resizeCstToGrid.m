@@ -35,6 +35,7 @@ function cst = matRad_resizeCstToGrid(cst,vXgridOld,vYgridOld,vZgridOld,vXgridNe
 matRad_cfg = MatRad_Config.instance();
 matRad_cfg.dispInfo('Resampling structure set... ');
 
+
 for i = 1:size(cst,1)            % loop over all structures
    for j = 1:numel(cst{i,4})     % loop over all scenarios
       tmpCube              = zeros([numel(vYgridOld) numel(vXgridOld) numel(vZgridOld)]);
@@ -45,4 +46,4 @@ for i = 1:size(cst,1)            % loop over all structures
    end
 end
 
-matRad_cfg.dispInfo('done!\n');
+matRad_cfg.dispInfo('Done!\n');
