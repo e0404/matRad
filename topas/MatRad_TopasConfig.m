@@ -208,13 +208,14 @@ classdef MatRad_TopasConfig < handle
             % Set correct RBE scorer parameters
             if obj.scorer.RBE
                 obj.scorer.doseToMedium = true;
-                if contains(obj.scorer.RBE_model,'default')
-                    if contains(obj.radiationMode,'protons')
-                        obj.scorer.RBE_model = obj.scorer.defaultModelProtons;
-                    elseif contains(obj.radiationMode,'carbon') || contains(obj.radiationMode,'helium')
-                        obj.scorer.RBE_model = obj.scorer.defaultModelCarbon;
-                    else
-                        matRad_cfg.dispError(['No model implemented for ',obj.radiationMode]);
+                if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'default')), obj.scorer.RBE_model))
+                    switch obj.radiationMode
+                        case 'protons'
+                            obj.scorer.RBE_model = obj.scorer.defaultModelProtons;
+                        case {'carbon','helium'}
+                             obj.scorer.RBE_model = obj.scorer.defaultModelCarbon;
+                        otherwise
+                            matRad_cfg.dispError(['No model implemented for ',obj.radiationMode]);
                     end
                 end
 
@@ -223,7 +224,7 @@ classdef MatRad_TopasConfig < handle
                     obj.bioParam.BetaX = pln.propMC.BetaX;
                 else
                     for i = 1:length(pln.bioParam.AvailableAlphaXBetaX)
-                        if contains(pln.bioParam.AvailableAlphaXBetaX{i,2},'default')
+                        if ~isempty(strfind(lower(pln.bioParam.AvailableAlphaXBetaX{i,2}),'default'))
                             break
                         end
                     end
@@ -634,14 +635,14 @@ classdef MatRad_TopasConfig < handle
 
                         % add STD quadratically
                         for i = 1:currNumOfQuantities
-                            if contains(obj.MCparam.scoreReportQuantity{i},'standard_deviation','IgnoreCase',true)
+                            if ~isempty(strfind(lower(obj.MCparam.scoreReportQuantity{i}),'standard_deviation'))
                                 topasSum.(obj.MCparam.scoreReportQuantity{i}) = sqrt(double(obj.MCparam.nbHistoriesTotal)) * sqrt(sum(cat(4,data.(obj.MCparam.scoreReportQuantity{i}){:}).^2,4));
                             else
                                 topasSum.(obj.MCparam.scoreReportQuantity{i}) = sum(cat(4,data.(obj.MCparam.scoreReportQuantity{i}){:}),4);
                             end
                         end
 
-                        if contains(tnameFile,'dose','IgnoreCase',true)
+                        if ~isempty(strfind(lower(tnameFile),'dose'))
                             if obj.MCparam.nbRuns > 1
                                 % Calculate Standard Deviation from batches
                                 topasMeanDiff = zeros(cubeDim(1),cubeDim(2),cubeDim(3));
@@ -663,7 +664,7 @@ classdef MatRad_TopasConfig < handle
                                 topasSum.(obj.MCparam.scoreReportQuantity{i}) = correctionFactor .* topasSum.(obj.MCparam.scoreReportQuantity{i});
                             end
 
-                        elseif contains(tname,'alpha','IgnoreCase',true) || contains(tname,'beta','IgnoreCase',true) || contains(tname,'RBE','IgnoreCase',true) || contains(tname,'LET','IgnoreCase',true)
+                        elseif any(cellfun(@(teststr) ~isempty(strfind(tname,teststr)), {'alpha','beta','RBE','LET'}))
                             for i = 1:currNumOfQuantities
                                 topasSum.(obj.MCparam.scoreReportQuantity{i}) = topasSum.(obj.MCparam.scoreReportQuantity{i}) ./ obj.MCparam.nbRuns;
                             end
@@ -685,7 +686,7 @@ classdef MatRad_TopasConfig < handle
 
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
 
-            if contains(genFullFile,'.csv')
+            if ~isempty(strfind(lower(genFullFile),'.csv'))
                 % Read csv header file to get cubeDim and number of scorers automatically
                 fid = fopen(genFullFile);
                 header = textscan(fid,'%[^,],%[^,],%[^,]',1);
@@ -693,7 +694,7 @@ classdef MatRad_TopasConfig < handle
 
                 % Split header in rows
                 header = strsplit(strrep(header{1}{1},' ',''),'#');
-            elseif contains(genFullFile,'.bin')
+            elseif ~isempty(strfind(lower(genFullFile),'.bin'))
                 % Isolate filename without ending
                 [folder, filename] = fileparts(genFullFile);
                 strippedFileName = [folder filesep filename];
@@ -716,10 +717,10 @@ classdef MatRad_TopasConfig < handle
             cubeDim(1) = str2double(header{xLine+1}(4:strfind(header{xLine+1},'binsof')-1));
             cubeDim(3) = str2double(header{xLine+2}(4:strfind(header{xLine+2},'binsof')-1));
 
-            if contains(genFullFile,'.csv')
+            if ~isempty(strfind(lower(genFullFile),'.csv'))
                 % Read out bin data
                 dataOut = matRad_readCsvData(genFullFile,cubeDim);
-            elseif contains(genFullFile,'.bin')
+            elseif ~isempty(strfind(lower(genFullFile),'.bin'))
                 % Read out bin data
                 dataOut = matRad_readBinData(genFullFile,cubeDim);
             end
@@ -732,10 +733,10 @@ classdef MatRad_TopasConfig < handle
             numOfScenarios = obj.MCparam.numOfCtScen;
 
             % Set flag for RBE and LET
-            if any(contains(fieldnames(topasCubes),'alpha','IgnoreCase',true))
+            if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'alpha')), fieldnames(topasCubes)))
                 obj.scorer.RBE = true;
             end
-            if any(contains(fieldnames(topasCubes),'LET','IgnoreCase',true))
+            if any(cellfun(@(teststr) ~isempty(strfind(teststr,'LET')), fieldnames(topasCubes)))
                 obj.scorer.LET = true;
             end
 
@@ -774,7 +775,7 @@ classdef MatRad_TopasConfig < handle
             end
 
             % Get default tallies from dose
-            dijTallies = topasCubesTallies(contains(topasCubesTallies,'dose',"IgnoreCase",true));
+            dijTallies = topasCubesTallies(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'dose')), topasCubesTallies));
 
             % Handle LET tally
             if obj.scorer.LET
@@ -836,7 +837,7 @@ classdef MatRad_TopasConfig < handle
                     for d = 1:dij.totalNumOfBixels
                         for j = 1:numel(topasCubesTallies)
                             % Handle dose to medium and dose to water
-                            if contains(topasCubesTallies{j},'dose','IgnoreCase',true)
+                            if ~isempty(strfind(lower(topasCubesTallies{j}),'dose'))
                                 % loop through possible quantities
                                 for p = 1:length(processedQuantities)
                                     % Check if current quantity is available and write to dij
@@ -845,19 +846,19 @@ classdef MatRad_TopasConfig < handle
                                     end
                                 end
                                 % Handle RBE-related quantities (not multiplied by sum(w)!)
-                            elseif contains(topasCubesTallies{j},'alpha','IgnoreCase',true)
+                            elseif ~isempty(strfind(lower(topasCubesTallies{j}),'alpha'))
                                 modelName = strsplit(topasCubesTallies{j},'_');
                                 modelName = modelName{end};
                                 if isfield(topasCubes,[topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))])
                                     dij.(['mAlphaDose_' modelName]){ctScen,1}(:,d) = reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]){ctScen},[],1) .* dij.physicalDose{ctScen,1}(:,d);
                                 end
-                            elseif contains(topasCubesTallies{j},'beta','IgnoreCase',true)
+                            elseif ~isempty(strfind(lower(topasCubesTallies{j}),'beta'))
                                 modelName = strsplit(topasCubesTallies{j},'_');
                                 modelName = modelName{end};
                                 if isfield(topasCubes,[topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))])
                                     dij.(['mSqrtBetaDose_' modelName]){ctScen,1}(:,d) = sqrt(reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]){ctScen},[],1)) .* dij.physicalDose{ctScen,1}(:,d);
                                 end
-                            elseif contains(topasCubesTallies{j},'LET','IgnoreCase',true)
+                            elseif ~isempty(strfind(topasCubesTallies{j},'LET'))
                                 if isfield(topasCubes,[topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))])
                                     dij.mLETDose{ctScen,1}(:,d) = reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]){ctScen},[],1) .* dij.physicalDose{ctScen,1}(:,d);
                                 end
@@ -870,7 +871,7 @@ classdef MatRad_TopasConfig < handle
                     for d = 1:dij.numOfBeams
                         for j = 1:numel(topasCubesTallies)
                             % Handle dose to medium and dose to water
-                            if contains(topasCubesTallies{j},'dose','IgnoreCase',true)
+                            if ~isempty(strfind(lower(topasCubesTallies{j}),'dose'))
                                 % loop through possible quantities
                                 for p = 1:length(processedQuantities)
                                     % Check if current quantity is available and write to dij
@@ -879,19 +880,19 @@ classdef MatRad_TopasConfig < handle
                                     end
                                 end
                                 % Handle RBE-related quantities (not multiplied by sum(w)!)
-                            elseif contains(topasCubesTallies{j},'alpha','IgnoreCase',true)
+                            elseif ~isempty(strfind(lower(topasCubesTallies{j}),'alpha'))
                                 modelName = strsplit(topasCubesTallies{j},'_');
                                 modelName = modelName{end};
                                 if isfield(topasCubes,[topasCubesTallies{j} '_beam' num2str(d)])
                                     dij.(['mAlphaDose_' modelName]){ctScen}(:,d)        = reshape(topasCubes.([topasCubesTallies{j} '_beam',num2str(d)]){ctScen},[],1) .* dij.physicalDose{ctScen}(:,d);
                                 end
-                            elseif contains(topasCubesTallies{j},'beta','IgnoreCase',true)
+                            elseif ~isempty(strfind(lower(topasCubesTallies{j}),'beta'))
                                 modelName = strsplit(topasCubesTallies{j},'_');
                                 modelName = modelName{end};
                                 if isfield(topasCubes,[topasCubesTallies{j} '_beam' num2str(d)])
                                     dij.(['mSqrtBetaDose_' modelName]){ctScen}(:,d)        = sqrt(reshape(topasCubes.([topasCubesTallies{j} '_beam',num2str(d)]){ctScen},[],1)) .* dij.physicalDose{ctScen}(:,d);
                                 end
-                            elseif contains(topasCubesTallies{j},'LET','IgnoreCase',true)
+                            elseif ~isempty(strfind(topasCubesTallies{j},'LET'))
                                 if isfield(topasCubes,[topasCubesTallies{j} '_beam' num2str(d)])
                                     dij.mLETDose{ctScen}(:,d)        = reshape(topasCubes.([topasCubesTallies{j} '_beam',num2str(d)]){ctScen},[],1) .* dij.physicalDose{ctScen}(:,d);
                                 end
@@ -1004,18 +1005,19 @@ classdef MatRad_TopasConfig < handle
                     switch obj.radiationMode
                         case 'protons'
                             % Process available varRBE models for protons
-                            if contains(obj.scorer.RBE_model{i},'MCN','IgnoreCase',true)
+                            
+                            if ~isempty(strfind(lower(obj.scorer.RBE_model{i}),'mcn'))
                                 fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_RBE_MCN);
-                            elseif contains(obj.scorer.RBE_model{i},'WED','IgnoreCase',true)
+                            elseif ~isempty(strfind(lower(obj.scorer.RBE_model{i}),'wed'))
                                 fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_RBE_WED);
                             else
                                 matRad_cfg.dispError(['Model ',obj.scorer.RBE_model{i},' not implemented for ',obj.radiationMode]);
                             end
                         case {'carbon','helium'}
                             % Process available varRBE models for carbon and helium
-                            if contains(obj.scorer.RBE_model{i},'libamtrack','IgnoreCase',true)
+                            if ~isempty(strfind(lower(obj.scorer.RBE_model{i}),'libamtrack'))
                                 fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_RBE_libamtrack);
-                            elseif contains(obj.scorer.RBE_model{i},'LEM','IgnoreCase',true)
+                            elseif ~isempty(strfind(lower(obj.scorer.RBE_model{i}),'lem'))
                                 fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_RBE_LEM1);
                             else
                                 matRad_cfg.dispError(['Model ',obj.scorer.RBE_model{i},' not implemented for ',obj.radiationMode]);
@@ -1067,15 +1069,15 @@ classdef MatRad_TopasConfig < handle
             if obj.scorer.sharedSubscorers && obj.scorer.RBE
                 % Select appropriate scorer from selected flags
                 scorerNames = {'Alpha','Beta'};
-                if any(contains(obj.scorer.RBE_model,'MCN','IgnoreCase',true))
+                if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'mcn')), obj.scorer.RBE_model))
                     obj.scorer.LET = true;
                     obj.scorer.doseToWater = true;
                     scorerPrefix = 'McNamara';
-                elseif any(contains(obj.scorer.RBE_model,'WED','IgnoreCase',true))
+                elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'wed')), obj.scorer.RBE_model))
                     obj.scorer.LET = true;
                     obj.scorer.doseToWater = true;
                     scorerPrefix = 'Wedenberg';
-                elseif any(contains(obj.scorer.RBE_model,'LEM','IgnoreCase',true)) || any(contains(obj.scorer.RBE_model,'libamtrack','IgnoreCase',true))
+                elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'lem')), obj.scorer.RBE_model)) || any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'libamtrack')), obj.scorer.RBE_model))
                     obj.scorer.doseToWater = true;
                     scorerPrefix = 'tabulated';
                 end
@@ -1148,19 +1150,19 @@ classdef MatRad_TopasConfig < handle
             if obj.scorer.calcDij
                 tallyName = cell(1,0);
                 if obj.scorer.RBE
-                    if any(contains(obj.MCparam.RBE_models,'MCN','IgnoreCase',true))
+                    if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'mcn')), obj.MCparam.RBE_models))
                         tallyName{end+1} = 'McNamaraAlpha';
                         tallyName{end+1} = 'McNamaraBeta';
                     end
-                    if any(contains(obj.MCparam.RBE_models,'WED','IgnoreCase',true))
+                    if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'wed')), obj.MCparam.RBE_models))
                         tallyName{end+1} = 'WedenbergAlpha';
                         tallyName{end+1} = 'WedenbergBeta';
                     end
-                    if any(contains(obj.MCparam.RBE_models,'libamtrack','IgnoreCase',true))
+                    if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'libamtrack')), obj.MCparam.RBE_models))
                         tallyName{end+1} = 'tabulatedAlpha';
                         tallyName{end+1} = 'tabulatedBeta';
                     end
-                    if any(contains(obj.MCparam.RBE_models,'LEM','IgnoreCase',true))
+                    if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'lem')), obj.MCparam.RBE_models))
                         tallyName{end+1} = 'tabulatedAlpha';
                         tallyName{end+1} = 'tabulatedBeta';
                     end
@@ -1892,7 +1894,7 @@ classdef MatRad_TopasConfig < handle
                                 case 'default'
                                     fprintf(fID,'%s \n',materials{1:end-1});
                                     ExcitationEnergies = str2double(split(string(materials{end}(strfind(string(materials{end}),'=')+4:end-3))));
-                                    if contains(obj.materialConverter.addSection,'lung','IgnoreCase',true)
+                                    if ~isempty(strfind(lower(obj.materialConverter.addSection),lower('lung')))
                                         fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight%i = 5 0.10404040 0.75656566 0.03131313 0.10606061 0.00202020\n',length(materials)-2);
                                         ExcitationEnergies = [ExcitationEnergies' 75.3];
                                     end

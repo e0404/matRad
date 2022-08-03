@@ -352,7 +352,7 @@ classdef MatRad_Config < handle
 
                     fnames = fieldnames(obj.(currField));
                     for f = 1:length(fnames)
-                        if contains(fnames{f},'default')
+                        if ~isempty(strfind(fnames{f},'default'))
                             cutName = [lower(fnames{f}(8)) fnames{f}(9:end)];
                             if ~isfield(pln.(currField),cutName)
                                 pln.(currField).(cutName) = obj.(currField).(fnames{f});
@@ -363,7 +363,7 @@ classdef MatRad_Config < handle
                             end
                             subfields = fieldnames(obj.(currField).(fnames{f}));
                             for s = 1:length(subfields)
-                                if contains(subfields{s},'default')
+                                if ~isempty(strfind(subfields{s},'default'))
                                     if length(subfields{s})==8
                                         cutName = [subfields{s}(8)];
                                     else

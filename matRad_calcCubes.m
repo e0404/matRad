@@ -54,7 +54,7 @@ for j = 1:length(doseFields)
         % Check if combination is a field in dij, otherwise skip
         if isfield(dij,[doseFields{j} doseQuantities{k}])
             % Handle standard deviation fields and add quadratically
-            if contains(doseQuantities,'std','IgnoreCase',true)
+            if ~isempty(strfind(lower(doseQuantities{1}),'std'))
                 for i = 1:length(beamInfo)
                     resultGUI.([doseFields{j}, doseQuantities{k}, beamInfo(i).suffix]) = sqrt(reshape(full(dij.([doseFields{j} doseQuantities{k}]){scenNum}.^2 * (resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions));
                     resultGUI.([doseFields{j}, doseQuantities{k}, beamInfo(i).suffix])(isnan(resultGUI.([doseFields{j}, doseQuantities{k}, beamInfo(i).suffix]))) = 0;
@@ -88,7 +88,7 @@ if isfield(dij,'RBE') && isscalar(dij.RBE)
     for i = 1:length(beamInfo)
         resultGUI.(['RBExD', beamInfo(i).suffix]) = resultGUI.(['physicalDose', beamInfo(i).suffix]) * dij.RBE;
     end
-elseif any(contains(fieldnames(dij),'alpha','IgnoreCase',true))
+elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'alpha')), fieldnames(dij)))
     % Load RBE models if MonteCarlo was calculated for multiple models
     if isfield(dij,'RBE_models')
         RBE_model = cell(1,length(dij.RBE_models)+1);
@@ -146,7 +146,7 @@ if isfield(dij,'MC_tallies')
     for f = 1:numel(dij.MC_tallies)
         tally = dij.MC_tallies{f};
         % skip tallies processed above
-        if ~isfield(resultGUI,tally) && ~contains(tally,'std','IgnoreCase',true)
+        if ~isfield(resultGUI,tally) && isempty(strfind(lower(tally),'std'))
             tallyCut = strsplit(tally,'_');
             if size(tallyCut,2) > 1
                 beamNum = str2num(cell2mat(regexp(tally,'\d','Match')));
@@ -159,10 +159,10 @@ if isfield(dij,'MC_tallies')
 end
 
 % Remove suffix for RBExD if there's only one available
-if any(contains(fieldnames(dij),'alpha','IgnoreCase',true)) && isfield(dij,'RBE_models') && length(dij.RBE_models) == 1
+if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'alpha')), fieldnames(dij))) && isfield(dij,'RBE_models') && length(dij.RBE_models) == 1
     % Get fieldnames that include the specified RBE model
     fnames = fieldnames(resultGUI);
-    fnames = fnames(contains(fnames,dij.RBE_models{1},"IgnoreCase",true));
+    fnames = fnames(cellfun(@(teststr) ~isempty(strfind(lower(teststr),lower(dij.RBE_models{1}))), fnames));
 
     % Rename fields and remove model specifier if there's only one
     for f = 1:length(fnames)
