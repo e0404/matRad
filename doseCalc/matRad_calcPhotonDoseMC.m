@@ -37,7 +37,7 @@ function dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst,nCasePerBixel,visBool,useD
     % could be also set as pln property e.g pln.propDoseCalc.useDeprecated
     if ~(isfield(pln, 'propDoseCalc') && isfield(pln.propDoseCalc, 'engine'))
         % create new engine if no engine is defined inside the pln struct
-        pln.propDoseCalc.engine = DoseEngines.matRad_PhotonMonteCarloEngineOmpMC(ct,stf,pln,cst);
+        pln.propDoseCalc.engine = DoseEngines.matRad_DoseEnginePhotonsOmpMC(ct,stf,pln,cst);
     end
     % if additional args are given, configure the engine
     if exist('nCasePerBixel','var')

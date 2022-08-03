@@ -37,7 +37,7 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 
     % create new engine if no engine is defined inside the pln struct
     if ~(isfield(pln, 'propDoseCalc') && isfield(pln.propDoseCalc, 'engine'))
-        pln.propDoseCalc.engine = DoseEngines.matRad_ParticleAnalyticalPencilBeamDoseEngine(ct,stf,pln,cst);
+        pln.propDoseCalc.engine = DoseEngines.matRad_DoseEngineParticlePB(ct,stf,pln,cst);
     end
     % set additional args
     if exist('calcDoseDirect','var')    

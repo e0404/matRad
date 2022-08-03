@@ -39,7 +39,7 @@ function dij = matRad_calcDose(ct,stf,pln,cst)
 
 
     %get all available engines for given pln struct, could be done conditional
-    [nameList, ~, handleList] = matRad_getAvailableEngines(pln);
+    [nameList, ~, handleList] = DoseEngines.matRad_DoseEngine.getAvailableEngines(pln);
 
     if(isfield(pln,'propDoseCalc') && isfield(pln.propDoseCalc,'engine')) 
 

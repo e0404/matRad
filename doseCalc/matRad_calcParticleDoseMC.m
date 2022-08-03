@@ -39,7 +39,7 @@ function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nCasePerBixel,calcDoseDi
 
     % create new engine if no engine is defined inside the pln struct
     if ~(isfield(pln, 'propDoseCalc') && isfield(pln.propDoseCalc, 'engine'))
-        pln.propDoseCalc.engine = DoseEngines.matRad_ParticleMonteCarloDoseEngineMCsquare(ct,stf,pln,cst);
+        pln.propDoseCalc.engine = DoseEngines.matRad_DoseEngineMCsquare(ct,stf,pln,cst);
     end
     % set additional args
     if exist('nCasePerBixel','var')

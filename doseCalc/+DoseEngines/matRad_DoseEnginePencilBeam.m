@@ -1,5 +1,5 @@
-classdef (Abstract) matRad_AnalyticalPencilBeamEngine < DoseEngines.matRad_DoseEngine
-    % matRad_AnalyticalPencilBeamEngine: abstract superclass for all dose calculation engines which are based on 
+classdef (Abstract) matRad_DoseEnginePencilBeam < DoseEngines.matRad_DoseEngine
+    % matRad_DoseEnginePencilBeam: abstract superclass for all dose calculation engines which are based on 
     %   analytical pencil beam calculation 
     %   for more informations see superclass
     %   DoseEngines.matRad_DoseEngine
@@ -48,7 +48,7 @@ classdef (Abstract) matRad_AnalyticalPencilBeamEngine < DoseEngines.matRad_DoseE
     methods (Access = protected) %Abstract
 
         
-        function dij = fillDij(obj,dij,stf,counter) 
+        function dij = fillDij(this,dij,stf,counter) 
         % method for filling the dij struct with the computed dose cube
         % last step in dose calculation
         % Needs to be implemented in non abstract subclasses.  
@@ -56,7 +56,7 @@ classdef (Abstract) matRad_AnalyticalPencilBeamEngine < DoseEngines.matRad_DoseE
         end
 
         
-        function dij = fillDijDirect(obj,dij,stf,currBeamIdx,currRayIdx,currBixelIdx)
+        function dij = fillDijDirect(this,dij,stf,currBeamIdx,currRayIdx,currBixelIdx)
         % method for filling the dij struct, when using a direct dose
         % calcultion
         % Needs to be implemented in non abstract subclasses, 
@@ -68,26 +68,26 @@ classdef (Abstract) matRad_AnalyticalPencilBeamEngine < DoseEngines.matRad_DoseE
     
     methods (Access = protected)
         
-        function [ct,stf,pln,dij] = calcDoseInit(obj,ct,stf,pln,cst)
+        function [ct,stf,pln,dij] = calcDoseInit(this,ct,cst,pln,stf)
             % modified inherited method of the superclass DoseEngine,
             % containing intialization which are specificly needed for
             % pencil beam calculation and not for other engines
             
-            [ct,stf,pln,dij] = calcDoseInit@DoseEngines.matRad_DoseEngine(obj,ct,stf,pln,cst);
+            [ct,stf,pln,dij] = calcDoseInit@DoseEngines.matRad_DoseEngine(this,ct,cst,pln,stf);
             
             % Allocate memory for dose_temp cell array
-            obj.doseTmpContainer     = cell(obj.numOfBixelsContainer,dij.numOfScenarios);
+            this.doseTmpContainer     = cell(this.numOfBixelsContainer,dij.numOfScenarios);
             
             
             
         end
         
-        function dij = calcDoseInitBeam(obj,ct,stf,dij,i)
+        function dij = calcDoseInitBeam(this,ct,stf,dij,i)
             % Method for initializing the beams for analytical pencil beam
             % dose calculation
             %
             % call
-            %   obj.calcDoseInitBeam(ct,stf,dij,i)
+            %   this.calcDoseInitBeam(ct,stf,dij,i)
             %
             % input
             %   ct:                         matRad ct struct
@@ -102,34 +102,34 @@ classdef (Abstract) matRad_AnalyticalPencilBeamEngine < DoseEngines.matRad_DoseE
             matRad_cfg.dispInfo('Beam %d of %d:\n',i,dij.numOfBeams);
 
             % remember beam and bixel number
-            if obj.calcDoseDirect
+            if this.calcDoseDirect
                 dij.beamNum(i)    = i;
                 dij.rayNum(i)     = i;
                 dij.bixelNum(i)   = i;
             end
 
-            obj.bixelsPerBeam = 0;
+            this.bixelsPerBeam = 0;
 
             % convert voxel indices to real coordinates using iso center of beam i
-            xCoordsV       = obj.xCoordsV_vox(:)*ct.resolution.x-stf(i).isoCenter(1);
-            yCoordsV       = obj.yCoordsV_vox(:)*ct.resolution.y-stf(i).isoCenter(2);
-            zCoordsV       = obj.zCoordsV_vox(:)*ct.resolution.z-stf(i).isoCenter(3);
+            xCoordsV       = this.xCoordsV_vox(:)*ct.resolution.x-stf(i).isoCenter(1);
+            yCoordsV       = this.yCoordsV_vox(:)*ct.resolution.y-stf(i).isoCenter(2);
+            zCoordsV       = this.zCoordsV_vox(:)*ct.resolution.z-stf(i).isoCenter(3);
             coordsV        = [xCoordsV yCoordsV zCoordsV];
 
-            xCoordsVdoseGrid = obj.xCoordsV_voxDoseGrid(:)*dij.doseGrid.resolution.x-stf(i).isoCenter(1);
-            yCoordsVdoseGrid = obj.yCoordsV_voxDoseGrid(:)*dij.doseGrid.resolution.y-stf(i).isoCenter(2);
-            zCoordsVdoseGrid = obj.zCoordsV_voxDoseGrid(:)*dij.doseGrid.resolution.z-stf(i).isoCenter(3);
+            xCoordsVdoseGrid = this.xCoordsV_voxDoseGrid(:)*dij.doseGrid.resolution.x-stf(i).isoCenter(1);
+            yCoordsVdoseGrid = this.yCoordsV_voxDoseGrid(:)*dij.doseGrid.resolution.y-stf(i).isoCenter(2);
+            zCoordsVdoseGrid = this.zCoordsV_voxDoseGrid(:)*dij.doseGrid.resolution.z-stf(i).isoCenter(3);
             coordsVdoseGrid  = [xCoordsVdoseGrid yCoordsVdoseGrid zCoordsVdoseGrid];
 
             % Get Rotation Matrix
             % Do not transpose matrix since we usage of row vectors &
             % transformation of the coordinate system need double transpose
 
-            obj.rotMat_system_T = matRad_getRotationMatrix(stf(i).gantryAngle,stf(i).couchAngle);
+            this.rotMat_system_T = matRad_getRotationMatrix(stf(i).gantryAngle,stf(i).couchAngle);
 
             % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
-            rot_coordsV         = coordsV*obj.rotMat_system_T;
-            rot_coordsVdoseGrid = coordsVdoseGrid*obj.rotMat_system_T;
+            rot_coordsV         = coordsV*this.rotMat_system_T;
+            rot_coordsVdoseGrid = coordsVdoseGrid*this.rotMat_system_T;
 
             rot_coordsV(:,1) = rot_coordsV(:,1)-stf(i).sourcePoint_bev(1);
             rot_coordsV(:,2) = rot_coordsV(:,2)-stf(i).sourcePoint_bev(2);
@@ -140,30 +140,30 @@ classdef (Abstract) matRad_AnalyticalPencilBeamEngine < DoseEngines.matRad_DoseE
             rot_coordsVdoseGrid(:,3) = rot_coordsVdoseGrid(:,3)-stf(i).sourcePoint_bev(3);
 
             % calculate geometric distances
-            obj.geoDistVdoseGrid{1}= sqrt(sum(rot_coordsVdoseGrid.^2,2));
+            this.geoDistVdoseGrid{1}= sqrt(sum(rot_coordsVdoseGrid.^2,2));
             % Calculate radiological depth cube
             matRad_cfg.dispInfo('matRad: calculate radiological depth cube... ');
-            if strcmp(obj.pbCalcMode, 'fineSampling') || obj.keepRadDepthCubes
-                [radDepthVctGrid, obj.radDepthCube] = matRad_rayTracing(stf(i),ct,obj.VctGrid,rot_coordsV,obj.effectiveLateralCutoff);
-                obj.radDepthCube{1} = matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z, obj.radDepthCube{1}, ...
+            if strcmp(this.pbCalcMode, 'fineSampling') || this.keepRadDepthCubes
+                [radDepthVctGrid, this.radDepthCube] = matRad_rayTracing(stf(i),ct,this.VctGrid,rot_coordsV,this.effectiveLateralCutoff);
+                this.radDepthCube{1} = matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z, this.radDepthCube{1}, ...
                                                 dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest');
             else
-                radDepthVctGrid = matRad_rayTracing(stf(i),ct,obj.VctGrid,rot_coordsV,obj.effectiveLateralCutoff);
+                radDepthVctGrid = matRad_rayTracing(stf(i),ct,this.VctGrid,rot_coordsV,this.effectiveLateralCutoff);
             end
             
             % interpolate radiological depth cube to dose grid resolution
-            obj.radDepthVdoseGrid = matRad_interpRadDepth...
-                (ct,1,obj.VctGrid,obj.VdoseGrid,dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z,radDepthVctGrid);
+            this.radDepthVdoseGrid = matRad_interpRadDepth...
+                (ct,1,this.VctGrid,this.VdoseGrid,dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z,radDepthVctGrid);
             
             matRad_cfg.dispInfo('done.\n');
 
             %Keep rad depth cube if desired
-            if obj.keepRadDepthCubes
-                obj.radDepthCubes{i} = obj.radDepthCube;
+            if this.keepRadDepthCubes
+                this.radDepthCubes{i} = this.radDepthCube;
             end
 
             % limit rotated coordinates to positions where ray tracing is availabe
-            obj.rot_coordsVdoseGrid = rot_coordsVdoseGrid(~isnan(obj.radDepthVdoseGrid{1}),:);
+            this.rot_coordsVdoseGrid = rot_coordsVdoseGrid(~isnan(this.radDepthVdoseGrid{1}),:);
             
         end
         
@@ -178,7 +178,7 @@ classdef (Abstract) matRad_AnalyticalPencilBeamEngine < DoseEngines.matRad_DoseE
             % 
             % call
             %   [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = ...
-            %           obj.calcGeoDists(rot_coords_bev, ...
+            %           this.calcGeoDists(rot_coords_bev, ...
             %                               sourcePoint_bev, ...
             %                               targetPoint_bev, ...
             %                               SAD, ...
@@ -297,7 +297,7 @@ classdef (Abstract) matRad_AnalyticalPencilBeamEngine < DoseEngines.matRad_DoseE
             % 
             % call
             %   [ixNew,bixelDoseNew] =
-            %   obj.dijSampling(ix,bixelDose,radDepthV,rad_distancesSq,sType,Param)
+            %   this.dijSampling(ix,bixelDose,radDepthV,rad_distancesSq,sType,Param)
             %
             % input
             %   ix:               indices of voxels where we want to compute dose influence data

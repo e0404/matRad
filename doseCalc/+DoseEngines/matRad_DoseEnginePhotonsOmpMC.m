@@ -1,7 +1,7 @@
-classdef matRad_PhotonMonteCarloEngineOmpMC < DoseEngines.matRad_MonteCarloEngine
+classdef matRad_DoseEnginePhotonsOmpMC < DoseEngines.matRad_DoseEngineMonteCarlo
     % Engine for photon dose calculation based on monte carlo
     % for more informations see superclass
-    % DoseEngines.matRad_MonteCarloEngine
+    % DoseEngines.matRad_DoseEngineMonteCarlo
      %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
@@ -32,11 +32,11 @@ classdef matRad_PhotonMonteCarloEngineOmpMC < DoseEngines.matRad_MonteCarloEngin
         
     methods
         
-        function obj = matRad_PhotonMonteCarloEngineOmpMC(ct,stf,pln,cst)
+        function this = matRad_DoseEnginePhotonsOmpMC(ct,stf,pln,cst)
             % Constructor
             %
             % call
-            %   engine = DoseEngines.matRad_PhotonMonteCarloEngineOmpMCct,stf,pln,cst)
+            %   engine = DoseEngines.matRad_DoseEnginePhotonsOmpMCct,stf,pln,cst)
             %
             % input
             %   ct:                         matRad ct struct
@@ -45,17 +45,17 @@ classdef matRad_PhotonMonteCarloEngineOmpMC < DoseEngines.matRad_MonteCarloEngin
             %   cst:                        matRad cst struct
                         
             % call superclass constructor   
-            obj = obj@DoseEngines.matRad_MonteCarloEngine();    
+            this = this@DoseEngines.matRad_DoseEngineMonteCarlo();    
             
         end
         
-        function dij = calcDose(obj,ct,stf,pln,cst)
+        function dij = calcDose(this,ct,stf,pln,cst)
             % matRad ompMC monte carlo photon dose calculation wrapper
             % can be automaticly called through matRad_calcDose or
             % matRad_calcPhotonDoseMC
             %
             % call
-            %   dij = obj.calcDose(ct,stf,pln,cst)
+            %   dij = this.calcDose(ct,stf,pln,cst)
             %
             % input
             %   ct:                         matRad ct struct
@@ -99,17 +99,17 @@ classdef matRad_PhotonMonteCarloEngineOmpMC < DoseEngines.matRad_MonteCarloEngin
             end
             
             %run calcDoseInit as usual
-            [ct,stf,pln,dij] = obj.calcDoseInit(ct,stf,pln,cst);
+            [ct,stf,pln,dij] = this.calcDoseInit(ct,cst,pln,stf);
 
             % gaussian filter to model penumbra from (measured) machine output / see diploma thesis siggel 4.1.2
-            if isfield(obj.machine.data,'penumbraFWHMatIso')
-                penumbraFWHM = obj.machine.data.penumbraFWHMatIso;
+            if isfield(this.machine.data,'penumbraFWHMatIso')
+                penumbraFWHM = this.machine.data.penumbraFWHMatIso;
             else
                 penumbraFWHM = 5;
                 matRad_cfg.dispWarning('photon machine file does not contain measured penumbra width in machine.data.penumbraFWHMatIso. Assuming 5 mm.');
             end
 
-            sourceFWHM = penumbraFWHM * obj.machine.meta.SCD/(obj.machine.meta.SAD - obj.machine.meta.SCD);
+            sourceFWHM = penumbraFWHM * this.machine.meta.SCD/(this.machine.meta.SAD - this.machine.meta.SCD);
             sigmaGauss = sourceFWHM / sqrt(8*log(2)); % [mm] 
 
             % set up arrays for book keeping
@@ -117,7 +117,7 @@ classdef matRad_PhotonMonteCarloEngineOmpMC < DoseEngines.matRad_MonteCarloEngin
             dij.rayNum   = NaN*ones(dij.totalNumOfBixels,1);
             dij.beamNum  = NaN*ones(dij.totalNumOfBixels,1);
 
-            dij.numHistoriesPerBeamlet = obj.nCasePerBixel;
+            dij.numHistoriesPerBeamlet = this.nCasePerBixel;
 
             omcFolder = [matRad_cfg.matRadRoot filesep 'ompMC'];
             %omcFolder = [matRad_cfg.matRadRoot filesep 'submodules' filesep 'ompMC'];
@@ -128,7 +128,7 @@ classdef matRad_PhotonMonteCarloEngineOmpMC < DoseEngines.matRad_MonteCarloEngin
             ompMCoptions.verbose = matRad_cfg.logLevel - 1;
 
             % start MC control          
-            ompMCoptions.nHistories = obj.nCasePerBixel;
+            ompMCoptions.nHistories = this.nCasePerBixel;
             ompMCoptions.nSplit = 20;
             ompMCoptions.nBatches = 10;
             ompMCoptions.randomSeeds = [97 33];
@@ -218,7 +218,7 @@ classdef matRad_PhotonMonteCarloEngineOmpMC < DoseEngines.matRad_MonteCarloEngin
             ompMCgeo.zBounds = (dij.doseGrid.resolution.z * (0.5 + [0:dij.doseGrid.dimensions(3)])) ./ scale;
 
             %% debug visualization
-            if obj.visBool
+            if this.visBool
 
                 figure
                 hold on
@@ -250,7 +250,7 @@ classdef matRad_PhotonMonteCarloEngineOmpMC < DoseEngines.matRad_MonteCarloEngin
             end
 
             %% Create beamlet source
-            obj.useCornersSCD = true; %false -> use ISO corners
+            this.useCornersSCD = true; %false -> use ISO corners
 
             numOfBixels = [stf(:).numOfRays];
             beamSource = zeros(dij.numOfBeams, 3);
@@ -274,7 +274,7 @@ classdef matRad_PhotonMonteCarloEngineOmpMC < DoseEngines.matRad_MonteCarloEngin
                     dij.rayNum(counter)   = j;
                     dij.bixelNum(counter) = j;
 
-                    if obj.useCornersSCD
+                    if this.useCornersSCD
                         beamletCorners = stf(i).ray(j).rayCorners_SCD;
                     else    
                         beamletCorners = stf(i).ray(j).beamletCornersAtIso;
@@ -287,7 +287,7 @@ classdef matRad_PhotonMonteCarloEngineOmpMC < DoseEngines.matRad_MonteCarloEngin
                     bixelSide1(counter,:) = (beamletCorners(2,:) + stf(i).isoCenter) ./ scale - currCorner;
                     bixelSide2(counter,:) = (beamletCorners(4,:) + stf(i).isoCenter) ./ scale - currCorner;
 
-                    if obj.visBool
+                    if this.visBool
                         for k = 1:4
                             currCornerVis = (beamletCorners(k,:) + stf(i).isoCenter)/10;
                             % rays connecting source and ray corner
@@ -323,7 +323,7 @@ classdef matRad_PhotonMonteCarloEngineOmpMC < DoseEngines.matRad_MonteCarloEngin
             ompMCsource.ySide2 = bixelSide2(:,1);
             ompMCsource.zSide2 = bixelSide2(:,3);
 
-            if obj.visBool
+            if this.visBool
                 plot3(ompMCsource.ySource,ompMCsource.xSource,ompMCsource.zSource,'rx')
             end
 
@@ -392,7 +392,7 @@ classdef matRad_PhotonMonteCarloEngineOmpMC < DoseEngines.matRad_MonteCarloEngin
       
         function ret = isAvailable(pln)
             % see superclass for information
-            ret = any(strcmp(DoseEngines.matRad_PhotonMonteCarloEngineOmpMC.possibleRadiationModes, pln.radiationMode));
+            ret = any(strcmp(DoseEngines.matRad_DoseEnginePhotonsOmpMC.possibleRadiationModes, pln.radiationMode));
         end
         
     end

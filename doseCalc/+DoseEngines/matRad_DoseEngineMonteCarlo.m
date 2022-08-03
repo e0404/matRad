@@ -1,5 +1,5 @@
-classdef (Abstract) matRad_MonteCarloEngine < DoseEngines.matRad_DoseEngine
-    % matRad_MonteCarloEngine: abstract superclass for all dose calculation 
+classdef (Abstract) matRad_DoseEngineMonteCarlo < DoseEngines.matRad_DoseEngine
+    % matRad_DoseEngineMonteCarlo: abstract superclass for all dose calculation 
     %   engines which are based on monte carlo calculation 
     %   for more informations see superclass
     %   DoseEngines.matRad_DoseEngine
@@ -25,16 +25,16 @@ classdef (Abstract) matRad_MonteCarloEngine < DoseEngines.matRad_DoseEngine
         
     methods
         
-        function obj = matRad_MonteCarloEngine()
+        function this = matRad_DoseEngineMonteCarlo()
             
             % call superclass constructor
-            obj = obj@DoseEngines.matRad_DoseEngine();
+            this = this@DoseEngines.matRad_DoseEngine();
    
             % create config instance
             matRad_cfg = MatRad_Config.instance();
             
             %set number of particles simulated per pencil beam
-            obj.nCasePerBixel = matRad_cfg.propMC.MCsquare_defaultHistories;
+            this.nCasePerBixel = matRad_cfg.propMC.MCsquare_defaultHistories;
             
         end
     end

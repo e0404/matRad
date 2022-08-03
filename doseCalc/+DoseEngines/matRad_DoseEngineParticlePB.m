@@ -1,4 +1,4 @@
-classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_AnalyticalPencilBeamEngine
+classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
     % matRad_ParticleDoseEngine: 
     %   Implements an engine for particle based dose calculation 
     %   For detailed information see superclass matRad_DoseEngine
@@ -49,11 +49,11 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
              
     methods 
         
-        function obj = matRad_ParticleAnalyticalPencilBeamDoseEngine(ct,stf,pln,cst)
+        function this = matRad_DoseEngineParticlePB(ct,stf,pln,cst)
             % Constructor
             %
             % call
-            %   engine = DoseEngines.matRad_ParticleAnalyticalPencilBeamDoseEngine(ct,stf,pln,cst)
+            %   engine = DoseEngines.matRad_DoseEngineParticlePB(ct,stf,pln,cst)
             %
             % input
             %   ct:                         matRad ct struct
@@ -61,7 +61,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
             %   pln:                        matRad plan meta information struct
             %   cst:                        matRad cst struct
              
-            obj = obj@DoseEngines.matRad_AnalyticalPencilBeamEngine();
+            this = this@DoseEngines.matRad_DoseEnginePencilBeam();
             
 %             if exist('pln','var')
 %                 % check if bio optimization is needed and set the
@@ -70,25 +70,25 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
 %                     (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') ||... 
 %                     isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) && ... 
 %                     strcmp(pln.radiationMode,'carbon'))
-%                     obj.calcBioDose = true;
+%                     this.calcBioDose = true;
 %                  end
 %                  
 %                  if isfield(pln,'propDoseCalc') && ...
 %                     isfield(pln.propDoseCalc,'calcLET') && ...
 %                     pln.propDoseCalc.calcLET
-%                     obj.calcLET = true;
+%                     this.calcLET = true;
 %                  end
 %                     
 %             end
         end
         
-        function dij = calcDose(obj,ct,stf,pln,cst)
+        function dij = calcDose(this,ct,stf,pln,cst)
             % matRad particle dose calculation wrapper
             % can be automaticly called through matRad_calcDose or
             % matRad_calcParticleDose
             %
             % call
-            %   dij = obj.calcDose(ct,stf,pln,cst)
+            %   dij = this.calcDose(ct,stf,pln,cst)
             %
             % input
             %   ct:             ct cube
@@ -118,7 +118,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
             matRad_cfg =  MatRad_Config.instance();
             
             % init dose calc
-            [ct,stf,pln,dij] = obj.calcDoseInit(ct,stf,pln,cst);
+            [ct,stf,pln,dij] = this.calcDoseInit(ct,cst,pln,stf);
 
             % initialize waitbar
             figureWait = waitbar(0,'calculate dose influence matrix for particles...');
@@ -130,20 +130,20 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
             
             % allocate alpha and beta dose container and sparse matrices in the dij struct,
             % for more informations see corresponding method
-            dij = obj.allocateBioDoseContainer(dij,pln);
+            dij = this.allocateBioDoseContainer(dij,pln);
             
             % allocate LET containner and let sparse matrix in dij struct
-            if obj.calcLET
-                dij = obj.allocateLETContainer(dij,pln);
+            if this.calcLET
+                dij = this.allocateLETContainer(dij,pln);
             end
 
             % generates tissue class matrix for biological optimization
-            if obj.calcBioDose
+            if this.calcBioDose
 
-                if   isfield(obj.machine.data,'alphaX') && isfield(obj.machine.data,'betaX')
+                if   isfield(this.machine.data,'alphaX') && isfield(this.machine.data,'betaX')
 
                     matRad_cfg.dispInfo('matRad: loading biological base data... ');
-                    vTissueIndex = zeros(size(obj.VdoseGrid,1),1);
+                    vTissueIndex = zeros(size(this.VdoseGrid,1),1);
                     dij.ax       = zeros(dij.doseGrid.numOfVoxels,1);
                     dij.bx       = zeros(dij.doseGrid.numOfVoxels,1);
 
@@ -153,7 +153,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
                     cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
                                                      dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
                     % retrieve photon LQM parameter for the current dose grid voxels
-                    [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,obj.VdoseGrid);
+                    [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,this.VdoseGrid);
 
                     for i = 1:size(cst,1)
 
@@ -161,12 +161,12 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
                         if ~isempty(cst{i,5}) && isfield(cst{i,5},'alphaX') && isfield(cst{i,5},'betaX') 
 
                             % check if base data contains alphaX and betaX
-                            IdxTissue = find(ismember(obj.machine.data(1).alphaX,cst{i,5}.alphaX) & ...
-                                             ismember(obj.machine.data(1).betaX,cst{i,5}.betaX));
+                            IdxTissue = find(ismember(this.machine.data(1).alphaX,cst{i,5}.alphaX) & ...
+                                             ismember(this.machine.data(1).betaX,cst{i,5}.betaX));
 
                             % check consitency of biological baseData and cst settings
                             if ~isempty(IdxTissue)
-                                isInVdoseGrid = ismember(obj.VdoseGrid,cst{i,4}{1});
+                                isInVdoseGrid = ismember(this.VdoseGrid,cst{i,4}{1});
                                 vTissueIndex(isInVdoseGrid) = IdxTissue;
                             else
                                 matRad_cfg.dispError('biological base data and cst inconsistent\n');
@@ -193,7 +193,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
             end
 
             % lateral cutoff for raytracing and geo calculations
-            obj.effectiveLateralCutoff = matRad_cfg.propDoseCalc.defaultGeometricCutOff;
+            this.effectiveLateralCutoff = matRad_cfg.propDoseCalc.defaultGeometricCutOff;
             
             matRad_cfg.dispInfo('matRad: Particle dose calculation...\n');
             counter = 0;
@@ -202,13 +202,13 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
             for i = 1:length(stf) % loop over all beams
 
                 % init beam
-                dij = obj.calcDoseInitBeam(ct,stf,dij,i);     
+                dij = this.calcDoseInitBeam(ct,stf,dij,i);     
 
                 % Determine lateral cutoff
                 matRad_cfg.dispInfo('matRad: calculate lateral cutoff...');
                 cutOffLevel = matRad_cfg.propDoseCalc.defaultLateralCutOff;
-                obj.visBoolLateralCutOff = 0;
-                obj.calcLateralParticleCutOff(cutOffLevel,stf(i));
+                this.visBoolLateralCutOff = 0;
+                this.calcLateralParticleCutOff(cutOffLevel,stf(i));
                 matRad_cfg.dispInfo('done.\n');    
 
                 for j = 1:stf(i).numOfRays % loop over all rays
@@ -217,51 +217,51 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
 
                         % find index of maximum used energy (round to keV for numerical
                         % reasons
-                        energyIx = max(round2(stf(i).ray(j).energy,4)) == round2([obj.machine.data.energy],4);
+                        energyIx = max(round2(stf(i).ray(j).energy,4)) == round2([this.machine.data.energy],4);
 
-                        maxLateralCutoffDoseCalc = max(obj.machine.data(energyIx).LatCutOff.CutOff);
+                        maxLateralCutoffDoseCalc = max(this.machine.data(energyIx).LatCutOff.CutOff);
 
                         % calculate initial sigma for all bixel on current ray
-                        sigmaIniRay = matRad_calcSigmaIni(obj.machine.data,stf(i).ray(j),stf(i).ray(j).SSD);
+                        sigmaIniRay = matRad_calcSigmaIni(this.machine.data,stf(i).ray(j),stf(i).ray(j).SSD);
 
-                        if strcmp(obj.pbCalcMode, 'fineSampling')
+                        if strcmp(this.pbCalcMode, 'fineSampling')
                             % Ray tracing for beam i and ray j
-                            [ix,~,~,~,latDistsX,latDistsZ] = obj.calcGeoDists(obj.rot_coordsVdoseGrid, ...
+                            [ix,~,~,~,latDistsX,latDistsZ] = this.calcGeoDists(this.rot_coordsVdoseGrid, ...
                                                                  stf(i).sourcePoint_bev, ...
                                                                  stf(i).ray(j).targetPoint_bev, ...
-                                                                 obj.machine.meta.SAD, ...
-                                                                 find(~isnan(obj.radDepthVdoseGrid{1})), ...
+                                                                 this.machine.meta.SAD, ...
+                                                                 find(~isnan(this.radDepthVdoseGrid{1})), ...
                                                                  maxLateralCutoffDoseCalc);
 
                             % Given the initial sigmas of the sampling ray, this
                             % function provides the weights for the sub-pencil beams,
                             % their positions and their sigma used for dose calculation
                             for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
-                                if (obj.fineSamplingSigmaSub < sigmaIniRay(k)) && (obj.fineSamplingSigmaSub > 0)
+                                if (this.fineSamplingSigmaSub < sigmaIniRay(k)) && (this.fineSamplingSigmaSub > 0)
                                     [finalWeight(:,k), sigmaSub(:,k), posX(:,k), posZ(:,k), numOfSub(:,k)] = ...
-                                              matRad_calcWeights(sigmaIniRay(k), obj.fineSamplingMethod, obj.fineSamplingN, obj.fineSamplingSigmaSub);
+                                              matRad_calcWeights(sigmaIniRay(k), this.fineSamplingMethod, this.fineSamplingN, this.fineSamplingSigmaSub);
                                 else
-                                    if (obj.fineSamplingSigmaSub < 0)
+                                    if (this.fineSamplingSigmaSub < 0)
                                         matRad_cfg.dispError('Chosen fine sampling sigma cannot be negative!');
-                                    elseif (obj.fineSamplingSigmaSub > sigmaIniRay(k))
+                                    elseif (this.fineSamplingSigmaSub > sigmaIniRay(k))
                                         matRad_cfg.dispError('Chosen fine sampling sigma is too high for defined plan!');
                                     end                          
                                 end
                             end
                         else
                             % Ray tracing for beam i and ray j
-                            [ix,currRadialDist_sq,~,~,~,~] = obj.calcGeoDists(obj.rot_coordsVdoseGrid, ...
+                            [ix,currRadialDist_sq,~,~,~,~] = this.calcGeoDists(this.rot_coordsVdoseGrid, ...
                                                                  stf(i).sourcePoint_bev, ...
                                                                  stf(i).ray(j).targetPoint_bev, ...
-                                                                 obj.machine.meta.SAD, ...
-                                                                 find(~isnan(obj.radDepthVdoseGrid{1})), ...
+                                                                 this.machine.meta.SAD, ...
+                                                                 find(~isnan(this.radDepthVdoseGrid{1})), ...
                                                                  maxLateralCutoffDoseCalc);
 
-                            radDepths = obj.radDepthVdoseGrid{1}(ix); 
+                            radDepths = this.radDepthVdoseGrid{1}(ix); 
                         end
 
                         % just use tissue classes of voxels found by ray tracer
-                        if obj.calcBioDose
+                        if this.calcBioDose
                                 vTissueIndex_j = vTissueIndex(ix,:);
                         end
 
@@ -270,11 +270,11 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
                         for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
 
                             counter = counter + 1;
-                            obj.bixelsPerBeam = obj.bixelsPerBeam + 1;
+                            this.bixelsPerBeam = this.bixelsPerBeam + 1;
 
                             % Display progress and update text only 200 times
-                            if mod(obj.bixelsPerBeam,max(1,round(stf(i).totalNumOfBixels/200))) == 0
-                                    matRad_progress(obj.bixelsPerBeam/max(1,round(stf(i).totalNumOfBixels/200)),...
+                            if mod(this.bixelsPerBeam,max(1,round(stf(i).totalNumOfBixels/200))) == 0
+                                    matRad_progress(this.bixelsPerBeam/max(1,round(stf(i).totalNumOfBixels/200)),...
                                                     floor(stf(i).totalNumOfBixels/max(1,round(stf(i).totalNumOfBixels/200))));
                             end
 
@@ -284,7 +284,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
                             end
 
                             % remember beam and bixel number
-                            if ~obj.calcDoseDirect
+                            if ~this.calcDoseDirect
                                dij.beamNum(counter)  = i;
                                dij.rayNum(counter)   = j;
                                dij.bixelNum(counter) = k;
@@ -312,21 +312,21 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
 
 
                             % find energy index in base data
-                            energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([obj.machine.data.energy],4));
+                            energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([this.machine.data.energy],4));
 
 
-                                if strcmp(obj.pbCalcMode, 'fineSampling')
+                                if strcmp(this.pbCalcMode, 'fineSampling')
 
                                     % calculate projected coordinates for fine sampling of
                                     % each beamlet
-                                    projCoords = matRad_projectOnComponents(obj.VdoseGrid(ix), size(obj.radDepthCube{1}), stf(i).sourcePoint_bev,...
+                                    projCoords = matRad_projectOnComponents(this.VdoseGrid(ix), size(this.radDepthCube{1}), stf(i).sourcePoint_bev,...
                                                     stf(i).ray(j).targetPoint_bev, stf(i).isoCenter,...
                                                     [dij.doseGrid.resolution.x dij.doseGrid.resolution.y dij.doseGrid.resolution.z],...
-                                                    -posX(:,k), -posZ(:,k), obj.rotMat_system_T);
+                                                    -posX(:,k), -posZ(:,k), this.rotMat_system_T);
 
                                     % interpolate radiological depths at projected
                                     % coordinates
-                                    radDepths = interp3(obj.radDepthCube{1},projCoords(:,1,:)./dij.doseGrid.resolution.x,...
+                                    radDepths = interp3(this.radDepthCube{1},projCoords(:,1,:)./dij.doseGrid.resolution.x,...
                                         projCoords(:,2,:)./dij.doseGrid.resolution.y,projCoords(:,3,:)./dij.doseGrid.resolution.z,'nearest');                       
 
                                     % compute radial distances relative to pencil beam
@@ -337,21 +337,21 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
                                 % create offset vector to account for additional offsets modelled in the base data and a potential 
                                 % range shifter. In the following, we only perform dose calculation for voxels having a radiological depth
                                 % that is within the limits of the base data set (-> machine.data(i).dephts). By this means, we only allow  
-                                % interpolations in obj.calcParticleDoseBixel() and avoid extrapolations.
-                                offsetRadDepth = obj.machine.data(energyIx).offset - stf(i).ray(j).rangeShifter(k).eqThickness;                               
+                                % interpolations in this.calcParticleDoseBixel() and avoid extrapolations.
+                                offsetRadDepth = this.machine.data(energyIx).offset - stf(i).ray(j).rangeShifter(k).eqThickness;                               
                                 
                                 % find depth depended lateral cut off
                                 if cutOffLevel >= 1
-                                    currIx = radDepths <= obj.machine.data(energyIx).depths(end) + offsetRadDepth;
+                                    currIx = radDepths <= this.machine.data(energyIx).depths(end) + offsetRadDepth;
                                 elseif cutOffLevel < 1 && cutOffLevel > 0
                                     % perform rough 2D clipping
-                                    currIx = radDepths <= obj.machine.data(energyIx).depths(end) + offsetRadDepth & ...
-                                         currRadialDist_sq <= max(obj.machine.data(energyIx).LatCutOff.CutOff.^2);
+                                    currIx = radDepths <= this.machine.data(energyIx).depths(end) + offsetRadDepth & ...
+                                         currRadialDist_sq <= max(this.machine.data(energyIx).LatCutOff.CutOff.^2);
 
                                     % peform fine 2D clipping  
-                                    if length(obj.machine.data(energyIx).LatCutOff.CutOff) > 1
-                                        currIx(currIx) = matRad_interp1((obj.machine.data(energyIx).LatCutOff.depths + offsetRadDepth)',...
-                                            (obj.machine.data(energyIx).LatCutOff.CutOff.^2)', radDepths(currIx)) >= currRadialDist_sq(currIx);
+                                    if length(this.machine.data(energyIx).LatCutOff.CutOff) > 1
+                                        currIx(currIx) = matRad_interp1((this.machine.data(energyIx).LatCutOff.depths + offsetRadDepth)',...
+                                            (this.machine.data(energyIx).LatCutOff.CutOff.^2)', radDepths(currIx)) >= currRadialDist_sq(currIx);
                                     end
                                 else
                                     matRad_cfg.dispError('Cutoff must be a value between 0 and 1!')
@@ -373,7 +373,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
                                 if stf(i).ray(j).rangeShifter(k).eqThickness > 0 && strcmp(pln.radiationMode,'protons')
 
                                     % compute!
-                                    sigmaRashi = matRad_calcSigmaRashi(obj.machine.data(energyIx).energy, ...
+                                    sigmaRashi = matRad_calcSigmaRashi(this.machine.data(energyIx).energy, ...
                                                                        stf(i).ray(j).rangeShifter(k), ...
                                                                        stf(i).ray(j).SSD);
 
@@ -382,86 +382,86 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
 
                                 end
 
-                            if strcmp(obj.pbCalcMode, 'fineSampling')
+                            if strcmp(this.pbCalcMode, 'fineSampling')
                                 % initialise empty dose array
                                 totalDose = zeros(size(currIx,1),1);
 
                                 if isfield(dij,'mLETDose')
                                     % calculate particle LET for bixel k on ray j of beam i
-                                    depths = obj.machine.data(energyIx).depths + obj.machine.data(energyIx).offset; 
+                                    depths = this.machine.data(energyIx).depths + this.machine.data(energyIx).offset; 
                                     totalLET = zeros(size(currIx,1),1);
                                 end
 
                                 % run over components
                                 for c = 1:numOfSub(k)
                                     tmpDose = zeros(size(currIx,1),1);
-                                    bixelDose = finalWeight(c,k).*obj.calcParticleDoseBixel(...
+                                    bixelDose = finalWeight(c,k).*this.calcParticleDoseBixel(...
                                             radDepths(currIx(:,:,c),1,c), ...
                                             currRadialDist_sq(currIx(:,:,c),:,c), ...
                                             sigmaSub(k)^2, ...
-                                            obj.machine.data(energyIx));
+                                            this.machine.data(energyIx));
 
                                     tmpDose(currIx(:,:,c)) = bixelDose;
                                     totalDose = totalDose + tmpDose;
 
                                     if isfield(dij,'mLETDose') 
                                         tmpLET = zeros(size(currIx,1),1);
-                                        tmpLET(currIx(:,:,c)) = matRad_interp1(depths,obj.machine.data(energyIx).LET,radDepths(currIx(:,:,c),1,c));    
+                                        tmpLET(currIx(:,:,c)) = matRad_interp1(depths,this.machine.data(energyIx).LET,radDepths(currIx(:,:,c),1,c));    
                                         totalLET = totalLET + tmpLET;
                                     end
                                 end
 
-                                obj.doseTmpContainer{mod(counter-1,obj.numOfBixelsContainer)+1,1} = sparse(obj.VdoseGrid(ix),1,totalDose,dij.doseGrid.numOfVoxels,1);
+                                this.doseTmpContainer{mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(this.VdoseGrid(ix),1,totalDose,dij.doseGrid.numOfVoxels,1);
                                 if isfield(dij,'mLETDose') 
-                                    obj.letDoseTmpContainer{mod(counter-1,obj.numOfBixelsContainer)+1,1} = sparse(obj.VdoseGrid(ix),1,totalDose.*totalLET,dij.doseGrid.numOfVoxels,1);
+                                    this.letDoseTmpContainer{mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(this.VdoseGrid(ix),1,totalDose.*totalLET,dij.doseGrid.numOfVoxels,1);
                                 end                    
                             else
                                 % calculate particle dose for bixel k on ray j of beam i
-                                bixelDose = obj.calcParticleDoseBixel(...
+                                bixelDose = this.calcParticleDoseBixel(...
                                     currRadDepths, ...
                                     currRadialDist_sq(currIx), ...
                                     sigmaIni_sq, ...
-                                    obj.machine.data(energyIx));                 
+                                    this.machine.data(energyIx));                 
 
                                 % dij sampling is exluded for particles until we investigated the influence of voxel sampling for particles
                                 %relDoseThreshold   =  0.02;   % sample dose values beyond the relative dose
                                 %Type               = 'dose';
-                                %[currIx,bixelDose] = obj.dijSampling(currIx,bixelDose,radDepths(currIx),radialDist_sq(currIx),Type,relDoseThreshold);
+                                %[currIx,bixelDose] = this.dijSampling(currIx,bixelDose,radDepths(currIx),radialDist_sq(currIx),Type,relDoseThreshold);
 
                                 % Save dose for every bixel in cell array
-                                obj.doseTmpContainer{mod(counter-1,obj.numOfBixelsContainer)+1,1} = sparse(obj.VdoseGrid(ix(currIx)),1,bixelDose,dij.doseGrid.numOfVoxels,1);
+                                this.doseTmpContainer{mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(this.VdoseGrid(ix(currIx)),1,bixelDose,dij.doseGrid.numOfVoxels,1);
 
                                 if isfield(dij,'mLETDose')
                                   % calculate particle LET for bixel k on ray j of beam i
-                                  depths = obj.machine.data(energyIx).depths + obj.machine.data(energyIx).offset; 
-                                  bixelLET = matRad_interp1(depths,obj.machine.data(energyIx).LET,currRadDepths); 
+                                  depths = this.machine.data(energyIx).depths + this.machine.data(energyIx).offset; 
+                                  bixelLET = matRad_interp1(depths,this.machine.data(energyIx).LET,currRadDepths); 
 
                                   % Save LET for every bixel in cell array
-                                  obj.letDoseTmpContainer{mod(counter-1,obj.numOfBixelsContainer)+1,1} = sparse(obj.VdoseGrid(ix(currIx)),1,bixelLET.*bixelDose,dij.doseGrid.numOfVoxels,1);
+                                  this.letDoseTmpContainer{mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(this.VdoseGrid(ix(currIx)),1,bixelLET.*bixelDose,dij.doseGrid.numOfVoxels,1);
                                 end
                             end
 
 
 
-                            if obj.calcBioDose
+                            if this.calcBioDose
                                 % calculate alpha and beta values for bixel k on ray j of                  
                                 [bixelAlpha, bixelBeta] = matRad_calcLQParameter(...
                                     currRadDepths,...
                                     vTissueIndex_j(currIx,:),...
-                                    obj.machine.data(energyIx));
+                                    this.machine.data(energyIx));
 
-                                obj.alphaDoseTmpContainer{mod(counter-1,obj.numOfBixelsContainer)+1,1} = sparse(obj.VdoseGrid(ix(currIx)),1,bixelAlpha.*bixelDose,dij.doseGrid.numOfVoxels,1);
-                                obj.betaDoseTmpContainer{mod(counter-1,obj.numOfBixelsContainer)+1,1}  = sparse(obj.VdoseGrid(ix(currIx)),1,sqrt(bixelBeta).*bixelDose,dij.doseGrid.numOfVoxels,1);
+                                this.alphaDoseTmpContainer{mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(this.VdoseGrid(ix(currIx)),1,bixelAlpha.*bixelDose,dij.doseGrid.numOfVoxels,1);
+                                this.betaDoseTmpContainer{mod(counter-1,this.numOfBixelsContainer)+1,1}  = sparse(this.VdoseGrid(ix(currIx)),1,sqrt(bixelBeta).*bixelDose,dij.doseGrid.numOfVoxels,1);
                             end
 
                             %  fill the dij struct each time a
                             %  bixelContainer is calculated and at the end
                             %  of the dose calculation
-                            if mod(counter,obj.numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels                      
-                                if obj.calcDoseDirect
-                                    dij = obj.fillDijDirect(dij,stf,pln,i,j,k);
+                            if mod(counter,this.numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels                      
+                                if this.calcDoseDirect
+                                    dij = this.fillDijDirect(dij,stf,pln,i,j,k);
                                 else
-                                    dij = obj.fillDij(dij,stf,pln,counter);
+                                    dij = this.fillDij(dij,stf,pln,counter);
                                 end
 
                             end
@@ -483,7 +483,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
     
     methods (Access = protected)
         
-        function [ct,stf,pln,dij] = calcDoseInit(obj,ct,stf,pln,cst)
+        function [ct,stf,pln,dij] = calcDoseInit(this,ct,cst,pln,stf)
             % Extended version of the calcDoseInit method of
             % @matRad_DoseEngine method. See superclass for more information 
 
@@ -491,25 +491,25 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
                         
             % assign analytical mode
             if isfield(pln,'propDoseCalc') && isfield(pln.propDoseCalc,'fineSampling') && strcmp(pln.radiationMode, 'protons')
-                obj.pbCalcMode = 'fineSampling';
+                this.pbCalcMode = 'fineSampling';
                 defaultFineSampling = matRad_cfg.propDoseCalc.defaultFineSamplingProperties;    
                 if isfield(pln.propDoseCalc.fineSampling,'N')
-                    obj.fineSamplingN = pln.propDoseCalc.fineSampling.N;
+                    this.fineSamplingN = pln.propDoseCalc.fineSampling.N;
                 else
-                    obj.fineSamplingN = defaultFineSampling.N;
+                    this.fineSamplingN = defaultFineSampling.N;
                 end
                 if isfield(pln.propDoseCalc.fineSampling,'sigmaSub')    
-                    obj.fineSamplingSigmaSub = pln.propDoseCalc.fineSampling.sigmaSub;
+                    this.fineSamplingSigmaSub = pln.propDoseCalc.fineSampling.sigmaSub;
                 else
-                    obj.fineSamplingSigmaSub = defaultFineSampling.sigmaSub;
+                    this.fineSamplingSigmaSub = defaultFineSampling.sigmaSub;
                 end
                 if isfield(pln.propDoseCalc.fineSampling,'method')    
-                    obj.fineSamplingMethod = pln.propDoseCalc.fineSampling.method;
+                    this.fineSamplingMethod = pln.propDoseCalc.fineSampling.method;
                 else
-                    obj.fineSamplingMethod = defaultFineSampling.method;
+                    this.fineSamplingMethod = defaultFineSampling.method;
                 end
             else
-                obj.pbCalcMode = 'standard';
+                this.pbCalcMode = 'standard';
             end
             
             
@@ -519,42 +519,42 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
                 (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') ||... 
                 isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) && ... 
                 strcmp(pln.radiationMode,'carbon'))
-                obj.calcBioDose = true;
+                this.calcBioDose = true;
             end
             
             % check for calcLET in pln
             if isfield(pln,'propDoseCalc') && ...
                 isfield(pln.propDoseCalc,'calcLET') && ...
                 pln.propDoseCalc.calcLET
-                obj.calcLET = true;
+                this.calcLET = true;
             end
             
             % set lateral cutoff for raytracing and geo calculations (not used in calculation right now)
             if isfield(pln, 'propDoseCalc') && isfield(pln.propDoseCalc, 'geometricCutOff')
-                obj.geometricCutOff = pln.propDoseCalc.geometricCutOff;
+                this.geometricCutOff = pln.propDoseCalc.geometricCutOff;
             else
-                obj.geometricCutOff = matRad_cfg.propDoseCalc.defaultGeometricCutOff;
+                this.geometricCutOff = matRad_cfg.propDoseCalc.defaultGeometricCutOff;
                 pln.propDoseCalc.geometricCutOff = matRad_cfg.propDoseCalc.defaultGeometricCutOff;
             end 
                         
             % call superclass constructor
-            [ct,stf,pln,dij] = calcDoseInit@DoseEngines.matRad_DoseEngine(obj,ct,stf,pln,cst);
+            [ct,stf,pln,dij] = calcDoseInit@DoseEngines.matRad_DoseEngine(this,ct,cst,pln,stf);
             
         end
         
-        function dij = allocateBioDoseContainer(obj,dij,pln)
+        function dij = allocateBioDoseContainer(this,dij,pln)
         % allocate space for container used in bio optimization
 
             % get instance of matRad Config for displaying info
             matRad_cfg = MatRad_Config.instance();
             
-            if obj.calcBioDose
+            if this.calcBioDose
 
-                    obj.alphaDoseTmpContainer = cell(obj.numOfBixelsContainer,dij.numOfScenarios);
-                    obj.betaDoseTmpContainer  = cell(obj.numOfBixelsContainer,dij.numOfScenarios);
+                    this.alphaDoseTmpContainer = cell(this.numOfBixelsContainer,dij.numOfScenarios);
+                    this.betaDoseTmpContainer  = cell(this.numOfBixelsContainer,dij.numOfScenarios);
                     for i = 1:dij.numOfScenarios
-                        dij.mAlphaDose{i}    = spalloc(dij.doseGrid.numOfVoxels,obj.numOfColumnsDij,1);
-                        dij.mSqrtBetaDose{i} = spalloc(dij.doseGrid.numOfVoxels,obj.numOfColumnsDij,1);
+                        dij.mAlphaDose{i}    = spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,1);
+                        dij.mSqrtBetaDose{i} = spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,1);
                     end
 
             elseif isequal(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
@@ -563,16 +563,16 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
             end
         end
         
-        function dij = allocateLETContainer(obj,dij,pln)
+        function dij = allocateLETContainer(this,dij,pln)
         % allocate space for container used in LET calculation
         
               % get MatLab Config instance for displaying warings  
               matRad_cfg = MatRad_Config.instance();
-              if isfield(obj.machine.data,'LET')
-                obj.letDoseTmpContainer = cell(obj.numOfBixelsContainer,dij.numOfScenarios);
+              if isfield(this.machine.data,'LET')
+                this.letDoseTmpContainer = cell(this.numOfBixelsContainer,dij.numOfScenarios);
                 % Allocate space for dij.dosexLET sparse matrix
                 for i = 1:dij.numOfScenarios
-                    dij.mLETDose{i} = spalloc(dij.doseGrid.numOfVoxels,obj.numOfColumnsDij,1);
+                    dij.mLETDose{i} = spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,1);
                 end
               else
                 matRad_cfg.dispWarning('LET not available in the machine data. LET will not be calculated.');
@@ -580,11 +580,11 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
             
         end
                  
-        function dij = fillDij(obj,dij,stf,pln,counter)
+        function dij = fillDij(this,dij,stf,pln,counter)
         % Sequentially fill the sparse matrix dij from the tmpContainer cell array
         %
         % call
-        %   dij = fillDij(obj,dij,stf,pln,counter)
+        %   dij = fillDij(this,dij,stf,pln,counter)
         %
         % input
         %   dij:            matRad dij struct
@@ -598,46 +598,46 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
         %
         %   see also fillDijDirect
         
-            if ~obj.calcDoseDirect
+            if ~this.calcDoseDirect
                 
-                dij.physicalDose{1}(:,(ceil(counter/obj.numOfBixelsContainer)-1)*obj.numOfBixelsContainer+1:counter) = [obj.doseTmpContainer{1:mod(counter-1,obj.numOfBixelsContainer)+1,1}];
+                dij.physicalDose{1}(:,(ceil(counter/this.numOfBixelsContainer)-1)*this.numOfBixelsContainer+1:counter) = [this.doseTmpContainer{1:mod(counter-1,this.numOfBixelsContainer)+1,1}];
 
                 if isfield(dij,'mLETDose')
-                    dij.mLETDose{1}(:,(ceil(counter/obj.numOfBixelsContainer)-1)*obj.numOfBixelsContainer+1:counter) = [obj.letDoseTmpContainer{1:mod(counter-1,obj.numOfBixelsContainer)+1,1}];
+                    dij.mLETDose{1}(:,(ceil(counter/this.numOfBixelsContainer)-1)*this.numOfBixelsContainer+1:counter) = [this.letDoseTmpContainer{1:mod(counter-1,this.numOfBixelsContainer)+1,1}];
                 end
 
-                if obj.calcBioDose
+                if this.calcBioDose
 
-                    dij.mAlphaDose{1}(:,(ceil(counter/obj.numOfBixelsContainer)-1)*obj.numOfBixelsContainer+1:counter) = [obj.alphaDoseTmpContainer{1:mod(counter-1,obj.numOfBixelsContainer)+1,1}];
-                    dij.mSqrtBetaDose{1}(:,(ceil(counter/obj.numOfBixelsContainer)-1)*obj.numOfBixelsContainer+1:counter) = [obj.betaDoseTmpContainer{1:mod(counter-1,obj.numOfBixelsContainer)+1,1}];
+                    dij.mAlphaDose{1}(:,(ceil(counter/this.numOfBixelsContainer)-1)*this.numOfBixelsContainer+1:counter) = [this.alphaDoseTmpContainer{1:mod(counter-1,this.numOfBixelsContainer)+1,1}];
+                    dij.mSqrtBetaDose{1}(:,(ceil(counter/this.numOfBixelsContainer)-1)*this.numOfBixelsContainer+1:counter) = [this.betaDoseTmpContainer{1:mod(counter-1,this.numOfBixelsContainer)+1,1}];
                 end
             else
-                error([dbstack(1).name ' is not intended for direct dose calculation. For filling the dij inside a direct dose calculation please refer to obj.fillDijDirect.']);
+                error([dbstack(1).name ' is not intended for direct dose calculation. For filling the dij inside a direct dose calculation please refer to this.fillDijDirect.']);
             end    
             
         end
         
-        function dij = fillDijDirect(obj,dij,stf,pln,currBeamIdx,currRayIdx,currBixelIdx)
+        function dij = fillDijDirect(this,dij,stf,pln,currBeamIdx,currRayIdx,currBixelIdx)
         % fillDijDirect - sequentially fill dij, meant for direct calculation only
         %   Fill the sparse matrix physicalDose inside dij with the
         %   indices given by the direct dose calculation
         %   
         %   see also fillDij.      
-            if obj.calcDoseDirect
+            if this.calcDoseDirect
                 if isfield(stf(1).ray(1),'weight') && numel(stf(currBeamIdx).ray(currRayIdx).weight) >= currBixelIdx
 
                     % score physical dose
-                    dij.physicalDose{1}(:,currBeamIdx) = dij.physicalDose{1}(:,currBeamIdx) + stf(currBeamIdx).ray(currRayIdx).weight(currBixelIdx) * obj.doseTmpContainer{1,1};
+                    dij.physicalDose{1}(:,currBeamIdx) = dij.physicalDose{1}(:,currBeamIdx) + stf(currBeamIdx).ray(currRayIdx).weight(currBixelIdx) * this.doseTmpContainer{1,1};
                     
                     % write property for mLETDose
                     if isfield(dij,'mLETDose')
-                        dij.mLETDose{1}(:,currBeamIdx) = dij.mLETDose{1}(:,currBeamIdx) + stf(currBeamIdx).ray(currRayIdx).weight(currBixelIdx) * obj.letDoseTmpContainer{1,1}; 
+                        dij.mLETDose{1}(:,currBeamIdx) = dij.mLETDose{1}(:,currBeamIdx) + stf(currBeamIdx).ray(currRayIdx).weight(currBixelIdx) * this.letDoseTmpContainer{1,1}; 
                     end
 
-                    if obj.calcBioDose
+                    if this.calcBioDose
                         % score alpha and beta matrices
-                        dij.mAlphaDose{1}(:,currBeamIdx)    = dij.mAlphaDose{1}(:,currBeamIdx) + stf(currBeamIdx).ray(currRayIdx).weight(currBixelIdx) * obj.alphaDoseTmpContainer{1,1};
-                        dij.mSqrtBetaDose{1}(:,currBeamIdx) = dij.mSqrtBetaDose{1}(:,currBeamIdx) + stf(currBeamIdx).ray(currRayIdx).weight(currBixelIdx) * obj.betaDoseTmpContainer{1,1};
+                        dij.mAlphaDose{1}(:,currBeamIdx)    = dij.mAlphaDose{1}(:,currBeamIdx) + stf(currBeamIdx).ray(currRayIdx).weight(currBixelIdx) * this.alphaDoseTmpContainer{1,1};
+                        dij.mSqrtBetaDose{1}(:,currBeamIdx) = dij.mSqrtBetaDose{1}(:,currBeamIdx) + stf(currBeamIdx).ray(currRayIdx).weight(currBixelIdx) * this.betaDoseTmpContainer{1,1};
 
                     end
                 else
@@ -646,7 +646,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
 
                 end
             else
-                error([dbstack(1).name 'not available for not direct dose calculation. Refer to obj.fillDij() for a not direct dose calculation.'])
+                error([dbstack(1).name 'not available for not direct dose calculation. Refer to this.fillDij() for a not direct dose calculation.'])
             end
         end
         
@@ -655,7 +655,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
         % on ct including segmentation
         % 
         % call
-        %   dose = obj.calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData)
+        %   dose = this.calcParticleDoseBixel(radDepths, radialDist_sq, sigmaIni_sq, baseData)
         %
         % input
         %   radDepths:      radiological depths
@@ -725,15 +725,15 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
         end 
         end
         
-        function calcLateralParticleCutOff(obj,cutOffLevel,stf)
+        function calcLateralParticleCutOff(this,cutOffLevel,stf)
             % matRad function to calculate a depth dependend lateral cutoff 
             % for each pristine particle beam
             % 
             % call
-            %   obj.calcLateralParticleCutOff(cutOffLevel,stf)
+            %   this.calcLateralParticleCutOff(cutOffLevel,stf)
             %
             % input
-            %   obj:        current engine object includes machine base data file
+            %   this:        current engine object includes machine base data file
             %   cutOffLevel:    cut off level - number between 0 and 1
             %   stf:          	matRad steering information struct
             %
@@ -802,19 +802,19 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
             for i = 1:size(energySigmaLUT,1)
 
                 % find index of maximum used energy (round to keV for numerical reasons
-                energyIx = max(round2(energySigmaLUT(i,1),4)) == round2([obj.machine.data.energy],4);
+                energyIx = max(round2(energySigmaLUT(i,1),4)) == round2([this.machine.data.energy],4);
 
                 currFoci = energySigmaLUT(i,2);
-                sigmaIni = matRad_interp1(obj.machine.data(energyIx).initFocus.dist(currFoci,:)',...
-                                          obj.machine.data(energyIx).initFocus.sigma(currFoci,:)',...
+                sigmaIni = matRad_interp1(this.machine.data(energyIx).initFocus.dist(currFoci,:)',...
+                                          this.machine.data(energyIx).initFocus.sigma(currFoci,:)',...
                                           energySigmaLUT(i,3));
                 sigmaIni_sq = sigmaIni^2;
 
                 % consider range shifter for protons if applicable
-                if  strcmp(obj.machine.meta.radiationMode,'protons') && rangeShifterLUT(i).eqThickness > 0  && ~strcmp(obj.machine.meta.machine,'Generic')
+                if  strcmp(this.machine.meta.radiationMode,'protons') && rangeShifterLUT(i).eqThickness > 0  && ~strcmp(this.machine.meta.machine,'Generic')
 
                     %get max range shift
-                    sigmaRashi = matRad_calcSigmaRashi(obj.machine.data(energyIx).energy, ...
+                    sigmaRashi = matRad_calcSigmaRashi(this.machine.data(energyIx).energy, ...
                                                        rangeShifterLUT(i), ...
                                                        energySigmaLUT(i,3));
 
@@ -836,7 +836,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
             end
 
             % get energy indices for looping
-            vEnergiesIx = find(ismember([obj.machine.data(:).energy],uniqueEnergies(:,1)));
+            vEnergiesIx = find(ismember([this.machine.data(:).energy],uniqueEnergies(:,1)));
             cnt         = 0;    
 
             % loop over all entries in the machine.data struct
@@ -846,18 +846,18 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
                 depthDoseCutOff = inf;
 
                 % get the current integrated depth dose profile
-                if isstruct(obj.machine.data(energyIx).Z)
-                    idd_org = sumGauss(obj.machine.data(energyIx).depths,obj.machine.data(energyIx).Z.mean,...
-                                               obj.machine.data(energyIx).Z.width.^2,...
-                                               obj.machine.data(energyIx).Z.weight) * conversionFactor;
+                if isstruct(this.machine.data(energyIx).Z)
+                    idd_org = sumGauss(this.machine.data(energyIx).depths,this.machine.data(energyIx).Z.mean,...
+                                               this.machine.data(energyIx).Z.width.^2,...
+                                               this.machine.data(energyIx).Z.weight) * conversionFactor;
                 else
-                    idd_org = obj.machine.data(energyIx).Z * conversionFactor;
+                    idd_org = this.machine.data(energyIx).Z * conversionFactor;
                 end
 
                 [~,peakIxOrg] = max(idd_org); 
 
                 % get indices for which a lateral cutoff should be calculated
-                cumIntEnergy = cumtrapz(obj.machine.data(energyIx).depths,idd_org);
+                cumIntEnergy = cumtrapz(this.machine.data(energyIx).depths,idd_org);
 
                 peakTailRelation   = 0.5;
                 numDepthValToPeak  = ceil(numDepthVal*peakTailRelation);                                                                          % number of depth values from 0 to peak position
@@ -869,33 +869,33 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
                                              cumIntEnergy(peakIxOrg+1):energyStepsTail:cumIntEnergy(end) cumIntEnergy(end)]);
 
                 [cumIntEnergy,ix] = unique(cumIntEnergy);
-                depthValues       = matRad_interp1(cumIntEnergy,obj.machine.data(energyIx).depths(ix),vEnergySteps);
+                depthValues       = matRad_interp1(cumIntEnergy,this.machine.data(energyIx).depths(ix),vEnergySteps);
 
-                if isstruct(obj.machine.data(energyIx).Z)
-                    idd = sumGauss(depthValues,obj.machine.data(energyIx).Z.mean,...
-                                               obj.machine.data(energyIx).Z.width.^2,...
-                                               obj.machine.data(energyIx).Z.weight) * conversionFactor;
+                if isstruct(this.machine.data(energyIx).Z)
+                    idd = sumGauss(depthValues,this.machine.data(energyIx).Z.mean,...
+                                               this.machine.data(energyIx).Z.width.^2,...
+                                               this.machine.data(energyIx).Z.weight) * conversionFactor;
                 else
-                    idd  = matRad_interp1(obj.machine.data(energyIx).depths,obj.machine.data(energyIx).Z,depthValues) * conversionFactor; 
+                    idd  = matRad_interp1(this.machine.data(energyIx).depths,this.machine.data(energyIx).Z,depthValues) * conversionFactor; 
                 end
 
                 cnt = cnt +1 ;
                 % % calculate dose in spot
-                baseData                   = obj.machine.data(energyIx);
+                baseData                   = this.machine.data(energyIx);
                 baseData.LatCutOff.CompFac = 1;   
 
                 for j = 1:numel(depthValues)
 
                     % save depth value
-                    obj.machine.data(energyIx).LatCutOff.depths(j) = depthValues(j);
+                    this.machine.data(energyIx).LatCutOff.depths(j) = depthValues(j);
 
                     if cutOffLevel == 1
-                        obj.machine.data(energyIx).LatCutOff.CompFac   = 1;
-                        obj.machine.data(energyIx).LatCutOff.CutOff(j) = Inf;
+                        this.machine.data(energyIx).LatCutOff.CompFac   = 1;
+                        this.machine.data(energyIx).LatCutOff.CutOff(j) = Inf;
                     else
 
                         % calculate dose
-                        dose_r = obj.calcParticleDoseBixel(depthValues(j) + baseData.offset, radialDist_sq, largestSigmaSq4uniqueEnergies(cnt), baseData);
+                        dose_r = this.calcParticleDoseBixel(depthValues(j) + baseData.offset, radialDist_sq, largestSigmaSq4uniqueEnergies(cnt), baseData);
 
                         cumArea = cumsum(2*pi.*r_mid.*dose_r.*dr);
                         relativeTolerance = 0.5; %in [%]
@@ -904,7 +904,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
                         end
 
                         IX = find(cumArea >= idd(j) * cutOffLevel,1, 'first'); 
-                        obj.machine.data(energyIx).LatCutOff.CompFac = cutOffLevel^-1;
+                        this.machine.data(energyIx).LatCutOff.CompFac = cutOffLevel^-1;
 
                         if isempty(IX)
                             depthDoseCutOff = Inf;
@@ -913,20 +913,20 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
                             depthDoseCutOff = r_mid(IX);
                         end
 
-                        obj.machine.data(energyIx).LatCutOff.CutOff(j) = depthDoseCutOff;
+                        this.machine.data(energyIx).LatCutOff.CutOff(j) = depthDoseCutOff;
 
                     end
                 end    
             end    
 
             %% visualization
-            if obj.visBoolLateralCutOff
+            if this.visBoolLateralCutOff
 
                 % determine which pencil beam should be plotted
                 subIx    = ceil(numel(vEnergiesIx)/2);
                 energyIx = vEnergiesIx(subIx);
 
-                baseData       = obj.machine.data(energyIx);
+                baseData       = this.machine.data(energyIx);
                 focusIx        = energySigmaLUT(ix_Max(subIx),2);
                 maxSSD         = energySigmaLUT(ix_Max(subIx),3);
                 rangeShifter   = rangeShifterLUT(ix_Max(subIx));
@@ -940,7 +940,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
                 midPos        = round(length(vLatX)/2);
                 [X,Y]         = meshgrid(vLatX,vLatX);
 
-                radDepths     = [0:sStep:obj.machine.data(energyIx).depths(end)] + obj.machine.data(energyIx).offset;
+                radDepths     = [0:sStep:this.machine.data(energyIx).depths(end)] + this.machine.data(energyIx).offset;
                 radialDist_sq = (X.^2 + Y.^2);
                 radialDist_sq = radialDist_sq(:);
                 mDose         = zeros(dimX,dimX,numel(radDepths));
@@ -949,25 +949,25 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
                 for kk = 1:numel(radDepths)    
 
                      % calculate initial focus sigma
-                     sigmaIni = matRad_interp1(obj.machine.data(energyIx).initFocus.dist(focusIx,:)', ...
-                                               obj.machine.data(energyIx).initFocus.sigma(focusIx,:)',maxSSD);
+                     sigmaIni = matRad_interp1(this.machine.data(energyIx).initFocus.dist(focusIx,:)', ...
+                                               this.machine.data(energyIx).initFocus.sigma(focusIx,:)',maxSSD);
                      sigmaIni_sq = sigmaIni^2;
 
                      % consider range shifter for protons if applicable
                      if rangeShifter.eqThickness > 0 && strcmp(pln.radiationMode,'protons')
 
                           % compute!
-                          sigmaRashi = matRad_calcSigmaRashi(obj.machine.data(energyIx).energy,rangeShifter,maxSSD);
+                          sigmaRashi = matRad_calcSigmaRashi(this.machine.data(energyIx).energy,rangeShifter,maxSSD);
 
                           % add to initial sigma in quadrature
                           sigmaIni_sq = sigmaIni_sq +  sigmaRashi^2;
 
                      end
 
-                     mDose(:,:,kk) = reshape(obj.calcParticleDoseBixel(radDepths(kk), radialDist_sq, sigmaIni_sq,baseData),[dimX dimX]);
+                     mDose(:,:,kk) = reshape(this.calcParticleDoseBixel(radDepths(kk), radialDist_sq, sigmaIni_sq,baseData),[dimX dimX]);
 
-                     [~,IX]           = min(abs((obj.machine.data(energyIx).LatCutOff.depths + obj.machine.data(energyIx).offset) - radDepths(kk)));
-                     TmpCutOff        = obj.machine.data(energyIx).LatCutOff.CutOff(IX);    
+                     [~,IX]           = min(abs((this.machine.data(energyIx).LatCutOff.depths + this.machine.data(energyIx).offset) - radDepths(kk)));
+                     TmpCutOff        = this.machine.data(energyIx).LatCutOff.CutOff(IX);    
                      vXCut            = vX(vX<=TmpCutOff);
 
                      % integration steps
@@ -975,7 +975,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
                      dr_Cut           = (vXCut(2:end) - vXCut(1:end-1))';
                      radialDist_sqCut = r_mid_Cut.^2;    
 
-                     dose_r_Cut       = obj.calcParticleDoseBixel(radDepths(kk), radialDist_sqCut(:), sigmaIni_sq,baseData);
+                     dose_r_Cut       = this.calcParticleDoseBixel(radDepths(kk), radialDist_sqCut(:), sigmaIni_sq,baseData);
 
                      cumAreaCut = cumsum(2*pi.*r_mid_Cut.*dose_r_Cut.*dr_Cut);  
 
@@ -985,16 +985,16 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
                 end
 
                 % obtain maximum dose
-                if isstruct(obj.machine.data(energyIx).Z)
-                    idd = sumGauss(depthValues,obj.machine.data(energyIx).Z.mean,...
-                                               obj.machine.data(energyIx).Z.width.^2,...
-                                               obj.machine.data(energyIx).Z.weight) * conversionFactor;
+                if isstruct(this.machine.data(energyIx).Z)
+                    idd = sumGauss(depthValues,this.machine.data(energyIx).Z.mean,...
+                                               this.machine.data(energyIx).Z.width.^2,...
+                                               this.machine.data(energyIx).Z.weight) * conversionFactor;
                 else
-                    idd  = matRad_interp1(obj.machine.data(energyIx).depths,obj.machine.data(energyIx).Z,depthValues) * conversionFactor; 
+                    idd  = matRad_interp1(this.machine.data(energyIx).depths,this.machine.data(energyIx).Z,depthValues) * conversionFactor; 
                 end
 
                 [~,peakixDepth] = max(idd); 
-                dosePeakPos = obj.calcParticleDoseBixel(obj.machine.data(energyIx).depths(peakixDepth), 0, sigmaIni_sq, baseData);   
+                dosePeakPos = this.calcParticleDoseBixel(this.machine.data(energyIx).depths(peakixDepth), 0, sigmaIni_sq, baseData);   
 
                 vLevelsDose = dosePeakPos.*[0.01 0.05 0.1 0.9];
                 doseSlice   = squeeze(mDose(midPos,:,:));
@@ -1005,44 +1005,44 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
 
                 ax = gca;
                 ax.XTickLabelMode = 'manual';
-                ax.XTickLabel     = strsplit(num2str(ax.XTick*sStep + obj.machine.data(energyIx).offset),' ')';
+                ax.XTickLabel     = strsplit(num2str(ax.XTick*sStep + this.machine.data(energyIx).offset),' ')';
                 ax.YTickLabelMode = 'manual';
-                ax.YTickLabel     = strsplit(num2str(ax.YTick*sStep + obj.machine.data(energyIx).offset),' ')';
+                ax.YTickLabel     = strsplit(num2str(ax.YTick*sStep + this.machine.data(energyIx).offset),' ')';
 
-                plot(1+(obj.machine.data(energyIx).LatCutOff.depths)*sStep^-1,...
-                      obj.machine.data(energyIx).LatCutOff.CutOff * sStep^-1 + midPos,'rx');
+                plot(1+(this.machine.data(energyIx).LatCutOff.depths)*sStep^-1,...
+                      this.machine.data(energyIx).LatCutOff.CutOff * sStep^-1 + midPos,'rx');
 
                 legend({'isodose 1%,5%,10% 90%','calculated cutoff'}) ,colorbar,set(gca,'FontSize',12),xlabel('z [mm]'),ylabel('x [mm]');
 
-                entry = obj.machine.data(energyIx);
+                entry = this.machine.data(energyIx);
                 if isstruct(entry.Z)
                    idd = sumGauss(entry.depths,entry.Z.mean,entry.Z.width.^2,entry.Z.weight);
                 else
-                   idd = obj.machine.data(energyIx).Z;
+                   idd = this.machine.data(energyIx).Z;
                 end
-                subplot(312),plot(obj.machine.data(energyIx).depths,idd*conversionFactor,'k','LineWidth',2),grid on,hold on
-                             plot(radDepths - obj.machine.data(energyIx).offset,vDoseInt,'r--','LineWidth',2),hold on,
-                             plot(radDepths - obj.machine.data(energyIx).offset,vDoseInt * TmpCompFac,'bx','LineWidth',1),hold on,
+                subplot(312),plot(this.machine.data(energyIx).depths,idd*conversionFactor,'k','LineWidth',2),grid on,hold on
+                             plot(radDepths - this.machine.data(energyIx).offset,vDoseInt,'r--','LineWidth',2),hold on,
+                             plot(radDepths - this.machine.data(energyIx).offset,vDoseInt * TmpCompFac,'bx','LineWidth',1),hold on,
                 legend({'original IDD',['cut off IDD at ' num2str(cutOffLevel) '%'],'cut off IDD with compensation'},'Location','northwest'),
                 xlabel('z [mm]'),ylabel('[MeV cm^2 /(g * primary)]'),set(gca,'FontSize',12)     
 
-                totEnergy        = trapz(obj.machine.data(energyIx).depths,idd*conversionFactor) ;
+                totEnergy        = trapz(this.machine.data(energyIx).depths,idd*conversionFactor) ;
                 totEnergyCutOff  = trapz(radDepths,vDoseInt * TmpCompFac) ;
                 relDiff          =  ((totEnergy/totEnergyCutOff)-1)*100;   
                 title(['rel diff of integral dose ' num2str(relDiff) '%']);
                 baseData.LatCutOff.CompFac = TmpCompFac;
 
                 subplot(313),
-                if isfield(obj.machine.data(energyIx),'sigma1')
+                if isfield(this.machine.data(energyIx),'sigma1')
                     yyaxis left;
-                    plot(obj.machine.data(energyIx).LatCutOff.depths,obj.machine.data(energyIx).LatCutOff.CutOff,'LineWidth',2),hold on
-                    plot(obj.machine.data(energyIx).depths,(obj.machine.data(energyIx).sigma1),':','LineWidth',2),grid on,hold on,ylabel('mm')
+                    plot(this.machine.data(energyIx).LatCutOff.depths,this.machine.data(energyIx).LatCutOff.CutOff,'LineWidth',2),hold on
+                    plot(this.machine.data(energyIx).depths,(this.machine.data(energyIx).sigma1),':','LineWidth',2),grid on,hold on,ylabel('mm')
                     yyaxis right; 
-                    plot(obj.machine.data(energyIx).depths,(obj.machine.data(energyIx).sigma2),'-.','LineWidth',2),grid on,hold on,ylabel('mm')
+                    plot(this.machine.data(energyIx).depths,(this.machine.data(energyIx).sigma2),'-.','LineWidth',2),grid on,hold on,ylabel('mm')
                     legend({'Cutoff','sigma1','sigma2'});
                 else
-                    yyaxis left;plot(obj.machine.data(energyIx).LatCutOff.depths,obj.machine.data(energyIx).LatCutOff.CutOff,'LineWidth',2),hold on,ylabel('mm')
-                    yyaxis right;subplot(313),plot(obj.machine.data(energyIx).depths,obj.machine.data(energyIx).sigma,'LineWidth',2),grid on,hold on
+                    yyaxis left;plot(this.machine.data(energyIx).LatCutOff.depths,this.machine.data(energyIx).LatCutOff.CutOff,'LineWidth',2),hold on,ylabel('mm')
+                    yyaxis right;subplot(313),plot(this.machine.data(energyIx).depths,this.machine.data(energyIx).sigma,'LineWidth',2),grid on,hold on
                     legend({'Cutoff','sigma'});ylabel('mm')
                 end
 
@@ -1052,8 +1052,8 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
                 figure,set(gcf,'Color',[1 1 1]);
                 cnt = 1;
                 for i = vEnergiesIx
-                    plot(obj.machine.data(i).LatCutOff.depths,obj.machine.data(i).LatCutOff.CutOff,'LineWidth',1.5),hold on
-                    cellLegend{cnt} = [num2str(obj.machine.data(i).energy) ' MeV'];
+                    plot(this.machine.data(i).LatCutOff.depths,this.machine.data(i).LatCutOff.CutOff,'LineWidth',1.5),hold on
+                    cellLegend{cnt} = [num2str(this.machine.data(i).energy) ' MeV'];
                     cnt = cnt + 1;
                 end
                 grid on, grid minor,xlabel('depth in [mm]'),ylabel('lateral cutoff in [mm]')
@@ -1069,7 +1069,7 @@ classdef matRad_ParticleAnalyticalPencilBeamDoseEngine < DoseEngines.matRad_Anal
         
         function ret = isAvailable(pln)
             % see superclass for information
-            ret = any(strcmp(DoseEngines.matRad_ParticleAnalyticalPencilBeamDoseEngine.possibleRadiationModes, pln.radiationMode));
+            ret = any(strcmp(DoseEngines.matRad_DoseEngineParticlePB.possibleRadiationModes, pln.radiationMode));
         end
     end
 end
