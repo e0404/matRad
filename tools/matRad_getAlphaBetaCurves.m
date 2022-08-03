@@ -39,7 +39,7 @@ if ~isempty(varargin)
         if iscell(varargin{i})
             cst = varargin{i};
         elseif ischar(varargin{i})
-            if contains(varargin{i},'override')
+            if ~isempty(strfind(lower(varargin{i}),'override'))
                 if  isfield(machine.data,'alphaX')
                     overrideAB = true;
                 end
@@ -50,7 +50,9 @@ if ~isempty(varargin)
     end
 end
 
-if ~contains(machine.meta.radiationMode,{'protons','helium'}) || (exist('modelName','var') && contains(modelName,'LEM'))
+
+if any(cellfun(@(teststr) isempty(strfind(lower(machine.meta.radiationMode),lower(teststr))), {'protons','helium'})) || ...
+        (exist('modelName','var') && ~isempty(strfind(lower(modelName),'LEM')))
     matRad_cfg.dispWarning('alphaBetaCurves cannot be calculated for LEM model, skipping...');
 elseif ~isfield(machine.data,'alphaX') || overrideAB
     %% save original fields with suffix if available
@@ -64,10 +66,11 @@ elseif ~isfield(machine.data,'alphaX') || overrideAB
     
     %% Set biological models
     if ~exist('modelName','var')
-        if contains(machine.meta.radiationMode,'proton')
-            modelName = 'MCN'; % Use McNamara model as default for protons
-        elseif contains(machine.meta.radiationMode,'helium')
-            modelName = 'HEL';
+        switch machine.meta.radiationMode
+            case 'protons'
+                modelName = 'MCN'; % Use McNamara model as default for protons
+            case 'helium'
+                modelName = 'HEL';
         end
     end
     pln.bioParam = matRad_bioModel(machine.meta.radiationMode,'RBExD',modelName);
