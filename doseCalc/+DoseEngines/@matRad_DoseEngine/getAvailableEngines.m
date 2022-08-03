@@ -31,7 +31,7 @@ function [nameList, classList, handleList] = getAvailableEngines(pln,optionalPat
             % so we use a somewhat unclean work around in Octave which propably won't work withg class folder.
             % So when using engine classes in octave it's better to initionlize them from hand
             if matRad_cfg.isOctave
-                [nameList, classList, handleList] = matRad_getAvailableEnginesOctave();
+                [nameList, classList, handleList] = DoseEngines.matRad_DoseEngine.getAvailableEnginesOctave();
             else
                 % get all meta classes in the DoseEngines package
                 mp = meta.package.fromName('DoseEngines');
@@ -74,7 +74,7 @@ function [nameList, classList, handleList] = getAvailableEngines(pln,optionalPat
             end
         case 1
             if matRad_cfg.isOctave
-                [nameList, classList, handleList] = matRad_getAvailableEnginesOctave(pln);
+                [nameList, classList, handleList] = DoseEngines.matRad_DoseEngine.getAvailableEnginesOctave(pln);
             else
                 mp = meta.package.fromName('DoseEngines');
                 mc_list = mp.ClassList;
@@ -128,7 +128,7 @@ function [nameList, classList, handleList] = getAvailableEngines(pln,optionalPat
 
         case 2
             if matRad_cfg.isOctave
-                [nameList, classList, handleList] = matRad_getAvailableEnginesOctave(pln,optionalPath);
+                [nameList, classList, handleList] = DoseEngines.matRad_DoseEngine.getAvailableEnginesOctave(pln,optionalPath);
             else
                 % check if path is valid and add it to the current
                 % matlab path
