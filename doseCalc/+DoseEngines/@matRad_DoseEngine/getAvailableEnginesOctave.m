@@ -42,6 +42,11 @@ function [nameList, classList, handleList] = getAvailableEnginesOctave(pln,optio
                 [~,className] = fileparts(files(i).name);
                 % get meta class with package name infront
                 mc = meta.class.fromName(['DoseEngines.' className]);
+                
+                % Check if we found a class
+                if isempty(mc)
+                    continue;
+                end
 
                 % check for the isCalcEngine property,
                 % could be done cleaner with the superclasses method
@@ -88,7 +93,7 @@ function [nameList, classList, handleList] = getAvailableEnginesOctave(pln,optio
                 % get meta class with package name infront
                 mc = meta.class.fromName(['DoseEngines.' className]);
                 % skip class if abstract
-                if~(mc.Abstract)
+                if ~isempty(mc) && ~(mc.Abstract)
                     % check for the isCalcEngine property,
                     % could be done cleaner with the superclasses method
                     % which sadly isn't available in octave
