@@ -60,7 +60,7 @@ classdef MatRad_TopasConfig < handle
 
         %Image
         materialConverter = struct('mode','HUToWaterSchneider',...    %'RSP','HUToWaterSchneider';
-            'densityCorrection','TOPAS2',... %'default','TOPAS1','TOPAS2','TOPAS3'
+            'densityCorrection','Schneider_TOPAS',... %'rspHLUT','Schneider_TOPAS','Schneider_matRad'
             'addSection','none',... %'none','lung'
             'addTitanium',false,... %'false','true' (can only be used with advanced HUsections)
             'HUSection','advanced',... %'default','advanced'
@@ -120,9 +120,8 @@ classdef MatRad_TopasConfig < handle
             'MCsquare','definedMaterials/MCsquare.txt.in',...
             'advanced','definedMaterials/advanced.txt.in'),...
             ... % Density Correction
-            'matConv_Schneider_densityCorr_TOPAS1','densityCorrection/TOPAS1.dat',...
-            'matConv_Schneider_densityCorr_TOPAS2','densityCorrection/TOPAS2.dat',...
-            'matConv_Schneider_densityCorr_TOPAS3','densityCorrection/TOPAS3.dat',...
+            'matConv_Schneider_densityCorr_Schneider_matRad','densityCorrection/Schneider_matRad.dat',...
+            'matConv_Schneider_densityCorr_Schneider_TOPAS','densityCorrection/Schneider_TOPAS.dat',...
             ... % load from file
             'matConv_Schneider_loadFromFile','TOPAS_SchneiderConverter.txt.in',...
             ... % Scorer
@@ -1750,7 +1749,7 @@ classdef MatRad_TopasConfig < handle
 
                     unique_hu = unique(huCube(:));
                     unique_rsp = matRad_interp1(rspHlut(:,1),rspHlut(:,2),double(unique_hu));
-                    fbase = fopen(['materials/' medium '.txt'],'r');
+                    fbase = fopen(['materialConverter/definedMaterials/' medium '.txt'],'r');
                     while ~feof(fbase)
                         strLine = fgets(fbase); %# read line by line
                         fprintf(fID,'%s',strLine);
@@ -1799,7 +1798,7 @@ classdef MatRad_TopasConfig < handle
                             % define density correction
                             matRad_cfg.dispInfo('TOPAS: Writing density correction\n');
                             switch obj.materialConverter.densityCorrection
-                                case 'default'
+                                case 'rspHLUT'
                                     densityCorrection.density = [];
                                     for i = 1:size(rspHlut,1)-1
                                         startVal = rspHlut(i,1);
@@ -1810,7 +1809,7 @@ classdef MatRad_TopasConfig < handle
                                     densityCorrection.density(end+1) = rspHlut(end,2); %add last missing value
                                     densityCorrection.boundaries = [rspHlut(1,1) numel(densityCorrection.density)-abs(rspHlut(1,1))];
 
-                                case {'TOPAS1','TOPAS2','TOPAS3'}
+                                case {'Schneider_TOPAS','Schneider_matRad'}
                                     fname = fullfile(obj.thisFolder,filesep,obj.converterFolder,filesep,obj.infilenames.(['matConv_Schneider_densityCorr_',obj.materialConverter.densityCorrection]));
                                     densityFile = fopen(fname);
                                     densityCorrection.density = fscanf(densityFile,'%f');
