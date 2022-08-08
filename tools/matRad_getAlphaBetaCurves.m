@@ -40,7 +40,7 @@ if ~isempty(varargin)
             cst = varargin{i};
         elseif ischar(varargin{i})
             if ~isempty(strfind(lower(varargin{i}),'override'))
-                if  isfield(machine.data,'alphaX')
+                if isfield(machine.data,'alphaX')
                     overrideAB = true;
                 end
             else
@@ -50,8 +50,7 @@ if ~isempty(varargin)
     end
 end
 
-
-if any(cellfun(@(teststr) isempty(strfind(lower(machine.meta.radiationMode),lower(teststr))), {'protons','helium'})) || ...
+if ~any(cellfun(@(teststr) isempty(strfind(lower(machine.meta.radiationMode),lower(teststr))), {'protons','helium'})) || ...
         (exist('modelName','var') && ~isempty(strfind(lower(modelName),'LEM')))
     matRad_cfg.dispWarning('alphaBetaCurves cannot be calculated for LEM model, skipping...');
 elseif ~isfield(machine.data,'alphaX') || overrideAB
