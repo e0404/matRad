@@ -19,18 +19,22 @@ function [nameList, classList, handleList] = getAvailableEngines(pln,optionalPat
 matRad_cfg = MatRad_Config.instance();
 
 %Parse inputs
-p = inputParser;
-p.addOptional('pln',[],@(x) isstruct(x) || isempty(x));
-p.addOptional('optionalPaths',{},@(x) iscellstr(x) && all(isfolder(x)));
-if nargin < 1
-    p.parse();
-elseif nargin < 2
-    p.parse(pln);
+if nargin < 2
+    optionalPaths = {};
 else
-    p.parse(pln,optionalPaths);
+    if ~(iscellstr(optionalPaths) && all(optionalPaths))
+        matRad_cfg.dispError('Invalid path array!');
+    end
 end
-pln = p.Results.pln;
-optionalPaths = p.Results.optionalPaths;
+
+if nargin < 1
+    pln = [];
+else
+    if ~(isstruct(pln) || isemplty(pln))
+        matRad_cfg.dispError('Invalid pln!');
+    end
+end
+
 
 %Get available, valid classes through call to matRad helper function
 %for finding subclasses
@@ -71,7 +75,8 @@ classList = cellfun(@(mc) mc.Name,availableDoseEngines,'UniformOutput',false);
 if matRad_cfg.isMatlab
     nameList = cellfun(@(mc) mc.PropertyList(strcmp({mc.PropertyList.Name}, 'name')).DefaultValue,availableDoseEngines,'UniformOutput',false);
 else
-    nameList = cellfun(@(mc) mc.PropertyList{strcmp({mc.PropertyList.Name}, 'name')}.DefaultValue,availableDoseEngines,'UniformOutput',false);
+    %Indexing a cell array with . not possible (in Octave)
+    nameList = cellfun(@(mc) mc.PropertyList{find(cellfun(@(p) strcmp(p.Name, 'name'),mc.PropertyList))}.DefaultValue,availableDoseEngines,'UniformOutput',false);
 end
 handleList = cellfun(@(namestr) str2func(namestr),classList,'UniformOutput',false);
 
