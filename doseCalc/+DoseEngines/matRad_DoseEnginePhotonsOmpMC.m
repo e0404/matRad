@@ -1,25 +1,25 @@
 classdef matRad_DoseEnginePhotonsOmpMC < DoseEngines.matRad_DoseEngineMonteCarlo
-    % Engine for photon dose calculation based on monte carlo
-    % for more informations see superclass
-    % DoseEngines.matRad_DoseEngineMonteCarlo
-     %
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %
-    % Copyright 2019 the matRad development team.
-    %
-    % This file is part of the matRad project. It is subject to the license
-    % terms in the LICENSE file found in the top-level directory of this
-    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
-    % of the matRad project, including this file, may be copied, modified,
-    % propagated, or distributed except according to the terms contained in the
-    % LICENSE file.
-    %
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Engine for photon dose calculation based on monte carlo
+% for more informations see superclass
+% DoseEngines.matRad_DoseEngineMonteCarlo
+ %
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2019 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (Constant) 
         
         possibleRadiationModes = 'photons';
-        name = 'monte carlo photon';  
+        name = 'ompMC';  
         
     end
     

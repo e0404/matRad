@@ -1,27 +1,27 @@
 classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
-    % matRad_ParticleDoseEngine: 
-    %   Implements an engine for particle based dose calculation 
-    %   For detailed information see superclass matRad_DoseEngine
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad_DoseEngineParticlePB: 
+%   Implements an engine for particle based dose calculation 
+%   For detailed information see superclass matRad_DoseEngine
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %
-    % Copyright 2015 the matRad development team. 
-    % 
-    % This file is part of the matRad project. It is subject to the license 
-    % terms in the LICENSE file found in the top-level directory of this 
-    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
-    % of the matRad project, including this file, may be copied, modified, 
-    % propagated, or distributed except according to the terms contained in the
-    % help edit
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2022 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the
+% help edit
 
-    % LICENSE file.
-    %
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (Constant)
            possibleRadiationModes = {'protons', 'carbon'}
-           name = 'pencil beam particle';
+           name = 'Particle Pencil-Beam';
     end
     
     properties (SetAccess = public, GetAccess = public)
@@ -53,7 +53,7 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
             % Constructor
             %
             % call
-            %   engine = DoseEngines.matRad_DoseEngineParticlePB(ct,stf,pln,cst)
+            %   engine = DoseEngines.matRad_ParticleAnalyticalPencilBeamDoseEngine(ct,stf,pln,cst)
             %
             % input
             %   ct:                         matRad ct struct
@@ -1069,7 +1069,7 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
         
         function ret = isAvailable(pln)
             % see superclass for information
-            ret = any(strcmp(DoseEngines.matRad_DoseEngineParticlePB.possibleRadiationModes, pln.radiationMode));
+            ret = any(strcmp(DoseEngines.matRad_ParticleAnalyticalPencilBeamDoseEngine.possibleRadiationModes, pln.radiationMode));
         end
     end
 end
