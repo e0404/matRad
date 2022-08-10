@@ -168,7 +168,7 @@ this.VctGrid = VctGrid;
 [this.yCoordsV_voxDoseGrid, this.xCoordsV_voxDoseGrid, this.zCoordsV_voxDoseGrid] = ind2sub(dij.doseGrid.dimensions,this.VdoseGrid);
 
 % load machine file from base data folder
-this.machine = this.loadMachine(pln);
+this.machine = matRad_loadMachine(pln);
 
 % compute SSDs
 stf = matRad_computeSSD(stf,ct);

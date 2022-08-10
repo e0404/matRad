@@ -6,8 +6,12 @@ function classList = matRad_findSubclasses(superClassName,varargin)
 %
 % call:
 %   classList = matRad_findSubclasses(superClassName);
-%   classList = matRad_findSubclasses(superClassName,'package',{packageNames}
-%   classList = matRad_findSubclasses(superClassName,'folders,{folderNames}
+%   classList =
+%       matRad_findSubclasses(superClassName,'package',{packageNames})
+%   classList =
+%       matRad_findSubclasses(superClassName,'folders',{folderNames})
+%   classList =
+%       matRad_findSubclasses(superClassName,'includeAbstract',true/false)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -26,6 +30,7 @@ function classList = matRad_findSubclasses(superClassName,varargin)
     p.addRequired('superclassName',@(x) ischar(x) || isa(x,'meta.class'));
     p.addParameter('packages',{},@(x) iscell(x) && (iscellstr(x) || all(cellfun(@(y) isa(y,'meta.package'),x))));
     p.addParameter('folders',{},@(x) iscellstr(x) && all(isfolder(x)));
+    p.addParameter('includeAbstract',false,@(x) isscalar(x) && islogical(x));
     %p.addParameter('usePath',false,@(x) islogical(x) && isscalar(x));
 
     p.parse(superClassName,varargin{:});
@@ -33,6 +38,7 @@ function classList = matRad_findSubclasses(superClassName,varargin)
     superClassName = p.Results.superclassName;
     packages = p.Results.packages;
     folders = p.Results.folders;
+    includeAbstract = p.Results.includeAbstract;
     %usePath = p.Results.usePath;
 
     if all(cellfun(@(y) isa(y,'meta.package'),packages))
@@ -67,15 +73,21 @@ function classList = matRad_findSubclasses(superClassName,varargin)
         classList = [classList; matRad_getClassesFromFolder(folder)];
     end
 
-    %Now test if it is a subclass
-    isNotAbstract = cellfun(@(mc) ~mc.Abstract,classList);
-    classList = classList(isNotAbstract);
-    
+    %Throw out abstract classes if requested
+    if ~includeAbstract
+        isNotAbstract = cellfun(@(mc) ~mc.Abstract,classList);
+        classList = classList(isNotAbstract);
+    end
+
+    %Now test if it is a subclass    
     inherits = cellfun(@(mc) matRad_checkInheritance(mc,superClassName),classList);
     classList = classList(inherits);
 end
 
 function metaClassList = matRad_getClassesFromFolder(folder,packageName)
+% matRad_getClassesFromFolder: collects classes from a folder. packageName
+% can be passed for Octave compatibility
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %We accept the specific package name for Octave compatability
 if nargin < 2
@@ -111,7 +123,12 @@ end
 metaClassList = transpose(metaClassList);
 end
 
+
 function inherits = matRad_checkInheritance(metaClass,superClassName)
+% matRad_checkInheritance: checks class inheritance of a superclass
+% recursively. Would be easier with superclass method, but this is not
+% available in Octave
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     matRad_cfg = MatRad_Config.instance();
     if matRad_cfg.isOctave
         superClasses = metaClass.SuperClassList;

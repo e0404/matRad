@@ -84,49 +84,19 @@ classdef (Abstract) matRad_DoseEngine < handle
         function ret = isAvailable(pln)   
         % return a boolean if the engine is is available for the given pln
         % struct. Needs to be implemented in non abstract subclasses
-            error('Funktion needs to be implemented!');
+            error('Function needs to be implemented!');
         end
         
         % the actual calculation method wich returns the final dij struct.
         % Needs to be implemented in non abstract subclasses. 
         %(Internal logic is often split into multiple methods in order to make the whole calculation more modular)
         function dij = calcDose(this,ct,stf,pln,cst)
-            error('Funktion needs to be implemented!');
+            error('Function needs to be implemented!');
         end
         
     end 
     
     methods(Static)
-        
-        function machine = loadMachine(pln, filepath)
-            %load the machine mode for the specific dose calculation
-            %static so it can be used outside e.g. to validate the machine,
-            %pre the dose calculation
-            matRad_cfg = MatRad_Config.instance();
-            if isfield(pln, 'radiationMode')
-                if isfield(pln, 'machine')
-                    fileName = [pln.radiationMode '_' pln.machine];
-                else
-                    fileName = [pln.radiationMode '_Generic'];
-                end 
-            else
-                matRad_cfg.dispError('No radiation mode given in pln');
-            end 
-            
-            if ~exist('filepath','var')
-                filepath = [matRad_cfg.matRadRoot filesep 'basedata' filesep fileName];
-            end
-            
-            try
-               m = load(filepath, 'machine');
-               machine = m.machine; % strip first layer of loaded struct for convenience 
-            catch
-               matRad_cfg.dispWarning('Could not find the following machine file: %s\n',fileName); 
-            end
-        end
-
-        [nameList, classList, handleList] = getAvailableEngines(pln,optionalPath)     
-
-        [nameList, classList, handleList] = getAvailableEnginesOctave(pln,optionalPath)     
+        [nameList, classList, handleList] = getAvailableEngines(pln,optionalPath)         
     end
 end
