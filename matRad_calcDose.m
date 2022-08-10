@@ -34,8 +34,7 @@ function dij = matRad_calcDose(ct,stf,pln,cst)
 
  
     matRad_cfg = MatRad_Config.instance();
-    matRad_cfg.logLevel = 3;
-    initStdEngine = false;
+    initDefaultEngine = false;
 
 
     %get all available engines for given pln struct, could be done conditional
@@ -54,7 +53,7 @@ function dij = matRad_calcDose(ct,stf,pln,cst)
                 engine = pln.propDoseCalc.engine;
             else
                 % cancel if the given engine is not a valid dose calc engine
-                matRad_cfg.dispError('Pln struct contains non valid dose engine: %s! ', pln.propDoseCalc.engine.name);
+                matRad_cfg.dispError('pln struct contains non valid dose engine: %s! ', pln.propDoseCalc.engine.name);
             end
 
         else
@@ -94,7 +93,7 @@ function dij = matRad_calcDose(ct,stf,pln,cst)
             else
                 % if the given engine isn't valid set boolean to initiliaze
                 % it at the end of this function
-                initStdEngine = true;
+                initDefaultEngine = true;
                 matRad_cfg.dispWarning('No valid engine name for given radiation mode given in pln.propDoseCalc struct. Trying to use default dose calc engine from MatRad_Config.');
                 
             end
@@ -103,7 +102,7 @@ function dij = matRad_calcDose(ct,stf,pln,cst)
     else
         % if the given engine isn't valid set boolean to initiliaze
         % it at the end of this function
-        initStdEngine = true;
+        initDefaultEngine = true;
         matRad_cfg.dispWarning('No engine or propDoseCalc field inside given pln struct. Trying to use default dose calc engine from MatRad_Config.');
 
     end
@@ -111,7 +110,7 @@ function dij = matRad_calcDose(ct,stf,pln,cst)
     % trying to use a default engine which fits
     % the given radiation mode, when no valid engine was defined. 
     % Default Engines are defined in matRad_Config.
-    if initStdEngine
+    if initDefaultEngine
         
         if any(ismember(nameList,matRad_cfg.propDoseCalc.defaultDoseEngines))
             engineHandle = handleList{ismember(nameList,matRad_cfg.propDoseCalc.defaultDoseEngines)};  
