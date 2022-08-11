@@ -130,10 +130,8 @@ if isfield(files,'rtdose')
     if ~(cellfun(@isempty,files.rtdose(1,1:2))) 
         fprintf('loading Dose files \n', structures(i).structName);
         % parse plan in order to scale dose cubes to a fraction based dose
-        if exist('pln','var')
-            if isfield(pln,'numOfFractions')
-                resultGUI = matRad_importDicomRTDose(ct, files.rtdose, pln);
-            end
+        if exist('pln','var') && ~isempty(pln) && isfield(pln,'numOfFractions')
+            resultGUI = matRad_importDicomRTDose(ct, files.rtdose, pln);
         else
             resultGUI = matRad_importDicomRTDose(ct, files.rtdose);
         end
