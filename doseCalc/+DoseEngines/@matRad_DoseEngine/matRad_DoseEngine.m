@@ -78,15 +78,7 @@ classdef (Abstract) matRad_DoseEngine < handle
     % Should be abstract methods but in order to satisfy the compatibility
     % with OCTAVE we can't use abstract methods. If OCTAVE at some point 
     % in the far future implements this feature this should be abstract again.
-    methods %(Abstract)
-        
-       
-        function ret = isAvailable(pln)   
-        % return a boolean if the engine is is available for the given pln
-        % struct. Needs to be implemented in non abstract subclasses
-            error('Function needs to be implemented!');
-        end
-        
+    methods %(Abstract)                
         % the actual calculation method wich returns the final dij struct.
         % Needs to be implemented in non abstract subclasses. 
         %(Internal logic is often split into multiple methods in order to make the whole calculation more modular)
@@ -98,5 +90,26 @@ classdef (Abstract) matRad_DoseEngine < handle
     
     methods(Static)
         [nameList, classList, handleList] = getAvailableEngines(pln,optionalPath)         
+
+        function [available,msg] = isAvailable(pln,machine)   
+        % return a boolean if the engine is is available for the given pln
+        % struct. Needs to be implemented in non abstract subclasses
+        % input:
+        % - pln:        matRad pln struct
+        % - machine:    optional machine to avoid loading the machine from
+        %               disk (makes sense to use if machine already loaded)
+        % output:
+        % - available:  boolean value to check if the dose engine is 
+        %               available for the given pln/machine
+        % - msg:        msg to elaborate on availability. If not available,
+        %               a msg string indicates an error during the check
+        %               if available, indicates a warning that not all
+        %               information was present in the machine file and
+        %               approximations need to be made
+        
+            error('This is an Abstract Base class! Function needs to be called for instantiable subclasses!');
+        end
     end
+
+
 end

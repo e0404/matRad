@@ -547,10 +547,51 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
     end
     
     methods (Static)
-
-        function ret = isAvailable(pln)
+        
+        function [available,msg] = isAvailable(pln,machine)   
             % see superclass for information
-            ret = any(strcmp(DoseEngines.matRad_DoseEnginePhotonSVD.possibleRadiationModes, pln.radiationMode));
+            
+            msg = [];
+            available = false;
+
+            if nargin < 2
+                machine = matRad_loadMachine(pln);
+            end
+
+            %checkBasic
+            try
+                checkBasic = isfield(machine,'meta') && isfield(machine,'data');
+
+                %check modality
+                checkModality = any(strcmp(DoseEngines.matRad_DoseEnginePhotonSVD.possibleRadiationModes, machine.meta.radiationMode));
+                
+                preCheck = checkBasic && checkModality;
+
+                if ~preCheck
+                    return;
+                end
+            catch
+                msg = 'Your machine file is invalid and does not contain the basic field (meta/data/radiationMode)!';
+                return;
+            end
+
+            
+            %Basic check for information (does not check data integrity & subfields etc.)
+            checkData = all(isfield(machine.data,{'betas','energy','m','primaryFluence','kernel','kernelPos'}));
+            checkMeta = all(isfield(machine.meta,{'SAD','SCD'}));
+
+            if checkData && checkMeta
+                available = true;
+            else
+                available = false;
+                return;
+            end
+            
+            %Now check for optional fields that would be guessed otherwise
+            checkOptional = isfield(machine.data,'penumbraFWHMatIso');
+            if checkOptional
+                msg = 'No penumbra given, generic value will be used!';
+            end
         end
         
         function bixelDose = calcSingleBixel(SAD,m,betas,interpKernels,...

@@ -120,7 +120,7 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
 
             %% check if binaries are available
             % Executables for simulation
-            this.checkBinaries();
+            this.setBinaries();
 
             %Mex interface for import of sparse matrix
             if ~this.calcDoseDirect && ~matRad_checkMexFileExists('matRad_sparseBeamletsReaderMCsquare')
@@ -374,33 +374,13 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
             
         end
         
-        function checkBinaries(this)
-        % CHECKBINARIES check if the binaries are available on the current
-        % machine and sets to the mcsquarebinary object property
-        %        
-        %
-            matRad_cfg = MatRad_Config.instance();
-            
-            if ispc
-                if exist('MCSquare_windows.exe','file') ~= 2
-                    matRad_cfg.dispError('Could not find MCsquare binary.\n');
-                else
-                    this.mcSquareBinary = 'MCSquare_windows.exe';
-                end
-            elseif ismac
-                if exist('MCsquare_mac','file') ~= 2
-                    matRad_cfg.dispError('Could not find MCsquare binary.\n');
-                else
-                    this.mcSquareBinary = './MCsquare_mac';
-                end
-                %error('MCsquare binaries not available for mac OS.\n');
-            elseif isunix
-                if exist('MCsquare_linux','file') ~= 2
-                    matRad_cfg.dispError('Could not find MCsquare binary.\n');
-                else
-                    this.mcSquareBinary = './MCsquare_linux';
-                end
-            end
+        function setBinaries(this)
+            % setBinaries check if the binaries are available on the current
+            % machine and sets to the mcsquarebinary object property
+            %
+
+            [~,binaryFile] = this.checkBinaries();
+            this.mcSquareBinary = binaryFile;
         end
         
         function [ct,stf,pln,dij] = calcDoseInit(this,ct,cst,pln,stf)
@@ -452,12 +432,83 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
     end
     
     methods (Static)
-      
-        function ret = isAvailable(pln)
-            % see superclass for information
-            ret = any(strcmp(DoseEngines.matRad_DoseEngineMCsquare.possibleRadiationModes, pln.radiationMode));
+
+        function [binaryFound,binaryFile] = checkBinaries()
+            % checkBinaries check if the binaries are available on the current
+            % machine and sets to the mcsquarebinary object property
+            %        
+            %
+            matRad_cfg = MatRad_Config.instance();
+            
+            binaryFile = [];
+            binaryFound = false;
+
+            if ispc
+                if exist('MCSquare_windows.exe','file') ~= 2
+                    matRad_cfg.dispWarning('Could not find MCsquare binary.\n');
+                else
+                    binaryFile = 'MCSquare_windows.exe';
+                end
+            elseif ismac
+                if exist('MCsquare_mac','file') ~= 2
+                    matRad_cfg.dispWarning('Could not find MCsquare binary.\n');
+                else
+                    binaryFile = './MCsquare_mac';
+                end
+                %error('MCsquare binaries not available for mac OS.\n');
+            elseif isunix
+                if exist('MCsquare_linux','file') ~= 2
+                    matRad_cfg.dispWarning('Could not find MCsquare binary.\n');
+                else
+                    binaryFile = './MCsquare_linux';
+                end
+            end
+
+            if ~isempty(binaryFile)
+                binaryFound = true;
+            end
+
         end
-        
+
+        function [available,msg] = isAvailable(pln,machine)   
+            % see superclass for information
+            
+            msg = [];
+            available = false;
+
+            if nargin < 2
+                machine = matRad_loadMachine(pln);
+            end
+
+            %checkBasic
+            try
+                checkBasic = isfield(machine,'meta') && isfield(machine,'data');
+
+                %check modality
+                checkModality = any(strcmp(DoseEngines.matRad_DoseEngineMCsquare.possibleRadiationModes, machine.meta.radiationMode));
+                
+                preCheck = checkBasic && checkModality;
+
+                if ~preCheck
+                    return;
+                end
+            catch
+                msg = 'Your machine file is invalid and does not contain the basic field (meta/data/radiationMode)!';
+                return;
+            end
+
+            %Check the binaries
+            hasBinaries = DoseEngines.matRad_DoseEngineMCsquare.checkBinaries();
+            
+            if ~hasBinaries
+                return;
+            end
+
+            %MCsquare currently only works for the generic_MCSquare machine
+            available = strcmp(pln.machine,'generic_MCsquare');
+            msg = 'Machine check is currently not reliable, machine only works reliably with generic_MCsquare';
+        end
+              
     end
       
         

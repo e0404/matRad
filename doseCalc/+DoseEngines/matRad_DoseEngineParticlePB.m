@@ -1067,9 +1067,45 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
     
     methods (Static)
         
-        function ret = isAvailable(pln)
+        function [available,msg] = isAvailable(pln,machine)   
             % see superclass for information
-            ret = any(strcmp(DoseEngines.matRad_ParticleAnalyticalPencilBeamDoseEngine.possibleRadiationModes, pln.radiationMode));
+            
+            msg = [];
+            available = false;
+
+            if nargin < 2
+                machine = matRad_loadMachine(pln);
+            end
+
+            %checkBasic
+            try
+                checkBasic = isfield(machine,'meta') && isfield(machine,'data');
+
+                %check modality
+                checkModality = any(strcmp(DoseEngines.matRad_DoseEngineParticlePB.possibleRadiationModes, machine.meta.radiationMode));
+                
+                preCheck = checkBasic && checkModality;
+
+                if ~preCheck
+                    return;
+                end
+            catch
+                msg = 'Your machine file is invalid and does not contain the basic field (meta/data/radiationMode)!';
+                return;
+            end
+
+            checkMeta = all(isfield(machine.meta,{'SAD','BAMStoIsoDist','LUT_bxWidthminFWHM','dataType'}));
+
+            dataType = machine.meta.dataType;
+            if strcmp(dataType,'singleGauss')
+                checkData = all(isfield(machine.data,{'energy','depths','Z','peakPos','sigma','offset','initFocus'}));
+            elseif strcmp(dataType,'doubleGauss')
+                checkData = all(isfield(machine.data,{'energy','depths','Z','peakPos','weight','sigma1','sigma2','offset','initFocus'}));
+            else
+                checkData = false;
+            end
+            
+            available = checkMeta && checkData;
         end
     end
 end

@@ -390,9 +390,39 @@ classdef matRad_DoseEnginePhotonsOmpMC < DoseEngines.matRad_DoseEngineMonteCarlo
     
      methods (Static)
       
-        function ret = isAvailable(pln)
+         function [available,msg] = isAvailable(pln,machine)   
             % see superclass for information
-            ret = any(strcmp(DoseEngines.matRad_DoseEnginePhotonsOmpMC.possibleRadiationModes, pln.radiationMode));
+            
+            msg = [];
+            available = false;
+
+            if nargin < 2
+                machine = matRad_loadMachine(pln);
+            end
+
+            %checkBasic
+            try
+                checkBasic = isfield(machine,'meta') && isfield(machine,'data');
+
+                %check modality
+                checkModality = any(strcmp(DoseEngines.matRad_DoseEnginePhotonsOmpMC.possibleRadiationModes, machine.meta.radiationMode));
+                
+                preCheck = checkBasic && checkModality;
+
+                if ~preCheck
+                    return;
+                end
+            catch
+                msg = 'Your machine file is invalid and does not contain the basic field (meta/data/radiationMode)!';
+                return;
+            end
+
+            checkMeta = all(isfield(machine.meta,{'SAD','SCD'}));
+            
+            if checkMeta
+                available = true;
+                msg = 'The ompMC machine is not representing the machine exactly and approximates it with a virtual Gaussian source and generic primary fluence & 6 MV energy spectrum!';
+            end 
         end
         
     end

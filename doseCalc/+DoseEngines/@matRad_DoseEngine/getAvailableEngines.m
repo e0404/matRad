@@ -45,26 +45,36 @@ ix = [];
 
 if nargin >= 1 && ~isempty(pln)
     machine = matRad_loadMachine(pln);
-    machineMode = machine.meta.radiationMode;
+    %machineMode = machine.meta.radiationMode;
 
     for cIx = 1:length(availableDoseEngines)
         mc = availableDoseEngines{cIx};
-        mpList = mc.PropertyList;
-        if matRad_cfg.isMatlab
-            loc = find(arrayfun(@(x) strcmp('possibleRadiationModes',x.Name),mpList));
-            propValue = mpList(loc).DefaultValue;
-        else
-            loc = find(cellfun(@(x) strcmp('possibleRadiationModes',x.Name),mpList));
-            propValue = mpList{loc}.DefaultValue;
-        end
-
-        if any(strcmp(propValue, pln.radiationMode))
-            % get radiation mode from the in pln proposed basedata machine file
-            % add current class to return lists if the
-            % radiation mode is compatible
-            if(any(strcmp(propValue, machineMode)))
-                ix = [ix cIx];
+        availabilityFunc = str2func([mc.Name '.isAvailable']);
+        try
+            available = availabilityFunc(pln,machine);
+        catch
+            available = false;
+            mpList = mc.PropertyList;
+            if matRad_cfg.isMatlab
+                loc = find(arrayfun(@(x) strcmp('possibleRadiationModes',x.Name),mpList));
+                propValue = mpList(loc).DefaultValue;
+            else
+                loc = find(cellfun(@(x) strcmp('possibleRadiationModes',x.Name),mpList));
+                propValue = mpList{loc}.DefaultValue;
             end
+    
+            if any(strcmp(propValue, pln.radiationMode))
+                % get radiation mode from the in pln proposed basedata machine file
+                % add current class to return lists if the
+                % radiation mode is compatible
+                if(any(strcmp(propValue, machineMode)))
+                    available = true;
+                    
+                end
+            end
+        end
+        if available
+            ix = [ix cIx];
         end
     end
 
