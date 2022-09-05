@@ -64,7 +64,10 @@ classdef MatRad_Config < handle
 
             %Set Version
             obj.getEnvironment();
-            obj.matRad_version = matRad_version();            
+            obj.matRad_version = matRad_version();
+
+            %Configure Environment
+            obj.configureEnvironment();
             
             %Just to catch people messing with the properties in the file
             if ~isempty(obj.writeLog) && obj.writeLog
@@ -303,6 +306,13 @@ classdef MatRad_Config < handle
                 vData = ver(obj.env);
                 obj.envVersion = vData.Version;
                 
+            end
+        end
+
+        function configureEnvironment(obj)
+            if obj.isOctave
+                struct_levels_to_print(0);                  %Disables full printing of struct array fields
+                warning("off","Octave:data-file-in-path");  %Disables warning of loading patients from the data folder
             end
         end
     end
