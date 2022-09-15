@@ -25,26 +25,20 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
     end
     
     properties (SetAccess = public, GetAccess = public)
+            
+        calcLET = true;                 % Boolean which defines if LET should be calculated
+        calcBioDose = false;            % Boolean which defines if calculation should account for bio optimization
         
-        calcLET = false; % Boolean which defines if LET should be calculated
-        calcBioDose = false; % Boolean which defines if calculation should account for bio optimization
+        pbCalcMode;                     % fine sampling mode
+        fineSampling;                   % Struct with finesampling properties
         
-        fineSampling; % Boolean switch if using fineSampling  
-        fineSamplingN; % number of subsample beams shells, see matRad_calcWeights
-        fineSamplingSigmaSub; % gaussian of the sub-beams , see matRad_calcWeights
-        fineSamplingMethod; % method used for fine sampling
-        geometricCutOff; % effective leteral cutoff
-        
-        visBoolLateralCutOff = 1; % Boolean switch for visualization during+ LeteralCutOff calculation
-        
+        visBoolLateralCutOff = false;   % Boolean switch for visualization during+ LeteralCutOff calculation
     end
     
-    properties (SetAccess = protected, GetAccess = public)  
-        
-        letDoseTmpContainer; % temporary dose LET container
-        alphaDoseTmpContainer; % temporary dose alpha dose container
-        betaDoseTmpContainer; % temporary dose beta dose container
-        
+    properties (SetAccess = protected, GetAccess = public)        
+        letDoseTmpContainer;            % temporary dose LET container
+        alphaDoseTmpContainer;          % temporary dose alpha dose container
+        betaDoseTmpContainer;           % temporary dose beta dose container        
     end
              
     methods 
@@ -62,39 +56,27 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
             %   cst:                        matRad cst struct
              
             this = this@DoseEngines.matRad_DoseEnginePencilBeam();
+
+            this.pbCalcMode = 'standard';
             
-%             if exist('pln','var')
-%                 % check if bio optimization is needed and set the
-%                 % coresponding boolean accordingly
-%                  if (isfield(pln,'propOpt')&& isfield(pln.propOpt,'bioOptimization')&& ...
-%                     (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') ||... 
-%                     isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) && ... 
-%                     strcmp(pln.radiationMode,'carbon'))
-%                     this.calcBioDose = true;
-%                  end
-%                  
-%                  if isfield(pln,'propDoseCalc') && ...
-%                     isfield(pln.propDoseCalc,'calcLET') && ...
-%                     pln.propDoseCalc.calcLET
-%                     this.calcLET = true;
-%                  end
-%                     
-%             end
+            matRad_cfg = MatRad_Config.instance();
+            this.fineSampling = matRad_cfg.propDoseCalc.defaultFineSamplingProperties;
+            
         end
         
-        function dij = calcDose(this,ct,stf,pln,cst)
+        function dij = calcDose(this,ct,cst,stf,pln)
             % matRad particle dose calculation wrapper
             % can be automaticly called through matRad_calcDose or
             % matRad_calcParticleDose
             %
             % call
-            %   dij = this.calcDose(ct,stf,pln,cst)
+            %   dij = this.calcDose(ct,cst,stf,pln)
             %
             % input
             %   ct:             ct cube
+            %   cst:            matRad cst struct
             %   stf:            matRad steering information struct
             %   pln:            matRad plan meta information struct
-            %   cst:            matRad cst struct
             %
             % output
             %   dij:            matRad dij struct
@@ -118,7 +100,7 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
             matRad_cfg =  MatRad_Config.instance();
             
             % init dose calc
-            [ct,stf,pln,dij] = this.calcDoseInit(ct,cst,pln,stf);
+            [dij,ct,cst,stf,pln] = this.calcDoseInit(ct,cst,stf,pln);
 
             % initialize waitbar
             figureWait = waitbar(0,'calculate dose influence matrix for particles...');
@@ -193,7 +175,7 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
             end
 
             % lateral cutoff for raytracing and geo calculations
-            this.effectiveLateralCutoff = matRad_cfg.propDoseCalc.defaultGeometricCutOff;
+            this.effectiveLateralCutOff = this.geometricLateralCutOff;
             
             matRad_cfg.dispInfo('matRad: Particle dose calculation...\n');
             counter = 0;
@@ -202,13 +184,12 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
             for i = 1:length(stf) % loop over all beams
 
                 % init beam
-                dij = this.calcDoseInitBeam(ct,stf,dij,i);     
+                dij = this.calcDoseInitBeam(dij,ct,cst,stf,i);     
 
                 % Determine lateral cutoff
                 matRad_cfg.dispInfo('matRad: calculate lateral cutoff...');
-                cutOffLevel = matRad_cfg.propDoseCalc.defaultLateralCutOff;
-                this.visBoolLateralCutOff = 0;
-                this.calcLateralParticleCutOff(cutOffLevel,stf(i));
+                
+                this.calcLateralParticleCutOff(this.dosimetricLateralCutOff,stf(i));
                 matRad_cfg.dispInfo('done.\n');    
 
                 for j = 1:stf(i).numOfRays % loop over all rays
@@ -341,9 +322,9 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
                                 offsetRadDepth = this.machine.data(energyIx).offset - stf(i).ray(j).rangeShifter(k).eqThickness;                               
                                 
                                 % find depth depended lateral cut off
-                                if cutOffLevel >= 1
+                                if this.dosimetricLateralCutOff == 1
                                     currIx = radDepths <= this.machine.data(energyIx).depths(end) + offsetRadDepth;
-                                elseif cutOffLevel < 1 && cutOffLevel > 0
+                                elseif this.dosimetricLateralCutOff < 1 && this.dosimetricLateralCutOff > 0
                                     % perform rough 2D clipping
                                     currIx = radDepths <= this.machine.data(energyIx).depths(end) + offsetRadDepth & ...
                                          currRadialDist_sq <= max(this.machine.data(energyIx).LatCutOff.CutOff.^2);
@@ -424,9 +405,12 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
                                     this.machine.data(energyIx));                 
 
                                 % dij sampling is exluded for particles until we investigated the influence of voxel sampling for particles
-                                %relDoseThreshold   =  0.02;   % sample dose values beyond the relative dose
-                                %Type               = 'dose';
-                                %[currIx,bixelDose] = this.dijSampling(currIx,bixelDose,radDepths(currIx),radialDist_sq(currIx),Type,relDoseThreshold);
+                                if this.enableDijSampling 
+                                    if i+j+k == 3 %print only once if all have the first index
+                                        matRad_cfg.dispWarning('dij sampling not available for particles!')                                        
+                                    end
+                                    %[currIx,bixelDose] = this.dijSampling(currIx,bixelDose,radDepths(currIx),radialDist_sq(currIx),Type,relDoseThreshold);
+                                end
 
                                 % Save dose for every bixel in cell array
                                 this.doseTmpContainer{mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(this.VdoseGrid(ix(currIx)),1,bixelDose,dij.doseGrid.numOfVoxels,1);
@@ -482,37 +466,40 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
     end
     
     methods (Access = protected)
+
+        function dij = calcDoseInitBeam(this,dij,ct,cst,stf,i)
+            % Method for initializing the beams for analytical pencil beam
+            % dose calculation
+            %
+            % call
+            %   this.calcDoseInitBeam(dij,ct,cst,stf,i)
+            %
+            % input
+            %   dij:                        matRad dij struct
+            %   ct:                         matRad ct struct
+            %   cst:                        matRad cst struct
+            %   stf:                        matRad steering information struct
+            %   i:                          index of beam
+            %
+            % output
+            %   dij:                        updated dij struct
+
+            if ~this.keepRadDepthCubes
+                this.keepRadDepthCubes = true;
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispInfo('Keeping radiological depth cubes for fine-sampling!');
+            end
+
+            dij = calcDoseInitBeam@DoseEngines.matRad_DoseEnginePencilBeam(this,dij,ct,cst,stf,i);
+
+        end
         
-        function [ct,stf,pln,dij] = calcDoseInit(this,ct,cst,pln,stf)
+        function [dij,ct,cst,stf,pln] = calcDoseInit(this,ct,cst,stf,pln)
             % Extended version of the calcDoseInit method of
             % @matRad_DoseEngine method. See superclass for more information 
 
             matRad_cfg =  MatRad_Config.instance();
-                        
-            % assign analytical mode
-            if isfield(pln,'propDoseCalc') && isfield(pln.propDoseCalc,'fineSampling') && strcmp(pln.radiationMode, 'protons')
-                this.pbCalcMode = 'fineSampling';
-                defaultFineSampling = matRad_cfg.propDoseCalc.defaultFineSamplingProperties;    
-                if isfield(pln.propDoseCalc.fineSampling,'N')
-                    this.fineSamplingN = pln.propDoseCalc.fineSampling.N;
-                else
-                    this.fineSamplingN = defaultFineSampling.N;
-                end
-                if isfield(pln.propDoseCalc.fineSampling,'sigmaSub')    
-                    this.fineSamplingSigmaSub = pln.propDoseCalc.fineSampling.sigmaSub;
-                else
-                    this.fineSamplingSigmaSub = defaultFineSampling.sigmaSub;
-                end
-                if isfield(pln.propDoseCalc.fineSampling,'method')    
-                    this.fineSamplingMethod = pln.propDoseCalc.fineSampling.method;
-                else
-                    this.fineSamplingMethod = defaultFineSampling.method;
-                end
-            else
-                this.pbCalcMode = 'standard';
-            end
-            
-            
+                                   
             % check if bio optimization is needed and set the
             % coresponding boolean accordingly
             if (isfield(pln,'propOpt')&& isfield(pln.propOpt,'bioOptimization')&& ...
@@ -521,24 +508,9 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
                 strcmp(pln.radiationMode,'carbon'))
                 this.calcBioDose = true;
             end
-            
-            % check for calcLET in pln
-            if isfield(pln,'propDoseCalc') && ...
-                isfield(pln.propDoseCalc,'calcLET') && ...
-                pln.propDoseCalc.calcLET
-                this.calcLET = true;
-            end
-            
-            % set lateral cutoff for raytracing and geo calculations (not used in calculation right now)
-            if isfield(pln, 'propDoseCalc') && isfield(pln.propDoseCalc, 'geometricCutOff')
-                this.geometricCutOff = pln.propDoseCalc.geometricCutOff;
-            else
-                this.geometricCutOff = matRad_cfg.propDoseCalc.defaultGeometricCutOff;
-                pln.propDoseCalc.geometricCutOff = matRad_cfg.propDoseCalc.defaultGeometricCutOff;
-            end 
-                        
+                                                
             % call superclass constructor
-            [ct,stf,pln,dij] = calcDoseInit@DoseEngines.matRad_DoseEngine(this,ct,cst,pln,stf);
+            [dij,ct,cst,stf,pln] = calcDoseInit@DoseEngines.matRad_DoseEngine(this,ct,cst,stf,pln);
             
         end
         
@@ -549,7 +521,6 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
             matRad_cfg = MatRad_Config.instance();
             
             if this.calcBioDose
-
                     this.alphaDoseTmpContainer = cell(this.numOfBixelsContainer,dij.numOfScenarios);
                     this.betaDoseTmpContainer  = cell(this.numOfBixelsContainer,dij.numOfScenarios);
                     for i = 1:dij.numOfScenarios

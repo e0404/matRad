@@ -19,8 +19,12 @@ classdef (Abstract) matRad_DoseEngineMonteCarlo < DoseEngines.matRad_DoseEngine
     
     properties (SetAccess = public, GetAccess = public)
                          
-        nCasePerBixel ; %number of histories per beamlet
+        numHistoriesPerBeamlet; %number of histories per beamlet
+        numHistoriesDirect;     %number of histories for a forward dose calculation
         
+        outputMCvariance;       %boolean value to decide if variance information for the MC calculation should be scored
+
+        relativeDosimetricCutOff;       %relative dosimetric cut-off (i.e., 1 - minimum relative dose-value to be stored)
     end
         
     methods
@@ -34,8 +38,28 @@ classdef (Abstract) matRad_DoseEngineMonteCarlo < DoseEngines.matRad_DoseEngine
             matRad_cfg = MatRad_Config.instance();
             
             %set number of particles simulated per pencil beam
-            this.nCasePerBixel = matRad_cfg.propMC.MCsquare_defaultHistories;
-            
+            this.numHistoriesPerBeamlet     = matRad_cfg.propDoseCalc.defaultNumHistoriesPerBeamlet;
+            this.numHistoriesDirect         = matRad_cfg.propDoseCalc.defaultNumHistoriesDirect;
+            this.outputMCvariance           = matRad_cfg.propDoseCalc.defaultOutputMCvariance;
+
+            this.relativeDosimetricCutOff   = matRad_cfg.propDoseCalc.defaultDosimetricLateralCutOff;
+        end
+    end
+
+
+    %% Deprecated properties
+    properties (Dependent)
+        relDoseCutOff;
+    end
+    
+    methods
+        function set.relDoseCutOff(this,relDoseCutOff_)
+            this.relativeDosimetricCutOff = 1 - relDoseCutOff_;
+            this.warnDeprecatedEngineProperty('relDoseCutOff','','relativeDosimetricCutOff');
+        end
+        function relDoseCutOff_ = get.relDoseCutOff(this)
+            relDoseCutOff_ = 1 - this.relativeDosimetricCutOff;
+            this.warnDeprecatedEngineProperty('relDoseCutOff','','relativeDosimetricCutOff');
         end
     end
     

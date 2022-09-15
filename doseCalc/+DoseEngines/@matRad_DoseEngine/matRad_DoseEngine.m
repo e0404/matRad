@@ -20,7 +20,10 @@ classdef (Abstract) matRad_DoseEngine < handle
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties
-        machine; % base data defined in machine file
+        machine;                    % base data defined in machine file
+        useGivenEqDensityCube;        % Use the given density cube ct.cube and omit conversion from cubeHU.
+        ignoreOutsideDensities;     % Ignore densities outside of cst contours
+        doseGrid;                   % doseGrid to use (struct with at least doseGrid.resolution.x/y/z set)
     end
     
     properties (SetAccess = protected, GetAccess = public)
@@ -39,8 +42,7 @@ classdef (Abstract) matRad_DoseEngine < handle
         offset; % offset adjustment for isocenter
         
         VctGrid; % voxel grid inside patient
-        VdoseGrid;  % voxel dose grid 
-        
+        VdoseGrid;  % voxel dose grid         
     end
   
     properties (SetAccess = public, GetAccess = public)
@@ -59,7 +61,79 @@ classdef (Abstract) matRad_DoseEngine < handle
     methods      
         %Constructor  
         function this = matRad_DoseEngine()
-        % future code for property validation on creation here
+            % future code for property validation on creation here
+            matRad_cfg = MatRad_Config.instance();
+            
+            %Assign default parameters from MatRad_Config
+            this.doseGrid.resolution    = matRad_cfg.propDoseCalc.defaultResolution;
+            this.useGivenEqDensityCube  = matRad_cfg.propDoseCalc.defaultUseGivenEqDensityCube;
+            this.ignoreOutsideDensities = matRad_cfg.propDoseCalc.defaultIgnoreOutsideDensities;
+
+        end
+
+        function warnDeprecatedEngineProperty(this,oldProp,msg,newProp)
+            matRad_cfg = MatRad_Config.instance();
+            if nargin < 3 || isempty(msg)
+                msg = '';
+            end
+
+            if nargin < 4
+                dep2 = '';
+            else
+                dep2 = sprintf('Use Property ''%s'' instead!',newProp);
+            end
+
+            matRad_cfg.dispDeprecationWarning('Property ''%s'' of Dose Engine ''%s'' is deprecated! %s%s',oldProp,this.name,msg,dep2);
+        end
+
+        function assignPropertiesFromPln(this,pln,warnWhenPropertyChanged)
+
+            if nargin < 3 || ~isscalar(warnWhenPropertyChanged) || ~islogical(warnWhenPropertyChanged)
+                warnWhenPropertyChanged = false;
+            end
+
+            %Overwrite default properties within the engine with the ones
+            %given in the propDoseCalc struct
+            if isfield(pln,'propDoseCalc')
+                fields = fieldnames(pln.propDoseCalc); %get remaining fields
+                if isfield(pln.propDoseCalc,'engine') && ~strcmp(pln.propDoseCalc.engine,this.name)
+                    matRad_cfg.dispError('Inconsistent dose engines! pln asks for ''%s'', but engine is ''%s''!',pln.propDoseCalc.engine,this.name);
+                end
+                fields(strcmp(fields, 'engine')) = []; % engine field is no longer needed and would throw an exception
+            else
+                fields = {};
+            end
+
+            % iterate over all fieldnames and try to set the
+            % corresponding properties inside the engine
+            for i = 1:length(fields)
+                try
+                    oldValue = this.(fields{i});
+                    newValue = pln.propDoseCalc.(fields{i});
+                    this.(fields{i}) = newValue;
+
+                    if warnWhenPropertyChanged
+                        if ~isequal(oldValue,newValue)
+                            matRad_cfg.dispWarning('Property ''%s'' has been changed!',fields{i});
+                        end
+                    end
+
+
+                    % catch exceptions when the engine has no properties,
+                    % which are defined in the struct.
+                    % When defining an engine with custom setter and getter
+                    % methods, custom exceptions can be caught here. Be
+                    % careful with Octave exceptions!
+                catch ME
+                    switch ME.identifier
+                        case 'MATLAB:noPublicFieldForClass'
+                            matRad_cfg.dispWarning('Problem with given engine struct: %s',ME.message);
+                        otherwise
+                            matRad_cfg.dispWarning('Problem while setting up engine from struct:%s %s',fields{i},ME.message);
+                    end
+                end
+
+            end
         end
     end
     
@@ -70,7 +144,7 @@ classdef (Abstract) matRad_DoseEngine < handle
         % Should be called at the beginning of calcDose method.
         % Can be expanded or changed by overwriting this method and calling
         % the superclass method inside of it
-        [ct,stf,pln,dij] = calcDoseInit(this,ct,cst,pln,stf)
+        [dij,ct,cst,stf,pln] = calcDoseInit(this,ct,cst,stf,pln)
         
         
     end
@@ -82,7 +156,7 @@ classdef (Abstract) matRad_DoseEngine < handle
         % the actual calculation method wich returns the final dij struct.
         % Needs to be implemented in non abstract subclasses. 
         %(Internal logic is often split into multiple methods in order to make the whole calculation more modular)
-        function dij = calcDose(this,ct,stf,pln,cst)
+        function dij = calcDose(this,ct,cst,stf,pln)
             error('Function needs to be implemented!');
         end
         

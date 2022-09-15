@@ -1,4 +1,4 @@
-function [ct,stf,pln,dij] = calcDoseInit(this,ct,cst,pln,stf)
+function [dij,ct,cst,stf,pln] = calcDoseInit(this,ct,cst,stf,pln)
 % matRad_DoseEngine.calcDoseInit: Interface for dose calculation
 %   method for setting and preparing the inition parameters for the
 %   dose calculation.
@@ -11,9 +11,9 @@ function [ct,stf,pln,dij] = calcDoseInit(this,ct,cst,pln,stf)
 %
 % input:
 %   ct:             matRad ct  struct
+
 %   stf:            matRad stf struct
 %   pln:            matRad pln struct
-%   cst:            matRad cst struct
 %
 % returns:
 %   ct:             matRad ct  struct
@@ -83,21 +83,14 @@ for i = 1:numel(stf)
     stf(i).isoCenter = stf(i).isoCenter + this.offset;
 end
 
-%set up HU to rED or rSP conversion
-if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'useGivenEqDensityCube')
-    disableHUconversion = matRad_cfg.propDoseCalc.defaultUseGivenEqDensityCube;
-else
-    disableHUconversion = pln.propDoseCalc.useGivenEqDensityCube;
-end
-
 %If we want to omit HU conversion check if we have a ct.cube ready
-if disableHUconversion && ~isfield(ct,'cube')
+if this.useGivenEqDensityCube && ~isfield(ct,'cube')
     matRad_cfg.dispWarning('HU Conversion requested to be omitted but no ct.cube exists! Will override and do the conversion anyway!');
-    disableHUconversion = false;
+    this.useGivenEqDensityCube = false;
 end
 
 % calculate rED or rSP from HU
-if disableHUconversion
+if this.useGivenEqDensityCube
     matRad_cfg.dispInfo('Omitting HU to rED/rSP conversion and using existing ct.cube!\n');
 else
     ct = matRad_calcWaterEqD(ct, pln);
@@ -135,13 +128,7 @@ VctGrid = [cst{:,4}];
 VctGrid = unique(vertcat(VctGrid{:}));
 
 % ignore densities outside of contours
-if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'ignoreOutsideDensities')
-    ignoreOutsideDensities = matRad_cfg.propDoseCalc.defaultIgnoreOutsideDensities;
-else
-    ignoreOutsideDensities = pln.propDoseCalc.ignoreOutsideDensities;
-end
-
-if ignoreOutsideDensities
+if this.ignoreOutsideDensities
     eraseCtDensMask = ones(prod(ct.cubeDim),1);
     eraseCtDensMask(VctGrid) = 0;
     for i = 1:ct.numOfCtScen

@@ -1,6 +1,6 @@
 classdef (Abstract) matRad_DoseEnginePencilBeam < DoseEngines.matRad_DoseEngine
-    % matRad_DoseEnginePencilBeam: abstract superclass for all dose calculation engines which are based on 
-    %   analytical pencil beam calculation 
+    % matRad_DoseEnginePencilBeam: abstract superclass for all dose calculation engines which are based on
+    %   analytical pencil beam calculation
     %   for more informations see superclass
     %   DoseEngines.matRad_DoseEngine
     %   MatRad_Config MatRad Configuration class
@@ -17,72 +17,90 @@ classdef (Abstract) matRad_DoseEnginePencilBeam < DoseEngines.matRad_DoseEngine
     % LICENSE file.
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
+
     properties
-       keepRadDepthCubes = false; 
+        keepRadDepthCubes = false;
+
+        enableDijSampling = true;
+        dijSampling;             %struct with lateral dij sampling parameters
+
+        geometricLateralCutOff; %lateral geometric cut-off id mm, used for raytracing and geometry
+        dosimetricLateralCutOff; %relative dosimetric cut-off (in fraction of values calculated)
     end
-    
+
+    properties (SetAccess = protected)
+        effectiveLateralCutOff;         %internal cutoff to be used, computed from machine/pencil-beam kernel properties and geometric/dosimetric cutoff settings
+    end
+
     properties (SetAccess = protected, GetAccess = public)
-        
-        pbCalcMode; % fine sampling mode
-        
-        doseTmpContainer;   % temporary container for dose calculation results
-  
-        effectiveLateralCutoff; % lateral cutoff for raytracing and geo calculations
-        bixelsPerBeam;  % number of bixel per energy beam
-                
-        radDepthCubes; %only stored if property set accordingly)
-    end
-    
-    properties (Access = protected)
-        rotMat_system_T; % rotation matrix for current beam
-        geoDistVdoseGrid;   % geometric distance in dose grid for current beam
+        doseTmpContainer;       % temporary container for dose calculation results
+
+        bixelsPerBeam;          % number of bixel per energy beam
+
+        radDepthCubes;          % only stored if property set accordingly
+        rotMat_system_T;        % rotation matrix for current beam
+        geoDistVdoseGrid;       % geometric distance in dose grid for current beam
         rot_coordsVdoseGrid;    % Rotate coordinates for gantry movement for current beam
-        radDepthVdoseGrid;  % grid for radiologica depth cube for current beam
-        radDepthCube;   % radiological depth cube for current beam
+        radDepthVdoseGrid;      % grid for radiologica depth cube for current beam
+        radDepthCube;           % radiological depth cube for current beam
     end
-    
+
+    methods
+        function this = matRad_DoseEnginePencilBeam()
+            this = this@DoseEngines.matRad_DoseEngine();
+            
+            matRad_cfg = MatRad_Config.instance();
+
+            %Set defaults
+            this.geometricLateralCutOff       = matRad_cfg.propDoseCalc.defaultGeometricLateralCutOff;
+            this.dosimetricLateralCutOff      = matRad_cfg.propDoseCalc.defaultDosimetricLateralCutOff;
+
+            %Set additional parameters
+            this.dijSampling.relDoseThreshold = 0.01;
+            this.dijSampling.latCutOff        = 20;
+            this.dijSampling.type             = 'radius';
+            this.dijSampling.deltaRadDepth    = 5;
+        end
+    end
+
     % Should be abstract methods but in order to satisfy the compatibility
-    % with OCTAVE we can't use abstract methods. If OCTAVE at some point 
+    % with OCTAVE we can't use abstract methods. If OCTAVE at some point
     % in the far future implements this feature this should be abstract again.
     methods (Access = protected) %Abstract
 
-        
-        function dij = fillDij(this,dij,stf,counter) 
-        % method for filling the dij struct with the computed dose cube
-        % last step in dose calculation
-        % Needs to be implemented in non abstract subclasses.  
+
+        function dij = fillDij(this,dij,stf,counter)
+            % method for filling the dij struct with the computed dose cube
+            % last step in dose calculation
+            % Needs to be implemented in non abstract subclasses.
             error('Funktion needs to be implemented!');
         end
 
-        
+
         function dij = fillDijDirect(this,dij,stf,currBeamIdx,currRayIdx,currBixelIdx)
-        % method for filling the dij struct, when using a direct dose
-        % calcultion
-        % Needs to be implemented in non abstract subclasses, 
-        % when direct calc shoulb be utilizable.    
+            % method for filling the dij struct, when using a direct dose
+            % calcultion
+            % Needs to be implemented in non abstract subclasses,
+            % when direct calc shoulb be utilizable.
             error('Funktion needs to be implemented!');
         end
 
     end
-    
+
     methods (Access = protected)
-        
-        function [ct,stf,pln,dij] = calcDoseInit(this,ct,cst,pln,stf)
+
+        function [dij,ct,cst,stf,pln] = calcDoseInit(this,ct,cst,stf,pln)
             % modified inherited method of the superclass DoseEngine,
             % containing intialization which are specificly needed for
             % pencil beam calculation and not for other engines
-            
-            [ct,stf,pln,dij] = calcDoseInit@DoseEngines.matRad_DoseEngine(this,ct,cst,pln,stf);
-            
+
+            [dij,ct,cst,stf,pln] = calcDoseInit@DoseEngines.matRad_DoseEngine(this,ct,cst,stf,pln);
+
             % Allocate memory for dose_temp cell array
             this.doseTmpContainer     = cell(this.numOfBixelsContainer,dij.numOfScenarios);
-            
-            
-            
         end
-        
-        function dij = calcDoseInitBeam(this,ct,stf,dij,i)
+
+        function dij = calcDoseInitBeam(this,dij,ct,cst,stf,i)
             % Method for initializing the beams for analytical pencil beam
             % dose calculation
             %
@@ -91,13 +109,13 @@ classdef (Abstract) matRad_DoseEnginePencilBeam < DoseEngines.matRad_DoseEngine
             %
             % input
             %   ct:                         matRad ct struct
+            %   cst:                        matRad cst struct
             %   stf:                        matRad steering information struct
-            %   dij:                        matRad dij struct
             %   i:                          index of beam
             %
             % output
             %   dij:                        updated dij struct
-            
+
             matRad_cfg = MatRad_Config.instance();
             matRad_cfg.dispInfo('Beam %d of %d:\n',i,dij.numOfBeams);
 
@@ -143,18 +161,18 @@ classdef (Abstract) matRad_DoseEnginePencilBeam < DoseEngines.matRad_DoseEngine
             this.geoDistVdoseGrid{1}= sqrt(sum(rot_coordsVdoseGrid.^2,2));
             % Calculate radiological depth cube
             matRad_cfg.dispInfo('matRad: calculate radiological depth cube... ');
-            if strcmp(this.pbCalcMode, 'fineSampling') || this.keepRadDepthCubes
-                [radDepthVctGrid, this.radDepthCube] = matRad_rayTracing(stf(i),ct,this.VctGrid,rot_coordsV,this.effectiveLateralCutoff);
+            if this.keepRadDepthCubes
+                [radDepthVctGrid, this.radDepthCube] = matRad_rayTracing(stf(i),ct,this.VctGrid,rot_coordsV,this.effectiveLateralCutOff);
                 this.radDepthCube{1} = matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z, this.radDepthCube{1}, ...
-                                                dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest');
+                    dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest');
             else
-                radDepthVctGrid = matRad_rayTracing(stf(i),ct,this.VctGrid,rot_coordsV,this.effectiveLateralCutoff);
+                radDepthVctGrid = matRad_rayTracing(stf(i),ct,this.VctGrid,rot_coordsV,this.effectiveLateralCutOff);
             end
-            
+
             % interpolate radiological depth cube to dose grid resolution
             this.radDepthVdoseGrid = matRad_interpRadDepth...
                 (ct,1,this.VctGrid,this.VdoseGrid,dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z,radDepthVctGrid);
-            
+
             matRad_cfg.dispInfo('done.\n');
 
             %Keep rad depth cube if desired
@@ -164,152 +182,23 @@ classdef (Abstract) matRad_DoseEnginePencilBeam < DoseEngines.matRad_DoseEngine
 
             % limit rotated coordinates to positions where ray tracing is availabe
             this.rot_coordsVdoseGrid = rot_coordsVdoseGrid(~isnan(this.radDepthVdoseGrid{1}),:);
-            
-        end
-        
-    end
-    
-    methods (Static)
-        
-        function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ,latDistsX,latDistsZ] = ...
-              calcGeoDists(rot_coords_bev, sourcePoint_bev, targetPoint_bev, SAD, radDepthIx, lateralCutOff)
-            % matRad calculation of lateral distances from central ray 
-            % used for dose calculation
-            % 
-            % call
-            %   [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = ...
-            %           this.calcGeoDists(rot_coords_bev, ...
-            %                               sourcePoint_bev, ...
-            %                               targetPoint_bev, ...
-            %                               SAD, ...
-            %                               radDepthIx, ...
-            %                               lateralCutOff)
-            %
-            % input
-            %   rot_coords_bev:     coordinates in bev of the voxels with index V,
-            %                       where also ray tracing results are availabe 
-            %   sourcePoint_bev:    source point in voxel coordinates in beam's eye view
-            %   targetPoint_bev:    target point in voxel coordinated in beam's eye view
-            %   SAD:                source-to-axis distance
-            %   radDepthIx:         sub set of voxels for which radiological depth
-            %                       calculations are available
-            %   lateralCutOff:      lateral cutoff specifying the neighbourhood for
-            %                       which dose calculations will actually be performed
-            %
-            % output
-            %   ix:                 indices of voxels where we want to compute dose
-            %                       influence data
-            %   rad_distancesSq:    squared radial distance to the central ray (where the
-            %                       actual computation of the radiological depth takes place)
-            %   isoLatDistsX:       lateral x-distance to the central ray projected to
-            %                       iso center plane
-            %   isoLatDistsZ:       lateral z-distance to the central ray projected to
-            %                       iso center plane
-            %   latDistsX:          lateral x-distance to the central ray
-            %   latDistsZ:          lateral z-distance to the central ray
-            %
-            %
-            % References
-            %   -
-            %
-            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %
-            % Copyright 2015 the matRad development team. 
-            % 
-            % This file is part of the matRad project. It is subject to the license 
-            % terms in the LICENSE file found in the top-level directory of this 
-            % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
-            % of the matRad project, including this file, may be copied, modified, 
-            % propagated, or distributed except according to the terms contained in the 
-            % LICENSE file.
-            %
-            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            % ROTATE A SINGLE BEAMLET AND ALIGN WITH BEAMLET WHO PASSES THROUGH
-            % ISOCENTER
-
-            % Put [0 0 0] position in the source point for beamlet who passes through
-            % isocenter
-            a = -sourcePoint_bev';
-
-            % Normalize the vector
-            a = a/norm(a);
-
-            % Put [0 0 0] position in the source point for a single beamlet
-            b = (targetPoint_bev - sourcePoint_bev)';
-
-            % Normalize the vector
-            b = b/norm(b);
-
-            % Define function for obtain rotation matrix.
-            if all(a==b) % rotation matrix corresponds to eye matrix if the vectors are the same
-                rot_coords_temp = rot_coords_bev;
-            else
-                % Define rotation matrix
-                ssc = @(v) [0 -v(3) v(2); v(3) 0 -v(1); -v(2) v(1) 0];
-                R   = eye(3) + ssc(cross(a,b)) + ssc(cross(a,b))^2*(1-dot(a,b))/(norm(cross(a,b))^2);
-
-                % Rotate every CT voxel 
-                rot_coords_temp = rot_coords_bev*R;
-            end
-
-            % Put [0 0 0] position CT in center of the beamlet.
-            latDistsX = rot_coords_temp(:,1) + sourcePoint_bev(1);
-            latDistsZ = rot_coords_temp(:,3) + sourcePoint_bev(3);
-
-            % check of radial distance exceeds lateral cutoff (projected to iso center)
-            rad_distancesSq = latDistsX.^2 + latDistsZ.^2;
-            subsetMask = rad_distancesSq ./ rot_coords_temp(:,2).^2 <= lateralCutOff^2 /SAD^2;
-
-            % return index list within considered voxels
-            ix = radDepthIx(subsetMask);
-
-            % return radial distances squared
-            rad_distancesSq = rad_distancesSq(subsetMask);
-
-            % return x & z distance
-            % if nargout > 2
-            %    isoLatDistsX = latDistsX(subsetMask)./rot_coords_temp(subsetMask,2)*SAD;
-            %    isoLatDistsZ = latDistsZ(subsetMask)./rot_coords_temp(subsetMask,2)*SAD; 
-            % end
-
-
-            % latDists
-            if nargout > 4
-                % latDists
-                latDistsX = latDistsX(subsetMask);
-                latDistsZ = latDistsZ(subsetMask);
-                isoLatDistsX = latDistsX./rot_coords_temp(subsetMask,2)*SAD;
-                isoLatDistsZ = latDistsZ./rot_coords_temp(subsetMask,2)*SAD; 
-            else
-                % lateral distances projected to iso center plane
-                isoLatDistsX = latDistsX(subsetMask)./rot_coords_temp(subsetMask,2)*SAD;
-                isoLatDistsZ = latDistsZ(subsetMask)./rot_coords_temp(subsetMask,2)*SAD; 
-            end
-
 
         end
-        
-        function [ixNew,bixelDoseNew] =  dijSampling(ix,bixelDose,radDepthV,rad_distancesSq,sType,Param)
-            % matRad dij sampling function 
-            % This function samples. 
-            % 
+
+        function [ixNew,bixelDoseNew] =  sampleDij(this,ix,bixelDose,radDepthV,rad_distancesSq,bixelWidth)
+            % matRad dij sampling function
+            % This function samples.
+            %
             % call
             %   [ixNew,bixelDoseNew] =
-            %   this.dijSampling(ix,bixelDose,radDepthV,rad_distancesSq,sType,Param)
+            %   this.sampleDij(ix,bixelDose,radDepthV,rad_distancesSq,sType,Param)
             %
             % input
             %   ix:               indices of voxels where we want to compute dose influence data
             %   bixelDose:        dose at specified locations as linear vector
             %   radDepthV:        radiological depth vector
             %   rad_distancesSq:  squared radial distance to the central ray
-            %   sType:            can either be set to 'radius' or 'dose'. These are two different ways 
-            %                     to determine dose values that are keept as they are and dose values used for sampling
-            %   Param:            In the case of radius based sampling, dose values having a radial 
-            %                     distance below r0 [mm] are keept anyway and sampling is only done beyond r0. 
-            %                     In the case of dose based sampling, dose values having a relative dose greater 
-            %                     the threshold [0...1] are keept and sampling is done for dose values below the relative threshold  
+            %   bixelWidth:       bixelWidth as set in pln (optional)
             %
             % output
             %   ixNew:            reduced indices of voxels where we want to compute dose influence data
@@ -320,57 +209,44 @@ classdef (Abstract) matRad_DoseEnginePencilBeam < DoseEngines.matRad_DoseEngine
             %
             % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %
-            % Copyright 2016 the matRad development team. 
-            % 
-            % This file is part of the matRad project. It is subject to the license 
-            % terms in the LICENSE file found in the top-level directory of this 
-            % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
-            % of the matRad project, including this file, may be copied, modified, 
-            % propagated, or distributed except according to the terms contained in the 
+            % Copyright 2016 the matRad development team.
+            %
+            % This file is part of the matRad project. It is subject to the license
+            % terms in the LICENSE file found in the top-level directory of this
+            % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+            % of the matRad project, including this file, may be copied, modified,
+            % propagated, or distributed except according to the terms contained in the
             % LICENSE file.
             %
             % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-            %% define default parameters as a fallback 
-            defaultType                = 'radius';
-            deltaRadDepth              = 5;                       % step size of radiological depth
-            defaultLatCutOff           = 25;                      % default lateral cut off
-            defaultrelDoseThreshold    = 0.01;                    % default relative dose threshold
-
-            relDoseThreshold           = defaultrelDoseThreshold;
-            LatCutOff                  = defaultLatCutOff;
-            Type                       = sType;
+            relDoseThreshold           = this.dijSampling.relDoseThreshold;
+            LatCutOff                  = this.dijSampling.latCutOff;
+            Type                       = this.dijSampling.type;
+            deltaRadDepth              = this.dijSampling.deltaRadDepth;
 
             % if the input index vector is of type logical convert it to linear indices
             if islogical(ix)
-               ix = find(ix); 
+                ix = find(ix);
             end
 
-            %% parse inputs
-            if sum(strcmp(sType,{'radius','dose'})) == 0
-               Type = defaultType;
-            end
-
-            % if an parameter is provided then use it
-            if nargin>5   
-                if exist('Param','var')
-                     if strcmp(sType,'radius')
-                       LatCutOff = Param;
-                    elseif strcmp(sType,'dose')
-                       relDoseThreshold = Param;
-                    end
-                end
+            %Increase sample cut-off by bixel width if given
+            if nargin == 6 && ~isempty(bixelWidth)
+                LatCutOff = LatCutOff + bixelWidth;
             end
 
             %% remember dose values inside the inner core
             switch  Type
-                case {'radius'}
-                ixCore      = rad_distancesSq < LatCutOff^2;                 % get voxels indices having a smaller radial distance than r0
-                case {'dose'}
-                ixCore      = bixelDose > relDoseThreshold * max(bixelDose); % get voxels indices having a greater dose than the thresholdDose
+                case 'radius'
+                    ixCore      = rad_distancesSq < LatCutOff^2;                 % get voxels indices having a smaller radial distance than r0
+                case 'dose'
+                    ixCore      = bixelDose > relDoseThreshold * max(bixelDose); % get voxels indices having a greater dose than the thresholdDose
+                otherwise
+                    matRad_cfg = MatRad_Config.instance();
+                    matRad_cfg.dispError('Dij Sampling mode ''%s'' not known!',Type);
             end
 
-            bixelDoseCore       = bixelDose(ixCore);                         % save dose values that are not affected by sampling
+            bixelDoseCore = bixelDose(ixCore);                         % save dose values that are not affected by sampling
 
             if all(ixCore)
                 %% all bixels are in the core
@@ -420,10 +296,150 @@ classdef (Abstract) matRad_DoseEnginePencilBeam < DoseEngines.matRad_DoseEngine
                 ixNew        = [ix(ixCore);    ixNew(1:IxCnt-1)];
                 bixelDoseNew = [bixelDoseCore; bixelDoseNew(1:IxCnt-1)];
             end
-            
+
         end
-        
+
     end
-   
+
+    methods (Static)
+
+        function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ,latDistsX,latDistsZ] = ...
+                calcGeoDists(rot_coords_bev, sourcePoint_bev, targetPoint_bev, SAD, radDepthIx, lateralCutOff)
+            % matRad calculation of lateral distances from central ray
+            % used for dose calculation
+            %
+            % call
+            %   [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = ...
+            %           this.calcGeoDists(rot_coords_bev, ...
+            %                               sourcePoint_bev, ...
+            %                               targetPoint_bev, ...
+            %                               SAD, ...
+            %                               radDepthIx, ...
+            %                               lateralCutOff)
+            %
+            % input
+            %   rot_coords_bev:     coordinates in bev of the voxels with index V,
+            %                       where also ray tracing results are availabe
+            %   sourcePoint_bev:    source point in voxel coordinates in beam's eye view
+            %   targetPoint_bev:    target point in voxel coordinated in beam's eye view
+            %   SAD:                source-to-axis distance
+            %   radDepthIx:         sub set of voxels for which radiological depth
+            %                       calculations are available
+            %   lateralCutOff:      lateral cutoff specifying the neighbourhood for
+            %                       which dose calculations will actually be performed
+            %
+            % output
+            %   ix:                 indices of voxels where we want to compute dose
+            %                       influence data
+            %   rad_distancesSq:    squared radial distance to the central ray (where the
+            %                       actual computation of the radiological depth takes place)
+            %   isoLatDistsX:       lateral x-distance to the central ray projected to
+            %                       iso center plane
+            %   isoLatDistsZ:       lateral z-distance to the central ray projected to
+            %                       iso center plane
+            %   latDistsX:          lateral x-distance to the central ray
+            %   latDistsZ:          lateral z-distance to the central ray
+            %
+            %
+            % References
+            %   -
+            %
+            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %
+            % Copyright 2015 the matRad development team.
+            %
+            % This file is part of the matRad project. It is subject to the license
+            % terms in the LICENSE file found in the top-level directory of this
+            % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+            % of the matRad project, including this file, may be copied, modified,
+            % propagated, or distributed except according to the terms contained in the
+            % LICENSE file.
+            %
+            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % ROTATE A SINGLE BEAMLET AND ALIGN WITH BEAMLET WHO PASSES THROUGH
+            % ISOCENTER
+
+            % Put [0 0 0] position in the source point for beamlet who passes through
+            % isocenter
+            a = -sourcePoint_bev';
+
+            % Normalize the vector
+            a = a/norm(a);
+
+            % Put [0 0 0] position in the source point for a single beamlet
+            b = (targetPoint_bev - sourcePoint_bev)';
+
+            % Normalize the vector
+            b = b/norm(b);
+
+            % Define function for obtain rotation matrix.
+            if all(a==b) % rotation matrix corresponds to eye matrix if the vectors are the same
+                rot_coords_temp = rot_coords_bev;
+            else
+                % Define rotation matrix
+                ssc = @(v) [0 -v(3) v(2); v(3) 0 -v(1); -v(2) v(1) 0];
+                R   = eye(3) + ssc(cross(a,b)) + ssc(cross(a,b))^2*(1-dot(a,b))/(norm(cross(a,b))^2);
+
+                % Rotate every CT voxel
+                rot_coords_temp = rot_coords_bev*R;
+            end
+
+            % Put [0 0 0] position CT in center of the beamlet.
+            latDistsX = rot_coords_temp(:,1) + sourcePoint_bev(1);
+            latDistsZ = rot_coords_temp(:,3) + sourcePoint_bev(3);
+
+            % check of radial distance exceeds lateral cutoff (projected to iso center)
+            rad_distancesSq = latDistsX.^2 + latDistsZ.^2;
+            subsetMask = rad_distancesSq ./ rot_coords_temp(:,2).^2 <= lateralCutOff^2 /SAD^2;
+
+            % return index list within considered voxels
+            ix = radDepthIx(subsetMask);
+
+            % return radial distances squared
+            rad_distancesSq = rad_distancesSq(subsetMask);
+
+            % return x & z distance
+            % if nargout > 2
+            %    isoLatDistsX = latDistsX(subsetMask)./rot_coords_temp(subsetMask,2)*SAD;
+            %    isoLatDistsZ = latDistsZ(subsetMask)./rot_coords_temp(subsetMask,2)*SAD;
+            % end
+
+
+            % latDists
+            if nargout > 4
+                % latDists
+                latDistsX = latDistsX(subsetMask);
+                latDistsZ = latDistsZ(subsetMask);
+                isoLatDistsX = latDistsX./rot_coords_temp(subsetMask,2)*SAD;
+                isoLatDistsZ = latDistsZ./rot_coords_temp(subsetMask,2)*SAD;
+            else
+                % lateral distances projected to iso center plane
+                isoLatDistsX = latDistsX(subsetMask)./rot_coords_temp(subsetMask,2)*SAD;
+                isoLatDistsZ = latDistsZ(subsetMask)./rot_coords_temp(subsetMask,2)*SAD;
+            end
+
+
+        end
+
+    end
+
+    %% deprecated properties
+    properties (Dependent)
+        geometricCutOff;                %deprecated property, replaced with geometricLateralCutOff
+    end
+
+    methods
+        function set.geometricCutOff(this,geoCutOff)
+            this.geometricLateralCutOff = geoCutOff;
+            this.warnDeprecatedEngineProperty('geometricCutOff','','geometricLateralCutOff');
+        end
+        function geoCutOff = get.geometricCutOff(this)
+            geoCutOff = this.geometricLateralCutOff;
+            this.warnDeprecatedEngineProperty('geometricCutOff','','geometricLateralCutOff');
+        end
+    end
+
 end
 

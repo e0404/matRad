@@ -33,18 +33,25 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-    matRad_cfg =  MatRad_Config.instance();
+matRad_cfg = MatRad_Config.instance();
+matRad_cfg.dispDeprecationWarning('The old dose calculation functions are deprecated! Try to use matRad_calcDose with the new engine format from now on!');
 
-    % create new engine if no engine is defined inside the pln struct
-    if ~(isfield(pln, 'propDoseCalc') && isfield(pln.propDoseCalc, 'engine'))
-        pln.propDoseCalc.engine = DoseEngines.matRad_DoseEngineParticlePB(ct,stf,pln,cst);
-    end
-    % set additional args
-    if exist('calcDoseDirect','var')    
-        pln.propDoseCalc.engine.calcDoseDirect = calcDoseDirect;
-    end
-    matRad_cfg.dispInfo('Starting dose calculation using %s engine.\n', pln.propDoseCalc.engine.name);
-    % call calcDose from engine
-    dij = matRad_calcDose(ct,stf,pln,cst);
+% could be also set as pln property e.g pln.propDoseCalc.useDeprecated
+if isfield(pln, 'propDoseCalc') && isfield(pln.propDoseCalc, 'engine')
+    matRad_cfg.dispWarning('You should not use the deprecated MC calculation with the new engine architecture! Setting pencil beam as engine!');
+end
+
+engine = DoseEngines.matRad_DoseEngineParticlePB(ct,stf,pln,cst);
+
+% set additional args
+if exist('calcDoseDirect','var')    
+    engine.calcDoseDirect = calcDoseDirect;
+end
+
+matRad_cfg.dispInfo('Starting dose calculation using %s engine.\n', engine.name);
+pln.propDoseCalc.engine = engine;
+
+% call calcDose from engine
+dij = matRad_calcDose(ct,cst,stf,pln);
 
 end

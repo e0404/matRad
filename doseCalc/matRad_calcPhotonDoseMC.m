@@ -1,4 +1,4 @@
-function dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst,nCasePerBixel,visBool,useDeprecated)
+function dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst,nCasePerBixel,visBool)
 % matRad ompMC monte carlo photon dose calculation wrapper
 %
 % call
@@ -10,8 +10,6 @@ function dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst,nCasePerBixel,visBool,useD
 %   pln:                        matRad plan meta information struct
 %   cst:                        matRad cst struct
 %   visBool:                    binary switch to enable visualization
-%   useDeprecated:              optional var for using the "old" function, when false
-%                               use dose engines
 % output
 %   dij:                        matRad dij struct
 %
@@ -32,22 +30,33 @@ function dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst,nCasePerBixel,visBool,useD
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-    matRad_cfg =  MatRad_Config.instance();
+matRad_cfg =  MatRad_Config.instance();
 
-    % could be also set as pln property e.g pln.propDoseCalc.useDeprecated
-    if ~(isfield(pln, 'propDoseCalc') && isfield(pln.propDoseCalc, 'engine'))
-        % create new engine if no engine is defined inside the pln struct
-        pln.propDoseCalc.engine = DoseEngines.matRad_DoseEnginePhotonsOmpMC(ct,stf,pln,cst);
-    end
-    % if additional args are given, configure the engine
-    if exist('nCasePerBixel','var')
-        pln.propDoseCalc.engine.nCasePerBixel = nCasePerBixel;
-    end
-    if exist('visBool','var')    
-        pln.propDoseCalc.engine.visBool = visBool;
-    end
-    matRad_cfg.dispInfo('Starting dose calculation using %s engine.\n', pln.propDoseCalc.engine.name);
+matRad_cfg.dispDeprecationWarning('The old dose calculation functions are deprecated! Try to use matRad_calcDose with the new engine format from now on!');
+
+% could be also set as pln property e.g pln.propDoseCalc.useDeprecated
+if isfield(pln, 'propDoseCalc') && isfield(pln.propDoseCalc, 'engine')
+    matRad_cfg.dispWarning('You should not use the deprecated MC calculation with the new engine architecture! Setting ompMC as engine!');
+end
+
+engine = DoseEngines.matRad_DoseEnginePhotonsOmpMC(ct,cst,stf,pln);
+
+% assign old deprecated defaults
+if exist('nCasePerBixel','var')
+    engine.numHistoriesPerBeamlet = nCasePerBixel;
+else
+    engine.numHistoriesPerBeamlet = matRad_cfg.propMC.ompMC_defaultHistories;
+end
+engine.outputMCvariance = matRad_cfg.propMC.ompMC_defaultOutputVariance;
     
-    % call the calcDose from engine
-    dij = matRad_calcDose(ct,stf,pln,cst);
+if exist('visBool','var')
+    engine.visBool = visBool;
+end
+
+matRad_cfg.dispInfo('Starting dose calculation using %s engine.\n', engine.name);
+
+pln.propDoseCalc.engine = engine;
+
+% call the calcDose from engine
+dij = matRad_calcDose(ct,cst,stf,pln);
 end

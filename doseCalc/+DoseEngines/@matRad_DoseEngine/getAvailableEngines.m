@@ -30,7 +30,7 @@ end
 if nargin < 1
     pln = [];
 else
-    if ~(isstruct(pln) || isemplty(pln))
+    if ~(isstruct(pln) || isempty(pln))
         matRad_cfg.dispError('Invalid pln!');
     end
 end
@@ -53,7 +53,7 @@ if nargin >= 1 && ~isempty(pln)
         %availabilityFunc = str2func(availabilityFuncStr); %str2func  does not seem to work on static class functions in Octave 5.2.0
         try
             %available = availabilityFunc(pln,machine);
-            available = evalc([availabilityFuncStr '(pln,machine)']);
+            available = eval([availabilityFuncStr '(pln,machine)']);
         catch
             available = false;
             mpList = mc.PropertyList;

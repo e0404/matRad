@@ -22,7 +22,7 @@ classdef MatRad_Config < handle
     properties
 
         %Logging
-        logLevel = 3; %1 = only Errors, 2 = with Warnings, 3 = Info output, 4 = deprecation warnings, 5 = debug information
+        logLevel = 4; %1 = only Errors, 2 = with Warnings, 3 = Info output, 4 = deprecation warnings, 5 = debug information
         keepLog = false; %Stores the full log in memory
         writeLog = false; %Writes the log to a file on-the-fly
                 
@@ -161,23 +161,30 @@ classdef MatRad_Config < handle
             obj.propStf.defaultLongitudinalSpotSpacing = 2;
             obj.propStf.defaultAddMargin = true; %expand target for beamlet finding
             
+            %Dose Calculation Options
             obj.propDoseCalc.defaultResolution = struct('x',3,'y',3,'z',3); %[mm]
-            obj.propDoseCalc.defaultLateralCutOff = 0.995; %[rel.]
-            obj.propDoseCalc.defaultGeometricCutOff = 50; %[mm]
+            obj.propDoseCalc.defaultDosimetricLateralCutOff = 0.995; %[rel.]
+            obj.propDoseCalc.defaultGeometricLateralCutOff = 50; %[mm]
             obj.propDoseCalc.defaultKernelCutOff = Inf; %[mm]
             obj.propDoseCalc.defaultSsdDensityThreshold = 0.05; %[rel.]
             obj.propDoseCalc.defaultUseGivenEqDensityCube = false; %Use the given density cube ct.cube and omit conversion from cubeHU.
             obj.propDoseCalc.defaultIgnoreOutsideDensities = true; %Ignore densities outside of cst contours
             obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
-            obj.propDoseCalc.defaultDoseEngines = {'pencil beam photon','pencil beam particle'}; %Names for default engines used when no other is given
-            
+            obj.propDoseCalc.defaultDoseEngines = {'SVD Pencil Beam','pencil beam particle'}; %Names for default engines used when no other is given
+                        
             % default properties for fine sampling calculation
             obj.propDoseCalc.defaultFineSamplingProperties.sigmaSub = 1;
             obj.propDoseCalc.defaultFineSamplingProperties.N = 21;
             obj.propDoseCalc.defaultFineSamplingProperties.method = 'russo';
-            
+
+            %Monte Carlo options
+            obj.propDoseCalc.defaultNumHistoriesPerBeamlet = 2e4;
+            obj.propDoseCalc.defaultNumHistoriesDirect = 1e6;
+            obj.propDoseCalc.defaultOutputMCvariance = true;
+                        
             obj.propOpt.defaultMaxIter = 500;
             
+            %deprecated monte carlo options
             obj.propMC.ompMC_defaultHistories = 1e6;
             obj.propMC.ompMC_defaultOutputVariance = false;
             obj.propMC.MCsquare_defaultHistories = 1e6;
@@ -197,22 +204,28 @@ classdef MatRad_Config < handle
             obj.propStf.defaultAddMargin = true; %expand target for beamlet finding
             
             obj.propDoseCalc.defaultResolution = struct('x',5,'y',6,'z',7); %[mm]
-            obj.propDoseCalc.defaultGeometricCutOff = 20;
-            obj.propDoseCalc.defaultLateralCutOff = 0.8;
+            obj.propDoseCalc.defaultGeometricLateralCutOff = 20;
+            obj.propDoseCalc.defaultDosimetricLateralCutOff = 0.8;
             obj.propDoseCalc.defaultKernelCutOff = 20; %[mm]
             obj.propDoseCalc.defaultSsdDensityThreshold = 0.05;
             obj.propDoseCalc.defaultUseGivenEqDensityCube = false; %Use the given density cube ct.cube and omit conversion from cubeHU.
             obj.propDoseCalc.defaultIgnoreOutsideDensities = true;
             obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
-            obj.propDoseCalc.defaultDoseEngines = {'pencil beam photon','pencil beam particle'}; %Names for default engines used when no other is given
+            obj.propDoseCalc.defaultDoseEngines = {'SVD Pencil Beam','pencil beam particle'}; %Names for default engines used when no other is given
             
             % default properties for fine sampling calculation
             obj.propDoseCalc.defaultFineSamplingProperties.sigmaSub = 2;
             obj.propDoseCalc.defaultFineSamplingProperties.N = 5;
             obj.propDoseCalc.defaultFineSamplingProperties.method = 'russo';
             
+            %Monte Carlo options
+            obj.propDoseCalc.defaultNumHistoriesPerBeamlet = 100;
+            obj.propDoseCalc.defaultNumHistoriesDirect = 100;
+            obj.propDoseCalc.defaultOutputMCvariance = true;
+
             obj.propOpt.defaultMaxIter = 10;
             
+            %Deprecated Monte Carlo options
             obj.propMC.ompMC_defaultHistories = 100;
             obj.propMC.ompMC_defaultOutputVariance = true;
             obj.propMC.MCsquare_defaultHistories = 100;

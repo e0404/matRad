@@ -30,13 +30,8 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
         
         mcSquareBinary; %Executable for mcSquare simulation
         nbThreads; %number of threads for MCsquare, 0 is all available
-        relDoseCutoff;
         
-    end
-    
-    properties (SetAccess = public, GetAccess = public)
-        
-    end
+    end      
     
     methods
         
@@ -63,11 +58,10 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
                 this.checkPln(pln);  
             else
                 matRad_cfg.dispInfo('No pln struct given. Base properties will have to be set later.\n')
-            end
-       
+            end       
         end
         
-        function dij = calcDose(this,ct,stf,pln,cst)
+        function dij = calcDose(this,ct,cst,stf,pln)
             % matRad MCsqaure monte carlo photon dose calculation wrapper
             % can be automaticly called through matRad_calcDose or
             % matRad_calcParticleDoseMC
@@ -81,9 +75,9 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
             %
             % input
             %   ct:          	matRad ct struct
+            %   cst:            matRad cst struct
             %   stf:         	atRad steering information struct
             %   pln:            matRad plan meta information struct
-            %   cst:            matRad cst struct
             %   
             % output
             %   dij:            matRad dij struct
@@ -110,13 +104,6 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
             
             this.checkPln(pln);
             
-%             if exist('nCasePerBixel','var')
-%                 if exist('calcDoseDirect','var')
-%                     this.setUp(nCasePerBixel,calcDoseDirect);
-%                 else
-%                     this.setUp(nCasePerBixel);
-%                 end
-%             end
 
             %% check if binaries are available
             % Executables for simulation
@@ -149,7 +136,7 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
 
 
             %Now we can run calcDoseInit as usual
-            [ct,stf,pln,dij] = this.calcDoseInit(ct,cst,pln,stf);
+            [dij,ct,cst,stf,pln] = this.calcDoseInit(ct,cst,stf,pln);
 
             % We need to adjust the offset used in matRad_calcDoseInit
             mcSquareAddIsoCenterOffset = [dij.doseGrid.resolution.x/2 dij.doseGrid.resolution.y/2 dij.doseGrid.resolution.z/2] ...
@@ -181,7 +168,7 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
             MCsquareConfig.CT_File       = 'MC2patientCT.mhd';
             MCsquareConfig.Num_Threads   = this.nbThreads;
             MCsquareConfig.RNG_Seed      = 1234;
-            MCsquareConfig.Num_Primaries = this.nCasePerBixel;
+            MCsquareConfig.Num_Primaries = this.numHistoriesPerBeamlet;
 
             % turn simulation of individual beamlets
             MCsquareConfig.Beamlet_Mode = ~this.calcDoseDirect;
@@ -190,7 +177,7 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
             % turn on sparse output
             MCsquareConfig.Dose_Sparse_Output = ~this.calcDoseDirect;
             % set threshold of sparse matrix generation
-            MCsquareConfig.Dose_Sparse_Threshold = this.relDoseCutoff;
+            MCsquareConfig.Dose_Sparse_Threshold = 1 - this.relativeDosimetricCutOff;
 
             % write patient data
             MCsquareBinCubeResolution = [dij.doseGrid.resolution.x ...
@@ -383,7 +370,7 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
             this.mcSquareBinary = binaryFile;
         end
         
-        function [ct,stf,pln,dij] = calcDoseInit(this,ct,cst,pln,stf)
+        function [dij,ct,cst,stf,pln] = calcDoseInit(this,ct,cst,stf,pln)
             %% Assingn and check parameters
             
             matRad_cfg = MatRad_Config.instance();
@@ -408,7 +395,7 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
             end
             
             %% Call Superclass init function
-            [ct,stf,pln,dij] = calcDoseInit@DoseEngines.matRad_DoseEngineMonteCarlo(this,ct,cst,pln,stf); 
+            [dij,ct,cst,stf,pln] = calcDoseInit@DoseEngines.matRad_DoseEngineMonteCarlo(this,ct,cst,stf,pln); 
             
             %% Validate and preset some additional dij variables
             
@@ -421,11 +408,7 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
             end
             
             % prefill ordering of MCsquare bixels
-            dij.MCsquareCalcOrder = NaN*ones(dij.totalNumOfBixels,1);
-            
-            % set relative dose cutoff for storage in dose influence matrix, we use the
-            % default value for the lateral cutoff here
-            this.relDoseCutoff = 1 - matRad_cfg.propDoseCalc.defaultLateralCutOff;
+            dij.MCsquareCalcOrder = NaN*ones(dij.totalNumOfBixels,1);            
         end
         
         
@@ -510,8 +493,5 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
         end
               
     end
-      
-        
-        
 end
 
