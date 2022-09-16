@@ -41,7 +41,6 @@ classdef matRad_NominalScenario < matRad_ScenarioModel
         end
         
         function scenarios = updateScenarios(this)
-            
             %Scenario Probability from pdf - here it is one since only one
             %scenario exist
             %TODO: In the context of an uncertainty model, we should
@@ -80,6 +79,9 @@ classdef matRad_NominalScenario < matRad_ScenarioModel
             [cs,p] = chol(Sigma);
             this.scenProb = (2*pi)^(-d/2) * exp(-0.5*sum((this.scenForProb/cs).^2, 2)) / prod(diag(cs));
             this.scenWeight = this.scenProb./sum(this.scenProb); 
+            
+            %Return variable
+            scenarios = [0 0 0 0 0];
 
             if totNumScen ~= this.totNumScen
                 matRad_cfg = MatRad_Config.instance();
