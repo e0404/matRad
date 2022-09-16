@@ -163,7 +163,7 @@ classdef matRad_ImportanceScenarios < matRad_ScenarioModel
                     matRad_cfg.dispError('Invalid value for combinations! This sanity check should never be reached!');
             end
 
-            griddedSetupShifts = unique(griddedSetupShifts,'rows','stable');
+            griddedSetupShifts = matRad_ImportanceScenarios.uniqueStableRowsCompat(griddedSetupShifts);
             shiftNomScenIx = find(all(griddedSetupShifts == zeros(1,3),2));            
             
             if ~isempty(shiftNomScenIx) || includeNominalScenario
@@ -201,7 +201,7 @@ classdef matRad_ImportanceScenarios < matRad_ScenarioModel
             end
 
             %Remove duplicate scenarios and update number of shifts
-            griddedRangeShifts = unique(griddedRangeShifts,'rows','stable'); 
+            griddedRangeShifts = matRad_ImportanceScenarios.uniqueStableRowsCompat(griddedRangeShifts); 
 
             rangeNomScenIx = find(all(griddedRangeShifts == zeros(1,2),2));            
             
@@ -229,7 +229,7 @@ classdef matRad_ImportanceScenarios < matRad_ScenarioModel
                     linearMask(1:totNumShiftScen,2) = (1:totNumShiftScen)';
                     linearMask(totNumShiftScen+1:totNumShiftScen+totNumRangeScen,3) = (1:totNumRangeScen)';
 
-                    [scenarios,ia] = unique(scenarios,'rows','stable');
+                    [scenarios,ia] = matRad_ImportanceScenarios.uniqueStableRowsCompat(scenarios);
                     linearMask = linearMask(ia,:);
 
                 case 'all'
@@ -252,24 +252,25 @@ classdef matRad_ImportanceScenarios < matRad_ScenarioModel
 
 
                     %create the linear mask of scenarios
-                    [scenarios,ia] = unique(scenarios,'rows','stable');
+                    [scenarios,ia] = matRad_ImportanceScenarios.uniqueStableRowsCompat(scenarios);
                     linearMask = linearMask(ia,:);
                 otherwise
                     matRad_cfg.dispError('Invalid value for combinations! This sanity check should never be reached!');
             end
         end
     
-        function uniqueStableRows = uniqueStableRowsCompat(values)
+        function [uniqueStableRows,ia] = uniqueStableRowsCompat(values)
             %This is a compatability wrapper to call unique without sorting            
             
             matRad_cfg = MatRad_Config.instance();
             
             if matRad_cfg.isOctave
                 %https://stackoverflow.com/questions/37828894/
-                [~,i,~] = unique(values(:,2), 'first');
-                uniqueStableRows = values(sort(i),:);
+                [~,ia,~] = unique(values,'rows','first');
+                ia = sort(ia);
+                uniqueStableRows = values(ia,:);
             else
-                uniqueStableRows = unique(values,'rows','stable');
+                [uniqueStableRows,ia] = unique(values,'rows','stable');
             end
         end
     end
