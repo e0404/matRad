@@ -82,76 +82,20 @@ classdef matRad_WorstCaseScenarios < matRad_ScenarioModel
         end
         
         function scenarios = updateScenarios(this)
-            matRad_cfg = MatRad_Config.instance();
             
-            %Create worst case setup shifts
-            wcSetupShifts = this.wcSigma * this.shiftSD;            
-            switch this.combinations
-                case 'none'
-                    %Create independent shifts
-                    wcSetupShifts = wcSetupShifts.*[eye(3); -eye(3)];
-                case 'shift'
-                    %error('Not implemented!');
-                    if this.includeNominalScenario
-                        wcSetupShifts = [wcSetupShifts; zeros(1,numel(wcSetupShifts))];
-                    end
-                    wcSetupShifts = [wcSetupShifts; -wcSetupShifts(1,:)];
-                    
-                    [X,Y,Z] = meshgrid(wcSetupShifts(:,1),wcSetupShifts(:,2),wcSetupShifts(:,3));
-                    wcSetupShifts = [X(:), Y(:), Z(:)];
-
-                case 'all'
-                    error('Not implemented!');
-            end
-            this.totNumShiftScen = size(wcSetupShifts,1);
-                                
-            %Create worst case range shifts
-            wcRangeShifts = this.wcSigma * [this.rangeAbsSD this.rangeRelSD];
-            wcRangeShifts(2,:) = -wcRangeShifts;
-            if ~this.combineRange
-                wcRangeShifts(end+1,:) = this.wcSigma * [this.rangeAbsSD -this.rangeRelSD];
-                wcRangeShifts(end+1,:) = this.wcSigma * [-this.rangeAbsSD this.rangeRelSD];
-            end
-            
-            %consider percent
-            wcRangeShifts(:,2) = wcRangeShifts(:,2)./100;                      
-            
-            %Aggregate scenarios
-            this.totNumRangeScen = size(wcRangeShifts,1);
-
-            if any(strcmp(this.combinations,{'none','shift'}))
-                scenarios = zeros(this.totNumShiftScen + this.totNumRangeScen,5);
-                scenarios(1:this.totNumShiftScen,1:3) = wcSetupShifts;
-                scenarios(this.totNumShiftScen+1:this.totNumShiftScen+this.totNumRangeScen,4:5) = wcRangeShifts;
-                
-                %create the linear mask of scenarios
-                linearMask = ones(size(scenarios,1),3);
-                if strcmp(this.combinations,'none')
-                    linearMask(1:this.totNumShiftScen,2) = (1:this.totNumShiftScen)' + this.includeNominalScenario;
-                    linearMask(this.totNumShiftScen+1:this.totNumShiftScen+this.totNumRangeScen,3) = (1:this.totNumRangeScen)' + this.includeNominalScenario;
-                elseif strcmp(this.combinations,'shift')
-                    linearMask(1:this.totNumShiftScen,2) = (1:this.totNumShiftScen)' + this.includeNominalScenario;
-                    linearMask(this.totNumShiftScen+1:this.totNumShiftScen+this.totNumRangeScen,3) = (1:this.totNumRangeScen)' + this.includeNominalScenario;
-                else
-                    matRad_cfg.dispError('This sanity check should never be reached!');
-                end
-            
-            else
-                error('Not implemented yet!');
-            end
-                
-
             if this.includeNominalScenario
-                %We include the nominal scenario by just replacing the  
-                %first one to keep the number of scenarios the same 
-                scenarios = [0 0 0 0 0; scenarios];
-                linearMask = [1 1 1; linearMask];
-                this.totNumRangeScen = this.totNumRangeScen + 1;
-                this.totNumShiftScen = this.totNumShiftScen + 1;
+                nPoints = 3;
+            else
+                nPoints = 2;
             end
-
+            
+            %Use the static gridded shift function from
+            %ImportanceScenarios. We set inclusion of nominal scenarios to
+            %false and handle it automatically via the grid point number
+            [scenarios,linearMask,this.totNumShiftScen,this.totNumRangeScen] = matRad_ImportanceScenarios.createGriddedScenarios(this,false,this.combinations,this.combineRange,nPoints,nPoints);
+            
+            %Finalize meta information
             this.totNumScen = size(scenarios,1);
-
 
             this.relRangeShift = scenarios(:,5);
             this.absRangeShift = scenarios(:,4);
