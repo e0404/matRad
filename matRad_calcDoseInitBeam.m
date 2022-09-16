@@ -52,13 +52,10 @@ matRad_cfg.dispInfo('done.\n');
 
 % interpolate radiological depth cube to dose grid resolution
 radDepthVdoseGrid = matRad_interpRadDepth(ct,VctGrid,VdoseGrid,dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z,radDepthVctGrid);
-
+ 
 if exist('radDepthsMat', 'var')
-    for ctScen = 1:ct.numOfCtScen
-        % interpolate radiological depth cube used for fine sampling to dose grid resolution
-        radDepthsMat{ctScen} = matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z, radDepthsMat{1}, ...
-            dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest');
-    end
+    % interpolate radiological depth cube used for fine sampling to dose grid resolution    
+    radDepthsMat = cellfun(@(radDepthCube) matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z,radDepthCube,dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest'),radDepthsMat,'UniformOutput',false);    
 end
 
 % limit rotated coordinates to positions where ray tracing is availabe

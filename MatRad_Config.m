@@ -67,6 +67,9 @@ classdef MatRad_Config < handle
             obj.getEnvironment();
             obj.matRad_version = matRad_version();
 
+            %Configure Environment
+            obj.configureEnvironment();
+            
             %Just to catch people messing with the properties in the file
             if ~isempty(obj.writeLog) && obj.writeLog
                 logFile = [obj.matRadRoot filesep 'matRad.log'];
@@ -77,6 +80,11 @@ classdef MatRad_Config < handle
             obj.reset();
         end
 
+        function delete(~)
+            %might not be desired by users
+            %rmpath(genpath(matRad_cfg.matRadRoot));
+        end
+        
         function displayToConsole(obj,type,formatSpec,varargin)
             %displayToConsole lowest-level logging function for matRad.
             %   Display to console will be called from the public wrapper
@@ -473,6 +481,14 @@ classdef MatRad_Config < handle
 
             % Send info to console
             obj.dispInfo(['Class ' class(pln.(propName)) ' has been loaded to pln.' propName '!\n']);
+
+        end
+
+        function configureEnvironment(obj)
+            if obj.isOctave
+                struct_levels_to_print(0);                  %Disables full printing of struct array fields
+                warning("off","Octave:data-file-in-path");  %Disables warning of loading patients from the data folder
+            end
         end
     end
 
