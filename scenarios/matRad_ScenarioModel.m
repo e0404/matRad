@@ -117,7 +117,9 @@ classdef matRad_ScenarioModel < handle
            
 
         function scenarios = updateScenarios(this)            
-            %This is an abstract function
+            %This function will always update the scenarios given the
+            %current property settings
+
             matRad_cfg = MatRad_Config.instance();
             matRad_cfg.dispError('This abstract function needs to be implemented!');
         end
@@ -149,6 +151,9 @@ classdef matRad_ScenarioModel < handle
     end
 
     methods (Static)
+        %{
+        %TODO: implement automatic collection of available scenario classes
+ 
         function metaScenarioModels = getAvailableModels()
             matRad_cfg = MatRad_Config.instance();
             
@@ -157,6 +162,7 @@ classdef matRad_ScenarioModel < handle
 
             %
         end
+        %}
 
         function types = AvailableScenCreationTYPE()
             matRad_cfg = MatRad_Config.instance();
