@@ -293,10 +293,12 @@ for i = 1:length(pln.propStf.gantryAngles)
 
                Counter = 0;
                
+               %Here we iterate through scenarios to check the required
+               %energies w.r.t lateral position. 
+               %TODO: iterate over the linear scenario mask instead?
                for CtScen = 1:pln.multScen.numOfCtScen
                    for ShiftScen = 1:pln.multScen.totNumShiftScen
                           for RangeShiftScen = 1:pln.multScen.totNumRangeScen 
-                          
                               if pln.multScen.scenMask(CtScen,ShiftScen,RangeShiftScen)
                                   Counter = Counter+1;
                                   
@@ -322,8 +324,7 @@ for i = 1:length(pln.propStf.gantryAngles)
                                   %This captures the case that the first
                                   %relevant voxel is a target voxel
                                   targetEntry(Counter,1:length(entryIx)) = (radDepths(entryIx) + radDepths(entryIx+1)) ./ 2;
-                                  targetExit(Counter,1:length(exitIx)) = (radDepths(exitIx) + radDepths(exitIx+1)) ./ 2;
-                                  
+                                  targetExit(Counter,1:length(exitIx)) = (radDepths(exitIx) + radDepths(exitIx+1)) ./ 2;    
                               end
                           end
                           
@@ -458,7 +459,7 @@ for i = 1:length(pln.propStf.gantryAngles)
     stf(i).numOfRays = size(stf(i).ray,2);
      
     % post processing for particle remove energy slices
-    if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')
+    if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'helium') || strcmp(stf(i).radiationMode,'carbon')
         
         % get minimum energy per field
         minEnergy = min([stf(i).ray.energy]);

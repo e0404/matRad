@@ -51,9 +51,14 @@ if exist('multScen','var') && ~isempty(multScen)
     pln.multScen = multScen;
 else
     % create random scenarios for sampling
-    pln.multScen = matRad_multScen(ctSamp,'rndScen'); % 'impSamp' or 'wcSamp'
-    pln.multScen.numOfShiftScen = matRad_cfg.defaults.samplingScenarios * ones(3,1);
-    pln.multScen.numOfRangeShiftScen = matRad_cfg.defaults.samplingScenarios;    
+    % Deprecated Code
+    %pln.multScen = matRad_multScen(ctSamp,'rndScen'); % 'impSamp' or 'wcSamp'
+    %pln.multScen.numOfShiftScen = matRad_cfg.defaults.samplingScenarios * ones(3,1);
+    %pln.multScen.numOfRangeShiftScen = matRad_cfg.defaults.samplingScenarios;
+    %pln.multScen.totNumScen = matRad_cfg.defaults.samplingScenarios; %This yields an error now
+    
+    pln.multScen = matRad_RandomScenarios(ctSamp);
+    pln.multScen.nSamples = matRad_cfg.defaults.samplingScenarios;
 end
 
 matRad_cfg.dispInfo('Using %d samples in total \n',pln.multScen.totNumScen);
@@ -141,7 +146,7 @@ if FlagParallToolBoxLicensed
       FlagParforProgressDisp = false;
    end
   
-   for i = 1:pln.multScen.totNumScen
+   parfor i = 1:pln.multScen.totNumScen
           
           % create nominal scenario
           plnSamp          = pln;
