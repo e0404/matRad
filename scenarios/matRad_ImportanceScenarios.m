@@ -258,6 +258,20 @@ classdef matRad_ImportanceScenarios < matRad_ScenarioModel
                     matRad_cfg.dispError('Invalid value for combinations! This sanity check should never be reached!');
             end
         end
+    
+        function uniqueStableRows = uniqueStableRowsCompat(values)
+            %This is a compatability wrapper to call unique without sorting            
+            
+            matRad_cfg = MatRad_Config.instance();
+            
+            if matRad_cfg.isOctave
+                %https://stackoverflow.com/questions/37828894/
+                [~,i,~] = unique(values(:,2), 'first');
+                uniqueStableRows = values(sort(i),:);
+            else
+                uniqueStableRows = unique(values,'rows','stable');
+            end
+        end
     end
 end
 
