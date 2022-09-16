@@ -291,6 +291,26 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                         dij.beamNum(counter)  = i;
                         dij.rayNum(counter)   = j;
                         dij.bixelNum(counter) = k;
+                        
+                        % extract MU data if present (checks for downwards compatability)
+                        minMU = 0;
+                        if isfield(stf(i).ray(j),'minMU')
+                            minMU = stf(i).ray(j).minMU(k);
+                        end
+    
+                        maxMU = Inf;
+                        if isfield(stf(i).ray(j),'maxMU')
+                            maxMU = stf(i).ray(j).maxMU(k);
+                        end
+    
+                        numParticlesPerMU = 1e6;
+                        if isfield(stf(i).ray(j),'numParticlesPerMU')
+                            numParticlesPerMU = stf(i).ray(j).numParticlesPerMU(k);
+                        end
+    
+                        dij.minMU(counter,1) = minMU;
+                        dij.maxMU(counter,1) = maxMU;
+                        dij.numParticlesPerMU(counter,1) = numParticlesPerMU;
                     end
 
                     % find energy index in base data
