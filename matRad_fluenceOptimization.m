@@ -106,11 +106,13 @@ elseif  strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'proto
     if ~isfield(dij,'RBE')
         dij.RBE = 1.1;
     end
-    bixelWeight =  (doseTarget)/(dij.RBE * mean(dij.physicalDose{1}(V,:)*wOnes)); 
-    wInit       = bixelWeight * wOnes;
-    matRad_cfg.dispInfo('chosen uniform weight of %f!\n',bixelWeight);    
+
+    doseTmp = dij.physicalDose{1}*wOnes;
+    bixelWeight =  (doseTarget)/(dij.RBE * mean(doseTmp(V)));     
+    wInit       = wOnes * bixelWeight;
+    matRad_cfg.dispInfo('chosen uniform weight of %f!\n',bixelWeight);  
+        
 elseif pln.bioParam.bioOpt
-    
     % retrieve photon LQM parameter
     [ax,bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1);
 
@@ -135,8 +137,11 @@ elseif pln.bioParam.bioOpt
     if isequal(pln.bioParam.quantityOpt,'effect')
 
            effectTarget = cst{ixTarget,5}.alphaX * doseTarget + cst{ixTarget,5}.betaX * doseTarget^2;
-           p            = (sum(dij.mAlphaDose{1}(V,:)*wOnes)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
-           q            = -(effectTarget * length(V)) / (sum((dij.mSqrtBetaDose{1}(V,:) * wOnes).^2));
+           aTmp = dij.mAlphaDose{1}*wOnes;
+           bTmp = dij.mSqrtBetaDose{1} * wOnes;
+           p = sum(aTmp(V)) / sum(bTmp(V).^2);
+           q = -(effectTarget * length(V)) / sum(bTmp(V).^2);
+           
            wInit        = -(p/2) + sqrt((p^2)/4 -q) * wOnes;
 
     elseif isequal(pln.bioParam.quantityOpt,'RBExD')
@@ -146,18 +151,23 @@ elseif pln.bioParam.bioOpt
            dij.gamma(dij.ixDose) = dij.ax(dij.ixDose)./(2*dij.bx(dij.ixDose)); 
 
             
-           % calculate current in target
-           CurrEffectTarget = (dij.mAlphaDose{1}(V,:)*wOnes + (dij.mSqrtBetaDose{1}(V,:)*wOnes).^2);
+           % calculate current effect in target
+           aTmp = dij.mAlphaDose{1}*wOnes;
+           bTmp = dij.mSqrtBetaDose{1} * wOnes;
+           doseTmp = dij.physicalDose{1}*wOnes;
+
+           CurrEffectTarget = aTmp(V) + bTmp(V).^2;
            % ensure a underestimated biological effective dose 
            TolEstBio        = 1.2;
            % calculate maximal RBE in target
            maxCurrRBE = max(-cst{ixTarget,5}.alphaX + sqrt(cst{ixTarget,5}.alphaX^2 + ...
-                        4*cst{ixTarget,5}.betaX.*CurrEffectTarget)./(2*cst{ixTarget,5}.betaX*(dij.physicalDose{1}(V,:)*wOnes)));
-           wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(dij.physicalDose{1}(V,:)*wOnes)))* wOnes;
+                        4*cst{ixTarget,5}.betaX.*CurrEffectTarget)./(2*cst{ixTarget,5}.betaX*doseTmp(V)));
+           wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(doseTmp(V))))* wOnes;
     end
     
-else 
-    bixelWeight =  (doseTarget)/(mean(dij.physicalDose{1}(V,:)*wOnes)); 
+else
+    doseTmp = dij.physicalDose{1}*wOnes;
+    bixelWeight =  (doseTarget)/mean(doseTmp(V));
     wInit       = wOnes * bixelWeight;
     matRad_cfg.dispInfo('chosen uniform weight of %f!\n',bixelWeight);   
 end
@@ -235,6 +245,30 @@ if isfield(pln,'propOpt') && isfield(pln.propOpt,'useLogSumExpForRobOpt')
     optiProb.useLogSumExpForRobOpt = pln.propOpt.useLogSumExpForRobOpt;
 end
 
+%Get Bounds
+if ~isfield(pln.propOpt,'boundMU')
+    pln.propOpt.boundMU = false;
+end 
+
+if pln.propOpt.boundMU
+    if (isfield(dij,'minMU') || isfield(dij,'maxMU')) && ~isfield(dij,'numParticlesPerMU')
+        matRad_cfg.dispWarning('Requested MU bounds but number of particles per MU not set! Bounds will not be enforced and standard [0,Inf] will be used instead!');
+    elseif ~isfield(dij,'minMU') && ~isfield(dij,'maxMU')
+        matRad_cfg.dispWarning('Requested MU bounds but machine bounds not defined in dij.minMU & dij.maxMU! Bounds will not be enforced and standard [0,Inf] will be used instead!');
+    else
+        if isfield(dij,'minMU')
+            optiProb.minimumW = dij.numParticlesPerMU .* dij.minMU / 1e6;
+            matRad_cfg.dispInfo('Using lower MU bounds provided in dij!\n')
+        end
+
+        if isfield(dij,'maxMU')
+            optiProb.maximumW = dij.numParticlesPerMU .* dij.maxMU / 1e6;
+            matRad_cfg.dispInfo('Using upper MU bounds provided in dij!\n')
+        end
+    end
+else
+    matRad_cfg.dispInfo('Using standard MU bounds of [0,Inf]!\n')
+end
 
 if ~isfield(pln.propOpt,'optimizer')
     pln.propOpt.optimizer = 'IPOPT';
