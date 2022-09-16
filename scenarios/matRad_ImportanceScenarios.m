@@ -102,11 +102,11 @@ classdef matRad_ImportanceScenarios < matRad_ScenarioModel
                         tmpGrid(:,i) = setupShiftGrid(:,i);
                         griddedSetupShifts = [griddedSetupShifts; tmpGrid];
                     end                    
-                case 'shift'
+                case {'shift','all'}
                     [X,Y,Z] = meshgrid(setupShiftGrid(:,1),setupShiftGrid(:,2),setupShiftGrid(:,3));
                     griddedSetupShifts = [X(:), Y(:), Z(:)];    
-                case 'all'
-                    error('Not implemented!');
+                otherwise
+                    matRad_cfg.dispError('Invalid value for combinations! This sanity check should never be reached!');
             end
 
             griddedSetupShifts = unique(griddedSetupShifts,'rows','stable');
@@ -162,24 +162,46 @@ classdef matRad_ImportanceScenarios < matRad_ScenarioModel
             
             
             %Aggregate scenarios
+            switch this.combinations
+                case {'none','shift'}
+                    scenarios = zeros(this.totNumShiftScen + this.totNumRangeScen,5);
+                    scenarios(1:this.totNumShiftScen,1:3) = griddedSetupShifts;
+                    scenarios(this.totNumShiftScen+1:this.totNumShiftScen+this.totNumRangeScen,4:5) = griddedRangeShifts;
 
-            if any(strcmp(this.combinations,{'none','shift'}))
-                scenarios = zeros(this.totNumShiftScen + this.totNumRangeScen,5);
-                scenarios(1:this.totNumShiftScen,1:3) = griddedSetupShifts;
-                scenarios(this.totNumShiftScen+1:this.totNumShiftScen+this.totNumRangeScen,4:5) = griddedRangeShifts;
-                
 
-                
-                %create the linear mask of scenarios
-                linearMask = ones(size(scenarios,1),3);
-                linearMask(1:this.totNumShiftScen,2) = (1:this.totNumShiftScen)';
-                linearMask(this.totNumShiftScen+1:this.totNumShiftScen+this.totNumRangeScen,3) = (1:this.totNumRangeScen)';
-                
-                [scenarios,ia] = unique(scenarios,'rows','stable');
-                linearMask = linearMask(ia,:);
-            
-            else
-                error('Not implemented yet!');
+
+                    %create the linear mask of scenarios
+                    linearMask = ones(size(scenarios,1),3);
+                    linearMask(1:this.totNumShiftScen,2) = (1:this.totNumShiftScen)';
+                    linearMask(this.totNumShiftScen+1:this.totNumShiftScen+this.totNumRangeScen,3) = (1:this.totNumRangeScen)';
+
+                    [scenarios,ia] = unique(scenarios,'rows','stable');
+                    linearMask = linearMask(ia,:);
+
+                case 'all'
+                    %Prepare scenario matrix by replicating shifts
+                    %with the number of range scenarios
+                    scenarios = repmat(griddedSetupShifts,this.totNumRangeScen,1);
+                    scenarios = [scenarios zeros(size(scenarios,1),2)];
+                    
+                    %create the linear mask of scenarios
+                    linearMask = ones(size(scenarios,1),3);
+                    for r = 1:this.totNumRangeScen                    
+                        offset = (r-1)*this.totNumShiftScen;
+                        ixR = (offset + 1):(offset + this.totNumShiftScen);
+                        scenarios(ixR,4:5) = repmat(griddedRangeShifts(r,:),this.totNumShiftScen,1);
+
+                        %Set linear mask
+                        linearMask(ixR,2) = (1:this.totNumShiftScen)';
+                        linearMask(ixR,3) = r;
+                    end
+
+
+                    %create the linear mask of scenarios
+                    [scenarios,ia] = unique(scenarios,'rows','stable');
+                    linearMask = linearMask(ia,:);
+                otherwise
+                    matRad_cfg.dispError('Invalid value for combinations! This sanity check should never be reached!');
             end
                 
 
