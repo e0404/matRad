@@ -123,7 +123,7 @@ doseStat.gammaAnalysis.cube1 = doseCube;
 doseStat.gammaAnalysis.cube2 = doseStat.meanCubeW;
 doseStat.gammaAnalysis.cube2Name = 'doseStat.meanCubeW';
 
-matRad_cfg.dispInfo(['matRad: Performing gamma index analysis with parameters', num2str(meta.gammaCriterion), '[% mm] \n']);
+matRad_cfg.dispInfo(['matRad: Performing gamma index analysis with parameters', num2str(meta.gammaCriterion), '[%% mm] \n']);
 doseStat.gammaAnalysis.doseAgreement = meta.gammaCriterion(1);
 doseStat.gammaAnalysis.distAgreement = meta.gammaCriterion(2);
 
