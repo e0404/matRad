@@ -399,6 +399,10 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                         end
                     end
                     dij.numOfBeams = 1;
+                    dij.beamNum = 1;
+                    dij.bixelNum = 1;
+                    dij.totalNumOfRays = 1;
+                    dij.numOfRaysPerBeam = 1;
                 end
                 
                 % reorder influence matrix to comply with matRad default ordering
