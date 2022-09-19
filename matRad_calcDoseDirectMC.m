@@ -92,7 +92,12 @@ if ~isfield(pln.propMC,'externalCalculation') || ~pln.propMC.externalCalculation
         % already performed in dij construction
         if size(dij.physicalDose{1},2) ~= pln.propStf.numOfBeams
             matRad_cfg.dispWarning('Number of beams stored not the same as size of dij. Using singular weight for MC');
-            dij.numOfBeams = size(dij.physicalDose{1},2);
+            % This parameter should be 1 since calcDoseDirect is true and all weights are used in the simulation already
+            if size(dij.physicalDose{1},2) ~= 1
+                matRad_cfg.dispError('Singular weight was called but dij has %i columns!',1)
+            end
+            dij.numOfBeams = 1;
+            dij.beamNum = 1;
         end
         resultGUI    = matRad_calcCubes(ones(dij.numOfBeams,1),dij,1);
 
