@@ -133,9 +133,9 @@ for energyIx = vEnergiesIx
                                  cumIntEnergy(peakIxOrg+1):energyStepsTail:cumIntEnergy(end) cumIntEnergy(end)]);
 
     [cumIntEnergy,ix] = unique(cumIntEnergy);
-    depthValues       = matRad_interp1(cumIntEnergy,machine.data(energyIx).depths(ix),vEnergySteps);
+    depthValues       = matRad_interp1(cumIntEnergy,machine.data(energyIx).depths(ix),vEnergySteps');
 
-        idd  = matRad_interp1(machine.data(energyIx).depths,machine.data(energyIx).Z,depthValues) * conversionFactor; 
+    idd  = matRad_interp1(machine.data(energyIx).depths,machine.data(energyIx).Z,depthValues) * conversionFactor; 
      
     cnt = cnt +1 ;
     % % calculate dose in spot

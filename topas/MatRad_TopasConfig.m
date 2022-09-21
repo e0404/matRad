@@ -23,7 +23,10 @@ classdef MatRad_TopasConfig < handle
         topasExecCommand; %Defaults will be set during construction according to TOPAS installation instructions and used system
 
         parallelRuns = false; %Starts runs in parallel
-        externalCalculation = false; %Generates folder for external TOPAS calculation (e.g. on a server)
+
+        %If enabled, the interface generates a separate (unique) folder in the working directory for external TOPAS calculation
+        %(e.g. on a server). Folder will be named according to radiationMode, machine name and current date.
+        externalCalculation = false; 
 
         workingDir; %working directory for the simulation
 
@@ -80,7 +83,7 @@ classdef MatRad_TopasConfig < handle
             'surfaceTrackCount',false,...
             'calcDij',false,...
             'RBE',false,...
-            'RBE_model','default',... % default is MCN for protons and LEM1 for ions
+            'RBE_model',{{'default'}},... % default is MCN for protons and LEM1 for ions
             'defaultModelProtons',{{'MCN'}},...
             'defaultModelCarbon',{{'LEM'}},...
             'LET',false,...
@@ -218,6 +221,7 @@ classdef MatRad_TopasConfig < handle
                     end
                 end
 
+                % Get alpha beta parameters from bioParam struct
                 if all(isfield(pln.propMC,{'AlphaX','BetaX'}))
                     obj.bioParam.AlphaX = pln.propMC.AlphaX;
                     obj.bioParam.BetaX = pln.propMC.BetaX;
@@ -314,89 +318,6 @@ classdef MatRad_TopasConfig < handle
 
             % Console message
             matRad_cfg.dispInfo('Successfully written TOPAS setup files!\n')
-        end
-
-        function [ctR,cst,stf] = resampleGrid(~,ct,cst,pln,stf)
-            % function to resample the TOPAS grid for faster computation
-            %
-            % call
-            %   [ctR,cst,stf] = topasConfig.resampleGrid(ct,cst,pln,stf)
-            %   [ctR,cst,stf] = obj.resampleGrid(ct,cst,pln,stf)
-            %
-            % input
-            %   ct:             Path to folder where TOPAS files are in (as string)
-            %   cst:            matRad segmentation struct
-            %   pln:            matRad plan struct
-            %   stf:            matRad steering struct
-            %
-            % output
-            %   ctR:            resampled CT
-            %   cst:            updated ct struct (due to calcDoseInit)
-            %   stf:            updated stf struct (due to calcDoseInit)
-            %
-            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %
-            % Copyright 2022 the matRad development team.
-            %
-            % This file is part of the matRad project. It is subject to the license
-            % terms in the LICENSE file found in the top-level directory of this
-            % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
-            % of the matRad project, including this file, may be copied, modified,
-            % propagated, or distributed except according to the terms contained in the
-            % LICENSE file.
-            %
-            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-            matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
-
-            % Set flag in case a modulated CT is detected
-            if isfield(ct,'modulated') && ct.modulated
-                pln.propDoseCalc.useGivenEqDensityCube = true;
-            end
-
-            % Load calcDoseInit as usual
-            matRad_calcDoseInit;
-
-            % Check if CT has already been resampled
-            if ~isfield(ct,'resampled')
-                % Allpcate resampled cubes
-                cubeHUresampled = cell(1,ct.numOfCtScen);
-                cubeResampled = cell(1,ct.numOfCtScen);
-
-                % Perform resampling to dose grid
-                for s = 1:ct.numOfCtScen
-                    cubeHUresampled{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{s}, ...
-                        dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
-                    cubeResampled{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cube{s}, ...
-                        dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
-                end
-
-                % Allocate temporary resampled CT
-                ctR = ct;
-                ctR.cube = cell(1);
-                ctR.cubeHU = cell(1);
-
-                % Set CT resolution to doseGrid resolution
-                ctR.resolution = dij.doseGrid.resolution;
-                ctR.cubeDim = dij.doseGrid.dimensions;
-                ctR.x = dij.doseGrid.x;
-                ctR.y = dij.doseGrid.y;
-                ctR.z = dij.doseGrid.z;
-
-                % Write resampled cubes
-                ctR.cubeHU = cubeHUresampled;
-                ctR.cube = cubeResampled;
-
-                % Set flag for complete resampling
-                ctR.resampled = 1;
-                ctR.ctGrid = dij.doseGrid;
-
-                % Save original grid
-                ctR.originalGrid = dij.ctGrid;
-            else
-                ctR = ct;
-                matRad_cfg.dispWarning('CT already resampled.');
-            end
         end
 
         function dij = readFiles(obj,folder)

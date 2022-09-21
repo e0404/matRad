@@ -71,13 +71,7 @@ pln = matRad_cfg.getDefaultProperties(pln,{'propDoseCalc'});
 % set nested folder structure if external calculation is turned on (this will put new simulations in subfolders)
 if pln.propMC.externalCalculation
     pln.propMC.workingDir = [pln.propMC.thisFolder filesep 'MCrun' filesep];
-    if isfield(pln,'patientID')
-        pln.propMC.workingDir = [pln.propMC.workingDir pln.radiationMode filesep pln.patientID filesep pln.patientID '_'];
-    end
     pln.propMC.workingDir = [pln.propMC.workingDir pln.radiationMode,'_',pln.machine,'_',datestr(now, 'dd-mm-yy')];
-    if isfield(ct,'sampleIdx')
-        pln.propMC.workingDir = [pln.propMC.workingDir '_' num2str(ct.sampleIdx,'%02.f') filesep];
-    end
 end
 
 %% Initialize dose grid and dij
@@ -86,7 +80,7 @@ end
 matRad_calcDoseInit;
 
 % for TOPAS we explicitly downsample the ct to the dose grid (might not be necessary in future versions with separated grids)
-[ctR,~,~] = pln.propMC.resampleGrid(ct,cst,pln,stf);
+[ctR,~,~] = matRad_resampleGrid(ct,cst,stf);
 
 % overwrite CT grid in dij in case of modulation.
 if isfield(ctR,'ctGrid')
@@ -161,9 +155,11 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
     % change director back to original directory
     cd(pln.propMC.workingDir);
 
-    % save dij and weights, they are needed for later reading the data back in
+    % Skip local calculation and data readout with this parameter. All necessary parameters to read the data back in
+    % later are stored in the MCparam file that is stored in the folder. The folder is generated in the working
+    % directory and the matRad_plan*.txt file can be manually called with TOPAS.
     if pln.propMC.externalCalculation
-        matRad_cfg.dispInfo('TOPAS simulation skipped for external calculation\n');
+        matRad_cfg.dispInfo(['TOPAS simulation skipped for external calculation\nFiles have been written to: "',replace(pln.propMC.workingDir,'\','\\'),'"']);
     else
         for ctScen = 1:ct.numOfCtScen
             for beamIx = 1:numel(stf)

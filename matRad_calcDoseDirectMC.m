@@ -87,7 +87,7 @@ end
 
 % calc resulting dose
 if ~isfield(pln.propMC,'externalCalculation') || ~pln.propMC.externalCalculation
-    if pln.multScen.totNumScen == 1
+    if pln.multScen.numOfCtScen == 1
         % calculate cubes; use uniform weights here, weighting with actual fluence
         % already performed in dij construction
         if size(dij.physicalDose{1},2) ~= dij.numOfBeams || size(dij.physicalDose{1},2) ~= numel(dij.beamNum)
@@ -114,9 +114,9 @@ if ~isfield(pln.propMC,'externalCalculation') || ~pln.propMC.externalCalculation
 
     end
 
-    if pln.multScen.totNumScen ~= 1
+    if pln.multScen.numOfCtScen ~= 1
         resultGUI.accPhysicalDose = zeros(size(resultGUI.phaseDose{1}));
-        for i = 1:pln.multScen.totNumScen
+        for i = 1:pln.multScen.numOfCtScen
             resultGUI.accPhysicalDose = resultGUI.accPhysicalDose + resultGUI.phaseDose{i};
         end
     end

@@ -383,7 +383,7 @@ classdef matRad_bioModel
         
         
         
-        function [bixelAlpha,bixelBeta] = calcLQParameter(this,vRadDepths,baseDataEntry,mTissueClass,vAlpha_x,vBeta_x,vABratio)
+        function [bixelAlpha,bixelBeta] = calcLQParameter(this,vRadDepths,baseDataEntry,mTissueClass,vAlpha_x,vBeta_x,vABratio,LETin)
             matRad_cfg = MatRad_Config.instance();
             
             bixelAlpha = NaN*ones(numel(vRadDepths),1);
@@ -416,11 +416,14 @@ classdef matRad_bioModel
                   % TODO: assign normal tissue an RBE of 1.1
                   
                case {'protons_MCN'}
-                  
-                  
-                  bixelLET = matRad_interp1(depths,baseDataEntry.LET,vRadDepths);
+
+                  if exist('LETin','var') && ~isempty(LETin)
+                      bixelLET = LETin;
+                  else
+                      bixelLET = matRad_interp1(depths,baseDataEntry.LET,vRadDepths);
+                  end
                   bixelLET(isnan(bixelLET)) = 0;
-                  
+                   
                   RBEmax     = this.p0_MCN + ((this.p1_MCN * bixelLET )./ vABratio);
                   RBEmin     = this.p2_MCN + (this.p3_MCN  * sqrt(vABratio) .* bixelLET);
                   bixelAlpha = RBEmax    .* vAlpha_x;
@@ -428,7 +431,11 @@ classdef matRad_bioModel
                   
                case {'protons_WED'}
                   
-                  bixelLET = matRad_interp1(depths,baseDataEntry.LET,vRadDepths);
+                  if exist('LETin','var') && ~isempty(LETin)
+                      bixelLET = LETin;
+                  else
+                      bixelLET = matRad_interp1(depths,baseDataEntry.LET,vRadDepths);
+                  end
                   bixelLET(isnan(bixelLET)) = 0;
                   
                   RBEmax     = this.p0_WED + ((this.p1_WED * bixelLET )./ vABratio);
