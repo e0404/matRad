@@ -369,8 +369,6 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                             dij.doseGrid.dimensions, ...
                             dij.totalNumOfBixels, ...
                             mask);
-                        
-                        dij.MC_tallies{1} = 'LET';
                     end
                 else
                     %Read dose cube
@@ -387,8 +385,6 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                             sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
                                 cube(VdoseGrid), ...
                                 dij.doseGrid.numOfVoxels,1);
-                        
-                        dij.MC_tallies{1} = 'LET';
                     end
 
                     % Postprocessing for dij:

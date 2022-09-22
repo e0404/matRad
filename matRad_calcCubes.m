@@ -144,24 +144,6 @@ elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'alpha')), fieldna
 end
 
 %% Final processing
-% Add non-processed MC tallies
-% Note that the tallies are already computed per beam and altogether
-if isfield(dij,'MC_tallies')
-    for f = 1:numel(dij.MC_tallies)
-        tally = dij.MC_tallies{f};
-        % skip tallies processed above
-        if ~isfield(resultGUI,tally) && isempty(strfind(lower(tally),'std'))
-            tallyCut = strsplit(tally,'_');
-            if size(tallyCut,2) > 1
-                beamNum = str2num(cell2mat(regexp(tally,'\d','Match')));
-                resultGUI.(tally) = reshape(full(dij.(tallyCut{1}){scenNum}(:,beamNum)),dij.doseGrid.dimensions);
-            else
-                resultGUI.(tally) = reshape(full(dij.(tally){scenNum} * wBeam),dij.doseGrid.dimensions);
-            end
-        end
-    end
-end
-
 % Remove suffix for RBExD if there's only one available
 if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'alpha')), fieldnames(dij))) && isfield(dij,'RBE_models') && length(dij.RBE_models) == 1
     % Get fieldnames that include the specified RBE model
