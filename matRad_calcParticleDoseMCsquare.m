@@ -391,16 +391,15 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                         dij.MC_tallies{1} = 'LET';
                     end
 
-                    % Postprocessing for dij: Remove fields since this is already the combined dose over all bixels
-                    fields = {'MCsquareCalcOrder','bixelNum','rayNum','totalNumOfRays','totalNumOfBixels','numOfRaysPerBeam','numOfBeams'};
-                    for f = 1:length(fields)
-                        if isfield(dij,fields{f})
-                            dij = rmfield(dij,fields{f});
-                        end
-                    end
+                    % Postprocessing for dij:
+                    % This is already the combined dose over all bixels, so all parameters are 1 in this case
+                    dij = rmfield(dij,'MCsquareCalcOrder');
+
                     dij.numOfBeams = 1;
                     dij.beamNum = 1;
                     dij.bixelNum = 1;
+                    dij.rayNum = 1;
+                    dij.totalNumOfBixels = 1;
                     dij.totalNumOfRays = 1;
                     dij.numOfRaysPerBeam = 1;
                 end
@@ -440,6 +439,9 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
         stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(shiftScen,:);
     end   
 end
+
+% Order fields for easier comparison between different dijs
+dij = orderfields(dij);
 
 %% cd back
 cd(currFolder);

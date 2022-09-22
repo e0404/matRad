@@ -293,20 +293,24 @@ classdef MatRad_TopasConfig < handle
                 for f = 1:length(stf)
                     for r = 1:stf(f).numOfRays
                         for b = 1:stf(f).numOfBixelsPerRay(r)
+                            obj.MCparam.beamNum(counter)  = f;
                             obj.MCparam.bixelNum(counter) = b;
                             obj.MCparam.rayNum(counter)   = r;
-                            obj.MCparam.beamNum(counter)  = f;
+                            
                             counter = counter + 1;
                         end
                     end
                 end
+                obj.MCparam.numOfRaysPerBeam   = [stf(:).numOfRays];
             else
-                % In case of calcDoseDirect, you only need beamNum
+                % In case of calcDoseDirect, set to 1 since all results are combined into one field
+                obj.MCparam.beamNum  = 1:length(stf);
                 obj.MCparam.bixelNum = 1;
                 obj.MCparam.rayNum   = 1;
-                obj.MCparam.beamNum  = 1:length(stf);
+
+                obj.MCparam.numOfRaysPerBeam = 1;
             end
-            obj.MCparam.numOfRaysPerBeam   = [stf(:).numOfRays];
+            
 
             % Generate baseData using the MCemittanceBaseData constructor
             % Write TOPAS beam properties

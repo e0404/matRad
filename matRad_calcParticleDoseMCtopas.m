@@ -1,4 +1,4 @@
-function topasCubes = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,calcDoseDirect)
+function dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,calcDoseDirect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad TOPAS Monte Carlo proton dose calculation wrapper
 %   This calls a TOPAS installation (not included in matRad due to
@@ -223,10 +223,13 @@ end
 %% Simulation(s) finished - read out volume scorers from topas simulation
 % Skip readout if external files were generated
 if ~pln.propMC.externalCalculation
-    topasCubes = pln.propMC.readFiles(pln.propMC.workingDir);
+    dij = pln.propMC.readFiles(pln.propMC.workingDir);
 else
-    topasCubes = [];
+    dij = [];
 end
+
+% Order fields for easier comparison between different dijs
+dij = orderfields(dij);
 
 % manipulate isocenter back
 for k = 1:length(stf)
