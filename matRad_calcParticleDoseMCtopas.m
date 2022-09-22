@@ -80,7 +80,7 @@ end
 matRad_calcDoseInit;
 
 % for TOPAS we explicitly downsample the ct to the dose grid (might not be necessary in future versions with separated grids)
-[ctR,~,~] = matRad_resampleGrid(ct,cst,stf);
+[ctR,~,~] = matRad_resampleCTtoGrid(ct,cst,pln,stf);
 
 % overwrite CT grid in dij in case of modulation.
 if isfield(ctR,'ctGrid')

@@ -1,4 +1,4 @@
-function [ctR,cst,stf] = matRad_resampleCTtoGrid(ct,cst,stf)
+function [ctR,cst,stf] = matRad_resampleCTtoGrid(ct,cst,pln,stf)
             % function to resample the ct grid for example for faster MC computation
             %
             % call
@@ -31,6 +31,7 @@ function [ctR,cst,stf] = matRad_resampleCTtoGrid(ct,cst,stf)
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
 
             % Load calcDoseInit as usual
+            % Note of warning, even though the pln is marked as unused, it is needed for calcDoseInit!
             matRad_calcDoseInit;
 
             % Check if CT has already been resampled
