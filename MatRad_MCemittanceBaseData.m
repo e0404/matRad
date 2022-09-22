@@ -23,16 +23,16 @@ classdef MatRad_MCemittanceBaseData
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties
-        machine         %matRad base data machine struct
-        bdl_path = ''   %stores path to generated file
-        nozzleToIso     %Nozzle to Isocenter Distance
-        smx             %Scanning magnet X to isocenter Distance
-        smy             %Scanning magnet y to isocenter Distance
-        monteCarloData  %MC Phase space data struct
-        selectedFocus   %array containing selected focus indices per energy
-        energyspread    %custom energy spread
-        matRad_cfg      %matRad config
-        rangeShifters   %Stores range shifters
+        machine                             %matRad base data machine struct
+        bdl_path = ''                       %stores path to generated file
+        nozzleToIso                         %Nozzle to Isocenter Distance
+        smx                                 %Scanning magnet X to isocenter Distance
+        smy                                 %Scanning magnet y to isocenter Distance
+        monteCarloData                      %MC Phase space data struct
+        selectedFocus                       %array containing selected focus indices per energy
+        defaultRelativeEnergySpread = 0;    %default energy spread
+        matRad_cfg                          %matRad config
+        rangeShifters                       %Stores range shifters
     end
     
     properties (SetAccess = private)
@@ -58,7 +58,6 @@ classdef MatRad_MCemittanceBaseData
             end
             
             obj.matRad_cfg = MatRad_Config.instance();
-            obj.energyspread = obj.matRad_cfg.propMC.defaultCarbonEnergySpread;
                         
             obj.machine = machine;
             obj.problemSigma = false;
@@ -258,7 +257,9 @@ classdef MatRad_MCemittanceBaseData
                     % https://www.nist.gov/system/files/documents/2017/04/26/newstar.pdf
                     meanEnergy = @(x) 11.39 * x^0.628 + 11.24;
                     mcDataEnergy.MeanEnergy = meanEnergy(r80);
-                    mcDataEnergy.EnergySpread = obj.energyspread;
+                    % reading in a potential given energyspread could go here directly. How would you parse the energyspread
+                    % into the function? Through a field in the machine?
+                    mcDataEnergy.EnergySpread = obj.defaultRelativeEnergySpread;
                 case 'helium'
                     % Fit to Range-Energy relationship
                     % Data from "Update to ESTAR, PSTAR, and ASTAR Databases" - ICRU Report 90, 2014
@@ -266,7 +267,7 @@ classdef MatRad_MCemittanceBaseData
                     % https://www.nist.gov/system/files/documents/2017/04/26/newstar.pdf
                     meanEnergy = @(x) 7.57* x.^0.5848 + 3.063;
                     mcDataEnergy.MeanEnergy = meanEnergy(r80);
-                    mcDataEnergy.EnergySpread = obj.energyspread;
+                    mcDataEnergy.EnergySpread = obj.defaultRelativeEnergySpread;
                 otherwise
                     error('not implemented')
             end

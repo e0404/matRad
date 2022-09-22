@@ -180,8 +180,6 @@ classdef MatRad_Config < handle
             obj.propOpt.defaultRunDAO = 0;
             obj.propOpt.defaultRunSequencing = 0;
 
-            obj.propMC.defaultCarbonEnergySpread = 0; %[%]
-
             obj.propMC.ompMC_defaultHistories = 1e6;
             obj.propMC.ompMC_defaultOutputVariance = false;
 
