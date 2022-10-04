@@ -95,23 +95,25 @@ if isfield(dij,'RBE') && isscalar(dij.RBE)
 elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'alpha')), fieldnames(dij)))
     % Load RBE models if MonteCarlo was calculated for multiple models
     if isfield(dij,'RBE_models')
-        RBE_model = cell(1,length(dij.RBE_models)+1);
+        RBE_model = cell(1,length(dij.RBE_models));
         for i = 1:length(dij.RBE_models)
-            RBE_model{i+1} = ['_' dij.RBE_models{i}];
+            RBE_model{i} = ['_' dij.RBE_models{i}];
         end
     else
         RBE_model = {''};
     end
-
-    % consider biological optimization
-    wBeam = (resultGUI.w .* beamInfo(i).logIx);
-    ix = dij.bx(:,scenNum)~=0 & resultGUI.(['physicalDose', beamInfo(i).suffix])(:) > 0;
 
     % Loop through RBE models
     for j = 1:length(RBE_model)
         % Check if combination is a field in dij, otherwise skip
         if isfield(dij,['mAlphaDose' RBE_model{j}])
             for i = 1:length(beamInfo)
+                % Get weights of current beam
+                wBeam = (resultGUI.w .* beamInfo(i).logIx);
+
+                % consider biological optimization
+                ix = dij.bx(:,scenNum)~=0 & resultGUI.(['physicalDose', beamInfo(i).suffix])(:) > 0;
+
                 % Calculate effect from alpha- and sqrtBetaDose
                 resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])       = full(dij.(['mAlphaDose' RBE_model{j}]){scenNum} * wBeam + (dij.(['mSqrtBetaDose' RBE_model{j}]){scenNum} * wBeam).^2);
                 resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])       = reshape(resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix]),dij.doseGrid.dimensions);
@@ -152,7 +154,7 @@ if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'alpha')), fieldnames(
 
     % Rename fields and remove model specifier if there's only one
     for f = 1:length(fnames)
-        resultGUI.(erase(fnames{f},['_',dij.RBE_models{1}])) = resultGUI.(fnames{1});
+        resultGUI.(erase(fnames{f},['_',dij.RBE_models{1}])) = resultGUI.(fnames{f});
     end
 
     % Remove old fields

@@ -86,7 +86,7 @@ switch pln.propMC.engine
 end
 
 % calc resulting dose
-if ~isfield(pln.propMC,'externalCalculation') || ~pln.propMC.externalCalculation
+if ~isprop(pln.propMC,'externalCalculation') || ~pln.propMC.externalCalculation
     if pln.multScen.numOfCtScen == 1
         % calculate cubes; use uniform weights here, weighting with actual fluence
         % already performed in dij construction
@@ -126,7 +126,7 @@ end
 if isfield(dij,'nbHistoriesTotal')
     resultGUI.nbHistoriesTotal = dij.nbHistoriesTotal;
     resultGUI.nbParticlesTotal = dij.nbParticlesTotal;
-elseif isfield(pln.propMC,'numHistories')
+elseif isprop(pln.propMC,'numHistories')
     resultGUI.historiesMC = pln.propMC.numHistories;
 end
 
