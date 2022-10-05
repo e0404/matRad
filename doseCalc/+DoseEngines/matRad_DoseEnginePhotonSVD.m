@@ -34,6 +34,9 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
         kernelCutOff;                   %cut off in [mm] of kernel values
         randomSeed = 0;                 %for bixel sampling
         intConvResolution = 0.5;        %resolution for kernel convolution [mm]
+
+        enableDijSampling = true;
+        dijSampling;             %struct with lateral dij sampling parameters
     end
 
     %Calculation variables
@@ -81,6 +84,12 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
             matRad_cfg = MatRad_Config.instance();
             this.useCustomPrimaryPhotonFluence  = matRad_cfg.propDoseCalc.defaultUseCustomPrimaryPhotonFluence;
             this.kernelCutOff                   = matRad_cfg.propDoseCalc.defaultKernelCutOff;
+            
+            %dij sampling defaults                      
+            this.dijSampling.relDoseThreshold = 0.01;
+            this.dijSampling.latCutOff        = 20; 
+            this.dijSampling.type             = 'radius';
+            this.dijSampling.deltaRadDepth    = 5;
 
             if exist('pln','var')
                 % 0 if field calc is bixel based, 1 if dose calc is field based
@@ -497,6 +506,120 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
                     interpKernels{ik} = @(x,y) interpn(this.convMx_X(1,:),this.convMx_Z(:,1),convMx',x,y,'linear',NaN);
                 end
             end
+        end
+
+        function [ixNew,bixelDoseNew] =  sampleDij(this,ix,bixelDose,radDepthV,rad_distancesSq,bixelWidth)
+            % matRad dij sampling function
+            % This function samples.
+            %
+            % call
+            %   [ixNew,bixelDoseNew] =
+            %   this.sampleDij(ix,bixelDose,radDepthV,rad_distancesSq,sType,Param)
+            %
+            % input
+            %   ix:               indices of voxels where we want to compute dose influence data
+            %   bixelDose:        dose at specified locations as linear vector
+            %   radDepthV:        radiological depth vector
+            %   rad_distancesSq:  squared radial distance to the central ray
+            %   bixelWidth:       bixelWidth as set in pln (optional)
+            %
+            % output
+            %   ixNew:            reduced indices of voxels where we want to compute dose influence data
+            %   bixelDoseNew      reduced dose at specified locations as linear vector
+            %
+            % References
+            %   [1] http://dx.doi.org/10.1118/1.1469633
+            %
+            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %
+            % Copyright 2016 the matRad development team.
+            %
+            % This file is part of the matRad project. It is subject to the license
+            % terms in the LICENSE file found in the top-level directory of this
+            % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+            % of the matRad project, including this file, may be copied, modified,
+            % propagated, or distributed except according to the terms contained in the
+            % LICENSE file.
+            %
+            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+            relDoseThreshold           = this.dijSampling.relDoseThreshold;
+            LatCutOff                  = this.dijSampling.latCutOff;
+            Type                       = this.dijSampling.type;
+            deltaRadDepth              = this.dijSampling.deltaRadDepth;
+
+            % if the input index vector is of type logical convert it to linear indices
+            if islogical(ix)
+                ix = find(ix);
+            end
+
+            %Increase sample cut-off by bixel width if given
+            if nargin == 6 && ~isempty(bixelWidth)
+                LatCutOff = LatCutOff + bixelWidth/sqrt(2); %use half of the bixel width diagonal as max. field size radius for sampling
+            end
+
+            %% remember dose values inside the inner core
+            switch  Type
+                case 'radius'
+                    ixCore      = rad_distancesSq < LatCutOff^2;                 % get voxels indices having a smaller radial distance than r0
+                case 'dose'
+                    ixCore      = bixelDose > relDoseThreshold * max(bixelDose); % get voxels indices having a greater dose than the thresholdDose
+                otherwise
+                    matRad_cfg = MatRad_Config.instance();
+                    matRad_cfg.dispError('Dij Sampling mode ''%s'' not known!',Type);
+            end
+
+            bixelDoseCore = bixelDose(ixCore);                         % save dose values that are not affected by sampling
+
+            if all(ixCore)
+                %% all bixels are in the core
+                %exit function with core dose only
+                ixNew = ix;
+                bixelDoseNew = bixelDoseCore;
+            else
+                logIxTail           = ~ixCore;                                   % get voxels indices beyond r0
+                linIxTail           = find(logIxTail);                           % convert logical index to linear index
+                numTail             = numel(linIxTail);
+                bixelDoseTail       = bixelDose(linIxTail);                      % dose values that are going to be reduced by sampling
+                ixTail              = ix(linIxTail);                             % indices that are going to be reduced by sampling
+
+                %% sample for each radiological depth the lateral halo dose
+                radDepthTail        = (radDepthV(linIxTail));                    % get radiological depth in the tail
+
+                % cluster radiological dephts to reduce computations
+                B_r                 = int32(ceil(radDepthTail));                 % cluster radiological depths;
+                maxRadDepth         = double(max(B_r));
+                C                   = int32(linspace(0,maxRadDepth,round(maxRadDepth)/deltaRadDepth));     % coarse clustering of rad depths
+
+                ixNew               = zeros(numTail,1);                          % inizialize new index vector
+                bixelDoseNew        = zeros(numTail,1);                          % inizialize new dose vector
+                linIx               = int32(1:1:numTail)';
+                IxCnt               = 1;
+
+                %% loop over clustered radiological depths
+                for i = 1:numel(C)-1
+                    ixTmp              = linIx(B_r >= C(i) & B_r < C(i+1));      % extracting sub indices
+                    if isempty(ixTmp)
+                        continue
+                    end
+                    subDose            = bixelDoseTail(ixTmp);                   % get tail dose in current cluster
+                    subIx              = ixTail(ixTmp);                          % get indices in current cluster
+                    thresholdDose      = max(subDose);
+                    r                  = rand(numel(subDose),1);                 % get random samples
+                    ixSamp             = r<=(subDose/thresholdDose);
+                    NumSamples         = sum(ixSamp);
+
+                    ixNew(IxCnt:IxCnt+NumSamples-1,1)        = subIx(ixSamp);    % save new indices
+                    bixelDoseNew(IxCnt:IxCnt+NumSamples-1,1) = thresholdDose;    % set the dose
+                    IxCnt = IxCnt + NumSamples;
+                end
+
+
+                % cut new vectors and add inner core values
+                ixNew        = [ix(ixCore);    ixNew(1:IxCnt-1)];
+                bixelDoseNew = [bixelDoseCore; bixelDoseNew(1:IxCnt-1)];
+            end
+
         end
     end
 

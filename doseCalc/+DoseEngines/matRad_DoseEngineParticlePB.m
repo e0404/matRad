@@ -404,13 +404,16 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
                                     sigmaIni_sq, ...
                                     this.machine.data(energyIx));                 
 
-                                % dij sampling is exluded for particles until we investigated the influence of voxel sampling for particles
+                                % dij sampling is not implemented for
+                                % particles If we decied to implement it,
+                                % it should be implemented as interface in
+                                % the superclass as well
+
+                                %{
                                 if this.enableDijSampling 
-                                    if i+j+k == 3 %print only once if all have the first index
-                                        matRad_cfg.dispWarning('dij sampling not available for particles!')                                        
-                                    end
-                                    %[currIx,bixelDose] = this.dijSampling(currIx,bixelDose,radDepths(currIx),radialDist_sq(currIx),Type,relDoseThreshold);
+                                    [currIx,bixelDose] = this.dijSampling(currIx,bixelDose,radDepths(currIx),radialDist_sq(currIx),Type,relDoseThreshold);
                                 end
+                                %}
 
                                 % Save dose for every bixel in cell array
                                 this.doseTmpContainer{mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(this.VdoseGrid(ix(currIx)),1,bixelDose,dij.doseGrid.numOfVoxels,1);

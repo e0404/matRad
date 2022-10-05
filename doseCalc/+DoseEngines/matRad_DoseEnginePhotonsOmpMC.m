@@ -64,8 +64,6 @@ classdef matRad_DoseEnginePhotonsOmpMC < DoseEngines.matRad_DoseEngineMonteCarlo
                     matRad_cfg.dispError('Could not find/generate mex interface for MC dose calculation.\nCause of error:\n%s\n Please compile it yourself (preferably with OpenMP support).',MException.message);
                 end
             end
-
-
         end
 
         function dij = calcDose(this,ct,cst,stf,pln)
