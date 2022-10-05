@@ -3,8 +3,8 @@
 [![Contributors](https://img.shields.io/github/contributors/e0404/matRad)](https://github.com/e0404/matRad/graphs/contributors)
 [![GitPitch](https://gitpitch.com/assets/badge.svg)](https://gitpitch.com/e0404/matRad/master) 
 
-[![TravisCI Build Status](https://travis-ci.org/e0404/matRad.svg?branch=dev_varRBErobOpt)](https://travis-ci.org/e0404/matRad)
-[![Azure Pipelines Build Status](https://dev.azure.com/e0404/matRad/_apis/build/status/e0404.matRad?branchName=dev_varRBErobOpt)](https://dev.azure.com/e0404/matRad)
+[![GitHub Build Status](https://github.com/e0404/matRad/actions/workflows/tests.yml/badge.svg)](https://github.com/e0404/matRad/actions/workflows/tests.yml)
+[![Azure Pipelines Build Status](https://dev.azure.com/e0404/matRad/_apis/build/status/e0404.matRad)](https://dev.azure.com/e0404/matRad)
 
 DOIs:
 - General DOI: [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.3879615.svg)](https://doi.org/10.5281/zenodo.3879615)
@@ -111,7 +111,7 @@ Copyright 2020 the matRad development team.
 matrad@dkfz.de
 
 All the elements of the compilation of matRad and Ipopt are free software. You can redistribute and/or modify matRad's source code version provided as files with .m and .mat extension under the terms of the GNU GENERAL PUBLIC LICENSE Version 3 (GPL v3). You can also add to matRad the Ipopt functionality by using the precompiled mex files of the Ipopt optimizer in object code version which are licensed under the Eclipse Public License Version 1.0 (EPL v1.0), also made available for download via https://projects.coin-or.org/Ipopt.
-matRad also contains interfaces to an open-source photon Monte Carlo dose calculation engine developed by Edgardo Doerner hosted on GitHub (http://github.com/edoerner/ompMC) and to the open-source proton Monte Carlo project MCsquare (www.openmcsquare.org) from UCLouvain, Louvain-la-Neuve, Belgium. Both interfaces are integrated into matRad as submodules.
+matRad also contains interfaces to an open-source photon Monte Carlo dose calculation engine developed by Edgardo Dörner hosted on GitHub (http://github.com/edoerner/ompMC) and to the open-source proton Monte Carlo project MCsquare (www.openmcsquare.org) from UCLouvain, Louvain-la-Neuve, Belgium. Both interfaces are integrated into matRad as submodules.
 
 In addition, we provide a matlab standalone version of the compilation of matRad and Ipopt, where the files of matRad and Ipopt are licensed under GPL v3 and EPL v1.0 respectively. The matlab standalone version is meant to be used by students for learning and practicing scientific programming and does not yet contain the interfaces to the aforementioned Monte Carlo dose calculation engines.
 
