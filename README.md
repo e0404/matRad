@@ -3,8 +3,8 @@
 [![Contributors](https://img.shields.io/github/contributors/e0404/matRad)](https://github.com/e0404/matRad/graphs/contributors)
 [![GitPitch](https://gitpitch.com/assets/badge.svg)](https://gitpitch.com/e0404/matRad/master) 
 
-[![TravisCI Build Status](https://travis-ci.org/e0404/matRad.svg?branch=dev)](https://travis-ci.org/e0404/matRad)
-[![Azure Pipelines Build Status](https://dev.azure.com/e0404/matRad/_apis/build/status/e0404.matRad?branchName=dev)](https://dev.azure.com/e0404/matRad)
+[![GitHub Build Status](https://github.com/e0404/matRad/actions/workflows/tests.yml/badge.svg)](https://github.com/e0404/matRad/actions/workflows/tests.yml)
+[![Azure Pipelines Build Status](https://dev.azure.com/e0404/matRad/_apis/build/status/e0404.matRad)](https://dev.azure.com/e0404/matRad)
 
 DOIs:
 - General DOI: [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.3879615.svg)](https://doi.org/10.5281/zenodo.3879615)
