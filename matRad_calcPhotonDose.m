@@ -320,7 +320,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                         
                         % sample dose only for bixel based dose calculation
                         if ~isFieldBasedDoseCalc
-                            r0   = 25;   % [mm] sample beyond the inner core
+                            r0   = 20 + stf(i).bixelWidth;   % [mm] sample beyond the inner core
                             Type = 'radius';
                             [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,manipulatedRadDepthCube,rad_distancesSq,Type,r0);
                         end
