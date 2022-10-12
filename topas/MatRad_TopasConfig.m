@@ -23,10 +23,7 @@ classdef MatRad_TopasConfig < handle
         topasExecCommand; %Defaults will be set during construction according to TOPAS installation instructions and used system
 
         parallelRuns = false; %Starts runs in parallel
-
-        %If enabled, the interface generates a separate (unique) folder in the working directory for external TOPAS calculation
-        %(e.g. on a server). Folder will be named according to radiationMode, machine name and current date.
-        externalCalculation = false; 
+        externalCalculation = false; %Generates folder for external TOPAS calculation (e.g. on a server)
 
         workingDir; %working directory for the simulation
 
@@ -222,14 +219,9 @@ classdef MatRad_TopasConfig < handle
                 end
 
                 % Get alpha beta parameters from bioParam struct
-                if all(isfield(pln.propMC,{'AlphaX','BetaX'}))
-                    obj.bioParam.AlphaX = pln.propMC.AlphaX;
-                    obj.bioParam.BetaX = pln.propMC.BetaX;
-                else
-                    for i = 1:length(pln.bioParam.AvailableAlphaXBetaX)
-                        if ~isempty(strfind(lower(pln.bioParam.AvailableAlphaXBetaX{i,2}),'default'))
-                            break
-                        end
+                for i = 1:length(pln.bioParam.AvailableAlphaXBetaX)
+                    if ~isempty(strfind(lower(pln.bioParam.AvailableAlphaXBetaX{i,2}),'default'))
+                        break
                     end
                 end
                 obj.bioParam.AlphaX = pln.bioParam.AvailableAlphaXBetaX{5,1}(1);
@@ -285,24 +277,20 @@ classdef MatRad_TopasConfig < handle
                 for f = 1:length(stf)
                     for r = 1:stf(f).numOfRays
                         for b = 1:stf(f).numOfBixelsPerRay(r)
-                            obj.MCparam.beamNum(counter)  = f;
                             obj.MCparam.bixelNum(counter) = b;
                             obj.MCparam.rayNum(counter)   = r;
-                            
+                            obj.MCparam.beamNum(counter)  = f;
                             counter = counter + 1;
                         end
                     end
                 end
-                obj.MCparam.numOfRaysPerBeam   = [stf(:).numOfRays];
             else
-                % In case of calcDoseDirect, set to 1 since all results are combined into one field
-                obj.MCparam.beamNum  = 1:length(stf);
+                % In case of calcDoseDirect, you only need beamNum
                 obj.MCparam.bixelNum = 1;
                 obj.MCparam.rayNum   = 1;
-
-                obj.MCparam.numOfRaysPerBeam = 1;
+                obj.MCparam.beamNum  = 1:length(stf);
             end
-            
+            obj.MCparam.numOfRaysPerBeam   = [stf(:).numOfRays];
 
             % Generate baseData using the MCemittanceBaseData constructor
             % Write TOPAS beam properties
@@ -1181,6 +1169,7 @@ classdef MatRad_TopasConfig < handle
             % Set variables for loop over beams
             nBeamParticlesTotal = zeros(1,length(stf));
             currentBixel = 1;
+            bixelNotMeetingParticleQuota = 0;
             historyCount = zeros(1,length(stf));
 
             for beamIx = 1:length(stf)
@@ -1306,21 +1295,23 @@ classdef MatRad_TopasConfig < handle
                     end
                 end
 
+                bixelNotMeetingParticleQuota = bixelNotMeetingParticleQuota + (stf(beamIx).totalNumOfBixels-cutNumOfBixel);
+
                 % discard data if the current has unphysical values
                 idx = find([dataTOPAS.current] < 1);
                 dataTOPAS(idx) = [];
-
-                % Sort dataTOPAS according to energy
-                if length(dataTOPAS)>1 && ~issorted([dataTOPAS(:).energy])
-                    [~,ixSorted] = sort([dataTOPAS(:).energy]);
-                    dataTOPAS = dataTOPAS(ixSorted);
-                end
 
                 % Safety check for empty beam (not allowed)
                 if isempty(dataTOPAS)
                     matRad_cfg.dispError('dataTOPAS of beam %i is empty.',beamIx);
                 else
                     cutNumOfBixel = length(dataTOPAS(:));
+                end
+
+                % Sort dataTOPAS according to energy
+                if length(dataTOPAS)>1 && ~issorted([dataTOPAS(:).energy])
+                    [~,ixSorted] = sort([dataTOPAS(:).energy]);
+                    dataTOPAS = dataTOPAS(ixSorted);
                 end
 
                 % Save adjusted beam histories
@@ -1610,6 +1601,10 @@ classdef MatRad_TopasConfig < handle
                     end
                     fclose(fileID);
                 end
+            end
+
+            if bixelNotMeetingParticleQuota ~= 0
+                matRad_cfg.dispWarning([num2str(bixelNotMeetingParticleQuota) ' bixels were discarded due to particle threshold.'])
             end
 
             % Bookkeeping
