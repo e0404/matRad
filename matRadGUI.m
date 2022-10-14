@@ -191,6 +191,7 @@ for i = 1:length(handles.Modalities)
 end
 set(handles.popUpMachine,'String',handles.Machines);
 
+%TODO: replace with class crawling
 multScenDummy = matRad_multScen([],'nomScen');
 set(handles.popupmenuScenGen,'String',multScenDummy.AvailableScenCreationTYPE);
 
@@ -310,9 +311,9 @@ try
          setPln(handles);
     end
         
-catch
+catch ME
        handles.State = 0;
-       handles = showError(handles,'GUI OpeningFunc: Could not set or get pln');
+       handles = showError(handles,sprintf('GUI OpeningFunc: Could not set or get pln: %s',ME.message));
 end
 
 % check for dij structure
@@ -4301,7 +4302,7 @@ function popupmenuScenGen_Callback(hObject, eventdata, handles)
 % hObject    handle to popupmenuScenGen (see GCBO)
 contents = cellstr(get(hObject,'String'));
 
-if handles.State > 1
+if handles.State >= 1
     ct = evalin('base','ct');
     pln = evalin('base','pln');
     pln.scenGenType = contents{get(hObject,'Value')};

@@ -291,6 +291,26 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                         dij.beamNum(counter)  = i;
                         dij.rayNum(counter)   = j;
                         dij.bixelNum(counter) = k;
+                        
+                        % extract MU data if present (checks for downwards compatability)
+                        minMU = 0;
+                        if isfield(stf(i).ray(j),'minMU')
+                            minMU = stf(i).ray(j).minMU(k);
+                        end
+    
+                        maxMU = Inf;
+                        if isfield(stf(i).ray(j),'maxMU')
+                            maxMU = stf(i).ray(j).maxMU(k);
+                        end
+    
+                        numParticlesPerMU = 1e6;
+                        if isfield(stf(i).ray(j),'numParticlesPerMU')
+                            numParticlesPerMU = stf(i).ray(j).numParticlesPerMU(k);
+                        end
+    
+                        dij.minMU(counter,1) = minMU;
+                        dij.maxMU(counter,1) = maxMU;
+                        dij.numParticlesPerMU(counter,1) = numParticlesPerMU;
                     end
 
                     % find energy index in base data
@@ -328,7 +348,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                     % vectorize computations more efficiently than when
                     % making this an outer loop
                     for ctScen = 1:pln.multScen.numOfCtScen
-                        if any(pln.multScen.scenMask(ctScen,:,:),'all') %We don't need it if no scenario for this ct scenario is relevant
+                        if any(any(pln.multScen.scenMask(ctScen,:,:))) %We don't need it if no scenario for this ct scenario is relevant
                             % precomputations for fine-sampling
                             if strcmp(pbCalcMode, 'fineSampling')   
                                 % compute radial distances relative to pencil beam
@@ -344,12 +364,11 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                             end
                         end
                         for rangeShiftScen = 1:pln.multScen.totNumRangeScen
-                            if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)                              
+                            if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
 
                                 % manipulate radDepthCube for range scenarios
                                 if pln.multScen.relRangeShift(rangeShiftScen) ~= 0 || pln.multScen.absRangeShift(rangeShiftScen) ~= 0
-                                    currRadDepths = radDepths + ...
-                                        radDepths*pln.multScen.relRangeShift(rangeShiftScen) +... % rel range shift
+                                    currRadDepths = radDepths * (1+pln.multScen.relRangeShift(rangeShiftScen)) +... % rel range shift
                                         pln.multScen.absRangeShift(rangeShiftScen);                                   % absolute range shift
                                     currRadDepths(currRadDepths < 0) = 0;
                                 else
@@ -399,11 +418,10 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                 else
                                     currRadDepths(currIx) = currRadDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness;
                                 end
-                                
-                                % select correct initial focus sigma
-                                % squared
+
+                                % select correct initial focus sigma squared
                                 sigmaIni_sq = sigmaIniRay(k)^2;
-                                
+
                                 % consider range shifter for protons if applicable
                                 if stf(i).ray(j).rangeShifter(k).eqThickness > 0 && strcmp(pln.radiationMode,'protons')
                                     

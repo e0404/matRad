@@ -201,15 +201,15 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
         
         % convolution here if no custom primary fluence and no field based dose calc
         if ~useCustomPrimFluenceBool && ~isFieldBasedDoseCalc
-
-            % Display console message.
+            
+            % Display console message
             matRad_cfg.dispInfo('\tUniform primary photon fluence -> pre-compute kernel convolution...\n');
 
             % 2D convolution of Fluence and Kernels in fourier domain
             convMx1 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel1Mx,kernelConvSize,kernelConvSize)));
             convMx2 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel2Mx,kernelConvSize,kernelConvSize)));
             convMx3 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel3Mx,kernelConvSize,kernelConvSize)));
-
+            
             % Creates an interpolant for kernes from vectors position X and Z
             if haveGriddedInterpolant
                 Interp_kernel1 = griddedInterpolant(convMx_X',convMx_Z',convMx1','linear','none');
@@ -254,7 +254,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 convMx3 = real( ifft2(fft2(Fx,kernelConvSize,kernelConvSize).* fft2(kernel3Mx,kernelConvSize,kernelConvSize)) );
                 
                 % Creates an interpolant for kernes from vectors position X and Z
-                if haveGriddedInterpolant % use griddedInterpoland class when available
+                if haveGriddedInterpolant
                     Interp_kernel1 = griddedInterpolant(convMx_X',convMx_Z',convMx1','linear','none');
                     Interp_kernel2 = griddedInterpolant(convMx_X',convMx_Z',convMx2','linear','none');
                     Interp_kernel3 = griddedInterpolant(convMx_X',convMx_Z',convMx3','linear','none');
