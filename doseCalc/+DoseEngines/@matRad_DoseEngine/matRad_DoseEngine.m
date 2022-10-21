@@ -24,16 +24,17 @@ classdef (Abstract) matRad_DoseEngine < handle
         useGivenEqDensityCube;        % Use the given density cube ct.cube and omit conversion from cubeHU.
         ignoreOutsideDensities;     % Ignore densities outside of cst contours
         doseGrid;                   % doseGrid to use (struct with at least doseGrid.resolution.x/y/z set)
+        ssdDensityThreshold;        % Threshold for SSD computation
     end
     
     properties (SetAccess = protected, GetAccess = public)
         
         numOfBixelsContainer;   % number of used bixel container
-        numOfColumnsDij;    % number of columns in the dij struct
+        numOfColumnsDij;        % number of columns in the dij struct
                                           
-        yCoordsV_vox;   % y-coordinate voxel
-        xCoordsV_vox;   % x-coordinate voxel
-        zCoordsV_vox;   % z-coordinate voxel
+        yCoordsV_vox;           % y-coordinate voxel
+        xCoordsV_vox;           % x-coordinate voxel
+        zCoordsV_vox;           % z-coordinate voxel
         
         yCoordsV_voxDoseGrid;   % converted voxel indices to real grid 
         xCoordsV_voxDoseGrid;   % converted voxel indices to real grid
@@ -68,6 +69,7 @@ classdef (Abstract) matRad_DoseEngine < handle
             this.doseGrid.resolution    = matRad_cfg.propDoseCalc.defaultResolution;
             this.useGivenEqDensityCube  = matRad_cfg.propDoseCalc.defaultUseGivenEqDensityCube;
             this.ignoreOutsideDensities = matRad_cfg.propDoseCalc.defaultIgnoreOutsideDensities;
+            this.ssdDensityThreshold    = matRad_cfg.propDoseCalc.defaultSsdDensityThreshold;
 
         end
 

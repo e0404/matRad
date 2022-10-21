@@ -158,7 +158,7 @@ this.VctGrid = VctGrid;
 this.machine = matRad_loadMachine(pln);
 
 % compute SSDs
-stf = matRad_computeSSD(stf,ct);
+stf = matRad_computeSSD(stf,ct,'densityThreshold',this.ssdDensityThreshold);
 
 end
 
