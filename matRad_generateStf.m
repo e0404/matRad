@@ -124,6 +124,7 @@ for i = 1:length(pln.propStf.gantryAngles)
     stf(i).couchAngle    = pln.propStf.couchAngles(i);
     stf(i).bixelWidth    = pln.propStf.bixelWidth;
     stf(i).radiationMode = pln.radiationMode;
+    stf(i).machine       = pln.machine;
     stf(i).SAD           = SAD;
     stf(i).isoCenter     = pln.propStf.isoCenter(i,:);
         

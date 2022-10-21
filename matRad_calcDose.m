@@ -35,6 +35,13 @@ function dij = matRad_calcDose(ct,cst,stf,pln)
 matRad_cfg = MatRad_Config.instance();
 initDefaultEngine = false;
 
+%Deprecation warnings
+if ~isfield(stf,'machine')
+    matRad_cfg.dispDeprecationWarning('stf should contain the machine name in the ''machine'' field since matRad 3. Manually adding ''%s'' from pln.',pln.machine);
+    for i=1:numel(stf)
+        stf(i).machine = pln.machine;
+    end
+end
 
 %get all available engines for given pln struct, could be done conditional
 [nameList, ~, handleList] = DoseEngines.matRad_DoseEngine.getAvailableEngines(pln);
