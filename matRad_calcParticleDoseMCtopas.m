@@ -52,7 +52,9 @@ if ~calcDoseDirect
 
     % Load class variables in pln
     % for calcDoseDirect, this is already done in superior function
-    pln = matRad_cfg.getDefaultClass(pln,'propMC','MatRad_TopasConfig');
+    if ~isa(pln.propMC,'MatRad_TopasConfig')
+        pln = matRad_cfg.getDefaultClass(pln,'propMC','MatRad_TopasConfig');
+    end
 
     if pln.propMC.numHistories  < 1e10
         matRad_cfg.dispWarning('Selected TOPAS dij calculation with fewer than normal histories (default 1e10), make sure you want to continue.');

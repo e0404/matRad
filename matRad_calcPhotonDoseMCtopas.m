@@ -35,7 +35,7 @@ function dij = matRad_calcPhotonDoseMCtopas(ct,stf,pln,cst,calcDoseDirect)
 
 matRad_cfg = MatRad_Config.instance();
 
-if nargin < 6
+if nargin < 5
     calcDoseDirect = false;
 end
 
@@ -46,7 +46,9 @@ if ~calcDoseDirect
 
     % Load class variables in pln
     % for calcDoseDirect, this is already done in superior function
-    pln = matRad_cfg.getDefaultClass(pln,'propMC','MatRad_TopasConfig');
+    if ~isa(pln.propMC,'MatRad_TopasConfig')
+        pln = matRad_cfg.getDefaultClass(pln,'propMC','MatRad_TopasConfig');
+    end
 else
     if ~isa(pln.propMC,'MatRad_TopasConfig')
         matRad_cfg.dispError('Run calcParticleDoseMCtopas through calcDoseDirectMC');
