@@ -1,26 +1,39 @@
 classdef matRad_DVHStatsWidget < matRad_Widget
-    
+    % matRad_DVHStatsWidget class to generate GUI widget display DVH and
+    % stats
+    % Describes a standard fluence optimization problem by providing the 
+    % implementation of the objective & constraint function/gradient wrappers
+    % and managing the mapping and backprojection of the respective dose-
+    % related quantity
+    %
+    % References
+    %   -
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %
+    % Copyright 2020 the matRad development team. 
+    % 
+    % This file is part of the matRad project. It is subject to the license 
+    % terms in the LICENSE file found in the top-level directory of this 
+    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+    % of the matRad project, including this file, may be copied, modified, 
+    % propagated, or distributed except according to the terms contained in the 
+    % LICENSE file.
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties
-        SelectedCube;
-        
+        SelectedDisplayOption;
+        lockUpdate = false;
         dvhWidgetHandle = [];
         statWidgetHandle = [];
     end
-    
-    events
-        
-    end
-    
+
     methods
-        function this = matRad_DVHStatsWidget(varargin)    
-            
-            p = inputParser;
-            p.addOptional('handleParent',[], @ishandle);
-            p.addParameter('SelectedCube','physicalDose', @ischar);
-            p.parse(varargin{:});
+        function this = matRad_DVHStatsWidget(SelectedDisplayOption,handleParent)  
+
             
             matRad_cfg = MatRad_Config.instance();
-            if isempty(p.Results.handleParent)
+            if nargin<2 %isempty(p.Results.handleParent)
                 handleParent = figure(...
                     'Units','normalized',...
                     'Position',[0.005 0.05 0.495 0.9],...
@@ -33,33 +46,55 @@ classdef matRad_DVHStatsWidget < matRad_Widget
                     'Name','MatRad Plan Analysis',...
                     'NumberTitle','off',...
                     'HandleVisibility','callback',...
-                    'Tag','figure1');
+                    'Tag','figDVHStat');
                 
             end
-            
-            this = this@matRad_Widget(handleParent);   
-            this.SelectedCube = p.Results.SelectedCube;    
-            this.dvhWidgetHandle.SelectedCube = this.SelectedCube;
-            this.statWidgetHandle.SelectedCube = this.SelectedCube;
-            this.showDVHstat();
+            this = this@matRad_Widget(handleParent);
+            this.SelectedDisplayOption = SelectedDisplayOption;
+            this.dvhWidgetHandle.SelectedCube = SelectedDisplayOption;
+            this.statWidgetHandle.SelectedCube = SelectedDisplayOption;
+            this.lockUpdate = true;
+            this.dvhWidgetHandle.lockUpdate = true;
+            this.statWidgetHandle.lockUpdate = true;
+            this.update();
+
         end        
         
         function this=update(this,evt)
-            if nargin == 2
-                doUpdate = this.checkUpdateNecessary({'resultGUI','cst','pln'},evt);
-                
-                if doUpdate
-                    this.dvhWidgetHandle.update(evt);
-                    this.statWidgetHandle.update(evt);
+            if this.lockUpdate
+                if nargin == 2
+                    doUpdate = this.checkUpdateNecessary({'resultGUI','cst','pln'},evt);
+
+                    if doUpdate
+                        this.dvhWidgetHandle.update(evt);
+                        this.statWidgetHandle.update(evt);
+                    end
+                else
+                    if    ~strcmp(this.dvhWidgetHandle.SelectedCube, this.SelectedDisplayOption)
+                        this.dvhWidgetHandle.SelectedCube = this.SelectedDisplayOption;
+                        this.statWidgetHandle.SelectedCube = this.SelectedDisplayOption;
+
+                    end
+                        this.dvhWidgetHandle = this.dvhWidgetHandle.update();
+                        this.statWidgetHandle = this.statWidgetHandle.update();
+                        if numel(this.dvhWidgetHandle.widgetHandle.Children)>2 
+                            this.removeOverlap();
+                        end
+                 
                 end
-            else                  
-                this.dvhWidgetHandle.update();
-                this.statWidgetHandle.update();
             end
         end
-        
+        function set.SelectedDisplayOption(this,value)
+            this.SelectedDisplayOption=value;
+            this.update();
+
+        end
+        function removeOverlap(this)
+            delete(this.dvhWidgetHandle.widgetHandle.Children(3)); % to clear previous plotted objects
+            delete(this.dvhWidgetHandle.widgetHandle.Children(3));
+        end
     end
-    
+
     methods(Access = protected)
         function this = createLayout(this)
             h88 = this.widgetHandle;
@@ -69,7 +104,7 @@ classdef matRad_DVHStatsWidget < matRad_Widget
             p1 = uipanel(...
                 'Parent',h88,...                      
                 'BackgroundColor',matRad_cfg.gui.backgroundColor,...
-                'Tag','uipanel1',...
+                'Tag','panelDVH',...
                 'Clipping','off',...
                 'Position',[0.005 0.505 0.99 0.495],...
                 'FontName',matRad_cfg.gui.fontName,...
@@ -80,7 +115,7 @@ classdef matRad_DVHStatsWidget < matRad_Widget
             p2 = uipanel(...
                 'Parent',h88,...                
                 'BackgroundColor',matRad_cfg.gui.backgroundColor,...
-                'Tag','uipanel2',...
+                'Tag','panelStats',...
                 'Clipping','off',...
                 'Position',[0.005 0.005 0.99 0.495],...
                 'FontName',matRad_cfg.gui.fontName,...
@@ -88,16 +123,15 @@ classdef matRad_DVHStatsWidget < matRad_Widget
                 'FontWeight',matRad_cfg.gui.fontWeight,...
                 'Title','Statistics');
             
-            this.dvhWidgetHandle = matRad_DVHWidget(p1);
-            this.statWidgetHandle = matRad_StatisticsWidget(p2);
+            this.dvhWidgetHandle = matRad_DVHWidget([],p1);
+            this.statWidgetHandle = matRad_StatisticsWidget([],p2);
             
             this.createHandles();
             
         end
         
-        function this = showDVHstat(this)
-            this.dvhWidgetHandle.showDVH();
-            this.statWidgetHandle.showStatistics();
-        end 
+
+        
     end
 end
+
