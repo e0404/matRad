@@ -4,10 +4,8 @@ d:Ge/World/HLY=200.0 cm
 d:Ge/World/HLZ=200.0 cm
 b:Ge/World/Invisible = "TRUE"
 
-s:Ge/BeamSpot/Parent = "Nozzle"
-s:Ge/BeamSpot/Type = "Group"
-d:Ge/BeamSpot/TransX = Tf/Beam/PosX/Value mm
-d:Ge/BeamSpot/TransY = Tf/Beam/PosY/Value mm
+s:Ge/Nozzle/Parent = "Isocenter"
+s:Ge/Nozzle/Type = "Group"
 
 s:Ge/Isocenter/Parent = "Gantry"
 s:Ge/Isocenter/Type = "Group"
@@ -29,6 +27,3 @@ d:Ge/Couch/TransZ = 0. cm
 d:Ge/Couch/RotX = 0. deg
 d:Ge/Couch/RotY = -1 * Sim/CouchAngle deg
 d:Ge/Couch/RotZ = 0. deg
-
-s:Ge/Nozzle/Parent = "Isocenter"
-s:Ge/Nozzle/Type = "Group"

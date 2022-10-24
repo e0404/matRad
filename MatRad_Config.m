@@ -186,7 +186,7 @@ classdef MatRad_Config < handle
             % Set default histories for MonteCarlo here if necessary
 %             obj.propMC.defaultNumHistories = 100;
 
-            %obj.propMC.default_photon_engine = 'ompMC';
+            obj.propMC.default_photon_engine = 'ompMC';
             obj.propMC.default_proton_engine = 'MatRad_MCsquareConfig';
             obj.propMC.default_carbon_engine = 'MatRad_TopasConfig';
 
@@ -239,7 +239,7 @@ classdef MatRad_Config < handle
             % Set default histories for MonteCarlo
             obj.propMC.defaultNumHistories = 100;
 
-            %obj.propMC.default_photon_engine = 'ompMC';
+            obj.propMC.default_photon_engine = 'ompMC';
             obj.propMC.default_proton_engine = 'MatRad_MCsquareConfig';
             obj.propMC.default_carbon_engine = 'MatRad_TopasConfig';
 
@@ -402,6 +402,8 @@ classdef MatRad_Config < handle
                         else
                             if isfield(pln,'radiationMode') && ~isempty(pln.radiationMode)
                                 switch pln.radiationMode
+                                    case 'photons'
+                                        configName = obj.propMC.default_photon_engine;
                                     case 'protons'
                                         configName = obj.propMC.default_proton_engine;
                                     otherwise

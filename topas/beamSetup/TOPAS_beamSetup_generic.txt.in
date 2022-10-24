@@ -1,3 +1,8 @@
+s:Ge/BeamSpot/Parent = "Nozzle"
+s:Ge/BeamSpot/Type = "Group"
+d:Ge/BeamSpot/TransX = Tf/Beam/PosX/Value mm
+d:Ge/BeamSpot/TransY = Tf/Beam/PosY/Value mm
+
 s:So/PencilBeam/BeamParticle = Sim/ParticleName
 d:So/PencilBeam/BeamEnergy = Tf/Beam/Energy/Value MeV
 d:So/PencilBeam/BeamPositionSpreadX = Tf/Beam/FocusFWHM/Value mm * Sim/FWHM2SIGMA
