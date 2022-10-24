@@ -186,7 +186,8 @@ classdef MatRad_Config < handle
             % Set default histories for MonteCarlo here if necessary
 %             obj.propMC.defaultNumHistories = 100;
 
-            obj.propMC.default_photon_engine = 'ompMC';
+            %obj.propMC.default_photon_engine = 'ompMC';
+            obj.propMC.default_photon_engine = 'MatRad_TopasConfig';
             obj.propMC.default_proton_engine = 'MatRad_MCsquareConfig';
             obj.propMC.default_carbon_engine = 'MatRad_TopasConfig';
 
@@ -239,7 +240,8 @@ classdef MatRad_Config < handle
             % Set default histories for MonteCarlo
             obj.propMC.defaultNumHistories = 100;
 
-            obj.propMC.default_photon_engine = 'ompMC';
+            %obj.propMC.default_photon_engine = 'ompMC';
+            obj.propMC.default_photon_engine = 'MatRad_TopasConfig';
             obj.propMC.default_proton_engine = 'MatRad_MCsquareConfig';
             obj.propMC.default_carbon_engine = 'MatRad_TopasConfig';
 
@@ -539,7 +541,7 @@ classdef MatRad_Config < handle
                 obj = MatRad_Config();
                 % Use a metaclass object to get the properties because
                 % Octave <= 5.2 doesn't have a properties function
-                props = {metaclass(obj).PropertyList.Name};
+                %props = {metaclass(obj).PropertyList.Name};
                 % Throw warning if the version differs and remove the
                 % matRad_version field from the loaded struct, in order to
                 % not overwrite the version later
