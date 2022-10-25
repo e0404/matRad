@@ -1,5 +1,5 @@
 s:So/Phasespace/Type                            = "PhaseSpace"
-s:So/Phasespace/PhaseSpaceFileName              = "SIEMENS_PRIMUS_6.0_0.10_15.0x15.0."
+s:So/Phasespace/PhaseSpaceFileName              = "SIEMENS_PRIMUS_6.0_0.10_15.0x15.0"
 s:So/Phasespace/Component                       = "Nozzle"
 #b:So/Example/LimitedAssumeFirstParticleIsNewHistory = "true"
 #b:So/Example/LimitedAssumeEveryParticleIsNewHistory = "true"
