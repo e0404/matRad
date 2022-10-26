@@ -217,7 +217,7 @@ classdef MatRad_TopasConfig < handle
                         case {'carbon','helium'}
                             obj.scorer.RBE_model = obj.scorer.defaultModelCarbon;
                         otherwise
-                            matRad_cfg.dispError(['No model implemented for ',obj.radiationMode]);
+                            matRad_cfg.dispError(['No RBE model implemented for ',obj.radiationMode]);
                     end
                 end
                 
@@ -1147,8 +1147,21 @@ classdef MatRad_TopasConfig < handle
             
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
             
-            if ~exist('baseData','var') || isempty(baseData)
-                isPhoton = true;
+            switch pln.radiationMode
+                case 'photons'
+                    % if photons
+                    isPhoton = true;
+                    if any(ismember(obj.beamProfile,{'biGaussian','simple'}))
+                        matRad_cfg.dispWarning('beamProfile "%s" not available for photons, switching to "%s" as default.',obj.beamProfile,matRad_cfg.propMC.default_beamProfile_photons);
+                        obj.beamProfile = matRad_cfg.propMC.default_beamProfile_photons;
+                    end
+                    
+                otherwise
+                    % if particles
+                    if ~any(ismember(obj.beamProfile,{'biGaussian','simple'}))
+                        matRad_cfg.dispWarning('beamProfile "%s" not available for particles, switching to "%s" as default.',obj.beamProfile,matRad_cfg.propMC.default_beamProfile_particles);
+                        obj.beamProfile = matRad_cfg.propMC.default_beamProfile_particles;
+                    end
             end
             
             %Bookkeeping
@@ -1471,7 +1484,7 @@ classdef MatRad_TopasConfig < handle
                     %fprintf(fileID,'uv:Tf/Beam/Spot/Values = %i %s\n',cutNumOfBixel,num2str(collectBixelIdx));
                     
                     % Write energySpectrum if available and flag is set
-                    if isfield(baseData.machine.data,'energySpectrum') && obj.useEnergySpectrum
+                    if ~isPhoton && isfield(baseData.machine.data,'energySpectrum') && obj.useEnergySpectrum
                         matRad_cfg.dispInfo('Beam energy spectrum available\n');
                         energySpectrum = [baseData.machine.data(:).energySpectrum];
                         nbSpectrumPoints = length(energySpectrum(1).energy_MeVpN);
@@ -1640,7 +1653,7 @@ classdef MatRad_TopasConfig < handle
                     fprintf(fileID,'\n\n');
                     
                     % Range shifter in/out
-                    if ~isempty(raShis)
+                    if ~isPhoton && ~isempty(raShis)
                         fprintf(fileID,'#Range Shifter States:\n');
                         for r = 1:numel(raShis)
                             fprintf(fileID,'s:Tf/Beam/%sOut/Function = "Step"\n',raShis(r).topasID);
@@ -1648,13 +1661,14 @@ classdef MatRad_TopasConfig < handle
                             fprintf(fileID,'uv:Tf/Beam/%sOut/Values = %i ', raShis(r).topasID, cutNumOfBixel);
                             fprintf(fileID,'%f ',[dataTOPAS.raShiOut]);
                             fprintf(fileID,'\n\n');
+                        end                       
+                        
+                        % Range Shifter Definition
+                        for r = 1:numel(raShis)
+                            obj.writeRangeShifter(fileID,raShis(r),sourceToNozzleDistance);
                         end
                     end
-                    
-                    % Range Shifter Definition
-                    for r = 1:numel(raShis)
-                        obj.writeRangeShifter(fileID,raShis(r),sourceToNozzleDistance);
-                    end
+
                     
                 end
                 

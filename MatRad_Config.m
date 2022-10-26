@@ -192,6 +192,8 @@ classdef MatRad_Config < handle
             obj.propMC.default_carbon_engine = 'MatRad_TopasConfig';
 
             % Default settings for TOPAS
+            obj.propMC.default_beamProfile_particles = 'biGaussian';
+            obj.propMC.default_beamProfile_photons = 'uniform';
             obj.propMC.defaultExternalCalculation = false;
             obj.propMC.defaultCalcDij = false;
 

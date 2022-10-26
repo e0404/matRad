@@ -79,8 +79,6 @@ end
 
 load([pln.radiationMode,'_',pln.machine]);
 
-pln.propMC.numOfRuns = 1; %matRad_cfg.propMC.topas_defaultNumBatches;
-pln.propMC.beamProfile = 'phasespace'; %'uniform'; 'virtualGaussian';
 %Collect weights
 if calcDoseDirect
     w = zeros(sum([stf(:).totalNumOfBixels]),1);
