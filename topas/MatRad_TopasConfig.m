@@ -51,12 +51,13 @@ classdef MatRad_TopasConfig < handle
         
         useOrigBaseData = false; % base data of the original matRad plan will be used?
         beamProfile = 'biGaussian'; %'biGaussian' (emittance); 'simple'
+        
         useEnergySpectrum = false;
         
         %Not yet implemented
         %beamletMode = false; %In beamlet mode simulation will be performed for a dose influence matrix (i.e., each beamlet simulates numHistories beamlets)
         
-        pencilBeamScanning = true; %This should be always true (enables deflection)
+        pencilBeamScanning = true; %This should be always true except when using photons (enables deflection)
         
         %Image
         materialConverter = struct('mode','HUToWaterSchneider',...    %'RSP','HUToWaterSchneider';
@@ -1180,25 +1181,31 @@ classdef MatRad_TopasConfig < handle
                     fname = fullfile(obj.thisFolder,obj.infilenames.beam_biGaussian);
                     TOPAS_beamSetup = fileread(fname);
                     matRad_cfg.dispInfo('Reading ''%s'' Beam Characteristics from ''%s''\n',obj.beamProfile,fname);
+                    
                 case 'simple'
                     fname = fullfile(obj.thisFolder,obj.infilenames.beam_generic);
                     TOPAS_beamSetup = fileread(fname);
                     matRad_cfg.dispInfo('Reading ''%s'' Beam Characteristics from ''%s''\n',obj.beamProfile,fname);
+                    
                 case 'phasespace'
                     fname = fullfile(obj.thisFolder,obj.infilenames.beam_phasespace);
                     TOPAS_beamSetup = fileread(fname);
                     obj.pencilBeamScanning = 0 ;
-                    matRad_cfg.dispInfo('Reading ''%s'' Beam Characteristics from ''%s''\n',obj.beamProfile,fname);
+                    matRad_cfg.dispInfo('Reading ''%s'' Beam Characteristics from ''%s''\n',obj.beamProfile,fname);   
+                    
                 case 'virtualGaussian'
                     fname = fullfile(obj.thisFolder,obj.infilenames.beam_virtualGaussian);
                     TOPAS_beamSetup = fileread(fname);
-                    matRad_cfg.dispInfo('Reading ''%s'' Beam Characteristics from ''%s''\n',obj.beamProfile,fname)
+                    matRad_cfg.dispInfo('Reading ''%s'' Beam Characteristics from ''%s''\n',obj.beamProfile,fname);
+                    
                 case 'uniform'
                     fname = fullfile(obj.thisFolder,obj.infilenames.beam_uniform);
                     TOPAS_beamSetup = fileread(fname);
                     matRad_cfg.dispInfo('Reading ''%s'' Beam Characteristics from ''%s''\n',obj.beamProfile,fname);
+                    
                 otherwise
                     matRad_cfg.dispError('Beam Type ''%s'' not supported for photons',obj.beamProfile);
+                    
             end
             
             % Set variables for loop over beams
@@ -1557,11 +1564,11 @@ classdef MatRad_TopasConfig < handle
                         fprintf(fileID,'\n');
                         
                         if isfield(pln.propStf, 'collimation')
-                            %Use field width for now
+                            % Use field width for now
                             fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadX = %d mm\n', pln.propStf.collimation.fieldWidth);
                             fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadY = %d mm\n', pln.propStf.collimation.fieldWidth);
                         else
-                            %Set some default value
+                            % Set some default value
                             fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadX = %d mm\n', 30);
                             fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadY = %d mm\n', 30);
                         end
@@ -1574,18 +1581,28 @@ classdef MatRad_TopasConfig < handle
                         fprintf(fileID,'\n');
                         
                         if isfield(pln.propStf, 'collimation')
-                            %Use field width for now
+                            % Use field width for now
                             fprintf(fileID,'d:So/PencilBeam/BeamPositionCutoffX = %d mm\n', pln.propStf.collimation.fieldWidth/2);
                             fprintf(fileID,'d:So/PencilBeam/BeamPositionCutoffY = %d mm\n', pln.propStf.collimation.fieldWidth/2);
                         else
-                            %Set some default value
+                            % Set some default value
                             fprintf(fileID,'d:So/PencilBeam/BeamPositionCutoffX = %d mm\n', 15);
                             fprintf(fileID,'d:So/PencilBeam/BeamPositionCutoffY = %d mm\n', 15);
                         end
                         
                     case 'phasespace'
                         fprintf(fileID,'d:Sim/GantryAngle = %f deg\n',stf(beamIx).gantryAngle); %just one beam angle for now
-                        fprintf(fileID,'d:Sim/CouchAngle = %f deg\n',stf(beamIx).couchAngle);
+                        fprintf(fileID,'d:Sim/CouchAngle = %f deg\n',stf(beamIx).couchAngle);                            
+                        % Here the phasespace file is loaded and referenced in the beamSetup file
+                        phaseSpaceFileName = 'SIEMENS_PRIMUS_6.0_0.10_15.0x15.0';
+                        if obj.externalCalculation
+                            matRad_cfg.dispWarning(['External calculation and phaseSpace selected, manually place ' phaseSpaceFileName '.header and ' phaseSpaceFileName '.phsp into your simulation directory.']);
+                        else
+                            if length(dir([obj.thisFolder filesep 'beamSetup' filesep 'phasespace' filesep phaseSpaceFileName '*'])) < 2
+                                matRad_cfg.dispError([phaseSpaceFileName ' header or phsp file could not be found in beamSetup/phasespace folder.']);
+                            end
+                        end
+                        fprintf(fileID,'s:So/Phasespace/PhaseSpaceFileName = "%s"\n', [obj.thisFolder filesep 'beamSetup' filesep 'phasespace' filesep phaseSpaceFileName]);
                                                 
                 end
                 
