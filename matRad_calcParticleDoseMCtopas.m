@@ -49,13 +49,13 @@ end
 if ~calcDoseDirect
     pln.propMC.scorer.calcDij = true;
     pln.propMC.numOfRuns = 1;
-
+    
     % Load class variables in pln
     % for calcDoseDirect, this is already done in superior function
     if ~isa(pln.propMC,'MatRad_TopasConfig')
         pln = matRad_cfg.getDefaultClass(pln,'propMC','MatRad_TopasConfig');
     end
-
+    
     if pln.propMC.numHistories  < 1e10
         matRad_cfg.dispWarning('Selected TOPAS dij calculation with fewer than normal histories (default 1e10), make sure you want to continue.');
     else
@@ -119,12 +119,12 @@ end
 currDir = cd;
 
 for shiftScen = 1:pln.multScen.totNumShiftScen
-
+    
     % manipulate isocenter
     for k = 1:length(stf)
         stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(shiftScen,:);
     end
-
+    
     % Delete previous topas files so there is no mix-up
     files = dir([pln.propMC.workingDir,'*']);
     files = {files(~[files.isdir]).name};
@@ -132,18 +132,18 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
     for i = 1:length(files)
         delete([pln.propMC.workingDir,files{i}])
     end
-
+    
     % Run simulations for each scenario
     for ctScen = 1:pln.multScen.numOfCtScen
         for rangeShiftScen = 1:pln.multScen.totNumRangeScen
             if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
-
+                
                 % Save ctScen and rangeShiftScen for file constructor
                 if ct.numOfCtScen > 1
                     ctR.currCtScen = ctScen;
                     ctR.currRangeShiftScen = rangeShiftScen;
                 end
-
+                
                 % actually write TOPAS files
                 if calcDoseDirect
                     pln.propMC.writeAllFiles(ctR,cst,pln,stf,machine,w);
@@ -153,10 +153,10 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
             end
         end
     end
-
+    
     % change director back to original directory
     cd(pln.propMC.workingDir);
-
+    
     % Skip local calculation and data readout with this parameter. All necessary parameters to read the data back in
     % later are stored in the MCparam file that is stored in the folder. The folder is generated in the working
     % directory and the matRad_plan*.txt file can be manually called with TOPAS.
@@ -171,23 +171,23 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                     else
                         fname = sprintf('%s_field%d_run%d',pln.propMC.label,beamIx,runIx);
                     end
-
+                    
                     if isprop(pln.propMC,'verbosity') && strcmp(pln.propMC.verbosity,'full')
                         topasCall = sprintf('%s %s.txt',pln.propMC.topasExecCommand,fname);
                     else
                         topasCall = sprintf('%s %s.txt > %s.out > %s.log',pln.propMC.topasExecCommand,fname,fname,fname);
                     end
-
+                    
                     % initiate parallel runs and delete previous files
                     if pln.propMC.parallelRuns
                         finishedFiles{runIx} = sprintf('%s.finished',fname);
                         topasCall = [topasCall '; touch ' finishedFiles{runIx} ' &'];
                     end
-
+                    
                     % Actual simulation happening here
                     matRad_cfg.dispInfo('Calling TOPAS: %s\n',topasCall);
                     [status,cmdout] = system(topasCall,'-echo');
-
+                    
                     % Process TOPAS output and potential errors
                     cout = splitlines(string(cmdout));
                     if status == 0
@@ -200,7 +200,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                         end
                     end
                 end
-
+                
                 % wait for parallel runs to finish and process
                 if pln.propMC.parallelRuns
                     runsFinished = false;
@@ -216,22 +216,22 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
             end
         end
     end
-
+    
     % revert back to original directory
     cd(currDir);
-
+    
 end
 
 %% Simulation(s) finished - read out volume scorers from topas simulation
 % Skip readout if external files were generated
 if ~pln.propMC.externalCalculation
     dij = pln.propMC.readFiles(pln.propMC.workingDir);
+    
+    % Order fields for easier comparison between different dijs
+    dij = orderfields(dij);
 else
     dij = [];
 end
-
-% Order fields for easier comparison between different dijs
-dij = orderfields(dij);
 
 % manipulate isocenter back
 for k = 1:length(stf)
