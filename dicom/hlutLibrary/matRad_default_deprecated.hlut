@@ -2,11 +2,11 @@
 # 
 # First column:    Hounsfield values (typically -1000...+3000)
 # Second column:   Relative electron densities(photons) or stopping power (particles)
--1024   0.001
+-1024.0 0.001
 -999    0.001
--90     0.95
--45     0.99
 0       1
-100     1.095
-350     1.199
-3000    2.505
+200.0   1.20000
+449.0   1.20001
+2000.0  2.49066		
+2048    2.53060
+3071    2.53061

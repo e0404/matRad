@@ -48,6 +48,10 @@ switch env
           rand('seed',0)
 end
 
+%We check here explicitly for the griddedInterpolant class
+haveGriddedInterpolant = exist('griddedInterpolant','class');
+
+
 % initialize waitbar
 figureWait = waitbar(0,'calculate dose influence matrix for photons...');
 % show busy state
@@ -157,14 +161,13 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
     end
     
     counter = 0;
-    
+
     % compute SSDs
     stf = matRad_computeSSD(stf,ct);
     if pln.multScen.totNumShiftScen > 1
         matRad_cfg.dispInfo('\tShift scenario %d of %d: \n',shiftScen,pln.multScen.totNumShiftScen);
     end
-    
-    
+
     for i = 1:numel(stf) % loop over all beams
         matRad_calcDoseInitBeam;
         
@@ -191,14 +194,14 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
             
             % Display console message
             matRad_cfg.dispInfo('\tUniform primary photon fluence -> pre-compute kernel convolution...\n');
-            
+
             % 2D convolution of Fluence and Kernels in fourier domain
             convMx1 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel1Mx,kernelConvSize,kernelConvSize)));
             convMx2 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel2Mx,kernelConvSize,kernelConvSize)));
             convMx3 = real(ifft2(fft2(F,kernelConvSize,kernelConvSize).* fft2(kernel3Mx,kernelConvSize,kernelConvSize)));
             
             % Creates an interpolant for kernes from vectors position X and Z
-            if matRad_cfg.isMatlab
+            if haveGriddedInterpolant
                 Interp_kernel1 = griddedInterpolant(convMx_X',convMx_Z',convMx1','linear','none');
                 Interp_kernel2 = griddedInterpolant(convMx_X',convMx_Z',convMx2','linear','none');
                 Interp_kernel3 = griddedInterpolant(convMx_X',convMx_Z',convMx3','linear','none');
@@ -232,7 +235,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 % apply the primary fluence to the field
                 Fx = F .* Psi;
                 
-                % convolute with the gaussian
+                % convolve with the gaussian
                 Fx = real( ifft2(fft2(Fx,gaussConvSize,gaussConvSize).* fft2(gaussFilter,gaussConvSize,gaussConvSize)) );
                 
                 % 2D convolution of Fluence and Kernels in fourier domain
@@ -241,7 +244,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 convMx3 = real( ifft2(fft2(Fx,kernelConvSize,kernelConvSize).* fft2(kernel3Mx,kernelConvSize,kernelConvSize)) );
                 
                 % Creates an interpolant for kernes from vectors position X and Z
-                if matRad_cfg.isMatlab
+                if haveGriddedInterpolant
                     Interp_kernel1 = griddedInterpolant(convMx_X',convMx_Z',convMx1','linear','none');
                     Interp_kernel2 = griddedInterpolant(convMx_X',convMx_Z',convMx2','linear','none');
                     Interp_kernel3 = griddedInterpolant(convMx_X',convMx_Z',convMx3','linear','none');
