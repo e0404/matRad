@@ -16,6 +16,8 @@ classdef matRad_MainGUI < handle
         StructureVisibilityWidget
         InfoWidget
         ViewingWidget
+        DVHStatsWidget
+        GammaWidget
         eventListeners
         
         matRad_cfg = MatRad_Config.instance();
@@ -29,7 +31,7 @@ classdef matRad_MainGUI < handle
            folder = fileparts(mfilename('fullpath'));
            loadIcons = load(fullfile(folder,'matRad_iconsGUI.mat'),'icons');
            icons = loadIcons.icons;
-            
+           icons{end+1} = imread('icons8-gamma-16.png'); 
             h60 = uitoolbar(...
                 'Parent',h1,...
                 'Tag','uitoolbar1');
@@ -111,6 +113,15 @@ classdef matRad_MainGUI < handle
                 'ClickedCallback',@(hObject, eventdata)uitoggletool8_ClickedCallback(this, hObject, eventdata),...
                 'Separator','on',...
                 'TooltipString','Insert Colorbar' );
+             h70 = uipushtool(...
+                'Parent',h60,...
+                'BusyAction','cancel',...
+                'Interruptible','off',...
+                'Tag','gammaWidget',...  
+                'CData',icons{10},...
+                'ClickedCallback',@(hObject,eventdata)gammaWidget_ClickedCallback(this,hObject,eventdata),...
+                'Separator','on',...
+                'TooltipString','Gamma index tool' );
             
         end
     end
@@ -486,6 +497,10 @@ classdef matRad_MainGUI < handle
            %set(this.ViewingWidget.legendHandle,'visible',get(hObject,'State'));
         end
         
+         function gammaWidget_ClickedCallback(this,hObject,eventdata)
+            this.GammaWidget = matRad_GammaWidget();
+         end 
+         
         function toolbarZoomIn_ClickedCallback(this,hObject, eventdata)
             set(this.ViewingWidget.zoomHandle,'Enable',char(get(hObject,'State')));
             set(this.ViewingWidget.zoomHandle,'Direction','in');
