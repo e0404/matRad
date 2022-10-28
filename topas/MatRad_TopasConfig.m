@@ -1147,6 +1147,8 @@ classdef MatRad_TopasConfig < handle
             
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
             
+            isPhoton = false;
+            
             switch pln.radiationMode
                 case 'photons'
                     % if photons

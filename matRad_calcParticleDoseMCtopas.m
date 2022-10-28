@@ -227,7 +227,7 @@ end
 if ~pln.propMC.externalCalculation
     dij = pln.propMC.readFiles(pln.propMC.workingDir);
 else
-    dij = [];
+    dij = struct([]);
 end
 
 % Order fields for easier comparison between different dijs
