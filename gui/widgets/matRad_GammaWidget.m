@@ -1,5 +1,6 @@
 classdef matRad_GammaWidget < matRad_Widget
-% matRad_GammaWidget 
+% matRad_GammaWidget : GUI widget for gamma index based comparisons of  
+% dose cubes stored within resultGUI struct.
 %
 % References
 %   -
