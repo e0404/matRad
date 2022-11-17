@@ -75,6 +75,7 @@ for testIx = 1:length(testScriptNames)
         errMsg = sprintf('Experiencd an error during testing of %s. Error-Message:\n %s',scriptName,message);
         warning(errMsg);
         errors{end+1} = errMsg;
+        cd(matRad_cfg.matRadRoot); %Make sure we don't get stuck in another folder
     end
 end
 
