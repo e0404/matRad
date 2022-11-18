@@ -49,7 +49,7 @@ pln = matRad_cfg.getDefaultProperties(pln,'propDoseCalc');
 
 switch pln.propMC.engine
     case 'ompMC'
-        dij = matRad_calcPhotonDoseOmpMC(ct,stf,pln,cst,nHistories,calcDoseDirect);
+        dij = matRad_calcPhotonDoseOmpMC(ct,stf,pln,cst,calcDoseDirect);
     case 'TOPAS'
         dij = matRad_calcPhotonDoseMCtopas(ct,stf,pln,cst,calcDoseDirect);
     otherwise
