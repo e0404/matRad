@@ -1,4 +1,4 @@
-function dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst,calcDoseDirect)
+function dij = matRad_calcPhotonDoseOmpMC(ct,stf,pln,cst,calcDoseDirect)
 % matRad ompMC monte carlo photon dose calculation wrapper
 %
 % call
