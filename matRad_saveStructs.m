@@ -1,4 +1,4 @@
-function status = matRad_saveStructs(path)
+function status = matRad_saveStructs(path, engine)
 % matRad_saveStructs Mat file transfer for python interface
 %
 % input
@@ -20,8 +20,15 @@ function status = matRad_saveStructs(path)
 
 load(path);
 
-save('ct.mat', 'ct');
-save('cst.mat', 'cst');
+if engine=='matlab'
+    save('ct.mat', 'ct');
+    save('cst.mat', 'cst');
+else
+    save('ct.mat', '-mat7-binary', 'ct');
+    save('cst.mat', '-mat7-binary', 'cst');
+end
+
+%Choosing the engine is necessary because Octave has trouble reading .mat files. Doesn't recognize them as binary.
 
 status = 'Files written';
 
