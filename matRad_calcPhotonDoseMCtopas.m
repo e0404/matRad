@@ -153,7 +153,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                     if isprop(pln.propMC,'verbosity') && strcmp(pln.propMC.verbosity,'full')
                         topasCall = sprintf('%s %s.txt',pln.propMC.topasExecCommand,fname);
                     else
-                        topasCall = sprintf('%s %s.txt > %s.out > %s.log',pln.propMC.topasExecCommand,fname,fname,fname);
+                        topasCall = sprintf('%s %s.txt > %s.out 2> %s.log',pln.propMC.topasExecCommand,fname,fname,fname);
                     end
                     
                     % initiate parallel runs and delete previous files

@@ -1251,7 +1251,7 @@ classdef MatRad_TopasConfig < handle
                         selectedData = [];
                         focusIndex = baseData.selectedFocus(baseData.energyIndex);
                         for i = 1:numel(focusIndex)
-                            selectedData = [selectedData, structfun(@(x) x(focusIndex(i)),baseData.monteCarloData(i),'Uni',false)];
+                            selectedData = [selectedData, structfun(@(x) x(focusIndex(i)),baseData.monteCarloData(i),'UniformOutput',false)];
                         end
                         energies = [selectedData.NominalEnergy];
                     end
@@ -1393,7 +1393,11 @@ classdef MatRad_TopasConfig < handle
                 % If needed, adjust current to actual histories (by adding/subtracting from random rays)
                 while sum([dataTOPAS(:).current]) ~= historyCount(beamIx)
                     diff = sum([dataTOPAS.current]) - sum(historyCount(beamIx));
-                    [~,~,R] = histcounts(rand(abs(diff),1),cumsum([0;double(transpose([dataTOPAS(:).current]))./double(sum([dataTOPAS(:).current]))]));
+                    if matRad_cfg.isMatlab
+                        [~,~,R] = histcounts(rand(abs(diff),1),cumsum([0;double(transpose([dataTOPAS(:).current]))./double(sum([dataTOPAS(:).current]))]));
+                    else
+                        [~,R] = histc(rand(abs(diff),1),cumsum([0;double(transpose([dataTOPAS(:).current]))./double(sum([dataTOPAS(:).current]))]));
+                    end
                     idx = 1:length(dataTOPAS);
                     randIx = idx(R);
 
@@ -1418,7 +1422,7 @@ classdef MatRad_TopasConfig < handle
 
                 % NozzleAxialDistance
                 if isPhoton
-                    fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', 100 + ct.cubeDim(3)*ct.resolution.z);%Not sure if this is correct,100 is SSD and probably distance from surface to isocenter needs to be added
+                    fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', 1000 + ct.cubeDim(3)*ct.resolution.z);%Not sure if this is correct,100 cm is SSD and probably distance from surface to isocenter needs to be added
                 else
                     fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', nozzleToAxisDistance);
                 end
@@ -1617,7 +1621,9 @@ classdef MatRad_TopasConfig < handle
                                 matRad_cfg.dispError([phaseSpaceFileName ' header or phsp file could not be found in beamSetup/phasespace folder.']);
                             end
                         end
-                        fprintf(fileID,'s:So/Phasespace/PhaseSpaceFileName = "%s"\n', [obj.thisFolder filesep 'beamSetup' filesep 'phasespace' filesep phaseSpaceFileName]);
+                        phasespaceStr = ['..' filesep 'beamSetup' filesep 'phasespace' filesep phaseSpaceFileName];
+                        phasespaceStr =  replace(phasespaceStr, '\', '/');
+                        fprintf(fileID,'s:So/Phasespace/PhaseSpaceFileName = "%s"\n', phasespaceStr);
 
                 end
 
