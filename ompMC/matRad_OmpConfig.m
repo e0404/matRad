@@ -235,36 +235,70 @@ classdef matRad_OmpConfig < handle
                 
             end
         end
+                
+
+    end
+    
+    methods (Access = private)
+        function material = setupMaterials(~)
+            material = cell(4,5);
+            material{1,1} = 'AIR700ICRU';
+            material{1,2} = -1024;
+            material{1,3} = -974;
+            material{1,4} = 0.001;
+            material{1,5} = 0.044;
+            material{2,1} = 'LUNG700ICRU';
+            material{2,2} = -974;
+            material{2,3} = -724;
+            material{2,4} = 0.044;
+            material{2,5} = 0.302;
+            material{3,1} = 'ICRUTISSUE700ICRU';
+            material{3,2} = -724;
+            material{3,3} = 101;
+            material{3,4} = 0.302;
+            material{3,5} = 1.101;
+            material{4,1} = 'ICRPBONE700ICRU';
+            material{4,2} = 101;
+            material{4,3} = 1976;
+            material{4,4} = 1.101;
+            material{4,5} = 2.088;
+            
+        end
         
+    end
+    
+    methods (Static)
         function compileOmpMCInterface(dest,omcFolder)
-            % Compiles the ompMC interface (integrated as submodule)
-            %
-            % call
-            %   obj.compileOmpMCInterface()
-            %   obj.compileOmpMCInterface(dest)
-            %   obj.compileOmpMCInterface(dest,sourceFolder)
-            %
-            % input:
-            %   dest:           (optional) destination for mex file. Default: location
-            %                   of this file
-            %   sourceFolder:   (optional) path to ompMC . Default assumes its checked
-            %                   out in the submodules folder of matRad
-            %
-            % References
-            %
-            %
-            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %
-            % Copyright 2020 the matRad development team.
-            %
-            % This file is part of the matRad project. It is subject to the license
-            % terms in the LICENSE file found in the top-level directory of this
-            % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
-            % of the matRad project, including this file, may be copied, modified,
-            % propagated, or distributed except according to the terms contained in the
-            % LICENSE file.
-            %
-            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Compiles the ompMC interface (integrated as submodule)
+        %
+        % call
+        %   matRad_OmpConfig.compileOmpMCInterface()
+        %   matRad_OmpConfig.compileOmpMCInterface(dest)
+        %   matRad_OmpConfig.compileOmpMCInterface(dest,sourceFolder)
+        % if an object is instantiated, matRad_OmpConfig can be replaced by the 
+        % object handle
+        %
+        % input:
+        %   dest:           (optional) destination for mex file. Default: location
+        %                   of this file
+        %   sourceFolder:   (optional) path to ompMC . Default assumes its checked
+        %                   out in the submodules folder of matRad
+        %
+        % References
+        %
+        %
+        % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %
+        % Copyright 2020 the matRad development team.
+        %
+        % This file is part of the matRad project. It is subject to the license
+        % terms in the LICENSE file found in the top-level directory of this
+        % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+        % of the matRad project, including this file, may be copied, modified,
+        % propagated, or distributed except according to the terms contained in the
+        % LICENSE file.
+        %
+        % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
             
             matRad_cfg = MatRad_Config.instance();
@@ -338,35 +372,6 @@ classdef matRad_OmpConfig < handle
             eval(mexCall);
             cd(currDir);
         end
-
-    end
-    
-    methods (Access = private)
-        function material = setupMaterials(~)
-            material = cell(4,5);
-            material{1,1} = 'AIR700ICRU';
-            material{1,2} = -1024;
-            material{1,3} = -974;
-            material{1,4} = 0.001;
-            material{1,5} = 0.044;
-            material{2,1} = 'LUNG700ICRU';
-            material{2,2} = -974;
-            material{2,3} = -724;
-            material{2,4} = 0.044;
-            material{2,5} = 0.302;
-            material{3,1} = 'ICRUTISSUE700ICRU';
-            material{3,2} = -724;
-            material{3,3} = 101;
-            material{3,4} = 0.302;
-            material{3,5} = 1.101;
-            material{4,1} = 'ICRPBONE700ICRU';
-            material{4,2} = 101;
-            material{4,3} = 1976;
-            material{4,4} = 1.101;
-            material{4,5} = 2.088;
-            
-        end
-        
     end
 end
 

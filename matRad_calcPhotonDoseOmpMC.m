@@ -53,7 +53,7 @@ pln = matRad_cfg.getDefaultProperties(pln,{'propDoseCalc'});
 if ~matRad_checkMexFileExists('omc_matrad') %exist('matRad_ompInterface','file') ~= 3
     matRad_cfg.dispWarning('Compiled mex interface not found. Trying to compile the ompMC interface on the fly!');
     try
-        pln.propMC.compileOmpMCInterface();
+        matRad_OmpConfig.compileOmpMCInterface();
     catch MException
         matRad_cfg.dispError('Could not find/generate mex interface for MC dose calculation.\nCause of error:\n%s\n Please compile it yourself (preferably with OpenMP support).',MException.message);
     end
