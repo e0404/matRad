@@ -75,10 +75,16 @@ classdef MatRad_MCemittanceBaseData
                 obj.nozzleToIso = 500;
             end
             
-            SAD = machine.meta.SAD;
-            
-            obj.smx = SAD;
-            obj.smy = SAD;
+            if all(isfield(machine.meta,{'SAD_x','SAD_y'}))
+                obj.smx = machine.meta.SAD_x;
+                obj.smy = machine.meta.SAD_y;
+            elseif isfield(machine.meta,'SAD')
+                SAD = machine.meta.SAD;
+                obj.smx = SAD;
+                obj.smy = SAD;
+            else
+                obj.matRad_cfg.dispError('No SAD found!');
+            end
             
             obj.monteCarloData = [];
             
@@ -160,8 +166,8 @@ classdef MatRad_MCemittanceBaseData
                         opticsData.Divergence2y     = 0;
                         opticsData.Correlation2y    = 0;
                     else
-                        opticsData.Weight1      = 1 - emittance.weight(1);
-                        opticsData.Weight2      = emittance.weight(1);
+                        opticsData.Weight1          = 1 - emittance.weight(1);
+                        opticsData.Weight2          = emittance.weight(1);
                         opticsData.SpotSize2x       = emittance.sigmaX(2);
                         opticsData.Divergence2x     = emittance.divX(2);
                         opticsData.Correlation2x    = emittance.corrX(2);
