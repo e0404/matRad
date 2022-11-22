@@ -142,7 +142,7 @@ classdef MatRad_MCemittanceBaseData
 
                     nGauss = 1;
                     if isfield(emittance,'weight') 
-                        nGauss = length(emittance.weight);
+                        nGauss = length(emittance.weight) + 1;
                     end
 
                     if nGauss > 2
