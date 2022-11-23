@@ -110,7 +110,7 @@ classdef matRad_OmpConfig < handle
                 bixelSide1 = zeros(totalNumOfBixels,3);
                 bixelSide2 = zeros(totalNumOfBixels,3);
                 
-                beamNum = zeros(1,prod(stf.numOfRays,numOfBeams));
+                beamNum = zeros(1,prod(sum(numOfBixels),numOfBeams));
                 counter = 0;
                 
                 for i = 1:numOfBeams % loop over all beams

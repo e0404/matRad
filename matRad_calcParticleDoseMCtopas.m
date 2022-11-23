@@ -58,8 +58,6 @@ if ~calcDoseDirect
     
     if pln.propMC.numHistories  < 1e10
         matRad_cfg.dispWarning('Selected TOPAS dij calculation with fewer than normal histories (default 1e10), make sure you want to continue.');
-    else
-        matRad_cfg.dispWarning('You have selected TOPAS dij calculation, this may take a while ^^');
     end
 else
     if ~isa(pln.propMC,'MatRad_TopasConfig')

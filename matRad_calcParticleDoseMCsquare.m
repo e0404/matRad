@@ -53,7 +53,7 @@ end
 
 % Load class variables in pln
 % for calcDoseDirect, this is already done in superior function
-if ~calcDoseDirect
+if ~isfield(pln,'propMC') || ~isa(pln.propMC,'MatRad_MCsquareConfig')
     pln = matRad_cfg.getDefaultClass(pln,'propMC','MatRad_MCsquareConfig');
 end
 

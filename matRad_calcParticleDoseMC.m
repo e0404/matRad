@@ -38,8 +38,9 @@ function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,calcDoseDirect)
 % Instance of MatRad_Config class
 matRad_cfg = MatRad_Config.instance();
 
-if nargin < 6
+if nargin < 5
     calcDoseDirect = false;
+    matRad_cfg.dispWarning('You have selected Monte Carlo dij calculation.');
 end
 
 % load appropriate config from pln or from class
