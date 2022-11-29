@@ -16,6 +16,12 @@ The sustainable development of matRad costs time. To help us make a strong case 
 
 Also, if you are interested in irregular updates, please send us an <a href="mailto:contact@matrad.org?Subject=matRad newsletter" target="_top">email</a> to receive the matRad newsletter.
 
+matRad developments were/are, in part, supported by the following research grants:
+- Grant  No. BA 2279/3-1 (Project No. 265744405) from the German Research Foundation (DFG)
+- Grant No. WA 4707/1-1 (Project No. 443188743) from the German Research Foundation (DFG)
+- Grant No. 70113094 from the German Cancer Aid
+
+
 Features
 ========
 
