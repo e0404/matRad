@@ -79,8 +79,8 @@ elseif ~isfield(machine.data,'alphaX') || overrideAB
         ab(1,1) = 0.1;
         ab(1,2) = 0.05;
     else
-        ab = cellfun(@(f)cst{f,5}.alphaX,num2cell(1:10)');
-        ab(:,2) = cellfun(@(f)cst{f,5}.betaX,num2cell(1:10)');
+        ab = cellfun(@(f)cst{f,5}.alphaX,num2cell(1:size(cst,1))');
+        ab(:,2) = cellfun(@(f)cst{f,5}.betaX,num2cell(1:size(cst,1))');
     end
     ab = unique(ab,'rows');
     

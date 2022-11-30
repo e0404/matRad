@@ -41,8 +41,9 @@ load('LIVER.mat');
 % need to define a treatment machine to correctly load the corresponding 
 % base data. matRad features generic base data in the file
 % 'carbon_Generic.mat'; consequently the machine has to be set accordingly
-pln.radiationMode = 'carbon';            
-pln.machine       = 'Generic';
+pln.radiationMode = 'carbon';          
+% use fitted APM here to include LET
+pln.machine       = 'Generic_APM';
 
 %%
 % Define the biological optimization model for treatment planning along

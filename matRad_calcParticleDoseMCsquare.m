@@ -165,6 +165,9 @@ else
     % fit and create BDL file using selected machine file
     bdFile = [machine.meta.machine '.txt'];
 
+    % override base data in case of APM, it is not needed here
+    machine.data = MatRad_HeterogeneityConfig.overrideBaseData(machine.data);
+
     % Calculate MCsquare base data
     % Argument stf is optional, if given, calculation only for energies given in stf
     MCsquareBDL = MatRad_MCsquareBaseData(machine);
@@ -334,6 +337,32 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 end
 
                 %% Write config files
+                % override HU_Density_Conversion_File and HU_Material_Conversion_File in case of Heterogeneity density sampling
+                if isfield(ct,'modulated') && ct.modulated
+                    % copy and override with default HU conversion files
+                    copyfile(MCsquareConfig.HU_Density_Conversion_File,'Scanners/densitySampling/HU_Density_Conversion.txt')
+                    copyfile(MCsquareConfig.HU_Material_Conversion_File,'Scanners/densitySampling/HU_Material_Conversion.txt')
+
+                    % prepare sampled densities and combine with HU
+                    sampledDensities(1,:) = 6000:5999+length(ct.sampledDensities);
+                    sampledDensities(2,:) = ct.sampledDensities;
+
+                    % write sampled densities
+                    fID = fopen('Scanners/densitySampling/HU_Density_Conversion.txt','a');
+                    fprintf(fID,'\n%i       %.3f',sampledDensities);
+                    fclose(fID);
+                    
+                    % write material conversion
+                    fID = fopen('Scanners/densitySampling/HU_Material_Conversion.txt','a');
+                    fprintf(fID,'\n6000    40      # Schneider_Lung');
+%                     fprintf(fID,'\n6000    17      # Water');
+                    fclose(fID);
+
+                    % set custom HU conversion files to be used by MCsquare
+                    MCsquareConfig.HU_Density_Conversion_File = 'Scanners/densitySampling/HU_Density_Conversion.txt';
+                    MCsquareConfig.HU_Material_Conversion_File = 'Scanners/densitySampling/HU_Material_Conversion.txt';
+                end
+
                 % write patient data
                 MCsquareBinCubeResolution = [dij.doseGrid.resolution.x ...
                     dij.doseGrid.resolution.y ...

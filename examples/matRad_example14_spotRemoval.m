@@ -88,19 +88,13 @@ dij = matRad_calcParticleDose(ct,stf,pln,cst);
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Spot removal
-% instantiate spot removal class
-sr_cfg = MatRad_spotRemovalDij(dij,resultGUI.w);
+% Note: This will be moved into a class setup soon
+relativeThreshold = 0.05;
+[dij2,stf2] = matRad_spotRemoval(dij,w,0.05);
 
-sr_cfg.removalMode = 'relative';
-sr_cfg.propSpotRemoval.relativeThreshold = 0.05;
-resultGUI2 = sr_cfg.reoptimize(cst,pln);
+resultGUI2 = matRad_fluenceOptimization(dij2,cst,pln);
 
-% numOfRemovedSpots = sr_cfg.numOfRemovedSpots;
-
-% stf2 = sr_cfg.getStf(stf);
-% dij2 = sr_cfg.getDij;
-% weight2 = sr_cfg.getWeights;
-% weightLogical = sr_cfg.getLogical;
+% numOfRemovedSpots = dij2.numOfRemovedSpots;
 
 %% Plot difference of the doses
 matRad_compareDose(resultGUI.RBExD,resultGUI2.RBExD,ct,cst);

@@ -68,10 +68,18 @@ end
 % load default parameters for doseCalc in case they haven't been set yet
 pln = matRad_cfg.getDefaultProperties(pln,{'propDoseCalc'});
 
+% override default parameters from external parameters if available
+if isfield(pln,'propHeterogeneity') && isprop(pln.propHeterogeneity,'sampling') && isfield(pln.propHeterogeneity.sampling,'numHistories')
+    pln.propMC.numHistories = pln.propHeterogeneity.sampling.numHistories;
+end
+
 % set nested folder structure if external calculation is turned on (this will put new simulations in subfolders)
 if pln.propMC.externalCalculation
     pln.propMC.workingDir = [pln.propMC.thisFolder filesep 'MCrun' filesep];
     pln.propMC.workingDir = [pln.propMC.workingDir pln.radiationMode,'_',pln.machine,'_',datestr(now, 'dd-mm-yy')];
+end
+if isfield(ct,'sampleIdx')
+    pln.propMC.workingDir = [pln.propMC.workingDir '_' num2str(ct.sampleIdx,'%02.f')];
 end
 
 %% Initialize dose grid and dij
@@ -91,6 +99,7 @@ end
 
 % Load and create TOPAS Base Data
 load([pln.radiationMode,'_',pln.machine],'machine');
+machine.data = MatRad_HeterogeneityConfig.overrideBaseData(machine.data);
 
 % Collect given weights
 if calcDoseDirect
@@ -108,7 +117,6 @@ end
 
 % Get photon parameters for RBExD calculation
 if isfield(pln,'bioParam') && strcmp(pln.bioParam.quantityOpt,'RBExD')
-    pln.propMC.scorer.RBE = true;
     [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
     dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
 end
@@ -230,6 +238,9 @@ if ~pln.propMC.externalCalculation
 else
     dij = struct([]);
 end
+
+% Order fields for easier comparison between different dijs
+dij = orderfields(dij);
 
 % manipulate isocenter back
 for k = 1:length(stf)

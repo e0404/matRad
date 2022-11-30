@@ -31,6 +31,7 @@ classdef MatRad_Config < handle
         propOpt;
         propMC;
         propStf;
+        propHeterogeneity;
 
         defaults;
 
@@ -162,7 +163,6 @@ classdef MatRad_Config < handle
             obj.propStf.defaultLongitudinalSpotSpacing = 2;
             obj.propStf.defaultAddMargin = true; %expand target for beamlet finding
 
-
             obj.propDoseCalc.doseGrid.defaultResolution = struct('x',3,'y',3,'z',3); %[mm]
             obj.propDoseCalc.defaultLateralCutOff = 0.995; %[rel.]
             obj.propDoseCalc.defaultGeometricCutOff = 50; %[mm]
@@ -176,11 +176,6 @@ classdef MatRad_Config < handle
 
             obj.propDoseCalc.defaultAirOffsetCorrection = true;
 
-            % default properties for fine sampling calculation
-            obj.propDoseCalc.defaultFineSamplingProperties.sigmaSub = 1;
-            obj.propDoseCalc.defaultFineSamplingProperties.N = 21;
-            obj.propDoseCalc.defaultFineSamplingProperties.method = 'russo';
-            
             obj.propOpt.defaultMaxIter = 500;
             obj.propOpt.defaultRunDAO = 0;
             obj.propOpt.defaultRunSequencing = 0;
@@ -189,10 +184,10 @@ classdef MatRad_Config < handle
             obj.propMC.ompMC_defaultOutputVariance = false;
 
             % Set default histories for MonteCarlo here if necessary
-%             obj.propMC.defaultNumHistories = 100;
+            %             obj.propMC.defaultNumHistories = 100;
 
             obj.propMC.default_photon_engine = 'matRad_OmpConfig';
-%             obj.propMC.default_photon_engine = 'MatRad_TopasConfig';
+            %             obj.propMC.default_photon_engine = 'MatRad_TopasConfig';
             obj.propMC.default_proton_engine = 'MatRad_MCsquareConfig';
             obj.propMC.default_carbon_engine = 'MatRad_TopasConfig';
 
@@ -201,6 +196,20 @@ classdef MatRad_Config < handle
             obj.propMC.default_beamProfile_photons = 'uniform';
             obj.propMC.defaultExternalCalculation = false;
             obj.propMC.defaultCalcDij = false;
+
+            obj.propHeterogeneity.defaultType = 'complete'; % 'depthBased','voxelwise'
+            obj.propHeterogeneity.defaultCalcHetero = true;
+            obj.propHeterogeneity.defaultUseOriginalDepths = false; % use original base data depths instead of fitted ones
+            obj.propHeterogeneity.defaultModulateBioDose = true; % directly modulate alpha beta curves for RBE
+            obj.propHeterogeneity.defaultModulateLET = false;
+
+            obj.propHeterogeneity.defaultModPower = 800;
+            obj.propHeterogeneity.sampling.defaultMode = 'matRad';
+            obj.propHeterogeneity.sampling.defaultMethod = 'binomial';
+            obj.propHeterogeneity.sampling.defaultUseContinuous = true;
+            obj.propHeterogeneity.sampling.defaultNumOfSamples = 50;
+            obj.propHeterogeneity.sampling.defaultContinuous = true;
+
 
             % default properties for fine sampling calculation
             obj.propDoseCalc.fineSampling.defaultSigmaSub = 1;
@@ -251,6 +260,11 @@ classdef MatRad_Config < handle
 %             obj.propMC.default_photon_engine = 'MatRad_TopasConfig';
             obj.propMC.default_proton_engine = 'MatRad_MCsquareConfig';
             obj.propMC.default_carbon_engine = 'MatRad_TopasConfig';
+
+            obj.propHeterogeneity.defaultType = 'complete'; % 'depthBased','voxelwise'
+            obj.propHeterogeneity.defaultCalcHetero = true;
+            obj.propHeterogeneity.defaultUseOriginalDepths = true; % use original base data depths instead of fitted ones
+            obj.propHeterogeneity.defaultUodulateBioDose = true; % use alpha beta curves for RBE
 
             obj.defaults.samplingScenarios = 2;
 
@@ -349,7 +363,7 @@ classdef MatRad_Config < handle
 
         function pln = getDefaultProperties(obj,pln,fields)
             % Function to load all non-set parameters into pln struct
-            standardFields = {'propDoseCalc','propOpt','propStf'};
+            standardFields = {'propHeterogeneity','propDoseCalc','propOpt','propStf'};
 
             % Check if only one argument was given
             if ~iscell(fields)
@@ -422,14 +436,16 @@ classdef MatRad_Config < handle
                                 end
                             end
                         end
+                    case 'propHeterogeneity'
+                        configName = 'MatRad_HeterogeneityConfig';
                     otherwise
                         obj.dispError('Config for ''%s'' not implemented',configName);
                 end
             elseif nargin == 4
 
             elseif nargin < 4 && ~isstruct(pln.(propName))
-                    % get config name from input field
-                    configName = class(pln.(propName));
+                % get config name from input field
+                configName = class(pln.(propName));
             else
                 obj.dispError('Error in default clasee');
             end
@@ -451,6 +467,8 @@ classdef MatRad_Config < handle
                     case 'MatRad_MCsquareConfig'
                         config = MatRad_MCsquareConfig();
                         pln.propMC.engine = 'MCsquare';
+                    case 'MatRad_HeterogeneityConfig'
+                        config = MatRad_HeterogeneityConfig;
                 end
 
                 props = fieldnames(pln.(propName));
@@ -495,7 +513,6 @@ classdef MatRad_Config < handle
 
             % Send info to console
             obj.dispInfo(['Class ' class(pln.(propName)) ' has been loaded to pln.' propName '!\n']);
-
         end
 
         function configureEnvironment(obj)

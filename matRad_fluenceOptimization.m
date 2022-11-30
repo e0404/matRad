@@ -108,7 +108,7 @@ elseif strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'proton
     if ~isfield(dij,'RBE')
         dij.RBE = 1.1;
     end
-
+    
     doseTmp = dij.physicalDose{1}*wOnes;
     bixelWeight =  (doseTarget)/(dij.RBE * mean(doseTmp(V)));
     wInit       = wOnes * bixelWeight;
@@ -295,6 +295,10 @@ resultGUI = matRad_calcCubes(wOpt,dij);
 resultGUI.wUnsequenced = wOpt;
 resultGUI.usedOptimizer = optimizer;
 resultGUI.info = info;
+
+if isfield(dij,'numOfRemovedSpots')
+    resultGUI.numOfRemovedSpots = dij.numOfRemovedSpots;
+end
 
 %Robust quantities
 if FLAG_ROB_OPT || numel(ixForOpt) > 1

@@ -415,7 +415,7 @@ for i = 1:length(pln.propStf.gantryAngles)
                 end                
 
                 stf(i).ray(j).focusIx = focusIx';
-
+                
                 %Get machine bounds
                 numParticlesPerMU = 1e6*ones(1,stf(i).numOfBixelsPerRay(j));
                 minMU = zeros(1,stf(i).numOfBixelsPerRay(j));

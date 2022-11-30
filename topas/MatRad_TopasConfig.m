@@ -62,7 +62,7 @@ classdef MatRad_TopasConfig < handle
         %Image
         materialConverter = struct('mode','HUToWaterSchneider',...    %'RSP','HUToWaterSchneider';
             'densityCorrection','Schneider_TOPAS',... %'rspHLUT','Schneider_TOPAS','Schneider_matRad'
-            'addSection','none',... %'none','lung'
+            'addSection','none',... %'none','lung','poisson','sampledDensities' (the last 2 only with modulation)
             'addTitanium',false,... %'false','true' (can only be used with advanced HUsections)
             'HUSection','advanced',... %'default','advanced'
             'HUToMaterial','default',... %'default',','advanced','MCsquare'
@@ -387,7 +387,8 @@ classdef MatRad_TopasConfig < handle
         end
 
         function resultGUI = readExternal(obj,folder)
-            % function to read out complete TOPAS simulation from single folder
+            % function to read out complete TOPAS simulation from single folder or multiple folders
+            % in case of heterogeneity modulation
             %
             % call
             %   topasCube = topasConfig.readExternal(folder)
@@ -414,15 +415,69 @@ classdef MatRad_TopasConfig < handle
             % LICENSE file.
             %
             % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % Process input folder(s)
+            if ~isempty(strfind(folder,'*'))
+                folder = dir(folder);
+                for i = 1:length(folder)
+                    folders{i} = [folder(i).folder filesep folder(i).name];
+                end
+            else
+                folders{1} = folder;
+            end
+            folders = folders(~cellfun('isempty',folders));
 
-            % read in TOPAS files in dij
-            dij = obj.readFiles(folder);
+            % Check if .bin or .csv files are available and sort out unnecessary folders
+            folderIsValid = cellfun(@(x) ~isempty(dir([x '\*.bin'])), folders) | cellfun(@(x) ~isempty(dir([x '\*.csv'])), folders);
+            folders = folders(folderIsValid);
 
-            % Postprocessing
-            resultGUI = obj.getResultGUI(dij);
+            % Get numOfSamples from number of folders
+            numOfSamples = length(folders);
+
+            % Allocate empty resultGUI and space for individual physical doses to calculate their standard deviation
+            resultGUI = struct;
+            data = cell(numOfSamples,1);
+
+            % Instance of heterogeneity correction class in case of sampling
+            if numOfSamples > 1
+                heterogeneityConfig = MatRad_HeterogeneityConfig();
+            end
+
+            % Set dij calculation if multiple bixels detected
+            if ~isempty(strfind([dir(folders{1}).name],'_bixel'))
+                obj.scorer.calcDij = true;
+            end
+
+            for f = 1:numOfSamples
+                % read in TOPAS files in dij
+                dij = obj.readFiles(folders{f});
+
+                % Postprocessing
+                resultGUI_mod = obj.getResultGUI(dij);
+
+                if numOfSamples > 1
+                    % Accumulate averaged results
+                    resultGUI = heterogeneityConfig.accumulateOverSamples(resultGUI,resultGUI_mod,numOfSamples);
+
+                    % Save individual physical doses to calculate standard deviation
+                    data{f} = resultGUI_mod.physicalDose;
+
+                    % Save individual standard deviation
+                    if isfield(resultGUI_mod,'physicalDose_std')
+                        resultGUI.physicalDose_std_individual{f} = resultGUI_mod.physicalDose_std;
+                    end
+                else
+                    resultGUI = resultGUI_mod;
+                end
+            end
+
+            if numOfSamples > 1
+                % Calculate standard deviation between samples
+                resultGUI.physicalDose_std = heterogeneityConfig.calcSampleStd(data,resultGUI.physicalDose);
+            end
 
         end
     end
+
     methods (Access = private)
         function topasCubes = markFieldsAsEmpty(obj,topasCubes)
 
@@ -640,9 +695,13 @@ classdef MatRad_TopasConfig < handle
             % Set flag for RBE and LET
             if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'alpha')), fieldnames(topasCubes)))
                 obj.scorer.RBE = true;
+            else
+                obj.scorer.RBE = false;
             end
             if any(cellfun(@(teststr) ~isempty(strfind(teststr,'LET')), fieldnames(topasCubes)))
                 obj.scorer.LET = true;
+            else
+                obj.scorer.LET = false;
             end
 
             % Create empty dij
@@ -769,7 +828,6 @@ classdef MatRad_TopasConfig < handle
                         end
                     end
                 end
-
                 % Remove processed physDoseFields from total tallies
                 topasCubesTallies = topasCubesTallies(~physDoseFields);
 
@@ -787,16 +845,13 @@ classdef MatRad_TopasConfig < handle
                                         dij.([topasCubesTallies{j} processedQuantities{p}]){ctScen,1}(:,d) = sum(w)*reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]){ctScen},[],1);
                                     end
                                 end
-                                % Handle RBE-related quantities (not multiplied by sum(w)!)
                             elseif ~isempty(strfind(lower(topasCubesTallies{j}),'alpha'))
                                 modelName = strsplit(topasCubesTallies{j},'_');
                                 modelName = modelName{end};
                                 if isfield(topasCubes,[topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]) ...
-                                        && iscell(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]))
                                     dij.(['mAlphaDose_' modelName]){ctScen,1}(:,d) = reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]){ctScen},[],1) .* dij.physicalDose{ctScen,1}(:,d);
                                 end
                             elseif ~isempty(strfind(lower(topasCubesTallies{j}),'beta'))
-                                modelName = strsplit(topasCubesTallies{j},'_');
                                 modelName = modelName{end};
                                 if isfield(topasCubes,[topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]) ...
                                         && iscell(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]))
@@ -1385,6 +1440,10 @@ classdef MatRad_TopasConfig < handle
                 % Save adjusted beam histories
                 historyCount(beamIx) = uint32(obj.fracHistories * nBeamParticlesTotal(beamIx) / obj.numOfRuns);
 
+                % Check if beam has enough current/particles to not result in NaN (empirical estimate)
+                if mean([dataTOPAS(:).current]) < 10
+                    matRad_cfg.dispWarning('Very low current detected, high possibility to not result in usable dose.')
+                end
                 if historyCount(beamIx) < cutNumOfBixel || cutNumOfBixel == 0
                     matRad_cfg.dispError('Insufficient number of histories!')
                 end
@@ -1938,11 +1997,22 @@ classdef MatRad_TopasConfig < handle
                             end
 
                             % define additional density sections
+                            % Set sampledDensities to empty if no modulated CT is parsed
+                            if ~(isfield(ct,'modulated') && ct.modulated)
+                                ct.sampledDensities = [];
+                            end
                             switch obj.materialConverter.addSection
                                 case 'lung'
                                     addSection = [0.00012 1.05];
+                                case 'poisson'
+                                    addSection = [0.001,0.1/3:0.1/3:1.2];
+                                case 'sampledDensities'
+                                    if isfield(ct,'sampledDensities')
+                                        addSection = ct.sampledDensities;
+                                    else
+                                        addSection = [];
+                                    end
                                 otherwise
-                                    addSection = [];
                             end
                             if exist('addSection','var') && ~isempty(addSection)
                                 densityCorrection.density(end+1:end+numel(addSection)) = addSection;
@@ -2046,6 +2116,10 @@ classdef MatRad_TopasConfig < handle
                         fprintf(fID,'s:Ge/Patient/Parent="World"\n');
                         fprintf(fID,'s:Ge/Patient/Type = "TsImageCube"\n');
                         fprintf(fID,'b:Ge/Patient/DumpImagingValues = "True"\n');
+                        if isfield(ct,'modulated') && ct.modulated
+                            fprintf(fID,'b:Ge/Patient/SchneiderUseVariableDensityMaterials = "True"\n');
+                            fprintf(fID,'b:Ge/Patient/PreLoadAllMaterials = "True"\n');
+                        end
                         fprintf(fID,'s:Ge/Patient/InputDirectory = "./"\n');
                         fprintf(fID,'s:Ge/Patient/InputFile = "%s"\n',dataFile);
                         fprintf(fID,'s:Ge/Patient/ImagingtoMaterialConverter = "Schneider"\n');
@@ -2061,7 +2135,11 @@ classdef MatRad_TopasConfig < handle
 
                         % write HU data
                         matRad_cfg.dispInfo('TOPAS: Export patient cube\n');
+                        if strcmp(obj.materialConverter.addSection,'sampledDensities') && isfield(ct,'sampledLungIndices')
+                            ct.cubeHU{ctScen}(ct.sampledLungIndices) = ct.cubeHU{ctScen}(ct.sampledLungIndices)-6000+densityCorrection.boundaries(end-1);
+                        end
                         huCube = int32(permute(ct.cubeHU{ctScen},permutation));
+
                         fID = fopen(fullfile(obj.workingDir, dataFile),'w');
                         fwrite(fID,huCube,'short');
                         fclose(fID);
