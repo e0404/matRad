@@ -72,7 +72,7 @@ elseif ~isfield(machine.data,'alphaX') || overrideAB
                 modelName = 'HEL';
         end
     end
-    pln.bioParam = matRad_bioModel(machine.meta.radiationMode,'RBExD',modelName);
+    pln.bioParam = matRad_BioModel(machine.meta.radiationMode,'RBExD',modelName);
     
     %% get unique combintions of alpha/beta from cst or use default alpha/beta values
     if ~exist('cst','var')

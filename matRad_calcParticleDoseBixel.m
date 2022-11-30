@@ -37,7 +37,7 @@ matRad_cfg = MatRad_Config.instance();
 if nargin < 5
     heteroCorrDepths = [];
     % Load heterogeneity config for Gauss functions that are called even if heterogeneity correction is turned off
-    propHeterogeneity = MatRad_HeterogeneityConfig();
+    propHeterogeneity = matRad_HeterogeneityConfig();
 end
 
 % Check if correct base data is loaded for heterogeneity correction

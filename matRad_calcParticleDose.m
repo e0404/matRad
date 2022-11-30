@@ -47,7 +47,7 @@ matRad_cfg.dispInfo('matRad: Particle dose calculation... \n');
 pln = matRad_cfg.getDefaultProperties(pln,{'propDoseCalc'});
 
 if isfield(pln,'propHeterogeneity') && pln.propHeterogeneity.calcHetero
-    pln.propHeterogeneity = MatRad_HeterogeneityConfig();
+    pln.propHeterogeneity = matRad_HeterogeneityConfig();
     pln.propHeterogeneity.bioOpt = pln.bioParam.bioOpt;
     matRad_cfg.dispInfo(['Modulation power set to Pmod = ' num2str(pln.propHeterogeneity.modPower) ' µm.\n']);
     cstOriginal = cst;
@@ -97,7 +97,7 @@ if isfield(pln,'propHeterogeneity') && pln.propHeterogeneity.calcHetero
 end
 
 if isfield(pln,'propHeterogeneity') && pln.propHeterogeneity.calcHetero && pln.propHeterogeneity.useOriginalDepths
-    machine.data = MatRad_HeterogeneityConfig.overrideBaseData(machine.data);
+    machine.data = matRad_HeterogeneityConfig.overrideBaseData(machine.data);
 end
 
 % helper function for energy selection

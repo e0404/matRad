@@ -1,5 +1,5 @@
-classdef MatRad_MCsquareBaseData < MatRad_MCemittanceBaseData
-    % MatRad_MCsquareBaseData class for calculating MCsquare base data and
+classdef matRad_MCsquareBaseData < matRad_MCemittanceBaseData
+    % matRad_MCsquareBaseData class for calculating MCsquare base data and
     % writing it to a .txt file, for MCsquare to use
     % 
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -16,13 +16,13 @@ classdef MatRad_MCsquareBaseData < MatRad_MCemittanceBaseData
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     methods (Access = public)
-        function obj = MatRad_MCsquareBaseData(machine,stf)
-            %Call MatRad_MCemmitanceBaseData constructor
+        function obj = matRad_MCsquareBaseData(machine,stf)
+            %Call matRad_MCemmitanceBaseData constructor
             if nargin < 2
                 stf = [];
             end
             
-            obj = obj@MatRad_MCemittanceBaseData(machine, stf);
+            obj = obj@matRad_MCemittanceBaseData(machine, stf);
         end
                 
         function obj = writeMCsquareData(obj,filepath)

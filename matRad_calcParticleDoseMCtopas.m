@@ -52,15 +52,15 @@ if ~calcDoseDirect
     
     % Load class variables in pln
     % for calcDoseDirect, this is already done in superior function
-    if ~isa(pln.propMC,'MatRad_TopasConfig')
-        pln = matRad_cfg.getDefaultClass(pln,'propMC','MatRad_TopasConfig');
+    if ~isa(pln.propMC,'matRad_TopasConfig')
+        pln = matRad_cfg.getDefaultClass(pln,'propMC','matRad_TopasConfig');
     end
     
     if pln.propMC.numHistories  < 1e10
         matRad_cfg.dispWarning('Selected TOPAS dij calculation with fewer than normal histories (default 1e10), make sure you want to continue.');
     end
 else
-    if ~isa(pln.propMC,'MatRad_TopasConfig')
+    if ~isa(pln.propMC,'matRad_TopasConfig')
         matRad_cfg.dispError('Run calcParticleDoseMCtopas through calcDoseDirectMC');
     end
 end
@@ -99,7 +99,7 @@ end
 
 % Load and create TOPAS Base Data
 load([pln.radiationMode,'_',pln.machine],'machine');
-machine.data = MatRad_HeterogeneityConfig.overrideBaseData(machine.data);
+machine.data = matRad_HeterogeneityConfig.overrideBaseData(machine.data);
 
 % Collect given weights
 if calcDoseDirect

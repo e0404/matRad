@@ -187,9 +187,9 @@ classdef MatRad_Config < handle
             %             obj.propMC.defaultNumHistories = 100;
 
             obj.propMC.default_photon_engine = 'matRad_OmpConfig';
-            %             obj.propMC.default_photon_engine = 'MatRad_TopasConfig';
-            obj.propMC.default_proton_engine = 'MatRad_MCsquareConfig';
-            obj.propMC.default_carbon_engine = 'MatRad_TopasConfig';
+            %             obj.propMC.default_photon_engine = 'matRad_TopasConfig';
+            obj.propMC.default_proton_engine = 'matRad_MCsquareConfig';
+            obj.propMC.default_carbon_engine = 'matRad_TopasConfig';
 
             % Default settings for TOPAS
             obj.propMC.default_beamProfile_particles = 'biGaussian';
@@ -257,9 +257,9 @@ classdef MatRad_Config < handle
             obj.propMC.defaultNumHistories = 100;
 
             obj.propMC.default_photon_engine = 'matRad_OmpConfig';
-%             obj.propMC.default_photon_engine = 'MatRad_TopasConfig';
-            obj.propMC.default_proton_engine = 'MatRad_MCsquareConfig';
-            obj.propMC.default_carbon_engine = 'MatRad_TopasConfig';
+%             obj.propMC.default_photon_engine = 'matRad_TopasConfig';
+            obj.propMC.default_proton_engine = 'matRad_MCsquareConfig';
+            obj.propMC.default_carbon_engine = 'matRad_TopasConfig';
 
             obj.propHeterogeneity.defaultType = 'complete'; % 'depthBased','voxelwise'
             obj.propHeterogeneity.defaultCalcHetero = true;
@@ -419,9 +419,9 @@ classdef MatRad_Config < handle
                                 case 'ompMC'
                                     configName = 'matRad_OmpConfig';
                                 case 'TOPAS'
-                                    configName = 'MatRad_TopasConfig';
+                                    configName = 'matRad_TopasConfig';
                                 case 'MCsquare'
-                                    configName = 'MatRad_MCsquareConfig';
+                                    configName = 'matRad_MCsquareConfig';
                             end
                             pln.propMC = rmfield(pln.propMC,'engine');
                         else
@@ -437,7 +437,7 @@ classdef MatRad_Config < handle
                             end
                         end
                     case 'propHeterogeneity'
-                        configName = 'MatRad_HeterogeneityConfig';
+                        configName = 'matRad_HeterogeneityConfig';
                     otherwise
                         obj.dispError('Config for ''%s'' not implemented',configName);
                 end
@@ -461,14 +461,14 @@ classdef MatRad_Config < handle
                     case 'matRad_OmpConfig'
                         config = matRad_OmpConfig();
                         pln.propMC.engine = 'ompMC';
-                    case 'MatRad_TopasConfig'
-                        config = MatRad_TopasConfig();
+                    case 'matRad_TopasConfig'
+                        config = matRad_TopasConfig();
                         pln.propMC.engine = 'TOPAS';
-                    case 'MatRad_MCsquareConfig'
-                        config = MatRad_MCsquareConfig();
+                    case 'matRad_MCsquareConfig'
+                        config = matRad_MCsquareConfig();
                         pln.propMC.engine = 'MCsquare';
-                    case 'MatRad_HeterogeneityConfig'
-                        config = MatRad_HeterogeneityConfig;
+                    case 'matRad_HeterogeneityConfig'
+                        config = matRad_HeterogeneityConfig;
                 end
 
                 props = fieldnames(pln.(propName));

@@ -38,7 +38,7 @@ end
 conversionFactor = 1.6021766208e-02;
 
 % function handle for calculating depth dose for APM
-heterogeneityConfig = MatRad_HeterogeneityConfig();
+heterogeneityConfig = matRad_HeterogeneityConfig();
 
 if (cutOffLevel < 0 || cutOffLevel > 1)
     warning('lateral cutoff is out of range - using default cut off of 0.99')

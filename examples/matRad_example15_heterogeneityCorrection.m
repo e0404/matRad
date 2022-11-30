@@ -77,7 +77,7 @@ pln.propOpt.runDAO        = 0;
 pln.propOpt.runSequencing = 0;
 
 % retrieve bio model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
+pln.bioParam = matRad_BioModel(pln.radiationMode,quantityOpt,modelName);
 
 % retrieve scenarios for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,'nomScen'); % optimize on the nominal scenario                                            
@@ -90,7 +90,7 @@ pln.multScen = matRad_multScen(ct,'nomScen'); % optimize on the nominal scenario
 % calculation of RBE using fitted alpha and sqrtBeta curves implemented in
 % the APM base data files. 
 
-pln.propHeterogeneity = MatRad_HeterogeneityConfig.instance();
+pln.propHeterogeneity = matRad_HeterogeneityConfig.instance();
 
 %% Generate Beam Geometry STF
 % stf = matRad_generateStf(ct,cst,pln);

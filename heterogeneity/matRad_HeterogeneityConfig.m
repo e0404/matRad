@@ -1,5 +1,5 @@
-classdef MatRad_HeterogeneityConfig < handle
-    % MatRad_TopasConfig class definition
+classdef matRad_HeterogeneityConfig < handle
+    % matRad_TopasConfig class definition
     %
     %
     % References
@@ -49,8 +49,8 @@ classdef MatRad_HeterogeneityConfig < handle
     end
 
     methods
-        function obj = MatRad_HeterogeneityConfig()
-            % MatRad_TopasConfig Construct configuration Class for TOPAS
+        function obj = matRad_HeterogeneityConfig()
+            % matRad_TopasConfig Construct configuration Class for TOPAS
         end
 
         function out = Gauss(~,x,mu,SqSigma)

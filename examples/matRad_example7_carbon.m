@@ -71,7 +71,7 @@ pln.propOpt.runDAO        = 0;
 pln.propOpt.runSequencing = 0;
 
 % retrieve bio model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
+pln.bioParam = matRad_BioModel(pln.radiationMode,quantityOpt,modelName);
 
 % retrieve scenarios for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,'nomScen'); % optimize on the nominal scenario                                            
@@ -126,7 +126,7 @@ imagesc(resultGUI.LET(:,:,slice)),colorbar, colormap(jet);
 % biological effect instead of the RBE-weighted dose. Therefore we have to
 % change the optimization mode and restart the optimization
 quantityOpt  = 'effect'; 
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
+pln.bioParam = matRad_BioModel(pln.radiationMode,quantityOpt,modelName);
 
 resultGUI_effect = matRad_fluenceOptimization(dij,cst,pln);
 
