@@ -1,5 +1,5 @@
 classdef matRad_OmpConfig < handle
-    % MatRad_TopasConfig class definition
+    % matRad_TopasConfig class definition
     %
     %
     % References

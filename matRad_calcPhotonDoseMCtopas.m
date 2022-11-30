@@ -46,11 +46,11 @@ if ~calcDoseDirect
     
     % Load class variables in pln
     % for calcDoseDirect, this is already done in superior function
-    if ~isa(pln.propMC,'MatRad_TopasConfig')
-        pln = matRad_cfg.getDefaultClass(pln,'propMC','MatRad_TopasConfig');
+    if ~isa(pln.propMC,'matRad_TopasConfig')
+        pln = matRad_cfg.getDefaultClass(pln,'propMC','matRad_TopasConfig');
     end
 else
-    if ~isa(pln.propMC,'MatRad_TopasConfig')
+    if ~isa(pln.propMC,'matRad_TopasConfig')
         matRad_cfg.dispError('Run calcParticleDoseMCtopas through calcDoseDirectMC');
     end
 end

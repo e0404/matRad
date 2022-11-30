@@ -90,7 +90,7 @@ if ~isfield(pln, 'bioParam')
         pln.bioOptimization = 'RBExD';
         pln.model = 'LEM';
     end
-    pln.bioParam = matRad_bioModel(pln.radiationMode, pln.bioOptimization, pln.model);
+    pln.bioParam = matRad_BioModel(pln.radiationMode, pln.bioOptimization, pln.model);
 end
 
 

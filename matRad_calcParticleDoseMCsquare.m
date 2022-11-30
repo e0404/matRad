@@ -53,8 +53,8 @@ end
 
 % Load class variables in pln
 % for calcDoseDirect, this is already done in superior function
-if ~isfield(pln,'propMC') || ~isa(pln.propMC,'MatRad_MCsquareConfig')
-    pln = matRad_cfg.getDefaultClass(pln,'propMC','MatRad_MCsquareConfig');
+if ~isfield(pln,'propMC') || ~isa(pln.propMC,'matRad_MCsquareConfig')
+    pln = matRad_cfg.getDefaultClass(pln,'propMC','matRad_MCsquareConfig');
 end
 
 % load default parameters in case they haven't been set yet
@@ -167,7 +167,7 @@ else
 
     % Calculate MCsquare base data
     % Argument stf is optional, if given, calculation only for energies given in stf
-    MCsquareBDL = MatRad_MCsquareBaseData(machine);
+    MCsquareBDL = matRad_MCsquareBaseData(machine);
 
     %matRad_createMCsquareBaseDataFile(bdFile,machine,1);
     MCsquareBDL = MCsquareBDL.writeMCsquareData([MCsquareFolder filesep 'BDL' filesep bdFile]);

@@ -1,5 +1,5 @@
-classdef MatRad_TopasConfig < handle
-    % MatRad_TopasConfig class definition
+classdef matRad_TopasConfig < handle
+    % matRad_TopasConfig class definition
     %
     %
     % References
@@ -145,7 +145,7 @@ classdef MatRad_TopasConfig < handle
     end
 
     methods
-        function obj = MatRad_TopasConfig()
+        function obj = matRad_TopasConfig()
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
 
             % Default execution paths are set here
@@ -298,7 +298,7 @@ classdef MatRad_TopasConfig < handle
             % Generate baseData using the MCemittanceBaseData constructor
             % Write TOPAS beam properties
             if ~strcmp(machine.meta.radiationMode,'photons')
-                topasBaseData = MatRad_MCemittanceBaseData(machine,stf);
+                topasBaseData = matRad_MCemittanceBaseData(machine,stf);
             else
                 topasBaseData = [];
             end

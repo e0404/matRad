@@ -163,7 +163,7 @@ modelName     = 'none';         % none: for photons, protons, carbon            
                                     % MCN: McNamara-variable RBE model for protons                          WED: Wedenberg-variable RBE model for protons 
                                     % LEM: Local Effect Model for carbon ions
 % retrieve bio model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
+pln.bioParam = matRad_BioModel(pln.radiationMode,quantityOpt, modelName);
 
 
 %% generate steering file

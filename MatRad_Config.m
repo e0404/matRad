@@ -69,7 +69,7 @@ classdef MatRad_Config < handle
 
             %Configure Environment
             obj.configureEnvironment();
-            
+
             %Just to catch people messing with the properties in the file
             if ~isempty(obj.writeLog) && obj.writeLog
                 logFile = [obj.matRadRoot filesep 'matRad.log'];
@@ -84,7 +84,7 @@ classdef MatRad_Config < handle
             %might not be desired by users
             %rmpath(genpath(matRad_cfg.matRadRoot));
         end
-        
+
         function displayToConsole(obj,type,formatSpec,varargin)
             %displayToConsole lowest-level logging function for matRad.
             %   Display to console will be called from the public wrapper
@@ -184,12 +184,12 @@ classdef MatRad_Config < handle
             obj.propMC.ompMC_defaultOutputVariance = false;
 
             % Set default histories for MonteCarlo here if necessary
-%             obj.propMC.defaultNumHistories = 100;
+            %             obj.propMC.defaultNumHistories = 100;
 
             obj.propMC.default_photon_engine = 'matRad_OmpConfig';
-%             obj.propMC.default_photon_engine = 'MatRad_TopasConfig';
-            obj.propMC.default_proton_engine = 'MatRad_MCsquareConfig';
-            obj.propMC.default_carbon_engine = 'MatRad_TopasConfig';
+            %             obj.propMC.default_photon_engine = 'matRad_TopasConfig';
+            obj.propMC.default_proton_engine = 'matRad_MCsquareConfig';
+            obj.propMC.default_carbon_engine = 'matRad_TopasConfig';
 
             % Default settings for TOPAS
             obj.propMC.default_beamProfile_particles = 'biGaussian';
@@ -243,9 +243,9 @@ classdef MatRad_Config < handle
             obj.propMC.defaultNumHistories = 100;
 
             obj.propMC.default_photon_engine = 'matRad_OmpConfig';
-%             obj.propMC.default_photon_engine = 'MatRad_TopasConfig';
-            obj.propMC.default_proton_engine = 'MatRad_MCsquareConfig';
-            obj.propMC.default_carbon_engine = 'MatRad_TopasConfig';
+            %             obj.propMC.default_photon_engine = 'matRad_TopasConfig';
+            obj.propMC.default_proton_engine = 'matRad_MCsquareConfig';
+            obj.propMC.default_carbon_engine = 'matRad_TopasConfig';
 
             obj.defaults.samplingScenarios = 2;
 
@@ -400,9 +400,9 @@ classdef MatRad_Config < handle
                                 case 'ompMC'
                                     configName = 'matRad_OmpConfig';
                                 case 'TOPAS'
-                                    configName = 'MatRad_TopasConfig';
+                                    configName = 'matRad_TopasConfig';
                                 case 'MCsquare'
-                                    configName = 'MatRad_MCsquareConfig';
+                                    configName = 'matRad_MCsquareConfig';
                             end
                             pln.propMC = rmfield(pln.propMC,'engine');
                         else
@@ -423,8 +423,8 @@ classdef MatRad_Config < handle
             elseif nargin == 4
 
             elseif nargin < 4 && ~isstruct(pln.(propName))
-                    % get config name from input field
-                    configName = class(pln.(propName));
+                % get config name from input field
+                configName = class(pln.(propName));
             else
                 obj.dispError('Error in default clasee');
             end
@@ -440,12 +440,14 @@ classdef MatRad_Config < handle
                     case 'matRad_OmpConfig'
                         config = matRad_OmpConfig();
                         pln.propMC.engine = 'ompMC';
-                    case 'MatRad_TopasConfig'
-                        config = MatRad_TopasConfig();
+                    case 'matRad_TopasConfig'
+                        config = matRad_TopasConfig();
                         pln.propMC.engine = 'TOPAS';
-                    case 'MatRad_MCsquareConfig'
-                        config = MatRad_MCsquareConfig();
+                    case 'matRad_MCsquareConfig'
+                        config = matRad_MCsquareConfig();
                         pln.propMC.engine = 'MCsquare';
+                    case 'matRad_HeterogeneityConfig'
+                        config = matRad_HeterogeneityConfig;
                 end
 
                 props = fieldnames(pln.(propName));

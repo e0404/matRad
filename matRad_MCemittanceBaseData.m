@@ -1,6 +1,6 @@
-classdef MatRad_MCemittanceBaseData
+classdef matRad_MCemittanceBaseData
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % MatRad_MCemmitanceBaseData This is the superclass for MonteCarlo base
+    % matRad_MCemmitanceBaseData This is the superclass for MonteCarlo base
     % data calculation
     %
     %
@@ -48,8 +48,8 @@ classdef MatRad_MCemittanceBaseData
     end
     
     methods
-        function obj = MatRad_MCemittanceBaseData(machine,stf)
-            %MatRad_MCsquareBaseData construct an instance of the MCsquare
+        function obj = matRad_MCemittanceBaseData(machine,stf)
+            %matRad_MCsquareBaseData construct an instance of the MCsquare
             %Base data format using a focus index
             
             %stfCompressed states whether monteCarloData are calculated for
