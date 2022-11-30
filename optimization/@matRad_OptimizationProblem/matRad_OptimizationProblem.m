@@ -6,7 +6,8 @@ classdef matRad_OptimizationProblem < handle
     % related quantity
     %
     % References
-    %   -
+    %   [1] https://doi.org/10.1093/imanum/draa038
+    %   [2] https://doi.org/10.1002/mp.14148
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
@@ -24,6 +25,11 @@ classdef matRad_OptimizationProblem < handle
     properties
         BP
         quantityOpt = '';
+        useMaxApprox = 'logsumexp'; %'pnorm'; %'logsumexp'; %'none';
+        p = 30; %Can be chosen larger (closer to maximum) or smaller (closer to mean). Only tested 20 >= p >= 1
+
+        minimumW = NaN;
+        maximumW = NaN;
     end
     
     methods
@@ -49,11 +55,67 @@ classdef matRad_OptimizationProblem < handle
         [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
         
         function lb = lowerBounds(optiProb,w)
-            lb = zeros(size(w));
+            minW = optiProb.minimumW;
+            if isnan(minW)
+                lb = zeros(size(w));
+            elseif isscalar(minW)
+                lb = minW*ones(size(w));
+            elseif isvector(minW) && all(size(minW) == size(w))
+                lb = minW;
+            else
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Minimum Bounds for Optimization Problem could not be set!');
+            end
         end
         
         function ub = upperBounds(optiProb,w)
-            ub = Inf * ones(size(w));
+            maxW = optiProb.maximumW;
+            if isnan(maxW)
+                ub = Inf(size(w));
+            elseif isscalar(maxW)
+                ub = maxW*ones(size(w));
+            elseif isvector(maxW) && all(size(maxW) == size(w))
+                ub = maxW;
+            else
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Maximum Bounds for Optimization Problem could not be set!');
+            end
+        end
+    end
+    
+    methods (Access = protected)
+        function [val,grad] = logSumExp(optiProb,fVals)
+            % [1] stable log sum exp trick
+            [fMax,ixMax] = max(fVals(:));
+            
+            ix = true(numel(fVals),1);
+            ix(ixMax) = 0;
+
+            tmp = exp(fVals - fMax);
+                       
+            expSum = sum(tmp(ix));
+            val = fMax + log1p(expSum); %log1p(x) = Matlab's numerically accurate log(1+x) 
+            
+            grad = tmp ./ (1 + expSum);
+        end
+        
+        function [val,grad] = pNorm(optiProb,fVals,n)
+            % Implemented as proposed in [2] including a normalization for stability of the exponent.
+            if nargout < 3
+                n = numel(fVals);
+            end
+            
+            p = optiProb.p;
+            
+            valMax = max(fVals(:));            
+            tmp = fVals./valMax;            
+            
+            pNormVal = sum(tmp(:).^p)^(1/p);
+            
+            fac = (1/n)^(1/p);
+            val = valMax*fac*pNormVal;
+
+            grad = fac * (tmp ./ pNormVal).^(p-1);
         end
     end                
 end

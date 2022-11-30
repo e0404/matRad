@@ -4,7 +4,6 @@ function ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid, visB
 % call
 %   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool)
 %   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid)
-%   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, visBool)
 %   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid, visBool)
 %
 % input
@@ -76,7 +75,7 @@ for i = 1:numOfSlices
     %Problem due to some CT files using non-standard SpacingBetweenSlices
     
     if isempty(ctInfo(i).SliceThickness)
-        %Print warning ocne
+        %Print warning once
         if sliceThicknessStandard
             matRad_cfg.dispWarning('Non-standard use of SliceThickness Attribute (empty), trying to overwrite with SpacingBetweenSlices');
             sliceThicknessStandard = false;

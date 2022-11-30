@@ -1,4 +1,4 @@
-classdef matRad_BackProjection
+classdef matRad_BackProjection < handle
 % matRad_BackProjection superclass for all backprojection algorithms 
 % used within matRad optimzation processes
 %
@@ -15,7 +15,7 @@ classdef matRad_BackProjection
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
    
-    properties (Access = protected)
+    properties (SetAccess = protected)
         wCache
         wGradCache  %different cache for optimal performance (if multiple evaluations of objective but not gradient are required)
         wGradCacheProb

@@ -32,6 +32,10 @@ function c = matRad_constraintFunctions(optiProb,apertureInfoVec,dij,cst)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% update apertureInfo, bixel weight vector an mapping of leafes to bixels
+if ~isequal(apertureInfoVec,optiProb.apertureInfo.apertureVector)
+    optiProb.apertureInfo = optiProb.matRad_daoVec2ApertureInfo(optiProb.apertureInfo,apertureInfoVec);
+end
 apertureInfo = optiProb.apertureInfo;
 
 % value of constraints for leaves

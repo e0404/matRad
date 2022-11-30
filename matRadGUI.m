@@ -191,6 +191,7 @@ for i = 1:length(handles.Modalities)
 end
 set(handles.popUpMachine,'String',handles.Machines);
 
+%TODO: replace with class crawling
 multScenDummy = matRad_multScen([],'nomScen');
 set(handles.popupmenuScenGen,'String',multScenDummy.AvailableScenCreationTYPE);
 
@@ -310,9 +311,9 @@ try
          setPln(handles);
     end
         
-catch
+catch ME
        handles.State = 0;
-       handles = showError(handles,'GUI OpeningFunc: Could not set or get pln');
+       handles = showError(handles,sprintf('GUI OpeningFunc: Could not set or get pln: %s',ME.message));
 end
 
 % check for dij structure
@@ -1993,14 +1994,27 @@ guidata(handles.figure1,handles);
  
 % fill GUI elements with plan information
 function setPln(handles)
+
+matRad_cfg = MatRad_Config.instance();
+
 pln = evalin('base','pln');
 % sanity check of isoCenter
 if size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) == 1
   pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * pln.propStf.isoCenter(1,:);
 elseif size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) ~= 1
-  error('Isocenter in plan file are incosistent.');
+  matRad_cfg.dispError('Isocenter in plan file are incosistent.');
 end
-set(handles.editBixelWidth,'String',num2str(pln.propStf.bixelWidth));
+
+%Sanity check for the bixelWidth field
+bixelWidth = pln.propStf.bixelWidth;
+
+if isnumeric(bixelWidth) && isscalar(bixelWidth)
+    bixelWidth = num2str(pln.propStf.bixelWidth);
+elseif ~isnumeric(bixelWidth) && ~strcmp(bixelWidth,'field')
+    matRad_cfg.dispError('Invalid bixel width! Must be a scalar number or ''field'' for field-based dose calculation with shapes stored in stf!');
+end   
+
+set(handles.editBixelWidth,'String',bixelWidth);
 set(handles.editFraction,'String',num2str(pln.numOfFractions));
 
 if isfield(pln.propStf,'isoCenter')
@@ -2135,7 +2149,20 @@ if evalin('base','exist(''pln'',''var'')')
     pln = evalin('base','pln');
 end
 
-pln.propStf.bixelWidth      = parseStringAsNum(get(handles.editBixelWidth,'String'),false); % [mm] / also corresponds to lateral spot spacing for particles
+% Special parsing of bixelWidth (since it can also be "field") for imported
+% shapes
+bixelWidth = get(handles.editBixelWidth,'String'); % [mm] / also corresponds to lateral spot spacing for particles
+if strcmp(bixelWidth,'field')
+    pln.propStf.bixelWidth = bixelWidth; 
+else
+    pln.propStf.bixelWidth = parseStringAsNum(bixelWidth,false);
+    if isnan(pln.propStf.bixelWidth)
+        warndlg('Invalid bixel width! Use standard bixel width of 5mm!');
+        pln.propStf.bixelWidth = 5;
+        set(handles.editBixelWidth,'String','5');
+    end
+end
+
 pln.propStf.gantryAngles    = parseStringAsNum(get(handles.editGantryAngle,'String'),true); % [???]
 
 if handles.eduMode
@@ -2591,9 +2618,22 @@ try
         Suffix = '';
     end
     
-    if sum([stf.totalNumOfBixels]) ~= length(resultGUI.(['w' Suffix]))
-        warndlg('weight vector does not corresponding to current steering file');
-        return
+    wField = ['w' Suffix];
+    
+    if ~isfield(resultGUI,wField) 
+        warndlg(['No exact match found for weight vector ''' wField ''' with selected dose insance. Trying common weight vector ''w'' instead!']);
+        wField = 'w';
+    end
+    
+    %Second sanity check to exclude case with no 'w' present
+    if ~isfield(resultGUI,wField)
+        errordlg('No weight vector found for forward dose recalculation!');
+        return;
+    end
+    
+    if sum([stf.totalNumOfBixels]) ~= length(resultGUI.(wField))
+        errordlg('Selected weight vector does not correspond to current steering file (wrong number of entries/bixels!)!');
+        return;
     end
     
     % change isocenter if that was changed and do _not_ recreate steering
@@ -2610,7 +2650,7 @@ try
     end
 
     % recalculate cubes in resultGUI
-    resultGUIreCalc = matRad_calcCubes(resultGUI.(['w' Suffix]),dij,cst);
+    resultGUIreCalc = matRad_calcCubes(resultGUI.(wField),dij);
     
     % delete old variables to avoid confusion
     if isfield(resultGUI,'effect')
@@ -3629,8 +3669,8 @@ if get(handles.popupTypeOfPlot,'Value')==1 %Image view
             cursorText{end+1,1} = ['Cube Index: ' mat2str(cubeIx)];
             %Space Coordinates
             coords = zeros(1,3);
-            coords(1) = cubePos(2)*ct.resolution.y;
-            coords(2) = cubePos(1)*ct.resolution.x;
+            coords(1) = cubePos(2)*ct.resolution.x;
+            coords(2) = cubePos(1)*ct.resolution.y;
             coords(3) = cubePos(3)*ct.resolution.z;            
             cursorText{end+1,1} = ['Space Coordinates: ' mat2str(coords,5) ' mm'];
             
@@ -3969,7 +4009,11 @@ for clIx = 1:numel(classList)
     classNames(:,clIx) = {cl.Name; pName}; %Store class name and display name
 end
 
-numOfObjectives = sum(cellfun(@numel,cst(:,6)));
+if size(cst,2) < 6
+    numOfObjectives = 0;
+else 
+    numOfObjectives = sum(cellfun(@numel,cst(:,6)));
+end
 
 cnt = 0;
 
@@ -4005,7 +4049,12 @@ xPos = xPos + tmp_pos(3) + fieldSep;
 cnt = cnt + 1;
 
 %Create Objectives / Constraints controls
-for i = 1:size(cst,1)   
+for i = 1:size(cst,1)
+    %Safety break in case the 6th column is empty, because it allows us to
+    %run less checks afterwards
+    if numOfObjectives == 0
+        break;
+    end
     if strcmp(cst(i,3),'IGNORED')~=1
         %Compatibility Layer for old objective format
         if isstruct(cst{i,6})
@@ -4253,7 +4302,7 @@ function popupmenuScenGen_Callback(hObject, eventdata, handles)
 % hObject    handle to popupmenuScenGen (see GCBO)
 contents = cellstr(get(hObject,'String'));
 
-if handles.State > 1
+if handles.State >= 1
     ct = evalin('base','ct');
     pln = evalin('base','pln');
     pln.scenGenType = contents{get(hObject,'Value')};

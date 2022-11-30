@@ -1,8 +1,8 @@
 function weightGradient = matRad_objectiveGradient(optiProb,w,dij,cst)
-% matRad IPOPT callback: gradient function for inverse planning 
-% supporting mean dose objectives, EUD objectives, squared overdosage, 
+% matRad IPOPT callback: gradient function for inverse planning
+% supporting mean dose objectives, EUD objectives, squared overdosage,
 % squared underdosage, squared deviation and DVH objectives
-% 
+%
 % call
 %   g = matRad_gradFuncWrapper(optiProb,w,dij,cst)
 %
@@ -37,38 +37,33 @@ function weightGradient = matRad_objectiveGradient(optiProb,w,dij,cst)
 matRad_cfg = MatRad_Config.instance();
 
 % get current dose / effect / RBExDose vector
-%d = matRad_backProjection(w,dij,optiProb);
-optiProb.BP = optiProb.BP.compute(dij,w);
+optiProb.BP.compute(dij,w);
 d = optiProb.BP.GetResult();
 
-%Also get probabilistic quantities (nearly no overhead if empty)
+% also get probabilistic quantities (nearly no overhead if empty)
 [dExp,dOmega] = optiProb.BP.GetResultProb();
 
-%Get the used scenarios
-useScen = optiProb.BP.scenarios;
-
+% get the used scenarios
+useScen  = optiProb.BP.scenarios;
 scenProb = optiProb.BP.scenarioProb;
 
-
-%Retrieve matching 4D scenarios
-fullScen = cell(ndims(d),1);
+% retrieve matching 4D scenarios
+fullScen      = cell(ndims(d),1);
 [fullScen{:}] = ind2sub(size(d),useScen);
-contourScen = fullScen{1};
+contourScen   = fullScen{1};
 
-
-
-doseGradient      = cell(size(dij.physicalDose));
-doseGradient(useScen)	= {zeros(dij.doseGrid.numOfVoxels,1)};
+doseGradient          = cell(size(dij.physicalDose));
+doseGradient(useScen) = {zeros(dij.doseGrid.numOfVoxels,1)};
 
 %For probabilistic optimization
-vOmega        = 0;
+vOmega = 0;
 
 %For COWC
 f_COWC = zeros(size(dij.physicalDose));
 
 % compute objective function for every VOI.
-for  i = 1:size(cst,1)    
-    
+for  i = 1:size(cst,1)
+   
     % Only take OAR or target VOI.
     if ~isempty(cst{i,4}{1}) && ( isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') )
         
@@ -81,12 +76,12 @@ for  i = 1:size(cst,1)
             % only perform gradient computations for objectives
             if isa(objective,'DoseObjectives.matRad_DoseObjective')
                 
-                %dose in VOI
+                % retrieve the robustness type
                 robustness = objective.robustness;
                 
                 % rescale dose parameters to biological optimization quantity if required
                 objective = optiProb.BP.setBiologicalDosePrescriptions(objective,cst{i,5}.alphaX,cst{i,5}.betaX);
-                              
+                
                 switch robustness
                     case 'none' % if conventional opt: just sum objectiveectives of nominal dose
                         for s = 1:numel(useScen)
@@ -100,7 +95,7 @@ for  i = 1:size(cst,1)
                         for s = 1:numel(useScen)
                             ixScen = useScen(s);
                             ixContour = contourScen(s);
-
+                            
                             d_i = d{ixScen}(cst{i,4}{ixContour});
                             
                             doseGradient{ixScen}(cst{i,4}{ixContour}) = doseGradient{ixScen}(cst{i,4}{ixContour}) + ...
@@ -110,19 +105,18 @@ for  i = 1:size(cst,1)
                         
                     case 'PROB' % use the expectation value and the integral variance influence matrix
                         %First check the speficic cache for probabilistic
-                        %opt
-                        if ~exist('delta_exp','var')
-                            delta_exp{1} = zeros(dij.doseGrid.numOfVoxels,1);
+                        if ~exist('doseGradientExp','var')
+                            doseGradientExp{1} = zeros(dij.doseGrid.numOfVoxels,1);
                         end
                         
                         d_i = dExp{1}(cst{i,4}{1});
                         
-                        delta_exp{1}(cst{i,4}{1}) = delta_exp{1}(cst{i,4}{1}) + objective.computeDoseObjectiveGradient(d_i);
+                        doseGradientExp{1}(cst{i,4}{1}) = doseGradientExp{1}(cst{i,4}{1}) + objective.computeDoseObjectiveGradient(d_i);
                         
                         p = objective.penalty/numel(cst{i,4}{1});
-                                                
-                        vOmega = vOmega + p * dOmega{i,1};
                         
+                        vOmega = vOmega + p * dOmega{i,1};
+                    
                     case 'VWWC'  % voxel-wise worst case - takes minimum dose in TARGET and maximum in OAR
                         contourIx = unique(contourScen);
                         if ~isscalar(contourIx)
@@ -165,12 +159,17 @@ for  i = 1:size(cst,1)
                             doseGradient{ixScen}(cst{i,4}{ixContour}) = doseGradient{ixScen}(cst{i,4}{ixContour}) + deltaTmp.*currWcIx;
                         end
                         
-                        
                     case 'VWWC_INV'  % voxel-wise worst case - takes minimum dose in TARGET and maximum in OAR
+                        contourIx = unique(contourScen);
+                        if ~isscalar(contourIx)
+                            % voxels need to be tracked through the 4D CT,
+                            % not yet implemented
+                            matRad_cfg.dispError('4D VWWC optimization is currently not supported');
+                        end
                         
                         % prepare min/max dose vector for voxel-wise worst case
                         if ~exist('d_tmp','var')
-                            d_tmp = [d{:}];
+                            d_tmp = [d{useScen}];
                         end
                         
                         d_Scen = d_tmp(cst{i,4}{1},:);
@@ -207,26 +206,28 @@ for  i = 1:size(cst,1)
                         if ~exist('delta_COWC','var')
                             delta_COWC         = cell(size(doseGradient));
                             delta_COWC(useScen)    = {zeros(dij.doseGrid.numOfVoxels,1)};
-                        end                                                                       
+                        end
                         
-                         for s = 1:numel(useScen)
+                        for s = 1:numel(useScen)
                             ixScen = useScen(s);
                             ixContour = contourScen(s);
                             
                             d_i = d{ixScen}(cst{i,4}{ixContour});
-                            f_COWC(ixScen)                             = f_COWC(ixScen) + objective.computeDoseObjectiveFunction(d_i);
+                            
+                            f_COWC(ixScen) = f_COWC(ixScen) + objective.computeDoseObjectiveFunction(d_i);
                             delta_COWC{ixScen}(cst{i,4}{ixContour}) = delta_COWC{ixScen}(cst{i,4}{ixContour}) + objective.computeDoseObjectiveGradient(d_i);
                         end
                         
                     case 'OWC' % objective-wise worst case consideres the worst individual objective function value
                         %First check the speficic cache for COWC
-                        f_OWC         = zeros(size(doseGradient));
+                        f_OWC = zeros(size(doseGradient));
+                        
                         if ~exist('delta_OWC','var')
-                            delta_OWC         = cell(size(doseGradient));
-                            delta_OWC(useScen)    = {zeros(dij.doseGrid.numOfVoxels,1)};
+                            delta_OWC = cell(size(doseGradient));
+                            delta_OWC(useScen) = {zeros(dij.doseGrid.numOfVoxels,1)};
                         end
                         
-                         for s = 1:numel(useScen)
+                        for s = 1:numel(useScen)
                             ixScen = useScen(s);
                             ixContour = contourScen(s);
                             
@@ -237,36 +238,76 @@ for  i = 1:size(cst,1)
                             delta_OWC{ixScen}(cst{i,4}{ixContour}) = objective.computeDoseObjectiveGradient(d_i);
                             
                         end
+                          
+                        switch optiProb.useMaxApprox
+                            case 'logsumexp'
+                                [~,fGrad] = optiProb.logSumExp(f_OWC);
+                            case 'pnorm'
+                                [~,fGrad] = optiProb.pNorm(f_OWC,numel(useScen));
+                            case 'none'
+                                [~,ix] = max(f_OWC(:));
+                                fGrad = zeros(size(f_OWC));
+                                fGrad(ix) = 1;
+                            case 'otherwise'
+                                matRad_cfg.dispWarning('Unknown maximum approximation desired. Using ''none'' instead.');
+                                [~,ix] = max(f_OWC(:));
+                                fGrad = zeros(size(f_OWC));
+                                fGrad(ix) = 1;
+                        end
                         
-                        [~,ix] = max(f_OWC(:));
-                                               
-                        doseGradient{1}(cst{i,4}{ixContour}) = doseGradient{1}(cst{i,4}{ixContour}) + delta_OWC{ix}(cst{i,4}{ixContour});
-                    
+                        for s = 1:numel(useScen)
+                            ixScen = useScen(s);
+                            ixContour = contourScen(s);
+                            if fGrad(ixScen ) ~= 0
+                                doseGradient{ixScen}(cst{i,4}{ixContour}) = doseGradient{ixScen}(cst{i,4}{ixContour}) + fGrad(ixScen)*delta_OWC{ixScen}(cst{i,4}{ixContour});
+                            end
+                        end
+                        
                     otherwise
                         matRad_cfg.dispError('Robustness setting %s not supported!',objective.robustness);
                         
-                end
-            end
+                end  %robustness type                              
+            end  % objective check         
+        end %objective loop       
+    end %empty check    
+end %cst structure loop
+
+if exist('delta_COWC','var')   
+    switch optiProb.useMaxApprox
+        case 'logsumexp'
+            [~,fGrad] = optiProb.logSumExp(f_COWC);
+        case 'pnorm'
+            [~,fGrad] = optiProb.pNorm(f_COWC,numel(useScen));
+        case 'none'
+            [~,ixCurrWC] = max(f_COWC(:));
+            fGrad = zeros(size(f_COWC));
+            fGrad(ixCurrWC) = 1;
+        case 'otherwise'
+            matRad_cfg.dispWarning('Unknown maximum approximation desired. Using ''none'' instead.');
+            [~,ixCurrWC] = max(f_COWC(:));
+            fGrad = zeros(size(f_COWC));
+            fGrad(ixCurrWC) = 1;
+    end
+    
+    for s = 1:numel(useScen)
+        ixScen = useScen(s);
+        if fGrad(ixScen) ~= 0
+            doseGradient{ixScen} = doseGradient{ixScen} + fGrad(ixScen)*delta_COWC{ixScen};
         end
     end
 end
 
-if exist('delta_COWC','var')
-    [~,ixCurrWC] = max(f_COWC(:));
-    doseGradient{ixCurrWC} = delta_COWC{ixCurrWC};
-end    
-
 weightGradient = zeros(dij.totalNumOfBixels,1);
 
-optiProb.BP = optiProb.BP.computeGradient(dij,doseGradient,w);
+optiProb.BP.computeGradient(dij,doseGradient,w);
 g = optiProb.BP.GetGradient();
 
 for s = 1:numel(useScen)
-    weightGradient = weightGradient + g{useScen(s)};
+   weightGradient = weightGradient + g{useScen(s)};
 end
 
 if vOmega ~= 0
-    optiProb.BP = optiProb.BP.computeGradientProb(dij,doseGradient,vOmega,w);
+    optiProb.BP.computeGradientProb(dij,doseGradientExp,vOmega,w);
     gProb = optiProb.BP.GetGradientProb();
     
     %Only implemented for first scenario now
