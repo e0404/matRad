@@ -31,15 +31,20 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-matRad_cfg =  MatRad_Config.instance();
+% Instance of MatRad_Config class
+matRad_cfg = MatRad_Config.instance();
 
 % initialize waitbar
-figureWait = waitbar(0,'calculate dose influence matrix for particles...');
-% prevent closure of waitbar and show busy state
-set(figureWait,'pointer','watch');
-
+if matRad_cfg.logLevel > 1
+    figureWait = waitbar(0,'calculate dose influence matrix for particles...');
+    % prevent closure of waitbar and show busy state
+    set(figureWait,'pointer','watch');
+end
 
 matRad_cfg.dispInfo('matRad: Particle dose calculation... \n');
+
+% load default parameters in case they haven't been set yet
+pln = matRad_cfg.getDefaultProperties(pln,{'propDoseCalc'});
 
 % init dose calc
 matRad_calcDoseInit;
@@ -131,11 +136,7 @@ if pln.bioParam.bioOpt
     end
 end
 
-if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'calcLET')
-    pln.propDoseCalc.calcLET = matRad_cfg.propDoseCalc.defaultCalcLET;
-end
-
-if  pln.propDoseCalc.calcLET
+if pln.propDoseCalc.calcLET
     if isfield(machine.data,'LET')
 
         letDoseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.totNumShiftScen,pln.multScen.totNumRangeScen);
@@ -159,9 +160,7 @@ end
 
 %Toggles correction of small difference of current SSD to distance used
 %in generation of base data (e.g. phantom surface at isocenter)
-if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc, 'airOffsetCorrection')
-    pln.propDoseCalc.airOffsetCorrection = true;
-
+if pln.propDoseCalc.airOffsetCorrection
     if ~isfield(machine.meta, 'fitAirOffset')
         fitAirOffset = 0; %By default we assume that the base data was fitted to a phantom with surface at isocenter
         matRad_cfg.dispDebug('Asked for correction of Base Data Air Offset, but no value found. Using default value of %f mm.\n',fitAirOffset);
@@ -174,7 +173,7 @@ end
 
 if ~isfield(machine.meta, 'BAMStoIsoDist')
     BAMStoIsoDist = 1000;
-    matRad_cfg.dispWarning('Machine data does not contain BAMStoIsoDist. Using default value of %f mm\n.',BAMStoIsoDist);
+    matRad_cfg.dispWarning('Machine data does not contain BAMStoIsoDist. Using default value of %f mm.',BAMStoIsoDist);
 else
     BAMStoIsoDist = machine.meta.BAMStoIsoDist;
 end
@@ -190,12 +189,14 @@ end
 if pln.bioParam.bioOpt
 
     vTissueIndex = zeros(size(VdoseGrid,1),1);
-    dij.ax       = zeros(dij.doseGrid.numOfVoxels,1);
-    dij.bx       = zeros(dij.doseGrid.numOfVoxels,1);
-    dij.abx      = zeros(dij.doseGrid.numOfVoxels,1);  % alpha beta ratio
+    dij.ax       = zeros(dij.doseGrid.numOfVoxels,ct.numOfCtScen);
+    dij.bx       = zeros(dij.doseGrid.numOfVoxels,ct.numOfCtScen);
+    dij.abx      = zeros(dij.doseGrid.numOfVoxels,ct.numOfCtScen);  % alpha beta ratio
 
     % retrieve photon LQM parameter for the current dose grid voxels
-    [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
+    %     [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,ct.numOfCtScen,VdoseGrid);
+    [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,ct.numOfCtScen);
+
 
     dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
 
@@ -203,7 +204,7 @@ if pln.bioParam.bioOpt
     if strcmp(pln.bioParam.model,'LEM')
         if isfield(machine.data,'alphaX') && isfield(machine.data,'betaX')
 
-            matRad_cfg.dispInfo('\tloading biological base data...');
+            matRad_cfg.dispInfo('loading biological base data...');
 
             for i = 1:size(cst,1)
 
@@ -228,7 +229,7 @@ if pln.bioParam.bioOpt
                 end
             end
 
-            matRad_cfg.dispInfo(' done.\n');
+            matRad_cfg.dispInfo('Done!\n');
 
         else
             matRad_cfg.dispError('base data is incomplement - alphaX and/or betaX is missing');
@@ -243,9 +244,7 @@ if pln.bioParam.bioOpt
 end
 
 % lateral cutoff for raytracing and geo calculations
-if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'geometricCutOff')
-    effectiveLateralCutoff = matRad_cfg.propDoseCalc.defaultGeometricCutOff;
-end
+pln.propDoseCalc.effectiveLateralCutOff = matRad_cfg.propDoseCalc.defaultGeometricCutOff;
 
 if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'lateralCutOff')
     pln.propDoseCalc.lateralCutOff = matRad_cfg.propDoseCalc.defaultLateralCutOff;
@@ -275,22 +274,11 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
         % init beam
         matRad_calcDoseInitBeam;
 
-        % Calculate radiological depth cube for heterogeneity correction
-        if pln.propHeterogeneity.calcHetero
-            matRad_cfg.dispInfo('matRad: calculate radiological depth cube for heterogeneity correction...');
-            heteroCorrDepthV = matRad_rayTracing(stf(i),calcHeteroCorrStruct,VctGrid,rot_coordsV,effectiveLateralCutoff);
-            % HETERO interpolate hetero depth cube to dose grid resolution
-            heteroCorrDepthV = matRad_interpRadDepth...
-                (ct,VctGrid,VdoseGrid,dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z,heteroCorrDepthV);
-            matRad_cfg.dispInfo('done.\n');
-        end
-
         % Determine lateral cutoff
-        matRad_cfg.dispInfo('\tmatRad: calculate lateral cutoff...');
-        cutOffLevel = pln.propDoseCalc.lateralCutOff;
+        matRad_cfg.dispInfo('matRad: calculate lateral cutoff...');
         visBoolLateralCutOff = 0;
-        machine = matRad_calcLateralParticleCutOff(machine,cutOffLevel,stf(i),visBoolLateralCutOff);
-        matRad_cfg.dispInfo('done.\n');
+        machine = matRad_calcLateralParticleCutOff(machine,pln.propDoseCalc.lateralCutOff,stf(i),visBoolLateralCutOff);
+        matRad_cfg.dispInfo('Done!\n');
 
         for j = 1:stf(i).numOfRays % loop over all rays
 
@@ -301,7 +289,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
 
                 maxLateralCutoffDoseCalc = max(machine.data(energyIx).LatCutOff.CutOff);
 
-                if strcmp(pbCalcMode, 'fineSampling')
+                if strcmp(pln.propDoseCalc.fineSampling.calcMode, 'fineSampling')
                     % calculate initial sigma for all bixel on current ray
                     sigmaIniRay = matRad_calcSigmaIni(machine.data,stf(i).ray(j),stf(i).ray(j).SSD);
 
@@ -318,29 +306,26 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                     % function provides the weights for the sub-pencil beams,
                     % their positions and their sigma used for dose calculation
                     for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
-                        if (fineSamplingSigmaSub < sigmaIniRay(k)) && (fineSamplingSigmaSub > 0)
+                        if (pln.propDoseCalc.fineSampling.sigmaSub < sigmaIniRay(k)) && (pln.propDoseCalc.fineSampling.sigmaSub > 0)
                             [finalWeight(:,k), sigmaSub(:,k), posX(:,k), posZ(:,k), numOfSub(:,k)] = ...
-                                matRad_calcWeights(sigmaIniRay(k), fineSamplingMethod, fineSamplingN, fineSamplingSigmaSub);
+                                matRad_calcWeights(sigmaIniRay(k), pln.propDoseCalc.fineSampling.method, pln.propDoseCalc.fineSampling.N, pln.propDoseCalc.fineSampling.sigmaSub);
                         else
-                            if (fineSamplingSigmaSub < 0)
+                            if (pln.propDoseCalc.fineSampling.sigmaSub < 0)
                                 matRad_cfg.dispError('Chosen fine sampling sigma cannot be negative!');
-                            elseif (fineSamplingSigmaSub > sigmaIniRay(k))
+                            elseif (pln.propDoseCalc.fineSampling.sigmaSub > sigmaIniRay(k))
                                 matRad_cfg.dispError('Chosen fine sampling sigma is too high for defined plan!');
                             end
                         end
                     end
                 else
-                    % Ray tracing for beam i and ray j
-                    [ix,radialDist_sq] = matRad_calcGeoDists(rot_coordsVdoseGrid, ...
+                    % Ray tracing for beam i and ray j without explicitly
+                    % obtaining lateral distances
+                    [ix,currRadialDist_sq,~,~,~,~] = matRad_calcGeoDists(rot_coordsVdoseGrid, ...
                         stf(i).sourcePoint_bev, ...
                         stf(i).ray(j).targetPoint_bev, ...
                         machine.meta.SAD, ...
                         find(~isnan(radDepthVdoseGrid{1})), ...
                         maxLateralCutoffDoseCalc);
-                end
-
-                if pln.propHeterogeneity.calcHetero
-                    heteroCorrDepths = heteroCorrDepthV{1}(ix);
                 end
 
                 % just use tissue classes of voxels found by ray tracer
@@ -349,7 +334,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 else
                     vTissueIndex_j = zeros(size(ix));
                 end
-
+                             
                 for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
 
                     counter       = counter + 1;
@@ -361,10 +346,11 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                             matRad_progress(bixelsPerBeam/max(1,round(stf(i).totalNumOfBixels/200)),...
                                 floor(stf(i).totalNumOfBixels/max(1,round(stf(i).totalNumOfBixels/200))));
                         end
-                    end
-                    % update waitbar only 100 times if it is not closed
-                    if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(figureWait)
-                        waitbar(counter/dij.totalNumOfBixels,figureWait);
+
+                        % update waitbar only 100 times if it is not closed
+                        if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(figureWait)
+                            waitbar(counter/dij.totalNumOfBixels,figureWait);
+                        end
                     end
 
                     % remember beam and bixel number
@@ -372,23 +358,23 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                         dij.beamNum(counter)  = i;
                         dij.rayNum(counter)   = j;
                         dij.bixelNum(counter) = k;
-
+                        
                         % extract MU data if present (checks for downwards compatability)
                         minMU = 0;
                         if isfield(stf(i).ray(j),'minMU')
                             minMU = stf(i).ray(j).minMU(k);
                         end
-
+    
                         maxMU = Inf;
                         if isfield(stf(i).ray(j),'maxMU')
                             maxMU = stf(i).ray(j).maxMU(k);
                         end
-
+    
                         numParticlesPerMU = 1e6;
                         if isfield(stf(i).ray(j),'numParticlesPerMU')
                             numParticlesPerMU = stf(i).ray(j).numParticlesPerMU(k);
                         end
-
+    
                         dij.minMU(counter,1) = minMU;
                         dij.maxMU(counter,1) = maxMU;
                         dij.numParticlesPerMU(counter,1) = numParticlesPerMU;
@@ -414,16 +400,15 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                     % interpolations in matRad_calcParticleDoseBixel() and avoid extrapolations.
                     offsetRadDepth = machine.data(energyIx).offset - (stf(i).ray(j).rangeShifter(k).eqThickness + dR);
 
-
                     % calculate projected coordinates for fine sampling of
                     % each beamlet
-                    if strcmp(pbCalcMode, 'fineSampling')
+                    if strcmp(pln.propDoseCalc.fineSampling.calcMode, 'fineSampling')
                         projCoords = matRad_projectOnComponents(VdoseGrid(ix), size(radDepthsMat{1}), stf(i).sourcePoint_bev,...
                             stf(i).ray(j).targetPoint_bev, stf(i).isoCenter,...
                             [dij.doseGrid.resolution.x dij.doseGrid.resolution.y dij.doseGrid.resolution.z],...
                             -posX(:,k), -posZ(:,k), rotMat_system_T);
                     end
-
+                    
                     % We do now loop over scenarios that alter voxel
                     % values, e.g. range scenarios or ct phases, as we can
                     % vectorize computations more efficiently than when
@@ -431,7 +416,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                     for ctScen = 1:pln.multScen.numOfCtScen
                         if any(any(pln.multScen.scenMask(ctScen,:,:))) %We don't need it if no scenario for this ct scenario is relevant
                             % precomputations for fine-sampling
-                            if strcmp(pbCalcMode, 'fineSampling')
+                            if strcmp(pln.propDoseCalc.fineSampling.calcMode, 'fineSampling')   
                                 % compute radial distances relative to pencil beam
                                 % component
                                 currRadialDist_sq = reshape(bsxfun(@plus,latDistsX,posX(:,k)'),[],1,numOfSub(k)).^2 + reshape(bsxfun(@plus,latDistsZ,posZ(:,k)'),[],1,numOfSub(k)).^2;
@@ -457,9 +442,9 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                 end
 
                                 % find depth depended lateral cut off
-                                if cutOffLevel >= 1
+                                if pln.propDoseCalc.lateralCutOff >= 1
                                     currIx = currRadDepths <= machine.data(energyIx).depths(end) + offsetRadDepth;
-                                elseif cutOffLevel < 1 && cutOffLevel > 0
+                                elseif pln.propDoseCalc.lateralCutOff < 1 && pln.propDoseCalc.lateralCutOff > 0
                                     % perform rough 2D clipping
                                     currIx = currRadDepths <= machine.data(energyIx).depths(end) + offsetRadDepth & ...
                                         currRadialDist_sq <= max(machine.data(energyIx).LatCutOff.CutOff.^2);
@@ -472,174 +457,111 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                 else
                                     matRad_cfg.dispError('Lateral Cut-Off must be a value between 0 and 1!')
                                 end
-
+                                
                                 % empty bixels may happen during recalculation of error
                                 % scenarios -> skip to next bixel
                                 if ~any(currIx)
-                                    %Create empty container entries for
-                                    %this bixel
                                     doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(dij.doseGrid.numOfVoxels,1);
-                                    if isfield(dij,'mLETDose')
-                                        letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(dij.doseGrid.numOfVoxels,1);
-                                    end
-                                    if pln.bioParam.bioOpt
-                                        alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix(currIx)),1,bixelAlpha.*bixelDose,dij.doseGrid.numOfVoxels,1);
-                                        betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen}  = sparse(VdoseGrid(ix(currIx)),1,sqrt(bixelBeta).*bixelDose,dij.doseGrid.numOfVoxels,1);
-                                    end
-
-                                    %skip bixel
                                     continue;
                                 end
-
-                                % adjust radDepth according to range shifter
+                                
                                 if  pln.propDoseCalc.airOffsetCorrection
-                                    currRadDepths(currIx) = currRadDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness + dR;
-
+                                    currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness + dR;
+                                    
                                     %sanity check due to negative corrections
                                     currRadDepths(currRadDepths < 0) = 0;
                                 else
-                                    currRadDepths(currIx) = currRadDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness;
+                                    currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness;
                                 end
-
-                                if pln.propHeterogeneity.calcHetero
-                                    currHeteroCorrDepths = heteroCorrDepths(currIx);
-                                end
-
+                                
                                 % calculate initial focus sigma
                                 sigmaIni = matRad_interp1(machine.data(energyIx).initFocus.dist(stf(i).ray(j).focusIx(k),:)', ...
                                     machine.data(energyIx).initFocus.sigma(stf(i).ray(j).focusIx(k),:)',stf(i).ray(j).SSD);
                                 sigmaIni_sq = sigmaIni^2;
-
+                                
                                 % consider range shifter for protons if applicable
                                 if stf(i).ray(j).rangeShifter(k).eqThickness > 0 && strcmp(pln.radiationMode,'protons')
-
+                                    
                                     % compute!
                                     sigmaRashi = matRad_calcSigmaRashi(machine.data(energyIx), ...
                                         stf(i).ray(j).rangeShifter(k), ...
                                         stf(i).ray(j).SSD);
-
+                                    
                                     % add to initial sigma in quadrature
                                     sigmaIni_sq = sigmaIni_sq +  sigmaRashi^2;
+                                    
                                 end
-
-                                if strcmp(pbCalcMode, 'fineSampling')
-                                    % initialise empty dose array
-                                    totalDose = zeros(size(currIx,1),1);
-
-                                    if isfield(dij,'mLETDose')
-                                        % calculate particle LET for bixel k on ray j of beam i
-                                        depths = machine.data(energyIx).depths + machine.data(energyIx).offset;
-                                        totalLET = zeros(size(currIx,1),1);
-                                    end
-
-                                    % run over components
-                                    for c = 1:numOfSub(k)
-                                        tmpDose = zeros(size(currIx,1),1);
-                                        bixelDose = finalWeight(c,k).*matRad_calcParticleDoseBixel(...
-                                            currRadDepths(currIx(:,:,c),1,c), ...
-                                            currRadialDist_sq(currIx(:,:,c),:,c), ...
-                                            sigmaSub(k)^2, ...
-                                            machine.data(energyIx));
-
-                                        tmpDose(currIx(:,:,c)) = bixelDose;
-                                        totalDose = totalDose + tmpDose;
-
-                                        if isfield(dij,'mLETDose')
-                                            tmpLET = zeros(size(currIx,1),1);
-                                            tmpLET(currIx(:,:,c)) = matRad_interp1(depths,machine.data(energyIx).LET,currRadDepths(currIx(:,:,c),1,c));
-                                            totalLET = totalLET + tmpLET;
-                                        end
-                                    end
-
-                                    doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix),1,totalDose,dij.doseGrid.numOfVoxels,1);
-                                    if isfield(dij,'mLETDose')
-                                        letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix),1,totalDose.*totalLET,dij.doseGrid.numOfVoxels,1);
-                                    end
-                                else
-                                    % calculate particle dose for bixel k on ray j of beam i
-                                    if pln.propHeterogeneity.calcHetero
-                                        bixelDose = matRad_calcParticleDoseBixel(...
-                                            currRadDepths, ...
-                                            radialDist_sq(currIx), ...
-                                            sigmaIni_sq, ...
-                                            machine.data(energyIx), ...
-                                            currHeteroCorrDepths, ...
-                                            pln.propHeterogeneity.type, ...
-                                            pln.propHeterogeneity.modulateBioDose, vTissueIndex_j(currIx));
-                                    else
-                                        bixelDose = matRad_calcParticleDoseBixel(...
-                                            currRadDepths, ...
-                                            radialDist_sq(currIx), ...
-                                            sigmaIni_sq, ...
-                                            machine.data(energyIx));
-                                    end
-
-
-                                    % dij sampling is exluded for particles until we investigated the influence of voxel sampling for particles
-                                    %relDoseThreshold   =  0.02;   % sample dose values beyond the relative dose
-                                    %Type               = 'dose';
-                                    %[currIx,bixelDose] = matRad_DijSampling(currIx,bixelDose,radDepths(currIx),radialDist_sq(currIx),Type,relDoseThreshold);
-
-                                    % save dose for every bixel in cell array
-                                    doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix(currIx)),1,bixelDose.physDose,dij.doseGrid.numOfVoxels,1);
-
-
-                                    if isfield(dij,'mLETDose')
-                                        % calculate particle LET for bixel k on ray j of beam i
-                                        depths   = machine.data(energyIx).depths + machine.data(energyIx).offset;
-                                        bixelLET = matRad_interp1(depths,machine.data(energyIx).LET,currRadDepths);
-                                        bixelLET(isnan(bixelLET)) = 0;
-                                        % save LET for every bixel in cell array
-                                        letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix(currIx)),1,bixelLET.*bixelDose.physDose,dij.doseGrid.numOfVoxels,1);
-                                    end
+                                
+                                % calculate particle dose for bixel k on ray j of beam i
+                                bixelDose = matRad_calcParticleDoseBixel(...
+                                    currRadDepths, ...
+                                    radialDist_sq(currIx), ...
+                                    sigmaIni_sq, ...
+                                    machine.data(energyIx));
+                                
+                                
+                                % dij sampling is exluded for particles until we investigated the influence of voxel sampling for particles
+                                %relDoseThreshold   =  0.02;   % sample dose values beyond the relative dose
+                                %Type               = 'dose';
+                                %[currIx,bixelDose] = matRad_DijSampling(currIx,bixelDose,radDepths(currIx),radialDist_sq(currIx),Type,relDoseThreshold);
+                                
+                                % save dose for every bixel in cell array
+                                doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix(currIx)),1,bixelDose,dij.doseGrid.numOfVoxels,1);
+                                
+                                
+                                if isfield(dij,'mLETDose')
+                                    % calculate particle LET for bixel k on ray j of beam i
+                                    depths   = machine.data(energyIx).depths + machine.data(energyIx).offset;
+                                    bixelLET = matRad_interp1(depths,machine.data(energyIx).LET,currRadDepths);
+                                    bixelLET(isnan(bixelLET)) = 0;
+                                    % save LET for every bixel in cell array
+                                    letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix(currIx)),1,bixelLET.*bixelDose,dij.doseGrid.numOfVoxels,1);
                                 end
-
+                                
                                 % save alpha_p and beta_p radiosensititvy parameter for every bixel in cell array
                                 if pln.bioParam.bioOpt
-
-                                    if all(isfield(bixelDose,{'Z_Aij','Z_Bij'}))
-                                        bixelAlphaDose =  bixelDose.L .* bixelDose.Z_Aij;
-                                        bixelBetaDose  =  bixelDose.L .* bixelDose.Z_Bij;
-                                    else
-                                        [bixelAlpha,bixelBeta] = pln.bioParam.calcLQParameter(currRadDepths,machine.data(energyIx),vTissueIndex_j(currIx,:),dij.ax(VdoseGrid(ix(currIx))),...
-                                            dij.bx(VdoseGrid(ix(currIx))),dij.abx(VdoseGrid(ix(currIx))));
-
-                                        bixelAlphaDose =  bixelDose.physDose .* bixelAlpha;
-                                        bixelBetaDose  =  bixelDose.physDose .* sqrt(bixelBeta);
-                                    end
-
+                                    
+                                    [bixelAlpha,bixelBeta] = pln.bioParam.calcLQParameter(currRadDepths,machine.data(energyIx),vTissueIndex_j(currIx,:),dij.ax(VdoseGrid(ix(currIx))),...
+                                        dij.bx(VdoseGrid(ix(currIx))),...
+                                        dij.abx(VdoseGrid(ix(currIx))));  
+                                    
                                     bixelAlpha(isnan(bixelAlpha)) = 0;
                                     bixelBeta(isnan(bixelBeta)) = 0;
-
-                                    alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix(currIx)),1,bixelAlphaDose,dij.doseGrid.numOfVoxels,1);
-                                    betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen}  = sparse(VdoseGrid(ix(currIx)),1,bixelBetaDose,dij.doseGrid.numOfVoxels,1);
-
+                                    
+                                    alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix(currIx)),1,bixelAlpha.*bixelDose,dij.doseGrid.numOfVoxels,1);
+                                    betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen}  = sparse(VdoseGrid(ix(currIx)),1,sqrt(bixelBeta).*bixelDose,dij.doseGrid.numOfVoxels,1);
+                                    
                                 end
+                                
+                                
+                                
                             end
                         end
                     end
-
+                    
                     matRad_calcDoseFillDij;
-
+                    
                 end % end bixels per ray
-
+                
+                
+                
             end
-
+            
         end %  end ray loop
-
+        
     end % end beam loop
-
-
+    
+    
     % undo manipulation of isocenter
     for k = 1:length(stf)
         stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(shiftScen,:);
     end
-
+    
 end % end shift scenario loop
 
 dij = matRad_cleanDijScenarios(dij,pln,cst);
 
-%Close Waitbar
-if ishandle(figureWait)
+% Close Waitbar
+if exist('figureWait') && ishandle(figureWait)
     delete(figureWait);
 end

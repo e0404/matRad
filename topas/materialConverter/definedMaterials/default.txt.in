@@ -1,0 +1,5 @@
+# -- Define Materials used for HU
+sv:Ge/Patient/SchneiderElements = 5 "Hydrogen" "Oxygen" "Nitrogen" "Carbon" "Phosphorus"
+uv:Ge/Patient/SchneiderMaterialsWeight1 = 5 0.0 0.23479269 0.76508170 0.00012561 0.0
+uv:Ge/Patient/SchneiderMaterialsWeight2 = 5 0.111894 0.888106 0.0 0.0 0.0
+dv:Ge/Patient/SchneiderMaterialMeanExcitationEnergy = 2 85.7 78.0 eV
