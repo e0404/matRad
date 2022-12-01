@@ -103,6 +103,15 @@ if exist('wInit','var')
     %do nothing as wInit was passed to the function
     matRad_cfg.dispInfo('chosen provided wInit!\n');
 
+    % Write ixDose which is needed for the optimizer
+    if pln.bioParam.bioOpt
+        dij.ixDose  = dij.bx~=0;
+
+        %pre-calculations
+        dij.gamma             = zeros(dij.doseGrid.numOfVoxels,dij.numOfScenarios);
+        dij.gamma(dij.ixDose) = dij.ax(dij.ixDose)./(2*dij.bx(dij.ixDose));
+    end
+
 elseif strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'protons')
     % check if a constant RBE is defined - if not use 1.1
     if ~isfield(dij,'RBE')
