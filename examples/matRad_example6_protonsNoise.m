@@ -63,7 +63,7 @@ modelName    = 'constRBE';
 quantityOpt  = 'RBExD'; 
 
 % retrieve bio model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
+pln.bioParam = matRad_BioModel(pln.radiationMode,quantityOpt,modelName);
 
 % retrieve scenarios for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,'nomScen');  % optimize on the nominal scenario
@@ -140,7 +140,8 @@ resultGUI_noise = matRad_calcDoseDirectMC(ct_manip,stf,pln,cst,resultGUI.w);
 % pln.propDoseCalc.fineSampling stores parameters defining the fine 
 % sampling simulation
 
-pln.propDoseCalc.fineSampling.method = 'russo'; 
+pln.propDoseCalc.fineSampling.calcMode = 'fineSampling';
+% pln.propDoseCalc.fineSampling.method = 'russo'; 
     % method for weight calculation, availabe methods:
     %   'russo'
     %   'fitCircle', supports N = 2,3 and 8

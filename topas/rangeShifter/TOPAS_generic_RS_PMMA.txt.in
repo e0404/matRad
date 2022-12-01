@@ -1,0 +1,11 @@
+s:Ge/RangeShifter/Parent	= "Nozzle"
+s:Ge/RangeShifter/Type		= "TsBox"
+s:Ge/RangeShifter/Material	= "Lucite"
+s:Ge/RangeShifter/HLX     	= 500 mm
+s:Ge/RangeShifter/HLY     	= 500 mm
+s:Ge/RangeShifter/HLZ     	= Tf/Beam/RangeShifterWidth/Value
+s:Ge/RangeShifter/TransX  	= 2 * TF/Beam/RangeShifterOut * Ge/RangeShifter/HLX 
+s:Ge/RangeShifter/TransY  	= 0 mm
+s:Ge/RangeShifter/TransZ  	= Sim/SourceToRangeShifterDistance
+
+

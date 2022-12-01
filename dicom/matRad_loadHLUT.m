@@ -38,15 +38,19 @@ end
 
 % if possible -> file standard out of dicom tags
 try
-    
-    hlutFileName = '';
-    particle     = pln.radiationMode;
-    manufacturer = ct.dicomInfo.Manufacturer;
-    model        = ct.dicomInfo.ManufacturerModelName;
-    convKernel   = ct.dicomInfo.ConvolutionKernel;
-    
-    hlutFileName = strcat(manufacturer, '-', model, '-ConvolutionKernel-',...
-        convKernel, '_', particle, '.hlut');
+    if exist('ct','var') && isfield(ct,'dicomInfo') && isfield(ct.dicomInfo,'hlut')
+        hlutFileName = '';
+        hlutFileName = [ct.dicomInfo.hlut,'.hlut'];
+    else
+        hlutFileName = '';
+        particle     = pln.radiationMode;
+        manufacturer = ct.dicomInfo.Manufacturer;
+        model        = ct.dicomInfo.ManufacturerModelName;
+        convKernel   = ct.dicomInfo.ConvolutionKernel;
+        
+        hlutFileName = strcat(manufacturer, '-', model, '-ConvolutionKernel-',...
+            convKernel, '_', particle, '.hlut');
+    end
     
     % check whether fileNames used '-' or '_' instead of blanks
     hlutFileCell{1} = hlutFileName;

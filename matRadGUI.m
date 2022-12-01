@@ -2186,7 +2186,7 @@ pln.machine         = contents{get(handles.popUpMachine,'Value')};
 cellBioModel        = get(handles.popMenuBioOpt,'String');
 cellQuantOpt        = get(handles.popMenuQuantOpt,'String');
 
-pln.bioParam        = matRad_bioModel(pln.radiationMode, cellQuantOpt{get(handles.popMenuQuantOpt,'Value'),1}, cellBioModel{get(handles.popMenuBioOpt,'Value'),1}); 
+pln.bioParam        = matRad_BioModel(pln.radiationMode, cellQuantOpt{get(handles.popMenuQuantOpt,'Value'),1}, cellBioModel{get(handles.popMenuBioOpt,'Value'),1}); 
 pln.bioOptimization = pln.bioParam.identifier;
 
 scenGenTypes    = get(handles.popupmenuScenGen,'String');
@@ -3751,7 +3751,7 @@ function popMenuBioOpt_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-bioParam = matRad_bioModel('photons','physicalDose','none');
+bioParam = matRad_BioModel('photons','physicalDose','none');
 set(hObject,'String',bioParam.AvailableModels);
 
 
@@ -3762,7 +3762,7 @@ function popMenuQuantOpt_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-bioParam = matRad_bioModel('photons','physicalDose','none');
+bioParam = matRad_BioModel('photons','physicalDose','none');
 set(hObject,'String',bioParam.AvailableQuantitiesForOpt);
 
 % --- Executes on selection change in popMenuQuantOpt.

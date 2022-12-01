@@ -56,7 +56,7 @@ pln.propDoseCalc.calcLET = 0;
 pln.numOfFractions        = 30;
 pln.propStf.gantryAngles  = [90 270];
 pln.propStf.couchAngles   = [0 0];
-pln.propStf.bixelWidth    = 5;
+pln.propStf.bixelWidth    = 3;
 pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 pln.propOpt.runDAO        = 0;
@@ -70,7 +70,7 @@ modelName     = 'constRBE';         % none: for photons, protons, carbon        
                                     % MCN: McNamara-variable RBE model for protons                          WED: Wedenberg-variable RBE model for protons 
                                     % LEM: Local Effect Model for carbon ions
 % retrieve bio model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
+pln.bioParam = matRad_BioModel(pln.radiationMode,quantityOpt, modelName);
 
 % retrieve scenarios for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,'nomScen');

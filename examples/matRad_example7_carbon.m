@@ -41,8 +41,9 @@ load('LIVER.mat');
 % need to define a treatment machine to correctly load the corresponding 
 % base data. matRad features generic base data in the file
 % 'carbon_Generic.mat'; consequently the machine has to be set accordingly
-pln.radiationMode = 'carbon';            
-pln.machine       = 'Generic';
+pln.radiationMode = 'carbon';          
+% use fitted APM here to include LET
+pln.machine       = 'Generic_APM';
 
 %%
 % Define the biological optimization model for treatment planning along
@@ -70,7 +71,7 @@ pln.propOpt.runDAO        = 0;
 pln.propOpt.runSequencing = 0;
 
 % retrieve bio model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
+pln.bioParam = matRad_BioModel(pln.radiationMode,quantityOpt,modelName);
 
 % retrieve scenarios for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,'nomScen'); % optimize on the nominal scenario                                            
@@ -125,7 +126,7 @@ imagesc(resultGUI.LET(:,:,slice)),colorbar, colormap(jet);
 % biological effect instead of the RBE-weighted dose. Therefore we have to
 % change the optimization mode and restart the optimization
 quantityOpt  = 'effect'; 
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
+pln.bioParam = matRad_BioModel(pln.radiationMode,quantityOpt,modelName);
 
 resultGUI_effect = matRad_fluenceOptimization(dij,cst,pln);
 

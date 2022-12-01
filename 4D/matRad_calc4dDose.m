@@ -84,12 +84,12 @@ elseif any(strcmp(pln.bioParam.model,{'MCN','LEM','WED'}))
     resultGUI.accSqrtBetaDose = matRad_doseAcc(ct,resultGUI.phaseSqrtBetaDose, cst, 'DDM');
 
     % only compute where we have biologically defined tissue
-    ix = dij.alphaX~=0; 
+    ix = dij.ax(:,1)~=0; 
     
     resultGUI.accEffect = resultGUI.accAlphaDose + resultGUI.accSqrtBetaDose.^2;
     
     resultGUI.accRBExD     = zeros(ct.cubeDim);
-    resultGUI.accRBExD(ix) = ((sqrt(dij.alphaX(ix).^2 + 4 .* dij.betaX(ix) .* resultGUI.accEffect(ix)) - dij.alphaX(ix))./(2.*dij.betaX(ix)));
+    resultGUI.accRBExD(ix) = ((sqrt(dij.ax(ix).^2 + 4 .* dij.bx(ix) .* resultGUI.accEffect(ix)) - dij.ax(ix))./(2.*dij.bx(ix)));
         
 end
 

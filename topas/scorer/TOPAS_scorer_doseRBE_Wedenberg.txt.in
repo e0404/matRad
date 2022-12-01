@@ -1,0 +1,21 @@
+# Wedenberg proton RBE scorer
+
+s:Sc/WedenbergAlpha/Quantity                  = "RBE_Wedenberg"
+s:Sc/WedenbergAlpha/Component                 = "Patient"
+s:Sc/WedenbergAlpha/OutputQuantity            = "alpha"
+d:Sc/WedenbergAlpha/PrescribedDose            = Sc/PrescribedDose Gy
+sv:Sc/WedenbergAlpha/CellLines                = Sc/CellLines
+b:Sc/WedenbergAlpha/SimultaneousExposure      = Sc/SimultaneousExposure
+s:Sc/WedenbergAlpha/OutputType                = Sim/DoseScorerOutputType
+s:Sc/WedenbergAlpha/OutputFile                = Sim/ScoreLabel + "_alpha_WED"
+s:Sc/WedenbergAlpha/IfOutputFileAlreadyExists = "Overwrite"
+
+s:Sc/WedenbergBeta/Quantity                  = "RBE_Wedenberg"
+s:Sc/WedenbergBeta/Component                 = "Patient"
+s:Sc/WedenbergBeta/OutputQuantity            = "beta"
+d:Sc/WedenbergBeta/PrescribedDose            = Sc/PrescribedDose Gy
+sv:Sc/WedenbergBeta/CellLines                = Sc/CellLines
+b:Sc/WedenbergBeta/SimultaneousExposure      = Sc/SimultaneousExposure
+s:Sc/WedenbergBeta/OutputType                = Sim/DoseScorerOutputType
+s:Sc/WedenbergBeta/OutputFile                = Sim/ScoreLabel + "_beta_WED"
+s:Sc/WedenbergBeta/IfOutputFileAlreadyExists = "Overwrite"
