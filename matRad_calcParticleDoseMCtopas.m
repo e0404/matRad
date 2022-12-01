@@ -167,7 +167,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
     % later are stored in the MCparam file that is stored in the folder. The folder is generated in the working
     % directory and the matRad_plan*.txt file can be manually called with TOPAS.
     if pln.propMC.externalCalculation
-        matRad_cfg.dispInfo(['TOPAS simulation skipped for external calculation\nFiles have been written to: "',replace(pln.propMC.workingDir,'\','\\'),'"']);
+        matRad_cfg.dispInfo(['TOPAS simulation skipped for external calculation\nFiles have been written to: "',replace(pln.propMC.workingDir,'\','\\'),'"\n']);
     else
         for ctScen = 1:ct.numOfCtScen
             for beamIx = 1:numel(stf)

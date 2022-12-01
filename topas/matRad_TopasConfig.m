@@ -33,7 +33,7 @@ classdef matRad_TopasConfig < handle
 
         %Simulation parameters
         numThreads = 0; %number of used threads, 0 = max number of threads (= num cores)
-        numOfRuns = 1; %Default number of runs / batches
+        numOfRuns = 5; %Default number of runs / batches
         modeHistories = 'num'; %'frac';
         fracHistories = 1e-4; %Fraction of histories to compute
 
@@ -2083,9 +2083,9 @@ classdef matRad_TopasConfig < handle
                                 case 'default'
                                     fprintf(fID,'%s \n',materials{1:end-1});
                                     ExcitationEnergies = str2double(strsplit(materials{end}(strfind(materials{end},'=')+4:end-3)));
-                                    if ~isempty(strfind(lower(obj.materialConverter.addSection),lower('lung')))
+                                    if any(cellfun(@(teststr) ~isempty(strfind(lower(obj.materialConverter.addSection),lower(teststr))), {'lung','sampled'}))
                                         fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight%i = 5 0.10404040 0.75656566 0.03131313 0.10606061 0.00202020\n',length(materials)-2);
-                                        ExcitationEnergies = [ExcitationEnergies' 75.3];
+                                        ExcitationEnergies = [ExcitationEnergies 75.3];
                                     end
                                     fprintf(fID,['dv:Ge/Patient/SchneiderMaterialMeanExcitationEnergy = %i',repmat(' %.6g',1,numel(ExcitationEnergies)),' eV\n'],numel(ExcitationEnergies),ExcitationEnergies);
                                 case 'advanced'
