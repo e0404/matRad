@@ -33,10 +33,15 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 
 matRad_cfg =  MatRad_Config.instance();
 
-% initialize waitbar
-figureWait = waitbar(0,'calculate dose influence matrix for particles...');
-% prevent closure of waitbar and show busy state
-set(figureWait,'pointer','watch');
+% initialize waitbar, but catch exceptions (e.g. in Octave when run from cmd-line)
+figureWait = [];
+try
+    figureWait = waitbar(0,'calculate dose influence matrix for particles...');
+    % prevent closure of waitbar and show busy state
+    set(figureWait,'pointer','watch');
+catch
+    figureWait = [];
+end
 
 
 matRad_cfg.dispInfo('matRad: Particle dose calculation... \n');
