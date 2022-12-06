@@ -146,6 +146,11 @@ elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'alpha')), fieldna
 end
 
 %% Final processing
+% Add heterogeneity field to resultGUI
+if isfield(dij,'heterogeneityCorrection') && dij.heterogeneityCorrection
+    resultGUI.heterogeneityCorrection = true;
+end
+
 % Remove suffix for RBExD if there's only one available
 if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'alpha')), fieldnames(dij))) && isfield(dij,'RBE_models') && length(dij.RBE_models) == 1
     % Get fieldnames that include the specified RBE model

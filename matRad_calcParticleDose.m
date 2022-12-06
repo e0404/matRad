@@ -329,7 +329,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                 end
 
                 if isfield(pln,'propHeterogeneity') && pln.propHeterogeneity.calcHetero
-                    heteroCorrDepths = heteroCorrDepthV{1}(ix);
+                    heteroCorrDepths = heteroCorrDepthV{shiftScen}(ix);
                 end
 
                 % just use tissue classes of voxels found by ray tracer
@@ -627,6 +627,11 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
 end % end shift scenario loop
 
 dij = matRad_cleanDijScenarios(dij,pln,cst);
+
+% Set flag for completed heterogeneity correction
+if isfield(pln,'propHeterogeneity') && pln.propHeterogeneity.calcHetero
+    dij.heterogeneityCorrection = true;
+end
 
 % Close Waitbar
 if exist('figureWait') && ishandle(figureWait)
