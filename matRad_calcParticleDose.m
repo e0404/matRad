@@ -83,16 +83,20 @@ if isfield(pln,'propHeterogeneity') && pln.propHeterogeneity.calcHetero
     end
 
     % get all lung voxel indices
-    lungVoxel = unique(cell2mat([cstOriginal{cellfun(@(teststr) ~isempty(strfind(lower(teststr),'lung')), cst(:,2)),4}]'),'rows');
+    lungVoxel = [cstOriginal{cellfun(@(teststr) ~isempty(strfind(lower(teststr),'lung')), cst(:,2)),4}];
+    lungVoxel = cellfun(@unique, lungVoxel, 'UniformOutput', false);
+    
+    % Setup empty "heteroCorrStruct", basically a CT struct with just lung
     calcHeteroCorrStruct.cubeDim = ct.cubeDim;
     calcHeteroCorrStruct.numOfCtScen = pln.multScen.numOfCtScen;
     calcHeteroCorrStruct.resolution = ct.resolution;
 
-    calcHeteroCorrStruct.cube = cell(1,ctScen);
+    calcHeteroCorrStruct.cube = cell(1,pln.multScen.numOfCtScen);
     calcHeteroCorrStruct.cube(1,:) = {zeros(ct.cubeDim)};
 
+    % Fill the new cube(s) with only lung
     for shiftScen = 1:pln.multScen.numOfCtScen
-        calcHeteroCorrStruct.cube{shiftScen}(lungVoxel(:,shiftScen)) = ct.cube{shiftScen}(lungVoxel(:,shiftScen));
+        calcHeteroCorrStruct.cube{shiftScen}(lungVoxel{shiftScen}) = ct.cube{shiftScen}(lungVoxel{shiftScen});
     end
 end
 

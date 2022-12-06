@@ -61,10 +61,10 @@ if strcmp(accMethod,'DDM')
         error('dose accumulation via direct dose mapping (DDM) requires pull dvfs');
     end    
          
-    [Y,X,Z] = meshgrid(yGridVec,xGridVec,zGridVec);
+    [X,Y,Z] = meshgrid(xGridVec,yGridVec,zGridVec);
 
     % TODODODODODOD %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    ix = [];1:prod(ct.cubeDim);%[];
+    ix = [];
     for i = 1:size(cst,1)
         ix = unique([ix; cst{i,4}{1}]);
     end
@@ -74,13 +74,17 @@ if strcmp(accMethod,'DDM')
         dvf_x_i = squeeze(ct.dvf{1,i}(1,:,:,:))/ct.resolution.x;
         dvf_y_i = squeeze(ct.dvf{1,i}(2,:,:,:))/ct.resolution.y;
         dvf_z_i = squeeze(ct.dvf{1,i}(3,:,:,:))/ct.resolution.z;
-        
-        d_ref = matRad_interp3(yGridVec,xGridVec',zGridVec,phaseCubes{i}, ...
+
+        d_ref = matRad_interp3(yGridVec,xGridVec,zGridVec,permute(phaseCubes{i},[2 1 3]), ...
                          Y(ix) + dvf_y_i(ix), ...     
                          X(ix) + dvf_x_i(ix), ... 
                          Z(ix) + dvf_z_i(ix), ...
                          'linear',0);  
 
+        % Plot phase Dose for debugging
+        %         doseRef = zeros(ct.cubeDim);
+        %         doseRef(ix) = d_ref;
+        %figure, imagesc(doseRef(:,:,ct.cubeDim(3)/2));
         dAcc(ix) = dAcc(ix) + d_ref;
       
     end
