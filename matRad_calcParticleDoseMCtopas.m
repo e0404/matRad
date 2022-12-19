@@ -145,7 +145,7 @@ end
 
 currDir = cd;
 
-for scenarioIx = pln.multScen.totNumScen
+for scenarioIx = 1:pln.multScen.totNumScen
     
     % manipulate isocenter
     for k = 1:length(stf)
