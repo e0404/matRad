@@ -34,12 +34,18 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 % Instance of MatRad_Config class
 matRad_cfg = MatRad_Config.instance();
 
-% initialize waitbar
-if matRad_cfg.logLevel > 1
-    figureWait = waitbar(0,'calculate dose influence matrix for particles...');
-    % prevent closure of waitbar and show busy state
-    set(figureWait,'pointer','watch');
+% initialize waitbar, but catch exceptions (e.g. in Octave when run from cmd-line)
+figureWait = [];
+if matRad_cfg.logLevel > 1           
+    try
+        figureWait = waitbar(0,'calculate dose influence matrix for particles...');
+        % prevent closure of waitbar and show busy state
+        set(figureWait,'pointer','watch');
+    catch
+        figureWait = [];
+    end
 end
+
 
 matRad_cfg.dispInfo('matRad: Particle dose calculation... \n');
 
@@ -187,11 +193,19 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %loop over all shift scenarios
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%TODO we should simplify this whole thing and not separate range and shift
+%scenarios like this for marginal computational benefit of reusing the same
+%raytracing 
+
 for shiftScen = 1:pln.multScen.totNumShiftScen
+
+    %Find first instance of the shift to select the shift values
+    ixShiftScen = find(pln.multScen.linearMask(:,2) == shiftScen,1);
 
     % manipulate isocenter
     for k = 1:length(stf)
-        stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(shiftScen,:);
+        stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(ixShiftScen,:);
     end
 
     if pln.multScen.totNumShiftScen > 1
@@ -364,12 +378,13 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                             end
                         end
                         for rangeShiftScen = 1:pln.multScen.totNumRangeScen
+                            rangeScenIx = find(pln.multScen.linearMask(:,3) == rangeShiftScen,1);
                             if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
 
                                 % manipulate radDepthCube for range scenarios
-                                if pln.multScen.relRangeShift(rangeShiftScen) ~= 0 || pln.multScen.absRangeShift(rangeShiftScen) ~= 0
-                                    currRadDepths = radDepths * (1+pln.multScen.relRangeShift(rangeShiftScen)) +... % rel range shift
-                                        pln.multScen.absRangeShift(rangeShiftScen);                                   % absolute range shift
+                                if pln.multScen.relRangeShift(rangeScenIx) ~= 0 || pln.multScen.absRangeShift(rangeScenIx) ~= 0
+                                    currRadDepths = radDepths * (1+pln.multScen.relRangeShift(rangeScenIx)) +... % rel range shift
+                                        pln.multScen.absRangeShift(rangeScenIx);                                   % absolute range shift
                                     currRadDepths(currRadDepths < 0) = 0;
                                 else
                                     currRadDepths = radDepths;
@@ -527,7 +542,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
 
     % undo manipulation of isocenter
     for k = 1:length(stf)
-        stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(shiftScen,:);
+        stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(ixShiftScen,:);
     end
 
 end % end shift scenario loop
@@ -535,6 +550,6 @@ end % end shift scenario loop
 dij = matRad_cleanDijScenarios(dij,pln,cst);
 
 % Close Waitbar
-if exist('figureWait') && ishandle(figureWait)
+if ishandle(figureWait)
     delete(figureWait);
 end

@@ -121,75 +121,75 @@ pln.propMC.absCalibrationFactor = pln.propMC.absCalibrationFactor * (pln.propStf
 %% Create beamlet source
 scenCount = 0;
 
-for shiftScen = 1:pln.multScen.totNumShiftScen
+for scenarioIx = 1:pln.multScen.totNumScen
     
     % manipulate isocenter
     for k = 1:length(stf)
-        stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(shiftScen,:);
+        stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(scenarioIx,:);
     end
+
+    ctScen = pln.multScen.linearMask(scenarioIx,1);
+    shiftScen = pln.multScen.linearMask(scenarioIx,2);
+    rangeShiftScen = pln.multScen.linearMask(scenarioIx,3);
     
-    for ctScen = 1:pln.multScen.numOfCtScen
-        for rangeShiftScen = 1:pln.multScen.totNumRangeScen
-            if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
-                scenCount = scenCount + 1;
-                
-                % load ompMC source
-                ompMCsource = pln.propMC.getOmpMCsource(dij.numOfBeams,dij.totalNumOfBixels,stf);
-                
-                % Book keeping for dij
-                counter = 0;
-                for i = 1:dij.numOfBeams
-                    for j = 1:stf(i).numOfRays
-                        counter = counter + 1;
-                        dij.beamNum(counter)  = i;
-                        dij.rayNum(counter)   = j;
-                        dij.bixelNum(counter) = j;
-                    end
-                end
-                    
-                %% Call the OmpMC interface
-                if pln.multScen.totNumScen > 1
-                    matRad_cfg.dispInfo('matRad: OmpMC photon dose calculation... \n');
-                else
-                    matRad_cfg.dispInfo('matRad: OmpMC photon dose calculation for scenario %d of %d... \n',scenCount,pln.multScen.totNumScen);
-                end
-                
-                ompMCgeo.isoCenter = [stf(:).isoCenter];
-                
-                %Call the Monte Carlo simulation and catch  possible mex
-                %interface issues       
-                try
-                    %If we ask for variance, a field in the dij will be filled
-                    if pln.propMC.outputVariance
-                        [dij.physicalDose{ctScen,shiftScen,rangeShiftScen},dij.physicalDose_MCvar{ctScen,shiftScen,rangeShiftScen}] = omc_matrad(cubeRho{ctScen},cubeMatIx{ctScen},ompMCgeo,ompMCsource,ompMCoptions);
-                    else
-                        [dij.physicalDose{ctScen,shiftScen,rangeShiftScen}] = omc_matrad(cubeRho{ctScen},cubeMatIx{ctScen},ompMCgeo,ompMCsource,ompMCoptions);
-                    end
-                catch ME
-                    errorString = [ME.message '\nThis error was thrown by the MEX-interface of ompMC.\nMex interfaces can raise compatability issues which may be resolved by compiling them by hand directly on your particular system.'];
-                    matRad_cfg.dispError(errorString);
-                end
-                
-                dij.physicalDose{ctScen,shiftScen,rangeShiftScen} = dij.physicalDose{ctScen,shiftScen,rangeShiftScen} * pln.propMC.absCalibrationFactor;
-                if isfield(dij,'physicalDose_MCvar')
-                    dij.physicalDose_MCvar{s} = dij.physicalDose_MCvar{ctScen,shiftScen,rangeShiftScen} * pln.propMC.absCalibrationFactor^2;
-                end
-            
-                matRad_cfg.dispInfo('matRad: MC photon dose calculation done!\n');
-                
-                try
-                    % wait 0.1s for closing all waitbars
-                    allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar');
-                    delete(allWaitBarFigures);
-                    pause(0.1);
-                catch
-                end
-                
-                % manipulate isocenter back
-                for k = 1:length(stf)
-                    stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(shiftScen,:);
-                end
+    if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
+        scenCount = scenCount + 1;
+        
+        % load ompMC source
+        ompMCsource = pln.propMC.getOmpMCsource(dij.numOfBeams,dij.totalNumOfBixels,stf);
+        
+        % Book keeping for dij
+        counter = 0;
+        for i = 1:dij.numOfBeams
+            for j = 1:stf(i).numOfRays
+                counter = counter + 1;
+                dij.beamNum(counter)  = i;
+                dij.rayNum(counter)   = j;
+                dij.bixelNum(counter) = j;
             end
+        end
+            
+        %% Call the OmpMC interface
+        if pln.multScen.totNumScen > 1
+            matRad_cfg.dispInfo('matRad: OmpMC photon dose calculation... \n');
+        else
+            matRad_cfg.dispInfo('matRad: OmpMC photon dose calculation for scenario %d of %d... \n',scenCount,pln.multScen.totNumScen);
+        end
+        
+        ompMCgeo.isoCenter = [stf(:).isoCenter];
+        
+        %Call the Monte Carlo simulation and catch  possible mex
+        %interface issues       
+        try
+            %If we ask for variance, a field in the dij will be filled
+            if pln.propMC.outputVariance
+                [dij.physicalDose{ctScen,shiftScen,rangeShiftScen},dij.physicalDose_MCvar{ctScen,shiftScen,rangeShiftScen}] = omc_matrad(cubeRho{ctScen},cubeMatIx{ctScen},ompMCgeo,ompMCsource,ompMCoptions);
+            else
+                [dij.physicalDose{ctScen,shiftScen,rangeShiftScen}] = omc_matrad(cubeRho{ctScen},cubeMatIx{ctScen},ompMCgeo,ompMCsource,ompMCoptions);
+            end
+        catch ME
+            errorString = [ME.message '\nThis error was thrown by the MEX-interface of ompMC.\nMex interfaces can raise compatability issues which may be resolved by compiling them by hand directly on your particular system.'];
+            matRad_cfg.dispError(errorString);
+        end
+        
+        dij.physicalDose{ctScen,shiftScen,rangeShiftScen} = dij.physicalDose{ctScen,shiftScen,rangeShiftScen} * pln.propMC.absCalibrationFactor;
+        if isfield(dij,'physicalDose_MCvar')
+            dij.physicalDose_MCvar{s} = dij.physicalDose_MCvar{ctScen,shiftScen,rangeShiftScen} * pln.propMC.absCalibrationFactor^2;
+        end
+    
+        matRad_cfg.dispInfo('matRad: MC photon dose calculation done!\n');
+        
+        try
+            % wait 0.1s for closing all waitbars
+            allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar');
+            delete(allWaitBarFigures);
+            pause(0.1);
+        catch
+        end
+        
+        % manipulate isocenter back
+        for k = 1:length(stf)
+            stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(scenarioIx,:);
         end
     end
 end

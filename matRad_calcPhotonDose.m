@@ -154,10 +154,13 @@ end
 
 matRad_cfg.dispInfo('matRad: Photon dose calculation...\n');
 for shiftScen = 1:pln.multScen.totNumShiftScen
+
+    %Find first instance of the shift to select the shift values
+    ixShiftScen = find(pln.multScen.linearMask(:,2) == shiftScen,1);
     
     % manipulate isocenter
     for k = 1:numel(stf)
-        stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(shiftScen,:);
+        stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(ixShiftScen,:);
     end
     
     counter = 0;
@@ -283,7 +286,9 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
             
             for ctScen = 1:pln.multScen.numOfCtScen
                 for rangeShiftScen = 1:pln.multScen.totNumRangeScen
-                    
+
+                    rangeScenIx = find(pln.multScen.linearMask(:,3) == rangeShiftScen,1);
+
                     if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
                         % Ray tracing for beam i and bixel j
                         [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = matRad_calcGeoDists(rot_coordsVdoseGrid, ...
@@ -303,10 +308,10 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                         % manipulate radDepthCube for range scenarios
                         manipulatedRadDepthCube = radDepthVdoseGrid{ctScen}(ix);
                         
-                        if pln.multScen.relRangeShift(rangeShiftScen) ~= 0 || pln.multScen.absRangeShift(rangeShiftScen) ~= 0
+                        if pln.multScen.relRangeShift(rangeScenIx) ~= 0 || pln.multScen.absRangeShift(rangeScenIx) ~= 0
                             manipulatedRadDepthCube = manipulatedRadDepthCube +...                                                                                % original cube
-                                radDepthVdoseGrid{ctScen}(ix)*pln.multScen.relRangeShift(rangeShiftScen) +... % rel range shift
-                                pln.multScen.absRangeShift(rangeShiftScen);                                                      % absolute range shift
+                                radDepthVdoseGrid{ctScen}(ix)*pln.multScen.relRangeShift(rangeScenIx) +... % rel range shift
+                                pln.multScen.absRangeShift(rangeScenIx);                                                      % absolute range shift
                             manipulatedRadDepthCube(manipulatedRadDepthCube < 0) = 0;
                         end
                         
@@ -340,7 +345,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
     
     % undo manipulation of isocenter
     for k = 1:length(stf)
-        stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(shiftScen,:);
+        stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(ixShiftScen,:);
     end
     
 end
