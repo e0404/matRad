@@ -145,74 +145,74 @@ end
 
 currDir = cd;
 
-for shiftScen = 1:pln.multScen.totNumShiftScen
+for scenarioIx = pln.multScen.totNumScen
     
     % manipulate isocenter
     for k = 1:length(stf)
-        stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(shiftScen,:);
-    end    
+        stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(scenarioIx,:);
+    end
+
+    ctScen = pln.multScen.linearMask(scenarioIx,1);
+    shiftScen = pln.multScen.linearMask(scenarioIx,2);
+    rangeShiftScen = pln.multScen.linearMask(scenarioIx,3);
     
-    for ctScen = 1:pln.multScen.numOfCtScen
-        for rangeShiftScen = 1:pln.multScen.totNumRangeScen
-            if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
-                
-                %Overwrite CT (TEMPORARY - we should use 4D calculation in
-                %TOPAS here)
-                ctR.cubeHU = cubeHUresampled(ctScen);
-                ctR.cube = cubeResampled(ctScen);
-                                
-                topasConfig.writeAllFiles(ctR,pln,stf,topasBaseData,w);                
-                
-                % Run simulation for current scenario
-                cd(topasConfig.workingDir);
-                
-                for beamIx = 1:numel(stf)
-                    for runIx = 1:topasConfig.numOfRuns       
-                        fname = sprintf('%s_field%d_run%d',topasConfig.label,beamIx,runIx);
-                        topasCall = sprintf('%s %s.txt > %s.out 2> %s.err',topasConfig.topasExecCommand,fname,fname,fname);
-                        if topasConfig.parallelRuns
-                            finishedFiles{runIx} = sprintf('%s.finished',fname);
-                            delete(finishedFiles{runIx});
-                            topasCall = [topasCall '; touch ' finishedFiles{runIx} ' &'];
-                        end
-                        matRad_cfg.dispInfo('Calling TOPAS: %s\n',topasCall);
-                        [status,cmdout] = system(topasCall,'-echo');
-                        if status == 0
-                            matRad_cfg.dispInfo('TOPAS simulation completed succesfully\n');
-                        else
-                            matRad_cfg.dispError('TOPAS simulation exited with error code %d\n',status);
-                        end
-                    end
+    if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
 
-                    if topasConfig.parallelRuns
-                        runsFinished = false;
-                        pause('on');
-                        while ~runsFinished
-                            pause(1);
-                            fin = cellfun(@(f) exist(f,'file'),finishedFiles);
-                            runsFinished = all(fin);
-                        end
-                    end
+        %Overwrite CT (TEMPORARY - we should use 4D calculation in
+        %TOPAS here)
+        ctR.cubeHU = cubeHUresampled(ctScen);
+        ctR.cube = cubeResampled(ctScen);
 
+        topasConfig.writeAllFiles(ctR,pln,stf,topasBaseData,w);
+
+        % Run simulation for current scenario
+        cd(topasConfig.workingDir);
+
+        for beamIx = 1:numel(stf)
+            for runIx = 1:topasConfig.numOfRuns
+                fname = sprintf('%s_field%d_run%d',topasConfig.label,beamIx,runIx);
+                topasCall = sprintf('%s %s.txt > %s.out 2> %s.err',topasConfig.topasExecCommand,fname,fname,fname);
+                if topasConfig.parallelRuns
+                    finishedFiles{runIx} = sprintf('%s.finished',fname);
+                    delete(finishedFiles{runIx});
+                    topasCall = [topasCall '; touch ' finishedFiles{runIx} ' &'];
                 end
-                
-                cd(currDir);
-                
-                %% Simulation finished - read out volume scorers from topas simulation
-                
-                topasCubes = matRad_readTopasData(topasConfig.workingDir);
-
-                fnames = fieldnames(topasCubes);
-                dij.MC_tallies = fnames;
-                for f = 1:numel(fnames)
-                    dij.(fnames{f}){1} = sum(w)*reshape(topasCubes.(fnames{f}),[],1);
+                matRad_cfg.dispInfo('Calling TOPAS: %s\n',topasCall);
+                [status,cmdout] = system(topasCall,'-echo');
+                if status == 0
+                    matRad_cfg.dispInfo('TOPAS simulation completed succesfully\n');
+                else
+                    matRad_cfg.dispError('TOPAS simulation exited with error code %d\n',status);
                 end
             end
+
+            if topasConfig.parallelRuns
+                runsFinished = false;
+                pause('on');
+                while ~runsFinished
+                    pause(1);
+                    fin = cellfun(@(f) exist(f,'file'),finishedFiles);
+                    runsFinished = all(fin);
+                end
+            end
+
+        end
+
+        cd(currDir);
+
+        %% Simulation finished - read out volume scorers from topas simulation
+
+        topasCubes = matRad_readTopasData(topasConfig.workingDir);
+
+        fnames = fieldnames(topasCubes);
+        dij.MC_tallies = fnames;
+        for f = 1:numel(fnames)
+            dij.(fnames{f}){1} = sum(w)*reshape(topasCubes.(fnames{f}),[],1);
         end
     end
     
     % manipulate isocenter back
     for k = 1:length(stf)
-        stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(shiftScen,:);
+        stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(scenarioIx,:);
     end
 end

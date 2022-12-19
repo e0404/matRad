@@ -223,139 +223,140 @@ useCornersSCD = true; %false -> use ISO corners
 
 scenCount = 0;
 
-for shiftScen = 1:pln.multScen.totNumShiftScen
+for scenarioIx = pln.multScen.totNumScen
     
     % manipulate isocenter
     for k = 1:length(stf)
-        stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(shiftScen,:);
+        stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(scenarioIx,:);
     end
+
+    ctScen = pln.multScen.linearMask(scenarioIx,1);
+    shiftScen = pln.multScen.linearMask(scenarioIx,2);
+    rangeShiftScen = pln.multScen.linearMask(scenarioIx,3);
     
-    for ctScen = 1:pln.multScen.numOfCtScen
-        for rangeShiftScen = 1:pln.multScen.totNumRangeScen
-            if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
-                scenCount = scenCount + 1;
+    if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
+        scenCount = scenCount + 1;
+        
+        numOfBixels = [stf(:).numOfRays];
+        beamSource = zeros(dij.numOfBeams, 3);
+        
+        bixelCorner = zeros(dij.totalNumOfBixels,3);
+        bixelSide1 = zeros(dij.totalNumOfBixels,3);
+        bixelSide2 = zeros(dij.totalNumOfBixels,3);
+        
+        counter = 0;
+        
+        for i = 1:dij.numOfBeams % loop over all beams
+            
+            % define beam source in physical coordinate system in cm
+            beamSource(i,:) = (stf(i).sourcePoint + stf(i).isoCenter)/10;
+            
+            for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
                 
-                numOfBixels = [stf(:).numOfRays];
-                beamSource = zeros(dij.numOfBeams, 3);
+                counter = counter + 1;
                 
-                bixelCorner = zeros(dij.totalNumOfBixels,3);
-                bixelSide1 = zeros(dij.totalNumOfBixels,3);
-                bixelSide2 = zeros(dij.totalNumOfBixels,3);
+                dij.beamNum(counter)  = i;
+                dij.rayNum(counter)   = j;
+                dij.bixelNum(counter) = j;
                 
-                counter = 0;
-                
-                for i = 1:dij.numOfBeams % loop over all beams
-                    
-                    % define beam source in physical coordinate system in cm
-                    beamSource(i,:) = (stf(i).sourcePoint + stf(i).isoCenter)/10;
-                    
-                    for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
-                        
-                        counter = counter + 1;
-                        
-                        dij.beamNum(counter)  = i;
-                        dij.rayNum(counter)   = j;
-                        dij.bixelNum(counter) = j;
-                        
-                        if useCornersSCD
-                            beamletCorners = stf(i).ray(j).rayCorners_SCD;
-                        else
-                            beamletCorners = stf(i).ray(j).beamletCornersAtIso;
-                        end
-                        
-                        % get bixel corner and delimiting vectors.
-                        % a) change coordinate system (Isocenter cs-> physical cs) and units mm -> cm
-                        currCorner = (beamletCorners(1,:) + stf(i).isoCenter) ./ scale;
-                        bixelCorner(counter,:) = currCorner;
-                        bixelSide1(counter,:) = (beamletCorners(2,:) + stf(i).isoCenter) ./ scale - currCorner;
-                        bixelSide2(counter,:) = (beamletCorners(4,:) + stf(i).isoCenter) ./ scale - currCorner;
-                        
-                        if visBool
-                            for k = 1:4
-                                currCornerVis = (beamletCorners(k,:) + stf(i).isoCenter)/10;
-                                % rays connecting source and ray corner
-                                plot3([beamSource(i,1) currCornerVis(1)],[beamSource(i,2) currCornerVis(2)],[beamSource(i,3) currCornerVis(3)],'b')
-                                % connection between corners
-                                lRayCorner = (beamletCorners(mod(k,4) + 1,:) + stf(i).isoCenter)/10;
-                                plot3([lRayCorner(1) currCornerVis(1)],[lRayCorner(2) currCornerVis(2)],[lRayCorner(3) currCornerVis(3)],'r')
-                            end
-                        end
-                        
-                    end
-                    
+                if useCornersSCD
+                    beamletCorners = stf(i).ray(j).rayCorners_SCD;
+                else
+                    beamletCorners = stf(i).ray(j).beamletCornersAtIso;
                 end
                 
-                ompMCsource.nBeams = dij.numOfBeams;
-                ompMCsource.iBeam = dij.beamNum(:);
-                
-                % Switch x and y directions to match ompMC cs.
-                ompMCsource.xSource = beamSource(:,2);
-                ompMCsource.ySource = beamSource(:,1);
-                ompMCsource.zSource = beamSource(:,3);
-                
-                ompMCsource.nBixels = sum(numOfBixels(:));
-                ompMCsource.xCorner = bixelCorner(:,2);
-                ompMCsource.yCorner = bixelCorner(:,1);
-                ompMCsource.zCorner = bixelCorner(:,3);
-                
-                ompMCsource.xSide1 = bixelSide1(:,2);
-                ompMCsource.ySide1 = bixelSide1(:,1);
-                ompMCsource.zSide1 = bixelSide1(:,3);
-                
-                ompMCsource.xSide2 = bixelSide2(:,2);
-                ompMCsource.ySide2 = bixelSide2(:,1);
-                ompMCsource.zSide2 = bixelSide2(:,3);
+                % get bixel corner and delimiting vectors.
+                % a) change coordinate system (Isocenter cs-> physical cs) and units mm -> cm
+                currCorner = (beamletCorners(1,:) + stf(i).isoCenter) ./ scale;
+                bixelCorner(counter,:) = currCorner;
+                bixelSide1(counter,:) = (beamletCorners(2,:) + stf(i).isoCenter) ./ scale - currCorner;
+                bixelSide2(counter,:) = (beamletCorners(4,:) + stf(i).isoCenter) ./ scale - currCorner;
                 
                 if visBool
-                    plot3(ompMCsource.ySource,ompMCsource.xSource,ompMCsource.zSource,'rx')
-                end
-                
-                %% Call the OmpMC interface
-                if pln.multScen.totNumScen > 1
-                    matRad_cfg.dispInfo('matRad: OmpMC photon dose calculation... \n');
-                else
-                    matRad_cfg.dispInfo('matRad: OmpMC photon dose calculation for scenario %d of %d... \n',scenCount,pln.multScen.totNumScen);
-                end
-                
-                ompMCgeo.isoCenter = [stf(:).isoCenter];
-                
-                %Call the Monte Carlo simulation and catch  possible mex
-                %interface issues       
-                try
-                    %If we ask for variance, a field in the dij will be filled
-                    if outputVariance
-                        [dij.physicalDose{ctScen,shiftScen,rangeShiftScen},dij.physicalDose_MCvar{ctScen,shiftScen,rangeShiftScen}] = omc_matrad(cubeRho{ctScen},cubeMatIx{ctScen},ompMCgeo,ompMCsource,ompMCoptions);
-                    else
-                        [dij.physicalDose{ctScen,shiftScen,rangeShiftScen}] = omc_matrad(cubeRho{ctScen},cubeMatIx{ctScen},ompMCgeo,ompMCsource,ompMCoptions);
+                    for k = 1:4
+                        currCornerVis = (beamletCorners(k,:) + stf(i).isoCenter)/10;
+                        % rays connecting source and ray corner
+                        plot3([beamSource(i,1) currCornerVis(1)],[beamSource(i,2) currCornerVis(2)],[beamSource(i,3) currCornerVis(3)],'b')
+                        % connection between corners
+                        lRayCorner = (beamletCorners(mod(k,4) + 1,:) + stf(i).isoCenter)/10;
+                        plot3([lRayCorner(1) currCornerVis(1)],[lRayCorner(2) currCornerVis(2)],[lRayCorner(3) currCornerVis(3)],'r')
                     end
-                catch ME
-                    errorString = [ME.message '\nThis error was thrown by the MEX-interface of ompMC.\nMex interfaces can raise compatability issues which may be resolved by compiling them by hand directly on your particular system.'];
-                    matRad_cfg.dispError(errorString);
                 end
                 
-                dij.physicalDose{ctScen,shiftScen,rangeShiftScen} = dij.physicalDose{ctScen,shiftScen,rangeShiftScen} * absCalibrationFactor;
-                if isfield(dij,'physicalDose_MCvar')
-                    dij.physicalDose_MCvar{s} = dij.physicalDose_MCvar{ctScen,shiftScen,rangeShiftScen} * absCalibrationFactor^2;
-                end
-                
-                ompMCgeo.isoCenter = [stf(:).isoCenter];
-            
-                matRad_cfg.dispInfo('matRad: MC photon dose calculation done!\n');
-                
-                try
-                    % wait 0.1s for closing all waitbars
-                    allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar');
-                    delete(allWaitBarFigures);
-                    pause(0.1);
-                catch
-                end
-                
-                % manipulate isocenter back
-                for k = 1:length(stf)
-                    stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(shiftScen,:);
-                end
             end
+            
         end
+        
+        ompMCsource.nBeams = dij.numOfBeams;
+        ompMCsource.iBeam = dij.beamNum(:);
+        
+        % Switch x and y directions to match ompMC cs.
+        ompMCsource.xSource = beamSource(:,2);
+        ompMCsource.ySource = beamSource(:,1);
+        ompMCsource.zSource = beamSource(:,3);
+        
+        ompMCsource.nBixels = sum(numOfBixels(:));
+        ompMCsource.xCorner = bixelCorner(:,2);
+        ompMCsource.yCorner = bixelCorner(:,1);
+        ompMCsource.zCorner = bixelCorner(:,3);
+        
+        ompMCsource.xSide1 = bixelSide1(:,2);
+        ompMCsource.ySide1 = bixelSide1(:,1);
+        ompMCsource.zSide1 = bixelSide1(:,3);
+        
+        ompMCsource.xSide2 = bixelSide2(:,2);
+        ompMCsource.ySide2 = bixelSide2(:,1);
+        ompMCsource.zSide2 = bixelSide2(:,3);
+        
+        if visBool
+            plot3(ompMCsource.ySource,ompMCsource.xSource,ompMCsource.zSource,'rx')
+        end
+        
+        %% Call the OmpMC interface
+        if pln.multScen.totNumScen > 1
+            matRad_cfg.dispInfo('matRad: OmpMC photon dose calculation... \n');
+        else
+            matRad_cfg.dispInfo('matRad: OmpMC photon dose calculation for scenario %d of %d... \n',scenCount,pln.multScen.totNumScen);
+        end
+        
+        ompMCgeo.isoCenter = [stf(:).isoCenter];
+        
+        %Call the Monte Carlo simulation and catch  possible mex
+        %interface issues       
+        try
+            %If we ask for variance, a field in the dij will be filled
+            if outputVariance
+                [dij.physicalDose{ctScen,shiftScen,rangeShiftScen},dij.physicalDose_MCvar{ctScen,shiftScen,rangeShiftScen}] = omc_matrad(cubeRho{ctScen},cubeMatIx{ctScen},ompMCgeo,ompMCsource,ompMCoptions);
+            else
+                [dij.physicalDose{ctScen,shiftScen,rangeShiftScen}] = omc_matrad(cubeRho{ctScen},cubeMatIx{ctScen},ompMCgeo,ompMCsource,ompMCoptions);
+            end
+        catch ME
+            errorString = [ME.message '\nThis error was thrown by the MEX-interface of ompMC.\nMex interfaces can raise compatability issues which may be resolved by compiling them by hand directly on your particular system.'];
+            matRad_cfg.dispError(errorString);
+        end
+        
+        dij.physicalDose{ctScen,shiftScen,rangeShiftScen} = dij.physicalDose{ctScen,shiftScen,rangeShiftScen} * absCalibrationFactor;
+        if isfield(dij,'physicalDose_MCvar')
+            dij.physicalDose_MCvar{s} = dij.physicalDose_MCvar{ctScen,shiftScen,rangeShiftScen} * absCalibrationFactor^2;
+        end
+        
+        ompMCgeo.isoCenter = [stf(:).isoCenter];
+    
+        matRad_cfg.dispInfo('matRad: MC photon dose calculation done!\n');
+        
+        try
+            % wait 0.1s for closing all waitbars
+            allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar');
+            delete(allWaitBarFigures);
+            pause(0.1);
+        catch
+        end
+        
+    end
+
+    % manipulate isocenter back
+    for k = 1:length(stf)
+        stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(scenarioIx,:);
     end
 end
 

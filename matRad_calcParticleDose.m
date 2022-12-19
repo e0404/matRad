@@ -188,11 +188,20 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %loop over all shift scenarios
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%TODO we should simplify this whole thing and not separate range and shift
+%scenarios like this for marginal computational benefit of reusing the same
+%raytracing 
+
 for shiftScen = 1:pln.multScen.totNumShiftScen
+    
+    %Find first instance of the shift to select the shift values
+    ixShiftScen = find(pln.multScen.linearMask(:,2) == shiftScen,1);
+
     
     % manipulate isocenter
     for k = 1:length(stf)
-        stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(shiftScen,:);
+        stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(ixShiftScen,:);
     end
     
     if pln.multScen.totNumShiftScen > 1
@@ -364,12 +373,13 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                             end
                         end
                         for rangeShiftScen = 1:pln.multScen.totNumRangeScen
+                            rangeScenIx = find(pln.multScen.linearMask(:,3) == rangeShiftScen,1);
                             if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
 
                                 % manipulate radDepthCube for range scenarios
-                                if pln.multScen.relRangeShift(rangeShiftScen) ~= 0 || pln.multScen.absRangeShift(rangeShiftScen) ~= 0
-                                    currRadDepths = radDepths * (1+pln.multScen.relRangeShift(rangeShiftScen)) +... % rel range shift
-                                        pln.multScen.absRangeShift(rangeShiftScen);                                   % absolute range shift
+                                if pln.multScen.relRangeShift(rangeScenIx) ~= 0 || pln.multScen.absRangeShift(rangeScenIx) ~= 0
+                                    currRadDepths = radDepths * (1+pln.multScen.relRangeShift(rangeScenIx)) +... % rel range shift
+                                        pln.multScen.absRangeShift(rangeScenIx);                                   % absolute range shift
                                     currRadDepths(currRadDepths < 0) = 0;
                                 else
                                     currRadDepths = radDepths;
@@ -525,7 +535,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
     
     % undo manipulation of isocenter
     for k = 1:length(stf)
-        stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(shiftScen,:);
+        stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(ixShiftScen,:);
     end
     
 end % end shift scenario loop

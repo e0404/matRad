@@ -134,7 +134,7 @@ for i = 1:numOfFields
             if MCsquareConfig.Beamlet_Mode
                 n = stf(i).energyLayer(j).numOfPrimaries(k);
             else
-                n = stf(i).energyLayer(j).numOfPrimaries(k) / mcSquare_magicFudge(stf(i).energies(j));
+                n = stf(i).energyLayer(j).numOfPrimaries(k);% / mcSquare_magicFudge(stf(i).energies(j));
             end
             fprintf(fileHandle,[num2str(stf(i).energyLayer(j).targetPoints(k,:)) ' ' num2str(n) '\n']);
         end
