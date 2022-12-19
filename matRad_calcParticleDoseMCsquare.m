@@ -300,7 +300,7 @@ for scenarioIx = 1:pln.multScen.totNumScen
                                 pln.propMC.numHistories];
 
                             stfMCsquare(i).energyLayer(k).MU = [stfMCsquare(i).energyLayer(k).MU ...
-                                pln.propMC.numHistories)];
+                                pln.propMC.numHistories];
                         end
 
                         %Now add the range shifter
