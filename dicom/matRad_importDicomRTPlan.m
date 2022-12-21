@@ -29,6 +29,8 @@ function pln = matRad_importDicomRTPlan(ct, rtPlanFiles, dicomMetaBool)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+
 %% load plan file
 % check size of RT Plan
 if size(rtPlanFiles,1) ~= 1
@@ -92,7 +94,7 @@ if ct.dicomInfo.ImageOrientationPatient == [1;0;0;0;1;0]
     isoCenter = isoCenter - ones(length(BeamSeqNames),1) * ...
         ([ct.x(1) ct.y(1) ct.z(1)] - [ct.resolution.x ct.resolution.y ct.resolution.z]);
 else
-    error('This Orientation is not yet supported.');
+    matRad_cfg.dispError('This Orientation is not yet supported.');
 end
 
 %% read constant parameters
@@ -103,7 +105,7 @@ if ~strncmpi(radiationMode,'photons',6)
         radiationMass = planInfo.(BeamParam).Item_1.RadiationMassNumber;
         radiationAtomicNumber = planInfo.(BeamParam).Item_1.RadiationAtomicNumber;
     catch
-        warning('Could not determine mass and atomic number of the particle');
+        matRad_cfg.dispWarning('Could not determine mass and atomic number of the particle');
     end
 end
 
@@ -114,7 +116,7 @@ elseif strncmpi(radiationMode,'proton',6)
 elseif (strncmpi(radiationMode,'ion',3) && radiationMass == 12 && radiationAtomicNumber == 6)
     radiationMode = 'carbon';
 else
-    warning('The given type of radiation is not yet supported');
+    matRad_cfg.dispError('The given type of radiation is not yet supported');
 end
 
 % extract field shapes
@@ -131,7 +133,7 @@ pln.numOfFractions  = planInfo.FractionGroupSequence.Item_1.NumberOfFractionsPla
 
 % set handling of multiple scenarios -> default: only nominal
 pln.multScen = matRad_multScen(ct,'nomScen');
-pln.machine         = planInfo.BeamSequence.Item_1.TreatmentMachineName;
+pln.machine         = BeamSequence.Item_1.TreatmentMachineName;
 
 % set bio model parameters (default physical opt, no bio model)
 pln.bioParam = matRad_bioModel(pln.radiationMode,'physicalDose','none');
