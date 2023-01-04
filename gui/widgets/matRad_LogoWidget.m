@@ -20,6 +20,7 @@ classdef matRad_LogoWidget < matRad_Widget
     % LICENSE file.
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     properties
     end
     

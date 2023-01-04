@@ -63,12 +63,15 @@ classdef MatRad_Config < handle
             %  Therefore its constructor is private
             %  For instantiation, use the static MatRad_Config.instance();
             
-            obj.matRadRoot = fileparts(mfilename('fullpath'));
+            obj.matRadRoot = fileparts(mfilename('fullpath'))
             addpath(genpath(obj.matRadRoot));
 
             %Set Version
             obj.getEnvironment();
-            obj.matRad_version = matRad_version();            
+            obj.matRad_version = matRad_version();
+
+            %Configure Environment
+            obj.configureEnvironment();
             
             %Just to catch people messing with the properties in the file
             if ~isempty(obj.writeLog) && obj.writeLog
@@ -186,6 +189,9 @@ classdef MatRad_Config < handle
             obj.propMC.direct_defaultHistories = 2e4;
             
             obj.disableGUI = false;
+            
+            obj.devMode = false;
+            obj.eduMode = false;
         end
         
         %%For testing
@@ -221,6 +227,7 @@ classdef MatRad_Config < handle
             obj.propMC.direct_defaultHistories = 100;
             
             obj.disableGUI = true;
+
             obj.devMode = true;
             obj.eduMode = false;
         end  
@@ -252,8 +259,9 @@ classdef MatRad_Config < handle
             
             obj.devMode = false;
             obj.eduMode = true;
-        end
 
+        end
+        
         function setDefaultGUIProperties(obj)
            obj.gui.backgroundColor = [0.5 0.5 0.5];
            obj.gui.elementColor = [0.75 0.75 0.75];
@@ -263,7 +271,7 @@ classdef MatRad_Config < handle
            obj.gui.fontWeight = 'bold';
            obj.gui.fontName = 'Helvetica';
         end
-        
+
         function dispDebug(obj,formatSpec,varargin)
             %dispDebug print debug messages (log level >= 4)
             %  input
@@ -351,6 +359,13 @@ classdef MatRad_Config < handle
                 vData = ver(obj.env);
                 obj.envVersion = vData.Version;
                 
+            end
+        end
+
+        function configureEnvironment(obj)
+            if obj.isOctave
+                struct_levels_to_print(0);                  %Disables full printing of struct array fields
+                warning("off","Octave:data-file-in-path");  %Disables warning of loading patients from the data folder
             end
         end
     end

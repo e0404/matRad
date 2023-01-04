@@ -1,4 +1,5 @@
 classdef matRad_3DWidget < matRad_ViewingWidget
+
     % matRad_3DWidget class to generate GUI widget for 3D plan visualization 
     % Describes a standard fluence optimization problem by providing the 
     % implementation of the objective & constraint function/gradient wrappers
@@ -20,6 +21,7 @@ classdef matRad_3DWidget < matRad_ViewingWidget
     % LICENSE file.
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     properties
         viewingWidgetHandle;
     end

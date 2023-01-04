@@ -21,6 +21,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
     % LICENSE file.
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     properties
     end
     

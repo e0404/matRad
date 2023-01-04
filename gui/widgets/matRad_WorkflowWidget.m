@@ -21,6 +21,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
     % LICENSE file.
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     properties
     end        
     
@@ -133,7 +134,9 @@ classdef matRad_WorkflowWidget < matRad_Widget
             
             matRad_cfg = MatRad_Config.instance();
                    
+
             h72 = this.addControlToGrid([2 4],...
+
                 'Style','text',...
                 'String','Status:',...                                
                 'BackgroundColor',matRad_cfg.gui.backgroundColor,...
@@ -141,7 +144,9 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 'Tag','txtStatus',...
                 'FontSize',round(matRad_cfg.gui.fontSize*1.2));
             
+
             h73 = this.addControlToGrid([3 4],...
+
                 'String','no data loaded',...
                 'Style','text',...               
                 'BackgroundColor',matRad_cfg.gui.backgroundColor,...
@@ -259,14 +264,14 @@ classdef matRad_WorkflowWidget < matRad_Widget
             set(handles.btn_export,'Enable','off');
             set(handles.exportDicomButton,'Enable','off');
             
+
             if evalin('base','exist(''ct'')') && ...
                         evalin('base','exist(''cst'')')
                     
                 set(handles.txtInfo,'String','loaded and ready');
                 
                 if evalin('base','exist(''pln'')')
-                
-                
+
                     
                     % ct cst and pln available; ready for dose calculation
                     set(handles.txtInfo,'String','ready for dose calculation');
@@ -430,7 +435,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 ct  = evalin('base','ct');
                 dij = evalin('base','dij');
                 % optimize
-                [resultGUIcurrentRun,usedOptimizer] = matRad_fluenceOptimization(evalin('base','dij'),evalin('base','cst'),pln);
+                [resultGUIcurrentRun,usedOptimizer] = matRad_fluenceOptimization(dij,evalin('base','cst'),pln);
                 if pln.propOpt.conf3D && strcmp(pln.radiationMode,'photons')
                     resultGUIcurrentRun.w = resultGUIcurrentRun.w .* ones(dij.totalNumOfBixels,1); % what and why ? 
                     resultGUIcurrentRun.wUnsequenced = resultGUIcurrentRun.w;
@@ -510,6 +515,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
             try
                 %% DAO
                 if strcmp(pln.radiationMode,'photons') && pln.propOpt.runDAO
+
                     showWarning(this,['Observe: You are running direct aperture optimization' filesep 'This is experimental code that has not been thoroughly debugged - especially in combination with constrained optimization.']); % was assigned to handles WHY ? 
                     [resultGUI,usedOptimizer] = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst'),...
                         resultGUI.apertureInfo,resultGUI,pln);
@@ -518,7 +524,9 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     CheckOptimizerStatus(this,usedOptimizer,'DAO');
                 end
                 
+
                 if strcmp(pln.radiationMode,'photons') && (pln.propSeq.runSequencing || pln.propOpt.runDAO)
+
                     matRad_visApertureInfo(resultGUI.apertureInfo);
                 end
                 

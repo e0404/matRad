@@ -24,6 +24,7 @@ classdef matRad_StatisticsWidget < matRad_Widget
     properties
         SelectedCube;
         lockUpdate = false;
+
     end
     
     events
@@ -31,10 +32,12 @@ classdef matRad_StatisticsWidget < matRad_Widget
     end
     
     methods
-        function this = matRad_StatisticsWidget(SelectedCube,handleParent)%(varargin)
+
+        function this = matRad_StatisticsWidget(SelectedCube,handleParent)    % use (varargin) ?
              
              matRad_cfg = MatRad_Config.instance();
              if nargin < 2 
+
                 handleParent = figure(...
                     'Units','normalized',...
                     'Position',[0.005 0.05 0.495 0.45],...
@@ -53,11 +56,11 @@ classdef matRad_StatisticsWidget < matRad_Widget
               end
               this = this@matRad_Widget(handleParent);
               this.SelectedCube = SelectedCube;
-
         end
 
         
         function this=update(this)
+
             if this.lockUpdate
                 doUpdate = true;
                 if nargin == 2
@@ -73,7 +76,6 @@ classdef matRad_StatisticsWidget < matRad_Widget
                 end
             end
         end
-
     end
     
     methods(Access = protected)
@@ -93,7 +95,6 @@ classdef matRad_StatisticsWidget < matRad_Widget
             resultGUI = evalin('base','resultGUI');
             pln = evalin('base','pln');
             cst = evalin('base','cst');
-
             doseCube = resultGUI.(this.SelectedCube);
             
             if ~exist('refVol', 'var')
@@ -105,7 +106,6 @@ classdef matRad_StatisticsWidget < matRad_Widget
             end
             
             qi  = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol);
-
             ixVoi = cellfun(@(c) c.Visible == 1,cst(:,5));
             qi = qi(ixVoi);
             matRad_showQualityIndicators(this.widgetHandle,qi);

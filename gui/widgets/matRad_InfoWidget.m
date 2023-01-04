@@ -21,6 +21,7 @@ classdef matRad_InfoWidget < matRad_Widget
     % LICENSE file.
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     properties
         
     end

@@ -55,6 +55,7 @@ classdef matRad_DVHWidget < matRad_Widget
         end
         
         function this=update(this,evt)
+
              if this.lockUpdate
             doUpdate = true;
             if nargin == 2
@@ -87,6 +88,7 @@ classdef matRad_DVHWidget < matRad_Widget
     end
     
     methods
+
         function set.SelectedCube(this,value)
             this.SelectedCube=value;
         end

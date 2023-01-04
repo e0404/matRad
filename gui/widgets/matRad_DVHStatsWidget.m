@@ -1,4 +1,5 @@
 classdef matRad_DVHStatsWidget < matRad_Widget
+
     % matRad_DVHStatsWidget class to generate GUI widget display DVH and
     % stats
     % Describes a standard fluence optimization problem by providing the 
@@ -34,6 +35,7 @@ classdef matRad_DVHStatsWidget < matRad_Widget
             
             matRad_cfg = MatRad_Config.instance();
             if nargin<2 %isempty(p.Results.handleParent)
+
                 handleParent = figure(...
                     'Units','normalized',...
                     'Position',[0.005 0.05 0.495 0.9],...
@@ -125,12 +127,9 @@ classdef matRad_DVHStatsWidget < matRad_Widget
             
             this.dvhWidgetHandle = matRad_DVHWidget([],p1);
             this.statWidgetHandle = matRad_StatisticsWidget([],p2);
-            
             this.createHandles();
             
         end
-        
-
         
     end
 end

@@ -1,4 +1,5 @@
 classdef matRad_Widget <  handle 
+
     % matRad_Widget Main Class for GUI widget generation 
     % Describes a standard fluence optimization problem by providing the 
     % implementation of the objective & constraint function/gradient wrappers
@@ -20,6 +21,7 @@ classdef matRad_Widget <  handle
     % LICENSE file.
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
    
     properties (GetAccess = public , SetAccess = protected)
         widgetHandle            %Holds parent widget handle

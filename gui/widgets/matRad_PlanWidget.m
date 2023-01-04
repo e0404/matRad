@@ -20,6 +20,7 @@ classdef matRad_PlanWidget < matRad_Widget
     % LICENSE file.
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     properties
         State = false
         Machines
@@ -136,7 +137,7 @@ classdef matRad_PlanWidget < matRad_Widget
             h15 = uicontrol(...
                 'Parent',h12,...
                 'Units','normalized',...
-                'String','Gantry Angle in º',...
+                'String','Gantry Angle in °',...
                 'Tooltip',txt,...
                 'Style','text',...
                 'Position',gridPos{1,2},...
@@ -167,7 +168,7 @@ classdef matRad_PlanWidget < matRad_Widget
             h17 = uicontrol(...
                 'Parent',h12,...
                 'Units','normalized',...
-                'String','Couch Angle in º',...
+                'String','Couch Angle in °',...
                 'Tooltip',txt,...
                 'Style','text',...
                 'Position',gridPos{1,3},...
@@ -359,6 +360,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 'FontWeight',matRad_cfg.gui.fontWeight,...
                 'Tag','txtSequencing' );
             
+
             pos = gridPos{5,3};
             pos(3) = pos(3) / 2;
             %pos(1) = pos(1) + pos(3);
@@ -481,6 +483,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 'FontWeight',matRad_cfg.gui.fontWeight);
             
             pos = gridPos{4,1};
+
             pos(3) = pos(3)*2;
             
             h36 = uicontrol(...
@@ -569,7 +572,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 'FontName',matRad_cfg.gui.fontName,...
                 'FontWeight',matRad_cfg.gui.fontWeight);
             
-            
+          
              h40 = uicontrol(...
                 'Parent',h12,...
                 'Units','normalized',...
@@ -679,11 +682,6 @@ classdef matRad_PlanWidget < matRad_Widget
             contentPopUp = get(handles.popMenuBioOpt,'String');
             ix = find(strcmp(pln.propOpt.bioOptimization,contentPopUp));
             set(handles.popMenuBioOpt,'Value',ix);
-            
-%             contentPopUp = get(handles.popUpMenuSequencer,'String');
-%             seqIx = find(strcmp(pln.propSeq.sequencer,contentPopUp));
-%             set(handles.popUpMenuSequencer,'Value',seqIx);
-            
             set(handles.btnRunSequencing,'Value',pln.propSeq.runSequencing);
             set(handles.btnRunDAO,'Value',pln.propOpt.runDAO);
             if isfield(pln.propSeq, 'sequencingLevel')
@@ -692,6 +690,7 @@ classdef matRad_PlanWidget < matRad_Widget
             if isfield (pln.propOpt, 'conf3D')
                 set(handles.radiobutton3Dconf,'Value',pln.propOpt.conf3D);
             end 
+
             set(handles.editDoseX,'String',num2str(pln.propDoseCalc.doseGrid.resolution.x));
             set(handles.editDoseY,'String',num2str(pln.propDoseCalc.doseGrid.resolution.y));
             set(handles.editDoseZ,'String',num2str(pln.propDoseCalc.doseGrid.resolution.z));
@@ -806,6 +805,7 @@ classdef matRad_PlanWidget < matRad_Widget
                         end
                     end
                 catch ME
+
                     showWarning(this,'couldn''t set isocenter in pln update! Reason: %s\n',ME.message)  %% showWarning vs warning 
                 end
             end
@@ -896,8 +896,7 @@ classdef matRad_PlanWidget < matRad_Widget
             else
                 set(handles.btnSetTissue,'Enable','on');
             end
-            
-                       
+
             this.handles = handles;
         end
         
@@ -959,6 +958,7 @@ classdef matRad_PlanWidget < matRad_Widget
             updatePlnInWorkspace(this);
         end
         
+
         function popUpMenuSequencer_Callback(this, hObject, eventdata)
             handles = this.handles;
             contents      = cellstr(get(hObject,'String'));
@@ -999,7 +999,7 @@ classdef matRad_PlanWidget < matRad_Widget
             getMachines(this);
             pln = evalin('base','pln');
             
-            % M�GLICHEE FEHLER HIER VALUE UND GENERIC WERDEN VERGLICHEN
+            % Mï¿½GLICHEE FEHLER HIER VALUE UND GENERIC WERDEN VERGLICHEN
             if strcmp(contents(get(hObject,'Value')),'Generic')
                 try
                     AllVarNames = evalin('base','who');
@@ -1014,7 +1014,7 @@ classdef matRad_PlanWidget < matRad_Widget
                     end
                 catch
                 end
-            % M�GLICHEE FEHLER HIER VALUE UND GENERIC WERDEN VERGLICHEN
+            % Mï¿½GLICHEE FEHLER HIER VALUE UND GENERIC WERDEN VERGLICHEN
             elseif strcmp(contents(get(hObject,'Value')),'generic_MCsquare')
                 try
                     AllVarNames = evalin('base','who');

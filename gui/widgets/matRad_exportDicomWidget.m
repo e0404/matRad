@@ -21,6 +21,7 @@ classdef matRad_exportDicomWidget < matRad_Widget
     % LICENSE file.
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
     properties
         variables = {'ct','cst','resultGUI'}; %variables to export
     end

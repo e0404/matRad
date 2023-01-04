@@ -21,6 +21,7 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
     % LICENSE file.
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     methods
         function this = matRad_StructureVisibilityWidget(handleParent)
             if nargin < 1
