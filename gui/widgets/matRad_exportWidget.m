@@ -1,4 +1,5 @@
 classdef matRad_exportWidget < matRad_Widget
+
     % matRad_exportWidget class to generate GUI widget to export plan as
     % dicom, nrrd etc.
     % 
@@ -22,6 +23,7 @@ classdef matRad_exportWidget < matRad_Widget
     % LICENSE file.
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
     properties
     end
     

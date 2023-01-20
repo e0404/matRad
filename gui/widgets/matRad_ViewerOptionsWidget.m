@@ -21,6 +21,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
     % LICENSE file.
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     properties
         viewingWidgetHandle;
         colormapLocked = false;

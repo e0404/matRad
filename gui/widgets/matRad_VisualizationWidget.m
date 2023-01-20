@@ -24,6 +24,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
     properties
         viewingWidgetHandle;
          dvhStatWidgetHandle;
+
     end
     
     methods
@@ -713,12 +714,13 @@ classdef matRad_VisualizationWidget < matRad_Widget
             handles = this.handles;
             this.viewingWidgetHandle.SelectedDisplayOption = content{get(hObject,'Value'),1};
             this.handles = handles;
-            fh = findobj( 'Type', 'Figure', 'Name', 'MatRad Plan Analysis' );
+            % if matRad Plan Analysis exists use that
+            fh = findobj( 'Type', 'Figure', 'Name', 'MatRad Plan Analysis' ); 
             if ~isempty(fh)
             this.dvhStatWidgetHandle.SelectedDisplayOption = content{get(hObject,'Value'),1};
             end
              
-                        
+
         end
         
         % H49 Callback

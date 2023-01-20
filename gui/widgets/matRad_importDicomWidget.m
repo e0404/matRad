@@ -21,6 +21,7 @@ classdef matRad_importDicomWidget < matRad_Widget
     % LICENSE file.
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
     properties
     end
     
@@ -411,7 +412,7 @@ classdef matRad_importDicomWidget < matRad_Widget
             
         end
         
-        % H?? CHECKBOX§ CALLBACK
+        % H?? CHECKBOXÂ§ CALLBACK
         function this = checkbox3_Callback(this, hObject, eventdata)
             % hObject    handle to checkbox3 (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB

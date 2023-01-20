@@ -29,6 +29,7 @@ end
 
 %clear command window and close all figures
 if clearWindow
+
     clc;
     close all;
 end
