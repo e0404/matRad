@@ -56,7 +56,7 @@ modelName    = 'constRBE';             % none: for photons, protons, carbon     
 scenGenType  = 'nomScen';          % scenario creation type 'nomScen'  'wcScen' 'impScen' 'rndScen' 
 
 % retrieve bio model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
+pln.bioParam = matRad_BioModel(pln.radiationMode,quantityOpt, modelName);
 
 % retrieve scenarios for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,scenGenType);

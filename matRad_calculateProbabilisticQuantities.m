@@ -94,7 +94,7 @@ for i = 1:numel(fNames)
                  (((dij.(fNames{1,i}){scenIx}(cst{v,4}{ctIx},:)' * pln.multScen.scenProb(s)) * ...
                  (dij.(fNames{1,i}){scenIx}(cst{v,4}{ctIx},:)) * pln.multScen.scenProb(s)));
          end
-         matRad_cfg.dispInfo('done!\n');
+         matRad_cfg.dispInfo('Done!\n');
     end
     matRad_cfg.dispInfo('\tFinalizing Omega...');
     %Finalize Omega matrices

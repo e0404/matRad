@@ -33,7 +33,8 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-matRad_cfg =  MatRad_Config.instance();
+% Instance of MatRad_Config class
+matRad_cfg = MatRad_Config.instance();
 
 % initialize
 matRad_calcDoseInit;
@@ -56,32 +57,19 @@ figureWait = waitbar(0,'calculate dose influence matrix for photons...');
 % show busy state
 set(figureWait,'pointer','watch');
 
-% set lateral cutoff value
-if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'geometricCutOff')
-    pln.propDoseCalc.geometricCutOff =  matRad_cfg.propDoseCalc.defaultGeometricCutOff; % [mm]
-end
-
-lateralCutoff = pln.propDoseCalc.geometricCutOff;
-
-if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'kernelCutOff')
-    pln.propDoseCalc.kernelCutOff =  matRad_cfg.propDoseCalc.defaultKernelCutOff; % [mm]
-end
+% load default parameters if not set
+pln = matRad_cfg.getDefaultProperties(pln,'propDoseCalc');
 
 % set kernel cutoff value (determines how much of the kernel is used. This
 % value is separated from lateralCutOff to obtain accurate large open fields)
 kernelCutoff = pln.propDoseCalc.kernelCutOff;
 
-if kernelCutoff < lateralCutoff
-    matRad_cfg.dispWarning('Kernel Cut-Off ''%f mm'' cannot be smaller than geometric lateral cutoff ''%f mm''. Using ''%f mm''!',kernelCutoff,lateralCutoff,lateralCutoff);
-    kernelCutoff = lateralCutoff;
-end
+% set lateral cutoff value
+lateralCutOff = pln.propDoseCalc.geometricCutOff; % [mm]
 
-% toggle custom primary fluence on/off. if 0 we assume a homogeneous
-% primary fluence, if 1 we use measured radially symmetric data
-if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'useCustomPrimaryPhotonFluence')
-    useCustomPrimFluenceBool = matRad_cfg.propDoseCalc.defaultUseCustomPrimaryPhotonFluence;
-else
-    useCustomPrimFluenceBool = pln.propDoseCalc.useCustomPrimaryPhotonFluence;
+if kernelCutoff < pln.propDoseCalc.geometricCutOff
+    matRad_cfg.dispWarning('Kernel Cut-Off ''%f mm'' cannot be smaller than geometric lateral cutoff ''%f mm''. Using ''%f mm''!',kernelCutoff,lateralCutOff,lateralCutOff);
+    kernelCutoff = lateralCutOff;
 end
 
 % 0 if field calc is bixel based, 1 if dose calc is field based
@@ -128,7 +116,9 @@ if ~isFieldBasedDoseCalc
    % Create fluence matrix
    F = ones(floor(fieldWidth/intConvResolution));
    
-   if ~useCustomPrimFluenceBool
+   % toggle custom primary fluence on/off. if 0 we assume a homogeneous
+   % primary fluence, if 1 we use measured radially symmetric data
+   if ~pln.propDoseCalc.useCustomPrimaryPhotonFluence
       % gaussian convolution of field to model penumbra
       F = real(ifft2(fft2(F,gaussConvSize,gaussConvSize).*fft2(gaussFilter,gaussConvSize,gaussConvSize)));
    end
@@ -154,7 +144,7 @@ kernelConvSize = 2*kernelConvLimit;
 
 % define an effective lateral cutoff where dose will be calculated. note
 % that storage within the influence matrix may be subject to sampling
-effectiveLateralCutoff = lateralCutoff + fieldWidth/sqrt(2);
+pln.propDoseCalc.effectiveLateralCutOff = lateralCutOff + fieldWidth/sqrt(2);
 
 % book keeping - this is necessary since pln is not used in optimization or
 % matRad_calcCubes
@@ -203,7 +193,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
         kernel3Mx = interp1(kernelPos,kernel3,sqrt(kernelX.^2+kernelZ.^2),'linear',0);
         
         % convolution here if no custom primary fluence and no field based dose calc
-        if ~useCustomPrimFluenceBool && ~isFieldBasedDoseCalc
+        if ~pln.propDoseCalc.useCustomPrimaryPhotonFluence && ~isFieldBasedDoseCalc
             
             % Display console message
             matRad_cfg.dispInfo('\tUniform primary photon fluence -> pre-compute kernel convolution...\n');
@@ -233,7 +223,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
             bixelsPerBeam = bixelsPerBeam + 1;
             
             % convolution here if custom primary fluence OR field based dose calc
-            if useCustomPrimFluenceBool || isFieldBasedDoseCalc
+            if pln.propDoseCalc.useCustomPrimaryPhotonFluence || isFieldBasedDoseCalc
                 
                 % overwrite field opening if necessary
                 if isFieldBasedDoseCalc
@@ -306,7 +296,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                             stf(i).ray(j).targetPoint_bev, ...
                             machine.meta.SAD, ...
                             find(~isnan(radDepthVdoseGrid{ctScen})), ...
-                            effectiveLateralCutoff);
+                            pln.propDoseCalc.effectiveLateralCutOff);
                         
                         % empty bixels may happen during recalculation of error
                         % scenarios -> skip to next bixel
@@ -338,7 +328,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                         
                         % sample dose only for bixel based dose calculation
                         if ~isFieldBasedDoseCalc
-                            r0   = 25;   % [mm] sample beyond the inner core
+                            r0   = 20 + stf(i).bixelWidth;   % [mm] sample beyond the inner core
                             Type = 'radius';
                             [ix,bixelDose] = matRad_DijSampling(ix,bixelDose,manipulatedRadDepthCube,rad_distancesSq,Type,r0);
                         end
