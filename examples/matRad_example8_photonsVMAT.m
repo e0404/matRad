@@ -112,7 +112,7 @@ resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln,0);
 % directly optimize aperture shapes and weights at the angles in the
 % optGantryAngles set.  The gantry angle speed, leaf speed, and MU rate are
 % constrained by the min and max values specified by the user.
-resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln,stf);
+resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln);
 
 %% Aperture visualization
 % Use a matrad function to visualize the resulting aperture shapes
