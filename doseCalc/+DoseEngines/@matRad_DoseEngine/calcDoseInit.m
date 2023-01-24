@@ -1,4 +1,4 @@
-function [dij,ct,cst,stf,pln] = calcDoseInit(this,ct,cst,stf,pln)
+function [dij,ct,cst,stf,pln] = calcDoseInit(this,ct,cst,stf)
 % matRad_DoseEngine.calcDoseInit: Interface for dose calculation
 %   method for setting and preparing the inition parameters for the
 %   dose calculation.
@@ -43,26 +43,19 @@ if ~any(isfield(ct,{'x','y','z'}))
     ct.z = ct.resolution.z*[0:ct.cubeDim(3)-1]-ct.resolution.z/2;
 end
 
-% set grids
-if ~isfield(pln,'propDoseCalc') || ...
-        ~isfield(pln.propDoseCalc,'doseGrid') || ...
-        ~isfield(pln.propDoseCalc.doseGrid,'resolution')
-    % default values
-    dij.doseGrid.resolution = matRad_cfg.propDoseCalc.defaultResolution;
-else
-    % take values from pln strcut
-    dij.doseGrid.resolution.x = pln.propDoseCalc.doseGrid.resolution.x;
-    dij.doseGrid.resolution.y = pln.propDoseCalc.doseGrid.resolution.y;
-    dij.doseGrid.resolution.z = pln.propDoseCalc.doseGrid.resolution.z;
-end
+dij = struct();
 
-dij.doseGrid.x = ct.x(1):dij.doseGrid.resolution.x:ct.x(end);
-dij.doseGrid.y = ct.y(1):dij.doseGrid.resolution.y:ct.y(end);
-dij.doseGrid.z = ct.z(1):dij.doseGrid.resolution.z:ct.z(end);
+%One can provide the dose grid directly (in the future, variable grids would be possible with this)
+if ~all(isfield(this.doseGrid,{'x','y','z'}))
+    dij.doseGrid.x = ct.x(1):dij.doseGrid.resolution.x:ct.x(end);
+    dij.doseGrid.y = ct.y(1):dij.doseGrid.resolution.y:ct.y(end);
+    dij.doseGrid.z = ct.z(1):dij.doseGrid.resolution.z:ct.z(end);
+end
 
 dij.doseGrid.dimensions  = [numel(dij.doseGrid.y) numel(dij.doseGrid.x) numel(dij.doseGrid.z)];
 dij.doseGrid.numOfVoxels = prod(dij.doseGrid.dimensions);
 
+%store CT grid
 dij.ctGrid.resolution.x = ct.resolution.x;
 dij.ctGrid.resolution.y = ct.resolution.y;
 dij.ctGrid.resolution.z = ct.resolution.z;
@@ -74,13 +67,14 @@ dij.ctGrid.z = ct.z;
 dij.ctGrid.dimensions  = [numel(dij.ctGrid.y) numel(dij.ctGrid.x) numel(dij.ctGrid.z)];
 dij.ctGrid.numOfVoxels = prod(dij.ctGrid.dimensions);
 
-% adjust isocenter internally for different dose grid
-this.offset = [dij.doseGrid.resolution.x - dij.ctGrid.resolution.x ...
+dij.doseGrid.isoCenterOffset = [dij.doseGrid.resolution.x - dij.ctGrid.resolution.x ...
     dij.doseGrid.resolution.y - dij.ctGrid.resolution.y ...
     dij.doseGrid.resolution.z - dij.ctGrid.resolution.z];
 
+%Maybe we should not do this in the preprocessing if it allows us to not
+%change the stf
 for i = 1:numel(stf)
-    stf(i).isoCenter = stf(i).isoCenter + this.offset;
+    stf(i).isoCenter = stf(i).isoCenter + dij.doseGrid.isoCenterOffset;
 end
 
 %If we want to omit HU conversion check if we have a ct.cube ready
@@ -90,6 +84,7 @@ if this.useGivenEqDensityCube && ~isfield(ct,'cube')
 end
 
 % calculate rED or rSP from HU
+% Maybe we can avoid duplicating the CT here?
 if this.useGivenEqDensityCube
     matRad_cfg.dispInfo('Omitting HU to rED/rSP conversion and using existing ct.cube!\n');
 else
@@ -117,10 +112,16 @@ dij.bixelNum = NaN*ones(this.numOfColumnsDij,1);
 dij.rayNum   = NaN*ones(this.numOfColumnsDij,1);
 dij.beamNum  = NaN*ones(this.numOfColumnsDij,1);
 
+%Default MU calibration
+dij.minMU               = zeros(this.numOfColumnsDij,1);
+dij.maxMU               = inf(this.numOfColumnsDij,1);
+dij.numOfParticlesPerMU = 1e6*ones(this.numOfColumnsDij,1);
 
-% Allocate space for dij.physicalDose sparse matrix
-for i = 1:dij.numOfScenarios
-    dij.physicalDose{i} = spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,1);
+
+% Allocate space for dij.physicalDose sparse matrix, assume 1%nnz
+for i = 1:dij.numOfScenarios   
+    nnzEstimate = 0.01*(dij.doseGrid.numOfVoxels*this.numOfColumnsDij);
+    dij.physicalDose{i} = spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,nnzEstimate);
 end
 
 % take only voxels inside patient
