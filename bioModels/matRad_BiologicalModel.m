@@ -1,13 +1,13 @@
-classdef matRad_BioModel
+classdef matRad_BiologicalModel
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %  matRad_BioModel
+    %  matRad_BiologicalModel
     %  This class creates all required biological model parameters according to
     % a given radiation modatlity and a given bio model identifier string.
     %
     % constructor call
-    %   pln.bioParam = matRad_BioModel(sRadiationMode,sQuantityOpt, sModel)
+    %   pln.bioParam = matRad_BiologicalModel(sRadiationMode,sQuantityOpt, sModel)
     %
-    %   e.g. pln.bioParam = matRad_BioModel('protons','constRBE_RBExD')
+    %   e.g. pln.bioParam = matRad_BiologicalModel('protons','constRBE','RBExD')
     %
     % input
     %   sRadiationMode:     radiation modality 'photons' 'protons' 'carbon'
@@ -315,7 +315,7 @@ classdef matRad_BioModel
     methods
         
         % default constructor
-        function this = matRad_BioModel(sRadiationMode,sQuantityOpt, sModel)
+        function this = matRad_BiologicalModel(sRadiationMode,sQuantityOpt, sModel)
             this.radiationMode = sRadiationMode;
             this.quantityOpt   = sQuantityOpt;       % setter checks for valid strings but not for valid combinations (e.g. photons_LEM
             this.model         = sModel;
