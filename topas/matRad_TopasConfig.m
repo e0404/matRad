@@ -484,11 +484,17 @@ classdef matRad_TopasConfig < handle
             % Make sure that the filename always ends on 'run1_tally'
             switch obj.MCparam.outputType
                 case 'csv'
-                    files = dir([folder filesep 'score_matRad_plan_field1_run1_*.csv']);
-                    obj.MCparam.tallies = cellfun(@(x) extractBetween(x,'run1_','.csv') ,{files(:).name});
+                    searchstr = 'score_matRad_plan_field1_run1_*.csv';
+                    files = dir([folder filesep searchstr]);
+                    %obj.MCparam.tallies = cellfun(@(x) extractBetween(x,'run1_','.csv') ,{files(:).name}); %Not Octave compatible
+                    nameBegin = strfind(searchstr,'*');
+                    obj.MCparam.tallies = cellfun(@(s) s(nameBegin:end-4),{files(:).name},'UniformOutput',false);
                 case 'binary'
-                    files = dir([folder filesep 'score_matRad_plan_field1_*run1_*.bin']);
-                    obj.MCparam.tallies = cellfun(@(x) extractBetween(x,'run1_','.bin') ,{files(:).name});
+                    searchstr = 'score_matRad_plan_field1_run1_*.bin';
+                    files = dir([folder filesep searchstr]);
+                    %obj.MCparam.tallies = cellfun(@(x) extractBetween(x,'run1_','.bin') ,{files(:).name}); %Not Octave compatible
+                    nameBegin = strfind(searchstr,'*');
+                    obj.MCparam.tallies = cellfun(@(s) s(nameBegin:end-4),{files(:).name},'UniformOutput',false);
             end
 
             obj.MCparam.tallies = unique(obj.MCparam.tallies);
