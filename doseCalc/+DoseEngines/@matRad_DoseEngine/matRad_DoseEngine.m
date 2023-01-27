@@ -21,10 +21,7 @@ classdef (Abstract) matRad_DoseEngine < handle
     
     properties
         machine;                    % base data defined in machine file
-        useGivenEqDensityCube;        % Use the given density cube ct.cube and omit conversion from cubeHU.
-        ignoreOutsideDensities;     % Ignore densities outside of cst contours
-        doseGrid;                   % doseGrid to use (struct with at least doseGrid.resolution.x/y/z set)
-        ssdDensityThreshold;        % Threshold for SSD computation
+        doseGrid;                   % doseGrid to use (struct with at least doseGrid.resolution.x/y/z set)        
     end
     
     properties (SetAccess = protected, GetAccess = public)
@@ -67,10 +64,6 @@ classdef (Abstract) matRad_DoseEngine < handle
             
             %Assign default parameters from MatRad_Config
             this.doseGrid.resolution    = matRad_cfg.propDoseCalc.defaultResolution;
-            this.useGivenEqDensityCube  = matRad_cfg.propDoseCalc.defaultUseGivenEqDensityCube;
-            this.ignoreOutsideDensities = matRad_cfg.propDoseCalc.defaultIgnoreOutsideDensities;
-            this.ssdDensityThreshold    = matRad_cfg.propDoseCalc.defaultSsdDensityThreshold;
-
         end
 
         function warnDeprecatedEngineProperty(this,oldProp,msg,newProp)
@@ -146,9 +139,7 @@ classdef (Abstract) matRad_DoseEngine < handle
         % Should be called at the beginning of calcDose method.
         % Can be expanded or changed by overwriting this method and calling
         % the superclass method inside of it
-        [dij,ct,cst,stf,pln] = calcDoseInit(this,ct,cst,stf,pln)
-        
-        
+        [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)       
     end
     
     % Should be abstract methods but in order to satisfy the compatibility
@@ -158,7 +149,7 @@ classdef (Abstract) matRad_DoseEngine < handle
         % the actual calculation method wich returns the final dij struct.
         % Needs to be implemented in non abstract subclasses. 
         %(Internal logic is often split into multiple methods in order to make the whole calculation more modular)
-        function dij = calcDose(this,ct,cst,stf,pln)
+        function dij = calcDose(this,ct,cst,stf)
             error('Function needs to be implemented!');
         end
         
@@ -184,6 +175,12 @@ classdef (Abstract) matRad_DoseEngine < handle
         %               approximations need to be made
         
             error('This is an Abstract Base class! Function needs to be called for instantiable subclasses!');
+        end
+
+        % Machine Loader
+        % Currently just uses the matRad function that asks for pln
+        function machine = loadMachine(radiationMode,machineName)
+            machine = matRad_loadMachine(struct('radiationMode',radiationMode,'machine',machineName));
         end
     end
 

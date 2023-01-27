@@ -136,7 +136,7 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
 
 
             %Now we can run calcDoseInit as usual
-            [dij,ct,cst,stf,pln] = this.calcDoseInit(ct,cst,stf,pln);
+            [dij,ct,cst,stf] = this.calcDoseInit(ct,cst,stf);
 
             % We need to adjust the offset used in matRad_calcDoseInit
             mcSquareAddIsoCenterOffset = [dij.doseGrid.resolution.x/2 dij.doseGrid.resolution.y/2 dij.doseGrid.resolution.z/2] ...
@@ -370,7 +370,7 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
             this.mcSquareBinary = binaryFile;
         end
         
-        function [dij,ct,cst,stf,pln] = calcDoseInit(this,ct,cst,stf,pln)
+        function [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)
             %% Assingn and check parameters
             
             matRad_cfg = MatRad_Config.instance();
@@ -395,7 +395,7 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
             end
             
             %% Call Superclass init function
-            [dij,ct,cst,stf,pln] = calcDoseInit@DoseEngines.matRad_DoseEngineMonteCarlo(this,ct,cst,stf,pln); 
+            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_DoseEngineMonteCarlo(this,ct,cst,stf); 
             
             %% Validate and preset some additional dij variables
             

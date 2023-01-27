@@ -100,7 +100,7 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
             matRad_cfg =  MatRad_Config.instance();
             
             % init dose calc
-            [dij,ct,cst,stf,pln] = this.calcDoseInit(ct,cst,stf,pln);
+            [dij,ct,cst,stf] = this.calcDoseInit(ct,cst,stf);
 
             % initialize waitbar
             figureWait = waitbar(0,'calculate dose influence matrix for particles...');
@@ -497,7 +497,7 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
 
         end
         
-        function [dij,ct,cst,stf,pln] = calcDoseInit(this,ct,cst,stf,pln)
+        function [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)
             % Extended version of the calcDoseInit method of
             % @matRad_DoseEngine method. See superclass for more information 
 
@@ -513,7 +513,7 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
             end
                                                 
             % call superclass constructor
-            [dij,ct,cst,stf,pln] = calcDoseInit@DoseEngines.matRad_DoseEngine(this,ct,cst,stf,pln);
+            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_DoseEngine(this,ct,cst,stf);
             
         end
         

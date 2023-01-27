@@ -273,7 +273,7 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
             this.isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
 
             %% Call Superclass init
-            [dij,ct,cst,stf,pln] = calcDoseInit@DoseEngines.matRad_DoseEnginePencilBeam(this,ct,cst,stf,pln);
+            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_DoseEnginePencilBeam(this,ct,cst,stf);
 
             %% Validate some properties
             % gaussian filter to model penumbra from (measured) machine output / see
@@ -291,9 +291,9 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
                 this.kernelCutOff = this.machine.data.kernelPos(end);
             end
 
-            if this.kernelCutOff < this.geometricCutOff
-                matRad_cfg.dispWarning('Kernel Cut-Off ''%f mm'' cannot be smaller than geometric lateral cutoff ''%f mm''. Using ''%f mm''!',this.kernelCutOff,this.geometricCutOff,this.geometricCutOff);
-                this.kernelCutOff = this.geometricCutOff;
+            if this.kernelCutOff < this.geometricLateralCutOff
+                matRad_cfg.dispWarning('Kernel Cut-Off ''%f mm'' cannot be smaller than geometric lateral cutoff ''%f mm''. Using ''%f mm''!',this.kernelCutOff,this.geometricLateralCutOff,this.geometricLateralCutOff);
+                this.kernelCutOff = this.geometricLateralCutOff;
             end
 
             %% kernel convolution
@@ -340,7 +340,7 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
 
             % define an effective lateral cutoff where dose will be calculated. note
             % that storage within the influence matrix may be subject to sampling
-            this.effectiveLateralCutOff = this.geometricCutOff + this.fieldWidth/sqrt(2);
+            this.effectiveLateralCutOff = this.geometricLateralCutOff + this.fieldWidth/sqrt(2);
 
 
             %% Initialize randomization

@@ -105,7 +105,7 @@ classdef matRad_DoseEnginePhotonsOmpMC < DoseEngines.matRad_DoseEngineMonteCarlo
             tic
 
             %run calcDoseInit as usual
-            [dij,ct,cst,stf,pln] = this.calcDoseInit(ct,cst,stf,pln);
+            [dij,ct,cst,stf] = this.calcDoseInit(ct,cst,stf);
 
             %% Call the OmpMC interface
 
@@ -163,9 +163,9 @@ classdef matRad_DoseEnginePhotonsOmpMC < DoseEngines.matRad_DoseEngineMonteCarlo
     end
 
     methods (Access = protected)
-        function [dij,ct,cst,stf,pln] = calcDoseInit(this,ct,cst,stf,pln)
+        function [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)
 
-            [dij,ct,cst,stf,pln] = calcDoseInit@DoseEngines.matRad_DoseEngineMonteCarlo(this,ct,cst,stf,pln);
+            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_DoseEngineMonteCarlo(this,ct,cst,stf);
             
             matRad_cfg = MatRad_Config.instance();
 

@@ -1,4 +1,4 @@
-function [dij,ct,cst,stf,pln] = calcDoseInit(this,ct,cst,stf)
+function [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)
 % matRad_DoseEngine.calcDoseInit: Interface for dose calculation
 %   method for setting and preparing the inition parameters for the
 %   dose calculation.
@@ -11,14 +11,10 @@ function [dij,ct,cst,stf,pln] = calcDoseInit(this,ct,cst,stf)
 %
 % input:
 %   ct:             matRad ct  struct
-
+%   cst:            matRad cst struct
 %   stf:            matRad stf struct
-%   pln:            matRad pln struct
 %
 % returns:
-%   ct:             matRad ct  struct
-%   stf:            matRad stf struct
-%   pln:            matRad pln struct
 %   dij:            matRad dij struct
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -35,37 +31,47 @@ function [dij,ct,cst,stf,pln] = calcDoseInit(this,ct,cst,stf)
 
 matRad_cfg =  MatRad_Config.instance();
 
-% to guarantee downwards compatibility with data that does not have
-% ct.x/y/z
-if ~any(isfield(ct,{'x','y','z'}))
-    ct.x = ct.resolution.x*[0:ct.cubeDim(2)-1]-ct.resolution.x/2;
-    ct.y = ct.resolution.y*[0:ct.cubeDim(1)-1]-ct.resolution.y/2;
-    ct.z = ct.resolution.z*[0:ct.cubeDim(3)-1]-ct.resolution.z/2;
+if numel(unique({stf(:).machine})) ~= 1 || numel(unique({stf(:).radiationMode})) ~= 1
+    matRad_cfg.dispError('machine and radiation mode need to be unique within supplied stf!');
 end
 
 dij = struct();
 
+%store CT grid
+dij.ctGrid.resolution = ct.resolution;
+%dij.ctGrid.resolution.x = ct.resolution.x;
+%dij.ctGrid.resolution.y = ct.resolution.y;
+%dij.ctGrid.resolution.z = ct.resolution.z;
+
+% to guarantee downwards compatibility with data that does not have
+% ct.x/y/z
+if ~any(isfield(ct,{'x','y','z'}))
+    dij.ctGrid.x = ct.resolution.x*[0:ct.cubeDim(2)-1]-ct.resolution.x/2;
+    dij.ctGrid.y = ct.resolution.y*[0:ct.cubeDim(1)-1]-ct.resolution.y/2;
+    dij.ctGrid.z = ct.resolution.z*[0:ct.cubeDim(3)-1]-ct.resolution.z/2;
+else
+    dij.ctGrid.x = ct.x;
+    dij.ctGrid.y = ct.y;   
+    dij.ctGrid.z = ct.z;
+end
+
+dij.ctGrid.dimensions  = [numel(dij.ctGrid.y) numel(dij.ctGrid.x) numel(dij.ctGrid.z)];
+dij.ctGrid.numOfVoxels = prod(dij.ctGrid.dimensions);
+
+
+%Create Dose Grid
+dij.doseGrid = this.doseGrid;
+
 %One can provide the dose grid directly (in the future, variable grids would be possible with this)
-if ~all(isfield(this.doseGrid,{'x','y','z'}))
-    dij.doseGrid.x = ct.x(1):dij.doseGrid.resolution.x:ct.x(end);
-    dij.doseGrid.y = ct.y(1):dij.doseGrid.resolution.y:ct.y(end);
-    dij.doseGrid.z = ct.z(1):dij.doseGrid.resolution.z:ct.z(end);
+if ~all(isfield(dij.doseGrid,{'x','y','z'}))
+    dij.doseGrid.x = dij.ctGrid.x(1):this.doseGrid.resolution.x:dij.ctGrid.x(end);
+    dij.doseGrid.y = dij.ctGrid.y(1):this.doseGrid.resolution.y:dij.ctGrid.y(end);
+    dij.doseGrid.z = dij.ctGrid.z(1):this.doseGrid.resolution.z:dij.ctGrid.z(end);
 end
 
 dij.doseGrid.dimensions  = [numel(dij.doseGrid.y) numel(dij.doseGrid.x) numel(dij.doseGrid.z)];
 dij.doseGrid.numOfVoxels = prod(dij.doseGrid.dimensions);
-
-%store CT grid
-dij.ctGrid.resolution.x = ct.resolution.x;
-dij.ctGrid.resolution.y = ct.resolution.y;
-dij.ctGrid.resolution.z = ct.resolution.z;
-
-dij.ctGrid.x = ct.x;
-dij.ctGrid.y = ct.y;
-dij.ctGrid.z = ct.z;
-
-dij.ctGrid.dimensions  = [numel(dij.ctGrid.y) numel(dij.ctGrid.x) numel(dij.ctGrid.z)];
-dij.ctGrid.numOfVoxels = prod(dij.ctGrid.dimensions);
+matRad_cfg.dispInfo('Dose grid has dimensions %dx%dx%d\n',dij.doseGrid.dimensions(1),dij.doseGrid.dimensions(2),dij.doseGrid.dimensions(3));
 
 dij.doseGrid.isoCenterOffset = [dij.doseGrid.resolution.x - dij.ctGrid.resolution.x ...
     dij.doseGrid.resolution.y - dij.ctGrid.resolution.y ...
@@ -73,26 +79,14 @@ dij.doseGrid.isoCenterOffset = [dij.doseGrid.resolution.x - dij.ctGrid.resolutio
 
 %Maybe we should not do this in the preprocessing if it allows us to not
 %change the stf
-for i = 1:numel(stf)
+for i = 1:numel(stf)    
     stf(i).isoCenter = stf(i).isoCenter + dij.doseGrid.isoCenterOffset;
 end
 
-%If we want to omit HU conversion check if we have a ct.cube ready
-if this.useGivenEqDensityCube && ~isfield(ct,'cube')
-    matRad_cfg.dispWarning('HU Conversion requested to be omitted but no ct.cube exists! Will override and do the conversion anyway!');
-    this.useGivenEqDensityCube = false;
-end
 
-% calculate rED or rSP from HU
-% Maybe we can avoid duplicating the CT here?
-if this.useGivenEqDensityCube
-    matRad_cfg.dispInfo('Omitting HU to rED/rSP conversion and using existing ct.cube!\n');
-else
-    ct = matRad_calcWaterEqD(ct, pln);
-end
 
 % meta information for dij
-dij.numOfBeams         = pln.propStf.numOfBeams;
+dij.numOfBeams         = numel(stf);
 dij.numOfScenarios     = 1;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
@@ -120,22 +114,13 @@ dij.numOfParticlesPerMU = 1e6*ones(this.numOfColumnsDij,1);
 
 % Allocate space for dij.physicalDose sparse matrix, assume 1%nnz
 for i = 1:dij.numOfScenarios   
-    nnzEstimate = 0.01*(dij.doseGrid.numOfVoxels*this.numOfColumnsDij);
+    nnzEstimate = floor(0.01*(dij.doseGrid.numOfVoxels*this.numOfColumnsDij));
     dij.physicalDose{i} = spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,nnzEstimate);
 end
 
 % take only voxels inside patient
 VctGrid = [cst{:,4}];
 VctGrid = unique(vertcat(VctGrid{:}));
-
-% ignore densities outside of contours
-if this.ignoreOutsideDensities
-    eraseCtDensMask = ones(prod(ct.cubeDim),1);
-    eraseCtDensMask(VctGrid) = 0;
-    for i = 1:ct.numOfCtScen
-        ct.cube{i}(eraseCtDensMask == 1) = 0;
-    end
-end
 
 % receive linear indices and grid locations from the dose grid
 tmpCube    = zeros(ct.cubeDim);
@@ -156,10 +141,7 @@ this.VctGrid = VctGrid;
 [this.yCoordsV_voxDoseGrid, this.xCoordsV_voxDoseGrid, this.zCoordsV_voxDoseGrid] = ind2sub(dij.doseGrid.dimensions,this.VdoseGrid);
 
 % load machine file from base data folder
-this.machine = matRad_loadMachine(pln);
-
-% compute SSDs
-stf = matRad_computeSSD(stf,ct,'densityThreshold',this.ssdDensityThreshold);
+this.machine = this.loadMachine(stf(1).radiationMode,stf(1).machine);
 
 end
 

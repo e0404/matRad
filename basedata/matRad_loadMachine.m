@@ -35,6 +35,7 @@ if isfield(pln, 'radiationMode')
         fileName = [pln.radiationMode '_' pln.machine];
     else
         fileName = [pln.radiationMode '_Generic'];
+        matRad_cfg.dispWarning('No machine name given, loading generic machine');
     end
 else
     matRad_cfg.dispError('No radiation mode given in pln');

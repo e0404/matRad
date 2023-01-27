@@ -23,6 +23,10 @@ classdef (Abstract) matRad_DoseEnginePencilBeam < DoseEngines.matRad_DoseEngine
 
         geometricLateralCutOff; %lateral geometric cut-off id mm, used for raytracing and geometry
         dosimetricLateralCutOff; %relative dosimetric cut-off (in fraction of values calculated)
+
+        ssdDensityThreshold;        % Threshold for SSD computation
+        useGivenEqDensityCube;      % Use the given density cube ct.cube and omit conversion from cubeHU.
+        ignoreOutsideDensities;     % Ignore densities outside of cst contours
     end
 
     properties (SetAccess = protected)
@@ -40,6 +44,9 @@ classdef (Abstract) matRad_DoseEnginePencilBeam < DoseEngines.matRad_DoseEngine
         rot_coordsVdoseGrid;    % Rotate coordinates for gantry movement for current beam
         radDepthVdoseGrid;      % grid for radiologica depth cube for current beam
         radDepthCube;           % radiological depth cube for current beam
+
+        cube;                   % relative electron density / stopping power cube
+        hlut;                   % hounsfield lookup table to craete relative electron density cube
     end
 
     methods
@@ -51,6 +58,9 @@ classdef (Abstract) matRad_DoseEnginePencilBeam < DoseEngines.matRad_DoseEngine
             %Set defaults
             this.geometricLateralCutOff       = matRad_cfg.propDoseCalc.defaultGeometricLateralCutOff;
             this.dosimetricLateralCutOff      = matRad_cfg.propDoseCalc.defaultDosimetricLateralCutOff;
+            this.useGivenEqDensityCube  = matRad_cfg.propDoseCalc.defaultUseGivenEqDensityCube;
+            this.ignoreOutsideDensities = matRad_cfg.propDoseCalc.defaultIgnoreOutsideDensities;
+            this.ssdDensityThreshold    = matRad_cfg.propDoseCalc.defaultSsdDensityThreshold;
         end
     end
 
@@ -80,12 +90,40 @@ classdef (Abstract) matRad_DoseEnginePencilBeam < DoseEngines.matRad_DoseEngine
 
     methods (Access = protected)
 
-        function [dij,ct,cst,stf,pln] = calcDoseInit(this,ct,cst,stf,pln)
+        function [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)
             % modified inherited method of the superclass DoseEngine,
             % containing intialization which are specificly needed for
             % pencil beam calculation and not for other engines
 
-            [dij,ct,cst,stf,pln] = calcDoseInit@DoseEngines.matRad_DoseEngine(this,ct,cst,stf,pln);
+            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_DoseEngine(this,ct,cst,stf);
+            
+            % calculate rED or rSP from HU
+            % Maybe we can avoid duplicating the CT here?
+            if this.useGivenEqDensityCube
+                matRad_cfg.dispInfo('Omitting HU to rED/rSP conversion and using existing ct.cube!\n');
+            else
+                ct = matRad_calcWaterEqD(ct, stf);
+                %this.cube = ct.cube;
+                this.hlut = ct.hlut;
+            end
+
+            %If we want to omit HU conversion check if we have a ct.cube ready
+            if this.useGivenEqDensityCube && ~isfield(ct,'cube')
+                matRad_cfg.dispWarning('HU Conversion requested to be omitted but no ct.cube exists! Will override and do the conversion anyway!');
+                this.useGivenEqDensityCube = false;
+            end
+
+            % ignore densities outside of contours
+            if this.ignoreOutsideDensities
+                eraseCtDensMask = ones(prod(ct.cubeDim),1);
+                eraseCtDensMask(this.VctGrid) = 0;
+                for i = 1:ct.numOfCtScen
+                    ct.cube{i}(eraseCtDensMask == 1) = 0;
+                end
+            end
+
+            % compute SSDs
+            stf = matRad_computeSSD(stf,ct,'densityThreshold',this.ssdDensityThreshold);
 
             % Allocate memory for dose_temp cell array
             this.doseTmpContainer     = cell(this.numOfBixelsContainer,dij.numOfScenarios);
