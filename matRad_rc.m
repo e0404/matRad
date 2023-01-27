@@ -27,7 +27,7 @@ if ~strcmp(matRad_cfg.matRadRoot,fileparts(mfilename("fullpath")))
     matRad_cfg = MatRad_Config.instance();
 end
 
-%clear command window and close all figures
+% clear command window and close all figures
 if clearWindow
 
     clc;

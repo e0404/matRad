@@ -47,10 +47,10 @@ classdef matRad_ViewingWidget < matRad_Widget
         plotLegend = true;
         plotColorBar = true;
         ProfileType = 'lateral';
-        SelectedDisplayOption ='physicalDose';
-        SelectedDisplayAllOptions='';
-        CutOffLevel= 0.01;
-        dispWindow= cell(3,2);
+        SelectedDisplayOption = 'physicalDose';
+        SelectedDisplayAllOptions = '';
+        CutOffLevel = 0.01;
+        dispWindow = cell(3,2);
         doseOpacity = 0.6;
         IsoDose_Levels= [];
         NewIsoDoseFlag = true;
@@ -1315,10 +1315,11 @@ classdef matRad_ViewingWidget < matRad_Widget
                         referenceDose            = (minMaxRange(1,2))/(upperMargin);
                         this.IsoDose_Levels   = minMaxRange(1,1) + (referenceDose-minMaxRange(1,1)) * vLevels;
                         this.IsoDose_Contours = matRad_computeIsoDoseContours(dose,this.IsoDose_Levels);
+                    end
                 end
-            end
              
             this.lockUpdate=lockState;
         end
+    end
     end
 end

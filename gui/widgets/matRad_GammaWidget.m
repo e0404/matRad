@@ -1,22 +1,22 @@
 classdef matRad_GammaWidget < matRad_Widget
-% matRad_GammaWidget : GUI widget for gamma index based comparisons of  
-% dose cubes stored within resultGUI struct.
-%
-% References
-%   -
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% Copyright 2020 the matRad development team. 
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
-% LICENSE file.
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    % matRad_GammaWidget : GUI widget for gamma index based comparisons of
+    % dose cubes stored within resultGUI struct.
+    %
+    % References
+    %   -
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %
+    % Copyright 2020 the matRad development team.
+    %
+    % This file is part of the matRad project. It is subject to the license
+    % terms in the LICENSE file found in the top-level directory of this
+    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+    % of the matRad project, including this file, may be copied, modified,
+    % propagated, or distributed except according to the terms contained in the
+    % LICENSE file.
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
     properties
@@ -33,21 +33,18 @@ classdef matRad_GammaWidget < matRad_Widget
         gammaCube;
         gammaPassRateCell;
         updated = false;
-        
-    end 
+
+    end
     properties (Constant)
-      normalization = {'local','global'}  ;
-    end 
+        normalization = {'local','global'}  ;
+    end
 
     events
 
-    end 
+    end
 
     methods
         function this  = matRad_GammaWidget(handleParent)
-%MANAGE ARGUMENTS 
-
-
             matRad_cfg = MatRad_Config.instance();
             if nargin < 2
                 handleParent = figure(...
@@ -62,12 +59,12 @@ classdef matRad_GammaWidget < matRad_Widget
                     'NumberTitle','off',...
                     'HandleVisibility','callback',...
                     'Tag','GammaWidget');
-                
+
             end
             this = this@matRad_Widget(handleParent);
-           
-           this.initialize();
-           this.update();
+
+            this.initialize();
+            this.update();
         end
 
         function this = initialize(this)
@@ -75,17 +72,17 @@ classdef matRad_GammaWidget < matRad_Widget
                 resultGUI = evalin('base','resultGUI');
                 resultnames = fieldnames(resultGUI) ;
                 j = 1;
-               for i = 1:numel(resultnames)
-                   if ndims(resultGUI.(resultnames{i}))==3
-                       this.SelectedDisplayAllOptions(j) = resultnames{i};
-                       j=j+1;
-                   end 
-               end 
-               % get and set display options 
+                for i = 1:numel(resultnames)
+                    if ndims(resultGUI.(resultnames{i}))==3
+                        this.SelectedDisplayAllOptions(j) = resultnames{i};
+                        j=j+1;
+                    end
+                end
+                % get and set display options
                 this.SelectedDisplayAllOptions = pad(this.SelectedDisplayAllOptions);
                 set(this.handles.popupSelectedDisplayOption1,'String',this.SelectedDisplayAllOptions);
                 set(this.handles.popupSelectedDisplayOption2,'String',this.SelectedDisplayAllOptions);
-                this.maxSlice = size(resultGUI.physicalDose,3); 
+                this.maxSlice = size(resultGUI.physicalDose,3);
                 this.slice = round(this.maxSlice/2);
             end
             if evalin( 'base', 'exist(''ct'')' )
@@ -95,30 +92,28 @@ classdef matRad_GammaWidget < matRad_Widget
             end
 
             set(this.handles.editGammaCrit,'String', regexprep(num2str(this.criteria),'\s+',' '));
-            
-            
 
         end
 
         function this = update (this,~)
-           
+
             if evalin( 'base', 'exist(''resultGUI'')' ) && this.lockUpdate
                 resultGUI = evalin('base','resultGUI');
                 resultnames = fieldnames(resultGUI) ;
                 j = 1;
-               for i = 1:numel(resultnames)
-                   if ndims(resultGUI.(resultnames{i}))==3
-                       this.SelectedDisplayAllOptions(j) = resultnames{i};
-                       j=j+1;
-                   end 
-               end 
-               % get and set display options 
+                for i = 1:numel(resultnames)
+                    if ndims(resultGUI.(resultnames{i}))==3
+                        this.SelectedDisplayAllOptions(j) = resultnames{i};
+                        j=j+1;
+                    end
+                end
+                % get and set display options
                 this.SelectedDisplayAllOptions = pad(this.SelectedDisplayAllOptions);
                 set(this.handles.popupSelectedDisplayOption1,'String',this.SelectedDisplayAllOptions);
                 set(this.handles.popupSelectedDisplayOption2,'String',this.SelectedDisplayAllOptions);
 
                 %slider options %CAN ALSO SET MIN AND MAX TO NONZERO SLICES
-                
+
                 if size(resultGUI.(this.SelectedDisplayOption1),3) == size(resultGUI.(this.SelectedDisplayOption2),3)
                     this.maxSlice = size(resultGUI.(this.SelectedDisplayOption1),3);
                     this.slice = round(this.maxSlice/2);
@@ -128,34 +123,34 @@ classdef matRad_GammaWidget < matRad_Widget
                 else
                     error('Mismatch in dimensions of selected cubes')
                 end
-            
-            
+
+
                 this.calcGamma();
                 this.plotGamma();
                 this.lockUpdate = false;
-            end 
+            end
 
-        end 
-        % METHOD FOR WHEN WORKSPACE IS CHANGED 
+        end
+        % METHOD FOR WHEN WORKSPACE IS CHANGED
 
         function set.SelectedDisplayOption1(this, value)
             this.SelectedDisplayOption1 = value;
             this.lockUpdate = true;
             this.update();
         end
-        
+
         function set.SelectedDisplayOption2(this, value)
             this.SelectedDisplayOption2 = value;
             this.lockUpdate = true;
             this.update();
         end
-        
+
         function set.resolution(this,value)
             this.resolution = value;
             this.lockUpdate = true;
             this.update();
         end
-        
+
         function set.criteria(this,value)
             this.criteria = value;
             this.lockUpdate = true;
@@ -171,14 +166,14 @@ classdef matRad_GammaWidget < matRad_Widget
             this.n = value;
             this.lockUpdate = true;
             this.update();
-        end 
-        
-        
-    end 
+        end
+
+
+    end
 
     methods (Access = protected)
-        
-        function this  = createLayout(this) 
+
+        function this  = createLayout(this)
             h20 = this.widgetHandle;
 
             matRad_cfg = MatRad_Config.instance();
@@ -189,7 +184,7 @@ classdef matRad_GammaWidget < matRad_Widget
             [i,j] = ndgrid(1:gridSize(1),1:gridSize(2));
             gridPos = arrayfun(@(i,j) computeGridPos(this,[i j],gridSize,elSize),i,j,'UniformOutput',false);
 
-             txt = sprintf('Choose Reference Cube from ResultGUI');
+            txt = sprintf('Choose Reference Cube from ResultGUI');
             h21 = uicontrol(...
                 'Parent',h20,...
                 'Units','normalized',...
@@ -199,7 +194,7 @@ classdef matRad_GammaWidget < matRad_Widget
                 'Position',gridPos{3,1},...
                 'BackgroundColor',matRad_cfg.gui.backgroundColor,...
                 'ForegroundColor',matRad_cfg.gui.textColor,...
-                'Tag','txtCube1',...                
+                'Tag','txtCube1',...
                 'FontSize',matRad_cfg.gui.fontSize,...
                 'FontName',matRad_cfg.gui.fontName,...
                 'FontWeight',matRad_cfg.gui.fontWeight);
@@ -219,8 +214,8 @@ classdef matRad_GammaWidget < matRad_Widget
                 'FontSize',matRad_cfg.gui.fontSize,...
                 'FontName',matRad_cfg.gui.fontName,...
                 'FontWeight',matRad_cfg.gui.fontWeight);
-            
-             txt = sprintf('Choose Reference Cube from ResultGUI');
+
+            txt = sprintf('Choose Reference Cube from ResultGUI');
             h23 = uicontrol(...
                 'Parent',h20,...
                 'Units','normalized',...
@@ -230,7 +225,7 @@ classdef matRad_GammaWidget < matRad_Widget
                 'Position',gridPos{5,1},...
                 'BackgroundColor',matRad_cfg.gui.backgroundColor,...
                 'ForegroundColor',matRad_cfg.gui.textColor,...
-                'Tag','txtCube2',...                
+                'Tag','txtCube2',...
                 'FontSize',matRad_cfg.gui.fontSize,...
                 'FontName',matRad_cfg.gui.fontName,...
                 'FontWeight',matRad_cfg.gui.fontWeight);
@@ -261,7 +256,7 @@ classdef matRad_GammaWidget < matRad_Widget
                 'Position',gridPos{1,3},...
                 'BackgroundColor',matRad_cfg.gui.backgroundColor,...
                 'ForegroundColor',matRad_cfg.gui.textColor,...
-                'Tag','txtGammaCrit',...                
+                'Tag','txtGammaCrit',...
                 'FontSize',matRad_cfg.gui.fontSize,...
                 'FontName',matRad_cfg.gui.fontName,...
                 'FontWeight',matRad_cfg.gui.fontWeight);
@@ -291,12 +286,12 @@ classdef matRad_GammaWidget < matRad_Widget
                 'Position',gridPos{1,5},...
                 'BackgroundColor',matRad_cfg.gui.backgroundColor,...
                 'ForegroundColor',matRad_cfg.gui.textColor,...
-                'Tag','txtResolution',...                
+                'Tag','txtResolution',...
                 'FontSize',matRad_cfg.gui.fontSize,...
                 'FontName',matRad_cfg.gui.fontName,...
                 'FontWeight',matRad_cfg.gui.fontWeight);
 
-             h28 = uicontrol(...
+            h28 = uicontrol(...
                 'Parent',h20,...
                 'Units','normalized',...
                 'String','0 0 0',...
@@ -321,12 +316,12 @@ classdef matRad_GammaWidget < matRad_Widget
                 'Position',gridPos{1,7},...
                 'BackgroundColor',matRad_cfg.gui.backgroundColor,...
                 'ForegroundColor',matRad_cfg.gui.textColor,...
-                'Tag','txtInterpolations',...                
+                'Tag','txtInterpolations',...
                 'FontSize',matRad_cfg.gui.fontSize,...
                 'FontName',matRad_cfg.gui.fontName,...
                 'FontWeight',matRad_cfg.gui.fontWeight);
 
-              h30 = uicontrol(...
+            h30 = uicontrol(...
                 'Parent',h20,...
                 'Units','normalized',...
                 'String','0',...
@@ -351,7 +346,7 @@ classdef matRad_GammaWidget < matRad_Widget
                 'Position',gridPos{1,9},...
                 'BackgroundColor',matRad_cfg.gui.backgroundColor,...
                 'ForegroundColor',matRad_cfg.gui.textColor,...
-                'Tag','txtInterpolations',...                
+                'Tag','txtInterpolations',...
                 'FontSize',matRad_cfg.gui.fontSize,...
                 'FontName',matRad_cfg.gui.fontName,...
                 'FontWeight',matRad_cfg.gui.fontWeight);
@@ -372,7 +367,7 @@ classdef matRad_GammaWidget < matRad_Widget
                 'FontName',matRad_cfg.gui.fontName,...
                 'FontWeight',matRad_cfg.gui.fontWeight);
 
-             txt = sprintf('Choose which slice should be displayed in intensity plots');
+            txt = sprintf('Choose which slice should be displayed in intensity plots');
             h33 = uicontrol(...
                 'Parent',h20,...
                 'Units','normalized',...
@@ -382,7 +377,7 @@ classdef matRad_GammaWidget < matRad_Widget
                 'Position',gridPos{1,11},...
                 'BackgroundColor',matRad_cfg.gui.backgroundColor,...
                 'ForegroundColor',matRad_cfg.gui.textColor,...
-                'Tag','txtInterpolations',...                
+                'Tag','txtInterpolations',...
                 'FontSize',matRad_cfg.gui.fontSize,...
                 'FontName',matRad_cfg.gui.fontName,...
                 'FontWeight',matRad_cfg.gui.fontWeight);
@@ -404,8 +399,8 @@ classdef matRad_GammaWidget < matRad_Widget
                 'FontWeight',matRad_cfg.gui.fontWeight,...
                 'Tag','sliderSlice');
 
-             p1 = uipanel(...
-                'Parent',h20,...   
+            p1 = uipanel(...
+                'Parent',h20,...
                 'Units','normalized',...
                 'BackgroundColor',matRad_cfg.gui.backgroundColor,...
                 'Tag','panelGammaIdx',...
@@ -416,37 +411,37 @@ classdef matRad_GammaWidget < matRad_Widget
                 'FontWeight',matRad_cfg.gui.fontWeight,...
                 'Title','Gamma Analysis');
 
-%               h35 = uicontrol(...
-%                 'Parent',p1,...
-%                 'Units','normalized',...
-%                 'String','Gamma Pass Rate : ',...
-%                 'Tooltip',txt,...
-%                 'Style','text',...
-%                 'Position',[0.05 0.05 0.5 0.95],...
-%                 'BackgroundColor',matRad_cfg.gui.backgroundColor,...
-%                 'ForegroundColor',matRad_cfg.gui.textColor,...
-%                 'Tag','txtGammaPass',...                
-%                 'FontSize',matRad_cfg.gui.fontSize,...
-%                 'FontName',matRad_cfg.gui.fontName,...
-%                 'FontWeight',matRad_cfg.gui.fontWeight);
-%                
-%               h36 = uifigure(...
-%                 'Parent',p1,...   
-%                 'Units','normalized',...
-%                 'BackgroundColor',matRad_cfg.gui.backgroundColor,...
-%                 'Tag','figGammaMap',...
-%                 'Clipping','off',...
-%                 'Position',[0.05 0.05 1 1],...
-%                 'FontName',matRad_cfg.gui.fontName,...
-%                 'FontSize',matRad_cfg.gui.fontSize,...
-%                 'FontWeight',matRad_cfg.gui.fontWeight);
+            %               h35 = uicontrol(...
+            %                 'Parent',p1,...
+            %                 'Units','normalized',...
+            %                 'String','Gamma Pass Rate : ',...
+            %                 'Tooltip',txt,...
+            %                 'Style','text',...
+            %                 'Position',[0.05 0.05 0.5 0.95],...
+            %                 'BackgroundColor',matRad_cfg.gui.backgroundColor,...
+            %                 'ForegroundColor',matRad_cfg.gui.textColor,...
+            %                 'Tag','txtGammaPass',...
+            %                 'FontSize',matRad_cfg.gui.fontSize,...
+            %                 'FontName',matRad_cfg.gui.fontName,...
+            %                 'FontWeight',matRad_cfg.gui.fontWeight);
+            %
+            %               h36 = uifigure(...
+            %                 'Parent',p1,...
+            %                 'Units','normalized',...
+            %                 'BackgroundColor',matRad_cfg.gui.backgroundColor,...
+            %                 'Tag','figGammaMap',...
+            %                 'Clipping','off',...
+            %                 'Position',[0.05 0.05 1 1],...
+            %                 'FontName',matRad_cfg.gui.fontName,...
+            %                 'FontSize',matRad_cfg.gui.fontSize,...
+            %                 'FontWeight',matRad_cfg.gui.fontWeight);
 
             this.createHandles();
         end
-        
+
     end
     methods (Access = private)
-    
+
         function popupNormalization_Callback(this, hObject, eventdata)
             contents      = cellstr(get(hObject,'String'));
             this.localglobal = contents{get(hObject,'Value')};
@@ -455,13 +450,13 @@ classdef matRad_GammaWidget < matRad_Widget
         function popupSelectedDisplayOption1_Callback(this,hObject,eventdata)
             contents      = cellstr(get(hObject,'String'));
             this.SelectedDisplayOption1 = strtrim(contents{get(hObject,'Value')});
-            
-        end 
+
+        end
         function popupSelectedDisplayOption2_Callback(this,hObject,eventdata)
             contents      = cellstr(get(hObject,'String'));
             this.SelectedDisplayOption2 = strtrim(contents{get(hObject,'Value')});
-            
-        end 
+
+        end
 
         function editResolution_Callback(this, hObject, ~)
             t = sscanf (get(hObject,'String'), '%f');
@@ -469,18 +464,18 @@ classdef matRad_GammaWidget < matRad_Widget
                 error('Resolution value error')
             else
                 this.resolution = t;
-            end 
-            
-        end 
+            end
+
+        end
         function editGammaCrit_Callback(this, hObject, ~)
             t = sscanf (get(hObject,'String'), '%f');
             if numel(t) ~=2
                 error('Gamma Criterion value error')
             else
                 this.criteria = t;
-            end 
-            
-        end 
+            end
+
+        end
 
         function editInterpolations_Callback(this, hObject, ~)
             t = str2double(get(hObject,'String'));
@@ -488,26 +483,26 @@ classdef matRad_GammaWidget < matRad_Widget
                 error('Number of Interpolations value error')
             else
                 this.n = t;
-            end 
-            
-        end 
-        function sliderSlice_Callback(this,hObject, ~)
-           % hObject    handle to sliderSlice (see GCBO)
-           % eventdata  reserved - to be defined in a future version of MATLAB
-           % handles    structure with handles and user data (see GUIDATA)
-           
-           % Hints: get(hObject,'Value') returns position of slider
-           %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-           %UpdatePlot(handles)
-           
-           this.slice = round(get(hObject,'Value'));
+            end
 
-           this.plotGamma();
+        end
+        function sliderSlice_Callback(this,hObject, ~)
+            % hObject    handle to sliderSlice (see GCBO)
+            % eventdata  reserved - to be defined in a future version of MATLAB
+            % handles    structure with handles and user data (see GUIDATA)
+
+            % Hints: get(hObject,'Value') returns position of slider
+            %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+            %UpdatePlot(handles)
+
+            this.slice = round(get(hObject,'Value'));
+
+            this.plotGamma();
         end
 
-        
+
     end
-    
+
 
     methods
         function calcGamma(this)
@@ -518,50 +513,48 @@ classdef matRad_GammaWidget < matRad_Widget
             end
             if evalin( 'base', 'exist(''cst'')' )
                 cst = evalin('base','cst');
-            else 
+            else
                 %no cst
-            end 
+            end
 
-            
+
 
             [this.gammaCube,this.gammaPassRateCell] = matRad_gammaIndex(resultGUI.(this.SelectedDisplayOption1) ,resultGUI.(this.SelectedDisplayOption2),...
-                                                                            this.resolution,this.criteria,[],this.n,this.localglobal,cst);
+                this.resolution,this.criteria,[],this.n,this.localglobal,cst);
 
-        end 
+        end
         function plotGamma(this)
-          this.widgetHandle;  
-            
-          
-          % visualize if applicable
+            this.widgetHandle;
+            % visualize if applicable
 
-            if  ~isempty(this.slice) && ~isempty(this.gammaCube) 
+            if  ~isempty(this.slice) && ~isempty(this.gammaCube)
                 if isempty(this.handles.panelGammaIdx(1).Children)
-                ax = axes('Parent',this.handles.panelGammaIdx);
+                    ax = axes('Parent',this.handles.panelGammaIdx);
                 else
-%                     delete(this.handles.panelGammaIdx(1).Children(2));
+                    % overwrite previous plot in the panel
                     ax = this.handles.panelGammaIdx(1).Children(2);
-                    
+
                 end
-%                 ax = figure('Parent',this.handles.panelGammaIdx);
-%                 set(ax,'Color',[1 1 1]);  
+                %                 ax = figure('Parent',this.handles.panelGammaIdx);
+                %                 set(ax,'Color',[1 1 1]);
                 imagesc(ax, this.gammaCube(:,:,this.slice))
                 myColormap = matRad_getColormap('gammaIndex');
 
                 set(ax,'colormap',myColormap);
-                
+
                 colorbar(ax);
                 titletxt = {[num2str(this.gammaPassRateCell{1,2},5) '% of points > ' num2str(this.criteria(1))  ...
                     '% pass gamma criterion (' num2str(this.criteria(1))  '% / ' ...
                     num2str(this.criteria(2))  'mm)']; ['with ' num2str(2^this.n-1) ' interpolation points']};
                 title(ax, titletxt);
-%                 set(this.handles.panelGammaIdx(1).Children(2),'Title',titletxt);
+                %                 set(this.handles.panelGammaIdx(1).Children(2),'Title',titletxt);
 
-                
-            
-%             this.createHandles();
+
+
+                %             this.createHandles();
             end
         end
 
     end
 
-end 
+end

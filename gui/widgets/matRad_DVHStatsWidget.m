@@ -23,18 +23,18 @@ classdef matRad_DVHStatsWidget < matRad_Widget
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties
-        SelectedDisplayOption;
+        selectedDisplayOption;
         lockUpdate = false;
         dvhWidgetHandle = [];
         statWidgetHandle = [];
     end
 
     methods
-        function this = matRad_DVHStatsWidget(SelectedDisplayOption,handleParent)  
+        function this = matRad_DVHStatsWidget(selectedDisplayOption,handleParent)  
 
             
             matRad_cfg = MatRad_Config.instance();
-            if nargin<2 %isempty(p.Results.handleParent)
+            if nargin < 2 
 
                 handleParent = figure(...
                     'Units','normalized',...
@@ -52,9 +52,9 @@ classdef matRad_DVHStatsWidget < matRad_Widget
                 
             end
             this = this@matRad_Widget(handleParent);
-            this.SelectedDisplayOption = SelectedDisplayOption;
-            this.dvhWidgetHandle.SelectedCube = SelectedDisplayOption;
-            this.statWidgetHandle.SelectedCube = SelectedDisplayOption;
+            this.selectedDisplayOption = selectedDisplayOption;
+            this.dvhWidgetHandle.selectedCube = selectedDisplayOption;
+            this.statWidgetHandle.selectedCube = selectedDisplayOption;
             this.lockUpdate = true;
             this.dvhWidgetHandle.lockUpdate = true;
             this.statWidgetHandle.lockUpdate = true;
@@ -72,22 +72,22 @@ classdef matRad_DVHStatsWidget < matRad_Widget
                         this.statWidgetHandle.update(evt);
                     end
                 else
-                    if    ~strcmp(this.dvhWidgetHandle.SelectedCube, this.SelectedDisplayOption)
-                        this.dvhWidgetHandle.SelectedCube = this.SelectedDisplayOption;
-                        this.statWidgetHandle.SelectedCube = this.SelectedDisplayOption;
+                    if ~strcmp(this.dvhWidgetHandle.selectedCube, this.selectedDisplayOption)
+                        this.dvhWidgetHandle.selectedCube = this.selectedDisplayOption;
+                        this.statWidgetHandle.selectedCube = this.selectedDisplayOption;
 
                     end
                         this.dvhWidgetHandle = this.dvhWidgetHandle.update();
                         this.statWidgetHandle = this.statWidgetHandle.update();
-                        if numel(this.dvhWidgetHandle.widgetHandle.Children)>2 
+                        if numel(this.dvhWidgetHandle.widgetHandle.Children) > 2 
                             this.removeOverlap();
                         end
                  
                 end
             end
         end
-        function set.SelectedDisplayOption(this,value)
-            this.SelectedDisplayOption=value;
+        function set.selectedDisplayOption(this,value)
+            this.selectedDisplayOption = value;
             this.update();
 
         end

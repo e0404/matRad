@@ -64,8 +64,8 @@ end
 
 %%
 % Enable sequencing and direct aperture optimization (DAO).
-pln.propSeq.runSequencing = 1;
-pln.propOpt.runDAO        = 1;
+pln.propSeq.runSequencing = true;
+pln.propOpt.runDAO        = true;
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);

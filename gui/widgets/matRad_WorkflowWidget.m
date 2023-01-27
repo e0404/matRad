@@ -136,7 +136,6 @@ classdef matRad_WorkflowWidget < matRad_Widget
                    
 
             h72 = this.addControlToGrid([2 4],...
-
                 'Style','text',...
                 'String','Status:',...                                
                 'BackgroundColor',matRad_cfg.gui.backgroundColor,...
@@ -146,7 +145,6 @@ classdef matRad_WorkflowWidget < matRad_Widget
             
 
             h73 = this.addControlToGrid([3 4],...
-
                 'String','no data loaded',...
                 'Style','text',...               
                 'BackgroundColor',matRad_cfg.gui.backgroundColor,...
@@ -432,12 +430,12 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 set(InterfaceObj,'Enable','off');
                 
                 pln = evalin('base','pln');
-                ct  = evalin('base','ct');
                 dij = evalin('base','dij');
+                cst = evalin('base','cst');
                 % optimize
-                [resultGUIcurrentRun,usedOptimizer] = matRad_fluenceOptimization(dij,evalin('base','cst'),pln);
+                [resultGUIcurrentRun,usedOptimizer] = matRad_fluenceOptimization(dij,cst,pln);
                 if pln.propOpt.conf3D && strcmp(pln.radiationMode,'photons')
-                    resultGUIcurrentRun.w = resultGUIcurrentRun.w .* ones(dij.totalNumOfBixels,1); % what and why ? 
+                    resultGUIcurrentRun.w = resultGUIcurrentRun.w .* ones(dij.totalNumOfBixels,1);  
                     resultGUIcurrentRun.wUnsequenced = resultGUIcurrentRun.w;
                 end
                 
@@ -460,27 +458,9 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 else
                     resultGUI = resultGUIcurrentRun;
                 end
+
                 assignin('base','resultGUI',resultGUI);
-                %
-                %                     % set some values
-                %                     if handles.plane == 1
-                %                         set(handles.sliderSlice,'Value',ceil(pln.propStf.isoCenter(1,2)/ct.resolution.x));
-                %                     elseif handles.plane == 2
-                %                         set(handles.sliderSlice,'Value',ceil(pln.propStf.isoCenter(1,1)/ct.resolution.y));
-                %                     elseif handles.plane == 3
-                %                         set(handles.sliderSlice,'Value',ceil(pln.propStf.isoCenter(1,3)/ct.resolution.z));
-                %                     end
-                
-                %                     handles.State = 3;
-                %                     handles.SelectedDisplayOptionIdx = 1;
-                %                     if strcmp(pln.radiationMode,'carbon') || (strcmp(pln.radiationMode,'protons') && strcmp(pln.propOpt.bioOptimization,'const_RBExD'))
-                %                         handles.SelectedDisplayOption = 'RBExDose';
-                %                     else
-                %                         handles.SelectedDisplayOption = 'physicalDose';
-                %                     end
-                %                     handles.selectedBeam = 1;
-                % check IPOPT status and return message for GUI user if no DAO or
-                % particles
+
                 if ~pln.propOpt.runDAO || ~strcmp(pln.radiationMode,'photons')
                     CheckOptimizerStatus(this,usedOptimizer,'Fluence')
                 end
@@ -496,10 +476,9 @@ classdef matRad_WorkflowWidget < matRad_Widget
             
             % perform sequencing and DAO
             try
-                
                 %% sequencing
                 
-                resultGUI = matRad_sequencing(resultGUI,evalin('base','stf'),evalin('base','dij'),evalin('base','pln'));
+                resultGUI = matRad_sequencing(resultGUI,evalin('base','stf'),dij,pln);
                 assignin('base','resultGUI',resultGUI);
                 
                 
@@ -542,14 +521,6 @@ classdef matRad_WorkflowWidget < matRad_Widget
             % change state from busy to normal
             set(Figures, 'pointer', 'arrow');
             set(InterfaceObj,'Enable','on');
-            %                 handles.dispWindow{3,1}  = [];   % reset dose ranges
-            %                 handles.dispWindow{3,2}  = [];   % reset min max dose values
-            %                 handles.rememberCurrAxes = false;
-            %                 handles.IsoDose.Levels   = 0;  % ensure to use default iso dose line spacing
-            %                 handles.cBarChanged      = true;
-            %                 handles = updateIsoDoseLineCache(handles);
-            %                 UpdatePlot(handles);
-            %                 handles.rememberCurrAxes = true;
             this.handles = handles;
             
             this.changedWorkspace('resultGUI');
@@ -564,7 +535,6 @@ classdef matRad_WorkflowWidget < matRad_Widget
             handles = this.handles;
             try
                 % delete existing workspace - parse variables from base workspace
-                %                     set(handles.popupDisplayOption,'String','no option available');
                 AllVarNames = evalin('base','who');
                 RefVarNames = {'ct','cst','pln','stf','dij','resultGUI'};
                 for i = 1:length(RefVarNames)
@@ -579,8 +549,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
             end
             
             this.handles = handles;
-            %changeWorkspace(this);
-            %getFromWorkspace(this);
+
         end
         
         % H78 Callback - button: refresh
@@ -598,7 +567,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
             try
                 % indicate that matRad is busy
                 % change mouse pointer to hour glass
-                Figures = gcf;%findobj('type','figure');
+                Figures = gcf;
                 set(Figures, 'pointer', 'watch');
                 drawnow;
                 % disable all active objects
@@ -611,16 +580,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 ct        = evalin('base','ct');
                 cst       = evalin('base','cst');
                 resultGUI = evalin('base','resultGUI');
-                
-                %                         % get weights of the selected cube
-                %                         Content = get(handles.popupDisplayOption,'String');
-                %                         SelectedCube = Content{get(handles.popupDisplayOption,'Value')};
-                %                         Suffix = strsplit(SelectedCube,'_');
-                %                         if length(Suffix)>1
-                %                             Suffix = ['_' Suffix{2}];
-                %                         else
-                %                             Suffix = '';
-                %                         end
+
                 
                 if sum([stf.totalNumOfBixels]) ~= length(resultGUI.w)%(['w' Suffix]))
                     warndlg('weight vector does not corresponding to current steering file');
@@ -661,19 +621,12 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 % assign results to base worksapce
                 assignin('base','dij',dij);
                 assignin('base','resultGUI',resultGUI);
-                
-                
-                %                         % show physicalDose of newly computed state
-                %                         handles.SelectedDisplayOption = 'physicalDose';
-                %                         set(handles.popupDisplayOption,'Value',find(strcmp('physicalDose',Content)));
+
                 
                 % change state from busy to normal
                 set(Figures, 'pointer', 'arrow');
                 set(InterfaceObj,'Enable','on');
-                
-                %                         handles.cBarChanged = true;
-                %                         handles = updateIsoDoseLineCache(handles);
-                
+               
                 this.handles = handles;
                 this.changedWorkspace('dij','resultGUI');
                 
@@ -730,8 +683,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
             
             uiwait(figDialog);
             this.handles = handles;
-            %changeWorkspace(this);
-            %getFromWorkspace(this);
+
         end
         
         function SaveResultToGUI(this, ~, ~)
@@ -865,41 +817,6 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 h=matRad_importWidget;
                 uiwait(h.widgetHandle);
                 
-%                 %Check if we have the variables in the workspace
-%                 if evalin('base','exist(''cst'',''var'')') == 1 && evalin('base','exist(''ct'',''var'')') == 1
-%                     cst = evalin('base','cst');
-%                     ct = evalin('base','ct');
-%                     %cst = generateCstTable(this,cst);
-%                     %                         handles.TableChanged = false;
-%                     %                         set(handles.popupTypeOfPlot,'Value',1);
-%                     
-%                     % compute HU values
-%                     if ~isfield(ct, 'cubeHU')
-%                         ct = matRad_electronDensitiesToHU(ct);
-%                     end
-%                     %                         if ~isfield(ct, 'cubeHU')
-%                     %                             handles.cubeHUavailable = false;
-%                     %                         else
-%                     %                             handles.cubeHUavailable = true;
-%                     %                         end
-%                     
-%                     %                         % precompute contours
-%                     %                         cst = precomputeContours(this,ct,cst);
-%                     
-%                     assignin('base','ct',ct);
-%                     assignin('base','cst',cst);
-%                     
-%                     if evalin('base','exist(''pln'',''var'')')
-%                         assignin('base','pln',pln);
-%                         %                             setPln(handles);
-%                         %                         else
-%                         %                             getPlnFromGUI(handles);
-%                         %                             setPln(handles);
-%                     end
-%                     
-%                    
-%                     
-%                 end
                 this.handles = handles;
                 this.changedWorkspace();
             catch ME                

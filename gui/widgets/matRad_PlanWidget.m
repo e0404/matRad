@@ -363,8 +363,7 @@ classdef matRad_PlanWidget < matRad_Widget
 
             pos = gridPos{5,3};
             pos(3) = pos(3) / 2;
-            %pos(1) = pos(1) + pos(3);
-            
+                        
             
             h29 = uicontrol(...
                 'Parent',h12,...
@@ -483,7 +482,6 @@ classdef matRad_PlanWidget < matRad_Widget
                 'FontWeight',matRad_cfg.gui.fontWeight);
             
             pos = gridPos{4,1};
-
             pos(3) = pos(3)*2;
             
             h36 = uicontrol(...
@@ -519,7 +517,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 'FontSize',matRad_cfg.gui.fontSize,...
                 'FontName',matRad_cfg.gui.fontName,...
                 'FontWeight',matRad_cfg.gui.fontWeight);
-              
+              % positioning dose grid size input boxes
               pos(1) = pos(1) + pos(3) + 0.005;
               
               h38 = uicontrol(...
@@ -772,7 +770,7 @@ classdef matRad_PlanWidget < matRad_Widget
                     set(handles.editIsoCenter,'Enable','off')
                     assignin('base','pln',pln);
                 catch ME
-                    warning(ME.identifier,'couldn''t set isocenter in pln update! Reason: %s\n',ME.message)
+                    warning(ME.identifier,'could not set isocenter in pln update! Reason: %s\n',ME.message)
                 end
             else
                 set(handles.editIsoCenter,'Enable','on')
@@ -806,7 +804,7 @@ classdef matRad_PlanWidget < matRad_Widget
                     end
                 catch ME
 
-                    showWarning(this,'couldn''t set isocenter in pln update! Reason: %s\n',ME.message)  %% showWarning vs warning 
+                    showWarning(this,'Could not set isocenter in pln update! Reason: %s\n',ME.message)  %% showWarning vs warning 
                 end
             end
             
@@ -986,7 +984,7 @@ classdef matRad_PlanWidget < matRad_Widget
         end
         
         function popUpMachine_Callback(this, hObject, eventdata)
-            % M???GLICHER FEHLER WEGEN VALUE WERT!
+            % MOEGLICHER FEHLER WEGEN VALUE WERT!
             handles = this.handles;
              contents = cellstr(get(hObject,'String'));
              MachineIdentifier = contents{get(hObject,'Value')};
@@ -999,7 +997,7 @@ classdef matRad_PlanWidget < matRad_Widget
             getMachines(this);
             pln = evalin('base','pln');
             
-            % Mï¿½GLICHEE FEHLER HIER VALUE UND GENERIC WERDEN VERGLICHEN
+            % MOEGLICHEE FEHLER HIER VALUE UND GENERIC WERDEN VERGLICHEN
             if strcmp(contents(get(hObject,'Value')),'Generic')
                 try
                     AllVarNames = evalin('base','who');
@@ -1014,7 +1012,7 @@ classdef matRad_PlanWidget < matRad_Widget
                     end
                 catch
                 end
-            % Mï¿½GLICHEE FEHLER HIER VALUE UND GENERIC WERDEN VERGLICHEN
+            % MOEGLICHEE FEHLER HIER VALUE UND GENERIC WERDEN VERGLICHEN
             elseif strcmp(contents(get(hObject,'Value')),'generic_MCsquare')
                 try
                     AllVarNames = evalin('base','who');
@@ -1105,7 +1103,7 @@ classdef matRad_PlanWidget < matRad_Widget
                         'Position', [Width-(0.5*Width) 0.1 * Height 80 30],...
                         'Callback', 'close');
                 catch ME
-                    warning(ME.identifier,'couldn''t set isocenter in pln update! Reason: %s\n',ME.message)
+                    warning(ME.identifier,'Could not set isocenter in pln update! Reason: %s\n',ME.message)
                 end
             end
             this.handles = handles;

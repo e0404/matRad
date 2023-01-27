@@ -412,8 +412,8 @@ classdef matRad_importDicomWidget < matRad_Widget
             
         end
         
-        % H?? CHECKBOX§ CALLBACK
-        function this = checkbox3_Callback(this, hObject, eventdata)
+        % H38 CHECKBOX USE RT DOSE GRID CALLBACK
+        function this = checkUseRTdoseGrid_Callback(this, hObject, eventdata)
             % hObject    handle to checkbox3 (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
@@ -946,7 +946,7 @@ classdef matRad_importDicomWidget < matRad_Widget
                 'FontSize',matRad_cfg.gui.fontSize,...
                 'FontName',matRad_cfg.gui.fontName,...
                 'FontWeight',matRad_cfg.gui.fontWeight,...
-                'Callback',@(hObject,event) checkbox3_Callback(this,hObject,event),...
+                'Callback',@(hObject,event) checkUseRTdoseGrid_Callback(this,hObject,event),...
                 'Enable','off',...
                 'Tag','checkbox3' );
 
