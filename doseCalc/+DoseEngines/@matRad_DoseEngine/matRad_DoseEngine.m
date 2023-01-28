@@ -37,7 +37,7 @@ classdef (Abstract) matRad_DoseEngine < handle
         xCoordsV_voxDoseGrid;   % converted voxel indices to real grid
         zCoordsV_voxDoseGrid;   % converted voxel indices to real grid
         
-        offset; % offset adjustment for isocenter
+        %offset; % offset adjustment for isocenter
         
         VctGrid; % voxel grid inside patient
         VdoseGrid;  % voxel dose grid         
@@ -58,7 +58,7 @@ classdef (Abstract) matRad_DoseEngine < handle
     
     methods      
         %Constructor  
-        function this = matRad_DoseEngine()
+        function this = matRad_DoseEngine(pln)
             % future code for property validation on creation here
             matRad_cfg = MatRad_Config.instance();
             

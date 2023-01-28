@@ -41,7 +41,7 @@ if isfield(pln, 'propDoseCalc') && isfield(pln.propDoseCalc, 'engine')
     matRad_cfg.dispWarning('You should not use the deprecated MC calculation with the new engine architecture! Setting pencil beam as engine!');
 end
 
-engine = DoseEngines.matRad_DoseEngineParticlePB(ct,stf,pln,cst);
+engine = DoseEngines.matRad_DoseEngineParticlePB(pln);
 
 % set additional args
 if exist('calcDoseDirect','var')    

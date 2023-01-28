@@ -137,11 +137,11 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
 
             %Now we can run calcDoseInit as usual
             [dij,ct,cst,stf] = this.calcDoseInit(ct,cst,stf);
-
+            
             % We need to adjust the offset used in matRad_calcDoseInit
             mcSquareAddIsoCenterOffset = [dij.doseGrid.resolution.x/2 dij.doseGrid.resolution.y/2 dij.doseGrid.resolution.z/2] ...
                             - [dij.ctGrid.resolution.x   dij.ctGrid.resolution.y   dij.ctGrid.resolution.z];
-            mcSquareAddIsoCenterOffset = mcSquareAddIsoCenterOffset - this.offset;
+            mcSquareAddIsoCenterOffset = mcSquareAddIsoCenterOffset - dij.doseGrid.isoCenterOffset;
 
             % for MCsquare we explicitly downsample the ct to the dose grid (might not
             % be necessary in future MCsquare versions with separated grids)

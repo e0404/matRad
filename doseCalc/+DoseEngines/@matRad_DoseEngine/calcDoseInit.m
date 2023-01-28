@@ -77,7 +77,7 @@ dij.doseGrid.isoCenterOffset = [dij.doseGrid.resolution.x - dij.ctGrid.resolutio
     dij.doseGrid.resolution.y - dij.ctGrid.resolution.y ...
     dij.doseGrid.resolution.z - dij.ctGrid.resolution.z];
 
-%Maybe we should not do this in the preprocessing if it allows us to not
+%TODO: Maybe we should not do this in the preprocessing if it allows us to not
 %change the stf
 for i = 1:numel(stf)    
     stf(i).isoCenter = stf(i).isoCenter + dij.doseGrid.isoCenterOffset;

@@ -510,7 +510,7 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
             matRad_cfg =  MatRad_Config.instance();                                   
                                                 
             % call superclass constructor
-            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_DoseEngine(this,ct,cst,stf);
+            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_DoseEnginePencilBeam(this,ct,cst,stf);
             
         end
         
