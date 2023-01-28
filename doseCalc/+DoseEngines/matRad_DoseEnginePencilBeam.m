@@ -146,7 +146,9 @@ classdef (Abstract) matRad_DoseEnginePencilBeam < DoseEngines.matRad_DoseEngine
             %   dij:                        updated dij struct
 
             matRad_cfg = MatRad_Config.instance();
-            matRad_cfg.dispInfo('Beam %d of %d:\n',i,dij.numOfBeams);
+            if dij.numOfBeams > 1
+                matRad_cfg.dispInfo('Beam %d of %d:\n',i,dij.numOfBeams);
+            end
 
             % remember beam and bixel number
             if this.calcDoseDirect
@@ -158,9 +160,9 @@ classdef (Abstract) matRad_DoseEnginePencilBeam < DoseEngines.matRad_DoseEngine
             this.bixelsPerBeam = 0;
 
             % convert voxel indices to real coordinates using iso center of beam i
-            xCoordsV       = this.xCoordsV_vox(:)*ct.resolution.x-stf(i).isoCenter(1);
-            yCoordsV       = this.yCoordsV_vox(:)*ct.resolution.y-stf(i).isoCenter(2);
-            zCoordsV       = this.zCoordsV_vox(:)*ct.resolution.z-stf(i).isoCenter(3);
+            xCoordsV       = this.xCoordsV_vox(:)*dij.ctGrid.resolution.x-stf(i).isoCenter(1);
+            yCoordsV       = this.yCoordsV_vox(:)*dij.ctGrid.resolution.y-stf(i).isoCenter(2);
+            zCoordsV       = this.zCoordsV_vox(:)*dij.ctGrid.resolution.z-stf(i).isoCenter(3);
             coordsV        = [xCoordsV yCoordsV zCoordsV];
 
             xCoordsVdoseGrid = this.xCoordsV_voxDoseGrid(:)*dij.doseGrid.resolution.x-stf(i).isoCenter(1);
@@ -199,8 +201,10 @@ classdef (Abstract) matRad_DoseEnginePencilBeam < DoseEngines.matRad_DoseEngine
             end
 
             % interpolate radiological depth cube to dose grid resolution
-            this.radDepthVdoseGrid = matRad_interpRadDepth...
-                (ct,1,this.VctGrid,this.VdoseGrid,dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z,radDepthVctGrid);
+            %this.radDepthVdoseGrid = matRad_interpRadDepth...
+            %    (ct,1,this.VctGrid,this.VdoseGrid,dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z,radDepthVctGrid);
+
+            this.radDepthVdoseGrid = this.interpRadDepth(ct,1,this.VctGrid,this.VdoseGrid,dij.ctGrid,dij.doseGrid,radDepthVctGrid);
 
             matRad_cfg.dispInfo('done.\n');
 
@@ -212,6 +216,15 @@ classdef (Abstract) matRad_DoseEnginePencilBeam < DoseEngines.matRad_DoseEngine
             % limit rotated coordinates to positions where ray tracing is availabe
             this.rot_coordsVdoseGrid = rot_coordsVdoseGrid(~isnan(this.radDepthVdoseGrid{1}),:);
 
+        end
+
+        function radDepthVdoseGrid = interpRadDepth(~,ct,ctScenNum,V,Vcoarse,ctGrid,doseGrid,radDepthVctGrid)            
+            radDepthCube                = NaN*ones(ct.cubeDim);
+            radDepthCube(V(~isnan(radDepthVctGrid{1}))) = radDepthVctGrid{ctScenNum}(~isnan(radDepthVctGrid{1}));
+            
+            % interpolate cube - cube is now stored in Y X Z 
+            coarseRadDepthCube          = matRad_interp3(ctGrid.x,ctGrid.y',ctGrid.z,radDepthCube,doseGrid.x,doseGrid.y',doseGrid.z);
+            radDepthVdoseGrid{ctScenNum}  = coarseRadDepthCube(Vcoarse);
         end
        
     end
