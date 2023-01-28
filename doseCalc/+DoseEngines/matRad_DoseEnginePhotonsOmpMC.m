@@ -37,20 +37,17 @@ classdef matRad_DoseEnginePhotonsOmpMC < DoseEngines.matRad_DoseEngineMonteCarlo
     end
 
     methods
-        function this = matRad_DoseEnginePhotonsOmpMC(ct,stf,pln,cst)
+        function this = matRad_DoseEnginePhotonsOmpMC(pln)
             % Constructor
             %
             % call
             %   engine = DoseEngines.matRad_DoseEnginePhotonsOmpMCct,stf,pln,cst)
             %
             % input
-            %   ct:                         matRad ct struct
-            %   stf:                        matRad steering information struct
             %   pln:                        matRad plan meta information struct
-            %   cst:                        matRad cst struct
 
             % call superclass constructor
-            this = this@DoseEngines.matRad_DoseEngineMonteCarlo();
+            this = this@DoseEngines.matRad_DoseEngineMonteCarlo(pln);
 
             matRad_cfg = MatRad_Config.instance();
             this.omcFolder = [matRad_cfg.matRadRoot filesep 'ompMC'];

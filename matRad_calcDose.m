@@ -58,7 +58,7 @@ if(isfield(pln,'propDoseCalc') && isfield(pln.propDoseCalc,'engine'))
         if any(strcmpi(nameList,pln.propDoseCalc.engine))
             %instantiate engine
             engineHandle = handleList{strcmpi(nameList,pln.propDoseCalc.engine)};
-            engine = engineHandle(ct,stf,pln,cst);
+            engine = engineHandle(pln);
             
             engine.assignPropertiesFromPln(pln); %TODO: could this be in the constructor?
         else
@@ -88,11 +88,11 @@ if initDefaultEngine
         if length(engineHandle) > 1
             engineHandle = engineHandle{1};
         end
-        engine = engineHandle(ct,stf,pln,cst);
+        engine = engineHandle(pln);
         matRad_cfg.dispWarning('Using default photon dose calculation engine %s!', engine.name);
     elseif length(nameList) > 0
         engineHandle = handleList{1};
-        engine = engineHandle(ct,stf,pln,cst);
+        engine = engineHandle(pln);
         matRad_cfg.dispWarning('Default photon dose calculation engine not available! Using %s.', engine.name);
     else
         matRad_cfg.dispError('No dose engine found!');

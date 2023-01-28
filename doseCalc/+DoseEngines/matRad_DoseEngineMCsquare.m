@@ -35,7 +35,7 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
     
     methods
         
-        function this = matRad_DoseEngineMCsquare(ct,stf,pln,cst)
+        function this = matRad_DoseEngineMCsquare(pln)
             % Constructor
             %
             % call
@@ -48,13 +48,13 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
             %   cst:                        matRad cst struct
             
             % call superclass constructor
-            this = this@DoseEngines.matRad_DoseEngineMonteCarlo();
+            this = this@DoseEngines.matRad_DoseEngineMonteCarlo(pln);
    
             % create config instance
             matRad_cfg = MatRad_Config.instance();
             
             % check pln values if struct is given
-            if exist('pln', 'var')            
+            if nargin < 1          
                 this.checkPln(pln);  
             else
                 matRad_cfg.dispInfo('No pln struct given. Base properties will have to be set later.\n')

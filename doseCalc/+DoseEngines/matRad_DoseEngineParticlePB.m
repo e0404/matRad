@@ -43,24 +43,30 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
              
     methods 
         
-        function this = matRad_DoseEngineParticlePB(ct,stf,pln,cst)
+        function this = matRad_DoseEngineParticlePB(pln)
             % Constructor
             %
             % call
             %   engine = DoseEngines.matRad_ParticleAnalyticalPencilBeamDoseEngine(ct,stf,pln,cst)
             %
             % input
-            %   ct:                         matRad ct struct
-            %   stf:                        matRad steering information struct
             %   pln:                        matRad plan meta information struct
-            %   cst:                        matRad cst struct
              
-            this = this@DoseEngines.matRad_DoseEnginePencilBeam();
+            this = this@DoseEngines.matRad_DoseEnginePencilBeam(pln);
 
             this.pbCalcMode = 'standard';
             
             matRad_cfg = MatRad_Config.instance();
             this.fineSampling = matRad_cfg.propDoseCalc.defaultFineSamplingProperties;
+
+            % check if bio optimization is needed and set the
+            % coresponding boolean accordingly
+            if nargin > 0 && (isfield(pln,'propOpt')&& isfield(pln.propOpt,'bioOptimization')&& ...
+                (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') ||... 
+                isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) && ... 
+                strcmp(pln.radiationMode,'carbon'))
+                this.calcBioDose = true;
+            end
             
         end
         
@@ -501,16 +507,7 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
             % Extended version of the calcDoseInit method of
             % @matRad_DoseEngine method. See superclass for more information 
 
-            matRad_cfg =  MatRad_Config.instance();
-                                   
-            % check if bio optimization is needed and set the
-            % coresponding boolean accordingly
-            if (isfield(pln,'propOpt')&& isfield(pln.propOpt,'bioOptimization')&& ...
-                (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') ||... 
-                isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) && ... 
-                strcmp(pln.radiationMode,'carbon'))
-                this.calcBioDose = true;
-            end
+            matRad_cfg =  MatRad_Config.instance();                                   
                                                 
             % call superclass constructor
             [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_DoseEngine(this,ct,cst,stf);

@@ -29,10 +29,10 @@ classdef (Abstract) matRad_DoseEngineMonteCarlo < DoseEngines.matRad_DoseEngine
         
     methods
         
-        function this = matRad_DoseEngineMonteCarlo()
+        function this = matRad_DoseEngineMonteCarlo(pln)
             
             % call superclass constructor
-            this = this@DoseEngines.matRad_DoseEngine();
+            this = this@DoseEngines.matRad_DoseEngine(pln);
    
             % create config instance
             matRad_cfg = MatRad_Config.instance();
