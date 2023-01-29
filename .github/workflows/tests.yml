@@ -16,7 +16,7 @@ jobs:
         with:
           command: cd unitTest; matRad_runTests
   test-octave: #Octave test Job
-    runs-on: ubuntu-20.04 # We use Ubuntu-20.04 because it has Octave 5.2
+    runs-on: ubuntu-22.04 # We use Ubuntu-22.04 because it has Octave 6.4
     steps:
       - uses: actions/checkout@v2 # Checks-out repository under $GITHUB_WORKSPACE
       - name: Install OCTAVE
