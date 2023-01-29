@@ -54,6 +54,7 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
             matRad_cfg = MatRad_Config.instance();
             
             % check pln values if struct is given
+            % TODO: do we need this?
             if nargin < 1          
                 this.checkPln(pln);  
             else

@@ -60,7 +60,7 @@ if(isfield(pln,'propDoseCalc') && isfield(pln.propDoseCalc,'engine'))
             engineHandle = handleList{strcmpi(nameList,pln.propDoseCalc.engine)};
             engine = engineHandle(pln);
             
-            engine.assignPropertiesFromPln(pln); %TODO: could this be in the constructor?
+            %engine.assignPropertiesFromPln(pln); %TODO: could this be in the constructor?
         else
             % if the given engine isn't valid set boolean to initiliaze
             % it at the end of this function

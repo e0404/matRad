@@ -78,8 +78,19 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
             %   cst:                        matRad cst struct
 
             % create this from superclass
-            this = this@DoseEngines.matRad_DoseEnginePencilBeam(pln);
-            
+            this = this@DoseEngines.matRad_DoseEnginePencilBeam(pln);            
+
+            if nargin > 0
+                % 0 if field calc is bixel based, 1 if dose calc is field based
+                % num2str is only used to prevent failure of strcmp when bixelWidth
+                % contains a number and not a string
+                this.isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
+            end
+        end
+
+        function setDefaults(this)
+            setDefaults@DoseEngines.matRad_DoseEnginePencilBeam(this);
+
             %Assign defaults from Config
             matRad_cfg = MatRad_Config.instance();
             this.useCustomPrimaryPhotonFluence  = matRad_cfg.propDoseCalc.defaultUseCustomPrimaryPhotonFluence;
@@ -90,13 +101,6 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
             this.dijSampling.latCutOff        = 20; 
             this.dijSampling.type             = 'radius';
             this.dijSampling.deltaRadDepth    = 5;
-
-            if nargin > 0
-                % 0 if field calc is bixel based, 1 if dose calc is field based
-                % num2str is only used to prevent failure of strcmp when bixelWidth
-                % contains a number and not a string
-                this.isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
-            end
         end
 
         function dij = calcDose(this,ct,cst,stf,pln)

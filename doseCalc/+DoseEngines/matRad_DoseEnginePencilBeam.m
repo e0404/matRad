@@ -51,7 +51,11 @@ classdef (Abstract) matRad_DoseEnginePencilBeam < DoseEngines.matRad_DoseEngine
 
     methods
         function this = matRad_DoseEnginePencilBeam(pln)
-            this = this@DoseEngines.matRad_DoseEngine(pln);
+            this = this@DoseEngines.matRad_DoseEngine(pln);            
+        end
+
+        function setDefaults(this)
+            setDefaults@DoseEngines.matRad_DoseEngine(this);
             
             matRad_cfg = MatRad_Config.instance();
 

@@ -29,14 +29,17 @@ classdef (Abstract) matRad_DoseEngineMonteCarlo < DoseEngines.matRad_DoseEngine
         
     methods
         
-        function this = matRad_DoseEngineMonteCarlo(pln)
-            
+        function this = matRad_DoseEngineMonteCarlo(pln)            
             % call superclass constructor
             this = this@DoseEngines.matRad_DoseEngine(pln);
-   
+        end
+
+        function setDefaults(this)
+            setDefaults@DoseEngines.matRad_DoseEngine(this);
+
             % create config instance
             matRad_cfg = MatRad_Config.instance();
-            
+
             %set number of particles simulated per pencil beam
             this.numHistoriesPerBeamlet     = matRad_cfg.propDoseCalc.defaultNumHistoriesPerBeamlet;
             this.numHistoriesDirect         = matRad_cfg.propDoseCalc.defaultNumHistoriesDirect;

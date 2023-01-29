@@ -56,9 +56,6 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
 
             this.pbCalcMode = 'standard';
             
-            matRad_cfg = MatRad_Config.instance();
-            this.fineSampling = matRad_cfg.propDoseCalc.defaultFineSamplingProperties;
-
             % check if bio optimization is needed and set the
             % coresponding boolean accordingly
             if nargin > 0 && (isfield(pln,'propOpt')&& isfield(pln.propOpt,'bioOptimization')&& ...
@@ -66,8 +63,14 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
                 isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) && ... 
                 strcmp(pln.radiationMode,'carbon'))
                 this.calcBioDose = true;
-            end
-            
+            end            
+        end
+
+        function setDefaults(this)
+            setDefaults@DoseEngines.matRad_DoseEnginePencilBeam(this);
+
+            matRad_cfg = MatRad_Config.instance();
+            this.fineSampling = matRad_cfg.propDoseCalc.defaultFineSamplingProperties;
         end
         
         function dij = calcDose(this,ct,cst,stf,pln)

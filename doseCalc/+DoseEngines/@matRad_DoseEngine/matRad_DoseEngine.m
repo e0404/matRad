@@ -59,11 +59,8 @@ classdef (Abstract) matRad_DoseEngine < handle
     methods      
         %Constructor  
         function this = matRad_DoseEngine(pln)
-            % future code for property validation on creation here
-            matRad_cfg = MatRad_Config.instance();
-            
-            %Assign default parameters from MatRad_Config
-            this.doseGrid.resolution    = matRad_cfg.propDoseCalc.defaultResolution;
+            this.setDefaults();
+            this.assignPropertiesFromPln(pln);
         end
 
         function warnDeprecatedEngineProperty(this,oldProp,msg,newProp)
@@ -153,6 +150,13 @@ classdef (Abstract) matRad_DoseEngine < handle
             error('Function needs to be implemented!');
         end
         
+        function setDefaults(this)
+            % future code for property validation on creation here
+            matRad_cfg = MatRad_Config.instance();
+            
+            %Assign default parameters from MatRad_Config
+            this.doseGrid.resolution    = matRad_cfg.propDoseCalc.defaultResolution;
+        end
     end 
     
     methods(Static)
