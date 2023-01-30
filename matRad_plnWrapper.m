@@ -28,7 +28,7 @@ if nPlans>1
    
    %First run plnConsistency, it is the same as current MixModality, small
    %corrections are introduced to handle output generation with matRad_cfg
-   pln = matRad_plnConsistency(pln);
+   pln = matRad_plnConsistency(pln); %to be reviewed
    
    %Define the Pln properties
    Pln.numOfFractions = sum([pln(:).numOfFractions]); %Use total number of fractions
@@ -50,6 +50,7 @@ if nPlans>1
 
    %Save the original plans as well
    Pln.OriginalPlans = OriginalPlans;
+   Pln.numOfModalities = nPlans;
 else
    %Do nothing
    Pln = pln;
