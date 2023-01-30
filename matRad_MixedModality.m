@@ -1,7 +1,7 @@
 matRad_rc;
 matRad_cfg = MatRad_Config.instance();
 
-load TG119.mat
+load 'TG119.mat'
 
 %% 
 % meta information for treatment plan (1) 
@@ -92,3 +92,6 @@ cst = matRad_prepCst(cst, sparecst);
 Pln = matRad_plnWrapper(pln);
 %% Stf Wrapper
 stf = matRad_stfWrapper(ct,cst,Pln);
+%% Dij Calculation
+
+dij = matRad_calcCombiDose(ct,stf,Pln,cst,0);
