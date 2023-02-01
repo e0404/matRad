@@ -10,10 +10,10 @@ function fileExists = matRad_checkMexFileExists(filename,linkOctave)
 %   filename:   name of the mex file (without extension)
 %   linkOctave: (optional: default true) If set to true, the function will check 
 %               for a custom build mex file for octave with our custom extension
-%               mexoct<system>. If such a file exists, it will create a link to 
-%               the file as filename.mex since octave not uses system-specific 
-%               extensions by default. If false, the function will only check 
-%               for an existing .mex file for octave.
+%               mexoct<version><system>. If such a file exists, it will create 
+%               a link to the file as filename.mex since octave not uses system- 
+%               specific extensions by default. If false, the function will only 
+%               check for an existing .mex file for octave.
 % output:
 %   fileExists: true if the mex file exists (or can be linked), and false
 %               otherwise
@@ -46,16 +46,10 @@ fileExists = (exist(filename,'file') == 3);
 %For octave we have experimental precompiled files for Octave 5 64 bit
 [env,ver] = matRad_getEnvironment();
 
-if ~fileExists && strcmp(env,'OCTAVE') && linkOctave        
+if ~fileExists && matRad_cfg.isOctave && linkOctave        
      
-    %Check Octave 5
-    versplit = strsplit(ver,'.');
-    isOctave5 = str2double(versplit{1}) == 5;     
-  
-    if ~isOctave5
-        fileExists = false;
-        return;
-    end
+    %versionstring
+    verStripped = erase(ver,'.');   
     
     %Check Architecture 
     [~,maxArraySize] = computer();
@@ -65,13 +59,15 @@ if ~fileExists && strcmp(env,'OCTAVE') && linkOctave
     else
         bitExt = '32';
     end
-       
+    
+    
+    systemext = ['mexoct' verStripped];
     if ispc
-        systemext = 'mexoctw';
+        systemext = [systemext 'w'];
     elseif ismac 
-        systemext = 'mexoctmac';
+        systemext = [systemext 'mac'];
     elseif isunix
-        systemext = 'mexocta';
+        systemext = [systemext 'a'];
     else
         %No file for unknown operating system
         fileExists = false;
@@ -100,7 +96,7 @@ if ~fileExists && strcmp(env,'OCTAVE') && linkOctave
         [status,msg] = link(oldpath,linkpath);        
         
         if status == 0
-            matRad_cfg.dispWarning('Trying to use a precompiled mex for Octave 5. This is experimental!');
+            matRad_cfg.dispWarning('Trying to use a precompiled mex for Octave %s. This is experimental!',ver);
             fileExists = true;
         else
             matRad_cfg.dispWarning('Could not link existing precompiled mex file %s to %s\n',octfilename,mexFileName);
