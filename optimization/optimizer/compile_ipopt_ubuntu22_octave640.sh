@@ -1,15 +1,10 @@
-# How to compile the IPOPT mex interface for Octave 6.4.0 (64-bit) in Windows
-# matRad only includes the IPOPT mex interface compiled for Matlab. It is also possible to compile the interface from the MSYS/MinGW distribution included in Octave for Windows.
-# The following has been tested for Octave 6.4.0 in 64 bit version to allow 64-bit algebra. Start this script from an octave mingw shell. You can open such a shell by running "cmdshell.bat" (potentially as administrator)from your Octave install directory
-
-pacman -Sy 
-# pacman -S --noconfirm --needed wget which git
-pacman -S --noconfirm --needed which
-
+# The following has been tested in Ubuntu 22.04 with gcc 
+# Note that this uses a reference BLAS and LAPACK and links everything statically. 
+# For better optimizer performence, consider using optimized implementations (e.g. OpenBLAS) and an updated IPOPT and use this script as a guideline.
+# You could also link against openblas and lapack as octave uses those libraries anyways
 echo "check_certificate = off" >> ~/.wgetrc
 
-# Run the following commands to create directories and get the IPOPT source. We dont need lapack and blas, since Octave comes with lapack and openblas
-
+# Run the following commands to create directories and get the IPOPT source. 
 mkdir ipopt && cd ipopt
 export IPOPTINSTALLDIR=`pwd`
 cd ..
@@ -36,18 +31,13 @@ sed -i 's,http://mumps.enseeiht.fr/,http://coin-or-tools.github.io/ThirdParty-Mu
 ./get.Mumps
 
 cd $IPOPTDIR
-#- Now we need a workaround for a problem regarding the quadmath library which cannot be found when compiling MUMPS. Run the following command
-export GCC_VERSION=`gcc --version | head -n1 | cut -d" " -f3`
-mkdir -p /usr/lib/gcc/$MINGW_CHOST/$GCC_VERSION/
-cp $MINGW_PREFIX/lib/gcc/$MINGW_CHOST/$GCC_VERSION/libquadmath.* /usr/lib/gcc/$MINGW_CHOST/$GCC_VERSION/
 
 
 # Now lets start the build process
-
 mkdir build
 cd build
 
-../configure --prefix=$IPOPTINSTALLDIR --disable-shared --enable-static 
+../configure --prefix=$IPOPTINSTALLDIR --disable-shared --enable-static ADD_FFLAGS="-fallow-argument-mismatch -fPIC" ADD_FCLAGS="-fallow-argument-mismatch -fPIC" ADD_CXXFLAGS="-fPIC" ADD_CFLAGS="-fPIC"
 make
 make install
 
