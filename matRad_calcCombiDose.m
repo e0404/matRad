@@ -1,20 +1,52 @@
 function dij = matRad_calcCombiDose(ct,stf,pln,cst,CalcDoseDirect)
-    
+% data structure handling and dij calculation for Joint optimization and
+% spatiotemporal plans 
+% 
+% call
+%   dij = matRad_calcCombiDose(ct,stf,pln,cst,CalcDoseDirect)
+%
+% input
+%   ct :            matRad ct struct
+%   stf:            matRad stf stuct
+%   cst:            matRad cst struct
+%   pln:            matRad pln struct
+%   CalcDoseDirect: (optional) boolian to bypass dose influence matrix
+%                   computation and directly calculate dose; only makes
+%                   sense in combination with matRad_calcDoseDirect.m
+%
+% output
+%   dij:            matRad dij struct
+%
+% References
+%   -
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2016 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     matRad_cfg = MatRad_Config.instance();
 
     if (strcmp(pln.radiationMode, 'MixMod'))
 
-        matRad_cfg.dispInfo('\n PROJECT MIXED MOD HAS BEEN ACTIVATED. AMDG. !! \n \n');
+        matRad_cfg.dispInfo(' PROJECT MIXED MOD HAS BEEN ACTIVATED. AMDG. !! \n \n');
    
          stfModalities = {stf(:).radiationMode};
-         radiationModalities = {pln.OriginalPlans.radiationMode};
+         radiationModalities = {pln.originalPlans.radiationMode};
          dij_fields = [];
          dijt = [];
          
          for k = 1:pln.numOfModalities
 
             currStf  = stf(strcmp(stfModalities,radiationModalities{k}));
-            currPln = pln.OriginalPlans(k);
+            currPln = pln.originalPlans(k);
             currPln.bioParam = pln.bioParam(k);
             
 
@@ -30,11 +62,11 @@ function dij = matRad_calcCombiDose(ct,stf,pln,cst,CalcDoseDirect)
          [~, idx] = unique(dij_fields);
          idx = setdiff(1:numel(dij_fields),idx);
 
-         CommonFields = dij_fields(idx);
-         CommonFields(:,2) = cell(size(CommonFields));
-         CommonFields = CommonFields';
+         commonFields = dij_fields(idx);
+         commonFields(:,2) = cell(size(commonFields));
+         commonFields = commonFields';
 
-         dij = struct(CommonFields{:});
+         dij = struct(commonFields{:});
 
          dij_fieldnames = fieldnames(dij);
 
@@ -88,13 +120,13 @@ function dij = matRad_calcCombiDose(ct,stf,pln,cst,CalcDoseDirect)
             if ~isfield (pln.propOpt(k),'spatioTemp')
                 pln.propOpt(k).spatioTemp = 0;
                 pln.propOpt(k).STScenarios = 1;
-                pln.propOpt(k).STfractions = pln.OriginalPlans(k).numOfFractions;
+                pln.propOpt(k).STfractions = pln.originalPlans(k).numOfFractions;
             else
                 if ~isfield(pln.propOpt(k), 'STScenarios') || pln.propOpt(k).spatioTemp == 0
                     pln.propOpt(k).STScenarios = 1;
                 end
                 if ~isfield(pln.propOpt(k),'STfractions')                           % adjust not fully divisible number of fraction .... later
-                    pln.propOpt(k).STfractions = floor(pln.OriginalPlans(k).numOfFractions/pln.propOpt(k).STScenarios)* ones(pln.propOpt(k).STScenarios,1);
+                    pln.propOpt(k).STfractions = floor(pln.originalPlans(k).numOfFractions/pln.propOpt(k).STScenarios)* ones(pln.propOpt(k).STScenarios,1);
                 end
             end
         end
@@ -106,9 +138,9 @@ function dij = matRad_calcCombiDose(ct,stf,pln,cst,CalcDoseDirect)
         dij.numOfModalities = pln.numOfModalities;
         dij.totalNumOfFractions = pln.numOfFractions;
 
-        dij.dualIrradiation = true;
+        dij.dualIrradiation = false;
 
-        dij.Original_Dijs = [dijt];
+        dij.original_Dijs = [dijt];
 
 
          matRad_cfg.dispInfo('SUCCESS. I Dij It  !! \n');

@@ -89,9 +89,10 @@ sparecst = 0;
 
 cst = matRad_prepCst(cst, sparecst);
 %% Plan Wrapper
-Pln = matRad_plnWrapper(pln);
+plnJO = matRad_plnWrapper(pln);
 %% Stf Wrapper
-stf = matRad_stfWrapper(ct,cst,Pln);
+stf = matRad_stfWrapper(ct,cst,plnJO);
 %% Dij Calculation
-
-dij = matRad_calcCombiDose(ct,stf,Pln,cst,0);
+dij = matRad_calcCombiDose(ct,stf,plnJO,cst,false);
+%% Fluence optimization 
+resultGUI = matRad_fluenceOptimization(dij,cst,plnJO)
