@@ -6,7 +6,7 @@ jobs:
   test-matlab: #Matlab test Job
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2 # Checks-out repository under $GITHUB_WORKSPACE
+      - uses: actions/checkout@v3 # Checks-out repository under $GITHUB_WORKSPACE
       # Install MATLAB
       - name: Install MATLAB
         uses: matlab-actions/setup-matlab@v1        
@@ -18,7 +18,7 @@ jobs:
   test-octave: #Octave test Job
     runs-on: ubuntu-22.04 # We use Ubuntu-22.04 because it has Octave 6.4
     steps:
-      - uses: actions/checkout@v2 # Checks-out repository under $GITHUB_WORKSPACE
+      - uses: actions/checkout@v3 # Checks-out repository under $GITHUB_WORKSPACE
       - name: Install OCTAVE
         run: sudo apt-get install -y gdb gfortran fonts-freefont-otf gnuplot-x11 libgdcm-dev octave liboctave-dev
       - name: Prepare Test Environment
@@ -30,7 +30,7 @@ jobs:
         with:
           run: .travis/runtests.sh octave-cli
       - name: Upload Logs if failure
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: failure()
         with:
           name: Test Log
