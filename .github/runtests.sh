@@ -4,7 +4,8 @@
 ## Make sure some failures are detected by the CI runners
 function exitIfError {
 	# pass "$?" as argument: i.e. the exit status of the last call
-	if [ "$1" -ne 0 ]; then
+	# currently octave 6 can finish with a segfault when the program is closed due to some bug, for now we try to ignore it
+	if [ "$1" -ne 0 ] && [ "$1" -ne 139 ]; then
 		exit $1;
 	fi
 }
