@@ -31,10 +31,11 @@ jobs:
         uses: GabrielBB/xvfb-action@v1 #For Headless tests
         with:
           run: .github/runtests.sh octave-cli
+          working-directory: ./unitTest
       - name: Upload logs if test fails
         uses: actions/upload-artifact@v3
         if: failure()
         with:
           name: Test Log
-          path: runtests.log
+          path: ./unitTest/runtests.log
             
