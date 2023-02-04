@@ -25,13 +25,13 @@ jobs:
           sudo apt-get install -y gdb gfortran fonts-freefont-otf gnuplot-x11 libgdcm-dev octave liboctave-dev
       - name: Prepare Test Environment
         run: |
-          sudo chmod +x .travis/before_install_linux.sh
-          sudo .travis/before_install_linux.sh
+          sudo chmod +x .github/before_install_linux.sh
+          sudo .github/before_install_linux.sh
       - name: Run Tests
         uses: GabrielBB/xvfb-action@v1 #For Headless tests
         with:
-          run: .travis/runtests.sh octave-cli
-      - name: Upload Logs if failure
+          run: .github/runtests.sh octave-cli
+      - name: Upload logs if test fails
         uses: actions/upload-artifact@v3
         if: failure()
         with:
