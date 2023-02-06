@@ -45,7 +45,7 @@ if nPlans>1
    plnJO.radiationMode = 'MixMod';
    plnJO.machine       = 'MixMod';
    plnJO.propStf       = [pln(:).propStf];
-   plnJO.propDoseCalc  = [matRad_fieldConsistency(pln,{'propDoseCalc'})]; 
+   originalPropDoseCalc  = [matRad_fieldConsistency(pln,{'propDoseCalc'})]; 
    plnJO.multScen      = [pln(:).multScen];
    %    for k=1:length(currentFields)
 %       if isempty(getfield(superPln,currentFields{1,k})) && isstruct(pln(1).(currentFields{1,k}))
@@ -81,6 +81,18 @@ if nPlans>1
       %superPln.propOpt.STFractions = zeros(1,sum(superPln.propOpt.STScenarios));
    end
    %Save the original plans as well
+   
+   if isfield(pln(1), 'propDoseCalc')
+      if any(arrayfun(@(x) isfield(pln(x).propDoseCalc, 'calcLET'), [1:nPlans]));
+         plnJO.propDoseCalc.calcLET = true;
+      end
+      
+      doseCalcResolution.x = max(arrayfun(@(x) pln(x).propDoseCalc.doseGrid.resolution.x,[1:nPlans]));
+      doseCalcResolution.y = max(arrayfun(@(x) pln(x).propDoseCalc.doseGrid.resolution.y,[1:nPlans]));
+      doseCalcResolution.z = max(arrayfun(@(x) pln(x).propDoseCalc.doseGrid.resolution.z,[1:nPlans]));
+
+      plnJO.propDoseCalc.doseGrid.resolution = doseCalcResolution;
+   end
    plnJO.originalPlans = originalPlans;
    plnJO.numOfModalities = nPlans;
 else
