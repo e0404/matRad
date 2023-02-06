@@ -3,6 +3,7 @@ matRad_cfg = MatRad_Config.instance();
 
 load 'TG119.mat'
 
+
 %% 
 % meta information for treatment plan (1) 
 pln(1).numOfFractions  = 5;
@@ -21,7 +22,7 @@ pln(1).propDoseCalc.calcLET = 1;
 pln(1).propOpt.runDAO          = false;      % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln(1).propOpt.runSequencing   = false;      % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln(1).propOpt.spatioTemp      = 0;
-pln(1).propOpt.STScenarios     = 2;
+pln(1).propOpt.STScenarios     = 1;
 %pln(1).propOpt.STfractions     = [ 4 4 6 8 8];             % can also do different spread of the fractions between scenes ( make sure sum(STfractions == numOfFractions)
 
 % dose calculation settings
@@ -58,8 +59,8 @@ pln(2).propStf.isoCenter       = ones(pln(2).propStf.numOfBeams,1) * matRad_getI
 % optimization settings
 pln(2).propOpt.runDAO          = false;      % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln(2).propOpt.runSequencing   = false;      % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
-pln(2).propOpt.spatioTemp      = 0;
-pln(2).propOpt.STScenarios     = 5;
+pln(2).propOpt.spatioTemp      = 1;
+pln(2).propOpt.STScenarios     = 2;
 %pln(2).propOpt.STfractions     = [ 4 4 6 8 8];             % can also do different spread of the fractions between scenes ( make sure sum(STfractions == numOfFractions)
 
 % dose calculation settings
@@ -81,17 +82,17 @@ pln(2).bioParam = matRad_bioModel(pln(2).radiationMode,quantityOpt, modelName);
 
 % retrieve scenarios for dose calculation and optimziation
 pln(2).multScen = matRad_multScen(ct,scenGenType);
-
 % prepping cst 
 % placing alpha/beta ratios in cst{:,6},
 % different alpha beta ration for each obj of a structure  
 sparecst = 0;
-
 cst = matRad_prepCst(cst, sparecst);
 %% Plan Wrapper
-Pln = matRad_plnWrapper(pln);
+plnJO = matRad_plnWrapper(pln);
 %% Stf Wrapper
-stf = matRad_stfWrapper(ct,cst,Pln);
+stf = matRad_stfWrapper(ct,cst,plnJO);
 %% Dij Calculation
+dij = matRad_calcCombiDose(ct,stf,plnJO,cst,0);
 
-dij = matRad_calcCombiDose(ct,stf,Pln,cst,0);
+%% Optimization
+resultGUI = matRad_fluenceOptimization(dij,cst,plnJO);

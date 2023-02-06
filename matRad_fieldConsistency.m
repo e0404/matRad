@@ -1,4 +1,4 @@
-function pln = matRad_fieldConsistency(pln, field)
+function out = matRad_fieldConsistency(pln, field)
 %Checks that the given field of the pln struct array contains stuctures
 %that are consistent, i.e contain trhe same fields
 % 
@@ -21,14 +21,15 @@ fields = [];
       fields = [fields; fieldnames(pln(k).(field{:}))];
    end
    
-   Totfields = unique(fields);
+   totfields = unique(fields);
    for k=1:size(pln,2)
-      IsPlanField = isfield(pln(k).(field{:}),Totfields);
+      isPlanField = isfield(pln(k).(field{:}),totfields);
 
-      for m=1:size(IsPlanField,1)
-       if ~IsPlanField(m)
-          pln(k).(field{:}) = setfield(pln(k).(field{:}),Totfields{m},[]);
+      for m=1:size(isPlanField,1)
+       if ~isPlanField(m)
+          pln(k).(field{:}) = setfield(pln(k).(field{:}),totfields{m},[]);
        end
       end
    end
+ out = [pln().(field{:})];
 end
