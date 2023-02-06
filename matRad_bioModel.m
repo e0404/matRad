@@ -1,5 +1,5 @@
 classdef matRad_bioModel
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %  matRad_bioModel
     %  This class creates all required biological model parameters according to
     % a given radiation modatlity and a given bio model identifier string.
@@ -39,7 +39,7 @@ classdef matRad_bioModel
     
     % public properties which can be changed outside this class
     properties
-        
+        originalModels;
     end
     
     % public properties which can only be changed inside this class
@@ -59,8 +59,8 @@ classdef matRad_bioModel
     
     % constant public properties which are visible outside of this class
     properties(Constant = true)
-        AvailableModels                 = {'none','constRBE','MCN','WED','LEM','HEL'};   % cell array determines available models - if cell is deleted then the corersponding model can not be generated
-        AvailableradiationModealities   = {'photons','protons','helium','carbon'};
+        AvailableModels                 = {'none','constRBE','MCN','WED','LEM','HEL', 'MixMod'};   % cell array determines available models - if cell is deleted then the corersponding model can not be generated
+        AvailableradiationModealities   = {'photons','protons','helium','carbon','MixMod'};
         AvailableQuantitiesForOpt       = {'physicalDose','effect','RBExD'};
         
         AvailableAlphaXBetaX = {[0.036 0.024],    'prostate';
@@ -272,7 +272,25 @@ classdef matRad_bioModel
                                 matRad_cfg.dispWarning(['matRad: Invalid biological optimization quantity: ' this.quantityOpt  '; using "none" instead. \n']);
                                 this.quantityOpt = 'physicalDose';
                         end
-                                      
+                    
+                   case {'MixMod'}
+                       obj.model = 'MixMod';
+                       switch this.quantityOpt
+                            
+                            case {'physicalDose'}
+                                    boolCHECK           = true;
+                                    this.bioOpt         = false;
+                                    this.quantityVis    = 'physicalDose';
+                                
+                            case {'effect','RBExD'}
+                                    boolCHECK           = true;
+                                    this.bioOpt         = true;
+                                    this.quantityVis    = 'RBExD';
+                                
+                            otherwise
+                                matRad_cfg.dispWarning(['matRad: Invalid biological optimization quantity: ' this.quantityOpt  '; using "none" instead. \n']);
+                                this.quantityOpt = 'physicalDose';
+                       end
                     otherwise
                         matRad_cfg.dispWarning(['matRad: Invalid biological radiation mode: ' this.radiationMode  '; using photons instead. \n']);
                         this.radiationMode = 'photons';
@@ -325,7 +343,7 @@ classdef matRad_bioModel
         
         % setter functions
         function this = set.radiationMode(this,value)
-            if ischar(value) && sum(strcmp(value,{'photons','protons','helium','carbon'})) == 1
+            if ischar(value) && sum(strcmp(value,{'photons','protons','helium','carbon', 'MixMod'})) == 1
                 this.radiationMode = value;
             else
                 matRad_cfg = MatRad_Config.instance();
@@ -333,6 +351,11 @@ classdef matRad_bioModel
             end
         end
         
+        function this = setOriginalModelsForMixMod(this, originalModels)
+           if strcmp(this.model, 'MixMod')
+              this.originalModels = originalModels;
+           end
+        end
         
         function this = set.bioOpt(this,value)
             if islogical(value)

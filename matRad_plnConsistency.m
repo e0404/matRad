@@ -46,6 +46,7 @@ elseif numel(pln) > 1
     
     if numel(unique(maxh)) > 1
         maxh = max(maxh);
+        %This will probably clash with new class based bioModel implementation
         quantityOpt = pln(i).bioParam.AvailableQuantitiesForOpt{maxh};
         matRad_cfg.dispInfo(['make plan consistent. optimized quantity chosen by hirarchy is ' quantityOpt '. \n' ]);
         for i = 1:numel(pln)
