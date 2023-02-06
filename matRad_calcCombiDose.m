@@ -1,21 +1,53 @@
 function dij = matRad_calcCombiDose(ct,stf,pln,cst,CalcDoseDirect)
-    
+% data structure handling and dij calculation for Joint optimization and
+% spatiotemporal plans 
+% 
+% call
+%   dij = matRad_calcCombiDose(ct,stf,pln,cst,CalcDoseDirect)
+%
+% input
+%   ct :            matRad ct struct
+%   stf:            matRad stf stuct
+%   cst:            matRad cst struct
+%   pln:            matRad pln struct
+%   CalcDoseDirect: (optional) boolian to bypass dose influence matrix
+%                   computation and directly calculate dose; only makes
+%                   sense in combination with matRad_calcDoseDirect.m
+%
+% output
+%   dij:            matRad dij struct
+%
+% References
+%   -
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2016 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
     matRad_cfg = MatRad_Config.instance();
 
     if (strcmp(pln.radiationMode, 'MixMod'))
 
-        matRad_cfg.dispInfo('\n PROJECT MIXED MOD HAS BEEN ACTIVATED. AMDG. !! \n \n');
+        matRad_cfg.dispInfo('PROJECT MIXED MOD HAS BEEN ACTIVATED. AMDG. !! \n \n');
    
          stfModalities = {stf(:).radiationMode};
-         radiationModalities = {pln.OriginalPlans.radiationMode};
+         radiationModalities = {pln.originalPlans.radiationMode};
          dij_fields = [];
          dijt = [];
          
          for k = 1:pln.numOfModalities
 
             currStf  = stf(strcmp(stfModalities,radiationModalities{k}));
-            currPln = pln.OriginalPlans(k);
-            currPln.bioParam = pln.bioParam(k);
+            currPln = pln.originalPlans(k);
+            currPln.bioParam = pln.bioParam.originalModels(k);
             
 
             if strcmp(radiationModalities{k},'photons')
@@ -30,11 +62,11 @@ function dij = matRad_calcCombiDose(ct,stf,pln,cst,CalcDoseDirect)
          [~, idx] = unique(dij_fields);
          idx = setdiff(1:numel(dij_fields),idx);
 
-         CommonFields = dij_fields(idx);
-         CommonFields(:,2) = cell(size(CommonFields));
-         CommonFields = CommonFields';
+         commonFields = dij_fields(idx);
+         commonFields(:,2) = cell(size(commonFields));
+         commonFields = commonFields';
 
-         dij = struct(CommonFields{:});
+         dij = struct(commonFields{:});
 
          dij_fieldnames = fieldnames(dij);
 
@@ -55,13 +87,15 @@ function dij = matRad_calcCombiDose(ct,stf,pln,cst,CalcDoseDirect)
         fieldsName = 'totalNumOfBixels';
         if isfield(dij, fieldsName)
             fieldValues = [cellfun(@(x) x.(fieldsName), dijt, 'UniformOutput', false)];
-            dij.(fieldsName) = sum([fieldValues{:}]);
+            ST = [pln.propOpt.spatioTemp];
+            dij.(fieldsName) = sum([fieldValues{:}].*[(~ST + ST.*[pln.propOpt.STScenarios])]);
         end
 
         fieldsName = 'totalNumOfRays';
         if isfield(dij, fieldsName)
             fieldValues = [cellfun(@(x) x.(fieldsName), dijt, 'UniformOutput', false)];
             dij.(fieldsName) = sum([fieldValues{:}]);
+
         end
 
         fieldsName = 'numOfRaysPerBeam';
@@ -80,38 +114,108 @@ function dij = matRad_calcCombiDose(ct,stf,pln,cst,CalcDoseDirect)
             dij.spareStruct = spareStruct;
             dij.alphaCubes = 2;
         else 
-                dij.alphaCubes = 1;
+            dij.alphaCubes = 1;
         end
 
 
+        pln.propOpt.STFractions = [];
         for k=1:pln.numOfModalities
-            if ~isfield (pln.propOpt(k),'spatioTemp')
-                pln.propOpt(k).spatioTemp = 0;
-                pln.propOpt(k).STScenarios = 1;
-                pln.propOpt(k).STfractions = pln.OriginalPlans(k).numOfFractions;
+            if ~isfield(pln.propOpt,'spatioTemp')
+                pln.propOpt.spatioTemp = 0;
+                pln.propOpt.STScenarios = 1;
+                pln.propOpt.STfractions = pln.OriginalPlans(k).numOfFractions;
             else
-                if ~isfield(pln.propOpt(k), 'STScenarios') || pln.propOpt(k).spatioTemp == 0
-                    pln.propOpt(k).STScenarios = 1;
+                if ~isfield(pln.propOpt, 'STScenarios') || pln.propOpt.spatioTemp(k) == 0
+                    pln.propOpt.STScenarios(k) = 1;
                 end
-                if ~isfield(pln.propOpt(k),'STfractions')                           % adjust not fully divisible number of fraction .... later
-                    pln.propOpt(k).STfractions = floor(pln.OriginalPlans(k).numOfFractions/pln.propOpt(k).STScenarios)* ones(pln.propOpt(k).STScenarios,1);
+                %This messes up fractionation, need to review
+                if ~isfield(pln.propOpt,'STfractions') || (isfield(pln.propOpt,'STfractions') && any((pln.propOpt.STfractions == 0)))                      % adjust not fully divisible number of fraction .... later
+                    pln.propOpt.STFractions = [pln.propOpt.STFractions,[floor(pln.originalPlans(k).numOfFractions/pln.propOpt.STScenarios(k))* ones(1,pln.propOpt.STScenarios(k))]];
                 end
             end
         end
         
+   if logical(spareStruct)
+        for k=1:pln.numOfModalities
+
+            currStf  = stf(strcmp(stfModalities,radiationModalities{k}));
+            currPln = pln.OriginalPlans(k);
+            currPln.bioParam = pln.bioParam(k);
+
+            if strcmp(radiationModalities{k}, 'photons')
+     
+              dijt{k}.photonspareAlpha = cst{spareStruct,6}(2).alphaX;
+              dijt{k}.photonspareBeta  = cst{spareStruct,6}(2).betaX;
+            
+              % ser overlap prioriites
+              cst = matRad_setOverlapPriorities(cst);
+
+               % resizing cst to dose cube resolution
+               cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
+                                               dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
+               aC = ones(prod(dij.doseGrid.dimensions),1);
+               bC = ones(prod(dij.doseGrid.dimensions),1);
+               aC(cst{spareStruct,4}{1}) = cst{spareStruct,6}(2).alphaX;
+               bC(cst{spareStruct,4}{1}) = cst{spareStruct,6}(2).betaX;
+               dijt{k}.alphaX{2}   = aC;   % alpha 
+               dijt{k}.betaX{2}    = bC;
+ 
+               dijt{k}.abX{2}      = aC./bC;
+ 
+            elseif strcmp(radiationModalities{k}, 'protons')
+               matRad_cfg.dispInfo('Lets spare some NT!! \n');
+               cst1 = cst;
+               cst1{spareStruct,5}.alphaX  = cst{spareStruct,6}(2).alphaX;
+               cst1{spareStruct,5}.betaX   = cst{spareStruct,6}(2).betaX;
+               dijspare                    = matRad_calcParticleDose(ct,currStf,currPln,cst1);
+               if ~strcmp(currPln.bioParam.model, 'constRBE')
+                   dijt{k}.mAlphaDose{2,i}         = dijspare.mAlphaDose{1};
+                   dijt{k}.mSqrtBetaDose{2,i}      = dijspare.mSqrtBetaDose{1};
+               end
+               dijt{k}.alphaX{2}               = dijspare.ax;
+               dijt{k}.betaX{2}                = dijspare.bx;
+               dijt{k}.abX{2}                  = dijspare.abx;
+            
+               elseif strcmp(radiationModalities{k}, 'carbon')
+               matRad_cfg.dispInfo('Lets spare some NT!! \n');
+               cst1 = cst;
+               cst1{spareStruct,5}.alphaX  = cst{spareStruct,6}(2).alphaX;
+               cst1{spareStruct,5}.betaX   = cst{spareStruct,6}(2).betaX;
+               dijspare                    = matRad_calcParticleDose(ct,currStf,currPln,cst1);
+               dijt{k}.mAlphaDose{2,i}         = dijspare.mAlphaDose{1};
+               dijt{k}.mSqrtBetaDose{2,i}      = dijspare.mSqrtBetaDose{1};
+               dijt{k}.alphaX{2}               = dijspare.ax;
+               dijt{k}.betaX{2}                = dijspare.bx;
+               dijt{k}.abX{2}                  = dijspare.abx;
+            end
+        end
+   end
+ 
+   cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,  dij.ctGrid.y,  dij.ctGrid.z,...
+                                 dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
+
+    [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1);
+    
+    dij.abx = dij.ax./dij.bx;
+    
         dij.spatioTemp = [pln.propOpt.spatioTemp];
         dij.numOfSTScen = [pln.propOpt.STScenarios];
-        dij.numOfSTFractions = [pln.propOpt.STfractions];
+        dij.numOfSTFractions = {pln.propOpt.STFractions};
         
         dij.numOfModalities = pln.numOfModalities;
         dij.totalNumOfFractions = pln.numOfFractions;
 
-        dij.dualIrradiation = true;
-
-        dij.Original_Dijs = [dijt];
-
-
-         matRad_cfg.dispInfo('SUCCESS. I Dij It  !! \n');
+        dij.dualIrradiation = false;
+        
+        totNumOfpD = sum([arrayfun(@(x) prod(size(dijt{x}.physicalDose)), [1:size(dijt,2)])]);
+%         totNumOfphysicalDoses = 1;
+%         for k=1:pln.numOfModalities
+%             totNumOfphysicalDoses = totNumOfScenarios + (pln.multScen(k).totNumScen -1);
+%         end
+        
+        dij.physicalDose = cell(totNumOfpD,1);
+        dij.original_Dijs = [dijt];
+        matRad_cfg.dispInfo('SUCCESS. I Dij It  !! \n');
 
 
     else
