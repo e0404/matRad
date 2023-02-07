@@ -59,11 +59,15 @@ classdef MatRad_Config < handle
             %  Therefore its constructor is private
             %  For instantiation, use the static MatRad_Config.instance();
             
+            obj.matRadRoot = fileparts(mfilename('fullpath'));
+            addpath(genpath(obj.matRadRoot));
+
             %Set Version
             obj.getEnvironment();
             obj.matRad_version = matRad_version();
-            
-            obj.matRadRoot = fileparts(mfilename('fullpath'));
+
+            %Configure Environment
+            obj.configureEnvironment();
             
             %Just to catch people messing with the properties in the file
             if ~isempty(obj.writeLog) && obj.writeLog
@@ -73,6 +77,11 @@ classdef MatRad_Config < handle
             
             %Call the reset function for remaining inatialization
             obj.reset();
+        end
+
+        function delete(~)
+            %might not be desired by users
+            %rmpath(genpath(matRad_cfg.matRadRoot));
         end
         
         function displayToConsole(obj,type,formatSpec,varargin)
@@ -297,6 +306,13 @@ classdef MatRad_Config < handle
                 vData = ver(obj.env);
                 obj.envVersion = vData.Version;
                 
+            end
+        end
+
+        function configureEnvironment(obj)
+            if obj.isOctave
+                struct_levels_to_print(0);                  %Disables full printing of struct array fields
+                warning("off","Octave:data-file-in-path");  %Disables warning of loading patients from the data folder
             end
         end
     end

@@ -225,10 +225,31 @@ for i = 1:length(stf) % loop over all beams
 
                 % remember beam and bixel number
                 if ~calcDoseDirect
-                   dij.beamNum(counter)  = i;
-                   dij.rayNum(counter)   = j;
-                   dij.bixelNum(counter) = k;
+                    dij.beamNum(counter)  = i;
+                    dij.rayNum(counter)   = j;
+                    dij.bixelNum(counter) = k;
+
+                    % extract MU data if present (checks for downwards compatability)
+                    minMU = 0;
+                    if isfield(stf(i).ray(j),'minMU')
+                        minMU = stf(i).ray(j).minMU(k);
+                    end
+
+                    maxMU = Inf;
+                    if isfield(stf(i).ray(j),'maxMU')
+                        maxMU = stf(i).ray(j).maxMU(k);
+                    end
+
+                    numParticlesPerMU = 1e6;
+                    if isfield(stf(i).ray(j),'numParticlesPerMU')
+                        numParticlesPerMU = stf(i).ray(j).numParticlesPerMU(k);
+                    end
+
+                    dij.minMU(counter,1) = minMU;
+                    dij.maxMU(counter,1) = maxMU;
+                    dij.numParticlesPerMU(counter,1) = numParticlesPerMU;
                 end
+
                 
                 % find energy index in base data
                 energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([machine.data.energy],4));
@@ -278,7 +299,7 @@ for i = 1:length(stf) % loop over all beams
 
                     % empty bixels may happen during recalculation of error
                     % scenarios -> skip to next bixel
-                    if ~any(currIx)
+                    if ~(any(any(currIx)))
                         continue;
                     end
 
@@ -312,7 +333,7 @@ for i = 1:length(stf) % loop over all beams
                     end
                     
                     % run over components
-                    for c = 1:numOfSub
+                    for c = 1:numOfSub(k)
                         tmpDose = zeros(size(currIx,1),1);
                         bixelDose = finalWeight(c,k).*matRad_calcParticleDoseBixel(...
                                 radDepths(currIx(:,:,c),1,c), ...

@@ -36,6 +36,10 @@ end
 
 resultGUI.w = w;
 
+if isfield(dij,'numParticlesPerMU')
+    resultGUI.MU = (w.*1e6) ./ dij.numParticlesPerMU;
+end
+
 % get bixel - beam correspondence  
 for i = 1:dij.numOfBeams
     beamInfo(i).suffix = ['_beam', num2str(i)];
