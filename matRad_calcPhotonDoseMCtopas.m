@@ -82,12 +82,12 @@ load([pln.radiationMode,'_',pln.machine]);
 %Collect weights
 if calcDoseDirect
     w = zeros(sum([stf(:).totalNumOfBixels]),1);
-    ct = 1;
+    counter = 1;
     for i = 1:length(stf)
         for j = 1:stf(i).numOfRays
             rayBix = stf(i).numOfBixelsPerRay(j);
-            w(ct:ct+rayBix-1) = stf(i).ray(j).weight;
-            ct = ct + rayBix;
+            w(counter:counter+rayBix-1) = stf(i).ray(j).weight;
+            counter = counter + rayBix;
         end
     end
 else
@@ -116,7 +116,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
             if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
                 
                 % Save ctScen and rangeShiftScen for file constructor
-                if ct.numOfCtScen > 1
+                if ctR.numOfCtScen > 1
                     ctR.currCtScen = ctScen;
                     ctR.currRangeShiftScen = rangeShiftScen;
                 end
@@ -139,12 +139,12 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
     % later are stored in the MCparam file that is stored in the folder. The folder is generated in the working
     % directory and the matRad_plan*.txt file can be manually called with TOPAS.
     if pln.propMC.externalCalculation
-        matRad_cfg.dispInfo(['TOPAS simulation skipped for external calculation\nFiles have been written to: "',replace(pln.propMC.workingDir,'\','\\'),'"']);
+        matRad_cfg.dispInfo(['TOPAS simulation skipped for external calculation\nFiles have been written to: "',replace(pln.propMC.workingDir,'\','\\'),'"\n']);
     else
-        for ctScen = 1:ct.numOfCtScen
+        for ctScen = 1:ctR.numOfCtScen
             for beamIx = 1:numel(stf)
                 for runIx = 1:pln.propMC.numOfRuns
-                    if ct.numOfCtScen > 1
+                    if ctR.numOfCtScen > 1
                         fname = sprintf('%s_field%d_ct%d_run%d',pln.propMC.label,beamIx,ctScen,runIx);
                     else
                         fname = sprintf('%s_field%d_run%d',pln.propMC.label,beamIx,runIx);

@@ -1173,6 +1173,7 @@ classdef matRad_TopasConfig < handle
                             obj.MCparam.tallies = [obj.MCparam.tallies,{obj.scorer.RBE_model{i}}];
                         end
                     end
+
             end
         end
 
@@ -1208,7 +1209,6 @@ classdef matRad_TopasConfig < handle
             end
 
             nParticlesTotalBixel = round(obj.numParticlesPerHistory * w);
-            nParticlesTotal = sum(nParticlesTotalBixel);
             maxParticlesBixel = obj.numParticlesPerHistory * max(w(:));
             minParticlesBixel = round(max([obj.minRelWeight*maxParticlesBixel,1]));
 
@@ -1220,8 +1220,6 @@ classdef matRad_TopasConfig < handle
                 otherwise
                     matRad_cfg.dispError('Invalid history setting!');
             end
-
-            nParticlesTotal = 0;
 
             %Preread beam setup
             switch obj.beamProfile
@@ -2100,6 +2098,7 @@ classdef matRad_TopasConfig < handle
                         % write HU data
                         matRad_cfg.dispInfo('TOPAS: Export patient cube\n');
                         huCube = int32(permute(ct.cubeHU{ctScen},permutation));
+
                         fID = fopen(fullfile(obj.workingDir, dataFile),'w');
                         fwrite(fID,huCube,'short');
                         fclose(fID);

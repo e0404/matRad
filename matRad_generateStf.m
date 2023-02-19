@@ -412,10 +412,10 @@ for i = 1:length(pln.propStf.gantryAngles)
                 % get for each spot the focus index
                 for k = 1:stf(i).numOfBixelsPerRay(j)                    
                     focusIx(k) = find(machine.data(vEnergyIx(k)).initFocus.SisFWHMAtIso > currentMinimumFWHM,1,'first');
-                end
+                end                
 
                 stf(i).ray(j).focusIx = focusIx';
-
+                
                 %Get machine bounds
                 numParticlesPerMU = 1e6*ones(1,stf(i).numOfBixelsPerRay(j));
                 minMU = zeros(1,stf(i).numOfBixelsPerRay(j));

@@ -119,8 +119,8 @@ classdef matRad_MCsquareConfig
     end
 
     methods
-        function obj = MatRad_MCsquareConfig()
-            %MatRad_MCsquareConfig Configuration Class for MCsquare
+        function obj = matRad_MCsquareConfig()
+            %matRad_MCsquareConfig Configuration Class for MCsquare
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
 
             % Set default histories from MatRad_Config
