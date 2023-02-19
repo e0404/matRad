@@ -119,7 +119,18 @@ if pln.propDoseCalc.doseGrid.resolution.x ~= pln.propDoseCalc.doseGrid.resolutio
     matRad_cfg.dispWarning('Anisotropic resolution in axial plane for dose calculation with MCsquare not possible\nUsing average x = y = %g mm\n',pln.propDoseCalc.doseGrid.resolution.x);
 end
 
-%Now we can run calcDoseInit as usual
+% Clear previous data
+try
+    rmdir(pln.propMC.MCrun_Directory,'s')
+catch
+    matRad_cfg.dispInfo('Processed files could not be deleted, consider deleting them manually if an error occurs.')
+end
+
+if ~exist(['./' pln.propMC.MCrun_Directory],'dir')
+    mkdir(pln.propMC.MCrun_Directory)
+end
+
+%%Now we can run calcDoseInit as usual
 matRad_calcDoseInit;
 
 %Issue a warning when we have more than 1 scenario
@@ -136,9 +147,6 @@ nbThreads = 0;
 % set relative dose cutoff for storage in dose influence matrix, we use the
 % default value for the lateral cutoff here
 relDoseCutOff = 1 - matRad_cfg.propDoseCalc.defaultLateralCutOff;
-% set absolute calibration factor
-% convert from eV/g/primary to Gy 1e6 primaries
-absCalibrationFactorMC2 = 1.602176e-19 * 1.0e+9;
 
 % book keeping - this is necessary since pln is not used in optimization or
 % matRad_calcCubes
@@ -200,11 +208,11 @@ for scenarioIx = 1:pln.multScen.totNumScen
         mcSquareAddIsoCenterOffset = mcSquareAddIsoCenterOffset - offset;
 
         % MCsquare settings
-        MCsquareConfigFile = sprintf('MCsquareConfig.txt');
+        MCsquareConfigFile = [pln.propMC.MCrun_Directory 'MCsquareConfig.txt'];
 
         pln.propMC.BDL_Machine_Parameter_File = ['BDL/' bdFile];
-        pln.propMC.BDL_Plan_File = 'currBixels.txt';
-        pln.propMC.CT_File       = 'MC2patientCT.mhd';
+        pln.propMC.BDL_Plan_File = [pln.propMC.MCrun_Directory 'currBixels.txt'];
+        pln.propMC.CT_File       = [pln.propMC.MCrun_Directory 'MC2patientCT.mhd'];
         pln.propMC.Num_Threads   = nbThreads;
         pln.propMC.RNG_Seed      = 1234;
 
@@ -353,86 +361,46 @@ for scenarioIx = 1:pln.multScen.totNumScen
         % write config file
         pln.propMC.writeMCsquareinputAllFiles(MCsquareConfigFile,stfMCsquare);
 
+        % write parameters to a MCparam file that can be used to later read the dose back in
+        MCparam.dij = dij; % this can be done here since the dij is not filled at this point
+        if isfield(dij,'physicalDose')
+            MCparam.dij = rmfield(MCparam.dij,'physicalDose');
+        end
+        if isfield(dij,'mLETDose')
+            MCparam.dij = rmfield(MCparam.dij,'mLETDose');
+        end
+        MCparam.VdoseGrid = VdoseGrid;
+        MCparam.calcDoseDirect = calcDoseDirect;
+        MCparam.totalWeights = totalWeights;
+        MCparam.Beamlet_Mode = pln.propMC.Beamlet_Mode;
+        MCparam.nbHistoriesTotal = pln.propMC.numHistories;
+        MCparam.MCsquareOrder = MCsquareOrder;
+
+        % Generate output folder and save MCparam
+        if ~exist(pln.propMC.Output_Directory,'dir')
+            mkdir(pln.propMC.Output_Directory)
+        end
+        save([pln.propMC.Output_Directory '/' 'MCparam.mat'],'MCparam')
+
         %% MC computation and dij filling
         % run MCsquare
-        mcSquareCall = [mcSquareBinary ' ' MCsquareConfigFile];
-        matRad_cfg.dispInfo(['Calling Monte Carlo Engine: ' mcSquareCall]);
-        [status,cmdout] = system(mcSquareCall,'-echo');
+        if ~pln.propMC.externalCalculation
+            mcSquareCall = [mcSquareBinary ' ' MCsquareConfigFile];
+            matRad_cfg.dispInfo(['Calling Monte Carlo Engine: ' mcSquareCall]);
+            [status,cmdout] = system(mcSquareCall,'-echo');
+        end
 
-        mask = false(dij.doseGrid.numOfVoxels,1);
-        mask(VdoseGrid) = true;
-
-        % read output
-        if ~calcDoseDirect
-            %Read Sparse Matrix
-            dij.physicalDose{1} = absCalibrationFactorMC2 * matRad_sparseBeamletsReaderMCsquare ( ...
-                [pln.propMC.Output_Directory filesep 'Sparse_Dose.bin'], ...
-                dij.doseGrid.dimensions, ...
-                dij.totalNumOfBixels, ...
-                mask);
-
-            %Read sparse LET
-            if pln.propDoseCalc.calcLET
-                dij.mLETDose{1} =  absCalibrationFactorMC2 * matRad_sparseBeamletsReaderMCsquare ( ...
-                    [pln.propMC.Output_Directory filesep 'Sparse_LET.bin'], ...
-                    dij.doseGrid.dimensions, ...
-                    dij.totalNumOfBixels, ...
-                    mask);
-            end
+        % Skip readout if external files were generated
+        if ~pln.propMC.externalCalculation
+            dij = pln.propMC.readFiles(strrep(pln.propMC.Output_Directory, '/', filesep));
         else
-            %Read dose cube
-            cube = pln.propMC.readMhd('Dose.mhd');
-            dij.physicalDose{1} = absCalibrationFactorMC2 * totalWeights * ...
-                sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
-                cube(VdoseGrid), ...
-                dij.doseGrid.numOfVoxels,1);
-
-            %Read LET cube
-            if pln.propDoseCalc.calcLET
-                cube = pln.propMC.readMhd('LET.mhd');
-                dij.mLETDose{1} = absCalibrationFactorMC2 * totalWeights * ...
-                    sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
-                    cube(VdoseGrid), ...
-                    dij.doseGrid.numOfVoxels,1);
-            end
-
-            % Postprocessing for dij:
-            % This is already the combined dose over all bixels, so all parameters are 1 in this case
-            dij = rmfield(dij,'MCsquareCalcOrder');
-
-            dij.numOfBeams = 1;
-            dij.beamNum = 1;
-            dij.bixelNum = 1;
-            dij.rayNum = 1;
-            dij.totalNumOfBixels = 1;
-            dij.totalNumOfRays = 1;
-            dij.numOfRaysPerBeam = 1;
+            dij = struct([]);
         end
 
-        % reorder influence matrix to comply with matRad default ordering
-        if pln.propMC.Beamlet_Mode
-            dij.physicalDose{1} = dij.physicalDose{1}(:,MCsquareOrder);
-            if pln.propDoseCalc.calcLET
-                dij.mLETDose{1} = dij.mLETDose{1}(:,MCsquareOrder);
-            end
-        end
-
-        matRad_cfg.dispInfo('Simulation finished!\n');
-
-        %% Clear data
-        delete([pln.propMC.CT_File(1:end-4) '.*']);
-        delete('currBixels.txt');
-        delete('MCsquareConfig.txt');
-
-        %For Octave temporarily disable confirmation for recursive rmdir
-        if strcmp(env,'OCTAVE')
-            rmdirConfirmState = confirm_recursive_rmdir(0);
-        end
-        rmdir(pln.propMC.Output_Directory,'s');
-
-        %Reset to old confirmatoin state
-        if strcmp(env,'OCTAVE')
-            confirm_recursive_rmdir(rmdirConfirmState);
+        if ~pln.propMC.externalCalculation
+            matRad_cfg.dispInfo('Simulation finished!\n');
+        else
+            matRad_cfg.dispInfo('Files generated for external calculation!\n');
         end
 
     end

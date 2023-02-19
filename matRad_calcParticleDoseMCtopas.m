@@ -108,7 +108,6 @@ end
 
 % Get photon parameters for RBExD calculation
 if isfield(pln,'bioParam') && strcmp(pln.bioParam.quantityOpt,'RBExD')
-    pln.propMC.scorer.RBE = true;
     [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
     dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
 end
@@ -162,7 +161,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
     % later are stored in the MCparam file that is stored in the folder. The folder is generated in the working
     % directory and the matRad_plan*.txt file can be manually called with TOPAS.
     if pln.propMC.externalCalculation
-        matRad_cfg.dispInfo(['TOPAS simulation skipped for external calculation\nFiles have been written to: "',replace(pln.propMC.workingDir,'\','\\'),'"']);
+        matRad_cfg.dispInfo(['TOPAS simulation skipped for external calculation\nFiles have been written to: "',replace(pln.propMC.workingDir,'\','\\'),'"\n']);
     else
         for ctScen = 1:ct.numOfCtScen
             for beamIx = 1:numel(stf)
@@ -176,7 +175,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                     if isprop(pln.propMC,'verbosity') && strcmp(pln.propMC.verbosity,'full')
                         topasCall = sprintf('%s %s.txt',pln.propMC.topasExecCommand,fname);
                     else
-                        topasCall = sprintf('%s %s.txt > %s.out > %s.log',pln.propMC.topasExecCommand,fname,fname,fname);
+                        topasCall = sprintf('%s %s.txt > %s.out 2> %s.log',pln.propMC.topasExecCommand,fname,fname,fname);
                     end
                     
                     % initiate parallel runs and delete previous files
@@ -233,6 +232,9 @@ if ~pln.propMC.externalCalculation
 else
     dij = struct([]);
 end
+
+% Order fields for easier comparison between different dijs
+dij = orderfields(dij);
 
 % manipulate isocenter back
 for k = 1:length(stf)

@@ -33,11 +33,14 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
     end
     
     methods
-        function obj = matRad_OptimizerIPOPT
+        function obj = matRad_OptimizerIPOPT(pln)
             %matRad_OptimizerIPOPT
             %   Construct an instance of the IPOPT optimizer (mex
             %   interface)
-            
+            if nargin < 1
+                pln = [];
+            end
+
             matRad_cfg = MatRad_Config.instance();
             
             obj.wResult = [];
@@ -76,7 +79,12 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.options.acceptable_compl_inf_tol      = 1e10; % (Acc5)
             obj.options.acceptable_obj_change_tol     = 1e-4; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
             
-            obj.options.max_iter                      = matRad_cfg.propOpt.defaultMaxIter;
+            if ~isempty(pln) && isfield(pln,'propOpt') && isfield(pln.propOpt,'maxIter')
+                obj.options.max_iter                      = pln.propOpt.maxIter;
+            else
+                obj.options.max_iter                      = matRad_cfg.propOpt.defaultMaxIter;
+            end
+
             obj.options.max_cpu_time                  = 7200;
             
             % Barrier Parameter (C.6)

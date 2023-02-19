@@ -117,7 +117,7 @@ elseif strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'proton
     if ~isfield(dij,'RBE')
         dij.RBE = 1.1;
     end
-
+    
     doseTmp = dij.physicalDose{1}*wOnes;
     bixelWeight =  (doseTarget)/(dij.RBE * mean(doseTmp(V)));
     wInit       = wOnes * bixelWeight;
@@ -286,7 +286,7 @@ end
 
 switch pln.propOpt.optimizer
     case 'IPOPT'
-        optimizer = matRad_OptimizerIPOPT;
+        optimizer = matRad_OptimizerIPOPT(pln);
     case 'fmincon'
         optimizer = matRad_OptimizerFmincon;
     otherwise

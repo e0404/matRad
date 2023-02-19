@@ -78,12 +78,25 @@ else % weights need to be in stf!
 end
 
 % dose calculation
-switch pln.propMC.engine
-    case 'MCsquare'
-        dij = matRad_calcParticleDoseMCsquare(ct,stf,pln,cst,calcDoseDirect);
-    case 'TOPAS'
-        dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,calcDoseDirect);
+switch pln.radiationMode
+    case {'protons','carbon','helium'}
+        switch pln.propMC.engine
+            case 'MCsquare'
+                dij = matRad_calcParticleDoseMCsquare(ct,stf,pln,cst,calcDoseDirect);
+            case 'TOPAS'
+                dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,calcDoseDirect);
+        end
+    case 'photons'
+        switch pln.propMC.engine
+            case 'ompMC'
+                dij = matRad_calcPhotonDoseOmpMC(ct,stf,pln,cst,calcDoseDirect);
+            case 'TOPAS'
+                dij = matRad_calcPhotonDoseMCtopas(ct,stf,pln,cst,calcDoseDirect);
+        end
+    otherwise
+        matRad_cfg.dispError('Radiation mode "%s" not supported.',pln.radiationMode);
 end
+
 
 % calc resulting dose
 if ~isprop(pln.propMC,'externalCalculation') || ~pln.propMC.externalCalculation
@@ -125,7 +138,9 @@ end
 % Export histories to resultGUI
 if isfield(dij,'nbHistoriesTotal')
     resultGUI.nbHistoriesTotal = dij.nbHistoriesTotal;
-    resultGUI.nbParticlesTotal = dij.nbParticlesTotal;
+    if isfield(dij,'nbParticlesTotal')
+        resultGUI.nbParticlesTotal = dij.nbParticlesTotal;
+    end
 elseif isprop(pln.propMC,'numHistories')
     resultGUI.historiesMC = pln.propMC.numHistories;
 end

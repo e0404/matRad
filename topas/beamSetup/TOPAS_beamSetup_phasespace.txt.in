@@ -5,5 +5,8 @@ s:So/Phasespace/Component                       = "Nozzle"
 #b:So/Example/LimitedAssumePhotonIsNewHistory = "true"
 i:So/Phasespace/PhaseSpaceMultipleUse = 0
 i:So/Phasespace/NumberOfHistoriesInRun = 5
-i:So/Phasespace/PreCheckShowParticleCountAtInterval = 100000
+i:So/Phasespace/PreCheckShowParticleCountAtInterval = 1000000
 b:So/Phasespace/PhaseSpacePreCheck = "False"
+
+b:So/Phasespace/LimitedAssumeFirstParticleIsNewHistory = "true"
+b:So/Phasespace/LimitedAssumePhotonIsNewHistory = "true"

@@ -1,32 +1,34 @@
 classdef matRad_MCsquareConfig
-% matRad_MCsquareConfig class definition
-% 
-%
-% References
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% Copyright 2019 the matRad development team. 
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
-% LICENSE file.
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % matRad_MCsquareConfig class definition
+    %
+    %
+    % References
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %
+    % Copyright 2019 the matRad development team.
+    %
+    % This file is part of the matRad project. It is subject to the license
+    % terms in the LICENSE file found in the top-level directory of this
+    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+    % of the matRad project, including this file, may be copied, modified,
+    % propagated, or distributed except according to the terms contained in the
+    % LICENSE file.
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-    
-    properties       
+
+    properties
         %%% Parameter for continuity
         engine = 'MCsquare';
-        
+        externalCalculation = false;
+        MCrun_Directory = 'MCrun/';
+
         %%% Simulation parameters:
         Num_Threads   =	0;		% Number of parallel calculation threads. Default: 0 = max available threads
         RNG_Seed      =	0;		% Seed for the random number generator (deterministic result only with single thread). Default: 0 = seed based on the time
-        
+
         % This parameter can be overwritten through MatRad_Config default parameters
         numHistories  = 1e6;		% Number of primary protons to simulate. Default: 1e7
         E_Cut_Pro     =	0.5;		% Energy cut (in MeV) below which heavy charged particles are locally absorbed. Default: 0.5
@@ -35,21 +37,21 @@ classdef matRad_MCsquareConfig
         Te_Min	      =	0.05;		% Threshold energy (MeV) for the production of secondary electrons (currently locally absorbed). Default: 0.05
         Stat_uncertainty    = 0.0	% Maximum statistical uncertainty (in percent). Default: 0.0 = no maximum uncertainty (number of proton = numHistories)
         % As a reference: 200 MeV protons can transfer a maximum energy of 0.5 MeV to ?-electrons which correspond to a range of 7 mm in lung tissues.
-        
+
         %%% Input files
         CT_File                     = 'Patient.mhd';				% Name of the CT file. Default: CT.mhd
         HU_Density_Conversion_File	= 'Scanners/matRad_default/HU_Density_Conversion.txt';	% Name of the file containing HU to density conversion data. Default: HU_Density_Conversion.txt
         HU_Material_Conversion_File	= 'Scanners/matRad_default/HU_Material_Conversion.txt';	% Name of the file containing HU to material conversion data. Default: HU_Material_Conversion.txt
         BDL_Machine_Parameter_File  = 'BDL/BDL_matrad.txt';			% Name of the machine parameter file for the beam data library. Default: BDL.txt
         BDL_Plan_File               = 'PlanPencil.txt';			% Name of the plan file for the beam data library. Default: Plan.txt
-        
+
         %%% Physical parameters
         Simulate_Nuclear_Interactions = true;     % Enable/Disable the simulation of nuclear interactions. Default: True
         Simulate_Secondary_Protons	  = true;         % Enable/Disable the simulation of secondary protons (emitted during nuclear interactions). Default: True
         Simulate_Secondary_Deuterons  = true;        % Enable/Disable the simulation of secondary deuterons (emitted during nuclear interactions). Default: True
         Simulate_Secondary_Alphas     = true;           % Enable/Disable the simulation of secondary alphas (emitted during nuclear interactions). Default: True
-        
-        
+
+
         %%% 4D simulation
         fourD_Mode			    = false;	% Enable/Disable the 4D simulation mode. Default: False
         fourD_Dose_Accumulation = false;		% Enable/Disable the dose accumulation for all 4D-CT phases. Default: False
@@ -58,8 +60,8 @@ classdef matRad_MCsquareConfig
         Create_4DCT_from_Ref	= false;		% Create 4D CT images by deforming the reference phase image (True), or import 4D CT images (False). Default: False
         Dynamic_delivery        = false;		% Enable/Disable simulation of dynamic delivery (interplay simulation). Default: False
         Breathing_period        = 7.0;		% Period (in seconds) of the breathing motion. Default: 7.0
-        
-        
+
+
         %%% Robustness simulation
         Robustness_Mode            = false; 	% Enable/Disable the robustness verification mode. Default: False
         %Scenario_selection         = 'All'		% Method for scenario selection: All (simulate all combinations), Random (randomly sample scenarios). Default: All
@@ -71,16 +73,16 @@ classdef matRad_MCsquareConfig
         %Random_Amplitude_Error	    = 5.0;		% Random error in percent of the breathing motion amplitude for 4D simulations. Default: 5.0
         %Systematic_Period_Error	= 5.0;		% Systematic error in percent of the breathing motion period for simulations of interplay with dynamic delivery. Default: 5.0
         %Random_Period_Error        = 5.0;		% Random error in percent of the breathing motion period for simulations of interplay with dynamic delivery. Default: 5.0
-        
-        
+
+
         %%% Beamlet simulation
         Beamlet_Mode			= false; 	% Enable/Disable the beamlet computation mode. Default: False
         Beamlet_Parallelization = false;	% Parallelization on beamlet level is sometimes faster for beamlet simulation. This requires more memory. Default: False
-        
-        
+
+
         %%% Output parameters
-        Output_Directory =  'MCsquareOutput';	% Name of the output directory. Default: Outputs
-        
+        Output_Directory =  'MCrun/MCsquareOutput';	% Name of the output directory. Default: Outputs
+
         Energy_ASCII_Output	 = false;	% Enable/Disable the output of Energy in ASCII format. Default: False
         Energy_MHD_Output    = false;	% Enable/Disable the output of Energy in MHD format. Default: False
         Energy_Sparse_Output = false;	% Enable/Disable the output of Energy in Sparse matrix format. Default: False
@@ -90,37 +92,37 @@ classdef matRad_MCsquareConfig
         LET_ASCII_Output     = false;	% Enable/Disable the output of LET in ASCII format. Default: False
         LET_MHD_Output		 = false;	% Enable/Disable the output of LET in MHD format. Default: False
         LET_Sparse_Output	 = false;	% Enable/Disable the output of LET in Sparse matrix format. Default: False
-        
+
         Densities_Output = false;	% Enable/Disable the export of the density map (converted from the CT image). Default: False
         Materials_Output = false;	% Enable/Disable the export of the map of materials (converted from the CT image). Default: False
-        
+
         Compute_DVH = false;	% Enable/Disable the computation and export of DVH based on RT-Struct binary masks. Default: False
-        
+
         Dose_Sparse_Threshold	= 0;	% The dose values above the threshold will be stored in the sparse matrix file. Default: 0
         Energy_Sparse_Threshold	= 0;	% The energy values above the threshold will be stored in the sparse matrix file. Default: 0
         LET_Sparse_Threshold	= 0;	% The LET values above the threshold will be stored in the sparse matrix file. Default: 0
-        
+
         Score_PromptGammas	= false;	% Enable/Disable the scoring of Prompt Gammas (emitted during nuclear interactions). Default: False
         PG_LowEnergyCut     = 0.0;	% Disable the scoring of Prompt Gammas with energy below this value (MeV).  Default: 0.0
         PG_HighEnergyCut    = 50.0;	% Disable the scoring of Prompt Gammas with energy above this value (MeV).  Default: 50.0
         % Typical gamma camera would be sensitive between 3.0 and 6.0 MeV
         PG_Spectrum_NumBin  = 150;	% Number of bins to score the Prompt Gamma energy spectrum.  Default: 150
         PG_Spectrum_Binning = 0.1;	% Bin width (MeV) for the scoring of Prompt Gamma spectrum.  Default: 0.1
-        
+
         LET_Calculation_Method	= 'StopPow'; % Select the method employed for the calculation of LET (DepositedEnergy, StopPow). Default: StopPow
-        
+
         %Export_Beam_dose         = 'Disabled' % Export dose distribution for each beam (Enable) or entire plan (Disable). Default: Disable
         Dose_to_Water_conversion = 'Disabled'; % Select the method employed to convert simulation results (dose to medium) to dose to water (Disabled, PostProcessing, OnlineSPR). Default: Disabled
-        
+
         Dose_Segmentation                  = false;	% Enable/Disable a segmentation of the dose map based on a density thresholding (remove dose artifacts in the air). Default: False
         Density_Threshold_for_Segmentation = 0.01;	% Density threshold employed for the segmentation (in g/cm3). Default: 0.01
     end
-    
+
     methods
-        function obj = matRad_MCsquareConfig()
-            %matRad_MCsquareConfig Configuration Class for MCsquare   
+        function obj = MatRad_MCsquareConfig()
+            %MatRad_MCsquareConfig Configuration Class for MCsquare
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
-            
+
             % Set default histories from MatRad_Config
             if isfield(matRad_cfg.propMC,'defaultNumHistories')
                 obj.numHistories = matRad_cfg.propMC.defaultNumHistories;
@@ -331,8 +333,11 @@ classdef matRad_MCsquareConfig
             fprintf(fileHandle,'ElementSpacing = %f %f %f\n',resolution);
             fprintf(fileHandle,'DimSize = %d %d %d\n',size(cube,2),size(cube,1),size(cube,3));
             fprintf(fileHandle,'ElementType = MET_DOUBLE\n');
+
+            % Cut away ending to write link to raw data file
             filenameRaw = [obj.CT_File(1:end-4) '.raw'];
-            fprintf(fileHandle,'ElementDataFile = %s\n',filenameRaw);
+            % Only print file name without run folder here
+            fprintf(fileHandle,'ElementDataFile = %s\n',filenameRaw(numel(obj.MCrun_Directory)+1:end));
 
             fclose(fileHandle);
 
@@ -346,7 +351,7 @@ classdef matRad_MCsquareConfig
             fclose(dataFileHandle);
         end
 
-        function cube = readMhd(obj,filename)
+        function cube = readMhd(~,filename)
             % matRad mhd file reader
             %
             % call
@@ -374,9 +379,13 @@ classdef matRad_MCsquareConfig
             %
             % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+            %% Extract folder
+            filearray = strsplit(filename,filesep);
+            foldername = strjoin(filearray(1:end-1),filesep);
+            filename = filearray{end};
 
             %% read header
-            headerFileHandle = fopen([obj.Output_Directory, filesep filename],'r');
+            headerFileHandle = fopen([foldername filesep filename],'r');
 
             s = textscan(headerFileHandle, '%s', 'delimiter', '\n');
 
@@ -397,7 +406,7 @@ classdef matRad_MCsquareConfig
             fclose(headerFileHandle);
 
             %% read data
-            dataFileHandle = fopen([obj.Output_Directory filesep dataFilename],'r');
+            dataFileHandle = fopen([foldername filesep dataFilename],'r');
             cube = reshape(fread(dataFileHandle,inf,type),dimensions);
             cube = permute(cube,[2 1 3]);
             cube = flip(cube,2);
@@ -412,29 +421,163 @@ classdef matRad_MCsquareConfig
 
             for i = 1:numel(MCsquareProperties)
 
-                % modify fieldnames beginning with "4D"
-                if strncmp(MCsquareProperties{i},'fourD',5)
-                    writeString = ['4D' MCsquareProperties{i}(6:end)];
-                elseif strncmp(MCsquareProperties{i},'numHistories',5)
-                    writeString = 'Num_Primaries';
-                else
-                    writeString = MCsquareProperties{i};
-                end
-                
-                if isa(obj.(MCsquareProperties{i}),'logical')
-                    fprintf(fid,[writeString ' ' logicalString{obj.(MCsquareProperties{i})+1} '\n']);
-                elseif isa(obj.(MCsquareProperties{i}),'double')
-                    fprintf(fid,[writeString ' ' num2str(obj.(MCsquareProperties{i})) '\n']);
-                elseif isa(obj.(MCsquareProperties{i}),'char')
-                    fprintf(fid,[writeString ' ' obj.(MCsquareProperties{i}) '\n']);
-                else
-                    error('export not defined');
+                % Skip properties that are not part of the MCsquare Config file
+                if ~ismember(MCsquareProperties{i},{'engine','externalCalculation','MCrun_Directory'})
+
+                    % modify fieldnames beginning with "4D"
+                    if strncmp(MCsquareProperties{i},'fourD',5)
+                        writeString = ['4D' MCsquareProperties{i}(6:end)];
+                    elseif strncmp(MCsquareProperties{i},'numHistories',5)
+                        writeString = 'Num_Primaries';
+                    else
+                        writeString = MCsquareProperties{i};
+                    end
+
+                    if isa(obj.(MCsquareProperties{i}),'logical')
+                        fprintf(fid,[writeString ' ' logicalString{obj.(MCsquareProperties{i})+1} '\n']);
+                    elseif isa(obj.(MCsquareProperties{i}),'double')
+                        fprintf(fid,[writeString ' ' num2str(obj.(MCsquareProperties{i})) '\n']);
+                    elseif isa(obj.(MCsquareProperties{i}),'char')
+                        fprintf(fid,[writeString ' ' obj.(MCsquareProperties{i}) '\n']);
+                    else
+                        error('export not defined');
+                    end
                 end
 
             end
 
         end
 
+        function resultGUI = readExternal(obj,folder)
+            % function to read out complete MCsquare simulation from single folder
+            %
+            % call
+            %   resultGUI = MCsquareConfig.readExternal(folder)
+            %   resultGUI = obj.readExternal(folder)
+            %
+            % input
+            %   folder:         Path to folder where MCsquare files are in (as string)
+            %
+            % output
+            %   resultGUI:      struct with all read out subfields
+            %
+            % EXAMPLE calls:
+            %   resultGUI = MCsquareConfig.readExternal('pathToFolder')
+            %
+            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %
+            % Copyright 2023 the matRad development team.
+            %
+            % This file is part of the matRad project. It is subject to the license
+            % terms in the LICENSE file found in the top-level directory of this
+            % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+            % of the matRad project, including this file, may be copied, modified,
+            % propagated, or distributed except according to the terms contained in the
+            % LICENSE file.
+            %
+            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            dij = obj.readFiles(folder);
+
+            if size(dij.physicalDose{1},2)>1
+                resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij,1);
+            else
+                resultGUI = matRad_calcCubes(ones(dij.numOfBeams,1),dij,1);
+            end
+
+            % Export histories to resultGUI
+            if isfield(dij,'nbHistoriesTotal')
+                resultGUI.nbHistoriesTotal = dij.nbHistoriesTotal;
+            end
+
+
+        end
+
+        function dij = readFiles(obj,folder)
+            % function to read out calculated MCsquare data
+            %
+            %matRad_MCsquareConfig Configuration Class for MCsquare
+            matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
+
+            % set absolute calibration factor
+            % convert from eV/g/primary to Gy 1e6 primaries
+            absCalibrationFactorMC2 = 1.602176e-19 * 1.0e+9;
+
+            % Prepare dij from MCparam
+            try
+                load([folder filesep 'MCparam.mat'],'MCparam')
+                dij = MCparam.dij;
+            catch
+                matRad_cfg.dispError('Needs MCparam file for read-in of the MCsquare dose!')
+            end
+            calcLET = false;
+
+            mask = false(dij.doseGrid.numOfVoxels,1);
+            mask(MCparam.VdoseGrid) = true;
+
+
+            % read output
+            if ~MCparam.calcDoseDirect
+                %Read Sparse Matrix
+                dij.physicalDose{1} = absCalibrationFactorMC2 * matRad_sparseBeamletsReaderMCsquare ( ...
+                    [folder filesep 'Sparse_Dose.bin'], ...
+                    dij.doseGrid.dimensions, ...
+                    dij.totalNumOfBixels, ...
+                    mask);
+
+                %Read sparse LET
+                if isfile([folder filesep 'Sparse_LET.bin'])
+                    dij.mLETDose{1} =  absCalibrationFactorMC2 * matRad_sparseBeamletsReaderMCsquare ( ...
+                        [folder filesep 'Sparse_LET.bin'], ...
+                        dij.doseGrid.dimensions, ...
+                        dij.totalNumOfBixels, ...
+                        mask);
+                    calcLET = true;
+                end
+            else
+                %Read dose cube
+                cube = obj.readMhd([folder filesep 'Dose.mhd']);
+                dij.physicalDose{1} = absCalibrationFactorMC2 * MCparam.totalWeights * ...
+                    sparse(MCparam.VdoseGrid,ones(numel(MCparam.VdoseGrid),1), ...
+                    cube(MCparam.VdoseGrid), ...
+                    dij.doseGrid.numOfVoxels,1);
+
+                %Read LET cube
+                if isfile([folder filesep 'LET.mhd'])
+                    cube = obj.readMhd([folder filesep 'LET.mhd']);
+                    dij.mLETDose{1} = absCalibrationFactorMC2 * MCparam.totalWeights * ...
+                        sparse(MCparam.VdoseGrid,ones(numel(MCparam.VdoseGrid),1), ...
+                        cube(MCparam.VdoseGrid), ...
+                        dij.doseGrid.numOfVoxels,1);
+                    calcLET = true;
+                end
+
+                % Postprocessing for dij:
+                % This is already the combined dose over all bixels, so all parameters are 1 in this case
+                dij = rmfield(dij,'MCsquareCalcOrder');
+
+                dij.numOfBeams = 1;
+                dij.beamNum = 1;
+                dij.bixelNum = 1;
+                dij.rayNum = 1;
+                dij.totalNumOfBixels = 1;
+                dij.totalNumOfRays = 1;
+                dij.numOfRaysPerBeam = 1;
+            end
+
+            % Save numHistories for further reference
+            dij.nbHistoriesTotal = MCparam.nbHistoriesTotal;
+
+            % reorder influence matrix to comply with matRad default ordering
+            if MCparam.Beamlet_Mode
+                dij.physicalDose{1} = dij.physicalDose{1}(:,MCparam.MCsquareOrder);
+                if calcLET
+                    dij.mLETDose{1} = dij.mLETDose{1}(:,MCparam.MCsquareOrder);
+                end
+            end
+
+        end
+
     end
+
 end
 
