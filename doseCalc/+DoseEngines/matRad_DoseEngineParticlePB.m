@@ -31,8 +31,9 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
         
         pbCalcMode;                     % fine sampling mode
         fineSampling;                   % Struct with finesampling properties
-
-        latteralProfile = 'singleGauss' % Define Latteral Profile for Dose Calculation
+ 
+       
+        forceLateralModel = ' ';  % If i dont want to use the lateral Model with the maximum number of gausses
         
         visBoolLateralCutOff = false;   % Boolean switch for visualization during+ LeteralCutOff calculation
     end
@@ -667,9 +668,7 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
         sumGauss = @(x,mu,SqSigma,w) ((1./sqrt(2*pi*ones(numel(x),1) * SqSigma') .* ...
                               exp(-bsxfun(@minus,x,mu').^2 ./ (2* ones(numel(x),1) * SqSigma' ))) * w);
 
-        if strcmp(this.latteralProfile, 'multipleGauss')
-
-            if isfield(baseData, 'weightMulti') && isfield(baseData,'sigmaMulti')
+         if (isfield(baseData, 'weightMulti') && isfield(baseData,'sigmaMulti')) && (strcmp(this.forceLateralModel, 'multipleGauss') ||strcmp(this.forceLateralModel, ''))
                 
                 numGauss = size(baseData.sigmaMulti,2);
 
@@ -695,9 +694,9 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
                 L = baseData.LatCutOff.CompFac * sum(W.*L,2);
                 
                 dose = X(:,1).*L;
-                
                     
-            elseif isfield(baseData, 'sigma1') && isfield(baseData,'sigma2')
+
+        elseif (isfield(baseData, 'sigma1') && isfield(baseData,'sigma2'))  && (strcmp(this.forceLateralModel, 'doubleGauss') ||strcmp(this.forceLateralModel, ''))
         
                 % interpolate depth dose, sigmas, and weights    
                 X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma1 baseData.weight baseData.sigma2],radDepths);
@@ -715,27 +714,26 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
                 L = baseData.LatCutOff.CompFac * ((1-X(:,3)).*L_Narr + X(:,3).*L_Bro);
     
                 dose = X(:,1).*L;
-            end
 
-        elseif strcmp(this.latteralProfile, 'singleGauss')
+         elseif isfield(baseData, 'sigma')  && (strcmp(this.forceLateralModel, 'singleGauss') ||strcmp(this.forceLateralModel, ''))
+    
+                % interpolate depth dose and sigma
+                X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma],radDepths);
+    
+                %compute lateral sigma
+                sigmaSq = X(:,2).^2 + sigmaIni_sq;
+    
+                % calculate dose
+                dose = baseData.LatCutOff.CompFac * exp( -radialDist_sq ./ (2*sigmaSq)) .* X(:,1) ./(2*pi*sigmaSq);
+         
+         else
+             error('Error in particle dose calculation.');
+         end
 
-            % interpolate depth dose and sigma
-            X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma],radDepths);
-
-            %compute lateral sigma
-            sigmaSq = X(:,2).^2 + sigmaIni_sq;
-
-            % calculate dose
-            dose = baseData.LatCutOff.CompFac * exp( -radialDist_sq ./ (2*sigmaSq)) .* X(:,1) ./(2*pi*sigmaSq);
-        else
-            error('Wrong Latteral Dose Profile Chosen')
-            
-        end
-
-            % check if we have valid dose values
-            if any(isnan(dose)) || any(dose<0)
-               error('Error in particle dose calculation.');
-            end 
+        % check if we have valid dose values
+        if any(isnan(dose)) || any(dose<0)
+           error('Error in particle dose calculation.');
+        end 
         end
         
         function calcLateralParticleCutOff(this,cutOffLevel,stf)
@@ -1119,7 +1117,8 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
             else
                 checkData = false;
             end
-            
+           
+
             available = checkMeta && checkData;
         end
     end
