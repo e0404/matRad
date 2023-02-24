@@ -157,6 +157,8 @@ for i = 1:length(pln.propStf.gantryAngles)
     rayPos = unique(pln.propStf.bixelWidth*round([           coordsAtIsoCenterPlane(:,1) ... 
                                                   zeros(size(coordsAtIsoCenterPlane,1),1) ...
                                                              coordsAtIsoCenterPlane(:,2)]/pln.propStf.bixelWidth),'rows');
+                                                         
+    disp(rayPos);
                                                   
     % pad ray position array if resolution of target voxel grid not sufficient
     maxCtResolution = max([ct.resolution.x ct.resolution.y ct.resolution.z]);
