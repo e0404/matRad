@@ -86,7 +86,6 @@ else
     useCustomPrimFluenceBool = pln.propDoseCalc.useCustomPrimaryPhotonFluence;
 end
 
-
 % 0 if field calc is bixel based, 1 if dose calc is field based
 % num2str is only used to prevent failure of strcmp when bixelWidth
 % contains a number and not a string
@@ -147,7 +146,9 @@ kernelLimit = ceil(kernelCutoff/intConvResolution);
                             intConvResolution: ...
                             (kernelLimit-1)*intConvResolution);
 
+
 % precalculate convolved kernel size and distances
+
 kernelConvLimit = fieldLimit + gaussLimit + kernelLimit;
 [convMx_X, convMx_Z] = meshgrid(-kernelConvLimit*intConvResolution: ...
                                 intConvResolution: ...
@@ -299,6 +300,7 @@ for i = 1:dij.numOfBeams % loop over all beams
                                                    isoLatDistsX,...
                                                    isoLatDistsZ);
                                                
+
         % sample dose only for bixel based dose calculation
         if ~isFieldBasedDoseCalc
             r0   = 20 + stf(i).bixelWidth;   % [mm] sample beyond the inner core

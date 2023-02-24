@@ -48,7 +48,15 @@ for i = 1:size(UniqueComb,1)
     % set necessary steering information 
     stf(i).gantryAngle  = UniqueComb(i,1);
     stf(i).couchAngle   = UniqueComb(i,2);
-    stf(i).isoCenter    = pln.propStf.isoCenter(i,:);
+    
+    %Handle possibility of multiple isocenters
+    if size(pln.propStf.isoCenter,1) == 1
+        stf(i).isoCenter    = pln.propStf.isoCenter;
+    elseif size(pln.propStf.isoCenter,1) == pln.propStf.numOfBeams
+        stf(i).isoCenter = pln.propStf.isoCenter(i,:);
+    else
+        error('Invalid number of isocenters - should either be one or as many as beams!');
+    end
     
     % bixelWidth = 'field' as keyword for whole field dose calc
     stf(i).bixelWidth    = 'field';

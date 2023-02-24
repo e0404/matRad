@@ -42,20 +42,36 @@ color = flipud(color);
 color(:,3) = 0;
 color(:,2) = 0;
 
-% loop over all beams
-for i=1:numOfBeams
+if apertureInfo.runVMAT
+    % if doing VMAT, let wMax be the max weight across ALL angles
+    wMax = 0;
+    for i=1:numOfBeams
+        if wMax <= apertureInfo.beam(i).shape(1).weight
+            wMax = apertureInfo.beam(i).shape(1).weight;
+        end
+    end
+end
 
+
+for i=1:numOfBeams
+    
+    numOfShapes = numel(apertureInfo.beam(i).shape);
+    
     % open new figure for every beam
     figure('units','inches')
-
+    
     % get the MLC dimensions for this beam
     minX = apertureInfo.beam(i).MLCWindow(1);
-    maxX = apertureInfo.beam(i).MLCWindow(2);    
+    maxX = apertureInfo.beam(i).MLCWindow(2);
     
-    %get maximum weight
-    wMax = max([apertureInfo.beam(i).shape(:).weight]);
+    if ~apertureInfo.runVMAT
+        % if not VMAT, let wMax be the max weight of a particular angle
+        if numOfShapes;
+            wMax = max([apertureInfo.beam(i).shape(:).weight]);
+        end
+    end
     if strcmp(mode,'leafNum')
-
+        
         % get the active leaf Pairs
         % the leaf indices have to be flipped in order to fit to the order of
         % the leaf positions (1st row of leafPos is lowest row in physical
@@ -63,13 +79,16 @@ for i=1:numOfBeams
         activeLeafInd = flipud(find(apertureInfo.beam(i).isActiveLeafPair));
     end
     
-    subplotColumns = ceil(apertureInfo.beam(i).numOfShapes/2);
-    subplotLines   = ceil(apertureInfo.beam(i).numOfShapes/subplotColumns);
+    %subplotColumns = ceil(apertureInfo.beam(i).numOfShapes/2);
+    %subplotLines   = ceil(apertureInfo.beam(i).numOfShapes/subplotColumns);
+    subplotColumns = ceil(numOfShapes/2);
+    subplotLines = ceil(numOfShapes/subplotColumns);
+    
     %adjust figure position
     set(gcf,'pos',[0 0 1.8*subplotColumns 3*subplotLines])
     
-    % loop over all shapes of the beam 
-    for j = 1:apertureInfo.beam(i).numOfShapes
+    % loop over all shapes of the beam
+    for j = 1:numOfShapes
         
         % creating subplots
         subplot(subplotLines,subplotColumns,j)
@@ -78,6 +97,7 @@ for i=1:numOfBeams
                 num2str(apertureInfo.beam(i).shape(j).weight,2)],...
                     'Fontsize',8)
         colorInd = max(ceil((apertureInfo.beam(i).shape(j).weight/wMax)*61+eps),1);
+        
         set(gca,'Color',color(colorInd,:));
         
         hold on
@@ -86,18 +106,18 @@ for i=1:numOfBeams
             % loop over all active leaf pairs
             for k = 1:apertureInfo.beam(i).numOfActiveLeafPairs
                 fill([minX apertureInfo.beam(i).shape(j).leftLeafPos(k) ...
-                        apertureInfo.beam(i).shape(j).leftLeafPos(k) minX],...
-                        [apertureInfo.beam(i).leafPairPos(k)- bixelWidth/2 ...
-                        apertureInfo.beam(i).leafPairPos(k)- bixelWidth/2 ...
-                        apertureInfo.beam(i).leafPairPos(k)+ bixelWidth/2 ...
-                        apertureInfo.beam(i).leafPairPos(k)+ bixelWidth/2],'b')
-                 fill([apertureInfo.beam(i).shape(j).rightLeafPos(k) ...
-                        maxX maxX ...
-                        apertureInfo.beam(i).shape(j).rightLeafPos(k)],...
-                        [apertureInfo.beam(i).leafPairPos(k)- bixelWidth/2 ...
-                        apertureInfo.beam(i).leafPairPos(k)- bixelWidth/2 ...
-                        apertureInfo.beam(i).leafPairPos(k)+ bixelWidth/2 ...
-                        apertureInfo.beam(i).leafPairPos(k)+ bixelWidth/2],'b')                
+                    apertureInfo.beam(i).shape(j).leftLeafPos(k) minX],...
+                    [apertureInfo.beam(i).leafPairPos(k)- bixelWidth/2 ...
+                    apertureInfo.beam(i).leafPairPos(k)- bixelWidth/2 ...
+                    apertureInfo.beam(i).leafPairPos(k)+ bixelWidth/2 ...
+                    apertureInfo.beam(i).leafPairPos(k)+ bixelWidth/2],[0.5 0.5 0.5])
+                fill([apertureInfo.beam(i).shape(j).rightLeafPos(k) ...
+                    maxX maxX ...
+                    apertureInfo.beam(i).shape(j).rightLeafPos(k)],...
+                    [apertureInfo.beam(i).leafPairPos(k)- bixelWidth/2 ...
+                    apertureInfo.beam(i).leafPairPos(k)- bixelWidth/2 ...
+                    apertureInfo.beam(i).leafPairPos(k)+ bixelWidth/2 ...
+                    apertureInfo.beam(i).leafPairPos(k)+ bixelWidth/2],[0.5 0.5 0.5])
             end
         elseif strcmp(mode,'leafNum')
             % loop over all active leaf pairs
@@ -107,28 +127,28 @@ for i=1:numOfBeams
                     [activeLeafInd(k) - 1/2 ...
                     activeLeafInd(k) - 1/2 ...
                     activeLeafInd(k) + 1/2 ...
-                    activeLeafInd(k) + 1/2],'b') 
+                    activeLeafInd(k) + 1/2],[0.5 0.5 0.5])
                 fill([apertureInfo.beam(i).shape(j).rightLeafPos(k) ...
                     maxX maxX ...
                     apertureInfo.beam(i).shape(j).rightLeafPos(k)],...
                     [activeLeafInd(k) - 1/2 ...
                     activeLeafInd(k) - 1/2 ...
                     activeLeafInd(k) + 1/2 ...
-                    activeLeafInd(k) + 1/2],'b')                
+                    activeLeafInd(k) + 1/2],[0.5 0.5 0.5])
             end
         end
-    
+        
         axis tight
         xlabel('horiz. pos. [mm]')
-
+        
         if strcmp(mode,'physical')
             ylabel('vert. pos. [mm]')
         elseif strcmp(mode,'leafNum')
             ylabel('leaf pair #')
         end
-    
+        
     end
-
+    
 end
 
 end
