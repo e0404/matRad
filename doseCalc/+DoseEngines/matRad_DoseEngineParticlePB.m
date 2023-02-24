@@ -31,6 +31,8 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
         
         pbCalcMode;                     % fine sampling mode
         fineSampling;                   % Struct with finesampling properties
+
+        latteralProfile = 'singleGauss' % Define Latteral Profile for Dose Calculation
         
         visBoolLateralCutOff = false;   % Boolean switch for visualization during+ LeteralCutOff calculation
     end
@@ -624,7 +626,7 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
             end
         end
         
-        function dose = calcParticleDoseBixel(~, radDepths, radialDist_sq, sigmaIni_sq, baseData)
+        function dose = calcParticleDoseBixel(this, radDepths, radialDist_sq, sigmaIni_sq, baseData)
         % matRad visualization of two-dimensional dose distributions 
         % on ct including segmentation
         % 
@@ -662,25 +664,60 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
         % convert from MeV cm^2/g per primary to Gy mm^2 per 1e6 primaries
         conversionFactor = 1.6021766208e-02;
 
-        if ~isfield(baseData,'sigma')
+        sumGauss = @(x,mu,SqSigma,w) ((1./sqrt(2*pi*ones(numel(x),1) * SqSigma') .* ...
+                              exp(-bsxfun(@minus,x,mu').^2 ./ (2* ones(numel(x),1) * SqSigma' ))) * w);
 
-            % interpolate depth dose, sigmas, and weights    
-            X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma1 baseData.weight baseData.sigma2],radDepths);
+        if strcmp(this.latteralProfile, 'multipleGauss')
 
-            % set dose for query > tabulated depth dose values to zero
-            X(radDepths > max(depths),1) = 0;
+            if isfield(baseData, 'weightMulti') && isfield(baseData,'sigmaMulti')
+                
+                numGauss = size(baseData.sigmaMulti,2);
 
-            % compute lateral sigmas
-            sigmaSq_Narr = X(:,2).^2 + sigmaIni_sq;
-            sigmaSq_Bro  = X(:,4).^2 + sigmaIni_sq;
+                % interpolate depth dose, sigmas, and weights   
+                if isstruct(baseData.Z)    
+                   iddZ = sumGauss(baseData.depths,baseData.Z.mean,baseData.Z.width.^2, baseData.Z.weight);
+                   X = matRad_interp1(depths,[conversionFactor*iddZ baseData.weightMulti baseData.sigmaMulti], radDepths);
+                else
+                    X = matRad_interp1(depths, [conversionFactor*baseData.Z baseData.weightMulti baseData.sigmaMulti], radDepths);
+                end
+                
+                % set dose for query > tabulated depth dose values to zero
+                X(radDepths > max(depths),1) = 0;
+                    
+                % compute lateral sigmas
+                sigmaSq = X(:,numGauss+1:2*numGauss).^2+sigmaIni_sq;
+                
+                % calculate lateral profile
+                L = exp( -radialDist_sq ./ (2*sigmaSq))./(2*pi*sigmaSq);
+                
+                sumW = sum(X(:,2:numGauss),2);
+                W = [1-sumW, X(:,2:numGauss)];
+                L = baseData.LatCutOff.CompFac * sum(W.*L,2);
+                
+                dose = X(:,1).*L;
+                
+                    
+            elseif isfield(baseData, 'sigma1') && isfield(baseData,'sigma2')
+        
+                % interpolate depth dose, sigmas, and weights    
+                X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma1 baseData.weight baseData.sigma2],radDepths);
+    
+                % set dose for query > tabulated depth dose values to zero
+                X(radDepths > max(depths),1) = 0;
+    
+                % compute lateral sigmas
+                sigmaSq_Narr = X(:,2).^2 + sigmaIni_sq;
+                sigmaSq_Bro  = X(:,4).^2 + sigmaIni_sq;
+    
+                % calculate lateral profile
+                L_Narr =  exp( -radialDist_sq ./ (2*sigmaSq_Narr))./(2*pi*sigmaSq_Narr);
+                L_Bro  =  exp( -radialDist_sq ./ (2*sigmaSq_Bro ))./(2*pi*sigmaSq_Bro );
+                L = baseData.LatCutOff.CompFac * ((1-X(:,3)).*L_Narr + X(:,3).*L_Bro);
+    
+                dose = X(:,1).*L;
+            end
 
-            % calculate lateral profile
-            L_Narr =  exp( -radialDist_sq ./ (2*sigmaSq_Narr))./(2*pi*sigmaSq_Narr);
-            L_Bro  =  exp( -radialDist_sq ./ (2*sigmaSq_Bro ))./(2*pi*sigmaSq_Bro );
-            L = baseData.LatCutOff.CompFac * ((1-X(:,3)).*L_Narr + X(:,3).*L_Bro);
-
-            dose = X(:,1).*L;
-        else
+        elseif strcmp(this.latteralProfile, 'singleGauss')
 
             % interpolate depth dose and sigma
             X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma],radDepths);
@@ -690,13 +727,15 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
 
             % calculate dose
             dose = baseData.LatCutOff.CompFac * exp( -radialDist_sq ./ (2*sigmaSq)) .* X(:,1) ./(2*pi*sigmaSq);
+        else
+            error('Wrong Latteral Dose Profile Chosen')
+            
+        end
 
-         end
-
-        % check if we have valid dose values
-        if any(isnan(dose)) || any(dose<0)
-           error('Error in particle dose calculation.');
-        end 
+            % check if we have valid dose values
+            if any(isnan(dose)) || any(dose<0)
+               error('Error in particle dose calculation.');
+            end 
         end
         
         function calcLateralParticleCutOff(this,cutOffLevel,stf)
@@ -1075,6 +1114,8 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
                 checkData = all(isfield(machine.data,{'energy','depths','Z','peakPos','sigma','offset','initFocus'}));
             elseif strcmp(dataType,'doubleGauss')
                 checkData = all(isfield(machine.data,{'energy','depths','Z','peakPos','weight','sigma1','sigma2','offset','initFocus'}));
+            elseif strcmp(dataType,'multipleGauss')
+                checkData = all(isfield(machine.data,{'energy','depths','Z','peakPos','weightMulti','sigmaMulti','offset','initFocus'}));
             else
                 checkData = false;
             end
