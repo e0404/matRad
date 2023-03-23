@@ -40,5 +40,9 @@ for i = 1:size(cst,1)
       cst{i,4}{j}          = find(matRad_interp3(vXgridOld,vYgridOld,vZgridOld, ...
                                                  tmpCube, ...
                                                  vXgridNew,vYgridNew',vZgridNew,'nearest'));
+      if isempty(cst{i,4}{j})
+          matRad_cfg = MatRad_Config.instance();
+          matRad_cfg.dispWarning('Resizing the cst to the dose grid created an empty structure %s in scenario %d (cst{%d,4}{%d})!',cst{i,2},j,i,j);
+      end
    end
 end
