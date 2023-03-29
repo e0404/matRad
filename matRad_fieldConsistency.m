@@ -16,12 +16,12 @@ function out = matRad_fieldConsistency(pln, field)
 %   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%end
-fields = [];
+fieldcontainer = [];
    for k=1:size(pln,2)
-      fields = [fields; fieldnames(pln(k).(field{:}))];
+      fieldcontainer = [fieldcontainer; fieldnames(pln(k).(field{:}))];
    end
    
-   totfields = unique(fields);
+   totfields = unique(fieldcontainer);
    for k=1:size(pln,2)
       isPlanField = isfield(pln(k).(field{:}),totfields);
 

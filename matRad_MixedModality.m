@@ -3,7 +3,7 @@ matRad_cfg = MatRad_Config.instance();
 
 load 'TG119.mat'
 
-%% 
+% 
 % meta information for treatment plan (1) 
 pln(1).numOfFractions  = 5;
 pln(1).radiationMode   = 'protons';           % either photons / protons / helium / carbon
@@ -21,7 +21,7 @@ pln(1).propDoseCalc.calcLET = 1;
 pln(1).propOpt.runDAO          = false;      % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln(1).propOpt.runSequencing   = false;      % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln(1).propOpt.spatioTemp      = 0;
-pln(1).propOpt.STScenarios     = 2;
+pln(1).propOpt.STscenarios     = 2;
 %pln(1).propOpt.STfractions     = [ 4 4 6 8 8];             % can also do different spread of the fractions between scenes ( make sure sum(STfractions == numOfFractions)
 
 % dose calculation settings
@@ -29,9 +29,9 @@ pln(1).propDoseCalc.doseGrid.resolution.x = 8; % [mm]
 pln(1).propDoseCalc.doseGrid.resolution.y = 8; % [mm]
 pln(1).propDoseCalc.doseGrid.resolution.z = 8; % [mm]
 % pln(1).propDoseCalc.doseGrid.resolution = ct.resolution;
-quantityOpt  = 'RBExD';     % options: physicalDose, effect, RBExD
+quantityOpt  = 'physicalDose';     % options: physicalDose, effect, RBExD
 %=======================================> Model check error in bioModel
-modelName    = 'MCN';             % none: for photons, protons, carbon            % constRBE: constant RBE for photons and protons 
+modelName    = 'none';             % none: for photons, protons, carbon            % constRBE: constant RBE for photons and protons 
                                    % MCN: McNamara-variable RBE model for protons  % WED: Wedenberg-variable RBE model for protons 
                                    % LEM: Local Effect Model for carbon ions
 
@@ -59,7 +59,7 @@ pln(2).propStf.isoCenter       = ones(pln(2).propStf.numOfBeams,1) * matRad_getI
 pln(2).propOpt.runDAO          = false;      % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln(2).propOpt.runSequencing   = false;      % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln(2).propOpt.spatioTemp      = 0;
-pln(2).propOpt.STScenarios     = 5;
+pln(2).propOpt.STscenarios     = 5;
 %pln(2).propOpt.STfractions     = [ 4 4 6 8 8];             % can also do different spread of the fractions between scenes ( make sure sum(STfractions == numOfFractions)
 
 % dose calculation settings
@@ -68,7 +68,7 @@ pln(2).propDoseCalc.doseGrid.resolution.y = 8; % [mm]
 pln(2).propDoseCalc.doseGrid.resolution.z = 8; % [mm]
 % pln(2).propDoseCalc.doseGrid.resolution = ct.resolution;
 
-quantityOpt  = 'effect';     % options: physicalDose, effect, RBExD
+quantityOpt  = 'physicalDose';     % options: physicalDose, effect, RBExD
 modelName    = 'none';             % none: for photons, protons, carbon            % constRBE: constant RBE for photons and protons 
                                    % MCN: McNamara-variable RBE model for protons  % WED: Wedenberg-variable RBE model for protons 
                                    % LEM: Local Effect Model for carbon ions
@@ -95,4 +95,4 @@ stf = matRad_stfWrapper(ct,cst,plnJO);
 %% Dij Calculation
 dij = matRad_calcCombiDose(ct,stf,plnJO,cst,false);
 %% Fluence optimization 
-resultGUI = matRad_fluenceOptimization(dij,cst,plnJO)
+resultGUI = matRad_fluenceOptimizationJO(dij,cst,plnJO)

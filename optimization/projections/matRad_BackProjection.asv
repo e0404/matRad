@@ -102,7 +102,7 @@ classdef matRad_BackProjection < handle
         end
         
         function wGrad = projectGradient(obj,dij,doseGrad,w)
-            wGrad = cell(size(dij.physicalDose));                           % NOTE: Needs number of scenarios, maybe have another identifier than checking size 
+            wGrad = cell(size(dij.physicalDose));
             wGrad(obj.scenarios) = arrayfun(@(scen) projectSingleScenarioGradient(obj,dij,doseGrad,scen,w),obj.scenarios,'UniformOutput',false);         
         end
         

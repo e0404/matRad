@@ -32,7 +32,7 @@ if nPlans>1
    originalPlans = pln;
    %Initialize Pln struct
    currentFields = fieldnames(pln(1));
-   currentFields(:,2) = cell(size(currentFields));
+   currentFields(:,2) = cell(size(currentFields)); %why the two cells 
    currentFields = currentFields';
    plnJO = struct(currentFields{:});
    
@@ -50,17 +50,62 @@ if nPlans>1
       if isempty(getfield(plnJO,currentFields{1,k})) && isstruct(pln(1).(currentFields{1,k}))
         %For all pln fields that are structures, check that the number of
         %fields is the same
-        pln = matRad_fieldConsistency(pln,currentFields(1,k));
-        plnJO.(currentFields{1,k}) = [pln(:).(currentFields{1,k})];
+        plnfld = matRad_fieldConsistency(pln,currentFields(1,k));
+        if strcmp(currentFields{1,k},'propDoseCalc')
+            plnJO.(currentFields{1,k}) = [plnfld(:,1)];                         % check for consistency and singletonnness of propDoseCalc and PropOpt
+        elseif strcmp(currentFields{1,k},'propOpt')
+            plnJO.(currentFields{1,k}) = [plnfld(:,1)];   
+            
+        else
+            plnJO.(currentFields{1,k}) = [plnfld(:)];                         % check for consistency and singletonnness of propDoseCalc and PropOpt
+        end
+     
+       
       elseif isempty(getfield(plnJO,currentFields{1,k})) && ~isstruct(pln(1).(currentFields{1,k}))
          %If the field is a class, just keep it
          plnJO.(currentFields{1,k}) = [pln(:).(currentFields{1,k})];
       end
    end
-
+   plnJO.bioParam = matRad_bioModel(plnJO.radiationMode,pln(1).bioParam.quantityOpt, plnJO.radiationMode);
    %Save the original plans as well
    plnJO.originalPlans = originalPlans;
    plnJO.numOfModalities = nPlans;
+
+   % SORT OUT THE ST Fields
+
+
+   if isfield(plnJO.propOpt,'spatioTemp')
+
+       for i = 1: plnJO.numOfModalities
+            plnJO.propOpt.spatioTemp(i)  =    pln(i).propOpt.spatioTemp ;
+       end 
+       if isfield(plnJO.propOpt,'STscenarios') && sum(plnJO.propOpt.spatioTemp)>=1
+           for i = 1: plnJO.numOfModalities
+                plnJO.propOpt.STscenarios(i)  =    pln(i).propOpt.STscenarios;
+           end
+       else
+            plnJO.propOpt.STscenarios = ones( nPlans, 1);
+       end 
+       if isfield(plnJO.propOpt,'STfractions')
+           for i = 1: plnJO.numOfModalities
+                plnJO.propOpt.STfractions{i}  =    pln(i).propOpt.STfractions;
+           end
+       else
+           for i = 1: plnJO.numOfModalities
+               plnJO.propOpt.STfractions{i} = floor(pln(i).numOfFractions/plnJO.propOpt.STscenarios(i))* ones(plnJO.propOpt.STscenarios(i),1);
+               plnJO.propOpt.STfractions{i} = plnJO.propOpt.STfractions{i}(end) + mod(pln(i).numOfFractions,plnJO.propOpt.STscenarios(i));
+           end
+       end 
+   else 
+       plnJO.propOpt.spatioTemp = zeros(plnJO.numOfModalities,1);
+       plnJO.propOpt.STscenarios = ones(plnJO.numOfModalities,1);
+       for i = 1: plnJO.numOfModalities
+            plnJO.propOpt.STfractions{i} = floor(pln(i).numOfFractions/pln(i).propOpt.STscenarios)* ones(pln(i).propOpt.STscenarios,1);
+            plnJO.propOpt.STfractions{i} = plnJO.propOpt.STfractions{i}(end) + mod(pln(i).numOfFractions,plnJO.propOpt.STscenarios(i));
+       end
+   end
+       
+   
 else
    %Do nothing
    plnJO = pln;

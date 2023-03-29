@@ -47,11 +47,20 @@ function dij = matRad_calcCombiDose(ct,stf,pln,cst,CalcDoseDirect)
 
             currStf  = stf(strcmp(stfModalities,radiationModalities{k}));
             currPln = pln.originalPlans(k);
-            currPln.bioParam = pln.bioParam(k);
+            currPln.bioParam = pln.originalPlans(k).bioParam;
             
 
             if strcmp(radiationModalities{k},'photons')
                 dijt = [dijt, {matRad_calcPhotonDose(ct,currStf,currPln,cst,CalcDoseDirect)}];
+                
+                if strcmp(pln.originalPlans(k).bioParam.quantityOpt, 'effect')
+                    [ax,bx] = matRad_getPhotonLQMParameters(cst,dijt.doseGrid.numOfVoxels,1);
+                    dijt.ax = ax;
+                    dijt.bx = bx;
+                    dijt.mAlphaDose{1} = dijt.physicalDose{1}.*ax;
+                    dijt.mSqrtBetaDose{1} = dijt.physicalDose{1}.*sqrt(bx);
+                end
+                
             elseif strcmp(radiationModalities{k},'protons') || strcmp(radiationModalities{k},'carbon')|| strcmp(radiationModalities{k},'helium')
                 dijt = [dijt, {matRad_calcParticleDose(ct,currStf,currPln,cst,CalcDoseDirect)}];
             end
@@ -115,25 +124,27 @@ function dij = matRad_calcCombiDose(ct,stf,pln,cst,CalcDoseDirect)
                 dij.alphaCubes = 1;
         end
 
-
-        for k=1:pln.numOfModalities
-            if ~isfield (pln.propOpt(k),'spatioTemp')
-                pln.propOpt(k).spatioTemp = 0;
-                pln.propOpt(k).STScenarios = 1;
-                pln.propOpt(k).STfractions = pln.originalPlans(k).numOfFractions;
-            else
-                if ~isfield(pln.propOpt(k), 'STScenarios') || pln.propOpt(k).spatioTemp == 0
-                    pln.propOpt(k).STScenarios = 1;
-                end
-                if ~isfield(pln.propOpt(k),'STfractions')                           % adjust not fully divisible number of fraction .... later
-                    pln.propOpt(k).STfractions = floor(pln.originalPlans(k).numOfFractions/pln.propOpt(k).STScenarios)* ones(pln.propOpt(k).STScenarios,1);
-                end
-            end
-        end
-        
+% %       Set the Spatiotemporal optimization options
+%         for k=1:pln.numOfModalities
+%             if ~isfield (pln.propOpt,'spatioTemp')
+%                 pln.propOpt.spatioTemp(k) = false;
+%                 pln.propOpt.STscenarios(k) = 1;
+%                 pln.propOpt.STfractions(k) = pln.originalPlans(k).numOfFractions;
+%             else
+%                 if ~isfield(pln.propOpt, 'STScenarios') || pln.propOpt.spatioTemp(k) == 0
+%                     pln.propOpt.STscenarios(k) = 1;
+%                 end
+%                 if ~isfield(pln.propOpt,'STfractions')                           % adjust not fully divisible number of fraction .... later
+%                     pln.propOpt.STfractions(k) = floor(pln.originalPlans(k).numOfFractions/pln.propOpt.STscenarios(k))* ones(pln.propOpt.STscenarios(k),1);
+%                                                                                     
+%                 end
+%             end
+%         end
+        % this section needs to be reviewed 
         dij.spatioTemp = [pln.propOpt.spatioTemp];
-        dij.numOfSTScen = [pln.propOpt.STScenarios];
-        dij.numOfSTFractions = [pln.propOpt.STfractions];
+        dij.numOfSTscen = pln.propOpt.STscenarios;
+        dij.STfractions = pln.propOpt.STfractions;
+
         
         dij.numOfModalities = pln.numOfModalities;
         dij.totalNumOfFractions = pln.numOfFractions;
@@ -145,8 +156,8 @@ function dij = matRad_calcCombiDose(ct,stf,pln,cst,CalcDoseDirect)
 
          matRad_cfg.dispInfo('SUCCESS. I Dij It  !! \n');
 
-
     else
+  
     
         if (strcmp(pln.radiationMode, 'photons'))
             dij = matRad_calcPhotonDose(ct,stf,pln,cst,CalcDoseDirect);
@@ -154,6 +165,5 @@ function dij = matRad_calcCombiDose(ct,stf,pln,cst,CalcDoseDirect)
             dij = matRad_calcParticleDose(ct,stf,pln,cst,CalcDoseDirect);
         end
     end
-
-
 end
+
