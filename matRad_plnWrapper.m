@@ -28,7 +28,7 @@ function plnJO = matRad_plnWrapper(pln)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 nPlans = length(pln);
-if nPlans>1
+if nPlans>0
    originalPlans = pln;
    %Initialize Pln struct
    currentFields = fieldnames(pln(1));

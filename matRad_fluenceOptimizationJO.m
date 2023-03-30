@@ -366,12 +366,18 @@ optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
 
 wOpt = optimizer.wResult;
 info = optimizer.resultInfo;
-
-resultGUI = matRad_calcCubes(wOpt,dij);
-resultGUI.wUnsequenced = wOpt;
-resultGUI.usedOptimizer = optimizer;
-resultGUI.info = info;
-
+bxidx = 1;
+for mod = 1: pln.numOfModalities
+    wt = [];
+    % split the w for current modality
+    STrepmat = (~dij.spatioTemp(mod) + dij.spatioTemp(mod)*dij.numOfSTscen(mod));
+    wt = reshape(wOpt(bxidx: bxidx+STrepmat*dij.original_Dijs{mod}.totalNumOfBixels-1),[dij.original_Dijs{mod}.totalNumOfBixels,STrepmat]);
+    
+    resultGUI{mod} = matRad_calcCubes(wt,dij.original_Dijs{mod});
+    resultGUI{mod}.wUnsequenced = wt;
+    resultGUI{mod}.usedOptimizer = optimizer;
+    resultGUI{mod}.info = info;
+end
 %Robust quantities
 if FLAG_ROB_OPT || numel(ixForOpt) > 1   
     Cnt = 1;
