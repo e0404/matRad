@@ -57,12 +57,9 @@ for i = 1:size(cst,1)
                 matRad_cfg.dispError('cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!',i,j);
             end
         end
-
-        if ~strcmp(pln.radiationMode, 'MixMod')
-           obj = obj.setDoseParameters(obj.getDoseParameters()/pln.numOfFractions);
-        else
-           obj = obj.setDoseParameters(obj.getDoseParameters());
-        end
+        
+        obj = obj.setDoseParameters(obj.getDoseParameters()/pln.numOfFractions);
+        
         cst{i,6}{j} = obj;        
     end
 end
@@ -118,105 +115,63 @@ elseif strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'proton
     matRad_cfg.dispInfo('chosen uniform weight of %f!\n',bixelWeight);  
         
 elseif pln.bioParam.bioOpt
-   
     % retrieve photon LQM parameter
     [ax,bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1);
-    
-    
-    if strcmp(pln.radiationMode,'MixMod') && isfield(dij, 'original_Dijs') %Triggered if MixMod optimization
-       dijt = dij.original_Dijs;
-       for k=1:pln.numOfModalities
-          if strcmp(pln.originalPlans(k).radiationMode, 'photons')
-            dijt{k}.mAlphaDose{1} = dijt{k}.physicalDose{1}.*dij.ax;
-            dijt{k}.mSqrtBetaDose{1} = dijt{k}.physicalDose{1}.*sqrt(dij.bx);
-          end
-       end
-    else
-       dijt = {dij};
-    end
-    
+
     if ~isequal(dij.ax(dij.ax~=0),ax(dij.ax~=0)) || ...
-      ~isequal(dij.bx(dij.bx~=0),bx(dij.bx~=0))
-            matRad_cfg.dispError('Inconsistent biological parameter - please recalculate dose influence matrix!\n');
+       ~isequal(dij.bx(dij.bx~=0),bx(dij.bx~=0))
+         matRad_cfg.dispError('Inconsistent biological parameter - please recalculate dose influence matrix!\n');
     end
-    
     
     for i = 1:size(cst,1)
-           for j = 1:size(cst{i,6},2)
-              if strcmp(pln.radiationMode, 'MixMod')
-                 DoseParameters = cst{i,6}{j}.getDoseParameters()./sum([dij.numOfSTFractions{:}]);
-              else
-                 DoseParameters = cst{i,6}{j}.getDoseParameters();
-              end
-               % check if prescribed doses are in a valid domain
-               if any(DoseParameters > 5) && isequal(cst{i,3},'TARGET')
-                   matRad_cfg.dispWarning('Reference dose > 10 Gy[RBE] for target. Biological optimization outside the valid domain of the base data. Reduce dose prescription or use more fractions.\n');
-               end
 
-           end
+        for j = 1:size(cst{i,6},2)
+            % check if prescribed doses are in a valid domain
+            if any(cst{i,6}{j}.getDoseParameters() > 5) && isequal(cst{i,3},'TARGET')
+                matRad_cfg.dispWarning('Reference dose > 10 Gy[RBE] for target. Biological optimization outside the valid domain of the base data. Reduce dose prescription or use more fractions.\n');
+            end
+            
+        end
     end
-
+    
     dij.ixDose  = dij.bx~=0; 
         
     if isequal(pln.bioParam.quantityOpt,'effect')
 
            effectTarget = cst{ixTarget,5}.alphaX * doseTarget + cst{ixTarget,5}.betaX * doseTarget^2;
-           bixelNum = 1;
-           for k=1:size(dijt,2)
-
-               SelectedBixels = [bixelNum:bixelNum+dijt{k}.totalNumOfBixels*dij.numOfSTScen(k)-1];
-               wIdx = reshape(wOnes(SelectedBixels),[dijt{k}.totalNumOfBixels,dij.numOfSTScen(k)]);
-               aTmp = dijt{k}.mAlphaDose{1}*wIdx(:,1);
-               bTmp = dijt{k}.mSqrtBetaDose{1}*wIdx(:,1);
-         
-               p = sum(aTmp(V)) / sum(bTmp(V).^2);
-               q = -(effectTarget * length(V)) / sum(bTmp(V,1).^2);
+           aTmp = dij.mAlphaDose{1}*wOnes;
+           bTmp = dij.mSqrtBetaDose{1} * wOnes;
+           p = sum(aTmp(V)) / sum(bTmp(V).^2);
+           q = -(effectTarget * length(V)) / sum(bTmp(V).^2);
            
-               wInit(SelectedBixels)        = -(p/2) + sqrt((p^2)/4 - q) * wOnes(SelectedBixels);
+           wInit        = -(p/2) + sqrt((p^2)/4 -q) * wOnes;
 
-               bixelNum = bixelNum + dijt{k}.totalNumOfBixels;
-
-            end
     elseif isequal(pln.bioParam.quantityOpt,'RBExD')
 
            %pre-calculations
            dij.gamma             = zeros(dij.doseGrid.numOfVoxels,1);   
-           dij.gamma(dij.ixDose) = dijt{1}.ax(dij.ixDose)./(2*dijt{1}.bx(dij.ixDose)); 
-           bixelNum = 1;
- 
-           for k=1:size(dijt,2)
-              
-              SelectedBixels = [bixelNum:bixelNum+dijt{k}.totalNumOfBixels*dij.numOfSTScen(k)-1];
-              wIdx = reshape(wOnes(SelectedBixels),[dijt{k}.totalNumOfBixels,dij.numOfSTScen(k)]);
+           dij.gamma(dij.ixDose) = dij.ax(dij.ixDose)./(2*dij.bx(dij.ixDose)); 
 
-              % calculate current effect in target
-              aTmp = dijt{k}.mAlphaDose{1}*wIdx(:,1);
-              bTmp = dijt{k}.mSqrtBetaDose{1} * wIdx(:,1);
-              doseTmp = dijt{k}.physicalDose{1}*wIdx(:,1);
-              CurrEffectTarget = aTmp(V,1) + bTmp(V,1).^2;
-              TolEstBio        = 1.2;
-              % calculate maximal RBE in target
-              maxCurrRBE = max(-cst{ixTarget,5}.alphaX + sqrt(cst{ixTarget,5}.alphaX^2 + ...
-                           4*cst{ixTarget,5}.betaX.*CurrEffectTarget)./(2*cst{ixTarget,5}.betaX*doseTmp(V)));
-              wInit(SelectedBixels)    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(doseTmp(V))))* wOnes(SelectedBixels);
-              bixelNum = bixelNum + dijt{k}.totalNumOfBixels;
+            
+           % calculate current effect in target
+           aTmp = dij.mAlphaDose{1}*wOnes;
+           bTmp = dij.mSqrtBetaDose{1} * wOnes;
+           doseTmp = dij.physicalDose{1}*wOnes;
 
-           end
+           CurrEffectTarget = aTmp(V) + bTmp(V).^2;
+           % ensure a underestimated biological effective dose 
+           TolEstBio        = 1.2;
+           % calculate maximal RBE in target
+           maxCurrRBE = max(-cst{ixTarget,5}.alphaX + sqrt(cst{ixTarget,5}.alphaX^2 + ...
+                        4*cst{ixTarget,5}.betaX.*CurrEffectTarget)./(2*cst{ixTarget,5}.betaX*doseTmp(V)));
+           wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(doseTmp(V))))* wOnes;
     end
     matRad_cfg.dispInfo('chosen weights adapted to biological dose calculation!\n'); 
-else
-    bixelNum = 1;
-    for k=1:size(dijt,2)
-       SelectedBixels = [bixelNum:bixelNum+dijt{k}.totalNumOfBixels*dij.numOfSTScen(k)-1];
-       wIdx = reshape(wOnes(SelectedBixels),[dijt{k}.totalNumOfBixels,dij.numOfSTScen(k)]);
-
-       doseTmp = dijt{k}.physicalDose{1}*wIdx;
-       bixelWeight =  (doseTarget)/mean(doseTmp(V));
-       wInit(SelectedBixels)       = wOnes(SelectedBixels) * bixelWeight;
-
-       matRad_cfg.dispInfo('chosen uniform weight of %f!\n',bixelWeight);
- 
-    end
+else 
+    doseTmp = dij.physicalDose{1}*wOnes;
+    bixelWeight =  (doseTarget)/mean(doseTmp(V));
+    wInit       = wOnes * bixelWeight;
+    matRad_cfg.dispInfo('chosen uniform weight of %f!\n',bixelWeight);   
 end
     
 
@@ -233,44 +188,30 @@ end
 
 %If "all" provided, use all scenarios
 if isequal(scen4D,'all')
-
-   scen4D = 1:size(dij.physicalDose,1);
+    scen4D = 1:size(dij.physicalDose,1);
 end
 
-if strcmp(pln.radiationMode, 'MixMod') && (scen4D ~= 1)
-   scen4D = 1;
-   matRad_dispWarning('For the time being, scen4D is disabled for MixMod optimization. \n');
+linIxDIJ = find(~cellfun(@isempty,dij.physicalDose(scen4D,:,:)))';
+
+FLAG_CALC_PROB = false;
+FLAG_ROB_OPT   = false;
+
+
+for i = 1:size(cst,1)
+    for j = 1:numel(cst{i,6})
+       if strcmp(cst{i,6}{j}.robustness,'PROB') && numel(linIxDIJ) > 1
+          FLAG_CALC_PROB = true;
+       end
+       if ~strcmp(cst{i,6}{j}.robustness,'none') && numel(linIxDIJ) > 1
+          FLAG_ROB_OPT = true;
+       end
+    end
 end
 
-linIxDIJ = [];
-for k=1:size(dijt,2)
-
-     linIxDIJ = [linIxDIJ , find(~cellfun(@isempty,dijt{k}.physicalDose(scen4D,:,:)))'];
-
-     FLAG_CALC_PROB = false;
-     FLAG_ROB_OPT   = false;
-
-      for i = 1:size(cst,1)
-          for j = 1:numel(cst{i,6})
-             if strcmp(cst{i,6}{j}.robustness,'PROB') && numel(linIxDIJ{k}) > 1
-                FLAG_CALC_PROB = true;
-             end
-             if ~strcmp(cst{i,6}{j}.robustness,'none') && numel(linIxDIJ{k}) > 1
-                FLAG_ROB_OPT = true;
-             end
-          end
-      end
-
-
-   if FLAG_CALC_PROB
-         if stcmp(pln.radiationMode, 'MixMod')
-
-            [dij.Original_Dijs{k}] = matRad_calculateProbabilisticQuantities(dijt{k},cst,pln);
-         else
-            [dij] = matRad_calculateProbabilisticQuantities(dij,cst,pln);            
-         end
-   end
+if FLAG_CALC_PROB
+    [dij] = matRad_calculateProbabilisticQuantities(dij,cst,pln);
 end
+
 
 % set optimization options
 if ~FLAG_ROB_OPT || FLAG_CALC_PROB     % if multiple robust objectives are defined for one structure then remove FLAG_CALC_PROB from the if clause
@@ -298,15 +239,9 @@ end
 
 %Give scenarios used for optimization
 backProjection.scenarios    = ixForOpt;
+backProjection.scenarioProb = pln.multScen.scenProb;
 
-backProjection.scenarioProb = [pln.multScen.scenProb];
-
-if strcmp(pln.radiationMode, 'MixMod')
-   optiProb = matRad_OptimizationProblemMixMod(backProjection);
-else
-   
-   optiProb = matRad_OptimizationProblem(backProjection);
-end
+optiProb = matRad_OptimizationProblem(backProjection);
 optiProb.quantityOpt = pln.bioParam.quantityOpt;
 if isfield(pln,'propOpt') && isfield(pln.propOpt,'useLogSumExpForRobOpt')
     optiProb.useLogSumExpForRobOpt = pln.propOpt.useLogSumExpForRobOpt;
@@ -317,7 +252,6 @@ if ~isfield(pln.propOpt,'boundMU')
     pln.propOpt.boundMU = false;
 end 
 
-%To check for MixMod, as it is should not work now
 if pln.propOpt.boundMU
     if (isfield(dij,'minMU') || isfield(dij,'maxMU')) && ~isfield(dij,'numParticlesPerMU')
         matRad_cfg.dispWarning('Requested MU bounds but number of particles per MU not set! Bounds will not be enforced and standard [0,Inf] will be used instead!');
@@ -352,6 +286,7 @@ switch pln.propOpt.optimizer
         optimizer = matRad_OptimizerIPOPT;
 end
        
+
 optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
 
 wOpt = optimizer.wResult;

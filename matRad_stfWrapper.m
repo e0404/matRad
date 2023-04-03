@@ -28,6 +28,7 @@ function stf = matRad_stfWrapper(ct,cst,plnJO)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
    stf = [];
    fields = [];   
    

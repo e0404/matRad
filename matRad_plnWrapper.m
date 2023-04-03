@@ -9,12 +9,12 @@ function plnJO = matRad_plnWrapper(pln)
 %   pln:       array of pln structure for the different modalities (if any)
 %
 % output
-%   plnJO: synthetic overarching pln stuct for Joint Opt
+%   plnJO:      synthetic overarching pln stuct for Joint Opt 
 %
 % References
 %   -
 %
-%  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2016 the matRad development team. 
 % 
@@ -28,14 +28,14 @@ function plnJO = matRad_plnWrapper(pln)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 nPlans = length(pln);
-if nPlans>1
+if nPlans>0
    originalPlans = pln;
    %Initialize Pln struct
    currentFields = fieldnames(pln(1));
-   currentFields(:,2) = cell(size(currentFields));
+   currentFields(:,2) = cell(size(currentFields)); %why the two cells 
    currentFields = currentFields';
    plnJO = struct(currentFields{:});
-
+   
    %First run plnConsistency, it is the same as current MixModality, small
    %corrections are introduced to handle output generation with matRad_cfg
    pln = matRad_plnConsistency(pln); %to be reviewed
@@ -45,6 +45,7 @@ if nPlans>1
    plnJO.radiationMode = 'MixMod';
    plnJO.machine       = 'MixMod';
    plnJO.propStf       = [pln(:).propStf];
+<<<<<<< HEAD
    originalPropDoseCalc  = [matRad_fieldConsistency(pln,{'propDoseCalc'})]; 
    plnJO.multScen      = [pln(:).multScen];
    %    for k=1:length(currentFields)
@@ -75,11 +76,30 @@ if nPlans>1
       if any(arrayfun(@(x) isfield(pln(x).propOpt, 'useLogSumExpForRobOpt'), [1:nPlans]))
          plnJO.propOpt.useLogSumExpForRobOpt = 1;
 
+=======
+  
+   for k=1:length(currentFields)
+      if isempty(getfield(plnJO,currentFields{1,k})) && isstruct(pln(1).(currentFields{1,k}))
+        %For all pln fields that are structures, check that the number of
+        %fields is the same
+        plnfld = matRad_fieldConsistency(pln,currentFields(1,k));
+        if strcmp(currentFields{1,k},'propDoseCalc')
+            plnJO.(currentFields{1,k}) = [plnfld(:,1)];                         % check for consistency and singletonnness of propDoseCalc and PropOpt
+        elseif strcmp(currentFields{1,k},'propOpt')
+            plnJO.(currentFields{1,k}) = [plnfld(:,1)];   
+            
+        else
+            plnJO.(currentFields{1,k}) = [plnfld(:)];                         % check for consistency and singletonnness of propDoseCalc and PropOpt
+        end
+     
+       
+      elseif isempty(getfield(plnJO,currentFields{1,k})) && ~isstruct(pln(1).(currentFields{1,k}))
+         %If the field is a class, just keep it
+         plnJO.(currentFields{1,k}) = [pln(:).(currentFields{1,k})];
+>>>>>>> dev_MixedModality_amit
       end
-      plnJO.propOpt.spatioTemp  = arrayfun(@(x) getfield(pln(x).propOpt, 'spatioTemp'), [1:nPlans]);
-      plnJO.propOpt.STScenarios = arrayfun(@(x) getfield(pln(x).propOpt, 'STScenarios'), [1:nPlans]);
-      %superPln.propOpt.STFractions = zeros(1,sum(superPln.propOpt.STScenarios));
    end
+   plnJO.bioParam = matRad_bioModel(plnJO.radiationMode,pln(1).bioParam.quantityOpt, plnJO.radiationMode);
    %Save the original plans as well
    
    if isfield(pln(1), 'propDoseCalc')
@@ -95,6 +115,42 @@ if nPlans>1
    end
    plnJO.originalPlans = originalPlans;
    plnJO.numOfModalities = nPlans;
+
+   % SORT OUT THE ST Fields
+
+
+   if isfield(plnJO.propOpt,'spatioTemp')
+
+       for i = 1: plnJO.numOfModalities
+            plnJO.propOpt.spatioTemp(i)  =    pln(i).propOpt.spatioTemp ;
+       end 
+       if isfield(plnJO.propOpt,'STscenarios') && sum(plnJO.propOpt.spatioTemp)>=1
+           for i = 1: plnJO.numOfModalities
+                plnJO.propOpt.STscenarios(i)  =    pln(i).propOpt.STscenarios;
+           end
+       else
+            plnJO.propOpt.STscenarios = ones( nPlans, 1);
+       end 
+       if isfield(plnJO.propOpt,'STfractions')
+           for i = 1: plnJO.numOfModalities
+                plnJO.propOpt.STfractions{i}  =    pln(i).propOpt.STfractions;
+           end
+       else
+           for i = 1: plnJO.numOfModalities
+               plnJO.propOpt.STfractions{i} = floor(pln(i).numOfFractions/plnJO.propOpt.STscenarios(i))* ones(plnJO.propOpt.STscenarios(i),1);
+               plnJO.propOpt.STfractions{i} = plnJO.propOpt.STfractions{i}(end) + mod(pln(i).numOfFractions,plnJO.propOpt.STscenarios(i));
+           end
+       end 
+   else 
+       plnJO.propOpt.spatioTemp = zeros(plnJO.numOfModalities,1);
+       plnJO.propOpt.STscenarios = ones(plnJO.numOfModalities,1);
+       for i = 1: plnJO.numOfModalities
+            plnJO.propOpt.STfractions{i} = floor(pln(i).numOfFractions/pln(i).propOpt.STscenarios)* ones(pln(i).propOpt.STscenarios,1);
+            plnJO.propOpt.STfractions{i} = plnJO.propOpt.STfractions{i}(end) + mod(pln(i).numOfFractions,plnJO.propOpt.STscenarios(i));
+       end
+   end
+       
+   
 else
    %Do nothing
    plnJO = pln;
