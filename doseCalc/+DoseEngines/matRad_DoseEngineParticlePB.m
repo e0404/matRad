@@ -33,7 +33,8 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
         fineSampling;                   % Struct with finesampling properties
  
        
-        forceLateralModel = ' ';  % If i dont want to use the lateral Model with the maximum number of gausses
+        LateralModel = struct('force', false, ...
+                               'mode',      'singleGauss'); % if i dont want to use the lateral Model with the maximum number of gausses
         
         visBoolLateralCutOff = false;   % Boolean switch for visualization during+ LeteralCutOff calculation
     end
@@ -666,9 +667,9 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
         conversionFactor = 1.6021766208e-02;
 
         sumGauss = @(x,mu,SqSigma,w) ((1./sqrt(2*pi*ones(numel(x),1) * SqSigma') .* ...
-                              exp(-bsxfun(@minus,x,mu').^2 ./ (2* ones(numel(x),1) * SqSigma' ))) * w);
+                              exp(-bsxfun(@minus,x,mu').^2 ./ (2* ones(numel(x),1) * SqSigma' ))) * w); 
 
-         if (isfield(baseData, 'weightMulti') && isfield(baseData,'sigmaMulti')) && (strcmp(this.forceLateralModel, 'multipleGauss') ||strcmp(this.forceLateralModel, ''))
+         if  (isfield(baseData, 'weightMulti') && isfield(baseData,'sigmaMulti') && strcmp(this.LateralModel.mode, 'multipleGauss') && this.LateralModel.force) || (isfield(baseData, 'weightMulti') && isfield(baseData,'sigmaMulti') && ~this.LateralModel.force)
                 
                 numGauss = size(baseData.sigmaMulti,2);
 
@@ -696,7 +697,7 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
                 dose = X(:,1).*L;
                     
 
-        elseif (isfield(baseData, 'sigma1') && isfield(baseData,'sigma2'))  && (strcmp(this.forceLateralModel, 'doubleGauss') ||strcmp(this.forceLateralModel, ''))
+         elseif (isfield(baseData, 'sigma1') && isfield(baseData,'sigma2') && strcmp(this.LateralModel.mode, 'doubleGauss') && this.LateralModel.force) || (isfield(baseData, 'sigma1') && isfield(baseData,'sigma2')&& ~this.LateralModel.force) 
         
                 % interpolate depth dose, sigmas, and weights    
                 X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma1 baseData.weight baseData.sigma2],radDepths);
@@ -715,7 +716,7 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeam
     
                 dose = X(:,1).*L;
 
-         elseif isfield(baseData, 'sigma')  && (strcmp(this.forceLateralModel, 'singleGauss') ||strcmp(this.forceLateralModel, ''))
+         elseif (isfield(baseData, 'sigma')  && strcmp(this.LateralModel.mode, 'singleGauss') && this.LateralModel.force) || (isfield(baseData, 'sigma') && ~this.LateralModel.force)
     
                 % interpolate depth dose and sigma
                 X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma],radDepths);
