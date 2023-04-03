@@ -327,8 +327,9 @@ for mod = 1: length(dij.original_Dijs)
     
     optiProb.BP.computeGradient(dij.original_Dijs{mod},doseGradient,wt);
     gt = optiProb.BP.GetGradient();
-    
+                     % review for ST optimization 
     for s = 1:numel(useScen)
+        gt{s} = gt{s}*dij.STfractions{mod};  
         g{s} = [g{s}; gt{s}];                     
     end 
 end   
@@ -354,7 +355,7 @@ if gradientChecker == 1
     for i=ix
         wInit = w;
         wInit(i) = wInit(i) + epsilon;
-        fDel= matRad_objectiveFunction(optiProb,w,dij,cst);
+        fDel= matRad_objectiveFunction(optiProb,wInit,dij,cst);
         numGrad = (fDel - f)/epsilon;
         diff = (numGrad/weightGradient(i) - 1)*100;
         fprintf(['grad val #' num2str(i) ' - rel diff numerical and analytical gradient = ' num2str(diff) '\n']);
