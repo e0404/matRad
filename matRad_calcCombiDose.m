@@ -87,10 +87,10 @@ if (strcmp(pln.radiationMode, 'MixMod'))
 
         else
 
-            if isfield(dij,'doseGrid') &&  isequal(dij.doseGrid,dijt{end}.doseGrid)
+            if isfield(dij,'doseGrid') &&  ~isequal(dij.doseGrid,dijt{end}.doseGrid)
                 matRad_cfg.dispError('Mismatch in doseGrid ');
             end
-            if isfield(dij,'ctGrid') &&  isequal(dij.ctGrid,dijt{end}.ctGrid)
+            if isfield(dij,'ctGrid') &&  ~isequal(dij.ctGrid,dijt{end}.ctGrid)
                 matRad_cfg.dispError('Mismatch in ctGrid ');
             end
             if isfield(dij,'totalNumOfBixels')
