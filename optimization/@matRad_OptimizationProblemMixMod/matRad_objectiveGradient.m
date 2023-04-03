@@ -344,5 +344,23 @@ end
         %Only implemented for first scenario now
         weightGradient = weightGradient + gProb{1};
     end
+% code snippet to check the gradient
+    gradientChecker = 1;
+if gradientChecker == 1
+    f =  matRad_objectiveFunction(optiProb,w,dij,cst);
+    epsilon = 1e-6;
+    ix = unique(randi([1 numel(w)],1,5));
+    
+    for i=ix
+        wInit = w;
+        wInit(i) = wInit(i) + epsilon;
+        fDel= matRad_objectiveFunction(optiProb,w,dij,cst);
+        numGrad = (fDel - f)/epsilon;
+        diff = (numGrad/weightGradient(i) - 1)*100;
+        fprintf(['grad val #' num2str(i) ' - rel diff numerical and analytical gradient = ' num2str(diff) '\n']);
+        %fprintf([' any nan or zero for photons' num2str(sum(isnan(glog{1}))) ',' num2str(sum(~logical(glog{1}))) ' for protons: ' num2str(sum(isnan(glog{2}))) ',' num2str(sum(~logical(glog{2}))) '\n']);
+    end
+    
+end
 
 end
