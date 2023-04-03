@@ -36,6 +36,10 @@ classdef matRad_ScenarioModel < handle
     properties (Abstract,SetAccess=protected)
         name
     end
+
+    properties (Dependent)
+        wcFactor;
+    end
    
     properties (SetAccess = protected)
         numOfCtScen;           % total number of CT scenarios
@@ -71,7 +75,17 @@ classdef matRad_ScenarioModel < handle
             %TODO: We could do this here automatically in the constructur, but
             %Octave 5 has a bug here and throws an error
             %this.updateScenarios();
-        end  
+        end
+
+        function listAllScenarios(this)
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispInfo('Listing all scenarios...\n');
+            matRad_cfg.dispInfo('\t#\txShift\tyShift\tzShift\tabsRng\trelRng\tprob.\n');
+            for s = 1:size(this.scenForProb,1)
+                str = num2str(this.scenForProb(s,:),'\t%.3f');
+                matRad_cfg.dispInfo('\t%d\t%s\t%.3f\n',s,str,this.scenProb(s));
+            end
+        end
 
         %% SETTERS & UPDATE
         function set.rangeRelSD(this,rangeRelSD)
@@ -148,6 +162,20 @@ classdef matRad_ScenarioModel < handle
             matRad_cfg.dispDeprecationWarning('The property TYPE of the scenario class will soon be deprecated!');
             t = this.name;
         end
+
+        function value = get.wcFactor(this)
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispDeprecationWarning('The property wcFactor of the scenario class will soon be deprecated!');
+            value = this.wcSigma;
+        end
+
+        function set.wcFactor(this,value)
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispDeprecationWarning('The property wcFactor of the scenario class will soon be deprecated!');
+            this.wcSigma = value;
+        end
+
+
     end
 
     methods (Static)
