@@ -19,70 +19,52 @@
 % (iii) generate a treatment plan for this phantom
 
 %% set matRad runtime configuration
-clear all;
+clear all; %somewhat needed for the phantom builder
 matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
 
 %% Create a CT image series
-xDim = 200;
-yDim = 200;
-zDim = 100;
 
-ct.cubeDim      = [yDim xDim zDim]; % second cube dimension represents the x-coordinate
-ct.resolution.x = 2;
-ct.resolution.y = 2;
-ct.resolution.z = 3;
-ct.numOfCtScen  = 1;
- 
-% create a ct image series with zeros - it will be filled later
-ct.cubeHU{1} = ones(ct.cubeDim) * -1000;
-%% Create the VOI data for the phantom
+ctDim = [200,200,100]; % y,x,z dimensions
+ctResolution = [2,2,3]; % y,x,z the same here!
+
 %This uses the phantombuilder class, which helps to easily implement simple
 %objectives
-builder = matRad_PhantomBuilder(ct);
+builder = matRad_PhantomBuilder(ctDim,ctResolution,1);
 
+%% Create the VOI data for the phantom
 %To add a VOI there are (so far) two different options
-%either a cubic or a spherical Volume (either OAR or Target)
-%NOTE: The order in which the objectives are added, matters for the order
-%in the cst we will introduce later on!
+%either a Box or a spherical Volume (either OAR or Target)
+%NOTE: The order in which the objectives are initialized matters!
+% In case of overlaps in the objectives, the firstly created objectives have
+% a higher priority! This means that if two VOI have an overlap with
+% different HU, then the value of the firstly initialized objective will be
+% set in the overlap region
+
 
 %define objectives for the VOI
-objective1 = struct(DoseObjectives.matRad_SquaredOverdosing(400,0));
-objective2 = struct(DoseObjectives.matRad_SquaredOverdosing(10,0));
-objective3 = struct(DoseObjectives.matRad_SquaredDeviation(800,45));
 
-builder.addCubicOAR('Volume1',[60,30,60],'offset',[0 -15 0],'objectives',objective1);
-builder.addCubicOAR('Volume2',[60,30,60],'offset',[0 15 0],'objectives',objective2);
-builder.addSphericalTarget('Volume3',20,'objectives',objective3);
+objective1 = struct(DoseObjectives.matRad_SquaredDeviation(800,45));
+objective2 = struct(DoseObjectives.matRad_SquaredOverdosing(400,0));
+objective3 = struct(DoseObjectives.matRad_SquaredOverdosing(10,0));     
 
-% This adds two Cubic OAR and one Spherical Target in the middle
-% For Cubic Volumes a name (here Volume1 and Volume2) has to be specified,
+builder.addSphericalTarget('Volume1',20,'objectives',objective1,'HU',0);
+builder.addBoxOAR('Volume2',[60,30,60],'offset',[0 -15 0],'objectives',objective2);
+builder.addBoxOAR('Volume3',[60,30,60],'offset',[0 15 0],'objectives',objective3);
+
+% This adds two Box OAR and one Spherical Target in the middle
+% For Box Volumes a name (here Volume2 and Volume3) has to be specified,
 % as well as the dimension of the Volume.
 % For spherical Volumes a name has to be specified, as well as the radius
 % of the sphere
 %(Optional) To move the VOI from the center of the ct an offset can be set.
 %(Optional) The objectives can already be set here, however this can also
-%be don later on
+%be done later on
+%(Optional) The HU of the VOI can be set (normal value: 0 (water)) 
 
-
-%% Create the cst and update the ct with the generated Volumes 
-
-builder.updatecst()
-
-builder.updatect()
 
 %% Get the ct and cst (stored as properties of the phantomBuilder class)
-cst = builder.cst;
-ct = builder.ct;
-%%
-display(cst);
-%%
-display(ct);
 
-%if the priorities should be changed
-cst{1,5}.Priority = 3;
-cst{2,5}.Priority = 2;
-cst{3,5}.Priority = 1,
-
+[ct,cst] = builder.getctcst();
 
 %% Treatment Plan
 % The next step is to define your treatment plan labeled as 'pln'. This 
@@ -140,14 +122,15 @@ stf = matRad_generateStf(ct,cst,pln);
 dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 
 %% Export dij matrix
-matRad_exportDij('dij.bin',dij,stf);
+%matRad_exportDij('dij.bin',dij,stf);
 
 %% Inverse Optimization for intensity-modulated photon therapy
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment.
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
-
+%%
+matRadGUI
 %% Plot the resulting dose slice
 plane      = 3;
 slice      = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
