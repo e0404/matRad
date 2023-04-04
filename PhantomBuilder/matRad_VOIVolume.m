@@ -1,7 +1,7 @@
 classdef (Abstract) matRad_VOIVolume < handle
 % matRad_VOIVolume: Interface for VOI Volumes
 %   This abstract base class provides the structure of VOI Volumes.
-%   So far implemented: Cubic and spherical objectives   
+%   So far implemented: Box and spherical objectives   
 %
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -29,6 +29,7 @@ classdef (Abstract) matRad_VOIVolume < handle
         Priority = 1;
         Visible = 1;
         visibleColor = [0 0 0];
+        HU = 0;
         offset = [0,0,0]; %center of objective
         objectives = {};
         colors = [[1,0,0];[0,1,0];[0,0,1];[1,1,0];[1,0,1];[0,1,1];[1,1,1]];
@@ -63,7 +64,7 @@ classdef (Abstract) matRad_VOIVolume < handle
             matRad_VOIVolume.getOrIncrementCount(1);
             obj.idx = matRad_VOIVolume.getOrIncrementCount();
             if obj.idx <= size(obj.colors,1)
-                obj.visibleColor = obj.colors(obj.idx,:)
+                obj.visibleColor = obj.colors(obj.idx,:);
             else
                 obj.visibleColor = [1 1 1];
             end
@@ -71,7 +72,9 @@ classdef (Abstract) matRad_VOIVolume < handle
             obj.name = name;
             obj.type = type;
             obj.offset = p.Results.offset;
-            
+            obj.HU = p.Results.HU;
+
+
             %idea is that DoseObjectiveFunction can be either a single objective or an 
             %array of objectives. If it is a single objective store it as a cell array 
             if iscell(p.Results.objectives)
@@ -81,7 +84,6 @@ classdef (Abstract) matRad_VOIVolume < handle
             end
             %}
         end
-
 
         function cst = initializeParameters(obj,cst)
             %initialize entry for this VOI in cst

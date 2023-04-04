@@ -1,4 +1,4 @@
-classdef matRad_CubicVOI < matRad_VOIVolume
+classdef matRad_PhantomVOIBox < matRad_VOIVolume
     % matRad_CubicVOI implements a class that helps to create cubic VOIs
     %
     % References 
@@ -19,26 +19,31 @@ classdef matRad_CubicVOI < matRad_VOIVolume
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties %additional property of cubic objects 
-        dimensions;
+        boxDimensions;
     end
-    methods
-        function obj = matRad_CubicVOI(name,type,dimensions,varargin)
+
+    methods (Access = public)
+
+        function obj = matRad_PhantomVOIBox(name,type,boxDimensions,varargin)
             p = inputParser; 
             addOptional(p,'objectives',{});
             addOptional(p,'offset',[0,0,0]);
+            addOptional(p,'HU',0);
             parse(p,varargin{:});
 
             obj@matRad_VOIVolume(name,type,p); %call superclass constructor
-            obj.dimensions = dimensions;
+            obj.boxDimensions = boxDimensions;
         end
-        
+
         function [cst] = initializeParameters(obj,ct,cst)
+            %add this objective to the phantomBuilders cst
+
             cst = initializeParameters@matRad_VOIVolume(obj,cst);
             center = round(ct.cubeDim/2);
             VOIHelper = zeros(ct.cubeDim);
             offsets = obj.offset;
-            dims = obj.dimensions;
-
+            dims = obj.boxDimensions;
+    
             for x = center(1)+offsets(1) - dims(1)/2 :1: center(1) + offsets(1) + dims(1)/2
                 for y = center(2)+offsets(2) - dims(2)/2 :1: center(2) + offsets(2) + dims(2)/2
                    for z = round(center(3)+offsets(3) - dims(3)/2) :1: center(3) + offsets(3) + dims(3)/2
