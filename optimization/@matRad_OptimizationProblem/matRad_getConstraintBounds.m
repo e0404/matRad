@@ -39,7 +39,7 @@ cu = [];
 for  i = 1:size(cst,1)
 
     % Only take OAR or target VOI.
-    if ~isempty(cst{i,4}) && ( isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') )
+    if ~any(cellfun(@isempty,cst{i,4})) && ( isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') )
 
         % loop over the number of constraints for the current VOI
         for j = 1:numel(cst{i,6})
