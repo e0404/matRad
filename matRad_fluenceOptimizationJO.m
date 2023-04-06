@@ -101,17 +101,18 @@ ixTarget       = ixTarget(i);
    
 % calculate initial beam intensities wInit
 matRad_cfg.dispInfo('Estimating initial weights... ');
-
+if isfield(dij,'numOfModalities')
+    numOfModalities = dij.numOfModalities;
+else
+    numOfModalities = 1;
+end
 if exist('wInit','var')
     %do nothing as wInit was passed to the function
     matRad_cfg.dispInfo('chosen provided wInit!\n');   
 
 else
-    if isfield(dij,'numOfModalities')
-        numOfModalities = dij.numOfModalities;
-    else
-        numOfModalities = 1;
-    end
+
+    doseTarget = doseTarget/numOfModalities;
     wInit = [];
     % loop over all modalities
     for modality = 1: numOfModalities
@@ -221,7 +222,7 @@ else
         
         end
         
-        wInit = [wInit; wt];            
+        wInit = [wInit; wt./max(wt)];            
     end
 end
 
@@ -377,6 +378,7 @@ for mod = 1: pln.numOfModalities
     resultGUI{mod}.wUnsequenced = wt;
     resultGUI{mod}.usedOptimizer = optimizer;
     resultGUI{mod}.info = info;
+    bxidx = bxidx + STrepmat*dij.original_Dijs{mod}.totalNumOfBixels;
 end
 %Robust quantities
 if FLAG_ROB_OPT || numel(ixForOpt) > 1   
