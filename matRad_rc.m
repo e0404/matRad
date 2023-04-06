@@ -17,8 +17,6 @@
 
 matRad_cfg = MatRad_Config.instance();
 
-addpath(genpath(matRad_cfg.matRadRoot));
-
 %clear command window and close all figures
 clc;
 close all;
