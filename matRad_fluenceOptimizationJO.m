@@ -164,6 +164,7 @@ else
             end
 
             dijt.ixDose  = dijt.bx~=0;
+            dij.original_Dijs{modality}.ixDose = dijt.ixDose;
 
             if isequal(pln.bioParam.quantityOpt,'effect')
 
@@ -185,8 +186,9 @@ else
             elseif isequal(pln.bioParam.quantityOpt,'RBExD')
 
                 %pre-calculations
-                dij.gamma             = zeros(dij.doseGrid.numOfVoxels,1);
-                dij.gamma(dij.ixDose) = dijt.ax(dij.ixDose)./(2*dijt.bx(dij.ixDose));
+                dijt.gamma             = zeros(dijt.doseGrid.numOfVoxels,1);
+                dijt.gamma(dijt.ixDose) = dijt.ax(dijt.ixDose)./(2*dijt.bx(dijt.ixDose));
+                dij.original_Dijs{modality}.gamma = dijt.gamma;
                 bixelNum = 1;
 
                 SelectedBixels = [bixelNum:bixelNum+dijt.totalNumOfBixels*dij.numOfSTscen(modality)-1];
