@@ -56,13 +56,15 @@ if (strcmp(pln.radiationMode, 'MixMod'))
 
         if strcmp(radiationModalities{k},'photons')
             dijt = [dijt, {matRad_calcPhotonDose(ct,currStf,currPln,cst,CalcDoseDirect)}];
-
+                
             if strcmp(pln.originalPlans(k).bioParam.quantityOpt, 'effect')
-                [ax,bx] = matRad_getPhotonLQMParameters(cst,dijt.doseGrid.numOfVoxels,1);
-                dijt.ax = ax;
-                dijt.bx = bx;
-                dijt.mAlphaDose{1} = dijt.physicalDose{1}.*ax;
-                dijt.mSqrtBetaDose{1} = dijt.physicalDose{1}.*sqrt(bx);
+                cst = matRad_setOverlapPriorities(cst,ct.cubeDim);
+                [ax,bx] = matRad_getPhotonLQMParameters(matRad_resizeCstToGrid(cst,dijt{k}.ctGrid.x,  dijt{k}.ctGrid.y,  dijt{k}.ctGrid.z,...
+                                 dijt{k}.doseGrid.x,dijt{k}.doseGrid.y,dijt{k}.doseGrid.z),dijt{k}.doseGrid.numOfVoxels,1);
+                dijt{k}.ax = ax;
+                dijt{k}.bx = bx;
+                dijt{k}.mAlphaDose{1} = dijt{k}.physicalDose{1}.*ax;
+                dijt{k}.mSqrtBetaDose{1} = dijt{k}.physicalDose{1}.*sqrt(bx);
             end
 
         elseif strcmp(radiationModalities{k},'protons') || strcmp(radiationModalities{k},'carbon')|| strcmp(radiationModalities{k},'helium')

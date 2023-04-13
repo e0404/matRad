@@ -151,7 +151,7 @@ else
             for i = 1:size(cst,1)
                 for j = 1:size(cst{i,6},2)
                     if strcmp(pln.radiationMode, 'MixMod')
-                        DoseParameters = cst{i,6}{j}.getDoseParameters()./sum([dij.totalNumOfFractions{:}]);
+                        DoseParameters = cst{i,6}{j}.getDoseParameters()./sum([dij.STfractions{:}]);
                     else
                         DoseParameters = cst{i,6}{j}.getDoseParameters();
                     end
@@ -169,7 +169,7 @@ else
 
                 effectTarget = cst{ixTarget,5}.alphaX * doseTarget + cst{ixTarget,5}.betaX * doseTarget^2;
                 bixelNum = 1;
-                SelectedBixels = [bixelNum:bixelNum+dijt.totalNumOfBixels*dij.numOfSTsen(modality)-1];
+                SelectedBixels = [bixelNum:bixelNum+dijt.totalNumOfBixels*dij.numOfSTscen(modality)-1];
                 wIdx = reshape(wOnes(SelectedBixels),[dijt.totalNumOfBixels,dij.numOfSTscen(modality)]);
                 aTmp = dijt.mAlphaDose{1}*wIdx(:,1);
                 bTmp = dijt.mSqrtBetaDose{1}*wIdx(:,1);
