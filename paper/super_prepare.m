@@ -1,11 +1,10 @@
-load PROSTATE.mat
+load TG119.mat
 
-pln.radiationMode                       = 'protons';  
+pln.radiationMode                       = 'photons';  
 pln.machine                             = 'Generic';
-pln.propOpt.bioOptimization             = 'none';    
+  
 pln.numOfFractions                      = 1;
-pln.propStf.gantryAngles                = [90 270];
-%pln.propStf.gantryAngles               = [0];
+pln.propStf.gantryAngles                = [0:72359];
 pln.propStf.couchAngles                 = zeros(1, numel(pln.propStf.gantryAngles));
 pln.propStf.bixelWidth                  = 5;
 pln.propStf.numOfBeams                  = numel(pln.propStf.gantryAngles);
@@ -15,8 +14,7 @@ pln.propDoseCalc.doseGrid.resolution    = ct.resolution;
 pln.propOpt.runDAO = 0;
 
 stf = matRad_generateStf(ct,cst,pln);
-dij = matRad_calcParticleDose(ct,stf,pln,cst);
+dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 
-load prostate_super_cst.mat
 
-save PROSTATE_super.mat
+save TG119_super.mat
