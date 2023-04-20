@@ -70,7 +70,7 @@ while ~isempty(currentLine) && ischar(currentLine) %NRRD separates data from hea
             nrrdMetaData.keys{end+1,1} = lineContent{1}{1}; %Key
             nrrdMetaData.keys{end,2} = lineContent{1}{3}; %Value
         else
-            matRad_cfg.dispWarning(['Could not parse line: "' lineContent '"']);
+            matRad_cfg.dispWarning(['Could not parse line: "' currentLine '"']);
         end        
     end
     currentLine = fgetl(hFile);
