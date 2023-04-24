@@ -8,7 +8,8 @@ function stf = matRad_generateStf(ct,cst,pln,visMode)
 %   ct:         ct cube
 %   cst:        matRad cst struct
 %   pln:        matRad plan meta information struct
-%   visMode:    toggle on/off different visualizations by setting this value to 1,2,3 (optional)
+%   visMode:    toggle on/off different visualizations by setting 
+%               this value to 1,2,3 (optional)
 %
 % output
 %   stf:        matRad steering information struct
@@ -29,13 +30,19 @@ function stf = matRad_generateStf(ct,cst,pln,visMode)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-matRad_cfg = MatRad_Config.instance();
-
-matRad_cfg.dispInfo('matRad: Generating stf struct... ');
+matRad_cfg = MatRad_Config.instance();   
 
 if nargin < 4
     visMode = 0;
 end
+
+% call brachy in case this radiation mode is chosen
+if strcmp(pln.radiationMode,'brachy')
+    stf = matRad_generateBrachyStf(ct,cst,pln,visMode);
+    return
+end
+
+matRad_cfg.dispInfo('matRad: Generating stf struct... ');
 
 if numel(pln.propStf.gantryAngles) ~= numel(pln.propStf.couchAngles)
     matRad_cfg.dispError('Inconsistent number of gantry and couch angles.');
