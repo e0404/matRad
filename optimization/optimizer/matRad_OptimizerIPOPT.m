@@ -24,8 +24,11 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         env
     end
     
-    properties (Access = private)
+    properties(GetAccess = public, SetAccess = private)
         allObjectiveFunctionValues
+    end
+
+    properties (Access = private)
         axesHandle
         plotHandle
         abortRequested
@@ -110,6 +113,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         end
         
         function obj = optimize(obj,w0,optiProb,dij,cst)
+            obj.allObjectiveFunctionValues = [];
             matRad_cfg = MatRad_Config.instance();
             
             % set optimization options            
@@ -129,8 +133,10 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             
             % set callback functions.
             
-            funcs.objective         = @(x) optiProb.matRad_objectiveFunction(x,dij,cst);
+            %funcs.objective         = @(x) optiProb.matRad_objectiveFunction(x,dij,cst);
+            funcs.objective         = @(x) optiProb.matRad_objectiveFunction2(x,dij,cst);
             funcs.constraints       = @(x) optiProb.matRad_constraintFunctions(x,dij,cst);
+            %funcs.gradient          = @(x) optiProb.matRad_objectiveGradient2(x,dij,cst);
             funcs.gradient          = @(x) optiProb.matRad_objectiveGradient(x,dij,cst);
             funcs.jacobian          = @(x) optiProb.matRad_constraintJacobian(x,dij,cst);
             funcs.jacobianstructure = @( ) optiProb.matRad_getJacobianStructure(w0,dij,cst);
@@ -180,7 +186,6 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             
             obj.abortRequested = false;
             % Empty the array of stored function values
-            obj.allObjectiveFunctionValues = [];
         end
         
         function [statusmsg,statusflag] = GetStatus(obj)
@@ -309,7 +314,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             drawnow;
             
             % ensure to bring optimization window to front
-            figure(hFig);
+            %figure(hFig);
         end
         
         function abortCallbackKey(obj,~,KeyEvent)
