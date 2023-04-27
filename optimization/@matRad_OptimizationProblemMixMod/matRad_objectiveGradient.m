@@ -348,14 +348,14 @@ end
 % code snippet to check the gradient
     gradientChecker = 1;
 if gradientChecker == 1
-    f =  matRad_objectiveFunction2(optiProb,w,dij,cst);
+    f =  matRad_objectiveFunction(optiProb,w,dij,cst);
     epsilon = 1e-6;
     ix = unique(randi([1 numel(w)],1,5));
     
     for i=ix
         wInit = w;
         wInit(i) = wInit(i) + epsilon;
-        fDel= matRad_objectiveFunction2(optiProb,wInit,dij,cst);
+        fDel= matRad_objectiveFunction(optiProb,wInit,dij,cst);
         numGrad = (fDel - f)/epsilon;
         diff = (numGrad/weightGradient(i) - 1)*100;
         fprintf(['grad val #' num2str(i) ' - rel diff numerical and analytical gradient = ' num2str(diff) '\n']);
