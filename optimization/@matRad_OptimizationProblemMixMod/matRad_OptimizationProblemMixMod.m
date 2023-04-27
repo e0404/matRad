@@ -25,12 +25,6 @@ classdef matRad_OptimizationProblemMixMod < handle
     properties
         BP
         quantityOpt = '';
-        objectives = {}; %cell array storing all objectives, has to be initialized at the start
-        constraints = {}; %
-        objidx;
-        constridx;
-        normalizationScheme = struct('type','none');
-
         useMaxApprox = 'logsumexp'; %'pnorm'; %'logsumexp'; %'none';
         p = 30; %Can be chosen larger (closer to maximum) or smaller (closer to mean). Only tested 20 >= p >= 1
 
@@ -39,20 +33,16 @@ classdef matRad_OptimizationProblemMixMod < handle
     end
     
     methods
-        function obj = matRad_OptimizationProblemMixMod(backProjection,cst)
-        
-            obj.BP = backProjection; %needs to be initalized to have access to setBiologicalDosePrescriptions
-                if nargin == 2
-                    obj.extractObjectivesAndConstraintsFromcst(cst);
-                end
+        function obj = matRad_OptimizationProblemMixMod(backProjection)
+            obj.BP = backProjection;
         end       
         
         %Objective function declaration
-        fVal = matRad_objectiveFunction(optiProb,w,dij,cst) 
+        fVal = matRad_objectiveFunction(optiProb,w,dij,cst)   
         
         %Objective gradient declaration
         fGrad = matRad_objectiveGradient(optiProb,w,dij,cst)
-
+        
         %Constraint function declaration
         cVal = matRad_constraintFunctions(optiProb,w,dij,cst)
         
@@ -127,7 +117,6 @@ classdef matRad_OptimizationProblemMixMod < handle
 
             grad = fac * (tmp ./ pNormVal).^(p-1);
         end
-    end          
-        
+    end                
 end
 
