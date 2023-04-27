@@ -85,9 +85,9 @@ classdef matRad_MeanDose < DoseObjectives.matRad_DoseObjective
         function fDose = computeDoseObjectiveFunction(obj,dose)
             switch obj.parameters{2}
                 case 1
-                    fDose = obj.penalty * obj.objectiveLinearDiff(dose);
+                    fDose = obj.objectiveLinearDiff(dose);
                 case 2
-                    fDose = obj.penalty * obj.objectiveQuadraticDiff(dose);
+                    fDose = obj.objectiveQuadraticDiff(dose);
                 otherwise
                     matRad_cfg = MatRad_Config.instance();
                     matRad_cfg.dispError('Invalid setting for %s in Mean Dose Objective!',obj.parameterNames{2});  
@@ -98,9 +98,9 @@ classdef matRad_MeanDose < DoseObjectives.matRad_DoseObjective
         function fDoseGrad   = computeDoseObjectiveGradient(obj,dose)
             switch obj.parameters{2}
                 case 1
-                    fDoseGrad = obj.penalty * obj.gradientLinearDiff(dose);
+                    fDoseGrad = obj.gradientLinearDiff(dose);
                 case 2
-                    fDoseGrad = obj.penalty * obj.gradientQuadraticDiff(dose);
+                    fDoseGrad = obj.gradientQuadraticDiff(dose);
                 otherwise
                     matRad_cfg = MatRad_Config.instance();
                     matRad_cfg.dispError('Invalid setting for %s in Mean Dose Objective!',obj.parameterNames{2});  

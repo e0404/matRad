@@ -48,12 +48,10 @@ classdef matRad_OptimizationProblemMixMod < handle
         end       
         
         %Objective function declaration
-        fVal = matRad_objectiveFunction2(optiProb,w,dij,cst)   
-        %fVal = matRad_objectiveFunction(optiProb,w,dij,cst) 
+        fVal = matRad_objectiveFunction(optiProb,w,dij,cst) 
         
         %Objective gradient declaration
         fGrad = matRad_objectiveGradient(optiProb,w,dij,cst)
-        %fGrad = matRad_objectiveGradient2(optiProb,w,dij,cst)
 
         %Constraint function declaration
         cVal = matRad_constraintFunctions(optiProb,w,dij,cst)
@@ -130,41 +128,6 @@ classdef matRad_OptimizationProblemMixMod < handle
             grad = fac * (tmp ./ pNormVal).^(p-1);
         end
     end          
-
-    methods (Access = private)
-        function extractObjectivesAndConstraintsFromcst(optiProb,cst)
-            %used to store objectives in cell array as property of optimization Problem
-            optiProb.objidx = [];
-            optiProb.constridx = [];
-            optiProb.objectives = {};
-            optiProb.constraints = {};
-            
-            for i = 1:size(cst,1) % loop over cst
-                
-                if ~isempty(cst{i,4}{1}) && ( isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') )
-
-                    for j = 1:numel(cst{i,6})
-                        %check whether dose objective or constraint
-                        obj = cst{i,6}{j};
-                        if isstruct(cst{i,6}{j})
-                            obj =  matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
-                        end
-                        if contains(class(obj),'DoseObjectives')
-                            optiProb.objidx = [optiProb.objidx;i,j];
-                            obj = optiProb.BP.setBiologicalDosePrescriptions(obj,cst{i,5}.alphaX,cst{i,5}.betaX);
-                            optiProb.objectives(end+1) = {obj};
-
-                        elseif contains(class(obj),'DoseConstraints')
-                            optiProb.constridx = [optiProb.constridx;i,j];
-                            obj = optiProb.BP.setBiologicalDosePrescriptions(obj,cst{i,5}.alphaX,cst{i,5}.betaX);
-                            optiProb.constraints(end+1) = {obj};
-                        end
-                    end
-                end
-            end
-        end
-
-
-    end        
+        
 end
 

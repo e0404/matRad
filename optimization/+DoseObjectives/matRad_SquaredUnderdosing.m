@@ -64,7 +64,7 @@ classdef matRad_SquaredUnderdosing < DoseObjectives.matRad_DoseObjective
             underdose(underdose>0) = 0;
             
             % claculate objective function
-            fDose = obj.penalty/numel(dose) * (underdose'*underdose);
+            fDose = 1/numel(dose) * (underdose'*underdose);
         end
         
         %% Calculates the Objective Function gradient
@@ -76,7 +76,7 @@ classdef matRad_SquaredUnderdosing < DoseObjectives.matRad_DoseObjective
             underdose(underdose>0) = 0;
             
             % calculate delta
-            fDoseGrad = 2 * obj.penalty/numel(dose) * underdose;
+            fDoseGrad = 2/numel(dose) * underdose;
         end
     end
     
