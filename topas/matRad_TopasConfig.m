@@ -1075,16 +1075,17 @@ classdef matRad_TopasConfig < handle
                         % Write share sub-scorer
                         if obj.scorer.sharedSubscorers && obj.scorer.RBE
                             % Select appropriate scorer from selected flags
+                            for currModel = obj.scorer.RBE_model
                             scorerNames = {'Alpha','Beta'};
-                            if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'mcn')), obj.scorer.RBE_model))
+                            if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'mcn')), currModel))
                                 obj.scorer.LET = true;
                                 obj.scorer.doseToWater = true;
                                 scorerPrefix = 'McNamara';
-                            elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'wed')), obj.scorer.RBE_model))
+                            elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'wed')), currModel))
                                 obj.scorer.LET = true;
                                 obj.scorer.doseToWater = true;
                                 scorerPrefix = 'Wedenberg';
-                            elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'lem')), obj.scorer.RBE_model)) || any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'libamtrack')), obj.scorer.RBE_model))
+                            elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'lem')), currModel)) || any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'libamtrack')), currModel))
                                 obj.scorer.doseToWater = true;
                                 scorerPrefix = 'tabulated';
                             end
@@ -1095,6 +1096,7 @@ classdef matRad_TopasConfig < handle
                                     fprintf(fID,'s:Sc/%s%s/ReferencedSubScorer_LET      = "ProtonLET"\n',scorerPrefix,scorerNames{s});
                                 end
                                 fprintf(fID,'s:Sc/%s%s/ReferencedSubScorer_Dose     = "Tally_DoseToWater"\n',scorerPrefix,scorerNames{s});
+                            end
                             end
                         end
 
