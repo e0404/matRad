@@ -1,5 +1,5 @@
-classdef (Abstract) matRad_VOIVolume < handle
-% matRad_VOIVolume: Interface for VOI Volumes
+classdef (Abstract) matRad_PhantomVOIVolume < handle
+% matRad_PhantomVOIVolume: Interface for VOI Volumes
 %   This abstract base class provides the structure of VOI Volumes.
 %   So far implemented: Box and spherical objectives   
 %
@@ -58,11 +58,11 @@ classdef (Abstract) matRad_VOIVolume < handle
     end
 
     methods
-        function obj = matRad_VOIVolume(name,type,p)
+        function obj = matRad_PhantomVOIVolume(name,type,p)
         %p is the input parser used in the child classes to check for additional variables
         % Increment the counter in the constructor
-            matRad_VOIVolume.getOrIncrementCount(1);
-            obj.idx = matRad_VOIVolume.getOrIncrementCount();
+            matRad_PhantomVOIVolume.getOrIncrementCount(1);
+            obj.idx = matRad_PhantomVOIVolume.getOrIncrementCount();
             if obj.idx <= size(obj.colors,1)
                 obj.visibleColor = obj.colors(obj.idx,:);
             else

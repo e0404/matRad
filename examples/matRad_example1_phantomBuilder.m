@@ -27,8 +27,8 @@ matRad_rc; %If this throws an error, run it from the parent directory first to s
 ctDim = [200,200,100]; % y,x,z dimensions
 ctResolution = [2,2,3]; % y,x,z the same here!
 
-%This uses the phantombuilder class, which helps to easily implement simple
-%objectives
+%This uses the phantombuilder class, which helps to easily implement a 
+%water phantom containing geometrical 3D shapes as targets and organs
 builder = matRad_PhantomBuilder(ctDim,ctResolution,1);
 
 %% Create the VOI data for the phantom

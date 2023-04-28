@@ -1,4 +1,4 @@
-classdef  matRad_PhantomVOISphere < matRad_VOIVolume   
+classdef  matRad_PhantomVOISphere < matRad_PhantomVOIVolume   
     % matRad_SphericalVOI implements a class that helps to create spheric VOIs
     %
     % References 
@@ -30,14 +30,14 @@ classdef  matRad_PhantomVOISphere < matRad_VOIVolume
             addOptional(p,'HU',0);
             parse(p,varargin{:});
 
-            obj@matRad_VOIVolume(name,type,p); %call superclass constructor
+            obj@matRad_PhantomVOIVolume(name,type,p); %call superclass constructor
             obj.radius = radius;
         end
 
         function [cst] = initializeParameters(obj,ct,cst)
             %add this VOI to the phantomBuilders cst
             
-            cst = initializeParameters@matRad_VOIVolume(obj,cst);
+            cst = initializeParameters@matRad_PhantomVOIVolume(obj,cst);
             center = round([ct.cubeDim/2]);
             VOIHelper = zeros(ct.cubeDim);
             offsets = obj.offset;

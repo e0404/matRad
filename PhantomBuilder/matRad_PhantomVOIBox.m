@@ -1,4 +1,4 @@
-classdef matRad_PhantomVOIBox < matRad_VOIVolume
+classdef matRad_PhantomVOIBox < matRad_PhantomVOIVolume
     % matRad_CubicVOI implements a class that helps to create cubic VOIs
     %
     % References 
@@ -31,14 +31,14 @@ classdef matRad_PhantomVOIBox < matRad_VOIVolume
             addOptional(p,'HU',0);
             parse(p,varargin{:});
 
-            obj@matRad_VOIVolume(name,type,p); %call superclass constructor
+            obj@matRad_PhantomVOIVolume(name,type,p); %call superclass constructor
             obj.boxDimensions = boxDimensions;
         end
 
         function [cst] = initializeParameters(obj,ct,cst)
             %add this objective to the phantomBuilders cst
 
-            cst = initializeParameters@matRad_VOIVolume(obj,cst);
+            cst = initializeParameters@matRad_PhantomVOIVolume(obj,cst);
             center = round(ct.cubeDim/2);
             VOIHelper = zeros(ct.cubeDim);
             offsets = obj.offset;
