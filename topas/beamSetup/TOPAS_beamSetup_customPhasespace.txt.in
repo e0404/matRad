@@ -1,0 +1,12 @@
+# -- Phasespace Phantom Parameters
+s:Ge/PhantomSurface/Type               = "TsCylinder"
+s:Ge/PhantomSurface/Parent             = "Nozzle"
+s:Ge/PhantomSurface/Material           = "Vacuum"
+dc:Ge/PhantomSurface/TransZ            = 0 cm
+dc:Ge/PhantomSurface/RMax              = 50 cm
+dc:Ge/PhantomSurface/HL                = 0.1 mm
+
+s:So/PhaseSpaceSource/Type                            = "PhaseSpace"
+s:So/PhaseSpaceSource/Component                       = "PhantomSurface"
+u:So/PhaseSpaceSource/PhaseSpaceScaleZPosBy 		= 0.0
+b:So/PhaseSpaceSource/PhaseSpaceIncludeEmptyHistories = "True"

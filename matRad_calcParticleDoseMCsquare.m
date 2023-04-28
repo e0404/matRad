@@ -355,8 +355,15 @@ for scenarioIx = 1:pln.multScen.totNumScen
         MCsquareBinCubeResolution = [dij.doseGrid.resolution.x ...
             dij.doseGrid.resolution.y ...
             dij.doseGrid.resolution.z];
-
         pln.propMC.writeMhd(HUcube{ctScen},MCsquareBinCubeResolution);
+
+        % Copy necessary files to MCrun folder
+        copyfile(pln.propMC.HU_Density_Conversion_File, [pln.propMC.MCrun_Directory 'HU_Density_Conversion.txt'])
+        pln.propMC.HU_Density_Conversion_File = [pln.propMC.MCrun_Directory 'HU_Density_Conversion.txt'];
+        copyfile(pln.propMC.HU_Material_Conversion_File, [pln.propMC.MCrun_Directory 'HU_Material_Conversion.txt'])
+        pln.propMC.HU_Material_Conversion_File = [pln.propMC.MCrun_Directory 'HU_Material_Conversion.txt'];
+        copyfile(pln.propMC.BDL_Machine_Parameter_File, [pln.propMC.MCrun_Directory 'BDL_file.txt'])
+        pln.propMC.BDL_Machine_Parameter_File = [pln.propMC.MCrun_Directory 'BDL_file.txt'];
 
         % write config file
         pln.propMC.writeMCsquareinputAllFiles(MCsquareConfigFile,stfMCsquare);

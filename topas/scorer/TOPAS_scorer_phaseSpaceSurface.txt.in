@@ -1,0 +1,6 @@
+s:Sc/PhantomSurfaceScorer/Quantity 				    = "PhaseSpace"
+s:Sc/PhantomSurfaceScorer/OutputType 				= "ASCII"
+s:Sc/PhantomSurfaceScorer/Surface 				    = "PhantomSurface/ZMinusSurface"
+s:Sc/PhantomSurfaceScorer/Component 				= "PhantomSurface"
+s:Sc/PhantomSurfaceScorer/OutputFile 				= Sim/ScoreLabel + "_phaseSpace"
+s:Sc/PhantomSurfaceScorer/IfOutputFileAlreadyExists = "Overwrite"

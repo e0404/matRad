@@ -1,4 +1,4 @@
-function [voiContourHandles] = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIndex,selection,plane,slice,cMap,varargin)
+function [voiContourHandles] = matRad_plotVoiContourSlice(axesHandle,cst,ctCube,ctIndex,selection,plane,slice,cMap,varargin)
 % matRad function that plots the contours of the segmentations given in cst
 %
 % call
@@ -9,7 +9,7 @@ function [voiContourHandles] = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIn
 % input
 %   axesHandle          handle to axes the slice should be displayed in
 %   cst                 matRad cst cell array
-%   ct                  matRad ct structure
+%   ctCube              matRad ct cube
 %   ctIndex             index of the ct cube
 %   selection           logicals defining the current selection of contours
 %                       that should be plotted. Can be set to [] to plot
@@ -60,6 +60,7 @@ end
 
 if isempty(selection) || numel(selection) ~= size(cst,1)
     selection = true(size(cst,1),1);
+%     selection = [cell2mat(cst(:,5)).Visible]';
 end
 
 voiContourHandles = cell(0);
@@ -73,14 +74,14 @@ end
 
 for s = 1:size(cst,1)
     
-    if ~strcmp(cst{s,3},'IGNORED') && selection(s)
+    if cst{s,5}.Visible && selection(s)
         %Check for precalculated contours
         C =[];
         if size(cst,2) >= 7 && ~isempty(cst{s,7})
-            C = cst{s,7}{ctIndex}{slice,plane};
+            C = cst{s,7}{1}{slice,plane};
         else
             %If we do not have precomputed contours available, then compute them
-            mask = zeros(size(ct{ctIndex}));
+            mask = zeros(size(ctCube{ctIndex}));
             mask(cst{s,4}{ctIndex}) = 1;
             
             if plane == 1 && any(any(mask(slice,:,:) > 0))

@@ -72,7 +72,7 @@ dij.beamNum  = NaN*ones(dij.totalNumOfBixels,1);
 dij.numHistoriesPerBeamlet = pln.propMC.numHistories;
 
 %% Setup OmpMC options / parameters
-ompMCoptions = pln.propMC.getOmpMCoptions(machine);
+ompMCoptions = pln.propMC.getOmpMCoptions(machine,pln);
 
 % conversion from HU to densities & materials
 [~,cubeMatIx,cubeRho] = pln.propMC.materialConversion(dij.ctGrid,dij.doseGrid,ct);

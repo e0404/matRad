@@ -55,6 +55,7 @@ try
     % Layout
     pos = get(gca,'position');
     set(table,'units','normalized','position',pos)
+    title(inputname(1),'Interpreter','none')
     axis off
 catch ME
     matRad_cfg.dispWarning('The uitable function is not implemented in %s v%s.',env,vStr);

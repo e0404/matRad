@@ -145,6 +145,11 @@ elseif isprop(pln.propMC,'numHistories')
     resultGUI.historiesMC = pln.propMC.numHistories;
 end
 
+% Export removed spots to resultGUI
+if isfield(dij,'numOfDiscardedSpots')
+    resultGUI.numOfDiscardedSpots = dij.numOfDiscardedSpots;
+end
+
 % remember original fluence weights
 resultGUI.w  = w;
 

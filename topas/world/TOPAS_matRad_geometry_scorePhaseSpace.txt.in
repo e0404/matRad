@@ -1,0 +1,8 @@
+s:Ge/World/Type 		= "TsCylinder"
+s:Ge/World/Material 	= Sim/WorldMaterial
+d:Ge/World/RMax        	= 50 cm
+d:Ge/World/HL     	= 75 cm
+b:Ge/World/Invisible = "TRUE"
+
+s:Ge/Nozzle/Parent = "World"
+s:Ge/Nozzle/Type = "Group"

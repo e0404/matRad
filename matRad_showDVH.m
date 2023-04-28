@@ -1,4 +1,4 @@
-function matRad_showDVH(dvh,cst,pln,lineStyleIndicator)
+function p = matRad_showDVH(dvh,cst,pln,lineStyleIndicator)
 % matRad dvh visualizaion
 % 
 % call
@@ -43,6 +43,12 @@ end
 % specified
 hold on;
 
+if lineStyleIndicator > 1
+    visible = 'off';
+else
+    visible = 'on';
+end
+lineWidth = 2;
 %reduce cst
 visibleIx = cellfun(@(c) c.Visible == 1,cst(:,5));
 cstNames = cst(visibleIx,2);
@@ -73,14 +79,14 @@ for i = 1:numOfVois
     ix      = max([1 find(dvh(i).volumePoints>0,1,'last')]);
     currDvh = [dvh(i).doseGrid(1:ix);dvh(i).volumePoints(1:ix)];
     
-    plot(currDvh(1,:),currDvh(2,:),'LineWidth',4,'Color',colorMx(i,:), ...
-        'LineStyle',lineStyles{lineStyleIndicator},'DisplayName',cstNames{i})
+    p(i) = plot(currDvh(1,:),currDvh(2,:),'LineWidth',lineWidth,'Color',colorMx(i,:), ...
+        'LineStyle',lineStyles{lineStyleIndicator},'DisplayName',cstNames{i},'HandleVisibility',visible);
     
     maxDVHvol  = max(maxDVHvol,max(currDvh(2,:)));
     maxDVHdose = max(maxDVHdose,max(currDvh(1,:)));
 end
 
-fontSizeValue = 14;
+fontSizeValue = 12;
 myLegend = legend('show','location','NorthEast');
 set(myLegend,'FontSize',10,'Interpreter','none');
 legend boxoff
@@ -88,9 +94,13 @@ legend boxoff
 ylim([0 1.1*maxDVHvol]);
 xlim([0 1.2*maxDVHdose]);
 
-grid on,grid minor
-box(gca,'on');
-set(gca,'LineWidth',1.5,'FontSize',fontSizeValue);
+grid on
+ax = gca;
+ax.XMinorGrid = 'on';
+ax.YMinorGrid = 'on';
+
+box(ax,'on');
+% set(gca,'LineWidth',1.5,'FontSize',fontSizeValue);
 ylabel('Volume [%]','FontSize',fontSizeValue)
 
 if exist('pln','var') && ~isempty(pln)

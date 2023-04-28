@@ -58,8 +58,8 @@ classdef matRad_OmpConfig < handle
         end
 
 
-        function ompMCoptions = getOmpMCoptions(obj,machine)
-            matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
+        function ompMCoptions = getOmpMCoptions(obj,machine,pln)
+            matRad_cfg = MatRad_Config.instance(); % Instance of matRad configuration class
             
             %display options
             ompMCoptions.verbose = matRad_cfg.logLevel - 1;
@@ -71,6 +71,7 @@ classdef matRad_OmpConfig < handle
             ompMCoptions.randomSeeds = [97 33];
             
             %start source definition
+            % TODO make spectrum file a variable that can be loaded in and changed
             ompMCoptions.spectrumFile       = [obj.omcFolder filesep 'spectra' filesep 'mohan6.spectrum'];
             ompMCoptions.monoEnergy         = 0.1;
             ompMCoptions.charge             = 0;
@@ -86,7 +87,7 @@ classdef matRad_OmpConfig < handle
             ompMCoptions.global_pcut = 0.010;
             
             % Relative Threshold for dose
-            ompMCoptions.relDoseThreshold = 1 - matRad_cfg.propDoseCalc.defaultLateralCutOff;
+            ompMCoptions.relDoseThreshold = 1 - pln.propDoseCalc.lateralCutOff;
             
             % Output folders
             ompMCoptions.outputFolder = [obj.omcFolder filesep 'output' filesep];

@@ -33,7 +33,7 @@ classdef matRad_TopasConfig < handle
 
         %Simulation parameters
         numThreads = 0; %number of used threads, 0 = max number of threads (= num cores)
-        numOfRuns = 1; %Default number of runs / batches
+        numOfRuns = 5; %Default number of runs / batches
         modeHistories = 'num'; %'frac';
         fracHistories = 1e-4; %Fraction of histories to compute
 
@@ -47,7 +47,7 @@ classdef matRad_TopasConfig < handle
             'maxinterruptedhistories',1000,...
             'maxDetailedErrorReports',0,...
             'parameterizationErrorMaxReports',1,...
-            'parameterizationErrorMaxEnergy',0.0001 ...
+            'parameterizationErrorMaxEnergy',0.1 ...
             );
 
 
@@ -82,6 +82,7 @@ classdef matRad_TopasConfig < handle
             'doseToMedium',true,...
             'doseToWater',false,...
             'surfaceTrackCount',false,...
+            'scorePhaseSpace','none',... % 'none', 'read' or 'score'
             'calcDij',false,...
             'RBE',false,...
             'RBE_model',{{'default'}},... % default is MCN for protons and LEM1 for ions
@@ -115,9 +116,12 @@ classdef matRad_TopasConfig < handle
             'patientCube','matRad_cube.dat');
 
         infilenames = struct(   'geometry','world/TOPAS_matRad_geometry.txt.in',...
+            'geometry_scorePhaseSpace','world/TOPAS_matRad_geometry_scorePhaseSpace.txt.in',...
+            'geometry_readPhaseSpace','world/TOPAS_matRad_geometry_readPhaseSpace.txt.in',...
             ... % BeamSetup files
             'beam_virtualGaussian','beamSetup/TOPAS_beamSetup_virtualGaussian.txt.in',...
-            'beam_phasespace','beamSetup/TOPAS_beamSetup_phasespace.txt.in',...
+            'beam_genericPhasespace','beamSetup/TOPAS_beamSetup_genericPhasespace.txt.in',...
+            'beam_customPhasespace','beamSetup/TOPAS_beamSetup_customPhasespace.txt.in',...
             'beam_uniform','beamSetup/TOPAS_beamSetup_uniform.txt.in',...
             'beam_mlc','beamSetup/TOPAS_beamSetup_mlc.txt.in',...
             'beam_biGaussian','beamSetup/TOPAS_beamSetup_biGaussian.txt.in',...
@@ -134,6 +138,7 @@ classdef matRad_TopasConfig < handle
             'matConv_Schneider_loadFromFile','TOPAS_SchneiderConverter.txt.in',...
             ... % Scorer
             'Scorer_surfaceTrackCount','TOPAS_scorer_surfaceIC.txt.in',...
+            'Scorer_phaseSpaceSurface','TOPAS_scorer_phaseSpaceSurface.txt.in',...
             'Scorer_doseToMedium','TOPAS_scorer_doseToMedium.txt.in',...
             'Scorer_LET','TOPAS_subscorer_LET.txt.in',...
             'Scorer_doseToWater','TOPAS_scorer_doseToWater.txt.in',...
@@ -217,13 +222,17 @@ classdef matRad_TopasConfig < handle
             if obj.scorer.RBE
                 obj.scorer.doseToMedium = true;
                 if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'default')), obj.scorer.RBE_model))
-                    switch obj.radiationMode
-                        case 'protons'
-                            obj.scorer.RBE_model = obj.scorer.defaultModelProtons;
-                        case {'carbon','helium'}
-                            obj.scorer.RBE_model = obj.scorer.defaultModelCarbon;
-                        otherwise
-                            matRad_cfg.dispError(['No RBE model implemented for ',obj.radiationMode]);
+                    if isfield(pln,'bioParam') && isprop(pln.bioParam,'model')
+                        obj.scorer.RBE_model = {pln.bioParam.model};
+                    else
+                        switch obj.radiationMode
+                            case 'protons'
+                                obj.scorer.RBE_model = obj.scorer.defaultModelProtons;
+                            case {'carbon','helium'}
+                                obj.scorer.RBE_model = obj.scorer.defaultModelCarbon;
+                            otherwise
+                                matRad_cfg.dispError(['No RBE model implemented for ',obj.radiationMode]);
+                        end
                     end
                 end
 
@@ -257,49 +266,8 @@ classdef matRad_TopasConfig < handle
                 w = ones(numBixels,1);
             end
 
-            % Set MCparam structure with important simulation parameters that is needed for later readOut and
-            % postprocessing
-            obj.MCparam = struct();
-            obj.MCparam.tallies = {};
-            obj.MCparam.nbRuns = obj.numOfRuns;
-            obj.MCparam.simLabel = obj.label;
-            obj.MCparam.scoreReportQuantity = obj.scorer.reportQuantity;
-            obj.MCparam.workingDir = obj.workingDir;
-            obj.MCparam.weights = w;
-            obj.MCparam.ctGrid = ct.ctGrid;
-            if isfield(ct,'originalGrid')
-                obj.MCparam.originalGrid = ct.originalGrid;
-            end
-            obj.MCparam.cubeDim = ct.cubeDim;
-            obj.MCparam.ctResolution = ct.resolution;
-            obj.MCparam.numOfCtScen = ct.numOfCtScen;
-            % Save used RBE models
-            if obj.scorer.RBE
-                obj.MCparam.RBE_models = obj.scorer.RBE_model;
-                [obj.MCparam.ax,obj.MCparam.bx] = matRad_getPhotonLQMParameters(cst,prod(ct.cubeDim),obj.MCparam.numOfCtScen);
-                obj.MCparam.abx(obj.MCparam.bx>0) = obj.MCparam.ax(obj.MCparam.bx>0)./obj.MCparam.bx(obj.MCparam.bx>0);
-            end
-
-            % fill in bixels, rays and beams in case of dij calculation or external calculation
-            if obj.scorer.calcDij
-                counter = 1;
-                for f = 1:length(stf)
-                    for r = 1:stf(f).numOfRays
-                        for b = 1:stf(f).numOfBixelsPerRay(r)
-                            obj.MCparam.bixelNum(counter) = b;
-                            obj.MCparam.rayNum(counter)   = r;
-                            obj.MCparam.beamNum(counter)  = f;
-                            counter = counter + 1;
-                        end
-                    end
-                end
-            else
-                % In case of calcDoseDirect, you only need beamNum
-                obj.MCparam.bixelNum = 1;
-                obj.MCparam.rayNum   = 1;
-                obj.MCparam.beamNum  = 1:length(stf);
-            end
-            obj.MCparam.numOfRaysPerBeam   = [stf(:).numOfRays];
+            % Initialize MCparam struct (it is also used for the writeStfFields function)
+            obj.MCparamInit(ct,cst,stf,w);
 
             % Generate baseData using the MCemittanceBaseData constructor
             % Write TOPAS beam properties
@@ -308,7 +276,12 @@ classdef matRad_TopasConfig < handle
             else
                 topasBaseData = [];
             end
-            obj.writeStfFields(ct,stf,pln,w,topasBaseData);
+
+            if strcmp(obj.scorer.scorePhaseSpace,'read')
+                obj.writeStfPhaseSpace(ct,stf);
+            else
+                obj.writeStfFields(ct,stf,pln,w,topasBaseData);
+            end
 
             % Save simulation parameters to folder
             obj.writeMCparam();
@@ -362,6 +335,9 @@ classdef matRad_TopasConfig < handle
 
             % Fill empty Dij with fields from topasCubes
             dij = obj.fillDij(topasCubes,dij);
+
+            % Remove dose voxels that are not inside of the patient body
+            dij = obj.maskDij(dij);
 
         end
 
@@ -430,6 +406,27 @@ classdef matRad_TopasConfig < handle
         end
     end
     methods (Access = private)
+        function dij = maskDij(obj,dij)
+    
+                % Clip dose to patient body
+                mask = true(obj.MCparam.ctGrid.dimensions);
+                mask(obj.MCparam.patientVoxelIndices) = 0;
+    
+                uniqueTallies = unique(obj.MCparam.tallies);
+                for t = 1:length(uniqueTallies)
+                    for scenarioIx = 1:dij.numOfScenarios
+                        dij.(uniqueTallies{t}){scenarioIx}(mask,:) = 0;
+                        if isfield(dij,[uniqueTallies{t} '_std'])
+                            dij.([uniqueTallies{t} '_std']){scenarioIx}(mask,:) = 0;
+                        end
+                        if isfield(dij,[uniqueTallies{t} '_batchStd'])
+                            dij.([uniqueTallies{t} '_batchStd']){scenarioIx}(mask,:) = 0;
+                        end
+                    end
+                end
+    
+        end
+            
         function topasCubes = markFieldsAsEmpty(obj,topasCubes)
 
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
@@ -500,6 +497,13 @@ classdef matRad_TopasConfig < handle
             obj.MCparam.tallies = unique(obj.MCparam.tallies);
             talliesCut = replace(obj.MCparam.tallies,'-','_');
 
+            if any(contains(talliesCut,'_std'))
+                obj.MCparam.tallies(contains(talliesCut,'_std')) = [];
+                talliesCut(contains(talliesCut,'_std')) = [];
+                obj.MCparam.numOfReportQuantities = 2;
+                obj.MCparam.scoreReportQuantity{end+1} = 'Standard_Deviation';
+            end
+
             % Load data for each tally individually
             for t = 1:length(obj.MCparam.tallies)
                 tnameFile = obj.MCparam.tallies{t};
@@ -531,6 +535,26 @@ classdef matRad_TopasConfig < handle
 
                             % Read data from scored TOPAS files
                             dataRead = obj.readBinCsvData(genFullFile);
+                               
+                            if any(isnan(dataRead{1}(:)))
+                                matRad_cfg.dispWarning(['NaN detected in run ' num2str(k)])
+                            end
+
+                            % Check if std has been calculated afterwards and placed in the folder using the suffix '_std'
+                            if any(~cellfun(@isempty, strfind(string(ls(folder)),'std')))
+                                switch obj.MCparam.outputType
+                                    case 'csv'
+                                        % Generate csv file path to load
+                                        genFullFile_std = fullfile(folder,[genFileName '_std.csv']);
+                                    case 'binary'
+                                        % Generate bin file path to load
+                                        genFullFile_std = fullfile(folder,[genFileName '_std.bin']);
+                                    otherwise
+                                        matRad_cfg.dispError('Not implemented!');
+                                end
+
+                                dataRead(end+1) = obj.readBinCsvData(genFullFile_std);
+                            end
 
                             for i = 1:numel(dataRead)
                                 data.(obj.MCparam.scoreReportQuantity{i}){k} = dataRead{i};
@@ -779,7 +803,7 @@ classdef matRad_TopasConfig < handle
                         end
                     end
                 end
-
+                
                 % Remove processed physDoseFields from total tallies
                 topasCubesTallies = topasCubesTallies(~physDoseFields);
 
@@ -875,8 +899,8 @@ classdef matRad_TopasConfig < handle
             end
             fprintf(fID,'\n');
 
+            % Write verbosity parameters
             logicalString = {'"False"', '"True"'};
-
             fprintf(fID,'i:Ma/Verbosity = %d\n',obj.verbosity.material);
             fprintf(fID,'i:Ts/TrackingVerbosity = %d\n',obj.verbosity.tracking);
             fprintf(fID,'i:Ts/EventVerbosity = %d\n',obj.verbosity.event);
@@ -893,27 +917,28 @@ classdef matRad_TopasConfig < handle
             fprintf(fID,'i:Ts/ShowHistoryCountAtInterval = %d\n',10^(floor(log10(1/obj.numOfRuns * obj.numHistories))-1));
             fprintf(fID,'\n');
 
-
-            fprintf(fID,'s:Sim/DoseScorerOutputType = "%s"\n',obj.scorer.outputType);
-            if iscell(obj.scorer.reportQuantity)
-                fprintf(fID,'sv:Sim/DoseScorerReport = %i ',length(obj.scorer.reportQuantity));
-                fprintf(fID,'"%s" ',obj.scorer.reportQuantity{:});
+            if strcmp(obj.scorer.scorePhaseSpace,'none')
+                fprintf(fID,'s:Sim/DoseScorerOutputType = "%s"\n',obj.scorer.outputType);
+                if iscell(obj.scorer.reportQuantity)
+                    fprintf(fID,'sv:Sim/DoseScorerReport = %i ',length(obj.scorer.reportQuantity));
+                    fprintf(fID,'"%s" ',obj.scorer.reportQuantity{:});
+                    fprintf(fID,'\n');
+                else
+                    fprintf(fID,'sv:Sim/DoseScorerReport = 1 "%s"\n',obj.scorer.reportQuantity);
+                end
                 fprintf(fID,'\n');
-            else
-                fprintf(fID,'sv:Sim/DoseScorerReport = 1 "%s"\n',obj.scorer.reportQuantity);
             end
-            fprintf(fID,'\n');
+
+            % Write simulation seed
             fprintf(fID,['i:Ts/Seed = ',num2str(runIx),'\n']);
 
-            %fprintf(fID,'includeFile = %s/TOPAS_Simulation_Setup.txt\n',obj.thisFolder);
-            %fprintf(fID,'includeFile = %s/TOPAS_matRad_geometry.txt\n',obj.thisFolder);
-            %fprintf(fID,'includeFile = %s/TOPAS_scorer_surfaceIC.txt\n',obj.thisFolder);
         end
 
         function writeFieldHeader(obj,fID,ctScen)
 
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
 
+            % Write beamProfile simulation parameters
             if ~strcmp(obj.beamProfile,'phasespace')
                 fprintf(fID,'u:Sim/HalfValue = %d\n',0.5);
                 fprintf(fID,'u:Sim/SIGMA2FWHM = %d\n',2.354818);
@@ -941,7 +966,13 @@ classdef matRad_TopasConfig < handle
             fprintf(fID,'includeFile = %s\n',paramFile);
             fprintf(fID,'\n');
 
-            fname = fullfile(obj.thisFolder,obj.infilenames.geometry);
+            if strcmp(obj.scorer.scorePhaseSpace,'score')
+                fname = fullfile(obj.thisFolder,obj.infilenames.geometry_scorePhaseSpace);
+            elseif strcmp(obj.scorer.scorePhaseSpace,'read')
+                fname = fullfile(obj.thisFolder,obj.infilenames.geometry_readPhaseSpace);
+            else
+                fname = fullfile(obj.thisFolder,obj.infilenames.geometry);
+            end
             matRad_cfg.dispInfo('Reading Geometry from %s\n',fname);
             world = fileread(fname);
             fprintf(fID,'%s\n',world);
@@ -957,204 +988,212 @@ classdef matRad_TopasConfig < handle
             switch obj.scorer.filename
                 case 'constructor'
 
-                    % write dose to medium scorer
-                    if obj.scorer.doseToMedium
-                        fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_doseToMedium);
-                        matRad_cfg.dispDebug('Reading doseToMedium scorer from %s\n',fname);
+                    if strcmp(obj.scorer.scorePhaseSpace,'score')
+                        fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_phaseSpaceSurface);
+                        matRad_cfg.dispDebug('Reading phase space scorer from %s\n',fname);
                         scorerName = fileread(fname);
                         fprintf(fID,'\n%s\n\n',scorerName);
+                        
+                    else
+                        % write dose to medium scorer
+                        if obj.scorer.doseToMedium
+                            fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_doseToMedium);
+                            matRad_cfg.dispDebug('Reading doseToMedium scorer from %s\n',fname);
+                            scorerName = fileread(fname);
+                            fprintf(fID,'\n%s\n\n',scorerName);
 
-                        % Update MCparam.tallies with processed scorer
-                        obj.MCparam.tallies = [obj.MCparam.tallies,{'physicalDose'}];
-                    end
+                            % Update MCparam.tallies with processed scorer
+                            obj.MCparam.tallies = [obj.MCparam.tallies,{'physicalDose'}];
+                        end
 
-                    % write RBE scorer
-                    if obj.scorer.RBE
-                        for i = 1:length(obj.scorer.RBE_model)
+                        % write RBE scorer
+                        if obj.scorer.RBE
+                            for i = 1:length(obj.scorer.RBE_model)
+                                switch obj.radiationMode
+                                    case 'protons'
+                                        % Process available varRBE models for protons
+
+                                        if ~isempty(strfind(lower(obj.scorer.RBE_model{i}),'mcn'))
+                                            fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_RBE_MCN);
+                                        elseif ~isempty(strfind(lower(obj.scorer.RBE_model{i}),'wed'))
+                                            fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_RBE_WED);
+                                        else
+                                            matRad_cfg.dispError(['Model ',obj.scorer.RBE_model{i},' not implemented for ',obj.radiationMode]);
+                                        end
+                                    case {'carbon','helium'}
+                                        % Process available varRBE models for carbon and helium
+                                        if ~isempty(strfind(lower(obj.scorer.RBE_model{i}),'libamtrack'))
+                                            fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_RBE_libamtrack);
+                                        elseif ~isempty(strfind(lower(obj.scorer.RBE_model{i}),'lem'))
+                                            fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_RBE_LEM1);
+                                        else
+                                            matRad_cfg.dispError(['Model ',obj.scorer.RBE_model{i},' not implemented for ',obj.radiationMode]);
+                                        end
+                                    otherwise
+                                        % Throw error in case an invalid radiationMode has been selected
+                                        matRad_cfg.dispError(['Model ',obj.scorer.RBE_model{i},' not implemented for ',obj.radiationMode]);
+                                end
+
+                                % Read appropriate scorer from file and write to config file
+                                matRad_cfg.dispDebug('Reading RBE Scorer from %s\n',fname);
+                                scorerName = fileread(fname);
+                                fprintf(fID,'\n%s\n\n',scorerName);
+                            end
+
+                            % Begin writing biological scorer components: cell lines
                             switch obj.radiationMode
                                 case 'protons'
-                                    % Process available varRBE models for protons
-
-                                    if ~isempty(strfind(lower(obj.scorer.RBE_model{i}),'mcn'))
-                                        fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_RBE_MCN);
-                                    elseif ~isempty(strfind(lower(obj.scorer.RBE_model{i}),'wed'))
-                                        fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_RBE_WED);
-                                    else
-                                        matRad_cfg.dispError(['Model ',obj.scorer.RBE_model{i},' not implemented for ',obj.radiationMode]);
-                                    end
+                                    fprintf(fID,'\n### Biological Parameters ###\n');
+                                    fprintf(fID,'sv:Sc/CellLines = 1 "CellLineGeneric"\n');
+                                    fprintf(fID,'d:Sc/CellLineGeneric/Alphax 		= Sc/AlphaX /Gy\n');
+                                    fprintf(fID,'d:Sc/CellLineGeneric/Betax 		= Sc/BetaX /Gy2\n');
+                                    fprintf(fID,'d:Sc/CellLineGeneric/AlphaBetaRatiox 	= Sc/AlphaBetaX Gy\n\n');
                                 case {'carbon','helium'}
-                                    % Process available varRBE models for carbon and helium
-                                    if ~isempty(strfind(lower(obj.scorer.RBE_model{i}),'libamtrack'))
-                                        fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_RBE_libamtrack);
-                                    elseif ~isempty(strfind(lower(obj.scorer.RBE_model{i}),'lem'))
-                                        fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_RBE_LEM1);
-                                    else
-                                        matRad_cfg.dispError(['Model ',obj.scorer.RBE_model{i},' not implemented for ',obj.radiationMode]);
-                                    end
+                                    fprintf(fID,'\n### Biological Parameters ###\n');
+                                    fprintf(fID,'sv:Sc/CellLines = 1 "CellGeneric_abR2"\n');
+                                    fprintf(fID,'d:Sc/CellGeneric_abR2/Alphax = Sc/AlphaX /Gy\n');
+                                    fprintf(fID,'d:Sc/CellGeneric_abR2/Betax = Sc/BetaX /Gy2\n\n');
+                                    % fprintf(fID,'d:Sc/CellGeneric_abR2/AlphaBetaRatiox 	= Sc/AlphaBetaX Gy\n');
                                 otherwise
-                                    % Throw error in case an invalid radiationMode has been selected
-                                    matRad_cfg.dispError(['Model ',obj.scorer.RBE_model{i},' not implemented for ',obj.radiationMode]);
+                                    matRad_cfg.dispError([obj.radiationMode ' not implemented']);
                             end
 
-                            % Read appropriate scorer from file and write to config file
-                            matRad_cfg.dispDebug('Reading RBE Scorer from %s\n',fname);
-                            scorerName = fileread(fname);
-                            fprintf(fID,'\n%s\n\n',scorerName);
-                        end
-
-                        % Begin writing biological scorer components: cell lines
-                        switch obj.radiationMode
-                            case 'protons'
-                                fprintf(fID,'\n### Biological Parameters ###\n');
-                                fprintf(fID,'sv:Sc/CellLines = 1 "CellLineGeneric"\n');
-                                fprintf(fID,'d:Sc/CellLineGeneric/Alphax 		= Sc/AlphaX /Gy\n');
-                                fprintf(fID,'d:Sc/CellLineGeneric/Betax 		= Sc/BetaX /Gy2\n');
-                                fprintf(fID,'d:Sc/CellLineGeneric/AlphaBetaRatiox 	= Sc/AlphaBetaX Gy\n\n');
-                            case {'carbon','helium'}
-                                fprintf(fID,'\n### Biological Parameters ###\n');
-                                fprintf(fID,'sv:Sc/CellLines = 1 "CellGeneric_abR2"\n');
-                                fprintf(fID,'d:Sc/CellGeneric_abR2/Alphax = Sc/AlphaX /Gy\n');
-                                fprintf(fID,'d:Sc/CellGeneric_abR2/Betax = Sc/BetaX /Gy2\n\n');
-                                % fprintf(fID,'d:Sc/CellGeneric_abR2/AlphaBetaRatiox 	= Sc/AlphaBetaX Gy\n');
-                            otherwise
-                                matRad_cfg.dispError([obj.radiationMode ' not implemented']);
-                        end
-
-                        % write biological scorer components: dose parameters
-                        matRad_cfg.dispDebug('Writing Biologial Scorer components.\n');
-                        fprintf(fID,'d:Sc/PrescribedDose = %.4f Gy\n',obj.bioParam.PrescribedDose);
-                        fprintf(fID,'b:Sc/SimultaneousExposure = %s\n',obj.bioParam.SimultaneousExposure);
-                        fprintf(fID,'d:Sc/AlphaX = %.4f /Gy\n',obj.bioParam.AlphaX);
-                        fprintf(fID,'d:Sc/BetaX = %.4f /Gy2\n',obj.bioParam.BetaX);
-                        fprintf(fID,'d:Sc/AlphaBetaX = %.4f Gy\n',obj.bioParam.AlphaX/obj.bioParam.BetaX);
-
-                        % Update MCparam.tallies with processed scorer
-                        for i = 1:length(obj.scorer.RBE_model)
-                            obj.MCparam.tallies = [obj.MCparam.tallies,{['alpha_' obj.scorer.RBE_model{i}],['beta_' obj.scorer.RBE_model{i}]}];
-                        end
-                    end
-
-                    % Write share sub-scorer
-                    if obj.scorer.sharedSubscorers && obj.scorer.RBE
-                        % Select appropriate scorer from selected flags
-                        scorerNames = {'Alpha','Beta'};
-                        if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'mcn')), obj.scorer.RBE_model))
-                            obj.scorer.LET = true;
-                            obj.scorer.doseToWater = true;
-                            scorerPrefix = 'McNamara';
-                        elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'wed')), obj.scorer.RBE_model))
-                            obj.scorer.LET = true;
-                            obj.scorer.doseToWater = true;
-                            scorerPrefix = 'Wedenberg';
-                        elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'lem')), obj.scorer.RBE_model)) || any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'libamtrack')), obj.scorer.RBE_model))
-                            obj.scorer.doseToWater = true;
-                            scorerPrefix = 'tabulated';
-                        end
-
-                        % Write subscorer to config files
-                        for s = 1:length(scorerNames)
-                            if strcmp(obj.radiationMode,'protons')
-                                fprintf(fID,'s:Sc/%s%s/ReferencedSubScorer_LET      = "ProtonLET"\n',scorerPrefix,scorerNames{s});
-                            end
-                            fprintf(fID,'s:Sc/%s%s/ReferencedSubScorer_Dose     = "Tally_DoseToWater"\n',scorerPrefix,scorerNames{s});
-                        end
-                    end
-
-                    % write dose to water scorer from file
-                    if obj.scorer.doseToWater
-                        fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_doseToWater);
-                        matRad_cfg.dispDebug('Reading doseToWater scorer from %s\n',fname);
-                        scorerName = fileread(fname);
-                        fprintf(fID,'\n%s\n\n',scorerName);
-
-                        % Update MCparam.tallies with processed scorer
-                        obj.MCparam.tallies = [obj.MCparam.tallies,{'doseToWater'}];
-                    end
-
-                    % write LET scorer from file
-                    if obj.scorer.LET
-                        if strcmp(obj.radiationMode,'protons')
-                            fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_LET);
-                            matRad_cfg.dispDebug('Reading LET Scorer from %s\n',fname);
-                            scorerName = fileread(fname);
-                            fprintf(fID,'\n%s\n\n',scorerName);
+                            % write biological scorer components: dose parameters
+                            matRad_cfg.dispDebug('Writing Biologial Scorer components.\n');
+                            fprintf(fID,'d:Sc/PrescribedDose = %.4f Gy\n',obj.bioParam.PrescribedDose);
+                            fprintf(fID,'b:Sc/SimultaneousExposure = %s\n',obj.bioParam.SimultaneousExposure);
+                            fprintf(fID,'d:Sc/AlphaX = %.4f /Gy\n',obj.bioParam.AlphaX);
+                            fprintf(fID,'d:Sc/BetaX = %.4f /Gy2\n',obj.bioParam.BetaX);
+                            fprintf(fID,'d:Sc/AlphaBetaX = %.4f Gy\n',obj.bioParam.AlphaX/obj.bioParam.BetaX);
 
                             % Update MCparam.tallies with processed scorer
-                            obj.MCparam.tallies = [obj.MCparam.tallies,{'LET'}];
-                        else
-                            matRad_cfg.dispError('LET in TOPAS only for protons!\n');
-                        end
-                    end
-
-                    % write volume scorer from file
-                    if obj.scorer.volume
-                        fileList = dir(fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,'TOPAS_scorer_volume_*.in'));
-                        for fileIx=1:length(fileList)
-                            fname = fullfile(obj.thisFolder,fileList(fileIx).name);
-                            matRad_cfg.dispDebug('Reading Volume Scorer from %s\n',fname);
-                            scorerName = fileread(fname);
-                            fprintf(fID,'\n%s\n\n',scorerName);
-
-                            tallyLabel = regexprep(fileList(fileIx).name,'TOPAS_scorer_volume_','');
-                            tallyLabel = regexprep(tallyLabel,'.txt.in','');
-
-                            % Update MCparam.tallies with processed scorer
-                            obj.MCparam.tallies = [obj.MCparam.tallies,{tallyLabel}];
-                        end
-                    end
-
-                    % write surface track count from file
-                    if obj.scorer.surfaceTrackCount
-                        fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_surfaceTrackCount);
-                        matRad_cfg.dispDebug('Reading surface scorer from %s\n',fname);
-                        scorerName = fileread(fname);
-                        fprintf(fID,'\n%s\n\n',scorerName);
-
-                        % Update MCparam.tallies with processed scorer
-                        obj.MCparam.tallies = [obj.MCparam.tallies,{'IC'}];
-                    end
-
-
-                    % Write timefeature-splitting in case of dij calculation
-                    if obj.scorer.calcDij
-                        tallyName = cell(1,0);
-                        if obj.scorer.RBE
-                            if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'mcn')), obj.MCparam.RBE_models))
-                                tallyName{end+1} = 'McNamaraAlpha';
-                                tallyName{end+1} = 'McNamaraBeta';
-                            end
-                            if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'wed')), obj.MCparam.RBE_models))
-                                tallyName{end+1} = 'WedenbergAlpha';
-                                tallyName{end+1} = 'WedenbergBeta';
-                            end
-                            if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'libamtrack')), obj.MCparam.RBE_models))
-                                tallyName{end+1} = 'tabulatedAlpha';
-                                tallyName{end+1} = 'tabulatedBeta';
-                            end
-                            if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'lem')), obj.MCparam.RBE_models))
-                                tallyName{end+1} = 'tabulatedAlpha';
-                                tallyName{end+1} = 'tabulatedBeta';
+                            for i = 1:length(obj.scorer.RBE_model)
+                                obj.MCparam.tallies = [obj.MCparam.tallies,{['alpha_' obj.scorer.RBE_model{i}],['beta_' obj.scorer.RBE_model{i}]}];
                             end
                         end
-                        if obj.scorer.LET
-                            tallyName{end+1} = 'ProtonLET';
+
+                        % Write share sub-scorer
+                        if obj.scorer.sharedSubscorers && obj.scorer.RBE
+                            % Select appropriate scorer from selected flags
+                            scorerNames = {'Alpha','Beta'};
+                            if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'mcn')), obj.scorer.RBE_model))
+                                obj.scorer.LET = true;
+                                obj.scorer.doseToWater = true;
+                                scorerPrefix = 'McNamara';
+                            elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'wed')), obj.scorer.RBE_model))
+                                obj.scorer.LET = true;
+                                obj.scorer.doseToWater = true;
+                                scorerPrefix = 'Wedenberg';
+                            elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'lem')), obj.scorer.RBE_model)) || any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'libamtrack')), obj.scorer.RBE_model))
+                                obj.scorer.doseToWater = true;
+                                scorerPrefix = 'tabulated';
+                            end
+
+                            % Write subscorer to config files
+                            for s = 1:length(scorerNames)
+                                if strcmp(obj.radiationMode,'protons')
+                                    fprintf(fID,'s:Sc/%s%s/ReferencedSubScorer_LET      = "ProtonLET"\n',scorerPrefix,scorerNames{s});
+                                end
+                                fprintf(fID,'s:Sc/%s%s/ReferencedSubScorer_Dose     = "Tally_DoseToWater"\n',scorerPrefix,scorerNames{s});
+                            end
                         end
-                        if obj.scorer.surfaceTrackCount
-                            tallyName{end+1} = 'IC';
-                        end
-                        if obj.scorer.doseToMedium
-                            tallyName{end+1} = 'Patient/Tally_DoseToMedium';
-                        end
+
+                        % write dose to water scorer from file
                         if obj.scorer.doseToWater
-                            tallyName{end+1} = 'Tally_DoseToWater';
+                            fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_doseToWater);
+                            matRad_cfg.dispDebug('Reading doseToWater scorer from %s\n',fname);
+                            scorerName = fileread(fname);
+                            fprintf(fID,'\n%s\n\n',scorerName);
+
+                            % Update MCparam.tallies with processed scorer
+                            obj.MCparam.tallies = [obj.MCparam.tallies,{'doseToWater'}];
                         end
 
-                        % We should discuss here if that's something that has to be available for photons as well, turned off for now
-                        if ~strcmp(obj.radiationMode,'photons')
-                            fprintf(fID,'#-- Time feature splitting for dij calculation\n');
+                        % write LET scorer from file
+                        if obj.scorer.LET
+                            if strcmp(obj.radiationMode,'protons')
+                                fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_LET);
+                                matRad_cfg.dispDebug('Reading LET Scorer from %s\n',fname);
+                                scorerName = fileread(fname);
+                                fprintf(fID,'\n%s\n\n',scorerName);
 
-                            for i = 1:length(tallyName)
-                                fprintf(fID,['s:Sc/' tallyName{i} '/SplitByTimeFeature = "ImageName"\n']);
+                                % Update MCparam.tallies with processed scorer
+                                obj.MCparam.tallies = [obj.MCparam.tallies,{'LET'}];
+                            else
+                                matRad_cfg.dispError('LET in TOPAS only for protons!\n');
+                            end
+                        end
+
+                        % write volume scorer from file
+                        if obj.scorer.volume
+                            fileList = dir(fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,'TOPAS_scorer_volume_*.in'));
+                            for fileIx=1:length(fileList)
+                                fname = fullfile(obj.thisFolder,fileList(fileIx).name);
+                                matRad_cfg.dispDebug('Reading Volume Scorer from %s\n',fname);
+                                scorerName = fileread(fname);
+                                fprintf(fID,'\n%s\n\n',scorerName);
+
+                                tallyLabel = regexprep(fileList(fileIx).name,'TOPAS_scorer_volume_','');
+                                tallyLabel = regexprep(tallyLabel,'.txt.in','');
+
+                                % Update MCparam.tallies with processed scorer
+                                obj.MCparam.tallies = [obj.MCparam.tallies,{tallyLabel}];
+                            end
+                        end
+
+                        % write surface track count from file
+                        if obj.scorer.surfaceTrackCount
+                            fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_surfaceTrackCount);
+                            matRad_cfg.dispDebug('Reading surface scorer from %s\n',fname);
+                            scorerName = fileread(fname);
+                            fprintf(fID,'\n%s\n\n',scorerName);
+
+                            % Update MCparam.tallies with processed scorer
+                            obj.MCparam.tallies = [obj.MCparam.tallies,{'IC'}];
+                        end
+
+
+                        % Write timefeature-splitting in case of dij calculation
+                        if obj.scorer.calcDij
+                            tallyName = cell(1,0);
+                            if obj.scorer.RBE
+                                if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'mcn')), obj.MCparam.RBE_models))
+                                    tallyName{end+1} = 'McNamaraAlpha';
+                                    tallyName{end+1} = 'McNamaraBeta';
+                                end
+                                if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'wed')), obj.MCparam.RBE_models))
+                                    tallyName{end+1} = 'WedenbergAlpha';
+                                    tallyName{end+1} = 'WedenbergBeta';
+                                end
+                                if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'libamtrack')), obj.MCparam.RBE_models))
+                                    tallyName{end+1} = 'tabulatedAlpha';
+                                    tallyName{end+1} = 'tabulatedBeta';
+                                end
+                                if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'lem')), obj.MCparam.RBE_models))
+                                    tallyName{end+1} = 'tabulatedAlpha';
+                                    tallyName{end+1} = 'tabulatedBeta';
+                                end
+                            end
+                            if obj.scorer.LET
+                                tallyName{end+1} = 'ProtonLET';
+                            end
+                            if obj.scorer.surfaceTrackCount
+                                tallyName{end+1} = 'IC';
+                            end
+                            if obj.scorer.doseToMedium
+                                tallyName{end+1} = 'Patient/Tally_DoseToMedium';
+                            end
+                            if obj.scorer.doseToWater
+                                tallyName{end+1} = 'Tally_DoseToWater';
+                            end
+
+                            % We should discuss here if that's something that has to be available for photons as well, turned off for now
+                            if ~strcmp(obj.radiationMode,'photons')
+                                fprintf(fID,'#-- Time feature splitting for dij calculation\n');
+
+                                for i = 1:length(tallyName)
+                                    fprintf(fID,['s:Sc/' tallyName{i} '/SplitByTimeFeature = "ImageName"\n']);
+                                end
                             end
                         end
                     end
@@ -1209,9 +1248,15 @@ classdef matRad_TopasConfig < handle
             end
 
             nParticlesTotalBixel = round(obj.numParticlesPerHistory * w);
-            maxParticlesBixel = obj.numParticlesPerHistory * max(w(:));
-            minParticlesBixel = round(max([obj.minRelWeight*maxParticlesBixel,1]));
+            minParticlesBixel = round(max([obj.minRelWeight*max(nParticlesTotalBixel),1]));
 
+            % Output projected bixels that will be discarded due to particle theshold
+            projectedDiscardedBixel = sum((obj.numHistories ./ sum(nParticlesTotalBixel)*nParticlesTotalBixel /obj.numOfRuns) < (minParticlesBixel-0.5));
+            if projectedDiscardedBixel > 0
+                matRad_cfg.dispWarning('%d bixels will most likely be discarded, set histories to at least %.2e to avoid this!', projectedDiscardedBixel,ceil(max(sum(w)./w*obj.numOfRuns*abs(minParticlesBixel-0.5))/10000)*10000)
+            end
+
+            % Set history mode
             switch obj.modeHistories
                 case 'num'
                     obj.fracHistories = obj.numHistories ./ sum(nParticlesTotalBixel);
@@ -1234,7 +1279,7 @@ classdef matRad_TopasConfig < handle
                     matRad_cfg.dispInfo('Reading ''%s'' Beam Characteristics from ''%s''\n',obj.beamProfile,fname);
 
                 case 'phasespace'
-                    fname = fullfile(obj.thisFolder,obj.infilenames.beam_phasespace);
+                    fname = fullfile(obj.thisFolder,obj.infilenames.beam_genericPhasespace);
                     TOPAS_beamSetup = fileread(fname);
                     obj.pencilBeamScanning = 0 ;
                     matRad_cfg.dispInfo('Reading ''%s'' Beam Characteristics from ''%s''\n',obj.beamProfile,fname);
@@ -1446,272 +1491,269 @@ classdef matRad_TopasConfig < handle
                 if isfield(ct,'currCtScen')
                     % 4D case
                     fieldSetupFileName = sprintf('beamSetup_%s_field%d_ct%d.txt',obj.label,beamIx,ct.currCtScen);
-                    fileID = fopen(fullfile(obj.workingDir,fieldSetupFileName),'w');
-                    obj.writeFieldHeader(fileID,ct.currCtScen);
                 else
                     fieldSetupFileName = sprintf('beamSetup_%s_field%d.txt',obj.label,beamIx);
-                    fileID = fopen(fullfile(obj.workingDir,fieldSetupFileName),'w');
-                    obj.writeFieldHeader(fileID);
                 end
 
-                % NozzleAxialDistance
-                if isPhoton
-                    fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', 1000 + ct.cubeDim(3)*ct.resolution.z);%Not sure if this is correct,100 cm is SSD and probably distance from surface to isocenter needs to be added
-                else
-                    fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', nozzleToAxisDistance);
-                end
+                fileID = fopen(fullfile(obj.workingDir,fieldSetupFileName),'w');
+                obj.writeFieldHeader(fileID);
 
-                if obj.pencilBeamScanning
-                    fprintf(fileID,'d:Ge/Nozzle/RotX = Tf/Beam/AngleX/Value rad\n');
-                    fprintf(fileID,'d:Ge/Nozzle/RotY = Tf/Beam/AngleY/Value rad\n');
-                    fprintf(fileID,'d:Ge/Nozzle/RotZ = 0.0 rad\n\n');
-                end
-
-                %Write modality specific info
-                switch stf(beamIx).radiationMode
-                    case 'protons'
-                        fprintf(fileID,'s:Sim/ParticleName = "proton"\n');
-                        fprintf(fileID,'u:Sim/ParticleMass = 1.0\n');
-
-                        particleA = 1;
-                        % particleZ = 1;
-
-                        modules = obj.modules_protons;
-
-                    case 'carbon'
-                        fprintf(fileID,'s:Sim/ParticleName = "GenericIon(6,12)"\n');
-                        fprintf(fileID,'u:Sim/ParticleMass = 12.0\n');
-
-                        particleA = 12;
-                        % particleZ = 6;
-
-                        modules = obj.modules_GenericIon;
-
-                    case 'helium'
-                        fprintf(fileID,'s:Sim/ParticleName = "GenericIon(2,4)"\n');
-                        fprintf(fileID,'u:Sim/ParticleMass = 4.0\n');
-
-                        particleA = 4;
-                        % particleZ = 2;
-
-                        modules = obj.modules_GenericIon;
-
-                    case 'photons'
-                        fprintf(fileID,'s:Sim/ParticleName = "gamma"\n');
-                        fprintf(fileID,'u:Sim/ParticleMass = 0\n');
-
-                        particleA = 0;
-                        % particleZ = 0;
-
-                        modules = obj.modules_photons;
-
-                    otherwise
-                        matRad_cfg.dispError('Invalid radiation mode %s!',stf.radiationMode)
-                end
-
-                if obj.pencilBeamScanning
-                    % Write couch and gantry angles
-                    fprintf(fileID,'d:Sim/GantryAngle = %f deg\n',stf(beamIx).gantryAngle);
-                    fprintf(fileID,'d:Sim/CouchAngle = %f deg\n',stf(beamIx).couchAngle);
-
-                    % Write time feature (TOPAS uses time features to loop through bixels)
-                    fprintf(fileID,'d:Tf/TimelineStart = 0. ms\n');
-                    fprintf(fileID,'d:Tf/TimelineEnd = %i ms\n', 10 * cutNumOfBixel);
-                    fprintf(fileID,'i:Tf/NumberOfSequentialTimes = %i\n', cutNumOfBixel);
-                    fprintf(fileID,'dv:Tf/Beam/Spot/Times = %i ', cutNumOfBixel);
-                    fprintf(fileID,'%i ',linspace(10,cutNumOfBixel*10,cutNumOfBixel));
-                    fprintf(fileID,' ms\n');
-                    %fprintf(fileID,'uv:Tf/Beam/Spot/Values = %i %s\n',cutNumOfBixel,num2str(collectBixelIdx));
-
-                    % Write energySpectrum if available and flag is set
-                    if ~isPhoton && isfield(baseData.machine.data,'energySpectrum') && obj.useEnergySpectrum
-                        matRad_cfg.dispInfo('Beam energy spectrum available\n');
-                        energySpectrum = [baseData.machine.data(:).energySpectrum];
-                        nbSpectrumPoints = length(energySpectrum(1).energy_MeVpN);
-
-                        % Get energy indices of the current energies in the baseData
-                        [~,energyIx] = ismember([dataTOPAS.nominalEnergy],[baseData.machine.data.energy]);
-
-                        fprintf(fileID,'s:So/PencilBeam/BeamEnergySpectrumType = "Continuous"\n');
-                        fprintf(fileID,'dv:So/PencilBeam/BeamEnergySpectrumValues = %d %s MeV\n',nbSpectrumPoints,strtrim(sprintf('Tf/Beam/EnergySpectrum/Energy/Point%03d/Value ',1:nbSpectrumPoints)));
-                        fprintf(fileID,'uv:So/PencilBeam/BeamEnergySpectrumWeights = %d %s\n',nbSpectrumPoints,strtrim(sprintf('Tf/Beam/EnergySpectrum/Weight/Point%03d/Value ',1:nbSpectrumPoints)));
-                        points_energy = reshape([energySpectrum(energyIx).energy_MeVpN],[],length(energyIx));
-                        points_weight = reshape([energySpectrum(energyIx).weight],[],length(energyIx));
-                        for spectrumPoint=1:nbSpectrumPoints
-                            fprintf(fileID,'s:Tf/Beam/EnergySpectrum/Energy/Point%03d/Function = "Step"\n',spectrumPoint);
-                            fprintf(fileID,'dv:Tf/Beam/EnergySpectrum/Energy/Point%03d/Times = Tf/Beam/Spot/Times ms\n',spectrumPoint);
-                            fprintf(fileID,'dv:Tf/Beam/EnergySpectrum/Energy/Point%03d/Values = %d %s MeV\n',spectrumPoint,cutNumOfBixel,strtrim(sprintf('%f ',particleA*points_energy(spectrumPoint,:))));
-                            fprintf(fileID,'s:Tf/Beam/EnergySpectrum/Weight/Point%03d/Function = "Step"\n',spectrumPoint);
-                            fprintf(fileID,'dv:Tf/Beam/EnergySpectrum/Weight/Point%03d/Times = Tf/Beam/Spot/Times ms\n',spectrumPoint);
-                            fprintf(fileID,'uv:Tf/Beam/EnergySpectrum/Weight/Point%03d/Values = %d %s\n',spectrumPoint,cutNumOfBixel,strtrim(sprintf('%f ',points_weight(spectrumPoint,:))));
-                        end
+                    % NozzleAxialDistance
+                    if isPhoton
+                        fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', 1000 + ct.cubeDim(3)*ct.resolution.z);%Not sure if this is correct,100 cm is SSD and probably distance from surface to isocenter needs to be added
+                    else
+                        fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', nozzleToAxisDistance);
                     end
 
-                    % Write amount of energies in plan
-                    fprintf(fileID,'s:Tf/Beam/Energy/Function = "Step"\n');
-                    fprintf(fileID,'dv:Tf/Beam/Energy/Times = Tf/Beam/Spot/Times ms\n');
-                    fprintf(fileID,'dv:Tf/Beam/Energy/Values = %i ', cutNumOfBixel);
+                    if obj.pencilBeamScanning
+                        fprintf(fileID,'d:Ge/Nozzle/RotX = Tf/Beam/AngleX/Value rad\n');
+                        fprintf(fileID,'d:Ge/Nozzle/RotY = Tf/Beam/AngleY/Value rad\n');
+                        fprintf(fileID,'d:Ge/Nozzle/RotZ = 0.0 rad\n\n');
+                    end
 
-                    % Write actual energies
-                    % WARNING: Transform total energy with atomic number
-                    fprintf(fileID,'%f ',particleA*[dataTOPAS.energy]);
-                    fprintf(fileID,' MeV\n');
-                end
+                    %Write modality specific info
+                    switch stf(beamIx).radiationMode
+                        case 'protons'
+                            fprintf(fileID,'s:Sim/ParticleName = "proton"\n');
+                            fprintf(fileID,'u:Sim/ParticleMass = 1.0\n');
 
-                % Write beam profile
-                switch obj.beamProfile
-                    case 'biGaussian'
-                        % Write energy spread
-                        fprintf(fileID,'s:Tf/Beam/EnergySpread/Function = "Step"\n');
-                        fprintf(fileID,'dv:Tf/Beam/EnergySpread/Times = Tf/Beam/Spot/Times ms\n');
-                        fprintf(fileID,'uv:Tf/Beam/EnergySpread/Values = %i ', cutNumOfBixel);
-                        fprintf(fileID,'%f ',[dataTOPAS.energySpread]);
-                        fprintf(fileID,'\n');
+                            particleA = 1;
+                            % particleZ = 1;
 
-                        % Write parameters for first dimension
-                        fprintf(fileID,'s:Tf/Beam/SigmaX/Function = "Step"\n');
-                        fprintf(fileID,'dv:Tf/Beam/SigmaX/Times = Tf/Beam/Spot/Times ms\n');
-                        fprintf(fileID,'dv:Tf/Beam/SigmaX/Values = %i ', cutNumOfBixel);
-                        fprintf(fileID,'%f ',[dataTOPAS.spotSize]);
-                        fprintf(fileID,' mm\n');
-                        fprintf(fileID,'s:Tf/Beam/SigmaXPrime/Function = "Step"\n');
-                        fprintf(fileID,'dv:Tf/Beam/SigmaXPrime/Times = Tf/Beam/Spot/Times ms\n');
-                        fprintf(fileID,'uv:Tf/Beam/SigmaXPrime/Values = %i ', cutNumOfBixel);
-                        fprintf(fileID,'%f ',[dataTOPAS.divergence]);
-                        fprintf(fileID,'\n');
-                        fprintf(fileID,'s:Tf/Beam/CorrelationX/Function = "Step"\n');
-                        fprintf(fileID,'dv:Tf/Beam/CorrelationX/Times = Tf/Beam/Spot/Times ms\n');
-                        fprintf(fileID,'uv:Tf/Beam/CorrelationX/Values = %i ', cutNumOfBixel);
-                        fprintf(fileID,'%f ',[dataTOPAS.correlation]);
-                        fprintf(fileID,'\n');
+                            modules = obj.modules_protons;
 
-                        % Write parameters for second dimension (profile is uniform)
-                        fprintf(fileID,'s:Tf/Beam/SigmaY/Function = "Step"\n');
-                        fprintf(fileID,'dv:Tf/Beam/SigmaY/Times = Tf/Beam/Spot/Times ms\n');
-                        fprintf(fileID,'dv:Tf/Beam/SigmaY/Values = %i ', cutNumOfBixel);
-                        fprintf(fileID,'%f ',[dataTOPAS.spotSize]);
-                        fprintf(fileID,' mm\n');
-                        fprintf(fileID,'s:Tf/Beam/SigmaYPrime/Function = "Step"\n');
-                        fprintf(fileID,'dv:Tf/Beam/SigmaYPrime/Times = Tf/Beam/Spot/Times ms\n');
-                        fprintf(fileID,'uv:Tf/Beam/SigmaYPrime/Values = %i ', cutNumOfBixel);
-                        fprintf(fileID,'%f ',[dataTOPAS.divergence]);
-                        fprintf(fileID,'\n');
-                        fprintf(fileID,'s:Tf/Beam/CorrelationY/Function = "Step"\n');
-                        fprintf(fileID,'dv:Tf/Beam/CorrelationY/Times = Tf/Beam/Spot/Times ms\n');
-                        fprintf(fileID,'uv:Tf/Beam/CorrelationY/Values = %i ', cutNumOfBixel);
-                        fprintf(fileID,'%f ',[dataTOPAS.correlation]);
-                        fprintf(fileID,'\n');
+                        case 'carbon'
+                            fprintf(fileID,'s:Sim/ParticleName = "GenericIon(6,12)"\n');
+                            fprintf(fileID,'u:Sim/ParticleMass = 12.0\n');
 
-                    case 'simple'
-                        fprintf(fileID,'s:Tf/Beam/FocusFWHM/Function = "Step"\n');
-                        fprintf(fileID,'dv:Tf/Beam/FocusFWHM/Times = Tf/Beam/Spot/Times ms\n');
-                        fprintf(fileID,'dv:Tf/Beam/FocusFWHM/Values = %i ', cutNumOfBixel);
-                        fprintf(fileID,'%f ',[dataTOPAS.focusFWHM]);
-                        fprintf(fileID,' mm\n');
+                            particleA = 12;
+                            % particleZ = 6;
 
-                    case 'virtualGaussian'
-                        fprintf(fileID,'s:Tf/Beam/EnergySpread/Function = "Step"\n');
-                        fprintf(fileID,'dv:Tf/Beam/EnergySpread/Times = Tf/Beam/Spot/Times ms\n');
-                        fprintf(fileID,'uv:Tf/Beam/EnergySpread/Values = %i ', cutNumOfBixel);
-                        fprintf(fileID,num2str([dataTOPAS.energySpread]));
-                        fprintf(fileID,'\n');
+                            modules = obj.modules_GenericIon;
 
-                        if isfield(pln.propStf, 'collimation')
-                            % Use field width for now
-                            fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadX = %d mm\n', pln.propStf.collimation.fieldWidth);
-                            fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadY = %d mm\n', pln.propStf.collimation.fieldWidth);
-                        else
-                            % Set some default value
-                            fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadX = %d mm\n', 30);
-                            fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadY = %d mm\n', 30);
-                        end
+                        case 'helium'
+                            fprintf(fileID,'s:Sim/ParticleName = "GenericIon(2,4)"\n');
+                            fprintf(fileID,'u:Sim/ParticleMass = 4.0\n');
 
-                    case 'uniform'
-                        fprintf(fileID,'s:Tf/Beam/EnergySpread/Function = "Step"\n');
-                        fprintf(fileID,'dv:Tf/Beam/EnergySpread/Times = Tf/Beam/Spot/Times ms\n');
-                        fprintf(fileID,'uv:Tf/Beam/EnergySpread/Values = %i ', cutNumOfBixel);
-                        fprintf(fileID,num2str([dataTOPAS.energySpread]));
-                        fprintf(fileID,'\n');
+                            particleA = 4;
+                            % particleZ = 2;
 
-                        if isfield(pln.propStf, 'collimation')
-                            % Use field width for now
-                            fprintf(fileID,'d:So/PencilBeam/BeamPositionCutoffX = %d mm\n', pln.propStf.collimation.fieldWidth/2);
-                            fprintf(fileID,'d:So/PencilBeam/BeamPositionCutoffY = %d mm\n', pln.propStf.collimation.fieldWidth/2);
-                        else
-                            % Set some default value
-                            fprintf(fileID,'d:So/PencilBeam/BeamPositionCutoffX = %d mm\n', 15);
-                            fprintf(fileID,'d:So/PencilBeam/BeamPositionCutoffY = %d mm\n', 15);
-                        end
+                            modules = obj.modules_GenericIon;
 
-                    case 'phasespace'
-                        fprintf(fileID,'d:Sim/GantryAngle = %f deg\n',stf(beamIx).gantryAngle); %just one beam angle for now
+                        case 'photons'
+                            fprintf(fileID,'s:Sim/ParticleName = "gamma"\n');
+                            fprintf(fileID,'u:Sim/ParticleMass = 0\n');
+
+                            particleA = 0;
+                            % particleZ = 0;
+
+                            modules = obj.modules_photons;
+
+                        otherwise
+                            matRad_cfg.dispError('Invalid radiation mode %s!',stf.radiationMode)
+                    end
+
+                    if obj.pencilBeamScanning
+                        % Write couch and gantry angles
+                        fprintf(fileID,'d:Sim/GantryAngle = %f deg\n',stf(beamIx).gantryAngle);
                         fprintf(fileID,'d:Sim/CouchAngle = %f deg\n',stf(beamIx).couchAngle);
-                        % Here the phasespace file is loaded and referenced in the beamSetup file
-                        phaseSpaceFileName = 'SIEMENS_PRIMUS_6.0_0.10_15.0x15.0';
-                        if obj.externalCalculation
-                            matRad_cfg.dispWarning(['External calculation and phaseSpace selected, manually place ' phaseSpaceFileName '.header and ' phaseSpaceFileName '.phsp into your simulation directory.']);
-                        else
-                            if length(dir([obj.thisFolder filesep 'beamSetup' filesep 'phasespace' filesep phaseSpaceFileName '*'])) < 2
-                                matRad_cfg.dispError([phaseSpaceFileName ' header or phsp file could not be found in beamSetup/phasespace folder.']);
+
+                        % Write time feature (TOPAS uses time features to loop through bixels)
+                        fprintf(fileID,'d:Tf/TimelineStart = 0. ms\n');
+                        fprintf(fileID,'d:Tf/TimelineEnd = %i ms\n', 10 * cutNumOfBixel);
+                        fprintf(fileID,'i:Tf/NumberOfSequentialTimes = %i\n', cutNumOfBixel);
+                        fprintf(fileID,'dv:Tf/Beam/Spot/Times = %i ', cutNumOfBixel);
+                        fprintf(fileID,'%i ',linspace(10,cutNumOfBixel*10,cutNumOfBixel));
+                        fprintf(fileID,' ms\n');
+                        %fprintf(fileID,'uv:Tf/Beam/Spot/Values = %i %s\n',cutNumOfBixel,num2str(collectBixelIdx));
+
+                        % Write energySpectrum if available and flag is set
+                        if ~isPhoton && isfield(baseData.machine.data,'energySpectrum') && obj.useEnergySpectrum
+                            matRad_cfg.dispInfo('Beam energy spectrum available\n');
+                            energySpectrum = [baseData.machine.data(:).energySpectrum];
+                            nbSpectrumPoints = length(energySpectrum(1).energy_MeVpN);
+
+                            % Get energy indices of the current energies in the baseData
+                            [~,energyIx] = ismember([dataTOPAS.nominalEnergy],[baseData.machine.data.energy]);
+
+                            fprintf(fileID,'s:So/PencilBeam/BeamEnergySpectrumType = "Continuous"\n');
+                            fprintf(fileID,'dv:So/PencilBeam/BeamEnergySpectrumValues = %d %s MeV\n',nbSpectrumPoints,strtrim(sprintf('Tf/Beam/EnergySpectrum/Energy/Point%03d/Value ',1:nbSpectrumPoints)));
+                            fprintf(fileID,'uv:So/PencilBeam/BeamEnergySpectrumWeights = %d %s\n',nbSpectrumPoints,strtrim(sprintf('Tf/Beam/EnergySpectrum/Weight/Point%03d/Value ',1:nbSpectrumPoints)));
+                            points_energy = reshape([energySpectrum(energyIx).energy_MeVpN],[],length(energyIx));
+                            points_weight = reshape([energySpectrum(energyIx).weight],[],length(energyIx));
+                            for spectrumPoint=1:nbSpectrumPoints
+                                fprintf(fileID,'s:Tf/Beam/EnergySpectrum/Energy/Point%03d/Function = "Step"\n',spectrumPoint);
+                                fprintf(fileID,'dv:Tf/Beam/EnergySpectrum/Energy/Point%03d/Times = Tf/Beam/Spot/Times ms\n',spectrumPoint);
+                                fprintf(fileID,'dv:Tf/Beam/EnergySpectrum/Energy/Point%03d/Values = %d %s MeV\n',spectrumPoint,cutNumOfBixel,strtrim(sprintf('%f ',particleA*points_energy(spectrumPoint,:))));
+                                fprintf(fileID,'s:Tf/Beam/EnergySpectrum/Weight/Point%03d/Function = "Step"\n',spectrumPoint);
+                                fprintf(fileID,'dv:Tf/Beam/EnergySpectrum/Weight/Point%03d/Times = Tf/Beam/Spot/Times ms\n',spectrumPoint);
+                                fprintf(fileID,'uv:Tf/Beam/EnergySpectrum/Weight/Point%03d/Values = %d %s\n',spectrumPoint,cutNumOfBixel,strtrim(sprintf('%f ',points_weight(spectrumPoint,:))));
                             end
                         end
-                        phasespaceStr = ['..' filesep 'beamSetup' filesep 'phasespace' filesep phaseSpaceFileName];
-                        phasespaceStr =  replace(phasespaceStr, '\', '/');
-                        fprintf(fileID,'s:So/Phasespace/PhaseSpaceFileName = "%s"\n', phasespaceStr);
 
-                end
+                        % Write amount of energies in plan
+                        fprintf(fileID,'s:Tf/Beam/Energy/Function = "Step"\n');
+                        fprintf(fileID,'dv:Tf/Beam/Energy/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'dv:Tf/Beam/Energy/Values = %i ', cutNumOfBixel);
 
-                % Write spot angles
-                if obj.pencilBeamScanning
-                    fprintf(fileID,'s:Tf/Beam/AngleX/Function = "Step"\n');
-                    fprintf(fileID,'dv:Tf/Beam/AngleX/Times = Tf/Beam/Spot/Times ms\n');
-                    fprintf(fileID,'dv:Tf/Beam/AngleX/Values = %i ', cutNumOfBixel);
-                    fprintf(fileID,'%f ',[dataTOPAS.angleX]);
-                    fprintf(fileID,' rad\n');
-                    fprintf(fileID,'s:Tf/Beam/AngleY/Function = "Step"\n');
-                    fprintf(fileID,'dv:Tf/Beam/AngleY/Times = Tf/Beam/Spot/Times ms\n');
-                    fprintf(fileID,'dv:Tf/Beam/AngleY/Values = %i ', cutNumOfBixel);
-                    fprintf(fileID,'%f ',[dataTOPAS.angleY]);
-                    fprintf(fileID,' rad\n');
-
-
-                    % Write spot positions
-                    fprintf(fileID,'s:Tf/Beam/PosX/Function = "Step"\n');
-                    fprintf(fileID,'dv:Tf/Beam/PosX/Times = Tf/Beam/Spot/Times ms\n');
-                    fprintf(fileID,'dv:Tf/Beam/PosX/Values = %i ', cutNumOfBixel);
-                    fprintf(fileID,'%f ',[dataTOPAS.posX]);
-                    fprintf(fileID,' mm\n');
-                    fprintf(fileID,'s:Tf/Beam/PosY/Function = "Step"\n');
-                    fprintf(fileID,'dv:Tf/Beam/PosY/Times = Tf/Beam/Spot/Times ms\n');
-                    fprintf(fileID,'dv:Tf/Beam/PosY/Values = %i ', cutNumOfBixel);
-                    fprintf(fileID,'%f ',[dataTOPAS.posY]);
-                    fprintf(fileID,' mm\n');
-
-                    % Write spot current (translates to the amount of particles in a spot)
-                    fprintf(fileID,'s:Tf/Beam/Current/Function = "Step"\n');
-                    fprintf(fileID,'dv:Tf/Beam/Current/Times = Tf/Beam/Spot/Times ms\n');
-                    fprintf(fileID,'iv:Tf/Beam/Current/Values = %i ', cutNumOfBixel);
-                    fprintf(fileID,'%i ',[dataTOPAS.current]);
-                    fprintf(fileID,'\n\n');
-
-                    % Range shifter in/out
-                    if ~isPhoton && ~isempty(raShis)
-                        fprintf(fileID,'#Range Shifter States:\n');
-                        for r = 1:numel(raShis)
-                            fprintf(fileID,'s:Tf/Beam/%sOut/Function = "Step"\n',raShis(r).topasID);
-                            fprintf(fileID,'dv:Tf/Beam/%sOut/Times = Tf/Beam/Spot/Times ms\n',raShis(r).topasID);
-                            fprintf(fileID,'uv:Tf/Beam/%sOut/Values = %i ', raShis(r).topasID, cutNumOfBixel);
-                            fprintf(fileID,'%f ',[dataTOPAS.raShiOut]);
-                            fprintf(fileID,'\n\n');
-                        end
-
-                        % Range Shifter Definition
-                        for r = 1:numel(raShis)
-                            obj.writeRangeShifter(fileID,raShis(r),sourceToNozzleDistance);
-                        end
+                        % Write actual energies
+                        % WARNING: Transform total energy with atomic number
+                        fprintf(fileID,'%f ',particleA*[dataTOPAS.energy]);
+                        fprintf(fileID,' MeV\n');
                     end
 
+                    % Write beam profile
+                    switch obj.beamProfile
+                        case 'biGaussian'
+                            % Write energy spread
+                            fprintf(fileID,'s:Tf/Beam/EnergySpread/Function = "Step"\n');
+                            fprintf(fileID,'dv:Tf/Beam/EnergySpread/Times = Tf/Beam/Spot/Times ms\n');
+                            fprintf(fileID,'uv:Tf/Beam/EnergySpread/Values = %i ', cutNumOfBixel);
+                            fprintf(fileID,'%f ',[dataTOPAS.energySpread]);
+                            fprintf(fileID,'\n');
 
+                            % Write parameters for first dimension
+                            fprintf(fileID,'s:Tf/Beam/SigmaX/Function = "Step"\n');
+                            fprintf(fileID,'dv:Tf/Beam/SigmaX/Times = Tf/Beam/Spot/Times ms\n');
+                            fprintf(fileID,'dv:Tf/Beam/SigmaX/Values = %i ', cutNumOfBixel);
+                            fprintf(fileID,'%f ',[dataTOPAS.spotSize]);
+                            fprintf(fileID,' mm\n');
+                            fprintf(fileID,'s:Tf/Beam/SigmaXPrime/Function = "Step"\n');
+                            fprintf(fileID,'dv:Tf/Beam/SigmaXPrime/Times = Tf/Beam/Spot/Times ms\n');
+                            fprintf(fileID,'uv:Tf/Beam/SigmaXPrime/Values = %i ', cutNumOfBixel);
+                            fprintf(fileID,'%f ',[dataTOPAS.divergence]);
+                            fprintf(fileID,'\n');
+                            fprintf(fileID,'s:Tf/Beam/CorrelationX/Function = "Step"\n');
+                            fprintf(fileID,'dv:Tf/Beam/CorrelationX/Times = Tf/Beam/Spot/Times ms\n');
+                            fprintf(fileID,'uv:Tf/Beam/CorrelationX/Values = %i ', cutNumOfBixel);
+                            fprintf(fileID,'%f ',[dataTOPAS.correlation]);
+                            fprintf(fileID,'\n');
+
+                            % Write parameters for second dimension (profile is uniform)
+                            fprintf(fileID,'s:Tf/Beam/SigmaY/Function = "Step"\n');
+                            fprintf(fileID,'dv:Tf/Beam/SigmaY/Times = Tf/Beam/Spot/Times ms\n');
+                            fprintf(fileID,'dv:Tf/Beam/SigmaY/Values = %i ', cutNumOfBixel);
+                            fprintf(fileID,'%f ',[dataTOPAS.spotSize]);
+                            fprintf(fileID,' mm\n');
+                            fprintf(fileID,'s:Tf/Beam/SigmaYPrime/Function = "Step"\n');
+                            fprintf(fileID,'dv:Tf/Beam/SigmaYPrime/Times = Tf/Beam/Spot/Times ms\n');
+                            fprintf(fileID,'uv:Tf/Beam/SigmaYPrime/Values = %i ', cutNumOfBixel);
+                            fprintf(fileID,'%f ',[dataTOPAS.divergence]);
+                            fprintf(fileID,'\n');
+                            fprintf(fileID,'s:Tf/Beam/CorrelationY/Function = "Step"\n');
+                            fprintf(fileID,'dv:Tf/Beam/CorrelationY/Times = Tf/Beam/Spot/Times ms\n');
+                            fprintf(fileID,'uv:Tf/Beam/CorrelationY/Values = %i ', cutNumOfBixel);
+                            fprintf(fileID,'%f ',[dataTOPAS.correlation]);
+                            fprintf(fileID,'\n');
+
+                        case 'simple'
+                            fprintf(fileID,'s:Tf/Beam/FocusFWHM/Function = "Step"\n');
+                            fprintf(fileID,'dv:Tf/Beam/FocusFWHM/Times = Tf/Beam/Spot/Times ms\n');
+                            fprintf(fileID,'dv:Tf/Beam/FocusFWHM/Values = %i ', cutNumOfBixel);
+                            fprintf(fileID,'%f ',[dataTOPAS.focusFWHM]);
+                            fprintf(fileID,' mm\n');
+
+                        case 'virtualGaussian'
+                            fprintf(fileID,'s:Tf/Beam/EnergySpread/Function = "Step"\n');
+                            fprintf(fileID,'dv:Tf/Beam/EnergySpread/Times = Tf/Beam/Spot/Times ms\n');
+                            fprintf(fileID,'uv:Tf/Beam/EnergySpread/Values = %i ', cutNumOfBixel);
+                            fprintf(fileID,num2str([dataTOPAS.energySpread]));
+                            fprintf(fileID,'\n');
+
+                            if isfield(pln.propStf, 'collimation')
+                                % Use field width for now
+                                fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadX = %d mm\n', pln.propStf.collimation.fieldWidth);
+                                fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadY = %d mm\n', pln.propStf.collimation.fieldWidth);
+                            else
+                                % Set some default value
+                                fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadX = %d mm\n', 30);
+                                fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadY = %d mm\n', 30);
+                            end
+
+                        case 'uniform'
+                            fprintf(fileID,'s:Tf/Beam/EnergySpread/Function = "Step"\n');
+                            fprintf(fileID,'dv:Tf/Beam/EnergySpread/Times = Tf/Beam/Spot/Times ms\n');
+                            fprintf(fileID,'uv:Tf/Beam/EnergySpread/Values = %i ', cutNumOfBixel);
+                            fprintf(fileID,num2str([dataTOPAS.energySpread]));
+                            fprintf(fileID,'\n');
+
+                            if isfield(pln.propStf, 'collimation')
+                                % Use field width for now
+                                fprintf(fileID,'d:So/PencilBeam/BeamPositionCutoffX = %d mm\n', pln.propStf.collimation.fieldWidth/2);
+                                fprintf(fileID,'d:So/PencilBeam/BeamPositionCutoffY = %d mm\n', pln.propStf.collimation.fieldWidth/2);
+                            else
+                                % Set some default value
+                                fprintf(fileID,'d:So/PencilBeam/BeamPositionCutoffX = %d mm\n', 15);
+                                fprintf(fileID,'d:So/PencilBeam/BeamPositionCutoffY = %d mm\n', 15);
+                            end
+
+                        case 'phasespace'
+                            fprintf(fileID,'d:Sim/GantryAngle = %f deg\n',stf(beamIx).gantryAngle); %just one beam angle for now
+                            fprintf(fileID,'d:Sim/CouchAngle = %f deg\n',stf(beamIx).couchAngle);
+                            % Here the phasespace file is loaded and referenced in the beamSetup file
+                            phaseSpaceFileName = 'SIEMENS_PRIMUS_6.0_0.10_15.0x15.0';
+                            if obj.externalCalculation
+                                matRad_cfg.dispWarning(['External calculation and phaseSpace selected, manually place ' phaseSpaceFileName '.header and ' phaseSpaceFileName '.phsp into your simulation directory.']);
+                            else
+                                if length(dir([obj.thisFolder filesep 'beamSetup' filesep 'phasespace' filesep phaseSpaceFileName '*'])) < 2
+                                    matRad_cfg.dispError([phaseSpaceFileName ' header or phsp file could not be found in beamSetup/phasespace folder.']);
+                                end
+                            end
+                            phasespaceStr = ['..' filesep 'beamSetup' filesep 'phasespace' filesep phaseSpaceFileName];
+                            phasespaceStr =  replace(phasespaceStr, '\', '/');
+                            fprintf(fileID,'s:So/Phasespace/PhaseSpaceFileName = "%s"\n', phasespaceStr);
+
+                    end
+
+                    % Write spot angles
+                    if obj.pencilBeamScanning
+                        fprintf(fileID,'s:Tf/Beam/AngleX/Function = "Step"\n');
+                        fprintf(fileID,'dv:Tf/Beam/AngleX/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'dv:Tf/Beam/AngleX/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,'%f ',[dataTOPAS.angleX]);
+                        fprintf(fileID,' rad\n');
+                        fprintf(fileID,'s:Tf/Beam/AngleY/Function = "Step"\n');
+                        fprintf(fileID,'dv:Tf/Beam/AngleY/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'dv:Tf/Beam/AngleY/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,'%f ',[dataTOPAS.angleY]);
+                        fprintf(fileID,' rad\n');
+
+
+                        % Write spot positions
+                        fprintf(fileID,'s:Tf/Beam/PosX/Function = "Step"\n');
+                        fprintf(fileID,'dv:Tf/Beam/PosX/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'dv:Tf/Beam/PosX/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,'%f ',[dataTOPAS.posX]);
+                        fprintf(fileID,' mm\n');
+                        fprintf(fileID,'s:Tf/Beam/PosY/Function = "Step"\n');
+                        fprintf(fileID,'dv:Tf/Beam/PosY/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'dv:Tf/Beam/PosY/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,'%f ',[dataTOPAS.posY]);
+                        fprintf(fileID,' mm\n');
+
+                        % Write spot current (translates to the amount of particles in a spot)
+                        fprintf(fileID,'s:Tf/Beam/Current/Function = "Step"\n');
+                        fprintf(fileID,'dv:Tf/Beam/Current/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'iv:Tf/Beam/Current/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,'%i ',[dataTOPAS.current]);
+                        fprintf(fileID,'\n\n');
+
+                        % Range shifter in/out
+                        if ~isPhoton && ~isempty(raShis)
+                            fprintf(fileID,'#Range Shifter States:\n');
+                            for r = 1:numel(raShis)
+                                fprintf(fileID,'s:Tf/Beam/%sOut/Function = "Step"\n',raShis(r).topasID);
+                                fprintf(fileID,'dv:Tf/Beam/%sOut/Times = Tf/Beam/Spot/Times ms\n',raShis(r).topasID);
+                                fprintf(fileID,'uv:Tf/Beam/%sOut/Values = %i ', raShis(r).topasID, cutNumOfBixel);
+                                fprintf(fileID,'%f ',[dataTOPAS.raShiOut]);
+                                fprintf(fileID,'\n\n');
+                            end
+
+                            % Range Shifter Definition
+                            for r = 1:numel(raShis)
+                                obj.writeRangeShifter(fileID,raShis(r),sourceToNozzleDistance);
+                            end
+                        end
                 end
 
                 % Write previously beam profile
@@ -1778,6 +1820,7 @@ classdef matRad_TopasConfig < handle
                 fprintf(fileID,'sv:Ph/Default/Modules = %d %s\n',length(modules),strjoin(moduleString,' '));
 
                 fclose(fileID);
+                
                 % Write run scripts for TOPAS
                 for runIx = 1:obj.numOfRuns
                     if isfield(ct,'currCtScen')
@@ -1820,6 +1863,7 @@ classdef matRad_TopasConfig < handle
 
             if bixelNotMeetingParticleQuota ~= 0
                 matRad_cfg.dispWarning([num2str(bixelNotMeetingParticleQuota) ' bixels were discarded due to particle threshold.'])
+                obj.MCparam.numOfDiscardedSpots = bixelNotMeetingParticleQuota;
             end
 
             % Bookkeeping
@@ -1847,244 +1891,90 @@ classdef matRad_TopasConfig < handle
             % therefore, the maximum length of the vector is 32768
 
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
-            medium = obj.rsp_basematerial;
-            if isequal(obj.arrayOrdering,'C')
-                if matRad_cfg.logLevel > 2
-                    matRad_cfg.dispInfo('Exporting cube in C ordering...\n')
-                end
-                permutation = [3 1 2];
-            else
-                if matRad_cfg.logLevel > 2
-                    matRad_cfg.dispInfo('Exporting cube in FORTRAN ordering...\n')
-                end
-                permutation = [2 1 3];
-            end
-
-            % Bookkeeping
-            obj.MCparam.imageCubeOrdering = obj.arrayOrdering;
-            obj.MCparam.imageCubeConversionType = obj.materialConverter.mode;
-            obj.MCparam.imageCubeFile = obj.outfilenames.patientCube;
-            obj.MCparam.imageCubeDim = ct.cubeDim;
-            obj.MCparam.imageVoxelDimension = ct.resolution;
 
             % Save filenames
             paramFile = obj.outfilenames.patientParam;
             dataFile = obj.outfilenames.patientCube;
-
-            % Add ctScen number to filenames
-            if isfield(ct,'currCtScen')
-                ctScen = ct.currCtScen;
-                paramFile = strsplit(paramFile,'.');
-                paramFile = strjoin(paramFile,[num2str(ct.currCtScen) '.']);
-
-                dataFile = strsplit(dataFile,'.');
-                dataFile = strjoin(dataFile,[num2str(ct.currCtScen) '.']);
-            else
-                ctScen = 1;
-            end
 
             % Open file to write in data
             outfile = fullfile(obj.workingDir, paramFile);
             matRad_cfg.dispInfo('Writing data to %s\n',outfile)
             fID = fopen(outfile,'w+');
 
-            % Write material converter
-            switch obj.materialConverter.mode
-                case 'RSP' % Relative stopping power converter
-                    rspHlut = matRad_loadHLUT(ct,pln);
-                    min_HU = rspHlut(1,1);
-                    max_HU = rspHlut(end,1);
+            if strcmp(obj.scorer.scorePhaseSpace,'score')
+                fprintf(fID,'# -- Patient parameters\n');
+                fprintf(fID,'s:Ge/PhantomSurface/Type               = "TsCylinder"\n');
+                fprintf(fID,'s:Ge/PhantomSurface/Parent             = "World"\n');
+                fprintf(fID,'s:Ge/PhantomSurface/Material           = "Air"\n');
+                fprintf(fID,'dc:Ge/PhantomSurface/TransZ            = 74.9 cm\n');
+                fprintf(fID,'dc:Ge/PhantomSurface/RMax              = 50 cm\n');
+                fprintf(fID,'dc:Ge/PhantomSurface/HL                = 0.1 mm\n');
+            else
 
-                    huCube = int32(permute(ct.cubeHU{ctScen},permutation)); %  X,Y,Z ordering
-                    huCube(huCube < min_HU) = min_HU;
-                    huCube(huCube > max_HU) = max_HU;
-
-                    unique_hu = unique(huCube(:));
-                    unique_rsp = matRad_interp1(rspHlut(:,1),rspHlut(:,2),double(unique_hu));
-                    fbase = fopen(['materialConverter/definedMaterials/' medium '.txt'],'r');
-                    while ~feof(fbase)
-                        strLine = fgets(fbase); %# read line by line
-                        fprintf(fID,'%s',strLine);
+                medium = obj.rsp_basematerial;
+                if isequal(obj.arrayOrdering,'C')
+                    if matRad_cfg.logLevel > 2
+                        matRad_cfg.dispInfo('Exporting cube in C ordering...\n')
                     end
-                    fclose(fbase);
-
-                    unique_materials = cell(1,length(unique_hu));
-                    for ix=1:length(unique_hu)
-                        unique_materials{ix} = strrep(['Material_HU_',num2str(unique_hu(ix))],'-','m');
-                        fprintf(fID,'s:Ma/%s/BaseMaterial = "%s"\n',unique_materials{ix},medium);
-                        fprintf(fID,'d:Ma/%s/Density = %f g/cm3\n',unique_materials{ix},unique_rsp(ix));
+                    permutation = [3 1 2];
+                else
+                    if matRad_cfg.logLevel > 2
+                        matRad_cfg.dispInfo('Exporting cube in FORTRAN ordering...\n')
                     end
+                    permutation = [2 1 3];
+                end
 
-                    fprintf(fID,'s:Ge/Patient/Parent="World"\n');
-                    fprintf(fID,'s:Ge/Patient/Type = "TsImageCube"\n');
-                    fprintf(fID,'s:Ge/Patient/InputDirectory = "./"\n');
-                    fprintf(fID,'s:Ge/Patient/InputFile = "%s"\n',dataFile);
-                    fprintf(fID,'s:Ge/Patient/ImagingtoMaterialConverter = "MaterialTagNumber"\n');
-                    fprintf(fID,'i:Ge/Patient/NumberOfVoxelsX = %d\n',ct.cubeDim(2));
-                    fprintf(fID,'i:Ge/Patient/NumberOfVoxelsY = %d\n',ct.cubeDim(1));
-                    fprintf(fID,'iv:Ge/Patient/NumberOfVoxelsZ = 1 %d\n',ct.cubeDim(3));
-                    fprintf(fID,'d:Ge/Patient/VoxelSizeX       = %.3f mm\n',ct.resolution.x);
-                    fprintf(fID,'d:Ge/Patient/VoxelSizeY       = %.3f mm\n',ct.resolution.y);
-                    fprintf(fID,'dv:Ge/Patient/VoxelSizeZ       = 1 %.3f mm\n',ct.resolution.z);
-                    fprintf(fID,'s:Ge/Patient/DataType  = "SHORT"\n');
-                    fprintf(fID,'iv:Ge/Patient/MaterialTagNumbers = %d ',length(unique_hu));
-                    fprintf(fID,num2str(unique_hu','%d '));
-                    fprintf(fID,'\n');
-                    fprintf(fID,'sv:Ge/Patient/MaterialNames = %d ',length(unique_hu));
-                    fprintf(fID,'"%s"',strjoin(unique_materials,'" "'));
-                    fprintf(fID,'\n');
-                    fclose(fID);
+                % Bookkeeping
+                obj.MCparam.imageCubeOrdering = obj.arrayOrdering;
+                obj.MCparam.imageCubeConversionType = obj.materialConverter.mode;
+                obj.MCparam.imageCubeFile = obj.outfilenames.patientCube;
+                obj.MCparam.imageCubeDim = ct.cubeDim;
+                obj.MCparam.imageVoxelDimension = ct.resolution;
 
-                    % write data
-                    fID = fopen(fullfile(obj.workingDir, dataFile),'w');
-                    fwrite(fID,huCube,'short');
-                    fclose(fID);
-                    cube = huCube;
+                % Add ctScen number to filenames
+                if isfield(ct,'currCtScen')
+                    ctScen = ct.currCtScen;
+                    paramFile = strsplit(paramFile,'.');
+                    paramFile = strjoin(paramFile,[num2str(ct.currCtScen) '.']);
 
+                    dataFile = strsplit(dataFile,'.');
+                    dataFile = strjoin(dataFile,[num2str(ct.currCtScen) '.']);
+                else
+                    ctScen = 1;
+                end
 
-                case 'HUToWaterSchneider' % Schneider converter
-                    rspHlut = matRad_loadHLUT(ct,pln);
+                % Write material converter
+                switch obj.materialConverter.mode
+                    case 'RSP' % Relative stopping power converter
+                        rspHlut = matRad_loadHLUT(ct,pln);
+                        min_HU = rspHlut(1,1);
+                        max_HU = rspHlut(end,1);
 
-                    try
-                        % Write Schneider Converter
-                        if ~obj.materialConverter.loadConverterFromFile
-                            % define density correction
-                            matRad_cfg.dispInfo('TOPAS: Writing density correction\n');
-                            switch obj.materialConverter.densityCorrection
-                                case 'rspHLUT'
-                                    densityCorrection.density = [];
-                                    for i = 1:size(rspHlut,1)-1
-                                        startVal = rspHlut(i,1);
-                                        endVal = rspHlut(i+1,1);
-                                        range = startVal:1:endVal-1;
-                                        densityCorrection.density(end+1:end+numel(range)) = matRad_interp1(rspHlut(:,1),rspHlut(:,2),range);
-                                    end
-                                    densityCorrection.density(end+1) = rspHlut(end,2); %add last missing value
-                                    densityCorrection.boundaries = [rspHlut(1,1) numel(densityCorrection.density)-abs(rspHlut(1,1))];
+                        huCube = int32(permute(ct.cubeHU{ctScen},permutation)); %  X,Y,Z ordering
+                        huCube(huCube < min_HU) = min_HU;
+                        huCube(huCube > max_HU) = max_HU;
 
-                                case {'Schneider_TOPAS','Schneider_matRad'}
-                                    fname = fullfile(obj.thisFolder,filesep,obj.converterFolder,filesep,obj.infilenames.(['matConv_Schneider_densityCorr_',obj.materialConverter.densityCorrection]));
-                                    densityFile = fopen(fname);
-                                    densityCorrection.density = fscanf(densityFile,'%f');
-                                    fclose(densityFile);
-                                    %                                     minHU = floor(min(ct.cubeHU{1}(:)));
-                                    minHU = rspHlut(1,1);
-                                    densityCorrection.boundaries = [minHU numel(densityCorrection.density)+minHU];
+                        unique_hu = unique(huCube(:));
+                        unique_rsp = matRad_interp1(rspHlut(:,1),rspHlut(:,2),double(unique_hu));
+                        fbase = fopen(['materialConverter/definedMaterials/' medium '.txt'],'r');
+                        while ~feof(fbase)
+                            strLine = fgets(fbase); %# read line by line
+                            fprintf(fID,'%s',strLine);
+                        end
+                        fclose(fbase);
 
-                            end
-
-                            % define additional density sections
-                            switch obj.materialConverter.addSection
-                                case 'lung'
-                                    addSection = [0.00012 1.05];
-                                otherwise
-                                    addSection = [];
-                            end
-                            if exist('addSection','var') && ~isempty(addSection)
-                                densityCorrection.density(end+1:end+numel(addSection)) = addSection;
-                                densityCorrection.boundaries(end+1) = densityCorrection.boundaries(end)+numel(addSection);
-                            end
-                            % define Hounsfield Unit Sections
-                            switch obj.materialConverter.HUSection
-                                case 'default'
-                                    densityCorrection.unitSections = [densityCorrection.boundaries];
-                                    densityCorrection.offset = 1;
-                                    densityCorrection.factor = 0;
-                                    densityCorrection.factorOffset = -rspHlut(1,1);
-
-                                case 'advanced'
-                                    densityCorrection.offset = [0.00121 1.018 1.03 1.003 1.017 2.201];
-                                    densityCorrection.factor = [0.001029700665188 0.000893 0 0.001169 0.000592 0.0005];
-                                    densityCorrection.factorOffset = [1000 0 1000 0 0 -2000];
-
-                                    if isfield(obj.materialConverter,'addTitanium') && obj.materialConverter.addTitanium %Titanium independent of set hounsfield unit!
-                                        densityCorrection.density(end+1) = 1.00275;
-                                        densityCorrection.boundaries(end+1) = densityCorrection.boundaries(end)+1;
-                                        densityCorrection.offset(end+1) = 4.54;
-                                        densityCorrection.factor(end+1) = 0;
-                                        densityCorrection.factorOffset(end+1) = 0;
-                                    end
-
-                                    densityCorrection.unitSections = [densityCorrection.boundaries(1) -98 15 23 101 2001 densityCorrection.boundaries(2:end)];
-                            end
-                            for i = numel(densityCorrection.offset)+1:numel(densityCorrection.unitSections)-1
-                                densityCorrection.offset(i) = 1;
-                                densityCorrection.factor(i) = 0;
-                                densityCorrection.factorOffset(i) = 0;
-                            end
-
-                            % write density correction
-                            fprintf(fID,'# -- Density correction\n');
-                            fprintf(fID,['dv:Ge/Patient/DensityCorrection = %i',repmat(' %.6g',1,numel(densityCorrection.density)),' g/cm3\n'],numel(densityCorrection.density),densityCorrection.density);
-                            fprintf(fID,['iv:Ge/Patient/SchneiderHounsfieldUnitSections = %i',repmat(' %g',1,numel(densityCorrection.unitSections)),'\n'],numel(densityCorrection.unitSections),densityCorrection.unitSections);
-                            fprintf(fID,['uv:Ge/Patient/SchneiderDensityOffset = %i',repmat(' %g',1,numel(densityCorrection.offset)),'\n'],numel(densityCorrection.offset),densityCorrection.offset);
-                            % this is needed for a custom fprintf format which formats integers i to 'i.' and floats without trailing zeros
-                            % this is potentially not necessary but was done to mimick the original TOPAS Schneider converter file
-                            TOPASisFloat = mod(densityCorrection.factor,1)==0;
-                            fprintf(fID,['uv:Ge/Patient/SchneiderDensityFactor = %i ',strjoin(cellstr(char('%1.01f '.*TOPASisFloat' + '%1.15g '.*~TOPASisFloat'))),'\n'],numel(densityCorrection.factor),densityCorrection.factor);
-                            TOPASisFloat = mod(densityCorrection.factorOffset,1)==0;
-                            fprintf(fID,['uv:Ge/Patient/SchneiderDensityFactorOffset = %i ',strjoin(cellstr(char('%1.01f '.*TOPASisFloat' + '%1.15g '.*~TOPASisFloat'))),'\n'],numel(densityCorrection.factorOffset),densityCorrection.factorOffset);
-                            %                         fprintf(fID,'uv:Ge/Patient/SchneiderDensityFactor = 8 0.001029700665188 0.000893 0.0 0.001169 0.000592 0.0005 0.0 0.0\n');
-                            %                         fprintf(fID,'uv:Ge/Patient/SchneiderDensityFactorOffset = 8 1000. 0. 1000. 0. 0. -2000. 0. 0.0\n\n');
-
-                            % define HU to material sections
-                            matRad_cfg.dispInfo('TOPAS: Writing HU to material sections\n');
-                            switch obj.materialConverter.HUToMaterial
-                                case 'default'
-                                    HUToMaterial.sections = rspHlut(2,1);
-                                case 'MCsquare'
-                                    HUToMaterial.sections = [-1000 -950 -120 -82 -52 -22 8 19 80 120 200 300 400 500 600 700 800 900 1000 1100 1200 1300 1400 1500];
-                                case 'advanced'
-                                    HUToMaterial.sections = [-950 -120 -83 -53 -23 7 18 80 120 200 300 400 500 600 700 800 900 1000 1100 1200 1300 1400 1500];
-                            end
-                            HUToMaterial.sections = [densityCorrection.boundaries(1) HUToMaterial.sections densityCorrection.boundaries(2:end)];
-                            % write HU to material sections
-                            %                         fprintf(fID,'i:Ge/Patient/MinImagingValue = %d\n',densityCorrection.boundaries(1));
-                            fprintf(fID,['iv:Ge/Patient/SchneiderHUToMaterialSections = %i ',repmat('%d ',1,numel(HUToMaterial.sections)),'\n\n'],numel(HUToMaterial.sections),HUToMaterial.sections);
-                            % load defined material based on materialConverter.HUToMaterial
-
-                            fname = fullfile(obj.thisFolder,filesep,obj.converterFolder,filesep,obj.infilenames.matConv_Schneider_definedMaterials.(obj.materialConverter.HUToMaterial));
-                            materials = strsplit(fileread(fname),'\n')';
-                            switch obj.materialConverter.HUToMaterial
-                                case 'default'
-                                    fprintf(fID,'%s \n',materials{1:end-1});
-                                    ExcitationEnergies = str2double(strsplit(materials{end}(strfind(materials{end},'=')+4:end-3)));
-                                    if ~isempty(strfind(lower(obj.materialConverter.addSection),lower('lung')))
-                                        fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight%i = 5 0.10404040 0.75656566 0.03131313 0.10606061 0.00202020\n',length(materials)-2);
-                                        ExcitationEnergies = [ExcitationEnergies 75.3];
-                                    end
-                                    fprintf(fID,['dv:Ge/Patient/SchneiderMaterialMeanExcitationEnergy = %i',repmat(' %.6g',1,numel(ExcitationEnergies)),' eV\n'],numel(ExcitationEnergies),ExcitationEnergies);
-                                case 'advanced'
-                                    fprintf(fID,'\n%s\n',materials{:});
-                                case 'MCsquare'
-                                    fprintf(fID,'\n%s\n',materials{:});
-                            end
-
-                            switch obj.materialConverter.HUToMaterial
-                                case 'advanced'
-                                    counter = 25;
-                                    if isfield(obj.materialConverter,'addTitanium') && obj.materialConverter.addTitanium
-                                        fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight%i = 15 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0',counter);
-                                        counter = counter + 1;
-                                    end
-                                    %                                 fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight%i = 15 0.10404040 0.10606061 0.75656566 0.03131313 0.0 0.00202020 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0',counter);
-                                    fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight%i = 15 0.101278 0.102310 0.028650 0.757072 0.000730 0.000800 0.002250 0.002660 0.0 0.000090 0.001840 0.001940 0.0 0.000370 0.000010',counter);
-                            end
-                        else
-                            fname = fullfile(obj.thisFolder,filesep,obj.converterFolder,filesep,obj.infilenames.matConv_Schneider_loadFromFile);
-                            converter = fileread(fname);
-                            fprintf(fID,'\n%s\n',converter);
+                        unique_materials = cell(1,length(unique_hu));
+                        for ix=1:length(unique_hu)
+                            unique_materials{ix} = strrep(['Material_HU_',num2str(unique_hu(ix))],'-','m');
+                            fprintf(fID,'s:Ma/%s/BaseMaterial = "%s"\n',unique_materials{ix},medium);
+                            fprintf(fID,'d:Ma/%s/Density = %f g/cm3\n',unique_materials{ix},unique_rsp(ix));
                         end
 
-                        % write patient environment
-                        matRad_cfg.dispInfo('TOPAS: Writing patient environment\n');
-                        fprintf(fID,'\n# -- Patient parameters\n');
                         fprintf(fID,'s:Ge/Patient/Parent="World"\n');
                         fprintf(fID,'s:Ge/Patient/Type = "TsImageCube"\n');
-                        fprintf(fID,'b:Ge/Patient/DumpImagingValues = "True"\n');
                         fprintf(fID,'s:Ge/Patient/InputDirectory = "./"\n');
                         fprintf(fID,'s:Ge/Patient/InputFile = "%s"\n',dataFile);
-                        fprintf(fID,'s:Ge/Patient/ImagingtoMaterialConverter = "Schneider"\n');
+                        fprintf(fID,'s:Ge/Patient/ImagingtoMaterialConverter = "MaterialTagNumber"\n');
                         fprintf(fID,'i:Ge/Patient/NumberOfVoxelsX = %d\n',ct.cubeDim(2));
                         fprintf(fID,'i:Ge/Patient/NumberOfVoxelsY = %d\n',ct.cubeDim(1));
                         fprintf(fID,'iv:Ge/Patient/NumberOfVoxelsZ = 1 %d\n',ct.cubeDim(3));
@@ -2092,27 +1982,212 @@ classdef matRad_TopasConfig < handle
                         fprintf(fID,'d:Ge/Patient/VoxelSizeY       = %.3f mm\n',ct.resolution.y);
                         fprintf(fID,'dv:Ge/Patient/VoxelSizeZ       = 1 %.3f mm\n',ct.resolution.z);
                         fprintf(fID,'s:Ge/Patient/DataType  = "SHORT"\n');
+                        fprintf(fID,'iv:Ge/Patient/MaterialTagNumbers = %d ',length(unique_hu));
+                        fprintf(fID,num2str(unique_hu','%d '));
+                        fprintf(fID,'\n');
+                        fprintf(fID,'sv:Ge/Patient/MaterialNames = %d ',length(unique_hu));
+                        fprintf(fID,'"%s"',strjoin(unique_materials,'" "'));
+                        fprintf(fID,'\n');
 
-                        fclose(fID);
-
-                        % write HU data
-                        matRad_cfg.dispInfo('TOPAS: Export patient cube\n');
-                        huCube = int32(permute(ct.cubeHU{ctScen},permutation));
-
-                        fID = fopen(fullfile(obj.workingDir, dataFile),'w');
-                        fwrite(fID,huCube,'short');
-                        fclose(fID);
+                        % write data
+                        fID_hu = fopen(fullfile(obj.workingDir, dataFile),'w');
+                        fwrite(fID_hu,huCube,'short');
+                        fclose(fID_hu);
                         cube = huCube;
-                    catch ME
-                        matRad_cfg.dispWarning(ME.message);
-                        matRad_cfg.dispError(['TOPAS: Error in Schneider Converter! (line ',num2str(ME.stack(1).line),')']);
-                    end
 
-                otherwise
-                    matRad_cfg.dispError('Material Conversion rule "%s" not implemented (yet)!\n',obj.materialConverter.mode);
+
+                    case 'HUToWaterSchneider' % Schneider converter
+                        rspHlut = matRad_loadHLUT(ct,pln);
+
+                        try
+                            % Write Schneider Converter
+                            if ~obj.materialConverter.loadConverterFromFile
+                                % define density correction
+                                matRad_cfg.dispInfo('TOPAS: Writing density correction\n');
+                                switch obj.materialConverter.densityCorrection
+                                    case 'rspHLUT'
+                                        densityCorrection.density = [];
+                                        for i = 1:size(rspHlut,1)-1
+                                            startVal = rspHlut(i,1);
+                                            endVal = rspHlut(i+1,1);
+                                            range = startVal:1:endVal-1;
+                                            densityCorrection.density(end+1:end+numel(range)) = matRad_interp1(rspHlut(:,1),rspHlut(:,2),range);
+                                        end
+                                        densityCorrection.density(end+1) = rspHlut(end,2); %add last missing value
+                                        densityCorrection.boundaries = [rspHlut(1,1) numel(densityCorrection.density)-abs(rspHlut(1,1))];
+
+                                    case {'Schneider_TOPAS','Schneider_matRad'}
+                                        fname = fullfile(obj.thisFolder,filesep,obj.converterFolder,filesep,obj.infilenames.(['matConv_Schneider_densityCorr_',obj.materialConverter.densityCorrection]));
+                                        densityFile = fopen(fname);
+                                        densityCorrection.density = fscanf(densityFile,'%f');
+                                        fclose(densityFile);
+                                        %                                     minHU = floor(min(ct.cubeHU{1}(:)));
+                                        minHU = rspHlut(1,1);
+                                        densityCorrection.boundaries = [minHU numel(densityCorrection.density)+minHU];
+
+                                end
+
+                                % define additional density sections
+                                % Set sampledDensities to empty if no modulated CT is parsed
+                                if ~(isfield(ct,'modulated') && ct.modulated)
+                                    ct.sampledDensities = [];
+                                end
+                                switch obj.materialConverter.addSection
+                                    case 'lung'
+                                        addSection = [0.00012 1.05];
+                                    case 'poisson'
+                                        addSection = [0.001,0.1/3:0.1/3:1.2];
+                                    case 'sampledDensities'
+                                        if isfield(ct,'sampledDensities')
+                                            addSection = ct.sampledDensities;
+                                        else
+                                            addSection = [];
+                                        end
+                                    otherwise
+                                end
+                                if exist('addSection','var') && ~isempty(addSection)
+                                    densityCorrection.density(end+1:end+numel(addSection)) = addSection;
+                                    densityCorrection.boundaries(end+1) = densityCorrection.boundaries(end)+numel(addSection);
+                                end
+                                % define Hounsfield Unit Sections
+                                switch obj.materialConverter.HUSection
+                                    case 'default'
+                                        densityCorrection.unitSections = [densityCorrection.boundaries];
+                                        densityCorrection.offset = 1;
+                                        densityCorrection.factor = 0;
+                                        densityCorrection.factorOffset = -rspHlut(1,1);
+
+                                    case 'advanced'
+                                        densityCorrection.offset = [0.00121 1.018 1.03 1.003 1.017 2.201];
+                                        densityCorrection.factor = [0.001029700665188 0.000893 0 0.001169 0.000592 0.0005];
+                                        densityCorrection.factorOffset = [1000 0 1000 0 0 -2000];
+
+                                        if isfield(obj.materialConverter,'addTitanium') && obj.materialConverter.addTitanium %Titanium independent of set hounsfield unit!
+                                            densityCorrection.density(end+1) = 1.00275;
+                                            densityCorrection.boundaries(end+1) = densityCorrection.boundaries(end)+1;
+                                            densityCorrection.offset(end+1) = 4.54;
+                                            densityCorrection.factor(end+1) = 0;
+                                            densityCorrection.factorOffset(end+1) = 0;
+                                        end
+
+                                        densityCorrection.unitSections = [densityCorrection.boundaries(1) -98 15 23 101 2001 densityCorrection.boundaries(2:end)];
+                                end
+                                for i = numel(densityCorrection.offset)+1:numel(densityCorrection.unitSections)-1
+                                    densityCorrection.offset(i) = 1;
+                                    densityCorrection.factor(i) = 0;
+                                    densityCorrection.factorOffset(i) = 0;
+                                end
+
+                                % write density correction
+                                fprintf(fID,'# -- Density correction\n');
+                                fprintf(fID,['dv:Ge/Patient/DensityCorrection = %i',repmat(' %.6g',1,numel(densityCorrection.density)),' g/cm3\n'],numel(densityCorrection.density),densityCorrection.density);
+                                fprintf(fID,['iv:Ge/Patient/SchneiderHounsfieldUnitSections = %i',repmat(' %g',1,numel(densityCorrection.unitSections)),'\n'],numel(densityCorrection.unitSections),densityCorrection.unitSections);
+                                fprintf(fID,['uv:Ge/Patient/SchneiderDensityOffset = %i',repmat(' %g',1,numel(densityCorrection.offset)),'\n'],numel(densityCorrection.offset),densityCorrection.offset);
+                                % this is needed for a custom fprintf format which formats integers i to 'i.' and floats without trailing zeros
+                                % this is potentially not necessary but was done to mimick the original TOPAS Schneider converter file
+                                TOPASisFloat = mod(densityCorrection.factor,1)==0;
+                                fprintf(fID,['uv:Ge/Patient/SchneiderDensityFactor = %i ',strjoin(cellstr(char('%1.01f '.*TOPASisFloat' + '%1.15g '.*~TOPASisFloat'))),'\n'],numel(densityCorrection.factor),densityCorrection.factor);
+                                TOPASisFloat = mod(densityCorrection.factorOffset,1)==0;
+                                fprintf(fID,['uv:Ge/Patient/SchneiderDensityFactorOffset = %i ',strjoin(cellstr(char('%1.01f '.*TOPASisFloat' + '%1.15g '.*~TOPASisFloat'))),'\n'],numel(densityCorrection.factorOffset),densityCorrection.factorOffset);
+                                %                         fprintf(fID,'uv:Ge/Patient/SchneiderDensityFactor = 8 0.001029700665188 0.000893 0.0 0.001169 0.000592 0.0005 0.0 0.0\n');
+                                %                         fprintf(fID,'uv:Ge/Patient/SchneiderDensityFactorOffset = 8 1000. 0. 1000. 0. 0. -2000. 0. 0.0\n\n');
+
+                                % define HU to material sections
+                                matRad_cfg.dispInfo('TOPAS: Writing HU to material sections\n');
+                                switch obj.materialConverter.HUToMaterial
+                                    case 'default'
+                                        HUToMaterial.sections = rspHlut(2,1);
+                                    case 'MCsquare'
+                                        HUToMaterial.sections = [-1000 -950 -120 -82 -52 -22 8 19 80 120 200 300 400 500 600 700 800 900 1000 1100 1200 1300 1400 1500];
+                                    case 'advanced'
+                                        HUToMaterial.sections = [-950 -120 -83 -53 -23 7 18 80 120 200 300 400 500 600 700 800 900 1000 1100 1200 1300 1400 1500];
+                                end
+                                HUToMaterial.sections = [densityCorrection.boundaries(1) HUToMaterial.sections densityCorrection.boundaries(2:end)];
+                                % write HU to material sections
+                                %                         fprintf(fID,'i:Ge/Patient/MinImagingValue = %d\n',densityCorrection.boundaries(1));
+                                fprintf(fID,['iv:Ge/Patient/SchneiderHUToMaterialSections = %i ',repmat('%d ',1,numel(HUToMaterial.sections)),'\n\n'],numel(HUToMaterial.sections),HUToMaterial.sections);
+                                % load defined material based on materialConverter.HUToMaterial
+
+                                fname = fullfile(obj.thisFolder,filesep,obj.converterFolder,filesep,obj.infilenames.matConv_Schneider_definedMaterials.(obj.materialConverter.HUToMaterial));
+                                materials = strsplit(fileread(fname),'\n')';
+                                switch obj.materialConverter.HUToMaterial
+                                    case 'default'
+                                        fprintf(fID,'%s',materials{1:end-1});
+                                        ExcitationEnergies = str2double(strsplit(materials{end}(strfind(materials{end},'=')+4:end-3)));
+                                        if any(cellfun(@(teststr) ~isempty(strfind(lower(obj.materialConverter.addSection),lower(teststr))), {'lung','sampled'}))
+                                            % Write Lung material composition
+                                            fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight%i = 5 0.10404040 0.75656566 0.03131313 0.10606061 0.00202020\n',length(materials)-2);
+                                            ExcitationEnergies = [ExcitationEnergies 75.3];
+                                        end
+                                        fprintf(fID,['dv:Ge/Patient/SchneiderMaterialMeanExcitationEnergy = %i',repmat(' %.6g',1,numel(ExcitationEnergies)),' eV\n'],numel(ExcitationEnergies),ExcitationEnergies);
+                                    case 'advanced'
+                                        fprintf(fID,'\n%s',materials{:});
+                                    case 'MCsquare'
+                                        fprintf(fID,'\n%s',materials{:});
+                                end
+
+                                switch obj.materialConverter.HUToMaterial
+                                    case 'advanced'
+                                        counter = 25;
+                                        if isfield(obj.materialConverter,'addTitanium') && obj.materialConverter.addTitanium
+                                            fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight%i = 15 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0',counter);
+                                            counter = counter + 1;
+                                        end
+                                        %                                 fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight%i = 15 0.10404040 0.10606061 0.75656566 0.03131313 0.0 0.00202020 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0',counter);
+                                        fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight%i = 15 0.101278 0.102310 0.028650 0.757072 0.000730 0.000800 0.002250 0.002660 0.0 0.000090 0.001840 0.001940 0.0 0.000370 0.000010',counter);
+                                end
+                            else
+                                fname = fullfile(obj.thisFolder,filesep,obj.converterFolder,filesep,obj.infilenames.matConv_Schneider_loadFromFile);
+                                converter = fileread(fname);
+                                fprintf(fID,'\n%s',converter);
+                            end
+
+                            % write patient environment
+                            matRad_cfg.dispInfo('TOPAS: Writing patient environment\n');
+                            fprintf(fID,'\n# -- Patient parameters\n');
+                            fprintf(fID,'s:Ge/Patient/Parent            = "World"\n');
+                            fprintf(fID,'s:Ge/Patient/Type              = "TsImageCube"\n');
+                            fprintf(fID,'b:Ge/Patient/DumpImagingValues = "True"\n');
+                            if isfield(ct,'modulated') && ct.modulated
+                                %fprintf(fID,'b:Ge/Patient/SchneiderUseVariableDensityMaterials = "True"\n');
+                                fprintf(fID,'b:Ge/Patient/PreLoadAllMaterials = "True"\n');
+                            end
+                            fprintf(fID,'s:Ge/Patient/InputDirectory                = "./"\n');
+                            fprintf(fID,'s:Ge/Patient/InputFile                     = "%s"\n',dataFile);
+                            fprintf(fID,'s:Ge/Patient/ImagingtoMaterialConverter    = "Schneider"\n');
+                            fprintf(fID,'i:Ge/Patient/NumberOfVoxelsX               = %d\n',ct.cubeDim(2));
+                            fprintf(fID,'i:Ge/Patient/NumberOfVoxelsY               = %d\n',ct.cubeDim(1));
+                            fprintf(fID,'iv:Ge/Patient/NumberOfVoxelsZ              = 1 %d\n',ct.cubeDim(3));
+                            fprintf(fID,'d:Ge/Patient/VoxelSizeX                    = %.3f mm\n',ct.resolution.x);
+                            fprintf(fID,'d:Ge/Patient/VoxelSizeY                    = %.3f mm\n',ct.resolution.y);
+                            fprintf(fID,'dv:Ge/Patient/VoxelSizeZ                   = 1 %.3f mm\n',ct.resolution.z);
+                            fprintf(fID,'s:Ge/Patient/DataType                      = "SHORT"\n');
+
+                            % write HU data
+                            matRad_cfg.dispInfo('TOPAS: Export patient cube\n');
+                            if strcmp(obj.materialConverter.addSection,'sampledDensities') && isfield(ct,'sampledLungIndices')
+                                ct.cubeHU{ctScen}(ct.sampledLungIndices) = ct.cubeHU{ctScen}(ct.sampledLungIndices)-6000+densityCorrection.boundaries(end-1);
+                            end
+                            huCube = int32(permute(ct.cubeHU{ctScen},permutation));
+
+                            fID_hu = fopen(fullfile(obj.workingDir, dataFile),'w');
+                            fwrite(fID_hu,huCube,'short');
+                            fclose(fID_hu);
+                            cube = huCube;
+                        catch ME
+                            matRad_cfg.dispWarning(ME.message);
+                            matRad_cfg.dispError(['TOPAS: Error in Schneider Converter! (line ',num2str(ME.stack(1).line),')']);
+                        end
+
+                    otherwise
+                        matRad_cfg.dispError('Material Conversion rule "%s" not implemented (yet)!\n',obj.materialConverter.mode);
+                end
+
+                % Remeber imageCube in MCparam
+                obj.MCparam.imageCube{ctScen} = cube;
             end
-            obj.MCparam.imageCube{ctScen} = cube;
-
+            % Close file
+            fclose(fID);
 
         end
 
@@ -2134,10 +2209,108 @@ classdef matRad_TopasConfig < handle
 
         end
 
+        function MCparamInit(obj,ct,cst,stf,w)
+            % Set MCparam structure with important simulation parameters that is needed for later readOut and
+            % postprocessing
+            obj.MCparam = struct();
+            obj.MCparam.tallies = {};
+            obj.MCparam.nbRuns = obj.numOfRuns;
+            obj.MCparam.simLabel = obj.label;
+            obj.MCparam.scoreReportQuantity = obj.scorer.reportQuantity;
+            obj.MCparam.workingDir = obj.workingDir;
+            obj.MCparam.weights = w;
+            obj.MCparam.ctGrid = ct.ctGrid;
+            if isfield(ct,'originalGrid')
+                obj.MCparam.originalGrid = ct.originalGrid;
+            end
+            obj.MCparam.cubeDim = ct.cubeDim;
+            obj.MCparam.ctResolution = ct.resolution;
+            obj.MCparam.numOfCtScen = ct.numOfCtScen;
+            segmentationIndices = [cst{:,4}];
+            obj.MCparam.patientVoxelIndices = false(ct.cubeDim);
+            obj.MCparam.patientVoxelIndices(unique(vertcat(segmentationIndices{:}))) = true;
+            % Save used RBE models
+            if obj.scorer.RBE
+                obj.MCparam.RBE_models = obj.scorer.RBE_model;
+                [obj.MCparam.ax,obj.MCparam.bx] = matRad_getPhotonLQMParameters(cst,prod(ct.cubeDim),obj.MCparam.numOfCtScen);
+                obj.MCparam.abx(obj.MCparam.bx>0) = obj.MCparam.ax(obj.MCparam.bx>0)./obj.MCparam.bx(obj.MCparam.bx>0);
+            end
+
+            % fill in bixels, rays and beams in case of dij calculation or external calculation
+            if obj.scorer.calcDij
+                counter = 1;
+                for f = 1:length(stf)
+                    for r = 1:stf(f).numOfRays
+                        for b = 1:stf(f).numOfBixelsPerRay(r)
+                            obj.MCparam.bixelNum(counter) = b;
+                            obj.MCparam.rayNum(counter)   = r;
+                            obj.MCparam.beamNum(counter)  = f;
+                            counter = counter + 1;
+                        end
+                    end
+                end
+            else
+                % In case of calcDoseDirect, you only need beamNum
+                obj.MCparam.bixelNum = 1;
+                obj.MCparam.rayNum   = 1;
+                obj.MCparam.beamNum  = 1:length(stf);
+            end
+            obj.MCparam.numOfRaysPerBeam   = [stf(:).numOfRays];
+        end
+
         function writeMCparam(obj)
             %write MCparam file with basic parameters
-            MCparam = obj.MCparam;
-            save(fullfile(obj.workingDir,'MCparam.mat'),'MCparam','-v7');
+            if ~strcmp(obj.scorer.scorePhaseSpace,'score')
+                MCparam = obj.MCparam;
+                save(fullfile(obj.workingDir,'MCparam.mat'),'MCparam','-v7');
+            end
+        end
+
+        function writeStfPhaseSpace(obj,ct,stf)
+
+            matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
+
+            % Write TOPAS data base file
+            for beamIx = 1:length(stf)
+                fieldSetupFileName = sprintf('phaseSpaceSetup_%s_field%d.txt',obj.label,beamIx);
+                fileID = fopen(fullfile(obj.workingDir,fieldSetupFileName),'w');
+
+                obj.writeFieldHeader(fileID);
+                
+                % NozzleAxialDistance
+                fprintf(fileID,'d:Ge/Nozzle/TransZ = -495 mm\n');%Not sure if this is correct,100 cm is SSD and probably distance from surface to isocenter needs to be added
+
+                if obj.pencilBeamScanning
+                    % Write couch and gantry angles
+                    fprintf(fileID,'d:Sim/GantryAngle = %f deg\n',stf(beamIx).gantryAngle);
+                    fprintf(fileID,'d:Sim/CouchAngle = %f deg\n\n',stf(beamIx).couchAngle);
+                end
+
+                % Write beam profile
+                fname = fullfile(obj.thisFolder,obj.infilenames.beam_customPhasespace);
+                TOPAS_beamSetup = fileread(fname);
+                matRad_cfg.dispInfo('Reading ''%s'' Beam Characteristics from ''%s''\n',obj.beamProfile,fname);
+                fprintf(fileID,'%s\n',TOPAS_beamSetup);
+
+                fprintf(fileID,'s:So/PhaseSpaceSource/PhaseSpaceFileName              = "../" + Sim/ScoreLabel + "_phaseSpace"\n');
+                fclose(fileID);
+            end
+
+            % Write run scripts for TOPAS
+            for runIx = 1:obj.numOfRuns
+                runFileName = sprintf('%s_field%d_run%d.txt',obj.label,beamIx,runIx);
+                fileID = fopen(fullfile(obj.workingDir,runFileName),'w');
+
+                obj.writeRunHeader(fileID,beamIx,runIx);
+
+                % Include path to beamSetup file
+                fprintf(fileID,'includeFile = ./%s\n',fieldSetupFileName);
+
+                % Write lines from scorer files
+                obj.writeScorers(fileID);
+
+                fclose(fileID);
+            end
         end
 
     end

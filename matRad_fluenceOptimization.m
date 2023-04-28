@@ -305,6 +305,10 @@ resultGUI.wUnsequenced = wOpt;
 resultGUI.usedOptimizer = optimizer;
 resultGUI.info = info;
 
+if isfield(dij,'numOfRemovedSpots')
+    resultGUI.numOfRemovedSpots = dij.numOfRemovedSpots;
+end
+
 %Robust quantities
 if FLAG_ROB_OPT || numel(ixForOpt) > 1
     Cnt = 1;

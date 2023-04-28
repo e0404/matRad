@@ -68,10 +68,24 @@ end
 % load default parameters for doseCalc in case they haven't been set yet
 pln = matRad_cfg.getDefaultProperties(pln,{'propDoseCalc'});
 
-% set nested folder structure if external calculation is turned on (this will put new simulations in subfolders)
-if pln.propMC.externalCalculation
-    pln.propMC.workingDir = [pln.propMC.thisFolder filesep 'MCrun' filesep];
-    pln.propMC.workingDir = [pln.propMC.workingDir pln.radiationMode,'_',pln.machine,'_',datestr(now, 'dd-mm-yy')];
+% set nested folder structure (this will put new simulations in subfolders)
+pln.propMC.workingDir = [pln.propMC.thisFolder filesep 'MCrun' filesep];
+pln.propMC.workingDir = [pln.propMC.workingDir pln.radiationMode,'_',pln.machine,'_',datestr(now, 'dd-mm-yy')];
+if pln.propMC.scorer.RBE
+    if strcmp(pln.propMC.scorer.RBE_model,'default')
+        pln.propMC.workingDir = [pln.propMC.workingDir '_' pln.bioParam.model];
+    else
+        pln.propMC.workingDir = [pln.propMC.workingDir '_' strjoin(pln.propMC.scorer.RBE_model,'_')];
+    end
+end
+
+% Set numOfRuns to 1 if phaseSpace is being calculated
+if strcmp(pln.propMC.scorer.scorePhaseSpace,'write')
+    pln.propMC.numOfRuns = 1;
+    pln.propMC.workingDir = [pln.propMC.workingDir '_scorePhaseSpace'];
+    matRad_cfg.dispInfo('numOfRuns overwritten with 1 by phase space scoring!\n');
+elseif strcmp(pln.propMC.scorer.scorePhaseSpace,'read')
+    pln.propMC.workingDir = [pln.propMC.workingDir '_readPhaseSpace'];
 end
 
 %% Initialize dose grid and dij
@@ -230,7 +244,12 @@ if ~pln.propMC.externalCalculation
     % Order fields for easier comparison between different dijs
     dij = orderfields(dij);
 else
-    dij = struct([]);
+    dij = struct();
+end
+
+% Write number of discarded bixels as information
+if isfield(pln.propMC.MCparam,'numOfDiscardedSpots')
+    dij.numOfDiscardedSpots = pln.propMC.MCparam.numOfDiscardedSpots;
 end
 
 % Order fields for easier comparison between different dijs
