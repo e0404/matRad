@@ -1982,7 +1982,7 @@ classdef matRad_TopasConfig < handle
                         fprintf(fID,'iv:Ge/Patient/NumberOfVoxelsZ = 1 %d\n',ct.cubeDim(3));
                         fprintf(fID,'d:Ge/Patient/VoxelSizeX       = %.3f mm\n',ct.resolution.x);
                         fprintf(fID,'d:Ge/Patient/VoxelSizeY       = %.3f mm\n',ct.resolution.y);
-                        fprintf(fID,'dv:Ge/Patient/VoxelSizeZ       = 1 %.3f mm\n',ct.resolution.z);
+                        fprintf(fID,'d:Ge/Patient/VoxelSizeZ       = %.3f mm\n',ct.resolution.z);
                         fprintf(fID,'s:Ge/Patient/DataType  = "SHORT"\n');
                         fprintf(fID,'iv:Ge/Patient/MaterialTagNumbers = %d ',length(unique_hu));
                         fprintf(fID,num2str(unique_hu','%d '));
