@@ -40,8 +40,11 @@ warnDlgDICOMtagShown = false;
 %% get all files in search directory
 
 % dicom import needs image processing toolbox -> check if available
+v = ver;
 if ~license('checkout','image_toolbox')
-    matRad_cfg.dispError('image processing toolbox and/or corresponding licence not available');
+    matRad_cfg.dispError('Image Processing Toolbox and/or corresponding license not available');
+elseif ~any(strcmp('Image Processing Toolbox', {v.Name}))
+    matRad_cfg.dispError('Image Processing Toolbox not installed');
 end
 
 fileList = matRad_listAllFiles(patDir);
