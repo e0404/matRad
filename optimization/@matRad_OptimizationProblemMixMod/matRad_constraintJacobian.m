@@ -36,8 +36,34 @@ function jacob = matRad_constraintJacobian(optiProb,w,dij,cst)
 % get current dose / effect / RBExDose vector
 %d = matRad_backProjection(w,dij,optiProb);
 %d = optiProb.matRad_backProjection(w,dij);
-optiProb.BP.compute(dij,w);
-d = optiProb.BP.GetResult();
+matRad_cfg = MatRad_Config.instance();
+% DOSE PROJECTION
+bxidx = 1; %modality  bixel index
+
+% Obtain cumulative dose cube 
+[d{1}]    = deal(zeros(dij.doseGrid.numOfVoxels,1));
+
+for mod = 1: length(dij.original_Dijs)
+    wt = [];
+    % split the w for current modality
+    STrepmat = (~dij.spatioTemp(mod) + dij.spatioTemp(mod)*dij.numOfSTscen(mod));
+    wt = reshape(w(bxidx: bxidx+STrepmat*dij.original_Dijs{mod}.totalNumOfBixels-1),[dij.original_Dijs{mod}.totalNumOfBixels,STrepmat]);
+    % get current dose / effect / RBExDose vector
+    optiProb.BP.compute(dij.original_Dijs{mod},wt);
+    dt = optiProb.BP.GetResult();
+
+    % also get probabilistic quantities (nearly no overhead if empty)
+    [dExp,dOmega] = optiProb.BP.GetResultProb();                        % NOTE: not sure what exactly to do for the dOmegas 
+
+    %Index of nxt modality
+    bxidx = bxidx + STrepmat*dij.original_Dijs{mod}.totalNumOfBixels;
+    % Accumulat Dose for all scenarios FOR FUTURE REVIEW ON HOW TO COMBINE
+    % DIFFFERENT UNCERTAINTY SCENARIOS FOR DIFFERENT MODALITIES
+    % currently for ST optimization 
+    for scen = 1:numel(dt)
+         d{scen} = d{scen} + sum(dt{scen}.*dij.STfractions{mod}',2);
+    end
+end
 
 % initialize jacobian (only single scenario supported in optimization)
 jacob = sparse([]);
@@ -158,8 +184,10 @@ for i = 1:size(cst,1)
             elseif isa(optiProb.BP,'matRad_EffectProjection') && ~isempty(jacobSub)
                
                if isa(optiProb.BP,'matRad_VariableRBEProjection')
-                  scaledEffect = (dij.gamma(cst{i,4}{1}) + d_i);
-                  jacobSub     = jacobSub./(2*dij.bx(cst{i,4}{1}) .* scaledEffect);
+
+                  scaledEffect = (dij.original_Dijs{1}.gamma(cst{i,4}{1}) + d_i);
+                  jacobSub     = jacobSub./(2*dij.original_Dijs{1}.bx(cst{i,4}{1}) .* scaledEffect);
+
                end
                
                startIx = size(mAlphaDoseProjection{1},2) + 1;
@@ -194,31 +222,40 @@ for i = 1:size(cst,1)
    
 end
 
-
 scenario = 1;
-% enter if statement also for protons using a constant RBE
-if isa(optiProb.BP,'matRad_DoseProjection')
-   
-   if ~isempty(DoseProjection{scenario})
-      jacob = DoseProjection{scenario}' * dij.physicalDose{scenario};
-   end
-   
-elseif isa(optiProb.BP,'matRad_ConstantRBEProjection')
-   
-   if ~isempty(DoseProjection{scenario})
-      jacob = DoseProjection{scenario}' * dij.RBE * dij.physicalDose{scenario};
-   end
-   
-elseif isa(optiProb.BP,'matRad_EffectProjection')
-   
-   if ~isempty(mSqrtBetaDoseProjection{scenario}) && ~isempty(mAlphaDoseProjection{scenario})
-      mSqrtBetaDoseProjection{scenario} = mSqrtBetaDoseProjection{scenario}' * dij.mSqrtBetaDose{scenario} * w;
-      mSqrtBetaDoseProjection{scenario} = sparse(voxelID,constraintID,mSqrtBetaDoseProjection{scenario},...
-         size(mAlphaDoseProjection{scenario},1),size(mAlphaDoseProjection{scenario},2));
-      
-      jacob   = mAlphaDoseProjection{scenario}' * dij.mAlphaDose{scenario} +...
-         mSqrtBetaDoseProjection{scenario}' * dij.mSqrtBetaDose{scenario};
-      
-   end
-end
+bxidx = 1; %modality  bixel index
 
+for mod = 1: length(dij.original_Dijs)
+
+    
+    % enter if statement also for protons using a constant RBE
+    if isa(optiProb.BP,'matRad_DoseProjection')
+       
+       if ~isempty(DoseProjection{scenario})
+          jacob = [jacob,DoseProjection{scenario}' * dij.STfractions{mod} * dij.original_Dijs{mod}.physicalDose{scenario}];
+       end
+       
+    elseif isa(optiProb.BP,'matRad_ConstantRBEProjection')
+       
+       if ~isempty(DoseProjection{scenario})
+          jacob = [jacob,DoseProjection{scenario}' * dij.STfractions{mod}*  dij.original_Dijs{mod}.RBE * dij.original_Dijs{mod}.physicalDose{scenario}];
+       end
+       
+    elseif isa(optiProb.BP,'matRad_EffectProjection')
+       
+       if ~isempty(mSqrtBetaDoseProjection{scenario}) && ~isempty(mAlphaDoseProjection{scenario})
+
+          STrepmat = (~dij.spatioTemp(mod) + dij.spatioTemp(mod)*dij.numOfSTscen(mod));
+          wt = reshape(w(bxidx: bxidx+STrepmat*dij.original_Dijs{mod}.totalNumOfBixels-1),[dij.original_Dijs{mod}.totalNumOfBixels,STrepmat]);
+
+          mSqrtBetaDoseProjectionmod = mSqrtBetaDoseProjection{scenario}' * dij.original_Dijs{mod}.mSqrtBetaDose{scenario} * wt;
+          mSqrtBetaDoseProjectionmod = sparse(voxelID,constraintID,mSqrtBetaDoseProjectionmod,...
+             size(mAlphaDoseProjection{scenario},1),size(mAlphaDoseProjection{scenario},2));
+          
+          jacob   = [jacob,mAlphaDoseProjection{scenario}' * dij.STfractions{mod}* dij.original_Dijs{mod}.mAlphaDose{scenario} +...
+             mSqrtBetaDoseProjectionmod' * dij.original_Dijs{mod}.mSqrtBetaDose{scenario}];
+       end
+    end
+end
+end
+%}
