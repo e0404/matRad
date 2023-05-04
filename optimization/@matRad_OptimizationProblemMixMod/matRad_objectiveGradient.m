@@ -109,7 +109,7 @@ end
                                 ixContour = contourScen(s);
                                 d_i = d{ixScen}(cst{i,4}{ixContour});
                                 %add to dose gradient
-                                doseGradient{ixScen}(cst{i,4}{ixContour}) = doseGradient{ixScen}(cst{i,4}{ixContour}) + objective.computeDoseObjectiveGradient(d_i);
+                                doseGradient{ixScen}(cst{i,4}{ixContour}) = doseGradient{ixScen}(cst{i,4}{ixContour}) + objective.penalty * objective.computeDoseObjectiveGradient(d_i);
                             end
                         case 'STOCH' % perform stochastic optimization with weighted / random scenarios
                             for s = 1:numel(useScen)
@@ -119,7 +119,7 @@ end
                                 d_i = d{ixScen}(cst{i,4}{ixContour});
 
                                 doseGradient{ixScen}(cst{i,4}{ixContour}) = doseGradient{ixScen}(cst{i,4}{ixContour}) + ...
-                                    (objective.computeDoseObjectiveGradient(d_i) * scenProb(s));
+                                    (objective.penalty * objective.computeDoseObjectiveGradient(d_i) * scenProb(s));
 
                             end
 
@@ -131,7 +131,7 @@ end
 
                             d_i = dExp{1}(cst{i,4}{1});
 
-                            doseGradientExp{1}(cst{i,4}{1}) = doseGradientExp{1}(cst{i,4}{1}) + objective.computeDoseObjectiveGradient(d_i);
+                            doseGradientExp{1}(cst{i,4}{1}) = doseGradientExp{1}(cst{i,4}{1}) + objective.penalty * objective.computeDoseObjectiveGradient(d_i);
 
                             p = objective.penalty/numel(cst{i,4}{1});
 
@@ -164,7 +164,7 @@ end
                                 matRad_cfg.dispWarning('%d NaN values in gradient.',numel(isnan(d_i)));
                             end
 
-                            deltaTmp = objective.computeDoseObjectiveGradient(d_i);
+                            deltaTmp = objective.penalty * objective.computeDoseObjectiveGradient(d_i);
 
                             for s = 1:numel(useScen)
                                 ixScen = useScen(s);
@@ -206,7 +206,7 @@ end
                                 matRad_cfg.dispWarning('%d NaN values in gradFuncWrapper.',numel(isnan(d_i)));
                             end
 
-                            deltaTmp = objective.computeDoseObjectiveGradient(d_i);
+                            deltaTmp = objective.penalty * objective.computeDoseObjectiveGradient(d_i);
 
                             for s = 1:numel(useScen)
                                 ixScen = useScen(s);
@@ -234,8 +234,8 @@ end
 
                                 d_i = d{ixScen}(cst{i,4}{ixContour});
 
-                                f_COWC(ixScen) = f_COWC(ixScen) + objective.computeDoseObjectiveFunction(d_i);
-                                delta_COWC{ixScen}(cst{i,4}{ixContour}) = delta_COWC{ixScen}(cst{i,4}{ixContour}) + objective.computeDoseObjectiveGradient(d_i);
+                                f_COWC(ixScen) = f_COWC(ixScen) + objective.penalty * objective.computeDoseObjectiveFunction(d_i);
+                                delta_COWC{ixScen}(cst{i,4}{ixContour}) = delta_COWC{ixScen}(cst{i,4}{ixContour}) + objective.penalty * objective.computeDoseObjectiveGradient(d_i);
                             end
 
                         case 'OWC' % objective-wise worst case consideres the worst individual objective function value
@@ -253,9 +253,9 @@ end
 
                                 d_i = d{ixScen}(cst{i,4}{ixContour});
 
-                                f_OWC(ixScen) = objective.computeDoseObjectiveFunction(d_i);
+                                f_OWC(ixScen) = objective.penalty * objective.computeDoseObjectiveFunction(d_i);
 
-                                delta_OWC{ixScen}(cst{i,4}{ixContour}) = objective.computeDoseObjectiveGradient(d_i);
+                                delta_OWC{ixScen}(cst{i,4}{ixContour}) = objective.penalty * objective.computeDoseObjectiveGradient(d_i);
 
                             end
 
@@ -363,5 +363,4 @@ if gradientChecker == 1
     end
     
 end
-
 end
