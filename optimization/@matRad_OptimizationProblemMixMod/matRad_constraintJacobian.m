@@ -106,7 +106,7 @@ for i = 1:size(cst,1)
             
             switch robustness
                
-               case 'none' % if conventional opt: just sum objectiveectives of nominal dose
+               case 'none' % if conventional opt: just sum objectives of nominal dose
                      d_i = d{1}(cst{i,4}{1});
                      jacobSub = constraint.computeDoseConstraintJacobian(d_i);
                   
@@ -247,15 +247,36 @@ for mod = 1: length(dij.original_Dijs)
 
           STrepmat = (~dij.spatioTemp(mod) + dij.spatioTemp(mod)*dij.numOfSTscen(mod));
           wt = reshape(w(bxidx: bxidx+STrepmat*dij.original_Dijs{mod}.totalNumOfBixels-1),[dij.original_Dijs{mod}.totalNumOfBixels,STrepmat]);
-
+            
           mSqrtBetaDoseProjectionmod = mSqrtBetaDoseProjection{scenario}' * dij.original_Dijs{mod}.mSqrtBetaDose{scenario} * wt;
           mSqrtBetaDoseProjectionmod = sparse(voxelID,constraintID,mSqrtBetaDoseProjectionmod,...
              size(mAlphaDoseProjection{scenario},1),size(mAlphaDoseProjection{scenario},2));
           
           jacob   = [jacob,mAlphaDoseProjection{scenario}' * dij.STfractions{mod}* dij.original_Dijs{mod}.mAlphaDose{scenario} +...
-             mSqrtBetaDoseProjectionmod' * dij.original_Dijs{mod}.mSqrtBetaDose{scenario}];
+             mSqrtBetaDoseProjectionmod' * dij.STfractions{mod}* dij.original_Dijs{mod}.mSqrtBetaDose{scenario}];
+
+          bxidx = bxidx + STrepmat*dij.original_Dijs{mod}.totalNumOfBixels;
        end
     end
 end
+jacobianChecker = 1;
+if jacobianChecker == 1
+            c =  matRad_constraintFunctions(optiProb,w,dij,cst);
+    epsilon = 1e-6;
+    ix2 = unique(randi([1 numel(w)],1,5));
+    ix = find((full(jacob)>1e-3),5, "first")';
+    for i=ix
+        wInit = w;
+        wInit(i) = wInit(i) + epsilon;
+        cDel= matRad_constraintFunctions(optiProb,wInit,dij,cst);
+        numJacob = (cDel - c)/epsilon;
+        fullJacob = full(jacob);
+        diff = (numJacob./fullJacob(:,i) - 1)*100;
+        fprintf(['grad val #' num2str(i) ' - rel diff numerical and analytical jacob = ' num2str(diff(1)) '\n']);
+        %fprintf([' any nan or zero for photons' num2str(sum(isnan(glog{1}))) ',' num2str(sum(~logical(glog{1}))) ' for protons: ' num2str(sum(isnan(glog{2}))) ',' num2str(sum(~logical(glog{2}))) '\n']);
+    end
+    
+end
+
 end
 %}
