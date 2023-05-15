@@ -407,26 +407,26 @@ classdef matRad_TopasConfig < handle
     end
     methods (Access = private)
         function dij = maskDij(obj,dij)
-    
-                % Clip dose to patient body
-                mask = true(obj.MCparam.ctGrid.dimensions);
-                mask(obj.MCparam.patientVoxelIndices) = 0;
-    
-                uniqueTallies = unique(obj.MCparam.tallies);
-                for t = 1:length(uniqueTallies)
-                    for scenarioIx = 1:dij.numOfScenarios
-                        dij.(uniqueTallies{t}){scenarioIx}(mask,:) = 0;
-                        if isfield(dij,[uniqueTallies{t} '_std'])
-                            dij.([uniqueTallies{t} '_std']){scenarioIx}(mask,:) = 0;
-                        end
-                        if isfield(dij,[uniqueTallies{t} '_batchStd'])
-                            dij.([uniqueTallies{t} '_batchStd']){scenarioIx}(mask,:) = 0;
-                        end
+
+            % Clip dose to patient body
+            mask = true(obj.MCparam.ctGrid.dimensions);
+            mask(obj.MCparam.patientVoxelIndices) = 0;
+
+            uniqueTallies = unique(obj.MCparam.tallies);
+            for t = 1:length(uniqueTallies)
+                for scenarioIx = 1:dij.numOfScenarios
+                    dij.(uniqueTallies{t}){scenarioIx}(mask,:) = 0;
+                    if isfield(dij,[uniqueTallies{t} '_std'])
+                        dij.([uniqueTallies{t} '_std']){scenarioIx}(mask,:) = 0;
+                    end
+                    if isfield(dij,[uniqueTallies{t} '_batchStd'])
+                        dij.([uniqueTallies{t} '_batchStd']){scenarioIx}(mask,:) = 0;
                     end
                 end
-    
+            end
+
         end
-            
+
         function topasCubes = markFieldsAsEmpty(obj,topasCubes)
 
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
@@ -487,11 +487,17 @@ classdef matRad_TopasConfig < handle
             % Make sure that the filename always ends on 'run1_*tally*'
             switch obj.MCparam.outputType
                 case 'csv'
-                    files = dir([folder filesep 'score_matRad_plan_field1_run1_*.csv']);
-                    obj.MCparam.tallies = cellfun(@(x) extractBetween(x,'run1_','.csv') ,{files(:).name});
+                    searchstr = 'score_matRad_plan_field1_run1_*.csv';
+                    files = dir([folder filesep searchstr]);
+                    %obj.MCparam.tallies = cellfun(@(x) extractBetween(x,'run1_','.csv') ,{files(:).name}); %Not Octave compatible
+                    nameBegin = strfind(searchstr,'*');
+                    obj.MCparam.tallies = cellfun(@(s) s(nameBegin:end-4),{files(:).name},'UniformOutput',false);
                 case 'binary'
-                    files = dir([folder filesep 'score_matRad_plan_field1_*run1_*.bin']);
-                    obj.MCparam.tallies = cellfun(@(x) extractBetween(x,'run1_','.bin') ,{files(:).name});
+                    searchstr = 'score_matRad_plan_field1_run1_*.bin';
+                    files = dir([folder filesep searchstr]);
+                    %obj.MCparam.tallies = cellfun(@(x) extractBetween(x,'run1_','.bin') ,{files(:).name}); %Not Octave compatible
+                    nameBegin = strfind(searchstr,'*');
+                    obj.MCparam.tallies = cellfun(@(s) s(nameBegin:end-4),{files(:).name},'UniformOutput',false);
             end
 
             obj.MCparam.tallies = unique(obj.MCparam.tallies);
@@ -535,7 +541,7 @@ classdef matRad_TopasConfig < handle
 
                             % Read data from scored TOPAS files
                             dataRead = obj.readBinCsvData(genFullFile);
-                               
+
                             if any(isnan(dataRead{1}(:)))
                                 matRad_cfg.dispWarning(['NaN detected in run ' num2str(k)])
                             end
@@ -803,7 +809,7 @@ classdef matRad_TopasConfig < handle
                         end
                     end
                 end
-                
+
                 % Remove processed physDoseFields from total tallies
                 topasCubesTallies = topasCubesTallies(~physDoseFields);
 
@@ -993,7 +999,7 @@ classdef matRad_TopasConfig < handle
                         matRad_cfg.dispDebug('Reading phase space scorer from %s\n',fname);
                         scorerName = fileread(fname);
                         fprintf(fID,'\n%s\n\n',scorerName);
-                        
+
                     else
                         % write dose to medium scorer
                         if obj.scorer.doseToMedium
@@ -1076,27 +1082,27 @@ classdef matRad_TopasConfig < handle
                         if obj.scorer.sharedSubscorers && obj.scorer.RBE
                             % Select appropriate scorer from selected flags
                             for currModel = obj.scorer.RBE_model
-                            scorerNames = {'Alpha','Beta'};
-                            if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'mcn')), currModel))
-                                obj.scorer.LET = true;
-                                obj.scorer.doseToWater = true;
-                                scorerPrefix = 'McNamara';
-                            elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'wed')), currModel))
-                                obj.scorer.LET = true;
-                                obj.scorer.doseToWater = true;
-                                scorerPrefix = 'Wedenberg';
-                            elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'lem')), currModel)) || any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'libamtrack')), currModel))
-                                obj.scorer.doseToWater = true;
-                                scorerPrefix = 'tabulated';
-                            end
-
-                            % Write subscorer to config files
-                            for s = 1:length(scorerNames)
-                                if strcmp(obj.radiationMode,'protons')
-                                    fprintf(fID,'s:Sc/%s%s/ReferencedSubScorer_LET      = "ProtonLET"\n',scorerPrefix,scorerNames{s});
+                                scorerNames = {'Alpha','Beta'};
+                                if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'mcn')), currModel))
+                                    obj.scorer.LET = true;
+                                    obj.scorer.doseToWater = true;
+                                    scorerPrefix = 'McNamara';
+                                elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'wed')), currModel))
+                                    obj.scorer.LET = true;
+                                    obj.scorer.doseToWater = true;
+                                    scorerPrefix = 'Wedenberg';
+                                elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'lem')), currModel)) || any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'libamtrack')), currModel))
+                                    obj.scorer.doseToWater = true;
+                                    scorerPrefix = 'tabulated';
                                 end
-                                fprintf(fID,'s:Sc/%s%s/ReferencedSubScorer_Dose     = "Tally_DoseToWater"\n',scorerPrefix,scorerNames{s});
-                            end
+
+                                % Write subscorer to config files
+                                for s = 1:length(scorerNames)
+                                    if strcmp(obj.radiationMode,'protons')
+                                        fprintf(fID,'s:Sc/%s%s/ReferencedSubScorer_LET      = "ProtonLET"\n',scorerPrefix,scorerNames{s});
+                                    end
+                                    fprintf(fID,'s:Sc/%s%s/ReferencedSubScorer_Dose     = "Tally_DoseToWater"\n',scorerPrefix,scorerNames{s});
+                                end
                             end
                         end
 
@@ -1400,9 +1406,12 @@ classdef matRad_TopasConfig < handle
                                         dataTOPAS(cutNumOfBixel).energy = selectedData(ixTmp).MeanEnergy;
                                         dataTOPAS(cutNumOfBixel).nominalEnergy = selectedData(ixTmp).NominalEnergy;
                                         dataTOPAS(cutNumOfBixel).energySpread = selectedData(ixTmp).EnergySpread;
-                                        dataTOPAS(cutNumOfBixel).spotSize = selectedData(ixTmp).SpotSize1x;
-                                        dataTOPAS(cutNumOfBixel).divergence = selectedData(ixTmp).Divergence1x;
-                                        dataTOPAS(cutNumOfBixel).correlation = selectedData(ixTmp).Correlation1x;
+                                        dataTOPAS(cutNumOfBixel).spotSizeX = selectedData(ixTmp).SpotSize1x;
+                                        dataTOPAS(cutNumOfBixel).divergenceX = selectedData(ixTmp).Divergence1x;
+                                        dataTOPAS(cutNumOfBixel).correlationX = selectedData(ixTmp).Correlation1x;
+                                        dataTOPAS(cutNumOfBixel).spotSizeY = selectedData(ixTmp).SpotSize1y;
+                                        dataTOPAS(cutNumOfBixel).divergenceY = selectedData(ixTmp).Divergence1y;
+                                        dataTOPAS(cutNumOfBixel).correlationY = selectedData(ixTmp).Correlation1y;
                                         dataTOPAS(cutNumOfBixel).focusFWHM = selectedData(ixTmp).FWHMatIso;
                                     end
                                 case 'photons'
@@ -1500,262 +1509,262 @@ classdef matRad_TopasConfig < handle
                 fileID = fopen(fullfile(obj.workingDir,fieldSetupFileName),'w');
                 obj.writeFieldHeader(fileID);
 
-                    % NozzleAxialDistance
-                    if isPhoton
-                        fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', 1000 + ct.cubeDim(3)*ct.resolution.z);%Not sure if this is correct,100 cm is SSD and probably distance from surface to isocenter needs to be added
-                    else
-                        fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', nozzleToAxisDistance);
+                % NozzleAxialDistance
+                if isPhoton
+                    fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', 1000 + ct.cubeDim(3)*ct.resolution.z);%Not sure if this is correct,100 cm is SSD and probably distance from surface to isocenter needs to be added
+                else
+                    fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', nozzleToAxisDistance);
+                end
+
+                if obj.pencilBeamScanning
+                    fprintf(fileID,'d:Ge/Nozzle/RotX = Tf/Beam/AngleX/Value rad\n');
+                    fprintf(fileID,'d:Ge/Nozzle/RotY = Tf/Beam/AngleY/Value rad\n');
+                    fprintf(fileID,'d:Ge/Nozzle/RotZ = 0.0 rad\n\n');
+                end
+
+                %Write modality specific info
+                switch stf(beamIx).radiationMode
+                    case 'protons'
+                        fprintf(fileID,'s:Sim/ParticleName = "proton"\n');
+                        fprintf(fileID,'u:Sim/ParticleMass = 1.0\n');
+
+                        particleA = 1;
+                        % particleZ = 1;
+
+                        modules = obj.modules_protons;
+
+                    case 'carbon'
+                        fprintf(fileID,'s:Sim/ParticleName = "GenericIon(6,12)"\n');
+                        fprintf(fileID,'u:Sim/ParticleMass = 12.0\n');
+
+                        particleA = 12;
+                        % particleZ = 6;
+
+                        modules = obj.modules_GenericIon;
+
+                    case 'helium'
+                        fprintf(fileID,'s:Sim/ParticleName = "GenericIon(2,4)"\n');
+                        fprintf(fileID,'u:Sim/ParticleMass = 4.0\n');
+
+                        particleA = 4;
+                        % particleZ = 2;
+
+                        modules = obj.modules_GenericIon;
+
+                    case 'photons'
+                        fprintf(fileID,'s:Sim/ParticleName = "gamma"\n');
+                        fprintf(fileID,'u:Sim/ParticleMass = 0\n');
+
+                        particleA = 0;
+                        % particleZ = 0;
+
+                        modules = obj.modules_photons;
+
+                    otherwise
+                        matRad_cfg.dispError('Invalid radiation mode %s!',stf.radiationMode)
+                end
+
+                if obj.pencilBeamScanning
+                    % Write couch and gantry angles
+                    fprintf(fileID,'d:Sim/GantryAngle = %f deg\n',stf(beamIx).gantryAngle);
+                    fprintf(fileID,'d:Sim/CouchAngle = %f deg\n',stf(beamIx).couchAngle);
+
+                    % Write time feature (TOPAS uses time features to loop through bixels)
+                    fprintf(fileID,'d:Tf/TimelineStart = 0. ms\n');
+                    fprintf(fileID,'d:Tf/TimelineEnd = %i ms\n', 10 * cutNumOfBixel);
+                    fprintf(fileID,'i:Tf/NumberOfSequentialTimes = %i\n', cutNumOfBixel);
+                    fprintf(fileID,'dv:Tf/Beam/Spot/Times = %i ', cutNumOfBixel);
+                    fprintf(fileID,'%i ',linspace(10,cutNumOfBixel*10,cutNumOfBixel));
+                    fprintf(fileID,' ms\n');
+                    %fprintf(fileID,'uv:Tf/Beam/Spot/Values = %i %s\n',cutNumOfBixel,num2str(collectBixelIdx));
+
+                    % Write energySpectrum if available and flag is set
+                    if ~isPhoton && isfield(baseData.machine.data,'energySpectrum') && obj.useEnergySpectrum
+                        matRad_cfg.dispInfo('Beam energy spectrum available\n');
+                        energySpectrum = [baseData.machine.data(:).energySpectrum];
+                        nbSpectrumPoints = length(energySpectrum(1).energy_MeVpN);
+
+                        % Get energy indices of the current energies in the baseData
+                        [~,energyIx] = ismember([dataTOPAS.nominalEnergy],[baseData.machine.data.energy]);
+
+                        fprintf(fileID,'s:So/PencilBeam/BeamEnergySpectrumType = "Continuous"\n');
+                        fprintf(fileID,'dv:So/PencilBeam/BeamEnergySpectrumValues = %d %s MeV\n',nbSpectrumPoints,strtrim(sprintf('Tf/Beam/EnergySpectrum/Energy/Point%03d/Value ',1:nbSpectrumPoints)));
+                        fprintf(fileID,'uv:So/PencilBeam/BeamEnergySpectrumWeights = %d %s\n',nbSpectrumPoints,strtrim(sprintf('Tf/Beam/EnergySpectrum/Weight/Point%03d/Value ',1:nbSpectrumPoints)));
+                        points_energy = reshape([energySpectrum(energyIx).energy_MeVpN],[],length(energyIx));
+                        points_weight = reshape([energySpectrum(energyIx).weight],[],length(energyIx));
+                        for spectrumPoint=1:nbSpectrumPoints
+                            fprintf(fileID,'s:Tf/Beam/EnergySpectrum/Energy/Point%03d/Function = "Step"\n',spectrumPoint);
+                            fprintf(fileID,'dv:Tf/Beam/EnergySpectrum/Energy/Point%03d/Times = Tf/Beam/Spot/Times ms\n',spectrumPoint);
+                            fprintf(fileID,'dv:Tf/Beam/EnergySpectrum/Energy/Point%03d/Values = %d %s MeV\n',spectrumPoint,cutNumOfBixel,strtrim(sprintf('%f ',particleA*points_energy(spectrumPoint,:))));
+                            fprintf(fileID,'s:Tf/Beam/EnergySpectrum/Weight/Point%03d/Function = "Step"\n',spectrumPoint);
+                            fprintf(fileID,'dv:Tf/Beam/EnergySpectrum/Weight/Point%03d/Times = Tf/Beam/Spot/Times ms\n',spectrumPoint);
+                            fprintf(fileID,'uv:Tf/Beam/EnergySpectrum/Weight/Point%03d/Values = %d %s\n',spectrumPoint,cutNumOfBixel,strtrim(sprintf('%f ',points_weight(spectrumPoint,:))));
+                        end
                     end
 
-                    if obj.pencilBeamScanning
-                        fprintf(fileID,'d:Ge/Nozzle/RotX = Tf/Beam/AngleX/Value rad\n');
-                        fprintf(fileID,'d:Ge/Nozzle/RotY = Tf/Beam/AngleY/Value rad\n');
-                        fprintf(fileID,'d:Ge/Nozzle/RotZ = 0.0 rad\n\n');
-                    end
+                    % Write amount of energies in plan
+                    fprintf(fileID,'s:Tf/Beam/Energy/Function = "Step"\n');
+                    fprintf(fileID,'dv:Tf/Beam/Energy/Times = Tf/Beam/Spot/Times ms\n');
+                    fprintf(fileID,'dv:Tf/Beam/Energy/Values = %i ', cutNumOfBixel);
 
-                    %Write modality specific info
-                    switch stf(beamIx).radiationMode
-                        case 'protons'
-                            fprintf(fileID,'s:Sim/ParticleName = "proton"\n');
-                            fprintf(fileID,'u:Sim/ParticleMass = 1.0\n');
+                    % Write actual energies
+                    % WARNING: Transform total energy with atomic number
+                    fprintf(fileID,'%f ',particleA*[dataTOPAS.energy]);
+                    fprintf(fileID,' MeV\n');
+                end
 
-                            particleA = 1;
-                            % particleZ = 1;
+                % Write beam profile
+                switch obj.beamProfile
+                    case 'biGaussian'
+                        % Write energy spread
+                        fprintf(fileID,'s:Tf/Beam/EnergySpread/Function = "Step"\n');
+                        fprintf(fileID,'dv:Tf/Beam/EnergySpread/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'uv:Tf/Beam/EnergySpread/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,'%f ',[dataTOPAS.energySpread]);
+                        fprintf(fileID,'\n');
 
-                            modules = obj.modules_protons;
+                        % Write parameters for first dimension
+                        fprintf(fileID,'s:Tf/Beam/SigmaX/Function = "Step"\n');
+                        fprintf(fileID,'dv:Tf/Beam/SigmaX/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'dv:Tf/Beam/SigmaX/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,'%f ',[dataTOPAS.spotSizeX]);
+                        fprintf(fileID,' mm\n');
+                        fprintf(fileID,'s:Tf/Beam/SigmaXPrime/Function = "Step"\n');
+                        fprintf(fileID,'dv:Tf/Beam/SigmaXPrime/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'uv:Tf/Beam/SigmaXPrime/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,'%f ',[dataTOPAS.divergenceX]);
+                        fprintf(fileID,'\n');
+                        fprintf(fileID,'s:Tf/Beam/CorrelationX/Function = "Step"\n');
+                        fprintf(fileID,'dv:Tf/Beam/CorrelationX/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'uv:Tf/Beam/CorrelationX/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,'%f ',[dataTOPAS.correlationX]);
+                        fprintf(fileID,'\n');
 
-                        case 'carbon'
-                            fprintf(fileID,'s:Sim/ParticleName = "GenericIon(6,12)"\n');
-                            fprintf(fileID,'u:Sim/ParticleMass = 12.0\n');
+                        % Write parameters for second dimension (profile is uniform)
+                        fprintf(fileID,'s:Tf/Beam/SigmaY/Function = "Step"\n');
+                        fprintf(fileID,'dv:Tf/Beam/SigmaY/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'dv:Tf/Beam/SigmaY/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,'%f ',[dataTOPAS.spotSizeY]);
+                        fprintf(fileID,' mm\n');
+                        fprintf(fileID,'s:Tf/Beam/SigmaYPrime/Function = "Step"\n');
+                        fprintf(fileID,'dv:Tf/Beam/SigmaYPrime/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'uv:Tf/Beam/SigmaYPrime/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,'%f ',[dataTOPAS.divergenceY]);
+                        fprintf(fileID,'\n');
+                        fprintf(fileID,'s:Tf/Beam/CorrelationY/Function = "Step"\n');
+                        fprintf(fileID,'dv:Tf/Beam/CorrelationY/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'uv:Tf/Beam/CorrelationY/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,'%f ',[dataTOPAS.correlationY]);
+                        fprintf(fileID,'\n');
 
-                            particleA = 12;
-                            % particleZ = 6;
+                    case 'simple'
+                        fprintf(fileID,'s:Tf/Beam/FocusFWHM/Function = "Step"\n');
+                        fprintf(fileID,'dv:Tf/Beam/FocusFWHM/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'dv:Tf/Beam/FocusFWHM/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,'%f ',[dataTOPAS.focusFWHM]);
+                        fprintf(fileID,' mm\n');
 
-                            modules = obj.modules_GenericIon;
+                    case 'virtualGaussian'
+                        fprintf(fileID,'s:Tf/Beam/EnergySpread/Function = "Step"\n');
+                        fprintf(fileID,'dv:Tf/Beam/EnergySpread/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'uv:Tf/Beam/EnergySpread/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,num2str([dataTOPAS.energySpread]));
+                        fprintf(fileID,'\n');
 
-                        case 'helium'
-                            fprintf(fileID,'s:Sim/ParticleName = "GenericIon(2,4)"\n');
-                            fprintf(fileID,'u:Sim/ParticleMass = 4.0\n');
+                        if isfield(pln.propStf, 'collimation')
+                            % Use field width for now
+                            fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadX = %d mm\n', pln.propStf.collimation.fieldWidth);
+                            fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadY = %d mm\n', pln.propStf.collimation.fieldWidth);
+                        else
+                            % Set some default value
+                            fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadX = %d mm\n', 30);
+                            fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadY = %d mm\n', 30);
+                        end
 
-                            particleA = 4;
-                            % particleZ = 2;
+                    case 'uniform'
+                        fprintf(fileID,'s:Tf/Beam/EnergySpread/Function = "Step"\n');
+                        fprintf(fileID,'dv:Tf/Beam/EnergySpread/Times = Tf/Beam/Spot/Times ms\n');
+                        fprintf(fileID,'uv:Tf/Beam/EnergySpread/Values = %i ', cutNumOfBixel);
+                        fprintf(fileID,num2str([dataTOPAS.energySpread]));
+                        fprintf(fileID,'\n');
 
-                            modules = obj.modules_GenericIon;
+                        if isfield(pln.propStf, 'collimation')
+                            % Use field width for now
+                            fprintf(fileID,'d:So/PencilBeam/BeamPositionCutoffX = %d mm\n', pln.propStf.collimation.fieldWidth/2);
+                            fprintf(fileID,'d:So/PencilBeam/BeamPositionCutoffY = %d mm\n', pln.propStf.collimation.fieldWidth/2);
+                        else
+                            % Set some default value
+                            fprintf(fileID,'d:So/PencilBeam/BeamPositionCutoffX = %d mm\n', 15);
+                            fprintf(fileID,'d:So/PencilBeam/BeamPositionCutoffY = %d mm\n', 15);
+                        end
 
-                        case 'photons'
-                            fprintf(fileID,'s:Sim/ParticleName = "gamma"\n');
-                            fprintf(fileID,'u:Sim/ParticleMass = 0\n');
-
-                            particleA = 0;
-                            % particleZ = 0;
-
-                            modules = obj.modules_photons;
-
-                        otherwise
-                            matRad_cfg.dispError('Invalid radiation mode %s!',stf.radiationMode)
-                    end
-
-                    if obj.pencilBeamScanning
-                        % Write couch and gantry angles
-                        fprintf(fileID,'d:Sim/GantryAngle = %f deg\n',stf(beamIx).gantryAngle);
+                    case 'phasespace'
+                        fprintf(fileID,'d:Sim/GantryAngle = %f deg\n',stf(beamIx).gantryAngle); %just one beam angle for now
                         fprintf(fileID,'d:Sim/CouchAngle = %f deg\n',stf(beamIx).couchAngle);
-
-                        % Write time feature (TOPAS uses time features to loop through bixels)
-                        fprintf(fileID,'d:Tf/TimelineStart = 0. ms\n');
-                        fprintf(fileID,'d:Tf/TimelineEnd = %i ms\n', 10 * cutNumOfBixel);
-                        fprintf(fileID,'i:Tf/NumberOfSequentialTimes = %i\n', cutNumOfBixel);
-                        fprintf(fileID,'dv:Tf/Beam/Spot/Times = %i ', cutNumOfBixel);
-                        fprintf(fileID,'%i ',linspace(10,cutNumOfBixel*10,cutNumOfBixel));
-                        fprintf(fileID,' ms\n');
-                        %fprintf(fileID,'uv:Tf/Beam/Spot/Values = %i %s\n',cutNumOfBixel,num2str(collectBixelIdx));
-
-                        % Write energySpectrum if available and flag is set
-                        if ~isPhoton && isfield(baseData.machine.data,'energySpectrum') && obj.useEnergySpectrum
-                            matRad_cfg.dispInfo('Beam energy spectrum available\n');
-                            energySpectrum = [baseData.machine.data(:).energySpectrum];
-                            nbSpectrumPoints = length(energySpectrum(1).energy_MeVpN);
-
-                            % Get energy indices of the current energies in the baseData
-                            [~,energyIx] = ismember([dataTOPAS.nominalEnergy],[baseData.machine.data.energy]);
-
-                            fprintf(fileID,'s:So/PencilBeam/BeamEnergySpectrumType = "Continuous"\n');
-                            fprintf(fileID,'dv:So/PencilBeam/BeamEnergySpectrumValues = %d %s MeV\n',nbSpectrumPoints,strtrim(sprintf('Tf/Beam/EnergySpectrum/Energy/Point%03d/Value ',1:nbSpectrumPoints)));
-                            fprintf(fileID,'uv:So/PencilBeam/BeamEnergySpectrumWeights = %d %s\n',nbSpectrumPoints,strtrim(sprintf('Tf/Beam/EnergySpectrum/Weight/Point%03d/Value ',1:nbSpectrumPoints)));
-                            points_energy = reshape([energySpectrum(energyIx).energy_MeVpN],[],length(energyIx));
-                            points_weight = reshape([energySpectrum(energyIx).weight],[],length(energyIx));
-                            for spectrumPoint=1:nbSpectrumPoints
-                                fprintf(fileID,'s:Tf/Beam/EnergySpectrum/Energy/Point%03d/Function = "Step"\n',spectrumPoint);
-                                fprintf(fileID,'dv:Tf/Beam/EnergySpectrum/Energy/Point%03d/Times = Tf/Beam/Spot/Times ms\n',spectrumPoint);
-                                fprintf(fileID,'dv:Tf/Beam/EnergySpectrum/Energy/Point%03d/Values = %d %s MeV\n',spectrumPoint,cutNumOfBixel,strtrim(sprintf('%f ',particleA*points_energy(spectrumPoint,:))));
-                                fprintf(fileID,'s:Tf/Beam/EnergySpectrum/Weight/Point%03d/Function = "Step"\n',spectrumPoint);
-                                fprintf(fileID,'dv:Tf/Beam/EnergySpectrum/Weight/Point%03d/Times = Tf/Beam/Spot/Times ms\n',spectrumPoint);
-                                fprintf(fileID,'uv:Tf/Beam/EnergySpectrum/Weight/Point%03d/Values = %d %s\n',spectrumPoint,cutNumOfBixel,strtrim(sprintf('%f ',points_weight(spectrumPoint,:))));
+                        % Here the phasespace file is loaded and referenced in the beamSetup file
+                        phaseSpaceFileName = 'SIEMENS_PRIMUS_6.0_0.10_15.0x15.0';
+                        if obj.externalCalculation
+                            matRad_cfg.dispWarning(['External calculation and phaseSpace selected, manually place ' phaseSpaceFileName '.header and ' phaseSpaceFileName '.phsp into your simulation directory.']);
+                        else
+                            if length(dir([obj.thisFolder filesep 'beamSetup' filesep 'phasespace' filesep phaseSpaceFileName '*'])) < 2
+                                matRad_cfg.dispError([phaseSpaceFileName ' header or phsp file could not be found in beamSetup/phasespace folder.']);
                             end
                         end
+                        phasespaceStr = ['..' filesep 'beamSetup' filesep 'phasespace' filesep phaseSpaceFileName];
+                        phasespaceStr =  replace(phasespaceStr, '\', '/');
+                        fprintf(fileID,'s:So/Phasespace/PhaseSpaceFileName = "%s"\n', phasespaceStr);
 
-                        % Write amount of energies in plan
-                        fprintf(fileID,'s:Tf/Beam/Energy/Function = "Step"\n');
-                        fprintf(fileID,'dv:Tf/Beam/Energy/Times = Tf/Beam/Spot/Times ms\n');
-                        fprintf(fileID,'dv:Tf/Beam/Energy/Values = %i ', cutNumOfBixel);
+                end
 
-                        % Write actual energies
-                        % WARNING: Transform total energy with atomic number
-                        fprintf(fileID,'%f ',particleA*[dataTOPAS.energy]);
-                        fprintf(fileID,' MeV\n');
-                    end
-
-                    % Write beam profile
-                    switch obj.beamProfile
-                        case 'biGaussian'
-                            % Write energy spread
-                            fprintf(fileID,'s:Tf/Beam/EnergySpread/Function = "Step"\n');
-                            fprintf(fileID,'dv:Tf/Beam/EnergySpread/Times = Tf/Beam/Spot/Times ms\n');
-                            fprintf(fileID,'uv:Tf/Beam/EnergySpread/Values = %i ', cutNumOfBixel);
-                            fprintf(fileID,'%f ',[dataTOPAS.energySpread]);
-                            fprintf(fileID,'\n');
-
-                            % Write parameters for first dimension
-                            fprintf(fileID,'s:Tf/Beam/SigmaX/Function = "Step"\n');
-                            fprintf(fileID,'dv:Tf/Beam/SigmaX/Times = Tf/Beam/Spot/Times ms\n');
-                            fprintf(fileID,'dv:Tf/Beam/SigmaX/Values = %i ', cutNumOfBixel);
-                            fprintf(fileID,'%f ',[dataTOPAS.spotSize]);
-                            fprintf(fileID,' mm\n');
-                            fprintf(fileID,'s:Tf/Beam/SigmaXPrime/Function = "Step"\n');
-                            fprintf(fileID,'dv:Tf/Beam/SigmaXPrime/Times = Tf/Beam/Spot/Times ms\n');
-                            fprintf(fileID,'uv:Tf/Beam/SigmaXPrime/Values = %i ', cutNumOfBixel);
-                            fprintf(fileID,'%f ',[dataTOPAS.divergence]);
-                            fprintf(fileID,'\n');
-                            fprintf(fileID,'s:Tf/Beam/CorrelationX/Function = "Step"\n');
-                            fprintf(fileID,'dv:Tf/Beam/CorrelationX/Times = Tf/Beam/Spot/Times ms\n');
-                            fprintf(fileID,'uv:Tf/Beam/CorrelationX/Values = %i ', cutNumOfBixel);
-                            fprintf(fileID,'%f ',[dataTOPAS.correlation]);
-                            fprintf(fileID,'\n');
-
-                            % Write parameters for second dimension (profile is uniform)
-                            fprintf(fileID,'s:Tf/Beam/SigmaY/Function = "Step"\n');
-                            fprintf(fileID,'dv:Tf/Beam/SigmaY/Times = Tf/Beam/Spot/Times ms\n');
-                            fprintf(fileID,'dv:Tf/Beam/SigmaY/Values = %i ', cutNumOfBixel);
-                            fprintf(fileID,'%f ',[dataTOPAS.spotSize]);
-                            fprintf(fileID,' mm\n');
-                            fprintf(fileID,'s:Tf/Beam/SigmaYPrime/Function = "Step"\n');
-                            fprintf(fileID,'dv:Tf/Beam/SigmaYPrime/Times = Tf/Beam/Spot/Times ms\n');
-                            fprintf(fileID,'uv:Tf/Beam/SigmaYPrime/Values = %i ', cutNumOfBixel);
-                            fprintf(fileID,'%f ',[dataTOPAS.divergence]);
-                            fprintf(fileID,'\n');
-                            fprintf(fileID,'s:Tf/Beam/CorrelationY/Function = "Step"\n');
-                            fprintf(fileID,'dv:Tf/Beam/CorrelationY/Times = Tf/Beam/Spot/Times ms\n');
-                            fprintf(fileID,'uv:Tf/Beam/CorrelationY/Values = %i ', cutNumOfBixel);
-                            fprintf(fileID,'%f ',[dataTOPAS.correlation]);
-                            fprintf(fileID,'\n');
-
-                        case 'simple'
-                            fprintf(fileID,'s:Tf/Beam/FocusFWHM/Function = "Step"\n');
-                            fprintf(fileID,'dv:Tf/Beam/FocusFWHM/Times = Tf/Beam/Spot/Times ms\n');
-                            fprintf(fileID,'dv:Tf/Beam/FocusFWHM/Values = %i ', cutNumOfBixel);
-                            fprintf(fileID,'%f ',[dataTOPAS.focusFWHM]);
-                            fprintf(fileID,' mm\n');
-
-                        case 'virtualGaussian'
-                            fprintf(fileID,'s:Tf/Beam/EnergySpread/Function = "Step"\n');
-                            fprintf(fileID,'dv:Tf/Beam/EnergySpread/Times = Tf/Beam/Spot/Times ms\n');
-                            fprintf(fileID,'uv:Tf/Beam/EnergySpread/Values = %i ', cutNumOfBixel);
-                            fprintf(fileID,num2str([dataTOPAS.energySpread]));
-                            fprintf(fileID,'\n');
-
-                            if isfield(pln.propStf, 'collimation')
-                                % Use field width for now
-                                fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadX = %d mm\n', pln.propStf.collimation.fieldWidth);
-                                fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadY = %d mm\n', pln.propStf.collimation.fieldWidth);
-                            else
-                                % Set some default value
-                                fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadX = %d mm\n', 30);
-                                fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadY = %d mm\n', 30);
-                            end
-
-                        case 'uniform'
-                            fprintf(fileID,'s:Tf/Beam/EnergySpread/Function = "Step"\n');
-                            fprintf(fileID,'dv:Tf/Beam/EnergySpread/Times = Tf/Beam/Spot/Times ms\n');
-                            fprintf(fileID,'uv:Tf/Beam/EnergySpread/Values = %i ', cutNumOfBixel);
-                            fprintf(fileID,num2str([dataTOPAS.energySpread]));
-                            fprintf(fileID,'\n');
-
-                            if isfield(pln.propStf, 'collimation')
-                                % Use field width for now
-                                fprintf(fileID,'d:So/PencilBeam/BeamPositionCutoffX = %d mm\n', pln.propStf.collimation.fieldWidth/2);
-                                fprintf(fileID,'d:So/PencilBeam/BeamPositionCutoffY = %d mm\n', pln.propStf.collimation.fieldWidth/2);
-                            else
-                                % Set some default value
-                                fprintf(fileID,'d:So/PencilBeam/BeamPositionCutoffX = %d mm\n', 15);
-                                fprintf(fileID,'d:So/PencilBeam/BeamPositionCutoffY = %d mm\n', 15);
-                            end
-
-                        case 'phasespace'
-                            fprintf(fileID,'d:Sim/GantryAngle = %f deg\n',stf(beamIx).gantryAngle); %just one beam angle for now
-                            fprintf(fileID,'d:Sim/CouchAngle = %f deg\n',stf(beamIx).couchAngle);
-                            % Here the phasespace file is loaded and referenced in the beamSetup file
-                            phaseSpaceFileName = 'SIEMENS_PRIMUS_6.0_0.10_15.0x15.0';
-                            if obj.externalCalculation
-                                matRad_cfg.dispWarning(['External calculation and phaseSpace selected, manually place ' phaseSpaceFileName '.header and ' phaseSpaceFileName '.phsp into your simulation directory.']);
-                            else
-                                if length(dir([obj.thisFolder filesep 'beamSetup' filesep 'phasespace' filesep phaseSpaceFileName '*'])) < 2
-                                    matRad_cfg.dispError([phaseSpaceFileName ' header or phsp file could not be found in beamSetup/phasespace folder.']);
-                                end
-                            end
-                            phasespaceStr = ['..' filesep 'beamSetup' filesep 'phasespace' filesep phaseSpaceFileName];
-                            phasespaceStr =  replace(phasespaceStr, '\', '/');
-                            fprintf(fileID,'s:So/Phasespace/PhaseSpaceFileName = "%s"\n', phasespaceStr);
-
-                    end
-
-                    % Write spot angles
-                    if obj.pencilBeamScanning
-                        fprintf(fileID,'s:Tf/Beam/AngleX/Function = "Step"\n');
-                        fprintf(fileID,'dv:Tf/Beam/AngleX/Times = Tf/Beam/Spot/Times ms\n');
-                        fprintf(fileID,'dv:Tf/Beam/AngleX/Values = %i ', cutNumOfBixel);
-                        fprintf(fileID,'%f ',[dataTOPAS.angleX]);
-                        fprintf(fileID,' rad\n');
-                        fprintf(fileID,'s:Tf/Beam/AngleY/Function = "Step"\n');
-                        fprintf(fileID,'dv:Tf/Beam/AngleY/Times = Tf/Beam/Spot/Times ms\n');
-                        fprintf(fileID,'dv:Tf/Beam/AngleY/Values = %i ', cutNumOfBixel);
-                        fprintf(fileID,'%f ',[dataTOPAS.angleY]);
-                        fprintf(fileID,' rad\n');
+                % Write spot angles
+                if obj.pencilBeamScanning
+                    fprintf(fileID,'s:Tf/Beam/AngleX/Function = "Step"\n');
+                    fprintf(fileID,'dv:Tf/Beam/AngleX/Times = Tf/Beam/Spot/Times ms\n');
+                    fprintf(fileID,'dv:Tf/Beam/AngleX/Values = %i ', cutNumOfBixel);
+                    fprintf(fileID,'%f ',[dataTOPAS.angleX]);
+                    fprintf(fileID,' rad\n');
+                    fprintf(fileID,'s:Tf/Beam/AngleY/Function = "Step"\n');
+                    fprintf(fileID,'dv:Tf/Beam/AngleY/Times = Tf/Beam/Spot/Times ms\n');
+                    fprintf(fileID,'dv:Tf/Beam/AngleY/Values = %i ', cutNumOfBixel);
+                    fprintf(fileID,'%f ',[dataTOPAS.angleY]);
+                    fprintf(fileID,' rad\n');
 
 
-                        % Write spot positions
-                        fprintf(fileID,'s:Tf/Beam/PosX/Function = "Step"\n');
-                        fprintf(fileID,'dv:Tf/Beam/PosX/Times = Tf/Beam/Spot/Times ms\n');
-                        fprintf(fileID,'dv:Tf/Beam/PosX/Values = %i ', cutNumOfBixel);
-                        fprintf(fileID,'%f ',[dataTOPAS.posX]);
-                        fprintf(fileID,' mm\n');
-                        fprintf(fileID,'s:Tf/Beam/PosY/Function = "Step"\n');
-                        fprintf(fileID,'dv:Tf/Beam/PosY/Times = Tf/Beam/Spot/Times ms\n');
-                        fprintf(fileID,'dv:Tf/Beam/PosY/Values = %i ', cutNumOfBixel);
-                        fprintf(fileID,'%f ',[dataTOPAS.posY]);
-                        fprintf(fileID,' mm\n');
+                    % Write spot positions
+                    fprintf(fileID,'s:Tf/Beam/PosX/Function = "Step"\n');
+                    fprintf(fileID,'dv:Tf/Beam/PosX/Times = Tf/Beam/Spot/Times ms\n');
+                    fprintf(fileID,'dv:Tf/Beam/PosX/Values = %i ', cutNumOfBixel);
+                    fprintf(fileID,'%f ',[dataTOPAS.posX]);
+                    fprintf(fileID,' mm\n');
+                    fprintf(fileID,'s:Tf/Beam/PosY/Function = "Step"\n');
+                    fprintf(fileID,'dv:Tf/Beam/PosY/Times = Tf/Beam/Spot/Times ms\n');
+                    fprintf(fileID,'dv:Tf/Beam/PosY/Values = %i ', cutNumOfBixel);
+                    fprintf(fileID,'%f ',[dataTOPAS.posY]);
+                    fprintf(fileID,' mm\n');
 
-                        % Write spot current (translates to the amount of particles in a spot)
-                        fprintf(fileID,'s:Tf/Beam/Current/Function = "Step"\n');
-                        fprintf(fileID,'dv:Tf/Beam/Current/Times = Tf/Beam/Spot/Times ms\n');
-                        fprintf(fileID,'iv:Tf/Beam/Current/Values = %i ', cutNumOfBixel);
-                        fprintf(fileID,'%i ',[dataTOPAS.current]);
-                        fprintf(fileID,'\n\n');
+                    % Write spot current (translates to the amount of particles in a spot)
+                    fprintf(fileID,'s:Tf/Beam/Current/Function = "Step"\n');
+                    fprintf(fileID,'dv:Tf/Beam/Current/Times = Tf/Beam/Spot/Times ms\n');
+                    fprintf(fileID,'iv:Tf/Beam/Current/Values = %i ', cutNumOfBixel);
+                    fprintf(fileID,'%i ',[dataTOPAS.current]);
+                    fprintf(fileID,'\n\n');
 
-                        % Range shifter in/out
-                        if ~isPhoton && ~isempty(raShis)
-                            fprintf(fileID,'#Range Shifter States:\n');
-                            for r = 1:numel(raShis)
-                                fprintf(fileID,'s:Tf/Beam/%sOut/Function = "Step"\n',raShis(r).topasID);
-                                fprintf(fileID,'dv:Tf/Beam/%sOut/Times = Tf/Beam/Spot/Times ms\n',raShis(r).topasID);
-                                fprintf(fileID,'uv:Tf/Beam/%sOut/Values = %i ', raShis(r).topasID, cutNumOfBixel);
-                                fprintf(fileID,'%f ',[dataTOPAS.raShiOut]);
-                                fprintf(fileID,'\n\n');
-                            end
-
-                            % Range Shifter Definition
-                            for r = 1:numel(raShis)
-                                obj.writeRangeShifter(fileID,raShis(r),sourceToNozzleDistance);
-                            end
+                    % Range shifter in/out
+                    if ~isPhoton && ~isempty(raShis)
+                        fprintf(fileID,'#Range Shifter States:\n');
+                        for r = 1:numel(raShis)
+                            fprintf(fileID,'s:Tf/Beam/%sOut/Function = "Step"\n',raShis(r).topasID);
+                            fprintf(fileID,'dv:Tf/Beam/%sOut/Times = Tf/Beam/Spot/Times ms\n',raShis(r).topasID);
+                            fprintf(fileID,'uv:Tf/Beam/%sOut/Values = %i ', raShis(r).topasID, cutNumOfBixel);
+                            fprintf(fileID,'%f ',[dataTOPAS.raShiOut]);
+                            fprintf(fileID,'\n\n');
                         end
+
+                        % Range Shifter Definition
+                        for r = 1:numel(raShis)
+                            obj.writeRangeShifter(fileID,raShis(r),sourceToNozzleDistance);
+                        end
+                    end
                 end
 
                 % Write previously beam profile
@@ -1822,7 +1831,7 @@ classdef matRad_TopasConfig < handle
                 fprintf(fileID,'sv:Ph/Default/Modules = %d %s\n',length(modules),strjoin(moduleString,' '));
 
                 fclose(fileID);
-                
+
                 % Write run scripts for TOPAS
                 for runIx = 1:obj.numOfRuns
                     if isfield(ct,'currCtScen')
@@ -2278,7 +2287,7 @@ classdef matRad_TopasConfig < handle
                 fileID = fopen(fullfile(obj.workingDir,fieldSetupFileName),'w');
 
                 obj.writeFieldHeader(fileID);
-                
+
                 % NozzleAxialDistance
                 fprintf(fileID,'d:Ge/Nozzle/TransZ = -495 mm\n');%Not sure if this is correct,100 cm is SSD and probably distance from surface to isocenter needs to be added
 

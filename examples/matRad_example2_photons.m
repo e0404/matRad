@@ -137,7 +137,7 @@ pln.propOpt.runSequencing = 1;
 pln.propOpt.runDAO        = 0;
 
 % retrieve bio model parameters
-pln.bioParam = matRad_BioModel(pln.radiationMode,quantityOpt, modelName);
+pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 
 % retrieve scenarios for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,'nomScen');
