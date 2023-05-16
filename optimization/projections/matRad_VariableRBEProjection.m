@@ -42,7 +42,7 @@ classdef matRad_VariableRBEProjection < matRad_EffectProjection
                 %Now modify the effect computation
                 vBias = (doseGradTmp' * dij.mAlphaDose{scen})';
                 quadTerm = dij.mSqrtBetaDose{scen} * w;
-                mPsi = (2*(doseGrad{scen}.*quadTerm)' * dij.mSqrtBetaDose{scen})';
+                mPsi = (2*(doseGradTmp.*quadTerm)' * dij.mSqrtBetaDose{scen})';
                 wGrad = vBias + mPsi;
             end
         end
