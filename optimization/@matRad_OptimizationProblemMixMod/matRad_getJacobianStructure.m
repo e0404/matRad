@@ -48,9 +48,15 @@ for i = 1:size(cst,1)
                 % get the jacobian structure depending on dose	
                 jacobDoseStruct = obj.getDoseConstraintJacobianStructure(numel(cst{i,4}{1}));	
                 nRows = size(jacobDoseStruct,2);	
-                jacobStruct = [jacobStruct; repmat(spones(mean(dij.physicalDose{1}(cst{i,4}{1},:))),nRows,1)];	
-                 
+                %need to check for each modality
+                %need
+                jacobStructMod = sparse([]);
+                for mod = 1: length(dij.original_Dijs) 
+                    jacobStructMod = [jacobStructMod,spones(mean(dij.original_Dijs{mod}.physicalDose{1}(cst{i,4}{1},:)))];
+                end
+                jacobStruct = [jacobStruct; repmat(jacobStructMod,nRows,1)];	
              end	
          end	
      end	
- end
+end
+end

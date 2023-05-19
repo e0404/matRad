@@ -109,7 +109,7 @@ end
                                 ixContour = contourScen(s);
                                 d_i = d{ixScen}(cst{i,4}{ixContour});
                                 %add to dose gradient
-                                doseGradient{ixScen}(cst{i,4}{ixContour}) = doseGradient{ixScen}(cst{i,4}{ixContour}) + objective.computeDoseObjectiveGradient(d_i);
+                                doseGradient{ixScen}(cst{i,4}{ixContour}) = doseGradient{ixScen}(cst{i,4}{ixContour}) + objective.penalty * objective.computeDoseObjectiveGradient(d_i);
                             end
                         case 'STOCH' % perform stochastic optimization with weighted / random scenarios
                             for s = 1:numel(useScen)
@@ -119,7 +119,7 @@ end
                                 d_i = d{ixScen}(cst{i,4}{ixContour});
 
                                 doseGradient{ixScen}(cst{i,4}{ixContour}) = doseGradient{ixScen}(cst{i,4}{ixContour}) + ...
-                                    (objective.computeDoseObjectiveGradient(d_i) * scenProb(s));
+                                    (objective.penalty * objective.computeDoseObjectiveGradient(d_i) * scenProb(s));
 
                             end
 
@@ -131,7 +131,7 @@ end
 
                             d_i = dExp{1}(cst{i,4}{1});
 
-                            doseGradientExp{1}(cst{i,4}{1}) = doseGradientExp{1}(cst{i,4}{1}) + objective.computeDoseObjectiveGradient(d_i);
+                            doseGradientExp{1}(cst{i,4}{1}) = doseGradientExp{1}(cst{i,4}{1}) + objective.penalty * objective.computeDoseObjectiveGradient(d_i);
 
                             p = objective.penalty/numel(cst{i,4}{1});
 
@@ -164,7 +164,7 @@ end
                                 matRad_cfg.dispWarning('%d NaN values in gradient.',numel(isnan(d_i)));
                             end
 
-                            deltaTmp = objective.computeDoseObjectiveGradient(d_i);
+                            deltaTmp = objective.penalty * objective.computeDoseObjectiveGradient(d_i);
 
                             for s = 1:numel(useScen)
                                 ixScen = useScen(s);
@@ -206,7 +206,7 @@ end
                                 matRad_cfg.dispWarning('%d NaN values in gradFuncWrapper.',numel(isnan(d_i)));
                             end
 
-                            deltaTmp = objective.computeDoseObjectiveGradient(d_i);
+                            deltaTmp = objective.penalty * objective.computeDoseObjectiveGradient(d_i);
 
                             for s = 1:numel(useScen)
                                 ixScen = useScen(s);
@@ -234,8 +234,8 @@ end
 
                                 d_i = d{ixScen}(cst{i,4}{ixContour});
 
-                                f_COWC(ixScen) = f_COWC(ixScen) + objective.computeDoseObjectiveFunction(d_i);
-                                delta_COWC{ixScen}(cst{i,4}{ixContour}) = delta_COWC{ixScen}(cst{i,4}{ixContour}) + objective.computeDoseObjectiveGradient(d_i);
+                                f_COWC(ixScen) = f_COWC(ixScen) + objective.penalty * objective.computeDoseObjectiveFunction(d_i);
+                                delta_COWC{ixScen}(cst{i,4}{ixContour}) = delta_COWC{ixScen}(cst{i,4}{ixContour}) + objective.penalty * objective.computeDoseObjectiveGradient(d_i);
                             end
 
                         case 'OWC' % objective-wise worst case consideres the worst individual objective function value
@@ -253,9 +253,9 @@ end
 
                                 d_i = d{ixScen}(cst{i,4}{ixContour});
 
-                                f_OWC(ixScen) = objective.computeDoseObjectiveFunction(d_i);
+                                f_OWC(ixScen) = objective.penalty * objective.computeDoseObjectiveFunction(d_i);
 
-                                delta_OWC{ixScen}(cst{i,4}{ixContour}) = objective.computeDoseObjectiveGradient(d_i);
+                                delta_OWC{ixScen}(cst{i,4}{ixContour}) = objective.penalty * objective.computeDoseObjectiveGradient(d_i);
 
                             end
 
@@ -327,8 +327,9 @@ for mod = 1: length(dij.original_Dijs)
     
     optiProb.BP.computeGradient(dij.original_Dijs{mod},doseGradient,wt);
     gt = optiProb.BP.GetGradient();
-    
+                     % review for ST optimization 
     for s = 1:numel(useScen)
+        gt{s} = gt{s}*dij.STfractions{mod};  
         g{s} = [g{s}; gt{s}];                     
     end 
 end   
@@ -345,7 +346,7 @@ end
         weightGradient = weightGradient + gProb{1};
     end
 % code snippet to check the gradient
-    gradientChecker = 1;
+    gradientChecker = 0;
 if gradientChecker == 1
     f =  matRad_objectiveFunction(optiProb,w,dij,cst);
     epsilon = 1e-6;
@@ -354,7 +355,7 @@ if gradientChecker == 1
     for i=ix
         wInit = w;
         wInit(i) = wInit(i) + epsilon;
-        fDel= matRad_objectiveFunction(optiProb,w,dij,cst);
+        fDel= matRad_objectiveFunction(optiProb,wInit,dij,cst);
         numGrad = (fDel - f)/epsilon;
         diff = (numGrad/weightGradient(i) - 1)*100;
         fprintf(['grad val #' num2str(i) ' - rel diff numerical and analytical gradient = ' num2str(diff) '\n']);
@@ -362,5 +363,4 @@ if gradientChecker == 1
     end
     
 end
-
 end

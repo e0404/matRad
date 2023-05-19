@@ -36,8 +36,37 @@ function jacob = matRad_constraintJacobian(optiProb,w,dij,cst)
 % get current dose / effect / RBExDose vector
 %d = matRad_backProjection(w,dij,optiProb);
 %d = optiProb.matRad_backProjection(w,dij);
-optiProb.BP.compute(dij,w);
-d = optiProb.BP.GetResult();
+matRad_cfg = MatRad_Config.instance();
+% DOSE PROJECTION
+bxidx = 1; %modality  bixel index
+
+% Obtain cumulative dose cube 
+[d{1}]    = deal(zeros(dij.doseGrid.numOfVoxels,1));
+
+for mod = 1: length(dij.original_Dijs)
+    wt = [];
+    % split the w for current modality
+    STrepmat = (~dij.spatioTemp(mod) + dij.spatioTemp(mod)*dij.numOfSTscen(mod));
+    wt = reshape(w(bxidx: bxidx+STrepmat*dij.original_Dijs{mod}.totalNumOfBixels-1),[dij.original_Dijs{mod}.totalNumOfBixels,STrepmat]);
+    % get current dose / effect / RBExDose vector
+    optiProb.BP.compute(dij.original_Dijs{mod},wt);
+    dt = optiProb.BP.GetResult();
+
+    % also get probabilistic quantities (nearly no overhead if empty)
+    [dExp,dOmega] = optiProb.BP.GetResultProb();                        % NOTE: not sure what exactly to do for the dOmegas 
+
+    %Index of nxt modality
+    bxidx = bxidx + STrepmat*dij.original_Dijs{mod}.totalNumOfBixels;
+    % Accumulat Dose for all scenarios FOR FUTURE REVIEW ON HOW TO COMBINE
+    % DIFFFERENT UNCERTAINTY SCENARIOS FOR DIFFERENT MODALITIES
+    % currently for ST optimization 
+    %d_singleModality(mod) = cell();
+    for scen = 1:numel(dt)
+         d{scen} = d{scen} + sum(dt{scen}.*dij.STfractions{mod}',2);
+
+         d_singleModality(mod,scen) = {sum(dt{scen}.*dij.STfractions{mod}',2)};
+    end
+end
 
 % initialize jacobian (only single scenario supported in optimization)
 jacob = sparse([]);
