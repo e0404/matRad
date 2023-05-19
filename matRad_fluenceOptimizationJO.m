@@ -1,4 +1,4 @@
-function [resultGUI,optimizer] = matRad_fluenceOptimizationJO(dij,cst,pln,wInit)
+function [resultGUI,optimizer] = matRad_fluenceOptimizationJO(dij,cst,pln,wInit,loadwInit)
 % matRad inverse planning wrapper function
 % 
 % call
@@ -368,7 +368,13 @@ switch pln.propOpt.optimizer
         warning(['Optimizer ''' pln.propOpt.optimizer ''' not known! Fallback to IPOPT!']);
         optimizer = matRad_OptimizerIPOPT;
 end
-       
+
+if exist('loadwInit', 'var')
+    if loadwInit ==1
+        load('wInit.mat');
+    end
+end
+optimizer.options.max_iter = 10000;
 optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
 
 wOpt = optimizer.wResult;
