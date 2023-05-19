@@ -286,7 +286,7 @@ switch pln.propOpt.optimizer
         optimizer = matRad_OptimizerIPOPT;
 end
        
-
+optimizer.options.max_iter = 10000;
 optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
 
 wOpt = optimizer.wResult;

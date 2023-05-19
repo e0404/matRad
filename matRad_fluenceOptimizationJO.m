@@ -101,17 +101,22 @@ ixTarget       = ixTarget(i);
    
 % calculate initial beam intensities wInit
 matRad_cfg.dispInfo('Estimating initial weights... ');
+if isfield(dij,'numOfModalities')
+    numOfModalities = dij.numOfModalities;
+else
+    numOfModalities = 1;
+end
 
-if exist('wInit','var')
+if ~exist('wInit', 'var')
+    wInit = [];
+end
+if ~isempty(wInit) %can never happen now
     %do nothing as wInit was passed to the function
     matRad_cfg.dispInfo('chosen provided wInit!\n');   
 
 else
-    if isfield(dij,'numOfModalities')
-        numOfModalities = dij.numOfModalities;
-    else
-        numOfModalities = 1;
-    end
+
+    doseTarget = doseTarget/numOfModalities;
     wInit = [];
     % loop over all modalities
     for modality = 1: numOfModalities
@@ -150,7 +155,7 @@ else
             for i = 1:size(cst,1)
                 for j = 1:size(cst{i,6},2)
                     if strcmp(pln.radiationMode, 'MixMod')
-                        DoseParameters = cst{i,6}{j}.getDoseParameters()./sum([dij.totalNumOfFractions{:}]);
+                        DoseParameters = cst{i,6}{j}.getDoseParameters()./sum([dij.STfractions{:}]);
                     else
                         DoseParameters = cst{i,6}{j}.getDoseParameters();
                     end
@@ -163,12 +168,13 @@ else
             end
 
             dijt.ixDose  = dijt.bx~=0;
+            dij.original_Dijs{modality}.ixDose = dijt.ixDose;
 
             if isequal(pln.bioParam.quantityOpt,'effect')
 
                 effectTarget = cst{ixTarget,5}.alphaX * doseTarget + cst{ixTarget,5}.betaX * doseTarget^2;
                 bixelNum = 1;
-                SelectedBixels = [bixelNum:bixelNum+dijt.totalNumOfBixels*dij.numOfSTsen(modality)-1];
+                SelectedBixels = [bixelNum:bixelNum+dijt.totalNumOfBixels*dij.numOfSTscen(modality)-1];
                 wIdx = reshape(wOnes(SelectedBixels),[dijt.totalNumOfBixels,dij.numOfSTscen(modality)]);
                 aTmp = dijt.mAlphaDose{1}*wIdx(:,1);
                 bTmp = dijt.mSqrtBetaDose{1}*wIdx(:,1);
@@ -184,8 +190,9 @@ else
             elseif isequal(pln.bioParam.quantityOpt,'RBExD')
 
                 %pre-calculations
-                dij.gamma             = zeros(dij.doseGrid.numOfVoxels,1);
-                dij.gamma(dij.ixDose) = dijt.ax(dij.ixDose)./(2*dijt.bx(dij.ixDose));
+                dijt.gamma             = zeros(dijt.doseGrid.numOfVoxels,1);
+                dijt.gamma(dijt.ixDose) = dijt.ax(dijt.ixDose)./(2*dijt.bx(dijt.ixDose));
+                dij.original_Dijs{modality}.gamma = dijt.gamma;
                 bixelNum = 1;
 
                 SelectedBixels = [bixelNum:bixelNum+dijt.totalNumOfBixels*dij.numOfSTscen(modality)-1];
@@ -221,7 +228,7 @@ else
         
         end
         
-        wInit = [wInit; wt];            
+        wInit = [wInit; wt./max(wt)];            
     end
 end
 
@@ -377,6 +384,7 @@ for mod = 1: pln.numOfModalities
     resultGUI{mod}.wUnsequenced = wt;
     resultGUI{mod}.usedOptimizer = optimizer;
     resultGUI{mod}.info = info;
+    bxidx = bxidx + STrepmat*dij.original_Dijs{mod}.totalNumOfBixels;
 end
 %Robust quantities
 if FLAG_ROB_OPT || numel(ixForOpt) > 1   

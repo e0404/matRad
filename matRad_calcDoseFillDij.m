@@ -37,7 +37,7 @@ if mod(counter,numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
                         dij.mLETDose{ctScen,shiftScen,rangeShiftScen}(:,dijIx) = [letDoseTmpContainer{containerIx,ctScen,shiftScen,rangeShiftScen}];
                     end
                     
-                    if pln.bioParam.bioOpt
+                    if pln.bioParam.bioOpt && ~strcmp(pln.radiationMode,'photons')
                         % fill entire alphaxDose influence and sqrt(beta)xDose influence matrices
                         dij.mAlphaDose{ctScen,shiftScen,rangeShiftScen}(:,dijIx)    = [alphaDoseTmpContainer{containerIx,ctScen,shiftScen,rangeShiftScen}];
                         dij.mSqrtBetaDose{ctScen,shiftScen,rangeShiftScen}(:,dijIx) = [betaDoseTmpContainer{containerIx,ctScen,shiftScen,rangeShiftScen}];

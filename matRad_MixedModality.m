@@ -1,6 +1,6 @@
 matRad_rc;
 matRad_cfg = MatRad_Config.instance();
-
+matRad_cfg.propOpt.defaultMaxIter = 50000;
 load 'TG119.mat'
 
 % 
@@ -43,7 +43,7 @@ pln(1).bioParam = matRad_bioModel(pln(1).radiationMode,quantityOpt, modelName);
 
 % retrieve scenarios for dose calculation and optimziation
 pln(1).multScen = matRad_multScen(ct,scenGenType);
-
+% 
 % meta information for treatment plan (2) 
 pln(2).numOfFractions  = 25;
 pln(2).radiationMode   = 'photons';           % either photons / protons / helium / carbon
@@ -88,11 +88,11 @@ pln(2).multScen = matRad_multScen(ct,scenGenType);
 sparecst = 0;
 
 cst = matRad_prepCst(cst, sparecst);
-%% Plan Wrapper
+% Plan Wrapper
 plnJO = matRad_plnWrapper(pln);
-%% Stf Wrapper
+% Stf Wrapper
 stf = matRad_stfWrapper(ct,cst,plnJO);
-%% Dij Calculation
+% Dij Calculation
 dij = matRad_calcCombiDose(ct,stf,plnJO,cst,false);
-%% Fluence optimization 
+% Fluence optimization 
 resultGUI = matRad_fluenceOptimizationJO(dij,cst,plnJO)

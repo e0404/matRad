@@ -45,38 +45,6 @@ if nPlans>0
    plnJO.radiationMode = 'MixMod';
    plnJO.machine       = 'MixMod';
    plnJO.propStf       = [pln(:).propStf];
-<<<<<<< HEAD
-   originalPropDoseCalc  = [matRad_fieldConsistency(pln,{'propDoseCalc'})]; 
-   plnJO.multScen      = [pln(:).multScen];
-   %    for k=1:length(currentFields)
-%       if isempty(getfield(superPln,currentFields{1,k})) && isstruct(pln(1).(currentFields{1,k}))
-%         %For all pln fields that are structures, check that the number of
-%         %fields is the same
-%         pln = matRad_fieldConsistency(pln,currentFields(1,k));
-%         superPln.(currentFields{1,k}) = [pln(:).(currentFields{1,k})];
-%       elseif isempty(getfield(superPln,currentFields{1,k})) && ~isstruct(pln(1).(currentFields{1,k}))
-%          %If the field is a class, just keep it
-%          superPln.(currentFields{1,k}) = [pln(:).(currentFields{1,k})];
-%       end
-%    end
-
-   if isfield(plnJO, 'bioParam')
-      % This is a temporary solution.
-      originalModels = [pln(:).bioParam];
-      plnJO.bioParam = matRad_bioModel('MixMod',pln(1).bioParam.quantityOpt,'MixMod'); %quantityOpt should be consistent here
-      
-      plnJO.bioParam.originalModels = originalModels;
-   end
-   
-   if isfield(plnJO, 'propOpt')
-      % This is a temporary solution.
-      originalPropOpt = plnJO.propOpt;
-      plnJO.propOpt.runDAO = 0;
-      plnJO.propOpt.runSequencing = 0;
-      if any(arrayfun(@(x) isfield(pln(x).propOpt, 'useLogSumExpForRobOpt'), [1:nPlans]))
-         plnJO.propOpt.useLogSumExpForRobOpt = 1;
-
-=======
   
    for k=1:length(currentFields)
       if isempty(getfield(plnJO,currentFields{1,k})) && isstruct(pln(1).(currentFields{1,k}))
@@ -96,23 +64,10 @@ if nPlans>0
       elseif isempty(getfield(plnJO,currentFields{1,k})) && ~isstruct(pln(1).(currentFields{1,k}))
          %If the field is a class, just keep it
          plnJO.(currentFields{1,k}) = [pln(:).(currentFields{1,k})];
->>>>>>> dev_MixedModality_amit
       end
    end
    plnJO.bioParam = matRad_bioModel(plnJO.radiationMode,pln(1).bioParam.quantityOpt, plnJO.radiationMode);
    %Save the original plans as well
-   
-   if isfield(pln(1), 'propDoseCalc')
-      if any(arrayfun(@(x) isfield(pln(x).propDoseCalc, 'calcLET'), [1:nPlans]));
-         plnJO.propDoseCalc.calcLET = true;
-      end
-      
-      doseCalcResolution.x = max(arrayfun(@(x) pln(x).propDoseCalc.doseGrid.resolution.x,[1:nPlans]));
-      doseCalcResolution.y = max(arrayfun(@(x) pln(x).propDoseCalc.doseGrid.resolution.y,[1:nPlans]));
-      doseCalcResolution.z = max(arrayfun(@(x) pln(x).propDoseCalc.doseGrid.resolution.z,[1:nPlans]));
-
-      plnJO.propDoseCalc.doseGrid.resolution = doseCalcResolution;
-   end
    plnJO.originalPlans = originalPlans;
    plnJO.numOfModalities = nPlans;
 
