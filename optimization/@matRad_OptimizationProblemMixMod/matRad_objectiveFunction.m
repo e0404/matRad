@@ -99,7 +99,7 @@ for  i = 1:size(cst,1)
                     case 'none' % if conventional opt: just sum objectives of nominal dose
                         for ixScen = useScen
                             d_i = d{ixScen}(cst{i,4}{useScen(1)});
-                            f = f + objective.computeDoseObjectiveFunction(d_i);
+                            f = f + objective.penalty * objective.computeDoseObjectiveFunction(d_i);
                         end
                         
                     case 'STOCH' % if prob opt: sum up expectation value of objectives
@@ -109,7 +109,7 @@ for  i = 1:size(cst,1)
                             
                             d_i = d{ixScen}(cst{i,4}{ixContour});
                             
-                            f   = f + scenProb(s) * objective.computeDoseObjectiveFunction(d_i);
+                            f   = f + scenProb(s) * objective.penalty * objective.computeDoseObjectiveFunction(d_i);
                             
                         end
                         
@@ -117,7 +117,7 @@ for  i = 1:size(cst,1)
                         
                         d_i = dExp{1}(cst{i,4}{1});
                         
-                        f   = f +  objective.computeDoseObjectiveFunction(d_i);
+                        f   = f + objective.penalty *  objective.computeDoseObjectiveFunction(d_i);
                         
                         p = objective.penalty/numel(cst{i,4}{1});
                         
@@ -150,7 +150,7 @@ for  i = 1:size(cst,1)
                             d_i = d_min;
                         end
                         
-                        f = f + objective.computeDoseObjectiveFunction(d_i);
+                        f = f + objective.penalty * objective.computeDoseObjectiveFunction(d_i);
                         
                     case 'VWWC_INV'  %inverse voxel-wise conformitiy - consider the maximum and minimum dose in the target and optimize the dose conformity
                         contourIx = unique(contourScen);
@@ -175,7 +175,7 @@ for  i = 1:size(cst,1)
                             d_i = d_max;
                         end
                         
-                        f = f + objective.computeDoseObjectiveFunction(d_i);
+                        f = f + objective.penalty * objective.computeDoseObjectiveFunction(d_i);
                         
                     case 'COWC'  % composite worst case consideres ovarall the worst objective function value
                         
@@ -185,7 +185,7 @@ for  i = 1:size(cst,1)
                             
                             d_i = d{ixScen}(cst{i,4}{ixContour});
                             
-                            f_COWC(s) = f_COWC(s) + objective.computeDoseObjectiveFunction(d_i);
+                            f_COWC(s) = f_COWC(s) + objective.penalty * objective.computeDoseObjectiveFunction(d_i);
                         end
                         
                     case 'OWC'   % objective-wise worst case considers the worst individual objective function value
@@ -197,7 +197,7 @@ for  i = 1:size(cst,1)
                             ixContour = contourScen(s);
                             
                             d_i = d{ixScen}(cst{i,4}{ixContour});
-                            f_OWC(s) = objective.computeDoseObjectiveFunction(d_i);
+                            f_OWC(s) = objective.penalty * objective.computeDoseObjectiveFunction(d_i);
                         end
                         
                         % compute the maximum objective function value
