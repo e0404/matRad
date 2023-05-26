@@ -31,7 +31,7 @@ jobs:
         uses: matlab-actions/run-command@v1
         with:
           command: cd unitTest; matRad_runTests
-  test-octave: #Octave test Job
+  test-octave-6: #Octave test Job
     runs-on: ubuntu-22.04 # We use Ubuntu-22.04 because it has Octave 6.4
     steps:
       - uses: actions/checkout@v3 # Checks-out repository under $GITHUB_WORKSPACE
