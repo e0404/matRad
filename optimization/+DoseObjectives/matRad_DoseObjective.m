@@ -60,6 +60,10 @@ classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
             s = struct@matRad_DoseOptimizationFunction(obj);
             s.penalty = obj.penalty;
         end
+        
+        function constr = convertToConstraint(obj,maxObj,epsilon)
+            constr = DoseConstraints.matRad_ObjectiveConstraint(obj,maxObj,epsilon);
+        end
     end   
 end
 
