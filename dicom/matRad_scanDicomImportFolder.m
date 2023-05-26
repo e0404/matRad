@@ -41,6 +41,7 @@ warnDlgDICOMtagShown = false;
 
 % dicom import needs image processing toolbox -> check if available
 available = matRad_checkEnvDicomRequirements();
+isOctave = strcmp(matRad_cfg.env,'OCTAVE');
 
 if ~available
     matRad_cfg.dispError('Image processing toolbox / packages not available!');

@@ -16,6 +16,7 @@ classdef matRad_MainGUI < handle
         StructureVisibilityWidget
         InfoWidget
         ViewingWidget
+        DVHStatsWidget
         eventListeners
         
         matRad_cfg = MatRad_Config.instance();

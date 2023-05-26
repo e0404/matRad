@@ -1,5 +1,26 @@
 classdef matRad_PlanWidget < matRad_Widget
-    
+    % matRad_PlanWidget class to generate GUI widget for plan parameters
+    % Describes a standard fluence optimization problem by providing the 
+    % implementation of the objective & constraint function/gradient wrappers
+    % and managing the mapping and backprojection of the respective dose-
+    % related quantity
+    %
+    % References
+    %   -
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %
+    % Copyright 2020 the matRad development team. 
+    % 
+    % This file is part of the matRad project. It is subject to the license 
+    % terms in the LICENSE file found in the top-level directory of this 
+    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+    % of the matRad project, including this file, may be copied, modified, 
+    % propagated, or distributed except according to the terms contained in the 
+    % LICENSE file.
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     properties
         State = false
         Machines
@@ -116,7 +137,7 @@ classdef matRad_PlanWidget < matRad_Widget
             h15 = uicontrol(...
                 'Parent',h12,...
                 'Units','normalized',...
-                'String','Gantry Angle in °',...
+                'String','Gantry Angle in Â°',...
                 'Tooltip',txt,...
                 'Style','text',...
                 'Position',gridPos{1,2},...
@@ -147,7 +168,7 @@ classdef matRad_PlanWidget < matRad_Widget
             h17 = uicontrol(...
                 'Parent',h12,...
                 'Units','normalized',...
-                'String','Couch Angle in °',...
+                'String','Couch Angle in Â°',...
                 'Tooltip',txt,...
                 'Style','text',...
                 'Position',gridPos{1,3},...
@@ -168,6 +189,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 'Position',gridPos{2,3},...
                 'BackgroundColor',matRad_cfg.gui.elementColor,...
                 'ForegroundColor',matRad_cfg.gui.textColor,...
+                'Callback',@(hObject,eventdata)standardCallback(this,hObject,eventdata),...
                 'Tag','editCouchAngle',...
                 'FontSize',matRad_cfg.gui.fontSize,...
                 'FontName',matRad_cfg.gui.fontName,...
@@ -281,7 +303,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 'Tag','checkIsoCenter');
             
             
-            pos = gridPos{4,3};
+            pos = gridPos{4,2};
             pos(3) = pos(3)*2;
             
               txt = sprintf('Check this if you want to run a MLC sequencing\nThe number of stratification levels can be adjusted below');
@@ -320,7 +342,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 'Enable','off',...
                 'Tag','btnRunDAO' );
             
-            pos = gridPos{4,4};
+            pos = gridPos{4,3};
             pos(3) = pos(3) * 1.5;
 
             h28 = uicontrol(...
@@ -338,10 +360,10 @@ classdef matRad_PlanWidget < matRad_Widget
                 'FontWeight',matRad_cfg.gui.fontWeight,...
                 'Tag','txtSequencing' );
             
-            pos = gridPos{4,5};
+
+            pos = gridPos{5,3};
             pos(3) = pos(3) / 2;
-            %pos(1) = pos(1) + pos(3);
-            
+                        
             
             h29 = uicontrol(...
                 'Parent',h12,...
@@ -459,7 +481,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 'FontName',matRad_cfg.gui.fontName,...
                 'FontWeight',matRad_cfg.gui.fontWeight);
             
-            pos = gridPos{4,2};
+            pos = gridPos{4,1};
             pos(3) = pos(3)*2;
             
             h36 = uicontrol(...
@@ -495,7 +517,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 'FontSize',matRad_cfg.gui.fontSize,...
                 'FontName',matRad_cfg.gui.fontName,...
                 'FontWeight',matRad_cfg.gui.fontWeight);
-              
+              % positioning dose grid size input boxes
               pos(1) = pos(1) + pos(3) + 0.005;
               
               h38 = uicontrol(...
@@ -548,8 +570,42 @@ classdef matRad_PlanWidget < matRad_Widget
                 'FontName',matRad_cfg.gui.fontName,...
                 'FontWeight',matRad_cfg.gui.fontWeight);
             
-            this.createHandles();
+          
+             h40 = uicontrol(...
+                'Parent',h12,...
+                'Units','normalized',...
+                'String','Sequencer : ',...
+                'Tooltip','Set the sequencing algorithm',... 
+                'HorizontalAlignment','left',...
+                'Style','text',...
+                'Position',gridPos{4,4},...
+                'BackgroundColor',matRad_cfg.gui.backgroundColor,...
+                'ForegroundColor',matRad_cfg.gui.textColor,....
+                'Interruptible','off',...
+                'Tag','txtSequencer',...
+                'FontSize',matRad_cfg.gui.fontSize,...
+                'FontName',matRad_cfg.gui.fontName,...
+                'FontWeight',matRad_cfg.gui.fontWeight);
+            
+            txt = sprintf('Choose a sequencing algorithm (siochi, xia or engel)');
+            h41 = uicontrol(...
+                'Parent',h12,...
+                'Units','normalized',...
+                'String',{  'siochi','xia','engel' },...
+                'Tooltip',txt,...
+                'Style','popupmenu',...
+                'Value',1,...
+                'Position',gridPos{5,4},...
+                'BackgroundColor',matRad_cfg.gui.elementColor,...
+                'ForegroundColor',matRad_cfg.gui.textColor,....
+                'Callback',@(hObject,eventdata) popUpMenuSequencer_Callback(this,hObject,eventdata),...
+                'Tag','popUpMenuSequencer',...
+                'Enable', 'off',...
+                'FontSize',matRad_cfg.gui.fontSize,...
+                'FontName',matRad_cfg.gui.fontName,...
+                'FontWeight',matRad_cfg.gui.fontWeight);
              
+            this.createHandles();
         end
        
         function this = setPlnDefaultValues(this)
@@ -624,11 +680,15 @@ classdef matRad_PlanWidget < matRad_Widget
             contentPopUp = get(handles.popMenuBioOpt,'String');
             ix = find(strcmp(pln.propOpt.bioOptimization,contentPopUp));
             set(handles.popMenuBioOpt,'Value',ix);
-            
-            set(handles.btnRunSequencing,'Value',pln.propOpt.runSequencing);
+            set(handles.btnRunSequencing,'Value',pln.propSeq.runSequencing);
             set(handles.btnRunDAO,'Value',pln.propOpt.runDAO);
-            set(handles.radiobutton3Dconf,'Value',pln.propOpt.conf3D);
-            
+            if isfield(pln.propSeq, 'sequencingLevel')
+                set(handles.editSequencingLevel,'String',num2str(pln.propSeq.sequencingLevel));
+            end
+            if isfield (pln.propOpt, 'conf3D')
+                set(handles.radiobutton3Dconf,'Value',pln.propOpt.conf3D);
+            end 
+
             set(handles.editDoseX,'String',num2str(pln.propDoseCalc.doseGrid.resolution.x));
             set(handles.editDoseY,'String',num2str(pln.propDoseCalc.doseGrid.resolution.y));
             set(handles.editDoseZ,'String',num2str(pln.propDoseCalc.doseGrid.resolution.z));
@@ -682,7 +742,10 @@ classdef matRad_PlanWidget < matRad_Widget
                 pln.propOpt.bioOptimization = 'none';
             end
             
-            pln.propOpt.runSequencing = logical(get(handles.btnRunSequencing,'Value'));
+            contents   = get(handles.popUpMenuSequencer,'String');
+            pln.propSeq.sequencer = contents{get(handles.popUpMenuSequencer,'Value')};
+            pln.propSeq.runSequencing = logical(get(handles.btnRunSequencing,'Value'));
+            pln.propSeq.sequencingLevel = this.parseStringAsNum(get(handles.editSequencingLevel,'String'),false);
             pln.propOpt.runDAO = logical(get(handles.btnRunDAO,'Value'));
             pln.propOpt.conf3D = logical(get(handles.radiobutton3Dconf,'Value'));
             
@@ -707,7 +770,7 @@ classdef matRad_PlanWidget < matRad_Widget
                     set(handles.editIsoCenter,'Enable','off')
                     assignin('base','pln',pln);
                 catch ME
-                    warning(ME.identifier,'couldn''t set isocenter in pln update! Reason: %s\n',ME.message)
+                    warning(ME.identifier,'could not set isocenter in pln update! Reason: %s\n',ME.message)
                 end
             else
                 set(handles.editIsoCenter,'Enable','on')
@@ -740,7 +803,8 @@ classdef matRad_PlanWidget < matRad_Widget
                         end
                     end
                 catch ME
-                    warning(ME.identifier,'couldn''t set isocenter in pln update! Reason: %s\n',ME.message)
+
+                    showWarning(this,'Could not set isocenter in pln update! Reason: %s\n',ME.message)  %% showWarning vs warning 
                 end
             end
             
@@ -780,7 +844,22 @@ classdef matRad_PlanWidget < matRad_Widget
                     set(handles.btnRunDAO,'Enable','on');
                     set(handles.radiobutton3Dconf,'Enable','on');
                     set(handles.txtSequencing,'Enable','on');
-                    set(handles.editSequencingLevel,'Enable','on');                                           
+                    set(handles.editSequencingLevel,'Enable','on');    
+                    set(handles.popUpMenuSequencer,'Enable','on');
+                    set(handles.txtSequencer,'Enable','on');
+                    
+                    if ~(get(handles.btnRunSequencing,'Value') || get(handles.btnRunDAO,'Value'))
+                    
+                        set(handles.txtSequencing,'Enable','off');
+                        set(handles.editSequencingLevel,'Enable','off');    
+                        set(handles.popUpMenuSequencer,'Enable','off');
+                        set(handles.txtSequencer,'Enable','off');
+                    else 
+                        set(handles.txtSequencing,'Enable','on');
+                        set(handles.editSequencingLevel,'Enable','on');    
+                        set(handles.popUpMenuSequencer,'Enable','on');
+                        set(handles.txtSequencer,'Enable','on');
+                    end
                     
                 case 'protons'                    
                     set(handles.popMenuBioOpt,'Enable','on');
@@ -791,6 +870,8 @@ classdef matRad_PlanWidget < matRad_Widget
                     set(handles.radiobutton3Dconf,'Enable','off');
                     set(handles.txtSequencing,'Enable','off');
                     set(handles.editSequencingLevel,'Enable','off');
+                    set(handles.popUpMenuSequencer,'Enable','off');
+                    set(handles.txtSequencer,'Enable','off');
                     
                 case 'carbon'
                     
@@ -801,7 +882,9 @@ classdef matRad_PlanWidget < matRad_Widget
                     set(handles.btnRunDAO,'Enable','off');
                     set(handles.radiobutton3Dconf,'Enable','off');
                     set(handles.txtSequencing,'Enable','off');
-                    set(handles.editSequencingLevel,'Enable','off');                    
+                    set(handles.editSequencingLevel,'Enable','off');  
+                    set(handles.popUpMenuSequencer,'Enable','off');
+                    set(handles.txtSequencer,'Enable','off');
             end
             
             selectedBioOpt = get(handles.popMenuBioOpt,'Value');
@@ -811,6 +894,7 @@ classdef matRad_PlanWidget < matRad_Widget
             else
                 set(handles.btnSetTissue,'Enable','on');
             end
+
             this.handles = handles;
         end
         
@@ -872,8 +956,35 @@ classdef matRad_PlanWidget < matRad_Widget
             updatePlnInWorkspace(this);
         end
         
+
+        function popUpMenuSequencer_Callback(this, hObject, eventdata)
+            handles = this.handles;
+            contents      = cellstr(get(hObject,'String'));
+            SeqIdentifier = contents{get(hObject,'Value')};
+            contentPopUp  = get(handles.popUpMenuSequencer,'String');
+            
+            switch SeqIdentifier
+                case 'siochi'
+                    ix = find(strcmp(contentPopUp,'siochi'));
+                    set(handles.popUpMenuSequencer,'Value',ix);
+                    
+                case 'xia'
+                    ix = find(strcmp(contentPopUp,'xia'));
+                    set(handles.popUpMenuSequencer,'Value',ix);
+                case 'engel'
+                    ix = find(strcmp(contentPopUp,'engel'));
+                    set(handles.popUpMenuSequencer,'Value',ix);
+            end
+            
+            pln = evalin('base','pln');
+            
+            
+            this.handles = handles;
+            updatePlnInWorkspace(this);
+        end
+        
         function popUpMachine_Callback(this, hObject, eventdata)
-            % Mï¿½GLICHER FEHLER WEGEN VALUE WERT!
+            % MOEGLICHER FEHLER WEGEN VALUE WERT!
             handles = this.handles;
              contents = cellstr(get(hObject,'String'));
              MachineIdentifier = contents{get(hObject,'Value')};
@@ -886,7 +997,7 @@ classdef matRad_PlanWidget < matRad_Widget
             getMachines(this);
             pln = evalin('base','pln');
             
-            % Mï¿½GLICHEE FEHLER HIER VALUE UND GENERIC WERDEN VERGLICHEN
+            % MOEGLICHEE FEHLER HIER VALUE UND GENERIC WERDEN VERGLICHEN
             if strcmp(contents(get(hObject,'Value')),'Generic')
                 try
                     AllVarNames = evalin('base','who');
@@ -901,7 +1012,7 @@ classdef matRad_PlanWidget < matRad_Widget
                     end
                 catch
                 end
-            % Mï¿½GLICHEE FEHLER HIER VALUE UND GENERIC WERDEN VERGLICHEN
+            % MOEGLICHEE FEHLER HIER VALUE UND GENERIC WERDEN VERGLICHEN
             elseif strcmp(contents(get(hObject,'Value')),'generic_MCsquare')
                 try
                     AllVarNames = evalin('base','who');
@@ -992,7 +1103,7 @@ classdef matRad_PlanWidget < matRad_Widget
                         'Position', [Width-(0.5*Width) 0.1 * Height 80 30],...
                         'Callback', 'close');
                 catch ME
-                    warning(ME.identifier,'couldn''t set isocenter in pln update! Reason: %s\n',ME.message)
+                    warning(ME.identifier,'Could not set isocenter in pln update! Reason: %s\n',ME.message)
                 end
             end
             this.handles = handles;

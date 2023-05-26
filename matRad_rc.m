@@ -27,8 +27,9 @@ if ~strcmp(matRad_cfg.matRadRoot,fileparts(mfilename("fullpath")))
     matRad_cfg = MatRad_Config.instance();
 end
 
+% clear command window and close all figures
 if clearWindow
-    %clear command window and close all figures
+
     clc;
     close all;
 end
@@ -41,3 +42,4 @@ matRad_cfg.dispInfo('You are running matRad %s with %s %s\n',vString,env,envver)
 clear env envver vString;
 
 
+end

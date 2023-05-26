@@ -102,3 +102,4 @@ if exist('pln','var') && ~isempty(pln)
 else
      xlabel(axesHandle,'Dose [Gy]','FontSize',fontSizeValue);
 end
+hold(axesHandle,'off');

@@ -259,6 +259,7 @@ classdef MatRad_Config < handle
             
             obj.devMode = false;
             obj.eduMode = true;
+
         end
         
         function setDefaultGUIProperties(obj)

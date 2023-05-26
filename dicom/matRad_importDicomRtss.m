@@ -37,7 +37,7 @@ fprintf('\nReading structures...');
 if nargin < 3
     visBool = 0;
 end
-
+matRad_cfg = MatRad_Config.instance();
 env = matRad_getEnvironment();
 matRad_checkEnvDicomRequirements(env);
 isOctave = strcmp(env,'OCTAVE');
@@ -52,9 +52,17 @@ else % apply 'UseVRHeuristic' option when available to use a to help read certai
 end
 
 % list the defined structures
-listOfDefStructs = fieldnames(structInfo.StructureSetROISequence);
+try
+    listOfDefStructs = fieldnames(structInfo.StructureSetROISequence);
+catch
+    matRad_cfg.dispError('StructureSetROISequence not defined ')
+end
 % list of contoured structures
-listOfContStructs = fieldnames(structInfo.ROIContourSequence);
+try
+    listOfContStructs = fieldnames(structInfo.ROIContourSequence);
+catch
+    matRad_cfg.dispError('ROIContourSequence not defined ')
+end 
 
 %% process structure data
 numOfDefStructs  = numel(listOfDefStructs);
@@ -86,11 +94,11 @@ for i = 1:numOfContStructs % loop over every structure
                     listOfSlices = fieldnames(structInfo.ROIContourSequence.(...
                                                 listOfContStructs{i}).ContourSequence);
                 else
-                    warning(['Contour ' structures(i).structName ' is empty'])
+                    matRad_cfg.dispWarning(['Contour ' structures(i).structName ' is empty'])
                     continue;
                 end
     else
-        warning(['Contour ' structures(i).structName ' is empty'])
+        matRad_cfg.dispWarning(['Contour ' structures(i).structName ' is empty'])
         continue;
     end
     
@@ -113,12 +121,12 @@ for i = 1:numOfContStructs % loop over every structure
         
         % sanity check 1
         if numel(unique(structZ)) > 1
-            error('Detected contour points outside of single slice\n');
+            matRad_cfg.dispError('Detected contour points outside of single slice\n');
         end
         
         % sanity check 2
         if unique(structZ) > max(dicomInfo.SlicePositions) || unique(structZ) < min(dicomInfo.SlicePositions)
-            warning(['Omitting contour data for ' structures(i).structName ' at slice position ' num2str(unique(structZ)) 'mm - no ct data available.\n']);
+            matRad_cfg.dispWarning(['Omitting contour data for ' structures(i).structName ' at slice position ' num2str(unique(structZ)) 'mm - no ct data available.\n']);
         else
             structures(i).item(j).points = [structX, structY, structZ];
         end

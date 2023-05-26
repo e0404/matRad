@@ -1,7 +1,30 @@
 classdef matRad_VisualizationWidget < matRad_Widget
-    
+    % matRad_VisualizationWidget class to generate GUI widget to set
+    % viewing options
+    % Describes a standard fluence optimization problem by providing the 
+    % implementation of the objective & constraint function/gradient wrappers
+    % and managing the mapping and backprojection of the respective dose-
+    % related quantity
+    %
+    % References
+    %   -
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %
+    % Copyright 2020 the matRad development team. 
+    % 
+    % This file is part of the matRad project. It is subject to the license 
+    % terms in the LICENSE file found in the top-level directory of this 
+    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+    % of the matRad project, including this file, may be copied, modified, 
+    % propagated, or distributed except according to the terms contained in the 
+    % LICENSE file.
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties
         viewingWidgetHandle;
+         dvhStatWidgetHandle;
+
     end
     
     methods
@@ -44,7 +67,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 set(handles.radiobtnPlan,'Enable','off');
                 set(handles.btn3Dview,'Enable','off');
             end
-            this.handles=handles;
+            this.handles = handles;
         end
         
         
@@ -59,7 +82,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 % get the default values from the viewer widget
                 this.getFromViewingWidget();
             else
-                handles=this.handles;
+                handles = this.handles;
                 % disable all buttons
                 set(handles.popupDisplayOption,'Enable','off');
                 set(handles.popupProfileType,'Enable','off');
@@ -73,7 +96,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 set(handles.radiobtnIsoDoseLinesLabels,'Enable','off');
                 set(handles.radioBtnIsoCenter,'Enable','off');
                 set(handles.radiobtnPlan,'Enable','off');
-                this.handles=handles;
+                this.handles = handles;
             end
         end
                 
@@ -528,7 +551,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
     
     methods (Access = protected)
         function getFromViewingWidget(this)
-            handles=this.handles;
+            handles = this.handles;
             if strcmp(this.viewingWidgetHandle.ProfileType,'lateral')
                 set(handles.popupProfileType,'Value',2);
             else
@@ -612,7 +635,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 end
                 
             end
-            this.handles=handles;
+            this.handles = handles;
         end        
         
          % H37 Calback
@@ -632,7 +655,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
         
          %45 Callback
         function popupTypeOfPlot_Callback(this, hObject, event)
-            this.viewingWidgetHandle.typeOfPlot=get(hObject,'Value');
+            this.viewingWidgetHandle.typeOfPlot = get(hObject,'Value');
             handles = this.handles;
             
             % intensity plot
@@ -690,12 +713,14 @@ classdef matRad_VisualizationWidget < matRad_Widget
             
             handles = this.handles;
             this.viewingWidgetHandle.SelectedDisplayOption = content{get(hObject,'Value'),1};
-            
-            %UpdatePlot(handles);
             this.handles = handles;
-            
-            
-            
+            % if matRad Plan Analysis exists use that
+            fh = findobj( 'Type', 'Figure', 'Name', 'MatRad Plan Analysis' ); 
+            if ~isempty(fh)
+                this.dvhStatWidgetHandle.SelectedDisplayOption = content{get(hObject,'Value'),1};
+            end
+             
+
         end
         
         % H49 Callback
@@ -739,7 +764,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
          
         % 52 Callback
         function btnDVH_Callback(this, hObject, event)
-            matRad_DVHStatsWidget();
+            this.dvhStatWidgetHandle = matRad_DVHStatsWidget(this.viewingWidgetHandle.SelectedDisplayOption); % pass fieldname in resultGUI
         end
         
         %H55 Callback
@@ -760,7 +785,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
            
            % Hint: get(hObject,'Value') returns toggle state of radiobtnContour
            %UpdatePlot(handles)
-           this.viewingWidgetHandle.plotContour=get(hObject,'Value');
+           this.viewingWidgetHandle.plotContour = get(hObject,'Value');
        end
        % --- Executes on slider movement.
        function sliderSlice_Callback(this,hObject, ~)
@@ -772,7 +797,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
            %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
            %UpdatePlot(handles)
            
-           this.viewingWidgetHandle.slice= round(get(hObject,'Value'));
+           this.viewingWidgetHandle.slice = round(get(hObject,'Value'));
        end
        
        function radiobtnCT_Callback(this,hObject, ~)
@@ -782,7 +807,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
            
            % Hint: get(hObject,'Value') returns toggle state of radiobtnCT
            %UpdatePlot(handles)
-           this.viewingWidgetHandle.plotCT=get(hObject,'Value');
+           this.viewingWidgetHandle.plotCT = get(hObject,'Value');
        end
        
        % --- Executes on button press in radiobtnPlan.
@@ -793,7 +818,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
            
            % Hint: get(hObject,'Value') returns toggle state of radiobtnPlan
            %UpdatePlot(handles)
-           this.viewingWidgetHandle.plotPlan=get(hObject,'Value');
+           this.viewingWidgetHandle.plotPlan = get(hObject,'Value');
        end
        
        % --- Executes on button press in radiobtnIsoDoseLines.
@@ -803,7 +828,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
            % handles    structure with handles and user data (see GUIDATA)
            
            % Hint: get(hObject,'Value') returns toggle state of radiobtnIsoDoseLines
-           this.viewingWidgetHandle.plotIsoDoseLines=get(hObject,'Value');
+           this.viewingWidgetHandle.plotIsoDoseLines = get(hObject,'Value');
 
        end
        
@@ -821,7 +846,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
        % radio button: plot isolines labels
        function radiobtnIsoDoseLinesLabels_Callback(this,hObject, ~)
            %UpdatePlot(handles);
-           this.viewingWidgetHandle.plotIsoDoseLinesLabels=get(hObject,'Value');
+           this.viewingWidgetHandle.plotIsoDoseLinesLabels = get(hObject,'Value');
        end
        
        % --- Executes on button press in radioBtnIsoCenter.
@@ -831,7 +856,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
            % handles    structure with handles and user data (see GUIDATA)
            %UpdatePlot(handles)
            % Hint: get(hObject,'Value') returns toggle state of radioBtnIsoCenter
-           this.viewingWidgetHandle.plotIsoCenter=get(hObject,'Value');
+           this.viewingWidgetHandle.plotIsoCenter = get(hObject,'Value');
        end       
     end
 end

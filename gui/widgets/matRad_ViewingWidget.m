@@ -1,5 +1,27 @@
 classdef matRad_ViewingWidget < matRad_Widget
-    
+    % matRad_ViewingWidget class to generate GUI widget to display plan
+    % dose distributions and ct
+    % Describes a standard fluence optimization problem by providing the 
+    % implementation of the objective & constraint function/gradient wrappers
+    % and managing the mapping and backprojection of the respective dose-
+    % related quantity
+    %
+    % References
+    %   -
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %
+    % Copyright 2020 the matRad development team. 
+    % 
+    % This file is part of the matRad project. It is subject to the license 
+    % terms in the LICENSE file found in the top-level directory of this 
+    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+    % of the matRad project, including this file, may be copied, modified, 
+    % propagated, or distributed except according to the terms contained in the 
+    % LICENSE file.
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     properties
         plane = 3;
         slice = 1;
@@ -25,10 +47,10 @@ classdef matRad_ViewingWidget < matRad_Widget
         plotLegend = true;
         plotColorBar = true;
         ProfileType = 'lateral';
-        SelectedDisplayOption ='';
-        SelectedDisplayAllOptions='';
-        CutOffLevel= 0.01;
-        dispWindow= cell(3,2);
+        SelectedDisplayOption = 'physicalDose';
+        SelectedDisplayAllOptions = '';
+        CutOffLevel = 0.01;
+        dispWindow = cell(3,2);
         doseOpacity = 0.6;
         IsoDose_Levels= [];
         NewIsoDoseFlag = true;
@@ -1285,7 +1307,14 @@ classdef matRad_ViewingWidget < matRad_Widget
                     end
                     
                     minMaxRange = this.dispWindow{2,1};
-                    
+                                      
+                    if (length(this.IsoDose_Levels) == 1 && this.IsoDose_Levels(1,1) == 0)
+
+                        vLevels                  = [0.1:0.1:0.9 0.95:0.05:upperMargin];
+                        referenceDose            = (minMaxRange(1,2))/(upperMargin);
+                        this.IsoDose_Levels   = minMaxRange(1,1) + (referenceDose-minMaxRange(1,1)) * vLevels;
+                        this.IsoDose_Contours = matRad_computeIsoDoseContours(dose,this.IsoDose_Levels);
+                    end
                 
                     % update cached IsoDose contours
                     vLevels                  = [0.1:0.1:0.9 0.95:0.05:upperMargin];
@@ -1294,9 +1323,9 @@ classdef matRad_ViewingWidget < matRad_Widget
                     this.IsoDose_Contours = matRad_computeIsoDoseContours(dose,this.IsoDose_Levels);
 
                 end
-            end
              
             this.lockUpdate=lockState;
         end
+    end
     end
 end

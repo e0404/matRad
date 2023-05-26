@@ -1,5 +1,27 @@
 classdef matRad_importDicomWidget < matRad_Widget
-    
+    % matRad_importDicomWidget class to generate GUI widget to import dicom
+    % files
+    % Describes a standard fluence optimization problem by providing the 
+    % implementation of the objective & constraint function/gradient wrappers
+    % and managing the mapping and backprojection of the respective dose-
+    % related quantity
+    %
+    % References
+    %   -
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %
+    % Copyright 2020 the matRad development team. 
+    % 
+    % This file is part of the matRad project. It is subject to the license 
+    % terms in the LICENSE file found in the top-level directory of this 
+    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+    % of the matRad project, including this file, may be copied, modified, 
+    % propagated, or distributed except according to the terms contained in the 
+    % LICENSE file.
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
     properties
     end
     
@@ -390,8 +412,8 @@ classdef matRad_importDicomWidget < matRad_Widget
             
         end
         
-        % H?? CHECKBOX§ CALLBACK
-        function this = checkbox3_Callback(this, hObject, eventdata)
+        % H38 CHECKBOX USE RT DOSE GRID CALLBACK
+        function this = checkUseRTdoseGrid_Callback(this, hObject, eventdata)
             % hObject    handle to checkbox3 (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
@@ -924,7 +946,7 @@ classdef matRad_importDicomWidget < matRad_Widget
                 'FontSize',matRad_cfg.gui.fontSize,...
                 'FontName',matRad_cfg.gui.fontName,...
                 'FontWeight',matRad_cfg.gui.fontWeight,...
-                'Callback',@(hObject,event) checkbox3_Callback(this,hObject,event),...
+                'Callback',@(hObject,event) checkUseRTdoseGrid_Callback(this,hObject,event),...
                 'Enable','off',...
                 'Tag','checkbox3' );
 
