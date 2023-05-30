@@ -16,7 +16,7 @@ jobs:
       - name: Run Tests
         uses: matlab-actions/run-command@v1
         with:
-          command: cd unitTest; matRad_runTests
+          command: cd test; matRad_runTests
   test-matlab-latest: #Matlab test Job for latest Matlab release
     runs-on: ubuntu-latest
     steps:
@@ -30,7 +30,7 @@ jobs:
       - name: Run Tests
         uses: matlab-actions/run-command@v1
         with:
-          command: cd unitTest; matRad_runTests
+          command: cd test; matRad_runTests
   test-octave-6: #Octave test Job
     runs-on: ubuntu-22.04 # We use Ubuntu-22.04 because it has Octave 6.4
     steps:
