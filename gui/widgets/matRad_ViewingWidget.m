@@ -44,7 +44,7 @@ classdef matRad_ViewingWidget < matRad_Widget
         plotDose = true;
         plotIsoDoseLines = true;
         plotIsoDoseLinesLabels = false;
-        plotLegend = true;
+        plotLegend = false;
         plotColorBar = true;
         ProfileType = 'lateral';
         SelectedDisplayOption = 'physicalDose';
