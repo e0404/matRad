@@ -249,7 +249,7 @@ end
 backProjection.scenarios    = ixForOpt;
 backProjection.scenarioProb = pln.multScen.scenProb;
 
-optiProb = matRad_OptimizationProblem(backProjection);
+optiProb = matRad_OptimizationProblem(backProjection,cst);
 optiProb.quantityOpt = pln.bioParam.quantityOpt;
 if isfield(pln,'propOpt') && isfield(pln.propOpt,'useLogSumExpForRobOpt')
     optiProb.useLogSumExpForRobOpt = pln.propOpt.useLogSumExpForRobOpt;
@@ -304,6 +304,7 @@ resultGUI = matRad_calcCubes(wOpt,dij);
 resultGUI.wUnsequenced = wOpt;
 resultGUI.usedOptimizer = optimizer;
 resultGUI.info = info;
+resultGUI.optiProb = optiProb;
 
 %Robust quantities
 if FLAG_ROB_OPT || numel(ixForOpt) > 1
