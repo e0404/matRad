@@ -73,6 +73,7 @@ classdef matRad_ViewingWidget < matRad_Widget
         AxesHandlesVOI;
         env;
         cst;
+        vIsoCenter;
     end
     
     events
@@ -1270,8 +1271,12 @@ classdef matRad_ViewingWidget < matRad_Widget
                         this.VOIPlotFlag(i) = true;
                     end
                 end
+                % set isoCenter values 
+                % Note: only defined for the first Isocenter
+                uniqueIsoCenters = unique(pln.propStf.isoCenter,'rows');
+                this.vIsoCenter      = round(uniqueIsoCenters(1,:)./[ct.resolution.x ct.resolution.y ct.resolution.z]);
                 
-               
+
                  % set profile offset slider
                 this.OffsetMinMax = [-100 100];
                 vRange = sum(abs(this.OffsetMinMax));

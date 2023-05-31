@@ -883,16 +883,10 @@ classdef matRad_VisualizationWidget < matRad_Widget
            % handles    structure with handles and user data (see GUIDATA)
            %UpdatePlot(handles)
            % Hint: get(hObject,'Value') returns toggle state of radioBtnIsoCenter
-           if evalin('base','exist(''pln'')') && evalin('base','exist(''ct'')')
-                pln = evalin('base','pln');
-                ct = evalin('base','ct');
-               uniqueIsoCenters = unique(pln.propStf.isoCenter,'rows');
-                vIsoCenter      = round(uniqueIsoCenters./[ct.resolution.x ct.resolution.y ct.resolution.z]);
-               isoSlice = vIsoCenter(this.viewingWidgetHandle.plane);
-               this.viewingWidgetHandle.slice = isoSlice;
-           end
-
            
+           isoSlice = this.viewingWidgetHandle.vIsoCenter(this.viewingWidgetHandle.plane);
+           this.viewingWidgetHandle.slice = isoSlice;
        end
+
     end
 end
