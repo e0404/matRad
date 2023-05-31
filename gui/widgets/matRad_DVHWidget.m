@@ -21,7 +21,7 @@ classdef matRad_DVHWidget < matRad_Widget
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties
-        SelectedCube;
+        selectedCube;
         lockUpdate = false;
 
     end
@@ -47,7 +47,7 @@ classdef matRad_DVHWidget < matRad_Widget
                            
             end
             this = this@matRad_Widget(handleParent);
-            this.SelectedCube = SelectedCube;
+            this.selectedCube = SelectedCube;
 
         end
         
@@ -89,8 +89,8 @@ classdef matRad_DVHWidget < matRad_Widget
     
     methods
 
-        function set.SelectedCube(this,value)
-            this.SelectedCube=value;
+        function set.selectedCube(this,value)
+            this.selectedCube=value;
         end
         function showDVH(this)
 
@@ -98,10 +98,10 @@ classdef matRad_DVHWidget < matRad_Widget
             pln = evalin('base','pln');
             cst = evalin('base','cst');
 
-            doseCube = resultGUI.(this.SelectedCube);
+            doseCube = resultGUI.(this.selectedCube);
             dvh = matRad_calcDVH(cst,doseCube,'cum');
             matRad_showDVH(axes(this.widgetHandle),dvh,cst,pln);
-            this.widgetHandle.Children(2).Title.String = strrep(this.SelectedCube, '_',' ');
+            this.widgetHandle.Children(2).Title.String = strrep(this.selectedCube, '_',' ');
         end
         
     end
