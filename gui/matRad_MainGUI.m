@@ -340,6 +340,7 @@ classdef matRad_MainGUI < handle
            this.PlanWidget.update(evt);
            this.WorkflowWidget.update(evt);
            this.OptimizationWidget.update(evt);
+           this.ViewingWidget.lockUpdate = 0;
            this.ViewingWidget.update(evt);
            %this.ViewerOptionsWidget.update();
            %this.VisualizationWidget.update();
