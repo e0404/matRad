@@ -22,7 +22,7 @@ classdef matRad_StatisticsWidget < matRad_Widget
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties
-        SelectedCube;
+        selectedCube;
         lockUpdate = false;
 
     end
@@ -55,7 +55,7 @@ classdef matRad_StatisticsWidget < matRad_Widget
                 
               end
               this = this@matRad_Widget(handleParent);
-              this.SelectedCube = SelectedCube;
+              this.selectedCube = SelectedCube;
         end
 
         
@@ -87,15 +87,15 @@ classdef matRad_StatisticsWidget < matRad_Widget
     end
     
     methods
-         function set.SelectedCube(this,value)
-            this.SelectedCube=value;
+         function set.selectedCube(this,value)
+            this.selectedCube=value;
         end
          function showStatistics(this)
             
             resultGUI = evalin('base','resultGUI');
             pln = evalin('base','pln');
             cst = evalin('base','cst');
-            doseCube = resultGUI.(this.SelectedCube);
+            doseCube = resultGUI.(this.selectedCube);
             
             if ~exist('refVol', 'var')
                 refVol = [];

@@ -240,6 +240,21 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 'FontName',matRad_cfg.gui.fontName,...
                 'FontWeight',matRad_cfg.gui.fontWeight,...
                 'Tag','sliderOffset');
+           h25 = uicontrol(...
+                'Parent',h36,...
+                'Units','normalized',...
+                'String','Recenter',...
+                'Tooltip','Recenter ct to isocenter',...
+                'Position',gridPos{2,4},...
+                'BackgroundColor',[0.8 0.8 0.8],...
+                'Callback',@(hObject,eventdata) btnRecenter_Callback(this,hObject,eventdata),...
+                'Enable','off',...
+                'Tag','btnRecenter',...
+                'BackgroundColor',matRad_cfg.gui.elementColor,...
+                'ForegroundColor',matRad_cfg.gui.textColor,...
+                'FontSize',matRad_cfg.gui.fontSize,...
+                'FontName',matRad_cfg.gui.fontName,...
+                'FontWeight',matRad_cfg.gui.fontWeight);
             
             %Third Column
             h44 = uicontrol(...
@@ -617,7 +632,8 @@ classdef matRad_VisualizationWidget < matRad_Widget
                     set(handles.radiobtnIsoDoseLines,'Enable','on');
                     set(handles.radiobtnIsoDoseLinesLabels,'Enable','on');
                     set(handles.sliderSlice,'Enable','on');
-                    
+                    set(handles.btnRecenter, 'Enable','on');
+
                     % profile plot
                 elseif this.viewingWidgetHandle.typeOfPlot == 2
                     
@@ -630,8 +646,8 @@ classdef matRad_VisualizationWidget < matRad_Widget
                     set(handles.radiobtnIsoDoseLines,'Enable','off');
                     set(handles.sliderSlice,'Enable','off');
                     set(handles.radiobtnIsoDoseLinesLabels,'Enable','off');
-                    set(handles.popupProfileType,'Enable','on')
-                    
+                    set(handles.popupProfileType,'Enable','on');
+                    set(handles.btnRecenter, 'Enable','off');
                 end
                 
             end
@@ -857,6 +873,20 @@ classdef matRad_VisualizationWidget < matRad_Widget
            %UpdatePlot(handles)
            % Hint: get(hObject,'Value') returns toggle state of radioBtnIsoCenter
            this.viewingWidgetHandle.plotIsoCenter = get(hObject,'Value');
-       end       
+       end     
+
+       % --- Executes on button press in btnRecenter
+       % currently imlpemented for one single isocenter for all beams
+       function btnRecenter_Callback(this,hObject, eventdata)
+           % hObject    handle to radioBtnIsoCenter (see GCBO)
+           % eventdata  reserved - to be defined in a future version of MATLAB
+           % handles    structure with handles and user data (see GUIDATA)
+           %UpdatePlot(handles)
+           % Hint: get(hObject,'Value') returns toggle state of radioBtnIsoCenter
+           
+           isoSlice = this.viewingWidgetHandle.vIsoCenter(this.viewingWidgetHandle.plane);
+           this.viewingWidgetHandle.slice = isoSlice;
+       end
+
     end
 end
