@@ -74,6 +74,7 @@ classdef matRad_ViewingWidget < matRad_Widget
         env;
         cst;
         vIsoCenter;
+        sliceContourLegend;
     end
     
     events
@@ -683,7 +684,8 @@ classdef matRad_ViewingWidget < matRad_Widget
             
             %% plot VOIs
             if this.plotContour && this.typeOfPlot==1 && exist('ct','var') %&& get(handles.radiobtnContour,'Value') && handles.State>0
-                AxesHandlesVOI = [AxesHandlesVOI matRad_plotVoiContourSlice(handles.axesFig,this.cst,ct,1,this.VOIPlotFlag,this.plane,this.slice,[],'LineWidth',2)];
+                [AxVOI, this.sliceContourLegend] = matRad_plotVoiContourSlice(handles.axesFig,this.cst,ct,1,this.VOIPlotFlag,this.plane,this.slice,[],'LineWidth',2);
+                AxesHandlesVOI = [AxesHandlesVOI AxVOI];
             end
             this.AxesHandlesVOI=AxesHandlesVOI;
             
@@ -874,7 +876,9 @@ classdef matRad_ViewingWidget < matRad_Widget
                     VOIlines=this.AxesHandlesVOI(~cellfun(@isempty,this.AxesHandlesVOI));
                     VOIlegendlines=cellfun(@(v)v(1),VOIlines);
 
-                    l=legend(handles.axesFig, VOIlegendlines, this.cst{this.VOIPlotFlag,2}); %, 'FontSize',8
+                    l=legend(handles.axesFig, VOIlegendlines, this.cst{ this.sliceContourLegend,2}); %, 'FontSize',8
+                    hold(handles.axesFig,'on');
+                    
                 end
             end
             set(l,'FontSize',defaultFontSize);

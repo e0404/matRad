@@ -118,13 +118,13 @@ classdef matRad_OptimizationWidget < matRad_Widget
             
             %Widths of the fields
             buttonW = objHeight / aspectRatio; % Make button squared
-            nameW = 3.5*buttonW;%60;
+            nameW = 3*buttonW;%60;
             typeW = 3*buttonW;%70;
             opW = buttonW;%objHeight;
-            functionW = 6*buttonW;%120;
-            penaltyW = 2*buttonW;%40;
+            functionW = 5*buttonW;%120;
+            penaltyW = 1.5*buttonW;%40;
             paramTitleW = 4*buttonW;%120;
-            paramW = 2*buttonW;%30;
+            paramW = 1*buttonW;%30;
             fieldSep = 0.25*buttonW; %Separation between fields horizontally
             
             %Scrollbar
@@ -143,7 +143,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
             %Creates a dummy axis to allow for the use of textboxes instead of uicontrol to be able to use the (la)tex interpreter
             tmpAxes = axes('Parent',cstPanel,'units','normalized','position',[0 0 1 1],'visible','off', 'FontSize',8);
             
-            organTypes = {'OAR', 'TARGET'};
+            organTypes = {'OAR', 'TARGET','IGNORED'};
             
             %Get all Classes & classNames
             classNames = matRad_getObjectivesAndConstraints();

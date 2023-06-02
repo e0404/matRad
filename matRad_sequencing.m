@@ -59,7 +59,7 @@ if strcmp(pln.radiationMode,'photons') && (pln.propSeq.runSequencing || pln.prop
         otherwise
             matRad_cfg.dispError('Could not find specified sequencing algorithm');
     end
-elseif ~strcmp(pln.radiationMode,'photons')
+elseif (pln.propSeq.runSequencing || pln.propOpt.runDAO) && ~strcmp(pln.radiationMode,'photons')
     matRad_cfg.dispWarning('Sequencing is only specified for pln.radiationMode = "photons". Continuing with out sequencing ... ')
 end
 end
