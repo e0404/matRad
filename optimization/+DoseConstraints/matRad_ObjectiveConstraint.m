@@ -30,7 +30,7 @@ classdef matRad_ObjectiveConstraint < DoseConstraints.matRad_DoseConstraint
     end
     
     methods (Access = public)
-        function obj = matRad_ObjectiveConstraint(objective,maxObj,epsilon)
+        function constr = matRad_ObjectiveConstraint(objective,maxObj,epsilon)
             
             %check if objective is a struct and a DoseObjective or Constraint (for init from constraint)
             if isstruct(objective) && ~isempty(strfind(objective.className,'DoseObjectives'))
@@ -45,61 +45,61 @@ classdef matRad_ObjectiveConstraint < DoseConstraints.matRad_DoseConstraint
                 inputStruct = [];
             end
 
-            obj@DoseConstraints.matRad_DoseConstraint(inputStruct);
+            constr@DoseConstraints.matRad_DoseConstraint(inputStruct);
             
             
             if ~initFromStruct
                 
                 if nargin == 3 && isscalar(epsilon)
-                    obj.epsilon = epsilon;
+                    constr.epsilon = epsilon;
                 end
 
                 if nargin >= 2 && isscalar(maxObj)
-                    obj.parameters{1} = maxObj;
+                    constr.parameters{1} = maxObj;
                 end
                 
                 if nargin >= 1
-                    obj.objective = objective;
+                    constr.objective = objective;
                 end
 
             end
             %}
         end
         
-        function s = struct(obj)
-            s = struct@DoseConstraints.matRad_DoseConstraint(obj);
-            s.epsilon = obj.epsilon;
-            s.objective = obj.objective;
+        function s = struct(constr)
+            s = struct@DoseConstraints.matRad_DoseConstraint(constr);
+            s.epsilon = constr.epsilon;
+            s.objective = constr.objective;
         end
         
-        function cu = upperBounds(obj,n)
-            cu = obj.parameters{1}+obj.epsilon;
-            %cu = [Inf; obj.parameters{2}];
+        function cu = upperBounds(constr,n)
+            cu = constr.parameters{1}+constr.epsilon;
+            %cu = [Inf; constr.parameters{2}];
         end
-        function cl = lowerBounds(obj,n)          
+        function cl = lowerBounds(constr,n)          
             cl = 0;
         end
                 
         %% Calculates the Constraint Function value
-        function cDose = computeDoseConstraintFunction(obj,dose)
-            cDose = obj.objective.computeDoseObjectiveFunction(dose);
+        function cDose = computeDoseConstraintFunction(constr,dose)
+            cDose = constr.objective.computeDoseObjectiveFunction(dose);
         end
         
         %% Calculates the Constraint jacobian
-        function cDoseJacob  = computeDoseConstraintJacobian(obj,dose)
-            cDoseJacob = obj.objective.computeDoseObjectiveGradient(dose);
+        function cDoseJacob  = computeDoseConstraintJacobian(constr,dose)
+            cDoseJacob = constr.objective.computeDoseObjectiveGradient(dose);
         end
         
-        function doseParams = getDoseParameters(obj)
+        function doseParams = getDoseParameters(constr)
             % get only the dose related parameters.
-            ix = cellfun(@(c) isequal('dose',c),obj.objective.parameterTypes);
-            doseParams = [obj.objective.parameters{ix}];
+            ix = cellfun(@(c) isequal('dose',c),constr.objective.parameterTypes);
+            doseParams = [constr.objective.parameters{ix}];
         end
         
-        function obj = setDoseParameters(obj,doseParams)
+        function constr = setDoseParameters(constr,doseParams)
             % set only the dose related parameters.
-            ix = cellfun(@(c) isequal('dose',c),obj.objective.parameterTypes);
-            obj.objective.parameters(ix) = num2cell(doseParams);
+            ix = cellfun(@(c) isequal('dose',c),constr.objective.parameterTypes);
+            constr.objective.parameters(ix) = num2cell(doseParams);
          
         end        
     
