@@ -30,7 +30,7 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
     end
     
     methods
-        function obj = matRad_MinMaxDose(minDose,maxDose,method)
+        function constr = matRad_MinMaxDose(minDose,maxDose,method)
             
             %If we have a struct in first argument
             if nargin == 1 && isstruct(minDose)
@@ -42,7 +42,7 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
             end
             
             %Call Superclass Constructor (for struct initialization)
-            obj@DoseConstraints.matRad_DoseConstraint(inputStruct);
+            constr@DoseConstraints.matRad_DoseConstraint(inputStruct);
             
             %now handle initialization from other parameters
             if ~initFromStruct
@@ -51,80 +51,80 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
                     method = 'approx';
                 end
                 
-                methodIx = find(strcmp(method,obj.parameterTypes{3}));
+                methodIx = find(strcmp(method,constr.parameterTypes{3}));
                 
                 if isempty(methodIx) || numel(methodIx) > 1
                     methodIx = 1;
-                    msg = ['Dose Constraint method can only be ', strjoin(obj.parameterTypes{3},' or '), '! Using method ''', obj.parameterTypes{3}{methodIx}, '''.'];
+                    msg = ['Dose Constraint method can only be ', strjoin(constr.parameterTypes{3},' or '), '! Using method ''', constr.parameterTypes{3}{methodIx}, '''.'];
                     warning(msg);
                 end
                 
-                obj.parameters{3} = methodIx;
+                constr.parameters{3} = methodIx;
                 
                 if nargin >= 2 && isscalar(maxDose)
-                    obj.parameters{2} = maxDose;
+                    constr.parameters{2} = maxDose;
                 end
                 
                 if nargin >= 1 && isscalar(minDose)
-                    obj.parameters{1} = minDose;
+                    constr.parameters{1} = minDose;
                 end
             end
         end
         
         %Overloads the struct function to add constraint specific
         %parameters
-        function s = struct(obj)
-            s = struct@DoseConstraints.matRad_DoseConstraint(obj);
-            s.epsilon = obj.epsilon;
+        function s = struct(constr)
+            s = struct@DoseConstraints.matRad_DoseConstraint(constr);
+            s.epsilon = constr.epsilon;
         end
         
-        function cu = upperBounds(obj,n)
-            switch obj.parameters{3}
+        function cu = upperBounds(constr,n)
+            switch constr.parameters{3}
                 case 1 %logsumexp approx
                     %Validate parameters
-                    if obj.parameters{1} <= 0 && isinf(obj.parameters{2}) %Constraint doesn't make sense (min = 0 & max = Inf)
+                    if constr.parameters{1} <= 0 && isinf(constr.parameters{2}) %Constraint doesn't make sense (min = 0 & max = Inf)
                         cu = [];
-                    elseif obj.parameters{2} == Inf %Only min dose
+                    elseif constr.parameters{2} == Inf %Only min dose
                         cu = Inf;
-                    elseif obj.parameters{1} <= 0 %Only max dose
-                        cu = obj.parameters{2};
+                    elseif constr.parameters{1} <= 0 %Only max dose
+                        cu = constr.parameters{2};
                     else %both are set sensible
-                        cu = [Inf; obj.parameters{2}];
+                        cu = [Inf; constr.parameters{2}];
                     end
                 case 2 %voxelwise
-                    cu = obj.parameters{2}*ones(n,1);
+                    cu = constr.parameters{2}*ones(n,1);
                 otherwise
                     error(['Min/max dose constraint evaluation method not known!']);
             end
-            %cu = [Inf; obj.parameters{2}];
+            %cu = [Inf; constr.parameters{2}];
         end
-        function cl = lowerBounds(obj,n)
-            switch obj.parameters{3}
+        function cl = lowerBounds(constr,n)
+            switch constr.parameters{3}
                 case 1 %logsumexp approx
-                    if obj.parameters{1} <= 0 && isinf(obj.parameters{2})
+                    if constr.parameters{1} <= 0 && isinf(constr.parameters{2})
                         cl = [];
-                    elseif obj.parameters{2} == Inf
-                        cl = obj.parameters{1};
-                    elseif obj.parameters{1} <= 0
+                    elseif constr.parameters{2} == Inf
+                        cl = constr.parameters{1};
+                    elseif constr.parameters{1} <= 0
                         cl = 0;
                     else
-                        cl = [obj.parameters{1}; 0];
+                        cl = [constr.parameters{1}; 0];
                     end
                 case 2
-                    cl = obj.parameters{1}*ones(n,1);
+                    cl = constr.parameters{1}*ones(n,1);
                 otherwise
                     matRad_cfg = MatRad_Config.instance();
                     matRad_cfg.dispError('Min/max dose constraint evaluation method not known!');
             end
         end
         
-        function jStruct = getDoseConstraintJacobianStructure(obj,n)
-            switch obj.parameters{3}
+        function jStruct = getDoseConstraintJacobianStructure(constr,n)
+            switch constr.parameters{3}
                 case 1 %logsumexp approx
                     %Validate parameters
-                    if obj.parameters{1} <= 0 && isinf(obj.parameters{2}) %Constraint doesn't make sense (min = 0 & max = Inf)
+                    if constr.parameters{1} <= 0 && isinf(constr.parameters{2}) %Constraint doesn't make sense (min = 0 & max = Inf)
                         jStruct = ones(n,0);
-                    elseif obj.parameters{1} > 0 && isfinite(obj.parameters{2}) %both are set sensible
+                    elseif constr.parameters{1} > 0 && isfinite(constr.parameters{2}) %both are set sensible
                         jStruct = ones(n,2);
                     else %Only min or max dose
                         jStruct = ones(n,1);
@@ -140,14 +140,14 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
         end
         
         %% Calculates the Constraint Function value
-        function cDose = computeDoseConstraintFunction(obj,dose)
-            %cDose(2) = dose_max + obj.epsilon * log( sum(exp((dose - dose_max)/obj.epsilon)));
-            %cDose(1) = dose_min - obj.epsilon * log( sum(exp((dose_min - dose)/obj.epsilon)));
-            switch obj.parameters{3}
+        function cDose = computeDoseConstraintFunction(constr,dose)
+            %cDose(2) = dose_max + constr.epsilon * log( sum(exp((dose - dose_max)/constr.epsilon)));
+            %cDose(1) = dose_min - constr.epsilon * log( sum(exp((dose_min - dose)/constr.epsilon)));
+            switch constr.parameters{3}
                 case 1 %logsumexp approx
-                    cDose = obj.computeDoseConstraintFunctionLogSumExp(dose);
+                    cDose = constr.computeDoseConstraintFunctionLogSumExp(dose);
                 case 2
-                    cDose = obj.computeDoseConstraintFunctionVoxelwise(dose);
+                    cDose = constr.computeDoseConstraintFunctionVoxelwise(dose);
                 otherwise
                     matRad_cfg = MatRad_Config.instance();
                     matRad_cfg.dispError('Min/max dose constraint evaluation method not known!');
@@ -155,12 +155,12 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
         end
         
         %% Calculates the Constraint jacobian
-        function cDoseJacob  = computeDoseConstraintJacobian(obj,dose)
-            switch obj.parameters{3}
+        function cDoseJacob  = computeDoseConstraintJacobian(constr,dose)
+            switch constr.parameters{3}
                 case 1 %logsumexp approx
-                    cDoseJacob = obj.computeDoseConstraintJacobianLogSumExp(dose);
+                    cDoseJacob = constr.computeDoseConstraintJacobianLogSumExp(dose);
                 case 2
-                    cDoseJacob = obj.computeDoseConstraintJacobianVoxelwise(dose);
+                    cDoseJacob = constr.computeDoseConstraintJacobianVoxelwise(dose);
                 otherwise
                     matRad_cfg = MatRad_Config.instance();
                     matRad_cfg.dispError('Min/max dose constraint evaluation method not known!');
@@ -170,38 +170,38 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
     
     methods (Access = private)
         % LogSumExp Approximation
-        function cDose = computeDoseConstraintFunctionLogSumExp(obj,dose)
+        function cDose = computeDoseConstraintFunctionLogSumExp(constr,dose)
             dose_min = min(dose);
             dose_max = max(dose);
             
             %Validate parameters
-            if obj.parameters{1} <= 0 && isinf(obj.parameters{2}) %Constraint doesn't make sense (min = 0 & max = Inf)
+            if constr.parameters{1} <= 0 && isinf(constr.parameters{2}) %Constraint doesn't make sense (min = 0 & max = Inf)
                 cDose = [];
-            elseif obj.parameters{2} == Inf %Only min dose
-                cDose = dose_min - obj.epsilon * log( sum(exp((dose_min - dose)/obj.epsilon)));
-            elseif obj.parameters{1} <= 0 %Only max dose
-                cDose = dose_max + obj.epsilon * log( sum(exp((dose - dose_max)/obj.epsilon)));
+            elseif constr.parameters{2} == Inf %Only min dose
+                cDose = dose_min - constr.epsilon * log( sum(exp((dose_min - dose)/constr.epsilon)));
+            elseif constr.parameters{1} <= 0 %Only max dose
+                cDose = dose_max + constr.epsilon * log( sum(exp((dose - dose_max)/constr.epsilon)));
             else %both are set sensible
-                cDose(2,1) = dose_max + obj.epsilon * log( sum(exp((dose - dose_max)/obj.epsilon)));
-                cDose(1,1) = dose_min - obj.epsilon * log( sum(exp((dose_min - dose)/obj.epsilon)));
+                cDose(2,1) = dose_max + constr.epsilon * log( sum(exp((dose - dose_max)/constr.epsilon)));
+                cDose(1,1) = dose_min - constr.epsilon * log( sum(exp((dose_min - dose)/constr.epsilon)));
             end
             
         end
-        function cDoseJacob  = computeDoseConstraintJacobianLogSumExp(obj,dose)
+        function cDoseJacob  = computeDoseConstraintJacobianLogSumExp(constr,dose)
             %Validate parameters
-            if obj.parameters{1} <= 0 && isinf(obj.parameters{2}) %Constraint doesn't make sense (min = 0 & max = Inf)
+            if constr.parameters{1} <= 0 && isinf(constr.parameters{2}) %Constraint doesn't make sense (min = 0 & max = Inf)
                 cDoseJacob = [];
-            elseif obj.parameters{2} == Inf %Only min dose
-                cDoseJacob(:,1) = exp( (min(dose)-dose)/obj.epsilon );
+            elseif constr.parameters{2} == Inf %Only min dose
+                cDoseJacob(:,1) = exp( (min(dose)-dose)/constr.epsilon );
                 cDoseJacob(:,1) = cDoseJacob(:,1)/sum(cDoseJacob(:,1));
-            elseif obj.parameters{1} <= 0 %Only max dose
-                cDoseJacob(:,1) = exp( (dose-max(dose))/obj.epsilon );
+            elseif constr.parameters{1} <= 0 %Only max dose
+                cDoseJacob(:,1) = exp( (dose-max(dose))/constr.epsilon );
                 cDoseJacob(:,1) = cDoseJacob(:,1)/sum(cDoseJacob(:,1));
             else %both are set sensible
-                cDoseJacob(:,1) = exp( (min(dose)-dose)/obj.epsilon );
+                cDoseJacob(:,1) = exp( (min(dose)-dose)/constr.epsilon );
                 cDoseJacob(:,1) = cDoseJacob(:,1)/sum(cDoseJacob(:,1));
                 
-                cDoseJacob(:,2) = exp( (dose-max(dose))/obj.epsilon );
+                cDoseJacob(:,2) = exp( (dose-max(dose))/constr.epsilon );
                 cDoseJacob(:,2) = cDoseJacob(:,2)/sum(cDoseJacob(:,2));
             end
             
@@ -209,10 +209,10 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
         end
         
         %Exact voxel-wise
-        function cDose = computeDoseConstraintFunctionVoxelwise(obj,dose)
+        function cDose = computeDoseConstraintFunctionVoxelwise(constr,dose)
             cDose = dose;
         end
-        function cDoseJacob  = computeDoseConstraintJacobianVoxelwise(obj,dose)
+        function cDoseJacob  = computeDoseConstraintJacobianVoxelwise(constr,dose)
             cDoseJacob = speye(numel(dose),numel(dose));
         end
     end

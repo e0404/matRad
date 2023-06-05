@@ -32,7 +32,7 @@
     end
     
     methods
-        function obj = matRad_MinMaxDVH(dRef,vMin,vMax)
+        function constr = matRad_MinMaxDVH(dRef,vMin,vMax)
             
             %If we have a struct in first argument
             if nargin == 1 && isstruct(dRef)
@@ -44,43 +44,43 @@
             end
             
             %Call Superclass Constructor (for struct initialization)
-            obj@DoseConstraints.matRad_DoseConstraint(inputStruct);
+            constr@DoseConstraints.matRad_DoseConstraint(inputStruct);
             
             %now handle initialization from other parameters
             if ~initFromStruct                
                 if nargin == 3 && isscalar(vMax)
-                    obj.parameters{3} = vMax;
+                    constr.parameters{3} = vMax;
                 end
                 
                 if nargin >= 1 && isscalar(dRef)
-                    obj.parameters{1} = dRef;
+                    constr.parameters{1} = dRef;
                 end
                 
                 if nargin >= 2 && isscalar(vMin)
-                    obj.parameters{2} = vMin;
+                    constr.parameters{2} = vMin;
                 end
             end
         end
         
         %Overloads the struct function to add constraint specific
         %parameters
-        function s = struct(obj)
-            s = struct@DoseConstraints.matRad_DoseConstraint(obj);
+        function s = struct(constr)
+            s = struct@DoseConstraints.matRad_DoseConstraint(constr);
             s.voxelScalingRatio = 1;
             s.referenceScalingVal = 0.01;
         end
         
-        function cu = upperBounds(obj,n)
-            cu = obj.parameters{3} / 100;
+        function cu = upperBounds(constr,n)
+            cu = constr.parameters{3} / 100;
         end
-        function cl = lowerBounds(obj,n)
-            cl = obj.parameters{2} / 100;
+        function cl = lowerBounds(constr,n)
+            cl = constr.parameters{2} / 100;
         end
         %% Calculates the Constraint Function value
-        function cDose = computeDoseConstraintFunction(obj,dose)
+        function cDose = computeDoseConstraintFunction(constr,dose)
             
             %Fast DVH point calculation
-            cDose = sum(dose >= obj.parameters{1})/numel(dose);
+            cDose = sum(dose >= constr.parameters{1})/numel(dose);
             
             %cDose = 100 * cDose; %In Percent
             
@@ -109,22 +109,22 @@
         end
         
         %% Calculates the Constraint jacobian
-        function cDoseJacob  = computeDoseConstraintJacobian(obj,dose)
+        function cDoseJacob  = computeDoseConstraintJacobian(constr,dose)
             %logistic approximation
             
             %Do we really need to sort two times?
             dose_sort = sort(dose);
             
             % calculate scaling
-            NoVoxels     = max(obj.voxelScalingRatio*numel(dose),10);
-            absDiffsort  = sort(abs(obj.parameters{1} - dose_sort));                       
+            NoVoxels     = max(constr.voxelScalingRatio*numel(dose),10);
+            absDiffsort  = sort(abs(constr.parameters{1} - dose_sort));                       
             
             deltaDoseMax = absDiffsort(min(ceil(NoVoxels/2),numel(dose)));
             
             % calclulate DVHC scaling
-            DVHCScaling = min((log(1/obj.referenceScalingVal-1))/(2*deltaDoseMax),250);
+            DVHCScaling = min((log(1/constr.referenceScalingVal-1))/(2*deltaDoseMax),250);
             
-            d_diff = dose - obj.parameters{1};
+            d_diff = dose - constr.parameters{1};
             
             cDoseJacob = (2/numel(dose))*DVHCScaling*exp(2*DVHCScaling*d_diff)./(exp(2*DVHCScaling*d_diff)+1).^2;
             
