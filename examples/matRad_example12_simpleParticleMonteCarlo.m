@@ -67,7 +67,7 @@ pln.propMC.engine = 'MCsquare';
 % pln.propMC.engine = 'TOPAS';
 
 % set number of histories lower than default for this example (default: 1e8)
-pln.propMC.numHistories = 1e5;
+pln.propMC.numHistories = 1e7;
 
 %Enable/Disable use of range shifter (has effect only when we need to fill 
 %up the low-range region)
@@ -99,9 +99,9 @@ matRad_compareDose(resultGUI.physicalDose, resultGUI.physicalDose_MC, ct, cst, [
 
 
 %% Compare LET
-if isfield(resultGUI,'LET') && isfield(resultGUI_recalc,'LET')
-    matRad_compareDose(resultGUI.LET, resultGUI_recalc.LET, ct, cst, [1, 1, 0] , 'off', pln, [2, 2], 1, 'global');
-    resultGUI.LET_MC = resultGUI_recalc.LET;
+if isfield(resultGUI,'LET') && isfield(resultGUI_MC,'LET')
+    matRad_compareDose(resultGUI.LET, resultGUI_MC.LET, ct, cst, [1, 1, 0] , 'off', pln, [2, 2], 1, 'global');
+    resultGUI.LET_MC = resultGUI_MC.LET;
 end
 
 %% GUI
