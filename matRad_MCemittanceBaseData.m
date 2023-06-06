@@ -338,8 +338,7 @@ classdef matRad_MCemittanceBaseData
             sigma = obj.machine.data(i).initFocus.sigma(focusIndex,:);
             
             %correct for in-air scattering with polynomial or interpolation
-            sigma = arrayfun(@(d,sigma) obj.spotSizeAirCorrection(obj.machine.meta.radiationMode,obj.machine.data(i).energy,d,sigma),z+obj.machine.meta.BAMStoIsoDist,sigma);
-                     
+            sigma = arrayfun(@(d,sigma) obj.spotSizeAirCorrection(obj.machine.meta.radiationMode,obj.machine.data(i).energy,d,sigma),-z+obj.machine.meta.BAMStoIsoDist,sigma);                   
 
             %square and interpolate at isocenter
             sigmaSq = sigma.^2;     
@@ -477,9 +476,9 @@ classdef matRad_MCemittanceBaseData
         function sigmaAirCorrected = spotSizeAirCorrection(radiationMode,E,d,sigma,method)
             %performs a rudimentary correction for additional scattering in
             %air not considered by the courant snyder equation
-
+            matRad_cfg = MatRad_Config.instance();
             if nargin < 5
-                method = 'fit';
+                method = 'interp_linear';
             end
 
             switch radiationMode
@@ -497,7 +496,7 @@ classdef matRad_MCemittanceBaseData
                                 0    0.0257    0.1801    0.5314    1.0970; ...
                                 0    0.0244    0.1670    0.4966    1.0342];
                     energies = [31.7290   69.4389   95.2605  116.5270  135.1460  151.9670  167.4620  181.9230  195.5480  208.4780  220.8170  232.6480]';
-                    depths = [0 500 1000 1500 2000];
+                    depths = [0 500 1000 1500 2000];                                       
                     polyFit = @(E,d) 0.001681*d - 0.0001178*E*d + 6.094e-6*d^2 + 1.764e-6*E^2*d - 1.016e-7*E*d^2 - 9.803e-09*E^3*d + 6.096e-10*E^2*d^2 + 1.835e-11*E^4*d - 1.209e-12*E^3*d^2;
                 otherwise 
                     sigmaLUT = [0 0; 0 0];
@@ -507,18 +506,42 @@ classdef matRad_MCemittanceBaseData
                     polyFit = @(E,d) 0;
             end
 
+            %make sure to not violate ranges!
+            %this is a little hardcoded, but helps us handle strange
+            %distances in the initFocus field
+            if d > max(depths)
+                d = max(depths);
+                matRad_cfg.dispWarning('Spot Size Air Correction problem, distance too large!',method);
+            end
+
+            if E > max(energies)
+                E = max(energies);
+                matRad_cfg.dispWarning('Spot Size Air Correction problem, energy too large!',method);
+            end
+
+            if E < min(energies)
+                E = min(energies);
+                matRad_cfg.dispWarning('Spot Size Air Correction problem, energy too small!',method);
+            end
+
+
             switch method
                 case 'interp_linear'
                     sigmaAir = interp2(energies,depths,sigmaLUT',E,d,'linear');
                 case 'fit'
                     sigmaAir = polyFit(E,d);
                 otherwise
-                    matRad_cfg = MatRad_Config.instance();
                     matRad_cfg.dispWarning('Air Correction Method ''%s'' not known, skipping!',method);
                     sigmaAir = 0;
             end
+    
+            if sigmaAir >= sigma
+                sigmaAirCorrected = sigma;
+                matRad_cfg.dispWarning('Spot Size Air Correction failed, too large!',method);
+            else
+                sigmaAirCorrected = sigma - sigmaAir; 
+            end
 
-            sigmaAirCorrected = sigma - sigmaAir;            
         end
     end
 end
