@@ -41,12 +41,8 @@ for i = 1:numel(caFieldnames)
 
    if boolOverwrite
        resultGUI.(caFieldnames{i,1}) =   resultGUItoAppend.(caFieldnames{i,1}); 
-       
-   elseif isfield(resultGUI,caFieldnames{i,1})
-      resultGUI.([caFieldnames{i,1} '_' Identifier]) =   resultGUItoAppend.(caFieldnames{i,1}); 
-      
-   elseif ~isfield(resultGUI,caFieldnames{i,1})
-        resultGUI.(caFieldnames{i,1}) =   resultGUItoAppend.(caFieldnames{i,1}); 
+   else
+       resultGUI.([caFieldnames{i,1} '_' Identifier]) =   resultGUItoAppend.(caFieldnames{i,1}); 
    end
    
 end
