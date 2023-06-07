@@ -30,8 +30,8 @@ pln.machine         = 'generic_MCsquare';
 pln.numOfFractions  = 1;
 
 % beam geometry settings
-pln.propStf.bixelWidth              = 10; % [mm] / also corresponds to lateral spot spacing for particles
-pln.propStf.longitudinalSpotSpacing = 10;
+pln.propStf.bixelWidth              = 5; % [mm] / also corresponds to lateral spot spacing for particles
+pln.propStf.longitudinalSpotSpacing = 3;
 pln.propStf.gantryAngles            = 0; % [?] 
 pln.propStf.couchAngles             = 0; % [?]
 pln.propStf.numOfBeams              = numel(pln.propStf.gantryAngles);
@@ -73,6 +73,9 @@ pln.propMC.numHistories = 1e7;
 %up the low-range region)
 pln.propStf.useRangeShifter = true;  
 
+%Enable LET calculation
+pln.propDoseCalc.calcLET = true;
+
 % Enable/Disable local computation with TOPAS. Enabling this will generate
 % the necessary TOPAS files to run the simulation on any machine or server.
 % pln.propMC.externalCalculation = true;
@@ -94,14 +97,13 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln); %Optimize
 resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,resultGUI.w);
 
 %% Compare Dose (number of histories not sufficient for accurate representation)
-resultGUI = matRad_appendResultGUI(resultGUI,resultGUI_MC,0,'MC');
-matRad_compareDose(resultGUI.physicalDose, resultGUI.physicalDose_MC, ct, cst, [1, 1, 0] , 'off', pln, [2, 2], 1, 'global');
+resultGUI = matRad_appendResultGUI(resultGUI,resultGUI_MC,true,pln.propMC.engine);
+matRad_compareDose(resultGUI.physicalDose, resultGUI.(['physicalDose_' pln.propMC.engine]), ct, cst, [1, 1, 0] , 'off', pln, [2, 2], 3, 'global');
 
 
 %% Compare LET
 if isfield(resultGUI,'LET') && isfield(resultGUI_MC,'LET')
-    matRad_compareDose(resultGUI.LET, resultGUI_MC.LET, ct, cst, [1, 1, 0] , 'off', pln, [2, 2], 1, 'global');
-    resultGUI.LET_MC = resultGUI_MC.LET;
+    matRad_compareDose(resultGUI.LET, resultGUI.(['LET_' pln.propMC.engine]), ct, cst, [1, 1, 0] , 'off', pln, [2, 2], 1, 'global');    
 end
 
 %% GUI
