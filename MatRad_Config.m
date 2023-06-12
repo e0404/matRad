@@ -173,6 +173,7 @@ classdef MatRad_Config < handle
             obj.propDoseCalc.defaultIgnoreOutsideDensities = true; %Ignore densities outside of cst contours
             obj.propDoseCalc.defaultVoxelSubIx = []; %Allows specification of a subindex list for dose calculation, empty by default means automatic setting
             obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
+<<<<<<< HEAD
             obj.propDoseCalc.defaultCalcLET = true; %calculate LETs for particles
 
             obj.propDoseCalc.defaultAirOffsetCorrection = true;
@@ -191,6 +192,23 @@ classdef MatRad_Config < handle
             %             obj.propMC.default_photon_engine = 'matRad_TopasConfig';
             obj.propMC.default_proton_engine = 'matRad_MCsquareConfig';
             obj.propMC.default_carbon_engine = 'matRad_TopasConfig';
+=======
+            obj.propDoseCalc.defaultCalcLET = false; %calculate LETs for particles
+            
+            % default properties for fine sampling calculation
+            obj.propDoseCalc.defaultFineSamplingProperties.sigmaSub = 1;
+            obj.propDoseCalc.defaultFineSamplingProperties.N = 21;
+            obj.propDoseCalc.defaultFineSamplingProperties.method = 'russo';
+            
+            obj.propOpt.defaultMaxIter = 500;
+            obj.propOpt.defaultAccChangeTol = 1e-4;
+            
+            obj.propMC.ompMC_defaultHistories = 1e6;
+            obj.propMC.ompMC_defaultOutputVariance = false;          
+            
+            obj.propMC.direct_defaultHistories = 1e7;
+            obj.propMC.particles_defaultHistories = 2e4;
+>>>>>>> de570e337753ef5899358548bbe69233e90e406b
 
             % Default settings for TOPAS
             obj.propMC.default_beamProfile_particles = 'biGaussian';

@@ -27,8 +27,11 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         showPlot = true;
     end
     
-    properties (Access = private)
+    properties(GetAccess = public, SetAccess = private)
         allObjectiveFunctionValues
+    end
+
+    properties (Access = private)
         axesHandle
         plotHandle
         abortRequested
@@ -77,7 +80,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.options.acceptable_constr_viol_tol    = 1e-2; % (Acc3)
             obj.options.acceptable_dual_inf_tol       = 1e10; % (Acc4)
             obj.options.acceptable_compl_inf_tol      = 1e10; % (Acc5)
-            obj.options.acceptable_obj_change_tol     = 1e-4; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
+            obj.options.acceptable_obj_change_tol     = matRad_cfg.propOpt.defaultAccChangeTol; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
             
             obj.options.max_iter                      = matRad_cfg.propOpt.defaultMaxIter;
             obj.options.max_cpu_time                  = 7200;
@@ -117,6 +120,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         end
         
         function obj = optimize(obj,w0,optiProb,dij,cst)
+            obj.allObjectiveFunctionValues = [];
             matRad_cfg = MatRad_Config.instance();
             
             % set optimization options            
@@ -187,7 +191,6 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             
             obj.abortRequested = false;
             % Empty the array of stored function values
-            obj.allObjectiveFunctionValues = [];
         end
         
         function [statusmsg,statusflag] = GetStatus(obj)
@@ -316,7 +319,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             drawnow;
             
             % ensure to bring optimization window to front
-            figure(hFig);
+            %figure(hFig);
         end
         
         function abortCallbackKey(obj,~,KeyEvent)
