@@ -1,4 +1,4 @@
-function [resultGUI,optimizer] = matRad_fluenceOptimizationJO(dij,cst,pln,wInit,loadwInit)
+function [resultGUI,optimizer] = matRad_fluenceOptimizationJO(dij,cst,pln,wInit)
 % matRad inverse planning wrapper function
 % 
 % call
@@ -107,9 +107,6 @@ else
     numOfModalities = 1;
 end
 
-if ~exist('wInit', 'var')
-    wInit = [];
-end
 if ~isempty(wInit) %can never happen now
     %do nothing as wInit was passed to the function
     matRad_cfg.dispInfo('chosen provided wInit!\n');   
@@ -369,11 +366,6 @@ switch pln.propOpt.optimizer
         optimizer = matRad_OptimizerIPOPT;
 end
 
-if exist('loadwInit', 'var')
-    if loadwInit ==1
-        load('wInit.mat');
-    end
-end
 optimizer.options.max_iter = 10000;
 optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
 
