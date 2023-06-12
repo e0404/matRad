@@ -313,7 +313,10 @@ if vOmega ~= 0
     %Only implemented for first scenario now
     weightGradient = weightGradient + gProb{1};
 end
-    gradientChecker = 1;
+% code snippet to check the gradient.
+% Please activate gradientChecker only if approximate explicit numerical estimation
+% of the gradient is required (for debug purposes)
+    gradientChecker = 0;
 if gradientChecker == 1
     f =  matRad_objectiveFunction(optiProb,w,dij,cst);
     epsilon = 1e-8;
