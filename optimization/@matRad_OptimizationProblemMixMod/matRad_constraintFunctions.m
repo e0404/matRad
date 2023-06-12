@@ -32,19 +32,43 @@ function c = matRad_constraintFunctions(optiProb,w,dij,cst)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+% DOSE PROJECTION
+bxidx = 1; %modality  bixel index
 
-% get current dose / effect / RBExDose vector
-optiProb.BP.compute(dij,w);
-d = optiProb.BP.GetResult();
+% Obtain cumulative dose cube 
+[d{1}]    = deal(zeros(dij.doseGrid.numOfVoxels,1));
+
+for mod = 1: length(dij.original_Dijs)
+    wt = [];
+    % split the w for current modality
+    STrepmat = (~dij.spatioTemp(mod) + dij.spatioTemp(mod)*dij.numOfSTscen(mod));
+    wt = reshape(w(bxidx: bxidx+STrepmat*dij.original_Dijs{mod}.totalNumOfBixels-1),[dij.original_Dijs{mod}.totalNumOfBixels,STrepmat]);
+    % get current dose / effect / RBExDose vector
+    optiProb.BP.compute(dij.original_Dijs{mod},wt);
+    dt = optiProb.BP.GetResult();
+
+    % also get probabilistic quantities (nearly no overhead if empty)
+    [dExp,dOmega] = optiProb.BP.GetResultProb();                        % NOTE: not sure what exactly to do for the dOmegas 
+
+    %Index of nxt modality
+    bxidx = bxidx + STrepmat*dij.original_Dijs{mod}.totalNumOfBixels;
+    % Accumulat Dose for all scenarios FOR FUTURE REVIEW ON HOW TO COMBINE
+    % DIFFFERENT UNCERTAINTY SCENARIOS FOR DIFFERENT MODALITIES
+    % currently for ST optimization 
+    for scen = 1:numel(dt)
+         d{scen} = d{scen} + sum(dt{scen}.*dij.STfractions{mod}',2);
+    end
+end
 
 % get the used scenarios
 useScen  = optiProb.BP.scenarios;
 scenProb = optiProb.BP.scenarioProb;
 
 % retrieve matching 4D scenarios
-fullScen = cell(ndims(d),1);
-[fullScen{:}] = ind2sub(size(d),useScen);
-contourScen = fullScen{1};
+fullScen      = cell(ndims(dt),1);
+[fullScen{:}] = ind2sub(size(dt),useScen);
+contourScen   = fullScen{1};
 
 % Initializes constraints
 c = [];
@@ -64,7 +88,13 @@ for  i = 1:size(cst,1)
          if isa(constraint,'DoseConstraints.matRad_DoseConstraint')
             
             % rescale dose parameters to biological optimization quantity if required
+            doseParameter = constraint.getDoseParameters();
+            constraint = constraint.setDoseParameters(doseParameter./sum([dij.STfractions{:}]));
+
             constraint = optiProb.BP.setBiologicalDosePrescriptions(constraint,cst{i,5}.alphaX,cst{i,5}.betaX);
+            
+            doseParameter = constraint.getDoseParameters();
+            constraint = constraint.setDoseParameters(doseParameter.*sum([dij.STfractions{:}]));            
             
             % retrieve the robustness type
             robustness = constraint.robustness;
@@ -73,12 +103,10 @@ for  i = 1:size(cst,1)
                case 'none' % if conventional opt: just sum objectives of nominal dose
                    d_i = d{1}(cst{i,4}{1});
                    c = [c; constraint.computeDoseConstraintFunction(d_i)];
-                  
                case 'PROB' % if prob opt: sum up expectation value of objectives
                   
                   d_i = dExp{1}(cst{i,4}{1});
                   c = [c; constraint.computeDoseConstraintFunction(d_i)];
-                  
                case 'VWWC'  % voxel-wise worst case - takes minimum dose in TARGET and maximum in OAR
                   contourIx = unique(contourScen);
                   if ~isscalar(contourIx)

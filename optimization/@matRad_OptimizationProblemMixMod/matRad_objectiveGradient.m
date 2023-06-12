@@ -99,9 +99,13 @@ end
                     % retrieve the robustness type
                     robustness = objective.robustness;
 
-                    % rescale dose parameters to biological optimization quantity if required
-                    objective = optiProb.BP.setBiologicalDosePrescriptions(objective,cst{i,5}.alphaX,cst{i,5}.betaX);
+                    doseParameter = objective.getDoseParameters();
+                    objective = objective.setDoseParameters(doseParameter./sum([dij.STfractions{:}]));
 
+                    objective = optiProb.BP.setBiologicalDosePrescriptions(objective,cst{i,5}.alphaX,cst{i,5}.betaX);
+                
+                    doseParameter = objective.getDoseParameters();
+                    objective = objective.setDoseParameters(doseParameter.*sum([dij.STfractions{:}]));
                     switch robustness
                         case 'none' % if conventional opt: just sum objectiveectives of nominal dose
                             for s = 1:numel(useScen)
@@ -346,7 +350,7 @@ end
         weightGradient = weightGradient + gProb{1};
     end
 % code snippet to check the gradient
-    gradientChecker = 1;
+    gradientChecker = 0;
 if gradientChecker == 1
     f =  matRad_objectiveFunction(optiProb,w,dij,cst);
     epsilon = 1e-6;
