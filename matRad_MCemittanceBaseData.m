@@ -483,6 +483,7 @@ classdef matRad_MCemittanceBaseData
 
             switch radiationMode
                 case 'protons'
+                    %Provide Look-up Table and fit for protons
                     sigmaLUT = [0    0.4581    2.7777    7.0684   12.6747; ...
                                 0    0.1105    0.7232    2.1119    4.2218; ...
                                 0    0.0754    0.5049    1.4151    2.8604; ...
@@ -499,9 +500,10 @@ classdef matRad_MCemittanceBaseData
                     depths = [0 500 1000 1500 2000];                                       
                     polyFit = @(E,d) 0.001681*d - 0.0001178*E*d + 6.094e-6*d^2 + 1.764e-6*E^2*d - 1.016e-7*E*d^2 - 9.803e-09*E^3*d + 6.096e-10*E^2*d^2 + 1.835e-11*E^4*d - 1.209e-12*E^3*d^2;
                 otherwise 
+                    %No air correction because we don't have data yet
                     sigmaLUT = [0 0; 0 0];
-                    energies = [0; Inf];
-                    depths = [0; Inf];
+                    energies = [0; realmax];
+                    depths = [0; realmax];
 
                     polyFit = @(E,d) 0;
             end
