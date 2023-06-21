@@ -511,6 +511,11 @@ classdef matRad_MCemittanceBaseData
             %make sure to not violate ranges!
             %this is a little hardcoded, but helps us handle strange
             %distances in the initFocus field
+            if d < min(depths)
+                d = min(depths);
+                matRad_cfg.dispWarning('Spot Size Air Correction problem, negative distance found!',method);
+            end
+
             if d > max(depths)
                 d = max(depths);
                 matRad_cfg.dispWarning('Spot Size Air Correction problem, distance too large!',method);
