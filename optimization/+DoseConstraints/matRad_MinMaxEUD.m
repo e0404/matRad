@@ -30,7 +30,7 @@ classdef matRad_MinMaxEUD < DoseConstraints.matRad_DoseConstraint
     end
     
     methods
-        function constr = matRad_MinMaxEUD(exponent,eudMin,eudMax)
+        function this = matRad_MinMaxEUD(exponent,eudMin,eudMax)
             %If we have a struct in first argument
             if nargin == 1 && isstruct(exponent)
                 inputStruct = exponent;
@@ -41,47 +41,47 @@ classdef matRad_MinMaxEUD < DoseConstraints.matRad_DoseConstraint
             end
             
             %Call Superclass Constructor (for struct initialization)
-            constr@DoseConstraints.matRad_DoseConstraint(inputStruct);
+            this@DoseConstraints.matRad_DoseConstraint(inputStruct);
             
             %now handle initialization from other parameters
             if ~initFromStruct
                 
                 if nargin == 3 && isscalar(eudMax)
-                    constr.parameters{3} = eudMax;
+                    this.parameters{3} = eudMax;
                 end
                 
                 if nargin >= 1 && isscalar(exponent)
-                    constr.parameters{1} = exponent;
+                    this.parameters{1} = exponent;
                 end
                 
                 if nargin >= 2 && isscalar(eudMin)
-                    constr.parameters{2} = eudMin;
+                    this.parameters{2} = eudMin;
                 end
             end
         end
         
         %Overloads the struct function to add constraint specific
         %parameters
-        function s = struct(constr)
-            s = struct@DoseConstraints.matRad_DoseConstraint(constr);
+        function s = struct(this)
+            s = struct@DoseConstraints.matRad_DoseConstraint(this);
             %Nothing to do here...
         end
         
-        function cu = upperBounds(constr,n)
-            cu = constr.parameters{3};
+        function cu = upperBounds(this,n)
+            cu = this.parameters{3};
         end
-        function cl = lowerBounds(constr,n)
-            cl = constr.parameters{2};
+        function cl = lowerBounds(this,n)
+            cl = this.parameters{2};
         end
         %% Calculates the Constraint Function value
-        function cDose = computeDoseConstraintFunction(constr,dose)
-            k = constr.parameters{1};
+        function cDose = computeDoseConstraintFunction(this,dose)
+            k = this.parameters{1};
             cDose = mean(dose.^k)^(1/k);
         end
         
         %% Calculates the Constraint jacobian
-        function cDoseJacob  = computeDoseConstraintJacobian(constr,dose)
-            k = constr.parameters{1};
+        function cDoseJacob  = computeDoseConstraintJacobian(this,dose)
+            k = this.parameters{1};
             cDoseJacob = nthroot(1/numel(dose),k) * sum(dose.^k)^((1-k)/k) * (dose.^(k-1));
         end
     end
