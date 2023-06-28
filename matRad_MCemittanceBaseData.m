@@ -36,6 +36,7 @@ classdef matRad_MCemittanceBaseData
         
         % air correction in beam optics approximation
         fitWithSpotSizeAirCorrection  = true;
+        fitCorrectDoubleGaussian      = false;
 
         %To force the phase space approximation even if we have the data
         forceSpectrumApproximation  = false; 
@@ -138,7 +139,9 @@ classdef matRad_MCemittanceBaseData
                 
                 if isfield(machine.data(ixE).initFocus,'emittance') && ~obj.forceEmittanceApproximation 
                     data = [];
-                    emittance = machine.data(ixE).initFocus.emittance;
+                    focusIx = obj.selectedFocus(ixE);
+                    emittance = machine.data(ixE).initFocus.emittance(focusIx);
+
                     if ~strcmpi(emittance.type,'bigaussian')
                         matRad_cfg.dispError('Can not handle emittance of type ''%S''!',emittance.type);
                     end
@@ -337,8 +340,16 @@ classdef matRad_MCemittanceBaseData
             z     = -(obj.machine.data(i).initFocus.dist(focusIndex,:) - SAD);
             sigma = obj.machine.data(i).initFocus.sigma(focusIndex,:);
             
+            if obj.fitCorrectDoubleGaussian
+                sigmaSq_Narr = sigma.^2 + obj.machine.data(i).sigma1(1).^2;
+                sigmaSq_Bro  = sigma.^2 + obj.machine.data(i).sigma2(1).^2;
+                sigma = sqrt(sigmaSq_Narr*(1-obj.machine.data(i).weight(1).^2) + sigmaSq_Bro*obj.machine.data(i).weight(1).^2);
+            end
+            
             %correct for in-air scattering with polynomial or interpolation
-            sigma = arrayfun(@(d,sigma) obj.spotSizeAirCorrection(obj.machine.meta.radiationMode,obj.machine.data(i).energy,d,sigma),-z+obj.machine.meta.BAMStoIsoDist,sigma);                   
+            if obj.fitWithSpotSizeAirCorrection
+                sigma = arrayfun(@(d,sigma) obj.spotSizeAirCorrection(obj.machine.meta.radiationMode,obj.machine.data(i).energy,d,sigma),-z+obj.machine.meta.BAMStoIsoDist,sigma);                   
+            end
 
             %square and interpolate at isocenter
             sigmaSq = sigma.^2;     
@@ -433,18 +444,34 @@ classdef matRad_MCemittanceBaseData
                 
                 ixE = obj.energyIndex(i);
 
-                obj.machine.data(ixE).initFocus.emittance.type  = 'bigaussian';
-                obj.machine.data(ixE).initFocus.emittance.sigmaX = [obj.monteCarloData(:,count).SpotSize1x obj.monteCarloData(:,count).SpotSize2x];
-                obj.machine.data(ixE).initFocus.emittance.sigmaY = [obj.monteCarloData(:,count).SpotSize1y obj.monteCarloData(:,count).SpotSize2y];
-                obj.machine.data(ixE).initFocus.emittance.divX = [obj.monteCarloData(:,count).Divergence1x obj.monteCarloData(:,count).Divergence2x];
-                obj.machine.data(ixE).initFocus.emittance.divY = [obj.monteCarloData(:,count).Divergence1y obj.monteCarloData(:,count).Divergence2y];
-                obj.machine.data(ixE).initFocus.emittance.corrX = [obj.monteCarloData(:,count).Correlation1x obj.monteCarloData(:,count).Correlation2x];
-                obj.machine.data(ixE).initFocus.emittance.corrY = [obj.monteCarloData(:,count).Correlation1y obj.monteCarloData(:,count).Correlation2y];
-                obj.machine.data(ixE).initFocus.emittance.weight = [obj.monteCarloData(:,count).Weight2]; %Weight one will not be stored explicitly due to normalization
+                numFoci = numel(obj.monteCarloData(:,count).SpotSize1x);
+
+                for f = 1:numFoci
+                    if obj.monteCarloData(:,count).Weight2 ~= 0
+                        obj.machine.data(ixE).initFocus.emittance(f).type  = 'bigaussian';
+                        obj.machine.data(ixE).initFocus.emittance(f).sigmaX = [obj.monteCarloData(f,count).SpotSize1x obj.monteCarloData(:,count).SpotSize2x(f)];
+                        obj.machine.data(ixE).initFocus.emittance(f).sigmaY = [obj.monteCarloData(f,count).SpotSize1y obj.monteCarloData(:,count).SpotSize2y(f)];
+                        obj.machine.data(ixE).initFocus.emittance(f).divX = [obj.monteCarloData(f,count).Divergence1x obj.monteCarloData(:,count).Divergence2x(f)];
+                        obj.machine.data(ixE).initFocus.emittance(f).divY = [obj.monteCarloData(f,count).Divergence1y obj.monteCarloData(:,count).Divergence2y(f)];
+                        obj.machine.data(ixE).initFocus.emittance(f).corrX = [obj.monteCarloData(f,count).Correlation1x obj.monteCarloData(:,count).Correlation2x(f)];
+                        obj.machine.data(ixE).initFocus.emittance(f).corrY = [obj.monteCarloData(f,count).Correlation1y obj.monteCarloData(:,count).Correlation2y(f)];
+                        obj.machine.data(ixE).initFocus.emittance(f).weight = [obj.monteCarloData(f,count).Weight2]; %Weight one will not be stored explicitly due to normalization
+                    else
+                        obj.machine.data(ixE).initFocus.emittance(f).type  = 'bigaussian';
+                        obj.machine.data(ixE).initFocus.emittance(f).sigmaX = [obj.monteCarloData(:,count).SpotSize1x(f)];
+                        obj.machine.data(ixE).initFocus.emittance(f).sigmaY = [obj.monteCarloData(:,count).SpotSize1y(f)];
+                        obj.machine.data(ixE).initFocus.emittance(f).divX = [obj.monteCarloData(:,count).Divergence1x(f)];
+                        obj.machine.data(ixE).initFocus.emittance(f).divY = [obj.monteCarloData(:,count).Divergence1y(f)];
+                        obj.machine.data(ixE).initFocus.emittance(f).corrX = [obj.monteCarloData(:,count).Correlation1x(f)];
+                        obj.machine.data(ixE).initFocus.emittance(f).corrY = [obj.monteCarloData(:,count).Correlation1y(f)];
+                    end
+                end
                 
+                %At the moment coded to only take the first energy because
+                %focus settings do not apply to the energy spectrum
                 obj.machine.data(ixE).energySpectrum.type  = 'gaussian';
-                obj.machine.data(ixE).energySpectrum.mean   = [obj.monteCarloData(:,count).MeanEnergy];
-                obj.machine.data(ixE).energySpectrum.sigma = [obj.monteCarloData(:,count).EnergySpread];
+                obj.machine.data(ixE).energySpectrum.mean   = [obj.monteCarloData(:,count).MeanEnergy(f)];
+                obj.machine.data(ixE).energySpectrum.sigma = [obj.monteCarloData(:,count).EnergySpread(f)];
                 
                 
                 count = count + 1;
