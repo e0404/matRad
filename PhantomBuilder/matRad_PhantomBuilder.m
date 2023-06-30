@@ -27,9 +27,9 @@ classdef matRad_PhantomBuilder < handle
     methods (Access = public)
         function obj = matRad_PhantomBuilder(ctDim,ctResolution,numOfCtScen)
             obj.ct = {};
-            obj.ct.cubeDim = ctDim;
-            obj.ct.resolution.x = ctResolution(2);
-            obj.ct.resolution.y = ctResolution(1);
+            obj.ct.cubeDim = [ctDim(2),ctDim(1),ctDim(3)];
+            obj.ct.resolution.x = ctResolution(1);
+            obj.ct.resolution.y = ctResolution(2);
             obj.ct.resolution.z = ctResolution(3);
             obj.ct.numOfCtScen = numOfCtScen;
             obj.ct.cubeHU{1} = ones(obj.ct.cubeDim) * -1000;

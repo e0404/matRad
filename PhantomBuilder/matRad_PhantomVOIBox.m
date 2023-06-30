@@ -44,8 +44,8 @@ classdef matRad_PhantomVOIBox < matRad_PhantomVOIVolume
             offsets = obj.offset;
             dims = obj.boxDimensions;
     
-            for x = center(1)+offsets(1) - round(dims(1)/2) :1: center(1) + offsets(1) + round(dims(1)/2)
-                for y = center(2)+offsets(2) - round(dims(2)/2) :1: center(2) + offsets(2) + round(dims(2)/2)
+            for x = center(2)+offsets(1) - round(dims(1)/2) :1: center(2) + offsets(1) + round(dims(1)/2) 
+                for y = center(1)+offsets(2) - round(dims(2)/2) :1: center(1) + offsets(2) + round(dims(2)/2)
                    for z = center(3)+offsets(3) - round(dims(3)/2) :1: center(3) + offsets(3) + round(dims(3)/2)
                         VOIHelper(y,x,z) = 1;
                         

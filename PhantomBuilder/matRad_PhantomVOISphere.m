@@ -45,7 +45,7 @@ classdef  matRad_PhantomVOISphere < matRad_PhantomVOIVolume
             for x = 1:ct.cubeDim(2)
                 for y = 1:ct.cubeDim(1)
                    for z = 1:ct.cubeDim(3)
-                      currPost = [x y z]  + offsets - center;
+                      currPost = [y x z]  + offsets - center;
                       if  (sqrt(sum(currPost.^2)) < obj.radius)
                             VOIHelper(y,x,z) = 1;
                       end

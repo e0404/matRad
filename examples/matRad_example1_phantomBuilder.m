@@ -24,8 +24,8 @@ matRad_rc; %If this throws an error, run it from the parent directory first to s
 
 %% Create a CT image series
 
-ctDim = [200,200,100]; % y,x,z dimensions
-ctResolution = [2,2,3]; % y,x,z the same here!
+ctDim = [200,200,100]; % x,y,z dimensions
+ctResolution = [2,2,3]; % x,y,z the same here!
 
 %This uses the phantombuilder class, which helps to easily implement a 
 %water phantom containing geometrical 3D shapes as targets and organs
@@ -114,6 +114,8 @@ pln.multScen = matRad_multScen(ct,'nomScen');
 pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
+%%
+matRadGUI;
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
@@ -123,7 +125,6 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 
 %% Export dij matrix
 %matRad_exportDij('dij.bin',dij,stf);
-
 %% Inverse Optimization for intensity-modulated photon therapy
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
