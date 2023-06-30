@@ -184,7 +184,7 @@ set(handles.popUpMachine,'String',handles.Machines);
 
 %Add Bed as Biogical Optimization method
 stringBioOpt = get(handles.popMenuBioOpt, 'String');
-stringBioOpt{5} = 'BED';
+stringBioOpt{5} = 'LEMIV_BED';
 set(handles.popMenuBioOpt, 'String', stringBioOpt);
 
 vChar = get(handles.editGantryAngle,'String');
@@ -2181,16 +2181,6 @@ pln.radiationMode   = contents{get(handles.popupRadMode,'Value')}; % either phot
 contents            = get(handles.popUpMachine,'String'); 
 pln.machine         = contents{get(handles.popUpMachine,'Value')}; 
 
-%{
-if (~strcmp(pln.radiationMode,'photons'))
-    contentBioOpt = get(handles.popMenuBioOpt,'String');
-    pln.propOpt.bioOptimization = contentBioOpt{get(handles.popMenuBioOpt,'Value'),:};
-elseif isfield(pln, 'propOpt') && strcmp(pln.propOpt.bioOptimization, 'BED')
-    pln.propOpt.bioOptimization = 'BED';
-else
-    pln.propOpt.bioOptimization = 'none';
-end
-%}
 
 contentBioOpt = get(handles.popMenuBioOpt,'String');
 pln.propOpt.bioOptimization = contentBioOpt{get(handles.popMenuBioOpt,'Value'),:};
