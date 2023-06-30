@@ -90,8 +90,13 @@ for  i = 1:size(cst,1)
             if isa(objective,'DoseObjectives.matRad_DoseObjective')
                 
                 % rescale dose parameters to biological optimization quantity if required
+                doseParameter = objective.getDoseParameters();
+                objective = objective.setDoseParameters(doseParameter./dij.totalNumOfFractions);
+
                 objective = optiProb.BP.setBiologicalDosePrescriptions(objective,cst{i,5}.alphaX,cst{i,5}.betaX);
                 
+                doseParameter = objective.getDoseParameters();
+                objective = objective.setDoseParameters(doseParameter.*dij.totalNumOfFractions);                
                 % retrieve the robustness type
                 robustness = objective.robustness;
                 
