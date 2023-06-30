@@ -56,7 +56,6 @@ matRad_unitTestTextManipulation(testScripts,'pln.propDoseCalc.resolution.x',['pl
 matRad_unitTestTextManipulation(testScripts,'pln.propDoseCalc.resolution.y',['pln.propDoseCalc.resolution.y = ' num2str(unitTestResolution.y)]);
 matRad_unitTestTextManipulation(testScripts,'pln.propDoseCalc.resolution.z',['pln.propDoseCalc.resolution.z = ' num2str(unitTestResolution.z)]);
 matRad_unitTestTextManipulation(testScripts,'display(','%%%%%%%%%%%%%%% REMOVED DISPLAY FOR TESTING %%%%%%%%%%%%%%');
-matRad_unitTestTextManipulation(testScripts,'clear all','%%%%%%%%%%%%%%% REMOVED CLEAR ALL FOR TESTING %%%%%%%%%%%%%%');
 
 errors = {};
 %Running tests
