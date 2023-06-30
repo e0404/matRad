@@ -47,7 +47,7 @@ set(figureWait,'pointer','watch');
 round2 = @(a,b)round(a*10^b)/10^b;
 
 if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD') ... 
-        ||isequal(pln.propOpt.bioOptimization,'BED')) ... 
+        ||isequal(pln.propOpt.bioOptimization,'LEMIV_BED')) ... 
         && strcmp(pln.radiationMode,'carbon')
    
         alphaDoseTmpContainer = cell(numOfBixelsContainer,dij.numOfScenarios);
@@ -57,7 +57,7 @@ if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.b
             dij.mSqrtBetaDose{i} = spalloc(dij.doseGrid.numOfVoxels,numOfColumnsDij,1);
         end
         
-elseif (isequal(pln.propOpt.bioOptimization,'const_RBExD') ||isequal(pln.propOpt.bioOptimization,'BED') )...
+elseif (isequal(pln.propOpt.bioOptimization,'const_RBExD') ||isequal(pln.propOpt.bioOptimization,'LEMIV_BED') )...
         && strcmp(pln.radiationMode,'protons')
             dij.RBE = 1.1;
             matRad_cfg.dispInfo('matRad: Using a constant RBE of %g\n',dij.RBE);   
@@ -93,7 +93,7 @@ matRad_cfg.dispInfo('matRad: loading biological base data... ');
         [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
         
 if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')... 
-        ||isequal(pln.propOpt.bioOptimization,'BED') ) && strcmp(pln.radiationMode,'carbon')
+        ||isequal(pln.propOpt.bioOptimization,'LEMIV_BED') ) && strcmp(pln.radiationMode,'carbon')
     
     if   isfield(machine.data,'alphaX') && isfield(machine.data,'betaX')
 
@@ -204,7 +204,7 @@ for i = 1:length(stf) % loop over all beams
                    
             % just use tissue classes of voxels found by ray tracer
             if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')... 
-                ||isequal(pln.propOpt.bioOptimization,'BED') ) && strcmp(pln.radiationMode,'carbon')
+                ||isequal(pln.propOpt.bioOptimization,'LEMIV_BED') ) && strcmp(pln.radiationMode,'carbon')
                     vTissueIndex_j = vTissueIndex(ix,:);
             end
             
@@ -366,7 +366,7 @@ for i = 1:length(stf) % loop over all beams
                 
                              
                 if (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') || isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD') ... 
-                    ||isequal(pln.propOpt.bioOptimization,'BED') ) && strcmp(pln.radiationMode,'carbon')
+                    ||isequal(pln.propOpt.bioOptimization,'LEMIV_BED') ) && strcmp(pln.radiationMode,'carbon')
                     % calculate alpha and beta values for bixel k on ray j of                  
                     [bixelAlpha, bixelBeta] = matRad_calcLQParameter(...
                         currRadDepths,...
