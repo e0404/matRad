@@ -19,18 +19,17 @@ classdef matRad_DoseConstraintFromObjective < DoseConstraints.matRad_DoseConstra
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties (Constant)
         name = 'Objective Constraint';
-        parameterTypes = {'objFunc'};
-        parameterNames = {'f^{max}'};    
+        parameterTypes = {'objFunc','scalar'};
+        parameterNames = {'f^{max}','slackParameter'};    
     end
 
     properties
         objective;
-        parameters = {1e-5};
-        epsilon = 1e-3; %
+        parameters = {1e-5, 1e-3};
     end
     
     methods (Access = public)
-        function this = matRad_DoseConstraintFromObjective(objective,maxObj,epsilon)
+        function this = matRad_DoseConstraintFromObjective(objective,maxObj,slackParameter)
             
             %check if objective is a struct and a DoseObjective or Constraint (for init from constraint)
             if isstruct(objective) && ~isempty(strfind(objective.className,'DoseObjectives'))
@@ -50,8 +49,8 @@ classdef matRad_DoseConstraintFromObjective < DoseConstraints.matRad_DoseConstra
             
             if ~initFromStruct
                 
-                if nargin == 3 && isscalar(epsilon)
-                    this.epsilon = epsilon;
+                if nargin == 3 && isscalar(slackParameter)
+                    this.parameters{2} = slackParameter;
                 end
 
                 if nargin >= 2 && isscalar(maxObj)
@@ -68,12 +67,11 @@ classdef matRad_DoseConstraintFromObjective < DoseConstraints.matRad_DoseConstra
         
         function s = struct(this)
             s = struct@DoseConstraints.matRad_DoseConstraint(this);
-            s.epsilon = this.epsilon;
             s.objective = this.objective;
         end
         
         function cu = upperBounds(this,n)
-            cu = this.parameters{1}+this.epsilon;
+            cu = this.parameters{1}+this.slackParameter;
             %cu = [Inf; this.parameters{2}];
         end
         function cl = lowerBounds(this,n)          
