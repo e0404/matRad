@@ -117,7 +117,7 @@ end
 
 %plot VOI contours
 if  ~isempty(cst)
-    hContour = matRad_plotVoiContourSlice(axesHandle,cst,ct.cubeHU,cubeIdx,voiSelection,plane,slice,contourColorMap,varargin{:});
+    [hContour,~] = matRad_plotVoiContourSlice(axesHandle,cst,ct.cubeHU,cubeIdx,voiSelection,plane,slice,contourColorMap,varargin{:});
 
 if boolPlotLegend
    visibleOnSlice = (~cellfun(@isempty,hContour));
