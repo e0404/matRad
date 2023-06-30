@@ -169,7 +169,15 @@ elseif (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') || strcmp(pln.propOpt
                         4*cst{ixTarget,5}.betaX.*CurrEffectTarget)./(2*cst{ixTarget,5}.betaX*(dij.physicalDose{1}(V,:)*wOnes)));
            wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(dij.physicalDose{1}(V,:)*wOnes)))* wOnes;
     end
-elseif strcmp(pln.propOpt.bioOptimization, 'BED')
+elseif strcmp(pln.propOpt.bioOptimization, 'LEMIV_BED')
+
+    % retrieve photon LQM parameter
+    [ax,bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1);
+    if ~isequal(dij.ax(dij.ax~=0),ax(dij.ax~=0)) || ...
+       ~isequal(dij.bx(dij.bx~=0),bx(dij.bx~=0))
+         matRad_cfg.dispError('Inconsistent biological parameter - please recalculate dose influence matrix!\n');
+    end
+
     if isfield(dij, 'mAlphaDose') && isfield(dij, 'mSqrtBetaDose')
         abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
         meanBED = mean(pln.numOfFractions.*(dij.mAlphaDose{1}(V,:)*wOnes + (dij.mSqrtBetaDose{1}(V,:)*wOnes).^2)./cst{ixTarget,5}.alphaX);
@@ -206,7 +214,7 @@ switch pln.propOpt.bioOptimization
         backProjection = matRad_ConstantRBEProjection;
     case 'LEMIV_RBExD'
         backProjection = matRad_VariableRBEProjection;
-    case 'BED'
+    case 'LEMIV_BED'
         backProjection = matRad_BEDProjection;
     case 'none'
         backProjection = matRad_DoseProjection;
