@@ -16,8 +16,10 @@ classdef matRad_BEDProjection < matRad_EffectProjection
             end 
         
         function wGrad = projectSingleScenarioGradient(obj,dij,doseGrad,scen,w)
-                doseGrad{scen} = doseGrad{scen}./dij.ax;
-                wGradEffect = projectSingleScenarioGradient@matRad_EffectProjection(obj,dij,doseGrad,scen,w); 
+                ix = ~(dij.ax==0);
+                doseGradtmp{scen} = zeros(size(doseGrad{scen}));
+                doseGradtmp{scen}(ix) = doseGrad{scen}(ix)./dij.ax(ix);
+                wGradEffect = projectSingleScenarioGradient@matRad_EffectProjection(obj,dij,doseGradtmp,scen,w); 
                 wGrad = obj.numOfFractions.*wGradEffect;
             end
         end
