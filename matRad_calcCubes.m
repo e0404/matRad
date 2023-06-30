@@ -30,6 +30,8 @@ function resultGUI = matRad_calcCubes(w,dij,pln,scenNum)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg =  MatRad_Config.instance();
+
 if ~exist('sceneNum', 'var')
     scenNum = 1;
 end
@@ -112,7 +114,7 @@ if exist('pln','var')
            resultGUI.(['BED', beamInfo(i).suffix])(ix) = full(pln.numOfFractions.*resultGUI.(['effect', beamInfo(i).suffix])(ix) ./alphax(ix));
            resultGUI.(['BED', beamInfo(i).suffix]) = reshape(resultGUI.(['BED', beamInfo(i).suffix]), dij.doseGrid.dimensions);     
         end
-    
+         matRad_cfg.dispWarning('Photon Equiavlent BED calculated');
     else
         % Get Alpha and Beta Values form dij.ax and dij.bx
         alphax = reshape(dij.ax, dij.doseGrid.dimensions);
@@ -128,6 +130,9 @@ if exist('pln','var')
            resultGUI.(['BED', beamInfo(i).suffix]) = zeros(dij.doseGrid.dimensions);
            resultGUI.(['BED', beamInfo(i).suffix])(ix) = full(pln.numOfFractions.*effect(ix)./alphax(ix));
            resultGUI.(['BED', beamInfo(i).suffix]) = reshape(resultGUI.(['BED', beamInfo(i).suffix]), dij.doseGrid.dimensions);
+        end
+        if isfield(resultGUI, 'RBExDose')
+            matRad_cfg.dispWarning('Photon Equiavlent BED calculated');
         end
     end
 end
