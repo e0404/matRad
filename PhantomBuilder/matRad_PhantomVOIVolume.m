@@ -20,7 +20,6 @@ classdef (Abstract) matRad_PhantomVOIVolume < handle
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     properties
-        idx;
         name;
         type;
         TissueClass = 1;
@@ -34,7 +33,7 @@ classdef (Abstract) matRad_PhantomVOIVolume < handle
         objectives = {};
         colors = [[1,0,0];[0,1,0];[0,0,1];[1,1,0];[1,0,1];[0,1,1];[1,1,1]];
     end
-
+%{
     methods (Static, Access = private)
 
         function oldValue = getOrIncrementCount(increment) %used to automatically index the objectives
@@ -49,26 +48,24 @@ classdef (Abstract) matRad_PhantomVOIVolume < handle
             end
         end 
     end
-
-     methods (Static)
+    methods (Static)
         function value = getInstanceCount()
         % Public access to the counter cannot increment it
             value = cldef.getOrIncrementCount();
         end
     end
+%}
 
     methods
         function obj = matRad_PhantomVOIVolume(name,type,p)
         %p is the input parser used in the child classes to check for additional variables
         % Increment the counter in the constructor
-            matRad_PhantomVOIVolume.getOrIncrementCount(1);
-            obj.idx = matRad_PhantomVOIVolume.getOrIncrementCount();
-            if obj.idx <= size(obj.colors,1)
-                obj.visibleColor = obj.colors(obj.idx,:);
-            else
-                obj.visibleColor = [1 1 1];
-            end
-            obj.Priority = obj.idx;
+            %matRad_PhantomVOIVolume.getOrIncrementCount(1);
+            %obj.idx = matRad_PhantomVOIVolume.getOrIncrementCount();
+            %if obj.idx <= size(obj.colors,1)
+            %    obj.visibleColor = obj.colors(obj.idx,:);
+            %end
+            %obj.Priority = obj.idx;
             obj.name = name;
             obj.type = type;
             obj.offset = p.Results.offset;
@@ -87,15 +84,20 @@ classdef (Abstract) matRad_PhantomVOIVolume < handle
 
         function cst = initializeParameters(obj,cst)
             %initialize entry for this VOI in cst
-            cst{obj.idx,1}                = obj.idx-1;
-            cst{obj.idx,2}                = obj.name;
-            cst{obj.idx,3}                = obj.type;
-            cst{obj.idx,5}.TissueClass    = obj.TissueClass;
-            cst{obj.idx,5}.alphaX         = obj.alphaX;
-            cst{obj.idx,5}.betaX          = obj.betaX;
-            cst{obj.idx,5}.Priority       = obj.Priority;
-            cst{obj.idx,5}.Visible        = obj.Visible;
-            cst{obj.idx,5}.visibleColor   = obj.visibleColor;
+            nxIdx = size(cst,1)+1;
+            cst{nxIdx,1}                = nxIdx-1;
+            cst{nxIdx,2}                = obj.name;
+            cst{nxIdx,3}                = obj.type;
+            cst{nxIdx,5}.TissueClass    = obj.TissueClass;
+            cst{nxIdx,5}.alphaX         = obj.alphaX;
+            cst{nxIdx,5}.betaX          = obj.betaX;
+            cst{nxIdx,5}.Priority       = nxIdx;
+            cst{nxIdx,5}.Visible        = obj.Visible;
+
+            if nxIdx <= size(obj.colors,1)
+                obj.visibleColor = obj.colors(nxIdx,:);
+            end
+            cst{nxIdx,5}.visibleColor   = obj.visibleColor;
 
             if ~iscell(obj.objectives) %should be redundant
                 DoseObjectives = {obj.objectives};  
@@ -103,7 +105,7 @@ classdef (Abstract) matRad_PhantomVOIVolume < handle
                 DoseObjectives = obj.objectives;
             end
             for i = 1:numel(DoseObjectives)
-                cst{obj.idx,6} {i}= DoseObjectives{i}; 
+                cst{nxIdx,6} {i}= DoseObjectives{i}; 
             end
         end
     end

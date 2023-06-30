@@ -53,7 +53,7 @@ classdef matRad_PhantomVOIBox < matRad_PhantomVOIVolume
                 end
             end
             
-            cst{obj.idx,4}{1} = find(VOIHelper);
+            cst{end,4}{1} = find(VOIHelper);
             
 
         end

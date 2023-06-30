@@ -19,7 +19,7 @@
 % (iii) generate a treatment plan for this phantom
 
 %% set matRad runtime configuration
-clear all; %somewhat needed for the phantom builder
+%clear all; %somewhat needed for the phantom builder
 matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
 
 %% Create a CT image series
