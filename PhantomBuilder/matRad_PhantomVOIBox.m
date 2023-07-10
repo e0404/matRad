@@ -1,5 +1,5 @@
 classdef matRad_PhantomVOIBox < matRad_PhantomVOIVolume
-    % matRad_CubicVOI implements a class that helps to create cubic VOIs
+    % matRad_PhantomVOIBox implements a class that helps to create box VOIs
     %
     % References 
     %     -

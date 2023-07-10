@@ -1,5 +1,5 @@
 classdef  matRad_PhantomVOISphere < matRad_PhantomVOIVolume   
-    % matRad_SphericalVOI implements a class that helps to create spheric VOIs
+    % matRad_PhantomVOISphere implements a class that helps to create spheric VOIs
     %
     % References 
     %     -

@@ -33,39 +33,11 @@ classdef (Abstract) matRad_PhantomVOIVolume < handle
         objectives = {};
         colors = [[1,0,0];[0,1,0];[0,0,1];[1,1,0];[1,0,1];[0,1,1];[1,1,1]];
     end
-%{
-    methods (Static, Access = private)
-
-        function oldValue = getOrIncrementCount(increment) %used to automatically index the objectives
-        % Private function to manage the counter
-            persistent VALUE
-            if isempty(VALUE)
-                VALUE = 0;
-            end
-            oldValue = VALUE;
-            if nargin > 0
-                VALUE = VALUE + increment;
-            end
-        end 
-    end
-    methods (Static)
-        function value = getInstanceCount()
-        % Public access to the counter cannot increment it
-            value = cldef.getOrIncrementCount();
-        end
-    end
-%}
 
     methods
         function obj = matRad_PhantomVOIVolume(name,type,p)
         %p is the input parser used in the child classes to check for additional variables
-        % Increment the counter in the constructor
-            %matRad_PhantomVOIVolume.getOrIncrementCount(1);
-            %obj.idx = matRad_PhantomVOIVolume.getOrIncrementCount();
-            %if obj.idx <= size(obj.colors,1)
-            %    obj.visibleColor = obj.colors(obj.idx,:);
-            %end
-            %obj.Priority = obj.idx;
+        
             obj.name = name;
             obj.type = type;
             obj.offset = p.Results.offset;
