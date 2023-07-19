@@ -39,8 +39,8 @@ classdef matRad_MCemittanceBaseData
         fitCorrectDoubleGaussian      = false;
 
         %To force the phase space approximation even if we have the data
-        forceSpectrumApproximation  = false; 
-        forceEmittanceApproximation = false;
+        forceSpectrumApproximation  = true; 
+        forceEmittanceApproximation = true;
         forceFixedMU                = true;
     end
     
@@ -241,6 +241,7 @@ classdef matRad_MCemittanceBaseData
                 fitAirOffset = obj.machine.meta.fitAirOffset;
             end
             dR = 0.0011 * (fitAirOffset);
+            %dR = 0;
             
             i = energyIx;
             
@@ -281,35 +282,71 @@ classdef matRad_MCemittanceBaseData
             %to TOPAS data
             switch obj.machine.meta.radiationMode
                 case 'protons'
-                    meanEnergy = @(x) 5.762374661332111e-20 * x^9 - 9.645413625310569e-17 * x^8 + 7.073049219034644e-14 * x^7 ...
-                        - 2.992344292008054e-11 * x^6 + 8.104111934547256e-09 * x^5 - 1.477860913846939e-06 * x^4 ...
-                        + 1.873625800704108e-04 * x^3 - 1.739424343114980e-02 * x^2 + 1.743224692623838e+00 * x ...
-                        + 1.827112816899668e+01;
-                    mcDataEnergy.MeanEnergy = ones(1, size(obj.machine.data(1).initFocus.dist,1)) * meanEnergy(r80);
+                    %some constants according to Bortfeld (1993). Note that
+                    %the paper usually works in [cm]
+                    alpha = 2.2e-3;
+                    p = 1.77;
+                    stragglingFactor = 0.012; %(sigma_straggling = 0.012*R^0.935)
+
+                    %some functions describing range/energy relation and
+                    %straggling
+
+                    %polyfit to MC for energy from range (in mm)
+                    meanEnergyFromRange = @(R) 5.762374661332111e-20 * R.^9 - 9.645413625310569e-17 * R.^8 + 7.073049219034644e-14 * R.^7 ...
+                        - 2.992344292008054e-11 * R.^6 + 8.104111934547256e-09 * R.^5 - 1.477860913846939e-06 * R.^4 ...
+                        + 1.873625800704108e-04 * R.^3 - 1.739424343114980e-02 * R.^2 + 1.743224692623838e+00 * R ...
+                        + 1.827112816899668e+01;                 
+                    %alternatively we can use range energy relationship
+                    %Bortfeld (1993) Eq. (4) * 10 for [mm]
+                    %meanEnergyFromRange = @(R) (R./(10*alpha)).^(1/p);
+
+                    %polyfit to MC for straggling width
+                    %sigmaRangeStragglingOnlySq = @(x) 2.713311945114106e-20 * x^9 - 4.267890251195303e-17 * x^8 + 2.879118523083018e-14 * x^7 ...
+                    %     - 1.084418008735459e-11 * x^6 + 2.491796224784373e-09 * x^5 - 3.591462823163767e-07 * x^4 ...
+                    %     + 3.232810400304542e-05 * x^3 - 1.584729282376364e-03 * x^2 + 5.228413840446568e-02 * x ...
+                    %     - 6.547482267336220e-01;
+                    %
+                    
+                    %straggling contribution according to Bortfeld Eq.
+                    %(18), in [mm]
+                    stragglingSigmaFromRange = @(R) 10 * stragglingFactor * (R/10)^0.935;
+
+                    %energy spectrum contribution to peak width according
+                    %to Bortfeld Eq. 19, in mm
+                    energySpreadFromWidth = @(sigmaSq,E) sqrt(sigmaSq ./ ((10*alpha)^2 * p^2 * E^(2*p-2)));
+
+                    mcDataEnergy.MeanEnergy = meanEnergyFromRange(r80);
                     
                     %calculate energy straggling using formulae deducted from paper
                     %"An analytical approximation of the Bragg curve for therapeutic
-                    %proton beams" by T. Bortfeld et al.
+                    %proton beams" by T. Bortfeld et al. After inversion of
+                    %the formula to obtain the two values z_50 where
+                    %d(z_50) = 0.5*dMax, we obtain that the width is 6.14 *
+                    %the total (energy + range) straggling sigma
                     totalSigmaSq = ((w50) / 6.14)^2;
                     
-                    totalSpreadSq = @(x) 2.713311945114106e-20 * x^9 - 4.267890251195303e-17 * x^8 + 2.879118523083018e-14 * x^7 ...
-                        - 1.084418008735459e-11 * x^6 + 2.491796224784373e-09 * x^5 - 3.591462823163767e-07 * x^4 ...
-                        + 3.232810400304542e-05 * x^3 - 1.584729282376364e-03 * x^2 + 5.228413840446568e-02 * x ...
-                        - 6.547482267336220e-01;
-                    
-                    % use formula deducted from Bragg Kleeman rule to calcuate
-                    % energy straggling given the total sigma and the range
-                    % straggling
-                    energySpread = (totalSigmaSq - totalSpreadSq(r80)) / (0.022^2 * 1.77^2 * meanEnergy(r80)^(2*1.77-2));
-                    energySpread(energySpread < 0) = 0;
-                    mcDataEnergy.EnergySpread = ones(1, size(obj.machine.data(1).initFocus.dist,1)) * sqrt(energySpread);
+                    %Obtain estimate straggling component
+                    sigmaRangeStragglingOnlySq = stragglingSigmaFromRange(r80).^2; 
+
+                    %Squared difference to obtain residual width from
+                    %energy spectrum
+                    if totalSigmaSq > sigmaRangeStragglingOnlySq
+                        sigmaEnergyContributionSq = totalSigmaSq - sigmaRangeStragglingOnlySq;
+                        energySpreadInMeV = energySpreadFromWidth(sigmaEnergyContributionSq,mcDataEnergy.MeanEnergy);                
+                    else
+                        energySpreadInMeV = 1e-8; %monoenergetic, but let's not write 0 to avoid division by zero in some codes
+                    end
+
+                    energySpreadRelative = energySpreadInMeV ./ mcDataEnergy.MeanEnergy * 100;
+                        
+                    mcDataEnergy.EnergySpread = energySpreadRelative;
                 case 'carbon'
                     % Fit to Range-Energy relationship
                     % Data from "Update to ESTAR, PSTAR, and ASTAR Databases" - ICRU Report 90, 2014
                     % Normalized energy before fit (MeV/u)! Only used ranges [10 350] mm for fit
                     % https://www.nist.gov/system/files/documents/2017/04/26/newstar.pdf
-                    meanEnergy = @(x) 11.39 * x^0.628 + 11.24;
-                    mcDataEnergy.MeanEnergy = meanEnergy(r80);
+                    meanEnergyFromRange = @(x) 11.39 * x^0.628 + 11.24;
+                    mcDataEnergy.MeanEnergy = meanEnergyFromRange(r80);
                     % reading in a potential given energyspread could go here directly. How would you parse the energyspread
                     % into the function? Through a field in the machine?
                     mcDataEnergy.EnergySpread = obj.defaultRelativeEnergySpread;
@@ -318,8 +355,8 @@ classdef matRad_MCemittanceBaseData
                     % Data from "Update to ESTAR, PSTAR, and ASTAR Databases" - ICRU Report 90, 2014
                     % Normalized energy before fit (MeV/u)! Only used ranges [10 350] mm for fit
                     % https://www.nist.gov/system/files/documents/2017/04/26/newstar.pdf
-                    meanEnergy = @(x) 7.57* x.^0.5848 + 3.063;
-                    mcDataEnergy.MeanEnergy = meanEnergy(r80);
+                    meanEnergyFromRange = @(x) 7.57* x.^0.5848 + 3.063;
+                    mcDataEnergy.MeanEnergy = meanEnergyFromRange(r80);
                     mcDataEnergy.EnergySpread = obj.defaultRelativeEnergySpread;
                 otherwise
                     error('not implemented')
