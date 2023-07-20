@@ -36,6 +36,10 @@ depths = baseData.depths + baseData.offset;
 % convert from MeV cm^2/g per primary to Gy mm^2 per 1e6 primaries
 conversionFactor = 1.6021766208e-02;
 
+if ~isfield(baseData,'LatCutOff')
+    baseData.LatCutOff.CompFac = 1;
+end
+
 if ~isfield(baseData,'sigma')
     
     % interpolate depth dose, sigmas, and weights    

@@ -43,7 +43,7 @@ if nargin < 2
 end
 
 if exist ('OCTAVE_VERSION', 'builtin')
-    ccName = eval('mkoctfile -p CXX');
+    ccName = evalc('mkoctfile -p CXX');
 else
     myCCompiler = mex.getCompilerConfigurations('C','Selected');
     ccName = myCCompiler.ShortName;

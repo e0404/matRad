@@ -59,7 +59,8 @@ classdef MatRad_Config < handle
             %  The configuration is implemented as a singleton and used globally
             %  Therefore its constructor is private
             %  For instantiation, use the static MatRad_Config.instance();
-
+            
+            %Set Path
             obj.matRadRoot = fileparts(mfilename('fullpath'));
             addpath(genpath(obj.matRadRoot));
 

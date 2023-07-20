@@ -1328,9 +1328,12 @@ classdef matRad_TopasConfig < handle
                                         dataTOPAS(cutNumOfBixel).energy = selectedData(ixTmp).MeanEnergy;
                                         dataTOPAS(cutNumOfBixel).nominalEnergy = selectedData(ixTmp).NominalEnergy;
                                         dataTOPAS(cutNumOfBixel).energySpread = selectedData(ixTmp).EnergySpread;
-                                        dataTOPAS(cutNumOfBixel).spotSize = selectedData(ixTmp).SpotSize1x;
-                                        dataTOPAS(cutNumOfBixel).divergence = selectedData(ixTmp).Divergence1x;
-                                        dataTOPAS(cutNumOfBixel).correlation = selectedData(ixTmp).Correlation1x;
+                                        dataTOPAS(cutNumOfBixel).spotSizeX = selectedData(ixTmp).SpotSize1x;
+                                        dataTOPAS(cutNumOfBixel).divergenceX = selectedData(ixTmp).Divergence1x;
+                                        dataTOPAS(cutNumOfBixel).correlationX = selectedData(ixTmp).Correlation1x;
+                                        dataTOPAS(cutNumOfBixel).spotSizeY = selectedData(ixTmp).SpotSize1y;
+                                        dataTOPAS(cutNumOfBixel).divergenceY = selectedData(ixTmp).Divergence1y;
+                                        dataTOPAS(cutNumOfBixel).correlationY = selectedData(ixTmp).Correlation1y;
                                         dataTOPAS(cutNumOfBixel).focusFWHM = selectedData(ixTmp).FWHMatIso;
                                     end
                                 case 'photons'
@@ -1544,34 +1547,34 @@ classdef matRad_TopasConfig < handle
                         fprintf(fileID,'s:Tf/Beam/SigmaX/Function = "Step"\n');
                         fprintf(fileID,'dv:Tf/Beam/SigmaX/Times = Tf/Beam/Spot/Times ms\n');
                         fprintf(fileID,'dv:Tf/Beam/SigmaX/Values = %i ', cutNumOfBixel);
-                        fprintf(fileID,'%f ',[dataTOPAS.spotSize]);
+                        fprintf(fileID,'%f ',[dataTOPAS.spotSizeX]);
                         fprintf(fileID,' mm\n');
                         fprintf(fileID,'s:Tf/Beam/SigmaXPrime/Function = "Step"\n');
                         fprintf(fileID,'dv:Tf/Beam/SigmaXPrime/Times = Tf/Beam/Spot/Times ms\n');
                         fprintf(fileID,'uv:Tf/Beam/SigmaXPrime/Values = %i ', cutNumOfBixel);
-                        fprintf(fileID,'%f ',[dataTOPAS.divergence]);
+                        fprintf(fileID,'%f ',[dataTOPAS.divergenceX]);
                         fprintf(fileID,'\n');
                         fprintf(fileID,'s:Tf/Beam/CorrelationX/Function = "Step"\n');
                         fprintf(fileID,'dv:Tf/Beam/CorrelationX/Times = Tf/Beam/Spot/Times ms\n');
                         fprintf(fileID,'uv:Tf/Beam/CorrelationX/Values = %i ', cutNumOfBixel);
-                        fprintf(fileID,'%f ',[dataTOPAS.correlation]);
+                        fprintf(fileID,'%f ',[dataTOPAS.correlationX]);
                         fprintf(fileID,'\n');
 
                         % Write parameters for second dimension (profile is uniform)
                         fprintf(fileID,'s:Tf/Beam/SigmaY/Function = "Step"\n');
                         fprintf(fileID,'dv:Tf/Beam/SigmaY/Times = Tf/Beam/Spot/Times ms\n');
                         fprintf(fileID,'dv:Tf/Beam/SigmaY/Values = %i ', cutNumOfBixel);
-                        fprintf(fileID,'%f ',[dataTOPAS.spotSize]);
+                        fprintf(fileID,'%f ',[dataTOPAS.spotSizeY]);
                         fprintf(fileID,' mm\n');
                         fprintf(fileID,'s:Tf/Beam/SigmaYPrime/Function = "Step"\n');
                         fprintf(fileID,'dv:Tf/Beam/SigmaYPrime/Times = Tf/Beam/Spot/Times ms\n');
                         fprintf(fileID,'uv:Tf/Beam/SigmaYPrime/Values = %i ', cutNumOfBixel);
-                        fprintf(fileID,'%f ',[dataTOPAS.divergence]);
+                        fprintf(fileID,'%f ',[dataTOPAS.divergenceY]);
                         fprintf(fileID,'\n');
                         fprintf(fileID,'s:Tf/Beam/CorrelationY/Function = "Step"\n');
                         fprintf(fileID,'dv:Tf/Beam/CorrelationY/Times = Tf/Beam/Spot/Times ms\n');
                         fprintf(fileID,'uv:Tf/Beam/CorrelationY/Values = %i ', cutNumOfBixel);
-                        fprintf(fileID,'%f ',[dataTOPAS.correlation]);
+                        fprintf(fileID,'%f ',[dataTOPAS.correlationY]);
                         fprintf(fileID,'\n');
 
                     case 'simple'
