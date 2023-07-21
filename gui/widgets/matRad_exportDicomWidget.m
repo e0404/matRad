@@ -1,10 +1,6 @@
 classdef matRad_exportDicomWidget < matRad_Widget
     % matRad_exportDicomWidget class to generate GUI widget to export plan
     % to dicom files
-    % Describes a standard fluence optimization problem by providing the 
-    % implementation of the objective & constraint function/gradient wrappers
-    % and managing the mapping and backprojection of the respective dose-
-    % related quantity
     %
     % References
     %   -

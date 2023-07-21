@@ -197,7 +197,7 @@ classdef matRad_MainGUI < handle
                 'FontName',matRad_cfg.gui.fontName,...
                 'FontSize',matRad_cfg.gui.fontSize,...
                 'FontWeight',matRad_cfg.gui.fontWeight);
-            
+            %TODO: No way of writing the color in a nice way?
             pViewing = uipanel(...
                 'Parent',obj.guiHandle,...
                 'Title','Viewing',...
@@ -245,7 +245,7 @@ classdef matRad_MainGUI < handle
 
             
             [obj.env, ~] = matRad_getEnvironment();
-                        
+            %initialize widgets           
             obj.WorkflowWidget = matRad_WorkflowWidget(pWorkflow);
             obj.PlanWidget = matRad_PlanWidget(pPlan);            
             obj.OptimizationWidget = matRad_OptimizationWidget(pOptimization);
@@ -260,7 +260,9 @@ classdef matRad_MainGUI < handle
             obj.LogoWidget = matRad_LogoWidget(pLogo); % does not need a listener
             
             switch obj.env
-                case 'MATLAB'                                      
+                case 'MATLAB'      
+                    %TODO: Is this used to update the GUI when variables in
+                    %the workspace are changed? Maybe short comment
                     obj.eventListeners.workflow = addlistener(obj.WorkflowWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,hEvent));
                     obj.eventListeners.plan = addlistener(obj.PlanWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,hEvent));
                     obj.eventListeners.optimization = addlistener(obj.OptimizationWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,hEvent));
@@ -294,7 +296,7 @@ classdef matRad_MainGUI < handle
             obj.updateButtons();
             
             try
-                % change color of toobar the first time GUI is started
+                % change color of toolbar the first time GUI is started
                 hToolbar = findall(obj.guiHandle,'tag','uitoolbar1');
                 jToolbar = get(get(hToolbar,'JavaContainer'),'ComponentPeer');
                 jToolbar.setBorderPainted(false);
@@ -303,6 +305,8 @@ classdef matRad_MainGUI < handle
                 jToolbar.setBackground(color);
                 % Remove the separator line between toolbar and contents
                 warning('off','MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame');
+                %TODO: editor complains about the Java here and that it
+                %will get removed in a future release
                 jFrame = get(handle(obj.guiHandle),'JavaFrame');
                 jFrame.showTopSeparator(false);
                 jtbc = jToolbar.getComponents;
@@ -465,6 +469,7 @@ classdef matRad_MainGUI < handle
             
             %Check if on or off
             this.ViewingWidget.plotColorBar = strcmp(get(hObject,'State'),'on');
+            %TODO: Longer unnecessary part?
 %             val = strcmp(get(hObject,'State'),'on');
 
 %             %Now we have to apply the new selection to our colormap options panel

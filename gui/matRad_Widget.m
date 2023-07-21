@@ -1,10 +1,6 @@
 classdef matRad_Widget <  handle 
 
-    % matRad_Widget Main Class for GUI widget generation 
-    % Describes a standard fluence optimization problem by providing the 
-    % implementation of the objective & constraint function/gradient wrappers
-    % and managing the mapping and backprojection of the respective dose-
-    % related quantity
+    % matRad_Widget Main Class for GUI widget generation
     %
     % References
     %   -
@@ -108,7 +104,7 @@ classdef matRad_Widget <  handle
         
         function showWarning(this,Message,ME)
             matRad_cfg = MatRad_Config.instance();
-            
+            %TODO: Why are the handles stored seperately here?
             handles = this.handles;
             if nargin == 3
                 %Add exception message
@@ -212,7 +208,7 @@ classdef matRad_Widget <  handle
             end            
         end
         
-        
+        %TODO: Maybe quick explanation
         function pos = computeGridPos(this,gridPos,buttonGridSize,buttonRelSize)
             if nargin < 4
                 buttonRelSize = [0.9 0.75];

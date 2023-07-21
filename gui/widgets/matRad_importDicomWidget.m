@@ -1,10 +1,6 @@
 classdef matRad_importDicomWidget < matRad_Widget
     % matRad_importDicomWidget class to generate GUI widget to import dicom
     % files
-    % Describes a standard fluence optimization problem by providing the 
-    % implementation of the objective & constraint function/gradient wrappers
-    % and managing the mapping and backprojection of the respective dose-
-    % related quantity
     %
     % References
     %   -
@@ -245,6 +241,7 @@ classdef matRad_importDicomWidget < matRad_Widget
         end
         
         % H?? RESCAN BUTTON CALLBACK; NICHT IN CREATELAYOUT VORHANDEN
+        %TODO: Random function? can be removed?
         function this = rescan_button_Callback(this, hObject, eventdata)
         end
         
@@ -523,7 +520,7 @@ classdef matRad_importDicomWidget < matRad_Widget
                 'Tag','axesDKFZLogo');
 
             
-
+            %TODO: Explanation for h's?
             h7 = axes(...
                 'Parent',h1,...
                 'CameraPosition',[0.5 0.5 9.16025403784439],...

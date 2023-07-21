@@ -1,10 +1,6 @@
 classdef matRad_ViewerOptionsWidget < matRad_Widget
     % matRad_ViewerOptionsWidget class to generate GUI widget to set
     % options for the plan ViewingWidget
-    % Describes a standard fluence optimization problem by providing the 
-    % implementation of the objective & constraint function/gradient wrappers
-    % and managing the mapping and backprojection of the respective dose-
-    % related quantity
     %
     % References
     %   -
@@ -125,7 +121,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             elSize = [0.9 0.9];
             [i,j] = ndgrid(1:gridSize(1),1:gridSize(2));
             gridPos = arrayfun(@(i,j) computeGridPos(this,[i j],gridSize,elSize),i,j,'UniformOutput',false);
-            
+            %TODO: should there be explanations what these do?
             h84 = uicontrol(...
                 'Parent',h98,...
                 'Units','normalized',...

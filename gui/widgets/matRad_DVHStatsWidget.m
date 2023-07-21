@@ -1,11 +1,6 @@
 classdef matRad_DVHStatsWidget < matRad_Widget
-
     % matRad_DVHStatsWidget class to generate GUI widget display DVH and
     % stats
-    % Describes a standard fluence optimization problem by providing the 
-    % implementation of the objective & constraint function/gradient wrappers
-    % and managing the mapping and backprojection of the respective dose-
-    % related quantity
     %
     % References
     %   -
@@ -93,7 +88,7 @@ classdef matRad_DVHStatsWidget < matRad_Widget
         end
         function removeOverlap(this)
             delete(this.dvhWidgetHandle.widgetHandle.Children(3)); % to clear previous plotted objects
-            delete(this.dvhWidgetHandle.widgetHandle.Children(3));
+            delete(this.dvhWidgetHandle.widgetHandle.Children(3)); %TODO: Why twice?
         end
     end
 

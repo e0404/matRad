@@ -1,10 +1,6 @@
 classdef matRad_importWidget < matRad_Widget
     % matRad_importWidget class to generate GUI widget to import various
     % formats : dicom, nrrd, etc.
-    % Describes a standard fluence optimization problem by providing the 
-    % implementation of the objective & constraint function/gradient wrappers
-    % and managing the mapping and backprojection of the respective dose-
-    % related quantity
     %
     % References
     %   -
@@ -58,7 +54,7 @@ classdef matRad_importWidget < matRad_Widget
     methods (Access = protected)
         function this = createLayout(this)
             matRad_cfg = MatRad_Config.instance();
-            
+            %TODO: should there be expalnations what these do?
             h1 = this.widgetHandle;
             
             

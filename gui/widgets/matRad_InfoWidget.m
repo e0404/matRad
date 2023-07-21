@@ -1,11 +1,6 @@
 classdef matRad_InfoWidget < matRad_Widget
     % matRad_InfoWidget class to generate GUI widget to display system and
-    % version information 
-    % Describes a standard fluence optimization problem by providing the 
-    % implementation of the objective & constraint function/gradient wrappers
-    % and managing the mapping and backprojection of the respective dose-
-    % related quantity
-    %
+    % version information
     % References
     %   -
     %
@@ -48,6 +43,7 @@ classdef matRad_InfoWidget < matRad_Widget
     
         methods (Access = protected)
         function this = createLayout(this)
+            %TODO: should there be expalnations what these do?
             h94 = this.widgetHandle;
             matRad_cfg = MatRad_Config.instance();
             txt = sprintf('Info about\nsoftware environment & version\nmatRad version & branch');

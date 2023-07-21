@@ -1,10 +1,6 @@
 classdef matRad_ViewingWidget < matRad_Widget
     % matRad_ViewingWidget class to generate GUI widget to display plan
     % dose distributions and ct
-    % Describes a standard fluence optimization problem by providing the 
-    % implementation of the objective & constraint function/gradient wrappers
-    % and managing the mapping and backprojection of the respective dose-
-    % related quantity
     %
     % References
     %   -
@@ -153,7 +149,8 @@ classdef matRad_ViewingWidget < matRad_Widget
             end
             
         end
-        
+        %TODO: The next functions are setter methods, right? Maybe quick
+        %comment about that
         function set.plane(this,value)
             this.plane=value;
             this.UpdatePlot();
@@ -344,6 +341,7 @@ classdef matRad_ViewingWidget < matRad_Widget
     
     methods(Access = protected)
         function this = createLayout(this)
+            %TODO: What do the numbers mean (h88,h89,etc.)?
             h88 = this.widgetHandle;
             
             h89 = axes(...
@@ -521,6 +519,7 @@ classdef matRad_ViewingWidget < matRad_Widget
             
             % this is necessary to prevent multiple callbacks of update plot drawing on
             % top of each other in matlab <2014
+            %TODO: Are we expecting people to run with these versions?
             drawnow;
             
             defaultFontSize = 8;
@@ -554,6 +553,7 @@ classdef matRad_ViewingWidget < matRad_Widget
             end
             
             %% Remove colorbar?
+            %TODO: Longer weird comment block
             %plotColorbarSelection = get(handles.popupmenu_chooseColorData,'Value');
           
 %             if this.typeOfPlot==2 || this.colorData == 1
@@ -658,6 +658,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 
                 %% plot iso dose lines
                 if this.plotIsoDoseLines %get(handles.radiobtnIsoDoseLines,'Value')
+                %TODO: Long unused comment?
                     plotLabels = this.plotIsoDoseLinesLabels; %get(handles.radiobtnIsoDoseLinesLabels,'Value') == 1;
 %                     
 %                     %Sanity Check for Contours, which actually should have been

@@ -1,11 +1,15 @@
 function hGUI = matRadGUI(varargin)
 % matRad compatability function to call the matRad_MainGUI
 %   The function checks input parameters and handles the GUI as a
-%   singleton, so following calls will not create new windows
+%   singleton, so following calls will not create new window
 % 
 % call
 %   hGUI = matRadGUI
 %   matRadGUI
+%
+%  input
+%  devMode (optional):  boolean variable. Default false, set to true for devMode
+%  eduMode (optional):  boolean variable. Default false, set to true for eduMode
 %
 % References
 %   -
@@ -25,6 +29,7 @@ function hGUI = matRadGUI(varargin)
 
 persistent hMatRadGUI;
 
+%check for additional input parameters
 p = inputParser;
 addParameter(p,'devMode',false,@(x) validateModeValue(x));
 addParameter(p,'eduMode',false,@(x) validateModeValue(x));
@@ -62,7 +67,7 @@ if matRad_cfg.disableGUI
     matRad_cfg.dispInfo('matRad GUI disabled in matRad_cfg!\n');
     return;
 end
-
+%TODO: why assigned?
 handleValid = true;
 
 try 

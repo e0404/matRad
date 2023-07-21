@@ -1,10 +1,6 @@
 classdef matRad_OptimizationWidget < matRad_Widget
     % matRad_OptimizationWidget class to generate GUI widget to set
     % optimization options
-    % Describes a standard fluence optimization problem by providing the 
-    % implementation of the objective & constraint function/gradient wrappers
-    % and managing the mapping and backprojection of the respective dose-
-    % related quantity
     %
     % References
     %   -
@@ -202,13 +198,14 @@ classdef matRad_OptimizationWidget < matRad_Widget
                             try
                                 obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
                             catch ME
+                                %TODO: The editor complains here
                                 warning('Objective/Constraint not valid!\n%s',ME.message)
                                 continue;
                             end
                         end
                         
                         xPos = 0.01;%5;
-                        
+                        %TODO: Explanation?
                         h = uicontrol(cstPanel,'Style','pushbutton','String','-','Units','normalized','Position',[xPos ypos(cnt) buttonW objHeight], 'FontSize',matRad_cfg.gui.fontSize,'FontName',matRad_cfg.gui.fontName,'FontWeight',matRad_cfg.gui.fontWeight,'BackgroundColor',matRad_cfg.gui.elementColor,'ForegroundColor',matRad_cfg.gui.textColor,'Tooltip','Remove Objective/Constraint','Callback',@(hObject,eventdata)btObjRemove_Callback(this,hObject,eventdata),...
                             'UserData',[i,j]);
                         tmp_pos = get(h,'Position');
@@ -384,6 +381,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
         end
         
         function editCstParams_Callback(this,hObject,~)
+            %TODO: Maybe quick explanation?
             handles=this.handles;
             data = hObject.UserData;
             ix = data(1);

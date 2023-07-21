@@ -1,9 +1,5 @@
 classdef matRad_PlanWidget < matRad_Widget
     % matRad_PlanWidget class to generate GUI widget for plan parameters
-    % Describes a standard fluence optimization problem by providing the 
-    % implementation of the objective & constraint function/gradient wrappers
-    % and managing the mapping and backprojection of the respective dose-
-    % related quantity
     %
     % References
     %   -
@@ -95,6 +91,7 @@ classdef matRad_PlanWidget < matRad_Widget
     
     methods(Access = protected)
         function this = createLayout(this)
+            %TODO: Documentation. Maybe explain which parts are initialized
             h12 = this.widgetHandle;
             
             matRad_cfg = MatRad_Config.instance();
@@ -102,6 +99,7 @@ classdef matRad_PlanWidget < matRad_Widget
             gridSize = [5 8];
             [i,j] = ndgrid(1:gridSize(1),1:gridSize(2));
             gridPos = arrayfun(@(i,j) computeGridPos(this,[i j],gridSize),i,j,'UniformOutput',false);
+            %TODO: Should there be additional information here for the h's?
             txt = sprintf('Photons: Choose width (and height) of quadratic photon bixel (i.e. discrete fluence elements)\nParticles: Choose lateral spot distance');
             h13 = uicontrol(...
                 'Parent',h12,...
@@ -633,6 +631,7 @@ classdef matRad_PlanWidget < matRad_Widget
         end
         
         function this = getPlnFromWorkspace(this)
+            %TODO: Not entirely sure what is done here
             pln = evalin('base', 'pln');
             handles = this.handles;
             
@@ -831,7 +830,8 @@ classdef matRad_PlanWidget < matRad_Widget
             contents      = cellstr(get(hObject,'String'));
             RadIdentifier = contents{get(hObject,'Value')};
             contentPopUp  = get(handles.popMenuBioOpt,'String');
-            
+
+            %set handles
             switch RadIdentifier
                 case 'photons'
                     
@@ -1110,7 +1110,7 @@ classdef matRad_PlanWidget < matRad_Widget
             %updatePlnInWorkspace(this);
         end
         
-        function popMenuBioOpt_Callback(this, hObject, eventdata)
+        function popMenuBioOpt_Callback(this, hObject, eventdata) %unused arguments?
             handles = this.handles;
             
             pln = evalin('base','pln');
