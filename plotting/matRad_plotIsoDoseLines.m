@@ -4,10 +4,8 @@ function isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContour
 % itself
 %
 % call
-%   isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,cMap)
-%   isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,window)
-%   isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,cMap,window)
-%   isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,cMap,window, ...)
+%   isoLineHandles =
+%   matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,...)
 %
 % input
 %   axesHandle  handle to axes the slice should be displayed in
@@ -86,7 +84,7 @@ end
 colors = squeeze(ind2rgb(isoColorLevel,cMap));
 
 axes(axesHandle);
-hold on;
+hold(axesHandle,'on');
 
 %Check if there is a contour in the plane
 if any(isoContours{slice,plane}(:))
@@ -100,7 +98,7 @@ if any(isoContours{slice,plane}(:))
         else
             color = unique(colors,'rows'); 
         end
-        isoLineHandles(end+1) = line(isoContours{slice,plane}(1,lower+1:lower+steps),...
+        isoLineHandles{end+1} = line(isoContours{slice,plane}(1,lower+1:lower+steps),...
             isoContours{slice,plane}(2,lower+1:lower+steps),...
             'Color',color,'Parent',axesHandle,varargin{:});
         if plotLabels
@@ -113,6 +111,6 @@ if any(isoContours{slice,plane}(:))
     end
 end
 
-hold off;
+hold(axesHandle,'off');
 
 end

@@ -29,6 +29,11 @@ function pln = matRad_importDicomRTPlan(ct, rtPlanFiles, dicomMetaBool)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+env = matRad_getEnvironment();
+matRad_checkEnvDicomRequirements(env);
+isOctave = strcmp(env,'OCTAVE');
+
 %% load plan file
 % check size of RT Plan
 if size(rtPlanFiles,1) ~= 1
@@ -36,7 +41,7 @@ if size(rtPlanFiles,1) ~= 1
 end
 
 % read information out of the RT file
-if verLessThan('matlab','9')
+if isOctave || verLessThan('matlab','9')
     planInfo = dicominfo(rtPlanFiles{1});
 else
     planInfo = dicominfo(rtPlanFiles{1},'UseDictionaryVR',true);

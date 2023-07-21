@@ -25,15 +25,15 @@ load TG119.mat
 
 % meta information for treatment plan
 
-pln.radiationMode   = 'photons';     % either photons / protons / carbon
+pln.radiationMode   = 'protons';     % either photons / protons / carbon
 pln.machine         = 'Generic';
 
 pln.numOfFractions  = 30;
 
 % beam geometry settings
 pln.propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.propStf.gantryAngles    = [0:72:359]; % [?]
-pln.propStf.couchAngles     = [0 0 0 0 0]; % [?]
+pln.propStf.gantryAngles    = [0]; % [?]
+pln.propStf.couchAngles     = [0]; % [?]
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
@@ -47,7 +47,8 @@ pln.propOpt.optimizer       = 'IPOPT';
 pln.propOpt.bioOptimization = 'none'; % none: physical optimization;             const_RBExD; constant RBE of 1.1;
                                       % LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose
 pln.propOpt.runDAO          = false;  % 1/true: run DAO, 0/false: don't / will be ignored for particles
-pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
+
+pln.propSeq.runSequencing   = true;  % true: run sequencing, false: don't / will be ignored for particles and also triggered by runDAO below
 
 %% initial visualization and change objective function settings if desired
 matRadGUI
@@ -67,11 +68,8 @@ end
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% sequencing
-if strcmp(pln.radiationMode,'photons') && (pln.propOpt.runSequencing || pln.propOpt.runDAO)
-    %resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,5);
-    %resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,5);
-    resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,5);
-end
+resultGUI = matRad_sequencing(resultGUI,stf,dij,pln);
+
 
 %% DAO
 if strcmp(pln.radiationMode,'photons') && pln.propOpt.runDAO

@@ -32,18 +32,16 @@ function cBarHandle = matRad_plotColorbar(axesHandle,cMap,window,varargin)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-v=version;
+[~,v] = matRad_getEnvironment();
 
 colormap(axesHandle,cMap);
-caxis(window);
+caxis(axesHandle,window);
 
 if str2double(v(1:3))>=8.5
     cBarHandle = colorbar(axesHandle,varargin{:});
 else
     cBarHandle = colorbar('peer',axesHandle,varargin{:});
 end
-
-
 
 
 
