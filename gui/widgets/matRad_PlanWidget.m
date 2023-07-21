@@ -1106,7 +1106,7 @@ classdef matRad_PlanWidget < matRad_Widget
                         'Position', [Width-(0.5*Width) 0.1 * Height 80 30],...
                         'Callback', 'close');
                 catch ME
-                    warning(ME.identifier,'Could not set isocenter in pln update! Reason: %s\n',ME.message)
+                    warning(ME.identifier,'Could not set Tissue parameter update! Reason: %s\n',ME.message)
                 end
             end
             this.handles = handles;
