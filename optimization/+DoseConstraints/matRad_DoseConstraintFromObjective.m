@@ -1,4 +1,4 @@
-classdef matRad_ObjectiveConstraint < DoseConstraints.matRad_DoseConstraint
+classdef matRad_DoseConstraintFromObjective < DoseConstraints.matRad_DoseConstraint
     % matRad_ObjectiveConstraint implements a wrapper function that turns 
     % dose objectives into constraints
     %
@@ -19,18 +19,17 @@ classdef matRad_ObjectiveConstraint < DoseConstraints.matRad_DoseConstraint
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties (Constant)
         name = 'Objective Constraint';
-        parameterTypes = {'objFunc'};
-        parameterNames = {'f^{max}'};    
+        parameterTypes = {'objFunc','scalar'};
+        parameterNames = {'f^{max}','slackParameter'};    
     end
 
     properties
         objective;
-        parameters = {1e-5};
-        epsilon = 1e-3; %
+        parameters = {1e-5, 1e-3};
     end
     
     methods (Access = public)
-        function constr = matRad_ObjectiveConstraint(objective,maxObj,epsilon)
+        function this = matRad_DoseConstraintFromObjective(objective,maxObj,slackParameter)
             
             %check if objective is a struct and a DoseObjective or Constraint (for init from constraint)
             if isstruct(objective) && ~isempty(strfind(objective.className,'DoseObjectives'))
@@ -45,61 +44,60 @@ classdef matRad_ObjectiveConstraint < DoseConstraints.matRad_DoseConstraint
                 inputStruct = [];
             end
 
-            constr@DoseConstraints.matRad_DoseConstraint(inputStruct);
+            this@DoseConstraints.matRad_DoseConstraint(inputStruct);
             
             
             if ~initFromStruct
                 
-                if nargin == 3 && isscalar(epsilon)
-                    constr.epsilon = epsilon;
+                if nargin == 3 && isscalar(slackParameter)
+                    this.parameters{2} = slackParameter;
                 end
 
                 if nargin >= 2 && isscalar(maxObj)
-                    constr.parameters{1} = maxObj;
+                    this.parameters{1} = maxObj;
                 end
                 
                 if nargin >= 1
-                    constr.objective = objective;
+                    this.objective = objective;
                 end
 
             end
             %}
         end
         
-        function s = struct(constr)
-            s = struct@DoseConstraints.matRad_DoseConstraint(constr);
-            s.epsilon = constr.epsilon;
-            s.objective = constr.objective;
+        function s = struct(this)
+            s = struct@DoseConstraints.matRad_DoseConstraint(this);
+            s.objective = this.objective;
         end
         
-        function cu = upperBounds(constr,n)
-            cu = constr.parameters{1}+constr.epsilon;
-            %cu = [Inf; constr.parameters{2}];
+        function cu = upperBounds(this,n)
+            cu = this.parameters{1}+this.slackParameter;
+            %cu = [Inf; this.parameters{2}];
         end
-        function cl = lowerBounds(constr,n)          
+        function cl = lowerBounds(this,n)          
             cl = 0;
         end
                 
         %% Calculates the Constraint Function value
-        function cDose = computeDoseConstraintFunction(constr,dose)
-            cDose = constr.objective.computeDoseObjectiveFunction(dose);
+        function cDose = computeDoseConstraintFunction(this,dose)
+            cDose = this.objective.computeDoseObjectiveFunction(dose);
         end
         
         %% Calculates the Constraint jacobian
-        function cDoseJacob  = computeDoseConstraintJacobian(constr,dose)
-            cDoseJacob = constr.objective.computeDoseObjectiveGradient(dose);
+        function cDoseJacob  = computeDoseConstraintJacobian(this,dose)
+            cDoseJacob = this.objective.computeDoseObjectiveGradient(dose);
         end
         
-        function doseParams = getDoseParameters(constr)
+        function doseParams = getDoseParameters(this)
             % get only the dose related parameters.
-            ix = cellfun(@(c) isequal('dose',c),constr.objective.parameterTypes);
-            doseParams = [constr.objective.parameters{ix}];
+            ix = cellfun(@(c) isequal('dose',c),this.objective.parameterTypes);
+            doseParams = [this.objective.parameters{ix}];
         end
         
-        function constr = setDoseParameters(constr,doseParams)
+        function this = setDoseParameters(this,doseParams)
             % set only the dose related parameters.
-            ix = cellfun(@(c) isequal('dose',c),constr.objective.parameterTypes);
-            constr.objective.parameters(ix) = num2cell(doseParams);
+            ix = cellfun(@(c) isequal('dose',c),this.objective.parameterTypes);
+            this.objective.parameters(ix) = num2cell(doseParams);
          
         end        
     
