@@ -678,12 +678,15 @@ classdef matRad_PlanWidget < matRad_Widget
             
             
             contentPopUp = get(handles.popMenuBioOpt,'String');
+            
             ix = find(strcmp(pln.propOpt.bioOptimization,contentPopUp));
             set(handles.popMenuBioOpt,'Value',ix);
-            set(handles.btnRunSequencing,'Value',pln.propSeq.runSequencing);
             set(handles.btnRunDAO,'Value',pln.propOpt.runDAO);
-            if isfield(pln.propSeq, 'sequencingLevel')
+            if isfield(pln, 'propSeq') && isfield(pln.propSeq, 'sequencingLevel')
+                set(handles.btnRunSequencing,'Value',pln.propSeq.runSequencing);
                 set(handles.editSequencingLevel,'String',num2str(pln.propSeq.sequencingLevel));
+            else
+                set(handles.btnRunSequencing,'Value', 0 );
             end
             if isfield (pln.propOpt, 'conf3D')
                 set(handles.radiobutton3Dconf,'Value',pln.propOpt.conf3D);
