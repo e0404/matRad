@@ -120,20 +120,21 @@ classdef matRad_ViewingWidget < matRad_Widget
         function this=initialize(this)
 %             updateIsoDoseLineCache(this);
             %update(this);
+             
         end
         
         function this=update(this,evt)
             if ~this.lockUpdate
             
-                doUpdate = true;
+                doUpdate = false;
                 if nargin == 2
                     %At pln changes and at cst/cst (for Isocenter and new settings) 
                     %we need to update
                     doUpdate = this.checkUpdateNecessary({'pln','ct','cst','resultGUI'},evt);
                 end
             
-                if doUpdate
-                    this.initValues();
+                if ~doUpdate
+                   this.initValues();
                 end
                             
                 this.updateValues();
@@ -867,11 +868,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 if this.typeOfPlot==2 || ~this.plotContour || isempty([this.AxesHandlesVOI{:}]) %isempty(find(this.VOIPlotFlag, 1))
                     l=legend(handles.axesFig,'off');
                 else
-                    % display legend for nonempty VOI
-                    empty_VOI=find(cellfun(@isempty,this.AxesHandlesVOI));
-                    if ~isempty(empty_VOI)
-                        this.VOIPlotFlag(empty_VOI)=false;
-                    end
+%                    
                     % in case of multiple lines per VOI, only display the legend once
                     VOIlines=this.AxesHandlesVOI(~cellfun(@isempty,this.AxesHandlesVOI));
                     VOIlegendlines=cellfun(@(v)v(1),VOIlines);
