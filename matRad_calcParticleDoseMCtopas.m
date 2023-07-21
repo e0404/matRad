@@ -220,6 +220,11 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
     
     % revert back to original directory
     cd(currDir);
+
+    % manipulate isocenter back
+    for k = 1:length(stf)
+        stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(ixShiftScen,:);
+    end
     
 end
 
@@ -234,8 +239,4 @@ else
     dij = struct([]);
 end
 
-% manipulate isocenter back
-for k = 1:length(stf)
-    stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(ixShiftScen,:);
-end
 end

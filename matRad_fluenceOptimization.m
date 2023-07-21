@@ -293,7 +293,10 @@ switch pln.propOpt.optimizer
         warning(['Optimizer ''' pln.propOpt.optimizer ''' not known! Fallback to IPOPT!']);
         optimizer = matRad_OptimizerIPOPT;
 end
-
+        
+if ~optimizer.IsAvailable()
+    matRad_cfg.dispError(['Optimizer ''' pln.propOpt.optimizer ''' not available!']);
+end
 
 optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
 

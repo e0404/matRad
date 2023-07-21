@@ -1,5 +1,3 @@
-function [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
-% matRad IPOPT get constraint bounds wrapper function
 % 
 % call
 %   [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
@@ -8,7 +6,8 @@ function [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
 %   cst:            matRad cst struct
 %
 % output
-%   cl: lower bounds on constraints
+%   cl: lower bounds on constfunction [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
+% matRad IPOPT get constraint bounds wrapper functioraints
 %   cu: lower bounds on constraints
 %
 % References
@@ -33,6 +32,7 @@ cl = [];
 cu = [];
 
 % compute objective function for every VOI.
+
 for i = 1:size(optiProb.constridx,1)	
     obj = optiProb.constraints{i};
     curConidx = optiProb.constridx(i,1);
