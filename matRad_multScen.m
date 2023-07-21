@@ -43,7 +43,7 @@ switch scenarioModel
     case 'rndScen'
         multScen = matRad_RandomScenarios(ct);
     otherwise
-        matRad_cfg.dispError('''%s'' not known as scenario type!');
+        matRad_cfg.dispError('''%s'' not known as scenario type!',scenarioModel);
 end
 
 end
