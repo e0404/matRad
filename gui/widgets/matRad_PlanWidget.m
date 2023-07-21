@@ -677,12 +677,15 @@ classdef matRad_PlanWidget < matRad_Widget
             
             
             contentPopUp = get(handles.popMenuBioOpt,'String');
+            
             ix = find(strcmp(pln.propOpt.bioOptimization,contentPopUp));
             set(handles.popMenuBioOpt,'Value',ix);
-            set(handles.btnRunSequencing,'Value',pln.propSeq.runSequencing);
             set(handles.btnRunDAO,'Value',pln.propOpt.runDAO);
-            if isfield(pln.propSeq, 'sequencingLevel')
+            if isfield(pln, 'propSeq') && isfield(pln.propSeq, 'sequencingLevel')
+                set(handles.btnRunSequencing,'Value',pln.propSeq.runSequencing);
                 set(handles.editSequencingLevel,'String',num2str(pln.propSeq.sequencingLevel));
+            else
+                set(handles.btnRunSequencing,'Value', 0 );
             end
             if isfield (pln.propOpt, 'conf3D')
                 set(handles.radiobutton3Dconf,'Value',pln.propOpt.conf3D);
@@ -1103,7 +1106,7 @@ classdef matRad_PlanWidget < matRad_Widget
                         'Position', [Width-(0.5*Width) 0.1 * Height 80 30],...
                         'Callback', 'close');
                 catch ME
-                    warning(ME.identifier,'Could not set isocenter in pln update! Reason: %s\n',ME.message)
+                    warning(ME.identifier,'Could not set Tissue parameter update! Reason: %s\n',ME.message)
                 end
             end
             this.handles = handles;
