@@ -846,6 +846,7 @@ classdef matRad_TopasConfig < handle
             fprintf(fID,'\n');
             fprintf(fID,['i:Ts/Seed = ',num2str(runIx),'\n']);
 
+            %TODO: remove or document 
             %fprintf(fID,'includeFile = %s/TOPAS_Simulation_Setup.txt\n',obj.thisFolder);
             %fprintf(fID,'includeFile = %s/TOPAS_matRad_geometry.txt\n',obj.thisFolder);
             %fprintf(fID,'includeFile = %s/TOPAS_scorer_surfaceIC.txt\n',obj.thisFolder);
@@ -1725,7 +1726,7 @@ classdef matRad_TopasConfig < handle
                     obj.writeScorers(fileID);
 
                     % Write dij-related config lines
-                    % We should discuss here if that's something that has to be available for photons as well
+                    % TODO: move this to github issue/todo -> We should discuss here if that's something that has to be available for photons as well
                     if ~strcmp(obj.radiationMode,'photons')
                         if obj.scorer.calcDij
                             fprintf(fileID,'\n');
@@ -1941,7 +1942,7 @@ classdef matRad_TopasConfig < handle
                             fprintf(fID,['iv:Ge/Patient/SchneiderHounsfieldUnitSections = %i',repmat(' %g',1,numel(densityCorrection.unitSections)),'\n'],numel(densityCorrection.unitSections),densityCorrection.unitSections);
                             fprintf(fID,['uv:Ge/Patient/SchneiderDensityOffset = %i',repmat(' %g',1,numel(densityCorrection.offset)),'\n'],numel(densityCorrection.offset),densityCorrection.offset);
                             % this is needed for a custom fprintf format which formats integers i to 'i.' and floats without trailing zeros
-                            % this is potentially not necessary but was done to mimick the original TOPAS Schneider converter file
+                            % TODO: check whether this can be removed -> this is potentially not necessary but was done to mimick the original TOPAS Schneider converter file
                             TOPASisFloat = mod(densityCorrection.factor,1)==0;
                             fprintf(fID,['uv:Ge/Patient/SchneiderDensityFactor = %i ',strjoin(cellstr(char('%1.01f '.*TOPASisFloat' + '%1.15g '.*~TOPASisFloat'))),'\n'],numel(densityCorrection.factor),densityCorrection.factor);
                             TOPASisFloat = mod(densityCorrection.factorOffset,1)==0;
