@@ -77,6 +77,7 @@ classdef matRad_MCemittanceBaseData
             else
                 obj.matRad_cfg.dispWarning('No information on BAMS to isocenter distance. Using generic value of 500mm');
                 obj.nozzleToIso = 500;
+                obj.machine.meta.BAMStoIsoDist = 500;
             end
             
             if all(isfield(machine.meta,{'SAD_x','SAD_y'}))
