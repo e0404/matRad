@@ -41,7 +41,7 @@ bxidx = 1; %modality  bixel index
 % Obtain cumulative dose cube 
 [d{1}]    = deal(zeros(dij.doseGrid.numOfVoxels,1));
 
-for mod = 1: length(dij.original_Dijs)
+for mod = 1:length(dij.original_Dijs)
     wt = [];
     % split the w for current modality
     STrepmat = (~dij.spatioTemp(mod) + dij.spatioTemp(mod)*dij.numOfSTscen(mod));
@@ -59,7 +59,7 @@ for mod = 1: length(dij.original_Dijs)
     % DIFFFERENT UNCERTAINTY SCENARIOS FOR DIFFERENT MODALITIES
     % currently for ST optimization 
     for scen = 1:numel(dt)
-         d{scen} = d{scen} + sum(dt{scen}.*dij.STfractions{mod}',2);
+         d{scen} = d{scen} + sum(dt{scen}.*dij.STfractions{mod},2);
     end
 end
 
@@ -322,18 +322,20 @@ for mod = 1: length(dij.original_Dijs)
     wt = [];
 
     % split the w and g for current modality
-    STrepmat = (~dij.spatioTemp(mod) + dij.spatioTemp(mod)*dij.numOfSTscen(mod));
+    STrepmat = (~dij.spatioTemp(mod) + dij.spatioTemp(mod)*dij.numOfSTscen(mod)); %can this be the num of St scenrios?
+
     wt = reshape(w(bxidx: bxidx+STrepmat*dij.original_Dijs{mod}.totalNumOfBixels-1),[dij.original_Dijs{mod}.totalNumOfBixels,STrepmat]);
     
     optiProb.BP.computeGradient(dij.original_Dijs{mod},doseGradient,wt);
     gt = optiProb.BP.GetGradient();
                      % review for ST optimization 
     for s = 1:numel(useScen)
-        gt{s} = gt{s}*dij.STfractions{mod};  
+        gt{s} = gt{s}.*dij.STfractions{mod};
+        gt{s} = reshape(gt{s}, [dij.original_Dijs{mod}.totalNumOfBixels*STrepmat 1]);
         g{s} = [g{s}; gt{s}];                     
     end 
 end   
-    weightGradient = zeros(dij.totalNumOfBixels,1);
+    weightGradient = zeros(size(g{1}));
     for s = 1:numel(useScen)
         weightGradient = weightGradient + g{useScen(s)};
     end
@@ -346,7 +348,7 @@ end
         weightGradient = weightGradient + gProb{1};
     end
 % code snippet to check the gradient
-    gradientChecker = 1;
+    gradientChecker = 0;
 if gradientChecker == 1
     f =  matRad_objectiveFunction(optiProb,w,dij,cst);
     epsilon = 1e-6;

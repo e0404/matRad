@@ -56,7 +56,7 @@ for mod = 1: length(dij.original_Dijs)
     % DIFFFERENT UNCERTAINTY SCENARIOS FOR DIFFERENT MODALITIES
     % currently for ST optimization 
     for scen = 1:numel(dt)
-         d{scen} = d{scen} + sum(dt{scen}.*dij.STfractions{mod}',2);
+         d{scen} = d{scen} + sum(dt{scen}.*dij.STfractions{mod},2);
     end
 end
 
