@@ -63,6 +63,7 @@ for i = 1:size(cst,1)
         else
            obj = obj.setDoseParameters(obj.getDoseParameters());
         end
+
         cst{i,6}{j} = obj;        
     end
 end
@@ -122,8 +123,8 @@ else
             dijt = dij;
         end
 
-        wOnes          = ones(dijt.totalNumOfBixels,1);
-        wt             = zeros(dijt.totalNumOfBixels,1);
+        wOnes          = ones(dijt.totalNumOfBixels*dij.numOfSTscen(modality),1);
+        wt             = zeros(dijt.totalNumOfBixels*dij.numOfSTscen(modality),1);
         
         if strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'protons')
             % check if a constant RBE is defined - if not use 1.1
@@ -328,6 +329,7 @@ end
 %Get Bounds
 
 if ~isfield(pln.propOpt,'boundMU')
+    %pln.propOpt = arrayfun(@(modality) setfield(pln.propOpt(modality), 'boundMU',0), [1:numOfModalities]);
     pln.propOpt.boundMU = 0;
 end 
     % NOTE: for MixMod, as it is should not work now
@@ -376,10 +378,36 @@ for mod = 1: pln.numOfModalities
     STrepmat = (~dij.spatioTemp(mod) + dij.spatioTemp(mod)*dij.numOfSTscen(mod));
     wt = reshape(wOpt(bxidx: bxidx+STrepmat*dij.original_Dijs{mod}.totalNumOfBixels-1),[dij.original_Dijs{mod}.totalNumOfBixels,STrepmat]);
     
-    resultGUI{mod} = matRad_calcCubes(wt,dij.original_Dijs{mod});
+    % Loop over the different ST scenarios
+    if STrepmat>1
+        for STscenIdx=1:STrepmat
+            STresultGUI{STscenIdx} = matRad_calcCubes(wt(:,STscenIdx),dij.original_Dijs{mod});
+            STfractionWeight = dij.STfractions{mod}(STscenIdx);%./sum(dij.STfractions{mod});
+            STresultGUI_fractionWeighted{STscenIdx} = matRad_calcCubes(wt(:,STscenIdx).*STfractionWeight,dij.original_Dijs{mod});
+        end
+
+        fields = fieldnames(STresultGUI{1});
+        %resultGUI{mod} = cell2struct(cell(1,length(fields)), fields, 2);
+        for fieldIdx=1:size(fields,1)     %Accumulate the total quantity also
+             resultGUI{mod}.(fields{fieldIdx}) = zeros(size(STresultGUI_fractionWeighted{STscenIdx}.(fields{fieldIdx})));
+        end
+        
+        
+        for STscenIdx=1:STrepmat
+            for fieldIdx=1:size(fields,1)
+                resultGUI{mod}.([fields{fieldIdx}, '_STscenario_', num2str(STscenIdx)]) = STresultGUI{STscenIdx}.(fields{fieldIdx});
+
+                %Accumulate the total quantity also
+                resultGUI{mod}.(fields{fieldIdx}) = resultGUI{mod}.(fields{fieldIdx}) + STresultGUI_fractionWeighted{STscenIdx}.(fields{fieldIdx});
+            end
+        end
+    else
+
+    resultGUI{mod} = matRad_calcCubes(wt*dij.STfractions{mod},dij.original_Dijs{mod});
     resultGUI{mod}.wUnsequenced = wt;
     resultGUI{mod}.usedOptimizer = optimizer;
     resultGUI{mod}.info = info;
+    end
     bxidx = bxidx + STrepmat*dij.original_Dijs{mod}.totalNumOfBixels;
 end
 %Robust quantities
