@@ -929,8 +929,6 @@ classdef matRad_PlanWidget < matRad_Widget
                     
                     set(handles.popMenuQuantityOpt,'Enable','on');
                     set(handles.popMenuBioModel,'Enable','on');
-                    ix = find(strcmp(contentPopUpBioModel,'none'));
-                    set(handles.popMenuBioModel,'Value',ix);
                     set(handles.btnSetTissue,'Enable','on');
                     
                     set(handles.btnRunSequencing,'Enable','off');
