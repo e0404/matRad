@@ -185,9 +185,11 @@ if (strcmp(pln.radiationMode, 'MixMod'))
     %             end
     %         end
     % this section needs to be reviewed
-    dij.spatioTemp = [pln.propOpt.spatioTemp];
-    dij.numOfSTscen = pln.propOpt.STscenarios;
-    dij.STfractions = pln.propOpt.STfractions;
+
+    %for modalityIdx=1:
+    dij.spatioTemp  = [pln.propOpt.spatioTemp];
+    dij.numOfSTscen = [pln.propOpt.STscenarios];
+    dij.STfractions = [pln.propOpt.STfractions];
 
 
     dij.numOfModalities = pln.numOfModalities;
