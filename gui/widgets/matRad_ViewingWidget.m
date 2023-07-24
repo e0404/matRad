@@ -133,7 +133,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                     doUpdate = this.checkUpdateNecessary({'pln','ct','cst','resultGUI'},evt);
                 end
             
-                if ~doUpdate
+                if ~doUpdate || this.checkUpdateNecessary({'pln','ct','resultGUI'},evt)
                    this.initValues();
                 end
                             
