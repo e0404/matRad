@@ -82,7 +82,7 @@ pln.propDoseCalc.calcLET = true;
 
 %% generate steering file
 stf = matRad_generateStf(ct,cst,pln);
-%stf = matRad_generateSingleBixelStf(ct,cst,pln); %Example to create a single beamlet stf
+%stf = matRad_generateSingleBixelStf(ct,cst,pln); %Example to create a single beamlet stf, WARNING: this sometimes does not produce all required output files (TODO: check this)
 
 %% analytical dose calculation
 dij = matRad_calcParticleDose(ct, stf, pln, cst); %Calculate particle dose influence matrix (dij) with analytical algorithm
