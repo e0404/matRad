@@ -1,5 +1,7 @@
 List of all matRad developers that contributed code (alphabetical)
 
+* Nelly Abbani
+* Nabe Al-Hasnawi
 * Mark Bangert
 * Tobias Becher
 * Amit Ben Antony Bennan

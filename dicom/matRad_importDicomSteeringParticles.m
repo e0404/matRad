@@ -38,6 +38,10 @@ matRad_cfg = MatRad_Config.instance();
 %% load plan file
 % load machine data
 
+env = matRad_getEnvironment();
+matRad_checkEnvDicomRequirements(env);
+isOctave = strcmp(env,'OCTAVE');
+
 dlgBaseDataText = ['Import steering information from DICOM Plan.','Choose corresponding matRad base data for ', ...
         pln.radiationMode, '.'];
 % messagebox only necessary for non windows users
@@ -51,7 +55,7 @@ ix = find(fileName == '_');
 pln.machine = fileName(ix(1)+1:end-4);
 
 % RT Plan consists only on meta information
-if verLessThan('matlab','9')
+if isOctave || verLessThan('matlab','9')
     rtPlanInfo = dicominfo(rtPlanFile{1});
 else
     rtPlanInfo = dicominfo(rtPlanFile{1},'UseDictionaryVR',true);

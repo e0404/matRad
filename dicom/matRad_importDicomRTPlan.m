@@ -38,7 +38,7 @@ if size(rtPlanFiles,1) ~= 1
 end
 
 % read information out of the RT file
-if verLessThan('matlab','9')
+if isOctave || verLessThan('matlab','9')
     planInfo = dicominfo(rtPlanFiles{1});
 else
     planInfo = dicominfo(rtPlanFiles{1},'UseDictionaryVR',true);
