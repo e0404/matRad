@@ -719,10 +719,14 @@ classdef matRad_PlanWidget < matRad_Widget
             set(handles.editFraction,'String',num2str(pln.numOfFractions));
             
             
-            contentPopUp = get(handles.popMenuQuantityOpt,'String');
-            
-            ix = find(strcmp(pln.bioParam.quantityOpt,contentPopUp));
+            contentPopUpQuantityOpt = get(handles.popMenuQuantityOpt,'String');
+            ix = find(strcmp(pln.bioParam.quantityOpt,contentPopUpQuantityOpt));
             set(handles.popMenuQuantityOpt,'Value',ix);
+            
+            contentPopUpBioModel = get(handles.popMenuBioModel,'String');
+            ix = find(strcmp(pln.bioParam.model,contentPopUpBioModel));
+            set(handles.popMenuBioModel,'Value',ix);
+
             set(handles.btnRunDAO,'Value',pln.propOpt.runDAO);
             if isfield(pln, 'propSeq') && isfield(pln.propSeq, 'sequencingLevel')
                 set(handles.btnRunSequencing,'Value',pln.propSeq.runSequencing);
@@ -873,15 +877,16 @@ classdef matRad_PlanWidget < matRad_Widget
             
             contents      = cellstr(get(hObject,'String'));
             RadIdentifier = contents{get(hObject,'Value')};
-            contentPopUp  = get(handles.popMenuQuantityOpt,'String');
-            
+            contentPopUpQuantityOpt  = get(handles.popMenuQuantityOpt,'String');
+            contentPopUpBioModel = get(handles.popMenuBioModel,'String');
             switch RadIdentifier
                 case 'photons'
                     
                     set(handles.popMenuQuantityOpt,'Enable','on');
-                    ix = find(strcmp(contentPopUp,'physicalDose'));
-                    set(handles.popMenuQuantityOpt,'Value',ix);
-                    set(handles.popMenuBioModel,'Value',1);
+%                     ix = find(strcmp(contentPopUpQuantityOpt,'physicalDose'));
+%                     set(handles.popMenuQuantityOpt,'Value',ix);
+                    ix = find(strcmp(contentPopUpBioModel,'none'));
+                    set(handles.popMenuBioModel,'Value',ix);
                     set(handles.popMenuBioModel,'Enable','off');
                     set(handles.btnSetTissue,'Enable','off');
                     
@@ -909,8 +914,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 case 'protons'                    
                     set(handles.popMenuQuantityOpt,'Enable','on');
                     set(handles.popMenuBioModel,'Enable','on');
-                    set(handles.popMenuBioModel,'Value',2);
-                    
+                                        
                     set(handles.btnSetTissue,'Enable','on');
                     
                     set(handles.btnRunSequencing,'Enable','off');
@@ -925,7 +929,8 @@ classdef matRad_PlanWidget < matRad_Widget
                     
                     set(handles.popMenuQuantityOpt,'Enable','on');
                     set(handles.popMenuBioModel,'Enable','on');
-                    set(handles.popMenuBioModel,'Value',5);
+                    ix = find(strcmp(contentPopUpBioModel,'none'));
+                    set(handles.popMenuBioModel,'Value',ix);
                     set(handles.btnSetTissue,'Enable','on');
                     
                     set(handles.btnRunSequencing,'Enable','off');
@@ -938,8 +943,7 @@ classdef matRad_PlanWidget < matRad_Widget
             end
             
             selectedQuantityOpt = get(handles.popMenuQuantityOpt,'Value');
-            contentPopUp = get(handles.popMenuQuantityOpt,'String');
-            if strcmp(contentPopUp{selectedQuantityOpt},'physicalDose')
+            if strcmp(contentPopUpQuantityOpt{selectedQuantityOpt},'physicalDose')
                 set(handles.btnSetTissue,'Enable','off');
             else
                 set(handles.btnSetTissue,'Enable','on');
