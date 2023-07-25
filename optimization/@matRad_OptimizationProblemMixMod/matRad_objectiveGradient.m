@@ -333,11 +333,6 @@ for mod = 1: length(dij.original_Dijs)
         gt{s} = gt{s}.*dij.STfractions{mod};
         gt{s} = reshape(gt{s}, [dij.original_Dijs{mod}.totalNumOfBixels*STrepmat 1]);
         g{s} = [g{s}; gt{s}];                     
-    end 
-end   
-    weightGradient = zeros(size(g{1}));
-    for s = 1:numel(useScen)
-        weightGradient = weightGradient + g{useScen(s)};
     end
     bxidx = bxidx + STrepmat*dij.original_Dijs{mod}.totalNumOfBixels;
 end
