@@ -339,14 +339,22 @@ end
     for s = 1:numel(useScen)
         weightGradient = weightGradient + g{useScen(s)};
     end
+    bxidx = bxidx + STrepmat*dij.original_Dijs{mod}.totalNumOfBixels;
+end
 
-    if vOmega ~= 0
-        optiProb.BP.computeGradientProb(dij.original_Dijs{mod},doseGradientExp,vOmega,w);
-        gProb = optiProb.BP.GetGradientProb();
+weightGradient = zeros(dij.totalNumOfBixels,1);
+for s = 1:numel(useScen)
+    weightGradient = weightGradient + g{useScen(s)};
+end
 
-        %Only implemented for first scenario now
-        weightGradient = weightGradient + gProb{1};
-    end
+if vOmega ~= 0
+    optiProb.BP.computeGradientProb(dij.original_Dijs{mod},doseGradientExp,vOmega,w);
+    gProb = optiProb.BP.GetGradientProb();
+
+    %Only implemented for first scenario now
+    weightGradient = weightGradient + gProb{1};
+end
+
 % code snippet to check the gradient
     gradientChecker = 0;
 if gradientChecker == 1
