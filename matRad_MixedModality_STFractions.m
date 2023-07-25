@@ -105,9 +105,9 @@ resultGUI = matRad_fluenceOptimizationJO(dij,cst,plnJO);
 %Then all photon scenarios
 
 slice = 59;
-qtOpt = 'physicalDose';
+qtOpt = plnJO.bioParam.quantityOpt;
 modalities = {'proton', 'photon'};
-plan_JO = resultGUI{1}.(qtOpt) + resultGUI{2}.(qtOpt); %pln(1).numOfFractions * resultGUI{1}.(qtOpt) + pln(2).numOfFractions * resultGUI{2}.(qtOpt);
+plan_JO = pln(1).numOfFractions * resultGUI{1}.(qtOpt) + pln(2).numOfFractions * resultGUI{2}.(qtOpt);%resultGUI{1}.(qtOpt) + resultGUI{2}.(qtOpt); %pln(1).numOfFractions * resultGUI{1}.(qtOpt) + pln(2).numOfFractions * resultGUI{2}.(qtOpt);
 
 if any(plnJO.propOpt.spatioTemp)
     f = figure;
