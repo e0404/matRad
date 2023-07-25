@@ -373,6 +373,15 @@ wOpt = optimizer.wResult;
 info = optimizer.resultInfo;
 bxidx = 1;
 for mod = 1: pln.numOfModalities
+
+    % For the time being compute also the mAlphaDose mSQRTBetaDose also for
+    % photons (triggers effect calculation in matRad_calcCubes)
+
+    if strcmp(pln.originalPlans(mod).radiationMode, 'photons') && strcmp(pln.originalPlans(mod).bioParam.quantityOpt, 'effect')
+        dij.original_Dijs{mod}.mAlphaDose{1} = dij.original_Dijs{mod}.physicalDose{1}.*dij.original_Dijs{mod}.ax; 
+        dij.original_Dijs{mod}.mSqrtBetaDose{1} = dij.original_Dijs{mod}.physicalDose{1}.*sqrt(dij.original_Dijs{mod}.bx); 
+    end
+
     wt = [];
     % split the w for current modality
     STrepmat = (~dij.spatioTemp(mod) + dij.spatioTemp(mod)*dij.numOfSTscen(mod));
@@ -382,28 +391,25 @@ for mod = 1: pln.numOfModalities
     if STrepmat>1
         for STscenIdx=1:STrepmat
             STresultGUI{STscenIdx} = matRad_calcCubes(wt(:,STscenIdx),dij.original_Dijs{mod});
-            STfractionWeight = dij.STfractions{mod}(STscenIdx);%./sum(dij.STfractions{mod});
-            STresultGUI_fractionWeighted{STscenIdx} = matRad_calcCubes(wt(:,STscenIdx).*STfractionWeight,dij.original_Dijs{mod});
         end
 
+        
         fields = fieldnames(STresultGUI{1});
-        %resultGUI{mod} = cell2struct(cell(1,length(fields)), fields, 2);
-        for fieldIdx=1:size(fields,1)     %Accumulate the total quantity also
-             resultGUI{mod}.(fields{fieldIdx}) = zeros(size(STresultGUI_fractionWeighted{STscenIdx}.(fields{fieldIdx})));
+        for fieldIdx=1:size(fields,1)
+             resultGUI{mod}.(fields{fieldIdx}) = zeros(size(STresultGUI{STscenIdx}.(fields{fieldIdx})));
         end
-        
-        
+                
         for STscenIdx=1:STrepmat
             for fieldIdx=1:size(fields,1)
                 resultGUI{mod}.([fields{fieldIdx}, '_STscenario_', num2str(STscenIdx)]) = STresultGUI{STscenIdx}.(fields{fieldIdx});
 
                 %Accumulate the total quantity also
-                resultGUI{mod}.(fields{fieldIdx}) = resultGUI{mod}.(fields{fieldIdx}) + STresultGUI_fractionWeighted{STscenIdx}.(fields{fieldIdx});
+                resultGUI{mod}.(fields{fieldIdx}) = resultGUI{mod}.(fields{fieldIdx}) + STresultGUI{STscenIdx}.(fields{fieldIdx}).*dij.STfractions{mod}(STscenIdx)./sum(dij.STfractions{mod});
             end
         end
     else
 
-    resultGUI{mod} = matRad_calcCubes(wt*dij.STfractions{mod},dij.original_Dijs{mod});
+    resultGUI{mod} = matRad_calcCubes(wt,dij.original_Dijs{mod});
     resultGUI{mod}.wUnsequenced = wt;
     resultGUI{mod}.usedOptimizer = optimizer;
     resultGUI{mod}.info = info;
