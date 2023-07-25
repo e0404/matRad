@@ -331,22 +331,25 @@ for mod = 1: length(dij.original_Dijs)
     for s = 1:numel(useScen)
         gt{s} = gt{s}*dij.STfractions{mod};  
         g{s} = [g{s}; gt{s}];                     
-    end 
-end   
-    weightGradient = zeros(dij.totalNumOfBixels,1);
-    for s = 1:numel(useScen)
-        weightGradient = weightGradient + g{useScen(s)};
     end
+    bxidx = bxidx + STrepmat*dij.original_Dijs{mod}.totalNumOfBixels;
+end
 
-    if vOmega ~= 0
-        optiProb.BP.computeGradientProb(dij.original_Dijs{mod},doseGradientExp,vOmega,w);
-        gProb = optiProb.BP.GetGradientProb();
+weightGradient = zeros(dij.totalNumOfBixels,1);
+for s = 1:numel(useScen)
+    weightGradient = weightGradient + g{useScen(s)};
+end
 
-        %Only implemented for first scenario now
-        weightGradient = weightGradient + gProb{1};
-    end
+if vOmega ~= 0
+    optiProb.BP.computeGradientProb(dij.original_Dijs{mod},doseGradientExp,vOmega,w);
+    gProb = optiProb.BP.GetGradientProb();
+
+    %Only implemented for first scenario now
+    weightGradient = weightGradient + gProb{1};
+end
+
 % code snippet to check the gradient
-    gradientChecker = 1;
+    gradientChecker = 0;
 if gradientChecker == 1
     f =  matRad_objectiveFunction(optiProb,w,dij,cst);
     epsilon = 1e-6;
