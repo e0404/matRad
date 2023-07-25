@@ -669,7 +669,8 @@ classdef matRad_PlanWidget < matRad_Widget
             % do not calculate / suggest isoCenter new by default
             %this.checkIsoCenter_Callback(handles.checkIsoCenter);
             set(handles.editIsoCenter,'Enable','on');
-
+            set(handles.popMenuQuantityOpt,'Value',1);
+            set(handles.popMenuBioModel,'Value',1);
             this.handles=handles;
             updatePlnInWorkspace(this);
         end
