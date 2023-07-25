@@ -337,7 +337,7 @@ for mod = 1: length(dij.original_Dijs)
     bxidx = bxidx + STrepmat*dij.original_Dijs{mod}.totalNumOfBixels;
 end
 
-weightGradient = zeros(dij.totalNumOfBixels,1);
+weightGradient = zeros(size(g{1}));
 for s = 1:numel(useScen)
     weightGradient = weightGradient + g{useScen(s)};
 end
