@@ -713,7 +713,11 @@ classdef matRad_PlanWidget < matRad_Widget
             
             pln.propStf.bixelWidth      = this.parseStringAsNum(get(handles.editBixelWidth,'String'),false); % [mm] / also corresponds to lateral spot spacing for particles
             pln.propStf.gantryAngles    = this.parseStringAsNum(get(handles.editGantryAngle,'String'),true); % [???]
-            pln.propStf.couchAngles     = this.parseStringAsNum(get(handles.editCouchAngle,'String'),true); % [???]
+            if numel(this.parseStringAsNum(get(handles.editCouchAngle,'String'),true))==1 % Feature: autofill couch angles to single plane by entering a single value 
+                pln.propStf.couchAngles     = this.parseStringAsNum(get(handles.editCouchAngle,'String'),true) * ones(1,numel(pln.propStf.gantryAngles));
+            else
+                pln.propStf.couchAngles     = this.parseStringAsNum(get(handles.editCouchAngle,'String'),true); % [???]
+            end
             pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
             pln.propStf.isoCenter       = this.parseStringAsNum(get(handles.editIsoCenter,'String'),true);
             
