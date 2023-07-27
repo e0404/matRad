@@ -274,7 +274,7 @@ classdef matRad_bioModel
                         end
                     
                    case {'MixMod'}
-                       obj.model = 'MixMod';
+                       this.model = 'MixMod';
                        switch this.quantityOpt
                             
                             case {'physicalDose'}
