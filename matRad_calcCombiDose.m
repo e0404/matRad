@@ -45,7 +45,7 @@ if (strcmp(pln.radiationMode, 'MixMod'))
     dij_fields = [];
     dijt = [];
 
-    bioModels = [pln.originalPlans.bioParam];
+    %bioModels = [pln.originalPlans.bioParam];
 
 
     for k = 1:pln.numOfModalities
