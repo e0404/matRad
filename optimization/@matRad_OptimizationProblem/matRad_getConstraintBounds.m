@@ -1,4 +1,5 @@
-% 
+function [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
+% matRad IPOPT get constraint bounds wrapper function
 % call
 %   [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
 %

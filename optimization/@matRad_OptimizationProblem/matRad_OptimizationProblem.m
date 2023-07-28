@@ -93,10 +93,14 @@ classdef matRad_OptimizationProblem < handle
         end
 
         function normalizedfVals = normalizeObjectives(optiProb,fVals)
+            %function to normalize objectives (used for sandwich
+            %algorithms)
             switch optiProb.normalizationScheme.type
                 case 'none'
+                    %default case no normalization
                     normalizedfVals = fVals;
                 case 'UL'
+                    %used to normalize with respect to min and max values
                     %maybe check that U and L are defined
                     normalizedfVals = (fVals - optiProb.normalizationScheme.L)./(optiProb.normalizationScheme.U-optiProb.normalizationScheme.L); %might have to check that U and L work!
                 otherwise
@@ -105,23 +109,29 @@ classdef matRad_OptimizationProblem < handle
         end
 
         function normalizedGradient = normalizeGradients(optiProb,Gradient)
+            %function to normalize objectives (used for sandwich
+            %algorithms)
             switch optiProb.normalizationScheme.type
+                
                 case 'none'
+                    %default case no normalization
                     normalizedGradient = Gradient;
                 case 'UL'
+                    %used to normalize with respect to min and max values
                     %maybe check that U and L are defined
-                    normalizedfVals = Gradient./(optiProb.normalizationScheme.U-optiProb.normalizationScheme.L); %might have to check that U and L work!
+                    normalizedGradient = Gradient./(optiProb.normalizationScheme.U-optiProb.normalizationScheme.L); %might have to check that U and L work!
                 otherwise
                     matRad_cfg.dispError('Normalization scheme not known!');
             end
         end
 
-        function updatePenalties(optiProb,newPen) %does it handle grouping?
+        function updatePenalties(optiProb,newPen) 
+            %TODO: Allow grouping of objectives
             if numel(optiProb.objectives) ~= numel(newPen)
                 matRad_cfg.dispError('Number of objectives in optimization Problem not equal to number of new penalties to be set!');
             end
             for i=1:numel(newPen)
-                optiProb.objectives{i}.penalty = newPen(i)*100;
+                optiProb.objectives{i}.penalty = newPen(i)*100; %scaling of penalties with factor 100
             end
         end
 
@@ -166,7 +176,7 @@ classdef matRad_OptimizationProblem < handle
     
     methods (Access = private)
         function extractObjectivesAndConstraintsFromcst(optiProb,cst)
-            %used to store objectives in cell array as property of optimization Problem
+            %used to extract objectives from cst and store in cell array as property of optimization Problem
             optiProb.objidx = [];
             optiProb.constridx = [];
             optiProb.objectives = {};
