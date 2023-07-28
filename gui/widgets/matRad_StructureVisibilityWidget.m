@@ -1,10 +1,7 @@
 classdef matRad_StructureVisibilityWidget < matRad_Widget
     % matRad_StructureVisibilityWidget class to generate GUI widget to set
     % visibility of structure in viewing widget
-    % Describes a standard fluence optimization problem by providing the 
-    % implementation of the objective & constraint function/gradient wrappers
-    % and managing the mapping and backprojection of the respective dose-
-    % related quantity
+    % 
     %
     % References
     %   -

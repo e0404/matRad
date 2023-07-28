@@ -1,9 +1,6 @@
 classdef matRad_LogoWidget < matRad_Widget
     % matRad_InfoWidget class to display GUI logo widget 
-    % Describes a standard fluence optimization problem by providing the 
-    % implementation of the objective & constraint function/gradient wrappers
-    % and managing the mapping and backprojection of the respective dose-
-    % related quantity
+    % 
     %
     % References
     %   -

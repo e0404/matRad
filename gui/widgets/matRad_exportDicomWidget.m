@@ -1,10 +1,7 @@
 classdef matRad_exportDicomWidget < matRad_Widget
     % matRad_exportDicomWidget class to generate GUI widget to export plan
     % to dicom files
-    % Describes a standard fluence optimization problem by providing the 
-    % implementation of the objective & constraint function/gradient wrappers
-    % and managing the mapping and backprojection of the respective dose-
-    % related quantity
+    % 
     %
     % References
     %   -
@@ -153,7 +150,7 @@ classdef matRad_exportDicomWidget < matRad_Widget
                 'Tooltip', 'Export path',...
                 'Callback',@this.edit_dir_export_Callback,...
                 'Tag','edit_dir_export');
-            
+            %Text Variable to export
             h10 = uicontrol(...
                 'Parent',h1,...
                 'Units','normalized',...
@@ -170,7 +167,7 @@ classdef matRad_exportDicomWidget < matRad_Widget
                 'Position',[0.035 0.63 0.7 0.04 ],...
                 'Tag','label_variables'); 
             
-            % table variables to export
+            % Table variables to export
             h11 = uitable(...
                 'Parent',h1,...
                 'Units','normalized',...
@@ -199,7 +196,7 @@ classdef matRad_exportDicomWidget < matRad_Widget
     
     %CALLBACK METHODS
     methods
-        %---------------CALLBACK FOR H2 BUTTON EXPORT
+        % CALLBACK FOR H2 BUTTON EXPORT
         function this = btn_export_Callback(this,  hObject, event)
             handles = this.handles;
             

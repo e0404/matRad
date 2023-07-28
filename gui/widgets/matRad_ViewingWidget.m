@@ -1,10 +1,7 @@
 classdef matRad_ViewingWidget < matRad_Widget
     % matRad_ViewingWidget class to generate GUI widget to display plan
     % dose distributions and ct
-    % Describes a standard fluence optimization problem by providing the 
-    % implementation of the objective & constraint function/gradient wrappers
-    % and managing the mapping and backprojection of the respective dose-
-    % related quantity
+    % 
     %
     % References
     %   -
@@ -155,6 +152,7 @@ classdef matRad_ViewingWidget < matRad_Widget
             
         end
         
+        %SET FUNCTIONS
         function set.plane(this,value)
             this.plane=value;
             this.UpdatePlot();

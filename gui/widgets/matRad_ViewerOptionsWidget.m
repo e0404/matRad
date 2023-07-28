@@ -1,11 +1,7 @@
 classdef matRad_ViewerOptionsWidget < matRad_Widget
     % matRad_ViewerOptionsWidget class to generate GUI widget to set
     % options for the plan ViewingWidget
-    % Describes a standard fluence optimization problem by providing the 
-    % implementation of the objective & constraint function/gradient wrappers
-    % and managing the mapping and backprojection of the respective dose-
-    % related quantity
-    %
+    % 
     % References
     %   -
     %

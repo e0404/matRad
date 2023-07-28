@@ -1,9 +1,6 @@
 classdef matRad_DVHWidget < matRad_Widget
     % matRad_DVHWidget class to generate GUI widget to display DVH 
-    % Describes a standard fluence optimization problem by providing the 
-    % implementation of the objective & constraint function/gradient wrappers
-    % and managing the mapping and backprojection of the respective dose-
-    % related quantity
+    % 
     %
     % References
     %   -
@@ -72,7 +69,7 @@ classdef matRad_DVHWidget < matRad_Widget
         end
         
         function removeOverlap(this)
-            delete(this.widgetHandle.Children(3)); % clear previous plotted objects from the figure
+            %Clear previous plotted objects from the figure
             delete(this.widgetHandle.Children(3));
         end
         
@@ -92,12 +89,13 @@ classdef matRad_DVHWidget < matRad_Widget
         function set.selectedCube(this,value)
             this.selectedCube=value;
         end
+
         function showDVH(this)
 
             resultGUI = evalin('base','resultGUI');
             pln = evalin('base','pln');
             cst = evalin('base','cst');
-
+            % Calculate and show DVH
             doseCube = resultGUI.(this.selectedCube);
             dvh = matRad_calcDVH(cst,doseCube,'cum');
             matRad_showDVH(axes(this.widgetHandle),dvh,cst,pln);
