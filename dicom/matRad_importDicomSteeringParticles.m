@@ -33,6 +33,8 @@ function [stf, pln] = matRad_importDicomSteeringParticles(ct, pln, rtPlanFile)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+
 %% load plan file
 % load machine data
 
@@ -42,7 +44,7 @@ dlgBaseDataText = ['Import steering information from DICOM Plan.','Choose corres
 if ~ispc
     uiwait(helpdlg(dlgBaseDataText,['DICOM import - ', pln.radiationMode, ' base data' ]));
 end
-[fileName,pathName] = uigetfile('*.mat', dlgBaseDataText);
+[fileName,pathName] = uigetfile([matRad_cfg.matRadRoot filesep 'basedata' filesep '*.mat'], dlgBaseDataText);
 load([pathName filesep fileName]);
 
 ix = find(fileName == '_');
@@ -111,6 +113,8 @@ stf(length(BeamSeqNames)).numOfBixelsPerRay = [];
 stf(length(BeamSeqNames)).totalNumOfBixels = [];
 stf(length(BeamSeqNames)).ray = [];
 
+
+
 for i = 1:length(BeamSeqNames)
     currBeamSeq = BeamSeq.(BeamSeqNames{i});
     ControlPointSeq      = currBeamSeq.IonControlPointSequence;
@@ -119,9 +123,12 @@ for i = 1:length(BeamSeqNames)
     stf(i).bixelWidth    = pln.propStf.bixelWidth;
     stf(i).radiationMode = pln.radiationMode;
     % there might be several SAD's, e.g. compensator?
-    stf(i).SAD           = machine.meta.SAD;
+    stf(i).SAD_x         = currBeamSeq.VirtualSourceAxisDistances(1);
+    stf(i).SAD_y         = currBeamSeq.VirtualSourceAxisDistances(1);
+    %stf(i).SAD           = machine.meta.SAD; %we write the SAD later when we check machine match
+    %stf(i).sourcePoint_bev = [0 -stf(i).SAD 0];
     stf(i).isoCenter     = pln.propStf.isoCenter(i,:);
-    stf(i).sourcePoint_bev = [0 -stf(i).SAD 0];
+    
         % now loop over ControlPointSequences
     ControlPointSeqNames = fieldnames(ControlPointSeq);
     numOfContrPointSeq = length(ControlPointSeqNames);
@@ -202,9 +209,6 @@ for i = 1:length(BeamSeqNames)
     numOfRays = size(stf(i).ray,2);
     for l = 1:numOfRays
         stf(i).ray(l).energy = unique(stf(i).ray(l).energy);
-        stf(i).ray(l).targetPoint_bev = [2*stf(i).ray(l).rayPos_bev(1) ...
-                                         machine.meta.SAD ...
-                                         2*stf(i).ray(l).rayPos_bev(3)];
     end
     stf(i).numOfRays = numel(stf(i).ray);  
     
@@ -235,15 +239,96 @@ for i = 1:length(BeamSeqNames)
         stf(i).bixelWidth = NaN;
     end
     
+end
+
+%% check if matching given machine
+% if a machine is given, check if we can exactly match the plan with
+% the machine details
+machineNotMatching = false;
+if ~isempty(machine)
+    matRad_cfg.dispInfo('Machine provided! Checking for exact steering match within RTPlan...');
+    for i = 1:numel(stf)
+        for j = 1:stf(i).numOfRays
+            % loop over all energies
+            numOfEnergy = length(stf(i).ray(j).energy);
+            for k = 1:numOfEnergy        
+                energyTemp = stf(i).ray(j).energy(k);
+                focusFWHM = stf(i).ray(j).focusFWHM(k);
+                energyIndex = find(abs([machine.data(:).energy]-energyTemp)<10^-2);
+                if isempty(energyIndex)
+                    machineNotMatching = true;
+                    break;
+                end
+                focusIndex = find(abs([machine.data(energyIndex).initFocus.SisFWHMAtIso] - focusFWHM )< 10^-3);
+                if isempty(focusIndex)
+                    machineNotMatching = true;
+                    break;
+                end
+            end
+    
+            if machineNotMatching
+                break;
+            end
+        end
+        if machineNotMatching
+            break;
+        end
+    end
+        
+    %If the machine matches, format the stf for direct use. Otherwise,
+    %leave it be
+    if machineNotMatching
+        matRad_cfg.dispInfo('not matching!\n');
+        matRad_cfg.dispWarning('The given machine does not match the steering info found in RTPlan. matRad will generate an stf, but it will be incompatible with the given machine and most likely not directly be usable in dose calculation!');
+
+        for i = 1:numel(stf)
+            stf(i).SAD = mean([stf(i).SAD_x stf(i).SAD_y]);
+        end
+    else
+        matRad_cfg.dispInfo('matching!\n');
+        matRad_cfg.dispInfo('Formatting stf for use with given machine...');
+   
+        for i = 1:numel(stf)
+            stf(i).SAD = machine.meta.SAD;
+            for j = 1:stf(i).numOfRays
+
+                % loop over all energies
+                numOfEnergy = length(stf(i).ray(j).energy);
+                for k = 1:numOfEnergy
+                    %If a corresponding machine was found, check assignment here            
+                    if ~isempty(machine)
+                        energyTemp = stf(i).ray(j).energy(k);
+                        focusFWHM = stf(i).ray(j).focusFWHM(k);
+                        energyIndex = find(abs([machine.data(:).energy]-energyTempenergyTemp)<10^-2);
+                        focusIndex = find(abs([machine.data(energyIndex).initFocus.SisFWHMAtIso] - focusFWHM )< 10^-3);
+    
+                        stf(i).ray(j).energy(k) = machine.data(energyIndex).energy;
+                        stf(i).ray(j).focusIx(k) = focusIndex;
+                        stf(i).ray(j).focusFWHM(k) = machine.data(energyIndex).initFocus.SisFWHMAtIso(stf(i).ray(j).focusIx(k));
+                    end
+                end            
+            end
+
+            
+        end
+    end
+end   
+
+%% Finalize geometry
+for i = 1:numel(stf)
     % coordinate transformation with rotation matrix.
     % use transpose matrix because we are working with row vectors
-    rotMat_vectors_T = transpose(matRad_getRotationMatrix(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i)));
+    rotMat_vectors_T = transpose(matRad_getRotationMatrix(stf(i).gantryAngle,stf(i).couchAngle));
+    
+    % set source point using (average/machine) SAD
+    stf(i).sourcePoint_bev = [0 -stf(i).SAD 0];
 
     % Rotated Source point (1st gantry, 2nd couch)
     stf(i).sourcePoint = stf(i).sourcePoint_bev*rotMat_vectors_T;
     
     % Save ray and target position in lps system.
     for j = 1:stf(i).numOfRays
+        stf(i).ray(j).targetPoint_bev = [2*stf(i).ray(j).rayPos_bev(1) stf(i).SAD 2*stf(i).ray(j).rayPos_bev(3)];
         stf(i).ray(j).rayPos      = stf(i).ray(j).rayPos_bev*rotMat_vectors_T;
         stf(i).ray(j).targetPoint = stf(i).ray(j).targetPoint_bev*rotMat_vectors_T;   
     end
@@ -251,38 +336,9 @@ for i = 1:length(BeamSeqNames)
     % book keeping & calculate focus index
     for j = 1:stf(i).numOfRays
             stf(i).numOfBixelsPerRay(j) = numel([stf(i).ray(j).energy]);
-    end
+    end       
     
-    % use the original machine energies
-    for j = 1:stf(i).numOfRays
-        % loop over all energies
-        numOfEnergy = length(stf(i).ray(j).energy);
-        for k = 1:numOfEnergy
-            energyIndex = find(abs([machine.data(:).energy]-stf(i).ray(j).energy(k))<10^-2);
-            if ~isempty(energyIndex)
-                stf(i).ray(j).energy(k) = machine.data(energyIndex).energy;
-            else
-                error('No match between imported and machine data. Maybe wrong machine loaded.');
-            end
-        end
-    end
-    
-    % get focusIx instead of focusFWHM
-    for j = 1:stf(i).numOfRays
-        % loop over all energies
-        numOfEnergy = length(stf(i).ray(j).energy);
-        for k = 1:numOfEnergy
-            energyTemp = stf(i).ray(j).energy(k);
-            focusFWHM = stf(i).ray(j).focusFWHM(k);
-            energyIxTemp = find([machine.data.energy] == energyTemp);
-            focusIxTemp = find(abs([machine.data(energyIxTemp).initFocus.SisFWHMAtIso] - focusFWHM )< 10^-3);
-            stf(i).ray(j).focusIx(k) = focusIxTemp;
-            stf(i).ray(j).focusFWHM(k) = machine.data(energyIxTemp).initFocus.SisFWHMAtIso(stf(i).ray(j).focusIx(k));
-        end
-    end
-    
-    stf(i).timeStamp = datestr(clock);
-    
+    stf(i).timeStamp = datetime('now');    
 end
 
 if any(isnan([stf(:).bixelWidth])) || numel(unique([stf(:).bixelWidth])) > 1

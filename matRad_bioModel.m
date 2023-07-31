@@ -1,3 +1,30 @@
+<<<<<<< HEAD
+function model = matRad_bioModel(sRadiationMode,sQuantityOpt, sModel)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  matRad_bioModel
+%  This is a helper function to instantiate a matRad_BiologicalModel. This
+%  function currently exists for downwards compatability, as the new
+%  Biological Models will follow a polymorphic software architecture
+%
+% call
+%   matRad_bioModel(sRadiationMode,sQuantityOpt, sModel)
+%
+%   e.g. pln.bioParam = matRad_bioModel('protons','constRBE','RBExD')
+%
+% input
+%   sRadiationMode:     radiation modality 'photons' 'protons' 'carbon'
+%   sQuantityOpt:       string to denote the quantity used for
+%                       optimization 'physicalDose', 'RBExD', 'effect'
+%   sModel:             string to denote which biological model is used
+%                       'none': for photons, protons, carbon                'constRBE': constant RBE for photons and protons
+%                       'MCN': McNamara-variable RBE model for protons      'WED': Wedenberg-variable RBE model for protons
+%                       'LEM': Local Effect Model for carbon ions
+%
+% output
+%   model:              instance of a biological model
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+=======
 classdef matRad_bioModel
    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %  matRad_bioModel
@@ -480,38 +507,21 @@ classdef matRad_bioModel
                   % quadratic exponential fit
                   f_QE      = (this.p1_HEL * bixelLET.^2) .* exp(-this.p2_HEL * bixelLET);
                   RBEmax_QE = 1 + ((this.p0_HEL  + (vABratio.^-1)) .* f_QE);
+>>>>>>> de570e337753ef5899358548bbe69233e90e406b
 
-                  % the linear quadratic fit yielded the best fitting result
-                  RBEmax = RBEmax_QE;
-                  
-                  RBEmin = 1; % no gain in using fitted parameters over a constant value of 1
-                  
-                  bixelAlpha = RBEmax    .* vAlpha_x;
-                  bixelBeta  = RBEmin.^2 .* vBeta_x;
-                  
-               case {'carbon_LEM','helium_LEM'}
-                  
-                  numOfTissueClass = size(baseDataEntry(1).alpha,2);
-                  
-                  for i = 1:numOfTissueClass
-                     bixelAlpha(mTissueClass==i) = matRad_interp1(depths,baseDataEntry.alpha(:,i),vRadDepths(mTissueClass==i));
-                     bixelBeta(mTissueClass==i)  = matRad_interp1(depths,baseDataEntry.beta(:,i), vRadDepths(mTissueClass==i));
-                  end
-                  
-               otherwise
-                  
-            end
-            
-        end
-        
-        
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2023 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    end % end public methods
-    
-    
-    methods(Static)
-        
-    end % end static public methods
-    
-    
+model = matRad_BiologicalModel(sRadiationMode,sQuantityOpt,sModel);
+
 end % end class definition

@@ -19,7 +19,7 @@ function fitData = matRad_fitBaseData(doseCube, resolution, energy, mcData, init
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2022 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -29,6 +29,9 @@ function fitData = matRad_fitBaseData(doseCube, resolution, energy, mcData, init
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%       
+
+
+matRad_cfg = MatRad_Config.instance();
 
 % save cube dimesions
 cubeDim = size(doseCube);
@@ -80,49 +83,85 @@ for i = 1:size(resSigma1,1)
     gauss2 = @(x, w, sigma1, sigma2) (1 - w) / (2 * pi * sigma1^2) .* exp(- x.^2 / (2*sigma1^2)) + ...
                                         w   / (2 * pi * sigma2^2) .* exp(- x.^2 / (2*sigma2^2)); 
 
-    % first single gauss fit
-    funcs1.objective = @(p) sum((gauss1(axisGauss, p(1)) - profile).^2, 'all');
-    
-    funcs1.gradient  = @(p) 2 * sum((gauss1(axisGauss, p(1)) - profile) .* ...  
-                                exp(-axisGauss.^2 ./ (2 * p(1)^2)) .* (axisGauss.^2 - 2 .* p(1)^2) ./ (2 .* pi .* p(1)^5), 'all');
-                             
-                                     
-    options1.lb =   0;
-    options1.ub = Inf;
-    options1.ipopt.hessian_approximation = 'limited-memory';
-    options1.ipopt.limited_memory_update_type = 'bfgs';
-    options1.ipopt.print_level = 1;
-    start1 = 8;
-    
-    [fitResult1, ~] = ipopt (start1, funcs1, options1);                   
-    preSigma1 = fitResult1;   
-    
-    %define fit parameters
-    funcs2.objective = @(p) sum(sum((gauss2(axisGauss, p(1), p(2), p(3)) - profile).^2));
+    % fitting for either matlab or octave_core_file_limit
+    if ~matRad_cfg.isOctave
+      
+        % first single gauss fit
+        funcs1.objective = @(p) sum((gauss1(axisGauss, p(1)) - profile).^2, 'all');
+        
+        funcs1.gradient  = @(p) 2 * sum((gauss1(axisGauss, p(1)) - profile) .* ...  
+                                    exp(-axisGauss.^2 ./ (2 * p(1)^2)) .* (axisGauss.^2 - 2 .* p(1)^2) ./ (2 .* pi .* p(1)^5), 'all');
+                                 
+                                         
+        options1.lb =   0;
+        options1.ub = Inf;
+        options1.ipopt.hessian_approximation = 'limited-memory';
+        options1.ipopt.limited_memory_update_type = 'bfgs';
+        options1.ipopt.print_level = 1;
+        start1 = 8;
+        
+        [fitResult1, ~] = ipopt (start1, funcs1, options1);                   
+        preSigma1 = fitResult1;   
+        
+        %define fit parameters
+        funcs2.objective = @(p) sum(sum((gauss2(axisGauss, p(1), p(2), p(3)) - profile).^2));
 
-    funcs2.gradient = @(p) [ 2 * sum(sum((gauss2(axisGauss, p(1), p(2), p(3)) - profile) .* ...  
-                                    (-1 / (2 * pi * p(2)^2) .* exp(-axisGauss.^2 / (2 * p(2)^2)) + 1 / (2 * pi * p(3)^2) .* exp(-axisGauss.^2 / (2 * p(3)^2)))));
-                             2 * sum(sum((gauss2(axisGauss, p(1), p(2), p(3)) - profile) .* ...                                   
-                                    (1 - p(1)) .* exp(-axisGauss.^2 / (2 * p(2)^2)) .* (axisGauss.^2 - 2 * p(2)^2) / (2 * pi * p(2)^5))); 
-                             2 * sum(sum((gauss2(axisGauss, p(1), p(2), p(3)) - profile) .* ...
-                                    p(1)       .* exp(-axisGauss.^2 / (2 * p(3)^2)) .* (axisGauss.^2 - 2 * p(3)^2) / (2 * pi * p(3)^5)))]; 
+        funcs2.gradient = @(p) [ 2 * sum(sum((gauss2(axisGauss, p(1), p(2), p(3)) - profile) .* ...  
+                                        (-1 / (2 * pi * p(2)^2) .* exp(-axisGauss.^2 / (2 * p(2)^2)) + 1 / (2 * pi * p(3)^2) .* exp(-axisGauss.^2 / (2 * p(3)^2)))));
+                                 2 * sum(sum((gauss2(axisGauss, p(1), p(2), p(3)) - profile) .* ...                                   
+                                        (1 - p(1)) .* exp(-axisGauss.^2 / (2 * p(2)^2)) .* (axisGauss.^2 - 2 * p(2)^2) / (2 * pi * p(2)^5))); 
+                                 2 * sum(sum((gauss2(axisGauss, p(1), p(2), p(3)) - profile) .* ...
+                                        p(1)       .* exp(-axisGauss.^2 / (2 * p(3)^2)) .* (axisGauss.^2 - 2 * p(3)^2) / (2 * pi * p(3)^5)))]; 
 
-    options2.lb = [   0,   preSigma1 - 1,  preSigma1 + 1];
-    options2.ub = [ 0.2,   preSigma1 + 1,  preSigma2 + 10];
-%     options.ipopt.tol = 1e-30;
+        options2.lb = [   0,   preSigma1 - 1,  preSigma1 + 1];
+        options2.ub = [ 0.2,   preSigma1 + 1,  preSigma2 + 10];
+      %     options.ipopt.tol = 1e-30;
 
-    options2.ipopt.hessian_approximation = 'limited-memory';
-    options2.ipopt.limited_memory_update_type = 'bfgs';
-    options2.ipopt.print_level = 1;
+        options2.ipopt.hessian_approximation = 'limited-memory';
+        options2.ipopt.limited_memory_update_type = 'bfgs';
+        options2.ipopt.print_level = 1;
 
-    %run fit and calculate actual sigma by squared substracting initial
-    %sigma / spotsize
+        %run fit and calculate actual sigma by squared substracting initial
+        %sigma / spotsize
 
-    start2 = [0.002, preSigma1, preSigma2];
-    [fitResult, ~] = ipopt (start2, funcs2, options2);
-    
-    preSigma2 = fitResult(3);
-    
+        start2 = [0.002, preSigma1, preSigma2];
+        [fitResult, ~] = ipopt (start2, funcs2, options2);
+        
+        preSigma2 = fitResult(3);
+        
+    else
+        
+        % first single gauss fit
+        phi1{1} = @(p) sum(sum((gauss1(axisGauss, p(1)) - profile).^2));
+        phi1{2} = @(p) 2 * sum(sum((gauss1(axisGauss, p(1)) - profile) .* ...  
+                                exp(-axisGauss.^2 ./ (2 * p(1)^2)) .* (axisGauss.^2 - 2 .* p(1)^2) ./ (2 .* pi .* p(1)^5)));
+                         
+        start1 = 8;
+        
+        [fitResult1, ~] = sqp(start1, phi1, [], [], 0, Inf);                  
+        preSigma1 = fitResult1;   
+        
+        %define fit parameters
+        phi2{1} = @(p) sum(sum((gauss2(axisGauss, p(1), p(2), p(3)) - profile).^2));
+        phi2{2} = @(p) [ 2 * sum(sum((gauss2(axisGauss, p(1), p(2), p(3)) - profile) .* ...  
+                                      (-1 / (2 * pi * p(2)^2) .* exp(-axisGauss.^2 / (2 * p(2)^2)) + 1 / (2 * pi * p(3)^2) .* exp(-axisGauss.^2 / (2 * p(3)^2)))));
+                               2 * sum(sum((gauss2(axisGauss, p(1), p(2), p(3)) - profile) .* ...                                   
+                                      (1 - p(1)) .* exp(-axisGauss.^2 / (2 * p(2)^2)) .* (axisGauss.^2 - 2 * p(2)^2) / (2 * pi * p(2)^5))); 
+                               2 * sum(sum((gauss2(axisGauss, p(1), p(2), p(3)) - profile) .* ...
+                                      p(1)       .* exp(-axisGauss.^2 / (2 * p(3)^2)) .* (axisGauss.^2 - 2 * p(3)^2) / (2 * pi * p(3)^5)))]; 
+        
+        %run fit and calculate actual sigma by squared substracting initial
+        %sigma / spotsize
+
+        start2 = [0.002, preSigma1, preSigma2];
+        lb = [   0,   preSigma1 - 1,  preSigma1 + 1];
+        ub = [ 0.2,   preSigma1 + 1,  preSigma2 + 10];
+        [fitResult, ~] = sqp (start2, phi2, [], [], lb, ub); 
+        
+        preSigma2 = fitResult(3);
+    end
+        
+        
     if (i == 1)
         if ~exist('initSigma0','var')
             noInitSigma = true;
@@ -161,7 +200,7 @@ depthsSigma = depthsSigma(IDDnotZero);
 resSigma1 = interp1(depthsSigma, resSigma1, depthsIDD);
 resSigma2 = interp1(depthsSigma, resSigma2, depthsIDD);
 resWeight = interp1(depthsSigma, resWeight, depthsIDD);
-resSigma2 = smoothdata(resSigma2, 'gaussian', 200);
+%resSigma2 = smoothdata(resSigma2, 'gaussian', 200);
 
 % interpolate range at 80% dose after peak.
 [maxV, maxI] = max(IDD);

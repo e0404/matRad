@@ -106,7 +106,8 @@ if isfield(dij,'numOfModalities')
 else
     numOfModalities = 1;
 end
-if exist('wInit','var')
+
+if ~isempty(wInit) %can never happen now
     %do nothing as wInit was passed to the function
     matRad_cfg.dispInfo('chosen provided wInit!\n');   
 
@@ -364,7 +365,8 @@ switch pln.propOpt.optimizer
         warning(['Optimizer ''' pln.propOpt.optimizer ''' not known! Fallback to IPOPT!']);
         optimizer = matRad_OptimizerIPOPT;
 end
-       
+
+optimizer.options.max_iter = 10000;
 optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
 
 wOpt = optimizer.wResult;
