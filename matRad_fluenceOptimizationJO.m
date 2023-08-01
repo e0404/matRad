@@ -119,6 +119,8 @@ else
     doseTarget = doseTarget/numOfModalities;
     wInit = [];
     % loop over all modalities
+    
+    bxidx = 1; %modality  bixel index
     for modality = 1: numOfModalities
 
         if isfield(dij,'original_Dijs')   
@@ -143,7 +145,7 @@ else
                 end
             end
 
-            doseTmp = dijt.physicalDose{1}*wOnes;
+            doseTmp = dijt.physicalDose{1}*wOnes(dijt.totalNumOfBixels);
             bixelWeight =  (doseTarget)/(dijt.RBE * mean(doseTmp(V)));
             wt       = wOnes * bixelWeight;
             matRad_cfg.dispInfo('chosen uniform weight of %f!\n',bixelWeight);
