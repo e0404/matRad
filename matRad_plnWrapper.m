@@ -88,81 +88,50 @@ if nPlans>0
         end
     end
 
-    %%% Disable STfractionation fo the time being
-    for modalityIdx=1:plnJO.numOfModalities
-        if (isfield(pln(modalityIdx).propOpt, 'spatioTemp')) && pln(modalityIdx).propOpt.spatioTemp
-            matRad.dispWarning('Sorry no spatioTemporal avalability yet');
-        end
-
+    if ~isfield(plnJO.propOpt, {'spatioTemp'})
+        plnJO.propOpt.spatioTemp = zeros(1,plnJO.numOfModalities);
+        plnJO.propOpt.STfractions = num2cell(pln(:).numOfFractions);
+        plnJO.propOpt.STscenarios = ones(1,plnJO.numOfModalities);
     end
-    plnJO.propOpt.spatioTemp = zeros(1,plnJO.numOfModalities);
-    plnJO.propOpt.STfractions = {pln.numOfFractions};
-    plnJO.propOpt.STscenarios = ones(1,plnJO.numOfModalities);
 
+    for modalityIdx=1:plnJO.numOfModalities
+        if pln(modalityIdx).propOpt.spatioTemp
+            plnJO.propOpt.spatioTemp(modalityIdx) = 1;
+
+            if isfield(pln(modalityIdx).propOpt, 'STscenarios') && pln(modalityIdx).propOpt.STscenarios>1
+                
+                if isfield(pln(modalityIdx).propOpt, 'STfractions') && sum(pln(modalityIdx).propOpt.STfractions) == pln(modalityIdx).numOfFractions
+                    
+                    plnJO.propOpt.STscenarios(modalityIdx) = pln(modalityIdx).propOpt.STscenarios;
+                    
+                    if length(pln(modalityIdx).propOpt.STfractions) == pln(modalityIdx).propOpt.STscenarios
+                        plnJO.propOpt.STfractions(modalityIdx) = {pln(modalityIdx).propOpt.STfractions};
+                        matRad_cfg.dispInfo(['STfractionation for modality ', num2str(modalityIdx), ' correctly set with ', num2str(plnJO.propOpt.STscenarios(modalityIdx)), ' scenarios and [', num2str(plnJO.propOpt.STfractions{modalityIdx}), '] fractions\n']);
+                    else
+                        matRad_cfg.dispError(['Number of fractions for modality ', num2str(modalityIdx), ' needs to be set for every scenario']);
+
+                    end
+                else
+                    matRad_cfg.dispError(['Fractionation scheme of modality ',num2str(modalityIdx), ' must match the total number of fractions']);
+                end
+            else
+                plnJO.propOpt.spatioTemp(modalityIdx) = 0;
+                plnJO.propOpt.STscenarios(modalityIdx) = 1;
+                plnJO.propOpt.STfractions(modalityIdx) = {pln(modalityIdx).numOfFractions};
+                matRad_cfg.dispWarning(['STfractionation required for modality ',num2str(modalityIdx), ' but no fractionation scheme specified. Disabling STfractionation.\n']);
+            end
+        else
+            plnJO.propOpt.spatioTemp(modalityIdx) = 0;
+            plnJO.propOpt.STscenarios = [plnJO.propOpt.STscenarios, 1];
+            plnJO.propOpt.STfractions = [plnJO.propOpt.STfractions, {pln(modalityIdx).numOfFractions}];
+        end
+    end
+    
     % Feed the first bio model quantity, they are consistent
     plnJO.bioParam = matRad_bioModel(plnJO.radiationMode,pln(1).bioParam.quantityOpt, plnJO.radiationMode);
     plnJO.originalPlans = originalPlans;
     plnJO.multScen = [pln(:).multScen];
 
-
-   % for k=1:length(currentFields)
-   %    if isempty(getfield(plnJO,currentFields{1,k})) && isstruct(pln(1).(currentFields{1,k}))
-   %      %For all pln fields that are structures, check that the number of
-   %      %fields is the same
-   %      plnfld = matRad_fieldConsistency(pln,currentFields(1,k));
-   %      if strcmp(currentFields{1,k},'propDoseCalc')
-   %          plnJO.(currentFields{1,k}) = [plnfld(:,1)];                         % check for consistency and singletonnness of propDoseCalc and PropOpt
-   %      elseif strcmp(currentFields{1,k},'propOpt')
-   %          plnJO.(currentFields{1,k}) = [plnfld(:,1)];   
-   % 
-   %      else
-   %          plnJO.(currentFields{1,k}) = [plnfld(:)];                         % check for consistency and singletonnness of propDoseCalc and PropOpt
-   %      end
-   % 
-   % 
-   %    elseif isempty(getfield(plnJO,currentFields{1,k})) && ~isstruct(pln(1).(currentFields{1,k}))
-   %       %If the field is a class, just keep it
-   %       plnJO.(currentFields{1,k}) = [pln(:).(currentFields{1,k})];
-   %    end
-   % end
-   % plnJO.bioParam = matRad_bioModel(plnJO.radiationMode,pln(1).bioParam.quantityOpt, plnJO.radiationMode);
-   % %Save the original plans as well
-   % plnJO.originalPlans = originalPlans;
-   % plnJO.numOfModalities = nPlans;
-
-   % SORT OUT THE ST Fields
-
-
-   % if isfield(plnJO.propOpt,'spatioTemp')
-   % 
-   %     for i = 1: plnJO.numOfModalities
-   %          plnJO.propOpt.spatioTemp(i)  =    pln(i).propOpt.spatioTemp ;
-   %     end 
-   %     if isfield(plnJO.propOpt,'STscenarios') && sum(plnJO.propOpt.spatioTemp)>=1
-   %         for i = 1: plnJO.numOfModalities
-   %              plnJO.propOpt.STscenarios(i)  =    pln(i).propOpt.STscenarios;
-   %         end
-   %     else
-   %          plnJO.propOpt.STscenarios = ones( nPlans, 1);
-   %     end 
-   %     if isfield(plnJO.propOpt,'STfractions')
-   %         for i = 1: plnJO.numOfModalities
-   %              plnJO.propOpt.STfractions{i}  =    pln(i).propOpt.STfractions;
-   %         end
-   %     else
-   %         for i = 1: plnJO.numOfModalities
-   %             plnJO.propOpt.STfractions{i} = floor(pln(i).numOfFractions/plnJO.propOpt.STscenarios(i))* ones(plnJO.propOpt.STscenarios(i),1);
-   %             plnJO.propOpt.STfractions{i} = plnJO.propOpt.STfractions{i}(end) + mod(pln(i).numOfFractions,plnJO.propOpt.STscenarios(i));
-   %         end
-   %     end 
-   % else 
-   %     plnJO.propOpt.spatioTemp = zeros(plnJO.numOfModalities,1);
-   %     plnJO.propOpt.STscenarios = ones(plnJO.numOfModalities,1);
-   %     for i = 1: plnJO.numOfModalities
-   %          plnJO.propOpt.STfractions{i} = floor(pln(i).numOfFractions/pln(i).propOpt.STscenarios)* ones(pln(i).propOpt.STscenarios,1);
-   %          plnJO.propOpt.STfractions{i} = plnJO.propOpt.STfractions{i}(end) + mod(pln(i).numOfFractions,plnJO.propOpt.STscenarios(i));
-   %     end
-   % end
        
    
 else
