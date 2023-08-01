@@ -29,10 +29,7 @@ function plnJO = matRad_plnWrapper(pln)
 matRad_cfg = MatRad_Config.instance();
 nPlans = length(pln);
 if nPlans>0
-
-    originalPlans = pln;
-
-    %Initialize Pln struct
+    
     allFields = arrayfun(@(modality) fieldnames(pln(modality)), [1:nPlans], 'UniformOutput',false);
     allFields = unique(cat(1,allFields{:}));
     plnJO = cell2struct(cell(1,length(allFields)), allFields, 2);
@@ -41,21 +38,22 @@ if nPlans>0
     %corrections are introduced to handle output generation with matRad_cfg
     pln = matRad_plnConsistency(pln); %to be reviewed
    
+    % Save now the plns. This will have now the updated pln.bioParam
+    originalPlans = pln;
+   
     %Define the Pln properties
-    plnJO.numOfFractions = sum([pln(:).numOfFractions]); %Use total number of fractions
-    plnJO.radiationMode = 'MixMod';
-    plnJO.machine       = 'MixMod';
+    plnJO.numOfFractions  = sum([pln(:).numOfFractions]); %Use total number of fractions
+    plnJO.radiationMode   = 'MixMod';
+    plnJO.machine         = 'MixMod';
+    plnJO.propStf         = [pln(:).propStf];
     plnJO.numOfModalities = nPlans;
-    
 
     %%%%%%% propDoseCalc %%%%%
-    %plnJO.propDoseCalc = struct.empty(0,2);
     allFields = arrayfun(@(modality) fieldnames(pln(modality).propDoseCalc), [1:plnJO.numOfModalities], 'UniformOutput',false);
     allFields = unique(cat(1,allFields{:}));
     plnJO.propDoseCalc(1:plnJO.numOfModalities) = cell2struct(cell(1,length(allFields)), allFields, 2);
-   
-   
-    for modalityIdx=1:plnJO.numOfModalities
+
+     for modalityIdx=1:plnJO.numOfModalities
         currModalityFields = fieldnames(pln(modalityIdx).propDoseCalc);
         for fieldIdx=1:length(currModalityFields)
            plnJO.propDoseCalc(modalityIdx).(currModalityFields{fieldIdx}) = pln(modalityIdx).propDoseCalc.(currModalityFields{fieldIdx});
@@ -66,8 +64,7 @@ if nPlans>0
     allFields = arrayfun(@(modality) fieldnames(pln(modality).propStf), [1:plnJO.numOfModalities], 'UniformOutput',false);
     allFields = unique(cat(1,allFields{:}));
     plnJO.propStf(1:plnJO.numOfModalities) = cell2struct(cell(1,length(allFields)), allFields, 2);
-    
-    
+
     for modalityIdx=1:plnJO.numOfModalities
         currModalityFields = fieldnames(pln(modalityIdx).propStf);
         for fieldIdx=1:length(currModalityFields)
@@ -75,7 +72,6 @@ if nPlans>0
         end
     end
 
-   
     %%%%%%% propOpt %%%%%
     allFields = arrayfun(@(modality) fieldnames(pln(modality).propOpt), [1:plnJO.numOfModalities], 'UniformOutput',false);
     allFields = unique(cat(1,allFields{:}));
@@ -91,102 +87,24 @@ if nPlans>0
             end
         end
     end
-    
-    % SORT OUT THE ST Fields %To be adjusted later
 
-    if ~isfield(plnJO.propOpt, {'spatioTemp'})
-        plnJO.propOpt.spatioTemp = zeros(1,plnJO.numOfModalities);
-        plnJO.propOpt.STfractions = num2cell(pln(:).numOfFractions);
-        plnJO.propOpt.STscenarios = ones(1,plnJO.numOfModalities);
-    end
-
+    %%% Disable STfractionation fo the time being
     for modalityIdx=1:plnJO.numOfModalities
-        if pln(modalityIdx).propOpt.spatioTemp
-            plnJO.propOpt.spatioTemp(modalityIdx) = 1;
-
-            if isfield(pln(modalityIdx).propOpt, 'STscenarios') && pln(modalityIdx).propOpt.STscenarios>1
-                
-                if isfield(pln(modalityIdx).propOpt, 'STfractions') && sum(pln(modalityIdx).propOpt.STfractions) == pln(modalityIdx).numOfFractions
-                    
-                    plnJO.propOpt.STscenarios(modalityIdx) = pln(modalityIdx).propOpt.STscenarios;
-                    
-                    if length(pln(modalityIdx).propOpt.STfractions) == pln(modalityIdx).propOpt.STscenarios
-                        plnJO.propOpt.STfractions(modalityIdx) = {pln(modalityIdx).propOpt.STfractions};
-                        matRad_cfg.dispInfo(['STfractionation for modality ', num2str(modalityIdx), ' correctly set with ', num2str(plnJO.propOpt.STscenarios(modalityIdx)), ' scenarios and [', num2str(plnJO.propOpt.STfractions{modalityIdx}), '] fractions\n']);
-                    else
-                        matRad_cfg.dispError(['Number of fractions for modality ', num2str(modalityIdx), ' needs to be set for every scenario']);
-
-                    end
-                else
-                    matRad_cfg.dispError(['Fractionation scheme of modality ',num2str(modalityIdx), ' must match the total number of fractions']);
-                end
-            else
-                plnJO.propOpt.spatioTemp(modalityIdx) = 0;
-                plnJO.propOpt.STscenarios(modalityIdx) = 1;
-                plnJO.propOpt.STfractions(modalityIdx) = {pln(modalityIdx).numOfFractions};
-                matRad_cfg.dispWarning(['STfractionation required for modality ',num2str(modalityIdx), ' but no fractionation scheme specified. Disabling STfractionation.\n']);
-            end
-        else
-            plnJO.propOpt.spatioTemp(modalityIdx) = 0;
-            plnJO.propOpt.STscenarios = [plnJO.propOpt.STscenarios, 1];
-            plnJO.propOpt.STfractions = [plnJO.propOpt.STfractions, {pln(modalityIdx).numOfFractions}];
+        if (isfield(pln(modalityIdx).propOpt, 'spatioTemp')) && pln(modalityIdx).propOpt.spatioTemp
+            matRad.dispWarning('Sorry no spatioTemporal avalability yet');
         end
 
-        % if isfield(plnJO.propOpt,'spatioTemp') && ~isempty(plnJO.propOpt.spatioTemp)
-        % 
-        %     if  plnJO.propOpt.spatioTemp(modalityIdx) % if set and set to true
-        %         %check that STScenarios is defined
-        % 
-        %         if any(~isfield(plnJO.propOpt, {'STscenarios', 'STfractions'})) %|| length(plnJO.propOpt(modalityIdx).STfractions) ~= plnJO.propOpt(modalityIdx).STscenarios
-        %             matRad_cfg.dispError(['STfractionation required for modality ',num2str(modalityIdx), ' but no fractionation scheme specified']);
-        %         elseif sum(plnJO.propOpt(modalityIdx).STfractions) ~= pln(modalityIdx).numOfFractions
-        %            matRad_cfg.dispError(['Fractionation scheme of modality ',num2str(modalityIdx), ' must match the total number of fractions']);
-        %         else
-        %             matRad_cfg.dispInfo(['STfractionation for modality ', num2str(modalityIdx), ' correctly set with ', num2str(plnJO.propOpt(modalityIdx).STscenarios), ' scenarios and [', num2str(plnJO.propOpt(modalityIdx).STfractions), '] fractions\n']);
-        %         end
-        %     else
-        %         plnJO.propOpt(modalityIdx).STfractions = pln(modalityIdx).numOfFractions;
-        %         plnJO.propOpt(modalityIdx).STscenarios = 1;  
-        %     end
-        % else %spatioTemporal does not exist/is empty
-        %     plnJO.propOpt.spatioTemp = zeros(1,plnJO.numOfModalities);
-        %     plnJO.propOpt.STfractions = [plnJO.propOpt.STfractions,pln(modalityIdx).numOfFractions];
-        %     plnJO.propOpt.STscenarios = 1;
-        % end
-
     end
+    plnJO.propOpt.spatioTemp = zeros(1,plnJO.numOfModalities);
+    plnJO.propOpt.STfractions = {pln.numOfFractions};
+    plnJO.propOpt.STscenarios = ones(1,plnJO.numOfModalities);
 
-    % for modalityIdx=1:plnJO.numOfModalities
-    %     if isfield(plnJO.propOpt,'spatioTemp') && ~isempty(plnJO.propOpt.spatioTemp)
-    % 
-    %         if  plnJO.propOpt.spatioTemp(modalityIdx) % if set and set to true
-    %             %check that STScenarios is defined
-    % 
-    %             if any(~isfield(plnJO.propOpt, {'STscenarios', 'STfractions'})) %|| length(plnJO.propOpt(modalityIdx).STfractions) ~= plnJO.propOpt(modalityIdx).STscenarios
-    %                 matRad_cfg.dispError(['STfractionation required for modality ',num2str(modalityIdx), ' but no fractionation scheme specified']);
-    %             elseif sum(plnJO.propOpt(modalityIdx).STfractions) ~= pln(modalityIdx).numOfFractions
-    %                matRad_cfg.dispError(['Fractionation scheme of modality ',num2str(modalityIdx), ' must match the total number of fractions']);
-    %             else
-    %                 matRad_cfg.dispInfo(['STfractionation for modality ', num2str(modalityIdx), ' correctly set with ', num2str(plnJO.propOpt(modalityIdx).STscenarios), ' scenarios and [', num2str(plnJO.propOpt(modalityIdx).STfractions), '] fractions\n']);
-    %             end
-    %         else
-    %             plnJO.propOpt(modalityIdx).STfractions = pln(modalityIdx).numOfFractions;
-    %             plnJO.propOpt(modalityIdx).STscenarios = 1;  
-    %         end
-    %     else %spatioTemporal does not exist/is empty
-    %         plnJO.propOpt(modalityIdx).spatioTemp = 0;
-    %         plnJO.propOpt(modalityIdx).STfractions = pln(modalityIdx).numOfFractions;
-    %         plnJO.propOpt(modalityIdx).STscenarios = 1;
-    %     end
-    % 
-    % end
+    % Feed the first bio model quantity, they are consistent
+    plnJO.bioParam = matRad_bioModel(plnJO.radiationMode,pln(1).bioParam.quantityOpt, plnJO.radiationMode);
+    plnJO.originalPlans = originalPlans;
+    plnJO.multScen = [pln(:).multScen];
 
 
-   plnJO.bioParam = matRad_bioModel(plnJO.radiationMode,pln(1).bioParam.quantityOpt, plnJO.radiationMode);
-   plnJO.originalPlans = originalPlans;
-   plnJO.multScen = [pln(:).multScen];
-   % 
-   
    % for k=1:length(currentFields)
    %    if isempty(getfield(plnJO,currentFields{1,k})) && isstruct(pln(1).(currentFields{1,k}))
    %      %For all pln fields that are structures, check that the number of
@@ -207,13 +125,14 @@ if nPlans>0
    %       plnJO.(currentFields{1,k}) = [pln(:).(currentFields{1,k})];
    %    end
    % end
-   %Save the original plans as well
-   
-   %
-   
-   %plnJO.numOfModalities = nPlans;
+   % plnJO.bioParam = matRad_bioModel(plnJO.radiationMode,pln(1).bioParam.quantityOpt, plnJO.radiationMode);
+   % %Save the original plans as well
+   % plnJO.originalPlans = originalPlans;
+   % plnJO.numOfModalities = nPlans;
 
    % SORT OUT THE ST Fields
+
+
    % if isfield(plnJO.propOpt,'spatioTemp')
    % 
    %     for i = 1: plnJO.numOfModalities

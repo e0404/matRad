@@ -88,11 +88,72 @@ pln(2).multScen = matRad_multScen(ct,scenGenType);
 sparecst = 0;
 
 cst = matRad_prepCst(cst, sparecst);
-% Plan Wrapper
+%% Plan Wrapper
 plnJO = matRad_plnWrapper(pln);
-% Stf Wrapper
+%% Stf Wrapper
 stf = matRad_stfWrapper(ct,cst,plnJO);
-% Dij Calculation
+%% Dij Calculation
 dij = matRad_calcCombiDose(ct,stf,plnJO,cst,false);
-% Fluence optimization 
-resultGUI = matRad_fluenceOptimizationJO(dij,cst,plnJO)
+%% Fluence optimization 
+resultGUI = matRad_fluenceOptimizationJO(dij,cst,plnJO);
+%% Visualization
+slice = 59;
+qtOpt = plnJO.bioParam.quantityOpt;
+modalities = {'proton', 'photon'};
+plan_JO = pln(1).numOfFractions * resultGUI{1}.(qtOpt) + pln(2).numOfFractions * resultGUI{2}.(qtOpt);
+
+if any(plnJO.propOpt.spatioTemp)
+    f = figure;
+    protonScenarios = plnJO.propOpt.STscenarios(1);
+    if protonScenarios>1
+        for scenarioIdx = 1:protonScenarios
+            subplot(3,max([plnJO.propOpt.STscenarios])+1,scenarioIdx);
+            imagesc(resultGUI{1}.([qtOpt, '_STscenario_', num2str(scenarioIdx)])(:,:,slice));
+            matRad_plotVoiContourSlice(gca(f), cst,ct.cube, 1, 1,3,slice);
+            title(['proton plan scenario ', num2str(scenarioIdx)]);
+            colorbar();
+        end
+    end
+    subplot(3,max([plnJO.propOpt.STscenarios])+1,max([plnJO.propOpt.STscenarios])+1);
+    imagesc(resultGUI{1}.(qtOpt)(:,:,slice));
+    matRad_plotVoiContourSlice(gca(f), cst,ct.cube, 1, 1,3,slice);
+    title('total proton plan');
+    colorbar();
+   
+    photonScenarios = plnJO.propOpt.STscenarios(2);
+    if photonScenarios>1
+        for scenarioIdx = 1:photonScenarios
+            subplot(3,max([plnJO.propOpt.STscenarios])+1,max([plnJO.propOpt.STscenarios])+1 + scenarioIdx);
+            imagesc(resultGUI{2}.([qtOpt, '_STscenario_', num2str(scenarioIdx)])(:,:,slice));
+            matRad_plotVoiContourSlice(gca(f), cst,ct.cube, 1, 1,3,slice);
+            title(['photon plan scenario ', num2str(scenarioIdx)]);
+            colorbar();
+        end
+    end
+    subplot(3,max([plnJO.propOpt.STscenarios])+1,2*(max([plnJO.propOpt.STscenarios])+1));
+    imagesc(resultGUI{2}.(qtOpt)(:,:,slice));
+    matRad_plotVoiContourSlice(gca(f), cst,ct.cube, 1, 1,3,slice);
+    title('total photon plan');
+    colorbar();
+    subplot(3,max([plnJO.propOpt.STscenarios])+1,3*(max([plnJO.propOpt.STscenarios])+1));
+    imagesc(plan_JO(:,:,slice));
+    matRad_plotVoiContourSlice(gca(f), cst,ct.cube, 1, 1,3,slice);
+    title('total plan');
+    colorbar();
+else
+%%% Plot photon-proton single scenarios total plan
+    f = figure;
+
+    for modalityIdx =1:plnJO.numOfModalities
+        subplot(1,3,modalityIdx);
+        imagesc(resultGUI{modalityIdx}.(qtOpt)(:,:,slice));
+        matRad_plotVoiContourSlice(gca(f), cst,ct.cube, 1, 1,3,slice);
+        title([ modalities{modalityIdx}, ' plan']);
+    end
+
+    subplot(1,3,3);
+    imagesc(plan_JO(:,:,slice));
+    matRad_plotVoiContourSlice(gca(f), cst,ct.cube, 1, 1,3,slice);
+
+    title('Total plan');
+end
