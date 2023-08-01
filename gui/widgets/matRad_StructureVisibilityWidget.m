@@ -55,7 +55,7 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             h86 = this.widgetHandle;
             
             matRad_cfg = MatRad_Config.instance();
-            
+            % List box of stuctures that can be selected for display
             h87 = uicontrol(...
                 'Parent',h86,...
                 'Units','normalized',...
@@ -133,6 +133,7 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             %UpdatePlot(handles)
         end
         
+        %Update cst with Visibility settings
         function cst = updateStructureTable(this,cst)
             handles=this.handles;
             colorAssigned = true;

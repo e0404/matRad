@@ -152,7 +152,7 @@ classdef matRad_ViewingWidget < matRad_Widget
             
         end
         
-        %SET FUNCTIONS
+        %% SET FUNCTIONS
         function set.plane(this,value)
             this.plane=value;
             this.UpdatePlot();
@@ -340,9 +340,10 @@ classdef matRad_ViewingWidget < matRad_Widget
             set(this.scrollHandle,'WindowScrollWheelFcn',@(src,event)matRadScrollWheelFcn(this,src,event));
         end
     end
-    
+ %%
     methods(Access = protected)
         function this = createLayout(this)
+            %Viewer Widget 
             h88 = this.widgetHandle;
             
             h89 = axes(...
@@ -353,11 +354,8 @@ classdef matRad_ViewingWidget < matRad_Widget
                 'YTickLabel',{  '0'; '0.1'; '0.2'; '0.3'; '0.4'; '0.5'; '0.6'; '0.7'; '0.8'; '0.9'; '1' },...
                 'Position',[0.0718390804597701 0.0654391371340524 0.902298850574712 0.899121725731895],...
                  'Tag','axesFig'); 
-                 %'SortMethod','childorder',...
-                %'ButtonDownFcn',@(hObject,eventdata)axesFig_ButtonDownFcn(this,hObject,eventdata),...
-                % 'FontSize',9.63,...  'FontName','CMU Serif',...
-            %'Colormap',[0 0 0.5625;0 0 0.625;0 0 0.6875;0 0 0.75;0 0 0.8125;0 0 0.875;0 0 0.9375;0 0 1;0 0.0625 1;0 0.125 1;0 0.1875 1;0 0.25 1;0 0.3125 1;0 0.375 1;0 0.4375 1;0 0.5 1;0 0.5625 1;0 0.625 1;0 0.6875 1;0 0.75 1;0 0.8125 1;0 0.875 1;0 0.9375 1;0 1 1;0.0625 1 1;0.125 1 0.9375;0.1875 1 0.875;0.25 1 0.8125;0.3125 1 0.75;0.375 1 0.6875;0.4375 1 0.625;0.5 1 0.5625;0.5625 1 0.5;0.625 1 0.4375;0.6875 1 0.375;0.75 1 0.3125;0.8125 1 0.25;0.875 1 0.1875;0.9375 1 0.125;1 1 0.0625;1 1 0;1 0.9375 0;1 0.875 0;1 0.8125 0;1 0.75 0;1 0.6875 0;1 0.625 0;1 0.5625 0;1 0.5 0;1 0.4375 0;1 0.375 0;1 0.3125 0;1 0.25 0;1 0.1875 0;1 0.125 0;1 0.0625 0;1 0 0;0.9375 0 0;0.875 0 0;0.8125 0 0;0.75 0 0;0.6875 0 0;0.625 0 0;0.5625 0 0],...
-                
+                 
+            %Title
             h90 = get(h89,'title');
             
             set(h90,...
@@ -392,8 +390,8 @@ classdef matRad_ViewingWidget < matRad_Widget
                 'BusyAction','queue',...
                 'Interruptible','on',...
                 'HitTest','on');
-                %'PickableParts','visible'); this gave an error in octave
-            
+                
+            %X Label
             h91 = get(h89,'xlabel');
             
             set(h91,...
@@ -427,9 +425,9 @@ classdef matRad_ViewingWidget < matRad_Widget
                 'HandleVisibility','off',...
                 'BusyAction','queue',...
                 'Interruptible','on',...
-                'HitTest','on');%,...
-                %'PickableParts','visible');
+                'HitTest','on');
             
+            %Y label
             h92 = get(h89,'ylabel');
             
             set(h92,...
@@ -463,9 +461,9 @@ classdef matRad_ViewingWidget < matRad_Widget
                 'HandleVisibility','off',...
                 'BusyAction','queue',...
                 'Interruptible','on',...
-                'HitTest','on');%,...
-                %'PickableParts','visible');
+                'HitTest','on');
             
+            %Z label
             h93 = get(h89,'zlabel');
             
             set(h93,...
@@ -499,8 +497,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 'HandleVisibility','off',...
                 'BusyAction','queue',...
                 'Interruptible','on',...
-                'HitTest','on');%,...
-                %'PickableParts','visible');           
+                'HitTest','on');           
             
             this.createHandles();
             
@@ -541,9 +538,7 @@ classdef matRad_ViewingWidget < matRad_Widget
             if evalin('base','exist(''resultGUI'')') 
                 Result = evalin('base','resultGUI');
             end
-            
-            
-            
+
             %% set and get required variables
             %plane = get(handles.popupPlane,'Value');
             %slice = round(get(handles.sliderSlice,'Value'));
@@ -551,23 +546,7 @@ classdef matRad_ViewingWidget < matRad_Widget
             if this.typeOfPlot==1 %get(handles.popupTypeOfPlot,'Value')==1
                 set(handles.axesFig,'YDir','Reverse');
             end
-            
-            %% Remove colorbar?
-            %plotColorbarSelection = get(handles.popupmenu_chooseColorData,'Value');
-          
-%             if this.typeOfPlot==2 || this.colorData == 1
-% %                 if isfield(handles,'cBarHandle')
-% %                     delete(handles.cBarHandle);
-% %                 end
-% this.cBarHandle=[];
-%                 %The following seems to be necessary as MATLAB messes up some stuff
-%                 %with the handle storage
-%                 ch = findall(this.widgetHandle,'tag','Colorbar');
-%                 if ~isempty(ch)
-%                     delete(ch);
-%                 end
-%             end
-            
+                 
             selectIx = this.colorData; %get(handles.popupmenu_chooseColorData,'Value');
             
             cla(handles.axesFig);
@@ -626,18 +605,14 @@ classdef matRad_ViewingWidget < matRad_Widget
                 
                 % dose colorwash
                 if ~isempty(dose) && ~isvector(dose)
-                    
-%                     if isempty(this.dispWindow{doseIx,2})
-%                         this.dispWindow{doseIx,2} = [min(dose(:)) max(dose(:))];   % set min and max dose values
-%                     end
-                    
-                    if this.plotDose %get(handles.radiobtnDose,'Value')
+                  
+                    if this.plotDose 
                         [doseHandle,~,~] = matRad_plotDoseSlice(handles.axesFig,dose,this.plane,this.slice,this.CutOffLevel,this.doseOpacity,doseMap,this.dispWindow{doseIx,1});
                         AxesHandlesCT_Dose{end+1}         = doseHandle;
                     end
                     
-                    % plot colorbar?
-                    if strcmp(this.env,'MATLAB') && this.colorData > 1  %&& this.cBarChanged
+                    % plot colorbar
+                    if strcmp(this.env,'MATLAB') && this.colorData > 1 
                         %Plot the colorbar
                         this.cBarHandle = matRad_plotColorbar(handles.axesFig,doseMap,this.dispWindow{selectIx,1},'fontsize',defaultFontSize);
                         
@@ -656,8 +631,8 @@ classdef matRad_ViewingWidget < matRad_Widget
                 
                 
                 %% plot iso dose lines
-                if this.plotIsoDoseLines %get(handles.radiobtnIsoDoseLines,'Value')
-                    plotLabels = this.plotIsoDoseLinesLabels; %get(handles.radiobtnIsoDoseLinesLabels,'Value') == 1;
+                if this.plotIsoDoseLines 
+                    plotLabels = this.plotIsoDoseLinesLabels; 
 %                     
 %                     %Sanity Check for Contours, which actually should have been
 %                     %computed before calling UpdatePlot
@@ -676,11 +651,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                     AxesHandlesIsoDose = matRad_plotIsoDoseLines(handles.axesFig,dose,this.IsoDose_Contours,this.IsoDose_Levels,plotLabels,this.plane,this.slice,doseMap,this.dispWindow{doseIx,1},'LineWidth',1.5);
                 end
             end
-            
-%              selectIx = this.colorData; %get(handles.popupmenu_chooseColorData,'Value');
-%              set(handles.txtMinVal,'String',num2str(handles.dispWindow{selectIx,2}(1,1)));
-%              set(handles.txtMaxVal,'String',num2str(handles.dispWindow{selectIx,2}(1,2)));
-            
+           
             %% plot VOIs
             if this.plotContour && this.typeOfPlot==1 && exist('ct','var') %&& get(handles.radiobtnContour,'Value') && handles.State>0
                 [AxVOI, this.sliceContourLegend] = matRad_plotVoiContourSlice(handles.axesFig,this.cst,ct,1,this.VOIPlotFlag,this.plane,this.slice,[],'LineWidth',2);
@@ -1043,16 +1014,14 @@ classdef matRad_ViewingWidget < matRad_Widget
             
         end
         
+        %Scroll wheel update
         function matRadScrollWheelFcn(this,src,event)
-            
             % compute new slice
             this.slice= this.slice - event.VerticalScrollCount;
-            
-            % update slider (use instead the update plot notification)
-            %set(handles.sliderSlice,'Value',newSlice);
-
+                        
         end
         
+        %Toggle Legend
         function legendToggleFunction(this,src,event)
             if isempty(this.legendHandle) || ~isobject(this.legendHandle)
                 return;
@@ -1064,6 +1033,7 @@ classdef matRad_ViewingWidget < matRad_Widget
             end
         end
         
+        %Toggle Colorbar 
         function colorBarToggleFunction(this,src,event)
             if isempty(this.cBarHandle) || ~isobject(this.cBarHandle) || this.lockUpdate
                 return;
@@ -1083,6 +1053,7 @@ classdef matRad_ViewingWidget < matRad_Widget
             %this.notifyPlotUpdated();
         end
         
+        %
         function initValues(this)
             lockState=this.lockUpdate;
             
@@ -1247,6 +1218,7 @@ classdef matRad_ViewingWidget < matRad_Widget
             this.lockUpdate=lockState;
         end
         
+        %update the Viewer
         function updateValues(this)
             lockState=this.lockUpdate;
             
@@ -1328,8 +1300,8 @@ classdef matRad_ViewingWidget < matRad_Widget
 
                 end
              
-            this.lockUpdate=lockState;
+                this.lockUpdate=lockState;
+            end
         end
-    end
     end
 end
