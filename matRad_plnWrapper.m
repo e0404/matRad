@@ -88,10 +88,10 @@ if nPlans>0
         end
     end
 
-    if ~isfield(plnJO.propOpt, {'spatioTemp'})
-        plnJO.propOpt.spatioTemp = zeros(1,plnJO.numOfModalities);
-        plnJO.propOpt.STfractions = num2cell(pln(:).numOfFractions);
-        plnJO.propOpt.STscenarios = ones(1,plnJO.numOfModalities);
+    if ~all(isfield(plnJO.propOpt, {'spatioTemp', 'STfractions', 'STscenarios'}))
+        plnJO.propOpt.spatioTemp = [];%zeros(1,plnJO.numOfModalities);
+        plnJO.propOpt.STfractions = [];%num2cell([pln(:).numOfFractions]);
+        plnJO.propOpt.STscenarios = [];%ones(1,plnJO.numOfModalities);
     end
 
     for modalityIdx=1:plnJO.numOfModalities
@@ -126,7 +126,7 @@ if nPlans>0
             plnJO.propOpt.STfractions = [plnJO.propOpt.STfractions, {pln(modalityIdx).numOfFractions}];
         end
     end
-    
+
     % Feed the first bio model quantity, they are consistent
     plnJO.bioParam = matRad_bioModel(plnJO.radiationMode,pln(1).bioParam.quantityOpt, plnJO.radiationMode);
     plnJO.originalPlans = originalPlans;
