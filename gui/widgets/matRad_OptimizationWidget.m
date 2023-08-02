@@ -1,10 +1,7 @@
 classdef matRad_OptimizationWidget < matRad_Widget
     % matRad_OptimizationWidget class to generate GUI widget to set
     % optimization options
-    % Describes a standard fluence optimization problem by providing the 
-    % implementation of the objective & constraint function/gradient wrappers
-    % and managing the mapping and backprojection of the respective dose-
-    % related quantity
+    % 
     %
     % References
     %   -
@@ -202,7 +199,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
                             try
                                 obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
                             catch ME
-                                warning('Objective/Constraint not valid!\n%s',ME.message)
+                                matRad_cfg.dispWarning('Objective/Constraint not valid!\n%s',ME.message)
                                 continue;
                             end
                         end
@@ -382,7 +379,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
                 %generateCstTable(this,cst);
             end
         end
-        
+        %CST Param Callback
         function editCstParams_Callback(this,hObject,~)
             handles=this.handles;
             data = hObject.UserData;
@@ -403,7 +400,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
                     cst{ix,col}.Priority = uint32(str2double(str));
                     %cst{ix,col}=setfield(cst{ix,col},'Priority',uint32(str2double(str)));
                 otherwise
-                    warning('Wrong column assignment in GUI based cst setting');
+                    matRad_cfg.dispWarning('Wrong column assignment in GUI based cst setting');
             end
             
             assignin('base','cst',cst);

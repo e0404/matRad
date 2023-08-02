@@ -3,11 +3,7 @@ classdef matRad_exportWidget < matRad_Widget
     % matRad_exportWidget class to generate GUI widget to export plan as
     % dicom, nrrd etc.
     % 
-    % Describes a standard fluence optimization problem by providing the 
-    % implementation of the objective & constraint function/gradient wrappers
-    % and managing the mapping and backprojection of the respective dose-
-    % related quantity
-    %
+    % 
     % References
     %   -
     %
@@ -92,7 +88,6 @@ classdef matRad_exportWidget < matRad_Widget
             set(handles.uitable_doseCubes,'data',tableData);
             
             % Update handles structure
-            % guidata(this.widgetHandle, handles);
             this.handles = handles;
         end
     end

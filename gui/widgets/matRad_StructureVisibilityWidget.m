@@ -1,10 +1,7 @@
 classdef matRad_StructureVisibilityWidget < matRad_Widget
     % matRad_StructureVisibilityWidget class to generate GUI widget to set
     % visibility of structure in viewing widget
-    % Describes a standard fluence optimization problem by providing the 
-    % implementation of the objective & constraint function/gradient wrappers
-    % and managing the mapping and backprojection of the respective dose-
-    % related quantity
+    % 
     %
     % References
     %   -
@@ -58,7 +55,7 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             h86 = this.widgetHandle;
             
             matRad_cfg = MatRad_Config.instance();
-            
+            % List box of stuctures that can be selected for display
             h87 = uicontrol(...
                 'Parent',h86,...
                 'Units','normalized',...
@@ -136,6 +133,7 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             %UpdatePlot(handles)
         end
         
+        %Update cst with Visibility settings
         function cst = updateStructureTable(this,cst)
             handles=this.handles;
             colorAssigned = true;
