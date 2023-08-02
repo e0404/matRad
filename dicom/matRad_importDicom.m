@@ -34,9 +34,7 @@ function [ct,cst,pln,stf,resultGUI] = matRad_importDicom( files, dicomMetaBool )
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-[env, ~] = matRad_getEnvironment();
-
+matRad_cfg = MatRad_Config.instance();
     
 %%
 if ~exist('dicomMetaBool','var')
@@ -55,7 +53,7 @@ resolution.y = files.resy;
 resolution.z = files.resz; % [mm] / lps coordinate system
 if files.useDoseGrid && isfield(files,'rtdose')
     % get grid from dose cube
-    if isOctave || verLessThan('matlab','9')
+    if matRad_cfg.isOctave || verLessThan('matlab','9')
         doseInfo = dicominfo(files.rtdose{1,1});
     else
         doseInfo = dicominfo(files.rtdose{1,1},'UseDictionaryVR',true);
