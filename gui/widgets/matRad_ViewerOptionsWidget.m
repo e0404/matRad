@@ -44,7 +44,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             end
             this = this@matRad_Widget(handleParent);
             
-            handles=this.handles;
+            handles = this.handles;
             
             %Set up the colormap selection box
             availableColormaps = matRad_getColormap();

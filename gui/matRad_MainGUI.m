@@ -18,8 +18,7 @@ classdef matRad_MainGUI < handle
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties
         guiHandle
-        lastStoragePath = []
-        env
+        lastStoragePath = []        
     end
     
     properties (Access = private)
@@ -35,7 +34,6 @@ classdef matRad_MainGUI < handle
         DVHStatsWidget
         eventListeners
         GammaWidget
-        matRad_cfg = MatRad_Config.instance();
     end
     
    
@@ -264,9 +262,6 @@ classdef matRad_MainGUI < handle
                 'FontSize',matRad_cfg.gui.fontSize,...
                 'FontWeight',matRad_cfg.gui.fontWeight);
            
-
-            
-            [obj.env, ~] = matRad_getEnvironment();
             % Initialize Widgets            
             obj.WorkflowWidget = matRad_WorkflowWidget(pWorkflow);
             obj.PlanWidget = matRad_PlanWidget(pPlan);            
@@ -280,7 +275,7 @@ classdef matRad_MainGUI < handle
             obj.LogoWidget = matRad_LogoWidget(pLogo); % does not need a listener
             
             %Initialize event Listeners
-            switch obj.env
+            switch matRad_cfg.env
                 case 'MATLAB' 
                     %Event listeners triggered on events
                     obj.eventListeners.workflow = addlistener(obj.WorkflowWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,hEvent));
@@ -341,19 +336,19 @@ classdef matRad_MainGUI < handle
         end
         
         function this = updateWidgets(this,evt)
-           
-           if this.matRad_cfg.logLevel > 3 
+           matRad_cfg = MatRad_Config.instance();
+           if matRad_cfg.logLevel > 3 
                if nargin < 2 || ~isa(evt,'matRad_WorkspaceChangedEvent')
                    changed = {};
                else
                    changed = evt.changedVariables;
                end
 
-               this.matRad_cfg.dispDebug('GUI Workspace Changed at %s. ',datestr(now,'HH:MM:SS.FFF')); 
+               matRad_cfg.dispDebug('GUI Workspace Changed at %s. ',datestr(now,'HH:MM:SS.FFF')); 
                if ~isempty(changed)
-                   this.matRad_cfg.dispDebug('Specific Variables: %s.\n',strjoin(changed,'|'));
+                   matRad_cfg.dispDebug('Specific Variables: %s.\n',strjoin(changed,'|'));
                else
-                   this.matRad_cfg.dispDebug('\n');
+                   matRad_cfg.dispDebug('\n');
                end
            end
            
@@ -373,8 +368,10 @@ classdef matRad_MainGUI < handle
         function this = updateButtons(this)
            %disp(['Plot Changed ' datestr(now,'HH:MM:SS.FFF')]); %Debug
            % update the visualization and viewer options widgets
-                      
-           if strcmp(this.env,'OCTAVE')
+           
+           matRad_cfg = MatRad_Config.instance();
+
+           if strcmp(matRad_cfg.env,'OCTAVE')
               return
            end
          

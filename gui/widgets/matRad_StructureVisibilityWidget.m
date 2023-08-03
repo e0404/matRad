@@ -101,13 +101,13 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             %Get the string entries
             tmpString = get(handles.legendTable,'String');
             
-            env = matRad_getEnvironment();
+            matRad_cfg = MatRad_Config.instance();
             
             % html not supported in octave       
             if handles.VOIPlotFlag(idx)
                 handles.VOIPlotFlag(idx) = false;
                 cst{idx,5}.Visible = false;
-                switch env
+                switch matRad_cfg.env
                     case 'OCTAVE'
                         tmpString{idx} = ['☐ ' cst{idx,2}];
                     otherwise
@@ -116,7 +116,7 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             elseif ~handles.VOIPlotFlag(idx)
                 handles.VOIPlotFlag(idx) = true;
                 cst{idx,5}.Visible = true;
-                switch env
+                switch matRad_cfg.env
                     case 'OCTAVE'
                         tmpString{idx} = ['☑ ' cst{idx,2}];
                     otherwise
@@ -163,7 +163,7 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
                 end
             end
             
-            env = matRad_getEnvironment();
+            matRad_cfg = MatRad_Config.instance();
             
             for s = 1:size(cst,1)
                 handles.VOIPlotFlag(s) = cst{s,5}.Visible;
@@ -171,7 +171,7 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
                 clr = ['#';clr(:)]';
                 % html is not supported in octave 
                 
-                switch env
+                switch matRad_cfg.env
                     case 'OCTAVE'
                         if handles.VOIPlotFlag(s)
                             tmpString{s} = ["o " cst{s,2}];

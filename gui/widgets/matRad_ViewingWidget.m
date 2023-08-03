@@ -67,8 +67,7 @@ classdef matRad_ViewingWidget < matRad_Widget
         IsoDose_Contours; %only updated from within this class
         VOIPlotFlag;
         DispInfo;
-        AxesHandlesVOI;
-        env;
+        AxesHandlesVOI;        
         cst;
         vIsoCenter;
         sliceContourLegend;
@@ -98,14 +97,14 @@ classdef matRad_ViewingWidget < matRad_Widget
             
             this = this@matRad_Widget(handleParent);
             
-            [this.env, ~] = matRad_getEnvironment();
+            matRad_cfg = MatRad_Config.instance();
             
             if nargin < 1
                 % create the handle objects if there's no parent
                 this.scrollHandle = this.widgetHandle;
                 
                 % only available in MATLAB
-                if strcmp(this.env,'MATLAB')
+                if matRad_cfg.isMatlab
                     this.dcmHandle = datacursormode(this.widgetHandle);
                     this.panHandle = pan(this.widgetHandle);
                     this.zoomHandle = zoom(this.widgetHandle);
@@ -143,7 +142,8 @@ classdef matRad_ViewingWidget < matRad_Widget
         
         function notifyPlotUpdated(obj)
             % handle environment
-            switch obj.env
+            matRad_cfg = MatRad_Config.instance();
+            switch matRad_cfg.env
                 case 'MATLAB'
                     notify(obj, 'plotUpdated');
                 case 'OCTAVE'
@@ -509,6 +509,8 @@ classdef matRad_ViewingWidget < matRad_Widget
             if this.lockUpdate
                 return
             end
+
+            matRad_cfg = MatRad_Config.instance();
             
             handles = this.handles;
             
@@ -574,7 +576,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                     
                     % plot colorbar? If 1 the user asked for the CT.
                     % not available in octave 
-                    if strcmp(this.env,'MATLAB') && this.colorData == 1
+                    if strcmp(matRad_cfg.env,'MATLAB') && this.colorData == 1
                         %Plot the colorbar
                         this.cBarHandle = matRad_plotColorbar(handles.axesFig,ctMap,this.dispWindow{ctIx,1},'fontsize',defaultFontSize);
                         
