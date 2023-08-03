@@ -1,29 +1,20 @@
-% Copyright (C) 2020 nikla
-% 
-% This program is free software: you can redistribute it and/or modify it
-% under the terms of the GNU General Public License as published by
-% the Free Software Foundation, either version 3 of the License, or
-% (at your option) any later version.
-% 
-% This program is distributed in the hope that it will be useful, but
-% WITHOUT ANY WARRANTY; without even the implied warranty of
-% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-% GNU General Public License for more details.
-% 
-% You should have received a copy of the GNU General Public License
-% along with this program.  If not, see
-% <https://www.gnu.org/licenses/>.
-
-% -*- texinfo -*- 
-% @deftypefn {} {@var{retval} =} matRad_notifyOctave (@var{input1}, @var{input2})
-%
-% @seealso{}
-% @end deftypefn
-
-% Author: nikla <nikla@LAPTOP-NIKLAS>
-% Created: 2020-06-04
-
 function matRad_notifyOctave(hObject,eventName,evt)
+% Experimental Function to notify on event for OCTAVE
+%
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2019 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     global eventMap;
     if isempty(eventMap)
         return;
