@@ -1083,7 +1083,7 @@ classdef matRad_PlanWidget < matRad_Widget
                     end
                     
                     Width  = 400;
-                    Height = 200 + 20*size(data,1);
+                    Height = 300 + 20*size(data,1);
                     ScreenSize = get(0,'ScreenSize');
                     % show "set tissue parameter" window
                     figHandles = get(0,'Children');
@@ -1101,8 +1101,8 @@ classdef matRad_PlanWidget < matRad_Widget
                         %set focus
                         figure(figTissue);
                     else
-                        figTissue = figure('Name','Set Tissue Parameters','Color',[.5 .5 .5],'NumberTitle','off','Position',...
-                            [ceil(ScreenSize(3)/2) ceil(ScreenSize(4)/2) Width Height]);
+                        figTissue = figure('Name','Set Tissue Parameters','Color',[.5 .5 .5],'NumberTitle','off','OuterPosition',...
+                            [ceil(ScreenSize(3)/2) 100 Width Height]);
                     end
                     
                     % define the tissue parameter table
