@@ -336,7 +336,7 @@ classdef matRad_MainGUI < handle
                     end
                 end
             catch
-                warning('Java properties couldn''t be set');
+                matRad_cfg.dispDeprecationWarning('Java properties couldn''t be set');
             end
         end
         
