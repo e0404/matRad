@@ -614,7 +614,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                     end
                     
                     % plot colorbar
-                    if strcmp(this.env,'MATLAB') && this.colorData > 1 
+                    if matRad_cfg.isMatlab && this.colorData > 1 
                         %Plot the colorbar
                         this.cBarHandle = matRad_plotColorbar(handles.axesFig,doseMap,this.dispWindow{selectIx,1},'fontsize',defaultFontSize);
                         
