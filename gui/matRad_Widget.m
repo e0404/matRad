@@ -44,11 +44,11 @@ classdef matRad_Widget <  handle
             this.createLayout();           
             this.initialize();
             
-            [env, ~] = matRad_getEnvironment();
+            matRad_cfg = MatRad_Config.instance();
             
             % only enable in matlab
             %strcmp(env,'MATLAB') && 
-            if strcmp(env,'MATLAB') && strcmp(get(handleParent,'type'),'figure')
+            if matRad_cfg.isMatlab && strcmp(get(handleParent,'type'),'figure')
                 set(this.widgetHandle,'ButtonDownFcn',@(src,hEvent) update(this));   
                 set(this.widgetHandle,'KeyPressFcn',@(src,hEvent) update(this));   
             end
@@ -64,9 +64,9 @@ classdef matRad_Widget <  handle
         end
         
         function changedWorkspace(this,varargin)
-           [env, ~] = matRad_getEnvironment();
+            matRad_cfg = MatRad_Config.instance();
             % handle environment
-            switch env
+            switch matRad_cfg.env
                 case 'MATLAB'
                     %the PlanWidget only changes the pln
                     evt = matRad_WorkspaceChangedEventData(varargin{:});

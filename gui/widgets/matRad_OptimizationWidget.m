@@ -75,9 +75,9 @@ classdef matRad_OptimizationWidget < matRad_Widget
         function this = createLayout(this)
             h1 = this.widgetHandle;
             
-            [env, ~] = matRad_getEnvironment();
+            matRad_cfg = MatRad_Config.instance();
             % handle environment
-            switch env
+            switch matRad_cfg.env
                 case 'MATLAB'
                     set(h1,'SizeChangedFcn',@(hObject,eventdata) widget_SizeChangedFcn(this,hObject,eventdata));
                 case 'OCTAVE'
