@@ -135,8 +135,18 @@ classdef matRad_ViewingWidget < matRad_Widget
                 end
                             
                 this.updateValues();
-                this.updateIsoDoseLineCache();               
-                this.UpdatePlot();
+                this.updateIsoDoseLineCache(); 
+                % Update plot only if there are changes to ct, resultGUI.
+                % for matRad Gui startup/ intializing viewing widget
+                %  evt does not exist, then catch segment 
+           
+                try
+                    if  this.checkUpdateNecessary({'ct','resultGUI'},evt)
+                        this.UpdatePlot();
+                    end
+                catch
+                    this.UpdatePlot();
+                end
             end
             
         end
