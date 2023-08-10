@@ -29,9 +29,9 @@ pln(1).propDoseCalc.doseGrid.resolution.x = 8; % [mm]
 pln(1).propDoseCalc.doseGrid.resolution.y = 8; % [mm]
 pln(1).propDoseCalc.doseGrid.resolution.z = 8; % [mm]
 % pln(1).propDoseCalc.doseGrid.resolution = ct.resolution;
-quantityOpt  = 'physicalDose';     % options: physicalDose, effect, RBExD
+quantityOpt  = 'effect';     % options: physicalDose, effect, RBExD
 %=======================================> Model check error in bioModel
-modelName    = 'none';             % none: for photons, protons, carbon            % constRBE: constant RBE for photons and protons 
+modelName    = 'MCN';             % none: for photons, protons, carbon            % constRBE: constant RBE for photons and protons 
                                    % MCN: McNamara-variable RBE model for protons  % WED: Wedenberg-variable RBE model for protons 
                                    % LEM: Local Effect Model for carbon ions
 
@@ -68,7 +68,7 @@ pln(2).propDoseCalc.doseGrid.resolution.y = 8; % [mm]
 pln(2).propDoseCalc.doseGrid.resolution.z = 8; % [mm]
 % pln(2).propDoseCalc.doseGrid.resolution = ct.resolution;
 
-quantityOpt  = 'physicalDose';     % options: physicalDose, effect, RBExD
+quantityOpt  = 'effect';     % options: physicalDose, effect, RBExD
 modelName    = 'none';             % none: for photons, protons, carbon            % constRBE: constant RBE for photons and protons 
                                    % MCN: McNamara-variable RBE model for protons  % WED: Wedenberg-variable RBE model for protons 
                                    % LEM: Local Effect Model for carbon ions
@@ -94,6 +94,7 @@ plnJO = matRad_plnWrapper(pln);
 stf = matRad_stfWrapper(ct,cst,plnJO);
 %% Dij Calculation
 dij = matRad_calcCombiDose(ct,stf,plnJO,cst,false);
+
 %% Fluence optimization 
 resultGUI = matRad_fluenceOptimizationJO(dij,cst,plnJO);
 %% Visualization
@@ -157,3 +158,4 @@ else
 
     title('Total plan');
 end
+

@@ -104,9 +104,9 @@ end
                     objective = objective.setDoseParameters(doseParameter./dij.totalNumOfFractions);
 
                     objective = optiProb.BP.setBiologicalDosePrescriptions(objective,cst{i,5}.alphaX,cst{i,5}.betaX);
-               
+                
                     doseParameter = objective.getDoseParameters();
-                    objective = objective.setDoseParameters(doseParameter.*dij.totalNumOfFractions); 
+                    objective = objective.setDoseParameters(doseParameter.*dij.totalNumOfFractions);
 
                     switch robustness
                         case 'none' % if conventional opt: just sum objectiveectives of nominal dose
