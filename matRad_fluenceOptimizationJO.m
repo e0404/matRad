@@ -316,6 +316,7 @@ backProjection.scenarioProb = [pln.multScen.scenProb];
 
 if strcmp(pln.radiationMode, 'MixMod')
    optiProb = matRad_OptimizationProblemMixMod(backProjection);
+   optiProb.nFractions = pln.numOfFractions;
 else
    
    optiProb = matRad_OptimizationProblem(backProjection);
