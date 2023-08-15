@@ -26,9 +26,12 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         %Visualization
         showPlot = true;
     end
+
+    properties(GetAccess = public, SetAccess = private)
+        allObjectiveFunctionValues
+    end
     
     properties (Access = private)
-        allObjectiveFunctionValues
         axesHandle
         plotHandle
         abortRequested
@@ -117,6 +120,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         end
         
         function obj = optimize(obj,w0,optiProb,dij,cst)
+            obj.allObjectiveFunctionValues = [];
             matRad_cfg = MatRad_Config.instance();
             
             % set optimization options            
@@ -187,7 +191,6 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             
             obj.abortRequested = false;
             % Empty the array of stored function values
-            obj.allObjectiveFunctionValues = [];
         end
         
         function [statusmsg,statusflag] = GetStatus(obj)
