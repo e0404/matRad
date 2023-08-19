@@ -1,4 +1,72 @@
 classdef matRad_OptimizerSuperization < matRad_Optimizer
+    % matRad_OptimizerSuperization - Superization-based optimization class
+    %
+    %   This class implements optimization using the superiorization algorithm.
+    %   It allows users to configure various optimization parameters and
+    %   options for radiation therapy planning.
+    %
+    %   Properties (User-Configurable):
+    %       - max_iter: Maximum number of iterations for optimization.
+    %       - max_time: Maximum time in seconds for optimization.
+    %       - warm_start: Enable warm-starting for optimization.
+    %       - warm_start_step_size: Step size for warm-starting.
+    %       - alpha: Alpha parameter for the optimization algorithm.
+    %       - lambda: Lambda parameter for the optimization algorithm.
+    %       - feasibility_seeker: Method for seeking feasibility.
+    %       - control_sequence: Method for controlling optimization sequence.
+    %       - weight_decay: Weight decay factor.
+    %       - temp_weight_decay: Temporary weight decay factor.
+    %       - tol_obj: Tolerance for the objective function.
+    %       - tol_violation: Tolerance for constraint violations.
+    %       - tol_max_violation: Tolerance for maximum constraint violation.
+    %       - accepted_tol_change: Accepted tolerance change.
+    %       - accepted_violation: Accepted constraint violation.
+    %       - accepted_max_violation: Accepted maximum constraint violation.
+    %       - accepted_iter: Number of accepted iterations.
+    %       - num_reductions: Number of reductions.
+    %       - weighted: Flag indicating whether constraints are weighted.
+    %       - ignoreObjective: Flag to ignore the objective function.
+    %
+    %   Properties (SetAccess = private):
+    %       - allObjectiveFunctionValues: Array to store objective function values.
+    %       - allConstraintViolations: Array to store constraint violations.
+    %       - allOptVars: Struct to store optimization variables.
+    %       - timeInit: Initialization time for optimization.
+    %       - timeStart: Start time for optimization.
+    %       - timeIter: Array to store iteration times.
+    %       - abortRequested: Flag indicating if the optimization was aborted.
+    %
+    %   Properties (Access = private):
+    %       - M: Temporary variables for the feasibility seeker.
+    %       - axesHandles: Handles to plot axes.
+    %       - plotHandles: Handles to plot data.
+    %       - figHandle: Handle to the plot figure.
+    %
+    %   Methods:
+    %       - matRad_OptimizerSuperization: Constructor method.
+    %       - optimize: Perform optimization using the superiorization algorithm.
+    %       - getvariables: Extract linear inequalities and weights from constraints.
+    %       - AMS_sim: Simultaneous AMS feasibility seeker method.
+    %       - AMS_sequential: Sequential AMS feasibility seeker method.
+    %       - plotFunction: Plot optimization progress.
+    %       - abortCallbackButton: Callback to request optimization abort.
+    %
+    %   Static Methods:
+    %       - IsAvailable: Check if the class is available.
+    %
+    %   Example:
+    %       % Create an instance of the optimizer
+    %       optimizer = matRad_OptimizerSuperization(pln);
+    %
+    %       % Configure optimization parameters (optional)
+    %       optimizer.max_iter = 1000;
+    %       optimizer.max_time = 3600;
+    %
+    %       % Perform optimization
+    %       result = optimizer.optimize(initialGuess, optiProb, dij, cst);
+    %
+    %   See also: matRad_Optimizer, matRad_Config
+    
     properties
         options
         wResult     %last optimization result
@@ -76,6 +144,7 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
         end
         
         function obj = optimize(obj, x_0,  optiProb, dij, cst)
+            % Optimize the objective function using the superization algorithm
             
             matRad_cfg = MatRad_Config.instance();
             matRad_cfg.dispInfo('Starting superiorization ... \n');
@@ -297,6 +366,9 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
         end
         
         function [A, b, c, A_norm, weights] = getvariables(obj, dij,cst)
+            % Returns the projection matrix, the bounds of the
+            % inequality constraints, the row norm of the projection matrix
+            % and the weights for each constraint.
             
             b=zeros(dij.ctGrid.numOfVoxels, 1);
             c=zeros(dij.ctGrid.numOfVoxels, 1);
@@ -356,6 +428,8 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
         
         
         function [x] = AMS_sim(obj, x, A, b, c, A_norm, weights)
+            % Runs one sweep of the simultaneous AMS algorithm.
+            
             
             % Precalculat persistent variables
             if isempty(obj.M) && nargin == 6
@@ -375,6 +449,7 @@ classdef matRad_OptimizerSuperization < matRad_Optimizer
         
         
         function [x] = AMS_sequential(obj, x, A, b, c, A_norm, weights)
+            %Runs one sweep of the sequential AMS algorithm.
             
             % Precalculat persistent variables
             if isempty(obj.M) && nargin == 6
