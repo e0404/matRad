@@ -63,6 +63,7 @@ for i = 1:size(cst,1)
         else
            obj = obj.setDoseParameters(obj.getDoseParameters());
         end
+
         cst{i,6}{j} = obj;        
     end
 end
@@ -106,6 +107,9 @@ if isfield(dij,'numOfModalities')
 else
     numOfModalities = 1;
 end
+
+bioModels = [pln.originalPlans.bioParam];
+
 if exist('wInit','var')
     %do nothing as wInit was passed to the function
     matRad_cfg.dispInfo('chosen provided wInit!\n');   
@@ -115,29 +119,39 @@ else
     doseTarget = doseTarget/numOfModalities;
     wInit = [];
     % loop over all modalities
+    
+    bxidx = 1; %modality  bixel index
     for modality = 1: numOfModalities
+
         if isfield(dij,'original_Dijs')   
             dijt = dij.original_Dijs{modality};
+            currentBioModel = pln.originalPlans(modality).bioParam;
         else 
             dijt = dij;
         end
 
-        wOnes          = ones(dijt.totalNumOfBixels,1);
-        wt             = zeros(dijt.totalNumOfBixels,1);
+        wOnes          = ones(dijt.totalNumOfBixels*dij.numOfSTscen(modality),1);
+        wt             = zeros(dijt.totalNumOfBixels*dij.numOfSTscen(modality),1);
         
-        if strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'protons')
+        if strcmp(currentBioModel.model,'constRBE') % If there is constRBE, the constRBE BP will be instantiated, and we need RBE field in dij.
+            
             % check if a constant RBE is defined - if not use 1.1
             if ~isfield(dijt,'RBE')
-                dijt.RBE = 1.1;
+                switch pln.originalPlans(modality).radiationMode
+                    case 'protons'
+                        dijt.RBE = 1.1;
+                    case 'photons'
+                        dijt.RBE = 1;
+                end
             end
 
-            doseTmp = dijt.physicalDose{1}*wOnes;
+            doseTmp = dijt.physicalDose{1}*wOnes(dijt.totalNumOfBixels);
             bixelWeight =  (doseTarget)/(dijt.RBE * mean(doseTmp(V)));
             wt       = wOnes * bixelWeight;
             matRad_cfg.dispInfo('chosen uniform weight of %f!\n',bixelWeight);
 
-        elseif pln.bioParam.bioOpt
-
+        elseif any(strcmp(pln.bioParam.quantityOpt, {'RBExD', 'effect'})) %currentBioModel.bioOpt %%%% here we could have photons with RBExD that have bioOpt = 0;
+            
             % retrieve photon LQM parameter
             [ax,bx] = matRad_getPhotonLQMParameters(cst,dijt.doseGrid.numOfVoxels,1);
 
@@ -166,7 +180,7 @@ else
             dijt.ixDose  = dijt.bx~=0;
             dij.original_Dijs{modality}.ixDose = dijt.ixDose;
 
-            if isequal(pln.bioParam.quantityOpt,'effect')
+            if isequal(pln.bioParam.quantityOpt,'effect') %here check on the mixMod bioModel, the quantityOpt should be consistent
 
                 effectTarget = cst{ixTarget,5}.alphaX * doseTarget + cst{ixTarget,5}.betaX * doseTarget^2;
                 bixelNum = 1;
@@ -297,7 +311,9 @@ switch pln.bioParam.quantityOpt
         backProjection = matRad_EffectProjection;
     case 'RBExD'
         %Capture special case of constant RBE
-        if strcmp(pln.bioParam.model,'constRBE')
+        protonPlnIdx = find(strcmp({pln.originalPlans.radiationMode}, 'protons'));
+
+        if strcmp(pln.originalPlans(protonPlnIdx).bioParam.model, 'constRBE') %If proton has constRBE, photon does not but calcCombi dose computes the dij.RBE=1 anyway. TODO: implement this correctly
             backProjection = matRad_ConstantRBEProjection;
         else
             backProjection = matRad_VariableRBEProjection;
@@ -329,6 +345,7 @@ end
 %Get Bounds
 
 if ~isfield(pln.propOpt,'boundMU')
+    %pln.propOpt = arrayfun(@(modality) setfield(pln.propOpt(modality), 'boundMU',0), [1:numOfModalities]);
     pln.propOpt.boundMU = 0;
 end 
     % NOTE: for MixMod, as it is should not work now
@@ -372,15 +389,47 @@ wOpt = optimizer.wResult;
 info = optimizer.resultInfo;
 bxidx = 1;
 for mod = 1: pln.numOfModalities
+
+    % For the time being compute also the mAlphaDose mSQRTBetaDose also for
+    % photons (triggers effect calculation in matRad_calcCubes)
+
+    if strcmp(pln.originalPlans(mod).radiationMode, 'photons') && strcmp(pln.originalPlans(mod).bioParam.quantityOpt, 'effect')
+        dij.original_Dijs{mod}.mAlphaDose{1} = dij.original_Dijs{mod}.physicalDose{1}.*dij.original_Dijs{mod}.ax; 
+        dij.original_Dijs{mod}.mSqrtBetaDose{1} = dij.original_Dijs{mod}.physicalDose{1}.*sqrt(dij.original_Dijs{mod}.bx); 
+    end
+
     wt = [];
     % split the w for current modality
     STrepmat = (~dij.spatioTemp(mod) + dij.spatioTemp(mod)*dij.numOfSTscen(mod));
     wt = reshape(wOpt(bxidx: bxidx+STrepmat*dij.original_Dijs{mod}.totalNumOfBixels-1),[dij.original_Dijs{mod}.totalNumOfBixels,STrepmat]);
     
+    % Loop over the different ST scenarios
+    if STrepmat>1
+        for STscenIdx=1:STrepmat
+            STresultGUI{STscenIdx} = matRad_calcCubes(wt(:,STscenIdx),dij.original_Dijs{mod});
+        end
+
+        
+        fields = fieldnames(STresultGUI{1});
+        for fieldIdx=1:size(fields,1)
+             resultGUI{mod}.(fields{fieldIdx}) = zeros(size(STresultGUI{STscenIdx}.(fields{fieldIdx})));
+        end
+                
+        for STscenIdx=1:STrepmat
+            for fieldIdx=1:size(fields,1)
+                resultGUI{mod}.([fields{fieldIdx}, '_STscenario_', num2str(STscenIdx)]) = STresultGUI{STscenIdx}.(fields{fieldIdx});
+
+                %Accumulate the total quantity also
+                resultGUI{mod}.(fields{fieldIdx}) = resultGUI{mod}.(fields{fieldIdx}) + STresultGUI{STscenIdx}.(fields{fieldIdx}).*dij.STfractions{mod}(STscenIdx)./sum(dij.STfractions{mod});
+            end
+        end
+    else
+
     resultGUI{mod} = matRad_calcCubes(wt,dij.original_Dijs{mod});
     resultGUI{mod}.wUnsequenced = wt;
     resultGUI{mod}.usedOptimizer = optimizer;
     resultGUI{mod}.info = info;
+    end
     bxidx = bxidx + STrepmat*dij.original_Dijs{mod}.totalNumOfBixels;
 end
 %Robust quantities

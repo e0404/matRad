@@ -56,7 +56,7 @@ for mod = 1: length(dij.original_Dijs)
     % DIFFFERENT UNCERTAINTY SCENARIOS FOR DIFFERENT MODALITIES
     % currently for ST optimization 
     for scen = 1:numel(dt)
-         d{scen} = d{scen} + sum(dt{scen}.*dij.STfractions{mod}',2);
+         d{scen} = d{scen} + sum(dt{scen}.*dij.STfractions{mod},2);
     end
 end
 
@@ -94,9 +94,10 @@ for  i = 1:size(cst,1)
                 objective = objective.setDoseParameters(doseParameter./dij.totalNumOfFractions);
 
                 objective = optiProb.BP.setBiologicalDosePrescriptions(objective,cst{i,5}.alphaX,cst{i,5}.betaX);
-                
+           
                 doseParameter = objective.getDoseParameters();
-                objective = objective.setDoseParameters(doseParameter.*dij.totalNumOfFractions);                
+                objective = objective.setDoseParameters(doseParameter.*dij.totalNumOfFractions); 
+
                 % retrieve the robustness type
                 robustness = objective.robustness;
                 
