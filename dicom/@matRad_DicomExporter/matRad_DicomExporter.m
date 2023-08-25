@@ -73,6 +73,8 @@ classdef matRad_DicomExporter < handle
         rtPlanFilePrefix = 'RTPlan'
         rtPlanMetas
         rtPlanExportStatus
+        rtPlanLabel = 'matRadPlan';
+        rtPlanName = 'matRadPlan'
 
         % some dictionaries
         externalContourDict = {'EXTERNAL','BODY','PATIENT'}; %Names to identify external contours

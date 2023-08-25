@@ -40,6 +40,7 @@ if isfield(pln,'DicomInfo')
 
 else
     meta = struct([]);
+
     %Class UID
     ClassUID = '1.2.840.10008.5.1.4.1.1.481.5'; %RT PLAN
     meta.MediaStorageSOPClassUID = ClassUID;
@@ -47,76 +48,154 @@ else
     %TransferSyntaxUID = '1.2.840.10008.1.2.1'; %Explicit VR Little Endian - correct?
     %meta.TransferSyntaxUID = TransferSyntaxUID;
 
-    %Identifiers
+    %Identifiers for this object
     meta.SOPInstanceUID             = dicomuid;
-    meta.MediaStorageSOPInstanceUID = meta.SOPInstanceUID;
+    meta.MediaStorageSOPInstanceUID = meta.SOPInstanceUID;    
     meta.SeriesInstanceUID          = dicomuid;
     meta.SeriesNumber               = 1;
     meta.InstanceNumber             = 1;
-
+    
+    currDate = now;
+    currDateStr = datestr(currDate,'yyyymmdd');
+    currTimeStr = datestr(currDate,'HHMMSS');
+    meta.InstanceCreationDate = currDateStr;
+    meta.InstanceCreationTime = currTimeStr;
+    
+    %ID/Information about the Study
+    meta.StudyInstanceUID = obj.StudyInstanceUID;
+    meta.StudyID = obj.StudyID; 
+    meta.StudyDate = obj.StudyDate;
+    meta.StudyTime = obj.StudyTime;
+      
     %Remaining Meta Data
     meta.Modality = 'RTPLAN';
-    meta.Manufacturer = '';
+    meta.Manufacturer = 'matRad';
     meta.ReferringPhysicianName = obj.dicomName();
     meta.OperatorsName = obj.OperatorsName;
     meta.StationName = '';
+    meta.AccessionNumber = '';
     meta = obj.assignDefaultMetaValue(meta,'ManufacturerModelName','matRad DicomExport');
 
     meta.PatientName = obj.PatientName;
     meta.PatientID = obj.PatientID;
     meta.PatientBirthDate = obj.PatientBirthDate;
     meta.PatientSex = obj.PatientSex;
+
+    meta.ApprovalStatus = 'UNAPPROVED';
+
+    meta.RTPlanLabel = obj.rtPlanLabel;
+    meta.RTPlanName  = obj.rtPlanName;
+    meta.RTPlanDate = currDateStr;
+    meta.RTPlanTime = currTimeStr;
+    meta.RTPlanGeometry = 'PATIENT';
+
+    meta.SoftwareVersions = matRad_version();
+    meta.ManufacturerModelName = matRad_version();       
+    
+    %Referenced Dose
+    try
+        rtPlanUID = obj.rtPlanMeta.SOPInstanceUID;
+        rtPlanClassID = obj.rtPlanMeta.SOPClassUID;
+        meta.ReferencedRTPlanSequence.Item_1.ReferencedSOPClassUID = rtPlanClassID;
+        meta.ReferencedRTPlanSequence.Item_1.ReferencedSOPInstanceUID = rtPlanUID;
+    catch
+        rtPlanUID = '';
+        rtPlanClassID = '';
+    end
 end
 
 
-% Write Photon or ion RTPLAN
-if strcmp(pln.radiationMode,'photons')
-    BeamParam = 'BeamSequence';
-    ControlParam = 'ControlPointSequence';
-elseif strcmp(pln.radiationmode, 'protons')||strcmp(pln.radiationmode, 'carbon')||strcmp(pln.radiationmode, 'helium')
-    BeamParam = 'IonBeamSequence';
-    ControlParam = 'IonControlPointSequence';
-else
-    matRad_cfg.DispError('Not supported radiation mode of DICOM RT plan file.')
+%Write references to image, RTStruct, RTDose
+%RTStruct
+meta.ReferencedStructureSetSequence.Item_1.ReferencedSOPClassUID = '1.2.840.10008.5.1.4.1.1.481.3';
+meta.ReferencedStructureSetSequence.Item_1.ReferencedSOPInstanceUID = obj.rtssMeta.SOPInstanceUID;
+
+%RTDose - %TODO
+%meta.DoseReferenceSquence.Item_1. ...
+
+
+if pln.propStf.numOfBeams ~= numel(stf)
+    matRad_cfg.error('Inconsistency in stf! number of beams not matching!');
 end
+   
 
-if strcmp(pln.radiationMode,'photons')
-    %% FRaction number
-    %  meta.FractionGroupSequence.Item_1.
-    meta.FractionGroupSequence.Item_1.FractionGroupNumber =  1;
-    meta.FractionGroupSequence.Item_1.NumberOfFractionsPlanned =  pln.numOfFractions;
-    meta.FractionGroupSequence.Item_1.NumberOfBeams = pln.propStf.numOfBeams;
+%Sequences
+%Sequences
+%ToleranceTableSequence - Optional, we do not write this
 
-    %Ingnoring
-    % NumberOfBrachyApplicationSetups: 0
-    % ReferencedBeamSequence: [1×1 struct]
-    % meta.FractionGroupSequence.Item_1.ReferencedBeamSequence.Item_1
-    % BeamDoseSpecificationPoint: [3×1 double]
-    %                       BeamDose: 0.3512
-    %                   BeamMeterset: 116.7359
-    %           ReferencedBeamNumber: 1
+ % Fraction Sequence
+ %  meta.FractionGroupSequence.Item_1.
+ meta.FractionGroupSequence.Item_1.FractionGroupNumber =  1;
+ meta.FractionGroupSequence.Item_1.NumberOfFractionsPlanned =  pln.numOfFractions;
+ meta.FractionGroupSequence.Item_1.NumberOfBeams = pln.propStf.numOfBeams;
+ meta.FractionGroupSequence.Item_1.NumberOfBrachyApplicationSetups = 0;
 
+for i = 1:pln.propStf.numOfBeams
+    %PatientSetupSequence - Required
+    currItemStr = sprintf('Item_%d',i);
+    meta.PatientSetupSequence.(currItemStr) = struct('PatientPosition','HFS','PatientSetupNumber',i,'SetupTechniqueDescription','');
+    
+   
+    %TODO meta.FractionGroupSequence.Item_1.ReferencedBeamSequence - %Maybe do when going through the
+    %BeamSequence or afterwards?
+     
 
-    % Write beam sequence info 
-    if pln.propStf.numOfBeams == numel(stf)
-        for i = 1: pln.propStf.numOfBeams
-            %     meta.BeamSequence.(['Item_' num2str(i)]).
-            meta.BeamSequence.(['Item_' num2str(i)]).RadiationType = 'PHOTON'; %upper(pln.radiationMode);
-            meta.BeamSequence.(['Item_' num2str(i)]).BeamType = 'STATIC';
-            meta.BeamSequence.(['Item_' num2str(i)]).PrimaryDosimeterUnit = 'MU';
-            meta.BeamSequence.(['Item_' num2str(i)]).SourceAxisDistance = stf(i).SAD;
-            meta.BeamSequence.(['Item_' num2str(i)]).TreatmentDeliveryType = 'TREATMENT';
-            meta.BeamSequence.(['Item_' num2str(i)]).NumberOfControlPoints = 2;
-            meta.BeamSequence.(['Item_' num2str(i)]).TreatmentMachineName = pln.machine;
+    % Write Photon or ion RTPLAN
+    if strcmp(pln.radiationMode,'photons')
+        BeamParam = 'BeamSequence';
+        ControlParam = 'ControlPointSequence';
+    elseif strcmp(pln.radiationmode, 'protons') ||strcmp(pln.radiationmode, 'helium') || strcmp(pln.radiationmode, 'carbon')
+        BeamParam = 'IonBeamSequence';
+        ControlParam = 'IonControlPointSequence';
+    else
+        matRad_cfg.DispError('Not supported radiation mode of DICOM RT plan file.')
+    end
 
+    if strcmp(pln.radiationMode,'photons')
+        
+            seqItem.TreatmentMachineName = pln.machine;
+            seqItem.PrimaryDosimeterUnit = 'MU';
+            seqItem.SourceAxisDistance = stf(i).SAD;
+            seqItem.BeamNumber = i;
+            seqItem.BeamType = 'STATIC';
+            seqItem.RadiationType = 'PHOTON'; 
+            seqItem.TreatmentDeliveryType = 'TREATMENT';
+            seqItem.NumberOfWedges = 0;
+            seqItem.NumberOfCompensators = 0;
+            seqItem.NumberOfBoli = 0;
+            seqItem.NumberOfBlocks = 0;
+
+            %TODO: seqItem.ReferencedDoseSequence (for the beam doses??)
+            
+            %Meterset
+            % The Meterset at a given Control Point is equal to Beam 
+            % Meterset (300A,0086) specified in the Referenced Beam 
+            % Sequence (300C,0004) of the RT Fraction Scheme Module, 
+            % multiplied by the Cumulative Meterset Weight (300A,0134) 
+            % for the Control Point, divided by the Final Cumulative 
+            % Meterset Weight (300A,010E). 
+            % The Meterset is specified in units defined by Primary 
+            % Dosimeter Unit (300A,00B3).
+            
+            
+            
+            
+           
+            %TODO: Get info from apertures
+            seqItem.NumberOfControlPoints = 2;
+            seqItem.Item_1.ControlPointIndex = 0;
+            seqItem.Item_1.NominalBeamEnergy = stf(1).ray.energy;
+            seqItem.Item_1.GantryAngle = stf(i).gantryAngle;
+            seqItem.Item_1.PatientSupportAngle = stf(i).couchAngle;
+            seqItem.Item_1.TableTopEccentricAngle = 0;
+            seqItem.Item_1.IsocenterPosition = stf(i).isoCenter';
+            %BBeamLimitingDeviceSequence: [1×1 struct]
             %       ignoring:
-            %        BeamLimitingDeviceSequence: [1×1 struct]
+            %        
             %                        BeamNumber: 1
             %                          BeamName: 'FB1'
             %                   BeamDescription: '1 FB1'
-            %                    NumberOfWedges: 1
             %                     WedgeSequence: [1×1 struct]
-            %              NumberOfCompensators: 0
             %                      NumberOfBoli: 0
             %                    NumberOfBlocks: 0
             %     FinalCumulativeMetersetWeight: 1
@@ -127,12 +206,7 @@ if strcmp(pln.radiationMode,'photons')
 
             % need a way to handle control point sequences for photons and ions
             %Beamdata
-            meta.BeamSequence.(['Item_' num2str(i)]).ControlPointSequence.Item_1.ControlPointIndex = 0;
-            meta.BeamSequence.(['Item_' num2str(i)]).ControlPointSequence.Item_1.NominalBeamEnergy = stf(1).ray.energy;
-            meta.BeamSequence.(['Item_' num2str(i)]).ControlPointSequence.Item_1.GantryAngle = stf(i).gantryAngle;
-            meta.BeamSequence.(['Item_' num2str(i)]).ControlPointSequence.Item_1.PatientSupportAngle = stf(i).couchAngle;
-            meta.BeamSequence.(['Item_' num2str(i)]).ControlPointSequence.Item_1.TableTopEccentricAngle = 0;
-            meta.BeamSequence.(['Item_' num2str(i)]).ControlPointSequence.Item_1.IsocenterPosition = stf(i).isoCenter';
+            
 
             % Ignoring :
             %      edgePositionSequence: [1×1 struct]
