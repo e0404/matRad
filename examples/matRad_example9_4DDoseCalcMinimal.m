@@ -24,12 +24,23 @@ matRad_rc
 load BOXPHANTOM.mat
 
 %%
+% Visualization
+% ct.cubeHU{1}(cst{2,4}{1}) = 1000;
 
 amplitude    = [0 3 0]; % [voxels]
 numOfCtScen  = 5;
 motionPeriod = 2.5; % [s] 
 
 [ct,cst] = matRad_addMovement(ct, cst,motionPeriod, numOfCtScen, amplitude);
+
+% Visualization
+% figure
+% for i = 1:length(ct.cubeHU)
+%    hold on
+%    imagesc(ct.cubeHU{i}(:,:,70));
+%    waitforbuttonpress;
+% end
+
 % Set up a plan, compute dose influence on all phases, conventional optimization
 % meta information for treatment plan
 pln.numOfFractions  = 30;

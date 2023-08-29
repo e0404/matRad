@@ -41,8 +41,9 @@ load('LIVER.mat');
 % need to define a treatment machine to correctly load the corresponding 
 % base data. matRad features generic base data in the file
 % 'carbon_Generic.mat'; consequently the machine has to be set accordingly
-pln.radiationMode = 'carbon';            
-pln.machine       = 'Generic';
+pln.radiationMode = 'carbon';          
+% use fitted APM here to include LET
+pln.machine       = 'Generic_APM';
 
 %%
 % Define the biological optimization model for treatment planning along
@@ -172,5 +173,5 @@ matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
 title('absolute difference')
 %%
 % Plot both doses with absolute difference and gamma analysis
-[gammaCube,gammaPassRate,hfigure]=matRad_compareDose(resultGUI_effect.RBExD, resultGUI_tissue.RBExD, ct, cst,[1 1 1],'on');
+[gammaCube,gammaPassRate,hfigure]=matRad_compareDose(resultGUI_effect.RBExD, resultGUI_tissue.RBExD, ct, cst,[1 1 1],'on',pln, [2 2], 0);
 

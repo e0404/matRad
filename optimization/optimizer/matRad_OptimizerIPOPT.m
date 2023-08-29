@@ -22,6 +22,9 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         wResult
         resultInfo
         env
+
+        %Visualization
+        showPlot = true;
     end
     
     properties (Access = private)
@@ -113,6 +116,10 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             
             if ~matRad_checkMexFileExists('ipopt')
                 matRad_cfg.dispError('IPOPT mex interface not available for %s!',obj.env);
+            end
+
+            if matRad_cfg.disableGUI || (matRad_cfg.isOctave && isequal(graphics_toolkit(),'gnuplot'))
+                obj.showPlot = false;
             end
 
         end
@@ -252,7 +259,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.allObjectiveFunctionValues(iter + 1) = objective;
             %We don't want the optimization to crash because of drawing
             %errors
-            if ~obj.plotFailed
+            if obj.showPlot && ~obj.plotFailed
                 try            
                     obj.plotFunction();
                 catch ME

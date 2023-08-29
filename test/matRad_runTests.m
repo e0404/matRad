@@ -21,10 +21,11 @@ matRad_cfg = MatRad_Config.instance();
 matRad_cfg.setDefaultPropertiesForTesting();
 
 % supressing the inherent Ocatave warnings for division by zero
-if strcmp(matRad_getEnvironment,'OCTAVE')
+if matRad_cfg.isOctave
     warning('off','Octave:divide-by-zero');
 end
 
+% Define Scripts
 exampleScripts = {'../examples/matRad_example1_phantom.m',...
     '../examples/matRad_example2_photons.m',...
     '../examples/matRad_example3_photonsDAO.m',...
@@ -40,11 +41,13 @@ exampleScripts = {'../examples/matRad_example1_phantom.m',...
     };
 
 testing_suffix = '_test';
+
+% Some parameters to reduce computational overhead during testing
 unitTestBixelWidth = 20;
 unitTestSpotSpacing = matRad_cfg.propStf.defaultLongitudinalSpotSpacing;
 unitTestResolution = matRad_cfg.propDoseCalc.defaultResolution;
 
-%Copy and manipulate all scripts
+% Copy and manipulate all scripts
 [folders,names,exts] = cellfun(@fileparts,exampleScripts,'UniformOutput',false);
 testScriptNames = strcat(names,testing_suffix);    
 testScripts = cellfun(@fullfile,folders,strcat(testScriptNames,exts),'UniformOutput',false);
@@ -57,8 +60,9 @@ matRad_unitTestTextManipulation(testScripts,'pln.propDoseCalc.resolution.y',['pl
 matRad_unitTestTextManipulation(testScripts,'pln.propDoseCalc.resolution.z',['pln.propDoseCalc.resolution.z = ' num2str(unitTestResolution.z)]);
 matRad_unitTestTextManipulation(testScripts,'display(','%%%%%%%%%%%%%%% REMOVED DISPLAY FOR TESTING %%%%%%%%%%%%%%');
 
+
+%% Run tests
 errors = {};
-%Running tests
 for testIx = 1:length(testScriptNames)
     fprintf('Running Integration Test for ''%s''\n',names{testIx});
     try

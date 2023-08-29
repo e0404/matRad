@@ -140,7 +140,8 @@ resultGUI_noise = matRad_calcDoseDirectMC(ct_manip,stf,pln,cst,resultGUI.w);
 % pln.propDoseCalc.fineSampling stores parameters defining the fine 
 % sampling simulation
 
-pln.propDoseCalc.fineSampling.method = 'russo'; 
+pln.propDoseCalc.fineSampling.calcMode = 'fineSampling';
+% pln.propDoseCalc.fineSampling.method = 'russo'; 
     % method for weight calculation, availabe methods:
     %   'russo'
     %   'fitCircle', supports N = 2,3 and 8
@@ -165,5 +166,5 @@ pln.propDoseCalc.fineSampling.method = 'russo';
 resultGUI_FS = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
 
 %%  Visual Comparison of results using the "compareDose" helper function
-matRad_compareDose(resultGUI_noise.RBExD,resultGUI.RBExD,ct,cst);
-matRad_compareDose(resultGUI_FS.RBExD,resultGUI.RBExD,ct,cst);
+matRad_compareDose(resultGUI_noise.RBExD,resultGUI.RBExD,ct,cst, [1 1 0] , 'off', pln, [2 2], 0, 'global');
+matRad_compareDose(resultGUI_FS.RBExD,resultGUI.RBExD,ct,cst, [1 1 0] , 'off', pln, [2 2], 0, 'global');

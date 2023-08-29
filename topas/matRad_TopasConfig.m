@@ -75,6 +75,11 @@ classdef matRad_TopasConfig < handle
         arrayOrdering = 'F'; %'C';
         rsp_basematerial = 'Water';
 
+        % PhaseSpace scoring
+        scorePhaseSpace = struct('mode','none',... % 'none', 'read' or 'score'
+            'phaseSpaceVolumeLength',NaN,...
+            'adjustedNozzleDist',495);
+
         %Scoring
         scorer = struct('filename','constructor',...
             'tallies',{{'default'}},...
@@ -82,9 +87,8 @@ classdef matRad_TopasConfig < handle
             'doseToMedium',true,...
             'doseToWater',false,...
             'surfaceTrackCount',false,...
-            'scorePhaseSpace','none',... % 'none', 'read' or 'score'
             'calcDij',false,...
-            'RBE',false,...
+            'RBE',true,...
             'RBE_model',{{'default'}},... % default is MCN for protons and LEM1 for ions
             'defaultModelProtons',{{'MCN'}},...
             'defaultModelCarbon',{{'LEM'}},...
@@ -107,7 +111,7 @@ classdef matRad_TopasConfig < handle
         modules_photons       = {'g4em-standard_opt4','g4h-phy_QGSP_BIC_HP','g4decay'};
 
         %Geometry / World
-        worldMaterial = 'G4_AIR';
+        worldMaterial = 'G4_AIR';  % 'G4_AIR', 'Vacuum'
 
         %filenames
         converterFolder = 'materialConverter';
@@ -258,6 +262,14 @@ classdef matRad_TopasConfig < handle
 
             % Write CT, patient parameters and Schneider converter
             matRad_cfg.dispInfo('Writing parameter files to %s\n',obj.workingDir);
+            
+            if strcmp(obj.scorePhaseSpace.mode,'score')
+                % Calculate length of the cylinder
+                obj.scorePhaseSpace.phaseSpaceVolumeLength = machine.meta.BAMStoIsoDist - obj.scorePhaseSpace.adjustedNozzleDist + 5;
+                % adjustedNozzleDist represents the nozzle shift for the readin of the phaseSpace, 
+                % the +5 is an adjustment because the scoring surface is shifted by 5 mm to avoid an overlap error by TOPAS
+            end
+            
             obj.writePatient(ct,pln);
 
             % Generate uniform weights in case of dij calculation (for later optimization)
@@ -277,7 +289,7 @@ classdef matRad_TopasConfig < handle
                 topasBaseData = [];
             end
 
-            if strcmp(obj.scorer.scorePhaseSpace,'read')
+            if strcmp(obj.scorePhaseSpace.mode,'read')
                 obj.writeStfPhaseSpace(ct,stf);
             else
                 obj.writeStfFields(ct,stf,pln,w,topasBaseData);
@@ -541,7 +553,6 @@ classdef matRad_TopasConfig < handle
 
                             % Read data from scored TOPAS files
                             dataRead = obj.readBinCsvData(genFullFile);
-
                             if any(isnan(dataRead{1}(:)))
                                 matRad_cfg.dispWarning(['NaN detected in run ' num2str(k)])
                             end
@@ -809,7 +820,6 @@ classdef matRad_TopasConfig < handle
                         end
                     end
                 end
-
                 % Remove processed physDoseFields from total tallies
                 topasCubesTallies = topasCubesTallies(~physDoseFields);
 
@@ -897,7 +907,6 @@ classdef matRad_TopasConfig < handle
 
         function writeRunHeader(obj,fID,fieldIx,runIx,ctScen)
 
-            fprintf(fID,'s:Sim/PlanLabel = "%s"\n',obj.label);
             if exist('ctScen','var')
                 fprintf(fID,'s:Sim/ScoreLabel = "score_%s_field%d_ct%d_run%d"\n',obj.label,fieldIx,ctScen,runIx);
             else
@@ -923,17 +932,16 @@ classdef matRad_TopasConfig < handle
             fprintf(fID,'i:Ts/ShowHistoryCountAtInterval = %d\n',10^(floor(log10(1/obj.numOfRuns * obj.numHistories))-1));
             fprintf(fID,'\n');
 
-            if strcmp(obj.scorer.scorePhaseSpace,'none')
-                fprintf(fID,'s:Sim/DoseScorerOutputType = "%s"\n',obj.scorer.outputType);
-                if iscell(obj.scorer.reportQuantity)
-                    fprintf(fID,'sv:Sim/DoseScorerReport = %i ',length(obj.scorer.reportQuantity));
-                    fprintf(fID,'"%s" ',obj.scorer.reportQuantity{:});
-                    fprintf(fID,'\n');
-                else
-                    fprintf(fID,'sv:Sim/DoseScorerReport = 1 "%s"\n',obj.scorer.reportQuantity);
-                end
+            fprintf(fID,'s:Sim/DoseScorerOutputType = "%s"\n',obj.scorer.outputType);
+                          
+            if iscell(obj.scorer.reportQuantity)
+                fprintf(fID,'sv:Sim/DoseScorerReport = %i ',length(obj.scorer.reportQuantity));
+                fprintf(fID,'"%s" ',obj.scorer.reportQuantity{:});
                 fprintf(fID,'\n');
+            else
+                fprintf(fID,'sv:Sim/DoseScorerReport = 1 "%s"\n',obj.scorer.reportQuantity);
             end
+            fprintf(fID,'\n');
 
             % Write simulation seed
             fprintf(fID,['i:Ts/Seed = ',num2str(runIx),'\n']);
@@ -972,9 +980,9 @@ classdef matRad_TopasConfig < handle
             fprintf(fID,'includeFile = %s\n',paramFile);
             fprintf(fID,'\n');
 
-            if strcmp(obj.scorer.scorePhaseSpace,'score')
+            if strcmp(obj.scorePhaseSpace.mode,'score')
                 fname = fullfile(obj.thisFolder,obj.infilenames.geometry_scorePhaseSpace);
-            elseif strcmp(obj.scorer.scorePhaseSpace,'read')
+            elseif strcmp(obj.scorePhaseSpace.mode,'read')
                 fname = fullfile(obj.thisFolder,obj.infilenames.geometry_readPhaseSpace);
             else
                 fname = fullfile(obj.thisFolder,obj.infilenames.geometry);
@@ -994,12 +1002,8 @@ classdef matRad_TopasConfig < handle
             switch obj.scorer.filename
                 case 'constructor'
 
-                    if strcmp(obj.scorer.scorePhaseSpace,'score')
+                    if strcmp(obj.scorePhaseSpace.mode,'score')
                         fname = fullfile(obj.thisFolder,filesep,obj.scorerFolder,filesep,obj.infilenames.Scorer_phaseSpaceSurface);
-                        matRad_cfg.dispDebug('Reading phase space scorer from %s\n',fname);
-                        scorerName = fileread(fname);
-                        fprintf(fID,'\n%s\n\n',scorerName);
-
                     else
                         % write dose to medium scorer
                         if obj.scorer.doseToMedium
@@ -1258,12 +1262,6 @@ classdef matRad_TopasConfig < handle
             nParticlesTotalBixel = round(obj.numParticlesPerHistory * w);
             minParticlesBixel = round(max([obj.minRelWeight*max(nParticlesTotalBixel),1]));
 
-            % Output projected bixels that will be discarded due to particle theshold
-            projectedDiscardedBixel = sum((obj.numHistories ./ sum(nParticlesTotalBixel)*nParticlesTotalBixel /obj.numOfRuns) < (minParticlesBixel-0.5));
-            if projectedDiscardedBixel > 0
-                matRad_cfg.dispWarning('%d bixels will most likely be discarded, set histories to at least %.2e to avoid this!', projectedDiscardedBixel,ceil(max(sum(w)./w*obj.numOfRuns*abs(minParticlesBixel-0.5))/10000)*10000)
-            end
-
             % Set history mode
             switch obj.modeHistories
                 case 'num'
@@ -1513,7 +1511,11 @@ classdef matRad_TopasConfig < handle
                 if isPhoton
                     fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', 1000 + ct.cubeDim(3)*ct.resolution.z);%Not sure if this is correct,100 cm is SSD and probably distance from surface to isocenter needs to be added
                 else
-                    fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', nozzleToAxisDistance);
+                    if strcmp(obj.scorePhaseSpace.mode,'score')
+                        fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', obj.scorePhaseSpace.phaseSpaceVolumeLength/2);
+                    else
+                        fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', nozzleToAxisDistance);
+                    end
                 end
 
                 if obj.pencilBeamScanning
@@ -1831,7 +1833,6 @@ classdef matRad_TopasConfig < handle
                 fprintf(fileID,'sv:Ph/Default/Modules = %d %s\n',length(modules),strjoin(moduleString,' '));
 
                 fclose(fileID);
-
                 % Write run scripts for TOPAS
                 for runIx = 1:obj.numOfRuns
                     if isfield(ct,'currCtScen')
@@ -1912,13 +1913,13 @@ classdef matRad_TopasConfig < handle
             matRad_cfg.dispInfo('Writing data to %s\n',outfile)
             fID = fopen(outfile,'w+');
 
-            if strcmp(obj.scorer.scorePhaseSpace,'score')
+            if strcmp(obj.scorePhaseSpace.mode,'score')
                 fprintf(fID,'# -- Patient parameters\n');
                 fprintf(fID,'s:Ge/PhantomSurface/Type               = "TsCylinder"\n');
                 fprintf(fID,'s:Ge/PhantomSurface/Parent             = "World"\n');
                 fprintf(fID,'s:Ge/PhantomSurface/Material           = "Air"\n');
-                fprintf(fID,'dc:Ge/PhantomSurface/TransZ            = 74.9 cm\n');
-                fprintf(fID,'dc:Ge/PhantomSurface/RMax              = 50 cm\n');
+                fprintf(fID,'dc:Ge/PhantomSurface/TransZ            = %f mm\n',obj.scorePhaseSpace.phaseSpaceVolumeLength/2-5);
+                fprintf(fID,'dc:Ge/PhantomSurface/RMax              = 500 mm\n');
                 fprintf(fID,'dc:Ge/PhantomSurface/HL                = 0.1 mm\n');
             else
 
@@ -2010,9 +2011,15 @@ classdef matRad_TopasConfig < handle
                     case 'HUToWaterSchneider' % Schneider converter
                         rspHlut = matRad_loadHLUT(ct,pln);
 
-                        % Hardcode possible density fix for TOPAS
-                        % TODO implement propery
+                        % Set minimum HU to -1000 for TOPAS
                         rspHlut(1) = -1000;
+
+                        % add air boundary at -950 HU, if an air boundary isn't available
+                        if ~any(ismember(rspHlut(:,1),-999))
+                            rspHlut(end+1,:) = [-950,0];
+                            rspHlut = sortrows(rspHlut,1);
+                            rspHlut(ismember(rspHlut(:,1),-950),2) = rspHlut(find(ismember(rspHlut(:,1),-950))-1,2);
+                        end
 
                         try
                             % Write Schneider Converter
@@ -2104,13 +2111,12 @@ classdef matRad_TopasConfig < handle
                                 fprintf(fID,['uv:Ge/Patient/SchneiderDensityFactor = %i ',strjoin(cellstr(char('%1.01f '.*TOPASisFloat' + '%1.15g '.*~TOPASisFloat'))),'\n'],numel(densityCorrection.factor),densityCorrection.factor);
                                 TOPASisFloat = mod(densityCorrection.factorOffset,1)==0;
                                 fprintf(fID,['uv:Ge/Patient/SchneiderDensityFactorOffset = %i ',strjoin(cellstr(char('%1.01f '.*TOPASisFloat' + '%1.15g '.*~TOPASisFloat'))),'\n'],numel(densityCorrection.factorOffset),densityCorrection.factorOffset);
-                                %                         fprintf(fID,'uv:Ge/Patient/SchneiderDensityFactor = 8 0.001029700665188 0.000893 0.0 0.001169 0.000592 0.0005 0.0 0.0\n');
-                                %                         fprintf(fID,'uv:Ge/Patient/SchneiderDensityFactorOffset = 8 1000. 0. 1000. 0. 0. -2000. 0. 0.0\n\n');
 
                                 % define HU to material sections
                                 matRad_cfg.dispInfo('TOPAS: Writing HU to material sections\n');
                                 switch obj.materialConverter.HUToMaterial
                                     case 'default'
+                                        % This selects the air HU only, since the defalt converter only differentiates between water and air
                                         HUToMaterial.sections = rspHlut(2,1);
                                     case 'MCsquare'
                                         HUToMaterial.sections = [-1000 -950 -120 -82 -52 -22 8 19 80 120 200 300 400 500 600 700 800 900 1000 1100 1200 1300 1400 1500];
@@ -2275,10 +2281,8 @@ classdef matRad_TopasConfig < handle
 
         function writeMCparam(obj)
             %write MCparam file with basic parameters
-            if ~strcmp(obj.scorer.scorePhaseSpace,'score')
-                MCparam = obj.MCparam;
-                save(fullfile(obj.workingDir,'MCparam.mat'),'MCparam','-v7');
-            end
+            MCparam = obj.MCparam;
+            save(fullfile(obj.workingDir,'MCparam.mat'),'MCparam','-v7');
         end
 
         function writeStfPhaseSpace(obj,ct,stf)
@@ -2291,9 +2295,8 @@ classdef matRad_TopasConfig < handle
                 fileID = fopen(fullfile(obj.workingDir,fieldSetupFileName),'w');
 
                 obj.writeFieldHeader(fileID);
-
                 % NozzleAxialDistance
-                fprintf(fileID,'d:Ge/Nozzle/TransZ = -495 mm\n');%Not sure if this is correct,100 cm is SSD and probably distance from surface to isocenter needs to be added
+                fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n',obj.scorePhaseSpace.adjustedNozzleDist);
 
                 if obj.pencilBeamScanning
                     % Write couch and gantry angles
@@ -2301,13 +2304,24 @@ classdef matRad_TopasConfig < handle
                     fprintf(fileID,'d:Sim/CouchAngle = %f deg\n\n',stf(beamIx).couchAngle);
                 end
 
+                % Translate patient according to beam isocenter
+                fprintf(fileID,'d:Ge/Patient/TransX      = %f mm\n',0.5*ct.resolution.x*(ct.cubeDim(2)+1)-stf(beamIx).isoCenter(1));
+                fprintf(fileID,'d:Ge/Patient/TransY      = %f mm\n',0.5*ct.resolution.y*(ct.cubeDim(1)+1)-stf(beamIx).isoCenter(2));
+                fprintf(fileID,'d:Ge/Patient/TransZ      = %f mm\n',0.5*ct.resolution.z*(ct.cubeDim(3)+1)-stf(beamIx).isoCenter(3));
+                fprintf(fileID,'d:Ge/Patient/RotX=0. deg\n');
+                fprintf(fileID,'d:Ge/Patient/RotY=0. deg\n');
+                fprintf(fileID,'d:Ge/Patient/RotZ=0. deg\n\n');
+
                 % Write beam profile
                 fname = fullfile(obj.thisFolder,obj.infilenames.beam_customPhasespace);
                 TOPAS_beamSetup = fileread(fname);
                 matRad_cfg.dispInfo('Reading ''%s'' Beam Characteristics from ''%s''\n',obj.beamProfile,fname);
                 fprintf(fileID,'%s\n',TOPAS_beamSetup);
 
-                fprintf(fileID,'s:So/PhaseSpaceSource/PhaseSpaceFileName              = "../" + Sim/ScoreLabel + "_phaseSpace"\n');
+                % We have to write Sim/ScoreLabel in plain text here because the called parameter file does not know the
+                % overall parameters
+                fprintf(fileID,'s:So/PhaseSpaceSource/PhaseSpaceFileName              = "../score_%s_field%i_run1_phaseSpace"\n',obj.label,beamIx);
+
                 fclose(fileID);
             end
 
@@ -2326,6 +2340,17 @@ classdef matRad_TopasConfig < handle
 
                 fclose(fileID);
             end
+
+            workingDir = replace(obj.workingDir,'read','score');
+            workingDir = erase(workingDir,sprintf('_sample%.2i',ct.sampleIdx));
+            MCparam2 = load([workingDir, '/MCparam.mat']);
+
+            % Bookkeeping
+            obj.MCparam.nbParticlesTotal = MCparam2.MCparam.nbParticlesTotal;
+            obj.MCparam.nbHistoriesTotal = MCparam2.MCparam.nbHistoriesTotal;
+            obj.MCparam.nbParticlesField = MCparam2.MCparam.nbParticlesField;
+            obj.MCparam.nbHistoriesField = MCparam2.MCparam.nbHistoriesField;
+            obj.MCparam.nbFields         = MCparam2.MCparam.nbFields;
         end
 
     end

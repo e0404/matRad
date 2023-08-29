@@ -9,7 +9,9 @@ data = fread(fID,inf,'double');
 fclose(fID);
 
 % Check if consistent with cubeDim
-if rem(numel(data),prod(cubeDim))==0
+if ~exist('cubeDim','var')
+    dataOut = data;
+elseif rem(numel(data),prod(cubeDim))==0
     % this is the number of ReportQuantities contained in that file
     numOfReportQuantities = numel(data)/prod(cubeDim);
 

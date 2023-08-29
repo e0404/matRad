@@ -307,7 +307,7 @@ try
         
 catch ME
        handles.State = 0;
-       handles = showError(handles,sprintf('GUI OpeningFunc: Could not set or get pln: %s',ME.message));
+       handles = showWarning(handles,sprintf('GUI OpeningFunc: Could not set or get pln: %s',ME.message));
 end
 
 % check for dij structure
@@ -1873,7 +1873,7 @@ function UpdateState(handles)
 if handles.State > 0
     pln = evalin('base','pln');
 
-    if pln.bioParam.bioOpt
+    if isfield(pln,'bioParam') && pln.bioParam.bioOpt
         set(handles.btnSetTissue,'Enable','on');
     else
         set(handles.btnSetTissue,'Enable','off');
@@ -2025,48 +2025,58 @@ if isfield(pln.propStf,'isoCenter')
 end
 set(handles.editGantryAngle,'String',num2str((pln.propStf.gantryAngles)));
 set(handles.editCouchAngle,'String',num2str((pln.propStf.couchAngles)));
-set(handles.popupRadMode,'Value',find(strcmp(get(handles.popupRadMode,'String'),pln.radiationMode)));
-set(handles.popUpMachine,'Value',find(strcmp(get(handles.popUpMachine,'String'),pln.machine)));
-
-cellBioModel = get(handles.popMenuBioOpt,'String');
-cellQuantOpt = get(handles.popMenuQuantOpt,'String');
-set(handles.popMenuBioOpt,'Value',find(strcmp(pln.bioParam.model,cellBioModel)));
-set(handles.popMenuQuantOpt,'Value',find(strcmp(pln.bioParam.quantityOpt,cellQuantOpt)));
-
-if (pln.bioParam.bioOpt)  
-    set(handles.btnSetTissue,'Enable','on');
-else
-    set(handles.btnSetTissue,'Enable','off');
+if isfield(pln,'radiationMode')
+    set(handles.popupRadMode,'Value',find(strcmp(get(handles.popupRadMode,'String'),pln.radiationMode)));
+end
+if isfield(pln,'machine')
+    set(handles.popUpMachine,'Value',find(strcmp(get(handles.popUpMachine,'String'),pln.machine)));
 end
 
-multScenDummy = matRad_multScen([],pln.multScen.TYPE);
-ix = find(strcmp(multScenDummy.AvailableScenCreationTYPE,pln.multScen.TYPE));
-set(handles.popupmenuScenGen,'Value',ix);
+if isfield(pln,'bioParam')
+    cellBioModel = get(handles.popMenuBioOpt,'String');
+    cellQuantOpt = get(handles.popMenuQuantOpt,'String');
+    set(handles.popMenuBioOpt,'Value',find(strcmp(pln.bioParam.model,cellBioModel)));
+    set(handles.popMenuQuantOpt,'Value',find(strcmp(pln.bioParam.quantityOpt,cellQuantOpt)));
+
+    if (pln.bioParam.bioOpt)
+        set(handles.btnSetTissue,'Enable','on');
+    else
+        set(handles.btnSetTissue,'Enable','off');
+    end
+end
+
+if isfield(pln,'multScen')
+    multScenDummy = matRad_multScen([],pln.multScen.TYPE);
+    ix = find(strcmp(multScenDummy.AvailableScenCreationTYPE,pln.multScen.TYPE));
+    set(handles.popupmenuScenGen,'Value',ix);
+end
 %% enable sequencing button if radiation mode is set to photons
-if strcmp(pln.radiationMode,'photons') && pln.propOpt.runSequencing
-    set(handles.btnRunSequencing,'Enable','on');
-    set(handles.btnRunSequencing,'Value',1);
-    set(handles.txtSequencing,'Enable','on');
-    set(handles.editSequencingLevel,'Enable','on');
-elseif strcmp(pln.radiationMode,'photons') && ~pln.propOpt.runSequencing
-    set(handles.btnRunSequencing,'Enable','on');
-    set(handles.btnRunSequencing,'Value',0);
-    set(handles.txtSequencing,'Enable','off');
-    set(handles.editSequencingLevel,'Enable','off');
-else
-    set(handles.btnRunSequencing,'Enable','off');
-    set(handles.txtSequencing,'Enable','off');
-    set(handles.editSequencingLevel,'Enable','off');
-end
-%% enable DAO button if radiation mode is set to photons
-if strcmp(pln.radiationMode,'photons') && pln.propOpt.runDAO
-    set(handles.btnRunDAO,'Enable','on');
-    set(handles.btnRunDAO,'Value',1);
-elseif strcmp(pln.radiationMode,'photons') && ~pln.propOpt.runDAO
-    set(handles.btnRunDAO,'Enable','on');
-    set(handles.btnRunDAO,'Value',0);
-else
-    set(handles.btnRunDAO,'Enable','off');
+if isfield(pln,'radiationMode')
+    if strcmp(pln.radiationMode,'photons') && pln.propOpt.runSequencing
+        set(handles.btnRunSequencing,'Enable','on');
+        set(handles.btnRunSequencing,'Value',1);
+        set(handles.txtSequencing,'Enable','on');
+        set(handles.editSequencingLevel,'Enable','on');
+    elseif strcmp(pln.radiationMode,'photons') && ~pln.propOpt.runSequencing
+        set(handles.btnRunSequencing,'Enable','on');
+        set(handles.btnRunSequencing,'Value',0);
+        set(handles.txtSequencing,'Enable','off');
+        set(handles.editSequencingLevel,'Enable','off');
+    else
+        set(handles.btnRunSequencing,'Enable','off');
+        set(handles.txtSequencing,'Enable','off');
+        set(handles.editSequencingLevel,'Enable','off');
+    end
+    %% enable DAO button if radiation mode is set to photons
+    if strcmp(pln.radiationMode,'photons') && pln.propOpt.runDAO
+        set(handles.btnRunDAO,'Enable','on');
+        set(handles.btnRunDAO,'Value',1);
+    elseif strcmp(pln.radiationMode,'photons') && ~pln.propOpt.runDAO
+        set(handles.btnRunDAO,'Enable','on');
+        set(handles.btnRunDAO,'Value',0);
+    else
+        set(handles.btnRunDAO,'Enable','off');
+    end
 end
 
 

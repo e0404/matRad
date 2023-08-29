@@ -155,7 +155,10 @@ for energyIx = vEnergiesIx
             % calculate dose
             dose_r = matRad_calcParticleDoseBixel(depthValues(j) + baseData.offset, radialDist_sq, largestSigmaSq4uniqueEnergies(cnt), baseData);
 
-            cumArea = cumsum(2*pi.*r_mid.*dose_r.*dr);
+            % calculate dose
+            bixel_r = matRad_calcParticleDoseBixel(depthValues(j) + baseData.offset, radialDist_sq, largestSigmaSq4uniqueEnergies(cnt), baseData);
+
+            cumArea = cumsum(2*pi.*r_mid.*bixel_r.physDose.*dr);
             relativeTolerance = 0.5; %in [%]
             if abs((cumArea(end)./(idd(j)))-1)*100 > relativeTolerance
                 warning('LateralParticleCutOff: shell integration is wrong !')
@@ -290,25 +293,76 @@ if visBool
         plot(machine.data(energyIx).depths,(machine.data(energyIx).sigma2),'-.','LineWidth',2),grid on,hold on,ylabel('mm')
         legend({'Cutoff','sigma1','sigma2'});
     else
-        yyaxis left;plot(machine.data(energyIx).LatCutOff.depths,machine.data(energyIx).LatCutOff.CutOff,'LineWidth',2),hold on,ylabel('mm')
-        yyaxis right;subplot(313),plot(machine.data(energyIx).depths,machine.data(energyIx).sigma,'LineWidth',2),grid on,hold on
-        legend({'Cutoff','sigma'});ylabel('mm')
-    end
+        idd  = matRad_interp1(machine.data(energyIx).depths,machine.data(energyIx).Z,depthValues) * conversionFactor;
 
-    set(gca,'FontSize',12),xlabel('z [mm]'),  ylabel('mm')
+        [~,peakixDepth] = max(idd);
+        dosePeakPos = matRad_calcParticleDoseBixel(machine.data(energyIx).depths(peakixDepth), 0, sigmaIni_sq, baseData);
 
-    % plot cutoff of different energies
-    figure,set(gcf,'Color',[1 1 1]);
-    cnt = 1;
-    for i = vEnergiesIx
-        plot(machine.data(i).LatCutOff.depths,machine.data(i).LatCutOff.CutOff,'LineWidth',1.5),hold on
-        cellLegend{cnt} = [num2str(machine.data(i).energy) ' MeV'];
-        cnt = cnt + 1;
+        vLevelsDose = dosePeakPos.*[0.01 0.05 0.1 0.9];
+        doseSlice   = squeeze(mDose(midPos,:,:));
+        figure,set(gcf,'Color',[1 1 1]);
+        subplot(311),h=imagesc(squeeze(mDose(midPos,:,:)));hold on;
+        set(h,'AlphaData', .8*double(doseSlice>0));
+        contour(doseSlice,vLevelsDose,'LevelListMode','manual','LineWidth',2);hold on
+
+        ax = gca;
+        ax.XTickLabelMode = 'manual';
+        ax.XTickLabel     = strsplit(num2str(ax.XTick*sStep + machine.data(energyIx).offset),' ')';
+        ax.YTickLabelMode = 'manual';
+        ax.YTickLabel     = strsplit(num2str(ax.YTick*sStep + machine.data(energyIx).offset),' ')';
+
+        plot(1+(machine.data(energyIx).LatCutOff.depths)*sStep^-1,...
+            machine.data(energyIx).LatCutOff.CutOff * sStep^-1 + midPos,'rx');
+
+        legend({'isodose 1%,5%,10% 90%','calculated cutoff'}) ,colorbar,set(gca,'FontSize',12),xlabel('z [mm]'),ylabel('x [mm]');
+
+        entry = machine.data(energyIx);
+        if isstruct(entry.Z)
+            idd = heterogeneityConfig.sumGauss(entry.depths,entry.Z.mean,entry.Z.width.^2,entry.Z.weight);
+        else
+            idd = machine.data(energyIx).Z;
+        end
+
+        subplot(312),plot(machine.data(energyIx).depths,idd*conversionFactor,'k','LineWidth',2),grid on,hold on
+        plot(radDepths - machine.data(energyIx).offset,vDoseInt,'r--','LineWidth',2),hold on,
+        plot(radDepths - machine.data(energyIx).offset,vDoseInt * TmpCompFac,'bx','LineWidth',1),hold on,
+        legend({'original IDD',['cut off IDD at ' num2str(cutOffLevel) '%'],'cut off IDD with compensation'},'Location','northwest'),
+        xlabel('z [mm]'),ylabel('[MeV cm^2 /(g * primary)]'),set(gca,'FontSize',12)
+
+        totEnergy        = trapz(machine.data(energyIx).depths,idd*conversionFactor) ;
+        totEnergyCutOff  = trapz(radDepths,vDoseInt * TmpCompFac) ;
+        relDiff          =  ((totEnergy/totEnergyCutOff)-1)*100;
+        title(['rel diff of integral dose ' num2str(relDiff) '%']);
+        baseData.LatCutOff.CompFac = TmpCompFac;
+
+        subplot(313),
+        if isfield(machine.data(energyIx),'sigma1')
+            yyaxis left;
+            plot(machine.data(energyIx).LatCutOff.depths,machine.data(energyIx).LatCutOff.CutOff,'LineWidth',2),hold on
+            plot(machine.data(energyIx).depths,(machine.data(energyIx).sigma1),':','LineWidth',2),grid on,hold on,ylabel('mm')
+            yyaxis right;
+            plot(machine.data(energyIx).depths,(machine.data(energyIx).sigma2),'-.','LineWidth',2),grid on,hold on,ylabel('mm')
+            legend({'Cutoff','sigma1','sigma2'});
+        else
+            yyaxis left;plot(machine.data(energyIx).LatCutOff.depths,machine.data(energyIx).LatCutOff.CutOff,'LineWidth',2),hold on,ylabel('mm')
+            yyaxis right;subplot(313),plot(machine.data(energyIx).depths,machine.data(energyIx).sigma,'LineWidth',2),grid on,hold on
+            legend({'Cutoff','sigma'});ylabel('mm')
+        end
+
+        set(gca,'FontSize',12),xlabel('z [mm]'),  ylabel('mm')
+
+        % plot cutoff of different energies
+        figure,set(gcf,'Color',[1 1 1]);
+        cnt = 1;
+        for i = vEnergiesIx
+            plot(machine.data(i).LatCutOff.depths,machine.data(i).LatCutOff.CutOff,'LineWidth',1.5),hold on
+            cellLegend{cnt} = [num2str(machine.data(i).energy) ' MeV'];
+            cnt = cnt + 1;
+        end
+        grid on, grid minor,xlabel('depth in [mm]'),ylabel('lateral cutoff in [mm]')
+        title(['cutoff level = ' num2str(cutOffLevel)]),
+        ylim = get(gca,'Ylim');    set(gca,'Ylim',[0 ylim(2)+3]),    legend(cellLegend)
     end
-    grid on, grid minor,xlabel('depth in [mm]'),ylabel('lateral cutoff in [mm]')
-    title(['cutoff level = ' num2str(cutOffLevel)]),
-    ylim = get(gca,'Ylim');    set(gca,'Ylim',[0 ylim(2)+3]),    legend(cellLegend)
-end
 
 
 
