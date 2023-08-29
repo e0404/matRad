@@ -28,18 +28,15 @@ if isOctave
     matRad_cfg.dispWarning('RTPlan export currently not supported by matRad running in Octave using the dicom package! Skipping...');
     return;
 end
-%%
-
-
 
 %%
 
-if isfield(pln,'DicomInfo')
+if isfield(obj.pln,'DicomInfo')
     % if from an imported plan then use the existing dicom info
     meta = pln.DicomInfo.Meta;
 
 else
-    meta = struct([]);
+    meta = struct();
 
     %Class UID
     ClassUID = '1.2.840.10008.5.1.4.1.1.481.5'; %RT PLAN
@@ -50,23 +47,23 @@ else
 
     %Identifiers for this object
     meta.SOPInstanceUID             = dicomuid;
-    meta.MediaStorageSOPInstanceUID = meta.SOPInstanceUID;    
+    meta.MediaStorageSOPInstanceUID = meta.SOPInstanceUID;
     meta.SeriesInstanceUID          = dicomuid;
     meta.SeriesNumber               = 1;
     meta.InstanceNumber             = 1;
-    
+
     currDate = now;
     currDateStr = datestr(currDate,'yyyymmdd');
     currTimeStr = datestr(currDate,'HHMMSS');
     meta.InstanceCreationDate = currDateStr;
     meta.InstanceCreationTime = currTimeStr;
-    
+
     %ID/Information about the Study
     meta.StudyInstanceUID = obj.StudyInstanceUID;
-    meta.StudyID = obj.StudyID; 
+    meta.StudyID = obj.StudyID;
     meta.StudyDate = obj.StudyDate;
     meta.StudyTime = obj.StudyTime;
-      
+
     %Remaining Meta Data
     meta.Modality = 'RTPLAN';
     meta.Manufacturer = 'matRad';
@@ -90,8 +87,8 @@ else
     meta.RTPlanGeometry = 'PATIENT';
 
     meta.SoftwareVersions = matRad_version();
-    meta.ManufacturerModelName = matRad_version();       
-    
+    meta.ManufacturerModelName = matRad_version();
+
     %Referenced Dose
     try
         rtPlanUID = obj.rtPlanMeta.SOPInstanceUID;
@@ -110,127 +107,183 @@ end
 meta.ReferencedStructureSetSequence.Item_1.ReferencedSOPClassUID = '1.2.840.10008.5.1.4.1.1.481.3';
 meta.ReferencedStructureSetSequence.Item_1.ReferencedSOPInstanceUID = obj.rtssMeta.SOPInstanceUID;
 
-%RTDose - %TODO
+%RTDose - %TODO the reference to the RTDose, also a little fishy because we
+%need cross-references to the rtplan in rtdose to. Maybe we need to set-up
+%IDs while constructing so we can set the references accordingly
 %meta.DoseReferenceSquence.Item_1. ...
 
 
-if pln.propStf.numOfBeams ~= numel(stf)
+if obj.pln.propStf.numOfBeams ~= numel(obj.stf)
     matRad_cfg.error('Inconsistency in stf! number of beams not matching!');
 end
-   
+
 
 %Sequences
 %Sequences
 %ToleranceTableSequence - Optional, we do not write this
 
- % Fraction Sequence
- %  meta.FractionGroupSequence.Item_1.
- meta.FractionGroupSequence.Item_1.FractionGroupNumber =  1;
- meta.FractionGroupSequence.Item_1.NumberOfFractionsPlanned =  pln.numOfFractions;
- meta.FractionGroupSequence.Item_1.NumberOfBeams = pln.propStf.numOfBeams;
- meta.FractionGroupSequence.Item_1.NumberOfBrachyApplicationSetups = 0;
+% Fraction Sequence
+%  meta.FractionGroupSequence.Item_1.
+meta.FractionGroupSequence.Item_1.FractionGroupNumber =  1;
+meta.FractionGroupSequence.Item_1.NumberOfFractionsPlanned =  obj.pln.numOfFractions;
+meta.FractionGroupSequence.Item_1.NumberOfBeams = obj.pln.propStf.numOfBeams;
+meta.FractionGroupSequence.Item_1.NumberOfBrachyApplicationSetups = 0;
+meta.FractionGroupSequence.Item_1.BeamDoseMeaning = 'FRACTION_LEVEL'; %TODO: This is probably no longer necessary.
 
-for i = 1:pln.propStf.numOfBeams
+for iBeam = 1:obj.pln.propStf.numOfBeams
     %PatientSetupSequence - Required
-    currItemStr = sprintf('Item_%d',i);
-    meta.PatientSetupSequence.(currItemStr) = struct('PatientPosition','HFS','PatientSetupNumber',i,'SetupTechniqueDescription','');
-    
-   
-    %TODO meta.FractionGroupSequence.Item_1.ReferencedBeamSequence - %Maybe do when going through the
-    %BeamSequence or afterwards?
-     
+    currBeamItemStr = sprintf('Item_%d',iBeam);
+    meta.PatientSetupSequence.(currBeamItemStr) = struct('PatientPosition','HFS','PatientSetupNumber',iBeam,'SetupTechniqueDescription','');
 
+
+    
     % Write Photon or ion RTPLAN
-    if strcmp(pln.radiationMode,'photons')
+    if strcmp(obj.pln.radiationMode,'photons')
         BeamParam = 'BeamSequence';
         ControlParam = 'ControlPointSequence';
-    elseif strcmp(pln.radiationmode, 'protons') ||strcmp(pln.radiationmode, 'helium') || strcmp(pln.radiationmode, 'carbon')
+    elseif strcmp(obj.pln.radiationmode, 'protons') ||strcmp(obj.pln.radiationmode, 'helium') || strcmp(obj.pln.radiationmode, 'carbon')
         BeamParam = 'IonBeamSequence';
         ControlParam = 'IonControlPointSequence';
     else
         matRad_cfg.DispError('Not supported radiation mode of DICOM RT plan file.')
     end
 
-    if strcmp(pln.radiationMode,'photons')
-        
-            seqItem.TreatmentMachineName = pln.machine;
-            seqItem.PrimaryDosimeterUnit = 'MU';
-            seqItem.SourceAxisDistance = stf(i).SAD;
-            seqItem.BeamNumber = i;
-            seqItem.BeamType = 'STATIC';
-            seqItem.RadiationType = 'PHOTON'; 
-            seqItem.TreatmentDeliveryType = 'TREATMENT';
-            seqItem.NumberOfWedges = 0;
-            seqItem.NumberOfCompensators = 0;
-            seqItem.NumberOfBoli = 0;
-            seqItem.NumberOfBlocks = 0;
+    if strcmp(obj.pln.radiationMode,'photons')
 
-            %TODO: seqItem.ReferencedDoseSequence (for the beam doses??)
-            
-            %Meterset
-            % The Meterset at a given Control Point is equal to Beam 
-            % Meterset (300A,0086) specified in the Referenced Beam 
-            % Sequence (300C,0004) of the RT Fraction Scheme Module, 
-            % multiplied by the Cumulative Meterset Weight (300A,0134) 
-            % for the Control Point, divided by the Final Cumulative 
-            % Meterset Weight (300A,010E). 
-            % The Meterset is specified in units defined by Primary 
-            % Dosimeter Unit (300A,00B3).
-            
-            
-            
-            
-           
-            %TODO: Get info from apertures
-            seqItem.NumberOfControlPoints = 2;
-            seqItem.Item_1.ControlPointIndex = 0;
-            seqItem.Item_1.NominalBeamEnergy = stf(1).ray.energy;
-            seqItem.Item_1.GantryAngle = stf(i).gantryAngle;
-            seqItem.Item_1.PatientSupportAngle = stf(i).couchAngle;
-            seqItem.Item_1.TableTopEccentricAngle = 0;
-            seqItem.Item_1.IsocenterPosition = stf(i).isoCenter';
-            %BBeamLimitingDeviceSequence: [1×1 struct]
-            %       ignoring:
-            %        
-            %                        BeamNumber: 1
-            %                          BeamName: 'FB1'
-            %                   BeamDescription: '1 FB1'
-            %                     WedgeSequence: [1×1 struct]
-            %                      NumberOfBoli: 0
-            %                    NumberOfBlocks: 0
-            %     FinalCumulativeMetersetWeight: 1
-            %             NumberOfControlPoints: 2
-            %      ReferencedPatientSetupNumber: 1
+        %seqItem references to the current BeamSequence
+        beamSeqItem.TreatmentMachineName = obj.pln.machine;
+        beamSeqItem.PrimaryDosimeterUnit = 'MU';
+        beamSeqItem.SourceAxisDistance = obj.stf(iBeam).SAD;
+        beamSeqItem.BeamNumber = iBeam;
+        beamSeqItem.BeamType = 'DYNAMIC';
+        beamSeqItem.RadiationType = 'PHOTON';
+        beamSeqItem.TreatmentDeliveryType = 'TREATMENT';
+        beamSeqItem.NumberOfWedges = 0;
+        beamSeqItem.NumberOfCompensators = 0;
+        beamSeqItem.NumberOfBoli = 0;
+        beamSeqItem.NumberOfBlocks = 0;
+
+        %TODO: seqItem.ReferencedDoseSequence (for the beam doses??)
+
+        %Meterset
+        % The Meterset at a given Control Point is equal to Beam
+        % Meterset (300A,0086) specified in the Referenced Beam
+        % Sequence (300C,0004) of the RT Fraction Scheme Module,
+        % multiplied by the Cumulative Meterset Weight (300A,0134)
+        % for the Control Point, divided by the Final Cumulative
+        % Meterset Weight (300A,010E).
+        % The Meterset is specified in units defined by Primary
+        % Dosimeter Unit (300A,00B3).
+
+        %Note also that if Final Cumulative Meterset Weight (300A,010E)
+        %is equal to 100, then Cumulative Meterset Weight (300A,0134)
+        %becomes equivalent to the percentage of Beam Meterset
+        %(300A,0086) delivered at each control point. If Final
+        %Cumulative Meterset Weight (300A,010E) is equal to Beam
+        %Meterset (300A,0086), then the Cumulative Meterset Weight
+        %(300A,0134) at each control point becomes equal to the
+        %cumulative Meterset delivered at that control point.
+
+        %This means that this can all be relative, when this value is
+        %100, but we need an absolute value somewhere else. So let's
+        %just use the shape weights and sum them up in the end
+        %beamSeqItem.FinalCumulativeMetersetWeight = 100;
 
 
-
-            % need a way to handle control point sequences for photons and ions
-            %Beamdata
-            
-
-            % Ignoring :
-            %      edgePositionSequence: [1×1 struct]
-            %      BeamLimitingDevicePositionSequence: [1×1 struct]
-            %      GantryRotationDirection: 'NONE'
-            %      BeamLimitingDeviceAngle: 270
-            %      BeamLimitingDeviceRotationDirection: 'NONE'
-            %      PatientSupportRotationDirection: 'NONE'
-            %      TableTopEccentricRotationDirection: 'NONE'
-            %      TableTopVerticalPosition: []
-            %      TableTopLongitudinalPosition: []
-            %      TableTopLateralPosition: []
-            %      SourceToSurfaceDistance: 941.2400            WHERE is this stored ?
-            %      CumulativeMetersetWeight: 0
-
-            meta.BeamSequence.(['Item_' num2str(i)]).ControlPointSequence.Item_2.ControlPointIndex = 1;
-            %   CumulativeMetersetWeight: 1
+        %TODO: Get info from apertures
+        % Take the information from the sequencing field
+        if ~isfield(obj.resultGUI,'apertureInfo')
+            matRad_cfg.dispError('Sequenced Apertures not found!')
         end
+
+        %Get basic information about the collimator:
+        limitDeviceSeq = struct();
+        limitDeviceSeq.Item_1.RTBeamLimitingDeviceType = 'MLCX';
+        %limitDeviceSeq.Item_1.SourceToBeamLimitingDeviceDistance = 300; %TODO
+        limitDeviceSeq.Item_1.NumberOfLeafJawPairs = obj.resultGUI.apertureInfo.numOfMLCLeafPairs;
+        %limitDeviceSeq.Item_1.LeafPositionBoundaries = TODO
+        beamSeqItem.BeamLimitingDeviceSequence = limitDeviceSeq;
+
+        currBeamApertures = obj.resultGUI.apertureInfo.beam(iBeam);
+        beamSeqItem.NumberOfControlPoints = currBeamApertures.numOfShapes;
+
+        %Only IMRT support, no VMAT
+        cumulativeMetersetWeight = 0;
+        for iShape = 1:currBeamApertures.numOfShapes
+            currCtrlSeqItemStr = sprintf('Item_%d',iShape);
+            currCtrlSeqItem = struct();
+            currCtrlSeqItem.ControlPointIndex = iShape-1;
+
+            currShape = currBeamApertures.shape(iShape);
+
+            %Write static Attributes only required for first control point:
+            if iShape == 1
+                currCtrlSeqItem.GantryAngle = obj.stf(iBeam).gantryAngle;
+                currCtrlSeqItem.GantryRotationDirection = 'NONE';
+                currCtrlSeqItem.PatientSupportAngle = obj.stf(iBeam).couchAngle;
+                currCtrlSeqItem.PatientSupportRotationDirection = 'NONE';
+                currCtrlSeqItem.TableTopEccentricAngle = 0;
+                currCtrlSeqItem.TableTopEccentricRotationDirection = 'NONE';
+                currCtrlSeqItem.IsocenterPosition = obj.stf(iBeam).isoCenter';
+            end
+
+            %Check energy, currently can only be constant
+            energy = unique([obj.stf(iBeam).ray.energy]);
+            if numel(energy) > 1
+                matRad_cfg.dispError('Multiple Energies currently not supported!');
+            end
+            currCtrlSeqItem.NominalBeamEnergy = energy;
+
+            %Collimator (& Jaws, but we leave them out for now)
+            limitPosSeq = struct();
+            limitPosSeq.Item_1.RTBeamLimitingDeviceType = 'MLCX';
+
+            leftLeafPos = zeros(obj.resultGUI.apertureInfo.numOfMLCLeafPairs,1);
+            rightLeafPos = leftLeafPos;
+
+            leftLeafPos(logical(currBeamApertures.isActiveLeafPair)) = currShape.leftLeafPos;
+            rightLeafPos(logical(currBeamApertures.isActiveLeafPair)) = currShape.rightLeafPos;
+
+            limitPosSeq.Item_1.LeafJawPositions = [leftLeafPos; rightLeafPos];
+
+            currCtrlSeqItem.BeamLimitingDevicePositionSequence = limitPosSeq;
+
+            %This always needs to be zero for the first Item. However,
+            %the last one should be the fully cumulated value. Does
+            %this mean that the last control point ?
+            currCtrlSeqItem.CumulativeMetersetWeight = cumulativeMetersetWeight;
+
+            shapeWeight = currBeamApertures.shape(iShape).weight; %Is this correct? It basically means that the next
+            cumulativeMetersetWeight = cumulativeMetersetWeight + shapeWeight;
+
+            beamSeqItem.ControlPointSequence.(currCtrlSeqItemStr) = currCtrlSeqItem;
+        end
+
+        %TODO: We need to add a final control point only containing the
+        %cumulative meterset
+        currCtrlSeqItemStr = sprintf('Item_%d',iShape+1);
+        beamSeqItem.ControlPointSequence.(currCtrlSeqItemStr).cumulativeMetersetWeight = cumulativeMetersetWeight;
+        %Do we need anything else here?
+        
+        %Add the final cumulative meterset weight (see comment above, we
+        %use absolute values and not 100, so we can easy add it to the Fraction sequence)
+        beamSeqItem.FinalCumulativeMetersetWeight = cumulativeMetersetWeight;
 
     end
 
+    meta.BeamSequence.(currBeamItemStr) = beamSeqItem;
 
-
+    %TODO meta.FractionGroupSequence.Item_1.ReferencedBeamSequence
+    refBeamSeqItem = struct();
+    resultGUIbeamStr = sprintf('physicalDose_beam%d',iBeam);
+    if isfield(obj.resultGUI,resultGUIbeamStr)
+        refBeamSeqItem.BeamDose = mean(obj.resultGUI.physicalDose_beam1,"all"); %TODO: Probably no longer necessary according to standard
+    end
+    refBeamSeqItem.BeamMeterset = cumulativeMetersetWeight;
+    refBeamSeqItem.ReferencedBeamNumber = iBeam;
+    meta.FractionGroupSequence.Item_1.ReferencedBeamSequence.(currBeamItemStr) = refBeamSeqItem;
 end
+
 %%
 
 filename = 'RTplan.dcm';
