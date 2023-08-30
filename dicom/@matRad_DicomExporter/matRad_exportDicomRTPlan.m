@@ -190,24 +190,42 @@ for iBeam = 1:obj.pln.propStf.numOfBeams
         %beamSeqItem.FinalCumulativeMetersetWeight = 100;
 
 
-        %TODO: Get info from apertures
-        % Take the information from the sequencing field
+        
+        % Take the information from the apertureInfo field
+        %TODO: Get info about jaws? 
         if ~isfield(obj.resultGUI,'apertureInfo')
             matRad_cfg.dispError('Sequenced Apertures not found!')
         end
+        apertureInfo = obj.resultGUI.apertureInfo;
 
         %Get basic information about the collimator:
         limitDeviceSeq = struct();
-        limitDeviceSeq.Item_1.RTBeamLimitingDeviceType = 'MLCX';
-        %limitDeviceSeq.Item_1.SourceToBeamLimitingDeviceDistance = 300; %TODO
-        limitDeviceSeq.Item_1.NumberOfLeafJawPairs = obj.resultGUI.apertureInfo.numOfMLCLeafPairs;
-        %limitDeviceSeq.Item_1.LeafPositionBoundaries = TODO
+        limitDeviceSeq.Item_1.RTBeamLimitingDeviceType = 'MLCX';        
+        limitDeviceSeq.Item_1.NumberOfLeafJawPairs = apertureInfo.numOfMLCLeafPairs;
+
+        if ~isfield(apertureInfo,'leafBoundaries') %TODO Information should be added by the sequencers
+            matRad_cfg.dispWarning('Leaf Boundaries not specified in aperture info!');
+            leafBoundaries = 0:apertureInfo.bixelWidth:(apertureInfo.numOfMLCLeafPairs)*apertureInfo.bixelWidth;
+            leafBoundaries = leafBoundaries - leafBoundaries(end)/2;
+        else
+            leafBoundaries = apertureInfo.leafBoundaries;
+        end
+        limitDeviceSeq.Item_1.LeafPositionBoundaries = leafBoundaries;
+
+        if ~isfield(apertureInfo,'SCD') %TODO implement that sequencers add this information (from machine file?)
+            load(fullfile(matRad_cfg.matRadRoot,'basedata',['photons_' obj.pln.machine '.mat']),'machine');
+            SCD = machine.meta.SCD;
+        else
+            SCD = aperturmateInfo.SCD;
+        end
+        limitDeviceSeq.Item_1.SourceToBeamLimitingDeviceDistance = SCD;
+        
         beamSeqItem.BeamLimitingDeviceSequence = limitDeviceSeq;
 
-        currBeamApertures = obj.resultGUI.apertureInfo.beam(iBeam);
+        currBeamApertures = apertureInfo.beam(iBeam);
         beamSeqItem.NumberOfControlPoints = currBeamApertures.numOfShapes;
 
-        %Only IMRT support, no VMAT
+        %Get IMRT shapes. Only IMRT support (DYNAMIC), no VMAT
         cumulativeMetersetWeight = 0;
         for iShape = 1:currBeamApertures.numOfShapes
             currCtrlSeqItemStr = sprintf('Item_%d',iShape);
@@ -238,7 +256,7 @@ for iBeam = 1:obj.pln.propStf.numOfBeams
             limitPosSeq = struct();
             limitPosSeq.Item_1.RTBeamLimitingDeviceType = 'MLCX';
 
-            leftLeafPos = zeros(obj.resultGUI.apertureInfo.numOfMLCLeafPairs,1);
+            leftLeafPos = zeros(apertureInfo.numOfMLCLeafPairs,1);
             rightLeafPos = leftLeafPos;
 
             leftLeafPos(logical(currBeamApertures.isActiveLeafPair)) = currShape.leftLeafPos;
@@ -262,7 +280,8 @@ for iBeam = 1:obj.pln.propStf.numOfBeams
         %TODO: We need to add a final control point only containing the
         %cumulative meterset
         currCtrlSeqItemStr = sprintf('Item_%d',iShape+1);
-        beamSeqItem.ControlPointSequence.(currCtrlSeqItemStr).cumulativeMetersetWeight = cumulativeMetersetWeight;
+        beamSeqItem.ControlPointSequence.(currCtrlSeqItemStr) = struct();
+        beamSeqItem.ControlPointSequence.(currCtrlSeqItemStr).CumulativeMetersetWeight = cumulativeMetersetWeight;
         %Do we need anything else here?
         
         %Add the final cumulative meterset weight (see comment above, we
