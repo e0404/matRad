@@ -35,7 +35,7 @@ tmpCollimation.Fields = struct;
 % check for following meta data in every control point sequence
 % Format: 'DICOM Name Tag' 'Name in struct'; ... 
 meta =  {'NominalBeamEnergy' 'Energy';'GantryAngle' 'GantryAngle';...
-        'PatientSupportAngle' 'CouchAngle';'SourceToSurfaceDistance' 'SSD'};
+        'PatientSupportAngle' 'CouchAngle'} %;'SourceToSurfaceDistance' 'SSD'};
 
 % extract field information
 beamSeqNames = fields(beamSequence);
