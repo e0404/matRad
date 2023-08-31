@@ -1,7 +1,7 @@
-function status = IO_stf()
+function status = IO_stf(path)
 
-stf_init = load('C:\Users\g906c\Projects\pyRadPlan\stf_with_separate_rays.mat', 'stf');
-ray_init = load('C:\Users\g906c\Projects\pyRadPlan\stf_with_separate_rays.mat', 'rays');
+stf_init = load(strcat(path,'stf_with_separate_rays.mat'), 'stf');
+ray_init = load(strcat(path,'stf_with_separate_rays.mat'), 'rays');
 
 %%
 stf = [stf_init.stf{:}];
@@ -16,7 +16,7 @@ for i=1:size(ray_init.rays, 2)
 end
 
 %%
-save('C:\Users\g906c\Projects\pyRadPlan\stf.mat', 'stf')
+save(strcat(path,'stf.mat'), 'stf')
 
 status = 'STF written';
 
