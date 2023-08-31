@@ -78,9 +78,16 @@ for i = 1:length(beamSeqNames)
         end
     end
     
-    for j = 1:length(currControlPointSeqNames)
+    for j = 1:length(currControlPointSeqNames)-1
        counter = counter + 1;
-       currControlPointElement = currBeamSeq.ControlPointSequence.(currControlPointSeqNames{j});      
+       currControlPointElement = currBeamSeq.ControlPointSequence.(currControlPointSeqNames{j});
+       %We need this to get the correct weight from the next Control Point
+       nextControlPointElement = currBeamSeq.ControlPointSequence.(currControlPointSeqNames{j+1});
+
+       if j == 1 && isfield(currControlPointElement, 'CumulativeMetersetWeight') && currControlPointElement.CumulativeMetersetWeight > 0
+           matRad_cfg.dispWarning('First Control Point in Beam %d already has a CumulativeMeterset bigger than 0.',i)
+           cumWeight = currControlPointElement.CumulativeMetersetWeight;
+       end
         
        if isfield(currControlPointElement, 'BeamLimitingDevicePositionSequence')
            % get the leaf position for every device
@@ -126,11 +133,11 @@ for i = 1:length(beamSeqNames)
        end
        
        % get field meta information
-       if isfield(currControlPointElement, 'CumulativeMetersetWeight')      
-           newCumWeight = currControlPointElement.CumulativeMetersetWeight;
-           tmpCollimation.Fields(counter).Weight = (newCumWeight - cumWeight) / ...
-                                    currBeamSeq.FinalCumulativeMetersetWeight * ...
-                                    tmpCollimation.beamMeterset(i)/100;
+       if isfield(nextControlPointElement, 'CumulativeMetersetWeight')      
+           newCumWeight = nextControlPointElement.CumulativeMetersetWeight;
+           relativeShapeWeight = (newCumWeight - cumWeight) / currBeamSeq.FinalCumulativeMetersetWeight;
+           tmpCollimation.Fields(counter).Weight = relativeShapeWeight * tmpCollimation.beamMeterset(i)/100;
+
            cumWeight = newCumWeight;
        else
            warning(['No CumulativeMetersetWeight found in control point sequence ' currControlPointSeqNames{j} ...
