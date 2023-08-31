@@ -24,10 +24,7 @@ function obj = matRad_exportDicomRTDoses(obj)
  matRad_cfg = MatRad_Config.instance();
 matRad_cfg.dispInfo('Exporting DICOM RTDose...\n');
 
-env = matRad_getEnvironment();
-isOctave = strcmp(env,'OCTAVE');
-
-if isOctave
+if matRad_cfg.isOctave
     matRad_cfg.dispWarning('RTDose export currently not supported by matRad running in Octave using the dicom package! Skipping...');
     return;
 end

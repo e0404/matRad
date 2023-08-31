@@ -47,7 +47,7 @@ pln.propStf.bixelWidth      = 3;
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 pln.propOpt.runDAO          = 0;
-pln.propOpt.runSequencing   = 0;
+pln.propSeq.runSequencing   = 0;
 
 % dose calculation settings
 pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
