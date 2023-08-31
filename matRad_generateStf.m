@@ -53,6 +53,8 @@ for i=1:size(cst,1)
     end
 end
 
+disp(length(V));
+
 % Remove double voxels
 V = unique(V);
 % generate voi cube for targets
@@ -115,6 +117,10 @@ end
 % Define steering file like struct. Prellocating for speed.
 stf = struct;
 
+save('coordsX_vox', 'coordsX_vox');
+save('coordsY_vox', 'coordsY_vox');
+save('coordsZ_vox', 'coordsZ_vox');
+
 % loop over all angles
 for i = 1:length(pln.propStf.gantryAngles)
     
@@ -123,6 +129,8 @@ for i = 1:length(pln.propStf.gantryAngles)
     coordsX = coordsX_vox*ct.resolution.x - pln.propStf.isoCenter(i,1);
     coordsY = coordsY_vox*ct.resolution.y - pln.propStf.isoCenter(i,2);
     coordsZ = coordsZ_vox*ct.resolution.z - pln.propStf.isoCenter(i,3);
+    
+    save('coordsX', 'coordsX');
 
     % Save meta information for treatment plan
     stf(i).gantryAngle   = pln.propStf.gantryAngles(i);
@@ -182,7 +190,7 @@ for i = 1:length(pln.propStf.gantryAngles)
          
          rayPos = [x,y,z];
      end
-    
+     
     % remove double rays
     rayPos = unique(rayPos,'rows');
     

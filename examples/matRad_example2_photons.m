@@ -146,7 +146,7 @@ display(stf(6));
 % Let's generate dosimetric information by pre-computing dose influence 
 % matrices for unit beamlet intensities. Having dose influences available 
 % allows subsequent inverse optimization.
-dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst,1000);
 
 %% Inverse Optimization for IMRT
 % The goal of the fluence optimization is to find a set of beamlet/pencil 
@@ -155,7 +155,7 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 % treatment. Once the optimization has finished, trigger once the GUI to 
 % visualize the optimized dose cubes.
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
-matRadGUI;
+%matRadGUI;
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
