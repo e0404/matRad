@@ -1,10 +1,7 @@
 classdef matRad_InfoWidget < matRad_Widget
     % matRad_InfoWidget class to generate GUI widget to display system and
     % version information 
-    % Describes a standard fluence optimization problem by providing the 
-    % implementation of the objective & constraint function/gradient wrappers
-    % and managing the mapping and backprojection of the respective dose-
-    % related quantity
+    %
     %
     % References
     %   -
@@ -51,6 +48,7 @@ classdef matRad_InfoWidget < matRad_Widget
             h94 = this.widgetHandle;
             matRad_cfg = MatRad_Config.instance();
             txt = sprintf('Info about\nsoftware environment & version\nmatRad version & branch');
+            %About button
             h95 = uicontrol(...
                 'Parent',h94,...
                 'Units','normalized',...
@@ -65,6 +63,7 @@ classdef matRad_InfoWidget < matRad_Widget
                 'FontWeight',matRad_cfg.gui.fontWeight,...
                 'FontName',matRad_cfg.gui.fontName);
             
+            %Position String
             h96 = uicontrol(...
                 'Parent',h94,...
                 'Units','normalized',...
@@ -76,6 +75,7 @@ classdef matRad_InfoWidget < matRad_Widget
                 'FontWeight',matRad_cfg.gui.fontWeight,...
                 'FontName',matRad_cfg.gui.fontName);
             
+            %URL Position String
             h97 = uicontrol(...
                 'Parent',h94,...
                 'Units','normalized',...
@@ -127,9 +127,8 @@ classdef matRad_InfoWidget < matRad_Widget
             elseif ~isempty(matRadVer.branch) && ~isempty(matRadVer.commitID)
                 msg{end+1} = sprintf('Git: Branch %s, commit %s',matRadVer.branch,matRadVer.commitID(1:8));
             end
-            
-            [env,envver]  = matRad_getEnvironment();
-            msg{end+1} = sprintf('Environment: %s v%s %s',env,envver,version('-release'));
+                        
+            msg{end+1} = sprintf('Environment: %s v%s %s',matRad_cfg.env,matRad_cfg.envVersion,version('-release'));
             
             msg{end+1} = 'Web: www.matrad.org';
             msg{end+1} = 'E-Mail: contact@matrad.org';

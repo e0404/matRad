@@ -1,10 +1,7 @@
 classdef matRad_Widget <  handle 
 
     % matRad_Widget Main Class for GUI widget generation 
-    % Describes a standard fluence optimization problem by providing the 
-    % implementation of the objective & constraint function/gradient wrappers
-    % and managing the mapping and backprojection of the respective dose-
-    % related quantity
+    % 
     %
     % References
     %   -
@@ -47,11 +44,11 @@ classdef matRad_Widget <  handle
             this.createLayout();           
             this.initialize();
             
-            [env, ~] = matRad_getEnvironment();
+            matRad_cfg = MatRad_Config.instance();
             
             % only enable in matlab
             %strcmp(env,'MATLAB') && 
-            if strcmp(env,'MATLAB') && strcmp(get(handleParent,'type'),'figure')
+            if matRad_cfg.isMatlab && strcmp(get(handleParent,'type'),'figure')
                 set(this.widgetHandle,'ButtonDownFcn',@(src,hEvent) update(this));   
                 set(this.widgetHandle,'KeyPressFcn',@(src,hEvent) update(this));   
             end
@@ -67,9 +64,9 @@ classdef matRad_Widget <  handle
         end
         
         function changedWorkspace(this,varargin)
-           [env, ~] = matRad_getEnvironment();
+            matRad_cfg = MatRad_Config.instance();
             % handle environment
-            switch env
+            switch matRad_cfg.env
                 case 'MATLAB'
                     %the PlanWidget only changes the pln
                     evt = matRad_WorkspaceChangedEventData(varargin{:});
@@ -117,18 +114,11 @@ classdef matRad_Widget <  handle
                 else
                     meType = 'basic';
                 end
-                Message = {Message,ME.message};%{Message,ME.getReport(meType,'hyperlinks','off')};
+                Message = {Message,ME.message};
+                % Future error hyperlinks {Message,ME.getReport(meType,'hyperlinks','off')};
             end
             matRad_cfg.dispWarning(Message);
-%
-%             if isfield(handles,'ErrorDlg')
-%                 if ishandle(handles.ErrorDlg)
-%                     close(handles.ErrorDlg);
-%                 end
-%             end
-%             handles.ErrorDlg = errordlg(Message);
-%
-             this.handles = handles;         
+            this.handles = handles;         
 
         end
         
@@ -212,7 +202,7 @@ classdef matRad_Widget <  handle
             end            
         end
         
-        
+        %Helper function to position GUI elements on the Main Widget 
         function pos = computeGridPos(this,gridPos,buttonGridSize,buttonRelSize)
             if nargin < 4
                 buttonRelSize = [0.9 0.75];

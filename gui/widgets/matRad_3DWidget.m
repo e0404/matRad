@@ -1,10 +1,7 @@
 classdef matRad_3DWidget < matRad_ViewingWidget
 
     % matRad_3DWidget class to generate GUI widget for 3D plan visualization 
-    % Describes a standard fluence optimization problem by providing the 
-    % implementation of the objective & constraint function/gradient wrappers
-    % and managing the mapping and backprojection of the respective dose-
-    % related quantity
+    % 
     %
     % References
     %   -
@@ -31,6 +28,7 @@ classdef matRad_3DWidget < matRad_ViewingWidget
     end
     
     methods
+        %Constructor
         function this = matRad_3DWidget(viewingWidgetHandle,handleParent)
             matRad_cfg = MatRad_Config.instance();
             if nargin < 2
@@ -92,7 +90,6 @@ classdef matRad_3DWidget < matRad_ViewingWidget
     methods(Access = protected)
         function this = createLayout(this)
             h88 = this.widgetHandle;
-         
             this.createHandles();
             
         end

@@ -1,6 +1,6 @@
 classdef matRad_OptimizationWidget < matRad_Widget
     % matRad_OptimizationWidget class to generate GUI widget to set
-    % optimization objectives and options
+    % optimization options
     %
     % References
     %   -
@@ -74,9 +74,9 @@ classdef matRad_OptimizationWidget < matRad_Widget
         function this = createLayout(this)
             h1 = this.widgetHandle;
             
-            [env, ~] = matRad_getEnvironment();
+            matRad_cfg = MatRad_Config.instance();
             % handle environment
-            switch env
+            switch matRad_cfg.env
                 case 'MATLAB'
                     set(h1,'SizeChangedFcn',@(hObject,eventdata) widget_SizeChangedFcn(this,hObject,eventdata));
                 case 'OCTAVE'
@@ -256,7 +256,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
                             try
                                 obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
                             catch ME
-                                matRad_cfg.dispError('Objective/Constraint not valid!\n%s',ME.message)
+                                matRad_cfg.dispWarning('Objective/Constraint not valid!\n%s',ME.message)
                                 continue;
                             end
                         end
@@ -559,7 +559,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
                 %generateCstTable(this,cst);
             end
         end
-        
+        %CST Param Callback
         function editCstParams_Callback(this,hObject,~)
             handles=this.handles;
             data = hObject.UserData;
@@ -580,7 +580,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
                     cst{ix,col}.Priority = uint32(str2double(str));
                     %cst{ix,col}=setfield(cst{ix,col},'Priority',uint32(str2double(str)));
                 otherwise
-                    warning('Wrong column assignment in GUI based cst setting');
+                    matRad_cfg.dispWarning('Wrong column assignment in GUI based cst setting');
             end
             
             assignin('base','cst',cst);

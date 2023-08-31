@@ -1,9 +1,24 @@
 classdef matRad_MainGUI < handle
-    
+% matRad_MainGUI   Graphical User Interface configuration class   
+% This Class is used to create the main GUI interface where all the widgets
+% are called and created.
+%
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2019 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties
         guiHandle
-        lastStoragePath = []
-        env
+        lastStoragePath = []        
     end
     
     properties (Access = private)
@@ -18,8 +33,7 @@ classdef matRad_MainGUI < handle
         ViewingWidget
         DVHStatsWidget
         eventListeners
-        
-        matRad_cfg = MatRad_Config.instance();
+        GammaWidget
     end
     
    
@@ -29,6 +43,7 @@ classdef matRad_MainGUI < handle
            h1 = this.guiHandle;
            folder = fileparts(mfilename('fullpath'));
            loadIcons = load(fullfile(folder,'matRad_iconsGUI.mat'),'icons');
+
            icons = loadIcons.icons;
             
             h60 = uitoolbar(...
@@ -112,6 +127,13 @@ classdef matRad_MainGUI < handle
                 'ClickedCallback',@(hObject, eventdata)uitoggletool8_ClickedCallback(this, hObject, eventdata),...
                 'Separator','on',...
                 'TooltipString','Insert Colorbar' );
+% TODO: future dose comparison tool
+%             h70 = uipushtool(...
+%                 'Parent',h60,...
+%                 'Tag','uipushtool_GammaIndex',...
+%                 'CData',icons{10},...
+%                 'ClickedCallback',@(hObject,eventdata)gammaIndex_ClickedCallback(this, hObject, eventdata),...
+%                 'TooltipString','Calculate Gamma Index' );
             
         end
     end
@@ -150,8 +172,6 @@ classdef matRad_MainGUI < handle
                 'FontName',matRad_cfg.gui.fontName,...
                 'FontSize',matRad_cfg.gui.fontSize,...
                 'FontWeight',matRad_cfg.gui.fontWeight);
-            
-            
             
             pPlan = uipanel(...
                 'Parent',obj.guiHandle,...
@@ -242,16 +262,11 @@ classdef matRad_MainGUI < handle
                 'FontSize',matRad_cfg.gui.fontSize,...
                 'FontWeight',matRad_cfg.gui.fontWeight);
            
-
-            
-            [obj.env, ~] = matRad_getEnvironment();
-                        
+            % Initialize Widgets            
             obj.WorkflowWidget = matRad_WorkflowWidget(pWorkflow);
             obj.PlanWidget = matRad_PlanWidget(pPlan);            
             obj.OptimizationWidget = matRad_OptimizationWidget(pOptimization);
             obj.ViewingWidget = matRad_ViewingWidget(pViewing);
-            
-           
             obj.ViewingWidget.scrollHandle =  obj.guiHandle;            
             obj.VisualizationWidget = matRad_VisualizationWidget(obj.ViewingWidget,pVisualization);        
             obj.ViewerOptionsWidget = matRad_ViewerOptionsWidget(obj.ViewingWidget,pViewerOptions);
@@ -259,8 +274,10 @@ classdef matRad_MainGUI < handle
             obj.InfoWidget = matRad_InfoWidget(pInfo); % does not need a listener
             obj.LogoWidget = matRad_LogoWidget(pLogo); % does not need a listener
             
-            switch obj.env
-                case 'MATLAB'                                      
+            %Initialize event Listeners
+            switch matRad_cfg.env
+                case 'MATLAB' 
+                    %Event listeners triggered on events
                     obj.eventListeners.workflow = addlistener(obj.WorkflowWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,hEvent));
                     obj.eventListeners.plan = addlistener(obj.PlanWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,hEvent));
                     obj.eventListeners.optimization = addlistener(obj.OptimizationWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,hEvent));
@@ -314,49 +331,50 @@ classdef matRad_MainGUI < handle
                     end
                 end
             catch
-                warning('Java properties couldn''t be set');
+                matRad_cfg.dispDeprecationWarning('Java properties couldn''t be set');
             end
         end
         
         function this = updateWidgets(this,evt)
-           
-           if this.matRad_cfg.logLevel > 3 
+           matRad_cfg = MatRad_Config.instance();
+           if matRad_cfg.logLevel > 3 
                if nargin < 2 || ~isa(evt,'matRad_WorkspaceChangedEvent')
                    changed = {};
                else
                    changed = evt.changedVariables;
                end
 
-               this.matRad_cfg.dispDebug('GUI Workspace Changed at %s. ',datestr(now,'HH:MM:SS.FFF')); 
+               matRad_cfg.dispDebug('GUI Workspace Changed at %s. ',datestr(now,'HH:MM:SS.FFF')); 
                if ~isempty(changed)
-                   this.matRad_cfg.dispDebug('Specific Variables: %s.\n',strjoin(changed,'|'));
+                   matRad_cfg.dispDebug('Specific Variables: %s.\n',strjoin(changed,'|'));
                else
-                   this.matRad_cfg.dispDebug('\n');
+                   matRad_cfg.dispDebug('\n');
                end
            end
            
-           %disp(['Workspace Changed ' datestr(now,'HH:MM:SS.FFF')]);
+          
            %%Debug
            this.PlanWidget.update(evt);
            this.WorkflowWidget.update(evt);
            this.OptimizationWidget.update(evt);
            this.ViewingWidget.lockUpdate = 0;
            this.ViewingWidget.update(evt);
+           this.StructureVisibilityWidget.update(evt);
            %this.ViewerOptionsWidget.update();
            %this.VisualizationWidget.update();
-           this.StructureVisibilityWidget.update(evt);
+           
         end
         
         function this = updateButtons(this)
            %disp(['Plot Changed ' datestr(now,'HH:MM:SS.FFF')]); %Debug
            % update the visualization and viewer options widgets
            
-           
-           if strcmp(this.env,'OCTAVE')
+           matRad_cfg = MatRad_Config.instance();
+
+           if strcmp(matRad_cfg.env,'OCTAVE')
               return
            end
          
-           %set(findobj(this.guiHandle,'tag','uitoggletool8'),'State',get(this.ViewingWidget.cBarHandle,'visible'));
            set(findobj(this.guiHandle,'tag','toolbarPan'),'State',get(this.ViewingWidget.panHandle,'Enable'));
            set(findobj(this.guiHandle,'tag','toolbarCursor'),'State',get(this.ViewingWidget.dcmHandle,'Enable'));
              
@@ -418,6 +436,7 @@ classdef matRad_MainGUI < handle
             end
 
         end
+        %Toolbar screenshot of the Viewing widget
         function uipushtool_screenshot_ClickedCallback(this,hObject, eventdata)
             % hObject    handle to uipushtool_screenshot (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
@@ -427,17 +446,15 @@ classdef matRad_MainGUI < handle
             tmpFig = figure('position',[100 100 700 600],'Visible','off','name','Current View');
             cBarHandle = this.ViewingWidget.cBarHandle; %findobj(handles.figure1,'Type','colorbar');
             if ~isempty(cBarHandle)
-                new_handle = copyobj([this.ViewingWidget.handles.axesFig cBarHandle],tmpFig);
-                %new_handle = copyobj([handles.axesFig cBarHandle],tmpFig);
+                new_handle = copyobj([this.ViewingWidget.handles.axesFig cBarHandle],tmpFig);                
             else
-                new_handle = copyobj(this.ViewingWidget.handles.axesFig,tmpFig);
-                %new_handle = copyobj(handles.axesFig,tmpFig);
+                new_handle = copyobj(this.ViewingWidget.handles.axesFig,tmpFig);                
             end
             
             oldPos = get(this.ViewingWidget.handles.axesFig,'Position');
             set(new_handle(1),'units','normalized', 'Position',oldPos);
             
-            if exist(this.lastStoragePath,'dir') ~= 7 %~isfield(handles,'lastStoragePath') || exist(handles.lastStoragePath,'dir') ~= 7
+            if exist(this.lastStoragePath,'dir') ~= 7 
                 this.lastStoragePath = [];
             end
             
@@ -457,65 +474,56 @@ classdef matRad_MainGUI < handle
             end
             
         end
-        % --------------------------------------------------------------------
+       
+        % Toggle color bar callback
         function uitoggletool8_ClickedCallback(this,hObject, eventdata)
             % hObject    handle to uitoggletool8 (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
             
-            %Check if on or off
             this.ViewingWidget.plotColorBar = strcmp(get(hObject,'State'),'on');
-%             val = strcmp(get(hObject,'State'),'on');
 
-%             %Now we have to apply the new selection to our colormap options panel
-%             if ~val
-%                 newSelection = 1;
-%             else
-%                 %Chooses the selection from the highest state
-%                 selections = get(this.ViewerOptionsWidget.handles.popupmenu_chooseColorData,'String'); %get(handles.popupmenu_chooseColorData,'String');
-%                 newSelection = numel(selections);
-%             end
-%             set(this.ViewerOptionsWidget.handles.popupmenu_chooseColorData,'Value',newSelection);
-%             this.ViewerOptionsWidget.popupmenu_chooseColorData_Callback();
-%             
-            %handles.cBarChanged = true;
-            %guidata(hObject,handles);
         end
-        
+        %Toggle Legend Callback
         function toolbarLegend_ClickedCallback(this,hObject, eventdata)
-            %Check if on or off
+           
             this.ViewingWidget.plotLegend = strcmp(get(hObject,'State'),'on');
-           %set(this.ViewingWidget.legendHandle,'visible',get(hObject,'State'));
         end
-        
+        %Toggle Zoom in Callback
         function toolbarZoomIn_ClickedCallback(this,hObject, eventdata)
             set(this.ViewingWidget.zoomHandle,'Enable',char(get(hObject,'State')));
             set(this.ViewingWidget.zoomHandle,'Direction','in');
             set(findobj('tag','toolbarZoomOut'),'State','off');
         end
-        
+        %Toggle Zoom out Callback
         function toolbarZoomOut_ClickedCallback(this,hObject, eventdata)
             set(this.ViewingWidget.zoomHandle,'Enable',char(get(hObject,'State')));
             set(this.ViewingWidget.zoomHandle,'Direction','out');
             set(findobj('tag','toolbarZoomIn'),'State','off');
         end
-        
+        %Toggle Pan Callback
         function toolbarPan_ClickedCallback(this,hObject, eventdata)
            set(this.ViewingWidget.panHandle,'Enable',char(get(hObject,'State')));
         end
-        
+        %Toggle cursor Callback
         function toolbarCursor_ClickedCallback(this,hObject, eventdata)
            set(this.ViewingWidget.dcmHandle,'Enable',get(hObject,'State'));
         end        
+
+        %Toggle cursor Callback
+        function gammaIndex_ClickedCallback(this,hObject, eventdata)
+           % this.GammaWidget = matRad_GammaWidget();
+        end     
+
         
         % button: close
         function figure1_CloseRequestFcn(this,hObject, ~)
-            set(0,'DefaultUicontrolBackgroundColor',[0.5 0.5 0.5]);
+            matRad_cfg = MatRad_Config.instance();
+            set(0,'DefaultUicontrolBackgroundColor',matRad_cfg.gui.backgroundColor);
             selection = questdlg('Do you really want to close matRad?',...
                 'Close matRad',...
                 'Yes','No','Yes');
-            
-            %BackgroundColor',[0.5 0.5 0.5]
+
             switch selection
                 case 'Yes'
                     delete(hObject);

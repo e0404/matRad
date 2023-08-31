@@ -1,10 +1,7 @@
 classdef matRad_WorkflowWidget < matRad_Widget
     % matRad_WorkflowWidget class to generate GUI widget to run through the
     % treatment planning workflow
-    % Describes a standard fluence optimization problem by providing the 
-    % implementation of the objective & constraint function/gradient wrappers
-    % and managing the mapping and backprojection of the respective dose-
-    % related quantity
+    % 
     %
     % References
     %   -

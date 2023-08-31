@@ -45,11 +45,7 @@ if ~exist('visBool','var')
   visBool = 0;
 end
 
-env = matRad_getEnvironment();
-
-matRad_checkEnvDicomRequirements(env);
-
-isOctave = strcmp(env,'OCTAVE');
+matRad_checkEnvDicomRequirements(matRad_cfg.env);
 
 
 % creation of ctInfo list
@@ -59,7 +55,7 @@ matRad_cfg.dispInfo('\ncreating info...')
 sliceThicknessStandard = true;
 for i = 1:numOfSlices
 
-    if isOctave ||verLessThan('matlab','9')
+    if matRad_cfg.isOctave || verLessThan('matlab','9')
         tmpDicomInfo = dicominfo(ctList{i,1});
     else
         tmpDicomInfo = dicominfo(ctList{i,1},'UseDictionaryVR',true);
@@ -149,7 +145,7 @@ matRad_cfg.dispInfo('reading slices...')
 origCt = zeros(ctInfo(1).Height, ctInfo(1).Width, numOfSlices);
 for i = 1:numOfSlices
     currentFilename = ctList{i};
-    if isOctave
+    if matRad_cfg.isOctave
         currentImage = dicomread(currentFilename);
         map = [];
     else

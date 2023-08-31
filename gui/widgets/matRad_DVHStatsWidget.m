@@ -2,10 +2,7 @@ classdef matRad_DVHStatsWidget < matRad_Widget
 
     % matRad_DVHStatsWidget class to generate GUI widget display DVH and
     % stats
-    % Describes a standard fluence optimization problem by providing the 
-    % implementation of the objective & constraint function/gradient wrappers
-    % and managing the mapping and backprojection of the respective dose-
-    % related quantity
+    %
     %
     % References
     %   -
@@ -38,7 +35,7 @@ classdef matRad_DVHStatsWidget < matRad_Widget
 
                 handleParent = figure(...
                     'Units','normalized',...
-                    'Position',[0.005 0.05 0.495 0.9],...
+                    'OuterPosition',[0 0 0.5 1],...
                     'Visible','on',...
                     'Color',matRad_cfg.gui.backgroundColor,...  'CloseRequestFcn',@(hObject,eventdata) figure1_CloseRequestFcn(this,hObject,eventdata),...
                     'IntegerHandle','off',...
@@ -72,6 +69,7 @@ classdef matRad_DVHStatsWidget < matRad_Widget
                         this.statWidgetHandle.update(evt);
                     end
                 else
+                    %Check for change in the selected cube 
                     if ~strcmp(this.dvhWidgetHandle.selectedCube, this.selectedDisplayOption)
                         this.dvhWidgetHandle.selectedCube = this.selectedDisplayOption;
                         this.statWidgetHandle.selectedCube = this.selectedDisplayOption;
@@ -79,6 +77,7 @@ classdef matRad_DVHStatsWidget < matRad_Widget
                     end
                         this.dvhWidgetHandle = this.dvhWidgetHandle.update();
                         this.statWidgetHandle = this.statWidgetHandle.update();
+                        %Clear previous DVH and stat
                         if numel(this.dvhWidgetHandle.widgetHandle.Children) > 2 
                             this.removeOverlap();
                         end
@@ -92,8 +91,9 @@ classdef matRad_DVHStatsWidget < matRad_Widget
 
         end
         function removeOverlap(this)
-            delete(this.dvhWidgetHandle.widgetHandle.Children(3)); % to clear previous plotted objects
-            delete(this.dvhWidgetHandle.widgetHandle.Children(3));
+            % Clear previous plotted objects
+            delete(this.dvhWidgetHandle.widgetHandle.Children(3)); 
+
         end
     end
 
@@ -102,7 +102,7 @@ classdef matRad_DVHStatsWidget < matRad_Widget
             h88 = this.widgetHandle;
             
             matRad_cfg = MatRad_Config.instance();
-            
+            %DVH Panel
             p1 = uipanel(...
                 'Parent',h88,...                      
                 'BackgroundColor',matRad_cfg.gui.backgroundColor,...
@@ -113,7 +113,7 @@ classdef matRad_DVHStatsWidget < matRad_Widget
                 'FontSize',matRad_cfg.gui.fontSize,...
                 'FontWeight',matRad_cfg.gui.fontWeight,...
                 'Title','DVH');
-            
+            % Statistics panel
             p2 = uipanel(...
                 'Parent',h88,...                
                 'BackgroundColor',matRad_cfg.gui.backgroundColor,...
@@ -125,6 +125,7 @@ classdef matRad_DVHStatsWidget < matRad_Widget
                 'FontWeight',matRad_cfg.gui.fontWeight,...
                 'Title','Statistics');
             
+            %Initiate DVH and Stats Widgets
             this.dvhWidgetHandle = matRad_DVHWidget([],p1);
             this.statWidgetHandle = matRad_StatisticsWidget([],p2);
             this.createHandles();
