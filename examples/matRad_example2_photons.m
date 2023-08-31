@@ -106,7 +106,7 @@ pln.propOpt.bioOptimization = 'none';
 % to 30. Internally, matRad considers the fraction dose for optimization, 
 % however, objetives and constraints are defined for the entire treatment.
 pln.numOfFractions         = 30;
-pln.propStf.gantryAngles   = [0, 90, 180, 270];
+pln.propStf.gantryAngles   = [0:40:359];
 pln.propStf.couchAngles    = zeros(1,numel(pln.propStf.gantryAngles));
 pln.propStf.bixelWidth     = 5;
 
