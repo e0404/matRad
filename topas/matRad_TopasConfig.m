@@ -134,7 +134,10 @@ classdef matRad_TopasConfig < handle
             'Scorer_RBE_libamtrack','TOPAS_scorer_doseRBE_libamtrack.txt.in',...
             'Scorer_RBE_LEM1','TOPAS_scorer_doseRBE_LEM1.txt.in',...
             'Scorer_RBE_WED','TOPAS_scorer_doseRBE_Wedenberg.txt.in',...
-            'Scorer_RBE_MCN','TOPAS_scorer_doseRBE_McNamara.txt.in');
+            'Scorer_RBE_MCN','TOPAS_scorer_doseRBE_McNamara.txt.in', ...
+            ... %PhaseSpace Source
+            'phaseSpaceSourcePhotons' ,'SIEMENS_PRIMUS_6.0_0.10_15.0x15.0' );
+       
 
     end
 
@@ -1569,20 +1572,20 @@ classdef matRad_TopasConfig < handle
                         end
 
                     case 'phasespace'
+
                         fprintf(fileID,'d:Sim/GantryAngle = %f deg\n',stf(beamIx).gantryAngle); %just one beam angle for now
                         fprintf(fileID,'d:Sim/CouchAngle = %f deg\n',stf(beamIx).couchAngle);
-                        % Here the phasespace file is loaded and referenced in the beamSetup file
-                        phaseSpaceFileName = 'SIEMENS_PRIMUS_6.0_0.10_15.0x15.0';
+                        % Here the phasespace file is loaded and referenced in the beamSetup file                      
                         if obj.externalCalculation
-                            matRad_cfg.dispWarning(['External calculation and phaseSpace selected, manually place ' phaseSpaceFileName '.header and ' phaseSpaceFileName '.phsp into your simulation directory.']);
+                            matRad_cfg.dispWarning(['External calculation and phaseSpace selected, manually place ' obj.infilenames.phaseSpaceSourcePhotons '.header and ' obj.infilenames.phaseSpaceSourcePhotons  '.phsp into your simulation directory.']);
                         else
-                            if length(dir([obj.thisFolder filesep 'beamSetup' filesep 'phasespace' filesep phaseSpaceFileName '*'])) < 2
+                            if length(dir([obj.thisFolder filesep 'beamSetup' filesep 'phasespace' filesep obj.infilenames.phaseSpaceSourcePhotons '*'])) < 2
                                 matRad_cfg.dispError([phaseSpaceFileName ' header or phsp file could not be found in beamSetup/phasespace folder.']);
                             end
                         end
-                        phasespaceStr = ['..' filesep 'beamSetup' filesep 'phasespace' filesep phaseSpaceFileName];
-                        phasespaceStr =  replace(phasespaceStr, '\', '/');
-                        fprintf(fileID,'s:So/Phasespace/PhaseSpaceFileName = "%s"\n', phasespaceStr);
+                        %phasespaceStr = ['..' filesep 'beamSetup' filesep 'phasespace' filesep phaseSpaceFileName];
+                        %&phasespaceStr =  replace(phasespaceStr, '\', '/');
+                        fprintf(fileID,'s:So/Phasespace/PhaseSpaceFileName = "%s"\n', obj.infilenames.phaseSpaceSourcePhotons );
 
                 end
 
@@ -1653,22 +1656,29 @@ classdef matRad_TopasConfig < handle
                     leftLeafPos = [stf(beamIx).ray.shapes(:).leftLeafPos];
                     rightLeafPos = [stf(beamIx).ray.shapes(:).rightLeafPos];
                     % Set MLC paramters as in TOPAS example file https://topas.readthedocs.io/en/latest/parameters/geometry/specialized.html#multi-leaf-collimator
+                    MLCshift = 0.5*15 + stf.SCD; %MLC thickness + SCD in cm
+                    fprintf(fileID,'d:Sim/Ge/MultiLeafCollimatorA/TransZ   = %f cm\n',MLCshift);
                     fprintf(fileID,'d:Ge/MultiLeafCollimatorA/MaximumLeafOpen   = %f cm\n',15);
                     fprintf(fileID,'d:Ge/MultiLeafCollimatorA/Thickness         = %f cm\n',15);
-                    fprintf(fileID,'d:Ge/MultiLeafCollimatorA/Length            = %f  cm\n',6);
-                    fprintf(fileID,'dv:Ge/MultiLeafCollimatorA/Widths           = %i ', numOfLeaves);
-                    fprintf(fileID,num2str(pln.propStf.collimation.leafWidth*ones(1,numOfLeaves),' % 2d'));
+                    fprintf(fileID,'d:Ge/MultiLeafCollimatorA/Length            = %f  cm\n',15);
+                    fprintf(fileID,'dv:Ge/MultiLeafCollimatorA/Widths           = %i ', numOfLeaves+2);
+                    fprintf(fileID,num2str([200, pln.propStf.collimation.leafWidth*ones(1,numOfLeaves) , 200],' % 2d'));
                     fprintf(fileID,' mm \n');
-                    fprintf(fileID,'dv:Ge/MultiLeafCollimatorA/XPlusLeavesOpen  = %i ',numOfLeaves);
-                    for i = 1:numOfLeaves
+                    fprintf(fileID,'dv:Ge/MultiLeafCollimatorA/XPlusLeavesOpen  = %i ',numOfLeaves+2);
+                    for i = 0:numOfLeaves+1
                         fprintf( fileID,'Tf/LeafXPlus%i/Value ',i);
                     end
                     fprintf(fileID,'mm \n');
-                    fprintf(fileID,'dv:Ge/MultiLeafCollimatorA/XMinusLeavesOpen  = %i ',numOfLeaves);
-                    for i = 1:numOfLeaves
+                    fprintf(fileID,'dv:Ge/MultiLeafCollimatorA/XMinusLeavesOpen  = %i ',numOfLeaves+2);
+                    for i = 0:numOfLeaves+1
                         fprintf( fileID,'Tf/LeafXMinus%i/Value ',i);
                     end
                     fprintf(fileID,'mm \n');
+
+                    %initilization of time features
+                    fprintf(fileID,'d:Tf/TimelineStart = 0 ms\n');
+                    fprintf(fileID,'d:Tf/TimelineEnd = %f ms\n',leafTimes*10);
+                    fprintf(fileID,'i:Tf/NumberOfSequentialTimes = %i \n',leafTimes);
 
                     for i = 1:numOfLeaves
                         fprintf(fileID,'s:Tf/LeafXMinus%i/Function  = "Step"\n',i);
@@ -1687,6 +1697,34 @@ classdef matRad_TopasConfig < handle
                         fprintf(fileID,num2str(rightLeafPos(i,:),' % 2d'));
                         fprintf(fileID,' mm\n\n');
                     end
+                    %Add aditional Leaf at the top and bottom to catch
+                    %scattering
+                    for i = [0,10]
+                        fprintf(fileID,'s:Tf/LeafXMinus%i/Function  = "Step"\n',i);
+                        fprintf(fileID,'dv:Tf/LeafXMinus%i/Times =  %i ', i,leafTimes);
+                        fprintf(fileID,num2str([1:leafTimes]*10,' % 2d'));
+                        fprintf(fileID,' ms\n');
+                        fprintf(fileID,'dv:Tf/LeafXMinus%i/Values = %i ', i,leafTimes);
+                        fprintf(fileID,num2str([0,0,0],' % 2d'));
+                        fprintf(fileID,' mm\n\n');
+
+                        fprintf(fileID,'s:Tf/LeafXPlus%i/Function  = "Step"\n',i);
+                        fprintf(fileID,'dv:Tf/LeafXPlus%i/Times =  %i ',i,leafTimes);
+                        fprintf(fileID,num2str([1:leafTimes]*10,' % 2d'));
+                        fprintf(fileID,' ms\n');
+                        fprintf(fileID,'dv:Tf/LeafXPlus%i/Values = %i ', i,leafTimes);
+                        fprintf(fileID,num2str([0,0,0],' % 2d'));
+                        fprintf(fileID,' mm\n\n');
+                    end
+
+                    fprintf(fileID, 's:Tf/Phasespace/NumberOfHistoriesInRun/Function  = "Step" \n');
+                    fprintf(fileID, 'dv:Tf/Phasespace/NumberOfHistoriesInRun/Times = %i ', leafTimes);
+                    fprintf(fileID,num2str([1:leafTimes]*10,' % 2d'));
+                    fprintf(fileID,' ms\n');
+                    fprintf(fileID, 'iv:Tf/Phasespace/NumberOfHistoriesInRun/Values = %i ', leafTimes);
+                    fprintf(fileID,num2str(round(historyCount(beamIx) * w'./sum(w)),' % 2d'));
+                    fprintf(fileID,' \n');
+
                 end
 
                 % Translate patient according to beam isocenter
