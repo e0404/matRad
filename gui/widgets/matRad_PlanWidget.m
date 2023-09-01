@@ -787,9 +787,11 @@ classdef matRad_PlanWidget < matRad_Widget
             ix = find(strcmp(pln.bioParam.model,contentPopUpBioModel));
             set(handles.popMenuBioModel,'Value',ix);
             
-            contentPopUpMultScen = get(handles.popMenuMultScen,'String');
-            ix = find(strcmp(pln.multScen.name,contentPopUpMultScen));
-            set(handles.popMenuMultScen,'Value',ix);
+            if evalin('base','exist(''ct'')') 
+                contentPopUpMultScen = get(handles.popMenuMultScen,'String');
+                ix = find(strcmp(pln.multScen.name,contentPopUpMultScen));
+                set(handles.popMenuMultScen,'Value',ix);
+            end
 
 
             set(handles.btnRunDAO,'Value',pln.propOpt.runDAO);
@@ -842,13 +844,8 @@ classdef matRad_PlanWidget < matRad_Widget
             pln.propDoseCalc.doseGrid.resolution.y = this.parseStringAsNum(get(handles.editDoseY,'String'),false);
             pln.propDoseCalc.doseGrid.resolution.z = this.parseStringAsNum(get(handles.editDoseZ,'String'),false);
                   
-            try
-                ct = evalin('base','ct');
-                pln.numOfVoxels     = prod(ct.cubeDim);
-                pln.voxelDimensions = ct.cubeDim;
-                pln.multScen =  matRad_multScen(ct,contentMultScen{get(handles.popMenuMultScen,'Value')});
-            catch
-            end
+           
+     
             pln.numOfFractions  = this.parseStringAsNum(get(handles.editFraction,'String'),false);
             contents            = get(handles.popupRadMode,'String');
             pln.radiationMode   = contents{get(handles.popupRadMode,'Value')}; % either photons / protons / carbon
@@ -859,7 +856,12 @@ classdef matRad_PlanWidget < matRad_Widget
             contentBioModel = get(handles.popMenuBioModel,'String');
             contentMultScen = get(handles.popMenuMultScen,'String');
             pln.bioParam = matRad_bioModel(pln.radiationMode, contentQuantityOpt{get(handles.popMenuQuantityOpt,'Value'),:}, contentBioModel{get(handles.popMenuBioModel,'Value'),:});
-          
+            if evalin('base','exist(''ct'')')
+                ct = evalin('base','ct');
+                pln.numOfVoxels     = prod(ct.cubeDim);
+                pln.voxelDimensions = ct.cubeDim;
+                pln.multScen =  matRad_multScen(ct,contentMultScen{get(handles.popMenuMultScen,'Value')});
+            end
             % Sequencing options set
             contents   = get(handles.popUpMenuSequencer,'String');
             pln.propSeq.sequencer = contents{get(handles.popUpMenuSequencer,'Value')};
@@ -1253,28 +1255,26 @@ classdef matRad_PlanWidget < matRad_Widget
             updatePlnInWorkspace(this);
         end
         function popMenuMultScen_Callback(this, hObject, eventdata)
-            handles = this.handles;
-         
-            this.handles = handles;
+        
             updatePlnInWorkspace(this);
         end
 
         function popMenuQuantityOpt_Callback(this, hObject, eventdata)
-            handles = this.handles;
-            
-            pln = evalin('base','pln');
-            contentQuantityOpt = get(handles.popMenuQuantityOpt,'String');
-            NewQuantityOpt = contentQuantityOpt(get(handles.popMenuQuantityOpt,'Value'),:);
-            
-%                 if (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') && strcmp(NewBioOptimization,'LEMIV_RBExD')) ||...
-%                         (strcmp(pln.propOpt.bioOptimization,'LEMIV_RBExD') && strcmp(NewBioOptimization,'LEMIV_effect'))
-%                     % do nothing - re-optimization is still possible
-%                 elseif ((strcmp(pln.propOpt.bioOptimization,'const_RBE') && strcmp(NewBioOptimization,'none')) ||...
-%                         (strcmp(pln.propOpt.bioOptimization,'none') && strcmp(NewBioOptimization,'const_RBE'))) && isequal(pln.radiationMode,'protons')
-%                     % do nothing - re-optimization is still possible
-%                 end
-%                 
-            this.handles = handles;
+%             handles = this.handles;
+%             
+%             pln = evalin('base','pln');
+%             contentQuantityOpt = get(handles.popMenuQuantityOpt,'String');
+%             NewQuantityOpt = contentQuantityOpt(get(handles.popMenuQuantityOpt,'Value'),:);
+%             
+% %                 if (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') && strcmp(NewBioOptimization,'LEMIV_RBExD')) ||...
+% %                         (strcmp(pln.propOpt.bioOptimization,'LEMIV_RBExD') && strcmp(NewBioOptimization,'LEMIV_effect'))
+% %                     % do nothing - re-optimization is still possible
+% %                 elseif ((strcmp(pln.propOpt.bioOptimization,'const_RBE') && strcmp(NewBioOptimization,'none')) ||...
+% %                         (strcmp(pln.propOpt.bioOptimization,'none') && strcmp(NewBioOptimization,'const_RBE'))) && isequal(pln.radiationMode,'protons')
+% %                     % do nothing - re-optimization is still possible
+% %                 end
+% %                 
+%             this.handles = handles;
             updatePlnInWorkspace(this);
         end
 
