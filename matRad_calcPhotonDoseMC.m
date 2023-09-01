@@ -37,7 +37,7 @@ function dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst,calcDoseDirect)
 
 matRad_cfg = MatRad_Config.instance();
 
-if nargin < 6
+if nargin < 5
     calcDoseDirect = false;
 end
 
