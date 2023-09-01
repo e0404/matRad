@@ -1656,7 +1656,7 @@ classdef matRad_TopasConfig < handle
                     leftLeafPos = [stf(beamIx).ray.shapes(:).leftLeafPos];
                     rightLeafPos = [stf(beamIx).ray.shapes(:).rightLeafPos];
                     % Set MLC paramters as in TOPAS example file https://topas.readthedocs.io/en/latest/parameters/geometry/specialized.html#multi-leaf-collimator
-                    MLCshift = 0.5*15 + stf.SCD; %MLC thickness + SCD in cm
+                    MLCshift = 0.5*15 + stf.SCD/10; %MLC thickness + SCD in cm
                     fprintf(fileID,'d:Sim/Ge/MultiLeafCollimatorA/TransZ   = %f cm\n',MLCshift);
                     fprintf(fileID,'d:Ge/MultiLeafCollimatorA/MaximumLeafOpen   = %f cm\n',15);
                     fprintf(fileID,'d:Ge/MultiLeafCollimatorA/Thickness         = %f cm\n',15);
