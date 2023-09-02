@@ -64,24 +64,26 @@ env = matRad_getEnvironment();
 
 %% check if binaries are available
 %Executables for simulation
-if ispc
-    if exist('MCSquare_windows.exe','file') ~= 2
-        matRad_cfg.dispError('Could not find MCsquare binary.\n');
-    else
-        mcSquareBinary = 'MCSquare_windows.exe';
-    end
-elseif ismac
-    if exist('MCsquare_mac','file') ~= 2
-        matRad_cfg.dispError('Could not find MCsquare binary.\n');
-    else
-        mcSquareBinary = './MCsquare_mac';
-    end
-    %error('MCsquare binaries not available for mac OS.\n');
-elseif isunix
-    if exist('MCsquare_linux','file') ~= 2
-        matRad_cfg.dispError('Could not find MCsquare binary.\n');
-    else
-        mcSquareBinary = 'chmod a+x MCsquare_linux && ./MCsquare_linux';
+if ~pln.propMC.externalCalculation
+    if ispc
+        if exist('MCSquare_windows.exe','file') ~= 2
+            matRad_cfg.dispError('Could not find MCsquare binary.\n');
+        else
+            mcSquareBinary = 'MCSquare_windows.exe';
+        end
+    elseif ismac
+        if exist('MCsquare_mac','file') ~= 2
+            matRad_cfg.dispError('Could not find MCsquare binary.\n');
+        else
+            mcSquareBinary = './MCsquare_mac';
+        end
+        %error('MCsquare binaries not available for mac OS.\n');
+    elseif isunix
+        if exist('MCsquare_linux','file') ~= 2
+            matRad_cfg.dispError('Could not find MCsquare binary.\n');
+        else
+            mcSquareBinary = 'chmod a+x MCsquare_linux && ./MCsquare_linux';
+        end
     end
 end
 

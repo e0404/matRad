@@ -161,7 +161,7 @@ classdef matRad_MCsquareConfig
 
             %% write overall configuration file
             fileHandle = fopen(filename,'w');
-            obj.write(fileHandle);
+            obj.writeConfigFile(fileHandle);
             fclose(fileHandle);
 
             %% prepare steering file writing
@@ -413,7 +413,7 @@ classdef matRad_MCsquareConfig
             fclose(dataFileHandle);
         end
 
-        function write(obj,fid)
+        function writeConfigFile(obj,fid)
 
             MCsquareProperties = fieldnames(obj);
 
@@ -438,7 +438,15 @@ classdef matRad_MCsquareConfig
                     elseif isa(obj.(MCsquareProperties{i}),'double')
                         fprintf(fid,[writeString ' ' num2str(obj.(MCsquareProperties{i})) '\n']);
                     elseif isa(obj.(MCsquareProperties{i}),'char')
-                        fprintf(fid,[writeString ' ' obj.(MCsquareProperties{i}) '\n']);
+                        % TODO there needs to be an octave fix for erase and contains in case anyone wants to use that
+                        if obj.externalCalculation && contains(obj.(MCsquareProperties{i}), obj.MCrun_Directory)
+                            % remove MCrunDirectory from file name in case of externalCalculation
+                            cutFileName = erase(obj.(MCsquareProperties{i}),obj.MCrun_Directory);
+                            fprintf(fid,[writeString ' ' cutFileName '\n']);
+                        else
+                            fprintf(fid,[writeString ' ' obj.(MCsquareProperties{i}) '\n']);
+                        end
+                        
                     else
                         error('export not defined');
                     end
