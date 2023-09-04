@@ -1722,7 +1722,7 @@ classdef matRad_TopasConfig < handle
                     fprintf(fileID,num2str([1:leafTimes]*10,' % 2d'));
                     fprintf(fileID,' ms\n');
                     fprintf(fileID, 'iv:Tf/Phasespace/NumberOfHistoriesInRun/Values = %i ', leafTimes);
-                    fprintf(fileID,num2str(round(historyCount(beamIx) * w'./sum(w)),' % 2d'));
+                    fprintf(fileID,num2str(round(historyCount(beamIx) * w./sum(w)),' % 2d'));
                     fprintf(fileID,' \n');
 
                 end
