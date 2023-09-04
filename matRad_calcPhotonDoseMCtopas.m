@@ -97,9 +97,9 @@ else
 end
 
 if isfield(stf(1).ray, 'shapes') %weight is in stf.ray.shapes
-    stf.ray.weight = [stf.ray.shapes.weight]; %how for multiple fields ?
+    w = [stf.ray.shapes.weight]; %how for multiple fields ?
 end
-stf.ray.energy = stf.ray.energy*ones(size(w)); %how for multiple fields ?
+stf.ray.energy = stf.ray.energy.*ones(size(w)); %how for multiple fields ?
 
 currDir = cd;
 

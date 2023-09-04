@@ -89,10 +89,10 @@ imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet)
 %% Dose Calculation
 %stf.ray.energy = [6,6,6];
 %stf.ray.weight = [stf.ray.shapes.weight];
-pln.propMC.numHistories = 1e8;
+pln.propMC.numHistories = 1e7;
 resultGUI_MC = matRad_calcPhotonDoseMC(ct,stf,pln,cst,1);
 
 %% readout
-foldername = 'E:\Code\matRad\topas\MCrun\photons_Generic_01-09-23';
-pln = matRad_cfg.getDefaultClass(pln,'propMC');
-resultGUI_MC = pln.propMC.readExternal(foldername);
+%foldername = 'E:\Code\matRad\topas\MCrun\photons_Generic_01-09-23';
+%pln = matRad_cfg.getDefaultClass(pln,'propMC');
+%resultGUI_MC = pln.propMC.readExternal(foldername);
