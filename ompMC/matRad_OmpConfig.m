@@ -325,7 +325,7 @@ classdef matRad_OmpConfig < handle
             addFiles = strjoin(addFiles,' ');
             
             if exist ('OCTAVE_VERSION','builtin')
-                ccName = eval('mkoctfile -p CC');
+                ccName = evalc('mkoctfile -p CC');
             else
                 myCCompiler = mex.getCompilerConfigurations('C','Selected');
                 ccName = myCCompiler.ShortName;

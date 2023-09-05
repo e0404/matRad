@@ -35,6 +35,7 @@ classdef matRad_MCemittanceBaseData
 
         % air correction in beam optics approximation
         fitWithSpotSizeAirCorrection  = true;
+        fitCorrectDoubleGaussian      = false;
 
         %To force the phase space approximation even if we have the data
         forceSpectrumApproximation  = false;
@@ -75,6 +76,7 @@ classdef matRad_MCemittanceBaseData
             else
                 matRad_cfg.dispWarning('No information on BAMS to isocenter distance. Using generic value of 500mm');
                 obj.nozzleToIso = 500;
+                obj.machine.meta.BAMStoIsoDist = 500;
             end
 
             if all(isfield(machine.meta,{'SAD_x','SAD_y'}))
@@ -276,7 +278,7 @@ classdef matRad_MCemittanceBaseData
 
                     % Calculate energy straggling using formulae deducted from paper
                     % "An analytical approximation of the Bragg curve for therapeutic proton beams" by T. Bortfeld et al.
-                    % After inversion of the formula to obtain the two values z_50 where d(z_50) = 0.5*dMax, 
+                    % After inversion of the formula to obtain the two values z_50 where d(z_50) = 0.5*dMax,
                     % we obtain that the width is 6.14 * the total (energy + range) straggling sigma
                     totalSigmaSq = (FWHM / 6.14)^2;
 
@@ -296,13 +298,12 @@ classdef matRad_MCemittanceBaseData
                     %Squared difference to obtain residual width from energy spectrum
                     if totalSigmaSq > sigmaRangeStragglingOnlySq(r80)
                         sigmaEnergyContributionSq = totalSigmaSq - sigmaRangeStragglingOnlySq(r80);
-                        energySpreadInMeV = energySpreadFromWidth(sigmaEnergyContributionSq,mcDataEnergy.MeanEnergy);                
+                        energySpreadInMeV = energySpreadFromWidth(sigmaEnergyContributionSq,mcDataEnergy.MeanEnergy);
                     else
                         energySpreadInMeV = 1e-8; %monoenergetic, but let's not write 0 to avoid division by zero in some codes
                     end
 
                     energySpreadRelative = energySpreadInMeV ./ mcDataEnergy.MeanEnergy * 100;
-
                 case 'carbon'
                     %%% Approximate mean energy
                     % Fit to Range-Energy relationship
@@ -356,6 +357,13 @@ classdef matRad_MCemittanceBaseData
             SAD = obj.machine.meta.SAD;
             z     = -(obj.machine.data(energyIx).initFocus.dist(focusIndex,:) - SAD);
             sigma = obj.machine.data(energyIx).initFocus.sigma(focusIndex,:);
+
+            % TODO Add comment
+            if obj.fitCorrectDoubleGaussian
+                sigmaSq_Narr = sigma.^2 + obj.machine.data(i).sigma1(1).^2;
+                sigmaSq_Bro  = sigma.^2 + obj.machine.data(i).sigma2(1).^2;
+                sigma = sqrt(sigmaSq_Narr*(1-obj.machine.data(i).weight(1).^2) + sigmaSq_Bro*obj.machine.data(i).weight(1).^2);
+            end
 
             %correct for in-air scattering with polynomial or interpolation
             sigma = arrayfun(@(d,sigma) obj.spotSizeAirCorrection(obj.machine.meta.radiationMode,obj.machine.data(energyIx).energy,d,sigma),-z+obj.machine.meta.BAMStoIsoDist,sigma);
@@ -448,18 +456,34 @@ classdef matRad_MCemittanceBaseData
 
                 ixE = obj.energyIndex(i);
 
-                obj.machine.data(ixE).initFocus.emittance.type  = 'bigaussian';
-                obj.machine.data(ixE).initFocus.emittance.sigmaX = [obj.monteCarloData(:,count).SpotSize1x obj.monteCarloData(:,count).SpotSize2x];
-                obj.machine.data(ixE).initFocus.emittance.sigmaY = [obj.monteCarloData(:,count).SpotSize1y obj.monteCarloData(:,count).SpotSize2y];
-                obj.machine.data(ixE).initFocus.emittance.divX = [obj.monteCarloData(:,count).Divergence1x obj.monteCarloData(:,count).Divergence2x];
-                obj.machine.data(ixE).initFocus.emittance.divY = [obj.monteCarloData(:,count).Divergence1y obj.monteCarloData(:,count).Divergence2y];
-                obj.machine.data(ixE).initFocus.emittance.corrX = [obj.monteCarloData(:,count).Correlation1x obj.monteCarloData(:,count).Correlation2x];
-                obj.machine.data(ixE).initFocus.emittance.corrY = [obj.monteCarloData(:,count).Correlation1y obj.monteCarloData(:,count).Correlation2y];
-                obj.machine.data(ixE).initFocus.emittance.weight = [obj.monteCarloData(:,count).Weight2]; %Weight one will not be stored explicitly due to normalization
+                numFoci = numel(obj.monteCarloData(:,count).SpotSize1x);
 
+                for f = 1:numFoci
+                    if obj.monteCarloData(:,count).Weight2 ~= 0
+                        obj.machine.data(ixE).initFocus.emittance(f).type  = 'bigaussian';
+                        obj.machine.data(ixE).initFocus.emittance(f).sigmaX = [obj.monteCarloData(f,count).SpotSize1x obj.monteCarloData(:,count).SpotSize2x(f)];
+                        obj.machine.data(ixE).initFocus.emittance(f).sigmaY = [obj.monteCarloData(f,count).SpotSize1y obj.monteCarloData(:,count).SpotSize2y(f)];
+                        obj.machine.data(ixE).initFocus.emittance(f).divX = [obj.monteCarloData(f,count).Divergence1x obj.monteCarloData(:,count).Divergence2x(f)];
+                        obj.machine.data(ixE).initFocus.emittance(f).divY = [obj.monteCarloData(f,count).Divergence1y obj.monteCarloData(:,count).Divergence2y(f)];
+                        obj.machine.data(ixE).initFocus.emittance(f).corrX = [obj.monteCarloData(f,count).Correlation1x obj.monteCarloData(:,count).Correlation2x(f)];
+                        obj.machine.data(ixE).initFocus.emittance(f).corrY = [obj.monteCarloData(f,count).Correlation1y obj.monteCarloData(:,count).Correlation2y(f)];
+                        obj.machine.data(ixE).initFocus.emittance(f).weight = [obj.monteCarloData(f,count).Weight2]; %Weight one will not be stored explicitly due to normalization
+                    else
+                        obj.machine.data(ixE).initFocus.emittance(f).type  = 'bigaussian';
+                        obj.machine.data(ixE).initFocus.emittance(f).sigmaX = [obj.monteCarloData(:,count).SpotSize1x(f)];
+                        obj.machine.data(ixE).initFocus.emittance(f).sigmaY = [obj.monteCarloData(:,count).SpotSize1y(f)];
+                        obj.machine.data(ixE).initFocus.emittance(f).divX = [obj.monteCarloData(:,count).Divergence1x(f)];
+                        obj.machine.data(ixE).initFocus.emittance(f).divY = [obj.monteCarloData(:,count).Divergence1y(f)];
+                        obj.machine.data(ixE).initFocus.emittance(f).corrX = [obj.monteCarloData(:,count).Correlation1x(f)];
+                        obj.machine.data(ixE).initFocus.emittance(f).corrY = [obj.monteCarloData(:,count).Correlation1y(f)];
+                    end
+                end
+
+                %At the moment coded to only take the first energy because
+                %focus settings do not apply to the energy spectrum
                 obj.machine.data(ixE).energySpectrum.type  = 'gaussian';
-                obj.machine.data(ixE).energySpectrum.mean   = [obj.monteCarloData(:,count).MeanEnergy];
-                obj.machine.data(ixE).energySpectrum.sigma = [obj.monteCarloData(:,count).EnergySpread];
+                obj.machine.data(ixE).energySpectrum.mean   = [obj.monteCarloData(:,count).MeanEnergy(f)];
+                obj.machine.data(ixE).energySpectrum.sigma = [obj.monteCarloData(:,count).EnergySpread(f)];
 
 
                 count = count + 1;
@@ -526,6 +550,11 @@ classdef matRad_MCemittanceBaseData
 
             %make sure to not violate ranges!
             %this is a little hardcoded, but helps us handle strange distances in the initFocus field
+            if d < min(depths)
+                d = min(depths);
+                matRad_cfg.dispWarning('Spot Size Air Correction problem, negative distance found!',method);
+            end
+
             if d > max(depths)
                 d = max(depths);
                 matRad_cfg.dispWarning('Spot Size Air Correction problem, distance too large!',method);
@@ -551,7 +580,6 @@ classdef matRad_MCemittanceBaseData
                     matRad_cfg.dispWarning('Air Correction Method ''%s'' not known, skipping!',method);
                     sigmaAir = 0;
             end
-
             if sigmaAir >= sigma
                 sigmaAirCorrected = sigma;
                 matRad_cfg.dispWarning('Spot Size Air Correction failed, too large!',method);

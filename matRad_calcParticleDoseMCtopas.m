@@ -233,6 +233,11 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
     
     % revert back to original directory
     cd(currDir);
+
+    % manipulate isocenter back
+    for k = 1:length(stf)
+        stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(ixShiftScen,:);
+    end
     
 end
 
@@ -252,11 +257,4 @@ if isfield(pln.propMC.MCparam,'numOfDiscardedSpots')
     dij.numOfDiscardedSpots = pln.propMC.MCparam.numOfDiscardedSpots;
 end
 
-% Order fields for easier comparison between different dijs
-dij = orderfields(dij);
-
-% manipulate isocenter back
-for k = 1:length(stf)
-    stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(ixShiftScen,:);
-end
 end

@@ -764,7 +764,7 @@ classdef matRad_TopasConfig < handle
         end
 
         function dij = fillDij(obj,topasCubes,dij)
-
+            %TODO: Insert documentation
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
 
             % Load weights from parameter variable
@@ -906,7 +906,6 @@ classdef matRad_TopasConfig < handle
         end
 
         function writeRunHeader(obj,fID,fieldIx,runIx,ctScen)
-
             if exist('ctScen','var')
                 fprintf(fID,'s:Sim/ScoreLabel = "score_%s_field%d_ct%d_run%d"\n',obj.label,fieldIx,ctScen,runIx);
             else
@@ -949,7 +948,7 @@ classdef matRad_TopasConfig < handle
         end
 
         function writeFieldHeader(obj,fID,ctScen)
-
+            %TODO: Insert documentation
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
 
             % Write beamProfile simulation parameters
@@ -994,7 +993,7 @@ classdef matRad_TopasConfig < handle
         end
 
         function writeScorers(obj,fID)
-
+            %TODO: Insert documentation
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
 
             obj.MCparam.outputType = obj.scorer.outputType;
@@ -1229,7 +1228,7 @@ classdef matRad_TopasConfig < handle
         end
 
         function writeStfFields(obj,ct,stf,pln,w,baseData)
-
+            %TODO: Insert documentation
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
 
             isPhoton = false;
@@ -1856,7 +1855,7 @@ classdef matRad_TopasConfig < handle
                     obj.writeScorers(fileID);
 
                     % Write dij-related config lines
-                    % We should discuss here if that's something that has to be available for photons as well
+                    % TODO: move this to github issue/todo -> We should discuss here if that's something that has to be available for photons as well
                     if ~strcmp(obj.radiationMode,'photons')
                         if obj.scorer.calcDij
                             fprintf(fileID,'\n');
@@ -2213,7 +2212,7 @@ classdef matRad_TopasConfig < handle
         end
 
         function writeRangeShifter(~,fID,rangeShifter,sourceToNozzleDistance)
-
+            %TODO: Insert documentation
             %Hardcoded PMMA range shifter for now
             pmma_rsp = 1.165;
             rsWidth = rangeShifter.eqThickness / pmma_rsp;
@@ -2280,6 +2279,7 @@ classdef matRad_TopasConfig < handle
         end
 
         function writeMCparam(obj)
+            %TODO: Insert documentation
             %write MCparam file with basic parameters
             MCparam = obj.MCparam;
             save(fullfile(obj.workingDir,'MCparam.mat'),'MCparam','-v7');
