@@ -23,7 +23,7 @@ load BOXPHANTOM.mat
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.machine         = 'generic_TOPAS_APM';
+pln.machine         = 'generic_TOPAS';
 
 
 pln.numOfFractions  = 1;
