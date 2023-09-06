@@ -101,6 +101,20 @@ else
     end
 end
 
+%Correct Positioning Offset
+ct = obj.ct;
+if ~any(isfield(ct,{'x','y','z'}))
+    %positionOffset = transpose(ct.cubeDim ./ 2);
+    positionOffset = ct.cubeDim .* [ct.resolution.y, ct.resolution.x, ct.resolution.z] ./ 2;
+    ct.x = ct.resolution.x*[0:ct.cubeDim(2)-1] - positionOffset(2);
+    ct.y = ct.resolution.y*[0:ct.cubeDim(1)-1] - positionOffset(1);
+    ct.z = ct.resolution.z*[0:ct.cubeDim(3)-1] - positionOffset(3);
+end
+
+positionOffsetCoordinates = [ct.x(1) ct.y(1) ct.z(1)];
+positionOffsetCoordinates = positionOffsetCoordinates - [ct.resolution.x ct.resolution.y ct.resolution.z];
+
+
 
 %Write references to image, RTStruct, RTDose
 %RTStruct
@@ -242,7 +256,7 @@ for iBeam = 1:obj.pln.propStf.numOfBeams
                 currCtrlSeqItem.PatientSupportRotationDirection = 'NONE';
                 currCtrlSeqItem.TableTopEccentricAngle = 0;
                 currCtrlSeqItem.TableTopEccentricRotationDirection = 'NONE';
-                currCtrlSeqItem.IsocenterPosition = obj.stf(iBeam).isoCenter';
+                currCtrlSeqItem.IsocenterPosition = (obj.stf(iBeam).isoCenter + positionOffsetCoordinates)';
             end
 
             %Check energy, currently can only be constant
