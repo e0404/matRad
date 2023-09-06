@@ -136,7 +136,7 @@ for i = 1:length(beamSeqNames)
        if isfield(nextControlPointElement, 'CumulativeMetersetWeight')      
            newCumWeight = nextControlPointElement.CumulativeMetersetWeight;
            relativeShapeWeight = (newCumWeight - cumWeight) / currBeamSeq.FinalCumulativeMetersetWeight;
-           tmpCollimation.Fields(counter).Weight = relativeShapeWeight * tmpCollimation.beamMeterset(i)/100;
+           tmpCollimation.Fields(counter).Weight = relativeShapeWeight * tmpCollimation.beamMeterset(i);
 
            cumWeight = newCumWeight;
        else
