@@ -37,15 +37,16 @@ function [facetPoints,refPoint,normal] = matRad_normalFromFacet(fVals,k,i)
     
     %we want to check if the components of the normal contain negative
     %components. For that one has to check the orientation first
-    
+    if rank(spanningVectors) ~= size(spanningVectors,1)
+        normal = -1*ones(size(spanningVectors,2),1); %simply return all -1
+        return 
+    end
     %choose a point of the PS that is not part of the hyperplane currently
     %investigated
     idxs = (1:size(fVals,1));
     
     %calculate orientation vector
     orientationVector = mean(fVals(unique(k),:))-refPoint;
-    
     orientation = (orientationVector*normal>0);    %check orientation of facet (either 0 or 1)
-
     normal = normal*(2*orientation-1); %flip normal vector if it faces in the wrong direction
     
