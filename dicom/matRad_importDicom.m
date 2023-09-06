@@ -167,13 +167,13 @@ matRadFileName = [files.ct{1,3} '.mat']; % use default from dicom
 [FileName,PathName] = uiputfile('*','Save as...',matRadFileName);
 if ischar(FileName)
     % delete unnecessary variables
-    switch env
-    case 'MATLAB'
+    if matRad_cfg.isMatlab
         clearvars -except ct cst pln stf resultGUI FileName PathName;
         save([PathName, FileName], '-regexp', '^(?!(FileName|PathName)$).','-v7');
-    case 'OCTAVE' 
+    elseif matRad_cfg.isOctave
         clear -x ct cst pln stf resultGUI FileName PathName;
         save([PathName, FileName],'-v6');
+    else
     end
     % save all except FileName and PathName
     

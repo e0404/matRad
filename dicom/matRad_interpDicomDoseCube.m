@@ -30,7 +30,7 @@ function [ dose ] = matRad_interpDicomDoseCube( ct, currDose )
 
 % read information out of the RT file
 
-matRad_cfg = matRad_Config.instance();
+matRad_cfg = MatRad_Config.instance();
 matRad_checkEnvDicomRequirements(matRad_cfg.env);
 
 
