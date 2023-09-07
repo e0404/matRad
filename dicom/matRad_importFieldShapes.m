@@ -173,12 +173,13 @@ shapeLimit = ceil(maximumExtent / convResolution);
 maximumVoxelExtent = 0;
 [X,Y] = meshgrid(-shapeLimit:shapeLimit-1);
 for i = 1:length(tmpCollimation.Fields)
-    shape = ones(2*shapeLimit); 
+    shape = ones(2*shapeLimit);    
     beamIndex = tmpCollimation.Fields(i).BeamIndex;
     for j = 1:length(tmpCollimation.Devices{beamIndex})
         % check for ASYM and SYM jaws == type 1
         if strncmpi(tmpCollimation.Devices{beamIndex}(j).DeviceType,'ASYM',4)
             type = 1;
+            
         elseif (strcmpi(tmpCollimation.Devices{beamIndex}(j).DeviceType,'X') || ...
                 strcmpi(tmpCollimation.Devices{beamIndex}(j).DeviceType,'Y'))
             type = 1;
@@ -190,6 +191,26 @@ for i = 1:length(tmpCollimation.Fields)
                     ' not supported. Field shapes could not be imported!']);
             return;
         end
+
+        %Consider orthogonal limits 
+        if type == 2
+            firstLeafStart = ceil(tmpCollimation.Devices{beamIndex}(j).Limits(1)/convResolution)+shapeLimit+1;
+            lastLeafEnd = ceil(tmpCollimation.Devices{beamIndex}(j).Limits(end)/convResolution)+shapeLimit;
+
+            if strcmpi(tmpCollimation.Devices{beamIndex}(j).Direction, 'X')
+                shape(1:firstLeafStart-1,:) = 0;
+                shape(lastLeafEnd+1:end,:) = 0;
+            elseif strcmpi(tmpCollimation.Devices{beamIndex}(j).Direction, 'Y')
+                shape(:,1:firstLeafStart-1) = 0;
+                shape(:,lastLeafEnd+1:end) = 0;
+            else
+                warning(['Wrong collimation direction ' tmpCollimation.Devices{beamIndex}(j).Direction ...
+                    ' given for device ' tmpCollimation.Devices{beamIndex}(j).DeviceType ...
+                    '. Fields could not be imported.']);
+                return;
+            end
+        end
+
         for k = 1:tmpCollimation.Devices{beamIndex}(j).NumOfLeafs
             % determine corner points of the open area
             p1 = ceil(tmpCollimation.Fields(i).LeafPos{j}(k,1)/convResolution)+shapeLimit;
