@@ -212,6 +212,7 @@ for iBeam = 1:obj.pln.propStf.numOfBeams
             matRad_cfg.dispError('Sequenced Apertures not found!')
         end
         apertureInfo = obj.resultGUI.apertureInfo;
+        currBeamApertures = apertureInfo.beam(iBeam);
 
         %Get basic information about the collimator:
         limitDeviceSeq = struct();
@@ -220,8 +221,10 @@ for iBeam = 1:obj.pln.propStf.numOfBeams
 
         if ~isfield(apertureInfo,'leafBoundaries') %TODO Information should be added by the sequencers
             matRad_cfg.dispWarning('Leaf Boundaries not specified in aperture info!');
+            centralLeafPair = currBeamApertures.centralLeafPair;
             leafBoundaries = 0:apertureInfo.bixelWidth:(apertureInfo.numOfMLCLeafPairs)*apertureInfo.bixelWidth;
-            leafBoundaries = leafBoundaries - leafBoundaries(end)/2;
+            centralLeafOffset = leafBoundaries(centralLeafPair) + apertureInfo.bixelWidth/2;
+            leafBoundaries = leafBoundaries - centralLeafOffset;
         else
             leafBoundaries = apertureInfo.leafBoundaries;
         end
@@ -237,7 +240,7 @@ for iBeam = 1:obj.pln.propStf.numOfBeams
         
         beamSeqItem.BeamLimitingDeviceSequence = limitDeviceSeq;
 
-        currBeamApertures = apertureInfo.beam(iBeam);
+        
         beamSeqItem.NumberOfControlPoints = currBeamApertures.numOfShapes;
 
         %Get IMRT shapes. Only IMRT support (DYNAMIC), no VMAT
