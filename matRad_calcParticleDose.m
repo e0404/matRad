@@ -248,7 +248,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                         stf(i).ray(j).targetPoint_bev, ...
                         machine.meta.SAD, ...
                         find(~isnan(radDepthVdoseGrid{1})), ...
-                        maxLateralCutoffDoseCalc);
+                        maxLateralCutoffDoseCalc, robustVoxelsOnGrid);
 
                     % Given the initial sigmas of the sampling ray, this
                     % function provides the weights for the sub-pencil beams,
@@ -407,6 +407,19 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                     matRad_cfg.dispError('Lateral Cut-Off must be a value between 0 and 1!')
                                 end
 
+
+                                % get rid of currIdx
+                                if isfield(pln.propDoseCalc, 'clearVoxelsForRobustness') && ~isequal(pln.propDoseCalc.clearVoxelsForRobustness, 'none')
+                                    if (shiftScen>1) || (rangeShiftScen>1)
+
+                                        ixOnRobustMask = robustVoxelsOnGrid{ctScen}(VdoseGrid(ix));
+
+                                        currIx = currIx & ixOnRobustMask;
+
+                                    end
+                                end
+                                
+
                                 % empty bixels may happen during recalculation of error
                                 % scenarios -> skip to next bixel
                                 if ~any(currIx) 
@@ -497,6 +510,20 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                     %relDoseThreshold   =  0.02;   % sample dose values beyond the relative dose
                                     %Type               = 'dose';
                                     %[currIx,bixelDose] = matRad_DijSampling(currIx,bixelDose,radDepths(currIx),radialDist_sq(currIx),Type,relDoseThreshold);
+
+
+                                    
+                                    % Alternative method for pruning the
+                                    % unused voxels
+                                    % if isfield(pln.propDoseCalc, 'clearVoxelsForRobustness') && ~isequal(pln.propDoseCalc.clearVoxelsForRobustness, 'none')
+                                    %     if (shiftScen>1) || (rangeShiftScen>1)
+                                    % 
+                                    %         ixOnRobustMask = robustVoxelsOnGrid{ctScen}(ix(currIx));
+                                    % 
+                                    %         bixelDose = bixelDose.*ixOnRobustMask;
+                                    % 
+                                    %     end
+                                    % end
 
                                     % Save dose for every bixel in cell array
                                     doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix(currIx)),1,bixelDose,dij.doseGrid.numOfVoxels,1);
