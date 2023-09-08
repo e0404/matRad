@@ -41,6 +41,7 @@ d = optiProb.BP.GetResult();
 % get the used scenarios
 useScen  = optiProb.BP.scenarios;
 scenProb = optiProb.BP.scenarioProb;
+useNominalCtScen = optiProb.BP.nominalCtScenarios;
 
 % retrieve matching 4D scenarios
 fullScen = cell(ndims(d),1);
@@ -75,8 +76,8 @@ for  i = 1:size(cst,1)
                 
                 switch robustness
                     case 'none' % if conventional opt: just sum objectives of nominal dose
-                        for ixScen = useScen
-                            d_i = d{ixScen}(cst{i,4}{useScen(1)});
+                        for ixScen = useNominalCtScen
+                            d_i = d{ixScen}(cst{i,4}{useScen(ixScen)});
                             f = f + objective.penalty * objective.computeDoseObjectiveFunction(d_i);
                         end
 

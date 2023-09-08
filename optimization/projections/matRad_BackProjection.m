@@ -27,9 +27,10 @@ classdef matRad_BackProjection < handle
     end
     
     properties 
-        dij                 %reference to matRad dij struct (to enable local changes)
-        scenarios    = 1    %Scenario indices to evaluate (used for 4D & robust/stochastic optimization)
-        scenarioProb = 1    %Probability associated with scenario (for stochastic optimization)
+        dij                     %reference to matRad dij struct (to enable local changes)
+        scenarios    = 1        %Scenario indices to evaluate (used for 4D & robust/stochastic optimization)
+        scenarioProb = 1        %Probability associated with scenario (for stochastic optimization)
+        nominalCtScenarios = 1; %nominal ct scenario (no shift, no range error) indices to evaluate (used for 4D & robust/stochastic optimization, when at least one cst structure does not have robustness)
     end
 
     
