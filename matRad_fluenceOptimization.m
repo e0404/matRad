@@ -250,7 +250,7 @@ end
 
 %Give scenarios used for optimization
 backProjection.scenarios    = ixForOpt;
-backProjection.scenarioProb = repmat(pln.multScen.scenProb, pln.multScen.numOfCtScen,1);
+backProjection.scenarioProb = pln.multScen.scenProb;
 backProjection.nominalCtScenarios = linIxDIJ_nominalCT;
 
 optiProb = matRad_OptimizationProblem(backProjection);
