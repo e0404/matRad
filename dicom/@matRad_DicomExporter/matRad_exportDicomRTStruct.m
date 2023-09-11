@@ -35,7 +35,7 @@ end
 
 %% Metadata
 %Class UID
-ClassUID = '1.2.840.10008.5.1.4.1.1.481.3'; %RT Structure Set
+ClassUID = obj.rtStructClassUID; %RT Structure Set
 meta.MediaStorageSOPClassUID = ClassUID;
 meta.SOPClassUID             = ClassUID;
 %TransferSyntaxUID = '1.2.840.10008.1.2.1'; %Explicit VR Little Endian - correct?
@@ -205,7 +205,7 @@ for i = 1:size(obj.cst,1)
         elseif ~isempty(regexpi(obj.cst{i,2},['(' strjoin(obj.targetGtvDict) ')']))
             RTROIObservationsSequenceItem.RTROIInterpretedType = 'GTV';
             fprintf('identified target type as GTV...');
-        elseif ~isempty(regexpi(obj.cst{i,2},['(' strjoin(obj.targetGtvDict) ')']))
+        elseif ~isempty(regexpi(obj.cst{i,2},['(' strjoin(obj.targetCtvDict) ')']))
             RTROIObservationsSequenceItem.RTROIInterpretedType = 'CTV';
             fprintf('identified target type as CTV...');
         else
@@ -240,7 +240,7 @@ end
 RTReferencedSeriesSequenceItem.SeriesInstanceUID = obj.ctSliceMetas(1).SeriesInstanceUID;
 RTReferencedSeriesSequenceItem.ContourImageSequence = ContourImageSequence;
 
-RTReferencedStudySequenceItem.ReferencedSOPClassUID = '1.2.840.10008.3.1.2.3.2'; %Apparently this class UID is deprecated in DICOM standard - what to use instead?
+%RTReferencedStudySequenceItem.ReferencedSOPClassUID = '1.2.840.10008.3.1.2.3.2'; %Apparently this class UID is deprecated in DICOM standard - what to use instead?
 RTReferencedStudySequenceItem.ReferencedSOPInstanceUID = obj.StudyInstanceUID;
 RTReferencedStudySequenceItem.RTReferencedSeriesSequence.Item_1 = RTReferencedSeriesSequenceItem;
 
@@ -255,8 +255,14 @@ filename = fullfile(filepath,filename);
 if isOctave
 	dicomwrite(int16(zeros(2)),filename,meta);
 else
-    obj.rtssExportStatus = dicomwrite([],filename,meta,'CreateMode','copy');%,'TransferSyntax',TransferSyntaxUID);
+    obj.rtssExportStatus = dicomwrite([],filename,meta,'CreateMode','copy');%,'TransferSyntax',TransferSyntaxUID);    
 end
+
+%We need to get the info of the file just written because of Matlab's
+%hardcoded way of generating InstanceUIDs during writing
+tmpInfo = dicominfo(filename);
+meta.SOPInstanceUID              = tmpInfo.SOPInstanceUID;
+meta.MediaStorageSOPInstanceUID  = tmpInfo.MediaStorageSOPInstanceUID;
 
 obj.rtssMeta = meta;
 end 

@@ -38,7 +38,7 @@ meta.StudyTime           = obj.StudyTime;
 meta.StudyInstanceUID    = obj.StudyInstanceUID;
 meta.FrameOfReferenceUID = obj.FrameOfReferenceUID;
 
-ClassUID = '1.2.840.10008.5.1.4.1.1.2'; %CT Image
+ClassUID = obj.ctClassUID; %CT Image
 meta.MediaStorageSOPClassUID = ClassUID;
 meta.SOPClassUID = ClassUID;
 %TransferSyntaxUID = '1.2.840.10008.1.2';

@@ -30,7 +30,7 @@ if isOctave
 end
 
 %%
-
+matRad_cfg.dispInfo('Exporting RTPlan...\n');
 if isfield(obj.pln,'DicomInfo')
     % if from an imported plan then use the existing dicom info
     meta = pln.DicomInfo.Meta;
@@ -39,14 +39,18 @@ else
     meta = struct();
 
     %Class UID
-    ClassUID = '1.2.840.10008.5.1.4.1.1.481.5'; %RT PLAN
+    ClassUID = obj.rtPlanClassUID;
     meta.MediaStorageSOPClassUID = ClassUID;
     meta.SOPClassUID             = ClassUID;
     %TransferSyntaxUID = '1.2.840.10008.1.2.1'; %Explicit VR Little Endian - correct?
     %meta.TransferSyntaxUID = TransferSyntaxUID;
 
     %Identifiers for this object
-    meta.SOPInstanceUID             = dicomuid;
+    try
+        meta.SOPInstanceUID = obj.rtPlanMeta.SOPInstanceUID;   
+    catch
+        meta.SOPInstanceUID = dicomuid;
+    end    
     meta.MediaStorageSOPInstanceUID = meta.SOPInstanceUID;
     meta.SeriesInstanceUID          = dicomuid;
     meta.SeriesNumber               = 1;
@@ -88,17 +92,6 @@ else
 
     meta.SoftwareVersions = matRad_version();
     meta.ManufacturerModelName = matRad_version();
-
-    %Referenced Dose
-    try
-        rtPlanUID = obj.rtPlanMeta.SOPInstanceUID;
-        rtPlanClassID = obj.rtPlanMeta.SOPClassUID;
-        meta.ReferencedRTPlanSequence.Item_1.ReferencedSOPClassUID = rtPlanClassID;
-        meta.ReferencedRTPlanSequence.Item_1.ReferencedSOPInstanceUID = rtPlanUID;
-    catch
-        rtPlanUID = '';
-        rtPlanClassID = '';
-    end
 end
 
 %Correct Positioning Offset
@@ -119,7 +112,7 @@ positionOffsetCoordinates = positionOffsetCoordinates - [ct.resolution.x ct.reso
 
 %Write references to image, RTStruct, RTDose
 %RTStruct
-meta.ReferencedStructureSetSequence.Item_1.ReferencedSOPClassUID = '1.2.840.10008.5.1.4.1.1.481.3';
+meta.ReferencedStructureSetSequence.Item_1.ReferencedSOPClassUID = obj.rtStructClassUID;
 meta.ReferencedStructureSetSequence.Item_1.ReferencedSOPInstanceUID = obj.rtssMeta.SOPInstanceUID;
 
 %RTDose - %TODO the reference to the RTDose, also a little fishy because we
@@ -143,9 +136,26 @@ meta.FractionGroupSequence.Item_1.FractionGroupNumber =  1;
 meta.FractionGroupSequence.Item_1.NumberOfFractionsPlanned =  obj.pln.numOfFractions;
 meta.FractionGroupSequence.Item_1.NumberOfBeams = obj.pln.propStf.numOfBeams;
 meta.FractionGroupSequence.Item_1.NumberOfBrachyApplicationSetups = 0;
-meta.FractionGroupSequence.Item_1.BeamDoseMeaning = 'FRACTION_LEVEL'; %TODO: This is probably no longer necessary.
+% meta.FractionGroupSequence.Item_1.BeamDoseMeaning = 'FRACTION_LEVEL'; %TODO: This is probably no longer necessary.
+
+refDoseSeq = struct();
+
+%We need the doses to be exported already if we want to store the reference
+for i = 1:numel(obj.rtDoseMetas)
+    currItemStr = sprintf('Item_%d',i);
+    refDoseSeq.(currItemStr).ReferencedSOPInstanceUID = obj.rtDoseMetas(i).SOPInstanceUID;
+    refDoseSeq.(currItemStr).ReferencedSOPClassUID = obj.rtDoseMetas(i).SOPClassUID;
+end
+
+if ~isempty(refDoseSeq)
+    meta.ReferencedDoseSequence = refDoseSeq;
+    meta.FractionGroupSequence.Item_1.ReferencedDoseSequence = refDoseSeq;
+end
+
 
 for iBeam = 1:obj.pln.propStf.numOfBeams
+    matRad_cfg.dispInfo('\tBeam %d: ',iBeam);
+    
     %PatientSetupSequence - Required
     currBeamItemStr = sprintf('Item_%d',iBeam);
     meta.PatientSetupSequence.(currBeamItemStr) = struct('PatientPosition','HFS','PatientSetupNumber',iBeam,'SetupTechniqueDescription','');
@@ -295,17 +305,19 @@ for iBeam = 1:obj.pln.propStf.numOfBeams
             beamSeqItem.ControlPointSequence.(currCtrlSeqItemStr) = currCtrlSeqItem;
         end
 
-        %TODO: We need to add a final control point only containing the
+        %We need to add a final control point only containing the
         %cumulative meterset
         currCtrlSeqItemStr = sprintf('Item_%d',iShape+1);
         beamSeqItem.ControlPointSequence.(currCtrlSeqItemStr) = struct();
         beamSeqItem.ControlPointSequence.(currCtrlSeqItemStr).CumulativeMetersetWeight = cumulativeMetersetWeight;
-        %Do we need anything else here?
         
         %Add the final cumulative meterset weight (see comment above, we
         %use absolute values and not 100, so we can easy add it to the Fraction sequence)
         beamSeqItem.FinalCumulativeMetersetWeight = cumulativeMetersetWeight;
 
+        %TODO: Do we need anything else here?   
+
+        matRad_cfg.dispInfo('exported %d Control Points.\n',iShape+1);
     end
 
     meta.BeamSequence.(currBeamItemStr) = beamSeqItem;
@@ -334,6 +346,6 @@ if isOctave
 else
     obj.rtPlanExportStatus = dicomwrite([],filename,meta,'CreateMode','copy');%,'TransferSyntax',TransferSyntaxUID);
 end
-obj.rtPlanMetas = meta;
+obj.rtPlanMeta = meta;
 
 end
