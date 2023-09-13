@@ -513,18 +513,6 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
 
 
                                     
-                                    % Alternative method for pruning the
-                                    % unused voxels
-                                    % if isfield(pln.propDoseCalc, 'clearVoxelsForRobustness') && ~isequal(pln.propDoseCalc.clearVoxelsForRobustness, 'none')
-                                    %     if (shiftScen>1) || (rangeShiftScen>1)
-                                    % 
-                                    %         ixOnRobustMask = robustVoxelsOnGrid{ctScen}(ix(currIx));
-                                    % 
-                                    %         bixelDose = bixelDose.*ixOnRobustMask;
-                                    % 
-                                    %     end
-                                    % end
-
                                     % Save dose for every bixel in cell array
                                     doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix(currIx)),1,bixelDose,dij.doseGrid.numOfVoxels,1);
 
