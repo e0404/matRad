@@ -172,7 +172,11 @@ classdef matRad_DicomExporter < handle
             obj.StudyInstanceUID = dicomuid;
             
             % coordinates
-            obj.FrameOfReferenceUID = dicomuid;
+            if isfield(obj.ct,'dicomMeta') && isfield(obj.ct.dicomMeta,'FrameOfReferenceUID')
+                obj.FrameOfReferenceUID = obj.ct.dicomMeta.FrameOfReferenceUID;
+            else
+                obj.FrameOfReferenceUID = dicomuid;
+            end
             
             if isfield(obj.ct,'dicomInfo') && isfield(obj.ct.dicomInfo,'PatientPosition')
                obj.PatientPosition = obj.ct.dicomInfo.PatientPosition;
