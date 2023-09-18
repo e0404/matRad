@@ -42,6 +42,7 @@ meta.SOPClassUID             = ClassUID;
 %meta.TransferSyntaxUID = TransferSyntaxUID; 
 
 %Identifiers
+meta.FrameOfReferenceUID        = obj.FrameOfReferenceUID;
 meta.SOPInstanceUID             = dicomuid;
 meta.MediaStorageSOPInstanceUID = meta.SOPInstanceUID;
 meta.SeriesInstanceUID          = dicomuid;

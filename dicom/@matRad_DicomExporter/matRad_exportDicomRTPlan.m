@@ -42,6 +42,7 @@ else
     ClassUID = obj.rtPlanClassUID;
     meta.MediaStorageSOPClassUID = ClassUID;
     meta.SOPClassUID             = ClassUID;
+    meta.FrameOfReferenceUID     = obj.FrameOfReferenceUID;
     %TransferSyntaxUID = '1.2.840.10008.1.2.1'; %Explicit VR Little Endian - correct?
     %meta.TransferSyntaxUID = TransferSyntaxUID;
 

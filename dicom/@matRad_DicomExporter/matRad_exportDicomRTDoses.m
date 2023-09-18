@@ -47,7 +47,7 @@ end
 storageClass = obj.rtDoseClassUID;
 meta.MediaStorageSOPClassUID = storageClass;
 meta.SOPClassUID = storageClass;
-
+meta.FrameOfReferenceUID = obj.FrameOfReferenceUID;
 %TransferSyntaxUID = '1.2.840.10008.1.2.1'; %Explicit VR little endian?
 %meta.TransferSyntaxUID = TransferSyntaxUID;
 
@@ -71,7 +71,6 @@ meta.InstanceCreationTime = currTimeStr;
 meta.StudyDate = obj.StudyDate;
 meta.StudyTime = obj.StudyTime;
 
-meta.FrameOfReferenceUID = obj.FrameOfReferenceUID;
 meta.PositionReferenceIndicator = '';
 
 
