@@ -1,7 +1,7 @@
 function [includeMask] = matRad_getRobustVoxelsOnGrid(cst, doseGrid, selectionMode)
 % matRad function to get mask of the voxels (on dose grid) that are
 % included in structures used for robust optimization. Dose calculation in
-% the non nonminal scenarios will anly be performed on the voxels sset to 1
+% the non nonminal scenarios will only be performed on the voxels sset to 1
 % in the mask 
 %
 % call
@@ -12,12 +12,14 @@ function [includeMask] = matRad_getRobustVoxelsOnGrid(cst, doseGrid, selectionMo
 %   doseGrid:               doseGrid struct containing field doseGrid.dimensions
 %   selectionMode:          define wich method to apply to select the cst
 %                           structures to include. Choices are: 
-%                               none            does nothing, all voxels will be included                                                                                  
-%                               all             includes all the structures in the cst%                               
+%                               none            all voxels will be excluded from calculation
+%                               doseGrid        all voxels will be included, also those not assigned to any structure in the cst
+%                               all             includes all the structures in the cst                               
 %                               targetOnly      only includes the voxels in structures labeld as target                      
 %                               oarsOnly        only includes the voxels in structures labeld as oars    
 %                               objectivesOnly  only includes the voxels in structures with at least one objective/constraint    
-%                               TODO:           all structurtes with robustness objectives
+%                               robustnessOnly  only includes the voxels in structures with robustness
+%                               [indexes]       only includes the voxels in structures specified by index array (i.e. [1,2,3] includes first three structures)
 %                               
 % 
 % output
@@ -38,9 +40,9 @@ function [includeMask] = matRad_getRobustVoxelsOnGrid(cst, doseGrid, selectionMo
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     matRad_cfg = MatRad_Config.instance();
-    
-    matRad_cfg.dispInfo('Disabling dose calculation in voxels outside of ROIs in robustness scenarios');
     cst  = matRad_setOverlapPriorities(cst);
+    matRad_cfg.dispInfo('Disabling dose calculation in voxels outside of ROIs in robustness scenarios');
+   
 
     selectedCstStructs = [];
     
@@ -49,31 +51,52 @@ function [includeMask] = matRad_getRobustVoxelsOnGrid(cst, doseGrid, selectionMo
         
     if isequal(selectionMode , 'none')
         for ctScenIdx=1:size(includeMask,2)
+            includeMask{ctScenIdx}(:) = 0;
+        end
+
+    elseif isequal(selectionMode , 'doseGrid')
+
+        for ctScenIdx=1:size(includeMask,2)
             includeMask{ctScenIdx}(:) = 1;
         end
-    
+
     else
         %structures that are selected here will be included in dose calculation
         %over the robust scenarios
+        if ischar(selectionMode)
 
-        switch selectionMode
-        
-            case 'all'
-                selectedCstStructs = [1:size(cst,1)];
-            case 'targetOnly'
-                selectedCstStructs = find(cellfun(@(x) strcmp(x,'TARGET'), [cst(:,3)]));
-            case 'objectivesOnly'
-                for i=1:size(cst,1)
-                    if numel(cst{i,6})>0
-                        selectedCstStructs = [selectedCstStructs, i];
+            switch selectionMode
+            
+                case 'all'
+                    selectedCstStructs = [1:size(cst,1)];
+                case 'targetOnly'
+                    selectedCstStructs = find(cellfun(@(x) strcmp(x,'TARGET'), [cst(:,3)]));
+                case 'objectivesOnly'
+                    for i=1:size(cst,1)
+                        if numel(cst{i,6})>0
+                            selectedCstStructs = [selectedCstStructs, i];
+                        end
                     end
-                end
-            case 'oarsOnly'
-                selectedCstStructs = find(cellfun(@(x) strcmp(x,'OAR'), [cst(:,3)]));    
-            otherwise
-        
+                case 'oarsOnly'
+                    selectedCstStructs = find(cellfun(@(x) strcmp(x,'OAR'), [cst(:,3)]));
+                case 'robustnessOnly'
+                    for i=1:size(cst,1)
+                        for j = 1:numel(cst{i,6})
+                            if isfield(cst{i,6}{j}, 'robustness') && ~isequal(cst{i,6}{j}.robustness, 'none')
+                                selectedCstStructs = [selectedCstStructs,i];
+                            end
+                        end
+                    end
+                otherwise
+            
+            end
+        elseif isnumeric(selectionMode)
+
+            selectedCstStructs = unique(intersect(selectionMode, [cst{:,1}]+1));
+            if ~isequal(selectedCstStructs, unique(selectionMode))
+                matRad_cfg.dispWarning('Specified structures are not compatible with cst structures. Only performing calculation on stuctures: %s',num2str(selectedCstStructs));
+            end
         end
-    
         
         %loop over all cst sturctures 
         for i=1:size(cst,1)
@@ -107,25 +130,21 @@ function [includeMask] = matRad_getRobustVoxelsOnGrid(cst, doseGrid, selectionMo
                             end
                         else
                             if ~isequal(robustness, 'none')
-                                matRad_cfg.dispError('Trying to clear voxels in cst structure: %s, but this structure has robustness requirements', cst{i,2});
+                                matRad_cfg.distWarning('Trying to clear voxels in cst structure: %s, but this structure has robustness requirements', cst{i,2});
                             end
                         end
                     end
     
-                else %numel(cst{i,6}) < 0
+                else %numel(cst{i,6}) <= 0
                     if any(intersect(i, selectedCstStructs))
-                        matRad_cfg.dispWarning('Trying to clear voxels in cst structure: %s, but this structure does not have any objective or constraint', cst{i,2}');
+                        matRad_cfg.dispWarning('Computing dose in cst structure: %s, but this structure does not have any objective or constraint', cst{i,2}');
                     end
                 end %numel(cst{i,6}) > 0
             end %if cst{i,4} not empty
-        
 
         end %for loop over cst
-    end
 
-    for ctIdx=1:size(cst{1,4},2)
-        includeMask{ctIdx} = includeMask{ctIdx};
     end
     
-    matRad_cfg.dispInfo('\n done\n');
+    matRad_cfg.dispInfo('...done\n');
 end

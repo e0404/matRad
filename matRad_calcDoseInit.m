@@ -171,8 +171,8 @@ end
 % compute SSDs -> Removed for now because it is scenario-dependent
 % stf = matRad_computeSSD(stf,ct);
 
-if ~isfield(pln.propDoseCalc, 'clearVoxelsForRobustness')
-    pln.propDoseCalc.clearVoxelsForRobustness = 'none';
+if ~isfield(pln.propDoseCalc, 'computeDoseInStuctures')
+    pln.propDoseCalc.computeDoseInStuctures = 'doseGrid';
 end
 
-robustVoxelsOnGrid = matRad_getRobustVoxelsOnGrid(cst, dij.doseGrid, pln.propDoseCalc.clearVoxelsForRobustness);
+robustVoxelsOnGrid = matRad_getRobustVoxelsOnGrid(cst, dij.doseGrid, pln.propDoseCalc.computeDoseInStuctures);

@@ -409,7 +409,7 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
 
 
                                 % get rid of currIdx
-                                if isfield(pln.propDoseCalc, 'clearVoxelsForRobustness') && ~isequal(pln.propDoseCalc.clearVoxelsForRobustness, 'none')
+                                if isfield(pln.propDoseCalc, 'computeDoseInStuctures') && ~isequal(pln.propDoseCalc.computeDoseInStuctures, 'all')
                                     if (shiftScen>1) || (rangeShiftScen>1)
 
                                         ixOnRobustMask = robustVoxelsOnGrid{ctScen}(VdoseGrid(ix));
