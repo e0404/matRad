@@ -173,6 +173,11 @@ end
 
 if ~isfield(pln.propDoseCalc, 'computeDoseInStuctures')
     pln.propDoseCalc.computeDoseInStuctures = 'doseGrid';
+elseif ~isequal(pln.propDoseCalc, 'doseGrid')
+    matRad_cfg.dispInfo('Disabling dose calculation in voxels outside of ROIs in robustness scenarios');
 end
 
-robustVoxelsOnGrid = matRad_getRobustVoxelsOnGrid(cst, dij.doseGrid, pln.propDoseCalc.computeDoseInStuctures);
+%structures that are selected here will be included in dose calculation over the robust scenarios
+robustVoxelsOnGrid = matRad_getVoxelsOnCstStructs(cst, dij.doseGrid, pln.propDoseCalc.computeDoseInStuctures);
+
+matRad_cfg.dispInfo('...done.');
