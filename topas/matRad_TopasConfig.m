@@ -183,19 +183,6 @@ classdef matRad_TopasConfig < handle
             %   stf:            matRad steering struct
             %   machine:        machine to be used for calculation
             %   w:              (optional) weights in case of calcDoseDirect
-            %
-            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %
-            % Copyright 2022 the matRad development team.
-            %
-            % This file is part of the matRad project. It is subject to the license
-            % terms in the LICENSE file found in the top-level directory of this
-            % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
-            % of the matRad project, including this file, may be copied, modified,
-            % propagated, or distributed except according to the terms contained in the
-            % LICENSE file.
-            %
-            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
 
@@ -324,19 +311,7 @@ classdef matRad_TopasConfig < handle
             %
             % output
             %   topasCube:      struct with all read out subfields
-            %
-            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %
-            % Copyright 2022 the matRad development team.
-            %
-            % This file is part of the matRad project. It is subject to the license
-            % terms in the LICENSE file found in the top-level directory of this
-            % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
-            % of the matRad project, including this file, may be copied, modified,
-            % propagated, or distributed except according to the terms contained in the
-            % LICENSE file.
-            %
-            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
             % Load in saved MC parameters
             if isfile([folder filesep 'MCparam.mat'])
@@ -401,19 +376,6 @@ classdef matRad_TopasConfig < handle
             %
             % EXAMPLE calls:
             %   topasCube = topasConfig.readExternal('pathToFolder')
-            %
-            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %
-            % Copyright 2022 the matRad development team.
-            %
-            % This file is part of the matRad project. It is subject to the license
-            % terms in the LICENSE file found in the top-level directory of this
-            % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
-            % of the matRad project, including this file, may be copied, modified,
-            % propagated, or distributed except according to the terms contained in the
-            % LICENSE file.
-            %
-            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
             % read in TOPAS files in dij
             dij = obj.readFiles(folder);
@@ -452,19 +414,6 @@ classdef matRad_TopasConfig < handle
             %
             % output
             %   topasCube:      struct with all read out subfields
-            %
-            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %
-            % Copyright 2022 the matRad development team.
-            %
-            % This file is part of the matRad project. It is subject to the license
-            % terms in the LICENSE file found in the top-level directory of this
-            % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
-            % of the matRad project, including this file, may be copied, modified,
-            % propagated, or distributed except according to the terms contained in the
-            % LICENSE file.
-            %
-            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
 
@@ -719,7 +668,7 @@ classdef matRad_TopasConfig < handle
         end
 
         function dij = fillDij(obj,topasCubes,dij)
-
+            %TODO: Insert documentation
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
 
             % Load weights from parameter variable
@@ -862,7 +811,7 @@ classdef matRad_TopasConfig < handle
         end
 
         function writeRunHeader(obj,fID,fieldIx,runIx,ctScen)
-
+            %TODO: Insert documentation
             fprintf(fID,'s:Sim/PlanLabel = "%s"\n',obj.label);
             if exist('ctScen','var')
                 fprintf(fID,'s:Sim/ScoreLabel = "score_%s_field%d_ct%d_run%d"\n',obj.label,fieldIx,ctScen,runIx);
@@ -897,13 +846,14 @@ classdef matRad_TopasConfig < handle
             fprintf(fID,'\n');
             fprintf(fID,['i:Ts/Seed = ',num2str(runIx),'\n']);
 
+            %TODO: remove or document 
             %fprintf(fID,'includeFile = %s/TOPAS_Simulation_Setup.txt\n',obj.thisFolder);
             %fprintf(fID,'includeFile = %s/TOPAS_matRad_geometry.txt\n',obj.thisFolder);
             %fprintf(fID,'includeFile = %s/TOPAS_scorer_surfaceIC.txt\n',obj.thisFolder);
         end
 
         function writeFieldHeader(obj,fID,ctScen)
-
+            %TODO: Insert documentation
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
 
             if ~strcmp(obj.beamProfile,'phasespace')
@@ -941,7 +891,7 @@ classdef matRad_TopasConfig < handle
         end
 
         function writeScorers(obj,fID)
-
+            %TODO: Insert documentation
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
 
             obj.MCparam.outputType = obj.scorer.outputType;
@@ -1150,7 +1100,7 @@ classdef matRad_TopasConfig < handle
         end
 
         function writeStfFields(obj,ct,stf,pln,w,baseData)
-
+            %TODO: Insert documentation
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
 
             isPhoton = false;
@@ -1776,7 +1726,7 @@ classdef matRad_TopasConfig < handle
                     obj.writeScorers(fileID);
 
                     % Write dij-related config lines
-                    % We should discuss here if that's something that has to be available for photons as well
+                    % TODO: move this to github issue/todo -> We should discuss here if that's something that has to be available for photons as well
                     if ~strcmp(obj.radiationMode,'photons')
                         if obj.scorer.calcDij
                             fprintf(fileID,'\n');
@@ -1992,7 +1942,7 @@ classdef matRad_TopasConfig < handle
                             fprintf(fID,['iv:Ge/Patient/SchneiderHounsfieldUnitSections = %i',repmat(' %g',1,numel(densityCorrection.unitSections)),'\n'],numel(densityCorrection.unitSections),densityCorrection.unitSections);
                             fprintf(fID,['uv:Ge/Patient/SchneiderDensityOffset = %i',repmat(' %g',1,numel(densityCorrection.offset)),'\n'],numel(densityCorrection.offset),densityCorrection.offset);
                             % this is needed for a custom fprintf format which formats integers i to 'i.' and floats without trailing zeros
-                            % this is potentially not necessary but was done to mimick the original TOPAS Schneider converter file
+                            % TODO: check whether this can be removed -> this is potentially not necessary but was done to mimick the original TOPAS Schneider converter file
                             TOPASisFloat = mod(densityCorrection.factor,1)==0;
                             fprintf(fID,['uv:Ge/Patient/SchneiderDensityFactor = %i ',strjoin(cellstr(char('%1.01f '.*TOPASisFloat' + '%1.15g '.*~TOPASisFloat'))),'\n'],numel(densityCorrection.factor),densityCorrection.factor);
                             TOPASisFloat = mod(densityCorrection.factorOffset,1)==0;
@@ -2089,7 +2039,7 @@ classdef matRad_TopasConfig < handle
         end
 
         function writeRangeShifter(~,fID,rangeShifter,sourceToNozzleDistance)
-
+            %TODO: Insert documentation
             %Hardcoded PMMA range shifter for now
             pmma_rsp = 1.165;
             rsWidth = rangeShifter.eqThickness / pmma_rsp;
@@ -2107,6 +2057,7 @@ classdef matRad_TopasConfig < handle
         end
 
         function writeMCparam(obj)
+            %TODO: Insert documentation
             %write MCparam file with basic parameters
             MCparam = obj.MCparam;
             save(fullfile(obj.workingDir,'MCparam.mat'),'MCparam','-v7');

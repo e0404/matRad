@@ -75,7 +75,7 @@ classdef matRad_MinDVH < DoseObjectives.matRad_DoseObjective
             deviation(dose > obj.parameters{1} | dose < d_ref2) = 0;
    
             % claculate objective function
-            fDose = (obj.penalty/numel(dose))*(deviation'*deviation);
+            fDose = (1/numel(dose))*(deviation'*deviation);
         end
         
         %% Calculates the Objective Function gradient
@@ -92,7 +92,7 @@ classdef matRad_MinDVH < DoseObjectives.matRad_DoseObjective
             deviation(dose > obj.parameters{1} | dose < d_ref2) = 0;
 
             % calculate delta
-            fDoseGrad = 2 * (obj.penalty/numel(dose))*deviation;
+            fDoseGrad = (2/numel(dose))*deviation;
         end
     end
     

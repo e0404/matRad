@@ -201,6 +201,9 @@ end
 
 linIxDIJ = find(~cellfun(@isempty,dij.physicalDose(scen4D,:,:)))';
 
+%Only select the indexes of the nominal ct Scenarios
+linIxDIJ_nominalCT = find(~cellfun(@isempty,dij.physicalDose(scen4D,1,1)))';
+
 FLAG_CALC_PROB = false;
 FLAG_ROB_OPT   = false;
 
@@ -248,6 +251,7 @@ end
 %Give scenarios used for optimization
 backProjection.scenarios    = ixForOpt;
 backProjection.scenarioProb = pln.multScen.scenProb;
+backProjection.nominalCtScenarios = linIxDIJ_nominalCT;
 
 optiProb = matRad_OptimizationProblem(backProjection);
 optiProb.quantityOpt = pln.bioParam.quantityOpt;
