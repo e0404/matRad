@@ -1,4 +1,4 @@
-function [dij, mask] = matRad_clearUnusedVoxelsFromDij(cst, dij, scenarios)
+function [dij, mask] = matRad_clearUnusedVoxelsFromDij(cstOnDoseGrid, dij, scenarios)
 % matRad function to set the voxels in dij that are not used for
 % optimization.
 %
@@ -9,7 +9,7 @@ function [dij, mask] = matRad_clearUnusedVoxelsFromDij(cst, dij, scenarios)
 %   [dij, mask] = matRad_clearUnusedVoxelsFromDij(cst, dij, scenarios)
 %
 % input
-%   cst:                    cst
+%   cstInDoseGrid:          cst (on dose grid)
 %   dij:                    dij struct
 %   scenarios (optional):   explicitly define the scenario indexes that need to be cleared
 %                               
@@ -34,7 +34,7 @@ function [dij, mask] = matRad_clearUnusedVoxelsFromDij(cst, dij, scenarios)
 
     
     matRad_cfg = MatRad_Config.instance();
-    matRad_cfg.dispInfo('Clearing unused voxels in dij...');
+    matRad_cfg.dispInfo('Clearing unused voxels in dij... ');
     
     % If no scenarios are specified, clear them all
     if ~exist('scenarios', 'var')
@@ -47,7 +47,7 @@ function [dij, mask] = matRad_clearUnusedVoxelsFromDij(cst, dij, scenarios)
 
 
     % get voxel mask with voxels on those structures that have objectives/constraints
-    includeMask = matRad_getVoxelsOnCstStructs(cst,dij.doseGrid,'objectivesOnly');
+    includeMask = matRad_selectVoxelsFromCst(cstOnDoseGrid,dij.doseGrid,'objectivesOnly');
 
     ctScenarios = unique(scenIndexes{1});
 
@@ -72,10 +72,14 @@ function [dij, mask] = matRad_clearUnusedVoxelsFromDij(cst, dij, scenarios)
         if isfield(dij, 'mSqrtBetaDose')
             dij.mSqrtBetaDose{scenIdx} = dij.mSqrtBetaDose{scenIdx}.*includeMask{ctIdx};
         end
+
+        if isfield(dij,'mLETDose')
+            dij.mSqrtBetaDose{scenIdx} = dij.mLETDose{scenIdx}.*includeMask{ctIdx};
+        end
     end
 
     if nargout>1
         mask = includeMask;
     end
-    matRad_cfg.dispInfo('done.');
+    matRad_cfg.dispInfo('done.\n');
 end

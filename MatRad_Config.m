@@ -180,6 +180,7 @@ classdef MatRad_Config < handle
             obj.propDoseCalc.defaultVoxelSubIx = []; %Allows specification of a subindex list for dose calculation, empty by default means automatic setting
             obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
             obj.propDoseCalc.defaultCalcLET = true; %calculate LETs for particles
+            obj.propDoseCalc.defaultSelectVoxelsInScenarios = 'all';
 
             obj.propDoseCalc.defaultAirOffsetCorrection = true;
 
@@ -224,6 +225,8 @@ classdef MatRad_Config < handle
             %setDefaultPropertiesForTesting sets matRad's default
             %properties during testing to reduce computational load
 
+            obj.setDefaultProperties();
+
             obj.logLevel   = 3; %Omit output except errors
 
             obj.propStf.defaultLongitudinalSpotSpacing = 20;
@@ -241,6 +244,7 @@ classdef MatRad_Config < handle
             obj.propDoseCalc.defaultVoxelSubIx = []; %Allows specification of a subindex list for dose calculation, empty by default means automatic setting
             obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
             obj.propDoseCalc.defaultCalcLET = true; %calculate LET for particles
+            obj.propDoseCalc.defaultSelectVoxelsInScenarios = 'all';
 
             % default properties for fine sampling calculation
             obj.propDoseCalc.fineSamplingProperties.sigmaSub = 2;
@@ -248,6 +252,7 @@ classdef MatRad_Config < handle
             obj.propDoseCalc.fineSamplingProperties.method = 'russo';
 
             obj.propOpt.defaultMaxIter = 10;
+            obj.propOpt.defaultClearUnusedVoxels = false;
 
             obj.propMC.ompMC_defaultHistories = 100;
             obj.propMC.ompMC_defaultOutputVariance = true;
@@ -270,6 +275,9 @@ classdef MatRad_Config < handle
         
         %%for edu mode
         function setDefaultPropertiesForEduMode(obj)
+            
+            obj.setDefaultProperties();
+
             obj.logLevel = 1;
             
             obj.propStf.defaultLongitudinalSpotSpacing = 3;
