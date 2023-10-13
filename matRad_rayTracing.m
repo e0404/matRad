@@ -36,6 +36,14 @@ function [radDepthV, radDepthCube] = matRad_rayTracing(stf,ct,V,rot_coordsV,late
 % set up rad depth cube for results
 radDepthCube = repmat({NaN*ones(ct.cubeDim)},ct.numOfCtScen);
 
+if any(cellfun(@isgpuarray,ct.cube)) || isgpuarray(V) || isgpuarray(rot_coordsV)
+    matRad_cfg = MatRad_Config.instance();
+    matRad_cfg.dispWarning('RayTracing currently not supported on GPU! Using CPU instead!');
+    ct = matRad_getCtFromGPU(ct);
+    V = gather(V);
+    rot_coordsV = gather(rot_coordsV);
+end
+
 % set up ray matrix direct behind last voxel
 rayMx_bev_y = max(rot_coordsV(:,2)) + max([ct.resolution.x ct.resolution.y ct.resolution.z]);
 rayMx_bev_y = rayMx_bev_y + stf.sourcePoint_bev(2);
@@ -129,6 +137,12 @@ end
 % only take voxel inside the patient
 for i = 1:ct.numOfCtScen
     radDepthV{i} = radDepthCube{i}(V);
+end
+
+matRad_cfg = MatRad_Config.instance();
+if matRad_cfg.enableGPU
+    radDepthCube = cellfun(@gpuArray,radDepthCube,'UniformOutput',false);
+    radDepthV = cellfun(@gpuArray,radDepthV,'UniformOutput',false);
 end
 
 

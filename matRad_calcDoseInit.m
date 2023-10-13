@@ -1,6 +1,11 @@
 
 matRad_cfg =  MatRad_Config.instance();
 
+if matRad_cfg.enableGPU
+    ct = matRad_moveCtToGPU(ct);
+    cst = matRad_moveCstToGPU(cst);
+end
+
 % default: dose influence matrix computation
 if ~exist('calcDoseDirect','var')
     calcDoseDirect = false;

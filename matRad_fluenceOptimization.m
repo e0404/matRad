@@ -34,6 +34,11 @@ function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
 
 matRad_cfg = MatRad_Config.instance();
 
+if matRad_cfg.enableGPU    
+    cst = matRad_moveCstToGPU(cst);
+    dij = matRad_moveDijToGPU(dij);
+end
+
 % consider VOI priorities
 cst  = matRad_setOverlapPriorities(cst);
 
@@ -300,6 +305,16 @@ end
         
 if ~optimizer.IsAvailable()
     matRad_cfg.dispError(['Optimizer ''' pln.propOpt.optimizer ''' not available!']);
+end
+
+if isgpuarray(wInit)
+    wInit = double(gather(wInit));
+end
+
+if isfield(pln,'propOpt') && isfield(pln.propOpt,'showPlot')
+    optimizer.showPlot = pln.propOpt.showPlot;
+else
+    optimizer.showPlot = true;
 end
 
 optimizer = optimizer.optimize(wInit,optiProb,dij,cst);

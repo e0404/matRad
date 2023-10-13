@@ -40,6 +40,9 @@ classdef MatRad_Config < handle
         eduMode = false;
         
         gui;
+        
+        %Experimental
+        enableGPU = false;
     end
 
     properties (SetAccess = private)

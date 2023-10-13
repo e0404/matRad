@@ -94,6 +94,11 @@ elseif isGriddedInterpolantAvailable
         samplePoints = {xi};
         queryPoints  = {x};
     end
+
+    if isgpuarray(x)
+        samplePoints = cellfun(@gpuArray,samplePoints,'UniformOutput',false);
+        yi = gpuArray(yi);
+    end
     
     F = griddedInterpolant(samplePoints,yi,'linear',extrapmethod);
 

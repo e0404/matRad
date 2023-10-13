@@ -32,6 +32,12 @@ function stf = matRad_generateStf(ct,cst,pln,visMode)
 % Instance of MatRad_Config class
 matRad_cfg = MatRad_Config.instance();
 
+%GPU 
+if matRad_cfg.enableGPU
+    ct = matRad_moveCtToGPU(ct);
+    cst = matRad_moveCstToGPU(cst);
+end
+
 matRad_cfg.dispInfo('matRad: Generating stf struct...\n');
 
 % load default parameters if not set

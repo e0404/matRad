@@ -220,3 +220,7 @@ if fMax > 0
 end
 %Sum up max of composite worst case part
 f = f + fMax;
+
+if isgpuarray(f)
+    f = double(gather(f));
+end

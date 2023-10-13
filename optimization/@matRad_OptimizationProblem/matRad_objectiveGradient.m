@@ -314,3 +314,9 @@ if vOmega ~= 0
     %Only implemented for first scenario now
     weightGradient = weightGradient + gProb{1};
 end
+
+% GPU Handling
+if isgpuarray(weightGradient)
+    weightGradient = double(gather(weightGradient));
+end
+

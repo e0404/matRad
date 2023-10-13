@@ -106,7 +106,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             % obj.options.derivative_test_perturbation = 1e-6; % default 1e-8
             % obj.options.derivative_test_tol          = 1e-6;  
             
-            if ~matRad_checkMexFileExists('ipopt')
+            if ~matRad_OptimizerIPOPT.IsAvailable()
                 matRad_cfg.dispError('IPOPT mex interface not available for %s!',obj.env);
             end
 
@@ -251,6 +251,11 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.allObjectiveFunctionValues(iter + 1) = objective;
             %We don't want the optimization to crash because of drawing
             %errors
+            
+            if ~isempty(obj.axesHandle) && ~isgraphics(obj.axesHandle)
+                obj.plotFailed = true;
+            end
+
             if obj.showPlot && ~obj.plotFailed
                 try            
                     obj.plotFunction();
@@ -259,6 +264,11 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
                     %Put a warning at iteration 1 that plotting failed
                     matRad_cfg.dispWarning('Objective Function plotting failed and thus disabled. Message:\n%s',ME.message);
                     obj.plotFailed = true;
+                    if matRad_cfg.isOctave
+                        fflush(stdout);
+                    else
+                        drawnow('update');
+                    end
                 end                
             end
             flag = ~obj.abortRequested;
@@ -268,8 +278,8 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             % plot objective function output
             y = obj.allObjectiveFunctionValues;
             x = 1:numel(y);
-            
-            if isempty(obj.axesHandle) || ~isgraphics(obj.axesHandle,'axes')
+
+            if isempty(obj.axesHandle) || ~isgraphics(obj.axesHandle)
                 %Create new Fiure and store axes handle
                 hFig = figure('Name','Progress of IPOPT Optimization','NumberTitle','off','Color',[.5 .5 .5]);
                 hAx = axes(hFig);
@@ -333,7 +343,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
     
     methods (Static)
         function available = IsAvailable()
-            available = matRad_checkMexFileExists('ipopt');                   
+            available = matRad_checkMexFileExists(['ipopt.' mexext]);                   
         end
     end
 end
