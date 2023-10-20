@@ -121,13 +121,6 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
 
 
             matRad_cfg =  MatRad_Config.instance();
-            matRad_cfg.dispInfo('matRad: Photon dose calculation...\n');
-
-            % initialize waitbar
-            figureWait = waitbar(0,'calculate dose influence matrix for photons...');
-
-            % show busy state
-            set(figureWait,'pointer','watch');
 
             % initialize
             [dij,ct,cst,stf,pln] = this.calcDoseInit(ct,cst,stf,pln);
@@ -195,8 +188,8 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
                             floor(stf(i).totalNumOfBixels/max(1,round(stf(i).totalNumOfBixels/200))));
                     end
                     % update waitbar only 100 times
-                    if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(figureWait)
-                        waitbar(counter/dij.totalNumOfBixels);
+                    if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(this.hWaitbar)
+                        waitbar(counter/dij.totalNumOfBixels,this.hWaitbar);
                     end
 
                     % remember beam and bixel number
@@ -255,8 +248,8 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
             end
 
             %Close Waitbar
-            if ishandle(figureWait)
-                delete(figureWait);
+            if ishandle(this.hWaitbar)
+                delete(this.hWaitbar);
             end
 
         end

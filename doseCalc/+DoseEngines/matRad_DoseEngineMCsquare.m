@@ -282,14 +282,6 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
 
             matRad_cfg.dispInfo('matRad: done!\n');
 
-            try
-                % wait 0.1s for closing all waitbars
-                allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar');
-                delete(allWaitBarFigures);
-                pause(0.1);
-            catch
-            end
-
             %% clear all data
             delete([MCsquareConfig.CT_File(1:end-4) '.*']);
             delete('currBixels.txt');
@@ -308,6 +300,13 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
 
             % cd back
             cd(this.currFolder);
+
+            try
+                if ishandle(this.hWaitbar)
+                    delete(this.hWaitbar);
+                end
+            catch
+            end
 
         end
         

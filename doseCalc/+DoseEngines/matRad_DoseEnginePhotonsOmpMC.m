@@ -115,8 +115,6 @@ classdef matRad_DoseEnginePhotonsOmpMC < DoseEngines.matRad_DoseEngineMonteCarlo
             %Now we have to calibrate to the the beamlet width.
             absCalibrationFactor = absCalibrationFactor * (pln.propStf.bixelWidth/50)^2;
 
-            matRad_cfg.dispInfo('matRad: OmpMC photon dose calculation... \n');
-
             %run over all scenarios
             for s = 1:dij.numOfScenarios
                 this.ompMCgeo.isoCenter = [stf(:).isoCenter];
@@ -145,14 +143,9 @@ classdef matRad_DoseEnginePhotonsOmpMC < DoseEngines.matRad_DoseEngineMonteCarlo
             matRad_cfg.dispInfo('matRad: MC photon dose calculation done!\n');
             matRad_cfg.dispInfo(evalc('toc'));
 
-            try
-                % wait 0.1s for closing all waitbars
-                allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar');
-                delete(allWaitBarFigures);
-                pause(0.1);
-            catch
+            if ishandle(this.hWaitbar)
+                delete(this.hWaitbar);
             end
-
         end
 
 

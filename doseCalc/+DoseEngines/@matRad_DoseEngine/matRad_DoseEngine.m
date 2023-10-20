@@ -55,6 +55,10 @@ classdef (Abstract) matRad_DoseEngine < handle
        name; % readable name for dose engine
        possibleRadiationModes; % radiation modes the engine is meant to process
     end
+
+    properties (SetAccess = private)
+        hWaitbar;
+    end
     
     methods      
         %Constructor  
@@ -137,7 +141,7 @@ classdef (Abstract) matRad_DoseEngine < handle
         % Should be called at the beginning of calcDose method.
         % Can be expanded or changed by overwriting this method and calling
         % the superclass method inside of it
-        [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)       
+        [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)         
     end
     
     % Should be abstract methods but in order to satisfy the compatibility

@@ -31,6 +31,8 @@ classdef (Abstract) matRad_DoseEnginePencilBeamParticle < DoseEngines.matRad_Dos
         letDoseTmpContainer;            % temporary dose LET container
         alphaDoseTmpContainer;          % temporary dose alpha dose container
         betaDoseTmpContainer;           % temporary dose beta dose container
+
+        constantRBE = NaN;              % constant RBE value
     end
 
     methods
@@ -43,37 +45,106 @@ classdef (Abstract) matRad_DoseEnginePencilBeamParticle < DoseEngines.matRad_Dos
             % This should not be handled here as an optimization property
             % We should rather make optimization dependent on what we have
             % decided to calculate here.
-            if nargin > 0 && (isfield(pln,'propOpt')&& isfield(pln.propOpt,'bioOptimization')&& ...
+            if nargin > 0 
+                if (isfield(pln,'propOpt')&& isfield(pln.propOpt,'bioOptimization')&& ...
                     (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') ||...
                     isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) && ...
                     strcmp(pln.radiationMode,'carbon'))
                 this.calcBioDose = true;
+                elseif strcmp(pln.radiationMode,'protons') && isfield(pln,'propOpt') && isfield(pln.propOpt,'bioOptimization') && isequal(pln.propOpt.bioOptimization,'const_RBExD')
+                    this.constantRBE = 1.1;                    
+                end
             end
         end
+
     end
 
     methods (Access = protected)
-        function dij = allocateBioDoseContainer(this,dij,pln)
-            % allocate space for container used in bio optimization
 
-            % get instance of matRad Config for displaying info
-            matRad_cfg = MatRad_Config.instance();
+        function [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)
+            % modified inherited method of the superclass DoseEngine,
+            % containing intialization which are specificly needed for
+            % pencil beam calculation and not for other engines
 
+            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_DoseEnginePencilBeam(this,ct,cst,stf);
+            
+            if ~isnan(this.constantRBE)
+                dij.RBE = this.constantRBE;
+            end
+
+            % Load biologicla base data if needed
             if this.calcBioDose
-                this.alphaDoseTmpContainer = cell(this.numOfBixelsContainer,dij.numOfScenarios);
-                this.betaDoseTmpContainer  = cell(this.numOfBixelsContainer,dij.numOfScenarios);
-                for i = 1:dij.numOfScenarios
-                    dij.mAlphaDose{i}    = spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,1);
-                    dij.mSqrtBetaDose{i} = spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,1);
-                end
+                dij = this.loadBiologicalBaseData(cst,dij);
+                % allocate alpha and beta dose container and sparse matrices in the dij struct,
+                % for more informations see corresponding method
+                dij = this.allocateBioDoseContainer(dij);
+            end           
 
-            elseif isequal(pln.propOpt.bioOptimization,'const_RBExD') && strcmp(pln.radiationMode,'protons')
-                dij.RBE = 1.1;
-                matRad_cfg.dispInfo('matRad: Using a constant RBE of %g\n',dij.RBE);
+            % allocate LET containner and let sparse matrix in dij struct
+            if this.calcLET
+                dij = this.allocateLETContainer(dij);
+            end
+
+            % lateral cutoff for raytracing and geo calculations
+            this.effectiveLateralCutOff = this.geometricLateralCutOff;
+        end
+
+        function dij = loadBiologicalBaseData(this,cst,dij)
+            matRad_cfg = MatRad_Config.instance();
+            if isfield(this.machine.data,'alphaX') && isfield(this.machine.data,'betaX')
+                matRad_cfg.dispInfo('matRad: loading biological base data... ');
+                dij.vTissueIndex    = zeros(size(this.VdoseGrid,1),1);
+                dij.ax              = zeros(dij.doseGrid.numOfVoxels,1);
+                dij.bx              = zeros(dij.doseGrid.numOfVoxels,1);
+
+                cstDownsampled = matRad_setOverlapPriorities(cst);
+
+                % resizing cst to dose cube resolution
+                cstDownsampled = matRad_resizeCstToGrid(cstDownsampled,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
+                    dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
+                % retrieve photon LQM parameter for the current dose grid voxels
+                [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cstDownsampled,dij.doseGrid.numOfVoxels,1,this.VdoseGrid);
+
+                for i = 1:size(cstDownsampled,1)
+
+                    % check if cst is compatiable
+                    if ~isempty(cstDownsampled{i,5}) && isfield(cstDownsampled{i,5},'alphaX') && isfield(cstDownsampled{i,5},'betaX')
+
+                        % check if base data contains alphaX and betaX
+                        IdxTissue = find(ismember(this.machine.data(1).alphaX,cstDownsampled{i,5}.alphaX) & ...
+                            ismember(this.machine.data(1).betaX,cstDownsampled{i,5}.betaX));
+
+                        % check consitency of biological baseData and cst settings
+                        if ~isempty(IdxTissue)
+                            isInVdoseGrid = ismember(this.VdoseGrid,cstDownsampled{i,4}{1});
+                            dij.vTissueIndex(isInVdoseGrid) = IdxTissue;
+                        else
+                            matRad_cfg.dispError('Biological base data and cst are inconsistent!');
+                        end
+
+                    else
+                        dij.vTissueIndex(row) = 1;
+                        matRad_cfg.dispInfo('Tissue type of %s was set to 1\n',cstDownsampled{i,2});
+                    end
+                end
+                matRad_cfg.dispInfo('done.\n');
+
+            else
+                matRad_cfg.dispError('Base data is missing alphaX and/or betaX!');
             end
         end
 
-        function dij = allocateLETContainer(this,dij,pln)
+        function dij = allocateBioDoseContainer(this,dij)
+            % allocate space for container used in bio optimization           
+            this.alphaDoseTmpContainer = cell(this.numOfBixelsContainer,dij.numOfScenarios);
+            this.betaDoseTmpContainer  = cell(this.numOfBixelsContainer,dij.numOfScenarios);
+            for i = 1:dij.numOfScenarios
+                dij.mAlphaDose{i}    = spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,1);
+                dij.mSqrtBetaDose{i} = spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,1);
+            end
+        end
+
+        function dij = allocateLETContainer(this,dij)
             % allocate space for container used in LET calculation
 
             % get MatLab Config instance for displaying warings
@@ -268,6 +339,9 @@ classdef (Abstract) matRad_DoseEnginePencilBeamParticle < DoseEngines.matRad_Dos
             %
             % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispInfo('matRad: calculate lateral cutoff...');
+
             if cutOffLevel <= 0.98
                 warning('a lateral cut off below 0.98 may result in an inaccurate dose calculation')
             end
@@ -279,7 +353,7 @@ classdef (Abstract) matRad_DoseEnginePencilBeamParticle < DoseEngines.matRad_Dos
                 exp(-bsxfun(@minus,x,mu').^2 ./ (2* ones(numel(x),1) * SqSigma' ))) * w);
 
             if (cutOffLevel < 0 || cutOffLevel > 1)
-                warning('lateral cutoff is out of range - using default cut off of 0.99')
+                matRad_cfg.dispWarning('lateral cutoff is out of range - using default cut off of 0.99')
                 cutOffLevel = 0.99;
             end
             % define some variables needed for the cutoff calculation
@@ -411,7 +485,7 @@ classdef (Abstract) matRad_DoseEnginePencilBeamParticle < DoseEngines.matRad_Dos
                         cumArea = cumsum(2*pi.*r_mid.*dose_r.*dr);
                         relativeTolerance = 0.5; %in [%]
                         if abs((cumArea(end)./(idd(j)))-1)*100 > relativeTolerance
-                            warning('LateralParticleCutOff: shell integration is wrong !')
+                            matRad_cfg.dispWarning('LateralParticleCutOff: shell integration is wrong !')
                         end
 
                         IX = find(cumArea >= idd(j) * cutOffLevel,1, 'first');
@@ -419,7 +493,7 @@ classdef (Abstract) matRad_DoseEnginePencilBeamParticle < DoseEngines.matRad_Dos
 
                         if isempty(IX)
                             depthDoseCutOff = Inf;
-                            warning('LateralParticleCutOff: Couldnt find lateral cut off !')
+                            matRad_cfg.dispWarning('LateralParticleCutOff: Couldnt find lateral cut off !')
                         elseif isnumeric(IX)
                             depthDoseCutOff = r_mid(IX);
                         end
@@ -429,6 +503,8 @@ classdef (Abstract) matRad_DoseEnginePencilBeamParticle < DoseEngines.matRad_Dos
                     end
                 end
             end
+
+            matRad_cfg.dispInfo('done.\n');
 
             %% visualization
             if this.visBoolLateralCutOff

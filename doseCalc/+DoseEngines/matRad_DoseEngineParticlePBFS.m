@@ -87,82 +87,10 @@ classdef matRad_DoseEngineParticlePBFS < DoseEngines.matRad_DoseEnginePencilBeam
             % init dose calc
             [dij,ct,cst,stf] = this.calcDoseInit(ct,cst,stf);
 
-            % initialize waitbar
-            figureWait = waitbar(0,'calculate dose influence matrix for particles...');
-            % prevent closure of waitbar and show busy state
-            set(figureWait,'pointer','watch');
-
             % helper function for energy selection
             round2 = @(a,b)round(a*10^b)/10^b;
-            
-            % allocate alpha and beta dose container and sparse matrices in the dij struct,
-            % for more informations see corresponding method
-            dij = this.allocateBioDoseContainer(dij,pln);
-            
-            % allocate LET containner and let sparse matrix in dij struct
-            if this.calcLET
-                dij = this.allocateLETContainer(dij,pln);
-            end
-
-            % generates tissue class matrix for biological optimization
-            if this.calcBioDose
-
-                if   isfield(this.machine.data,'alphaX') && isfield(this.machine.data,'betaX')
-
-                    matRad_cfg.dispInfo('matRad: loading biological base data... ');
-                    vTissueIndex = zeros(size(this.VdoseGrid,1),1);
-                    dij.ax       = zeros(dij.doseGrid.numOfVoxels,1);
-                    dij.bx       = zeros(dij.doseGrid.numOfVoxels,1);
-
-                    cst = matRad_setOverlapPriorities(cst);
-
-                    % resizing cst to dose cube resolution 
-                    cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
-                                                     dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
-                    % retrieve photon LQM parameter for the current dose grid voxels
-                    [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,this.VdoseGrid);
-
-                    for i = 1:size(cst,1)
-
-                        % check if cst is compatiable 
-                        if ~isempty(cst{i,5}) && isfield(cst{i,5},'alphaX') && isfield(cst{i,5},'betaX') 
-
-                            % check if base data contains alphaX and betaX
-                            IdxTissue = find(ismember(this.machine.data(1).alphaX,cst{i,5}.alphaX) & ...
-                                             ismember(this.machine.data(1).betaX,cst{i,5}.betaX));
-
-                            % check consitency of biological baseData and cst settings
-                            if ~isempty(IdxTissue)
-                                isInVdoseGrid = ismember(this.VdoseGrid,cst{i,4}{1});
-                                vTissueIndex(isInVdoseGrid) = IdxTissue;
-                            else
-                                matRad_cfg.dispError('biological base data and cst inconsistent\n');
-                            end
-
-                        else
-                                vTissueIndex(row) = 1;
-                                matRad_cfg.dispInfo(['matRad: tissue type of ' cst{i,2} ' was set to 1\n']);          
-                        end
-                    end
-                    matRad_cfg.dispInfo('done.\n');
-
-                else
-
-                    matRad_cfg.dispError('base data is incomplement - alphaX and/or betaX is missing');
-
-                end
-
-            % issue warning if biological optimization not possible
-            elseif sum(strcmp(pln.propOpt.bioOptimization,{'LEMIV_effect','LEMIV_RBExD'}))>0 && ~strcmp(pln.radiationMode,'carbon') ||...
-                   ~strcmp(pln.radiationMode,'protons') && strcmp(pln.propOpt.bioOptimization,'const_RBExD')
-                warndlg([pln.propOpt.bioOptimization ' optimization not possible with ' pln.radiationMode '- physical optimization is carried out instead.']);
-                pln.propOpt.bioOptimization = 'none';      
-            end
-
-            % lateral cutoff for raytracing and geo calculations
-            this.effectiveLateralCutOff = this.geometricLateralCutOff;
-            
-            matRad_cfg.dispInfo('matRad: Particle dose calculation...\n');
+              
+            %Progress Counter
             counter = 0;
 
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -170,12 +98,8 @@ classdef matRad_DoseEngineParticlePBFS < DoseEngines.matRad_DoseEnginePencilBeam
 
                 % init beam
                 dij = this.calcDoseInitBeam(dij,ct,cst,stf,i);     
-
-                % Determine lateral cutoff
-                matRad_cfg.dispInfo('matRad: calculate lateral cutoff...');
-                
+               
                 this.calcLateralParticleCutOff(this.dosimetricLateralCutOff,stf(i));
-                matRad_cfg.dispInfo('done.\n');    
 
                 for j = 1:stf(i).numOfRays % loop over all rays
 
@@ -220,8 +144,6 @@ classdef matRad_DoseEngineParticlePBFS < DoseEngines.matRad_DoseEnginePencilBeam
                                 vTissueIndex_j = vTissueIndex(ix,:);
                         end
 
-
-
                         for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
 
                             counter = counter + 1;
@@ -234,8 +156,8 @@ classdef matRad_DoseEngineParticlePBFS < DoseEngines.matRad_DoseEnginePencilBeam
                             end
 
                             % update waitbar only 100 times if it is not closed
-                            if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(figureWait)
-                                waitbar(counter/dij.totalNumOfBixels,figureWait);
+                            if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(this.hWaitbar)
+                                waitbar(counter/dij.totalNumOfBixels,this.hWaitbar);
                             end
 
                             % remember beam and bixel number
@@ -398,8 +320,8 @@ classdef matRad_DoseEngineParticlePBFS < DoseEngines.matRad_DoseEnginePencilBeam
             end
 
             %Close Waitbar
-            if ishandle(figureWait)
-                delete(figureWait);
+            if ishandle(this.hWaitbar)
+                delete(this.hWaitbar);
             end
         end
 
