@@ -79,6 +79,7 @@ classdef (Abstract) matRad_DoseEngine < handle
         end
 
         function assignPropertiesFromPln(this,pln,warnWhenPropertyChanged)
+            matRad_cfg = MatRad_Config.instance();
 
             if nargin < 3 || ~isscalar(warnWhenPropertyChanged) || ~islogical(warnWhenPropertyChanged)
                 warnWhenPropertyChanged = false;
