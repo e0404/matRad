@@ -71,7 +71,7 @@ function [includeMask] = matRad_selectVoxelsFromCst(cstOnDoseGrid, doseGrid, sel
                         end
                     end
                 otherwise
-            
+                    matRad_cfg.dispError('Unrecognized voxel selection mode: %s', selectionMode);
             end
         elseif isnumeric(selectionMode)
 
@@ -112,10 +112,10 @@ function [includeMask] = matRad_selectVoxelsFromCst(cstOnDoseGrid, doseGrid, sel
                                 matRad_cfg.dispWarning('Including cst structure %s even though this structure has no robustness.', cstOnDoseGrid{i,2});
                             end
                         else
-                            matRad_cfg.distWarning('Excluding cst structure %s even though this structure has an objective or constratint.', cstOnDoseGrid{i,2});
+                            matRad_cfg.dispWarning('Excluding cst structure %s even though this structure has an objective or constratint.', cstOnDoseGrid{i,2});
                             
                             if ~isequal(robustness, 'none')
-                                matRad_cfg.distWarning('Excluding cst structure %s even though this structure has robustness.', cstOnDoseGrid{i,2});
+                                matRad_cfg.dispWarning('Excluding cst structure %s even though this structure has robustness.', cstOnDoseGrid{i,2});
                             end
                         end
                     end

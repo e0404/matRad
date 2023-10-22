@@ -171,7 +171,7 @@ end
 % compute SSDs -> Removed for now because it is scenario-dependent
 % stf = matRad_computeSSD(stf,ct);
 
-if ~isfield(pln.propDoseCalc, 'useVoxelsInScenarios')
+if ~isfield(pln.propDoseCalc, 'selectVoxelsInScenarios')
     pln.propDoseCalc.selectVoxelsInScenarios = matRad_cfg.propDoseCalc.defaultSelectVoxelsInScenarios;
 end
 
