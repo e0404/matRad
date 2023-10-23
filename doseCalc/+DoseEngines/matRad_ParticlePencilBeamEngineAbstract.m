@@ -22,7 +22,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
     properties (SetAccess = public, GetAccess = public)
 
         calcLET = true;                 % Boolean which defines if LET should be calculated
-        calcBioDose = false;            % Boolean which defines if calculation should account for bio optimization
+        calcBioDose = false;            % Boolean which defines if biological dose calculation shoudl be performed (alpha*dose and sqrt(beta)*dose)
 
         visBoolLateralCutOff = false;   % Boolean switch for visualization during+ LeteralCutOff calculation
     end
