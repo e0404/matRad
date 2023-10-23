@@ -1,4 +1,4 @@
-classdef (Abstract) matRad_DoseEngine < handle
+classdef (Abstract) matRad_DoseEngineBase < handle
 % matRad_DoseEngine: Interface for dose calculation
 %   This base class provides the structure for the basic initialization 
 %   functions and corresponding properties for e.g. particle and photon
@@ -62,7 +62,7 @@ classdef (Abstract) matRad_DoseEngine < handle
     
     methods      
         %Constructor  
-        function this = matRad_DoseEngine(pln)
+        function this = matRad_DoseEngineBase(pln)
             this.setDefaults();
             this.assignPropertiesFromPln(pln);
         end

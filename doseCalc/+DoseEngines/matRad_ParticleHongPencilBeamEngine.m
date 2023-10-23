@@ -1,5 +1,5 @@
-classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeamParticle
-% matRad_DoseEngineParticlePB: 
+classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencilBeamEngineAbstract
+% matRad_ParticlePencilBeamEngineAbstractGaussian: 
 %   Implements an engine for particle based dose calculation 
 %   For detailed information see superclass matRad_DoseEngine
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -26,7 +26,7 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeamPa
        
     methods 
         
-        function this = matRad_DoseEngineParticlePB(pln)
+        function this = matRad_ParticleHongPencilBeamEngine(pln)
             % Constructor
             %
             % call
@@ -35,7 +35,7 @@ classdef matRad_DoseEngineParticlePB < DoseEngines.matRad_DoseEnginePencilBeamPa
             % input
             %   pln:                        matRad plan meta information struct
              
-            this = this@DoseEngines.matRad_DoseEnginePencilBeamParticle(pln);
+            this = this@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(pln);
         end
         
         function dij = calcDose(this,ct,cst,stf,pln)

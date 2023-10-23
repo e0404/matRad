@@ -1,8 +1,8 @@
-classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
+classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 % Engine for particle dose calculation using monte carlo calculation
 % specificly the mc square method
 % for more informations see superclass
-% DoseEngines.matRad_DoseEngineMonteCarlo
+% DoseEngines.matRad_MonteCarloEngineAbstract
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -35,7 +35,7 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
     
     methods
         
-        function this = matRad_DoseEngineMCsquare(pln)
+        function this = matRad_ParticleMCsquareEngine(pln)
             % Constructor
             %
             % call
@@ -48,7 +48,7 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
             %   cst:                        matRad cst struct
             
             % call superclass constructor
-            this = this@DoseEngines.matRad_DoseEngineMonteCarlo(pln);
+            this = this@DoseEngines.matRad_MonteCarloEngineAbstract(pln);
    
             % create config instance
             matRad_cfg = MatRad_Config.instance();
@@ -376,7 +376,7 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
             matRad_cfg = MatRad_Config.instance();            
 
             %% Call Superclass init function
-            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_DoseEngineMonteCarlo(this,ct,cst,stf); 
+            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_MonteCarloEngineAbstract(this,ct,cst,stf); 
 
             % Since MCsquare 1.1 only allows similar resolution in x&y, we do some
             % extra checks on that before calling the normal calcDoseInit. First, we make sure a

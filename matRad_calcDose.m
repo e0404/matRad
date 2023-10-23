@@ -44,14 +44,14 @@ if ~isfield(stf,'machine')
 end
 
 %get all available engines for given pln struct, could be done conditional
-[nameList, ~, handleList] = DoseEngines.matRad_DoseEngine.getAvailableEngines(pln);
+[nameList, ~, handleList] = DoseEngines.matRad_DoseEngineBase.getAvailableEngines(pln);
 
 if(isfield(pln,'propDoseCalc') && isfield(pln.propDoseCalc,'engine'))
 
 
     % check if there is an engine field in the pln struct
     % check if it is a dose calc engine and not some other oject
-    if isa(pln.propDoseCalc.engine, 'DoseEngines.matRad_DoseEngine')
+    if isa(pln.propDoseCalc.engine, 'DoseEngines.matRad_DoseEngineBase')
         % set engine
         engine = pln.propDoseCalc.engine;
     elseif  ischar(pln.propDoseCalc.engine)
@@ -89,11 +89,11 @@ if initDefaultEngine
             engineHandle = engineHandle{1};
         end
         engine = engineHandle(pln);
-        matRad_cfg.dispWarning('Using default photon dose calculation engine %s!', engine.name);
-    elseif length(nameList) > 0
+        matRad_cfg.dispWarning('Using default dose calculation engine %s!', engine.name);
+    elseif ~isempty(nameList)
         engineHandle = handleList{1};
         engine = engineHandle(pln);
-        matRad_cfg.dispWarning('Default photon dose calculation engine not available! Using %s.', engine.name);
+        matRad_cfg.dispWarning('Default dose calculation engine not available! Using %s.', engine.name);
     else
         matRad_cfg.dispError('No dose engine found!');
     end

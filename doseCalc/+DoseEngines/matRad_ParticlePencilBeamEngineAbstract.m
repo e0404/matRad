@@ -1,4 +1,4 @@
-classdef (Abstract) matRad_DoseEnginePencilBeamParticle < DoseEngines.matRad_DoseEnginePencilBeam
+classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad_PencilBeamEngineAbstract
     % matRad_DoseEngineParticlePB:
     %   Implements an engine for particle based dose calculation
     %   For detailed information see superclass matRad_DoseEngine
@@ -36,8 +36,8 @@ classdef (Abstract) matRad_DoseEnginePencilBeamParticle < DoseEngines.matRad_Dos
     end
 
     methods
-        function this = matRad_DoseEnginePencilBeamParticle(pln)
-            this = this@DoseEngines.matRad_DoseEnginePencilBeam(pln);
+        function this = matRad_ParticlePencilBeamEngineAbstract(pln)
+            this = this@DoseEngines.matRad_PencilBeamEngineAbstract(pln);
 
             % check if bio optimization is needed and set the
             % coresponding boolean accordingly
@@ -66,7 +66,7 @@ classdef (Abstract) matRad_DoseEnginePencilBeamParticle < DoseEngines.matRad_Dos
             % containing intialization which are specificly needed for
             % pencil beam calculation and not for other engines
 
-            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_DoseEnginePencilBeam(this,ct,cst,stf);
+            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_PencilBeamEngineAbstract(this,ct,cst,stf);
             
             if ~isnan(this.constantRBE)
                 dij.RBE = this.constantRBE;

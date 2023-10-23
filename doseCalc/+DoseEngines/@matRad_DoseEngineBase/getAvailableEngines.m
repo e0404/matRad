@@ -38,7 +38,7 @@ end
 
 %Get available, valid classes through call to matRad helper function
 %for finding subclasses
-availableDoseEngines = matRad_findSubclasses('DoseEngines.matRad_DoseEngine','packages',{'DoseEngines'},'folders',optionalPaths,'includeAbstract',false);
+availableDoseEngines = matRad_findSubclasses('DoseEngines.matRad_DoseEngineBase','packages',{'DoseEngines'},'folders',optionalPaths,'includeAbstract',false);
 
 %Now filter for pln
 ix = [];

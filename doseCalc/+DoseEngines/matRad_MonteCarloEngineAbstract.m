@@ -1,8 +1,8 @@
-classdef (Abstract) matRad_DoseEngineMonteCarlo < DoseEngines.matRad_DoseEngine
-% matRad_DoseEngineMonteCarlo: abstract superclass for all dose calculation 
+classdef (Abstract) matRad_MonteCarloEngineAbstract < DoseEngines.matRad_DoseEngineBase
+% matRad_MonteCarloEngineAbstract: abstract superclass for all dose calculation 
 %   engines which are based on monte carlo calculation 
 %   for more informations see superclass
-%   DoseEngines.matRad_DoseEngine
+%   DoseEngines.matRad_DoseEngineBase
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -29,13 +29,13 @@ classdef (Abstract) matRad_DoseEngineMonteCarlo < DoseEngines.matRad_DoseEngine
         
     methods
         
-        function this = matRad_DoseEngineMonteCarlo(pln)            
+        function this = matRad_MonteCarloEngineAbstract(pln)            
             % call superclass constructor
-            this = this@DoseEngines.matRad_DoseEngine(pln);
+            this = this@DoseEngines.matRad_DoseEngineBase(pln);
         end
 
         function setDefaults(this)
-            setDefaults@DoseEngines.matRad_DoseEngine(this);
+            setDefaults@DoseEngines.matRad_DoseEngineBase(this);
 
             % create config instance
             matRad_cfg = MatRad_Config.instance();

@@ -1,7 +1,7 @@
-classdef matRad_DoseEnginePhotonsOmpMC < DoseEngines.matRad_DoseEngineMonteCarlo
+classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
     % Engine for photon dose calculation based on monte carlo
     % for more informations see superclass
-    % DoseEngines.matRad_DoseEngineMonteCarlo
+    % DoseEngines.matRad_MonteCarloEngineAbstract
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
@@ -37,7 +37,7 @@ classdef matRad_DoseEnginePhotonsOmpMC < DoseEngines.matRad_DoseEngineMonteCarlo
     end
 
     methods
-        function this = matRad_DoseEnginePhotonsOmpMC(pln)
+        function this = matRad_PhotonOmpMCEngine(pln)
             % Constructor
             %
             % call
@@ -47,7 +47,7 @@ classdef matRad_DoseEnginePhotonsOmpMC < DoseEngines.matRad_DoseEngineMonteCarlo
             %   pln:                        matRad plan meta information struct
 
             % call superclass constructor
-            this = this@DoseEngines.matRad_DoseEngineMonteCarlo(pln);
+            this = this@DoseEngines.matRad_MonteCarloEngineAbstract(pln);
 
             matRad_cfg = MatRad_Config.instance();
             this.omcFolder = [matRad_cfg.matRadRoot filesep 'ompMC'];
@@ -155,7 +155,7 @@ classdef matRad_DoseEnginePhotonsOmpMC < DoseEngines.matRad_DoseEngineMonteCarlo
     methods (Access = protected)
         function [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)
 
-            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_DoseEngineMonteCarlo(this,ct,cst,stf);
+            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_MonteCarloEngineAbstract(this,ct,cst,stf);
             
             matRad_cfg = MatRad_Config.instance();
 

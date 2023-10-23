@@ -1,6 +1,7 @@
-classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
-    % matRad_PhotonDoseEngine: Pencil-beam dose calculation with decomposed
-    % kernels
+classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineAbstract
+    % matRad_PhotonPencilBeamSVDEngine: Pencil-beam dose calculation with 
+    % singular value decomposed kernels
+    % 
     %
     % References
     %   [1] http://www.ncbi.nlm.nih.gov/pubmed/8497215
@@ -65,11 +66,11 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
 
     methods
 
-        function this = matRad_DoseEnginePhotonSVD(pln)
+        function this = matRad_PhotonPencilBeamSVDEngine(pln)
             % Constructor
             %
             % call
-            %   engine = DoseEngines.matRad_DoseEnginePhotonSVD(ct,stf,pln,cst)
+            %   engine = DoseEngines.matRad_PhotonPencilBeamSVDEngine(ct,stf,pln,cst)
             %
             % input
             %   ct:                         matRad ct struct
@@ -78,7 +79,7 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
             %   cst:                        matRad cst struct
 
             % create this from superclass
-            this = this@DoseEngines.matRad_DoseEnginePencilBeam(pln);            
+            this = this@DoseEngines.matRad_PencilBeamEngineAbstract(pln);            
 
             if nargin > 0
                 % 0 if field calc is bixel based, 1 if dose calc is field based
@@ -89,7 +90,7 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
         end
 
         function setDefaults(this)
-            setDefaults@DoseEngines.matRad_DoseEnginePencilBeam(this);
+            setDefaults@DoseEngines.matRad_PencilBeamEngineAbstract(this);
 
             %Assign defaults from Config
             matRad_cfg = MatRad_Config.instance();
@@ -269,7 +270,7 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
             this.isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
 
             %% Call Superclass init
-            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_DoseEnginePencilBeam(this,ct,cst,stf);
+            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_PencilBeamEngineAbstract(this,ct,cst,stf);
 
             %% Validate some properties
             % gaussian filter to model penumbra from (measured) machine output / see
@@ -370,7 +371,7 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
             % output
             %   dij:                        updated dij struct
 
-            dij = calcDoseInitBeam@DoseEngines.matRad_DoseEnginePencilBeam(this,dij,ct,cst,stf,i);
+            dij = calcDoseInitBeam@DoseEngines.matRad_PencilBeamEngineAbstract(this,dij,ct,cst,stf,i);
 
             matRad_cfg = MatRad_Config.instance();
 
@@ -636,7 +637,7 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
                 checkBasic = isfield(machine,'meta') && isfield(machine,'data');
 
                 %check modality
-                checkModality = any(strcmp(DoseEngines.matRad_DoseEnginePhotonSVD.possibleRadiationModes, machine.meta.radiationMode));
+                checkModality = any(strcmp(DoseEngines.matRad_PhotonPencilBeamSVDEngine.possibleRadiationModes, machine.meta.radiationMode));
 
                 preCheck = checkBasic && checkModality;
 

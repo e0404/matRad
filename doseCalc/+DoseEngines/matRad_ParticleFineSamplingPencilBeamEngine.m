@@ -1,5 +1,5 @@
-classdef matRad_DoseEngineParticlePBFS < DoseEngines.matRad_DoseEnginePencilBeamParticle
-% matRad_DoseEngineParticlePB: 
+classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_ParticlePencilBeamEngineAbstract
+% matRad_ParticlePencilBeamEngineAbstractFineSampling: 
 %   Implements an engine for particle based dose calculation 
 %   For detailed information see superclass matRad_DoseEngine
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -30,7 +30,7 @@ classdef matRad_DoseEngineParticlePBFS < DoseEngines.matRad_DoseEnginePencilBeam
                  
     methods 
         
-        function this = matRad_DoseEngineParticlePBFS(pln)
+        function this = matRad_ParticleFineSamplingPencilBeamEngine(pln)
             % Constructor
             %
             % call
@@ -39,11 +39,11 @@ classdef matRad_DoseEngineParticlePBFS < DoseEngines.matRad_DoseEnginePencilBeam
             % input
             %   pln:                        matRad plan meta information struct
              
-            this = this@DoseEngines.matRad_DoseEnginePencilBeamParticle(pln);
+            this = this@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(pln);
         end
 
         function setDefaults(this)
-            setDefaults@DoseEngines.matRad_DoseEnginePencilBeamParticle(this);
+            setDefaults@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(this);
 
             matRad_cfg = MatRad_Config.instance();
             this.fineSampling = matRad_cfg.propDoseCalc.defaultFineSamplingProperties;
@@ -352,7 +352,7 @@ classdef matRad_DoseEngineParticlePBFS < DoseEngines.matRad_DoseEnginePencilBeam
                 matRad_cfg.dispInfo('Keeping radiological depth cubes for fine-sampling!');
             end
 
-            dij = calcDoseInitBeam@DoseEngines.matRad_DoseEnginePencilBeamParticle(this,dij,ct,cst,stf,i);
+            dij = calcDoseInitBeam@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(this,dij,ct,cst,stf,i);
 
         end
                                                     
