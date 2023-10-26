@@ -89,6 +89,11 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             this.effectiveLateralCutOff = this.geometricLateralCutOff;
         end
 
+        function dij = calcDoseInitBeam(this,dij,ct,cst,stf,i)
+            dij = calcDoseInitBeam@DoseEngines.matRad_PencilBeamEngineAbstract(this,dij,ct,cst,stf,i);
+            this.calcLateralParticleCutOff(this.dosimetricLateralCutOff,stf(i));
+        end
+        
         function dij = loadBiologicalBaseData(this,cst,dij)
             matRad_cfg = MatRad_Config.instance();
             if isfield(this.machine.data,'alphaX') && isfield(this.machine.data,'betaX')
@@ -161,7 +166,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
 
         end
 
-        function dij = fillDij(this,dij,stf,pln,counter)
+        function dij = fillDij(this,dij,stf,counter)
             % Sequentially fill the sparse matrix dij from the tmpContainer cell array
             %
             % call
@@ -199,7 +204,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
 
         end
 
-        function dij = fillDijDirect(this,dij,stf,pln,currBeamIdx,currRayIdx,currBixelIdx)
+        function dij = fillDijDirect(this,dij,stf,currBeamIdx,currRayIdx,currBixelIdx)
             % fillDijDirect - sequentially fill dij, meant for direct calculation only
             %   Fill the sparse matrix physicalDose inside dij with the
             %   indices given by the direct dose calculation
@@ -307,7 +312,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             end
         end
 
-        function calcLateralParticleCutOff(this,cutOffLevel,stf)
+        function calcLateralParticleCutOff(this,cutOffLevel,stfElement)
             % matRad function to calculate a depth dependend lateral cutoff
             % for each pristine particle beam
             %
@@ -317,7 +322,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             % input
             %   this:        current engine object includes machine base data file
             %   cutOffLevel:    cut off level - number between 0 and 1
-            %   stf:          	matRad steering information struct
+            %   stfElement:  matRad steering information struct for a single beam
             %
             % output
             %   machine:    	changes in the object property machine base data file including an additional field representing the lateral
@@ -338,24 +343,31 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             % LICENSE file.
             %
             % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+            
             matRad_cfg = MatRad_Config.instance();
-            matRad_cfg.dispInfo('matRad: calculate lateral cutoff...');
-
-            if cutOffLevel <= 0.98
-                warning('a lateral cut off below 0.98 may result in an inaccurate dose calculation')
+            
+            %Sanity Checks
+            if numel(stfElement) > 1
+                matRad_cfg.dispError('CutOff can only be precalculated for a single element, but you provided steering information for multiple beams!');
             end
 
+            if cutOffLevel <= 0.98
+                matRad_cfg.dispWarning('a lateral cut off below 0.98 may result in an inaccurate dose calculation');
+            end
+
+            if (cutOffLevel < 0 || cutOffLevel > 1)
+                matRad_cfg.dispWarning('lateral cutoff is out of range - using default cut off of 0.99')
+                cutOffLevel = 0.99;
+            end
+
+
+            matRad_cfg.dispInfo('matRad: calculate lateral cutoff...');           
             conversionFactor = 1.6021766208e-02;
 
             % function handle for calculating depth dose for APM
             sumGauss = @(x,mu,SqSigma,w) ((1./sqrt(2*pi*ones(numel(x),1) * SqSigma') .* ...
                 exp(-bsxfun(@minus,x,mu').^2 ./ (2* ones(numel(x),1) * SqSigma' ))) * w);
 
-            if (cutOffLevel < 0 || cutOffLevel > 1)
-                matRad_cfg.dispWarning('lateral cutoff is out of range - using default cut off of 0.99')
-                cutOffLevel = 0.99;
-            end
             % define some variables needed for the cutoff calculation
             vX = [0 logspace(-1,3,1200)]; % [mm]
 
@@ -371,16 +383,16 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             round2 = @(a,b)round(a*10^b)/10^b;
 
             % extract SSD for each bixel
-            vSSD = ones(1,length([stf.ray(:).energy]));
+            vSSD = ones(1,length([stfElement.ray(:).energy]));
             cnt = 1;
-            for i  = 1:length(stf.ray)
-                vSSD(cnt:cnt+numel([stf.ray(i).energy])-1) = stf.ray(i).SSD;
-                cnt = cnt + numel(stf.ray(i).energy);
+            for i  = 1:length(stfElement.ray)
+                vSSD(cnt:cnt+numel([stfElement.ray(i).energy])-1) = stfElement.ray(i).SSD;
+                cnt = cnt + numel(stfElement.ray(i).energy);
             end
 
             % setup energy, focus index, sigma look up table - only consider unique rows
-            [energySigmaLUT,ixUnique]  = unique([[stf.ray(:).energy]; [stf.ray(:).focusIx] ; vSSD]','rows');
-            rangeShifterLUT = [stf.ray(:).rangeShifter];
+            [energySigmaLUT,ixUnique]  = unique([[stfElement.ray(:).energy]; [stfElement.ray(:).focusIx] ; vSSD]','rows');
+            rangeShifterLUT = [stfElement.ray(:).rangeShifter];
             rangeShifterLUT = rangeShifterLUT(1,ixUnique);
 
             % find the largest inital beam width considering focus index, SSD and range shifter for each individual energy
@@ -648,50 +660,42 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                 ylim = get(gca,'Ylim');    set(gca,'Ylim',[0 ylim(2)+3]),    legend(cellLegend)
             end
         end
-    end
+    
+        function ray = computeRayGeometry(this,ray,dij)
+            % find index of maximum used energy (round to keV for numerical
+            % reasons
+            maxEnergyIx = max(this.round2(ray.energy,4)) == this.round2([this.machine.data.energy],4);
 
-    methods (Static)
+            maxLateralCutoffDoseCalc = max(this.machine.data(maxEnergyIx).LatCutOff.CutOff);
 
-        function [available,msg] = isAvailable(pln,machine)
-            % see superclass for information
-
-            msg = [];
-            available = false;
-
-            if nargin < 2
-                machine = matRad_loadMachine(pln);
+            % calculate initial sigma for all bixel on current ray
+            ray.sigmaIni = matRad_calcSigmaIni(this.machine.data,ray,ray.SSD);
+            
+            if ~isfield(ray,'sourcePoint_bev')
+                ray.sourcePoint_bev = ray.targetPoint_bev + 2*(ray.rayPos_bev - ray.targetPoint_bev);
             end
 
-            %checkBasic
-            try
-                checkBasic = isfield(machine,'meta') && isfield(machine,'data');
+            % Ray tracing for beam i and ray j
+            [ray.ix,ray.radialDist_sq,~,~,ray.latDistsX,ray.latDistsZ] = this.calcGeoDists(this.rot_coordsVdoseGrid, ...
+                ray.sourcePoint_bev, ...
+                ray.targetPoint_bev, ...
+                this.machine.meta.SAD, ...
+                find(~isnan(this.radDepthVdoseGrid{1})), ...
+                maxLateralCutoffDoseCalc);
 
-                %check modality
-                checkModality = any(strcmp(DoseEngines.matRad_DoseEngineParticlePB.possibleRadiationModes, machine.meta.radiationMode));
+            ray.radDepths = this.radDepthVdoseGrid{1}(ray.ix);
 
-                preCheck = checkBasic && checkModality;
-
-                if ~preCheck
-                    return;
-                end
-            catch
-                msg = 'Your machine file is invalid and does not contain the basic field (meta/data/radiationMode)!';
-                return;
+            % just use tissue classes of voxels found by ray tracer
+            if this.calcBioDose
+                ray.vTissueIndex_j = dij.vTissueIndex(ray.ix,:);
             end
-
-            checkMeta = all(isfield(machine.meta,{'SAD','BAMStoIsoDist','LUT_bxWidthminFWHM','dataType'}));
-
-            dataType = machine.meta.dataType;
-            if strcmp(dataType,'singleGauss')
-                checkData = all(isfield(machine.data,{'energy','depths','Z','peakPos','sigma','offset','initFocus'}));
-            elseif strcmp(dataType,'doubleGauss')
-                checkData = all(isfield(machine.data,{'energy','depths','Z','peakPos','weight','sigma1','sigma2','offset','initFocus'}));
-            else
-                checkData = false;
-            end
-
-            available = checkMeta && checkData;
         end
-    end
+
+        function r2 = round2(~,a,b)
+            % helper function for energy selection
+            r2 = round(a*10^b)/10^b; 
+        end
+
+    end   
 end
 

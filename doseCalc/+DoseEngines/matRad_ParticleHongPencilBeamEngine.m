@@ -75,9 +75,6 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
             
             % init dose calc
             [dij,ct,cst,stf] = this.calcDoseInit(ct,cst,stf);
-
-            % helper function for energy selection
-            round2 = @(a,b)round(a*10^b)/10^b;
                         
             %Progress Counter
             counter = 0;
@@ -86,39 +83,13 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
             for i = 1:length(stf) % loop over all beams
 
                 % init beam
-                dij = this.calcDoseInitBeam(dij,ct,cst,stf,i);     
-
-                % Determine lateral cutoff
-                this.calcLateralParticleCutOff(this.dosimetricLateralCutOff,stf(i));    
+                dij = this.calcDoseInitBeam(dij,ct,cst,stf,i);                    
 
                 for j = 1:stf(i).numOfRays % loop over all rays
 
                     if ~isempty(stf(i).ray(j).energy)
-
-                        % find index of maximum used energy (round to keV for numerical
-                        % reasons
-                        energyIx = max(round2(stf(i).ray(j).energy,4)) == round2([this.machine.data.energy],4);
-
-                        maxLateralCutoffDoseCalc = max(this.machine.data(energyIx).LatCutOff.CutOff);
-
-                        % calculate initial sigma for all bixel on current ray
-                        sigmaIniRay = matRad_calcSigmaIni(this.machine.data,stf(i).ray(j),stf(i).ray(j).SSD);
-
                         
-                        % Ray tracing for beam i and ray j
-                        [ix,currRadialDist_sq,~,~,~,~] = this.calcGeoDists(this.rot_coordsVdoseGrid, ...
-                            stf(i).sourcePoint_bev, ...
-                            stf(i).ray(j).targetPoint_bev, ...
-                            this.machine.meta.SAD, ...
-                            find(~isnan(this.radDepthVdoseGrid{1})), ...
-                            maxLateralCutoffDoseCalc);
-
-                        radDepths = this.radDepthVdoseGrid{1}(ix);
-
-                        % just use tissue classes of voxels found by ray tracer
-                        if this.calcBioDose
-                                vTissueIndex_j = dij.vTissueIndex(ix,:);
-                        end
+                        currRay = this.computeRayGeometry(stf(i).ray(j),dij);
 
                         for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
 
@@ -144,18 +115,18 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
 
                                % extract MU data if present (checks for downwards compatability)
                                 minMU = 0;
-                                if isfield(stf(i).ray(j),'minMU')
-                                    minMU = stf(i).ray(j).minMU(k);
+                                if isfield(currRay,'minMU')
+                                    minMU = currRay.minMU(k);
                                 end
     
                                 maxMU = Inf;
-                                if isfield(stf(i).ray(j),'maxMU')
-                                    maxMU = stf(i).ray(j).maxMU(k);
+                                if isfield(currRay,'maxMU')
+                                    maxMU = currRay.maxMU(k);
                                 end
     
                                 numParticlesPerMU = 1e6;
-                                if isfield(stf(i).ray(j),'numParticlesPerMU')
-                                    numParticlesPerMU = stf(i).ray(j).numParticlesPerMU(k);
+                                if isfield(currRay,'numParticlesPerMU')
+                                    numParticlesPerMU = currRay.numParticlesPerMU(k);
                                 end
     
                                 dij.minMU(counter,1) = minMU;
@@ -165,26 +136,29 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
 
 
                             % find energy index in base data
-                            energyIx = find(round2(stf(i).ray(j).energy(k),4) == round2([this.machine.data.energy],4));
+                            energyIx = find(this.round2(currRay.energy(k),4) == this.round2([this.machine.data.energy],4));
 
                             % create offset vector to account for additional offsets modelled in the base data and a potential
                             % range shifter. In the following, we only perform dose calculation for voxels having a radiological depth
                             % that is within the limits of the base data set (-> machine.data(i).dephts). By this means, we only allow
                             % interpolations in this.calcParticleDoseBixel() and avoid extrapolations.
-                            offsetRadDepth = this.machine.data(energyIx).offset - stf(i).ray(j).rangeShifter(k).eqThickness;
+                            offsetRadDepth = this.machine.data(energyIx).offset - currRay.rangeShifter(k).eqThickness;
 
                             % find depth depended lateral cut off
                             if this.dosimetricLateralCutOff == 1
-                                currIx = radDepths <= this.machine.data(energyIx).depths(end) + offsetRadDepth;
+                                currIx = currRay.radDepths <= this.machine.data(energyIx).depths(end) + offsetRadDepth;
                             elseif this.dosimetricLateralCutOff < 1 && this.dosimetricLateralCutOff > 0
                                 % perform rough 2D clipping
-                                currIx = radDepths <= this.machine.data(energyIx).depths(end) + offsetRadDepth & ...
-                                    currRadialDist_sq <= max(this.machine.data(energyIx).LatCutOff.CutOff.^2);
+                                currIx = currRay.radDepths <= this.machine.data(energyIx).depths(end) + offsetRadDepth & ...
+                                    currRay.radialDist_sq <= max(this.machine.data(energyIx).LatCutOff.CutOff.^2);
+
+                                %currIx = currRay.radDepths <= this.machine.data(energyIx).depths(end) + offsetRadDepth & ...
+                                %    currRay.latDistsX.^2 + currRay.latDistsZ.^2 <= max(this.machine.data(energyIx).LatCutOff.CutOff.^2);
 
                                 % peform fine 2D clipping
                                 if length(this.machine.data(energyIx).LatCutOff.CutOff) > 1
                                     currIx(currIx) = matRad_interp1((this.machine.data(energyIx).LatCutOff.depths + offsetRadDepth)',...
-                                        (this.machine.data(energyIx).LatCutOff.CutOff.^2)', radDepths(currIx)) >= currRadialDist_sq(currIx);
+                                        (this.machine.data(energyIx).LatCutOff.CutOff.^2)', currRay.radDepths(currIx)) >= currRay.radialDist_sq(currIx);
                                 end
                             else
                                 matRad_cfg.dispError('Cutoff must be a value between 0 and 1!')
@@ -197,29 +171,29 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
                             end
 
                             % adjust radDepth according to range shifter
-                            currRadDepths = radDepths(currIx) + stf(i).ray(j).rangeShifter(k).eqThickness;
+                            currRadDepths = currRay.radDepths(currIx) + currRay.rangeShifter(k).eqThickness;
 
                             % select correct initial focus sigma squared
-                            sigmaIni_sq = sigmaIniRay(k)^2;
+                            currSigmaIni_sq = currRay.sigmaIni(k)^2;
 
                             % consider range shifter for protons if applicable
-                            if stf(i).ray(j).rangeShifter(k).eqThickness > 0 && strcmp(pln.radiationMode,'protons')
+                            if currRay.rangeShifter(k).eqThickness > 0 && strcmp(pln.radiationMode,'protons')
 
                                 % compute!
                                 sigmaRashi = matRad_calcSigmaRashi(this.machine.data(energyIx).energy, ...
-                                    stf(i).ray(j).rangeShifter(k), ...
-                                    stf(i).ray(j).SSD);
+                                    currRay.rangeShifter(k), ...
+                                    currRay.SSD);
 
                                 % add to initial sigma in quadrature
-                                sigmaIni_sq = sigmaIni_sq +  sigmaRashi^2;
+                                currSigmaIni_sq = currSigmaIni_sq +  sigmaRashi^2;
 
                             end
                             
                             % calculate particle dose for bixel k on ray j of beam i
                             bixelDose = this.calcParticleDoseBixel(...
                                 currRadDepths, ...
-                                currRadialDist_sq(currIx), ...
-                                sigmaIni_sq, ...
+                                currRay.radialDist_sq(currIx), ...
+                                currSigmaIni_sq, ...
                                 this.machine.data(energyIx));
 
                             % dij sampling is not implemented for
@@ -234,7 +208,7 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
                             %}
 
                             % Save dose for every bixel in cell array
-                            this.doseTmpContainer{mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(this.VdoseGrid(ix(currIx)),1,bixelDose,dij.doseGrid.numOfVoxels,1);
+                            this.doseTmpContainer{mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(this.VdoseGrid(currRay.ix(currIx)),1,bixelDose,dij.doseGrid.numOfVoxels,1);
 
                             if isfield(dij,'mLETDose')
                                 % calculate particle LET for bixel k on ray j of beam i
@@ -242,18 +216,18 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
                                 bixelLET = matRad_interp1(depths,this.machine.data(energyIx).LET,currRadDepths);
 
                                 % Save LET for every bixel in cell array
-                                this.letDoseTmpContainer{mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(this.VdoseGrid(ix(currIx)),1,bixelLET.*bixelDose,dij.doseGrid.numOfVoxels,1);
+                                this.letDoseTmpContainer{mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(this.VdoseGrid(currRay.ix(currIx)),1,bixelLET.*bixelDose,dij.doseGrid.numOfVoxels,1);
                             end
 
                             if this.calcBioDose
                                 % calculate alpha and beta values for bixel k on ray j of                  
                                 [bixelAlpha, bixelBeta] = matRad_calcLQParameter(...
                                     currRadDepths,...
-                                    vTissueIndex_j(currIx,:),...
+                                    currRay.vTissueIndex_j(currIx,:),...
                                     this.machine.data(energyIx));
 
-                                this.alphaDoseTmpContainer{mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(this.VdoseGrid(ix(currIx)),1,bixelAlpha.*bixelDose,dij.doseGrid.numOfVoxels,1);
-                                this.betaDoseTmpContainer{mod(counter-1,this.numOfBixelsContainer)+1,1}  = sparse(this.VdoseGrid(ix(currIx)),1,sqrt(bixelBeta).*bixelDose,dij.doseGrid.numOfVoxels,1);
+                                this.alphaDoseTmpContainer{mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(this.VdoseGrid(currRay.ix(currIx)),1,bixelAlpha.*bixelDose,dij.doseGrid.numOfVoxels,1);
+                                this.betaDoseTmpContainer{mod(counter-1,this.numOfBixelsContainer)+1,1}  = sparse(this.VdoseGrid(currRay.ix(currIx)),1,sqrt(bixelBeta).*bixelDose,dij.doseGrid.numOfVoxels,1);
                             end
 
                             %  fill the dij struct each time a
@@ -281,6 +255,56 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
             end
         end
 
-    end            
+    end
+
+    methods (Access = protected)
+        function ray = computeRayGeometry(this,ray,dij)
+            ray = computeRayGeometry@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(this,ray,dij);
+            ray.currRadialDist_sq = ray.latDistsX.^2 + ray.latDistsZ.^2;
+        end
+    end
+
+    methods (Static)
+        function [available,msg] = isAvailable(pln,machine)   
+            % see superclass for information
+            
+            msg = [];
+            available = false;
+
+            if nargin < 2
+                machine = matRad_loadMachine(pln);
+            end
+
+            %checkBasic
+            try
+                checkBasic = isfield(machine,'meta') && isfield(machine,'data');
+
+                %check modality
+                checkModality = any(strcmp(DoseEngines.matRad_ParticleHongPencilBeamEngine.possibleRadiationModes, machine.meta.radiationMode));
+                
+                preCheck = checkBasic && checkModality;
+
+                if ~preCheck
+                    return;
+                end
+            catch
+                msg = 'Your machine file is invalid and does not contain the basic field (meta/data/radiationMode)!';
+                return;
+            end
+
+            checkMeta = all(isfield(machine.meta,{'SAD','BAMStoIsoDist','LUT_bxWidthminFWHM','dataType'}));
+
+            dataType = machine.meta.dataType;
+            if strcmp(dataType,'singleGauss')
+                checkData = all(isfield(machine.data,{'energy','depths','Z','peakPos','sigma','offset','initFocus'}));
+            elseif strcmp(dataType,'doubleGauss')
+                checkData = all(isfield(machine.data,{'energy','depths','Z','peakPos','weight','sigma1','sigma2','offset','initFocus'}));
+            else
+                checkData = false;
+            end
+            
+            available = checkMeta && checkData;
+        end
+    end
 end
 

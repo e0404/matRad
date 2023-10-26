@@ -67,12 +67,18 @@ else % weights need to be in stf!
 end
 
 % dose calculation
+%{ 
+%Old code
 if strcmp(pln.radiationMode,'photons')
   dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect);
   %dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,5000,4,calcDoseDirect);
 elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
   dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect);
 end
+%}
+engine = DoseEngines.matRad_DoseEngineBase.getEngineFromPln(pln);
+engine.calcDoseDirect = true;
+dij = engine.calcDose(ct,cst,stf);
 
 % calculate cubes; use uniform weights here, weighting with actual fluence 
 % already performed in dij construction 

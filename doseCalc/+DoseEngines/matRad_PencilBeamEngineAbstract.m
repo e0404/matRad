@@ -46,7 +46,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
         radDepthCube;           % radiological depth cube for current beam
 
         cube;                   % relative electron density / stopping power cube
-        hlut;                   % hounsfield lookup table to craete relative electron density cube
+        hlut;                   % hounsfield lookup table to craete relative electron density cube        
     end
 
     methods
@@ -221,7 +221,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             this.rot_coordsVdoseGrid = rot_coordsVdoseGrid(~isnan(this.radDepthVdoseGrid{1}),:);
 
         end
-
+        
         function radDepthVdoseGrid = interpRadDepth(~,ct,ctScenNum,V,Vcoarse,ctGrid,doseGrid,radDepthVctGrid)            
             radDepthCube                = NaN*ones(ct.cubeDim);
             radDepthCube(V(~isnan(radDepthVctGrid{1}))) = radDepthVctGrid{ctScenNum}(~isnan(radDepthVctGrid{1}));
@@ -230,7 +230,15 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             coarseRadDepthCube          = matRad_interp3(ctGrid.x,ctGrid.y',ctGrid.z,radDepthCube,doseGrid.x,doseGrid.y',doseGrid.z);
             radDepthVdoseGrid{ctScenNum}  = coarseRadDepthCube(Vcoarse);
         end
-       
+        
+        function ray = computeRayGeoemetry(this,ray,dij)
+            error('Abstract Function. Needs to be implemented!');
+        end
+
+        function indices = applyDoseCutOff(this)
+            error('Abstract Function. Needs to be implemented!');
+        end
+
     end
 
     methods (Static)

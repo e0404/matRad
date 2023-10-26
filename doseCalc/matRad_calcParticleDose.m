@@ -38,7 +38,7 @@ matRad_cfg.dispDeprecationWarning('The old dose calculation functions are deprec
 
 % could be also set as pln property e.g pln.propDoseCalc.useDeprecated
 if isfield(pln, 'propDoseCalc') && isfield(pln.propDoseCalc, 'engine')
-    matRad_cfg.dispWarning('You should not use the deprecated MC calculation with the new engine architecture! Setting pencil beam as engine!');
+    matRad_cfg.dispWarning('You should not use the deprecated MC calculation with the new engine architecture! For backwards compatibility, this function will use the original pencil beam as engine!');
 end
 
 engine = DoseEngines.matRad_ParticleHongPencilBeamEngine(pln);

@@ -224,7 +224,7 @@ classdef MatRad_Config < handle
             obj.propDoseCalc.defaultUseGivenEqDensityCube = false; %Use the given density cube ct.cube and omit conversion from cubeHU.
             obj.propDoseCalc.defaultIgnoreOutsideDensities = true;
             obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
-            obj.propDoseCalc.defaultDoseEngines = {'SVD Pencil Beam','pencil beam particle'}; %Names for default engines used when no other is given
+            obj.propDoseCalc.defaultDoseEngines = {'SVD Pencil Beam','Particle Pencil-Beam'}; %Names for default engines used when no other is given
             
             % default properties for fine sampling calculation
             obj.propDoseCalc.defaultFineSamplingProperties.sigmaSub = 2;

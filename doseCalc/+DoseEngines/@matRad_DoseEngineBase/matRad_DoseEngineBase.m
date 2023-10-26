@@ -182,9 +182,11 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         %               if available, indicates a warning that not all
         %               information was present in the machine file and
         %               approximations need to be made
-        
             error('This is an Abstract Base class! Function needs to be called for instantiable subclasses!');
         end
+        
+        % static factory method to create/get correct dose engine from pln
+        engine = getEngineFromPln(pln);
 
         % Machine Loader
         % Currently just uses the matRad function that asks for pln
