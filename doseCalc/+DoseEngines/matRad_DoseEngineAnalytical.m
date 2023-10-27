@@ -32,7 +32,9 @@ classdef matRad_DoseEngineAnalytical < DoseEngines.matRad_DoseEnginePencilBeam
         calcLET = true;                 % Boolean which defines if LET should be calculated
         calcBioDose = false;            % Boolean which defines if calculation should account for bio optimization
         
+        %calcBortfeldBragg = true;
         modeWidth = true;               % Boolean which defines a monoenergetic (0) and gaussian (1) energy spectrum
+        %modeParabCyl = true;           % Boolean which defines a handmade, slower (0) and matLab, faster (1) parabolic cylinder function
         
         pbCalcMode;                     % fine sampling mode
         fineSampling;                   % Struct with finesampling properties
@@ -42,16 +44,16 @@ classdef matRad_DoseEngineAnalytical < DoseEngines.matRad_DoseEnginePencilBeam
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
            % Constants of the model
            % PHYSICAL CONSTANTS
-           epsilon0    = 8.854*10^(-12);                   % Vacuum dielectric constant in (C^2/(N*m^2))
-           el          = 1.602*10^(-19);                   % Electron charge in (C)
-           NA          = 6.022*10^23;                      % Avogadro number
+           epsilon0         = 8.854*10^(-12);                   % Vacuum dielectric constant in (C^2/(N*m^2))
+           electronCharge   = 1.602*10^(-19);                   % Electron charge in (C)
+           avogadroNum      = 6.022*10^23;                      % Avogadro number
 
            % PARAMETERS OF THE TARGET MATERIAL
-           ro          = 0.997;                            % Mass Density of the medium in (g/cm^3)
+           massDensity = 0.997;                            % Mass Density of the medium in (g/cm^3)
            p           = 1.77;                             % Exponent in the Bragg-Kleemann rule
            alpha       = 2.2*10^(-3);                      % Material-dependent constant in the Bragg-Kleemann rule
            beta        = 0.012;                            % Slope parameter of the linear fluence reduction
-           gamma_nuc   = 0.6;                              % Fraction of locally absorbed energy in nuclear interactions
+           gammaNuc   = 0.6;                              % Fraction of locally absorbed energy in nuclear interactions
 
            Z           = 10;                               % N of electrons per molecule (water)
            MM          = 18.01;                            % Molar mass in g/mol (water)
@@ -59,11 +61,11 @@ classdef matRad_DoseEngineAnalytical < DoseEngines.matRad_DoseEnginePencilBeam
            %alpha1      = matRad_DoseEngine.el^2*matRad_DoseEngine.n*matRad_DoseEngine.Z/(4*pi*matRad_DoseEngine.epsilon0^2)/10^8;  % Bohr's formula for d(sigmaE)^2/dz
 
            % PARAMETERS OF THE BEAM
-           phi0        = 1;                                % Primary proton fluence
-           eps         = 0.1;                              % (Small) fraction of primary fluence \phi_0 contributing to the linear "tail" of the energy spectrum
-           sigmaE      = 0.01;                             % sigma of the gaussian energy spectrum
+           phi0         = 1;                                % Primary proton fluence
+           epsilonTail  = 0.1;                              % (Small) fraction of primary fluence \phi_0 contributing to the linear "tail" of the energy spectrum
+           sigmaEnergy  = 0.01;                             % sigma of the gaussian energy spectrum
 
-           LR          = 36.3;
+           radLenght    = 36.3;
     
     end
     
@@ -1053,7 +1055,7 @@ classdef matRad_DoseEngineAnalytical < DoseEngines.matRad_DoseEnginePencilBeam
             end
         end
 
-        function dose_mat = calcAnalyticalBragg(this, PrimaryEnergy, depthz, WidthMod)
+        function doseVector = calcAnalyticalBragg(this, primaryEnergy, depthZ, widthMod)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %   call 
         %     this.calcAnalyticalBragg(PrimaryEnergy, depthz, WidthMod)
@@ -1061,18 +1063,18 @@ classdef matRad_DoseEngineAnalytical < DoseEngines.matRad_DoseEnginePencilBeam
         %       Purpose: Compute depth-dose curve i.e. the Bragg Peak
         %                in 'Bortfeld 1998' formalism.
         %
-        %       Input  : PrimaryEnergy -- Parameter (PrimaryEnergy > 0, it 
+        %       Input  : primaryEnergy -- Parameter (primaryEnergy > 0, it 
         %                                 is the primary energy of the beam
         %                                 )
-        %                depthz --------- Argument (depthz > 0,
+        %                depthZ --------- Argument (depthZ > 0,
         %                                 depth in the target material).
-        %                WidthMod ------- Parameter 
-        %                                 (WidthMod = 0 for a beam that
+        %                widthMod ------- Parameter 
+        %                                 (widthMod = 0 for a beam that
         %                                 is monoenergetic;
-        %                                 WidthMod = 1 for a beam that has 
-        %                                 a gaussian energy spectrum)
-        %       Output : dose ----------- Depth dose curve; same size of 
-        %                                 depthz 
+        %                                 WidthMod = 1 for a beam with 
+        %                                 initial gaussian energy spectrum)
+        %       Output : doseVector ----- Depth dose curve; same size of 
+        %                                 depthZ 
         %       ===========================================================
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %       This function was inspired by the paper from 
@@ -1080,107 +1082,98 @@ classdef matRad_DoseEngineAnalytical < DoseEngines.matRad_DoseEnginePencilBeam
         %       Bragg curve for therapeutic proton beams".
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
-        n           = this.ro*this.NA/this.MM;                         % Number density of molecules per cm^3
-        alpha1      = this.el^2*n*this.Z/(4*pi*this.epsilon0^2)/10^8;  % Bohr's formula for d(sigmaE)^2/dz
+        numberDensity   = this.massDensity*this.avogadroNum/this.MM;                                      % Number density of molecules per cm^3
+        alphaPrime      = this.electronCharge^2*numberDensity*this.Z/(4*pi*this.epsilon0^2)/10^8;   % Bohr's formula for d(sigmaE)^2/dz
 
 
             %% Conversion of depth value from mm to cm
-            depthz  = depthz./10;
-            z       = depthz; 
+            depthZ  = depthZ./10;
 
             %% Compute Range and sigma
             
-            E = PrimaryEnergy;
-            R = this.alpha*E.^this.p;                                                               % Range-Energy relation, i.e. Bragg-Kleemann rule
-
-            sigmamono_sq = alpha1*this.p^2*this.alpha^(2/this.p)*R.^(3-2/this.p)./(3-2/this.p);     % Squared Range straggling width
-            sigmamono = sqrt(sigmamono_sq);                                                         %         Range straggling width
+            range = this.alpha*primaryEnergy.^this.p;                                                           % Range-Energy relation, i.e. Bragg-Kleemann rule
+            sigmaMonoSquared = alphaPrime*this.p^2*this.alpha^(2/this.p)*range.^(3-2/this.p)./(3-2/this.p);     % Squared Range straggling width
+            sigmaMono = sqrt(sigmaMonoSquared);                                                                 % Range straggling width
             
-            %% Compute the width of straggling, determined by WidthMod
-            if WidthMod == 0
-                wid = sigmamono;
-            elseif WidthMod ==1
-                energy_strag = this.sigmaE*E;                                                                           % Gaussian energy straggling
-                sigmatot = sqrt( sigmamono_sq + (energy_strag^2) .*(this.alpha^2) .*(this.p^2) .*(E.^(2*this.p-2)) );   % Total straggling contribution: range + energy
-                wid = sigmatot;
+            %% Compute the width of straggling, determined by widthMod
+
+            if widthMod == 0
+                wid = sigmaMono;
+            elseif widthMod ==1
+                energyStraggling = this.sigmaEnergy*primaryEnergy;                                                                               % Gaussian energy straggling
+                sigmaTot = sqrt( sigmaMonoSquared + (energyStraggling^2) .*(this.alpha^2) .*(this.p^2) .*(primaryEnergy.^(2*this.p-2)) );   % Total straggling contribution: range + energy
+                wid = sigmaTot;
             else
                 error('Wrong value for WidthMod. Choose 0 for a monoenergetic beam, or choose 1 for a gaussian energy distribution');
             end
 
             % COEFFICIENTS IN THE BRAGG CURVE (WITHOUT STRAGGLING)
-            C   = this.phi0*(1-this.eps)./(this.ro*this.p*this.alpha^(1/this.p)*(1+this.beta*R));
-            C1  = C;                                                % Coefficient of D1
-            C2  = C*this.beta*(1+this.gamma_nuc*this.p);            % Coefficient of D2
-            C3  = C*this.eps*this.p./((1-this.eps)*R);              % Coefficient of Dtail
-            C23 = C2 + C3;
+            coeffA   = this.phi0*(1-this.epsilonTail)./(this.massDensity*this.p*this.alpha^(1/this.p)*(1+this.beta*range));
+            coeffA1  = coeffA;                                                % Coefficient of D1
+            coeffA2  = coeffA*this.beta*(1+this.gammaNuc*this.p);            % Coefficient of D2
+            coeffA3  = coeffA*this.epsilonTail*this.p./((1-this.epsilonTail)*range);              % Coefficient of Dtail
+            coeffA23 = coeffA2 + coeffA3;
             
             %% Definition of the Depth - Dose curve without straggling
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %       ===================================================================
-            %       Purpose: define the depth-dose curve without energy straggling
-            %                D_hat(z, E) (see Bortfeld 1997)
-            %       Input  : z --- Argument: depth in the target material
-            %                E --- Parameter: energy of the beam
-            %       Output : B_hat(z, E) = D_hat(z, E)
-            %       ===================================================================
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %       =======================================================
+            %       Purpose: compute the depth-dose curve without energy 
+            %                straggling hatD(z, E) (see Bortfeld 1997)
+            %       Input  : depthZ --- Argument:  depth in the target 
+            %                                      material
+            %                range  --- Parameter: range dependent on beam
+            %                                      primaryEnergy
+            %       Output : hatD = hatD(z, E)
+            %       =======================================================
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-            B1_hat  = C1.*(R-z).^(1/this.p-1);          % MCS contribution
-            B2_hat  = C23.*(R-z).^(1/this.p);           % Nuclear and MCS contribution
-            B_hat   = (B1_hat+B2_hat)  .*(z<=R)...      % Total depth-dose curve without straggling
-                     + 0               .*(z>R);
+            hatD1  = coeffA1.*(range-depthZ).^(1/this.p-1);         % MCS contribution
+            hatD2  = coeffA23.*(range-depthZ).^(1/this.p);          % Nuclear and MCS contribution
+            hatD   = (hatD1+hatD2)  .*(depthZ<=range)...            % Total depth-dose curve without straggling
+                     + 0            .*(depthZ>range);
 
             %% Depth-Dose curve, i.e. the Bragg peak
 
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %       ===================================================================
-            %       Purpose: definition and build of the depth-dose curve i.e. the
-            %                Bragg peak, as defined in Bortfeld 1997
-            %                (D(z) in the paper). Using the Matlab parabolic cylinder
-            %                function pu(a, z) = D_(-a-1/2)(x). In the first step the
-            %                product of gaussian and parabolic cylinder
-            %                function is computed.
-            %       Input  : z ----- Argument : depth in the target material
-            %                E ----- Parameter: energy of the beam
-            %                width - Parameter: width of the straggling
-            %                                   (width=sigmamono(E) for a monoenergetic
-            %                                   beam with range straggling only;
-            %                                   width=sigmatot(E) accounts also for a
-            %                                   gaussian energy spectrum, due to energy
-            %                                   straggling.)
-            %       Output : DD(z, E, width) = D(z) ( D(z) in Bortfeld 1997 implici-
+            %       Purpose: compute the depth-dose curve i.e. the Bragg 
+            %                Peak, as defined in Bortfeld 1997 (D(z) in the
+            %                paper). Using the Matlab parabolic cylinder
+            %                function pu(a, z) = D_(-a-1/2)(x). In the 
+            %                first step, the product of gauss and parabolic
+            %                cylinder function is computed.
+            %       Output : depthDose = D(z) ( D(z) in Bortfeld 1997 implici-
             %                                   tly depends on E and width. )
             %       ===================================================================
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-            gauss_cyl = @(a, x) exp(-x.^2/4).*pu(-a-1/2, x);    %product of gaussian
-                                                                % and pu
+            functionGaussXCyl = @(a, x) exp(-x.^2/4).*pu(-a-1/2, x);    %product of gaussian
+                                                                        % and "pu"                                                                        
 
-            A1 = C1/wid;                                        % coefficient
-            A2 = C23/this.p;                                    % coefficient
-            A  = wid.^(1/this.p)*gamma(1/this.p)/sqrt(2*pi);    % coefficient
-            DD = A.*(A1.*gauss_cyl(-1/this.p, (z-R)/wid ) ...
-                + A2.*gauss_cyl(-1/this.p-1, (z-R)/wid )  );
+            coeffD1     = coeffA1/wid;                                                              % coefficient
+            coeffD2     = coeffA23/this.p;                                                          % coefficient
+            coeffD      = wid.^(1/this.p)*gamma(1/this.p)/sqrt(2*pi);                               % coefficient
+            depthDose   = coeffD.*(coeffD1.*functionGaussXCyl(-1/this.p, (depthZ-range)/wid ) ...
+                                 + coeffD2.*functionGaussXCyl(-1/this.p-1, (depthZ-range)/wid )  );
 
-            %% OUTPUT: dose computation
+            %% OUTPUT: compute dose vector
 
-            % Boolean vectors to evaluate if the input depth(s) is(are)
-            % 1) in the Plateau before the Bragg peak
-            % 2) in the Bragg peak
-            % 3) beyond the Bragg peak
-            dose_mat = zeros(length(depthz), 1);
+            % Dose is computed with hatD in the plateau region, and with
+            % the parabolic cylinder function in the peak region.
+           
+            isPlateau       = depthZ <  range-10*wid;
+            isPeak          = depthZ >= range-10*wid & depthZ <= range+5*wid;
 
-            %for i=1:length(PrimaryEnergy)
-            isPlateau       = depthz<R-10.*wid;
-            isPeak          = depthz>=R-10*wid  ... 
-                                & depthz<=R+5*wid;
-
-            dose_mat(:)     = isPlateau.*B_hat + isPeak.*DD; 
+            dosePlateau                     = isPlateau .* hatD;
+            dosePlateau(isnan(dosePlateau)) = 0;
+            dosePeak                        = isPeak    .* depthDose;
+            dosePeak(isnan(dosePeak))       = 0;                        
+            doseVector                      = dosePlateau + dosePeak; 
             %end
 
         end
         
-        function displ = calcSigmaLatMCS(this, depthz, En)
+        function sigmaMCS = calcSigmaLatMCS(this, depthZ, primaryEnergy)
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %call
             %   this.SigmaLatMSC_H(depthz, En)
@@ -1200,39 +1193,29 @@ classdef matRad_DoseEngineAnalytical < DoseEngines.matRad_DoseEnginePencilBeam
             
 
             %% Conversion of depth value from mm to cm
-            depthz  = depthz./10;
+            depthZ  = depthZ./10;
             %z       = depthz;
 
-            R = this.alpha*En.^this.p;        % Range-Energy relation, i.e. Bragg-Kleemann rule
+            range = this.alpha*primaryEnergy.^this.p;        % Range-Energy relation, i.e. Bragg-Kleemann rule
 
-            s1      = @(z)      14.1^2 /this.LR * (1+1/9*log10(z./this.LR)).^2;
-            s21     = @(z)   1  ./(1-2/this.p)  .*( R.^(1-2/this.p).*(R-z).^2 - (R-z).^(3-2/this.p) );
-            s22     = @(z)   -2*(R-z)  ./(2-2/this.p)  .*( R.^(2-2/this.p) - (R-z).^(2-2/this.p) );
-            s23     = @(z)   1   ./(3-2/this.p)  .*( R.^(3-2/this.p) - (R-z).^(3-2/this.p) );
-            stot    = @(z) this.alpha^(1/this.p)/2  *sqrt( s1(z) .*( s21(z) + s22(z) + s23(z) ) );
-            splat   = stot(R);
+            sigma1      = @(z)      14.1^2 /this.radLenght * (1+1/9*log10(z./this.radLenght)).^2;
+            sigma21     = @(z)   1  ./(1-2/this.p)  .*( range.^(1-2/this.p).*(range-z).^2 - (range-z).^(3-2/this.p) );
+            sigma22     = @(z)   -2*(range-z)  ./(2-2/this.p)  .*( range.^(2-2/this.p) - (range-z).^(2-2/this.p) );
+            sigma23     = @(z)   1   ./(3-2/this.p)  .*( range.^(3-2/this.p) - (range-z).^(3-2/this.p) );
+            sigmaTot    = @(z) this.alpha^(1/this.p)/2  *sqrt( sigma1(z) .*( sigma21(z) + sigma22(z) + sigma23(z) ) );
+            sigmaBeyond   = sigmaTot(range);
 
 
-            isBelowR    = depthz<R;
-            isBeyondR   = depthz>=R;
-            displBelowR     = stot(depthz) .* isBelowR;
-            displBeyondR    = splat.*isBeyondR ;
+            isBelowR    = depthZ<=range;
+            isBeyondR   = depthZ>range;
+            sigmaBelowRange     = sigmaTot(depthZ)  .* isBelowR;
+            sigmaBeyondRange    = sigmaBeyond       .*isBeyondR ;
             
-            displ = 10.* (displBelowR + displBeyondR);      %output in mm
+            sigmaMCS = 10.* (sigmaBelowRange + sigmaBeyondRange);      %output in mm
             
-            for i = 1:length(displ)
-                if depthz(i) == 0
-                    displ(i) = 0;
-                end
-            end
+            sigmaMCS(depthZ==0) = 0;
 
         end
-        
-
-
-
-
-        
     end
     
     methods (Static)
