@@ -96,8 +96,8 @@ end
 for defaultEngine = matRad_cfg.propDoseCalc.defaultDoseEngines
     findDefaultIx = strcmp(defaultEngine,nameList);
     if ~isempty(findDefaultIx)
-        nameList = [nameList(findDefaultIx) nameList(~findDefaultIx)];
-        classList = [classList(findDefaultIx) classList(~findDefaultIx)];
+        nameList = [nameList(findDefaultIx); nameList(~findDefaultIx)];
+        classList = [classList(findDefaultIx); classList(~findDefaultIx)];
     end
 end
 

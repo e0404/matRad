@@ -586,15 +586,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     stf(i).isoCenter = pln.propStf.isoCenter(i,:);
                 end
                 
-                % recalculate influence matrix
-                if strcmp(pln.radiationMode,'photons')
-                    dij = matRad_calcPhotonDose(ct,stf,pln,cst);
-                elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-                    dij = matRad_calcParticleDose(ct,stf,pln,cst);
-                end
-                
-                % recalculate cubes in resultGUI
-                resultGUIreCalc = matRad_calcCubes(resultGUI.w,dij); %(['w' Suffix])
+                resultGUIreCalc = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
                 
                 % delete old variables to avoid confusion
                 if isfield(resultGUI,'effect')
