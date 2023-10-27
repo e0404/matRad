@@ -1,8 +1,8 @@
-classdef (Abstract) matRad_DoseEngineMonteCarlo < DoseEngines.matRad_DoseEngine
-% matRad_DoseEngineMonteCarlo: abstract superclass for all dose calculation 
+classdef (Abstract) matRad_MonteCarloEngineAbstract < DoseEngines.matRad_DoseEngineBase
+% matRad_MonteCarloEngineAbstract: abstract superclass for all dose calculation 
 %   engines which are based on monte carlo calculation 
 %   for more informations see superclass
-%   DoseEngines.matRad_DoseEngine
+%   DoseEngines.matRad_DoseEngineBase
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -29,13 +29,13 @@ classdef (Abstract) matRad_DoseEngineMonteCarlo < DoseEngines.matRad_DoseEngine
         
     methods
         
-        function this = matRad_DoseEngineMonteCarlo(pln)            
+        function this = matRad_MonteCarloEngineAbstract(pln)            
             % call superclass constructor
-            this = this@DoseEngines.matRad_DoseEngine(pln);
+            this = this@DoseEngines.matRad_DoseEngineBase(pln);
         end
 
         function setDefaults(this)
-            setDefaults@DoseEngines.matRad_DoseEngine(this);
+            setDefaults@DoseEngines.matRad_DoseEngineBase(this);
 
             % create config instance
             matRad_cfg = MatRad_Config.instance();
@@ -46,6 +46,56 @@ classdef (Abstract) matRad_DoseEngineMonteCarlo < DoseEngines.matRad_DoseEngine
             this.outputMCvariance           = matRad_cfg.propDoseCalc.defaultOutputMCvariance;
 
             this.relativeDosimetricCutOff   = matRad_cfg.propDoseCalc.defaultDosimetricLateralCutOff;
+        end
+
+        function resultGUI = calcDoseForward(this,ct,cst,stf,w)
+            
+            matRad_cfg = MatRad_Config.instance();
+            if nargin < 5 && ~isfield([stf.ray],'weight')
+                matRad_cfg.dispError('No weight vector available. Please provide w or add info to stf')
+            end
+
+            % copy bixel weight vector into stf struct
+            if nargin == 5
+                if sum([stf.totalNumOfBixels]) ~= numel(w)
+                    matRad_cfg.dispError('weighting does not match steering information')
+                end
+                counter = 0;
+                for i = 1:size(stf,2)
+                    for j = 1:stf(i).numOfRays
+                        for k = 1:stf(i).numOfBixelsPerRay(j)
+                            counter = counter + 1;
+                            stf(i).ray(j).weight(k) = w(counter);
+                        end
+                    end
+                end
+            else % weights need to be in stf!
+                w = NaN*ones(sum([stf.totalNumOfBixels]),1);
+                counter = 0;
+                for i = 1:size(stf,2)
+                    for j = 1:stf(i).numOfRays
+                        for k = 1:stf(i).numOfBixelsPerRay(j)
+                            counter = counter + 1;
+                            w(counter) = stf(i).ray(j).weight(k);
+                        end
+                    end
+                end
+            end            
+            
+            %Set direct dose calculation and compute "dij"
+            this.calcDoseDirect = true;
+            dij = this.calcDose(ct,cst,stf);
+
+            % hack dij struct
+            dij.numOfBeams = 1;
+            dij.beamNum = 1;
+
+            % calculate cubes; use uniform weights here, weighting with actual fluence
+            % already performed in dij construction
+            resultGUI    = matRad_calcCubes(sum(w),dij);
+
+            % remember original fluence weights
+            resultGUI.w  = w;
         end
     end
 

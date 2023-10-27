@@ -1,4 +1,4 @@
-classdef (Abstract) matRad_DoseEngine < handle
+classdef (Abstract) matRad_DoseEngineBase < handle
 % matRad_DoseEngine: Interface for dose calculation
 %   This base class provides the structure for the basic initialization 
 %   functions and corresponding properties for e.g. particle and photon
@@ -55,10 +55,14 @@ classdef (Abstract) matRad_DoseEngine < handle
        name; % readable name for dose engine
        possibleRadiationModes; % radiation modes the engine is meant to process
     end
+
+    properties (SetAccess = private)
+        hWaitbar;
+    end
     
     methods      
         %Constructor  
-        function this = matRad_DoseEngine(pln)
+        function this = matRad_DoseEngineBase(pln)
             this.setDefaults();
             this.assignPropertiesFromPln(pln);
         end
@@ -79,6 +83,7 @@ classdef (Abstract) matRad_DoseEngine < handle
         end
 
         function assignPropertiesFromPln(this,pln,warnWhenPropertyChanged)
+            matRad_cfg = MatRad_Config.instance();
 
             if nargin < 3 || ~isscalar(warnWhenPropertyChanged) || ~islogical(warnWhenPropertyChanged)
                 warnWhenPropertyChanged = false;
@@ -86,7 +91,7 @@ classdef (Abstract) matRad_DoseEngine < handle
 
             %Overwrite default properties within the engine with the ones
             %given in the propDoseCalc struct
-            if isfield(pln,'propDoseCalc')
+            if isfield(pln,'propDoseCalc') && isstruct(pln.propDoseCalc)
                 fields = fieldnames(pln.propDoseCalc); %get remaining fields
                 if isfield(pln.propDoseCalc,'engine') && ~strcmp(pln.propDoseCalc.engine,this.name)
                     matRad_cfg.dispError('Inconsistent dose engines! pln asks for ''%s'', but engine is ''%s''!',pln.propDoseCalc.engine,this.name);
@@ -127,6 +132,57 @@ classdef (Abstract) matRad_DoseEngine < handle
 
             end
         end
+    
+        function resultGUI = calcDoseForward(this,ct,cst,stf,w)
+            matRad_cfg = MatRad_Config.instance();
+            if nargin < 5 && ~isfield([stf.ray],'weight')
+                matRad_cfg.dispEerror('No weight vector available. Please provide w or add info to stf')
+            end
+
+            % copy bixel weight vector into stf struct
+            if nargin == 5
+                if sum([stf.totalNumOfBixels]) ~= numel(w)
+                    matRad_cfg.dispEerror('weighting does not match steering information')
+                end
+                counter = 0;
+                for i = 1:size(stf,2)
+                    for j = 1:stf(i).numOfRays
+                        for k = 1:stf(i).numOfBixelsPerRay(j)
+                            counter = counter + 1;
+                            stf(i).ray(j).weight(k) = w(counter);
+                        end
+                    end
+                end
+            else % weights need to be in stf!
+                w = NaN*ones(sum([stf.totalNumOfBixels]),1);
+                counter = 0;
+                for i = 1:size(stf,2)
+                    for j = 1:stf(i).numOfRays
+                        for k = 1:stf(i).numOfBixelsPerRay(j)
+                            counter = counter + 1;
+                            w(counter) = stf(i).ray(j).weight(k);
+                        end
+                    end
+                end
+            end            
+            
+            %Set direct dose calculation and compute "dij"
+            this.calcDoseDirect = true;
+            dij = this.calcDose(ct,cst,stf);
+
+            % calculate cubes; use uniform weights here, weighting with actual fluence 
+            % already performed in dij construction
+            resultGUI    = matRad_calcCubes(ones(dij.numOfBeams,1),dij);
+            resultGUI.w  = w; 
+        end
+
+        function setDefaults(this)
+            % future code for property validation on creation here
+            matRad_cfg = MatRad_Config.instance();
+            
+            %Assign default parameters from MatRad_Config
+            this.doseGrid.resolution    = matRad_cfg.propDoseCalc.defaultResolution;
+        end
     end
     
     methods(Access  =  protected)
@@ -136,7 +192,7 @@ classdef (Abstract) matRad_DoseEngine < handle
         % Should be called at the beginning of calcDose method.
         % Can be expanded or changed by overwriting this method and calling
         % the superclass method inside of it
-        [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)       
+        [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)         
     end
     
     % Should be abstract methods but in order to satisfy the compatibility
@@ -148,14 +204,6 @@ classdef (Abstract) matRad_DoseEngine < handle
         %(Internal logic is often split into multiple methods in order to make the whole calculation more modular)
         function dij = calcDose(this,ct,cst,stf)
             error('Function needs to be implemented!');
-        end
-        
-        function setDefaults(this)
-            % future code for property validation on creation here
-            matRad_cfg = MatRad_Config.instance();
-            
-            %Assign default parameters from MatRad_Config
-            this.doseGrid.resolution    = matRad_cfg.propDoseCalc.defaultResolution;
         end
     end 
     
@@ -177,9 +225,11 @@ classdef (Abstract) matRad_DoseEngine < handle
         %               if available, indicates a warning that not all
         %               information was present in the machine file and
         %               approximations need to be made
-        
             error('This is an Abstract Base class! Function needs to be called for instantiable subclasses!');
         end
+        
+        % static factory method to create/get correct dose engine from pln
+        engine = getEngineFromPln(pln);
 
         % Machine Loader
         % Currently just uses the matRad function that asks for pln

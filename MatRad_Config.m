@@ -34,7 +34,11 @@ classdef MatRad_Config < handle
         
         %Disable GUI
         disableGUI = false;
-                
+
+        devMode = false;
+        eduMode = false;
+        
+        gui;
     end
     
     properties (SetAccess = private)
@@ -154,6 +158,7 @@ classdef MatRad_Config < handle
         function reset(obj)
             %Set all default properties for matRad's computations
             obj.setDefaultProperties();
+            obj.setDefaultGUIProperties();
         end
         
         function setDefaultProperties(obj)
@@ -163,6 +168,7 @@ classdef MatRad_Config < handle
             
             obj.propStf.defaultLongitudinalSpotSpacing = 2;
             obj.propStf.defaultAddMargin = true; %expand target for beamlet finding
+            obj.propStf.defaultBixelWidth = 5;
             
             %Dose Calculation Options
             obj.propDoseCalc.defaultResolution = struct('x',3,'y',3,'z',3); %[mm]
@@ -173,7 +179,7 @@ classdef MatRad_Config < handle
             obj.propDoseCalc.defaultUseGivenEqDensityCube = false; %Use the given density cube ct.cube and omit conversion from cubeHU.
             obj.propDoseCalc.defaultIgnoreOutsideDensities = true; %Ignore densities outside of cst contours
             obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
-            obj.propDoseCalc.defaultDoseEngines = {'SVD Pencil Beam','pencil beam particle'}; %Names for default engines used when no other is given
+            obj.propDoseCalc.defaultDoseEngines = {'SVD Pencil Beam','Particle Pencil-Beam'}; %Names for default engines used when no other is given
                         
             % default properties for fine sampling calculation
             obj.propDoseCalc.defaultFineSamplingProperties.sigmaSub = 1;
@@ -194,6 +200,9 @@ classdef MatRad_Config < handle
             obj.propMC.direct_defaultHistories = 2e4;
             
             obj.disableGUI = false;
+            
+            obj.devMode = false;
+            obj.eduMode = false;
         end
         
         %%For testing
@@ -205,6 +214,7 @@ classdef MatRad_Config < handle
             
             obj.propStf.defaultLongitudinalSpotSpacing = 20;
             obj.propStf.defaultAddMargin = true; %expand target for beamlet finding
+            obj.propStf.defaultBixelWidth = 20;
             
             obj.propDoseCalc.defaultResolution = struct('x',5,'y',6,'z',7); %[mm]
             obj.propDoseCalc.defaultGeometricLateralCutOff = 20;
@@ -214,7 +224,7 @@ classdef MatRad_Config < handle
             obj.propDoseCalc.defaultUseGivenEqDensityCube = false; %Use the given density cube ct.cube and omit conversion from cubeHU.
             obj.propDoseCalc.defaultIgnoreOutsideDensities = true;
             obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
-            obj.propDoseCalc.defaultDoseEngines = {'SVD Pencil Beam','pencil beam particle'}; %Names for default engines used when no other is given
+            obj.propDoseCalc.defaultDoseEngines = {'SVD Pencil Beam','Particle Pencil-Beam'}; %Names for default engines used when no other is given
             
             % default properties for fine sampling calculation
             obj.propDoseCalc.defaultFineSamplingProperties.sigmaSub = 2;
@@ -235,8 +245,51 @@ classdef MatRad_Config < handle
             obj.propMC.direct_defaultHistories = 100;
             
             obj.disableGUI = true;
+
+            obj.devMode = true;
+            obj.eduMode = false;
+        end  
+        
+        %%for edu mode
+        function setDefaultPropertiesForEduMode(obj)
+            obj.logLevel = 1;
+            
+            obj.propStf.defaultLongitudinalSpotSpacing = 3;
+            obj.propStf.defaultAddMargin = true; %expand target for beamlet finding
+            obj.propStf.defaultBixelWidth = 5;
+            
+            obj.propDoseCalc.defaultResolution = struct('x',4,'y',4,'z',4); %[mm]
+            obj.propDoseCalc.defaultLateralCutOff = 0.975; %[rel.]
+            obj.propDoseCalc.defaultGeometricCutOff = 50; %[mm]
+            obj.propDoseCalc.defaultSsdDensityThreshold = 0.05; %[rel.]
+            obj.propDoseCalc.defaultUseGivenEqDensityCube = false; %Use the given density cube ct.cube and omit conversion from cubeHU.
+            obj.propDoseCalc.defaultIgnoreOutsideDensities = true; %Ignore densities outside of cst contours
+            obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
+            
+            obj.propOpt.defaultMaxIter = 500;
+            
+            obj.propMC.ompMC_defaultHistories = 1e4;
+            obj.propMC.ompMC_defaultOutputVariance = false;
+            obj.propMC.MCsquare_defaultHistories = 1e4;
+            obj.propMC.direct_defaultHistories = 1e4;
+            
+            obj.disableGUI = false;
+            
+            obj.devMode = false;
+            obj.eduMode = true;
+
         end
         
+        function setDefaultGUIProperties(obj)
+           obj.gui.backgroundColor = [0.5 0.5 0.5];
+           obj.gui.elementColor = [0.75 0.75 0.75];
+           obj.gui.textColor = [0 0 0];
+           
+           obj.gui.fontSize = 8;
+           obj.gui.fontWeight = 'bold';
+           obj.gui.fontName = 'Helvetica';
+        end
+
         function dispDebug(obj,formatSpec,varargin)
             %dispDebug print debug messages (log level >= 4)
             %  input

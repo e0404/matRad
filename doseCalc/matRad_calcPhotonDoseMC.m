@@ -39,7 +39,7 @@ if isfield(pln, 'propDoseCalc') && isfield(pln.propDoseCalc, 'engine')
     matRad_cfg.dispWarning('You should not use the deprecated MC calculation with the new engine architecture! Setting ompMC as engine!');
 end
 
-engine = DoseEngines.matRad_DoseEnginePhotonsOmpMC(pln);
+engine = DoseEngines.matRad_PhotonOmpMCEngine(pln);
 
 % assign old deprecated defaults
 if exist('nCasePerBixel','var')
@@ -55,7 +55,7 @@ end
 
 matRad_cfg.dispInfo('Starting dose calculation using %s engine.\n', engine.name);
 
-pln.propDoseCalc.engine = engine;
+pln.propDoseCalc = engine;
 
 % call the calcDose from engine
 dij = matRad_calcDose(ct,cst,stf,pln);

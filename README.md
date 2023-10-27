@@ -104,9 +104,16 @@ You can cite specific versions of matRad in your work! For example, Here is the 
 
 [![DOI](https://zenodo.org/badge/29671667.svg)](https://zenodo.org/badge/latestdoi/29671667)
 
+# Funding Sources
+matRad developments (on this branch) were (in parts) funded by:
+- Grant  No. BA 2279/3-1 (Project No. 265744405) from the German Research Foundation (DFG)
+- Grant No. 70113094 from the German Cancer Aid
+- Grant No. WA 4707/1-1 (Project No. 443188743) from the German Research Foundation (DFG)
+- Mathworks Academic Research Support
+
 ---
 
-Copyright 2020 the matRad development team. 
+Copyright 2022 the matRad development team. 
 
 matrad@dkfz.de
 

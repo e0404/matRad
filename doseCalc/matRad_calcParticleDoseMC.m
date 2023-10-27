@@ -43,7 +43,7 @@ if isfield(pln, 'propDoseCalc') && isfield(pln.propDoseCalc, 'engine')
     matRad_cfg.dispWarning('You should not use the deprecated MC calculation with the new engine architecture! Setting MCsquare as engine!');
 end
 
-engine = DoseEngines.matRad_DoseEngineMCsquare(pln);
+engine = DoseEngines.matRad_ParticleMCsquareEngine(pln);
 
 % set additional args
 % assign old deprecated defaults

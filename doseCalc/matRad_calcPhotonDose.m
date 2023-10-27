@@ -40,7 +40,7 @@ if isfield(pln, 'propDoseCalc') && isfield(pln.propDoseCalc, 'engine')
     matRad_cfg.dispWarning('You should not use the deprecated MC calculation with the new engine architecture! Setting SVD pencil beam as engine!');
 end
 
-engine = DoseEngines.matRad_DoseEnginePhotonSVD(pln);
+engine = DoseEngines.matRad_PhotonPencilBeamSVDEngine(pln);
 
 % if additional args are given, configure the engine
 if exist('calcDoseDirect','var')
@@ -48,7 +48,7 @@ if exist('calcDoseDirect','var')
 end
 matRad_cfg.dispInfo('Starting dose calculation using %s engine.\n', engine.name);
 
-pln.propDoseCalc.engine = engine;
+pln.propDoseCalc = engine;
 % call calcDose from engine
 dij = matRad_calcDose(ct,cst,stf,pln);
     

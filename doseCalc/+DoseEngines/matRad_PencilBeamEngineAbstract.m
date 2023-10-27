@@ -1,5 +1,5 @@
-classdef (Abstract) matRad_DoseEnginePencilBeam < DoseEngines.matRad_DoseEngine
-    % matRad_DoseEnginePencilBeam: abstract superclass for all dose calculation engines which are based on
+classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEngineBase
+    % matRad_PencilBeamEngineAbstract: abstract superclass for all dose calculation engines which are based on
     %   analytical pencil beam calculation
     %   for more informations see superclass
     %   DoseEngines.matRad_DoseEngine
@@ -46,16 +46,16 @@ classdef (Abstract) matRad_DoseEnginePencilBeam < DoseEngines.matRad_DoseEngine
         radDepthCube;           % radiological depth cube for current beam
 
         cube;                   % relative electron density / stopping power cube
-        hlut;                   % hounsfield lookup table to craete relative electron density cube
+        hlut;                   % hounsfield lookup table to craete relative electron density cube        
     end
 
     methods
-        function this = matRad_DoseEnginePencilBeam(pln)
-            this = this@DoseEngines.matRad_DoseEngine(pln);            
+        function this = matRad_PencilBeamEngineAbstract(pln)
+            this = this@DoseEngines.matRad_DoseEngineBase(pln);            
         end
 
         function setDefaults(this)
-            setDefaults@DoseEngines.matRad_DoseEngine(this);
+            setDefaults@DoseEngines.matRad_DoseEngineBase(this);
             
             matRad_cfg = MatRad_Config.instance();
 
@@ -99,7 +99,7 @@ classdef (Abstract) matRad_DoseEnginePencilBeam < DoseEngines.matRad_DoseEngine
             % containing intialization which are specificly needed for
             % pencil beam calculation and not for other engines
 
-            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_DoseEngine(this,ct,cst,stf);
+            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_DoseEngineBase(this,ct,cst,stf);
             
             % calculate rED or rSP from HU
             % Maybe we can avoid duplicating the CT here?
@@ -221,7 +221,7 @@ classdef (Abstract) matRad_DoseEnginePencilBeam < DoseEngines.matRad_DoseEngine
             this.rot_coordsVdoseGrid = rot_coordsVdoseGrid(~isnan(this.radDepthVdoseGrid{1}),:);
 
         end
-
+        
         function radDepthVdoseGrid = interpRadDepth(~,ct,ctScenNum,V,Vcoarse,ctGrid,doseGrid,radDepthVctGrid)            
             radDepthCube                = NaN*ones(ct.cubeDim);
             radDepthCube(V(~isnan(radDepthVctGrid{1}))) = radDepthVctGrid{ctScenNum}(~isnan(radDepthVctGrid{1}));
@@ -230,7 +230,15 @@ classdef (Abstract) matRad_DoseEnginePencilBeam < DoseEngines.matRad_DoseEngine
             coarseRadDepthCube          = matRad_interp3(ctGrid.x,ctGrid.y',ctGrid.z,radDepthCube,doseGrid.x,doseGrid.y',doseGrid.z);
             radDepthVdoseGrid{ctScenNum}  = coarseRadDepthCube(Vcoarse);
         end
-       
+        
+        function ray = computeRayGeoemetry(this,ray,dij)
+            error('Abstract Function. Needs to be implemented!');
+        end
+
+        function indices = applyDoseCutOff(this)
+            error('Abstract Function. Needs to be implemented!');
+        end
+
     end
 
     methods (Static)

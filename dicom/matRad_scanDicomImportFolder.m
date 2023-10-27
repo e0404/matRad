@@ -40,8 +40,11 @@ warnDlgDICOMtagShown = false;
 %% get all files in search directory
 
 % dicom import needs image processing toolbox -> check if available
-if ~license('checkout','image_toolbox')
-    matRad_cfg.dispError('image processing toolbox and/or corresponding licence not available');
+available = matRad_checkEnvDicomRequirements(matRad_cfg.env);
+
+
+if ~available
+    matRad_cfg.dispError('Image processing toolbox / packages not available!');
 end
 
 fileList = matRad_listAllFiles(patDir);
@@ -57,7 +60,7 @@ if ~isempty(fileList)
     for i = numOfFiles:-1:1
         waitbar((numOfFiles+1-i) / steps)
         try % try to get DicomInfo
-            if verLessThan('matlab','9')
+            if matRad_cfg.isOctave || verLessThan('matlab','9')
                 info = dicominfo(fileList{i});
             else
                 info = dicominfo(fileList{i},'UseDictionaryVR',true);

@@ -1,6 +1,7 @@
-classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
-    % matRad_PhotonDoseEngine: Pencil-beam dose calculation with decomposed
-    % kernels
+classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineAbstract
+    % matRad_PhotonPencilBeamSVDEngine: Pencil-beam dose calculation with 
+    % singular value decomposed kernels
+    % 
     %
     % References
     %   [1] http://www.ncbi.nlm.nih.gov/pubmed/8497215
@@ -59,17 +60,18 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
 
         F_X;                            %fluence meshgrid in X
         F_Z;                            %fluence meshgrid in Z
-
+        
+        collimation;                    %collimation structure from dicom import
     end
 
 
     methods
 
-        function this = matRad_DoseEnginePhotonSVD(pln)
+        function this = matRad_PhotonPencilBeamSVDEngine(pln)
             % Constructor
             %
             % call
-            %   engine = DoseEngines.matRad_DoseEnginePhotonSVD(ct,stf,pln,cst)
+            %   engine = DoseEngines.matRad_PhotonPencilBeamSVDEngine(ct,stf,pln,cst)
             %
             % input
             %   ct:                         matRad ct struct
@@ -78,7 +80,7 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
             %   cst:                        matRad cst struct
 
             % create this from superclass
-            this = this@DoseEngines.matRad_DoseEnginePencilBeam(pln);            
+            this = this@DoseEngines.matRad_PencilBeamEngineAbstract(pln);            
 
             if nargin > 0
                 % 0 if field calc is bixel based, 1 if dose calc is field based
@@ -89,7 +91,7 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
         end
 
         function setDefaults(this)
-            setDefaults@DoseEngines.matRad_DoseEnginePencilBeam(this);
+            setDefaults@DoseEngines.matRad_PencilBeamEngineAbstract(this);
 
             %Assign defaults from Config
             matRad_cfg = MatRad_Config.instance();
@@ -103,7 +105,7 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
             this.dijSampling.deltaRadDepth    = 5;
         end
 
-        function dij = calcDose(this,ct,cst,stf,pln)
+        function dij = calcDose(this,ct,cst,stf)
             % matRad photon dose calculation wrapper
             % can be automaticly called through matRad_calcDose or
             % matRad_calcPhotonDose
@@ -121,16 +123,9 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
 
 
             matRad_cfg =  MatRad_Config.instance();
-            matRad_cfg.dispInfo('matRad: Photon dose calculation...\n');
-
-            % initialize waitbar
-            figureWait = waitbar(0,'calculate dose influence matrix for photons...');
-
-            % show busy state
-            set(figureWait,'pointer','watch');
 
             % initialize
-            [dij,ct,cst,stf,pln] = this.calcDoseInit(ct,cst,stf,pln);
+            [dij,ct,cst,stf] = this.calcDoseInit(ct,cst,stf);
 
 
             % Precompute kernel convolution if we use a uniform fluence
@@ -195,8 +190,8 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
                             floor(stf(i).totalNumOfBixels/max(1,round(stf(i).totalNumOfBixels/200))));
                     end
                     % update waitbar only 100 times
-                    if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(figureWait)
-                        waitbar(counter/dij.totalNumOfBixels);
+                    if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(this.hWaitbar)
+                        waitbar(counter/dij.totalNumOfBixels,this.hWaitbar);
                     end
 
                     % remember beam and bixel number
@@ -239,11 +234,11 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
 
                         if this.calcDoseDirect
 
-                            dij = this.fillDijDirect(dij,stf,pln,i,j,k);
+                            dij = this.fillDijDirect(dij,stf,i,j,k);
 
                         else
 
-                            dij = this.fillDij(dij,stf,pln,counter);
+                            dij = this.fillDij(dij,stf,counter);
 
                         end
 
@@ -255,8 +250,8 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
             end
 
             %Close Waitbar
-            if ishandle(figureWait)
-                delete(figureWait);
+            if ishandle(this.hWaitbar)
+                delete(this.hWaitbar);
             end
 
         end
@@ -266,17 +261,17 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
 
     methods (Access = protected)
 
-        function [dij,ct,cst,stf,pln] = calcDoseInit(this,ct,cst,stf,pln)
+        function [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)
             %% Assign parameters
             matRad_cfg = MatRad_Config.instance();
 
             % 0 if field calc is bixel based, 1 if dose calc is field based
             % num2str is only used to prevent failure of strcmp when bixelWidth
             % contains a number and not a string
-            this.isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
+            this.isFieldBasedDoseCalc = any(arrayfun(@(s) strcmp(num2str(s.bixelWidth),'field'),stf));
 
             %% Call Superclass init
-            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_DoseEnginePencilBeam(this,ct,cst,stf);
+            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_PencilBeamEngineAbstract(this,ct,cst,stf);
 
             %% Validate some properties
             % gaussian filter to model penumbra from (measured) machine output / see
@@ -303,10 +298,14 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
             % set up convolution grid
             if this.isFieldBasedDoseCalc
                 % get data from DICOM import
-                this.intConvResolution = pln.propStf.collimation.convResolution; %overwrite default value from dicom
-                this.fieldWidth = pln.propStf.collimation.fieldWidth;
+                this.intConvResolution = this.collimation.convResolution; %overwrite default value from dicom
+                this.fieldWidth = this.collimation.fieldWidth;
             else
-                this.fieldWidth = pln.propStf.bixelWidth;
+                if numel(unique([stf.bixelWidth])) > 1
+                    matRad_cfg.dispError('Different bixelWidths pear beam are not supported!');
+                end
+
+                this.fieldWidth = unique([stf.bixelWidth]);
             end
 
             % calculate field size and distances
@@ -377,7 +376,7 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
             % output
             %   dij:                        updated dij struct
 
-            dij = calcDoseInitBeam@DoseEngines.matRad_DoseEnginePencilBeam(this,dij,ct,cst,stf,i);
+            dij = calcDoseInitBeam@DoseEngines.matRad_PencilBeamEngineAbstract(this,dij,ct,cst,stf,i);
 
             matRad_cfg = MatRad_Config.instance();
 
@@ -401,7 +400,7 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
         end
 
 
-        function dij = fillDij(this,dij,stf,pln,counter)
+        function dij = fillDij(this,dij,stf,counter)
             % Sequentially fill the sparse matrix dij from the tmpContainer cell arra
             %
             %   see also fillDijDirect
@@ -414,7 +413,7 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
 
         end
 
-        function dij = fillDijDirect(this,dij,stf,pln,currBeamIdx,currRayIdx,currBixelIdx)
+        function dij = fillDijDirect(this,dij,stf,currBeamIdx,currRayIdx,currBixelIdx)
             % fillDijDirect - sequentially fill dij, meant for direct calculation only
             %   Fill the sparse matrix physicalDose inside dij with the
             %   indices given by the direct dose calculation
@@ -643,7 +642,7 @@ classdef matRad_DoseEnginePhotonSVD < DoseEngines.matRad_DoseEnginePencilBeam
                 checkBasic = isfield(machine,'meta') && isfield(machine,'data');
 
                 %check modality
-                checkModality = any(strcmp(DoseEngines.matRad_DoseEnginePhotonSVD.possibleRadiationModes, machine.meta.radiationMode));
+                checkModality = any(strcmp(DoseEngines.matRad_PhotonPencilBeamSVDEngine.possibleRadiationModes, machine.meta.radiationMode));
 
                 preCheck = checkBasic && checkModality;
 
