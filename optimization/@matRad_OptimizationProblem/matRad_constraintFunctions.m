@@ -49,21 +49,21 @@ contourScen = fullScen{1};
 c = [];
 
 % compute objective function for every VOI.
-for  i = 1:size(optiProb.constridx,1)
+for  i = 1:size(optiProb.constrIdx,1)
          
       constraint = optiProb.constraints{i};
-      curConidx = optiProb.constridx(i,1);
+      curConIdx = optiProb.constrIdx(i,1);
       
       robustness = constraint.robustness;
          
       switch robustness
          case 'none' % if conventional opt: just sum objectives of nominal dose
-            d_i = d{1}(cst{curConidx,4}{1});
+            d_i = d{1}(cst{curConIdx,4}{1});
             c = [c; constraint.computeDoseConstraintFunction(d_i)];
             
          case 'PROB' % if prob opt: sum up expectation value of objectives
             
-            d_i = dExp{1}(cst{curConidx,4}{1});
+            d_i = dExp{1}(cst{curConIdx,4}{1});
             c = [c; constraint.computeDoseConstraintFunction(d_i)];
             
          case 'VWWC'  % voxel-wise worst case - takes minimum dose in TARGET and maximum in OAR
@@ -79,14 +79,14 @@ for  i = 1:size(optiProb.constridx,1)
                   d_tmp = [d{useScen}];
             end
             
-            d_Scen = d_tmp(cst{curConidx,4}{contourIx},:);
+            d_Scen = d_tmp(cst{curConIdx,4}{contourIx},:);
             
             d_max = max(d_Scen,[],2);
             d_min = min(d_Scen,[],2);
             
-            if isequal(cst{curConidx,3},'OAR')
+            if isequal(cst{curConIdx,3},'OAR')
                   d_i = d_max;
-            elseif isequal(cst{curConidx,3},'TARGET')
+            elseif isequal(cst{curConIdx,3},'TARGET')
                   d_i = d_min;
             end
             
@@ -105,13 +105,13 @@ for  i = 1:size(optiProb.constridx,1)
                   d_tmp = [d{:}];
             end
             
-            d_Scen = d_tmp(cst{curConidx,4}{contourIx},:);
+            d_Scen = d_tmp(cst{curConIdx,4}{contourIx},:);
             d_max = max(d_Scen,[],2);
             d_min = min(d_Scen,[],2);
             
-            if isequal(cst{curConidx,3},'OAR')
+            if isequal(cst{curConIdx,3},'OAR')
                   d_i = d_min;
-            elseif isequal(cst{curConidx,3},'TARGET')
+            elseif isequal(cst{curConIdx,3},'TARGET')
                   d_i = d_max;
             end
             

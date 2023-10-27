@@ -27,8 +27,8 @@ classdef matRad_OptimizationProblem < handle
         normalizationScheme = struct('type','none');
         objectives = {}; %cell array storing all objectives, has to be initialized at the start
         constraints = {}; %
-        objidx;
-        constridx;
+        objIdx;
+        constrIdx;
         quantityOpt = '';
         useMaxApprox = 'logsumexp'; %'pnorm'; %'logsumexp'; %'none';
         p = 30; %Can be chosen larger (closer to maximum) or smaller (closer to mean). Only tested 20 >= p >= 1
@@ -177,8 +177,8 @@ classdef matRad_OptimizationProblem < handle
     methods (Access = private)
         function extractObjectivesAndConstraintsFromcst(optiProb,cst)
             %used to extract objectives from cst and store in cell array as property of optimization Problem
-            optiProb.objidx = [];
-            optiProb.constridx = [];
+            optiProb.objIdx = [];
+            optiProb.constrIdx = [];
             optiProb.objectives = {};
             optiProb.constraints = {};
             
@@ -193,12 +193,12 @@ classdef matRad_OptimizationProblem < handle
                             obj =  matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
                         end
                         if contains(class(obj),'DoseObjectives')
-                            optiProb.objidx = [optiProb.objidx;i,j];
+                            optiProb.objIdx = [optiProb.objIdx;i,j];
                             obj = optiProb.BP.setBiologicalDosePrescriptions(obj,cst{i,5}.alphaX,cst{i,5}.betaX);
                             optiProb.objectives(end+1) = {obj};
 
                         elseif contains(class(obj),'DoseConstraints')
-                            optiProb.constridx = [optiProb.constridx;i,j];
+                            optiProb.constrIdx = [optiProb.constrIdx;i,j];
                             obj = optiProb.BP.setBiologicalDosePrescriptions(obj,cst{i,5}.alphaX,cst{i,5}.betaX);
                             optiProb.constraints(end+1) = {obj};
                         end

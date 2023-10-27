@@ -34,12 +34,12 @@ cu = [];
 
 % compute objective function for every VOI.
 
-for i = 1:size(optiProb.constridx,1)	
+for i = 1:size(optiProb.constrIdx,1)	
     obj = optiProb.constraints{i};
-    curConidx = optiProb.constridx(i,1);
+    curConIdx = optiProb.constrIdx(i,1);
 
-    cl = [cl;obj.lowerBounds(numel(cst{curConidx,4}{1}))];
-    cu = [cu;obj.upperBounds(numel(cst{curConidx,4}{1}))];
+    cl = [cl;obj.lowerBounds(numel(cst{curConIdx,4}{1}))];
+    cu = [cu;obj.upperBounds(numel(cst{curConIdx,4}{1}))];
         
 end
 

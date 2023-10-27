@@ -62,9 +62,9 @@ vOmega = 0;
 f_COWC = zeros(size(dij.physicalDose));
 
 % compute objective function for every VOI.
-for  i = 1:size(optiProb.objidx,1)
+for  i = 1:size(optiProb.objIdx,1)
     objective = optiProb.objectives{i};
-    curObjidx = optiProb.objidx(i,1);
+    curObjIdx = optiProb.objIdx(i,1);
 
     % retrieve the robustness type
     robustness = objective.robustness;
@@ -75,7 +75,7 @@ for  i = 1:size(optiProb.objidx,1)
             for s = 1:numel(useScen)
                 ixScen = useScen(s);
                 ixContour = contourScen(s);
-                d_i = d{ixScen}(cst{curObjidx,4}{ixContour});
+                d_i = d{ixScen}(cst{curObjIdx,4}{ixContour});
                 %add to dose gradient
                 %%THIS part should be changed -> see comment in pull request 
                 
@@ -86,16 +86,16 @@ for  i = 1:size(optiProb.objidx,1)
                     Ui = 1;
                     Li = 0;
                 end
-                doseGradient{ixScen}(cst{curObjidx,4}{ixContour}) = doseGradient{ixScen}(cst{curObjidx,4}{ixContour}) + objective.penalty*1/(Ui-Li)*objective.computeDoseObjectiveGradient(d_i);
+                doseGradient{ixScen}(cst{curObjIdx,4}{ixContour}) = doseGradient{ixScen}(cst{curObjIdx,4}{ixContour}) + objective.penalty*1/(Ui-Li)*objective.computeDoseObjectiveGradient(d_i);
             end
         case 'STOCH' % perform stochastic optimization with weighted / random scenarios
             for s = 1:numel(useScen)
                 ixScen = useScen(s);
                 ixContour = contourScen(s);
                 
-                d_i = d{ixScen}(cst{curObjidx,4}{ixContour});
+                d_i = d{ixScen}(cst{curObjIdx,4}{ixContour});
                 
-                doseGradient{ixScen}(cst{curObjidx,4}{ixContour}) = doseGradient{ixScen}(cst{curObjidx,4}{ixContour}) + ...
+                doseGradient{ixScen}(cst{curObjIdx,4}{ixContour}) = doseGradient{ixScen}(cst{curObjIdx,4}{ixContour}) + ...
                     (objective.penalty*objective.computeDoseObjectiveGradient(d_i) * scenProb(s));
                 
             end
@@ -106,11 +106,11 @@ for  i = 1:size(optiProb.objidx,1)
                 doseGradientExp{1} = zeros(dij.doseGrid.numOfVoxels,1);
             end
             
-            d_i = dExp{1}(cst{curObjidx,4}{1});
+            d_i = dExp{1}(cst{curObjIdx,4}{1});
             
-            doseGradientExp{1}(cst{curObjidx,4}{1}) = doseGradientExp{1}(cst{curObjidx,4}{1}) + objective.penalty*objective.computeDoseObjectiveGradient(d_i);
+            doseGradientExp{1}(cst{curObjIdx,4}{1}) = doseGradientExp{1}(cst{curObjIdx,4}{1}) + objective.penalty*objective.computeDoseObjectiveGradient(d_i);
             
-            p = objective.penalty/numel(cst{curObjidx,4}{1});
+            p = objective.penalty/numel(cst{curObjIdx,4}{1});
             
             vOmega = vOmega + p * dOmega{i,1};
         
@@ -127,13 +127,13 @@ for  i = 1:size(optiProb.objidx,1)
                 d_tmp = [d{useScen}];
             end
             
-            d_Scen = d_tmp(cst{curObjidx,4}{contourIx},:);
+            d_Scen = d_tmp(cst{curObjIdx,4}{contourIx},:);
             [d_max,max_ix] = max(d_Scen,[],2);
             [d_min,min_ix] = min(d_Scen,[],2);
             
-            if isequal(cst{curObjidx,3},'OAR')
+            if isequal(cst{curObjIdx,3},'OAR')
                 d_i = d_max;
-            elseif isequal(cst{curObjidx,3},'TARGET')
+            elseif isequal(cst{curObjIdx,3},'TARGET')
                 d_i = d_min;
             end
             
@@ -147,13 +147,13 @@ for  i = 1:size(optiProb.objidx,1)
                 ixScen = useScen(s);
                 ixContour = contourScen(s);
                 
-                if isequal(cst{curObjidx,3},'OAR')
+                if isequal(cst{curObjIdx,3},'OAR')
                     currWcIx = double(max_ix == s);
-                elseif isequal(cst{curObjidx,3},'TARGET')
+                elseif isequal(cst{curObjIdx,3},'TARGET')
                     currWcIx = double(min_ix == s);
                 end
                 
-                doseGradient{ixScen}(cst{curObjidx,4}{ixContour}) = doseGradient{ixScen}(cst{curObjidx,4}{ixContour}) + deltaTmp.*currWcIx;
+                doseGradient{ixScen}(cst{curObjIdx,4}{ixContour}) = doseGradient{ixScen}(cst{curObjIdx,4}{ixContour}) + deltaTmp.*currWcIx;
             end
             
         case 'VWWC_INV'  % voxel-wise worst case - takes minimum dose in TARGET and maximum in OAR
@@ -169,13 +169,13 @@ for  i = 1:size(optiProb.objidx,1)
                 d_tmp = [d{useScen}];
             end
             
-            d_Scen = d_tmp(cst{curObjidx,4}{1},:);
+            d_Scen = d_tmp(cst{curObjIdx,4}{1},:);
             [d_max,max_ix] = max(d_Scen,[],2);
             [d_min,min_ix] = min(d_Scen,[],2);
             
-            if isequal(cst{curObjidx,3},'OAR')
+            if isequal(cst{curObjIdx,3},'OAR')
                 d_i = d_min;
-            elseif isequal(cst{curObjidx,3},'TARGET')
+            elseif isequal(cst{curObjIdx,3},'TARGET')
                 d_i = d_max;
             end
             
@@ -189,13 +189,13 @@ for  i = 1:size(optiProb.objidx,1)
                 ixScen = useScen(s);
                 ixContour = contourScen(s);
                 
-                if isequal(cst{curObjidx,3},'OAR')
+                if isequal(cst{curObjIdx,3},'OAR')
                     currWcIx = double(min_ix == s);
-                elseif isequal(cst{curObjidx,3},'TARGET')
+                elseif isequal(cst{curObjIdx,3},'TARGET')
                     currWcIx = double(max_ix == s);
                 end
                 
-                doseGradient{ixScen}(cst{curObjidx,4}{ixContour}) = doseGradient{ixScen}(cst{curObjidx,4}{ixContour}) + deltaTmp.*currWcIx;
+                doseGradient{ixScen}(cst{curObjIdx,4}{ixContour}) = doseGradient{ixScen}(cst{curObjIdx,4}{ixContour}) + deltaTmp.*currWcIx;
             end
             
         case 'COWC' % composite worst case consideres ovarall the worst objective function value
@@ -209,10 +209,10 @@ for  i = 1:size(optiProb.objidx,1)
                 ixScen = useScen(s);
                 ixContour = contourScen(s);
                 
-                d_i = d{ixScen}(cst{curObjidx,4}{ixContour});
+                d_i = d{ixScen}(cst{curObjIdx,4}{ixContour});
                 
                 f_COWC(ixScen) = f_COWC(ixScen) + objective.penalty*objective.computeDoseObjectiveFunction(d_i);
-                delta_COWC{ixScen}(cst{curObjidx,4}{ixContour}) = delta_COWC{ixScen}(cst{curObjidx,4}{ixContour}) + objective.penalty*objective.computeDoseObjectiveGradient(d_i);
+                delta_COWC{ixScen}(cst{curObjIdx,4}{ixContour}) = delta_COWC{ixScen}(cst{curObjIdx,4}{ixContour}) + objective.penalty*objective.computeDoseObjectiveGradient(d_i);
             end
             
         case 'OWC' % objective-wise worst case consideres the worst individual objective function value
@@ -228,11 +228,11 @@ for  i = 1:size(optiProb.objidx,1)
                 ixScen = useScen(s);
                 ixContour = contourScen(s);
                 
-                d_i = d{ixScen}(cst{curObjidx,4}{ixContour});
+                d_i = d{ixScen}(cst{curObjIdx,4}{ixContour});
                 
                 f_OWC(ixScen) = objective.penalty*objective.computeDoseObjectiveFunction(d_i);
                 
-                delta_OWC{ixScen}(cst{curObjidx,4}{ixContour}) = objective.penalty*objective.computeDoseObjectiveGradient(d_i);
+                delta_OWC{ixScen}(cst{curObjIdx,4}{ixContour}) = objective.penalty*objective.computeDoseObjectiveGradient(d_i);
                 
             end
                 
@@ -256,7 +256,7 @@ for  i = 1:size(optiProb.objidx,1)
                 ixScen = useScen(s);
                 ixContour = contourScen(s);
                 if fGrad(ixScen ) ~= 0
-                    doseGradient{ixScen}(cst{curObjidx,4}{ixContour}) = doseGradient{ixScen}(cst{curObjidx,4}{ixContour}) + fGrad(ixScen)*delta_OWC{ixScen}(cst{curObjidx,4}{ixContour});
+                    doseGradient{ixScen}(cst{curObjIdx,4}{ixContour}) = doseGradient{ixScen}(cst{curObjIdx,4}{ixContour}) + fGrad(ixScen)*delta_OWC{ixScen}(cst{curObjIdx,4}{ixContour});
                 end
             end
             

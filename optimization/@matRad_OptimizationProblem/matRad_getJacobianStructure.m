@@ -34,13 +34,13 @@ function jacobStruct = matRad_getJacobianStructure(optiProb,w,dij,cst)
 % Initializes constraints	
 jacobStruct = sparse([]);	
 % compute objective function for every VOI.
-for i = 1:size(optiProb.constridx,1)	
+for i = 1:size(optiProb.constrIdx,1)	
    obj = optiProb.constraints{i};
-   curConidx = optiProb.constridx(i,1);
+   curConIdx = optiProb.constrIdx(i,1);
 
    % get the jacobian structure depending on dose	
-   jacobDoseStruct = obj.getDoseConstraintJacobianStructure(numel(cst{curConidx,4}{1}));	
+   jacobDoseStruct = obj.getDoseConstraintJacobianStructure(numel(cst{curConIdx,4}{1}));	
    nRows = size(jacobDoseStruct,2);	
-   jacobStruct = [jacobStruct; repmat(spones(mean(dij.physicalDose{1}(cst{curConidx,4}{1},:))),nRows,1)];	
+   jacobStruct = [jacobStruct; repmat(spones(mean(dij.physicalDose{1}(cst{curConIdx,4}{1},:))),nRows,1)];	
       
 end

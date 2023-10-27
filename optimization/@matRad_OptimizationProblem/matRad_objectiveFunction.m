@@ -45,25 +45,25 @@ function f = matRad_objectiveFunction(optiProb,w,dij,cst)
     %COWC calculation
 
     %get indices of objectives and their respective penalties
-    COWCidxs = [];
-    idxs = [];
+    COWCIdxs = [];
+    Idxs = [];
     penalties = [];
     COWCpenalties = [];
     f = 0;
 
     for i = 1:numel(optiProb.objectives)
         if strcmp(optiProb.objectives{i}.robustness,'COWC') 
-            COWCidxs = [COWCidxs,i];
+            COWCIdxs = [COWCIdxs,i];
             COWCpenalties = [COWCpenalties,optiProb.objectives{i}.penalty];
         else
-            idxs = [idxs,i];
+            Idxs = [Idxs,i];
             penalties = [penalties,optiProb.objectives{i}.penalty];
         end
     end
-    if isempty(COWCidxs)
+    if isempty(COWCIdxs)
         f_COWC  = [0];
     else
-        f_COWCs = fIndv(COWCidxs,:);
+        f_COWCs = fIndv(COWCIdxs,:);
         f_COWC = COWCpenalties*f_COWCs; 
     end%sum over scenarios respect penalties
         
@@ -85,10 +85,10 @@ function f = matRad_objectiveFunction(optiProb,w,dij,cst)
     f = f + fMax;
 
     %now sum up over other robustness scenarios
-    if isempty(idxs)
+    if isempty(Idxs)
         f_wo_COWC = [0];
     else
-        f_wo_COWCs = fIndv(idxs,:);
+        f_wo_COWCs = fIndv(Idxs,:);
         f_wo_COWC = sum(penalties*f_wo_COWCs,2); %sum over scenarios?
     end
     f = f + f_wo_COWC;

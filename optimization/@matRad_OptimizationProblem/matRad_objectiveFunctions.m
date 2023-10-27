@@ -56,10 +56,10 @@ function fIndv = matRad_objectiveFunctions(optiProb,w,dij,cst)
 
 
     %individual objective functions
-    for i = 1:size(optiProb.objidx,1) %loop over objectives
+    for i = 1:size(optiProb.objIdx,1) %loop over objectives
 
         objective = optiProb.objectives{i}; 
-        curObjidx = optiProb.objidx(i,1);
+        curObjIdx = optiProb.objIdx(i,1);
 
         %calculation differs based on robustness
         robustness = objective.robustness;
@@ -69,7 +69,7 @@ function fIndv = matRad_objectiveFunctions(optiProb,w,dij,cst)
             case 'none' % if conventional opt: just sum objectives of nominal dose
 
                 for ixScen = useScen
-                    d_i = d{ixScen}(cst{curObjidx,4}{useScen(1)});
+                    d_i = d{ixScen}(cst{curObjIdx,4}{useScen(1)});
                     fInd = objective.computeDoseObjectiveFunction(d_i);
                     fIndv(i,ixScen) = fInd;
                 end
@@ -80,7 +80,7 @@ function fIndv = matRad_objectiveFunctions(optiProb,w,dij,cst)
                     ixScen = useScen(s);
                     ixContour = contourScen(s);
                     
-                    d_i = d{ixScen}(cst{curObjidx,4}{ixContour});
+                    d_i = d{ixScen}(cst{curObjIdx,4}{ixContour});
                     
                     fInd =  scenProb(s) * objective.computeDoseObjectiveFunction(d_i);
                     fIndv(i,s) = fInd;
@@ -90,12 +90,12 @@ function fIndv = matRad_objectiveFunctions(optiProb,w,dij,cst)
             case 'PROB' % if prob opt: sum up expectation value of objectives TODO: CHECK FOR VALUE TO APPEND
 
                 %NOT UPDATED YET!
-                d_i = dExp{1}(cst{curObjidx,4}{1});
+                d_i = dExp{1}(cst{curObjIdx,4}{1});
                 
                 fInd = objective.computeDoseObjectiveFunction(d_i);
                 fIndv = [fIndv fInd]
 
-                p = 1/numel(cst{curObjidx,4}{1});
+                p = 1/numel(cst{curObjIdx,4}{1});
                 
                 % only one variance term per VOI
                 if j == 1
@@ -118,14 +118,14 @@ function fIndv = matRad_objectiveFunctions(optiProb,w,dij,cst)
                     d_tmp = [d{useScen}];
                 end
                 
-                d_Scen = d_tmp(cst{curObjidx,4}{contourIx},:);
+                d_Scen = d_tmp(cst{curObjIdx,4}{contourIx},:);
                 
                 d_max = max(d_Scen,[],2);
                 d_min = min(d_Scen,[],2);
                 
-                if isequal(cst{curObjidx,3},'OAR')
+                if isequal(cst{curObjIdx,3},'OAR')
                     d_i = d_max;
-                elseif isequal(cst{curObjidx,3},'TARGET')
+                elseif isequal(cst{curObjIdx,3},'TARGET')
                     d_i = d_min;
                 end
                 
@@ -145,13 +145,13 @@ function fIndv = matRad_objectiveFunctions(optiProb,w,dij,cst)
                     d_tmp = [d{useScen}];
                 end
                 
-                d_Scen = d_tmp(cst{curObjidx,4}{contourIx},:);
+                d_Scen = d_tmp(cst{curObjIdx,4}{contourIx},:);
                 d_max = max(d_Scen,[],2);
                 d_min = min(d_Scen,[],2);
                 
-                if isequal(cst{curObjidx,3},'OAR')
+                if isequal(cst{curObjIdx,3},'OAR')
                     d_i = d_min;
-                elseif isequal(cst{curObjidx,3},'TARGET')
+                elseif isequal(cst{curObjIdx,3},'TARGET')
                     d_i = d_max;
                 end
                 
@@ -164,7 +164,7 @@ function fIndv = matRad_objectiveFunctions(optiProb,w,dij,cst)
                     ixScen = useScen(s);
                     ixContour = contourScen(s);
                     
-                    d_i = d{ixScen}(cst{curObjidx,4}{ixContour});
+                    d_i = d{ixScen}(cst{curObjIdx,4}{ixContour});
                     fIndv(i,s) = objective.computeDoseObjectiveFunction(d_i);
                 end
                 
@@ -176,7 +176,7 @@ function fIndv = matRad_objectiveFunctions(optiProb,w,dij,cst)
                     ixScen    = useScen(s);
                     ixContour = contourScen(s);
                     
-                    d_i = d{ixScen}(cst{curObjidx,4}{ixContour});
+                    d_i = d{ixScen}(cst{curObjIdx,4}{ixContour});
                     f_OWC(s) =  objective.computeDoseObjectiveFunction(d_i);
                 end
                 
