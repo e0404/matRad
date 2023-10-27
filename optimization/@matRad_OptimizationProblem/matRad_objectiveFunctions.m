@@ -45,6 +45,7 @@ function fIndv = matRad_objectiveFunctions(optiProb,w,dij,cst)
     % get the used scenarios
     useScen  = optiProb.BP.scenarios;
     scenProb = optiProb.BP.scenarioProb;
+    useNominalCtScen = optiProb.BP.nominalCtScenarios;
 
     % retrieve matching 4D scenarios
     fullScen = cell(ndims(d),1);
@@ -68,7 +69,7 @@ function fIndv = matRad_objectiveFunctions(optiProb,w,dij,cst)
         switch robustness
             case 'none' % if conventional opt: just sum objectives of nominal dose
 
-                for ixScen = useScen
+                for ixScen = useNominalCtScen
                     d_i = d{ixScen}(cst{curObjIdx,4}{useScen(1)});
                     fInd = objective.computeDoseObjectiveFunction(d_i);
                     fIndv(i,ixScen) = fInd;
