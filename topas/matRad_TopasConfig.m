@@ -1383,8 +1383,8 @@ classdef matRad_TopasConfig < handle
                 end
 
                 % NozzleAxialDistance
-                if isPhoton
-                    fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', 1000 + ct.cubeDim(3)*ct.resolution.z);%Not sure if this is correct,100 cm is SSD and probably distance from surface to isocenter needs to be added
+                if isPhoton 
+                    fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', (SAD-stf(beamIx).SCD) +50); %Phasespace behind MLC
                 else
                     fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', nozzleToAxisDistance);
                 end
@@ -1647,22 +1647,20 @@ classdef matRad_TopasConfig < handle
 
                 % Write MLC if available
                 if isfield(stf(beamIx).ray, 'shapes')
+                    SCD = stf(beamIx).SCD;
                     fname = fullfile(obj.thisFolder,obj.infilenames.beam_mlc);
                     TOPAS_mlcSetup = fileread(fname);
-
                     fprintf(fileID,'%s\n',TOPAS_mlcSetup);
-                    % For now only for one ray
                     [numOfLeaves,leafTimes]=size([stf(beamIx).ray.shapes(:).leftLeafPos]); %there are #numOfLeaves leaves and #leafTimes times/shapes
-                    leftLeafPos = [stf(beamIx).ray.shapes(:).leftLeafPos];
-                    rightLeafPos = [stf(beamIx).ray.shapes(:).rightLeafPos];
+                    leftLeafPos = [stf(beamIx).ray.shapes(:).leftLeafPos]*SCD./SAD;
+                    rightLeafPos = [stf(beamIx).ray.shapes(:).rightLeafPos]*SCD./SAD;
                     % Set MLC paramters as in TOPAS example file https://topas.readthedocs.io/en/latest/parameters/geometry/specialized.html#multi-leaf-collimator
-                    MLCshift = stf.SCD/10 - 0.5*15; %MLC thickness + SCD in cm SCD defined at the edge facing pacient?
-                    fprintf(fileID,'d:Sim/Ge/MultiLeafCollimatorA/TransZ   = %f cm\n',MLCshift);
+                    fprintf(fileID,'d:Sim/Ge/MultiLeafCollimatorA/TransZ   = %f cm\n', 0.5*5);
                     fprintf(fileID,'d:Ge/MultiLeafCollimatorA/MaximumLeafOpen   = %f cm\n',15);
-                    fprintf(fileID,'d:Ge/MultiLeafCollimatorA/Thickness         = %f cm\n',15);
+                    fprintf(fileID,'d:Ge/MultiLeafCollimatorA/Thickness         = %f cm\n',5);
                     fprintf(fileID,'d:Ge/MultiLeafCollimatorA/Length            = %f  cm\n',15);
                     fprintf(fileID,'dv:Ge/MultiLeafCollimatorA/Widths           = %i ', numOfLeaves+2);
-                    fprintf(fileID,num2str([200, pln.propStf.collimation.leafWidth*ones(1,numOfLeaves) , 200],' % 2d'));
+                    fprintf(fileID, '%f ', [200, pln.propStf.collimation.leafWidth*ones(1,numOfLeaves)*SCD./SAD , 200]);
                     fprintf(fileID,' mm \n');
                     fprintf(fileID,'dv:Ge/MultiLeafCollimatorA/XPlusLeavesOpen  = %i ',numOfLeaves+2);
                     for i = 0:numOfLeaves+1
@@ -1683,46 +1681,46 @@ classdef matRad_TopasConfig < handle
                     for i = 1:numOfLeaves
                         fprintf(fileID,'s:Tf/LeafXMinus%i/Function  = "Step"\n',i);
                         fprintf(fileID,'dv:Tf/LeafXMinus%i/Times =  %i ', i,leafTimes);
-                        fprintf(fileID,num2str([1:leafTimes]*10,' % 2d'));
+                        fprintf(fileID,'%i ', [1:leafTimes]*10);
                         fprintf(fileID,' ms\n');
                         fprintf(fileID,'dv:Tf/LeafXMinus%i/Values = %i ', i,leafTimes);
-                        fprintf(fileID,num2str(leftLeafPos(i,:),' % 2d'));
+                        fprintf(fileID,'%f ', leftLeafPos(i,:));
                         fprintf(fileID,' mm\n\n');
 
                         fprintf(fileID,'s:Tf/LeafXPlus%i/Function  = "Step"\n',i);
                         fprintf(fileID,'dv:Tf/LeafXPlus%i/Times =  %i ',i,leafTimes);
-                        fprintf(fileID,num2str([1:leafTimes]*10,' % 2d'));
+                        fprintf(fileID,'%i ',[1:leafTimes]*10);
                         fprintf(fileID,' ms\n');
                         fprintf(fileID,'dv:Tf/LeafXPlus%i/Values = %i ', i,leafTimes);
-                        fprintf(fileID,num2str(rightLeafPos(i,:),' % 2d'));
+                        fprintf(fileID,'%f ', rightLeafPos(i,:));
                         fprintf(fileID,' mm\n\n');
                     end
                     %Add aditional Leaf at the top and bottom to catch
                     %scattering
-                    for i = [0,10]
+                    for i = [0,numOfLeaves+1]
                         fprintf(fileID,'s:Tf/LeafXMinus%i/Function  = "Step"\n',i);
                         fprintf(fileID,'dv:Tf/LeafXMinus%i/Times =  %i ', i,leafTimes);
-                        fprintf(fileID,num2str([1:leafTimes]*10,' % 2d'));
+                        fprintf(fileID,'%i ',[1:leafTimes]*10);
                         fprintf(fileID,' ms\n');
                         fprintf(fileID,'dv:Tf/LeafXMinus%i/Values = %i ', i,leafTimes);
-                        fprintf(fileID,num2str([0,0,0],' % 2d'));
+                        fprintf(fileID,'%f ', [0,0,0]);
                         fprintf(fileID,' mm\n\n');
 
                         fprintf(fileID,'s:Tf/LeafXPlus%i/Function  = "Step"\n',i);
                         fprintf(fileID,'dv:Tf/LeafXPlus%i/Times =  %i ',i,leafTimes);
-                        fprintf(fileID,num2str([1:leafTimes]*10,' % 2d'));
+                        fprintf(fileID,'%i ',[1:leafTimes]*10);
                         fprintf(fileID,' ms\n');
                         fprintf(fileID,'dv:Tf/LeafXPlus%i/Values = %i ', i,leafTimes);
-                        fprintf(fileID,num2str([0,0,0],' % 2d'));
+                        fprintf(fileID,'%f ',[0,0,0]);
                         fprintf(fileID,' mm\n\n');
                     end
 
                     fprintf(fileID, 's:Tf/Phasespace/NumberOfHistoriesInRun/Function  = "Step" \n');
                     fprintf(fileID, 'dv:Tf/Phasespace/NumberOfHistoriesInRun/Times = %i ', leafTimes);
-                    fprintf(fileID,num2str([1:leafTimes]*10,' % 2d'));
+                    fprintf(fileID,'%i ',[1:leafTimes]*10);
                     fprintf(fileID,' ms\n');
                     fprintf(fileID, 'iv:Tf/Phasespace/NumberOfHistoriesInRun/Values = %i ', leafTimes);
-                    fprintf(fileID,num2str(round(historyCount(beamIx) * w./sum(w)),' % 2d'));
+                    fprintf(fileID,'%i ',[dataTOPAS(:).current]);
                     fprintf(fileID,' \n');
 
                 end

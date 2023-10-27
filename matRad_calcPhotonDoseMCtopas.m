@@ -79,16 +79,23 @@ end
 
 load([pln.radiationMode,'_',pln.machine]);
 
-stf.SCD = machine.meta.SCD;
+for i = 1:size(stf,2)
+    stf(i).SCD = machine.meta.SCD;
+end
+
 
 %Collect weights
-if calcDoseDirect
+if calcDoseDirect 
     w = zeros(sum([stf(:).totalNumOfBixels]),1);
     counter = 1;
     for i = 1:length(stf)
         for j = 1:stf(i).numOfRays
             rayBix = stf(i).numOfBixelsPerRay(j);
-            w(counter:counter+rayBix-1) = stf(i).ray(j).weight;
+            if isfield(stf(1).ray, 'shapes')
+                w(counter:counter+rayBix-1)  = [stf(i).ray.shapes.weight];
+            else
+                w(counter:counter+rayBix-1) = stf(i).ray(j).weight;
+            end
             counter = counter + rayBix;
         end
     end
@@ -96,10 +103,9 @@ else
     w = ones(sum([stf(:).totalNumOfBixels]),1);
 end
 
-if isfield(stf(1).ray, 'shapes') %weight is in stf.ray.shapes
-    w = [stf.ray.shapes.weight]; %how for multiple fields ?
+for i = 1:size(stf,2)
+    stf(i).ray.energy = stf(i).ray.energy.*ones(size(w));
 end
-stf.ray.energy = stf.ray.energy.*ones(size(w)); %how for multiple fields ?
 
 currDir = cd;
 

@@ -35,8 +35,10 @@ load('BOXPHANTOM.mat');
 pln.radiationMode           = 'photons';  
 pln.machine                 = 'Generic';
 pln.numOfFractions          = 30;
-pln.propStf.gantryAngles    = [0];
-pln.propStf.couchAngles     = [0];
+pln.propStf.gantryAngles    = [0:72:359];
+pln.propStf.couchAngles     = [0 0 0 0 0];
+%pln.propStf.gantryAngles    = [0];
+%pln.propStf.couchAngles     = [0];
 pln.propStf.bixelWidth      = 10;
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
@@ -87,12 +89,10 @@ figure,
 imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet)
 
 %% Dose Calculation
-%stf.ray.energy = [6,6,6];
-%stf.ray.weight = [stf.ray.shapes.weight];
-pln.propMC.numHistories = 1e7;
+pln.propMC.numHistories = 1e9;
 resultGUI_MC = matRad_calcPhotonDoseMC(ct,stf,pln,cst,1);
 
 %% readout
-%foldername = 'E:\Code\matRad\topas\MCrun\photons_Generic_01-09-23';
+%foldername = 'FolderName';
 %pln = matRad_cfg.getDefaultClass(pln,'propMC');
 %resultGUI_MC = pln.propMC.readExternal(foldername);
