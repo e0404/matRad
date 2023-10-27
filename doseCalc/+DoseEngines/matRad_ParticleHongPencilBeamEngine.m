@@ -235,9 +235,9 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
                             %  of the dose calculation
                             if mod(counter,this.numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels                      
                                 if this.calcDoseDirect
-                                    dij = this.fillDijDirect(dij,stf,pln,i,j,k);
+                                    dij = this.fillDijDirect(dij,stf,i,j,k);
                                 else
-                                    dij = this.fillDij(dij,stf,pln,counter);
+                                    dij = this.fillDij(dij,stf,counter);
                                 end
 
                             end

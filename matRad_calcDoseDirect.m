@@ -78,7 +78,7 @@ end
 %}
 engine = DoseEngines.matRad_DoseEngineBase.getEngineFromPln(pln);
 engine.calcDoseDirect = true;
-dij = engine.calcDose(ct,cst,stf);
+dij = engine.calcDose(ct,cst,stf,pln);
 
 % calculate cubes; use uniform weights here, weighting with actual fluence 
 % already performed in dij construction 
