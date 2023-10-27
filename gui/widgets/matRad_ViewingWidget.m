@@ -686,13 +686,13 @@ classdef matRad_ViewingWidget < matRad_Widget
             ratios = [1/ct.resolution.x 1/ct.resolution.y 1/ct.resolution.z];
             set(handles.axesFig,'DataAspectRatioMode','manual');
             if this.plane == 1
-                res = [ratios(3) ratios(2)]./max([ratios(3) ratios(2)]);
-                set(handles.axesFig,'DataAspectRatio',[res 1])
-            elseif this.plane == 2 % sagittal plane
                 res = [ratios(3) ratios(1)]./max([ratios(3) ratios(1)]);
                 set(handles.axesFig,'DataAspectRatio',[res 1])
+            elseif this.plane == 2 % sagittal plane
+                res = [ratios(3) ratios(2)]./max([ratios(3) ratios(2)]);
+                set(handles.axesFig,'DataAspectRatio',[res 1])
             elseif  this.plane == 3 % Axial plane
-                res = [ratios(2) ratios(1)]./max([ratios(2) ratios(1)]);
+                res = [ratios(1) ratios(2)]./max([ratios(1) ratios(2)]);
                 set(handles.axesFig,'DataAspectRatio',[res 1])
             end
             
