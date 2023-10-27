@@ -530,7 +530,7 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
                 checkData = false;
             end
             
-            available = checkMeta && checkData;
+            available = checkMeta & checkData;
         end
     end
 end

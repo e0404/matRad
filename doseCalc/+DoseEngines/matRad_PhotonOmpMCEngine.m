@@ -401,7 +401,7 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 checkBasic = isfield(machine,'meta') && isfield(machine,'data');
 
                 %check modality
-                checkModality = any(strcmp(DoseEngines.matRad_DoseEnginePhotonsOmpMC.possibleRadiationModes, machine.meta.radiationMode));
+                checkModality = any(strcmp(DoseEngines.matRad_PhotonOmpMCEngine.possibleRadiationModes, machine.meta.radiationMode));
 
                 preCheck = checkBasic && checkModality;
 

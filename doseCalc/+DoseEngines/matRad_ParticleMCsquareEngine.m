@@ -460,7 +460,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                 checkBasic = isfield(machine,'meta') && isfield(machine,'data');
 
                 %check modality
-                checkModality = any(strcmp(DoseEngines.matRad_DoseEngineMCsquare.possibleRadiationModes, machine.meta.radiationMode));
+                checkModality = any(strcmp(DoseEngines.matRad_ParticleMCsquareEngine.possibleRadiationModes, machine.meta.radiationMode));
                 
                 preCheck = checkBasic && checkModality;
 
@@ -473,7 +473,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             end
 
             %Check the binaries
-            hasBinaries = DoseEngines.matRad_DoseEngineMCsquare.checkBinaries();
+            hasBinaries = DoseEngines.matRad_ParticleMCsquareEngine.checkBinaries();
             
             if ~hasBinaries
                 return;
