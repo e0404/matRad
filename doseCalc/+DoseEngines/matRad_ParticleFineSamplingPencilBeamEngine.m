@@ -49,7 +49,7 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
             this.fineSampling = matRad_cfg.propDoseCalc.defaultFineSamplingProperties;
         end
         
-        function dij = calcDose(this,ct,cst,stf,pln)
+        function dij = calcDose(this,ct,cst,stf)
             % matRad particle dose calculation wrapper
             % can be automaticly called through matRad_calcDose or
             % matRad_calcParticleDose
@@ -145,6 +145,22 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
                                 dij.numParticlesPerMU(counter,1) = numParticlesPerMU;
                             end
 
+                            % select correct initial focus sigma squared
+                            sigmaIni_sq = currRay.sigmaIni(k)^2;
+
+                            % consider range shifter for protons if applicable
+                            if currRay.rangeShifter(k).eqThickness > 0 && strcmp(stf(i).radiationMode,'protons')
+
+                                % compute!
+                                sigmaRashi = matRad_calcSigmaRashi(this.machine.data(energyIx).energy, ...
+                                    currRay.rangeShifter(k), ...
+                                    currRay.SSD);
+
+                                % add to initial sigma in quadrature
+                                sigmaIni_sq = sigmaIni_sq +  sigmaRashi^2;
+
+                            end
+
 
                             % find energy index in base data
                             energyIx = find(this.round2(currRay.energy(k),4) == this.round2([this.machine.data.energy],4));
@@ -152,13 +168,13 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
                             % Given the initial sigmas of the sampling ray, this
                             % function provides the weights for the sub-pencil beams,
                             % their positions and their sigma used for dose calculation
-                            if (this.fineSampling.sigmaSub < currRay.sigmaIni(k)) && (this.fineSampling.sigmaSub > 0)
+                            if (this.fineSampling.sigmaSub < sqrt(sigmaIni_sq)) && (this.fineSampling.sigmaSub > 0)
                                 [finalSubWeight, sigmaSub, subPosX, subPosZ, numOfSub] = ...
-                                    this.calcFineSamplingMixture(currRay.sigmaIni(k));
+                                    this.calcFineSamplingMixture(sqrt(sigmaIni_sq));
                             else
-                                if (this.fineSamplingSigmaSub < 0)
+                                if (this.fineSampling.sigmaSub < 0)
                                     matRad_cfg.dispError('Chosen fine sampling sigma cannot be negative!');
-                                elseif (this.fineSamplingSigmaSub > currRay.sigmaIni(k))
+                                elseif (this.fineSampling.sigmaSub > sqrt(sigmaIni_sq))
                                     matRad_cfg.dispError('Chosen fine sampling sigma is too high for defined plan!');
                                 end
                             end
@@ -211,22 +227,7 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
                             % adjust radDepth according to range shifter
                             currRadDepths = radDepths(currIx) + currRay.rangeShifter(k).eqThickness;
 
-                            % select correct initial focus sigma squared
-                            sigmaIni_sq = currRay.sigmaIni(k)^2;
-
-                            % consider range shifter for protons if applicable
-                            if currRay.rangeShifter(k).eqThickness > 0 && strcmp(pln.radiationMode,'protons')
-
-                                % compute!
-                                sigmaRashi = matRad_calcSigmaRashi(this.machine.data(energyIx).energy, ...
-                                    currRay.rangeShifter(k), ...
-                                    currRay.SSD);
-
-                                % add to initial sigma in quadrature
-                                sigmaIni_sq = sigmaIni_sq +  sigmaRashi^2;
-
-                            end
-
+                            
                             % initialise empty dose array
                             totalDose = zeros(size(currIx,1),1);
 

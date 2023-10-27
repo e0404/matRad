@@ -111,6 +111,8 @@ resultGUI_noise = matRad_calcDoseDirect(ct_manip,stf,pln,cst,resultGUI.w);
 pln.propDoseCalc.engine = 'Subsampling Particle Pencil-Beam';
 
 pln.propDoseCalc.fineSampling.method = 'russo';
+pln.propDoseCalc.fineSampling.sigmaSub = 2; %mm
+pln.propDoseCalc.fineSampling.N = 4;
 % method for weight calculation, availabe methods:
 %   'russo'
 %   'fitCircle', supports N = 2,3 and 8

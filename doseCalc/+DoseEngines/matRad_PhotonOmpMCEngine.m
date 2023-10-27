@@ -63,7 +63,7 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             end
         end
 
-        function dij = calcDose(this,ct,cst,stf,pln)
+        function dij = calcDose(this,ct,cst,stf)
             % matRad ompMC monte carlo photon dose calculation wrapper
             % can be automaticly called through matRad_calcDose or
             % matRad_calcPhotonDoseMC
@@ -74,7 +74,6 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % input
             %   ct:                         matRad ct struct
             %   stf:                        matRad steering information struct
-            %   pln:                        matRad plan meta information struct
             %   cst:                        matRad cst struct
             % output
             %   dij:                        matRad dij struct
@@ -111,9 +110,16 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % 5cm depth for SSD = 900 which corresponds to the calibration for the
             % analytical base data.
             absCalibrationFactor = 3.49056 * 1e12; %Approximate!
+            
+            bixelWidth = unique([stf.bixelWidth]);
+
+            if numel(bixelWidth) > 1
+                matRad_cfg.dispWarning('Varying bixel width in stf, calibartion might be wrong!')
+                bixelWidth = mean(bixelWidth);
+            end
 
             %Now we have to calibrate to the the beamlet width.
-            absCalibrationFactor = absCalibrationFactor * (pln.propStf.bixelWidth/50)^2;
+            absCalibrationFactor = absCalibrationFactor * (bixelWidth/50)^2;
 
             %run over all scenarios
             for s = 1:dij.numOfScenarios

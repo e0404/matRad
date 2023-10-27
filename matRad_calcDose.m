@@ -45,6 +45,6 @@ end
 engine = DoseEngines.matRad_DoseEngineBase.getEngineFromPln(pln);
 
 %call the calcDose funktion
-dij = engine.calcDose(ct,cst,stf,pln);
+dij = engine.calcDose(ct,cst,stf);
 
 end

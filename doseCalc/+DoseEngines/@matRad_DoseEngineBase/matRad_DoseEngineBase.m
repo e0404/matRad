@@ -91,7 +91,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
 
             %Overwrite default properties within the engine with the ones
             %given in the propDoseCalc struct
-            if isfield(pln,'propDoseCalc')
+            if isfield(pln,'propDoseCalc') && isstruct(pln.propDoseCalc)
                 fields = fieldnames(pln.propDoseCalc); %get remaining fields
                 if isfield(pln.propDoseCalc,'engine') && ~strcmp(pln.propDoseCalc.engine,this.name)
                     matRad_cfg.dispError('Inconsistent dose engines! pln asks for ''%s'', but engine is ''%s''!',pln.propDoseCalc.engine,this.name);
@@ -132,6 +132,57 @@ classdef (Abstract) matRad_DoseEngineBase < handle
 
             end
         end
+    
+        function resultGUI = calcDoseForward(this,ct,cst,stf,w)
+            matRad_cfg = MatRad_Config.instance();
+            if nargin < 5 && ~isfield([stf.ray],'weight')
+                matRad_cfg.dispEerror('No weight vector available. Please provide w or add info to stf')
+            end
+
+            % copy bixel weight vector into stf struct
+            if nargin == 5
+                if sum([stf.totalNumOfBixels]) ~= numel(w)
+                    matRad_cfg.dispEerror('weighting does not match steering information')
+                end
+                counter = 0;
+                for i = 1:size(stf,2)
+                    for j = 1:stf(i).numOfRays
+                        for k = 1:stf(i).numOfBixelsPerRay(j)
+                            counter = counter + 1;
+                            stf(i).ray(j).weight(k) = w(counter);
+                        end
+                    end
+                end
+            else % weights need to be in stf!
+                w = NaN*ones(sum([stf.totalNumOfBixels]),1);
+                counter = 0;
+                for i = 1:size(stf,2)
+                    for j = 1:stf(i).numOfRays
+                        for k = 1:stf(i).numOfBixelsPerRay(j)
+                            counter = counter + 1;
+                            w(counter) = stf(i).ray(j).weight(k);
+                        end
+                    end
+                end
+            end            
+            
+            %Set direct dose calculation and compute "dij"
+            this.calcDoseDirect = true;
+            dij = this.calcDose(ct,cst,stf);
+
+            % calculate cubes; use uniform weights here, weighting with actual fluence 
+            % already performed in dij construction
+            resultGUI    = matRad_calcCubes(ones(dij.numOfBeams,1),dij);
+            resultGUI.w  = w; 
+        end
+
+        function setDefaults(this)
+            % future code for property validation on creation here
+            matRad_cfg = MatRad_Config.instance();
+            
+            %Assign default parameters from MatRad_Config
+            this.doseGrid.resolution    = matRad_cfg.propDoseCalc.defaultResolution;
+        end
     end
     
     methods(Access  =  protected)
@@ -153,14 +204,6 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         %(Internal logic is often split into multiple methods in order to make the whole calculation more modular)
         function dij = calcDose(this,ct,cst,stf)
             error('Function needs to be implemented!');
-        end
-        
-        function setDefaults(this)
-            % future code for property validation on creation here
-            matRad_cfg = MatRad_Config.instance();
-            
-            %Assign default parameters from MatRad_Config
-            this.doseGrid.resolution    = matRad_cfg.propDoseCalc.defaultResolution;
         end
     end 
     

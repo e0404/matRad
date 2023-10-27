@@ -60,7 +60,8 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
 
         F_X;                            %fluence meshgrid in X
         F_Z;                            %fluence meshgrid in Z
-
+        
+        collimation;                    %collimation structure from dicom import
     end
 
 
@@ -104,7 +105,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             this.dijSampling.deltaRadDepth    = 5;
         end
 
-        function dij = calcDose(this,ct,cst,stf,pln)
+        function dij = calcDose(this,ct,cst,stf)
             % matRad photon dose calculation wrapper
             % can be automaticly called through matRad_calcDose or
             % matRad_calcPhotonDose
@@ -124,7 +125,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             matRad_cfg =  MatRad_Config.instance();
 
             % initialize
-            [dij,ct,cst,stf,pln] = this.calcDoseInit(ct,cst,stf,pln);
+            [dij,ct,cst,stf] = this.calcDoseInit(ct,cst,stf);
 
 
             % Precompute kernel convolution if we use a uniform fluence
@@ -233,11 +234,11 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
 
                         if this.calcDoseDirect
 
-                            dij = this.fillDijDirect(dij,stf,pln,i,j,k);
+                            dij = this.fillDijDirect(dij,stf,i,j,k);
 
                         else
 
-                            dij = this.fillDij(dij,stf,pln,counter);
+                            dij = this.fillDij(dij,stf,counter);
 
                         end
 
@@ -260,14 +261,14 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
 
     methods (Access = protected)
 
-        function [dij,ct,cst,stf,pln] = calcDoseInit(this,ct,cst,stf,pln)
+        function [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)
             %% Assign parameters
             matRad_cfg = MatRad_Config.instance();
 
             % 0 if field calc is bixel based, 1 if dose calc is field based
             % num2str is only used to prevent failure of strcmp when bixelWidth
             % contains a number and not a string
-            this.isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
+            this.isFieldBasedDoseCalc = any(arrayfun(@(s) strcmp(num2str(s.bixelWidth),'field'),stf));
 
             %% Call Superclass init
             [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_PencilBeamEngineAbstract(this,ct,cst,stf);
@@ -297,10 +298,14 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             % set up convolution grid
             if this.isFieldBasedDoseCalc
                 % get data from DICOM import
-                this.intConvResolution = pln.propStf.collimation.convResolution; %overwrite default value from dicom
-                this.fieldWidth = pln.propStf.collimation.fieldWidth;
+                this.intConvResolution = this.collimation.convResolution; %overwrite default value from dicom
+                this.fieldWidth = this.collimation.fieldWidth;
             else
-                this.fieldWidth = pln.propStf.bixelWidth;
+                if numel(unique([stf.bixelWidth])) > 1
+                    matRad_cfg.dispError('Different bixelWidths pear beam are not supported!');
+                end
+
+                this.fieldWidth = unique([stf.bixelWidth]);
             end
 
             % calculate field size and distances
@@ -395,7 +400,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
         end
 
 
-        function dij = fillDij(this,dij,stf,pln,counter)
+        function dij = fillDij(this,dij,stf,counter)
             % Sequentially fill the sparse matrix dij from the tmpContainer cell arra
             %
             %   see also fillDijDirect
@@ -408,7 +413,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
 
         end
 
-        function dij = fillDijDirect(this,dij,stf,pln,currBeamIdx,currRayIdx,currBixelIdx)
+        function dij = fillDijDirect(this,dij,stf,currBeamIdx,currRayIdx,currBixelIdx)
             % fillDijDirect - sequentially fill dij, meant for direct calculation only
             %   Fill the sparse matrix physicalDose inside dij with the
             %   indices given by the direct dose calculation

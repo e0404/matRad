@@ -38,7 +38,7 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
             this = this@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(pln);
         end
         
-        function dij = calcDose(this,ct,cst,stf,pln)
+        function dij = calcDose(this,ct,cst,stf)
             % matRad particle dose calculation wrapper
             % can be automaticly called through matRad_calcDose or
             % matRad_calcParticleDose
@@ -50,7 +50,6 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
             %   ct:             ct cube
             %   cst:            matRad cst struct
             %   stf:            matRad steering information struct
-            %   pln:            matRad plan meta information struct
             %
             % output
             %   dij:            matRad dij struct
@@ -177,7 +176,7 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
                             currSigmaIni_sq = currRay.sigmaIni(k)^2;
 
                             % consider range shifter for protons if applicable
-                            if currRay.rangeShifter(k).eqThickness > 0 && strcmp(pln.radiationMode,'protons')
+                            if currRay.rangeShifter(k).eqThickness > 0 && strcmp(stf(i).radiationMode,'protons')
 
                                 % compute!
                                 sigmaRashi = matRad_calcSigmaRashi(this.machine.data(energyIx).energy, ...
