@@ -291,10 +291,10 @@ if enable(3) == 1 && ~isempty(cst)
     disp('Plotting DVH...');
     
     hfig.dvh.fig = figure('Renderer', 'painters', 'Position', [10 100 1000 700]);
-    set(gcf,'Color',[1 1 1]);
-    matRad_showDVH(dvh1,cst,pln);
+    set(gcf,'Color',matRad_cfg.gui.backgroundColor);
+    matRad_showDVH(axes(gcf),dvh1,cst,pln);
     hold on
-    matRad_showDVH(dvh2,cst,pln,2);
+    matRad_showDVH(gca,dvh2,cst,pln,2);
     xlim([0 dvhWindow*1.2])
     title('Dose Volume Histrogram, Dose 1: solid, Dose 2: dashed')
 end

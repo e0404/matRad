@@ -34,8 +34,7 @@ function [ct,cst,pln,stf,resultGUI] = matRad_importDicom( files, dicomMetaBool )
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%[env, ~] = matRad_getEnvironment();
+matRad_cfg = MatRad_Config.instance();
     
 %%
 if ~exist('dicomMetaBool','var')
@@ -54,7 +53,7 @@ resolution.y = files.resy;
 resolution.z = files.resz; % [mm] / lps coordinate system
 if files.useDoseGrid && isfield(files,'rtdose')
     % get grid from dose cube
-    if verLessThan('matlab','9')
+    if matRad_cfg.isOctave || verLessThan('matlab','9')
         doseInfo = dicominfo(files.rtdose{1,1});
     else
         doseInfo = dicominfo(files.rtdose{1,1},'UseDictionaryVR',true);
@@ -160,4 +159,22 @@ if ~isempty(stf) && ~isempty(resultGUI)
     for i = 1:size(stf,2)
         resultGUI.w = [resultGUI.w; [stf(i).ray.weight]'];
     end
+end
+
+
+%% save ct, cst, pln, dose
+matRadFileName = [files.ct{1,3} '.mat']; % use default from dicom
+[FileName,PathName] = uiputfile('*','Save as...',matRadFileName);
+if ischar(FileName)
+    % delete unnecessary variables
+    if matRad_cfg.isMatlab
+        clearvars -except ct cst pln stf resultGUI FileName PathName;
+        save([PathName, FileName], '-regexp', '^(?!(FileName|PathName)$).','-v7');
+    elseif matRad_cfg.isOctave
+        clear -x ct cst pln stf resultGUI FileName PathName;
+        save([PathName, FileName],'-v6');
+    else
+    end
+    % save all except FileName and PathName
+    
 end

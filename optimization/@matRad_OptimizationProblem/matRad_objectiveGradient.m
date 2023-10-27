@@ -45,6 +45,7 @@ d = optiProb.BP.GetResult();
 % get the used scenarios
 useScen  = optiProb.BP.scenarios;
 scenProb = optiProb.BP.scenarioProb;
+useNominalCtScen = optiProb.BP.nominalCtScenarios;
 
 % retrieve matching 4D scenarios
 fullScen      = cell(ndims(d),1);
