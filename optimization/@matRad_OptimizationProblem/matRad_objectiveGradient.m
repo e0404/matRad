@@ -78,7 +78,6 @@ for  i = 1:size(optiProb.objIdx,1)
                 ixContour = contourScen(s);
                 d_i = d{ixScen}(cst{curObjIdx,4}{ixContour});
                 %add to dose gradient
-                %%THIS part should be changed -> see comment in pull request 
                 
                 if isfield(optiProb.normalizationScheme,'U') && isfield(optiProb.normalizationScheme,'L')
                     Ui = optiProb.normalizationScheme.U(i);

@@ -24,7 +24,7 @@ classdef matRad_OptimizationProblem < handle
     
     properties
         BP
-        normalizationScheme = struct('type','none');
+        normalizationScheme = struct('scheme','none'); % used in pareto optimization
         objectives = {}; %cell array storing all objectives, has to be initialized at the start
         constraints = {}; %
         objIdx;
