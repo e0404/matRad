@@ -28,29 +28,28 @@
 % search path.
 
 matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
-%%
+matRad_rc;
 matRad_cfg = MatRad_Config.instance();
-matRad_cfg.propOpt.defaultAccChangeTol = 1e-6;
+%matRad_cfg.propOpt.defaultMaxIter = 50000;
 %%
-
-load('PROSTATE.mat');
-
+load('TG119.mat');
 %%
-
+cst{1,6}{1} = struct(DoseObjectives.matRad_EUDMin(1000,0));
+cst{3,6}{1} = struct(DoseObjectives.matRad_MeanDose(1000,0));
 %%
+%cst{2,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(45,55));
 
-pln.radiationMode = 'protons';  
-%pln.radiationMode = 'photons';
+%pln.radiationMode = 'protons';  
+pln.radiationMode = 'photons';
 pln.machine       = 'Generic';
 
-quantityOpt    = 'RBExD';                                     
-modelName      = 'constRBE';  
+quantityOpt    = 'physicalDose';                                     
+modelName      = 'none';  
 
 %pln.propDoseCalc.calcLET = 0;
 
 pln.numOfFractions         = 30;
-%pln.propStf.gantryAngles   = [0:52:359];
-pln.propStf.gantryAngles   = [90 270];
+pln.propStf.gantryAngles   = [0:40:359];
 pln.propStf.couchAngles    = zeros(1,numel(pln.propStf.gantryAngles));
 pln.propStf.bixelWidth     = 5;
 
@@ -92,8 +91,8 @@ stf = matRad_generateStf(ct,cst,pln);
 % Let's generate dosimetric information by pre-computing dose influence 
 % matrices for unit beamlet intensities. Having dose influences available 
 % allows subsequent inverse optimization.
-%dij = matRad_calcPhotonDose(ct,stf,pln,cst);
-dij = matRad_calcParticleDose(ct,stf,pln,cst);
+%dij = matRad_calcParticleDose(ct,stf,pln,cst);
+dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 %% Inverse Optimization for IMRT
 % The goal of the fluence optimization is to find a set of beamlet/pencil 
 % beam weights which yield the best possible dose distribution according to
@@ -107,67 +106,13 @@ dij = matRad_calcParticleDose(ct,stf,pln,cst);
 % It is possible to have more than one objective function per VOI
 % penVal stores the Grid which is then passed on. penGrid contains an
 % version easier to visualize, however harder to loop over
-%%
-%objective function values are returned in order of ordering in VOI
-%returnStruct = matRad_paretoGenerationPGEN(dij,cst,pln,VOI);
-%
-cst{1,6}{1} = struct(DoseObjectives.matRad_EUDMin(100,0,8));
-cst{8,6}{1} = struct(DoseObjectives.matRad_EUDMin(100,0,3));
-cst{9,6}{1} = struct(DoseObjectives.matRad_MeanDose(100,0));
-cst{6,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(61.2,78.2));
-cst{7,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(50.4,64.4));
-cst{1,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,58));
-cst{9,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,58));
-cst{8,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,58));
-%%
-cst{5,5}.Priority = 99;
-%%
-%cst{17,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,38));
-%{
-tic;
-resultGUI = matRad_fluenceOptimization(dij,cst,pln);
-toc
-%}
-%%
-matRadGUI
-%Aaaaaaaa
-%matRadGUI;
-%%
-tic;            
-retStruct = matRad_ParetoOptimization(dij,cst,pln,50);
-toc
-%%
-resultGUIDoseGrid = matRad_calcCubesDoseGrid(retStruct.weights(:,2),dij)
-%resultGUI2 = matRad_calcCubes(retStruct.weights(:,5),dij)
-%matRadGUI;
+%% Add constraints
+cst{1,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,40));
+cst{3,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,45));
+cst{2,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(45,57));
 
 %%
-figure
-matRad_plotSliceWrapper(gca(),ct,retStruct.modcst,1,resultGUI.RBExD,3,40)
-%%
-
-doseCube = resultGUIDoseGrid.physicalDose;
-dvh = matRad_calcDVH(retStruct.modcst,doseCube);
+retStruct = matRad_ParetoOptimization(dij,cst,pln,30);
 
 %%
-cstR = matRad_resizeCstToGrid(cst,dij.ctGrid.x,  dij.ctGrid.y,  dij.ctGrid.z,...
-                                 dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
-matRad_indicatorWrapper(matRad_setOverlapPriorities(cstR),pln,resultGUIDoseGrid)
-%%
-retStruct.optiProb.matRad_objectiveFunctions(retStruct.weights(:,2),dij,retStruct.modcst)
-%%
-matRad_showDVH(dvh,retStruct.modcst,pln);
-%%
-doseCube2 = resultGUI2.RBExD;
-dvh2 = matRad_calcDVH(cstR,doseCube2);
-matRad_showDVH(dvh2,cstR,pln,2);
-
-%%
-%load('data50constrPTVs.mat')
-%%
-matRad_plotParetoSurface(retStruct)
-%%
-matRad_plotPenaltyGrid(retStruct.penGrid)
-
-%%
-matRad_UIInterpolation(retStruct,dij,pln,ct,matRad_setOverlapPriorities(cst),retStruct.optiProb)
+%matRad_UIInterpolation(retStruct,dij,pln,ct,matRad_setOverlapPriorities(cst),retStruct.optiProb)
