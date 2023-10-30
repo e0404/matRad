@@ -661,34 +661,24 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             end
         end
     
-        function ray = computeRayGeometry(this,ray,dij)
-            % find index of maximum used energy (round to keV for numerical
-            % reasons
-            maxEnergyIx = max(this.round2(ray.energy,4)) == this.round2([this.machine.data.energy],4);
-
-            maxLateralCutoffDoseCalc = max(this.machine.data(maxEnergyIx).LatCutOff.CutOff);
+        function ray = computeRayGeometry(this,ray,dij)           
+            ray = computeRayGeometry@DoseEngines.matRad_PencilBeamEngineAbstract(this,ray,dij);
 
             % calculate initial sigma for all bixel on current ray
             ray.sigmaIni = matRad_calcSigmaIni(this.machine.data,ray,ray.SSD);
             
-            if ~isfield(ray,'sourcePoint_bev')
-                ray.sourcePoint_bev = ray.targetPoint_bev + 2*(ray.rayPos_bev - ray.targetPoint_bev);
-            end
-
-            % Ray tracing for beam i and ray j
-            [ray.ix,ray.radialDist_sq,~,~,ray.latDistsX,ray.latDistsZ] = this.calcGeoDists(this.rot_coordsVdoseGrid, ...
-                ray.sourcePoint_bev, ...
-                ray.targetPoint_bev, ...
-                this.machine.meta.SAD, ...
-                find(~isnan(this.radDepthVdoseGrid{1})), ...
-                maxLateralCutoffDoseCalc);
-
-            ray.radDepths = this.radDepthVdoseGrid{1}(ray.ix);
-
             % just use tissue classes of voxels found by ray tracer
             if this.calcBioDose
                 ray.vTissueIndex_j = dij.vTissueIndex(ray.ix,:);
             end
+        end
+
+        function lateralRayCutOff = getLateralDistanceFromDoseCutOffOnRay(this,ray)
+                        % find index of maximum used energy (round to keV for numerical
+            % reasons
+            maxEnergyIx = max(this.round2(ray.energy,4)) == this.round2([this.machine.data.energy],4);
+
+            lateralRayCutOff = max(this.machine.data(maxEnergyIx).LatCutOff.CutOff);
         end
 
         function r2 = round2(~,a,b)

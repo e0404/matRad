@@ -60,6 +60,9 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
 
         F_X;                            %fluence meshgrid in X
         F_Z;                            %fluence meshgrid in Z
+
+        Fpre;                           %precomputed fluence if uniform fluence used for calculation
+        interpKernelCache;              %Kernel interpolators (cached if precomputation per beam possible)
         
         collimation;                    %collimation structure from dicom import
     end
@@ -128,61 +131,16 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             [dij,ct,cst,stf] = this.calcDoseInit(ct,cst,stf);
 
 
-            % Precompute kernel convolution if we use a uniform fluence
-            if ~this.isFieldBasedDoseCalc
-                % Create fluence matrix
-                F = ones(floor(this.fieldWidth/this.intConvResolution));
-
-                if ~this.useCustomPrimaryPhotonFluence
-                    % gaussian convolution of field to model penumbra
-                    F = real(ifft2(fft2(F,this.gaussConvSize,this.gaussConvSize).*fft2(this.gaussFilter,this.gaussConvSize,this.gaussConvSize)));
-                end
-            end
-
             counter = 0;
 
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             for i = 1:dij.numOfBeams % loop over all beams
                 dij = this.calcDoseInitBeam(dij,ct,cst,stf,i);
 
-                % convolution here if no custom primary fluence and no field based dose calc
-                if ~this.useCustomPrimaryPhotonFluence && ~this.isFieldBasedDoseCalc
-
-                    % Display console message.
-                    matRad_cfg.dispInfo('\tUniform primary photon fluence -> pre-compute kernel convolution...\n');
-
-                    % Get kernel interpolators
-                    interpKernels = this.getKernelInterpolators(F);
-                end
-
                 for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray! For field based dose calc, a ray equals a shape
 
                     counter = counter + 1;
                     this.bixelsPerBeam = this.bixelsPerBeam + 1;
-
-                    % convolution here if custom primary fluence OR field based dose calc
-                    if this.useCustomPrimaryPhotonFluence || this.isFieldBasedDoseCalc
-
-                        % overwrite field opening if necessary
-                        if this.isFieldBasedDoseCalc
-                            F = stf(i).ray(j).shape;
-                        end
-
-                        % prepare primary fluence array
-                        primaryFluence = this.machine.data.primaryFluence;
-                        r     = sqrt( (this.F_X-stf(i).ray(j).rayPos(1)).^2 + (this.F_Z-stf(i).ray(j).rayPos(3)).^2 );
-                        Psi   = interp1(primaryFluence(:,1)',primaryFluence(:,2)',r,'linear',0);
-
-                        % apply the primary fluence to the field
-                        Fx = F .* Psi;
-
-                        % convolve with the gaussian
-                        Fx = real( ifft2(fft2(Fx,this.gaussConvSize,this.gaussConvSize).* fft2(this.gaussFilter,this.gaussConvSize,this.gaussConvSize)) );
-
-                        % Get kernel interpolators
-                        interpKernels = this.getKernelInterpolators(Fx);
-
-                    end
 
                     % Display progress and update text only 200 times
                     if mod(this.bixelsPerBeam,max(1,round(stf(i).totalNumOfBixels/200))) == 0
@@ -202,27 +160,22 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
                     else
                         k = 1;
                     end
-
-                    % Ray tracing for beam i and bixel j
-                    [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = this.calcGeoDists(this.rot_coordsVdoseGrid, ...
-                        stf(i).sourcePoint_bev, ...
-                        stf(i).ray(j).targetPoint_bev, ...
-                        this.machine.meta.SAD, ...
-                        find(~isnan(this.radDepthVdoseGrid{1})), ...
-                        this.effectiveLateralCutOff);
+                    
+                    %Ray calculation
+                    currRay = this.computeRayGeometry(stf(i).ray(j),dij);                    
 
                     % empty bixels may happen during recalculation of error
                     % scenarios -> skip to next bixel
-                    if isempty(ix)
+                    if isempty(currRay.ix)
                         continue;
                     end
 
                     % calculate photon dose for beam i and bixel j
-                    bixelDose = this.calcBixel(interpKernels,ix,isoLatDistsX,isoLatDistsZ);
+                    bixelDose = this.calcBixel(currRay.interpKernels,currRay.ix,currRay.isoLatDistsX,currRay.isoLatDistsZ);
 
                     % sample dose only for bixel based dose calculation
                     if this.enableDijSampling && ~this.isFieldBasedDoseCalc
-                        [ix,bixelDose] = this.sampleDij(ix,bixelDose,this.radDepthVdoseGrid{1}(ix),rad_distancesSq,stf(i).bixelWidth);
+                        [ix,bixelDose] = this.sampleDij(currRay.ix,bixelDose,currRay.radDepths,currRay.radialDist_sq,stf(i).bixelWidth);
                     end
 
                     % Save dose for every bixel in cell array
@@ -231,22 +184,13 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
                     % save computation time and memory
                     % by sequentially filling the sparse matrix dose.dij from the cell array
                     if mod(counter,this.numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
-
                         if this.calcDoseDirect
-
                             dij = this.fillDijDirect(dij,stf,i,j,k);
-
                         else
-
                             dij = this.fillDij(dij,stf,counter);
-
                         end
-
                     end
-
                 end
-
-
             end
 
             %Close Waitbar
@@ -343,7 +287,19 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             % define an effective lateral cutoff where dose will be calculated. note
             % that storage within the influence matrix may be subject to sampling
             this.effectiveLateralCutOff = this.geometricLateralCutOff + this.fieldWidth/sqrt(2);
+            
 
+            % Check if we can precompute fluence and precompute kernel 
+            % convolution if we use a uniform fluence
+            if ~this.isFieldBasedDoseCalc
+                % Create fluence matrix
+                this.Fpre = ones(floor(this.fieldWidth/this.intConvResolution));
+
+                if ~this.useCustomPrimaryPhotonFluence
+                    % gaussian convolution of field to model penumbra
+                    this.Fpre = real(ifft2(fft2(this.Fpre,this.gaussConvSize,this.gaussConvSize).*fft2(this.gaussFilter,this.gaussConvSize,this.gaussConvSize)));
+                end
+            end
 
             %% Initialize randomization
             [env, ~] = matRad_getEnvironment();
@@ -396,6 +352,16 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             for k = 1:length(useKernels)
                 kernel = this.machine.data.kernel(currSSDix).(useKernels{k});
                 this.kernelMxs{k} = interp1(kernelPos,kernel,sqrt(this.kernelX.^2+this.kernelZ.^2),'linear',0);
+            end
+
+            % convolution here if no custom primary fluence and no field based dose calc
+            if ~isempty(this.Fpre) && ~this.useCustomPrimaryPhotonFluence && ~this.isFieldBasedDoseCalc
+
+                % Display console message.
+                matRad_cfg.dispInfo('\tUniform primary photon fluence -> pre-compute kernel convolution...\n');
+
+                % Get kernel interpolators
+                this.interpKernelCache = this.getKernelInterpolators(this.Fpre);
             end
         end
 
@@ -623,6 +589,37 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             end
 
         end
+    
+        function [ray] = computeRayGeometry(this,ray,dij)
+
+            ray = computeRayGeometry@DoseEngines.matRad_PencilBeamEngineAbstract(this,ray,dij);
+
+            % convolution here if custom primary fluence OR field based dose calc
+            if this.useCustomPrimaryPhotonFluence || this.isFieldBasedDoseCalc
+
+                % overwrite field opening if necessary
+                if this.isFieldBasedDoseCalc
+                    F = ray.shape;
+                end
+
+                % prepare primary fluence array
+                primaryFluence = this.machine.data.primaryFluence;
+                r     = sqrt( (this.F_X-stf(i).ray(j).rayPos(1)).^2 + (this.F_Z-stf(i).ray(j).rayPos(3)).^2 );
+                Psi   = interp1(primaryFluence(:,1)',primaryFluence(:,2)',r,'linear',0);
+
+                % apply the primary fluence to the field
+                Fx = F .* Psi;
+
+                % convolve with the gaussian
+                Fx = real( ifft2(fft2(Fx,this.gaussConvSize,this.gaussConvSize).* fft2(this.gaussFilter,this.gaussConvSize,this.gaussConvSize)) );
+
+                % Get kernel interpolators
+                ray.interpKernels = this.getKernelInterpolators(Fx);
+
+            else
+                ray.interpKernels = this.interpKernelCache;
+            end
+        end    
     end
 
     methods (Static)

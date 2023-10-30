@@ -231,8 +231,26 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             radDepthVdoseGrid{ctScenNum}  = coarseRadDepthCube(Vcoarse);
         end
         
-        function ray = computeRayGeoemetry(this,ray,dij)
-            error('Abstract Function. Needs to be implemented!');
+        function ray = computeRayGeometry(this,ray,dij)
+            if ~isfield(ray,'sourcePoint_bev')
+                ray.sourcePoint_bev = ray.targetPoint_bev + 2*(ray.rayPos_bev - ray.targetPoint_bev);
+            end
+
+            lateralRayCutOff = this.getLateralDistanceFromDoseCutOffOnRay(ray);
+            
+            % Ray tracing for beam i and ray j
+            [ray.ix,ray.radialDist_sq,ray.isoLatDistsX,ray.isoLatDistsZ,ray.latDistsX,ray.latDistsZ] = this.calcGeoDists(this.rot_coordsVdoseGrid, ...
+                ray.sourcePoint_bev, ...
+                ray.targetPoint_bev, ...
+                this.machine.meta.SAD, ...
+                find(~isnan(this.radDepthVdoseGrid{1})), ...
+                lateralRayCutOff);
+
+            ray.radDepths = this.radDepthVdoseGrid{1}(ray.ix);
+        end
+        
+        function lateralRayCutOff = getLateralDistanceFromDoseCutOffOnRay(this,ray)
+            lateralRayCutOff = this.effectiveLateralCutOff;
         end
 
         function indices = applyDoseCutOff(this)
@@ -339,13 +357,6 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
             % return radial distances squared
             rad_distancesSq = rad_distancesSq(subsetMask);
-
-            % return x & z distance
-            % if nargout > 2
-            %    isoLatDistsX = latDistsX(subsetMask)./rot_coords_temp(subsetMask,2)*SAD;
-            %    isoLatDistsZ = latDistsZ(subsetMask)./rot_coords_temp(subsetMask,2)*SAD;
-            % end
-
 
             % latDists
             if nargout > 4
