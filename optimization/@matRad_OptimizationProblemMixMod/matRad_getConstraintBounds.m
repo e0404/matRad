@@ -63,14 +63,20 @@ for  i = 1:size(cst,1)
                     [clTmp,cuTmp] = matRad_getConstBounds(cst{i,6}(j),param);
 %}
             %if ~isempty(strfind(cst{i,6}{j}.type,'constraint'))
+
+
             if isa(optiFunc,'DoseConstraints.matRad_DoseConstraint')
                 
                 if isEffectBP
-                   
+                    doseParameter = optiFunc.getDoseParameters();
+                    optiFunc = optiFunc.setDoseParameters(doseParameter./optiProb.nFractions);
+
                     doses  = optiFunc.getDoseParameters();
                     effect = cst{i,5}.alphaX*doses + cst{i,5}.betaX*doses.^2;
                     
                     optiFunc = optiFunc.setDoseParameters(effect);
+                    doseParameters = optiFunc.getDoseParameters();
+                    optiFunc = optiFunc.setDoseParameters(doseParameters*optiProb.nFractions);
                 end
                    
                  cl = [cl;optiFunc.lowerBounds(numel(cst{i,4}{1}))];
@@ -78,7 +84,7 @@ for  i = 1:size(cst,1)
                     
                 %end
             end
-
+            
         end % over all objectives of structure
 
     end % if structure not empty and target or oar

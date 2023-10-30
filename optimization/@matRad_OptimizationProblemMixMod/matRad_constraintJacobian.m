@@ -76,7 +76,13 @@ for i = 1:size(cst,1)
             robustness = constraint.robustness;
             
             % rescale dose parameters to biological optimization quantity if required
+            doseParameter = constraint.getDoseParameters();
+            constraint = constraint.setDoseParameters(doseParameter./dij.totalNumOfFractions);
+
             constraint = optiProb.BP.setBiologicalDosePrescriptions(constraint,cst{i,5}.alphaX,cst{i,5}.betaX);
+            
+            doseParameter = constraint.getDoseParameters();
+            constraint = constraint.setDoseParameters(doseParameter.*dij.totalNumOfFractions); 
             
             switch robustness
                
