@@ -1703,7 +1703,7 @@ classdef matRad_TopasConfig < handle
                         fprintf(fileID,'%i ',[1:leafTimes]*10);
                         fprintf(fileID,' ms\n');
                         fprintf(fileID,'dv:Tf/LeafXMinus%i/Values = %i ', i,leafTimes);
-                        fprintf(fileID,'%f ', [0,0,0]);
+                        fprintf(fileID,'%f ', zeros(size([1:leafTimes])));
                         fprintf(fileID,' mm\n\n');
 
                         fprintf(fileID,'s:Tf/LeafXPlus%i/Function  = "Step"\n',i);
@@ -1711,7 +1711,7 @@ classdef matRad_TopasConfig < handle
                         fprintf(fileID,'%i ',[1:leafTimes]*10);
                         fprintf(fileID,' ms\n');
                         fprintf(fileID,'dv:Tf/LeafXPlus%i/Values = %i ', i,leafTimes);
-                        fprintf(fileID,'%f ',[0,0,0]);
+                        fprintf(fileID,'%f ', zeros(size([1:leafTimes])));
                         fprintf(fileID,' mm\n\n');
                     end
 
