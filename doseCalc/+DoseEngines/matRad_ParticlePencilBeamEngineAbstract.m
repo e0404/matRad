@@ -140,13 +140,8 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
         end
 
         function dij = allocateBioDoseContainer(this,dij)
-            % allocate space for container used in bio optimization           
-            this.alphaDoseTmpContainer = cell(this.numOfBixelsContainer,dij.numOfScenarios);
-            this.betaDoseTmpContainer  = cell(this.numOfBixelsContainer,dij.numOfScenarios);
-            for i = 1:dij.numOfScenarios
-                dij.mAlphaDose{i}    = spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,1);
-                dij.mSqrtBetaDose{i} = spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,1);
-            end
+            % allocate space for container used in bio optimization
+            dij = this.allocateQuantityMatrixContainers(dij,{'mAlphaDose','mSqrtBetaDose'});
         end
 
         function dij = allocateLETContainer(this,dij)
@@ -155,86 +150,11 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             % get MatLab Config instance for displaying warings
             matRad_cfg = MatRad_Config.instance();
             if isfield(this.machine.data,'LET')
-                this.letDoseTmpContainer = cell(this.numOfBixelsContainer,dij.numOfScenarios);
-                % Allocate space for dij.dosexLET sparse matrix
-                for i = 1:dij.numOfScenarios
-                    dij.mLETDose{i} = spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,1);
-                end
+                dij = this.allocateQuantityMatrixContainers(dij,{'mLETDose'});         
             else
                 matRad_cfg.dispWarning('LET not available in the machine data. LET will not be calculated.');
             end
 
-        end
-
-        function dij = fillDij(this,dij,stf,counter)
-            % Sequentially fill the sparse matrix dij from the tmpContainer cell array
-            %
-            % call
-            %   dij = fillDij(this,dij,stf,pln,counter)
-            %
-            % input
-            %   dij:            matRad dij struct
-            %   stf:            matRad steering information struct
-            %   pln:            matRad plan meta information struct
-            %   cst:            counter for indexing current beam, ray and bixel
-            %
-            % output
-            %   dij:            filled dij struct now holding the pre calculated
-            %                   dose influence data
-            %
-            %   see also fillDijDirect
-
-            if ~this.calcDoseDirect
-
-                dij.physicalDose{1}(:,(ceil(counter/this.numOfBixelsContainer)-1)*this.numOfBixelsContainer+1:counter) = [this.doseTmpContainer{1:mod(counter-1,this.numOfBixelsContainer)+1,1}];
-
-                if isfield(dij,'mLETDose')
-                    dij.mLETDose{1}(:,(ceil(counter/this.numOfBixelsContainer)-1)*this.numOfBixelsContainer+1:counter) = [this.letDoseTmpContainer{1:mod(counter-1,this.numOfBixelsContainer)+1,1}];
-                end
-
-                if this.calcBioDose
-
-                    dij.mAlphaDose{1}(:,(ceil(counter/this.numOfBixelsContainer)-1)*this.numOfBixelsContainer+1:counter) = [this.alphaDoseTmpContainer{1:mod(counter-1,this.numOfBixelsContainer)+1,1}];
-                    dij.mSqrtBetaDose{1}(:,(ceil(counter/this.numOfBixelsContainer)-1)*this.numOfBixelsContainer+1:counter) = [this.betaDoseTmpContainer{1:mod(counter-1,this.numOfBixelsContainer)+1,1}];
-                end
-            else
-                matRad_cfg = MatRad_Config.instance();
-                matRad_cfg.dispError([dbstack(1).name ' is not intended for direct dose calculation. For filling the dij inside a direct dose calculation please refer to this.fillDijDirect.']);
-            end
-
-        end
-
-        function dij = fillDijDirect(this,dij,stf,currBeamIdx,currRayIdx,currBixelIdx)
-            % fillDijDirect - sequentially fill dij, meant for direct calculation only
-            %   Fill the sparse matrix physicalDose inside dij with the
-            %   indices given by the direct dose calculation
-            %
-            %   see also fillDij.
-            if this.calcDoseDirect
-                if isfield(stf(1).ray(1),'weight') && numel(stf(currBeamIdx).ray(currRayIdx).weight) >= currBixelIdx
-
-                    % score physical dose
-                    dij.physicalDose{1}(:,currBeamIdx) = dij.physicalDose{1}(:,currBeamIdx) + stf(currBeamIdx).ray(currRayIdx).weight(currBixelIdx) * this.doseTmpContainer{1,1};
-
-                    % write property for mLETDose
-                    if isfield(dij,'mLETDose')
-                        dij.mLETDose{1}(:,currBeamIdx) = dij.mLETDose{1}(:,currBeamIdx) + stf(currBeamIdx).ray(currRayIdx).weight(currBixelIdx) * this.letDoseTmpContainer{1,1};
-                    end
-
-                    if this.calcBioDose
-                        % score alpha and beta matrices
-                        dij.mAlphaDose{1}(:,currBeamIdx)    = dij.mAlphaDose{1}(:,currBeamIdx) + stf(currBeamIdx).ray(currRayIdx).weight(currBixelIdx) * this.alphaDoseTmpContainer{1,1};
-                        dij.mSqrtBetaDose{1}(:,currBeamIdx) = dij.mSqrtBetaDose{1}(:,currBeamIdx) + stf(currBeamIdx).ray(currRayIdx).weight(currBixelIdx) * this.betaDoseTmpContainer{1,1};
-
-                    end
-                else
-                    matRad_cfg = MatRad_Config.instance();
-                    matRad_cfg.dispError(['No weight available for beam ' num2str(currBeamIdx) ', ray ' num2str(currRayIdx) ', bixel ' num2str(currBixelIdx)]);
-                end
-            else
-                matRad_cfg = MatRad_Config.instance();
-                matRad_cfg.dispError([dbstack(1).name 'not available for not direct dose calculation. Refer to this.fillDij() for a not direct dose calculation.']);
-            end
         end
 
         function dose = calcParticleDoseBixel(~, radDepths, radialDist_sq, sigmaIni_sq, baseData)

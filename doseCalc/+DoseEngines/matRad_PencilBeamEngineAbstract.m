@@ -34,7 +34,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
     end
 
     properties (SetAccess = protected, GetAccess = public)
-        doseTmpContainer;       % temporary container for dose calculation results
+        tmpMatrixContainers;    % temporary containers for 
 
         bixelsPerBeam;          % number of bixel per energy beam
 
@@ -72,24 +72,9 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
     % with OCTAVE we can't use abstract methods. If OCTAVE at some point
     % in the far future implements this feature this should be abstract again.
     methods (Access = protected) %Abstract
-
-
-        function dij = fillDij(this,dij,stf,counter)
-            % method for filling the dij struct with the computed dose cube
-            % last step in dose calculation
-            % Needs to be implemented in non abstract subclasses.
-            error('Funktion needs to be implemented!');
+        function indices = applyDoseCutOff(this)
+            error('Abstract Function. Needs to be implemented!');
         end
-
-
-        function dij = fillDijDirect(this,dij,stf,currBeamIdx,currRayIdx,currBixelIdx)
-            % method for filling the dij struct, when using a direct dose
-            % calcultion
-            % Needs to be implemented in non abstract subclasses,
-            % when direct calc shoulb be utilizable.
-            error('Funktion needs to be implemented!');
-        end
-
     end
 
     methods (Access = protected)
@@ -129,8 +114,18 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             % compute SSDs
             stf = matRad_computeSSD(stf,ct,'densityThreshold',this.ssdDensityThreshold);
 
-            % Allocate memory for dose_temp cell array
-            this.doseTmpContainer     = cell(this.numOfBixelsContainer,dij.numOfScenarios);
+            % Allocate memory for quantity containers
+            dij = this.allocateQuantityMatrixContainers(dij,{'physicalDose'});            
+        end
+
+        function dij = allocateQuantityMatrixContainers(this,dij,names)
+            for n = 1:numel(names)
+                this.tmpMatrixContainers.(names{n}) = cell(this.numOfBixelsContainer,dij.numOfScenarios);
+                for i = 1:dij.numOfScenarios
+                    dij.(names{n}){i} = spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,1);
+                end
+            end
+
         end
 
         function dij = calcDoseInitBeam(this,dij,ct,cst,stf,i)
@@ -253,10 +248,44 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             lateralRayCutOff = this.effectiveLateralCutOff;
         end
 
-        function indices = applyDoseCutOff(this)
-            error('Abstract Function. Needs to be implemented!');
+        function dij = fillDij(this,dij,stf,currBeamIdx,currRayIdx,currBixelIdx,counter)
+            % method for filling the dij struct with the computed dose cube
+            % last step in dose calculation
+            % Needs to be implemented in non abstract subclasses.
+            
+            if mod(counter,this.numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
+                if ~this.calcDoseDirect
+                    if nargin < 7
+                        matRad_cfg = MatRad_Config.instance();
+                        matRad_cfg.dispError('Total bixel counter not provided in fillDij');
+                    end
+    
+                    dijColIx = (ceil(counter/this.numOfBixelsContainer)-1)*this.numOfBixelsContainer+1:counter;
+                    containerIx = 1:mod(counter-1,this.numOfBixelsContainer)+1;
+                    weight = 1;
+                else
+                    dijColIx = currBeamIdx;
+                    containerIx = 1;
+                    if isfield(stf(1).ray(1),'weight') && numel(stf(currBeamIdx).ray(currRayIdx).weight) >= currBixelIdx
+                        weight = stf(currBeamIdx).ray(currRayIdx).weight(currBixelIdx);
+                    else
+                        matRad_cfg = MatRad_Config.instance();
+                        matRad_cfg.dispError('No weight available for beam %d, ray %d, bixel %d',currBeamIdx,currRayIdx,currBixelIdx);
+                    end
+                end
+                
+                % Iterate through all quantities
+                names = fieldnames(this.tmpMatrixContainers);
+                for q = 1:numel(names)
+                    qName = names{q};
+                    if ~this.calcDoseDirect
+                        dij.(qName){1}(:,dijColIx) = [this.tmpMatrixContainers.(qName){containerIx,1}];
+                    else
+                        dij.(qName){1}(:,dijColIx) = dij.(qName){1}(:,dijColIx) + weight * this.tmpMatrixContainers.(qName){containerIx,1};
+                    end
+                end
+            end
         end
-
     end
 
     methods (Static)

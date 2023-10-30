@@ -256,9 +256,10 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
                                 end
                             end
 
-                            this.doseTmpContainer{mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(this.VdoseGrid(currRay.ix),1,totalDose,dij.doseGrid.numOfVoxels,1);
+                            this.tmpMatrixContainers.physicalDose{mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(this.VdoseGrid(currRay.ix),1,totalDose,dij.doseGrid.numOfVoxels,1);
+
                             if isfield(dij,'mLETDose')
-                                this.letDoseTmpContainer{mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(this.VdoseGrid(currRay.ix),1,totalDose.*totalLET,dij.doseGrid.numOfVoxels,1);
+                                this.tmpMatrixContainers.mLETDose{mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(this.VdoseGrid(currRay.ix),1,totalDose.*totalLET,dij.doseGrid.numOfVoxels,1);
                             end
                             
 
@@ -269,26 +270,16 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
                                     currRay.vTissueIndex_j(currIx,:),...
                                     this.machine.data(energyIx));
 
-                                this.alphaDoseTmpContainer{mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(this.VdoseGrid(currRay.ix),1,bixelAlpha.*bixelDose,dij.doseGrid.numOfVoxels,1);
-                                this.betaDoseTmpContainer{mod(counter-1,this.numOfBixelsContainer)+1,1}  = sparse(this.VdoseGrid(currRay.ix),1,sqrt(bixelBeta).*bixelDose,dij.doseGrid.numOfVoxels,1);
+                                this.tmpMatrixContainers.mAlphaDose{mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(this.VdoseGrid(currRay.ix),1,bixelAlpha.*bixelDose,dij.doseGrid.numOfVoxels,1);
+                                this.tmpMatrixContainers.mSqrtBetaDose{mod(counter-1,this.numOfBixelsContainer)+1,1}  = sparse(this.VdoseGrid(currRay.ix),1,sqrt(bixelBeta).*bixelDose,dij.doseGrid.numOfVoxels,1);
                             end
 
                             %  fill the dij struct each time a
                             %  bixelContainer is calculated and at the end
                             %  of the dose calculation
-                            if mod(counter,this.numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels                      
-                                if this.calcDoseDirect
-                                    dij = this.fillDijDirect(dij,stf,i,j,k);
-                                else
-                                    dij = this.fillDij(dij,stf,counter);
-                                end
-
-                            end
-
+                            dij = this.fillDij(dij,stf,i,j,k,counter);
                         end
-
                     end
-
                 end
             end
 

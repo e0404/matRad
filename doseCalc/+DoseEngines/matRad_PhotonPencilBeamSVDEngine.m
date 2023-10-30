@@ -179,17 +179,11 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
                     end
 
                     % Save dose for every bixel in cell array
-                    this.doseTmpContainer{mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(this.VdoseGrid(ix),1,bixelDose,dij.doseGrid.numOfVoxels,1);
+                    this.tmpMatrixContainers.physicalDose{mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(this.VdoseGrid(ix),1,bixelDose,dij.doseGrid.numOfVoxels,1);
 
                     % save computation time and memory
                     % by sequentially filling the sparse matrix dose.dij from the cell array
-                    if mod(counter,this.numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
-                        if this.calcDoseDirect
-                            dij = this.fillDijDirect(dij,stf,i,j,k);
-                        else
-                            dij = this.fillDij(dij,stf,counter);
-                        end
-                    end
+                    dij = this.fillDij(dij,stf,i,j,1,counter);
                 end
             end
 
@@ -364,42 +358,6 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
                 this.interpKernelCache = this.getKernelInterpolators(this.Fpre);
             end
         end
-
-
-        function dij = fillDij(this,dij,stf,counter)
-            % Sequentially fill the sparse matrix dij from the tmpContainer cell arra
-            %
-            %   see also fillDijDirect
-
-            if ~this.calcDoseDirect
-                dij.physicalDose{1}(:,(ceil(counter/this.numOfBixelsContainer)-1)*this.numOfBixelsContainer+1:counter) = [this.doseTmpContainer{1:mod(counter-1,this.numOfBixelsContainer)+1,1}];
-            else
-                error([dbstack(1).name ' is not intended for direct dose calculation. For filling the dij inside a direct dose calculation please refer to this.fillDijDirect.']);
-            end
-
-        end
-
-        function dij = fillDijDirect(this,dij,stf,currBeamIdx,currRayIdx,currBixelIdx)
-            % fillDijDirect - sequentially fill dij, meant for direct calculation only
-            %   Fill the sparse matrix physicalDose inside dij with the
-            %   indices given by the direct dose calculation
-            %
-            %   see also fillDij.
-            if this.calcDoseDirect
-                if isfield(stf(1).ray(1),'weight') && numel(stf(currBeamIdx).ray(currRayIdx).weight) >= currBixelIdx
-
-                    % score physical dose
-                    dij.physicalDose{1}(:,currBeamIdx) = dij.physicalDose{1}(:,currBeamIdx) + stf(currBeamIdx).ray(currRayIdx).weight(currBixelIdx) * this.doseTmpContainer{1,1};
-
-                else
-                    error(['No weight available for beam ' num2str(currBeamIdx) ', ray ' num2str(currRayIdx) ', bixel ' num2str(currBixelIdx)]);
-
-                end
-            else
-                error([dbstack(1).name 'not available for not direct dose calculation. Refer to this.fillDij() for a not direct dose calculation.'])
-            end
-        end
-
 
         function dose = calcBixel(this,interpKernels,voxelIx,isoLatDistsX,isoLatDistsZ)
             % matRad photon dose calculation for an individual bixel
