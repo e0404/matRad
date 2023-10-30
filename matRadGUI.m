@@ -94,12 +94,6 @@ end
 % End initialization code - DO NOT EDIT
 
 function handles = resetGUI(hObject, handles, varargin)
-% enable opengl software rendering to visualize linewidths properly
-if ispc
-  opengl software
-elseif ismac
-  % opengl is not supported
-end
 
 % Choose default command line output for matRadGUI
 handles.output = hObject;

@@ -1,4 +1,4 @@
-function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nHistories,calcDoseDirect)
+function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,calcDoseDirect)
 % matRad Monte Carlo particle dose calculation wrapper
 %   Will call the appropriate subfunction for the respective
 %   MC dose-calculation engine
@@ -35,35 +35,25 @@ function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nHistories,calcDoseDirec
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% Instance of MatRad_Config class
 matRad_cfg = MatRad_Config.instance();
 
-if nargin < 6
+if nargin < 5
     calcDoseDirect = false;
+    matRad_cfg.dispWarning('You have selected Monte Carlo dij calculation.');
 end
 
-if ~isfield(pln,'propMC') || ~isfield(pln.propMC,'proton_engine')
-    matRad_cfg.dispInfo('Using default proton MC engine "%s"\n',matRad_cfg.propMC.default_proton_engine);
-    engine = matRad_cfg.propMC.default_proton_engine;
-else
-    engine = pln.propMC.proton_engine;
-end
+% load appropriate config from pln or from class
+pln = matRad_cfg.getDefaultClass(pln,'propMC');
 
+% load default parameters in case they haven't been set yet
+pln = matRad_cfg.getDefaultProperties(pln,'propDoseCalc');
 
-if nargin < 5 
-    if ~calcDoseDirect
-        nHistories = matRad_cfg.propMC.particles_defaultHistories;
-        matRad_cfg.dispInfo('Using default number of Histories per bixel: %d\n',nHistories);
-    else
-        nHistories = matRad_cfg.propMC.direct_defaultHistories;
-        matRad_cfg.dispInfo('Using default number of Histories for forward dose calculation: %d\n',nHistories);
-    end
-end
-
-switch engine
+switch pln.propMC.engine
     case 'MCsquare'
-        dij = matRad_calcParticleDoseMCsquare(ct,stf,pln,cst,nHistories,calcDoseDirect);
+        dij = matRad_calcParticleDoseMCsquare(ct,stf,pln,cst,calcDoseDirect);
     case 'TOPAS'
-        dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,nHistories,calcDoseDirect);
+        dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,calcDoseDirect);
     otherwise
         matRad_cfg.dispError('MC engine %s not known/supported!',engine);
 end

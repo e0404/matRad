@@ -1,7 +1,20 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%% Expample script for baseData fitting to mcSquare simulation %%%%%%%
+%% Example: baseData fitting to mcSquare simulation
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2022 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
  %% 1) CT & CST creation
+clear
 matRad_rc
 
 ixOAR = 1;
@@ -45,14 +58,14 @@ yDim = 250;
 zDim = 250;
 
 cubeDim      = [xDim yDim zDim];
+ct.cubeDim = cubeDim;
+
 ct.cube{1} = ones(cubeDim) * 1;
 ct.cube{1}(1,1,1) = 0; 
 
 ct.resolution.x = 0.32;
 ct.resolution.y = 0.32;
 ct.resolution.z = 0.32;
-
-ct.cubeDim = cubeDim;
 
 ct.numOfCtScen  = 1;
 
@@ -67,38 +80,55 @@ ct.cubeHU{1}(1,1,1) = -1000;
 ct.hlut = [1,0;0,-1024];
 
 % create body of full phantom size
-mask = ones(ct.cubeDim);
-cst{1,4}{1} = find(mask == 1);
+body = ones(ct.cubeDim);
+cst{1,4}{1} = find(body == 1);
 
-%create target
+% create target
 centerP_corr = iso;
 height_corr = 10;
 width_corr = 10;
 depth_corr = 10;
 
-
-mask = zeros(ct.cubeDim);
-
+target = zeros(ct.cubeDim);
 for i=-height_corr/2+1:height_corr/2
     for j=-width_corr/2:width_corr/2
         for k=-depth_corr/2:depth_corr/2
-            mask(centerP_corr(1)+i,centerP_corr(2)+j,centerP_corr(3)+k) = 1;
+            target(centerP_corr(1)+i,centerP_corr(2)+j,centerP_corr(3)+k) = 1;
         end
     end
 end
-cst{2,4}{1} = find(mask == 1);
+cst{2,4}{1} = find(target == 1);
 
 disp('CT creation done!');
-clearvars -except ct cst
+clearvars -except ct cst matRad_cfg
 
 
- %% 2) MCsquare computation and baseData fitting
+%% 2) MCsquare computation and baseData fitting
 
 % meta information for treatment plan
-pln.radiationMode   = 'protons';     % either photons / protons / carbon
-pln.machine         = 'matRadBDLold';
+pln.radiationMode   = 'protons'; 
 
-pln.numOfFractions  = 30;
+% create meta machine data
+machine.meta.machine = 'example'; %name of the machine
+machine.meta.radiationMode = 'protons'; %modality
+machine.meta.dataType = 'singleGauss'; %singleGauss or doubleGauss
+machine.meta.created_on = date;
+machine.meta.created_by = 'matRad_example';
+machine.meta.SAD = (2218 + 1839) / 2; %This is the (virtual) source to axis distance
+machine.meta.BAMStoIsoDist = 420.0; %distance from beam nozzle ot isocenter
+machine.meta.LUT_bxWidthminFWHM = [0, Inf; 5 ,5]; %Specifies which minimum FWHM to use as spot sice for which ranges of lateral spot distance (here, each spot distance of 0 to to Inf gets at least 5mm wide spots
+machine.meta.fitAirOffset = 420.0; %Tells matRad how much "air" was considered during fitting. Set this to 0 if the fit is obtained in vacuum and no air transport is simulated up to the phantom. matRad assumes that the phantom starts at the isocenter.
+
+% Now add the example machine to the pln and then save it
+pln.machine = machine.meta.machine;
+pln.radiationMode = machine.meta.radiationMode;
+fileName = [pln.radiationMode '_' pln.machine];
+filePath = fullfile(matRad_cfg.matRadRoot,'basedata',[fileName '.mat']);
+
+matRad_cfg.dispInfo('Saving temporary machine %s to %s\n',fileName,filePath);
+save(filePath,'machine','-v7');
+clear machine; 
+
  
 % beam geometry settings
 pln.propStf.bixelWidth      = 50; % [mm] / also corresponds to lateral spot spacing for particles
@@ -124,26 +154,45 @@ pln.propOpt.bioOptimization = 'none'; % none: physical optimization;            
 pln.propOpt.runDAO          = false;  % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 
+% retrieve scenarios for dose calculation and optimziation
+pln.multScen = matRad_multScen(ct,'nomScen');
+
+
+quantityOpt   = 'physicalDose';            % either  physicalDose / effect / RBExD
+modelName     = 'none';         % none: for photons, protons, carbon                                    constRBE: constant RBE model
+                                    % MCN: McNamara-variable RBE model for protons                          WED: Wedenberg-variable RBE model for protons 
+                                    % LEM: Local Effect Model for carbon ions
+% retrieve bio model parameters
+pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
+
+
 %% generate steering file
-stf = matRad_generateStf(ct,cst,pln);
- 
-%read MC phase space data
-dataMC = readtable('BDL_matrad.txt');             
-dataMC = dataMC{11:end,:};
-tmp = [];
-for i = 1:size(dataMC,1)    
-    tmp = [tmp; strsplit(dataMC{i})];
-end
-energyMC    = str2double(tmp(:,1));
-spotMC      = (str2double(tmp(:,6)) + str2double(tmp(:,9)))  / 2;
-divMC       = (str2double(tmp(:,7)) + str2double(tmp(:,10))) / 2;
-corMC       = (str2double(tmp(:,8)) + str2double(tmp(:,11))) / 2;
-  
+stf = matRad_generateStfSinglePencilBeam(ct,cst,pln);
+
+% Select existing BDL file to load and fit
+pln.loadExistingBDL = 'BDL_matRad.txt';
+
+% read MC phase space data
+dataMC = importdata(pln.loadExistingBDL, ' ', 16);       
+energyMC = dataMC.data(:, 1);
+spotMC   = (dataMC.data(:, 6) + dataMC.data(:, 9)) / 2;
+divMC    = (dataMC.data(:, 7) + dataMC.data(:,10)) / 2;
+corMC    = (dataMC.data(:, 8) + dataMC.data(:,11)) / 2;
+
+%% Run Base Data Fitting
+
 % define energy range
 minEnergy = 70;
 maxEnergy = 225;
-nEnergy   = 88;  
+nEnergy   = 75;
 
+% Number of histories for the MC simulation
+pln.propMC.numHistories = 1e5;
+
+% We create a figure to display the fit
+hf = figure();
+
+% Here we loop over all energies we want to fit
 count = 1;
 for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
     
@@ -159,28 +208,19 @@ for currentEnergy = linspace(minEnergy, maxEnergy, nEnergy)
     mcData.z = z;
     spotIso = sqrt(spotNozzle^2 + 2 * (corNozzle*spotNozzle + divNozzle * z) * divNozzle * z - divNozzle^2*z^2);
     
-    %assign energy to stf and run MC simulation
+    % assign energy to stf and run MC simulation
     stf.ray.energy = currentEnergy;
     
     %% needs to use correct BDL file in calcParticleDoseMC
-    resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,ones(sum(stf(:).totalNumOfBixels),1),1000000);          
+    resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,1);          
     
     machine.data(count) = matRad_fitBaseData(resultGUI.physicalDose, ct.resolution, currentEnergy, mcData);
-
-    disp(['baseData Progress :', ' ', num2str(round(count/nEnergy*100)), '%']);
+    
+    matRad_plotParticleBaseDataEntry(machine,count,hf);
     count = count + 1;
 end
 
-% save data in machine
-machine.meta.radiationMode = 'protons';
-machine.meta.dataType = 'singleGauss';
-machine.meta.created_on = date;
-machine.meta.created_by = 'Paul Anton Meder';
-machine.meta.SAD = (2218 + 1839) / 2;
-machine.meta.BAMStoIsoDist = 420.0;
-machine.meta.machine = 'Generic';
-machine.meta.LUT_bxWidthminFWHM = [1, Inf; 8 ,8];
-machine.meta.fitAirOffset = 420.0;
-  
-% save machine
-save('protons_fitMachine.mat', 'machine');
+%% save final machine  
+matRad_cfg.dispInfo('Saving final machine %s to %s\n',fileName,filePath);
+save(filePath,'machine','-v7');
+clear machine; 

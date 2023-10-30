@@ -1,0 +1,5 @@
+# Hand-defined water
+sv:Ma/Water/Components = 2 "Hydrogen" "Oxygen"
+uv:Ma/Water/Fractions = 2 0.111894 0.888106
+d:Ma/Water/Density = 1.0 g/cm3
+d:Ma/Water/MeanExcitationEnergy = 78.0 eV
