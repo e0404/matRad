@@ -25,7 +25,8 @@ classdef (Abstract) matRad_DoseEngineBase < handle
     end
     
     properties (SetAccess = protected, GetAccess = public)
-        
+        timers;                 % timers of dose calc
+
         numOfBixelsContainer;   % number of used bixel container
         numOfColumnsDij;        % number of columns in the dij struct
                                           
@@ -192,7 +193,22 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         % Should be called at the beginning of calcDose method.
         % Can be expanded or changed by overwriting this method and calling
         % the superclass method inside of it
-        [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)         
+        [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)   
+        
+        % method for finalizing the dose calculation (e.g. postprocessing
+        % on dij or files
+        function dij = calcDoseFinalize(this,ct,cst,stf,dij)
+            
+            matRad_cfg = MatRad_Config.instance();
+            %Close Waitbar
+            if any(ishandle(this.hWaitbar))
+                delete(this.hWaitbar);
+            end
+
+            this.timers.full = toc(this.timers.full);
+            
+            matRad_cfg.dispInfo('Dose calculation finished in %g seconds!\n',this.timers.full);
+        end
     end
     
     % Should be abstract methods but in order to satisfy the compatibility

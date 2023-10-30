@@ -282,6 +282,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             matRad_cfg.dispInfo('matRad: done!\n');
 
             %% clear all data
+            %could also be moved to the "finalize" function
             delete([MCsquareConfig.CT_File(1:end-4) '.*']);
             delete('currBixels.txt');
             delete('MCsquareConfig.txt');
@@ -300,12 +301,8 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             % cd back
             cd(this.currFolder);
 
-            try
-                if ishandle(this.hWaitbar)
-                    delete(this.hWaitbar);
-                end
-            catch
-            end
+            %Finalize dose calculation
+            dij = this.calcDoseFinalize(ct,cst,stf,dij);
 
         end
         

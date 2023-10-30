@@ -148,7 +148,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
                             floor(stf(i).totalNumOfBixels/max(1,round(stf(i).totalNumOfBixels/200))));
                     end
                     % update waitbar only 100 times
-                    if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(this.hWaitbar)
+                    if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && any(ishandle(this.hWaitbar))
                         waitbar(counter/dij.totalNumOfBixels,this.hWaitbar);
                     end
 
@@ -186,11 +186,9 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
                     dij = this.fillDij(dij,stf,i,j,1,counter);
                 end
             end
-
-            %Close Waitbar
-            if ishandle(this.hWaitbar)
-                delete(this.hWaitbar);
-            end
+            
+            %Finalize dose calculation
+            dij = this.calcDoseFinalize(ct,cst,stf,dij);
 
         end
 

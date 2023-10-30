@@ -94,11 +94,7 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             %
             % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
             matRad_cfg =  MatRad_Config.instance();
-
-            %start evaluation timer
-            tic
 
             %run calcDoseInit as usual
             [dij,ct,cst,stf] = this.calcDoseInit(ct,cst,stf);
@@ -146,16 +142,9 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 end
             end
 
-            matRad_cfg.dispInfo('matRad: MC photon dose calculation done!\n');
-            matRad_cfg.dispInfo(evalc('toc'));
-
-            if ishandle(this.hWaitbar)
-                delete(this.hWaitbar);
-            end
+            %Finalize dose calculation
+            dij = this.calcDoseFinalize(ct,cst,stf,dij);   
         end
-
-
-
     end
 
     methods (Access = protected)

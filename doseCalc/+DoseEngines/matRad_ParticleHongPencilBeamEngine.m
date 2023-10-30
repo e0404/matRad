@@ -102,7 +102,7 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
                             end
 
                             % update waitbar only 100 times if it is not closed
-                            if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && ishandle(this.hWaitbar)
+                            if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && any(ishandle(this.hWaitbar))
                                 waitbar(counter/dij.totalNumOfBixels,this.hWaitbar);
                             end
 
@@ -238,10 +238,8 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
                 end
             end
 
-            %Close Waitbar
-            if ishandle(this.hWaitbar)
-                delete(this.hWaitbar);
-            end
+            %Finalize dose calculation
+            dij = this.calcDoseFinalize(ct,cst,stf,dij);
         end
 
     end

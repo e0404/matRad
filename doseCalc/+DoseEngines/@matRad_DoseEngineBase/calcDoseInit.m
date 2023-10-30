@@ -31,19 +31,22 @@ function [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)
 
 matRad_cfg =  MatRad_Config.instance();
 
+this.timers.full = tic;
+
 if this.calcDoseDirect
     msg = sprintf('Forward dose calculation using  ''%s'' Dose Engine...',this.name);
 else
     msg = sprintf('Dose influence matrix calculation using  ''%s'' Dose Engine...',this.name);
 end
+matRad_cfg.dispInfo('%s\n',msg);
 
 % initialize waitbar
 % TODO: This should be managed from the user interface instead
-this.hWaitbar = waitbar(0,msg);
-% prevent closure of waitbar and show busy state
-set(this.hWaitbar,'pointer','watch');
-
-matRad_cfg.dispInfo('%s\n',msg);
+if ~matRad_cfg.disableGUI
+    this.hWaitbar = waitbar(0,msg);
+    % prevent closure of waitbar and show busy state
+    set(this.hWaitbar,'pointer','watch');
+end
 
 if numel(unique({stf(:).machine})) ~= 1 || numel(unique({stf(:).radiationMode})) ~= 1
     matRad_cfg.dispError('machine and radiation mode need to be unique within supplied stf!');
