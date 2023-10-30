@@ -68,6 +68,16 @@ end
 cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,  dij.ctGrid.y,  dij.ctGrid.z,...
     dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
 
+% Get rid of voxels that are not interesting for the optimization problem
+if ~isfield(pln.propOpt, 'clearUnusedVoxels')
+    pln.propOpt.clearUnusedVoxels = matRad_cfg.propOpt.defaultClearUnusedVoxels;
+end
+
+if pln.propOpt.clearUnusedVoxels
+    dij = matRad_clearUnusedVoxelsFromDij(cst, dij);
+end
+
+
 % find target indices and described dose(s) for weight vector
 % initialization
 V          = [];
@@ -201,6 +211,9 @@ end
 
 linIxDIJ = find(~cellfun(@isempty,dij.physicalDose(scen4D,:,:)))';
 
+%Only select the indexes of the nominal ct Scenarios
+linIxDIJ_nominalCT = find(~cellfun(@isempty,dij.physicalDose(scen4D,1,1)))';
+
 FLAG_CALC_PROB = false;
 FLAG_ROB_OPT   = false;
 
@@ -248,6 +261,7 @@ end
 %Give scenarios used for optimization
 backProjection.scenarios    = ixForOpt;
 backProjection.scenarioProb = pln.multScen.scenProb;
+backProjection.nominalCtScenarios = linIxDIJ_nominalCT;
 
 optiProb = matRad_OptimizationProblem(backProjection);
 optiProb.quantityOpt = pln.bioParam.quantityOpt;

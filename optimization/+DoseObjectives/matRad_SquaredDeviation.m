@@ -73,7 +73,7 @@ classdef matRad_SquaredDeviation < DoseObjectives.matRad_DoseObjective
             deviation = dose - obj.parameters{1};
             
             % calculate delta
-            fDoseGrad = 2/numel(dose) * deviation;
+            fDoseGrad = 2 * 1/numel(dose) * deviation;
         end
     end
     

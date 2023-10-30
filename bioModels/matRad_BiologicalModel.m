@@ -325,7 +325,7 @@ classdef matRad_BiologicalModel
         
         % setter functions
         function this = set.radiationMode(this,value)
-            if ischar(value) && sum(strcmp(value,{'photons','protons','helium','carbon'})) == 1
+            if ischar(value) && sum(strcmp(value,{'photons','protons','helium','carbon','MixMod'})) == 1
                 this.radiationMode = value;
             else
                 matRad_cfg = MatRad_Config.instance();

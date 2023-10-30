@@ -10,7 +10,7 @@ pln(1).radiationMode   = 'protons';           % either photons / protons / heliu
 pln(1).machine         = 'Generic';
 
 % beam geometry settings
-pln(1).propStf.bixelWidth      = 3; % [mm] / also corresponds to lateral spot spacing for particles
+pln(1).propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
 pln(1).propStf.gantryAngles    = [0]; % [?] ;
 pln(1).propStf.couchAngles     = zeros(numel(pln(1).propStf.gantryAngles),1); % [?] ; 
 pln(1).propStf.numOfBeams      = numel(pln(1).propStf.gantryAngles);
@@ -107,13 +107,13 @@ totalPlan = pln(1).numOfFractions.*proton_plan.(quantityOpt) + pln(2).numOfFract
 f = figure;
 subplot(1,3,1);
     imagesc(proton_plan.(quantityOpt)(:,:,slice));
-    matRad_plotVoiContourSlice(gca(f), cst,ct.cube, 1, 1,3,slice);
+    matRad_plotVoiContourSlice(gca(f), cst,ct, 1, 1,3,slice);
     title('Proton Plan');
 subplot(1,3,2);
     imagesc(photon_plan.(quantityOpt)(:,:,slice));
-    matRad_plotVoiContourSlice(gca(f), cst,ct.cube, 1, 1,3,slice);
+    matRad_plotVoiContourSlice(gca(f), cst,ct, 1, 1,3,slice);
     title('Photon Plan');
 subplot(1,3,3);
     imagesc(totalPlan(:,:,slice));
-    matRad_plotVoiContourSlice(gca(f), cst,ct.cube, 1, 1,3,slice);
+    matRad_plotVoiContourSlice(gca(f), cst,ct, 1, 1,3,slice);
     title('Total Plan');

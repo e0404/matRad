@@ -36,6 +36,10 @@ classdef MatRad_Config < handle
 
         %Disable GUI
         disableGUI = false;
+        devMode = false;
+        eduMode = false;
+        
+        gui;
     end
 
     properties (SetAccess = private)
@@ -60,6 +64,7 @@ classdef MatRad_Config < handle
             %  Therefore its constructor is private
             %  For instantiation, use the static MatRad_Config.instance();
             
+
             %Set Path
             obj.matRadRoot = fileparts(mfilename('fullpath'));
             addpath(genpath(obj.matRadRoot));
@@ -153,6 +158,7 @@ classdef MatRad_Config < handle
         function reset(obj)
             %Set all default properties for matRad's computations
             obj.setDefaultProperties();
+            obj.setDefaultGUIProperties();
         end
 
         function setDefaultProperties(obj)
@@ -163,8 +169,8 @@ classdef MatRad_Config < handle
             obj.propStf.defaultLongitudinalSpotSpacing = 2;
             obj.propStf.defaultAddMargin = true; %expand target for beamlet finding
 
-
-            obj.propDoseCalc.doseGrid.defaultResolution = struct('x',3,'y',3,'z',3); %[mm]
+            obj.propStf.defaultBixelWidth = 5;
+            obj.propDoseCalc.defaultResolution = struct('x',3,'y',3,'z',3); %[mm]
             obj.propDoseCalc.defaultLateralCutOff = 0.995; %[rel.]
             obj.propDoseCalc.defaultGeometricCutOff = 50; %[mm]
             obj.propDoseCalc.defaultKernelCutOff = Inf; %[mm]
@@ -174,6 +180,7 @@ classdef MatRad_Config < handle
             obj.propDoseCalc.defaultVoxelSubIx = []; %Allows specification of a subindex list for dose calculation, empty by default means automatic setting
             obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
             obj.propDoseCalc.defaultCalcLET = true; %calculate LETs for particles
+            obj.propDoseCalc.defaultSelectVoxelsInScenarios = 'all';
 
             obj.propDoseCalc.defaultAirOffsetCorrection = true;
 
@@ -182,7 +189,8 @@ classdef MatRad_Config < handle
             
             obj.propOpt.defaultRunDAO = 0;
             obj.propOpt.defaultRunSequencing = 0;
-
+            obj.propOpt.defaultClearUnusedVoxels = false;
+            
             obj.propMC.ompMC_defaultHistories = 1e6;
             obj.propMC.ompMC_defaultOutputVariance = false;
 
@@ -207,8 +215,12 @@ classdef MatRad_Config < handle
             obj.propDoseCalc.fineSampling.defaultCalcMode = 'standard';
 
             obj.disableGUI = false;
-
+            
             obj.defaults.samplingScenarios = 25;
+
+            obj.devMode = false;
+            obj.eduMode = false;
+
         end
 
         %%For testing
@@ -216,11 +228,15 @@ classdef MatRad_Config < handle
             %setDefaultPropertiesForTesting sets matRad's default
             %properties during testing to reduce computational load
 
+            obj.setDefaultProperties();
+
             obj.logLevel   = 3; %Omit output except errors
 
             obj.propStf.defaultLongitudinalSpotSpacing = 20;
             obj.propStf.defaultAddMargin = true; %expand target for beamlet finding
 
+            obj.propStf.defaultBixelWidth = 20;
+            
             obj.propDoseCalc.defaultResolution = struct('x',5,'y',6,'z',7); %[mm]
             obj.propDoseCalc.defaultGeometricCutOff = 20;
             obj.propDoseCalc.defaultLateralCutOff = 0.8;
@@ -231,6 +247,7 @@ classdef MatRad_Config < handle
             obj.propDoseCalc.defaultVoxelSubIx = []; %Allows specification of a subindex list for dose calculation, empty by default means automatic setting
             obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
             obj.propDoseCalc.defaultCalcLET = true; %calculate LET for particles
+            obj.propDoseCalc.defaultSelectVoxelsInScenarios = 'all';
 
             % default properties for fine sampling calculation
             obj.propDoseCalc.fineSamplingProperties.sigmaSub = 2;
@@ -238,6 +255,7 @@ classdef MatRad_Config < handle
             obj.propDoseCalc.fineSamplingProperties.method = 'russo';
 
             obj.propOpt.defaultMaxIter = 10;
+            obj.propOpt.defaultClearUnusedVoxels = false;
 
             obj.propMC.ompMC_defaultHistories = 100;
             obj.propMC.ompMC_defaultOutputVariance = true;
@@ -253,6 +271,52 @@ classdef MatRad_Config < handle
             obj.defaults.samplingScenarios = 2;
 
             obj.disableGUI = true;
+
+            obj.devMode = true;
+            obj.eduMode = false;
+        end  
+        
+        %%for edu mode
+        function setDefaultPropertiesForEduMode(obj)
+            
+            obj.setDefaultProperties();
+
+            obj.logLevel = 1;
+            
+            obj.propStf.defaultLongitudinalSpotSpacing = 3;
+            obj.propStf.defaultAddMargin = true; %expand target for beamlet finding
+            obj.propStf.defaultBixelWidth = 5;
+            
+            obj.propDoseCalc.defaultResolution = struct('x',4,'y',4,'z',4); %[mm]
+            obj.propDoseCalc.defaultLateralCutOff = 0.975; %[rel.]
+            obj.propDoseCalc.defaultGeometricCutOff = 50; %[mm]
+            obj.propDoseCalc.defaultSsdDensityThreshold = 0.05; %[rel.]
+            obj.propDoseCalc.defaultUseGivenEqDensityCube = false; %Use the given density cube ct.cube and omit conversion from cubeHU.
+            obj.propDoseCalc.defaultIgnoreOutsideDensities = true; %Ignore densities outside of cst contours
+            obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
+            
+            obj.propOpt.defaultMaxIter = 500;
+            
+            obj.propMC.ompMC_defaultHistories = 1e4;
+            obj.propMC.ompMC_defaultOutputVariance = false;
+            obj.propMC.MCsquare_defaultHistories = 1e4;
+            obj.propMC.direct_defaultHistories = 1e4;
+            
+            obj.disableGUI = false;
+            
+            obj.devMode = false;
+            obj.eduMode = true;
+
+        end
+
+        function setDefaultGUIProperties(obj)
+           obj.gui.backgroundColor = [0.5 0.5 0.5];
+           obj.gui.elementColor = [0.75 0.75 0.75];
+           obj.gui.textColor = [0 0 0];
+           
+           obj.gui.fontSize = 8;
+           obj.gui.fontWeight = 'bold';
+           obj.gui.fontName = 'Helvetica';
         end
 
         function dispDebug(obj,formatSpec,varargin)
