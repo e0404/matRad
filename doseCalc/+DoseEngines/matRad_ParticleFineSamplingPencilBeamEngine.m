@@ -107,16 +107,7 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
                             counter = counter + 1;
                             this.bixelsPerBeam = this.bixelsPerBeam + 1;
 
-                            % Display progress and update text only 200 times
-                            if mod(this.bixelsPerBeam,max(1,round(stf(i).totalNumOfBixels/200))) == 0
-                                    matRad_progress(this.bixelsPerBeam/max(1,round(stf(i).totalNumOfBixels/200)),...
-                                                    floor(stf(i).totalNumOfBixels/max(1,round(stf(i).totalNumOfBixels/200))));
-                            end
-
-                            % update waitbar only 100 times if it is not closed
-                            if mod(counter,round(dij.totalNumOfBixels/100)) == 0 && any(ishandle(this.hWaitbar))
-                                waitbar(counter/dij.totalNumOfBixels,this.hWaitbar);
-                            end
+                            this.progressUpdate(counter/dij.totalNumOfBixels);
 
                             % remember beam and bixel number
                             if ~this.calcDoseDirect

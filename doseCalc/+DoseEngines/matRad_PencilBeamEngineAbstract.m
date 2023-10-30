@@ -149,6 +149,9 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                 matRad_cfg.dispInfo('Beam %d of %d:\n',i,dij.numOfBeams);
             end
 
+            %Reinitialize Progress:
+            matRad_progress(1,1000);
+
             % remember beam and bixel number
             if this.calcDoseDirect
                 dij.beamNum(i)    = i;

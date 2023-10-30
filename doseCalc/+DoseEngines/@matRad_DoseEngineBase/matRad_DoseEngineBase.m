@@ -48,6 +48,10 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         calcDoseDirect = false; % switch for direct cube / dij calculation 
     end
     
+    properties (Access = protected)
+        lastProgressUpdate;
+    end
+    
     properties (Constant)
         isDoseEngine = true; % const boolean for checking inheritance
     end
@@ -208,6 +212,24 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             this.timers.full = toc(this.timers.full);
             
             matRad_cfg.dispInfo('Dose calculation finished in %g seconds!\n',this.timers.full);
+        end
+    
+        function progressUpdate(this,pos,total)
+            if cputime()-this.lastProgressUpdate < 1e-1
+                return;
+            end
+
+            if nargin < 3
+                pos = pos*1000;
+                total=1000;
+            end
+
+            matRad_progress(pos,total);
+            if any(ishandle(this.hWaitbar))
+                waitbar(pos/total,this.hWaitbar);
+            end
+            
+            this.lastProgressUpdate = cputime();
         end
     end
     
