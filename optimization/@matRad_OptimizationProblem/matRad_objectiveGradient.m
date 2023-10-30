@@ -78,16 +78,8 @@ for  i = 1:size(optiProb.objIdx,1)
                 ixContour = contourScen(s);
                 d_i = d{ixScen}(cst{curObjIdx,4}{ixContour});
                 %add to dose gradient
-                
-                if isfield(optiProb.normalizationScheme,'U') && isfield(optiProb.normalizationScheme,'L')
-                    Ui = optiProb.normalizationScheme.U(i);
-                    Li = optiProb.normalizationScheme.L(i);
-                else
-                    Ui = 1;
-                    Li = 0;
-                end
-                doseGradient{ixScen}(cst{curObjIdx,4}{ixContour}) = doseGradient{ixScen}(cst{curObjIdx,4}{ixContour}) + objective.penalty*1/(Ui-Li)*objective.computeDoseObjectiveGradient(d_i);
-            end
+                doseGradient{ixScen}(cst{curObjIdx,4}{ixContour}) = doseGradient{ixScen}(cst{curObjIdx,4}{ixContour}) + objective.penalty * optiProb.normalizeGradient(objective.computeDoseObjectiveGradient(d_i),i);
+             end
         case 'STOCH' % perform stochastic optimization with weighted / random scenarios
             for s = 1:numel(useScen)
                 ixScen = useScen(s);

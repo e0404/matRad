@@ -57,9 +57,9 @@ pln.propStf.bixelWidth     = 5;
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
-pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
-pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
-pln.propDoseCalc.doseGrid.resolution.z = 2.5; % [mm]
+pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]
+pln.propDoseCalc.doseGrid.resolution.y = 5; % [mm]
+pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
 
 %%
 % Enable sequencing and disable direct aperture optimization (DAO) for now.
@@ -107,11 +107,6 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 % penVal stores the Grid which is then passed on. penGrid contains an
 % version easier to visualize, however harder to loop over
 %%
-%objective function values are returned in order of ordering in VOI
-%returnStruct = matRad_paretoGenerationPGEN(dij,cst,pln,VOI);
-%
-
-%returnStruct = matRad_paretoGenerationPGEN(dij,cst,pln,VOI)
 
 cst{1,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,40));
 cst{3,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,45));
@@ -120,6 +115,7 @@ cst{3,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,45));
 cst{2,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(45,57));
 
 %%
+retStruct = matRad_ParetoOptimization(dij,cst,pln,30);
 %load('data503constr.mat')
 
 %%

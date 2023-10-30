@@ -35,7 +35,7 @@ function f = matRad_objectiveFunction(optiProb,w,dij,cst)
     %fIndv should be an mxn matrix where m is the number of objectives and n should be the number of scenarios used
 
     % normalization is so far only used for pareto optimization
-    switch optiProb.normalizationScheme.type
+    switch optiProb.normalizationScheme.scheme
         case 'UL' % f = (f-L)/(U-L)
             fIndv = optiProb.normalizeObjectives(fIndv')';%ISSUES IF COWC is used -
     end

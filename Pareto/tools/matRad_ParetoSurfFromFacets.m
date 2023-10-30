@@ -1,5 +1,6 @@
 function [k,facets] = matRad_ParetoSurfFromFacets(fVals)
-% matRad_ParetoSurfFromFacets allows to calculate the pareto surface 
+% matRad_ParetoSurfFromFacets allows to calculate the facets of the pareto surface
+% from its vertices. The facets are calculated by calculating the convex hull.
 %
 % call
 %   [k,facets] = matRad_ParetoSurfFromFacets(fVals)
@@ -12,8 +13,6 @@ function [k,facets] = matRad_ParetoSurfFromFacets(fVals)
 %   facets:         Matrix storing only the vertices that belong to the Pareto surface (The ones associated to facets with positive normals)
 %
 % References
-%
-% TODO: Add an example how to visualize the pareto surface in low dimensions
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -37,7 +36,6 @@ function [k,facets] = matRad_ParetoSurfFromFacets(fVals)
     %normal vector to be calculated
 
     %initializing some objects that are returned by the function
-    cs  = zeros(size(k,1),1);
     facets= zeros(size(k));
 
     j = 0;

@@ -33,26 +33,8 @@ function matRad_plotParetoSurface(retStruct)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%{
+
 fig2 = figure;
-switch size(fInd,2)
-    case 2
-        penGrid = [penGrid,zeros(size(penGrid,1),1)];
-        scatter(fInd(:,1),fInd(:,2),[],penGrid,'filled')
-        xlabel("x: " + VOIObj(1));
-        ylabel("y: " + VOIObj(2));
-        %set(gca,'Xscale','log')
-        %set(gca,'Yscale','log') 
-    case 3
-        scatter3(fInd(:,1),fInd(:,2),fInd(:,3),[], penGrid,'filled')
-        xlabel("x: " + VOIObj(1));
-        ylabel("y: " + VOIObj(2));
-        zlabel("z: " + VOIObj(3));
-    otherwise
-        warning(['Number of objectives for Pareto Analysis not suited for Plot!']);
-end
-%}
-figure;
 ps = retStruct.finds;
 [k,facets] = matRad_ParetoSurfFromFacets(ps);
 

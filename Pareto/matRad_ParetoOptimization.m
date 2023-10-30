@@ -296,8 +296,6 @@ switch pln.propOpt.optimizer
         optimizer = matRad_OptimizerIPOPT;
 end
 
-%check that number of penalties equals number of constraints
-
 
 % PARETO PART
 %get number of objectives at the start
@@ -305,14 +303,15 @@ objcount = numel(optiProb.objectives);
 
 %% generaete Anchor Points for optimization
 penGrid = matRad_generateAnchorPoints(objcount);
-%matRad_plotPenaltyGrid(penGrid);
 
+%initialize matrices for weight vectors and associated objective function values
 weights = zeros(numel(wInit),size(penGrid,1));
 fInd = zeros(size(penGrid,1),objcount);
 objectiveFunctionVals = {};
-% loop over all penalty combinations
+% loop over all anchor points
 
 for i = 1:size(penGrid,1)
+    
     optiProb.updatePenalties(penGrid(i,:));
     
     
@@ -320,6 +319,7 @@ for i = 1:size(penGrid,1)
     wOpt = optimizer.wResult;
     info = optimizer.resultInfo;
     weights(:,i) = wOpt;
+
     %set values for warm start
     %optimizer.optionsWarmStart.use      = true;
     %optimizer.optionsWarmStart.zl       = info.zl;
@@ -332,7 +332,7 @@ end
 
 
 
-%% try to normalize objectives
+%%normalize objectives
 
 optiProb.normalizationScheme.scheme = 'UL';
 optiProb.normalizationScheme.U = max(fInd,[],1);
@@ -341,44 +341,7 @@ optiProb.normalizationScheme.L = min(fInd,[],1);
 fInd = (fInd-optiProb.normalizationScheme.L)./(optiProb.normalizationScheme.U-optiProb.normalizationScheme.L);
 
 
-
-
-%{
-varToLoad = {'data'}
-load('dataRennen.mat',varToLoad{:})
-weights = data.weights;
-penGrid = data.penGrid(1:4,:);
-weights = weights(:,1:4);
-fInd = data.finds;
-fInd = fInd(1:4,:);
-%}
-
-%% Grouping
-%{
-if isfield(pln.propOpt,'grouping') %if no grouping ignore
-    
-    switch pln.propOpt.grouping
-        case 'forced' %grouping of objectives forced by user -> How to store groups? Pln para?
-            if isfield(pln.propOpt,'groups')
-                groups = pln.propOpt.groups; %?  
-            else
-                 matRad_cfg.dispError('pln.propOpt.grouping set to forced, but no groups provided!');
-            end
-        case 'Spearman' %grouping by correlation of spearman ranking
-                %tbd
-            'Spearman ranking: TO BE IMPLEMENTED'
-
-    end
-end
-%}
-%Do we have to reoptimize as fInd would change size? 
-%{
-objcount = numel(groups); %update 
-
-fInd = zeros(objcount);
-[pen,penGrid] = matRad_generateAnchorPoints(objcount);
-weights = zeros(numel(wInit),objcount);
-%}
+%% Maybe: Grouping based on correlation of objectives
 %% Generaete further points
 
 %initialize OPS boundaries
@@ -395,11 +358,9 @@ penGrid(np+1,:) = abs(firstNormal);
 newPen = abs(firstNormal);
 
 %update cst values
-
-
 optiProb.updatePenalties(newPen); % change for groupings!
 
-%calculate new point
+%calculate first new point
 
 optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
 wOpt = optimizer.wResult;
@@ -408,12 +369,10 @@ objectiveFunctionVals(end + 1) = {optimizer.allObjectiveFunctionValues};
 %wInit = wOpt;
 fIndv = matRad_objectiveFunctions(optiProb,wOpt,dij,cst)';
 fIndv = optiProb.normalizeObjectives(fIndv);
-%fIndv = cellfun(@(group)sum(fIndv(:,group)),groups)
-%grouping
 
-%change for groupings -> sum up over groups!
 fInd = [fInd;fIndv];
 
+%initialize some variables that might be used if points are removed later on (should only happen with too high stopping criteria)
 removedfInd = [];
 removedpenGrid = [];
 removedweights = [];
@@ -428,32 +387,28 @@ allErrors = {};
 
 initSize = size(penGrid,1);
 
-
+%calculating for distance measure
 L = min(fInd,[],1);
 U = max(fInd,[],1);
 eps = U - L;
 
-%% remaining facets
-%nIter = 100;
+%% calculate remaining facets
+
 for i = 1:nIter
     fprintf('Now in iteration %i',i)
     %Step 1 calculate convex Hull -> Inner approximation (IPS) and gives facets
     %Rennen Algorithm
     fVals = fInd;
-    
-    %calculate epsilon value (used in error calculation)
-
-
 
     fValsMod = matRad_generateDummyPoints(fVals,U); %generate dummy points
     %
     [kmod,vol] = convhulln(fValsMod);
-    [kred,vol] = convhulln(fVals);
+    %[kred,vol] = convhulln(fVals);
+
     %check for relevant facets (those that contain points of the original
     %fVals set)
     IPSidxs = 1:size(fVals,1);
     relFacetidxs = [];
-            
     for j = 1:size(kmod,1)
         if any(ismember(kmod(j,:),IPSidxs))
             relFacetidxs = [relFacetidxs,j];
@@ -462,15 +417,13 @@ for i = 1:nIter
     facetMods = kmod(relFacetidxs,:);
     facetErrors = zeros(size(facetMods,1),1);
     normals = zeros(size(facetMods));
-    
-    %% 
 
-    %Loop over facets ands 
+    %Loop over facets and calculate error
     for j = 1:size(relFacetidxs,2)
         [facetPoints,refPoint,normal] = matRad_normalFromFacet(fValsMod,facetMods,j);
 
         
-        %check for sign of normals (should be redundant)
+        %check for sign of normals (might be redundant)
         if all(normal<0)
             continue
         end
@@ -488,12 +441,6 @@ for i = 1:nIter
         facetErrors(j) = (b-z'*normal)/(eps*normal); 
         normals(j,:) = normal;
 
-        %{
-        figure
-        trisurf(kmod,fValsMod(:,1),fValsMod(:,2),fValsMod(:,3),'FaceColor','cyan')
-        hold on 
-        fill3(facetPoints(:,1),facetPoints(:,2),facetPoints(:,3),'green')
-        %}
     end
     allErrors(end+1) = {facetErrors};
     [A,I] = sort(facetErrors,'descend');
@@ -506,20 +453,22 @@ for i = 1:nIter
     while ~found && facetNum <= numel(I) %loop over facets
         idx = I(facetNum);
         norm = normals(idx,:);
+
         %check if facet has already been run
         if ~any(ismember(round(penGrid,accuracy),round(norm,accuracy),'rows'))
 
             %update weights in cst
-            
             optiProb.updatePenalties(norm);
             paretoOptimal = false;
             calcPointsForFacet = 0;
+
             while ~paretoOptimal && calcPointsForFacet < 4 %more than 4 points?
                 if calcPointsForFacet < 3
                     optimizer = optimizer.optimize(weights(:,end-calcPointsForFacet),optiProb,dij,cst);
                 else
                     optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
                 end
+
                 %really necessary?
                 if optimizer.resultInfo.iter < 15 %sometimes optimizer will terminate fast (points tend to be not optimal!)
                     calcPointsForFacet = calcPointsForFacet + 1;
@@ -541,7 +490,6 @@ for i = 1:nIter
                 % update penGrid, weights, fInd,OPSa,OPSb
 
                 if isempty(dominatedPoints)
-                    
                     paretoOptimal = true;   
                     
                 elseif dominatedPoints == 0
@@ -561,9 +509,7 @@ for i = 1:nIter
                     penGrid(dominatedPoints,:) = []; 
                     weights(:,dominatedPoints) = [];
                     %Issue if 
-                    if (dominatedPoints-objcount <=0)
-                      'Well well well'
-                    else
+                    if ~(dominatedPoints-objcount <=0)
                         removedOPSA = [removedOPSA;OPSA(dominatedPoints-objcount,:)];
                         removedOPSb = [removedOPSb;OPSb(dominatedPoints-objcount,:)];
                         OPSA(dominatedPoints-objcount,:) = []; % shifted index
@@ -585,22 +531,13 @@ for i = 1:nIter
             
             %fIndv = cellfun(@(group)sum(fIndv(:,group)),groups)
             fInd = [fInd;fIndv];
-            
-            %%  plot current convex hull and facet that was run            
-               
-            figure
-            trisurf(kmod,fValsMod(:,1),fValsMod(:,2),fValsMod(:,3),'FaceColor','cyan')
-            hold on
-            fill3(fValsMod(facetMods(idx,:),1),fValsMod(facetMods(idx,:),2),fValsMod(facetMods(idx,:),3),'r')
-
+                      
             found = true;
         end
         facetNum = facetNum +1;
     end    
 
-
     % when final point is found: Update OPSA and OPSb
-
     OPSA = [OPSA;-newPen]; %add normal vector of facet that was run 
     OPSb = [OPSb;-fIndv*newPen'];
 
@@ -610,7 +547,7 @@ end
 
 
 
-%returnStruct.VOIObj = VOIObjNames;
+%defining a structure that contains all relevant information
 returnStruct.OPSA = OPSA;
 returnStruct.OPSb = OPSb;
 returnStruct.weights = weights;
@@ -619,8 +556,7 @@ returnStruct.penGrid = penGrid;
 returnStruct.errors = errors;
 returnStruct.allErrors = allErrors;
 returnStruct.removed = {removedfInd,removedpenGrid,removedweights,removedOPSA,removedOPSb};
-% unblock mex files
-%}
+
 returnStruct.weights = weights;
 returnStruct.finds = fInd;
 returnStruct.penGrid = penGrid;
@@ -628,4 +564,6 @@ returnStruct.penGrid = penGrid;
 returnStruct.optiProb = optiProb;
 returnStruct.allObj = objectiveFunctionVals;
 returnStruct.modcst = cst;
+
+% unblock mex files
 clear mex

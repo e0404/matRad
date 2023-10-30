@@ -1,5 +1,6 @@
 classdef matRad_EUDMin < DoseObjectives.matRad_DoseObjective
-% matRad_EUD Implements a penalized equivalent uniform dose objective
+% matRad_EUD implements a penalized equivalent uniform dose objective
+% as given in the literature
 %   See matRad_DoseObjective for interface description
 %
 % References
@@ -19,7 +20,7 @@ classdef matRad_EUDMin < DoseObjectives.matRad_DoseObjective
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (Constant)
-        name = 'EUD';
+        name = 'EUD_{min}';
         parameterNames = {'EUD^{ref}', 'k'};
         parameterTypes = {'dose','numeric'};
     end

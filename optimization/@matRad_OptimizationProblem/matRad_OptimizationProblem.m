@@ -95,7 +95,7 @@ classdef matRad_OptimizationProblem < handle
         function normalizedfVals = normalizeObjectives(optiProb,fVals)
             %function to normalize objectives (used for sandwich
             %algorithms)
-            switch optiProb.normalizationScheme.type
+            switch optiProb.normalizationScheme.scheme
                 case 'none'
                     %default case no normalization
                     normalizedfVals = fVals;
@@ -108,10 +108,10 @@ classdef matRad_OptimizationProblem < handle
             end
         end
 
-        function normalizedGradient = normalizeGradients(optiProb,Gradient)
+        function normalizedGradient = normalizeGradient(optiProb,Gradient,i)
             %function to normalize objectives (used for sandwich
             %algorithms)
-            switch optiProb.normalizationScheme.type
+            switch optiProb.normalizationScheme.scheme
                 
                 case 'none'
                     %default case no normalization
@@ -119,7 +119,7 @@ classdef matRad_OptimizationProblem < handle
                 case 'UL'
                     %used to normalize with respect to min and max values
                     %maybe check that U and L are defined
-                    normalizedGradient = Gradient./(optiProb.normalizationScheme.U-optiProb.normalizationScheme.L); %might have to check that U and L work!
+                    normalizedGradient = Gradient./(optiProb.normalizationScheme.U(i)-optiProb.normalizationScheme.L(i)); %might have to check that U and L work!
                 otherwise
                     matRad_cfg.dispError('Normalization scheme not known!');
             end
