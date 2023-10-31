@@ -248,7 +248,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
         
         function this = getFromWorkspace(this)
             handles = this.handles;
-            
+            matRad_cfg = MatRad_Config.instance();
             % no data loaded, disable the buttons
             set(handles.txtInfo,'String','no data loaded');
             set(handles.btnCalcDose,'Enable','off');
@@ -273,30 +273,42 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     set(handles.btnCalcDose,'Enable','on');
                     set(handles.btn_export,'Enable','on');
                     set(handles.exportDicomButton,'Enable','on');
-                    
-                    if evalin('base','exist(''resultGUI'')')
-                        % plan is optimized
-                        % check if dij, stf and pln match                        
-                        if matRad_comparePlnDijStf(evalin('base','pln'),evalin('base','stf'),evalin('base','dij'))
-                            set(handles.txtInfo,'String','plan is optimized');
-                            set(handles.btnOptimize ,'Enable','on'); 
+
+                    % check if stf exists
+                    if evalin('base','exist(''stf'')') 
+                        % check if dij, stf and pln match
+                       [allMatch, msg] = matRad_comparePlnDijStf(evalin('base','pln'),evalin('base','stf'),[]);
+                        if allMatch
+                            % plan is ready for optimization
+                            set(handles.txtInfo,'String','ready for dose calculation');
+                            set(handles.btnOptimize ,'Enable','on');
+                        else 
+                            matRad_cfg.dispWarning(msg);
                         end
-                        
+                    end
+
+                    % check if dij exist
+                    if evalin('base','exist(''dij'')') 
+                        [allMatch, msg] = matRad_comparePlnDijStf(evalin('base','pln'),evalin('base','stf'),evalin('base','dij'));
+                        if allMatch
+                            set(handles.txtInfo,'String','ready for optimization');
+                            set(handles.btnOptimize ,'Enable','on'); 
+                        else 
+                            matRad_cfg.dispWarning(msg);
+                        end
+                   end
+
+                    % does resultGUI exist
+                    if evalin('base','exist(''resultGUI'')')
                         set(handles.pushbutton_recalc,'Enable','on');
                         set(handles.btnSaveToGUI,'Enable','on');
                         % resultGUI struct needs to be available to import dose
                         % otherwise inconsistent states can be achieved
                         set(handles.importDoseButton,'Enable','on');
-                        
-                    elseif evalin('base','exist(''dij'')') &&  evalin('base','exist(''stf'')')
-                        % check if dij, stf and pln match
-                        if matRad_comparePlnDijStf(evalin('base','pln'),evalin('base','stf'),evalin('base','dij'))
-                            % plan is ready for optimization
-                            set(handles.txtInfo,'String','ready for optimization');
-                            set(handles.btnOptimize ,'Enable','on');
-                        end
                     end
                 end
+            else
+                matRad_cfg.dispWarning('could not load ct/cst ');
             end
             this.handles=handles;
         end

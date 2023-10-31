@@ -29,12 +29,29 @@ function [allMatch, msg] = matRad_comparePlnDijStf(pln,stf,dij)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 allMatch=true;
+msg = [];
+if ~isempty(dij)
+    %% compare number of rays per beam in dij and stf
+    stf_RaysPerBeam=[stf.numOfRays];
+    if numel(stf_RaysPerBeam) ~= numel(dij.numOfRaysPerBeam) ... % different size
+            || ~isempty(find(stf_RaysPerBeam-dij.numOfRaysPerBeam,1)) % different values
+        msg= 'Number of rays do not match';
+        allMatch=false;
+        return
+    end
+    stf_gantryAngles=[stf.gantryAngle];
+    if dij.numOfBeams ~= numel(stf_gantryAngles) ...
+            || dij.numOfBeams ~= numel(pln.propStf.gantryAngles) % different size
+         msg= 'Number of beams do not match';
+         allMatch=false;
+        return
+    end
+end
 
-
-%% compare gantry angles in dij, stf and pln
+%% compare gantry angles in  stf and pln
 stf_gantryAngles=[stf.gantryAngle];
-if dij.numOfBeams ~= numel(stf_gantryAngles) || dij.numOfBeams ~= numel(pln.propStf.gantryAngles) ... % different size
-        || ~isempty(find(stf_gantryAngles-pln.propStf.gantryAngles, 1))  % values in stf and pln do not match
+if numel(stf_gantryAngles) ~= numel(pln.propStf.gantryAngles) ... % different size
+        || ~isempty(find(stf_gantryAngles-pln.propStf.gantryAngles, 1))  % values in stf and pln do not match  % values in stf and pln do not match
     allMatch=false;
     msg= 'Gantry angles do not match';
     return
@@ -72,13 +89,5 @@ for i = 1:numel(pln.propStf.gantryAngles)
     end
 end
 
-%% compare number of rays per beam in dij and stf
-stf_RaysPerBeam=[stf.numOfRays];
-if numel(stf_RaysPerBeam) ~= numel(dij.numOfRaysPerBeam) ... % different size
-        || ~isempty(find(stf_RaysPerBeam-dij.numOfRaysPerBeam,1)) % different values
-    msg= 'Number of rays does not match';
-    allMatch=false;
-    return
-end
 
 end
