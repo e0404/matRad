@@ -100,7 +100,7 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
 
                     if ~isempty(stf(i).ray(j).energy)
 
-                        currRay = this.computeRayGeometry(stf(i).ray(j),dij);
+                        currRay = this.initRay(stf(i).ray(j),dij);
 
                         for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
 

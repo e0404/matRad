@@ -88,7 +88,7 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
 
                     if ~isempty(stf(i).ray(j).energy)
                         
-                        currRay = this.computeRayGeometry(stf(i).ray(j),dij);
+                        currRay = this.initRay(stf(i).ray(j),dij);
 
                         for k = 1:stf(i).numOfBixelsPerRay(j) % loop over all bixels per ray
 
@@ -236,8 +236,8 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
     end
 
     methods (Access = protected)
-        function ray = computeRayGeometry(this,ray,dij)
-            ray = computeRayGeometry@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(this,ray,dij);
+        function ray = initRay(this,ray,dij)
+            ray = initRay@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(this,ray,dij);
             ray.currRadialDist_sq = ray.latDistsX.^2 + ray.latDistsZ.^2;
         end
     end

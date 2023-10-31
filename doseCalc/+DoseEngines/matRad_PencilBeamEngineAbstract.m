@@ -229,7 +229,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             radDepthVdoseGrid{ctScenNum}  = coarseRadDepthCube(Vcoarse);
         end
         
-        function ray = computeRayGeometry(this,ray,dij)
+        function ray = initRay(this,ray,dij)
             if ~isfield(ray,'sourcePoint_bev')
                 ray.sourcePoint_bev = ray.targetPoint_bev + 2*(ray.rayPos_bev - ray.targetPoint_bev);
             end

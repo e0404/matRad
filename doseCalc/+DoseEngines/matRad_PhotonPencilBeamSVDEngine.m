@@ -154,7 +154,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
                     end
                     
                     %Ray calculation
-                    currRay = this.computeRayGeometry(stf(i).ray(j),dij);                    
+                    currRay = this.initRay(stf(i).ray(j),dij);                    
 
                     % empty bixels may happen during recalculation of error
                     % scenarios -> skip to next bixel
@@ -538,9 +538,9 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
 
         end
     
-        function [ray] = computeRayGeometry(this,ray,dij)
+        function [ray] = initRay(this,ray,dij)
 
-            ray = computeRayGeometry@DoseEngines.matRad_PencilBeamEngineAbstract(this,ray,dij);
+            ray = initRay@DoseEngines.matRad_PencilBeamEngineAbstract(this,ray,dij);
 
             % convolution here if custom primary fluence OR field based dose calc
             if this.useCustomPrimaryPhotonFluence || this.isFieldBasedDoseCalc

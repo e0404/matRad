@@ -581,8 +581,8 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             end
         end
     
-        function ray = computeRayGeometry(this,ray,dij)           
-            ray = computeRayGeometry@DoseEngines.matRad_PencilBeamEngineAbstract(this,ray,dij);
+        function ray = initRay(this,ray,dij)           
+            ray = initRay@DoseEngines.matRad_PencilBeamEngineAbstract(this,ray,dij);
 
             % calculate initial sigma for all bixel on current ray
             ray.sigmaIni = matRad_calcSigmaIni(this.machine.data,ray,ray.SSD);
