@@ -144,14 +144,13 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
                     this.bixelsPerBeam = this.bixelsPerBeam + 1;
 
                     this.progressUpdate(counter/dij.totalNumOfBixels);
-
+                    
+                    k = 1;
                     % remember beam and bixel number
                     if ~this.calcDoseDirect
                         dij.beamNum(counter)  = i;
                         dij.rayNum(counter)   = j;
-                        dij.bixelNum(counter) = 1;
-                    else
-                        k = 1;
+                        dij.bixelNum(counter) = k;
                     end
                     
                     %Ray calculation
@@ -176,7 +175,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
 
                     % save computation time and memory
                     % by sequentially filling the sparse matrix dose.dij from the cell array
-                    dij = this.fillDij(dij,stf,i,j,1,counter);
+                    dij = this.fillDij(dij,stf,i,j,k,counter);
                 end
             end
             
