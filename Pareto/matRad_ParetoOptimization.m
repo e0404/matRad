@@ -33,6 +33,10 @@ function returnStruct = matRad_ParetoOptimization(dij,cst,pln,nIter,wInit)
 
 matRad_cfg = MatRad_Config.instance();
 
+if matRad_cfg.propOpt.defaultMaxIter < 10000
+    warning(['Since the Pareto method relies on accurate results more exact results, meaning higher iterations are required (In combination with lower objective tolerance).']);
+end
+
 % consider VOI priorities
 cst  = matRad_setOverlapPriorities(cst);
 
@@ -298,7 +302,11 @@ end
 
 
 % PARETO PART
+if optimizer.options.acceptable_obj_change_tol > 1e-5
+    warning(['Pareto Optimization requires more accurate results and therefore small objective change tolerance!']);
+end
 %get number of objectives at the start
+
 objcount = numel(optiProb.objectives);
 
 %% generaete Anchor Points for optimization

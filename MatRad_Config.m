@@ -184,7 +184,7 @@ classdef MatRad_Config < handle
 
             obj.propDoseCalc.defaultAirOffsetCorrection = true;
 
-            obj.propOpt.defaultMaxIter = 50000;
+            obj.propOpt.defaultMaxIter = 500;
             obj.propOpt.defaultRunDAO = 0;
             obj.propOpt.defaultRunSequencing = 0;
             obj.propOpt.defaultClearUnusedVoxels = false;
