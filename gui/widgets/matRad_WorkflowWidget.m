@@ -52,12 +52,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
         function this = initialize(this)
             this.update();
         end
-        
-        function this = update(this,evt)
-            getFromWorkspace(this);
-            %updateInWorkspace(this);
-        end       
-        
+                
         
         % moved so it can be called from the toolbar button
         % H74 Callback
@@ -246,6 +241,11 @@ classdef matRad_WorkflowWidget < matRad_Widget
             this.handles=handles;
         end
         
+        function this = doUpdate(this,evt)
+            getFromWorkspace(this);
+            %updateInWorkspace(this);
+        end      
+        
         function this = getFromWorkspace(this)
             handles = this.handles;
             matRad_cfg = MatRad_Config.instance();
@@ -312,6 +312,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
             end
             this.handles=handles;
         end
+        
         
     end
     methods (Access = private)

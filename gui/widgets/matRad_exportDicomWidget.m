@@ -42,41 +42,7 @@ classdef matRad_exportDicomWidget < matRad_Widget
         end
         function this = initialize(this)
              
-        end
-        
-        
-        function this = update(this,evt)
-            doUpdate = true;
-            if nargin == 2
-                %At pln changes and at cst/cst (for Isocenter and new settings) 
-                %we need to update
-                doUpdate = this.checkUpdateNecessary(this.variables,evt);
-            end
-            
-            if doUpdate                
-                handles = this.handles;
-                
-                % load table with available variables that can be exported
-                vExists=false(1,numel(this.variables));
-                for i= 1:numel(this.variables)
-                    var= char(this.variables(i));
-                    vExists(i) = evalin('base',['exist(''' var ''',''var'')']);
-                end
-                
-                if find(vExists,1) % not empty
-                    tableData(:,2)= this.variables(vExists);
-                    tableData(:,1) ={true};
-                    set(handles.uitable_variables,'ColumnEditable',[true,false]);
-                else
-                    tableData(1,2) = {'No variables to export'};
-                    set(handles.btn_export,'Enable','off');
-                    set(handles.uitable_variables,'ColumnEditable',[false,false]);
-                end
-                set(handles.uitable_variables,'data',tableData);
-                
-                this.handles = handles;
-            end
-        end
+        end        
     end
     
     
@@ -191,6 +157,39 @@ classdef matRad_exportDicomWidget < matRad_Widget
             this.createHandles();
         end
         
+        function this = doUpdate(this,evt)
+            doUpdate = true;
+            if nargin == 2
+                %At pln changes and at cst/cst (for Isocenter and new settings) 
+                %we need to update
+                doUpdate = this.checkUpdateNecessary(this.variables,evt);
+            end
+            
+            if doUpdate                
+                handles = this.handles;
+                
+                % load table with available variables that can be exported
+                vExists=false(1,numel(this.variables));
+                for i= 1:numel(this.variables)
+                    var= char(this.variables(i));
+                    vExists(i) = evalin('base',['exist(''' var ''',''var'')']);
+                end
+                
+                if find(vExists,1) % not empty
+                    tableData(:,2)= this.variables(vExists);
+                    tableData(:,1) ={true};
+                    set(handles.uitable_variables,'ColumnEditable',[true,false]);
+                else
+                    tableData(1,2) = {'No variables to export'};
+                    set(handles.btn_export,'Enable','off');
+                    set(handles.uitable_variables,'ColumnEditable',[false,false]);
+                end
+                set(handles.uitable_variables,'data',tableData);
+                
+                this.handles = handles;
+            end
+        end
+    
     end
     
     

@@ -37,16 +37,6 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             end
             this = this@matRad_Widget(handleParent);
         end
-  
-        function this=update(this,evt)
-            if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
-                updateStructureTable(this, evalin('base','cst'));
-            else
-                set(this.handles.legendTable,'String','no data loaded');
-            end
-           
-        end
-        
     end
    
     
@@ -76,7 +66,17 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             this.createHandles();
          
         end
+
+        function this=doUpdate(this,evt)
+            if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
+                updateStructureTable(this, evalin('base','cst'));
+            else
+                set(this.handles.legendTable,'String','no data loaded');
+            end           
+        end
     end
+
+    
     
     methods (Access = protected)
         function legendTable_Callback(this, hObject, event)

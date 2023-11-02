@@ -62,9 +62,6 @@ classdef matRad_GammaWidget < matRad_Widget
 
             end
             this = this@matRad_Widget(handleParent);
-
-            this.initialize();
-            this.update();
         end
 
         function this = initialize(this)
@@ -92,45 +89,10 @@ classdef matRad_GammaWidget < matRad_Widget
             end
 
             set(this.handles.editGammaCrit,'String', regexprep(num2str(this.criteria),'\s+',' '));
-
-        end
-
-        function this = update (this,~)
             
-            if evalin( 'base', 'exist(''resultGUI'')' ) && this.lockUpdate
-                resultGUI = evalin('base','resultGUI');
-                resultnames = fieldnames(resultGUI) ;
-                j = 1;
-                for i = 1:numel(resultnames)
-                    if ndims(resultGUI.(resultnames{i}))==3
-                        this.SelectedDisplayAllOptions(j) = resultnames{i};
-                        j=j+1;
-                    end
-                end
-                % get and set display options
-                this.SelectedDisplayAllOptions = pad(this.SelectedDisplayAllOptions);
-                set(this.handles.popupSelectedDisplayOption1,'String',this.SelectedDisplayAllOptions);
-                set(this.handles.popupSelectedDisplayOption2,'String',this.SelectedDisplayAllOptions);
-
-                %slider options %CAN ALSO SET MIN AND MAX TO NONZERO SLICES
-
-                if size(resultGUI.(this.SelectedDisplayOption1),3) == size(resultGUI.(this.SelectedDisplayOption2),3)
-                    this.maxSlice = size(resultGUI.(this.SelectedDisplayOption1),3);
-                    this.slice = round(this.maxSlice/2);
-                    set(this.handles.sliderSlice,'Min',1,'Max',this.maxSlice,...
-                        'Value', this.slice, ...
-                        'SliderStep',[1 1]);
-                else
-                    error('Mismatch in dimensions of selected cubes')
-                end
-
-
-                this.calcGamma();
-                this.plotGamma();
-                this.lockUpdate = false;
-            end
-
+            this.update();
         end
+        
         % METHOD FOR WHEN WORKSPACE IS CHANGED
 
         function set.SelectedDisplayOption1(this, value)
@@ -427,6 +389,42 @@ classdef matRad_GammaWidget < matRad_Widget
             this.createHandles();
         end
 
+        function this = doUpdate(this,~)
+            
+            if evalin( 'base', 'exist(''resultGUI'')' ) && this.lockUpdate
+                resultGUI = evalin('base','resultGUI');
+                resultnames = fieldnames(resultGUI) ;
+                j = 1;
+                for i = 1:numel(resultnames)
+                    if ndims(resultGUI.(resultnames{i}))==3
+                        this.SelectedDisplayAllOptions(j) = resultnames{i};
+                        j=j+1;
+                    end
+                end
+                % get and set display options
+                this.SelectedDisplayAllOptions = pad(this.SelectedDisplayAllOptions);
+                set(this.handles.popupSelectedDisplayOption1,'String',this.SelectedDisplayAllOptions);
+                set(this.handles.popupSelectedDisplayOption2,'String',this.SelectedDisplayAllOptions);
+
+                %slider options %CAN ALSO SET MIN AND MAX TO NONZERO SLICES
+
+                if size(resultGUI.(this.SelectedDisplayOption1),3) == size(resultGUI.(this.SelectedDisplayOption2),3)
+                    this.maxSlice = size(resultGUI.(this.SelectedDisplayOption1),3);
+                    this.slice = round(this.maxSlice/2);
+                    set(this.handles.sliderSlice,'Min',1,'Max',this.maxSlice,...
+                        'Value', this.slice, ...
+                        'SliderStep',[1 1]);
+                else
+                    error('Mismatch in dimensions of selected cubes')
+                end
+
+
+                this.calcGamma();
+                this.plotGamma();
+                this.lockUpdate = false;
+            end
+
+        end
     end
     methods (Access = private)
         %CALLBACKS

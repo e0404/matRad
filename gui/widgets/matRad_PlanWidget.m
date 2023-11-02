@@ -52,7 +52,7 @@ classdef matRad_PlanWidget < matRad_Widget
             end
             this = this@matRad_Widget(handleParent);
             
-            update(this);
+            this.initialize();
             
             handles=this.handles;
             
@@ -67,27 +67,7 @@ classdef matRad_PlanWidget < matRad_Widget
             this.handles=handles;
 
         end
-        
-        function this = initialize(this)
-        end
-        
-        function this = update(this,evt)          
-            doUpdate = true;
-            if nargin == 2
-                %At pln changes and at cst/cst (for Isocenter and new settings) 
-                %we need to update
-                doUpdate = this.checkUpdateNecessary({'pln','ct','cst'},evt);
-            end
-            
-            if doUpdate
-                if evalin('base','exist(''pln'')')
-                  getPlnFromWorkspace(this);
-                else
-                  setPlnDefaultValues(this);
-                end
-            end
-        end
-        
+                       
     end
     
     methods(Access = protected)
@@ -627,6 +607,23 @@ classdef matRad_PlanWidget < matRad_Widget
             this.createHandles();
         end
        
+        function this = doUpdate(this,evt)          
+            doUpdate = true;
+            if nargin == 2
+                %At pln changes and at cst/cst (for Isocenter and new settings) 
+                %we need to update
+                doUpdate = this.checkUpdateNecessary({'pln','ct','cst'},evt);
+            end
+            
+            if doUpdate
+                if evalin('base','exist(''pln'')')
+                  getPlnFromWorkspace(this);
+                else
+                  setPlnDefaultValues(this);
+                end
+            end
+        end
+        
         %Set default values for the PLN on matRadGUI startup
         function this = setPlnDefaultValues(this)
             

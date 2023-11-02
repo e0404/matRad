@@ -110,46 +110,9 @@ classdef matRad_ViewingWidget < matRad_Widget
                     this.zoomHandle = zoom(this.widgetHandle);
                 end
             end
-            this.update();
+            this.initialize();
         end
-        
-        function this=initialize(this)
-%             updateIsoDoseLineCache(this);
-            %update(this);
-             
-        end
-        
-        function this=update(this,evt)
-            if ~this.lockUpdate
-            
-                doUpdate = false;
-                if nargin == 2
-                    %At pln changes and at cst/cst (for Isocenter and new settings) 
-                    %we need to update
-                    doUpdate = this.checkUpdateNecessary({'pln','ct','cst','resultGUI'},evt);
-                end
-            
-                if ~doUpdate || this.checkUpdateNecessary({'pln','ct','resultGUI'},evt)
-                   this.initValues();
-                end
-                            
-                this.updateValues();
-                this.updateIsoDoseLineCache(); 
-                % Update plot only if there are changes to ct, resultGUI.
-                % for matRad Gui startup/ intializing viewing widget
-                %  evt does not exist, then catch segment 
-           
-                try
-                    if  this.checkUpdateNecessary({'ct','resultGUI'},evt)
-                        this.UpdatePlot();
-                    end
-                catch
-                    this.UpdatePlot();
-                end
-            end
-            
-        end
-        
+                        
         function notifyPlotUpdated(obj)
             % handle environment
             matRad_cfg = MatRad_Config.instance();
@@ -510,6 +473,37 @@ classdef matRad_ViewingWidget < matRad_Widget
                 'HitTest','on');           
             
             this.createHandles();
+            
+        end
+    
+        function this=doUpdate(this,evt)
+            if ~this.lockUpdate
+            
+                doUpdate = false;
+                if nargin == 2
+                    %At pln changes and at cst/cst (for Isocenter and new settings) 
+                    %we need to update
+                    doUpdate = this.checkUpdateNecessary({'pln','ct','cst','resultGUI'},evt);
+                end
+            
+                if ~doUpdate || this.checkUpdateNecessary({'pln','ct','resultGUI'},evt)
+                   this.initValues();
+                end
+                            
+                this.updateValues();
+                this.updateIsoDoseLineCache(); 
+                % Update plot only if there are changes to ct, resultGUI.
+                % for matRad Gui startup/ intializing viewing widget
+                %  evt does not exist, then catch segment 
+           
+                try
+                    if  this.checkUpdateNecessary({'ct','resultGUI'},evt)
+                        this.UpdatePlot();
+                    end
+                catch
+                    this.UpdatePlot();
+                end
+            end
             
         end
     end

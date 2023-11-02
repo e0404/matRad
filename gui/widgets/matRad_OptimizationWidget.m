@@ -43,32 +43,9 @@ classdef matRad_OptimizationWidget < matRad_Widget
             end
             this = this@matRad_Widget(handleParent);
             
-            this.update();
+            this.initialize();
         end
-       
-        function this=initialize(this)
-            
-        end
-        
-        function this = update(this,evt)
-            
-            doUpdate = true;
-            if nargin == 2
-                %At pln changes and at cst/cst (for Isocenter and new settings) 
-                %we need to update
-                doUpdate = this.checkUpdateNecessary({'cst'},evt);
-            end
-            
-            if doUpdate
-                if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
-                    generateCstTable(this, evalin('base','cst'));
-                else
-                    delete(get(this.widgetHandle,'Children'));
-                end
-            end
-           
-        end
-               
+                              
     end
     
     methods (Access = protected)
@@ -87,6 +64,25 @@ classdef matRad_OptimizationWidget < matRad_Widget
                         
             this.createHandles();
             
+        end
+
+        function this = doUpdate(this,evt)
+            
+            doUpdate = true;
+            if nargin == 2
+                %At pln changes and at cst/cst (for Isocenter and new settings) 
+                %we need to update
+                doUpdate = this.checkUpdateNecessary({'cst'},evt);
+            end
+            
+            if doUpdate
+                if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
+                    generateCstTable(this, evalin('base','cst'));
+                else
+                    delete(get(this.widgetHandle,'Children'));
+                end
+            end
+           
         end
     end
     
