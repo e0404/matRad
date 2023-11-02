@@ -13,7 +13,7 @@ function returnStruct = matRad_ParetoOptimization(dij,cst,pln,nIter,wInit)
 %   wInit:      (optional) custom weights to initialize problems
 %
 % output
-%   retStruct:  Structure contain
+%   retStruct:  Structure containing the weights of the final plans and other important information
 %
 % References
 %   - https://dx.doi.org/10.2139/ssrn.1427721 
@@ -344,7 +344,7 @@ fInd = (fInd-optiProb.normalizationScheme.L)./(optiProb.normalizationScheme.U-op
 %% Maybe: Grouping based on correlation of objectives
 %% Generaete further points
 
-%initialize OPS boundaries
+%initialize array storing OPS boundaries
 OPSA = [];
 OPSb = [];
 np = size(penGrid,1);
