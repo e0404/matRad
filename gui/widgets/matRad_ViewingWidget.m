@@ -497,7 +497,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 %  evt does not exist, then catch segment 
            
                 try
-                    if  this.checkUpdateNecessary({'ct','resultGUI'},evt)
+                    if  this.checkUpdateNecessary({'ct','resultGUI'},evt)|| doUpdate
                         this.UpdatePlot();
                     end
                 catch

@@ -41,23 +41,22 @@ classdef matRad_Widget <  handle
         %CONSTRUCTOR
         function this = matRad_Widget(handleParent)
             this.widgetHandle = handleParent;
-            
+            matRad_cfg = MatRad_Config.instance();
             %Create the layout
             try 
                 this.createLayout();           
             catch ME
-                showError(this,'Widget could not be created!',ME);
+                matRad_cfg.dispError(this,'Widget could not be created!',ME);
             end
 
             %Initialize the widget
             try
                 this.initialize();
             catch ME
-                showWarning(this,'Widget could not be initialized!',ME);
+                matRad_cfg.dispWarning(this,'Widget could not be initialized!',ME);
             end
             
-            matRad_cfg = MatRad_Config.instance();
-            
+                       
             % only enable in matlab
             %strcmp(env,'MATLAB') && 
             if matRad_cfg.isMatlab && strcmp(get(handleParent,'type'),'figure')
