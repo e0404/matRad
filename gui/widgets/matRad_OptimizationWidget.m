@@ -315,7 +315,9 @@ classdef matRad_OptimizationWidget < matRad_Widget
             
             assignin('base','cst',cst);
             this.handles=handles;
-            changedWorkspace(this,'cst');
+            % this.changedWorkspace('cst'); %does not need to notify
+            % listener for this
+            this.doUpdate();
                         
         end
         function btObjRemove_Callback(this,hObject, ~)
@@ -332,10 +334,10 @@ classdef matRad_OptimizationWidget < matRad_Widget
             
             assignin('base','cst',cst);
             this.handles=handles;
-            this.changedWorkspace('cst');
+            % this.changedWorkspace('cst'); %does not need to notify
+            % listener for this
+            this.doUpdate();
             
-            %generateCstTable(this,cst);
-
         end
         
         function changeObjFunction_Callback(this,hObject, ~)
@@ -370,9 +372,10 @@ classdef matRad_OptimizationWidget < matRad_Widget
                 
                 assignin('base','cst',cst);
                 this.handles=handles;
-                this.changedWorkspace('cst');
-                
-                %generateCstTable(this,cst);
+                % this.changedWorkspace('cst'); %does not need to notify
+                % listener for this
+                this.doUpdate();
+
             end
         end
         %CST Param Callback
@@ -401,9 +404,10 @@ classdef matRad_OptimizationWidget < matRad_Widget
             
             assignin('base','cst',cst);
             this.handles=handles;
-            this.changedWorkspace('cst');
+            % this.changedWorkspace('cst'); %does not need to notify
+            % listener for this
+            this.doUpdate();
             
-            %generateCstTable(this,cst);
         end
         
         function editObjParam_Callback(this,hObject, ~)
@@ -425,9 +429,10 @@ classdef matRad_OptimizationWidget < matRad_Widget
             
             assignin('base','cst',cst);
             this.handles=handles;
-            this.changedWorkspace('cst');
+            % this.changedWorkspace('cst'); %does not need to notify
+            % listener for this
+            this.doUpdate();
             
-            %generateCstTable(this,cst);
             
         end
         
