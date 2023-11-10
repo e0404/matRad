@@ -113,10 +113,8 @@ dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
 % check if full dose influence data is required
 if this.calcDoseDirect
     this.numOfColumnsDij      = length(stf);
-    this.numOfBixelsContainer = 1;
 else
     this.numOfColumnsDij      = dij.totalNumOfBixels;
-    this.numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
 end
 
 % set up arrays for book keeping
@@ -160,6 +158,8 @@ this.VctGrid = VctGrid;
 
 % load machine file from base data folder
 this.machine = this.loadMachine(stf(1).radiationMode,stf(1).machine);
+
+this.doseGrid = dij.doseGrid;
 
 end
 

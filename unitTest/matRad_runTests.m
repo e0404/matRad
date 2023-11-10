@@ -52,7 +52,7 @@ for testIx = 1:length(testScriptNames)
     fprintf('Running Integration Test for ''%s''\n',names{testIx});
     try
         run(testScripts{testIx});
-        clear ct cst pln stf dij resultGUI; %Make sure the workspace is somewhat clean
+        clearvars ct cst pln stf dij resultGUI; %Make sure the workspace is somewhat clean
         delete(testScripts{testIx}); %Delete after successful run
     catch ME
         [~,scriptName] = fileparts(testScripts{testIx});

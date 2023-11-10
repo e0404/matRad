@@ -21,8 +21,9 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     properties (Constant)
-        possibleRadiationModes = 'photons' %constant which represent available radiation modes
+        possibleRadiationModes = {'photons'}; %constant which represent available radiation modes
         name = 'SVD Pencil Beam';
+        %supportedQuantities = {'physicalDose'};
 
         % Define function_Di for beamlet calculation. Constant for use in
         % static computations
@@ -107,84 +108,6 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             this.dijSampling.type             = 'radius';
             this.dijSampling.deltaRadDepth    = 5;
         end
-
-        function dij = calcDose(this,ct,cst,stf)
-            % matRad photon dose calculation wrapper
-            % can be automaticly called through matRad_calcDose or
-            % matRad_calcPhotonDose
-            %
-            % call
-            %   dij = calcDose(ct,stf,pln,cst)
-            %
-            % input
-            %   ct:             ct cube
-            %   cst:            matRad cst struct
-            %   stf:            matRad steering information struct
-            %
-            % output
-            %   dij:            matRad dij struct
-
-
-            matRad_cfg =  MatRad_Config.instance();
-
-            % initialize
-            [dij,ct,cst,stf] = this.calcDoseInit(ct,cst,stf);
-
-
-            counter = 0;
-
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            for i = 1:dij.numOfBeams % loop over all beams
-                dij = this.calcDoseInitBeam(dij,ct,cst,stf,i);
-                matRad_cfg.dispInfo('\n');
-
-                for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray! For field based dose calc, a ray equals a shape
-
-                    counter = counter + 1;
-                    this.bixelsPerBeam = this.bixelsPerBeam + 1;
-
-                    this.progressUpdate(counter/dij.totalNumOfBixels);
-                    
-                    k = 1;
-                    % remember beam and bixel number
-                    if ~this.calcDoseDirect
-                        dij.beamNum(counter)  = i;
-                        dij.rayNum(counter)   = j;
-                        dij.bixelNum(counter) = k;
-                    end
-                    
-                    %Ray calculation
-                    currRay = this.initRay(stf(i).ray(j),dij);                    
-
-                    % empty bixels may happen during recalculation of error
-                    % scenarios -> skip to next bixel
-                    if isempty(currRay.ix)
-                        continue;
-                    end
-
-                    % calculate photon dose for beam i and bixel j
-                    bixelDose = this.calcBixel(currRay.interpKernels,currRay.ix,currRay.isoLatDistsX,currRay.isoLatDistsZ);
-
-                    % sample dose only for bixel based dose calculation
-                    if this.enableDijSampling && ~this.isFieldBasedDoseCalc
-                        [ix,bixelDose] = this.sampleDij(currRay.ix,bixelDose,currRay.radDepths,currRay.radialDist_sq,stf(i).bixelWidth);
-                    end
-
-                    % Save dose for every bixel in cell array
-                    this.tmpMatrixContainers.physicalDose{mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(this.VdoseGrid(ix),1,bixelDose,dij.doseGrid.numOfVoxels,1);
-
-                    % save computation time and memory
-                    % by sequentially filling the sparse matrix dose.dij from the cell array
-                    dij = this.fillDij(dij,stf,i,j,k,counter);
-                end
-            end
-            
-            %Finalize dose calculation
-            dij = this.calcDoseFinalize(ct,cst,stf,dij);
-
-        end
-
-
     end
 
     methods (Access = protected)
@@ -349,59 +272,35 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             end
         end
 
-        function dose = calcBixel(this,interpKernels,voxelIx,isoLatDistsX,isoLatDistsZ)
+        function [bixel] = computeBixel(this,currRay,k)
             % matRad photon dose calculation for an individual bixel
             %
             % call
-            %   dose = this.calcPhotonDoseBixel(SAD,m,betas,Interp_kernel1,...
-            %                  Interp_kernel2,Interp_kernel3,radDepths,geoDists,...
-            %                  isoLatDistsX,isoLatDistsZ)
-            %
-            % input
-            %   SAD:                source to axis distance
-            %   m:                  absorption in water (part of the dose calc base
-            %                       data)
-            %   betas:              beta parameters for the parameterization of the
-            %                       three depth dose components
-            %   interpKernels:      kernel interpolators for dose calculation
-            %   radDepths:          radiological depths
-            %   geoDists:           geometrical distance from virtual photon source
-            %   isoLatDistsX:       lateral distance in X direction in BEV from central
-            %                       ray at iso center plane
-            %   isoLatDistsZ:       lateral distance in Z direction in BEV from central
-            %                       ray at iso center plane
-            %
-            % output
-            %   dose:               photon dose at specified locations as linear vector
-            %
-            % References
-            %   [1] http://www.ncbi.nlm.nih.gov/pubmed/8497215
-            %
-            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %
-            % Copyright 2015 the matRad development team.
-            %
-            % This file is part of the matRad project. It is subject to the license
-            % terms in the LICENSE file found in the top-level directory of this
-            % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
-            % of the matRad project, including this file, may be copied, modified,
-            % propagated, or distributed except according to the terms contained in the
-            % LICENSE file.
-            %
-            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %   bixel = this.computeBixel(currRay,k)
+            
+            bixel = struct();
 
-            %Here, we just forward to the static implementation
-            dose = this.calcSingleBixel(this.machine.meta.SAD,...
-                this.machine.data.m,...
-                this.machine.data.betas,...
-                interpKernels,...
-                this.radDepthVdoseGrid{1}(voxelIx),...
-                this.geoDistVdoseGrid{1}(voxelIx),...
-                isoLatDistsX,...
-                isoLatDistsZ);
+            if isfield(this.tmpMatrixContainers,'physicalDose')            
+                bixel.physicalDose = this.calcSingleBixel(currRay.SAD,...
+                    this.machine.data.m,...
+                    this.machine.data.betas,...
+                    currRay.interpKernels,...
+                    currRay.radDepths,...
+                    currRay.geoDepths,...
+                    currRay.isoLatDistsX,...
+                    currRay.isoLatDistsZ);
+
+                % sample dose only for bixel based dose calculation
+                if this.enableDijSampling && ~this.isFieldBasedDoseCalc
+                    [bixel.ix,bixel.physicalDose] = this.sampleDij(currRay.ix,bixel.physicalDose,currRay.radDepths,currRay.radialDist_sq,currRay.bixelWidth);
+                else
+                    bixel.ix = currRay.ix;
+                end
+            else
+                bixel.ix = [];
+            end
         end
-
-
+        
         function interpKernels = getKernelInterpolators(this,Fx)
 
             matRad_cfg = MatRad_Config.instance();
@@ -538,9 +437,9 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
 
         end
     
-        function [ray] = initRay(this,ray,dij)
+        function [ray] = initRay(this,currBeam,j)
 
-            ray = initRay@DoseEngines.matRad_PencilBeamEngineAbstract(this,ray,dij);
+            ray = initRay@DoseEngines.matRad_PencilBeamEngineAbstract(this,currBeam,j);
 
             % convolution here if custom primary fluence OR field based dose calc
             if this.useCustomPrimaryPhotonFluence || this.isFieldBasedDoseCalc
@@ -552,7 +451,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
 
                 % prepare primary fluence array
                 primaryFluence = this.machine.data.primaryFluence;
-                r     = sqrt( (this.F_X-stf(i).ray(j).rayPos(1)).^2 + (this.F_Z-stf(i).ray(j).rayPos(3)).^2 );
+                r     = sqrt( (this.F_X-ray.rayPos(1)).^2 + (this.F_Z-ray.rayPos(3)).^2 );
                 Psi   = interp1(primaryFluence(:,1)',primaryFluence(:,2)',r,'linear',0);
 
                 % apply the primary fluence to the field
@@ -567,6 +466,8 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             else
                 ray.interpKernels = this.interpKernelCache;
             end
+
+            ray.geoDepths = currBeam.geoDistVdoseGrid{1}(ray.ix);
         end    
     end
 

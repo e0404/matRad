@@ -27,7 +27,6 @@ classdef (Abstract) matRad_DoseEngineBase < handle
     properties (SetAccess = protected, GetAccess = public)
         timers;                 % timers of dose calc
 
-        numOfBixelsContainer;   % number of used bixel container
         numOfColumnsDij;        % number of columns in the dij struct
                                           
         yCoordsV_vox;           % y-coordinate voxel
@@ -57,8 +56,9 @@ classdef (Abstract) matRad_DoseEngineBase < handle
     end
     
     properties (Constant, Abstract)
-       name; % readable name for dose engine
-       possibleRadiationModes; % radiation modes the engine is meant to process
+       name;                    % readable name for dose engine
+       possibleRadiationModes;  % radiation modes the engine is meant to process
+       %supportedQuantities;     % supported (influence) quantities. Does not include quantities that can be derived post-calculation.
     end
 
     properties (SetAccess = private)
@@ -215,13 +215,13 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         end
     
         function progressUpdate(this,pos,total)
-            if cputime()-this.lastProgressUpdate < 1e-1
-                return;
-            end
-
             if nargin < 3
                 pos = pos*1000;
                 total=1000;
+            end
+            
+            if pos ~= total && cputime()-this.lastProgressUpdate < 1e-1
+                return;
             end
 
             matRad_progress(pos,total);
