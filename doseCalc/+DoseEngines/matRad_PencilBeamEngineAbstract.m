@@ -27,6 +27,8 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
         ssdDensityThreshold;        % Threshold for SSD computation
         useGivenEqDensityCube;      % Use the given density cube ct.cube and omit conversion from cubeHU.
         ignoreOutsideDensities;     % Ignore densities outside of cst contours
+
+        numOfDijFillSteps = 10;     % Number of times during dose calculation the temporary containers are moved to a sparse matrix
     end
 
     properties (SetAccess = protected)
@@ -34,16 +36,10 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
     end
 
     properties (SetAccess = protected, GetAccess = public)
-        doseTmpContainer;       % temporary container for dose calculation results
-
-        bixelsPerBeam;          % number of bixel per energy beam
+        tmpMatrixContainers;    % temporary containers for 
+        numOfBixelsContainer;   % number of used bixel container
 
         radDepthCubes;          % only stored if property set accordingly
-        rotMat_system_T;        % rotation matrix for current beam
-        geoDistVdoseGrid;       % geometric distance in dose grid for current beam
-        rot_coordsVdoseGrid;    % Rotate coordinates for gantry movement for current beam
-        radDepthVdoseGrid;      % grid for radiologica depth cube for current beam
-        radDepthCube;           % radiological depth cube for current beam
 
         cube;                   % relative electron density / stopping power cube
         hlut;                   % hounsfield lookup table to craete relative electron density cube        
@@ -66,30 +62,58 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             this.ignoreOutsideDensities       = matRad_cfg.propDoseCalc.defaultIgnoreOutsideDensities;
             this.ssdDensityThreshold          = matRad_cfg.propDoseCalc.defaultSsdDensityThreshold;
         end
+    
+        function dij = calcDose(this,ct,cst,stf)
+
+            % initialize
+            [dij,ct,cst,stf] = this.calcDoseInit(ct,cst,stf);
+
+            bixelCounter = 0;
+
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            for i = 1:dij.numOfBeams % loop over all beams
+
+                %Initialize Beam Geometry
+                currBeam = this.calcDoseInitBeam(dij,ct,cst,stf,i);
+                
+                %Keep tabs on bixels computed in this beam
+                bixelBeamCounter = 0;
+
+                %Ray calculation
+                for j = 1:currBeam.numOfRays % loop over all rays / for photons we only have one bixel per ray! For field based dose calc, a ray equals a shape
+                    
+                    %Initialize Ray Geometry
+                    currRay = this.initRay(currBeam,j);
+                   
+                    for k = 1:currRay.numOfBixels
+                        % Progress Update & Bookkeeping
+                        bixelCounter = bixelCounter + 1;
+                        bixelBeamCounter = bixelBeamCounter + 1;
+                        this.progressUpdate(bixelCounter/dij.totalNumOfBixels);
+
+                        %Bixel Computation
+                        currBixel = this.computeBixel(currRay,k);
+
+                        % save computation time and memory
+                        % by sequentially filling the sparse matrix dose.dij from the cell array
+                        dij = this.fillDij(currBixel,dij,stf,i,j,k,bixelCounter);
+
+                    end
+                end
+            end
+
+            %Finalize dose calculation
+            dij = this.calcDoseFinalize(ct,cst,stf,dij);
+        end
     end
 
     % Should be abstract methods but in order to satisfy the compatibility
     % with OCTAVE we can't use abstract methods. If OCTAVE at some point
     % in the far future implements this feature this should be abstract again.
     methods (Access = protected) %Abstract
-
-
-        function dij = fillDij(this,dij,stf,counter)
-            % method for filling the dij struct with the computed dose cube
-            % last step in dose calculation
-            % Needs to be implemented in non abstract subclasses.
-            error('Funktion needs to be implemented!');
+        function bixel = computeBixel(this,currRay,k)
+            error('Abstract Function. Needs to be implemented!');
         end
-
-
-        function dij = fillDijDirect(this,dij,stf,currBeamIdx,currRayIdx,currBixelIdx)
-            % method for filling the dij struct, when using a direct dose
-            % calcultion
-            % Needs to be implemented in non abstract subclasses,
-            % when direct calc shoulb be utilizable.
-            error('Funktion needs to be implemented!');
-        end
-
     end
 
     methods (Access = protected)
@@ -129,11 +153,27 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             % compute SSDs
             stf = matRad_computeSSD(stf,ct,'densityThreshold',this.ssdDensityThreshold);
 
-            % Allocate memory for dose_temp cell array
-            this.doseTmpContainer     = cell(this.numOfBixelsContainer,dij.numOfScenarios);
+            % Allocate memory for quantity containers
+            dij = this.allocateQuantityMatrixContainers(dij,{'physicalDose'});            
         end
 
-        function dij = calcDoseInitBeam(this,dij,ct,cst,stf,i)
+        function dij = allocateQuantityMatrixContainers(this,dij,names)
+            if this.calcDoseDirect
+                this.numOfBixelsContainer = 1;
+            else
+                this.numOfBixelsContainer = ceil(dij.totalNumOfBixels/this.numOfDijFillSteps);
+            end
+
+            for n = 1:numel(names)
+                this.tmpMatrixContainers.(names{n}) = cell(this.numOfBixelsContainer,dij.numOfScenarios);
+                for i = 1:dij.numOfScenarios
+                    dij.(names{n}){i} = spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,1);
+                end
+            end
+
+        end
+
+        function currBeam = calcDoseInitBeam(this,dij,ct,cst,stf,i)
             % Method for initializing the beams for analytical pencil beam
             % dose calculation
             %
@@ -150,76 +190,68 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             %   dij:                        updated dij struct
 
             matRad_cfg = MatRad_Config.instance();
-            if dij.numOfBeams > 1
-                matRad_cfg.dispInfo('Beam %d of %d:\n',i,dij.numOfBeams);
+            if numel(stf) > 1
+                matRad_cfg.dispInfo('Beam %d of %d:\n',i,numel(stf));
             end
 
-            % remember beam and bixel number
-            if this.calcDoseDirect
-                dij.beamNum(i)    = i;
-                dij.rayNum(i)     = i;
-                dij.bixelNum(i)   = i;
-            end
-
-            this.bixelsPerBeam = 0;
+            currBeam = stf(i);
+            currBeam.beamIndex = i;
 
             % convert voxel indices to real coordinates using iso center of beam i
-            xCoordsV       = this.xCoordsV_vox(:)*dij.ctGrid.resolution.x-stf(i).isoCenter(1);
-            yCoordsV       = this.yCoordsV_vox(:)*dij.ctGrid.resolution.y-stf(i).isoCenter(2);
-            zCoordsV       = this.zCoordsV_vox(:)*dij.ctGrid.resolution.z-stf(i).isoCenter(3);
+            xCoordsV       = this.xCoordsV_vox(:)*dij.ctGrid.resolution.x-currBeam.isoCenter(1);
+            yCoordsV       = this.yCoordsV_vox(:)*dij.ctGrid.resolution.y-currBeam.isoCenter(2);
+            zCoordsV       = this.zCoordsV_vox(:)*dij.ctGrid.resolution.z-currBeam.isoCenter(3);
             coordsV        = [xCoordsV yCoordsV zCoordsV];
 
-            xCoordsVdoseGrid = this.xCoordsV_voxDoseGrid(:)*dij.doseGrid.resolution.x-stf(i).isoCenter(1);
-            yCoordsVdoseGrid = this.yCoordsV_voxDoseGrid(:)*dij.doseGrid.resolution.y-stf(i).isoCenter(2);
-            zCoordsVdoseGrid = this.zCoordsV_voxDoseGrid(:)*dij.doseGrid.resolution.z-stf(i).isoCenter(3);
+            xCoordsVdoseGrid = this.xCoordsV_voxDoseGrid(:)*dij.doseGrid.resolution.x-currBeam.isoCenter(1);
+            yCoordsVdoseGrid = this.yCoordsV_voxDoseGrid(:)*dij.doseGrid.resolution.y-currBeam.isoCenter(2);
+            zCoordsVdoseGrid = this.zCoordsV_voxDoseGrid(:)*dij.doseGrid.resolution.z-currBeam.isoCenter(3);
             coordsVdoseGrid  = [xCoordsVdoseGrid yCoordsVdoseGrid zCoordsVdoseGrid];
 
             % Get Rotation Matrix
             % Do not transpose matrix since we usage of row vectors &
             % transformation of the coordinate system need double transpose
 
-            this.rotMat_system_T = matRad_getRotationMatrix(stf(i).gantryAngle,stf(i).couchAngle);
+            currBeam.rotMat_system_T = matRad_getRotationMatrix(currBeam.gantryAngle,currBeam.couchAngle);
 
             % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
-            rot_coordsV         = coordsV*this.rotMat_system_T;
-            rot_coordsVdoseGrid = coordsVdoseGrid*this.rotMat_system_T;
+            rot_coordsV         = coordsV*currBeam.rotMat_system_T;
+            rot_coordsVdoseGrid = coordsVdoseGrid*currBeam.rotMat_system_T;
 
-            rot_coordsV(:,1) = rot_coordsV(:,1)-stf(i).sourcePoint_bev(1);
-            rot_coordsV(:,2) = rot_coordsV(:,2)-stf(i).sourcePoint_bev(2);
-            rot_coordsV(:,3) = rot_coordsV(:,3)-stf(i).sourcePoint_bev(3);
+            rot_coordsV(:,1) = rot_coordsV(:,1)-currBeam.sourcePoint_bev(1);
+            rot_coordsV(:,2) = rot_coordsV(:,2)-currBeam.sourcePoint_bev(2);
+            rot_coordsV(:,3) = rot_coordsV(:,3)-currBeam.sourcePoint_bev(3);
 
-            rot_coordsVdoseGrid(:,1) = rot_coordsVdoseGrid(:,1)-stf(i).sourcePoint_bev(1);
-            rot_coordsVdoseGrid(:,2) = rot_coordsVdoseGrid(:,2)-stf(i).sourcePoint_bev(2);
-            rot_coordsVdoseGrid(:,3) = rot_coordsVdoseGrid(:,3)-stf(i).sourcePoint_bev(3);
+            rot_coordsVdoseGrid(:,1) = rot_coordsVdoseGrid(:,1)-currBeam.sourcePoint_bev(1);
+            rot_coordsVdoseGrid(:,2) = rot_coordsVdoseGrid(:,2)-currBeam.sourcePoint_bev(2);
+            rot_coordsVdoseGrid(:,3) = rot_coordsVdoseGrid(:,3)-currBeam.sourcePoint_bev(3);
 
             % calculate geometric distances
-            this.geoDistVdoseGrid{1}= sqrt(sum(rot_coordsVdoseGrid.^2,2));
+            currBeam.geoDistVdoseGrid{1}= sqrt(sum(rot_coordsVdoseGrid.^2,2));
             % Calculate radiological depth cube
             matRad_cfg.dispInfo('matRad: calculate radiological depth cube... ');
             if this.keepRadDepthCubes
-                [radDepthVctGrid, this.radDepthCube] = matRad_rayTracing(stf(i),ct,this.VctGrid,rot_coordsV,this.effectiveLateralCutOff);
-                this.radDepthCube{1} = matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z, this.radDepthCube{1}, ...
+                [radDepthVctGrid, currBeam.radDepthCube] = matRad_rayTracing(currBeam,ct,this.VctGrid,rot_coordsV,this.effectiveLateralCutOff);
+                currBeam.radDepthCube{1} = matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z, currBeam.radDepthCube{1}, ...
                     dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest');
+                this.radDepthCubes{i} = currBeam.radDepthCube{1};
             else
-                radDepthVctGrid = matRad_rayTracing(stf(i),ct,this.VctGrid,rot_coordsV,this.effectiveLateralCutOff);
+                radDepthVctGrid = matRad_rayTracing(currBeam,ct,this.VctGrid,rot_coordsV,this.effectiveLateralCutOff);
             end
 
             % interpolate radiological depth cube to dose grid resolution
             %this.radDepthVdoseGrid = matRad_interpRadDepth...
             %    (ct,1,this.VctGrid,this.VdoseGrid,dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z,radDepthVctGrid);
 
-            this.radDepthVdoseGrid = this.interpRadDepth(ct,1,this.VctGrid,this.VdoseGrid,dij.ctGrid,dij.doseGrid,radDepthVctGrid);
+            currBeam.radDepthVdoseGrid = this.interpRadDepth(ct,1,this.VctGrid,this.VdoseGrid,dij.ctGrid,dij.doseGrid,radDepthVctGrid);
 
             matRad_cfg.dispInfo('done.\n');
 
-            %Keep rad depth cube if desired
-            if this.keepRadDepthCubes
-                this.radDepthCubes{i} = this.radDepthCube;
-            end
-
             % limit rotated coordinates to positions where ray tracing is availabe
-            this.rot_coordsVdoseGrid = rot_coordsVdoseGrid(~isnan(this.radDepthVdoseGrid{1}),:);
-
+            currBeam.rot_coordsVdoseGrid = rot_coordsVdoseGrid(~isnan(currBeam.radDepthVdoseGrid{1}),:);
+            
+            %Reinitialize Progress:
+            matRad_progress(1,1000);
         end
         
         function radDepthVdoseGrid = interpRadDepth(~,ct,ctScenNum,V,Vcoarse,ctGrid,doseGrid,radDepthVctGrid)            
@@ -231,14 +263,101 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             radDepthVdoseGrid{ctScenNum}  = coarseRadDepthCube(Vcoarse);
         end
         
-        function ray = computeRayGeoemetry(this,ray,dij)
-            error('Abstract Function. Needs to be implemented!');
-        end
+        function ray = initRay(this,currBeam,j)
+            ray = currBeam.ray(j);
 
-        function indices = applyDoseCutOff(this)
-            error('Abstract Function. Needs to be implemented!');
-        end
+            ray.beamIndex = currBeam.beamIndex;
+            ray.rayIndex  = j;
+            ray.isoCenter = currBeam.isoCenter;
+           
+            if ~isfield(currBeam,'numOfBixelsPerRay')
+                ray.numOfBixels = 1;
+            else
+                ray.numOfBixels = currBeam.numOfBixelsPerRay(j);
+            end
 
+            ray.sourcePoint_bev = currBeam.sourcePoint_bev;
+            ray.SAD = currBeam.SAD;
+            ray.bixelWidth = currBeam.bixelWidth;
+
+            lateralRayCutOff = this.getLateralDistanceFromDoseCutOffOnRay(ray);
+            
+            % Ray tracing for beam i and ray j
+            [ray.ix,ray.radialDist_sq,ray.isoLatDistsX,ray.isoLatDistsZ,ray.latDistsX,ray.latDistsZ] = this.calcGeoDists(currBeam.rot_coordsVdoseGrid, ...
+                ray.sourcePoint_bev, ...
+                ray.targetPoint_bev, ...
+                ray.SAD, ...
+                find(~isnan(currBeam.radDepthVdoseGrid{1})), ...
+                lateralRayCutOff);
+
+            ray.radDepths = currBeam.radDepthVdoseGrid{1}(ray.ix);
+
+        end
+        
+        function lateralRayCutOff = getLateralDistanceFromDoseCutOffOnRay(this,ray)
+            lateralRayCutOff = this.effectiveLateralCutOff;
+        end     
+        
+        
+        function dij = fillDij(this,bixel,dij,stf,currBeamIdx,currRayIdx,currBixelIdx,counter)
+            % method for filling the dij struct with the computed dose cube
+            % last step in bixel dose calculation
+
+            %Only fill if we actually had bixel (indices) to compute
+            if ~isempty(bixel) || ~isempty(bixel.ix)
+                % Store in temporary containers to limit matrix filling
+                names = fieldnames(this.tmpMatrixContainers);
+                for q = 1:numel(names)
+                    qName = names{q};
+                    this.tmpMatrixContainers.(qName){mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(this.VdoseGrid(bixel.ix),1,bixel.(qName),dij.doseGrid.numOfVoxels,1);
+                end
+                
+                % Check if we write to the matrix
+                if mod(counter,this.numOfBixelsContainer) == 0 || counter == dij.totalNumOfBixels
+                    if ~this.calcDoseDirect
+                        if nargin < 8
+                            matRad_cfg = MatRad_Config.instance();
+                            matRad_cfg.dispError('Total bixel counter not provided in fillDij');
+                        end
+        
+                        dijColIx = (ceil(counter/this.numOfBixelsContainer)-1)*this.numOfBixelsContainer+1:counter;
+                        containerIx = 1:mod(counter-1,this.numOfBixelsContainer)+1;
+                        weight = 1;
+                    else
+                        dijColIx = currBeamIdx;
+                        containerIx = 1;
+                        if isfield(stf(currBeamIdx).ray(currRayIdx),'weight') && numel(stf(currBeamIdx).ray(currRayIdx).weight) >= currBixelIdx
+                            weight = stf(currBeamIdx).ray(currRayIdx).weight(currBixelIdx);
+                        else
+                            matRad_cfg = MatRad_Config.instance();
+                            matRad_cfg.dispError('No weight available for beam %d, ray %d, bixel %d',currBeamIdx,currRayIdx,currBixelIdx);
+                        end
+                    end
+                    
+                    % Iterate through all quantities
+                    for q = 1:numel(names)
+                        qName = names{q};
+                        if ~this.calcDoseDirect
+                            dij.(qName){1}(:,dijColIx) = [this.tmpMatrixContainers.(qName){containerIx,1}];
+                        else
+                            dij.(qName){1}(:,dijColIx) = dij.(qName){1}(:,dijColIx) + weight * this.tmpMatrixContainers.(qName){containerIx,1};
+                        end
+                    end
+                end
+            end
+
+            %Bookkeeping of bixel numbers
+            % remember beam and bixel number
+            if this.calcDoseDirect
+                dij.beamNum(currBeamIdx)    = currBeamIdx;
+                dij.rayNum(currBeamIdx)     = currBeamIdx;
+                dij.bixelNum(currBeamIdx)   = currBeamIdx;
+            else
+                dij.beamNum(counter)    = currBeamIdx;
+                dij.rayNum(counter)     = currRayIdx;
+                dij.bixelNum(counter)   = currBixelIdx;
+            end
+        end
     end
 
     methods (Static)
@@ -332,37 +451,21 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
             % check of radial distance exceeds lateral cutoff (projected to iso center)
             rad_distancesSq = latDistsX.^2 + latDistsZ.^2;
-            subsetMask = rad_distancesSq ./ rot_coords_temp(:,2).^2 <= lateralCutOff^2 /SAD^2;
+            subsetMask = rad_distancesSq <= (lateralCutOff/SAD)^2 * rot_coords_temp(:,2).^2;
+            
+            %Apply mask
+            latDistsX = latDistsX(subsetMask);
+            latDistsZ = latDistsZ(subsetMask);
 
-            % return index list within considered voxels
-            ix = radDepthIx(subsetMask);
+            isoLatDistsX = latDistsX./rot_coords_temp(subsetMask,2)*SAD;
+            isoLatDistsZ = latDistsZ./rot_coords_temp(subsetMask,2)*SAD;
 
             % return radial distances squared
             rad_distancesSq = rad_distancesSq(subsetMask);
 
-            % return x & z distance
-            % if nargout > 2
-            %    isoLatDistsX = latDistsX(subsetMask)./rot_coords_temp(subsetMask,2)*SAD;
-            %    isoLatDistsZ = latDistsZ(subsetMask)./rot_coords_temp(subsetMask,2)*SAD;
-            % end
-
-
-            % latDists
-            if nargout > 4
-                % latDists
-                latDistsX = latDistsX(subsetMask);
-                latDistsZ = latDistsZ(subsetMask);
-                isoLatDistsX = latDistsX./rot_coords_temp(subsetMask,2)*SAD;
-                isoLatDistsZ = latDistsZ./rot_coords_temp(subsetMask,2)*SAD;
-            else
-                % lateral distances projected to iso center plane
-                isoLatDistsX = latDistsX(subsetMask)./rot_coords_temp(subsetMask,2)*SAD;
-                isoLatDistsZ = latDistsZ(subsetMask)./rot_coords_temp(subsetMask,2)*SAD;
-            end
-
-
+            % return index list within considered voxels
+            ix = radDepthIx(subsetMask);
         end
-
     end
 
     %% deprecated properties

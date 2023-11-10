@@ -82,6 +82,12 @@ function classList = matRad_findSubclasses(superClassName,varargin)
     %Now test if it is a subclass    
     inherits = cellfun(@(mc) matRad_checkInheritance(mc,superClassName),classList);
     classList = classList(inherits);
+    
+    %We want classes to be a row vector, but the meta.class lists column
+    %vector
+    if ~isrow(classList)
+        classList = classList';
+    end
 end
 
 function metaClassList = matRad_getClassesFromFolder(folder,packageName)

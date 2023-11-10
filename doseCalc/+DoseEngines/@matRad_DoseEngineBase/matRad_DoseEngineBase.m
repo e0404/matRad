@@ -25,8 +25,8 @@ classdef (Abstract) matRad_DoseEngineBase < handle
     end
     
     properties (SetAccess = protected, GetAccess = public)
-        
-        numOfBixelsContainer;   % number of used bixel container
+        timers;                 % timers of dose calc
+
         numOfColumnsDij;        % number of columns in the dij struct
                                           
         yCoordsV_vox;           % y-coordinate voxel
@@ -47,13 +47,18 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         calcDoseDirect = false; % switch for direct cube / dij calculation 
     end
     
+    properties (Access = protected)
+        lastProgressUpdate;
+    end
+    
     properties (Constant)
         isDoseEngine = true; % const boolean for checking inheritance
     end
     
     properties (Constant, Abstract)
-       name; % readable name for dose engine
-       possibleRadiationModes; % radiation modes the engine is meant to process
+       name;                    % readable name for dose engine
+       possibleRadiationModes;  % radiation modes the engine is meant to process
+       %supportedQuantities;     % supported (influence) quantities. Does not include quantities that can be derived post-calculation.
     end
 
     properties (SetAccess = private)
@@ -192,7 +197,40 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         % Should be called at the beginning of calcDose method.
         % Can be expanded or changed by overwriting this method and calling
         % the superclass method inside of it
-        [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)         
+        [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)   
+        
+        % method for finalizing the dose calculation (e.g. postprocessing
+        % on dij or files
+        function dij = calcDoseFinalize(this,ct,cst,stf,dij)
+            
+            matRad_cfg = MatRad_Config.instance();
+            %Close Waitbar
+            if any(ishandle(this.hWaitbar))
+                delete(this.hWaitbar);
+            end
+
+            this.timers.full = toc(this.timers.full);
+            
+            matRad_cfg.dispInfo('Dose calculation finished in %g seconds!\n',this.timers.full);
+        end
+    
+        function progressUpdate(this,pos,total)
+            if nargin < 3
+                pos = pos*1000;
+                total=1000;
+            end
+            
+            if pos ~= total && cputime()-this.lastProgressUpdate < 1e-1
+                return;
+            end
+
+            matRad_progress(pos,total);
+            if any(ishandle(this.hWaitbar))
+                waitbar(pos/total,this.hWaitbar);
+            end
+            
+            this.lastProgressUpdate = cputime();
+        end
     end
     
     % Should be abstract methods but in order to satisfy the compatibility
