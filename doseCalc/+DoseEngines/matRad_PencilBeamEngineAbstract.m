@@ -74,7 +74,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             for i = 1:dij.numOfBeams % loop over all beams
 
                 %Initialize Beam Geometry
-                currBeam = this.calcDoseInitBeam(dij,ct,cst,stf,i);
+                currBeam = this.initBeam(dij,ct,cst,stf,i);
                 
                 %Keep tabs on bixels computed in this beam
                 bixelBeamCounter = 0;
@@ -177,12 +177,12 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
         end
 
-        function currBeam = calcDoseInitBeam(this,dij,ct,cst,stf,i)
+        function currBeam = initBeam(this,dij,ct,cst,stf,i)
             % Method for initializing the beams for analytical pencil beam
             % dose calculation
             %
             % call
-            %   this.calcDoseInitBeam(ct,stf,dij,i)
+            %   this.initBeam(ct,stf,dij,i)
             %
             % input
             %   ct:                         matRad ct struct

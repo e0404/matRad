@@ -223,12 +223,12 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
 
         end
 
-        function currBeam = calcDoseInitBeam(this,currBeam,ct,cst,stf,i)
+        function currBeam = initBeam(this,currBeam,ct,cst,stf,i)
             % Method for initializing the beams for analytical pencil beam
             % dose calculation
             %
             % call
-            %   this.calcDoseInitBeam(ct,stf,dij,i)
+            %   this.initBeam(ct,stf,dij,i)
             %
             % input
             %   ct:                         matRad ct struct
@@ -239,7 +239,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             % output
             %   dij:                        updated dij struct
 
-            currBeam = calcDoseInitBeam@DoseEngines.matRad_PencilBeamEngineAbstract(this,currBeam,ct,cst,stf,i);
+            currBeam = initBeam@DoseEngines.matRad_PencilBeamEngineAbstract(this,currBeam,ct,cst,stf,i);
 
             matRad_cfg = MatRad_Config.instance();
 

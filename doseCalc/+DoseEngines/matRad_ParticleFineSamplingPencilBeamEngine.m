@@ -104,12 +104,12 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
             bixel.radialDist_sq = reshape((bixel.latDists(:,1) + bixel.subPosX').^2 + (bixel.latDists(:,2) + bixel.subPosZ').^2,[],1,bixel.numOfSub);
         end
 
-        function currBeam = calcDoseInitBeam(this,dij,ct,cst,stf,i)
+        function currBeam = initBeam(this,dij,ct,cst,stf,i)
             % Method for initializing the beams for analytical pencil beam
             % dose calculation
             %
             % call
-            %   this.calcDoseInitBeam(dij,ct,cst,stf,i)
+            %   this.initBeam(dij,ct,cst,stf,i)
             %
             % input
             %   dij:                        matRad dij struct
@@ -127,7 +127,7 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
                 matRad_cfg.dispInfo('Keeping radiological depth cubes for fine-sampling!');
             end
 
-            currBeam = calcDoseInitBeam@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(this,dij,ct,cst,stf,i);
+            currBeam = initBeam@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(this,dij,ct,cst,stf,i);
         end
         
         function kernels = interpolateKernelsInDepth(this,bixel)

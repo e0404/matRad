@@ -282,8 +282,8 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             this.effectiveLateralCutOff = this.geometricLateralCutOff;
         end
 
-        function currBeam = calcDoseInitBeam(this,dij,ct,cst,stf,i)
-            currBeam = calcDoseInitBeam@DoseEngines.matRad_PencilBeamEngineAbstract(this,dij,ct,cst,stf,i);
+        function currBeam = initBeam(this,dij,ct,cst,stf,i)
+            currBeam = initBeam@DoseEngines.matRad_PencilBeamEngineAbstract(this,dij,ct,cst,stf,i);
             
             %currBeam.rot_coordsVdoseGrid = currBeam.rot_coordsVdoseGrid(~isnan(currBeam.radDepthVdoseGrid{1}),:);
             maxEnergy = max([currBeam.ray.energy]);
