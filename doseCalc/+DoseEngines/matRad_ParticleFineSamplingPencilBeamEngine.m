@@ -47,6 +47,8 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
 
             matRad_cfg = MatRad_Config.instance();
             this.fineSampling = matRad_cfg.propDoseCalc.defaultFineSamplingProperties;
+            this.fineSampling.method = 'fitCircle';
+            this.fineSampling.N = 2;
         end
     end
     
@@ -62,8 +64,7 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
         function bixel = initBixel(this,currRay,k)
             bixel = initBixel@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(this,currRay,k);
             
-            bixel.latDistsX = currRay.latDistsX(bixel.subRayIx);
-            bixel.latDistsZ = currRay.latDistsZ(bixel.subRayIx);
+            bixel.latDists = currRay.latDists(bixel.subRayIx,:);            
 
             % Given the initial sigmas of the sampling ray, this
             % function provides the weights for the sub-pencil beams,
@@ -72,9 +73,10 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
                 [bixel.finalSubWeight, bixel.sigmaSub, bixel.subPosX, bixel.subPosZ, bixel.numOfSub] = ...
                     this.calcFineSamplingMixture(sqrt(bixel.sigmaIniSq));
             else
+                matRad_cfg = MatRad_Config.instance();
                 if (this.fineSampling.sigmaSub < 0)
                     matRad_cfg.dispError('Chosen fine sampling sigma cannot be negative!');
-                elseif (this.fineSampling.sigmaSub > sqrt(sigmaIni_sq))
+                elseif (this.fineSampling.sigmaSub > sqrt(bixel.sigmaIniSq))
                     matRad_cfg.dispError('Chosen fine sampling sigma is too high for defined plan!');
                 end
             end
@@ -98,7 +100,8 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
 
             % compute radial distances relative to pencil beam
             % component
-            bixel.radialDist_sq = reshape(bsxfun(@plus,bixel.latDistsX,bixel.subPosX'),[],1,bixel.numOfSub).^2 + reshape(bsxfun(@plus,bixel.latDistsZ,bixel.subPosZ'),[],1,bixel.numOfSub).^2;
+            %bixel.radialDist_sq = reshape(bsxfun(@plus,bixel.latDists(:,1),bixel.subPosX'),[],1,bixel.numOfSub).^2 + reshape(bsxfun(@plus,bixel.latDists(:,2),bixel.subPosZ'),[],1,bixel.numOfSub).^2;
+            bixel.radialDist_sq = reshape((bixel.latDists(:,1) + bixel.subPosX').^2 + (bixel.latDists(:,2) + bixel.subPosZ').^2,[],1,bixel.numOfSub);
         end
 
         function currBeam = calcDoseInitBeam(this,dij,ct,cst,stf,i)

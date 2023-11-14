@@ -223,7 +223,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
 
         end
 
-        function dij = calcDoseInitBeam(this,dij,ct,cst,stf,i)
+        function currBeam = calcDoseInitBeam(this,currBeam,ct,cst,stf,i)
             % Method for initializing the beams for analytical pencil beam
             % dose calculation
             %
@@ -239,7 +239,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             % output
             %   dij:                        updated dij struct
 
-            dij = calcDoseInitBeam@DoseEngines.matRad_PencilBeamEngineAbstract(this,dij,ct,cst,stf,i);
+            currBeam = calcDoseInitBeam@DoseEngines.matRad_PencilBeamEngineAbstract(this,currBeam,ct,cst,stf,i);
 
             matRad_cfg = MatRad_Config.instance();
 
@@ -287,8 +287,8 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
                     currRay.interpKernels,...
                     currRay.radDepths,...
                     currRay.geoDepths,...
-                    currRay.isoLatDistsX,...
-                    currRay.isoLatDistsZ);
+                    currRay.isoLatDists(:,1),...
+                    currRay.isoLatDists(:,2));
 
                 % sample dose only for bixel based dose calculation
                 if this.enableDijSampling && ~this.isFieldBasedDoseCalc

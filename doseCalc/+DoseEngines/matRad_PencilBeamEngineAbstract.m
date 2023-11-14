@@ -42,7 +42,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
         radDepthCubes;          % only stored if property set accordingly
 
         cube;                   % relative electron density / stopping power cube
-        hlut;                   % hounsfield lookup table to craete relative electron density cube        
+        hlut;                   % hounsfield lookup table to craete relative electron density cube    
     end
 
     methods
@@ -89,7 +89,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                         % Progress Update & Bookkeeping
                         bixelCounter = bixelCounter + 1;
                         bixelBeamCounter = bixelBeamCounter + 1;
-                        this.progressUpdate(bixelCounter/dij.totalNumOfBixels);
+                        this.progressUpdate(bixelCounter,dij.totalNumOfBixels);
 
                         %Bixel Computation
                         currBixel = this.computeBixel(currRay,k);
@@ -167,7 +167,11 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             for n = 1:numel(names)
                 this.tmpMatrixContainers.(names{n}) = cell(this.numOfBixelsContainer,dij.numOfScenarios);
                 for i = 1:dij.numOfScenarios
-                    dij.(names{n}){i} = spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,1);
+                    if this.calcDoseDirect
+                        dij.(names{n}){i} = zeros(dij.doseGrid.numOfVoxels,this.numOfColumnsDij);
+                    else
+                        dij.(names{n}){i} = spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,1);
+                    end
                 end
             end
 
@@ -244,12 +248,10 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             %    (ct,1,this.VctGrid,this.VdoseGrid,dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z,radDepthVctGrid);
 
             currBeam.radDepthVdoseGrid = this.interpRadDepth(ct,1,this.VctGrid,this.VdoseGrid,dij.ctGrid,dij.doseGrid,radDepthVctGrid);
+            currBeam.rot_coordsVdoseGrid = rot_coordsVdoseGrid;
 
             matRad_cfg.dispInfo('done.\n');
-
-            % limit rotated coordinates to positions where ray tracing is availabe
-            currBeam.rot_coordsVdoseGrid = rot_coordsVdoseGrid(~isnan(currBeam.radDepthVdoseGrid{1}),:);
-            
+           
             %Reinitialize Progress:
             matRad_progress(1,1000);
         end
@@ -283,21 +285,20 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             lateralRayCutOff = this.getLateralDistanceFromDoseCutOffOnRay(ray);
             
             % Ray tracing for beam i and ray j
-            [ray.ix,ray.radialDist_sq,ray.isoLatDistsX,ray.isoLatDistsZ,ray.latDistsX,ray.latDistsZ] = this.calcGeoDists(currBeam.rot_coordsVdoseGrid, ...
+            [ray.ix,ray.latDists,ray.radialDist_sq,ray.isoLatDists] = this.calcGeoDists(currBeam.rot_coordsVdoseGrid, ...
                 ray.sourcePoint_bev, ...
                 ray.targetPoint_bev, ...
                 ray.SAD, ...
-                find(~isnan(currBeam.radDepthVdoseGrid{1})), ...
+                currBeam.ixRadDepths, ...
                 lateralRayCutOff);
-
+            
             ray.radDepths = currBeam.radDepthVdoseGrid{1}(ray.ix);
 
         end
         
         function lateralRayCutOff = getLateralDistanceFromDoseCutOffOnRay(this,ray)
             lateralRayCutOff = this.effectiveLateralCutOff;
-        end     
-        
+        end         
         
         function dij = fillDij(this,bixel,dij,stf,currBeamIdx,currRayIdx,currBixelIdx,counter)
             % method for filling the dij struct with the computed dose cube
@@ -309,7 +310,14 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                 names = fieldnames(this.tmpMatrixContainers);
                 for q = 1:numel(names)
                     qName = names{q};
-                    this.tmpMatrixContainers.(qName){mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(this.VdoseGrid(bixel.ix),1,bixel.(qName),dij.doseGrid.numOfVoxels,1);
+                    if this.calcDoseDirect                        
+                        %We can omit the resetting to zero because we will
+                        %use only the indices we write into
+                        %this.tmpMatrixContainers.(qName){mod(counter-1,this.numOfBixelsContainer)+1,1} = zeros(dij.doseGrid.numOfVoxels,1);                        
+                        %this.tmpMatrixContainers.(qName){mod(counter-1,this.numOfBixelsContainer)+1,1}(this.VdoseGrid(bixel.ix)) = bixel.(qName);
+                    else
+                        this.tmpMatrixContainers.(qName){mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(this.VdoseGrid(bixel.ix),1,bixel.(qName),dij.doseGrid.numOfVoxels,1);
+                    end
                 end
                 
                 % Check if we write to the matrix
@@ -340,7 +348,8 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                         if ~this.calcDoseDirect
                             dij.(qName){1}(:,dijColIx) = [this.tmpMatrixContainers.(qName){containerIx,1}];
                         else
-                            dij.(qName){1}(:,dijColIx) = dij.(qName){1}(:,dijColIx) + weight * this.tmpMatrixContainers.(qName){containerIx,1};
+                            %dij.(qName){1}(this.VdoseGrid(bixel.ix),dijColIx) = dij.(qName){1}(this.VdoseGrid(bixel.ix),dijColIx) + weight * this.tmpMatrixContainers.(qName){containerIx,1}(this.VdoseGrid(bixel.ix));
+                            dij.(qName){1}(this.VdoseGrid(bixel.ix),dijColIx) = dij.(qName){1}(this.VdoseGrid(bixel.ix),dijColIx) + weight * bixel.(qName);
                         end
                     end
                 end
@@ -362,7 +371,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
     methods (Static)
 
-        function [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ,latDistsX,latDistsZ] = ...
+        function [ix,latDists,rad_distancesSq,isoLatDists] = ...
                 calcGeoDists(rot_coords_bev, sourcePoint_bev, targetPoint_bev, SAD, radDepthIx, lateralCutOff)
             % matRad calculation of lateral distances from central ray
             % used for dose calculation
@@ -446,22 +455,25 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             end
 
             % Put [0 0 0] position CT in center of the beamlet.
-            latDistsX = rot_coords_temp(:,1) + sourcePoint_bev(1);
-            latDistsZ = rot_coords_temp(:,3) + sourcePoint_bev(3);
+            %latDistsX = rot_coords_temp(:,1) + sourcePoint_bev(1);
+            %latDistsZ = rot_coords_temp(:,3) + sourcePoint_bev(3);
+            latDists = rot_coords_temp(:,[1 3]) + sourcePoint_bev([1 3]);
 
             % check of radial distance exceeds lateral cutoff (projected to iso center)
-            rad_distancesSq = latDistsX.^2 + latDistsZ.^2;
+            %rad_distancesSq = latDistsX.^2 + latDistsZ.^2;
+            %subsetMask = rad_distancesSq <= (lateralCutOff/SAD)^2 * rot_coords_temp(:,2).^2;           
+            
+            rad_distancesSq = sum(latDists.^2,2);
             subsetMask = rad_distancesSq <= (lateralCutOff/SAD)^2 * rot_coords_temp(:,2).^2;
             
             %Apply mask
-            latDistsX = latDistsX(subsetMask);
-            latDistsZ = latDistsZ(subsetMask);
-
-            isoLatDistsX = latDistsX./rot_coords_temp(subsetMask,2)*SAD;
-            isoLatDistsZ = latDistsZ./rot_coords_temp(subsetMask,2)*SAD;
+            latDists = latDists(subsetMask,:);
 
             % return radial distances squared
             rad_distancesSq = rad_distancesSq(subsetMask);
+            
+            % return lateral distances projected onto isocenter
+            isoLatDists = latDists./rot_coords_temp(subsetMask,2)*SAD;           
 
             % return index list within considered voxels
             ix = radDepthIx(subsetMask);

@@ -28,10 +28,6 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
     end
 
     properties (SetAccess = protected, GetAccess = public)
-        letDoseTmpContainer;            % temporary dose LET container
-        alphaDoseTmpContainer;          % temporary dose alpha dose container
-        betaDoseTmpContainer;           % temporary dose beta dose container
-
         constantRBE = NaN;              % constant RBE value
 
         vTissueIndex;                   %Stores tissue indices available in the matRad base data
@@ -195,7 +191,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
 
             % find depth depended lateral cut off
             if this.dosimetricLateralCutOff == 1
-                currIx = currRay.radDepths <= currBixel.baseData.depths(end) + currBixel.offsetRadDepth;
+                currIx = currRay.radDepths <= currBixel.baseData.depths(end) + tmpOffset;
             elseif this.dosimetricLateralCutOff < 1 && this.dosimetricLateralCutOff > 0
                 
                 %{
@@ -213,7 +209,8 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                 %}                
 
                 if length(currBixel.baseData.LatCutOff.CutOff) > 1
-                    currIx = matRad_interp1((currBixel.baseData.LatCutOff.depths + tmpOffset)',(currBixel.baseData.LatCutOff.CutOff.^2)', currRay.radDepths,'nearest') >= currRay.radialDist_sq;
+                    %currIx = matRad_interp1((currBixel.baseData.LatCutOff.depths + tmpOffset)',(currBixel.baseData.LatCutOff.CutOff.^2)', currRay.radDepths,'nearest') >= currRay.radialDist_sq & currRay.radDepths <= currBixel.baseData.depths(end) + tmpOffset;
+                    currIx = matRad_interp1((currBixel.baseData.LatCutOff.depths + tmpOffset)',(currBixel.baseData.LatCutOff.CutOff.^2)', currRay.radDepths) >= currRay.radialDist_sq & currRay.radDepths <= currBixel.baseData.depths(end) + tmpOffset;
                 end
             else
                 matRad_cfg = MatRad_Config.instance();
@@ -287,6 +284,21 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
 
         function currBeam = calcDoseInitBeam(this,dij,ct,cst,stf,i)
             currBeam = calcDoseInitBeam@DoseEngines.matRad_PencilBeamEngineAbstract(this,dij,ct,cst,stf,i);
+            
+            %currBeam.rot_coordsVdoseGrid = currBeam.rot_coordsVdoseGrid(~isnan(currBeam.radDepthVdoseGrid{1}),:);
+            maxEnergy = max([currBeam.ray.energy]);
+            maxEnergyIx = find(this.round2(maxEnergy,4) == this.round2([this.machine.data.energy],4));
+            raShis = [currBeam.ray.rangeShifter];
+            minRaShi = min([raShis.eqThickness]);
+            radDepthOffset = this.machine.data(maxEnergyIx).offset + minRaShi;
+
+            % limit rotated coordinates to positions where ray tracing is availabe
+            currBeam.ixRadDepths = find(currBeam.radDepthVdoseGrid{1} < (this.machine.data(maxEnergyIx).depths(end) - radDepthOffset));% & ~isnan(currBeam.radDepthVdoseGrid{1}));
+            
+            %currBeam.radDepthVdoseGrid{1} = currBeam.radDepthVdoseGrid{1}(currBeam.ixRadDepths);
+            currBeam.rot_coordsVdoseGrid = currBeam.rot_coordsVdoseGrid(currBeam.ixRadDepths,:);
+
+            %Precompute CutOff
             this.calcLateralParticleCutOff(this.dosimetricLateralCutOff,stf(i));
         end
         
