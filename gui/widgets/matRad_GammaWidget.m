@@ -415,7 +415,7 @@ classdef matRad_GammaWidget < matRad_Widget
                         'Value', this.slice, ...
                         'SliderStep',[1 1]);
                 else
-                    error('Mismatch in dimensions of selected cubes')
+                    this.showWarning('Mismatch in dimensions of selected cubes')
                 end
 
 
@@ -447,7 +447,7 @@ classdef matRad_GammaWidget < matRad_Widget
         function editResolution_Callback(this, hObject, ~)
             t = sscanf (get(hObject,'String'), '%f');
             if numel(t) ~=3
-                error('Resolution value error')
+                this.showWarning('Resolution value error')
             else
                 this.resolution = t;
             end
@@ -456,7 +456,7 @@ classdef matRad_GammaWidget < matRad_Widget
         function editGammaCrit_Callback(this, hObject, ~)
             t = sscanf (get(hObject,'String'), '%f');
             if numel(t) ~=2
-                error('Gamma Criterion value error')
+                this.showWarning('Gamma Criterion value error')
             else
                 this.criteria = t;
             end
@@ -465,7 +465,7 @@ classdef matRad_GammaWidget < matRad_Widget
         function editInterpolations_Callback(this, hObject, ~)
             t = str2double(get(hObject,'String'));
             if ~isnumeric(t)
-                error('Number of Interpolations value error')
+                this.showWarning('Number of Interpolations value error')
             else
                 this.n = t;
             end

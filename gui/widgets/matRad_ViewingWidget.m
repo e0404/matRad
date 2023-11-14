@@ -699,7 +699,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                     load(fileName);
                     SAD = machine.meta.SAD;
                 catch
-                    error(['Could not find the following machine file: ' fileName ]);
+                    this.showError(['Could not find the following machine file: ' fileName ]);
                 end
                 
                 % clear view and initialize some values

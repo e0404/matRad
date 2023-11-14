@@ -283,7 +283,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                             set(handles.txtInfo,'String','ready for dose calculation');
                             set(handles.btnOptimize ,'Enable','on');
                         else 
-                            matRad_cfg.dispWarning(msg);
+                            this.showWarning(msg);
                         end
                     end
 
@@ -294,7 +294,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                             set(handles.txtInfo,'String','ready for optimization');
                             set(handles.btnOptimize ,'Enable','on'); 
                         else 
-                            matRad_cfg.dispWarning(msg);
+                            this.showWarning(msg);
                         end
                    end
 
@@ -308,7 +308,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     end
                 end
             else
-                matRad_cfg.dispWarning('could not load ct/cst ');
+                this.showWarning('could not load ct/cst ');
             end
             this.handles=handles;
         end
@@ -593,7 +593,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
 
                 
                 if sum([stf.totalNumOfBixels]) ~= length(resultGUI.w)%(['w' Suffix]))
-                    warndlg('weight vector does not corresponding to current steering file');
+                    this.showWarning('weight vector does not corresponding to current steering file');
                     return
                 end
                 
@@ -796,7 +796,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     [~,name,~] = fileparts(filename{1});
                     [cube,~] = matRad_readCube(fullfile(filepath,filename{1}));
                     if ~isequal(ct.cubeDim, size(cube))
-                        errordlg('Dimensions of the imported cube do not match with ct','Import failed!','modal');
+                        this.showError('Dimensions of the imported cube do not match with ct','Import failed!','modal');
                         continue;
                     end
                     

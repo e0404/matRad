@@ -748,7 +748,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
                     %handles.IsoDose.NewIsoDoseFlag = true;
                 end
             catch
-                warning('Couldnt parse iso dose levels - using default values');
+                this.showWarning('Couldnt parse iso dose levels - using default values');
                 this.viewingWidgetHandle.IsoDose_Levels = 0;
             end
             this.handles = handles;

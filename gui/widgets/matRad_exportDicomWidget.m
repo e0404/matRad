@@ -203,10 +203,10 @@ classdef matRad_exportDicomWidget < matRad_Widget
             
             %Sanity check-
             if numel(exportDir) == 0
-                errordlg('No Export folder selected!');
+                this.showError('No Export folder selected!');
                 return;
             elseif ~exist(exportDir,'dir')
-                errordlg(['Folder ' exportDir ' does not exist!']);
+                this.showError(['Folder ' exportDir ' does not exist!']);
                 return;
             else
                 %Add file separator if necessary
@@ -236,12 +236,12 @@ classdef matRad_exportDicomWidget < matRad_Widget
                     end
                 end
             catch ME
-                warning(ME.identifier,'couldn''t export! Reason: %s\n',ME.message)
+                this.showWarning('couldn''t export! Reason: %s\n',ME.message)
             end
             
             
             if ~var_selected
-                errordlg('No variables selected!');
+                this.showWarning('No variables selected!');
                 return;
             end
             
@@ -281,7 +281,7 @@ classdef matRad_exportDicomWidget < matRad_Widget
             
             %Check if the user specified an existing directory
             if ~exist(exportDir,'dir')
-                warndlg(['Folder ' exportDir ' does not exist!']);
+                this.showWarning(['Folder ' exportDir ' does not exist!']);
                 exportDir = '';
             end
             
