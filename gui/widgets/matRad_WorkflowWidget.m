@@ -427,7 +427,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 cst = evalin('base','cst');
                 % optimize
                 [resultGUIcurrentRun,usedOptimizer] = matRad_fluenceOptimization(dij,cst,pln);
-                if pln.propOpt.conf3D && strcmp(pln.radiationMode,'photons')
+                if isfield(pln,'propOpt') && isfield(pln.propOpt,'conf3D') && pln.propOpt.conf3D && strcmp(pln.radiationMode,'photons')
                     resultGUIcurrentRun.w = resultGUIcurrentRun.w .* ones(dij.totalNumOfBixels,1);  
                     resultGUIcurrentRun.wUnsequenced = resultGUIcurrentRun.w;
                 end
