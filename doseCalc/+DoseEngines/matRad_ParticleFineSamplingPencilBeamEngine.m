@@ -61,6 +61,21 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
             ray.rotMat_system_T = beam.rotMat_system_T;
         end
 
+        % We override this function to get full lateral distances
+        function ray = getRayGeometryFromBeam(this,ray,currBeam)
+            lateralRayCutOff = this.getLateralDistanceFromDoseCutOffOnRay(ray);
+
+            % Ray tracing for beam i and ray j
+            [ray.ix,ray.radialDist_sq,ray.latDists] = this.calcGeoDists(currBeam.rot_coordsVdoseGrid, ...
+                ray.sourcePoint_bev, ...
+                ray.targetPoint_bev, ...
+                ray.SAD, ...
+                currBeam.ixRadDepths, ...
+                lateralRayCutOff);
+            
+            ray.radDepths = currBeam.radDepthVdoseGrid{1}(ray.ix);
+        end
+
         function bixel = initBixel(this,currRay,k)
             bixel = initBixel@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(this,currRay,k);
             
@@ -154,43 +169,7 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
             bixel.sigmaSubSq = bixel.sigmaSub.^2;            
             
             dg = ~isfield(bixel.baseData,'sigma');
-
-            % run over components
-            %{
-            for c = 1:bixel.numOfSub 
-            
-                if dg
-                    % compute lateral sigmas
-                    sigmaSqNarrow = kernel.sigma1(:,:,c).^2 + bixel.sigmaSubSq(c);
-                    sigmaSqBroad  = kernel.sigma2(:,:,c).^2 + bixel.sigmaSubSq(c);
-
-                    % calculate lateral profile
-                    L_Narr =  exp( -bixel.radialDist_sq(:,:,c) ./ (2*sigmaSqNarrow))./(2*pi*sigmaSqNarrow);
-                    L_Bro  =  exp( -bixel.radialDist_sq(:,:,c) ./ (2*sigmaSqBroad ))./(2*pi*sigmaSqBroad );
-                    L = (1-kernel.weight).*L_Narr + kernel.weight.*L_Bro;
-                else
-                    %compute lateral sigma
-                    sigmaSq = kernel.sigma(:,:,c).^2 + bixel.sigmaSubSq(c);
-                    L = exp( -bixel.radialDist_sq(:,:,c) ./ (2*sigmaSq))./ (2*pi*sigmaSq);
-                end
-                
-                tmpDose = zeros(size(bixel.physicalDose));
-                tmpDose(:) = bixel.finalSubWeight(c) * bixel.baseData.LatCutOff.CompFac * L .* kernel.Z(:,:,c);
-
-                % check if we have valid dose values
-                if any(isnan(bixel.physicalDose)) || any(bixel.physicalDose<0)
-                    matRad_cfg = MatRad_Config.instance();
-                    matRad_cfg.dispError('Numerical Error in particle dose calculation.');
-                end
-
-                if this.calcLET
-                    bixel.mLETDose = bixel.mLETDose + tmpDose .* kernel.LET(:,:,c);
-                end
-
-                bixel.physicalDose = bixel.physicalDose + tmpDose;
-            end
-            %}
-            
+      
             if dg
                 % compute lateral sigmas
                 sigmaSqNarrow = squeeze(kernel.sigma1).^2 + bixel.sigmaSubSq';

@@ -129,10 +129,6 @@ pln.propDoseCalc.fineSampling.N = 4;
 % deviation of the sub Gaussian beams, only used when fine sampling
 % method 'russo' is selected', default is s = 1;
 
-% Indirect call for fine sampling dose calculation:    
-% dijFS = matRad_calcParticleDose(ct,stf,pln,cst,false);
-% resultGUI_FS = matRad_calcCubes(resultGUI.w,dijFS);
-
 % Direct call for fine sampling dose calculation:
 resultGUI_FS = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
 

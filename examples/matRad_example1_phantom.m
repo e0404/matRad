@@ -219,7 +219,7 @@ pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
 stf = matRad_generateStf(ct,cst,pln);
 
 %% Dose Calculation
-dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+dij = matRad_calcDose(ct,cst,stf,pln);
 
 %% Export dij matrix
 matRad_exportDij('dij.bin',dij,stf);

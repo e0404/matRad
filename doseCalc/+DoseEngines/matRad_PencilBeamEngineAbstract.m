@@ -170,11 +170,12 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                     if this.calcDoseDirect
                         dij.(names{n}){i} = zeros(dij.doseGrid.numOfVoxels,this.numOfColumnsDij);
                     else
-                        dij.(names{n}){i} = spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,1);
+                        %We preallocate a sparse matrix with sparsity of
+                        %1e-3 to make the filling slightly faster
+                        dij.(names{n}){i} = spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,round(prod(dij.doseGrid.numOfVoxels,this.numOfColumnsDij)*1e-3));
                     end
                 end
             end
-
         end
 
         function currBeam = initBeam(this,dij,ct,cst,stf,i)
@@ -249,6 +250,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
             currBeam.radDepthVdoseGrid = this.interpRadDepth(ct,1,this.VctGrid,this.VdoseGrid,dij.ctGrid,dij.doseGrid,radDepthVctGrid);
             currBeam.rot_coordsVdoseGrid = rot_coordsVdoseGrid;
+            currBeam.ixRadDepths = this.VdoseGrid;
 
             matRad_cfg.dispInfo('done.\n');
            
@@ -282,10 +284,14 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             ray.SAD = currBeam.SAD;
             ray.bixelWidth = currBeam.bixelWidth;
 
+            ray = this.getRayGeometryFromBeam(ray,currBeam);
+        end
+
+        function ray = getRayGeometryFromBeam(this,ray,currBeam)
             lateralRayCutOff = this.getLateralDistanceFromDoseCutOffOnRay(ray);
-            
+
             % Ray tracing for beam i and ray j
-            [ray.ix,ray.latDists,ray.radialDist_sq,ray.isoLatDists] = this.calcGeoDists(currBeam.rot_coordsVdoseGrid, ...
+            [ray.ix,ray.radialDist_sq,ray.latDists,ray.isoLatDists] = this.calcGeoDists(currBeam.rot_coordsVdoseGrid, ...
                 ray.sourcePoint_bev, ...
                 ray.targetPoint_bev, ...
                 ray.SAD, ...
@@ -293,7 +299,6 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                 lateralRayCutOff);
             
             ray.radDepths = currBeam.radDepthVdoseGrid{1}(ray.ix);
-
         end
         
         function lateralRayCutOff = getLateralDistanceFromDoseCutOffOnRay(this,ray)
@@ -347,6 +352,8 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                         qName = names{q};
                         if ~this.calcDoseDirect
                             dij.(qName){1}(:,dijColIx) = [this.tmpMatrixContainers.(qName){containerIx,1}];
+                            %Clean container
+                            this.tmpMatrixContainers.(qName)(containerIx,1) = cell(numel(containerIx,1));
                         else
                             %dij.(qName){1}(this.VdoseGrid(bixel.ix),dijColIx) = dij.(qName){1}(this.VdoseGrid(bixel.ix),dijColIx) + weight * this.tmpMatrixContainers.(qName){containerIx,1}(this.VdoseGrid(bixel.ix));
                             dij.(qName){1}(this.VdoseGrid(bixel.ix),dijColIx) = dij.(qName){1}(this.VdoseGrid(bixel.ix),dijColIx) + weight * bixel.(qName);
@@ -371,7 +378,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
     methods (Static)
 
-        function [ix,latDists,rad_distancesSq,isoLatDists] = ...
+        function [ix,rad_distancesSq,latDists,isoLatDists] = ...
                 calcGeoDists(rot_coords_bev, sourcePoint_bev, targetPoint_bev, SAD, radDepthIx, lateralCutOff)
             % matRad calculation of lateral distances from central ray
             % used for dose calculation
@@ -466,17 +473,25 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             rad_distancesSq = sum(latDists.^2,2);
             subsetMask = rad_distancesSq <= (lateralCutOff/SAD)^2 * rot_coords_temp(:,2).^2;
             
-            %Apply mask
-            latDists = latDists(subsetMask,:);
+            %Apply mask for return quantities
+
+            % index list within considered voxels
+            ix = radDepthIx(subsetMask);
 
             % return radial distances squared
-            rad_distancesSq = rad_distancesSq(subsetMask);
+            if nargout > 1
+                rad_distancesSq = rad_distancesSq(subsetMask);
+            end
             
-            % return lateral distances projected onto isocenter
-            isoLatDists = latDists./rot_coords_temp(subsetMask,2)*SAD;           
-
-            % return index list within considered voxels
-            ix = radDepthIx(subsetMask);
+            %lateral distances in X & Z
+            if nargout > 2
+                latDists = latDists(subsetMask,:);
+            end
+            
+            % lateral distances projected onto isocenter
+            if nargout > 3
+                isoLatDists = latDists./rot_coords_temp(subsetMask,2)*SAD;           
+            end            
         end
     end
 

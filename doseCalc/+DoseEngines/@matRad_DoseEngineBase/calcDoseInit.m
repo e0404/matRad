@@ -47,7 +47,7 @@ if ~matRad_cfg.disableGUI
     % prevent closure of waitbar and show busy state
     set(this.hWaitbar,'pointer','watch');
 end
-this.lastProgressUpdate = cputime();
+this.lastProgressUpdate = tic;
 
 if numel(unique({stf(:).machine})) ~= 1 || numel(unique({stf(:).radiationMode})) ~= 1
     matRad_cfg.dispError('machine and radiation mode need to be unique within supplied stf!');

@@ -180,6 +180,22 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             X = structfun(@(v) matRad_interp1(depths,v,bixel.radDepths,'nearest'),X,'UniformOutput',false); %Extrapolate to zero?           
         end
 
+        % We override this function to boost efficiency a bit (latDistX & Z
+        % not needed)
+        function ray = getRayGeometryFromBeam(this,ray,currBeam)
+            lateralRayCutOff = this.getLateralDistanceFromDoseCutOffOnRay(ray);
+
+            % Ray tracing for beam i and ray j
+            [ray.ix,ray.radialDist_sq] = this.calcGeoDists(currBeam.rot_coordsVdoseGrid, ...
+                ray.sourcePoint_bev, ...
+                ray.targetPoint_bev, ...
+                ray.SAD, ...
+                currBeam.ixRadDepths, ...
+                lateralRayCutOff);
+            
+            ray.radDepths = currBeam.radDepthVdoseGrid{1}(ray.ix);
+        end
+
         function [currBixel] = getBixelIndicesOnRay(this,currBixel,currRay)
             
             % create offset vector to account for additional offsets modelled in the base data and a potential

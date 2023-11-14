@@ -220,7 +220,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
                 total=1000;
             end
             
-            if pos ~= total && cputime()-this.lastProgressUpdate < 1e-1
+            if pos ~= total && toc(this.lastProgressUpdate) < 1e-1
                 return;
             end
 
@@ -229,7 +229,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
                 waitbar(pos/total,this.hWaitbar);
             end
             
-            this.lastProgressUpdate = cputime();
+            this.lastProgressUpdate = tic;
         end
     end
     

@@ -240,6 +240,9 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             %   dij:                        updated dij struct
 
             currBeam = initBeam@DoseEngines.matRad_PencilBeamEngineAbstract(this,currBeam,ct,cst,stf,i);
+            
+            currBeam.ixRadDepths = find( ~isnan(currBeam.radDepthVdoseGrid{1}));
+            currBeam.rot_coordsVdoseGrid = currBeam.rot_coordsVdoseGrid(currBeam.ixRadDepths,:);
 
             matRad_cfg = MatRad_Config.instance();
 
