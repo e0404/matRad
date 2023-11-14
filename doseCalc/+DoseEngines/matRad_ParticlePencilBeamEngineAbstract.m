@@ -227,6 +227,8 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                 if length(currBixel.baseData.LatCutOff.CutOff) > 1
                     %currIx = matRad_interp1((currBixel.baseData.LatCutOff.depths + tmpOffset)',(currBixel.baseData.LatCutOff.CutOff.^2)', currRay.radDepths,'nearest') >= currRay.radialDist_sq & currRay.radDepths <= currBixel.baseData.depths(end) + tmpOffset;
                     currIx = matRad_interp1((currBixel.baseData.LatCutOff.depths + tmpOffset)',(currBixel.baseData.LatCutOff.CutOff.^2)', currRay.radDepths) >= currRay.radialDist_sq & currRay.radDepths <= currBixel.baseData.depths(end) + tmpOffset;
+                else
+                    currIx = currBixel.baseData.LatCutOff.CutOff.^2 >= currRay.radialDist_sq & currRay.radDepths <= currBixel.baseData.depths(end) + tmpOffset;
                 end
             else
                 matRad_cfg = MatRad_Config.instance();
