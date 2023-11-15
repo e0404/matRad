@@ -207,7 +207,7 @@ else
 end
 
 if nonStandardDirection
-    matRad_cfg.dispInfo(['Non-standard patient orientation.\n'...
+    matRad_cfg.dispWarning(['Non-standard patient orientation.\n'...
         'CT might not fit to contoured structures\n'])
 end
 
