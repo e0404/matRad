@@ -83,6 +83,19 @@ classdef matRad_ParticleAnalyticalBortfeldEngine < DoseEngines.matRad_ParticlePe
             [dij,ct,cst,stf] = this.calcDoseInit@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(ct,cst,stf);
         end
 
+        function chooseLateralModel(this)
+            %Now check if we need tho chose the lateral model because it
+            %was set to auto
+            if strcmp(this.lateralModel,'auto') 
+                this.lateralModel = 'single';
+            elseif ~strcmp(this.lateralModel,'single') 
+                matRad_cfg.dispWarning('Engine only supports analytically computed singleGaussian lateral Model!');
+                this.lateralModel = 'single';
+            end              
+
+            matRad_cfg.dispInfo('Using an analytically computed %s Gaussian pencil-beam kernel model!\n');
+        end
+
         function [currBixel] = getBixelIndicesOnRay(this,currBixel,currRay)
             
             % create offset vector to account for additional offsets modelled in the base data and a potential
