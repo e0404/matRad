@@ -31,6 +31,24 @@ function [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)
 
 matRad_cfg =  MatRad_Config.instance();
 
+this.timers.full = tic;
+
+if this.calcDoseDirect
+    msg = sprintf('Forward dose calculation using  ''%s'' Dose Engine...',this.name);
+else
+    msg = sprintf('Dose influence matrix calculation using  ''%s'' Dose Engine...',this.name);
+end
+matRad_cfg.dispInfo('%s\n',msg);
+
+% initialize waitbar
+% TODO: This should be managed from the user interface instead
+if ~matRad_cfg.disableGUI
+    this.hWaitbar = waitbar(0,msg);
+    % prevent closure of waitbar and show busy state
+    set(this.hWaitbar,'pointer','watch');
+end
+this.lastProgressUpdate = tic;
+
 if numel(unique({stf(:).machine})) ~= 1 || numel(unique({stf(:).radiationMode})) ~= 1
     matRad_cfg.dispError('machine and radiation mode need to be unique within supplied stf!');
 end
@@ -95,10 +113,8 @@ dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
 % check if full dose influence data is required
 if this.calcDoseDirect
     this.numOfColumnsDij      = length(stf);
-    this.numOfBixelsContainer = 1;
 else
     this.numOfColumnsDij      = dij.totalNumOfBixels;
-    this.numOfBixelsContainer = ceil(dij.totalNumOfBixels/10);
 end
 
 % set up arrays for book keeping
@@ -142,6 +158,8 @@ this.VctGrid = VctGrid;
 
 % load machine file from base data folder
 this.machine = this.loadMachine(stf(1).radiationMode,stf(1).machine);
+
+this.doseGrid = dij.doseGrid;
 
 end
 

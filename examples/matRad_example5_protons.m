@@ -55,6 +55,8 @@ pln.machine       = 'Generic';
 % Therefore we set bioOptimization to const_RBExD
 pln.propOpt.bioOptimization = 'const_RBExD';
 
+pln.propDoseCalc.engine = 'Particle Pencil-Beam';
+
 %%
 % for particles it is possible to also calculate the LET disutribution
 % alongside the physical dose. Therefore you need to activate the
@@ -70,7 +72,7 @@ pln.propStf.bixelWidth    = 3;
 pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 pln.propOpt.runDAO        = 0;
-pln.propOpt.runSequencing = 0;
+pln.propSeq.runSequencing = 0;
 
 % dose calculation settings
 pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
@@ -84,7 +86,7 @@ stf = matRad_generateStf(ct,cst,pln);
 % Lets generate dosimetric information by pre-computing dose influence 
 % matrices for unit beamlet intensities. Having dose influences available 
 % allows for subsequent inverse optimization. 
-dij = matRad_calcParticleDose(ct,stf,pln,cst);
+dij = matRad_calcDose(ct,cst,stf,pln);
 
 %% Inverse Optimization for IMPT
 % The goal of the fluence optimization is to find a set of bixel/spot 

@@ -64,8 +64,8 @@ end
 
 %%
 % Enable sequencing and direct aperture optimization (DAO).
-pln.propOpt.runSequencing = 1;
-pln.propOpt.runDAO        = 1;
+pln.propSeq.runSequencing = true;
+pln.propOpt.runDAO        = true;
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
@@ -74,7 +74,7 @@ stf = matRad_generateStf(ct,cst,pln);
 % Lets generate dosimetric information by pre-computing dose influence 
 % matrices for unit beamlet intensities. Having dose influences available 
 % allows for subsequent inverse optimization.
-dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+dij = matRad_calcDose(ct,cst,stf,pln);
 
 %% Inverse Planning for IMRT
 % The goal of the fluence optimization is to find a set of beamlet weights 
@@ -90,7 +90,7 @@ matRadGUI;
 % order to modulate the intensity of the beams with multiple static 
 % segments, so that translates each intensity map into a set of deliverable 
 % aperture shapes.
-resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,5);
+resultGUI = matRad_sequencing(resultGUI,stf,dij,pln);
 
 %% DAO - Direct Aperture Optimization
 % The Direct Aperture Optimization is an optimization approach where we 

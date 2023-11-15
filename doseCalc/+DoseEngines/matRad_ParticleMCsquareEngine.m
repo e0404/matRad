@@ -1,8 +1,8 @@
-classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
+classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 % Engine for particle dose calculation using monte carlo calculation
 % specificly the mc square method
 % for more informations see superclass
-% DoseEngines.matRad_DoseEngineMonteCarlo
+% DoseEngines.matRad_MonteCarloEngineAbstract
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -30,12 +30,13 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
         
         mcSquareBinary; %Executable for mcSquare simulation
         nbThreads; %number of threads for MCsquare, 0 is all available
-        
+
+        constantRBE = NaN;              % constant RBE value        
     end      
     
     methods
         
-        function this = matRad_DoseEngineMCsquare(pln)
+        function this = matRad_ParticleMCsquareEngine(pln)
             % Constructor
             %
             % call
@@ -48,21 +49,27 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
             %   cst:                        matRad cst struct
             
             % call superclass constructor
-            this = this@DoseEngines.matRad_DoseEngineMonteCarlo(pln);
-   
-            % create config instance
-            matRad_cfg = MatRad_Config.instance();
-            
-            % check pln values if struct is given
-            % TODO: do we need this?
-            if nargin < 1          
-                this.checkPln(pln);  
-            else
-                matRad_cfg.dispInfo('No pln struct given. Base properties will have to be set later.\n')
-            end       
+            this = this@DoseEngines.matRad_MonteCarloEngineAbstract(pln);
+
+            % check if bio optimization is needed and set the
+            % coresponding boolean accordingly
+            % TODO:
+            % This should not be handled here as an optimization property
+            % We should rather make optimization dependent on what we have
+            % decided to calculate here.
+            if nargin > 0 
+                if (isfield(pln,'propOpt')&& isfield(pln.propOpt,'bioOptimization')&& ...
+                    (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') ||...
+                    isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) && ...
+                    strcmp(pln.radiationMode,'carbon'))
+                this.calcBioDose = true;
+                elseif strcmp(pln.radiationMode,'protons') && isfield(pln,'propOpt') && isfield(pln.propOpt,'bioOptimization') && isequal(pln.propOpt.bioOptimization,'const_RBExD')
+                    this.constantRBE = 1.1;                    
+                end
+            end
         end
         
-        function dij = calcDose(this,ct,cst,stf,pln)
+        function dij = calcDose(this,ct,cst,stf)
             % matRad MCsqaure monte carlo photon dose calculation wrapper
             % can be automaticly called through matRad_calcDose or
             % matRad_calcParticleDoseMC
@@ -78,7 +85,6 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
             %   ct:          	matRad ct struct
             %   cst:            matRad cst struct
             %   stf:         	atRad steering information struct
-            %   pln:            matRad plan meta information struct
             %   
             % output
             %   dij:            matRad dij struct
@@ -102,9 +108,7 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
             % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
             matRad_cfg = MatRad_Config.instance();
-            
-            this.checkPln(pln);
-            
+
 
             %% check if binaries are available
             % Executables for simulation
@@ -154,11 +158,6 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
             % set absolute calibration factor
             % convert from eV/g/primary to Gy 1e6 primaries
             absCalibrationFactorMC2 = 1.602176e-19 * 1.0e+9;
-
-            if isequal(pln.propOpt.bioOptimization,'const_RBExD')
-                        dij.RBE = 1.1;
-                        matRad_cfg.dispInfo('matRad: Using a constant RBE of %g\n',dij.RBE);
-            end
    
             % MCsquare settings
             MCsquareConfigFile = 'MCsquareConfig.txt';
@@ -282,15 +281,8 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
 
             matRad_cfg.dispInfo('matRad: done!\n');
 
-            try
-                % wait 0.1s for closing all waitbars
-                allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar');
-                delete(allWaitBarFigures);
-                pause(0.1);
-            catch
-            end
-
             %% clear all data
+            %could also be moved to the "finalize" function
             delete([MCsquareConfig.CT_File(1:end-4) '.*']);
             delete('currBixels.txt');
             delete('MCsquareConfig.txt');
@@ -309,34 +301,15 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
             % cd back
             cd(this.currFolder);
 
+            %Finalize dose calculation
+            dij = this.calcDoseFinalize(ct,cst,stf,dij);
+
         end
         
     end
     
     methods(Access = protected)
-        
-        function checkPln(this,pln)
-        % CHECKPLN Check pln fields,
-        %   Checking if the properties defined in pln are
-        %   supported for this specific dose calc engine 
-        %   could be set as static method, because this isn't needed
-            
-            disp(nargin);
-
-            if ~strcmp(pln.radiationMode,'protons') || ~strcmp(pln.machine,'generic_MCsquare')
-                matRad_cfg.dispError('Wrong radiation modality and/or machine. For now MCsquare requires machine generic_MCsquare!');    
-            end   
-                     
-            if isfield(pln,'propMC') && isfield(pln.propMC,'outputVariance')
-                matRad_cfg.dispWarning('Variance scoring for MCsquare not yet supported.');
-            end
-
-            if ~strcmp(pln.radiationMode,'protons')
-                errordlg('MCsquare is only supported for protons');
-            end
-            
-        end
-       
+              
         function setUp(this,nCasePerBixel,calcDoseDirect)    
         % SETUP Set up properties used for dose calculation
         %
@@ -377,7 +350,7 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
             matRad_cfg = MatRad_Config.instance();            
 
             %% Call Superclass init function
-            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_DoseEngineMonteCarlo(this,ct,cst,stf); 
+            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_MonteCarloEngineAbstract(this,ct,cst,stf); 
 
             % Since MCsquare 1.1 only allows similar resolution in x&y, we do some
             % extra checks on that before calling the normal calcDoseInit. First, we make sure a
@@ -401,7 +374,11 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
             end
             
             % prefill ordering of MCsquare bixels
-            dij.MCsquareCalcOrder = NaN*ones(dij.totalNumOfBixels,1);            
+            dij.MCsquareCalcOrder = NaN*ones(dij.totalNumOfBixels,1);  
+
+            if ~isnan(this.constantRBE) 
+                dij.RBE = this.constantRBE;
+            end
         end
         
         
@@ -461,7 +438,7 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
                 checkBasic = isfield(machine,'meta') && isfield(machine,'data');
 
                 %check modality
-                checkModality = any(strcmp(DoseEngines.matRad_DoseEngineMCsquare.possibleRadiationModes, machine.meta.radiationMode));
+                checkModality = any(strcmp(DoseEngines.matRad_ParticleMCsquareEngine.possibleRadiationModes, machine.meta.radiationMode));
                 
                 preCheck = checkBasic && checkModality;
 
@@ -474,7 +451,7 @@ classdef matRad_DoseEngineMCsquare < DoseEngines.matRad_DoseEngineMonteCarlo
             end
 
             %Check the binaries
-            hasBinaries = DoseEngines.matRad_DoseEngineMCsquare.checkBinaries();
+            hasBinaries = DoseEngines.matRad_ParticleMCsquareEngine.checkBinaries();
             
             if ~hasBinaries
                 return;

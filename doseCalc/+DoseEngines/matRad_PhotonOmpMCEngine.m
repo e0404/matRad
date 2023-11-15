@@ -1,7 +1,7 @@
-classdef matRad_DoseEnginePhotonsOmpMC < DoseEngines.matRad_DoseEngineMonteCarlo
+classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
     % Engine for photon dose calculation based on monte carlo
     % for more informations see superclass
-    % DoseEngines.matRad_DoseEngineMonteCarlo
+    % DoseEngines.matRad_MonteCarloEngineAbstract
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
@@ -37,7 +37,7 @@ classdef matRad_DoseEnginePhotonsOmpMC < DoseEngines.matRad_DoseEngineMonteCarlo
     end
 
     methods
-        function this = matRad_DoseEnginePhotonsOmpMC(pln)
+        function this = matRad_PhotonOmpMCEngine(pln)
             % Constructor
             %
             % call
@@ -47,7 +47,7 @@ classdef matRad_DoseEnginePhotonsOmpMC < DoseEngines.matRad_DoseEngineMonteCarlo
             %   pln:                        matRad plan meta information struct
 
             % call superclass constructor
-            this = this@DoseEngines.matRad_DoseEngineMonteCarlo(pln);
+            this = this@DoseEngines.matRad_MonteCarloEngineAbstract(pln);
 
             matRad_cfg = MatRad_Config.instance();
             this.omcFolder = [matRad_cfg.matRadRoot filesep 'ompMC'];
@@ -63,7 +63,7 @@ classdef matRad_DoseEnginePhotonsOmpMC < DoseEngines.matRad_DoseEngineMonteCarlo
             end
         end
 
-        function dij = calcDose(this,ct,cst,stf,pln)
+        function dij = calcDose(this,ct,cst,stf)
             % matRad ompMC monte carlo photon dose calculation wrapper
             % can be automaticly called through matRad_calcDose or
             % matRad_calcPhotonDoseMC
@@ -74,7 +74,6 @@ classdef matRad_DoseEnginePhotonsOmpMC < DoseEngines.matRad_DoseEngineMonteCarlo
             % input
             %   ct:                         matRad ct struct
             %   stf:                        matRad steering information struct
-            %   pln:                        matRad plan meta information struct
             %   cst:                        matRad cst struct
             % output
             %   dij:                        matRad dij struct
@@ -95,11 +94,7 @@ classdef matRad_DoseEnginePhotonsOmpMC < DoseEngines.matRad_DoseEngineMonteCarlo
             %
             % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
             matRad_cfg =  MatRad_Config.instance();
-
-            %start evaluation timer
-            tic
 
             %run calcDoseInit as usual
             [dij,ct,cst,stf] = this.calcDoseInit(ct,cst,stf);
@@ -111,11 +106,16 @@ classdef matRad_DoseEnginePhotonsOmpMC < DoseEngines.matRad_DoseEngineMonteCarlo
             % 5cm depth for SSD = 900 which corresponds to the calibration for the
             % analytical base data.
             absCalibrationFactor = 3.49056 * 1e12; %Approximate!
+            
+            bixelWidth = unique([stf.bixelWidth]);
+
+            if numel(bixelWidth) > 1
+                matRad_cfg.dispWarning('Varying bixel width in stf, calibartion might be wrong!')
+                bixelWidth = mean(bixelWidth);
+            end
 
             %Now we have to calibrate to the the beamlet width.
-            absCalibrationFactor = absCalibrationFactor * (pln.propStf.bixelWidth/50)^2;
-
-            matRad_cfg.dispInfo('matRad: OmpMC photon dose calculation... \n');
+            absCalibrationFactor = absCalibrationFactor * (bixelWidth/50)^2;
 
             %run over all scenarios
             for s = 1:dij.numOfScenarios
@@ -142,27 +142,15 @@ classdef matRad_DoseEnginePhotonsOmpMC < DoseEngines.matRad_DoseEngineMonteCarlo
                 end
             end
 
-            matRad_cfg.dispInfo('matRad: MC photon dose calculation done!\n');
-            matRad_cfg.dispInfo(evalc('toc'));
-
-            try
-                % wait 0.1s for closing all waitbars
-                allWaitBarFigures = findall(0,'type','figure','tag','TMWWaitbar');
-                delete(allWaitBarFigures);
-                pause(0.1);
-            catch
-            end
-
+            %Finalize dose calculation
+            dij = this.calcDoseFinalize(ct,cst,stf,dij);   
         end
-
-
-
     end
 
     methods (Access = protected)
         function [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)
 
-            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_DoseEngineMonteCarlo(this,ct,cst,stf);
+            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_MonteCarloEngineAbstract(this,ct,cst,stf);
             
             matRad_cfg = MatRad_Config.instance();
 
@@ -408,7 +396,7 @@ classdef matRad_DoseEnginePhotonsOmpMC < DoseEngines.matRad_DoseEngineMonteCarlo
                 checkBasic = isfield(machine,'meta') && isfield(machine,'data');
 
                 %check modality
-                checkModality = any(strcmp(DoseEngines.matRad_DoseEnginePhotonsOmpMC.possibleRadiationModes, machine.meta.radiationMode));
+                checkModality = any(strcmp(DoseEngines.matRad_PhotonOmpMCEngine.possibleRadiationModes, machine.meta.radiationMode));
 
                 preCheck = checkBasic && checkModality;
 

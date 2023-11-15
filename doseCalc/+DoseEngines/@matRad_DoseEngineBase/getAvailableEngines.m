@@ -38,7 +38,7 @@ end
 
 %Get available, valid classes through call to matRad helper function
 %for finding subclasses
-availableDoseEngines = matRad_findSubclasses('DoseEngines.matRad_DoseEngine','packages',{'DoseEngines'},'folders',optionalPaths,'includeAbstract',false);
+availableDoseEngines = matRad_findSubclasses('DoseEngines.matRad_DoseEngineBase','packages',{'DoseEngines'},'folders',optionalPaths,'includeAbstract',false);
 
 %Now filter for pln
 ix = [];
@@ -84,12 +84,24 @@ if nargin >= 1 && ~isempty(pln)
 end
 
 classList = cellfun(@(mc) mc.Name,availableDoseEngines,'UniformOutput',false);
+
 if matRad_cfg.isMatlab
     nameList = cellfun(@(mc) mc.PropertyList(strcmp({mc.PropertyList.Name}, 'name')).DefaultValue,availableDoseEngines,'UniformOutput',false);
 else
     %Indexing a cell array with . not possible (in Octave)
     nameList = cellfun(@(mc) mc.PropertyList{find(cellfun(@(p) strcmp(p.Name, 'name'),mc.PropertyList))}.DefaultValue,availableDoseEngines,'UniformOutput',false);
 end
+
+%make sure the default engines are the first ones listed
+for defaultEngine = matRad_cfg.propDoseCalc.defaultDoseEngines
+    findDefaultIx = strcmp(defaultEngine,nameList);
+    if ~isempty(findDefaultIx)
+        nameList = [nameList(findDefaultIx), nameList(~findDefaultIx)];
+        classList = [classList(findDefaultIx), classList(~findDefaultIx)];
+    end
+end
+
+
 handleList = cellfun(@(namestr) str2func(namestr),classList,'UniformOutput',false);
 
 end

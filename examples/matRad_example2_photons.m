@@ -126,7 +126,7 @@ pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
 %%
 % Enable sequencing and disable direct aperture optimization (DAO) for now.
 % A DAO optimization is shown in a seperate example.
-pln.propOpt.runSequencing = 1;
+pln.propSeq.runSequencing = 1;
 pln.propOpt.runDAO        = 0;
 
 %%
@@ -146,7 +146,7 @@ display(stf(6));
 % Let's generate dosimetric information by pre-computing dose influence 
 % matrices for unit beamlet intensities. Having dose influences available 
 % allows subsequent inverse optimization.
-dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+dij = matRad_calcDose(ct,cst,stf,pln);
 
 %% Inverse Optimization for IMRT
 % The goal of the fluence optimization is to find a set of beamlet/pencil 
@@ -170,7 +170,7 @@ pln.propStf.couchAngles  = zeros(1,numel(pln.propStf.gantryAngles));
 pln.propStf.numOfBeams   = numel(pln.propStf.gantryAngles);
 stf                      = matRad_generateStf(ct,cst,pln);
 pln.propStf.isoCenter    = vertcat(stf.isoCenter);
-dij                      = matRad_calcPhotonDose(ct,stf,pln,cst);
+dij                      = matRad_calcDose(ct,cst,stf,pln);
 resultGUI_coarse         = matRad_fluenceOptimization(dij,cst,pln);
 
 %%  Visual Comparison of results

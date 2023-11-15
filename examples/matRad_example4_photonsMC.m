@@ -42,7 +42,7 @@ pln.propStf.couchAngles     = [0];
 pln.propStf.bixelWidth      = 10;
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
-pln.propOpt.runSequencing   = 0;
+pln.propSeq.runSequencing   = 0;
 pln.propOpt.runDAO          = 0;
 
 % dose calculation settings
@@ -56,7 +56,7 @@ stf = matRad_generateStf(ct,cst,pln);
 %% Dose Calculation
 % Calculate dose influence matrix for unit pencil beam intensities using 
 % a Monte Carlo algorithm
-dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst);
+dij = matRad_calcDose(ct,cst,stf,pln);
 
 %% Inverse Optimization for IMRT
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
