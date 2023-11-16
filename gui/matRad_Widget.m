@@ -171,7 +171,7 @@ classdef matRad_Widget <  handle
     
     methods (Access = protected)
         
-        function this = doUpdate(this)
+        function this = doUpdate(this,~)
 
         end
 
