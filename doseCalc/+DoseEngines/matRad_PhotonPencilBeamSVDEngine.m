@@ -450,6 +450,8 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
                 % overwrite field opening if necessary
                 if this.isFieldBasedDoseCalc
                     F = ray.shape;
+                else
+                    F = this.Fpre;
                 end
 
                 % prepare primary fluence array
