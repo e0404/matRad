@@ -946,33 +946,28 @@ classdef matRad_PlanWidget < matRad_Widget
             pln = evalin('base','pln');
             
             % new radiation modality is photons -> just keep physicalDose
-            if strcmp(contents(get(hObject,'Value')),'photons')
-                try
-                    AllVarNames = evalin('base','who');
-                    if  ismember('resultGUI',AllVarNames)
-                        resultGUI = evalin('base','resultGUI');
-                        if isfield(resultGUI,'alpha');    resultGUI = rmfield(resultGUI,'alpha');   end
-                        if isfield(resultGUI,'beta');     resultGUI = rmfield(resultGUI,'beta');    end
-                        if isfield(resultGUI,'RBExDose'); resultGUI = rmfield(resultGUI,'RBExDose');end
-                        if isfield(resultGUI,'RBE');      resultGUI = rmfield(resultGUI,'RBE');     end
-                        assignin('base','resultGUI',resultGUI);
-                        %handles = updateIsoDoseLineCache(handles);
+            try
+                AllVarNames = evalin('base','who');
+                if  ismember('resultGUI',AllVarNames)
+                    resultGUI = evalin('base','resultGUI');
+                    switch contents(get(hObject,'Value'))
+                        case 'photons'                                              
+                            if isfield(resultGUI,'alpha');    resultGUI = rmfield(resultGUI,'alpha');   end
+                            if isfield(resultGUI,'beta');     resultGUI = rmfield(resultGUI,'beta');    end
+                            if isfield(resultGUI,'RBExDose'); resultGUI = rmfield(resultGUI,'RBExDose');end
+                            if isfield(resultGUI,'RBE');      resultGUI = rmfield(resultGUI,'RBE');     end
+                            assignin('base','resultGUI',resultGUI);
+                            %handles = updateIsoDoseLineCache(handles);
+                        case 'protons'
+                                if isfield(resultGUI,'alpha'); resultGUI = rmfield(resultGUI,'alpha');end
+                                if isfield(resultGUI,'beta');  resultGUI = rmfield(resultGUI,'beta'); end
+                                if isfield(resultGUI,'RBE');   resultGUI = rmfield(resultGUI,'RBE');  end             
                     end
-                catch
-                end
-            elseif strcmp(contents(get(hObject,'Value')),'protons')
-                try
-                    AllVarNames = evalin('base','who');
-                    if  ismember('resultGUI',AllVarNames)
-                        resultGUI = evalin('base','resultGUI');
-                        if isfield(resultGUI,'alpha'); resultGUI = rmfield(resultGUI,'alpha');end
-                        if isfield(resultGUI,'beta');  resultGUI = rmfield(resultGUI,'beta'); end
-                        if isfield(resultGUI,'RBE');   resultGUI = rmfield(resultGUI,'RBE');  end
-                        assignin('base','resultGUI',resultGUI);
-                        %handles = updateIsoDoseLineCache(handles);
-                    end
-                catch
-                end
+                    assignin('base','resultGUI',resultGUI);
+                    %handles = updateIsoDoseLineCache(handles);
+                end                
+            catch
+                %Do nothing here
             end
             this.handles = handles;
             updatePlnInWorkspace(this);
@@ -1226,7 +1221,7 @@ classdef matRad_PlanWidget < matRad_Widget
             if isdeployed
                 baseroot = [ctfroot filesep 'matRad'];
             else
-                baseroot = [fileparts(mfilename('fullpath')) filesep '..'];
+                baseroot = [matRad_cfg.matRadRoot];
             end
             FoundFile = dir([baseroot filesep 'basedata' filesep  radMod '_' Machine '.mat']);
             
