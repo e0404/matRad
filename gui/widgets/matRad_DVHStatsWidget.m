@@ -59,32 +59,6 @@ classdef matRad_DVHStatsWidget < matRad_Widget
 
         end        
         
-        function this=update(this,evt)
-            if this.lockUpdate
-                if nargin == 2
-                    doUpdate = this.checkUpdateNecessary({'resultGUI','cst','pln'},evt);
-
-                    if doUpdate
-                        this.dvhWidgetHandle.update(evt);
-                        this.statWidgetHandle.update(evt);
-                    end
-                else
-                    %Check for change in the selected cube 
-                    if ~strcmp(this.dvhWidgetHandle.selectedCube, this.selectedDisplayOption)
-                        this.dvhWidgetHandle.selectedCube = this.selectedDisplayOption;
-                        this.statWidgetHandle.selectedCube = this.selectedDisplayOption;
-
-                    end
-                        this.dvhWidgetHandle = this.dvhWidgetHandle.update();
-                        this.statWidgetHandle = this.statWidgetHandle.update();
-                        %Clear previous DVH and stat
-                        if numel(this.dvhWidgetHandle.widgetHandle.Children) > 2 
-                            this.removeOverlap();
-                        end
-                 
-                end
-            end
-        end
         function set.selectedDisplayOption(this,value)
             this.selectedDisplayOption = value;
             this.update();
@@ -130,6 +104,33 @@ classdef matRad_DVHStatsWidget < matRad_Widget
             this.statWidgetHandle = matRad_StatisticsWidget([],p2);
             this.createHandles();
             
+        end
+
+        function this=doUpdate(this,evt)
+            if this.lockUpdate
+                if nargin == 2
+                    doUpdate = this.checkUpdateNecessary({'resultGUI','cst','pln'},evt);
+
+                    if doUpdate
+                        this.dvhWidgetHandle.update(evt);
+                        this.statWidgetHandle.update(evt);
+                    end
+                else
+                    %Check for change in the selected cube 
+                    if ~strcmp(this.dvhWidgetHandle.selectedCube, this.selectedDisplayOption)
+                        this.dvhWidgetHandle.selectedCube = this.selectedDisplayOption;
+                        this.statWidgetHandle.selectedCube = this.selectedDisplayOption;
+
+                    end
+                        this.dvhWidgetHandle = this.dvhWidgetHandle.update();
+                        this.statWidgetHandle = this.statWidgetHandle.update();
+                        %Clear previous DVH and stat
+                        if numel(this.dvhWidgetHandle.widgetHandle.Children) > 2 
+                            this.removeOverlap();
+                        end
+                 
+                end
+            end
         end
         
     end
