@@ -110,46 +110,9 @@ classdef matRad_ViewingWidget < matRad_Widget
                     this.zoomHandle = zoom(this.widgetHandle);
                 end
             end
-            this.update();
+            this.initialize();
         end
-        
-        function this=initialize(this)
-%             updateIsoDoseLineCache(this);
-            %update(this);
-             
-        end
-        
-        function this=update(this,evt)
-            if ~this.lockUpdate
-            
-                doUpdate = false;
-                if nargin == 2
-                    %At pln changes and at cst/cst (for Isocenter and new settings) 
-                    %we need to update
-                    doUpdate = this.checkUpdateNecessary({'pln','ct','cst','resultGUI'},evt);
-                end
-            
-                if ~doUpdate || this.checkUpdateNecessary({'pln','ct','resultGUI'},evt)
-                   this.initValues();
-                end
-                            
-                this.updateValues();
-                this.updateIsoDoseLineCache(); 
-                % Update plot only if there are changes to ct, resultGUI.
-                % for matRad Gui startup/ intializing viewing widget
-                %  evt does not exist, then catch segment 
-           
-                try
-                    if  this.checkUpdateNecessary({'ct','resultGUI'},evt)
-                        this.UpdatePlot();
-                    end
-                catch
-                    this.UpdatePlot();
-                end
-            end
-            
-        end
-        
+                        
         function notifyPlotUpdated(obj)
             % handle environment
             matRad_cfg = MatRad_Config.instance();
@@ -512,6 +475,37 @@ classdef matRad_ViewingWidget < matRad_Widget
             this.createHandles();
             
         end
+    
+        function this=doUpdate(this,evt)
+            if ~this.lockUpdate
+            
+                doUpdate = false;
+                if nargin == 2
+                    %At pln changes and at cst/cst (for Isocenter and new settings) 
+                    %we need to update
+                    doUpdate = this.checkUpdateNecessary({'pln','ct','cst','resultGUI'},evt);
+                end
+            
+                if ~doUpdate || this.checkUpdateNecessary({'pln','ct','resultGUI'},evt)
+                   this.initValues();
+                end
+                            
+                this.updateValues();
+                this.updateIsoDoseLineCache(); 
+                % Update plot only if there are changes to ct, resultGUI.
+                % for matRad Gui startup/ intializing viewing widget
+                %  evt does not exist, then catch segment 
+           
+                try
+                    if  this.checkUpdateNecessary({'ct','resultGUI'},evt)
+                        this.UpdatePlot();
+                    end
+                catch
+                    this.UpdatePlot();
+                end
+            end
+            
+        end
     end
     
     methods
@@ -686,13 +680,13 @@ classdef matRad_ViewingWidget < matRad_Widget
             ratios = [1/ct.resolution.x 1/ct.resolution.y 1/ct.resolution.z];
             set(handles.axesFig,'DataAspectRatioMode','manual');
             if this.plane == 1
-                res = [ratios(3) ratios(2)]./max([ratios(3) ratios(2)]);
-                set(handles.axesFig,'DataAspectRatio',[res 1])
-            elseif this.plane == 2 % sagittal plane
                 res = [ratios(3) ratios(1)]./max([ratios(3) ratios(1)]);
                 set(handles.axesFig,'DataAspectRatio',[res 1])
+            elseif this.plane == 2 % sagittal plane
+                res = [ratios(3) ratios(2)]./max([ratios(3) ratios(2)]);
+                set(handles.axesFig,'DataAspectRatio',[res 1])
             elseif  this.plane == 3 % Axial plane
-                res = [ratios(2) ratios(1)]./max([ratios(2) ratios(1)]);
+                res = [ratios(1) ratios(2)]./max([ratios(1) ratios(2)]);
                 set(handles.axesFig,'DataAspectRatio',[res 1])
             end
             
@@ -705,7 +699,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                     load(fileName);
                     SAD = machine.meta.SAD;
                 catch
-                    error(['Could not find the following machine file: ' fileName ]);
+                    this.showError(['Could not find the following machine file: ' fileName ]);
                 end
                 
                 % clear view and initialize some values
@@ -975,10 +969,10 @@ classdef matRad_ViewingWidget < matRad_Widget
                         cubePos(this.plane) = this.slice;
                         cubePos(1:end ~= this.plane) = fliplr(pos);
                         cubeIx = round(cubePos);
-                        
+                        vCubeIdx = [cubeIx(2),cubeIx(1),cubeIx(3)];
                         %Here comes the index permutation stuff
                         %Cube Index
-                        cursorText{end+1,1} = ['Cube Index: ' mat2str(cubeIx)];
+                        cursorText{end+1,1} = ['Cube Index: ' mat2str(vCubeIdx)];
                         %Space Coordinates
                         coords = zeros(1,3);
                         coords(1) = cubePos(2)*ct.resolution.y;

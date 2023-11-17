@@ -52,7 +52,7 @@ classdef matRad_PlanWidget < matRad_Widget
             end
             this = this@matRad_Widget(handleParent);
             
-            update(this);
+            this.initialize();
             
             handles=this.handles;
             
@@ -67,27 +67,7 @@ classdef matRad_PlanWidget < matRad_Widget
             this.handles=handles;
 
         end
-        
-        function this = initialize(this)
-        end
-        
-        function this = update(this,evt)          
-            doUpdate = true;
-            if nargin == 2
-                %At pln changes and at cst/cst (for Isocenter and new settings) 
-                %we need to update
-                doUpdate = this.checkUpdateNecessary({'pln','ct','cst'},evt);
-            end
-            
-            if doUpdate
-                if evalin('base','exist(''pln'')')
-                  getPlnFromWorkspace(this);
-                else
-                  setPlnDefaultValues(this);
-                end
-            end
-        end
-        
+                       
     end
     
     methods(Access = protected)
@@ -706,6 +686,23 @@ classdef matRad_PlanWidget < matRad_Widget
             this.createHandles();
         end
        
+        function this = doUpdate(this,evt)          
+            doUpdate = true;
+            if nargin == 2
+                %At pln changes and at cst/cst (for Isocenter and new settings) 
+                %we need to update
+                doUpdate = this.checkUpdateNecessary({'pln','ct','cst'},evt);
+            end
+            
+            if doUpdate
+                if evalin('base','exist(''pln'')')
+                  getPlnFromWorkspace(this);
+                else
+                  setPlnDefaultValues(this);
+                end
+            end
+        end
+        
         %Set default values for the PLN on matRadGUI startup
         function this = setPlnDefaultValues(this)
             
@@ -743,7 +740,7 @@ classdef matRad_PlanWidget < matRad_Widget
             if size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) == 1
                 pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * pln.propStf.isoCenter(1,:);
             elseif size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) ~= 1
-                error('Isocenter in plan file are incosistent.');
+                this.showError('Isocenter in plan file are inconsistent.');
             end           
             
             
@@ -891,7 +888,7 @@ classdef matRad_PlanWidget < matRad_Widget
                     set(handles.editIsoCenter,'Enable','off')
                     assignin('base','pln',pln);
                 catch ME
-                    warning(ME.identifier,'could not set isocenter in pln update! Reason: %s\n',ME.message)
+                    this.showWarning('could not set isocenter in pln update! Reason: %s\n',ME.message)
                 end
             else
                 set(handles.editIsoCenter,'Enable','on')
@@ -924,7 +921,7 @@ classdef matRad_PlanWidget < matRad_Widget
                     end
                 catch ME
 
-                    showWarning(this,'Could not set isocenter in pln update! Reason: %s\n',ME.message)  %TODO: showWarning vs warning 
+                    this.showWarning('Could not set isocenter in pln update! Reason: %s\n',ME.message) 
                 end
             end
             
@@ -1229,7 +1226,7 @@ classdef matRad_PlanWidget < matRad_Widget
                         'Position', [Width-(0.5*Width) 0.1 * Height 80 30],...
                         'Callback', 'close');
                 catch ME
-                    warning(ME.identifier,'Could not set Tissue parameter update! Reason: %s\n',ME.message)
+                    this.showWarning('Could not set Tissue parameter update! Reason: %s\n',ME.message)
                 end
             end
             this.handles = handles;
@@ -1331,7 +1328,7 @@ classdef matRad_PlanWidget < matRad_Widget
             else
                 number = str2num(stringIn);
                 if isempty(number) || length(number) > 1 && ~isVector
-                    warndlg(['could not parse all parameters (pln, optimization parameter)']);
+                    this.showWarning(['could not parse all parameters (pln, optimization parameter)']);
                     number = NaN;
                 elseif isVector && iscolumn(number)
                     number = number';
@@ -1358,7 +1355,7 @@ classdef matRad_PlanWidget < matRad_Widget
             FoundFile = dir([baseroot filesep 'basedata' filesep  radMod '_' Machine '.mat']);
             
             if isempty(FoundFile)
-                matRad_cfg.dispWarning(['No base data available for machine: ' Machine '. Selecting default machine.']);
+                this.showWarning(['No base data available for machine: ' Machine '. Selecting default machine.']);
                 flag = false;
               %  set(handles.popUpMachine,'Value',1);
             end
