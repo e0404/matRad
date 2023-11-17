@@ -52,13 +52,13 @@ classdef (Abstract) matRad_DoseEngineBase < handle
     end
     
     properties (Constant)
-        isDoseEngine = true; % const boolean for checking inheritance
+        isDoseEngine = true;    % const boolean for checking inheritance
     end
     
     properties (Constant, Abstract)
        name;                    % readable name for dose engine
        possibleRadiationModes;  % radiation modes the engine is meant to process
-       %supportedQuantities;     % supported (influence) quantities. Does not include quantities that can be derived post-calculation.
+       %supportedQuantities;    % supported (influence) quantities. Does not include quantities that can be derived post-calculation.
     end
 
     properties (SetAccess = private)
@@ -98,7 +98,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             %given in the propDoseCalc struct
             if isfield(pln,'propDoseCalc') && isstruct(pln.propDoseCalc)
                 fields = fieldnames(pln.propDoseCalc); %get remaining fields
-                if isfield(pln.propDoseCalc,'engine') && ~strcmp(pln.propDoseCalc.engine,this.name)
+                if isfield(pln.propDoseCalc,'engine') && ~isempty(pln.propDoseCalc.engine) && ~strcmp(pln.propDoseCalc.engine,this.name)
                     matRad_cfg.dispError('Inconsistent dose engines! pln asks for ''%s'', but engine is ''%s''!',pln.propDoseCalc.engine,this.name);
                 end
                 fields(strcmp(fields, 'engine')) = []; % engine field is no longer needed and would throw an exception
