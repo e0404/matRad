@@ -260,8 +260,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
             set(handles.exportDicomButton,'Enable','off');
             
 
-            if evalin('base','exist(''ct'')') && ...
-                        evalin('base','exist(''cst'')')
+            if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
                     
                 set(handles.txtInfo,'String','loaded and ready');
                 
@@ -308,7 +307,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     end
                 end
             else
-                this.showWarning('could not load ct/cst ');
+                % Do Nothing
             end
             this.handles=handles;
         end
