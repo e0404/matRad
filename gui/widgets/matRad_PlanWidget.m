@@ -268,7 +268,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 'Position',gridPos{2,6},...
                 'BackgroundColor',matRad_cfg.gui.elementColor,...
                 'ForegroundColor',matRad_cfg.gui.textColor,....
-                'Callback',@(hObject,eventdata) standardCallback(this,hObject,eventdata),...
+                'Callback',@(hObject,eventdata) editIsocenter_Callback(this,hObject,eventdata),...
                 'Enable','off',...
                 'Tag','editIsoCenter',...
                 'FontSize',matRad_cfg.gui.fontSize,...
@@ -766,22 +766,12 @@ classdef matRad_PlanWidget < matRad_Widget
             else
                 pln.propOpt.bioOptimization = 'none';
             end
-            
-            contents   = get(handles.popUpMenuSequencer,'String');
-            pln.propSeq.sequencer = contents{get(handles.popUpMenuSequencer,'Value')};
-            pln.propSeq.runSequencing = logical(get(handles.btnRunSequencing,'Value'));
-            pln.propSeq.sequencingLevel = this.parseStringAsNum(get(handles.editSequencingLevel,'String'),false);
-            pln.propOpt.runDAO = logical(get(handles.btnRunDAO,'Value'));
-            pln.propOpt.conf3D = logical(get(handles.radiobutton3Dconf,'Value'));
-            
-            
             % checkIsoCenter checkbox
             W = evalin('base','whos');
             doesPlnExist = ismember('pln',{W(:).name}) && evalin('base','exist(''cst'')') && evalin('base','exist(''ct'')');
-            
             if get(handles.checkIsoCenter,'Value') && doesPlnExist
                 try
-                    %pln = evalin('base','pln');
+
                     if ~isfield(pln.propStf,'isoCenter')
                         pln.propStf.isoCenter = NaN;
                     end
@@ -800,19 +790,13 @@ classdef matRad_PlanWidget < matRad_Widget
             else
                 set(handles.editIsoCenter,'Enable','on')
             end
-            
-            
-            % editIsoCenter textbox
-            tmpIsoCenter = str2num(get(handles.editIsoCenter,'String'));
-            
-            if length(tmpIsoCenter) == 3
-                if sum(any(unique(pln.propStf.isoCenter,'rows')~=tmpIsoCenter))
-                    pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1)*tmpIsoCenter;
-                    
-                end
-            else
-                handles = showError(this,'EditIsoCenterCallback: Could not set iso center');
-            end
+            contents   = get(handles.popUpMenuSequencer,'String');
+            pln.propSeq.sequencer = contents{get(handles.popUpMenuSequencer,'Value')};
+            pln.propSeq.runSequencing = logical(get(handles.btnRunSequencing,'Value'));
+            pln.propSeq.sequencingLevel = this.parseStringAsNum(get(handles.editSequencingLevel,'String'),false);
+            pln.propOpt.runDAO = logical(get(handles.btnRunDAO,'Value'));
+            pln.propOpt.conf3D = logical(get(handles.radiobutton3Dconf,'Value'));
+                       
             
             if evalin('base','exist(''cst'')')
                 try
@@ -908,7 +892,8 @@ classdef matRad_PlanWidget < matRad_Widget
                     set(handles.popUpMenuSequencer,'Enable','off');
                     set(handles.txtSequencer,'Enable','off');
             end
-            
+             
+          
             selectedBioOpt = get(handles.popMenuBioOpt,'Value');
             contentPopUp = get(handles.popMenuBioOpt,'String');
             if strcmp(contentPopUp{selectedBioOpt},'none')
@@ -973,6 +958,34 @@ classdef matRad_PlanWidget < matRad_Widget
             updatePlnInWorkspace(this);
         end
         
+        function editIsocenter_Callback(this, hObject, eventdata)
+        handles = this.handles;
+
+            % checkIsoCenter checkbox
+            W = evalin('base','whos');
+            doesPlnExist = ismember('pln',{W(:).name}) && evalin('base','exist(''cst'')') && evalin('base','exist(''ct'')');
+            % evalin pln (if existant) in order to decide whether isoCenter should be calculated
+            % automatically
+            if doesPlnExist
+                pln = evalin('base','pln');
+            end
+            
+           
+         % editIsoCenter textbox
+            tmpIsoCenter = str2num(get(handles.editIsoCenter,'String'));
+            
+            if length(tmpIsoCenter) == 3
+                if sum(any(unique(pln.propStf.isoCenter,'rows')~=tmpIsoCenter))
+                    pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1)*tmpIsoCenter;
+                    
+                end
+            else
+                handles = showError(this,'EditIsoCenterCallback: Could not set iso center');
+            end
+            this.handles = handles;
+            updatePlnInWorkspace(this);
+            this.changedWorkspace('pln_display');  
+        end
 
         function popUpMenuSequencer_Callback(this, hObject, eventdata)
             handles = this.handles;

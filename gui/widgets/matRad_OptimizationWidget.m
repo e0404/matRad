@@ -314,7 +314,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
             
             assignin('base','cst',cst);
             this.handles=handles;
-            changedWorkspace(this,'cst');
+            changedWorkspace(this,'cst_obj');
                         
         end
         function btObjRemove_Callback(this,hObject, ~)
@@ -331,7 +331,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
             
             assignin('base','cst',cst);
             this.handles=handles;
-            this.changedWorkspace('cst');
+            this.changedWorkspace('cst_obj');
             
             %generateCstTable(this,cst);
 
@@ -369,7 +369,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
                 
                 assignin('base','cst',cst);
                 this.handles=handles;
-                this.changedWorkspace('cst');
+                this.changedWorkspace('cst_obj');
                 
                 %generateCstTable(this,cst);
             end
@@ -400,7 +400,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
             
             assignin('base','cst',cst);
             this.handles=handles;
-            this.changedWorkspace('cst');
+            this.changedWorkspace('cst_obj');
             
             %generateCstTable(this,cst);
         end
@@ -424,7 +424,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
             
             assignin('base','cst',cst);
             this.handles=handles;
-            this.changedWorkspace('cst');
+            this.changedWorkspace('cst_obj');
             
             %generateCstTable(this,cst);
             
