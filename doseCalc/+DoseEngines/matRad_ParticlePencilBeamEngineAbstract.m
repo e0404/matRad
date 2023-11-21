@@ -35,6 +35,10 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
 
     methods
         function this = matRad_ParticlePencilBeamEngineAbstract(pln)
+            if nargin < 1
+                pln = [];
+            end
+
             this = this@DoseEngines.matRad_PencilBeamEngineAbstract(pln);
 
             % check if bio optimization is needed and set the
@@ -43,7 +47,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             % This should not be handled here as an optimization property
             % We should rather make optimization dependent on what we have
             % decided to calculate here.
-            if nargin > 0 
+            if nargin == 1 && ~isempty(pln)
                 if (isfield(pln,'propOpt')&& isfield(pln.propOpt,'bioOptimization')&& ...
                     (isequal(pln.propOpt.bioOptimization,'LEMIV_effect') ||...
                     isequal(pln.propOpt.bioOptimization,'LEMIV_RBExD')) && ...

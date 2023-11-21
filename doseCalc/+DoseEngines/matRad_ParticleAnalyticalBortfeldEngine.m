@@ -61,6 +61,10 @@ classdef matRad_ParticleAnalyticalBortfeldEngine < DoseEngines.matRad_ParticlePe
             % input
             %   pln:                        matRad plan meta information struct
 
+            if nargin < 1
+                pln = [];
+            end
+
             this = this@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(pln);
             
             this.calcLET = false;

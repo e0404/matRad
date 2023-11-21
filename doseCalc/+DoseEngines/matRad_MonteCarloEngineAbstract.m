@@ -29,7 +29,11 @@ classdef (Abstract) matRad_MonteCarloEngineAbstract < DoseEngines.matRad_DoseEng
         
     methods
         
-        function this = matRad_MonteCarloEngineAbstract(pln)            
+        function this = matRad_MonteCarloEngineAbstract(pln)   
+            if nargin < 1
+                pln = [];
+            end
+
             % call superclass constructor
             this = this@DoseEngines.matRad_DoseEngineBase(pln);
         end

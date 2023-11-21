@@ -38,7 +38,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
         intConvResolution = 0.5;        %resolution for kernel convolution [mm]
 
         enableDijSampling = true;
-        dijSampling;             %struct with lateral dij sampling parameters
+        dijSampling;                    %struct with lateral dij sampling parameters
     end
 
     %Calculation variables
@@ -75,13 +75,17 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             % Constructor
             %
             % call
-            %   engine = DoseEngines.matRad_PhotonPencilBeamSVDEngine(ct,stf,pln,cst)
+            %   engine = DoseEngines.matRad_PhotonPencilBeamSVDEngine(pln)
             %
             % input
             %   ct:                         matRad ct struct
             %   stf:                        matRad steering information struct
             %   pln:                        matRad plan meta information struct
             %   cst:                        matRad cst struct
+            
+            if nargin < 1
+                pln = [];
+            end
 
             % create this from superclass
             this = this@DoseEngines.matRad_PencilBeamEngineAbstract(pln);            

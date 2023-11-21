@@ -34,6 +34,10 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
             %
             % input
             %   pln:                        matRad plan meta information struct
+
+            if nargin < 1
+                pln = [];
+            end
              
             this = this@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(pln);
         end

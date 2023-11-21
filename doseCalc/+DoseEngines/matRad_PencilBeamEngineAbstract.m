@@ -47,6 +47,10 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
     methods
         function this = matRad_PencilBeamEngineAbstract(pln)
+            if nargin < 1
+                pln = [];
+            end
+
             this = this@DoseEngines.matRad_DoseEngineBase(pln);            
         end
 

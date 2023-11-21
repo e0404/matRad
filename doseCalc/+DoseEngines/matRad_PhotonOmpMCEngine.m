@@ -46,6 +46,10 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % input
             %   pln:                        matRad plan meta information struct
 
+            if nargin < 1
+                pln = [];
+            end
+
             % call superclass constructor
             this = this@DoseEngines.matRad_MonteCarloEngineAbstract(pln);
 
