@@ -81,21 +81,26 @@ end
 
 % dose calculation
 if strcmp(pln.radiationMode,'protons')
-  dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nHistories,calcDoseDirect);
+    dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nHistories,calcDoseDirect);
+elseif strcmp(pln.radiationMode,'photons')
+    nCasePerBixel = nHistories;
+    visBool = false;
+    dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst,nCasePerBixel,visBool);
 else
-    matRad_cfg.dispError('Forward MC only implemented for protons.');
+    matRad_cfg.dispError('Forward MC only implemented for protons and photons.');
 end
 
 % hack dij struct
-dij.numOfBeams = 1;
-dij.beamNum = 1;
+%dij.numOfBeams = 1;
+%dij.beamNum = 1;
 
 % calculate cubes; use uniform weights here, weighting with actual fluence 
 % already performed in dij construction 
-resultGUI    = matRad_calcCubes(sum(w),dij);
+%resultGUI    = matRad_calcCubes(sum(w),dij);
+resultGUI    = matRad_calcCubes(w,dij);
 
 % remember original fluence weights
-resultGUI.w  = w; 
+%resultGUI.w  = w; 
 
 
 
