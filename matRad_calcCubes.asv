@@ -35,20 +35,19 @@ if nargin < 3
 end
 
 resultGUI.w = w;
-
+%v = size(resultGUI.w);
 
 if isfield(dij,'numParticlesPerMU')
     resultGUI.MU = (w.*1e6) ./ dij.numParticlesPerMU;
 end
 
 % get bixel - beam correspondence  
-
+% idx = dij.physicalDose{1} ~= 0;
 for i = 1:dij.numOfBeams
     beamInfo(i).suffix = ['_beam', num2str(i)];
     beamInfo(i).logIx  = (dij.beamNum == i);
 end
-beamInfo(dij.numOfBeams+1).suffix = '';
-beamInfo(dij.numOfBeams+1).logIx  = true(size(resultGUI.w,1),1);
+
 
 
 %% Physical Dose
@@ -91,7 +90,7 @@ end
 % consider dirty dose
 if isfield(dij,'dirtyDoseThreshold')
     for i = 1:length(beamInfo)
-        resultGUI.(['dirtyDose', beamInfo(i).suffix]) = reshape((dij.dirtyDose{1}*(resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
+        resultGUI.(['dirtyDose', beamInfo(i).suffix]) = reshape((dij.dirtyDose.*(resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
     end
 end
 
@@ -99,7 +98,7 @@ end
 % consider clean dose
 if isfield(dij,'dirtyDoseThreshold')
     for i = 1:length(beamInfo)
-        resultGUI.(['cleanDose', beamInfo(i).suffix]) = reshape((dij.cleanDose{1}*(resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
+        resultGUI.(['cleanDose', beamInfo(i).suffix]) = reshape((dij.cleanDose*(resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
     end
 end
 
