@@ -70,7 +70,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
         function dij = calcDose(this,ct,cst,stf)
 
             % initialize
-            [dij,ct,cst,stf] = this.calcDoseInit(ct,cst,stf);
+            [dij,ct,cst,stf] = this.initDoseCalc(ct,cst,stf);
 
             bixelCounter = 0;
 
@@ -122,12 +122,12 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
     methods (Access = protected)
 
-        function [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)
+        function [dij,ct,cst,stf] = initDoseCalc(this,ct,cst,stf)
             % modified inherited method of the superclass DoseEngine,
             % containing intialization which are specificly needed for
             % pencil beam calculation and not for other engines
 
-            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_DoseEngineBase(this,ct,cst,stf);
+            [dij,ct,cst,stf] = initDoseCalc@DoseEngines.matRad_DoseEngineBase(this,ct,cst,stf);
             
             % calculate rED or rSP from HU
             % Maybe we can avoid duplicating the CT here?

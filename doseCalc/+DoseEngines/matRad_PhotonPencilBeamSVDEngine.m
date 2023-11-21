@@ -116,7 +116,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
 
     methods (Access = protected)
 
-        function [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)
+        function [dij,ct,cst,stf] = initDoseCalc(this,ct,cst,stf)
             %% Assign parameters
             matRad_cfg = MatRad_Config.instance();
 
@@ -126,7 +126,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             this.isFieldBasedDoseCalc = any(arrayfun(@(s) strcmp(num2str(s.bixelWidth),'field'),stf));
 
             %% Call Superclass init
-            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_PencilBeamEngineAbstract(this,ct,cst,stf);
+            [dij,ct,cst,stf] = initDoseCalc@DoseEngines.matRad_PencilBeamEngineAbstract(this,ct,cst,stf);
 
             %% Validate some properties
             % gaussian filter to model penumbra from (measured) machine output / see

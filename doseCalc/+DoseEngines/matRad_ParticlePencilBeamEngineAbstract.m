@@ -270,12 +270,12 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             currBixel.radDepthOffset = radDepthOffset;
         end
         
-        function [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)
+        function [dij,ct,cst,stf] = initDoseCalc(this,ct,cst,stf)
             % modified inherited method of the superclass DoseEngine,
             % containing intialization which are specificly needed for
             % pencil beam calculation and not for other engines
 
-            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_PencilBeamEngineAbstract(this,ct,cst,stf);
+            [dij,ct,cst,stf] = initDoseCalc@DoseEngines.matRad_PencilBeamEngineAbstract(this,ct,cst,stf);
             
             if ~isnan(this.constantRBE)
                 dij.RBE = this.constantRBE;

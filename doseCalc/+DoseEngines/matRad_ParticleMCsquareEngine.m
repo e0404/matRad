@@ -144,10 +144,10 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             end
 
 
-            %Now we can run calcDoseInit as usual
-            [dij,ct,cst,stf] = this.calcDoseInit(ct,cst,stf);
+            %Now we can run initDoseCalc as usual
+            [dij,ct,cst,stf] = this.initDoseCalc(ct,cst,stf);
             
-            % We need to adjust the offset used in matRad_calcDoseInit
+            % We need to adjust the offset used in matRad_initDoseCalc
             mcSquareAddIsoCenterOffset = [dij.doseGrid.resolution.x/2 dij.doseGrid.resolution.y/2 dij.doseGrid.resolution.z/2] ...
                             - [dij.ctGrid.resolution.x   dij.ctGrid.resolution.y   dij.ctGrid.resolution.z];
             mcSquareAddIsoCenterOffset = mcSquareAddIsoCenterOffset - dij.doseGrid.isoCenterOffset;
@@ -348,16 +348,16 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             this.mcSquareBinary = binaryFile;
         end
         
-        function [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)
+        function [dij,ct,cst,stf] = initDoseCalc(this,ct,cst,stf)
             %% Assingn and check parameters
             
             matRad_cfg = MatRad_Config.instance();            
 
             %% Call Superclass init function
-            [dij,ct,cst,stf] = calcDoseInit@DoseEngines.matRad_MonteCarloEngineAbstract(this,ct,cst,stf); 
+            [dij,ct,cst,stf] = initDoseCalc@DoseEngines.matRad_MonteCarloEngineAbstract(this,ct,cst,stf); 
 
             % Since MCsquare 1.1 only allows similar resolution in x&y, we do some
-            % extra checks on that before calling the normal calcDoseInit. First, we make sure a
+            % extra checks on that before calling the normal initDoseCalc. First, we make sure a
             % dose grid resolution is set in the pln struct
 
             % Now we check for different x/y

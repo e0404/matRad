@@ -1,5 +1,5 @@
-function [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)
-% matRad_DoseEngine.calcDoseInit: Interface for dose calculation
+function [dij,ct,cst,stf] = initDoseCalc(this,ct,cst,stf)
+% matRad_DoseEngine.initDoseCalc: Interface for dose calculation
 %   method for setting and preparing the inition parameters for the
 %   dose calculation.
 %   Should be called at the beginning of calcDose method.
@@ -7,7 +7,7 @@ function [dij,ct,cst,stf] = calcDoseInit(this,ct,cst,stf)
 %   the superclass method inside of it
 %
 % call:
-%   [ct,stf,pln,dij] = matRad_DoseEngine.calcDoseInit(this,ct,stf,pln,cst)
+%   [ct,stf,pln,dij] = matRad_DoseEngine.initDoseCalc(this,ct,stf,pln,cst)
 %
 % input:
 %   ct:             matRad ct  struct
