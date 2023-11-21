@@ -484,7 +484,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 if nargin == 2
                     %At pln changes and at cst/cst (for Isocenter and new settings) 
                     %we need to update
-                    doUpdate = this.checkUpdateNecessary({'pln','ct','cst','resultGUI'},evt);
+                    doUpdate = this.checkUpdateNecessary({'pln_display','ct','cst','resultGUI'},evt);
                 end
             
                 if ~doUpdate || this.checkUpdateNecessary({'pln','ct','resultGUI'},evt)
@@ -493,17 +493,13 @@ classdef matRad_ViewingWidget < matRad_Widget
                             
                 this.updateValues();
                 this.updateIsoDoseLineCache(); 
-                % Update plot only if there are changes to ct, resultGUI.
-                % for matRad Gui startup/ intializing viewing widget
-                %  evt does not exist, then catch segment 
+                % Update plot only if there are changes to ct, resultGUI and cst structures.
+                % 
            
-                try
-                    if  this.checkUpdateNecessary({'ct','resultGUI'},evt)
-                        this.UpdatePlot();
-                    end
-                catch
+                if  doUpdate
                     this.UpdatePlot();
                 end
+             
             end
             
         end

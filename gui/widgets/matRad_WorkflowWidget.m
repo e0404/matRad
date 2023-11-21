@@ -276,7 +276,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     % check if stf exists
                     if evalin('base','exist(''stf'')') 
                         % check if dij, stf and pln match
-                       [allMatch, msg] = matRad_comparePlnDijStf(evalin('base','pln'),evalin('base','stf'),[]);
+                       [allMatch, msg] = matRad_comparePlnStf(evalin('base','pln'),evalin('base','stf'));
                         if allMatch
                             % plan is ready for optimization
                             set(handles.txtInfo,'String','ready for dose calculation');
@@ -284,18 +284,19 @@ classdef matRad_WorkflowWidget < matRad_Widget
                         else 
                             this.showWarning(msg);
                         end
+                        
                     end
-
                     % check if dij exist
-                    if evalin('base','exist(''dij'')') 
-                        [allMatch, msg] = matRad_comparePlnDijStf(evalin('base','pln'),evalin('base','stf'),evalin('base','dij'));
+                    if evalin('base','exist(''dij'')') && evalin('base','exist(''stf'')') 
+                        [allMatch, msg] = matRad_compareDijStf(evalin('base','stf'),evalin('base','dij'));
                         if allMatch
                             set(handles.txtInfo,'String','ready for optimization');
-                            set(handles.btnOptimize ,'Enable','on'); 
-                        else 
+                            set(handles.btnOptimize ,'Enable','on');
+                        else
                             this.showWarning(msg);
                         end
-                   end
+                    end
+                    
 
                     % does resultGUI exist
                     if evalin('base','exist(''resultGUI'')')
