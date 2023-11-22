@@ -190,14 +190,17 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             lateralRayCutOff = this.getLateralDistanceFromDoseCutOffOnRay(ray);
 
             % Ray tracing for beam i and ray j
-            [ray.ix,ray.radialDist_sq] = this.calcGeoDists(currBeam.rot_coordsVdoseGrid, ...
+            [ix,ray.radialDist_sq] = this.calcGeoDists(currBeam.bevCoords, ...
                 ray.sourcePoint_bev, ...
                 ray.targetPoint_bev, ...
                 ray.SAD, ...
                 currBeam.ixRadDepths, ...
                 lateralRayCutOff);
             
-            ray.radDepths = currBeam.radDepthVdoseGrid{1}(ray.ix);
+            ray.geoDepths = currBeam.geoDepths{1}(ix);
+            ray.radDepths = currBeam.radDepths{1}(ix);
+            ray.ix = currBeam.ixRadDepths(ix);
+            ray.subIxVdoseGrid = currBeam.subIxVdoseGrid(ix);
         end
 
         function [currBixel] = getBixelIndicesOnRay(this,currBixel,currRay)
@@ -314,11 +317,12 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             minRaShi = min([raShis.eqThickness]);
             radDepthOffset = this.machine.data(maxEnergyIx).offset + minRaShi;
 
-            % limit rotated coordinates to positions where ray tracing is availabe
-            currBeam.ixRadDepths = find(currBeam.radDepthVdoseGrid{1} < (this.machine.data(maxEnergyIx).depths(end) - radDepthOffset));% & ~isnan(currBeam.radDepthVdoseGrid{1}));
-            
-            %currBeam.radDepthVdoseGrid{1} = currBeam.radDepthVdoseGrid{1}(currBeam.ixRadDepths);
-            currBeam.rot_coordsVdoseGrid = currBeam.rot_coordsVdoseGrid(currBeam.ixRadDepths,:);
+            % apply limit in depth
+            subSelectIx = currBeam.radDepths{1} < (this.machine.data(maxEnergyIx).depths(end) - radDepthOffset);
+            currBeam.ixRadDepths = currBeam.ixRadDepths(subSelectIx);
+            currBeam.subIxVdoseGrid = currBeam.subIxVdoseGrid(subSelectIx);
+            currBeam.radDepths = cellfun(@(rd) rd(subSelectIx),currBeam.radDepths,'UniformOutput',false);
+            currBeam.bevCoords = currBeam.bevCoords(subSelectIx,:);
 
             %Precompute CutOff
             this.calcLateralParticleCutOff(this.dosimetricLateralCutOff,currBeam);
@@ -786,7 +790,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             
             % just use tissue classes of voxels found by ray tracer
             if this.calcBioDose
-                ray.vTissueIndex = this.vTissueIndex(ray.ix,:);
+                ray.vTissueIndex = this.vTissueIndex(ray.subIxVdoseGrid,:);
             end
         end
 

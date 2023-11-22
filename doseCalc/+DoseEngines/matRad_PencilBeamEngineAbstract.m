@@ -230,17 +230,13 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
             rot_coordsV         = coordsV*currBeam.rotMat_system_T;
             rot_coordsVdoseGrid = coordsVdoseGrid*currBeam.rotMat_system_T;
-
-            rot_coordsV(:,1) = rot_coordsV(:,1)-currBeam.sourcePoint_bev(1);
-            rot_coordsV(:,2) = rot_coordsV(:,2)-currBeam.sourcePoint_bev(2);
-            rot_coordsV(:,3) = rot_coordsV(:,3)-currBeam.sourcePoint_bev(3);
-
-            rot_coordsVdoseGrid(:,1) = rot_coordsVdoseGrid(:,1)-currBeam.sourcePoint_bev(1);
-            rot_coordsVdoseGrid(:,2) = rot_coordsVdoseGrid(:,2)-currBeam.sourcePoint_bev(2);
-            rot_coordsVdoseGrid(:,3) = rot_coordsVdoseGrid(:,3)-currBeam.sourcePoint_bev(3);
+            
+            rot_coordsV = rot_coordsV - currBeam.sourcePoint_bev;
+            rot_coordsVdoseGrid = rot_coordsVdoseGrid - currBeam.sourcePoint_bev;
 
             % calculate geometric distances
-            currBeam.geoDistVdoseGrid{1}= sqrt(sum(rot_coordsVdoseGrid.^2,2));
+            geoDistVdoseGrid{1}= sqrt(sum(rot_coordsVdoseGrid.^2,2));
+
             % Calculate radiological depth cube
             matRad_cfg.dispInfo('matRad: calculate radiological depth cube... ');
 
@@ -258,9 +254,16 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             %this.radDepthVdoseGrid = matRad_interpRadDepth...
             %    (ct,1,this.VctGrid,this.VdoseGrid,dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z,radDepthVctGrid);
 
-            currBeam.radDepthVdoseGrid = this.interpRadDepth(ct,1,this.VctGrid,this.VdoseGrid,dij.ctGrid,dij.doseGrid,radDepthVctGrid);
-            currBeam.rot_coordsVdoseGrid = rot_coordsVdoseGrid;
-            currBeam.ixRadDepths = this.VdoseGrid;
+            radDepthVdoseGrid = this.interpRadDepth(ct,1,this.VctGrid,this.VdoseGrid,dij.ctGrid,dij.doseGrid,radDepthVctGrid);
+            
+            % limit rotated coordinates to positions where ray tracing is availabe
+            
+            coordIsValid = ~isnan(radDepthVdoseGrid{1});
+            currBeam.subIxVdoseGrid = find(coordIsValid);
+            currBeam.ixRadDepths = this.VdoseGrid(coordIsValid);
+            currBeam.radDepths = cellfun(@(rd) rd(coordIsValid),radDepthVdoseGrid,'UniformOutput',false);
+            currBeam.geoDepths = cellfun(@(gd) gd(coordIsValid),geoDistVdoseGrid,'UniformOutput',false);
+            currBeam.bevCoords = rot_coordsVdoseGrid(coordIsValid,:);          
 
             % compute SSDs
             currBeam = matRad_computeSSD(currBeam,ct,'densityThreshold',this.ssdDensityThreshold);
@@ -307,14 +310,16 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             lateralRayCutOff = this.getLateralDistanceFromDoseCutOffOnRay(ray);
 
             % Ray tracing for beam i and ray j
-            [ray.ix,ray.radialDist_sq,ray.latDists,ray.isoLatDists] = this.calcGeoDists(currBeam.rot_coordsVdoseGrid, ...
+            [ix,ray.radialDist_sq,ray.latDists,ray.isoLatDists] = this.calcGeoDists(currBeam.bevCoords, ...
                 ray.sourcePoint_bev, ...
                 ray.targetPoint_bev, ...
                 ray.SAD, ...
                 currBeam.ixRadDepths, ...
                 lateralRayCutOff);
             
-            ray.radDepths = currBeam.radDepthVdoseGrid{1}(ray.ix);
+            ray.geoDepths = currBeam.geoDepths{1}(ix);
+            ray.radDepths = currBeam.radDepths{1}(ix);
+            ray.ix = currBeam.ixRadDepths(ix);
         end
         
         function lateralRayCutOff = getLateralDistanceFromDoseCutOffOnRay(this,ray)
@@ -337,7 +342,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                         %this.tmpMatrixContainers.(qName){mod(counter-1,this.numOfBixelsContainer)+1,1} = zeros(dij.doseGrid.numOfVoxels,1);                        
                         %this.tmpMatrixContainers.(qName){mod(counter-1,this.numOfBixelsContainer)+1,1}(this.VdoseGrid(bixel.ix)) = bixel.(qName);
                     else
-                        this.tmpMatrixContainers.(qName){mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(this.VdoseGrid(bixel.ix),1,bixel.(qName),dij.doseGrid.numOfVoxels,1);
+                        this.tmpMatrixContainers.(qName){mod(counter-1,this.numOfBixelsContainer)+1,1} = sparse(bixel.ix,1,bixel.(qName),dij.doseGrid.numOfVoxels,1);
                     end
                 end
                 
@@ -372,7 +377,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                             this.tmpMatrixContainers.(qName)(containerIx,1) = cell(numel(containerIx,1));
                         else
                             %dij.(qName){1}(this.VdoseGrid(bixel.ix),dijColIx) = dij.(qName){1}(this.VdoseGrid(bixel.ix),dijColIx) + weight * this.tmpMatrixContainers.(qName){containerIx,1}(this.VdoseGrid(bixel.ix));
-                            dij.(qName){1}(this.VdoseGrid(bixel.ix),dijColIx) = dij.(qName){1}(this.VdoseGrid(bixel.ix),dijColIx) + weight * bixel.(qName);
+                            dij.(qName){1}(bixel.ix,dijColIx) = dij.(qName){1}(bixel.ix,dijColIx) + weight * bixel.(qName);
                         end
                     end
                 end
@@ -515,7 +520,8 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             %Apply mask for return quantities
 
             % index list within considered voxels
-            ix = radDepthIx(subsetMask);
+            %ix = radDepthIx(subsetMask);
+            ix = subsetMask;
 
             % return radial distances squared
             if nargout > 1

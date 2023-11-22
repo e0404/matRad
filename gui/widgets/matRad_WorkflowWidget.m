@@ -616,7 +616,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 end
                 
                 % assign results to base worksapce
-                assignin('base','dij',dij);
+                %assignin('base','dij',dij);
                 assignin('base','resultGUI',resultGUI);
 
                 
@@ -625,7 +625,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 set(InterfaceObj,'Enable','on');
                
                 this.handles = handles;
-                this.changedWorkspace('dij','resultGUI');
+                this.changedWorkspace('resultGUI');
                 
             catch ME
                 % change state from busy to normal

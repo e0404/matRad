@@ -153,6 +153,13 @@ this.VctGrid = VctGrid;
 % Convert CT subscripts to coarse linear indices.
 [this.yCoordsV_voxDoseGrid, this.xCoordsV_voxDoseGrid, this.zCoordsV_voxDoseGrid] = ind2sub(dij.doseGrid.dimensions,this.VdoseGrid);
 
+%Create helper masks
+this.VdoseGridMask = false(dij.doseGrid.numOfVoxels,1);
+this.VdoseGridMask(this.VdoseGrid) = true;
+
+this.VctGridMask = false(prod(ct.cubeDim),1);
+this.VctGridMask(this.VctGrid) = true;
+
 % load machine file from base data folder
 this.machine = this.loadMachine(radiationMode,machine);
 

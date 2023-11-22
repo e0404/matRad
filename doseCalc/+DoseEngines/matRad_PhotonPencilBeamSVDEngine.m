@@ -245,9 +245,6 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
 
             currBeam = initBeam@DoseEngines.matRad_PencilBeamEngineAbstract(this,currBeam,ct,cst,stf,i);
             
-            currBeam.ixRadDepths = find( ~isnan(currBeam.radDepthVdoseGrid{1}));
-            currBeam.rot_coordsVdoseGrid = currBeam.rot_coordsVdoseGrid(currBeam.ixRadDepths,:);
-
             matRad_cfg = MatRad_Config.instance();
 
             % get index of central ray or closest to the central ray
@@ -476,7 +473,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
                 ray.interpKernels = this.interpKernelCache;
             end
 
-            ray.geoDepths = currBeam.geoDistVdoseGrid{1}(ray.ix);
+            
         end    
     end
 
