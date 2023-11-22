@@ -307,7 +307,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             cd(this.currFolder);
 
             %Finalize dose calculation
-            dij = this.calcDoseFinalize(ct,cst,stf,dij);
+            dij = this.finalizeDose(ct,cst,stf,dij);
 
         end
         

@@ -201,7 +201,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         
         % method for finalizing the dose calculation (e.g. postprocessing
         % on dij or files
-        function dij = calcDoseFinalize(this,ct,cst,stf,dij)
+        function dij = finalizeDose(this,ct,cst,stf,dij)
             
             matRad_cfg = MatRad_Config.instance();
             %Close Waitbar
