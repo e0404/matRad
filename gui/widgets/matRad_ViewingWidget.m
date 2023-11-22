@@ -494,9 +494,9 @@ classdef matRad_ViewingWidget < matRad_Widget
                 this.updateValues();
                 this.updateIsoDoseLineCache(); 
                 % Update plot only if there are changes to ct, resultGUI and cst structures.
-                % 
+                % or on initialization
            
-                if  doUpdate
+                if  doUpdate || nargin == 1
                     this.UpdatePlot();
                 end
              
