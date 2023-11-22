@@ -270,12 +270,12 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             currBixel.radDepthOffset = radDepthOffset;
         end
         
-        function [dij,ct,cst,stf] = initDoseCalc(this,ct,cst,stf)
+        function dij = initDoseCalc(this,ct,cst,stf)
             % modified inherited method of the superclass DoseEngine,
             % containing intialization which are specificly needed for
             % pencil beam calculation and not for other engines
 
-            [dij,ct,cst,stf] = initDoseCalc@DoseEngines.matRad_PencilBeamEngineAbstract(this,ct,cst,stf);
+            dij = initDoseCalc@DoseEngines.matRad_PencilBeamEngineAbstract(this,ct,cst,stf);
             
             if ~isnan(this.constantRBE)
                 dij.RBE = this.constantRBE;
@@ -321,7 +321,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             currBeam.rot_coordsVdoseGrid = currBeam.rot_coordsVdoseGrid(currBeam.ixRadDepths,:);
 
             %Precompute CutOff
-            this.calcLateralParticleCutOff(this.dosimetricLateralCutOff,stf(i));
+            this.calcLateralParticleCutOff(this.dosimetricLateralCutOff,currBeam);
         end
         
         function dij = loadBiologicalBaseData(this,cst,dij)

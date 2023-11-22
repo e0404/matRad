@@ -41,7 +41,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
         radDepthCubes;          % only stored if property set accordingly
 
-        cube;                   % relative electron density / stopping power cube
+        cubeWED;                   % relative electron density / stopping power cube
         hlut;                   % hounsfield lookup table to craete relative electron density cube    
     end
 
@@ -70,7 +70,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
         function dij = calcDose(this,ct,cst,stf)
 
             % initialize
-            [dij,ct,cst,stf] = this.initDoseCalc(ct,cst,stf);
+            dij = this.initDoseCalc(ct,cst,stf);
 
             bixelCounter = 0;
 
@@ -122,27 +122,28 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
     methods (Access = protected)
 
-        function [dij,ct,cst,stf] = initDoseCalc(this,ct,cst,stf)
+        function dij = initDoseCalc(this,ct,cst,stf)
             % modified inherited method of the superclass DoseEngine,
             % containing intialization which are specificly needed for
             % pencil beam calculation and not for other engines
 
-            [dij,ct,cst,stf] = initDoseCalc@DoseEngines.matRad_DoseEngineBase(this,ct,cst,stf);
+            dij = initDoseCalc@DoseEngines.matRad_DoseEngineBase(this,ct,cst,stf);
             
-            % calculate rED or rSP from HU
-            % Maybe we can avoid duplicating the CT here?
-            if this.useGivenEqDensityCube
-                matRad_cfg.dispInfo('Omitting HU to rED/rSP conversion and using existing ct.cube!\n');
-            else
-                ct = matRad_calcWaterEqD(ct, stf);
-                %this.cube = ct.cube;
-                this.hlut = ct.hlut;
-            end
-
-            %If we want to omit HU conversion check if we have a ct.cube ready
+            % calculate rED or rSP from HU or take provided wedCube
             if this.useGivenEqDensityCube && ~isfield(ct,'cube')
                 matRad_cfg.dispWarning('HU Conversion requested to be omitted but no ct.cube exists! Will override and do the conversion anyway!');
                 this.useGivenEqDensityCube = false;
+            end
+
+            if this.useGivenEqDensityCube
+                matRad_cfg.dispInfo('Omitting HU to rED/rSP conversion and using existing ct.cube!\n');
+            else
+                ct = matRad_calcWaterEqD(ct, stf); % Maybe we can avoid duplicating the CT here?
+            end
+
+            this.cubeWED = ct.cube;
+            if isfield(ct,'hlut')
+                this.hlut = ct.hlut;
             end
 
             % ignore densities outside of contours
@@ -153,9 +154,6 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                     ct.cube{i}(eraseCtDensMask == 1) = 0;
                 end
             end
-
-            % compute SSDs
-            stf = matRad_computeSSD(stf,ct,'densityThreshold',this.ssdDensityThreshold);
 
             % Allocate memory for quantity containers
             dij = this.allocateQuantityMatrixContainers(dij,{'physicalDose'});            
@@ -206,6 +204,12 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             currBeam = stf(i);
             currBeam.beamIndex = i;
 
+            %Adjust for isocenter offset
+            %change the stf
+            currBeam.isoCenter = currBeam.isoCenter + dij.doseGrid.isoCenterOffset;
+
+            
+
             % convert voxel indices to real coordinates using iso center of beam i
             xCoordsV       = this.xCoordsV_vox(:)*dij.ctGrid.resolution.x-currBeam.isoCenter(1);
             yCoordsV       = this.yCoordsV_vox(:)*dij.ctGrid.resolution.y-currBeam.isoCenter(2);
@@ -239,6 +243,8 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             currBeam.geoDistVdoseGrid{1}= sqrt(sum(rot_coordsVdoseGrid.^2,2));
             % Calculate radiological depth cube
             matRad_cfg.dispInfo('matRad: calculate radiological depth cube... ');
+
+            ct.cube = this.cubeWED;
             if this.keepRadDepthCubes
                 [radDepthVctGrid, currBeam.radDepthCube] = matRad_rayTracing(currBeam,ct,this.VctGrid,rot_coordsV,this.effectiveLateralCutOff);
                 currBeam.radDepthCube{1} = matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z, currBeam.radDepthCube{1}, ...
@@ -255,6 +261,9 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             currBeam.radDepthVdoseGrid = this.interpRadDepth(ct,1,this.VctGrid,this.VdoseGrid,dij.ctGrid,dij.doseGrid,radDepthVctGrid);
             currBeam.rot_coordsVdoseGrid = rot_coordsVdoseGrid;
             currBeam.ixRadDepths = this.VdoseGrid;
+
+            % compute SSDs
+            currBeam = matRad_computeSSD(currBeam,ct,'densityThreshold',this.ssdDensityThreshold);
 
             matRad_cfg.dispInfo('done.\n');
            
@@ -289,6 +298,9 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             ray.bixelWidth = currBeam.bixelWidth;
 
             ray = this.getRayGeometryFromBeam(ray,currBeam);
+
+            %ray = this.computeRaySSD(this,ray); %Is already done in the
+            %initBeam function
         end
 
         function ray = getRayGeometryFromBeam(this,ray,currBeam)
@@ -378,6 +390,29 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                 dij.bixelNum(counter)   = currBixelIdx;
             end
         end
+        
+        %{
+        function ray = computeRaySSD(this,ray)
+            [alpha,~,rho,d12,~] = matRad_siddonRayTracer(ray.isoCenter, ...
+                                 ct.resolution, ...
+                                 ray.sourcePoint, ...
+                                 ray.targetPoint, ...
+                                 this.cubeWED(1));
+            ixSSD = find(rho{1} > this.ssdDensityThreshold,1,'first');
+
+            
+            if isempty(ixSSD)
+                matRad_cfg.dispError('ray does not hit patient. Trying to fix afterwards...');
+                boolShowWarning = false;
+            elseif ixSSD(1) == 1
+                matRad_cfg.dispWarning('Surface for SSD calculation starts directly in first voxel of CT!');
+                boolShowWarning = false;
+            end
+            
+            % calculate SSD
+            ray.SSD = double(d12* alpha(ixSSD));             
+        end
+        %}
     end
 
     methods (Static)

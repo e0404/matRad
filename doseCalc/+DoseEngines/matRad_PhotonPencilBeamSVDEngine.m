@@ -116,7 +116,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
 
     methods (Access = protected)
 
-        function [dij,ct,cst,stf] = initDoseCalc(this,ct,cst,stf)
+        function dij = initDoseCalc(this,ct,cst,stf)
             %% Assign parameters
             matRad_cfg = MatRad_Config.instance();
 
@@ -126,7 +126,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             this.isFieldBasedDoseCalc = any(arrayfun(@(s) strcmp(num2str(s.bixelWidth),'field'),stf));
 
             %% Call Superclass init
-            [dij,ct,cst,stf] = initDoseCalc@DoseEngines.matRad_PencilBeamEngineAbstract(this,ct,cst,stf);
+            dij = initDoseCalc@DoseEngines.matRad_PencilBeamEngineAbstract(this,ct,cst,stf);
 
             %% Validate some properties
             % gaussian filter to model penumbra from (measured) machine output / see
@@ -251,10 +251,10 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             matRad_cfg = MatRad_Config.instance();
 
             % get index of central ray or closest to the central ray
-            [~,center] = min(sum(reshape([stf(i).ray.rayPos_bev],3,[]).^2));
+            [~,center] = min(sum(reshape([currBeam.ray.rayPos_bev],3,[]).^2));
 
             % get correct kernel for given SSD at central ray (nearest neighbor approximation)
-            [~,currSSDix] = min(abs([this.machine.data.kernel.SSD]-stf(i).ray(center).SSD));
+            [~,currSSDix] = min(abs([this.machine.data.kernel.SSD]-currBeam.ray(center).SSD));
             % Display console message.
             matRad_cfg.dispInfo('\tSSD = %g mm ...\n',this.machine.data.kernel(currSSDix).SSD);
 

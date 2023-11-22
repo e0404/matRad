@@ -101,7 +101,7 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             matRad_cfg =  MatRad_Config.instance();
 
             %run initDoseCalc as usual
-            [dij,ct,cst,stf] = this.initDoseCalc(ct,cst,stf);
+            dij = this.initDoseCalc(ct,cst,stf);
 
             %% Call the OmpMC interface
 
@@ -123,7 +123,7 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
             %run over all scenarios
             for s = 1:dij.numOfScenarios
-                this.ompMCgeo.isoCenter = [stf(:).isoCenter];
+                this.ompMCgeo.isoCenter = [stf(:).isoCenter + dij.doseGrid.isoCenterOffset];
 
                 %Run the Monte Carlo simulation and catch  possible mex-interface
                 %issues
@@ -152,9 +152,9 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
     end
 
     methods (Access = protected)
-        function [dij,ct,cst,stf] = initDoseCalc(this,ct,cst,stf)
+        function dij = initDoseCalc(this,ct,cst,stf)
 
-            [dij,ct,cst,stf] = initDoseCalc@DoseEngines.matRad_MonteCarloEngineAbstract(this,ct,cst,stf);
+            dij = initDoseCalc@DoseEngines.matRad_MonteCarloEngineAbstract(this,ct,cst,stf);
             
             matRad_cfg = MatRad_Config.instance();
 
@@ -316,9 +316,11 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             counter = 0;
 
             for i = 1:dij.numOfBeams % loop over all beams
+                
+                isoCenterBeam = stf(i).isoCenter + dij.doseGrid.isoCenterOffset;
 
                 % define beam source in physical coordinate system in cm
-                beamSource(i,:) = (stf(i).sourcePoint + stf(i).isoCenter)/10;
+                beamSource(i,:) = (stf(i).sourcePoint + isoCenterBeam)/10;
 
                 for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
 
@@ -336,18 +338,18 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
                     % get bixel corner and delimiting vectors.
                     % a) change coordinate system (Isocenter cs-> physical cs) and units mm -> cm
-                    currCorner = (beamletCorners(1,:) + stf(i).isoCenter) ./ scale;
+                    currCorner = (beamletCorners(1,:) + isoCenterBeam) ./ scale;
                     bixelCorner(counter,:) = currCorner;
-                    bixelSide1(counter,:) = (beamletCorners(2,:) + stf(i).isoCenter) ./ scale - currCorner;
-                    bixelSide2(counter,:) = (beamletCorners(4,:) + stf(i).isoCenter) ./ scale - currCorner;
+                    bixelSide1(counter,:) = (beamletCorners(2,:) + isoCenterBeam) ./ scale - currCorner;
+                    bixelSide2(counter,:) = (beamletCorners(4,:) + isoCenterBeam) ./ scale - currCorner;
 
                     if this.visBool
                         for k = 1:4
-                            currCornerVis = (beamletCorners(k,:) + stf(i).isoCenter)/10;
+                            currCornerVis = (beamletCorners(k,:) + isoCenterBeam)/10;
                             % rays connecting source and ray corner
                             plot3([beamSource(i,1) currCornerVis(1)],[beamSource(i,2) currCornerVis(2)],[beamSource(i,3) currCornerVis(3)],'b')
                             % connection between corners
-                            lRayCorner = (beamletCorners(mod(k,4) + 1,:) + stf(i).isoCenter)/10;
+                            lRayCorner = (beamletCorners(mod(k,4) + 1,:) + isoCenterBeam)/10;
                             plot3([lRayCorner(1) currCornerVis(1)],[lRayCorner(2) currCornerVis(2)],[lRayCorner(3) currCornerVis(3)],'r')
                         end
                     end

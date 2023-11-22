@@ -72,7 +72,7 @@ classdef matRad_ParticleAnalyticalBortfeldEngine < DoseEngines.matRad_ParticlePe
     end
 
     methods (Access = protected)
-        function [dij,ct,cst,stf] = initDoseCalc(this,ct,cst,stf)
+        function dij = initDoseCalc(this,ct,cst,stf)
            
             if this.calcLET == true
                 matRad_cfg.dispWarning('Engine does not support LET calculation! Disabling!');
@@ -84,7 +84,7 @@ classdef matRad_ParticleAnalyticalBortfeldEngine < DoseEngines.matRad_ParticlePe
                 this.calcBioDose = false;
             end
             
-            [dij,ct,cst,stf] = this.initDoseCalc@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(ct,cst,stf);
+            dij = this.initDoseCalc@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(ct,cst,stf);
         end
 
         function [currBixel] = getBixelIndicesOnRay(this,currBixel,currRay)

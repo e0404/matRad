@@ -1,4 +1,4 @@
-function [dij,ct,cst,stf] = initDoseCalc(this,ct,cst,stf)
+function [dij] = initDoseCalc(this,ct,cst,stf)
 % matRad_DoseEngine.initDoseCalc: Interface for dose calculation
 %   method for setting and preparing the inition parameters for the
 %   dose calculation.
@@ -7,7 +7,7 @@ function [dij,ct,cst,stf] = initDoseCalc(this,ct,cst,stf)
 %   the superclass method inside of it
 %
 % call:
-%   [ct,stf,pln,dij] = matRad_DoseEngine.initDoseCalc(this,ct,stf,pln,cst)
+%   [dij] = matRad_DoseEngine.initDoseCalc(this,ct,cst,stf)
 %
 % input:
 %   ct:             matRad ct  struct
@@ -49,9 +49,14 @@ if ~matRad_cfg.disableGUI
 end
 this.lastProgressUpdate = tic;
 
-if numel(unique({stf(:).machine})) ~= 1 || numel(unique({stf(:).radiationMode})) ~= 1
+machine = unique({stf.machine});
+radiationMode = unique({stf.radiationMode});
+if numel(machine) ~= 1 || numel(radiationMode) ~= 1
     matRad_cfg.dispError('machine and radiation mode need to be unique within supplied stf!');
 end
+%extract strings from cell
+machine = machine{1};
+radiationMode = radiationMode{1};
 
 dij = struct();
 
@@ -94,14 +99,6 @@ matRad_cfg.dispInfo('Dose grid has dimensions %dx%dx%d\n',dij.doseGrid.dimension
 dij.doseGrid.isoCenterOffset = [dij.doseGrid.resolution.x - dij.ctGrid.resolution.x ...
     dij.doseGrid.resolution.y - dij.ctGrid.resolution.y ...
     dij.doseGrid.resolution.z - dij.ctGrid.resolution.z];
-
-%TODO: Maybe we should not do this in the preprocessing if it allows us to not
-%change the stf
-for i = 1:numel(stf)    
-    stf(i).isoCenter = stf(i).isoCenter + dij.doseGrid.isoCenterOffset;
-end
-
-
 
 % meta information for dij
 dij.numOfBeams         = numel(stf);
@@ -157,7 +154,7 @@ this.VctGrid = VctGrid;
 [this.yCoordsV_voxDoseGrid, this.xCoordsV_voxDoseGrid, this.zCoordsV_voxDoseGrid] = ind2sub(dij.doseGrid.dimensions,this.VdoseGrid);
 
 % load machine file from base data folder
-this.machine = this.loadMachine(stf(1).radiationMode,stf(1).machine);
+this.machine = this.loadMachine(radiationMode,machine);
 
 this.doseGrid = dij.doseGrid;
 
