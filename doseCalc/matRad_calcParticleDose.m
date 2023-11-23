@@ -34,7 +34,7 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 
 
 matRad_cfg = MatRad_Config.instance();
-matRad_cfg.dispDeprecationWarning('The old dose calculation functions are deprecated! Try to use matRad_calcDose with the new engine format from now on!');
+matRad_cfg.dispDeprecationWarning('The old dose calculation functions are deprecated! Try to use matRad_calcDoseInfluence with the new engine format from now on!');
 
 % could be also set as pln property e.g pln.propDoseCalc.useDeprecated
 if isfield(pln, 'propDoseCalc') && isfield(pln.propDoseCalc, 'engine')
