@@ -67,7 +67,9 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 end
             end
         end
+    end
 
+    methods (Access = protected)
         function dij = calcDose(this,ct,cst,stf)
             % matRad ompMC monte carlo photon dose calculation wrapper
             % can be automaticly called through matRad_calcDose or

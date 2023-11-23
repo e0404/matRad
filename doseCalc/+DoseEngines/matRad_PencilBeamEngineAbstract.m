@@ -65,8 +65,20 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             this.useGivenEqDensityCube        = matRad_cfg.propDoseCalc.defaultUseGivenEqDensityCube;
             this.ignoreOutsideDensities       = matRad_cfg.propDoseCalc.defaultIgnoreOutsideDensities;
             this.ssdDensityThreshold          = matRad_cfg.propDoseCalc.defaultSsdDensityThreshold;
+        end    
+    end
+
+    % Should be abstract methods but in order to satisfy the compatibility
+    % with OCTAVE we can't use abstract methods. If OCTAVE at some point
+    % in the far future implements this feature this should be abstract again.
+    methods (Access = protected) %Abstract
+        function bixel = computeBixel(this,currRay,k)
+            throw(MException('MATLAB:class:AbstractMember','Abstract function computeBixel of your PencilBeam DoseEngine needs to be implemented!'));
         end
-    
+    end
+
+    methods (Access = protected)
+        
         function dij = calcDose(this,ct,cst,stf)
 
             % initialize
@@ -109,18 +121,6 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             %Finalize dose calculation
             dij = this.finalizeDose(ct,cst,stf,dij);
         end
-    end
-
-    % Should be abstract methods but in order to satisfy the compatibility
-    % with OCTAVE we can't use abstract methods. If OCTAVE at some point
-    % in the far future implements this feature this should be abstract again.
-    methods (Access = protected) %Abstract
-        function bixel = computeBixel(this,currRay,k)
-            error('Abstract Function. Needs to be implemented!');
-        end
-    end
-
-    methods (Access = protected)
 
         function dij = initDoseCalc(this,ct,cst,stf)
             % modified inherited method of the superclass DoseEngine,

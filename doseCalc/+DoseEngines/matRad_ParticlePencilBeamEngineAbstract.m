@@ -67,7 +67,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
     % in the far future implements this feature this should be abstract again.
     methods (Access = protected) %Abstract
         function bixel = calcParticleBixel(this,bixel)
-            error('Function needs to be implemented!');
+           throw(MException('MATLAB:class:AbstractMember','Abstract function calcParticleBixel of your Particle PencilBeam DoseEngine needs to be implemented!'));
         end
     end
 

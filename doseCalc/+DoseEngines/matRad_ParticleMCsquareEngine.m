@@ -71,7 +71,10 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                     this.constantRBE = 1.1;                    
                 end
             end
-        end
+        end                
+    end
+    
+    methods(Access = protected)
         
         function dij = calcDose(this,ct,cst,stf)
             % matRad MCsqaure monte carlo photon dose calculation wrapper
@@ -310,11 +313,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             dij = this.finalizeDose(ct,cst,stf,dij);
 
         end
-        
-    end
-    
-    methods(Access = protected)
-              
+
         function setUp(this,nCasePerBixel,calcDoseDirect)    
         % SETUP Set up properties used for dose calculation
         %

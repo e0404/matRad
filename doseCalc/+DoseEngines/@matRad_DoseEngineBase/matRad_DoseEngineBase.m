@@ -187,6 +187,10 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             resultGUI.w  = w; 
         end
 
+        function dij = calcDoseInfluence(this,ct,cst,stf)
+            this.calcDoseDirect = false;
+            dij = this.calcDose(ct,cst,stf);
+        end
         function setDefaults(this)
             % future code for property validation on creation here
             matRad_cfg = MatRad_Config.instance();
@@ -242,12 +246,12 @@ classdef (Abstract) matRad_DoseEngineBase < handle
     % Should be abstract methods but in order to satisfy the compatibility
     % with OCTAVE we can't use abstract methods. If OCTAVE at some point 
     % in the far future implements this feature this should be abstract again.
-    methods %(Abstract)                
+    methods (Access = protected) %(Abstract)                
         % the actual calculation method wich returns the final dij struct.
         % Needs to be implemented in non abstract subclasses. 
-        %(Internal logic is often split into multiple methods in order to make the whole calculation more modular)
+        % (Internal logic is often split into multiple methods in order to make the whole calculation more modular)
         function dij = calcDose(this,ct,cst,stf)
-            error('Function needs to be implemented!');
+            throw(MException('MATLAB:class:AbstractMember','Abstract function calcDose of your DoseEngine needs to be implemented!'));
         end
     end 
     
