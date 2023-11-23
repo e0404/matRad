@@ -395,7 +395,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
             
             % carry out dose calculation
             try
-                dij = matRad_calcDose(evalin('base','ct'),evalin('base','cst'),stf,pln);
+                dij = matRad_calcDoseInfluence(evalin('base','ct'),evalin('base','cst'),stf,pln);
                                
                 % assign results to base worksapce
                 assignin('base','dij',dij);

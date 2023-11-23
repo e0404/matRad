@@ -57,7 +57,7 @@ matRadGUI
 stf = matRad_generateStf(ct,cst,pln);
 
 %% dose calculation
-dij = matRad_calcDose(ct,cst,stf,pln);
+dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 
 %% inverse planning for imrt
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);

@@ -1,9 +1,9 @@
-function dij = matRad_calcDose(ct,cst,stf,pln)
+function dij = matRad_calcDoseInfluence(ct,cst,stf,pln)
 % matRad dose calculation automaticly creating the appropriate dose engine
 % for the given pln struct and called the associated dose calculation funtion
 %
 % call
-%   dij =  matRad_calcDose(ct,stf,pln,cst)
+%   dij =  matRad_calcDoseInfluence(ct,stf,pln,cst)
 %
 % input
 %   ct:         ct cube

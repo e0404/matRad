@@ -58,5 +58,5 @@ matRad_cfg.dispInfo('Starting dose calculation using %s engine.\n', engine.name)
 pln.propDoseCalc = engine;
 
 % call the calcDose from engine
-dij = matRad_calcDose(ct,cst,stf,pln);
+dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 end
