@@ -56,7 +56,7 @@ stf = matRad_generateStf(ct,cst,pln);
 %% Dose Calculation
 % Calculate dose influence matrix for unit pencil beam intensities using 
 % a Monte Carlo algorithm
-dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst);
+dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 
 %% Inverse Optimization for IMRT
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);

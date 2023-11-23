@@ -79,13 +79,8 @@ end
 [coordsY_vox, coordsX_vox, coordsZ_vox] = ind2sub(ct.cubeDim,V);
 
 % prepare structures necessary for particles
-fileName = [pln.radiationMode '_' pln.machine];
-try
-   load([fileparts(mfilename('fullpath')) filesep 'basedata' filesep fileName]);
-   SAD = machine.meta.SAD;
-catch
-   matRad_cfg.dispError('Could not find the following machine file: %s',fileName); 
-end
+machine = matRad_loadMachine(pln);
+SAD = machine.meta.SAD;
 
 if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
       
@@ -129,6 +124,7 @@ for i = 1:length(pln.propStf.gantryAngles)
     stf(i).couchAngle    = pln.propStf.couchAngles(i);
     stf(i).bixelWidth    = pln.propStf.bixelWidth;
     stf(i).radiationMode = pln.radiationMode;
+    stf(i).machine       = pln.machine;
     stf(i).SAD           = SAD;
     stf(i).isoCenter     = pln.propStf.isoCenter(i,:);
         
