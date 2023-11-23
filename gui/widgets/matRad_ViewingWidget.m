@@ -1233,7 +1233,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                                    
             if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')') &&  evalin('base','exist(''pln'')')
                 % update slice, beam and offset sliders parameters
-                pln= evalin('base','pln');
+                pln = evalin('base','pln');
                 ct = evalin('base','ct');
                 cst = evalin('base','cst');
                 this.cst = cst;
@@ -1274,12 +1274,12 @@ classdef matRad_ViewingWidget < matRad_Widget
                     dose = Result.(this.SelectedDisplayOption);
                     
                     %if the workspace has changed update the display parameters
+                    upperMargin = 1;
                     if  isempty(this.dispWindow{2,1}) || ~this.lockColorSettings
                         this.dispWindow{2,1} = [min(dose(:)) max(dose(:))]; % set default dose range
                         this.dispWindow{2,2} = [min(dose(:)) max(dose(:))]; % set min max values
                         
                         % if upper colorrange is defined then use it otherwise 120% iso dose
-                        upperMargin = 1;
                         if abs((max(dose(:)) - this.dispWindow{2,1}(1,2))) < 0.01  * max(dose(:))
                             upperMargin = 1.2;
                         end
