@@ -33,12 +33,23 @@ function interpCt = matRad_interpDicomCtCube(origCt, origCtInfo, resolution, gri
 
 coordsOfFirstPixel = [origCtInfo.ImagePositionPatient];
 
+xDir = origCtInfo(1).ImageOrientationPatient(1:3); % lps: [1;0;0]
+yDir = origCtInfo(1).ImageOrientationPatient(4:6); % lps: [0;1;0]
+
 % set up original grid vectors
 x = coordsOfFirstPixel(1,1) + origCtInfo(1).ImageOrientationPatient(1) * ...
                               origCtInfo(1).PixelSpacing(1)*double([0:origCtInfo(1).Columns-1]);
 y = coordsOfFirstPixel(2,1) + origCtInfo(1).ImageOrientationPatient(5) * ...
                               origCtInfo(1).PixelSpacing(2)*double([0:origCtInfo(1).Rows-1]);
 z = coordsOfFirstPixel(3,:);
+
+if xDir(1) == -1 && xDir(2) == 0 && xDir(3) == 0
+     x = flip(x,2);
+end
+
+if yDir(1) == 0 && yDir(2) == -1 && yDir(3) == 0
+    y = flip(y,2);
+end
 
 if exist('grid','var')
     xq = grid{1};
@@ -51,7 +62,13 @@ if exist('grid','var')
     yqRe = [coordsOfFirstPixel(2,1):origCtInfo(1).ImageOrientationPatient(5)*resolution.y: ...
         (coordsOfFirstPixel(2,1)+origCtInfo(1).ImageOrientationPatient(5)*origCtInfo(1).PixelSpacing(2)*double(origCtInfo(1).Rows-1))];
     zqRe = coordsOfFirstPixel(3,1):resolution.z: coordsOfFirstPixel(3,end);
+    if xDir(1) == -1 && xDir(2) == 0 && xDir(3) == 0
+     x = flip(x,2);
+    end
     
+    if yDir(1) == 0 && yDir(2) == -1 && yDir(3) == 0
+        y = flip(y,2);
+    end
     % cut values
     xq(xq < min(xqRe)) = [];
     xq(xq > max(xqRe)) = [];
@@ -94,6 +111,12 @@ else
         yq = [coordsOfFirstPixel(2,1):origCtInfo(1).ImageOrientationPatient(5)*resolution.y: ...
         (coordsOfFirstPixel(2,1)+origCtInfo(1).ImageOrientationPatient(5)*origCtInfo(1).PixelSpacing(2)*double(origCtInfo(1).Rows-1))];
         zq = coordsOfFirstPixel(3,1):resolution.z: coordsOfFirstPixel(3,end);
+        if xDir(1) == -1 && xDir(2) == 0 && xDir(3) == 0
+          xq = flip(xq,2);
+        end 
+        if yDir(1) == 0 && yDir(2) == -1 && yDir(3) == 0
+            yq = flip(yq,2);
+        end
         % set up grid matrices - implicit dimension permuation (X Y Z-> Y X Z)
         % Matlab represents internally in the first matrix dimension the
         % ordinate axis and in the second matrix dimension the abscissas axis
