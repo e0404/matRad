@@ -21,7 +21,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
         
         possibleRadiationModes = {'protons'};
         name = 'MCsquare';
-        
+        shortName = 'MCsquare';
     end
     
     properties (SetAccess = protected, GetAccess = public)

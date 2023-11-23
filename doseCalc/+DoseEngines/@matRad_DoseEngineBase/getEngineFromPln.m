@@ -8,7 +8,7 @@ engine = [];
 
 initDefaultEngine = false;
 %get all available engines for given pln struct, could be done conditional
-[nameList, ~, handleList] = DoseEngines.matRad_DoseEngineBase.getAvailableEngines(pln);
+classList = DoseEngines.matRad_DoseEngineBase.getAvailableEngines(pln);
 
 % Check for a valid engine, and if the given engine isn't valid set boolean 
 % to initiliaze default engine at the end of this function
@@ -17,9 +17,10 @@ if isfield(pln,'propDoseCalc') && isa(pln.propDoseCalc, 'DoseEngines.matRad_Dose
 elseif isfield(pln,'propDoseCalc') && isstruct(pln.propDoseCalc) && isfield(pln.propDoseCalc,'engine')         
     
     if ischar(pln.propDoseCalc.engine) || isstring(pln.propDoseCalc.engine)
-        if any(strcmpi(nameList,pln.propDoseCalc.engine))
+        matchEngines = strcmpi({classList(:).shortName},pln.propDoseCalc.engine);
+        if any(matchEngines)
             %instantiate engine
-            engineHandle = handleList{strcmpi(nameList,pln.propDoseCalc.engine)};
+            engineHandle = classList(matchEngines).handle;
             engine = engineHandle(pln);
             
             %engine.assignPropertiesFromPln(pln); %TODO: could this be in the constructor?
@@ -38,8 +39,9 @@ end
 % the given radiation mode, when no valid engine was defined.
 % Default Engines are defined in matRad_Config.
 if initDefaultEngine
-    if any(ismember(nameList,matRad_cfg.propDoseCalc.defaultDoseEngines))
-        engineHandle = handleList{ismember(nameList,matRad_cfg.propDoseCalc.defaultDoseEngines)};
+    matchEngines = ismember({classList(:).shortName},matRad_cfg.propDoseCalc.defaultDoseEngines);
+    if any(matchEngines)
+        engineHandle = classList(matchEngines).handle;
 
         % unlikely event that multiple engines fit just take the first
         if length(engineHandle) > 1

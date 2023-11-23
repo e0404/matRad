@@ -23,6 +23,8 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
     properties (Constant)
         possibleRadiationModes = {'photons'}; %constant which represent available radiation modes
         name = 'SVD Pencil Beam';
+        shortName = 'SVDPB';
+        
         %supportedQuantities = {'physicalDose'};
 
         % Define function_Di for beamlet calculation. Constant for use in

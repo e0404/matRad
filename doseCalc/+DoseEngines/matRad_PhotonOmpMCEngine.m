@@ -19,6 +19,7 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
     properties (Constant)
         possibleRadiationModes = 'photons';
         name = 'ompMC';
+        shortName = 'ompMC';
     end
 
     properties (SetAccess = public, GetAccess = public)
@@ -123,7 +124,7 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
             %run over all scenarios
             for s = 1:dij.numOfScenarios
-                this.ompMCgeo.isoCenter = [stf(:).isoCenter + dij.doseGrid.isoCenterOffset];
+                this.ompMCgeo.isoCenter = vertcat(stf(:).isoCenter) + dij.doseGrid.isoCenterOffset;
 
                 %Run the Monte Carlo simulation and catch  possible mex-interface
                 %issues

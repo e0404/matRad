@@ -22,6 +22,7 @@ classdef matRad_ParticleAnalyticalBortfeldEngine < DoseEngines.matRad_ParticlePe
     properties (Constant)
         possibleRadiationModes = {'protons'}
         name = 'Analytical Bortfeld Pencil-Beam';
+        shortName = 'AnalyticalPB';
     end
 
     properties (SetAccess = public, GetAccess = public)

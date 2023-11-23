@@ -22,6 +22,7 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
     properties (Constant)
            possibleRadiationModes = {'protons', 'carbon'}
            name = 'Subsampling Particle Pencil-Beam';
+           shortName = 'SubsamplingPB';
     end
     
     properties (SetAccess = public, GetAccess = public)

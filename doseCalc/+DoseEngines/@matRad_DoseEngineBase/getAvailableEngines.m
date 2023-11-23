@@ -1,20 +1,18 @@
-function [nameList, classList, handleList] = getAvailableEngines(pln,optionalPaths)
+function classList = getAvailableEngines(pln,optionalPaths)
 % Returns a list of names and coresponding handle for available dose calc engines
 %   Returns all dose calc engines in the package when no arg is
 %   given. If no engines are found return gonna be empty.
 %
 % call:
-%   [nameList, handleList] = DoseEngines.matRad_DoseEngine.getAvailableEngines(pln,optional_path)
+%   classList = DoseEngines.matRad_DoseEngine.getAvailableEngines(pln,optional_path)
 %
 % input:
 %   pln:            containing proposed dose calc and machine file informations
 %   optionalPath:   cell array of other folders to search in
 %
 % returns:
-%   nameList: cell-array conatining readable names for engines
-%   classList: cell-array conatining full classnamens for available engines
-%   handleList: cell-array containing function-handles to
-%                  available engines constructor (call the included handle by adding Parentheses e.g. handleList{1}())
+%   classList: struct array containing name, shortName, className, and
+%   handle for construction of the Engine
 
 matRad_cfg = MatRad_Config.instance();
 
@@ -83,26 +81,30 @@ if nargin >= 1 && ~isempty(pln)
     availableDoseEngines = availableDoseEngines(ix);
 end
 
-classList = cellfun(@(mc) mc.Name,availableDoseEngines,'UniformOutput',false);
+classNameList = cellfun(@(mc) mc.Name,availableDoseEngines,'UniformOutput',false);
 
 if matRad_cfg.isMatlab
+    shortNameList = cellfun(@(mc) mc.PropertyList(strcmp({mc.PropertyList.Name}, 'shortName')).DefaultValue,availableDoseEngines,'UniformOutput',false);
     nameList = cellfun(@(mc) mc.PropertyList(strcmp({mc.PropertyList.Name}, 'name')).DefaultValue,availableDoseEngines,'UniformOutput',false);
 else
     %Indexing a cell array with . not possible (in Octave)
+    shortNameList = cellfun(@(mc) mc.PropertyList{find(cellfun(@(p) strcmp(p.Name, 'shortName'),mc.PropertyList))}.DefaultValue,availableDoseEngines,'UniformOutput',false);
     nameList = cellfun(@(mc) mc.PropertyList{find(cellfun(@(p) strcmp(p.Name, 'name'),mc.PropertyList))}.DefaultValue,availableDoseEngines,'UniformOutput',false);
 end
 
 %make sure the default engines are the first ones listed
 for defaultEngine = matRad_cfg.propDoseCalc.defaultDoseEngines
-    findDefaultIx = strcmp(defaultEngine,nameList);
+    findDefaultIx = strcmp(defaultEngine,shortNameList);
     if ~isempty(findDefaultIx)
-        nameList = [nameList(findDefaultIx), nameList(~findDefaultIx)];
-        classList = [classList(findDefaultIx), classList(~findDefaultIx)];
+        shortNameList = [shortNameList(findDefaultIx), shortNameList(~findDefaultIx)];
+        classNameList = [classNameList(findDefaultIx), classNameList(~findDefaultIx)];
     end
 end
 
 
-handleList = cellfun(@(namestr) str2func(namestr),classList,'UniformOutput',false);
+handleList = cellfun(@(namestr) str2func(namestr),classNameList,'UniformOutput',false);
+
+classList = cell2struct([shortNameList; nameList; classNameList; handleList],{'shortName','name','className','handle'});
 
 end
 

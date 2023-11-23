@@ -19,12 +19,23 @@ classdef (Abstract) matRad_DoseEngineBase < handle
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
+    % Implement these properties in a subclass
+    properties (Constant, Abstract)
+       shortName;               % short identifier by which matRad recognizes an engine
+       name;                    % user readable name for dose engine
+       possibleRadiationModes;  % radiation modes the engine is meant to process
+       %supportedQuantities;    % supported (influence) quantities. Does not include quantities that can be derived post-calculation.
+    end    
+    
+    % Public properties
     properties
-        machine;                    % base data defined in machine file
         doseGrid;                   % doseGrid to use (struct with at least doseGrid.resolution.x/y/z set)        
     end
     
+    % Protected properties with public get access
     properties (SetAccess = protected, GetAccess = public)
+        machine;                % base data defined in machine file
+
         timers;                 % timers of dose calc
 
         numOfColumnsDij;        % number of columns in the dij struct
@@ -45,25 +56,17 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         VctGridMask; % voxel grid inside patient as logical mask
         VdoseGridMask;  % voxel dose grid inside patient as logical mask
     end
-  
-    properties (SetAccess = public, GetAccess = public)
-        calcDoseDirect = false; % switch for direct cube / dij calculation 
-    end
     
+    % Fully protected properties
     properties (Access = protected)
         lastProgressUpdate;
+        calcDoseDirect = false; % switch for direct cube / dij calculation
     end
     
     properties (Constant)
         isDoseEngine = true;    % const boolean for checking inheritance
     end
     
-    properties (Constant, Abstract)
-       name;                    % readable name for dose engine
-       possibleRadiationModes;  % radiation modes the engine is meant to process
-       %supportedQuantities;    % supported (influence) quantities. Does not include quantities that can be derived post-calculation.
-    end
-
     properties (SetAccess = private)
         hWaitbar;
     end
@@ -103,8 +106,8 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             %given in the propDoseCalc struct
             if isfield(pln,'propDoseCalc') && isstruct(pln.propDoseCalc)
                 fields = fieldnames(pln.propDoseCalc); %get remaining fields
-                if isfield(pln.propDoseCalc,'engine') && ~isempty(pln.propDoseCalc.engine) && ~strcmp(pln.propDoseCalc.engine,this.name)
-                    matRad_cfg.dispWarning('Inconsistent dose engines given! pln asks for ''%s'', but you are using ''%s''!',pln.propDoseCalc.engine,this.name);
+                if isfield(pln.propDoseCalc,'engine') && ~isempty(pln.propDoseCalc.engine) && ~strcmp(pln.propDoseCalc.engine,this.shortName)
+                    matRad_cfg.dispWarning('Inconsistent dose engines given! pln asks for ''%s'', but you are using ''%s''!',pln.propDoseCalc.engine,this.shortName);
                 end
                 fields(strcmp(fields, 'engine')) = []; % engine field is no longer needed and would throw an exception
             else

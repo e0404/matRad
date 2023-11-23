@@ -714,7 +714,7 @@ classdef matRad_PlanWidget < matRad_Widget
             set(handles.popUpMachine,'Value',modIy); 
 
             availableEngines = DoseEngines.matRad_DoseEngineBase.getAvailableEngines(pln);
-            set(handles.popUpMenuDoseEngine,'String',availableEngines);
+            set(handles.popUpMenuDoseEngine,'String',{availableEngines(:).shortName});
             
             if isfield(pln.propStf,'isoCenter')
                 if size(unique(pln.propStf.isoCenter,'rows'),1) == 1
@@ -1025,7 +1025,7 @@ classdef matRad_PlanWidget < matRad_Widget
             
             pln.radiationMode = RadIdentifier;
             availableEngines = DoseEngines.matRad_DoseEngineBase.getAvailableEngines(pln);
-            set(handles.popUpMenuDoseEngine,'String',availableEngines);
+            set(handles.popUpMenuDoseEngine,'String',{availableEngines(:).shortName});
 
             this.handles = handles;
             updatePlnInWorkspace(this);
@@ -1104,7 +1104,7 @@ classdef matRad_PlanWidget < matRad_Widget
             end
 
             availableEngines = DoseEngines.matRad_DoseEngineBase.getAvailableEngines(pln);
-            set(handles.popUpMenuDoseEngine,'String',availableEngines);
+            set(handles.popUpMenuDoseEngine,'String',{availableEngines(:).shortName});
                
             this.handles = handles;
             updatePlnInWorkspace(this); 
