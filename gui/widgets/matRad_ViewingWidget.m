@@ -325,6 +325,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 'XTickLabel',{  '0'; '0.1'; '0.2'; '0.3'; '0.4'; '0.5'; '0.6'; '0.7'; '0.8'; '0.9'; '1' },...
                 'YTick',[0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1],...
                 'YTickLabel',{  '0'; '0.1'; '0.2'; '0.3'; '0.4'; '0.5'; '0.6'; '0.7'; '0.8'; '0.9'; '1' },...
+                'Units','normalized',...
                 'Position',[0.0718390804597701 0.0654391371340524 0.902298850574712 0.899121725731895],...
                  'Tag','axesFig'); 
                  
@@ -483,7 +484,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 if nargin == 2
                     %At pln changes and at cst/cst (for Isocenter and new settings) 
                     %we need to update
-                    doUpdate = this.checkUpdateNecessary({'pln','ct','cst','resultGUI'},evt);
+                    doUpdate = this.checkUpdateNecessary({'pln_display','ct','cst','resultGUI'},evt);
                 end
             
                 if ~doUpdate || this.checkUpdateNecessary({'pln','ct','resultGUI'},evt)
@@ -492,17 +493,13 @@ classdef matRad_ViewingWidget < matRad_Widget
                             
                 this.updateValues();
                 this.updateIsoDoseLineCache(); 
-                % Update plot only if there are changes to ct, resultGUI.
-                % for matRad Gui startup/ intializing viewing widget
-                %  evt does not exist, then catch segment 
+                % Update plot only if there are changes to ct, resultGUI and cst structures.
+                % or on initialization
            
-                try
-                    if  this.checkUpdateNecessary({'ct','resultGUI'},evt)
-                        this.UpdatePlot();
-                    end
-                catch
+                if  doUpdate || nargin == 1
                     this.UpdatePlot();
                 end
+             
             end
             
         end
@@ -1245,7 +1242,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                                    
             if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')') &&  evalin('base','exist(''pln'')')
                 % update slice, beam and offset sliders parameters
-                pln= evalin('base','pln');
+                pln = evalin('base','pln');
                 ct = evalin('base','ct');
                 cst = evalin('base','cst');
                 this.cst = cst;
@@ -1286,12 +1283,12 @@ classdef matRad_ViewingWidget < matRad_Widget
                     dose = Result.(this.SelectedDisplayOption);
                     
                     %if the workspace has changed update the display parameters
+                    upperMargin = 1;
                     if  isempty(this.dispWindow{2,1}) || ~this.lockColorSettings
                         this.dispWindow{2,1} = [min(dose(:)) max(dose(:))]; % set default dose range
                         this.dispWindow{2,2} = [min(dose(:)) max(dose(:))]; % set min max values
                         
                         % if upper colorrange is defined then use it otherwise 120% iso dose
-                        upperMargin = 1;
                         if abs((max(dose(:)) - this.dispWindow{2,1}(1,2))) < 0.01  * max(dose(:))
                             upperMargin = 1.2;
                         end

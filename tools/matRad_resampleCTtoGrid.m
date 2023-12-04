@@ -1,19 +1,16 @@
-function [ctR,cst,stf] = matRad_resampleCTtoGrid(ct,cst,pln,stf)
+function [ctR] = matRad_resampleCTtoGrid(ct,dij)
 % function to resample the ct grid for example for faster MC computation
 %
 % call
-%   [ctR,cst,stf] = matRad_resampleGrid(ct,cst,stf)
+%   [ctR] = matRad_resampleGrid(ct)
 %
 % input
 %   ct:             Path to folder where TOPAS files are in (as string)
 %   cst:            matRad segmentation struct
-%   pln:            matRad plan struct
-%   stf:            matRad steering struct
 %
 % output
 %   ctR:            resampled CT
 %   cst:            updated ct struct (due to calcDoseInit)
-%   stf:            updated stf struct (due to calcDoseInit)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -21,7 +18,7 @@ function [ctR,cst,stf] = matRad_resampleCTtoGrid(ct,cst,pln,stf)
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
 % of the matRad project, including this file, may be copied, modified,
 % propagated, or distributed except according to the terms contained in the
 % LICENSE file.
@@ -29,10 +26,6 @@ function [ctR,cst,stf] = matRad_resampleCTtoGrid(ct,cst,pln,stf)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
-
-% Load calcDoseInit as usual
-% Note of warning, even though the pln is marked as unused, it is needed for calcDoseInit!
-matRad_calcDoseInit;
 
 % Check if CT has already been resampled
 if ~isfield(ct,'resampled')
@@ -72,6 +65,6 @@ if ~isfield(ct,'resampled')
     ctR.originalGrid = dij.ctGrid;
 else
     ctR = ct;
-    matRad_cfg.dispWarning('CT already resampled.');
+    matRad_cfg.dispInfo('CT already resampled.');
 end
 end

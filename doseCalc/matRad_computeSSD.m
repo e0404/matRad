@@ -1,15 +1,20 @@
-function stf = matRad_computeSSD(stf,ct,mode)
+function stf = matRad_computeSSD(stf,ct,varargin)
 % matRad SSD calculation
 % 
 % call
 %   stf = matRad_computeSSD(stf,ct)
-%   stf = matRad_computeSSD(stf,ct,mode)
+%   stf = matRad_computeSSD(stf,ct,Name,Value)
 %
 % input
 %   ct:     ct cube
 %   stf:    matRad steering information struct
+%   
+%   Optional Name/Value Properties:
 %   mode:   optional parameter specifying how to handle multiple
-%           cubes to compute one SSD
+%           cubes to compute one SSD. Only 'first' isimplemented
+%
+%   densityThreshold: value determining the skin threshold.
+%
 % output
 %   stf:    matRad steering information struct
 %
@@ -31,15 +36,22 @@ function stf = matRad_computeSSD(stf,ct,mode)
 
 matRad_cfg = MatRad_Config.instance();
 
-if nargin < 3
-    mode = 'first';
-end
+%Parse arguments
+p = inputParser();
+%We leave the required parameters to avoid duplicates
+%p.addRequired('stf',@isstruct);
+%p.addRequired('ct',@isstruct);
+p.addParameter('mode','first');
+p.addParameter('densityThreshold',matRad_cfg.propDoseCalc.defaultSsdDensityThreshold,@(x) isnumeric(x) && isscalar(x));
+p.addParameter('showWarning',true,@(x) islogical(x) && isscalar(x));
 
-% booleon to show warnings only once in the console
-boolShowWarning = true;
+p.parse(varargin{:});
 
-% set density threshold for SSD computation
-densityThreshold = matRad_cfg.propDoseCalc.defaultSsdDensityThreshold;
+mode             = p.Results.mode;
+densityThreshold = p.Results.densityThreshold;
+boolShowWarning  = p.Results.showWarning;
+
+
 
 if strcmp(mode,'first')
     for i = 1:size(stf,2)

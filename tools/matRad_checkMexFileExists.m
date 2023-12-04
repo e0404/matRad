@@ -41,7 +41,7 @@ if nargin < 2
 end
 
 %Explicitly check for matching mex file (id 3)
-fileExists = (exist(filename,'file') == 3);
+fileExists = (exist([filename '.' mexext],'file') == 3);
 
 %For octave we have experimental precompiled files for Octave 5 64 bit
 [env,ver] = matRad_getEnvironment();

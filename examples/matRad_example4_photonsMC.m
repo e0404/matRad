@@ -52,6 +52,9 @@ pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 % retrieve scenarios for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,'nomScen');
 % dose calculation settings
+%Choose MC Engine
+pln.propDoseCalc.engine = 'ompMC';
+
 pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
@@ -62,7 +65,7 @@ stf = matRad_generateStf(ct,cst,pln);
 %% Dose Calculation
 % Calculate dose influence matrix for unit pencil beam intensities using 
 % a Monte Carlo algorithm
-dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst);
+dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 
 %% Inverse Optimization for IMRT
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);

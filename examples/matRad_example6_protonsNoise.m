@@ -82,10 +82,10 @@ stf = matRad_generateStf(ct,cst,pln);
 %We do a Monte Carlo Dose calculation here to demonstrate how long an MC
 %simulation on pencil-beam basis will take. If you just want to get through
 %the example, feel free to use analytical dose calculation instead by
-%uncommenting the first line and comment the second
+%uncommenting the first line or explicitly switch engine to HongPB
 
-%dij = matRad_calcParticleDose(ct,stf,pln,cst);
-dij = matRad_calcParticleDoseMC(ct,stf,pln,cst);
+pln.propDoseCalc.engine = 'MCsquare';
+dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 
 %% Inverse Optimization for IMPT
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
@@ -133,7 +133,7 @@ ct_manip.cube{1} = 1.035*ct_manip.cube{1};
 
 %% Recalculate Plan with MC square
 % Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose
-resultGUI_noise = matRad_calcDoseDirectMC(ct_manip,stf,pln,cst,resultGUI.w);
+resultGUI_noise = matRad_calcDoseDirect(ct_manip,stf,pln,cst,resultGUI.w);
 
 %% Recalculate Plan with analytical fine sampling algorithm
 % Again use the existing optimized pencil beam weights and recalculate the 
@@ -142,26 +142,26 @@ resultGUI_noise = matRad_calcDoseDirectMC(ct_manip,stf,pln,cst,resultGUI.w);
 % pln.propDoseCalc.fineSampling stores parameters defining the fine 
 % sampling simulation
 
-pln.propDoseCalc.fineSampling.method = 'russo'; 
-    % method for weight calculation, availabe methods:
-    %   'russo'
-    %   'fitCircle', supports N = 2,3 and 8
-    %   'fitSquare', supports N = 2 and 3
+pln.propDoseCalc.engine = 'SubsamplingPB';
 
-    % pln.propDoseCalc.fineSampling.N = n sets the number of used fine
-    % sampling sub beams, default is N = 21
-    % parameter to modify number of calculated FS sub beams
-    %   'russo',        total number of beams = N^2
-    %   'fitCircle',    total number of beams = (2*N + 1)^2
-    %   'fitSquare',    total number of beams = (2^N - 1) * 6 + 1
+pln.propDoseCalc.fineSampling.method = 'fitCircle';
+pln.propDoseCalc.fineSampling.sigmaSub = 2; %mm
+pln.propDoseCalc.fineSampling.N = 2;
+% method for weight calculation, availabe methods:
+%   'russo'
+%   'fitCircle', supports N = 2,3 and 8
+%   'fitSquare', supports N = 2 and 3
 
-    % pln.propDoseCalc.fineSampling.sigmaSub = s set the Gaussian standard 
-    % deviation of the sub Gaussian beams, only used when fine sampling 
-    % method 'russo' is selected', default is s = 1;
+% pln.propDoseCalc.fineSampling.N = n sets the number of used fine
+% sampling sub beams, default is N = 21
+% parameter to modify number of calculated FS sub beams
+%   'russo',        total number of beams = N^2
+%   'fitCircle',    total number of beams = (2*N + 1)^2
+%   'fitSquare',    total number of beams = (2^N - 1) * 6 + 1
 
-% Indirect call for fine sampling dose calculation:    
-% dijFS = matRad_calcParticleDose(ct,stf,pln,cst,false);
-% resultGUI_FS = matRad_calcCubes(resultGUI.w,dijFS);
+% pln.propDoseCalc.fineSampling.sigmaSub = s set the Gaussian standard
+% deviation of the sub Gaussian beams, only used when fine sampling
+% method 'russo' is selected', default is s = 1;
 
 % Direct call for fine sampling dose calculation:
 resultGUI_FS = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
