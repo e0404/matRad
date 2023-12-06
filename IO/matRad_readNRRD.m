@@ -27,10 +27,12 @@ function [cube, metadata] = matRad_readNRRD(filename)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+
 % Open file.
 hFile = fopen(filename, 'r');
 if hFile <= 0
-    error('Could not open NRRD file!');
+    matRad_cfg.dispError('Could not open NRRD file!');
 end
 cleaner = onCleanup(@() fclose(hFile));
 
@@ -38,12 +40,12 @@ cleaner = onCleanup(@() fclose(hFile));
 nrrdLine = fgetl(hFile);
 regTokens = regexp(nrrdLine,'NRRD00(?:\.)?0([1-5])','tokens');
 if isempty(regTokens)
-    error('Invalid Header line! Could not identify NRRD version!');
+    matRad_cfg.dispError('Invalid Header line! Could not identify NRRD version!');
 end
 nrrdVersion = str2num(regTokens{1}{1});
 
 if nrrdVersion > 5
-    error('NRRD version > 5 not supported!');
+    matRad_cfg.dispError('NRRD version > 5 not supported!');
 end
 
 %% Read header
@@ -60,7 +62,7 @@ while ~isempty(currentLine) && ischar(currentLine) %NRRD separates data from hea
         %Parse the line
         lineContent = regexp(currentLine, '(.+):(=|\s)(.+)', 'tokens');
         if isempty(lineContent)
-            warning(['Could not parse line: "' lineContent '"']);
+            matRad_cfg.dispWarning(['Could not parse line: "' currentLine '"']);
         elseif isequal(lineContent{1}{2},' ') %space after colon refers to "field"
             nrrdMetaData.fields{end+1,1} = lineContent{1}{1}; %Fieldname
             nrrdMetaData.fields{end,2} = lineContent{1}{3}; %Information
@@ -68,7 +70,7 @@ while ~isempty(currentLine) && ischar(currentLine) %NRRD separates data from hea
             nrrdMetaData.keys{end+1,1} = lineContent{1}{1}; %Key
             nrrdMetaData.keys{end,2} = lineContent{1}{3}; %Value
         else
-            warning(['Could not parse line: "' lineContent '"']);
+            matRad_cfg.dispWarning(['Could not parse line: "' currentLine '"']);
         end        
     end
     currentLine = fgetl(hFile);
@@ -85,7 +87,7 @@ if ~isempty(typeFieldIx)
         endianFieldIx = find(ismember(nrrdMetaData.fields(:,1),'endian'));
         if ~isempty(endianFieldIx)
             if ~isequal(nrrdMetaData.fields{endianFieldIx,2},'little') && ~isequal(nrrdMetaData.fields{endianFieldIx,2},'big')
-                error(['Datatype is ' datatype ', thus endian information is required but could not be interpreted!']);
+                matRad_cfg.dispError(['Datatype is ' datatype ', thus endian information is required but could not be interpreted!']);
             end;
             %Now we compare the file endian to the system endian
             %First acquire system endian
@@ -101,13 +103,13 @@ if ~isempty(typeFieldIx)
                 doSwapBytes = true;
             end
         else
-            error(['Datatype is ' datatype ', thus endian information is required but could not be found!']);
+            matRad_cfg.dispError(['Datatype is ' datatype ', thus endian information is required but could not be found!']);
         end
     end
     metadata.datatype = datatype;
     
 else
-    error('Could not find required "type" field!');
+    matRad_cfg.dispError('Could not find required "type" field!');
 end
 
 %Check for the always required image dimension
@@ -115,10 +117,10 @@ dimFieldIx = find(ismember(nrrdMetaData.fields(:,1), 'dimension'));
 if ~isempty(dimFieldIx)
     [metadata.dimension,success] = str2num(nrrdMetaData.fields{dimFieldIx,2});
     if ~success
-        error('Could not read required dimension field');
+        matRad_cfg.dispError('Could not read required dimension field');
     end
 else
-    error('Could not find required "dimension" field!');
+    matRad_cfg.dispError('Could not find required "dimension" field!');
 end
 
 %Check for size / dim length
@@ -126,11 +128,11 @@ sizeFieldIx = find(ismember(nrrdMetaData.fields(:,1), 'sizes'));
 if ~isempty(sizeFieldIx)
     sizes = textscan(nrrdMetaData.fields{sizeFieldIx,2},'%d');
     if numel(sizes{1}) ~= metadata.dimension || ~all(sizes{1} > 0) 
-        error('Incorrect size definition!');
+        matRad_cfg.dispError('Incorrect size definition!');
     end
     metadata.cubeDim = sizes{1}';
 else
-    error('Could not find required "dimension" field!');
+    matRad_cfg.dispError('Could not find required "dimension" field!');
 end
 
 %Check for resolution
@@ -140,7 +142,7 @@ spaceDirFieldIx = find(ismember(nrrdMetaData.fields(:,1), 'space directions'));
 if ~isempty(spacingFieldIx)
     resolutions = textscan(nrrdMetaData.fields{spacingFieldIx,2},'%f');
     if numel(resolutions{1}) ~= metadata.dimension
-        error('Incorrect spacings definition');
+        matRad_cfg.dispError('Incorrect spacings definition');
     end
     metadata.resolution = resolutions{1}';    
     
@@ -167,14 +169,14 @@ elseif ~isempty(spaceDirFieldIx)
         currentAxis = find(vectors{c});
         
         if numel(find(vectors{c})) ~= 1
-            error('Sorry! We currently only support spaces with cartesian basis!'); 
+            matRad_cfg.dispError('Sorry! We currently only support spaces with cartesian basis!'); 
         end        
         metadata.axisPermutation(c) = currentAxis*sign(vectors{c}(currentAxis));
         metadata.resolution(c) = vectors{c}(currentAxis);       
     end
    
 else
-    warning('No Resolution Information available');
+    matRad_cfg.dispWarning('No Resolution Information available');
 end
 
 %find the origin if we have one
@@ -202,7 +204,7 @@ end
 data_fileFieldIx = find(ismember(nrrdMetaData.fields(:,1), 'data file'));
 datafileFieldIx = find(ismember(nrrdMetaData.fields(:,1), 'datafile'));
 if ~isempty(data_fileFieldIx) || ~isempty(datafileFieldIx)
-    error('Sorry! We currently do not support detached data files!');
+    matRad_cfg.dispError('Sorry! We currently do not support detached data files!');
     %Proposed workflow:
     %check for data file    
     %close file
@@ -215,7 +217,7 @@ end
 %Check for encoding
 encodingFieldIx = find(ismember(nrrdMetaData.fields(:,1), 'encoding'));
 if isempty(encodingFieldIx)
-    error('Could not find required "encoding" field!');
+    matRad_cfg.dispError('Could not find required "encoding" field!');
 end
 switch nrrdMetaData.fields{encodingFieldIx,2}
     case 'raw'
@@ -223,7 +225,7 @@ switch nrrdMetaData.fields{encodingFieldIx,2}
     case {'txt','text','ascii'}
         cube = cast(fscanf(hFile,'%f'),metadata.datatype);
     case 'hex'
-        error('Sorry: NRRD hex file not yet supported!');
+        matRad_cfg.dispError('Sorry: NRRD hex file not yet supported!');
     case {'gz','gzip'}
         compressedByteArray = fread(hFile, inf, 'uint8');
         
@@ -242,7 +244,7 @@ switch nrrdMetaData.fields{encodingFieldIx,2}
                 javaByteOutputStream.close();
                 javaUnpackSuccessful = true;
             catch
-                warning('Java unpacking failed... using temporary files!');
+                matRad_cfg.dispWarning('Java unpacking failed... using temporary files!');
             end
         end
         if ~javaUnpackSuccessful
@@ -252,7 +254,7 @@ switch nrrdMetaData.fields{encodingFieldIx,2}
             hFileTmp = fopen(tmpFile, 'wb');
             
             if hFileTmp <= 0
-                error('Could not open temporary file for GZIP!');
+                matRad_cfg.dispError('Could not open temporary file for GZIP!');
             end
             
             fwrite(hFileTmp, compressedByteArray, 'uint8');
@@ -264,16 +266,16 @@ switch nrrdMetaData.fields{encodingFieldIx,2}
             %Read the uncompressed file
             hFileTmp = fopen(tmpName, 'rb');
             if hFileTmp <= 0
-                error('Could not open unpacked file!');
+                matRad_cfg.dispError('Could not open unpacked file!');
             end
             cleanTmpFile = onCleanup(@() fclose(hFileTmp));
 
             cube = fread(hFileTmp, prod(metadata.cubeDim), metadata.datatype);
         end
     case {'bz2','bzip2'}
-        error('Sorry: bzip compression not yet supported!');
+        matRad_cfg.dispError('Sorry: bzip compression not yet supported!');
     otherwise 
-        error(['Undefined NRRD encoding scheme: ' nrrdMetaData.encoding]);
+        matRad_cfg.dispError(['Undefined NRRD encoding scheme: ' nrrdMetaData.encoding]);
 end
 
 %maybe we need to correct the byte ordering (endian)
@@ -327,7 +329,7 @@ switch typestring
     case 'double'
         datatype = 'double';        
     otherwise
-        error('Could not identify datatype for NRRD data');
+        matRad_cfg.dispError('Could not identify datatype for NRRD data');
 end
 
 end

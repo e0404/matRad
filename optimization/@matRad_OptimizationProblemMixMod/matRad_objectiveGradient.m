@@ -100,7 +100,13 @@ end
                     robustness = objective.robustness;
 
                     % rescale dose parameters to biological optimization quantity if required
+                    doseParameter = objective.getDoseParameters();
+                    objective = objective.setDoseParameters(doseParameter./dij.totalNumOfFractions);
+
                     objective = optiProb.BP.setBiologicalDosePrescriptions(objective,cst{i,5}.alphaX,cst{i,5}.betaX);
+                
+                    doseParameter = objective.getDoseParameters();
+                    objective = objective.setDoseParameters(doseParameter.*dij.totalNumOfFractions);
 
                     switch robustness
                         case 'none' % if conventional opt: just sum objectiveectives of nominal dose
@@ -109,7 +115,7 @@ end
                                 ixContour = contourScen(s);
                                 d_i = d{ixScen}(cst{i,4}{ixContour});
                                 %add to dose gradient
-                                doseGradient{ixScen}(cst{i,4}{ixContour}) = doseGradient{ixScen}(cst{i,4}{ixContour}) + objective.computeDoseObjectiveGradient(d_i);
+                                doseGradient{ixScen}(cst{i,4}{ixContour}) = doseGradient{ixScen}(cst{i,4}{ixContour}) + objective.penalty * objective.computeDoseObjectiveGradient(d_i);
                             end
                         case 'STOCH' % perform stochastic optimization with weighted / random scenarios
                             for s = 1:numel(useScen)
@@ -119,7 +125,7 @@ end
                                 d_i = d{ixScen}(cst{i,4}{ixContour});
 
                                 doseGradient{ixScen}(cst{i,4}{ixContour}) = doseGradient{ixScen}(cst{i,4}{ixContour}) + ...
-                                    (objective.computeDoseObjectiveGradient(d_i) * scenProb(s));
+                                    (objective.penalty * objective.computeDoseObjectiveGradient(d_i) * scenProb(s));
 
                             end
 
@@ -131,7 +137,7 @@ end
 
                             d_i = dExp{1}(cst{i,4}{1});
 
-                            doseGradientExp{1}(cst{i,4}{1}) = doseGradientExp{1}(cst{i,4}{1}) + objective.computeDoseObjectiveGradient(d_i);
+                            doseGradientExp{1}(cst{i,4}{1}) = doseGradientExp{1}(cst{i,4}{1}) + objective.penalty * objective.computeDoseObjectiveGradient(d_i);
 
                             p = objective.penalty/numel(cst{i,4}{1});
 
@@ -164,7 +170,7 @@ end
                                 matRad_cfg.dispWarning('%d NaN values in gradient.',numel(isnan(d_i)));
                             end
 
-                            deltaTmp = objective.computeDoseObjectiveGradient(d_i);
+                            deltaTmp = objective.penalty * objective.computeDoseObjectiveGradient(d_i);
 
                             for s = 1:numel(useScen)
                                 ixScen = useScen(s);
@@ -206,7 +212,7 @@ end
                                 matRad_cfg.dispWarning('%d NaN values in gradFuncWrapper.',numel(isnan(d_i)));
                             end
 
-                            deltaTmp = objective.computeDoseObjectiveGradient(d_i);
+                            deltaTmp = objective.penalty * objective.computeDoseObjectiveGradient(d_i);
 
                             for s = 1:numel(useScen)
                                 ixScen = useScen(s);
@@ -234,8 +240,8 @@ end
 
                                 d_i = d{ixScen}(cst{i,4}{ixContour});
 
-                                f_COWC(ixScen) = f_COWC(ixScen) + objective.computeDoseObjectiveFunction(d_i);
-                                delta_COWC{ixScen}(cst{i,4}{ixContour}) = delta_COWC{ixScen}(cst{i,4}{ixContour}) + objective.computeDoseObjectiveGradient(d_i);
+                                f_COWC(ixScen) = f_COWC(ixScen) + objective.penalty * objective.computeDoseObjectiveFunction(d_i);
+                                delta_COWC{ixScen}(cst{i,4}{ixContour}) = delta_COWC{ixScen}(cst{i,4}{ixContour}) + objective.penalty * objective.computeDoseObjectiveGradient(d_i);
                             end
 
                         case 'OWC' % objective-wise worst case consideres the worst individual objective function value
@@ -253,9 +259,9 @@ end
 
                                 d_i = d{ixScen}(cst{i,4}{ixContour});
 
-                                f_OWC(ixScen) = objective.computeDoseObjectiveFunction(d_i);
+                                f_OWC(ixScen) = objective.penalty * objective.computeDoseObjectiveFunction(d_i);
 
-                                delta_OWC{ixScen}(cst{i,4}{ixContour}) = objective.computeDoseObjectiveGradient(d_i);
+                                delta_OWC{ixScen}(cst{i,4}{ixContour}) = objective.penalty * objective.computeDoseObjectiveGradient(d_i);
 
                             end
 
@@ -331,22 +337,25 @@ for mod = 1: length(dij.original_Dijs)
     for s = 1:numel(useScen)
         gt{s} = gt{s}*dij.STfractions{mod};  
         g{s} = [g{s}; gt{s}];                     
-    end 
-end   
-    weightGradient = zeros(dij.totalNumOfBixels,1);
-    for s = 1:numel(useScen)
-        weightGradient = weightGradient + g{useScen(s)};
     end
+    bxidx = bxidx + STrepmat*dij.original_Dijs{mod}.totalNumOfBixels;
+end
 
-    if vOmega ~= 0
-        optiProb.BP.computeGradientProb(dij.original_Dijs{mod},doseGradientExp,vOmega,w);
-        gProb = optiProb.BP.GetGradientProb();
+weightGradient = zeros(dij.totalNumOfBixels,1);
+for s = 1:numel(useScen)
+    weightGradient = weightGradient + g{useScen(s)};
+end
 
-        %Only implemented for first scenario now
-        weightGradient = weightGradient + gProb{1};
-    end
+if vOmega ~= 0
+    optiProb.BP.computeGradientProb(dij.original_Dijs{mod},doseGradientExp,vOmega,w);
+    gProb = optiProb.BP.GetGradientProb();
+
+    %Only implemented for first scenario now
+    weightGradient = weightGradient + gProb{1};
+end
+
 % code snippet to check the gradient
-    gradientChecker = 1;
+    gradientChecker = 0;
 if gradientChecker == 1
     f =  matRad_objectiveFunction(optiProb,w,dij,cst);
     epsilon = 1e-6;
@@ -363,5 +372,4 @@ if gradientChecker == 1
     end
     
 end
-
 end

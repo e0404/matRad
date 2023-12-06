@@ -1,19 +1,17 @@
-function dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect)
+function dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,calcDoseDirect)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad TOPAS Monte Carlo proton dose calculation wrapper
 %   This calls a TOPAS installation (not included in matRad due to
 %   licensing model of TOPAS) for MC simulation
 %
 % call
-%   dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect)
+%   dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,calcDoseDirect)
 %
 % input
 %   ct:                         matRad ct struct
 %   stf:                        matRad steering information struct
 %   pln:                        matRad plan meta information struct
 %   cst:                        matRad cst struct
-%   nCasePerBixel               number of histories per beamlet (nCasePerBixel > 1),
-%                               max stat uncertainity (0 < nCasePerBixel < 1)
 %   calcDoseDirect:             binary switch to enable forward dose
 %                               calcualtion
 % output
@@ -24,195 +22,221 @@ function dij = matRad_calcParticleDoseMCtopas(ct,stf,pln,cst,nCasePerBixel,calcD
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2019 the matRad development team. 
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
+% Copyright 2019 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% Instance of MatRad_Config class
 matRad_cfg = MatRad_Config.instance();
 
+% handle inputs
 if nargin < 5
-    % set number of particles simulated per pencil beam
-    nCasePerBixel = matRad_cfg.propMC.particles_defaultHistories;
-    matRad_cfg.dispInfo('Using default number of Histories per Bixel: %d\n',nCasePerBixel);
-end
-
-if nargin < 6
     calcDoseDirect = false;
 end
 
-if isfield(pln,'propMC') && isfield(pln.propMC,'outputVariance')
-    matRad_cfg.dispWarning('Variance scoring for TOPAS not yet supported.');
-end
-
-if isfield(pln,'propMC') && isfield(pln.propMC,'config')        
-    if isa(pln.propMC.config,'MatRad_TopasConfig')
-        matRad_cfg.dispInfo('Using given Topas Configuration in pln.propMC.config!\n');
-        topasConfig = pln.propMC.config;
-    else 
-        %Create a default instance of the configuration
-        topasConfig = MatRad_TopasConfig();
-        
-        %Overwrite parameters
-        %mc = metaclass(topasConfig); %get metaclass information to check if we can overwrite properties
-        
-        if isstruct(pln.propMC.config)
-            props = fieldnames(pln.propMC.config);
-            for fIx = 1:numel(props)
-                fName = props{fIx};
-                if isprop(topasConfig,fName)
-                    %We use a try catch block to catch errors when trying
-                    %to overwrite protected/private properties instead of a
-                    %metaclass approach
-                    try 
-                        topasConfig.(fName) = pln.propMC.config.(fName);
-                    catch
-                        matRad_cfg.dispWarning('Property ''%s'' for MatRad_TopasConfig will be omitted due to protected/private access or invalid value.',fName);
-                    end
-                else
-                    matRad_cfg.dispWarning('Unkown property ''%s'' for MatRad_TopasConfig will be omitted.',fName);
-                end
-            end
-        else
-            matRad_cfg.dispError('Invalid Configuration in pln.propMC.config');
-        end
-    end
-else
-    topasConfig = MatRad_TopasConfig();
-end
-        
-
-if ~calcDoseDirect
-    matRad_cfg.dispError('matRad so far only supports direct dose calculation for TOPAS!\n');
-end
-
-if ~isfield(pln.propStf,'useRangeShifter') 
+if ~isfield(pln.propStf,'useRangeShifter')
     pln.propStf.useRangeShifter = false;
 end
 
-env = matRad_getEnvironment();
-
-%% Initialize dose Grid as usual
-matRad_calcDoseInit;
-
-% for TOPAS we explicitly downsample the ct to the dose grid (might not
-% be necessary in future versions with separated grids)
-
-
-for s = 1:ct.numOfCtScen
-    cubeHUresampled{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{s}, ...
-                                dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
-    cubeResampled{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cube{s}, ...
-                                dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');                        
-end
-
-%Allocate temporary resampled CT
-ctR = ct;
-ctR.cube = cell(1);
-ctR.cubeHU = cell(1);
-ctR.numOfCtScen = 1;
-ctR.resolution = dij.doseGrid.resolution;
-ctR.cubeDim = dij.doseGrid.dimensions;
-ctR.x = dij.doseGrid.x;
-ctR.y = dij.doseGrid.y;
-ctR.z = dij.doseGrid.z;
-
-%% sending data to topas
-
-load([pln.radiationMode,'_',pln.machine]);
-
-topasBaseData = MatRad_TopasBaseData(machine,stf);%,TopasConfig);
-
-topasConfig.numHistories = nCasePerBixel;
-topasConfig.numOfRuns = matRad_cfg.propMC.topas_defaultNumBatches;
-
-%Collect weights
-w = zeros(sum([stf(:).totalNumOfBixels]),1);
-ct = 1;
-for i = 1:length(stf)
-    for j = 1:stf(i).numOfRays
-        rayBix = stf(i).numOfBixelsPerRay(j);
-        w(ct:ct+rayBix-1) = stf(i).ray(j).weight;
-        ct = ct + rayBix;
+% Set parameters for full Dij calculation
+if ~calcDoseDirect
+    pln.propMC.scorer.calcDij = true;
+    pln.propMC.numOfRuns = 1;
+    
+    % Load class variables in pln
+    % for calcDoseDirect, this is already done in superior function
+    if ~isa(pln.propMC,'matRad_TopasConfig')
+        pln = matRad_cfg.getDefaultClass(pln,'propMC','matRad_TopasConfig');
+    end
+    
+    if pln.propMC.numHistories  < 1e10
+        matRad_cfg.dispWarning('Selected TOPAS dij calculation with fewer than normal histories (default 1e10), make sure you want to continue.');
+    end
+else
+    if ~isa(pln.propMC,'matRad_TopasConfig')
+        matRad_cfg.dispError('Run calcParticleDoseMCtopas through calcDoseDirectMC');
     end
 end
 
+% load default parameters for doseCalc in case they haven't been set yet
+pln = matRad_cfg.getDefaultProperties(pln,{'propDoseCalc'});
+
+% set nested folder structure if external calculation is turned on (this will put new simulations in subfolders)
+if pln.propMC.externalCalculation
+    pln.propMC.workingDir = [pln.propMC.thisFolder filesep 'MCrun' filesep];
+    pln.propMC.workingDir = [pln.propMC.workingDir pln.radiationMode,'_',pln.machine,'_',datestr(now, 'dd-mm-yy')];
+end
+
+%% Initialize dose grid and dij
+
+% load calcDoseInit as usual
+matRad_calcDoseInit;
+
+% for TOPAS we explicitly downsample the ct to the dose grid (might not be necessary in future versions with separated grids)
+[ctR,~,~] = matRad_resampleCTtoGrid(ct,cst,pln,stf);
+
+% overwrite CT grid in dij in case of modulation.
+if isfield(ctR,'ctGrid')
+    dij.ctGrid = ctR.ctGrid;
+end
+
+%% sending data to topas
+
+% Load and create TOPAS Base Data
+load([pln.radiationMode,'_',pln.machine],'machine');
+
+% Collect given weights
+if calcDoseDirect
+    %     w = zeros(sum([stf(:).totalNumOfBixels]),ctR.numOfCtScen);
+    w = zeros(sum([stf(:).totalNumOfBixels]),1);
+    counter = 1;
+    for i = 1:length(stf)
+        for j = 1:stf(i).numOfRays
+            rayBix = stf(i).numOfBixelsPerRay(j);
+            w(counter:counter+rayBix-1,:) = stf(i).ray(j).weight;
+            counter = counter + rayBix;
+        end
+    end
+end
+
+% Get photon parameters for RBExD calculation
+if isfield(pln,'bioParam') && strcmp(pln.bioParam.quantityOpt,'RBExD')
+    pln.propMC.scorer.RBE = true;
+    [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
+    dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
+end
+
+% save current directory to revert back to later
 currDir = cd;
 
 for shiftScen = 1:pln.multScen.totNumShiftScen
     
-    % manipulate isocenter
-    for k = 1:length(stf)
-        stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(shiftScen,:);
-    end    
+    %Find first instance of the shift to select the shift values
+    ixShiftScen = find(pln.multScen.linearMask(:,2) == shiftScen,1);
     
+    % manipulate isocenter
+    for k = 1:numel(stf)
+        stf(k).isoCenter = stf(k).isoCenter + pln.multScen.isoShift(ixShiftScen,:);
+    end
+    
+    % Delete previous topas files so there is no mix-up
+    files = dir([pln.propMC.workingDir,'*']);
+    files = {files(~[files.isdir]).name};
+    fclose('all');
+    for i = 1:length(files)
+        delete([pln.propMC.workingDir,files{i}])
+    end
+    
+    % Run simulations for each scenario
     for ctScen = 1:pln.multScen.numOfCtScen
         for rangeShiftScen = 1:pln.multScen.totNumRangeScen
             if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
                 
-                %Overwrite CT (TEMPORARY - we should use 4D calculation in
-                %TOPAS here)
-                ctR.cubeHU = cubeHUresampled(ctScen);
-                ctR.cube = cubeResampled(ctScen);
-                                
-                topasConfig.writeAllFiles(ctR,pln,stf,topasBaseData,w);                
-                
-                % Run simulation for current scenario
-                cd(topasConfig.workingDir);
-                
-                for beamIx = 1:numel(stf)
-                    for runIx = 1:topasConfig.numOfRuns       
-                        fname = sprintf('%s_field%d_run%d',topasConfig.label,beamIx,runIx);
-                        topasCall = sprintf('%s %s.txt > %s.out 2> %s.err',topasConfig.topasExecCommand,fname,fname,fname);
-                        if topasConfig.parallelRuns
-                            finishedFiles{runIx} = sprintf('%s.finished',fname);
-                            delete(finishedFiles{runIx});
-                            topasCall = [topasCall '; touch ' finishedFiles{runIx} ' &'];
-                        end
-                        matRad_cfg.dispInfo('Calling TOPAS: %s\n',topasCall);
-                        [status,cmdout] = system(topasCall,'-echo');
-                        if status == 0
-                            matRad_cfg.dispInfo('TOPAS simulation completed succesfully\n');
-                        else
-                            matRad_cfg.dispError('TOPAS simulation exited with error code %d\n',status);
-                        end
-                    end
-
-                    if topasConfig.parallelRuns
-                        runsFinished = false;
-                        pause('on');
-                        while ~runsFinished
-                            pause(1);
-                            fin = cellfun(@(f) exist(f,'file'),finishedFiles);
-                            runsFinished = all(fin);
-                        end
-                    end
-
+                % Save ctScen and rangeShiftScen for file constructor
+                if ct.numOfCtScen > 1
+                    ctR.currCtScen = ctScen;
+                    ctR.currRangeShiftScen = rangeShiftScen;
                 end
                 
-                cd(currDir);
-                
-                %% Simulation finished - read out volume scorers from topas simulation
-                
-                topasCubes = matRad_readTopasData(topasConfig.workingDir);
-
-                fnames = fieldnames(topasCubes);
-                dij.MC_tallies = fnames;
-                for f = 1:numel(fnames)
-                    dij.(fnames{f}){1} = sum(w)*reshape(topasCubes.(fnames{f}),[],1);
+                % actually write TOPAS files
+                if calcDoseDirect
+                    pln.propMC.writeAllFiles(ctR,cst,pln,stf,machine,w);
+                else
+                    pln.propMC.writeAllFiles(ctR,cst,pln,stf,machine);
                 end
             end
         end
     end
     
+    % change director back to original directory
+    cd(pln.propMC.workingDir);
+    
+    % Skip local calculation and data readout with this parameter. All necessary parameters to read the data back in
+    % later are stored in the MCparam file that is stored in the folder. The folder is generated in the working
+    % directory and the matRad_plan*.txt file can be manually called with TOPAS.
+    if pln.propMC.externalCalculation
+        matRad_cfg.dispInfo(['TOPAS simulation skipped for external calculation\nFiles have been written to: "',replace(pln.propMC.workingDir,'\','\\'),'"']);
+    else
+        for ctScen = 1:ct.numOfCtScen
+            for beamIx = 1:numel(stf)
+                for runIx = 1:pln.propMC.numOfRuns
+                    if ct.numOfCtScen > 1
+                        fname = sprintf('%s_field%d_ct%d_run%d',pln.propMC.label,beamIx,ctScen,runIx);
+                    else
+                        fname = sprintf('%s_field%d_run%d',pln.propMC.label,beamIx,runIx);
+                    end
+                    
+                    if isprop(pln.propMC,'verbosity') && strcmp(pln.propMC.verbosity,'full')
+                        topasCall = sprintf('%s %s.txt',pln.propMC.topasExecCommand,fname);
+                    else
+                        topasCall = sprintf('%s %s.txt > %s.out > %s.log',pln.propMC.topasExecCommand,fname,fname,fname);
+                    end
+                    
+                    % initiate parallel runs and delete previous files
+                    if pln.propMC.parallelRuns
+                        finishedFiles{runIx} = sprintf('%s.finished',fname);
+                        topasCall = [topasCall '; touch ' finishedFiles{runIx} ' &'];
+                    end
+                    
+                    % Actual simulation happening here
+                    matRad_cfg.dispInfo('Calling TOPAS: %s\n',topasCall);
+                    [status,cmdout] = system(topasCall,'-echo');
+                    
+                    % Process TOPAS output and potential errors
+                    cout = splitlines(string(cmdout));
+                    if status == 0
+                        matRad_cfg.dispInfo('TOPAS simulation completed succesfully\n');
+                    else
+                        if status == 139
+                            matRad_cfg.dispError('TOPAS segmentation fault: might be caused from an outdated TOPAS version or Linux distribution');
+                        else
+                            matRad_cfg.dispError('TOPAS simulation exited with error code %d\n "%s"',status,cout(2:end-1));
+                        end
+                    end
+                end
+                
+                % wait for parallel runs to finish and process
+                if pln.propMC.parallelRuns
+                    runsFinished = false;
+                    pause('on');
+                    while ~runsFinished
+                        pause(1);
+                        fin = cellfun(@(f) exist(f,'file'),finishedFiles);
+                        runsFinished = all(fin);
+                    end
+                    % Delete marker files
+                    delete(finishedFiles{:});
+                end
+            end
+        end
+    end
+    
+    % revert back to original directory
+    cd(currDir);
+
     % manipulate isocenter back
     for k = 1:length(stf)
-        stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(shiftScen,:);
+        stf(k).isoCenter = stf(k).isoCenter - pln.multScen.isoShift(ixShiftScen,:);
     end
+    
+end
+
+%% Simulation(s) finished - read out volume scorers from topas simulation
+% Skip readout if external files were generated
+if ~pln.propMC.externalCalculation
+    dij = pln.propMC.readFiles(pln.propMC.workingDir);
+    
+    % Order fields for easier comparison between different dijs
+    dij = orderfields(dij);
+else
+    dij = struct([]);
+end
+
 end

@@ -1,0 +1,8 @@
+#-- shared physDose sub-scorer
+s:Sc/Tally_DoseToWater/Quantity   			= "DoseToWater"
+s:Sc/Tally_DoseToWater/OutputType 			= Sim/DoseScorerOutputType
+s:Sc/Tally_DoseToWater/Component  			= "Patient"
+b:Sc/Tally_DoseToWater/PreCalculateStoppingPowerRatios 	= "True"
+s:Sc/Tally_DoseToWater/IfOutputFileAlreadyExists 	= "Overwrite"
+b:Sc/Tally_DoseToWater/OutputToConsole 			= "False"
+s:Sc/Tally_DoseToWater/OutputFile 			= Sim/ScoreLabel + "_doseToWater"

@@ -22,10 +22,16 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         wResult
         resultInfo
         env
+
+        %Visualization
+        showPlot = true;
     end
     
-    properties (Access = private)
+    properties(GetAccess = public, SetAccess = private)
         allObjectiveFunctionValues
+    end
+
+    properties (Access = private)
         axesHandle
         plotHandle
         abortRequested
@@ -107,9 +113,14 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
                 matRad_cfg.dispError('IPOPT mex interface not available for %s!',obj.env);
             end
 
+            if matRad_cfg.disableGUI || (matRad_cfg.isOctave && isequal(graphics_toolkit(),'gnuplot'))
+                obj.showPlot = false;
+            end
+
         end
         
         function obj = optimize(obj,w0,optiProb,dij,cst)
+            obj.allObjectiveFunctionValues = [];
             matRad_cfg = MatRad_Config.instance();
             
             % set optimization options            
@@ -180,7 +191,6 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             
             obj.abortRequested = false;
             % Empty the array of stored function values
-            obj.allObjectiveFunctionValues = [];
         end
         
         function [statusmsg,statusflag] = GetStatus(obj)
@@ -244,7 +254,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.allObjectiveFunctionValues(iter + 1) = objective;
             %We don't want the optimization to crash because of drawing
             %errors
-            if ~obj.plotFailed
+            if obj.showPlot && ~obj.plotFailed
                 try            
                     obj.plotFunction();
                 catch ME
@@ -309,7 +319,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             drawnow;
             
             % ensure to bring optimization window to front
-            figure(hFig);
+            %figure(hFig);
         end
         
         function abortCallbackKey(obj,~,KeyEvent)
