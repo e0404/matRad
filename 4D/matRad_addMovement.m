@@ -1,4 +1,4 @@
-function [ct, cst] = matRad_addMovement(ct, cst, motionPeriod, numOfCtScen, amp,visBool)
+function [ct, cst] = matRad_addMovement(ct, cst, motionPeriod, numOfCtScen, amp, dvfType, visBool)
 % adds artificial sinosodal patient motion by creating a deformation vector
 % field and applying it to the ct.cube by geometric transformation
 %
@@ -11,6 +11,7 @@ function [ct, cst] = matRad_addMovement(ct, cst, motionPeriod, numOfCtScen, amp,
 %   motionPeriod:   the length of a whole breathing cycle (in seconds)
 %   numOfCtScen:    number of ct phases
 %   amp:            amplitude of the sinosoidal movement (in pixels)
+%   dvfType:        push or pull dvf
 %   visBool         boolean flag for visualization
 %
 %   note:           1st dim --> x LPS coordinate system
@@ -43,6 +44,9 @@ function [ct, cst] = matRad_addMovement(ct, cst, motionPeriod, numOfCtScen, amp,
 if ~exist('visBool','var')
     visBool = false;
 end
+if ~exist('dvfType','var')
+   dvfType = 'pull';
+end
 
 matRad_cfg = MatRad_Config.instance();
 
@@ -50,8 +54,15 @@ matRad_cfg = MatRad_Config.instance();
 ct.motionPeriod = motionPeriod;
 ct.numOfCtScen = numOfCtScen;
 
+if ~(strcmp(dvfType, 'pull') || strcmp(dvfType,'push'))
+    matRad_cfg.disperror('Chosse Push or Pull DVF type')
+end
+
 % set type
-ct.dvfType = 'pull'; % push or pull
+ct.dvfMetadata.dvfType = dvfType;
+if strcmp(dvfType,'push')
+    amp = -amp; %dvf_pull = -dvf_push;
+end
 
 env = matRad_getEnvironment();
 
@@ -110,10 +121,9 @@ for i = 1:numOfCtScen
     end
     
     % convert dvfs to [mm]
-    tmp = ct.dvf{i}(:,:,:,1);
-    ct.dvf{i}(:,:,:,1) = -ct.dvf{i}(:,:,:,2) * ct.resolution.x;
-    ct.dvf{i}(:,:,:,2) = -tmp * ct.resolution.y;
-    ct.dvf{i}(:,:,:,3) = -ct.dvf{i}(:,:,:,3) * ct.resolution.z;
+    ct.dvf{i}(:,:,:,1) = ct.dvf{i}(:,:,:,1).* ct.resolution.x;
+    ct.dvf{i}(:,:,:,2) = ct.dvf{i}(:,:,:,2).*ct.resolution.y;
+    ct.dvf{i}(:,:,:,3) = ct.dvf{i}(:,:,:,3).* ct.resolution.z;
     
     ct.dvf{i} = permute(ct.dvf{i}, [4,1,2,3]);    
 end

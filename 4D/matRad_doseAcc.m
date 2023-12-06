@@ -57,7 +57,7 @@ dAcc = zeros(ct.cubeDim);
        
 if strcmp(accMethod,'DDM')
     
-    if ~strcmp(ct.dvfType,'pull')
+    if ~strcmp(ct.dvfMetadata.dvfType,'pull')
         error('dose accumulation via direct dose mapping (DDM) requires pull dvfs');
     end    
          
@@ -75,19 +75,16 @@ if strcmp(accMethod,'DDM')
         dvf_y_i = squeeze(ct.dvf{1,i}(2,:,:,:))/ct.resolution.y;
         dvf_z_i = squeeze(ct.dvf{1,i}(3,:,:,:))/ct.resolution.z;
 
-        d_ref = matRad_interp3(yGridVec,xGridVec,zGridVec,permute(phaseCubes{i},[2 1 3]), ...
-                         Y(ix) + dvf_y_i(ix), ...     
-                         X(ix) + dvf_x_i(ix), ... 
-                         Z(ix) + dvf_z_i(ix), ...
-                         'linear',0);  
+        d_ref = matRad_interp3(X, Y, Z,...
+                            phaseCubes{i}, X-dvf_x_i,Y-dvf_y_i,Z-dvf_z_i,'linear',0);   
 
-        dAcc(ix) = dAcc(ix) + d_ref;
+        dAcc(ix) = dAcc(ix) + d_ref(ix);
       
     end
     
 elseif strcmp(accMethod,'EMT')   % funktioniert nicht wenn Dosis in einer Phase = 0 ist...
    
-    if ~strcmp(ct.dvfType,'push')
+    if ~strcmp(ct.dvfMetadata.dvfType,'push')
         error('dose accumulation via interpolation requires push dvfs');
     end
 
@@ -99,8 +96,10 @@ elseif strcmp(accMethod,'EMT')   % funktioniert nicht wenn Dosis in einer Phase 
         dvf_y_i = squeeze(ct.dvf{1,i}(2,:,:,:))/ct.resolution.y;
         dvf_z_i = squeeze(ct.dvf{1,i}(3,:,:,:))/ct.resolution.z;
 
-        m_i     = ct.cube{i};
-        e_i     = phaseCubes{i}.*m_i;
+        m_i = ct.cube{i};
+        m_i = permute(m_i,[2 1 3]);
+        e_i = phaseCubes{i}.*ct.cube{i};
+        e_i     = permute(e_i,[2 1 3]);
         
         ix = e_i>0;
         
@@ -163,6 +162,7 @@ elseif strcmp(accMethod,'EMT')   % funktioniert nicht wenn Dosis in einer Phase 
          k = find(m_ref);
          dAcc(k) = dAcc(k) + e_ref(k)./m_ref(k);
         
+          dAcc = permute(dAcc,[2 1 3]);
     end
 
 % elseif strcmp(accMethod,'DDMM')
