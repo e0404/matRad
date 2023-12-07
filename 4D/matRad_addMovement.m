@@ -55,7 +55,7 @@ ct.motionPeriod = motionPeriod;
 ct.numOfCtScen = numOfCtScen;
 
 if ~(strcmp(dvfType, 'pull') || strcmp(dvfType,'push'))
-    matRad_cfg.disperror('Chosse Push or Pull DVF type')
+    matRad_cfg.dispError('Chosse Push or Pull DVF type')
 end
 
 % set type
