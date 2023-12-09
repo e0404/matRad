@@ -92,7 +92,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
                 scenStf = stf;
                 % manipulate isocenter
-                for k = 1:numel(stf)
+                for k = 1:numel(scenStf)
                     scenStf(k).isoCenter = scenStf(k).isoCenter + this.multScen.isoShift(ixShiftScen,:);
                 end
 
@@ -106,7 +106,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                 for i = 1:dij.numOfBeams % loop over all beams
 
                     %Initialize Beam Geometry
-                    currBeam = this.initBeam(dij,ct,cst,stf,i);
+                    currBeam = this.initBeam(dij,ct,cst,scenStf,i);
 
                     %Keep tabs on bixels computed in this beam
                     bixelBeamCounter = 0;
