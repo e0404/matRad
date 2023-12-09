@@ -39,9 +39,9 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
         tmpMatrixContainers;    % temporary containers for 
         numOfBixelsContainer;   % number of used bixel container
 
-        radDepthCubes;          % only stored if property set accordingly
+        radDepthCubes = {};     % only stored if property set accordingly
 
-        cubeWED;                   % relative electron density / stopping power cube
+        cubeWED;                % relative electron density / stopping power cube
         hlut;                   % hounsfield lookup table to craete relative electron density cube    
     end
 
@@ -134,7 +134,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                                         else
                                             scenIdx = ctScen;
                                         end
-
+                                        
                                         %rangeScenIx = find(this.multScen.linearMask(:,3) == rangeShiftScen,1);
                                         %Bixel Computation
                                         currBixel = this.computeBixel(currRay,k);
@@ -282,9 +282,10 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             ct.cube = this.cubeWED;
             if this.keepRadDepthCubes
                 [radDepthVctGrid, currBeam.radDepthCube] = matRad_rayTracing(currBeam,ct,this.VctGrid,rot_coordsV,this.effectiveLateralCutOff);
-                currBeam.radDepthCube{1} = matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z, currBeam.radDepthCube{1}, ...
-                    dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest');
-                this.radDepthCubes{i} = currBeam.radDepthCube{1};
+
+                currBeam.radDepthCube = cellfun(@(rD) matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z, rD, ...
+                    dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest'),currBeam.radDepthCube,'UniformOutput',false);
+                this.radDepthCubes(i,:) = currBeam.radDepthCube(:);
             else
                 radDepthVctGrid = matRad_rayTracing(currBeam,ct,this.VctGrid,rot_coordsV,this.effectiveLateralCutOff);
             end
