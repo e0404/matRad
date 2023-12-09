@@ -199,21 +199,24 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             else
                 this.numOfBixelsContainer = ceil(dij.totalNumOfBixels/this.numOfDijFillSteps);
             end
-
+            
+            %Loop over all requested quantities
             for n = 1:numel(names)
-                this.tmpMatrixContainers.(names{n}) = cell(this.numOfBixelsContainer,this.multScen.numOfCtScen,this.multScen.totNumShiftScen,this.multScen.totNumRangeScen);
-                for ctScen = 1:this.multScen.numOfCtScen
-                    for shiftScen = 1:this.multScen.totNumShiftScen
-                        for rangeShiftScen = 1:this.multScen.totNumRangeScen
-                            if this.calcDoseDirect
-                                dij.(names{n}){ctScen,shiftScen,rangeShiftScen} = zeros(dij.doseGrid.numOfVoxels,this.numOfColumnsDij);
-                            else
-                                %We preallocate a sparse matrix with sparsity of
-                                %1e-3 to make the filling slightly faster
-                                dij.(names{n}){ctScen,shiftScen,rangeShiftScen} = spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,round(prod(dij.doseGrid.numOfVoxels,this.numOfColumnsDij)*1e-3));
-                            end
-                        end
-                    end
+                %Create Cell arrays for container and dij
+                szContainer = [this.numOfBixelsContainer size(this.multScen.scenMask)];
+                this.tmpMatrixContainers.(names{n}) = cell(szContainer);
+                dij.(names{n}) = cell(size(this.multScen.scenMask));
+                
+                %Now preallocate a matrix in each active scenario using the
+                %scenmask
+                if this.calcDoseDirect
+                    dij.(names{n})(this.multScen.scenMask) = {zeros(dij.doseGrid.numOfVoxels,this.numOfColumnsDij)};
+                else
+                    %We preallocate a sparse matrix with sparsity of
+                    %1e-3 to make the filling slightly faster
+                    %TODO: the preallocation could probably
+                    %have more accurate estimates
+                    dij.(names{n})(this.multScen.scenMask) = {spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,round(prod(dij.doseGrid.numOfVoxels,this.numOfColumnsDij)*1e-3))};
                 end
             end
         end
