@@ -1,4 +1,4 @@
-function [ct, cst] = matRad_addMovement(ct, cst, motionPeriod, numOfCtScen, amp, dvfType, visBool)
+function [ct, cst] = matRad_addMovement(ct, cst, motionPeriod, numOfCtScen, amp, varargin)
 % adds artificial sinosodal patient motion by creating a deformation vector
 % field and applying it to the ct.cube by geometric transformation
 %
@@ -11,8 +11,8 @@ function [ct, cst] = matRad_addMovement(ct, cst, motionPeriod, numOfCtScen, amp,
 %   motionPeriod:   the length of a whole breathing cycle (in seconds)
 %   numOfCtScen:    number of ct phases
 %   amp:            amplitude of the sinosoidal movement (in pixels)
-%   dvfType:        push or pull dvf
-%   visBool         boolean flag for visualization
+%   varargin:   dvfType:        push or pull dvf
+%               visBool         boolean flag for visualization
 %
 %   note:           1st dim --> x LPS coordinate system
 %                   2nd dim --> y LPS coordinate system
@@ -41,12 +41,12 @@ function [ct, cst] = matRad_addMovement(ct, cst, motionPeriod, numOfCtScen, amp,
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if ~exist('visBool','var')
-    visBool = false;
-end
-if ~exist('dvfType','var')
-   dvfType = 'pull';
-end
+expectedDVF = {'pull', 'push'};
+
+p = inputParser; 
+addParameter(p,'dvfType','pull', @(x) any(validatestring(x,expectedDVF)))
+addParameter(p,'visBool',false, @islogical);
+parse(p,varargin{:});
 
 matRad_cfg = MatRad_Config.instance();
 
@@ -54,13 +54,9 @@ matRad_cfg = MatRad_Config.instance();
 ct.motionPeriod = motionPeriod;
 ct.numOfCtScen = numOfCtScen;
 
-if ~(strcmp(dvfType, 'pull') || strcmp(dvfType,'push'))
-    matRad_cfg.dispError('Choose Push or Pull DVF type')
-end
-
 % set type
-ct.dvfMetadata.dvfType = dvfType;
-if strcmp(dvfType,'push')
+ct.dvfMetadata.dvfType = p.Results.dvfType;
+if strcmp(p.Results.dvfType,'push')
     amp = -amp; %dvf_pull = -dvf_push;
 end
 
@@ -130,7 +126,7 @@ end
 
 
 
-if visBool
+if p.Results.visBool
     slice = round(ct.cubeDim(3)/2);
     figure,
     for i = 1:numOfCtScen
