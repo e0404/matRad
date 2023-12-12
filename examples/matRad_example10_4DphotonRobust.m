@@ -122,7 +122,7 @@ amplitude    = [5 0 0]; % [voxels]
 numOfCtScen  = 5;
 motionPeriod = 2.5; % [s] 
 
-[ct,cst] = matRad_addMovement(ct, cst,motionPeriod, numOfCtScen, amplitude,1);
+[ct,cst] = matRad_addMovement(ct, cst,motionPeriod, numOfCtScen, amplitude,'visBool',true);
 
 % show the deformation vector field
 slice = 25; % select a specific slice and to plot the vector field
