@@ -261,6 +261,9 @@ if isfield(pln,'propOpt') && isfield(pln.propOpt,'useLogSumExpForRobOpt')
 end
 
 rowCst = size(cst);
+dirty = false;
+mLET = false;
+LET = false;
 for i = 1 : rowCst(1,1)
     num = size(cst{i,6});
     for j = 1 : num(1,2)
@@ -270,11 +273,24 @@ for i = 1 : rowCst(1,1)
         if isa(cst{i,6}{j},'mLETDoseObjectives.matRad_mLETDoseObjective')
             optiProb.mLETDoseBP = matRad_mLETDoseProjection;
         end
-        if isa(cst{i,6}{j},'LETdObjectives.matRad_LETdObjective')
+        if isa(cst{i,6}{j},'LETdObjectives')
             optiProb.LETdBP = matRad_LETdProjection;
         end
     end
 end
+% optiProb.LETdBP = matRad_LETdProjection;
+%         if dirty == true
+%             break
+%         end
+%     end
+%     if dirty == true
+%         break
+%     end
+% end
+% mLET = false;
+% for i = 1 : rowCst(1,1)
+%     num = size(cst{i,6});
+%     for j = 1 : num(1,2)
 
 %Get Bounds
 if ~isfield(pln.propOpt,'boundMU')

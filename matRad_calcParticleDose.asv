@@ -1,4 +1,4 @@
-function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
+function dij = matRad_calcParticleDose(ct,stf,pln,cst,LET_thres,calcDoseDirect)
 % matRad particle dose calculation wrapper
 %
 % call
@@ -9,6 +9,7 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 %   stf:            matRad steering information struct
 %   pln:            matRad plan meta information struct
 %   cst:            matRad cst struct
+%   LET_thres:      LET threshold, above: dirty dose, below: clean dose
 %   calcDoseDirect: (optional) switches to direct dose calculation, only
 %                   makes sense in combination with matRad_calcDoseDirect
 %
@@ -93,7 +94,15 @@ if pln.propDoseCalc.calcLET
             end
         end
         matRad_cfg.dispInfo('LET computation enabled!\n');
-        
+
+        dij.dirtyDoseThreshold = setLETthreshold(LET_thres);
+        if dij.dirtyDoseThreshold =
+        end
+        dij.LETmask.Dirty = matRad_calcLETmask(dij);
+        dij.LETmask.Clean = ~matRad_calcLETmask(dij);
+        dij.DoseDij.Dirty = dij.LETmask.Dirty.*full(dij.physicalDose{1}(:,:));
+        dij.DoseDij.Clean = dij.LETmask.Clean.*full(dij.physicalDose{1}(:,:));
+
     else
         matRad_cfg.dispWarning('\tLET not available in the machine data. LET will not be calculated.');
     end

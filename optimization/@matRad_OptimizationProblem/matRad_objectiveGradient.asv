@@ -911,7 +911,7 @@ if exist('delta_COWC','var')
             if ~isempty(optiProb.mLETDoseBP) 
                 mLETDoseGradient{ixScen} = mLETDoseGradient{ixScen} + fGrad{ixScen} * delta_COWC{ixScen};
             end
-            % if ~isempty(optiProb.LETdBP) 
+            % if ~isempty(optiProb.LETdBP) && isa(objective,'LETdObjectives.matRad_LETdObjective')
             %     LETdGradient{ixScen} = LETdGradient{ixScen} + fGrad{ixScen} * delta_COWC{ixScen};
             % end
             if ~isempty(optiProb.BP)
@@ -940,7 +940,7 @@ if vOmega ~= 0
 end
 
 %Manage Dirty Dose Gradient
-if ~isempty(optiProb.dirtyDoseBP) 
+if ~isempty(optiProb.dirtyDoseBP) % && isa(objective,'DirtyDoseObjectives.matRad_DirtyDoseObjective')
     optiProb.dirtyDoseBP.computeGradient(dij,dirtyDoseGradient,w);
     g = optiProb.dirtyDoseBP.GetGradient();
 
@@ -956,7 +956,7 @@ if ~isempty(optiProb.dirtyDoseBP)
         weightGradient = weightGradient + gProb{1};
     end
 end
-if ~isempty(optiProb.mLETDoseBP) 
+if ~isempty(optiProb.mLETDoseBP) % && isa(objective,'mLETDoseObjectives.matRad_mLETDoseObjective')
     optiProb.mLETDoseBP.computeGradient(dij,mLETDoseGradient,w);
     g = optiProb.mLETDoseBP.GetGradient();
 
@@ -972,7 +972,7 @@ if ~isempty(optiProb.mLETDoseBP)
         weightGradient = weightGradient + gProb{1};
     end
 end
-% if ~isempty(optiProb.LETdBP) 
+% if ~isempty(optiProb.LETdBP) && isa(objective,'LETdObjectives.matRad_LETdObjective')
 %     optiProb.LETdBP.computeGradient(dij,LETdGradient,w);
 %     g = optiProb.LETdBP.GetGradient();
 % 

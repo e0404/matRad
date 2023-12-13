@@ -1,6 +1,6 @@
-classdef matRad_MaxDVH < DoseObjectives.matRad_DoseObjective
-% matRad_MaxDVH Implements a penalized maximum DVH objective
-%   See matRad_DoseObjective for interface description
+classdef matRad_MinDVHmLETDose < mLETDoseObjectives.matRad_mLETDoseObjective
+% matRad_MinDVHmLETDose Implements a penalized MinDVHmLETDose objective
+%   See matRad_mLETDoseObjective for interface description
 %
 % References
 %   -
@@ -19,19 +19,20 @@ classdef matRad_MaxDVH < DoseObjectives.matRad_DoseObjective
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (Constant)
-        name = 'Max DVH';
-        parameterNames = {'dose', 'V^{max}'};
-        parameterTypes = {'dose','numeric'};
+        name = 'Min DVH mLETDose';
+        parameterNames = {'mLETDose', 'V^{min}'};
+        parameterTypes = {'mLETDose','numeric'};
     end
     
     properties
-        parameters = {30,95};
+        parameters = {60,95};
         penalty = 1;
     end
     
-    methods 
-        function obj = matRad_MaxDVH(penalty,dRef,vMaxPercent)
-            %If we have a struct in first argument
+    methods
+        function obj = matRad_MinDVHmLETDose(penalty,mLETDoseRef,vMinPercent)
+            
+            % if we have a struct in first argument
             if nargin == 1 && isstruct(penalty)
                 inputStruct = penalty;
                 initFromStruct = true;
@@ -41,57 +42,57 @@ classdef matRad_MaxDVH < DoseObjectives.matRad_DoseObjective
             end
             
             %Call Superclass Constructor (for struct initialization)
-            obj@DoseObjectives.matRad_DoseObjective(inputStruct);
+            obj@mLETDoseObjectives.matRad_mLETDoseObjective(inputStruct);
             
             %now handle initialization from other parameters
             if ~initFromStruct
-                if nargin >= 3 && isscalar(vMaxPercent)
-                    obj.parameters{2} = vMaxPercent;
+                if nargin >= 3 && isscalar(vMinPercent)
+                    obj.parameters{2} = vMinPercent;
                 end
                 
-                if nargin >= 2 && isscalar(dRef)
-                    obj.parameters{1} = dRef;
+                if nargin >= 2 && isscalar(mLETDoseRef)
+                    obj.parameters{1} = mLETDoseRef;
                 end
                 
                 if nargin >= 1 && isscalar(penalty)
                     obj.penalty = penalty;
                 end
             end
+            
         end        
-        
         %% Calculates the Objective Function value
-        function fDose = computeDoseObjectiveFunction(obj,dose)                       
+        function fmLETDose = computemLETDoseObjectiveFunction(obj,mLETDose)                       
             % get reference Volume
             refVol = obj.parameters{2}/100;
             
             % calc deviation
-            deviation = dose - obj.parameters{1};
+            deviation = mLETDose - obj.parameters{1};
 
             % calc d_ref2: V(d_ref2) = refVol
-            d_ref2 = matRad_calcInversDVH(refVol,dose);
+            d_ref2 = matRad_calcInversDVHmLETDose(refVol,mLETDose);
 
             
-            deviation(dose < obj.parameters{1} | dose > d_ref2) = 0;
+            deviation(mLETDose > obj.parameters{1} | mLETDose < d_ref2) = 0;
    
             % calculate objective function
-            fDose = (1/numel(dose))*(deviation'*deviation);
+            fmLETDose = (1/numel(mLETDose))*(deviation'*deviation);
         end
         
         %% Calculates the Objective Function gradient
-        function fDoseGrad   = computeDoseObjectiveGradient(obj,dose)
+        function fmLETDoseGrad   = computemLETDoseObjectiveGradient(obj,mLETDose)
             % get reference Volume
             refVol = obj.parameters{2}/100;
             
             % calc deviation
-            deviation = dose - obj.parameters{1};
+            deviation = mLETDose - obj.parameters{1};
             
             % calc d_ref2: V(d_ref2) = refVol
-            d_ref2 = matRad_calcInversDVH(refVol,dose);
+            d_ref2 = matRad_calcInversDVHmLETDose(refVol,mLETDose);
             
-            deviation(dose < obj.parameters{1} | dose > d_ref2) = 0;
+            deviation(mLETDose > obj.parameters{1} | mLETDose < d_ref2) = 0;
 
             % calculate delta
-            fDoseGrad = (2/numel(dose))*deviation;
+            fmLETDoseGrad = (2/numel(mLETDose))*deviation;
         end
     end
     

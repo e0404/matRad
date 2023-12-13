@@ -69,7 +69,7 @@ classdef matRad_SquaredUnderdosing < DoseObjectives.matRad_DoseObjective
         
         %% Calculates the Objective Function gradient
         function fDoseGrad   = computeDoseObjectiveGradient(obj,dose)
-            % overdose : dose minus prefered dose
+            % underdose : dose minus prefered dose
             underdose = dose - obj.parameters{1};
             
             % apply positive operator

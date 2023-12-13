@@ -87,6 +87,23 @@ if isfield(dij,'mLETDose')
     end
 end
 
+%% mLETDose
+% consider mLETDose
+if isfield(dij,'mLETDose')
+    for i = 1:length(beamInfo)
+        resultGUI.(['mLETDose', beamInfo(i).suffix]) = reshape((dij.mLETDose{1}*(resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
+    end
+end
+
+% %% LETd
+% % consider LETd
+% if isfield(dij,'mLETDose')
+%     for i = 1:length(beamInfo)
+%         resultGUI.(['mLETDose', beamInfo(i).suffix]) = reshape((dij.mLETDose{1}*(resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
+%     end
+% end
+
+
 %% dirty dose
 % consider dirty dose
 if isfield(dij,'dirtyDoseThreshold')

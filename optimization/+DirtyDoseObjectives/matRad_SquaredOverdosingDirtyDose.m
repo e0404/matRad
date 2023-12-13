@@ -19,7 +19,7 @@ classdef matRad_SquaredOverdosingDirtyDose < DirtyDoseObjectives.matRad_DirtyDos
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (Constant)
-        name = 'squared overdosing dirty dose';
+        name = 'Squared Overdosing Dirty Dose';
         parameterNames = {'d^{max}'}; 
         parameterTypes = {'dirtyDose'}; 
     end
