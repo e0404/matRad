@@ -170,3 +170,12 @@ end
 
 % compute SSDs -> Removed for now because it is scenario-dependent
 % stf = matRad_computeSSD(stf,ct);
+
+if ~isfield(pln.propDoseCalc, 'selectVoxelsInScenarios')
+    pln.propDoseCalc.selectVoxelsInScenarios = matRad_cfg.propDoseCalc.defaultSelectVoxelsInScenarios;
+end
+
+%structures that are selected here will be included in dose calculation over the robust scenarios
+robustVoxelsOnGrid = matRad_selectVoxelsFromCst(cst, dij.doseGrid, pln.propDoseCalc.selectVoxelsInScenarios);
+
+matRad_cfg.dispInfo('...done.');

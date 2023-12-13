@@ -408,6 +408,19 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                     matRad_cfg.dispError('Lateral Cut-Off must be a value between 0 and 1!')
                                 end
 
+
+                                % get rid of currIdx
+                                if ~strcmp(pln.propDoseCalc.selectVoxelsInScenarios, 'all')
+                                    if (shiftScen>1) || (rangeShiftScen>1)
+
+                                        ixOnRobustMask = robustVoxelsOnGrid{ctScen}(VdoseGrid(ix));
+
+                                        currIx = currIx & ixOnRobustMask;
+
+                                    end
+                                end
+                                
+
                                 % empty bixels may happen during recalculation of error
                                 % scenarios -> skip to next bixel
                                 if ~any(currIx) 
@@ -499,6 +512,8 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                     %Type               = 'dose';
                                     %[currIx,bixelDose] = matRad_DijSampling(currIx,bixelDose,radDepths(currIx),radialDist_sq(currIx),Type,relDoseThreshold);
 
+
+                                    
                                     % Save dose for every bixel in cell array
                                     doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix(currIx)),1,bixelDose,dij.doseGrid.numOfVoxels,1);
 

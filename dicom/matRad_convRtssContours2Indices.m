@@ -29,7 +29,7 @@ function indices = matRad_convRtssContours2Indices(structure,ct)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+matRad_cfg = MatRad_Config.instance();
 voiCube = zeros(ct.cubeDim);
 
 % loop over all closed contour items
@@ -40,7 +40,7 @@ for i = 1:size(structure.item,2)
         dicomCtSlicePos = unique(structure.item(i).points(:,3));
         
         if numel(dicomCtSlicePos) > 1 || isempty(dicomCtSlicePos)
-            error('Contour defined over multiple planes!');
+            matRad_cfg.dispError('Contour defined over multiple planes!');
         end
     
         round2 = @(a,b) round(a*10^b)/10^b;
@@ -49,7 +49,7 @@ for i = 1:size(structure.item,2)
         %Sanity check
         msg = checkSliceThickness(dicomCtSliceThickness);
         if ~isempty(msg)
-            error('Slice Thickness of slice at %f could not be identified: %s',dicomCtSlicePos,msg);
+            matRad_cfg.dispError('Slice Thickness of slice at %f could not be identified: %s',dicomCtSlicePos,msg);
         end
         
         slicesInMatradCt = find(dicomCtSlicePos+dicomCtSliceThickness/2 > ct.z & dicomCtSlicePos-dicomCtSliceThickness/2 <= ct.z);
@@ -66,6 +66,33 @@ for i = 1:size(structure.item,2)
         
     end
     
+end
+% The x- & y-direction in lps-coordinates are specified in:
+% ImageOrientationPatient
+
+xDir = ct.dicomInfo.ImageOrientationPatient(1:3); % lps: [1;0;0]
+yDir = ct.dicomInfo.ImageOrientationPatient(4:6); % lps: [0;1;0]
+nonStandardDirection = false;
+
+if xDir(1) == 1 && xDir(2) == 0 && xDir(3) == 0
+%     matRad_cfg.dispInfo('x-direction OK\n')
+elseif xDir(1) == -1 && xDir(2) == 0 && xDir(3) == 0
+    voiCube = flip(voiCube,1);
+else
+    nonStandardDirection = true;
+end
+    
+if yDir(1) == 0 && yDir(2) == 1 && yDir(3) == 0
+%     matRad_cfg.dispInfo('y-direction OK\n')
+elseif yDir(1) == 0 && yDir(2) == -1 && yDir(3) == 0
+    voiCube = flip(voiCube,2);
+else
+    nonStandardDirection = true;
+end
+
+if nonStandardDirection
+    matRad_cfg.dispWarning(['Non-standard patient orientation.\n'...
+        'CT might not fit to contoured structures\n'])
 end
 
 indices = find(voiCube(:));
