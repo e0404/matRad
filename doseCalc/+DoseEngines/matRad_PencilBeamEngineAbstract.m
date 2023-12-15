@@ -117,37 +117,44 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                         %Initialize Ray Geometry
                         currRay = this.initRay(currBeam,j);
 
-                        for k = 1:currRay.numOfBixels
-                            % Progress Update & Bookkeeping
-                            bixelCounter = bixelCounter + 1;
-                            bixelBeamCounter = bixelBeamCounter + 1;
-                            this.progressUpdate(bixelCounter,dij.totalNumOfBixels);
-                            
-                            for ctScen = 1:this.multScen.numOfCtScen
-                                for rangeShiftScen = 1:this.multScen.totNumRangeScen
-                                    if this.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
+                        for ctScen = 1:this.multScen.numOfCtScen
+                            for rangeShiftScen = 1:this.multScen.totNumRangeScen
+                                if this.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
+                                    %TODO: This shows we need better scenario
+                                    %management
+                                    if ~isvector(this.multScen.scenMask)
+                                        scenIdx = sub2ind(size(this.multScen.scenMask),ctScen,shiftScen,rangeShiftScen);
+                                    else
+                                        scenIdx = ctScen;
+                                    end
+
+                                    scenNum = find(find(this.multScen.scenMask) == scenIdx);
+
+                                    %First, create a ray of the
+                                    %specific scenario to adapt rad
+                                    %depths
+                                    scenRay = currRay;
+                                    scenRay.radDepths = scenRay.radDepths{ctScen};
+                                    scenRay.radDepths = (1+this.multScen.relRangeShift(scenNum))*scenRay.radDepths + this.multScen.absRangeShift(scenNum);
+
+                                    for k = 1:currRay.numOfBixels
                                         
-                                        %TODO: This shows we need better scenario
-                                        %management
-                                        if ~isvector(this.multScen.scenMask)
-                                            scenIdx = sub2ind(size(this.multScen.scenMask),ctScen,shiftScen,rangeShiftScen);
-                                        else
-                                            scenIdx = ctScen;
-                                        end
-                                        
-                                        %rangeScenIx = find(this.multScen.linearMask(:,3) == rangeShiftScen,1);
+                                                                                
                                         %Bixel Computation
-                                        currBixel = this.computeBixel(currRay,k);
+                                        currBixel = this.computeBixel(scenRay,k);
 
                                         % save computation time and memory
                                         % by sequentially filling the sparse matrix dose.dij from the cell array
-                                        dij = this.fillDij(currBixel,dij,scenStf,scenIdx,i,j,k,bixelCounter);
+                                        dij = this.fillDij(currBixel,dij,scenStf,scenIdx,i,j,k,bixelCounter + k);
                                     end
                                 end
                             end
                         end
 
-
+                        % Progress Update & Bookkeeping
+                        bixelCounter = bixelCounter + currRay.numOfBixels;
+                        bixelBeamCounter = bixelBeamCounter + currRay.numOfBixels;
+                        this.progressUpdate(bixelCounter,dij.totalNumOfBixels);
                     end
                 end
             end
@@ -359,8 +366,10 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                 currBeam.ixRadDepths, ...
                 lateralRayCutOff);
             
-            ray.geoDepths = currBeam.geoDepths{1}(ix);
-            ray.radDepths = currBeam.radDepths{1}(ix);
+            %Subindex given the relevant indices from the geometric
+            %distance calculation
+            ray.geoDepths = cellfun(@(rD) rD(ix),currBeam.geoDepths,'UniformOutput',false);
+            ray.radDepths = cellfun(@(rD) rD(ix),currBeam.radDepths,'UniformOutput',false);
             ray.ix = currBeam.ixRadDepths(ix);
         end
         
