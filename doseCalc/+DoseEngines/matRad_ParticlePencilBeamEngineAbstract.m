@@ -23,15 +23,15 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
 
         calcLET = true;                 % Boolean which defines if LET should be calculated
         calcBioDose = false;            % Boolean which defines if biological dose calculation shoudl be performed (alpha*dose and sqrt(beta)*dose)
+        airOffsetCorrection  = true;    % Corrects WEPL for SSD difference to kernel database
+        lateralModel = 'auto';          % Lateral Model used. 'auto' uses the most accurate model available (i.e. multiple Gaussians). 'single','double','multi' try to force a singleGaussian or doubleGaussian model, if available
 
         visBoolLateralCutOff = false;   % Boolean switch for visualization during+ LeteralCutOff calculation
-        airOffsetCorrection  = true;    % Corrects WEPL for SSD difference to kernel database
     end
 
     properties (SetAccess = protected, GetAccess = public)
         constantRBE = NaN;              % constant RBE value
-
-        vTissueIndex;                   %Stores tissue indices available in the matRad base data
+        vTissueIndex;                   % Stores tissue indices available in the matRad base data
     end
 
     methods
@@ -56,6 +56,52 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
     end
 
     methods (Access = protected)
+        function chooseLateralModel(this)
+            fValidateMulti = @(bd) isfield(bd,'sigmaMulti') && isfield(bd,'weightMulti') && ~isempty(bd.sigmaMulti) && ~isempty(bd.weightMulti);
+            fValidateDouble = @(bd) isfield(bd,'sigma1') && isfield(bd,'sigma2') && isfield(bd,'weight') && ~isempty(bd.sigma1) && ~isempty(bd.sigma2) && ~isempty(bd.weight);
+            fValidateSingle = @(bd) isfield(bd,'sigma') && ~isempty(bd.sigma);
+            
+            matRad_cfg = MatRad_Config.instance();
+
+            switch this.lateralModel
+                case 'single'
+                    if ~all(arrayfun(fValidateSingle,this.machine.data))
+                        matRad_cfg.dispWarning('Chosen Machine does not support a singleGaussian Pencil-Beam model!');
+                        this.lateralModel = 'auto';
+                    end
+                case 'double'
+                    if ~all(arrayfun(fValidateDouble,this.machine.data))
+                        matRad_cfg.dispWarning('Chosen Machine does not support a doubleGaussian Pencil-Beam model!');
+                        this.lateralModel = 'auto';
+                    end
+                case 'multi'
+                    if ~all(arrayfun(fValidateMulti,this.machine.data))
+                        matRad_cfg.dispWarning('Chosen Machine does not support a multiGaussian Pencil-Beam model!');
+                        this.lateralModel = 'auto';
+                    end
+                case 'auto'
+                    %Do nothing, will be handled below
+                otherwise
+                    matRad_cfg.dispError('Lateral model ''%s'' not known!',this.lateralModel);
+            end
+
+            %Now check if we need tho chose the lateral model because it
+            %was set to auto
+            if strcmp(this.lateralModel,'auto') 
+                if all(arrayfun(fValidateMulti,this.machine.data))
+                    this.lateralModel = 'multi';
+                elseif all(arrayfun(fValidateDouble,this.machine.data))
+                    this.lateralModel = 'double';
+                elseif all(arrayfun(fValidateSingle,this.machine.data))
+                    this.lateralModel = 'single';
+                else
+                    matRad_cfg.dispError('Invalid kernel model!');
+                end
+            end
+
+            matRad_cfg.dispInfo('Using a %s Gaussian pencil-beam kernel model!\n');
+        end
+        
         function bixel = computeBixel(this,currRay,k)
             %Initialize Bixel Geometry
             bixel = this.initBixel(currRay,k);
@@ -146,16 +192,24 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             
             %Find all values we need to interpolate
             X.Z = conversionFactor*baseData.Z;
-
-             %Single or double gaussian
-            if ~isfield(baseData,'sigma')
-                X.sigma1 = baseData.sigma1;
-                X.sigma2 = baseData.sigma2;
-                X.weight = baseData.weight;
-            else
-                X.sigma  = baseData.sigma;
+            
+            %Lateral Kernel Model
+            switch this.lateralModel
+                case 'single'
+                    X.sigma  = baseData.sigma;
+                case 'double'
+                    X.sigma1 = baseData.sigma1;
+                    X.sigma2 = baseData.sigma2;
+                    X.weight = baseData.weight;
+                case 'multi'
+                    X.weightMulti = baseData.weightMulti;
+                    X.sigmaMulti = baseData.sigmaMulti;
+                otherwise
+                    %Sanity check
+                    matRad_cfg = MatRad_Config.instance();
+                    matRad_cfg.dispError('Invalid Lateral Model');
             end
-
+                   
             % LET
             if this.calcLET
                 X.LET = baseData.LET;
@@ -268,6 +322,9 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             
             matRad_cfg = MatRad_Config.instance();
 
+            %Choose the lateral pencil beam model
+            this.chooseLateralModel();
+
             %Toggles correction of small difference of current SSD to distance used
             %in generation of base data (e.g. phantom surface at isocenter)
             if this.airOffsetCorrection
@@ -284,6 +341,13 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                 matRad_cfg.dispWarning('Machine data does not contain BAMStoIsoDist. Using default value of %f mm.',this.machine.meta.BAMStoIsoDist);
             end
             
+            %Biology
+            if ~isnan(this.constantRBE)
+                dij.RBE = this.constantRBE;
+            end
+            
+            % TODO: this is clumsy and needs to be changed with the
+            % biomodel update
             if this.bioParam.bioOpt
                 this.calcBioDose = true;
             end
