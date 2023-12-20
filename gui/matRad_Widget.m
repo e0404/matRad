@@ -123,7 +123,7 @@ classdef matRad_Widget <  handle
                 else
                     meType = 'basic';
                 end
-                Message = {Message,ME.message};
+                Message = [Message,ME.message];
                 % Future error hyperlinks {Message,ME.getReport(meType,'hyperlinks','off')};
             end
             matRad_cfg.dispWarning(Message);
