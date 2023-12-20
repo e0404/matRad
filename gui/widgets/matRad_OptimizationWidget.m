@@ -70,7 +70,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
             if nargin == 2
                 %At pln changes and at cst/cst (for Isocenter and new settings) 
                 %we need to update
-                doUpdate = this.checkUpdateNecessary({'cst'},evt);
+                doUpdate = this.checkUpdateNecessary({'cst_obj'},evt);
             end
             
             if doUpdate
