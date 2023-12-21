@@ -75,7 +75,7 @@ classdef matRad_MinDVHLETd < LETdObjectives.matRad_LETdObjective
             deviation(LETd > obj.parameters{1} | LETd < d_ref2) = 0;
    
             % calculate objective function
-            fLETd = (obj.penalty/numel(LETd))*(deviation'*deviation);
+            fLETd = (1/numel(LETd))*(deviation'*deviation);
         end
         
         %% Calculates the Objective Function gradient
@@ -92,7 +92,7 @@ classdef matRad_MinDVHLETd < LETdObjectives.matRad_LETdObjective
             deviation(LETd > obj.parameters{1} | LETd < d_ref2) = 0;
 
             % calculate delta
-            fLETdGrad = (2 * obj.penalty/numel(LETd))*deviation;
+            fLETdGrad = (2/numel(LETd))*deviation;
         end
     end
     

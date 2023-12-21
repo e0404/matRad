@@ -122,7 +122,7 @@ classdef matRad_MeanLETd < LETdObjectives.matRad_LETdObjective
         end
 
         function fLETdGrad = gradientLinearDiff(obj,LETd)
-            fLETdGrad = (obj.penalty/numel(LETd))*sign(LETd(:)-obj.parameters{1});
+            fLETdGrad = (1/numel(LETd))*sign(LETd(:)-obj.parameters{1});
         end
     end
     

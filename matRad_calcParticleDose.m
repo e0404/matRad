@@ -430,6 +430,9 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                     if isfield(dij,'mLETDose')
                                         letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(dij.doseGrid.numOfVoxels,1);
                                     end
+                                    if isfield(dij,'LETd')
+                                        letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(dij.doseGrid.numOfVoxels,1);
+                                    end
                                     if pln.bioParam.bioOpt
                                         alphaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix(currIx)),1,bixelAlpha.*bixelDose,dij.doseGrid.numOfVoxels,1);
                                         betaDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen}  = sparse(VdoseGrid(ix(currIx)),1,sqrt(bixelBeta).*bixelDose,dij.doseGrid.numOfVoxels,1);
@@ -474,6 +477,12 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                         totalLET = zeros(size(currIx,1),1);
                                     end
 
+                                    if isfield(dij,'LETd')
+                                        % calculate particle LET for bixel k on ray j of beam i
+                                        depths = machine.data(energyIx).depths + machine.data(energyIx).offset;
+                                        totalLET = zeros(size(currIx,1),1);
+                                    end
+
                                     % run over components
                                     for c = 1:numOfSub(k)
                                         tmpDose = zeros(size(currIx,1),1);
@@ -493,10 +502,20 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                             tmpLET(currIx(:,:,c)) = matRad_interp1(depths,machine.data(energyIx).LET,currRadDepths(currIx(:,:,c),1,c));
                                             totalLET = totalLET + tmpLET;
                                         end
+                                        
+                                        if isfield(dij,'LETd')
+                                            tmpLET = zeros(size(currIx,1),1);
+                                            tmpLET(currIx(:,:,c)) = matRad_interp1(depths,machine.data(energyIx).LET,currRadDepths(currIx(:,:,c),1,c));
+                                            totalLET = totalLET + tmpLET;
+                                        end
+
                                     end
 
                                     doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix),1,totalDose,dij.doseGrid.numOfVoxels,1);
                                     if isfield(dij,'mLETDose')
+                                        letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix),1,totalDose.*totalLET,dij.doseGrid.numOfVoxels,1);
+                                    end
+                                    if isfield(dij,'LETd')
                                         letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix),1,totalDose.*totalLET,dij.doseGrid.numOfVoxels,1);
                                     end
                                 else
@@ -518,6 +537,16 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                     doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix(currIx)),1,bixelDose,dij.doseGrid.numOfVoxels,1);
 
                                     if isfield(dij,'mLETDose')
+                                        % calculate particle LET for bixel k on ray j of beam i
+                                        depths = machine.data(energyIx).depths + machine.data(energyIx).offset;
+                                        bixelLET = matRad_interp1(depths,machine.data(energyIx).LET,currRadDepths(currIx));
+                                        bixelLET(isnan(bixelLET)) = 0;
+
+                                        % Save LET for every bixel in cell array
+                                        letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix(currIx)),1,bixelLET.*bixelDose,dij.doseGrid.numOfVoxels,1);
+                                    end
+
+                                    if isfield(dij,'LETd')
                                         % calculate particle LET for bixel k on ray j of beam i
                                         depths = machine.data(energyIx).depths + machine.data(energyIx).offset;
                                         bixelLET = matRad_interp1(depths,machine.data(energyIx).LET,currRadDepths(currIx));

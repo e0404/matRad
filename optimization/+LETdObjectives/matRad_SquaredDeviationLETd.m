@@ -64,7 +64,7 @@ classdef matRad_SquaredDeviationLETd < LETdObjectives.matRad_LETdObjective
             % deviation : LETd minus prefered LETd
             deviation = LETd - obj.parameters{1};
             % calculate objective function
-            fLETd = obj.penalty/numel(LETd) * (deviation'*deviation);
+            fLETd = 1/numel(LETd) * (deviation'*deviation);
         end
         
         %% Calculates the Objective Function gradient
@@ -73,7 +73,7 @@ classdef matRad_SquaredDeviationLETd < LETdObjectives.matRad_LETdObjective
             deviation = LETd - obj.parameters{1};
             
             % calculate delta
-            fLETdGrad = 2 * obj.penalty/numel(LETd) * deviation;
+            fLETdGrad = 2/numel(LETd) * deviation;
         end
     end
     

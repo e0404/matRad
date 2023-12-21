@@ -18,8 +18,8 @@ function [wPhysDose,LET] = matRad_plotLETbeamletSpectrumInVoxel(index, ct, ctCub
 %   displayfigures:         (optional) displays the figures
 %
 % output
-%   LETbeamletSpectrum: histogram plot for LET beamlet spectrum
-%   PhysDose_LET:       bivariate histogram plot: dose distribution and associated LET
+%   wPhysDose:      row of physicalDose multipled with w vector
+%   LET:            LET in a certain Voxel from every bixel
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

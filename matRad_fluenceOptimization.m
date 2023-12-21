@@ -336,6 +336,7 @@ info = optimizer.resultInfo;
 
 resultGUI = matRad_calcCubes(wOpt,dij);
 resultGUI.wUnsequenced = wOpt;
+
 resultGUI.usedOptimizer = optimizer;
 resultGUI.info = info;
 

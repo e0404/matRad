@@ -81,9 +81,9 @@ end
 if isfield(dij,'mLETDose')
     for i = 1:length(beamInfo)
         LETDoseCube                                 = reshape(full(dij.mLETDose{scenNum} * (resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
-        resultGUI.(['LET', beamInfo(i).suffix])     = zeros(dij.doseGrid.dimensions);
+        resultGUI.(['LETd', beamInfo(i).suffix])     = zeros(dij.doseGrid.dimensions);
         ix                                          = resultGUI.(['physicalDose', beamInfo(i).suffix]) > 0;
-        resultGUI.(['LET', beamInfo(i).suffix])(ix) = LETDoseCube(ix)./resultGUI.(['physicalDose', beamInfo(i).suffix])(ix);
+        resultGUI.(['LETd', beamInfo(i).suffix])(ix) = LETDoseCube(ix)./resultGUI.(['physicalDose', beamInfo(i).suffix])(ix);
     end
 end
 
@@ -94,14 +94,6 @@ if isfield(dij,'mLETDose')
         resultGUI.(['mLETDose', beamInfo(i).suffix]) = reshape((dij.mLETDose{1}*(resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
     end
 end
-
-% %% LETd
-% % consider LETd
-% if isfield(dij,'mLETDose')
-%     for i = 1:length(beamInfo)
-%         resultGUI.(['mLETDose', beamInfo(i).suffix]) = reshape((dij.mLETDose{1}*(resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
-%     end
-% end
 
 
 %% dirty dose

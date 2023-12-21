@@ -27,7 +27,7 @@ classdef matRad_LETdProjection < matRad_BackProjection
                 % separation of combined quantities
                 wFinal = size(dij.physicalDose{scen},2); % how many pencil beams I have;
                 weight = w(1:wFinal);
-                % I = w(wFinal,1:end);
+                I = w(wFinal,1:end);
                 d = dij.physicalDose{scen}*w;
                 
                 % Computation of the LETd
@@ -36,6 +36,9 @@ classdef matRad_LETdProjection < matRad_BackProjection
                 LETD(d > 0) = LETD(d > 0)./d(d > 0); %dose averging -> avoid div by zero
 
                 LETd = LETD;
+
+                % dij = matRad_calcLETd(dij,resultGUI);
+                % LETd = dij.LETd;
                                 
             else
                 LETd = [];
@@ -58,30 +61,33 @@ classdef matRad_LETdProjection < matRad_BackProjection
             end             
         end
 
-        function wGrad = projectSingleScenarioGradient(~,dij,doseGrad,scen,w)
+        function wGrad = projectSingleScenarioGradient(this,dij,doseGrad,scen,w)
              if ~isempty(dij.mLETDose{scen})
                
-                % LETd = this.computeSingleScenario(dij,scen,w);
+                LETd = this.computeSingleScenario(dij,scen,w);
 
                 d = dij.physicalDose{scen} * w;
                 mLD = dij.mLETDose{scen} * w;
-              
+                ix = dose > 0;
                 % doseGrad * u'v/v^2
-                vox_tmp = zeros(dij.doseGrid.numOfVoxels,1);
-                vox_tmp(d>0) =  (doseGrad{scen}(d>0)./d(d>0));
-                firstDerivativeterm = (dij.mLETDose{scen}' * vox_tmp);
+                vox_tmp = zeros(dij.doseGrid.numOfVoxels);
+                vox_tmp(d>0) =  (doseGrad(d>0)./d(d>0));
+                first = (dij.mLETDose{scen}' * vox_tmp)';
                 
-                vox_tmp = zeros(dij.doseGrid.numOfVoxels,1);
-                vox_tmp(d>0) = (mLD(d>0)./(d(d>0).^2)).* doseGrad{scen}(d>0);
-                secondDerivativeterm =  (vox_tmp' * dij.physicalDose{scen})';
+                vox_tmp = zeros(dij.doseGrid.numOfVoxels);
+                vox_tmp(d>0) = (mLD(d>0)'./d(d>0).^2).* doseGrad(d>0);
+                second =  vox_tmp * dij.physicalDose{scen}';
                
-                wGrad = (firstDerivativeterm - secondDerivativeterm);
+                wGrad = (first - second);
 
-               % from DADR:
+                % uv'/v^2
+
 
                 % wFinal = size(dij.physicalDose{scen},2); % how many pencil beams I have;
+                % % weight = w(1:wFinal);
                 % I = w(wFinal,1:end);
                 % 
+                % %doseGrad = doseGradCombined{scen}(1:dij.doseGrid.numOfVoxels,:);
                 % LETdGrad = doseGrad{scen}(1:dij.doseGrid.numOfVoxels);
                 % 
                 % dose = LETd(1:dij.doseGrid.numOfVoxels);
@@ -91,13 +97,24 @@ classdef matRad_LETdProjection < matRad_BackProjection
                 % tmp(ix) = LETdGrad(ix) ./ dose(ix);
                 % tmpForW = zeros(size(tmp));
                 % tmpForW(ix) = tmp(ix) ./ dose(ix);
+                % 
+                % % tmp2 = zeros(size(doseRate));
+                % % tmp2(ix) = LETdGrad(ix) ./ dose(ix);
+                % % tmp2ForW = zeros(size(tmp2));
+                % % tmp2ForW(ix) = tmp2(ix) ./ doseRate(ix);
+                % 
+                % %wGrad= (doseGrad' * dij.physicalDose{scen})' + LETdGradPart.*w;
                 % wGradPart1 = ((tmpForW.*dose)'  * dij.mLETDose{scen}.^2)' .* I; %u'v/v^2
+                % % gsize = tmp2ForW.*doseRate;
+                % % tsize = size(tmp);
+                % %wGradPart2 = (gsize(1:tsize(1,1))' * dij.mLETDose{scen}.^2)' .* I; %uv'/v^2 
+                % 
                 % wGradient = wGradPart1; %- wGradPart2;
                 % 
                 % LETdGradPart = (tmp' * dij.mLETDose{scen}.^2)';                                
                 % IGrad = LETdGradPart;               
                 % wGrad = wGradient + IGrad;
-              
+                % %wGrad = [wGradient; IGrad];
             else
                 wGrad = [];
                 matRad_cfg = MatRad_Config.instance();

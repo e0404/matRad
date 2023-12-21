@@ -64,7 +64,7 @@ classdef matRad_SquaredOverdosingLETd < LETdObjectives.matRad_LETdObjective
             overLETd(overLETd<0) = 0;
             
             % calculate objective function
-            fLETd = obj.penalty/numel(LETd) * (overLETd'*overLETd);
+            fLETd = 1/numel(LETd) * (overLETd'*overLETd);
         end
         
         %% Calculates the Objective Function gradient
@@ -76,7 +76,7 @@ classdef matRad_SquaredOverdosingLETd < LETdObjectives.matRad_LETdObjective
             overLETd(overLETd<0) = 0;
             
             % calculate delta
-            fLETdGrad = 2 * obj.penalty/numel(LETd) * overLETd;
+            fLETdGrad = 2/numel(LETd) * overLETd;
         end
     end
     
