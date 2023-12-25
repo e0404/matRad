@@ -170,6 +170,8 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
             dij = initDoseCalc@DoseEngines.matRad_DoseEngineBase(this,ct,cst,stf);
             
+            matRad_cfg = MatRad_Config.instance();
+            
             % calculate rED or rSP from HU or take provided wedCube
             if this.useGivenEqDensityCube && ~isfield(ct,'cube')
                 matRad_cfg.dispWarning('HU Conversion requested to be omitted but no ct.cube exists! Will override and do the conversion anyway!');
