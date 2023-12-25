@@ -283,7 +283,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             rot_coordsVdoseGrid = rot_coordsVdoseGrid - currBeam.sourcePoint_bev;
 
             % calculate geometric distances
-            geoDistVdoseGrid{1}= sqrt(sum(rot_coordsVdoseGrid.^2,2));
+            geoDistVdoseGrid(1:ct.numOfCtScen)= {sqrt(sum(rot_coordsVdoseGrid.^2,2))};
 
             % Calculate radiological depth cube
             matRad_cfg.dispInfo('matRad: calculate radiological depth cube... ');
@@ -300,11 +300,14 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             end
             
             % interpolate radiological depth cube to dose grid resolution
-            radDepthVdoseGrid = this.interpRadDepth(ct,1:numel(ct.numOfCtScen),this.VctGrid,this.VdoseGrid,dij.ctGrid,dij.doseGrid,radDepthVctGrid);
+            radDepthVdoseGrid = this.interpRadDepth(ct,1:ct.numOfCtScen,this.VctGrid,this.VdoseGrid,dij.ctGrid,dij.doseGrid,radDepthVctGrid);
             
             % limit rotated coordinates to positions where ray tracing is availabe
             %radDepthsMat = cellfun(@(radDepthCube) matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z,radDepthCube,dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest'),radDepthsMat,'UniformOutput',false);
             
+            %Find valid coordinates
+            %TODO: currently we are taking coordinates valid in the first
+            %cube. Might cause issues in other cubes
             coordIsValid = ~isnan(radDepthVdoseGrid{1});
             currBeam.subIxVdoseGrid = find(coordIsValid);
             currBeam.ixRadDepths = this.VdoseGrid(coordIsValid);
