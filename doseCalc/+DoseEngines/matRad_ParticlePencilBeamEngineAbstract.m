@@ -237,7 +237,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                 currBeam.ixRadDepths, ...
                 lateralRayCutOff);
             
-            ray.geoDepths = cellfun(@(rD) rD(ix),currBeam.geoDepths,'UniformOutput',false);
+            %ray.geoDepths = cellfun(@(rD) rD(ix),currBeam.geoDepths,'UniformOutput',false); %usually not needed for particle beams
             ray.radDepths = cellfun(@(rD) rD(ix),currBeam.radDepths,'UniformOutput',false);
             ray.ix = currBeam.ixRadDepths(ix);
             ray.subIxVdoseGrid = currBeam.subIxVdoseGrid(ix);

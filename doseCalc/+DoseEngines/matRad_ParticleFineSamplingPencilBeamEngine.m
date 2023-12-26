@@ -78,8 +78,8 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
                 currBeam.ixRadDepths, ...
                 lateralRayCutOff);
             
-            %ray.geoDepths = currBeam.geoDepths{1}(ix); %we don't need that
-            ray.radDepths = currBeam.radDepths{1}(ix);
+            %ray.geoDepths = cellfun(@(rD) rD(ix),currBeam.geoDepths,'UniformOutput',false); %Not needed for this engine
+            ray.radDepths = cellfun(@(rD) rD(ix),currBeam.radDepths,'UniformOutput',false);
             ray.ix = currBeam.ixRadDepths(ix);
             ray.subIxVdoseGrid = currBeam.subIxVdoseGrid(ix);
         end
