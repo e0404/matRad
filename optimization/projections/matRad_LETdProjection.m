@@ -24,15 +24,12 @@ classdef matRad_LETdProjection < matRad_BackProjection
         function LETd = computeSingleScenario(~,dij,scen,w)
 
              if ~isempty(dij.mLETDose{scen})
-                % separation of combined quantities
-                wFinal = size(dij.physicalDose{scen},2); % how many pencil beams I have;
-                weight = w(1:wFinal);
-                % I = w(wFinal,1:end);
+               
                 d = dij.physicalDose{scen}*w;
                 
                 % Computation of the LETd
-                % LETD = dij.mLETDose{scen}.^2 * (weight.*I); % computes the nominator quickly (should be correct)
-                LETD = dij.mLETDose{scen} * weight; % computes the nominator quickly (should be correct)
+               
+                LETD = dij.mLETDose{scen} * w; % computes the nominator quickly (should be correct)
                 LETD(d > 0) = LETD(d > 0)./d(d > 0); %dose averging -> avoid div by zero
 
                 LETd = LETD;

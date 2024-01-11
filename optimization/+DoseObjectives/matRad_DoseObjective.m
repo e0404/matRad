@@ -21,6 +21,7 @@ classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
     
     properties (Abstract, Access = public)
         penalty                 %Optimization penalty
+        
     end
        
     methods (Static)
@@ -43,6 +44,13 @@ classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
         function fDoseGrad   = computeDoseObjectiveGradient(obj,dose)
             error('Function needs to be implemented!');
         end
+
+         % function fClusterDose = computeClusterDoseObjectiveFunction(obj,dose)
+         %     error('Function needs to be implemented!')
+         % end
+         % function fClusterDoseGrad   = computeClusterDoseObjectiveGradient(obj,dose)
+         %     error('Function needs to be implemented!')
+         %end
          
     end
     
@@ -59,6 +67,7 @@ classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
         function s = struct(obj)
             s = struct@matRad_DoseOptimizationFunction(obj);
             s.penalty = obj.penalty;
+            
         end
         
     end   

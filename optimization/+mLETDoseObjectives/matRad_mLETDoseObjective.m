@@ -21,6 +21,7 @@ classdef (Abstract) matRad_mLETDoseObjective < matRad_DoseOptimizationFunction
     
    properties (Abstract, Access = public)
         penalty                 %Optimization penalty
+       
     end
        
     methods (Static)
@@ -59,6 +60,7 @@ classdef (Abstract) matRad_mLETDoseObjective < matRad_DoseOptimizationFunction
         function s = struct(obj)
             s = struct@matRad_DoseOptimizationFunction(obj);
             s.penalty = obj.penalty;
+            
         end
     end 
 end

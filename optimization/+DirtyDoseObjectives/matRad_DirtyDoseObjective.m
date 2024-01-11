@@ -21,6 +21,7 @@ classdef (Abstract) matRad_DirtyDoseObjective < matRad_DoseOptimizationFunction
     
     properties (Abstract, Access = public)
         penalty                 %Optimization penalty
+        
     end
        
     methods (Static)
@@ -43,7 +44,7 @@ classdef (Abstract) matRad_DirtyDoseObjective < matRad_DoseOptimizationFunction
         function fDirtyDoseGrad   = computeDirtyDoseObjectiveGradient(obj,dirtyDose)
             error('Function needs to be implemented!');
         end
-         
+
     end
     
     methods (Access = public)
@@ -59,6 +60,7 @@ classdef (Abstract) matRad_DirtyDoseObjective < matRad_DoseOptimizationFunction
         function s = struct(obj)
             s = struct@matRad_DoseOptimizationFunction(obj);
             s.penalty = obj.penalty;
+            
         end
         
     end   
