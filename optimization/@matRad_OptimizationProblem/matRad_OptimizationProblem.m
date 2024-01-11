@@ -43,7 +43,7 @@ classdef matRad_OptimizationProblem < handle
             
             obj.BP = backProjection; %needs to be initalized to have access to setBiologicalDosePrescriptions
             if nargin == 2
-                obj.extractObjectivesAndConstraintsFromcst(cst);
+                obj.extractObjectivesAndConstraintsFromCst(cst);
             end
         end       
         
@@ -95,7 +95,7 @@ classdef matRad_OptimizationProblem < handle
         function normalizedfVals = normalizeObjectives(optiProb,fVals)
             %function to normalize objectives (used for sandwich
             %algorithms)
-            switch optiProb.normalizationScheme.scheme
+            switch optiProb.normalizationScheme
                 case 'none'
                     %default case no normalization
                     normalizedfVals = fVals;
@@ -175,7 +175,7 @@ classdef matRad_OptimizationProblem < handle
     
     
     methods (Access = private)
-        function extractObjectivesAndConstraintsFromcst(optiProb,cst)
+        function extractObjectivesAndConstraintsFromCst(optiProb,cst)
             %used to extract objectives from cst and store in cell array as property of optimization Problem
             optiProb.objIdx = [];
             optiProb.constrIdx = [];

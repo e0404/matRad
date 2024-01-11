@@ -112,7 +112,7 @@ cst{3,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,45));
 cst{2,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(45,57));
 
 %%
-retStruct = matRad_ParetoOptimization(dij,cst,pln,30);
+retStruct = matRad_paretoOptimization(dij,cst,pln,30);
 
 %%
 %matRad_UIInterpolation(retStruct,dij,pln,ct,matRad_setOverlapPriorities(cst),retStruct.optiProb)

@@ -173,7 +173,7 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
         function cDose = computeDoseConstraintFunctionLogSumExp(this,dose)
             dose_min = min(dose);
             dose_max = max(dose);
-            epsilon = (this.epsilon/3)*max(dose);
+            epsilon = (this.epsilon/3)*dose_max;
             %Validate parameters
             if this.parameters{1} <= 0 && isinf(this.parameters{2}) %Constraint doesn't make sense (min = 0 & max = Inf)
                 cDose = [];
@@ -189,20 +189,21 @@ classdef matRad_MinMaxDose < DoseConstraints.matRad_DoseConstraint
         end
         function cDoseJacob  = computeDoseConstraintJacobianLogSumExp(this,dose)
             %Validate parameters
-            epsilon = (this.epsilon/3)*max(dose);
+            max_dose = max(dose);
+            epsilon = (this.epsilon/3)*max_dose;
             %espilon = this.epsilon;
             if this.parameters{1} <= 0 && isinf(this.parameters{2}) %Constraint doesn't make sense (min = 0 & max = Inf)
                 cDoseJacob = [];
             elseif this.parameters{2} == Inf %Only min dose
-                cDoseJacob(:,1) = exp( (min(dose)-dose)/epsilon );
+                cDoseJacob(:,1) = exp( (min(dose)-dose)/epsilon);
                 cDoseJacob(:,1) = cDoseJacob(:,1)/sum(cDoseJacob(:,1));
             elseif this.parameters{1} <= 0 %Only max dose
-                cDoseJacob(:,1) = exp( (dose-max(dose))/epsilon );
+                cDoseJacob(:,1) = exp( (dose-max_dose)/epsilon );
                 cDoseJacob(:,1) = cDoseJacob(:,1)/sum(cDoseJacob(:,1));
             else %both are set sensible
                 cDoseJacob(:,1) = exp( (min(dose)-dose)/epsilon );
                 cDoseJacob(:,1) = cDoseJacob(:,1)/sum(cDoseJacob(:,1));
-                cDoseJacob(:,2) = exp( (dose-max(dose))/epsilon );
+                cDoseJacob(:,2) = exp( (dose-max_dose)/epsilon );
                 cDoseJacob(:,2) = cDoseJacob(:,2)/sum(cDoseJacob(:,2));
             end
 
