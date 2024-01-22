@@ -59,8 +59,8 @@ classdef matRad_BiologicalModel
     
     % constant public properties which are visible outside of this class
     properties(Constant = true)
-        AvailableModels                 = {'none','constRBE','MCN','WED','LEM','HEL'};   % cell array determines available models - if cell is deleted then the corersponding model can not be generated
-        AvailableradiationModealities   = {'photons','protons','helium','carbon'};
+        AvailableModels                 = {'none','constRBE','MCN','WED','LEM','HEL', 'MixMod'};   % cell array determines available models - if cell is deleted then the corersponding model can not be generated
+        AvailableradiationModealities   = {'photons','protons','helium','carbon', 'MixMod'};
         AvailableQuantitiesForOpt       = {'physicalDose','effect','RBExD'};
         
         AvailableAlphaXBetaX = {[0.036 0.024],    'prostate';
@@ -272,7 +272,26 @@ classdef matRad_BiologicalModel
                                 matRad_cfg.dispWarning(['matRad: Invalid biological optimization quantity: ' this.quantityOpt  '; using "none" instead.']);
                                 this.quantityOpt = 'physicalDose';
                         end
-                                      
+
+                    case {'MixMod'}
+                       this.model = 'MixMod';
+                       switch this.quantityOpt
+
+                            case {'physicalDose'}
+                                    boolCHECK           = true;
+                                    this.bioOpt         = false;
+                                    this.quantityVis    = 'physicalDose';
+
+                            case {'effect','RBExD'}
+                                    boolCHECK           = true;
+                                    this.bioOpt         = true;
+                                    this.quantityVis    = 'RBExD';
+
+                            otherwise
+                                matRad_cfg.dispWarning(['matRad: Invalid biological optimization quantity: ' this.quantityOpt  '; using "none" instead. \n']);
+                                this.quantityOpt = 'physicalDose';
+                       end 
+                    
                     otherwise
                         matRad_cfg.dispWarning(['matRad: Invalid biological radiation mode: ' this.radiationMode  '; using photons instead.']);
                         this.radiationMode = 'photons';
