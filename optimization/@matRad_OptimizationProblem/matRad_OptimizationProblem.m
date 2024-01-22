@@ -34,6 +34,7 @@ classdef matRad_OptimizationProblem < handle
         dirtyDoseBP
         mLETDoseBP
         LETdBP
+        LETtBP
     end
     
     methods
@@ -42,6 +43,7 @@ classdef matRad_OptimizationProblem < handle
             obj.dirtyDoseBP = [];
             obj.mLETDoseBP = [];
             obj.LETdBP = [];
+            obj.LETtBP = [];
         end
         
         %Objective function declaration

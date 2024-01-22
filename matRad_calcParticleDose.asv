@@ -1,4 +1,4 @@
-function dij = matRad_calcParticleDose(ct,stf,pln,cst,LET_thres,calcDoseDirect)
+function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 % matRad particle dose calculation wrapper
 %
 % call
@@ -9,7 +9,6 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,LET_thres,calcDoseDirect)
 %   stf:            matRad steering information struct
 %   pln:            matRad plan meta information struct
 %   cst:            matRad cst struct
-%   LET_thres:      LET threshold, above: dirty dose, below: clean dose
 %   calcDoseDirect: (optional) switches to direct dose calculation, only
 %                   makes sense in combination with matRad_calcDoseDirect
 %
@@ -88,21 +87,14 @@ if pln.propDoseCalc.calcLET
 
                     if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
                         dij.mLETDose{ctScen,shiftScen,rangeShiftScen} = spalloc(dij.doseGrid.numOfVoxels,numOfColumnsDij,1);
+                        dij.LETd{ctScen,shiftScen,rangeShiftScen} = spalloc(dij.doseGrid.numOfVoxels,numOfColumnsDij,1);
                     end
 
                 end
             end
         end
         matRad_cfg.dispInfo('LET computation enabled!\n');
-
-        dij.dirtyDoseThreshold = setLETthreshold(LET_thres);
-        if dij.dirtyDoseThreshold =
-        end
-        dij.LETmask.Dirty = matRad_calcLETmask(dij);
-        dij.LETmask.Clean = ~matRad_calcLETmask(dij);
-        dij.DoseDij.Dirty = dij.LETmask.Dirty.*full(dij.physicalDose{1}(:,:));
-        dij.DoseDij.Clean = dij.LETmask.Clean.*full(dij.physicalDose{1}(:,:));
-
+        
     else
         matRad_cfg.dispWarning('\tLET not available in the machine data. LET will not be calculated.');
     end
@@ -417,6 +409,19 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                     matRad_cfg.dispError('Lateral Cut-Off must be a value between 0 and 1!')
                                 end
 
+
+                                % get rid of currIdx
+                                if ~strcmp(pln.propDoseCalc.selectVoxelsInScenarios, 'all')
+                                    if (shiftScen>1) || (rangeShiftScen>1)
+
+                                        ixOnRobustMask = robustVoxelsOnGrid{ctScen}(VdoseGrid(ix));
+
+                                        currIx = currIx & ixOnRobustMask;
+
+                                    end
+                                end
+                                
+
                                 % empty bixels may happen during recalculation of error
                                 % scenarios -> skip to next bixel
                                 if ~any(currIx) 
@@ -424,6 +429,9 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                     %this bixel
                                     doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(dij.doseGrid.numOfVoxels,1);
                                     if isfield(dij,'mLETDose')
+                                        letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(dij.doseGrid.numOfVoxels,1);
+                                    end
+                                    if isfield(dij,'LETd')
                                         letDoseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(dij.doseGrid.numOfVoxels,1);
                                     end
                                     if pln.bioParam.bioOpt
@@ -470,6 +478,12 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                         totalLET = zeros(size(currIx,1),1);
                                     end
 
+                                    if isfield(dij,'LETd')
+                                        % calculate particle LET for bixel k on ray j of beam i
+                                        depths = machine.data(energyIx).depths + machine.data(energyIx).offset;
+                                        totalLET = zeros(size(currIx,1),1);
+                                    end
+
                                     % run over components
                                     for c = 1:numOfSub(k)
                                         tmpDose = zeros(size(currIx,1),1);
@@ -489,6 +503,9 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                             tmpLET(currIx(:,:,c)) = matRad_interp1(depths,machine.data(energyIx).LET,currRadDepths(currIx(:,:,c),1,c));
                                             totalLET = totalLET + tmpLET;
                                         end
+                                        
+                                        
+
                                     end
 
                                     doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix),1,totalDose,dij.doseGrid.numOfVoxels,1);
@@ -508,6 +525,8 @@ for shiftScen = 1:pln.multScen.totNumShiftScen
                                     %Type               = 'dose';
                                     %[currIx,bixelDose] = matRad_DijSampling(currIx,bixelDose,radDepths(currIx),radialDist_sq(currIx),Type,relDoseThreshold);
 
+
+                                    
                                     % Save dose for every bixel in cell array
                                     doseTmpContainer{mod(counter-1,numOfBixelsContainer)+1,ctScen,shiftScen,rangeShiftScen} = sparse(VdoseGrid(ix(currIx)),1,bixelDose,dij.doseGrid.numOfVoxels,1);
 

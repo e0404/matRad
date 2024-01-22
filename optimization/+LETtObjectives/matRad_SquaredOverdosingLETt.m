@@ -1,6 +1,6 @@
-classdef matRad_SquaredOverdosingLETd < LETdObjectives.matRad_LETdObjective
-% matRad_SquaredOverdosingLETd Implements a penalized squared overdosing LETd objective
-%   See matRad_LETdObjective for interface description
+classdef matRad_SquaredOverdosingLETt < LETtObjectives.matRad_LETtObjective
+% matRad_SquaredOverdosingLETt Implements a penalized squared overdosing LETt objective
+%   See matRad_LETObjective for interface description
 %
 % References
 %   -
@@ -19,9 +19,9 @@ classdef matRad_SquaredOverdosingLETd < LETdObjectives.matRad_LETdObjective
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (Constant)
-        name = 'Squared Overdosing LETd';
-        parameterNames = {'LETd^{max}'};
-        parameterTypes = {'LETd'};
+        name = 'Squared Overdosing LETt';
+        parameterNames = {'LETt^{max}'};
+        parameterTypes = {'LETt'};
     end
     
     properties
@@ -30,7 +30,7 @@ classdef matRad_SquaredOverdosingLETd < LETdObjectives.matRad_LETdObjective
     end
     
     methods
-        function obj = matRad_SquaredOverdosingLETd(penalty,LETdMax)
+        function obj = matRad_SquaredOverdosingLETt(penalty,LETtMax)
             %If we have a struct in first argument
             if nargin == 1 && isstruct(penalty)
                 inputStruct = penalty;
@@ -41,12 +41,12 @@ classdef matRad_SquaredOverdosingLETd < LETdObjectives.matRad_LETdObjective
             end
             
             %Call Superclass Constructor (for struct initialization)
-            obj@LETdObjectives.matRad_LETdObjective(inputStruct);
+            obj@LETtObjectives.matRad_LETtObjective(inputStruct);
             
             %now handle initialization from other parameters
             if ~initFromStruct
-                if nargin == 2 && isscalar(LETdMax)
-                    obj.parameters{1} = LETdMax;
+                if nargin == 2 && isscalar(LETtMax)
+                    obj.parameters{1} = LETtMax;
                 end
                 
                 if nargin >= 1 && isscalar(penalty)
@@ -56,27 +56,27 @@ classdef matRad_SquaredOverdosingLETd < LETdObjectives.matRad_LETdObjective
         end
         
         %% Calculates the Objective Function value
-        function fLETd = computeLETdObjectiveFunction(obj,LETd)
-            % overLETd : LETd minus prefered dose
-            overLETd = LETd - obj.parameters{1};
+        function fLETt = computeLETtObjectiveFunction(obj,LETt)
+            % overLETt : LETt minus prefered LETt
+            overLETt = LETt - obj.parameters{1};
             
             % apply positive operator
-            overLETd(overLETd<0) = 0;
+            overLETt(overLETt<0) = 0;
             
             % calculate objective function
-            fLETd = 1/numel(LETd) * (overLETd'*overLETd);
+            fLETt = 1/numel(LETt) * (overLETt'*overLETt);
         end
         
         %% Calculates the Objective Function gradient
-        function fLETdGrad   = computeLETdObjectiveGradient(obj,LETd)
-            % overLETd : LETd minus prefered dose
-            overLETd = LETd - obj.parameters{1};
+        function fLETtGrad   = computeLETtObjectiveGradient(obj,LETt)
+            % overLETt : LETt minus prefered LETt
+            overLETt = LETt - obj.parameters{1};
             
             % apply positive operator
-            overLETd(overLETd<0) = 0;
+            overLETt(overLETt<0) = 0;
             
             % calculate delta
-            fLETdGrad = 2 * 1/numel(LETd) * overLETd;
+            fLETtGrad = 2 * 1/numel(LETt) * overLETt;
         end
     end
     
