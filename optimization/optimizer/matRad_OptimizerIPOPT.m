@@ -80,7 +80,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.options.acceptable_constr_viol_tol    = 1e-2; % (Acc3)
             obj.options.acceptable_dual_inf_tol       = 1e10; % (Acc4)
             obj.options.acceptable_compl_inf_tol      = 1e10; % (Acc5)
-            obj.options.acceptable_obj_change_tol     = 1e-4; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
+            obj.options.acceptable_obj_change_tol     = 1e-5; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
             
             obj.options.max_iter                      = matRad_cfg.propOpt.defaultMaxIter;
             obj.options.max_cpu_time                  = 7200;

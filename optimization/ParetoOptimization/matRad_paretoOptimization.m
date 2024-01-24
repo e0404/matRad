@@ -342,7 +342,7 @@ end
 
 %%normalize objectives
 
-optiProb.normalizationScheme.scheme = 'UL';
+optiProb.normalizationScheme.name = 'UL';
 optiProb.normalizationScheme.U = max(fInd,[],1);
 optiProb.normalizationScheme.L = min(fInd,[],1);
 
