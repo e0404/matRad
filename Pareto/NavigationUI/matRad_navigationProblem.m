@@ -60,10 +60,8 @@ function v = matRad_navigationProblem(Y,yr,tau,j,b)
 
     %Bounds
     lb = zeros(m+k,1);
-    %lb(end) = -1000000;
-    %ub = 1000000*zeros(m+k+1,1);
-    %ub(1:m) = 1;
     ub = ones(1,m);
+    
     options = optimoptions('linprog','Display','iter');
     %options = optimoptions('linprog','Algorithm','interior-point','Display','iter');
     v = linprog(f,A,b,Aeq,beq,lb,ub,options); 

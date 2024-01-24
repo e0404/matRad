@@ -1,12 +1,12 @@
-function matRad_plotPS(refObj)
+function matRad_plotPS(helperObj)
     %{
     figure
     scatter3(finds(:,1),finds(:,2),finds(:,3))
     hold on
     scatter3(fNew(:,1),fNew(:,2),fNew(:,3),'filled')
     %}
-    ps = refObj.fIndsAll;
-    psRed = refObj.fIndsRed;
+    ps = refObj.allPoints;
+    psRed = refObj.;
     fNew = refObj.fRef;
     [k,facets] = matRad_ParetoSurfFromFacets(ps);
     figure

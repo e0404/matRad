@@ -95,7 +95,7 @@ classdef matRad_OptimizationProblem < handle
         function normalizedfVals = normalizeObjectives(optiProb,fVals)
             %function to normalize objectives (used for sandwich
             %algorithms)
-            switch optiProb.normalizationScheme
+            switch optiProb.normalizationScheme.type
                 case 'none'
                     %default case no normalization
                     normalizedfVals = fVals;
