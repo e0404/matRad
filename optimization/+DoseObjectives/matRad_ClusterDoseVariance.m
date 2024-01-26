@@ -1,5 +1,5 @@
 classdef matRad_ClusterDoseVariance < DoseObjectives.matRad_DoseObjective
-% matRad_SquaredDeviation Implements a penalized least squares objective
+% matRad_ClusterDoseVariance Implements a variance objective for homogenous dose
 %   See matRad_DoseObjective for interface description
 %
 % References 
@@ -60,25 +60,13 @@ classdef matRad_ClusterDoseVariance < DoseObjectives.matRad_DoseObjective
    
         %% Calculates the Objective Function value
         function fClusterDose = computeDoseObjectiveFunction(obj,dose)
-            % deviation : dose minus prefered dose
-            %deviation = dose - obj.parameters{1};
-            %fClusterDose = clusterDose'*clusterDose / numel(clusterDose) - mean(clusterDose)^2;
-            %fClusterDose = fClusterDose * obj.penalty*numel(clusterDose)/(numel(clusterDose) - 1);
-            fClusterDose = obj.penalty * var(dose);
+                 fClusterDose = obj.penalty * var(dose);
             
-            % claculate objective function
-            %fClusterDose = obj.penalty/numel(clusterDose) * (deviation'*deviation);
         end
         
         %% Calculates the Objective Function gradient
         function fClusterDoseGrad   = computeDoseObjectiveGradient(obj,dose)
-            % deviation : Dose minus prefered dose
-            % deviation = dose - obj.parameters{1};
-            %deviation = (clusterDose - obj.parameters{1});
-            
-            % calculate delta
-            %fClusterDoseGrad = 2 * obj.penalty/numel(clusterDose) * deviation;
-            fClusterDoseGrad = obj.penalty * 2/(numel(dose) - 1) * (dose - mean(dose));
+                 fClusterDoseGrad = obj.penalty * 2/(numel(dose) - 1) * (dose - mean(dose));
         end
     end
        

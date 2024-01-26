@@ -46,7 +46,6 @@ classdef matRad_mLETDoseProjection < matRad_BackProjection
      
         function wGrad = projectSingleScenarioGradient(~,dij,mLETDoseGrad,scen,~)
             if ~isempty(dij.mLETDose{scen})
-               %wGrad = (LETgrad * dij.dirtyDose) + ((dij.mLETDose/dij.physicalDose) * ((doseGrad{scen}' * dij.dirtyDose{scen})'));
                wGrad = (mLETDoseGrad{scen}' * dij.mLETDose{scen})';
             else
                 wGrad = [];

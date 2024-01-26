@@ -1,5 +1,6 @@
 classdef matRad_ClusterDirtyDoseVariance < DirtyDoseObjectives.matRad_DirtyDoseObjective
-% matRad_SquaredDeviation Implements a penalized least squares objective
+% matRad_ClusterDirtyDoseVariance Implements a variance objective for
+% homogenous dirty dose distribution
 %   See matRad_DoseObjective for interface description
 %
 % References 
@@ -60,25 +61,13 @@ classdef matRad_ClusterDirtyDoseVariance < DirtyDoseObjectives.matRad_DirtyDoseO
    
         %% Calculates the Objective Function value
         function fDirtyDose       = computeDirtyDoseObjectiveFunction(obj,dirtyDose)
-            % deviation : dose minus prefered dose
-            %deviation = dose - obj.parameters{1};
-            %fClusterDose = clusterDose'*clusterDose / numel(clusterDose) - mean(clusterDose)^2;
-            %fClusterDose = fClusterDose * obj.penalty*numel(clusterDose)/(numel(clusterDose) - 1);
-            fDirtyDose = obj.penalty * var(dirtyDose);
+                 fDirtyDose = obj.penalty * var(dirtyDose);
             
-            % claculate objective function
-            %fClusterDose = obj.penalty/numel(clusterDose) * (deviation'*deviation);
         end
         
         %% Calculates the Objective Function gradient
         function fDirtyDoseGrad   = computeDirtyDoseObjectiveGradient(obj,dirtyDose)
-            % deviation : Dose minus prefered dose
-            % deviation = dose - obj.parameters{1};
-            %deviation = (clusterDose - obj.parameters{1});
-            
-            % calculate delta
-            %fClusterDoseGrad = 2 * obj.penalty/numel(clusterDose) * deviation;
-            fDirtyDoseGrad = obj.penalty * 2/(numel(dirtyDose) - 1) * (dirtyDose - mean(dirtyDose));
+                 fDirtyDoseGrad = obj.penalty * 2/(numel(dirtyDose) - 1) * (dirtyDose - mean(dirtyDose));
         end
     end
     

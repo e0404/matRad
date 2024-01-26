@@ -23,7 +23,7 @@ classdef matRad_CleanDoseProjection < matRad_BackProjection
     methods 
         function d = computeSingleScenario(~,dij,scen,w)
             if ~isempty(dij.cleanDose{scen})
-                d = dij.cleaDose{scen}*w;
+                d = dij.cleanDose{scen}*w;
             else
                 d = [];
                 matRad_cfg = MatRad_Config.instance();
@@ -31,25 +31,22 @@ classdef matRad_CleanDoseProjection < matRad_BackProjection
             end 
         end
         
-        function [dExp,dOmegaV] = computeSingleScenarioProb(~,dij,scen,w)
+        function [cExp,cOmegaV] = computeSingleScenarioProb(~,dij,scen,w)
             if ~isempty(dij.cleanDoseExp{scen})
-                dExp = dij.cleanDoseExp{scen}*w;
+                cExp = dij.cleanDoseExp{scen}*w;
 
                 for i = 1:size(dij.cleanDoseOmega,2)
-                   dOmegaV{scen,i} = dij.cleanDoseOmega{scen,i} * w;
+                   cOmegaV{scen,i} = dij.cleanDoseOmega{scen,i} * w;
                 end 
             else
-                dExp = [];
-                dOmegaV = [];
+                cExp = [];
+                cOmegaV = [];
             end             
         end
-        
-         % without thinking about the LET threshold
-        LETgrad = matRad_calcLETGradient(dij,doseGrad,scen);
-        function wGrad = projectSingleScenarioGradient(~,dij,doseGrad,scen,~)
+     
+        function wGrad = projectSingleScenarioGradient(~,dij,cleanDoseGrad,scen,~)
             if ~isempty(dij.cleanDose{scen})
-                wGrad = (LETgrad * dij.cleanDose) + ((dij.mLETDose/dij.physicalDose) * ((doseGrad{scen}' * dij.cleanDose{scen})'));
-               % wGrad = (CleanDoseGrad{scen}' * dij.DoseDij.Clean{scen})';
+               wGrad = (cleanDoseGrad{scen}' * dij.cleanDose{scen})';
             else
                 wGrad = [];
                 matRad_cfg = MatRad_Config.instance();
@@ -57,10 +54,10 @@ classdef matRad_CleanDoseProjection < matRad_BackProjection
             end
         end
         
-        function wGrad = projectSingleScenarioGradientProb(~,dij,dExpGrad,dOmegaVgrad,scen,~)
+        function wGrad = projectSingleScenarioGradientProb(~,dij,cExpGrad,cOmegaVgrad,scen,~)
             if ~isempty(dij.cleanDoseExp{scen})
-                wGrad = (dExpGrad{scen}' * dij.cleanDoseExp{scen})';
-                wGrad = wGrad + 2 * dOmegaVgrad;
+                wGrad = (cExpGrad{scen}' * dij.cleanDoseExp{scen})';
+                wGrad = wGrad + 2 * cOmegaVgrad;
             else
                 wGrad = [];
                 matRad_cfg = MatRad_Config.instance();
