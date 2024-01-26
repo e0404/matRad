@@ -1,4 +1,4 @@
-function [ct, cst] = matRad_addMovement(ct, cst, motionPeriod, numOfCtScen, amp,visBool)
+function [ct, cst] = matRad_addMovement(ct, cst, motionPeriod, numOfCtScen, amp, varargin)
 % adds artificial sinosodal patient motion by creating a deformation vector
 % field and applying it to the ct.cube by geometric transformation
 %
@@ -11,7 +11,8 @@ function [ct, cst] = matRad_addMovement(ct, cst, motionPeriod, numOfCtScen, amp,
 %   motionPeriod:   the length of a whole breathing cycle (in seconds)
 %   numOfCtScen:    number of ct phases
 %   amp:            amplitude of the sinosoidal movement (in pixels)
-%   visBool         boolean flag for visualization
+%   varargin:   dvfType:        push or pull dvf
+%               visBool         boolean flag for visualization
 %
 %   note:           1st dim --> x LPS coordinate system
 %                   2nd dim --> y LPS coordinate system
@@ -40,9 +41,12 @@ function [ct, cst] = matRad_addMovement(ct, cst, motionPeriod, numOfCtScen, amp,
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if ~exist('visBool','var')
-    visBool = false;
-end
+expectedDVF = {'pull', 'push'};
+
+p = inputParser; 
+addParameter(p,'dvfType','pull', @(x) any(validatestring(x,expectedDVF)))
+addParameter(p,'visBool',false, @islogical);
+parse(p,varargin{:});
 
 matRad_cfg = MatRad_Config.instance();
 
@@ -51,7 +55,10 @@ ct.motionPeriod = motionPeriod;
 ct.numOfCtScen = numOfCtScen;
 
 % set type
-ct.dvfType = 'pull'; % push or pull
+ct.dvfMetadata.dvfType = p.Results.dvfType;
+if strcmp(p.Results.dvfType,'push')
+    amp = -amp; %dvf_pull = -dvf_push;
+end
 
 env = matRad_getEnvironment();
 
@@ -110,17 +117,16 @@ for i = 1:numOfCtScen
     end
     
     % convert dvfs to [mm]
-    tmp = ct.dvf{i}(:,:,:,1);
-    ct.dvf{i}(:,:,:,1) = -ct.dvf{i}(:,:,:,2) * ct.resolution.x;
-    ct.dvf{i}(:,:,:,2) = -tmp * ct.resolution.y;
-    ct.dvf{i}(:,:,:,3) = -ct.dvf{i}(:,:,:,3) * ct.resolution.z;
+    ct.dvf{i}(:,:,:,1) = ct.dvf{i}(:,:,:,1).* ct.resolution.x;
+    ct.dvf{i}(:,:,:,2) = ct.dvf{i}(:,:,:,2).*ct.resolution.y;
+    ct.dvf{i}(:,:,:,3) = ct.dvf{i}(:,:,:,3).* ct.resolution.z;
     
     ct.dvf{i} = permute(ct.dvf{i}, [4,1,2,3]);    
 end
 
 
 
-if visBool
+if p.Results.visBool
     slice = round(ct.cubeDim(3)/2);
     figure,
     for i = 1:numOfCtScen

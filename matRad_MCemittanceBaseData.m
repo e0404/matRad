@@ -36,11 +36,11 @@ classdef matRad_MCemittanceBaseData
         
         % air correction in beam optics approximation
         fitWithSpotSizeAirCorrection  = true;
-        fitCorrectDoubleGaussian      = false;
+        fitCorrectDoubleGaussian      = true;
 
         %To force the phase space approximation even if we have the data
-        forceSpectrumApproximation  = true; 
-        forceEmittanceApproximation = true;
+        forceSpectrumApproximation  = false; 
+        forceEmittanceApproximation = false;
         forceFixedMU                = true;
     end
     
@@ -279,6 +279,14 @@ classdef matRad_MCemittanceBaseData
                 obj.problemSigma = true;
             end
             
+            %material dependent straggling factor for water (Bortfeld 1998
+            %Eq. (18) & (B2)
+            %We assume alpha to contain the A/Z^2 dependence across ions!
+            alphaStraggling = 0.086; %MeV^2/cm
+            fStragglingFactor = @(alpha,p) sqrt(alphaStraggling * p^3 * alpha^(2/p) / (3*p - 2)); %(sigma_straggling = 0.012*R^0.935), for calculations in cm
+            fEnergyFromRange = @(R,alpha,p) (R./(10*alpha)).^(1/p);
+            
+                        
             %calcualte mean energy used my mcSquare with a formula fitted
             %to TOPAS data
             switch obj.machine.meta.radiationMode
@@ -287,13 +295,14 @@ classdef matRad_MCemittanceBaseData
                     %the paper usually works in [cm]
                     alpha = 2.2e-3;
                     p = 1.77;
-                    stragglingFactor = 0.012; %(sigma_straggling = 0.012*R^0.935)
-
+                    
+                    stragglingFactor = fStragglingFactor(alpha,p);
+                    
                     %some functions describing range/energy relation and
                     %straggling
 
                     %polyfit to MC for energy from range (in mm)
-                    meanEnergyFromRange = @(R) 5.762374661332111e-20 * R.^9 - 9.645413625310569e-17 * R.^8 + 7.073049219034644e-14 * R.^7 ...
+                    fMeanEnergyFromRange = @(R) 5.762374661332111e-20 * R.^9 - 9.645413625310569e-17 * R.^8 + 7.073049219034644e-14 * R.^7 ...
                         - 2.992344292008054e-11 * R.^6 + 8.104111934547256e-09 * R.^5 - 1.477860913846939e-06 * R.^4 ...
                         + 1.873625800704108e-04 * R.^3 - 1.739424343114980e-02 * R.^2 + 1.743224692623838e+00 * R ...
                         + 1.827112816899668e+01;                 
@@ -310,13 +319,13 @@ classdef matRad_MCemittanceBaseData
                     
                     %straggling contribution according to Bortfeld Eq.
                     %(18), in [mm]
-                    stragglingSigmaFromRange = @(R) 10 * stragglingFactor * (R/10)^0.935;
+                    fStragglingSigmaFromRange = @(R) 10 * stragglingFactor * (R/10)^((3-2/p)/2);
 
                     %energy spectrum contribution to peak width according
                     %to Bortfeld Eq. 19, in mm
-                    energySpreadFromWidth = @(sigmaSq,E) sqrt(sigmaSq ./ ((10*alpha)^2 * p^2 * E^(2*p-2)));
+                    fEnergySpreadFromWidth = @(sigmaSq,E) sqrt(sigmaSq ./ ((10*alpha)^2 * p^2 * E^(2*p-2)));
 
-                    mcDataEnergy.MeanEnergy = meanEnergyFromRange(r80);
+                    mcDataEnergy.MeanEnergy = fMeanEnergyFromRange(r80);
                     
                     %calculate energy straggling using formulae deducted from paper
                     %"An analytical approximation of the Bragg curve for therapeutic
@@ -327,13 +336,13 @@ classdef matRad_MCemittanceBaseData
                     totalSigmaSq = ((w50) / 6.14)^2;
                     
                     %Obtain estimate straggling component
-                    sigmaRangeStragglingOnlySq = stragglingSigmaFromRange(r80).^2; 
+                    sigmaRangeStragglingOnlySq = fStragglingSigmaFromRange(r80).^2; 
 
                     %Squared difference to obtain residual width from
                     %energy spectrum
                     if totalSigmaSq > sigmaRangeStragglingOnlySq
                         sigmaEnergyContributionSq = totalSigmaSq - sigmaRangeStragglingOnlySq;
-                        energySpreadInMeV = energySpreadFromWidth(sigmaEnergyContributionSq,mcDataEnergy.MeanEnergy);                
+                        energySpreadInMeV = fEnergySpreadFromWidth(sigmaEnergyContributionSq,mcDataEnergy.MeanEnergy);                
                     else
                         energySpreadInMeV = 1e-8; %monoenergetic, but let's not write 0 to avoid division by zero in some codes
                     end
@@ -342,23 +351,59 @@ classdef matRad_MCemittanceBaseData
                         
                     mcDataEnergy.EnergySpread = energySpreadRelative;
                 case 'carbon'
+                    %Constants
+                    alpha = 4.425e-3;
+                    p = 1.64;
+
+                    alphaStraggling = 0.086; %MeV^2/cm
+                    
                     % Fit to Range-Energy relationship
                     % Data from "Update to ESTAR, PSTAR, and ASTAR Databases" - ICRU Report 90, 2014
                     % Normalized energy before fit (MeV/u)! Only used ranges [10 350] mm for fit
                     % https://www.nist.gov/system/files/documents/2017/04/26/newstar.pdf
-                    meanEnergyFromRange = @(x) 11.39 * x^0.628 + 11.24;
-                    mcDataEnergy.MeanEnergy = meanEnergyFromRange(r80);
+                    %meanEnergyFromRange = @(R) 11.39 * R^0.628 + 11.24;
+                    fMeanEnergyFromRange = @(R) fEnergyFromRange(R,alpha,p);
+                    mcDataEnergy.MeanEnergy = fMeanEnergyFromRange(r80);
                     % reading in a potential given energyspread could go here directly. How would you parse the energyspread
                     % into the function? Through a field in the machine?
+                    
+                    %Straggling factor:
+                    %stragglingSigmaFromRange = @(R) 10 * stragglingFactor * (R/10)^0.935;
+
+
                     mcDataEnergy.EnergySpread = obj.defaultRelativeEnergySpread;
                 case 'helium'
+                    alpha = 2.567e-3;
+                    p = 1.74;                                
+
                     % Fit to Range-Energy relationship
                     % Data from "Update to ESTAR, PSTAR, and ASTAR Databases" - ICRU Report 90, 2014
                     % Normalized energy before fit (MeV/u)! Only used ranges [10 350] mm for fit
                     % https://www.nist.gov/system/files/documents/2017/04/26/newstar.pdf
-                    meanEnergyFromRange = @(x) 7.57* x.^0.5848 + 3.063;
-                    mcDataEnergy.MeanEnergy = meanEnergyFromRange(r80);
-                    mcDataEnergy.EnergySpread = obj.defaultRelativeEnergySpread;
+                    %meanEnergyFromRange = @(x) 7.57* x.^0.5848 + 3.063;
+
+                    fMeanEnergyFromRange = @(R) fEnergyFromRange(R,alpha,p);
+                    mcDataEnergy.MeanEnergy = fMeanEnergyFromRange(r80);
+
+
+                    stragglingFactor = fStragglingFactor(alpha,p);
+                    fStragglingSigmaFromRange = @(R) 10 * stragglingFactor * (R/10)^((3-2/p)/2);
+                    fEnergySpreadFromWidth = @(sigmaSq,E) sqrt(sigmaSq ./ ((10*alpha)^2 * p^2 * E^(2*p-2)));
+                    totalSigmaSq = ((w50) / 6.14)^2;
+                    sigmaRangeStragglingOnlySq = fStragglingSigmaFromRange(r80).^2; 
+
+                    if totalSigmaSq > sigmaRangeStragglingOnlySq
+                        sigmaEnergyContributionSq = totalSigmaSq - sigmaRangeStragglingOnlySq;
+                        energySpreadInMeV = fEnergySpreadFromWidth(sigmaEnergyContributionSq,mcDataEnergy.MeanEnergy);                
+                    else
+                        energySpreadInMeV = 1e-8; %monoenergetic, but let's not write 0 to avoid division by zero in some codes
+                    end
+
+                    energySpreadRelative = energySpreadInMeV ./ mcDataEnergy.MeanEnergy * 100;
+                        
+                    mcDataEnergy.EnergySpread = energySpreadRelative;
+
+                    %mcDataEnergy.EnergySpread = obj.defaultRelativeEnergySpread;
                 otherwise
                     error('not implemented')
             end
@@ -378,10 +423,20 @@ classdef matRad_MCemittanceBaseData
             z     = -(obj.machine.data(i).initFocus.dist(focusIndex,:) - SAD);
             sigma = obj.machine.data(i).initFocus.sigma(focusIndex,:);
             
-            if obj.fitCorrectDoubleGaussian
+            %Double Gaussian data might have a non-zero wide Gaussian,
+            %adding width to the beam. We do a maximum correction here,
+            %which compromises the fwhm, but seems to work better in
+            %estimating the optics
+            if obj.fitCorrectDoubleGaussian && isfield(obj.machine.data(i),'sigma1')              
                 sigmaSq_Narr = sigma.^2 + obj.machine.data(i).sigma1(1).^2;
                 sigmaSq_Bro  = sigma.^2 + obj.machine.data(i).sigma2(1).^2;
-                sigma = sqrt(sigmaSq_Narr*(1-obj.machine.data(i).weight(1).^2) + sigmaSq_Bro*obj.machine.data(i).weight(1).^2);
+                dgWeight = obj.machine.data(i).weight(1);
+                
+                %Maximum of double gaussian
+                maxL = (1-dgWeight) ./ (2*pi*sigmaSq_Narr) + dgWeight ./ (2*pi*sigmaSq_Bro );
+                
+                %Find the sigma that corresponds to the maximum
+                sigma = sqrt(1 ./ (2*pi*maxL));
             end
             
             %correct for in-air scattering with polynomial or interpolation
@@ -508,8 +563,8 @@ classdef matRad_MCemittanceBaseData
                 %At the moment coded to only take the first energy because
                 %focus settings do not apply to the energy spectrum
                 obj.machine.data(ixE).energySpectrum.type  = 'gaussian';
-                obj.machine.data(ixE).energySpectrum.mean   = [obj.monteCarloData(:,count).MeanEnergy(f)];
-                obj.machine.data(ixE).energySpectrum.sigma = [obj.monteCarloData(:,count).EnergySpread(f)];
+                obj.machine.data(ixE).energySpectrum.mean   = [obj.monteCarloData(:,count).MeanEnergy];
+                obj.machine.data(ixE).energySpectrum.sigma = [obj.monteCarloData(:,count).EnergySpread];
                 
                 
                 count = count + 1;
@@ -611,7 +666,7 @@ classdef matRad_MCemittanceBaseData
                 sigmaAirCorrected = sigma;
                 matRad_cfg.dispWarning('Spot Size Air Correction failed, too large!',method);
             else
-                sigmaAirCorrected = sigma - sigmaAir; 
+                sigmaAirCorrected = sqrt(sigma.^2 - sigmaAir.^2); 
             end
 
         end

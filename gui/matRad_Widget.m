@@ -40,9 +40,21 @@ classdef matRad_Widget <  handle
     methods
         %CONSTRUCTOR
         function this = matRad_Widget(handleParent)
-            this.widgetHandle = handleParent;           
-            this.createLayout();           
-            this.initialize();
+            this.widgetHandle = handleParent;
+            
+            %Create the layout
+            try 
+                this.createLayout();           
+            catch ME
+                showError(this,'Widget could not be created!',ME);
+            end
+
+            %Initialize the widget
+            try
+                this.initialize();
+            catch ME
+                showWarning(this,'Widget could not be initialized!',ME);
+            end
             
             matRad_cfg = MatRad_Config.instance();
             
@@ -77,9 +89,6 @@ classdef matRad_Widget <  handle
             end 
         end
         
-        function this = update(this,evt)
-        end
-
         function handles = showError(this,Message,ME)
             matRad_cfg = MatRad_Config.instance();
             handles = this.handles;
@@ -118,6 +127,7 @@ classdef matRad_Widget <  handle
                 % Future error hyperlinks {Message,ME.getReport(meType,'hyperlinks','off')};
             end
             matRad_cfg.dispWarning(Message);
+            warndlg(Message);
             this.handles = handles;         
 
         end
@@ -137,9 +147,34 @@ classdef matRad_Widget <  handle
             end
         end
     end
+
+    methods (Sealed)
+        
+        %Update function to be called when the widget should be updated
+        %(i.e. by listener to the workspaceChanged event or in
+        %initialization)
+        %Implement the protected doUpdate function in a subclass to define
+        %the update process
+        function update(this,evt)
+            try
+                if nargin == 2
+                    this.doUpdate(evt);
+                else
+                    this.doUpdate();
+                end
+            catch ME
+                %Error Handling
+                this.showWarning('Update failed',ME); %We only show a warning to not halt execution.
+            end
+        end
+    end
     
     methods (Access = protected)
         
+        function this = doUpdate(this,~)
+
+        end
+
         %CREATE LAYOUT FUNCTION
         function this = createLayout(this, handleParent)
         end  

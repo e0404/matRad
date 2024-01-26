@@ -123,13 +123,13 @@ end
 % patients in a supine position. Other orientations (e.g. prone, decubitus
 % left/right) are not supported.
 % Defined Terms:
-% HFP     Head First-Prone                  (not supported)
+% HFP     Head First-Prone                  (supported)
 % HFS     Head First-Supine                 (supported)
 % HFDR    Head First-Decubitus Right        (not supported)
 % HFDL    Head First-Decubitus Left         (not supported)
 % FFDR    Feet First-Decubitus Right        (not supported)
 % FFDL    Feet First-Decubitus Left         (not supported)
-% FFP     Feet First-Prone                  (not supported)
+% FFP     Feet First-Prone                  (supported)
 % FFS     Feet First-Supine                 (supported)
 
 if isempty(regexp(ctInfo(1).PatientPosition,{'S','P'}, 'once'))
@@ -185,29 +185,29 @@ yDir = ctInfo(1).ImageOrientationPatient(4:6); % lps: [0;1;0]
 nonStandardDirection = false;
 
 % correct x- & y-direction
-% 
-% if xDir(1) == 1 && xDir(2) == 0 && xDir(3) == 0
-%     matRad_cfg.dispInfo('x-direction OK\n')
-% elseif xDir(1) == -1 && xDir(2) == 0 && xDir(3) == 0
-%     matRad_cfg.dispInfo('\nMirroring x-direction...')
-%     origCt = flip(origCt,1);
-%     matRad_cfg.dispInfo('finished!\n')
-% else
-%     nonStandardDirection = true;
-% end
-%     
-% if yDir(1) == 0 && yDir(2) == 1 && yDir(3) == 0
-%     matRad_cfg.dispInfo('y-direction OK\n')
-% elseif yDir(1) == 0 && yDir(2) == -1 && yDir(3) == 0
-%     matRad_cfg.dispInfo('\nMirroring y-direction...')
-%     origCt = flip(origCt,2);
-%     matRad_cfg.dispInfo('finished!\n')
-% else
-%     nonStandardDirection = true;
-% end
+
+if xDir(1) == 1 && xDir(2) == 0 && xDir(3) == 0
+    matRad_cfg.dispInfo('x-direction OK\n')
+elseif xDir(1) == -1 && xDir(2) == 0 && xDir(3) == 0
+    matRad_cfg.dispInfo('\nMirroring x-direction...')
+    origCt = flip(origCt,1);
+    matRad_cfg.dispInfo('finished!\n')
+else
+    nonStandardDirection = true;
+end
+    
+if yDir(1) == 0 && yDir(2) == 1 && yDir(3) == 0
+    matRad_cfg.dispInfo('y-direction OK\n')
+elseif yDir(1) == 0 && yDir(2) == -1 && yDir(3) == 0
+    matRad_cfg.dispInfo('\nMirroring y-direction...')
+    origCt = flip(origCt,2);
+    matRad_cfg.dispInfo('finished!\n')
+else
+    nonStandardDirection = true;
+end
 
 if nonStandardDirection
-    matRad_cfg.dispInfo(['Non-standard patient orientation.\n'...
+    matRad_cfg.dispWarning(['Non-standard patient orientation.\n'...
         'CT might not fit to contoured structures\n'])
 end
 

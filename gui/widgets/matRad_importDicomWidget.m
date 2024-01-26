@@ -199,7 +199,7 @@ classdef matRad_importDicomWidget < matRad_Widget
             files.resy = str2double(get(handles.resy_edit,'String'));
             % check if valid assignment is made when z slices are not equi-distant
             if strcmp(get(handles.resz_edit,'String'),'not equi')
-                msgbox('Ct data not sliced equi-distantly in z direction! Chose uniform resolution.', 'Error','error');
+                this.showError('Ct data not sliced equi-distantly in z direction! Chose uniform resolution.');
                 return;
             else
                 files.resz = str2double(get(handles.resz_edit,'String'));
@@ -353,7 +353,7 @@ classdef matRad_importDicomWidget < matRad_Widget
                 end
                 
                 if sum(corrDosesLoc) == 0
-                    warndlg('no rt dose file directly associated to plan file. showing all rt dose files.');
+                    this.showWarning('no rt dose file directly associated to plan file. showing all rt dose files.');
                     corrDosesLoc = strcmp(handles.fileList(:,2),'RTDOSE');
                 end
                 
@@ -368,7 +368,7 @@ classdef matRad_importDicomWidget < matRad_Widget
                 set(handles.checkbox3,'Enable','off');
                 
             elseif numel(get(hObject,'Value')) >=2
-                warning('More than one RTPLAN selected. Unsetting selection ...');
+                this.showWarning('More than one RTPLAN selected. Unsetting selection ...');
                 patient_listbox_Callback(this, hObject, eventdata);
             else
                 patient_listbox_Callback(this, hObject, eventdata);
@@ -423,7 +423,7 @@ classdef matRad_importDicomWidget < matRad_Widget
                 selectedDoseFiles = get(handles.doseseries_listbox,'Value');
                 if isempty(selectedDoseFiles)
                     set(hObject,'Value',0)
-                    errordlg('no dose file selected');
+                    this.showError('no dose file selected');
                     return;
                 end
                 for i = 1:numel(selectedDoseFiles)
@@ -440,7 +440,7 @@ classdef matRad_importDicomWidget < matRad_Widget
                 
                 if numel(unique(cell2mat(res_x)))*numel(unique(cell2mat(res_y)))*numel(unique(cell2mat(res_z))) ~= 1
                     set(handles.checkbox3,'Value',0);
-                    warndlg('Different resolutions in dose file(s)');
+                    this.showWarning('Different resolutions in dose file(s)');
                     set(handles.resx_edit,'Enable', 'on');
                     set(handles.resy_edit,'Enable', 'on');
                     set(handles.resz_edit,'Enable', 'on');
