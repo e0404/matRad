@@ -62,8 +62,7 @@ pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
 %%
 pln.propMC.engine = 'TOPAS';
 pln.propMC.beamProfile = 'phasespace';
-pln.propMC.externalCalculation = true;
-pln.propMC.infilenames.phaseSpaceSourcePhotons = 'SIEMENS_PRIMUS_6mv_15x15';
+pln.propMC.externalCalculation =true;
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
 

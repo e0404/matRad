@@ -136,7 +136,7 @@ classdef matRad_TopasConfig < handle
             'Scorer_RBE_WED','TOPAS_scorer_doseRBE_Wedenberg.txt.in',...
             'Scorer_RBE_MCN','TOPAS_scorer_doseRBE_McNamara.txt.in', ...
             ... %PhaseSpace Source
-            'phaseSpaceSourcePhotons' ,'SIEMENS_PRIMUS_6.0_0.10_15.0x15.0' );
+            'phaseSpaceSourcePhotons' ,'VarianClinaciX_6MV_20x20_aboveMLC_w2' );
        
 
     end
@@ -693,6 +693,9 @@ classdef matRad_TopasConfig < handle
             processedQuantities = {'','_std','_batchStd'};
             topasCubesTallies = unique(erase(topasCubesTallies,processedQuantities(2:end)));
 
+            normFac = sum(w);
+            
+
             % Loop through 4D scenarios
             for ctScen = 1:dij.numOfScenarios
 
@@ -708,7 +711,7 @@ classdef matRad_TopasConfig < handle
                                 % Check if current quantity is available and write to dij
                                 if isfield(topasCubes,[topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]) ...
                                         && iscell(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]))
-                                    dij.([topasCubesTallies{j} processedQuantities{p}]){ctScen,1}(:,d) = sum(w)*reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]){ctScen},[],1);
+                                    dij.([topasCubesTallies{j} processedQuantities{p}]){ctScen,1}(:,d) = normFac*reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]){ctScen},[],1);
                                 end
                             end
                         end
@@ -721,7 +724,7 @@ classdef matRad_TopasConfig < handle
                             for p = 1:length(processedQuantities)
                                 % Check if current quantity is available and write to dij
                                 if isfield(topasCubes,[topasCubesTallies{j} processedQuantities{p} '_beam' num2str(d)]) && iscell(topasCubes.([topasCubesTallies{j} processedQuantities{p} '_beam' num2str(d)]))
-                                    dij.([topasCubesTallies{j} processedQuantities{p}]){ctScen}(:,d) = sum(w)*reshape(topasCubes.([topasCubesTallies{j} processedQuantities{p} '_beam',num2str(d)]){ctScen},[],1);
+                                    dij.([topasCubesTallies{j} processedQuantities{p}]){ctScen}(:,d) = normFac*reshape(topasCubes.([topasCubesTallies{j} processedQuantities{p} '_beam',num2str(d)]){ctScen},[],1);
                                 end
                             end
                         end
@@ -742,7 +745,7 @@ classdef matRad_TopasConfig < handle
                                     % Check if current quantity is available and write to dij
                                     if isfield(topasCubes,[topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]) ...
                                             && iscell(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]))
-                                        dij.([topasCubesTallies{j} processedQuantities{p}]){ctScen,1}(:,d) = sum(w)*reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]){ctScen},[],1);
+                                        dij.([topasCubesTallies{j} processedQuantities{p}]){ctScen,1}(:,d) = normFac*reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]){ctScen},[],1);
                                     end
                                 end
                                 % Handle RBE-related quantities (not multiplied by sum(w)!)
@@ -779,7 +782,7 @@ classdef matRad_TopasConfig < handle
                                 for p = 1:length(processedQuantities)
                                     % Check if current quantity is available and write to dij
                                     if isfield(topasCubes,[topasCubesTallies{j} processedQuantities{p} '_beam' num2str(d)]) && iscell(topasCubes.([topasCubesTallies{j} processedQuantities{p} '_beam' num2str(d)]))
-                                        dij.([topasCubesTallies{j} processedQuantities{p}]){ctScen}(:,d) = sum(w)*reshape(topasCubes.([topasCubesTallies{j} processedQuantities{p} '_beam',num2str(d)]){ctScen},[],1);
+                                        dij.([topasCubesTallies{j} processedQuantities{p}]){ctScen}(:,d) = normFac*reshape(topasCubes.([topasCubesTallies{j} processedQuantities{p} '_beam',num2str(d)]){ctScen},[],1);
                                     end
                                 end
                                 % Handle RBE-related quantities (not multiplied by sum(w)!)
@@ -1384,7 +1387,7 @@ classdef matRad_TopasConfig < handle
 
                 % NozzleAxialDistance
                 if isPhoton 
-                    fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', (SAD-stf(beamIx).SCD) +50); %Phasespace behind MLC
+                    fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', stf(beamIx).SCD+40); %Phasespace hardcorded infront of MLC at SSD 46 cm
                 else
                     fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', nozzleToAxisDistance);
                 end
@@ -1655,9 +1658,9 @@ classdef matRad_TopasConfig < handle
                     leftLeafPos = [stf(beamIx).ray.shapes(:).leftLeafPos]*SCD./SAD;
                     rightLeafPos = [stf(beamIx).ray.shapes(:).rightLeafPos]*SCD./SAD;
                     % Set MLC paramters as in TOPAS example file https://topas.readthedocs.io/en/latest/parameters/geometry/specialized.html#multi-leaf-collimator
-                    fprintf(fileID,'d:Sim/Ge/MultiLeafCollimatorA/TransZ   = %f cm\n', 0.5*5);
+                    fprintf(fileID,'d:Sim/Ge/MultiLeafCollimatorA/TransZ   = %f cm\n', 4);
                     fprintf(fileID,'d:Ge/MultiLeafCollimatorA/MaximumLeafOpen   = %f cm\n',15);
-                    fprintf(fileID,'d:Ge/MultiLeafCollimatorA/Thickness         = %f cm\n',5);
+                    fprintf(fileID,'d:Ge/MultiLeafCollimatorA/Thickness         = %f cm\n',8);
                     fprintf(fileID,'d:Ge/MultiLeafCollimatorA/Length            = %f  cm\n',15);
                     fprintf(fileID,'dv:Ge/MultiLeafCollimatorA/Widths           = %i ', numOfLeaves+2);
                     fprintf(fileID, '%f ', [200, pln.propStf.collimation.leafWidth*ones(1,numOfLeaves)*SCD./SAD , 200]);
