@@ -162,6 +162,21 @@ classdef (Abstract) matRad_ScenarioModel < handle
             newInstance.numOfCtScen         = this.numOfCtScen;
         end
         
+        function scenIx = sub2scenIx(this,ctScen,shiftScen,rangeShiftScen)
+            %Returns linear index in the scenario cell array from scenario
+            %subscript indices
+            if ~isvector(this.scenMask)
+                scenIx = sub2ind(size(this.scenMask),ctScen,shiftScen,rangeShiftScen);
+            else
+                scenIx = ctScen;
+            end
+        end
+
+        function scenNum = scenNum(this,scenIx)
+            %gets number of scneario from linear scenario index
+            scenNum = find(find(this.scenMask) == scenIx);
+        end
+        
         %% Deprecated functions / properties
         function newInstance = extractSingleNomScen(this,~,scenIdx)
             matRad_cfg = MatRad_Config.instance();
@@ -186,7 +201,6 @@ classdef (Abstract) matRad_ScenarioModel < handle
             matRad_cfg.dispDeprecationWarning('The property wcFactor of the scenario class will soon be deprecated!');
             this.wcSigma = value;
         end
-
 
     end
 

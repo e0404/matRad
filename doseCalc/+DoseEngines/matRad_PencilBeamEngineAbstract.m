@@ -120,15 +120,13 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                         for ctScen = 1:this.multScen.numOfCtScen
                             for rangeShiftScen = 1:this.multScen.totNumRangeScen
                                 if this.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
-                                    %TODO: This shows we need better scenario
-                                    %management
-                                    if ~isvector(this.multScen.scenMask)
-                                        scenIdx = sub2ind(size(this.multScen.scenMask),ctScen,shiftScen,rangeShiftScen);
-                                    else
-                                        scenIdx = ctScen;
-                                    end
-
-                                    scenNum = find(find(this.multScen.scenMask) == scenIdx);
+                                    %TODO: This shows we probably need
+                                    %better scenario management
+                                    %Gets linear index in scenario cell array
+                                    scenIdx = this.multScen.sub2scenIx(ctScen,shiftScen,rangeShiftScen);
+                                    
+                                    %Gets number of scenario
+                                    scenNum = this.multScen.scenNum(scenIdx);
 
                                     %First, create a ray of the
                                     %specific scenario to adapt rad
