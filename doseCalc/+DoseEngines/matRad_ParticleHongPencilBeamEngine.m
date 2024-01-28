@@ -86,18 +86,11 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
                 bixel.mLETDose = bixel.physicalDose.*kernels.LET;
             end
             
-            if this.calcBioDose
-                bixel.mAlphaDose = bixel.physicalDose;
-                bixel.mSqrtBetaDose = bixel.physicalDose;
-                %From matRad_calcLQParameter
-                numOfTissueClass = size(bixel.baseData.alpha,2);
-                for i = 1:numOfTissueClass
-                    mask = bixel.vTissueIndex == i;
-                    if any(mask)
-                        bixel.mAlphaDose(mask) = bixel.mAlphaDose(mask) .* kernels.alpha(mask);
-                        bixel.mSqrtBetaDose(mask)  = bixel.mSqrtBetaDose(mask) .* kernels.beta(mask);
-                    end
-                end
+            if this.calcBioDose                               
+                [bixelAlpha,bixelBeta] = this.bioParam.calcLQParameterForKernel(bixel,kernels);
+
+                bixel.mAlphaDose = bixel.physicalDose .* bixelAlpha;
+                bixel.mSqrtBetaDose = bixel.physicalDose .* sqrt(bixelBeta);
             end  
         end
         

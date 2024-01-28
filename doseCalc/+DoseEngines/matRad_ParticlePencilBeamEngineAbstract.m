@@ -32,6 +32,8 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
     properties (SetAccess = protected, GetAccess = public)
         constantRBE = NaN;              % constant RBE value
         vTissueIndex;                   % Stores tissue indices available in the matRad base data
+        vAlphaX;                        % Stores Photon Alpha
+        vBetaX;                         % Stores Photon Beta
     end
 
     methods
@@ -172,6 +174,8 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             bixel.radDepths = currRay.radDepths(bixel.subRayIx);
             if this.calcBioDose
                 bixel.vTissueIndex = currRay.vTissueIndex(bixel.subRayIx);
+                bixel.vAlphaX      = currRay.vAlphaX(bixel.subRayIx);
+                bixel.vBetaX       = currRay.vBetaX(bixel.subRayIx);
             end
         
         end
@@ -216,7 +220,8 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             end
 
             % bioDose
-            if this.calcBioDose
+            % TODO: Improve isfield check by better model management
+            if this.calcBioDose && strcmp(this.bioParam.model,'LEM')
                 X.alpha = baseData.alpha;
                 X.beta = baseData.beta;
             end   
@@ -398,46 +403,67 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
         
         function dij = loadBiologicalBaseData(this,cst,dij)
             matRad_cfg = MatRad_Config.instance();
-            if isfield(this.machine.data,'alphaX') && isfield(this.machine.data,'betaX')
-                matRad_cfg.dispInfo('matRad: loading biological base data... ');
-                this.vTissueIndex    = zeros(size(this.VdoseGrid,1),1);
-                dij.ax              = zeros(dij.doseGrid.numOfVoxels,1);
-                dij.bx              = zeros(dij.doseGrid.numOfVoxels,1);
 
-                cstDownsampled = matRad_setOverlapPriorities(cst);
+            matRad_cfg.dispInfo('Initializing biological dose calculation...\n');
+            
+            dij.ax              = zeros(dij.doseGrid.numOfVoxels,1);
+            dij.bx              = zeros(dij.doseGrid.numOfVoxels,1);
 
-                % resizing cst to dose cube resolution
-                cstDownsampled = matRad_resizeCstToGrid(cstDownsampled,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
-                    dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
-                % retrieve photon LQM parameter for the current dose grid voxels
-                [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cstDownsampled,dij.doseGrid.numOfVoxels,1,this.VdoseGrid);
+            cstDownsampled = matRad_setOverlapPriorities(cst);
 
-                for i = 1:size(cstDownsampled,1)
+            % resizing cst to dose cube resolution
+            cstDownsampled = matRad_resizeCstToGrid(cstDownsampled,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
+                dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
+            % retrieve photon LQM parameter for the current dose grid voxels
+            [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cstDownsampled,dij.doseGrid.numOfVoxels,1,this.VdoseGrid);
+            
+            %TODO: maybe we can avoid this double storage? Doesn't matter
+            %resource usage, as no copy will be made
+            this.vAlphaX = dij.ax;
+            this.vBetaX = dij.bx;
+            this.vTissueIndex = zeros(size(this.VdoseGrid,1),1);
 
-                    % check if cst is compatiable
-                    if ~isempty(cstDownsampled{i,5}) && isfield(cstDownsampled{i,5},'alphaX') && isfield(cstDownsampled{i,5},'betaX')
+            if strcmp(this.bioParam.model,'LEM') 
+                matRad_cfg.dispInfo('\tUsing LEM model with precomputed kernels\n');
 
-                        % check if base data contains alphaX and betaX
-                        IdxTissue = find(ismember(this.machine.data(1).alphaX,cstDownsampled{i,5}.alphaX) & ...
-                            ismember(this.machine.data(1).betaX,cstDownsampled{i,5}.betaX));
+                
 
-                        % check consitency of biological baseData and cst settings
-                        if ~isempty(IdxTissue)
-                            isInVdoseGrid = ismember(this.VdoseGrid,cstDownsampled{i,4}{1});
-                            this.vTissueIndex(isInVdoseGrid) = IdxTissue;
+                if isfield(this.machine.data,'alphaX') && isfield(this.machine.data,'betaX')
+                    for i = 1:size(cstDownsampled,1)
+
+                        % check if cst is compatiable
+                        if ~isempty(cstDownsampled{i,5}) && isfield(cstDownsampled{i,5},'alphaX') && isfield(cstDownsampled{i,5},'betaX')
+
+                            % check if base data contains alphaX and betaX
+                            IdxTissue = find(ismember(this.machine.data(1).alphaX,cstDownsampled{i,5}.alphaX) & ...
+                                ismember(this.machine.data(1).betaX,cstDownsampled{i,5}.betaX));
+
+                            % check consitency of biological baseData and cst settings
+                            if ~isempty(IdxTissue)
+                                isInVdoseGrid = ismember(this.VdoseGrid,cstDownsampled{i,4}{1});
+                                this.vTissueIndex(isInVdoseGrid) = IdxTissue;
+                            else
+                                matRad_cfg.dispError('Biological base data and cst are inconsistent!');
+                            end
+
                         else
-                            matRad_cfg.dispError('Biological base data and cst are inconsistent!');
+                            this.vTissueIndex(row) = 1;
+                            matRad_cfg.dispInfo('\tTissue type of %s was set to 1\n',cstDownsampled{i,2});
                         end
-
-                    else
-                        this.vTissueIndex(row) = 1;
-                        matRad_cfg.dispInfo('Tissue type of %s was set to 1\n',cstDownsampled{i,2});
                     end
+                    dij.vTissueIndex = this.vTissueIndex;
+                    matRad_cfg.dispInfo('done.\n');
+                else
+                    matRad_cfg.dispError('Base data is missing alphaX and/or betaX!');
                 end
-                dij.vTissueIndex = this.vTissueIndex;
-                matRad_cfg.dispInfo('done.\n');
+            elseif any(strcmp(this.bioParam.model,{'HEL','MCN','WED'}))
+                matRad_cfg.dispInfo('\tUsing LET-dependent model\n');
+                if ~this.calcLET
+                    matRad_cfg.dispWarning('Forcing LET calculation as it is required for LET-dependent models!');
+                    this.calcLET = true;
+                end
             else
-                matRad_cfg.dispError('Base data is missing alphaX and/or betaX!');
+                matRad_cfg.dispError('Unknown Biological Model!');
             end
         end
 
@@ -643,6 +669,8 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                         bixel.sigmaIniSq = largestSigmaSq4uniqueEnergies(cnt);
                         bixel.radDepths = (depthValues(j) + baseData.offset) * ones(size(radialDist_sq));
                         bixel.vTissueIndex = ones(size(bixel.radDepths));
+                        bixel.vAlphaX      = 0.5*ones(size(bixel.radDepths));
+                        bixel.vBetaX      = 0.05*ones(size(bixel.radDepths));
                         bixel.subRayIx = true(size(bixel.radDepths));
                         bixel.ix = find(bixel.subRayIx);
                         bixel.radDepthOffset = 0;
@@ -870,6 +898,8 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             % just use tissue classes of voxels found by ray tracer
             if this.calcBioDose
                 ray.vTissueIndex = this.vTissueIndex(ray.subIxVdoseGrid,:);
+                ray.vAlphaX = this.vAlphaX(ray.subIxVdoseGrid);
+                ray.vBetaX  = this.vBetaX(ray.subIxVdoseGrid);
             end
         end
 
