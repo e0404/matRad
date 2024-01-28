@@ -134,11 +134,11 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                                     scenRay = currRay;
                                     scenRay.radDepths = scenRay.radDepths{ctScen};
                                     scenRay.radDepths = (1+this.multScen.relRangeShift(scenNum))*scenRay.radDepths + this.multScen.absRangeShift(scenNum);
-                                    scenRay.geoDepths = scenRay.geoDepths{ctScen};
+                                    if isfield(scenRay,'geoDepths')
+                                        scenRay.geoDepths = scenRay.geoDepths{ctScen};
+                                    end
 
                                     for k = 1:currRay.numOfBixels
-                                        
-                                                                                
                                         %Bixel Computation
                                         currBixel = this.computeBixel(scenRay,k);
 
