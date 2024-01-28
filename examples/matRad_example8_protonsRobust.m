@@ -40,6 +40,11 @@ builder.addSphericalTarget('target',ctDim(1)/13,'objectives',struct(DoseObjectiv
 builder.addSphericalOAR('OAR',ctDim(1)/15,'offset',[-10 10 0],'HU',-100,'objectives',struct(DoseObjectives.matRad_SquaredOverdosing(10,40)));
 builder.addBoxOAR('contour',ctDim./2,'HU',0,'objectives',struct(DoseObjectives.matRad_SquaredOverdosing(5,20)));
 
+%Keep indices for assignment of robustness objectives later
+ixTarget = 1;
+ixOAR = 2;
+ixNT = 3;
+
 [ct,cst] = builder.getctcst();
   
 %% Treatment Plan
