@@ -49,7 +49,11 @@ if  plane == 3% Axial plane
         set(axesHandle,'YTickLabel',0:tickdist:1000*ct.resolution.y);   
         xlabel(axesHandle,'x [mm]','FontSize',defaultFontSize)
         ylabel(axesHandle,'y [mm]','FontSize',defaultFontSize)
-        title(axesHandle,['axial plane z = ' num2str(ct.resolution.z*(slice-1)) ' [mm]'],'FontSize',defaultFontSize)
+        if any(isfield(ct,{'x','y','z'}))
+            title(axesHandle,['axial plane z = ' num2str(ct.z(slice)) ' [mm]'],'FontSize',defaultFontSize)
+        else
+            title(axesHandle,['axial plane z = ' num2str(ct.resolution.z*(slice-1)) ' [mm]'],'FontSize',defaultFontSize)
+        end
     else
         xlabel(axesHandle,'x [voxels]','FontSize',defaultFontSize)
         ylabel(axesHandle,'y [voxels]','FontSize',defaultFontSize)
