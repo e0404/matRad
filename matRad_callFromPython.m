@@ -3,7 +3,7 @@ function matRad_callFromPython(functionName, outputName, inputPath, outputPath, 
 
 for i=1:length(varargin)
     if contains(string(varargin{i}), string('.mat'))
-        load(strcat(inputPath, varargin{i}));
+        load(fullfile(inputPath, varargin{i}));
         [path, var, ext]=fileparts(varargin{i});
         functionVars{i}=var;
     else
