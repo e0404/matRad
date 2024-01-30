@@ -43,8 +43,11 @@ try
     particle     = pln.radiationMode;
     manufacturer = ct.dicomInfo.Manufacturer;
     model        = ct.dicomInfo.ManufacturerModelName;
-    convKernel   = ct.dicomInfo.ConvolutionKernel;
-    
+    if isfield(ct.dicomInfo,'ConvolutionKernel')
+        convKernel = ct.dicomInfo.ConvolutionKernel;
+    else
+        convKernel = '0';
+    end
     hlutFileName = strcat(manufacturer, '-', model, '-ConvolutionKernel-',...
         convKernel, '_', particle, '.hlut');
     
