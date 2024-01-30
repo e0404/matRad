@@ -18,6 +18,6 @@ execFunc = sprintf('%s = %s(%s);', outputName, functionName, strjoin(functionVar
 %end
 
 eval(execFunc);
-save(strcat(outputPath, outputName,'.mat'), outputName);
+save(fullfile(outputPath, [outputName '.mat']), outputName);
 
 end
