@@ -46,23 +46,36 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             
             matRad_cfg = MatRad_Config.instance();
             % List box of stuctures that can be selected for display
-            h87 = uicontrol(...
-                'Parent',h86,...
-                'Units','normalized',...
-                'Tooltip','Choose which structures should be displayed in the GUI',...
-                'HorizontalAlignment','left',...
-                'Max',1,...
-                'Style','listbox',...
-                'Value',1,...
-                'Position',[0.02 0.01 0.97 0.98],...
-                'BackgroundColor',matRad_cfg.gui.elementColor,...
-                'ForegroundColor',matRad_cfg.gui.textColor,...
-                'FontSize',matRad_cfg.gui.fontSize,...
-                'FontWeight',matRad_cfg.gui.fontWeight,...
-                'FontName',matRad_cfg.gui.fontName,...
-                'Callback',@(hObject,eventdata) legendTable_Callback(this,hObject,eventdata),...
-                'Tag','legendTable');
-            
+
+            if this.isInUifigure
+                pos = getpixelposition(h86);
+                h87 = uilistbox('Parent',h86,...
+                    'Position',[0 0 pos(3) pos(4)],...
+                    'Tooltip','Choose which structures should be displayed in the GUI',...
+                    'BackgroundColor',matRad_cfg.gui.elementColor,...
+                    'FontColor',matRad_cfg.gui.textColor,...
+                    'FontSize',matRad_cfg.gui.fontSize,...
+                    'FontWeight',matRad_cfg.gui.fontWeight,...
+                    'FontName',matRad_cfg.gui.fontName,...
+                    'Tag','legendTable');
+            else
+                h87 = uicontrol(...
+                    'Parent',h86,...
+                    'Units','normalized',...
+                    'Tooltip','Choose which structures should be displayed in the GUI',...
+                    'HorizontalAlignment','left',...
+                    'Max',1,...
+                    'Style','listbox',...
+                    'Value',1,...
+                    'Position',[0.02 0.01 0.97 0.98],...
+                    'BackgroundColor',matRad_cfg.gui.elementColor,...
+                    'ForegroundColor',matRad_cfg.gui.textColor,...
+                    'FontSize',matRad_cfg.gui.fontSize,...
+                    'FontWeight',matRad_cfg.gui.fontWeight,...
+                    'FontName',matRad_cfg.gui.fontName,...
+                    'Callback',@(hObject,eventdata) legendTable_Callback(this,hObject,eventdata),...
+                    'Tag','legendTable');
+            end
             this.createHandles();
          
         end
@@ -71,7 +84,12 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
                 updateStructureTable(this, evalin('base','cst'));
             else
-                set(this.handles.legendTable,'String','no data loaded');
+                if this.isInUifigure()
+                    uilistbox()
+                    this.handles.legendTable.Items = {'no data loaded'};
+                else
+                    set(this.handles.legendTable,'String','no data loaded');
+                end
             end           
         end
     end
@@ -167,28 +185,52 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             
             for s = 1:size(cst,1)
                 handles.VOIPlotFlag(s) = cst{s,5}.Visible;
-                clr = dec2hex(round(cst{s,5}.visibleColor(:)*255),2)';
-                clr = ['#';clr(:)]';
-                % html is not supported in octave 
                 
-                switch matRad_cfg.env
-                    case 'OCTAVE'
-                        if handles.VOIPlotFlag(s)
-                            tmpString{s} = ["o " cst{s,2}];
-                        else
-                            tmpString{s} = ["x " cst{s,2}];
-                        end
-                    otherwise
-                        if handles.VOIPlotFlag(s)
-                            tmpString{s} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"><center>&#10004;</center></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
-                        else
-                            tmpString{s} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
-                        end
+                clr = cst{s,5}.visibleColor;
+                hexClr = dec2hex(round(cst{s,5}.visibleColor(:)*255),2)';
+                hexClr = ['#';hexClr(:)]';
+
+                % html is not supported in octave
+                if this.isInUifigure()
+                    % calculate text color
+                    intensity = clr * [0.299 0.587 0.114]';
+                    if intensity > 186/255
+                        txtClr = [0 0 0];
+                    else
+                        txtClr = [1 1 1];
+                    end
+
+                    if handles.VOIPlotFlag(s)
+                        tmpString{s} = ['☑ ' cst{s,2}];
+                        tmpStyles{s} = uistyle('BackgroundColor',clr,'FontColor',txtClr);
+                    else
+                        tmpString{s} = ['☐ ' cst{s,2}];
+                    end
+                else
+                    switch matRad_cfg.env
+                        case 'OCTAVE'
+                            if handles.VOIPlotFlag(s)
+                                tmpString{s} = ['☑ ' cst{s,2}];
+                            else
+                                tmpString{s} = ['☐ ' cst{s,2}];
+                            end
+                        otherwise
+                            if handles.VOIPlotFlag(s)
+                                tmpString{s} = ['<html><table border=0 ><TR><TD bgcolor=',hexClr,' width="18"><center>&#10004;</center></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
+                            else
+                                tmpString{s} = ['<html><table border=0 ><TR><TD bgcolor=',hexClr,' width="18"></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
+                            end
+                    end
                 end
-                
-                
             end
-            set(handles.legendTable,'String',tmpString);
+            if this.isInUifigure
+                handles.legendTable.Items = tmpString;
+                for s = 1:numel(tmpStyles)
+                    addStyle(handles.legendTable,tmpStyles{s},'Item',s);
+                end
+            else
+                set(handles.legendTable,'String',tmpString);
+            end
             this.handles = handles;
         end
     end
