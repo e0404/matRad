@@ -57,6 +57,8 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
                     'FontSize',matRad_cfg.gui.fontSize,...
                     'FontWeight',matRad_cfg.gui.fontWeight,...
                     'FontName',matRad_cfg.gui.fontName,...
+                    'ClickedFcn', @(hObject,eventdata) legendTable_Callback(this,hObject,eventdata),...
+                    'Items',{'no data loaded'},...
                     'Tag','legendTable');
             else
                 h87 = uicontrol(...
@@ -67,6 +69,7 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
                     'Max',1,...
                     'Style','listbox',...
                     'Value',1,...
+                    'String','no data loaded',...
                     'Position',[0.02 0.01 0.97 0.98],...
                     'BackgroundColor',matRad_cfg.gui.elementColor,...
                     'ForegroundColor',matRad_cfg.gui.textColor,...
@@ -105,44 +108,29 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             % Hints: contents = cellstr(get(hObject,'String')) returns legendTable contents as cell array
             %        contents{get(hObject,'Value')} returns selected item from legendTable
             
-            if strcmp(get(hObject,'String'),'no data loaded')
+            if this.isInUifigure
+                content = hObject.Items;
+                idx = event.InteractionInformation.Item;
+            else
+                content = get(hObject,'String');
+                idx = get(hObject,'Value');
+            end
+            if numel(content) == 1 && strcmp(content,'no data loaded')
                 return;
             end
             
             handles = this.handles;
             cst = evalin('base','cst');
             
-            idx    = get(hObject,'Value');
-            clr    = dec2hex(round(cst{idx,5}.visibleColor(:)*255),2)';
-            clr    = ['#';clr(:)]';
-            
-            %Get the string entries
-            tmpString = get(handles.legendTable,'String');
-            
-            matRad_cfg = MatRad_Config.instance();
-            
-            % html not supported in octave       
             if handles.VOIPlotFlag(idx)
                 handles.VOIPlotFlag(idx) = false;
                 cst{idx,5}.Visible = false;
-                switch matRad_cfg.env
-                    case 'OCTAVE'
-                        tmpString{idx} = ['☐ ' cst{idx,2}];
-                    otherwise
-                        tmpString{idx} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"></TD><TD>',cst{idx,2},'</TD></TR> </table></html>'];
-                end
-            elseif ~handles.VOIPlotFlag(idx)
+            else
                 handles.VOIPlotFlag(idx) = true;
                 cst{idx,5}.Visible = true;
-                switch matRad_cfg.env
-                    case 'OCTAVE'
-                        tmpString{idx} = ['☑ ' cst{idx,2}];
-                    otherwise
-                        tmpString{idx} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"><center>&#10004;</center></TD><TD>',cst{idx,2},'</TD></TR> </table></html>'];
-                end
             end
-           
-            set(handles.legendTable,'String',tmpString);
+              
+            this.updateStructureTable(cst);
             
             % update cst in workspace accordingly
             assignin('base','cst',cst)
@@ -186,42 +174,7 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             for s = 1:size(cst,1)
                 handles.VOIPlotFlag(s) = cst{s,5}.Visible;
                 
-                clr = cst{s,5}.visibleColor;
-                hexClr = dec2hex(round(cst{s,5}.visibleColor(:)*255),2)';
-                hexClr = ['#';hexClr(:)]';
-
-                % html is not supported in octave
-                if this.isInUifigure()
-                    % calculate text color
-                    intensity = clr * [0.299 0.587 0.114]';
-                    if intensity > 186/255
-                        txtClr = [0 0 0];
-                    else
-                        txtClr = [1 1 1];
-                    end
-
-                    if handles.VOIPlotFlag(s)
-                        tmpString{s} = ['☑ ' cst{s,2}];
-                        tmpStyles{s} = uistyle('BackgroundColor',clr,'FontColor',txtClr);
-                    else
-                        tmpString{s} = ['☐ ' cst{s,2}];
-                    end
-                else
-                    switch matRad_cfg.env
-                        case 'OCTAVE'
-                            if handles.VOIPlotFlag(s)
-                                tmpString{s} = ['☑ ' cst{s,2}];
-                            else
-                                tmpString{s} = ['☐ ' cst{s,2}];
-                            end
-                        otherwise
-                            if handles.VOIPlotFlag(s)
-                                tmpString{s} = ['<html><table border=0 ><TR><TD bgcolor=',hexClr,' width="18"><center>&#10004;</center></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
-                            else
-                                tmpString{s} = ['<html><table border=0 ><TR><TD bgcolor=',hexClr,' width="18"></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
-                            end
-                    end
-                end
+                [tmpString{s},tmpStyles{s}] = this.getListEntry(cst(s,:));
             end
             if this.isInUifigure
                 handles.legendTable.Items = tmpString;
@@ -232,6 +185,44 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
                 set(handles.legendTable,'String',tmpString);
             end
             this.handles = handles;
+        end
+
+        function [item,style] = getListEntry(this,cstElement)
+            clr = cstElement{1,5}.visibleColor;
+
+            if cstElement{1,5}.Visible
+                checkbox = '☑ ';
+            else
+                checkbox = '☐ ';
+            end
+
+            % html is not supported in octave
+            if this.isInUifigure()
+                % calculate text color
+                intensity = clr * [0.299 0.587 0.114]';
+                if intensity > 150/255 %186/255 %https://stackoverflow.com/questions/3942878/how-to-decide-font-color-in-white-or-black-depending-on-background-color
+                    txtClr = [0 0 0];
+                else
+                    txtClr = [1 1 1];
+                end
+
+                item = [checkbox cstElement{1,2}];
+                style = uistyle('BackgroundColor',clr,'FontColor',txtClr);
+            else
+                switch matRad_cfg.env
+                    case 'OCTAVE'
+                        item = [checkbox cstElement{1,2}];
+                    otherwise
+                        hexClr = dec2hex(round(cstElement{1,5}.visibleColor(:)*255),2)';
+                        hexClr = ['#';hexClr(:)]';
+                        if cstElement{1,5}.Visible
+                            item = ['<html><table border=0 ><TR><TD bgcolor=',hexClr,' width="18"><center>&#10004;</center></TD><TD>',cstElement{1,2},'</TD></TR> </table></html>'];
+                        else
+                            item = ['<html><table border=0 ><TR><TD bgcolor=',hexClr,' width="18"></TD><TD>',cstElement{1,2},'</TD></TR> </table></html>'];
+                        end
+                end
+                style = [];
+            end
         end
     end
 end
