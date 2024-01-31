@@ -169,8 +169,6 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
                 end
             end
             
-            matRad_cfg = MatRad_Config.instance();
-            
             for s = 1:size(cst,1)
                 handles.VOIPlotFlag(s) = cst{s,5}.Visible;
                 
@@ -209,6 +207,7 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
                 item = [checkbox cstElement{1,2}];
                 style = uistyle('BackgroundColor',clr,'FontColor',txtClr);
             else
+                matRad_cfg = MatRad_Config.instance();
                 switch matRad_cfg.env
                     case 'OCTAVE'
                         item = [checkbox cstElement{1,2}];
