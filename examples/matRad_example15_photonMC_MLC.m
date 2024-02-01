@@ -88,7 +88,7 @@ figure,
 imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet)
 
 %% Dose Calculation
-pln.propMC.numHistories = 1e9;
+pln.propMC.numHistories = 1e8;
 resultGUI_MC = matRad_calcPhotonDoseMC(ct,stf,pln,cst,1);
 
 %% readout
