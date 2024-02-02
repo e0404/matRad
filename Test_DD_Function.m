@@ -1,7 +1,8 @@
 matRad_rc
+clear
 load("NEW-BOXPHANTOM-Overlap.mat")
 
-cst{1,6}{2} = struct(DirtyDoseObjectives.matRad_SquaredOverdosingDirtyDose(100,30));
+cst{3,6}{2} = struct(DirtyDoseObjectives.matRad_SquaredOverdosingDirtyDose(100,30));
 cst{2,6}{1} = struct(DoseObjectives.matRad_SquaredUnderdosing(800,60));
 
 pln.radiationMode   = 'protons';           % either photons / protons / helium / carbon
@@ -67,7 +68,7 @@ save("varRBE2_DD.mat","cst_O_DD","dij_O_DD","pln_O_DD","result_O_DD","stf_O_DD",
 clear
 load("NEW-BOXPHANTOM-Overlap.mat")
 
-cst{1,6}{2} = struct(mLETDoseObjectives.matRad_SquaredOverdosingmLETDose(100,120));
+cst{3,6}{2} = struct(mLETDoseObjectives.matRad_SquaredOverdosingmLETDose(100,120));
 cst{2,6}{1} = struct(DoseObjectives.matRad_SquaredUnderdosing(800,60));
 
 pln.radiationMode   = 'protons';           % either photons / protons / helium / carbon
