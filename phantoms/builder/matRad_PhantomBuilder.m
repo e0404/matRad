@@ -124,7 +124,7 @@ classdef matRad_PhantomBuilder < handle
             
             for i = 1:size(obj.cst,1)                    
                 vIxVOI = obj.cst{end-i+1,4}{1};
-                obj.ct.cubeHU{1}(vIxVOI) = 0; % assign HU 
+                obj.ct.cubeHU{1}(vIxVOI) = obj.volumes{1,end-i+1}.HU; % assign HU
             end
             
             ct  = obj.ct;
