@@ -57,9 +57,6 @@ classdef MatRad_Config < handle
         matRadRoot; %Path to matRadRoot
     end
 
-    properties (SetAccess = private)
-        
-    end
     methods (Access = private)
         function obj = MatRad_Config()
             %MatRad_Config Constructs an instance of this class.
