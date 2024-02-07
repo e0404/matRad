@@ -198,7 +198,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                 eraseCtDensMask = ones(prod(ct.cubeDim),1);
                 eraseCtDensMask(this.VctGrid) = 0;
                 for i = 1:ct.numOfCtScen
-                    ct.cube{i}(eraseCtDensMask == 1) = 0;
+                    this.cubeWED{i}(eraseCtDensMask == 1) = 0;
                 end
             end
 
