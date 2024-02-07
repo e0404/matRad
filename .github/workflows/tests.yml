@@ -3,25 +3,41 @@ name: Tests
 # Controls when the action will run. 
 on: [push, pull_request, workflow_dispatch]  
 jobs:
-  test-matlab: #Matlab test Job
+  test-matlab-stable: #Matlab test Job for supported Release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3 # Checks-out repository under $GITHUB_WORKSPACE
       # Install MATLAB
       - name: Install MATLAB
-        uses: matlab-actions/setup-matlab@v1        
+        uses: matlab-actions/setup-matlab@v1
+        with:
+          release: R2022b
       # Runs test command
       - name: Run Tests
         uses: matlab-actions/run-command@v1
         with:
           command: cd unitTest; matRad_runTests
-  test-octave: #Octave test Job
+  test-matlab-latest: #Matlab test Job for latest Matlab release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3 # Checks-out repository under $GITHUB_WORKSPACE
+      # Install MATLAB
+      - name: Install MATLAB
+        uses: matlab-actions/setup-matlab@v1
+        with:
+          release: latest
+      # Runs test command
+      - name: Run Tests
+        uses: matlab-actions/run-command@v1
+        with:
+          command: cd unitTest; matRad_runTests
+  test-octave-6: #Octave test Job
     runs-on: ubuntu-22.04 # We use Ubuntu-22.04 because it has Octave 6.4
     steps:
       - uses: actions/checkout@v3 # Checks-out repository under $GITHUB_WORKSPACE
       - name: Install OCTAVE
-        run: |
-          sudo apt-get update
+        run: | 
+          sudo apt update
           sudo apt-get install -y gdb gfortran fonts-freefont-otf gnuplot-x11 libgdcm-dev octave liboctave-dev
       - name: Prepare Test Environment
         run: |

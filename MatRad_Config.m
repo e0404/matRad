@@ -54,11 +54,7 @@ classdef MatRad_Config < handle
 
         matRadRoot; %Path to matRadRoot
     end
-    
-    properties (SetAccess = private)
         
-    end
-    
     methods (Access = private)
         function obj = MatRad_Config()
             %MatRad_Config Constructs an instance of this class.
@@ -66,6 +62,7 @@ classdef MatRad_Config < handle
             %  Therefore its constructor is private
             %  For instantiation, use the static MatRad_Config.instance();
             
+            %Set Path
             obj.matRadRoot = fileparts(mfilename('fullpath'));
             addpath(genpath(obj.matRadRoot));
 
