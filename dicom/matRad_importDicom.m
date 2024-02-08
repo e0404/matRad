@@ -34,8 +34,7 @@ function [ct,cst,pln,stf,resultGUI] = matRad_importDicom( files, dicomMetaBool )
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%[env, ~] = matRad_getEnvironment();
+matRad_cfg = MatRad_Config.instance();
     
 %%
 if ~exist('dicomMetaBool','var')
@@ -54,7 +53,7 @@ resolution.y = files.resy;
 resolution.z = files.resz; % [mm] / lps coordinate system
 if files.useDoseGrid && isfield(files,'rtdose')
     % get grid from dose cube
-    if verLessThan('matlab','9')
+    if matRad_cfg.isOctave || verLessThan('matlab','9')
         doseInfo = dicominfo(files.rtdose{1,1});
     else
         doseInfo = dicominfo(files.rtdose{1,1},'UseDictionaryVR',true);
@@ -83,6 +82,22 @@ if ~isempty(files.rtss)
     h = waitbar(0,'Please wait...');
     %h.WindowStyle = 'Modal';
     steps = numel(structures);
+
+
+    % The x- & y-direction in lps-coordinates are specified in:
+    % ImageOrientationPatient
+
+xDir = ct.dicomInfo.ImageOrientationPatient(1:3); % lps: [1;0;0]
+yDir = ct.dicomInfo.ImageOrientationPatient(4:6); % lps: [0;1;0]
+
+
+if ~(xDir(1) == 1 && xDir(2) == 0 && xDir(3) == 0)
+     matRad_cfg.dispInfo('\nNonstandard image orientation: tring to Mirror RTSS x-direction...')
+end
+
+if ~(yDir(1) == 0 && yDir(2) == 1 && yDir(3) == 0)
+    matRad_cfg.dispInfo('\nNonstandard image orientation: trying to Mirror RTSS y direction...')
+end
     for i = 1:numel(structures)
         % computations take place here
         waitbar(i / steps)
@@ -141,10 +156,8 @@ if isfield(files,'rtdose')
     if ~(cellfun(@isempty,files.rtdose(1,1:2))) 
         fprintf('loading Dose files \n', structures(i).structName);
         % parse plan in order to scale dose cubes to a fraction based dose
-        if exist('pln','var')
-            if isfield(pln,'numOfFractions')
-                resultGUI = matRad_importDicomRTDose(ct, files.rtdose, pln);
-            end
+        if exist('pln','var') && ~isempty(pln) && isfield(pln,'numOfFractions')
+            resultGUI = matRad_importDicomRTDose(ct, files.rtdose, pln);
         else
             resultGUI = matRad_importDicomRTDose(ct, files.rtdose);
         end
@@ -162,4 +175,37 @@ if ~isempty(stf) && ~isempty(resultGUI)
     for i = 1:size(stf,2)
         resultGUI.w = [resultGUI.w; [stf(i).ray.weight]'];
     end
+end
+
+
+
+%% save ct, cst, pln, dose
+matRadFileName = [files.ct{1,3} '.mat']; % use default from dicom
+[FileName,PathName] = uiputfile('*','Save as...',matRadFileName);
+if ischar(FileName)
+    % delete unnecessary variables
+    if matRad_cfg.isMatlab
+        varNames=who;
+        for var=1:length(varNames)
+            cleanVar=eval([varNames{var}]);
+            if isempty(cleanVar)
+                eval(['clear ' varNames{var} ';'])
+            end
+        end
+        clearvars -except ct cst pln stf resultGUI FileName PathName;
+        save([PathName, FileName], '-regexp', '^(?!(FileName|PathName)$).','-v7');
+    elseif matRad_cfg.isOctave
+        varNames=who;
+        for var=1:length(varNames)
+            cleanVar=eval([varNames{var}]);
+            if isempty(cleanVar)
+                eval(['clear ' varNames{var} ';'])
+            end
+        end
+        clear -x ct cst pln stf resultGUI FileName PathName;
+        save([PathName, FileName],'-v6');
+    else
+    end
+    % save all except FileName and PathName
+    
 end
