@@ -75,22 +75,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
         
         function this = initialize(this)            
         end
-        
-        function this = update(this)
-
-            try
-                %                 minVal=num2str(this.viewingWidgetHandle.dispWindow{selectionIndex,2}(1,1));
-                %                 maxVal=num2str(this.viewingWidgetHandle.dispWindow{selectionIndex,2}(1,2));
-                if isa(this.viewingWidgetHandle,'matRad_ViewingWidget') %...
-                    %                         && (~strcmp(get(this.handles.txtMinVal,'String'),minVal) ...
-                    %                         || ~strcmp(get(this.handles.txtMaxVal,'String'),maxVal))  %% new data is loaded
-                    this.getFromViewingWidget();
-                end
-            catch
-            end
-            this.UpdateColormapOptions();
-        end
-        
+                
         %         function viewingWidgetHandle=get.viewingWidgetHandle(this)
         %             viewingWidgetHandle=this.viewingWidgetHandle;
         %         end
@@ -490,6 +475,20 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             
             this.createHandles();
         end
+
+        function this = doUpdate(this,~)
+            try
+                %                 minVal=num2str(this.viewingWidgetHandle.dispWindow{selectionIndex,2}(1,1));
+                %                 maxVal=num2str(this.viewingWidgetHandle.dispWindow{selectionIndex,2}(1,2));
+                if isa(this.viewingWidgetHandle,'matRad_ViewingWidget') %...
+                    %                         && (~strcmp(get(this.handles.txtMinVal,'String'),minVal) ...
+                    %                         || ~strcmp(get(this.handles.txtMaxVal,'String'),maxVal))  %% new data is loaded
+                    this.getFromViewingWidget();
+                end
+            catch
+            end
+            this.UpdateColormapOptions();
+        end
         
     end
     
@@ -749,7 +748,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
                     %handles.IsoDose.NewIsoDoseFlag = true;
                 end
             catch
-                warning('Couldnt parse iso dose levels - using default values');
+                this.showWarning('Couldnt parse iso dose levels - using default values');
                 this.viewingWidgetHandle.IsoDose_Levels = 0;
             end
             this.handles = handles;

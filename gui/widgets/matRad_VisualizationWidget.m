@@ -71,32 +71,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
         function this = initialize(this)
             
         end
-        
-        
-        
-        function this = update(this)
-            if isa(this.viewingWidgetHandle,'matRad_ViewingWidget')                
-                % get the default values from the viewer widget
-                this.getFromViewingWidget();
-            else
-                handles = this.handles;
-                % disable all buttons
-                set(handles.popupDisplayOption,'Enable','off');
-                set(handles.popupProfileType,'Enable','off');
-                set(handles.popupTypeOfPlot,'Enable','off');
-                set(handles.popupPlane,'Enable','off');
-                set(handles.radiobtnCT,'Enable','off');
-                set(handles.radiobtnContour,'Enable','off');
-                set(handles.radiobtnDose,'Enable','off');
-                set(handles.radiobtnIsoDoseLines,'Enable','off');
-                set(handles.sliderSlice,'Enable','off');
-                set(handles.radiobtnIsoDoseLinesLabels,'Enable','off');
-                set(handles.radioBtnIsoCenter,'Enable','off');
-                set(handles.radiobtnPlan,'Enable','off');
-                this.handles = handles;
-            end
-        end
-                
+                         
 %         function viewingWidgetHandle=get.viewingWidgetHandle(this)
 %             viewingWidgetHandle=this.viewingWidgetHandle;
 %         end
@@ -557,6 +532,29 @@ classdef matRad_VisualizationWidget < matRad_Widget
             
             
             this.createHandles();
+        end
+
+        function this = doUpdate(this,~)
+            if isa(this.viewingWidgetHandle,'matRad_ViewingWidget')                
+                % get the default values from the viewer widget
+                this.getFromViewingWidget();
+            else
+                handles = this.handles;
+                % disable all buttons
+                set(handles.popupDisplayOption,'Enable','off');
+                set(handles.popupProfileType,'Enable','off');
+                set(handles.popupTypeOfPlot,'Enable','off');
+                set(handles.popupPlane,'Enable','off');
+                set(handles.radiobtnCT,'Enable','off');
+                set(handles.radiobtnContour,'Enable','off');
+                set(handles.radiobtnDose,'Enable','off');
+                set(handles.radiobtnIsoDoseLines,'Enable','off');
+                set(handles.sliderSlice,'Enable','off');
+                set(handles.radiobtnIsoDoseLinesLabels,'Enable','off');
+                set(handles.radioBtnIsoCenter,'Enable','off');
+                set(handles.radiobtnPlan,'Enable','off');
+                this.handles = handles;
+            end
         end
     end
     
