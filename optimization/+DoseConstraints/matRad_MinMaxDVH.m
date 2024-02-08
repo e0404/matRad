@@ -29,6 +29,7 @@
         voxelScalingRatio = 1;
         referenceScalingVal = 0.01;
         parameters = {30,0,100};
+        numOfFractions = NaN;
     end
     
     methods

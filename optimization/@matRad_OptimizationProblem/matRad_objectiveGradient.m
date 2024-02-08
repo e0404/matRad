@@ -58,13 +58,20 @@ for  i = 1:size(cst,1)
             if isa(objective,'DoseObjectives.matRad_DoseObjective')
                 % if we have effect optimization, temporarily replace doses with effect
                 if (~isequal(objective.name, 'Mean Dose') && ~isequal(objective.name, 'EUD')) &&...
-                    (isa(optiProb.BP,'matRad_EffectProjection') && ~isa(optiProb.BP,'matRad_VariableRBEProjection')) 
+                    (isa(optiProb.BP,'matRad_EffectProjection') && ~isa(optiProb.BP,'matRad_VariableRBEProjection')...
+                     && ~isa(optiProb.BP, 'matRad_BEDProjection')) 
                     
                     doses = objective.getDoseParameters();
-                
                     effect = cst{i,5}.alphaX*doses + cst{i,5}.betaX*doses.^2;
-                    
                     objective = objective.setDoseParameters(effect);
+                end
+                
+                 % if we have BED optimization, temporarily replace doses with BED
+                if isa(optiProb.BP, 'matRad_BEDProjection')
+                    doses = objective.getDoseParameters();
+                    abr = cst{i,5}.alphaX ./ cst{i,5}.betaX;
+                    BED = optiProb.BP.numOfFractions.*doses.*(1+doses./abr);
+                    objective = objective.setDoseParameters(BED);
                 end
                 
                 %dose in VOI

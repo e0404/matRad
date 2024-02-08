@@ -27,6 +27,7 @@ classdef matRad_MaxDVH < DoseObjectives.matRad_DoseObjective
     properties
         parameters = {30,95};
         penalty = 1;
+        numOfFractions = NaN;
     end
     
     methods 

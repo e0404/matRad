@@ -24,6 +24,7 @@ classdef matRad_BackProjection
     
     properties 
         dij          %reference to matRad dij struct (to enable local changes)
+        numOfFractions = NaN;
     end
 
     

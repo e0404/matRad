@@ -27,6 +27,7 @@ classdef matRad_EUD < DoseObjectives.matRad_DoseObjective
     properties
         parameters = {0, 3.5};
         penalty = 1;
+        numOfFractions = NaN;
     end
     
     methods

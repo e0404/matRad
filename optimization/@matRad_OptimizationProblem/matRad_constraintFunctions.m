@@ -61,7 +61,8 @@ for  i = 1:size(cst,1)
                 if (~isequal(obj.name, 'max dose constraint')      && ~isequal(obj.name, 'min dose constraint')      &&...
                     ~isequal(obj.name, 'max mean dose constraint') && ~isequal(obj.name, 'min mean dose constraint') && ...
                     ~isequal(obj.name, 'min EUD constraint')       && ~isequal(obj.name, 'max EUD constraint'))     && ...
-                    (isa(optiProb.BP,'matRad_EffectProjection') && ~isa(optiProb.BP,'matRad_VariableRBEProjection'))
+                    (isa(optiProb.BP,'matRad_EffectProjection') && ~isa(optiProb.BP,'matRad_VariableRBEProjection')...
+                     && ~isa(optiProb.BP, 'matRad_BEDProjection')) 
                     
                     doses = obj.getDoseParameters();
                     
@@ -69,6 +70,18 @@ for  i = 1:size(cst,1)
                     
                     obj = obj.setDoseParameters(effect);
                 end
+                
+                % if we have BED optimization, temporarily replace doses with BED
+                % Maybe we should put some switch into the classes for that
+                if (~isequal(obj.name, 'min EUD constraint')       && ~isequal(obj.name, 'max EUD constraint'))&& ...
+                    (isa(optiProb.BP,'matRad_BEDProjection'))
+                    
+                    doses = obj.getDoseParameters();
+                    abr = cst{i,5}.alphaX ./ cst{i,5}.betaX;
+                    BED = optiProb.BP.numOfFractions.*doses.*(1+doses./abr);
+                    obj = obj.setDoseParameters(BED);
+                end
+
 
                 % if conventional opt: just add constraints of nominal dose
                 %if strcmp(cst{i,6}(j).robustness,'none')

@@ -27,6 +27,7 @@ classdef matRad_MinMaxMeanDose < DoseConstraints.matRad_DoseConstraint
     
     properties
         parameters = {0,30};
+        numOfFractions = NaN;
     end
     
     methods

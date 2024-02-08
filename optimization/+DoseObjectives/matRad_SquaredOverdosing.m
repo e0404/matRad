@@ -27,6 +27,7 @@ classdef matRad_SquaredOverdosing < DoseObjectives.matRad_DoseObjective
     properties
         parameters = {30};
         penalty = 1;
+        numOfFractions = NaN;
     end
     
     methods
