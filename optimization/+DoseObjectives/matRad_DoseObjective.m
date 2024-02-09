@@ -28,6 +28,10 @@ classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
             rob = {'none','STOCH','PROB','VWWC','VWWC_INV','COWC','OWC'}; %By default, no robustness is available
         end 
     end
+
+    methods (Static,Abstract)
+        adaptGoalToFraction
+    end
     
     %These should be abstract methods, however Octave can't parse them. As soon
     %as Octave is able to do this, they should be made abstract again

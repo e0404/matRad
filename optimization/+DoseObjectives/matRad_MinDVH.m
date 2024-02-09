@@ -95,5 +95,12 @@ classdef matRad_MinDVH < DoseObjectives.matRad_DoseObjective
             fDoseGrad = (2/numel(dose))*deviation;
         end
     end
+
+    methods (Static)
+        function newGoalValue = adaptGoalToFraction(goalValue,numOfFractions)
+            newGoalValue = goalValue/numOfFractions;
+        end
+        
+    end
     
 end

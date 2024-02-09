@@ -1,6 +1,5 @@
 function [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
 % matRad IPOPT get constraint bounds wrapper function
-% 
 % call
 %   [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
 %
@@ -8,7 +7,8 @@ function [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
 %   cst:            matRad cst struct
 %
 % output
-%   cl: lower bounds on constraints
+%   cl: lower bounds on constfunction [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
+% matRad IPOPT get constraint bounds wrapper functioraints
 %   cu: lower bounds on constraints
 %
 % References
@@ -28,61 +28,20 @@ function [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-BPtype = class(optiProb.BP);
-isEffectBP = strcmp(BPtype,'matRad_EffectProjection');
-
 % Initialize bounds
 cl = [];
 cu = [];
 
 % compute objective function for every VOI.
-for  i = 1:size(cst,1)
 
-    % Only take OAR or target VOI.
-    if ~any(cellfun(@isempty,cst{i,4})) && ( isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') )
+for i = 1:size(optiProb.constrIdx,1)	
+    obj = optiProb.constraints{i};
+    curConIdx = optiProb.constrIdx(i,1);
 
-        % loop over the number of constraints for the current VOI
-        for j = 1:numel(cst{i,6})
-            
-            optiFunc = cst{i,6}{j};
-            
-            % only perform computations for constraints
-%{
-            if ~isempty(strfind(cst{i,6}(j).type,'constraint'))
+    cl = [cl;obj.lowerBounds(numel(cst{curConIdx,4}{1}))];
+    cu = [cu;obj.upperBounds(numel(cst{curConIdx,4}{1}))];
+        
+end
 
-                if isequal(options.quantityOpt,'effect')
-                    param = cst{i,5}.alphaX .* cst{i,6}(j).dose + cst{i,5}.betaX .* cst{i,6}(j).dose.^2; 
-                else 
-                    param = cst{i,6}(j).dose;
-                end
-
-                if strcmp(cst{i,6}(j).robustness,'none') || strcmp(cst{i,6}(j).robustness,'probabilistic') || strcmp(cst{i,6}(j).robustness,'VWWC') ||...
-                   strcmp(cst{i,6}(j).robustness,'COWC') || strcmp(cst{i,6}(j).robustness,'VWWC_CONF')|| strcmp(cst{i,6}(j).robustness,'OWC')
-
-
-                    [clTmp,cuTmp] = matRad_getConstBounds(cst{i,6}(j),param);
-%}
-            %if ~isempty(strfind(cst{i,6}{j}.type,'constraint'))
-            if isa(optiFunc,'DoseConstraints.matRad_DoseConstraint')
-                
-                if isEffectBP
-                   
-                    doses  = optiFunc.getDoseParameters();
-                    effect = cst{i,5}.alphaX*doses + cst{i,5}.betaX*doses.^2;
-                    
-                    optiFunc = optiFunc.setDoseParameters(effect);
-                end
-                   
-                 cl = [cl;optiFunc.lowerBounds(numel(cst{i,4}{1}))];
-                 cu = [cu;optiFunc.upperBounds(numel(cst{i,4}{1}))];
-                    
-                %end
-            end
-
-        end % over all objectives of structure
-
-    end % if structure not empty and target or oar
-
-end % over all structures
-   
+    
 

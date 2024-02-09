@@ -32,7 +32,6 @@ function jacob = matRad_constraintJacobian(optiProb,w,dij,cst)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % get current dose / effect / RBExDose vector
 %d = matRad_backProjection(w,dij,optiProb);
 %d = optiProb.matRad_backProjection(w,dij);
@@ -44,6 +43,7 @@ jacob = sparse([]);
 
 % initialize projection matrices and id containers
 DoseProjection{1}          = sparse([]);
+%DoseProjection{1}          = [];
 mAlphaDoseProjection{1}    = sparse([]);
 mSqrtBetaDoseProjection{1} = sparse([]);
 voxelID                     = [];
@@ -59,154 +59,138 @@ fullScen      = cell(ndims(d),1);
 contourScen   = fullScen{1};
 
 % compute objective function for every VOI.
-for i = 1:size(cst,1)
+for i = 1:size(optiProb.constrIdx,1)
    
-   % Only take OAR or target VOI.
-   if ~isempty(cst{i,4}{1}) && ( isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') )
-      
-      % loop over the number of constraints for the current VOI
-      for j = 1:numel(cst{i,6})
+      constraint = optiProb.constraints{i}; %Get the Optimization Object
+      curConIdx = optiProb.constrIdx(i,1);
+      robustness = constraint.robustness;
+      switch robustness
          
-         constraint = cst{i,6}{j}; %Get the Optimization Object
-         
-         % only perform computations for constraints
-         if isa(constraint,'DoseConstraints.matRad_DoseConstraint')
-            
-            % retrieve the robustness type
-            robustness = constraint.robustness;
-            
-            % rescale dose parameters to biological optimization quantity if required
-            constraint = optiProb.BP.setBiologicalDosePrescriptions(constraint,cst{i,5}.alphaX,cst{i,5}.betaX);
-            
-            switch robustness
-               
-               case 'none' % if conventional opt: just sum objectiveectives of nominal dose
-                     d_i = d{1}(cst{i,4}{1});
-                     jacobSub = constraint.computeDoseConstraintJacobian(d_i);
-                  
-               case 'PROB' % if prob opt: sum up expectation value of objectives
-                  
-                  d_i = dExp{1}(cst{i,4}{1});
+         case 'none' % if conventional opt: just sum objectiveectives of nominal dose
+                  d_i = d{1}(cst{curConIdx,4}{1});
                   jacobSub = constraint.computeDoseConstraintJacobian(d_i);
                   
-               case 'VWWC'  % voxel-wise worst case - takes minimum dose in TARGET and maximum in OAR
-                  contourIx = unique(contourScen);
-                  if ~isscalar(contourIx)
-                     % voxels need to be tracked through the 4D CT,
-                     % not yet implemented
-                     matRad_cfg.dispError('4D VWWC optimization is currently not supported');
-                  end
-                  
-                  % prepare min/max dose vector
-                  if ~exist('d_tmp','var')
-                     d_tmp = [d{useScen}];
-                  end
-                  
-                  d_Scen = d_tmp(cst{i,4}{contourIx},:);
-                  
-                  d_max = max(d_Scen,[],2);
-                  d_min = min(d_Scen,[],2);
-                  
-                  if isequal(cst{i,3},'OAR')
-                     d_i = d_max;
-                  elseif isequal(cst{i,3},'TARGET')
-                     d_i = d_min;
-                  end
-                  jacobSub = constraint.computeDoseConstraintJacobian(d_i);
-                  
-               case 'VWWC_INV'  %inverse voxel-wise conformitiy - takes maximum dose in TARGET and minimum in OAR
-                  contourIx = unique(contourScen);
-                  if ~isscalar(contourIx)
-                     % voxels need to be tracked through the 4D CT,
-                     % not yet implemented
-                     matRad_cfg.dispError('4D inverted VWWC optimization is currently not supported');
-                  end
-                  
-                  % prepare min/max dose vector
-                  if ~exist('d_tmp','var')
-                     d_tmp = [d{useScen}];
-                  end
-                  
-                  d_Scen = d_tmp(cst{i,4}{contourIx},:);
-                  
-                  d_max = max(d_Scen,[],2);
-                  d_min = min(d_Scen,[],2);
-                  
-                  if isequal(cst{i,3},'OAR')
-                     d_i = d_min;
-                  elseif isequal(cst{i,3},'TARGET')
-                     d_i = d_max;
-                  end
-                  jacobSub = constraint.computeDoseConstraintJacobian(d_i);
-                  
-               otherwise
-                  matRad_cfg.dispError('Robustness setting %s not yet supported!',constraint.robustness);
+         case 'PROB' % if prob opt: sum up expectation value of objectives
+            
+            d_i = dExp{1}(cst{curConIdx,4}{1});
+            jacobSub = constraint.computeDoseConstraintJacobian(d_i);
+            
+         case 'VWWC'  % voxel-wise worst case - takes minimum dose in TARGET and maximum in OAR
+            contourIx = unique(contourScen);
+            if ~isscalar(contourIx)
+                  % voxels need to be tracked through the 4D CT,
+                  % not yet implemented
+                  matRad_cfg.dispError('4D VWWC optimization is currently not supported');
             end
             
-            nConst = size(jacobSub,2);
-            
-            %Iterate through columns of the sub-jacobian
-            if isa(optiProb.BP,'matRad_DoseProjection') && ~isempty(jacobSub) || isa(optiProb.BP,'matRad_ConstantRBEProjection')
-               
-               startIx = size(DoseProjection{1},2) + 1;
-               %First append the Projection matrix with sparse zeros
-               DoseProjection{1}          = [DoseProjection{1},sparse(dij.doseGrid.numOfVoxels,nConst)];
-               
-               %Now directly write the jacobian in there
-               DoseProjection{1}(cst{i,4}{1},startIx:end) = jacobSub;
-               
-            elseif isa(optiProb.BP,'matRad_EffectProjection') && ~isempty(jacobSub)
-               
-               if isa(optiProb.BP,'matRad_VariableRBEProjection')
-                  scaledEffect = (dij.gamma(cst{i,4}{1}) + d_i);
-                  jacobSub     = jacobSub./(2*dij.bx(cst{i,4}{1}) .* scaledEffect);
-               end
-               
-               startIx = size(mAlphaDoseProjection{1},2) + 1;
-               
-               %First append the alphaDose matrix with sparse
-               %zeros then insert
-               mAlphaDoseProjection{1}    = [mAlphaDoseProjection{1},sparse(dij.doseGrid.numOfVoxels,nConst)];
-               mAlphaDoseProjection{1}(cst{i,4}{1},startIx:end) = jacobSub;
-               
-               %The betadose has a different structure due to the
-               %quadratic transformation, but in principle the
-               %same as above
-               mSqrtBetaDoseProjection{1} =  [mSqrtBetaDoseProjection{1}, sparse(repmat(cst{i,4}{1},nConst,1),repmat(1:numel(cst{i,4}{1}),1,nConst),2*reshape(jacobSub',[],1),dij.doseGrid.numOfVoxels,nConst*numel(cst{i,4}{1}))];
-               
-               if isempty(constraintID)
-                  newID = 1;
-               else
-                  newID = constraintID(end)+1;
-               end
-               
-               voxelID = [voxelID;repmat(cst{i,4}{1},nConst,1)];                         %Keep track of voxels for organizing the sqrt(beta)Dose projection later
-               constraintID = [constraintID, ...
-                  reshape(ones(numel(cst{i,4}{1}),1)*[newID:newID+nConst-1],[1 nConst*numel(cst{i,4}{1})])];  %Keep track of constraints for organizing the sqrt(beta)Dose projection later
+            % prepare min/max dose vector
+            if ~exist('d_tmp','var')
+                  d_tmp = [d{useScen}];
             end
             
-        
-         end
-         
+            d_Scen = d_tmp(cst{curConIdx,4}{contourIx},:);
+            
+            d_max = max(d_Scen,[],2);
+            d_min = min(d_Scen,[],2);
+            
+            if isequal(cst{curConIdx,3},'OAR')
+                  d_i = d_max;
+            elseif isequal(cst{curConIdx,3},'TARGET')
+                  d_i = d_min;
+            end
+            jacobSub = constraint.computeDoseConstraintJacobian(d_i);
+            
+         case 'VWWC_INV'  %inverse voxel-wise conformitiy - takes maximum dose in TARGET and minimum in OAR
+            contourIx = unique(contourScen);
+            if ~isscalar(contourIx)
+                  % voxels need to be tracked through the 4D CT,
+                  % not yet implemented
+                  matRad_cfg.dispError('4D inverted VWWC optimization is currently not supported');
+            end
+            
+            % prepare min/max dose vector
+            if ~exist('d_tmp','var')
+                  d_tmp = [d{useScen}];
+            end
+            
+            d_Scen = d_tmp(cst{curConIdx,4}{contourIx},:);
+            
+            d_max = max(d_Scen,[],2);
+            d_min = min(d_Scen,[],2);
+            
+            if isequal(cst{curConIdx,3},'OAR')
+                  d_i = d_min;
+            elseif isequal(cst{curConIdx,3},'TARGET')
+                  d_i = d_max;
+            end
+            jacobSub = constraint.computeDoseConstraintJacobian(d_i);
+            
+         otherwise
+            matRad_cfg.dispError('Robustness setting %s not yet supported!',constraint.robustness);
       end
       
-   end
-   
+      nConst = size(jacobSub,2);
+      
+      %Iterate through columns of the sub-jacobian
+      if isa(optiProb.BP,'matRad_DoseProjection') && ~isempty(jacobSub) || isa(optiProb.BP,'matRad_ConstantRBEProjection')
+         
+         startIx = size(DoseProjection{1},2) + 1;
+         %First append the Projection matrix with sparse zeros
+         DoseProjection{1}          = [DoseProjection{1},sparse(dij.doseGrid.numOfVoxels,nConst)];
+%               DoseProjection{1}          = [DoseProjection{1},zeros(dij.doseGrid.numOfVoxels,nConst)];
+         
+         %Now directly write the jacobian in there
+         DoseProjection{1}(cst{curConIdx,4}{1},startIx:end) = jacobSub;
+         
+         
+      elseif isa(optiProb.BP,'matRad_EffectProjection') && ~isempty(jacobSub)
+         
+         if isa(optiProb.BP,'matRad_VariableRBEProjection')
+            scaledEffect = (dij.gamma(cst{curConIdx,4}{1}) + d_i);
+            jacobSub     = jacobSub./(2*dij.bx(cst{curConIdx,4}{1}) .* scaledEffect);
+         end
+         
+         startIx = size(mAlphaDoseProjection{1},2) + 1;
+         
+         %First append the alphaDose matrix with sparse
+         %zeros then insert
+         mAlphaDoseProjection{1}    = [mAlphaDoseProjection{1},sparse(dij.doseGrid.numOfVoxels,nConst)];
+         mAlphaDoseProjection{1}(cst{curConIdx,4}{1},startIx:end) = jacobSub;
+         
+         %The betadose has a different structure due to the
+         %quadratic transformation, but in principle the
+         %same as above
+         mSqrtBetaDoseProjection{1} =  [mSqrtBetaDoseProjection{1}, sparse(repmat(cst{curConIdx,4}{1},nConst,1),repmat(1:numel(cst{curConIdx,4}{1}),1,nConst),2*reshape(jacobSub',[],1),dij.doseGrid.numOfVoxels,nConst*numel(cst{curConIdx,4}{1}))];
+         
+         if isempty(constraintID)
+            newID = 1;
+         else
+            newID = constraintID(end)+1;
+         end
+         
+         voxelID = [voxelID;repmat(cst{curConIdx,4}{1},nConst,1)];                         %Keep track of voxels for organizing the sqrt(beta)Dose projection later
+         constraintID = [constraintID, ...
+            reshape(ones(numel(cst{curConIdx,4}{1}),1)*[newID:newID+nConst-1],[1 nConst*numel(cst{curConIdx,4}{1})])];  %Keep track of constraints for organizing the sqrt(beta)Dose projection later
+      end
+            
+         
 end
-
+         
+      
 
 scenario = 1;
 % enter if statement also for protons using a constant RBE
 if isa(optiProb.BP,'matRad_DoseProjection')
-   
    if ~isempty(DoseProjection{scenario})
-      jacob = DoseProjection{scenario}' * dij.physicalDose{scenario};
+      jacob = transpose(DoseProjection{scenario}) * dij.physicalDose{scenario}; %for some reason here faster than shorthand notation
+      
    end
    
 elseif isa(optiProb.BP,'matRad_ConstantRBEProjection')
    
    if ~isempty(DoseProjection{scenario})
-      jacob = DoseProjection{scenario}' * dij.RBE * dij.physicalDose{scenario};
+      %jacob = DoseProjection{scenario}' * dij.RBE * dij.physicalDose{scenario};
+      jacob = dij.RBE * (DoseProjection{scenario}' * dij.physicalDose{scenario});
    end
    
 elseif isa(optiProb.BP,'matRad_EffectProjection')
@@ -221,4 +205,3 @@ elseif isa(optiProb.BP,'matRad_EffectProjection')
       
    end
 end
-

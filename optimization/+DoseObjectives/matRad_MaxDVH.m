@@ -95,4 +95,9 @@ classdef matRad_MaxDVH < DoseObjectives.matRad_DoseObjective
         end
     end
     
+    methods (Static)
+        function newGoalValue = adaptGoalToFraction(goalValue,numOfFractions)
+            newGoalValue = goalValue;
+        end
+    end
 end

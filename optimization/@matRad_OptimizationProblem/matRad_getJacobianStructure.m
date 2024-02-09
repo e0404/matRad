@@ -19,7 +19,7 @@ function jacobStruct = matRad_getJacobianStructure(optiProb,w,dij,cst)
 % References	
 %	
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
- % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
 %	
 % Copyright 2016 the matRad development team. 	
 % 	
@@ -31,26 +31,16 @@ function jacobStruct = matRad_getJacobianStructure(optiProb,w,dij,cst)
 % LICENSE file.	
 %	
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
- % Initializes constraints	
+% Initializes constraints	
 jacobStruct = sparse([]);	
- % compute objective function for every VOI.	
-for i = 1:size(cst,1)	
-     % Only take OAR or target VOI.	
-    if ~any(cellfun(@isempty,cst{i,4})) && ( isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') )	
-         % loop over the number of constraints for the current VOI	
-        for j = 1:numel(cst{i,6})	
-            	
-            obj = cst{i,6}{j};	
-            	
-            % only perform computations for constraints	
-              if isa(obj,'DoseConstraints.matRad_DoseConstraint')	
-                	
-                % get the jacobian structure depending on dose	
-                jacobDoseStruct = obj.getDoseConstraintJacobianStructure(numel(cst{i,4}{1}));	
-                nRows = size(jacobDoseStruct,2);	
-                jacobStruct = [jacobStruct; repmat(spones(mean(dij.physicalDose{1}(cst{i,4}{1},:),1)),nRows,1)];	
-                 
-             end	
-         end	
-     end	
- end
+% compute objective function for every VOI.
+for i = 1:size(optiProb.constrIdx,1)	
+   obj = optiProb.constraints{i};
+   curConIdx = optiProb.constrIdx(i,1);
+
+   % get the jacobian structure depending on dose	
+   jacobDoseStruct = obj.getDoseConstraintJacobianStructure(numel(cst{curConIdx,4}{1}));	
+   nRows = size(jacobDoseStruct,2);	
+   jacobStruct = [jacobStruct; repmat(spones(mean(dij.physicalDose{1}(cst{curConIdx,4}{1},:))),nRows,1)];	
+      
+end
