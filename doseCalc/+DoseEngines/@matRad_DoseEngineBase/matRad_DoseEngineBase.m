@@ -163,13 +163,13 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         function resultGUI = calcDoseForward(this,ct,cst,stf,w)
             matRad_cfg = MatRad_Config.instance();
             if nargin < 5 && ~isfield([stf.ray],'weight')
-                matRad_cfg.dispEerror('No weight vector available. Please provide w or add info to stf')
+                matRad_cfg.dispError('No weight vector available. Please provide w or add info to stf')
             end
 
             % copy bixel weight vector into stf struct
             if nargin == 5
                 if sum([stf.totalNumOfBixels]) ~= numel(w)
-                    matRad_cfg.dispEerror('weighting does not match steering information');
+                    matRad_cfg.dispError('weighting does not match steering information');
                 end
                 counter = 0;
                 for i = 1:size(stf,2)
