@@ -210,8 +210,8 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
             %Matrices for LET
             if this.calcLET
-                this.LET_MHD_Output		 = calcDoseDirect;
-                this.LET_Sparse_Output	 = ~calcDoseDirect;
+                this.config.LET_MHD_Output		 = calcDoseDirect;
+                this.config.LET_Sparse_Output	 = ~calcDoseDirect;
             end
 
             for scenarioIx = 1:this.multScen.totNumScen
@@ -398,8 +398,8 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                         if this.calcLET
                             cube = this.readMhd('LET.mhd');
                             dij.mLETDose{ctScen,shiftScen,rangeShiftScen} = absCalibrationFactorMC2 * totalWeights * ...
-                                sparse(VdoseGrid,ones(numel(VdoseGrid),1), ...
-                                cube(VdoseGrid), ...
+                                sparse(this.VdoseGrid,ones(numel(this.VdoseGrid),1), ...
+                                cube(this.VdoseGrid), ...
                                 dij.doseGrid.numOfVoxels,1);
                         end
 
