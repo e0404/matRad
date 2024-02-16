@@ -60,15 +60,13 @@ if isempty(V)
 end
 
 % Transform subcripts from linear indices 
-[yCoordsV, xCoordsV, zCoordsV] = ind2sub(ct.cubeDim,V);
+[coordV(:,1), coordV(:,2), coordV(:,3)] = ind2sub(ct.cubeDim,V);
 
 % Transform to [mm]
-xCoordsV = xCoordsV * ct.resolution.x;
-yCoordsV = yCoordsV * ct.resolution.y;
-zCoordsV = zCoordsV * ct.resolution.z;
+coord = matRad_cubeToWorldCoordinates(coordV, ct);
 
 % Calculated isocenter.
-isoCenter = mean([xCoordsV yCoordsV zCoordsV]);
+isoCenter = mean(coord);
 
 % Visualization
 if visBool
@@ -76,6 +74,10 @@ if visBool
     clf
     hold on
     
+    xCoordsV = coord (:,1); %xCoordsV * ct.resolution.x;
+    yCoordsV = coord (:,2); %yCoordsV * ct.resolution.y;
+    zCoordsV = coord (:,3); %zCoordsV * ct.resolution.z;
+
     % Plot target
     plot3(yCoordsV,xCoordsV,zCoordsV,'kx')
     

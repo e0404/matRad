@@ -960,9 +960,9 @@ classdef matRad_ViewingWidget < matRad_Widget
                         cursorText{end+1,1} = ['Cube Index: ' mat2str(vCubeIdx)];
                         %Space Coordinates
                         coords = zeros(1,3);
-                        coords(1) = cubePos(2)*ct.resolution.y;
-                        coords(2) = cubePos(1)*ct.resolution.x;
-                        coords(3) = cubePos(3)*ct.resolution.z;
+                        coords(1) = ct.y(cubePos(2));
+                        coords(2) = ct.x(cubePos(1));
+                        coords(3) = ct.z(cubePos(3));
                         cursorText{end+1,1} = ['Space Coordinates: ' mat2str(coords,5) ' mm'];
                         
                         ctVal = ct.cubeHU{1}(cubeIx(1),cubeIx(2),cubeIx(3));
@@ -1075,12 +1075,13 @@ classdef matRad_ViewingWidget < matRad_Widget
                     end
                 end
                 
+                isoCoordinates = matRad_worldToCubeCoordinates(pln.propStf.isoCenter(1,:), ct);
                 if this.plane == 1
-                    this.slice= ceil(pln.propStf.isoCenter(1,2)/ct.resolution.x);
+                    this.slice= isoCoordinates(2);%ceil(pln.propStf.isoCenter(1,2)/ct.resolution.x);
                 elseif this.plane == 2
-                    this.slice= ceil(pln.propStf.isoCenter(1,1)/ct.resolution.y);
+                    this.slice= isoCoordinates(1);%ceil(pln.propStf.isoCenter(1,1)/ct.resolution.y);
                 elseif this.plane == 3
-                    this.slice= ceil(pln.propStf.isoCenter(1,3)/ct.resolution.z);
+                    this.slice= isoCoordinates(3);
                 end
                 
                 this.maxSlice=ct.cubeDim(this.plane);
@@ -1236,7 +1237,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 % set isoCenter values 
                 % Note: only defined for the first Isocenter
                 uniqueIsoCenters = unique(pln.propStf.isoCenter,'rows');
-                this.vIsoCenter      = round(uniqueIsoCenters(1,:)./[ct.resolution.x ct.resolution.y ct.resolution.z]);
+                this.vIsoCenter      = matRad_worldToCubeCoordinates(pln.propStf.isoCenter(1,:), ct);%round(uniqueIsoCenters(1,:)./[ct.resolution.x ct.resolution.y ct.resolution.z]);
                 
 
                  % set profile offset slider
