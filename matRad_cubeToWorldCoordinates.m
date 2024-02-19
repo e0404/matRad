@@ -30,9 +30,9 @@ if nargin == 2
         firstVox = - (ct.cubeDim./2).*[ct.resolution.x ct.resolution.y ct.resolution.z] ;
     end 
     try
-        coord(1,:) = firstVox(1) + vCoord(:,2)*ct.resolution.x;
-        coord(2,:) = firstVox(2) + vCoord(:,1)*ct.resolution.y;
-        coord(3,:) = firstVox(3) + vCoord(:,3)*ct.resolution.z;
+        coord(1,:) = firstVox(1) + (vCoord(:,1) - 1 ) *ct.resolution.x;
+        coord(2,:) = firstVox(2) + (vCoord(:,2) - 1 ) *ct.resolution.y;
+        coord(3,:) = firstVox(3) + (vCoord(:,3) - 1 ) *ct.resolution.z;
         coord = coord';
     catch
 
