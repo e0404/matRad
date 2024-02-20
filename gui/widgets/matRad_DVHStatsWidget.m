@@ -122,8 +122,8 @@ classdef matRad_DVHStatsWidget < matRad_Widget
                         this.statWidgetHandle.selectedCube = this.selectedDisplayOption;
 
                     end
-                        this.dvhWidgetHandle = this.dvhWidgetHandle.update();
-                        this.statWidgetHandle = this.statWidgetHandle.update();
+                        this.dvhWidgetHandle = this.dvhWidgetHandle.doUpdate();
+                        this.statWidgetHandle = this.statWidgetHandle.doUpdate();
                         %Clear previous DVH and stat
                         if numel(this.dvhWidgetHandle.widgetHandle.Children) > 2 
                             this.removeOverlap();

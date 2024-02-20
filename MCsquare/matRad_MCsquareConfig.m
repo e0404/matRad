@@ -15,20 +15,15 @@ classdef matRad_MCsquareConfig
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    properties              
+        Num_Primaries = 1e6;
 
-
-    
-    properties       
-        %%% Parameter for continuity
-        engine = 'MCsquare';
-        
         %%% Simulation parameters:
         Num_Threads   =	0;		% Number of parallel calculation threads. Default: 0 = max available threads
         RNG_Seed      =	0;		% Seed for the random number generator (deterministic result only with single thread). Default: 0 = seed based on the time
         
         % This parameter can be overwritten through MatRad_Config default parameters
-        numHistories  = 1e6;		% Number of primary protons to simulate. Default: 1e7
         E_Cut_Pro     =	0.5;		% Energy cut (in MeV) below which heavy charged particles are locally absorbed. Default: 0.5
         D_Max	      =	0.2;		% Maximum distance between two step (cm). Default: 0.2
         Epsilon_Max   =	0.25;		% Fractional energy loss (dE/T) per step. Default: 0.25
@@ -123,289 +118,12 @@ classdef matRad_MCsquareConfig
             
             % Set default histories from MatRad_Config
             if isfield(matRad_cfg.propMC,'defaultNumHistories')
-                obj.numHistories = matRad_cfg.propMC.defaultNumHistories;
+                obj.Num_Primaries = matRad_cfg.propMC.defaultNumHistories;
             end
         end
 
-        function writeMCsquareinputAllFiles(obj,filename,stf)
-            % generate input files for MCsquare dose calcualtion from matRad
-            %
-            % call
-            %   obj.writeMCsquareinputAllFiles(filename,MCsquareConfig,stf)
-            %
-            % input
-            %   filename:       filename
-            %   stf:            matRad steering information struct
-            %
-            % output
-            %   -
-            %
-            % References
-            %   [1] https://openreggui.org/git/open/REGGUI/blob/master/functions/io/convert_Plan_PBS.m
-            %
-            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %
-            % Copyright 2019 the matRad development team.
-            %
-            % This file is part of the matRad project. It is subject to the license
-            % terms in the LICENSE file found in the top-level directory of this
-            % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
-            % of the matRad project, including this file, may be copied, modified,
-            % propagated, or distributed except according to the terms contained in the
-            % LICENSE file.
-            %
-            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-            %% write overall configuration file
-            fileHandle = fopen(filename,'w');
-            obj.write(fileHandle);
-            fclose(fileHandle);
-
-            %% prepare steering file writing
-            numOfFields = length(stf);
-            if obj.Beamlet_Mode
-                totalMetersetWeightOfAllFields = 1;
-            else
-                totalMetersetWeightOfFields = NaN*ones(numOfFields,1);
-                for i = 1:numOfFields
-                    totalMetersetWeightOfFields(i) = sum([stf(i).energyLayer.numOfPrimaries]);
-                end
-                totalMetersetWeightOfAllFields = sum(totalMetersetWeightOfFields);
-            end
-
-            %% write steering file
-
-            fileHandle = fopen(obj.BDL_Plan_File,'w');
-
-            fprintf(fileHandle,'#TREATMENT-PLAN-DESCRIPTION\n');
-            fprintf(fileHandle,'#PlanName\n');
-            fprintf(fileHandle,'matRad_bixel\n');
-            fprintf(fileHandle,'#NumberOfFractions\n');
-            fprintf(fileHandle,'1\n');
-            fprintf(fileHandle,'##FractionID\n');
-            fprintf(fileHandle,'1\n');
-            fprintf(fileHandle,'##NumberOfFields\n');
-            fprintf(fileHandle,[num2str(numOfFields) '\n']);
-            for i = 1:numOfFields
-                fprintf(fileHandle,'###FieldsID\n');
-                fprintf(fileHandle,[num2str(i) '\n']);
-            end
-            fprintf(fileHandle,'\n#TotalMetersetWeightOfAllFields\n');
-            fprintf(fileHandle,[num2str(totalMetersetWeightOfAllFields) '\n']);
-
-            for i = 1:numOfFields
-                fprintf(fileHandle,'\n#FIELD-DESCRIPTION\n');
-                fprintf(fileHandle,'###FieldID\n');
-                fprintf(fileHandle,[num2str(i) '\n']);
-                fprintf(fileHandle,'###FinalCumulativeMeterSetWeight\n');
-                if obj.Beamlet_Mode
-                    finalCumulativeMeterSetWeight = 1/numOfFields;
-                else
-                    finalCumulativeMeterSetWeight = totalMetersetWeightOfFields(i);
-                end
-                fprintf(fileHandle,[num2str(finalCumulativeMeterSetWeight) '\n']);
-                fprintf(fileHandle,'###GantryAngle\n');
-                fprintf(fileHandle,[num2str(stf(i).gantryAngle) '\n']);
-                fprintf(fileHandle,'###PatientSupportAngle\n');
-                fprintf(fileHandle,[num2str(stf(i).couchAngle) '\n']);
-                fprintf(fileHandle,'###IsocenterPosition\n');
-                fprintf(fileHandle,[num2str(stf(i).isoCenter) '\n']);
-                fprintf(fileHandle,'###NumberOfControlPoints\n');
-                numOfEnergies = numel(stf(i).energies);
-                fprintf(fileHandle,[num2str(numOfEnergies) '\n']);
-
-                %Range shfiter
-                if stf(i).rangeShifterID ~= 0
-                    fprintf(fileHandle,'###RangeShifterID\n%d\n',stf(i).rangeShifterID);
-                    fprintf(fileHandle,'###RangeShifterType\n%s\n',stf(i).rangeShifterType);
-                end
-
-                metersetOffset = 0;
-                fprintf(fileHandle,'\n#SPOTS-DESCRIPTION\n');
-                for j = 1:numOfEnergies
-                    fprintf(fileHandle,'####ControlPointIndex\n');
-                    fprintf(fileHandle,[num2str(j) '\n']);
-                    fprintf(fileHandle,'####SpotTunnedID\n');
-                    fprintf(fileHandle,['1\n']);
-                    fprintf(fileHandle,'####CumulativeMetersetWeight\n');
-                    if obj.Beamlet_Mode
-                        cumulativeMetersetWeight = j/numOfEnergies * 1/numOfFields;
-                    else
-                        cumulativeMetersetWeight = metersetOffset + sum([stf(i).energyLayer(j).numOfPrimaries]);
-                        metersetOffset = cumulativeMetersetWeight;
-                    end
-                    fprintf(fileHandle,[num2str(cumulativeMetersetWeight) '\n']);
-                    fprintf(fileHandle,'####Energy (MeV)\n');
-                    fprintf(fileHandle,[num2str(stf(i).energies(j)) '\n']);
-
-                    %Range shfiter
-                    if stf(i).rangeShifterID ~= 0
-                        rangeShifter = stf(i).energyLayer(j).rangeShifter;
-                        if rangeShifter.ID ~= 0
-                            fprintf(fileHandle,'####RangeShifterSetting\n%s\n','IN');
-                            pmma_rsp = 1.165; %TODO: hardcoded for now
-                            rsWidth = rangeShifter.eqThickness / pmma_rsp;
-                            isoToRaShi = stf(i).SAD - rangeShifter.sourceRashiDistance + rsWidth;
-                            fprintf(fileHandle,'####IsocenterToRangeShifterDistance\n%f\n',-isoToRaShi/10); %in cm
-                            fprintf(fileHandle,'####RangeShifterWaterEquivalentThickness\n%f\n',rangeShifter.eqThickness);
-                        else
-                            fprintf(fileHandle,'####RangeShifterSetting\n%s\n','OUT');
-                        end
-                    end
-
-                    fprintf(fileHandle,'####NbOfScannedSpots\n');
-                    numOfSpots = size(stf(i).energyLayer(j).targetPoints,1);
-                    fprintf(fileHandle,[num2str(numOfSpots) '\n']);
-                    fprintf(fileHandle,'####X Y Weight\n');
-                    for k = 1:numOfSpots
-                        if obj.Beamlet_Mode
-                            n = stf(i).energyLayer(j).numOfPrimaries(k);
-                        else
-                            n = stf(i).energyLayer(j).numOfPrimaries(k); % / obj.mcSquare_magicFudge(stf(i).energies(j));
-                        end
-                        fprintf(fileHandle,[num2str(stf(i).energyLayer(j).targetPoints(k,:)) ' ' num2str(n) '\n']);
-                    end
-                end
-            end
-
-            fclose(fileHandle);
-
-        end
-
-        function gain = mcSquare_magicFudge(~,energy)
-            % mcSquare will scale the spot intensities in
-            % https://gitlab.com/openmcsquare/MCsquare/blob/master/src/data_beam_model.c#L906
-            % by this factor so we need to divide up front to make things work. The
-            % original code can be found at https://gitlab.com/openmcsquare/MCsquare/blob/master/src/compute_beam_model.c#L16
-
-            K = 35.87; % in eV (other value 34.23 ?)
-
-            % // Air stopping power (fit ICRU) multiplied by air density
-            SP = (9.6139e-9*energy^4 - 7.0508e-6*energy^3 + 2.0028e-3*energy^2 - 2.7615e-1*energy + 2.0082e1) * 1.20479E-3 * 1E6; % // in eV / cm
-
-            % // Temp & Pressure correction
-            PTP = 1.0;
-
-            % // MU calibration (1 MU = 3 nC/cm)
-            % // 1cm de gap effectif
-            C = 3.0E-9; % // in C / cm
-
-            % // Gain: 1eV = 1.602176E-19 J
-            gain = (C*K) / (SP*PTP*1.602176E-19);
-
-            % divide by 1e7 to not get tiny numbers...
-            gain = gain/1e7;
-
-        end
-
-        function writeMhd(obj,cube,resolution)
-            % References
-            %   -
-            %
-            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %
-            % Copyright 2020 the matRad development team.
-            %
-            % This file is part of the matRad project. It is subject to the license
-            % terms in the LICENSE file found in the top-level directory of this
-            % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
-            % of the matRad project, including this file, may be copied, modified,
-            % propagated, or distributed except according to the terms contained in the
-            % LICENSE file.
-            %
-            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-            %% write header file
-            fileHandle = fopen(obj.CT_File,'w');
-
-            fprintf(fileHandle,'ObjectType = Image\n');
-            fprintf(fileHandle,'NDims = 3\n');
-            fprintf(fileHandle,'BinaryData = True\n');
-            fprintf(fileHandle,'BinaryDataByteOrderMSB = False\n');
-            fprintf(fileHandle,'CompressedData = False\n');
-            fprintf(fileHandle,'TransformMatrix = 1 0 0 0 1 0 0 0 1\n');
-            fprintf(fileHandle,'Offset = 0 0 0\n');
-            fprintf(fileHandle,'CenterOfRotation = 0 0 0\n');
-            fprintf(fileHandle,'AnatomicalOrientation = RAI\n');
-            fprintf(fileHandle,'ElementSpacing = %f %f %f\n',resolution);
-            fprintf(fileHandle,'DimSize = %d %d %d\n',size(cube,2),size(cube,1),size(cube,3));
-            fprintf(fileHandle,'ElementType = MET_DOUBLE\n');
-            filenameRaw = [obj.CT_File(1:end-4) '.raw'];
-            fprintf(fileHandle,'ElementDataFile = %s\n',filenameRaw);
-
-            fclose(fileHandle);
-
-            %% write data file
-            dataFileHandle = fopen(filenameRaw,'w');
-
-            cube = flip(cube,2);
-            cube = permute(cube,[2 1 3]);
-
-            fwrite(dataFileHandle,cube(:),'double');
-            fclose(dataFileHandle);
-        end
-
-        function cube = readMhd(obj,filename)
-            % matRad mhd file reader
-            %
-            % call
-            %   cube = matRad_readMhd(folder,filename)
-            %
-            % input
-            %   folder:   folder where the *raw and *mhd file are located
-            %   filename: filename
-            %
-            % output
-            %   cube:     3D array
-            %
-            % References
-            %
-            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %
-            % Copyright 2019 the matRad development team.
-            %
-            % This file is part of the matRad project. It is subject to the license
-            % terms in the LICENSE file found in the top-level directory of this
-            % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
-            % of the matRad project, including this file, may be copied, modified,
-            % propagated, or distributed except according to the terms contained in the
-            % LICENSE file.
-            %
-            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-            %% read header
-            headerFileHandle = fopen([obj.Output_Directory, filesep filename],'r');
-
-            s = textscan(headerFileHandle, '%s', 'delimiter', '\n');
-
-            % read dimensions
-            idx = find(~cellfun(@isempty,strfind(s{1}, 'DimSize')),1,'first');
-            dimensions = cell2mat(textscan(s{1}{idx},'DimSize = %f %f %f'));
-
-            % read filename of data
-            idx = find(~cellfun(@isempty,strfind(s{1}, 'ElementDataFile')),1,'first');
-            tmp = textscan(s{1}{idx},'ElementDataFile = %s');
-            dataFilename = cell2mat(tmp{1});
-
-            % get data type
-            idx = find(~cellfun(@isempty,strfind(s{1}, 'ElementType')),1,'first');
-            tmp = textscan(s{1}{idx},'ElementType = MET_%s');
-            type = lower(cell2mat(tmp{1}));
-
-            fclose(headerFileHandle);
-
-            %% read data
-            dataFileHandle = fopen([obj.Output_Directory filesep dataFilename],'r');
-            cube = reshape(fread(dataFileHandle,inf,type),dimensions);
-            cube = permute(cube,[2 1 3]);
-            cube = flip(cube,2);
-            fclose(dataFileHandle);
-        end
-
+       
         function write(obj,fid)
-
             MCsquareProperties = fieldnames(obj);
 
             logicalString = {'False', 'True'};
@@ -415,8 +133,6 @@ classdef matRad_MCsquareConfig
                 % modify fieldnames beginning with "4D"
                 if strncmp(MCsquareProperties{i},'fourD',5)
                     writeString = ['4D' MCsquareProperties{i}(6:end)];
-                elseif strncmp(MCsquareProperties{i},'numHistories',5)
-                    writeString = 'Num_Primaries';
                 else
                     writeString = MCsquareProperties{i};
                 end
@@ -428,13 +144,11 @@ classdef matRad_MCsquareConfig
                 elseif isa(obj.(MCsquareProperties{i}),'char')
                     fprintf(fid,[writeString ' ' obj.(MCsquareProperties{i}) '\n']);
                 else
-                    error('export not defined');
+                    matRad_cfg = MatRad_Config.instance();
+                    matRad_cfg.dispError('Error when trying to write property %s for MCsquare dose calculation!',MCsquareProperties{i});                    
                 end
-
             end
-
         end
-
     end
 end
 

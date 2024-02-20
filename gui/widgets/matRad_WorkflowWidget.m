@@ -260,8 +260,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
             set(handles.exportDicomButton,'Enable','off');
             
 
-            if evalin('base','exist(''ct'')') && ...
-                        evalin('base','exist(''cst'')')
+            if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
                     
                 set(handles.txtInfo,'String','loaded and ready');
                 
@@ -277,7 +276,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     % check if stf exists
                     if evalin('base','exist(''stf'')') 
                         % check if dij, stf and pln match
-                       [allMatch, msg] = matRad_comparePlnDijStf(evalin('base','pln'),evalin('base','stf'),[]);
+                       [allMatch, msg] = matRad_comparePlnStf(evalin('base','pln'),evalin('base','stf'));
                         if allMatch
                             % plan is ready for optimization
                             set(handles.txtInfo,'String','ready for dose calculation');
@@ -285,18 +284,19 @@ classdef matRad_WorkflowWidget < matRad_Widget
                         else 
                             this.showWarning(msg);
                         end
+                        
                     end
-
                     % check if dij exist
-                    if evalin('base','exist(''dij'')') 
-                        [allMatch, msg] = matRad_comparePlnDijStf(evalin('base','pln'),evalin('base','stf'),evalin('base','dij'));
+                    if evalin('base','exist(''dij'')') && evalin('base','exist(''stf'')') 
+                        [allMatch, msg] = matRad_compareDijStf(evalin('base','stf'),evalin('base','dij'));
                         if allMatch
                             set(handles.txtInfo,'String','ready for optimization');
-                            set(handles.btnOptimize ,'Enable','on'); 
-                        else 
+                            set(handles.btnOptimize ,'Enable','on');
+                        else
                             this.showWarning(msg);
                         end
-                   end
+                    end
+                    
 
                     % does resultGUI exist
                     if evalin('base','exist(''resultGUI'')')
@@ -308,7 +308,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     end
                 end
             else
-                this.showWarning('could not load ct/cst ');
+                % Do Nothing
             end
             this.handles=handles;
         end
@@ -396,12 +396,8 @@ classdef matRad_WorkflowWidget < matRad_Widget
             
             % carry out dose calculation
             try
-                if strcmp(pln.radiationMode,'photons')
-                    dij = matRad_calcPhotonDose(evalin('base','ct'),stf,pln,evalin('base','cst'));
-                elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-                    dij = matRad_calcParticleDose(evalin('base','ct'),stf,pln,evalin('base','cst'));
-                end
-                
+                dij = matRad_calcDoseInfluence(evalin('base','ct'),evalin('base','cst'),stf,pln);
+                               
                 % assign results to base worksapce
                 assignin('base','dij',dij);
                 
@@ -444,7 +440,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 cst = evalin('base','cst');
                 % optimize
                 [resultGUIcurrentRun,usedOptimizer] = matRad_fluenceOptimization(dij,cst,pln);
-                if pln.propOpt.conf3D && strcmp(pln.radiationMode,'photons')
+                if isfield(pln,'propOpt') && isfield(pln.propOpt,'conf3D') && pln.propOpt.conf3D && strcmp(pln.radiationMode,'photons')
                     resultGUIcurrentRun.w = resultGUIcurrentRun.w .* ones(dij.totalNumOfBixels,1);  
                     resultGUIcurrentRun.wUnsequenced = resultGUIcurrentRun.w;
                 end
@@ -603,20 +599,12 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     stf(i).isoCenter = pln.propStf.isoCenter(i,:);
                 end
                 
-                % recalculate influence matrix
-                if strcmp(pln.radiationMode,'photons')
-                    dij = matRad_calcPhotonDose(ct,stf,pln,cst);
-                elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-                    dij = matRad_calcParticleDose(ct,stf,pln,cst);
-                end
-                
-                % recalculate cubes in resultGUI
-                resultGUIreCalc = matRad_calcCubes(resultGUI.w,dij); %(['w' Suffix])
+                resultGUIreCalc = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
                 
                 % delete old variables to avoid confusion
                 if isfield(resultGUI,'effect')
                     resultGUI = rmfield(resultGUI,'effect');
-                    resultGUI = rmfield(resultGUI,'RBExDose');
+                    resultGUI = rmfield(resultGUI,'RBExD');
                     resultGUI = rmfield(resultGUI,'RBE');
                     resultGUI = rmfield(resultGUI,'alpha');
                     resultGUI = rmfield(resultGUI,'beta');
@@ -629,7 +617,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 end
                 
                 % assign results to base worksapce
-                assignin('base','dij',dij);
+                %assignin('base','dij',dij);
                 assignin('base','resultGUI',resultGUI);
 
                 
@@ -638,7 +626,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 set(InterfaceObj,'Enable','on');
                
                 this.handles = handles;
-                this.changedWorkspace('dij','resultGUI');
+                this.changedWorkspace('resultGUI');
                 
             catch ME
                 % change state from busy to normal
@@ -725,8 +713,8 @@ classdef matRad_WorkflowWidget < matRad_Widget
             
             if ~strcmp(pln.propOpt.bioOptimization,'none')
                 
-                if isfield(resultGUI,'RBExDose')
-                    resultGUI.(['RBExDose' Suffix]) = resultGUI.RBExDose;
+                if isfield(resultGUI,'RBExD')
+                    resultGUI.(['RBExD' Suffix]) = resultGUI.RBExD;
                 end
                 
                 if strcmp(pln.radiationMode,'carbon') == 1

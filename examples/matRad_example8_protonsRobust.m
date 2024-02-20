@@ -25,111 +25,28 @@
 %% set matRad runtime configuration
 matRad_rc
 
-%% Create a CT image series
-xDim = 120;
-yDim = 120;
-zDim = 60;
+%% Create a CT image series with the Phantom Builder
 
-ct.cubeDim      = [xDim yDim zDim];
-ct.resolution.x = 3; % mm
-ct.resolution.y = 3; % mm
-ct.resolution.z = 3; % mm
-ct.numOfCtScen  = 1;
- 
-% create an ct image series with zeros - it will be filled later
-ct.cubeHU{1} = ones(ct.cubeDim) * -1024;
+ctDim = [120,120,60]; % x,y,z dimensions
+ctResolution = [3,3,3]; % x,y,z the same here!
 
-%% Create VOI data for the phantom
+builder = matRad_PhantomBuilder(ctDim,ctResolution,1);
+
 % Now we define three structures for the phantom 
-ixNT     = 1;
-ixTarget = 2;
-ixOAR    = 3;
+objective1 = struct(DoseObjectives.matRad_SquaredDeviation(800,45));
+objective2 = struct(DoseObjectives.matRad_SquaredOverdosing(400,0));
 
-% define general VOI properties
-cst{ixNT,1} = 0;     cst{ixNT,2} = 'contour';    cst{ixNT,3} = 'OAR';
-cst{ixTarget,1} = 1; cst{ixTarget,2} = 'target'; cst{ixTarget,3} = 'TARGET';
-cst{ixOAR,3} = 0;    cst{ixOAR,2} = 'OAR';       cst{ixOAR,3} = 'OAR';
+builder.addSphericalTarget('target',ctDim(1)/13,'objectives',struct(DoseObjectives.matRad_SquaredDeviation(100,60)));
+builder.addSphericalOAR('OAR',ctDim(1)/15,'offset',[-10 10 0],'HU',-100,'objectives',struct(DoseObjectives.matRad_SquaredOverdosing(10,40)));
+builder.addBoxOAR('contour',ctDim./2,'HU',0,'objectives',struct(DoseObjectives.matRad_SquaredOverdosing(5,20)));
 
-% define optimization parameter for both VOIs
-cst{ixNT,5}.TissueClass = 1;
-cst{ixNT,5}.alphaX      = 0.1000;
-cst{ixNT,5}.betaX       = 0.0500;
-cst{ixNT,5}.Priority    = 3;           % overlap priority for optimization - a higher number corresponds to a lower priority
-cst{ixNT,5}.Visible     = 1;
-cst{ixNT,6}{1}          = struct(DoseObjectives.matRad_SquaredOverdosing(5,20));
+%Keep indices for assignment of robustness objectives later
+ixTarget = 1;
+ixOAR = 2;
+ixNT = 3;
 
-cst{ixTarget,5}.TissueClass = 1;
-cst{ixTarget,5}.alphaX      = 0.1000;
-cst{ixTarget,5}.betaX       = 0.0500;
-cst{ixTarget,5}.Priority    = 1;           % overlap priority for optimization - a lower number corresponds to a higher priority
-cst{ixTarget,5}.Visible     = 1; 
-cst{ixTarget,6}{1}          = struct(DoseObjectives.matRad_SquaredDeviation(100,60));
-
-cst{ixOAR,5}.TissueClass = 1;
-cst{ixOAR,5}.alphaX      = 0.1000;
-cst{ixOAR,5}.betaX       = 0.0500;
-cst{ixOAR,5}.Priority    = 2;           % overlap priority for optimization - a higher number corresponds to a lower priority
-cst{ixOAR,5}.Visible     = 1;
-cst{ixOAR,6}{1}          = struct(DoseObjectives.matRad_SquaredOverdosing(10,40));
-
-%% Let's create a cubic phantom
-% first define the dimensions of the organ at risk
-cubeHelper = zeros(ct.cubeDim);
-xLowNT    = round(xDim/2 - xDim/4); xHighNT   = round(xDim/2 + xDim/4);
-yLowNT    = round(yDim/2 - yDim/4); yHighNT   = round(yDim/2 + yDim/4);
-zLowNT    = round(zDim/2 - zDim/4); zHighNT   = round(zDim/2 + zDim/4);
-
-for x = xLowNT:1:xHighNT
-   for y = yLowNT:1:yHighNT
-      for z = zLowNT:1:zHighNT
-         cubeHelper(x,y,z) = 1;
-      end
-   end
-end    
-% extract the linear voxel indices and save it in the cst
-cst{ixNT,4}{1} = find(cubeHelper);
-
-% create a spherical target
-cubeHelper = zeros(ct.cubeDim);
-radiusPTV  = xDim/13;
-for x = 1:xDim
-   for y = 1:yDim
-      for z = 1:zDim
-         currPost = [x y z] - round([ct.cubeDim./2]);
-         if  sqrt(sum(currPost.^2)) < radiusPTV
-            cubeHelper(x,y,z) = 1;
-         end
-      end
-   end
-end
-% extract the linear voxel indices and save it in the cst
-cst{ixTarget,4}{1} = find(cubeHelper);
-
-
-% create an OAR
-cubeHelper = zeros(ct.cubeDim);
-radiusOAR  = xDim/15;
-for x = 1:xDim
-   for y = 1:yDim
-      for z = 1:zDim
-         currPost = [x y z] - (round([ct.cubeDim./2])+ [10 -10 0]);
-         if  sqrt(sum(currPost.^2)) < radiusOAR
-            cubeHelper(x,y,z) = 1;
-         end
-      end
-   end
-end
-% extract the linear voxel indices and save it in the cst
-vIxOAR      = find(cubeHelper);
-[vLinLog,b] = ismember(vIxOAR,cst{ixTarget,4}{1});  % avoid overlap with target
-cst{ixOAR,4}{1} = vIxOAR(~vLinLog);
-
-% assign Hounsfield units
-ct.cubeHU{1}(cst{ixNT,4}{1})     = 0; % assign HU of water
-ct.cubeHU{1}(cst{ixTarget,4}{1}) = 0; % assign HU of water
-ct.cubeHU{1}(cst{ixOAR,4}{1}) =  -100; % assign HU of water
-
-clear x y z xDim yDim zDim xLowNT xHighNT yLowNT yHighNT zLowNT zHighNT   
+[ct,cst] = builder.getctcst();
+  
 %% Treatment Plan
 % The next step is to define your treatment plan labeled as 'pln'. This 
 % structure requires input from the treatment planner and defines the most

@@ -1,12 +1,13 @@
-function hlut = matRad_loadHLUT(ct, pln)
+function hlut = matRad_loadHLUT(ct, radiationMode)
 % matRad function to load HLUT file based on the provided ct
 %
 % call
 %   hlut = matRad_loadHLUT(ct, pln)
 %
 % input
-%   ct:   unprocessed dicom ct data 
-%   pln:  matRad pln struct
+%   ct:             ct with dicom information
+%   radiationMode:  radiationMode as character array (e.g. 'photons') since matRad 3.
+%                   Can also be a pln-struct for downwards compatibility
 %
 % output
 %   hlut: lookup table
@@ -36,15 +37,27 @@ else
     hlutDir = [];
 end
 
+%Old version - takes radiation mode from pln
+if isstruct(radiationMode) && isfield(radiationMode,'radiationMode')
+    particle = radiationMode.radiationMode;
+elseif ischar(radiationMode)
+    particle = radiationMode;
+else
+    matRad_cfg.dispError('Invalid radiation mode!');
+end
+
+
 % if possible -> file standard out of dicom tags
 try
     
     hlutFileName = '';
-    particle     = pln.radiationMode;
     manufacturer = ct.dicomInfo.Manufacturer;
     model        = ct.dicomInfo.ManufacturerModelName;
-    convKernel   = ct.dicomInfo.ConvolutionKernel;
-    
+    if isfield(ct.dicomInfo,'ConvolutionKernel')
+        convKernel = ct.dicomInfo.ConvolutionKernel;
+    else
+        convKernel = '0';
+    end
     hlutFileName = strcat(manufacturer, '-', model, '-ConvolutionKernel-',...
         convKernel, '_', particle, '.hlut');
     

@@ -100,7 +100,7 @@ display(stf.ray(100));
 display(stf.ray(100).energy);
 
 %% Dose Calculation
-dij = matRad_calcParticleDose(ct,stf,pln,cst);
+dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 
 %% Inverse Optimization  for IMPT based on RBE-weighted dose
 % The goal of the fluence optimization is to find a set of bixel/spot 

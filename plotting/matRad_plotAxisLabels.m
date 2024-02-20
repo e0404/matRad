@@ -63,7 +63,7 @@ elseif plane == 2 % Sagittal plane
         set(axesHandle,'YTickLabel',0:tickdist:1000*ct.resolution.y)
         xlabel(axesHandle,'z [mm]','FontSize',defaultFontSize);
         ylabel(axesHandle,'y [mm]','FontSize',defaultFontSize);
-        title(axesHandle,['sagittal plane x = ' num2str(ct.resolution.y*slice) ' [mm]'],'FontSize',defaultFontSize)
+        title(axesHandle,['sagittal plane x = ' num2str(ct.resolution.x*slice) ' [mm]'],'FontSize',defaultFontSize)
     else
         xlabel(axesHandle,'z [voxels]','FontSize',defaultFontSize)
         ylabel(axesHandle,'y [voxels]','FontSize',defaultFontSize)
@@ -77,7 +77,7 @@ elseif plane == 1 % Coronal plane
         set(axesHandle,'YTickLabel',0:tickdist:1000*ct.resolution.x)
         xlabel(axesHandle,'z [mm]','FontSize',defaultFontSize)
         ylabel(axesHandle,'x [mm]','FontSize',defaultFontSize)
-        title(axesHandle,['coronal plane y = ' num2str(ct.resolution.x*slice) ' [mm]'],'FontSize',defaultFontSize)
+        title(axesHandle,['coronal plane y = ' num2str(ct.resolution.y*slice) ' [mm]'],'FontSize',defaultFontSize)
     else
         xlabel(axesHandle,'z [voxels]','FontSize',defaultFontSize)
         ylabel(axesHandle,'x [voxels]','FontSize',defaultFontSize)

@@ -487,6 +487,97 @@ classdef matRad_BiologicalModel
             end
             
         end
+
+        function [bixelAlpha,bixelBeta] = calcLQParameterForKernel(this,bixel,kernels)
+            matRad_cfg = MatRad_Config.instance();
+            
+            bixelAlpha = NaN*ones(numel(bixel.radDepths),1);
+            bixelBeta  = NaN*ones(numel(bixel.radDepths),1);
+
+            vAlpha_x = bixel.vAlphaX;
+            vBeta_x  = bixel.vBetaX;
+            vABratio = vAlpha_x ./ vBeta_x;
+            
+            bixelLET = kernels.LET;
+            
+            switch [this.radiationMode '_' this.model]
+               
+               case {'protons_constRBE'}
+                  
+               case {'protons_LSM'}
+                  
+                  
+                  ix                 = this.p_lowerLETThreshold < bixelLET < this.p_upperLETThreshold;
+                  
+                  alpha_0            = vAlpha_x - (this.p_lamda_1_1 * this.p_corrFacEntranceRBE);
+                  bixelAlpha(ixLSM)  = alpha_0(ix) + this.p_lamda_1_1 * bixelLET;
+                  
+                  if sum(ix) < length(bixelLET)
+                     bixelAlpha(bixelLET > pln.bioParam.lowerLETThreshold) =  alpha_0(bixelLET > this.p_upperLETThreshold) + this.p_lamda_1_1 * this.p_upperLETThreshold;
+                     bixelAlpha(bixelLET < pln.bioParam.lowerLETThreshold) =  alpha_0(bixelLET < this.p_lowerLETThreshold) + this.p_lamda_1_1 * this.p_lowerLETThreshold;
+                  end
+                  
+                  bixelBeta        = vBeta_x;
+                  
+                  % TODO: assign normal tissue an RBE of 1.1
+                  
+               case {'protons_MCN'}
+                   
+                  RBEmax     = this.p0_MCN + ((this.p1_MCN * bixelLET )./ vABratio);
+                  RBEmin     = this.p2_MCN + (this.p3_MCN  * sqrt(vABratio) .* bixelLET);
+                  bixelAlpha = RBEmax    .* vAlpha_x;
+                  bixelBeta  = RBEmin.^2 .* vBeta_x;
+                  
+               case {'protons_WED'}
+                  
+                  RBEmax     = this.p0_WED + ((this.p1_WED * bixelLET )./ vABratio);
+                  RBEmin     = this.p2_WED;
+                  bixelAlpha = RBEmax    .* vAlpha_x;
+                  bixelBeta  = RBEmin.^2 .* vBeta_x;
+                  
+               case {'helium_HEL'}
+                  
+                  % data-driven RBE parametrization of helium ions
+                  % https://iopscience.iop.org/article/10.1088/0031-9155/61/2/888
+                 
+                  
+                  % quadratic fit
+                  %f_Q      = 8.53959e-4 .* bixelLET.^2;
+                  %RBEmax_Q = 1 + 2.145e-1  + vABratio.^-1 .* f_Q;
+                  % linear quadratic fit
+                  %f_LQ      = 2.91783e-1*bixelLET - 9.525e-4*bixelLET.^2;
+                  %RBEmax_LQ = 1 + ((1.42057e-1 + (vABratio.^-1)) .* f_LQ);
+                  % linear exponential fit
+                  %f_LE      = (2.965e-1 * bixelLET) .* exp(-4.90821e-3 * bixelLET);
+                  %RBEmax_LE = 1 + ((1.5384e-1  + (vABratio.^-1)) .* f_LE);
+                  
+                  % quadratic exponential fit
+                  f_QE      = (this.p1_HEL * bixelLET.^2) .* exp(-this.p2_HEL * bixelLET);
+                  RBEmax_QE = 1 + ((this.p0_HEL  + (vABratio.^-1)) .* f_QE);
+
+                  % the linear quadratic fit yielded the best fitting result
+                  RBEmax = RBEmax_QE;
+                  
+                  RBEmin = 1; % no gain in using fitted parameters over a constant value of 1
+                  
+                  bixelAlpha = RBEmax    .* vAlpha_x;
+                  bixelBeta  = RBEmin.^2 .* vBeta_x;
+                  
+               case {'carbon_LEM','helium_LEM'}
+                   %From matRad_calcLQParameter
+                   numOfTissueClass = size(bixel.baseData.alpha,2);
+                   for i = 1:numOfTissueClass
+                       mask = bixel.vTissueIndex == i;
+                       if any(mask)
+                           bixelAlpha(mask) = kernels.alpha(mask);
+                           bixelBeta(mask)  = kernels.beta(mask);
+                       end
+                   end                  
+               otherwise
+                  
+            end
+            
+        end
         
         
 

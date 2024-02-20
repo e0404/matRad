@@ -559,7 +559,13 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             end
             
             %handles.cBarChanged = true;
-            
+            % for difference maps cutoff level adjusted to show negative
+            % values in cube 
+            if strcmp(this.viewingWidgetHandle.doseColorMap,'diffMap') || strcmp(this.viewingWidgetHandle.doseColorMap,'gammaIndex')
+                this.viewingWidgetHandle.CutOffLevel = [];
+            else
+                 this.viewingWidgetHandle.CutOffLevel = 0.01; %default value
+            end
             this.handles = handles;
             %UpdatePlot(handles);
             this.UpdateColormapOptions();

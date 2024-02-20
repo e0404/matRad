@@ -23,12 +23,12 @@ classdef matRad_Widget <  handle
     properties (GetAccess = public , SetAccess = protected)
         widgetHandle            %Holds parent widget handle
         handles = struct([]);   %Holds all handles in parent handle
+        isInUifigure;
     end
     
     properties
         updateLock = false;     %Property to lock updating of the widget
     end
-
         
     events
         %If the widget changes the workspace, this event should be emitted 
@@ -123,7 +123,7 @@ classdef matRad_Widget <  handle
                 else
                     meType = 'basic';
                 end
-                Message = {Message,ME.message};
+                Message = [Message,ME.message];
                 % Future error hyperlinks {Message,ME.getReport(meType,'hyperlinks','off')};
             end
             matRad_cfg.dispWarning(Message);
@@ -144,6 +144,24 @@ classdef matRad_Widget <  handle
             else
                 set(this.widgetHandle,'ButtonDownFcn','');   
                 set(this.widgetHandle,'KeyPressFcn','');
+            end
+        end
+
+        function isInUi = get.isInUifigure(this)
+            matRad_cfg = MatRad_Config.instance();
+            
+            if matRad_cfg.isOctave
+                isInUi = false;
+            else
+                hFig = ancestor(this.widgetHandle,'Figure');
+    
+                if verLessThan('Matlab','9.0')      %version < 2016a (release of uifigs)
+                    isInUi = false;
+                elseif verLessThan('Matlab','9.5')  % 16a <= version < 2018b
+                    isInUi = ~isempty(matlab.ui.internal.dialog.DialogHelper.getFigureID(hFig));
+                else                                % version >= 2018b 
+                    isInUi = matlab.ui.internal.isUIFigure(hFig);
+                end
             end
         end
     end

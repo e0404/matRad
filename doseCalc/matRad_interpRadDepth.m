@@ -33,6 +33,9 @@ function radDepthVcoarse = matRad_interpRadDepth(ct,V,Vcoarse,vXgrid,vYgrid,vZgr
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+matRad_cfg.dispDeprecationWarning('This function is obsolete and will be removed in a future release');
+
 for ctScen = 1:ct.numOfCtScen
    radDepthCube             = NaN*ones(ct.cubeDim);
    radDepthCube(V(~isnan(radDepthV{1}))) = radDepthV{ctScen}(~isnan(radDepthV{1}));
