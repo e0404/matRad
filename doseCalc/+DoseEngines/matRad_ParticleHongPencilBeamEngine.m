@@ -21,7 +21,7 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
     
     properties (Constant)
            possibleRadiationModes = {'protons', 'helium','carbon'}
-           name = 'Particle Pencil-Beam';
+           name = 'Hong Particle Pencil-Beam';
            shortName = 'HongPB';
     end
        
