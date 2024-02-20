@@ -417,10 +417,9 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             % retrieve photon LQM parameter for the current dose grid voxels
             [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cstDownsampled,dij.doseGrid.numOfVoxels,1,this.VdoseGrid);
             
-            %TODO: maybe we can avoid this double storage? Doesn't matter
-            %resource usage, as no copy will be made
-            this.vAlphaX = dij.ax;
-            this.vBetaX = dij.bx;
+            % vAlphaX and vBetaX for parameters in VdoseGrid
+            this.vAlphaX = dij.ax(this.VdoseGridMask);
+            this.vBetaX = dij.bx(this.VdoseGridMask);
             this.vTissueIndex = zeros(size(this.VdoseGrid,1),1);
 
             if strcmp(this.bioParam.model,'LEM') 
