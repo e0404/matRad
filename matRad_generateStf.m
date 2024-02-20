@@ -115,9 +115,11 @@ for i = 1:length(pln.propStf.gantryAngles)
     
     % Correct for iso center position. Whit this correction Isocenter is
     % (0,0,0) [mm]
-    coordsX = coordsX_vox*ct.resolution.x - pln.propStf.isoCenter(i,1);
-    coordsY = coordsY_vox*ct.resolution.y - pln.propStf.isoCenter(i,2);
-    coordsZ = coordsZ_vox*ct.resolution.z - pln.propStf.isoCenter(i,3);
+    wCoords = matRad_cubeToWorldCoordinates([coordsX_vox, coordsY_vox, coordsZ_vox], ct);
+
+    coordsX = wCoords(:,1) - pln.propStf.isoCenter(i,1);
+    coordsY = wCoords(:,2) - pln.propStf.isoCenter(i,2);
+    coordsZ = wCoords(:,3) - pln.propStf.isoCenter(i,3);
 
     % Save meta information for treatment plan
     stf(i).gantryAngle   = pln.propStf.gantryAngles(i);

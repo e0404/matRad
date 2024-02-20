@@ -88,7 +88,8 @@ display(qi2(ixRectum).D_5);
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
-slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
+slice = matRad_worldToCubeCoordinates(pln.propStf.isoCenter,ct);
+slice = slice(3);
 figure
 imagesc(resultGUI.RBExDose(:,:,slice)),colorbar, colormap(jet)
 
