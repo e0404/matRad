@@ -115,7 +115,7 @@ for i = 1:length(pln.propStf.gantryAngles)
     
     % Correct for iso center position. Whit this correction Isocenter is
     % (0,0,0) [mm]
-    wCoords = matRad_cubeToWorldCoordinates([coordsX_vox, coordsY_vox, coordsZ_vox], ct);
+    wCoords = matRad_cubeToWorldCoordinates([coordsY_vox, coordsX_vox, coordsZ_vox], ct);
 
     coordsX = wCoords(:,1) - pln.propStf.isoCenter(i,1);
     coordsY = wCoords(:,2) - pln.propStf.isoCenter(i,2);
@@ -196,7 +196,7 @@ for i = 1:length(pln.propStf.gantryAngles)
     end
     
     % source position in bev
-    stf(i).sourcePoint_bev = [0 -SAD 0];
+    stf(i).sourcePoint_bev = [0 -SAD 0] + pln.propStf.isoCenter; 
     
     % get (active) rotation matrix 
     % transpose matrix because we are working with row vectors
