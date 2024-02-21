@@ -196,7 +196,7 @@ for i = 1:length(pln.propStf.gantryAngles)
     end
     
     % source position in bev
-    stf(i).sourcePoint_bev = [0 -SAD 0] + pln.propStf.isoCenter; 
+    stf(i).sourcePoint_bev = [0 -SAD 0] + pln.propStf.isoCenter(i); 
     
     % get (active) rotation matrix 
     % transpose matrix because we are working with row vectors
