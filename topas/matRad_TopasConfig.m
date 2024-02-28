@@ -692,8 +692,6 @@ classdef matRad_TopasConfig < handle
             % Allocate possible scored quantities
             processedQuantities = {'','_std','_batchStd'};
             topasCubesTallies = unique(erase(topasCubesTallies,processedQuantities(2:end)));
-
-            normFac = sum(w);
             
 
             % Loop through 4D scenarios
@@ -711,7 +709,7 @@ classdef matRad_TopasConfig < handle
                                 % Check if current quantity is available and write to dij
                                 if isfield(topasCubes,[topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]) ...
                                         && iscell(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]))
-                                    dij.([topasCubesTallies{j} processedQuantities{p}]){ctScen,1}(:,d) = normFac*reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]){ctScen},[],1);
+                                    dij.([topasCubesTallies{j} processedQuantities{p}]){ctScen,1}(:,d) = sum(w)*reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]){ctScen},[],1);
                                 end
                             end
                         end
@@ -724,7 +722,7 @@ classdef matRad_TopasConfig < handle
                             for p = 1:length(processedQuantities)
                                 % Check if current quantity is available and write to dij
                                 if isfield(topasCubes,[topasCubesTallies{j} processedQuantities{p} '_beam' num2str(d)]) && iscell(topasCubes.([topasCubesTallies{j} processedQuantities{p} '_beam' num2str(d)]))
-                                    dij.([topasCubesTallies{j} processedQuantities{p}]){ctScen}(:,d) = normFac*reshape(topasCubes.([topasCubesTallies{j} processedQuantities{p} '_beam',num2str(d)]){ctScen},[],1);
+                                    dij.([topasCubesTallies{j} processedQuantities{p}]){ctScen}(:,d) = sum(w)*reshape(topasCubes.([topasCubesTallies{j} processedQuantities{p} '_beam',num2str(d)]){ctScen},[],1);
                                 end
                             end
                         end
@@ -745,7 +743,7 @@ classdef matRad_TopasConfig < handle
                                     % Check if current quantity is available and write to dij
                                     if isfield(topasCubes,[topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]) ...
                                             && iscell(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]))
-                                        dij.([topasCubesTallies{j} processedQuantities{p}]){ctScen,1}(:,d) = normFac*reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]){ctScen},[],1);
+                                        dij.([topasCubesTallies{j} processedQuantities{p}]){ctScen,1}(:,d) = sum(w)*reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]){ctScen},[],1);
                                     end
                                 end
                                 % Handle RBE-related quantities (not multiplied by sum(w)!)
@@ -782,7 +780,7 @@ classdef matRad_TopasConfig < handle
                                 for p = 1:length(processedQuantities)
                                     % Check if current quantity is available and write to dij
                                     if isfield(topasCubes,[topasCubesTallies{j} processedQuantities{p} '_beam' num2str(d)]) && iscell(topasCubes.([topasCubesTallies{j} processedQuantities{p} '_beam' num2str(d)]))
-                                        dij.([topasCubesTallies{j} processedQuantities{p}]){ctScen}(:,d) = normFac*reshape(topasCubes.([topasCubesTallies{j} processedQuantities{p} '_beam',num2str(d)]){ctScen},[],1);
+                                        dij.([topasCubesTallies{j} processedQuantities{p}]){ctScen}(:,d) = sum(w)*reshape(topasCubes.([topasCubesTallies{j} processedQuantities{p} '_beam',num2str(d)]){ctScen},[],1);
                                     end
                                 end
                                 % Handle RBE-related quantities (not multiplied by sum(w)!)
