@@ -50,7 +50,7 @@ for i = 1:size(uniqueIsoCenters,1)
         end
     elseif plane == 2
         vIsoCenterPlot  = [vIsoCenter(3) vIsoCenter(2)];
-        if vIsoCenter(2) == slice
+        if vIsoCenter(1) == slice
             isoCenterDirection = 0;
         else
             isoCenterDirection = sign(double(vIsoCenter(1) > slice) - 0.5);
@@ -58,7 +58,7 @@ for i = 1:size(uniqueIsoCenters,1)
 
     elseif plane == 1    
         vIsoCenterPlot  = [vIsoCenter(3) vIsoCenter(1)];
-        if vIsoCenter(1) == slice
+        if vIsoCenter(2) == slice
             isoCenterDirection = 0;
         else
             isoCenterDirection = sign(double(vIsoCenter(2) > slice) - 0.5);

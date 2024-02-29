@@ -60,10 +60,10 @@ if isempty(V)
 end
 
 % Transform subcripts from linear indices 
-[coordV(:,1), coordV(:,2), coordV(:,3)] = ind2sub(ct.cubeDim,V);
+[coordV(:,2), coordV(:,1), coordV(:,3)] = ind2sub(ct.cubeDim,V);
 
 % Transform to [mm]
-coord = matRad_cubeToWorldCoordinates(coordV, ct);
+coord = matRad_cubeToWorldCoordinates(coordV, ct); %idx2worldcoord
 
 % Calculated isocenter.
 isoCenter = mean(coord);

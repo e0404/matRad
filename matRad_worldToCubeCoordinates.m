@@ -26,8 +26,8 @@ if nargin == 2
             ct = matRad_computeWorldCoordinates(ct);
         end
         
-        [~,coord(1)]=min(abs(ct.y-wCoord(2)));
-        [~,coord(2)]=min(abs(ct.x-wCoord(1)));
+        [~,coord(2)]=min(abs(ct.y-wCoord(2)));
+        [~,coord(1)]=min(abs(ct.x-wCoord(1)));
         [~,coord(3)]=min(abs(ct.z-wCoord(3)));
 
     catch
