@@ -1800,8 +1800,8 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
                         if isfield(stf.ray, 'collimation')
                             % Use field width for now
-                            fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadX = %d mm\n', stf.ray.collimation.fieldWidth);
-                            fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadY = %d mm\n', stf.ray.collimation.fieldWidth);
+                            fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadX = %d mm\n', stf(1).ray.collimation.fieldWidth);
+                            fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadY = %d mm\n', stf(1).ray.collimation.fieldWidth);
                         else
                             % Set some default value
                             fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadX = %d mm\n', 30);
