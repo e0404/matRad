@@ -53,21 +53,18 @@ modelName      = 'none';
 pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 
 % retrieve scenarios for dose calculation and optimziation
-pln.multScen = matRad_multScen(ct,'nomScen');
+pln.multScen = matRad_NominalScenario(ct);
 % dose calculation settings
 pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
 
-%%
-pln.propMC.engine = 'TOPAS';
-pln.propMC.beamProfile = 'phasespace';
-pln.propMC.externalCalculation =true;
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
 
 %% Dose Calculation
-dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+
+dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 
 %% Inverse Optimization for IMRT
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
@@ -88,8 +85,11 @@ figure,
 imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet)
 
 %% Dose Calculation
-pln.propMC.numHistories = 1e8;
-resultGUI_MC = matRad_calcPhotonDoseMC(ct,stf,pln,cst,1);
+%resultGUI_MC = matRad_calcDoseInfluence(ct,cst,stf,pln);
+pln.propDoseCalc.engine = 'TOPAS';
+pln.propDoseCalc.beamProfile = 'phasespace';
+pln.propDoseCalc.externalCalculation =true;
+resultGUI_MC = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
 
 %% readout
 %foldername = 'FolderName';
