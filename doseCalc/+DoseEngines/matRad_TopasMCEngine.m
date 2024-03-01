@@ -1798,7 +1798,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                         fprintf(fileID,num2str([dataTOPAS.energySpread]));
                         fprintf(fileID,'\n');
 
-                        if isfield(stf.ray, 'collimation')
+                        if isfield([stf.ray], 'collimation')
                             % Use field width for now
                             fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadX = %d mm\n', stf(1).ray.collimation.fieldWidth);
                             fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadY = %d mm\n', stf(1).ray.collimation.fieldWidth);
@@ -2106,7 +2106,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % Write material converter
             switch obj.materialConverter.mode
                 case 'RSP' % Relative stopping power converter
-                    rspHlut = matRad_loadHLUT(ct,pln);
+                    rspHlut = matRad_loadHLUT(ct,obj.radiationMode);
                     min_HU = rspHlut(1,1);
                     max_HU = rspHlut(end,1);
 
