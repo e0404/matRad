@@ -50,8 +50,9 @@ resultGUIRef= matRad_fluenceOptimization(dij,cst,pln);
 %% Proton Optimization 2 beam Bladder overdosing dirty Dose with penalty 100
 clear("dij","stf")
 
+% instead of dirtyDose you can try LETxDose Objectives, just use LETxDose instead of DirtyDose inside the brackets, but for both "DirtyDose"
 cst{8,6}{2} = struct(DirtyDoseObjectives.matRad_SquaredOverdosingDirtyDose(100,0));
-
+ 
 % Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
 
