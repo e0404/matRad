@@ -97,7 +97,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             ... % This variable is only used for physicalDose, since for now it adds unnecessary computation time
             'reportQuantity',{{'Sum','Standard_Deviation'}});         % 'reportQuantity',{{'Sum'}});
         scorerRBEmodelOrderForEvaluation = {'MCN','WED','LEM','libamtrack'};
-        bioParam = struct( 'PrescribedDose',2,...
+        bioParameters = struct( 'PrescribedDose',2,...
             'AlphaX',0.1,...
             'BetaX',0.05,...
             'SimultaneousExposure','"True"');
@@ -207,7 +207,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
             % prepare biological parameters
             if ~isempty(obj.prescribedDose)
-                obj.bioParam.PrescribedDose = obj.prescribedDose;
+                obj.bioParameters.PrescribedDose = obj.prescribedDose;
             end
             if isempty(obj.radiationMode)
                 obj.radiationMode = machine.meta.radiationMode;
@@ -228,13 +228,13 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 end
 
                 % Get alpha beta parameters from bioParam struct
-                for i = 1:length(obj.bioParam.AvailableAlphaXBetaX)
-                    if ~isempty(strfind(lower(obj.bioParam.AvailableAlphaXBetaX{i,2}),'default'))
+                for i = 1:length(obj.bioParameters.AvailableAlphaXBetaX)
+                    if ~isempty(strfind(lower(obj.bioParameters.AvailableAlphaXBetaX{i,2}),'default'))
                         break
                     end
                 end
-                obj.bioParam.AlphaX = obj.bioParam.AvailableAlphaXBetaX{5,1}(1);
-                obj.bioParam.BetaX = obj.bioParam.AvailableAlphaXBetaX{5,1}(2);
+                obj.bioParameters.AlphaX = obj.bioParameters.AvailableAlphaXBetaX{5,1}(1);
+                obj.bioParameters.BetaX = obj.bioParameters.AvailableAlphaXBetaX{5,1}(2);
 
             end
             if obj.scorer.LET
@@ -415,11 +415,10 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 this.scorer.calcDij = true;
                 this.numOfRuns = 1;
             end
-
             % set nested folder structure if external calculation is turned on (this will put new simulations in subfolders)
             if this.externalCalculation
-                this.workingDir = [this.thisFolder filesep 'MCrun' filesep];
-                this.workingDir = [this.workingDir pln.radiationMode,'_',pln.machine,'_',datestr(now, 'dd-mm-yy')];
+                this.workingDir = [this.topasFolder filesep 'MCrun' filesep];
+                this.workingDir = [this.workingDir stf(1).radiationMode,'_',stf(1).machine,'_',datestr(now, 'dd-mm-yy')];
             end
 
             %% Initialize dose grid and dij
@@ -429,7 +428,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
             %% sending data to topas
             for i = 1:size(stf,2)
-                stf(i).SCD = machine.meta.SCD;
+                stf(i).SCD = this.machine.meta.SCD;
             end
             % Collect given weights
             if this.calcDoseDirect
@@ -1219,11 +1218,11 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
                 % write biological scorer components: dose parameters
                 matRad_cfg.dispDebug('Writing Biologial Scorer components.\n');
-                fprintf(fID,'d:Sc/PrescribedDose = %.4f Gy\n',obj.bioParam.PrescribedDose);
-                fprintf(fID,'b:Sc/SimultaneousExposure = %s\n',obj.bioParam.SimultaneousExposure);
-                fprintf(fID,'d:Sc/AlphaX = %.4f /Gy\n',obj.bioParam.AlphaX);
-                fprintf(fID,'d:Sc/BetaX = %.4f /Gy2\n',obj.bioParam.BetaX);
-                fprintf(fID,'d:Sc/AlphaBetaX = %.4f Gy\n',obj.bioParam.AlphaX/obj.bioParam.BetaX);
+                fprintf(fID,'d:Sc/PrescribedDose = %.4f Gy\n',obj.bioParameters.PrescribedDose);
+                fprintf(fID,'b:Sc/SimultaneousExposure = %s\n',obj.bioParameters.SimultaneousExposure);
+                fprintf(fID,'d:Sc/AlphaX = %.4f /Gy\n',obj.bioParameters.AlphaX);
+                fprintf(fID,'d:Sc/BetaX = %.4f /Gy2\n',obj.bioParameters.BetaX);
+                fprintf(fID,'d:Sc/AlphaBetaX = %.4f Gy\n',obj.bioParameters.AlphaX/obj.bioParameters.BetaX);
 
                 % Update MCparam.tallies with processed scorer
                 for i = 1:length(obj.scorer.RBE_model)
@@ -1799,10 +1798,10 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                         fprintf(fileID,num2str([dataTOPAS.energySpread]));
                         fprintf(fileID,'\n');
 
-                        if isfield(pln.propStf, 'collimation')
+                        if isfield(stf.ray, 'collimation')
                             % Use field width for now
-                            fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadX = %d mm\n', pln.propStf.collimation.fieldWidth);
-                            fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadY = %d mm\n', pln.propStf.collimation.fieldWidth);
+                            fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadX = %d mm\n', stf.ray.collimation.fieldWidth);
+                            fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadY = %d mm\n', stf.ray.collimation.fieldWidth);
                         else
                             % Set some default value
                             fprintf(fileID,'d:So/PencilBeam/BeamPositionSpreadX = %d mm\n', 30);
@@ -1816,10 +1815,10 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                         fprintf(fileID,num2str([dataTOPAS.energySpread]));
                         fprintf(fileID,'\n');
 
-                        if isfield(pln.propStf, 'collimation')
+                        if  isfield([stf.ray],'collimation')
                             % Use field width for now
-                            fprintf(fileID,'d:So/PencilBeam/BeamPositionCutoffX = %d mm\n', pln.propStf.collimation.fieldWidth/2);
-                            fprintf(fileID,'d:So/PencilBeam/BeamPositionCutoffY = %d mm\n', pln.propStf.collimation.fieldWidth/2);
+                            fprintf(fileID,'d:So/PencilBeam/BeamPositionCutoffX = %d mm\n', stf(1).ray.collimation.fieldWidth/2);
+                            fprintf(fileID,'d:So/PencilBeam/BeamPositionCutoffY = %d mm\n', stf(1).ray.collimation.fieldWidth/2);
                         else
                             % Set some default value
                             fprintf(fileID,'d:So/PencilBeam/BeamPositionCutoffX = %d mm\n', 15);
@@ -1834,7 +1833,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                         if obj.externalCalculation
                             matRad_cfg.dispWarning(['External calculation and phaseSpace selected, manually place ' obj.infilenames.phaseSpaceSourcePhotons '.header and ' obj.infilenames.phaseSpaceSourcePhotons  '.phsp into your simulation directory.']);
                         else
-                            if length(dir([obj.thisFolder filesep 'beamSetup' filesep 'phasespace' filesep obj.infilenames.phaseSpaceSourcePhotons '*'])) < 2
+                            if length(dir([obj.topasFolder filesep 'beamSetup' filesep 'phasespace' filesep obj.infilenames.phaseSpaceSourcePhotons '*'])) < 2
                                 matRad_cfg.dispError([phaseSpaceFileName ' header or phsp file could not be found in beamSetup/phasespace folder.']);
                             end
                         end
@@ -1903,7 +1902,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 % Write MLC if available
                 if isfield(stf(beamIx).ray, 'shapes')
                     SCD = stf(beamIx).SCD;
-                    fname = fullfile(obj.thisFolder,obj.infilenames.beam_mlc);
+                    fname = fullfile(obj.topasFolder,obj.infilenames.beam_mlc);
                     TOPAS_mlcSetup = fileread(fname);
                     fprintf(fileID,'%s\n',TOPAS_mlcSetup);
                     [numOfLeaves,leafTimes]=size([stf(beamIx).ray.shapes(:).leftLeafPos]); %there are #numOfLeaves leaves and #leafTimes times/shapes
@@ -1915,7 +1914,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     fprintf(fileID,'d:Ge/MultiLeafCollimatorA/Thickness         = %f cm\n',8);
                     fprintf(fileID,'d:Ge/MultiLeafCollimatorA/Length            = %f  cm\n',15);
                     fprintf(fileID,'dv:Ge/MultiLeafCollimatorA/Widths           = %i ', numOfLeaves+2);
-                    fprintf(fileID, '%f ', [200, pln.propStf.collimation.leafWidth*ones(1,numOfLeaves)*SCD./SAD , 200]);
+                    fprintf(fileID, '%f ', [200,  stf(1).ray.collimation.leafWidth*ones(1,numOfLeaves)*SCD./SAD , 200]);
                     fprintf(fileID,' mm \n');
                     fprintf(fileID,'dv:Ge/MultiLeafCollimatorA/XPlusLeavesOpen  = %i ',numOfLeaves+2);
                     for i = 0:numOfLeaves+1
@@ -2354,6 +2353,41 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             save(fullfile(obj.workingDir,'MCparam.mat'),'MCparam','-v7');
         end
 
+    end
+    methods(Static)
+           function [available,msg] = isAvailable(pln,machine)   
+            % see superclass for information
+            
+            msg = [];
+            available = false;
+
+            if nargin < 2
+                machine = matRad_loadMachine(pln);
+            end
+
+            %checkBasic
+            try
+                checkBasic = isfield(machine,'meta') && isfield(machine,'data');
+
+                %check modality
+                checkModality = any(strcmp(DoseEngines.matRad_TopasMCEngine.possibleRadiationModes, machine.meta.radiationMode));
+                
+                preCheck = checkBasic && checkModality;
+
+                if ~preCheck
+                    return;
+                end
+            catch
+                msg = 'Your machine file is invalid and does not contain the basic field (meta/data/radiationMode)!';
+                return;
+            end
+            
+            %For the time being, just use the generic machine, will need to
+            %have a specific one later on
+            available = any(strcmp(pln.machine,{'Generic'}));
+            msg = 'Machine check is currently not reliable';
+
+           end
     end
 end
 
