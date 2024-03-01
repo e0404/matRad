@@ -3,6 +3,7 @@ matRad_rc;
 clear("dij","pln","resultGUI","ct","cst","stf")
 load("PROSTATE.mat")
 
+% Create a margin
 cube = zeros(183,183,90);
 cube(cst{6,4}{1}) = 1;
 vResolution = ct.resolution;
@@ -20,8 +21,9 @@ cst{11,5}    = cst{3,5};
 
 cst{11,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(300,60)); 
 
-cst{6,6}{2} = struct(mLETDoseObjectives.matRad_SquaredUnderdosingmLETDose(100,20));
+cst{6,6}{2} = struct(LETxDoseObjectives.matRad_SquaredUnderdosingLETxDose(100,20));
 
+% create a second margin
 % cube = zeros(183,183,90);
 % cube(cst{4,4}{1}) = 1;
 % mVOIEnlarged = matRad_addMargin(cube,cst,vResolution,vMargin);
@@ -76,6 +78,7 @@ pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter
 pln.propOpt.runDAO        = 0;
 pln.propSeq.runSequencing = 0;
 
+% create a third margin
 % cube = zeros(183,183,90);
 % sub2ind(pln.propStf.isoCenter(1,1),pln.propStf.isoCenter(1,2),pln.propStf.isoCenter(1,3));
 % 
@@ -114,9 +117,9 @@ dij = matRad_calcParticleDose(ct,stf,pln,cst);
 dij = matRad_calcDirtyDose(2,dij);
 
 % Inverse Optimization for IMPT
-resultGUI= matRad_fluenceOptimization(dij,cst,pln);
-resultGUImLETDose = resultGUI;
+resultGUI_LETxD = matRad_fluenceOptimization(dij,cst,pln);
 
+% by changing the name of your cube, you can plot your cube
 % cube = resultGUIRef.RBExD;
 % plane = 3;
 % slice = 34;
@@ -141,7 +144,7 @@ resultGUImLETDose = resultGUI;
 % minimumRef = min(resultGUIRef.RBExD(cst{9,4}{1}));
 
 %% Proton Optimization 2 beam Body mean dirty Dose with penalty 100 dmax 20
-clear("dij","pln","resultGUI","ct","cst","stf")
+clear("dij","cst","stf")
 
 load("PROSTATE.mat")
 
@@ -202,35 +205,6 @@ cst{14,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(300,30));
 cst{9,6}{2} = struct(DoseObjectives.matRad_SquaredOverdosing(300,maximumRef));
 cst{6,6}{2} = struct(DirtyDoseObjectives.matRad_SquaredUnderdosingDirtyDose(10,10));
 
-% Define radiation modality
-pln.radiationMode = 'protons';        
-pln.machine       = 'Generic';
-
-% Calculate LET
-pln.propDoseCalc.calcLET = 1;
-
-% Set some beam parameters
-pln.numOfFractions        = 30;
-pln.propStf.gantryAngles  = [90 120 240 270];
-pln.propStf.couchAngles   = [0 0 0 0];
-pln.propStf.bixelWidth    = 5;
-pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
-pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
-pln.propOpt.runDAO        = 0;
-pln.propSeq.runSequencing = 0;
-
-% Define the flavor of optimization
-quantityOpt   = 'RBExD'; 
-modelName     = 'constRBE'; %MCN for protons, HEL for helium, LEM for carbon
-
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
-pln.multScen = matRad_multScen(ct,'nomScen');
-
-% dose calculation settings
-pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
-pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
-pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
-
 % Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
 
@@ -241,9 +215,9 @@ dij = matRad_calcParticleDose(ct,stf,pln,cst);
 dij = matRad_calcDirtyDose(2,dij);
 
 % Inverse Optimization for IMPT
-resultGUI= matRad_fluenceOptimization(dij,cst,pln);
-resultTarget = resultGUI;
+resultGUI_Target = matRad_fluenceOptimization(dij,cst,pln);
 
+% you can plot your result by changing the name to the name of your resultGUI if there is any difference
 cube = resultTarget.RBExD;
 plane = 3;
 slice = 34;
