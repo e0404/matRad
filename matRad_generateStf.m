@@ -138,7 +138,9 @@ end
 % Convert linear indices to 3D voxel coordinates
 [coordsY_vox, coordsX_vox, coordsZ_vox] = ind2sub(ct.cubeDim,V);
 
-
+% prepare structures necessary for particles
+machine = matRad_loadMachine(pln);
+SAD = machine.meta.SAD;
 
 % calculate rED or rSP from HU
 ct = matRad_calcWaterEqD(ct, pln);
@@ -171,6 +173,7 @@ for i = 1:length(pln.propStf.gantryAngles)
     stf(i).couchAngle    = pln.propStf.couchAngles(i);
     stf(i).bixelWidth    = pln.propStf.bixelWidth;
     stf(i).radiationMode = pln.radiationMode;
+    stf(i).machine       = pln.machine;
     stf(i).SAD           = SAD;
     stf(i).isoCenter     = pln.propStf.isoCenter(i,:);
         

@@ -29,8 +29,14 @@ function [ dose ] = matRad_interpDicomDoseCube( ct, currDose )
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % read information out of the RT file
+
+matRad_cfg = MatRad_Config.instance();
+matRad_checkEnvDicomRequirements(matRad_cfg.env);
+
+
 dosefile = currDose{1};
-if verLessThan('matlab','9')
+
+if matRad_cfg.isOctave || verLessThan('matlab','9')
     doseInfo = dicominfo(dosefile);
 else
     doseInfo = dicominfo(dosefile,'UseDictionaryVR',true);

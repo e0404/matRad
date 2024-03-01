@@ -48,8 +48,10 @@ pln.machine       = 'Generic';
 %%
 % for particles it is possible to also calculate the LET disutribution
 % alongside the physical dose. Therefore you need to activate the
-% corresponding option during dose calculcation
+% corresponding option during dose calculcation. We also explicitly say to
+% use the Hong Pencil Beam Algorithm
 pln.propDoseCalc.calcLET = 0;
+pln.propDoseCalc.engine = 'HongPB';
                                        
 %%
 % Now we have to set the remaining plan parameters.
@@ -60,7 +62,7 @@ pln.propStf.bixelWidth    = 5;
 pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 pln.propOpt.runDAO        = 0;
-pln.propOpt.runSequencing = 0;
+pln.propSeq.runSequencing = 0;
 
 % Define the flavor of biological optimization for treatment planning along
 % with the quantity that should be used for optimization.
@@ -87,7 +89,7 @@ stf = matRad_generateStf(ct,cst,pln);
 % Lets generate dosimetric information by pre-computing dose influence 
 % matrices for unit beamlet intensities. Having dose influences available 
 % allows for subsequent inverse optimization. 
-dij = matRad_calcParticleDose(ct,stf,pln,cst);
+dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 
 %% Inverse Optimization for IMPT
 % The goal of the fluence optimization is to find a set of bixel/spot 

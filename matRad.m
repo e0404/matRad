@@ -31,8 +31,8 @@ pln.machine         = 'Generic';
 
 % beam geometry settings
 pln.propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln.propStf.gantryAngles    = [0:72:359]; % [?] ;
-pln.propStf.couchAngles     = [0 0 0 0 0]; % [?] ; 
+pln.propStf.gantryAngles    = [0:72:359]; % [°] ;
+pln.propStf.couchAngles     = [0 0 0 0 0]; % [°] ; 
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 % optimization settings
@@ -56,6 +56,14 @@ pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 % retrieve scenarios for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,scenGenType);
 
+% optimization settings
+pln.propOpt.optimizer       = 'IPOPT';
+% pln.propOpt.bioOptimization = 'none'; % none: physical optimization;             const_RBExD; constant RBE of 1.1;
+%                                       % LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose
+pln.propOpt.runDAO          = false;  % 1/true: run DAO, 0/false: don't / will be ignored for particles
+pln.propSeq.runSequencing   = true;  % true: run sequencing, false: don't / will be ignored for particles and also triggered by runDAO below
+
+
 %% initial visualization and change objective function settings if desired
 matRadGUI
 
@@ -63,23 +71,14 @@ matRadGUI
 stf = matRad_generateStf(ct,cst,pln);
 
 %% dose calculation
-if strcmp(pln.radiationMode,'photons')
-    dij = matRad_calcPhotonDose(ct,stf,pln,cst);
-    %dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst);
-elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'helium') || strcmp(pln.radiationMode,'carbon')
-    dij = matRad_calcParticleDose(ct,stf,pln,cst);
-    %dij = matRad_calcParticleDoseMC(ct,stf,pln,cst); 
-end
+dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 
 %% inverse planning for imrt
 resultGUI  = matRad_fluenceOptimization(dij,cst,pln);
 
 %% sequencing
-if strcmp(pln.radiationMode,'photons') && (pln.propOpt.runSequencing || pln.propOpt.runDAO)
-    %resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,5);
-    %resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,5);
-    resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,5);
-end
+resultGUI = matRad_sequencing(resultGUI,stf,dij,pln);
+
 
 %% DAO
 if strcmp(pln.radiationMode,'photons') && pln.propOpt.runDAO

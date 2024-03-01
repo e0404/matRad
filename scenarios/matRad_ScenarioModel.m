@@ -1,4 +1,4 @@
-classdef matRad_ScenarioModel < handle
+classdef (Abstract) matRad_ScenarioModel < handle
 %  matRad_ScenarioModel
 %  This is an abstract interface class to define Scenario Models for use in
 %  robust treatment planning and uncertainty analysis.
@@ -30,7 +30,9 @@ classdef matRad_ScenarioModel < handle
         rangeRelSD  = 3.5;                % given in %
         rangeAbsSD  = 1;                  % given in [mm]
         shiftSD     = [2.25 2.25 2.25];   % given in [mm]
-        wcSigma     = 1;                  % Multiplier to compute the worst case / maximum shifts    
+        wcSigma     = 1;                  % Multiplier to compute the worst case / maximum shifts
+
+        phaseProbability = 1;             % Probability of being in a phase of a 4D CT (vector with probability value for each phase)       
     end
 
     properties (Abstract,SetAccess=protected)
@@ -43,7 +45,6 @@ classdef matRad_ScenarioModel < handle
    
     properties (SetAccess = protected)
         numOfCtScen;           % total number of CT scenarios
-
 
         % these parameters will be filled according to the choosen scenario type
         isoShift;
@@ -71,6 +72,8 @@ classdef matRad_ScenarioModel < handle
             else
                 this.numOfCtScen = ct.numOfCtScen;
             end
+
+            this.phaseProbability = ones(this.numOfCtScen,1)./this.numOfCtScen; %Equal probability to be in each phase of the 4D ct
             
             %TODO: We could do this here automatically in the constructur, but
             %Octave 5 has a bug here and throws an error
@@ -128,7 +131,16 @@ classdef matRad_ScenarioModel < handle
             this.updateScenarios();
         end
 
-           
+        function set.phaseProbability(this,phaseProbability)
+            valid = isnumeric(phaseProbability) && iscolumn(phaseProbability) && all(phaseProbability <= 1) && all(phaseProbability >= 0);
+            if ~valid
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Invalid value for phaseProbability! Needs to be a valid column vector of probabilities [0,1]!');
+            end
+            this.phaseProbability = phaseProbability;
+            this.updateScenarios();
+        end
+
 
         function scenarios = updateScenarios(this)            
             %This function will always update the scenarios given the
@@ -148,6 +160,21 @@ classdef matRad_ScenarioModel < handle
             newInstance.scenProb            = this.scenProb(scenIdx);
             newInstance.scenWeight          = this.scenWeight(scenIdx);
             newInstance.numOfCtScen         = this.numOfCtScen;
+        end
+        
+        function scenIx = sub2scenIx(this,ctScen,shiftScen,rangeShiftScen)
+            %Returns linear index in the scenario cell array from scenario
+            %subscript indices
+            if ~isvector(this.scenMask)
+                scenIx = sub2ind(size(this.scenMask),ctScen,shiftScen,rangeShiftScen);
+            else
+                scenIx = ctScen;
+            end
+        end
+
+        function scenNum = scenNum(this,scenIx)
+            %gets number of scneario from linear scenario index
+            scenNum = find(find(this.scenMask) == scenIx);
         end
         
         %% Deprecated functions / properties
@@ -174,7 +201,6 @@ classdef matRad_ScenarioModel < handle
             matRad_cfg.dispDeprecationWarning('The property wcFactor of the scenario class will soon be deprecated!');
             this.wcSigma = value;
         end
-
 
     end
 

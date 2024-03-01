@@ -67,7 +67,7 @@ pln.propStf.bixelWidth    = 6;
 pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 pln.propOpt.runDAO        = 0;
-pln.propOpt.runSequencing = 0;
+pln.propSeq.runSequencing = 0;
 
 % retrieve bio model parameters
 pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
@@ -100,7 +100,7 @@ display(stf.ray(100));
 display(stf.ray(100).energy);
 
 %% Dose Calculation
-dij = matRad_calcParticleDose(ct,stf,pln,cst);
+dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 
 %% Inverse Optimization  for IMPT based on RBE-weighted dose
 % The goal of the fluence optimization is to find a set of bixel/spot 
