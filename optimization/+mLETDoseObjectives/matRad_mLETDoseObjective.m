@@ -1,8 +1,8 @@
-classdef (Abstract) matRad_mLETDoseObjective < matRad_DoseOptimizationFunction
-% matRad_mLETDoseObjective: Interface for optimization objectives
+classdef (Abstract) matRad_LETxDoseObjective < matRad_DoseOptimizationFunction
+% matRad_LETxDoseObjective: Interface for optimization objectives
 %   This abstract base class provides the structure of optimization
-%   objectives like mean mLETDose, squared deviation, EUmLETDose, mLETDose-volume etc.
-%   Implementations can be found in the mLETDoseObjectives package
+%   objectives like mean LETxDose, squared deviation, EULETxDose, LETxDose-volume etc.
+%   Implementations can be found in the LETxDoseObjectives package
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
@@ -35,13 +35,13 @@ classdef (Abstract) matRad_mLETDoseObjective < matRad_DoseOptimizationFunction
     methods %(Abstract)
        
         %returns the objective function value for the given LET vector. Needs to be implemented in sub-classes.
-        function fmLETDose       = computemLETDoseObjectiveFunction(obj,mLETDose)
+        function fLETxDose       = computeLETxDoseObjectiveFunction(obj,LETxDose)
             error('Function needs to be implemented!');
         end
         
         
         %returns the LET-gradient for the given LET vector. Needs to be implemented in sub-classes.
-        function fmLETDoseGrad   = computemLETDoseObjectiveGradient(obj,mLETDose)
+        function fLETxDoseGrad   = computeLETxDoseObjectiveGradient(obj,LETxDose)
             error('Function needs to be implemented!');
         end
          
@@ -50,7 +50,7 @@ classdef (Abstract) matRad_mLETDoseObjective < matRad_DoseOptimizationFunction
     methods (Access = public)
        
         % constructor of matRad_LETObjective
-        function obj = matRad_mLETDoseObjective(varargin)
+        function obj = matRad_LETxDoseObjective(varargin)
             %default initialization from struct (parameters & penalty)
             obj@matRad_DoseOptimizationFunction(varargin{:});
         end

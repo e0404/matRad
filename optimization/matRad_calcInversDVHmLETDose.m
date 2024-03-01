@@ -1,15 +1,15 @@
-function mLETDose = matRad_calcInversDVHmLETDose(volume,mLETDoseVec)
-% matRad inverse DVH mLETDose (mLETDose Volume Histogram) calculation
+function LETxDose = matRad_calcInversDVHLETxDose(volume,LETxDoseVec)
+% matRad inverse DVH LETxDose (LETxDose Volume Histogram) calculation
 % 
 % call
-%   dose = matRad_calcInversDVHmLETDose(volume,mLETDoseVec)
+%   dose = matRad_calcInversDVHLETxDose(volume,LETxDoseVec)
 %
 % input
-%   volume:     rel volume of structure
-%   mLETDoseVec:    mLETDose vector of specific structure
+%   volume:         rel volume of structure
+%   LETxDoseVec:    LETxDose vector of specific structure
 %
 % output
-%   mLETDose:       mLETDose that corresponds to rel volume
+%   LETxDose:       LETxDose that corresponds to rel volume
 %
 % References
 %   -
@@ -27,11 +27,11 @@ function mLETDose = matRad_calcInversDVHmLETDose(volume,mLETDoseVec)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% sort mLETDose values
-mLETDosePoints = sort(mLETDoseVec,'descend');
+% sort LETxDose values
+LETxDosePoints = sort(LETxDoseVec,'descend');
 
-ix = max([1 ceil(volume*numel(mLETDosePoints))]);
+ix = max([1 ceil(volume*numel(LETxDosePoints))]);
 
-mLETDose = mLETDosePoints(ix);
+LETxDose = LETxDosePoints(ix);
 
 end

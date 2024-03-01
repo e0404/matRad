@@ -57,12 +57,12 @@ if ~isempty(optiProb.dirtyDoseBP)
     [dDExp,dDOmega] = optiProb.dirtyDoseBP.GetResultProb();
 end
 
-if ~isempty(optiProb.mLETDoseBP)
-    optiProb.mLETDoseBP.compute(dij,w);
-    dLD = optiProb.mLETDoseBP.GetResult();
+if ~isempty(optiProb.LETxDoseBP)
+    optiProb.LETxDoseBP.compute(dij,w);
+    LxD = optiProb.LETxDoseBP.GetResult();
 
     % also get probabilistic quantities (nearly no overhead if empty)
-    [dLDExp,dLDOmega] = optiProb.mLETDoseBP.GetResultProb();
+    [LxDExp,LxDOmega] = optiProb.LETxDoseBP.GetResultProb();
 end
 
 if ~isempty(optiProb.LETdBP)
@@ -357,7 +357,7 @@ for  i = 1:size(cst,1)
                         f = f + fMax;
                 end
             end
-            if ~isempty(optiProb.mLETDoseBP) && isa(objective,'mLETDoseObjectives.matRad_mLETDoseObjective')
+            if ~isempty(optiProb.LETxDoseBP) && isa(objective,'LETxDoseObjectives.matRad_LETxDoseObjective')
 
                 % retrieve the robustness type
                 robustness = objective.robustness;
@@ -365,8 +365,8 @@ for  i = 1:size(cst,1)
                 switch robustness
                     case 'none' % if conventional opt: just sum objectives of nominal dirty dose
                         for ixScen = useNominalCtScen
-                            d_i = dLD{ixScen}(cst{i,4}{useScen(ixScen)});
-                            f = f + objective.penalty * objective.computemLETDoseObjectiveFunction(d_i);
+                            d_i = LxD{ixScen}(cst{i,4}{useScen(ixScen)});
+                            f = f + objective.penalty * objective.computeLETxDoseObjectiveFunction(d_i);
                         end
 
                     case 'STOCH' % if prob opt: sum up expectation value of objectives
@@ -374,23 +374,23 @@ for  i = 1:size(cst,1)
                             ixScen = useScen(s);
                             ixContour = contourScen(s);
 
-                            d_i = dLD{ixScen}(cst{i,4}{ixContour});
+                            d_i = LxD{ixScen}(cst{i,4}{ixContour});
 
-                            f   = f + scenProb(s) * objective.penalty*objective.computemLETDoseObjectiveFunction(d_i);
+                            f   = f + scenProb(s) * objective.penalty*objective.computeLETxDoseObjectiveFunction(d_i);
 
                         end
 
                     case 'PROB' % if prob opt: sum up expectation value of objectives
 
-                        d_i = dLDExp{1}(cst{i,4}{1});
+                        d_i = LxDExp{1}(cst{i,4}{1});
 
-                        f   = f +  objective.penalty*objective.computemLETDoseObjectiveFunction(d_i);
+                        f   = f +  objective.penalty*objective.computeLETxDoseObjectiveFunction(d_i);
 
                         p = objective.penalty/numel(cst{i,4}{1});
 
                         % only one variance term per VOI
                         if j == 1
-                            f = f + p * w' * dLDOmega{i,1};
+                            f = f + p * w' * LxDOmega{i,1};
                         end
 
                     case 'VWWC'  % voxel-wise worst case - takes minimum dose in TARGET and maximum in OAR
@@ -403,7 +403,7 @@ for  i = 1:size(cst,1)
 
                         % prepare min/max dose vector
                         if ~exist('d_tmp','var')
-                            d_tmp = [dLD{useScen}];
+                            d_tmp = [LxD{useScen}];
                         end
 
                         d_Scen = d_tmp(cst{i,4}{contourIx},:);
@@ -417,7 +417,7 @@ for  i = 1:size(cst,1)
                             d_i = d_min;
                         end
 
-                        f = f + objective.penalty*objective.computemLETDoseObjectiveFunction(d_i);
+                        f = f + objective.penalty*objective.computeLETxDoseObjectiveFunction(d_i);
 
                     case 'VWWC_INV'  %inverse voxel-wise conformitiy - consider the maximum and minimum dose in the target and optimize the dose conformity
                         contourIx = unique(contourScen);
@@ -429,7 +429,7 @@ for  i = 1:size(cst,1)
 
                         % prepare min/max dose vector
                         if ~exist('d_tmp','var')
-                            d_tmp = [dLD{useScen}];
+                            d_tmp = [LxD{useScen}];
                         end
 
                         d_Scen = d_tmp(cst{i,4}{contourIx},:);
@@ -442,7 +442,7 @@ for  i = 1:size(cst,1)
                             d_i = d_max;
                         end
 
-                        f = f + objective.penalty*objective.computemLETDoseObjectiveFunction(d_i);
+                        f = f + objective.penalty*objective.computeLETxDoseObjectiveFunction(d_i);
 
                     case 'COWC'  % composite worst case consideres ovarall the worst objective function value
 
@@ -450,9 +450,9 @@ for  i = 1:size(cst,1)
                             ixScen = useScen(s);
                             ixContour = contourScen(s);
 
-                            d_i = dLD{ixScen}(cst{i,4}{ixContour});
+                            d_i = LxD{ixScen}(cst{i,4}{ixContour});
 
-                            f_COWC(s) = f_COWC(s) + objective.penalty*objective.computemLETDoseObjectiveFunction(d_i);
+                            f_COWC(s) = f_COWC(s) + objective.penalty*objective.computeLETxDoseObjectiveFunction(d_i);
                         end
 
                     case 'OWC'   % objective-wise worst case considers the worst individual objective function value
@@ -463,8 +463,8 @@ for  i = 1:size(cst,1)
                             ixScen    = useScen(s);
                             ixContour = contourScen(s);
 
-                            d_i = dLD{ixScen}(cst{i,4}{ixContour});
-                            f_OWC(s) = objective.penalty*objective.computemLETDoseObjectiveFunction(d_i);
+                            d_i = LxD{ixScen}(cst{i,4}{ixContour});
+                            f_OWC(s) = objective.penalty*objective.computeLETxDoseObjectiveFunction(d_i);
                         end
 
                         % compute the maximum objective function value

@@ -1,7 +1,7 @@
-classdef matRad_ExpoMeanmLETDose < mLETDoseObjectives.matRad_mLETDoseObjective
-% matRad_ExpoMeanmLETDose implements a penalized exponential mean mLETDose objective
-% f = ((sum(mLETDose)/N)-mLETDoseRef)^k
-%   See matRad_mLETDoseObjective for interface description
+classdef matRad_ExpoMeanLETxDose < LETxDoseObjectives.matRad_LETxDoseObjective
+% matRad_ExpoMeanLETxDose implements a penalized exponential mean LETxDose objective
+% f = ((sum(LETxDose)/N)-LETxDoseRef)^k
+%   See matRad_LETxDoseObjective for interface description
 %
 % References
 %   matRad_MeanDose
@@ -21,9 +21,9 @@ classdef matRad_ExpoMeanmLETDose < mLETDoseObjectives.matRad_mLETDoseObjective
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (Constant)
-        name = 'Exponential Mean mLETDose';
-        parameterNames = {'mLETDose^{ref}','k'};       % k is the exponent of the mean function
-        parameterTypes = {'mLETDose','numeric'};
+        name = 'Exponential Mean LETxDose';
+        parameterNames = {'LETxDose^{ref}','k'};       % k is the exponent of the mean function
+        parameterTypes = {'LETxDose','numeric'};
     end
     
     properties
@@ -32,7 +32,7 @@ classdef matRad_ExpoMeanmLETDose < mLETDoseObjectives.matRad_mLETDoseObjective
     end
     
     methods 
-        function obj = matRad_ExpoMeanmLETDose(penalty,mLETDoseRef,k)
+        function obj = matRad_ExpoMeanLETxDose(penalty,LETxDoseRef,k)
            
             % if we have a struct in first argument
             if nargin == 1 && isstruct(penalty)
@@ -44,15 +44,15 @@ classdef matRad_ExpoMeanmLETDose < mLETDoseObjectives.matRad_mLETDoseObjective
             end
             
             % Call Superclass Constructor (for struct initialization)
-            obj@mLETDoseObjectives.matRad_mLETDoseObjective(inputStruct);
+            obj@LETxDoseObjectives.matRad_LETxDoseObjective(inputStruct);
             
             % now handle initialization from other parameters
             if ~initFromStruct
                 if nargin == 3 && isscalar(k)
                     obj.parameters{2} = k;
                 end
-                if nargin >= 2 && isscalar(mLETDoseRef)
-                    obj.parameters{1} = mLETDoseRef;
+                if nargin >= 2 && isscalar(LETxDoseRef)
+                    obj.parameters{1} = LETxDoseRef;
                 end
                 
                 if nargin >= 1 && isscalar(penalty)
@@ -61,7 +61,7 @@ classdef matRad_ExpoMeanmLETDose < mLETDoseObjectives.matRad_mLETDoseObjective
             end
                    
             %% Downwards compatability / set default values
-            % TODO: maybe move into set method for parameters
+            
             if numel(obj.parameters) < 1
                 obj.parameters{1} = 0;
             end
@@ -71,24 +71,24 @@ classdef matRad_ExpoMeanmLETDose < mLETDoseObjectives.matRad_mLETDoseObjective
             end
         end
         %% Calculates the Objective Function value
-        function fmLETDose = computemLETDoseObjectiveFunction(obj,mLETDose)
-            fmLETDose =  obj.objectiveExpoDiff(mLETDose);
+        function fLETxDose = computeLETxDoseObjectiveFunction(obj,LETxDose)
+            fLETxDose =  obj.objectiveExpoDiff(LETxDose);
         end
         
         %% Calculates the Objective Function gradient
-        function fmLETDoseGrad   = computemLETDoseObjectiveGradient(obj,mLETDose)
-            fmLETDoseGrad = obj.gradientExpoDiff(mLETDose);
+        function fLETxDoseGrad   = computeLETxDoseObjectiveGradient(obj,LETxDose)
+            fLETxDoseGrad = obj.gradientExpoDiff(LETxDose);
         end
     end
      methods (Access = protected)
-        function fmLETDose = objectiveExpoDiff(obj,mLETDose)
+        function fLETxDose = objectiveExpoDiff(obj,LETxDose)
             % Formula for the Objective Function value
-            fmLETDose = (mean(mLETDose(:)) - obj.parameters{1})^obj.parameters{2}; 
+            fLETxDose = (mean(LETxDose(:)) - obj.parameters{1})^obj.parameters{2}; 
         end
 
-        function fmLETDoseGrad = gradientExpoDiff(obj,mLETDose)
+        function fLETxDoseGrad = gradientExpoDiff(obj,LETxDose)
             % Derivative of the Objective Function
-            fmLETDoseGrad = obj.parameters{2}*((mean(mLETDose(:))-obj.parameters{1}))^(obj.parameters{2}-1) * ones(size(mLETDose(:)))/numel(mLETDose);
+            fLETxDoseGrad = obj.parameters{2}*((mean(LETxDose(:))-obj.parameters{1}))^(obj.parameters{2}-1) * ones(size(LETxDose(:)))/numel(LETxDose);
         end
 
     end

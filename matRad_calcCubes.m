@@ -91,7 +91,7 @@ end
 % consider mLETDose
 if isfield(dij,'mLETDose')
     for i = 1:length(beamInfo)
-        resultGUI.(['mLETDose', beamInfo(i).suffix]) = reshape((dij.mLETDose{1}*(resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
+        resultGUI.(['mLETDose', beamInfo(i).suffix]) = reshape(full(dij.mLETDose{1}*(resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
     end
 end
 
@@ -100,7 +100,7 @@ end
 % consider dirty dose
 if isfield(dij,'dirtyDoseThreshold')
     for i = 1:length(beamInfo)
-        resultGUI.(['dirtyDose', beamInfo(i).suffix]) = reshape((dij.dirtyDose{1}*(resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
+        resultGUI.(['dirtyDose', beamInfo(i).suffix]) = reshape(full(dij.dirtyDose{1}*(resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
     end
 end
 
@@ -108,7 +108,7 @@ end
 % consider clean dose
 if isfield(dij,'dirtyDoseThreshold')
     for i = 1:length(beamInfo)
-        resultGUI.(['cleanDose', beamInfo(i).suffix]) = reshape((dij.cleanDose{1}*(resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
+        resultGUI.(['cleanDose', beamInfo(i).suffix]) = reshape(full(dij.cleanDose{1}*(resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
     end
 end
 

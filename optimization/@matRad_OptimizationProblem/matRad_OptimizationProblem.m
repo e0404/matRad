@@ -32,7 +32,7 @@ classdef matRad_OptimizationProblem < handle
         maximumW = NaN;
 
         dirtyDoseBP
-        mLETDoseBP
+        LETxDoseBP
         LETdBP
         LETtBP
     end
@@ -41,7 +41,7 @@ classdef matRad_OptimizationProblem < handle
         function obj = matRad_OptimizationProblem(backProjection)
             obj.BP = backProjection;
             obj.dirtyDoseBP = [];
-            obj.mLETDoseBP = [];
+            obj.LETxDoseBP = [];
             obj.LETdBP = [];
             obj.LETtBP = [];
         end

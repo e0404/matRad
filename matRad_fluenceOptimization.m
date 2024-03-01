@@ -277,8 +277,8 @@ for i = 1 : rowCst(1,1)
         if isa(cst{i,6}{j},'DirtyDoseObjectives.matRad_DirtyDoseObjective')
             optiProb.dirtyDoseBP = matRad_DirtyDoseProjection;
         end
-        if isa(cst{i,6}{j},'mLETDoseObjectives.matRad_mLETDoseObjective')
-            optiProb.mLETDoseBP = matRad_mLETDoseProjection;
+        if isa(cst{i,6}{j},'LETxDoseObjectives.matRad_LETxDoseObjective')
+            optiProb.LETxDoseBP = matRad_LETxDoseProjection;
         end
         if isa(cst{i,6}{j},'LETdObjectives.matRad_LETdObjective')
             optiProb.LETdBP = matRad_LETdProjection;

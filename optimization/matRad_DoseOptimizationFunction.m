@@ -72,8 +72,8 @@ classdef (Abstract) matRad_DoseOptimizationFunction
                 objParams = [obj.parameters{ix}];
             end
 
-            if cellfun(@(c) isequal('mLETd',c),obj.parameterTypes)
-                ix = cellfun(@(c) isequal('mLETd',c),obj.parameterTypes);
+            if cellfun(@(c) isequal('LETxd',c),obj.parameterTypes)
+                ix = cellfun(@(c) isequal('LETxd',c),obj.parameterTypes);
                 objParams = [obj.parameters{ix}];
             end
 
@@ -102,8 +102,8 @@ classdef (Abstract) matRad_DoseOptimizationFunction
                 obj.parameters(ix) = num2cell(objParams);
             end
 
-            if cellfun(@(c) isequal('mLETd',c),obj.parameterTypes)
-                ix = cellfun(@(c) isequal('mLETd',c),obj.parameterTypes);
+            if cellfun(@(c) isequal('LETxd',c),obj.parameterTypes)
+                ix = cellfun(@(c) isequal('LETxd',c),obj.parameterTypes);
                 obj.parameters(ix) = num2cell(objParams);
             end
 
