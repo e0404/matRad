@@ -232,7 +232,8 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Plot the resulting dose slice
 plane      = 3;
-slice      = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
+slice = matRad_worldToCubeCoordinates(pln.propStf.isoCenter(1,:),ct);
+slice = slice(3);
 doseWindow = [0 max([resultGUI.physicalDose(:)])];
 
 figure,title('phantom plan')

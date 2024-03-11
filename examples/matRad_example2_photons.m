@@ -159,7 +159,7 @@ matRadGUI;
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
-slice = matRad_worldToCubeCoordinates(pln.propStf.isoCenter,ct);
+slice = matRad_worldToCubeCoordinates(pln.propStf.isoCenter(1,:),ct);
 slice = slice(3);
 figure
 imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet);

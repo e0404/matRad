@@ -206,7 +206,10 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
             %Adjust for isocenter offset
             %change the stf
-            currBeam.isoCenter = currBeam.isoCenter - [ct.x(1) ct.y(1) ct.z(1)] + dij.doseGrid.isoCenterOffset;
+            if ~isfield(ct,'x')
+                ct = matRad_computeWorldCoordinates(ct);
+            end
+            currBeam.isoCenter = currBeam.isoCenter - [ct.x(1) ct.y(1) ct.z(1)] + [ct.resolution.x ct.resolution.y ct.resolution.z] + dij.doseGrid.isoCenterOffset;
 
             
 

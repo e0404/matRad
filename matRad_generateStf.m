@@ -106,7 +106,9 @@ eraseCtDensMask(V) = 0;
 for i = 1:ct.numOfCtScen
     ct.cube{i}(eraseCtDensMask == 1) = 0;
 end
-
+if ~isfield(ct,'x')
+    ct = matRad_computeWorldCoordinates(ct);
+end
 % Define steering file like struct. Prellocating for speed.
 stf = struct;
 
@@ -226,7 +228,7 @@ for i = 1:length(pln.propStf.gantryAngles)
     stf(i).numOfBixelsPerRay = ones(1,stf(i).numOfRays);
     
     for j = stf(i).numOfRays:-1:1
-            mmCubeisoCenter = stf(i).isoCenter - [ct.x(1) ct.y(1) ct.z(1)];
+            mmCubeisoCenter = stf(i).isoCenter - [ct.x(1) ct.y(1) ct.z(1)] + [ct.resolution.x ct.resolution.y ct.resolution.z];
         % ray tracing necessary to determine depth of the target
         [~,l,rho,~,~] = matRad_siddonRayTracer(mmCubeisoCenter, ...
                              ct.resolution, ...
