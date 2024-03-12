@@ -146,7 +146,8 @@ figure,title('manipulated plan FS')
 matRad_plotSliceWrapper(gca,ct_manip,cst,1,resultGUI_FS.RBExDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
 
 % Let's plot single profiles along the beam direction
-ixProfileY = round(pln.propStf.isoCenter(1,1)./ct.resolution.x);
+ixProfileY = matRad_worldToCubeCoordinates(pln.propStf.isoCenter(1,:),ct);
+ixProfileY = ixProfileY(2);
 
 profileOrginal = resultGUI.RBExDose(:,ixProfileY,slice);
 profileNoiseMC   = resultGUI_noise.RBExDose(:,ixProfileY,slice);
