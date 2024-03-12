@@ -126,7 +126,7 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
             %run over all scenarios
             for s = 1:dij.numOfScenarios
-                this.ompMCgeo.isoCenter = vertcat(stf(:).isoCenter) + dij.doseGrid.isoCenterOffset;
+                this.ompMCgeo.isoCenter = vertcat(stf(:).isoCenter) - [ct.x(1) ct.y(1) ct.z(1)] + dij.doseGrid.isoCenterOffset;
 
                 %Run the Monte Carlo simulation and catch  possible mex-interface
                 %issues
