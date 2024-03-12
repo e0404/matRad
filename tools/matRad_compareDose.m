@@ -109,12 +109,12 @@ if isempty(cst)
     [~,s(3)] = max(sum(sum(cube1,1),2));
     isoCenter = [ct.resolution.y*s(1) ct.resolution.x*s(2) ct.resolution.z*s(3)];
 else
-    isoCenter = matRad_getIsoCenter(cst,ct,0);
+    isoCenter = matRad_worldToCubeCoordinates( matRad_getIsoCenter(cst,ct,0),ct);
 end
 
 resolution = [ct.resolution.x ct.resolution.y ct.resolution.z];
 
-slicename = {round(isoCenter(2)./resolution(2)),round(isoCenter(1)./resolution(1)),round(isoCenter(3)./resolution(3))};
+slicename = {isoCenter(1),isoCenter(2),isoCenter(3)};
 doseWindow = [0 max([cube1(:); cube2(:)])];
 planename = {'coronal','sagittal','axial'};
 
