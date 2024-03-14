@@ -82,7 +82,7 @@ elseif isGriddedInterpolantAvailable
     elseif strcmp(extrapolation,'extrap')
         extrapmethod = 'linear';
     else 
-        error('Invalid extrapolation argument!');
+        extrapmethod = extrapolation;
     end
     
     if size(yi,2) > 1
