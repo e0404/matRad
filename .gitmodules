@@ -1,3 +1,14 @@
+[submodule "submodules/matlab2tikz"]
+	path = submodules/matlab2tikz
+	url = https://github.com/e0404/matlab2tikz.git
+	branch = dev
+[submodule "submodules/latexTable"]
+	path = submodules/latexTable
+	url = https://github.com/e0404/latexTable.git
+	branch = dev
+[submodule "submodules/parfor_progress"]
+	path = submodules/parfor_progress
+	url = https://github.com/dumbmatter/parfor_progress.git
 [submodule "submodules/MCsquare"]
 	path = submodules/MCsquare
 	url = https://github.com/e0404/MCsquare.git

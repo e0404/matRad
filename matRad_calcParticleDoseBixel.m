@@ -36,10 +36,14 @@ depths = baseData.depths + baseData.offset;
 % convert from MeV cm^2/g per primary to Gy mm^2 per 1e6 primaries
 conversionFactor = 1.6021766208e-02;
 
+if ~isfield(baseData,'LatCutOff')
+    baseData.LatCutOff.CompFac = 1;
+end
+
 if ~isfield(baseData,'sigma')
     
     % interpolate depth dose, sigmas, and weights    
-    X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma1 baseData.weight baseData.sigma2],radDepths);
+    X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma1 baseData.weight baseData.sigma2],radDepths,'extrap');
     
     % set dose for query > tabulated depth dose values to zero
     X(radDepths > max(depths),1) = 0;
@@ -59,6 +63,9 @@ else
     % interpolate depth dose and sigma
     X = matRad_interp1(depths,[conversionFactor*baseData.Z baseData.sigma],radDepths);
 
+    % set dose for query > tabulated depth dose values to zero
+    X(radDepths > max(depths),1) = 0;
+    
     %compute lateral sigma
     sigmaSq = X(:,2).^2 + sigmaIni_sq;
     

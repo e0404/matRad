@@ -142,7 +142,7 @@ if enable(1) == 1
     
     % Calculate absolute difference cube and dose windows for plots
     differenceCube  = cube1-cube2;
-    doseDiffWindow  = [-max(differenceCube(:)) max(differenceCube(:))];
+    doseDiffWindow  = [-max(abs(differenceCube(:))) max(abs(differenceCube(:)))];
     %doseGammaWindow = [0 max(gammaCube(:))];
     doseGammaWindow = [0 2]; %We choose 2 as maximum value since the gamma colormap has a sharp cut in the middle
     
@@ -235,7 +235,7 @@ if enable(2) == 1
     end
 
     if exist('pln','var') && ~isempty(pln)
-        if strcmp(pln.propOpt.bioOptimization,'none')
+        if strcmp(pln.bioParam.quantityVis,'physicalDose')
             yLabelString = 'Dose [Gy]';
         else
             yLabelString = 'RBE x Dose [Gy(RBE)]';
@@ -291,10 +291,10 @@ if enable(3) == 1 && ~isempty(cst)
     disp('Plotting DVH...');
     
     hfig.dvh.fig = figure('Renderer', 'painters', 'Position', [10 100 1000 700]);
-    set(gcf,'Color',[1 1 1]);
-    matRad_showDVH(dvh1,cst,pln);
+    set(gcf,'Color',matRad_cfg.gui.backgroundColor);
+    matRad_showDVH(axes(gcf),dvh1,cst,pln);
     hold on
-    matRad_showDVH(dvh2,cst,pln,2);
+    matRad_showDVH(gca,dvh2,cst,pln,2);
     xlim([0 dvhWindow*1.2])
     title('Dose Volume Histrogram, Dose 1: solid, Dose 2: dashed')
 end

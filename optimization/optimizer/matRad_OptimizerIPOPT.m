@@ -22,6 +22,9 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
         wResult
         resultInfo
         env
+
+        %Visualization
+        showPlot = true;
     end
     
     properties (Access = private)
@@ -77,7 +80,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.options.acceptable_obj_change_tol     = 1e-4; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
             
             obj.options.max_iter                      = matRad_cfg.propOpt.defaultMaxIter;
-            obj.options.max_cpu_time                  = 3000;
+            obj.options.max_cpu_time                  = 7200;
             
             % Barrier Parameter (C.6)
             obj.options.mu_strategy = 'adaptive';
@@ -105,6 +108,10 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             
             if ~matRad_checkMexFileExists('ipopt')
                 matRad_cfg.dispError('IPOPT mex interface not available for %s!',obj.env);
+            end
+
+            if matRad_cfg.disableGUI || (matRad_cfg.isOctave && isequal(graphics_toolkit(),'gnuplot'))
+                obj.showPlot = false;
             end
 
         end
@@ -244,7 +251,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.allObjectiveFunctionValues(iter + 1) = objective;
             %We don't want the optimization to crash because of drawing
             %errors
-            if ~obj.plotFailed
+            if obj.showPlot && ~obj.plotFailed
                 try            
                     obj.plotFunction();
                 catch ME

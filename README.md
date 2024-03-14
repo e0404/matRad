@@ -3,8 +3,8 @@
 [![Contributors](https://img.shields.io/github/contributors/e0404/matRad)](https://github.com/e0404/matRad/graphs/contributors)
 [![GitPitch](https://gitpitch.com/assets/badge.svg)](https://gitpitch.com/e0404/matRad/master) 
 
-[![TravisCI Build Status](https://travis-ci.org/e0404/matRad.svg?branch=dev)](https://travis-ci.org/e0404/matRad)
-[![Azure Pipelines Build Status](https://dev.azure.com/e0404/matRad/_apis/build/status/e0404.matRad?branchName=dev)](https://dev.azure.com/e0404/matRad)
+[![GitHub Build Status](https://github.com/e0404/matRad/actions/workflows/tests.yml/badge.svg)](https://github.com/e0404/matRad/actions/workflows/tests.yml)
+[![Azure Pipelines Build Status](https://dev.azure.com/e0404/matRad/_apis/build/status/e0404.matRad)](https://dev.azure.com/e0404/matRad)
 
 DOIs:
 - General DOI: [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.3879615.svg)](https://doi.org/10.5281/zenodo.3879615)
@@ -104,9 +104,16 @@ You can cite specific versions of matRad in your work! For example, Here is the 
 
 [![DOI](https://zenodo.org/badge/29671667.svg)](https://zenodo.org/badge/latestdoi/29671667)
 
+# Funding Sources
+matRad developments (on this branch) were (in parts) funded by:
+- Grant  No. BA 2279/3-1 (Project No. 265744405) from the German Research Foundation (DFG)
+- Grant No. 70113094 from the German Cancer Aid
+- Grant No. WA 4707/1-1 (Project No. 443188743) from the German Research Foundation (DFG)
+- Mathworks Academic Research Support
+
 ---
 
-Copyright 2020 the matRad development team. 
+Copyright 2022 the matRad development team. 
 
 matrad@dkfz.de
 

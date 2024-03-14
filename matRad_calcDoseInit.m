@@ -6,29 +6,6 @@ if ~exist('calcDoseDirect','var')
     calcDoseDirect = false;
 end
 
-% assign analytical mode
-if isfield(pln,'propDoseCalc')  && isfield(pln.propDoseCalc,'fineSampling') && strcmp(pln.radiationMode, 'protons')
-    pbCalcMode = 'fineSampling';
-    defaultFineSampling = matRad_cfg.propDoseCalc.defaultFineSamplingProperties;    
-    if isfield(pln.propDoseCalc.fineSampling,'N')
-        fineSamplingN = pln.propDoseCalc.fineSampling.N;
-    else
-        fineSamplingN = defaultFineSampling.N;
-    end
-    if isfield(pln.propDoseCalc.fineSampling,'sigmaSub')    
-        fineSamplingSigmaSub = pln.propDoseCalc.fineSampling.sigmaSub;
-    else
-        fineSamplingSigmaSub = defaultFineSampling.sigmaSub;
-    end
-    if isfield(pln.propDoseCalc.fineSampling,'method')    
-        fineSamplingMethod = pln.propDoseCalc.fineSampling.method;
-    else
-        fineSamplingMethod = defaultFineSampling.method;
-    end
-else
-    pbCalcMode = 'standard';
-end
-
 % to guarantee downwards compatibility with data that does not have
 % ct.x/y/z
 if ~any(isfield(ct,{'x','y','z'}))
@@ -99,7 +76,7 @@ end
 
 % meta information for dij
 dij.numOfBeams         = pln.propStf.numOfBeams;
-dij.numOfScenarios     = 1;
+dij.numOfScenarios     = pln.multScen.numOfCtScen;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
@@ -120,16 +97,33 @@ dij.beamNum  = NaN*ones(numOfColumnsDij,1);
 
 
 % Allocate space for dij.physicalDose sparse matrix
-for i = 1:dij.numOfScenarios
-    dij.physicalDose{i} = spalloc(dij.doseGrid.numOfVoxels,numOfColumnsDij,1);
+for ctScen = 1:pln.multScen.numOfCtScen
+   for shiftScen = 1:pln.multScen.totNumShiftScen
+      for rangeShiftScen = 1:pln.multScen.totNumRangeScen   
+         if pln.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
+            dij.physicalDose{ctScen,shiftScen,rangeShiftScen} = spalloc(dij.doseGrid.numOfVoxels,numOfColumnsDij,1);
+         end
+      end
+   end
 end
 
 % Allocate memory for dose_temp cell array
-doseTmpContainer     = cell(numOfBixelsContainer,dij.numOfScenarios);
+doseTmpContainer = cell(numOfBixelsContainer,pln.multScen.numOfCtScen,pln.multScen.totNumShiftScen,pln.multScen.totNumRangeScen);
 
-% take only voxels inside patient
-VctGrid = [cst{:,4}];
-VctGrid = unique(vertcat(VctGrid{:}));
+% take only voxels inside patient or as specified in
+% pln.propDoseCalc.voxelSubIx
+if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'voxelSubIx')
+    subIx = matRad_cfg.propDoseCalc.defaultVoxelSubIx;
+else
+    subIx = pln.propDoseCalc.voxelSubIx;
+end
+
+if isempty(subIx)
+    VctGrid = [cst{:,4}];
+    VctGrid = unique(vertcat(VctGrid{:}));
+else
+    VctGrid = subIx;
+end
 
 % ignore densities outside of contours
 if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'ignoreOutsideDensities')
@@ -146,6 +140,13 @@ if ignoreOutsideDensities
     end
 end
 
+% ser overlap prioriites
+cst = matRad_setOverlapPriorities(cst);
+
+% resizing cst to dose cube resolution
+cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
+   dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
+
 % Convert CT subscripts to linear indices.
 [yCoordsV_vox, xCoordsV_vox, zCoordsV_vox] = ind2sub(ct.cubeDim,VctGrid);
 
@@ -159,13 +160,22 @@ VdoseGrid = find(matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z,tmpC
 % Convert CT subscripts to coarse linear indices.
 [yCoordsV_voxDoseGrid, xCoordsV_voxDoseGrid, zCoordsV_voxDoseGrid] = ind2sub(dij.doseGrid.dimensions,VdoseGrid);
 
-% load base data% load machine file
+% load base data
 fileName = [pln.radiationMode '_' pln.machine];
 try
-   load([fileparts(mfilename('fullpath')) filesep 'basedata' filesep fileName]);
+   load([fileparts(mfilename('fullpath')) filesep 'basedata' filesep fileName '.mat']);
 catch
    matRad_cfg.dispError('Could not find the following machine file: %s\n',fileName); 
 end
 
-% compute SSDs
-stf = matRad_computeSSD(stf,ct);
+% compute SSDs -> Removed for now because it is scenario-dependent
+% stf = matRad_computeSSD(stf,ct);
+
+if ~isfield(pln.propDoseCalc, 'selectVoxelsInScenarios')
+    pln.propDoseCalc.selectVoxelsInScenarios = matRad_cfg.propDoseCalc.defaultSelectVoxelsInScenarios;
+end
+
+%structures that are selected here will be included in dose calculation over the robust scenarios
+robustVoxelsOnGrid = matRad_selectVoxelsFromCst(cst, dij.doseGrid, pln.propDoseCalc.selectVoxelsInScenarios);
+
+matRad_cfg.dispInfo('...done.');

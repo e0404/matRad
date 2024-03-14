@@ -21,7 +21,7 @@ classdef matRad_VariableRBEProjection < matRad_EffectProjection
         function RBExD = computeSingleScenario(obj,dij,scen,w)
             effect = computeSingleScenario@matRad_EffectProjection(obj,dij,scen,w); %First compute effect
             RBExD = zeros(dij.doseGrid.numOfVoxels,1);
-            RBExD(dij.ixDose) = sqrt((effect(dij.ixDose)./dij.bx(dij.ixDose))+(dij.gamma(dij.ixDose).^2)) - dij.gamma(dij.ixDose);
+            RBExD(dij.ixDose(:,scen)) = sqrt((effect(dij.ixDose(:,scen))./dij.bx(dij.ixDose(:,scen)))+(dij.gamma(dij.ixDose(:,scen)).^2)) - dij.gamma(dij.ixDose(:,scen));
         end
         
         function wGrad = projectSingleScenarioGradient(obj,dij,doseGrad,scen,w)
@@ -35,16 +35,66 @@ classdef matRad_VariableRBEProjection < matRad_EffectProjection
                 obj = obj.compute(dij,w);
                 
                 %Scaling vor variable RBExD
-                scaledEffect = obj.d{scen} + dij.gamma;
+                scaledEffect = obj.d{scen} + dij.gamma(:,scen);
                 doseGradTmp = zeros(dij.doseGrid.numOfVoxels,1);
-                doseGradTmp(dij.ixDose) = doseGrad{scen}(dij.ixDose) ./ (2*dij.bx(dij.ixDose).*scaledEffect(dij.ixDose));
+                doseGradTmp(dij.ixDose(:,scen)) = doseGrad{scen}(dij.ixDose(:,scen)) ./ (2*dij.bx(dij.ixDose(:,scen)).*scaledEffect(dij.ixDose(:,scen)));
                 
                 %Now modify the effect computation
                 vBias = (doseGradTmp' * dij.mAlphaDose{scen})';
                 quadTerm = dij.mSqrtBetaDose{scen} * w;
-                mPsi = (2*(doseGrad{scen}.*quadTerm)' * dij.mSqrtBetaDose{scen})';
+                mPsi = (2*(doseGradTmp.*quadTerm)' * dij.mSqrtBetaDose{scen})';
                 wGrad = vBias + mPsi;
             end
+        end
+        
+        function [RBExDexp,dOmegaV] = computeSingleScenarioProb(~,dij,scen,w)
+            if isempty(dij.mAlphaDoseExp{scen}) || isempty(dij.mSqrtBetaDoseExp{scen})
+                RBExDexp = [];
+                dOmegaV = [];
+                %matRad_cfg = MatRad_Config.instance();
+                %matRad_cfg.dispWarning('Empty scenario in optimization detected! This should not happen...\n');
+            else
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispWarning('Probabilistic Backprojection uses inaccurate approximation for Variable RBE computation...\n');
+                eExpLinTerm = dij.mAlphaDose{scen}*w;
+                eExpSqTerm  = dij.mSqrtBetaDose{scen}*w;
+                eExp = eExpLinTerm + eExpSqTerm.^2;
+                
+                RBExDexp = zeros(dij.doseGrid.numOfVoxels,1);
+                RBExDexp(dij.ixDose(:,scen)) = sqrt((eExp(dij.ixDose(:,scen))./dij.bx(dij.ixDose(:,scen)))+(dij.gamma(dij.ixDose(:,scen)).^2)) - dij.gamma(dij.ixDose(:,scen));
+                
+                for i = 1:size(dij.physicalDoseOmega,2)
+                   dOmegaV{scen,i} = dij.mAlphaDoseOmega{scen,i} * w;
+                end 
+            end      
+        end
+        
+        function wGrad = projectSingleScenarioGradientProb(obj,dij,dExpGrad,dOmegaVgrad,scen,~)
+            if isempty(dij.mAlphaDoseExp{scen}) || isempty(dij.mSqrtBetaDoseExp{scen})
+                wGrad = [];
+            else
+                %While the dose cache should be up to date here, we ask for
+                %a computation (will skip if weights are equal to cache)
+                obj = obj.compute(dij,w);
+                
+                %Scaling vor variable RBExD
+                scaledEffect = obj.dExp{scen} + dij.gamma;
+                doseGradTmp = zeros(dij.doseGrid.numOfVoxels,1);
+                doseGradTmp(dij.ixDose(:,scen)) = dExpGrad{scen}(dij.ixDose(:,scen)) ./ (2*dij.bx(dij.ixDose(:,scen)).*scaledEffect(dij.ixDose(:,scen)));
+                
+                %Now modify the effect computation
+                vBias = (doseGradTmp' * dij.mAlphaDoseExp{scen})';
+                quadTerm = dij.mSqrtBetaDose{scen} * w;
+                mPsi = (2*(doseGradTmp.*quadTerm)' * dij.mSqrtBetaDoseExp{scen})';
+                wGrad = vBias + mPsi + 2 * dOmegaVgrad;
+            end
+        end
+    end
+    
+    methods (Static)
+        function optiFunc = setBiologicalDosePrescriptions(optiFunc,~,~)
+            %Do nothing here to overwrite the behavior of the Effect
+            %projection, since we have unit GyRBE here
         end
     end
 end

@@ -13,8 +13,7 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%
-% In this example we will show 
+%% In this example we will show 
 % (i) how to load patient data into matRad
 % (ii) how to setup a photon dose calculation and 
 % (iii) how to inversely optimize beamlet intensities
@@ -28,7 +27,6 @@
 % search path.
 
 matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
-
 load('TG119.mat');
 
 %%
@@ -38,7 +36,6 @@ load('TG119.mat');
 % dimensions, resolution, number of CT scenarios). Please note that 
 %multiple ct cubes (e.g. 4D CT) can be stored in the cell array ct.cube{}
 display(ct);
-
 %%
 % The 'cst' cell array defines volumes of interests along with information 
 % required for optimization. Each row belongs to one certain volume of 
@@ -48,7 +45,6 @@ display(ct);
 % column contains a linear index vector that lists all voxels belonging to 
 % a certain VOI.
 display(cst);
-
 %%
 % The fifth column represents meta parameters for optimization. The overlap
 % priority is used to resolve ambiguities of overlapping structures (voxels 
@@ -58,6 +54,7 @@ display(cst);
 % parameter of the linear quadratic model. These parameter are required for
 % biological treatment planning using a variable RBE. Let's output the meta 
 % optimization parameter of the target, which is stored in the thrid row:
+
 ixTarget = 3;
 display(cst{ixTarget,5});
 
@@ -68,6 +65,7 @@ display(cst{ixTarget,5});
 % individual structures. Here, we have defined a squared deviation 
 % objective making it 'expensive/costly' for the optimizer to over- and 
 % underdose the target structure (both are equally important). 
+
 display(cst{ixTarget,6});
 
 %% Treatment Plan
@@ -83,17 +81,26 @@ display(cst{ixTarget,6});
 % generic photon linear accelerator called 'Generic'. By this means matRad 
 % will look for 'photons_Generic.mat' in our root directory and will use 
 % the data provided in there for dose calculation
+
 pln.radiationMode = 'photons';  
 pln.machine       = 'Generic';
 
 %%
 % Define the flavor of optimization along with the quantity that should be
-% used for optimization. Possible values are (none: physical optimization; 
-% const_RBExD: constant RBE of 1.1; LEMIV_effect: effect-based 
-% optimization; LEMIV_RBExD: optimization of RBE-weighted dose. As we are 
-% using photons, we simply set the parameter to 'none' thereby indicating 
-% the physical dose should be optimized.
-pln.propOpt.bioOptimization = 'none';    
+% used for optimization. Possible quantities used for optimization are: 
+% physicalDose: physical dose based optimization; 
+% effect: biological effect based optimization;
+% RBExD: RBE weighted dose based optimzation;
+% Possible biological models are:
+% none:        use no specific biological model
+% constRBE:    use a constant RBE
+% MCN:         use the variable RBE McNamara model for protons
+% WED:         use the variable RBE Wedenberg model for protons
+% LEM:         use the biophysical variable RBE Local Effect model for carbons
+% As we are  using photons, we simply set the parameter to 'physicalDose' and
+% and 'none'
+quantityOpt    = 'physicalDose';                                     
+modelName      = 'none';  
 
 %%
 % Now we have to set some beam parameters. We can define multiple beam 
@@ -126,12 +133,19 @@ pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
 %%
 % Enable sequencing and disable direct aperture optimization (DAO) for now.
 % A DAO optimization is shown in a seperate example.
-pln.propOpt.runSequencing = 1;
+pln.propSeq.runSequencing = 1;
 pln.propOpt.runDAO        = 0;
+
+% retrieve bio model parameters
+pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
+
+% retrieve scenarios for dose calculation and optimziation
+pln.multScen = matRad_multScen(ct,'nomScen');
 
 %%
 % and et voila our treatment plan structure is ready. Lets have a look:
 display(pln);
+
 
 %% Generate Beam Geometry STF
 % The steering file struct comprises the complete beam geometry along with 
@@ -168,10 +182,12 @@ imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet);
 pln.propStf.gantryAngles = [0:50:359];
 pln.propStf.couchAngles  = zeros(1,numel(pln.propStf.gantryAngles));
 pln.propStf.numOfBeams   = numel(pln.propStf.gantryAngles);
+
 stf                      = matRad_generateStf(ct,cst,pln);
 pln.propStf.isoCenter    = vertcat(stf.isoCenter);
 dij                      = matRad_calcPhotonDose(ct,stf,pln,cst);
 resultGUI_coarse         = matRad_fluenceOptimization(dij,cst,pln);
+
 
 %%  Visual Comparison of results
 % Let's compare the new recalculation against the optimization result.
@@ -216,5 +232,3 @@ display(qi_coarse(ixOAR).D_95);
 % set.
 metadata = struct('resolution',[ct.resolution.x ct.resolution.y ct.resolution.z]);
 matRad_writeCube([pwd filesep 'photonDose_example2.nrrd'],resultGUI.physicalDose,'double',metadata);
-
-

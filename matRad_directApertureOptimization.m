@@ -2,7 +2,6 @@ function [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apert
 % matRad function to run direct aperture optimization
 %
 % call
-%   [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apertureInfo,pln)
 %   [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln)
 %
 % input
@@ -11,7 +10,7 @@ function [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apert
 %   apertureInfo:   aperture shape info struct
 %   optResult:      resultGUI struct to which the output data will be added, if
 %                   this field is empty optResult struct will be created
-%                   (optional)
+%                   
 %   pln:            matRad pln struct
 %
 % output
@@ -35,8 +34,8 @@ function [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apert
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
 matRad_cfg = MatRad_Config.instance();
+
 
 % adjust overlap priorities
 cst = matRad_setOverlapPriorities(cst);
@@ -66,6 +65,16 @@ end
 % resizing cst to dose cube resolution 
 cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
                                  dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
+
+
+
+% set optimization options
+options.ixForOpt     = 1;
+options.numOfScen    = 1;
+options.scenProb     = 1;
+options.bioOpt       = pln.bioParam.bioOpt;
+options.quantityOpt  = pln.bioParam.quantityOpt;
+options.model        = pln.bioParam.model;
 
 % update aperture info vector
 apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(apertureInfo,apertureInfo.apertureVector);

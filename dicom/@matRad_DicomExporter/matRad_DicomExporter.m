@@ -30,6 +30,9 @@ classdef matRad_DicomExporter < handle
         %output folder
         dicomDir = ['.' filesep];
         
+        %which scenario to export (no 4D data supported for now)
+        exportScenario = 1;
+        
         % matRad structures to export
         ct = [];
         cst = [];
@@ -81,7 +84,6 @@ classdef matRad_DicomExporter < handle
             %matRad_DicomExporter Construct an instance of this class
             %   Can be called with the structures. If no argument is given,
             %   all structures will be read from the base workspace
-            
             
             matRad_cfg = MatRad_Config.instance();  
             

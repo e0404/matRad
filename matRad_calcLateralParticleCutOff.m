@@ -36,11 +36,7 @@ if cutOffLevel <= 0.98
 end
 
 conversionFactor = 1.6021766208e-02;
-
-% function handle for calculating depth dose for APM
-sumGauss = @(x,mu,SqSigma,w) ((1./sqrt(2*pi*ones(numel(x),1) * SqSigma') .* ...
-                              exp(-bsxfun(@minus,x,mu').^2 ./ (2* ones(numel(x),1) * SqSigma' ))) * w);
-                          
+                    
 if (cutOffLevel < 0 || cutOffLevel > 1)
    warning('lateral cutoff is out of range - using default cut off of 0.99') 
    cutOffLevel = 0.99;
@@ -88,7 +84,7 @@ for i = 1:size(energySigmaLUT,1)
     if  strcmp(machine.meta.radiationMode,'protons') && rangeShifterLUT(i).eqThickness > 0  && ~strcmp(machine.meta.machine,'Generic')
 
         %get max range shift
-        sigmaRashi = matRad_calcSigmaRashi(machine.data(energyIx).energy, ...
+        sigmaRashi = matRad_calcSigmaRashi(machine.data(energyIx), ...
                                            rangeShifterLUT(i), ...
                                            energySigmaLUT(i,3));
 
@@ -120,13 +116,7 @@ for energyIx = vEnergiesIx
     depthDoseCutOff = inf;
 
     % get the current integrated depth dose profile
-    if isstruct(machine.data(energyIx).Z)
-        idd_org = sumGauss(machine.data(energyIx).depths,machine.data(energyIx).Z.mean,...
-                                   machine.data(energyIx).Z.width.^2,...
-                                   machine.data(energyIx).Z.weight) * conversionFactor;
-    else
         idd_org = machine.data(energyIx).Z * conversionFactor;
-    end
     
     [~,peakIxOrg] = max(idd_org); 
     
@@ -143,15 +133,9 @@ for energyIx = vEnergiesIx
                                  cumIntEnergy(peakIxOrg+1):energyStepsTail:cumIntEnergy(end) cumIntEnergy(end)]);
 
     [cumIntEnergy,ix] = unique(cumIntEnergy);
-    depthValues       = matRad_interp1(cumIntEnergy,machine.data(energyIx).depths(ix),vEnergySteps);
+    depthValues       = matRad_interp1(cumIntEnergy,machine.data(energyIx).depths(ix),vEnergySteps');
 
-    if isstruct(machine.data(energyIx).Z)
-        idd = sumGauss(depthValues,machine.data(energyIx).Z.mean,...
-                                   machine.data(energyIx).Z.width.^2,...
-                                   machine.data(energyIx).Z.weight) * conversionFactor;
-    else
-        idd  = matRad_interp1(machine.data(energyIx).depths,machine.data(energyIx).Z,depthValues) * conversionFactor; 
-    end
+    idd  = matRad_interp1(machine.data(energyIx).depths,machine.data(energyIx).Z,depthValues) * conversionFactor; 
      
     cnt = cnt +1 ;
     % % calculate dose in spot
@@ -259,14 +243,8 @@ if visBool
     end
     
     % obtain maximum dose
-    if isstruct(machine.data(energyIx).Z)
-        idd = sumGauss(depthValues,machine.data(energyIx).Z.mean,...
-                                   machine.data(energyIx).Z.width.^2,...
-                                   machine.data(energyIx).Z.weight) * conversionFactor;
-    else
         idd  = matRad_interp1(machine.data(energyIx).depths,machine.data(energyIx).Z,depthValues) * conversionFactor; 
-    end
-    
+
     [~,peakixDepth] = max(idd); 
     dosePeakPos = matRad_calcParticleDoseBixel(machine.data(energyIx).depths(peakixDepth), 0, sigmaIni_sq, baseData);   
     
@@ -289,11 +267,8 @@ if visBool
     legend({'isodose 1%,5%,10% 90%','calculated cutoff'}) ,colorbar,set(gca,'FontSize',12),xlabel('z [mm]'),ylabel('x [mm]');
        
     entry = machine.data(energyIx);
-    if isstruct(entry.Z)
-       idd = sumGauss(entry.depths,entry.Z.mean,entry.Z.width.^2,entry.Z.weight);
-    else
        idd = machine.data(energyIx).Z;
-    end
+
     subplot(312),plot(machine.data(energyIx).depths,idd*conversionFactor,'k','LineWidth',2),grid on,hold on
                  plot(radDepths - machine.data(energyIx).offset,vDoseInt,'r--','LineWidth',2),hold on,
                  plot(radDepths - machine.data(energyIx).offset,vDoseInt * TmpCompFac,'bx','LineWidth',1),hold on,

@@ -24,7 +24,7 @@ function obj = matRad_exportDicomCt(obj)
 
 matRad_cfg = MatRad_Config.instance();
 
-matRad_cfg.dispInfo('Exporting DICOM CT...');
+matRad_cfg.dispInfo('Exporting DICOM CT for scenario %s into %s...\n',obj.exportScenario,obj.dicomDir);
 
 %default meta
 meta.PatientName         = obj.PatientName;
@@ -88,7 +88,7 @@ if isfield(ct,'z')
     z = ct.z;
 end
 
-ctCube = ct.cubeHU{1};
+ctCube = ct.cubeHU{obj.exportScenario};
 ctMin  = min(ctCube(:));
 ctCube = ctCube - ctMin;
 ctMax  = max(ctCube(:));
@@ -128,16 +128,19 @@ for i = 1:nSlices
     else
         status = dicomwrite(ctSlice,fullFileName,obj.ctSliceMetas(i),'ObjectType','CT Image Storage');
         obj.ctExportStatus = obj.addStruct2StructArray(obj.ctExportStatus,status);
-        
-        %We need to get the info of the file just written because of Matlab's
+		
+		matRad_cfg.dispDebug('\tWritten Slice %d to %s\n',i,fullFileName);
+		
+		%We need to get the info of the file just written because of Matlab's
         %hardcoded way of generating InstanceUIDs during writing
         tmpInfo = dicominfo(fullFileName);
         obj.ctSliceMetas(i).SOPInstanceUID              = tmpInfo.SOPInstanceUID;
-        obj.ctSliceMetas(i).MediaStorageSOPInstanceUID  = tmpInfo.MediaStorageSOPInstanceUID;
+        obj.ctSliceMetas(i).MediaStorageSOPInstanceUID  = tmpInfo.MediaStorageSOPInstanceUID;        
+        
     end   
-    
+
     matRad_progress(i,nSlices);
-    
+
 end
 
 end

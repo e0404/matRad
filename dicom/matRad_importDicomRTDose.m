@@ -47,6 +47,9 @@ end
 countBeamNumberPhysDose = 1;
 countBeamNumberRBExDose = 1;
 countBeamNumberOther = 1;
+
+resultGUI = struct();
+
 for i = 1 : numDoseFiles
     itemName = strcat('Item_',num2str(i));
     doseTypeHelper      = dose.(itemName).dicomInfo.DoseType;
@@ -100,10 +103,24 @@ for i = 1 : numDoseFiles
         instanceSuffix = ['_' num2str(doseInstanceHelper)];
     else
         instanceSuffix = '';
-    end
-        
+    end        
     
     resultName = strcat(doseTypeHelper,instanceSuffix,beamSuffix);
+        
+
+    if isfield(resultGUI,resultName)
+        count = 1;
+        addSuffix = ['_' num2str(count)];
+        resultNameNew = [resultName addSuffix];
+        while isfield(resultGUI,resultNameNew)
+            count = count + 1;
+            addSuffix = ['_' num2str(count)];
+            resultNameNew = [resultName addSuffix];
+        end       
+               
+        matRad_cfg.dispWarning('Already imported dose ''%s'', naming the new dose ''%s'', manually organize resultGUI afterwards for duplicates!',resultName, resultNameNew);
+        resultName = resultNameNew;
+    end
     
     resultGUI.(resultName) = dose.(itemName).cube;
     resultGUI.doseMetaInfo.(resultName) = dose.(itemName).dicomInfo;

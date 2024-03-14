@@ -1,3 +1,4 @@
+function matRad_rc(clearWindow)
 % matRad rc script
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -13,6 +14,10 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+if nargin < 1
+    clearWindow = true;
+end
+
 % Initialize matRad
 matRad_cfg = MatRad_Config.instance();
 if ~strcmp(matRad_cfg.matRadRoot,fileparts(mfilename("fullpath")))
@@ -22,9 +27,12 @@ if ~strcmp(matRad_cfg.matRadRoot,fileparts(mfilename("fullpath")))
     matRad_cfg = MatRad_Config.instance();
 end
 
-%clear command window and close all figures
-clc;
-close all;
+% clear command window and close all figures
+if clearWindow
+
+    clc;
+    close all;
+end
 
 % clear workspace and command prompt, close all figures
 [env,envver] = matRad_getEnvironment();
@@ -34,3 +42,4 @@ matRad_cfg.dispInfo('You are running matRad %s with %s %s\n',vString,env,envver)
 clear env envver vString;
 
 
+end

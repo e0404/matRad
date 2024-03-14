@@ -23,38 +23,44 @@ classdef (Abstract) matRad_DoseConstraint < matRad_DoseOptimizationFunction
     methods %(Abstract)
         %returns the constraint function(s) value(s) for a given dose
         %vector. Needs to be implemented in sub-classes.
-        function cDose        = computeDoseConstraintFunction(obj,dose)
+        function cDose        = computeDoseConstraintFunction(this,dose)
           error('Function needs to be implemented!');
         end
         
         %return the (dose-dependent) constraint function jacobian for a
         %given dose vector. Needs to be implemented in sub-classes.
-        function cDoseJacob   = computeDoseConstraintJacobian(obj,dose)
+        function cDoseJacob   = computeDoseConstraintJacobian(this,dose)
           error('Function needs to be implemented!');
         end
         
         %Returns upper bound(s) / max value(s) for constraint function(s)
         %Needs to be implemented in sub-classes.
-        function cu           = upperBounds(obj,n)
+        function cu           = upperBounds(this,n)
           error('Function needs to be implemented!');
         end
         
         %Returns lower bound(s) / min value(s) for constraint function(s)
         %Needs to be implemented in sub-classes.
-        function cl           = lowerBounds(obj,n)                
+        function cl           = lowerBounds(this,n)                
           error('Function needs to be implemented!');
         end
     end
 
+    methods (Static)
+        function rob = availableRobustness()
+            rob = {'none','PROB','VWWC','VWWC_INV',}; %By default, no robustness is available
+        end 
+    end
+    
     methods (Access = public)
        
         % default constructor of matRad_DoseConstraint
-        function obj = matRad_DoseConstraint(varargin)
+        function this = matRad_DoseConstraint(varargin)
             %default initialization from struct (parameters & penalty)
-            obj@matRad_DoseOptimizationFunction(varargin{:});
+            this@matRad_DoseOptimizationFunction(varargin{:});
         end
         
-        function jStruct = getDoseConstraintJacobianStructure(obj,n)
+        function jStruct = getDoseConstraintJacobianStructure(this,n)
         %return the structure of the (dose-dependent) constraint function 
         %jacobian for a given length n of the dose vector. Returns a
         %default of a jStruct
@@ -63,8 +69,8 @@ classdef (Abstract) matRad_DoseConstraint < matRad_DoseOptimizationFunction
         
         %Overloads the struct function to add Objective related information
         %to output struct
-        function s = struct(obj)
-            s = struct@matRad_DoseOptimizationFunction(obj);
+        function s = struct(this)
+            s = struct@matRad_DoseOptimizationFunction(this);
         end
     end
 end

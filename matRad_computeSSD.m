@@ -29,7 +29,6 @@ function stf = matRad_computeSSD(stf,ct,mode)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
 matRad_cfg = MatRad_Config.instance();
 
 if nargin < 3
@@ -43,15 +42,14 @@ boolShowWarning = true;
 densityThreshold = matRad_cfg.propDoseCalc.defaultSsdDensityThreshold;
 
 if strcmp(mode,'first')
-    
     for i = 1:size(stf,2)
         SSD = cell(1,stf(i).numOfRays);
         for j = 1:stf(i).numOfRays
-            [alpha,~,rho,~,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
+            [alpha,~,rho,d12,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
                                  ct.resolution, ...
                                  stf(i).sourcePoint, ...
                                  stf(i).ray(j).targetPoint, ...
-                                 {ct.cube{1}});
+                                 {ct.cube{1}}); %Is this correct for multiple scenarios?
             ixSSD = find(rho{1} > densityThreshold,1,'first');
 
             if boolShowWarning
@@ -63,9 +61,9 @@ if strcmp(mode,'first')
                     boolShowWarning = false;
                 end
             end
-            
+
             % calculate SSD
-            SSD{j} = double(2 * stf(i).SAD * alpha(ixSSD));
+            SSD{j} = double(d12* alpha(ixSSD));
             stf(i).ray(j).SSD = SSD{j};            
         end
         
@@ -77,9 +75,11 @@ if strcmp(mode,'first')
                 stf(i).ray(j).SSD =  matRad_closestNeighbourSSD(rayPos_bev, SSD, rayPos_bev(j,:));
             end
         end
+        
     end
+
 else
-    matRad_cfg.dispError('mode not defined for SSD calculation');
+    matRad_cfg.dispError('Invalid mode %s for SSD calculation',mode);
 end
 
 end
@@ -97,7 +97,7 @@ function bestSSD = matRad_closestNeighbourSSD(rayPos, SSD, currPos)
     end
     if any(isempty(bestSSD))
         matRad_cfg = MatRad_Config.instance();
-        matRad_cfg.dispError('Could not fix SSD calculation.');
+        matRad_cfg.dispError('Error in SSD calculation: Could not fix SSD calculation by using closest neighbouring ray.');
     end
+  
 end
-
