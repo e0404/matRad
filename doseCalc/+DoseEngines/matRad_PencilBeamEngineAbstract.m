@@ -204,11 +204,14 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             currBeam = stf(i);
             currBeam.beamIndex = i;
 
+            %Create X Y Z vectors if not present
+            if ~any(isfield(ct,{'x','y','z'}))
+                ct = matRad_getWorldAxes(ct);
+            end
+            
             %Adjust for isocenter offset
             %change the stf
-            if ~isfield(ct,'x')
-                ct = matRad_computeWorldCoordinates(ct);
-            end
+            
             currBeam.isoCenter = currBeam.isoCenter - [ct.x(1) ct.y(1) ct.z(1)] + [ct.resolution.x ct.resolution.y ct.resolution.z] + dij.doseGrid.isoCenterOffset;
 
             

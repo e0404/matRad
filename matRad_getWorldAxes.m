@@ -1,12 +1,9 @@
-function coord = matRad_cubeToWorldCoordinates(vCoord, ct)
-% matRad function to convert world coordinates to cube coordinates
+function ct = matRad_getWorldAxes(ct)
+% matRad function to compute and store world coordinates int ct.x
 % 
 % call
-%   coord = matRad_worldToCubeCoordinates(vCoord, ct)
-%   
-% 
-%   vCoord : Voxel Coordinates [vx vy vz]
-% 
+%   ct = matRad_getWorldAxes(ct)
+%
 % References
 %   -
 %
@@ -22,22 +19,22 @@ function coord = matRad_cubeToWorldCoordinates(vCoord, ct)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-coord = [];   % [x y z ] mm 
-if nargin == 2
+matRad_cfg = MatRad_Config.instance();
+
+if nargin>0
+    %
+    % check if dicominfo exists
     if isfield(ct, 'dicomInfo') && isfield(ct.dicomInfo,'ImagePositionPatient')
         firstVox = ct.dicomInfo.ImagePositionPatient;
     else 
         firstVox = - (ct.cubeDim./2).*[ct.resolution.x ct.resolution.y ct.resolution.z] ;
     end 
-    try
-        coord(1,:) = firstVox(1) + (vCoord(:,1) - 1 ) *ct.resolution.x;
-        coord(2,:) = firstVox(2) + (vCoord(:,2) - 1 ) *ct.resolution.y;
-        coord(3,:) = firstVox(3) + (vCoord(:,3) - 1 ) *ct.resolution.z;
-        coord = coord';
-    catch
-
-    end
+    
+    ct.x = firstVox(1) + ct.resolution.x*[0:ct.cubeDim(2)-1] ;
+    ct.y = firstVox(2) + ct.resolution.y*[0:ct.cubeDim(1)-1] ;
+    ct.z = firstVox(3) + ct.resolution.z*[0:ct.cubeDim(3)-1] ;
+else
+    matRad_cfg.dispWarning('Cannot compute world coordinates without matRad ct structure');
 end
 
 end
-

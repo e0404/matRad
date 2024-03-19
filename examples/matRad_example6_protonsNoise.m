@@ -88,7 +88,7 @@ display(qi2(ixRectum).D_5);
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
-slice = matRad_worldToCubeCoordinates(pln.propStf.isoCenter(1,:),ct);
+slice = matRad_world2cubeCoords(pln.propStf.isoCenter(1,:),ct);
 slice = slice(3);
 figure
 imagesc(resultGUI.RBExDose(:,:,slice)),colorbar, colormap(jet)
@@ -146,7 +146,7 @@ figure,title('manipulated plan FS')
 matRad_plotSliceWrapper(gca,ct_manip,cst,1,resultGUI_FS.RBExDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
 
 % Let's plot single profiles along the beam direction
-ixProfileY = matRad_worldToCubeCoordinates(pln.propStf.isoCenter(1,:),ct);
+ixProfileY = matRad_world2cubeCoords(pln.propStf.isoCenter(1,:),ct);
 ixProfileY = ixProfileY(2);
 
 profileOrginal = resultGUI.RBExDose(:,ixProfileY,slice);

@@ -1,8 +1,8 @@
-function coord = matRad_worldToCubeCoordinates(wCoord, ct)
+function coord = world2cubeCoords(wCoord, ct)
 % matRad function to convert world coordinates to cube coordinates
 % 
 % call
-%   coord = matRad_worldToCubeCoordinates(wCoord, ct)
+%   coord = world2cubeCoords(wCoord, ct)
 %
 % References
 %   -
@@ -23,7 +23,7 @@ coord = [];
 if nargin == 2
     try
         if ~ (isfield(ct,'x') && isfield(ct,'y') && isfield(ct,'z') )
-            ct = matRad_computeWorldCoordinates(ct);
+            ct = matRad_getWorldAxes(ct);
         end
         
         [~,coord(2)]=min(abs(ct.y-wCoord(2)));

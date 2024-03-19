@@ -1075,11 +1075,11 @@ classdef matRad_ViewingWidget < matRad_Widget
                     end
                 end
                 
-                isoCoordinates = matRad_worldToCubeCoordinates(pln.propStf.isoCenter(1,:), ct);
+                isoCoordinates = matRad_world2cubeCoords(pln.propStf.isoCenter(1,:), ct);
                 if this.plane == 1
-                    this.slice= isoCoordinates(2);%ceil(pln.propStf.isoCenter(1,2)/ct.resolution.x);
+                    this.slice= isoCoordinates(2);
                 elseif this.plane == 2
-                    this.slice= isoCoordinates(1);%ceil(pln.propStf.isoCenter(1,1)/ct.resolution.y);
+                    this.slice= isoCoordinates(1);
                 elseif this.plane == 3
                     this.slice= isoCoordinates(3);
                 end
@@ -1237,7 +1237,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 % set isoCenter values 
                 % Note: only defined for the first Isocenter
                 uniqueIsoCenters = unique(pln.propStf.isoCenter,'rows');
-                this.vIsoCenter      = matRad_worldToCubeCoordinates(pln.propStf.isoCenter(1,:), ct);%round(uniqueIsoCenters(1,:)./[ct.resolution.x ct.resolution.y ct.resolution.z]);
+                this.vIsoCenter      = matRad_world2cubeCoords(pln.propStf.isoCenter(1,:), ct);
                 
 
                  % set profile offset slider

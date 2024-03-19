@@ -37,7 +37,7 @@ if ~exist('defaultFontSize','var') || isempty(defaultFontSize)
     defaultFontSize = 12;
 end
 if ~isfield(ct,'x') || isempty(ct.x)
-    ct = matRad_computeWorldCoordinates(ct);
+    ct = matRad_getWorldAxes(ct);
 end
 
 if ~exist('tickdist','var') || isempty(tickdist)
@@ -52,7 +52,7 @@ if  plane == 3% Axial plane
         set(axesHandle,'YTickLabel',round(linspace(ct.y(1),ct.y(end),10)));
         xlabel(axesHandle,'x [mm]','FontSize',defaultFontSize)
         ylabel(axesHandle,'y [mm]','FontSize',defaultFontSize)
-        vcoord = matRad_cubeToWorldCoordinates([0,0,slice],ct);
+        vcoord = matRad_cube2worldCoords([0,0,slice],ct);
         title(axesHandle,['axial plane z = ' num2str(vcoord(3)) ' [mm]'],'FontSize',defaultFontSize)
     else
         xlabel(axesHandle,'x [voxels]','FontSize',defaultFontSize)
@@ -67,7 +67,7 @@ elseif plane == 2 % Sagittal plane
         set(axesHandle,'YTickLabel',round(linspace(ct.y(1),ct.y(end),10)));
         xlabel(axesHandle,'z [mm]','FontSize',defaultFontSize);
         ylabel(axesHandle,'y [mm]','FontSize',defaultFontSize);
-        vcoord = matRad_cubeToWorldCoordinates([slice,0,0],ct);
+        vcoord = matRad_cube2worldCoords([slice,0,0],ct);
         title(axesHandle,['sagittal plane x = ' num2str(vcoord(1)) ' [mm]'],'FontSize',defaultFontSize)
     else
         xlabel(axesHandle,'z [voxels]','FontSize',defaultFontSize)
@@ -82,7 +82,7 @@ elseif plane == 1 % Coronal plane
         set(axesHandle,'YTickLabel',round(linspace(ct.x(1),ct.x(end),10)));
         xlabel(axesHandle,'z [mm]','FontSize',defaultFontSize)
         ylabel(axesHandle,'x [mm]','FontSize',defaultFontSize)
-        vcoord = matRad_cubeToWorldCoordinates([0,slice,0],ct);
+        vcoord = matRad_cube2worldCoords([0,slice,0],ct);
         title(axesHandle,['coronal plane y = ' num2str(vcoord(2)) ' [mm]'],'FontSize',defaultFontSize)
     else
         xlabel(axesHandle,'z [voxels]','FontSize',defaultFontSize)

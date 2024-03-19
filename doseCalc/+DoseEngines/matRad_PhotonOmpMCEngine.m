@@ -124,6 +124,11 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             %Now we have to calibrate to the the beamlet width.
             absCalibrationFactor = absCalibrationFactor * (bixelWidth/50)^2;
 
+            %Create X Y Z vectors if not present
+            if ~any(isfield(ct,{'x','y','z'}))
+                ct = matRad_getWorldAxes(ct);
+            end
+            
             %run over all scenarios
             for s = 1:dij.numOfScenarios
                 this.ompMCgeo.isoCenter = vertcat(stf(:).isoCenter) - [ct.x(1) ct.y(1) ct.z(1)] + dij.doseGrid.isoCenterOffset;
@@ -320,7 +325,7 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
             for i = 1:dij.numOfBeams % loop over all beams
                 
-                isoCenterBeam = stf(i).isoCenter + dij.doseGrid.isoCenterOffset;
+                isoCenterBeam = stf(i).isoCenter - [ct.x(1) ct.y(1) ct.z(1)] + dij.doseGrid.isoCenterOffset;
 
                 % define beam source in physical coordinate system in cm
                 beamSource(i,:) = (stf(i).sourcePoint + isoCenterBeam)/10;

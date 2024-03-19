@@ -193,7 +193,10 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                                          dij.doseGrid.resolution.z];   
             matRad_writeMhd(HUcube{1},MCsquareBinCubeResolution,MCsquareConfig.CT_File);
 
-
+            %Create X Y Z vectors if not present
+            if ~any(isfield(ct,{'x','y','z'}))
+                ct = matRad_getWorldAxes(ct);
+            end
 
             counter = 0;             
             for i = 1:length(stf)

@@ -109,7 +109,7 @@ if isempty(cst)
     [~,s(3)] = max(sum(sum(cube1,1),2));
     isoCenter = [ct.resolution.y*s(1) ct.resolution.x*s(2) ct.resolution.z*s(3)];
 else
-    isoCenter = matRad_worldToCubeCoordinates( matRad_getIsoCenter(cst,ct,0),ct);
+    isoCenter = matRad_world2cubeCoords( matRad_getIsoCenter(cst,ct,0),ct);
 end
 
 resolution = [ct.resolution.x ct.resolution.y ct.resolution.z];

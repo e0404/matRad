@@ -63,7 +63,7 @@ end
 [coordV(:,2), coordV(:,1), coordV(:,3)] = ind2sub(ct.cubeDim,V);
 
 % Transform to [mm]
-coord = matRad_cubeToWorldCoordinates(coordV, ct); %idx2worldcoord
+coord = matRad_cube2worldCoords(coordV, ct); %idx2worldcoord
 
 % Calculated isocenter.
 isoCenter = mean(coord);
@@ -74,9 +74,9 @@ if visBool
     clf
     hold on
     
-    xCoordsV = coord (:,1); %xCoordsV * ct.resolution.x;
-    yCoordsV = coord (:,2); %yCoordsV * ct.resolution.y;
-    zCoordsV = coord (:,3); %zCoordsV * ct.resolution.z;
+    xCoordsV = coord (:,1); 
+    yCoordsV = coord (:,2); 
+    zCoordsV = coord (:,3); 
 
     % Plot target
     plot3(yCoordsV,xCoordsV,zCoordsV,'kx')

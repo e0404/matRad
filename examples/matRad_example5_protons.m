@@ -96,7 +96,7 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
-slice = matRad_worldToCubeCoordinates(pln.propStf.isoCenter(1,:),ct);
+slice = matRad_world2cubeCoords(pln.propStf.isoCenter(1,:),ct);
 slice = slice(3);
 figure
 imagesc(resultGUI.RBExDose(:,:,slice)),colorbar,colormap(jet)
@@ -111,7 +111,7 @@ subplot(122),imagesc(resultGUI.RBExDose_beam2(:,:,slice)),colorbar,colormap(jet)
 %% and the corresponding LET distribution
 % Transversal iso-center slice
 figure
-imagesc(resultGUI.LET(:,:,slice)),colormap(jet),colorbar,title('LET [keV/µm]')
+imagesc(resultGUI.LET(:,:,slice)),colormap(jet),colorbar,title('LET [keV/ï¿½m]')
 
 %%
 % Now let's simulate a patient shift in y direction for both beams
@@ -138,7 +138,7 @@ figure,title('absolute difference')
 matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
 
 % Let's plot single profiles that are perpendicular to the beam direction
-ixProfileY = matRad_worldToCubeCoordinates(pln.propStf.isoCenter(1,:),ct);
+ixProfileY = matRad_world2cubeCoords(pln.propStf.isoCenter(1,:),ct);
 ixProfileY = ixProfileY(2);
 
 profileOrginal = resultGUI.RBExDose(:,ixProfileY,slice);

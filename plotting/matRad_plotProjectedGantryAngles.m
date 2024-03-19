@@ -34,7 +34,7 @@ function matRad_plotProjectedGantryAngles(axesHandle,pln,ct,plane)
 if plane == 3
    
     meanIsoCenter = mean(pln.propStf.isoCenter,1);
-    cubeIso = matRad_worldToCubeCoordinates(meanIsoCenter,ct);
+    cubeIso = matRad_world2cubeCoords(meanIsoCenter,ct);
     
     % find radius of inner circle from isocenter
     r = 0.8*min([abs([1 ct.cubeDim(1)]-cubeIso(1)) abs([1 ct.cubeDim(2)]-cubeIso(2))]);

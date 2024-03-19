@@ -92,7 +92,7 @@ for i = 1:length(BeamSeqNames)
     isoCenter(i,:)          = currBeamSeq.(ControlParam).Item_1.IsocenterPosition';
 end
 
-% transform iso. At the moment just this way for HFS WHY?
+% transform iso. At the moment just this way for HFS
 if ct.dicomInfo.ImageOrientationPatient == [1;0;0;0;1;0]
     isoCenter = isoCenter - ones(length(BeamSeqNames),1) * ...
         ([ct.x(1) ct.y(1) ct.z(1)] - [ct.resolution.x ct.resolution.y ct.resolution.z]);

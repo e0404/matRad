@@ -70,12 +70,8 @@ nSlices = ct.cubeDim(3);
 %Create X Y Z vectors if not present
 % Here it stars from -0.5
 if ~any(isfield(ct,{'x','y','z'}))
-    %positionOffset = transpose(ct.cubeDim ./ 2);
-%     positionOffset = ct.cubeDim ./ 2;
-%     ct.x = ct.resolution.x*[0:ct.cubeDim(2)-1] - positionOffset(2);
-%     ct.y = ct.resolution.y*[0:ct.cubeDim(1)-1] - positionOffset(1);
-%     ct.z = ct.resolution.z*[0:ct.cubeDim(3)-1] - positionOffset(3);
-    ct = matRad_computeWorldCoordinates(ct);
+
+    ct = matRad_getWorldAxes(ct);
 end
 
 obj.ct = ct;

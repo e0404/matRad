@@ -107,7 +107,7 @@ for i = 1:ct.numOfCtScen
     ct.cube{i}(eraseCtDensMask == 1) = 0;
 end
 if ~isfield(ct,'x')
-    ct = matRad_computeWorldCoordinates(ct);
+    ct = matRad_getWorldAxes(ct);
 end
 % Define steering file like struct. Prellocating for speed.
 stf = struct;
@@ -117,7 +117,7 @@ for i = 1:length(pln.propStf.gantryAngles)
     
     % Correct for iso center position. Whit this correction Isocenter is
     % (0,0,0) [mm]
-    wCoords = matRad_cubeToWorldCoordinates([coordsX_vox, coordsY_vox, coordsZ_vox], ct);
+    wCoords = matRad_cube2worldCoords([coordsX_vox, coordsY_vox, coordsZ_vox], ct);
 
     coordsX = wCoords(:,1) - pln.propStf.isoCenter(i,1);
     coordsY = wCoords(:,2) - pln.propStf.isoCenter(i,2);
@@ -403,7 +403,7 @@ for i = 1:length(pln.propStf.gantryAngles)
             
             % generate a 3D rectangular grid centered at isocenter in
             % voxel coordinates
-            cubeIso = matRad_worldToCubeCoordinates(stf(i).isoCenter,ct);
+            cubeIso = matRad_world2cubeCoords(stf(i).isoCenter,ct);
             [X,Y,Z] = meshgrid((1:ct.cubeDim(2))- cubeIso(1), ...
                                (1:ct.cubeDim(1))- cubeIso(2), ...
                                (1:ct.cubeDim(3))- cubeIso(3));

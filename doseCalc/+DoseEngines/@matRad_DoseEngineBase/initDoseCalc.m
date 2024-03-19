@@ -62,17 +62,12 @@ dij = struct();
 
 %store CT grid
 dij.ctGrid.resolution = ct.resolution;
-%dij.ctGrid.resolution.x = ct.resolution.x;
-%dij.ctGrid.resolution.y = ct.resolution.y;
-%dij.ctGrid.resolution.z = ct.resolution.z;
+
 
 % to guarantee downwards compatibility with data that does not have
 % ct.x/y/z
 if ~any(isfield(ct,{'x','y','z'}))
-%     dij.ctGrid.x = ct.resolution.x*[0:ct.cubeDim(2)-1]-ct.resolution.x/2;
-%     dij.ctGrid.y = ct.resolution.y*[0:ct.cubeDim(1)-1]-ct.resolution.y/2;
-%     dij.ctGrid.z = ct.resolution.z*[0:ct.cubeDim(3)-1]-ct.resolution.z/2;
-    ct = matRad_computeWorldCoordinates(ct);
+    ct = matRad_getWorldAxes(ct);
 end
 
 dij.ctGrid.x = ct.x;
