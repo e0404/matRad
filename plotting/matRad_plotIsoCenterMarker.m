@@ -40,7 +40,7 @@ uniqueIsoCenters = unique(pln.propStf.isoCenter,'rows');
 
 for i = 1:size(uniqueIsoCenters,1)
 
-    vIsoCenter           = round(uniqueIsoCenters(i,:)./[ct.resolution.x ct.resolution.y ct.resolution.z]);
+    vIsoCenter           = matRad_world2cubeCoords(pln.propStf.isoCenter(1,:), ct);
     if  plane == 3% Axial plane
         vIsoCenterPlot  = [vIsoCenter(1) vIsoCenter(2)];
         if vIsoCenter(3) == slice
@@ -50,7 +50,7 @@ for i = 1:size(uniqueIsoCenters,1)
         end
     elseif plane == 2
         vIsoCenterPlot  = [vIsoCenter(3) vIsoCenter(2)];
-        if vIsoCenter(2) == slice
+        if vIsoCenter(1) == slice
             isoCenterDirection = 0;
         else
             isoCenterDirection = sign(double(vIsoCenter(1) > slice) - 0.5);
@@ -58,7 +58,7 @@ for i = 1:size(uniqueIsoCenters,1)
 
     elseif plane == 1    
         vIsoCenterPlot  = [vIsoCenter(3) vIsoCenter(1)];
-        if vIsoCenter(1) == slice
+        if vIsoCenter(2) == slice
             isoCenterDirection = 0;
         else
             isoCenterDirection = sign(double(vIsoCenter(2) > slice) - 0.5);

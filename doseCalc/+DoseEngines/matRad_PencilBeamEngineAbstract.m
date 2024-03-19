@@ -204,17 +204,25 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             currBeam = stf(i);
             currBeam.beamIndex = i;
 
+            %Create X Y Z vectors if not present
+            if ~any(isfield(ct,{'x','y','z'}))
+                ct = matRad_getWorldAxes(ct);
+            end
+            
             %Adjust for isocenter offset
             %change the stf
-            currBeam.isoCenter = currBeam.isoCenter + dij.doseGrid.isoCenterOffset;
+            
+            currBeam.isoCenter = currBeam.isoCenter - [ct.x(1) ct.y(1) ct.z(1)] + [ct.resolution.x ct.resolution.y ct.resolution.z] + dij.doseGrid.isoCenterOffset;
 
             
 
             % convert voxel indices to real coordinates using iso center of beam i
+
             xCoordsV       = this.xCoordsV_vox(:)*dij.ctGrid.resolution.x-currBeam.isoCenter(1);
             yCoordsV       = this.yCoordsV_vox(:)*dij.ctGrid.resolution.y-currBeam.isoCenter(2);
             zCoordsV       = this.zCoordsV_vox(:)*dij.ctGrid.resolution.z-currBeam.isoCenter(3);
-            coordsV        = [xCoordsV yCoordsV zCoordsV];
+            coordsV        = [xCoordsV yCoordsV zCoordsV]; 
+
 
             xCoordsVdoseGrid = this.xCoordsV_voxDoseGrid(:)*dij.doseGrid.resolution.x-currBeam.isoCenter(1);
             yCoordsVdoseGrid = this.yCoordsV_voxDoseGrid(:)*dij.doseGrid.resolution.y-currBeam.isoCenter(2);

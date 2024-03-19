@@ -193,13 +193,16 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                                          dij.doseGrid.resolution.z];   
             matRad_writeMhd(HUcube{1},MCsquareBinCubeResolution,MCsquareConfig.CT_File);
 
-
+            %Create X Y Z vectors if not present
+            if ~any(isfield(ct,{'x','y','z'}))
+                ct = matRad_getWorldAxes(ct);
+            end
 
             counter = 0;             
             for i = 1:length(stf)
                 stfMCsquare(i).gantryAngle = mod(180-stf(i).gantryAngle,360); %Different MCsquare geometry
                 stfMCsquare(i).couchAngle  = stf(i).couchAngle;
-                stfMCsquare(i).isoCenter   = stf(i).isoCenter + mcSquareAddIsoCenterOffset;
+                stfMCsquare(i).isoCenter   = stf(i).isoCenter - [ct.x(1) ct.y(1) ct.z(1)] + mcSquareAddIsoCenterOffset;
                 stfMCsquare(i).energies    = unique([stf(i).ray.energy]);
 
                 % allocate empty target point container
