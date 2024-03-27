@@ -77,7 +77,7 @@ classdef matRad_BackProjection < handle
             dOmegaV = obj.dOmegaV;
         end
 
-        function wGrad = GetGradient(obj) % here is the problem: size is too big
+        function wGrad = GetGradient(obj) 
             wGrad = obj.wGrad;
         end
         

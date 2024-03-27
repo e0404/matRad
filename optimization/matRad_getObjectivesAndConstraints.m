@@ -55,7 +55,7 @@ else
        
     objFiles = dir(objectiveDir);
     for i=1:numel(objFiles)
-      objFiles(i).pkgName = 'DoseObjectives'; % Is it still right?
+      objFiles(i).pkgName = 'DoseObjectives'; 
     end
     constrFiles = dir(constraintDir);
     for i=1:numel(objFiles)
