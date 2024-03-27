@@ -1,4 +1,4 @@
-function [stackedbarDose,physDoseInDepth,RBExDcurve,RBEcurve,h,d] = matRad_DoseComparison(definedEnd,index,ct,ctCube,dij,resultGUI,add,LET_thres,k,displayComparison)
+function [stackedbarDose,physDoseInDepth,RBExDcurve,RBEcurve,h,d] = matRad_plotDirtynCleanDoseShare(definedEnd,index,ct,ctCube,dij,resultGUI,add,LET_thres,k,displayComparison)
 %
 % call
 %   [LETbeamletSpectrum, PhysDose_LET] = matRad_DoseComparison(definedEnd,index,ct,ctCube,dij,resultGUI,add,LET_thres,k)
