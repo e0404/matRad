@@ -86,7 +86,7 @@ classdef matRad_MaxDVHLETd < LETdObjectives.matRad_LETdObjective
             deviation = LETd - obj.parameters{1};
             
             % calc d_ref2: V(d_ref2) = refVol
-            d_ref2 = matRad_calcInversDVHLET(refVol,LETd);
+            d_ref2 = matRad_calcInversDVHLETd(refVol,LETd);
             
             deviation(LETd < obj.parameters{1} | LETd > d_ref2) = 0;
 

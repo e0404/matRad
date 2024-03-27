@@ -1,4 +1,4 @@
-function LET = matRad_calcInversDVHLET(volume,LETVec)
+function LETd = matRad_calcInversDVHLETd(volume,LETdVec)
 % matRad inverse DVH LET (LET Volume Histogram) calculation
 % 
 % call
@@ -6,10 +6,10 @@ function LET = matRad_calcInversDVHLET(volume,LETVec)
 %
 % input
 %   volume:     rel volume of structure
-%   LETVec:    LET vector of specific structure
+%   LETdVec:    LET vector of specific structure
 %
 % output
-%   LET:       LET that corresponds to rel volume
+%   LETd:       LET that corresponds to rel volume
 %
 % References
 %   -
@@ -28,10 +28,10 @@ function LET = matRad_calcInversDVHLET(volume,LETVec)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % sort dose values
-LETPoints = sort(LETVec,'descend');
+LETdPoints = sort(LETdVec,'descend');
 
-ix = max([1 ceil(volume*numel(LETPoints))]);
+ix = max([1 ceil(volume*numel(LETdPoints))]);
 
-LET = LETPoints(ix);
+LETd = LETdPoints(ix);
 
 end

@@ -1,6 +1,6 @@
-classdef matRad_SquaredUnderdosingLETt < LETtObjectives.matRad_LETtObjective
-% matRad_SquaredUnderdosingLETt Implements a penalized squared underdosing LETt objective
-%   See matRad_LETtObjectives for interface description
+classdef matRad_SquaredUnderdosingLETxDose < LETxDoseObjectives.matRad_LETxDoseObjective
+% matRad_SquaredUnderdosingLETxDose implements a penalized squared underdosing LETxDose objective
+%   See matRad_LETxDoseObjective for interface description
 %
 % References
 %   -
@@ -19,9 +19,9 @@ classdef matRad_SquaredUnderdosingLETt < LETtObjectives.matRad_LETtObjective
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     properties (Constant)
-        name = 'Squared Underdosing LETt';
-        parameterNames = {'LETt^{min}'};
-        parameterTypes = {'LETt'};
+        name = 'Squared Underdosing LETxDose';
+        parameterNames = {'LETxd^{min}'};
+        parameterTypes = {'LETxd'};
     end
     
     properties
@@ -30,7 +30,7 @@ classdef matRad_SquaredUnderdosingLETt < LETtObjectives.matRad_LETtObjective
     end
     
     methods
-        function obj = matRad_SquaredUnderdosingLETt(penalty,LETtMin)
+        function obj = matRad_SquaredUnderdosingLETxDose(penalty,LETxDoseMin)
             %If we have a struct in first argument
             if nargin == 1 && isstruct(penalty)
                 inputStruct = penalty;
@@ -41,12 +41,12 @@ classdef matRad_SquaredUnderdosingLETt < LETtObjectives.matRad_LETtObjective
             end
             
             %Call Superclass Constructor (for struct initialization)
-            obj@LETtObjectives.matRad_LETtObjective(inputStruct);
+            obj@LETxDoseObjectives.matRad_LETxDoseObjective(inputStruct);
             
             %now handle initialization from other parameters
             if ~initFromStruct
-                if nargin >= 2 && isscalar(LETtMin)
-                    obj.parameters{1} = LETtMin;
+                if nargin >= 2 && isscalar(LETxDoseMin)
+                    obj.parameters{1} = LETxDoseMin;
                 end
                 
                 if nargin >= 1 && isscalar(penalty)
@@ -56,27 +56,27 @@ classdef matRad_SquaredUnderdosingLETt < LETtObjectives.matRad_LETtObjective
         end
         
         %% Calculates the Objective Function value
-        function fLETt = computeLETtObjectiveFunction(obj,LETt)
-            % underLETt : LETt minus prefered LETt
-            underLETt = LETt - obj.parameters{1};
+        function fLETxDose = computeLETxDoseObjectiveFunction(obj,LETxDose)
+            % underLETxDose : LETxDose minus prefered LETxDose
+            underLETxDose = LETxDose - obj.parameters{1};
             
             % apply positive operator
-            underLETt(underLETt>0) = 0;
+            underLETxDose(underLETxDose>0) = 0;
             
             % calculate objective function
-            fLETt = 1/numel(LETt) * (underLETt'*underLETt);
+            fLETxDose = 1/numel(LETxDose) * (underLETxDose'*underLETxDose);
         end
         
         %% Calculates the Objective Function gradient
-        function fLETtGrad   = computeLETtObjectiveGradient(obj,LETt)
-            % underLETt : LETt minus prefered LETt
-            underLETt = LETt - obj.parameters{1};
+        function fLETxDoseGrad   = computeLETxDoseObjectiveGradient(obj,LETxDose)
+            % underLETxDose : LETxDose minus prefered LETxDose
+            underLETxDose = LETxDose - obj.parameters{1};
             
             % apply positive operator
-            underLETt(underLETt>0) = 0;
+            underLETxDose(underLETxDose>0) = 0;
             
             % calculate delta
-            fLETtGrad = 2/numel(LETt) * underLETt;
+            fLETxDoseGrad = 2/numel(LETxDose) * underLETxDose;
         end
     end
     

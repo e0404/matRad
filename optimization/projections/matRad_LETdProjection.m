@@ -42,16 +42,16 @@ classdef matRad_LETdProjection < matRad_BackProjection
 
         end
 
-        function [lExp,lOmegaV] = computeSingleScenarioProb(~,dij,scen,w)
+        function [LdExp,LdOmegaV] = computeSingleScenarioProb(~,dij,scen,w)
             if ~isempty(dij.LETdExp{scen})
-                lExp = dij.LETdExp{scen}*w;
+                LdExp = dij.LETdExp{scen}*w;
 
                 for i = 1:size(dij.LETdOmega,2)
-                   lOmegaV{scen,i} = dij.LETdOmega{scen,i} * w;
+                   LdOmegaV{scen,i} = dij.LETdOmega{scen,i} * w;
                 end 
             else
-                lExp = [];
-                lOmegaV = [];
+                LdExp = [];
+                LdOmegaV = [];
             end             
         end
 
@@ -74,27 +74,6 @@ classdef matRad_LETdProjection < matRad_BackProjection
                
                 wGrad = (firstDerivativeterm - secondDerivativeterm);
 
-               % from DADR:
-
-                % wFinal = size(dij.physicalDose{scen},2); % how many pencil beams I have;
-                % I = w(wFinal,1:end);
-                % 
-                % LETdGrad = doseGrad{scen}(1:dij.doseGrid.numOfVoxels);
-                % 
-                % dose = LETd(1:dij.doseGrid.numOfVoxels);
-                % doseRate = LETd(dij.doseGrid.numOfVoxels:end);
-                % ix = dose > 0;
-                % tmp = zeros(size(dose));
-                % tmp(ix) = LETdGrad(ix) ./ dose(ix);
-                % tmpForW = zeros(size(tmp));
-                % tmpForW(ix) = tmp(ix) ./ dose(ix);
-                % wGradPart1 = ((tmpForW.*dose)'  * dij.mLETDose{scen}.^2)' .* I; %u'v/v^2
-                % wGradient = wGradPart1; %- wGradPart2;
-                % 
-                % LETdGradPart = (tmp' * dij.mLETDose{scen}.^2)';                                
-                % IGrad = LETdGradPart;               
-                % wGrad = wGradient + IGrad;
-              
             else
                 wGrad = [];
                 matRad_cfg = MatRad_Config.instance();
@@ -103,10 +82,10 @@ classdef matRad_LETdProjection < matRad_BackProjection
             
         end
 
-        function wGrad = projectSingleScenarioGradientProb(~,dij,lExpGrad,lOmegaVgrad,scen,~)
+        function wGrad = projectSingleScenarioGradientProb(~,dij,LdExpGrad,LdOmegaVgrad,scen,~)
             if ~isempty(dij.LETdExp{scen})
-                wGrad = (lExpGrad{scen}' * dij.LETdExp{scen})';
-                wGrad = wGrad + 2 * lOmegaVgrad;
+                wGrad = (LdExpGrad{scen}' * dij.LETdExp{scen})';
+                wGrad = wGrad + 2 * LdOmegaVgrad;
             else
                 wGrad = [];
                 matRad_cfg = MatRad_Config.instance();

@@ -21,26 +21,26 @@ classdef matRad_DirtyDoseProjection < matRad_BackProjection
     end
     
     methods 
-        function d = computeSingleScenario(~,dij,scen,w)
+        function dD = computeSingleScenario(~,dij,scen,w)
             if ~isempty(dij.dirtyDose{scen})
-                d = dij.dirtyDose{scen}*w;
+                dD = dij.dirtyDose{scen}*w;
             else
-                d = [];
+                dD = [];
                 matRad_cfg = MatRad_Config.instance();
                 matRad_cfg.dispWarning('Empty scenario in optimization detected! This should not happen...\n');
             end 
         end
         
-        function [dExp,dOmegaV] = computeSingleScenarioProb(~,dij,scen,w)
+        function [dDExp,dDOmegaV] = computeSingleScenarioProb(~,dij,scen,w)
             if ~isempty(dij.dirtyDoseExp{scen})
-                dExp = dij.dirtyDoseExp{scen}*w;
+                dDExp = dij.dirtyDoseExp{scen}*w;
 
                 for i = 1:size(dij.dirtyDoseOmega,2)
-                   dOmegaV{scen,i} = dij.dirtyDoseOmega{scen,i} * w;
+                   dDOmegaV{scen,i} = dij.dirtyDoseOmega{scen,i} * w;
                 end 
             else
-                dExp = [];
-                dOmegaV = [];
+                dDExp = [];
+                dDOmegaV = [];
             end             
         end
      
@@ -54,10 +54,10 @@ classdef matRad_DirtyDoseProjection < matRad_BackProjection
             end
         end
         
-        function wGrad = projectSingleScenarioGradientProb(~,dij,dExpGrad,dOmegaVgrad,scen,~)
+        function wGrad = projectSingleScenarioGradientProb(~,dij,dDExpGrad,dDOmegaVgrad,scen,~)
             if ~isempty(dij.dirtyDoseExp{scen})
-                wGrad = (dExpGrad{scen}' * dij.dirtyDoseExp{scen})';
-                wGrad = wGrad + 2 * dOmegaVgrad;
+                wGrad = (dDExpGrad{scen}' * dij.dirtyDoseExp{scen})';
+                wGrad = wGrad + 2 * dDOmegaVgrad;
             else
                 wGrad = [];
                 matRad_cfg = MatRad_Config.instance();

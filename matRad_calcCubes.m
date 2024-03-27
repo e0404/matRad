@@ -87,11 +87,11 @@ if isfield(dij,'mLETDose')
     end
 end
 
-%% mLETDose
-% consider mLETDose
+%% LETxDose
+% consider LETxDose
 if isfield(dij,'mLETDose')
     for i = 1:length(beamInfo)
-        resultGUI.(['mLETDose', beamInfo(i).suffix]) = reshape(full(dij.mLETDose{1}*(resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
+        resultGUI.(['LETxDose', beamInfo(i).suffix]) = reshape(full(dij.mLETDose{1}*(resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
     end
 end
 

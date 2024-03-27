@@ -1,5 +1,5 @@
-classdef matRad_mLETDoseProjection < matRad_BackProjection
-% matRad_mLETProjection class to compute physical dose during optimization
+classdef matRad_LETxDoseProjection < matRad_BackProjection
+% matRad_LETxProjection class to compute physical dose during optimization
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -15,32 +15,32 @@ classdef matRad_mLETDoseProjection < matRad_BackProjection
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
 
   methods
-        function obj = matRad_mLETDoseProjection()
+        function obj = matRad_LETxDoseProjection()
             
         end
     end
     
     methods 
-        function mLETd = computeSingleScenario(~,dij,scen,w)
+        function LxD = computeSingleScenario(~,dij,scen,w)
             if ~isempty(dij.mLETDose{scen})
-                mLETd = dij.mLETDose{scen}*w;
+                LxD = dij.mLETDose{scen}*w;
             else
-                mLETd = [];
+                LxD = [];
                 matRad_cfg = MatRad_Config.instance();
                 matRad_cfg.dispWarning('Empty scenario in optimization detected! This should not happen...\n');
             end 
         end
         
-        function [dLDExp,dLDOmegaV] = computeSingleScenarioProb(~,dij,scen,w)
+        function [LxDExp,LxDOmegaV] = computeSingleScenarioProb(~,dij,scen,w)
             if ~isempty(dij.mLETDoseExp{scen})
-                dLDExp = dij.mLETDoseExp{scen}*w;
+                LxDExp = dij.mLETDoseExp{scen}*w;
 
                 for i = 1:size(dij.mLETDoseOmega,2)
-                   dLDOmegaV{scen,i} = dij.mLETDoseOmega{scen,i} * w;
+                   LxDOmegaV{scen,i} = dij.mLETDoseOmega{scen,i} * w;
                 end 
             else
-                dLDExp = [];
-                dLDOmegaV = [];
+                LxDExp = [];
+                LxDOmegaV = [];
             end             
         end
      
@@ -54,10 +54,10 @@ classdef matRad_mLETDoseProjection < matRad_BackProjection
             end
         end
         
-        function wGrad = projectSingleScenarioGradientProb(~,dij,dLDExpGrad,dLDOmegaVgrad,scen,~)
+        function wGrad = projectSingleScenarioGradientProb(~,dij,LxDExpGrad,LxDOmegaVgrad,scen,~)
             if ~isempty(dij.mLETDoseExp{scen})
-                wGrad = (dLDExpGrad{scen}' * dij.mLETDoseExp{scen})';
-                wGrad = wGrad + 2 * dLDOmegaVgrad;
+                wGrad = (LxDExpGrad{scen}' * dij.mLETDoseExp{scen})';
+                wGrad = wGrad + 2 * LxDOmegaVgrad;
             else
                 wGrad = [];
                 matRad_cfg = MatRad_Config.instance();

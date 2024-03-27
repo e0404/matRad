@@ -44,15 +44,6 @@ classdef (Abstract) matRad_LETdObjective < matRad_DoseOptimizationFunction
         function fLETdGrad   = computeLETdObjectiveGradient(obj,LETd)
             error('Function needs to be implemented!');
         end
-        % 
-        % function fClusterLETd = computeClusterLETdObjectiveFunction(obj,LETd)
-        %     error('Function needs to be implemented!');
-        % end
-        % 
-        % function fClusterLETdGrad   = computeClusterLETdObjectiveGradient(obj,LETd)
-        %     error('Function needs to be implemented!');
-        % end
-         
     end
     
     methods (Access = public)
@@ -61,6 +52,8 @@ classdef (Abstract) matRad_LETdObjective < matRad_DoseOptimizationFunction
         function obj = matRad_LETdObjective(varargin)
             %default initialization from struct (parameters & penalty)
             obj@matRad_DoseOptimizationFunction(varargin{:});
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispWarning('LETd SquaredOverdosing does not work!')
         end
         
         %Overloads the struct function to add Objective related information

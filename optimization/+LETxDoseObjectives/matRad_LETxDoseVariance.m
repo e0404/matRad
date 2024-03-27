@@ -1,7 +1,6 @@
-classdef matRad_LETdVariance < LETdObjectives.matRad_LETdObjective
-% matRad_LETdVariance Implements a variance objective for homogenous
-% LETd
-%   See matRad_LETdObjective for interface description
+classdef matRad_LETxDoseVariance < LETxDoseObjectives.matRad_LETxDoseObjective
+% matRad_LETxDoseVariance Implements a variance objective for homogenous LETxDose
+% See matRad_LETxDoseObjective for interface description
 %
 % References 
 %     -
@@ -33,7 +32,7 @@ classdef matRad_LETdVariance < LETdObjectives.matRad_LETdObjective
     end
     
     methods
-        function obj = matRad_LETdVariance(penalty)
+        function obj = matRad_LETxDoseVariance(penalty)
             
             %If we have a struct in first argument
             if nargin == 1 && isstruct(penalty)
@@ -45,12 +44,12 @@ classdef matRad_LETdVariance < LETdObjectives.matRad_LETdObjective
             end
             
             %Call Superclass Constructor (for struct initialization)
-            obj@LETdObjectives.matRad_LETdObjective(inputStruct);
+            obj@LETxDoseObjectives.matRad_LETxDoseObjective(inputStruct);
             
             %now handle initialization from other parameters
             if ~initFromStruct
-                if nargin == 2 && isscalar(LETdRef)
-                    obj.parameters{1} = LETdRef;
+                if nargin == 2 && isscalar(LETxDoseRef)
+                    obj.parameters{1} = LETxDoseRef;
                 end
                 
                 if nargin >= 1 && isscalar(penalty)
@@ -60,15 +59,15 @@ classdef matRad_LETdVariance < LETdObjectives.matRad_LETdObjective
         end
    
         %% Calculates the Objective Function value
-        function fLETd = computeLETdObjectiveFunction(obj,LETd)
-                 fLETd = obj.penalty * var(LETd);
+        function fLETxDose = computeLETxDoseObjectiveFunction(obj,LETxDose)
+                 fLETxDose = obj.penalty * var(LETxDose);
             
         end
         
         %% Calculates the Objective Function gradient
-        function fLETdGrad   = computeLETdObjectiveGradient(obj,LETd)
+        function fLETxDoseGrad   = computeLETxDoseObjectiveGradient(obj,LETxDose)
             
-            fLETdGrad = obj.penalty * 2/(numel(LETd) - 1) * (LETd - mean(LETd));
+            fLETxDoseGrad = obj.penalty * 2/(numel(LETxDose) - 1) * (LETxDose - mean(LETxDose));
         end
     end
     

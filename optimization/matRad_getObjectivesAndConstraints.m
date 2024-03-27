@@ -30,7 +30,7 @@ env = matRad_getEnvironment();
 if strcmp(env,'MATLAB') %use the package methodology for Matlab (stable)
     mpkgObjectives = meta.package.fromName('DoseObjectives');
     mpkgDirtyObjectives = meta.package.fromName('DirtyDoseObjectives');
-    mpkgmLETDoseObjectives = meta.package.fromName('LETxDoseObjectives');
+    mpkgLETxDoseObjectives = meta.package.fromName('LETxDoseObjectives');
     mpkgLETdObjectives = meta.package.fromName('LETdObjectives');
     mpkgConstraints = meta.package.fromName('DoseConstraints');
     

@@ -283,9 +283,6 @@ for i = 1 : rowCst(1,1)
         if isa(cst{i,6}{j},'LETdObjectives.matRad_LETdObjective')
             optiProb.LETdBP = matRad_LETdProjection;
         end
-        if isa(cst{i,6}{j},'LETtObjectives.matRad_LETtObjective')
-            optiProb.LETtBP = matRad_LETtProjection;
-        end
     end
 end
 

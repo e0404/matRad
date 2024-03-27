@@ -1,5 +1,5 @@
 function dirtyDose = matRad_calcInversDVHDirtyDose(volume,dirtyDoseVec)
-% matRad inverse DVH (Dose Volume Histogram) calculation
+% matRad inverse DVH (Dose Volume Histogram) for dirty dose calculation
 % 
 % call
 %   dirtyDose = matRad_calcInversDVH(volume,dirtyDoseVec)

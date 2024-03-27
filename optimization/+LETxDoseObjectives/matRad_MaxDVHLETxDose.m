@@ -30,7 +30,7 @@ classdef matRad_MaxDVHLETxDose < LETxDoseObjectives.matRad_LETxDoseObjective
     end
     
     methods 
-        function obj = matRad_MaxDVHmLETDose(penalty,LETxDoseRef,vMaxPercent)
+        function obj = matRad_MaxDVHLETxDose(penalty,LETxDoseRef,vMaxPercent)
             %If we have a struct in first argument
             if nargin == 1 && isstruct(penalty)
                 inputStruct = penalty;

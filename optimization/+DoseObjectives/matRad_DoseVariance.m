@@ -1,5 +1,5 @@
 classdef matRad_DoseVariance < DoseObjectives.matRad_DoseObjective
-% matRad_ClusterDoseVariance Implements a variance objective for homogenous dose
+% matRad_DoseVariance Implements a variance objective for homogenous dose
 %   See matRad_DoseObjective for interface description
 %
 % References 
