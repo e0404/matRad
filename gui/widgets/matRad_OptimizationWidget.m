@@ -401,7 +401,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
                                 'Tooltip','Objective Penalty', ...
                                 'UserData',[i,j,0],...
                                 'Callback',@(hObject,eventdata)editObjParam_Callback(this,hObject,eventdata));
-                        elseif isa(obj,'mLETDoseObjectives.matRad_mLETDoseObjective')
+                        elseif isa(obj,'LETxDoseObjectives.matRad_LETxDoseObjective')
                              h = uicontrol(cstPanel,'Style','edit', ...
                                 'String',num2str(obj.penalty), ...
                                 'Units','normalized', ...
@@ -622,7 +622,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
                 if  (isfield(currentObj,'penalty') || isa(currentObj,'DoseObjectives.matRad_DoseObjective')) &&  isa(newObj,'DoseObjectives.matRad_DoseObjective')
                 elseif (isfield(currentObj,'penalty') || isa(currentObj,'DirtyDoseObjectives.matRad_DirtyDoseObjective')) &&  isa(newObj,'DirtyDoseObjectives.matRad_DirtyDoseObjective')
                     newObj.penalty = currentObj.penalty;
-                elseif (isfield(currentObj,'penalty') || isa(currentObj,'mLETDoseObjectives.matRad_mLETDoseObjective')) &&  isa(newObj,'mLETDoseObjectives.matRad_mLETDoseObjective')
+                elseif (isfield(currentObj,'penalty') || isa(currentObj,'LETxDoseObjectives.matRad_LETxDoseObjective')) &&  isa(newObj,'LETxDoseObjectives.matRad_LETxDoseObjective')
                     newObj.penalty = currentObj.penalty;
                 elseif (isfield(currentObj,'penalty') || isa(currentObj,'LETdObjectives.matRad_LETdObjective')) &&  isa(newObj,'LETdObjectives.matRad_LETdObjective')
                     newObj.penalty = currentObj.penalty;
