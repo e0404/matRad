@@ -582,7 +582,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 % Order fields for easier comparison between different dijs
                 dij = orderfields(dij);
             else
-                dij = struct([]);
+                dij = [];
             end
 
         end

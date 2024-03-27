@@ -90,15 +90,14 @@ classdef (Abstract) matRad_MonteCarloEngineAbstract < DoseEngines.matRad_DoseEng
             this.calcDoseDirect = true;
             dij = this.calcDose(ct,cst,stf);
 
-            if ~this.externalCalculation
-                % hack dij struct
-                dij.numOfBeams = 1;
-                dij.beamNum = 1;
-    
-                % calculate cubes; use uniform weights here, weighting with actual fluence
-                % already performed in dij construction
-                resultGUI    = matRad_calcCubes(sum(w),dij);
-            end
+            % hack dij struct
+            dij.numOfBeams = 1;
+            dij.beamNum = 1;
+
+            % calculate cubes; use uniform weights here, weighting with actual fluence
+            % already performed in dij construction
+            resultGUI    = matRad_calcCubes(sum(w),dij);
+            
             % remember original fluence weights
             resultGUI.w  = w;
         end
