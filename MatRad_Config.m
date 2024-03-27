@@ -490,6 +490,8 @@ classdef MatRad_Config < handle
                                 switch pln.radiationMode
                                     case 'photons'
                                         configName = obj.propMC.default_photon_engine;
+                                    case 'brachy'
+                                        configName = obj.propMC.default_photon_engine;
                                     case 'protons'
                                         configName = obj.propMC.default_proton_engine;
                                     otherwise

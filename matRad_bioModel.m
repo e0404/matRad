@@ -12,6 +12,7 @@ function model = matRad_bioModel(sRadiationMode,sQuantityOpt, sModel)
 %
 % input
 %   sRadiationMode:     radiation modality 'photons' 'protons' 'carbon'
+%                                                                   and 'brachy'
 %   sQuantityOpt:       string to denote the quantity used for
 %                       optimization 'physicalDose', 'RBExD', 'effect'
 %   sModel:             string to denote which biological model is used

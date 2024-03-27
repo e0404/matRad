@@ -19,15 +19,15 @@ matRad_rc
 %% load patient data, i.e. ct, voi, cst
 
 %load HEAD_AND_NECK
-load TG119.mat
+load PROSTATE.mat
 %load PROSTATE.mat
 %load LIVER.mat
 %load BOXPHANTOM.mat
 
 % meta information for treatment plan
 pln.numOfFractions  = 30;
-pln.radiationMode   = 'photons';           % either photons / protons / helium / carbon
-pln.machine         = 'Generic';
+pln.radiationMode   = 'brachy';           % either photons / protons / helium / carbon / brachy
+pln.machine         = 'HDR';              % generic for RT / LDR or HDR for BT
 
 % beam geometry settings
 pln.propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
@@ -40,7 +40,7 @@ pln.propOpt.runDAO          = false;      % 1/true: run DAO, 0/false: don't / wi
 pln.propOpt.runSequencing   = false;      % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 
 quantityOpt  = 'physicalDose';     % options: physicalDose, effect, RBExD
-modelName    = 'none';             % none: for photons, protons, carbon            % constRBE: constant RBE for photons and protons 
+modelName    = 'none';             % none: for photons, protons, carbon, brachy           % constRBE: constant RBE for photons and protons 
                                    % MCN: McNamara-variable RBE model for protons  % WED: Wedenberg-variable RBE model for protons 
                                    % LEM: Local Effect Model for carbon ions       % HEL: data-driven RBE parametrization for helium
 % dose calculation settings
@@ -67,11 +67,22 @@ pln.propSeq.runSequencing   = true;  % true: run sequencing, false: don't / will
 %% initial visualization and change objective function settings if desired
 matRadGUI
 
-%% generate steering file
-stf = matRad_generateStf(ct,cst,pln);
+%% generate steering file 
+% -marios interchanging the stfs between normal RT and BT
+if strcmp(pln.radiationMode, 'brachy')
+    stf = matRad_generateBrachyStf(ct,cst,pln,1);
+elseif ismember(pln.radiationMode, {'photons', 'protons', 'helium', 'carbon'})
+    stf = matRad_generateStf(ct,cst,pln);
+end
 
 %% dose calculation
-dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
+if strcmp(pln.radiationMode, 'brachy')
+    dij = matRad_calcBrachyDose(ct, stf, pln, cst);
+
+elseif ismember(pln.radiationMode, {'photons', 'protons', 'helium', 'carbon'})
+    dij = matRad_calcDoseInfluence(ct, cst, stf, pln);
+
+end
 
 %% inverse planning for imrt
 resultGUI  = matRad_fluenceOptimization(dij,cst,pln);
@@ -81,7 +92,7 @@ resultGUI = matRad_sequencing(resultGUI,stf,dij,pln);
 
 
 %% DAO
-if strcmp(pln.radiationMode,'photons') && pln.propOpt.runDAO
+if strcmp(pln.radiationMode,'brachy') && pln.propOpt.runDAO
    resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln);
    matRad_visApertureInfo(resultGUI.apertureInfo);
 end

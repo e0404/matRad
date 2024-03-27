@@ -178,7 +178,7 @@ disp(pln);
 % target volume, number of needles, seeds and the positions of all needles
 % The one in the end enables visualization.
 
-stf = matRad_generateStf(ct,cst,pln,1);
+stf = matRad_generateBrachyStf(ct,cst,pln,1);
 
 %% II.2 - view stf
 % The 3D view is interesting, but we also want to know how the stf struct
