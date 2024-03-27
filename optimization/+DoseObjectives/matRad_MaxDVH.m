@@ -20,7 +20,7 @@ classdef matRad_MaxDVH < DoseObjectives.matRad_DoseObjective
     
     properties (Constant)
         name = 'Max DVH';
-        parameterNames = {'d', 'V^{max}'};
+        parameterNames = {'dose', 'V^{max}'};
         parameterTypes = {'dose','numeric'};
     end
     
@@ -73,7 +73,7 @@ classdef matRad_MaxDVH < DoseObjectives.matRad_DoseObjective
             
             deviation(dose < obj.parameters{1} | dose > d_ref2) = 0;
    
-            % claculate objective function
+            % calculate objective function
             fDose = (1/numel(dose))*(deviation'*deviation);
         end
         

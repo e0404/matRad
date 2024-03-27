@@ -1,8 +1,8 @@
-classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
-% matRad_DoseObjective: Interface for optimization objectives
+classdef (Abstract) matRad_DirtyDoseObjective < matRad_DoseOptimizationFunction
+% matRad_DirtyDoseObjective: Interface for optimization objectives
 %   This abstract base class provides the structure of optimization
-%   objectives like mean dose, squared deviation, EUD, dose-volume etc.
-%   Implementations can be found in the DoseObjectives package
+%   objectives like mean dirty dose, squared deviation dirty dose, EUD dirty dose, dose-volume etc.
+%   Implementations can be found in the DirtyDoseObjectives package
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
@@ -35,29 +35,22 @@ classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
     methods %(Abstract)
        
         %returns the objective function value for the given dose vector. Needs to be implemented in sub-classes.
-        function fDose       = computeDoseObjectiveFunction(obj,dose)
+        function fDirtyDose       = computeDirtyDoseObjectiveFunction(obj,dirtyDose)
             error('Function needs to be implemented!');
         end
         
         
         %returns the dose-gradient for the given dose vector. Needs to be implemented in sub-classes.
-        function fDoseGrad   = computeDoseObjectiveGradient(obj,dose)
+        function fDirtyDoseGrad   = computeDirtyDoseObjectiveGradient(obj,dirtyDose)
             error('Function needs to be implemented!');
         end
 
-         % function fClusterDose = computeClusterDoseObjectiveFunction(obj,dose)
-         %     error('Function needs to be implemented!')
-         % end
-         % function fClusterDoseGrad   = computeClusterDoseObjectiveGradient(obj,dose)
-         %     error('Function needs to be implemented!')
-         %end
-         
     end
     
     methods (Access = public)
        
         % constructor of matRad_DoseObjective
-        function obj = matRad_DoseObjective(varargin)
+        function obj = matRad_DirtyDoseObjective(varargin)
             %default initialization from struct (parameters & penalty)
             obj@matRad_DoseOptimizationFunction(varargin{:});
         end

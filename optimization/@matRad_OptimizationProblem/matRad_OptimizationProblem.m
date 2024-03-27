@@ -30,12 +30,19 @@ classdef matRad_OptimizationProblem < handle
 
         minimumW = NaN;
         maximumW = NaN;
+
+        dirtyDoseBP
+        LETxDoseBP
+        LETdBP
     end
     
     methods
         function obj = matRad_OptimizationProblem(backProjection)
             obj.BP = backProjection;
-        end       
+            obj.dirtyDoseBP = [];
+            obj.LETxDoseBP = [];
+            obj.LETdBP = [];
+        end
         
         %Objective function declaration
         fVal = matRad_objectiveFunction(optiProb,w,dij,cst)   

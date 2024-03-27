@@ -29,8 +29,12 @@ env = matRad_getEnvironment();
 
 if strcmp(env,'MATLAB') %use the package methodology for Matlab (stable)
     mpkgObjectives = meta.package.fromName('DoseObjectives');
+    mpkgDirtyObjectives = meta.package.fromName('DirtyDoseObjectives');
+    mpkgLETxDoseObjectives = meta.package.fromName('LETxDoseObjectives');
+    mpkgLETdObjectives = meta.package.fromName('LETdObjectives');
     mpkgConstraints = meta.package.fromName('DoseConstraints');
-    classList = [mpkgObjectives.ClassList; mpkgConstraints.ClassList];
+    
+    classList = [mpkgObjectives.ClassList;mpkgDirtyObjectives.ClassList;mpkgLETxDoseObjectives.ClassList;mpkgLETdObjectives.ClassList;mpkgConstraints.ClassList];
 
     classList = classList(not([classList.Abstract]));
 
@@ -46,12 +50,12 @@ if strcmp(env,'MATLAB') %use the package methodology for Matlab (stable)
     end
 else
     currDir = fileparts(mfilename('fullpath'));
-    objectiveDir = [currDir filesep '+DoseObjectives'];
+    objectiveDir = [currDir filesep '+DoseObjectives';currDir filesep '+DirtyDoseObjectives'; currDir filesep '+LETxDoseObjectives'; currDir filesep '+LETdObjectives'];
     constraintDir = [currDir filesep '+DoseConstraints'];
        
     objFiles = dir(objectiveDir);
     for i=1:numel(objFiles)
-      objFiles(i).pkgName = 'DoseObjectives';
+      objFiles(i).pkgName = 'DoseObjectives'; 
     end
     constrFiles = dir(constraintDir);
     for i=1:numel(objFiles)

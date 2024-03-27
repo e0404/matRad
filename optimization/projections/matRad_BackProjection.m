@@ -77,7 +77,7 @@ classdef matRad_BackProjection < handle
             dOmegaV = obj.dOmegaV;
         end
 
-        function wGrad = GetGradient(obj)
+        function wGrad = GetGradient(obj) 
             wGrad = obj.wGrad;
         end
         
@@ -105,7 +105,7 @@ classdef matRad_BackProjection < handle
         function wGrad = projectGradient(obj,dij,doseGrad,w)
             wGrad = cell(size(dij.physicalDose));
             wGrad(obj.scenarios) = arrayfun(@(scen) projectSingleScenarioGradient(obj,dij,doseGrad,scen,w),obj.scenarios,'UniformOutput',false);         
-        end
+        end 
         
         function wGrad = projectGradientProb(obj,dij,dExpGrad,dOmegaVgrad,w)
             wGrad = cell(size(dij.physicalDose));
