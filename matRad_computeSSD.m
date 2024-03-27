@@ -45,7 +45,7 @@ if strcmp(mode,'first')
     for i = 1:size(stf,2)
         SSD = cell(1,stf(i).numOfRays);
         for j = 1:stf(i).numOfRays
-            [alpha,~,rho,~,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
+            [alpha,~,rho,d12,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
                                  ct.resolution, ...
                                  stf(i).sourcePoint, ...
                                  stf(i).ray(j).targetPoint, ...
@@ -63,7 +63,7 @@ if strcmp(mode,'first')
             end
 
             % calculate SSD
-            SSD{j} = double(2 * stf(i).SAD * alpha(ixSSD));
+            SSD{j} = double(d12* alpha(ixSSD));
             stf(i).ray(j).SSD = SSD{j};            
         end
         

@@ -10,7 +10,7 @@ pln(1).radiationMode   = 'protons';           % either photons / protons / heliu
 pln(1).machine         = 'Generic';
 
 % beam geometry settings
-pln(1).propStf.bixelWidth      = 3; % [mm] / also corresponds to lateral spot spacing for particles
+pln(1).propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
 pln(1).propStf.gantryAngles    = [0]; % [?] ;
 pln(1).propStf.couchAngles     = zeros(numel(pln(1).propStf.gantryAngles),1); % [?] ; 
 pln(1).propStf.numOfBeams      = numel(pln(1).propStf.gantryAngles);
@@ -29,9 +29,9 @@ pln(1).propDoseCalc.doseGrid.resolution.x = 8; % [mm]
 pln(1).propDoseCalc.doseGrid.resolution.y = 8; % [mm]
 pln(1).propDoseCalc.doseGrid.resolution.z = 8; % [mm]
 % pln(1).propDoseCalc.doseGrid.resolution = ct.resolution;
-quantityOpt  = 'physicalDose';     % options: physicalDose, effect, RBExD
+quantityOpt  = 'effect';     % options: physicalDose, effect, RBExD
 %=======================================> Model check error in bioModel
-modelName    = 'none';             % none: for photons, protons, carbon            % constRBE: constant RBE for photons and protons 
+modelName    = 'MCN';             % none: for photons, protons, carbon            % constRBE: constant RBE for photons and protons 
                                    % MCN: McNamara-variable RBE model for protons  % WED: Wedenberg-variable RBE model for protons 
                                    % LEM: Local Effect Model for carbon ions
 
@@ -68,7 +68,7 @@ pln(2).propDoseCalc.doseGrid.resolution.y = 8; % [mm]
 pln(2).propDoseCalc.doseGrid.resolution.z = 8; % [mm]
 % pln(2).propDoseCalc.doseGrid.resolution = ct.resolution;
 
-quantityOpt  = 'physicalDose';     % options: physicalDose, effect, RBExD
+quantityOpt  = 'effect';     % options: physicalDose, effect, RBExD
 modelName    = 'none';             % none: for photons, protons, carbon            % constRBE: constant RBE for photons and protons 
                                    % MCN: McNamara-variable RBE model for protons  % WED: Wedenberg-variable RBE model for protons 
                                    % LEM: Local Effect Model for carbon ions
@@ -95,4 +95,25 @@ stf = matRad_stfWrapper(ct,cst,plnJO);
 % Dij Calculation
 dij = matRad_calcCombiDose(ct,stf,plnJO,cst,false);
 % Fluence optimization 
-resultGUI = matRad_fluenceOptimizationJO(dij,cst,plnJO)
+resultGUI = matRad_fluenceOptimizationJO(dij,cst,plnJO);
+
+%% Visualization
+slice = 59;
+
+photon_plan = resultGUI{2};
+proton_plan = resultGUI{1};
+totalPlan = pln(1).numOfFractions.*proton_plan.(quantityOpt) + pln(2).numOfFractions.*photon_plan.(quantityOpt);
+
+f = figure;
+subplot(1,3,1);
+    imagesc(proton_plan.(quantityOpt)(:,:,slice));
+    matRad_plotVoiContourSlice(gca(f), cst,ct, 1, 1,3,slice);
+    title('Proton Plan');
+subplot(1,3,2);
+    imagesc(photon_plan.(quantityOpt)(:,:,slice));
+    matRad_plotVoiContourSlice(gca(f), cst,ct, 1, 1,3,slice);
+    title('Photon Plan');
+subplot(1,3,3);
+    imagesc(totalPlan(:,:,slice));
+    matRad_plotVoiContourSlice(gca(f), cst,ct, 1, 1,3,slice);
+    title('Total Plan');

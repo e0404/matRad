@@ -1,3 +1,37 @@
+Monte-Carlo Update
+    Workflow of the Monte Carlo pipeline including MCsquare and TOPAS have been completely overhauled
+    - Restructured the MCEmittanceBaseData class, fit and calculation pipeline
+        - Added example 13 for generating analytical data file by fitting to given machine emittance
+            - added function to plot particleBaseDataEntry
+            - edited function to fit base data
+            - added function to generate a single pencil beam
+        - MCemmittanceBaseData can calculate meanEnergy and spread also for carbon and helium ions
+    - Added support for 4D calculation
+        - added 4D accumulation in calcDoseDirectMC
+        - Fixed number of errors in 4D calculation workflow
+    - TOPAS Updates:
+        - Added comments to whole pipeline
+        - Implemented dij calculation
+        - Restructured resampling in calcParticleDoseMCtopas in separate function
+        - calcParticleDoseMCtopas now generates dij in matRad format for calcDoseDirect
+        - Merged support functions for TOPAS into topasConfig class
+        - modular Schneider Converter: Converter is generated on demand rather than read from file which allows a variety of different options
+        - modular TOPAS scorer which can be individually turned on and off
+        - Export feature for TOPAS to run externally (includes functions to read from external folders) 
+    - MCsquare Updates:
+        - Merged support functions for MCsquare into MCsquareConfig class
+        - added variable in pln to contain an existing BDL file if available
+        - renamed MCsquare property "Num_Primaries" -> "numHistories" to be in line with other Monte Carlo (this is written to the BDL file in original format)
+    - Implemented calculation of std of physicalDose
+
+    Changes to matRad workflow:
+    - Added a class constructor for pln in MatRad_config, which loads requested classes in pln and writes default values that were not set
+    - Changed matRad_calcCubes to accept a variety of different fields for Monte Carlo, without changing the current usage
+    - Enabled helium in calcdoseDirect
+    - Bugfix for coordinate system in resizeCstToGrid function 
+    - Added optional initial weights to fluence Optimization
+    - Added flag in stf to catch specific error where no energies could be found
+
 Development Changes
 	- Bugfixes:
 		- Fix SFUD wrapper for new pln & cst format

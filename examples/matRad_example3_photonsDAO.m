@@ -72,8 +72,8 @@ end
 
 %%
 % Enable sequencing and direct aperture optimization (DAO).
-pln.propOpt.runSequencing = 1;
-pln.propOpt.runDAO        = 1;
+pln.propSeq.runSequencing = true;
+pln.propOpt.runDAO        = true;
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
@@ -98,7 +98,7 @@ matRadGUI;
 % order to modulate the intensity of the beams with multiple static 
 % segments, so that translates each intensity map into a set of deliverable 
 % aperture shapes.
-resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,5);
+resultGUI = matRad_sequencing(resultGUI,stf,dij,pln);
 
 %% DAO - Direct Aperture Optimization
 % The Direct Aperture Optimization is an optimization approach where we 

@@ -64,7 +64,13 @@ for  i = 1:size(cst,1)
          if isa(constraint,'DoseConstraints.matRad_DoseConstraint')
             
             % rescale dose parameters to biological optimization quantity if required
+            doseParameter = constraint.getDoseParameters();
+            constraint = constraint.setDoseParameters(doseParameter./dij.totalNumOfFractions);
+
             constraint = optiProb.BP.setBiologicalDosePrescriptions(constraint,cst{i,5}.alphaX,cst{i,5}.betaX);
+            
+            doseParameter = constraint.getDoseParameters();
+            constraint = constraint.setDoseParameters(doseParameter.*dij.totalNumOfFractions);
             
             % retrieve the robustness type
             robustness = constraint.robustness;

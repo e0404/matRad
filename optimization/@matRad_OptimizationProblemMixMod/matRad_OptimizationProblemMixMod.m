@@ -30,6 +30,7 @@ classdef matRad_OptimizationProblemMixMod < handle
 
         minimumW = NaN;
         maximumW = NaN;
+        nFractions;
     end
     
     methods

@@ -1,0 +1,9 @@
+s:Ge/MultiLeafCollimatorA/Type              = "TsMultiLeafCollimator"
+s:Ge/MultiLeafCollimatorA/Parent            = "Nozzle"
+s:Ge/MultiLeafCollimatorA/Material          = "Aluminum"
+d:Ge/MultiLeafCollimatorA/TransX            = 0.0 cm
+d:Ge/MultiLeafCollimatorA/TransY            = 0.0 cm
+d:Ge/MultiLeafCollimatorA/TransZ            = 0.5 * Ge/MultiLeafCollimatorA/Thickness cm
+d:Ge/MultiLeafCollimatorA/RotX              = 0.0 deg
+d:Ge/MultiLeafCollimatorA/RotY              = 0.0 deg
+d:Ge/MultiLeafCollimatorA/RotZ              = 90.0 deg

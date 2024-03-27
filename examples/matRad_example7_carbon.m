@@ -67,7 +67,7 @@ pln.propStf.bixelWidth    = 6;
 pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 pln.propOpt.runDAO        = 0;
-pln.propOpt.runSequencing = 0;
+pln.propSeq.runSequencing = 0;
 
 % retrieve bio model parameters
 pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);

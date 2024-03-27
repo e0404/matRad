@@ -133,7 +133,7 @@ pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
 %%
 % Enable sequencing and disable direct aperture optimization (DAO) for now.
 % A DAO optimization is shown in a seperate example.
-pln.propOpt.runSequencing = 1;
+pln.propSeq.runSequencing = 1;
 pln.propOpt.runDAO        = 0;
 
 % retrieve bio model parameters

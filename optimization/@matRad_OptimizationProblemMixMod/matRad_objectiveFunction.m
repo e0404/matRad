@@ -90,8 +90,27 @@ for  i = 1:size(cst,1)
             if isa(objective,'DoseObjectives.matRad_DoseObjective')
                 
                 % rescale dose parameters to biological optimization quantity if required
+
+                % Obtain the fraction-size dose prescription to be
+                % converted to biological prescription. When performing
+                % effect-based optimization, this step ensures that the
+                % dose-effect conversion is always performed on a
+                % fraction-size dose prescription and only after scaled back to
+                % total plan effect.
+
+                % First scale the dose prescription to fraction size
+                doseParameter = objective.getDoseParameters();
+                objective = objective.setDoseParameters(doseParameter./dij.totalNumOfFractions);
+
+                % Compute the biological parameters. This function is only effective when using effect-based
+                % optimization
                 objective = optiProb.BP.setBiologicalDosePrescriptions(objective,cst{i,5}.alphaX,cst{i,5}.betaX);
-                
+           
+                % Scale back the biological dose prescription to total plan
+                % size
+                doseParameter = objective.getDoseParameters();
+                objective = objective.setDoseParameters(doseParameter.*dij.totalNumOfFractions); 
+              
                 % retrieve the robustness type
                 robustness = objective.robustness;
                 

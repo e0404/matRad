@@ -29,10 +29,13 @@ function stf = matRad_generateStf(ct,cst,pln,visMode)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
+% Instance of MatRad_Config class
 matRad_cfg = MatRad_Config.instance();
 
 matRad_cfg.dispInfo('matRad: Generating stf struct...\n');
+
+% load default parameters if not set
+pln = matRad_cfg.getDefaultProperties(pln,{'propOpt','propStf'});
 
 if nargin < 4
     visMode = 0;
@@ -409,7 +412,7 @@ for i = 1:length(pln.propStf.gantryAngles)
                 % get for each spot the focus index
                 for k = 1:stf(i).numOfBixelsPerRay(j)                    
                     focusIx(k) = find(machine.data(vEnergyIx(k)).initFocus.SisFWHMAtIso > currentMinimumFWHM,1,'first');
-                end                
+                end
 
                 stf(i).ray(j).focusIx = focusIx';
 
@@ -455,6 +458,9 @@ for i = 1:length(pln.propStf.gantryAngles)
        
     end
     
+    if ~isfield(stf(i).ray,'energy')
+        matRad_cfg.dispError('Error generating stf struct: no suitable energies found. Check if bixelwidth is too large.');
+    end
     % store total number of rays for beam-i
     stf(i).numOfRays = size(stf(i).ray,2);
      

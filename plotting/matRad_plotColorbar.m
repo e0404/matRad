@@ -32,17 +32,19 @@ function cBarHandle = matRad_plotColorbar(axesHandle,cMap,window,varargin)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
 [env,envver] = matRad_getEnvironment();
 
 colormap(axesHandle,cMap);
-
+caxis(axesHandle,window);
 %sanity check to avoid a crash
-if window(1) < window(2)
-    caxis(window);
-else
-    matRad_cfg = MatRad_Config.instance();
-    matRad_cfg.dispWarning('Unsuitable display window [%d,%d] for color axis!',window(1),window(2));
-end 
+% if window(1) < window(2)
+%     
+% else
+% 
+%     matRad_cfg = MatRad_Config.instance();
+%     matRad_cfg.dispWarning('Unsuitable display window [%d,%d] for color axis!',window(1),window(2));
+% end 
 
 
 switch env

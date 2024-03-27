@@ -25,10 +25,7 @@ function obj = matRad_exportDicomRTStruct(obj)
 matRad_cfg = MatRad_Config.instance();
 matRad_cfg.dispInfo('Exporting DICOM RTStruct...\n');
 
-env = matRad_getEnvironment();
-isOctave = strcmp(env,'OCTAVE');
-
-if isOctave
+if matRad_cfg.isOctave
     matRad_cfg.dispWarning('RTStruct export currently not supported by matRad running in Octave due to crashing dicomwrite! Skipping...');
     return;
 end
@@ -158,7 +155,7 @@ for i = 1:size(obj.cst,1)
     meta.StructureSetROISequence.(['Item_' num2str(i)]) = ROISequenceItem;
     
     %Contour Sequence
-    if ~isOctave
+    if ~ matRad_cfg.isOctave
         ROIContourSequenceItem.ROIDisplayColor = int32(round(255 * obj.cst{i,5}.visibleColor));
     end
     
@@ -251,7 +248,7 @@ filepath = obj.dicomDir;
 filename = fullfile(filepath,filename);
 
 
-if isOctave
+if matRad_cfg.isOctave
 	dicomwrite(int16(zeros(2)),filename,meta);
 else
     obj.rtssExportStatus = dicomwrite([],filename,meta,'CreateMode','copy');%,'TransferSyntax',TransferSyntaxUID);

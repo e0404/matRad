@@ -6,29 +6,6 @@ if ~exist('calcDoseDirect','var')
     calcDoseDirect = false;
 end
 
-% assign analytical mode
-if isfield(pln,'propDoseCalc')  && isfield(pln.propDoseCalc,'fineSampling') && strcmp(pln.radiationMode, 'protons')
-    pbCalcMode = 'fineSampling';
-    defaultFineSampling = matRad_cfg.propDoseCalc.defaultFineSamplingProperties;    
-    if isfield(pln.propDoseCalc.fineSampling,'N')
-        fineSamplingN = pln.propDoseCalc.fineSampling.N;
-    else
-        fineSamplingN = defaultFineSampling.N;
-    end
-    if isfield(pln.propDoseCalc.fineSampling,'sigmaSub')    
-        fineSamplingSigmaSub = pln.propDoseCalc.fineSampling.sigmaSub;
-    else
-        fineSamplingSigmaSub = defaultFineSampling.sigmaSub;
-    end
-    if isfield(pln.propDoseCalc.fineSampling,'method')    
-        fineSamplingMethod = pln.propDoseCalc.fineSampling.method;
-    else
-        fineSamplingMethod = defaultFineSampling.method;
-    end
-else
-    pbCalcMode = 'standard';
-end
-
 % to guarantee downwards compatibility with data that does not have
 % ct.x/y/z
 if ~any(isfield(ct,{'x','y','z'}))
@@ -183,7 +160,7 @@ VdoseGrid = find(matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z,tmpC
 % Convert CT subscripts to coarse linear indices.
 [yCoordsV_voxDoseGrid, xCoordsV_voxDoseGrid, zCoordsV_voxDoseGrid] = ind2sub(dij.doseGrid.dimensions,VdoseGrid);
 
-% load base data% load machine file
+% load base data
 fileName = [pln.radiationMode '_' pln.machine];
 try
    load([fileparts(mfilename('fullpath')) filesep 'basedata' filesep fileName '.mat']);
@@ -193,3 +170,12 @@ end
 
 % compute SSDs -> Removed for now because it is scenario-dependent
 % stf = matRad_computeSSD(stf,ct);
+
+if ~isfield(pln.propDoseCalc, 'selectVoxelsInScenarios')
+    pln.propDoseCalc.selectVoxelsInScenarios = matRad_cfg.propDoseCalc.defaultSelectVoxelsInScenarios;
+end
+
+%structures that are selected here will be included in dose calculation over the robust scenarios
+robustVoxelsOnGrid = matRad_selectVoxelsFromCst(cst, dij.doseGrid, pln.propDoseCalc.selectVoxelsInScenarios);
+
+matRad_cfg.dispInfo('...done.');

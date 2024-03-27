@@ -106,6 +106,9 @@ if isfield(dij,'numOfModalities')
 else
     numOfModalities = 1;
 end
+
+bioModels = [pln.originalPlans.bioParam];
+
 if exist('wInit','var')
     %do nothing as wInit was passed to the function
     matRad_cfg.dispInfo('chosen provided wInit!\n');   
@@ -116,8 +119,10 @@ else
     wInit = [];
     % loop over all modalities
     for modality = 1: numOfModalities
+
         if isfield(dij,'original_Dijs')   
             dijt = dij.original_Dijs{modality};
+            currentBioModel = pln.originalPlans(modality).bioParam;
         else 
             dijt = dij;
         end
@@ -125,10 +130,16 @@ else
         wOnes          = ones(dijt.totalNumOfBixels,1);
         wt             = zeros(dijt.totalNumOfBixels,1);
         
-        if strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'protons')
+        if strcmp(currentBioModel.model,'constRBE') % If there is constRBE, the constRBE BP will be instantiated, and we need RBE field in dij.
+            
             % check if a constant RBE is defined - if not use 1.1
             if ~isfield(dijt,'RBE')
-                dijt.RBE = 1.1;
+                switch pln.originalPlans(modality).radiationMode
+                    case 'protons'
+                        dijt.RBE = 1.1;
+                    case 'photons'
+                        dijt.RBE = 1;
+                end
             end
 
             doseTmp = dijt.physicalDose{1}*wOnes;
@@ -136,8 +147,8 @@ else
             wt       = wOnes * bixelWeight;
             matRad_cfg.dispInfo('chosen uniform weight of %f!\n',bixelWeight);
 
-        elseif pln.bioParam.bioOpt
-
+        elseif any(strcmp(pln.bioParam.quantityOpt, {'RBExD', 'effect'})) %currentBioModel.bioOpt %%%% here we could have photons with RBExD that have bioOpt = 0;
+            
             % retrieve photon LQM parameter
             [ax,bx] = matRad_getPhotonLQMParameters(cst,dijt.doseGrid.numOfVoxels,1);
 
@@ -166,7 +177,7 @@ else
             dijt.ixDose  = dijt.bx~=0;
             dij.original_Dijs{modality}.ixDose = dijt.ixDose;
 
-            if isequal(pln.bioParam.quantityOpt,'effect')
+            if isequal(pln.bioParam.quantityOpt,'effect') %here check on the mixMod bioModel, the quantityOpt should be consistent
 
                 effectTarget = cst{ixTarget,5}.alphaX * doseTarget + cst{ixTarget,5}.betaX * doseTarget^2;
                 bixelNum = 1;
@@ -297,7 +308,9 @@ switch pln.bioParam.quantityOpt
         backProjection = matRad_EffectProjection;
     case 'RBExD'
         %Capture special case of constant RBE
-        if strcmp(pln.bioParam.model,'constRBE')
+        protonPlnIdx = find(strcmp({pln.originalPlans.radiationMode}, 'protons'));
+
+        if strcmp(pln.originalPlans(protonPlnIdx).bioParam.model, 'constRBE') %If proton has constRBE, photon does not but calcCombi dose computes the dij.RBE=1 anyway. TODO: implement this correctly
             backProjection = matRad_ConstantRBEProjection;
         else
             backProjection = matRad_VariableRBEProjection;
@@ -316,6 +329,7 @@ backProjection.scenarioProb = [pln.multScen.scenProb];
 
 if strcmp(pln.radiationMode, 'MixMod')
    optiProb = matRad_OptimizationProblemMixMod(backProjection);
+   optiProb.nFractions = pln.numOfFractions;
 else
    
    optiProb = matRad_OptimizationProblem(backProjection);

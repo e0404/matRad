@@ -47,6 +47,7 @@ pln.propStf.isoCenter               = ones(pln.propStf.numOfBeams,1) * matRad_ge
 pln.propOpt.runDAO                  = 0;
 pln.propOpt.runSequencing           = 0;
 
+
 %%
 % Define the biological optimization model for treatment planning along
 % with the quantity that should be used for optimization. Possible model values 
@@ -67,6 +68,7 @@ pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
 
 % retrieve scenarios for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,'nomScen');  % optimize on the nominal scenario
+
 
 % dose calculation settings
 pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]

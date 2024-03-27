@@ -65,7 +65,6 @@ classdef matRad_SquaredOverdosing < DoseObjectives.matRad_DoseObjective
             
             % claculate objective function
             fDose = 1/numel(dose) * (overdose'*overdose);
-            
         end
         
         %% Calculates the Objective Function gradient
@@ -77,7 +76,7 @@ classdef matRad_SquaredOverdosing < DoseObjectives.matRad_DoseObjective
             overdose(overdose<0) = 0;
             
             % calculate delta
-            fDoseGrad = 2/numel(dose) * overdose;
+            fDoseGrad = 2 * 1/numel(dose) * overdose;
         end
     end
     

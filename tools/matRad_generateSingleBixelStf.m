@@ -53,7 +53,7 @@ catch
    matRad_cfg.dispError('Could not find the following machine file: %s',fileName); 
 end
 
-if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
+if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon') || strcmp(pln.radiationMode,'helium')
       
     availableEnergies = [machine.data.energy];
     availablePeakPos  = [machine.data.peakPos] + [machine.data.offset];
@@ -159,7 +159,7 @@ for i = 1:length(pln.propStf.gantryAngles)
     
     
     % find appropriate energies for particles
-    if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon')
+    if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon') || strcmp(stf(i).radiationMode,'helium')
         stf.longitudinalSpotSpacing = longitudinalSpotSpacing;
               
         % ray tracing necessary to determine depth of the target

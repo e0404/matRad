@@ -73,7 +73,7 @@ classdef matRad_EUD < DoseObjectives.matRad_DoseObjective
             
             %This check is not needed since dose is always positive
             %if powersum > 0
-            fDose =  (nthroot(powersum/numel(dose),k) - obj.parameters{1})^2;
+            fDose = (nthroot(powersum/numel(dose),k) - obj.parameters{1})^2;
             %end
         end
         

@@ -96,11 +96,32 @@ end
                 % only perform gradient computations for objectives
                 if isa(objective,'DoseObjectives.matRad_DoseObjective')
 
+                    % rescale dose parameters to biological optimization quantity if required
+
+                    % Obtain the fraction-size dose prescription to be
+                    % converted to biological prescription. When performing
+                    % effect-based optimization, this step ensures that the
+                    % dose-effect conversion is always performed on a
+                    % fraction-size dose prescription and only after scaled back to
+                    % total plan effect.
+
+                    % First scale the dose prescription to fraction size
+                    doseParameter = objective.getDoseParameters();
+                    objective = objective.setDoseParameters(doseParameter./dij.totalNumOfFractions);
+
+                    % Compute the biological parameters. This function is only effective when using effect-based
+                    % optimization
+ 
+                    objective = optiProb.BP.setBiologicalDosePrescriptions(objective,cst{i,5}.alphaX,cst{i,5}.betaX);
+               
+                    % Scale back the biological dose prescription to total plan
+                    % size
+                    doseParameter = objective.getDoseParameters();
+                    objective = objective.setDoseParameters(doseParameter.*dij.totalNumOfFractions); 
+
                     % retrieve the robustness type
                     robustness = objective.robustness;
 
-                    % rescale dose parameters to biological optimization quantity if required
-                    objective = optiProb.BP.setBiologicalDosePrescriptions(objective,cst{i,5}.alphaX,cst{i,5}.betaX);
 
                     switch robustness
                         case 'none' % if conventional opt: just sum objectiveectives of nominal dose
@@ -331,22 +352,25 @@ for mod = 1: length(dij.original_Dijs)
     for s = 1:numel(useScen)
         gt{s} = gt{s}*dij.STfractions{mod};  
         g{s} = [g{s}; gt{s}];                     
-    end 
-end   
-    weightGradient = zeros(dij.totalNumOfBixels,1);
-    for s = 1:numel(useScen)
-        weightGradient = weightGradient + g{useScen(s)};
     end
+    bxidx = bxidx + STrepmat*dij.original_Dijs{mod}.totalNumOfBixels;
+end
 
-    if vOmega ~= 0
-        optiProb.BP.computeGradientProb(dij.original_Dijs{mod},doseGradientExp,vOmega,w);
-        gProb = optiProb.BP.GetGradientProb();
+weightGradient = zeros(dij.totalNumOfBixels,1);
+for s = 1:numel(useScen)
+    weightGradient = weightGradient + g{useScen(s)};
+end
 
-        %Only implemented for first scenario now
-        weightGradient = weightGradient + gProb{1};
-    end
+if vOmega ~= 0
+    optiProb.BP.computeGradientProb(dij.original_Dijs{mod},doseGradientExp,vOmega,w);
+    gProb = optiProb.BP.GetGradientProb();
+
+    %Only implemented for first scenario now
+    weightGradient = weightGradient + gProb{1};
+end
+
 % code snippet to check the gradient
-    gradientChecker = 1;
+    gradientChecker = 0;
 if gradientChecker == 1
     f =  matRad_objectiveFunction(optiProb,w,dij,cst);
     epsilon = 1e-6;
