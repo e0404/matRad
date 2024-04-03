@@ -339,6 +339,9 @@ if isfield(pln,'propOpt') && isfield(pln.propOpt,'useLogSumExpForRobOpt')
     optiProb.useLogSumExpForRobOpt = pln.propOpt.useLogSumExpForRobOpt;
 end
 
+if dij.precon
+    dij = matRad_mixModPreconditioner(dij);
+end
 %Get Bounds
 
 if ~isfield(pln.propOpt,'boundMU')
@@ -384,13 +387,18 @@ optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
 wOpt = optimizer.wResult;
 info = optimizer.resultInfo;
 bxidx = 1;
+
 for mod = 1: pln.numOfModalities
+
     wt = [];
     % split the w for current modality
     STrepmat = (~dij.spatioTemp(mod) + dij.spatioTemp(mod)*dij.numOfSTscen(mod));
     wt = reshape(wOpt(bxidx: bxidx+STrepmat*dij.original_Dijs{mod}.totalNumOfBixels-1),[dij.original_Dijs{mod}.totalNumOfBixels,STrepmat]);
     
     resultGUI{mod} = matRad_calcCubes(wt,dij.original_Dijs{mod});
+    if isfield(dij,'preconW') && dij.precon
+       wt = wt.*dij.preconW(mod);     
+    end
     resultGUI{mod}.wUnsequenced = wt;
     resultGUI{mod}.usedOptimizer = optimizer;
     resultGUI{mod}.info = info;
