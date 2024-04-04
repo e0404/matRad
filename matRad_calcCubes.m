@@ -165,7 +165,7 @@ end
 resultGUI = orderfields(resultGUI);
 
 % interpolation if dose grid does not match ct grid
-if any(dij.ctGrid.dimensions~=dij.doseGrid.dimensions)
+if isfield(dij,'ctGrid') && any(dij.ctGrid.dimensions~=dij.doseGrid.dimensions)
     myFields = fieldnames(resultGUI);
     for i = 1:numel(myFields)
         if numel(resultGUI.(myFields{i})) == dij.doseGrid.numOfVoxels

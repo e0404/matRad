@@ -61,7 +61,7 @@ classdef (Abstract) matRad_MonteCarloEngineAbstract < DoseEngines.matRad_DoseEng
 
             % copy bixel weight vector into stf struct
             if nargin == 5
-                if sum([stf.totalNumOfBixels]) ~= numel(w)
+                if sum([stf.totalNumOfBixels]) ~= numel(w) && ~isfield([stf.ray],'shapes')
                     matRad_cfg.dispError('weighting does not match steering information')
                 end
                 counter = 0;
@@ -97,7 +97,7 @@ classdef (Abstract) matRad_MonteCarloEngineAbstract < DoseEngines.matRad_DoseEng
             % calculate cubes; use uniform weights here, weighting with actual fluence
             % already performed in dij construction
             resultGUI    = matRad_calcCubes(sum(w),dij);
-
+            
             % remember original fluence weights
             resultGUI.w  = w;
         end
