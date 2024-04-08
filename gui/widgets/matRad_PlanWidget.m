@@ -29,7 +29,7 @@ classdef matRad_PlanWidget < matRad_Widget
     end
     
     properties (Constant)
-        Modalities = {'photons','protons','carbon', 'helium'};
+        Modalities = {'photons','protons','carbon', 'helium','neutrons'};
     end
     
     methods
@@ -986,7 +986,7 @@ classdef matRad_PlanWidget < matRad_Widget
             contentPopUpQuantityOpt  = get(handles.popMenuQuantityOpt,'String');
             contentPopUpBioModel = get(handles.popMenuBioModel,'String');
             switch RadIdentifier
-                case 'photons'
+                case {'photons', 'neutrons'}
                     
                     set(handles.popMenuQuantityOpt,'Enable','on');
 %                     ix = find(strcmp(contentPopUpQuantityOpt,'physicalDose'));
@@ -1090,7 +1090,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 if  ismember('resultGUI',AllVarNames)
                     resultGUI = evalin('base','resultGUI');
                     switch contents(get(hObject,'Value'))
-                        case 'photons'                                              
+                        case {'photons', 'neutrons'}                                       
                             if isfield(resultGUI,'alpha');    resultGUI = rmfield(resultGUI,'alpha');   end
                             if isfield(resultGUI,'beta');     resultGUI = rmfield(resultGUI,'beta');    end
                             if isfield(resultGUI,'RBExDose'); resultGUI = rmfield(resultGUI,'RBExDose');end

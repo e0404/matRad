@@ -60,7 +60,7 @@ classdef matRad_BiologicalModel
     % constant public properties which are visible outside of this class
     properties(Constant = true)
         AvailableModels                 = {'none','constRBE','MCN','WED','LEM','HEL'};   % cell array determines available models - if cell is deleted then the corersponding model can not be generated
-        AvailableradiationModealities   = {'photons','protons','helium','carbon'};
+        AvailableradiationModealities   = {'photons','protons','helium','carbon','neutrons'};
         AvailableQuantitiesForOpt       = {'physicalDose','effect','RBExD'};
         
         AvailableAlphaXBetaX = {[0.036 0.024],    'prostate';
@@ -129,7 +129,7 @@ classdef matRad_BiologicalModel
                 
                 switch this.radiationMode
                     
-                    case {'photons'}
+                    case {'photons', 'neutrons'}
                         
                         setDefaultValues = false;
                         switch this.quantityOpt
@@ -325,7 +325,7 @@ classdef matRad_BiologicalModel
         
         % setter functions
         function this = set.radiationMode(this,value)
-            if ischar(value) && sum(strcmp(value,{'photons','protons','helium','carbon'})) == 1
+            if ischar(value) && sum(strcmp(value,{'photons','protons','helium','carbon','neutrons'})) == 1
                 this.radiationMode = value;
             else
                 matRad_cfg = MatRad_Config.instance();

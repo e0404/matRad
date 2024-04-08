@@ -251,7 +251,6 @@ classdef MatRad_Config < handle
             obj.propDoseCalc.defaultUseGivenEqDensityCube = false; %Use the given density cube ct.cube and omit conversion from cubeHU.
             obj.propDoseCalc.defaultIgnoreOutsideDensities = true;
             obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
-            obj.propDoseCalc.defaultUseCustomPrimaryNeutronFluence = false; %Use a custom primary neutron fluence
             obj.propDoseCalc.defaultCalcLET = true; %calculate LET for particles
             obj.propDoseCalc.defaultSelectVoxelsInScenarios = 'all';
 

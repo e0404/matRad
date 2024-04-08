@@ -454,7 +454,11 @@ for i = 1:length(pln.propStf.gantryAngles)
            
          % book keeping for photons
          stf(i).ray(j).energy = machine.data.energy;
-         
+           
+       elseif strcmp(stf(i).radiationMode,'neutrons')
+           
+         % book keeping for neutrons
+         stf(i).ray(j).energy = machine.data.energy;         
        else
           matRad_cfg.dispError('Error generating stf struct: invalid radiation modality.');
        end
