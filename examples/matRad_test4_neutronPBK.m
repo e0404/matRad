@@ -211,7 +211,7 @@ ct.dicomInfo.Manufacturer = 'matRad';
 % base data. matRad features generic base data in the file
 % 'photons_Generic.mat'; consequently the machine has to be set to 'Generic'
 pln.radiationMode = 'neutrons'; %'photons'; %'neutrons';            
-pln.machine       = 'neutronField_MLCv1_MEDAPP'; %'Generic'; %'';
+pln.machine       = 'MEDAPP'; %'Generic'; %'';
 
 %%
 % Define the biological optimization model for treatment planning along
