@@ -192,9 +192,9 @@ ct.cubeHU{1}(vIxPTV) = 0; % assign HU of water
 ct.cubeHU{1}(vIxBone) = 2000; % assign HU of water
 ct.cubeHU{1}(vIxLung) = -300; % assign HU of water
 
-ct.dicomInfo.ManufacturerModelName = 'neutronXScorrfinalCalcMLC1';
+ct.dicomInfo.ManufacturerModelName = 'neutronXScorrMEDAPPspec';
 ct.dicomInfo.ConvolutionKernel = 'neutronField';
-ct.dicomInfo.Manufacturer = 'matRad';
+ct.dicomInfo.Manufacturer = 'MEDAPP';
 
 %% Treatment Plan
 % The next step is to define your treatment plan labeled as 'pln'. This 
@@ -223,8 +223,8 @@ pln.machine       = 'MEDAPP'; %'Generic'; %'';
 % 'WED':      Wedenberg-variable RBE model for protons
 % 'LEM':      Local Effect Model 
 % and possible quantityOpt are 'physicalDose', 'effect' or 'RBExD'.
-modelName    = 'constRBE'; %'none';
-quantityOpt  = 'RBExD'; %'physicalDose';                                             
+modelName    = 'none'; %'constRBE';
+quantityOpt  = 'physicalDose'; %'RBExD';                                             
 
 %%
 % The remaining plan parameters are set like in the previous example files
@@ -238,7 +238,7 @@ pln.propOpt.runDAO        = 0;
 pln.propOpt.runSequencing = 0;
 
 % retrieve bio model parameters
-pln.bioParam.model = 'constRBE';
+pln.bioParam.model = 'none';
 pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
 
 % retrieve nominal scenario for dose calculation and optimziation

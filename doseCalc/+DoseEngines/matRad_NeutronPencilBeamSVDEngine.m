@@ -191,8 +191,11 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
 
             % precalculate convolved kernel size and distances
             if isfield(this.machine.data,'penumbraFWHMatIso')
-            kernelConvLimit = fieldLimit + gaussLimit + kernelLimit;
+                kernelConvLimit = fieldLimit + gaussLimit + kernelLimit;
+            else
+                kernelConvLimit = fieldLimit + kernelLimit;
             end
+
             [this.convMx_X, this.convMx_Z] = meshgrid(-kernelConvLimit*this.intConvResolution: ...
                 this.intConvResolution: ...
                 (kernelConvLimit-1)*this.intConvResolution);
@@ -210,7 +213,7 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
                 % Create fluence matrix
                 this.Fpre = ones(floor(this.fieldWidth/this.intConvResolution));
 
-                if ~this.useCustomPrimaryPhotonFluence
+                if ~this.useCustomPrimaryNeutronFluence && isfield(this.machine.data,'penumbraFWHMatIso')
                     % gaussian convolution of field to model penumbra
                     this.Fpre = real(ifft2(fft2(this.Fpre,this.gaussConvSize,this.gaussConvSize).*fft2(this.gaussFilter,this.gaussConvSize,this.gaussConvSize)));
                 end
@@ -270,10 +273,10 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
             end
 
             % convolution here if no custom primary fluence and no field based dose calc
-            if ~isempty(this.Fpre) && ~this.useCustomPrimaryPhotonFluence && ~this.isFieldBasedDoseCalc
+            if ~isempty(this.Fpre) && ~this.useCustomPrimaryNeutronFluence && ~this.isFieldBasedDoseCalc
 
                 % Display console message.
-                matRad_cfg.dispInfo('\tUniform primary photon fluence -> pre-compute kernel convolution...\n');
+                matRad_cfg.dispInfo('\tUniform primary neutron fluence -> pre-compute kernel convolution...\n');
 
                 % Get kernel interpolators
                 this.interpKernelCache = this.getKernelInterpolators(this.Fpre);
@@ -450,7 +453,7 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
             ray = initRay@DoseEngines.matRad_PencilBeamEngineAbstract(this,currBeam,j);
 
             % convolution here if custom primary fluence OR field based dose calc
-            if this.useCustomPrimaryPhotonFluence || this.isFieldBasedDoseCalc
+            if this.useCustomPrimaryNeutronFluence || this.isFieldBasedDoseCalc
 
                 % overwrite field opening if necessary
                 if this.isFieldBasedDoseCalc
@@ -531,13 +534,13 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
 
         function bixelDose = calcSingleBixel(SAD,m,betas,interpKernels,...
                 radDepths,geoDists,isoLatDistsX,isoLatDistsZ)
-            % matRad photon dose calculation for an individual bixel
+            % matRad neutron dose calculation for an individual bixel
             %   This is defined as a static function so it can also be
             %   called individually for certain applications without having
             %   a fully defined dose engine
             %
             % call
-            %   dose = this.calcPhotonDoseBixel(SAD,m,betas,Interp_kernel1,...
+            %   dose = this.calcNeutronDoseBixel(SAD,m,betas,Interp_kernel1,...
             %                  Interp_kernel2,Interp_kernel3,radDepths,geoDists,...
             %                  isoLatDistsX,isoLatDistsZ)
             %
@@ -563,13 +566,18 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
             %
 
             % Compute depth dose components according to [1, eq. 17]
-            doseComponent = betas./(betas-m) .* (exp(-m*radDepths) - exp(-betas.*radDepths));
+            % doseComponent = betas(:,1)./(betas(:,2)-m)' .* (exp(-m*radDepths) - exp(-betas(:,2).*radDepths)) + ...
+            %     betas(:,3)/(betas(:,4) - m) * (exp(-m*radDepths) - exp(-betas(:,4)*radDepths));
 
+            func_Di = @(beta,x) beta(1)/(beta(2) - m) * (exp(-m*x) - exp(-beta(2)*x)) + ...
+                beta(3)/(beta(4) - m) * (exp(-m*x) - exp(-beta(4)*x));
+
+            doseComponent = zeros(size(radDepths,1),length(interpKernels));
             % Multiply with lateral 2D-convolved kernels using
             % grid interpolation at lateral distances (summands in [1, eq.
             % 19] w/o inv sq corr)
             for ik = 1:length(interpKernels)
-                doseComponent(:,ik) = doseComponent(:,ik) .* interpKernels{ik}(isoLatDistsX,isoLatDistsZ);
+                doseComponent(:,ik) = func_Di(betas(ik,:),radDepths) .* interpKernels{ik}(isoLatDistsX,isoLatDistsZ);
             end
 
             % now add everything together (eq 19 w/o inv sq corr -> see below)
@@ -580,10 +588,10 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
 
             % check if we have valid dose values and adjust numerical instabilities
             % from fft convolution
-            bixelDose(bixelDose < 0 & bixelDose > -1e-14) = 0;
+            minLimit = -1; % default limit = -1e-14
+            bixelDose(bixelDose < 0 & bixelDose > minLimit) = 0;
             if any(isnan(bixelDose)) || any(bixelDose<0)
-                matRad_cfg = MatRad_Config.instance();
-                matRad_cfg.dispError('Invalid numerical values in photon dose calculation.');
+                matRad_cfg.dispError('Invalid numerical values in neutron dose calculation. PBK-based dose calculation for neutrons appeares to be less stable than for photons.');
             end
         end
 
