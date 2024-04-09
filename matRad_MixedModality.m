@@ -11,7 +11,7 @@ pln(1).machine         = 'Generic';
 
 % beam geometry settings
 pln(1).propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
-pln(1).propStf.gantryAngles    = [ -45 0 45 ]; % [?] ;
+pln(1).propStf.gantryAngles    = [ -45 45 ]; % [?] ;
 pln(1).propStf.couchAngles     = zeros(numel(pln(1).propStf.gantryAngles),1); % [?] ; 
 pln(1).propStf.numOfBeams      = numel(pln(1).propStf.gantryAngles);
 pln(1).propStf.isoCenter       = ones(pln(1).propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
@@ -99,6 +99,7 @@ dij.precon = 1;
 % Fluence optimization 
 resultGUI = matRad_fluenceOptimizationJO(dij,cst,plnJO);
 
+
 %% Visualization
 slice = 59;
 
@@ -119,3 +120,10 @@ subplot(1,3,3);
     imagesc(totalPlan(:,:,slice));
     matRad_plotVoiContourSlice(gca(f), cst,ct, 1, 1,3,slice);
     title('Total Plan');
+
+%% Visualization
+if iscell(resultGUI)
+[resultGUI, result] = matRad_accumulateCubesMixMod(resultGUI, pln,ct);
+end
+pln = pln(1)
+matRadGUI
