@@ -68,6 +68,8 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
         interpKernelCache;              %Kernel interpolators (cached if precomputation per beam possible)
         
         collimation;                    %collimation structure from dicom import
+
+        cubeKERMAcorr;                  %neutron KERMA correction factors relative to water on CT grid
     end
 
 
@@ -148,6 +150,31 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
             if this.kernelCutOff < this.geometricLateralCutOff
                 matRad_cfg.dispWarning('Kernel Cut-Off ''%f mm'' cannot be smaller than geometric lateral cutoff ''%f mm''. Using ''%f mm''!',this.kernelCutOff,this.geometricLateralCutOff,this.geometricLateralCutOff);
                 this.kernelCutOff = this.geometricLateralCutOff;
+            end
+
+            %% Initiate KERMA correction for neutron dose calculation
+            % for scenCounter = 1:ct.numOfCtScen
+            %     this.cubeKERMAcorr{scenCounter} = zeros(size(ct.cubeHU{scenCounter}));
+            %                 if isfield(this.machine.data,'neutronKERMAcorr')
+            %                     for counterCorrInt = 1:size(this.machine.data.neutronKERMAcorr,2)-1
+            %                     this.cubeKERMAcorr{scenCounter}((ct.cubeHU{scenCounter}>=this.machine.data.neutronKERMAcorr(1,counterCorrInt))&(ct.cubeHU{scenCounter}<this.machine.data.neutronKERMAcorr(1,counterCorrInt+1))) = this.machine.data.neutronKERMAcorr(2,counterCorrInt+1);
+            %                     end
+            %                 else
+            %                     this.cubeKERMAcorr{scenCounter}(:)=1;
+            %                     matRad_cfg.dispWarning('No KERMA correction provided in machine data for neutron dose calculation.');
+            %                 end
+            % end
+            if ct.numOfCtScen==1
+                if isfield(this.machine.data,'neutronKERMAcorr')
+                    for counterCorrInt = 1:size(this.machine.data.neutronKERMAcorr,2)-1
+                        this.cubeKERMAcorr{1}((ct.cubeHU{1}>=this.machine.data.neutronKERMAcorr(1,counterCorrInt))&(ct.cubeHU{1}<this.machine.data.neutronKERMAcorr(1,counterCorrInt+1))) = this.machine.data.neutronKERMAcorr(2,counterCorrInt+1);
+                    end
+                else
+                    this.cubeKERMAcorr{1}(:)=1;
+                    matRad_cfg.dispWarning('No KERMA correction provided in machine data for neutron dose calculation.');
+                end
+            else
+                matRad_cfg.dispError('Neutron dose calculation implemented only for 1 CT scenario!')
             end
 
             %% kernel convolution
@@ -304,6 +331,11 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
                 % sample dose only for bixel based dose calculation
                 if this.enableDijSampling && ~this.isFieldBasedDoseCalc
                     [bixel.ix,bixel.physicalDose] = this.sampleDij(currRay.ix,bixel.physicalDose,currRay.radDepths,currRay.radialDist_sq,currRay.bixelWidth);
+                    if this.multScen.numOfCtScen==1
+                        bixel.physicalDose = bixel.physicalDose.*this.cubeKERMAcorr{1}(bixel.ix)';
+                    else
+                        matRad_cfg.dispError('Neutron dose calculation implemented only for 1 CT scenario!')
+                    end
                 else
                     bixel.ix = currRay.ix;
                 end
