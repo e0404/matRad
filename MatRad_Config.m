@@ -219,8 +219,6 @@ classdef MatRad_Config < handle
             obj.propMC.default_beamProfile_photons = 'uniform';
             obj.propMC.defaultExternalCalculation = false;
             obj.propMC.defaultCalcDij = false;
-
-            obj.disableGUI = false;
             
             obj.defaults.samplingScenarios = 25;
 
@@ -486,6 +484,8 @@ classdef MatRad_Config < handle
                                     configName = 'matRad_TopasConfig';
                                 case 'MCsquare'
                                     configName = 'matRad_MCsquareConfig';
+                                case 'MCNP'
+                                    configName = 'matRad_MCNPConfig';
                             end
                             pln.propMC = rmfield(pln.propMC,'engine');
                         else
@@ -495,6 +495,8 @@ classdef MatRad_Config < handle
                                         configName = obj.propMC.default_photon_engine;
                                     case 'protons'
                                         configName = obj.propMC.default_proton_engine;
+                                    case 'neutrons'
+                                        configName = obj.propMC.default_neutron_engine;
                                     otherwise
                                         configName = obj.propMC.default_carbon_engine;
                                 end
@@ -531,6 +533,9 @@ classdef MatRad_Config < handle
                         pln.propMC.engine = 'MCsquare';
                     case 'matRad_HeterogeneityConfig'
                         config = matRad_HeterogeneityConfig;
+                    case 'matRad_MCNPConfig'
+                        config = matRad_MCNPConfig();
+                        pln.propMC.engine = 'MCNP';                        
                 end
 
                 props = fieldnames(pln.(propName));

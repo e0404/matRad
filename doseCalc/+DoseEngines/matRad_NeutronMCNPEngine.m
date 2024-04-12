@@ -1,6 +1,6 @@
 classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
-    % Engine for particle dose calculation using monte carlo calculation
-    % specificly the mc square method
+    % Engine for neutron dose calculation using monte carlo calculation
+    % specificly MCNP
     % for more informations see superclass
     % DoseEngines.matRad_MonteCarloEngineAbstract
     %
@@ -75,7 +75,7 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                         isequal(pln.propOpt.bioOptimization,'RBExSecPartDose_MCDS_RMFmodel'))
                     this.calcBioDose = true;
                 elseif strcmp(pln.radiationMode,'neutrons') && isfield(pln,'propOpt') && isfield(pln.propOpt,'bioOptimization') && isequal(pln.propOpt.bioOptimization,'const_RBExD')
-                    this.constantRBE = 2;
+                    this.constantRBE = 4;
                 end
             end
         end
@@ -87,13 +87,15 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             matRad_cfg = MatRad_Config.instance();
 
             %Assign default parameters from MatRad_Config
-            this.doseGrid.resolution    = matRad_cfg.propDoseCalc.defaultResolution;
-            this.multScen = 'nomScen';
-            this.selectVoxelsInScenarios = matRad_cfg.propDoseCalc.defaultSelectVoxelsInScenarios;
-
+            %this.doseGrid.resolution    = matRad_cfg.propDoseCalc.defaultResolution;
+            %this.multScen = 'nomScen';
+            
             %Set Default MCNP path
             %Set folder
             this.MCNPFolder = [matRad_cfg.matRadRoot filesep 'MCNP'];
+
+            % Default settings for MCNP
+            this.propMC.neutronTallySpecifier = 'TotalDose_TMESH';
         end
     end
 
@@ -775,22 +777,18 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
 
     methods (Static)
-        function [binaryFound,binaryFile] = checkBinaries()
-            % checkBinaries check if MCNP is installed on the machine
-            matRad_cfg = MatRad_Config.instance();
-            matRad_cfg.dispWarning('Check for MCNP simulation not yet implemented.\n');
-
-            binaryFile = [];
+        function binaryFound = checkBinaries()
+            % checkBinaries check if MCNP is installed on the machine and
+            % path variables are properly set to run MCNP in matRad
+            matRad_cfg = MatRad_Config.instance();                       
             binaryFound = true;
 
             % if ispc
-            %     if exist('MCSquare_windows.exe','file') ~= 2
-            %         matRad_cfg.dispWarning('Could not find MCsquare binary.\n');
-            %     else
-            %         binaryFile = 'MCSquare_windows.exe';
-            %     end
+                [~,cmdout] = system('mcnp6');
+                if ~strcmp(cmdout(2:5), 'mcnp')
+                    matRad_cfg.dispWarning('Could not test MCNP. Please check installation and path variables.\n');
+                end
             % elseif ismac
-            %     if exist('MCsquare_mac','file') ~= 2
             %         matRad_cfg.dispWarning('Could not find MCsquare binary.\n');
             %     else
             %         binaryFile = './MCsquare_mac';

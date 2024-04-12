@@ -22,7 +22,7 @@ display(cst);
 % base data. matRad features generic base data in the file
 % 'photons_Generic.mat'; consequently the machine has to be set to 'Generic'
 pln.radiationMode = 'neutrons';
-pln.machine       = 'MCNPneutronField'; 
+pln.machine       = 'MEDAPP_MCNP'; 
 
 % MCNP parameter
 pln.propMCNP.normalizationFactor = 1e5;
