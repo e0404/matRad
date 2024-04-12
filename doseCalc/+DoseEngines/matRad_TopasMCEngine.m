@@ -427,9 +427,12 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             dij = this.initDoseCalc(ct,cst,stf);
 
             %% sending data to topas
-            for i = 1:size(stf,2)
-                stf(i).SCD = this.machine.meta.SCD;
+            if isfield(this.machine.meta,'SCD')
+                for i = 1:size(stf,2)
+                    stf(i).SCD = this.machine.meta.SCD;
+                end
             end
+
             % Collect given weights
             if this.calcDoseDirect
                 %     w = zeros(sum([stf(:).totalNumOfBixels]),ctR.numOfCtScen);
@@ -447,9 +450,11 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     end
                 end
             end
-
-            for i = 1:size(stf,2)
-                stf(i).ray.energy = stf(i).ray.energy.*ones(size(w));
+            
+            for i = 1:numel(stf)
+                if strcmp(stf(i).radiationMode,'photons')
+                    stf(i).ray.energy = stf(i).ray.energy.*ones(size(w));
+                end
             end            
 
             % Get photon parameters for RBExD calculation
@@ -1463,7 +1468,13 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     else
                         selectedData = [];
                         focusIndex = baseData.selectedFocus(baseData.energyIndex);
+
+                        scalarFields = ["NominalEnergy","EnergySpread","MeanEnergy"];                                                   
+                        
                         for i = 1:numel(focusIndex)
+                            for field = scalarFields
+                                baseData.monteCarloData(i).(field) = ones(1,max(focusIndex))*baseData.monteCarloData(i).(field);
+                            end
                             selectedData = [selectedData, structfun(@(x) x(focusIndex(i)),baseData.monteCarloData(i),'UniformOutput',false)];
                         end
                         energies = [selectedData.NominalEnergy];
@@ -2376,18 +2387,16 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
                 if ~preCheck
                     return;
+                else
+                    available = preCheck;
                 end
             catch
                 msg = 'Your machine file is invalid and does not contain the basic field (meta/data/radiationMode)!';
                 return;
             end
-            
-            %For the time being, just use the generic machine, will need to
-            %have a specific one later on
-            available = any(strcmp(pln.machine,{'Generic'}));
-            msg = 'Machine check is currently not reliable';
 
-           end
+            
+       end
     end
 end
 
