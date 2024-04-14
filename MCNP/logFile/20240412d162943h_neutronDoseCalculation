@@ -1,0 +1,25 @@
+*****
+Load pre-defined HU conversion properties and MCNP cross sections from conversionCT2tissue.mat.
+Note: Modification of conversionCT2tissue.mat using generateVar_conversionCT2tissue.m.
+*****
+*****
+Properties from (scaled) HU loaded are: Minimum value: -1000 and 
+{Error using <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_Widget/showError')" style="font-weight:bold">matRad_Widget/showError</a>
+CalcDoseCallback: Error in dose calculation!Index exceeds the number of array elements. Index must not exceed 650000.
+
+Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_WorkflowWidget/btnCalcDose_Callback', 'matRad_WorkflowWidget.m', 410)" style="font-weight:bold">matRad_WorkflowWidget/btnCalcDose_Callback</a> (<a href="matlab: opentoline('matRad_WorkflowWidget.m',410,0)">line 410</a>)
+
+Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_WorkflowWidget>@(hObject,eventdata)btnCalcDose_Callback(this,hObject,eventdata)', 'matRad_WorkflowWidget.m', 158)" style="font-weight:bold">matRad_WorkflowWidget>@(hObject,eventdata)btnCalcDose_Callback(this,hObject,eventdata)</a> (<a href="matlab: opentoline('matRad_WorkflowWidget.m',158,0)">line 158</a>)
+} 
+Error while evaluating UIControl Callback.
+
+matRad: Generating stf struct...
+[Warning: Could not find HLUT GE MEDICAL SYSTEMS-LightSpeed RT-ConvolutionKernel-STANDARD_neutrons.hlut in hlutLibrary
+folder. matRad default HLUT loaded] 
+Progress: 100.00 %
+[Warning: Check for MCNP installation not yet implemented. Check set to false.\n] 
+Dose influence matrix calculation using  'MCNP' Dose Engine...
+Dose grid has dimensions 100x100x65
+Adjusting structures for overlap... Done!
+Resampling structure set... Done!
+Adjusting structures for overlap... Done!

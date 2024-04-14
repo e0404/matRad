@@ -1,0 +1,57 @@
+*****
+Monte Carlo dose calculation enabled.
+*****
+*****
+Load pre-defined HU conversion properties and MCNP cross sections from conversionCT2tissue.mat.
+Note: Modification of conversionCT2tissue.mat using generateVar_conversionCT2tissue.m.
+*****
+*****
+Properties from (scaled) HU loaded are: Minimum value: -1000 and 
+{Error using <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_Widget/showError')" style="font-weight:bold">matRad_Widget/showError</a>
+CalcDoseCallback: Error in dose calculation!Index exceeds the number of array elements. Index must not exceed 650000.
+
+Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_WorkflowWidget/btnCalcDose_Callback', 'matRad_WorkflowWidget.m', 410)" style="font-weight:bold">matRad_WorkflowWidget/btnCalcDose_Callback</a> (<a href="matlab: opentoline('matRad_WorkflowWidget.m',410,0)">line 410</a>)
+
+Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_WorkflowWidget>@(hObject,eventdata)btnCalcDose_Callback(this,hObject,eventdata)', 'matRad_WorkflowWidget.m', 158)" style="font-weight:bold">matRad_WorkflowWidget>@(hObject,eventdata)btnCalcDose_Callback(this,hObject,eventdata)</a> (<a href="matlab: opentoline('matRad_WorkflowWidget.m',158,0)">line 158</a>)
+} 
+Error while evaluating UIControl Callback.
+
+[Warning: The matRad_multScen function will be deprecated soon!\nCheck out the new Scenario Models in the scenarios folder.] 
+[Warning: Number of rays do not match] 
+matRad: Generating stf struct...
+[Warning: Could not find HLUT GE MEDICAL SYSTEMS-LightSpeed RT-ConvolutionKernel-STANDARD_neutrons.hlut in hlutLibrary folder.
+matRad default HLUT loaded] 
+Progress: 100.00 %
+Dose influence matrix calculation using  'SVD Pencil Beam' Dose Engine...
+Dose grid has dimensions 100x100x65
+Adjusting structures for overlap... Done!
+Resampling structure set... Done!
+Adjusting structures for overlap... Done!
+[Warning: Could not find HLUT GE MEDICAL SYSTEMS-LightSpeed RT-ConvolutionKernel-STANDARD_neutrons.hlut in hlutLibrary folder.
+matRad default HLUT loaded] 
+[Warning: Neutron machine file does not contain measured penumbra width in machine.data.penumbraFWHMatIso. Convolution with
+Gaussian to model penumbra from machine is switched off.] 
+[Warning: Kernel Cut-Off 'Inf mm' larger than machine data range of '139.750000 mm'. Using '139.750000 mm'!] 
+matRad: calculate radiological depth cube... done.
+Progress: 0.10 %	SSD = 49995 mm ...
+	Uniform primary neutron fluence -> pre-compute kernel convolution...
+Progress: 4.00 %24.00 %52.00 %80.00 %100.00 %
+Dose calculation finished in 4.6259 seconds!
+[Warning: The matRad_multScen function will be deprecated soon!\nCheck out the new Scenario Models in the scenarios folder.] 
+matRad: Generating stf struct...
+[Warning: Could not find HLUT GE MEDICAL SYSTEMS-LightSpeed RT-ConvolutionKernel-STANDARD_neutrons.hlut in hlutLibrary folder.
+matRad default HLUT loaded] 
+Progress: 100.00 %
+[Warning: Check for MCNP installation not yet implemented. Check set to false.\n] 
+Dose influence matrix calculation using  'MCNP' Dose Engine...
+Dose grid has dimensions 100x100x65
+Adjusting structures for overlap... Done!
+Resampling structure set... Done!
+Adjusting structures for overlap... Done!
+<a href="matlab: opentoline('/Users/lucassommer/Daten/gitHub/matRadNeutronDoseCalc/matRad_Lucas/doseCalc/+DoseEngines/matRad_NeutronMCNPEngine.m',137,1)">137 </a>            absCalibrationFactorMCNP = 1.602177e-19*1e6*1e3;
+try open('matRad_getTime4log'); catch edit('matRad_getTime4log'); end
+if system_dependent('IsDebugMode')==1, dbstep; end
+<a href="matlab: opentoline('/Users/lucassommer/Daten/gitHub/matRadNeutronDoseCalc/matRad_Lucas/doseCalc/+DoseEngines/matRad_NeutronMCNPEngine.m',142,1)">142 </a>            pathLog = strcat(this.MCNPFolder, filesep, 'logFile');
+if system_dependent('IsDebugMode')==1, dbstep; end
+<a href="matlab: opentoline('/Users/lucassommer/Daten/gitHub/matRadNeutronDoseCalc/matRad_Lucas/doseCalc/+DoseEngines/matRad_NeutronMCNPEngine.m',144,1)">144 </a>            try diary(fullfile(pathLog, strcat(matRad_getTime4log, '_neutronDoseCalculation')))
+if system_dependent('IsDebugMode')==1, dbstep; end

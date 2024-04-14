@@ -27,16 +27,15 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         config;             %Holds an instance of all configurable parameters
 
         %Other Dose Calculation Properties
+        externalCalculation = false;
         calcRMFparameters = false;
-
+        MCNPinstallationCheck;
         MCNPFolder;
     end
 
     properties (SetAccess = protected, GetAccess = public)
 
         currFolder = pwd; %folder path when set
-
-        nbThreads; %number of threads for MCNP, 0 is all available
 
         constantRBE = NaN;              % constant RBE value
     end
@@ -92,10 +91,7 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             
             %Set Default MCNP path
             %Set folder
-            this.MCNPFolder = [matRad_cfg.matRadRoot filesep 'MCNP'];
-
-            % Default settings for MCNP
-            this.propMC.neutronTallySpecifier = 'TotalDose_TMESH';
+            this.MCNPFolder = [matRad_cfg.matRadRoot filesep 'MCNP'];        
         end
     end
 
@@ -152,37 +148,6 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 diary(fullfile(pathLog, strcat(matRad_getTime4log, '_neutronDoseCalculation')))
             end
 
-            % Default: dose influence matrix computation
-            if ~exist('calcDoseDirect','var')
-                calcDoseDirect = false;
-                varHelper.calcDoseDirect = calcDoseDirect;
-            elseif exist('calcDoseDirect','var')
-                if calcDoseDirect
-                    varHelper.calcDoseDirect = calcDoseDirect;
-                    stf(1).ray(1).energy = 'rssa';
-                end
-            end
-
-
-            % Check if MCNP6 is installed
-            answer = questdlg('Is MCNP6 installed on your computer?', ...
-                'MCNP6', ...
-                'Yes', 'No', 'No');
-
-            switch answer
-                case 'Yes'
-                    disp('*****')
-                    disp('Monte Carlo dose calculation enabled.')
-                    disp('*****')
-                    varHelper.runMCdoseCalc = 1;
-                case 'No'
-                    disp('*****')
-                    disp(['MCNP runfiles will be created but no dose caculation will be performed.', newline, '(dij=zeros(size(ct.cubeHU)))'])
-                    disp('*****')
-                    varHelper.runMCdoseCalc = 0;
-            end
-            clear answer
-
             % Load predefined conversion properties for tissue characterization
             % according to CT values - elemental composition will be assigned according
             % to these predefined tissue intervals later
@@ -203,14 +168,14 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % Note: body structure is the only normal tissue structure that
             % has to be contured
 
-            pln.propMCNP.bodyStructureName = 'Body'; % Default name for body structure is 'Body'
+            bodyStructureName = 'Body'; % Default name for body structure is 'Body'
             try
-                cstBodyIndex = matRad_findBodyStructureCST(cst, pln.propMCNP.bodyStructureName);
+                cstBodyIndex = matRad_findBodyStructureCST(cst, bodyStructureName);
             catch
                 prompt = {'Please enter body structure name:'};
                 dlgtitle = 'Find Body Structure';
-                pln.propMCNP.bodyStructureName = inputdlg(prompt,dlgtitle);
-                cstBodyIndex = matRad_findBodyStructureCST(cst, pln.propMCNP.bodyStructureName);
+                bodyStructureName = inputdlg(prompt,dlgtitle);
+                cstBodyIndex = matRad_findBodyStructureCST(cst, bodyStructureName);
             end
 
             % Process HU values
@@ -230,7 +195,7 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             try
                 cstTargetIndex = matRad_findTargetStructureCST(cst);
             catch
-                error('Target structure has to be set in matRad.')
+                matRad_cfg.dispError('Target structure has to be set in matRad.')
             end
 
             maskNonBody = ones(ct.cubeDim);
@@ -415,8 +380,8 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % machine and sets to the mcsquarebinary object property
             %
 
-            [~,binaryFile] = this.checkBinaries();
-            this.MCNPBinary = binaryFile;
+            binaryFound = this.checkBinaries();
+            this.MCNPinstallationCheck = binaryFound;
         end
 
         function dij = initDoseCalc(this,ct,cst,stf)
@@ -427,60 +392,23 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % Executables for simulation
             this.setBinaries();
 
-            %Mex interface for import of sparse matrix
-            if ~this.calcDoseDirect && ~matRad_checkMexFileExists('matRad_sparseBeamletsReaderMCsquare')
-                matRad_cfg.dispWarning('Compiled sparse reader interface not found. Trying to compile it on the fly!');
-                try
-                    matRad_compileMCsquareSparseReader();
-                catch MException
-                    matRad_cfg.dispError('Could not find/generate mex interface for reading the sparse matrix. \nCause of error:\n%s\n Please compile it yourself.',MException.message);
-                end
-            end
-
             % set and change to MCsquare binary folder
             this.currFolder = pwd;
-            %fullfilename = mfilename('fullpath');
-
-            % cd to MCsquare folder (necessary for binary)
-            % TODO: Could be checked in a property setter function
-            if ~exist(this.MCsquareFolder,'dir')
-                matRad_cfg.dispError('MCsquare Folder does not exist!');
-            end
-            cd(this.MCsquareFolder);
-
-            %Check Materials
-            if ~exist([this.MCsquareFolder filesep 'Materials'],'dir') || ~exist(fullfile(this.MCsquareFolder,'Materials','list.dat'),'file')
-                matRad_cfg.dispInfo('First call of MCsquare: unzipping Materials...');
-                unzip('Materials.zip');
-                matRad_cfg.dispInfo('Done');
-            end
 
             %% Call Superclass init function
             dij = initDoseCalc@DoseEngines.matRad_MonteCarloEngineAbstract(this,ct,cst,stf);
 
-            % Since MCsquare 1.1 only allows similar resolution in x&y, we do some
-            % extra checks on that before calling the normal initDoseCalc. First, we make sure a
-            % dose grid resolution is set in the pln struct
-
-            % Now we check for different x/y
+            % Since MCNP setup only allows similar resolution in x&y, we do some
+            % extra checks on that before calling the normal initDoseCalc. 
             if dij.doseGrid.resolution.x ~= dij.doseGrid.resolution.y
-                dij.doseGrid.resolution.x = mean([dij.doseGrid.resolution.x dij.doseGrid.resolution.y]);
-                dij.doseGrid.resolution.y = dij.doseGrid.resolution.x;
-                matRad_cfg.dispWarning('Anisotropic resolution in axial plane for dose calculation with MCsquare not possible\nUsing average x = y = %g mm\n',dij.doseGrid.resolution.x);
+                matRad_cfg.dispError('Voxel size in x and y do not agree.');
             end
 
             %% Validate and preset some additional dij variables
-
-            % Explicitly setting the number of threads for MCsquare, 0 is all available
-            this.nbThreads = 0;
-
             %Issue a warning when we have more than 1 scenario
             if dij.numOfScenarios ~= 1
-                matRad_cfg.dispWarning('MCsquare is only implemented for single scenario use at the moment. Will only use the first Scenario for Monte Carlo calculation!');
+                matRad_cfg.dispWarning('MCNP is only implemented for single scenario use at the moment. Will only use the first Scenario for Monte Carlo calculation!');
             end
-
-            % prefill ordering of MCsquare bixels
-            dij.MCsquareCalcOrder = NaN*ones(dij.totalNumOfBixels,1);
 
             if ~isnan(this.constantRBE)
                 dij.RBE = this.constantRBE;
@@ -781,30 +709,24 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % checkBinaries check if MCNP is installed on the machine and
             % path variables are properly set to run MCNP in matRad
             matRad_cfg = MatRad_Config.instance();                       
-            binaryFound = true;
 
-            % if ispc
+            if ispc
                 [~,cmdout] = system('mcnp6');
-                if ~strcmp(cmdout(2:5), 'mcnp')
+                if strcmp(cmdout(2:5), 'mcnp')
+                    binaryFound = true;
+                else
                     matRad_cfg.dispWarning('Could not test MCNP. Please check installation and path variables.\n');
                 end
-            % elseif ismac
-            %         matRad_cfg.dispWarning('Could not find MCsquare binary.\n');
-            %     else
-            %         binaryFile = './MCsquare_mac';
-            %     end
-            %     %error('MCsquare binaries not available for mac OS.\n');
-            % elseif isunix
-            %     if exist('MCsquare_linux','file') ~= 2
-            %         matRad_cfg.dispWarning('Could not find MCsquare binary.\n');
-            %     else
-            %         binaryFile = './MCsquare_linux';
-            %     end
-            % end
-            % 
-            % if ~isempty(binaryFile)
-            %     binaryFound = true;
-            % end
+            elseif ismac
+                matRad_cfg.dispWarning('Check for MCNP installation not yet implemented. Check set to false.\n');
+                binaryFound = false;
+            elseif isunix
+                matRad_cfg.dispWarning('Check for MCNP installation not yet implemented. Check set to false.\n');
+                binaryFound = false;
+
+            else
+                binaryFound = false;
+            end
 
         end
 
