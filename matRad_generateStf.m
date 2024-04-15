@@ -44,7 +44,7 @@ end
 
 % call brachy in case this radiation mode is chosen
 if strcmp(pln.radiationMode,'brachy')
-    stf = matRad_generateBrachyStf(ct,cst,pln,visMode);
+    stf = matRad_generateBrachyStf(ct,cst,pln,1);
     return
 end
 

@@ -26,8 +26,8 @@ load PROSTATE.mat
 
 % meta information for treatment plan
 pln.numOfFractions  = 30;
-pln.radiationMode   = 'brachy';           % either photons / protons / helium / carbon / brachy
-pln.machine         = 'HDR';              % generic for RT / LDR or HDR for BT
+pln.radiationMode   = 'photons';           % either photons / protons / helium / carbon / brachy
+pln.machine         = 'generic';              % generic for RT / LDR or HDR for BT
 
 % beam geometry settings
 pln.propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
@@ -69,20 +69,10 @@ matRadGUI
 
 %% generate steering file 
 % -marios interchanging the stfs between normal RT and BT
-if strcmp(pln.radiationMode, 'brachy')
-    stf = matRad_generateBrachyStf(ct,cst,pln,1);
-elseif ismember(pln.radiationMode, {'photons', 'protons', 'helium', 'carbon'})
     stf = matRad_generateStf(ct,cst,pln);
-end
 
 %% dose calculation
-if strcmp(pln.radiationMode, 'brachy')
-    dij = matRad_calcBrachyDose(ct, stf, pln, cst);
-
-elseif ismember(pln.radiationMode, {'photons', 'protons', 'helium', 'carbon'})
     dij = matRad_calcDoseInfluence(ct, cst, stf, pln);
-
-end
 
 %% inverse planning for imrt
 resultGUI  = matRad_fluenceOptimization(dij,cst,pln);
@@ -92,7 +82,7 @@ resultGUI = matRad_sequencing(resultGUI,stf,dij,pln);
 
 
 %% DAO
-if strcmp(pln.radiationMode,'brachy') && pln.propOpt.runDAO
+if strcmp(pln.radiationMode,'photons') && pln.propOpt.runDAO
    resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln);
    matRad_visApertureInfo(resultGUI.apertureInfo);
 end

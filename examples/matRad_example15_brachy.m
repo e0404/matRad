@@ -88,6 +88,19 @@ cst{9,6}{1} = struct(DoseObjectives.matRad_MeanDose(1));
 pln.radiationMode   = 'brachy'; 
 pln.machine         = 'HDR';    % 'LDR' or 'HDR' for brachy
 
+quantityOpt    = 'physicalDose';                                     
+modelName      = 'none';  
+
+% retrieve bio model parameters
+pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
+
+% retrieve scenarios for dose calculation and optimziation
+pln.multScen = matRad_multScen(ct,'nomScen');
+% dose calculation settings
+%Choose BT Engine
+pln.propDoseCalc.engine = 'TG43';
+
+
 
 %% II.1 - needle and template geometry
 % Now we have to set some parameters for the template and the needles. 
@@ -151,8 +164,7 @@ pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]
 pln.propDoseCalc.doseGrid.resolution.y = 5; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
 
-pln.propDoseCalc.DistanceCutoff    = 130; %[mm] sets the maximum distance
-                                            %to which dose is calculated. 
+
 
 % the standard interior point optimizer IPOPT can be used
 pln.propOpt.optimizer       = 'IPOPT';
@@ -192,7 +204,7 @@ disp(stf)
 % available allows subsequent inverse optimization.
 % Don't get inpatient, this can take a few seconds...
 
-dij = matRad_calcBrachyDose(ct,stf,pln,cst);
+dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 
 %% III Inverse Optimization for brachy therapy
 % The goal of the fluence optimization is to find a set of holding point

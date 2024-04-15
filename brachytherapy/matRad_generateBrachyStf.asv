@@ -121,7 +121,7 @@ templZ = ones(size(col))                 + pln.propStf.templateRoot(3);
 
 
 stf.template = [templX';templY';templZ'];
-stf.templateNormal = pln.propStf.template.normal;
+stf.template.normal = [0,0,1];
 
 
 

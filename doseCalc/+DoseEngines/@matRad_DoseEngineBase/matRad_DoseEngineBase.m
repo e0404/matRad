@@ -225,7 +225,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         % Should be called at the beginning of calcDose method.
         % Can be expanded or changed by overwriting this method and calling
         % the superclass method inside of it
-        [dij,ct,cst,stf] = initDoseCalc(this,ct,cst,stf)   
+        dij = initDoseCalc(this,ct,cst,stf)   
         
         % method for finalizing the dose calculation (e.g. postprocessing
         % on dij or files
