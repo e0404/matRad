@@ -42,12 +42,6 @@ if nargin < 4
     visMode = 0;
 end
 
-% call brachy in case this radiation mode is chosen
-if strcmp(pln.radiationMode,'brachy')
-    stf = matRad_generateBrachyStf(ct,cst,pln,1);
-    return
-end
-
 matRad_cfg.dispInfo('matRad: Generating stf struct... ');
 
 if numel(pln.propStf.gantryAngles) ~= numel(pln.propStf.couchAngles)

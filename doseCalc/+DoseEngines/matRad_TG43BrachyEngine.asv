@@ -102,7 +102,7 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
                    matRad_cfg.dispInfo('\t computing distance transform... ');
 
            
-                   DistanceMatrix = matRad_getDistanceMatrix(seedPoints,dosePoints);
+                   DistanceMatrix = this.getDistanceMatrix(seedPoints,dosePoints);
 
                    % ignore all distances > Cutoff for the following calculations to save time
                    Ignore = DistanceMatrix.dist > this.DistanceCutoff;
@@ -126,7 +126,7 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
                    if strcmp(this.TG43approximation,'2D')
                        matRad_cfg.dispInfo('\t computing angle for TG43-2D... ');
                        tmpTimer = tic;
-                       [ThetaMatrix,~] = matRad_getThetaMatrix(stf.templateNormal,calcDistanceMatrix);
+                       [ThetaMatrix,~] = this.getThetaMatrix(stf.templateNormal,calcDistanceMatrix);
                        matRad_cfg.dispInfo('done in %f s!\n',toc(tmpTimer));
                    end
 
@@ -140,10 +140,10 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
                    switch this.TG43approximation
                        case '1D'        
                            DoseRate(~Ignore) = ...
-                           matRad_getDoseRate1D_poly(this.machine,calcDistanceMatrix.dist);
+                           this.getDoseRate1D_poly(this.machine,calcDistanceMatrix.dist);
                        case '2D'
                            DoseRate(~Ignore) = ...
-                           matRad_getDoseRate2D_poly(this.machine,calcDistanceMatrix.dist,ThetaMatrix);
+                           this.getDoseRate2D_poly(this.machine,calcDistanceMatrix.dist,ThetaMatrix);
                        otherwise
                            matRad_cfg.dispError('TG43 Approximation ''%s'' not known!',this.TG43approximation);
                    end
@@ -171,7 +171,7 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
         
 
 
-        function PhiAn = anisotropyFactor1D(r,PhiAnTab, L)
+        function PhiAn = anisotropyFactor1D(this,r,PhiAnTab, L)
             rmin = PhiAnTab{1}(1);
             rmax = PhiAnTab{1}(end);
             p = polyfit(PhiAnTab{1},PhiAnTab{2},5);
@@ -182,7 +182,7 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
         end
 
 
-        function F = anisotropyFunction2D(r,thet,FTab)
+        function F = anisotropyFunction2D(this,r,thet,FTab)
             % prepare data for multivariate polynomial fit:
             [DataRGrid,DataThetGrid] = meshgrid(FTab{1},FTab{2});
             Data(:,1) = reshape(DataRGrid,[],1);
@@ -206,7 +206,7 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
         end
 
 
-        function GL = geometryFunction(r,thet,L)
+        function GL = geometryFunction(this,r,thet,L)
             % calculate solution
             if thet == 90
                 beta = 2*atan(L./2./r);
@@ -380,7 +380,7 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             DoseRate = Sk * lambda * GL./GL0.*gL.*F;
         end
 
-        function F = anisotropyFunction2DInterp(r,thet,FTab)
+        function F = anisotropyFunction2DInterp(this,r,thet,FTab)
           [DataRGrid,DataThetGrid] = meshgrid(FTab{1},FTab{2});
           Data(:,1) = reshape(DataRGrid,[],1);
           Data(:,2) = reshape(DataThetGrid,[],1);
@@ -402,7 +402,7 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
 
         end
 
-        function [DistanceMatrix,DistanceVector] = getDistanceMatrix(seedPoints,dosePoints)
+        function [DistanceMatrix,DistanceVector] = getDistanceMatrix(this,seedPoints,dosePoints)
             DistanceMatrix.x = dosePoints.x'*ones(1,length(seedPoints.x)) - ones(length(dosePoints.x),1)*seedPoints.x;
             DistanceMatrix.y = dosePoints.y'*ones(1,length(seedPoints.y)) - ones(length(dosePoints.y),1)*seedPoints.y;
             DistanceMatrix.z = dosePoints.z'*ones(1,length(seedPoints.z)) - ones(length(dosePoints.z),1)*seedPoints.z;
@@ -414,7 +414,7 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
 
         end
 
-        function templateRoot = getTemplateRoot(ct,cst)
+        function templateRoot = getTemplateRoot(this,ct,cst)
             V = [];
 
             %Check if any constraints/Objectives have been defined yet
@@ -451,7 +451,7 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
 
         end
 
-        function [ThetaMatrix,ThetaVector] = getThetaMatrix(templateNormal,DistanceMatrix)
+        function [ThetaMatrix,ThetaVector] = getThetaMatrix(this,templateNormal,DistanceMatrix)
             
                       DistanceMatrix.dist(DistanceMatrix.dist == 0) = 1; %Avoid deviding by zero
 
