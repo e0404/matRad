@@ -89,7 +89,7 @@ elseif any(strcmp(pln.bioParam.model,{'MCN','LEM','WED','HEL'}))
     resultGUI.accSqrtBetaDose = matRad_doseAcc(ct,resultGUI.phaseSqrtBetaDose, cst, accType);
 
     % only compute where we have biologically defined tissue
-    ix = dij.ax(:,1)~=0; 
+    ix = any(cell2mat(cellfun(@(ax) ax ~= 0,dij.ax','UniformOutput',false)),2);
     
     resultGUI.accEffect = resultGUI.accAlphaDose + resultGUI.accSqrtBetaDose.^2;
     

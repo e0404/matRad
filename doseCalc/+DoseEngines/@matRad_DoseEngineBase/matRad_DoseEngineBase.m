@@ -55,7 +55,9 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         %offset; % offset adjustment for isocenter
         
         VctGrid; % voxel grid inside patient
-        VdoseGrid;  % voxel dose grid         
+        VdoseGrid;  % voxel dose grid    
+        VctGridScenIx;  %logical subindexes of scenarios in ct grid
+        VdoseGridScenIx; %logical subindexes of scenarios in dose grid
 
         VctGridMask; % voxel grid inside patient as logical mask
         VdoseGridMask;  % voxel dose grid inside patient as logical mask

@@ -134,6 +134,9 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                                     scenRay = currRay;
                                     scenRay.radDepths = scenRay.radDepths{ctScen};
                                     scenRay.radDepths = (1+this.multScen.relRangeShift(scenNum))*scenRay.radDepths + this.multScen.absRangeShift(scenNum);
+                                    scenRay.radialDist_sq = scenRay.radialDist_sq{ctScen};
+                                    scenRay.ix = scenRay.ix{ctScen};
+
                                     if this.multScen.absRangeShift(scenNum) < 0
                                         %TODO: better way to handle this?
                                         scenRay.radDepths(scenRay.radDepths < 0) = 0;
@@ -141,6 +144,20 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
                                     if isfield(scenRay,'geoDepths')
                                         scenRay.geoDepths = scenRay.geoDepths{ctScen};
+                                    end
+
+                                    if isfield(scenRay,'latDists')
+                                        scenRay.latDists = scenRay.latDists{ctScen};
+                                    end
+
+                                    if isfield(scenRay,'isoLatDists')
+                                        scenRay.isoLatDists = scenRay.isoLatDists{ctScen};
+                                    end
+
+                                    if isfield(scenRay,'vTissueIndex')
+                                        scenRay.vTissueIndex = scenRay.vTissueIndex{ctScen};
+                                        scenRay.vAlphaX = scenRay.vAlphaX{ctScen};
+                                        scenRay.vBetaX = scenRay.vBetaX{ctScen};
                                     end
 
                                     for k = 1:currRay.numOfBixels
@@ -310,14 +327,13 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             %radDepthsMat = cellfun(@(radDepthCube) matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z,radDepthCube,dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest'),radDepthsMat,'UniformOutput',false);
             
             %Find valid coordinates
-            %TODO: currently we are taking coordinates valid in the first
-            %cube. Might cause issues in other cubes
-            coordIsValid = ~isnan(radDepthVdoseGrid{1});
-            currBeam.subIxVdoseGrid = find(coordIsValid);
-            currBeam.ixRadDepths = this.VdoseGrid(coordIsValid);
-            currBeam.radDepths = cellfun(@(rd) rd(coordIsValid),radDepthVdoseGrid,'UniformOutput',false);
-            currBeam.geoDepths = cellfun(@(gd) gd(coordIsValid),geoDistVdoseGrid,'UniformOutput',false);
-            currBeam.bevCoords = rot_coordsVdoseGrid(coordIsValid,:);          
+            coordIsValid = cellfun(@isfinite, radDepthVdoseGrid,'UniformOutput',false); %Reduce coordinates for finite values
+            currBeam.validCoords = cellfun(@and,coordIsValid,this.VdoseGridScenIx,'UniformOutput',false); %Reduce coordinates according to scenario
+            currBeam.validCoordsAll = any(cell2mat(coordIsValid),2);
+            
+            currBeam.radDepths = radDepthVdoseGrid;
+            currBeam.geoDepths = geoDistVdoseGrid;
+            currBeam.bevCoords = rot_coordsVdoseGrid;      
 
             % compute SSDs
             currBeam = matRad_computeSSD(currBeam,ct,'densityThreshold',this.ssdDensityThreshold);
@@ -368,18 +384,30 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             lateralRayCutOff = this.getLateralDistanceFromDoseCutOffOnRay(ray);
 
             % Ray tracing for beam i and ray j
-            [ix,ray.radialDist_sq,ray.latDists,ray.isoLatDists] = this.calcGeoDists(currBeam.bevCoords, ...
+            [ix,radialDist_sq,latDists,isoLatDists] = this.calcGeoDists(currBeam.bevCoords, ...
                 ray.sourcePoint_bev, ...
                 ray.targetPoint_bev, ...
                 ray.SAD, ...
-                currBeam.ixRadDepths, ...
+                currBeam.validCoordsAll, ...
                 lateralRayCutOff);
             
             %Subindex given the relevant indices from the geometric
             %distance calculation
-            ray.geoDepths = cellfun(@(rD) rD(ix),currBeam.geoDepths,'UniformOutput',false);
-            ray.radDepths = cellfun(@(rD) rD(ix),currBeam.radDepths,'UniformOutput',false);
-            ray.ix = currBeam.ixRadDepths(ix);
+            ray.validCoords = cellfun(@(beamIx) beamIx & ix,currBeam.validCoords,'UniformOutput',false);
+            ray.ix = cellfun(@(ixInGrid) this.VdoseGrid(ixInGrid),ray.validCoords,'UniformOutput',false);
+            
+            %subCoords = cellfun(@(beamIx) beamIx(ix),currBeam.validCoords,'UniformOutput',false);
+            %ray.radialDist_sq = cellfun(@(subix) radialDist_sq(subix),radialDist_sq,subCoords);
+            ray.radialDist_sq = cellfun(@(beamIx) radialDist_sq(beamIx(ix)),currBeam.validCoords,'UniformOutput',false);
+            ray.latDists = cellfun(@(beamIx) latDists(beamIx(ix),:),currBeam.validCoords,'UniformOutput',false);
+            ray.isoLatDists = cellfun(@(beamIx) isoLatDists(beamIx(ix),:),currBeam.validCoords,'UniformOutput',false);
+
+            ray.validCoordsAll = any(cell2mat(ray.validCoords),2);
+            
+            ray.geoDepths = cellfun(@(rD,ix) rD(ix),currBeam.geoDepths,ray.validCoords,'UniformOutput',false); %usually not needed for particle beams
+            ray.radDepths = cellfun(@(rD,ix) rD(ix),currBeam.radDepths,ray.validCoords,'UniformOutput',false);
+            %ray.ix = currBeam.ixRadDepths(ix);
+            %ray.subIxVdoseGrid = currBeam.subIxVdoseGrid(ix);
         end
         
         function lateralRayCutOff = getLateralDistanceFromDoseCutOffOnRay(this,ray)
@@ -587,14 +615,14 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
             % Define function for obtain rotation matrix.
             if all(a==b) % rotation matrix corresponds to eye matrix if the vectors are the same
-                rot_coords_temp = rot_coords_bev;
+                rot_coords_temp = rot_coords_bev(radDepthIx,:);
             else
                 % Define rotation matrix
                 ssc = @(v) [0 -v(3) v(2); v(3) 0 -v(1); -v(2) v(1) 0];
                 R   = eye(3) + ssc(cross(a,b)) + ssc(cross(a,b))^2*(1-dot(a,b))/(norm(cross(a,b))^2);
 
                 % Rotate every CT voxel
-                rot_coords_temp = rot_coords_bev*R;
+                rot_coords_temp = rot_coords_bev(radDepthIx,:)*R;
             end
 
             % Put [0 0 0] position CT in center of the beamlet.
@@ -613,7 +641,8 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
             % index list within considered voxels
             %ix = radDepthIx(subsetMask);
-            ix = subsetMask;
+            ix = radDepthIx;
+            ix(ix) = subsetMask;
 
             % return radial distances squared
             if nargout > 1

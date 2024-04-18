@@ -235,17 +235,26 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             lateralRayCutOff = this.getLateralDistanceFromDoseCutOffOnRay(ray);
 
             % Ray tracing for beam i and ray j
-            [ix,ray.radialDist_sq] = this.calcGeoDists(currBeam.bevCoords, ...
+            [ix,radialDist_sq] = this.calcGeoDists(currBeam.bevCoords, ...
                 ray.sourcePoint_bev, ...
                 ray.targetPoint_bev, ...
                 ray.SAD, ...
-                currBeam.ixRadDepths, ...
+                currBeam.validCoordsAll, ...
                 lateralRayCutOff);
+
+            ray.validCoords = cellfun(@(beamIx) beamIx & ix,currBeam.validCoords,'UniformOutput',false);
+            ray.ix = cellfun(@(ixInGrid) this.VdoseGrid(ixInGrid),ray.validCoords,'UniformOutput',false);
             
-            %ray.geoDepths = cellfun(@(rD) rD(ix),currBeam.geoDepths,'UniformOutput',false); %usually not needed for particle beams
-            ray.radDepths = cellfun(@(rD) rD(ix),currBeam.radDepths,'UniformOutput',false);
-            ray.ix = currBeam.ixRadDepths(ix);
-            ray.subIxVdoseGrid = currBeam.subIxVdoseGrid(ix);
+            %subCoords = cellfun(@(beamIx) beamIx(ix),currBeam.validCoords,'UniformOutput',false);
+            %ray.radialDist_sq = cellfun(@(subix) radialDist_sq(subix),radialDist_sq,subCoords);
+            ray.radialDist_sq = cellfun(@(beamIx) radialDist_sq(beamIx(ix)),currBeam.validCoords,'UniformOutput',false);
+
+            ray.validCoordsAll = any(cell2mat(ray.validCoords),2);
+            
+            ray.geoDepths = cellfun(@(rD,ix) rD(ix),currBeam.geoDepths,ray.validCoords,'UniformOutput',false); %usually not needed for particle beams
+            ray.radDepths = cellfun(@(rD,ix) rD(ix),currBeam.radDepths,ray.validCoords,'UniformOutput',false);
+            %ray.ix = currBeam.ixRadDepths(ix);
+            %ray.subIxVdoseGrid = currBeam.subIxVdoseGrid(ix);
         end
 
         function [currBixel] = getBixelIndicesOnRay(this,currBixel,currRay)
@@ -391,11 +400,16 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             radDepthOffset = this.machine.data(maxEnergyIx).offset + minRaShi;
 
             % apply limit in depth
-            subSelectIx = currBeam.radDepths{1} < (this.machine.data(maxEnergyIx).depths(end) - radDepthOffset);
-            currBeam.ixRadDepths = currBeam.ixRadDepths(subSelectIx);
-            currBeam.subIxVdoseGrid = currBeam.subIxVdoseGrid(subSelectIx);
-            currBeam.radDepths = cellfun(@(rd) rd(subSelectIx),currBeam.radDepths,'UniformOutput',false);
-            currBeam.bevCoords = currBeam.bevCoords(subSelectIx,:);
+            %subSelectIx = currBeam.radDepths{1} < (this.machine.data(maxEnergyIx).depths(end) - radDepthOffset);
+
+            subSelectIx = cellfun(@(rD) rD < (this.machine.data(maxEnergyIx).depths(end) - radDepthOffset),currBeam.radDepths,'UniformOutput',false);
+            currBeam.validCoords = cellfun(@and,subSelectIx,currBeam.validCoords,'UniformOutput',false);
+            currBeam.validCoordsAll = any(cell2mat(currBeam.validCoords),2);
+
+            %currBeam.ixRadDepths = currBeam.ixRadDepths(subSelectIx);
+            %currBeam.subIxVdoseGrid = currBeam.subIxVdoseGrid(subSelectIx);
+            %currBeam.radDepths = cellfun(@(rd) rd(subSelectIx),currBeam.radDepths,'UniformOutput',false);
+            %currBeam.bevCoords = currBeam.bevCoords(subSelectIx,:);
 
             %Precompute CutOff
             this.calcLateralParticleCutOff(this.dosimetricLateralCutOff,currBeam);
@@ -406,26 +420,31 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
 
             matRad_cfg.dispInfo('Initializing biological dose calculation...\n');
             
-            dij.ax              = zeros(dij.doseGrid.numOfVoxels,1);
-            dij.bx              = zeros(dij.doseGrid.numOfVoxels,1);
+            numOfCtScen = numel(this.VdoseGridScenIx);
+
 
             cstDownsampled = matRad_setOverlapPriorities(cst);
 
             % resizing cst to dose cube resolution
             cstDownsampled = matRad_resizeCstToGrid(cstDownsampled,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
                 dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
-            % retrieve photon LQM parameter for the current dose grid voxels
-            [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cstDownsampled,dij.doseGrid.numOfVoxels,1,this.VdoseGrid);
             
-            % vAlphaX and vBetaX for parameters in VdoseGrid
-            this.vAlphaX = dij.ax(this.VdoseGridMask);
-            this.vBetaX = dij.bx(this.VdoseGridMask);
-            this.vTissueIndex = zeros(size(this.VdoseGrid,1),1);
+            tmpScenVdoseGrid = cell(numOfCtScen,1);
 
+            [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cstDownsampled,dij.doseGrid.numOfVoxels,this.VdoseGrid);  
+
+            for s = 1:numOfCtScen            
+                tmpScenVdoseGrid{s} = this.VdoseGrid(this.VdoseGridScenIx{s});
+                % retrieve photon LQM parameter for the current dose grid voxels
+
+                % vAlphaX and vBetaX for parameters in VdoseGrid
+                this.vAlphaX{s}         = dij.ax{s}(tmpScenVdoseGrid{s});
+                this.vBetaX{s}          = dij.bx{s}(tmpScenVdoseGrid{s});
+                this.vTissueIndex{s}    = zeros(size(tmpScenVdoseGrid{s},1),1);
+            end
+                   
             if strcmp(this.bioParam.model,'LEM') 
-                matRad_cfg.dispInfo('\tUsing LEM model with precomputed kernels\n');
-
-                
+                matRad_cfg.dispInfo('\tUsing LEM model with precomputed kernels\n');                    
 
                 if isfield(this.machine.data,'alphaX') && isfield(this.machine.data,'betaX')
                     for i = 1:size(cstDownsampled,1)
@@ -439,15 +458,20 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
 
                             % check consitency of biological baseData and cst settings
                             if ~isempty(IdxTissue)
-                                isInVdoseGrid = ismember(this.VdoseGrid,cstDownsampled{i,4}{1});
-                                this.vTissueIndex(isInVdoseGrid) = IdxTissue;
+                                for s = 1:numOfCtScen
+                                    tmpScenVdoseGrid = this.VdoseGrid(this.VdoseGridScenIx{s});
+                                    isInVdoseGrid = ismember(tmpScenVdoseGrid,cstDownsampled{i,4}{s});
+                                    this.vTissueIndex{s}(isInVdoseGrid) = IdxTissue;
+                                end
                             else
                                 matRad_cfg.dispError('Biological base data and cst are inconsistent!');
                             end
 
                         else
-                            this.vTissueIndex(row) = 1;
-                            matRad_cfg.dispInfo('\tTissue type of %s was set to 1\n',cstDownsampled{i,2});
+                            for s = 1:numOfCtScen
+                                this.vTissueIndex{s}(:) = 1;
+                            end
+                            matRad_cfg.dispWarning('\tTissue type of %s was set to 1\n',cstDownsampled{i,2});
                         end
                     end
                     dij.vTissueIndex = this.vTissueIndex;
@@ -464,6 +488,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             else
                 matRad_cfg.dispError('Unknown Biological Model!');
             end
+
         end
 
         function dij = allocateBioDoseContainer(this,dij)
@@ -896,9 +921,11 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
 
             % just use tissue classes of voxels found by ray tracer
             if this.calcBioDose
-                ray.vTissueIndex = this.vTissueIndex(ray.subIxVdoseGrid,:);
-                ray.vAlphaX = this.vAlphaX(ray.subIxVdoseGrid);
-                ray.vBetaX  = this.vBetaX(ray.subIxVdoseGrid);
+                for s = 1:numel(this.vTissueIndex)
+                    ray.vTissueIndex{s} = this.vTissueIndex{s}(ray.validCoords{s},:);
+                    ray.vAlphaX{s} = this.vAlphaX{s}(ray.validCoords{s});
+                    ray.vBetaX{s}  = this.vBetaX{s}(ray.validCoords{s});
+                end
             end
         end
 

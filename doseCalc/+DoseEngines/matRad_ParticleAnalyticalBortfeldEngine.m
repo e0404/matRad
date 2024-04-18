@@ -96,7 +96,8 @@ classdef matRad_ParticleAnalyticalBortfeldEngine < DoseEngines.matRad_ParticlePe
             elseif ~strcmp(this.lateralModel,'single') 
                 matRad_cfg.dispWarning('Engine only supports analytically computed singleGaussian lateral Model!');
                 this.lateralModel = 'single';
-            end              
+            end   
+            matRad_cfg = MatRad_Config.instance();
 
             matRad_cfg.dispInfo('Using an analytically computed %s Gaussian pencil-beam kernel model!\n');
         end
@@ -319,11 +320,16 @@ classdef matRad_ParticleAnalyticalBortfeldEngine < DoseEngines.matRad_ParticlePe
         end
         
         function calcLateralParticleCutOff(this,cutOffLevel,~)
+            calcRange = false;
+            if ~isfield(this.machine.data,'range')
+                calcRange = true;
+            end
+
             for i = 1:numel(this.machine.data)
                 this.machine.data(i).LatCutOff.CompFac = 1-cutOffLevel;
                 this.machine.data(i).LatCutOff.numSig  = sqrt(2) * sqrt(gammaincinv(0.995,1)); %For a 2D symmetric gaussian we need the inverse of the incomplete Gamma function for defining the CutOff
                 this.machine.data(i).LatCutOff.maxSigmaIni = max([this.machine.data(i).initFocus(:).SisFWHMAtIso]) ./ 2.3548;
-                if ~isfield(this.machine.data(i),'range')
+                if calcRange
                     this.machine.data(i).range = 10 * this.alpha*this.machine.data(i).energy.^this.p;
                 end
                 this.machine.data(i).LatCutOff.CutOff = this.machine.data(i).LatCutOff.numSig * sqrt(this.machine.data(i).LatCutOff.maxSigmaIni^2 + this.calcSigmaLatMCS(this.machine.data(i).range,this.machine.data(i).energy)^2);

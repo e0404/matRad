@@ -136,22 +136,40 @@ dij.numOfParticlesPerMU = 1e6*ones(this.numOfColumnsDij,1);
 
 if isempty(this.voxelSubIx)
     % take only voxels inside patient
-    VctGrid = [cst{:,4}];
-    VctGrid = unique(vertcat(VctGrid{:}));
+    tmpVctGridScen = cell(1,ct.numOfCtScen);
+    for s = 1:ct.numOfCtScen
+        tmpScen = cellfun(@(c) c{s},cst(:,4),'UniformOutput',false);
+        tmpVctGridScen{s} = unique(vertcat(tmpScen{:}));    
+    end
 else
-    VctGrid = this.voxelSubIx;
+    if iscell(this.voxelSubIx)
+        tmpVctGridScen = cell(1,ct.numOfCtScen);
+        for s = 1:ct.numOfCtScen
+            tmpVctGridScen{s} = this.voxelSubIx;    
+        end
+    else
+        tmpVctGridScen = this.voxelSubIx;
+    end    
 end
+this.VctGrid = unique(vertcat(tmpVctGridScen{:}));
+% No we find the subindexes for the indivdual scenarios. This helps us
+% doing a subselection later on.
+this.VctGridScenIx = cellfun(@(c) ismember(this.VctGrid,c),tmpVctGridScen,'UniformOutput',false);
 
-% receive linear indices and grid locations from the dose grid
-tmpCube    = zeros(ct.cubeDim);
-tmpCube(VctGrid) = 1;
-% interpolate cube
-this.VdoseGrid = find(matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z,tmpCube, ...
-    dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest'));
 
-% save vct grid as own property in order to allow sub-classes
-% to access it
-this.VctGrid = VctGrid;
+tmpVdoseGridScen = cell(1,ct.numOfCtScen);
+for s = 1:ct.numOfCtScen
+    % receive linear indices and grid locations from the dose grid
+    tmpCube    = zeros(ct.cubeDim);
+    tmpCube(tmpVctGridScen{s}) = 1;
+    
+    % interpolate cube
+    tmpVdoseGridScen{s} = find(matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z,tmpCube, ...
+        dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest'));
+end
+this.VdoseGrid = unique(vertcat(tmpVdoseGridScen{:}));
+this.VdoseGridScenIx = cellfun(@(c) ismember(this.VdoseGrid,c), tmpVdoseGridScen,'UniformOutput',false);
+
 
 % Convert CT subscripts to linear indices.
 [this.yCoordsV_vox, this.xCoordsV_vox, this.zCoordsV_vox] = ind2sub(ct.cubeDim,this.VctGrid);
