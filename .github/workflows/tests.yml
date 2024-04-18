@@ -27,7 +27,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: success() || failure()
         with:
-          name: test-results
+          name: tests-matlab-stable
           path: testresults.xml
   test-matlab-latest: #Matlab test Job for latest Matlab release
     runs-on: ubuntu-latest
