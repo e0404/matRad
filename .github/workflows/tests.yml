@@ -21,7 +21,13 @@ jobs:
       - name: Run Tests
         uses: matlab-actions/run-command@v2
         with:
-          command: back=cd("MOxUnit/MOxUnit"); moxunit_set_path; cd(back); matRad_rc; moxunit_runtests test; exit(double(~ans))
+          command: back=cd('MOxUnit/MOxUnit'); moxunit_set_path; cd(back); matRad_rc; moxunit_runtests('test','-junit_xml_file','testresults.xml'); exit(double(~ans))
+      - name: Upload Report
+        uses: actions/upload-artifact@v4
+        if: success() || failure()
+        with:
+          name: test-results
+          path: testresults.xml
   test-matlab-latest: #Matlab test Job for latest Matlab release
     runs-on: ubuntu-latest
     steps:
