@@ -6,17 +6,22 @@ jobs:
   test-matlab-stable: #Matlab test Job for supported Release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3 # Checks-out repository under $GITHUB_WORKSPACE
+      - uses: actions/checkout@v4 # Checks-out repository under $GITHUB_WORKSPACE
+      - name: Get MOxUnit
+        uses: actions/checkout@v4
+        with:
+          repository: MOxUnit/MOxUnit
+          path: MOxUnit
       # Install MATLAB
       - name: Install MATLAB
-        uses: matlab-actions/setup-matlab@v1
+        uses: matlab-actions/setup-matlab@v2
         with:
           release: R2022b
       # Runs test command
       - name: Run Tests
-        uses: matlab-actions/run-command@v1
+        uses: matlab-actions/run-command@v2
         with:
-          command: cd test; matRad_runTests
+          command: back=cd("MOxUnit/MOxUnit"); moxunit_set_path; cd(back); matRad_rc; moxunit_runtests tests; exit(double(ans))
   test-matlab-latest: #Matlab test Job for latest Matlab release
     runs-on: ubuntu-latest
     steps:
