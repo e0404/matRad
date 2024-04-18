@@ -9,7 +9,7 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
     properties 
         DistanceCutoff;
         TG43approximation;
-        
+   
     end
 
     methods
@@ -21,6 +21,8 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
 
             % call superclass constructor
             this = this@DoseEngines.matRad_DoseEngineBase(pln); 
+
+
         end
         function setDefaults(this)
             setDefaults@DoseEngines.matRad_DoseEngineBase(this);
@@ -102,7 +104,7 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
                    matRad_cfg.dispInfo('\t computing distance transform... ');
 
            
-                   DistanceMatrix = this.getDistanceMatrix(seedPoints,dosePoints);
+                   DistanceMatrix = matRad_getDistanceMatrix(seedPoints,dosePoints);
 
                    % ignore all distances > Cutoff for the following calculations to save time
                    Ignore = DistanceMatrix.dist > this.DistanceCutoff;
@@ -414,55 +416,6 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
 
         end
 
-        function [DistanceMatrix,DistanceVector] = getDistanceMatrix(this,seedPoints,dosePoints)
-            DistanceMatrix.x = dosePoints.x'*ones(1,length(seedPoints.x)) - ones(length(dosePoints.x),1)*seedPoints.x;
-            DistanceMatrix.y = dosePoints.y'*ones(1,length(seedPoints.y)) - ones(length(dosePoints.y),1)*seedPoints.y;
-            DistanceMatrix.z = dosePoints.z'*ones(1,length(seedPoints.z)) - ones(length(dosePoints.z),1)*seedPoints.z;
-            DistanceMatrix.dist = sqrt(DistanceMatrix.x.^2+DistanceMatrix.y.^2+DistanceMatrix.z.^2);
-
-            if nargout == 2
-            DistanceVector = reshape(DistanceMatrix.dist,[],1);
-            end
-
-        end
-
-        function templateRoot = getTemplateRoot(this,ct,cst)
-            V = [];
-
-            %Check if any constraints/Objectives have been defined yet
-            noObjOrConst = all(cellfun(@isempty,cst(:,6)));
-
-            % Save target indices in V variable.
-            for i = 1:size(cst,1)
-                % We only let a target contribute if it has an objective/constraint or
-                % if we do not have specified objectives/constraints at all so far
-                if isequal(cst{i,3},'TARGET') && (~isempty(cst{i,6}) || noObjOrConst)
-                    V = [V; cst{i,4}{1}];
-                end
-            end
-
-            % Delete repeated indices, one voxel can belong to two VOIs, because
-            % VOIs can be overlapping.
-            V = unique(V);
-
-            % throw error message if no target is found
-            if isempty(V)
-                error('Could not find target');
-            end
-
-            % Transform subcripts from linear indices 
-            [yCoordsV, xCoordsV, zCoordsV] = ind2sub(ct.cubeDim,V);
-
-            % Transform to [mm] in ct grid
-            xCoordsV = ct.x(xCoordsV);
-            yCoordsV = ct.y(yCoordsV);
-            zCoordsV = ct.z(zCoordsV);
-
-            % define root position
-            templateRoot = [mean(xCoordsV),mean(yCoordsV),min(zCoordsV)];
-
-        end
-
         function [ThetaMatrix,ThetaVector] = getThetaMatrix(this,templateNormal,DistanceMatrix)
             
                       DistanceMatrix.dist(DistanceMatrix.dist == 0) = 1; %Avoid deviding by zero
@@ -474,5 +427,6 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
 
         end
 
-   end
+    end
+                  
 end

@@ -9,6 +9,7 @@ classdef matRad_calcBrachyDoseTest < matlab.unittest.TestCase
             testCase.OriginalPath = path;
             addpath(fileparts(fileparts(fileparts(mfilename('fullpath'))))); %matRad
             addpath(fullfile(fileparts(fileparts(fileparts(mfilename('fullpath')))), 'phantoms')); %matRad/phantoms
+            engine = DoseEngines.matRad_TG43BrachyEngine();
         end
     end
     
@@ -63,7 +64,7 @@ classdef matRad_calcBrachyDoseTest < matlab.unittest.TestCase
             SeedDirection = sqrt(1/3)*ones(1,3);
             verifyThetaMatrix = [164.2,151.4,160.5;125.3,134.4,90;70.5,125.3,61.9];
             [DistanceMatrix,~] = matRad_getDistanceMatrix(seedPoints,dosePoints);
-            [funcThetaMatrix,~] = matRad_getThetaMatrix(SeedDirection,DistanceMatrix);
+            [funcThetaMatrix,~] = getThetaMatrix(SeedDirection,DistanceMatrix);
             
             testCase.verifyEqual(funcThetaMatrix,verifyThetaMatrix,'AbsTol',0.1)
         end
@@ -81,7 +82,7 @@ classdef matRad_calcBrachyDoseTest < matlab.unittest.TestCase
              r = refDos.coords.r; 
              grids = refDos.coords.grids;
 
-             doseCal = matRad_getDoseRate1D_poly(machine,r);
+             doseCal = getDoseRate1D_poly(machine,r);
              doseRef = refDos.TG43_1D.fullDose;
     
              [gammaPassRate,~] = ...
@@ -100,7 +101,7 @@ classdef matRad_calcBrachyDoseTest < matlab.unittest.TestCase
             r = refDos.coords.r; 
             theta = refDos.coords.theta; 
 
-            doseCal = matRad_getDoseRate2D_poly(machine,r,theta);
+            doseCal = getDoseRate2D_poly(machine,r,theta);
             doseRef = refDos.TG43_2D.fullDose;
     
             [gammaPassRate,~] = ...

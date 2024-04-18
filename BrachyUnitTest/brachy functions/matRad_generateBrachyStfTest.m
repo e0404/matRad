@@ -51,7 +51,7 @@ classdef matRad_generateBrachyStfTest < matlab.unittest.TestCase
         
         function rightOutput(testCase)
             load PROSTATE.mat ct cst;
-            stf = matRad_generateBrachyStf(ct,cst,testCase.plnTest,0);
+            stf = matRad_generateStf(ct,cst,testCase.plnTest,0);
             testCase.verifyTrue(isfield(stf,'radiationMode'));
             testCase.verifyTrue(isfield(stf,'numOfSeedsPerNeedle'));
             testCase.verifyTrue(isfield(stf,'numOfNeedles'));

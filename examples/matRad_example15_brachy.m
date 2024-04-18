@@ -119,7 +119,7 @@ pln.propStf.needle.seedsNo           = 6;
 % used for external beam therapy.
 % The needles will be positioned right under the target volume pointing up.
 
-pln.propStf.template.normal      = [0,0,1];
+
 pln.propStf.bixelWidth   = 5; % [mm] template grid distance
 pln.propStf.templateRoot = matRad_getTemplateRoot(ct,cst); % mass center of
 % target in x and y and bottom in z
@@ -190,7 +190,7 @@ disp(pln);
 % target volume, number of needles, seeds and the positions of all needles
 % The one in the end enables visualization.
 
-stf = matRad_generateBrachyStf(ct,cst,pln,1);
+stf = matRad_generateStf(ct,cst,pln,1);
 
 %% II.2 - view stf
 % The 3D view is interesting, but we also want to know how the stf struct
