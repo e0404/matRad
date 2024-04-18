@@ -33,6 +33,7 @@ jobs:
         with:
           files: |
             *.xml
+          check_name: "${{ github.job }} Results"
   test-matlab-latest: #Matlab test Job for latest Matlab release
     runs-on: ubuntu-latest
     steps:
@@ -59,6 +60,7 @@ jobs:
         with:
           files: |
             *.xml
+          check_name: "${{ github.job }} Results"
   test-octave-6: #Octave test Job
     runs-on: ubuntu-22.04 # We use Ubuntu-22.04 because it has Octave 6.4
     steps:
@@ -93,5 +95,6 @@ jobs:
         with:
           files: |
             *.xml
+          check_name: "${{ github.job }} Results"
 
             
