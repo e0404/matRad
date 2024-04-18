@@ -21,25 +21,35 @@ jobs:
       - name: Run Tests
         uses: matlab-actions/run-command@v2
         with:
-          command: back=cd("MOxUnit/MOxUnit"); moxunit_set_path; cd(back); matRad_rc; moxunit_runtests tests; exit(double(ans))
+          command: back=cd("MOxUnit/MOxUnit"); moxunit_set_path; cd(back); matRad_rc; moxunit_runtests test; exit(double(~ans))
   test-matlab-latest: #Matlab test Job for latest Matlab release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3 # Checks-out repository under $GITHUB_WORKSPACE
+      - uses: actions/checkout@v4 # Checks-out repository under $GITHUB_WORKSPACE
+      - name: Get MOxUnit
+        uses: actions/checkout@v4
+        with:
+          repository: MOxUnit/MOxUnit
+          path: MOxUnit
       # Install MATLAB
       - name: Install MATLAB
-        uses: matlab-actions/setup-matlab@v1
+        uses: matlab-actions/setup-matlab@v2
         with:
           release: latest
       # Runs test command
       - name: Run Tests
-        uses: matlab-actions/run-command@v1
+        uses: matlab-actions/run-command@v2
         with:
-          command: cd test; matRad_runTests
+          command: back=cd("MOxUnit/MOxUnit"); moxunit_set_path; cd(back); matRad_rc; moxunit_runtests test; exit(double(~ans))
   test-octave-6: #Octave test Job
     runs-on: ubuntu-22.04 # We use Ubuntu-22.04 because it has Octave 6.4
     steps:
-      - uses: actions/checkout@v3 # Checks-out repository under $GITHUB_WORKSPACE
+      - uses: actions/checkout@v4 # Checks-out repository under $GITHUB_WORKSPACE
+      - name: Get MOxUnit
+        uses: actions/checkout@v4
+        with:
+          repository: MOxUnit/MOxUnit
+          path: MOxUnit
       - name: Install OCTAVE
         run: | 
           sudo apt update
@@ -54,7 +64,7 @@ jobs:
         # with:
         #   run: .github/runtests.sh octave-cli
       - name: Upload logs if test fails
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: Test Log
