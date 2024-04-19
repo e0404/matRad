@@ -21,7 +21,7 @@ classdef matRad_VariableRBEProjection < matRad_EffectProjection
         function RBExD = computeSingleScenario(obj,dij,scen,w)
             effect = computeSingleScenario@matRad_EffectProjection(obj,dij,scen,w); %First compute effect
             RBExD = zeros(dij.doseGrid.numOfVoxels,1);
-            ctScen = ind2sub(size(dij.physicalDose),scen);
+            [ctScen,~] = ind2sub(size(dij.physicalDose),scen);
             RBExD(dij.ixDose{ctScen}) = sqrt((effect(dij.ixDose{ctScen})./dij.bx{ctScen}(dij.ixDose{ctScen}))+(dij.gamma{ctScen}(dij.ixDose{ctScen}).^2)) - dij.gamma{ctScen}(dij.ixDose{ctScen});
         end
         
@@ -36,7 +36,7 @@ classdef matRad_VariableRBEProjection < matRad_EffectProjection
                 obj = obj.compute(dij,w);
                 
                 %Get corresponding ct scenario
-                ctScen = ind2sub(size(dij.physicalDose),scen);
+                [ctScen,~] = ind2sub(size(dij.physicalDose),scen);
                 
                 %Scaling vor variable RBExD
                 scaledEffect = obj.d{scen} + dij.gamma{ctScen};
@@ -65,7 +65,7 @@ classdef matRad_VariableRBEProjection < matRad_EffectProjection
                 eExp = eExpLinTerm + eExpSqTerm.^2;
                 
                 %Get corresponding ct scenario
-                ctScen = ind2sub(size(dij.physicalDose),scen);
+                 [ctScen,~] = ind2sub(size(dij.physicalDose),scen);
 
                 RBExDexp = zeros(dij.doseGrid.numOfVoxels,1);
                 RBExDexp(dij.ixDose{ctScen}) = sqrt((eExp(dij.ixDose{ctScen})./dij.bx{ctScen}(dij.ixDose{ctScen}))+(dij.gamma{ctScen}(dij.ixDose{ctScen}).^2)) - dij.gamma{ctScen}(dij.ixDose{ctScen});
@@ -85,7 +85,7 @@ classdef matRad_VariableRBEProjection < matRad_EffectProjection
                 obj = obj.compute(dij,w);
 
                 %Get corresponding ct scenario
-                ctScen = ind2sub(size(dij.physicalDose),scen);
+                [ctScen,~]= ind2sub(size(dij.physicalDose),scen);
                 
                 %Scaling vor variable RBExD
                 scaledEffect = obj.dExp{scen} + dij.gamma{ctScen};

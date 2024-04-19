@@ -55,6 +55,11 @@ else
    timeSequence = [];
    
 end
+
+if any(strcmp(pln.bioParam.model,{'MCN','LEM','WED','HEL'}))
+    [ax,bx] = matRad_getPhotonLQMParameters(cst,numel(resultGUI.physicalDose));
+end
+
 % compute all phases
 for i = 1:ct.numOfCtScen
     
@@ -70,6 +75,10 @@ for i = 1:ct.numOfCtScen
     elseif any(strcmp(pln.bioParam.model,{'MCN','LEM','WED','HEL'}))
         resultGUI.phaseAlphaDose{i}    = tmpResultGUI.alpha .* tmpResultGUI.physicalDose;
         resultGUI.phaseSqrtBetaDose{i} = sqrt(tmpResultGUI.beta) .* tmpResultGUI.physicalDose;
+        ix = ax{i} ~=0;   
+        resultGUI.phaseEffect{i}    = resultGUI.phaseAlphaDose{i} + resultGUI.phaseSqrtBetaDose{i}.^2;               
+        resultGUI.phaseRBExD{i}     = zeros(ct.cubeDim);
+        resultGUI.phaseRBExD{i}(ix) = ((sqrt(ax{i}(ix).^2 + 4 .* bx{i}(ix) .* resultGUI.phaseEffect{i}(ix)) - ax{i}(ix))./(2.*bx{i}(ix)));
     end
     
 end
@@ -89,12 +98,12 @@ elseif any(strcmp(pln.bioParam.model,{'MCN','LEM','WED','HEL'}))
     resultGUI.accSqrtBetaDose = matRad_doseAcc(ct,resultGUI.phaseSqrtBetaDose, cst, accType);
 
     % only compute where we have biologically defined tissue
-    ix = any(cell2mat(cellfun(@(ax) ax ~= 0,dij.ax','UniformOutput',false)),2);
+    ix = (ax{1} ~= 0);
     
     resultGUI.accEffect = resultGUI.accAlphaDose + resultGUI.accSqrtBetaDose.^2;
     
     resultGUI.accRBExD     = zeros(ct.cubeDim);
-    resultGUI.accRBExD(ix) = ((sqrt(dij.ax(ix).^2 + 4 .* dij.bx(ix) .* resultGUI.accEffect(ix)) - dij.ax(ix))./(2.*dij.bx(ix)));
+    resultGUI.accRBExD(ix) = ((sqrt(ax{1}(ix).^2 + 4 .* bx{1}(ix) .* resultGUI.accEffect(ix)) - ax{1}(ix))./(2.*bx{1}(ix)));
         
 end
 
