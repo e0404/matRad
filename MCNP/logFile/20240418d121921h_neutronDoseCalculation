@@ -1,0 +1,87 @@
+*****
+Load pre-defined HU conversion properties and MCNP cross sections from conversionCT2tissue.mat.
+Note: Modification of conversionCT2tissue.mat using generateVar_conversionCT2tissue.m.
+*****
+*****
+Properties from (scaled) HU loaded are: Minimum value: -1024 and 
+Maximum value: 0.
+[Warning: No information on rescale slope and/or intercept provided in DICOM data. Calculation might crash...] 
+Please use question dialog to decide how to convert to scaled HU.
+*****
+*****
+You decided not to use DICOM rescale slope and intercept.
+*****
+*****
+Properties from rescaled HU are: Minimum value: 0 and 
+Maximum value: 1000.
+*****
+Material types are assigned using the following HU intervals...
+air: 0 to 50
+lung: 50 to 830
+softTissue: 830 to 1280
+bone: 1280 to 5000
+*****
+Segmentation via HU intervals led to zero voxels with lung tissue.
+*****
+Skin thickness has been set to: 1 mm.
+*****
+{Operation terminated by user during <a href="matlab:matlab.internal.language.introspective.errorDocCallback('KDTreeSearcher')" style="font-weight:bold">KDTreeSearcher</a>
+
+
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('createns', 'C:\Program Files\MATLAB\R2023b\toolbox\stats\stats\createns.m', 193)" style="font-weight:bold">createns</a> (<a href="matlab: opentoline('C:\Program Files\MATLAB\R2023b\toolbox\stats\stats\createns.m',193,0)">line 193</a>)
+        obj = KDTreeSearcher(X,'distance',distMetric,'bucketSize',bSize, args{:});
+
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('knnsearch', 'C:\Program Files\MATLAB\R2023b\toolbox\stats\stats\knnsearch.m', 180)" style="font-weight:bold">knnsearch</a> (<a href="matlab: opentoline('C:\Program Files\MATLAB\R2023b\toolbox\stats\stats\knnsearch.m',180,0)">line 180</a>)
+obj=createns(X,args{:},'nsmethod', nsmethod,'bucketSize',bSize);
+
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_segmentationCTscan', 'D:\GitHub\matRad_Lucas\MCNP\tools\matRad_segmentationCTscan.m', 437)" style="font-weight:bold">matRad_segmentationCTscan</a> (<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\MCNP\tools\matRad_segmentationCTscan.m',437,0)">line 437</a>)
+    [idx, dist] = knnsearch(b_ind, a_ind,'K',5000);
+
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('DoseEngines.matRad_NeutronMCNPEngine/calcDose', 'D:\GitHub\matRad_Lucas\doseCalc\+DoseEngines\matRad_NeutronMCNPEngine.m', 252)" style="font-weight:bold">DoseEngines.matRad_NeutronMCNPEngine/calcDose</a> (<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\doseCalc\+DoseEngines\matRad_NeutronMCNPEngine.m',252,0)">line 252</a>)
+            [cst, ct.tissueBin] = matRad_segmentationCTscan(HUcube{1}, ct.resolution, binIntervals, cst, cstBodyIndex, cstTargetIndex);
+
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('DoseEngines.matRad_DoseEngineBase/calcDoseInfluence', 'D:\GitHub\matRad_Lucas\doseCalc\+DoseEngines\@matRad_DoseEngineBase\matRad_DoseEngineBase.m', 208)" style="font-weight:bold">DoseEngines.matRad_DoseEngineBase/calcDoseInfluence</a> (<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\doseCalc\+DoseEngines\@matRad_DoseEngineBase\matRad_DoseEngineBase.m',208,0)">line 208</a>)
+            dij = this.calcDose(ct,cst,stf);
+
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_calcDoseInfluence', 'D:\GitHub\matRad_Lucas\matRad_calcDoseInfluence.m', 48)" style="font-weight:bold">matRad_calcDoseInfluence</a> (<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\matRad_calcDoseInfluence.m',48,0)">line 48</a>)
+dij = engine.calcDoseInfluence(ct,cst,stf);
+
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_WorkflowWidget/btnCalcDose_Callback', 'D:\GitHub\matRad_Lucas\gui\widgets\matRad_WorkflowWidget.m', 399)" style="font-weight:bold">matRad_WorkflowWidget/btnCalcDose_Callback</a> (<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\gui\widgets\matRad_WorkflowWidget.m',399,0)">line 399</a>)
+                dij = matRad_calcDoseInfluence(evalin('base','ct'),evalin('base','cst'),stf,pln);
+
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_WorkflowWidget>@(hObject,eventdata)btnCalcDose_Callback(this,hObject,eventdata)', 'D:\GitHub\matRad_Lucas\gui\widgets\matRad_WorkflowWidget.m', 158)" style="font-weight:bold">matRad_WorkflowWidget>@(hObject,eventdata)btnCalcDose_Callback(this,hObject,eventdata)</a> (<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\gui\widgets\matRad_WorkflowWidget.m',158,0)">line 158</a>)
+                'Callback',@(hObject,eventdata) btnCalcDose_Callback(this,hObject,eventdata),...
+} 
+Interrupt while evaluating UIControl Callback.
+
+matRadGUI
+You are running matRad v2.10.1 "Blaise" (doseEnginesRobOpt-2cb0a08a) with MATLAB 23.2
+matRad: Generating stf struct...
+[Warning: Could not find HLUT  in hlutLibrary folder. matRad default HLUT loaded] 
+Progress: 100.00 %
+<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\doseCalc\+DoseEngines\matRad_NeutronMCNPEngine.m',122,1)">122 </a>            matRad_cfg = MatRad_Config.instance();
+if system_dependent('IsDebugMode')==1, dbstep; end
+<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\doseCalc\+DoseEngines\matRad_NeutronMCNPEngine.m',125,1)">125 </a>            dij = this.initDoseCalc(ct,cst,stf);
+<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\doseCalc\+DoseEngines\matRad_NeutronMCNPEngine.m',389,1)">389 </a>            matRad_cfg = MatRad_Config.instance();
+<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\MatRad_Config.m',600,1)">600 </a>            persistent uniqueInstance;
+if system_dependent('IsDebugMode')==1, dbstep; end
+if system_dependent('IsDebugMode')==1, dbstep; end
+if system_dependent('IsDebugMode')==1, dbstep; end
+if system_dependent('IsDebugMode')==1, dbstep; end
+if system_dependent('IsDebugMode')==1, dbstep; end
+if system_dependent('IsDebugMode')==1, dbstep; end
+if system_dependent('IsDebugMode')==1, dbstep; end
+if system_dependent('IsDebugMode')==1, dbstep; end
+<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\doseCalc\+DoseEngines\matRad_NeutronMCNPEngine.m',393,1)">393 </a>            this.setBinaries();
+if system_dependent('IsDebugMode')==1, dbstep; end
+<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\doseCalc\+DoseEngines\matRad_NeutronMCNPEngine.m',396,1)">396 </a>            this.currFolder = pwd;
+if system_dependent('IsDebugMode')==1, dbstep; end
+<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\doseCalc\+DoseEngines\matRad_NeutronMCNPEngine.m',399,1)">399 </a>            dij = initDoseCalc@DoseEngines.matRad_MonteCarloEngineAbstract(this,ct,cst,stf);
+if system_dependent('IsDebugMode')==1, dbstep; end
+Dose influence matrix calculation using  'MCNP' Dose Engine...
+Dose grid has dimensions 160x160x160
+Adjusting structures for overlap... Done!
+Resampling structure set... nothing to be done, grids are the same!
+Adjusting structures for overlap... Done!
+<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\doseCalc\+DoseEngines\matRad_NeutronMCNPEngine.m',403,1)">403 </a>            if dij.doseGrid.resolution.x ~= dij.doseGrid.resolution.y
+if system_dependent('IsDebugMode')==1, dbcont; end

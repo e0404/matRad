@@ -10,14 +10,15 @@ classdef matRad_MCNPConfig
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
     properties              
-        Num_Primaries = 1e6;
 
         %%% Simulation parameters:
-        Num_Threads   =	feature('numcores');		% Number of parallel calculation threads. Default: 0 = max available threads
+        Num_Primaries = 1e6;
+        Num_Threads   =	feature('numcores');		% Number of parallel calculation threads
         RNG_Seed      =	43;		% Seed for the random number generator
+
         
-        % % This parameter can be overwritten through MatRad_Config default parameters
-        % E_Cut_Pro     =	0.5;		% Energy cut (in MeV) below which heavy charged particles are locally absorbed. Default: 0.5
+
+        
     end
     
     methods

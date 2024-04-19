@@ -1,4 +1,4 @@
-function [control_makeSourceMCNP, varHelper] = matRad_makeSourceMCNP(stf, pln, varHelper, counterField, counterRay)
+function [control_makeSourceMCNP, varHelper] = matRad_makeSourceMCNP(this,stf, varHelper, counterField, counterRay)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Write source data as MCNP input file. For each bixel/ray an individual
 % MCNP input file is generated, where position of the source is defined by
@@ -11,13 +11,12 @@ function [control_makeSourceMCNP, varHelper] = matRad_makeSourceMCNP(stf, pln, v
 % MCNP dose engine folder).
 %
 % call
-%   [control_makeSourceMCNP, fileID_C, nameListRays] = matRad_makeSourceMCNP(stf, pln, varHelper, counterField, counterRay)
+%   [control_makeSourceMCNP, fileID_C, nameListRays] = matRad_makeSourceMCNP(stf, varHelper, counterField, counterRay)
 %
 % input
 %   stf:    steering information structure used to position square source
 %           for every ray individually in lps system and control source
 %           particles, spectral information and initial direction of flight
-%   pln:    matRad plan meta information struct
 %
 % output:   varHelper with new element .simPropMCNP.fileID_C containing
 %           individual file IDs for all bixels s.th. runfiles can be put
@@ -33,129 +32,60 @@ function [control_makeSourceMCNP, varHelper] = matRad_makeSourceMCNP(stf, pln, v
 matRad_cfg =  MatRad_Config.instance();
 
 %% Check source input and create source part of runfile
-pathRunfiles = fullfile(matRad_cfg.matRadRoot, 'submodules', 'MCdoseEngineMCNP', 'runfiles_tmp', filesep);
+pathRunfiles = fullfile(matRad_cfg.matRadRoot, 'MCNP', filesep, 'runfiles_tmp', filesep);
 
 %% Option A: Predefined field using RSSA file
-if strcmp(num2str(pln.propStf.bixelWidth),'field')
+if strcmp(num2str(stf.bixelWidth),'field')
     pathRSSA = fullfile(matRad_cfg.matRadRoot, 'submodules', 'MCdoseEngineMCNP', 'RSSA_depot', filesep);
-    makeSource_readRSSA(stf, pln, varHelper, pathRunfiles, pathRSSA)
+    makeSource_readRSSA(stf, varHelper, pathRunfiles, pathRSSA)
     control_makeSourceMCNP = 1;
 
-    %% Option B: only neutrons but with spectral information
-elseif strcmp(pln.radiationMode, 'neutrons') ...
-        && ~isstring(pln.propStf.bixelWidth) ...
-        && strcmp(num2str(stf(counterField).ray(counterRay).energy), 'spectralDistribution') ...
-        && strcmp(pln.machine,'MCNPneutronField')
-
-    % Get list of available tabulated neutron spectra
-    spectralInformation.pathLocation = fullfile(matRad_cfg.matRadRoot, 'submodules', 'MCdoseEngineMCNP', 'SpectralInformation', filesep);
-    spectralInformation.neutronSpectrum = dir([spectralInformation.pathLocation, 'spectrum_neutrons_*']);
-
-    % Check if there is more than one neutron spectrum available in
-    % ../MATRAD/MCdoseEngineMCNP/SpectralInformation
-    if size(spectralInformation.neutronSpectrum,1)~=1
-        [spectralInformation.neutronIndex,~] = listdlg('PromptString','Please select neutron spectrum:',...
-            'SelectionMode','single',...
-            'ListString',{spectralInformation.neutronSpectrum.name});
+%% Option B: only neutrons but with spectral information
+elseif strcmp(this.machine.meta.radiationMode, 'neutrons') ...
+        && ~isstring(stf.bixelWidth) ...
+        && isfield(this.machine.data, 'neutronSpec') ...
+        && ~isfield(this.machine.data, 'neutronMonoEn')
+    if isfield(this.machine.data, 'photonSpec')
+        if counterField==1 && counterRay==1
+        matRad_cfg.dispInfo('***')
+        matRad_cfg.dispInfo('Neutron spectrum load from machine file.\n')
+        matRad_cfg.dispInfo('***\n')
+        matRad_cfg.dispInfo('Gamma/photon spectrum found in neutron machine. Will be included in the simulation as primary particles.\n')
+        matRad_cfg.dispInfo('***\n')
+        end
+        makeSource_spectralInformationNeutronsPlusPhotons(stf, varHelper, pathRunfiles,this.machine.data)
+        control_makeSourceMCNP = 1;
     else
-        spectralInformation.neutronIndex = 1;
+        if counterField==1 && counterRay==1
+        matRad_cfg.dispInfo('***\n')
+        matRad_cfg.dispInfo('Neutron spectrum load from machine file.\n')
+        matRad_cfg.dispInfo('***\n')
+        end
+        makeSource_spectralInformationNeutrons(stf, varHelper, pathRunfiles, counterField, counterRay,this.machine.data)
+        control_makeSourceMCNP = 1;
     end
-
-    % Read spectral information from selected file with first column as
-    % energy and second column as spectral information
-    fid_neutronSpectrum = fopen([spectralInformation.neutronSpectrum(spectralInformation.neutronIndex).folder, filesep, spectralInformation.neutronSpectrum(spectralInformation.neutronIndex).name], 'r');
-    spectralInformation.spectrumValuesNeutrons = fscanf(fid_neutronSpectrum, '%f', [2,inf]);
-    spectralInformation.spectrumValuesNeutrons = spectralInformation.spectrumValuesNeutrons';
-    fclose(fid_neutronSpectrum);
-
-    makeSource_spectralInformationNeutrons(stf, varHelper, pathRunfiles, counterField, counterRay,spectralInformation)
+%% Option C: only photons but with spectral information
+elseif strcmp(this.machine.meta.radiationMode, 'photons') ...
+        && ~isstring(stf.bixelWidth) ...
+        && isfield(this.machine.data, 'photonSpec')
+    if counterField==1 && counterRay==1
+    matRad_cfg.dispInfo('***\n')
+    matRad_cfg.dispInfo('Photon spectrum load from machine file.\n')
+    matRad_cfg.dispInfo('***\n')
+    end
+    makeSource_spectralInformationPhotons(stf, varHelper, pathRunfiles, counterField, counterRay, this.machine.data)
     control_makeSourceMCNP = 1;
-
-    %% Option C: only photons but with spectral information
-elseif strcmp(pln.radiationMode, 'photons') ...
-        && ~isstring(pln.propStf.bixelWidth) ...
-        && strcmp(num2str(stf(counterField).ray(counterRay).energy), 'spectralDistribution') ...
-        && strcmp(pln.machine,'MCNPphotonField')
-
-    % Get list of available tabulated photon spectra
-    spectralInformation.pathLocation = fullfile(matRad_cfg.matRadRoot, 'submodules', 'MCdoseEngineMCNP', 'SpectralInformation', filesep);
-    spectralInformation.photonSpectrum = dir([spectralInformation.pathLocation, 'spectrum_photons_*']);
-
-    % Check if there is more than one photon spectra available in
-    % ../MATRAD/MCNP/SpectralInformation
-    if size(spectralInformation.photonSpectrum,1)~=1
-        [spectralInformation.photonIndex,~] = listdlg('PromptString','Please select photon spectrum:',...
-            'SelectionMode','single',...
-            'ListString',{spectralInformation.photonSpectrum.name});
-    else
-        spectralInformation.photonIndex = 1;
+%% Option D: monoenergetic neutrons
+elseif strcmp(this.machine.meta.radiationMode,'neutrons') ...
+        && ~isstring(stf.bixelWidth) ...
+        && isfield(this.machine.data,'neutronMonoEn') ...
+        && ~isfield(this.machine.data, 'neutronSpec')
+    if counterField==1 && counterRay==1
+    disp('*****\n')
+    disp('Monoenergetic neutrons used for simulation.\n')
+    disp('*****\n')
     end
-
-    % Read spectral information from selected file with first column as
-    % energy and second column as spectral information
-    fid_photonSpectrum = fopen([spectralInformation.photonSpectrum(spectralInformation.photonIndex).folder, filesep, spectralInformation.photonSpectrum(spectralInformation.photonIndex).name], 'r');
-    spectralInformation.spectrumValuesPhotons = fscanf(fid_photonSpectrum, '%f', [2,inf]);
-    spectralInformation.spectrumValuesPhotons = spectralInformation.spectrumValuesPhotons';
-    fclose(fid_photonSpectrum);
-
-    makeSource_spectralInformationPhotons(stf, varHelper,pathRunfiles,spectralInformation)
-    control_makeSourceMCNP = 1;
-    %% Option D: neutrons and photons with spectral information
-elseif strcmp(pln.radiationMode, 'neutrons') ...
-        && ~isstring(pln.propStf.bixelWidth) ...
-        && strcmp(num2str(stf(counterField).ray(counterRay).energy), 'spectralDistribution') ...
-        && strcmp(pln.machine,'MCNPmixedField')
-
-    % Get list of available tabulated neutron spectra
-    spectralInformation.pathLocation = fullfile(matRad_cfg.matRadRoot, 'submodules', 'MCdoseEngineMCNP', 'SpectralInformation', filesep);
-    spectralInformation.neutronSpectrum = dir([spectralInformation.pathLocation, 'spectrum_neutrons_*']);
-    spectralInformation.photonSpectrum = dir([spectralInformation.pathLocation, 'spectrum_photons_*']);
-
-    % Check if there is more than one neutron spectrum available in
-    % ../MATRAD/MCNP/SpectralInformation
-    if size(spectralInformation.neutronSpectrum,1)~=1
-        [spectralInformation.neutronIndex,~] = listdlg('PromptString','Please select neutron spectrum:',...
-            'SelectionMode','single',...
-            'ListString',{spectralInformation.neutronSpectrum.name});
-    else
-        spectralInformation.neutronIndex = 1;
-    end
-    % Same for photons
-    if size(spectralInformation.photonSpectrum,1)~=1
-        [spectralInformation.photonIndex,~] = listdlg('PromptString','Please select photon spectrum:',...
-            'SelectionMode','single',...
-            'ListString',{spectralInformation.photonSpectrum.name});
-    else
-        spectralInformation.photonIndex = 1;
-    end
-
-    % Read spectral information from selected file with first column as
-    % energy and second column as spectral information
-    % Neutrons
-    fid_neutronSpectrum = fopen([spectralInformation.neutronSpectrum(spectralInformation.neutronIndex).folder, filesep, spectralInformation.neutronSpectrum(spectralInformation.neutronIndex).name], 'r');
-    spectralInformation.spectrumValuesNeutrons = fscanf(fid_neutronSpectrum, '%f', [2,inf]);
-    spectralInformation.spectrumValuesNeutrons = spectralInformation.spectrumValuesNeutrons';
-    fclose(fid_neutronSpectrum);
-    % Photons
-    fid_photonSpectrum = fopen([spectralInformation.photonSpectrum(spectralInformation.photonIndex).folder, filesep, spectralInformation.photonSpectrum(spectralInformation.photonIndex).name], 'r');
-    spectralInformation.spectrumValuesPhotons = fscanf(fid_photonSpectrum, '%f', [2,inf]);
-    spectralInformation.spectrumValuesPhotons = spectralInformation.spectrumValuesPhotons';
-    fclose(fid_photonSpectrum);
-
-    makeSource_spectralInformationNeutronsPlusPhotons(stf, varHelper,pathRunfiles,spectralInformation)
-    control_makeSourceMCNP = 1;
-
-    %% Option E: monoenergetic neutrons
-elseif strcmp(pln.radiationMode, 'neutrons') ...
-        && ~isstring(pln.propStf.bixelWidth) ...
-        && isnumeric(stf(counterField).ray(counterRay).energy) ...
-        && strcmp(pln.machine,'MCNPmonoEn')
-
-    disp('*****')
-    disp('Monoenergetic neutrons used for simulation.')
-    disp('*****')
-
-    makeSource_monoenN(stf, varHelper, pathRunfiles, counterField, counterRay)
+    makeSource_monoenN(stf, varHelper, pathRunfiles, counterField, counterRay, this.machine.data)
     control_makeSourceMCNP = 1;
 
 else
@@ -163,7 +93,7 @@ else
 end
 
 %% Define functions here
-    function makeSource_monoenN(stf, varHelper, pathRunfiles, counterField, counterRay)
+    function makeSource_monoenN(stf, varHelper, pathRunfiles, counterField, counterRay, spectralInformation)
         % Get rotation matrix
         rotMatrix = matRad_calcMCNProtMatrix(stf.gantryAngle, stf.couchAngle);
         % Calculate source position in original coordinate system
@@ -191,7 +121,7 @@ end
         % Write initial source position and extension
         fprintf(fileID_C, source.sourceCard_0, ...
             sourcePoint(2)*varHelper.rescaleFactor, ...
-            stf(varHelper.simPropMCNP.counterField).ray(varHelper.simPropMCNP.counterRay).energy);
+            spectralInformation.neutronMonoEn);
         fprintf(fileID_C, source.sourceCard_1_i, ...
             (sourcePoint(1)-stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor, ...
             (sourcePoint(1)+stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
@@ -258,10 +188,10 @@ end
         % Write spectral distribution
         fprintf(fileID_C, source.energyCard_3_i_0);
         fprintf(fileID_C, source.energyCard_3_i, ...
-            spectralInformation.spectrumValuesNeutrons(:,1));
+            spectralInformation.neutronSpec(:,1));
         fprintf(fileID_C, source.energyCard_3_p_0);
         fprintf(fileID_C, source.energyCard_3_p, ...
-            spectralInformation.spectrumValuesNeutrons(:,2));
+            spectralInformation.neutronSpec(:,2));
 
         % Write TR card for spatial source transformation
         fprintf(fileID_C, coordTrafo.TRcard, ...
@@ -316,10 +246,10 @@ end
         % Write spectral distribution
         fprintf(fileID_C, source.energyCard_3_i_0);
         fprintf(fileID_C, source.energyCard_3_i, ...
-            spectralInformation.spectrumValuesPhotons(:,1));
+            spectralInformation.photonSpec(:,1));
         fprintf(fileID_C, source.energyCard_3_p_0);
         fprintf(fileID_C, source.energyCard_3_p, ...
-            spectralInformation.spectrumValuesPhotons(:,2));
+            spectralInformation.photonSpec(:,2));
 
         % Write TR card for spatial source transformation
         fprintf(fileID_C, coordTrafo.TRcard, ...
@@ -351,8 +281,7 @@ end
         source.sourceCard_2_i = 'SI2 %.4f %.4f\n';  % ...
         source.sourceCard_2_p = 'SP2 0 1\n';
         source.particleDistribution_i = 'SI3 L 1 2\n';
-        error('Relation of neutron and photons fluence not implemented yet.')
-        % source.particleDistribution_p = 'SP3 ? ?\n';
+        source.particleDistribution_p = 'SP3 1 1\n';
         source.particleEnergyDistributions = 'DS4 S 5 6\n';
         source.neutronEnergyCard_5_i_0 = 'SI5 H\n';        % Energy bins neutrons
         source.neutronEnergyCard_5_i = '        %8d\n';
@@ -389,17 +318,17 @@ end
         % Neutrons
         fprintf(fileID_C, source.neutronEnergyCard_5_i_0);
         fprintf(fileID_C, source.neutronEnergyCard_5_i, ...
-            spectralInformation.spectrumValuesNeutrons(:,1));
+            spectralInformation.neutronSpec(:,1));
         fprintf(fileID_C, source.neutronEnergyCard_5_p_0);
         fprintf(fileID_C, source.neutronEnergyCard_5_p, ...
-            spectralInformation.spectrumValuesNeutrons(:,2));
+            spectralInformation.neutronSpec(:,2));
         % Photons
         fprintf(fileID_C, source.photonEnergyCard_6_i_0);
         fprintf(fileID_C, source.photonEnergyCard_6_i, ...
-            spectralInformation.spectrumValuesPhotons(:,1));
+            spectralInformation.photonSpec(:,1));
         fprintf(fileID_C, source.photonEnergyCard_6_p_0);
         fprintf(fileID_C, source.photonEnergyCard_6_p, ...
-            spectralInformation.spectrumValuesPhotons(:,2));
+            spectralInformation.photonSpec(:,2));
 
         % Write TR card for spatial source transformation
         fprintf(fileID_C, coordTrafo.TRcard, ...

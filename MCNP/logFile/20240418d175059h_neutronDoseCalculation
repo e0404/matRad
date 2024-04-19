@@ -1,0 +1,255 @@
+*****
+Load pre-defined HU conversion properties and MCNP cross sections from conversionCT2tissue.mat.
+Note: Modification of conversionCT2tissue.mat using generateVar_conversionCT2tissue.m.
+*****
+*****
+Properties from (scaled) HU loaded are: Minimum value: -1024 and 
+Maximum value: 0.
+[Warning: No information on rescale slope and/or intercept provided in DICOM data. Calculation might crash...] 
+Please use question dialog to decide how to convert to scaled HU.
+*****
+*****
+You decided not to use DICOM rescale slope and intercept.
+*****
+*****
+Properties from rescaled HU are: Minimum value: 0 and 
+Maximum value: 1000.
+*****
+Material types are assigned using the following HU intervals...
+air: 0 to 50
+lung: 50 to 830
+softTissue: 830 to 1280
+bone: 1280 to 5000
+*****
+Segmentation via HU intervals led to zero voxels with lung tissue.
+*****
+Skin thickness has been set to: 1 mm.
+*****
+*****
+In case you wish to simulate BNCT irradiation make sure the PTV is called PTV_BNCT.
+*****
+Checking for PTV...
+*****
+No PTV for BNCT detected.
+*****
+Segmentation process performed sucessfully.
+*****
+Calculate density from CT data with density given in [g/cm^3]
+*****
+<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\doseCalc\+DoseEngines\matRad_NeutronMCNPEngine.m',315,1)">315 </a>                    [control_makeSourceMCNP, varHelper] = matRad_makeSourceMCNP(this, stf, varHelper, counterField, counterRay);
+if system_dependent('IsDebugMode')==1, dbstep; end
+isprop(this.machine.data, 'neutronSpec')
+
+ans =
+
+  <a href="matlab:helpPopup logical" style="font-weight:bold">logical</a>
+
+   0
+
+if system_dependent('IsDebugMode')==1, dbquit; end
+matRadGUI
+matRadGUI
+You are running matRad v2.10.1 "Blaise" (doseEnginesRobOpt-2cb0a08a) with MATLAB 23.2
+[Warning: The matRad_multScen function will be deprecated soon!\nCheck out the new Scenario Models in the scenarios folder.] 
+[Warning: Bixel width does not match] 
+[Warning: The matRad_multScen function will be deprecated soon!\nCheck out the new Scenario Models in the scenarios folder.] 
+[Warning: Couch angles do not match] 
+[Warning: The matRad_multScen function will be deprecated soon!\nCheck out the new Scenario Models in the scenarios folder.] 
+[Warning: Number of beams do not match] 
+[Warning: The matRad_multScen function will be deprecated soon!\nCheck out the new Scenario Models in the scenarios folder.] 
+[Warning: Number of beams do not match] 
+matRad: Generating stf struct...
+[Warning: Could not find HLUT  in hlutLibrary folder. matRad default HLUT loaded] 
+Progress: 100.00 %
+Dose influence matrix calculation using  'SVD Pencil Beam' Dose Engine...
+Dose grid has dimensions 96x96x96
+Adjusting structures for overlap... Done!
+Resampling structure set... Done!
+Adjusting structures for overlap... Done!
+[Warning: Could not find HLUT  in hlutLibrary folder. matRad default HLUT loaded] 
+[Warning: Neutron machine file does not contain measured penumbra width in machine.data.penumbraFWHMatIso. Convolution with Gaussian to model penumbra from machine is switched off.] 
+[Warning: Kernel Cut-Off 'Inf mm' larger than machine data range of '139.750000 mm'. Using '139.750000 mm'!] 
+matRad: calculate radiological depth cube... done.
+Progress: 0.10 %	SSD = 49995 mm ...
+	Uniform primary neutron fluence -> pre-compute kernel convolution...
+Progress: 4.00 %52.00 %100.00 %
+Dose calculation finished in 1.91227 seconds!
+Adjusting structures for overlap... Done!
+Resampling structure set... Done!
+Estimating initial weights... chosen uniform weight of Inf!
+Using standard MU bounds of [0,Inf]!
+
+Optimzation initiating...
+Press q to terminate the optimization...
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit http://projects.coin-or.org/Ipopt
+******************************************************************************
+
+This is Ipopt version trunk, running with linear solver ma57.
+
+Number of nonzeros in equality constraint Jacobian...:        0
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:        0
+
+Total number of variables............................:       25
+                     variables with only lower bounds:       25
+                variables with lower and upper bounds:        0
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:        0
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  3.2000000e+03 0.00e+00 1.00e+00   0.0 0.00e+00    -  0.00e+00 0.00e+00   0
+
+Number of Iterations....: 0
+
+                                   (scaled)                 (unscaled)
+Objective...............:   3.2000000000000000e+03    3.2000000000000000e+03
+Dual infeasibility......:   1.0000000000000000e+00    1.0000000000000000e+00
+Constraint violation....:   0.0000000000000000e+00    0.0000000000000000e+00
+Complementarity.........:                      inf                       inf
+Overall NLP error.......:                      inf                       inf
+
+
+Number of objective function evaluations             = 1
+Number of objective gradient evaluations             = 1
+Number of equality constraint evaluations            = 0
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 0
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 0
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.610
+Total CPU secs in NLP function evaluations           =      0.020
+
+EXIT: Iterates diverging; problem might be unbounded.
+[Warning: Update failedError setting property 'CLim' of class '<a href="matlab:doc matlab.graphics.axis.Axes">Axes</a>':
+Value must be a 1x2 vector of numeric type in which the second element is greater than the first element or is Inf.] 
+clear
+load('BOXPHANTOM.mat')
+matRadGUI
+You are running matRad v2.10.1 "Blaise" (doseEnginesRobOpt-2cb0a08a) with MATLAB 23.2
+[Warning: The matRad_multScen function will be deprecated soon!\nCheck out the new Scenario Models in the scenarios folder.] 
+Precomputing Contours for Display...
+Progress: 50.00 %100.00 %
+matRad_test1_mixedNeutronGammaPBK
+You are running matRad v2.10.1 "Blaise" (doseEnginesRobOpt-2cb0a08a) with MATLAB 23.2
+
+ct = 
+
+  <a href="matlab:helpPopup struct" style="font-weight:bold">struct</a> with fields:
+
+        cubeDim: [200 200 50]
+     resolution: [1×1 struct]
+    numOfCtScen: 1
+         cubeHU: {[200×200×50 double]}
+
+
+cst =
+
+  4×6 <a href="matlab:helpPopup cell" style="font-weight:bold">cell</a> array
+
+    {[0]}    {'contour'}    {'OAR'   }    {1×1 cell}    {1×1 struct}    {1×1 cell}
+    {[1]}    {'target' }    {'TARGET'}    {1×1 cell}    {1×1 struct}    {1×1 cell}
+    {[2]}    {'bone'   }    {'OAR'   }    {1×1 cell}    {1×1 struct}    {1×1 cell}
+    {[3]}    {'lung'   }    {'OAR'   }    {1×1 cell}    {1×1 struct}    {1×1 cell}
+
+if system_dependent('IsDebugMode')==1, dbquit; end
+matRadGUI
+You are running matRad v2.10.1 "Blaise" (doseEnginesRobOpt-2cb0a08a) with MATLAB 23.2
+[Warning: The matRad_multScen function will be deprecated soon!\nCheck out the new Scenario Models in the scenarios folder.] 
+Precomputing Contours for Display...
+Progress: 25.00 %50.00 %75.00 %100.00 %
+[Warning: The matRad_multScen function will be deprecated soon!\nCheck out the new Scenario Models in the scenarios folder.] 
+{Error using <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_loadMachine')" style="font-weight:bold">matRad_loadMachine</a>
+Could not find the following machine file: neutrons_Generic
+
+
+Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('getAvailableEngines', 'getAvailableEngines.m', 45)" style="font-weight:bold">getAvailableEngines</a> (<a href="matlab: opentoline('getAvailableEngines.m',45,0)">line 45</a>)
+
+Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_PlanWidget/popupRadMode_Callback', 'matRad_PlanWidget.m', 1113)" style="font-weight:bold">matRad_PlanWidget/popupRadMode_Callback</a> (<a href="matlab: opentoline('matRad_PlanWidget.m',1113,0)">line 1113</a>)
+
+Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_PlanWidget>@(hObject,eventdata)popupRadMode_Callback(this,hObject,eventdata)', 'matRad_PlanWidget.m', 192)" style="font-weight:bold">matRad_PlanWidget>@(hObject,eventdata)popupRadMode_Callback(this,hObject,eventdata)</a> (<a href="matlab: opentoline('matRad_PlanWidget.m',192,0)">line 192</a>)
+} 
+Error while evaluating UIControl Callback.
+
+[Warning: No base data available for machine: Generic. Selecting default machine.] 
+[Warning: No base data available for machine: Generic. Selecting default machine.] 
+[Warning: The matRad_multScen function will be deprecated soon!\nCheck out the new Scenario Models in the scenarios folder.] 
+matRad: Generating stf struct...
+[Warning: Could not find HLUT  in hlutLibrary folder. matRad default HLUT loaded] 
+Progress: 100.00 %
+Dose influence matrix calculation using  'SVD Pencil Beam' Dose Engine...
+Dose grid has dimensions 80x80x30
+Adjusting structures for overlap... Done!
+Resampling structure set... Done!
+Adjusting structures for overlap... Done!
+[Warning: Could not find HLUT  in hlutLibrary folder. matRad default HLUT loaded] 
+[Warning: Neutron machine file does not contain measured penumbra width in machine.data.penumbraFWHMatIso. Convolution with Gaussian to model penumbra from machine is switched off.] 
+[Warning: Kernel Cut-Off 'Inf mm' larger than machine data range of '139.750000 mm'. Using '139.750000 mm'!] 
+matRad: calculate radiological depth cube... done.
+Progress: 0.10 %	SSD = 49995 mm ...
+	Uniform primary neutron fluence -> pre-compute kernel convolution...
+Progress: 11.11 %100.00 %
+Dose calculation finished in 1.56445 seconds!
+Adjusting structures for overlap... Done!
+Resampling structure set... Done!
+Estimating initial weights... chosen uniform weight of Inf!
+Using standard MU bounds of [0,Inf]!
+
+Optimzation initiating...
+Press q to terminate the optimization...
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit http://projects.coin-or.org/Ipopt
+******************************************************************************
+
+This is Ipopt version trunk, running with linear solver ma57.
+
+Number of nonzeros in equality constraint Jacobian...:        0
+Number of nonzeros in inequality constraint Jacobian.:        0
+Number of nonzeros in Lagrangian Hessian.............:        0
+
+Total number of variables............................:        9
+                     variables with only lower bounds:        9
+                variables with lower and upper bounds:        0
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:        0
+Total number of inequality constraints...............:        0
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:        0
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  3.2000000e+03 0.00e+00 1.00e+00   0.0 0.00e+00    -  0.00e+00 0.00e+00   0
+
+Number of Iterations....: 0
+
+                                   (scaled)                 (unscaled)
+Objective...............:   3.2000000000000000e+03    3.2000000000000000e+03
+Dual infeasibility......:   1.0000000000000000e+00    1.0000000000000000e+00
+Constraint violation....:   0.0000000000000000e+00    0.0000000000000000e+00
+Complementarity.........:                      inf                       inf
+Overall NLP error.......:                      inf                       inf
+
+
+Number of objective function evaluations             = 1
+Number of objective gradient evaluations             = 1
+Number of equality constraint evaluations            = 0
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 0
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 0
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.343
+Total CPU secs in NLP function evaluations           =      0.012
+
+EXIT: Iterates diverging; problem might be unbounded.
+[Warning: Update failedError setting property 'CLim' of class '<a href="matlab:doc matlab.graphics.axis.Axes">Axes</a>':
+Value must be a 1x2 vector of numeric type in which the second element is greater than the first element or is Inf.] 

@@ -1,0 +1,60 @@
+*****
+Load pre-defined HU conversion properties and MCNP cross sections from conversionCT2tissue.mat.
+Note: Modification of conversionCT2tissue.mat using generateVar_conversionCT2tissue.m.
+*****
+*****
+Properties from (scaled) HU loaded are: Minimum value: -1024 and 
+Maximum value: 0.
+[Warning: No information on rescale slope and/or intercept provided in DICOM data. Calculation might crash...] 
+Please use question dialog to decide how to convert to scaled HU.
+*****
+<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\doseCalc\+DoseEngines\matRad_NeutronMCNPEngine.m',212,1)">212 </a>            ct.cube{1}(maskNonBody>0) = 0;
+if system_dependent('IsDebugMode')==1, dbcont; end
+*****
+You decided not to use DICOM rescale slope and intercept.
+*****
+*****
+Properties from rescaled HU are: Minimum value: 0 and 
+Maximum value: 1000.
+*****
+Material types are assigned using the following HU intervals...
+air: 0 to 50
+lung: 50 to 830
+softTissue: 830 to 1280
+bone: 1280 to 5000
+*****
+Segmentation via HU intervals led to zero voxels with lung tissue.
+*****
+Skin thickness has been set to: 1 mm.
+*****
+*****
+In case you wish to simulate BNCT irradiation make sure the PTV is called PTV_BNCT.
+*****
+Checking for PTV...
+*****
+No PTV for BNCT detected.
+*****
+Segmentation process performed sucessfully.
+*****
+Calculate density from CT data with density given in [g/cm^3]
+*****
+<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\MCNP\matRad_makeTargetMCNP.m',145,1)">145 </a>        fprintf(fileID_B, blockB.universeVoxelSpec, ...
+if system_dependent('IsDebugMode')==1, dbcont; end
+{Error using <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_Widget/showError')" style="font-weight:bold">matRad_Widget/showError</a>
+CalcDoseCallback: Error in dose calculation!Unrecognized field name "x_MCNP".
+
+Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_WorkflowWidget/btnCalcDose_Callback', 'matRad_WorkflowWidget.m', 410)" style="font-weight:bold">matRad_WorkflowWidget/btnCalcDose_Callback</a> (<a href="matlab: opentoline('matRad_WorkflowWidget.m',410,0)">line 410</a>)
+
+Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_WorkflowWidget>@(hObject,eventdata)btnCalcDose_Callback(this,hObject,eventdata)', 'matRad_WorkflowWidget.m', 158)" style="font-weight:bold">matRad_WorkflowWidget>@(hObject,eventdata)btnCalcDose_Callback(this,hObject,eventdata)</a> (<a href="matlab: opentoline('matRad_WorkflowWidget.m',158,0)">line 158</a>)
+} 
+Error while evaluating UIControl Callback.
+
+matRad: Generating stf struct...
+[Warning: Could not find HLUT  in hlutLibrary folder. matRad default HLUT loaded] 
+Progress: 100.00 %
+Dose influence matrix calculation using  'MCNP' Dose Engine...
+Dose grid has dimensions 96x96x96
+Adjusting structures for overlap... Done!
+Resampling structure set... Done!
+Adjusting structures for overlap... Done!
+Resampling structure set... Done!

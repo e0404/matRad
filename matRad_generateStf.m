@@ -458,14 +458,15 @@ for i = 1:length(pln.propStf.gantryAngles)
        elseif strcmp(stf(i).radiationMode,'neutrons')
            
          % book keeping for neutrons
-         stf(i).ray(j).energy = machine.data.energy;         
+         matRad_cfg.dispInfo('No book keeping for neutron energies.')
+         %stf(i).ray(j).energy = machine.data.energy;         
        else
           matRad_cfg.dispError('Error generating stf struct: invalid radiation modality.');
        end
        
     end
     
-    if ~isfield(stf(i).ray,'energy')
+    if ~isfield(stf(i).ray,'energy') && ~strcmp(stf(i).radiationMode,'neutrons')
         matRad_cfg.dispError('Error generating stf struct: no suitable energies found. Check if bixelwidth is too large.');
     end
     % store total number of rays for beam-i

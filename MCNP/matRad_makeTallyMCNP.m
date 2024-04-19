@@ -36,6 +36,7 @@ switch pln.propMCNP.tallySpecifier
                 fprintf(fileID_C_rest, 'C ***************************************************************\n');
                 fprintf(fileID_C_rest, meshTally.typeCard);
                 fprintf(fileID_C_rest, meshTally.geometry, pln.propMCNP.tallyKeyword);
+                error('')
                 fprintf(fileID_C_rest, meshTally.corA, .5*ct.resolution.x_resized, (ct.cubeDim(2)-1), ct.cubeDim(2)*ct.resolution.x_resized+.5*ct.resolution.x_resized);    % Caution: MATLAB indexing
                 fprintf(fileID_C_rest, meshTally.corB, .5*ct.resolution.y_resized, (ct.cubeDim(1)-1), ct.cubeDim(1)*ct.resolution.y_resized+.5*ct.resolution.y_resized);
                 fprintf(fileID_C_rest, meshTally.corC, .5*ct.resolution.z_resized, (ct.cubeDim(3)-1), ct.cubeDim(3)*ct.resolution.z_resized+.5*ct.resolution.z_resized);
@@ -69,6 +70,7 @@ switch pln.propMCNP.tallySpecifier
                 fprintf(fileID_C_rest, 'C ***************************************************************\n');
                 fprintf(fileID_C_rest, meshTally.typeCard);
                 fprintf(fileID_C_rest, meshTally.geometry, pln.propMCNP.tallyKeyword);
+                error('')
                 fprintf(fileID_C_rest, meshTally.corA, -.5*ct.resolution.x_resized, (ct.cubeDim(2)-1), ct.cubeDim(2)*ct.resolution.x_resized-.5*ct.resolution.x_resized);    % Caution: MATLAB indexing
                 fprintf(fileID_C_rest, meshTally.corB, -.5*ct.resolution.y_resized, (ct.cubeDim(1)-1), ct.cubeDim(1)*ct.resolution.y_resized-.5*ct.resolution.y_resized);
                 fprintf(fileID_C_rest, meshTally.corC, -.5*ct.resolution.z_resized, (ct.cubeDim(3)-1), ct.cubeDim(3)*ct.resolution.z_resized-.5*ct.resolution.z_resized);
