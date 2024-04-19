@@ -1,0 +1,38 @@
+name: 'Octave Test'
+author: 'e0404'
+description: 'Runs an Octave test. Uses the version in the respective Ubuntu-OS'
+
+runs:
+  steps:
+    - uses: actions/checkout@v4 # Checks-out repository under $GITHUB_WORKSPACE
+    - name: Get MOxUnit
+      uses: actions/checkout@v4
+      with:
+        repository: MOxUnit/MOxUnit
+        path: MOxUnit
+    - name: Install OCTAVE
+      run: | 
+        sudo apt update
+        sudo apt-get install -y gdb gfortran fonts-freefont-otf gnuplot-x11 libgdcm-dev octave liboctave-dev
+    - name: Prepare Test Environment
+      run: |
+        sudo chmod +x .github/before_install_linux.sh
+        sudo .github/before_install_linux.sh
+    - name: Run Tests 
+      run: xvfb-run -a .github/runtests.sh octave-cli
+      # uses: GabrielBB/xvfb-action@v1 #For Headless tests
+      # with:
+      #   run: .github/runtests.sh octave-cli
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: Test Results (Matlab ${{ inputs.matlab-version }})
+
+    - name: Publish Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: success() || failure()
+      with:
+        files: |
+          *.xml
+        check_name: "${{ github.job }} Results"
