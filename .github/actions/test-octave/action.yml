@@ -34,9 +34,11 @@ runs:
         path: matRad/testresults.xml
 
     - name: Publish Test Results
-      uses: EnricoMi/publish-unit-test-result-action@v2
+      # uses: EnricoMi/publish-unit-test-result-action@v2
+      uses: test-summary/action@v2
       if: success() || failure()
       with:
-        files: |
-          matRad/testresults.xml
+        # files: |
+        #   matRad/testresults.xml
+        paths: matRad/testresults.xml
         check_name: "${{ github.job }}"
