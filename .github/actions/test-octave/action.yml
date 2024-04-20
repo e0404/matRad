@@ -18,8 +18,8 @@ runs:
     - name: Prepare Test Environment
       shell: bash
       run: |
-        sudo chmod +x .github/before_install_linux.sh
-        sudo .github/before_install_linux.sh
+        sudo chmod +x matRad/.github/before_install_linux.sh
+        sudo matRad/.github/before_install_linux.sh
     - name: Run Tests
       shell: bash 
       run: xvfb-run -a matRad/.github/runtests.sh octave-cli
@@ -38,5 +38,5 @@ runs:
       if: success() || failure()
       with:
         files: |
-          matRad/*.xml
-        check_name: "${{ github.job }} Results"
+          matRad/testresults.xml
+        check_name: "${{ github.job }}"
