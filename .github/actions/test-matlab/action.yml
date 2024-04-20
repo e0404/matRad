@@ -8,7 +8,7 @@ inputs:
     required: true
 
 runs:
-  # using: 'composite'runs-on: ubuntu-latest
+  using: 'composite'
   steps:
     - name: Get MOxUnit
       uses: actions/checkout@v4

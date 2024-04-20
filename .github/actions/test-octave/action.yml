@@ -3,6 +3,7 @@ author: 'e0404'
 description: 'Runs an Octave test. Uses the version in the respective Ubuntu-OS'
 
 runs:
+  using: 'composite'
   steps:
     - name: Get MOxUnit
       uses: actions/checkout@v4
