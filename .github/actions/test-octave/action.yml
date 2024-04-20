@@ -22,7 +22,7 @@ runs:
         sudo .github/before_install_linux.sh
     - name: Run Tests
       shell: bash 
-      run: xvfb-run -a .github/runtests.sh octave-cli
+      run: xvfb-run -a matRad/.github/runtests.sh octave-cli
       # uses: GabrielBB/xvfb-action@v1 #For Headless tests
       # with:
       #   run: .github/runtests.sh octave-cli
