@@ -32,6 +32,7 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: Test Results (Matlab ${{ inputs.matlab-version }})
+        path: testresults.xml
     
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
