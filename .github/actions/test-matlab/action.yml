@@ -10,7 +10,6 @@ inputs:
 runs:
   # using: 'composite'runs-on: ubuntu-latest
   steps:
-    - uses: actions/checkout@v4 # Checks-out repository under $GITHUB_WORKSPACE
     - name: Get MOxUnit
       uses: actions/checkout@v4
       with:

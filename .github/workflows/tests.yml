@@ -11,6 +11,7 @@ jobs:
   test-matlab-stable: #Matlab test Job for supported Release
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4 # Checks-out repository under $GITHUB_WORKSPACE
       - name: Run Test
         uses: ./.github/actions/test-matlab
         with:
@@ -19,6 +20,7 @@ jobs:
   test-matlab-latest: #Matlab test Job for latest Matlab release
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4 # Checks-out repository under $GITHUB_WORKSPACE
       - uses: ./.github/actions/test-matlab
         with:
           matlab-version: latest
@@ -26,4 +28,5 @@ jobs:
   test-octave-6: #Octave test Job
     runs-on: ubuntu-22.04 # We use Ubuntu-22.04 because it has Octave 6.4
     steps:
+      - uses: actions/checkout@v4 # Checks-out repository under $GITHUB_WORKSPACE
       - uses: ./.github/actions/test-octave

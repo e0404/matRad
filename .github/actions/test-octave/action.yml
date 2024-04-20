@@ -4,7 +4,6 @@ description: 'Runs an Octave test. Uses the version in the respective Ubuntu-OS'
 
 runs:
   steps:
-    - uses: actions/checkout@v4 # Checks-out repository under $GITHUB_WORKSPACE
     - name: Get MOxUnit
       uses: actions/checkout@v4
       with:
