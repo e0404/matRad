@@ -48,6 +48,8 @@ end
 beamInfo(dij.numOfBeams+1).suffix = '';
 beamInfo(dij.numOfBeams+1).logIx  = true(size(resultGUI.w,1),1);
 
+[ctScen,~] = ind2sub(size(dij.physicalDose),scenNum);
+
 
 %% Physical Dose
 doseFields = {'physicalDose','doseToWater'};
@@ -112,7 +114,7 @@ elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'alpha')), fieldna
                 wBeam = (resultGUI.w .* beamInfo(i).logIx);
 
                 % consider biological optimization
-                ix = dij.bx{scenNum}~=0 & resultGUI.(['physicalDose', beamInfo(i).suffix])(:) > 0;
+                ix = dij.bx{ctScen}~=0 & resultGUI.(['physicalDose', beamInfo(i).suffix])(:) > 0;
 
                 % Calculate effect from alpha- and sqrtBetaDose
                 resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])       = full(dij.(['mAlphaDose' RBE_model{j}]){scenNum} * wBeam + (dij.(['mSqrtBetaDose' RBE_model{j}]){scenNum} * wBeam).^2);
@@ -120,7 +122,7 @@ elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'alpha')), fieldna
 
                 % Calculate RBExD from the effect
                 resultGUI.(['RBExD', RBE_model{j}, beamInfo(i).suffix])        = zeros(size(resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])));
-                resultGUI.(['RBExD', RBE_model{j}, beamInfo(i).suffix])(ix)    = (sqrt(dij.ax{scenNum}(ix).^2 + 4 .* dij.bx{scenNum}(ix) .* resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])(ix)) - dij.ax{scenNum}(ix))./(2.*dij.bx{scenNum}(ix));
+                resultGUI.(['RBExD', RBE_model{j}, beamInfo(i).suffix])(ix)    = (sqrt(dij.ax{ctScen}(ix).^2 + 4 .* dij.bx{ctScen}(ix) .* resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])(ix)) - dij.ax{ctScen}(ix))./(2.*dij.bx{ctScen}(ix));
 
                 % Divide RBExD with the physicalDose to get the plain RBE cube
                 resultGUI.(['RBE', RBE_model{j}, beamInfo(i).suffix])          = resultGUI.(['RBExD', RBE_model{j}, beamInfo(i).suffix])./resultGUI.(['physicalDose', beamInfo(i).suffix]);
