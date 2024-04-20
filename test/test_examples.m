@@ -50,7 +50,8 @@ test_suite=MOxUnitTestSuite();
 
 for testIx = 1:length(testScriptNames)
     currScriptName = testScriptNames{testIx};
-    testfun = @() evalin('caller',currScriptName); %this is ridiculous style but it works. We trust that we don't have a variable in the workspace that overwrites the callers (MOxUnit) variable
+    testfun = @() runSingleExampleTest(currScriptName); %Test is evaluated in the base workspace and clears new variables after that
+
     test_case=MOxUnitFunctionHandleTestCase(...
         names{testIx},...
         mfilename, testfun);
@@ -60,6 +61,20 @@ end
     
 %initTestSuite;
 %We need to manually set up the test_suite
+
+function runSingleExampleTest(exampleName)
+    %We use a kind of fishy way to run the test in the base workspace
+    %First we record the variables we have in the base workspace
+    baseVars = evalin('base','who');
+    
+    %Example is evaluated in the base workspace
+    evalin('base',exampleName);
+
+    %Clean up of the base workspace by cleaning all new variables
+    afterTestVars = evalin('base','who');
+    newVars = setdiff(afterTestVars,baseVars);
+    evalin('base',['clear ' strjoin(newVars)]);
+
 
 
 
