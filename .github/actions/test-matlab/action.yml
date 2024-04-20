@@ -38,7 +38,7 @@ runs:
       with:
         name: Test Results (Matlab ${{ inputs.matlab-version }})
         path: |
-          testresults.xml
+          matRad/testresults.xml
 
     
     - name: Publish Test Results
@@ -46,5 +46,5 @@ runs:
       if: success() || failure()
       with:
         files: |
-          *.xml
+          matRad/*.xml
         check_name: "${{ github.job }} Results"

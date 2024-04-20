@@ -31,12 +31,12 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: Test Results (Octave)
-        path: testresults.xml
+        path: matRad/testresults.xml
 
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
       if: success() || failure()
       with:
         files: |
-          *.xml
+          matRad/*.xml
         check_name: "${{ github.job }} Results"
