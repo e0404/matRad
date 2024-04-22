@@ -18,8 +18,15 @@ jobs:
               with:
                   name: test-results-matlab-R2022b
                   path: coverage
+
+            - name: Upload to Coveralls
+              uses: coverallsapp/github-action@v2
+              with:
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  file: coverage/coverage.json
+                  format: coveralls
             
-            - name: Publish Test Results
+            - name: Publish Coverage Report
               uses: irongut/CodeCoverageSummary@v1.3.0
               with:
                   filename: coverage/coverage.xml
