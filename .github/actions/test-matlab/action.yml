@@ -39,6 +39,7 @@ runs:
         name: Test Results (Matlab ${{ inputs.matlab-version }})
         path: |
           matRad/testresults.xml
+          matRad/coverage.xml
 
     
     - name: Publish Test Results

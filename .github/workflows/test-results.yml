@@ -1,4 +1,4 @@
-name: Test Results
+name: Test Report
 
 permissions:
     checks: write
@@ -37,20 +37,11 @@ permissions:
                 name: Test Results (Octave)  # Replace with your actual artifact name
                 path: test-results/artifact3
       
-            # Step to use an action to report the test results on GitHub
-            - name: Report Test Results
-              uses: some-org/some-test-report-action@v1  # Replace with your specific action
-              with:
-                result-files: |
-                  test-results/artifact1/testresults.xml
-                  test-results/artifact2/testresults.xml
-                  test-results/artifact3/testresults.xml
-                # other required inputs for the action
-
-
             - name: Publish Test Results
               uses: EnricoMi/publish-unit-test-result-action@v2
               with:
                 files: |
-                test-results/*/*.xml
+                test-results/*/testresults.xml
               check_name: "Test Results"
+
+            
