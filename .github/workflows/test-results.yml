@@ -18,30 +18,30 @@ jobs:
             
             # Step to download artifact from a previous workflow run 1
             - name: Download Artifact 1
-                uses: actions/download-artifact@v3
-                with:
-                    name: Test Results (Matlab R2022b)  # Replace with your actual artifact name
-                    path: test-results/artifact1
+              uses: actions/download-artifact@v3
+              with:
+                  name: Test Results (Matlab R2022b)  # Replace with your actual artifact name
+                  path: test-results/artifact1
             
             # Step to download artifact from a previous workflow run 2
             - name: Download Artifact 2
-                uses: actions/download-artifact@v3
-                with:
-                    name: Test Results (Matlab latest)  # Replace with your actual artifact name
-                    path: test-results/artifact2
+              uses: actions/download-artifact@v3
+              with:
+                  name: Test Results (Matlab latest)  # Replace with your actual artifact name
+                  path: test-results/artifact2
             
             # Step to download artifact from a previous workflow run 3
             - name: Download Artifact 3
-                uses: actions/download-artifact@v3
-                with:
-                    name: Test Results (Octave)  # Replace with your actual artifact name
-                    path: test-results/artifact3
+              uses: actions/download-artifact@v3
+              with:
+                  name: Test Results (Octave)  # Replace with your actual artifact name
+                  path: test-results/artifact3
             
             - name: Publish Test Results
-                uses: EnricoMi/publish-unit-test-result-action@v2
-                with:
-                    files: |
-                        test-results/*/testresults.xml
-                check_name: "Test Results"
+              uses: EnricoMi/publish-unit-test-result-action@v2
+              with:
+                  files: |
+                      test-results/*/testresults.xml
+              check_name: "Test Results"
 
             

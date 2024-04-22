@@ -18,27 +18,27 @@ jobs:
             
             # Step to download artifact from a previous workflow run 1
             - name: Download Artifact 1
-                uses: actions/download-artifact@v3
-                with:
-                    name: Test Results (Matlab R2022b)  # Replace with your actual artifact name
-                    path: coverage
+              uses: actions/download-artifact@v3
+              with:
+                  name: Test Results (Matlab R2022b)  # Replace with your actual artifact name
+                  path: coverage
             
             - name: Publish Test Results
-                uses: irongut/CodeCoverageSummary@v1.3.0
-                with:
-                    filename: coverage/coverage.xml
-                    badge: true
-                    fail_below_min: true
-                    format: markdown
-                    hide_branch_rate: false
-                    hide_complexity: true
-                    indicators: true
-                    output: both
-                    thresholds: '40 70'
+              uses: irongut/CodeCoverageSummary@v1.3.0
+              with:
+                  filename: coverage/coverage.xml
+                  badge: true
+                  fail_below_min: true
+                  format: markdown
+                  hide_branch_rate: false
+                  hide_complexity: true
+                  indicators: true
+                  output: both
+                  thresholds: '40 70'
                         
             - name: Add Coverage PR Comment
-                uses: marocchino/sticky-pull-request-comment@v2
-                if: github.event_name == 'pull_request'
-                with:
-                    recreate: true
-                    path: code-coverage-results.md
+              uses: marocchino/sticky-pull-request-comment@v2
+              if: github.event_name == 'pull_request'
+              with:
+                  recreate: true
+                  path: code-coverage-results.md
