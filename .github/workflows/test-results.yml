@@ -8,7 +8,7 @@ on:
     workflow_call:
             
 jobs:
-    download_and_report:
+    test_report:
         runs-on: ubuntu-latest
             
         steps:
