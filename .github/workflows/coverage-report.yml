@@ -45,7 +45,8 @@ jobs:
                 script: |
                   const fs = require('fs');
                   const markdownContent = fs.readFileSync('code-coverage-results.md', 'utf8');
-                  core.summary.add(markdownContent);
+                  core.summary.addRaw(markdownContent);
+                  core.summary.write();
                         
             - name: Add Coverage PR Comment
               uses: marocchino/sticky-pull-request-comment@v2
