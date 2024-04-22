@@ -49,4 +49,4 @@ runs:
         # files: |
         #   matRad/testresults.xml
         paths: matRad/testresults.xml
-        check_name: "${{ github.job }}"
+        # check_name: "${{ github.job }}"
