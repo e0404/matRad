@@ -353,7 +353,7 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             clear counterMaterial; clear counterComponent;
 
             % C.4 Tally
-            matRad_makeTallyMCNP(ct, pln, fileID_C_rest, binIntervals)
+            matRad_makeTallyMCNP(this, ct, fileID_C_rest, binIntervals)
 
             fclose(fileID_C_rest);
 
@@ -361,19 +361,12 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             matRad_concatenateRunfiles(varHelper, pathRunfiles);
 
             %% Generate dij matrix
-            switch varHelper.runMCdoseCalc
-                case 1
-                    dij = matRad_bixelDoseCalculatorMCNP(pathRunfiles, dij, stf, ct, pln, cst, binIntervals);
-                case 0
-                    dij=zeros(size(ct.cubeHU));
-            end
+            
+                matRad_bixelDoseCalculatorMCNP(this);
+
 
             %% Switch off diary
             diary off
-            matRad_cfg.dispInfo('matRad: Simulation finished!\n');
-            %Finalize dose calculation
-            dij = this.finalizeDose(dij);
-
         end
 
         function setBinaries(this)
