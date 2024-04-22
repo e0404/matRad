@@ -42,6 +42,5 @@ jobs:
               with:
                   files: |
                       test-results/*/testresults.xml
-              check_name: "Test Results"
 
             
