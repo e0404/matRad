@@ -32,8 +32,11 @@ unitTestResolution = matRad_cfg.propDoseCalc.defaultResolution;
 
 % Copy and manipulate all scripts
 [folders,names,exts] = cellfun(@fileparts,exampleScripts,'UniformOutput',false);
+newFolders = cell(size(folders));
+[newFolders{:}] = deal(pwd);
 testScriptNames = strcat(testing_prefix,names);    
-testScripts = cellfun(@fullfile,folders,strcat(testScriptNames,exts),'UniformOutput',false);
+testScripts = cellfun(@fullfile,newFolders,strcat(testScriptNames,exts),'UniformOutput',false);
+
 status = cellfun(@copyfile,exampleScripts,testScripts);
 
 matRad_unitTestTextManipulation(testScripts,'pln.propStf.bixelWidth',['pln.propStf.bixelWidth = ' num2str(unitTestBixelWidth)]);
@@ -50,7 +53,7 @@ test_suite=MOxUnitTestSuite();
 
 for testIx = 1:length(testScriptNames)
     currScriptName = testScriptNames{testIx};
-    testfun = @() runSingleExampleTest(currScriptName); %Test is evaluated in the base workspace and clears new variables after that
+    testfun = @() runSingleExampleTest(currScriptName,testScripts{testIx}); %Test is evaluated in the base workspace and clears new variables after that
 
     test_case=MOxUnitFunctionHandleTestCase(...
         names{testIx},...
@@ -62,7 +65,7 @@ end
 %initTestSuite;
 %We need to manually set up the test_suite
 
-function runSingleExampleTest(exampleName)
+function runSingleExampleTest(exampleName,path)
     %We use a kind of fishy way to run the test in the base workspace
     %First we record the variables we have in the base workspace
     baseVars = evalin('base','who');
@@ -74,6 +77,9 @@ function runSingleExampleTest(exampleName)
     afterTestVars = evalin('base','who');
     newVars = setdiff(afterTestVars,baseVars);
     evalin('base',['clear ' strjoin(newVars)]);
+    
+    %Delete the temporary script
+    delete(path);
 
 
 
