@@ -13,26 +13,23 @@ jobs:
             
         steps:
             
-            # Step to download artifact from a previous workflow run 1
-            - name: Download Artifact 1
-              uses: actions/download-artifact@v3
+            - name: Download Results for Matlab R2022b
+              uses: actions/download-artifact@v4
               with:
-                  name: Test Results (Matlab R2022b)  # Replace with your actual artifact name
-                  path: test-results/artifact1
+                  name: test-results-matlab-R2022b
+                  path: test-results/matlab-R2022b
             
-            # Step to download artifact from a previous workflow run 2
-            - name: Download Artifact 2
-              uses: actions/download-artifact@v3
+            - name: Download Results for Matlab Latest
+              uses: actions/download-artifact@v4
               with:
-                  name: Test Results (Matlab latest)  # Replace with your actual artifact name
-                  path: test-results/artifact2
+                  name: test-results-matlab-latest
+                  path: test-results/matlab-latest
             
-            # Step to download artifact from a previous workflow run 3
-            - name: Download Artifact 3
-              uses: actions/download-artifact@v3
+            - name: Download Results for Octave
+              uses: actions/download-artifact@v4
               with:
-                  name: Test Results (Octave)  # Replace with your actual artifact name
-                  path: test-results/artifact3
+                  name: test-results-octave
+                  path: test-results/octave
             
             - name: Publish Test Results
               uses: EnricoMi/publish-unit-test-result-action@v2

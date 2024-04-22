@@ -13,11 +13,10 @@ jobs:
             
         steps:
             
-            # Step to download artifact from a previous workflow run 1
-            - name: Download Artifact 1
-              uses: actions/download-artifact@v3
+            - name: Download Coverage Artifact
+              uses: actions/download-artifact@v4
               with:
-                  name: Test Results (Matlab R2022b)  # Replace with your actual artifact name
+                  name: test-results-matlab-R2022b
                   path: coverage
             
             - name: Publish Test Results

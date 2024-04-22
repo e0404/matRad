@@ -30,7 +30,7 @@ runs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: Test Results (Octave)
+        name: test-results-octave
         path: matRad/testresults.xml
 
     - name: Publish Test Results
