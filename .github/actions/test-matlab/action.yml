@@ -15,11 +15,12 @@ runs:
       with:
         repository: MOxUnit/MOxUnit
         path: MOxUnit
-    - name: Get MOcov
+    - name: Get MOcov (e0404 Fork)
       uses: actions/checkout@v4
       with:
-        repository: MOcov/MOcov
+        repository: e0404/MOcov
         path: MOcov
+        ref: addCoberturaValues
     # Install MATLAB
     - name: Install MATLAB
       uses: matlab-actions/setup-matlab@v2
