@@ -33,7 +33,7 @@ unitTestResolution = matRad_cfg.propDoseCalc.defaultResolution;
 % Copy and manipulate all scripts
 [folders,names,exts] = cellfun(@fileparts,exampleScripts,'UniformOutput',false);
 newFolders = cell(size(folders));
-[newFolders{:}] = deal(pwd);
+[newFolders{:}] = deal('.');
 testScriptNames = strcat(testing_prefix,names);    
 testScripts = cellfun(@fullfile,newFolders,strcat(testScriptNames,exts),'UniformOutput',false);
 
