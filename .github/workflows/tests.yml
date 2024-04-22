@@ -38,13 +38,13 @@ jobs:
       - uses: ./matRad/.github/actions/test-octave
 
   test-report:
-    runs-on: ubuntu-latest
+    name: Collect Test Results
     needs: [test-matlab-stable, test-matlab-latest, test-octave-6]
-    uses: ./.github/workflows/test-results.yml
+    uses: .github/workflows/test-results.yml
     secrets: inherit
   
   coverage-report:
-    runs-on: ubuntu-latest
-    needs: [test-matlab-stable, test-octave-6]
-    uses: ./.github/workflows/coverage-report.yml
+    name: Collect Coverage Report
+    needs: [test-matlab-stable]
+    uses: .github/workflows/coverage-report.yml
     secrets: inherit
