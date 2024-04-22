@@ -1,12 +1,16 @@
-%% Welcome to a dirty dose testing script
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% What is the script about?
-%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% the script will tell you how you can use the dirty dose objectives and
-% how the dose distribution will look like if you do that
-% follow the steps and you will succeed :)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+%% Welcome to a dirty dose example script
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2017 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% open matRad files and delete everything in the workspace
 matRad_rc
 
@@ -14,7 +18,6 @@ matRad_rc
 load("TG119.mat")
 
 %% Plan and Geometry
-% choose your modality... but seriously choose protons!!
 pln.radiationMode   = 'protons';           % either photons / protons / helium / carbon
 pln.machine         = 'Generic';
 pln.numOfFractions  = 30;
@@ -58,17 +61,12 @@ stf = matRad_generateStf(ct,cst,pln);
 % Dij Calculation --> only for dose
 dij = matRad_calcParticleDose(ct,stf,pln,cst);
 
-% Dirty Dose Calculation --> adding dirty dose. The number describes your
-% LET threshold -> that you can change but everything else has to stay like
-% this
+% Dirty Dose Calculation --> compute dirty dose influence matrix
+%  arg: LET threshold (keV/um)
 dij = matRad_calcDirtyDose(2,dij);
 
 %% Optimization
-% yeyy only the optimization has to be done
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
-
-% IMPORTANT: If you want to save your results, rename them! Maybe they will
-% get overwritten later
 
 %% Plotting
 % Let's see how it looks
@@ -90,29 +88,12 @@ subplot(2,1,2)
 matRad_plotSliceWrapper(gca,ct,cst,1,cube,plane,slice,[],[],colorcube,[],doseWindow,[],[]);
 title('dirtyDose without DD objective')
 zoom(4)
-%% Adding dirty dose
-% the cst is important! 
-% for adding a dirty dose objective choose a structure like the Core
 
-% REMEMBER: Always set dirty dose objectives as a secondary objective and
-% have a dose objective as your first objective
-% You can change the penalty and the prescribed dirtydose if you like
+%% Adding dirty dose objective
+% adding a dirty dose objective to the Core
 cst{1,6}{2} = struct(DirtyDoseObjectives.matRad_SquaredOverdosingDirtyDose(300,0));
 
-%% Generate the Geometry again
-stf = matRad_generateStf(ct,cst,pln);
-
-%% Dose calculation
-% Dij Calculation --> only for dose
-dij = matRad_calcParticleDose(ct,stf,pln,cst);
-
-% Dirty Dose Calculation --> adding dirty dose. The number describes your
-% LET threshold -> that you can change but everything else has to stay like
-% this
-dij = matRad_calcDirtyDose(2,dij);
-
 %% Optimization
-% yeyy only the optimization has to be done
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Well done your first dirty dose calculation is ready!
@@ -137,102 +118,15 @@ title('dirtyDose with DD objective in Core')
 zoom(4)
 
 %% Now with the Target
-% make sure to delete cst{1,6}{2} = struct(DirtyDoseObjectives.matRad_SquaredOverdosingDirtyDose(300,0));
-clear('cst')
-load("TG119.mat")
 %% Adding dirty dose
-% the cst is important! 
-% for adding a dirty dose objective choose a structure like the OuterTarget
-
-% REMEMBER: Always set dirty dose objectives as a secondary objective and
-% have a dose objective as your first objective
-% You can change the penalty and the prescribed dirtydose if you like
-cst{2,6}{2} = struct(DirtyDoseObjectives.matRad_SquaredUnderdosingDirtyDose(300,4));
-
-%% Generate the Geometry again
-stf = matRad_generateStf(ct,cst,pln);
-
-%% Dose calculation
-% Dij Calculation --> only for dose
-dij = matRad_calcParticleDose(ct,stf,pln,cst);
-
-% Dirty Dose Calculation --> adding dirty dose. The number describes your
-% LET threshold -> that you can change but everything else has to stay like
-% this
-dij = matRad_calcDirtyDose(2,dij);
-
-%% Optimization
-% yeyy only the optimization has to be done
+% for adding a dirty dose objective to OuterTarget
+cst{2,6}{2} = struct(DirtyDoseObjectives.matRad_SquaredUnderdosingDirtyDose(300,20));
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
-
-%% Well done your second dirty dose calculation is ready!
-% Let's see how it looks
-cube = resultGUI.physicalDose;
-plane = 3;
-slice = 80;
-doseWindow = [min(cube(:)) max(cube(:))];
-figure
-subplot(2,1,1)
-matRad_plotSliceWrapper(gca,ct,cst,1,cube,plane,slice,[],[],colorcube,[],doseWindow,[],[]);
-title('physicalDose')
-zoom(4)
-
-cube = resultGUI.dirtyDose;
-plane = 3;
-slice = 80;
-doseWindow = [min(cube(:)) max(cube(:))];
-subplot(2,1,2)
-matRad_plotSliceWrapper(gca,ct,cst,1,cube,plane,slice,[],[],colorcube,[],doseWindow,[],[]);
-title('dirtyDose with DD objective in Target')
-zoom(4)
 
 %% Now with the Core and Target
-% make sure to delete cst{2,6}{2} = struct(DirtyDoseObjectives.matRad_SquaredUnderdosingDirtyDose(300,4));
-clear('cst')
-load("TG119.mat")
 %% Adding dirty dose
-% the cst is important! 
-% for adding a dirty dose objective choose two structures like the Core and OuterTarget
-
-% REMEMBER: Always set dirty dose objectives as a secondary objective and
-% have a dose objective as your first objective
-% You can change the penalty and the prescribed dirtydose if you like
+% for adding a dirty dose objective choose two structures: Core and OuterTarget
 cst{1,6}{2} = struct(DirtyDoseObjectives.matRad_SquaredOverdosingDirtyDose(300,0));
-cst{2,6}{2} = struct(DirtyDoseObjectives.matRad_SquaredUnderdosingDirtyDose(300,4));
-
-%% Generate the Geometry again
-stf = matRad_generateStf(ct,cst,pln);
-
-%% Dose calculation
-% Dij Calculation --> only for dose
-dij = matRad_calcParticleDose(ct,stf,pln,cst);
-
-% Dirty Dose Calculation --> adding dirty dose. The number describes your
-% LET threshold -> that you can change but everything else has to stay like
-% this
-dij = matRad_calcDirtyDose(2,dij);
-
+cst{2,6}{2} = struct(DirtyDoseObjectives.matRad_SquaredUnderdosingDirtyDose(300,20));
 %% Optimization
-% yeyy only the optimization has to be done
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
-
-%% Well done your third dirty dose calculation is ready!
-% Let's see how it looks
-cube = resultGUI.physicalDose;
-plane = 3;
-slice = 80;
-doseWindow = [min(cube(:)) max(cube(:))];
-figure
-subplot(2,1,1)
-matRad_plotSliceWrapper(gca,ct,cst,1,cube,plane,slice,[],[],colorcube,[],doseWindow,[],[]);
-title('physicalDose')
-zoom(4)
-
-cube = resultGUI.dirtyDose;
-plane = 3;
-slice = 80;
-doseWindow = [min(cube(:)) max(cube(:))];
-subplot(2,1,2)
-matRad_plotSliceWrapper(gca,ct,cst,1,cube,plane,slice,[],[],colorcube,[],doseWindow,[],[]);
-title('dirtyDose with DD objective in Core and Target')
-zoom(4)

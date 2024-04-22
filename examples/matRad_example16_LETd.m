@@ -1,12 +1,16 @@
-%% Welcome to a LETd testing script
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% What is the script about?
-%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% the script will tell you how you can use the LETd SquaredUnderdosing objective and
-% how the dose distribution will look like if you do that
-% follow the steps and you will succeed :)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+%% Welcome to a LETd example script
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2017 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% open matRad files and delete everything in the workspace
 matRad_rc
 
@@ -14,7 +18,6 @@ matRad_rc
 load("TG119.mat")
 
 %% Plan and Geometry
-% choose your modality... but seriously choose protons!!
 pln.radiationMode   = 'protons';           % either photons / protons / helium / carbon
 pln.machine         = 'Generic';
 pln.numOfFractions  = 30;
@@ -58,17 +61,12 @@ stf = matRad_generateStf(ct,cst,pln);
 % Dij Calculation --> only for dose
 dij = matRad_calcParticleDose(ct,stf,pln,cst);
 
-% Dirty Dose Calculation --> adding dirty dose. The number describes your
-% LET threshold -> that you can change but everything else has to stay like
-% this
+% Dirty Dose Calculation --> compute dirty dose influence matrix
+%  arg: LET threshold (keV/um)
 dij = matRad_calcDirtyDose(2,dij);
 
 %% Optimization
-% yeyy only the optimization has to be done
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
-
-% IMPORTANT: If you want to save your results, rename them! Maybe they will
-% get overwritten later
 
 %% Plotting
 % Let's see how it looks
@@ -88,31 +86,14 @@ slice = 80;
 doseWindow = [min(cube(:)) max(cube(:))];
 subplot(2,1,2)
 matRad_plotSliceWrapper(gca,ct,cst,1,cube,plane,slice,[],[],colorcube,[],doseWindow,[],[]);
-title('LETd without Ld objective')
+title('LETd without LETd objective')
 zoom(4)
-%% Adding LETd
-% the cst is important! 
-% for adding a LETd objective choose a structure like the OuterTarget
 
-% REMEMBER: Always set LETd objectives as a secondary objective and
-% have a dose objective as your first objective
-% You can change the penalty and the prescribed LETd if you like 
-cst{2,6}{2} = struct(LETdObjectives.matRad_SquaredUnderdosingLETd(100,0));
-
-%% Generate the Geometry again
-stf = matRad_generateStf(ct,cst,pln);
-
-%% Dose calculation
-% Dij Calculation --> only for dose
-dij = matRad_calcParticleDose(ct,stf,pln,cst);
-
-% Dirty Dose Calculation --> adding dirty dose. The number describes your
-% LET threshold -> that you can change but everything else has to stay like
-% this
-dij = matRad_calcDirtyDose(2,dij);
+%% Adding LETd objective
+% adding a LETd objective to the Core
+cst{1,6}{2} = struct(LETdObjectives.matRad_SquaredOverdosingLETd(100,0));
 
 %% Optimization
-% yeyy only the optimization has to be done
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Well done your first LETd calculation is ready!
@@ -133,6 +114,57 @@ slice = 80;
 doseWindow = [min(cube(:)) max(cube(:))];
 subplot(2,1,2)
 matRad_plotSliceWrapper(gca,ct,cst,1,cube,plane,slice,[],[],colorcube,[],doseWindow,[],[]);
-title('LETd with Ld in Target')
+title('LETd with LETd objective in Core')
 zoom(4)
 
+%% Now with the Target
+%% Adding LETd
+% for adding a LETd objective to OuterTarget
+cst{2,6}{2} = struct(LETdObjectives.matRad_SquaredUnderdosingLETd(100,20));
+resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+%% Plotting
+cube = resultGUI.physicalDose;
+plane = 3;
+slice = 80;
+doseWindow = [min(cube(:)) max(cube(:))];
+figure
+subplot(2,1,1)
+matRad_plotSliceWrapper(gca,ct,cst,1,cube,plane,slice,[],[],colorcube,[],doseWindow,[],[]);
+title('physicalDose')
+zoom(4)
+
+cube = resultGUI.LETd;
+plane = 3;
+slice = 80;
+doseWindow = [min(cube(:)) max(cube(:))];
+subplot(2,1,2)
+matRad_plotSliceWrapper(gca,ct,cst,1,cube,plane,slice,[],[],colorcube,[],doseWindow,[],[]);
+title('LETd with LETd objective in Target')
+zoom(4)
+
+%% Now with the Core and Target
+%% Adding LETd
+% for adding a LETd objective choose two structures: Core and OuterTarget
+cst{1,6}{2} = struct(LETdObjectives.matRad_SquaredOverdosingLETd(100,0));
+cst{2,6}{2} = struct(LETdObjectives.matRad_SquaredUnderdosingLETd(100,20));
+%% Optimization
+resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+%% Plotting
+cube = resultGUI.physicalDose;
+plane = 3;
+slice = 80;
+doseWindow = [min(cube(:)) max(cube(:))];
+figure
+subplot(2,1,1)
+matRad_plotSliceWrapper(gca,ct,cst,1,cube,plane,slice,[],[],colorcube,[],doseWindow,[],[]);
+title('physicalDose')
+zoom(4)
+
+cube = resultGUI.LETd;
+plane = 3;
+slice = 80;
+doseWindow = [min(cube(:)) max(cube(:))];
+subplot(2,1,2)
+matRad_plotSliceWrapper(gca,ct,cst,1,cube,plane,slice,[],[],colorcube,[],doseWindow,[],[]);
+title('LETd with LETd objective in Core and Target')
+zoom(4)
