@@ -5,10 +5,7 @@ permissions:
     pull-requests: write
 
 on:
-    workflow_run:
-        workflows: ["Tests"]
-        types:
-            - completed
+    workflow_call:
             
 jobs:
     download_and_report:
