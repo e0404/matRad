@@ -360,11 +360,12 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             %% Concatenate all blocks to one runfile for each ray
             matRad_concatenateRunfiles(varHelper, pathRunfiles);
 
-            %% Generate dij matrix
+            %% Run MCNP calculation
+            matRad_bixelDoseCalculatorMCNP(this);
+
+            %% Evaluate MCNP results
+            dij = matRad_evaluateTallyMCNP(dij, cst);
             
-                matRad_bixelDoseCalculatorMCNP(this);
-
-
             %% Switch off diary
             diary off
         end
