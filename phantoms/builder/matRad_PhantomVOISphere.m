@@ -1,11 +1,11 @@
-classdef  matRad_PhantomVOISphere < matRad_PhantomVOIVolume   
+classdef  matRad_PhantomVOISphere < matRad_PhantomVOIVolume
     % matRad_PhantomVOISphere implements a class that helps to create spheric VOIs
     %
-    % References 
+    % References
     %     -
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % 
+    %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
     % Copyright 2022 the matRad development team.
@@ -25,9 +25,9 @@ classdef  matRad_PhantomVOISphere < matRad_PhantomVOIVolume
     methods (Access = public)
         function obj = matRad_PhantomVOISphere(name,type,radius,varargin)
             p = inputParser;
-            addOptional(p,'objectives',{});
-            addOptional(p,'offset',[0,0,0]);
-            addOptional(p,'HU',0);
+            addParameter(p,'objectives',{});
+            addParameter(p,'offset',[0,0,0]);
+            addParameter(p,'HU',0);
             parse(p,varargin{:});
 
             obj@matRad_PhantomVOIVolume(name,type,p); %call superclass constructor
