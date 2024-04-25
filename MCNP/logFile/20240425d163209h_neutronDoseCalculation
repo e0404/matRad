@@ -12,38 +12,62 @@ No PTV for BNCT detected.
 *****
 Segmentation process performed sucessfully.
 *****Calculate density from CT data with density given in [g/cm^3]*****<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\MCNP\matRad_makeSourceMCNP.m',38,1)">38  </a>if strcmp(num2str(stf.bixelWidth),'field')
-stf(counterField).ray(counterRay).rayPos_bev
+if system_dependent('IsDebugMode')==1, dbstep; end
+strcmp(this.machine.meta.radiationMode, 'neutrons')
 
 ans =
 
-   -62     0   -62
+  <a href="matlab:helpPopup logical" style="font-weight:bold">logical</a>
 
-clear
-clc
-load('BOXPHANTOM.mat')
+   1
+
+~isstring(stf.bixelWidth)
+{Error using <a href="matlab:matlab.internal.language.introspective.errorDocCallback('isstring')" style="font-weight:bold">isstring</a>
+Too many input arguments.
+} 
+~isstring(stf.bixelWidth(:))
+{Intermediate dot '.' indexing produced a comma-separated list with 2 values, but it must produce a single value when followed by subsequent indexing operations.
+
+<a href="matlab:helpview('matlab','error_index_expected_one_output_from_intermediate_indexing')" style="font-weight:bold">Related documentation</a>
+} 
+~isstring(stf(:).bixelWidth)
+{Error using <a href="matlab:matlab.internal.language.introspective.errorDocCallback('isstring')" style="font-weight:bold">isstring</a>
+Too many input arguments.
+} 
+~isstring(stf(1).bixelWidth)
+
+ans =
+
+  <a href="matlab:helpPopup logical" style="font-weight:bold">logical</a>
+
+   1
+
+~isstring(stf(2).bixelWidth)
+
+ans =
+
+  <a href="matlab:helpPopup logical" style="font-weight:bold">logical</a>
+
+   1
+
+~isstring(stf(1:end).bixelWidth)
+{Error using <a href="matlab:matlab.internal.language.introspective.errorDocCallback('isstring')" style="font-weight:bold">isstring</a>
+Too many input arguments.
+} 
+~isstring(stf(1:2).bixelWidth)
+{Error using <a href="matlab:matlab.internal.language.introspective.errorDocCallback('isstring')" style="font-weight:bold">isstring</a>
+Too many input arguments.
+} 
+~isstring(stf(1).bixelWidth)
+
+ans =
+
+  <a href="matlab:helpPopup logical" style="font-weight:bold">logical</a>
+
+   1
+
 matRadGUI
 You are running matRad v2.10.1 "Blaise" (doseEnginesRobOpt-e53f2400) with MATLAB 23.2
-[Warning: The matRad_multScen function will be deprecated soon!\nCheck out the new Scenario Models in the scenarios folder.] 
-Precomputing Contours for Display...
-Progress: 50.00 %100.00 %
-[Warning: The matRad_multScen function will be deprecated soon!\nCheck out the new Scenario Models in the scenarios folder.] 
-[Warning: The matRad_multScen function will be deprecated soon!\nCheck out the new Scenario Models in the scenarios folder.] 
-[Warning: The matRad_multScen function will be deprecated soon!\nCheck out the new Scenario Models in the scenarios folder.] 
-{Error using <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_loadMachine')" style="font-weight:bold">matRad_loadMachine</a>
-Could not find the following machine file: neutrons_Generic
-
-
-Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('getAvailableEngines', 'getAvailableEngines.m', 45)" style="font-weight:bold">getAvailableEngines</a> (<a href="matlab: opentoline('getAvailableEngines.m',45,0)">line 45</a>)
-
-Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_PlanWidget/popupRadMode_Callback', 'matRad_PlanWidget.m', 1113)" style="font-weight:bold">matRad_PlanWidget/popupRadMode_Callback</a> (<a href="matlab: opentoline('matRad_PlanWidget.m',1113,0)">line 1113</a>)
-
-Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_PlanWidget>@(hObject,eventdata)popupRadMode_Callback(this,hObject,eventdata)', 'matRad_PlanWidget.m', 192)" style="font-weight:bold">matRad_PlanWidget>@(hObject,eventdata)popupRadMode_Callback(this,hObject,eventdata)</a> (<a href="matlab: opentoline('matRad_PlanWidget.m',192,0)">line 192</a>)
-} 
-Error while evaluating UIControl Callback.
-
-[Warning: No base data available for machine: Generic. Selecting default machine.] 
-[Warning: No base data available for machine: Generic. Selecting default machine.] 
-[Warning: The matRad_multScen function will be deprecated soon!\nCheck out the new Scenario Models in the scenarios folder.] 
 matRad: Generating stf struct...
 <a href="matlab: opentoline('D:\GitHub\matRad_Lucas\matRad_generateStf.m',73,1)">73  </a>fileName = [pln.radiationMode '_' pln.machine];
 addmarginBool = false
