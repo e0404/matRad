@@ -1,3 +1,4 @@
 MCsquare/bin/Materials/
 topas/MCrun
 *.asv
+/MCNP/runfiles_tmp

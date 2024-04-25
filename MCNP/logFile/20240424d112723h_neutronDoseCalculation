@@ -1,0 +1,121 @@
+*****Load pre-defined HU conversion properties and MCNP cross sections from conversionCT2tissue.mat.Note: Modification of conversionCT2tissue.mat using generateVar_conversionCT2tissue.m.**********Properties from (scaled) HU loaded are: Minimum value: -1024 and Maximum value: 0.[Warning: No information on rescale slope and/or intercept provided in DICOM data. Calculation might crash...] 
+Please use question dialog to decide how to convert to scaled HU.**********You decided not to use DICOM rescale slope and intercept.**********Properties from rescaled HU are: Minimum value: 0 and Maximum value: 1000.*****Material types are assigned using the following HU intervals...air: 0 to 50lung: 50 to 830softTissue: 830 to 1280bone: 1280 to 5000*****Segmentation via HU intervals led to zero voxels with lung tissue.
+*****
+Skin thickness has been set to: 1 mm.
+*****
+*****
+In case you wish to simulate BNCT irradiation make sure the PTV is called PTV_BNCT.
+*****
+Checking for PTV...
+*****
+No PTV for BNCT detected.
+*****
+Segmentation process performed sucessfully.
+*****Calculate density from CT data with density given in [g/cm^3]********Neutron spectrum load from machine file.
+***
+Gamma/photon spectrum found in neutron machine. Will be included in the simulation as primary particles.
+***
+*****
+Tally type: TMESH3...
+*****
+<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\MCNP\matRad_bixelDoseCalculatorMCNP.m',25,1)">25  </a>if this.MCNPinstallationCheck && ~this.externalCalculation
+this
+
+this = 
+
+[Warning: DEPRECATION WARNING: Property 'relDoseCutOff' of Dose Engine 'MCNP' is deprecated! Use Property 'relativeDosimetricCutOff' instead!] 
+  <a href="matlab:helpPopup DoseEngines.matRad_NeutronMCNPEngine" style="font-weight:bold">matRad_NeutronMCNPEngine</a> with properties:
+
+      possibleRadiationModes: {'neutrons'}
+                        name: 'MCNP'
+                   shortName: 'MCNP'
+                      config: [1×1 matRad_MCNPConfig]
+         externalCalculation: 0
+           calcRMFparameters: 0
+       MCNPinstallationCheck: 1
+                  MCNPFolder: 'D:\GitHub\matRad_Lucas\MCNP'
+                  currFolder: 'D:\GitHub\matRad_Lucas\MCNP\runfiles_tmp'
+                 constantRBE: NaN
+      numHistoriesPerBeamlet: 20000
+          numHistoriesDirect: 1000000
+            outputMCvariance: 1
+    relativeDosimetricCutOff: 0.9950
+               relDoseCutOff: 0.0050
+                    doseGrid: [1×1 struct]
+                    multScen: [1×1 matRad_NominalScenario]
+                  voxelSubIx: []
+     selectVoxelsInScenarios: 'all'
+                    bioParam: [1×1 matRad_BiologicalModel]
+                     machine: [1×1 struct]
+                      timers: [1×1 struct]
+             numOfColumnsDij: 1
+                yCoordsV_vox: [531441×1 double]
+                xCoordsV_vox: [531441×1 double]
+                zCoordsV_vox: [531441×1 double]
+        yCoordsV_voxDoseGrid: [110592×1 double]
+        xCoordsV_voxDoseGrid: [110592×1 double]
+        zCoordsV_voxDoseGrid: [110592×1 double]
+                     VctGrid: [531441×1 double]
+                   VdoseGrid: [110592×1 double]
+                 VctGridMask: [4096000×1 logical]
+               VdoseGridMask: [884736×1 logical]
+          robustVoxelsOnGrid: {[884736×1 logical]}
+                isDoseEngine: 1
+                    hWaitbar: [1×1 Figure]
+
+this.externalCalculation = true
+
+this = 
+
+[Warning: DEPRECATION WARNING: Property 'relDoseCutOff' of Dose Engine 'MCNP' is deprecated! Use Property 'relativeDosimetricCutOff' instead!] 
+  <a href="matlab:helpPopup DoseEngines.matRad_NeutronMCNPEngine" style="font-weight:bold">matRad_NeutronMCNPEngine</a> with properties:
+
+      possibleRadiationModes: {'neutrons'}
+                        name: 'MCNP'
+                   shortName: 'MCNP'
+                      config: [1×1 matRad_MCNPConfig]
+         externalCalculation: 1
+           calcRMFparameters: 0
+       MCNPinstallationCheck: 1
+                  MCNPFolder: 'D:\GitHub\matRad_Lucas\MCNP'
+                  currFolder: 'D:\GitHub\matRad_Lucas\MCNP\runfiles_tmp'
+                 constantRBE: NaN
+      numHistoriesPerBeamlet: 20000
+          numHistoriesDirect: 1000000
+            outputMCvariance: 1
+    relativeDosimetricCutOff: 0.9950
+               relDoseCutOff: 0.0050
+                    doseGrid: [1×1 struct]
+                    multScen: [1×1 matRad_NominalScenario]
+                  voxelSubIx: []
+     selectVoxelsInScenarios: 'all'
+                    bioParam: [1×1 matRad_BiologicalModel]
+                     machine: [1×1 struct]
+                      timers: [1×1 struct]
+             numOfColumnsDij: 1
+                yCoordsV_vox: [531441×1 double]
+                xCoordsV_vox: [531441×1 double]
+                zCoordsV_vox: [531441×1 double]
+        yCoordsV_voxDoseGrid: [110592×1 double]
+        xCoordsV_voxDoseGrid: [110592×1 double]
+        zCoordsV_voxDoseGrid: [110592×1 double]
+                     VctGrid: [531441×1 double]
+                   VdoseGrid: [110592×1 double]
+                 VctGridMask: [4096000×1 logical]
+               VdoseGridMask: [884736×1 logical]
+          robustVoxelsOnGrid: {[884736×1 logical]}
+                isDoseEngine: 1
+                    hWaitbar: [1×1 Figure]
+
+if system_dependent('IsDebugMode')==1, dbcont; end
+Please use question dialog to continue after finishing external calculations.
+*****
+<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\MCNP\matRad_evaluateTallyMCNP.m',29,1)">29  </a>for counterBeam = 1:dij.numOfBeams
+if system_dependent('IsDebugMode')==1, dbcont; end
+*****
+Evaluate Tally Data.
+*****
+No MCNP tally for RBE calculation.
+Data output given in two columns.
+Reading out tally data took: 0.28715 seconds.
+*****

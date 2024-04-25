@@ -205,6 +205,10 @@ end
     end
 
     function makeSource_spectralInformationPhotons(stf, varHelper, pathRunfiles, spectralInformation)
+        % Get rotation matrix
+        rotMatrix = matRad_calcMCNProtMatrix(stf(counterField).gantryAngle, stf(counterField).couchAngle);
+        % Calculate source position in original coordinate system
+        sourcePoint = stf(counterField).sourcePoint_bev + stf(counterField).ray(counterRay).rayPos_bev;
 
         fileID_C = fopen(strcat(pathRunfiles,'blockC_source', int2str(varHelper.totalNumberBixels)), 'w');
         % Define source card, note: VEC=reference vector for the direction
@@ -213,8 +217,8 @@ end
         % VEC.
         % ERG=d3 used to define spectrum according to information read from
         % tabulated data in ..\MATRAD\MCNP\SpectralInformation
-
-        source.sourceCard_0 = 'SDEF\n        X=0 Y=d1 Z=d2\n        VEC=1 0 0\n        DIR=-1 PAR=2 ERG=d3 TR=1\n';
+        
+        source.sourceCard_0 = 'SDEF\n        X=d1 Y=%.4f Z=d2\n        VEC=0 1 0\n        DIR=1 PAR=2 ERG=d3 TR=1\n';
         source.sourceCard_1_i = 'SI1 %.4f %.4f\n';  % Initial position and source extension
         source.sourceCard_1_p = 'SP1 0 1\n';
         source.sourceCard_2_i = 'SI2 %.4f %.4f\n';  % ...
@@ -225,7 +229,7 @@ end
         source.energyCard_3_p = '        %8d\n';
 
         % Define coordinate transformation card
-        coordTrafo.TRcard = 'TR1\n        %.4f %.4f %.4f\n        %.4f 0 %.4f\n        0 1 0\n        %.4f 0 %.4f\n';
+        coordTrafo.TRcard = 'TR1\n        %.4f %.4f %.4f\n        %.4f %.4f %.4f\n        %.4f %.4f %.4f\n        %.4f %.4f %.4f\n';
 
         % Write Block C
         fprintf(fileID_C, 'C ***************************************************************\n');
@@ -233,39 +237,41 @@ end
         fprintf(fileID_C, 'C ***************************************************************\n');
 
         % Write initial source position and extension
-        fprintf(fileID_C, source.sourceCard_0);
+        fprintf(fileID_C, source.sourceCard_0, ...
+            sourcePoint(2)*varHelper.rescaleFactor);
         fprintf(fileID_C, source.sourceCard_1_i, ...
-            (-stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor, ...
-            (stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
+            (sourcePoint(1)-stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor, ...
+            (sourcePoint(1)+stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
         fprintf(fileID_C, source.sourceCard_1_p);
         fprintf(fileID_C, source.sourceCard_2_i, ...
-            (-stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor, ...
-            (stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
+            (sourcePoint(3)-stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor, ...
+            (sourcePoint(3)+stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
         fprintf(fileID_C, source.sourceCard_2_p);
 
         % Write spectral distribution
         fprintf(fileID_C, source.energyCard_3_i_0);
         fprintf(fileID_C, source.energyCard_3_i, ...
-            spectralInformation.photonSpec(:,1));
+            spectralInformation.neutronSpec(:,1));
         fprintf(fileID_C, source.energyCard_3_p_0);
         fprintf(fileID_C, source.energyCard_3_p, ...
-            spectralInformation.photonSpec(:,2));
+            spectralInformation.neutronSpec(:,2));
 
         % Write TR card for spatial source transformation
         fprintf(fileID_C, coordTrafo.TRcard, ...
-            stf(varHelper.simPropMCNP.counterField).ray(varHelper.simPropMCNP.counterRay).rayPosMLC(1)*varHelper.rescaleFactor, ...
-            stf(varHelper.simPropMCNP.counterField).ray(varHelper.simPropMCNP.counterRay).rayPosMLC(2)*varHelper.rescaleFactor, ...
-            stf(varHelper.simPropMCNP.counterField).ray(varHelper.simPropMCNP.counterRay).rayPosMLC(3)*varHelper.rescaleFactor, ...
-            cosd(stf(varHelper.simPropMCNP.counterField).couchAngle), ...
-            sind(stf(varHelper.simPropMCNP.counterField).couchAngle), ...
-            -sind(stf(varHelper.simPropMCNP.counterField).couchAngle), ...
-            cosd(stf(varHelper.simPropMCNP.counterField).couchAngle));
+            stf(counterField).isoCenter(1)*varHelper.rescaleFactor, stf(counterField).isoCenter(2)*varHelper.rescaleFactor, stf(counterField).isoCenter(3)*varHelper.rescaleFactor, ...
+            rotMatrix(1,1), rotMatrix(1,2), rotMatrix(1,3),...
+            rotMatrix(2,1), rotMatrix(2,2), rotMatrix(2,3),...
+            rotMatrix(3,1), rotMatrix(3,2), rotMatrix(3,3));
 
         % Close blockC_source file
         fclose(fileID_C);
     end
 
     function makeSource_spectralInformationNeutronsPlusPhotons(stf, varHelper, pathRunfiles, spectralInformation)
+        % Get rotation matrix
+        rotMatrix = matRad_calcMCNProtMatrix(stf(counterField).gantryAngle, stf(counterField).couchAngle);
+        % Calculate source position in original coordinate system
+        sourcePoint = stf(counterField).sourcePoint_bev + stf(counterField).ray(counterRay).rayPos_bev;
 
         fileID_C = fopen(strcat(pathRunfiles,'blockC_source', int2str(varHelper.totalNumberBixels)), 'w');
         % Define source card, note: VEC=reference vector for the direction
@@ -274,12 +280,11 @@ end
         % VEC.
         % ERG=d3 used to define spectrum according to information read from
         % tabulated data in ..\MATRAD\MCNP\SpectralInformation
-
-        source.sourceCard_0 = 'SDEF\n        X=0 Y=d1 Z=d2\n        VEC=1 0 0\n        DIR=-1 PAR=d3 ERG=fpar=d4 TR=1\n';
+        source.sourceCard_0 = 'SDEF\n        X=d1 Y=%.4f Z=d2\n        VEC=0 1 0\n        DIR=1 PAR=d3 ERG=fpar=d4 TR=1\n';
         source.sourceCard_1_i = 'SI1 %.4f %.4f\n';  % Initial position and source extension
         source.sourceCard_1_p = 'SP1 0 1\n';
         source.sourceCard_2_i = 'SI2 %.4f %.4f\n';  % ...
-        source.sourceCard_2_p = 'SP2 0 1\n';
+        source.sourceCard_2_p = 'SP2 0 1\n';        
         source.particleDistribution_i = 'SI3 L 1 2\n';
         source.particleDistribution_p = 'SP3 1 1\n';
         source.particleEnergyDistributions = 'DS4 S 5 6\n';
@@ -293,7 +298,7 @@ end
         source.photonEnergyCard_6_p = '        %8d\n';
 
         % Define coordinate transformation card
-        coordTrafo.TRcard = 'TR1\n        %.4f %.4f %.4f\n        %.4f 0 %.4f\n        0 1 0\n        %.4f 0 %.4f\n';
+        coordTrafo.TRcard = 'TR1\n        %.4f %.4f %.4f\n        %.4f %.4f %.4f\n        %.4f %.4f %.4f\n        %.4f %.4f %.4f\n';
 
         % Write Block C
         fprintf(fileID_C, 'C ***************************************************************\n');
@@ -301,7 +306,8 @@ end
         fprintf(fileID_C, 'C ***************************************************************\n');
 
         % Write initial source position and extension
-        fprintf(fileID_C, source.sourceCard_0);
+        fprintf(fileID_C, source.sourceCard_0, ...
+            sourcePoint(2)*varHelper.rescaleFactor);
         fprintf(fileID_C, source.sourceCard_1_i, ...
             (-stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor, ...
             (stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
@@ -332,13 +338,10 @@ end
 
         % Write TR card for spatial source transformation
         fprintf(fileID_C, coordTrafo.TRcard, ...
-            stf(varHelper.simPropMCNP.counterField).ray(varHelper.simPropMCNP.counterRay).rayPosMLC(1)*varHelper.rescaleFactor, ...
-            stf(varHelper.simPropMCNP.counterField).ray(varHelper.simPropMCNP.counterRay).rayPosMLC(2)*varHelper.rescaleFactor, ...
-            stf(varHelper.simPropMCNP.counterField).ray(varHelper.simPropMCNP.counterRay).rayPosMLC(3)*varHelper.rescaleFactor, ...
-            cosd(stf(varHelper.simPropMCNP.counterField).couchAngle), ...
-            sind(stf(varHelper.simPropMCNP.counterField).couchAngle), ...
-            -sind(stf(varHelper.simPropMCNP.counterField).couchAngle), ...
-            cosd(stf(varHelper.simPropMCNP.counterField).couchAngle));
+            stf(counterField).isoCenter(1)*varHelper.rescaleFactor, stf(counterField).isoCenter(2)*varHelper.rescaleFactor, stf(counterField).isoCenter(3)*varHelper.rescaleFactor, ...
+            rotMatrix(1,1), rotMatrix(1,2), rotMatrix(1,3),...
+            rotMatrix(2,1), rotMatrix(2,2), rotMatrix(2,3),...
+            rotMatrix(3,1), rotMatrix(3,2), rotMatrix(3,3));
 
         % Close blockC_source file
         fclose(fileID_C);

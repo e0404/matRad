@@ -1,0 +1,1110 @@
+*****Load pre-defined HU conversion properties and MCNP cross sections from conversionCT2tissue.mat.Note: Modification of conversionCT2tissue.mat using generateVar_conversionCT2tissue.m.**********Properties from (scaled) HU loaded are: Minimum value: -1024 and Maximum value: 0.[Warning: No information on rescale slope and/or intercept provided in DICOM data. Calculation might crash...] 
+Please use question dialog to decide how to convert to scaled HU.**********You decided not to use DICOM rescale slope and intercept.**********Properties from rescaled HU are: Minimum value: 0 and Maximum value: 1000.*****Material types are assigned using the following HU intervals...air: 0 to 50lung: 50 to 830softTissue: 830 to 1280bone: 1280 to 5000*****Segmentation via HU intervals led to zero voxels with lung tissue.
+*****
+Skin thickness has been set to: 1 mm.
+*****
+*****
+In case you wish to simulate BNCT irradiation make sure the PTV is called PTV_BNCT.
+*****
+Checking for PTV...
+*****
+No PTV for BNCT detected.
+*****
+Segmentation process performed sucessfully.
+*****Calculate density from CT data with density given in [g/cm^3]********Neutron spectrum load from machine file.
+***
+Gamma/photon spectrum found in neutron machine. Will be included in the simulation as primary particles.
+***
+*****
+Tally type: TMESH3...
+*****
+<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\MCNP\matRad_bixelDoseCalculatorMCNP.m',25,1)">25  </a>if this.MCNPinstallationCheck && ~this.externalCalculation
+if system_dependent('IsDebugMode')==1, dbcont; end
+Starting parallel pool (parpool) using the 'Processes' profile ...
+Connected to parallel pool with 8 workers.
+*****
+MCNP calculation of dose distribution for bixel 2...
+*****
+ mcnp     ver=6    , ld=02/20/18  04/25/24 11:54:58                    
+*****
+MCNP calculation of dose distribution for bixel 8...
+*****
+ mcnp     ver=6    , ld=02/20/18  04/25/24 11:54:58                    
+*****
+MCNP calculation of dose distribution for bixel 6...
+*****
+ mcnp     ver=6    , ld=02/20/18  04/25/24 11:54:57                    
+*****
+MCNP calculation of dose distribution for bixel 4...
+*****
+ mcnp     ver=6    , ld=02/20/18  04/25/24 11:54:58                    
+          Code Name & Version = MCNP_6.20, 6.2.0 
+          Copyright LANS/LANL/DOE - see output file 
+   
+     _/      _/        _/_/_/       _/      _/       _/_/_/         _/_/_/  
+    _/_/  _/_/      _/             _/_/    _/       _/    _/     _/         
+   _/  _/  _/      _/             _/  _/  _/       _/_/_/       _/_/_/      
+  _/      _/      _/             _/    _/_/       _/           _/    _/     
+ _/      _/        _/_/_/       _/      _/       _/             _/_/        
+   
+*****
+MCNP calculation of dose distribution for bixel 3...
+*****
+ mcnp     ver=6    , ld=02/20/18  04/25/24 11:54:58                    
+*****
+MCNP calculation of dose distribution for bixel 5...
+*****
+ mcnp     ver=6    , ld=02/20/18  04/25/24 11:54:58                    
+*****
+MCNP calculation of dose distribution for bixel 7...
+*****
+ mcnp     ver=6    , ld=02/20/18  04/25/24 11:54:58                    
+*****
+MCNP calculation of dose distribution for bixel 1...
+*****
+ mcnp     ver=6    , ld=02/20/18  04/25/24 11:54:58                    
+          Code Name & Version = MCNP_6.20, 6.2.0 
+          Copyright LANS/LANL/DOE - see output file 
+   
+     _/      _/        _/_/_/       _/      _/       _/_/_/         _/_/_/  
+    _/_/  _/_/      _/             _/_/    _/       _/    _/     _/         
+   _/  _/  _/      _/             _/  _/  _/       _/_/_/       _/_/_/      
+  _/      _/      _/             _/    _/_/       _/           _/    _/     
+ _/      _/        _/_/_/       _/      _/       _/             _/_/        
+   
+          Code Name & Version = MCNP_6.20, 6.2.0 
+          Copyright LANS/LANL/DOE - see output file 
+   
+     _/      _/        _/_/_/       _/      _/       _/_/_/         _/_/_/  
+    _/_/  _/_/      _/             _/_/    _/       _/    _/     _/         
+   _/  _/  _/      _/             _/  _/  _/       _/_/_/       _/_/_/      
+  _/      _/      _/             _/    _/_/       _/           _/    _/     
+ _/      _/        _/_/_/       _/      _/       _/             _/_/        
+   
+          Code Name & Version = MCNP_6.20, 6.2.0 
+          Copyright LANS/LANL/DOE - see output file 
+   
+     _/      _/        _/_/_/       _/      _/       _/_/_/         _/_/_/  
+    _/_/  _/_/      _/             _/_/    _/       _/    _/     _/         
+   _/  _/  _/      _/             _/  _/  _/       _/_/_/       _/_/_/      
+  _/      _/      _/             _/    _/_/       _/           _/    _/     
+ _/      _/        _/_/_/       _/      _/       _/             _/_/        
+   
+          Code Name & Version = MCNP_6.20, 6.2.0 
+          Copyright LANS/LANL/DOE - see output file 
+   
+     _/      _/        _/_/_/       _/      _/       _/_/_/         _/_/_/  
+    _/_/  _/_/      _/             _/_/    _/       _/    _/     _/         
+   _/  _/  _/      _/             _/  _/  _/       _/_/_/       _/_/_/      
+  _/      _/      _/             _/    _/_/       _/           _/    _/     
+ _/      _/        _/_/_/       _/      _/       _/             _/_/        
+   
+          Code Name & Version = MCNP_6.20, 6.2.0 
+          Copyright LANS/LANL/DOE - see output file 
+   
+     _/      _/        _/_/_/       _/      _/       _/_/_/         _/_/_/  
+    _/_/  _/_/      _/             _/_/    _/       _/    _/     _/         
+   _/  _/  _/      _/             _/  _/  _/       _/_/_/       _/_/_/      
+  _/      _/      _/             _/    _/_/       _/           _/    _/     
+ _/      _/        _/_/_/       _/      _/       _/             _/_/        
+   
+          Code Name & Version = MCNP_6.20, 6.2.0 
+          Copyright LANS/LANL/DOE - see output file 
+   
+     _/      _/        _/_/_/       _/      _/       _/_/_/         _/_/_/  
+    _/_/  _/_/      _/             _/_/    _/       _/    _/     _/         
+   _/  _/  _/      _/             _/  _/  _/       _/_/_/       _/_/_/      
+  _/      _/      _/             _/    _/_/       _/           _/    _/     
+ _/      _/        _/_/_/       _/      _/       _/             _/_/        
+   
+  warning.  universe map (print table 128) disabled. 
+  comment.  Physics models enabled. 
+          Code Name & Version = MCNP_6.20, 6.2.0 
+          Copyright LANS/LANL/DOE - see output file 
+   
+     _/      _/        _/_/_/       _/      _/       _/_/_/         _/_/_/  
+    _/_/  _/_/      _/             _/_/    _/       _/    _/     _/         
+   _/  _/  _/      _/             _/  _/  _/       _/_/_/       _/_/_/      
+  _/      _/      _/             _/    _/_/       _/           _/    _/     
+ _/      _/        _/_/_/       _/      _/       _/             _/_/        
+   
+  warning.  universe map (print table 128) disabled. 
+  comment.  Physics models enabled. 
+  warning.  universe map (print table 128) disabled. 
+  comment.  Physics models enabled. 
+  warning.  universe map (print table 128) disabled. 
+  comment.  Physics models enabled. 
+  warning.  universe map (print table 128) disabled. 
+  comment.  Physics models enabled. 
+  warning.  universe map (print table 128) disabled. 
+  comment.  Physics models enabled. 
+ cut:n j 0.00000000001                                                 
+  warning.  neutron energy cutoff >0 in this neutron-photon problem. 
+ comment. using random number generator  2, initial seed = 43                   
+  
+  comment.  total nubar used if fissionable isotopes are present. 
+  warning.  universe map (print table 128) disabled. 
+  comment.  Physics models enabled. 
+  warning.  universe map (print table 128) disabled. 
+  comment.  Physics models enabled. 
+ cut:n j 0.00000000001                                                 
+  warning.  neutron energy cutoff >0 in this neutron-photon problem. 
+ comment. using random number generator  2, initial seed = 43                   
+  
+  comment.  total nubar used if fissionable isotopes are present. 
+ cut:n j 0.00000000001                                                 
+  warning.  neutron energy cutoff >0 in this neutron-photon problem. 
+ comment. using random number generator  2, initial seed = 43                   
+  
+  comment.  total nubar used if fissionable isotopes are present. 
+ cut:n j 0.00000000001                                                 
+  warning.  neutron energy cutoff >0 in this neutron-photon problem. 
+ comment. using random number generator  2, initial seed = 43                   
+  
+  comment.  total nubar used if fissionable isotopes are present. 
+ cut:n j 0.00000000001                                                 
+  warning.  neutron energy cutoff >0 in this neutron-photon problem. 
+ comment. using random number generator  2, initial seed = 43                   
+  
+  comment.  total nubar used if fissionable isotopes are present. 
+ cut:n j 0.00000000001                                                 
+  warning.  neutron energy cutoff >0 in this neutron-photon problem. 
+ comment. using random number generator  2, initial seed = 43                   
+  
+  comment.  total nubar used if fissionable isotopes are present. 
+  warning.  use models for the following missing data tables: 
+   6000.70h 
+  11023.70h 
+  16032.70h 
+  16033.70h 
+  16034.70h 
+  17035.70h 
+  17037.70h 
+  18040.70h 
+  19039.70h 
+  19041.70h 
+  20042.70h 
+  20044.70h 
+   1001.  u 
+   5010.  u 
+   6000.  u 
+  15031.  u 
+  19039.  u 
+  19041.  u 
+   1001.  o 
+   5010.  o 
+   6000.  o 
+   7014.  o 
+   8016.  o 
+  11023.  o 
+  15031.  o 
+  16032.  o 
+  16033.  o 
+  16034.  o 
+  17035.  o 
+  17037.  o 
+  18040.  o 
+  19039.  o 
+  19041.  o 
+  20040.  o 
+  20042.  o 
+  20044.  o 
+   1001.  r 
+   5010.  r 
+   6000.  r 
+   7014.  r 
+   8016.  r 
+  11023.  r 
+  15031.  r 
+  16032.  r 
+  16033.  r 
+  16034.  r 
+  17035.  r 
+  17037.  r 
+  18040.  r 
+  19039.  r 
+  19041.  r 
+  20040.  r 
+  20042.  r 
+  20044.  r 
+   1001.  s 
+   5010.  s 
+   6000.  s 
+   7014.  s 
+   8016.  s 
+  11023.  s 
+  15031.  s 
+  16032.  s 
+  16033.  s 
+  16034.  s 
+  17035.  s 
+  17037.  s 
+  18040.  s 
+  19039.  s 
+  19041.  s 
+  20040.  s 
+  20042.  s 
+  20044.  s 
+   1001.  a 
+   5010.  a 
+   6000.  a 
+   7014.  a 
+   8016.  a 
+  11023.  a 
+  15031.  a 
+  16032.  a 
+  16033.  a 
+  16034.  a 
+  17035.  a 
+  17037.  a 
+  18040.  a 
+  19039.  a 
+  19041.  a 
+  20040.  a 
+  20042.  a 
+  20044.  a 
+  warning.    3 materials had unnormalized fractions. print table 40. 
+ cut:n j 0.00000000001                                                 
+  warning.  neutron energy cutoff >0 in this neutron-photon problem. 
+ comment. using random number generator  2, initial seed = 43                   
+  
+  comment.  total nubar used if fissionable isotopes are present. 
+ cut:n j 0.00000000001                                                 
+  warning.  neutron energy cutoff >0 in this neutron-photon problem. 
+ comment. using random number generator  2, initial seed = 43                   
+  
+  comment.  total nubar used if fissionable isotopes are present. 
+  warning.  use models for the following missing data tables: 
+   6000.70h 
+  11023.70h 
+  16032.70h 
+  16033.70h 
+  16034.70h 
+  17035.70h 
+  17037.70h 
+  18040.70h 
+  19039.70h 
+  19041.70h 
+  20042.70h 
+  20044.70h 
+   1001.  u 
+   5010.  u 
+   6000.  u 
+  15031.  u 
+  19039.  u 
+  19041.  u 
+   1001.  o 
+   5010.  o 
+   6000.  o 
+   7014.  o 
+   8016.  o 
+  11023.  o 
+  15031.  o 
+  16032.  o 
+  16033.  o 
+  16034.  o 
+  17035.  o 
+  17037.  o 
+  18040.  o 
+  19039.  o 
+  19041.  o 
+  20040.  o 
+  20042.  o 
+  20044.  o 
+   1001.  r 
+   5010.  r 
+   6000.  r 
+   7014.  r 
+   8016.  r 
+  11023.  r 
+  15031.  r 
+  16032.  r 
+  16033.  r 
+  16034.  r 
+  17035.  r 
+  17037.  r 
+  18040.  r 
+  19039.  r 
+  19041.  r 
+  20040.  r 
+  20042.  r 
+  20044.  r 
+   1001.  s 
+   5010.  s 
+   6000.  s 
+   7014.  s 
+   8016.  s 
+  11023.  s 
+  15031.  s 
+  16032.  s 
+  16033.  s 
+  16034.  s 
+  17035.  s 
+  17037.  s 
+  18040.  s 
+  19039.  s 
+  19041.  s 
+  20040.  s 
+  20042.  s 
+  20044.  s 
+   1001.  a 
+   5010.  a 
+   6000.  a 
+   7014.  a 
+   8016.  a 
+  11023.  a 
+  15031.  a 
+  16032.  a 
+  16033.  a 
+  16034.  a 
+  17035.  a 
+  17037.  a 
+  18040.  a 
+  19039.  a 
+  19041.  a 
+  20040.  a 
+  20042.  a 
+  20044.  a 
+  warning.    3 materials had unnormalized fractions. print table 40. 
+  warning.  use models for the following missing data tables: 
+   6000.70h 
+  11023.70h 
+  16032.70h 
+  16033.70h 
+  16034.70h 
+  17035.70h 
+  17037.70h 
+  18040.70h 
+  19039.70h 
+  19041.70h 
+  20042.70h 
+  20044.70h 
+   1001.  u 
+   5010.  u 
+   6000.  u 
+  15031.  u 
+  19039.  u 
+  19041.  u 
+   1001.  o 
+   5010.  o 
+   6000.  o 
+   7014.  o 
+   8016.  o 
+  11023.  o 
+  15031.  o 
+  16032.  o 
+  16033.  o 
+  16034.  o 
+  17035.  o 
+  17037.  o 
+  18040.  o 
+  19039.  o 
+  19041.  o 
+  20040.  o 
+  20042.  o 
+  20044.  o 
+   1001.  r 
+   5010.  r 
+   6000.  r 
+   7014.  r 
+   8016.  r 
+  11023.  r 
+  15031.  r 
+  16032.  r 
+  16033.  r 
+  16034.  r 
+  17035.  r 
+  17037.  r 
+  18040.  r 
+  19039.  r 
+  19041.  r 
+  20040.  r 
+  20042.  r 
+  20044.  r 
+   1001.  s 
+   5010.  s 
+   6000.  s 
+   7014.  s 
+   8016.  s 
+  11023.  s 
+  15031.  s 
+  16032.  s 
+  16033.  s 
+  16034.  s 
+  17035.  s 
+  17037.  s 
+  18040.  s 
+  19039.  s 
+  19041.  s 
+  20040.  s 
+  20042.  s 
+  20044.  s 
+   1001.  a 
+   5010.  a 
+   6000.  a 
+   7014.  a 
+   8016.  a 
+  11023.  a 
+  15031.  a 
+  16032.  a 
+  16033.  a 
+  16034.  a 
+  17035.  a 
+  17037.  a 
+  18040.  a 
+  19039.  a 
+  19041.  a 
+  20040.  a 
+  20042.  a 
+  20044.  a 
+  warning.    3 materials had unnormalized fractions. print table 40. 
+  warning.  use models for the following missing data tables: 
+   6000.70h 
+  11023.70h 
+  16032.70h 
+  16033.70h 
+  16034.70h 
+  17035.70h 
+  17037.70h 
+  18040.70h 
+  19039.70h 
+  19041.70h 
+  20042.70h 
+  20044.70h 
+   1001.  u 
+   5010.  u 
+   6000.  u 
+  15031.  u 
+  19039.  u 
+  19041.  u 
+   1001.  o 
+   5010.  o 
+   6000.  o 
+   7014.  o 
+   8016.  o 
+  11023.  o 
+  15031.  o 
+  16032.  o 
+  16033.  o 
+  16034.  o 
+  17035.  o 
+  17037.  o 
+  18040.  o 
+  19039.  o 
+  19041.  o 
+  20040.  o 
+  20042.  o 
+  20044.  o 
+   1001.  r 
+   5010.  r 
+   6000.  r 
+   7014.  r 
+   8016.  r 
+  11023.  r 
+  15031.  r 
+  16032.  r 
+  16033.  r 
+  16034.  r 
+  17035.  r 
+  17037.  r 
+  18040.  r 
+  19039.  r 
+  19041.  r 
+  20040.  r 
+  20042.  r 
+  20044.  r 
+   1001.  s 
+   5010.  s 
+   6000.  s 
+   7014.  s 
+   8016.  s 
+  11023.  s 
+  15031.  s 
+  16032.  s 
+  16033.  s 
+  16034.  s 
+  17035.  s 
+  17037.  s 
+  18040.  s 
+  19039.  s 
+  19041.  s 
+  20040.  s 
+  20042.  s 
+  20044.  s 
+   1001.  a 
+   5010.  a 
+   6000.  a 
+   7014.  a 
+   8016.  a 
+  11023.  a 
+  15031.  a 
+  16032.  a 
+  16033.  a 
+  16034.  a 
+  17035.  a 
+  17037.  a 
+  18040.  a 
+  19039.  a 
+  19041.  a 
+  20040.  a 
+  20042.  a 
+  20044.  a 
+  warning.    3 materials had unnormalized fractions. print table 40. 
+  warning.  use models for the following missing data tables: 
+   6000.70h 
+  11023.70h 
+  16032.70h 
+  16033.70h 
+  16034.70h 
+  17035.70h 
+  17037.70h 
+  18040.70h 
+  19039.70h 
+  19041.70h 
+  20042.70h 
+  20044.70h 
+   1001.  u 
+   5010.  u 
+   6000.  u 
+  15031.  u 
+  19039.  u 
+  19041.  u 
+   1001.  o 
+   5010.  o 
+   6000.  o 
+   7014.  o 
+   8016.  o 
+  11023.  o 
+  15031.  o 
+  16032.  o 
+  16033.  o 
+  16034.  o 
+  17035.  o 
+  17037.  o 
+  18040.  o 
+  19039.  o 
+  19041.  o 
+  20040.  o 
+  20042.  o 
+  20044.  o 
+   1001.  r 
+   5010.  r 
+   6000.  r 
+   7014.  r 
+   8016.  r 
+  11023.  r 
+  15031.  r 
+  16032.  r 
+  16033.  r 
+  16034.  r 
+  17035.  r 
+  17037.  r 
+  18040.  r 
+  19039.  r 
+  19041.  r 
+  20040.  r 
+  20042.  r 
+  20044.  r 
+   1001.  s 
+   5010.  s 
+   6000.  s 
+   7014.  s 
+   8016.  s 
+  11023.  s 
+  15031.  s 
+  16032.  s 
+  16033.  s 
+  16034.  s 
+  17035.  s 
+  17037.  s 
+  18040.  s 
+  19039.  s 
+  19041.  s 
+  20040.  s 
+  20042.  s 
+  20044.  s 
+   1001.  a 
+   5010.  a 
+   6000.  a 
+   7014.  a 
+   8016.  a 
+  11023.  a 
+  15031.  a 
+  16032.  a 
+  16033.  a 
+  16034.  a 
+  17035.  a 
+  17037.  a 
+  18040.  a 
+  19039.  a 
+  19041.  a 
+  20040.  a 
+  20042.  a 
+  20044.  a 
+  warning.    3 materials had unnormalized fractions. print table 40. 
+  warning.  use models for the following missing data tables: 
+   6000.70h 
+  11023.70h 
+  16032.70h 
+  16033.70h 
+  16034.70h 
+  17035.70h 
+  17037.70h 
+  18040.70h 
+  19039.70h 
+  19041.70h 
+  20042.70h 
+  20044.70h 
+   1001.  u 
+   5010.  u 
+   6000.  u 
+  15031.  u 
+  19039.  u 
+  19041.  u 
+   1001.  o 
+   5010.  o 
+   6000.  o 
+   7014.  o 
+   8016.  o 
+  11023.  o 
+  15031.  o 
+  16032.  o 
+  16033.  o 
+  16034.  o 
+  17035.  o 
+  17037.  o 
+  18040.  o 
+  19039.  o 
+  19041.  o 
+  20040.  o 
+  20042.  o 
+  20044.  o 
+   1001.  r 
+   5010.  r 
+   6000.  r 
+   7014.  r 
+   8016.  r 
+  11023.  r 
+  15031.  r 
+  16032.  r 
+  16033.  r 
+  16034.  r 
+  17035.  r 
+  17037.  r 
+  18040.  r 
+  19039.  r 
+  19041.  r 
+  20040.  r 
+  20042.  r 
+  20044.  r 
+   1001.  s 
+   5010.  s 
+   6000.  s 
+   7014.  s 
+   8016.  s 
+  11023.  s 
+  15031.  s 
+  16032.  s 
+  16033.  s 
+  16034.  s 
+  17035.  s 
+  17037.  s 
+  18040.  s 
+  19039.  s 
+  19041.  s 
+  20040.  s 
+  20042.  s 
+  20044.  s 
+   1001.  a 
+   5010.  a 
+   6000.  a 
+   7014.  a 
+   8016.  a 
+  11023.  a 
+  15031.  a 
+  16032.  a 
+  16033.  a 
+  16034.  a 
+  17035.  a 
+  17037.  a 
+  18040.  a 
+  19039.  a 
+  19041.  a 
+  20040.  a 
+  20042.  a 
+  20044.  a 
+  warning.    3 materials had unnormalized fractions. print table 40. 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  use models for the following missing data tables: 
+   6000.70h 
+  11023.70h 
+  16032.70h 
+  16033.70h 
+  16034.70h 
+  17035.70h 
+  17037.70h 
+  18040.70h 
+  19039.70h 
+  19041.70h 
+  20042.70h 
+  20044.70h 
+   1001.  u 
+   5010.  u 
+   6000.  u 
+  15031.  u 
+  19039.  u 
+  19041.  u 
+   1001.  o 
+   5010.  o 
+   6000.  o 
+   7014.  o 
+   8016.  o 
+  11023.  o 
+  15031.  o 
+  16032.  o 
+  16033.  o 
+  16034.  o 
+  17035.  o 
+  17037.  o 
+  18040.  o 
+  19039.  o 
+  19041.  o 
+  20040.  o 
+  20042.  o 
+  20044.  o 
+   1001.  r 
+   5010.  r 
+   6000.  r 
+   7014.  r 
+   8016.  r 
+  11023.  r 
+  15031.  r 
+  16032.  r 
+  16033.  r 
+  16034.  r 
+  17035.  r 
+  17037.  r 
+  18040.  r 
+  19039.  r 
+  19041.  r 
+  20040.  r 
+  20042.  r 
+  20044.  r 
+   1001.  s 
+   5010.  s 
+   6000.  s 
+   7014.  s 
+   8016.  s 
+  11023.  s 
+  15031.  s 
+  16032.  s 
+  16033.  s 
+  16034.  s 
+  17035.  s 
+  17037.  s 
+  18040.  s 
+  19039.  s 
+  19041.  s 
+  20040.  s 
+  20042.  s 
+  20044.  s 
+   1001.  a 
+   5010.  a 
+   6000.  a 
+   7014.  a 
+   8016.  a 
+  11023.  a 
+  15031.  a 
+  16032.  a 
+  16033.  a 
+  16034.  a 
+  17035.  a 
+  17037.  a 
+  18040.  a 
+  19039.  a 
+  19041.  a 
+  20040.  a 
+  20042.  a 
+  20044.  a 
+  warning.    3 materials had unnormalized fractions. print table 40. 
+  warning.  use models for the following missing data tables: 
+   6000.70h 
+  11023.70h 
+  16032.70h 
+  16033.70h 
+  16034.70h 
+  17035.70h 
+  17037.70h 
+  18040.70h 
+  19039.70h 
+  19041.70h 
+  20042.70h 
+  20044.70h 
+   1001.  u 
+   5010.  u 
+   6000.  u 
+  15031.  u 
+  19039.  u 
+  19041.  u 
+   1001.  o 
+   5010.  o 
+   6000.  o 
+   7014.  o 
+   8016.  o 
+  11023.  o 
+  15031.  o 
+  16032.  o 
+  16033.  o 
+  16034.  o 
+  17035.  o 
+  17037.  o 
+  18040.  o 
+  19039.  o 
+  19041.  o 
+  20040.  o 
+  20042.  o 
+  20044.  o 
+   1001.  r 
+   5010.  r 
+   6000.  r 
+   7014.  r 
+   8016.  r 
+  11023.  r 
+  15031.  r 
+  16032.  r 
+  16033.  r 
+  16034.  r 
+  17035.  r 
+  17037.  r 
+  18040.  r 
+  19039.  r 
+  19041.  r 
+  20040.  r 
+  20042.  r 
+  20044.  r 
+   1001.  s 
+   5010.  s 
+   6000.  s 
+   7014.  s 
+   8016.  s 
+  11023.  s 
+  15031.  s 
+  16032.  s 
+  16033.  s 
+  16034.  s 
+  17035.  s 
+  17037.  s 
+  18040.  s 
+  19039.  s 
+  19041.  s 
+  20040.  s 
+  20042.  s 
+  20044.  s 
+   1001.  a 
+   5010.  a 
+   6000.  a 
+   7014.  a 
+   8016.  a 
+  11023.  a 
+  15031.  a 
+  16032.  a 
+  16033.  a 
+  16034.  a 
+  17035.  a 
+  17037.  a 
+  18040.  a 
+  19039.  a 
+  19041.  a 
+  20040.  a 
+  20042.  a 
+  20044.  a 
+  warning.    3 materials had unnormalized fractions. print table 40. 
+  warning.  surface     1001.0 is not used for anything. 
+ imcn   is done 
+ 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  surface     1001.0 is not used for anything. 
+ imcn   is done 
+ 
+  warning.  surface     1001.0 is not used for anything. 
+ imcn   is done 
+ 
+  warning.  surface     1001.0 is not used for anything. 
+ imcn   is done 
+ 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  za = 1001 has no photonuclear interactions 
+  warning.  surface     1001.0 is not used for anything. 
+ imcn   is done 
+ 
+  warning.   18040.80c lacks gamma-ray production cross sections. 
+  warning.  surface     1001.0 is not used for anything. 
+ imcn   is done 
+ 
+  warning.  surface     1001.0 is not used for anything. 
+ imcn   is done 
+ 
+  warning.  surface     1001.0 is not used for anything. 
+ imcn   is done 
+ 
+  warning.   18040.80c lacks gamma-ray production cross sections. 
+  warning.   18040.80c lacks gamma-ray production cross sections. 
+  warning.   18040.80c lacks gamma-ray production cross sections. 
+  warning.   18040.80c lacks gamma-ray production cross sections. 
+  warning.   18040.80c lacks gamma-ray production cross sections. 
+  warning.   18040.80c lacks gamma-ray production cross sections. 
+  warning.   18040.80c lacks gamma-ray production cross sections. 
+  comment.  17 cross sections modified by free gas thermal treatment. 
+  comment.  17 cross sections modified by free gas thermal treatment. 
+  comment.  17 cross sections modified by free gas thermal treatment. 
+  comment.  17 cross sections modified by free gas thermal treatment. 
+  comment.  17 cross sections modified by free gas thermal treatment. 
+  comment.  17 cross sections modified by free gas thermal treatment. 
+  comment.  17 cross sections modified by free gas thermal treatment. 
+  comment.  setting up hash-based fast table search for xsec tables 
+  comment.  17 cross sections modified by free gas thermal treatment. 
+ 
+ ctm =        0.00   nrn =                 0 
+ dump    1 on file MCNPrunfile_bixel3r   nps =           0   coll =                0 
+ xact   is done 
+ 
+ cp0 =   0.64 
+  comment.  setting up hash-based fast table search for xsec tables 
+  comment.  setting up hash-based fast table search for xsec tables 
+  comment.  setting up hash-based fast table search for xsec tables 
+ 
+ ctm =        0.00   nrn =                 0 
+ dump    1 on file MCNPrunfile_bixel5r   nps =           0   coll =                0 
+ xact   is done 
+ 
+ cp0 =   0.65 
+ 
+ ctm =        0.00   nrn =                 0 
+ dump    1 on file MCNPrunfile_bixel7r   nps =           0   coll =                0 
+ xact   is done 
+ 
+ cp0 =   0.65 
+ 
+ ctm =        0.00   nrn =                 0 
+ dump    1 on file MCNPrunfile_bixel8r   nps =           0   coll =                0 
+ xact   is done 
+ 
+ cp0 =   0.65 
+  comment.  setting up hash-based fast table search for xsec tables 
+  comment.  setting up hash-based fast table search for xsec tables 
+ 
+ ctm =        0.00   nrn =                 0 
+ dump    1 on file MCNPrunfile_bixel2r   nps =           0   coll =                0 
+ xact   is done 
+ 
+ cp0 =   0.66 
+  comment.  setting up hash-based fast table search for xsec tables 
+ 
+ ctm =        0.00   nrn =                 0 
+ dump    1 on file MCNPrunfile_bixel1r   nps =           0   coll =                0 
+ xact   is done 
+ 
+ cp0 =   0.65 
+  comment.  setting up hash-based fast table search for xsec tables 
+ 
+ ctm =        0.00   nrn =                 0 
+ dump    1 on file MCNPrunfile_bixel4r   nps =           0   coll =                0 
+ xact   is done 
+ 
+ cp0 =   0.65 
+ 
+ ctm =        0.00   nrn =                 0 
+ dump    1 on file MCNPrunfile_bixel6r   nps =           0   coll =                0 
+ xact   is done 
+ 
+ cp0 =   0.66 
+{Operation terminated by user during <a href="matlab:matlab.internal.language.introspective.errorDocCallback('parallel.internal.parfor.ParforEngine/getCompleteIntervals')" style="font-weight:bold">parallel.internal.parfor.ParforEngine/getCompleteIntervals</a>
+
+
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('parallel_function>distributed_execution', 'C:\Program Files\MATLAB\R2023b\toolbox\matlab\lang\parallel_function.m', 746)" style="font-weight:bold">parallel_function>distributed_execution</a> (<a href="matlab: opentoline('C:\Program Files\MATLAB\R2023b\toolbox\matlab\lang\parallel_function.m',746,0)">line 746</a>)
+        [tags, out] = P.getCompleteIntervals(chunkSize);
+
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('parallel_function', 'C:\Program Files\MATLAB\R2023b\toolbox\matlab\lang\parallel_function.m', 578)" style="font-weight:bold">parallel_function</a> (<a href="matlab: opentoline('C:\Program Files\MATLAB\R2023b\toolbox\matlab\lang\parallel_function.m',578,0)">line 578</a>)
+    R = distributed_execution(...
+
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_bixelDoseCalculatorMCNP', 'D:\GitHub\matRad_Lucas\MCNP\matRad_bixelDoseCalculatorMCNP.m', 34)" style="font-weight:bold">matRad_bixelDoseCalculatorMCNP</a> (<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\MCNP\matRad_bixelDoseCalculatorMCNP.m',34,0)">line 34</a>)
+    parfor bixelCounter=1:size(runFileList,1)
+
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('DoseEngines.matRad_NeutronMCNPEngine/calcDose', 'D:\GitHub\matRad_Lucas\doseCalc\+DoseEngines\matRad_NeutronMCNPEngine.m', 364)" style="font-weight:bold">DoseEngines.matRad_NeutronMCNPEngine/calcDose</a> (<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\doseCalc\+DoseEngines\matRad_NeutronMCNPEngine.m',364,0)">line 364</a>)
+            matRad_bixelDoseCalculatorMCNP(this);
+
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('DoseEngines.matRad_DoseEngineBase/calcDoseInfluence', 'D:\GitHub\matRad_Lucas\doseCalc\+DoseEngines\@matRad_DoseEngineBase\matRad_DoseEngineBase.m', 208)" style="font-weight:bold">DoseEngines.matRad_DoseEngineBase/calcDoseInfluence</a> (<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\doseCalc\+DoseEngines\@matRad_DoseEngineBase\matRad_DoseEngineBase.m',208,0)">line 208</a>)
+            dij = this.calcDose(ct,cst,stf);
+
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_calcDoseInfluence', 'D:\GitHub\matRad_Lucas\matRad_calcDoseInfluence.m', 48)" style="font-weight:bold">matRad_calcDoseInfluence</a> (<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\matRad_calcDoseInfluence.m',48,0)">line 48</a>)
+dij = engine.calcDoseInfluence(ct,cst,stf);
+
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_WorkflowWidget/btnCalcDose_Callback', 'D:\GitHub\matRad_Lucas\gui\widgets\matRad_WorkflowWidget.m', 399)" style="font-weight:bold">matRad_WorkflowWidget/btnCalcDose_Callback</a> (<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\gui\widgets\matRad_WorkflowWidget.m',399,0)">line 399</a>)
+                dij = matRad_calcDoseInfluence(evalin('base','ct'),evalin('base','cst'),stf,pln);
+
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_WorkflowWidget>@(hObject,eventdata)btnCalcDose_Callback(this,hObject,eventdata)', 'D:\GitHub\matRad_Lucas\gui\widgets\matRad_WorkflowWidget.m', 158)" style="font-weight:bold">matRad_WorkflowWidget>@(hObject,eventdata)btnCalcDose_Callback(this,hObject,eventdata)</a> (<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\gui\widgets\matRad_WorkflowWidget.m',158,0)">line 158</a>)
+                'Callback',@(hObject,eventdata) btnCalcDose_Callback(this,hObject,eventdata),...
+} 
+Interrupt while evaluating UIControl Callback.
+
+matRadGUI
+You are running matRad v2.10.1 "Blaise" (doseEnginesRobOpt-2eb7347b) with MATLAB 23.2
+[Warning: The matRad_multScen function will be deprecated soon!\nCheck out the new Scenario Models in the scenarios folder.] 
+[Warning: Bixel width does not match] 
+[Warning: Bixel width does not match] 
+matRad: Generating stf struct...
+<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\matRad_generateStf.m',73,1)">73  </a>fileName = [pln.radiationMode '_' pln.machine];
+addmarginBool = false
+
+addmarginBool =
+
+  <a href="matlab:helpPopup logical" style="font-weight:bold">logical</a>
+
+   0
+
+if system_dependent('IsDebugMode')==1, dbstep; end
+if system_dependent('IsDebugMode')==1, dbcont; end
+[Warning: Could not find HLUT  in hlutLibrary folder. matRad default HLUT loaded] 
+No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.Progress: 100.00 %
+Dose influence matrix calculation using  'MCNP' Dose Engine...
+Dose grid has dimensions 96x96x96
+Adjusting structures for overlap... Done!
+Resampling structure set... Done!
+Adjusting structures for overlap... Done!
+Resampling structure set... Done!

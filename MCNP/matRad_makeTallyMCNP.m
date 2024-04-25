@@ -24,14 +24,14 @@ meshTally.geometry = 'RMESH3 %s\n';
 meshTally.corA = 'CORA3 %.4f %dI %.4f\n';
 meshTally.corB = 'CORB3 %.4f %dI %.4f\n';
 meshTally.corC = 'CORC3 %.4f %dI %.4f\n';
-pln.propMCNP.tallyKeyword= 'TOTAL';
+meshTally.tallyKeyword= 'TOTAL';
 
 %Write to text file
 fprintf(fileID_C_rest, 'C ***************************************************************\n');
 fprintf(fileID_C_rest, 'C C: Heating tally (one tally located in each voxel of the CT-data)\n');
 fprintf(fileID_C_rest, 'C ***************************************************************\n');
 fprintf(fileID_C_rest, meshTally.typeCard);
-fprintf(fileID_C_rest, meshTally.geometry, pln.propMCNP.tallyKeyword);
+fprintf(fileID_C_rest, meshTally.geometry, meshTally.tallyKeyword);
 %Keep in mind matRad LPS coordinate system convention
 fprintf(fileID_C_rest, meshTally.corA, .5*ct.doseGridCT.x_MCNP, (ct.doseGridCT.cubeDim(2)-1), ct.doseGridCT.cubeDim(2)*ct.doseGridCT.x_MCNP+.5*ct.doseGridCT.x_MCNP);    % Caution: MATLAB indexing
 fprintf(fileID_C_rest, meshTally.corB, .5*ct.doseGridCT.y_MCNP, (ct.doseGridCT.cubeDim(1)-1), ct.doseGridCT.cubeDim(1)*ct.doseGridCT.y_MCNP+.5*ct.doseGridCT.y_MCNP);

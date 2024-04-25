@@ -1,0 +1,85 @@
+*****Load pre-defined HU conversion properties and MCNP cross sections from conversionCT2tissue.mat.Note: Modification of conversionCT2tissue.mat using generateVar_conversionCT2tissue.m.**********Properties from (scaled) HU loaded are: Minimum value: -1000 and Maximum value: 0.Rescale slope from CT data is read to be: 1 and rescale intercept is read to be -1000.Please use question dialog to decide how to convert to scaled HU.**********You decided not to use DICOM rescale slope and intercept.**********Properties from rescaled HU are: Minimum value: 0 and Maximum value: 1000.*****Material types are assigned using the following HU intervals...air: 0 to 50lung: 50 to 830softTissue: 830 to 1280bone: 1280 to 5000*****0 voxels were redefined to be either air or soft tissue.
+*****
+Skin thickness has been set to: 1 mm.
+*****
+Additional 0 voxels were redefined to be either air or soft tissue.
+*****
+In case you wish to simulate BNCT irradiation make sure the PTV is called PTV_BNCT.
+*****
+Checking for PTV...
+*****
+PTV for BNCT detected. PTV will be filled with soft tissu and B-10 density specified in segmentation variable.
+*****
+*****
+8 from softTissue voxels were cut from softTissue and associated to PTV_BNCT.
+*****
+Segmentation process performed sucessfully.
+*****Calculate density from CT data with density given in [g/cm^3]********Neutron spectrum load from machine file.
+***
+Gamma/photon spectrum found in neutron machine. Will be included in the simulation as primary particles.
+***
+<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\MCNP\matRad_makeTallyMCNP.m',19,1)">19  </a>disp('*****')
+if system_dependent('IsDebugMode')==1, dbcont; end
+*****
+Tally type: TMESH3...
+*****
+*****
+MCNP calculation of dose distribution for bixel 1...
+*****
+Error while connecting to host, Es konnte keine Verbindung hergestellt werden, da der Zielcomputer die Verbindung verweigerte. (10061) 
+Connect on sock (host=medappopc5.office.frm2.tum.de, port=8676) failed, exhaused all end points 
+Unable to connect to 'medappopc5.office.frm2.tum.de:8676', 
+sock error: Error = -1 
+ 
+
+ans =
+
+    -1
+
+[Warning: File 'MCNPrunfile_bixel1o' not found.] 
+[Warning: File 'MCNPrunfile_bixel1r' not found.] 
+*****
+Calculation for bixel 1 took 16.9755 seconds.
+*****
+*****
+MCNP calculation of dose distribution for bixel 2...
+*****
+Error while connecting to host, Es konnte keine Verbindung hergestellt werden, da der Zielcomputer die Verbindung verweigerte. (10061) 
+Connect on sock (host=medappopc5.office.frm2.tum.de, port=8676) failed, exhaused all end points 
+Unable to connect to 'medappopc5.office.frm2.tum.de:8676', 
+sock error: Error = -1 
+ 
+
+ans =
+
+    -1
+
+[Warning: File 'MCNPrunfile_bixel1mo' not found.] 
+[Warning: File 'MCNPrunfile_bixel1mr' not found.] 
+*****
+Calculation for bixel 2 took 16.7519 seconds.
+*****
+<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\doseCalc\+DoseEngines\matRad_NeutronMCNPEngine.m',367,1)">367 </a>            dij = matRad_evaluateTallyMCNP(dij, cst);
+clearvars -except cst ct dij binIntervals varHelper
+matRad_cfg = MatRad_Config.instance();
+if system_dependent('IsDebugMode')==1, dbstep; end
+if system_dependent('IsDebugMode')==1, dbcont; end
+[Warning: Escaped character '\G' is not valid. See 'doc sprintf' for supported special characters.] 
+{Error using <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_Widget/showError')" style="font-weight:bold">matRad_Widget/showError</a>
+CalcDoseCallback: Error in dose calculation!<a href="matlab: opentoline('D:
+
+Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_WorkflowWidget/btnCalcDose_Callback', 'matRad_WorkflowWidget.m', 410)" style="font-weight:bold">matRad_WorkflowWidget/btnCalcDose_Callback</a> (<a href="matlab: opentoline('matRad_WorkflowWidget.m',410,0)">line 410</a>)
+
+Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_WorkflowWidget>@(hObject,eventdata)btnCalcDose_Callback(this,hObject,eventdata)', 'matRad_WorkflowWidget.m', 158)" style="font-weight:bold">matRad_WorkflowWidget>@(hObject,eventdata)btnCalcDose_Callback(this,hObject,eventdata)</a> (<a href="matlab: opentoline('matRad_WorkflowWidget.m',158,0)">line 158</a>)
+} 
+Error while evaluating UIControl Callback.
+
+matRad: Generating stf struct...
+[Warning: Could not find HLUT  in hlutLibrary folder. matRad default HLUT loaded] 
+No book keeping for neutron energies.Progress: 100.00 %
+Dose influence matrix calculation using  'MCNP' Dose Engine...
+Dose grid has dimensions 7x7x7
+Adjusting structures for overlap... Done!
+Resampling structure set... Done!
+Adjusting structures for overlap... Done!
+Resampling structure set... Done!

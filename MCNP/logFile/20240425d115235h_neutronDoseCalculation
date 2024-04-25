@@ -1,0 +1,32 @@
+*****Load pre-defined HU conversion properties and MCNP cross sections from conversionCT2tissue.mat.Note: Modification of conversionCT2tissue.mat using generateVar_conversionCT2tissue.m.**********Properties from (scaled) HU loaded are: Minimum value: -1024 and Maximum value: 0.[Warning: No information on rescale slope and/or intercept provided in DICOM data. Calculation might crash...] 
+Please use question dialog to decide how to convert to scaled HU.**********You decided to use the following parameters to re-scale (scaled) HU data given in ct.cubeHU to HU in ct.cube.{Error using <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_Widget/showError')" style="font-weight:bold">matRad_Widget/showError</a>
+CalcDoseCallback: Error in dose calculation!Unrecognized field name "dicomInfo".
+
+Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_WorkflowWidget/btnCalcDose_Callback', 'matRad_WorkflowWidget.m', 410)" style="font-weight:bold">matRad_WorkflowWidget/btnCalcDose_Callback</a> (<a href="matlab: opentoline('matRad_WorkflowWidget.m',410,0)">line 410</a>)
+
+Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_WorkflowWidget>@(hObject,eventdata)btnCalcDose_Callback(this,hObject,eventdata)', 'matRad_WorkflowWidget.m', 158)" style="font-weight:bold">matRad_WorkflowWidget>@(hObject,eventdata)btnCalcDose_Callback(this,hObject,eventdata)</a> (<a href="matlab: opentoline('matRad_WorkflowWidget.m',158,0)">line 158</a>)
+} 
+Error while evaluating UIControl Callback.
+
+[Warning: The matRad_multScen function will be deprecated soon!\nCheck out the new Scenario Models in the scenarios folder.] 
+[Warning: Bixel width does not match] 
+[Warning: Bixel width does not match] 
+matRad: Generating stf struct...
+<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\matRad_generateStf.m',73,1)">73  </a>fileName = [pln.radiationMode '_' pln.machine];
+addmarginBool = false
+
+addmarginBool =
+
+  <a href="matlab:helpPopup logical" style="font-weight:bold">logical</a>
+
+   0
+
+if system_dependent('IsDebugMode')==1, dbcont; end
+[Warning: Could not find HLUT  in hlutLibrary folder. matRad default HLUT loaded] 
+No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.Progress: 100.00 %
+Dose influence matrix calculation using  'MCNP' Dose Engine...
+Dose grid has dimensions 96x96x96
+Adjusting structures for overlap... Done!
+Resampling structure set... Done!
+Adjusting structures for overlap... Done!
+Resampling structure set... Done!

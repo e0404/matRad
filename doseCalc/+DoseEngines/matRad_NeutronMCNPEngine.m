@@ -364,7 +364,7 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             matRad_bixelDoseCalculatorMCNP(this);
 
             %% Evaluate MCNP results
-            dij = matRad_evaluateTallyMCNP(dij, cst);
+            dij = matRad_evaluateTallyMCNP(dij, cst, ct);
             
             %% Switch off diary
             diary off
