@@ -1,0 +1,137 @@
+*****Load pre-defined HU conversion properties and MCNP cross sections from conversionCT2tissue.mat.Note: Modification of conversionCT2tissue.mat using generateVar_conversionCT2tissue.m.**********Properties from (scaled) HU loaded are: Minimum value: -1024 and Maximum value: 0.[Warning: No information on rescale slope and/or intercept provided in DICOM data. Calculation might crash...] 
+Please use question dialog to decide how to convert to scaled HU.**********You decided not to use DICOM rescale slope and intercept.**********Properties from rescaled HU are: Minimum value: 0 and Maximum value: 1000.*****Material types are assigned using the following HU intervals...air: 0 to 50lung: 50 to 830softTissue: 830 to 1280bone: 1280 to 5000*****Segmentation via HU intervals led to zero voxels with lung tissue.
+*****
+Skin thickness has been set to: 1 mm.
+*****
+*****
+In case you wish to simulate BNCT irradiation make sure the PTV is called PTV_BNCT.
+*****
+Checking for PTV...
+*****
+No PTV for BNCT detected.
+*****
+Segmentation process performed sucessfully.
+*****Calculate density from CT data with density given in [g/cm^3]*****<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\MCNP\matRad_makeSourceMCNP.m',38,1)">38  </a>if strcmp(num2str(stf.bixelWidth),'field')
+if system_dependent('IsDebugMode')==1, dbstep; end
+if system_dependent('IsDebugMode')==1, dbcont; end
+{Error using <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_Widget/showError')" style="font-weight:bold">matRad_Widget/showError</a>
+CalcDoseCallback: Error in dose calculation!Too many input arguments.
+
+Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_WorkflowWidget/btnCalcDose_Callback', 'matRad_WorkflowWidget.m', 410)" style="font-weight:bold">matRad_WorkflowWidget/btnCalcDose_Callback</a> (<a href="matlab: opentoline('matRad_WorkflowWidget.m',410,0)">line 410</a>)
+
+Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_WorkflowWidget>@(hObject,eventdata)btnCalcDose_Callback(this,hObject,eventdata)', 'matRad_WorkflowWidget.m', 158)" style="font-weight:bold">matRad_WorkflowWidget>@(hObject,eventdata)btnCalcDose_Callback(this,hObject,eventdata)</a> (<a href="matlab: opentoline('matRad_WorkflowWidget.m',158,0)">line 158</a>)
+} 
+Error while evaluating UIControl Callback.
+
+matRad: Generating stf struct...
+<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\matRad_generateStf.m',73,1)">73  </a>fileName = [pln.radiationMode '_' pln.machine];
+Index: 8, Size: 8
+java.lang.IndexOutOfBoundsException: Index: 8, Size: 8
+	at java.util.ArrayList.rangeCheck(ArrayList.java:657)
+	at java.util.ArrayList.get(ArrayList.java:433)
+	at java.awt.Container.createHierarchyEvents(Container.java:1444)
+	at java.awt.Container.createHierarchyEvents(Container.java:1444)
+	at java.awt.Container.createHierarchyEvents(Container.java:1444)
+	at java.awt.Container.createHierarchyEvents(Container.java:1444)
+	at java.awt.Container.createHierarchyEvents(Container.java:1444)
+	at java.awt.Component.show(Component.java:1639)
+	at java.awt.Component.show(Component.java:1671)
+	at java.awt.Component.setVisible(Component.java:1623)
+	at javax.swing.JComponent.setVisible(JComponent.java:2644)
+	at javax.swing.JTabbedPane.fireStateChanged(JTabbedPane.java:394)
+	at javax.swing.JTabbedPane$ModelListener.stateChanged(JTabbedPane.java:270)
+	at javax.swing.DefaultSingleSelectionModel.fireStateChanged(DefaultSingleSelectionModel.java:132)
+	at javax.swing.DefaultSingleSelectionModel.setSelectedIndex(DefaultSingleSelectionModel.java:67)
+	at javax.swing.JTabbedPane.setSelectedIndexImpl(JTabbedPane.java:616)
+	at javax.swing.JTabbedPane.setSelectedIndex(JTabbedPane.java:591)
+	at com.mathworks.widgets.desk.DTTabbedPane.setSelectedIndex(DTTabbedPane.java:415)
+	at com.mathworks.widgets.desk.DTTabbedPane.toFront(DTTabbedPane.java:362)
+	at com.mathworks.widgets.desk.DTNestingContainer.toFront(DTNestingContainer.java:362)
+	at com.mathworks.widgets.desk.DTMultipleClientFrame.moveToFront(DTMultipleClientFrame.java:718)
+	at com.mathworks.widgets.desk.Desktop.toFront(Desktop.java:1354)
+	at sun.reflect.GeneratedMethodAccessor88.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at com.mathworks.widgets.desk.Desktop$DeferredFacadeProxy.invoke(Desktop.java:8564)
+	at com.sun.proxy.$Proxy6.toFront(Unknown Source)
+	at com.mathworks.widgets.desk.Desktop.toFront(Desktop.java:1247)
+	at com.mathworks.mde.editor.DebugFileOpeningService.doOpenEditorForDebug(DebugFileOpeningService.java:224)
+	at com.mathworks.mde.editor.DebugFileOpeningService.access$200(DebugFileOpeningService.java:42)
+	at com.mathworks.mde.editor.DebugFileOpeningService$3.run(DebugFileOpeningService.java:170)
+	at java.awt.event.InvocationEvent.dispatch(InvocationEvent.java:311)
+	at java.awt.EventQueue.dispatchEventImpl(EventQueue.java:758)
+	at java.awt.EventQueue.access$500(EventQueue.java:97)
+	at java.awt.EventQueue$3.run(EventQueue.java:709)
+	at java.awt.EventQueue$3.run(EventQueue.java:703)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.security.ProtectionDomain$JavaSecurityAccessImpl.doIntersectionPrivilege(ProtectionDomain.java:74)
+	at java.awt.EventQueue.dispatchEvent(EventQueue.java:728)
+	at java.awt.EventDispatchThread.pumpOneEventForFilters(EventDispatchThread.java:205)
+	at java.awt.EventDispatchThread.pumpEventsForFilter(EventDispatchThread.java:116)
+	at java.awt.EventDispatchThread.pumpEventsForHierarchy(EventDispatchThread.java:105)
+	at java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:101)
+	at java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:93)
+	at java.awt.EventDispatchThread.run(EventDispatchThread.java:82)
+Exception in thread "AWT-EventQueue-0": java.lang.IndexOutOfBoundsException: Index: 8, Size: 8
+	at java.util.ArrayList.rangeCheck(ArrayList.java:657)
+	at java.util.ArrayList.get(ArrayList.java:433)
+	at java.awt.Container.createHierarchyEvents(Container.java:1444)
+	at java.awt.Container.createHierarchyEvents(Container.java:1444)
+	at java.awt.Container.createHierarchyEvents(Container.java:1444)
+	at java.awt.Container.createHierarchyEvents(Container.java:1444)
+	at java.awt.Container.createHierarchyEvents(Container.java:1444)
+	at java.awt.Component.show(Component.java:1639)
+	at java.awt.Component.show(Component.java:1671)
+	at java.awt.Component.setVisible(Component.java:1623)
+	at javax.swing.JComponent.setVisible(JComponent.java:2644)
+	at javax.swing.JTabbedPane.fireStateChanged(JTabbedPane.java:394)
+	at javax.swing.JTabbedPane$ModelListener.stateChanged(JTabbedPane.java:270)
+	at javax.swing.DefaultSingleSelectionModel.fireStateChanged(DefaultSingleSelectionModel.java:132)
+	at javax.swing.DefaultSingleSelectionModel.setSelectedIndex(DefaultSingleSelectionModel.java:67)
+	at javax.swing.JTabbedPane.setSelectedIndexImpl(JTabbedPane.java:616)
+	at javax.swing.JTabbedPane.setSelectedIndex(JTabbedPane.java:591)
+	at com.mathworks.widgets.desk.DTTabbedPane.setSelectedIndex(DTTabbedPane.java:415)
+	at com.mathworks.widgets.desk.DTTabbedPane.toFront(DTTabbedPane.java:362)
+	at com.mathworks.widgets.desk.DTNestingContainer.toFront(DTNestingContainer.java:362)
+	at com.mathworks.widgets.desk.DTMultipleClientFrame.moveToFront(DTMultipleClientFrame.java:718)
+	at com.mathworks.widgets.desk.Desktop.toFront(Desktop.java:1354)
+	at sun.reflect.GeneratedMethodAccessor88.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at com.mathworks.widgets.desk.Desktop$DeferredFacadeProxy.invoke(Desktop.java:8564)
+	at com.sun.proxy.$Proxy6.toFront(Unknown Source)
+	at com.mathworks.widgets.desk.Desktop.toFront(Desktop.java:1247)
+	at com.mathworks.mde.editor.DebugFileOpeningService.doOpenEditorForDebug(DebugFileOpeningService.java:224)
+	at com.mathworks.mde.editor.DebugFileOpeningService.access$200(DebugFileOpeningService.java:42)
+	at com.mathworks.mde.editor.DebugFileOpeningService$3.run(DebugFileOpeningService.java:170)
+	at java.awt.event.InvocationEvent.dispatch(InvocationEvent.java:311)
+	at java.awt.EventQueue.dispatchEventImpl(EventQueue.java:758)
+	at java.awt.EventQueue.access$500(EventQueue.java:97)
+	at java.awt.EventQueue$3.run(EventQueue.java:709)
+	at java.awt.EventQueue$3.run(EventQueue.java:703)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.security.ProtectionDomain$JavaSecurityAccessImpl.doIntersectionPrivilege(ProtectionDomain.java:74)
+	at java.awt.EventQueue.dispatchEvent(EventQueue.java:728)
+	at java.awt.EventDispatchThread.pumpOneEventForFilters(EventDispatchThread.java:205)
+	at java.awt.EventDispatchThread.pumpEventsForFilter(EventDispatchThread.java:116)
+	at java.awt.EventDispatchThread.pumpEventsForHierarchy(EventDispatchThread.java:105)
+	at java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:101)
+	at java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:93)
+	at java.awt.EventDispatchThread.run(EventDispatchThread.java:82)
+addmarginBool = false
+
+addmarginBool =
+
+  <a href="matlab:helpPopup logical" style="font-weight:bold">logical</a>
+
+   0
+
+if system_dependent('IsDebugMode')==1, dbcont; end
+[Warning: Could not find HLUT  in hlutLibrary folder. matRad default HLUT loaded] 
+No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.Progress: 33.33 %No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.66.67 %No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.100.00 %
+Dose influence matrix calculation using  'MCNP' Dose Engine...
+Dose grid has dimensions 96x96x96
+Adjusting structures for overlap... Done!
+Resampling structure set... Done!
+Adjusting structures for overlap... Done!
+Resampling structure set... Done!

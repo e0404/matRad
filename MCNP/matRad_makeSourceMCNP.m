@@ -35,7 +35,7 @@ matRad_cfg =  MatRad_Config.instance();
 pathRunfiles = fullfile(matRad_cfg.matRadRoot, 'MCNP', filesep, 'runfiles_tmp', filesep);
 
 %% Option A: Predefined field using RSSA file
-if strcmp(num2str(stf.bixelWidth),'field')
+if strcmp(num2str(stf(1).bixelWidth),'field')
     pathRSSA = fullfile(matRad_cfg.matRadRoot, 'submodules', 'MCdoseEngineMCNP', 'RSSA_depot', filesep);
     makeSource_readRSSA(stf, varHelper, pathRunfiles, pathRSSA)
     control_makeSourceMCNP = 1;
@@ -139,7 +139,7 @@ end
             rotMatrix(1,1), rotMatrix(1,2), rotMatrix(1,3),...
             rotMatrix(2,1), rotMatrix(2,2), rotMatrix(2,3),...
             rotMatrix(3,1), rotMatrix(3,2), rotMatrix(3,3));
-        
+
         fclose(fileID_C);
     end
 

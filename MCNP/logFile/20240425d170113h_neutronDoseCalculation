@@ -3,6 +3,8 @@ Please use question dialog to decide how to convert to scaled HU.**********You d
 *****
 Skin thickness has been set to: 1 mm.
 *****
+<a href="matlab: opentoline('C:\Program Files\MATLAB\R2023b\toolbox\shared\statslib\@KDTreeSearcher\knnsearch.m',190,1)">190 </a>    end
+if system_dependent('IsDebugMode')==1, dbcont; end
 *****
 In case you wish to simulate BNCT irradiation make sure the PTV is called PTV_BNCT.
 *****
@@ -11,12 +13,38 @@ Checking for PTV...
 No PTV for BNCT detected.
 *****
 Segmentation process performed sucessfully.
-*****Calculate density from CT data with density given in [g/cm^3]********
+*****Calculate density from CT data with density given in [g/cm^3]*****if system_dependent('IsDebugMode')==1, dbcont; end
+if system_dependent('IsDebugMode')==1, dbcont; end
+***
 Neutron spectrum load from machine file.
 ***
+if system_dependent('IsDebugMode')==1, dbcont; end
+if system_dependent('IsDebugMode')==1, dbcont; end
+if system_dependent('IsDebugMode')==1, dbcont; end
+if system_dependent('IsDebugMode')==1, dbcont; end
 *****
 Tally type: TMESH3...
 *****
+if system_dependent('IsDebugMode')==1, dbcont; end
+min(ct.cubeHU{scenCounter}(dummyIdx))
+{Unrecognized function or variable 'scenCounter'.
+} 
+min(ct.cubeHU{1}(dummyIdx))
+{Unrecognized function or variable 'dummyIdx'.
+} 
+min(ct.cubeHU{1}, [], 'all')
+
+ans =
+
+       -1000
+
+max(ct.cubeHU{1}, [], 'all')
+
+ans =
+
+     0
+
+if system_dependent('IsDebugMode')==1, dbcont; end
 Starting parallel pool (parpool) using the 'Processes' profile ...
 {Operation terminated by user during <a href="matlab:matlab.internal.language.introspective.errorDocCallback('parallel.internal.cluster.wait')" style="font-weight:bold">parallel.internal.cluster.wait</a>
 
@@ -136,26 +164,10 @@ In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matR
 } 
 Interrupt while evaluating UIControl Callback.
 
-matRadGUI
-You are running matRad v2.10.1 "Blaise" (doseEnginesRobOpt-769c1ced) with MATLAB 23.2
-[Warning: The matRad_multScen function will be deprecated soon!\nCheck out the new Scenario Models in the scenarios folder.] 
-[Warning: Number of beams do not match] 
-matRad: Generating stf struct...
-<a href="matlab: opentoline('D:\GitHub\matRad_Lucas\matRad_generateStf.m',73,1)">73  </a>fileName = [pln.radiationMode '_' pln.machine];
-addmarginBool = false
+{Operation terminated by user during matlab.internal.editor.figure.ToolstripSubscriber/unsubscribe
 
-addmarginBool =
 
-  <a href="matlab:helpPopup logical" style="font-weight:bold">logical</a>
+In matlab.internal.editor.FigureManager.cleanupOnEditorClose
 
-   0
-
-if system_dependent('IsDebugMode')==1, dbcont; end
-[Warning: Could not find HLUT  in hlutLibrary folder. matRad default HLUT loaded] 
-No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.Progress: 33.33 %No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.66.67 %No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.No book keeping for neutron energies.100.00 %
-Dose influence matrix calculation using  'MCNP' Dose Engine...
-Dose grid has dimensions 96x96x96
-Adjusting structures for overlap... Done!
-Resampling structure set... Done!
-Adjusting structures for overlap... Done!
-Resampling structure set... Done!
+In matlab.internal.editor.EvaluationOutputsService.cleanup
+} 
