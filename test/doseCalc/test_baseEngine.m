@@ -32,11 +32,11 @@ function test_loadMachine
     assertTrue(isstruct(machine));
 
     if moxunit_util_platform_is_octave()
-        assertExceptionThrown(@() DoseEngines.matRad_DoseEngineBase.loadMachine(),'MATLAB:minrhs');
-        assertExceptionThrown(@() DoseEngines.matRad_DoseEngineBase.loadMachine('photons'),'MATLAB:minrhs');
-    else
         assertExceptionThrown(@() DoseEngines.matRad_DoseEngineBase.loadMachine());
         assertExceptionThrown(@() DoseEngines.matRad_DoseEngineBase.loadMachine('photons'));
+    else
+        assertExceptionThrown(@() DoseEngines.matRad_DoseEngineBase.loadMachine(),'MATLAB:minrhs');
+        assertExceptionThrown(@() DoseEngines.matRad_DoseEngineBase.loadMachine('photons'),'MATLAB:minrhs');
     end
     assertExceptionThrown(@() DoseEngines.matRad_DoseEngineBase.loadMachine('grbl','grbl'),'matRad:Error');
 
