@@ -9,6 +9,7 @@ if matRad_cfg.isOctave
 end
 
 % Define Scripts relative to root folder
+
 exampleScripts = {'examples/matRad_example1_phantom.m',...
     'examples/matRad_example2_photons.m',...
     'examples/matRad_example3_photonsDAO.m',...
@@ -22,6 +23,8 @@ exampleScripts = {'examples/matRad_example1_phantom.m',...
     'examples/matRad_example11_helium.m',...
     'matRad.m',...
     };
+
+%exampleScripts = {'matRad.m'}; %Uncomment to fast-test the example testing workflow
 
 exampleScripts = cellfun(@(script) fullfile(matRad_cfg.matRadRoot,script),exampleScripts,'UniformOutput',false);
 
@@ -80,7 +83,7 @@ function runSingleExampleTest(exampleName,path)
     baseVars = evalin('base','who');
     
     %Example is evaluated in the base workspace
-    addpath(fileparts(path));
+    %addpath(fileparts(path));
     evalin('base',exampleName);
 
     %Clean up of the base workspace by cleaning all new variables
@@ -89,7 +92,7 @@ function runSingleExampleTest(exampleName,path)
     evalin('base',['clear ' strjoin(newVars)]);
     
     %Delete the temporary script
-    rmpath(fileparts(path));
+    %rmpath(fileparts(path));
     delete(path);
 
 
