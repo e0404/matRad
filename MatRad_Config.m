@@ -139,7 +139,7 @@ classdef MatRad_Config < handle
 
                         err.message = sprintf(forwardArgs{:});
                         err.identifier = 'matRad:Error';
-                        err.stack = dbstack(2);
+                        %err.stack = dbstack(2);
                         error(err);
 
                     end
@@ -355,7 +355,17 @@ classdef MatRad_Config < handle
             %    formatSpec: 	string to print using format specifications
             %                   similar to 'error'
             %    varargin:   	variables according to formatSpec
-            obj.displayToConsole('error',formatSpec,varargin{:});
+
+            try
+                obj.displayToConsole('error',formatSpec,varargin{:});
+            catch ME
+                if obj.isOctave
+                    ME.stack = ME.stack(3:end); % Removes the dispError and dispToConsole from the stack
+                    error(ME);
+                else
+                    throwAsCaller(ME);
+                end
+            end
         end
 
         function dispWarning(obj,formatSpec,varargin)
