@@ -15,6 +15,7 @@ classdef matRad_generateBrachyStfTest < matlab.unittest.TestCase
             pln.machine         = 'HDR';
             % geometry settings
             load PROSTATE.mat ct cst;
+     
             pln.propStf.templateRoot             = matRad_getTemplateRoot(ct,cst);
             pln.propStf.needle.seedDistance      = 1; % [mm] seed distance on needle
             pln.propStf.needle.seedsNo           = 2; % number of seeds per needle
