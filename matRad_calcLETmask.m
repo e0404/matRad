@@ -1,21 +1,22 @@
 function [LETmaskDirty,LETmaskClean,mLET] = matRad_calcLETmask(dij)
-% Calculates logical matrix where LET is above (LETmask.Dirty) or below (LETmask.Clean) a certain threshold
+% Calculates logical matrix where LET is above (LETmaskDirty) or below
+% (LETmaskClean) a certain threshold which is set in matRad_calcDirtyDose
 %
 % call
-%   LETmask = matRad_calcLETmask(dij)
+%   [LETmaskDirty,LETmaskClean,mLET] = matRad_calcLETmask(dij)
 %
 % input
-%   dij:       matRad dij struct
+%   dij:       matRad dij struct after the dose calculation using
+%              matRad_calcParticleDose
 %
 % output
-%   LETmask:   logical matrix for dirty dose
+%   LETmaskDirty:   logical matrix (0 and 1) for dirty dose 
+%                   -> it needs to go into matRad_calcDirtyDose to create
+%                   dirty dose as a variable
+%   LETmaskClean:   logical matrix (0 and 1) for clean dose -> into matRad_calcDirtyDose
+%   mLET:           mLETDose matrix divided by the physicalDose matrix
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% instead of:
-% mLET = full(dij.mLETDose{1}(:,:))./full(dij.physicalDose{1}(:,:));
-% LETmask = mLET > dij.dirtyDoseThreshold;
-% logical matrix is calculated like this:
 
     [i,j,v] = find(dij.physicalDose{1});
     idx = sub2ind(size(dij.physicalDose{1}),i,j);
