@@ -66,3 +66,34 @@ if system_dependent('IsDebugMode')==1, dbstep; end
 Error in <a href="matlab:matlab.internal.language.introspective.errorDocCallback('matRad_evaluateTallyMCNP', '/Users/lucassommer/Daten/gitHub/matRadNeutronDoseCalc/matRad_Lucas/MCNP/matRad_evaluateTallyMCNP.m', 9)" style="font-weight:bold">matRad_evaluateTallyMCNP</a> (<a href="matlab: opentoline('/Users/lucassommer/Daten/gitHub/matRadNeutronDoseCalc/matRad_Lucas/MCNP/matRad_evaluateTallyMCNP.m',9,0)">line 9</a>)
 lengthList = dij.totalNumOfRays;
 } 
+clear
+clc
+matRadGUI
+You are running matRad v2.10.1 "Blaise" (doseEnginesRobOpt-0813381d) with MATLAB 23.2
+[Warning: The matRad_multScen function will be deprecated soon!\nCheck out the new Scenario Models in the scenarios folder.] 
+Precomputing Contours for Display...
+Progress: 25.00 %50.00 %75.00 %100.00 %
+std(M1_PTV.alphasMatrix)
+
+ans =
+
+   3.2068e-05
+
+clc
+matRadGUI
+You are running matRad v2.10.1 "Blaise" (doseEnginesRobOpt-0813381d) with MATLAB 23.2
+Precomputing Contours for Display...
+Progress: 25.00 %50.00 %75.00 %100.00 %
+mean(doseMatrixBixel.physicalDose_proton(intersect(PTV_idx, find(doseMatrixBixel.physicalDose_proton))))
+
+ans =
+
+   1.6717e-15
+
+mean(doseMatrixBixel.physicalDose_alpha(intersect(PTV_idx, find(doseMatrixBixel.physicalDose_alpha))))
+
+ans =
+
+   3.9652e-14
+
+load('nanoResults.mat')
