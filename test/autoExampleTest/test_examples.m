@@ -91,9 +91,6 @@ function runSingleExampleTest(exampleName,path)
     newVars = setdiff(afterTestVars,baseVars);
     evalin('base',['clear ' strjoin(newVars)]);
     
-    %Delete the temporary script
-    %rmpath(fileparts(path));
-    delete(path);
 
 
 

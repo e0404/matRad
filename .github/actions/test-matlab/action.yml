@@ -20,7 +20,8 @@ runs:
       with:
         repository: e0404/MOcov
         path: MOcov
-        ref: addCoberturaValues
+        ref: md5Methods
+        
     # Install MATLAB
     - name: Install MATLAB
       uses: matlab-actions/setup-matlab@v2
