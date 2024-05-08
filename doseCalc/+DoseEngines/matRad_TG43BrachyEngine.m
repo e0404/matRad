@@ -9,7 +9,8 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
 
     properties 
         DistanceCutoff;
-        TG43approximation;        
+        TG43approximation;    
+        
 
    
     end
@@ -37,28 +38,7 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             this.doseGrid.resolution.y = 5;
             this.doseGrid.resolution.z = 5;
             
- %% FIX THI SSHIT MAN TOMMOROW... %%
-            if isempty(this.machine)
-                this.machine = input('Please enter the machine type (HDR or LDR): ', 's');
-                while ~strcmpi(this.machine, 'HDR') && ~strcmpi(this.machine, 'LDR')
-                    disp('Invalid input. Please enter either HDR or LDR.');
-                    this.machine = input('Please enter the machine type (HDR or LDR): ', 's');
-                end
-            else
-                % If the machine variable is already defined, use the existing value
-                disp(['Machine type is already defined as: ', pln.machine]);
-            end
-            
-            if strcmp(machine, 'HDR')
-                this.machine.data = 'brachy_HDR.mat';
-            elseif strcmp(machine, 'LDR')
-                this.machine.data = 'brachy_LDR.mat';
-            else
-                warning('Unrecognized machine type: %s', machine);
-            end
-
-
-            
+           
 
         end
     end
@@ -304,23 +284,23 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
 
         function DoseRate = getDoseRate1D_poly(this,machine,r_mm)
             % validate/ complete input arguments
-            if ~isfield(this.machine.data,'AnisotropyFactorRadialDistance')
+            if ~isfield(machine.data,'AnisotropyFactorRadialDistance')
                 matRad_cfg.dispError('machine is missing field "AnisotropyFactorRadialDistance"...you might be trying to apply the TG43 2D formalism for basedata measured for 1D formalism') 
             end
-            if ~isfield(this.machine.data,'AnisotropyFactorValue')
+            if ~isfield(machine.data,'AnisotropyFactorValue')
                 matRad_cfg.dispError('machine is missing field "AnisotropyFactorValue"')
             end
-            if ~isfield(this.machine.data,'lambda')
+            if ~isfield(machine.data,'lambda')
                 matRad_cfg.dispError...
                     ('machine is missing field "lambda" (dose constant in water)') 
             end
-            if  this.machine.data.lambda < 0
+            if  machine.data.lambda < 0
                 matRad_cfg.dispError('negative doseRate')
             end
             if min(r_mm,[],'all') < 0
                 matRad_cfg.dispError('r contatins negative distances')
             end
-            if ~isfield(this.machine.data,'SourceStrengthImplanted')
+            if ~isfield(machine.data,'SourceStrengthImplanted')
                 this.machine.data.SourceStrengthImplanted = 1;
             end 
 
@@ -329,13 +309,13 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             r = 0.1*r_mm; 
 
             % Sk: Air-kerma strength in  U...[1 U = 1 muGy*m^2/h) = 1 cGy*cm^2/h]
-            Sk = this.machine.data.SourceStrengthImplanted;
+            Sk = machine.data.SourceStrengthImplanted;
 
             % lambda: Dose-rate constant in water (Lambda) in cGy/(h*U)
-            lambda = this.machine.data.lambda;
+            lambda = machine.data.lambda;
 
             % L: length of line source in cm
-            L = this.machine.data.ActiveSourceLength;
+            L = machine.data.ActiveSourceLength;
 
             % r0: reference radius in cm
             r0 = 1;
@@ -345,13 +325,13 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
 
             % gLTab: Tabulated radial dose function \\ cell entry 1: radii; entry 2: values
             % radii in cm, values in units of g(r0)
-            gLTab{1} = this.machine.data.RadialDoseDistance;
-            gLTab{2} = this.machine.data.RadialDoseValue;
+            gLTab{1} = machine.data.RadialDoseDistance;
+            gLTab{2} = machine.data.RadialDoseValue;
 
             % PhiAn: Tabulated anisotropy factor \\ cell entry 1: radii; entry 2: values
             % radii in cm, values unitless
-            PhiAnTab{1} = this.machine.data.AnisotropyFactorRadialDistance;
-            PhiAnTab{2} = this.machine.data.AnisotropyFactorValue;
+            PhiAnTab{1} = machine.data.AnisotropyFactorRadialDistance;
+            PhiAnTab{2} = machine.data.AnisotropyFactorValue;
 
             % 1D formalism
             % according to Rivard et al.: AAPM TG-43 update Eq. (11)
@@ -368,37 +348,37 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             matRad_cfg = MatRad_Config.instance();
 
             % validate/ complete input arguments
-            if ~isfield(this.machine.data,'AnisotropyRadialDistances')
+            if ~isfield(machine.data,'AnisotropyRadialDistances')
                 matRad_cfg.dispError('machine is missing field "AnisotropyRadialDistances"...you might be trying to apply the TG43 1D formalism for basedata measured for 2D formalism') 
             end
-            if ~isfield(this.machine.data,'AnisotropyPolarAngles')
+            if ~isfield(machine.data,'AnisotropyPolarAngles')
                 matRad_cfg.dispError('machine is missing field "AnisotropyPolarAngles"')
             end
-            if ~isfield(this.machine.data,'AnisotropyFunctionValue')
+            if ~isfield(machine.data,'AnisotropyFunctionValue')
                 matRad_cfg.dispError('machine is missing field "AnisotropyFunctionValue"')
             end
-            if ~isfield(this.machine.data,'lambda')
+            if ~isfield(machine.data,'lambda')
                 matRad_cfg.dispError('machine is missing field "lambda" (dose constant in water)') 
             end
-            if  this.machine.data.lambda < 0
+            if  machine.data.lambda < 0
                 matRad_cfg.dispError('negative doseRate')
             end
-            if ~isfield(this.machine.data,'AnisotropyRadialDistances')
+            if ~isfield(machine.data,'AnisotropyRadialDistances')
                 matRad_cfg.dispError('machine is missing field "AnisotropyRadialDistances"') 
             end
-            if ~isfield(this.machine.data,'AnisotropyPolarAngles')
+            if ~isfield(machine.data,'AnisotropyPolarAngles')
                 matRad_cfg.dispError('machine is missing field "AnisotropyPolarAngles"')
             end
-            if ~isfield(this.machine.data,'AnisotropyFunctionValue')
+            if ~isfield(machine.data,'AnisotropyFunctionValue')
                 matRad_cfg.dispError('machine is missing field "AnisotropyFunctionValue"')
             end
             if min(r_mm,[],'all') < 0
                 matRad_cfg.dispError('r contatins negative distances')
             end
-            if ~isfield(this.machine.data,'ActiveSourceLength')
+            if ~isfield(machine.data,'ActiveSourceLength')
                 matRad_cfg.dispError('machine is missing field "ActiveSourceLength", defining the source length')
             end
-            if ~isfield(this.machine.data,'SourceStrengthImplanted')
+            if ~isfield(machine.data,'SourceStrengthImplanted')
                 machine.data.SourceStrengthImplanted = 1;
             end 
 
@@ -407,13 +387,13 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             r = 0.1*r_mm; 
 
             % Sk: Air-kerma strength in U...[1 U = 1 muGy*m^2/h) = 1 cGy*cm^2/h]
-            Sk = this.machine.data.SourceStrengthImplanted;
+            Sk = machine.data.SourceStrengthImplanted;
 
             % lambda: Dose-rate constant in water (Lambda) in cGy/(h*U)
             lambda = machine.data.lambda;
 
             % L: length of line source in cm
-            L = this.machine.data.ActiveSourceLength;
+            L = machine.data.ActiveSourceLength;
 
             % r0: standard radius in cm
             r0 = 1;
@@ -423,15 +403,15 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
 
             % gLTab: Tabulated radial dose function \\ cell entry 1: radii; entry 2: values
             % radii in cm, values in units of g(r0)
-            gLTab{1} = this.machine.data.RadialDoseDistance;
-            gLTab{2} = this.machine.data.RadialDoseValue;
+            gLTab{1} = machine.data.RadialDoseDistance;
+            gLTab{2} = machine.data.RadialDoseValue;
 
             % FTab: Tabulated 2D anisotropy function
             % \\ cell entry 1: radii; entry 2: angles; entry 3: values
             % radii in cm, angles in degree, values unitless
-            FTab{1} = this.machine.data.AnisotropyRadialDistances;
-            FTab{2} = this.machine.data.AnisotropyPolarAngles;
-            FTab{3} = this.machine.data.AnisotropyFunctionValue;
+            FTab{1} = machine.data.AnisotropyRadialDistances;
+            FTab{2} =machine.data.AnisotropyPolarAngles;
+            FTab{3} = machine.data.AnisotropyFunctionValue;
 
             % 2D formalism
             % according to Rivard et al.: AAPM TG-43 update p. 637 eq. (1)
@@ -439,8 +419,8 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             gL = this.radialDoseFunction(r,gLTab);
             GL = this.geometryFunction(r,theta,L);
             GL0 = this.geometryFunction(r0,theta0,L);
-            if isfield(this.machine.data,'AnisotropyPolynomial')
-                F = this.machine.data.AnisotropyPolynomial(r,theta);
+            if isfield(machine.data,'AnisotropyPolynomial')
+                F = machine.data.AnisotropyPolynomial(r,theta);
             else 
                 F = anisotropyFunction2DInterp(r,theta,FTab);   % uses the Interp2 function for estimation of Anisotropy function ( Gamma(1mm,1%) pass rate 99.5%)
             %    F = matRad_anisotropyFunction2D(r,theta,FTab);   % uses the 5th order polynomial for estimation of Anisotropy function 

@@ -3,6 +3,7 @@ classdef matRad_calcBrachyDoseTest < matlab.unittest.TestCase
      properties
         OriginalPath
         engine
+        machine
 
     end
     
@@ -14,6 +15,7 @@ classdef matRad_calcBrachyDoseTest < matlab.unittest.TestCase
             
             
             testCase.engine = DoseEngines.matRad_TG43BrachyEngine;
+            
  
         end
     end
