@@ -21,6 +21,9 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
     
     properties
         options     %the optimoptions for fmincon
+    end
+
+    properties (SetAccess = protected)
         wResult     %last optimization result
         resultInfo  %info struct about last results
     end
@@ -141,7 +144,7 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
     methods (Static)    
         function available = IsAvailable()
             %'fmincon' is a p-code file in the optimization toolbox
-            available = exist('fmincon') == 6;
+            available = exist('fmincon') ~= 0;
         end
     end
 end

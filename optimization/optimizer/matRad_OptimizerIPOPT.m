@@ -19,12 +19,15 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
     
     properties
         options
-        wResult
-        resultInfo
         env
 
         %Visualization
         showPlot = true;
+    end
+
+    properties (SetAccess = protected)
+        wResult
+        resultInfo
     end
     
     properties (Access = private)
