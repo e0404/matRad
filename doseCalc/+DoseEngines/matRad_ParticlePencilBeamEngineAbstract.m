@@ -931,7 +931,10 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
 
         function scenRay = extractSingleScenarioRay(this,ray,scenIdx)
             scenRay = extractSingleScenarioRay@DoseEngines.matRad_PencilBeamEngineAbstract(this,ray,scenIdx);
-            ctScen = this.multScen.linearMask(scenIdx,1);
+            
+            %Gets number of scenario
+            scenNum = this.multScen.scenNum(scenIdx);
+            ctScen = this.multScen.linearMask(scenNum,1);
 
             if isfield(scenRay,'vTissueIndex')
                 scenRay.vTissueIndex = scenRay.vTissueIndex{ctScen};

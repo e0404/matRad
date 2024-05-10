@@ -347,12 +347,11 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             %initBeam function
         end
 
-        function scenRay = extractSingleScenarioRay(this,ray,scenIdx)
-             
-             ctScen = this.multScen.linearMask(scenIdx,1);
+        function scenRay = extractSingleScenarioRay(this,ray,scenIdx)             
             
              %Gets number of scenario
              scenNum = this.multScen.scenNum(scenIdx);
+             ctScen = this.multScen.linearMask(scenNum,1);
             
              %First, create a ray of the
              %specific scenario to adapt rad
