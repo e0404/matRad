@@ -98,7 +98,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             
             % Quasi-Newton (C.13)
             obj.options.hessian_approximation         = 'limited-memory';
-            obj.options.limited_memory_max_history    = 6;
+            obj.options.limited_memory_max_history    = 50;
             obj.options.limited_memory_initialization = 'scalar2';
             
             % determine once if Matlab or Octave
