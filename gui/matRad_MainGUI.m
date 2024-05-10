@@ -270,13 +270,27 @@ classdef matRad_MainGUI < handle
             obj.updateButtons();
         end
         
-        function this = updateWidgets(this,evt)
+        function update(this,evt)           
+            if nargin < 2
+                this.updateWidgets();
+                this.updateButtons();
+            else
+                this.updateWidgets(evt);
+                this.updateButtons();
+            end
+        end          
+
+
+        function updateWidgets(this,evt)
            matRad_cfg = MatRad_Config.instance();
+
+           args = {};
            if matRad_cfg.logLevel > 3 
                if nargin < 2 || ~isa(evt,'matRad_WorkspaceChangedEvent')
                    changed = {};
                else
                    changed = evt.changedVariables;
+                   args = {evt};
                end
 
                matRad_cfg.dispDebug('GUI Workspace Changed at %s. ',datestr(now,'HH:MM:SS.FFF')); 
@@ -289,18 +303,18 @@ classdef matRad_MainGUI < handle
            
           
            %%Debug
-           this.PlanWidget.update(evt);
-           this.WorkflowWidget.update(evt);
-           this.OptimizationWidget.update(evt);
+           this.PlanWidget.update(args{:});
+           this.WorkflowWidget.update(args{:});
+           this.OptimizationWidget.update(args{:});
            this.ViewingWidget.lockUpdate = 0;
-           this.ViewingWidget.update(evt);
-           this.StructureVisibilityWidget.update(evt);
+           this.ViewingWidget.update(args{:});
+           this.StructureVisibilityWidget.update(args{:});
            %this.ViewerOptionsWidget.update();
            %this.VisualizationWidget.update();
            
         end
         
-        function this = updateButtons(this)
+        function updateButtons(this)
            %disp(['Plot Changed ' datestr(now,'HH:MM:SS.FFF')]); %Debug
            % update the visualization and viewer options widgets
            
