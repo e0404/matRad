@@ -13,6 +13,9 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% Warning
+warning('This testing script is outdated! We are now using unit testing with MOxUnit. Press button to continue testing with this script!');
+
 %% Set path
 run(['..' filesep 'matRad_rc']);
 
