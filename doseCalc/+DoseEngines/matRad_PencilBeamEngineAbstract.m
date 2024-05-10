@@ -124,42 +124,9 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                                     %better scenario management
                                     %Gets linear index in scenario cell array
                                     scenIdx = this.multScen.sub2scenIx(ctScen,shiftScen,rangeShiftScen);
+
+                                    scenRay = this.extractSingleScenarioRay(currRay,scenIdx);    
                                     
-                                    %Gets number of scenario
-                                    scenNum = this.multScen.scenNum(scenIdx);
-
-                                    %First, create a ray of the
-                                    %specific scenario to adapt rad
-                                    %depths
-                                    scenRay = currRay;
-                                    scenRay.radDepths = scenRay.radDepths{ctScen};
-                                    scenRay.radDepths = (1+this.multScen.relRangeShift(scenNum))*scenRay.radDepths + this.multScen.absRangeShift(scenNum);
-                                    scenRay.radialDist_sq = scenRay.radialDist_sq{ctScen};
-                                    scenRay.ix = scenRay.ix{ctScen};
-
-                                    if this.multScen.absRangeShift(scenNum) < 0
-                                        %TODO: better way to handle this?
-                                        scenRay.radDepths(scenRay.radDepths < 0) = 0;
-                                    end
-
-                                    if isfield(scenRay,'geoDepths')
-                                        scenRay.geoDepths = scenRay.geoDepths{ctScen};
-                                    end
-
-                                    if isfield(scenRay,'latDists')
-                                        scenRay.latDists = scenRay.latDists{ctScen};
-                                    end
-
-                                    if isfield(scenRay,'isoLatDists')
-                                        scenRay.isoLatDists = scenRay.isoLatDists{ctScen};
-                                    end
-
-                                    if isfield(scenRay,'vTissueIndex')
-                                        scenRay.vTissueIndex = scenRay.vTissueIndex{ctScen};
-                                        scenRay.vAlphaX = scenRay.vAlphaX{ctScen};
-                                        scenRay.vBetaX = scenRay.vBetaX{ctScen};
-                                    end
-
                                     for k = 1:currRay.numOfBixels
                                         %Bixel Computation
                                         currBixel = this.computeBixel(scenRay,k);
@@ -380,6 +347,40 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             %initBeam function
         end
 
+        function scenRay = extractSingleScenarioRay(this,ray,scenIdx)
+             
+             ctScen = this.multScen.linearMask(scenIdx,1);
+            
+             %Gets number of scenario
+             scenNum = this.multScen.scenNum(scenIdx);
+            
+             %First, create a ray of the
+             %specific scenario to adapt rad
+             %depths
+             scenRay = ray;
+             scenRay.radDepths = scenRay.radDepths{ctScen};
+             scenRay.radDepths = (1+this.multScen.relRangeShift(scenNum))*scenRay.radDepths + this.multScen.absRangeShift(scenNum);
+             scenRay.radialDist_sq = scenRay.radialDist_sq{ctScen};
+             scenRay.ix = scenRay.ix{ctScen};
+            
+             if this.multScen.absRangeShift(scenNum) < 0
+                 %TODO: better way to handle this?
+                 scenRay.radDepths(scenRay.radDepths < 0) = 0;
+             end
+            
+             if isfield(scenRay,'geoDepths')
+                 scenRay.geoDepths = scenRay.geoDepths{ctScen};
+             end
+            
+             if isfield(scenRay,'latDists')
+                 scenRay.latDists = scenRay.latDists{ctScen};
+             end
+            
+             if isfield(scenRay,'isoLatDists')
+                 scenRay.isoLatDists = scenRay.isoLatDists{ctScen};
+             end            
+        end
+        
         function ray = getRayGeometryFromBeam(this,ray,currBeam)
             lateralRayCutOff = this.getLateralDistanceFromDoseCutOffOnRay(ray);
 
