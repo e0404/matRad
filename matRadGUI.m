@@ -76,6 +76,7 @@ end
 
 if handleValid
     figure(hMatRadGUI.guiHandle);
+    hMatRadGUI.update();
 else
     matRad_rc(false);
     hMatRadGUI = matRad_MainGUI;

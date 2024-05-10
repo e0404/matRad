@@ -21,6 +21,9 @@ classdef (Abstract) matRad_Optimizer < handle
     
     properties (Abstract)
         options %options struct
+    end
+
+    properties (Abstract,SetAccess = protected)
         wResult
         resultInfo
     end

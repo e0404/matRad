@@ -35,7 +35,7 @@ tmpCollimation.Fields = struct;
 % check for following meta data in every control point sequence
 % Format: 'DICOM Name Tag' 'Name in struct'; ... 
 meta =  {'NominalBeamEnergy' 'Energy';'GantryAngle' 'GantryAngle';...
-        'PatientSupportAngle' 'CouchAngle';'SourceToSurfaceDistance' 'SSD'};
+        'PatientSupportAngle' 'CouchAngle'};%;'SourceToSurfaceDistance' 'SSD'};
 
 % extract field information
 beamSeqNames = fields(beamSequence);
@@ -57,9 +57,12 @@ for i = 1:length(beamSeqNames)
         currLimitsSeq = currDeviceSeq.(currDeviceSeqNames{j});
         device(j).DeviceType = currLimitsSeq.RTBeamLimitingDeviceType;
         device(j).NumOfLeafs = currLimitsSeq.NumberOfLeafJawPairs;
-        device(j).Direction = device(j).DeviceType(end); 
+        % Check for nonstandard double collimators 
         if strncmpi(device(j).DeviceType,'MLC',3)
-           device(j).Limits = currLimitsSeq.LeafPositionBoundaries; 
+            device(j).Limits = currLimitsSeq.LeafPositionBoundaries;
+            device(j).Direction = device(j).DeviceType(4:end);
+        else
+            device(j).Direction = device(j).DeviceType(end);
         end
     end
     tmpCollimation.Devices{i} = device;
@@ -202,10 +205,10 @@ for i = 1:length(tmpCollimation.Fields)
                (p3 > 0) && (p3 <= 2*shapeLimit) && ...
                (p4 > 0) && (p4 <= 2*shapeLimit)
                 try
-                    if strcmpi(tmpCollimation.Devices{beamIndex}(j).Direction, 'X')
+                    if strncmpi(tmpCollimation.Devices{beamIndex}(j).Direction,'X',1)
                         shape(p3:p4,1:p1) = 0;
                         shape(p3:p4,p2:end) = 0;
-                    elseif strcmpi(tmpCollimation.Devices{beamIndex}(j).Direction, 'Y')
+                    elseif strncmpi(tmpCollimation.Devices{beamIndex}(j).Direction,'Y',1)
                         shape(1:p1,p3:p4) = 0;
                         shape(p2:end,p3:p4) = 0;
                     else
@@ -222,7 +225,11 @@ for i = 1:length(tmpCollimation.Fields)
         end
     end
     openVoxelDistance = [X(shape == 1); Y(shape == 1)];
-    maximumVoxelExtent = max(maximumVoxelExtent, max(abs(openVoxelDistance)));
+    if ~isempty(openVoxelDistance)
+        maximumVoxelExtent = max(maximumVoxelExtent, max(abs(openVoxelDistance)));
+    else
+        warning('Empty shape detected!');
+    end
     tmpCollimation.Fields(i).Shape = shape;
 end
 
