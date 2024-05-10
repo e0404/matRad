@@ -78,22 +78,25 @@ end
 %We need to manually set up the test_suite
 
 function runSingleExampleTest(exampleName,path)
-    %We use a kind of fishy way to run the test in the base workspace
-    %First we record the variables we have in the base workspace
-    baseVars = evalin('base','who');
-    
-    %Example is evaluated in the base workspace
-    %addpath(fileparts(path));
+%We use a kind of fishy way to run the test in the base workspace
+%First we record the variables we have in the base workspace
+baseVars = evalin('base','who');
+
+%Example is evaluated in the base workspace
+%addpath(fileparts(path));
+try
     evalin('base',exampleName);
 
     %Clean up of the base workspace by cleaning all new variables
     afterTestVars = evalin('base','who');
     newVars = setdiff(afterTestVars,baseVars);
     evalin('base',['clear ' strjoin(newVars)]);
-    
+catch ME
+    %Also clean up the base workspace by cleaning all new variables
+    afterTestVars = evalin('base','who');
+    newVars = setdiff(afterTestVars,baseVars);
+    evalin('base',['clear ' strjoin(newVars)]);
 
-
-
-
-
-
+    %Now rethrow
+    rethrow(ME);
+end
