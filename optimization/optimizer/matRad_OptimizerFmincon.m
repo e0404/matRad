@@ -33,6 +33,10 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
             %matRad_OptimizerFmincon 
             %   Construct an instance of the fmincon optimizer from the Optimization Toolbox           
             matRad_cfg = MatRad_Config.instance();
+
+            if ~matRad_OptimizerFmincon.IsAvailable()
+                matRad_cfg.dipsError('matRad_OptimizerFmincon can not be constructed as fmincon is not available!');
+            end
             
             obj.wResult = [];
             obj.resultInfo = [];
@@ -52,7 +56,7 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
                 'UseParallel',true,...
                 'Diagnostics','on',...
                 'ScaleProblem',true,...
-                'PlotFcn',{@optimplotfval,@optimplotx,@optimplotfunccount,@optimplotconstrviolation,@optimplotstepsize,@optimplotfirstorderopt});                    
+                'PlotFcn',{@optimplotfval,@optimplotx,@optimplotfunccount,@optimplotconstrviolation,@optimplotstepsize,@optimplotfirstorderopt});
         end
                 
         function obj = optimize(obj,w0,optiProb,dij,cst)
@@ -65,6 +69,13 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
             % Informing user to press q to terminate optimization
             %fprintf('\nOptimzation initiating...\n');
             %fprintf('Press q to terminate the optimization...\n');
+
+            matRad_cfg = MatRad_Config.instance();
+            if matRad_cfg.isMatlab && str2double(matRad_cfg.envVersion) <= 9.13 && strcmp(obj.options.Diagnostics,'on')
+                matRad_cfg.dispWarning('Diagnostics in fmincon will be turned off due to a bug when using lbfgs with specified number of histories!');
+                obj.options.Diagnostics = 'off';
+            end
+                
             
             % Run fmincon.
             [obj.wResult,fVal,exitflag,info] = fmincon(@(x) obj.fmincon_objAndGradWrapper(x,optiProb,dij,cst),...
