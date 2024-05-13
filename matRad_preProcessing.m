@@ -2,8 +2,8 @@ function [dij,cst,pln,wInit,optiProb,FLAG_ROB_OPT] = matRad_preProcessing(dij,cs
 % matRad inverse planning wrapper function
 %
 % call
-%   [resultGUI,optimizer] = matRad_preProcessing(dij,cst,pln)
-%   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
+%   [dij,cst,pln,wInit,optiProb,FLAG_ROB_OPT] = matRad_preProcessing(dij,cst,pln)
+%   [dij,cst,pln,wInit,optiProb,FLAG_ROB_OPT] = matRad_preProcessing(dij,cst,pln,wInit)
 %
 % input
 %   dij:        matRad dij struct
@@ -25,7 +25,7 @@ function [dij,cst,pln,wInit,optiProb,FLAG_ROB_OPT] = matRad_preProcessing(dij,cs
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
 % of the matRad project, including this file, may be copied, modified,
 % propagated, or distributed except according to the terms contained in the
 % LICENSE file.
@@ -56,7 +56,7 @@ for i = 1:size(cst,1)
                 matRad_cfg.dispError('cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!',i,j);
             end
         end
-
+        
         obj = obj.setDoseParameters(obj.getDoseParameters()/pln.numOfFractions);
 
         cst{i,6}{j} = obj;
@@ -145,17 +145,13 @@ elseif pln.bioParam.bioOpt
     if ~all(checkAxBx)
         matRad_cfg.dispError('Inconsistent biological parameters in dij.ax and/or dij.bx - please recalculate dose influence matrix before optimization!\n');
     end
-
-       
-
+      
     for i = 1:size(cst,1)
-
         for j = 1:size(cst{i,6},2)
             % check if prescribed doses are in a valid domain
             if any(cst{i,6}{j}.getDoseParameters() > 5) && isequal(cst{i,3},'TARGET')
                 matRad_cfg.dispError('Reference dose > 5 Gy[RBE] for target. Biological optimization outside the valid domain of the base data. Reduce dose prescription or use more fractions.\n');
             end
-
         end
     end
     
