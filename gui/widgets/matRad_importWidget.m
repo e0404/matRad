@@ -302,7 +302,7 @@ classdef matRad_importWidget < matRad_Widget
                 tmp = get(hTable,'Data');
                 cst(:,2:3) = tmp(:,:);
             catch
-                warning('Closed checkdialog without confirmation! Using default cst information!');
+                this.showWarning('Closed checkdialog without confirmation! Using default cst information!');
             end
             delete(handle);
             this.handles = handles();
@@ -317,7 +317,7 @@ classdef matRad_importWidget < matRad_Widget
             maskFiles = get(handles.listbox_maskPaths,'String');
             
             if isempty(ctFile) || isempty(maskFiles)
-                errordlg('Please sepecify a CT and at least one mask!');
+                this.showError('Please sepecify a CT and at least one mask!');
             end
             
             convertHU = get(handles.checkbox_huConvert,'Value');

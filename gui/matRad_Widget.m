@@ -23,12 +23,12 @@ classdef matRad_Widget <  handle
     properties (GetAccess = public , SetAccess = protected)
         widgetHandle            %Holds parent widget handle
         handles = struct([]);   %Holds all handles in parent handle
+        isInUifigure;
     end
     
     properties
         updateLock = false;     %Property to lock updating of the widget
     end
-
         
     events
         %If the widget changes the workspace, this event should be emitted 
@@ -40,9 +40,21 @@ classdef matRad_Widget <  handle
     methods
         %CONSTRUCTOR
         function this = matRad_Widget(handleParent)
-            this.widgetHandle = handleParent;           
-            this.createLayout();           
-            this.initialize();
+            this.widgetHandle = handleParent;
+            
+            %Create the layout
+            try 
+                this.createLayout();           
+            catch ME
+                showError(this,'Widget could not be created!',ME);
+            end
+
+            %Initialize the widget
+            try
+                this.initialize();
+            catch ME
+                showWarning(this,'Widget could not be initialized!',ME);
+            end
             
             matRad_cfg = MatRad_Config.instance();
             
@@ -77,9 +89,6 @@ classdef matRad_Widget <  handle
             end 
         end
         
-        function this = update(this,evt)
-        end
-
         function handles = showError(this,Message,ME)
             matRad_cfg = MatRad_Config.instance();
             handles = this.handles;
@@ -114,10 +123,11 @@ classdef matRad_Widget <  handle
                 else
                     meType = 'basic';
                 end
-                Message = {Message,ME.message};
+                Message = [Message,ME.message];
                 % Future error hyperlinks {Message,ME.getReport(meType,'hyperlinks','off')};
             end
             matRad_cfg.dispWarning(Message);
+            warndlg(Message);
             this.handles = handles;         
 
         end
@@ -136,10 +146,53 @@ classdef matRad_Widget <  handle
                 set(this.widgetHandle,'KeyPressFcn','');
             end
         end
+
+        function isInUi = get.isInUifigure(this)
+            matRad_cfg = MatRad_Config.instance();
+            
+            if matRad_cfg.isOctave
+                isInUi = false;
+            else
+                hFig = ancestor(this.widgetHandle,'Figure');
+    
+                if verLessThan('Matlab','9.0')      %version < 2016a (release of uifigs)
+                    isInUi = false;
+                elseif verLessThan('Matlab','9.5')  % 16a <= version < 2018b
+                    isInUi = ~isempty(matlab.ui.internal.dialog.DialogHelper.getFigureID(hFig));
+                else                                % version >= 2018b 
+                    isInUi = matlab.ui.internal.isUIFigure(hFig);
+                end
+            end
+        end
+    end
+
+    methods (Sealed)
+        
+        %Update function to be called when the widget should be updated
+        %(i.e. by listener to the workspaceChanged event or in
+        %initialization)
+        %Implement the protected doUpdate function in a subclass to define
+        %the update process
+        function update(this,evt)
+            try
+                if nargin == 2
+                    this.doUpdate(evt);
+                else
+                    this.doUpdate();
+                end
+            catch ME
+                %Error Handling
+                this.showWarning('Update failed',ME); %We only show a warning to not halt execution.
+            end
+        end
     end
     
     methods (Access = protected)
         
+        function this = doUpdate(this,~)
+
+        end
+
         %CREATE LAYOUT FUNCTION
         function this = createLayout(this, handleParent)
         end  

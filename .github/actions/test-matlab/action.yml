@@ -1,0 +1,56 @@
+name: 'Matlab Test'
+author: 'e0404'
+description: 'Runs a Matlab Test for a given version'
+
+inputs:
+  matlab-version:
+    description: Matlab Version, e.g. R2022b
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Get MOxUnit
+      uses: actions/checkout@v4
+      with:
+        repository: MOxUnit/MOxUnit
+        path: MOxUnit
+    - name: Get MOcov (e0404 Fork)
+      uses: actions/checkout@v4
+      with:
+        repository: e0404/MOcov
+        path: MOcov
+        ref: md5Methods
+        
+    # Install MATLAB
+    - name: Install MATLAB
+      uses: matlab-actions/setup-matlab@v2
+      with:
+        release: ${{ inputs.matlab-version }}
+        products: Image_Processing_Toolbox Parallel_Computing_Toolbox Optimization_Toolbox
+    # Runs test command
+    - name: Run Tests
+      uses: matlab-actions/run-command@v2
+      with:
+        command: back=cd('MOxUnit/MOxUnit'); moxunit_set_path; cd(back); addpath('MOcov/MOcov'); cd('matRad'); matRad_rc; moxunit_runtests('test','-recursive','-junit_xml_file','testresults.xml','-with_coverage','-cover','.','-cover_xml_file','coverage.xml','-cover_json_file','coverage.json','-cover_exclude','submodules','-cover_exclude','examples','-cover_method','profile'); exit(double(~ans))
+    
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-matlab-${{ inputs.matlab-version }}
+        path: |
+          matRad/testresults.xml
+          matRad/coverage.xml
+          matRad/coverage.json
+
+    
+    - name: Publish Test Results
+      # uses: EnricoMi/publish-unit-test-result-action@v2
+      uses: test-summary/action@v2
+      if: success() || failure()
+      with:
+        # files: |
+        #   matRad/testresults.xml
+        paths: matRad/testresults.xml
+        # check_name: "${{ github.job }}"

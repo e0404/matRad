@@ -117,11 +117,14 @@ if exist('wInit','var')
 
     % Write ixDose which is needed for the optimizer
     if pln.bioParam.bioOpt
-        dij.ixDose  = dij.bx~=0;
-
+        for s = 1:numel(dij.bx)
+            dij.ixDose{s}  = dij.bx{s}~=0;
+        end
         %pre-calculations
-        dij.gamma             = zeros(dij.doseGrid.numOfVoxels,dij.numOfScenarios);
-        dij.gamma(dij.ixDose) = dij.ax(dij.ixDose)./(2*dij.bx(dij.ixDose));
+        for s = 1:numel(dij.ixDose)
+            dij.gamma{s}             = zeros(dij.doseGrid.numOfVoxels,dij.numOfScenarios);
+            dij.gamma{s}(dij.ixDose{s}) = dij.ax{s}(dij.ixDose{s})./(2*dij.bx{s}(dij.ixDose{s}));
+        end
     end
 
 elseif strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'protons')
@@ -136,13 +139,14 @@ elseif strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'proton
     matRad_cfg.dispInfo('chosen uniform weight of %f!\n',bixelWeight);
 
 elseif pln.bioParam.bioOpt
-    % retrieve photon LQM parameter
-    [ax,bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,dij.numOfScenarios);
-
-    if ~isequal(dij.ax(dij.ax~=0),ax(dij.ax~=0)) || ...
-            ~isequal(dij.bx(dij.bx~=0),bx(dij.bx~=0))
-        matRad_cfg.dispError('Inconsistent biological parameter - please recalculate dose influence matrix!\n');
+    % retrieve photon LQM parameter 
+    [ax,bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels);
+    checkAxBx = cellfun(@(ax1,bx1,ax2,bx2) isequal(ax1(ax1~=0),ax2(ax1~=0)) && isequal(bx1(bx1~=0),bx2(bx1~=0)),dij.ax,dij.bx,ax,bx);
+    if ~all(checkAxBx)
+        matRad_cfg.dispError('Inconsistent biological parameters in dij.ax and/or dij.bx - please recalculate dose influence matrix before optimization!\n');
     end
+
+       
 
     for i = 1:size(cst,1)
 
@@ -154,8 +158,10 @@ elseif pln.bioParam.bioOpt
 
         end
     end
-
-    dij.ixDose  = dij.bx~=0;
+    
+    for s = 1:numel(dij.bx)
+        dij.ixDose{s}  = dij.bx{s}~=0;
+    end
 
     if isequal(pln.bioParam.quantityOpt,'effect')
 
@@ -170,8 +176,11 @@ elseif pln.bioParam.bioOpt
     elseif isequal(pln.bioParam.quantityOpt,'RBExD')
 
         %pre-calculations
-        dij.gamma             = zeros(dij.doseGrid.numOfVoxels,dij.numOfScenarios);
-        dij.gamma(dij.ixDose) = dij.ax(dij.ixDose)./(2*dij.bx(dij.ixDose));
+        for s = 1:numel(dij.ixDose)
+            dij.gamma{s}             = zeros(dij.doseGrid.numOfVoxels,dij.numOfScenarios);
+            dij.gamma{s}(dij.ixDose{s}) = dij.ax{s}(dij.ixDose{s})./(2*dij.bx{s}(dij.ixDose{s}));
+        end
+
 
         % calculate current effect in target
         aTmp = dij.mAlphaDose{1}*wOnes;
@@ -293,23 +302,5 @@ if pln.propOpt.boundMU
     end
 else
     matRad_cfg.dispInfo('Using standard MU bounds of [0,Inf]!\n')
-end
-
-if ~isfield(pln.propOpt,'optimizer')
-    pln.propOpt.optimizer = 'IPOPT';
-end
-
-switch pln.propOpt.optimizer
-    case 'IPOPT'
-        optimizer = matRad_OptimizerIPOPT;
-    case 'fmincon'
-        optimizer = matRad_OptimizerFmincon;
-    otherwise
-        warning(['Optimizer ''' pln.propOpt.optimizer ''' not known! Fallback to IPOPT!']);
-        optimizer = matRad_OptimizerIPOPT;
-end
-        
-if ~optimizer.IsAvailable()
-    matRad_cfg.dispError(['Optimizer ''' pln.propOpt.optimizer ''' not available!']);
 end
 

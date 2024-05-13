@@ -37,16 +37,6 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             end
             this = this@matRad_Widget(handleParent);
         end
-  
-        function this=update(this,evt)
-            if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
-                updateStructureTable(this, evalin('base','cst'));
-            else
-                set(this.handles.legendTable,'String','no data loaded');
-            end
-           
-        end
-        
     end
    
     
@@ -56,27 +46,57 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             
             matRad_cfg = MatRad_Config.instance();
             % List box of stuctures that can be selected for display
-            h87 = uicontrol(...
-                'Parent',h86,...
-                'Units','normalized',...
-                'Tooltip','Choose which structures should be displayed in the GUI',...
-                'HorizontalAlignment','left',...
-                'Max',1,...
-                'Style','listbox',...
-                'Value',1,...
-                'Position',[0.02 0.01 0.97 0.98],...
-                'BackgroundColor',matRad_cfg.gui.elementColor,...
-                'ForegroundColor',matRad_cfg.gui.textColor,...
-                'FontSize',matRad_cfg.gui.fontSize,...
-                'FontWeight',matRad_cfg.gui.fontWeight,...
-                'FontName',matRad_cfg.gui.fontName,...
-                'Callback',@(hObject,eventdata) legendTable_Callback(this,hObject,eventdata),...
-                'Tag','legendTable');
-            
+
+            if this.isInUifigure
+                pos = getpixelposition(h86);
+                h87 = uilistbox(h86);
+                h87.Position = [0 0 pos(3) pos(4)];
+                h87.Tooltip = 'Choose which structures should be displayed in the GUI';
+                h87.BackgroundColor = matRad_cfg.gui.elementColor;
+                h87.FontColor = matRad_cfg.gui.textColor;
+                h87.FontSize = matRad_cfg.gui.fontSize;
+                h87.FontWeight = matRad_cfg.gui.fontWeight;
+                h87.FontName = matRad_cfg.gui.fontName;
+                h87.ClickedFcn = @(hObject,eventdata) legendTable_Callback(this,hObject,eventdata);
+                h87.Items = {'no data loaded'};
+                h87.Tag = 'legendTable';
+            else
+                h87 = uicontrol(...
+                    'Parent',h86,...
+                    'Units','normalized',...
+                    'Tooltip','Choose which structures should be displayed in the GUI',...
+                    'HorizontalAlignment','left',...
+                    'Max',1,...
+                    'Style','listbox',...
+                    'Value',1,...
+                    'String','no data loaded',...
+                    'Position',[0.02 0.01 0.97 0.98],...
+                    'BackgroundColor',matRad_cfg.gui.elementColor,...
+                    'ForegroundColor',matRad_cfg.gui.textColor,...
+                    'FontSize',matRad_cfg.gui.fontSize,...
+                    'FontWeight',matRad_cfg.gui.fontWeight,...
+                    'FontName',matRad_cfg.gui.fontName,...
+                    'Callback',@(hObject,eventdata) legendTable_Callback(this,hObject,eventdata),...
+                    'Tag','legendTable');
+            end
             this.createHandles();
          
         end
+
+        function this=doUpdate(this,evt)
+            if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
+                updateStructureTable(this, evalin('base','cst'));
+            else
+                if this.isInUifigure()
+                    this.handles.legendTable.Items = {'no data loaded'};
+                else
+                    set(this.handles.legendTable,'String','no data loaded');
+                end
+            end           
+        end
     end
+
+    
     
     methods (Access = protected)
         function legendTable_Callback(this, hObject, event)
@@ -87,44 +107,29 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             % Hints: contents = cellstr(get(hObject,'String')) returns legendTable contents as cell array
             %        contents{get(hObject,'Value')} returns selected item from legendTable
             
-            if strcmp(get(hObject,'String'),'no data loaded')
+            if this.isInUifigure
+                content = hObject.Items;
+                idx = event.InteractionInformation.Item;
+            else
+                content = get(hObject,'String');
+                idx = get(hObject,'Value');
+            end
+            if numel(content) == 1 && strcmp(content,'no data loaded')
                 return;
             end
             
             handles = this.handles;
             cst = evalin('base','cst');
             
-            idx    = get(hObject,'Value');
-            clr    = dec2hex(round(cst{idx,5}.visibleColor(:)*255),2)';
-            clr    = ['#';clr(:)]';
-            
-            %Get the string entries
-            tmpString = get(handles.legendTable,'String');
-            
-            matRad_cfg = MatRad_Config.instance();
-            
-            % html not supported in octave       
             if handles.VOIPlotFlag(idx)
                 handles.VOIPlotFlag(idx) = false;
                 cst{idx,5}.Visible = false;
-                switch matRad_cfg.env
-                    case 'OCTAVE'
-                        tmpString{idx} = ['☐ ' cst{idx,2}];
-                    otherwise
-                        tmpString{idx} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"></TD><TD>',cst{idx,2},'</TD></TR> </table></html>'];
-                end
-            elseif ~handles.VOIPlotFlag(idx)
+            else
                 handles.VOIPlotFlag(idx) = true;
                 cst{idx,5}.Visible = true;
-                switch matRad_cfg.env
-                    case 'OCTAVE'
-                        tmpString{idx} = ['☑ ' cst{idx,2}];
-                    otherwise
-                        tmpString{idx} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"><center>&#10004;</center></TD><TD>',cst{idx,2},'</TD></TR> </table></html>'];
-                end
             end
-           
-            set(handles.legendTable,'String',tmpString);
+              
+            this.updateStructureTable(cst);
             
             % update cst in workspace accordingly
             assignin('base','cst',cst)
@@ -163,33 +168,59 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
                 end
             end
             
-            matRad_cfg = MatRad_Config.instance();
-            
             for s = 1:size(cst,1)
                 handles.VOIPlotFlag(s) = cst{s,5}.Visible;
-                clr = dec2hex(round(cst{s,5}.visibleColor(:)*255),2)';
-                clr = ['#';clr(:)]';
-                % html is not supported in octave 
                 
+                [tmpString{s},tmpStyles{s}] = this.getListEntry(cst(s,:));
+            end
+            if this.isInUifigure
+                handles.legendTable.Items = tmpString;
+                for s = 1:numel(tmpStyles)
+                    addStyle(handles.legendTable,tmpStyles{s},'Item',s);
+                end
+            else
+                set(handles.legendTable,'String',tmpString);
+            end
+            this.handles = handles;
+        end
+
+        function [item,style] = getListEntry(this,cstElement)
+            clr = cstElement{1,5}.visibleColor;
+
+            if cstElement{1,5}.Visible
+                checkbox = '☑ ';
+            else
+                checkbox = '☐ ';
+            end
+
+            % html is not supported in octave
+            if this.isInUifigure()
+                % calculate text color
+                intensity = clr * [0.299 0.587 0.114]';
+                if intensity > 150/255 %186/255 %https://stackoverflow.com/questions/3942878/how-to-decide-font-color-in-white-or-black-depending-on-background-color
+                    txtClr = [0 0 0];
+                else
+                    txtClr = [1 1 1];
+                end
+
+                item = [checkbox cstElement{1,2}];
+                style = uistyle('BackgroundColor',clr,'FontColor',txtClr);
+            else
+                matRad_cfg = MatRad_Config.instance();
                 switch matRad_cfg.env
                     case 'OCTAVE'
-                        if handles.VOIPlotFlag(s)
-                            tmpString{s} = ["o " cst{s,2}];
-                        else
-                            tmpString{s} = ["x " cst{s,2}];
-                        end
+                        item = [checkbox cstElement{1,2}];
                     otherwise
-                        if handles.VOIPlotFlag(s)
-                            tmpString{s} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"><center>&#10004;</center></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
+                        hexClr = dec2hex(round(cstElement{1,5}.visibleColor(:)*255),2)';
+                        hexClr = ['#';hexClr(:)]';
+                        if cstElement{1,5}.Visible
+                            item = ['<html><table border=0 ><TR><TD bgcolor=',hexClr,' width="18"><center>&#10004;</center></TD><TD>',cstElement{1,2},'</TD></TR> </table></html>'];
                         else
-                            tmpString{s} = ['<html><table border=0 ><TR><TD bgcolor=',clr,' width="18"></TD><TD>',cst{s,2},'</TD></TR> </table></html>'];
+                            item = ['<html><table border=0 ><TR><TD bgcolor=',hexClr,' width="18"></TD><TD>',cstElement{1,2},'</TD></TR> </table></html>'];
                         end
                 end
-                
-                
+                style = [];
             end
-            set(handles.legendTable,'String',tmpString);
-            this.handles = handles;
         end
     end
 end

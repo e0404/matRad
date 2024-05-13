@@ -50,24 +50,7 @@ classdef matRad_DVHWidget < matRad_Widget
         
         function this=initialize(this)
         end
-        
-        function this=update(this,evt)
-
-            if this.lockUpdate
-            doUpdate = true;
-                if nargin == 2
-                    doUpdate = this.checkUpdateNecessary({'resultGUI','cst','pln'},evt);
-                end
-            
-                if doUpdate && evalin('base','exist(''resultGUI'')') && evalin('base','exist(''cst'')')
-                    this.showDVH();
-                    if numel(this.widgetHandle.Children) > 2
-                        this.removeOverlap();
-                    end
-                end
-             end
-        end
-        
+                
         function removeOverlap(this)
             %Clear previous plotted objects from the figure
             delete(this.widgetHandle.Children(3));
@@ -81,6 +64,22 @@ classdef matRad_DVHWidget < matRad_Widget
             h88 = this.widgetHandle;
             this.createHandles();
             
+        end
+
+        function this = doUpdate(this,evt)
+            if this.lockUpdate
+            doUpdate = true;
+                if nargin == 2
+                    doUpdate = this.checkUpdateNecessary({'resultGUI','cst','pln'},evt);
+                end
+            
+                if doUpdate && evalin('base','exist(''resultGUI'')') && evalin('base','exist(''cst'')')
+                    this.showDVH();
+                    if numel(this.widgetHandle.Children) > 2
+                        this.removeOverlap();
+                    end
+                end
+             end
         end
     end
     

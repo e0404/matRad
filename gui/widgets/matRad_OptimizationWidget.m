@@ -36,38 +36,14 @@ classdef matRad_OptimizationWidget < matRad_Widget
                     'Name','MatRad Optimization',...
                     'NumberTitle','off',...
                     'HandleVisibility','callback',...
-                    'Tag','figure1');
-                
-                
+                    'Tag','figure1', ...
+                    'AutoResizeChildren','Off'); 
             end
             this = this@matRad_Widget(handleParent);
             
-            this.update();
+            this.initialize();
         end
-       
-        function this=initialize(this)
-            
-        end
-        
-        function this = update(this,evt)
-            
-            doUpdate = true;
-            if nargin == 2
-                %At pln changes and at cst/cst (for Isocenter and new settings) 
-                %we need to update
-                doUpdate = this.checkUpdateNecessary({'cst'},evt);
-            end
-            
-            if doUpdate
-                if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
-                    generateCstTable(this, evalin('base','cst'));
-                else
-                    delete(get(this.widgetHandle,'Children'));
-                end
-            end
-           
-        end
-               
+                              
     end
     
     methods (Access = protected)
@@ -86,6 +62,25 @@ classdef matRad_OptimizationWidget < matRad_Widget
                         
             this.createHandles();
             
+        end
+
+        function this = doUpdate(this,evt)
+            
+            doUpdate = true;
+            if nargin == 2
+                %At pln changes and at cst/cst (for Isocenter and new settings) 
+                %we need to update
+                doUpdate = this.checkUpdateNecessary({'cst_obj'},evt);
+            end
+            
+            if doUpdate
+                if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
+                    generateCstTable(this, evalin('base','cst'));
+                else
+                    delete(get(this.widgetHandle,'Children'));
+                end
+            end
+           
         end
     end
     
@@ -272,7 +267,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
                             try
                                 obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
                             catch ME
-                                matRad_cfg.dispWarning('Objective/Constraint not valid!\n%s',ME.message)
+                                this.showWarning('Objective/Constraint not valid!\n%s',ME.message)
                                 continue;
                             end
                         end
@@ -537,7 +532,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
             
             assignin('base','cst',cst);
             this.handles=handles;
-            changedWorkspace(this,'cst');
+            changedWorkspace(this,'cst_obj');
                         
         end
         function btObjRemove_Callback(this,hObject, ~)
@@ -554,7 +549,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
             
             assignin('base','cst',cst);
             this.handles=handles;
-            this.changedWorkspace('cst');
+            this.changedWorkspace('cst_obj');
             
             %generateCstTable(this,cst);
 
@@ -592,7 +587,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
                 
                 assignin('base','cst',cst);
                 this.handles=handles;
-                this.changedWorkspace('cst');
+                this.changedWorkspace('cst_obj');
                 
                 %generateCstTable(this,cst);
             end
@@ -633,12 +628,12 @@ classdef matRad_OptimizationWidget < matRad_Widget
                     cst{ix,col}.Priority = uint32(str2double(str));
                     %cst{ix,col}=setfield(cst{ix,col},'Priority',uint32(str2double(str)));
                 otherwise
-                    matRad_cfg.dispWarning('Wrong column assignment in GUI based cst setting');
+                    this.showWarning('Wrong column assignment in GUI based cst setting');
             end
             
             assignin('base','cst',cst);
             this.handles=handles;
-            this.changedWorkspace('cst');
+            this.changedWorkspace('cst_obj');
             
             %generateCstTable(this,cst);
         end
@@ -662,7 +657,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
             
             assignin('base','cst',cst);
             this.handles=handles;
-            this.changedWorkspace('cst');
+            this.changedWorkspace('cst_obj');
             
             %generateCstTable(this,cst);
             

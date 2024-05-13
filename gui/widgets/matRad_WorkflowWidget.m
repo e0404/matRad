@@ -52,12 +52,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
         function this = initialize(this)
             this.update();
         end
-        
-        function this = update(this,evt)
-            getFromWorkspace(this);
-            %updateInWorkspace(this);
-        end       
-        
+                
         
         % moved so it can be called from the toolbar button
         % H74 Callback
@@ -246,9 +241,14 @@ classdef matRad_WorkflowWidget < matRad_Widget
             this.handles=handles;
         end
         
+        function this = doUpdate(this,evt)
+            getFromWorkspace(this);
+            %updateInWorkspace(this);
+        end      
+        
         function this = getFromWorkspace(this)
             handles = this.handles;
-            
+            matRad_cfg = MatRad_Config.instance();
             % no data loaded, disable the buttons
             set(handles.txtInfo,'String','no data loaded');
             set(handles.btnCalcDose,'Enable','off');
@@ -260,8 +260,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
             set(handles.exportDicomButton,'Enable','off');
             
 
-            if evalin('base','exist(''ct'')') && ...
-                        evalin('base','exist(''cst'')')
+            if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
                     
                 set(handles.txtInfo,'String','loaded and ready');
                 
@@ -273,33 +272,47 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     set(handles.btnCalcDose,'Enable','on');
                     set(handles.btn_export,'Enable','on');
                     set(handles.exportDicomButton,'Enable','on');
-                    
-                    if evalin('base','exist(''resultGUI'')')
-                        % plan is optimized
-                        % check if dij, stf and pln match                        
-                        if matRad_comparePlnDijStf(evalin('base','pln'),evalin('base','stf'),evalin('base','dij'))
-                            set(handles.txtInfo,'String','plan is optimized');
-                            set(handles.btnOptimize ,'Enable','on'); 
+
+                    % check if stf exists
+                    if evalin('base','exist(''stf'')') 
+                        % check if dij, stf and pln match
+                       [allMatch, msg] = matRad_comparePlnStf(evalin('base','pln'),evalin('base','stf'));
+                        if allMatch
+                            % plan is ready for optimization
+                            set(handles.txtInfo,'String','ready for dose calculation');
+                            set(handles.btnOptimize ,'Enable','on');
+                        else 
+                            this.showWarning(msg);
                         end
                         
+                    end
+                    % check if dij exist
+                    if evalin('base','exist(''dij'')') && evalin('base','exist(''stf'')') 
+                        [allMatch, msg] = matRad_compareDijStf(evalin('base','stf'),evalin('base','dij'));
+                        if allMatch
+                            set(handles.txtInfo,'String','ready for optimization');
+                            set(handles.btnOptimize ,'Enable','on');
+                        else
+                            this.showWarning(msg);
+                        end
+                    end
+                    
+
+                    % does resultGUI exist
+                    if evalin('base','exist(''resultGUI'')')
                         set(handles.pushbutton_recalc,'Enable','on');
                         set(handles.btnSaveToGUI,'Enable','on');
                         % resultGUI struct needs to be available to import dose
                         % otherwise inconsistent states can be achieved
                         set(handles.importDoseButton,'Enable','on');
-                        
-                    elseif evalin('base','exist(''dij'')') &&  evalin('base','exist(''stf'')')
-                        % check if dij, stf and pln match
-                        if matRad_comparePlnDijStf(evalin('base','pln'),evalin('base','stf'),evalin('base','dij'))
-                            % plan is ready for optimization
-                            set(handles.txtInfo,'String','ready for optimization');
-                            set(handles.btnOptimize ,'Enable','on');
-                        end
                     end
                 end
+            else
+                % Do Nothing
             end
             this.handles=handles;
         end
+        
         
     end
     methods (Access = private)
@@ -383,12 +396,8 @@ classdef matRad_WorkflowWidget < matRad_Widget
             
             % carry out dose calculation
             try
-                if strcmp(pln.radiationMode,'photons')
-                    dij = matRad_calcPhotonDose(evalin('base','ct'),stf,pln,evalin('base','cst'));
-                elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-                    dij = matRad_calcParticleDose(evalin('base','ct'),stf,pln,evalin('base','cst'));
-                end
-                
+                dij = matRad_calcDoseInfluence(evalin('base','ct'),evalin('base','cst'),stf,pln);
+                               
                 % assign results to base worksapce
                 assignin('base','dij',dij);
                 
@@ -431,7 +440,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 cst = evalin('base','cst');
                 % optimize
                 [resultGUIcurrentRun,usedOptimizer] = matRad_fluenceOptimization(dij,cst,pln);
-                if pln.propOpt.conf3D && strcmp(pln.radiationMode,'photons')
+                if isfield(pln,'propOpt') && isfield(pln.propOpt,'conf3D') && pln.propOpt.conf3D && strcmp(pln.radiationMode,'photons')
                     resultGUIcurrentRun.w = resultGUIcurrentRun.w .* ones(dij.totalNumOfBixels,1);  
                     resultGUIcurrentRun.wUnsequenced = resultGUIcurrentRun.w;
                 end
@@ -580,7 +589,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
 
                 
                 if sum([stf.totalNumOfBixels]) ~= length(resultGUI.w)%(['w' Suffix]))
-                    warndlg('weight vector does not corresponding to current steering file');
+                    this.showWarning('weight vector does not corresponding to current steering file');
                     return
                 end
                 
@@ -590,20 +599,12 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     stf(i).isoCenter = pln.propStf.isoCenter(i,:);
                 end
                 
-                % recalculate influence matrix
-                if strcmp(pln.radiationMode,'photons')
-                    dij = matRad_calcPhotonDose(ct,stf,pln,cst);
-                elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-                    dij = matRad_calcParticleDose(ct,stf,pln,cst);
-                end
-                
-                % recalculate cubes in resultGUI
-                resultGUIreCalc = matRad_calcCubes(resultGUI.w,dij); %(['w' Suffix])
+                resultGUIreCalc = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
                 
                 % delete old variables to avoid confusion
                 if isfield(resultGUI,'effect')
                     resultGUI = rmfield(resultGUI,'effect');
-                    resultGUI = rmfield(resultGUI,'RBExDose');
+                    resultGUI = rmfield(resultGUI,'RBExD');
                     resultGUI = rmfield(resultGUI,'RBE');
                     resultGUI = rmfield(resultGUI,'alpha');
                     resultGUI = rmfield(resultGUI,'beta');
@@ -616,7 +617,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 end
                 
                 % assign results to base worksapce
-                assignin('base','dij',dij);
+                %assignin('base','dij',dij);
                 assignin('base','resultGUI',resultGUI);
 
                 
@@ -625,7 +626,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 set(InterfaceObj,'Enable','on');
                
                 this.handles = handles;
-                this.changedWorkspace('dij','resultGUI');
+                this.changedWorkspace('resultGUI');
                 
             catch ME
                 % change state from busy to normal
@@ -712,8 +713,8 @@ classdef matRad_WorkflowWidget < matRad_Widget
             
             if ~strcmp(pln.propOpt.bioOptimization,'none')
                 
-                if isfield(resultGUI,'RBExDose')
-                    resultGUI.(['RBExDose' Suffix]) = resultGUI.RBExDose;
+                if isfield(resultGUI,'RBExD')
+                    resultGUI.(['RBExD' Suffix]) = resultGUI.RBExD;
                 end
                 
                 if strcmp(pln.radiationMode,'carbon') == 1
@@ -783,7 +784,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     [~,name,~] = fileparts(filename{1});
                     [cube,~] = matRad_readCube(fullfile(filepath,filename{1}));
                     if ~isequal(ct.cubeDim, size(cube))
-                        errordlg('Dimensions of the imported cube do not match with ct','Import failed!','modal');
+                        this.showError('Dimensions of the imported cube do not match with ct','Import failed!','modal');
                         continue;
                     end
                     

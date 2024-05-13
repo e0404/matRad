@@ -77,7 +77,14 @@ for s = 1:size(cst,1)
         %Check for precalculated contours
         C =[];
         if size(cst,2) >= 7 && ~isempty(cst{s,7})
-            C = cst{s,7}{ctIndex}{slice,plane};
+            %Downwards compatibility
+            if (numel(cst{s,7}) == 1 && ctIndex > numel(cst{s,7})) || ~iscell(cst{s,7}{ctIndex})
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispWarning("Recognizing old cst (<= matRad 2.10.1)! Format of storing contours has changed, contours on multiple ct scenarios might be wrong!");
+                C = cst{s,7}{slice,plane};
+            else
+                C = cst{s,7}{ctIndex}{slice,plane};
+            end
         else
             %If we do not have precomputed contours available, then compute them
             mask = zeros(ct.cubeDim);

@@ -22,7 +22,7 @@ classdef MatRad_Config < handle
     properties
 
         %Logging
-        logLevel = 3; %1 = only Errors, 2 = with Warnings, 3 = Info output, 4 = deprecation warnings, 5 = debug information
+        logLevel = 4; %1 = only Errors, 2 = with Warnings, 3 = Info output, 4 = deprecation warnings, 5 = debug information
         keepLog = false; %Stores the full log in memory
         writeLog = false; %Writes the log to a file on-the-fly
 
@@ -36,6 +36,7 @@ classdef MatRad_Config < handle
 
         %Disable GUI
         disableGUI = false;
+
         devMode = false;
         eduMode = false;
         
@@ -52,11 +53,10 @@ classdef MatRad_Config < handle
         isOctave; %Helper bool to check for Octave
         isMatlab; %Helper bool to check for Matlab
         matRad_version; %MatRad version string
+
+        matRadRoot; %Path to matRadRoot
     end
 
-    properties (SetAccess = private)
-        matRadRoot;
-    end
     methods (Access = private)
         function obj = MatRad_Config()
             %MatRad_Config Constructs an instance of this class.
@@ -64,7 +64,6 @@ classdef MatRad_Config < handle
             %  Therefore its constructor is private
             %  For instantiation, use the static MatRad_Config.instance();
             
-
             %Set Path
             obj.matRadRoot = fileparts(mfilename('fullpath'));
             addpath(genpath(obj.matRadRoot));
@@ -140,7 +139,7 @@ classdef MatRad_Config < handle
 
                         err.message = sprintf(forwardArgs{:});
                         err.identifier = 'matRad:Error';
-                        err.stack = dbstack(2);
+                        %err.stack = dbstack(2);
                         error(err);
 
                     end
@@ -165,30 +164,37 @@ classdef MatRad_Config < handle
             %setDefaultProperties set matRad's default computation
             %   properties
             %  input
-
+            
+            %Geometric stf options
             obj.propStf.defaultLongitudinalSpotSpacing = 2;
             obj.propStf.defaultAddMargin = true; %expand target for beamlet finding
-
             obj.propStf.defaultBixelWidth = 5;
+          
+            %Dose Calculation Options
+            obj.propDoseCalc.defaultDoseEngines = {'SVDPB','HongPB'}; %Names for default engines used when no other is given
             obj.propDoseCalc.defaultResolution = struct('x',3,'y',3,'z',3); %[mm]
-            obj.propDoseCalc.defaultLateralCutOff = 0.995; %[rel.]
-            obj.propDoseCalc.defaultGeometricCutOff = 50; %[mm]
+            obj.propDoseCalc.defaultDosimetricLateralCutOff = 0.995; %[rel.]
+            obj.propDoseCalc.defaultGeometricLateralCutOff = 50; %[mm]
             obj.propDoseCalc.defaultKernelCutOff = Inf; %[mm]
             obj.propDoseCalc.defaultSsdDensityThreshold = 0.05; %[rel.]
             obj.propDoseCalc.defaultUseGivenEqDensityCube = false; %Use the given density cube ct.cube and omit conversion from cubeHU.
             obj.propDoseCalc.defaultIgnoreOutsideDensities = true; %Ignore densities outside of cst contours
-            obj.propDoseCalc.defaultVoxelSubIx = []; %Allows specification of a subindex list for dose calculation, empty by default means automatic setting
             obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
             obj.propDoseCalc.defaultCalcLET = true; %calculate LETs for particles
             obj.propDoseCalc.defaultSelectVoxelsInScenarios = 'all';
-
             obj.propDoseCalc.defaultAirOffsetCorrection = true;
 
-            obj.propOpt.defaultMaxIter = 10000;
-            obj.propOpt.defaultRunDAO = 0;
-            obj.propOpt.defaultRunSequencing = 0;
-            obj.propOpt.defaultClearUnusedVoxels = false;
-            
+            % default properties for fine sampling calculation
+            obj.propDoseCalc.defaultFineSamplingProperties.sigmaSub = 1;
+            obj.propDoseCalc.defaultFineSamplingProperties.N = 2;
+            obj.propDoseCalc.defaultFineSamplingProperties.method = 'fitCircle';
+
+            %Monte Carlo options
+            obj.propDoseCalc.defaultNumHistoriesPerBeamlet = 2e4;
+            obj.propDoseCalc.defaultNumHistoriesDirect = 1e6;
+            obj.propDoseCalc.defaultOutputMCvariance = true;
+
+            %deprecated monte carlo options
             obj.propMC.ompMC_defaultHistories = 1e6;
             obj.propMC.ompMC_defaultOutputVariance = false;
 
@@ -206,11 +212,14 @@ classdef MatRad_Config < handle
             obj.propMC.defaultExternalCalculation = false;
             obj.propMC.defaultCalcDij = false;
 
-            % default properties for fine sampling calculation
-            obj.propDoseCalc.fineSampling.defaultSigmaSub = 1;
-            obj.propDoseCalc.fineSampling.defaultN = 21;
-            obj.propDoseCalc.fineSampling.defaultMethod = 'russo';
-            obj.propDoseCalc.fineSampling.defaultCalcMode = 'standard';
+
+            %Default Optimization Options
+            obj.propOpt.defaultMaxIter = 10000;
+            obj.propOpt.defaultRunDAO = 0;
+            obj.propOpt.defaultRunSequencing = 0;
+            obj.propOpt.defaultClearUnusedVoxels = false;
+            
+
 
             obj.disableGUI = false;
             
@@ -228,43 +237,33 @@ classdef MatRad_Config < handle
 
             obj.setDefaultProperties();
 
-            obj.logLevel   = 3; %Omit output except errors
-
+            obj.logLevel = 1; %Omit output except errors
+            
+            %Geomteric stf options
             obj.propStf.defaultLongitudinalSpotSpacing = 20;
-            obj.propStf.defaultAddMargin = true; %expand target for beamlet finding
-
             obj.propStf.defaultBixelWidth = 20;
             
+            %Dose Calculation Options
             obj.propDoseCalc.defaultResolution = struct('x',5,'y',6,'z',7); %[mm]
-            obj.propDoseCalc.defaultGeometricCutOff = 20;
-            obj.propDoseCalc.defaultLateralCutOff = 0.8;
+            obj.propDoseCalc.defaultGeometricLateralCutOff = 20;
+            obj.propDoseCalc.defaultDosimetricLateralCutOff = 0.8;
             obj.propDoseCalc.defaultKernelCutOff = 20; %[mm]
             obj.propDoseCalc.defaultSsdDensityThreshold = 0.05;
-            obj.propDoseCalc.defaultUseGivenEqDensityCube = false; %Use the given density cube ct.cube and omit conversion from cubeHU.
-            obj.propDoseCalc.defaultIgnoreOutsideDensities = true;
-            obj.propDoseCalc.defaultVoxelSubIx = []; %Allows specification of a subindex list for dose calculation, empty by default means automatic setting
-            obj.propDoseCalc.defaultUseCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
-            obj.propDoseCalc.defaultCalcLET = true; %calculate LET for particles
-            obj.propDoseCalc.defaultSelectVoxelsInScenarios = 'all';
-
-            % default properties for fine sampling calculation
-            obj.propDoseCalc.fineSamplingProperties.sigmaSub = 2;
-            obj.propDoseCalc.fineSamplingProperties.N = 5;
-            obj.propDoseCalc.fineSamplingProperties.method = 'russo';
-
-            obj.propOpt.defaultMaxIter = 10;
-            obj.propOpt.defaultClearUnusedVoxels = false;
-
+                      
+            %Monte Carlo options
+            obj.propDoseCalc.defaultNumHistoriesPerBeamlet = 100;
+            obj.propDoseCalc.defaultNumHistoriesDirect = 100;
+            obj.propDoseCalc.defaultOutputMCvariance = true;
+            
+            %Deprecated Monte Carlo options
             obj.propMC.ompMC_defaultHistories = 100;
             obj.propMC.ompMC_defaultOutputVariance = true;
 
             % Set default histories for MonteCarlo
             obj.propMC.defaultNumHistories = 100;
 
-            obj.propMC.default_photon_engine = 'matRad_OmpConfig';
-            %             obj.propMC.default_photon_engine = 'matRad_TopasConfig';
-            obj.propMC.default_proton_engine = 'matRad_MCsquareConfig';
-            obj.propMC.default_carbon_engine = 'matRad_TopasConfig';
+            % default optimization options
+            obj.propOpt.defaultMaxIter = 10;
 
             obj.defaults.samplingScenarios = 2;
 
@@ -340,7 +339,17 @@ classdef MatRad_Config < handle
             %    formatSpec: 	string to print using format specifications
             %                   similar to 'error'
             %    varargin:   	variables according to formatSpec
-            obj.displayToConsole('error',formatSpec,varargin{:});
+
+            try
+                obj.displayToConsole('error',formatSpec,varargin{:});
+            catch ME
+                if obj.isOctave
+                    ME.stack = ME.stack(3:end); % Removes the dispError and dispToConsole from the stack
+                    error(ME);
+                else
+                    throwAsCaller(ME);
+                end
+            end
         end
 
         function dispWarning(obj,formatSpec,varargin)

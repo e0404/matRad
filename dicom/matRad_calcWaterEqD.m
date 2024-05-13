@@ -1,19 +1,18 @@
-function ct = matRad_calcWaterEqD(ct, pln)
+function ct = matRad_calcWaterEqD(ct, radiationMode)
 % matRad function to calculate the equivalent densities from a dicom ct 
 % that originally uses intensity values
 %
 % call
-%   ct = matRad_calcWaterEqD(ct, pln)
+%   ct = matRad_calcWaterEqD(ct, radiationMode)
 %
 % input
-%   ct: unprocessed dicom ct data which are stored as intensity values (IV)
-%
-%       HU = IV * slope + intercept
-%
-%   pln: matRad plan struct
+%   ct:             ct containing a cubeHU to compute rED/rSP values from
+%   radiationMode:  radiationMode as character array (e.g. 'photons') since matRad 3.
+%                   Can also be a pln-struct for downwards compatibility
 %
 % output
-%   ct: ct struct with cube with relative _electron_ densities
+%   ct: ct struct with cube with relative _electron_ densities stored in
+%   ct.cube
 %
 % References
 %   -
@@ -31,10 +30,11 @@ function ct = matRad_calcWaterEqD(ct, pln)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% load hlut
-hlut = matRad_loadHLUT(ct, pln);
 
 matRad_cfg = MatRad_Config.instance();
+
+% load hlut
+hlut = matRad_loadHLUT(ct, radiationMode);  
 
 for i = 1:ct.numOfCtScen
 

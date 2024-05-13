@@ -53,11 +53,17 @@ classdef matRad_StatisticsWidget < matRad_Widget
               end
               this = this@matRad_Widget(handleParent);
               this.selectedCube = SelectedCube;
+        end       
+    end
+    
+    methods(Access = protected)
+        function this = createLayout(this)
+            h88 = this.widgetHandle;           
+            this.createHandles();
+            
         end
 
-        
-        function this=update(this)
-
+        function this=doUpdate(this)
             if this.lockUpdate
                 doUpdate = true;
                 if nargin == 2
@@ -72,14 +78,6 @@ classdef matRad_StatisticsWidget < matRad_Widget
                     this.showStatistics();
                 end
             end
-        end
-    end
-    
-    methods(Access = protected)
-        function this = createLayout(this)
-            h88 = this.widgetHandle;           
-            this.createHandles();
-            
         end
     end
     

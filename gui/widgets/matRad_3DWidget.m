@@ -60,9 +60,16 @@ classdef matRad_3DWidget < matRad_ViewingWidget
         
         function this=initialize(this)
             
+        end        
+    end
+    
+    methods(Access = protected)
+        function this = createLayout(this)
+            h88 = this.widgetHandle;
+            this.createHandles();
         end
-        
-        function this=update(this,~)            
+
+        function this=doUpdate(this,~)
             if this.lockUpdate
                 if ~isempty(this.viewingWidgetHandle) && isvalid(this.viewingWidgetHandle)
                     this.lockUpdate=false;
@@ -77,21 +84,10 @@ classdef matRad_3DWidget < matRad_ViewingWidget
                             end
                         end
                     end
-                    this.lockUpdate=true;   
+                    this.lockUpdate=true;
                 end
-                 
                 this.plot3D();
             end
-           
-        end
-        
-    end
-    
-    methods(Access = protected)
-        function this = createLayout(this)
-            h88 = this.widgetHandle;
-            this.createHandles();
-            
         end
     end
     

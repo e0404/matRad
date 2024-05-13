@@ -29,7 +29,7 @@ amplitude    = [0 3 0]; % [voxels]
 numOfCtScen  = 5;
 motionPeriod = 2.5; % [s] 
 
-[ct,cst] = matRad_addMovement(ct, cst,motionPeriod, numOfCtScen, amplitude);
+[ct,cst] = matRad_addMovement(ct, cst,motionPeriod, numOfCtScen, amplitude,'dvfType','pull');
 % Set up a plan, compute dose influence on all phases, conventional optimization
 % meta information for treatment plan
 pln.numOfFractions  = 30;

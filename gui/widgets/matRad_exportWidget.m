@@ -311,10 +311,10 @@ classdef matRad_exportWidget < matRad_Widget
             
             %Sanity check
             if numel(exportDir) == 0
-                errordlg('No Export folder selected!');
+                this.showError('No Export folder selected!');
                 return;
             elseif ~exist(exportDir,'dir')
-                errordlg(['Folder ' exportDir ' does not exist!']);
+                this.showError(['Folder ' exportDir ' does not exist!']);
                 return;
             else
                 %Add file separator if necessary
@@ -337,7 +337,7 @@ classdef matRad_exportWidget < matRad_Widget
                 voiDir = [exportDir '/vois/'];
                 if ~exist(voiDir,'dir')
                     if ~mkdir(voiDir)
-                        warndlg('Could not create subfolder for VOI masks. Masks will be stored in base folder.');
+                        this.showWarning('Could not create subfolder for VOI masks. Masks will be stored in base folder.');
                         voiDir = exportDir;
                     end
                 end
@@ -348,7 +348,7 @@ classdef matRad_exportWidget < matRad_Widget
                 resultDir = [exportDir '/results/'];
                 if ~exist(resultDir,'dir')
                     if ~mkdir(resultDir)
-                        warndlg('Could not create subfolder for resulting dose cubes. Cubes will be stored in base folder.');
+                        this.showWarning('Could not create subfolder for resulting dose cubes. Cubes will be stored in base folder.');
                         resultDir = exportDir;
                     end
                 end
@@ -372,7 +372,7 @@ classdef matRad_exportWidget < matRad_Widget
                 end
                 
                 %This is only for the waitbar to get the number of cubes you wanna save
-                numExportCubes = 0;
+                numExportCubes = 0;error
                 if (saveCT)
                     if isfield(ct,'cubeHU')
                         numExportCubes = numExportCubes + 1;
@@ -397,7 +397,7 @@ classdef matRad_exportWidget < matRad_Widget
                 
                 %Give an error if nothing was selected
                 if numExportCubes == 0
-                    errordlg('No data was selected for export!');
+                    this.showError('No data was selected for export!');
                     return;
                 end
                 
@@ -442,7 +442,7 @@ classdef matRad_exportWidget < matRad_Widget
                     
                 end
             catch ME
-                warning(ME.identifier,'couldn''t export! Reason: %s\n',ME.message)
+                this.showWarning('couldn''t export! Reason: %s\n',ME.message)
             end
             %Results Export
             if saveResults
@@ -522,7 +522,7 @@ classdef matRad_exportWidget < matRad_Widget
             
             %Check if the user specified an existing directory
             if ~exist(exportDir,'dir')
-                warndlg(['Folder ' exportDir ' does not exist!']);
+                this.showWarning(['Folder ' exportDir ' does not exist!']);
                 exportDir = '';
             end
             

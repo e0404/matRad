@@ -32,10 +32,12 @@ function resultGUI = matRad_calcCubes(w,dij,scenNum)
 if nargin < 3
     scenNum = 1;
 end
-resultGUI = matRad_calcCubesDoseGrid(w,dij,scenNum)
+
+% First calculate on dose grid
+resultGUI = matRad_calcCubesDoseGrid(w,dij,scenNum);
 
 % interpolation if dose grid does not match ct grid
-if any(dij.ctGrid.dimensions~=dij.doseGrid.dimensions)
+if isfield(dij,'ctGrid') && any(dij.ctGrid.dimensions~=dij.doseGrid.dimensions)
     myFields = fieldnames(resultGUI);
     for i = 1:numel(myFields)
         if numel(resultGUI.(myFields{i})) == dij.doseGrid.numOfVoxels

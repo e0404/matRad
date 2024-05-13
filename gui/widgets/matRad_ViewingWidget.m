@@ -110,46 +110,9 @@ classdef matRad_ViewingWidget < matRad_Widget
                     this.zoomHandle = zoom(this.widgetHandle);
                 end
             end
-            this.update();
+            this.initialize();
         end
-        
-        function this=initialize(this)
-%             updateIsoDoseLineCache(this);
-            %update(this);
-             
-        end
-        
-        function this=update(this,evt)
-            if ~this.lockUpdate
-            
-                doUpdate = false;
-                if nargin == 2
-                    %At pln changes and at cst/cst (for Isocenter and new settings) 
-                    %we need to update
-                    doUpdate = this.checkUpdateNecessary({'pln','ct','cst','resultGUI'},evt);
-                end
-            
-                if ~doUpdate || this.checkUpdateNecessary({'pln','ct','resultGUI'},evt)
-                   this.initValues();
-                end
-                            
-                this.updateValues();
-                this.updateIsoDoseLineCache(); 
-                % Update plot only if there are changes to ct, resultGUI.
-                % for matRad Gui startup/ intializing viewing widget
-                %  evt does not exist, then catch segment 
-           
-                try
-                    if  this.checkUpdateNecessary({'ct','resultGUI'},evt)
-                        this.UpdatePlot();
-                    end
-                catch
-                    this.UpdatePlot();
-                end
-            end
-            
-        end
-        
+                        
         function notifyPlotUpdated(obj)
             % handle environment
             matRad_cfg = MatRad_Config.instance();
@@ -362,19 +325,25 @@ classdef matRad_ViewingWidget < matRad_Widget
                 'XTickLabel',{  '0'; '0.1'; '0.2'; '0.3'; '0.4'; '0.5'; '0.6'; '0.7'; '0.8'; '0.9'; '1' },...
                 'YTick',[0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1],...
                 'YTickLabel',{  '0'; '0.1'; '0.2'; '0.3'; '0.4'; '0.5'; '0.6'; '0.7'; '0.8'; '0.9'; '1' },...
+                'Units','normalized',...
                 'Position',[0.0718390804597701 0.0654391371340524 0.902298850574712 0.899121725731895],...
                  'Tag','axesFig'); 
                  
             %Title
             h90 = get(h89,'title');
             
-            set(h90,...
+            set(h90, ...
                 'Parent',h89,...
+                'Visible','on',...
                 'Units','data',...
+                'Position',[0.500000554441759 1.00453467465753 0.5],...
+                'PositionMode','auto', ...
+                'Margin',2,...
+                'Clipping','off',...
                 'FontUnits','points',...
                 'Color',[0 0 0],...
-                'Position',[0.500000554441759 1.00453467465753 0.5],...
-                'PositionMode','auto',...
+                'BackgroundColor','none',...
+                'EdgeColor','none',...
                 'Interpreter','tex',...
                 'Rotation',0,...
                 'RotationMode','auto',...
@@ -385,22 +354,14 @@ classdef matRad_ViewingWidget < matRad_Widget
                 'HorizontalAlignment','center',...
                 'HorizontalAlignmentMode','auto',...
                 'VerticalAlignment','bottom',...
-                'VerticalAlignmentMode','auto',...
-                'EdgeColor','none',...
+                'VerticalAlignmentMode','auto', ...
                 'LineStyle','-',...
                 'LineWidth',0.5,...
-                'BackgroundColor','none',...
-                'Margin',2,...
-                'Clipping','off',...
-                'XLimInclude','on',...
-                'YLimInclude','on',...
-                'ZLimInclude','on',...
-                'Visible','on',...
                 'HandleVisibility','off',...
                 'BusyAction','queue',...
                 'Interruptible','on',...
                 'HitTest','on');
-                
+
             %X Label
             h91 = get(h89,'xlabel');
             
@@ -428,9 +389,6 @@ classdef matRad_ViewingWidget < matRad_Widget
                 'BackgroundColor','none',...
                 'Margin',3,...
                 'Clipping','off',...
-                'XLimInclude','on',...
-                'YLimInclude','on',...
-                'ZLimInclude','on',...
                 'Visible','on',...
                 'HandleVisibility','off',...
                 'BusyAction','queue',...
@@ -464,9 +422,6 @@ classdef matRad_ViewingWidget < matRad_Widget
                 'BackgroundColor','none',...
                 'Margin',3,...
                 'Clipping','off',...
-                'XLimInclude','on',...
-                'YLimInclude','on',...
-                'ZLimInclude','on',...
                 'Visible','on',...
                 'HandleVisibility','off',...
                 'BusyAction','queue',...
@@ -500,9 +455,6 @@ classdef matRad_ViewingWidget < matRad_Widget
                 'BackgroundColor','none',...
                 'Margin',3,...
                 'Clipping','off',...
-                'XLimInclude','on',...
-                'YLimInclude','on',...
-                'ZLimInclude','on',...
                 'Visible','off',...
                 'HandleVisibility','off',...
                 'BusyAction','queue',...
@@ -510,6 +462,33 @@ classdef matRad_ViewingWidget < matRad_Widget
                 'HitTest','on');           
             
             this.createHandles();
+            
+        end
+    
+        function this=doUpdate(this,evt)
+            if ~this.lockUpdate
+            
+                doUpdate = false;
+                if nargin == 2
+                    %At pln changes and at cst/cst (for Isocenter and new settings) 
+                    %we need to update
+                    doUpdate = this.checkUpdateNecessary({'pln_display','ct','cst','resultGUI'},evt);
+                end
+            
+                if ~doUpdate || this.checkUpdateNecessary({'pln','ct','resultGUI'},evt)
+                   this.initValues();
+                end
+                            
+                this.updateValues();
+                this.updateIsoDoseLineCache(); 
+                % Update plot only if there are changes to ct, resultGUI and cst structures.
+                % or on initialization
+           
+                if  doUpdate || nargin == 1
+                    this.UpdatePlot();
+                end
+             
+            end
             
         end
     end
@@ -686,13 +665,13 @@ classdef matRad_ViewingWidget < matRad_Widget
             ratios = [1/ct.resolution.x 1/ct.resolution.y 1/ct.resolution.z];
             set(handles.axesFig,'DataAspectRatioMode','manual');
             if this.plane == 1
-                res = [ratios(3) ratios(2)]./max([ratios(3) ratios(2)]);
-                set(handles.axesFig,'DataAspectRatio',[res 1])
-            elseif this.plane == 2 % sagittal plane
                 res = [ratios(3) ratios(1)]./max([ratios(3) ratios(1)]);
                 set(handles.axesFig,'DataAspectRatio',[res 1])
+            elseif this.plane == 2 % sagittal plane
+                res = [ratios(3) ratios(2)]./max([ratios(3) ratios(2)]);
+                set(handles.axesFig,'DataAspectRatio',[res 1])
             elseif  this.plane == 3 % Axial plane
-                res = [ratios(2) ratios(1)]./max([ratios(2) ratios(1)]);
+                res = [ratios(1) ratios(2)]./max([ratios(1) ratios(2)]);
                 set(handles.axesFig,'DataAspectRatio',[res 1])
             end
             
@@ -705,7 +684,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                     load(fileName);
                     SAD = machine.meta.SAD;
                 catch
-                    error(['Could not find the following machine file: ' fileName ]);
+                    this.showError(['Could not find the following machine file: ' fileName ]);
                 end
                 
                 % clear view and initialize some values
@@ -975,10 +954,10 @@ classdef matRad_ViewingWidget < matRad_Widget
                         cubePos(this.plane) = this.slice;
                         cubePos(1:end ~= this.plane) = fliplr(pos);
                         cubeIx = round(cubePos);
-                        
+                        vCubeIdx = [cubeIx(2),cubeIx(1),cubeIx(3)];
                         %Here comes the index permutation stuff
                         %Cube Index
-                        cursorText{end+1,1} = ['Cube Index: ' mat2str(cubeIx)];
+                        cursorText{end+1,1} = ['Cube Index: ' mat2str(vCubeIdx)];
                         %Space Coordinates
                         coords = zeros(1,3);
                         coords(1) = cubePos(2)*ct.resolution.y;
@@ -1251,7 +1230,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                                    
             if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')') &&  evalin('base','exist(''pln'')')
                 % update slice, beam and offset sliders parameters
-                pln= evalin('base','pln');
+                pln = evalin('base','pln');
                 ct = evalin('base','ct');
                 cst = evalin('base','cst');
                 this.cst = cst;
@@ -1292,12 +1271,12 @@ classdef matRad_ViewingWidget < matRad_Widget
                     dose = Result.(this.SelectedDisplayOption);
                     
                     %if the workspace has changed update the display parameters
+                    upperMargin = 1;
                     if  isempty(this.dispWindow{2,1}) || ~this.lockColorSettings
                         this.dispWindow{2,1} = [min(dose(:)) max(dose(:))]; % set default dose range
                         this.dispWindow{2,2} = [min(dose(:)) max(dose(:))]; % set min max values
                         
                         % if upper colorrange is defined then use it otherwise 120% iso dose
-                        upperMargin = 1;
                         if abs((max(dose(:)) - this.dispWindow{2,1}(1,2))) < 0.01  * max(dose(:))
                             upperMargin = 1.2;
                         end
