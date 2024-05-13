@@ -48,6 +48,8 @@ end
 beamInfo(dij.numOfBeams+1).suffix = '';
 beamInfo(dij.numOfBeams+1).logIx  = true(size(resultGUI.w,1),1);
 
+[ctScen,~] = ind2sub(size(dij.physicalDose),scenNum);
+
 
 %% Physical Dose
 doseFields = {'physicalDose','doseToWater'};
