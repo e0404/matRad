@@ -24,7 +24,7 @@ load BOXPHANTOM.mat
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
 %pln.machine         = 'generic_TOPAS_cropped';
-pln.machine         = 'generic_MCsquare';
+pln.machine         = 'HITfixedBL';
 
 
 pln.numOfFractions  = 1;
@@ -39,9 +39,9 @@ pln.propStf.isoCenter               = ones(pln.propStf.numOfBeams,1) * matRad_ge
 %pln.propStf.isoCenter       = [51 0 51];
                             
 % dose calculation settings
-pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]
-pln.propDoseCalc.doseGrid.resolution.y = 5; % [mm]
-pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
+pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
 %pln.propDoseCalc.doseGrid.resolution = ct.resolution;
 
 %Turn on to correct for nozzle-to-skin air WEPL in analytical calculation
@@ -78,9 +78,10 @@ pln.propDoseCalc.calcLET = true;
 stf = matRad_generateSingleBixelStf(ct,cst,pln); %Example to create a single beamlet stf
 
 %% analytical dose calculation
-pln.propDoseCalc.engine = 'HongPB';
-dij = matRad_calcParticleDose(ct, stf, pln, cst); %Calculate particle dose influence matrix (dij) with analytical algorithm
-%dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,1e4); %Calculate particle dose influence matrix (dij) with MC algorithm (slow!!)
+pln.propDoseCalc.engine = 'MCsquare';
+pln.propDoseCalc.numHistoriesPerBeamlet = 1e4;
+
+dij = matRad_calcDoseInfluence(ct, cst,stf, pln); %Calculate particle dose influence matrix (dij) with analytical algorithm
 
 resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij); %Use uniform weights
 %resultGUI = matRad_fluenceOptimization(dij,cst,pln); %Optimize
@@ -102,7 +103,7 @@ matRad_compareDose(resultGUI.physicalDose, resultGUI.(['physicalDose_' pln.propD
 
 %% Compare LET
 if isfield(resultGUI,'LET') && isfield(resultGUI_MC,'LET')
-    matRad_compareDose(resultGUI.LET, resultGUI.(['LET_' pln.propMC.engine]), ct, cst, [1, 1, 0] , 'off', pln, [2, 2], 1, 'global');    
+    matRad_compareDose(resultGUI.LET, resultGUI.(['LET_' pln.propDoseCalc.engine]), ct, cst, [1, 1, 0] , 'off', pln, [2, 2], 1, 'global');    
 end
 
 %% GUI
