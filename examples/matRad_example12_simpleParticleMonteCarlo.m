@@ -62,16 +62,9 @@ pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't /
 % retrieve scenarios for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,'nomScen'); % optimize on the nominal scenario     
 
-% select Monte Carlo engine ('MCsquare' very fast for physical protons, 'TOPAS' slow but versatile for everything else)
-pln.propMC.engine = 'MCsquare';
-% pln.propMC.engine = 'TOPAS';
-
-% set number of histories lower than default for this example (default: 1e8)
-pln.propMC.numHistories = 1e7;
-
 %Enable/Disable use of range shifter (has effect only when we need to fill 
 %up the low-range region)
-pln.propStf.useRangeShifter = true;  
+pln.propStf.useRangeShifter = false;  
 
 %Enable LET calculation
 pln.propDoseCalc.calcLET = true;
@@ -81,24 +74,30 @@ pln.propDoseCalc.calcLET = true;
 % pln.propMC.externalCalculation = true;
 
 %% generate steering file
-stf = matRad_generateStf(ct,cst,pln);
-%stf = matRad_generateSingleBixelStf(ct,cst,pln); %Example to create a single beamlet stf, WARNING: this sometimes does not produce all required output files (TODO: check this)
+%stf = matRad_generateStf(ct,cst,pln);
+stf = matRad_generateSingleBixelStf(ct,cst,pln); %Example to create a single beamlet stf
 
 %% analytical dose calculation
+pln.propDoseCalc.engine = 'HongPB';
 dij = matRad_calcParticleDose(ct, stf, pln, cst); %Calculate particle dose influence matrix (dij) with analytical algorithm
 %dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,1e4); %Calculate particle dose influence matrix (dij) with MC algorithm (slow!!)
 
+resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij); %Use uniform weights
+%resultGUI = matRad_fluenceOptimization(dij,cst,pln); %Optimize
 
-resultGUI = matRad_fluenceOptimization(dij,cst,pln); %Optimize
-%resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij); %Use uniform weights
 
 %% Monte Carlo dose calculation
-%resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
-resultGUI_MC = matRad_calcDoseDirectMC(ct,stf,pln,cst,resultGUI.w);
+% select Monte Carlo engine ('MCsquare' very fast for physical protons, 'TOPAS' slow but versatile for everything else)
+pln.propDoseCalc.engine = 'MCsquare';
+% pln.propDoseCalc.engine = 'TOPAS';
 
-%% Compare Dose (number of histories not sufficient for accurate representation)
-resultGUI = matRad_appendResultGUI(resultGUI,resultGUI_MC,true,pln.propMC.engine);
-matRad_compareDose(resultGUI.physicalDose, resultGUI.(['physicalDose_' pln.propMC.engine]), ct, cst, [1, 1, 0] , 'off', pln, [2, 2], 3, 'global');
+% set number of histories lower than default for this example (default: 1e8)
+pln.propDoseCalc.numHistoriesDirect = 1e6;
+resultGUI_MC = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
+
+%% Compare Dose
+resultGUI = matRad_appendResultGUI(resultGUI,resultGUI_MC,true,pln.propDoseCalc.engine);
+matRad_compareDose(resultGUI.physicalDose, resultGUI.(['physicalDose_' pln.propDoseCalc.engine]), ct, cst, [1, 1, 0] , 'off', pln, [2, 2], 3, 'global');
 
 
 %% Compare LET
