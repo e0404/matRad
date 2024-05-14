@@ -210,8 +210,8 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
             %Matrices for LET
             if this.calcLET
-                this.config.LET_MHD_Output		 = calcDoseDirect;
-                this.config.LET_Sparse_Output	 = ~calcDoseDirect;
+                this.config.LET_MHD_Output		 = this.calcDoseDirect;
+                this.config.LET_Sparse_Output	 = ~this.calcDoseDirect;
             end
 
             for scenarioIx = 1:this.multScen.totNumScen
