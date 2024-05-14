@@ -773,6 +773,8 @@ classdef matRad_PlanWidget < matRad_Widget
         function this = getPlnFromWorkspace(this)
             pln = evalin('base', 'pln');
             handles = this.handles;
+
+            matRad_cfg = MatRad_Config.instance();
             
             
             % sanity check of isoCenter
@@ -843,6 +845,10 @@ classdef matRad_PlanWidget < matRad_Widget
             if isfield (pln.propOpt, 'conf3D')
                 set(handles.radiobutton3Dconf,'Value',pln.propOpt.conf3D);
             end 
+
+            if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'doseGrid')
+                pln.propDoseCalc.doseGrid.resolution = matRad_cfg.propDoseCalc.defaultResolution;
+            end
 
             set(handles.editDoseX,'String',num2str(pln.propDoseCalc.doseGrid.resolution.x));
             set(handles.editDoseY,'String',num2str(pln.propDoseCalc.doseGrid.resolution.y));
