@@ -15,9 +15,7 @@
 
 %% Set path
 
-matRadFolderPath = fullfile('..', 'matRad');
-addpath(matRadFolderPath);
-run(fullfile(matRadFolderPath, 'matRad_rc.m'));
+run(['..' filesep 'matRad_rc']);
 
 
 %% Prepare settings for testing
