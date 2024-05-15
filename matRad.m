@@ -27,7 +27,7 @@ load PROSTATE.mat
 % meta information for treatment plan
 pln.numOfFractions  = 30;
 pln.radiationMode   = 'photons';           % either photons / protons / helium / carbon / brachy
-pln.machine         = 'generic';              % generic for RT / LDR or HDR for BT
+pln.machine         = 'Generic';              % generic for RT / LDR or HDR for BT
 
 % beam geometry settings
 pln.propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
