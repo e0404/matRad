@@ -1,4 +1,23 @@
 classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
+% Engine for dose calculation based on the revised AAPM protocol for
+% brachytherapy Dose Calculations
+% 
+%
+% for more informations see superclass
+% DoseEngines.matRad_DoseEngineBase
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2024 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (Constant)
         possibleRadiationModes = {'brachy'};
@@ -176,6 +195,25 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
 
 
         function PhiAn = anisotropyFactor1D(this,r,PhiAnTab, L)
+            %   anisotropy function interpolates tabulated data 
+            %   using fifth order polynomial and approximates small and large distances
+            %   according to Rivard et al.2007: Supplement to the 2004 update of the
+            %   AAPM Task Group No. 43 Report Eq. (2).
+            %   Normally called within matRad_getDoseRate(...)
+            %
+            % call
+            %   PhiAn = matRad_anisotropyFactor1D(r,PhiAnTab, L)
+            %
+            % input
+            %   r:          array of radial distances in cm!
+            %   PhiAnTab:   tabulated consensus data of gL according to the following
+            %               cell structure:
+            %               PhiAnTab{1} = AnisotropyFactorRadialDistance
+            %               PhiAnTab{2} = AnisotropyFactorValue
+            %
+            % output
+            %   PhiAn:      array of the same shape as r and thet containing the
+            %               interpolated and extrapolated values
             rmin = PhiAnTab{1}(1);
             rmax = PhiAnTab{1}(end);
             p = polyfit(PhiAnTab{1},PhiAnTab{2},5);
@@ -187,6 +225,29 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
 
 
         function F = anisotropyFunction2D(this,r,thet,FTab)
+            %  anisotropy function interpolates tabulated 
+            %   data using fifth order polynomial and approximates small and large 
+            %   distances according to Rivard et al.: AAPM TG-43 update Eq. (C1).
+            %   Normally called within matRad_getDoseRate(...)
+            %
+            %   This function requires the multiPolyRegress code : https://de.mathworks.com/matlabcentral/fileexchange/34918-multivariate-polynomial-regression
+            %
+            % call
+            %   F = matRad_anisotropyFunction2D(r,thet,FTab)
+            %
+            % input
+            %   r:      array of radial distances in cm
+            %   thet:   array of azimuthal angles in °
+            %   FTab:   tabulated consensus data of F according to the
+            %           following cell structure:
+            %           FTab{1} = AnisotropyRadialDistances
+            %           FTab{2} = AnisotropyPolarAngles
+            %           FTab{3} = AnisotropyFunctionValue
+            %
+            % output
+            %   F:      array of the same shape as r and thet containing the
+            %           interpolated and extrapolated values
+
             % prepare data for multivariate polynomial fit:
             [DataRGrid,DataThetGrid] = meshgrid(FTab{1},FTab{2});
             Data(:,1) = reshape(DataRGrid,[],1);
@@ -211,6 +272,21 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
 
 
         function GL = geometryFunction(this,r,thet,L)
+            %  calculates 2D geometry function
+            %   according to Rivard et al.: AAPM TG-43, p 638 update Eq. (4)
+            %   Normally called within matRad_getDoseRate(...)
+            %
+            % call
+            %   GL = matRad_geometryFunction(r,thet,L)
+            %
+            % inputs
+            %   r:              array of radial distances in cm!
+            %   thet:           array of azimual angles in °
+            %   Length:         length of radiation source in cm
+            %
+            % outputs
+            %   GL(r,theta):    geometry function output
+
             % calculate solution
             if thet == 90
                 beta = 2*atan(L./2./r);
@@ -239,6 +315,24 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
 
 
         function gL = radialDoseFunction(this,r,gLTab)
+            %   interpolates tabulated data using
+            %   fifth order polynomial and approximates small and large distances
+            %   according to Rivard et al.: AAPM TG-43 update, p.669, Eq. (C1).
+            %   Normally called within matRad_getDoseRate(...)
+            %
+            % call
+            %   matRad_radialDoseFuncrion(r,gLTab)
+            %
+            % input
+            %   r:      array of radial distances in cm!
+            %   gLTab:  tabulated consensus data of gL according to the
+            %           following cell structure:
+            %           gLTab{1} = RadialDoseDistance
+            %           gLTab{2} = RadialDoseValue
+            %
+            % output
+            %   gL:     array of the same shape as r containing the interpolated
+            %           and extrapolated values
                 rmin = gLTab{1}(1);
                 rmax = gLTab{1}(end);
                     polyCoefficients = polyfit(gLTab{1},gLTab{2},5);
@@ -251,6 +345,25 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
         end
 
         function F = anisotropyFunction2DInterp(this,r,thet,FTab)
+            %   anisotropy function interpolates tabulated 
+            %   data using interp2 ( interp technique TBD)
+            %   Normally called within matRad_getDoseRate(...)
+            %
+            % call
+            %   F = matRad_anisotropyFunction2D(r,thet,FTab)
+            %
+            % input
+            %   r:      array of radial distances in cm
+            %   thet:   array of azimuthal angles in ??
+            %   FTab:   tabulated consensus data of F according to the
+            %           following cell structure:
+            %           FTab{1} = AnisotropyRadialDistances
+            %           FTab{2} = AnisotropyPolarAngles
+            %           FTab{3} = AnisotropyFunctionValue
+            %
+            % output
+            %   F:      array of the same shape as r and thet containing the
+            %           interpolated and extrapolated values
           [DataRGrid,DataThetGrid] = meshgrid(FTab{1},FTab{2});
           Data(:,1) = reshape(DataRGrid,[],1);
           Data(:,2) = reshape(DataThetGrid,[],1);
@@ -283,6 +396,26 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
 
 
         function DoseRate = getDoseRate1D_poly(this,machine,r_mm)
+            % Calculation of radial dose Rate, interpolating using polynomes
+            %   1D dose rate formalism from Rivard et al. (2004): AAPM TG-43 update, 
+            %   page 639, Eq. 11:
+            %
+            % call 
+            %   DoseRate = matRad_getDoseRate1D_poly(machine,r_mm)
+            %
+            % input
+            %   machine:    TG43 information about the used seeds
+            %   r:          radial distance array, given in mm!
+            %
+            % output 
+            %   DoseRate:   size(r) array of dose Rate in cGy/h
+            %
+            % comment on dimensions / units
+            %   TG43 consensus data   cm, cGy, s
+            %   matRad                mm, Gy, s
+            %   output dimensions depend on the dimensions of air kerma strength
+            %   Sk, normallyi in cGy*cm^2/h)
+
             % validate/ complete input arguments
             if ~isfield(machine.data,'AnisotropyFactorRadialDistance')
                 matRad_cfg.dispError('machine is missing field "AnisotropyFactorRadialDistance"...you might be trying to apply the TG43 2D formalism for basedata measured for 1D formalism') 
@@ -345,6 +478,27 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
         end
 
         function DoseRate = getDoseRate2D_poly(this,machine,r_mm,theta)
+            % Calculation of radial dose Rate, interpolating using polynomes
+            %   2D dose rate formalism from Rivard et al. (2004): AAPM TG-43 update, 
+            %   page 637, eq. 1
+            %
+            % call 
+            %   DoseRate = matRad_getDoseRate2D_poly(machine,r_mm)
+            %
+            % input
+            %   machine:    TG43 information about the used seeds
+            %   r:          radial distance array, given in mm!
+            %   theta:      polar angle in degree
+            %
+            % output 
+            %   DoseRate:   size(r) array of dose Rate in cGy/h
+            %
+            % comment on dimensions / units
+            %   TG43 consensus data   cm, cGy, s
+            %   matRad                mm, Gy, s
+            %   output dimensions depend on the dimensions of air kerma strength
+            %   Sk, normallyi in cGy*cm^2/h)
+
             matRad_cfg = MatRad_Config.instance();
 
             % validate/ complete input arguments
@@ -429,6 +583,30 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
         end
 
         function [ThetaMatrix,ThetaVector] = getThetaMatrix(this,templateNormal,DistanceMatrix)
+            % getThetaMatrix gets (seed x dosepoint) matrix of relative polar angles
+            %
+            % call
+            %   [ThetaMatrix,ThetaVector] = matRad_getThetaMatrix(templateNormal,...
+            %       DistanceMatrix)
+            %   normally called within matRad_getBrachyDose
+            %   !!getDistanceMatrix needs to be called first!!
+            %
+            % input
+            %   DistanceMatrix:     [dosePoint x seedPoint] struct with fields 'x','y',
+            %                       'z' and total distance 'dist'
+            %   templateNormal:     normal vector of template (its assumed that this is
+            %                       the dir all seeds point to)
+            %
+            % output
+            %   angle matrix:       rows: index of dosepoint 
+            %                       columns: index of deedpoint
+            %                       entry: polar angles betreen seedpoints and  
+            %                       dosepoint in degrees
+            %   angle vector:       column vector of angle matrix entries
+            %
+            % comment:
+            %   The shape of the Theta matrix will be consistent with the shape of 
+            %   input fields. 
             
                       DistanceMatrix.dist(DistanceMatrix.dist == 0) = 1; %Avoid deviding by zero
 

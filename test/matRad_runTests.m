@@ -14,7 +14,11 @@
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Set path
-run(['..' filesep 'matRad_rc']);
+
+matRadFolderPath = fullfile('..', 'matRad');
+addpath(matRadFolderPath);
+run(fullfile(matRadFolderPath, 'matRad_rc.m'));
+
 
 %% Prepare settings for testing
 matRad_cfg = MatRad_Config.instance();
@@ -37,7 +41,10 @@ exampleScripts = {'../examples/matRad_example1_phantom.m',...
     '../examples/matRad_example9_4DDoseCalcMinimal.m',... 
     '../examples/matRad_example10_4DphotonRobust.m',...
     '../examples/matRad_example11_helium.m',...
-    '../examples/matRad_example15_brachy.m'
+    '../examples/matRad_example12_simpleParticleMonteCarlo.m',...
+    '../examples/matRad_example13_fitAnalyticalParticleBaseData.m',...
+    '../examples/matRad_example14_spotRemoval.m',...
+    '../examples/matRad_example15_brachy.m',...
     '../matRad.m',...
     };
 
@@ -88,4 +95,3 @@ end
 if ~isempty(errors)
     error(strjoin(errors,'\n\n============================\n\n'));
 end
-    
