@@ -50,7 +50,7 @@ switch env
   case 'OCTAVE'
         %If we do a vector query with similar sizes only don't create a meshgrid
         if isequal(size(xq),size(yq),size(zq))
-            y = interp3(xi,yi,zi,x,xq',yq',zq',mode,extrapVal);
+            y = interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal);
         else
             %Here we require a meshgrid to force octave to return the correct size
             %Maybe the same thing could be achieved with a reshape?

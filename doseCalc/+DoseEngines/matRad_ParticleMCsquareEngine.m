@@ -885,14 +885,8 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
             %Check the binaries
             hasBinaries = DoseEngines.matRad_ParticleMCsquareEngine.checkBinaries();
-            
-            if ~hasBinaries
-                return;
-            end
 
-            %MCsquare currently only works for the generic_MCSquare machine
-            available = strcmp(pln.machine,'generic_MCsquare');
-            msg = 'Machine check is currently not reliable, machine only works reliably with generic_MCsquare';
+            available = preCheck & hasBinaries;
         end
               
     end

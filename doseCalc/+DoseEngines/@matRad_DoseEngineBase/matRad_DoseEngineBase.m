@@ -55,7 +55,9 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         %offset; % offset adjustment for isocenter
         
         VctGrid; % voxel grid inside patient
-        VdoseGrid;  % voxel dose grid         
+        VdoseGrid;  % voxel dose grid    
+        VctGridScenIx;  %logical subindexes of scenarios in ct grid
+        VdoseGridScenIx; %logical subindexes of scenarios in dose grid
 
         VctGridMask; % voxel grid inside patient as logical mask
         VdoseGridMask;  % voxel dose grid inside patient as logical mask
@@ -292,7 +294,8 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         %               if available, indicates a warning that not all
         %               information was present in the machine file and
         %               approximations need to be made
-            error('This is an Abstract Base class! Function needs to be called for instantiable subclasses!');
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispError('This is an Abstract Base class! Function needs to be called for instantiable subclasses!');
         end
         
         % static factory method to create/get correct dose engine from pln

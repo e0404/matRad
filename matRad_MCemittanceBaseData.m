@@ -246,7 +246,8 @@ classdef matRad_MCemittanceBaseData
             
             i = energyIx;
             
-            mcDataEnergy.NominalEnergy = ones(1, size(obj.machine.data(1).initFocus.dist,1)) * obj.machine.data(i).energy;
+            %mcDataEnergy.NominalEnergy = ones(1, size(obj.machine.data(1).initFocus.dist,1)) * obj.machine.data(i).energy;
+            mcDataEnergy.NominalEnergy = obj.machine.data(i).energy;
             
             newDepths = linspace(0,obj.machine.data(i).depths(end),numel(obj.machine.data(i).depths) * 100);
             newDose   = interp1(obj.machine.data(i).depths, obj.machine.data(i).Z, newDepths, 'spline');
@@ -352,29 +353,42 @@ classdef matRad_MCemittanceBaseData
                     mcDataEnergy.EnergySpread = energySpreadRelative;
                 case 'carbon'
                     %Constants
-                    alpha = 4.425e-3;
-                    p = 1.64;
-
-                    alphaStraggling = 0.086; %MeV^2/cm
+                    alpha = 1.3413e-3;
+                    p = 1.658;                    
                     
                     % Fit to Range-Energy relationship
                     % Data from "Update to ESTAR, PSTAR, and ASTAR Databases" - ICRU Report 90, 2014
                     % Normalized energy before fit (MeV/u)! Only used ranges [10 350] mm for fit
                     % https://www.nist.gov/system/files/documents/2017/04/26/newstar.pdf
-                    %meanEnergyFromRange = @(R) 11.39 * R^0.628 + 11.24;
+                    %fMeanEnergyFromRange = @(R) 11.39 * R^0.628 + 11.24;
                     fMeanEnergyFromRange = @(R) fEnergyFromRange(R,alpha,p);
                     mcDataEnergy.MeanEnergy = fMeanEnergyFromRange(r80);
                     % reading in a potential given energyspread could go here directly. How would you parse the energyspread
                     % into the function? Through a field in the machine?
                     
                     %Straggling factor:
-                    %stragglingSigmaFromRange = @(R) 10 * stragglingFactor * (R/10)^0.935;
+                    stragglingFactor = fStragglingFactor(alpha,p);
+                    fStragglingSigmaFromRange = @(R) 10 * stragglingFactor * (R/10)^((3-2/p)/2);
+                    fEnergySpreadFromWidth = @(sigmaSq,E) sqrt(sigmaSq ./ ((10*alpha)^2 * p^2 * E^(2*p-2)));
+                    totalSigmaSq = ((w50) / 6.3028)^2;
+                    sigmaRangeStragglingOnlySq = fStragglingSigmaFromRange(r80).^2; 
 
+                    if totalSigmaSq > sigmaRangeStragglingOnlySq
+                        sigmaEnergyContributionSq = totalSigmaSq - sigmaRangeStragglingOnlySq;
+                        energySpreadInMeV = fEnergySpreadFromWidth(sigmaEnergyContributionSq,mcDataEnergy.MeanEnergy);                
+                    else
+                        energySpreadInMeV = 1e-8; %monoenergetic, but let's not write 0 to avoid division by zero in some codes
+                    end
 
-                    mcDataEnergy.EnergySpread = obj.defaultRelativeEnergySpread;
+                    energySpreadRelative = energySpreadInMeV ./ mcDataEnergy.MeanEnergy * 100;
+
+                    %mcDataEnergy.EnergySpread = obj.defaultRelativeEnergySpread;
+                    mcDataEnergy.EnergySpread = energySpreadRelative;
                 case 'helium'
-                    alpha = 2.567e-3;
-                    p = 1.74;                                
+                    alpha = 2.528e-3;
+                    p = 1.746;
+                    %alpha = 2.567e-3;
+                    %p = 1.74;                                
 
                     % Fit to Range-Energy relationship
                     % Data from "Update to ESTAR, PSTAR, and ASTAR Databases" - ICRU Report 90, 2014
@@ -389,7 +403,7 @@ classdef matRad_MCemittanceBaseData
                     stragglingFactor = fStragglingFactor(alpha,p);
                     fStragglingSigmaFromRange = @(R) 10 * stragglingFactor * (R/10)^((3-2/p)/2);
                     fEnergySpreadFromWidth = @(sigmaSq,E) sqrt(sigmaSq ./ ((10*alpha)^2 * p^2 * E^(2*p-2)));
-                    totalSigmaSq = ((w50) / 6.14)^2;
+                    totalSigmaSq = ((w50) / 7.4617)^2;
                     sigmaRangeStragglingOnlySq = fStragglingSigmaFromRange(r80).^2; 
 
                     if totalSigmaSq > sigmaRangeStragglingOnlySq

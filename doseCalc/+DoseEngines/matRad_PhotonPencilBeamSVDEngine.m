@@ -92,7 +92,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             % create this from superclass
             this = this@DoseEngines.matRad_PencilBeamEngineAbstract(pln);            
 
-            if nargin > 0
+            if nargin > 0 && isfield(pln,'propStf') && isfield(pln.propStf,'bixelWidth')
                 % 0 if field calc is bixel based, 1 if dose calc is field based
                 % num2str is only used to prevent failure of strcmp when bixelWidth
                 % contains a number and not a string

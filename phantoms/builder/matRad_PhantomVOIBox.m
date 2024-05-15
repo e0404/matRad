@@ -1,7 +1,7 @@
 classdef matRad_PhantomVOIBox < matRad_PhantomVOIVolume
     % matRad_PhantomVOIBox implements a class that helps to create box VOIs
     %
-    % References 
+    % References
     %     -
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -18,17 +18,17 @@ classdef matRad_PhantomVOIBox < matRad_PhantomVOIVolume
     % LICENSE file.
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    properties %additional property of cubic objects 
+    properties %additional property of cubic objects
         boxDimensions;
     end
 
     methods (Access = public)
 
         function obj = matRad_PhantomVOIBox(name,type,boxDimensions,varargin)
-            p = inputParser; 
-            addOptional(p,'objectives',{});
-            addOptional(p,'offset',[0,0,0]);
-            addOptional(p,'HU',0);
+            p = inputParser;
+            addParameter(p,'objectives',{});
+            addParameter(p,'offset',[0,0,0]);
+            addParameter(p,'HU',0);
             parse(p,varargin{:});
 
             obj@matRad_PhantomVOIVolume(name,type,p); %call superclass constructor

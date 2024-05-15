@@ -122,6 +122,7 @@ for iBeam = 1:numel(stf)
 
     ray.shape = shapeTotalF;
     ray.weight = ones(1,nShapes);
+    ray.collimation = pln.propStf.collimation;
     stfTmp.ray = ray;
 
     stf(iBeam) = stfTmp;

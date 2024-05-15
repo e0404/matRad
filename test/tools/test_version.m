@@ -15,4 +15,3 @@ function test_matrad_environment
     assertTrue(ischar(env));
     [~,verstr] = matRad_getEnvironment();
     assertTrue(ischar(verstr));
-    
