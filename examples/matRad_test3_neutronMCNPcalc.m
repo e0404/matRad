@@ -1,3 +1,4 @@
+
 %% Test neutron dose calculation using MCNP dose engine - modification of example 1
 clear
 %% set matRad runtime configuration
