@@ -1104,8 +1104,16 @@ classdef matRad_ViewingWidget < matRad_Widget
                 
                 if isfield(ct, 'cubeHU')
                     minMax = [min(ct.cubeHU{1}(:)) max(ct.cubeHU{1}(:))];
+
+                    if diff(minMax) == 0
+                        minMax = [-1000 2000];
+                    end
                 else
                     minMax = [min(ct.cube{1}(:)) max(ct.cube{1}(:))];
+
+                    if diff(minMax) == 0
+                        minMax = [0 2];
+                    end
                 end
                 
                 if evalin('base','exist(''resultGUI'')')
