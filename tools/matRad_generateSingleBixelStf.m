@@ -180,8 +180,13 @@ for i = 1:length(pln.propStf.gantryAngles)
             radDepths = cumsum(l .* rho{1});
             
             % find target entry & exit
-            diff_voi    = diff([rho{2}]);
-            targetEntry = radDepths(diff_voi == 1);
+            diff_voi    = diff([rho{2}]);  
+            if rho{2}(1) > 0
+                targetEntry = 1;
+            else
+                targetEntry = radDepths(diff_voi == 1);
+            end
+            
             targetExit  = radDepths(diff_voi == -1);
             
             if numel(targetEntry) ~= numel(targetExit)
