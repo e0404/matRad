@@ -8,19 +8,18 @@ initTestSuite;
 
 % test if dij struct has required shape
 function rightOutput(testCase)
-load PROSTATE.mat ct cst;
-load examplePlnAndStf.mat pln stf;
-pln.propDoseCalc.durationImplanted = Inf;
+            load PROSTATE.mat ct cst;
+            load examplePlnAndStf.mat pln stf;
+            pln.propDoseCalc.durationImplanted = Inf;
             
        
-dij = testCase.engine.setCalcDose(ct,cst,stf);
-testCase.verifyTrue(isfield(dij,'doseGrid'));
-testCase.verifyTrue(isfield(dij,'physicalDose'));
-% testCase.verifyTrue(isfield(dij,'basedata'));
-testCase.verifyTrue(iscell(dij.physicalDose));
+            dij = testCase.engine.setCalcDose(ct,cst,stf);
+            testCase.verifyTrue(isfield(dij,'doseGrid'));
+            testCase.verifyTrue(isfield(dij,'physicalDose'));
+            % testCase.verifyTrue(isfield(dij,'basedata'));
+            testCase.verifyTrue(iscell(dij.physicalDose));
             
-clear ct cst pln;
-end
+            clear ct cst pln;
 
 function getDistMtx(testCase)
             % check calculated distance matrix against values calculated
@@ -35,9 +34,9 @@ function getDistMtx(testCase)
             [funcDistanceMatrix,~] = matRad_getDistanceMatrix(seedPoints,dosePoints);
             
             testCase.verifyEqual(funcDistanceMatrix.dist,verifyDistanceMatrix,'AbsTol',0.1)
-        end
+
         
-        function getThetMtx(testCase)
+function getThetMtx(testCase)
             % check calculated angle matrix against values calculated
             % on a spreadsheet (same folder as test) for 3x3 test point mtx
             seedPoints.x = [2,1,2];
@@ -52,9 +51,9 @@ function getDistMtx(testCase)
             [funcThetaMatrix,~] = testCase.engine.getThetaMatrix(SeedDirection,DistanceMatrix);
             
             testCase.verifyEqual(funcThetaMatrix,verifyThetaMatrix,'AbsTol',0.1)
-        end
+
         
-        function verifyDose1D(testCase)
+function verifyDose1D(testCase)
              % verify if the calculated dose fits precalculated TG43.
              % The criterion is more than 99% gamma pass rate for 3mm and
              % 3%. For more information on gamma analysis, see help of the
@@ -74,11 +73,11 @@ function getDistMtx(testCase)
              matRad_gammaPassRate2D(doseRef,doseCal, grids, 3 , 3 , 0.1);
              
              testCase.verifyTrue(gammaPassRate > 0.99)
-        end
+
         
         
         
-        function verifyDose2D(testCase)
+function verifyDose2D(testCase)
             load referenceDoseCalculation refDos;
             
             machine = refDos.TG43_2D.basedata;
@@ -94,9 +93,9 @@ function getDistMtx(testCase)
         
             testCase.verifyTrue(gammaPassRate > 0.99)
            
-        end
+ 
         
 
         
-    end
-end
+   
+
