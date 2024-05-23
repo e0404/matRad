@@ -53,6 +53,10 @@ if nargin < 7 || isempty(window)
     window = [min(ctCube{cubeIdx}(:)) max(ctCube{cubeIdx}(:))];    
 end
 
+if window(2) - window(1) <= 0
+    window = [-1000 2000];
+end
+
 cMapScale = size(cMap,1) - 1;
 
 %Prepare the slice and convert it to uint8
