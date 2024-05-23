@@ -13,7 +13,7 @@ Multiple Matlab versions as well as Octave are tested, all running on Ubuntu.
     - You can limit your tests to a subfolder only (e.g., if you wrote new unit tests and want to do isolated bugfixing) by running on the subfolder directly, for example: `moxunit_runtests('test/tools','-recursive');`
 
 ### Writing Tests
-Here's how a basic Test File can look like, based on test_version.m
+Here's how a basic Test File can look like, based on [test_version.m](tools/test_version.m)
 ```matlab
 function test_suite = test_version
 %The output should always be test_suite, and the function name the same as
