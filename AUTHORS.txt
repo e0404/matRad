@@ -1,4 +1,4 @@
-List of all matRad developers that contributed code (alphabetical)
+﻿List of all matRad developers that contributed code (alphabetical)
 
 * Nelly Abbani
 * Nabe Al-Hasnawi
@@ -13,6 +13,7 @@ List of all matRad developers that contributed code (alphabetical)
 * Eric Christiansen
 * Hubert Gabrys
 * Josefine Handrack
+* Jennifer Hardt
 * Emily Heath
 * Cindy Hermann
 * Noa Homolka
