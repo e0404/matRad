@@ -50,6 +50,7 @@ classdef (Abstract) matRad_ScenarioModel < handle
         isoShift;
         relRangeShift;
         absRangeShift;
+        ctScen;
 
         maxAbsRangeShift;
         maxRelRangeShift;
@@ -58,7 +59,7 @@ classdef (Abstract) matRad_ScenarioModel < handle
         totNumRangeScen;        % total number of range and absolute range scenarios
         totNumScen;             % total number of samples 
         
-        scenForProb;            % matrix for probability calculation - each row denotes one scenario
+        scenForProb;            % matrix for probability calculation - each row denotes one scenario, whereas columns denotes the realization value
         scenProb;               % probability of each scenario stored in a vector (according to uncertainty model)
         scenWeight;             % weight of scenario relative to the underlying uncertainty model (depends on how scenarios are chosen / sampled)
         scenMask;
@@ -152,14 +153,21 @@ classdef (Abstract) matRad_ScenarioModel < handle
 
         function newInstance = extractSingleScenario(this,scenIdx)
             newInstance = matRad_NominalScenario();
-                        
+            
+            newInstance.numOfCtScen = 1;
+            scenNumber = this.scenNum(scenIdx);
+            ctScenNum = this.linearMask(scenNumber,1);
+
             newInstance.scenForProb         = this.scenForProb(scenIdx,:);
-            newInstance.relRangeShift       = this.scenForProb(scenIdx,5);
-            newInstance.absRangeShift       = this.scenForProb(scenIdx,4);
-            newInstance.isoShift            = this.scenForProb(scenIdx,1:3);
+            newInstance.relRangeShift       = this.scenForProb(scenIdx,6);
+            newInstance.absRangeShift       = this.scenForProb(scenIdx,5);
+            newInstance.isoShift            = this.scenForProb(scenIdx,2:4);
+            newInstance.phaseProbability    = this.phaseProbability(ctScenNum);
             newInstance.scenProb            = this.scenProb(scenIdx);
             newInstance.scenWeight          = this.scenWeight(scenIdx);
-            newInstance.numOfCtScen         = this.numOfCtScen;
+            newInstance.numOfCtScen         = 1;            
+            
+            newInstance.updateScenarios();
         end
         
         function scenIx = sub2scenIx(this,ctScen,shiftScen,rangeShiftScen)

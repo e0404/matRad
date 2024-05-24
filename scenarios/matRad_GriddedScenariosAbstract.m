@@ -204,6 +204,7 @@ classdef (Abstract) matRad_GriddedScenariosAbstract < matRad_ScenarioModel
             scenarios = horzcat(phases, repmat(scenarios,[this.numOfCtScen 1]));
             linearMaskTmp = repmat(linearMaskTmp,this.numOfCtScen,1);
             linearMaskTmp(:,1) = phases;
+            this.ctScen = phases;
 
             %Finalize meta information
             this.totNumScen = size(scenarios,1);
