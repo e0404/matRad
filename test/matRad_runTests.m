@@ -1,4 +1,12 @@
-%% This file runs the complete matRad test suite.
+function matRad_runTests(folder)
+%% matRad_runTests.m
+% This function runs the test suite for the matRad package.
+%
+% Usage:
+%   - Run the script to execute all the tests in the test suite.
+%
+% Notes:
+%   - Make sure to have MOxUnit installed and added to the path.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -13,85 +21,20 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Warning
-warning('This testing script is outdated! We are now using unit testing with MOxUnit. Press button to continue testing with this script!');
+if nargin == 0
+    folder = 'test';
+end
 
-%% Set path
-run(['..' filesep 'matRad_rc']);
-
-%% Prepare settings for testing
 matRad_cfg = MatRad_Config.instance();
+matRad_cfg.dispInfo('Setting default properties for testing and starting test suite!\n');
 matRad_cfg.setDefaultPropertiesForTesting();
+matRad_cfg.logLevel = 1;
 
-% supressing the inherent Ocatave warnings for division by zero
-if matRad_cfg.isOctave
-    warning('off','Octave:divide-by-zero');
-end
+back = cd(matRad_cfg.matRadRoot);
+moxunit_runtests(folder,'-recursive');
 
-% Define Scripts
-exampleScripts = {'../examples/matRad_example1_phantom.m',...
-    '../examples/matRad_example2_photons.m',...
-    '../examples/matRad_example3_photonsDAO.m',...
-    '../examples/matRad_example4_photonsMC.m',...
-    '../examples/matRad_example5_protons.m',...
-    '../examples/matRad_example6_protonsNoise.m',...
-    '../examples/matRad_example7_carbon.m',... 
-    '../examples/matRad_example8_protonsRobust.m',...
-    '../examples/matRad_example9_4DDoseCalcMinimal.m',... 
-    '../examples/matRad_example10_4DphotonRobust.m',...
-    '../examples/matRad_example11_helium.m',...
-    '../examples/matRad_example12_simpleParticleMonteCarlo.m',...
-    '../examples/matRad_example13_fitAnalyticalParticleBaseData.m',...
-    '../examples/matRad_example14_spotRemoval.m',...
-    '../examples/matRad_example15_photonMC_MLC.m',...
-    '../matRad.m',...
-    };
-
-testing_suffix = '_test';
-
-% Some parameters to reduce computational overhead during testing
-unitTestBixelWidth = 20;
-unitTestSpotSpacing = matRad_cfg.propStf.defaultLongitudinalSpotSpacing;
-unitTestResolution = matRad_cfg.propDoseCalc.defaultResolution;
-
-% Copy and manipulate all scripts
-[folders,names,exts] = cellfun(@fileparts,exampleScripts,'UniformOutput',false);
-testScriptNames = strcat(names,testing_suffix);    
-testScripts = cellfun(@fullfile,folders,strcat(testScriptNames,exts),'UniformOutput',false);
-status = cellfun(@copyfile,exampleScripts,testScripts);
-
-matRad_unitTestTextManipulation(testScripts,'pln.propStf.bixelWidth',['pln.propStf.bixelWidth = ' num2str(unitTestBixelWidth)]);
-matRad_unitTestTextManipulation(testScripts,'pln.propStf.longitudinalSpotSpacing',['pln.propStf.longitudinalSpotSpacing = ' num2str(unitTestBixelWidth)]);
-matRad_unitTestTextManipulation(testScripts,'pln.propDoseCalc.resolution.x',['pln.propDoseCalc.resolution.x = ' num2str(unitTestResolution.x)]);
-matRad_unitTestTextManipulation(testScripts,'pln.propDoseCalc.resolution.y',['pln.propDoseCalc.resolution.y = ' num2str(unitTestResolution.y)]);
-matRad_unitTestTextManipulation(testScripts,'pln.propDoseCalc.resolution.z',['pln.propDoseCalc.resolution.z = ' num2str(unitTestResolution.z)]);
-matRad_unitTestTextManipulation(testScripts,'display(','%%%%%%%%%%%%%%% REMOVED DISPLAY FOR TESTING %%%%%%%%%%%%%%');
-
-
-%% Run tests
-errors = {};
-for testIx = 1:length(testScriptNames)
-    fprintf('Running Integration Test for ''%s''\n',names{testIx});
-    try
-        run(testScripts{testIx});
-        clearvars ct cst pln stf dij resultGUI; %Make sure the workspace is somewhat clean
-        delete(testScripts{testIx}); %Delete after successful run
-    catch ME
-        [~,scriptName] = fileparts(testScripts{testIx});
-        if matRad_cfg.isMatlab
-            message = ME.getReport();
-        else
-            message = ME.message;
-        end
-        errMsg = sprintf('Experienced an error during testing of %s. Error-Message:\n %s',scriptName,message);
-        warning(errMsg);
-        errors{end+1} = errMsg;
-        cd([matRad_cfg.matRadRoot '/test']); %Make sure we don't get stuck in another folder
-    end
-end
-
-%Check if at least one script failed and report error
-if ~isempty(errors)
-    error(strjoin(errors,'\n\n============================\n\n'));
-end
-    
+matRad_cfg.setDefaultProperties();
+matRad_cfg.logLevel = 3;
+cd(back);
+clear back;
+matRad_cfg.dispInfo('Restored default properties and returned to original directory!\n');
