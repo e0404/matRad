@@ -1,7 +1,29 @@
-function [outputArg1,outputArg2] = untitled3(inputArg1,inputArg2)
-%UNTITLED3 Summary of this function goes here
-%   Detailed explanation goes here
-outputArg1 = inputArg1;
-outputArg2 = inputArg2;
-end
+function test_suite = test_runBrachyTestSuite
+
+test_functions=localfunctions();
+
+initTestSuite;
+
+
+function test_setup()
+    if ~exist('matRad_cfg', 'var')
+        addpath(fileparts(fileparts(pwd)));
+        matRad_cfg = MatRad_Config.instance();
+        matRad_rc;
+    end
+
+
+function test_stf()
+    test_setup();  % Ensure setup is called
+    testStf = test_generateBrachyStfTest;
+    testResultStf = run(testStf);
+    assert(~isempty(testResultStf), 'test_stf: Test results should not be empty');
+
+
+function test_calcDose()
+    test_setup();  % Ensure setup is called
+    testCalcDose = test_calcBrachyDoseTest;
+    testResultCalcDose = run(testCalcDose);
+    assert(~isempty(testResultCalcDose), 'test_calcDose: Test results should not be empty');
+
 

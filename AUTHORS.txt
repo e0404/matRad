@@ -8,9 +8,9 @@ List of all matRad developers that contributed code (alphabetical)
 * Lucas Burigo
 * Gonzalo Cabal
 * Eduadro Cisternas
-* Edgardo Doerner
 * Louis Charton
 * Eric Christiansen
+* Edgardo Doerner
 * Hubert Gabrys
 * Josefine Handrack
 * Emily Heath

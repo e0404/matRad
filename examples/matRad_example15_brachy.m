@@ -228,12 +228,3 @@ imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet);
 % standard dose statistics such as D95,D98, mean dose, max dose etc.
 [dvh,qi]               = matRad_indicatorWrapper(cst,pln,resultGUI);
 
-%% V Unit testing
-% It is very useful to test individual function for against results that
-% have been calculated using a trusted other method.
-% run the unit test suites for geometry and dose calculation
-
-matRad_runBrachyTestSuite
-
-% if you want to built the code further, it is recommended, to write at
-% least one unit test for each complicated function.
