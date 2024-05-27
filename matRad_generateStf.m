@@ -781,7 +781,7 @@ switch pln.radiationMode
             stf.seedPoints.y = reshape(Y,1,[]);
             stf.seedPoints.z = reshape(Z,1,[]);
 
-            matRad_cfg.dispInfo('...100% ');
+            matRad_cfg.dispInfo('Processing completed: %d%%\n', 100);
 
             %%visualize results of visMode is nonzero
             % plot 3D seed positions
