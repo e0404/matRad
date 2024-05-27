@@ -105,7 +105,7 @@ hCt = matRad_plotCtSlice(axesHandle,ct.cubeHU,cubeIdx,plane,slice);
 hold on;
 
 % plot dose
-if doseWindow(2) - doseWindow(1) <= 0
+if ~isempty(doseWindow) || doseWindow(2) - doseWindow(1) <= 0
     doseWindow = [0 2];
 end
 
