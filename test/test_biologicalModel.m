@@ -6,8 +6,8 @@ initTestSuite;
 
 function test_bioModelConstructor
     if moxunit_util_platform_is_octave()
-         assertExceptionThrown(@() matRad_BiologicalModel(),'');
-         assertExceptionThrown(@() matRad_BiologicalModel('photons'),'');
+         assertExceptionThrown(@() matRad_BiologicalModel());
+         assertExceptionThrown(@() matRad_BiologicalModel('photons'));
     else
         assertExceptionThrown(@() matRad_BiologicalModel(),'MATLAB:minrhs');
         assertExceptionThrown(@() matRad_BiologicalModel('photons'),'MATLAB:minrhs');
@@ -25,8 +25,8 @@ function test_setBiologicalModel
 function test_calcLQParameter
     bioModel = matRad_BiologicalModel('photons','RBExD','LEM');
     if moxunit_util_platform_is_octave()
-        assertExceptionThrown(@() bioModel.calcLQParameter(),'');
-        assertExceptionThrown(@() bioModel.calcLQParameterForKernel(),'');
+        assertExceptionThrown(@() bioModel.calcLQParameter());
+        assertExceptionThrown(@() bioModel.calcLQParameterForKernel());
     else
         assertExceptionThrown(@() bioModel.calcLQParameter(),'MATLAB:minrhs');
         assertExceptionThrown(@() bioModel.calcLQParameterForKernel(),'MATLAB:minrhs');
