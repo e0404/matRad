@@ -21,6 +21,9 @@ for m = 1:numel(models)
     end           
 end
 
+function assignmentTestHelper(model,property,value)
+    model.(property) = value;
+
 function test_scenarioAbstract
     if moxunit_util_platform_is_octave()
         assertExceptionThrown(@() matRad_ScenarioModel(),'');
@@ -48,25 +51,38 @@ function instanceTest_relRangeUncertainty(model)
     newValue = 0.01;
     model.rangeRelSD = newValue;
     getValue = model.rangeRelSD;
-    assertEqual(newValue,getValue);   
+    assertEqual(newValue,getValue);  
+    assertExceptionThrown(@() assignmentTestHelper(model,'rangeRelSD','a'),'matRad:Error');
+    assertExceptionThrown(@() assignmentTestHelper(model,'rangeRelSD',ones(2)),'matRad:Error');
+    assertExceptionThrown(@() assignmentTestHelper(model,'rangeRelSD',-1),'matRad:Error');
 
 function instanceTest_absRangeUncertainty(model)
     newValue = 2;
     model.rangeAbsSD = newValue;
     getValue = model.rangeAbsSD;
-    assertEqual(newValue,getValue); 
+    assertEqual(newValue,getValue);
+    assertExceptionThrown(@() assignmentTestHelper(model,'rangeAbsSD','a'),'matRad:Error');
+    assertExceptionThrown(@() assignmentTestHelper(model,'rangeAbsSD',ones(2)),'matRad:Error'); 
+    assertExceptionThrown(@() assignmentTestHelper(model,'rangeAbsSD',-1),'matRad:Error');
 
 function instanceTest_shiftUncertainty(model)
     newValue = [1 1 1];
     model.shiftSD = newValue;
     getValue = model.shiftSD;
-    assertEqual(newValue,getValue); 
+    assertEqual(newValue,getValue);
+    assertExceptionThrown(@() assignmentTestHelper(model,'shiftSD','a'),'matRad:Error');
+    assertExceptionThrown(@() assignmentTestHelper(model,'shiftSD',ones(3,3)),'matRad:Error');
+    assertExceptionThrown(@() assignmentTestHelper(model,'shiftSD',ones(3,1)),'matRad:Error');    
+    assertExceptionThrown(@() assignmentTestHelper(model,'shiftSD',[-1 2 2]),'matRad:Error');
 
 function instanceTest_wcSigma(model)
     newValue = 5;
     model.wcSigma = newValue;
     getValue = model.wcSigma;
     assertEqual(newValue,getValue); 
+    assertExceptionThrown(@() assignmentTestHelper(model,'wcSigma','a'),'matRad:Error');
+    assertExceptionThrown(@() assignmentTestHelper(model,'wcSigma',-1),'matRad:Error');
+    assertExceptionThrown(@() assignmentTestHelper(model,'wcSigma',ones(2)),'matRad:Error');
 
 function instanceTest_phaseProbability(model)
     newValue = rand(model.numOfCtScen,1);
@@ -74,6 +90,9 @@ function instanceTest_phaseProbability(model)
     model.phaseProbability = newValue;
     getValue = model.phaseProbability;
     assertEqual(newValue,getValue); 
+    assertExceptionThrown(@() assignmentTestHelper(model,'phaseProbability','a'),'matRad:Error');
+    assertExceptionThrown(@() assignmentTestHelper(model,'phaseProbability',ones(1,5)),'matRad:Error');
+    assertExceptionThrown(@() assignmentTestHelper(model,'phaseProbability',-1*ones(model.numOfCtScen,1)),'matRad:Error');
 
 function instanceTest_TYPE(model)
     %assertWarning(@() model.TYPE,'matRad:Deprecated');
