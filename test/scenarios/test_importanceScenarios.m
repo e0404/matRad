@@ -4,6 +4,9 @@ test_functions=localfunctions();
 
 initTestSuite;
 
+function assignmentTestHelper(model,property,value)
+    model.(property) = value;
+
 function p = helper_mvarGauss(model)
     Sigma = diag([model.shiftSD,model.rangeAbsSD,model.rangeRelSD./100].^2);
     d = size(Sigma,1);
@@ -145,3 +148,47 @@ function test_importanceScenarioExtractSingleScenarioWithCtScen
     assertEqual(scenario.scenWeight, 1);
     
 
+    function test_importanceScenarioCombineRange
+
+        model = matRad_ImportanceScenarios();
+    
+        assertExceptionThrown(@() assignmentTestHelper(model,'combineRange','hello'),'matRad:Error');
+        assertTrue(model.combineRange);
+        
+        nRangeScen = model.totNumRangeScen;
+
+        model.combineRange = false;
+        assertFalse(model.combineRange);
+        assertEqual(model.totNumRangeScen,nRangeScen^2);
+        assertEqual(model.totNumScen,model.totNumRangeScen - 1 + model.totNumShiftScen);
+    
+    function test_importanceScenarioShiftCombinations
+    
+        model = matRad_ImportanceScenarios();
+    
+        assertExceptionThrown(@() assignmentTestHelper(model,'combinations','hello'),'matRad:Error');
+        assertEqual(model.combinations,'none');
+    
+        nSetupPoints = model.numOfSetupGridPoints;
+        nRangePoints = model.numOfRangeGridPoints;
+
+        model.combinations = 'shift';
+        assertEqual(model.combinations,'shift');
+        assertEqual(model.totNumShiftScen,nSetupPoints^3);
+        assertEqual(model.totNumScen,model.totNumRangeScen - 1 + model.totNumShiftScen);
+    
+        model.combinations = 'all';
+        assertEqual(model.combinations,'all');
+        assertEqual(model.totNumShiftScen,nSetupPoints^3);
+        assertEqual(model.totNumRangeScen,nRangePoints);
+        assertEqual(model.totNumScen,model.totNumRangeScen * model.totNumShiftScen);
+    
+        model.combineRange = false;
+        assertEqual(model.totNumShiftScen,nSetupPoints^3);
+        assertEqual(model.totNumRangeScen,nRangePoints^2);
+        assertEqual(model.totNumScen,model.totNumRangeScen * model.totNumShiftScen);
+    
+        model.combinations = 'shift';
+        assertEqual(model.totNumShiftScen,nSetupPoints^3);
+        assertEqual(model.totNumRangeScen,nRangePoints^2);
+        assertEqual(model.totNumScen,model.totNumRangeScen + model.totNumShiftScen - 1);

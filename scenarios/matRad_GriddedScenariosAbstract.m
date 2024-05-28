@@ -3,7 +3,7 @@ classdef (Abstract) matRad_GriddedScenariosAbstract < matRad_ScenarioModel
     %   Detailed explanation goes here
 
     properties (AbortSet = true)
-        includeNominalScenario = true;        
+        %includeNominalScenario = true;        
         combinations = 'none'; %Can be 'none', 'shift', 'all' to ontrol creation of worst case combinations 
         combineRange = true; %Wether to treat absolute & relative range as one shift or as separate scenarios
     end
@@ -46,6 +46,7 @@ classdef (Abstract) matRad_GriddedScenariosAbstract < matRad_ScenarioModel
         end
 
         %% set methods
+        %{
         function set.includeNominalScenario(this,includeNomScen)
             valid = isscalar(includeNomScen) && (isnumeric(includeNomScen) || islogical(includeNomScen));
             if ~valid 
@@ -55,7 +56,8 @@ classdef (Abstract) matRad_GriddedScenariosAbstract < matRad_ScenarioModel
             this.includeNominalScenario = includeNomScen;
             this.updateScenarios();
         end
-
+        %}
+    
         function set.combinations(this,combinations_)
             valid = any(strcmp(combinations_,this.validCombinationTypes));
             if ~valid 
@@ -74,18 +76,22 @@ classdef (Abstract) matRad_GriddedScenariosAbstract < matRad_ScenarioModel
             
             %% Create gridded setup shifts
             %Create grid vectors for setup shifts
-            setupShiftGrid = zeros(this.numOfSetupGridPoints,numel(wcSetupShifts));            
+            setupShiftGrid = zeros(this.numOfSetupGridPoints,numel(wcSetupShifts));
+            %{
             if mod(this.numOfSetupGridPoints,2) == 0 && this.includeNominalScenario
                 matRad_cfg.dispWarning('Obtaining Setup Shifts: Including the nominal scenario with even number of grid points creates asymmetrical shifts!');
             end
+            %}
 
             for i = 1:numel(wcSetupShifts)
                 setupShiftGrid(:,i) = linspace(-wcSetupShifts(i),wcSetupShifts(i),this.numOfSetupGridPoints);
+                %{
                 if this.includeNominalScenario 
                       
                     [~,ix] = min(abs(setupShiftGrid(:,i)));
                     setupShiftGrid(ix,i) = 0;    
                 end  
+                %}
             end
             
             %Now create vector of all shifts for different combinatorial
@@ -109,7 +115,7 @@ classdef (Abstract) matRad_GriddedScenariosAbstract < matRad_ScenarioModel
             griddedSetupShifts = matRad_ImportanceScenarios.uniqueStableRowsCompat(griddedSetupShifts);
             shiftNomScenIx = find(all(griddedSetupShifts == zeros(1,3),2));            
             
-            if ~isempty(shiftNomScenIx) || this.includeNominalScenario
+            if ~isempty(shiftNomScenIx) %|| this.includeNominalScenario
                 if ~isempty(shiftNomScenIx)
                     griddedSetupShifts(shiftNomScenIx,:) = [];
                 end
@@ -122,18 +128,22 @@ classdef (Abstract) matRad_GriddedScenariosAbstract < matRad_ScenarioModel
             %Obtain worst case range shifts
             wcRangeShifts = this.wcSigma * [this.rangeAbsSD this.rangeRelSD./100];        
             
-            rangeShiftGrid = zeros(this.numOfRangeGridPoints,numel(wcRangeShifts));            
+            rangeShiftGrid = zeros(this.numOfRangeGridPoints,numel(wcRangeShifts));  
+            %{
             if mod(this.numOfRangeGridPoints,2) == 0 && this.includeNominalScenario
                 matRad_cfg.dispWarning('Obtaining Range Shifts: Including the nominal scenario with even number of grid points creates asymmetrical shifts!');
             end
+            %}
 
             for i = 1:numel(wcRangeShifts)
                 rangeShiftGrid(:,i) = linspace(-wcRangeShifts(i),wcRangeShifts(i),this.numOfRangeGridPoints);
+                
+                %{
                 if this.includeNominalScenario 
-                      
                     [~,ix] = min(abs(rangeShiftGrid(:,i)));
                     rangeShiftGrid(ix,i) = 0;    
-                end  
+                end
+                %}
             end
 
             if this.combineRange
@@ -148,7 +158,7 @@ classdef (Abstract) matRad_GriddedScenariosAbstract < matRad_ScenarioModel
 
             rangeNomScenIx = find(all(griddedRangeShifts == zeros(1,2),2));            
             
-            if ~isempty(rangeNomScenIx) || this.includeNominalScenario
+            if ~isempty(rangeNomScenIx) %|| this.includeNominalScenario
                 if ~isempty(rangeNomScenIx)
                     griddedRangeShifts(rangeNomScenIx,:) = [];
                 end
@@ -197,6 +207,12 @@ classdef (Abstract) matRad_GriddedScenariosAbstract < matRad_ScenarioModel
                 otherwise
                     matRad_cfg.dispError('Invalid value for combinations! This sanity check should never be reached!');
             end
+
+            %if ~this.includeNominalScenario
+            %    nomScen = all(scenarios == zeros(1,5),2);
+            %    scenarios(nomScen,:) = [];
+            %    linearMaskTmp(nomScen,:) = [];
+            %end
 
             %Handle 4D phases
             phases = repmat(1:this.numOfCtScen,size(scenarios,1),1);

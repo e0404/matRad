@@ -4,6 +4,9 @@ test_functions=localfunctions();
 
 initTestSuite;
 
+function assignmentTestHelper(model,property,value)
+    model.(property) = value;
+
 function p = helper_mvarGauss(model)
     Sigma = diag([model.shiftSD,model.rangeAbsSD,model.rangeRelSD./100].^2);
     d = size(Sigma,1);
@@ -138,4 +141,44 @@ function test_worstCaseScenarioExtractSingleScenarioWithCtScen
     assertEqual(scenario.scenForProb,[1 zeros(1,5)]);
     assertEqual(scenario.scenWeight, 1);
     
+function test_worstCaseScenarioCombineRange
 
+    model = matRad_WorstCaseScenarios();
+
+    assertExceptionThrown(@() assignmentTestHelper(model,'combineRange','hello'),'matRad:Error');
+    assertTrue(model.combineRange);
+
+    assertEqual(model.totNumRangeScen,3);
+    model.combineRange = false;
+    assertFalse(model.combineRange);
+    assertEqual(model.totNumScen,15);
+    assertEqual(model.totNumRangeScen,9);
+
+function test_worstCaseScenarioShiftCombinations
+
+    model = matRad_WorstCaseScenarios();
+
+    assertExceptionThrown(@() assignmentTestHelper(model,'combinations','hello'),'matRad:Error');
+    assertEqual(model.combinations,'none');
+
+    model.combinations = 'shift';
+    assertEqual(model.combinations,'shift');
+    assertEqual(model.totNumShiftScen,27);
+    assertEqual(model.totNumRangeScen,3);
+    assertEqual(model.totNumScen,29);
+
+    model.combinations = 'all';
+    assertEqual(model.combinations,'all');
+    assertEqual(model.totNumShiftScen,27);
+    assertEqual(model.totNumRangeScen,3);
+    assertEqual(model.totNumScen,81);
+
+    model.combineRange = false;
+    assertEqual(model.totNumShiftScen,27);
+    assertEqual(model.totNumRangeScen,9);
+    assertEqual(model.totNumScen,243);
+
+    model.combinations = 'shift';
+    assertEqual(model.totNumShiftScen,27);
+    assertEqual(model.totNumRangeScen,9);
+    assertEqual(model.totNumScen,35);
