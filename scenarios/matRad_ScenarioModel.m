@@ -113,7 +113,7 @@ classdef (Abstract) matRad_ScenarioModel < handle
         end
 
         function set.shiftSD(this,shiftSD)
-            valid = isnumeric(shiftSD) && isrow(shiftSD) && numel(shiftSD) == 3 && all(shiftSD > 0,"all");
+            valid = isnumeric(shiftSD) && isrow(shiftSD) && numel(shiftSD) == 3 && all(shiftSD > 0);
             if ~valid 
                 matRad_cfg = MatRad_Config.instance();
                 matRad_cfg.dispError('Invalid value for shiftSD! Needs to be 3-element numeric row vector!');
