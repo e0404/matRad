@@ -47,6 +47,7 @@ classdef matRad_WorstCaseScenarios < matRad_GriddedScenariosAbstract
             this.updateScenarios();
         end
         
+        function scenarios = updateScenarios(this)
             %Use the static gridded shift function from
             %ImportanceScenarios. We set inclusion of nominal scenarios to
             %false and handle it automatically via the grid point number
