@@ -22,22 +22,33 @@ function [cube, metadata] = matRad_readCube(filename)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%Instantiate matrad config
+matRad_cfg = MatRad_Config.instance();
+
 if ~exist(filename,'file')
     error(['File ' filename ' does not exist!']);
 end
 
 [pathstr,name,ext] = fileparts(filename);
+if strcmp(ext,'.gz')
+    [~,name,subext] = fileparts(name);
+    ext = strcat(subext,ext);
+end
 
 switch ext
     case {'.nrrd','.NRRD'}
-        disp(['Reading NRRD: ' filename '...']);
+        matRad_cfg.dispInfo('Reading NRRD: "%s" ...',filename);
         [cube, metadata] = matRad_readNRRD(filename);
-        disp('Done!');
+        matRad_cfg.dispInfo('Done!\n');
+    case {'.nii','.nii.gz'}
+        matRad_cfg.dispInfo('Reading NifTI: "%s" ...',filename);
+        [cube, metadata] = matRad_readNifTI(filename);
+        matRad_cfg.dispInfo('Done!\n');
     otherwise
-        error(['Extension ' ext ' not (yet) supported!']);
+        matRad_cfg.dispError('Extension %s not (yet) supported!',ext);
 end
 metadata.name = name;
-metadata.path = pathstr;
+metadata.path = pathstr;m
 
 end
 
