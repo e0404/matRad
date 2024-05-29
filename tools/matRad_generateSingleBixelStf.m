@@ -120,6 +120,7 @@ for i = 1:length(pln.propStf.gantryAngles)
     stf(i).numOfRays            = 1;
     stf(i).numOfBixelsPerRay    = 1;
     stf(i).totalNumOfBixels     = 1;
+    stf(i).machine              = pln.machine;
     
     x = floor(matRad_interp1(xVox,[1:ct.cubeDim(2)]',stf.isoCenter(1)));
     y = floor(matRad_interp1(yVox,[1:ct.cubeDim(1)]',stf.isoCenter(2)));
