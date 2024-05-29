@@ -43,12 +43,24 @@ classdef matRad_PhantomVOIBox < matRad_PhantomVOIVolume
             VOIHelper = zeros(ct.cubeDim);
             offsets = obj.offset;
             dims = obj.boxDimensions;
-    
-            for x = center(2)+offsets(1) - round(dims(1)/2) :1: center(2) + offsets(1) + round(dims(1)/2) 
-                for y = center(1)+offsets(2) - round(dims(2)/2) :1: center(1) + offsets(2) + round(dims(2)/2)
-                   for z = center(3)+offsets(3) - round(dims(3)/2) :1: center(3) + offsets(3) + round(dims(3)/2)
+
+            xMinMax = center(2)+offsets(1) + round(dims(1)/2)*[-1,1];
+            yMinMax = center(1)+offsets(2) + round(dims(2)/2)*[-1,1];
+            zMinMax = center(3)+offsets(3) + round(dims(3)/2)*[-1,1];
+            
+            %Correct if out of bounds
+            xMinMax(xMinMax < 1) = 1;
+            yMinMax(yMinMax < 1) = 1;
+            zMinMax(zMinMax < 1) = 1;
+
+            xMinMax(xMinMax > ct.cubeDim(2)) = ct.cubeDim(2);
+            yMinMax(yMinMax > ct.cubeDim(1)) = ct.cubeDim(1);
+            zMinMax(zMinMax > ct.cubeDim(3)) = ct.cubeDim(3);
+            
+            for x = xMinMax(1):1:xMinMax(2) 
+                for y = yMinMax(1):1:yMinMax(2)
+                   for z = zMinMax(1):1:zMinMax(2)
                         VOIHelper(y,x,z) = 1;
-                        
                    end
                 end
             end
