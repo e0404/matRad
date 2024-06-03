@@ -52,7 +52,7 @@ addFiles = cellfun(@(f) fullfile(sourceFolder,f),addFiles,'UniformOutput',false)
 addFiles = strjoin(addFiles,' ');
 
 if exist ('OCTAVE_VERSION','builtin')
-    ccName = eval('mkoctfile -p CC');
+    ccName = evalc('mkoctfile -p CC');
 else
     myCCompiler = mex.getCompilerConfigurations('C','Selected');
     ccName = myCCompiler.ShortName;
@@ -80,7 +80,7 @@ flagstring = '';
 %will be parsed as string arguments in MATLAB
 for flag = 1:size(flags,1)
     if strcmp(env,'OCTAVE')
-        preFlagContent = eval(['mkoctfile -p ' flags{flag,1}]);
+        preFlagContent = evalc(['mkoctfile -p ' flags{flag,1}]);
         if ~isempty(preFlagContent)
             preFlagContent = preFlagContent(1:end-1); %Strip newline
         end

@@ -252,7 +252,9 @@ switch pln.propOpt.optimizer
         optimizer = matRad_OptimizerIPOPT;
 end
         
-%optimizer = matRad_OptimizerFmincon;
+if ~optimizer.IsAvailable()
+    matRad_cfg.dispError(['Optimizer ''' pln.propOpt.optimizer ''' not available!']);
+end
 
 optimizer = optimizer.optimize(wInit,optiProb,dij,cst);
 

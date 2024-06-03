@@ -396,12 +396,8 @@ classdef matRad_WorkflowWidget < matRad_Widget
             
             % carry out dose calculation
             try
-                if strcmp(pln.radiationMode,'photons')
-                    dij = matRad_calcPhotonDose(evalin('base','ct'),stf,pln,evalin('base','cst'));
-                elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-                    dij = matRad_calcParticleDose(evalin('base','ct'),stf,pln,evalin('base','cst'));
-                end
-                
+                dij = matRad_calcDoseInfluence(evalin('base','ct'),evalin('base','cst'),stf,pln);
+                               
                 % assign results to base worksapce
                 assignin('base','dij',dij);
                 
@@ -444,7 +440,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 cst = evalin('base','cst');
                 % optimize
                 [resultGUIcurrentRun,usedOptimizer] = matRad_fluenceOptimization(dij,cst,pln);
-                if pln.propOpt.conf3D && strcmp(pln.radiationMode,'photons')
+                if isfield(pln,'propOpt') && isfield(pln.propOpt,'conf3D') && pln.propOpt.conf3D && strcmp(pln.radiationMode,'photons')
                     resultGUIcurrentRun.w = resultGUIcurrentRun.w .* ones(dij.totalNumOfBixels,1);  
                     resultGUIcurrentRun.wUnsequenced = resultGUIcurrentRun.w;
                 end
@@ -603,15 +599,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     stf(i).isoCenter = pln.propStf.isoCenter(i,:);
                 end
                 
-                % recalculate influence matrix
-                if strcmp(pln.radiationMode,'photons')
-                    dij = matRad_calcPhotonDose(ct,stf,pln,cst);
-                elseif strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon')
-                    dij = matRad_calcParticleDose(ct,stf,pln,cst);
-                end
-                
-                % recalculate cubes in resultGUI
-                resultGUIreCalc = matRad_calcCubes(resultGUI.w,dij); %(['w' Suffix])
+                resultGUIreCalc = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
                 
                 % delete old variables to avoid confusion
                 if isfield(resultGUI,'effect')
@@ -629,7 +617,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 end
                 
                 % assign results to base worksapce
-                assignin('base','dij',dij);
+                %assignin('base','dij',dij);
                 assignin('base','resultGUI',resultGUI);
 
                 
@@ -638,7 +626,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 set(InterfaceObj,'Enable','on');
                
                 this.handles = handles;
-                this.changedWorkspace('dij','resultGUI');
+                this.changedWorkspace('resultGUI');
                 
             catch ME
                 % change state from busy to normal

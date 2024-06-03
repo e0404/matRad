@@ -32,7 +32,7 @@ allMatch=true;
 msg = [];
 
 %% compare number of gantry angles
-if numel(pln.propStf.numOfBeams) ~= numel(stf) ...
+if pln.propStf.numOfBeams ~= numel(stf) 
         msg= 'Number of beams do not match';
         allMatch=false;
         return

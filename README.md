@@ -106,9 +106,9 @@ You can cite specific versions of matRad in your work! For example, Here is the 
 
 # Funding Sources
 matRad developments (on this branch) were (in parts) funded by:
-- Grant  No. BA 2279/3-1 (Project No. 265744405) from the German Research Foundation (DFG)
-- Grant No. 70113094 from the German Cancer Aid
-- Grant No. WA 4707/1-1 (Project No. 443188743) from the German Research Foundation (DFG)
+- The German Research Foundation (DFG), Project No. 265744405 & 443188743
+- The German Cancer Aid, Project No. 70113094
+- The German Federal Ministry of Education and Research (BMBF), Project No. 01DN17048
 - Mathworks Academic Research Support
 
 ---

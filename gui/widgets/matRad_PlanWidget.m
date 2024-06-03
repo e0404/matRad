@@ -602,6 +602,42 @@ classdef matRad_PlanWidget < matRad_Widget
                 'FontName',matRad_cfg.gui.fontName,...
                 'FontWeight',matRad_cfg.gui.fontWeight);
             
+            pos = gridPos{3,4};
+
+            hTxtDoseEngine = uicontrol(...
+                'Parent',h12,...
+                'Units','normalized',...
+                'String','Dose Engine',...
+                'Tooltip','Set the size of an individual voxel in the dose cube',...
+                'HorizontalAlignment','center',...
+                'Style','text',...
+                'Position',pos,...
+                'BackgroundColor',matRad_cfg.gui.backgroundColor,...
+                'ForegroundColor',matRad_cfg.gui.textColor,....
+                'Interruptible','off',...
+                'Tag','textDoseEngine',...
+                'FontSize',matRad_cfg.gui.fontSize,...
+                'FontName',matRad_cfg.gui.fontName,...
+                'FontWeight',matRad_cfg.gui.fontWeight);
+
+            pos = gridPos{3,5};
+
+            hSelectDoseEngine = uicontrol(...
+                'Parent',h12,...
+                'Units','normalized',...
+                'String',{'auto'},...
+                'Tooltip',txt,...
+                'Style','popupmenu',...
+                'Value',1,...
+                'Position',pos,...
+                'BackgroundColor',matRad_cfg.gui.elementColor,...
+                'ForegroundColor',matRad_cfg.gui.textColor,....
+                'Callback',@(hObject,eventdata) standardCallback(this,hObject,eventdata),...
+                'Tag','popUpMenuDoseEngine',...
+                'Enable', 'on',...
+                'FontSize',matRad_cfg.gui.fontSize,...
+                'FontName',matRad_cfg.gui.fontName,...
+                'FontWeight',matRad_cfg.gui.fontWeight);        
             
              
             this.createHandles();
@@ -629,7 +665,7 @@ classdef matRad_PlanWidget < matRad_Widget
             
             handles = this.handles;
             
-            this.getMachines()
+            this.getMachines();
 
             %
             vChar = get(handles.editGantryAngle,'String');
@@ -646,7 +682,10 @@ classdef matRad_PlanWidget < matRad_Widget
             set(handles.editIsoCenter,'Enable','on');
 
             this.handles=handles;
+
             updatePlnInWorkspace(this);
+
+            this.getPlnFromWorkspace();
         end
         
         %Get pln from workspace and update the Settings displayed in GUI
@@ -673,6 +712,9 @@ classdef matRad_PlanWidget < matRad_Widget
             getMachines(this);
             modIy = find(strcmp(pln.machine,this.Machines{modIx})); 
             set(handles.popUpMachine,'Value',modIy); 
+
+            availableEngines = DoseEngines.matRad_DoseEngineBase.getAvailableEngines(pln);
+            set(handles.popUpMenuDoseEngine,'String',{availableEngines(:).shortName});
             
             if isfield(pln.propStf,'isoCenter')
                 if size(unique(pln.propStf.isoCenter,'rows'),1) == 1
@@ -748,6 +790,17 @@ classdef matRad_PlanWidget < matRad_Widget
             pln.propDoseCalc.doseGrid.resolution.x = this.parseStringAsNum(get(handles.editDoseX,'String'),false);
             pln.propDoseCalc.doseGrid.resolution.y = this.parseStringAsNum(get(handles.editDoseY,'String'),false);
             pln.propDoseCalc.doseGrid.resolution.z = this.parseStringAsNum(get(handles.editDoseZ,'String'),false);
+
+            engines = get(handles.popUpMenuDoseEngine,'String');
+            selectedEngine = get(handles.popUpMenuDoseEngine,'Value');
+            
+            if ~strcmp(engines{selectedEngine},'auto') 
+                pln.propDoseCalc.engine = engines{selectedEngine};
+            else
+                if isfield(pln.propDoseCalc,'engine')
+                    pln.propDoseCal = rmfield(pln.propDoseCalc,'engine');
+                end
+            end
                   
             try
                 ct = evalin('base','ct');
@@ -954,6 +1007,11 @@ classdef matRad_PlanWidget < matRad_Widget
             catch
                 %Do nothing here
             end
+            
+            pln.radiationMode = RadIdentifier;
+            availableEngines = DoseEngines.matRad_DoseEngineBase.getAvailableEngines(pln);
+            set(handles.popUpMenuDoseEngine,'String',{availableEngines(:).shortName});
+
             this.handles = handles;
             updatePlnInWorkspace(this);
         end
@@ -1057,6 +1115,9 @@ classdef matRad_PlanWidget < matRad_Widget
                 catch
                 end
             end
+
+            availableEngines = DoseEngines.matRad_DoseEngineBase.getAvailableEngines(pln);
+            set(handles.popUpMenuDoseEngine,'String',{availableEngines(:).shortName});
                
             this.handles = handles;
             updatePlnInWorkspace(this); 

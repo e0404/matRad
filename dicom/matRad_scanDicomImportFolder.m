@@ -42,7 +42,6 @@ warnDlgDICOMtagShown = false;
 % dicom import needs image processing toolbox -> check if available
 available = matRad_checkEnvDicomRequirements(matRad_cfg.env);
 
-
 if ~available
     matRad_cfg.dispError('Image processing toolbox / packages not available!');
 end
