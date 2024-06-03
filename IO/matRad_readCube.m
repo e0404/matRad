@@ -48,7 +48,7 @@ switch ext
         matRad_cfg.dispError('Extension %s not (yet) supported!',ext);
 end
 metadata.name = name;
-metadata.path = pathstr;m
+metadata.path = pathstr;
 
 end
 
