@@ -35,18 +35,18 @@ if strcmp(ext,'.gz')
     ext = strcat(subext,ext);
 end
 
-switch ext
-    case {'.nrrd','.NRRD'}
-        matRad_cfg.dispInfo('Reading NRRD: "%s" ...',filename);
-        [cube, metadata] = matRad_readNRRD(filename);
-        matRad_cfg.dispInfo('Done!\n');
-    case {'.nii','.nii.gz'}
-        matRad_cfg.dispInfo('Reading NifTI: "%s" ...',filename);
-        [cube, metadata] = matRad_readNifTI(filename);
-        matRad_cfg.dispInfo('Done!\n');
-    otherwise
-        matRad_cfg.dispError('Extension %s not (yet) supported!',ext);
+[readers] = matRad_supportedBinaryFormats();
+
+readerIx = find(~cellfun(@isempty,strfind({readers.fileFilter},lower(ext))));
+if ~isempty(readerIx) && isscalar(readerIx)
+    readerHandle = readers(readerIx).handle;
+    matRad_cfg.dispInfo('Reading %s: "%s" ...',readers(readerIx).name,filename);
+    [cube,metadata] = readerHandle(filename);
+    matRad_cfg.dispInfo('Done!\n');
+else
+    matRad_cfg.dispError('Extension %s not (yet) supported!',ext);
 end
+
 metadata.name = name;
 metadata.path = pathstr;
 
