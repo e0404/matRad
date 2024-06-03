@@ -38,58 +38,6 @@ classdef matRad_exportWidget < matRad_Widget
             end
             this = this@matRad_Widget(handleParent);
         end
-        
-        function this = update(this,evt)
-            
-            doUpdate = true;
-            if nargin == 2
-                doUpdate = this.checkUpdateNecessary({'resultGUI','ct','cst'},evt);
-            end
-            
-            if ~doUpdate
-                return;
-            end
-            
-            handles = this.handles;
-            % handles = guidata(this.widgetHandle);
-            
-            %Fills structure export table
-            if evalin('base','exist(''cst'',''var'')') == 1
-                cst = evalin( 'base', 'cst' );
-                tableData = cell(numel(cst(:,2)),2);
-                tableData(:,2) = cst(:,2);
-                tableData(:,1) = {true};
-            else
-                tableData = cell(0);
-                set(handles.checkbox_CT,'Enable','off');
-            end
-            set(handles.uitable_vois,'data',tableData);
-            
-            %Fills result cubes export table
-            if evalin('base','exist(''resultGUI'',''var'')')
-                result = evalin( 'base', 'resultGUI' );
-                cubeNames = fieldnames(result);
-                cubeIx = 1;
-                for f = 1:numel(cubeNames)
-                    if ndims(result.(cubeNames{f})) < 3
-                        continue;
-                    end
-                    cubes{cubeIx} = cubeNames{f};
-                    cubeIx = cubeIx + 1;
-                end
-                numCubes = cubeIx - 1;
-                tableData = cell(numCubes,2);
-                tableData(:,2) = cubes;
-                tableData(:,1) = {true};
-            else
-                tableData = cell(0);
-                set(handles.checkbox_dose,'Enable','off'); %CHANGED CODE!ALTE VERSION: set(handles.checkbox_dose,'Enable','off');
-            end
-            set(handles.uitable_doseCubes,'data',tableData);
-            
-            % Update handles structure
-            this.handles = handles;
-        end
     end
     
     
@@ -232,11 +180,13 @@ classdef matRad_exportWidget < matRad_Widget
                 'Position',[0.035 0.225 0.7 0.05],...
                 'Tag','text_extension');
             
+            [~,writers] = matRad_supportedBinaryFormats();
+
             % DROPDOWN MENU
             h10 = uicontrol(...
                 'Parent',h1,...
                 'Units','normalized',...
-                'String',{  '*.nrrd'; '*.vtk'; '*.mha' },...
+                'String',{writers.fileFilter},...
                 'Tooltip', 'File format',...
                 'Style','popupmenu',...
                 'Value',1,...
@@ -298,6 +248,57 @@ classdef matRad_exportWidget < matRad_Widget
             this.createHandles();
         end
         
+        function this = doUpdate(this,evt)
+            
+            doUpdate = true;
+            if nargin == 2
+                doUpdate = this.checkUpdateNecessary({'resultGUI','ct','cst'},evt);
+            end
+            
+            if ~doUpdate
+                return;
+            end
+            
+            handles = this.handles;
+            % handles = guidata(this.widgetHandle);
+            
+            %Fills structure export table
+            if evalin('base','exist(''cst'',''var'')') == 1
+                cst = evalin( 'base', 'cst' );
+                tableData = cell(numel(cst(:,2)),2);
+                tableData(:,2) = cst(:,2);
+                tableData(:,1) = {true};
+            else
+                tableData = cell(0);
+                set(handles.checkbox_CT,'Enable','off');
+            end
+            set(handles.uitable_vois,'data',tableData);
+            
+            %Fills result cubes export table
+            if evalin('base','exist(''resultGUI'',''var'')')
+                result = evalin( 'base', 'resultGUI' );
+                cubeNames = fieldnames(result);
+                cubeIx = 1;
+                for f = 1:numel(cubeNames)
+                    if ndims(result.(cubeNames{f})) < 3
+                        continue;
+                    end
+                    cubes{cubeIx} = cubeNames{f};
+                    cubeIx = cubeIx + 1;
+                end
+                numCubes = cubeIx - 1;
+                tableData = cell(numCubes,2);
+                tableData(:,2) = cubes;
+                tableData(:,1) = {true};
+            else
+                tableData = cell(0);
+                set(handles.checkbox_dose,'Enable','off'); %CHANGED CODE!ALTE VERSION: set(handles.checkbox_dose,'Enable','off');
+            end
+            set(handles.uitable_doseCubes,'data',tableData);
+            
+            % Update handles structure
+            this.handles = handles;
+        end
     end
     
     
@@ -372,7 +373,7 @@ classdef matRad_exportWidget < matRad_Widget
                 end
                 
                 %This is only for the waitbar to get the number of cubes you wanna save
-                numExportCubes = 0;error
+                numExportCubes = 0;
                 if (saveCT)
                     if isfield(ct,'cubeHU')
                         numExportCubes = numExportCubes + 1;
@@ -442,7 +443,7 @@ classdef matRad_exportWidget < matRad_Widget
                     
                 end
             catch ME
-                this.showWarning('couldn''t export! Reason: %s\n',ME.message)
+                this.showWarning('couldn''t export! Reason:', ME)
             end
             %Results Export
             if saveResults

@@ -19,12 +19,7 @@ classdef matRad_importWidget < matRad_Widget
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
-    properties
-        importFilter = {'*.nrrd', 'NRRD-Files'; ...
-                '*.nii;*.nii.gz', 'NifTI-Files';...
-                };
-    end
-    
+   
     methods
         function this = matRad_importWidget(handleParent)
             matRad_cfg = MatRad_Config.instance();
@@ -250,8 +245,11 @@ classdef matRad_importWidget < matRad_Widget
         
         %CALLBACK FOR H4 PUSHBUTTON CREATE PATH
         function this = pushbutton_ctPath_Callback(this, hObject, event)
+            readers = matRad_supportedBinaryFormats();
+            importFilter = horzcat({readers.fileFilter}',{readers.name}');
+
             handles = this.handles;
-            [importCTFile,importCTPath,~] = uigetfile(this.importFilter, 'Choose the CT file...');
+            [importCTFile,importCTPath,~] = uigetfile(importFilter, 'Choose the CT file...');
             
             if importCTFile ~= 0
                 set(handles.edit_ctPath,'String',fullfile(importCTPath,importCTFile)); % NON EXISTING FIELD 'edit_ctPath'
@@ -268,7 +266,11 @@ classdef matRad_importWidget < matRad_Widget
         %CALLBACK FOR PUSHBUTTON ADD MASKPATHS
         function this = pushbutton_addMaskPaths_Callback(this, hObject, event)
             handles = this.handles;
-            [importMaskFile,importMaskPath,~] = uigetfile(this.importFilter, 'Choose the binary mask files...','MultiSelect','on');
+            
+            readers = matRad_supportedBinaryFormats();
+            importFilter = horzcat({readers.fileFilter}',{readers.name}');
+
+            [importMaskFile,importMaskPath,~] = uigetfile(importFilter, 'Choose the binary mask files...','MultiSelect','on');
             if ~isempty(importMaskFile)
                 if ~iscell(importMaskFile)
                     tmpName = importMaskFile;
