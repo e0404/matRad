@@ -27,9 +27,14 @@ sed -i 's,http://www.netlib.org/blas/,http://coin-or-tools.github.io/ThirdParty-
 ./get.Blas
 cd $IPOPTDIR/ThirdParty/Lapack
 ./get.Lapack
+# For Metis, we need to clone the updated git with the new get url
+rm -rf $IPOPTDIR/ThirdParty/Metis
+git clone https://github.com/coin-or-tools/ThirdParty-Metis.git --depth 1 --branch releases/1.3.10 $IPOPTDIR/ThirdParty/Metis
 cd $IPOPTDIR/ThirdParty/Metis
 sed -i 's,http://glaros.dtc.umn.edu/gkhome/fetch/sw/metis/OLD/,http://coin-or-tools.github.io/ThirdParty-Metis/,g' get.Metis
 ./get.Metis
+rm -rf $IPOPTDIR/ThirdParty/Mumps
+git clone https://github.com/coin-or-tools/ThirdParty-Mumps.git --depth 1 --branch releases/1.6.3 $IPOPTDIR/ThirdParty/Mumps
 cd $IPOPTDIR/ThirdParty/Mumps
 # First we need to replace the url as the version can no longer be downloaded
 sed -i 's,http://mumps.enseeiht.fr/,http://coin-or-tools.github.io/ThirdParty-Mumps/,g' get.Mumps
@@ -47,13 +52,13 @@ cp $MINGW_PREFIX/lib/gcc/$MINGW_CHOST/$GCC_VERSION/libquadmath.* /usr/lib/gcc/$M
 mkdir build
 cd build
 
-../configure --prefix=$IPOPTINSTALLDIR --disable-shared --enable-static 
+../configure --prefix=$IPOPTINSTALLDIR --disable-shared --enable-static ADD_FFLAGS=-fallow-argument-mismatch
 make
 make install
 
 cd ../..
 
-# If everything worked, you should see some (static) libraries when doing ls /usr/local/lib 
+# If everything worked, you should see some (static) libraries when doing ls $IPOPTINSTALLDIR 
 # we can get the mex interface
 
 git clone --depth 1 --branch 1.1.4 https://github.com/ebertolazzi/mexIPOPT

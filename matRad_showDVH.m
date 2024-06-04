@@ -94,12 +94,14 @@ set(axesHandle,'LineWidth',1.5,'FontSize',fontSizeValue); %set(gca,'LineWidth',1
 ylabel(axesHandle,'Volume [%]','FontSize',fontSizeValue)
 
 if exist('pln','var') && ~isempty(pln)
-    if strcmp(pln.propOpt.bioOptimization,'none')
-        xlabel(axesHandle,'Dose [Gy]','FontSize',fontSizeValue);
+
+    if strcmp(pln.bioParam.model,'none')
+        xlabel('Dose [Gy]','FontSize',fontSizeValue);
     else
         xlabel(axesHandle,'RBE x Dose [Gy(RBE)]','FontSize',fontSizeValue);
     end
 else
-     xlabel(axesHandle,'Dose [Gy]','FontSize',fontSizeValue);
+    xlabel('Dose [Gy]','FontSize',fontSizeValue);
+
 end
 hold(axesHandle,'off');

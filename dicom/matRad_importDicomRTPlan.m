@@ -29,10 +29,8 @@ function pln = matRad_importDicomRTPlan(ct, rtPlanFiles, dicomMetaBool)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
 matRad_cfg = MatRad_Config.instance();
 matRad_checkEnvDicomRequirements(matRad_cfg.env);
-
 
 %% load plan file
 % check size of RT Plan
@@ -97,7 +95,7 @@ if ct.dicomInfo.ImageOrientationPatient == [1;0;0;0;1;0]
     isoCenter = isoCenter - ones(length(BeamSeqNames),1) * ...
         ([ct.x(1) ct.y(1) ct.z(1)] - [ct.resolution.x ct.resolution.y ct.resolution.z]);
 else
-    error('This Orientation is not yet supported.');
+    matRad_cfg.dispError('This Orientation is not yet supported.');
 end
 
 %% read constant parameters
@@ -108,7 +106,7 @@ if ~strncmpi(radiationMode,'photons',6)
         radiationMass = planInfo.(BeamParam).Item_1.RadiationMassNumber;
         radiationAtomicNumber = planInfo.(BeamParam).Item_1.RadiationAtomicNumber;
     catch
-        warning('Could not determine mass and atomic number of the particle');
+        matRad_cfg.dispWarning('Could not determine mass and atomic number of the particle');
     end
 end
 
@@ -119,7 +117,7 @@ elseif strncmpi(radiationMode,'proton',6)
 elseif (strncmpi(radiationMode,'ion',3) && radiationMass == 12 && radiationAtomicNumber == 6)
     radiationMode = 'carbon';
 else
-    warning('The given type of radiation is not yet supported');
+    matRad_cfg.dispError('The given type of radiation is not yet supported');
 end
 
 % extract field shapes
@@ -133,17 +131,22 @@ end
 %% write parameters found to pln variable
 pln.radiationMode   = radiationMode; % either photons / protons / carbon
 pln.numOfFractions  = planInfo.FractionGroupSequence.Item_1.NumberOfFractionsPlanned;
-pln.machine         = planInfo.(BeamParam).Item_1.TreatmentMachineName;
 
+% set handling of multiple scenarios -> default: only nominal
+pln.multScen = matRad_multScen(ct,'nomScen');
+pln.machine         = BeamSequence.Item_1.TreatmentMachineName;
+
+% set bio model parameters (default physical opt, no bio model)
+pln.bioParam = matRad_bioModel(pln.radiationMode,'physicalDose','none');
+
+% set properties for steering
 pln.propStf.isoCenter    = isoCenter;
 pln.propStf.bixelWidth   = NaN; % [mm] / also corresponds to lateral spot spacing for particles
 pln.propStf.gantryAngles = [gantryAngles{1:length(BeamSeqNames)}];
-pln.propStf.couchAngles  = [PatientSupportAngle{1:length(BeamSeqNames)}]; % [°]
+pln.propStf.couchAngles  = [PatientSupportAngle{1:length(BeamSeqNames)}]; % [??]
 pln.propStf.numOfBeams   = length(BeamSeqNames);
 
-
-pln.propOpt.bioOptimization = 'none'; % none: physical optimization;             const_RBExD; constant RBE of 1.1;
-                                      % LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose
+% turn off sequerncing an DAO by default
 pln.propOpt.runSequencing   = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 pln.propOpt.runDAO          = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
 

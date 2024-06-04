@@ -73,7 +73,7 @@ classdef matRad_EUD < DoseObjectives.matRad_DoseObjective
             
             %This check is not needed since dose is always positive
             %if powersum > 0
-            fDose = obj.penalty * (nthroot(powersum/numel(dose),k) - obj.parameters{1})^2;
+            fDose = (nthroot(powersum/numel(dose),k) - obj.parameters{1})^2;
             %end
         end
         
@@ -93,7 +93,7 @@ classdef matRad_EUD < DoseObjectives.matRad_DoseObjective
             %if powersum > 0
             
             %derivatives = nthroot(1/numel(dose),k) * powersum^((1-k)/k) * (dose.^(k-1));
-            fDoseGrad = 2 * obj.penalty * nthroot(1/numel(dose),k) * powersum^((1-k)/k) * (dose.^(k-1)) .* (nthroot(powersum/numel(dose),k) - obj.parameters{1});
+            fDoseGrad = 2 * nthroot(1/numel(dose),k) * powersum^((1-k)/k) * (dose.^(k-1)) .* (nthroot(powersum/numel(dose),k) - obj.parameters{1});
             %end
             if any(~isfinite(fDoseGrad)) % check for inf and nan for numerical stability
                 error(['EUD computation failed. Reduce exponent to resolve numerical problems.']);

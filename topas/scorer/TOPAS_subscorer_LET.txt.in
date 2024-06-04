@@ -1,0 +1,6 @@
+#-- shared LET sub-scorer
+s:Sc/ProtonLET/Quantity   			= "ProtonLET"
+s:Sc/ProtonLET/Component  			= "Patient"
+s:Sc/ProtonLET/IfOutputFileAlreadyExists 	= "Overwrite"
+s:Sc/ProtonLET/OutputType 			= Sim/DoseScorerOutputType
+s:Sc/ProtonLET/OutputFile 			= Sim/ScoreLabel + "_LET"

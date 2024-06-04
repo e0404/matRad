@@ -30,6 +30,9 @@ classdef matRad_DicomExporter < handle
         %output folder
         dicomDir = ['.' filesep];
         
+        %which scenario to export (no 4D data supported for now)
+        exportScenario = 1;
+        
         % matRad structures to export
         ct = [];
         cst = [];

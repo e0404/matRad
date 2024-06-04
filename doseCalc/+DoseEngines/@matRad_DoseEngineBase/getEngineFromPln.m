@@ -49,8 +49,8 @@ if initDefaultEngine
         end
         engine = engineHandle(pln);
         matRad_cfg.dispWarning('Using default dose calculation engine %s!', engine.name);
-    elseif ~isempty(nameList)
-        engineHandle = handleList{1};
+    elseif ~isempty(classList)
+        engineHandle = classList(1).handle;
         engine = engineHandle(pln);
         matRad_cfg.dispWarning('Default dose calculation engine not available! Using %s.', engine.name);
     else

@@ -25,7 +25,12 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
     properties (SetAccess = public, GetAccess = public)
         visBool = false; %binary switch to en/disable visualitzation
         useCornersSCD = true; %false -> use ISO corners
-
+        
+         % This factor calibrates to 1 Gy in a %(5x5)cm^2 open field (1 bixel) at
+         % 5cm depth for SSD = 900 which corresponds to the calibration for the
+         % analytical base data.
+        absCalibrationFactor = 3.49056 * 1e12; %Approximate!
+        
         omcFolder;
     end
 
@@ -33,8 +38,14 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         ompMCoptions;
         ompMCgeo;
         ompMCsource;
+
+        cubeHU;         %resamples HU cube
         cubeRho;        %density cube
         cubeMatIx;      %material assignment
+    end
+
+    properties (Constant)
+        scale = 10;
     end
 
     methods
@@ -57,11 +68,10 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             matRad_cfg = MatRad_Config.instance();
             this.omcFolder = [matRad_cfg.matRadRoot filesep 'ompMC'];
 
-            fileFolder = fileparts(mfilename('fullpath'));
             if ~matRad_checkMexFileExists('omc_matrad') %exist('matRad_ompInterface','file') ~= 3
                 matRad_cfg.dispWarning('Compiled mex interface not found. Trying to compile the ompMC interface on the fly!');
                 try
-                    matRad_compileOmpMCInterface();
+                    this.compileOmpMCInterface(this.omcFolder);
                 catch MException
                     matRad_cfg.dispError('Could not find/generate mex interface for MC dose calculation.\nCause of error:\n%s\n Please compile it yourself (preferably with OpenMP support).',MException.message);
                 end
@@ -106,71 +116,88 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             %run initDoseCalc as usual
             dij = this.initDoseCalc(ct,cst,stf);
 
-            %% Call the OmpMC interface
-
             %ompMC for matRad returns dose/history * nHistories.
-            % This factor calibrates to 1 Gy in a %(5x5)cm^2 open field (1 bixel) at
-            % 5cm depth for SSD = 900 which corresponds to the calibration for the
-            % analytical base data.
-            absCalibrationFactor = 3.49056 * 1e12; %Approximate!
-            
+               
             bixelWidth = unique([stf.bixelWidth]);
 
             if numel(bixelWidth) > 1
                 matRad_cfg.dispWarning('Varying bixel width in stf, calibartion might be wrong!')
                 bixelWidth = mean(bixelWidth);
-            end
+            end           
 
             %Now we have to calibrate to the the beamlet width.
-            absCalibrationFactor = absCalibrationFactor * (bixelWidth/50)^2;
+            calibrationFactor = this.absCalibrationFactor * (bixelWidth/50)^2;
 
+            scenCount = 0;
             %run over all scenarios
-            for s = 1:dij.numOfScenarios
-                this.ompMCgeo.isoCenter = vertcat(stf(:).isoCenter) + dij.doseGrid.isoCenterOffset;
+            for scenarioIx = 1:this.multScen.totNumScen
+                ctScen = this.multScen.linearMask(scenarioIx,1);
+                shiftScen = this.multScen.linearMask(scenarioIx,2);
+                rangeShiftScen = this.multScen.linearMask(scenarioIx,3);
 
-                %Run the Monte Carlo simulation and catch  possible mex-interface
-                %issues
-                try
-                    %If we ask for variance, a field in the dij will be filled
-                    if this.outputMCvariance
-                        [dij.physicalDose{s},dij.physicalDose_MCvar{s}] = omc_matrad(this.cubeRho{s},this.cubeMatIx{s},this.ompMCgeo,this.ompMCsource,this.ompMCoptions);
-                    else
-                        [dij.physicalDose{s}] = omc_matrad(this.cubeRho{s},this.cubeMatIx{s},this.ompMCgeo,this.ompMCsource,this.ompMCoptions);
+                if this.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
+                    scenCount = scenCount + 1;
+                    
+                    % manipulate isocenter
+                    shiftedIsoCenter = vertcat(stf(:).isoCenter) + this.multScen.isoShift(scenarioIx,:) + dij.doseGrid.isoCenterOffset;
+                    this.ompMCgeo.isoCenter = shiftedIsoCenter;
+                    tmpStf = stf;
+                    
+                    for k = 1:length(tmpStf)
+                        tmpStf(k).isoCenter = shiftedIsoCenter;
                     end
-                catch ME
-                    errorString = [ME.message '\nThis error was thrown by the MEX-interface of ompMC.\nMex interfaces can raise compatability issues which may be resolved by compiling them by hand directly on your particular system.'];
-                    matRad_cfg.dispError(errorString);
-                end
 
-                %Calibrate the dose with above factor
-                dij.physicalDose{s} = dij.physicalDose{s} * absCalibrationFactor;
-                if isfield(dij,'physicalDose_MCvar')
-                    dij.physicalDose_MCvar{s} = dij.physicalDose_MCvar{s} * absCalibrationFactor^2;
+                    % load ompMC source
+                    this.getOmpMCsource(tmpStf);
+
+                    % Book keeping for dij
+                    counter = 0;
+                    for i = 1:dij.numOfBeams
+                        for j = 1:tmpStf(i).numOfRays
+                            counter = counter + 1;
+                            dij.beamNum(counter)  = i;
+                            dij.rayNum(counter)   = j;
+                            dij.bixelNum(counter) = j;
+                        end
+                    end
+
+                    if this.multScen.totNumScen == 1
+                        matRad_cfg.dispInfo('matRad: OmpMC photon dose calculation... \n');
+                    else
+                        matRad_cfg.dispInfo('matRad: OmpMC photon dose calculation for scenario %d of %d... \n',scenCount,this.multScen.totNumScen);
+                    end
+
+                    %Call the Monte Carlo simulation and catch  possible mex
+                    %interface issues
+                    try
+                        %If we ask for variance, a field in the dij will be filled
+                        if this.outputMCvariance
+                            [dij.physicalDose{ctScen,shiftScen,rangeShiftScen},dij.physicalDose_MCvar{ctScen,shiftScen,rangeShiftScen}] = omc_matrad(this.cubeRho{ctScen},this.cubeMatIx{ctScen},this.ompMCgeo,this.ompMCsource,this.ompMCoptions);
+                        else
+                            [dij.physicalDose{ctScen,shiftScen,rangeShiftScen}] = omc_matrad(this.cubeRho{ctScen},this.cubeMatIx{ctScen},this.ompMCgeo,this.ompMCsource,this.ompMCoptions);
+                        end
+                    catch ME
+                        errorString = [ME.message '\nThis error was thrown by the MEX-interface of ompMC.\nMex interfaces can raise compatability issues which may be resolved by compiling them by hand directly on your particular system.'];
+                        matRad_cfg.dispError(errorString);
+                    end
+
+                    %Calibrate the dose with above factor
+                    dij.physicalDose{scenarioIx} = dij.physicalDose{scenarioIx} * calibrationFactor;
+                    if isfield(dij,'physicalDose_MCvar')
+                        dij.physicalDose_MCvar{scenarioIx} = dij.physicalDose_MCvar{scenarioIx} * calibrationFactor^2;
+                    end
                 end
             end
 
             %Finalize dose calculation
-            dij = this.finalizeDose(ct,cst,stf,dij);   
+            dij = this.finalizeDose(dij);   
         end
-    end
-
-    methods (Access = protected)
+    
         function dij = initDoseCalc(this,ct,cst,stf)
 
             dij = initDoseCalc@DoseEngines.matRad_MonteCarloEngineAbstract(this,ct,cst,stf);
             
             matRad_cfg = MatRad_Config.instance();
-
-            % gaussian filter to model penumbra from (measured) machine output / see diploma thesis siggel 4.1.2
-            if isfield(this.machine.data,'penumbraFWHMatIso')
-                penumbraFWHM = this.machine.data.penumbraFWHMatIso;
-            else
-                penumbraFWHM = 5;
-                matRad_cfg.dispWarning('photon machine file does not contain measured penumbra width in machine.data.penumbraFWHMatIso. Assuming 5 mm.');
-            end
-
-            sourceFWHM = penumbraFWHM * this.machine.meta.SCD/(this.machine.meta.SAD - this.machine.meta.SCD);
-            sigmaGauss = sourceFWHM / sqrt(8*log(2)); % [mm]
 
             % set up arrays for book keeping
             dij.bixelNum = NaN*ones(dij.totalNumOfBixels,1);
@@ -180,38 +207,152 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             dij.numHistoriesPerBeamlet = this.numHistoriesPerBeamlet;
 
             %% Setup OmpMC options / parameters
+            this.setOmpMCoptions();
 
+            % conversion from HU to densities & materials
+            this.materialConversion(dij.ctGrid,dij.doseGrid,ct);
+            
+            % Create the Geometry
+            this.getOmpMCgeometry(dij.doseGrid);
+
+            %% Create beamlet source
+            this.getOmpMCsource(stf);
+        end
+    end
+
+    methods (Access = private)
+        function setOmpMCoptions(obj)
+            matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
+            
             %display options
-            this.ompMCoptions.verbose = matRad_cfg.logLevel - 1;
-
+            obj.ompMCoptions.verbose = matRad_cfg.logLevel - 1;
+            
             % start MC control
-            this.ompMCoptions.nHistories = this.numHistoriesPerBeamlet;
-            this.ompMCoptions.nSplit = 20;
-            this.ompMCoptions.nBatches = 10;
-            this.ompMCoptions.randomSeeds = [97 33];
-
+            obj.ompMCoptions.nHistories = obj.numHistoriesPerBeamlet;
+            obj.ompMCoptions.nSplit = 20;
+            obj.ompMCoptions.nBatches = 10;
+            obj.ompMCoptions.randomSeeds = [97 33];
+            
             %start source definition
-            this.ompMCoptions.spectrumFile       = [this.omcFolder filesep 'spectra' filesep 'mohan6.spectrum'];
-            this.ompMCoptions.monoEnergy         = 0.1;
-            this.ompMCoptions.charge             = 0;
-            this.ompMCoptions.sourceGeometry     = 'gaussian';
-            this.ompMCoptions.sourceGaussianWidth = 0.1*sigmaGauss;
-
+            obj.ompMCoptions.spectrumFile       = [obj.omcFolder filesep 'spectra' filesep 'mohan6.spectrum'];
+            obj.ompMCoptions.monoEnergy         = 0.1;
+            obj.ompMCoptions.charge             = 0;
+            obj.ompMCoptions.sourceGeometry     = 'gaussian';
+            obj.ompMCoptions.sourceGaussianWidth = obj.getSourceWidthFromPenumbra./obj.scale;
+            
             % start MC transport
-            this.ompMCoptions.dataFolder   = [this.omcFolder filesep 'data' filesep];
-            this.ompMCoptions.pegsFile     = [this.omcFolder filesep 'pegs4' filesep '700icru.pegs4dat'];
-            this.ompMCoptions.pgs4formFile = [this.omcFolder filesep 'pegs4' filesep 'pgs4form.dat'];
-
-            this.ompMCoptions.global_ecut = 0.7;
-            this.ompMCoptions.global_pcut = 0.010;
-
+            obj.ompMCoptions.dataFolder   = [obj.omcFolder filesep 'data' filesep];
+            obj.ompMCoptions.pegsFile     = [obj.omcFolder filesep 'pegs4' filesep '700icru.pegs4dat'];
+            obj.ompMCoptions.pgs4formFile = [obj.omcFolder filesep 'pegs4' filesep 'pgs4form.dat'];
+            
+            obj.ompMCoptions.global_ecut = 0.7;
+            obj.ompMCoptions.global_pcut = 0.010;
+            
             % Relative Threshold for dose
-            this.ompMCoptions.relDoseThreshold = 1 - this.relativeDosimetricCutOff;
-
+            obj.ompMCoptions.relDoseThreshold = 1 - obj.relativeDosimetricCutOff;
+            
             % Output folders
-            this.ompMCoptions.outputFolder = [this.omcFolder filesep 'output' filesep];
+            obj.ompMCoptions.outputFolder = [obj.omcFolder filesep 'output' filesep];            
+        end
 
+        function sigmaGauss = getSourceWidthFromPenumbra(obj)
+            % gaussian filter to model penumbra from (measured) machine output / see diploma thesis siggel 4.1.2
+            matRad_cfg = MatRad_Config.instance();
+            
+            if isfield(obj.machine.data,'penumbraFWHMatIso')
+                penumbraFWHM = obj.machine.data.penumbraFWHMatIso;
+            else
+                penumbraFWHM = 5;
+                matRad_cfg.dispWarning('photon machine file does not contain measured penumbra width in machine.data.penumbraFWHMatIso. Assuming 5 mm.');
+            end
+            
+            sourceFWHM = penumbraFWHM * obj.machine.meta.SCD/(obj.machine.meta.SAD - obj.machine.meta.SCD);
+            sigmaGauss = sourceFWHM / sqrt(8*log(2)); % [mm]  
+        end
+
+        function obj = materialConversion(obj,ctGrid,doseGrid,ct)
+            % conversion from HU to densities & materials
+            obj.cubeHU      = cell(1,ct.numOfCtScen);
+            obj.cubeMatIx   = cell(1,ct.numOfCtScen);
+            obj.cubeRho     = cell(1,ct.numOfCtScen);
+            
             % Create Material Density Cube
+            material = obj.setupMaterials();
+            
+            for s = 1:ct.numOfCtScen
+                
+                obj.cubeHU{s} =  matRad_interp3(ctGrid.x,ctGrid.y',ctGrid.z,ct.cubeHU{s}, ...
+                    doseGrid.x,doseGrid.y',doseGrid.z,'nearest');
+                
+                % projecting out of bounds HU values where necessary
+                if max(obj.cubeHU{s}(:)) > material{end,3}
+                    matRad_cfg.dispWarning('Projecting out of range HU values');
+                    obj.cubeHU{s}(obj.cubeHU{s}(:) > material{end,3}) = material{end,3};
+                end
+                if min(obj.cubeHU{s}(:)) < material{1,2}
+                    matRad_cfg.dispWarning('Projecting out of range HU values');
+                    obj.cubeHU{s}(obj.cubeHU{s}(:) < material{1,2}) = material{1,2};
+                end
+                
+                % find material index
+                obj.cubeMatIx{s} = NaN*ones(doseGrid.dimensions,'int32');
+                for i = size(material,1):-1:1
+                    obj.cubeMatIx{s}(obj.cubeHU{s} <= material{i,3}) = i;
+                end
+                
+                % create an artificial HU lookup table
+                hlut = [];
+                for i = 1:size(material,1)
+                    hlut = [hlut;material{i,2} material{i,4};material{i,3}-1e-10 material{i,5}]; % add eps for interpolation
+                end
+                
+                obj.cubeRho{s} = interp1(hlut(:,1),hlut(:,2),obj.cubeHU{s});
+                
+            end
+        end
+
+        function getOmpMCgeometry(obj,doseGrid)
+            obj.ompMCgeo.xBounds = (doseGrid.resolution.y * (0.5 + [0:doseGrid.dimensions(1)])) ./ obj.scale;
+            obj.ompMCgeo.yBounds = (doseGrid.resolution.x * (0.5 + [0:doseGrid.dimensions(2)])) ./ obj.scale;
+            obj.ompMCgeo.zBounds = (doseGrid.resolution.z * (0.5 + [0:doseGrid.dimensions(3)])) ./ obj.scale;
+        
+            % Create Material Density Cube
+            obj.ompMCgeo.material    = obj.setupMaterials();
+
+            %% debug visualization
+            if obj.visBool
+
+                figure;
+                hold on;
+
+                axis equal;
+
+                % ct box
+                ctCorner1 = [obj.ompMCgeo.xBounds(1) obj.ompMCgeo.yBounds(1) obj.ompMCgeo.zBounds(1)];
+                ctCorner2 = [obj.ompMCgeo.xBounds(end) obj.ompMCgeo.yBounds(end) obj.ompMCgeo.zBounds(end)];
+                plot3([ctCorner1(1) ctCorner2(1)],[ctCorner1(2) ctCorner1(2)],[ctCorner1(3) ctCorner1(3)],'k' );
+                plot3([ctCorner1(1) ctCorner2(1)],[ctCorner2(2) ctCorner2(2)],[ctCorner1(3) ctCorner1(3)],'k' );
+                plot3([ctCorner1(1) ctCorner1(1)],[ctCorner1(2) ctCorner2(2)],[ctCorner1(3) ctCorner1(3)],'k' );
+                plot3([ctCorner2(1) ctCorner2(1)],[ctCorner1(2) ctCorner2(2)],[ctCorner1(3) ctCorner1(3)],'k' );
+                plot3([ctCorner1(1) ctCorner2(1)],[ctCorner1(2) ctCorner1(2)],[ctCorner2(3) ctCorner2(3)],'k' );
+                plot3([ctCorner1(1) ctCorner2(1)],[ctCorner2(2) ctCorner2(2)],[ctCorner2(3) ctCorner2(3)],'k' );
+                plot3([ctCorner1(1) ctCorner1(1)],[ctCorner1(2) ctCorner2(2)],[ctCorner2(3) ctCorner2(3)],'k' );
+                plot3([ctCorner2(1) ctCorner2(1)],[ctCorner1(2) ctCorner2(2)],[ctCorner2(3) ctCorner2(3)],'k' );
+                plot3([ctCorner1(1) ctCorner1(1)],[ctCorner1(2) ctCorner1(2)],[ctCorner1(3) ctCorner2(3)],'k' );
+                plot3([ctCorner2(1) ctCorner2(1)],[ctCorner1(2) ctCorner1(2)],[ctCorner1(3) ctCorner2(3)],'k' );
+                plot3([ctCorner1(1) ctCorner1(1)],[ctCorner2(2) ctCorner2(2)],[ctCorner1(3) ctCorner2(3)],'k' );
+                plot3([ctCorner2(1) ctCorner2(1)],[ctCorner2(2) ctCorner2(2)],[ctCorner1(3) ctCorner2(3)],'k' );
+
+                xlabel('x [cm]');
+                ylabel('y [cm]');
+                zlabel('z [cm]');
+
+                rotate3d on;
+
+            end
+        end
+
+        function material = setupMaterials(~)
             material = cell(4,5);
             material{1,1} = 'AIR700ICRU';
             material{1,2} = -1024;
@@ -233,107 +374,35 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             material{4,3} = 1976;
             material{4,4} = 1.101;
             material{4,5} = 2.088;
+            
+        end
+        
+        function getOmpMCsource(obj,stf)
+            numOfBeams = numel(stf);
 
-            % conversion from HU to densities & materials
-            for s = 1:dij.numOfScenarios
+            numOfBixelsPerBeam = [stf(:).numOfRays];
+            totalNumOfBixels = sum(numOfBixelsPerBeam);
+            beamSource = zeros(numOfBeams, 3);
 
-                HUcube{s} =  matRad_interp3(dij.ctGrid.x,dij.ctGrid.y',dij.ctGrid.z,ct.cubeHU{s}, ...
-                    dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest');
+            bixelCorner = zeros(totalNumOfBixels,3);
+            bixelSide1 = zeros(totalNumOfBixels,3);
+            bixelSide2 = zeros(totalNumOfBixels,3);
 
-                % projecting out of bounds HU values where necessary
-                if max(HUcube{s}(:)) > material{end,3}
-                    matRad_cfg.dispWarning('Projecting out of range HU values');
-                    HUcube{s}(HUcube{s}(:) > material{end,3}) = material{end,3};
-                end
-                if min(HUcube{s}(:)) < material{1,2}
-                    matRad_cfg.dispWarning('Projecting out of range HU values');
-                    HUcube{s}(HUcube{s}(:) < material{1,2}) = material{1,2};
-                end
-
-                % find material index
-                this.cubeMatIx{s} = NaN*ones(dij.doseGrid.dimensions,'int32');
-                for i = size(material,1):-1:1
-                    this.cubeMatIx{s}(HUcube{s} <= material{i,3}) = i;
-                end
-
-                % create an artificial HU lookup table
-                hlut = [];
-                for i = 1:size(material,1)
-                    hlut = [hlut;material{i,2} material{i,4};material{i,3}-1e-10 material{i,5}]; % add eps for interpolation
-                end
-
-                this.cubeRho{s} = interp1(hlut(:,1),hlut(:,2),HUcube{s});
-
-            end
-
-            this.ompMCgeo.material = material;
-
-            scale = 10; % to convert to cm
-
-            this.ompMCgeo.xBounds = (dij.doseGrid.resolution.y * (0.5 + [0:dij.doseGrid.dimensions(1)])) ./ scale;
-            this.ompMCgeo.yBounds = (dij.doseGrid.resolution.x * (0.5 + [0:dij.doseGrid.dimensions(2)])) ./ scale;
-            this.ompMCgeo.zBounds = (dij.doseGrid.resolution.z * (0.5 + [0:dij.doseGrid.dimensions(3)])) ./ scale;
-
-            %% debug visualization
-            if this.visBool
-
-                figure
-                hold on
-
-                axis equal
-
-                % ct box
-                ctCorner1 = [this.ompMCgeo.xBounds(1) this.ompMCgeo.yBounds(1) this.ompMCgeo.zBounds(1)];
-                ctCorner2 = [this.ompMCgeo.xBounds(end) this.ompMCgeo.yBounds(end) this.ompMCgeo.zBounds(end)];
-                plot3([ctCorner1(1) ctCorner2(1)],[ctCorner1(2) ctCorner1(2)],[ctCorner1(3) ctCorner1(3)],'k' )
-                plot3([ctCorner1(1) ctCorner2(1)],[ctCorner2(2) ctCorner2(2)],[ctCorner1(3) ctCorner1(3)],'k' )
-                plot3([ctCorner1(1) ctCorner1(1)],[ctCorner1(2) ctCorner2(2)],[ctCorner1(3) ctCorner1(3)],'k' )
-                plot3([ctCorner2(1) ctCorner2(1)],[ctCorner1(2) ctCorner2(2)],[ctCorner1(3) ctCorner1(3)],'k' )
-                plot3([ctCorner1(1) ctCorner2(1)],[ctCorner1(2) ctCorner1(2)],[ctCorner2(3) ctCorner2(3)],'k' )
-                plot3([ctCorner1(1) ctCorner2(1)],[ctCorner2(2) ctCorner2(2)],[ctCorner2(3) ctCorner2(3)],'k' )
-                plot3([ctCorner1(1) ctCorner1(1)],[ctCorner1(2) ctCorner2(2)],[ctCorner2(3) ctCorner2(3)],'k' )
-                plot3([ctCorner2(1) ctCorner2(1)],[ctCorner1(2) ctCorner2(2)],[ctCorner2(3) ctCorner2(3)],'k' )
-                plot3([ctCorner1(1) ctCorner1(1)],[ctCorner1(2) ctCorner1(2)],[ctCorner1(3) ctCorner2(3)],'k' )
-                plot3([ctCorner2(1) ctCorner2(1)],[ctCorner1(2) ctCorner1(2)],[ctCorner1(3) ctCorner2(3)],'k' )
-                plot3([ctCorner1(1) ctCorner1(1)],[ctCorner2(2) ctCorner2(2)],[ctCorner1(3) ctCorner2(3)],'k' )
-                plot3([ctCorner2(1) ctCorner2(1)],[ctCorner2(2) ctCorner2(2)],[ctCorner1(3) ctCorner2(3)],'k' )
-
-                xlabel('x [cm]')
-                ylabel('y [cm]')
-                zlabel('z [cm]')
-
-                rotate3d on
-
-            end
-
-            %% Create beamlet source
-            this.useCornersSCD = true; %false -> use ISO corners
-
-            numOfBixels = [stf(:).numOfRays];
-            beamSource = zeros(dij.numOfBeams, 3);
-
-            bixelCorner = zeros(dij.totalNumOfBixels,3);
-            bixelSide1 = zeros(dij.totalNumOfBixels,3);
-            bixelSide2 = zeros(dij.totalNumOfBixels,3);
-
+            beamNum = zeros(1,prod(totalNumOfBixels,numOfBeams));
             counter = 0;
 
-            for i = 1:dij.numOfBeams % loop over all beams
-                
-                isoCenterBeam = stf(i).isoCenter + dij.doseGrid.isoCenterOffset;
+            for i = 1:numOfBeams % loop over all beams
 
                 % define beam source in physical coordinate system in cm
-                beamSource(i,:) = (stf(i).sourcePoint + isoCenterBeam)/10;
+                beamSource(i,:) = (stf(i).sourcePoint + stf(i).isoCenter)/10;
 
                 for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
 
                     counter = counter + 1;
 
-                    dij.beamNum(counter)  = i;
-                    dij.rayNum(counter)   = j;
-                    dij.bixelNum(counter) = j;
+                    beamNum(counter)  = i;
 
-                    if this.useCornersSCD
+                    if obj.useCornersSCD
                         beamletCorners = stf(i).ray(j).rayCorners_SCD;
                     else
                         beamletCorners = stf(i).ray(j).beamletCornersAtIso;
@@ -341,18 +410,18 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
                     % get bixel corner and delimiting vectors.
                     % a) change coordinate system (Isocenter cs-> physical cs) and units mm -> cm
-                    currCorner = (beamletCorners(1,:) + isoCenterBeam) ./ scale;
+                    currCorner = (beamletCorners(1,:) + stf(i).isoCenter) ./ obj.scale;
                     bixelCorner(counter,:) = currCorner;
-                    bixelSide1(counter,:) = (beamletCorners(2,:) + isoCenterBeam) ./ scale - currCorner;
-                    bixelSide2(counter,:) = (beamletCorners(4,:) + isoCenterBeam) ./ scale - currCorner;
+                    bixelSide1(counter,:) = (beamletCorners(2,:) + stf(i).isoCenter) ./ obj.scale - currCorner;
+                    bixelSide2(counter,:) = (beamletCorners(4,:) + stf(i).isoCenter) ./ obj.scale - currCorner;
 
-                    if this.visBool
+                    if obj.visBool
                         for k = 1:4
-                            currCornerVis = (beamletCorners(k,:) + isoCenterBeam)/10;
+                            currCornerVis = (beamletCorners(k,:) + stf(i).isoCenter)/10;
                             % rays connecting source and ray corner
                             plot3([beamSource(i,1) currCornerVis(1)],[beamSource(i,2) currCornerVis(2)],[beamSource(i,3) currCornerVis(3)],'b')
                             % connection between corners
-                            lRayCorner = (beamletCorners(mod(k,4) + 1,:) + isoCenterBeam)/10;
+                            lRayCorner = (beamletCorners(mod(k,4) + 1,:) + stf(i).isoCenter)/10;
                             plot3([lRayCorner(1) currCornerVis(1)],[lRayCorner(2) currCornerVis(2)],[lRayCorner(3) currCornerVis(3)],'r')
                         end
                     end
@@ -361,31 +430,33 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
             end
 
-            this.ompMCsource.nBeams = dij.numOfBeams;
-            this.ompMCsource.iBeam = dij.beamNum(:);
+            obj.ompMCsource.nBeams = numOfBeams;
+            obj.ompMCsource.iBeam = beamNum(:);
 
             % Switch x and y directions to match ompMC cs.
-            this.ompMCsource.xSource = beamSource(:,2);
-            this.ompMCsource.ySource = beamSource(:,1);
-            this.ompMCsource.zSource = beamSource(:,3);
+            obj.ompMCsource.xSource = beamSource(:,2);
+            obj.ompMCsource.ySource = beamSource(:,1);
+            obj.ompMCsource.zSource = beamSource(:,3);
 
-            this.ompMCsource.nBixels = sum(numOfBixels(:));
-            this.ompMCsource.xCorner = bixelCorner(:,2);
-            this.ompMCsource.yCorner = bixelCorner(:,1);
-            this.ompMCsource.zCorner = bixelCorner(:,3);
+            obj.ompMCsource.nBixels = sum(numOfBixelsPerBeam(:));
+            obj.ompMCsource.xCorner = bixelCorner(:,2);
+            obj.ompMCsource.yCorner = bixelCorner(:,1);
+            obj.ompMCsource.zCorner = bixelCorner(:,3);
 
-            this.ompMCsource.xSide1 = bixelSide1(:,2);
-            this.ompMCsource.ySide1 = bixelSide1(:,1);
-            this.ompMCsource.zSide1 = bixelSide1(:,3);
+            obj.ompMCsource.xSide1 = bixelSide1(:,2);
+            obj.ompMCsource.ySide1 = bixelSide1(:,1);
+            obj.ompMCsource.zSide1 = bixelSide1(:,3);
 
-            this.ompMCsource.xSide2 = bixelSide2(:,2);
-            this.ompMCsource.ySide2 = bixelSide2(:,1);
-            this.ompMCsource.zSide2 = bixelSide2(:,3);
+            obj.ompMCsource.xSide2 = bixelSide2(:,2);
+            obj.ompMCsource.ySide2 = bixelSide2(:,1);
+            obj.ompMCsource.zSide2 = bixelSide2(:,3);
 
-            if this.visBool
-                plot3(this.ompMCsource.ySource,this.ompMCsource.xSource,this.ompMCsource.zSource,'rx')
+            if obj.visBool
+                plot3(obj.ompMCsource.ySource,obj.ompMCsource.xSource,obj.ompMCsource.zSource,'rx')
             end
+
         end
+    
     end
 
     methods (Static)
@@ -425,10 +496,112 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             end
         end
 
-
-
+        function compileOmpMCInterface(dest,omcFolder)
+            % Compiles the ompMC interface (integrated as submodule)
+            %
+            % call
+            %   matRad_OmpConfig.compileOmpMCInterface()
+            %   matRad_OmpConfig.compileOmpMCInterface(dest)
+            %   matRad_OmpConfig.compileOmpMCInterface(dest,sourceFolder)
+            % if an object is instantiated, matRad_OmpConfig can be replaced by the
+            % object handle
+            %
+            % input:
+            %   dest:           (optional) destination for mex file. Default: location
+            %                   of this file
+            %   sourceFolder:   (optional) path to ompMC . Default assumes its checked
+            %                   out in the submodules folder of matRad
+            %
+            % References
+            %
+            %
+            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %
+            % Copyright 2020 the matRad development team.
+            %
+            % This file is part of the matRad project. It is subject to the license
+            % terms in the LICENSE file found in the top-level directory of this
+            % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+            % of the matRad project, including this file, may be copied, modified,
+            % propagated, or distributed except according to the terms contained in the
+            % LICENSE file.
+            %
+            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            
+            
+            matRad_cfg = MatRad_Config.instance();
+            
+            env = matRad_getEnvironment();
+            
+            %Our destination usually lies in the ompMC thirdPartyFolder
+            if nargin < 1
+                dest = [matRad_cfg.matRadRoot filesep 'ompMC'];
+            end
+            
+            %We can recompile form the submodules
+            if nargin < 2
+                omcFolder = [matRad_cfg.matRadRoot filesep 'submodules' filesep 'ompMC'];
+            end
+            
+            sourceFolder = [omcFolder filesep 'src'];
+            interfaceFolder = [omcFolder filesep 'ucodes' filesep 'omc_matrad'];
+            
+            mainFile = [interfaceFolder filesep 'omc_matrad.c'];
+            
+            addFiles = {'ompmc.c','omc_utilities.c','omc_random.c'};
+            addFiles = cellfun(@(f) fullfile(sourceFolder,f),addFiles,'UniformOutput',false);
+            
+            addFiles = strjoin(addFiles,' ');
+            
+            if exist ('OCTAVE_VERSION','builtin')
+                ccName = evalc('mkoctfile -p CC');
+            else
+                myCCompiler = mex.getCompilerConfigurations('C','Selected');
+                ccName = myCCompiler.ShortName;
+            end
+            
+            %These settings have only been tested for MSVC and g++. You may need to adapt for other compilers
+            if ~isempty(strfind(ccName,'MSVC')) %Not use contains(...) because of octave
+                flags{1,1} = 'COMPFLAGS';
+                flags{1,2} = '/openmp';
+                flags{2,1} = 'OPTIMFLAGS';
+                flags{2,2} = '/O2';
+            else
+                flags{1,1} = 'CFLAGS';
+                flags{1,2} = '-std=gnu99 -fopenmp -O3';
+                flags{2,1} = 'LDFLAGS';
+                flags{2,2} = '-fopenmp';
+                
+            end
+            
+            includestring =  ['-I' sourceFolder];
+            
+            flagstring = '';
+            
+            %For Octave, the flags will be set in the environment, while they
+            %will be parsed as string arguments in MATLAB
+            for flag = 1:size(flags,1)
+                if strcmp(env,'OCTAVE')
+                    preFlagContent = eval(['mkoctfile -p ' flags{flag,1}]);
+                    if ~isempty(preFlagContent)
+                        preFlagContent = preFlagContent(1:end-1); %Strip newline
+                    end
+                    newContent = [preFlagContent ' ' flags{flag,2}];
+                    setenv(flags{flag,1},newContent);
+                    matRad_cfg.dispDebug('Set compiler flag %s to %s\n',flags{flag,1},newContent);
+                else
+                    flagstring = [flagstring flags{flag,1} '="$' flags{flag,1} ' ' flags{flag,2} '" '];
+                end
+            end
+            
+            mexCall = ['mex -largeArrayDims ' flagstring ' ' includestring ' ' mainFile ' ' addFiles];
+            matRad_cfg.dispDebug('Compiler call: %s\n',mexCall);
+            
+            currDir = pwd;
+            cd(dest);
+            eval(mexCall);
+            cd(currDir);
+        end
     end
-
-
 end
 

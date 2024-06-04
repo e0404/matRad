@@ -43,7 +43,7 @@ ix = [];
 
 if nargin >= 1 && ~isempty(pln)
     machine = matRad_loadMachine(pln);
-    %machineMode = machine.meta.radiationMode;
+    machineMode = machine.meta.radiationMode;
 
     for cIx = 1:length(availableDoseEngines)
         mc = availableDoseEngines{cIx};

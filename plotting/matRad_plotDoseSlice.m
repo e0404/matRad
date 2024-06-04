@@ -65,6 +65,12 @@ if nargin < 8 || isempty(window)
     window = [min(doseCube(:)) max(doseCube(:))];
 end
 
+% window sanity check
+if window(2) - window(1) <= 0
+    window = [0 2];
+end
+
+%store maximum dose for thresholding
 maxDose = max(doseCube(:));
 
 cMapScale = size(cMap,1) - 1;

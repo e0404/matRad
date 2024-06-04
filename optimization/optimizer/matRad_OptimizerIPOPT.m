@@ -19,12 +19,15 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
     
     properties
         options
-        wResult
-        resultInfo
         env
 
         %Visualization
         showPlot = true;
+    end
+
+    properties (SetAccess = protected)
+        wResult
+        resultInfo
     end
     
     properties (Access = private)
@@ -80,7 +83,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.options.acceptable_obj_change_tol     = 1e-4; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
             
             obj.options.max_iter                      = matRad_cfg.propOpt.defaultMaxIter;
-            obj.options.max_cpu_time                  = 3000;
+            obj.options.max_cpu_time                  = 7200;
             
             % Barrier Parameter (C.6)
             obj.options.mu_strategy = 'adaptive';
@@ -95,7 +98,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             
             % Quasi-Newton (C.13)
             obj.options.hessian_approximation         = 'limited-memory';
-            obj.options.limited_memory_max_history    = 6;
+            obj.options.limited_memory_max_history    = 50;
             obj.options.limited_memory_initialization = 'scalar2';
             
             % determine once if Matlab or Octave

@@ -1114,8 +1114,16 @@ classdef matRad_ViewingWidget < matRad_Widget
                 
                 if isfield(ct, 'cubeHU')
                     minMax = [min(ct.cubeHU{1}(:)) max(ct.cubeHU{1}(:))];
+
+                    if diff(minMax) == 0
+                        minMax = [-1000 2000];
+                    end
                 else
                     minMax = [min(ct.cube{1}(:)) max(ct.cube{1}(:))];
+
+                    if diff(minMax) == 0
+                        minMax = [0 2];
+                    end
                 end
                 
                 if evalin('base','exist(''resultGUI'')')
@@ -1156,10 +1164,19 @@ classdef matRad_ViewingWidget < matRad_Widget
                     
                     this.SelectedDisplayAllOptions=fieldnames(Result);                    
                     
-                    if strcmp(pln.radiationMode,'carbon') || (strcmp(pln.radiationMode,'protons') && strcmp(pln.propOpt.bioOptimization,'const_RBExD'))
-                        this.SelectedDisplayOption = 'RBExDose';
-                    else
-                        this.SelectedDisplayOption = 'physicalDose';
+%                     if strcmp(pln.radiationMode,'carbon') || strcmp(pln.bioParam.quantityOpt,'RBExD') 
+%                         this.SelectedDisplayOption = 'RBExDose';
+%                     else
+%                         this.SelectedDisplayOption = 'physicalDose';
+%                     end
+
+                    switch pln.bioParam.quantityOpt
+                        case 'physicalDose'
+                            this.SelectedDisplayOption = 'physicalDose';
+                        case 'RBExD'
+                            this.SelectedDisplayOption = 'RBExDose';
+                        case 'effect'
+                            this.SelectedDisplayOption = 'effect';
                     end
                     
                     if sum(strcmp(this.SelectedDisplayOption,fieldnames(Result))) == 0

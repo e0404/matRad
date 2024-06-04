@@ -20,8 +20,8 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (Constant)
-           possibleRadiationModes = {'protons', 'carbon'}
-           name = 'Particle Pencil-Beam';
+           possibleRadiationModes = {'protons', 'helium','carbon'}
+           name = 'Hong Particle Pencil-Beam';
            shortName = 'HongPB';
     end
        
@@ -48,26 +48,33 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
     methods (Access = protected)
 
         function bixel = calcParticleBixel(this,bixel)
-            X = this.interpolateKernelsInDepth(bixel);
+            kernels = this.interpolateKernelsInDepth(bixel);
             
-            dg = ~isfield(bixel.baseData,'sigma');
-            
-            if dg
-                % compute lateral sigmas
-                sigmaSqNarrow = X.sigma1.^2 + bixel.sigmaIniSq;
-                sigmaSqBroad  = X.sigma2.^2 + bixel.sigmaIniSq;
-
-                % calculate lateral profile
-                L_Narr =  exp( -bixel.radialDist_sq ./ (2*sigmaSqNarrow))./(2*pi*sigmaSqNarrow);
-                L_Bro  =  exp( -bixel.radialDist_sq./ (2*sigmaSqBroad ))./(2*pi*sigmaSqBroad );
-                L = (1-X.weight).*L_Narr + X.weight.*L_Bro;
-            else
-                %compute lateral sigma
-                sigmaSq = X.sigma.^2 + bixel.sigmaIniSq;
-                L = exp( -bixel.radialDist_sq ./ (2*sigmaSq))./ (2*pi*sigmaSq);
+            %Lateral Component
+            switch this.lateralModel
+                case 'single'
+                    %compute lateral sigma
+                    sigmaSq = kernels.sigma.^2 + bixel.sigmaIniSq;
+                    L = exp( -bixel.radialDist_sq ./ (2*sigmaSq))./ (2*pi*sigmaSq);
+                case 'double'
+                    % compute lateral sigmas
+                    sigmaSqNarrow = kernels.sigma1.^2 + bixel.sigmaIniSq;
+                    sigmaSqBroad  = kernels.sigma2.^2 + bixel.sigmaIniSq;
+    
+                    % calculate lateral profile
+                    L_Narr =  exp( -bixel.radialDist_sq ./ (2*sigmaSqNarrow))./(2*pi*sigmaSqNarrow);
+                    L_Bro  =  exp( -bixel.radialDist_sq./ (2*sigmaSqBroad ))./(2*pi*sigmaSqBroad );
+                    L = (1-kernels.weight).*L_Narr + kernels.weight.*L_Bro;
+                case 'multi'
+                    sigmaSq = kernels.sigmaMulti.^2 + bixel.sigmaIniSq;
+                    L = sum([1 - sum(kernels.weightMulti,2), kernels.weightMulti] .* exp(-radialDist_sq ./ (2*sigmaSq))./(2*pi*sigmaSq),2);
+                otherwise
+                    %Sanity check
+                    matRad_cfg = MatRad_Config.instance();
+                    matRad_cfg.dispError('Invalid Lateral Model');
             end
                         
-            bixel.physicalDose = bixel.baseData.LatCutOff.CompFac * L .* X.Z;
+            bixel.physicalDose = bixel.baseData.LatCutOff.CompFac * L .* kernels.Z;
             
             % check if we have valid dose values
             if any(isnan(bixel.physicalDose)) || any(bixel.physicalDose<0)
@@ -76,21 +83,14 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
             end
 
             if this.calcLET
-                bixel.mLETDose = bixel.physicalDose.*X.LET;
+                bixel.mLETDose = bixel.physicalDose.*kernels.LET;
             end
             
-            if this.calcBioDose
-                bixel.mAlphaDose = bixel.physicalDose;
-                bixel.mSqrtBetaDose = bixel.physicalDose;
-                %From matRad_calcLQParameter
-                numOfTissueClass = size(bixel.baseData.alpha,2);
-                for i = 1:numOfTissueClass
-                    mask = bixel.vTissueIndex == i;
-                    if any(mask)
-                        bixel.mAlphaDose(mask) = bixel.mAlphaDose(mask) .* X.alpha(mask);
-                        bixel.mSqrtBetaDose(mask)  = bixel.mSqrtBetaDose(mask) .* X.beta(mask);
-                    end
-                end
+            if this.calcBioDose                               
+                [bixelAlpha,bixelBeta] = this.bioParam.calcLQParameterForKernel(bixel,kernels);
+
+                bixel.mAlphaDose = bixel.physicalDose .* bixelAlpha;
+                bixel.mSqrtBetaDose = bixel.physicalDose .* sqrt(bixelBeta);
             end  
         end
         
@@ -131,6 +131,8 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
                 checkData = all(isfield(machine.data,{'energy','depths','Z','peakPos','sigma','offset','initFocus'}));
             elseif strcmp(dataType,'doubleGauss')
                 checkData = all(isfield(machine.data,{'energy','depths','Z','peakPos','weight','sigma1','sigma2','offset','initFocus'}));
+            elseif strcmp(dataType,'multipleGauss')
+                checkData = all(isfield(machine.data,{'energy','depths','Z','peakPos','weightMulti','sigmaMulti','offset','initFocus'}));
             else
                 checkData = false;
             end
