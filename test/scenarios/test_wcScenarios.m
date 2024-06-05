@@ -98,10 +98,11 @@ function test_worstCaseScenarioConstructorWithCt
 
     
 function test_worstCaseScenarioExtractSingleScenario
+    scenNum = 1;
     refScen = matRad_WorstCaseScenarios();
-    scenario = refScen.extractSingleScenario(1);
+    scenario = refScen.extractSingleScenario(scenNum);
     assertTrue(isa(scenario, 'matRad_NominalScenario'));
-    assertEqual(scenario.phaseProbability, refScen.phaseProbability(1));
+    assertEqual(scenario.phaseProbability, refScen.phaseProbability(scenNum));
     assertEqual(scenario.numOfCtScen, 1);
     assertEqual(scenario.totNumScen, 1);
     assertEqual(scenario.totNumShiftScen, 1);
@@ -115,17 +116,18 @@ function test_worstCaseScenarioExtractSingleScenario
     assertEqual(scenario.linearMask, [1 1 1]);
     assertElementsAlmostEqual(scenario.scenProb,helper_mvarGauss(scenario));
     assertEqual(scenario.scenForProb,[1 zeros(1,5)]);
-    assertEqual(scenario.scenWeight, 1);
+    assertEqual(scenario.scenWeight, refScen.scenWeight(scenNum));
 
 
 function test_worstCaseScenarioExtractSingleScenarioWithCtScen
     n = 5;
+    scenNum = 1;
     ct = struct('numOfCtScen',n);
     refScen = matRad_WorstCaseScenarios(ct);
     scenario = refScen.extractSingleScenario(1);
 
     assertTrue(isa(scenario, 'matRad_NominalScenario'));
-    assertEqual(scenario.phaseProbability, refScen.phaseProbability(1));
+    assertEqual(scenario.phaseProbability, refScen.phaseProbability(scenNum));
     assertEqual(scenario.numOfCtScen, 1);
     assertEqual(scenario.totNumScen, 1);
     assertEqual(scenario.totNumShiftScen, 1);
@@ -139,7 +141,7 @@ function test_worstCaseScenarioExtractSingleScenarioWithCtScen
     assertEqual(scenario.linearMask, [1 1 1]);
     assertElementsAlmostEqual(scenario.scenProb,helper_mvarGauss(scenario));
     assertEqual(scenario.scenForProb,[1 zeros(1,5)]);
-    assertEqual(scenario.scenWeight, 1);
+    assertEqual(scenario.scenWeight, refScen.scenWeight(scenNum));
     
 function test_worstCaseScenarioCombineRange
 

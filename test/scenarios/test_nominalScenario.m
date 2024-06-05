@@ -68,14 +68,15 @@ function test_nominalScenarioExtractSingleScenario
 
 function test_nominalScenarioExtractSingleScenarioWithCtScen
     n = 5;
+    scenNum = 1;
     ct = struct('numOfCtScen',n);
     refScen = matRad_NominalScenario(ct);
-    scenario = refScen.extractSingleScenario(1);
+    scenario = refScen.extractSingleScenario(scenNum);
 
     assertTrue(isa(scenario, 'matRad_NominalScenario'));
     assertTrue(isa(scenario, 'matRad_ScenarioModel'));
     assertEqual(scenario.name, 'nomScen');
-    assertEqual(scenario.phaseProbability, refScen.phaseProbability(1));
+    assertEqual(scenario.phaseProbability, refScen.phaseProbability(scenNum));
     assertEqual(scenario.numOfCtScen, 1);
     assertEqual(scenario.totNumScen, 1);
     assertEqual(scenario.totNumShiftScen, 1);
@@ -89,6 +90,6 @@ function test_nominalScenarioExtractSingleScenarioWithCtScen
     assertEqual(scenario.linearMask, [1 1 1]);
     assertElementsAlmostEqual(scenario.scenProb,helper_mvarGauss(scenario));
     assertEqual(scenario.scenForProb,[1 zeros(1,5)]);
-    assertEqual(scenario.scenWeight, 1);
+    assertEqual(scenario.scenWeight, refScen.scenWeight(scenNum));
 
 
