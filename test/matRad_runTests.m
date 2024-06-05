@@ -30,7 +30,7 @@ if nargin < 2
     withCoverage = false;
 end
 
-if withCoverage && matrad_cfg.isOctave
+if withCoverage && matRad_cfg.isOctave
     matRad_cfg.dispWarning('Coverage collection not possible with Octave. Turning off!');
     withCoverage = false;
 end
