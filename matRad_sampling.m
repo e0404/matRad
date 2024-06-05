@@ -119,10 +119,6 @@ nomQi                = matRad_calcQualityIndicators(cst,pln,resultGUInomScen.(pl
 resultGUInomScen.qi  = nomQi;
 resultGUInomScen.cst = cst;
 
-% default ct scenario for sampling
-ctScenSampling = 1;
-matRad_cfg.dispInfo('Sampling will be performed on ct scenario: %d \n',ctScenSampling);
-
 %% perform parallel sampling
 if FlagParallToolBoxLicensed
    % Create parallel pool on cluster
@@ -150,7 +146,7 @@ if FlagParallToolBoxLicensed
           
           % create nominal scenario
           plnSamp          = pln;
-          plnSamp.multScen = pln.multScen.extractSingleNomScen(ctScenSampling,i);
+          plnSamp.multScen = pln.multScen.extractSingleScenario(i);
           
           resultSamp                 = matRad_calcDoseDirect(ct,stf,plnSamp,cst,w);
           sampledDose                = resultSamp.(pln.bioParam.quantityVis)(subIx);
@@ -187,7 +183,7 @@ end
        
           % create nominal scenario
           plnSamp          = pln;
-          plnSamp.multScen = pln.multScen.extractSingleNomScen(ctScenSampling,i);
+          plnSamp.multScen = pln.multScen.extractSingleScenario(i);
           
           resultSamp                 = matRad_calcDoseDirect(ct,stf,plnSamp,cst,w);
           sampledDose                = resultSamp.(pln.bioParam.quantityVis)(subIx);

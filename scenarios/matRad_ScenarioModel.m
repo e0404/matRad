@@ -151,23 +151,22 @@ classdef (Abstract) matRad_ScenarioModel < handle
             matRad_cfg.dispError('This abstract function needs to be implemented!');
         end
 
-        function newInstance = extractSingleScenario(this,scenIdx)
+        function newInstance = extractSingleScenario(this,scenNum)
             newInstance = matRad_NominalScenario();
             
             newInstance.numOfCtScen = 1;
-            scenNumber = this.scenNum(scenIdx);
-            ctScenNum = this.linearMask(scenNumber,1);
+            ctScenNum = this.linearMask(scenNum,1);
 
-            newInstance.scenForProb         = this.scenForProb(scenIdx,:);
-            newInstance.relRangeShift       = this.scenForProb(scenIdx,6);
-            newInstance.absRangeShift       = this.scenForProb(scenIdx,5);
-            newInstance.isoShift            = this.scenForProb(scenIdx,2:4);
+            newInstance.scenForProb         = this.scenForProb(scenNum,:);
+            newInstance.relRangeShift       = this.scenForProb(scenNum,6);
+            newInstance.absRangeShift       = this.scenForProb(scenNum,5);
+            newInstance.isoShift            = this.scenForProb(scenNum,2:4);
             newInstance.phaseProbability    = this.phaseProbability(ctScenNum);
-            newInstance.scenProb            = this.scenProb(scenIdx);
-            newInstance.scenWeight          = this.scenWeight(scenIdx);
+            newInstance.scenProb            = this.scenProb(scenNum);
+            newInstance.scenWeight          = this.scenWeight(scenNum);
             newInstance.numOfCtScen         = 1;            
             
-            newInstance.updateScenarios();
+            %newInstance.updateScenarios();
         end
         
         function scenIx = sub2scenIx(this,ctScen,shiftScen,rangeShiftScen)
