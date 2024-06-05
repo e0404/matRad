@@ -34,6 +34,7 @@ classdef matRad_ViewingWidget < matRad_Widget
         doseColorMap = 'jet';
         ctColorMap = 'bone';
         cMapSize = 64;
+        ctScen = 1;
         plotCT = true;
         plotContour = true;
         plotIsoCenter = true;
@@ -203,6 +204,11 @@ classdef matRad_ViewingWidget < matRad_Widget
         
         function set.cMapSize(this,value)
             this.cMapSize=value;
+            this.UpdatePlot();
+        end
+
+        function set.ctScen(this,value)
+            this.ctScen=value;
             this.UpdatePlot();
         end
         
@@ -473,6 +479,9 @@ classdef matRad_ViewingWidget < matRad_Widget
                     %At pln changes and at cst/cst (for Isocenter and new settings) 
                     %we need to update
                     doUpdate = this.checkUpdateNecessary({'pln_display','ct','cst','resultGUI'},evt);
+                    if  ~this.checkUpdateNecessary({'cst_obj','pln',},evt)
+                        this.updateIsoDoseLineCache();
+                    end
                 end
             
                 if ~doUpdate || this.checkUpdateNecessary({'pln','ct','resultGUI'},evt)
@@ -480,12 +489,13 @@ classdef matRad_ViewingWidget < matRad_Widget
                 end
                             
                 this.updateValues();
-                this.updateIsoDoseLineCache(); 
+                
                 % Update plot only if there are changes to ct, resultGUI and cst structures.
                 % or on initialization
            
                 if  doUpdate || nargin == 1
                     this.UpdatePlot();
+                    this.updateIsoDoseLineCache(); 
                 end
              
             end
@@ -561,7 +571,7 @@ classdef matRad_ViewingWidget < matRad_Widget
 %                 end
                 
                 if this.plotCT %get(handles.radiobtnCT,'Value')
-                    [AxesHandlesCT_Dose{end+1},~,~] = matRad_plotCtSlice(handles.axesFig,plotCtCube,1,this.plane,this.slice,ctMap,this.dispWindow{ctIx,1});
+                    [AxesHandlesCT_Dose{end+1},~,~] = matRad_plotCtSlice(handles.axesFig,plotCtCube,this.ctScen,this.plane,this.slice,ctMap,this.dispWindow{ctIx,1});
                     
                     % plot colorbar? If 1 the user asked for the CT.
                     % not available in octave 
@@ -645,7 +655,7 @@ classdef matRad_ViewingWidget < matRad_Widget
            
             %% plot VOIs
             if this.plotContour && this.typeOfPlot==1 && exist('ct','var') %&& get(handles.radiobtnContour,'Value') && handles.State>0
-                [AxVOI, this.sliceContourLegend] = matRad_plotVoiContourSlice(handles.axesFig,this.cst,ct,1,this.VOIPlotFlag,this.plane,this.slice,[],'LineWidth',2);
+                [AxVOI, this.sliceContourLegend] = matRad_plotVoiContourSlice(handles.axesFig,this.cst,ct,this.ctScen,this.VOIPlotFlag,this.plane,this.slice,[],'LineWidth',2);
                 AxesHandlesVOI = [AxesHandlesVOI AxVOI];
             end
             this.AxesHandlesVOI=AxesHandlesVOI;
@@ -1267,47 +1277,6 @@ classdef matRad_ViewingWidget < matRad_Widget
                 end
                 this.OffsetSliderStep=[1/this.OffsetSliderStep 1/this.OffsetSliderStep];
                 
-
-                if evalin('base','exist(''resultGUI'')')
-                    
-                    Result = evalin('base','resultGUI');
-               
-                    if ~any(strcmp(this.SelectedDisplayOption,fieldnames(Result)))
-                        this.SelectedDisplayOption = this.DispInfo{find([this.DispInfo{:,2}],1,'first'),1};
-                    end
-                    
-                    dose = Result.(this.SelectedDisplayOption);
-                    
-                    %if the workspace has changed update the display parameters
-                    upperMargin = 1;
-                    if  isempty(this.dispWindow{2,1}) || ~this.lockColorSettings
-                        this.dispWindow{2,1} = [min(dose(:)) max(dose(:))]; % set default dose range
-                        this.dispWindow{2,2} = [min(dose(:)) max(dose(:))]; % set min max values
-                        
-                        % if upper colorrange is defined then use it otherwise 120% iso dose
-                        if abs((max(dose(:)) - this.dispWindow{2,1}(1,2))) < 0.01  * max(dose(:))
-                            upperMargin = 1.2;
-                        end
-                    end
-                    
-                    minMaxRange = this.dispWindow{2,1};
-                                      
-                    if (length(this.IsoDose_Levels) == 1 && this.IsoDose_Levels(1,1) == 0)
-
-                        vLevels                  = [0.1:0.1:0.9 0.95:0.05:upperMargin];
-                        referenceDose            = (minMaxRange(1,2))/(upperMargin);
-                        this.IsoDose_Levels   = minMaxRange(1,1) + (referenceDose-minMaxRange(1,1)) * vLevels;
-                        this.IsoDose_Contours = matRad_computeIsoDoseContours(dose,this.IsoDose_Levels);
-                    end
-                
-                    % update cached IsoDose contours
-                    vLevels                  = [0.1:0.1:0.9 0.95:0.05:upperMargin];
-                    referenceDose            = (minMaxRange(1,2))/(upperMargin);
-                    this.IsoDose_Levels   = minMaxRange(1,1) + (referenceDose-minMaxRange(1,1)) * vLevels;
-                    this.IsoDose_Contours = matRad_computeIsoDoseContours(dose,this.IsoDose_Levels);
-
-                end
-             
                 this.lockUpdate=lockState;
             end
         end
