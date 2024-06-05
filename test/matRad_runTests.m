@@ -1,4 +1,4 @@
-function matRad_runTests(folder,withCoverage)
+function result = matRad_runTests(folder,withCoverage)
 %% matRad_runTests.m
 % This function runs the test suite for the matRad package.
 %
@@ -43,11 +43,11 @@ end
 back = cd(matRad_cfg.matRadRoot);
 
 if withCoverage
-    moxunit_runtests('test','-recursive','-junit_xml_file','testresults.xml',...
+    result = moxunit_runtests('test','-recursive','-junit_xml_file','testresults.xml',...
         '-with_coverage','-cover','.','-cover_xml_file','coverage.xml','-cover_json_file','coverage.json',...
         '-cover_exclude','submodules','-cover_exclude','examples','-cover_method','profile');
 else
-    moxunit_runtests(folder,'-recursive');
+    result = moxunit_runtests(folder,'-recursive');
 end
 
 
