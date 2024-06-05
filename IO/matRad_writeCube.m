@@ -62,6 +62,16 @@ end
 if ~isfield(metadata,'coordinateSystem')
     metadata.coordinateSystem = 'LPS';  %Matlab coordinate system
 end
+
+% Ensure resolution is given
+if ~isfield(metadata,'resolution')
+    matRad_cfg.dispError('metadata.resolution is required!');
+end
+
+if isstruct(metadata.resolution) && all(isfield(metadata.resolution,{'x','y','z'}))
+    metadata.resolution = [metadata.resolution.x metadata.resolution.y metadata.resolution.z];
+end
+
 %If there is no image origin set, center the image
 imageExtent = metadata.resolution .* size(cube);
 if ~isfield(metadata,'imageOrigin')
@@ -88,7 +98,7 @@ else
     matRad_cfg.dispError('No unique writer found for extension "%s"',ext);
 end
 
-fprintf('File written to %s...\n',filepath);
+matRad_cfg.dispInfo('File written to %s...\n',filepath);
 saved_metadata = metadata;
 
 

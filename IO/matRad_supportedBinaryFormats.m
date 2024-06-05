@@ -37,6 +37,10 @@ readers(2).fileFilter = '*.nii;*.nii.gz';
 readers(2).name = 'NifTI';
 readers(2).handle = @matRad_readNifTI;
 
+readers(3).fileFilter = '*.mha;*.mhd';
+readers(3).name = 'MHA/MHD';
+readers(3).handle = @matRad_readMHD;
+
 %available writers
 writers(1).fileFilter = '*.nrrd';
 writers(1).name = 'NRRD';
@@ -53,6 +57,10 @@ writers(3).handle = @matRad_writeVTK;
 writers(4).fileFilter = '*.mha';
 writers(4).name = 'MHA';
 writers(4).handle = @matRad_writeMHA;
+
+writers(5).fileFilter = '*.mhd';
+writers(5).name = 'MHD';
+writers(5).handle = @matRad_writeMHD;
 
 end
 

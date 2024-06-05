@@ -500,8 +500,15 @@ classdef matRad_exportWidget < matRad_Widget
         %-------------CALLBACK FOR H7 PUSHBUTTON DIR EXPORT BROWSE
         function this = pushbutton_dir_export_browse_Callback(this, hObject, event)
             handles = this.handles;
-            
-            exportDir = uigetdir('', 'Choose the export directory...');
+
+            path = get(handles.edit_dir_export,'String');
+
+            if ~exist(path,'dir')
+                matRad_cfg = MatRad_Config.instance();
+                path = matRad_cfg.matRadRoot;
+            end
+                        
+            exportDir = uigetdir(path, 'Choose the export directory...');
             if exportDir ~= 0
                 exportDir = [exportDir filesep];
                 set(handles.edit_dir_export,'String',exportDir);

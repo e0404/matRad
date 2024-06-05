@@ -352,7 +352,7 @@ classdef matRad_importWidget < matRad_Widget
             
             this.handles = handles;
             this.changedWorkspace('ct','cst');
-            delete(this.widgetHandle);
+            %delete(this.widgetHandle);
             
         end
         
