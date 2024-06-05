@@ -129,7 +129,6 @@ classdef matRad_Widget <  handle
             matRad_cfg.dispWarning(Message);
             warndlg(Message);
             this.handles = handles;         
-
         end
         
         %function notifyUpdate(this,workSpaceVariables)
@@ -164,6 +163,18 @@ classdef matRad_Widget <  handle
                 end
             end
         end
+
+        function delete(this)
+            if ishandle(this.widgetHandle)
+                this.destroyLayout();
+            end        
+        end
+
+        function close(this)
+            if ishandle(this.widgetHandle)
+                this.destroyLayout();
+            end        
+        end
     end
 
     methods (Sealed)
@@ -196,6 +207,16 @@ classdef matRad_Widget <  handle
         %CREATE LAYOUT FUNCTION
         function this = createLayout(this, handleParent)
         end  
+
+        function destroyLayout(this)
+            fNames = fieldnames(this.handles);
+            for i = 1:numel(fNames)
+                h = this.handles.(fNames{i});
+                if ishandle(h)
+                    delete(h);
+                end
+            end
+        end
         
         %Helper function to create handles structure from tags (similar to
         %guihandles)
@@ -270,7 +291,6 @@ classdef matRad_Widget <  handle
             
             pos = [buttonGridPos+offset buttonRelSize];
         end
-        
     end
     
 end

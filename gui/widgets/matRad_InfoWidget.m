@@ -116,6 +116,10 @@ classdef matRad_InfoWidget < matRad_Widget
             
             matRad_cfg = MatRad_Config.instance();
             [~,matRadVer] = matRad_version;
+
+            if isfield(handles,'aboutBox')
+                delete(handles.aboutBox);
+            end
             
             msg{1} = ['matRad ''' matRadVer.name '''']; %Name
             if matRad_cfg.eduMode
@@ -135,8 +139,7 @@ classdef matRad_InfoWidget < matRad_Widget
             
             msg{end+1} = 'MATRAD IS NOT A MEDICAL PRODUCT AND THEREFORE NOT SUITABLE FOR CLINICAL USE!';
             
-            msgbox(msg,'About matRad');
-            
+            handles.aboutBox = msgbox(msg,'About matRad');
             
             this.handles = handles;
         end
