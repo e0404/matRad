@@ -76,8 +76,9 @@ for i = 1:numOfContStructs % loop over every structure
             break;
         end
     end    
-    structures(i).structName   = structInfo.StructureSetROISequence.(...
-                                 listOfDefStructs{j}).ROIName;
+    structures(i).structName   = regexprep(...  % replace nonregular characters by whitespace
+        structInfo.StructureSetROISequence.(listOfDefStructs{j}).ROIName,...
+        '[^a-zA-Z0-9]',' ');
                              
     structures(i).structNumber = structInfo.ROIContourSequence.(...
                                  listOfContStructs{i}).ReferencedROINumber;

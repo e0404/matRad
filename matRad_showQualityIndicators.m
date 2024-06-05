@@ -28,9 +28,8 @@ function matRad_showQualityIndicators(figHandle,qi)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 matRad_cfg = MatRad_Config.instance();
-
 [env, vStr] = matRad_getEnvironment();
-    
+
 % Create the column and row names in cell arrays 
 rnames = {qi.name};
 qi = rmfield(qi,'name');

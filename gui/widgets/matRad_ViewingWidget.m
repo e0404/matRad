@@ -34,6 +34,7 @@ classdef matRad_ViewingWidget < matRad_Widget
         doseColorMap = 'jet';
         ctColorMap = 'bone';
         cMapSize = 64;
+        ctScen = 1;
         plotCT = true;
         plotContour = true;
         plotIsoCenter = true;
@@ -203,6 +204,11 @@ classdef matRad_ViewingWidget < matRad_Widget
         
         function set.cMapSize(this,value)
             this.cMapSize=value;
+            this.UpdatePlot();
+        end
+
+        function set.ctScen(this,value)
+            this.ctScen=value;
             this.UpdatePlot();
         end
         
@@ -566,7 +572,7 @@ classdef matRad_ViewingWidget < matRad_Widget
 %                 end
                 
                 if this.plotCT %get(handles.radiobtnCT,'Value')
-                    [AxesHandlesCT_Dose{end+1},~,~] = matRad_plotCtSlice(handles.axesFig,plotCtCube,1,this.plane,this.slice,ctMap,this.dispWindow{ctIx,1});
+                    [AxesHandlesCT_Dose{end+1},~,~] = matRad_plotCtSlice(handles.axesFig,plotCtCube,this.ctScen,this.plane,this.slice,ctMap,this.dispWindow{ctIx,1});
                     
                     % plot colorbar? If 1 the user asked for the CT.
                     % not available in octave 
@@ -650,7 +656,7 @@ classdef matRad_ViewingWidget < matRad_Widget
            
             %% plot VOIs
             if this.plotContour && this.typeOfPlot==1 && exist('ct','var') %&& get(handles.radiobtnContour,'Value') && handles.State>0
-                [AxVOI, this.sliceContourLegend] = matRad_plotVoiContourSlice(handles.axesFig,this.cst,ct,1,this.VOIPlotFlag,this.plane,this.slice,[],'LineWidth',2);
+                [AxVOI, this.sliceContourLegend] = matRad_plotVoiContourSlice(handles.axesFig,this.cst,ct,this.ctScen,this.VOIPlotFlag,this.plane,this.slice,[],'LineWidth',2);
                 AxesHandlesVOI = [AxesHandlesVOI AxVOI];
             end
             this.AxesHandlesVOI=AxesHandlesVOI;
@@ -1109,8 +1115,16 @@ classdef matRad_ViewingWidget < matRad_Widget
                 
                 if isfield(ct, 'cubeHU')
                     minMax = [min(ct.cubeHU{1}(:)) max(ct.cubeHU{1}(:))];
+
+                    if diff(minMax) == 0
+                        minMax = [-1000 2000];
+                    end
                 else
                     minMax = [min(ct.cube{1}(:)) max(ct.cube{1}(:))];
+
+                    if diff(minMax) == 0
+                        minMax = [0 2];
+                    end
                 end
                 
                 if evalin('base','exist(''resultGUI'')')
@@ -1151,10 +1165,19 @@ classdef matRad_ViewingWidget < matRad_Widget
                     
                     this.SelectedDisplayAllOptions=fieldnames(Result);                    
                     
-                    if strcmp(pln.radiationMode,'carbon') || (strcmp(pln.radiationMode,'protons') && strcmp(pln.propOpt.bioOptimization,'const_RBExD'))
-                        this.SelectedDisplayOption = 'RBExDose';
-                    else
-                        this.SelectedDisplayOption = 'physicalDose';
+%                     if strcmp(pln.radiationMode,'carbon') || strcmp(pln.bioParam.quantityOpt,'RBExD') 
+%                         this.SelectedDisplayOption = 'RBExDose';
+%                     else
+%                         this.SelectedDisplayOption = 'physicalDose';
+%                     end
+
+                    switch pln.bioParam.quantityOpt
+                        case 'physicalDose'
+                            this.SelectedDisplayOption = 'physicalDose';
+                        case 'RBExD'
+                            this.SelectedDisplayOption = 'RBExDose';
+                        case 'effect'
+                            this.SelectedDisplayOption = 'effect';
                     end
                     
                     if sum(strcmp(this.SelectedDisplayOption,fieldnames(Result))) == 0

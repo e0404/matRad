@@ -20,7 +20,7 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (Constant)
-           possibleRadiationModes = {'protons', 'carbon'}
+           possibleRadiationModes = {'protons', 'helium','carbon'}
            name = 'Subsampling Particle Pencil-Beam';
            shortName = 'SubsamplingPB';
     end
@@ -71,17 +71,25 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
             lateralRayCutOff = this.getLateralDistanceFromDoseCutOffOnRay(ray);
 
             % Ray tracing for beam i and ray j
-            [ix,ray.radialDist_sq,ray.latDists] = this.calcGeoDists(currBeam.bevCoords, ...
+            [ix,radialDist_sq,latDists] = this.calcGeoDists(currBeam.bevCoords, ...
                 ray.sourcePoint_bev, ...
                 ray.targetPoint_bev, ...
                 ray.SAD, ...
-                currBeam.ixRadDepths, ...
+                currBeam.validCoordsAll, ...
                 lateralRayCutOff);
             
-            %ray.geoDepths = currBeam.geoDepths{1}(ix); %we don't need that
-            ray.radDepths = currBeam.radDepths{1}(ix);
-            ray.ix = currBeam.ixRadDepths(ix);
-            ray.subIxVdoseGrid = currBeam.subIxVdoseGrid(ix);
+            ray.validCoords = cellfun(@(beamIx) beamIx & ix,currBeam.validCoords,'UniformOutput',false);
+            ray.ix = cellfun(@(ixInGrid) this.VdoseGrid(ixInGrid),ray.validCoords,'UniformOutput',false);
+
+            %subCoords = cellfun(@(beamIx) beamIx(ix),currBeam.validCoords,'UniformOutput',false);
+            %ray.radialDist_sq = cellfun(@(subix) radialDist_sq(subix),radialDist_sq,subCoords);
+            ray.radialDist_sq = cellfun(@(beamIx) radialDist_sq(beamIx(ix)),currBeam.validCoords,'UniformOutput',false);
+            ray.latDists = cellfun(@(beamIx) latDists(beamIx(ix),:),currBeam.validCoords,'UniformOutput',false);
+
+            ray.validCoordsAll = any(cell2mat(ray.validCoords),2);
+            
+            ray.geoDepths = cellfun(@(rD,ix) rD(ix),currBeam.geoDepths,ray.validCoords,'UniformOutput',false); %usually not needed for particle beams
+            ray.radDepths = cellfun(@(rD,ix) rD(ix),currBeam.radDepths,ray.validCoords,'UniformOutput',false);
         end
 
         function bixel = initBixel(this,currRay,k)

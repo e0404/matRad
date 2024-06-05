@@ -32,7 +32,18 @@ function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+
+%Deprecation warnings
+if ~isfield(stf,'machine')
+    matRad_cfg.dispDeprecationWarning('stf should contain the machine name in the ''machine'' field since matRad 3. Manually adding ''%s'' from pln.',pln.machine);
+    for i=1:numel(stf)
+        stf(i).machine = pln.machine;
+    end
+end
+
 engine = DoseEngines.matRad_DoseEngineBase.getEngineFromPln(pln);
+
 if nargin < 5
     resultGUI = engine.calcDoseForward(ct,cst,stf);
 else

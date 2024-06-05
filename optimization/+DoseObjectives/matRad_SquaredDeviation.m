@@ -30,6 +30,7 @@ classdef matRad_SquaredDeviation < DoseObjectives.matRad_DoseObjective
         parameters = {60};
         penalty = 1;
     end
+
     
     methods
         function obj = matRad_SquaredDeviation(penalty,dRef)
@@ -45,7 +46,7 @@ classdef matRad_SquaredDeviation < DoseObjectives.matRad_DoseObjective
             
             %Call Superclass Constructor (for struct initialization)
             obj@DoseObjectives.matRad_DoseObjective(inputStruct);
-            
+                        
             %now handle initialization from other parameters
             if ~initFromStruct
                 if nargin == 2 && isscalar(dRef)
@@ -63,7 +64,7 @@ classdef matRad_SquaredDeviation < DoseObjectives.matRad_DoseObjective
             % deviation : dose minus prefered dose
             deviation = dose - obj.parameters{1};
             % claculate objective function
-            fDose = obj.penalty/numel(dose) * (deviation'*deviation);
+            fDose = 1/numel(dose) * (deviation'*deviation);
         end
         
         %% Calculates the Objective Function gradient
@@ -72,7 +73,14 @@ classdef matRad_SquaredDeviation < DoseObjectives.matRad_DoseObjective
             deviation = dose - obj.parameters{1};
             
             % calculate delta
-            fDoseGrad = 2 * obj.penalty/numel(dose) * deviation;
+            fDoseGrad = 2 * 1/numel(dose) * deviation;
+        end
+    end
+    
+    methods (Static)
+        function rob = availableRobustness()
+            rob = DoseObjectives.matRad_DoseObjective.availableRobustness();
+            rob{end+1} = 'PROB'; %By default, no robustness is available
         end
     end
     

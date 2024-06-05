@@ -30,19 +30,22 @@ function ct = matRad_calcWaterEqD(ct, radiationMode)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+matRad_cfg = MatRad_Config.instance();
+
 % load hlut
-hlut = matRad_loadHLUT(ct, radiationMode);
-    
+hlut = matRad_loadHLUT(ct, radiationMode);  
+
 for i = 1:ct.numOfCtScen
 
     % Manual adjustments if ct data is corrupt. If some values are out of range
     % of the LUT, then these values are adjusted.
     if max(ct.cubeHU{i}(:)) > max(hlut(:,1))
-        warning('projecting out of range HU values');
+        matRad_cfg.dispWarning('projecting out of range HU values');
         ct.cubeHU{i}(ct.cubeHU{i} > max(hlut(:,1))) = max(hlut(:,1));
     end
     if min(ct.cubeHU{i}(:)) < min(hlut(:,1))
-        warning('projecting out of range HU values');
+        matRad_cfg.dispWarning('projecting out of range HU values');
         ct.cubeHU{i}(ct.cubeHU{i} < min(hlut(:,1))) = min(hlut(:,1));
     end
 

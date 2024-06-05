@@ -39,13 +39,17 @@ end
 V = [];
 
 %Check if any constraints/Objectives have been defined yet
-noObjOrConst = all(cellfun(@isempty,cst(:,6)));
+if size(cst,2) >= 6
+    noObjOrConst = all(cellfun(@isempty,cst(:,6)));
+else
+    noObjOrConst = true;
+end
 
 % Save target indices in V variable.
 for i = 1:size(cst,1)
     % We only let a target contribute if it has an objective/constraint or
     % if we do not have specified objectives/constraints at all so far
-    if isequal(cst{i,3},'TARGET') && (~isempty(cst{i,6}) || noObjOrConst)
+    if isequal(cst{i,3},'TARGET') && (noObjOrConst || ~isempty(cst{i,6}))
         V = [V; cst{i,4}{1}];
     end
 end

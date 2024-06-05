@@ -2,7 +2,7 @@ function hGUI = matRadGUI(varargin)
 % matRad compatability function to call the matRad_MainGUI
 %   The function checks input parameters and handles the GUI as a
 %   singleton, so following calls will not create new windows
-% 
+%
 % call
 %   hGUI = matRadGUI
 %   matRadGUI
@@ -12,18 +12,20 @@ function hGUI = matRadGUI(varargin)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
+% Copyright 2015 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
 persistent hMatRadGUI;
+
 
 p = inputParser;
 addParameter(p,'devMode',false,@(x) validateModeValue(x));
@@ -65,14 +67,16 @@ end
 
 handleValid = true;
 
-try 
+try
     handleValid = ishandle(hMatRadGUI.guiHandle);
 catch
+
     handleValid = false;
 end
 
 if handleValid
     figure(hMatRadGUI.guiHandle);
+    hMatRadGUI.update();
 else
     matRad_rc(false);
     hMatRadGUI = matRad_MainGUI;
@@ -85,11 +89,13 @@ end
 
 end
 
+
 %Validates the attributes for the command line Modes
 function validateModeValue(x)
 %When passed from OS terminal (or inline in Command Window) everything is a string
 if isdeployed || ischar(x) || isstring(x)
     x=str2double(x);
+
 end
 validateattributes(x,{'logical','numeric'},{'scalar','binary'});
 end

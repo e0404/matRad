@@ -25,6 +25,9 @@ if ~exist(obj.dicomDir)
     mkdir(obj.dicomDir);
 end
 
+matRad_cfg = MatRad_Config.instance();
+matRad_cfg.dispInfo('Exporting DICOM for scenario %d to %s:\n',obj.exportScenario,obj.dicomDir);
+
 %Name of Patient & Study
 %CT Series
 obj = matRad_exportDicomCt(obj);

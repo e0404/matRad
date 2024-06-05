@@ -30,6 +30,10 @@ classdef (Abstract) matRad_DoseEngineBase < handle
     % Public properties
     properties
         doseGrid;                   % doseGrid to use (struct with at least doseGrid.resolution.x/y/z set)        
+        multScen;                   % scenario model to use
+        voxelSubIx;                 % selection of where to calculate / store dose, empty by default
+        selectVoxelsInScenarios;    % which voxels to compute in robustness scenarios
+        bioParam;                   % Biological dose modeling
     end
     
     % Protected properties with public get access
@@ -51,10 +55,14 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         %offset; % offset adjustment for isocenter
         
         VctGrid; % voxel grid inside patient
-        VdoseGrid;  % voxel dose grid         
+        VdoseGrid;  % voxel dose grid    
+        VctGridScenIx;  %logical subindexes of scenarios in ct grid
+        VdoseGridScenIx; %logical subindexes of scenarios in dose grid
 
         VctGridMask; % voxel grid inside patient as logical mask
         VdoseGridMask;  % voxel dose grid inside patient as logical mask
+
+        robustVoxelsOnGrid; %voxels to be computed in robustness scenarios
     end
     
     % Fully protected properties
@@ -97,7 +105,17 @@ classdef (Abstract) matRad_DoseEngineBase < handle
 
         function assignPropertiesFromPln(this,pln,warnWhenPropertyChanged)
             matRad_cfg = MatRad_Config.instance();
-
+            
+            %Set Scenario Model
+            if isfield(pln,'multScen')
+                this.multScen = pln.multScen;
+            end
+            
+            %Assign biological model
+            if isfield(pln,'bioParam')
+                this.bioParam = pln.bioParam;
+            end
+            
             if nargin < 3 || ~isscalar(warnWhenPropertyChanged) || ~islogical(warnWhenPropertyChanged)
                 warnWhenPropertyChanged = false;
             end
@@ -147,13 +165,13 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         function resultGUI = calcDoseForward(this,ct,cst,stf,w)
             matRad_cfg = MatRad_Config.instance();
             if nargin < 5 && ~isfield([stf.ray],'weight')
-                matRad_cfg.dispEerror('No weight vector available. Please provide w or add info to stf')
+                matRad_cfg.dispError('No weight vector available. Please provide w or add info to stf')
             end
 
             % copy bixel weight vector into stf struct
             if nargin == 5
                 if sum([stf.totalNumOfBixels]) ~= numel(w)
-                    matRad_cfg.dispEerror('weighting does not match steering information');
+                    matRad_cfg.dispError('weighting does not match steering information');
                 end
                 counter = 0;
                 for i = 1:size(stf,2)
@@ -197,6 +215,8 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             
             %Assign default parameters from MatRad_Config
             this.doseGrid.resolution    = matRad_cfg.propDoseCalc.defaultResolution;
+            this.multScen = 'nomScen';
+            this.selectVoxelsInScenarios = matRad_cfg.propDoseCalc.defaultSelectVoxelsInScenarios;
         end
     end
     
@@ -211,8 +231,8 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         
         % method for finalizing the dose calculation (e.g. postprocessing
         % on dij or files
-        function dij = finalizeDose(this,ct,cst,stf,dij)
-            
+        function dij = finalizeDose(this,dij)
+
             matRad_cfg = MatRad_Config.instance();
             %Close Waitbar
             if any(ishandle(this.hWaitbar))
@@ -223,6 +243,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             
             matRad_cfg.dispInfo('Dose calculation finished in %g seconds!\n',this.timers.full);
         end
+
     
         function progressUpdate(this,pos,total)
             if nargin < 3
@@ -273,7 +294,8 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         %               if available, indicates a warning that not all
         %               information was present in the machine file and
         %               approximations need to be made
-            error('This is an Abstract Base class! Function needs to be called for instantiable subclasses!');
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispError('This is an Abstract Base class! Function needs to be called for instantiable subclasses!');
         end
         
         % static factory method to create/get correct dose engine from pln

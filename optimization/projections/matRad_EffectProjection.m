@@ -42,5 +42,44 @@ classdef matRad_EffectProjection < matRad_BackProjection
                 wGrad = vBias + mPsi;
             end
         end
+        
+        function [eExp,dOmegaV] = computeSingleScenarioProb(~,dij,scen,w)
+            if isempty(dij.mAlphaDoseExp{scen}) || isempty(dij.mSqrtBetaDoseExp{scen})
+                eExp = [];
+                dOmegaV = [];
+                %matRad_cfg = MatRad_Config.instance();
+                %matRad_cfg.dispWarning('Empty scenario in optimization detected! This should not happen...\n');
+            else
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispWarning('Probabilistic Backprojection uses inaccurate approximation for effect computation...\n');
+                %eExpLinTerm = dij.mAlphaDose{scen}*w;
+                %eExpSqTerm  = dij.mSqrtBetaDose{scen}*w;
+                eExp = dij.mAlphaDose{scen}*w + (dij.mSqrtBetaDose{scen}*w).^2;
+                
+                for i = 1:size(dij.physicalDoseOmega,2)
+                   dOmegaV{scen,i} = dij.mAlphaDoseOmega{scen,i} * w;
+                end 
+            end      
+        end
+        
+        function wGrad = projectSingleScenarioGradientProb(~,dij,dExpGrad,dOmegaVgrad,scen,~)
+            if isempty(dij.mAlphaDoseExp{scen}) || isempty(dij.mSqrtBetaDoseExp{scen})
+                wGrad = [];
+            else
+                vBias = (dExpGrad{scen}' * dij.mAlphaDoseExp{scen})';
+                quadTerm = dij.mSqrtBetaDoseExp{scen} * w;
+                mPsi = (2*(dExpGrad{scen}.*quadTerm)' * dij.mSqrtBetaDoseExp{scen})';
+                wGrad = vBias + mPsi;
+                wGrad = wGrad + 2 * dOmegaVgrad;
+            end            
+        end        
+    end
+    
+    methods (Static)
+        function optiFunc = setBiologicalDosePrescriptions(optiFunc,alphaX,betaX)
+            doses = optiFunc.getDoseParameters();    
+            effect = alphaX*doses + betaX*doses.^2;        
+            optiFunc = optiFunc.setDoseParameters(effect);
+        end
     end
 end

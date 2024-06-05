@@ -50,6 +50,8 @@ function [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(isocenter, ...
 % works with negatives values. This put (resolution.x,resolution.y,resolution.z)
 % in the center of first voxel
 
+matRad_cfg = MatRad_Config.instance();
+
 sourcePoint = sourcePoint + isocenter;
 targetPoint = targetPoint + isocenter;
 
@@ -75,9 +77,35 @@ xPlane_end = (xNumPlanes - .5)*resolution.x;
 yPlane_end = (yNumPlanes - .5)*resolution.y;
 zPlane_end = (zNumPlanes - .5)*resolution.z;
 
+% Calc insersection point with CT cube planes
+tvalues  = ([xPlane_1,yPlane_1,zPlane_1] - sourcePoint)./ (targetPoint - sourcePoint);
+tvalues = [tvalues,([xPlane_end,yPlane_end,zPlane_end] - sourcePoint)./ (targetPoint - sourcePoint)];
+
+%check if intersection point within CT
+doesHit = false;
+for t = tvalues
+    p = sourcePoint + t*(targetPoint - sourcePoint);
+    if (p(1) >= xPlane_1 && p(1) <= xPlane_end && ...
+        p(2) >= yPlane_1 && p(2) <= yPlane_end && ...
+        p(3) >= zPlane_1 && p(3) <= zPlane_end)
+        doesHit = true;
+    end
+end
+
+%If it does not hit, write empty values
+if ~doesHit
+    alphas = [];
+    l = [];
+    for i = 1:numel(cubes)
+        rho{i} = [];
+    end
+    ix = [];
+    return;
+end
+
 % eq 4
 % Calculate parametrics values of \alpha_{min} and \alpha_{max} for every
-% axis, intersecting the ray with the sides of the CT. 
+% axis, intersecting the ray with the sides of the CT.
 if targetPoint(1) ~= sourcePoint(1)
     aX_1   = (xPlane_1 - sourcePoint(1)) / (targetPoint(1) - sourcePoint(1));
     aX_end = (xPlane_end - sourcePoint(1)) / (targetPoint(1) - sourcePoint(1));
@@ -210,7 +238,7 @@ j(j>yNumPlanes-1) = yNumPlanes-1;
 k(k>zNumPlanes-1) = zNumPlanes-1;
 
 % Convert to linear indices
-ix = j + (i-1)*size(cubes{1},1) + (k-1)*size(cubes{1},1)*size(cubes{1},2); 
+ix = j + (i-1)*size(cubes{1},1) + (k-1)*size(cubes{1},1)*size(cubes{1},2);
 
 % obtains the values from cubes
 rho = cell(numel(cubes),1);

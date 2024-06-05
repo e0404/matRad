@@ -105,6 +105,10 @@ hCt = matRad_plotCtSlice(axesHandle,ct.cubeHU,cubeIdx,plane,slice);
 hold on;
 
 % plot dose
+if ~isempty(doseWindow) && doseWindow(2) - doseWindow(1) <= 0
+    doseWindow = [0 2];
+end
+
 [hDose,doseColorMap,doseWindow] = matRad_plotDoseSlice(axesHandle,dose,plane,slice,thresh,alpha,doseColorMap,doseWindow);
 
 % plot iso dose lines
@@ -117,7 +121,8 @@ end
 
 %plot VOI contours
 if  ~isempty(cst)
-    hContour = matRad_plotVoiContourSlice(axesHandle,cst,ct,cubeIdx,voiSelection,plane,slice,contourColorMap,varargin{:});
+
+    [hContour,~] = matRad_plotVoiContourSlice(axesHandle,cst,ct,cubeIdx,voiSelection,plane,slice,contourColorMap,varargin{:});
 
 if boolPlotLegend
    visibleOnSlice = (~cellfun(@isempty,hContour));

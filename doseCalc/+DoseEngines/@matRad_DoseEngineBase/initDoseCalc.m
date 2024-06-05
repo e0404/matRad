@@ -58,13 +58,23 @@ end
 machine = machine{1};
 radiationMode = radiationMode{1};
 
+%Scenario Model
+if ~isa(this.multScen,'matRad_ScenarioModel')
+    this.multScen = matRad_multScen(ct,this.multScen);
+end
+
+if ~isa(this.bioParam,'matRad_BiologicalModel')
+    this.bioParam = matRad_bioModel(radiationMode,'physicalDose','none');
+end
+
 dij = struct();
+
+if ~isnan(this.bioParam.RBE)
+    dij.RBE = this.bioParam.RBE; 
+end
 
 %store CT grid
 dij.ctGrid.resolution = ct.resolution;
-%dij.ctGrid.resolution.x = ct.resolution.x;
-%dij.ctGrid.resolution.y = ct.resolution.y;
-%dij.ctGrid.resolution.z = ct.resolution.z;
 
 % to guarantee downwards compatibility with data that does not have
 % ct.x/y/z
@@ -102,7 +112,7 @@ dij.doseGrid.isoCenterOffset = [dij.doseGrid.resolution.x - dij.ctGrid.resolutio
 
 % meta information for dij
 dij.numOfBeams         = numel(stf);
-dij.numOfScenarios     = 1;
+dij.numOfScenarios     = this.multScen.numOfCtScen;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
@@ -124,27 +134,42 @@ dij.minMU               = zeros(this.numOfColumnsDij,1);
 dij.maxMU               = inf(this.numOfColumnsDij,1);
 dij.numOfParticlesPerMU = 1e6*ones(this.numOfColumnsDij,1);
 
-
-% Allocate space for dij.physicalDose sparse matrix, assume 1%nnz
-for i = 1:dij.numOfScenarios   
-    nnzEstimate = floor(0.01*(dij.doseGrid.numOfVoxels*this.numOfColumnsDij));
-    dij.physicalDose{i} = spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,nnzEstimate);
+if isempty(this.voxelSubIx)
+    % take only voxels inside patient
+    tmpVctGridScen = cell(1,ct.numOfCtScen);
+    for s = 1:ct.numOfCtScen
+        tmpScen = cellfun(@(c) c{s},cst(:,4),'UniformOutput',false);
+        tmpVctGridScen{s} = unique(vertcat(tmpScen{:}));    
+    end
+else
+    if iscell(this.voxelSubIx)
+        tmpVctGridScen = cell(1,ct.numOfCtScen);
+        for s = 1:ct.numOfCtScen
+            tmpVctGridScen{s} = this.voxelSubIx;    
+        end
+    else
+        tmpVctGridScen = this.voxelSubIx;
+    end    
 end
+this.VctGrid = unique(vertcat(tmpVctGridScen{:}));
+% No we find the subindexes for the indivdual scenarios. This helps us
+% doing a subselection later on.
+this.VctGridScenIx = cellfun(@(c) ismember(this.VctGrid,c),tmpVctGridScen,'UniformOutput',false);
 
-% take only voxels inside patient
-VctGrid = [cst{:,4}];
-VctGrid = unique(vertcat(VctGrid{:}));
 
-% receive linear indices and grid locations from the dose grid
-tmpCube    = zeros(ct.cubeDim);
-tmpCube(VctGrid) = 1;
-% interpolate cube
-this.VdoseGrid = find(matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z,tmpCube, ...
-    dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest'));
+tmpVdoseGridScen = cell(1,ct.numOfCtScen);
+for s = 1:ct.numOfCtScen
+    % receive linear indices and grid locations from the dose grid
+    tmpCube    = zeros(ct.cubeDim);
+    tmpCube(tmpVctGridScen{s}) = 1;
+    
+    % interpolate cube
+    tmpVdoseGridScen{s} = find(matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z,tmpCube, ...
+        dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest'));
+end
+this.VdoseGrid = unique(vertcat(tmpVdoseGridScen{:}));
+this.VdoseGridScenIx = cellfun(@(c) ismember(this.VdoseGrid,c), tmpVdoseGridScen,'UniformOutput',false);
 
-% save vct grid as own property in order to allow sub-classes
-% to access it
-this.VctGrid = VctGrid;
 
 % Convert CT subscripts to linear indices.
 [this.yCoordsV_vox, this.xCoordsV_vox, this.zCoordsV_vox] = ind2sub(ct.cubeDim,this.VctGrid);
@@ -164,6 +189,17 @@ this.VctGridMask(this.VctGrid) = true;
 this.machine = this.loadMachine(radiationMode,machine);
 
 this.doseGrid = dij.doseGrid;
+
+%Voxel selection for dose calculation
+% ser overlap prioriites
+cst = matRad_setOverlapPriorities(cst);
+
+% resizing cst to dose cube resolution
+cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
+   dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
+
+%structures that are selected here will be included in dose calculation over the robust scenarios
+this.robustVoxelsOnGrid = matRad_selectVoxelsFromCst(cst, dij.doseGrid, this.selectVoxelsInScenarios);
 
 end
 
