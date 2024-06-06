@@ -44,7 +44,8 @@ classdef (Abstract) matRad_ScenarioModel < handle
     end
    
     properties (SetAccess = protected)
-        numOfCtScen;           % total number of CT scenarios
+        numOfCtScen;           % total number of CT scenarios used
+        
 
         % these parameters will be filled according to the choosen scenario type
         isoShift;
@@ -154,17 +155,21 @@ classdef (Abstract) matRad_ScenarioModel < handle
         function newInstance = extractSingleScenario(this,scenNum)
             newInstance = matRad_NominalScenario();
             
-            newInstance.numOfCtScen = 1;
             ctScenNum = this.linearMask(scenNum,1);
+            
+            %First set properties that force an update
+            newInstance.numOfCtScen         = 1;            
+            newInstance.phaseProbability    = this.phaseProbability(ctScenNum);
 
+            %Now overwrite existing variables for correct probabilties and
+            %error realizations
             newInstance.scenForProb         = this.scenForProb(scenNum,:);
             newInstance.relRangeShift       = this.scenForProb(scenNum,6);
             newInstance.absRangeShift       = this.scenForProb(scenNum,5);
             newInstance.isoShift            = this.scenForProb(scenNum,2:4);
-            newInstance.phaseProbability    = this.phaseProbability(ctScenNum);
             newInstance.scenProb            = this.scenProb(scenNum);
             newInstance.scenWeight          = this.scenWeight(scenNum);
-            newInstance.numOfCtScen         = 1;            
+            
             
             %newInstance.updateScenarios();
         end
