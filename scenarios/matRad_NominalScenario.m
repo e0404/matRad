@@ -41,9 +41,12 @@ classdef matRad_NominalScenario < matRad_ScenarioModel
         end
         
         function scenarios = updateScenarios(this)
+            this.numOfCtScen = size(this.ctScenProb,1);
+            
             %Scenario weight 
-            this.scenWeight = ones(this.numOfCtScen,1)./this.numOfCtScen;
-            this.scenWeight = this.phaseProbability;
+            this.scenWeight = ones(this.numOfCtScen,1)./this.numOfCtScen;            
+            this.scenWeight = this.ctScenProb(:,2);
+            this.ctScenIx   = this.ctScenProb(:,1);
 
             %set variables
             this.totNumShiftScen = 1;
@@ -53,19 +56,19 @@ classdef matRad_NominalScenario < matRad_ScenarioModel
             %Individual shifts
             this.relRangeShift = zeros(this.numOfCtScen,1);
             this.absRangeShift = zeros(this.numOfCtScen,1);
-            this.isoShift = zeros(this.numOfCtScen,3);
-            this.ctScen        = transpose(1:this.numOfCtScen);
+            this.isoShift = zeros(this.numOfCtScen,3);            
 
             %Probability matrices
-            this.scenForProb = [this.ctScen zeros(this.numOfCtScen,5)]; %Realization matrix
-            this.scenProb = this.phaseProbability; %Probabilities for each scenario
+            this.scenForProb = [this.ctScenProb(:,1) zeros(this.numOfCtScen,5)]; %Realization matrix
+            this.scenProb = this.ctScenProb(:,2); %Probabilities for each scenario
 
             this.maxAbsRangeShift = max(this.absRangeShift);
             this.maxRelRangeShift = max(this.absRangeShift);
 
             %Mask for scenario selection
-            this.scenMask = true(this.numOfCtScen,this.totNumShiftScen,this.totNumRangeScen);
-            
+            this.scenMask = false(this.numOfAvailableCtScen,this.totNumShiftScen,this.totNumRangeScen);
+            this.scenMask(this.ctScenIx,:,:) = true;
+
             %generic code
             [x{1}, x{2}, x{3}] = ind2sub(size(this.scenMask),find(this.scenMask));
             this.linearMask    = cell2mat(x);
@@ -78,7 +81,7 @@ classdef matRad_NominalScenario < matRad_ScenarioModel
             tmpScenProb = (2*pi)^(-d/2) * exp(-0.5*sum((this.scenForProb(:,2:end)/cs).^2, 2)) / prod(diag(cs));
             
             %Multiply with 4D phase probability
-            this.scenProb = this.phaseProbability .* tmpScenProb;
+            this.scenProb = this.ctScenProb(:,2) .* tmpScenProb;
             
             %Get relative (normalized) weight of the scenario
             this.scenWeight = this.scenProb./sum(this.scenProb); 

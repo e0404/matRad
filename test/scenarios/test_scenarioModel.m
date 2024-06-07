@@ -5,7 +5,9 @@ test_functions=localfunctions();
 initTestSuite;
 
 %Add automated instance tests for avaiable models
-models = {matRad_NominalScenario(),matRad_WorstCaseScenarios(),matRad_ImportanceScenarios(),matRad_RandomScenarios()};
+ct.numOfCtScen = 5;
+models = {matRad_NominalScenario(),matRad_WorstCaseScenarios(),matRad_ImportanceScenarios(),matRad_RandomScenarios(),...
+    matRad_NominalScenario(ct),matRad_WorstCaseScenarios(ct),matRad_ImportanceScenarios(ct),matRad_RandomScenarios(ct)};
 
 instanceTests = cellfun(@func2str,test_functions,'UniformOutput',false);
 funIx = ~cellfun(@isempty,strfind(instanceTests,'instanceTest_'));
@@ -84,15 +86,15 @@ function instanceTest_wcSigma(model)
     assertExceptionThrown(@() assignmentTestHelper(model,'wcSigma',-1),'matRad:Error');
     assertExceptionThrown(@() assignmentTestHelper(model,'wcSigma',ones(2)),'matRad:Error');
 
-function instanceTest_phaseProbability(model)
+function instanceTest_ctScenProb(model)
     newValue = rand(model.numOfCtScen,1);
     newValue = newValue ./ sum(newValue);
-    model.phaseProbability = newValue;
-    getValue = model.phaseProbability;
+    model.ctScenProb(:,2) = newValue;
+    getValue = model.ctScenProb(:,2);
     assertEqual(newValue,getValue); 
-    assertExceptionThrown(@() assignmentTestHelper(model,'phaseProbability','a'),'matRad:Error');
-    assertExceptionThrown(@() assignmentTestHelper(model,'phaseProbability',ones(1,5)),'matRad:Error');
-    assertExceptionThrown(@() assignmentTestHelper(model,'phaseProbability',-1*ones(model.numOfCtScen,1)),'matRad:Error');
+    assertExceptionThrown(@() assignmentTestHelper(model,'ctScenProb','a'),'matRad:Error');
+    assertExceptionThrown(@() assignmentTestHelper(model,'ctScenProb',ones(1,5)),'matRad:Error');
+    assertExceptionThrown(@() assignmentTestHelper(model,'ctScenProb',-1*ones(model.numOfCtScen,1)),'matRad:Error');
 
 function instanceTest_TYPE(model)
     %assertWarning(@() model.TYPE,'matRad:Deprecated');
