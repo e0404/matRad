@@ -185,15 +185,15 @@ classdef (Abstract) matRad_ScenarioModel < handle
             %Returns linear index in the scenario cell array from scenario
             %subscript indices
             if ~isvector(this.scenMask)
-                scenIx = sub2ind(size(this.scenMask),ctScen,shiftScen,rangeShiftScen);
+                scenIx = sub2ind(size(this.scenMask),this.ctScenIx(ctScen),shiftScen,rangeShiftScen);
             else
-                scenIx = ctScen;
+                scenIx = this.ctScenIx(ctScen);
             end
         end
 
-        function scenNum = scenNum(this,scenIx)
-            %gets number of scneario from linear scenario index
-            scenNum = find(find(this.scenMask) == scenIx);
+        function scenNum = scenNum(this,fullScenIx)
+            %gets number of scneario from full scenario index in scenMask
+            scenNum = find(find(this.scenMask) == fullScenIx);
         end
         
         %% Deprecated functions / properties
