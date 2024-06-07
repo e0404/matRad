@@ -265,6 +265,7 @@ classdef matRad_ViewingWidget < matRad_Widget
         function set.SelectedDisplayOption(this,value)
             this.SelectedDisplayOption=value;
             this.updateValues();
+            this.updateIsoDoseLineCache();
             this.UpdatePlot();
         end
         
@@ -1276,7 +1277,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                     this.OffsetSliderStep = vRange/ct.resolution.y;
                 end
                 this.OffsetSliderStep=[1/this.OffsetSliderStep 1/this.OffsetSliderStep];
-                
+
                 this.lockUpdate=lockState;
             end
         end

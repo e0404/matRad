@@ -95,6 +95,8 @@ classdef matRad_RandomScenarios < matRad_ScenarioModel
         
         function scenarios = updateScenarios(this)
             matRad_cfg = MatRad_Config.instance();
+
+            this.numOfCtScen = size(this.ctScenProb,1);
             
             %Multivariate Normal Sampling
             Sigma = diag([this.shiftSD,this.rangeAbsSD,this.rangeRelSD./100].^2);
@@ -117,10 +119,10 @@ classdef matRad_RandomScenarios < matRad_ScenarioModel
             end
 
             %Handle 4D phases
-            phases = repmat(1:this.numOfCtScen,size(scenarios,1),1);
+            phases = repmat(this.ctScenProb(:,1)',size(scenarios,1),1);
             phases = phases(:);
             scenarios = horzcat(phases, repmat(scenarios,[this.numOfCtScen 1]));
-            this.ctScen = phases;
+            this.ctScenIx = phases;
             
             %Scenario Probability from pdf
             this.scenForProb = scenarios;
@@ -129,7 +131,7 @@ classdef matRad_RandomScenarios < matRad_ScenarioModel
             tmpScenProb = (2*pi)^(-d/2) * exp(-0.5*sum((scenarios(:,2:end)/cs).^2, 2)) / prod(diag(cs));
             
             %Now we combine with the 4D ct phase probabilities (multiply)
-            tmpPhaseProb = arrayfun(@(phase) this.phaseProbability(phase),phases);
+            tmpPhaseProb = arrayfun(@(phase) this.ctScenProb(find(this.ctScenProb(:,1) == phase),2),phases);
             
             %Finalize Probability
             this.scenProb = tmpPhaseProb .* tmpScenProb;
@@ -139,13 +141,13 @@ classdef matRad_RandomScenarios < matRad_ScenarioModel
             for sCt = 1:this.numOfCtScen
                 %equal weights within a phase since they have been randomly sampled 
                 %(not entirely true if the Nominal scenario was forced) 
-                this.scenWeight = [this.scenWeight; this.phaseProbability(sCt) * ones(this.nSamples,1)./this.nSamples];
+                this.scenWeight = [this.scenWeight; this.ctScenProb(sCt,2) * ones(this.nSamples,1)./this.nSamples];
             end
 
             %set variables
             this.totNumShiftScen = this.nSamples;
             this.totNumRangeScen = this.nSamples;
-            this.totNumScen = this.nSamples; %check because of CT scenarios
+            this.totNumScen = this.nSamples * this.numOfCtScen; %check because of CT scenarios
             %this.totNumCtScen = 
             %this.numOfShiftScen = [nSamples,nSamples,nSamples];
             %this.numOfRangeShiftScen = nSamples;
@@ -159,10 +161,11 @@ classdef matRad_RandomScenarios < matRad_ScenarioModel
             this.maxRelRangeShift = max(this.relRangeShift);
 
             %Mask for scenario selection
-            this.scenMask = false(this.numOfCtScen,this.totNumShiftScen,this.totNumRangeScen);
+            this.scenMask = false(this.numOfAvailableCtScen,this.totNumShiftScen,this.totNumRangeScen);
 
             for sCt = 1:this.numOfCtScen
-                this.scenMask(sCt,:,:) = diag(true(this.nSamples,1));
+                scenIx = this.ctScenProb(sCt,1);
+                this.scenMask(scenIx,:,:) = diag(true(this.nSamples,1));
             end
             
 
