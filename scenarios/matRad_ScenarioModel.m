@@ -32,7 +32,7 @@ classdef (Abstract) matRad_ScenarioModel < handle
         shiftSD     = [2.25 2.25 2.25];   % given in [mm]
         wcSigma     = 1;                  % Multiplier to compute the worst case / maximum shifts
 
-        phaseProbability = 1;             % Probability of being in a phase of a 4D CT (vector with probability value for each phase)       
+        ctScenProb  = [1 1];              % Ct Scenarios to be included in the model. Left column: Scenario Index. Right column: Scenario Probability        
     end
 
     properties (Abstract,SetAccess=protected)
@@ -44,14 +44,15 @@ classdef (Abstract) matRad_ScenarioModel < handle
     end
    
     properties (SetAccess = protected)
-        numOfCtScen;           % total number of CT scenarios used
-        
+        numOfCtScen;            % total number of CT scenarios used
+        numOfAvailableCtScen;   % total number of CT scenarios existing in ct structure
+        ctScenIx;               % map of all ct scenario indices per scenario
+
 
         % these parameters will be filled according to the choosen scenario type
         isoShift;
         relRangeShift;
         absRangeShift;
-        ctScen;
 
         maxAbsRangeShift;
         maxRelRangeShift;
@@ -71,13 +72,15 @@ classdef (Abstract) matRad_ScenarioModel < handle
         function this = matRad_ScenarioModel(ct)
             if nargin == 0 || isempty(ct)
                 this.numOfCtScen = 1;
+                this.numOfAvailableCtScen = 1;
             else
                 this.numOfCtScen = ct.numOfCtScen;
+                this.numOfAvailableCtScen = ct.numOfCtScen;
             end
 
-            this.phaseProbability = ones(this.numOfCtScen,1)./this.numOfCtScen; %Equal probability to be in each phase of the 4D ct
+            this.ctScenProb = [(1:this.numOfCtScen)', ones(this.numOfCtScen,1)./this.numOfCtScen]; %Equal probability to be in each phase of the 4D ct
             
-            %TODO: We could do this here automatically in the constructur, but
+            %TODO: We could do this here automatically in the constructor, but
             %Octave 5 has a bug here and throws an error
             %this.updateScenarios();
         end
@@ -133,13 +136,13 @@ classdef (Abstract) matRad_ScenarioModel < handle
             this.updateScenarios();
         end
 
-        function set.phaseProbability(this,phaseProbability)
-            valid = isnumeric(phaseProbability) && iscolumn(phaseProbability) && all(phaseProbability <= 1) && all(phaseProbability >= 0);
+        function set.ctScenProb(this,ctScenProb)
+            valid = isnumeric(ctScenProb) && ismatrix(ctScenProb) && size(ctScenProb,2) == 2 && all(round(ctScenProb(:,1)) == ctScenProb(:,1)) && all(ctScenProb(:) >= 0);
             if ~valid
                 matRad_cfg = MatRad_Config.instance();
-                matRad_cfg.dispError('Invalid value for phaseProbability! Needs to be a valid column vector of probabilities [0,1]!');
-            end
-            this.phaseProbability = phaseProbability;
+                matRad_cfg.dispError('Invalid value for used ctScenProb! Needs to be a valid 2-column matrix with left column representing the scenario index and right column representing the appropriate probabilities [0,1]!');
+            end            
+            this.ctScenProb = ctScenProb;
             this.updateScenarios();
         end
 
@@ -159,7 +162,7 @@ classdef (Abstract) matRad_ScenarioModel < handle
             
             %First set properties that force an update
             newInstance.numOfCtScen         = 1;            
-            newInstance.phaseProbability    = this.phaseProbability(ctScenNum);
+            newInstance.ctScenProb          = this.ctScenProb(ctScenNum,:);
 
             %Now overwrite existing variables for correct probabilties and
             %error realizations
@@ -169,8 +172,12 @@ classdef (Abstract) matRad_ScenarioModel < handle
             newInstance.isoShift            = this.scenForProb(scenNum,2:4);
             newInstance.scenProb            = this.scenProb(scenNum);
             newInstance.scenWeight          = this.scenWeight(scenNum);
+            newInstance.maxAbsRangeShift    = max(abs(this.absRangeShift(scenNum)));
+            newInstance.maxRelRangeShift    = max(abs(this.relRangeShift(scenNum)));
+            newInstance.scenMask            = false(this.numOfAvailableCtScen,1,1);
+            newInstance.linearMask          = [newInstance.ctScenIx 1 1];
             
-            
+            newInstance.scenMask(newInstance.linearMask(:,1),newInstance.linearMask(:,2),newInstance.linearMask(:,3)) = true;
             %newInstance.updateScenarios();
         end
         
