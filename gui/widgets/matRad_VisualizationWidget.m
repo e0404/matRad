@@ -25,8 +25,8 @@ classdef matRad_VisualizationWidget < matRad_Widget
     end
     
     methods
-        function this = matRad_VisualizationWidget(viewingWidgetHandle,handleParent)
-            if nargin < 2
+        function this = matRad_VisualizationWidget(handleParent)
+            if nargin < 1
                 matRad_cfg = MatRad_Config.instance();
                 handleParent = figure(...
                     'Units','characters',...
@@ -46,24 +46,21 @@ classdef matRad_VisualizationWidget < matRad_Widget
             
             handles=this.handles;
             
-            if nargin>=1
-                this.viewingWidgetHandle=viewingWidgetHandle;
-            else
-                set(handles.btnDVH,'Enable','off');
-                set(handles.popupDisplayOption,'Enable','off');
-                set(handles.popupProfileType,'Enable','off');
-                set(handles.popupTypeOfPlot,'Enable','off');
-                set(handles.popupPlane,'Enable','off');
-                set(handles.radiobtnCT,'Enable','off');
-                set(handles.radiobtnContour,'Enable','off');
-                set(handles.radiobtnDose,'Enable','off');
-                set(handles.radiobtnIsoDoseLines,'Enable','off');
-                set(handles.sliderSlice,'Enable','off');
-                set(handles.radiobtnIsoDoseLinesLabels,'Enable','off');
-                set(handles.radioBtnIsoCenter,'Enable','off');
-                set(handles.radiobtnPlan,'Enable','off');
-                set(handles.btn3Dview,'Enable','off');
-            end
+            set(handles.btnDVH,'Enable','off');
+            set(handles.popupDisplayOption,'Enable','off');
+            set(handles.popupProfileType,'Enable','off');
+            set(handles.popupTypeOfPlot,'Enable','off');
+            set(handles.popupPlane,'Enable','off');
+            set(handles.radiobtnCT,'Enable','off');
+            set(handles.radiobtnContour,'Enable','off');
+            set(handles.radiobtnDose,'Enable','off');
+            set(handles.radiobtnIsoDoseLines,'Enable','off');
+            set(handles.sliderSlice,'Enable','off');
+            set(handles.radiobtnIsoDoseLinesLabels,'Enable','off');
+            set(handles.radioBtnIsoCenter,'Enable','off');
+            set(handles.radiobtnPlan,'Enable','off');
+            set(handles.btn3Dview,'Enable','off');
+
             this.handles = handles;
         end
         
@@ -805,7 +802,8 @@ classdef matRad_VisualizationWidget < matRad_Widget
          
         % 52 Callback
         function btnDVH_Callback(this, hObject, event)
-            this.dvhStatWidgetHandle = matRad_DVHStatsWidget(this.viewingWidgetHandle.SelectedDisplayOption); % pass fieldname in resultGUI
+            this.dvhStatWidgetHandle = matRad_DVHStatsWidget(); % pass fieldname in resultGUI
+            this.dvhStatWidgetHandle.selectedDisplayOption = this.viewingWidgetHandle.SelectedDisplayOption;
         end
         
         %H55 Callback

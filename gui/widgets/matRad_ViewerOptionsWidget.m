@@ -19,15 +19,15 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     properties
-        viewingWidgetHandle;
+        viewingWidgetHandle = [];
         colormapLocked = false;
         windowPresets;
     end
     
     methods
-        function this = matRad_ViewerOptionsWidget(viewingWidgetHandle,handleParent)
+        function this = matRad_ViewerOptionsWidget(handleParent)
             matRad_cfg = MatRad_Config.instance();
-            if nargin < 2
+            if nargin < 1
                 handleParent = figure(...
                     'Units','characters',...
                     'Position',[170 15 30 30],...
@@ -65,12 +65,8 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             set(handles.popupmenu_windowPreset,'Value',1);
             
             this.handles=handles;
-            if nargin>=1
-                this.viewingWidgetHandle=viewingWidgetHandle;
-                UpdateColormapOptions(this);
-            else
-                UpdateButtonState(this,'off');
-            end
+            
+            UpdateButtonState(this,'off');
         end
         
         function this = initialize(this)            

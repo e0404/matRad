@@ -21,17 +21,16 @@ classdef matRad_DVHStatsWidget < matRad_Widget
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties
         selectedDisplayOption;
-        lockUpdate = false;
         dvhWidgetHandle = [];
         statWidgetHandle = [];
     end
 
     methods
-        function this = matRad_DVHStatsWidget(selectedDisplayOption,handleParent)  
+        function this = matRad_DVHStatsWidget(handleParent)  
 
             
             matRad_cfg = MatRad_Config.instance();
-            if nargin < 2 
+            if nargin < 1
 
                 handleParent = figure(...
                     'Units','normalized',...
@@ -49,18 +48,12 @@ classdef matRad_DVHStatsWidget < matRad_Widget
                 
             end
             this = this@matRad_Widget(handleParent);
-            this.selectedDisplayOption = selectedDisplayOption;
-            this.dvhWidgetHandle.selectedCube = selectedDisplayOption;
-            this.statWidgetHandle.selectedCube = selectedDisplayOption;
-            this.lockUpdate = true;
-            this.dvhWidgetHandle.lockUpdate = true;
-            this.statWidgetHandle.lockUpdate = true;
             this.update();
 
         end        
         
         function set.selectedDisplayOption(this,value)
-            this.selectedDisplayOption = value;
+            this.selectedDisplayOption = value;  
             this.update();
 
         end
@@ -100,14 +93,14 @@ classdef matRad_DVHStatsWidget < matRad_Widget
                 'Title','Statistics');
             
             %Initiate DVH and Stats Widgets
-            this.dvhWidgetHandle = matRad_DVHWidget([],p1);
-            this.statWidgetHandle = matRad_StatisticsWidget([],p2);
+            this.dvhWidgetHandle = matRad_DVHWidget(p1);
+            this.statWidgetHandle = matRad_StatisticsWidget(p2);
             this.createHandles();
             
         end
 
         function this=doUpdate(this,evt)
-            if this.lockUpdate
+            if ~this.updateLock && ~isempty(this.selectedDisplayOption)
                 if nargin == 2
                     doUpdate = this.checkUpdateNecessary({'resultGUI','cst','pln'},evt);
 

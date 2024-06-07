@@ -18,16 +18,16 @@ classdef matRad_DVHWidget < matRad_Widget
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties
-        selectedCube;
+        selectedCube = [];
         lockUpdate = false;
 
     end
       
     methods
-        function this = matRad_DVHWidget( SelectedCube,handleParent) 
+        function this = matRad_DVHWidget(handleParent) 
            
             matRad_cfg = MatRad_Config.instance();
-            if nargin<2 
+            if nargin < 1 
                 handleParent = figure(...
                     'Units','normalized',...
                     'Position',[0.005 0.5 0.495 0.45],...
@@ -43,9 +43,7 @@ classdef matRad_DVHWidget < matRad_Widget
                     'PaperSize',[20.99999864 29.69999902]);
                            
             end
-            this = this@matRad_Widget(handleParent);
-            this.selectedCube = SelectedCube;
-
+            this = this@matRad_Widget(handleParent);             
         end
         
         function this=initialize(this)
@@ -67,19 +65,19 @@ classdef matRad_DVHWidget < matRad_Widget
         end
 
         function this = doUpdate(this,evt)
-            if this.lockUpdate
-            doUpdate = true;
+            if ~this.lockUpdate && ~isempty(this.selectedCube)
+                doUpdate = true;
                 if nargin == 2
                     doUpdate = this.checkUpdateNecessary({'resultGUI','cst','pln'},evt);
                 end
-            
+
                 if doUpdate && evalin('base','exist(''resultGUI'')') && evalin('base','exist(''cst'')')
                     this.showDVH();
                     if numel(this.widgetHandle.Children) > 2
                         this.removeOverlap();
                     end
                 end
-             end
+            end
         end
     end
     
@@ -87,10 +85,13 @@ classdef matRad_DVHWidget < matRad_Widget
 
         function set.selectedCube(this,value)
             this.selectedCube=value;
+            this.update();
         end
 
         function showDVH(this)
-
+            if isempty(this.selectedCube)
+                return;
+            end
             resultGUI = evalin('base','resultGUI');
             pln = evalin('base','pln');
             cst = evalin('base','cst');

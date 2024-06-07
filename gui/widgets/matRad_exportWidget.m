@@ -34,19 +34,22 @@ classdef matRad_exportWidget < matRad_Widget
                     'PaperUnits','inches',...
                     'Position', [450 170 440 500],...
                     'Color',matRad_cfg.gui.backgroundColor,...
-                    'Name','Export Patient');
+                    'Name','Export Patient',...
+                    'Tag','figure1');
             end
             this = this@matRad_Widget(handleParent);
         end
-        
-        function this = update(this,evt)
+    end
+    
+    methods (Access = protected)
+        function this = doUpdate(this,evt)
             
-            doUpdate = true;
+            updateNeeded = true;
             if nargin == 2
-                doUpdate = this.checkUpdateNecessary({'resultGUI','ct','cst'},evt);
+                updateNeeded = this.checkUpdateNecessary({'resultGUI','ct','cst'},evt);
             end
             
-            if ~doUpdate
+            if ~updateNeeded
                 return;
             end
             
@@ -89,11 +92,7 @@ classdef matRad_exportWidget < matRad_Widget
             
             % Update handles structure
             this.handles = handles;
-        end
-    end
-    
-    
-    methods (Access = protected)
+        end    
         
         function this = createLayout(this)
             

@@ -212,7 +212,7 @@ classdef matRad_Widget <  handle
             fNames = fieldnames(this.handles);
             for i = 1:numel(fNames)
                 h = this.handles.(fNames{i});
-                if ishandle(h)
+                if isscalar(h) && isgraphics(h)
                     delete(h);
                 end
             end
