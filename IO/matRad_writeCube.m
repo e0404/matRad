@@ -35,17 +35,19 @@ function [saved_metadata] = matRad_writeCube(filepath,cube,datatype,metadata)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+
 %% Sanity checks
 [filedir,filename,ext] = fileparts(filepath);
 if ~exist(filedir,'dir')
-    error(['Directory ' filedir ' does not exist!']);
+    matRad_cfg.dispError('Directory %s does not exist!', filedir);
 end
 
 %No Special characters in filename (allow only _ and alphanumeric
 %characters
 robustFileName = filename(isstrprop(filename,'alphanum') | filename == '_');
 if ~strcmp(robustFileName,filename)
-    warning(['Changing filename from ''' filename ''' to ''' robustFileName ''' to get rid of special characters!']);
+    matRad_cfg.dispWarning('Changing filename from ''%s'' to ''%s'' to get rid of special characters!',filename,robustFileName);
     filepath = fullfile(filedir,[robustFileName ext]);
 end
 
@@ -60,6 +62,16 @@ end
 if ~isfield(metadata,'coordinateSystem')
     metadata.coordinateSystem = 'LPS';  %Matlab coordinate system
 end
+
+% Ensure resolution is given
+if ~isfield(metadata,'resolution')
+    matRad_cfg.dispError('metadata.resolution is required!');
+end
+
+if isstruct(metadata.resolution) && all(isfield(metadata.resolution,{'x','y','z'}))
+    metadata.resolution = [metadata.resolution.x metadata.resolution.y metadata.resolution.z];
+end
+
 %If there is no image origin set, center the image
 imageExtent = metadata.resolution .* size(cube);
 if ~isfield(metadata,'imageOrigin')
@@ -75,18 +87,18 @@ metadata.datatype = datatype;
     
 %% Choose writer
 %So far we only have an nrrd writer
-switch ext
-    case '.nrrd'
-        matRad_writeNRRD(filepath,cube,metadata);
-    case '.vtk'
-        matRad_writeVTK(filepath,cube,metadata);
-    case '.mha'
-        matRad_writeMHA(filepath,cube,metadata);
-    otherwise
-        errordlg(['No writer found for extension "' ext '"']);
+[~,writers] = matRad_supportedBinaryFormats();
+
+writerIx = find(~cellfun(@isempty,strfind({writers.fileFilter},ext)));
+
+if ~isempty(writerIx) && isscalar(writerIx)
+    writerHandle = writers(writerIx).handle; 
+    writerHandle(filepath,cube,metadata);
+else
+    matRad_cfg.dispError('No unique writer found for extension "%s"',ext);
 end
 
-fprintf('File written to %s...\n',filepath);
+matRad_cfg.dispInfo('File written to %s...\n',filepath);
 saved_metadata = metadata;
 
 

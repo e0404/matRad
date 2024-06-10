@@ -22,20 +22,31 @@ function [cube, metadata] = matRad_readCube(filename)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%Instantiate matrad config
+matRad_cfg = MatRad_Config.instance();
+
 if ~exist(filename,'file')
     error(['File ' filename ' does not exist!']);
 end
 
 [pathstr,name,ext] = fileparts(filename);
-
-switch ext
-    case {'.nrrd','.NRRD'}
-        disp(['Reading NRRD: ' filename '...']);
-        [cube, metadata] = matRad_readNRRD(filename);
-        disp('Done!');
-    otherwise
-        error(['Extension ' ext ' not (yet) supported!']);
+if strcmp(ext,'.gz')
+    [~,name,subext] = fileparts(name);
+    ext = strcat(subext,ext);
 end
+
+[readers] = matRad_supportedBinaryFormats();
+
+readerIx = find(~cellfun(@isempty,strfind({readers.fileFilter},lower(ext))));
+if ~isempty(readerIx) && isscalar(readerIx)
+    readerHandle = readers(readerIx).handle;
+    matRad_cfg.dispInfo('Reading %s: "%s" ...',readers(readerIx).name,filename);
+    [cube,metadata] = readerHandle(filename);
+    matRad_cfg.dispInfo('Done!\n');
+else
+    matRad_cfg.dispError('Extension %s not (yet) supported!',ext);
+end
+
 metadata.name = name;
 metadata.path = pathstr;
 

@@ -640,7 +640,8 @@ classdef MatRad_Config < handle
                 obj = MatRad_Config();
                 % Use a metaclass object to get the properties because
                 % Octave <= 5.2 doesn't have a properties function
-                props = {metaclass(obj).PropertyList.Name};
+                meta = metaclass(obj);
+                props = {meta.PropertyList.Name};
                 % Throw warning if the version differs and remove the
                 % matRad_version field from the loaded struct, in order to
                 % not overwrite the version later
