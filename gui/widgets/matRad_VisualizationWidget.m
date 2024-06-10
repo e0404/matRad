@@ -20,8 +20,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties
         viewingWidgetHandle;
-         dvhStatWidgetHandle;
-
+        dvhStatWidgetHandle;
     end
     
     methods
@@ -594,7 +593,9 @@ classdef matRad_VisualizationWidget < matRad_Widget
             else
                 set(handles.popupProfileType,'Value',1);
             end
-            
+
+            set(handles.popupTypeOfPlot,'Enable','on');
+
             set(handles.popupTypeOfPlot,'Value',this.viewingWidgetHandle.typeOfPlot);
             set(handles.popupPlane,'Value',this.viewingWidgetHandle.plane);
             set(handles.radiobtnContour,'Value',this.viewingWidgetHandle.plotContour);
@@ -630,49 +631,60 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 % disable 3D and DVH button
                 set(handles.btn3Dview,'Enable','off');
                 set(handles.btnDVH,'Enable','off');
+                set(handles.radiobtnDose,'Enable','off');
+                set(handles.radiobtnIsoDoseLines,'Enable','off');
+                set(handles.radiobtnIsoDoseLinesLabels,'Enable','off');
             else
                 set(handles.btn3Dview,'Enable','on');
                 
                 if evalin('base','exist(''resultGUI'')')
                     set(handles.btnDVH,'Enable','on');
-                else
-                    set(handles.btnDVH,'Enable','off');
-                end
-                
-                 %% enable and diasble buttons according to type of plot
-                % intensity plot
-                if this.viewingWidgetHandle.typeOfPlot == 1
-                    
-                    set(handles.sliderBeamSelection,'Enable','off')
-                    set(handles.sliderOffset,'Enable','off')
-                    set(handles.popupDisplayOption,'Enable','on')
-                    set(handles.popupProfileType,'Enable','off');
-                    set(handles.popupPlane,'Enable','on');
-                    set(handles.radiobtnCT,'Enable','on');
-                    set(handles.radiobtnContour,'Enable','on');
                     set(handles.radiobtnDose,'Enable','on');
                     set(handles.radiobtnIsoDoseLines,'Enable','on');
                     set(handles.radiobtnIsoDoseLinesLabels,'Enable','on');
-                    set(handles.sliderSlice,'Enable','on');
-                    set(handles.btnRecenter, 'Enable','on');
-
-                    % profile plot
-                elseif this.viewingWidgetHandle.typeOfPlot == 2
-                    
-                    set(handles.popupDisplayOption,'Enable','on');
-                    set(handles.popupProfileType,'Enable','on');
-                    set(handles.popupPlane,'Enable','off');
-                    set(handles.radiobtnCT,'Enable','off');
-                    set(handles.radiobtnContour,'Enable','off');
+                else
+                    set(handles.btnDVH,'Enable','off');
                     set(handles.radiobtnDose,'Enable','off');
                     set(handles.radiobtnIsoDoseLines,'Enable','off');
-                    set(handles.sliderSlice,'Enable','off');
                     set(handles.radiobtnIsoDoseLinesLabels,'Enable','off');
-                    set(handles.popupProfileType,'Enable','on');
-                    set(handles.btnRecenter, 'Enable','off');
                 end
-                
             end
+                
+            %% enable and diasble buttons according to type of plot
+            % intensity plot
+            if this.viewingWidgetHandle.typeOfPlot == 1
+
+                set(handles.sliderBeamSelection,'Enable','off');
+                set(handles.sliderOffset,'Enable','off');
+                set(handles.popupDisplayOption,'Enable','on');
+                set(handles.popupProfileType,'Enable','off');
+                set(handles.popupPlane,'Enable','on');
+                set(handles.radiobtnCT,'Enable','on');
+                set(handles.radiobtnContour,'Enable','on');
+                set(handles.sliderSlice,'Enable','on');
+                set(handles.btnRecenter, 'Enable','on');
+                set(handles.radioBtnIsoCenter,'Enable','on');
+                set(handles.radiobtnPlan,'Enable','on');
+
+                % profile plot
+            elseif this.viewingWidgetHandle.typeOfPlot == 2
+
+                set(handles.popupDisplayOption,'Enable','on');
+                set(handles.popupProfileType,'Enable','on');
+                set(handles.popupPlane,'Enable','off');
+                set(handles.radiobtnCT,'Enable','off');
+                set(handles.radiobtnContour,'Enable','off');
+                set(handles.radiobtnDose,'Enable','off');
+                set(handles.radiobtnIsoDoseLines,'Enable','off');
+                set(handles.sliderSlice,'Enable','off');
+                set(handles.radiobtnIsoDoseLinesLabels,'Enable','off');
+                set(handles.popupProfileType,'Enable','on');
+                set(handles.btnRecenter, 'Enable','off');
+                set(handles.radioBtnIsoCenter,'Enable','off');
+                set(handles.radiobtnPlan,'Enable','off');
+            end
+
+
             this.handles = handles;
         end        
         

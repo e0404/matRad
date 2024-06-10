@@ -72,8 +72,10 @@ classdef matRad_3DWidget < matRad_ViewingWidget
         function this=doUpdate(this,~)
             if this.lockUpdate
                 if ~isempty(this.viewingWidgetHandle) && isvalid(this.viewingWidgetHandle)
+                    matRad_cfg = MatRad_Config.instance();
                     this.lockUpdate=false;
-                    p = properties(this.viewingWidgetHandle);
+                    p = octaveCompat_getProps(this.viewingWidgetHandle);
+                    
                     % copy all the properties of the viewingwidget except for the widgethandle
                     for k = 1:length(p)
                         if ~strcmp(p{k},'widgetHandle') && ~strcmp(p{k},'handles') && ~strcmp(p{k},'lockUpdate')
@@ -203,4 +205,10 @@ classdef matRad_3DWidget < matRad_ViewingWidget
            end
         
     end
+end
+
+%Helper function as Octave 6's parser can not parse properties function in
+%class
+function p = octaveCompat_getProps(obj)
+    p = properties(obj);
 end
