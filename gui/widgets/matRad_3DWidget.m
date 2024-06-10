@@ -71,7 +71,7 @@ classdef matRad_3DWidget < matRad_ViewingWidget
 
         function this=doUpdate(this,~)
             if this.lockUpdate
-                if ~isempty(this.viewingWidgetHandle) && isvalid(this.viewingWidgetHandle)
+                if ~isempty(this.viewingWidgetHandle) && ishandle(this.viewingWidgetHandle)
                     matRad_cfg = MatRad_Config.instance();
                     this.lockUpdate=false;
                     p = octaveCompat_getProps(this.viewingWidgetHandle);
@@ -210,5 +210,9 @@ end
 %Helper function as Octave 6's parser can not parse properties function in
 %class
 function p = octaveCompat_getProps(obj)
-    p = properties(obj);
+    try
+        p = properties(obj);
+    catch ME
+        p = [];
+    end
 end

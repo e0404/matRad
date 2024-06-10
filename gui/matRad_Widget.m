@@ -71,7 +71,7 @@ classdef matRad_Widget <  handle
         end
         
         %INITIALIZE FUNCTION
-        function this = initialize(this)
+        function initialize(this)
             this.update();
         end
         
