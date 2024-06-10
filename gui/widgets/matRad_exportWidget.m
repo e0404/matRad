@@ -93,7 +93,7 @@ classdef matRad_exportWidget < matRad_Widget
             % Update handles structure
             this.handles = handles;
         end    
-        
+
         function this = createLayout(this)
             
             h1 = this.widgetHandle;
@@ -231,11 +231,13 @@ classdef matRad_exportWidget < matRad_Widget
                 'Position',[0.035 0.225 0.7 0.05],...
                 'Tag','text_extension');
             
+            [~,writers] = matRad_supportedBinaryFormats();
+
             % DROPDOWN MENU
             h10 = uicontrol(...
                 'Parent',h1,...
                 'Units','normalized',...
-                'String',{  '*.nrrd'; '*.vtk'; '*.mha' },...
+                'String',{writers.fileFilter},...
                 'TooltipString', 'File format',...
                 'Style','popupmenu',...
                 'Value',1,...
@@ -296,7 +298,6 @@ classdef matRad_exportWidget < matRad_Widget
             
             this.createHandles();
         end
-        
     end
     
     
@@ -371,7 +372,7 @@ classdef matRad_exportWidget < matRad_Widget
                 end
                 
                 %This is only for the waitbar to get the number of cubes you wanna save
-                numExportCubes = 0;error
+                numExportCubes = 0;
                 if (saveCT)
                     if isfield(ct,'cubeHU')
                         numExportCubes = numExportCubes + 1;
@@ -441,7 +442,7 @@ classdef matRad_exportWidget < matRad_Widget
                     
                 end
             catch ME
-                this.showWarning('couldn''t export! Reason: %s\n',ME.message)
+                this.showWarning('couldn''t export! Reason:', ME)
             end
             %Results Export
             if saveResults
@@ -498,8 +499,15 @@ classdef matRad_exportWidget < matRad_Widget
         %-------------CALLBACK FOR H7 PUSHBUTTON DIR EXPORT BROWSE
         function this = pushbutton_dir_export_browse_Callback(this, hObject, event)
             handles = this.handles;
-            
-            exportDir = uigetdir('', 'Choose the export directory...');
+
+            path = get(handles.edit_dir_export,'String');
+
+            if ~exist(path,'dir')
+                matRad_cfg = MatRad_Config.instance();
+                path = matRad_cfg.matRadRoot;
+            end
+                        
+            exportDir = uigetdir(path, 'Choose the export directory...');
             if exportDir ~= 0
                 exportDir = [exportDir filesep];
                 set(handles.edit_dir_export,'String',exportDir);

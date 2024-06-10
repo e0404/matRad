@@ -130,7 +130,7 @@ if ~isempty(sizeFieldIx)
     if numel(sizes{1}) ~= metadata.dimension || ~all(sizes{1} > 0) 
         matRad_cfg.dispError('Incorrect size definition!');
     end
-    metadata.cubeDim = sizes{1}';
+    metadata.cubeDim = double(sizes{1}');
 else
     matRad_cfg.dispError('Could not find required "dimension" field!');
 end

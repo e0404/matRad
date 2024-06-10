@@ -1,4 +1,4 @@
-function matRad_writeMHA(filepath,cube,metadata)
+function matRad_writeMHD(filepath,cube,metadata)
 % matRad function to write mha files
 % 
 % call
@@ -38,42 +38,21 @@ matRad_cfg = MatRad_Config.instance();
 %Sanity checks and restrictions
 dimensions = size(cube);
 if numel(dimensions) ~= 3
-    matRad_cfg.dispError('Sorry! matRad only supports 3-dimensional MHA output');
+    matRad_cfg.dispError('Sorry! matRad only supports 3-dimensional MHD output');
 end
 
 fid = fopen(filepath, 'wb');
 if fid <= 0
-    matRad_cfg.dispError('Could not open MHA destination file!');
+    matRad_cfg.dispError('Could not open MHD destination file!');
 end
-%cleaner = onCleanup(@() fclose(fid));
 
 %We perform the permutation
 if isfield(metadata,'axisPermutation')
     cube = permute(cube,metadata.axisPermutation);
 end
-
-%Set up Transform Matrix
-T=zeros(4);
-ixOnes = sub2ind([4 4],metadata.axisPermutation,[1 2 3]);
-T(ixOnes) = 1;
-T(4,4) = 1;
-
-%Correct for coordinate system
-switch metadata.coordinateSystem
-    case 'LPS'
-        %tmpT = eye(4,4);
-        %tmpT(1:2,1:2) = 1*tmpT(1:2,1:2);
-        %T = T*tmpT;
-    otherwise
-        matRad_cfg.dispError('Only LPS currently supported for export!');
-end
-
-%Now add Translation
 %The transformation matrix is now the unit matrix
-%transformMatrix = diag(ones(1,numel(dimensions)));
-%tmString = sprintf(' %d',transformMatrix(:));
-
-tmString = sprintf(' %d',T(1:3,1:3));
+transformMatrix = diag(ones(1,numel(dimensions)));
+tmString = sprintf(' %d',transformMatrix(:));
 
 %Determine the endian
 [~,~,endian] = computer;
@@ -86,6 +65,9 @@ switch endian
         error('Unknown endian!');
 end
 
+[path,name,ext] = fileparts(filepath);
+filenameRaw = [name '.raw'];
+
 fprintf(fid, 'ObjectType = Image\n');
 fprintf(fid, 'NDims = %d\n',numel(dimensions));
 fprintf(fid, 'BinaryData = True\n');
@@ -97,9 +79,13 @@ fprintf(fid, 'AnatomicalOrientation = RAI\n'); %Did not double check this line
 fprintf(fid, 'ElementSpacing = %f %f %f\n',metadata.resolution(1),metadata.resolution(2),metadata.resolution(3));
 fprintf(fid, 'DimSize = %d %d %d\n',dimensions(1),dimensions(2),dimensions(3));
 fprintf(fid, 'ElementType = %s\n',matlabTypeToMHAtype(metadata.datatype));
-fprintf(fid, 'ElementDataFile = LOCAL\n');
-fwrite(fid,cube,metadata.datatype,lower(endian));
+fprintf(fid, sprintf('ElementDataFile = %s\n',filenameRaw));
 fclose(fid);
+
+%% write data file
+dataFileHandle = fopen(fullfile(path,filenameRaw),'w');
+fwrite(dataFileHandle,cube(:),metadata.datatype,lower(endian));
+fclose(dataFileHandle);
 
 end
 
@@ -127,7 +113,7 @@ switch datatype
         newType = 'MET_ULONG';
     otherwise
         matRad_cfg = MatRad_Config.instance();
-        matRad_cfg.dispError(['Datatype ' datatype ' not supported by MHA exporter!']);
+        matRad_cfg.dispError(['Datatype ' datatype ' not supported by MHD exporter!']);
 end
 end
 
