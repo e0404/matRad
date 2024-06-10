@@ -47,7 +47,7 @@ if withCoverage
         '-with_coverage','-cover','.','-cover_xml_file','coverage.xml','-cover_json_file','coverage.json',...
         '-cover_exclude','submodules','-cover_exclude','examples','-cover_method','profile');
 else
-    result = moxunit_runtests(folder,'-recursive');
+    result = moxunit_runtests(folder,'-recursive','-junit_xml_file','testresults.xml');
 end
 
 
