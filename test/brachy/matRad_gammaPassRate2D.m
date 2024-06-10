@@ -59,8 +59,15 @@ for rmIndex = usedIndices
     
     Gamma = sqrt(((grids.x-rm(1)).^2 + (grids.y-rm(2)).^2 +...
         (grids.z-rm(3)).^2)/d^2 + (doseMes(rmIndex) - doseCalc).^2/D^2); 
-              
-    gamma = min(reshape(Gamma(:)));
+    
+    if exist('OCTAVE_VERSION', 'builtin') == 5
+        % Octave environment
+        gamma = min(Gamma(:));
+    else
+        % MATLAB environment
+        gamma = min(Gamma,[],'all');
+        
+    end          
     
     gammaValues(rmIndex) = gamma;
     
