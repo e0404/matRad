@@ -166,9 +166,16 @@ pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
 
 
 
-% the standard interior point optimizer IPOPT can be used
-pln.propOpt.optimizer       = 'IPOPT';
-
+% We can also use other solver for optimization than IPOPT. matRad 
+% currently supports simulannealbnd from the MATLAB Global Optimization Toolbox. First we
+% check if the simulannealbnd-Solver is available, and if it is, we set in in the
+% pln.propOpt.optimizer varirable. Otherwise we set to the default
+% optimizer 'IPOPT'
+if matRad_OptimizerSimulannealbnd.IsAvailable()
+    pln.propOpt.optimizer = 'simulannealbnd';   
+else
+    pln.propOpt.optimizer = 'IPOPT';
+end
 %% II.1 - book keeping
 % Some field names have to be kept although they don't have a direct
 % relevance for brachy therapy.

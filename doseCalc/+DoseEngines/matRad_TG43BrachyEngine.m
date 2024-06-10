@@ -53,6 +53,7 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             matRad_cfg = MatRad_Config.instance(); 
             
             this.DistanceCutoff = 130;
+            
             this.doseGrid.resolution.x = 5;
             this.doseGrid.resolution.y = 5;
             this.doseGrid.resolution.z = 5;
@@ -430,7 +431,7 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             if  machine.data.lambda < 0
                 matRad_cfg.dispError('negative doseRate')
             end
-            if min(r_mm,[],'all') < 0
+            if min(r_mm(:)) < 0
                 matRad_cfg.dispError('r contatins negative distances')
             end
             if ~isfield(machine.data,'SourceStrengthImplanted')
@@ -526,7 +527,7 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             if ~isfield(machine.data,'AnisotropyFunctionValue')
                 matRad_cfg.dispError('machine is missing field "AnisotropyFunctionValue"')
             end
-            if min(r_mm,[],'all') < 0
+            if min(r_mm(:)) < 0
                 matRad_cfg.dispError('r contatins negative distances')
             end
             if ~isfield(machine.data,'ActiveSourceLength')
