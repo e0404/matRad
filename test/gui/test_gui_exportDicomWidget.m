@@ -46,11 +46,12 @@ function test_exportDicomWidget_constructWithData
     try
         assertTrue(isa(h, 'matRad_exportDicomWidget'));
         assertTrue(isa(h, 'matRad_Widget'));
-        delete(h);
     catch ME
         evalin('base','clear ct cst pln');
+        delete(h);
         rethrow(ME);
     end
+    delete(h);
     evalin('base','clear ct cst pln');
 
 %TODO: Test Buttons / visibility depending on data
