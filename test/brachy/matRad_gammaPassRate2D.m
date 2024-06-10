@@ -60,7 +60,7 @@ for rmIndex = usedIndices
     Gamma = sqrt(((grids.x-rm(1)).^2 + (grids.y-rm(2)).^2 +...
         (grids.z-rm(3)).^2)/d^2 + (doseMes(rmIndex) - doseCalc).^2/D^2); 
               
-    gamma = min(Gamma,[],'all');
+    gamma = min(Gamma,(:));
     
     gammaValues(rmIndex) = gamma;
     
