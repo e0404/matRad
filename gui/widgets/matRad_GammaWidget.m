@@ -22,7 +22,7 @@ classdef matRad_GammaWidget < matRad_Widget
     properties
         SelectedDisplayOption1 = 'physicalDose' ;
         SelectedDisplayOption2 = 'physicalDose' ;
-        SelectedDisplayAllOptions = strings;
+        SelectedDisplayAllOptions = {};
         criteria = [3 3];
         n = 0;
         localglobal = 'global';
@@ -71,12 +71,12 @@ classdef matRad_GammaWidget < matRad_Widget
                 j = 1;
                 for i = 1:numel(resultnames)
                     if ndims(resultGUI.(resultnames{i}))==3
-                        this.SelectedDisplayAllOptions(j) = resultnames{i};
+                        this.SelectedDisplayAllOptions{j} = resultnames{i};
                         j=j+1;
                     end
                 end
                 % get and set display options
-                this.SelectedDisplayAllOptions = pad(this.SelectedDisplayAllOptions);
+                %this.SelectedDisplayAllOptions = pad(this.SelectedDisplayAllOptions);
                 set(this.handles.popupSelectedDisplayOption1,'String',this.SelectedDisplayAllOptions);
                 set(this.handles.popupSelectedDisplayOption2,'String',this.SelectedDisplayAllOptions);
                 this.maxSlice = size(resultGUI.physicalDose,3);
@@ -395,14 +395,14 @@ classdef matRad_GammaWidget < matRad_Widget
                 resultGUI = evalin('base','resultGUI');
                 resultnames = fieldnames(resultGUI) ;
                 j = 1;
+                this.SelectedDisplayAllOptions = {};
                 for i = 1:numel(resultnames)
                     if ndims(resultGUI.(resultnames{i}))==3
-                        this.SelectedDisplayAllOptions(j) = resultnames{i};
+                        this.SelectedDisplayAllOptions{j} = resultnames{i};
                         j=j+1;
                     end
                 end
                 % get and set display options
-                this.SelectedDisplayAllOptions = pad(this.SelectedDisplayAllOptions);
                 set(this.handles.popupSelectedDisplayOption1,'String',this.SelectedDisplayAllOptions);
                 set(this.handles.popupSelectedDisplayOption2,'String',this.SelectedDisplayAllOptions);
 
