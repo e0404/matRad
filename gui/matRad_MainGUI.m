@@ -227,8 +227,10 @@ classdef matRad_MainGUI < handle
             obj.OptimizationWidget = matRad_OptimizationWidget(pOptimization);
             obj.ViewingWidget = matRad_ViewingWidget(pViewing);
             obj.ViewingWidget.scrollHandle =  obj.guiHandle;            
-            obj.VisualizationWidget = matRad_VisualizationWidget(obj.ViewingWidget,pVisualization);        
-            obj.ViewerOptionsWidget = matRad_ViewerOptionsWidget(obj.ViewingWidget,pViewerOptions);
+            obj.VisualizationWidget = matRad_VisualizationWidget(pVisualization);  
+            obj.VisualizationWidget.viewingWidgetHandle = obj.ViewingWidget;
+            obj.ViewerOptionsWidget = matRad_ViewerOptionsWidget(pViewerOptions);
+            obj.ViewerOptionsWidget.viewingWidgetHandle = obj.ViewingWidget;
             obj.StructureVisibilityWidget = matRad_StructureVisibilityWidget(pStructureVisibility);           
             obj.InfoWidget = matRad_InfoWidget(pInfo); % does not need a listener
             obj.LogoWidget = matRad_LogoWidget(pLogo); % does not need a listener

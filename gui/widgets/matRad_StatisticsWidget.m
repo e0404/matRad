@@ -19,9 +19,7 @@ classdef matRad_StatisticsWidget < matRad_Widget
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties
-        selectedCube;
-        lockUpdate = false;
-
+        selectedCube = [];
     end
     
     events
@@ -30,10 +28,10 @@ classdef matRad_StatisticsWidget < matRad_Widget
     
     methods
 
-        function this = matRad_StatisticsWidget(SelectedCube,handleParent)    % use (varargin) ?
+        function this = matRad_StatisticsWidget(handleParent)    % use (varargin) ?
              
              matRad_cfg = MatRad_Config.instance();
-             if nargin < 2 
+             if nargin < 1 
 
                 handleParent = figure(...
                     'Units','normalized',...
@@ -52,7 +50,6 @@ classdef matRad_StatisticsWidget < matRad_Widget
                 
               end
               this = this@matRad_Widget(handleParent);
-              this.selectedCube = SelectedCube;
         end       
     end
     
@@ -64,7 +61,7 @@ classdef matRad_StatisticsWidget < matRad_Widget
         end
 
         function this=doUpdate(this)
-            if this.lockUpdate
+            if ~this.updateLock && ~isempty(this.selectedCube)
                 doUpdate = true;
                 if nargin == 2
                     doUpdate = this.checkUpdateNecessary({'resultGUI','cst','pln'},evt);
@@ -86,24 +83,27 @@ classdef matRad_StatisticsWidget < matRad_Widget
             this.selectedCube=value;
         end
          function showStatistics(this)
-            
-            resultGUI = evalin('base','resultGUI');
-            pln = evalin('base','pln');
-            cst = evalin('base','cst');
-            doseCube = resultGUI.(this.selectedCube);
-            
-            if ~exist('refVol', 'var')
-                refVol = [];
-            end
-            
-            if ~exist('refGy', 'var')
-                refGy = [];
-            end
-            
-            qi  = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol);
-            ixVoi = cellfun(@(c) c.Visible == 1,cst(:,5));
-            qi = qi(ixVoi);
-            matRad_showQualityIndicators(this.widgetHandle,qi);
+             if isempty(this.selectedCube)
+                 return;
+             end
+
+             resultGUI = evalin('base','resultGUI');
+             pln = evalin('base','pln');
+             cst = evalin('base','cst');
+             doseCube = resultGUI.(this.selectedCube);
+
+             if ~exist('refVol', 'var')
+                 refVol = [];
+             end
+
+             if ~exist('refGy', 'var')
+                 refGy = [];
+             end
+
+             qi  = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol);
+             ixVoi = cellfun(@(c) c.Visible == 1,cst(:,5));
+             qi = qi(ixVoi);
+             matRad_showQualityIndicators(this.widgetHandle,qi);
 
          end
         

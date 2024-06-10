@@ -43,7 +43,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 set(handleParent,'Units','normalized')
                 pos = get(handleParent,'Position');
                 pos(1:2) = [0.5 0.5] - pos(3:4)./2;
-                set(handleParent,'Position');
+                set(handleParent,'Position',pos);
                 
             end
             this = this@matRad_Widget(handleParent);
