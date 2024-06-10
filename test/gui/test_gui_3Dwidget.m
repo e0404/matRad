@@ -1,4 +1,4 @@
-function test_suite = test_matRad_3DWidget
+function test_suite = test_gui_3Dwidget
 %The output should always be test_suite, and the function name the same as
 %your file name
 
