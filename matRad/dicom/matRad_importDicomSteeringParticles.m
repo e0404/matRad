@@ -47,7 +47,7 @@ dlgBaseDataText = ['Import steering information from DICOM Plan.','Choose corres
 if ~ispc
     uiwait(helpdlg(dlgBaseDataText,['DICOM import - ', pln.radiationMode, ' base data' ]));
 end
-[fileName,pathName] = uigetfile([matRad_cfg.matRadRoot filesep 'basedata' filesep '*.mat'], dlgBaseDataText);
+[fileName,pathName] = uigetfile([matRad_cfg.matRadSrcRoot filesep 'basedata' filesep '*.mat'], dlgBaseDataText);
 load([pathName filesep fileName]);
 
 ix = find(fileName == '_');

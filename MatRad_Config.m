@@ -415,6 +415,10 @@ classdef MatRad_Config < handle
             oldFolders = obj.userfolders;
             %We do this to verify folders
             allNewFolders = cellfun(@dir, userfolders,'UniformOutput',false);
+            if isempty(allNewFolders)
+                obj.dispWarning('No user folders specified. Defaulting to userdata folder in matRad root directory.');
+                allNewFolders = {[fileparts(mfilename('fullpath')) filesep 'userdata' filesep]}; %We don't access obj.matRadRoot here because of Matlab's weird behavior with properties
+            end
             cleanedNewFolders = cellfun(@(x) x.folder,allNewFolders,'UniformOutput',false);
             
             % Identify newly added folder paths

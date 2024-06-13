@@ -504,7 +504,7 @@ classdef matRad_exportWidget < matRad_Widget
 
             if ~exist(path,'dir')
                 matRad_cfg = MatRad_Config.instance();
-                path = matRad_cfg.matRadRoot;
+                path = matRad_cfg.userfolders{1};
             end
                         
             exportDir = uigetdir(path, 'Choose the export directory...');

@@ -39,7 +39,9 @@ else
     matRad_cfg.dispError('No radiation mode given in pln');
 end
 
-folders = [{[matRad_cfg.matRadRoot filesep 'basedata' filesep]} matRad_cfg.userfolders(:)'];
+userfolders = cellfun(@(uf) strcat(uf,filesep,'machines',filesep),matRad_cfg.userfolders,'UniformOutput',false);
+
+folders = [{[matRad_cfg.matRadSrcRoot filesep 'basedata' filesep]} userfolders(:)'];
 
 foundData = cellfun(@(folder) exist(fullfile(folder, [fileName '.mat']), 'file'), folders);
 foundIx = find(foundData, 1, 'first');

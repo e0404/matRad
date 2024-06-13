@@ -793,7 +793,7 @@ classdef matRad_PlanWidget < matRad_Widget
             set(handles.popupRadMode,'Value',modIx);
             
             getMachines(this);
-            modIy = find(strcmp(pln.machine,this.Machines{modIx})); 
+            modIy = find(strcmp(pln.machine,this.Machines(this.Modalities{modIx}))); 
             set(handles.popUpMachine,'Value',modIy); 
 
             availableEngines = DoseEngines.matRad_DoseEngineBase.getAvailableEngines(pln);
@@ -1366,37 +1366,20 @@ classdef matRad_PlanWidget < matRad_Widget
 
         % load Machine File
         function getMachines(this)
-            matRad_cfg = MatRad_Config.instance();
+            %matRad_cfg = MatRad_Config.instance();
             %seach for availabes machines
             handles = this.handles;
-            this.Machines=cell(size(this.Modalities));
-            %Loop over all modalities to find machine per modalitiy
-            for i = 1:length(this.Modalities)
-                pattern = [this.Modalities{1,i} '_*'];
-                if isdeployed
-                    baseroot = [ctfroot filesep 'matRad'];
-                else
-                    baseroot = matRad_cfg.matRadRoot; 
-                end
-                Files = dir([baseroot filesep 'basedata' filesep pattern]);
-                
-                for j = 1:length(Files)
-                    if ~isempty(Files)
-                        MachineName = Files(j).name(numel(this.Modalities{1,i})+2:end-4);
-                        this.Machines{i}{j} = MachineName;
-                    end
-                end
-            end
+            this.Machines = matRad_getAvailableMachines(this.Modalities);
             
             selectedRadMod = get(handles.popupRadMode,'Value');
-            nMachines = numel(this.Machines{selectedRadMod});
+            nMachines = numel(this.Machines(this.Modalities{selectedRadMod}));
             selectedMachine = get(handles.popUpMachine,'Value');
             
             if get(handles.popUpMachine,'Value') > nMachines
                 selectedMachine = 1;
             end            
             
-            set(handles.popUpMachine,'Value',selectedMachine,'String',this.Machines{selectedRadMod});
+            set(handles.popUpMachine,'Value',selectedMachine,'String',this.Machines(this.Modalities{selectedRadMod}));
             this.handles = handles;
         end
         
@@ -1426,14 +1409,9 @@ classdef matRad_PlanWidget < matRad_Widget
             contents = cellstr(get(handles.popupRadMode,'String'));
             radMod = contents{get(handles.popupRadMode,'Value')};
             
-            if isdeployed
-                baseroot = [ctfroot filesep 'matRad'];
-            else
-                baseroot = [matRad_cfg.matRadRoot];
-            end
-            FoundFile = dir([baseroot filesep 'basedata' filesep  radMod '_' Machine '.mat']);
+            FoundFile = ismember(Machine,this.Machines(radMod));
             
-            if isempty(FoundFile)
+            if ~FoundFile
                 this.showWarning(['No base data available for machine: ' Machine '. Selecting default machine.']);
                 flag = false;
               %  set(handles.popUpMachine,'Value',1);

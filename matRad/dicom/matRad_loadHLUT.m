@@ -30,12 +30,10 @@ function hlut = matRad_loadHLUT(ct, radiationMode)
 
 matRad_cfg = MatRad_Config.instance();
   
-% directory with look up table files
-if ~isdeployed
-    hlutDir = fullfile(fileparts(mfilename('fullpath')),'hlutLibrary',filesep);
-else
-    hlutDir = [];
-end
+% directories with look up table files
+hlutDefaultDir = [matRad_cfg.matRadSrcRoot filesep 'hluts' filesep];
+hlutUserDirs = cellfun(@(uf) strcat(uf,filesep,'hluts',filesep),matRad_cfg.userfolders,'UniformOutput',false);
+hlutDirs = [hlutDefaultDir hlutUserDirs(:)'];
 
 %Old version - takes radiation mode from pln
 if isstruct(radiationMode) && isfield(radiationMode,'radiationMode')
@@ -67,10 +65,14 @@ try
     hlutFileCell{3} = regexprep(hlutFileName,' ','_');
     
     % add pathname
-    hlutFileCell = strcat(hlutDir,hlutFileCell);
+    existIx = [];
+    for i = 1:numel(hlutDirs)
+        hlutDir = hlutDirs{i};
+        hlutFileCell = strcat(hlutDir,hlutFileCell);
 
-    % check if files exist
-    existIx = cellfun(@(x) exist(x,'file') == 2,hlutFileCell);
+        % check if files exist
+        existIx = [existIx cellfun(@(x) exist(x,'file') == 2,hlutFileCell)];
+    end       
     
     if sum(existIx) == 0
         produce an error to enter catch statment below :)
@@ -86,8 +88,7 @@ catch
     matRad_cfg.dispWarning(warnText);
     
     % load default HLUT
-    hlutFileName = strcat(hlutDir,'matRad_default.hlut');
-
+    hlutFileName = strcat(hlutDefaultDir,'matRad_default.hlut');
 end
 
 hlut = matRad_readHLUT(hlutFileName);

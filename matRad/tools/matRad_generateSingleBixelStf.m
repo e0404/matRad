@@ -47,11 +47,12 @@ end
 % prepare structures necessary for particles
 fileName = [pln.radiationMode '_' pln.machine '.mat'];
 try
-   load([matRad_cfg.matRadRoot filesep 'basedata' filesep fileName]);
-   SAD = machine.meta.SAD;
+   machine = matRad_loadMachine(pln);
 catch
    matRad_cfg.dispError('Could not find the following machine file: %s',fileName); 
 end
+
+SAD = machine.meta.SAD;
 
 if strcmp(pln.radiationMode,'protons') || strcmp(pln.radiationMode,'carbon') || strcmp(pln.radiationMode,'helium')
       

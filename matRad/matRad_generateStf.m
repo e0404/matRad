@@ -72,7 +72,7 @@ end
 % prepare structures necessary for particles
 fileName = [pln.radiationMode '_' pln.machine];
 try
-   load([matRad_cfg.matRadRoot filesep 'basedata' filesep fileName]);
+   machine = matRad_loadMachine(pln);
    SAD = machine.meta.SAD;
 catch
    matRad_cfg.dispError('Could not find the following machine file: %s',fileName); 

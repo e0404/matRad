@@ -36,7 +36,7 @@ matRad_cfg = MatRad_Config.instance();
 p = inputParser;
 p.addRequired('multScen',@(x) isa(x,'matRad_multScen'));
 p.addParameter('SelectStructures',cell(0),@iscellstr);
-p.addParameter('OutputPath',mfilename('fullpath'),@isfolder);
+p.addParameter('OutputPath',matRad_cfg.userfolder{1},@isfolder);
 p.addParameter('PatientMatFile','',@isfile);
 p.addParameter('ListOfQI',{'mean', 'std', 'max', 'min', 'D_2', 'D_5', 'D_50', 'D_95', 'D_98'},@iscellstr);
 p.addParameter('OperatorName','matRad User',@(x) isstring(x) || ischar(x));
@@ -110,12 +110,11 @@ save(filename, '-v7.3');
 [structureStat, doseStat, meta] = matRad_samplingAnalysis(ct,cst,pln,caSampRes,mSampDose,resultGUInomScen);
 
 %% generate report
-matRadPath = matRad_cfg.matRadRoot;
 reportPath = 'report';
    
 mkdir([outputPath filesep reportPath]);
     
-copyfile(fullfile(matRadPath,'tools','samplingAnalysis','main_template.tex'),fullfile(outputPath,reportPath,'main.tex'));
+copyfile(fullfile(matRad_cfg.matRadSrcRoot,'tools','samplingAnalysis','main_template.tex'),fullfile(outputPath,reportPath,'main.tex'));
     
 % generate actual latex report
 success = matRad_latexReport([outputPath filesep reportPath],ct, cst, pln, resultGUInomScen, structureStat, doseStat, mSampDose, listOfQI,...
