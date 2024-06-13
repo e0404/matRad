@@ -1,14 +1,12 @@
-function machine = matRad_loadMachine(pln,filepath)
-% matRad_loadMachine load a machine base data file from pln struct
+function machine = matRad_loadMachine(pln)
+% matRad_loadMachine load a machine base data file from pln struct. 
+%   Looks for the machine file from pln in the basedata folder and in the provided user folders.
 %
 % call
-%   machine = matRad_loadMachine(pln,filepath)
 %   machine = matRad_loadMachine(pln)
 %
 % input
-%   pln:            matRad plan meta information struct
-%   filepath:       (optional) filepath where to look for machine. default
-%                   is basedata in the matRad root folder 
+%   pln:            matRad plan meta information struct 
 %
 % output
 %   machine:        matRad machine struct
@@ -41,15 +39,22 @@ else
     matRad_cfg.dispError('No radiation mode given in pln');
 end
 
-if ~exist('filepath','var')
-    filepath = [matRad_cfg.matRadRoot filesep 'basedata' filesep fileName];
+folders = [{[matRad_cfg.matRadRoot filesep 'basedata' filesep]} matRad_cfg.userfolders(:)'];
+
+foundData = cellfun(@(folder) exist(fullfile(folder, [fileName '.mat']), 'file'), folders);
+foundIx = find(foundData, 1, 'first');
+
+if isempty(foundIx)
+    matRad_cfg.dispError('Could not find the following machine file: %s',fileName);
 end
+
+filepath = fullfile(folders{foundIx}, [fileName '.mat']);
 
 try
     m = load(filepath, 'machine');
     machine = m.machine; % strip first layer of loaded struct for convenience
 catch
-    matRad_cfg.dispError('Could not find the following machine file: %s\n',fileName);
+    matRad_cfg.dispError('Could not load the following machine file: %s',fileName);
 end
 end
 
