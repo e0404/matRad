@@ -419,19 +419,27 @@ classdef MatRad_Config < handle
                 obj.dispWarning('No user folders specified. Defaulting to userdata folder in matRad root directory.');
                 allNewFolders = {[fileparts(mfilename('fullpath')) filesep 'userdata' filesep]}; %We don't access obj.matRadRoot here because of Matlab's weird behavior with properties
             end
-            cleanedNewFolders = cellfun(@(x) x.folder,allNewFolders,'UniformOutput',false);
+
+            cleanedNewFolders = cellfun(@(x) x(1).folder,allNewFolders,'UniformOutput',false);
             
             % Identify newly added folder paths
-            addedFolders = setdiff(cleanedNewFolders, oldFolders);
+            if ~isempty(oldFolders) %if statement for octave compatibility
+                addedFolders = setdiff(cleanedNewFolders, oldFolders);
+            else
+                addedFolders = cleanedNewFolders;
+            end
+
             addedFolders = cellfun(@genpath,addedFolders,'UniformOutput',false);
             addedFolders = strjoin(addedFolders,pathsep);
             addpath(addedFolders);
 
             % Identify removed folder paths
-            removedFolders = setdiff(oldFolders, cleanedNewFolders);
-            removedFolders = cellfun(@genpath,removedFolders,'UniformOutput',false);
-            removedFolders = strjoin(removedFolders,pathsep);
-            rmpath(removedFolders);
+            if ~isempty(oldFolders) %if statement for octave compatibility
+                removedFolders = setdiff(oldFolders, cleanedNewFolders);
+                removedFolders = cellfun(@genpath,removedFolders,'UniformOutput',false);
+                removedFolders = strjoin(removedFolders,pathsep);
+                rmpath(removedFolders);
+            end
             
             obj.userfolders = cleanedNewFolders;
         end
