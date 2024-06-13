@@ -41,6 +41,9 @@ classdef MatRad_Config < handle
         eduMode = false;
         
         gui;
+
+        %User folders
+        userfolders; %Cell array of user folders containing machines, patients, hluts. Default contains the userdata folder in the matRad root directory
     end
 
     properties (SetAccess = private)
@@ -66,6 +69,7 @@ classdef MatRad_Config < handle
             
             %Set Path
             obj.matRadRoot = fileparts(mfilename('fullpath'));
+            obj.userfolders = {[obj.matRadRoot filesep 'userdata' filesep]};
             addpath(genpath(obj.matRadRoot));
 
             %Set Version
@@ -401,6 +405,27 @@ classdef MatRad_Config < handle
             else
                 obj.dispError('Invalid log level. Value must be between %d and %d',minLevel,maxLevel);
             end
+        end
+
+        function set.userfolders(obj,userfolders)
+            oldFolders = obj.userfolders;
+            %We do this to verify folders
+            allNewFolders = cellfun(@dir, userfolders,'UniformOutput',false);
+            cleanedNewFolders = cellfun(@(x) x.folder,allNewFolders,'UniformOutput',false);
+            
+            % Identify newly added folder paths
+            addedFolders = setdiff(cleanedNewFolders, oldFolders);
+            addedFolders = cellfun(@genpath,addedFolders,'UniformOutput',false);
+            addedFolders = strjoin(addedFolders,pathsep);
+            addpath(addedFolders);
+
+            % Identify removed folder paths
+            removedFolders = setdiff(oldFolders, cleanedNewFolders);
+            removedFolders = cellfun(@genpath,removedFolders,'UniformOutput',false);
+            removedFolders = strjoin(removedFolders,pathsep);
+            rmpath(removedFolders);
+            
+            obj.userfolders = cleanedNewFolders;
         end
 
         function set.writeLog(obj,writeLog)
