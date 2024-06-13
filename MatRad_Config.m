@@ -60,6 +60,10 @@ classdef MatRad_Config < handle
         matRadRoot; %Path to matRadRoot
     end
 
+    properties (SetAccess = private, Dependent)
+        matRadSrcRoot; %Path to matRadSrcRoot ("matRad" subfolder of matRadRoot)
+    end
+
     methods (Access = private)
         function obj = MatRad_Config()
             %MatRad_Config Constructs an instance of this class.
@@ -426,6 +430,10 @@ classdef MatRad_Config < handle
             rmpath(removedFolders);
             
             obj.userfolders = cleanedNewFolders;
+        end
+
+        function srcRoot = get.matRadSrcRoot(obj)
+            srcRoot = [obj.matRadRoot filesep 'matRad' filesep];
         end
 
         function set.writeLog(obj,writeLog)
