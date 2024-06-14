@@ -174,8 +174,14 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
 
             % Default execution paths are set here
-            this.topasFolder = [matRad_cfg.matRadRoot filesep 'TOPAS'];
-            this.workingDir = [this.topasFolder filesep 'MCrun' filesep];
+            this.topasFolder = [matRad_cfg.matRadSrcRoot filesep 'doseCalc' filesep 'topas' filesep];
+            this.workingDir = [matRad_cfg.userfolders{1} filesep 'TOPAS' filesep];
+
+            if ~exist(this.workingDir,'dir')
+                mkdir(this.workingDir);
+                matRad_cfg.dispInfo('Created TOPAS working directory in userfolder %s\n',this.workingDir);
+            end
+            
 
             %Let's set some default commands taken from topas installation
             %instructions for mac & debain/ubuntu
@@ -417,7 +423,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             end
             % set nested folder structure if external calculation is turned on (this will put new simulations in subfolders)
             if this.externalCalculation
-                this.workingDir = [this.topasFolder filesep 'MCrun' filesep];
+                this.workingDir = [matRad_cfg.userfolders{1} filesep 'TOPAS' filesep];
                 this.workingDir = [this.workingDir stf(1).radiationMode,'_',stf(1).machine,'_',datestr(now, 'dd-mm-yy')];
             end
 
