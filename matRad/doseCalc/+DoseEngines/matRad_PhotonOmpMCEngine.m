@@ -66,7 +66,7 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             this = this@DoseEngines.matRad_MonteCarloEngineAbstract(pln);
 
             matRad_cfg = MatRad_Config.instance();
-            this.omcFolder = [matRad_cfg.matRadRoot filesep 'ompMC'];
+            this.omcFolder = [matRad_cfg.matRadRoot filesep 'thirdParty' filesep 'ompMC'];
 
             if ~matRad_checkMexFileExists('omc_matrad') %exist('matRad_ompInterface','file') ~= 3
                 matRad_cfg.dispWarning('Compiled mex interface not found. Trying to compile the ompMC interface on the fly!');
