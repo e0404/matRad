@@ -96,7 +96,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
             %Set Default MCsquare path
             %Set folder
-            this.MCsquareFolder = [matRad_cfg.matRadRoot filesep 'MCsquare' filesep 'bin'];
+            this.MCsquareFolder = [matRad_cfg.matRadRoot filesep 'thirdParty' filesep 'MCsquare' filesep 'bin'];
         end
     end
     
