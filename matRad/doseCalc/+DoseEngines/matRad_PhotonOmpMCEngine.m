@@ -535,7 +535,7 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             
             %Our destination usually lies in the ompMC thirdPartyFolder
             if nargin < 1
-                dest = [matRad_cfg.matRadRoot filesep 'ompMC'];
+                dest = [matRad_cfg.matRadRoot filesep 'thirdParty' filesep 'ompMC'];
             end
             
             %We can recompile form the submodules
