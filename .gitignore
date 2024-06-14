@@ -1,2 +1,4 @@
 thirdParty/MCsquare/bin/Materials/
 userdata/*
+testresults.xml
+coverage.xml
