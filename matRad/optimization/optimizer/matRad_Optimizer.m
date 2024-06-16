@@ -33,17 +33,17 @@ classdef (Abstract) matRad_Optimizer < handle
     %as Octave is able to do this, they should be made abstract again 
     methods %(Abstract)        
         function obj = optimize(obj,w0,optiProb,dij,cst)
-          error('Function needs to be implemented!');
+            throw(MException('MATLAB:class:AbstractMember','Abstract function optimize needs to be implemented!'));
         end
         
         function [msg,statusflag] = GetStatus(obj)
-          error('Function needs to be implemented!');
+            throw(MException('MATLAB:class:AbstractMember','Abstract function GetStatus needs to be implemented!'));
         end
     end
     
     methods (Static)
         function available = IsAvailable(obj)
-          error('Function needs to be implemented!');
+          throw(MException('MATLAB:class:AbstractMember','Abstract function IsAvailable needs to be implemented!'));
         end
     end
 end
