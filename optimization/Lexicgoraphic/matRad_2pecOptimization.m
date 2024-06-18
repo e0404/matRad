@@ -12,6 +12,11 @@ function [resultGUIs,resultGUIs2,cst1,cst2,PriorityList2]=  matRad_2pecOptimizat
     %   wInit:          (optional) custom weights to initialize problems
     %
     % output
+    %   resultGUIs:     Plans created in the first phase
+    %   resultGUIs2:    Plans created in teh second phase
+    %   cst1:           Modified cst after the first phase
+    %   cst2:           Modified cst as after the second phase
+    %   PriorityList2:  Final priority list for lexicographic optimization
     %
     % References
     %   https://iopscience.iop.org/article/10.1088/0031-9155/54/23/011

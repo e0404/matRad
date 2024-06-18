@@ -2,7 +2,7 @@ function cubes = matRad_calcFastCubes(w,dij,pln)
 % matRad computation of cube for plan optimization quantity
 %
 % call
-%   resultGUI = matRad_calcCubes(w,dij,pln
+%   resultGUI = matRad_calcFastCubes(w,dij,pln)
 %
 % input
 %   w:       bixel weight vector
@@ -17,7 +17,7 @@ function cubes = matRad_calcFastCubes(w,dij,pln)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2024 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

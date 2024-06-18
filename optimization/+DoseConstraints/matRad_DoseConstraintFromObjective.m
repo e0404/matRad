@@ -20,12 +20,12 @@ classdef matRad_DoseConstraintFromObjective < DoseConstraints.matRad_DoseConstra
     properties (Constant)
         name = 'Objective Constraint';
         parameterTypes = {'objFunc'};
-        parameterNames = {'f^{max}'}    
+        parameterNames = {'f^{max}'};    
     end
 
     properties
         objective;
-        parameters = {1e-5}
+        parameters = {1e-5};
     end
     
     methods (Access = public)

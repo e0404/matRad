@@ -1,4 +1,4 @@
-function returnStruct = matRad_paretoOptimization(dij,cst,pln,nIter,wInit)
+function [resultGUI,returnStruct] = matRad_paretoOptimization(dij,cst,pln,nIter,wInit)
 % matRad inverse pareto planning wrapper function
 % 
 % call
@@ -310,7 +310,7 @@ end
 objcount = numel(optiProb.objectives);
 
 %% generaete Anchor Points for optimization
-penGrid = matRad_generateAnchorPoints(objcount);
+penGrid = matRad_generateParetoAnchorPoints(objcount);
 
 %initialize matrices for weight vectors and associated objective function values
 weights = zeros(numel(wInit),size(penGrid,1));
@@ -408,7 +408,7 @@ for i = 1:nIter
     %Rennen Algorithm
     fVals = fInd;
 
-    fValsMod = matRad_generateDummyPoints(fVals,U); %generate dummy points
+    fValsMod = matRad_generateParetoDummyPoints(fVals,U); %generate dummy points
     %
     [kmod,vol] = convhulln(fValsMod);
     %[kred,vol] = convhulln(fVals);
@@ -490,7 +490,7 @@ for i = 1:nIter
                 %how does the newly generated point influence the pareto
                 %surface?
     
-                dominatedPoints = matRad_paretoCheck(fInd,fIndv); 
+                dominatedPoints = matRad_paretoCheckPoint(fInd,fIndv); 
                 % if no point is dominated -> returns []
                 % if the newly generated point is not optimal -> Returns array with a 0 inside 
                 % if (a) previously generated point(s) is/are dominated by the
@@ -572,6 +572,15 @@ returnStruct.penGrid = penGrid;
 returnStruct.optiProb = optiProb;
 returnStruct.allObj = objectiveFunctionVals;
 returnStruct.modcst = cst;
+
+%calculate a single plan
+resultGUI = matRad_calcCubes(wOpt,dij);
+resultGUI.wUnsequenced = wOpt;
+resultGUI.usedOptimizer = optimizer;
+resultGUI.info = info;
+resultGUI.optiProb = optiProb;
+
+
 
 % unblock mex files
 clear mex

@@ -1,4 +1,4 @@
-function dominatedPoints = matRad_paretoCheck(fVals,newfVal)
+function dominatedPoints = matRad_paretoCheckPoint(fVals,newfVal)
 % matRad helper function that checks if a newly generated point dominates
 % another point or is dominated by a point in the previous sets. should
 % be called after calculating the first initial points 

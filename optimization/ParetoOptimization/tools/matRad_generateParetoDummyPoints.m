@@ -1,4 +1,4 @@
-function fValsMod = matRad_generateDummyPoints(fVals,U) 
+function fValsMod = matRad_generateParetoDummyPoints(fVals,U) 
     % matRad Function that generates Dummy Points for a set of points
     %
     % input

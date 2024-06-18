@@ -29,8 +29,12 @@ classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
         end 
     end
 
-    methods (Static,Abstract)
-        adaptGoalToFraction
+    %These should be abstract methods, however Octave can't parse them. As soon 
+    %as Octave is able to do this, they should be made abstract again 
+    methods %(Static,Abstract)
+        function newGoalValue = adaptGoalToFraction(goalValue,numOfFractions)
+            error('Function needs to be implemented');
+        end
     end
     
     %These should be abstract methods, however Octave can't parse them. As soon

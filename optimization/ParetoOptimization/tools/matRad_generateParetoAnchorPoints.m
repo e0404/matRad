@@ -1,4 +1,4 @@
-function penPoints= matRad_generateAnchorPoints(numObj)
+function penPoints= matRad_generateParetoAnchorPoints(numObj)
 % matRad function that generates the anchor points for pareto analysis
 % call
 %   penPoints = matRad_generateSphericalPenaltyGrid(numObj)

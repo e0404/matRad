@@ -1,4 +1,4 @@
-function v = matRad_navigationProblem(Y,yr,tau,j,b)
+function v = matRad_paretoSurfaceNavigation(Y,yr,tau,j,b)
     %matRad_navigation problem allows the exploration of plans that are not in the set
     %of precalculated plans. 
     %

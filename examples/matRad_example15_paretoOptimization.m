@@ -34,7 +34,7 @@ matRad_cfg = MatRad_Config.instance();
 %%
 load('TG119.mat');
 %%
-cst{1,6}{1} = struct(DoseObjectives.matRad_EUDMin(1000,0));
+cst{1,6}{1} = struct(DoseObjectives.matRad_EUD(1000,0));
 cst{3,6}{1} = struct(DoseObjectives.matRad_MeanDose(1000,0));
 %%
 %cst{2,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(45,55));
@@ -112,7 +112,10 @@ cst{3,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(0,45));
 cst{2,6}{2} = struct(DoseConstraints.matRad_MinMaxDose(45,57));
 
 %%
-retStruct = matRad_paretoOptimization(dij,cst,pln,30);
+[resultGUI,retStruct] = matRad_paretoOptimization(dij,cst,pln,3);
 
 %%
-%matRad_UIInterpolation(retStruct,dij,pln,ct,matRad_setOverlapPriorities(cst),retStruct.optiProb)
+matRadGUI
+%%
+matRadParetoGUI
+% matRad_UIInterpolation(retStruct,dij,pln,ct,matRad_setOverlapPriorities(cst),retStruct.optiProb)
