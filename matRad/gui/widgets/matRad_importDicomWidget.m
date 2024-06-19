@@ -227,7 +227,23 @@ classdef matRad_importDicomWidget < matRad_Widget
             
             % dicomMetaBool: store complete DICOM information and patientName or not
             dicomMetaBool = logical(get(handles.checkPatientName,'Value'));
-            matRad_importDicom(files, dicomMetaBool);
+            [ct, cst, pln, stf, resultGUI] = matRad_importDicom(files, dicomMetaBool);
+
+            %% save ct, cst, pln, dose
+            matRad_cfg = MatRad_Config.instance();
+            matRadFileName = fullfile(matRad_cfg.userfolders{1},[files.ct{1,3} '.mat']); % use default from dicom
+            [FileName,PathName] = uiputfile('*.mat','Save as...',matRadFileName);
+            if ischar(FileName)
+                variableNames = {'ct','cst','pln','stf','resultGUI'};
+
+                varsToSave = cellfun(@(v) ~isempty(evalin('caller',v)),variableNames);
+                
+                % delete unnecessary variables
+                
+                save([PathName, FileName],variableNames{varsToSave},'-v7');
+                % save all except FileName and PathName
+
+            end
             
             this.handles = handles;
         end

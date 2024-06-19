@@ -176,36 +176,3 @@ if ~isempty(stf) && ~isempty(resultGUI)
         resultGUI.w = [resultGUI.w; [stf(i).ray.weight]'];
     end
 end
-
-
-
-%% save ct, cst, pln, dose
-matRadFileName = [files.ct{1,3} '.mat']; % use default from dicom
-[FileName,PathName] = uiputfile('*','Save as...',matRadFileName);
-if ischar(FileName)
-    % delete unnecessary variables
-    if matRad_cfg.isMatlab
-        varNames=who;
-        for var=1:length(varNames)
-            cleanVar=eval([varNames{var}]);
-            if isempty(cleanVar)
-                eval(['clear ' varNames{var} ';'])
-            end
-        end
-        clearvars -except ct cst pln stf resultGUI FileName PathName;
-        save([PathName, FileName], '-regexp', '^(?!(FileName|PathName)$).','-v7');
-    elseif matRad_cfg.isOctave
-        varNames=who;
-        for var=1:length(varNames)
-            cleanVar=eval([varNames{var}]);
-            if isempty(cleanVar)
-                eval(['clear ' varNames{var} ';'])
-            end
-        end
-        clear -x ct cst pln stf resultGUI FileName PathName;
-        save([PathName, FileName],'-v6');
-    else
-    end
-    % save all except FileName and PathName
-    
-end
