@@ -58,7 +58,8 @@ classdef matRad_WorkflowWidget < matRad_Widget
         % H74 Callback
         function btnLoadMat_Callback(this, hObject, event)
             handles = this.handles;
-            [FileName, FilePath] = uigetfile('*.mat');
+            matRad_cfg = MatRad_Config.instance();
+            [FileName, FilePath] = uigetfile(fullfile(matRad_cfg.matRadSrcRoot,'phantoms','*.mat'));
             if FileName == 0 % user pressed cancel --> do nothing.
                 return;
             end
