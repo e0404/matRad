@@ -29,7 +29,7 @@ classdef matRad_PlanWidget < matRad_Widget
     end
     
     properties (Constant)
-        Modalities = {'photons','protons','carbon', 'helium','brachy'}; %-marios added brachy
+        Modalities = {'photons','protons','carbon', 'helium','brachy'}; 
     end
     
     methods
