@@ -93,6 +93,7 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             dosePoints.z = single(reshape(ZGrid,1,[]));
 
             matRad_cfg.dispInfo('\t computing distance transform... ');
+            startTime = tic;
 
             DistanceMatrix = matRad_getDistanceMatrix(seedPoints,dosePoints);
 
