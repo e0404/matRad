@@ -62,6 +62,7 @@ classdef MatRad_Config < handle
 
     properties (SetAccess = private, Dependent)
         matRadSrcRoot; %Path to matRadSrcRoot ("matRad" subfolder of matRadRoot)
+        primaryUserFolder;
     end
 
     methods (Access = private)
@@ -446,6 +447,10 @@ classdef MatRad_Config < handle
 
         function srcRoot = get.matRadSrcRoot(obj)
             srcRoot = [obj.matRadRoot filesep 'matRad' filesep];
+        end
+
+        function primaryUserFolder = get.primaryUserFolder(obj)
+            primaryUserFolder = obj.userfolders{1};
         end
 
         function set.writeLog(obj,writeLog)
