@@ -29,7 +29,6 @@ classdef matRad_ParetoSliceWidget < matRad_Widget
         end
         
         function this = initialize(this)
-            this.update();
         end
                 
         
@@ -46,10 +45,6 @@ classdef matRad_ParetoSliceWidget < matRad_Widget
             this.createHandles();
         end
         
-        function this = doUpdate(this,evt)
-            %getFromWorkspace(this);
-            %updateInWorkspace(this);
-        end
     end
     
 end

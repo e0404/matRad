@@ -1,6 +1,6 @@
-classdef matRad_SliderWidget < matRad_Widget
-    % matRad_OptimizationWidget class to generate GUI widget to set
-    % optimization options
+classdef matRad_ParetoSliderWidget < matRad_Widget
+    % matRad_ParetoSliderWidget class to generate GUI widget to move sliders for
+    % Pareto surface navigation
     %
     % References
     %   -
@@ -27,7 +27,7 @@ classdef matRad_SliderWidget < matRad_Widget
     end
     
     methods
-        function this = matRad_SliderWidget(handleParent,paretoSliceWidgetHandle)
+        function this = matRad_ParetoSliderWidget(handleParent,paretoSliceWidgetHandle)
 
             matRad_cfg = MatRad_Config.instance();
             this = this@matRad_Widget(handleParent);
@@ -35,12 +35,12 @@ classdef matRad_SliderWidget < matRad_Widget
             this.paretoSliceWidgetHandle = paretoSliceWidgetHandle;
             this.objectiveSliders = {};
             %TODO: Best way to pass objective function values?
-            fAll = evalin('base','retStruct.finds');
-            wAll = evalin('base','retStruct.weights');
-            this.optiProb = evalin('base','retStruct.optiProb');
-            this.helperObject = matRad_ParetoData(fAll,wAll);
+            %fAll = evalin('base','retStruct.finds');
+            %wAll = evalin('base','retStruct.weights');
+            %this.optiProb = evalin('base','retStruct.optiProb');
+            %this.helperObject = matRad_ParetoData(fAll,wAll);
             this.initialize();
-            %this.plotSlice(this.helperObject.currentWeights);
+            this.plotSlice(evalin('base','ParetoHelperObject.currentWeights'));
         end
                               
     end
@@ -64,8 +64,8 @@ classdef matRad_SliderWidget < matRad_Widget
         end
 
         function this = doUpdate(this,evt)
-            
             doUpdate = true;
+
             if nargin == 2
                 %At pln changes and at cst/cst (for Isocenter and new settings) 
                 %we need to update
@@ -87,7 +87,7 @@ classdef matRad_SliderWidget < matRad_Widget
         
         function cst = generateSliderTable(this,cst)
             matRad_cfg = MatRad_Config.instance();
-            
+            ParetoHelperObject = evalin('base','ParetoHelperObject');
             %cst = updateStructureTable(this,cst);
             handles = this.handles;
             SliderPanel = this.widgetHandle;
@@ -268,7 +268,8 @@ classdef matRad_SliderWidget < matRad_Widget
                                 'FontName',matRad_cfg.gui.fontName,...
                                 'FontWeight',matRad_cfg.gui.fontWeight, ...
                                 'Callback',@(hObject,eventdata)ObjectiveSlider_callback(this,hObject,eventdata,cnt));
-                            this.objectiveSliders{cnt}.Value = this.helperObject.currentPoint(cnt);
+                            
+                            this.objectiveSliders{cnt}.Value = ParetoHelperObject.currentPoint(cnt);
                 
                             tmp_pos = get(this.objectiveSliders{cnt},'Position');
                             xPos = xPos + tmp_pos(3) + fieldSep;
@@ -390,22 +391,23 @@ classdef matRad_SliderWidget < matRad_Widget
 
         function ObjectiveSlider_callback(this,slider,~,idx)
             % 
-            v = matRad_navigationProblem(this.helperObject.allPoints',this.helperObject.currentPoint,slider.Value,idx,this.helperObject.availableUpbound);
+            ParetoHelperObject = evalin('base','ParetoHelperObject');
+            v = matRad_paretoSurfaceNavigation(ParetoHelperObject.allPoints',ParetoHelperObject.currentPoint,slider.Value,idx,ParetoHelperObject.availableUpbound);
             
             if numel(v) == 0
             %navigation algorithm didnt find a new point
                 for i = 1:numel(this.objectiveSliders)
-                    set(this.objectiveSliders{i},'Value',this.helperObject.currentPoint(i));
+                    set(this.objectiveSliders{i},'Value',ParetoHelperObject.currentPoint(i));
                 end
             else
-                wNew = this.helperObject.allWeights*v;
+                wNew = ParetoHelperObject.allWeights*v;
 
-                fNew = this.helperObject.allPoints'*v;% evaluate function(strictly necessary?)
+                fNew = ParetoHelperObject.allPoints'*v;% evaluate function(strictly necessary?)
                 %fNew = this.optiProb.normalizeObjectives(fNew');
                 
 
-                this.helperObject.currentPoint = fNew;
-                this.helperObject.currentWeights = wNew;
+                ParetoHelperObject.currentPoint = fNew;
+                ParetoHelperObject.currentWeights = wNew;
                 
                 %Open: Current
                 for i = 1:numel(this.objectiveSliders)
@@ -424,8 +426,9 @@ classdef matRad_SliderWidget < matRad_Widget
         end
 
         function FixButton_callback(this,~,~,idx)
-
-            [lb,ub] = this.helperObject.restrictObjective(idx,this.objectiveSliders{idx}.Value); %update refObjects bounds
+            
+            ParetoHelperObject = evalin('base','ParetoHelperObject');
+            [lb,ub] = ParetoHelperObject.restrictObjective(idx,this.objectiveSliders{idx}.Value); %update refObjects bounds
             
     
             for i = 1:numel(this.objectiveSliders)

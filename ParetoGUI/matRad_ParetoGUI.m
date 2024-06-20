@@ -1,6 +1,6 @@
 classdef matRad_ParetoGUI < handle
-% matRad_MainGUI   Graphical User Interface configuration class   
-% This Class is used to create the main GUI interface where all the widgets
+% matRad_ParetoGUI Pareto navigation Graphical User Interface configuration class   
+% This Class is used to create the Pareto GUI interface where all the widgets
 % are called and created.
 %
 %
@@ -24,9 +24,9 @@ classdef matRad_ParetoGUI < handle
     properties (Access = private)
         LogoWidget
         ParetoSliceWidget
-        SliderWidget
-        DVHWidget
-        ButtonWidget
+        ParetoSliderWidget
+        ParetoDVHWidget
+        ParetoNavigationButtonWidget
     end
 
     methods
@@ -103,12 +103,18 @@ classdef matRad_ParetoGUI < handle
                 'FontWeight',matRad_cfg.gui.fontWeight);
         
 
-        
-        this.ParetoSliceWidget = matRad_ParetoSliceWidget(pParetoSlice);
-        this.SliderWidget = matRad_SliderWidget(pSliderWidget,this.ParetoSliceWidget);
-        this.DVHWidget = matRad_ParetoDVHWidget(pParetoDVHWidget);
-        this.ButtonWidget = matRad_ButtonWidget(pButtonWidget,this.SliderWidget,this.DVHWidget);
+        fAll = evalin('base','retStruct.finds');
+        wAll = evalin('base','retStruct.weights');
+        assignin('base','ParetoHelperObject',matRad_ParetoData(fAll,wAll))
+        %this.optiProb = evalin('base','retStruct.optiProb');
+        %this.helperObject = matRad_ParetoData(fAll,wAll);
 
+
+
+        this.ParetoSliceWidget = matRad_ParetoSliceWidget(pParetoSlice);
+        this.ParetoSliderWidget = matRad_ParetoSliderWidget(pSliderWidget,this.ParetoSliceWidget);
+        this.ParetoDVHWidget = matRad_ParetoDVHWidget(pParetoDVHWidget);
+        this.ParetoNavigationButtonWidget = matRad_ParetoNavigationButtonWidget(pButtonWidget,this.ParetoSliderWidget,this.ParetoDVHWidget);
         end
         
         function figure1_CloseRequestFcn(this,hObject, ~)

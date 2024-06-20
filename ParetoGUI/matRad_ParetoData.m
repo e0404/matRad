@@ -1,5 +1,5 @@
 classdef matRad_ParetoData < handle
-    % matRad_UIData implements a class that allows easy storing of
+    % matRad_ParetoData implements a class that allows easy storing of
     % variables related to the pareto Navigation
     %
     % References
