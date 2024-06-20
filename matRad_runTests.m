@@ -21,7 +21,9 @@ function result = matRad_runTests(folder,withCoverage)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-matRad_cfg = MatRad_Config.instance();
+back = cd(fileparts(mfilename("fullpath")));
+matRad_cfg = matRad_rc;
+
 matRad_cfg.dispInfo('Setting default properties for testing and starting test suite!\n');
 matRad_cfg.setDefaultPropertiesForTesting();
 matRad_cfg.logLevel = 1;
@@ -39,8 +41,8 @@ if nargin < 1
     folder = 'test';
 end
 
-
-back = cd(matRad_cfg.matRadRoot);
+%add test folder to path
+addpath(genpath(folder));
 
 if withCoverage
     result = moxunit_runtests(folder,'-recursive','-junit_xml_file','testresults.xml',...
