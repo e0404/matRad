@@ -24,10 +24,6 @@ function result = matRad_runTests(folder,withCoverage)
 back = cd(fileparts(mfilename("fullpath")));
 matRad_cfg = matRad_rc;
 
-matRad_cfg.dispInfo('Setting default properties for testing and starting test suite!\n');
-matRad_cfg.setDefaultPropertiesForTesting();
-matRad_cfg.logLevel = 1;
-
 if nargin < 2
     withCoverage = false;
 end
@@ -36,6 +32,33 @@ if withCoverage && matRad_cfg.isOctave
     matRad_cfg.dispWarning('Coverage collection not possible with Octave. Turning off!');
     withCoverage = false;
 end
+
+%add MOxUnit submodule if not yet on path
+if exist('moxunit_runtests','file') == 2
+    matRad_cfg.dispInfo('MOxUnit is already on the path and this version will be used for testing: ');
+else
+    matRad_cfg.dispInfo('MOxUnit submodule will be added to the path and used for testing: ');
+    rootFolder = cd(fullfile(matRad_cfg.matRadRoot,'submodules','MOxUnit','MOxUnit'));
+    moxunit_set_path;
+    cd(rootFolder);
+end
+matRad_cfg.dispInfo('%s\n',fileparts(which("moxunit_runtests")));
+
+%add MOcov if coverage will be recorded
+if withCoverage
+    if exist('mocov','file') == 2
+        matRad_cfg.dispInfo('MOcov is already on the path and this version will be used for coverage collection: ');
+    else
+        matRad_cfg.dispInfo('MOcov submodule will be added to the path and used for coverage collection: ');
+        addpath(fullfile(matRad_cfg.matRadRoot,'submodules','MOcov','MOcov'));
+    end
+    matRad_cfg.dispInfo('%s\n',fileparts(which("mocov.m")));
+end
+
+
+matRad_cfg.dispInfo('Setting default properties for testing and starting test suite!\n');
+matRad_cfg.setDefaultPropertiesForTesting();
+matRad_cfg.logLevel = 1;
 
 if nargin < 1
     folder = 'test';
