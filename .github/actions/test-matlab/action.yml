@@ -32,7 +32,7 @@ runs:
     - name: Run Tests
       uses: matlab-actions/run-command@v2
       with:
-        command: back=cd('MOxUnit/MOxUnit'); moxunit_set_path; cd(back); addpath('MOcov/MOcov'); cd('matRad'); matRad_rc; moxunit_runtests('test','-recursive','-junit_xml_file','testresults.xml','-with_coverage','-cover','.','-cover_xml_file','coverage.xml','-cover_json_file','coverage.json','-cover_exclude','submodules','-cover_exclude','examples','-cover_method','profile'); exit(double(~ans))
+        command: back=cd('MOxUnit/MOxUnit'); moxunit_set_path; cd(back); addpath('MOcov/MOcov'); cd('matRad'); matRad_rc; matRad_runTests('test',true); exit(double(~ans))
     
     - name: Upload Test Results
       if: always()

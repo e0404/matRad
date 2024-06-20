@@ -71,6 +71,9 @@ classdef (Abstract) matRad_GriddedScenariosAbstract < matRad_ScenarioModel
         function scenarios = updateScenarios(this)
             matRad_cfg = MatRad_Config.instance();
 
+            %
+            this.numOfCtScen = size(this.ctScenProb,1);
+
             %Get the maximum, i.e., worst case shifts
             wcSetupShifts = this.wcSigma * this.shiftSD;
             
@@ -215,12 +218,12 @@ classdef (Abstract) matRad_GriddedScenariosAbstract < matRad_ScenarioModel
             %end
 
             %Handle 4D phases
-            phases = repmat(1:this.numOfCtScen,size(scenarios,1),1);
+            phases = repmat(this.ctScenProb(:,1)',size(scenarios,1),1);
             phases = phases(:);
             scenarios = horzcat(phases, repmat(scenarios,[this.numOfCtScen 1]));
             linearMaskTmp = repmat(linearMaskTmp,this.numOfCtScen,1);
             linearMaskTmp(:,1) = phases;
-            this.ctScen = phases;
+            this.ctScenIx = phases;
 
             %Finalize meta information
             this.totNumScen = size(scenarios,1);
@@ -232,7 +235,7 @@ classdef (Abstract) matRad_GriddedScenariosAbstract < matRad_ScenarioModel
             this.maxAbsRangeShift = max(this.absRangeShift);
             this.maxRelRangeShift = max(this.relRangeShift);
 
-            this.scenMask = false(this.numOfCtScen,this.totNumShiftScen,this.totNumRangeScen);
+            this.scenMask = false(this.numOfAvailableCtScen,this.totNumShiftScen,this.totNumRangeScen);
             
             this.scenForProb = scenarios;
             this.linearMask = linearMaskTmp;
@@ -250,7 +253,7 @@ classdef (Abstract) matRad_GriddedScenariosAbstract < matRad_ScenarioModel
             tmpScenProb = (2*pi)^(-d/2) * exp(-0.5*sum((scenarios(:,2:end)/cs).^2, 2)) / prod(diag(cs));
             
             %Now we combine with the 4D ct phase probabilities (multiply)
-            tmpPhaseProb = arrayfun(@(phase) this.phaseProbability(phase),phases);
+            tmpPhaseProb = arrayfun(@(phase) this.ctScenProb(find(this.ctScenProb(:,1) == phase),2),phases);
             
             %Finalize probabilities
             this.scenProb = tmpPhaseProb .* tmpScenProb;

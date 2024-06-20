@@ -119,13 +119,15 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
                         for ctScen = 1:this.multScen.numOfCtScen
                             for rangeShiftScen = 1:this.multScen.totNumRangeScen
-                                if this.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
+                                fullScenIdx = this.multScen.sub2scenIx(ctScen,shiftScen,rangeShiftScen);
+ 
+                                if this.multScen.scenMask(fullScenIdx)
                                     %TODO: This shows we probably need
                                     %better scenario management
                                     %Gets linear index in scenario cell array
-                                    scenIdx = this.multScen.sub2scenIx(ctScen,shiftScen,rangeShiftScen);
+                                    
 
-                                    scenRay = this.extractSingleScenarioRay(currRay,scenIdx);    
+                                    scenRay = this.extractSingleScenarioRay(currRay,fullScenIdx);    
                                     
                                     for k = 1:currRay.numOfBixels
                                         %Bixel Computation
@@ -133,7 +135,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
                                         % save computation time and memory
                                         % by sequentially filling the sparse matrix dose.dij from the cell array
-                                        dij = this.fillDij(currBixel,dij,scenStf,scenIdx,i,j,k,bixelCounter + k);
+                                        dij = this.fillDij(currBixel,dij,scenStf,fullScenIdx,i,j,k,bixelCounter + k);
                                     end
                                 end
                             end
