@@ -60,7 +60,8 @@ V = unique(V);
 
 % throw error message if no target is found
 if isempty(V)
-    error('Could not find target');
+    matRad_cfg = MatRad_Config.instance();
+    matRad_cfg.dispError('Could not find target!');
 end
 
 % Transform subcripts from linear indices 
