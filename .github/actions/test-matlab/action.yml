@@ -21,7 +21,7 @@ runs:
     - name: Run Tests
       uses: matlab-actions/run-command@v2
       with:
-        command: matRad_rc; matRad_runTests('test',true);
+        command: matRad_runTests('test',true);
     
     - name: Upload Test Results
       if: always()
