@@ -14,7 +14,7 @@ function [gammaPassRate,gammaValues] =...
 %   grids: struct
 %       grids.x: 3D meshgrid with x coords
 %       grids.y: 3D meshgrid with y coords 
-%       grids.z: 3D meshgrid with y coords 
+%       grids.z: 3D meshgrid with z coords 
 %   DTA: Distance To Agreement in mm (criterion parameter)
 %   doseDiff: doseDiff in % (criterion parameter)
 %   frac: fraction of random dose points evaluated
@@ -43,9 +43,6 @@ gammaValues = zeros(size(doseCalc));
 % calculate gamma accordance for all measurement points at positions rm
 % with array indey rmIndex:
 
-% initialize waitbar
-w = waitbar(0,'validating individual points');
-
 % create random fraction
 indices = 1:numel(doseMes);
 randFrac = rand(size(indices)) < frac;
@@ -71,12 +68,10 @@ for rmIndex = usedIndices
     
     gammaValues(rmIndex) = gamma;
     
-    waitbar(run/numel(usedIndices),w);
     run = run+1;
 end
 
 gammaPassRate = nnz(gammaValues(usedIndices)<1)/numel(usedIndices);
 
-close(w)
 
 end

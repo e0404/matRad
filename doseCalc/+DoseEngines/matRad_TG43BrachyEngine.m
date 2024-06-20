@@ -55,8 +55,6 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
 
     methods (Access = protected)
 
-
-
         function dij = initDoseCalc(this,ct,cst,stf)
 
             for i = 1:numel(stf)
@@ -74,8 +72,6 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             dij.totalNumOfSeeds     = dij.numOfNeedles*dij.numOfSeedsPerNeedle;
             dij.totalNumOfBixels    = dij.totalNumOfSeeds;
         end
-
-
 
         function dij = calcDose(this,ct,cst,stf)
             % Initialize dij
@@ -149,198 +145,6 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             %Finalize dose calculation
             dij = this.finalizeDose(dij);
         end
-
-
-
-        function PhiAn = anisotropyFactor1D(this,r,PhiAnTab, L)
-            %   anisotropy function interpolates tabulated data
-            %   using fifth order polynomial and approximates small and large distances
-            %   according to Rivard et al.2007: Supplement to the 2004 update of the
-            %   AAPM Task Group No. 43 Report Eq. (2).
-            %   Normally called within matRad_getDoseRate(...)
-            %
-            % call
-            %   PhiAn = matRad_anisotropyFactor1D(r,PhiAnTab, L)
-            %
-            % input
-            %   r:          array of radial distances in cm!
-            %   PhiAnTab:   tabulated consensus data of gL according to the following
-            %               cell structure:
-            %               PhiAnTab{1} = AnisotropyFactorRadialDistance
-            %               PhiAnTab{2} = AnisotropyFactorValue
-            %
-            % output
-            %   PhiAn:      array of the same shape as r and thet containing the
-            %               interpolated and extrapolated values
-            rmin = PhiAnTab{1}(1);
-            rmax = PhiAnTab{1}(end);
-            p = polyfit(PhiAnTab{1},PhiAnTab{2},5);
-            PhiAn = zeros(size(r));
-            PhiAn(r>=rmin & r<=rmax) = polyval(p,r(r>=rmin & r<=rmax));
-            PhiAn(r>rmax) = PhiAnTab{2}(end);
-            PhiAn(r<rmin) = PhiAnTab{2}(1).*(atan(L./2./r(r<rmin))./(L.*r(r<rmin)))./(atan(L./2./rmin)./(L.*rmin));
-        end
-
-
-        function F = anisotropyFunction2D(this,r,thet,FTab)
-            %  anisotropy function interpolates tabulated
-            %   data using fifth order polynomial and approximates small and large
-            %   distances according to Rivard et al.: AAPM TG-43 update Eq. (C1).
-            %   Normally called within matRad_getDoseRate(...)
-            %
-            %   This function requires the multiPolyRegress code : https://de.mathworks.com/matlabcentral/fileexchange/34918-multivariate-polynomial-regression
-            %
-            % call
-            %   F = matRad_anisotropyFunction2D(r,thet,FTab)
-            %
-            % input
-            %   r:      array of radial distances in cm
-            %   thet:   array of azimuthal angles in °
-            %   FTab:   tabulated consensus data of F according to the
-            %           following cell structure:
-            %           FTab{1} = AnisotropyRadialDistances
-            %           FTab{2} = AnisotropyPolarAngles
-            %           FTab{3} = AnisotropyFunctionValue
-            %
-            % output
-            %   F:      array of the same shape as r and thet containing the
-            %           interpolated and extrapolated values
-
-            % prepare data for multivariate polynomial fit:
-            [DataRGrid,DataThetGrid] = meshgrid(FTab{1},FTab{2});
-            Data(:,1) = reshape(DataRGrid,[],1);
-            Data(:,2) = reshape(DataThetGrid,[],1);
-            Value     = reshape(FTab{3},[],1);
-            p = MultiPolyRegress(Data,Value,5);
-
-            % evaluate for input values
-            F = p.PolynomialExpression(r,thet);
-
-            % extrapolate for large and small values of r by taking the
-            % interpolation of the maximal tabulated value at this angle
-            % theta should be tabulated from 0° to 180°
-            rmin = FTab{1}(1);
-            rmax = FTab{1}(end);
-
-            IndLarge = r > rmax;
-            IndSmall = r < rmin;
-            F(IndLarge) = p.PolynomialExpression(rmax,thet(IndLarge));
-            F(IndSmall) = p.PolynomialExpression(rmin,thet(IndSmall));
-        end
-
-
-        function GL = geometryFunction(this,r,thet,L)
-            %  calculates 2D geometry function
-            %   according to Rivard et al.: AAPM TG-43, p 638 update Eq. (4)
-            %   Normally called within matRad_getDoseRate(...)
-            %
-            % call
-            %   GL = matRad_geometryFunction(r,thet,L)
-            %
-            % inputs
-            %   r:              array of radial distances in cm!
-            %   thet:           array of azimual angles in °
-            %   Length:         length of radiation source in cm
-            %
-            % outputs
-            %   GL(r,theta):    geometry function output
-
-            % calculate solution
-            if thet == 90
-                beta = 2*atan(L./2./r);
-                GL = beta./(L.*r);
-            else
-                GL = calcBeta(r,thet,L)./(L.*r.*sind(thet));
-                GL(thet==0) = 1./(r(thet==0).^2-L^2/4);
-                GL(thet==180) = 1./(r(thet==180).^2-L^2/4);
-                GL(GL<0) = 0;
-            end
-
-            function beta = calcBeta(r, theta,L)
-                % calculate beta (see Rivard et al.: AAPM TG-43, p 637, Fig 1)
-                % calculates beta from r[cm], theta [deg] and L[cm]
-                % array inputs are allowed for theta
-
-                r1 = sqrt(r.^2 + (L/2)^2 - r.*L.*cosd(180 - theta)); % cos theorem
-                r2 = sqrt(r.^2 + (L/2)^2 - r.*L.*cosd(theta)); % cos theorem
-
-                beta1 = asin(sind(180-theta).*L/2./r1); % sine theorem
-                beta2 = asin(sind(theta).*L/2./r2); % sine theorem
-
-                beta = beta1 + beta2;
-            end
-        end
-
-
-        function gL = radialDoseFunction(this,r,gLTab)
-            %   interpolates tabulated data using
-            %   fifth order polynomial and approximates small and large distances
-            %   according to Rivard et al.: AAPM TG-43 update, p.669, Eq. (C1).
-            %   Normally called within matRad_getDoseRate(...)
-            %
-            % call
-            %   matRad_radialDoseFuncrion(r,gLTab)
-            %
-            % input
-            %   r:      array of radial distances in cm!
-            %   gLTab:  tabulated consensus data of gL according to the
-            %           following cell structure:
-            %           gLTab{1} = RadialDoseDistance
-            %           gLTab{2} = RadialDoseValue
-            %
-            % output
-            %   gL:     array of the same shape as r containing the interpolated
-            %           and extrapolated values
-            rmin = gLTab{1}(1);
-            rmax = gLTab{1}(end);
-            polyCoefficients = polyfit(gLTab{1},gLTab{2},5);
-            gL = zeros(size(r));
-            gL(r>=rmin & r<=rmax) = polyval(polyCoefficients,r(r>=rmin & r<=rmax));
-            gL(r<rmin) = gLTab{2}(1);
-            gL(r>rmax) = gLTab{2}(end) + ...
-                (gLTab{2}(end)-gLTab{2}(end-1)) / (gLTab{1}(end)-...
-                gLTab{1}(end-1)).*(r(r>rmax)-gLTab{1}(end));
-        end
-
-        function F = anisotropyFunction2DInterp(this,r,thet,FTab)
-            %   anisotropy function interpolates tabulated
-            %   data using interp2 ( interp technique TBD)
-            %   Normally called within matRad_getDoseRate(...)
-            %
-            % call
-            %   F = matRad_anisotropyFunction2D(r,thet,FTab)
-            %
-            % input
-            %   r:      array of radial distances in cm
-            %   thet:   array of azimuthal angles in ??
-            %   FTab:   tabulated consensus data of F according to the
-            %           following cell structure:
-            %           FTab{1} = AnisotropyRadialDistances
-            %           FTab{2} = AnisotropyPolarAngles
-            %           FTab{3} = AnisotropyFunctionValue
-            %
-            % output
-            %   F:      array of the same shape as r and thet containing the
-            %           interpolated and extrapolated values
-            [DataRGrid,DataThetGrid] = meshgrid(FTab{1},FTab{2});
-            Data(:,1) = reshape(DataRGrid,[],1);
-            Data(:,2) = reshape(DataThetGrid,[],1);
-            Value     = reshape(FTab{3},[],1);
-
-            F = interp2(DataRGrid,DataThetGrid,FTab{3}, r, thet, 'linear');
-            % extrapolate for large and small values of r by taking the
-            % interpolation of the maximal tabulated value at this angle
-            % theta should be tabulated from 0?? to 180??
-            rmin = FTab{1}(1);
-            rmax = FTab{1}(end);
-
-            IndLarge = r > rmax;
-            IndSmall = r < rmin;
-            rmaxGrid = rmax*ones(sum(IndLarge),1);
-            rminGrid = rmin*ones(sum(IndSmall),1);
-            F(IndLarge) = interp2(DataRGrid,DataThetGrid,FTab{3},rmaxGrid,double(thet(IndLarge)));
-            F(IndSmall) = interp2(DataRGrid,DataThetGrid,FTab{3},rminGrid,double(thet(IndSmall)));
-        end
     end
 
     methods ( Access = public )
@@ -355,7 +159,7 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             %   page 639, Eq. 11:
             %
             % call
-            %   DoseRate = matRad_getDoseRate1D_poly(machine,r_mm)
+            %   DoseRate = matRad_TG43BrachyEngine.getDoseRate1D_poly(machine,r_mm)
             %
             % input
             %   machine:    TG43 information about the used seeds
@@ -437,7 +241,7 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             %   page 637, eq. 1
             %
             % call
-            %   DoseRate = matRad_getDoseRate2D_poly(machine,r_mm)
+            %   DoseRate = matRad_TG43BrachyEngine.getDoseRate2D_poly(machine,r_mm)
             %
             % input
             %   machine:    TG43 information about the used seeds
@@ -530,8 +334,8 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             if isfield(machine.data,'AnisotropyPolynomial')
                 F = machine.data.AnisotropyPolynomial(r,theta);
             else
-                F = anisotropyFunction2DInterp(r,theta,FTab);   % uses the Interp2 function for estimation of Anisotropy function ( Gamma(1mm,1%) pass rate 99.5%)
-                %    F = matRad_anisotropyFunction2D(r,theta,FTab);   % uses the 5th order polynomial for estimation of Anisotropy function
+                F = DoseEngines.matRad_TG43BrachyEngine.anisotropyFunction2DInterp(r,theta,FTab);   % uses the Interp2 function for estimation of Anisotropy function ( Gamma(1mm,1%) pass rate 99.5%)
+                %    F = matRad_TG43BrachyEngine.anisotropyFunction2D(r,theta,FTab);   % uses the 5th order polynomial for estimation of Anisotropy function
             end
             DoseRate = Sk * lambda * GL./GL0.*gL.*F;
         end
@@ -540,9 +344,9 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             % getThetaMatrix gets (seed x dosepoint) matrix of relative polar angles
             %
             % call
-            %   [ThetaMatrix,ThetaVector] = matRad_getThetaMatrix(templateNormal,...
+            %   [ThetaMatrix,ThetaVector] = matRad_TG43BrachyEngine.getThetaMatrix(templateNormal,...
             %       DistanceMatrix)
-            %   normally called within matRad_getBrachyDose
+            %   normally called within matRad_TG43BrachyEngine.getBrachyDose
             %   !!getDistanceMatrix needs to be called first!!
             %
             % input
@@ -570,4 +374,197 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             end
         end
     end
+
+    methods (Static)
+        function PhiAn = anisotropyFactor1D(r,PhiAnTab, L)
+            %   anisotropy function interpolates tabulated data
+            %   using fifth order polynomial and approximates small and large distances
+            %   according to Rivard et al.2007: Supplement to the 2004 update of the
+            %   AAPM Task Group No. 43 Report Eq. (2).
+            %   Normally called within matRad_TG43BrachyEngine.getDoseRate(...)
+            %
+            % call
+            %   PhiAn = matRad_TG43BrachyEngine.anisotropyFactor1D(r,PhiAnTab, L)
+            %
+            % input
+            %   r:          array of radial distances in cm!
+            %   PhiAnTab:   tabulated consensus data of gL according to the following
+            %               cell structure:
+            %               PhiAnTab{1} = AnisotropyFactorRadialDistance
+            %               PhiAnTab{2} = AnisotropyFactorValue
+            %
+            % output
+            %   PhiAn:      array of the same shape as r and thet containing the
+            %               interpolated and extrapolated values
+            rmin = PhiAnTab{1}(1);
+            rmax = PhiAnTab{1}(end);
+            p = polyfit(PhiAnTab{1},PhiAnTab{2},5);
+            PhiAn = zeros(size(r));
+            PhiAn(r>=rmin & r<=rmax) = polyval(p,r(r>=rmin & r<=rmax));
+            PhiAn(r>rmax) = PhiAnTab{2}(end);
+            PhiAn(r<rmin) = PhiAnTab{2}(1).*(atan(L./2./r(r<rmin))./(L.*r(r<rmin)))./(atan(L./2./rmin)./(L.*rmin));
+        end
+
+
+        function F = anisotropyFunction2D(r,thet,FTab)
+            %  anisotropy function interpolates tabulated
+            %   data using fifth order polynomial and approximates small and large
+            %   distances according to Rivard et al.: AAPM TG-43 update Eq. (C1).
+            %   Normally called within matRad_TG43BrachyEngine.getDoseRate(...)
+            %
+            %   This function requires the multiPolyRegress code : https://de.mathworks.com/matlabcentral/fileexchange/34918-multivariate-polynomial-regression
+            %
+            % call
+            %   F = matRad_TG43BrachyEngine.anisotropyFunction2D(r,thet,FTab)
+            %
+            % input
+            %   r:      array of radial distances in cm
+            %   thet:   array of azimuthal angles in °
+            %   FTab:   tabulated consensus data of F according to the
+            %           following cell structure:
+            %           FTab{1} = AnisotropyRadialDistances
+            %           FTab{2} = AnisotropyPolarAngles
+            %           FTab{3} = AnisotropyFunctionValue
+            %
+            % output
+            %   F:      array of the same shape as r and thet containing the
+            %           interpolated and extrapolated values
+
+            % prepare data for multivariate polynomial fit:
+            [DataRGrid,DataThetGrid] = meshgrid(FTab{1},FTab{2});
+            Data(:,1) = reshape(DataRGrid,[],1);
+            Data(:,2) = reshape(DataThetGrid,[],1);
+            Value     = reshape(FTab{3},[],1);
+            p = MultiPolyRegress(Data,Value,5);
+
+            % evaluate for input values
+            F = p.PolynomialExpression(r,thet);
+
+            % extrapolate for large and small values of r by taking the
+            % interpolation of the maximal tabulated value at this angle
+            % theta should be tabulated from 0° to 180°
+            rmin = FTab{1}(1);
+            rmax = FTab{1}(end);
+
+            IndLarge = r > rmax;
+            IndSmall = r < rmin;
+            F(IndLarge) = p.PolynomialExpression(rmax,thet(IndLarge));
+            F(IndSmall) = p.PolynomialExpression(rmin,thet(IndSmall));
+        end
+
+
+        function GL = geometryFunction(r,thet,L)
+            %  calculates 2D geometry function
+            %   according to Rivard et al.: AAPM TG-43, p 638 update Eq. (4)
+            %   Normally called within matRad_TG43BrachyEngine.getDoseRate(...)
+            %
+            % call
+            %   GL = matRad_TG43BrachyEngine.geometryFunction(r,thet,L)
+            %
+            % inputs
+            %   r:              array of radial distances in cm!
+            %   thet:           array of azimual angles in °
+            %   Length:         length of radiation source in cm
+            %
+            % outputs
+            %   GL(r,theta):    geometry function output
+
+            % calculate solution
+            if thet == 90
+                beta = 2*atan(L./2./r);
+                GL = beta./(L.*r);
+            else
+                GL = DoseEngines.matRad_TG43BrachyEngine.calcBeta(r,thet,L)./(L.*r.*sind(thet));
+                GL(thet==0) = 1./(r(thet==0).^2-L^2/4);
+                GL(thet==180) = 1./(r(thet==180).^2-L^2/4);
+                GL(GL<0) = 0;
+            end
+        end
+
+        function beta = calcBeta(r, theta,L)
+            % calculate beta (see Rivard et al.: AAPM TG-43, p 637, Fig 1)
+            % calculates beta from r[cm], theta [deg] and L[cm]
+            % array inputs are allowed for theta
+
+            r1 = sqrt(r.^2 + (L/2)^2 - r.*L.*cosd(180 - theta)); % cos theorem
+            r2 = sqrt(r.^2 + (L/2)^2 - r.*L.*cosd(theta)); % cos theorem
+
+            beta1 = asin(sind(180-theta).*L/2./r1); % sine theorem
+            beta2 = asin(sind(theta).*L/2./r2); % sine theorem
+
+            beta = beta1 + beta2;
+        end
+
+        function gL = radialDoseFunction(r,gLTab)
+            %   interpolates tabulated data using
+            %   fifth order polynomial and approximates small and large distances
+            %   according to Rivard et al.: AAPM TG-43 update, p.669, Eq. (C1).
+            %   Normally called within matRad_TG43BrachyEngine.TG43BrachyEngine.getDoseRate(...)
+            %
+            % call
+            %   matRad_TG43BrachyEngine.TG43BrachyEngine.radialDoseFuncrion(r,gLTab)
+            %
+            % input
+            %   r:      array of radial distances in cm!
+            %   gLTab:  tabulated consensus data of gL according to the
+            %           following cell structure:
+            %           gLTab{1} = RadialDoseDistance
+            %           gLTab{2} = RadialDoseValue
+            %
+            % output
+            %   gL:     array of the same shape as r containing the interpolated
+            %           and extrapolated values
+            rmin = gLTab{1}(1);
+            rmax = gLTab{1}(end);
+            polyCoefficients = polyfit(gLTab{1},gLTab{2},5);
+            gL = zeros(size(r));
+            gL(r>=rmin & r<=rmax) = polyval(polyCoefficients,r(r>=rmin & r<=rmax));
+            gL(r<rmin) = gLTab{2}(1);
+            gL(r>rmax) = gLTab{2}(end) + ...
+                (gLTab{2}(end)-gLTab{2}(end-1)) / (gLTab{1}(end)-...
+                gLTab{1}(end-1)).*(r(r>rmax)-gLTab{1}(end));
+        end
+
+        function F = anisotropyFunction2DInterp(r,thet,FTab)
+            %   anisotropy function interpolates tabulated
+            %   data using interp2 ( interp technique TBD)
+            %   Normally called within matRad_TG43BrachyEngine.TG43BrachyEngine.getDoseRate(...)
+            %
+            % call
+            %   F = matRad_TG43BrachyEngine.TG43BrachyEngine.anisotropyFunction2D(r,thet,FTab)
+            %
+            % input
+            %   r:      array of radial distances in cm
+            %   thet:   array of azimuthal angles in ??
+            %   FTab:   tabulated consensus data of F according to the
+            %           following cell structure:
+            %           FTab{1} = AnisotropyRadialDistances
+            %           FTab{2} = AnisotropyPolarAngles
+            %           FTab{3} = AnisotropyFunctionValue
+            %
+            % output
+            %   F:      array of the same shape as r and thet containing the
+            %           interpolated and extrapolated values
+            [DataRGrid,DataThetGrid] = meshgrid(FTab{1},FTab{2});
+            Data(:,1) = reshape(DataRGrid,[],1);
+            Data(:,2) = reshape(DataThetGrid,[],1);
+            Value     = reshape(FTab{3},[],1);
+
+            F = interp2(DataRGrid,DataThetGrid,FTab{3}, r, thet, 'linear');
+            % extrapolate for large and small values of r by taking the
+            % interpolation of the maximal tabulated value at this angle
+            % theta should be tabulated from 0?? to 180??
+            rmin = FTab{1}(1);
+            rmax = FTab{1}(end);
+
+            IndLarge = r > rmax;
+            IndSmall = r < rmin;
+            rmaxGrid = rmax*ones(sum(IndLarge(:)),1);
+            rminGrid = rmin*ones(sum(IndSmall(:)),1);
+            F(IndLarge) = interp2(DataRGrid,DataThetGrid,FTab{3},rmaxGrid,double(thet(IndLarge)));
+            F(IndSmall) = interp2(DataRGrid,DataThetGrid,FTab{3},rminGrid,double(thet(IndSmall)));
+        end
+
+    end
+
 end
