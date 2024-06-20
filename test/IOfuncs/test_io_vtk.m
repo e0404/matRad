@@ -1,4 +1,4 @@
-function test_suite = test_io_nrrd
+function test_suite = test_io_vtk
 %The output should always be test_suite, and the function name the same as
 %your file name
 
