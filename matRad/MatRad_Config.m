@@ -61,8 +61,10 @@ classdef MatRad_Config < handle
     end
 
     properties (SetAccess = private, Dependent)
-        matRadSrcRoot; %Path to matRadSrcRoot ("matRad" subfolder of matRadRoot)
-        primaryUserFolder;
+        matRadSrcRoot;      %Path to matRadSrcRoot ("matRad" subfolder of matRadRoot)
+        primaryUserFolder;  %Points to the first entry in userfolders
+        exampleFolder;      %Contains examples  
+        thirdPartyFolder;   %Contains third party tools/libraries used in matRad
     end
 
     methods (Access = private)
@@ -73,10 +75,13 @@ classdef MatRad_Config < handle
             %  For instantiation, use the static MatRad_Config.instance();
             
             %Set Path
-            obj.matRadRoot = fileparts(mfilename('fullpath'));
-            obj.userfolders = {[obj.matRadRoot filesep 'userdata' filesep]};
-            addpath(genpath(obj.matRadRoot));
+            obj.matRadRoot = fileparts(fileparts(mfilename('fullpath')));
+            addpath(genpath(obj.matRadSrcRoot));
+            addpath(obj.exampleFolder);
+            addpath(genpath(obj.thirdPartyFolder));
 
+            obj.userfolders = {[obj.matRadRoot filesep 'userdata' filesep]};
+            
             %Set Version
             obj.getEnvironment();
             obj.matRad_version = matRad_version();
@@ -451,6 +456,14 @@ classdef MatRad_Config < handle
 
         function primaryUserFolder = get.primaryUserFolder(obj)
             primaryUserFolder = obj.userfolders{1};
+        end
+
+        function exampleFolder = get.exampleFolder(obj)
+            exampleFolder = [obj.matRadRoot filesep 'examples' filesep];            
+        end
+
+        function thirdPartyFolder = get.thirdPartyFolder(obj)
+            thirdPartyFolder = [obj.matRadRoot filesep 'thirdParty' filesep];
         end
 
         function set.writeLog(obj,writeLog)
