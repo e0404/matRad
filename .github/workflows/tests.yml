@@ -12,8 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4 # Checks-out repository under $GITHUB_WORKSPACE
-        with:
-          path: matRad
       - name: Run Test
         uses: ./matRad/.github/actions/test-matlab
         with:
@@ -23,8 +21,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4 # Checks-out repository under $GITHUB_WORKSPACE
-        with:
-          path: matRad
       - uses: ./matRad/.github/actions/test-matlab
         with:
           matlab-version: latest
@@ -33,8 +29,6 @@ jobs:
     runs-on: ubuntu-22.04 # We use Ubuntu-22.04 because it has Octave 6.4
     steps:
       - uses: actions/checkout@v4 # Checks-out repository under $GITHUB_WORKSPACE
-        with:
-          path: matRad
       - uses: ./matRad/.github/actions/test-octave
 
   test-report:
