@@ -41,6 +41,16 @@ if nargin < 4
     visMode = 0;
 end
 
+if ~isfield(pln.propStf,'isoCenter')
+    matRad_cfg.dispWarning('No isocenter specified! Using center-of-mass of all targets!');
+    pln.propStf.isoCenter = matRad_getIsoCenter(cst,ct);
+end
+
+if ~isfield(pln,'multScen')
+    matRad_cfg.dispWarning('No scenario model specified! Using nominal Scenario model!');
+    pln.multScen = matRad_NominalScenario(ct);
+end
+
 if numel(pln.propStf.gantryAngles) ~= numel(pln.propStf.couchAngles)
     matRad_cfg.dispError('Inconsistent number of gantry and couch angles.');
 end
