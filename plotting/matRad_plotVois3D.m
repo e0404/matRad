@@ -57,7 +57,7 @@ end
 cMapScale = size(cMap,1)-1;
 
 axes(axesHandle);
-wasHold = ishold();
+wasHold = ishold(axesHandle);
 
 hold(axesHandle,'on');
 

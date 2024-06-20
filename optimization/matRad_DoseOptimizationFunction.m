@@ -26,6 +26,10 @@ classdef (Abstract) matRad_DoseOptimizationFunction
         parameters
     end
     
+    properties
+        robustness = 'none';    %Robustness setting -> may be removed from the DoseObjective class in a future release
+    end
+    
     methods
         function obj = matRad_DoseOptimizationFunction(dataStruct)
             if nargin > 0 && ~isempty(dataStruct) && isstruct(dataStruct)
@@ -39,6 +43,15 @@ classdef (Abstract) matRad_DoseOptimizationFunction
             s.className = class(obj);
             s.parameters = obj.parameters;
         end
+        
+        function obj = set.robustness(obj,robustness)
+            matRad_cfg = MatRad_Config.instance();
+            if ischar(robustness) && any(strcmp(robustness,obj.availableRobustness()))
+                obj.robustness = robustness;
+            else
+                matRad_cfg.dispError('Invalid robustness setting!');
+            end                        
+        end        
     end
     
     % Helper methods
@@ -52,9 +65,8 @@ classdef (Abstract) matRad_DoseOptimizationFunction
         function obj = setDoseParameters(obj,doseParams)
             % set only the dose related parameters.
             ix = cellfun(@(c) isequal('dose',c),obj.parameterTypes);
-            obj.parameters(ix) = num2cell(doseParams);
-            
-        end                
+            obj.parameters(ix) = num2cell(doseParams);            
+        end        
     end
     
     methods (Access = private)
@@ -69,7 +81,7 @@ classdef (Abstract) matRad_DoseOptimizationFunction
                 end
             end
         end
-    end
+    end    
         
     
     methods (Static)
@@ -96,6 +108,10 @@ classdef (Abstract) matRad_DoseOptimizationFunction
             catch ME
                 error(['Could not instantiate Optimization Function: ' ME.message]);
             end
+        end
+        
+        function rob = availableRobustness()
+            rob = {'none'}; %By default, no robustness is available
         end
                 
         function s = convertOldOptimizationStruct(old_s)

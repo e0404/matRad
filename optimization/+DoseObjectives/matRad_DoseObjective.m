@@ -20,7 +20,13 @@ classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (Abstract, Access = public)
-        penalty             %Optimization penalty
+        penalty                 %Optimization penalty
+    end
+       
+    methods (Static)
+        function rob = availableRobustness()
+            rob = {'none','STOCH','PROB','VWWC','VWWC_INV','COWC','OWC'}; %By default, no robustness is available
+        end 
     end
     
     %These should be abstract methods, however Octave can't parse them. As soon
@@ -54,6 +60,7 @@ classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
             s = struct@matRad_DoseOptimizationFunction(obj);
             s.penalty = obj.penalty;
         end
-    end 
+        
+    end   
 end
 

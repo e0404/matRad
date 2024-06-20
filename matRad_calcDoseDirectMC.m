@@ -39,63 +39,29 @@ function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)
 
 
 matRad_cfg =  MatRad_Config.instance();
-
-calcDoseDirect = true;
-
-if nargin < 6 || ~exist('nHistories')
-  nHistories = matRad_cfg.propMC.direct_defaultHistories;
-  matRad_cfg.dispInfo('Using default number of Histories: %d\n',nHistories);
-end
-
-% check if weight vector is available, either in function call or in stf - otherwise dose calculation not possible
-if ~exist('w','var') && ~isfield([stf.ray],'weight')
-     matRad_cfg.dispError('No weight vector available. Please provide w or add info to stf');
-end
-
-% copy bixel weight vector into stf struct
-if exist('w','var')
-    if sum([stf.totalNumOfBixels]) ~= numel(w)
-        matRad_cfg.dispError('weighting does not match steering information');
-    end
-    counter = 0;
-    for i = 1:size(stf,2)
-        for j = 1:stf(i).numOfRays
-            for k = 1:stf(i).numOfBixelsPerRay(j)
-                counter = counter + 1;
-                stf(i).ray(j).weight(k) = w(counter);
-            end
-        end
-    end
-else % weights need to be in stf!
-    w = NaN*ones(sum([stf.totalNumOfBixels]),1);
-    counter = 0;
-    for i = 1:size(stf,2)
-        for j = 1:stf(i).numOfRays
-            for k = 1:stf(i).numOfBixelsPerRay(j)
-                counter = counter + 1;
-                w(counter) = stf(i).ray(j).weight(k);
-            end
-        end
-    end    
-end
+matRad_cfg.dispDeprecationWarning('This function is deprecated. Please use matRad_calcDoeDirect with appropriate Monte Carlo engine set in pln.propDoseCalc.');
 
 % dose calculation
-if strcmp(pln.radiationMode,'protons')
-  dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nHistories,calcDoseDirect);
-else
-    matRad_cfg.dispError('Forward MC only implemented for protons.');
+switch pln.radiationMode
+    case 'protons'
+        engine = DoseEngines.matRad_ParticleMCsquareEngine(pln);
+    case 'photons'
+        engine = DoseEngines.matRad_PhotonOmpMCEngine(pln);
+    otherwise
+        matRad_cfg.dispError('Radiation mode ''%s'' not supported!',pln.radiationMode)
 end
 
-% hack dij struct
-dij.numOfBeams = 1;
-dij.beamNum = 1;
+if nargin == 5
+    engine.numHistoriesDirect = nHistories;
+end
 
-% calculate cubes; use uniform weights here, weighting with actual fluence 
-% already performed in dij construction 
-resultGUI    = matRad_calcCubes(sum(w),dij);
+if nargin < 4
+    resultGUI = engine.calcDoseForward(ct,cst,stf);
+else
+    resultGUI = engine.calcDoseForward(ct,cst,stf,w);
+end
 
-% remember original fluence weights
-resultGUI.w  = w; 
+
 
 
 

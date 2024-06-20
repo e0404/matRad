@@ -29,7 +29,7 @@ function indices = matRad_convRtssContours2Indices(structure,ct)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+matRad_cfg = MatRad_Config.instance();
 voiCube = zeros(ct.cubeDim);
 
 % loop over all closed contour items
@@ -40,7 +40,7 @@ for i = 1:size(structure.item,2)
         dicomCtSlicePos = unique(structure.item(i).points(:,3));
         
         if numel(dicomCtSlicePos) > 1 || isempty(dicomCtSlicePos)
-            error('Contour defined over multiple planes!');
+            matRad_cfg.dispError('Contour defined over multiple planes!');
         end
     
         round2 = @(a,b) round(a*10^b)/10^b;
@@ -49,9 +49,9 @@ for i = 1:size(structure.item,2)
         %Sanity check
         msg = checkSliceThickness(dicomCtSliceThickness);
         if ~isempty(msg)
-            error('Slice Thickness of slice at %f could not be identified: %s',dicomCtSlicePos,msg);
+            matRad_cfg.dispError('Slice Thickness of slice at %f could not be identified: %s',dicomCtSlicePos,msg);
         end
-
+        
         slicesInMatradCt = find(dicomCtSlicePos+dicomCtSliceThickness/2 > ct.z & dicomCtSlicePos-dicomCtSliceThickness/2 <= ct.z);
         
         coords1 = interp1(ct.x,1:ct.cubeDim(2),structure.item(i).points(:,1),'linear','extrap');

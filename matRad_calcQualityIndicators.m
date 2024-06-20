@@ -54,7 +54,7 @@ for runVoi = 1:size(cst,1)
     
     indices     = cst{runVoi,4}{1};
     numOfVoxels = numel(indices); 
-    voiPrint = sprintf('%3d %20s',cst{runVoi,1},cst{runVoi,2}); %String that will print quality indicators
+    voiPrint    = sprintf('%3d %20s',cst{runVoi,1},cst{runVoi,2}); %String that will print quality indicators
     
     % get Dose, dose is sorted to simplify calculations
     doseInVoi    = sort(doseCube(indices));

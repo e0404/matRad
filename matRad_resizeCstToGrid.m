@@ -1,5 +1,5 @@
 function cst = matRad_resizeCstToGrid(cst,vXgridOld,vYgridOld,vZgridOld,vXgridNew,vYgridNew,vZgridNew)
-% matRad function to resize the ct to a given resolution
+% matRad function to resize the cst to a given resolution
 % 
 % call
 %   cst = matRad_resizeCstToGrid(cst,vXgridOld,vYgridOld,vZgridOld,vXgridNew,vYgridNew,vZgridNew)
@@ -32,13 +32,27 @@ function cst = matRad_resizeCstToGrid(cst,vXgridOld,vYgridOld,vZgridOld,vXgridNe
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+matRad_cfg.dispInfo('Resampling structure set... ');
 
-for i = 1:size(cst,1)
-   for j = 1:numel(cst{i,4})
+if isequal(vXgridOld,vXgridNew) && isequal(vYgridOld,vYgridNew) && isequal(vZgridOld,vZgridNew)
+    matRad_cfg.dispInfo('nothing to be done, grids are the same!\n');
+    return;
+end
+
+
+for i = 1:size(cst,1)            % loop over all structures
+   for j = 1:numel(cst{i,4})     % loop over all scenarios
       tmpCube              = zeros([numel(vYgridOld) numel(vXgridOld) numel(vZgridOld)]);
       tmpCube(cst{i,4}{j}) = 1;
       cst{i,4}{j}          = find(matRad_interp3(vXgridOld,vYgridOld,vZgridOld, ...
                                                  tmpCube, ...
                                                  vXgridNew,vYgridNew',vZgridNew,'nearest'));
+      if isempty(cst{i,4}{j})
+          matRad_cfg = MatRad_Config.instance();
+          matRad_cfg.dispWarning('Resizing the cst to the dose grid created an empty structure %s in scenario %d (cst{%d,4}{%d})!',cst{i,2},j,i,j);
+      end
    end
 end
+
+matRad_cfg.dispInfo('Done!\n');

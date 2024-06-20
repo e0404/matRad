@@ -47,16 +47,17 @@ if plane == 3
 
     gantryAngleVisColor = 'w';
 
+    hold(axesHandle,'on');
     plot(axesHandle,x,y,'LineWidth',1,'Color',gantryAngleVisColor)
 
     % add text
-    txt = '180°';
+    txt = '180Â°';
     text(axesHandle,1.1*r*sind(0)+xOffset,1.1*r*cosd(0)+yOffset,txt,'Color',gantryAngleVisColor)
-    txt = '90°';
+    txt = '90Â°';
     text(axesHandle,1.1*r*sind(90)+xOffset,1.1*r*cosd(90)+yOffset,txt,'Color',gantryAngleVisColor)
-    txt = '0°';
+    txt = '0Â°';
     text(axesHandle,1.1*r*sind(180)+xOffset,1.1*r*cosd(180)+yOffset,txt,'Color',gantryAngleVisColor)
-    txt = '270°';
+    txt = '270Â°';
     text(axesHandle,1.22*r*sind(270)+xOffset,1.22*r*cosd(270)+yOffset,txt,'Color',gantryAngleVisColor)
 
     % plot gantry angles
