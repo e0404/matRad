@@ -120,6 +120,7 @@ for i = 1:length(pln.propStf.gantryAngles)
     stf(i).numOfRays            = 1;
     stf(i).numOfBixelsPerRay    = 1;
     stf(i).totalNumOfBixels     = 1;
+    stf(i).machine              = pln.machine;
     
     x = floor(matRad_interp1(xVox,[1:ct.cubeDim(2)]',stf.isoCenter(1)));
     y = floor(matRad_interp1(yVox,[1:ct.cubeDim(1)]',stf.isoCenter(2)));
@@ -132,12 +133,15 @@ for i = 1:length(pln.propStf.gantryAngles)
     % generate voi cube for targets
     voiTarget    = zeros(ct.cubeDim);
     voiTarget(isoIx(1),isoIx(2),isoIx(3)) = 1;
-    %adds = unique(perms([1 0 0]),'rows');
-    %adds = [adds; -adds];
-    %for p = 1:size(adds,1)
-    %    ix = isoIx + adds(i,:);
-    %    voiTarget(ix(1),ix(2),ix(3)) = 1;
-    %end
+    adds = unique(perms([1 0 0]),'rows');
+    adds = [adds; -adds];
+    for p = 1:size(adds,1)
+        padIx = isoIx + adds(p,:);
+        if any(padIx < 1) || any(padIx > ct.cubeDim)
+            continue;
+        end
+        voiTarget(padIx(1),padIx(2),padIx(3)) = 1;
+    end
     
     %voiTarget = matRad_addMargin(voiTarget,cst,ct.resolution,ct.resolution);
         

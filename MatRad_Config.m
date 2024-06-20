@@ -125,11 +125,11 @@ classdef MatRad_Config < handle
                 case{'dep'}
                     if obj.logLevel >= 4
                         forwardArgs{1} = ['DEPRECATION WARNING: ' forwardArgs{1}];
-                        warning(forwardArgs{:});
+                        warning('matRad:Deprecated',forwardArgs{:});
                     end
                 case{'warning'}
                     if obj.logLevel >= 2
-                        warning(forwardArgs{:});
+                        warning('matRad:Warning',forwardArgs{:});
                     end
                 case {'error'}
                     if obj.logLevel >= 1

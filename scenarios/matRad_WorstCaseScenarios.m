@@ -28,8 +28,8 @@ classdef matRad_WorstCaseScenarios < matRad_GriddedScenariosAbstract
     end
 
     properties (Hidden)
-        numOfSetupGridPoints = 2;
-        numOfRangeGridPoints = 2;
+        numOfSetupGridPoints = 3;
+        numOfRangeGridPoints = 3;
     end
     
     methods
@@ -48,15 +48,6 @@ classdef matRad_WorstCaseScenarios < matRad_GriddedScenariosAbstract
         end
         
         function scenarios = updateScenarios(this)
-            
-            if this.includeNominalScenario
-                this.numOfSetupGridPoints = 3;
-                this.numOfRangeGridPoints = 3;
-            else
-                this.numOfSetupGridPoints = 2;
-                this.numOfRangeGridPoints = 2;
-            end
-            
             %Use the static gridded shift function from
             %ImportanceScenarios. We set inclusion of nominal scenarios to
             %false and handle it automatically via the grid point number

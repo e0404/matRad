@@ -41,14 +41,6 @@ classdef matRad_NominalScenario < matRad_ScenarioModel
         end
         
         function scenarios = updateScenarios(this)
-            %Scenario Probability from pdf - here it is one since only one
-            %scenario exist
-            %TODO: In the context of an uncertainty model, we should
-            %consider assigning probability according to the model, and
-            %just leaving the weight 1
-            this.scenForProb = zeros(this.numOfCtScen,5);
-            this.scenProb = this.phaseProbability;
-
             %Scenario weight 
             this.scenWeight = ones(this.numOfCtScen,1)./this.numOfCtScen;
             this.scenWeight = this.phaseProbability;
@@ -62,6 +54,11 @@ classdef matRad_NominalScenario < matRad_ScenarioModel
             this.relRangeShift = zeros(this.numOfCtScen,1);
             this.absRangeShift = zeros(this.numOfCtScen,1);
             this.isoShift = zeros(this.numOfCtScen,3);
+            this.ctScen        = transpose(1:this.numOfCtScen);
+
+            %Probability matrices
+            this.scenForProb = [this.ctScen zeros(this.numOfCtScen,5)]; %Realization matrix
+            this.scenProb = this.phaseProbability; %Probabilities for each scenario
 
             this.maxAbsRangeShift = max(this.absRangeShift);
             this.maxRelRangeShift = max(this.absRangeShift);
@@ -78,7 +75,7 @@ classdef matRad_NominalScenario < matRad_ScenarioModel
             Sigma = diag([this.shiftSD,this.rangeAbsSD,this.rangeRelSD./100].^2);
             d = size(Sigma,1);
             [cs,p] = chol(Sigma);
-            tmpScenProb = (2*pi)^(-d/2) * exp(-0.5*sum((this.scenForProb/cs).^2, 2)) / prod(diag(cs));
+            tmpScenProb = (2*pi)^(-d/2) * exp(-0.5*sum((this.scenForProb(:,2:end)/cs).^2, 2)) / prod(diag(cs));
             
             %Multiply with 4D phase probability
             this.scenProb = this.phaseProbability .* tmpScenProb;
@@ -87,9 +84,8 @@ classdef matRad_NominalScenario < matRad_ScenarioModel
             this.scenWeight = this.scenProb./sum(this.scenProb); 
             
             %Return variable
-            scenarios = (1:this.numOfCtScen)';
-            scenarios = [scenarios zeros(this.numOfCtScen,5)];
-            this.scenForProb = scenarios;
+            scenarios = this.scenForProb;
+            
 
             if totNumScen ~= this.totNumScen
                 matRad_cfg = MatRad_Config.instance();

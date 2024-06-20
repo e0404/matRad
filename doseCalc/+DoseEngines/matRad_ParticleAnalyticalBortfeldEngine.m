@@ -132,26 +132,26 @@ classdef matRad_ParticleAnalyticalBortfeldEngine < DoseEngines.matRad_ParticlePe
         function X = interpolateKernelsInDepth(this,bixel)
             baseData = bixel.baseData;
             
-            radDepthOffset = bixel.radDepthOffset;
-            
-            if isfield(baseData,'offset')
-                radDepthOffset = radDepthOffset - baseData.offset;
-            end
-           
             % calculate particle dose for bixel k on ray j of beam i
             % convert from MeV cm^2/g per primary to Gy mm^2 per 1e6 primaries
             conversionFactor = 1.6021766208e-02;
+                       
+            radDepthOffset = bixel.radDepthOffset;
             
-            energyMean = baseData.energy;
-            energySpread = baseData.energy * this.sigmaEnergy;
-
             if isfield(baseData,'energySpectrum')
                 energyMean      = baseData.energySpectrum.mean;
                 energySpread    = baseData.energySpectrum.sigma/100 * baseData.energySpectrum.mean;
+            else
+                energyMean = baseData.energy;
+                energySpread = baseData.energy * this.sigmaEnergy;
             end
+
+            if isfield(baseData,'offset') && ~isfield(baseData,'energySpectrum')
+                radDepthOffset = radDepthOffset - baseData.offset;
+            end            
             
             X.Z = conversionFactor * this.calcAnalyticalBragg(energyMean, bixel.radDepths + radDepthOffset, energySpread);
-            X.sigma = this.calcSigmaLatMCS(bixel.radDepths, baseData.energy);
+            X.sigma = this.calcSigmaLatMCS(bixel.radDepths + radDepthOffset, baseData.energy);
         end
 
         function bixel = calcParticleBixel(this,bixel)
