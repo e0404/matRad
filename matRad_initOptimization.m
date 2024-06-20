@@ -1,9 +1,9 @@
-function [dij,cst,pln,wInit,optiProb,FLAG_ROB_OPT] = matRad_preProcessing(dij,cst,pln,wInit)
+function [dij,cst,pln,wInit,optiProb,FLAG_ROB_OPT] = matRad_initOptimization(dij,cst,pln,wInit)
 % matRad inverse planning wrapper function
 %
 % call
-%   [dij,cst,pln,wInit,optiProb,FLAG_ROB_OPT] = matRad_preProcessing(dij,cst,pln)
-%   [dij,cst,pln,wInit,optiProb,FLAG_ROB_OPT] = matRad_preProcessing(dij,cst,pln,wInit)
+%   [dij,cst,pln,wInit,optiProb,FLAG_ROB_OPT] = matRad_initOptimization(dij,cst,pln)
+%   [dij,cst,pln,wInit,optiProb,FLAG_ROB_OPT] = matRad_initOptimization(dij,cst,pln,wInit)
 %
 % input
 %   dij:        matRad dij struct

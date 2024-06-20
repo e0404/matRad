@@ -34,9 +34,9 @@ function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
 
 matRad_cfg = MatRad_Config.instance();
 if exist('wInit','var')
-    [dij,cst,pln,wInit,optiProb,FLAG_ROB_OPT] = matRad_preProcessing(dij,cst,pln,wInit);
+    [dij,cst,pln,wInit,optiProb,FLAG_ROB_OPT] = matRad_initOptimization(dij,cst,pln,wInit);
 else
-    [dij,cst,pln,wInit,optiProb,FLAG_ROB_OPT] = matRad_preProcessing(dij,cst,pln);
+    [dij,cst,pln,wInit,optiProb,FLAG_ROB_OPT] = matRad_initOptimization(dij,cst,pln);
 end
 
 if ~isfield(pln.propOpt,'optimizer')

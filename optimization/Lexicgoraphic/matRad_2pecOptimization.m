@@ -1,5 +1,5 @@
 function [resultGUIs,resultGUIs2,cst1,cst2,PriorityList2]=  matRad_2pecOptimization(PriorityList1,dij,cst,pln,wInit)
-    % Lexicographic optimization using the 2pec method asintroducded by
+    % Lexicographic optimization using the 2pec method as introducded by
     % Breedveld et al
     % 
     % call
@@ -39,9 +39,9 @@ function [resultGUIs,resultGUIs2,cst1,cst2,PriorityList2]=  matRad_2pecOptimizat
     PriorityList1.adaptToFractionSize(pln.numOfFractions);
 
     if exist('wInit','var') 
-        [dij,cst,pln,wInit,optiProb] = matRad_preProcessing(dij,cst,pln,wInit);
+        [dij,cst,pln,wInit,optiProb] = matRad_initOptimization(dij,cst,pln,wInit);
     else
-        [dij,cst,pln,wInit,optiProb] = matRad_preProcessing(dij,cst,pln);
+        [dij,cst,pln,wInit,optiProb] = matRad_initOptimization(dij,cst,pln);
     end
 
     if ~isfield(pln.propOpt,'optimizer')
