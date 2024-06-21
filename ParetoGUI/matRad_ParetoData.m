@@ -43,7 +43,7 @@ classdef matRad_ParetoData < handle
             this.upboundSlider = max(allPoints,[],1);
             this.lowboundSliderInit = min(allPoints,[],1);
             this.lowboundSlider = min(allPoints,[],1);
-            this.linestyle = 2;
+            this.linestyle = 1;
 
             %calculate an initial point based on the shortes distance to the
             %polyhedral center
