@@ -41,6 +41,16 @@ if nargin < 4
     visMode = 0;
 end
 
+if ~isfield(pln.propStf,'isoCenter')
+    matRad_cfg.dispWarning('No isocenter specified! Using center-of-mass of all targets!');
+    pln.propStf.isoCenter = matRad_getIsoCenter(cst,ct);
+end
+
+if ~isfield(pln,'multScen')
+    matRad_cfg.dispWarning('No scenario model specified! Using nominal Scenario model!');
+    pln.multScen = matRad_NominalScenario(ct);
+end
+
 if numel(pln.propStf.gantryAngles) ~= numel(pln.propStf.couchAngles)
     matRad_cfg.dispError('Inconsistent number of gantry and couch angles.');
 end
@@ -51,8 +61,23 @@ end
 
 % find all target voxels from cst cell array
 V = [];
+
+isTarget = cellfun(@(voiType) isequal(voiType,'TARGET'),cst(:,3));
+if ~any(isTarget)
+    matRad_cfg.dispError('No target found in cst. Please designate at least one VOI as ''TARGET''!');
+end
+
+hasObjective = ~cellfun(@isempty,cst(:,6));
+useTargetForBixelPlacement = isTarget & hasObjective;
+
+if ~any(useTargetForBixelPlacement)
+    matRad_cfg.dispWarning('No Objectives / Constraints assigned to targets. All targets will be considered for Bixel placement!');
+    useTargetForBixelPlacement(isTarget) = true;
+end
+
+%Now add all used target voxels to the voxel list
 for i=1:size(cst,1)
-    if isequal(cst{i,3},'TARGET') && ~isempty(cst{i,6})
+    if useTargetForBixelPlacement(i)
         V = [V; cst{i,4}{1}];
     end
 end
