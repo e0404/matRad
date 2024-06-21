@@ -175,7 +175,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
             % Default execution paths are set here
             this.topasFolder = [matRad_cfg.matRadSrcRoot filesep 'doseCalc' filesep 'topas' filesep];
-            this.workingDir = [matRad_cfg.userfolders{1} filesep 'TOPAS' filesep];
+            this.workingDir = [matRad_cfg.primaryUserFolder filesep 'TOPAS' filesep];
 
             if ~exist(this.workingDir,'dir')
                 mkdir(this.workingDir);
@@ -423,7 +423,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             end
             % set nested folder structure if external calculation is turned on (this will put new simulations in subfolders)
             if this.externalCalculation
-                this.workingDir = [matRad_cfg.userfolders{1} filesep 'TOPAS' filesep];
+                this.workingDir = [matRad_cfg.primaryUserFolder filesep 'TOPAS' filesep];
                 this.workingDir = [this.workingDir stf(1).radiationMode,'_',stf(1).machine,'_',datestr(now, 'dd-mm-yy')];
             end
 
@@ -593,11 +593,35 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 % Order fields for easier comparison between different dijs
                 dij = orderfields(dij);
             else
-                dij = [];
+                dij.beamNum = 1;
+                dij.bixelNum = 1;
+                dij.ctGrid = this.ctR.ctGrid;
+                dij.doseGrid = this.doseGrid;                
+                dij.numOfBeams = 1;
+                dij.numOfRaysPerBeam = 1;
+                dij.numOfScenarios = this.multScen.totNumScen;
+                for i = 1:this.multScen.numOfCtScen
+                    for j = 1:this.multScen.totNumShiftScen
+                        for k = 1:this.multScen.totNumRangeScen
+                            if this.multScen.scenMask(i,j,k)
+                                %TODO: loop over all expected output quantities
+                                dij.physicalDose{i,j,k} = zeros(dij.ctGrid.numOfVoxels,1);
+                                dij.physicalDose_std{i,j,k} = zeros(dij.ctGrid.numOfVoxels,1);
+                            end
+
+                        end
+                    end
+                end
+                dij.rayNum = 1;
+                dij.totalNumOfBixels = 1;
+                dij.totalNumOfRays = 1;
             end
+
+            this.finalizeDose()
 
         end
 
+                
         function dij = initDoseCalc(this,ct,cst,stf)
             dij = this.initDoseCalc@DoseEngines.matRad_MonteCarloEngineAbstract(ct,cst,stf);
             matRad_cfg = MatRad_Config.instance();
