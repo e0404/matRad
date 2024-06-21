@@ -422,7 +422,7 @@ classdef matRad_ParetoSliderWidget < matRad_Widget
             slice = round(evalin('base','pln.propStf.isoCenter(1,3)./ct.resolution.z'));
             cubes = matRad_calcFastCubes(w,evalin('base','dij'),evalin('base','pln'));
             
-            matRad_plotSliceWrapper(this.paretoSliceWidgetHandle.DosePlotAxes,evalin('base','ct'),evalin('base','cst'),1,cubes,3,slice);
+            matRad_plotSliceWrapper(this.paretoSliceWidgetHandle.DosePlotAxes,evalin('base','ct'),evalin('base','cst'),1,cubes,3,slice,[],[],[],[],[],[],[],[],[],'LineWidth',2);
         end
 
         function FixButton_callback(this,~,~,idx)
