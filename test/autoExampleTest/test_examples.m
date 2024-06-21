@@ -1,7 +1,6 @@
 function test_suite = test_examples
 
 matRad_cfg = MatRad_Config.instance();
-matRad_cfg.setDefaultPropertiesForTesting();
 
 % supressing the inherent Ocatave warnings for division by zero
 if matRad_cfg.isOctave
@@ -41,7 +40,12 @@ unitTestResolution = matRad_cfg.propDoseCalc.defaultResolution;
 [folders,names,exts] = cellfun(@fileparts,exampleScripts,'UniformOutput',false);
 
 %Create temporary example test folder
-tmpExampleTestFolder = fileparts(mfilename("fullpath"));
+tmpExampleTestFolder = tempdir();
+tmpExampleTestFolder = fullfile(tmpExampleTestFolder,'exampleTest');
+if ~exist(tmpExampleTestFolder,'dir')
+    mkdir(tmpExampleTestFolder);
+end
+addpath(tmpExampleTestFolder);
 newFolders = cell(size(folders));
 [newFolders{:}] = deal(tmpExampleTestFolder);
 
@@ -57,7 +61,7 @@ matRad_unitTestTextManipulation(testScriptFiles,'pln.propStf.longitudinalSpotSpa
 matRad_unitTestTextManipulation(testScriptFiles,'pln.propDoseCalc.resolution.x',['pln.propDoseCalc.resolution.x = ' num2str(unitTestResolution.x)],tmpExampleTestFolder);
 matRad_unitTestTextManipulation(testScriptFiles,'pln.propDoseCalc.resolution.y',['pln.propDoseCalc.resolution.y = ' num2str(unitTestResolution.y)],tmpExampleTestFolder);
 matRad_unitTestTextManipulation(testScriptFiles,'pln.propDoseCalc.resolution.z',['pln.propDoseCalc.resolution.z = ' num2str(unitTestResolution.z)],tmpExampleTestFolder);
-matRad_unitTestTextManipulation(testScriptFiles,'display(','%%%%%%%%%%%%%%% REMOVED DISPLAY FOR TESTING %%%%%%%%%%%%%%');
+matRad_unitTestTextManipulation(testScriptFiles,'display(','%%%%%%%%%%%%%%% REMOVED DISPLAY FOR TESTING %%%%%%%%%%%%%%',tmpExampleTestFolder);
 
 %initTestSuite;
 %We need to manually set up the test_suite to bypass the automatic function
@@ -73,6 +77,12 @@ for testIx = 1:length(testScriptNames)
         mfilename, testfun);
     test_suite=addTest(test_suite, test_case);
     %test_functions{testIx,1} = testfun;
+end
+
+try
+    rmdir(exampleTestFolder,'s');
+catch
+    warning('Could not delete temporary example test folder');
 end
     
 %initTestSuite;

@@ -26,7 +26,7 @@
 % matRad root directory with all its subdirectories is added to the Matlab 
 % search path.
 
-matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
+matRad_cfg = matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
 load('TG119.mat');
 
 %%
@@ -231,4 +231,4 @@ display(qi_coarse(ixOAR).D_95);
 % also store more optional parameters, but requires only the resolution to be s
 % set.
 metadata = struct('resolution',[ct.resolution.x ct.resolution.y ct.resolution.z]);
-matRad_writeCube([pwd filesep 'photonDose_example2.nrrd'],resultGUI.physicalDose,'double',metadata);
+matRad_writeCube(fullfile(matRad_cfg.primaryUserFolder,'photonDose_example2.nrrd'),resultGUI.physicalDose,'double',metadata);

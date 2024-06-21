@@ -149,6 +149,6 @@ matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],[],co
 % the property dicomDir. While the different DICOM datasets (ct, RTStruct, etc) 
 % can be exported individually, we call the wrapper to do all possible exports.
 dcmExport = matRad_DicomExporter();
-dcmExport.dicomDir = [matRad_cfg.userfolders{1} filesep 'dicomExport'];
+dcmExport.dicomDir = [matRad_cfg.primaryUserFolder filesep 'dicomExport'];
 dcmExport.matRad_exportDicom();
 

@@ -213,6 +213,7 @@ classdef matRad_exportWidget < matRad_Widget
                 'FontWeight',matRad_cfg.gui.fontWeight,...
                 'Callback',@this.edit_dir_export_Callback,...
                 'TooltipString', 'Export path',...
+                'String',fullfile(matRad_cfg.primaryUserFolder,'export'),...
                 'Tag','edit_dir_export');
             
             %EXTENSION TEXT
@@ -314,8 +315,11 @@ classdef matRad_exportWidget < matRad_Widget
                 this.showError('No Export folder selected!');
                 return;
             elseif ~exist(exportDir,'dir')
-                this.showError(['Folder ' exportDir ' does not exist!']);
-                return;
+                try 
+                    mkdir(exportDir);
+                catch ME
+                    this.showError(['Folder ' exportDir ' does not exist!'],ME);
+                end
             else
                 %Add file separator if necessary
                 if exportDir(end) ~= filesep
