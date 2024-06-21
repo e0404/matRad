@@ -32,13 +32,17 @@ function cubes = matRad_calcFastCubes(w,dij,pln)
             cubes = reshape(dij.physicalDose{1}*w,dij.doseGrid.dimensions);
         case 'RBExD'
             if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
-                %TODO
-                matRad_cfg.dispError('TODO');
+                %TODO                
+                effect = (dij.mAlphaDose{1} * w + (dij.mSqrtBetaDose{1} * w).^2);
+                ix = dij.bx{1}~=0 & effect(:) > 0;
+                cubes = zeros(dij.doseGrid.dimensions);  
+                cubes(ix) = (sqrt(dij.ax{1}(ix).^2 + 4 .* dij.bx{1}(ix).* effect(ix)) - dij.ax{1}(ix))./(2.*dij.bx{1}(ix));
+
             else
                 cubes = reshape(dij.physicalDose{1}*w,dij.doseGrid.dimensions)*dij.RBE;
             end
         case 'effect'
-            cubes = reshape(full(dij.mAlphaDose{1} * wBeam + (dij.mSqrtBetaDose{1} * wBeam).^2),dij.doseGrid.dimensions);
+            cubes = reshape(full(dij.mAlphaDose{1} * w + (dij.mSqrtBetaDose{1} * w).^2),dij.doseGrid.dimensions);
     end
     cubes = matRad_interp3(dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z, ...
                                      cubes, ...
