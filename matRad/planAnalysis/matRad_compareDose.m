@@ -288,7 +288,7 @@ if enable(3) == 1 && ~isempty(cst)
     dvh2 = matRad_calcDVH(cst,cube2);
     dvhWindow = max([dvh1(1).doseGrid dvh2(1).doseGrid]);
     % Plot DVH
-    disp('Plotting DVH...');
+    matRad_cfg.dispInfo('Plotting DVH...');
     
     hfig.dvh.fig = figure('Renderer', 'painters', 'Position', [10 100 1000 700]);
     set(gcf,'Color',matRad_cfg.gui.backgroundColor);
