@@ -133,7 +133,7 @@ ct_manip.cube{1} = 1.035*ct_manip.cube{1};
 
 %% Recalculate Plan with MC square
 % Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose
-resultGUI_noise = matRad_calcDoseDirect(ct_manip,stf,pln,cst,resultGUI.w);
+resultGUI_noise = matRad_calcDoseForward(ct_manip,cst,stf,pln,resultGUI.w);
 
 %% Recalculate Plan with analytical fine sampling algorithm
 % Again use the existing optimized pencil beam weights and recalculate the 
