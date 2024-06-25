@@ -66,7 +66,12 @@ if ~isempty(fileList)
             end
         catch
             fileList(i,:) = [];
-            matRad_progress(numOfFiles+1-i, numOfFiles);
+            
+            % Show progress
+            if matRad_cfg.logLevel > 2
+                matRad_progress(numOfFiles+1-i, numOfFiles);
+            end
+            
             continue;
         end
         try
@@ -160,7 +165,11 @@ if ~isempty(fileList)
         catch
             fileList{i,13} = {'NaN'};
         end
-        matRad_progress(numOfFiles+1-i, numOfFiles);
+        
+        % Show progress
+        if matRad_cfg.logLevel > 2
+            matRad_progress(numOfFiles+1-i, numOfFiles);
+        end
         
     end
     close(h)

@@ -201,7 +201,11 @@ for i = 1:numel(doseFieldNames)
     
     obj.rtDoseNames{i} = doseFieldNames{i};
     
-    matRad_progress(i,numel(doseFieldNames));
+    % Show progress
+    if matRad_cfg.logLevel > 2
+        matRad_progress(i,numel(doseFieldNames));
+    end
+    
 end
                
 

@@ -169,35 +169,38 @@ if FlagParallToolBoxLicensed
    end
 
 else
-%% perform seriel sampling
-% rough estimate of total computation time
-totCompTime = size(pln.multScen.scenForProb,1) * nomScenTime * 1.1;
-try
-    matRad_cfg.dispInfo(['Approximate Total calculation time: ', num2str(round(totCompTime / 3600)), ...
-        'h. Estimated finish: ', datestr(datetime('now') + seconds(totCompTime)), '\n']);
-catch
-    matRad_cfg.dispInfo(['Approximate Total calculation time: ', num2str(round(totCompTime / 3600)), '\n']);
-end
+    %% perform seriel sampling
+    % rough estimate of total computation time
+    totCompTime = size(pln.multScen.scenForProb,1) * nomScenTime * 1.1;
+    try
+        matRad_cfg.dispInfo(['Approximate Total calculation time: ', num2str(round(totCompTime / 3600)), ...
+            'h. Estimated finish: ', datestr(datetime('now') + seconds(totCompTime)), '\n']);
+    catch
+        matRad_cfg.dispInfo(['Approximate Total calculation time: ', num2str(round(totCompTime / 3600)), '\n']);
+    end
 
     for i = 1:pln.multScen.totNumScen
        
-          % create nominal scenario
-          plnSamp          = pln;
-          plnSamp.multScen = pln.multScen.extractSingleScenario(i);
+        % create nominal scenario
+        plnSamp          = pln;
+        plnSamp.multScen = pln.multScen.extractSingleScenario(i);
+
+        resultSamp                 = matRad_calcDoseDirect(ct,stf,plnSamp,cst,w);
+        sampledDose                = resultSamp.(pln.bioParam.quantityVis)(subIx);
+        mSampDose(:,i)             = single(reshape(sampledDose,[],1));
+        caSampRes(i).bioParam      = pln.bioParam;
+        caSampRes(i).relRangeShift = plnSamp.multScen.relRangeShift;
+        caSampRes(i).absRangeShift = plnSamp.multScen.absRangeShift;
+        caSampRes(i).isoShift      = plnSamp.multScen.isoShift;
+
+        caSampRes(i).dvh = matRad_calcDVH(cst,resultSamp.(pln.bioParam.quantityVis),'cum',dvhPoints);
+        caSampRes(i).qi  = matRad_calcQualityIndicators(cst,pln,resultSamp.(pln.bioParam.quantityVis),refGy,refVol);
           
-          resultSamp                 = matRad_calcDoseDirect(ct,stf,plnSamp,cst,w);
-          sampledDose                = resultSamp.(pln.bioParam.quantityVis)(subIx);
-          mSampDose(:,i)             = single(reshape(sampledDose,[],1));
-          caSampRes(i).bioParam      = pln.bioParam;
-          caSampRes(i).relRangeShift = plnSamp.multScen.relRangeShift;
-          caSampRes(i).absRangeShift = plnSamp.multScen.absRangeShift;
-          caSampRes(i).isoShift      = plnSamp.multScen.isoShift;
-          
-          caSampRes(i).dvh = matRad_calcDVH(cst,resultSamp.(pln.bioParam.quantityVis),'cum',dvhPoints);
-          caSampRes(i).qi  = matRad_calcQualityIndicators(cst,pln,resultSamp.(pln.bioParam.quantityVis),refGy,refVol);
-          matRad_progress(i, pln.multScen.totNumScen)
-    end
-    
+        % Show progress
+        if matRad_cfg.logLevel > 2
+            matRad_progress(i, pln.multScen.totNumScen);
+        end
+    end 
 end
 
 %% add subindices

@@ -90,7 +90,10 @@ for i = 1:numOfSlices
         completeDicom = tmpDicomInfo;
     end
     
-    matRad_progress(i,numOfSlices);
+    % Show progress
+    if matRad_cfg.logLevel > 2
+        matRad_progress(i,numOfSlices);
+    end
 end
 
 % adjusting sequence of slices (filenames may not be ordered propperly....
@@ -169,7 +172,10 @@ for i = 1:numOfSlices
         axis equal tight;
         pause(0.1);
     end
-    matRad_progress(i,numOfSlices);
+    % Show progress
+    if matRad_cfg.logLevel > 2
+        matRad_progress(i,numOfSlices);
+    end
 end
 
 %% correction if not lps-coordinate-system

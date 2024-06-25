@@ -549,7 +549,7 @@ for i = 1:length(pln.propStf.gantryAngles)
     stf(i).totalNumOfBixels = sum(stf(i).numOfBixelsPerRay);
     
     % Show progress
-    if matRad_cfg.logLevel > 1
+    if matRad_cfg.logLevel > 2
         matRad_progress(i,length(pln.propStf.gantryAngles));
     end
     

@@ -15,7 +15,7 @@ function matRad_cfg = matRad_rc(clearWindow)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if nargin < 1
-    clearWindow = true;
+    clearWindow = false;
 end
 
 thisFolder = fileparts(mfilename("fullpath"));

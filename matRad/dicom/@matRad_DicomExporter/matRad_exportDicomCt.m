@@ -139,7 +139,7 @@ for i = 1:nSlices
         
     end
     
-    if matRad_cfg.logLevel >= 2
+    if matRad_cfg.logLevel > 2
         matRad_progress(i,nSlices);
     end
 

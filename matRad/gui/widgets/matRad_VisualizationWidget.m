@@ -89,6 +89,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 set(handles.radiobtnIsoDoseLinesLabels,'Enable','off');
                 set(handles.radioBtnIsoCenter,'Enable','off');
                 set(handles.radiobtnPlan,'Enable','off');
+                set(handles.btn3Dview,'Enable','off');
                 this.handles=handles;
             end
         end
@@ -593,8 +594,23 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 set(handles.popupProfileType,'Value',1);
             end
 
-            set(handles.popupTypeOfPlot,'Enable','on');
-
+            %Check if CT / Cst exists
+            if evalin('base','exist(''ct'') & exist(''cst'')')
+                set(handles.btn3Dview,'Enable','on');
+                set(handles.popupTypeOfPlot,'Enable','on');
+                set(handles.radiobtnCT,'Enable','on');
+                set(handles.radiobtnContour,'Enable','on');
+                set(handles.sliderSlice,'Enable','on');
+                set(handles.popupPlane,'Enable','on');                
+            else
+                set(handles.btn3Dview,'Enable','off');
+                set(handles.popupTypeOfPlot,'Enable','off');
+                set(handles.radiobtnCT,'Enable','off');
+                set(handles.radiobtnContour,'Enable','off');
+                set(handles.sliderSlice,'Enable','off');
+                set(handles.popupPlane,'Enable','off');
+            end
+  
             set(handles.popupTypeOfPlot,'Value',this.viewingWidgetHandle.typeOfPlot);
             set(handles.popupPlane,'Value',this.viewingWidgetHandle.plane);
             set(handles.radiobtnContour,'Value',this.viewingWidgetHandle.plotContour);
@@ -624,17 +640,15 @@ classdef matRad_VisualizationWidget < matRad_Widget
             set(handles.popupDisplayOption,'String',this.viewingWidgetHandle.SelectedDisplayAllOptions);
             if ~strcmp(this.viewingWidgetHandle.SelectedDisplayOption,'')
                 set(handles.popupDisplayOption,'Value',find(strcmp(this.viewingWidgetHandle.SelectedDisplayOption,this.viewingWidgetHandle.SelectedDisplayAllOptions)));
-            end
+            end            
             
             if strcmp(this.viewingWidgetHandle.SelectedDisplayOption,'') % no data is loaded
                 % disable 3D and DVH button
-                set(handles.btn3Dview,'Enable','off');
                 set(handles.btnDVH,'Enable','off');
                 set(handles.radiobtnDose,'Enable','off');
                 set(handles.radiobtnIsoDoseLines,'Enable','off');
                 set(handles.radiobtnIsoDoseLinesLabels,'Enable','off');
             else
-                set(handles.btn3Dview,'Enable','on');
                 
                 if evalin('base','exist(''resultGUI'')')
                     set(handles.btnDVH,'Enable','on');
@@ -680,7 +694,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 set(handles.popupProfileType,'Enable','on');
                 set(handles.btnRecenter, 'Enable','off');
                 set(handles.radioBtnIsoCenter,'Enable','off');
-                set(handles.radiobtnPlan,'Enable','off');
+                set(handles.radiobtnPlan,'Enable','off');                
             end
 
 
