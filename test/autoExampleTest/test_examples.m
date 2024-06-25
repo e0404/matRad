@@ -102,11 +102,13 @@ try
     afterTestVars = evalin('base','who');
     newVars = setdiff(afterTestVars,baseVars);
     evalin('base',['clear ' strjoin(newVars)]);
+    close all;
 catch ME
     %Also clean up the base workspace by cleaning all new variables
     afterTestVars = evalin('base','who');
     newVars = setdiff(afterTestVars,baseVars);
     evalin('base',['clear ' strjoin(newVars)]);
+    close all;
 
     %Now rethrow
     rethrow(ME);
