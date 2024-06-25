@@ -30,7 +30,9 @@ function test_nrrd_basic_writeReadCube
     load TG119.mat
     tmpDir = tempdir();
     tmpDir = [tmpDir filesep 'matRad_test_nrrd' filesep];
-    mkdir(tmpDir)
+    if ~exist(tmpDir,'dir')
+        mkdir(tmpDir);
+    end
 
     tmpFilePath = [tmpDir filesep 'TG119.nrrd'];
     

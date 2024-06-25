@@ -30,7 +30,9 @@ function test_mhd_basic_writeReadCube
     load TG119.mat
     tmpDir = tempdir();
     tmpDir = [tmpDir filesep 'matRad_test_mha' filesep];
-    mkdir(tmpDir)
+    if ~exist(tmpDir,'dir')
+        mkdir(tmpDir);
+    end
 
     tmpFilePath = [tmpDir filesep 'TG119.mhd'];
     
@@ -54,7 +56,9 @@ function test_mha_basic_writeReadCube
     load TG119.mat
     tmpDir = tempdir();
     tmpDir = [tmpDir filesep 'matRad_test_mha' filesep];
-    mkdir(tmpDir)
+    if ~exist(tmpDir,'dir')
+        mkdir(tmpDir);
+    end
 
     tmpFilePath = [tmpDir filesep 'TG119.mha'];
     
