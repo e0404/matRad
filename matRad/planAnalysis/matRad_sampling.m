@@ -1,6 +1,6 @@
 function [caSampRes, mSampDose, pln, resultGUInomScen]  = matRad_sampling(ct,stf,cst,pln,w,structSel,multScen)
 % matRad_randomSampling enables sampling multiple treatment scenarios
-% 
+%
 % call
 %   [cst,pln] = matRad_setPlanUncertainties(ct,cst,pln)
 %
@@ -21,13 +21,13 @@ function [caSampRes, mSampDose, pln, resultGUInomScen]  = matRad_sampling(ct,stf
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2017 the matRad development team. 
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
+% Copyright 2017 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -37,13 +37,13 @@ matRad_cfg = MatRad_Config.instance();
 % save nonSampling pln for nominal scenario calculation and add dummy fields
 plnNominal = pln;
 % create nominal scenario
-plnNominal.multScen = matRad_multScen(ct,'nomScen'); 
+plnNominal.multScen = matRad_multScen(ct,'nomScen');
 
 % check for different ct scenarios
 ctSamp = ct;
 if ct.numOfCtScen > 1
-   matRad_cfg.dispWarning('Sampling for different ct scenarios is not implemented \n');
-   ctSamp.numOfCtScen = 1;
+    matRad_cfg.dispWarning('Sampling for different ct scenarios is not implemented \n');
+    ctSamp.numOfCtScen = 1;
 end
 
 % either use existing multScen struct or create new one
@@ -56,7 +56,7 @@ else
     %pln.multScen.numOfShiftScen = matRad_cfg.defaults.samplingScenarios * ones(3,1);
     %pln.multScen.numOfRangeShiftScen = matRad_cfg.defaults.samplingScenarios;
     %pln.multScen.totNumScen = matRad_cfg.defaults.samplingScenarios; %This yields an error now
-    
+
     pln.multScen = matRad_RandomScenarios(ctSamp);
     pln.multScen.nSamples = matRad_cfg.defaults.samplingScenarios;
 end
@@ -98,7 +98,7 @@ try
     if ~FlagParallToolBoxLicensed
         matRad_cfg.dispWarning('Could not check out parallel computing toolbox. \n');
     end
-    
+
 catch
     FlagParallToolBoxLicensed  = false;
 end
@@ -121,52 +121,61 @@ resultGUInomScen.cst = cst;
 
 %% perform parallel sampling
 if FlagParallToolBoxLicensed
-   % Create parallel pool on cluster
-   p = gcp(); % If no pool, create new one.
-   
-   if isempty(p)
-       poolSize = 1;
-   else
-       poolSize = p.NumWorkers;
-   end
-   % rough estimate of total computation time
-   totCompTime = ceil(size(pln.multScen.scenForProb,1) / poolSize) * nomScenTime * 1.35;
-   matRad_cfg.dispInfo(['Approximate Total calculation time: ', num2str(round(totCompTime / 3600)), ...
-                      'h. Estimated finish: ', datestr(datetime('now') + seconds(totCompTime)), '\n']);
-   
-   if exist('parfor_progress', 'file') == 2
-      FlagParforProgressDisp = true;
-      parfor_progress(pln.multScen.totNumScen);  % http://de.mathworks.com/matlabcentral/fileexchange/32101-progress-monitor--progress-bar--that-works-with-parfor
-   else
-      matRad_cfg.dispInfo('matRad: Consider downloading parfor_progress function from the matlab central fileexchange to get feedback from parfor loop.\n');
-      FlagParforProgressDisp = false;
-   end
-  
-   parfor i = 1:pln.multScen.totNumScen
-          
-          % create nominal scenario
-          plnSamp          = pln;
-          plnSamp.multScen = pln.multScen.extractSingleScenario(i);
-          
-          resultSamp                 = matRad_calcDoseDirect(ct,stf,plnSamp,cst,w);
-          sampledDose                = resultSamp.(pln.bioParam.quantityVis)(subIx);
-          mSampDose(:,i)             = single(reshape(sampledDose,[],1));
-          caSampRes(i).bioParam      = pln.bioParam;
-          caSampRes(i).relRangeShift = plnSamp.multScen.relRangeShift;
-          caSampRes(i).absRangeShift = plnSamp.multScen.absRangeShift;
-          caSampRes(i).isoShift      = plnSamp.multScen.isoShift;
-          
-          caSampRes(i).dvh = matRad_calcDVH(cst,resultSamp.(pln.bioParam.quantityVis),'cum',dvhPoints);
-          caSampRes(i).qi  = matRad_calcQualityIndicators(cst,pln,resultSamp.(pln.bioParam.quantityVis),refGy,refVol);
-          
-          if FlagParforProgressDisp
-            parfor_progress;
-          end
-   end
+    % Create parallel pool on cluster
+    p = gcp(); % If no pool, create new one.
 
-   if FlagParforProgressDisp
-      parfor_progress(0);
-   end
+    if isempty(p)
+        poolSize = 1;
+    else
+        poolSize = p.NumWorkers;
+    end
+
+    %TODO: find a way to manage matRad_Config on a parallel pool
+    logLevel = matRad_cfg.logLevel;
+
+    % rough estimate of total computation time
+    totCompTime = ceil(size(pln.multScen.scenForProb,1) / poolSize) * nomScenTime * 1.35;
+    matRad_cfg.dispInfo(['Approximate Total calculation time: ', num2str(round(totCompTime / 3600)), ...
+        'h. Estimated finish: ', datestr(datetime('now') + seconds(totCompTime)), '\n']);
+
+    if exist('parfor_progress', 'file') == 2 & logLevel > 2
+        FlagParforProgressDisp = true;
+        parfor_progress(pln.multScen.totNumScen);  % http://de.mathworks.com/matlabcentral/fileexchange/32101-progress-monitor--progress-bar--that-works-with-parfor
+    else
+        matRad_cfg.dispInfo('matRad: Consider downloading parfor_progress function from the matlab central fileexchange to get feedback from parfor loop.\n');
+        FlagParforProgressDisp = false;
+    end
+
+    
+
+    parfor i = 1:pln.multScen.totNumScen
+        %TODO: find a way to manage matRad_Config on a parallel pool more easily
+        matRad_cfg_worker = MatRad_Config.instance();
+        matRad_cfg_worker.logLevel = logLevel;
+
+        % create nominal scenario
+        plnSamp          = pln;
+        plnSamp.multScen = pln.multScen.extractSingleScenario(i);
+
+        resultSamp                 = matRad_calcDoseForward(ct,cst,stf,plnSamp,w);
+        sampledDose                = resultSamp.(pln.bioParam.quantityVis)(subIx);
+        mSampDose(:,i)             = single(reshape(sampledDose,[],1));
+        caSampRes(i).bioParam      = pln.bioParam;
+        caSampRes(i).relRangeShift = plnSamp.multScen.relRangeShift;
+        caSampRes(i).absRangeShift = plnSamp.multScen.absRangeShift;
+        caSampRes(i).isoShift      = plnSamp.multScen.isoShift;
+
+        caSampRes(i).dvh = matRad_calcDVH(cst,resultSamp.(pln.bioParam.quantityVis),'cum',dvhPoints);
+        caSampRes(i).qi  = matRad_calcQualityIndicators(cst,pln,resultSamp.(pln.bioParam.quantityVis),refGy,refVol);
+
+        if FlagParforProgressDisp & logLevel > 2
+            parfor_progress;
+        end
+    end
+
+    if FlagParforProgressDisp & logLevel > 2
+        parfor_progress(0);
+    end
 
 else
     %% perform seriel sampling
@@ -180,7 +189,7 @@ else
     end
 
     for i = 1:pln.multScen.totNumScen
-       
+
         % create nominal scenario
         plnSamp          = pln;
         plnSamp.multScen = pln.multScen.extractSingleScenario(i);
@@ -195,12 +204,12 @@ else
 
         caSampRes(i).dvh = matRad_calcDVH(cst,resultSamp.(pln.bioParam.quantityVis),'cum',dvhPoints);
         caSampRes(i).qi  = matRad_calcQualityIndicators(cst,pln,resultSamp.(pln.bioParam.quantityVis),refGy,refVol);
-          
+
         % Show progress
         if matRad_cfg.logLevel > 2
             matRad_progress(i, pln.multScen.totNumScen);
         end
-    end 
+    end
 end
 
 %% add subindices
