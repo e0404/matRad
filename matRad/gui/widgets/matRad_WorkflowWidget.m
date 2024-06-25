@@ -600,7 +600,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     stf(i).isoCenter = pln.propStf.isoCenter(i,:);
                 end
                 
-                resultGUIreCalc = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
+                resultGUIreCalc = matRad_calcDoseForward(ct,cst,stf,pln,resultGUI.w);
                 
                 % delete old variables to avoid confusion
                 if isfield(resultGUI,'effect')

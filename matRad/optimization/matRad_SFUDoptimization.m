@@ -169,7 +169,7 @@ else
 
     matRad_cfg.dispInfo('Calculate total dose...\n');
     % calculate dose
-    resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,wTot);
+    resultGUI = matRad_calcDoseForward(ct,cst,stf,pln,wTot);
     resultGUI.w = wTot;
 end
         

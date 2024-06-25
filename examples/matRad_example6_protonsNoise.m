@@ -164,7 +164,7 @@ pln.propDoseCalc.fineSampling.N = 2;
 % method 'russo' is selected', default is s = 1;
 
 % Direct call for fine sampling dose calculation:
-resultGUI_FS = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
+resultGUI_FS = matRad_calcDoseForward(ct,cst,stf,pln,resultGUI.w);
 
 %%  Visual Comparison of results using the "compareDose" helper function
 matRad_compareDose(resultGUI_noise.RBExD,resultGUI.RBExD,ct,cst);

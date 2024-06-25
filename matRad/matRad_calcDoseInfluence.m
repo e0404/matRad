@@ -7,7 +7,7 @@ function dij = matRad_calcDoseInfluence(ct,cst,stf,pln)
 %
 % input
 %   ct:         ct cube
-%   cst:        matRad cst struct
+%   cst:        matRad cst cell array
 %   stf:        matRad steering information struct
 %   pln:        matRad plan meta information struct
 %

@@ -94,7 +94,7 @@ pln.propDoseCalc.engine = 'MCsquare';
 
 % set number of histories lower than default for this example (default: 1e8)
 pln.propDoseCalc.numHistoriesDirect = 1e6;
-resultGUI_MC = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
+resultGUI_MC = matRad_calcDoseForward(ct,cst,stf,pln,resultGUI.w);
 
 %% Compare Dose
 resultGUI = matRad_appendResultGUI(resultGUI,resultGUI_MC,true,pln.propDoseCalc.engine);
