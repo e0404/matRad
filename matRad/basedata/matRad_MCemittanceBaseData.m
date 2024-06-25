@@ -584,7 +584,7 @@ classdef matRad_MCemittanceBaseData
                 count = count + 1;
             end
             machine = obj.machine;
-            machineFilePath = fullfile(obj.matRad_cfg.userfolders{1},'machines',[machineName '.mat']);
+            machineFilePath = fullfile(obj.matRad_cfg.primaryUserFolder,'machines',[machineName '.mat']);
 
             save('-v7',machineFilePath,'machine');
             obj.matRad_cfg.dispInfo('Saved Emittance to temporary matRad base data in %s\n',machineFilePath);

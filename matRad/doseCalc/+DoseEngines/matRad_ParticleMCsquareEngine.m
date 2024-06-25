@@ -26,6 +26,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
     properties
         config;             %Holds an instance of all configurable parameters (matRad_MCsquareConfig)
         MCsquareFolder;     %Folder to the MCsquare installation
+        workingDir;         %Working directory for simulation
         forceBDL = [];      %Specify an existing BDL file to load
 
         %Other Dose Calculation Properties
@@ -96,7 +97,8 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
             %Set Default MCsquare path
             %Set folder
-            this.MCsquareFolder = [matRad_cfg.matRadRoot filesep 'thirdParty' filesep 'MCsquare' filesep 'bin'];
+            this.workingDir     = fullfile(matRad_cfg.primaryUserFolder,'MCsquare');
+            this.MCsquareFolder = fullfile(matRad_cfg.matRadRoot,'thirdParty','MCsquare','bin');
         end
     end
     
@@ -160,7 +162,13 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                 MCsquareBDL = matRad_MCsquareBaseData(this.machine);
 
                 %matRad_createMCsquareBaseDataFile(bdFile,machine,1);
-                MCsquareBDL = MCsquareBDL.writeMCsquareData([this.MCsquareFolder filesep 'BDL' filesep bdFile]);
+                bdlFolder = fullfile(this.workingDir,'BDL');
+                if ~exist(bdlFolder,'dir')
+                    mkdir(bdlFolder);
+                end
+                bdFile = fullfile(bdlFolder,bdFile);
+
+                MCsquareBDL = MCsquareBDL.writeMCsquareData(bdFile);
                 MCsquareBDL = MCsquareBDL.saveMatradMachine('savedMatRadMachine');
 
             end
@@ -182,15 +190,47 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             % set absolute calibration factor
             % convert from eV/g/primary to Gy 1e6 primaries
             absCalibrationFactorMC2 = 1.602176e-19 * 1.0e+9;
+            
+            MCsquareConfigFile = fullfile(this.workingDir,'MCsquareConfig.txt');
+            plnFile = fullfile(this.workingDir,'currBixels.txt');
+            ctFile = fullfile(this.workingDir,'MC2patientCT.mhd');
+            outputDir = fullfile(this.workingDir,'output');
+            HU_Density_Conversion_File	= fullfile(this.MCsquareFolder,'Scanners','matRad_default','HU_Density_Conversion.txt');	% Name of the file containing HU to density conversion data. Default: HU_Density_Conversion.txt
+            HU_Material_Conversion_File	= fullfile(this.MCsquareFolder,'Scanners','matRad_default','HU_Material_Conversion.txt');	% Name of the filecontaining HU to material conversion data. Default: HU_Material_Conversion.txt
+            
 
+            %Format paths to always have slashes
+            if isequal(filesep,'\')
+                bdFileWrite = strrep(bdFile,'\','/');
+                plnFileWrite = strrep(plnFile,'\','/');
+                ctFileWrite = strrep(ctFile,'\','/');
+                MCsquareConfigFileWrite = strrep(MCsquareConfigFile,'\','/');
+                outputDirWrite = strrep(outputDir,'\','/');
+                HU_Density_Conversion_File_write = strrep(HU_Density_Conversion_File,'\','/');
+                HU_Material_Conversion_File_write = strrep(HU_Material_Conversion_File,'\','/');
+            else
+                bdFileWrite = bdFile;
+                plnFileWrite = plnFile;
+                ctFileWrite = ctFile;
+                MCsquareConfigFileWrite = MCsquareConfigFile;
+                outputDirWrite = outputDir;
+                HU_Density_Conversion_File_write = HU_Density_Conversion_File;
+                HU_Material_Conversion_File_write = HU_Material_Conversion_File;
+            end
+
+            
+            
 
             % MCsquare settings
-            MCsquareConfigFile = 'MCsquareConfig.txt';
+            MCsquareConfigFile = MCsquareConfigFileWrite;
 
-            this.config.BDL_Plan_File = 'currBixels.txt'; 
-            this.config.BDL_Machine_Parameter_File = ['BDL/' bdFile];
+            this.config.BDL_Plan_File = plnFileWrite; 
+            this.config.BDL_Machine_Parameter_File = bdFileWrite;
+            this.config.Output_Directory = outputDirWrite;
+            this.config.HU_Density_Conversion_File = HU_Density_Conversion_File_write;
+            this.config.HU_Material_Conversion_File = HU_Material_Conversion_File_write;
 
-            this.config.CT_File       = 'MC2patientCT.mhd';
+            this.config.CT_File       = ctFileWrite;
             this.config.Num_Threads   = this.nbThreads;
             this.config.RNG_Seed      = 1234;
             if this.calcDoseDirect 
@@ -770,12 +810,13 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             fprintf(fileHandle,'ElementSpacing = %f %f %f\n',resolution);
             fprintf(fileHandle,'DimSize = %d %d %d\n',size(cube,2),size(cube,1),size(cube,3));
             fprintf(fileHandle,'ElementType = MET_DOUBLE\n');
-            filenameRaw = [obj.config.CT_File(1:end-4) '.raw'];
+            [fPath,fName,~] = fileparts(obj.config.CT_File);
+            filenameRaw = [fName '.raw'];
             fprintf(fileHandle,'ElementDataFile = %s\n',filenameRaw);
-
             fclose(fileHandle);
 
             %% write data file
+            filenameRaw = fullfile(fPath,filenameRaw);
             dataFileHandle = fopen(filenameRaw,'w');
 
             cube = flip(cube,2);
