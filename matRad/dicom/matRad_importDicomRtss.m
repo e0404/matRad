@@ -32,12 +32,14 @@ function structures = matRad_importDicomRtss(filename,dicomInfo,visBool)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-fprintf('\nReading structures...');
+matRad_cfg = MatRad_Config.instance();
+
+matRad_cfg.dispInfo('\nReading structures...');
 
 if nargin < 3
     visBool = 0;
 end
-matRad_cfg = MatRad_Config.instance();
+
 matRad_checkEnvDicomRequirements(matRad_cfg.env);
 
 
@@ -148,7 +150,7 @@ if visBool
     legend('show')
 end
 
-fprintf('finished!\n');
+matRad_cfg.dispInfo('finished!\n');
 
 
 end

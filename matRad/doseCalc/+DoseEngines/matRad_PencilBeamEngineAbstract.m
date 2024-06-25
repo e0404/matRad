@@ -310,7 +310,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             matRad_cfg.dispInfo('done.\n');
            
             %Reinitialize Progress:
-            matRad_progress(1,1000);
+            %matRad_progress(1,1000);
         end
         
         function radDepthVdoseGrid = interpRadDepth(~,ct,ctScen,V,Vcoarse,ctGrid,doseGrid,radDepthVctGrid)                        

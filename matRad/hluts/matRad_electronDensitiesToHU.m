@@ -58,5 +58,6 @@ if isequal(hlut(:,2),unique(hlut(:,2))) && isequal(hlut(:,1),unique(hlut(:,1)))
     end
     
 else
-    fprintf('Reconversion of HU values could not be done because HLUT is not bijective.\n');
+    matRad_cfg = MatRad_Config.instance();
+    matRad_cfg.dispInfo('Reconversion of HU values could not be done because HLUT is not bijective.\n');
 end

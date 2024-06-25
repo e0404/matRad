@@ -56,11 +56,11 @@ testScripts = cellfun(@fullfile,newFolders,testScriptFiles,'UniformOutput',false
 
 status = cellfun(@copyfile,exampleScripts,testScripts);
 
-matRad_unitTestTextManipulation(testScriptFiles,'pln.propStf.bixelWidth',['pln.propStf.bixelWidth = ' num2str(unitTestBixelWidth)],tmpExampleTestFolder);
-matRad_unitTestTextManipulation(testScriptFiles,'pln.propStf.longitudinalSpotSpacing',['pln.propStf.longitudinalSpotSpacing = ' num2str(unitTestSpotSpacing)],tmpExampleTestFolder);
-matRad_unitTestTextManipulation(testScriptFiles,'pln.propDoseCalc.resolution.x',['pln.propDoseCalc.resolution.x = ' num2str(unitTestResolution.x)],tmpExampleTestFolder);
-matRad_unitTestTextManipulation(testScriptFiles,'pln.propDoseCalc.resolution.y',['pln.propDoseCalc.resolution.y = ' num2str(unitTestResolution.y)],tmpExampleTestFolder);
-matRad_unitTestTextManipulation(testScriptFiles,'pln.propDoseCalc.resolution.z',['pln.propDoseCalc.resolution.z = ' num2str(unitTestResolution.z)],tmpExampleTestFolder);
+matRad_unitTestTextManipulation(testScriptFiles,'pln.propStf.bixelWidth',['pln.propStf.bixelWidth = ' num2str(unitTestBixelWidth) ';'],tmpExampleTestFolder);
+matRad_unitTestTextManipulation(testScriptFiles,'pln.propStf.longitudinalSpotSpacing',['pln.propStf.longitudinalSpotSpacing = ' num2str(unitTestSpotSpacing) ';'],tmpExampleTestFolder);
+matRad_unitTestTextManipulation(testScriptFiles,'pln.propDoseCalc.resolution.x',['pln.propDoseCalc.resolution.x = ' num2str(unitTestResolution.x) ';'],tmpExampleTestFolder);
+matRad_unitTestTextManipulation(testScriptFiles,'pln.propDoseCalc.resolution.y',['pln.propDoseCalc.resolution.y = ' num2str(unitTestResolution.y) ';'],tmpExampleTestFolder);
+matRad_unitTestTextManipulation(testScriptFiles,'pln.propDoseCalc.resolution.z',['pln.propDoseCalc.resolution.z = ' num2str(unitTestResolution.z) ';'],tmpExampleTestFolder);
 matRad_unitTestTextManipulation(testScriptFiles,'display(','%%%%%%%%%%%%%%% REMOVED DISPLAY FOR TESTING %%%%%%%%%%%%%%',tmpExampleTestFolder);
 
 %initTestSuite;

@@ -242,7 +242,8 @@ classdef matRad_DicomExporter < handle
                 end
                 
                 if displayBool
-                    fprintf('No value set for ''%s'', using default value ''%s''\n',fn,default);
+                    matRad_cfg = MatRad_Config.instance();
+                    matRad_cfg.dispInfo('No value set for ''%s'', using default value ''%s''\n',fn,default);
                 end
             end
         end

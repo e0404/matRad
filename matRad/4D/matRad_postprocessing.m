@@ -30,6 +30,8 @@ function resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+
 round2 = @(a,b)round(a*10^b)/10^b;
  
 if strcmp(pln.radiationMode,'protons')
@@ -39,7 +41,7 @@ elseif strcmp(pln.radiationMode,'carbon')
      Imin = 15000/1e6;   
      minNrParticlesIES = 0;
 else
-    error('postprocessing only implemented for proton and carbon ion therapy')
+    matRad_cfg.dispError('postprocessing only implemented for proton and carbon ion therapy')
 end
 
 % remember old solution
@@ -69,7 +71,7 @@ else
 end
 
 if relIntDoseDif ~= 0
-    fprintf(['Relative difference in integral dose after deleting spots: ' num2str(relIntDoseDif) '%%\n']);
+    matRad_cfg.dispInfo('Relative difference in integral dose after deleting spots: %f %%\n',relIntDoseDif);
 end
 
 %% delete IES with less than XXX particles
@@ -107,7 +109,7 @@ if(minNrParticlesIES ~= 0)
             end % ray
             
             if(numParticlesIES < minNrParticlesIES && ~isempty(bixelsIES))  % not enough particles in IES, all spots are deleted
-                fprintf(['IES ' num2str(iesEnergy) ' in beam ' num2str(i) ' deleted\n']);
+                matRad_cfg.dispInfo("IES %f in beam %d deleted\n", iesEnergy, i);
                 resultGUI.w(bixelsIES) = 0;
             end              
                 
@@ -127,7 +129,7 @@ if(minNrParticlesIES ~= 0)
     end
 
     if relIntDoseDif ~= 0
-        fprintf(['Relative difference in integral dose after deleting IES: ' num2str(relIntDoseDif) '%%\n']);
+        matRad_cfg.dispInfo('Relative difference in integral dose after deleting IES: %f %%\n',relIntDoseDif);
     end
 
 end                        

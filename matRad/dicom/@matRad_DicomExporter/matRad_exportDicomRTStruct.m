@@ -111,7 +111,7 @@ obj.cst = matRad_computeVoiContoursWrapper(obj.cst,ct);
 
 for i = 1:size(obj.cst,1)
    
-    fprintf('Processinging VOI ''%s''...',obj.cst{i,2});
+    matRad_cfg.dispInfo('Processinging VOI ''%s''...',obj.cst{i,2});
    %Select contours in axial slices
     contours        = obj.cst{i,7}{obj.exportScenario}(:,3);
     contourSliceIx  = find(~cellfun(@isempty,contours));    
@@ -197,20 +197,20 @@ for i = 1:size(obj.cst,1)
     if strcmp(obj.cst{i,3},'TARGET')
         if ~isempty(regexpi(obj.cst{i,2},['(' strjoin(obj.targetPtvDict) ')']))
             RTROIObservationsSequenceItem.RTROIInterpretedType = 'PTV';
-            fprintf('identified target type as PTV...');
+            matRad_cfg.dispInfo('identified target type as PTV...');
         elseif ~isempty(regexpi(obj.cst{i,2},['(' strjoin(obj.targetGtvDict) ')']))
             RTROIObservationsSequenceItem.RTROIInterpretedType = 'GTV';
-            fprintf('identified target type as GTV...');
+            matRad_cfg.dispInfo('identified target type as GTV...');
         elseif ~isempty(regexpi(obj.cst{i,2},['(' strjoin(obj.targetGtvDict) ')']))
             RTROIObservationsSequenceItem.RTROIInterpretedType = 'CTV';
-            fprintf('identified target type as CTV...');
+            matRad_cfg.dispInfo('identified target type as CTV...');
         else
             RTROIObservationsSequenceItem.RTROIInterpretedType = 'CTV';
-            fprintf('Defaulting target type to CTV...');
+            matRad_cfg.dispInfo('Defaulting target type to CTV...');
         end
     else
         if ~isempty(regexpi(obj.cst{i,2},['(' strjoin(obj.externalContourDict) ')']))
-            fprintf('automatically identified as External Contour...');
+            matRad_cfg.dispInfo('automatically identified as External Contour...');
             RTROIObservationsSequenceItem.RTROIInterpretedType = 'EXTERNAL';
         else
             RTROIObservationsSequenceItem.RTROIInterpretedType = 'AVOIDANCE';
@@ -221,7 +221,7 @@ for i = 1:size(obj.cst,1)
 
     meta.RTROIObservationsSequence.(['Item_' num2str(i)]) = RTROIObservationsSequenceItem;
     
-    fprintf('Done!\n');
+    matRad_cfg.dispInfo('Done!\n');
     %matRad_progress(i,size(obj.cst,1));
 end
 

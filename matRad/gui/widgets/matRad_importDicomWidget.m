@@ -275,7 +275,8 @@ classdef matRad_importDicomWidget < matRad_Widget
                 set(handles.doseseries_listbox,'String',handles.fileList(strcmp(handles.fileList(:,2), 'RTDOSE') & strcmp(handles.fileList(:,3), selected_patient),4));
                 set(handles.rtplan_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'RTPLAN') & strcmp(handles.fileList(:,3), selected_patient),4)));
             else
-                fprintf('No patient loaded, so just switching default display option to SeriesUID. \n');
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispInfo('No patient loaded, so just switching default display option to SeriesUID. \n');
             end
             %guidata(hObject, handles);
             this.handles = handles;
@@ -298,7 +299,8 @@ classdef matRad_importDicomWidget < matRad_Widget
                 set(handles.ctseries_listbox,'String',unique(cell2mat(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),5))));
                 
             else
-                fprintf('No patient loaded, so just switching default display option to SeriesNumber. \n');
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispInfo('No patient loaded, so just switching default display option to SeriesNumber. \n');
             end
             % guidata(hObject, handles);
             this.handles = handles;

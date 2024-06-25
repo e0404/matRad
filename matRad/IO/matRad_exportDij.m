@@ -212,7 +212,7 @@ catch MExc
     end
 end
 
-fprintf(1,'Dij exported successfully into %s.\n',strcat(folderPath,filename,'.',metadata.extension));
+matRad_cfg.dispInfo('Dij exported successfully into %s.\n',strcat(folderPath,filename,'.',metadata.extension));
 
 %Used to add comments to the header
     function newHeader = header_addComment(header,comment)

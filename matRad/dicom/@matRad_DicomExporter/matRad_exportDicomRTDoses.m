@@ -21,7 +21,7 @@ function obj = matRad_exportDicomRTDoses(obj)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
- matRad_cfg = MatRad_Config.instance();
+matRad_cfg = MatRad_Config.instance();
 matRad_cfg.dispInfo('Exporting DICOM RTDose...\n');
 
 if matRad_cfg.isOctave
@@ -144,7 +144,7 @@ for i = 1:numel(doseFieldNames)
     elseif strncmp(doseName,'RBExDose',8)
         doseType = 'EFFECTIVE';
     else
-        fprintf('Dose Cube ''%s'' of unknown type for DICOM. Not exported!\n',doseName);
+        matRad_cfg.dispInfo('Dose Cube ''%s'' of unknown type for DICOM. Not exported!\n',doseName);
         continue;
     end
     
@@ -164,7 +164,7 @@ for i = 1:numel(doseFieldNames)
     maxDose = max(doseCube(:));
     
     if minDose < 0
-        fprintf('Dose Cube ''%s'' has negative values. Not exported!\n',doseName);
+        matRad_cfg.dispInfo('Dose Cube ''%s'' has negative values. Not exported!\n',doseName);
         continue;
     end
     

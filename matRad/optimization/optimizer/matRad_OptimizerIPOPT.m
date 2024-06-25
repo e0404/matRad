@@ -163,7 +163,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
                         
                             % set Key Pressed Callback of Matlab command window
                             set(h_cw, 'KeyPressedCallback', @(h,event) obj.abortCallbackKey(h,event));
-                            fprintf('Press q to terminate the optimization...\n');
+                            matRad_cfg.dispInfo('Press q to terminate the optimization...\n');
                             qCallbackSet = true;
                         catch
                             matRad_cfg.dispInfo('Manual termination with q not possible due to failing callback setup.\n');

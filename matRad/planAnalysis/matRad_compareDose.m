@@ -156,7 +156,7 @@ if enable(1) == 1
     end
     
     for plane = 1:3
-        disp(['Plotting ',planename{plane},' plane...']);
+        matRad_cfg.dispInfo('Plotting %s plane...\n',planename{plane});
         
         % Initialize Figure
         hfig.(planename{plane}).('fig') = figure('Renderer', 'painters', 'Position', [10 50 800 800]);

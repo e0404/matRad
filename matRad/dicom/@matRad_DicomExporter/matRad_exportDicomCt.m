@@ -137,9 +137,11 @@ for i = 1:nSlices
         obj.ctSliceMetas(i).SOPInstanceUID              = tmpInfo.SOPInstanceUID;
         obj.ctSliceMetas(i).MediaStorageSOPInstanceUID  = tmpInfo.MediaStorageSOPInstanceUID;        
         
-    end   
-
-    matRad_progress(i,nSlices);
+    end
+    
+    if matRad_cfg.logLevel >= 2
+        matRad_progress(i,nSlices);
+    end
 
 end
 

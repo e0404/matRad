@@ -246,20 +246,41 @@ classdef (Abstract) matRad_DoseEngineBase < handle
 
     
         function progressUpdate(this,pos,total)
+            % This function updates the progress of the dose calculation process.
+            % It can handle both absolute and relative progress updates.
+            % If only one argument is provided, it assumes a relative progress
+            % update from 0 to 1000. If two arguments are provided, it uses the
+            % actual values to calculate the progress percentage.
+            
+            % Default total value handling
             if nargin < 3
-                pos = pos*1000;
-                total=1000;
+                pos = pos*1000; % Assume pos is a relative progress if total is not provided
+                total=1000; % Set default total value
             end
             
+            % Throttle progress updates to not overload the UI or log
+            % Only update if the last update was more than 0.1 seconds ago
+            % This prevents excessive updates that could slow down the calculation
             if pos ~= total && toc(this.lastProgressUpdate) < 1e-1
-                return;
-            end
-
-            matRad_progress(pos,total);
-            if any(ishandle(this.hWaitbar))
-                waitbar(pos/total,this.hWaitbar);
+                return; % Skip the update if it's too soon
             end
             
+            % Get the global configuration instance
+            matRad_cfg = MatRad_Config.instance();
+            
+            % Log progress if the log level is high enough
+            % This allows for detailed tracking of the calculation progress in logs
+            if matRad_cfg.logLevel > 2
+                matRad_progress(pos,total); % Log the progress
+            end
+            
+            % Update the waitbar with the current progress if it exists
+            % This provides a visual feedback of the calculation progress to the user
+            if any(ishandle(this.hWaitbar))
+                waitbar(pos/total,this.hWaitbar); % Update the waitbar
+            end
+            
+            % Reset the timer for the next progress update
             this.lastProgressUpdate = tic;
         end
     end
