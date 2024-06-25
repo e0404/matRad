@@ -35,7 +35,7 @@ function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w,nHistories)
     
     
     matRad_cfg =  MatRad_Config.instance();
-    matRad_cfg.dispDeprecationWarning('This function is deprecated. Please use matRad_calcDoeDirect with appropriate engine set in pln.propDoseCalc.');
+    matRad_cfg.dispDeprecationWarning('This function is deprecated. Please use matRad_calcDoseForward with appropriate engine set in pln.propDoseCalc.');
     
     % dose calculation
     switch pln.radiationMode
