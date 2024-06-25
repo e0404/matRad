@@ -36,33 +36,35 @@ function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if isfield(resultGUI,'RBExD')
-    doseCube = resultGUI.RBExD;
-else
-    doseCube = resultGUI.physicalDose;
-end
-
-if ~exist('refVol', 'var') 
-    refVol = [];
-end
-
-if ~exist('refGy', 'var')
-    refGy = [];
-end
-
-dvh = matRad_calcDVH(cst,doseCube,'cum');
-qi  = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol);
-
-
+% Initialize the matRad configuration instance
 matRad_cfg = MatRad_Config.instance();
-hF = figure('Color',matRad_cfg.gui.backgroundColor);
+% Display a deprecation warning for the current function
+matRad_cfg.dispDeprecationWarning('The matRad_indicatorWrapper function will be deprecated soon!\nPlan analysis is now handled by matRad_planAnalysis!');
 
-subplotHandle1 = subplot(2,1,1);
-matRad_showDVH(subplotHandle1,dvh,cst,pln);
-subplotHandle2 = subplot(2,1,2);
-ixVoi = cellfun(@(c) c.Visible == 1,cst(:,5));
-qi = qi(ixVoi);
-matRad_showQualityIndicators(subplotHandle2,qi);
+% Initialize an empty cell array for optional arguments to translate the into key-value pairs
+args = {};
+% Check if 'refVol' variable exists and add it to the arguments if it does
+if exist('refVol', 'var') 
+    args{end+1,end+2} = {'refVol',refVol};
+end
+
+% Check if 'refGy' variable exists and add it to the arguments if it does
+if exist('refGy', 'var')
+    args{end+1,end+2} = {'refGy',refGy};
+end
+
+% Initialize empty structures for ct and stf, required for matRad_planAnalysis
+ct = struct();
+stf = struct();
+
+% Call the matRad_planAnalysis function with the prepared arguments
+resultGUI = matRad_planAnalysis(resultGUI,ct,cst,stf,pln,args{:});
+
+%Get the return arguments
+dvh = resultGUI.dvh;
+qi = resultGUI.qi;
+
+end
 
 
 

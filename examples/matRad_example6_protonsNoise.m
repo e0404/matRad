@@ -91,9 +91,9 @@ dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Calculate quality indicators 
-[dvh,qi]       = matRad_indicatorWrapper(cst,pln,resultGUI);
+resultGUI = matRad_planAnalysis(resultGUI,ct,cst,stf,pln);
 ixRectum       = 1;
-display(qi(ixRectum).D_5);
+display(resultGUI.qi(ixRectum).D_5);
 
 %%
 % Let's change the optimization parameter of the rectum in such a way that it
@@ -109,9 +109,9 @@ cst{ixRectum,6}{1} = struct(objective); % We put it back as struct for storage &
 cst{ixRectum,6}{1}.parameters{1} = 40;  % Change the reference dose
 cst{ixRectum,6}{1}.penalty = 500; % Change the penalty
 resultGUI               = matRad_fluenceOptimization(dij,cst,pln);
-[dvh2,qi2]              = matRad_indicatorWrapper(cst,pln,resultGUI);
+resultGUI = matRad_planAnalysis(resultGUI,ct,cst,stf,pln);
 
-display(qi2(ixRectum).D_5);
+display(resultGUI.qi(ixRectum).D_5);
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
