@@ -488,142 +488,19 @@ classdef MatRad_Config < handle
                 if ismember(currField,standardFields)
                     % Get defaults for standard fields that can easily be read from set default values
                     if ~isfield(pln,currField)
-                        pln.(currField) = struct();
-                    end
-
-                    fnames = fieldnames(obj.(currField));
-                    for f = 1:length(fnames)
-                        if ~isempty(strfind(fnames{f},'default'))
-                            cutName = [lower(fnames{f}(8)) fnames{f}(9:end)];
-                            if ~isfield(pln.(currField),cutName)
-                                pln.(currField).(cutName) = obj.(currField).(fnames{f});
-                            end
-                        else
-                            if ~isfield(pln.(currField),fnames{f})
-                                pln.(currField).(fnames{f}) = struct();
-                            end
-                            subfields = fieldnames(obj.(currField).(fnames{f}));
-                            for s = 1:length(subfields)
-                                if ~isempty(strfind(subfields{s},'default'))
-                                    if length(subfields{s})==8
-                                        cutName = [subfields{s}(8)];
-                                    else
-                                        cutName = [lower(subfields{s}(8)) subfields{s}(9:end)];
-                                    end
-                                    if ~isfield(pln.(currField).(fnames{f}),cutName)
-                                        pln.(currField).(fnames{f}).(cutName) = obj.(currField).(fnames{f}).(subfields{s});
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-
-        function pln = getDefaultClass(obj,pln,propName,configName)
-            % load config from pln or from class
-            if (isfield(pln,propName) && isstruct(pln.(propName)) && nargin < 4) || (~isfield(pln,propName) && nargin < 4)%if there is no config found
-                switch propName
-                    case 'propMC'
-                        if isfield(pln,'propMC') && strcmp(propName,'propMC') && isfield(pln.propMC,'engine')
-                            switch pln.propMC.engine
-                                case 'ompMC'
-                                    configName = 'matRad_OmpConfig';
-                                case 'TOPAS'
-                                    configName = 'matRad_TopasConfig';
-                                case 'MCsquare'
-                                    configName = 'matRad_MCsquareConfig';
-                            end
-                            pln.propMC = rmfield(pln.propMC,'engine');
-                        else
-                            if isfield(pln,'radiationMode') && ~isempty(pln.radiationMode)
-                                switch pln.radiationMode
-                                    case 'photons'
-                                        configName = obj.propMC.default_photon_engine;
-                                    case 'protons'
-                                        configName = obj.propMC.default_proton_engine;
-                                    otherwise
-                                        configName = obj.propMC.default_carbon_engine;
-                                end
-                            end
-                        end
-                    otherwise
-                        obj.dispError('Config for ''%s'' not implemented',configName);
-                end
-            elseif nargin == 4
-
-            elseif nargin < 4 && ~isstruct(pln.(propName))
-                % get config name from input field
-                configName = class(pln.(propName));
-            else
-                obj.dispError('Error in default clasee');
-            end
-
-            if ~isfield(pln,propName)
-                pln.(propName) = struct();
-            end
-            %Overwrite parameters
-            %mc = metaclass(topasConfig); %get metaclass information to check if we can overwrite properties
-            if isstruct(pln.(propName))
-                % Load configs
-                switch configName
-                    case 'matRad_OmpConfig'
-                        config = matRad_OmpConfig();
-                        pln.propMC.engine = 'ompMC';
-                    case 'matRad_TopasConfig'
-                        config = matRad_TopasConfig();
-                        pln.propMC.engine = 'TOPAS';
-                    case 'matRad_MCsquareConfig'
-                        config = matRad_MCsquareConfig();
-                        pln.propMC.engine = 'MCsquare';
-                    case 'matRad_HeterogeneityConfig'
-                        config = matRad_HeterogeneityConfig;
-                end
-
-                props = fieldnames(pln.(propName));
-                for fIx = 1:numel(props)
-                    fName = props{fIx};
-                    if isprop(config,fName)
-                        if isstruct(pln.(propName).(fName))
-                            SubProps = fieldnames(pln.(propName).(fName));
-                            for SubfIx = 1:numel(SubProps)
-                                subfName = SubProps{SubfIx};
-                                if isfield(config.(fName),subfName)
-                                    %We use a try catch block to catch errors when trying
-                                    %to overwrite protected/private properties instead of a
-                                    %metaclass approach
-                                    try
-                                        config.(fName).(subfName) = pln.(propName).(fName).(subfName);
-                                    catch
-                                        obj.dispWarning(['Property ''%s'' for ' configName ' will be omitted due to protected/private access or invalid value.'],fName);
-                                    end
-                                else
-                                    obj.dispWarning(['Unkown property ''%s'' for ' configName ' will be omitted.'],fName);
-                                end
-                            end
-                        else
-                            %We use a try catch block to catch errors when trying
-                            %to overwrite protected/private properties instead of a
-                            %metaclass approach
-                            try
-                                config.(fName) = pln.(propName).(fName);
-                            catch
-                                obj.dispWarning(['Property ''%s'' for ' class(config) ' will be omitted due to protected/private access or invalid value.'],fName);
-                            end
-                        end
+                        pln.(currField) = obj.defaults.(currField);
                     else
-                        obj.dispWarning(['Unkown property ''%s'' for ' class(config) ' will be omitted.'],fName);
+                        if ~isfield(pln.(currField),fnames{f})
+                            subfields = fieldnames(obj.defaults.(currField).(fnames{f}));
+                            for s = 1:length(subfields)
+                                if ~isfield(pln.(currField).(fnames{f}),subfields{s})
+                                    pln.(currField).(fnames{f}).(subfields{s}) = obj.defaults.(currField).(fnames{f}).(subfields{s});
+                                end
+                            end
+                        end
                     end
                 end
-
-                % Write config to pln
-                pln.(propName) = config;
             end
-
-            % Send info to console
-            obj.dispInfo(['Class ' class(pln.(propName)) ' has been loaded to pln.' propName '!\n']);
-
         end
 
         function configureEnvironment(obj)

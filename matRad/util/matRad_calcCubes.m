@@ -147,6 +147,12 @@ elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'alpha')), fieldna
     end
 end
 
+%add some dij meta
+if isfield(dij,'meta') && isstruct(dij.meta)
+    resultGUI.meta = dij.meta;
+end
+
+
 %% Final processing
 % Remove suffix for RBExD if there's only one available
 if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'alpha')), fieldnames(dij))) && isfield(dij,'RBE_models') && length(dij.RBE_models) == 1
@@ -180,6 +186,7 @@ if isfield(dij,'ctGrid') && any(dij.ctGrid.dimensions~=dij.doseGrid.dimensions)
         end
     end
 end
+
 
 end
 

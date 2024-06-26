@@ -36,7 +36,8 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         topasExecCommand; %Defaults will be set during construction according to TOPAS installation instructions and used system
 
         parallelRuns = false; %Starts runs in parallel
-        externalCalculation = false; %Generates folder for external TOPAS calculation (e.g. on a server)
+        
+        externalCalculation = 'off'; %Generates folder for external TOPAS calculation (e.g. on a server)
 
         workingDir; %working directory for the simulation
 
@@ -389,7 +390,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             %             end
         end
 
-        function resultGUI = readExternal(obj,folder)
+        function dij = readExternal(obj,folder)
             % function to read out complete TOPAS simulation from single folder
             %
             % call
@@ -409,7 +410,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             dij = obj.readFiles(folder);
 
             % Postprocessing
-            resultGUI = obj.getResultGUI(dij);
+            %resultGUI = obj.getResultGUI(dij);
 
         end
     end
@@ -425,10 +426,15 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 this.numOfRuns = 1;
             end
             % set nested folder structure if external calculation is turned on (this will put new simulations in subfolders)
-            if this.externalCalculation
+            if strcmp(this.externalCalculation,'write')
                 this.workingDir = [matRad_cfg.primaryUserFolder filesep 'TOPAS' filesep];
                 this.workingDir = [this.workingDir stf(1).radiationMode,'_',stf(1).machine,'_',datestr(now, 'dd-mm-yy')];
+            elseif isfolder(this.externalCalculation)
+                dij = this.readExternal(this.externalCalculation);
+                return;
+            else
             end
+                
 
             %% Initialize dose grid and dij
 
@@ -521,7 +527,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 % Skip local calculation and data readout with this parameter. All necessary parameters to read the data back in
                 % later are stored in the MCparam file that is stored in the folder. The folder is generated in the working
                 % directory and the matRad_plan*.txt file can be manually called with TOPAS.
-                if this.externalCalculation
+                if strcmp(this.externalCalculation,'write')
                     matRad_cfg.dispInfo(['TOPAS simulation skipped for external calculation\nFiles have been written to: "',replace(this.workingDir,'\','\\'),'"']);
                 else
                     for ctScen = 1:ct.numOfCtScen
@@ -590,7 +596,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
             %% Simulation(s) finished - read out volume scorers from topas simulation
             % Skip readout if external files were generated
-            if ~this.externalCalculation
+            if strcmp(this.externalCalculation,'off')
                 dij = this.readFiles(this.workingDir);
 
                 % Order fields for easier comparison between different dijs
@@ -618,9 +624,10 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 dij.rayNum = 1;
                 dij.totalNumOfBixels = 1;
                 dij.totalNumOfRays = 1;
+                dij.meta.TOPASworkingDir = this.workingDir;
             end
 
-            this.finalizeDose()
+            this.finalizeDose();
 
         end
 
@@ -1874,7 +1881,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                         fprintf(fileID,'d:Sim/GantryAngle = %f deg\n',stf(beamIx).gantryAngle); %just one beam angle for now
                         fprintf(fileID,'d:Sim/CouchAngle = %f deg\n',stf(beamIx).couchAngle);
                         % Here the phasespace file is loaded and referenced in the beamSetup file                      
-                        if obj.externalCalculation
+                        if strcmp(obj.externalCalculation,'write')
                             matRad_cfg.dispWarning(['External calculation and phaseSpace selected, manually place ' obj.infilenames.phaseSpaceSourcePhotons '.header and ' obj.infilenames.phaseSpaceSourcePhotons  '.phsp into your simulation directory.']);
                         else
                             if length(dir([obj.topasFolder filesep 'beamSetup' filesep 'phasespace' filesep obj.infilenames.phaseSpaceSourcePhotons '*'])) < 2
