@@ -113,13 +113,7 @@ classdef matRad_MCsquareConfig
     
     methods
         function obj = matRad_MCsquareConfig()
-            %matRad_MCsquareConfig Configuration Class for MCsquare   
-            matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
-            
-            % Set default histories from MatRad_Config
-            if isfield(matRad_cfg.propMC,'defaultNumHistories')
-                obj.Num_Primaries = matRad_cfg.propMC.defaultNumHistories;
-            end
+            %matRad_MCsquareConfig Configuration Class for MCsquare
         end
 
        
