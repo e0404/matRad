@@ -492,7 +492,7 @@ classdef MatRad_Config < handle
                     else
                         fNames = fieldnames(obj.defaults.(currField))
                         for f = 1:numel(fNames)
-                            if ~isfield(pln.(currField),fNames{f})
+                            if ~isfield(pln.(currField),fNames{f}) && isstruct(obj.defaults.(currField).(fNames{f}))
                                 subfields = fieldnames(obj.defaults.(currField).(fNames{f}));
                                 for s = 1:length(subfields)
                                     if ~isfield(pln.(currField).(fNames{f}),subfields{s})
