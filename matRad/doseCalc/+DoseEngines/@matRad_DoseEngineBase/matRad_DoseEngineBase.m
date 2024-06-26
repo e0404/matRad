@@ -88,6 +88,13 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             end
         end
 
+        function delete(this)
+            %Close Waitbar
+            if any(ishandle(this.hWaitbar))
+                delete(this.hWaitbar);
+            end
+        end
+
         function warnDeprecatedEngineProperty(this,oldProp,msg,newProp)
             matRad_cfg = MatRad_Config.instance();
             if nargin < 3 || isempty(msg)
