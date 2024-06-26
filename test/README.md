@@ -5,12 +5,13 @@ matRad runs through (most of the) examples (each one counting as one test) on to
 Multiple Matlab versions as well as Octave are tested, all running on Ubuntu.
 
 ### Testing Locally
-1. Clone MOxUnit into a *separate* folder (not within or in subfolders of the matRad root dir).
-2. Navigate into the MOxUnit code folder (within the MOxUnit) and call `moxunit_set_path`.
-3. Navigate back into the matRad root folder. Make sure your matRad folder is on the path by running `matRad_rc`.
-4. Run tests on matRads test folder by calling `moxunit_runtests('test','-recursive');`. Test output will be written to the command line. 
-    - You can also create a logfile by calling `moxunit_runtests('test','-recursive','-logfile', 'tests.log')`
-    - You can limit your tests to a subfolder only (e.g., if you wrote new unit tests and want to do isolated bugfixing) by running on the subfolder directly, for example: `moxunit_runtests('test/tools','-recursive');`
+1. As MOxUnit and MOcov are integrated as *submodules* in the submodules/ folder of the repository, make sure your submodules are initialized and up to date. Many git tools do that automatically on cloning a repository, but you can do this manually by running `git submodule update --init` in the repository root. 
+   
+   If you didn't clone the repository and are working with the downloaded source, you can do the following:
+   1. Clone MOxUnit into a *separate* folder (not within or in subfolders of the matRad root dir).
+   2. Navigate into the MOxUnit code folder (within the MOxUnit) and call `moxunit_set_path`.
+   3. Navigate back into the matRad root folder.
+2. Run tests on matRads test folder by calling `matRad_runTests(folder,withCoverage)` from the root folder. The arguments `folder` and `withCoverage` are optional. If `folder` is not given, it will default to `test`. A specific set of tests can be run, then, for example, by calling `matRad_runTests('test/tools')` to run tests in the `test/tools` folder.
 
 ### Writing Tests
 Here's how a basic Test File can look like, based on [test_version.m](tools/test_version.m)
