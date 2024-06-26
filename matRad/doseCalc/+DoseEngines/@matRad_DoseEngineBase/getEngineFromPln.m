@@ -39,7 +39,7 @@ end
 % the given radiation mode, when no valid engine was defined.
 % Default Engines are defined in matRad_Config.
 if initDefaultEngine
-    matchEngines = ismember({classList(:).shortName},matRad_cfg.propDoseCalc.defaultDoseEngines);
+    matchEngines = ismember({classList(:).shortName},matRad_cfg.defaults.propDoseCalc.engine);
     if any(matchEngines)
         engineHandle = classList(matchEngines).handle;
 

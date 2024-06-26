@@ -42,7 +42,7 @@ p = inputParser();
 %p.addRequired('stf',@isstruct);
 %p.addRequired('ct',@isstruct);
 p.addParameter('mode','first');
-p.addParameter('densityThreshold',matRad_cfg.propDoseCalc.defaultSsdDensityThreshold,@(x) isnumeric(x) && isscalar(x));
+p.addParameter('densityThreshold',matRad_cfg.defaults.propDoseCalc.ssdDensityThreshold,@(x) isnumeric(x) && isscalar(x));
 p.addParameter('showWarning',true,@(x) islogical(x) && isscalar(x));
 
 p.parse(varargin{:});

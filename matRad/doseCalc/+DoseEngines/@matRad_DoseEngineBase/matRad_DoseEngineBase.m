@@ -131,7 +131,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             %given in the propDoseCalc struct
             if isfield(pln,'propDoseCalc') && isstruct(pln.propDoseCalc)
                 fields = fieldnames(pln.propDoseCalc); %get remaining fields
-                if isfield(pln.propDoseCalc,'engine') && ~isempty(pln.propDoseCalc.engine) && ~strcmp(pln.propDoseCalc.engine,this.shortName)
+                if isfield(pln.propDoseCalc,'engine') && ~isempty(pln.propDoseCalc.engine) && ~any(strcmp(pln.propDoseCalc.engine,this.shortName))
                     matRad_cfg.dispWarning('Inconsistent dose engines given! pln asks for ''%s'', but you are using ''%s''!',pln.propDoseCalc.engine,this.shortName);
                 end
                 fields(strcmp(fields, 'engine')) = []; % engine field is no longer needed and would throw an exception
@@ -221,9 +221,9 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             matRad_cfg = MatRad_Config.instance();
             
             %Assign default parameters from MatRad_Config
-            this.doseGrid.resolution    = matRad_cfg.propDoseCalc.defaultResolution;
+            this.doseGrid.resolution    = matRad_cfg.defaults.propDoseCalc.resolution;
             this.multScen = 'nomScen';
-            this.selectVoxelsInScenarios = matRad_cfg.propDoseCalc.defaultSelectVoxelsInScenarios;
+            this.selectVoxelsInScenarios = matRad_cfg.defaults.propDoseCalc.selectVoxelsInScenarios;
         end
     end
     

@@ -60,11 +60,11 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             matRad_cfg = MatRad_Config.instance();
 
             %Set defaults
-            this.geometricLateralCutOff       = matRad_cfg.propDoseCalc.defaultGeometricLateralCutOff;
-            this.dosimetricLateralCutOff      = matRad_cfg.propDoseCalc.defaultDosimetricLateralCutOff;
-            this.useGivenEqDensityCube        = matRad_cfg.propDoseCalc.defaultUseGivenEqDensityCube;
-            this.ignoreOutsideDensities       = matRad_cfg.propDoseCalc.defaultIgnoreOutsideDensities;
-            this.ssdDensityThreshold          = matRad_cfg.propDoseCalc.defaultSsdDensityThreshold;
+            this.geometricLateralCutOff       = matRad_cfg.defaults.propDoseCalc.geometricLateralCutOff;
+            this.dosimetricLateralCutOff      = matRad_cfg.defaults.propDoseCalc.dosimetricLateralCutOff;
+            this.useGivenEqDensityCube        = matRad_cfg.defaults.propDoseCalc.useGivenEqDensityCube;
+            this.ignoreOutsideDensities       = matRad_cfg.defaults.propDoseCalc.ignoreOutsideDensities;
+            this.ssdDensityThreshold          = matRad_cfg.defaults.propDoseCalc.ssdDensityThreshold;
         end    
     end
 

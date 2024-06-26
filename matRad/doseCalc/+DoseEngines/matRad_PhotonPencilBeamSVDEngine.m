@@ -105,8 +105,8 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
 
             %Assign defaults from Config
             matRad_cfg = MatRad_Config.instance();
-            this.useCustomPrimaryPhotonFluence  = matRad_cfg.propDoseCalc.defaultUseCustomPrimaryPhotonFluence;
-            this.kernelCutOff                   = matRad_cfg.propDoseCalc.defaultKernelCutOff;
+            this.useCustomPrimaryPhotonFluence  = matRad_cfg.defaults.propDoseCalc.useCustomPrimaryPhotonFluence;
+            this.kernelCutOff                   = matRad_cfg.defaults.propDoseCalc.kernelCutOff;
             
             %dij sampling defaults                      
             this.dijSampling.relDoseThreshold = 0.01;

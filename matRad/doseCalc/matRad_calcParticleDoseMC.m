@@ -50,7 +50,7 @@ engine = DoseEngines.matRad_ParticleMCsquareEngine(pln);
 if exist('nCasePerBixel','var')
     engine.numHistoriesPerBeamlet = nCasePerBixel;
 else
-    engine.numHistoriesPerBeamlet = matRad_cfg.propMC.MCsquare_defaultHistories;
+    engine.numHistoriesPerBeamlet = matRad_cfg.defaults.propDoseCalc.numHistoriesPerBeamlet;
 end
 
 if exist('calcDoseDirect','var')    

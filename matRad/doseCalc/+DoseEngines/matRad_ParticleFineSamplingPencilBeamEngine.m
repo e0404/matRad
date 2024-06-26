@@ -51,7 +51,7 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
             setDefaults@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(this);
 
             matRad_cfg = MatRad_Config.instance();
-            this.fineSampling = matRad_cfg.propDoseCalc.defaultFineSamplingProperties;
+            this.fineSampling = matRad_cfg.defaults.propDoseCalc.fineSampling;
             this.fineSampling.method = 'fitCircle';
             this.fineSampling.N = 2;
         end

@@ -45,9 +45,9 @@ engine = DoseEngines.matRad_PhotonOmpMCEngine(pln);
 if exist('nCasePerBixel','var')
     engine.numHistoriesPerBeamlet = nCasePerBixel;
 else
-    engine.numHistoriesPerBeamlet = matRad_cfg.propMC.ompMC_defaultHistories;
+    engine.numHistoriesPerBeamlet = matRad_cfg.defaults.propDoseCalc.numHistoriesPerBeamlet;
 end
-engine.outputMCvariance = matRad_cfg.propMC.ompMC_defaultOutputVariance;
+engine.outputMCvariance = matRad_cfg.defaults.propDoseCalc.outputVariance;
     
 if exist('visBool','var')
     engine.visBool = visBool;

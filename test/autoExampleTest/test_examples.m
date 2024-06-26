@@ -33,8 +33,8 @@ testing_prefix = 'tmptest_';
 
 % Some parameters to reduce computational overhead during testing
 unitTestBixelWidth = 20;
-unitTestSpotSpacing = matRad_cfg.propStf.defaultLongitudinalSpotSpacing;
-unitTestResolution = matRad_cfg.propDoseCalc.defaultResolution;
+unitTestSpotSpacing = matRad_cfg.defaults.propStf.longitudinalSpotSpacing;
+unitTestResolution = matRad_cfg.defaults.propDoseCalc.resolution;
 
 %% Copy and manipulate all scripts
 [folders,names,exts] = cellfun(@fileparts,exampleScripts,'UniformOutput',false);

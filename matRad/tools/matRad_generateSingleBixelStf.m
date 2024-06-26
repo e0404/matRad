@@ -84,7 +84,7 @@ stf = struct;
 
 % find set of energyies with adequate spacing
 if ~isfield(pln.propStf, 'longitudinalSpotSpacing')
-    longitudinalSpotSpacing = matRad_cfg.propStf.defaultLongitudinalSpotSpacing;
+    longitudinalSpotSpacing = matRad_cfg.defaults.propStf.longitudinalSpotSpacing;
 else
     longitudinalSpotSpacing = pln.propStf.longitudinalSpotSpacing;
 end

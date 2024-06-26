@@ -45,11 +45,11 @@ classdef (Abstract) matRad_MonteCarloEngineAbstract < DoseEngines.matRad_DoseEng
             matRad_cfg = MatRad_Config.instance();
 
             %set number of particles simulated per pencil beam
-            this.numHistoriesPerBeamlet     = matRad_cfg.propDoseCalc.defaultNumHistoriesPerBeamlet;
-            this.numHistoriesDirect         = matRad_cfg.propDoseCalc.defaultNumHistoriesDirect;
-            this.outputMCvariance           = matRad_cfg.propDoseCalc.defaultOutputMCvariance;
+            this.numHistoriesPerBeamlet     = matRad_cfg.defaults.propDoseCalc.numHistoriesPerBeamlet;
+            this.numHistoriesDirect         = matRad_cfg.defaults.propDoseCalc.numHistoriesDirect;
+            this.outputMCvariance           = matRad_cfg.defaults.propDoseCalc.outputMCvariance;
 
-            this.relativeDosimetricCutOff   = matRad_cfg.propDoseCalc.defaultDosimetricLateralCutOff;
+            this.relativeDosimetricCutOff   = matRad_cfg.defaults.propDoseCalc.dosimetricLateralCutOff;
         end
 
         function resultGUI = calcDoseForward(this,ct,cst,stf,w)

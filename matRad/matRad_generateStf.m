@@ -89,7 +89,7 @@ voiTarget    = zeros(ct.cubeDim);
 voiTarget(V) = 1;
     
 % add margin
-addmarginBool = matRad_cfg.propStf.defaultAddMargin;
+addmarginBool = matRad_cfg.defaults.propStf.addMargin;
 if isfield(pln,'propStf') && isfield(pln.propStf,'addMargin')
    addmarginBool = pln.propStf.addMargin; 
 end

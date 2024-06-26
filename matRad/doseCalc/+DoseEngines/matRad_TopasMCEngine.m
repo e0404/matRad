@@ -22,6 +22,9 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         possibleRadiationModes = {'photons','protons','helium','carbon'};
         name = 'TOPAS';
         shortName = 'TOPAS';
+
+        defaultPhotonBeamProfile = 'uniform';
+        defaultParticleBeamProfile = 'biGaussian';
     end
 
     properties
@@ -1402,15 +1405,15 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     % if photons
                     isPhoton = true;
                     if any(ismember(obj.beamProfile,{'biGaussian','simple'}))
-                        matRad_cfg.dispWarning('beamProfile "%s" not available for photons, switching to "%s" as default.',obj.beamProfile,matRad_cfg.propMC.default_beamProfile_photons);
-                        obj.beamProfile = matRad_cfg.propMC.default_beamProfile_photons;
+                        matRad_cfg.dispWarning('beamProfile "%s" not available for photons, switching to "%s" as default.',obj.beamProfile,obj.defaultPhotonBeamProfile);
+                        obj.beamProfile = obj.defaultPhotonBeamProfile;
                     end
 
                 otherwise
                     % if particles
                     if ~any(ismember(obj.beamProfile,{'biGaussian','simple'}))
-                        matRad_cfg.dispWarning('beamProfile "%s" not available for particles, switching to "%s" as default.',obj.beamProfile,matRad_cfg.propMC.default_beamProfile_particles);
-                        obj.beamProfile = matRad_cfg.propMC.default_beamProfile_particles;
+                        matRad_cfg.dispWarning('beamProfile "%s" not available for particles, switching to "%s" as default.',obj.beamProfile,obj.defaultParticleBeamProfile);
+                        obj.beamProfile = obj.defaultParticleBeamProfile;
                     end
             end
 

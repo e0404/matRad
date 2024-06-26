@@ -93,7 +93,7 @@ else
 end
 
 %make sure the default engines are the first ones listed
-for defaultEngine = matRad_cfg.propDoseCalc.defaultDoseEngines
+for defaultEngine = matRad_cfg.defaults.propDoseCalc.engine
     findDefaultIx = strcmp(defaultEngine,shortNameList);
     if ~isempty(findDefaultIx)
         shortNameList = [shortNameList(findDefaultIx), shortNameList(~findDefaultIx)];
