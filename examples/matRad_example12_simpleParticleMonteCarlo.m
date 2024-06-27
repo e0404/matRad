@@ -90,11 +90,16 @@ resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij); %Use uniform wei
 %% Monte Carlo dose calculation
 % select Monte Carlo engine ('MCsquare' very fast for physical protons, 'TOPAS' slow but versatile for everything else)
 pln.propDoseCalc.engine = 'MCsquare';
-% pln.propDoseCalc.engine = 'TOPAS';
+%pln.propDoseCalc.engine = 'TOPAS';
 
 % set number of histories lower than default for this example (default: 1e8)
-pln.propDoseCalc.numHistoriesDirect = 1e6;
-resultGUI_MC = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
+pln.propDoseCalc.numHistoriesDirect = 1e3;
+%pln.propDoseCalc.externalCalculation = 'write';
+resultGUI_MC = matRad_calcDoseForward(ct,cst,stf,pln,resultGUI.w);
+
+%% Read an external calculation with TOPAS if externalCalculation was set to 'write'
+%pln.propDoseCalc.externalCalculation = resultGUI_MC.meta.TOPASworkingDir;
+%resultGUI_MC = matRad_calcDoseForward(ct,cst,stf,pln,resultGUI.w);
 
 %% Compare Dose
 resultGUI = matRad_appendResultGUI(resultGUI,resultGUI_MC,true,pln.propDoseCalc.engine);

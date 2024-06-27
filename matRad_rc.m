@@ -1,4 +1,4 @@
-function matRad_rc(clearWindow)
+function matRad_cfg = matRad_rc(clearWindow)
 % matRad rc script
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -15,21 +15,29 @@ function matRad_rc(clearWindow)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if nargin < 1
-    clearWindow = true;
+    clearWindow = false;
 end
 
+thisFolder = fileparts(mfilename("fullpath"));
+
 % Initialize matRad
-matRad_cfg = MatRad_Config.instance();
-if ~strcmp(matRad_cfg.matRadRoot,fileparts(mfilename("fullpath")))
-    matRad_cfg.dispWarning('Called matRad_rc in folder %s but matRad initialized in folder %s!\n Removing old matRad from path and using new installation!',fileparts(mfilename("fullpath")),matRad_cfg.matRadRoot); 
-    rmpath(genpath(matRad_cfg.matRadRoot));
-    clear matRad_cfg MatRad_Config;
-    matRad_cfg = MatRad_Config.instance();
+try %Check if matRad is already on the path and if so, if it is the same installation
+    tmp_cfg = MatRad_Config.instance();
+
+    if ~strcmp(tmp_cfg.matRadRoot,thisFolder)
+        tmp_cfg.dispWarning('Called matRad_rc in folder %s but matRad initialized in folder %s!\n Removing old matRad from path and using new installation!',fileparts(mfilename("fullpath")),tmp_cfg.matRadRoot); 
+        rmpath(genpath(tmp_cfg.matRadRoot));
+        clear tmp_cfg MatRad_Config;
+        tmp_cfg = MatRad_Config.instance();
+    end
+catch %If matRad is not on the path, initialize it freshly and add the sourcefolder containing MatRad_Config to the path
+    matRadRoot = fullfile(thisFolder,'matRad');
+    addpath(matRadRoot);
+    tmp_cfg = MatRad_Config.instance();
 end
 
 % clear command window and close all figures
 if clearWindow
-
     clc;
     close all;
 end
@@ -38,8 +46,10 @@ end
 [env,envver] = matRad_getEnvironment();
 vString = matRad_version();
 
-matRad_cfg.dispInfo('You are running matRad %s with %s %s\n',vString,env,envver);
-clear env envver vString;
+tmp_cfg.dispInfo('You are running matRad %s with %s %s\n',vString,env,envver);
 
-
+if nargout > 0
+    matRad_cfg = tmp_cfg;
+else
+    assignin('base','matRad_cfg',tmp_cfg);
 end
