@@ -13,9 +13,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4 # Checks-out repository under $GITHUB_WORKSPACE
         with:
-          path: matRad
+          submodules: 'true'
       - name: Run Test
-        uses: ./matRad/.github/actions/test-matlab
+        uses: ./.github/actions/test-matlab
         with:
           matlab-version: R2022b
 
@@ -24,8 +24,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4 # Checks-out repository under $GITHUB_WORKSPACE
         with:
-          path: matRad
-      - uses: ./matRad/.github/actions/test-matlab
+          submodules: 'true'
+      - uses: ./.github/actions/test-matlab
         with:
           matlab-version: latest
 
@@ -34,8 +34,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4 # Checks-out repository under $GITHUB_WORKSPACE
         with:
-          path: matRad
-      - uses: ./matRad/.github/actions/test-octave
+          submodules: 'true'
+      - uses: ./.github/actions/test-octave
 
   test-report:
     name: Collect Test Results

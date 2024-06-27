@@ -123,7 +123,7 @@ machine.meta.fitAirOffset = 420.0; %Tells matRad how much "air" was considered d
 pln.machine = machine.meta.machine;
 pln.radiationMode = machine.meta.radiationMode;
 fileName = [pln.radiationMode '_' pln.machine];
-filePath = fullfile(matRad_cfg.matRadRoot,'basedata',[fileName '.mat']);
+filePath = fullfile(matRad_cfg.userfolders{1},'machines',[fileName '.mat']);
 
 matRad_cfg.dispInfo('Saving temporary machine %s to %s\n',fileName,filePath);
 save(filePath,'machine','-v7');

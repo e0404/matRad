@@ -279,7 +279,7 @@ if strcmp(env,'MATLAB') || str2double(envver(1)) >= 5
 end
 
 %% Indicator calculation and show DVH and QI
-[dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUIrobust);
+resultGUI = matRad_planAnalysis(resultGUI,ct,cst,stf,pln);
 
 %% Perform sampling
 % select structures to include in sampling; leave empty to sample dose for all structures

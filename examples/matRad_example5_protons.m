@@ -123,7 +123,7 @@ pln.propStf.isoCenter       = reshape([stf.isoCenter],[3 pln.propStf.numOfBeams]
 
 %% Recalculate Plan
 % Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose
-resultGUI_isoShift = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
+resultGUI_isoShift = matRad_calcDoseForward(ct,cst,stf,pln,resultGUI.w);
 
 %%  Visual Comparison of results
 % Let's compare the new recalculation against the optimization result.

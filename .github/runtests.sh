@@ -41,6 +41,6 @@ export CI=true
 ## Actually run the test suite
 # also CD in MATLAB/Octave to make sure that startup files
 # cannot play any role in setting the path
-${Runner} ${Switches} "back=cd('MOxUnit/MOxUnit'); moxunit_set_path; cd(back); cd('matRad'); matRad_rc; moxunit_runtests('test','-recursive','-junit_xml_file','testresults.xml'); exit(double(~ans))" > ../runtests.log #2> ../runtests.err put stdout to log, but let it print error messages
+${Runner} ${Switches} "matRad_runTests('test');" > ../runtests.log #2> ../runtests.err put stdout to log, but let it print error messages
 exitIfError $?
 

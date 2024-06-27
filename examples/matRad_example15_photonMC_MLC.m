@@ -88,10 +88,10 @@ imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet)
 %resultGUI_MC = matRad_calcDoseInfluence(ct,cst,stf,pln);
 pln.propDoseCalc.engine = 'TOPAS';
 pln.propDoseCalc.beamProfile = 'phasespace';
-pln.propDoseCalc.externalCalculation =true;
-resultGUI_MC = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
+pln.propDoseCalc.externalCalculation = 'write';
+resultGUI_MC = matRad_calcDoseForward(ct,cst,stf,pln,resultGUI.w);
 
 %% readout
-%foldername = 'FolderName';
-%pln = matRad_cfg.getDefaultClass(pln,'propMC');
-%resultGUI_MC = pln.propMC.readExternal(foldername);
+waitforbuttonpress; %We will wait since we do need to do the external calculation first
+pln.propDoseCalc.externalCalculation = resultGUI_MC.meta.TOPASworkingDir;
+resultGUI_MC = matRad_calcDoseForward(ct,cst,stf,pln,resultGUI.w);

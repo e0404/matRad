@@ -46,8 +46,11 @@ for fIx = 1:numel(filename)
     
     currFilename = filename{fIx};
     
-    fid=fopen(fullfile(path,currFilename));
-    fo=fopen('tempFile.m','w');
+    currFile = fullfile(path,currFilename);
+    tempFile = fullfile(path,'tempFile.m');
+
+    fid=fopen(currFile);
+    fo=fopen(tempFile,'w');
     tline = fgetl(fid);
     
     while ischar(tline)
@@ -65,7 +68,7 @@ for fIx = 1:numel(filename)
     fclose(fo);
     
     
-    movefile('tempFile.m', fullfile(path,currFilename), 'f');
+    movefile(tempFile, currFile, 'f');
 end
 end
 
