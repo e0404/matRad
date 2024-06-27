@@ -24,6 +24,9 @@ matRad_cfg.dispInfo('Exporting DICOM RTDose...\n');
 env = matRad_getEnvironment();
 isOctave = strcmp(env,'OCTAVE');
 
+%Safeguard Error
+matRad_cfg.dispError('You are trying to run the RTPlan Dicom Export! This error message is a safeguard such that this export is not used unconciously and that you aware that exported RTPlans MUST NOT be used cinically. If you want to use it (at your own responsibility), uncomment this error in %s!',mfilename('fulpath'));
+
 if isOctave
     matRad_cfg.dispWarning('RTPlan export currently not supported by matRad running in Octave using the dicom package! Skipping...');
     return;

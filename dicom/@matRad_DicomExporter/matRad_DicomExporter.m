@@ -84,6 +84,9 @@ classdef matRad_DicomExporter < handle
         targetPtvDict = {'PTV','MARGIN'};
         targetCtvDict = {'CTV'};
         targetGtvDict = {'GTV','TUMOR'};
+        
+        % enable RTPlan Export
+        enableRtPlanExport = false;
     end
 
     properties (Constant)
