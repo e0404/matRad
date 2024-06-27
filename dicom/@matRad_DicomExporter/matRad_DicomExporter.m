@@ -72,11 +72,25 @@ classdef matRad_DicomExporter < handle
         rtDoseMetas
         rtDoseExportStatus
         
+        %RTPlan
+        rtPlanFilePrefix = 'RTPlan'
+        rtPlanMeta
+        rtPlanExportStatus
+        rtPlanLabel = 'matRadPlan';
+        rtPlanName = 'matRadPlan'        
+
         % some dictionaries
         externalContourDict = {'EXTERNAL','BODY','PATIENT'}; %Names to identify external contours
         targetPtvDict = {'PTV','MARGIN'};
         targetCtvDict = {'CTV'};
         targetGtvDict = {'GTV','TUMOR'};
+    end
+
+    properties (Constant)
+        rtPlanClassUID = '1.2.840.10008.5.1.4.1.1.481.5';
+        rtStructClassUID = '1.2.840.10008.5.1.4.1.1.481.3';
+        rtDoseClassUID = '1.2.840.10008.5.1.4.1.1.481.2';
+        ctClassUID = '1.2.840.10008.5.1.4.1.1.2';
     end
     
     methods
@@ -160,7 +174,11 @@ classdef matRad_DicomExporter < handle
             obj.StudyInstanceUID = dicomuid;
             
             % coordinates
-            obj.FrameOfReferenceUID = dicomuid;
+            if isfield(obj.ct,'dicomMeta') && isfield(obj.ct.dicomMeta,'FrameOfReferenceUID')
+                obj.FrameOfReferenceUID = obj.ct.dicomMeta.FrameOfReferenceUID;
+            else
+                obj.FrameOfReferenceUID = dicomuid;
+            end
             
             if isfield(obj.ct,'dicomInfo') && isfield(obj.ct.dicomInfo,'PatientPosition')
                obj.PatientPosition = obj.ct.dicomInfo.PatientPosition;
@@ -174,10 +192,10 @@ classdef matRad_DicomExporter < handle
         obj = matRad_exportDicomCt(obj)
         
         obj = matRad_exportDicomRTStruct(obj)
+
+        obj = matRad_exportDicomRTDoses(obj)
         
         obj = matRad_exportDicomRTPlan(obj)
-        
-        obj = matRad_exportDicomRTDoses(obj)
         
     end
     

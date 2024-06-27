@@ -38,16 +38,15 @@ if ~isempty(obj.cst)
    obj = matRad_exportDicomRTStruct(obj);    
 end
 
-%if ~isempty(obj.pln)
-%    obj = matRad_exportDicomRTPlan(obj);
-%end
-
+%RT Dose Series (Before Plan to have dose reference ids)
 if ~isempty(obj.resultGUI)
     obj = matRad_exportDicomRTDoses(obj);
 end
 
-%Pln Series
+%RT Plan at the end
+if ~isempty(obj.pln) && ~isempty(obj.resultGUI)
+    obj = matRad_exportDicomRTPlan(obj);
+end
 
-%Dose Series
 end
 

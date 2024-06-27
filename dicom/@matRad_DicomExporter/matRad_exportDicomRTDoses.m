@@ -33,17 +33,18 @@ end
 ct = obj.ct;
 if ~any(isfield(ct,{'x','y','z'}))
     %positionOffset = transpose(ct.cubeDim ./ 2);
-    positionOffset = ct.cubeDim ./ 2;
+    %positionOffset = ct.cubeDim .* [ct.resolution.y, ct.resolution.x, ct.resolution.z] ./ 2;
+    positionOffset = [ct.resolution.y, ct.resolution.x, ct.resolution.z] ./ 2;
     ct.x = ct.resolution.x*[0:ct.cubeDim(2)-1] - positionOffset(2);
     ct.y = ct.resolution.y*[0:ct.cubeDim(1)-1] - positionOffset(1);
     ct.z = ct.resolution.z*[0:ct.cubeDim(3)-1] - positionOffset(3);
 end
 
 %% Meta data
-storageClass = '1.2.840.10008.5.1.4.1.1.481.2';
+storageClass = obj.rtDoseClassUID;
 meta.MediaStorageSOPClassUID = storageClass;
 meta.SOPClassUID = storageClass;
-
+meta.FrameOfReferenceUID = obj.FrameOfReferenceUID;
 %TransferSyntaxUID = '1.2.840.10008.1.2.1'; %Explicit VR little endian?
 %meta.TransferSyntaxUID = TransferSyntaxUID;
 
@@ -67,7 +68,6 @@ meta.InstanceCreationTime = currTimeStr;
 meta.StudyDate = obj.StudyDate;
 meta.StudyTime = obj.StudyTime;
 
-meta.FrameOfReferenceUID = obj.FrameOfReferenceUID;
 meta.PositionReferenceIndicator = '';
 
 
@@ -105,17 +105,23 @@ meta.NumberOfFrames = ct.cubeDim(3);
 meta.GridFrameOffsetVector = transpose(ct.z - ct.z(1));
 
 %Referenced Plan
+%This does currently not work due to how Matlab creates UIDs by itself,
+%we can not know the reference before it is written by the RTPlanExport,
+%which itself needs the RTDose UIDs
+%{
 try
-    rtPlanUID = obj.rtPlanMeta.SOPInstanceUID;
-    rtPlanClassID = obj.rtPlanMeta.SOPClassUID;
-    meta.ReferencedRTPlanSequence.Item_1.ReferencedSOPClassUID = rtPlanClassID;
-    meta.ReferencedRTPlanSequence.Item_1.ReferencedSOPInstanceUID = rtPlanUID;
+    rtPlanUID = obj.rtPlanMeta.SOPInstanceUID;   
 catch
-    rtPlanUID = '';
-    rtPlanClassID = '';
+    obj.rtPlanMeta = struct();
+    obj.rtPlanMeta.SOPInstanceUID = dicomuid;
+    obj.rtPlanMeta.SOPClassUID = obj.rtPlanClassUID;
+    rtPlanUID = obj.rtPlanMeta.SOPInstanceUID;
 end
-    
+%}
 
+    
+%meta.ReferencedRTPlanSequence.Item_1.ReferencedSOPClassUID = obj.rtPlanClassUID;
+%meta.ReferencedRTPlanSequence.Item_1.ReferencedSOPInstanceUID = rtPlanUID;
 
 if nargin < 4 || isempty(doseFieldNames)
     doseFieldNames = cell(0);
@@ -144,7 +150,7 @@ for i = 1:numel(doseFieldNames)
     elseif strncmp(doseName,'RBExDose',8)
         doseType = 'EFFECTIVE';
     else
-        fprintf('Dose Cube ''%s'' of unknown type for DICOM. Not exported!\n',doseName);
+        matRad_cfg.dispInfo('Dose Cube ''%s'' of unknown type for DICOM. Not exported!\n',doseName);
         continue;
     end
     
@@ -164,7 +170,7 @@ for i = 1:numel(doseFieldNames)
     maxDose = max(doseCube(:));
     
     if minDose < 0
-        fprintf('Dose Cube ''%s'' has negative values. Not exported!\n',doseName);
+        matRad_cfg.dispInfo('Dose Cube ''%s'' has negative values. Not exported!\n',doseName);
         continue;
     end
     
@@ -176,25 +182,31 @@ for i = 1:numel(doseFieldNames)
     metaCube.DoseSummationType = deliveryType;
        
     %ID of the RTDose
-    meta.SeriesInstanceUID = dicomuid;    
+    metaCube.SeriesInstanceUID = dicomuid;    
     metaCube.SeriesNumber = i;
     metaCube.InstanceNumber = 1;
     metaCube.DoseGridScaling = doseCubeFac;
     
-    meta.SOPInstanceUID = dicomuid;
-    meta.MediaStorageSOPInstanceUID = meta.SOPInstanceUID;
+    metaCube.SOPInstanceUID = dicomuid;
+    metaCube.MediaStorageSOPInstanceUID = metaCube.SOPInstanceUID;
     
-    fileName = [obj.rtDoseFilePrefix num2str(i) '_' doseName '.dcm'];
-    
-    env = matRad_getEnvironment();
-    if strcmp(env,'OCTAVE')
-        dicomwrite(doseCube,fullfile(obj.dicomDir,fileName),metaCube);
+    fileName = [obj.rtDoseFilePrefix num2str(i) '_' doseName '.dcm'];    
+    fileName = fullfile(obj.dicomDir,fileName);
+
+    if matRad_cfg.isOctave
+        dicomwrite(doseCube,fileName,metaCube);
     else
-        status = dicomwrite(doseCube,fullfile(obj.dicomDir,fileName),metaCube,'CreateMode','copy');%,'TransferSyntax',TransferSyntaxUID);
+        status = dicomwrite(doseCube,fileName,metaCube,'CreateMode','copy');%,'TransferSyntax',TransferSyntaxUID);
         if ~isempty(status)
             obj.rtDoseExportStatus = obj.addStruct2StructArray(obj.rtDoseExportStatus,status,i);
         end
     end
+
+    %We need to get the info of the file just written because of Matlab's
+    %hardcoded way of generating InstanceUIDs during writing
+    tmpInfo = dicominfo(fileName);
+    metaCube.SOPInstanceUID              = tmpInfo.SOPInstanceUID;
+    metaCube.MediaStorageSOPInstanceUID  = tmpInfo.MediaStorageSOPInstanceUID;   
     
     
     obj.rtDoseMetas = obj.addStruct2StructArray(obj.rtDoseMetas,metaCube);
