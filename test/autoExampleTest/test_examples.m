@@ -1,7 +1,6 @@
 function test_suite = test_examples
 
 matRad_cfg = MatRad_Config.instance();
-matRad_cfg.setDefaultPropertiesForTesting();
 
 % supressing the inherent Ocatave warnings for division by zero
 if matRad_cfg.isOctave
@@ -34,14 +33,19 @@ testing_prefix = 'tmptest_';
 
 % Some parameters to reduce computational overhead during testing
 unitTestBixelWidth = 20;
-unitTestSpotSpacing = matRad_cfg.propStf.defaultLongitudinalSpotSpacing;
-unitTestResolution = matRad_cfg.propDoseCalc.defaultResolution;
+unitTestSpotSpacing = matRad_cfg.defaults.propStf.longitudinalSpotSpacing;
+unitTestResolution = matRad_cfg.defaults.propDoseCalc.resolution;
 
 %% Copy and manipulate all scripts
 [folders,names,exts] = cellfun(@fileparts,exampleScripts,'UniformOutput',false);
 
 %Create temporary example test folder
-tmpExampleTestFolder = fileparts(mfilename("fullpath"));
+tmpExampleTestFolder = tempdir();
+tmpExampleTestFolder = fullfile(tmpExampleTestFolder,'exampleTest');
+if ~exist(tmpExampleTestFolder,'dir')
+    mkdir(tmpExampleTestFolder);
+end
+addpath(tmpExampleTestFolder);
 newFolders = cell(size(folders));
 [newFolders{:}] = deal(tmpExampleTestFolder);
 
@@ -52,12 +56,12 @@ testScripts = cellfun(@fullfile,newFolders,testScriptFiles,'UniformOutput',false
 
 status = cellfun(@copyfile,exampleScripts,testScripts);
 
-matRad_unitTestTextManipulation(testScriptFiles,'pln.propStf.bixelWidth',['pln.propStf.bixelWidth = ' num2str(unitTestBixelWidth)],tmpExampleTestFolder);
-matRad_unitTestTextManipulation(testScriptFiles,'pln.propStf.longitudinalSpotSpacing',['pln.propStf.longitudinalSpotSpacing = ' num2str(unitTestSpotSpacing)],tmpExampleTestFolder);
-matRad_unitTestTextManipulation(testScriptFiles,'pln.propDoseCalc.resolution.x',['pln.propDoseCalc.resolution.x = ' num2str(unitTestResolution.x)],tmpExampleTestFolder);
-matRad_unitTestTextManipulation(testScriptFiles,'pln.propDoseCalc.resolution.y',['pln.propDoseCalc.resolution.y = ' num2str(unitTestResolution.y)],tmpExampleTestFolder);
-matRad_unitTestTextManipulation(testScriptFiles,'pln.propDoseCalc.resolution.z',['pln.propDoseCalc.resolution.z = ' num2str(unitTestResolution.z)],tmpExampleTestFolder);
-matRad_unitTestTextManipulation(testScriptFiles,'display(','%%%%%%%%%%%%%%% REMOVED DISPLAY FOR TESTING %%%%%%%%%%%%%%');
+matRad_unitTestTextManipulation(testScriptFiles,'pln.propStf.bixelWidth',['pln.propStf.bixelWidth = ' num2str(unitTestBixelWidth) ';'],tmpExampleTestFolder);
+matRad_unitTestTextManipulation(testScriptFiles,'pln.propStf.longitudinalSpotSpacing',['pln.propStf.longitudinalSpotSpacing = ' num2str(unitTestSpotSpacing) ';'],tmpExampleTestFolder);
+matRad_unitTestTextManipulation(testScriptFiles,'pln.propDoseCalc.resolution.x',['pln.propDoseCalc.resolution.x = ' num2str(unitTestResolution.x) ';'],tmpExampleTestFolder);
+matRad_unitTestTextManipulation(testScriptFiles,'pln.propDoseCalc.resolution.y',['pln.propDoseCalc.resolution.y = ' num2str(unitTestResolution.y) ';'],tmpExampleTestFolder);
+matRad_unitTestTextManipulation(testScriptFiles,'pln.propDoseCalc.resolution.z',['pln.propDoseCalc.resolution.z = ' num2str(unitTestResolution.z) ';'],tmpExampleTestFolder);
+matRad_unitTestTextManipulation(testScriptFiles,'display(','%%%%%%%%%%%%%%% REMOVED DISPLAY FOR TESTING %%%%%%%%%%%%%%',tmpExampleTestFolder);
 
 %initTestSuite;
 %We need to manually set up the test_suite to bypass the automatic function
@@ -73,6 +77,12 @@ for testIx = 1:length(testScriptNames)
         mfilename, testfun);
     test_suite=addTest(test_suite, test_case);
     %test_functions{testIx,1} = testfun;
+end
+
+try
+    rmdir(exampleTestFolder,'s');
+catch
+    warning('Could not delete temporary example test folder');
 end
     
 %initTestSuite;
@@ -92,11 +102,13 @@ try
     afterTestVars = evalin('base','who');
     newVars = setdiff(afterTestVars,baseVars);
     evalin('base',['clear ' strjoin(newVars)]);
+    close all;
 catch ME
     %Also clean up the base workspace by cleaning all new variables
     afterTestVars = evalin('base','who');
     newVars = setdiff(afterTestVars,baseVars);
     evalin('base',['clear ' strjoin(newVars)]);
+    close all;
 
     %Now rethrow
     rethrow(ME);

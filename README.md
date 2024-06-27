@@ -17,7 +17,9 @@ matRad is an open source treatment planning system for radiation therapy written
 More information can be found on the project page  at <http://e0404.github.io/matRad/>; a wiki documentation is under constant development at <https://github.com/e0404/matRad/wiki>.
 
 # Getting Started
+If you want to quickly run matRad, start with the Quick Start below. Some information on the structure of matRad for more sustainable use is given afterwards.
 
+## Quick Start
 It’s the first time you want to use matRad?
 
 First, get a local copy of matRad by download or git cloning. Having done that, we recommend you navigate into the folder in Matlab and execute 
@@ -56,8 +58,24 @@ The most time consuming but also most educational approach to matRad.
 
 When in the main matRad folder, navigate to the folder *examples*. Open one of the examples given there. Execute it section by section. Move on to the next example afterwards.
 
-# Need help?
+## Advanced information for new users
+### Folder Structure
+#### Core Source Code
+Most of the source code of matRad is located in the "matRad" subfolder. Within the first level of matRad, you find the functions handling the basic workflow steps. These functions have simple interfaces relying on matRad's main data structures ct, cst, stf, dij, resultGUI, and pln.
+Additionally, it contains MatRad_Config.m which is a singleton class implementation to handle global configuration of matRad. Check out the infos further below. 
 
+We try to keep the main workflow functions as consistent as possible, while the fine-grained implementation in the subfolders within matRad/* may undergo larger changes.
+#### User Directory
+By default, matRad adds the "userdata" folder to the path. It is the place to put your custom scripts, machine data, imported patients etc. Just follow the README files in the folders. Contents of this folder are added to the .gitignore and will thus be ignored during your development efforts, keeping your repository clean.
+#### Third-Party & Submodules
+Our ThirdParty-Tools used in matRad are stored in the thirdParty folder including licenses. Submodules contains references to used git repositories, and you might recognize that some dependencies appear both in submodules and thirdParty. This is mainly to maintain operation if the code is downloaded (and not cloned), and also helps us to maintain the build process of mex files built from source in the submodules (and then added to ThirdParty). 
+#### Tests
+The "test" folder contains xUnit-Style tests based on the MOxUnit framework. You can run those tests by running matRad_runTests from the root directory. Check the README file within the test folder for more information.
+
+### MatRad_Config / matRad_cfg
+matRad maintains its global configuration, including some default parameters, as well as a logging mechanism with different levels, in the MatRad_Config.m class serving as a "singleton" throughout matRad. You will see many functions using a call like `matRad_cfg = MatRad_Config.instance();`, which will get you the global configuration anywhere in the code or in the command window. Alternatively, `matRad_rc` will return matRad_cfg as well.
+
+# Need help?
 If you encounter problems with matRad, please consider the following guidelines **before** submitting issues on our github page. 
 
 * Check you are using the newest version of matRad.
