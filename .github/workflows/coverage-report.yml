@@ -3,6 +3,9 @@ name: Coverage Report
 permissions:
     checks: write
     pull-requests: write
+    actions: read
+    contents: read
+    
 
 on:
     workflow_call:
