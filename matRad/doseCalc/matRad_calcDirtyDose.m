@@ -13,17 +13,10 @@ function dij = matRad_calcDirtyDose(LET_thres,dij)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if ~exist('dij','var') || isempty(dij)
-    disp('Not enough input arguments! Calculation is not working.')
-else
-    if ~exist('LET_thres','var') || isempty(LET_thres)
-        disp('Not enough input arguments! Calculation is not working.')
-    else
-        dij.dirtyDoseThreshold                       = LET_thres;
-        [dij.LETmaskDirty,dij.LETmaskClean,dij.mLET] = matRad_calcLETmask(dij);
-        dij.dirtyDose{1}                             = dij.LETmaskDirty .* dij.physicalDose{1};
-        dij.cleanDose{1}                             = dij.LETmaskClean .* dij.physicalDose{1};
-    end
-end
+dij.dirtyDoseThreshold                       = LET_thres;
+[dij.LETmaskDirty,dij.LETmaskClean,dij.mLET] = matRad_calcLETmask(dij);
+
+dij.dirtyDose = cellfun(@times,dij.LETmaskDirty, dij.physicalDose,'UniformOutput',false);
+dij.cleanDose = cellfun(@times,dij.LETmaskClean, dij.physicalDose,'UniformOutput',false);
 
 end
