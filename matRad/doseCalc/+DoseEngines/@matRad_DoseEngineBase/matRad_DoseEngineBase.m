@@ -142,28 +142,56 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             % iterate over all fieldnames and try to set the
             % corresponding properties inside the engine
             for i = 1:length(fields)
-                try
-                    oldValue = this.(fields{i});
-                    newValue = pln.propDoseCalc.(fields{i});
-                    this.(fields{i}) = newValue;
-
-                    if warnWhenPropertyChanged
-                        if ~isequal(oldValue,newValue)
-                            matRad_cfg.dispWarning('Property ''%s'' overwritten by Plan settings!',fields{i});
+                if isstruct(this.(fields{i}))
+                    subfields = fieldnames(pln.propDoseCalc.(fields{i}));
+                    for s=1:numel(subfields)
+                        try
+                            oldValue = this.(fields{i}).(subfields{s});
+                            newValue = pln.propDoseCalc.(fields{i}).(subfields{s});
+                            this.(fields{i}).(subfields{s}) = newValue;
+                            if warnWhenPropertyChanged
+                                if ~isequal(oldValue,newValue)
+                                    matRad_cfg.dispWarning('Property ''%s'' overwritten by Plan settings!',fields{i}.(subfields{s}));
+                                end
+                            end
+                            % catch exceptions when the engine has no properties,
+                            % which are defined in the struct.
+                            % When defining an engine with custom setter and getter
+                            % methods, custom exceptions can be caught here. Be
+                            % careful with Octave exceptions!
+                         catch ME
+                            switch ME.identifier
+                                case 'MATLAB:noPublicFieldForClass'
+                                    matRad_cfg.dispWarning('Not able to assign property from pln.propDoseCalc to Dose Engine: %s',ME.message);
+                                otherwise
+                                    matRad_cfg.dispWarning('Problem while setting up engine from struct:%s %s',fields{i},ME.message);
+                            end
                         end
                     end
-
-                % catch exceptions when the engine has no properties,
-                % which are defined in the struct.
-                % When defining an engine with custom setter and getter
-                % methods, custom exceptions can be caught here. Be
-                % careful with Octave exceptions!
-                catch ME
-                    switch ME.identifier
-                        case 'MATLAB:noPublicFieldForClass'
-                            matRad_cfg.dispWarning('Not able to assign property from pln.propDoseCalc to Dose Engine: %s',ME.message);
-                        otherwise
-                            matRad_cfg.dispWarning('Problem while setting up engine from struct:%s %s',fields{i},ME.message);
+                else
+                    try
+                        oldValue = this.(fields{i});
+                        newValue = pln.propDoseCalc.(fields{i});
+                        this.(fields{i}) = newValue;
+    
+                        if warnWhenPropertyChanged
+                            if ~isequal(oldValue,newValue)
+                                matRad_cfg.dispWarning('Property ''%s'' overwritten by Plan settings!',fields{i});
+                            end
+                        end
+    
+                    % catch exceptions when the engine has no properties,
+                    % which are defined in the struct.
+                    % When defining an engine with custom setter and getter
+                    % methods, custom exceptions can be caught here. Be
+                    % careful with Octave exceptions!
+                    catch ME
+                        switch ME.identifier
+                            case 'MATLAB:noPublicFieldForClass'
+                                matRad_cfg.dispWarning('Not able to assign property from pln.propDoseCalc to Dose Engine: %s',ME.message);
+                            otherwise
+                                matRad_cfg.dispWarning('Problem while setting up engine from struct:%s %s',fields{i},ME.message);
+                        end
                     end
                 end
             end           
