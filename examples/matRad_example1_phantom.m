@@ -21,6 +21,7 @@
 %% set matRad runtime configuration
 %clear all; %somewhat needed for the phantom builder
 matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
+matRad_cfg = MatRad_Config.instance(); %This creates a matRad-Config object holding global configuration parameters
 
 %% Create a CT image series
 
@@ -121,7 +122,7 @@ matRadGUI;
 stf = matRad_generateStf(ct,cst,pln);
 
 %% Dose Calculation
-dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 
 %% Export dij matrix
 %matRad_exportDij('dij.bin',dij,stf);
@@ -148,6 +149,6 @@ matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],[],co
 % the property dicomDir. While the different DICOM datasets (ct, RTStruct, etc) 
 % can be exported individually, we call the wrapper to do all possible exports.
 dcmExport = matRad_DicomExporter();
-dcmExport.dicomDir = [pwd filesep 'dicomExport'];
+dcmExport.dicomDir = [matRad_cfg.primaryUserFolder filesep 'dicomExport'];
 dcmExport.matRad_exportDicom();
 

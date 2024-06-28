@@ -100,7 +100,7 @@ display(stf.ray(100));
 display(stf.ray(100).energy);
 
 %% Dose Calculation
-dij = matRad_calcParticleDose(ct,stf,pln,cst);
+dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 
 %% Inverse Optimization  for IMPT based on RBE-weighted dose
 % The goal of the fluence optimization is to find a set of bixel/spot 
@@ -150,7 +150,7 @@ end
 
 %% Recalculate Plan
 % Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose
-resultGUI_tissue = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
+resultGUI_tissue = matRad_calcDoseForward(ct,cst,stf,pln,resultGUI.w);
 
 %% Result Comparison
 % Let's compare the new recalculation against the optimization result.
