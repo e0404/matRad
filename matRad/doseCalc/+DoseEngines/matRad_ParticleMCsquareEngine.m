@@ -459,8 +459,8 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                     %% clear all data
                     %could also be moved to the "finalize" function
                     delete([this.config.CT_File(1:end-4) '.*']);
-                    delete('currBixels.txt');
-                    delete('MCsquareConfig.txt');
+                    fullfile(this.workingDir,'currBixels.txt');
+                    fullfile(this.workingDir,'MCsquareConfig.txt');
 
                     %For Octave temporarily disable confirmation for recursive rmdir
                     if strcmp(matRad_cfg.env,'OCTAVE')
