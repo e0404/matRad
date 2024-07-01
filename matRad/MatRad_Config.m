@@ -188,7 +188,7 @@ classdef MatRad_Config < handle
           
             %Dose Calculation Options
             obj.defaults.propDoseCalc.engine = {'SVDPB','HongPB'}; %Names for default engines used when no other is given
-            obj.defaults.propDoseCalc.resolution = struct('x',3,'y',3,'z',3); %[mm]
+            obj.defaults.propDoseCalc.doseGrid.resolution = struct('x',3,'y',3,'z',3); %[mm]
             obj.defaults.propDoseCalc.dosimetricLateralCutOff = 0.995; %[rel.]
             obj.defaults.propDoseCalc.geometricLateralCutOff = 50; %[mm]
             obj.defaults.propDoseCalc.kernelCutOff = Inf; %[mm]
@@ -242,7 +242,7 @@ classdef MatRad_Config < handle
             obj.defaults.propStf.bixelWidth = 20;
             
             %Dose Calculation Options
-            obj.defaults.propDoseCalc.resolution = struct('x',5,'y',6,'z',7); %[mm]
+            obj.defaults.propDoseCalc.doseGrid.resolution = struct('x',5,'y',6,'z',7); %[mm]
             obj.defaults.propDoseCalc.geometricLateralCutOff = 20;
             obj.defaults.propDoseCalc.dosimetricLateralCutOff = 0.8;
             obj.defaults.propDoseCalc.kernelCutOff = 20; %[mm]
