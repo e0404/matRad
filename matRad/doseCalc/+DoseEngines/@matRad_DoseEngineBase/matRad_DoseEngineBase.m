@@ -347,46 +347,4 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             machine = matRad_loadMachine(struct('radiationMode',radiationMode,'machine',machineName));
         end
     end
-
-
 end
-
-function this = iterateAndAssignProperties(this, plnStuct,warnWhenPropertyChanged)
-        fields = fieldnames(plnStuct);
-        for i = 1:numel(fields)
-            field = fields{i};
-            value = plnStuct.(field);
-            
-            if isstruct(value)
-                % If the field is a structure, recurse into it
-                this.(field) = iterateAndAssignProperties(this.(field),plnStuct.(field),warnWhenPropertyChanged);
-            else
-                try
-                    oldValue = this.(field);
-                    newValue = plnStuct.(field);
-                    this.(field) = newValue;
-                    if warnWhenPropertyChanged
-                        if ~isequal(oldValue,newValue)
-                            matRad_cfg = MatRad_Config.instance();
-                            matRad_cfg.dispWarning('Property ''%s'' overwritten by Plan settings!',field);
-                        end
-                    end
-
-                    % catch exceptions when the engine has no properties,
-                    % which are defined in the struct.
-                    % When defining an engine with custom setter and getter
-                    % methods, custom exceptions can be caught here. Be
-                    % careful with Octave exceptions!
-               catch ME
-                    switch ME.identifier
-                        case 'MATLAB:noPublicFieldForClass'
-                            matRad_cfg = MatRad_Config.instance();
-                            matRad_cfg.dispWarning('Not able to assign property from pln.propDoseCalc to Dose Engine: %s',ME.message);
-                        otherwise
-                            matRad_cfg = MatRad_Config.instance();
-                            matRad_cfg.dispWarning('Problem while setting up engine from struct:%s %s',field,ME.message);
-                    end
-                end
-            end
-       end
-    end
