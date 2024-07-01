@@ -530,18 +530,18 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             end
 
             %% Call Superclass init function
-            dij = initDoseCalc@DoseEngines.matRad_MonteCarloEngineAbstract(this,ct,cst,stf); 
-
             % Since MCsquare 1.1 only allows similar resolution in x&y, we do some
             % extra checks on that before calling the normal initDoseCalc. First, we make sure a
             % dose grid resolution is set in the pln struct
 
             % Now we check for different x/y
-            if dij.doseGrid.resolution.x ~= dij.doseGrid.resolution.y
-                dij.doseGrid.resolution.x = mean([dij.doseGrid.resolution.x dij.doseGrid.resolution.y]);
-                dij.doseGrid.resolution.y = dij.doseGrid.resolution.x;
-                matRad_cfg.dispWarning('Anisotropic resolution in axial plane for dose calculation with MCsquare not possible\nUsing average x = y = %g mm\n',dij.doseGrid.resolution.x);
+            if this.doseGrid.resolution.x ~= this.doseGrid.resolution.y
+                this.doseGrid.resolution.x = mean([this.doseGrid.resolution.x this.doseGrid.resolution.y]);
+                this.doseGrid.resolution.y = this.doseGrid.resolution.x;
+                matRad_cfg.dispWarning('Anisotropic resolution in axial plane for dose calculation with MCsquare not possible\nUsing average x = y = %g mm\n',this.doseGrid.resolution.x);
             end
+            
+            dij = initDoseCalc@DoseEngines.matRad_MonteCarloEngineAbstract(this,ct,cst,stf);            
             
             %% Validate and preset some additional dij variables
             
