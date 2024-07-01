@@ -490,17 +490,7 @@ classdef MatRad_Config < handle
                     if ~isfield(pln,currField)
                         pln.(currField) = obj.defaults.(currField);
                     else
-                        fNames = fieldnames(obj.defaults.(currField));
-                        for f = 1:numel(fNames)
-                            if ~isfield(pln.(currField),fNames{f}) && isstruct(obj.defaults.(currField).(fNames{f}))
-                                subfields = fieldnames(obj.defaults.(currField).(fNames{f}));
-                                for s = 1:length(subfields)
-                                    if ~isfield(pln.(currField).(fNames{f}),subfields{s})
-                                        pln.(currField).(fNames{f}).(subfields{s}) = obj.defaults.(currField).(fNames{f}).(subfields{s});
-                                    end
-                                end
-                            end
-                        end
+                        pln.(currField) = matRad_recursiveFieldAssignment(pln.(currField),obj.defaults.(currField));
                     end
                 end
             end

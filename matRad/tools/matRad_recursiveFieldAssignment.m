@@ -48,7 +48,11 @@ if isstruct(assignTo) && isstruct(reference)
     fields = fieldnames(reference);
     for i = 1:numel(fields)
         field = fields{i};
-        assigned.(field) = matRad_recursiveFieldAssignment(assignTo.(field),reference.(field),fieldChangedWarningMessage,field);
+        if ~isfield(assignTo,field)
+            assigned.(field) = reference.(field);
+        else
+            assigned.(field) = matRad_recursiveFieldAssignment(assignTo.(field),reference.(field),fieldChangedWarningMessage,field);
+        end
     end
 % If the reference is not a struct, we can assign it directly. 
 % However, we need to check if the assignTo is a struct and if we need to warn the user of overwriting a struct with a non-struct

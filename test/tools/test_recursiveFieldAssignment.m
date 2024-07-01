@@ -35,6 +35,21 @@ function test_recursiveFieldAssignment_existingField
     assertEqual(result, expected);
     %assertWarning(@() matRad_recursiveFieldAssignment(assignTo, reference,'TestWarn')); %Does not work for some reason, despite warnign being correctly raised
 
+% Test case: Assigning a struct field to a non-struct field
+function test_recursiveFieldAssignment_structToNonExisting
+    assignTo = struct();
+    reference = struct('a', 2);
+    expected = struct('a', 2);
+    result = matRad_recursiveFieldAssignment(assignTo, reference);
+    assertEqual(result, expected);
+    %assertWarning(@() matRad_recursiveFieldAssignment(assignTo, reference)); %Does not work for some reason, despite warning being correctly raised
+
+    assignTo = struct('a',2);
+    reference = struct('a',3,'b',4);
+    expected = struct('a',3,'b',4);
+    result = matRad_recursiveFieldAssignment(assignTo, reference);
+    assertEqual(result, expected);
+
 % Test case 4: Overwriting a non-struct field with a non-struct field
 function test_recursiveFieldAssignment_nonStruct
     assignTo = 1;
