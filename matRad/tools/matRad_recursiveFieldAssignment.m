@@ -45,6 +45,10 @@ end
 
 % If the reference is a struct, we need to recurse into it
 if isstruct(assignTo) && isstruct(reference)
+    %First make sure the output has all the fields of the assignTo structure
+    assigned = assignTo;
+    
+    %Now iterate over all fields provided in the reference structure
     fields = fieldnames(reference);
     for i = 1:numel(fields)
         field = fields{i};

@@ -88,13 +88,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             this.setDefaults@DoseEngines.matRad_MonteCarloEngineAbstract();
 
             % future code for property validation on creation here
-            matRad_cfg = MatRad_Config.instance();
-            
-            %Assign default parameters from MatRad_Config
-            this.doseGrid.resolution    = matRad_cfg.defaults.propDoseCalc.resolution;
-            this.multScen = 'nomScen';
-            this.selectVoxelsInScenarios = matRad_cfg.defaults.propDoseCalc.selectVoxelsInScenarios;
-
+            matRad_cfg = MatRad_Config.instance();            
             %Set Default MCsquare path
             %Set folder
             this.workingDir     = fullfile(matRad_cfg.primaryUserFolder,'MCsquare');

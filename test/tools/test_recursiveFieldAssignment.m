@@ -26,7 +26,7 @@ initTestSuite;
 % assertExceptionThrown(f,id) - test if exception of id is thrown. Take care of Octave issues with exception id (or don't provide id)
 % Check MOxUnit for more information or look at other tests
 
-% Test case 1: Assigning fields from reference to assignTo
+% Assigning fields from reference to assignTo
 function test_recursiveFieldAssignment_existingField
     assignTo = struct('a', 1, 'b', struct('c', 2));
     reference = struct('a', 3, 'b', struct('c', 4));
@@ -35,7 +35,15 @@ function test_recursiveFieldAssignment_existingField
     assertEqual(result, expected);
     %assertWarning(@() matRad_recursiveFieldAssignment(assignTo, reference,'TestWarn')); %Does not work for some reason, despite warnign being correctly raised
 
-% Test case: Assigning a struct field to a non-struct field
+
+function test_recursiveFieldAssignment_keepFields
+    assignTo = struct('a', 1, 'b', struct('c', 2), 'd', struct('e','hello'));
+    reference = struct('a', 3, 'b', struct('c', 4));
+    expected = struct('a', 3, 'b', struct('c', 4), 'd', struct('e','hello'));
+    result = matRad_recursiveFieldAssignment(assignTo, reference);
+    assertEqual(result, expected);
+
+% Assigning a struct field to a non-struct field
 function test_recursiveFieldAssignment_structToNonExisting
     assignTo = struct();
     reference = struct('a', 2);
@@ -50,7 +58,7 @@ function test_recursiveFieldAssignment_structToNonExisting
     result = matRad_recursiveFieldAssignment(assignTo, reference);
     assertEqual(result, expected);
 
-% Test case 4: Overwriting a non-struct field with a non-struct field
+% Overwriting a non-struct field with a non-struct field
 function test_recursiveFieldAssignment_nonStruct
     assignTo = 1;
     reference = 2;
@@ -59,7 +67,7 @@ function test_recursiveFieldAssignment_nonStruct
     assertEqual(result, expected);
     %assertWarning(@() matRad_recursiveFieldAssignment(assignTo, reference,'TestWarn')); %Does not work for some reason, despite warnign being correctly raised
 
-% Test case 2: Overwriting a non-struct field with a struct field
+% Overwriting a non-struct field with a struct field
 function test_recursiveFieldAssignment_nonExistingField
     assignTo = struct('a', 1);
     reference = struct('a', struct('b', 2));
@@ -69,7 +77,7 @@ function test_recursiveFieldAssignment_nonExistingField
     %assertWarning(@() matRad_recursiveFieldAssignment(assignTo, reference)); %Does not work for some reason, despite warnign being correctly raised
 
 
-% Test case 3: Overwriting a struct field with a non-struct field
+% Overwriting a struct field with a non-struct field
 function test_recursiveFieldAssignment_nestedField
     assignTo = struct('a', struct('b', 2));
     reference = struct('a', 3);
