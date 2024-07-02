@@ -37,6 +37,10 @@ if nargin < 5
     visBool = 0;
 end
 
+if ~isfield(pln,'propSeq')
+    pln.propSeq = struct('runSequencing',false);
+end
+
 if strcmp(pln.radiationMode,'photons') && (pln.propSeq.runSequencing || pln.propOpt.runDAO)
     
     if ~isfield(pln.propSeq, 'sequencer')
