@@ -111,11 +111,15 @@ function test_matRad_interp1_extrapolation
     assertElementsAlmostEqual(y2(outIdx), realExtrap.*ones(size(y2(outIdx))));
     % [2] NaN & 'none': we expect NaNs for both of them in this case
     % If numel(x2) == 1, we expect an error for 'none'----> Implement this!
-    y2 = matRad_interp1(x1, y1, x2, NaN);
-    y3 = matRad_interp1(x1, y1, x2, 'none');
-    assertTrue( sum(isnan(y2(outIdx)))==length(outIdx) );
-    assertTrue( sum(isnan(y3(outIdx)))==length(outIdx) );
-    assertElementsAlmostEqual(y2, y3);
+    if moxunit_util_platform_is_octave
+        assertExceptionThrown(@() matRad_interp1(x1, y1, x2, 'none'));
+    else
+        y2 = matRad_interp1(x1, y1, x2, NaN);
+        y3 = matRad_interp1(x1, y1, x2, 'none');
+        assertTrue( sum(isnan(y2(outIdx)))==length(outIdx) );
+        assertTrue( sum(isnan(y3(outIdx)))==length(outIdx) );
+        assertElementsAlmostEqual(y2, y3);
+    end
     % [3] linear & extrap: in this case we expect they work the same
     % If numel(x2) == 1, we expect an error for 'linear'----> Implement this!
     y2 = matRad_interp1(x1, y1, x2, 'extrap');
@@ -138,7 +142,11 @@ function test_matRad_interp1_errors
     % [1] x2 is a vector: we expect error
     % First value is repeted value in x1, second value is different; 
     x2 = [x1(1); rand.*((R-x1(1))/10)+x1(1)];
-    assertExceptionThrown(@() matRad_interp1(x1, y1, x2), 'MATLAB:griddedInterpolant:NonUniqueCompVecsPtsErrId');
+    if moxunit_util_platform_is_octave
+        assertExceptionThrown(@() matRad_interp1(x1, y1, x2));
+    else
+        assertExceptionThrown(@() matRad_interp1(x1, y1, x2), 'MATLAB:griddedInterpolant:NonUniqueCompVecsPtsErrId');
+    end
 
     % [2] x2 is a scalar, the result is NaN
     y2 = matRad_interp1(x1, y1, x2(1));
@@ -150,10 +158,10 @@ function test_matRad_interp1_errors
     % [1] Single query point, case 'none'
     x1 = [1; 10000];
     y1 = [7.3; 2.4];
-    assertExceptionThrown(@() matRad_interp1(x1, y1, 0.5, 'none'), '');
+    assertExceptionThrown(@() matRad_interp1(x1, y1, 0.5, 'none'));
 
     % [2] Single query point, case 'linear'
-    assertExceptionThrown(@() matRad_interp1(x1, y1, 0.5, 'linear'), '');
+    assertExceptionThrown(@() matRad_interp1(x1, y1, 0.5, 'linear'));
 
 %{
 function test_matRad_interp1_multiple1D
