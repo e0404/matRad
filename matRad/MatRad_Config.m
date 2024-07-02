@@ -188,7 +188,7 @@ classdef MatRad_Config < handle
           
             %Dose Calculation Options
             obj.defaults.propDoseCalc.engine = {'SVDPB','HongPB'}; %Names for default engines used when no other is given
-            obj.defaults.propDoseCalc.resolution = struct('x',3,'y',3,'z',3); %[mm]
+            obj.defaults.propDoseCalc.doseGrid.resolution = struct('x',3,'y',3,'z',3); %[mm]
             obj.defaults.propDoseCalc.dosimetricLateralCutOff = 0.995; %[rel.]
             obj.defaults.propDoseCalc.geometricLateralCutOff = 50; %[mm]
             obj.defaults.propDoseCalc.kernelCutOff = Inf; %[mm]
@@ -242,7 +242,7 @@ classdef MatRad_Config < handle
             obj.defaults.propStf.bixelWidth = 20;
             
             %Dose Calculation Options
-            obj.defaults.propDoseCalc.resolution = struct('x',5,'y',6,'z',7); %[mm]
+            obj.defaults.propDoseCalc.doseGrid.resolution = struct('x',5,'y',6,'z',7); %[mm]
             obj.defaults.propDoseCalc.geometricLateralCutOff = 20;
             obj.defaults.propDoseCalc.dosimetricLateralCutOff = 0.8;
             obj.defaults.propDoseCalc.kernelCutOff = 20; %[mm]
@@ -490,17 +490,7 @@ classdef MatRad_Config < handle
                     if ~isfield(pln,currField)
                         pln.(currField) = obj.defaults.(currField);
                     else
-                        fNames = fieldnames(obj.defaults.(currField));
-                        for f = 1:numel(fNames)
-                            if ~isfield(pln.(currField),fNames{f}) && isstruct(obj.defaults.(currField).(fNames{f}))
-                                subfields = fieldnames(obj.defaults.(currField).(fNames{f}));
-                                for s = 1:length(subfields)
-                                    if ~isfield(pln.(currField).(fNames{f}),subfields{s})
-                                        pln.(currField).(fNames{f}).(subfields{s}) = obj.defaults.(currField).(fNames{f}).(subfields{s});
-                                    end
-                                end
-                            end
-                        end
+                        pln.(currField) = matRad_recursiveFieldAssignment(pln.(currField),obj.defaults.(currField));
                     end
                 end
             end

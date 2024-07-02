@@ -88,13 +88,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             this.setDefaults@DoseEngines.matRad_MonteCarloEngineAbstract();
 
             % future code for property validation on creation here
-            matRad_cfg = MatRad_Config.instance();
-            
-            %Assign default parameters from MatRad_Config
-            this.doseGrid.resolution    = matRad_cfg.defaults.propDoseCalc.resolution;
-            this.multScen = 'nomScen';
-            this.selectVoxelsInScenarios = matRad_cfg.defaults.propDoseCalc.selectVoxelsInScenarios;
-
+            matRad_cfg = MatRad_Config.instance();            
             %Set Default MCsquare path
             %Set folder
             this.workingDir     = fullfile(matRad_cfg.primaryUserFolder,'MCsquare');
@@ -465,8 +459,8 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                     %% clear all data
                     %could also be moved to the "finalize" function
                     delete([this.config.CT_File(1:end-4) '.*']);
-                    delete('currBixels.txt');
-                    delete('MCsquareConfig.txt');
+                    fullfile(this.workingDir,'currBixels.txt');
+                    fullfile(this.workingDir,'MCsquareConfig.txt');
 
                     %For Octave temporarily disable confirmation for recursive rmdir
                     if strcmp(matRad_cfg.env,'OCTAVE')
@@ -536,18 +530,18 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             end
 
             %% Call Superclass init function
-            dij = initDoseCalc@DoseEngines.matRad_MonteCarloEngineAbstract(this,ct,cst,stf); 
-
             % Since MCsquare 1.1 only allows similar resolution in x&y, we do some
             % extra checks on that before calling the normal initDoseCalc. First, we make sure a
             % dose grid resolution is set in the pln struct
 
             % Now we check for different x/y
-            if dij.doseGrid.resolution.x ~= dij.doseGrid.resolution.y
-                dij.doseGrid.resolution.x = mean([dij.doseGrid.resolution.x dij.doseGrid.resolution.y]);
-                dij.doseGrid.resolution.y = dij.doseGrid.resolution.x;
-                matRad_cfg.dispWarning('Anisotropic resolution in axial plane for dose calculation with MCsquare not possible\nUsing average x = y = %g mm\n',dij.doseGrid.resolution.x);
+            if this.doseGrid.resolution.x ~= this.doseGrid.resolution.y
+                this.doseGrid.resolution.x = mean([this.doseGrid.resolution.x this.doseGrid.resolution.y]);
+                this.doseGrid.resolution.y = this.doseGrid.resolution.x;
+                matRad_cfg.dispWarning('Anisotropic resolution in axial plane for dose calculation with MCsquare not possible\nUsing average x = y = %g mm\n',this.doseGrid.resolution.x);
             end
+            
+            dij = initDoseCalc@DoseEngines.matRad_MonteCarloEngineAbstract(this,ct,cst,stf);            
             
             %% Validate and preset some additional dij variables
             

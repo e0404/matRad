@@ -34,7 +34,7 @@ testing_prefix = 'tmptest_';
 % Some parameters to reduce computational overhead during testing
 unitTestBixelWidth = 20;
 unitTestSpotSpacing = matRad_cfg.defaults.propStf.longitudinalSpotSpacing;
-unitTestResolution = matRad_cfg.defaults.propDoseCalc.resolution;
+unitTestResolution = matRad_cfg.defaults.propDoseCalc.doseGrid.resolution;
 
 %% Copy and manipulate all scripts
 [folders,names,exts] = cellfun(@fileparts,exampleScripts,'UniformOutput',false);
@@ -58,9 +58,9 @@ status = cellfun(@copyfile,exampleScripts,testScripts);
 
 matRad_unitTestTextManipulation(testScriptFiles,'pln.propStf.bixelWidth',['pln.propStf.bixelWidth = ' num2str(unitTestBixelWidth) ';'],tmpExampleTestFolder);
 matRad_unitTestTextManipulation(testScriptFiles,'pln.propStf.longitudinalSpotSpacing',['pln.propStf.longitudinalSpotSpacing = ' num2str(unitTestSpotSpacing) ';'],tmpExampleTestFolder);
-matRad_unitTestTextManipulation(testScriptFiles,'pln.propDoseCalc.resolution.x',['pln.propDoseCalc.resolution.x = ' num2str(unitTestResolution.x) ';'],tmpExampleTestFolder);
-matRad_unitTestTextManipulation(testScriptFiles,'pln.propDoseCalc.resolution.y',['pln.propDoseCalc.resolution.y = ' num2str(unitTestResolution.y) ';'],tmpExampleTestFolder);
-matRad_unitTestTextManipulation(testScriptFiles,'pln.propDoseCalc.resolution.z',['pln.propDoseCalc.resolution.z = ' num2str(unitTestResolution.z) ';'],tmpExampleTestFolder);
+matRad_unitTestTextManipulation(testScriptFiles,'pln.propDoseCalc.doseGrid.resolution.x',['pln.propDoseCalc.doseGrid.resolution.x = ' num2str(unitTestResolution.x) ';'],tmpExampleTestFolder);
+matRad_unitTestTextManipulation(testScriptFiles,'pln.propDoseCalc.doseGrid.resolution.y',['pln.propDoseCalc.doseGrid.resolution.y = ' num2str(unitTestResolution.y) ';'],tmpExampleTestFolder);
+matRad_unitTestTextManipulation(testScriptFiles,'pln.propDoseCalc.doseGrid.resolution.z',['pln.propDoseCalc.doseGrid.resolution.z = ' num2str(unitTestResolution.z) ';'],tmpExampleTestFolder);
 matRad_unitTestTextManipulation(testScriptFiles,'display(','%%%%%%%%%%%%%%% REMOVED DISPLAY FOR TESTING %%%%%%%%%%%%%%',tmpExampleTestFolder);
 
 %initTestSuite;
