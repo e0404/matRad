@@ -192,6 +192,9 @@ if isempty(V)
     matRad_cfg.dispError('Could not find target.');
 end
 
+% Convert linear indices to 3D voxel coordinates
+[coordsY_vox, coordsX_vox, coordsZ_vox] = ind2sub(ct.cubeDim,V);
+
 % take only voxels inside patient
 V = [cst{:,4}];
 V = unique(vertcat(V{:}));
@@ -202,10 +205,6 @@ eraseCtDensMask(V) = 0;
 for i = 1:ct.numOfCtScen
     ct.cube{i}(eraseCtDensMask == 1) = 0;
 end
-
-% Convert linear indices to 3D voxel coordinates
-[coordsY_vox, coordsX_vox, coordsZ_vox] = ind2sub(ct.cubeDim,V);
-
 
 if isExternalTherapy
     % prepare structures necessary for particles
