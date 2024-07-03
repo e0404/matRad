@@ -71,7 +71,8 @@ if numel(x) == 1
             %In this unlikely event fall back to classic
             y = interp1(xi,yi,x,'linear',extrapolation);
         else
-            error('Invalid extrapolation argument!');
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispError('Invalid extrapolation argument ''%s''!',extrapolation);
         end 
     end
         
@@ -105,8 +106,16 @@ elseif isGriddedInterpolantAvailable
         
         
 else
-    
-    % for older matlab versions use this code
-    y = interp1(xi,yi,x,'linear',extrapolation);
-
+    % for older matlab versions or octave use this code
+    if isscalar(extrapolation) || strcmp(extrapolation,'extrap')
+        extrapmethod = extrapolation;
+    else
+        matRad_cfg = MatRad_Config.instance();
+        if matRad_cfg.isOctave && ~strcmp(extrapolation,'linear')
+            matRad_cfg.dispError('Invalid extrapolation argument ''%s''!',extrapolation);
+        else
+            extrapmethod = 'extrap';
+        end
+    end
+    y = interp1(xi,yi,x,'linear',extrapmethod);
 end
