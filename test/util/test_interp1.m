@@ -141,15 +141,15 @@ function test_matRad_interp1_extrapolation_nearest
     y = matRad_interp1(xi,yi,x,'nearest');
     assertEqual(y,3);
 
-    xi = [1 2 3]';
-    yi = [1 2 3; 1 2 3]';
-    x = [0 1.5 4]';
+    xi = [1 2 3 4]';
+    yi = [1 2 3 4; 1 2 3 4]';
+    x = [-1 0 1.5 5 6]';
     y = matRad_interp1(xi,yi,x,'nearest');
-    assertEqual(y,[1 1; 1.5 1.5; 3 3]);
+    assertEqual(y,[1 1; 1 1; 1.5 1.5; 4 4; 4 4]);
     
-    x = 4;
+    x = 5;
     y = matRad_interp1(xi,yi,x,'nearest');
-    assertEqual(y,[3 3]);
+    assertEqual(y,[4 4]);
 
     x = 0;
     y = matRad_interp1(xi,yi,x,'nearest');
