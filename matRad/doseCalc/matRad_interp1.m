@@ -129,8 +129,9 @@ else
     end
     y = interp1(xi,yi,x,'linear',extrapmethod);
 
+    %Manual nearest neighbor assignment for extrapolation
     if strcmp(extrapolation,'nearest')
-        y(x < min(xi),:) = min(yi(x < min(xi),:));
-        y(x > max(xi),:) = max(yi(x > max(xi),:));
+        y(x < min(xi),:) = repmat(min(yi),sum(x<min(xi)),1);
+        y(x > max(xi),:) = repmat(max(yi),sum(x>max(xi)),1);
     end
 end
