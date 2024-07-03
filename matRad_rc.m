@@ -33,7 +33,7 @@ try %Check if matRad is already on the path and if so, if it is the same install
 catch %If matRad is not on the path, initialize it freshly and add the sourcefolder containing MatRad_Config to the path
     matRadRoot = thisFolder;
     matRadSrcRoot = fullfile(thisFolder,'matRad');
-    addpath(strjoin({matRadRoot,matRadSrcRoot},';'));
+    addpath(matRadRoot,matRadSrcRoot);
     tmp_cfg = MatRad_Config.instance();
 end
 
