@@ -130,7 +130,7 @@ else
     y = interp1(xi,yi,x,'linear',extrapmethod);
 
     if strcmp(extrapolation,'nearest')
-        y(x < min(xi)) = min(yi);
-        y(x > max(xi)) = max(yi);
+        y(x < min(xi),:) = min(yi(x < min(xi),:));
+        y(x > max(xi),:) = max(yi(x > max(xi),:));
     end
 end
