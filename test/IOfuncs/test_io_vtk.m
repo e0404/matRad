@@ -1,4 +1,4 @@
-function test_suite = test_io_nrrd
+function test_suite = test_io_vtk
 %The output should always be test_suite, and the function name the same as
 %your file name
 
@@ -30,7 +30,9 @@ function test_vtk_basic_write
     load TG119.mat
     tmpDir = tempdir();
     tmpDir = [tmpDir filesep 'matRad_test_vtk' filesep];
-    mkdir(tmpDir)
+    if ~exist(tmpDir,'dir')
+        mkdir(tmpDir);
+    end
 
     tmpFilePath = [tmpDir filesep 'TG119.vtk'];
     

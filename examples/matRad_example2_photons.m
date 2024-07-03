@@ -26,7 +26,7 @@
 % matRad root directory with all its subdirectories is added to the Matlab 
 % search path.
 
-matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
+matRad_cfg = matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
 load('TG119.mat');
 
 %%
@@ -212,16 +212,16 @@ matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
 %% Obtain dose statistics
 % Two more columns will be added to the cst structure depicting the DVH and
 % standard dose statistics such as D95,D98, mean dose, max dose etc.
-[dvh,qi]               = matRad_indicatorWrapper(cst,pln,resultGUI);
-[dvh_coarse,qi_coarse] = matRad_indicatorWrapper(cst,pln,resultGUI_coarse);
+resultGUI = matRad_planAnalysis(resultGUI,ct,cst,stf,pln);
+resultGUI_coarse = matRad_planAnalysis(resultGUI_coarse,ct,cst,stf,pln);
 
 %%
 % The treatment plan using more beams should in principle result in a
 % better OAR sparing. Therefore lets have a look at the D95 of the OAR of 
 % both plans
 ixOAR = 2;
-display(qi(ixOAR).D_95);
-display(qi_coarse(ixOAR).D_95);
+display(resultGUI.qi(ixOAR).D_95);
+display(resultGUI.qi_coarse(ixOAR).D_95);
 
 
 %% 
@@ -231,4 +231,4 @@ display(qi_coarse(ixOAR).D_95);
 % also store more optional parameters, but requires only the resolution to be s
 % set.
 metadata = struct('resolution',[ct.resolution.x ct.resolution.y ct.resolution.z]);
-matRad_writeCube([pwd filesep 'photonDose_example2.nrrd'],resultGUI.physicalDose,'double',metadata);
+matRad_writeCube(fullfile(matRad_cfg.primaryUserFolder,'photonDose_example2.nrrd'),resultGUI.physicalDose,'double',metadata);

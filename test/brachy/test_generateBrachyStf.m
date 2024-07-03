@@ -1,19 +1,13 @@
-function test_suite = test_generateBrachyStfTest
+function test_suite = test_generateBrachyStf
 
 test_functions=localfunctions();
 
 initTestSuite;
 
-
-
-function test_addBrachyInfo()
-    
-    global plnTest;
-    
-
+function pln = createPln(machine)
     % set up an example pln with relevant fields 
     pln.radiationMode   = 'brachy';
-    pln.machine         = 'HDR';
+    pln.machine         = machine;
     
     % geometry settings
     load PROSTATE.mat ct cst;
@@ -38,17 +32,25 @@ function test_addBrachyInfo()
                                             0 0 0 0 0 0 0 0 0 0 0 0 0;...                                                                      
                                             0 0 0 0 0 0 0 0 0 0 0 0 0];
     pln.propStf.bixelWidth = 10;
-    plnTest = pln;
 
-
-
-function test_rightOutput()
-    global plnTest;
-    load PROSTATE.mat ct cst;
-    stf = matRad_generateStf(ct, cst, plnTest, 0);
+function test_generate_HDR()
+    pln = createPln('HDR');
+    stf = matRad_generateStf(ct, cst, pln, 0);
     assertTrue(isfield(stf, 'radiationMode'));
     assertTrue(isfield(stf, 'numOfSeedsPerNeedle'));
     assertTrue(isfield(stf, 'numOfNeedles'));
     assertTrue(isfield(stf, 'totalNumOfBixels'));
     assertTrue(isfield(stf, 'template'));
     assertTrue(isfield(stf, 'seedPoints'));
+
+function test_generate_LDR()
+    pln = createPln('LDR');
+    stf = matRad_generateStf(ct, cst, pln, 0);
+    assertTrue(isfield(stf, 'radiationMode'));
+    assertTrue(isfield(stf, 'numOfSeedsPerNeedle'));
+    assertTrue(isfield(stf, 'numOfNeedles'));
+    assertTrue(isfield(stf, 'totalNumOfBixels'));
+    assertTrue(isfield(stf, 'template'));
+    assertTrue(isfield(stf, 'seedPoints'));
+
+

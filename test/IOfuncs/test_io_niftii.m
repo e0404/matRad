@@ -34,7 +34,9 @@ function test_niftii_basic_writeReadCube
     load TG119.mat
     tmpDir = tempdir();
     tmpDir = [tmpDir filesep 'matRad_test_nii' filesep];
-    mkdir(tmpDir)
+    if ~exist(tmpDir,'dir')
+        mkdir(tmpDir);
+    end
 
     tmpFilePath = [tmpDir filesep 'TG119.nii'];
     
@@ -63,7 +65,9 @@ function test_niftii_compressed_writeReadCube
     load TG119.mat
     tmpDir = tempdir();
     tmpDir = [tmpDir filesep 'matRad_test_nii' filesep];
-    mkdir(tmpDir)
+    if ~exist(tmpDir,'dir')
+        mkdir(tmpDir);
+    end
 
     tmpFilePath = [tmpDir filesep 'TG119_compressed.nii'];
     

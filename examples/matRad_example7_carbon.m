@@ -150,7 +150,7 @@ end
 
 %% Recalculate Plan
 % Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose
-resultGUI_tissue = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
+resultGUI_tissue = matRad_calcDoseForward(ct,cst,stf,pln,resultGUI.w);
 
 %% Result Comparison
 % Let's compare the new recalculation against the optimization result.
