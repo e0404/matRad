@@ -4,7 +4,7 @@ test_functions=localfunctions();
 
 initTestSuite;
 
-function pln = createPln(machine)
+function pln = createPln(machine,ct,cst)
     % set up an example pln with relevant fields 
     pln.radiationMode   = 'brachy';
     pln.machine         = machine;
@@ -34,7 +34,7 @@ function pln = createPln(machine)
 function test_generate_HDR()
     % geometry settings
     load PROSTATE.mat ct cst;
-    pln = createPln('HDR');
+    pln = createPln('HDR',ct,cst);
     
     stf = matRad_generateStf(ct, cst, pln, 0);
     assertTrue(isfield(stf, 'radiationMode'));
@@ -47,7 +47,7 @@ function test_generate_HDR()
 function test_generate_LDR()
     % geometry settings
     load PROSTATE.mat ct cst;
-    pln = createPln('LDR');
+    pln = createPln('LDR',ct,cst);
 
     stf = matRad_generateStf(ct, cst, pln, 0);
     assertTrue(isfield(stf, 'radiationMode'));
