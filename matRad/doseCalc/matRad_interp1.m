@@ -70,6 +70,14 @@ if numel(x) == 1
         elseif strcmp(extrapolation,'extrap')
             %In this unlikely event fall back to classic
             y = interp1(xi,yi,x,'linear',extrapolation);
+        elseif strcmp(extrapolation,'nearest')
+            if x < min(xi) 
+                y = min(yi);
+            elseif x > max(xi)
+                y = max(yi);
+            else
+                y = yi(ix1,:) + ( yi(ix2,:)-yi(ix1,:) ) * ( x - xi(ix1) ) / ( xi(ix2) - xi(ix1) );    
+            end
         else
             matRad_cfg = MatRad_Config.instance();
             matRad_cfg.dispError('Invalid extrapolation argument ''%s''!',extrapolation);
@@ -111,11 +119,18 @@ else
         extrapmethod = extrapolation;
     else
         matRad_cfg = MatRad_Config.instance();
-        if matRad_cfg.isOctave && ~strcmp(extrapolation,'linear')
+        if matRad_cfg.isOctave && strcmp(extrapolation,'nearest')
+            extrapmethod = NaN;
+        elseif matRad_cfg.isOctave && ~strcmp(extrapolation,'linear')
             matRad_cfg.dispError('Invalid extrapolation argument ''%s''!',extrapolation);
         else
             extrapmethod = 'extrap';
         end
     end
     y = interp1(xi,yi,x,'linear',extrapmethod);
+
+    if strcmp(extrapolation,'nearest')
+        y(x < min(xi)) = min(yi);
+        y(x > max(xi)) = max(yi);
+    end
 end

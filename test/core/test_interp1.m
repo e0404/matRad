@@ -126,6 +126,21 @@ function test_matRad_interp1_extrapolation
     y3 = matRad_interp1(x1, y1, x2, 'linear'); 
     assertElementsAlmostEqual(y2, y3);
 
+function test_matRad_interp1_extrapolation_nearest
+    xi = [1 2 3]';
+    yi = [1 2 3]';
+    x = [0 1.5 4]';
+    y = matRad_interp1(xi,yi,x,'nearest');
+    assertEqual(y,[1; 1.5; 3]);
+
+    x = 0;
+    y = matRad_interp1(xi,yi,x,'nearest');
+    assertEqual(y,1);
+
+    x = 4;
+    y = matRad_interp1(xi,yi,x,'nearest');
+    assertEqual(y,3);
+
 function test_matRad_interp1_errors
     R = 10^100;
 
