@@ -9,8 +9,6 @@ function pln = createPln(machine)
     pln.radiationMode   = 'brachy';
     pln.machine         = machine;
     
-    % geometry settings
-    load PROSTATE.mat ct cst;
     pln.propStf.templateRoot             = matRad_getTemplateRoot(ct, cst);
     pln.propStf.needle.seedDistance      = 1; % [mm] seed distance on needle
     pln.propStf.needle.seedsNo           = 2; % number of seeds per needle
@@ -34,7 +32,10 @@ function pln = createPln(machine)
     pln.propStf.bixelWidth = 10;
 
 function test_generate_HDR()
+    % geometry settings
+    load PROSTATE.mat ct cst;
     pln = createPln('HDR');
+    
     stf = matRad_generateStf(ct, cst, pln, 0);
     assertTrue(isfield(stf, 'radiationMode'));
     assertTrue(isfield(stf, 'numOfSeedsPerNeedle'));
@@ -44,7 +45,10 @@ function test_generate_HDR()
     assertTrue(isfield(stf, 'seedPoints'));
 
 function test_generate_LDR()
+    % geometry settings
+    load PROSTATE.mat ct cst;
     pln = createPln('LDR');
+
     stf = matRad_generateStf(ct, cst, pln, 0);
     assertTrue(isfield(stf, 'radiationMode'));
     assertTrue(isfield(stf, 'numOfSeedsPerNeedle'));
