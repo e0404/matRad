@@ -26,7 +26,7 @@ classdef matRad_ParetoDVHWidget < matRad_Widget
     methods
         function this = matRad_ParetoDVHWidget(handleParent)
             this = this@matRad_Widget(handleParent);
-            this.DVHPlotAxes = axes(this.widgetHandle,'Position',[0 0 1 1]);
+            this.DVHPlotAxes = axes(this.widgetHandle,'Position',[0.09 0.1 0.9 0.89]);
             this.plotInitialDVH();
         end
         
