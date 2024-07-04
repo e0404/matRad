@@ -5,11 +5,6 @@ description: 'Runs an Octave test. Uses the version in the respective Ubuntu-OS'
 runs:
   using: 'composite'
   steps:
-    - name: Get MOxUnit
-      uses: actions/checkout@v4
-      with:
-        repository: MOxUnit/MOxUnit
-        path: MOxUnit
     - name: Install OCTAVE
       shell: bash
       run: | 
@@ -18,11 +13,11 @@ runs:
     - name: Prepare Test Environment
       shell: bash
       run: |
-        sudo chmod +x matRad/.github/before_install_linux.sh
-        sudo matRad/.github/before_install_linux.sh
+        sudo chmod +x .github/before_install_linux.sh
+        sudo .github/before_install_linux.sh
     - name: Run Tests
       shell: bash 
-      run: xvfb-run -a matRad/.github/runtests.sh octave-cli
+      run: xvfb-run -a .github/runtests.sh octave-cli
       # uses: GabrielBB/xvfb-action@v1 #For Headless tests
       # with:
       #   run: .github/runtests.sh octave-cli
@@ -31,7 +26,7 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: test-results-octave
-        path: matRad/testresults.xml
+        path: testresults.xml
 
     - name: Publish Test Results
       # uses: EnricoMi/publish-unit-test-result-action@v2
@@ -39,6 +34,6 @@ runs:
       if: success() || failure()
       with:
         # files: |
-        #   matRad/testresults.xml
-        paths: matRad/testresults.xml
+        #   testresults.xml
+        paths: testresults.xml
         # check_name: "${{ github.job }}"

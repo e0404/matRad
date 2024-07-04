@@ -90,5 +90,5 @@ end
 matRadGUI
 
 %% indicator calculation and show DVH and QI
-[dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI);
+resultGUI = matRad_planAnalysis(resultGUI,ct,cst,stf,pln);
 
