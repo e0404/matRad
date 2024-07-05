@@ -305,7 +305,7 @@ end
         source.photonEnergyCard_6_p = '        %8d\n';
 
         % Define coordinate transformation card
-        coordTrafo.TRcard = 'TR1\n        %.4f %.4f %.4f\n        %.4f %.4f %.4f\n        %.4f %.4f %.4f\n        %.4f %.4f %.4f\n';
+        coordTrafo.TRcard = 'TR1\n        %.4f %.4f %.4f\n        %.4f %.4f %.4f\n        %.4f %.4f %.4f\n        %.4f %.4f %.4f\n        -1\n';
 
         % Write Block C
         fprintf(fileID_C, 'C ***************************************************************\n');

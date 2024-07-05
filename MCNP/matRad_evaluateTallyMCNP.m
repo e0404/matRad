@@ -17,6 +17,14 @@ for listCounter = 1:lengthList
     dummyList(listCounter).datenum = tallyDataList(i).datenum;
 end
 
+%% Resize cst (and forget about it)
+cst = matRad_resizeCstToGrid(cst,ct.resolution.y:ct.resolution.y:ct.cubeDim(1)*ct.resolution.y,...
+    ct.resolution.x:ct.resolution.x:ct.cubeDim(2)*ct.resolution.x,...
+    ct.resolution.z:ct.resolution.z:ct.cubeDim(3)*ct.resolution.z,...
+    dij.doseGrid.resolution.y:dij.doseGrid.resolution.y:dij.doseGrid.dimensions(1)*dij.doseGrid.resolution.y,...
+    dij.doseGrid.resolution.x:dij.doseGrid.resolution.x:dij.doseGrid.dimensions(2)*dij.doseGrid.resolution.x,...
+    dij.doseGrid.resolution.z:dij.doseGrid.resolution.z:dij.doseGrid.dimensions(3)*dij.doseGrid.resolution.z);
+
 %% Allocate dij dose matrix 
 dij.physicalDose{1} = spalloc(prod(dij.doseGrid.dimensions),dij.totalNumOfBixels,1);
 for counterBixel=1:dij.totalNumOfBixels
@@ -41,7 +49,7 @@ for counterBeam = 1:dij.numOfBeams
         tic;
 
         % Read TMESH results
-        resultMCNP = matRad_readDataFromText_TMESHvBioOpti(tallyDataList(counterDijColumns).name, 'TMESH3', 2);
+        resultMCNP = matRad_readDataFromText_TMESHvBioOpti(dummyList(counterDijColumns).name, 'TMESH3', 2);
         resultMCNP = resultMCNP';
         doseMatrixBixel.physicalDose = zeros(dij.doseGrid.dimensions(2), dij.doseGrid.dimensions(1), dij.doseGrid.dimensions(3));   % Total dose
         doseMatrixBixel.physicalDose(1:end) = resultMCNP(:,1);
@@ -92,9 +100,9 @@ for counterBeam = 1:dij.numOfBeams
         for counterRTStruct=1:size(cst,1)
             dij.relError_radioTherpyStruct(counterRTStruct,counterDijColumns).name = cst{counterRTStruct,2};
             dij.relError_radioTherpyStruct(counterRTStruct,counterDijColumns).bixelNumber = counterDijColumns;
-            dij.relError_radioTherpyStruct(counterRTStruct,counterDijColumns).meanError = mean(doseMatrixBixel.physicalDose_relError(ct.doseGridCT.tissueBin(counterRTStruct).linIndVol));
-            dij.relError_radioTherpyStruct(counterRTStruct,counterDijColumns).maxError = max(doseMatrixBixel.physicalDose_relError(ct.doseGridCT.tissueBin(counterRTStruct).linIndVol));
-            dij.relError_radioTherpyStruct(counterRTStruct,counterDijColumns).medianError = median(doseMatrixBixel.physicalDose_relError(ct.doseGridCT.tissueBin(counterRTStruct).linIndVol));
+            dij.relError_radioTherpyStruct(counterRTStruct,counterDijColumns).meanError = mean(doseMatrixBixel.physicalDose_relError(cst{counterRTStruct,4}{1,1}));
+            dij.relError_radioTherpyStruct(counterRTStruct,counterDijColumns).maxError = max(doseMatrixBixel.physicalDose_relError(cst{counterRTStruct,4}{1,1}));
+            dij.relError_radioTherpyStruct(counterRTStruct,counterDijColumns).medianError = median(doseMatrixBixel.physicalDose_relError(cst{counterRTStruct,4}{1,1}));
         end
 
         %% Calculate RMF parameters
