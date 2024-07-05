@@ -1,0 +1,27 @@
+name: 'Manage stale issues and PRs'
+on:
+  schedule:
+    - cron: '0 0 * * *'
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          stale-issue-message: 'This issue was automatically marked as stale because it has been sitting there for 14 days without activity. It will be closed in 14 days if no further activity occurs.'
+          stale-pr-message: 'This PR was automatically marked as stale it has been open 30 days with no activity. Please review/update/merge this PR.'
+          close-issue-message: 'This issue was automatically closed because it has not seen any activity in four weeks. This happens usually when the issue has already been solved or it is no longer relevant. If this is not the case, feel free to reopen the issue.'
+          stale-issue-label: 'stale'
+          stale-pr-label: 'stale'
+          days-before-issue-stale: 14
+          days-before-issue-close: 14
+          days-before-pr-stale: 30
+          days-before-pr-close: -1
+          exempt-issue-labels: 'hotfix-needed,bug,enhancement,help-wanted,release-candidate'
+          exemplt-pr-labels: 'hotfix-needed,bug,enhancement,help-wanted,release-candidate'
