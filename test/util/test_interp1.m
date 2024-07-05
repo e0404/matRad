@@ -140,7 +140,8 @@ function test_matRad_interp1_extrapolation_nearest
     x = 4;
     y = matRad_interp1(xi,yi,x,'nearest');
     assertEqual(y,3);
-
+    
+    %Multiple y
     xi = [1 2 3 4]';
     yi = [1 2 3 4; 1 2 3 4]';
     x = [-1 0 1.5 5 6]';
@@ -154,6 +155,22 @@ function test_matRad_interp1_extrapolation_nearest
     x = 0;
     y = matRad_interp1(xi,yi,x,'nearest');
     assertEqual(y,[1 1]);
+
+    %non-vector x
+    yi = [1 2 3 4]';
+    x = zeros(10,3,5); 
+    x(1:5:numel(x)) = 2.5;
+    x(2:5:numel(x)) = 5;
+    ixSmaller = x == 0;
+    ixInside  = x == 2.5;
+    ixLarger   = x == 5;
+
+    y = matRad_interp1(xi,yi,x,'nearest');
+    assertEqual([numel(x) 1],size(y));
+    assertTrue(all(y(ixSmaller) == 1));
+    assertTrue(all(y(ixInside) == 2.5));
+    assertTrue(all(y(ixLarger) == 4));
+    
 
 function test_matRad_interp1_errors
     R = 10^100;
