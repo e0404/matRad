@@ -158,7 +158,7 @@ classdef matRad_MainGUI < handle
                 'CloseRequestFcn',@(src,hEvent) figure1_CloseRequestFcn(obj,src,hEvent)};
 
             if ~matRad_cfg.isOctave
-                figArgs{end+1:end+2} = {'AutoResizeChildren','Off'};
+                figArgs(end+1:end+2) = {'AutoResizeChildren','Off'};
             end
 
             obj.guiHandle = figure(figArgs{:});
