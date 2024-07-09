@@ -28,10 +28,10 @@ function [versionString,matRadVer] = matRad_version()
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %Hardcoded version name / numbers
-matRadVer.name = 'Blaise';
-matRadVer.major = 2;
-matRadVer.minor = 10;
-matRadVer.patch = 1;
+matRadVer.name = 'Cleve';
+matRadVer.major = 3;
+matRadVer.minor = 0;
+matRadVer.patch = 5;
 
 tagged = false;
 
