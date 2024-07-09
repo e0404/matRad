@@ -1,0 +1,39 @@
+name: 'Octave Test'
+author: 'e0404'
+description: 'Runs an Octave test. Uses the version in the respective Ubuntu-OS'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install OCTAVE
+      shell: bash
+      run: | 
+        sudo apt update
+        sudo apt-get install -y gdb gfortran fonts-freefont-otf gnuplot-x11 libgdcm-dev octave liboctave-dev
+    - name: Prepare Test Environment
+      shell: bash
+      run: |
+        sudo chmod +x .github/before_install_linux.sh
+        sudo .github/before_install_linux.sh
+    - name: Run Tests
+      shell: bash 
+      run: xvfb-run -a .github/runtests.sh octave-cli
+      # uses: GabrielBB/xvfb-action@v1 #For Headless tests
+      # with:
+      #   run: .github/runtests.sh octave-cli
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-octave
+        path: testresults.xml
+
+    - name: Publish Test Results
+      # uses: EnricoMi/publish-unit-test-result-action@v2
+      uses: test-summary/action@v2
+      if: success() || failure()
+      with:
+        # files: |
+        #   testresults.xml
+        paths: testresults.xml
+        # check_name: "${{ github.job }}"

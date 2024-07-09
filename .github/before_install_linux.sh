@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 sudo chmod +x .github/runtests.sh
-sudo chmod +x MCsquare/bin/MCsquare_linux
+sudo chmod +x thirdParty/MCsquare/bin/MCsquare_linux
 
-mv optimization/optimizer/ipopt.m optimization/optimizer/ipopt.m.bak
+mv matRad/optimization/optimizer/ipopt.m optimization/optimizer/ipopt.m.bak
 
 octave --no-gui --eval "pkg install -forge dicom"
 octave --no-gui --eval "pkg install -forge nan"

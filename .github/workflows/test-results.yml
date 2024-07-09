@@ -1,0 +1,40 @@
+name: Test Report
+
+permissions:
+    checks: write
+    pull-requests: write
+
+on:
+    workflow_call:
+            
+jobs:
+    test_report:
+        runs-on: ubuntu-latest
+            
+        steps:
+            
+            - name: Download Results for Matlab R2022b
+              uses: actions/download-artifact@v4
+              with:
+                  name: test-results-matlab-R2022b
+                  path: test-results/matlab-R2022b
+            
+            - name: Download Results for Matlab Latest
+              uses: actions/download-artifact@v4
+              with:
+                  name: test-results-matlab-latest
+                  path: test-results/matlab-latest
+            
+            - name: Download Results for Octave
+              uses: actions/download-artifact@v4
+              with:
+                  name: test-results-octave
+                  path: test-results/octave
+            
+            - name: Publish Test Results
+              uses: EnricoMi/publish-unit-test-result-action@v2
+              with:
+                  files: |
+                      test-results/*/testresults.xml
+
+            

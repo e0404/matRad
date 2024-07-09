@@ -13,19 +13,18 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%
-% In this example we will show 
+%% In this example we will show 
 % (i) how to load patient data into matRad
 % (ii) how to setup a photon dose calculation based on the VMC++ Monte Carlo algorithm 
 % (iii) how to inversely optimize the beamlet intensities directly from command window in MATLAB. 
 % (iv) how to visualize the result
 
+%% set matRad runtime configuration
+matRad_rc %If this throws an error, run it from the parent directory first to set the paths
+
 %% Patient Data Import
 % Let's begin with a clear Matlab environment and import the boxphantom
 % into your workspace. 
-
-matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
-
 load('BOXPHANTOM.mat');
 
 %% Treatment Plan
@@ -33,10 +32,9 @@ load('BOXPHANTOM.mat');
 % structure requires input from the treatment planner and defines the most
 % important cornerstones of your treatment plan.
 
-pln.radiationMode  = 'photons';  
-pln.machine        = 'Generic';
-pln.numOfFractions = 30;
-pln.propOpt.bioOptimization = 'none';    
+pln.radiationMode           = 'photons';  
+pln.machine                 = 'Generic';
+pln.numOfFractions          = 30;
 pln.propStf.gantryAngles    = [0];
 pln.propStf.couchAngles     = [0];
 pln.propStf.bixelWidth      = 10;
@@ -45,7 +43,18 @@ pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCent
 pln.propSeq.runSequencing   = 0;
 pln.propOpt.runDAO          = 0;
 
+quantityOpt    = 'physicalDose';                                     
+modelName      = 'none';  
+
+% retrieve bio model parameters
+pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
+
+% retrieve scenarios for dose calculation and optimziation
+pln.multScen = matRad_multScen(ct,'nomScen');
 % dose calculation settings
+%Choose MC Engine
+pln.propDoseCalc.engine = 'ompMC';
+
 pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
@@ -72,7 +81,6 @@ imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet)
 ixTarget     = cst{2,4}{1};
 doseInTarget = resultGUI.physicalDose(ixTarget);
 figure
-[env, ~] = matRad_getEnvironment();
 hist(doseInTarget);
 
  % use hist for compatibility with GNU Octave

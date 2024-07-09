@@ -1,0 +1,282 @@
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad uncertainty analysis report latex template
+% 
+% call
+%   e.g. 'xelatex  main.tex' in console
+% output
+%   pdf report
+%
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2017 the matRad development team. 
+% 
+% This file is part of the matRad project. It is subject to the license 
+% terms in the LICENSE file found in the top-level directory of this 
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% of the matRad project, including this file, may be copied, modified, 
+% propagated, or distributed except according to the terms contained in the 
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\RequirePackage{luatex85,shellesc}
+\documentclass[a4paper]{scrartcl}
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[autoplay,loop]{animate}
+\usepackage[verbose]{placeins}
+\usepackage{fullpage}
+\usepackage{ifthen}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage[colorinlistoftodos]{todonotes}
+\addtokomafont{disposition}{\rmfamily}
+
+% pgfplots for matlab2tikz
+\usepackage{pgfplots}
+\pgfplotsset{compat=newest}
+%% the following commands are needed for some matlab2tikz features
+\usetikzlibrary{plotmarks}
+\usetikzlibrary{arrows.meta}
+\usepgfplotslibrary{patchplots}
+\usepackage{grffile}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{color}
+\usepackage{fancyhdr}
+\usepackage{footnote}
+\usepackage[hidelinks]{hyperref} % clickable table of content
+\makesavenoteenv{figure}
+
+\usetikzlibrary{external}
+\tikzexternalize[prefix=data/figures/]
+
+\newlength\figW
+\setlength{\figW}{0.9\textwidth}
+\newlength\figH
+\setlength{\figH}{0.56\textwidth} % 0.9 / golden ratio
+
+\usepackage[babel,english=british]{csquotes}
+
+
+\begin{document}
+\input{data/parameters.tex}
+\input{data/patientInformation.tex}
+
+\title{Uncertainty Sampling Report}
+\subtitle{\patientLastName{}, \patientFirstName{}, \patientID\\ \textcolor{red}{\warnMessage}}
+\author{\operator}
+% \date{\today}
+\maketitle
+\IfFileExists{data/frames/anim_1.png}{
+  \begin{figure}[!b]
+    \centering
+    \animategraphics[controls,width = \textwidth]{\framerate}{data/frames/anim_}{\firstframe}{\lastframe}
+  \end{figure}
+  }{No animation available.}
+
+\newpage
+\tableofcontents
+
+\newpage
+\section{Patient Information}
+\label{sec:patientInformation}
+
+\begin{table}[h]
+\centering
+%\caption{My caption}
+\label{table:patientInformation}
+\begin{tabular}{rl}
+\toprule
+Patient's name & \patientLastName{}, \patientFirstName \\
+Patient ID     & \patientID                             \\
+Patient's sex  & \patientSex \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Plan Overview}
+\label{sex:planOverview}
+
+\subsection{Setup}
+
+\begin{table}[h]
+  \centering
+  %\caption{My caption}
+  \label{table:planInformation}
+  \begin{tabular}{rl}
+    \toprule
+    Gantry angles   & \planGantryAngles \\
+    Couch angles    & \planCouchAngles  \\
+    Radiation modalitiy & \planRadiationModality \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Parameter for Uncertainty Analysis}
+\input{data/uncertaintyParameters.tex}
+The following parameters were used as scenarios, set by the user \operator.
+\begin{table}[!h]
+  \centering
+  %\caption{My caption}
+  \label{table:userParameters}
+  \begin{tabular}{rl}
+    \toprule
+    Number of shifts       & \numOfShiftScen \\
+    Shift size             & \shiftSize  \\
+    Shift combination     & \shiftCombType  \\
+    Number of range shifts & \numOfRangeShiftScen \\
+    Max abs. range Shift   & \maxAbsRangeShift  \\
+    Max rel. range Shift   & \maxRelRangeShift  \\
+    Range shift combination & \rangeCombType  \\
+    Total scen combination & \scenCombType  \\
+    Computation time & \computationTime  \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+The following uncertainties were incorporated in this analysis.
+\begin{table}[!h]
+  \centering
+  %\caption{My caption}
+  \label{table:typeUncertainty}
+  \begin{tabular}{rl}
+    \toprule
+    Ct uncertainties   & \ctScen \\
+    Shift uncertainties    & \shiftScen  \\
+    Range uncertainties & \rangeScen \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+Assuming the uncertainties above to be distributed by a normally around 0 with standard deviaton
+\begin{table}[!h]
+  \centering
+  %\caption{My caption}
+  \label{table:uncertaintySD}
+  \begin{tabular}{rl}
+    \toprule
+    $\sigma_{shift} $    & \shiftSD  \ mm\\
+    $\sigma_{relRange} $ & \rangeRelSD \ \% \\
+    $\sigma_{absRange} $ & \rangeAbsSD \ mm \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Explenatory Information}
+In section \ref{sec:usa} common quality indictors are used to examine their behaviour under the influence of uncertainties. 
+The quality indicator can also be found in the table (top row, column-wise).
+Metrics (i.e. percentiles and confidence values) are applied on an individual quality indicators of the scenarios and can be found in the first column (row-wise).
+
+\subsubsection{Statistics}
+All types of uncertainties are assumed to be uncorrelated, i.e. range uncertainties are not correlated to shift uncertainties.
+Shift uncertainties are assumed to be ineherently uncorrelated as well, i.e. no correlation between shifts in x-, y- or z direction.
+Therefore the probability assigned to a scenario $i$ is the product of the probabilities of the individual components $j$, i.e.
+\begin{equation}
+  p_i = \prod\limits_j p_j.
+\end{equation}
+ 
+\paragraph{Mean} $\mu$ on scenarios $X_i$ is weighted by the probabilities $p_i$:
+\begin{equation}
+  \mu = \frac{\sum\limits_{i} p_i X_i}{\sum\limits_{i} p_i}
+\end{equation}
+ 
+\paragraph{Variance} is analogously defined as:
+\begin{equation}
+	\sigma^2 = \frac{\sum\limits_{i} p_{i}\left(x_{i}-\mu\right)^{2}}{\sum\limits _{i}p_{i}}
+\end{equation}
+
+\subsubsection{Parameters}
+The complete explaination of parameters can be found next to the usage in every \textit{setupStudy.m}.
+\paragraph{shiftGenIsotropy} is set by default to \textit{+-}, which means that shifts go from negative to positive direction.
+One can also choose to only use positive or negative shifts.
+\paragraph{Combination Type} is a paremeter which is used for shift scenarios, range scenarios and the total combination of both (i.e. shiftCombType, rangeCombType, scenCombType).
+It can be set to \textit{individual}, where one type is computed after the other, \textit{combined} combines both types directly and \textit{permuted} is only available for shifts, where every possible permutation of the given x-, y- and z-shifts is being sampled.
+
+
+
+
+
+
+\FloatBarrier
+\newpage
+
+\section{Nominal Plan}
+\subsection{Slices at isoCentre}
+\begin{figure}[!b]
+  \centering
+  \input{data/figures/isoSlicePlane3_nominal.tex}
+  \caption{CT and nominal dose at isocentre. Axial view.}
+\end{figure}
+
+\begin{figure}[!b]
+  \centering
+  \input{data/figures/isoSlicePlane3_stdW.tex}
+  \caption{CT and standard deviation of dose at isocentre. Axial view.}
+\end{figure}
+
+\begin{figure}[!b]
+  \centering
+  \input{data/figures/isoSlicePlane3_gamma.tex}
+  \caption{CT and $\gamma$ index of nominal and mean dose (\gammaDoseAgreement \%, \gammaDoseAgreement mm, global). Axial view.}
+\end{figure}
+
+\begin{figure}[!b]
+  \centering
+  \input{data/figures/isoSlicePlane1_nominal.tex}
+  \caption{CT and nominal dose at isocentre. Coronal view.}
+\end{figure}
+
+\begin{figure}[!b]
+  \centering
+  \input{data/figures/isoSlicePlane1_stdW.tex}
+  \caption{CT and standard deviation of dose at isocentre. Coronal view.}
+\end{figure}
+
+\begin{figure}[!b]
+  \centering
+  \input{data/figures/isoSlicePlane1_gamma.tex}
+  \caption{CT and $\gamma$ index of nominal and mean dose (\gammaDoseAgreement \%, \gammaDoseAgreement mm, global). Coronal view.}
+\end{figure}
+
+\begin{figure}[!b]
+  \centering
+  \input{data/figures/isoSlicePlane2_nominal.tex}
+  \caption{CT and nominal dose at isocentre. Sagittal view.}
+\end{figure}
+
+\begin{figure}[!b]
+  \centering
+  \input{data/figures/isoSlicePlane2_stdW.tex}
+  \caption{CT and standard deviation of dose at isocentre. Sagittal view.}
+\end{figure}
+
+\begin{figure}[!b]
+  \centering
+  \input{data/figures/isoSlicePlane2_gamma.tex}
+  \caption{CT and $\gamma$ index of nominal and mean dose (\gammaDoseAgreement \%, \gammaDoseAgreement mm, global). Sagittal view.}
+\end{figure}
+
+
+\FloatBarrier
+
+\newpage
+\subsection{DVH and Quality Indicator}
+\begin{center}
+\input{data/figures/nominalDVH.tex}
+\end{center}
+\input{data/nominalQI.tex}
+
+\FloatBarrier
+\newpage
+\section{Uncertainty Scenario Analysis}
+\label{sec:usa}
+
+\input{data/structureWrapper.tex}
+
+
+
+
+\end{document}

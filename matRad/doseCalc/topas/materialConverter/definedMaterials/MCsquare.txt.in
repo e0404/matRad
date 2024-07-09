@@ -1,0 +1,27 @@
+# -- These Materials recreate the Material lookup as defined by MCsquare for 100% compatability. Note that the reference does some approximations (e.g., no Argon in Air) to spare Material overhead.
+sv:Ge/Patient/SchneiderElements = 7 "Hydrogen" "Carbon" "Nitrogen" "Oxygen" "Phosphorus" "Calcium" "Titanium"
+uv:Ge/Patient/SchneiderMaterialsWeight1  = 7 0.0     0.0001 0.7650   0.2349  0.0    0.0	0.0
+uv:Ge/Patient/SchneiderMaterialsWeight2  = 7 0.1040  0.1061 0.0313   0.7566  0.002  0.0	0.0
+uv:Ge/Patient/SchneiderMaterialsWeight3  = 7 0.116   0.683  0.002    0.199   0.0    0.0	0.0
+uv:Ge/Patient/SchneiderMaterialsWeight4  = 7 0.113   0.569  0.009    0.309   0.0    0.0	0.0
+uv:Ge/Patient/SchneiderMaterialsWeight5  = 7 0.111   0.460  0.015    0.413   0.001  0.0    0.0
+uv:Ge/Patient/SchneiderMaterialsWeight6  = 7 0.1085  0.3575 0.022    0.511   0.001  0.0    0.0
+uv:Ge/Patient/SchneiderMaterialsWeight7  = 7 0.1065  0.2855 0.026    0.581   0.001  0.0    0.0
+uv:Ge/Patient/SchneiderMaterialsWeight8  = 7 0.104   0.135  0.030    0.729   0.002  0.0    0.0
+uv:Ge/Patient/SchneiderMaterialsWeight9  = 7 0.0955  0.210  0.063    0.6315  0.0    0.0    0.0
+uv:Ge/Patient/SchneiderMaterialsWeight10 = 7 0.095   0.457  0.025    0.357   0.021  0.045  0.0
+uv:Ge/Patient/SchneiderMaterialsWeight11 = 7 0.089   0.425  0.027    0.365   0.030	 0.064  0.0
+uv:Ge/Patient/SchneiderMaterialsWeight12 = 7 0.082   0.393  0.029    0.374   0.039	 0.083  0.0
+uv:Ge/Patient/SchneiderMaterialsWeight13 = 7 0.076   0.363  0.030    0.382   0.047	 0.102  0.0
+uv:Ge/Patient/SchneiderMaterialsWeight14 = 7 0.0713  0.3363 0.0321   0.3886  0.0542  0.1175 0.0
+uv:Ge/Patient/SchneiderMaterialsWeight15 = 7 0.066   0.311  0.033    0.396   0.061	 0.133  0.0
+uv:Ge/Patient/SchneiderMaterialsWeight16 = 7 0.061   0.288  0.035    0.402   0.067	 0.147  0.0
+uv:Ge/Patient/SchneiderMaterialsWeight17 = 7 0.056   0.267  0.036    0.4075  0.0735 0.160  0.0
+uv:Ge/Patient/SchneiderMaterialsWeight18 = 7 0.0525  0.2475 0.037    0.4135  0.0785 0.171  0.0
+uv:Ge/Patient/SchneiderMaterialsWeight19 = 7 0.049   0.228  0.038    0.419   0.084	 0.182  0.0
+uv:Ge/Patient/SchneiderMaterialsWeight20 = 7 0.045   0.211  0.039    0.423   0.089	 0.193  0.0
+uv:Ge/Patient/SchneiderMaterialsWeight21 = 7 0.042   0.195  0.040    0.428   0.093	 0.202  0.0
+uv:Ge/Patient/SchneiderMaterialsWeight22 = 7 0.039   0.180  0.041    0.432   0.097	 0.211  0.0
+uv:Ge/Patient/SchneiderMaterialsWeight23 = 7 0.036   0.166  0.042    0.435   0.101	 0.220  0.0
+uv:Ge/Patient/SchneiderMaterialsWeight24 = 7 0.034   0.156  0.042    0.438   0.104	 0.226  0.0
+uv:Ge/Patient/SchneiderMaterialsWeight25 = 7 0.0     0.0    0.0      0.0     0.0	 0.0    1.0
