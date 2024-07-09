@@ -316,7 +316,7 @@ classdef matRad_BiologicalModel
                                       
                     otherwise
                         matRad_cfg.dispWarning(['matRad: Invalid biological radiation mode: ' this.radiationMode  '; using photons instead.']);
-                        this.radiationMode = 'brachy';
+                        this.radiationMode = 'photons';
                 end
             end
            
