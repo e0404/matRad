@@ -30,6 +30,7 @@
 * Giuseppe Pezzano
 * Daniel Ramirez
 * Carsten Scholz
+* Lisa Seckler
 * Camilo Sevilla
 * Alexander Stadler
 * Uwe Titt

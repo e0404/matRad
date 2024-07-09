@@ -189,6 +189,7 @@ elseif pln.bioParam.bioOpt
         maxCurrRBE = max(-cst{ixTarget,5}.alphaX + sqrt(cst{ixTarget,5}.alphaX^2 + ...
             4*cst{ixTarget,5}.betaX.*CurrEffectTarget)./(2*cst{ixTarget,5}.betaX*doseTmp(V)));
         wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(doseTmp(V))))* wOnes;
+
     end
 
     matRad_cfg.dispInfo('chosen weights adapted to biological dose calculation!\n');
@@ -260,7 +261,7 @@ switch pln.bioParam.quantityOpt
     case 'physicalDose'
         backProjection = matRad_DoseProjection;
     otherwise
-        warning(['Did not recognize bioloigcal setting ''' pln.probOpt.bioOptimization '''!\nUsing physical dose optimization!']);
+        matRad_cfg.dispWarning('Did not recognize biological setting ''%s''!\nUsing physical dose optimization!',pln.probOpt.bioOptimization);
         backProjection = matRad_DoseProjection;
 end
 
@@ -274,6 +275,22 @@ optiProb = matRad_OptimizationProblem(backProjection);
 optiProb.quantityOpt = pln.bioParam.quantityOpt;
 if isfield(pln,'propOpt') && isfield(pln.propOpt,'useLogSumExpForRobOpt')
     optiProb.useLogSumExpForRobOpt = pln.propOpt.useLogSumExpForRobOpt;
+end
+
+rowCst = size(cst);
+for i = 1 : rowCst(1,1)
+    num = size(cst{i,6});
+    for j = 1 : num(1,2)
+        if isa(cst{i,6}{j},'DirtyDoseObjectives.matRad_DirtyDoseObjective')
+            optiProb.dirtyDoseBP = matRad_DirtyDoseProjection;
+        end
+        if isa(cst{i,6}{j},'LETxDoseObjectives.matRad_LETxDoseObjective')
+            optiProb.LETxDoseBP = matRad_LETxDoseProjection;
+        end
+        if isa(cst{i,6}{j},'LETdObjectives.matRad_LETdObjective')
+            optiProb.LETdBP = matRad_LETdProjection;
+        end
+    end
 end
 
 %Get Bounds
@@ -326,6 +343,7 @@ info = optimizer.resultInfo;
 
 resultGUI = matRad_calcCubes(wOpt,dij);
 resultGUI.wUnsequenced = wOpt;
+
 resultGUI.usedOptimizer = optimizer;
 resultGUI.info = info;
 

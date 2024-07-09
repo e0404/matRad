@@ -108,7 +108,7 @@ matRad_compareDose(resultGUI.physicalDose, resultGUI.(['physicalDose_' pln.propD
 
 %% Compare LET
 if isfield(resultGUI,'LET') && isfield(resultGUI_MC,'LET')
-    matRad_compareDose(resultGUI.LET, resultGUI.(['LET_' pln.propDoseCalc.engine]), ct, cst, [1, 1, 0] , 'off', pln, [2, 2], 1, 'global');    
+    matRad_compareDose(resultGUI.LETd, resultGUI.(['LET_' pln.propDoseCalc.engine]), ct, cst, [1, 1, 0] , 'off', pln, [2, 2], 1, 'global');    
 end
 
 %% GUI

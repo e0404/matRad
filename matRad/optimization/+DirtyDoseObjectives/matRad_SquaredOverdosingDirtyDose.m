@@ -1,6 +1,6 @@
-classdef matRad_SquaredUnderdosing < DoseObjectives.matRad_DoseObjective
-% matRad_SquaredUnderdosing Implements a penalized squared underdosing objective
-%   See matRad_DoseObjective for interface description
+classdef matRad_SquaredOverdosingDirtyDose < DirtyDoseObjectives.matRad_DirtyDoseObjective
+% matRad_SquaredOverdosingDirtyDose implements a penalized dirty dose 
+%   See matRad_DirtyDoseObjective for interface description
 %
 % References
 %   -
@@ -17,20 +17,20 @@ classdef matRad_SquaredUnderdosing < DoseObjectives.matRad_DoseObjective
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+    
     properties (Constant)
-        name = 'Squared Underdosing';
-        parameterNames = {'d^{min}'};
-        parameterTypes = {'dose'};
+        name = 'Squared Overdosing Dirty Dose';
+        parameterNames = {'d^{max}'}; 
+        parameterTypes = {'dirtyDose'}; 
     end
     
     properties
-        parameters = {60};
+        parameters = {30}; 
         penalty = 1;
     end
     
     methods
-        function obj = matRad_SquaredUnderdosing(penalty,dMin)
+        function obj = matRad_SquaredOverdosingDirtyDose(penalty,dMax) 
             %If we have a struct in first argument
             if nargin == 1 && isstruct(penalty)
                 inputStruct = penalty;
@@ -41,12 +41,12 @@ classdef matRad_SquaredUnderdosing < DoseObjectives.matRad_DoseObjective
             end
             
             %Call Superclass Constructor (for struct initialization)
-            obj@DoseObjectives.matRad_DoseObjective(inputStruct);
+            obj@DirtyDoseObjectives.matRad_DirtyDoseObjective(inputStruct);
             
             %now handle initialization from other parameters
             if ~initFromStruct
-                if nargin == 2 && isscalar(dMin)
-                    obj.parameters{1} = dMin;
+                if nargin >= 2 && isscalar(dMax)
+                    obj.parameters{1} = dMax;
                 end
                 
                 if nargin >= 1 && isscalar(penalty)
@@ -55,28 +55,28 @@ classdef matRad_SquaredUnderdosing < DoseObjectives.matRad_DoseObjective
             end
         end
         
-        %% Calculates the Objective Function value
-        function fDose = computeDoseObjectiveFunction(obj,dose)
-            % overdose : dose minus prefered dose
-            underdose = dose - obj.parameters{1};
+       %% Calculates the Objective Function value
+        function fDirtyDose = computeDirtyDoseObjectiveFunction(obj,dirtyDose)
+            % overdose : dirtyDose minus prefered dose
+            overdose = dirtyDose - obj.parameters{1};
             
             % apply positive operator
-            underdose(underdose>0) = 0;
+            overdose(overdose<0) = 0;
             
-            % claculate objective function
-            fDose = 1/numel(dose) * (underdose'*underdose);
+            % calculate objective function
+            fDirtyDose = 1/numel(dirtyDose) * (overdose'*overdose);
         end
         
         %% Calculates the Objective Function gradient
-        function fDoseGrad   = computeDoseObjectiveGradient(obj,dose)
-            % underdose : dose minus prefered dose
-            underdose = dose - obj.parameters{1};
+        function fDirtyDoseGrad   = computeDirtyDoseObjectiveGradient(obj,dirtyDose)
+            % overdose : dirtyDose minus prefered dose
+            overdose = dirtyDose - obj.parameters{1};
             
             % apply positive operator
-            underdose(underdose>0) = 0;
+            overdose(overdose<0) = 0;
             
             % calculate delta
-            fDoseGrad = 2/numel(dose) * underdose;
+            fDirtyDoseGrad = 2 * 1/numel(dirtyDose) * overdose;
         end
     end
     

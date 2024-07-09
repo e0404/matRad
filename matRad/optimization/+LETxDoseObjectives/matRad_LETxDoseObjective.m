@@ -1,14 +1,14 @@
-classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
-% matRad_DoseObjective: Interface for optimization objectives
+classdef (Abstract) matRad_LETxDoseObjective < matRad_DoseOptimizationFunction
+% matRad_LETxDoseObjective: Interface for optimization objectives
 %   This abstract base class provides the structure of optimization
-%   objectives like mean dose, squared deviation, EUD, dose-volume etc.
-%   Implementations can be found in the DoseObjectives package
+%   objectives like mean LETxDose, squared deviation, EULETxDose, LETxDose-volume etc.
+%   Implementations can be found in the LETxDoseObjectives package
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team.
+% Copyright 2020 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
@@ -19,9 +19,9 @@ classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    properties (Abstract, Access = public)
+   properties (Abstract, Access = public)
         penalty                 %Optimization penalty
-        
+       
     end
        
     methods (Static)
@@ -34,30 +34,23 @@ classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
     %as Octave is able to do this, they should be made abstract again
     methods %(Abstract)
        
-        %returns the objective function value for the given dose vector. Needs to be implemented in sub-classes.
-        function fDose       = computeDoseObjectiveFunction(obj,dose)
+        %returns the objective function value for the given LET vector. Needs to be implemented in sub-classes.
+        function fLETxDose       = computeLETxDoseObjectiveFunction(obj,LETxDose)
             error('Function needs to be implemented!');
         end
         
         
-        %returns the dose-gradient for the given dose vector. Needs to be implemented in sub-classes.
-        function fDoseGrad   = computeDoseObjectiveGradient(obj,dose)
+        %returns the LET-gradient for the given LET vector. Needs to be implemented in sub-classes.
+        function fLETxDoseGrad   = computeLETxDoseObjectiveGradient(obj,LETxDose)
             error('Function needs to be implemented!');
         end
-
-         % function fClusterDose = computeClusterDoseObjectiveFunction(obj,dose)
-         %     error('Function needs to be implemented!')
-         % end
-         % function fClusterDoseGrad   = computeClusterDoseObjectiveGradient(obj,dose)
-         %     error('Function needs to be implemented!')
-         %end
          
     end
     
     methods (Access = public)
        
-        % constructor of matRad_DoseObjective
-        function obj = matRad_DoseObjective(varargin)
+        % constructor of matRad_LETObjective
+        function obj = matRad_LETxDoseObjective(varargin)
             %default initialization from struct (parameters & penalty)
             obj@matRad_DoseOptimizationFunction(varargin{:});
         end
@@ -69,7 +62,5 @@ classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
             s.penalty = obj.penalty;
             
         end
-        
-    end   
+    end 
 end
-

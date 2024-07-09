@@ -7,9 +7,9 @@ function resultGUI = matRad_calcCubes(w,dij,scenNum)
 %   resultGUI = matRad_calcCubes(w,dij,scenNum)
 %
 % input
-%   w:       bixel weight vector
-%   dij:     dose influence matrix
-%   scenNum: optional: number of scenario to calculated (default 1)
+%   w:          bixel weight vector
+%   dij:        dose influence matrix
+%   scenNum:    optional: number of scenario to calculated (default 1)
 %
 % output
 %   resultGUI: matRad result struct
@@ -75,18 +75,33 @@ for j = 1:length(doseFields)
     end
 end
 
-
 %% LET
-% consider LET
 if isfield(dij,'mLETDose')
+    %Apply a threshold to avoid division by doses close to zero
+    if ~isfield(dij,'doseLETthreshold')
+        doseLETthreshold = 0.01 * resultGUI.physicalDose;
+    else
+        doseLETthreshold = dij.doseLETthreshold;
+    end
+
+    % compute LETd and LETxDose for all beams individually and together
     for i = 1:length(beamInfo)
-        LETDoseCube                                 = reshape(full(dij.mLETDose{scenNum} * (resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
-        resultGUI.(['LET', beamInfo(i).suffix])     = zeros(dij.doseGrid.dimensions);
-        ix                                          = resultGUI.(['physicalDose', beamInfo(i).suffix]) > 0;
-        resultGUI.(['LET', beamInfo(i).suffix])(ix) = LETDoseCube(ix)./resultGUI.(['physicalDose', beamInfo(i).suffix])(ix);
+        resultGUI.(['LETxDose', beamInfo(i).suffix]) = reshape(full(dij.mLETDose{scenNum}*(resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
+        resultGUI.(['LETd', beamInfo(i).suffix])     = zeros(dij.doseGrid.dimensions);
+        ix                                          = resultGUI.(['physicalDose', beamInfo(i).suffix]) > doseLETthreshold;
+        resultGUI.(['LETd', beamInfo(i).suffix])(ix) = resultGUI.(['LETxDose', beamInfo(i).suffix])(ix)./resultGUI.(['physicalDose', beamInfo(i).suffix])(ix);
     end
 end
 
+%% dirty & clean dose
+if isfield(dij,'dirtyDoseThreshold')
+    for i = 1:length(beamInfo)
+        % consider dirty dose
+        resultGUI.(['dirtyDose', beamInfo(i).suffix]) = reshape(full(dij.dirtyDose{1}*(resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
+        % consider clean dose
+        resultGUI.(['cleanDose', beamInfo(i).suffix]) = reshape(full(dij.cleanDose{1}*(resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
+    end
+end
 
 %% RBE weighted dose
 % consider RBE for protons and skip varRBE calculation

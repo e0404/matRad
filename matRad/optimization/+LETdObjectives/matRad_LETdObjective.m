@@ -1,14 +1,14 @@
-classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
-% matRad_DoseObjective: Interface for optimization objectives
+classdef (Abstract) matRad_LETdObjective < matRad_DoseOptimizationFunction
+% matRad_LETdObjective: Interface for optimization objectives
 %   This abstract base class provides the structure of optimization
-%   objectives like mean dose, squared deviation, EUD, dose-volume etc.
-%   Implementations can be found in the DoseObjectives package
+%   objectives like mean LET, squared deviation, EULET, LET-volume etc.
+%   Implementations can be found in the mLETDoseObjectives package
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team.
+% Copyright 2020 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
@@ -20,46 +20,40 @@ classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (Abstract, Access = public)
-        penalty                 %Optimization penalty
+        penalty             %Optimization penalty
         
     end
-       
+    
     methods (Static)
         function rob = availableRobustness()
             rob = {'none','STOCH','PROB','VWWC','VWWC_INV','COWC','OWC'}; %By default, no robustness is available
         end 
     end
-    
+
     %These should be abstract methods, however Octave can't parse them. As soon
     %as Octave is able to do this, they should be made abstract again
     methods %(Abstract)
        
-        %returns the objective function value for the given dose vector. Needs to be implemented in sub-classes.
-        function fDose       = computeDoseObjectiveFunction(obj,dose)
+        %returns the objective function value for the given LET vector. Needs to be implemented in sub-classes.
+        function fLETd      = computeLETdObjectiveFunction(obj,LETd)
             error('Function needs to be implemented!');
         end
         
         
-        %returns the dose-gradient for the given dose vector. Needs to be implemented in sub-classes.
-        function fDoseGrad   = computeDoseObjectiveGradient(obj,dose)
+        %returns the LET-gradient for the given LET vector. Needs to be implemented in sub-classes.
+        function fLETdGrad   = computeLETdObjectiveGradient(obj,LETd)
             error('Function needs to be implemented!');
         end
-
-         % function fClusterDose = computeClusterDoseObjectiveFunction(obj,dose)
-         %     error('Function needs to be implemented!')
-         % end
-         % function fClusterDoseGrad   = computeClusterDoseObjectiveGradient(obj,dose)
-         %     error('Function needs to be implemented!')
-         %end
-         
     end
     
     methods (Access = public)
        
-        % constructor of matRad_DoseObjective
-        function obj = matRad_DoseObjective(varargin)
+        % constructor of matRad_LETObjective
+        function obj = matRad_LETdObjective(varargin)
             %default initialization from struct (parameters & penalty)
             obj@matRad_DoseOptimizationFunction(varargin{:});
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispWarning('LETd SquaredOverdosing does not work!')
         end
         
         %Overloads the struct function to add Objective related information
@@ -69,7 +63,5 @@ classdef (Abstract) matRad_DoseObjective < matRad_DoseOptimizationFunction
             s.penalty = obj.penalty;
             
         end
-        
-    end   
+    end 
 end
-

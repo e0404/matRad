@@ -118,7 +118,7 @@ imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet);
 % Let's plot the transversal iso-center LET slice
 slice = round(pln.propStf.isoCenter(3)./ct.resolution.z);
 figure;
-imagesc(resultGUI.LET(:,:,slice)),colorbar, colormap(jet);
+imagesc(resultGUI.LETd(:,:,slice)),colorbar, colormap(jet);
 
 %% Inverse Optimization  for IMPT based on biological effect
 % To perform a dose optimization for carbon ions we can also use the

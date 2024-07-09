@@ -56,17 +56,58 @@ classdef (Abstract) matRad_DoseOptimizationFunction
     
     % Helper methods
     methods (Access = public)
-        function doseParams = getDoseParameters(obj)
+        function objParams = getDoseParameters(obj)
             % get only the dose related parameters.
-            ix = cellfun(@(c) isequal('dose',c),obj.parameterTypes);
-            doseParams = [obj.parameters{ix}];
+            if isempty(obj.parameterTypes)
+                objParams = [];
+            end
+
+            if cellfun(@(c) isequal('dose',c),obj.parameterTypes)
+                ix = cellfun(@(c) isequal('dose',c),obj.parameterTypes);
+                objParams = [obj.parameters{ix}];
+            end
+
+            if cellfun(@(c) isequal('dirtyDose',c),obj.parameterTypes)
+                ix = cellfun(@(c) isequal('dirtyDose',c),obj.parameterTypes);
+                objParams = [obj.parameters{ix}];
+            end
+
+            if cellfun(@(c) isequal('LETxd',c),obj.parameterTypes)
+                ix = cellfun(@(c) isequal('LETxd',c),obj.parameterTypes);
+                objParams = [obj.parameters{ix}];
+            end
+
+            if cellfun(@(c) isequal('LETd',c),obj.parameterTypes)
+                ix = cellfun(@(c) isequal('LETd',c),obj.parameterTypes);
+                objParams = [obj.parameters{ix}];
+            end
+
         end
-        
-        function obj = setDoseParameters(obj,doseParams)
+
+        function obj = setDoseParameters(obj,objParams)
             % set only the dose related parameters.
-            ix = cellfun(@(c) isequal('dose',c),obj.parameterTypes);
-            obj.parameters(ix) = num2cell(doseParams);            
-        end        
+
+            if cellfun(@(c) isequal('dose',c),obj.parameterTypes)
+                ix = cellfun(@(c) isequal('dose',c),obj.parameterTypes);
+                obj.parameters(ix) = num2cell(objParams);
+            end
+
+            if cellfun(@(c) isequal('dirtyDose',c),obj.parameterTypes)
+                ix = cellfun(@(c) isequal('dirtyDose',c),obj.parameterTypes);
+                obj.parameters(ix) = num2cell(objParams);
+            end
+
+            if cellfun(@(c) isequal('LETxd',c),obj.parameterTypes)
+                ix = cellfun(@(c) isequal('LETxd',c),obj.parameterTypes);
+                obj.parameters(ix) = num2cell(objParams);
+            end
+
+            if cellfun(@(c) isequal('LETd',c),obj.parameterTypes)
+                ix = cellfun(@(c) isequal('LETd',c),obj.parameterTypes);
+                obj.parameters(ix) = num2cell(objParams);
+            end
+
+        end
     end
     
     methods (Access = private)
