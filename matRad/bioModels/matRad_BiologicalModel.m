@@ -12,7 +12,8 @@ classdef matRad_BiologicalModel
     % input
     %   sRadiationMode:     radiation modality 'photons' 'protons' 'carbon'
     %   sQuntityOpt:        string to denote the quantity used for
-    %                       optimization 'physicalDose', 'RBExD', 'effect'
+    %                       optimization 'physicalDose', 'RBExD',
+    %                       'effect','BED'
     %   sModel:             string to denote which biological model is used
     %                       'none': for photons, protons, carbon                                    'constRBE': constant RBE for photons and protons 
     %                       'MCN': McNamara-variable RBE model for protons                          'WED': Wedenberg-variable RBE model for protons 
@@ -61,7 +62,7 @@ classdef matRad_BiologicalModel
     properties(Constant = true)
         AvailableModels                 = {'none','constRBE','MCN','WED','LEM','HEL'};   % cell array determines available models - if cell is deleted then the corersponding model can not be generated
         AvailableradiationModealities   = {'photons','protons','helium','carbon'};
-        AvailableQuantitiesForOpt       = {'physicalDose','effect','RBExD'};
+        AvailableQuantitiesForOpt       = {'physicalDose','effect','RBExD','BED'};
         
         AvailableAlphaXBetaX = {[0.036 0.024],    'prostate';
             [0.089 0.287],    'rectum and normal tissue';
@@ -153,11 +154,11 @@ classdef matRad_BiologicalModel
                                     setDefaultValues = true;
                                 end
                                 
-                            case {'effect'}
+                            case {'effect','BED'}
                                 if strcmp( this.model,'none')
                                     boolCHECK        = true;
                                     this.bioOpt      = true;
-                                    this.quantityVis = 'RBExD';
+                                    this.quantityVis = 'physicalDose';
                                 else
                                     setDefaultValues = true;   
                                 end
@@ -202,7 +203,7 @@ classdef matRad_BiologicalModel
                                     this.model  = 'constRBE';
                                 end
                                 
-                            case {'effect'}
+                            case {'effect','BED'}
                                 if sum(strcmp( this.model, {'MCN','WED'})) == 1
                                     boolCHECK           = true;
                                     this.bioOpt         = true;
@@ -230,7 +231,7 @@ classdef matRad_BiologicalModel
                                     this.model  = 'none';
                                 end
                                 
-                            case {'effect','RBExD'}
+                            case {'effect','RBExD','BED'}
                                 if sum(strcmp(this.model,{'LEM','HEL'})) > 0
                                     boolCHECK           = true;
                                     this.bioOpt         = true;
@@ -258,7 +259,7 @@ classdef matRad_BiologicalModel
                                     this.model  = 'none';
                                 end
                                 
-                            case {'effect','RBExD'}
+                            case {'effect','RBExD','BED'}
                                 if strcmp(this.model,'LEM')
                                     boolCHECK           = true;
                                     this.bioOpt         = true;
@@ -282,7 +283,7 @@ classdef matRad_BiologicalModel
             
             % check quantity for optimization
             if this.bioOpt 
-                if sum(strcmp(this.quantityOpt,{'physicalDose','RBExD','effect'})) == 0
+                if sum(strcmp(this.quantityOpt,this.AvailableQuantitiesForOpt)) == 0
                     matRad_cfg.dispError(['matRad: Invalid quantity for optimization: ' this.quantityOpt  ]);
                 end
             else
@@ -294,7 +295,7 @@ classdef matRad_BiologicalModel
             
             % check quantity for visualization
             if this.bioOpt 
-                if sum(strcmp(this.quantityVis,{'physicalDose','RBExD','effect'})) == 0
+                if sum(strcmp(this.quantityVis,this.AvailableQuantitiesForOpt)) == 0
                     matRad_cfg.dispError(['matRad: Invalid quantity for visualization: ' this.quantityVis  ]);
                 end
             else
