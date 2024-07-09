@@ -38,7 +38,7 @@ tagged = false;
 %Retreive branch / commit information from current git repo if applicable
 try
     %read HEAD file to point to current ref / commit
-    repoGitDir = [fileparts(mfilename('fullpath')) filesep '.git'];   
+    repoGitDir = [fileparts(mfilename('fullpath')) filesep '..' filesep '.git'];   
     headText = fileread([repoGitDir filesep 'HEAD']);
 
     %Test if detached head (HEAD contains 40 hex SHA1 commit ID)    
