@@ -1,0 +1,21 @@
+# McNamara proton RBE scorer
+
+s:Sc/McNamaraAlpha/Quantity                   = "RBE_McNamara"
+s:Sc/McNamaraAlpha/Component                  = "Patient"
+s:Sc/McNamaraAlpha/OutputQuantity             = "alpha"
+d:Sc/McNamaraAlpha/PrescribedDose             = Sc/PrescribedDose Gy
+sv:Sc/McNamaraAlpha/CellLines                 = Sc/CellLines
+b:Sc/McNamaraAlpha/SimultaneousExposure       = Sc/SimultaneousExposure
+s:Sc/McNamaraAlpha/OutputType                 = Sim/DoseScorerOutputType
+s:Sc/McNamaraAlpha/OutputFile                 = Sim/ScoreLabel + "_alpha_MCN"
+s:Sc/McNamaraAlpha/IfOutputFileAlreadyExists  = "Overwrite"
+
+s:Sc/McNamaraBeta/Quantity                   = "RBE_McNamara"
+s:Sc/McNamaraBeta/Component                  = "Patient"
+s:Sc/McNamaraBeta/OutputQuantity             = "beta"
+d:Sc/McNamaraBeta/PrescribedDose             = Sc/PrescribedDose Gy
+sv:Sc/McNamaraBeta/CellLines                 = Sc/CellLines
+b:Sc/McNamaraBeta/SimultaneousExposure       = Sc/SimultaneousExposure
+s:Sc/McNamaraBeta/OutputType                 = Sim/DoseScorerOutputType
+s:Sc/McNamaraBeta/OutputFile                 = Sim/ScoreLabel + "_beta_MCN"
+s:Sc/McNamaraBeta/IfOutputFileAlreadyExists  = "Overwrite"
