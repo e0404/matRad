@@ -77,12 +77,29 @@ classdef MatRad_Config < handle
             %  For instantiation, use the static MatRad_Config.instance();
             
             %Set Path
-            obj.matRadRoot = fileparts(fileparts(mfilename('fullpath')));
-            addpath(genpath(obj.matRadSrcRoot));
-            addpath(obj.exampleFolder);
-            addpath(genpath(obj.thirdPartyFolder));
+            obj.matRadRoot = fileparts(fileparts(mfilename('fullpath'))); %Double fileparts will get the parent folder
+            
+            if ~isdeployed
+                addpath(genpath(obj.matRadSrcRoot));
+                addpath(obj.exampleFolder);
+                addpath(genpath(obj.thirdPartyFolder));
+                obj.userfolders = {[obj.matRadRoot filesep 'userdata' filesep]};
+            else
+                if ispc
+                    homeDir = getenv('USERPROFILE');
+                else
+                    homeDir = getenv('HOME');
+                end
+                userDataDir = [homeDir filesep 'matRad' filesep];
 
-            obj.userfolders = {[obj.matRadRoot filesep 'userdata' filesep]};
+                if ~isfolder(userDataDir)
+                    mkdir(userDataDir);
+                end
+
+                obj.userfolders = {userDataDir};
+            end
+
+            
             
             %Set Version
             obj.getEnvironment();
@@ -385,14 +402,18 @@ classdef MatRad_Config < handle
 
             addedFolders = cellfun(@genpath,addedFolders,'UniformOutput',false);
             addedFolders = strjoin(addedFolders,pathsep);
-            addpath(addedFolders);
+            if ~isdeployed
+                addpath(addedFolders);
+            end
 
             % Identify removed folder paths
             if ~isempty(oldFolders) %if statement for octave compatibility
                 removedFolders = setdiff(oldFolders, cleanedNewFolders);
                 removedFolders = cellfun(@genpath,removedFolders,'UniformOutput',false);
                 removedFolders = strjoin(removedFolders,pathsep);
-                rmpath(removedFolders);
+                if ~isdeployed
+                    rmpath(removedFolders);
+                end
             end
             
             obj.userfolders = cleanedNewFolders;
