@@ -40,4 +40,11 @@ classdef matRad_BEDProjection < matRad_EffectProjection
             wGrad = wGradEffect;
         end
     end
+    methods (Static)
+        function optiFunc = setBiologicalDosePrescriptions(optiFunc,alphaX,betaX)
+            doses = optiFunc.getDoseParameters();    
+            BED = doses*(1 + doses/(alphaX/betaX));        
+            optiFunc = optiFunc.setDoseParameters(BED);
+        end
+    end
 end
