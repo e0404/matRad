@@ -66,7 +66,3 @@ function test_getEngineFromPlnByName
     photonDummyPln = struct('radiationMode','photons','machine','Generic','propDoseCalc',struct('engine','MCsquare'));
     engine = DoseEngines.matRad_DoseEngineBase.getEngineFromPln(photonDummyPln);
     assertTrue(isa(engine,'DoseEngines.matRad_PhotonPencilBeamSVDEngine'));
-
-    
-
-
