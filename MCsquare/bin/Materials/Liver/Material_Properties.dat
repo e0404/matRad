@@ -1,0 +1,14 @@
+Name 			Liver
+Molecular_Weight 	0.0 		 # N.C.
+Density 		1.06000000 	 # in g/cm3 
+Electron_Density 	3.51063e+23 	 # in cm-3 
+Radiation_Length 	36.737973 	 # in g/cm2 
+
+Nuclear_Data 		Mixture 5 	# mixture with 5 components
+
+		# 	Label 	Name 		fraction by mass (in %)
+Mixture_Component	1 	hydrogen	10.303030 
+Mixture_Component	2 	carbon		14.040404 
+Mixture_Component	3 	nitrogen	3.030303 
+Mixture_Component	4 	oxygen		72.323232 
+Mixture_Component	7 	phosphorus	0.303030 

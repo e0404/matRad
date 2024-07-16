@@ -1,0 +1,13 @@
+Name 			G10
+Molecular_Weight 	0.0 		 # N.C.
+Density 		1.85000000 	 # in g/cm3 
+Electron_Density 	5.78416e+23 	 # in cm-3 
+Radiation_Length 	31.699186 	 # in g/cm2 
+
+Nuclear_Data 		Mixture 4 	# mixture with 4 components
+
+		# 	Label 	Name 		fraction by mass (in %)
+Mixture_Component	1 	hydrogen	4.000000 
+Mixture_Component	2 	carbon		25.000000 
+Mixture_Component	4 	oxygen		45.000000 
+Mixture_Component	6 	silicon		26.000000 

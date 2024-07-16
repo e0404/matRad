@@ -1,0 +1,7 @@
+Name			hydrogen
+Atomic_Weight		1.008
+Density			8.3748e-5	# in g/cm3
+Electron_Density	5.0034e19	# in cm-3
+Radiation_Length	63.047		# in g/cm2
+
+Nuclear_Data		proton-proton

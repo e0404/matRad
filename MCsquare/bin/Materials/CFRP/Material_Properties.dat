@@ -1,0 +1,13 @@
+Name 			CFRP
+Molecular_Weight 	0.0 		 # N.C.
+Density 		1.40000000 	 # in g/cm3 
+Electron_Density 	4.34512e+23 	 # in cm-3 
+Radiation_Length 	42.331140 	 # in g/cm2 
+
+Nuclear_Data 		Mixture 4 	# mixture with 4 components
+
+		# 	Label 	Name 		fraction by mass (in %)
+Mixture_Component	1 	hydrogen	3.207800 
+Mixture_Component	2 	carbon		88.669100 
+Mixture_Component	3 	nitrogen	0.849100 
+Mixture_Component	4 	oxygen		7.274000 

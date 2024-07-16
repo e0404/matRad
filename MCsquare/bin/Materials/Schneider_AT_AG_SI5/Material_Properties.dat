@@ -1,0 +1,14 @@
+Name 			Schneider_AT_AG_SI5
+Molecular_Weight 	0.0 		 # N.C.
+Density 		1.02460000 	 # in g/cm3 
+Electron_Density 	3.40575e+23 	 # in cm-3 
+Radiation_Length 	38.153306 	 # in g/cm2 
+
+Nuclear_Data 		Mixture 5 	# mixture with 5 components
+
+		# 	Label 	Name 		fraction by mass (in %)
+Mixture_Component	1 	hydrogen	10.653266 
+Mixture_Component	2 	carbon		28.542714 
+Mixture_Component	3 	nitrogen	2.613065 
+Mixture_Component	4 	oxygen		58.090452 
+Mixture_Component	7 	phosphorus	0.100503 

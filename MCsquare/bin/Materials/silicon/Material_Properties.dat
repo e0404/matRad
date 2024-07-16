@@ -1,0 +1,7 @@
+Name			Silicon
+Atomic_Weight		28.0855
+Density			2.3290		# in g/cm3
+Electron_Density	6.9914e+23	# in cm-3
+Radiation_Length	21.8234		# in g/cm2
+
+Nuclear_Data		ICRU

@@ -1,0 +1,12 @@
+Name 			Pyrex
+Molecular_Weight 	0.0 		 # N.C.
+Density 		2.23000000 	 # in g/cm3 
+Electron_Density 	6.67533e+23 	 # in cm-3 
+Radiation_Length 	28.170788 	 # in g/cm2 
+
+Nuclear_Data 		Mixture 3 	# mixture with 3 components
+
+		# 	Label 	Name 		fraction by mass (in %)
+Mixture_Component	4 	oxygen		58.115779 
+Mixture_Component	5 	aluminium	1.254166 
+Mixture_Component	6 	silicon		40.630056 

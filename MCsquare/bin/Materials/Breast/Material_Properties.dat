@@ -1,0 +1,14 @@
+Name 			Breast
+Molecular_Weight 	0.0 		 # N.C.
+Density 		1.02000000 	 # in g/cm3 
+Electron_Density 	3.39039e+23 	 # in cm-3 
+Radiation_Length 	38.645285 	 # in g/cm2 
+
+Nuclear_Data 		Mixture 5 	# mixture with 5 components
+
+		# 	Label 	Name 		fraction by mass (in %)
+Mixture_Component	1 	hydrogen	10.642570 
+Mixture_Component	2 	carbon		33.333333 
+Mixture_Component	3 	nitrogen	3.012048 
+Mixture_Component	4 	oxygen		52.911647 
+Mixture_Component	7 	phosphorus	0.100402 

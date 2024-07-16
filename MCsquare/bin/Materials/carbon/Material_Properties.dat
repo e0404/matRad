@@ -1,0 +1,7 @@
+Name			carbon
+Atomic_Weight		12.0111
+Density			2.0		# in g/cm3
+Electron_Density	6.0166e23	# in cm-3
+Radiation_Length	42.6983		# in g/cm2
+
+Nuclear_Data		ICRU

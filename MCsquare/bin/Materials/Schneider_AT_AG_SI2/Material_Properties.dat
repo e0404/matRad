@@ -1,0 +1,13 @@
+Name 			Schneider_AT_AG_SI2
+Molecular_Weight 	0.0 		 # N.C.
+Density 		0.94390000 	 # in g/cm3 
+Electron_Density 	3.15650e+23 	 # in cm-3 
+Radiation_Length 	40.910680 	 # in g/cm2 
+
+Nuclear_Data 		Mixture 4 	# mixture with 4 components
+
+		# 	Label 	Name 		fraction by mass (in %)
+Mixture_Component	1 	hydrogen	11.334002 
+Mixture_Component	2 	carbon		56.870612 
+Mixture_Component	3 	nitrogen	0.902708 
+Mixture_Component	4 	oxygen		30.892678 

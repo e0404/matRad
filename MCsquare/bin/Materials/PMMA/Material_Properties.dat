@@ -1,0 +1,12 @@
+Name 			PMMA
+Molecular_Weight 	0.0 		 # N.C.
+Density 		1.19000000 	 # in g/cm3 
+Electron_Density 	3.86526e+23 	 # in cm-3 
+Radiation_Length 	40.549999 	 # in g/cm2 
+
+Nuclear_Data 		Mixture 3 	# mixture with 3 components
+
+		# 	Label 	Name 		fraction by mass (in %)
+Mixture_Component	1 	hydrogen	8.054500 
+Mixture_Component	2 	carbon		59.984500 
+Mixture_Component	4 	oxygen		31.961000 

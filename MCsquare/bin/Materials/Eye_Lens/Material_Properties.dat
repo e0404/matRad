@@ -1,0 +1,14 @@
+Name 			Eye_Lens
+Molecular_Weight 	0.0 		 # N.C.
+Density 		1.07000000 	 # in g/cm3 
+Electron_Density 	3.52525e+23 	 # in cm-3 
+Radiation_Length 	37.387490 	 # in g/cm2 
+
+Nuclear_Data 		Mixture 5 	# mixture with 5 components
+
+		# 	Label 	Name 		fraction by mass (in %)
+Mixture_Component	1 	hydrogen	9.648241 
+Mixture_Component	2 	carbon		19.597990 
+Mixture_Component	3 	nitrogen	5.728643 
+Mixture_Component	4 	oxygen		64.924623 
+Mixture_Component	7 	phosphorus	0.100503 

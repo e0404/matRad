@@ -1,0 +1,14 @@
+Name 			Testis
+Molecular_Weight 	0.0 		 # N.C.
+Density 		1.04000000 	 # in g/cm3 
+Electron_Density 	3.45715e+23 	 # in cm-3 
+Radiation_Length 	36.576187 	 # in g/cm2 
+
+Nuclear_Data 		Mixture 5 	# mixture with 5 components
+
+		# 	Label 	Name 		fraction by mass (in %)
+Mixture_Component	1 	hydrogen	10.685484 
+Mixture_Component	2 	carbon		9.979839 
+Mixture_Component	3 	nitrogen	2.016129 
+Mixture_Component	4 	oxygen		77.217742 
+Mixture_Component	7 	phosphorus	0.100806 

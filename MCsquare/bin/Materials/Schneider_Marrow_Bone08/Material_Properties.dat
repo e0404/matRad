@@ -1,0 +1,15 @@
+Name 			Schneider_Marrow_Bone08
+Molecular_Weight 	0.0 		 # N.C.
+Density 		1.49030000 	 # in g/cm3 
+Electron_Density 	4.72157e+23 	 # in cm-3 
+Radiation_Length 	29.911241 	 # in g/cm2 
+
+Nuclear_Data 		Mixture 6 	# mixture with 6 components
+
+		# 	Label 	Name 		fraction by mass (in %)
+Mixture_Component	1 	hydrogen	5.633803 
+Mixture_Component	2 	carbon		26.659960 
+Mixture_Component	3 	nitrogen	3.621730 
+Mixture_Component	4 	oxygen		40.744467 
+Mixture_Component	7 	phosphorus	7.344064 
+Mixture_Component	8 	calcium		15.995976 

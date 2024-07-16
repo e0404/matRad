@@ -1,0 +1,13 @@
+Name 			Marrow_Yellow
+Molecular_Weight 	0.0 		 # N.C.
+Density 		0.98000000 	 # in g/cm3 
+Electron_Density 	3.28282e+23 	 # in cm-3 
+Radiation_Length 	41.706700 	 # in g/cm2 
+
+Nuclear_Data 		Mixture 4 	# mixture with 4 components
+
+		# 	Label 	Name 		fraction by mass (in %)
+Mixture_Component	1 	hydrogen	11.534604 
+Mixture_Component	2 	carbon		64.593781 
+Mixture_Component	3 	nitrogen	0.702106 
+Mixture_Component	4 	oxygen		23.169509 

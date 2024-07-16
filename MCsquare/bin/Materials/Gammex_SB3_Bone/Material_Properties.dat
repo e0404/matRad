@@ -1,0 +1,14 @@
+Name 			Gammex_SB3_Bone
+Molecular_Weight 	0.0 		 # N.C.
+Density 		1.81900000 	 # in g/cm3 
+Electron_Density 	5.65698e+23 	 # in cm-3 
+Radiation_Length 	28.035183 	 # in g/cm2 
+
+Nuclear_Data 		Mixture 5 	# mixture with 5 components
+
+		# 	Label 	Name 		fraction by mass (in %)
+Mixture_Component	1 	hydrogen	3.411023 
+Mixture_Component	2 	carbon		31.419426 
+Mixture_Component	3 	nitrogen	1.840552 
+Mixture_Component	4 	oxygen		36.510953 
+Mixture_Component	8 	calcium		26.818045 

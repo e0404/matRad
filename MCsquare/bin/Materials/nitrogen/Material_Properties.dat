@@ -1,0 +1,7 @@
+Name			nitrogen
+Atomic_Weight		14.0067
+Density			1.16528e-3	# in g/cm3
+Electron_Density	3.5071e20	# in cm-3
+Radiation_Length	37.9879		# in g/cm2
+
+Nuclear_Data		ICRU

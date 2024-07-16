@@ -1,0 +1,12 @@
+Name 			RW3
+Molecular_Weight 	0.0 		 # N.C.
+Density 		1.04500000 	 # in g/cm3 
+Electron_Density 	3.37592e+23 	 # in cm-3 
+Radiation_Length 	42.819996 	 # in g/cm2 
+
+Nuclear_Data 		Mixture 3 	# mixture with 3 components
+
+		# 	Label 	Name 		fraction by mass (in %)
+Mixture_Component	1 	hydrogen	7.682186 
+Mixture_Component	2 	carbon		91.508097 
+Mixture_Component	4 	oxygen		0.809717 

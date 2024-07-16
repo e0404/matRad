@@ -1,0 +1,14 @@
+Name 			Gastrointestinal_Tract
+Molecular_Weight 	0.0 		 # N.C.
+Density 		1.03000000 	 # in g/cm3 
+Electron_Density 	3.42408e+23 	 # in cm-3 
+Radiation_Length 	36.785859 	 # in g/cm2 
+
+Nuclear_Data 		Mixture 5 	# mixture with 5 components
+
+		# 	Label 	Name 		fraction by mass (in %)
+Mixture_Component	1 	hydrogen	10.653266 
+Mixture_Component	2 	carbon		11.557789 
+Mixture_Component	3 	nitrogen	2.211055 
+Mixture_Component	4 	oxygen		75.477387 
+Mixture_Component	7 	phosphorus	0.100503 

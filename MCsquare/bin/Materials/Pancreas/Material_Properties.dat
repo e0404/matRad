@@ -1,0 +1,14 @@
+Name 			Pancreas
+Molecular_Weight 	0.0 		 # N.C.
+Density 		1.04000000 	 # in g/cm3 
+Electron_Density 	3.45684e+23 	 # in cm-3 
+Radiation_Length 	37.139937 	 # in g/cm2 
+
+Nuclear_Data 		Mixture 5 	# mixture with 5 components
+
+		# 	Label 	Name 		fraction by mass (in %)
+Mixture_Component	1 	hydrogen	10.674723 
+Mixture_Component	2 	carbon		17.019134 
+Mixture_Component	3 	nitrogen	2.215509 
+Mixture_Component	4 	oxygen		69.889225 
+Mixture_Component	7 	phosphorus	0.201410 

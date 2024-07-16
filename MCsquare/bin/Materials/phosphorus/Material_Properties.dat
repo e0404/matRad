@@ -1,0 +1,7 @@
+Name			phosphorus
+Atomic_Weight		30.9738
+Density			2.2		# in g/cm3
+Electron_Density	5.3312e23	# in cm-3
+Radiation_Length	21.2053		# in g/cm2
+
+Nuclear_Data		ICRU
