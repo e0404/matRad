@@ -86,7 +86,7 @@ classdef MatRad_Config < handle
             
             %Set Version
             obj.getEnvironment();
-            obj.matRad_version = matRad_version();
+            obj.matRad_version = matRad_version(obj.matRadRoot);
 
             %Configure Environment
             obj.configureEnvironment();
