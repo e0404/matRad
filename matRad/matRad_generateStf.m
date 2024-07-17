@@ -39,7 +39,12 @@ if nargin < 4
 end
 
 % load default parameters if not set
-pln = matRad_cfg.getDefaultProperties(pln,{'propOpt','propStf'});
+if ~isfield(pln,'propOpt')
+    pln = matRad_cfg.getDefaultProperties(pln,{'propOpt'});
+end
+if ~isfield(pln,'propStf')
+    pln = matRad_cfg.getDefaultProperties(pln,{'propStf'});
+end
 
 isExternalTherapy = any(strcmp(pln.radiationMode,{'photons','protons','helium','carbon'}));
 isPhotonTherapy = strcmp(pln.radiationMode,'photons');
