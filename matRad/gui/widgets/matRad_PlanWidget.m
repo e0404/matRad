@@ -29,8 +29,8 @@ classdef matRad_PlanWidget < matRad_Widget
     end
     
     properties (Constant)
-        Modalities = {'photons','protons','carbon', 'helium'};
-        AvailableProjections = {  'physicalDose'; 'RBExD'; 'effect'; 'BED'; }
+        modalities = {'photons','protons','carbon', 'helium'};
+        availableProjections = {  'physicalDose'; 'RBExD'; 'effect'; 'BED'; }
     end
     
     methods
@@ -183,7 +183,7 @@ classdef matRad_PlanWidget < matRad_Widget
             h19 = uicontrol(...
                 'Parent',h12,...
                 'Units','normalized',...
-                'String',this.Modalities,...,...
+                'String',this.modalities,...,...
                 'TooltipString','Choose a radiation modality (photons, protons or carbon)',...
                 'Style','popupmenu',...
                 'Value',1,...
@@ -348,7 +348,7 @@ classdef matRad_PlanWidget < matRad_Widget
             h33 = uicontrol(...
                 'Parent',h12,...
                 'Units','normalized',...
-                'String', this.AvailableProjections,...
+                'String', this.availableProjections,...
                 'TooltipString',txt,...
                 'Style','popupmenu',...
                 'Value',1,...
@@ -790,11 +790,11 @@ classdef matRad_PlanWidget < matRad_Widget
             set(handles.editGantryAngle,'String',num2str(pln.propStf.gantryAngles));
             set(handles.editCouchAngle,'String',num2str(pln.propStf.couchAngles));
             
-            modIx = find(strcmp(pln.radiationMode,this.Modalities));
+            modIx = find(strcmp(pln.radiationMode,this.modalities));
             set(handles.popupRadMode,'Value',modIx);
             
             getMachines(this);
-            modIy = find(strcmp(pln.machine,this.Machines(this.Modalities{modIx}))); 
+            modIy = find(strcmp(pln.machine,this.Machines(this.modalities{modIx}))); 
             set(handles.popUpMachine,'Value',modIy); 
 
             availableEngines = DoseEngines.matRad_DoseEngineBase.getAvailableEngines(pln);
@@ -1370,17 +1370,17 @@ classdef matRad_PlanWidget < matRad_Widget
             %matRad_cfg = MatRad_Config.instance();
             %seach for availabes machines
             handles = this.handles;
-            this.Machines = matRad_getAvailableMachines(this.Modalities);
+            this.Machines = matRad_getAvailableMachines(this.modalities);
             
             selectedRadMod = get(handles.popupRadMode,'Value');
-            nMachines = numel(this.Machines(this.Modalities{selectedRadMod}));
+            nMachines = numel(this.Machines(this.modalities{selectedRadMod}));
             selectedMachine = get(handles.popUpMachine,'Value');
             
             if get(handles.popUpMachine,'Value') > nMachines
                 selectedMachine = 1;
             end            
             
-            set(handles.popUpMachine,'Value',selectedMachine,'String',this.Machines(this.Modalities{selectedRadMod}));
+            set(handles.popUpMachine,'Value',selectedMachine,'String',this.Machines(this.modalities{selectedRadMod}));
             this.handles = handles;
         end
         
