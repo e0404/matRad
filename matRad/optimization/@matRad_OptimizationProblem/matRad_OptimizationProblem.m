@@ -24,6 +24,11 @@ classdef matRad_OptimizationProblem < handle
     
     properties
         BP
+        normalizationScheme = struct('scheme','none'); % used in pareto optimization
+        objectives = {}; %cell array storing all objectives, has to be initialized at the start
+        constraints = {}; %
+        objIdx;
+        constrIdx;
         quantityOpt = '';
         useMaxApprox = 'logsumexp'; %'pnorm'; %'logsumexp'; %'none';
         p = 30; %Can be chosen larger (closer to maximum) or smaller (closer to mean). Only tested 20 >= p >= 1
@@ -31,14 +36,22 @@ classdef matRad_OptimizationProblem < handle
         minimumW = NaN;
         maximumW = NaN;
     end
+
     
     methods
-        function obj = matRad_OptimizationProblem(backProjection)
-            obj.BP = backProjection;
+        function obj = matRad_OptimizationProblem(backProjection,cst)
+            
+            obj.BP = backProjection; %needs to be initalized to have access to setBiologicalDosePrescriptions
+            if nargin == 2
+                obj.extractObjectivesAndConstraintsFromCst(cst);
+            end
         end       
         
         %Objective function declaration
         fVal = matRad_objectiveFunction(optiProb,w,dij,cst)   
+
+        %Objective function declaration
+        fIndv = matRad_objectiveFunctions(optiProb,w,dij,cst) 
         
         %Objective gradient declaration
         fGrad = matRad_objectiveGradient(optiProb,w,dij,cst)
@@ -81,6 +94,84 @@ classdef matRad_OptimizationProblem < handle
                 matRad_cfg.dispError('Maximum Bounds for Optimization Problem could not be set!');
             end
         end
+
+        function normalizedfVals = normalizeObjectives(optiProb,fVals)
+            %function to normalize objectives (used for sandwich
+            %algorithms)
+            switch optiProb.normalizationScheme.name
+                case 'none'
+                    %default case no normalization
+                    normalizedfVals = fVals;
+                case 'UL'
+                    %used to normalize with respect to min and max values
+                    %maybe check that U and L are defined
+                    normalizedfVals = (fVals - optiProb.normalizationScheme.L)./(optiProb.normalizationScheme.U-optiProb.normalizationScheme.L); %might have to check that U and L work!
+                otherwise
+                    matRad_cfg.dispError('Normalization scheme not known!');
+            end
+        end
+
+        function normalizedGradient = normalizeGradient(optiProb,Gradient,i)
+            %function to normalize objectives (used for sandwich
+            %algorithms)
+            switch optiProb.normalizationScheme.scheme
+                
+                case 'none'
+                    %default case no normalization
+                    normalizedGradient = Gradient;
+                case 'UL'
+                    %used to normalize with respect to min and max values
+                    %maybe check that U and L are defined
+                    normalizedGradient = Gradient./(optiProb.normalizationScheme.U(i)-optiProb.normalizationScheme.L(i)); %might have to check that U and L work!
+                otherwise
+                    matRad_cfg.dispError('Normalization scheme not known!');
+            end
+        end
+
+        function updatePenalties(optiProb,newPen) 
+            %TODO: Allow grouping of objectives
+            if numel(optiProb.objectives) ~= numel(newPen)
+                matRad_cfg.dispError('Number of objectives in optimization Problem not equal to number of new penalties to be set!');
+            end
+            for i=1:numel(newPen)
+                optiProb.objectives{i}.penalty = newPen(i)*100; %scaling of penalties with factor 100
+            end
+        end
+
+        function extractObjectivesAndConstraintsFromCst(optiProb,cst)
+            %used to extract objectives from cst and store in cell array as property of optimization Problem
+            optiProb.objIdx = [];
+            optiProb.constrIdx = [];
+            optiProb.objectives = {};
+            optiProb.constraints = {};
+            
+            for i = 1:size(cst,1) % loop over cst
+                
+                if ~isempty(cst{i,4}{1}) && ( isequal(cst{i,3},'OAR') || isequal(cst{i,3},'TARGET') )
+
+                    for j = 1:numel(cst{i,6})
+                        %check whether dose objective or constraint
+                        obj = cst{i,6}{j};
+                        if isstruct(cst{i,6}{j})
+                            obj =  matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
+                        end
+                        if contains(class(obj),'DoseObjectives')
+                            optiProb.objIdx = [optiProb.objIdx;i,j];
+                            obj = optiProb.BP.setBiologicalDosePrescriptions(obj,cst{i,5}.alphaX,cst{i,5}.betaX);
+                            optiProb.objectives(end+1) = {obj};
+
+                        elseif contains(class(obj),'DoseConstraints')
+                            optiProb.constrIdx = [optiProb.constrIdx;i,j];
+                            obj = optiProb.BP.setBiologicalDosePrescriptions(obj,cst{i,5}.alphaX,cst{i,5}.betaX);
+                            optiProb.constraints(end+1) = {obj};
+                        end
+                    end
+                end
+            end
+        end
+
+
+
     end
     
     methods (Access = protected)
@@ -117,6 +208,9 @@ classdef matRad_OptimizationProblem < handle
 
             grad = fac * (tmp ./ pNormVal).^(p-1);
         end
-    end                
-end
+    end     
+    
+    
 
+    
+end

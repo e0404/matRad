@@ -210,18 +210,16 @@ classdef MatRad_Config < handle
                       
             %Optimization Options
             obj.defaults.propOpt.optimizer = 'IPOPT';
-            obj.defaults.propOpt.maxIter = 500;
+            obj.defaults.propOpt.maxIter = 1000;
             obj.defaults.propOpt.runDAO = 0;
             obj.defaults.propOpt.clearUnusedVoxels = false;
 
             %Sequencing Options
             obj.defaults.propSeq.sequencer = 'siochi';
-            
-
-
-            obj.disableGUI = false;
-            
+                       
             obj.defaults.samplingScenarios = 25;
+            
+            obj.disableGUI = false;
 
             obj.devMode = false;
             obj.eduMode = false;

@@ -78,6 +78,20 @@ classdef matRad_SquaredOverdosing < DoseObjectives.matRad_DoseObjective
             % calculate delta
             fDoseGrad = 2 * 1/numel(dose) * overdose;
         end
+
+        function constr = turnIntoLexicographicConstraint(obj,goal)
+            if goal < 5e-4
+                goal = 5e-4*1.03;
+            end
+            objective = DoseObjectives.matRad_SquaredOverdosing(100,obj.parameters{1});
+            constr = DoseConstraints.matRad_DoseConstraintFromObjective(objective,goal);
+        end
+    end
+
+    methods (Static)
+        function newGoalValue = adaptGoalToFraction(goalValue,numOfFractions)
+            newGoalValue = goalValue/numOfFractions^2;
+        end
     end
     
 end

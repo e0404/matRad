@@ -106,6 +106,12 @@ classdef matRad_MeanDose < DoseObjectives.matRad_DoseObjective
                     matRad_cfg.dispError('Invalid setting for %s in Mean Dose Objective!',obj.parameterNames{2});  
             end
         end
+
+        function constr = turnIntoLexicographicConstraint(obj,goal)
+            objective = DoseObjectives.matRad_MeanDose(100,obj.parameters{1},obj.parameters{2});
+            constr = DoseConstraints.matRad_DoseConstraintFromObjective(objective,goal);
+        end
+
     end
 
     methods (Access = protected)
@@ -125,6 +131,11 @@ classdef matRad_MeanDose < DoseObjectives.matRad_DoseObjective
             fDoseGrad = (1/numel(dose))*sign(dose(:)-obj.parameters{1});
         end
     end
-    
+
+    methods (Static)
+        function newGoalValue = adaptGoalToFraction(goalValue,numOfFractions)
+            newGoalValue = goalValue/numOfFractions;
+        end
+    end
 end
 

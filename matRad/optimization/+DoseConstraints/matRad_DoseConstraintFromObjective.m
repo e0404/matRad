@@ -19,17 +19,17 @@ classdef matRad_DoseConstraintFromObjective < DoseConstraints.matRad_DoseConstra
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties (Constant)
         name = 'Objective Constraint';
-        parameterTypes = {'objFunc','scalar'};
-        parameterNames = {'f^{max}','slackParameter'};    
+        parameterTypes = {'objFunc'};
+        parameterNames = {'f^{max}'};    
     end
 
     properties
         objective;
-        parameters = {1e-5, 1e-3};
+        parameters = {1e-5};
     end
     
     methods (Access = public)
-        function this = matRad_DoseConstraintFromObjective(objective,maxObj,slackParameter)
+        function this = matRad_DoseConstraintFromObjective(objective,maxObj)
             
             %check if objective is a struct and a DoseObjective or Constraint (for init from constraint)
             if isstruct(objective) && ~isempty(strfind(objective.className,'DoseObjectives'))
@@ -48,12 +48,8 @@ classdef matRad_DoseConstraintFromObjective < DoseConstraints.matRad_DoseConstra
             
             
             if ~initFromStruct
-                
-                if nargin == 3 && isscalar(slackParameter)
-                    this.parameters{2} = slackParameter;
-                end
 
-                if nargin >= 2 && isscalar(maxObj)
+                if nargin == 2 && isscalar(maxObj)
                     this.parameters{1} = maxObj;
                 end
                 
@@ -71,9 +67,10 @@ classdef matRad_DoseConstraintFromObjective < DoseConstraints.matRad_DoseConstra
         end
         
         function cu = upperBounds(this,n)
-            cu = this.parameters{1}+this.slackParameter;
+            cu = this.parameters{1};
             %cu = [Inf; this.parameters{2}];
         end
+
         function cl = lowerBounds(this,n)          
             cl = 0;
         end

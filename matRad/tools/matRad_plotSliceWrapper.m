@@ -102,7 +102,6 @@ end
 set(axesHandle,'YDir','Reverse');
 % plot ct slice
 hCt = matRad_plotCtSlice(axesHandle,ct.cubeHU,cubeIdx,plane,slice); 
-hold on;
 
 % plot dose
 if ~isempty(doseWindow) && doseWindow(2) - doseWindow(1) <= 0
