@@ -1,4 +1,4 @@
-function assigned = matRad_recursiveFieldAssignment(assignTo,reference,fieldChangedWarningMessage,fieldname)
+function assigned = matRad_recursiveFieldAssignment(assignTo,reference,overwrite,fieldChangedWarningMessage,fieldname)
 % matRad recursive field assignment tool
 %   This function recursively assigns fields from one structure to another. If both 'assignTo' and 'reference' are structures,
 % it will recurse into their fields. If a field in 'assignTo' is a structure and its corresponding field in 'reference' is not,
@@ -11,6 +11,7 @@ function assigned = matRad_recursiveFieldAssignment(assignTo,reference,fieldChan
 % input
 %   assignTo:                      The initial structure to which the fields are to be assigned.
 %   reference:                     The structure containing the fields and values to be assigned to 'assignTo'.
+%   overwrite:                     Boolean flag that determines if the field value should be overwritten ( by defaults ) or preserved
 %   fieldChangedWarningMessage:    Optional. A message to display if a field is overwritten. If not provided, no message is displayed.
 %   fieldname:                     Optional. The name of the current field being processed. Used for generating specific warning messages.
 %
@@ -31,7 +32,7 @@ function assigned = matRad_recursiveFieldAssignment(assignTo,reference,fieldChan
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-if nargin < 3 || isempty(fieldChangedWarningMessage)
+if nargin < 4 || isempty(fieldChangedWarningMessage)
     fieldChangedWarningMessage = '';
 else
     if ~isempty(fieldChangedWarningMessage) && fieldChangedWarningMessage(end) ~= ':'
@@ -39,7 +40,7 @@ else
     end
 end
 
-if nargin < 4
+if nargin < 5
     fieldname = '';
 end
 
@@ -55,38 +56,43 @@ if isstruct(assignTo) && isstruct(reference)
         if ~isfield(assignTo,field)
             assigned.(field) = reference.(field);
         else
-            assigned.(field) = matRad_recursiveFieldAssignment(assignTo.(field),reference.(field),fieldChangedWarningMessage,field);
+            assigned.(field) = matRad_recursiveFieldAssignment(assignTo.(field),reference.(field),overwrite,fieldChangedWarningMessage,field);
         end
     end
 % If the reference is not a struct, we can assign it directly. 
 % However, we need to check if the assignTo is a struct and if we need to warn the user of overwriting a struct with a non-struct
 elseif isstruct(assignTo) && ~isstruct(reference)        
-    if ~isempty(fieldname)
-        matRad_cfg = MatRad_Config.instance();
-        matRad_cfg.dispWarning([fieldChangedWarningMessage 'Field ''%s'' is a struct but will be overwritten by a ''%s!'''],fieldname,class(reference));
+    if overwrite
+        if ~isempty(fieldname)
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispWarning([fieldChangedWarningMessage 'Field ''%s'' is a struct but will be overwritten by a ''%s!'''],fieldname,class(reference));
+        end
+        assigned = reference;
+    else
+        assigned = assignTo;
     end
-    assigned = reference;
 % If the assignTo is not a struct, we can assign it directly.
 % However, we need to check if the reference is a struct and if we need to warn the user of overwriting a non-struct with a struct
 elseif ~isstruct(assignTo) && isstruct(reference)
-    if ~isempty(fieldname)
-        matRad_cfg = MatRad_Config.instance();
-        matRad_cfg.dispWarning([fieldChangedWarningMessage 'Field ''%s'' is not a struct but will be overwritten by a struct!'],fieldname);
+    
+    if overwrite
+        if ~isempty(fieldname)
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispWarning([fieldChangedWarningMessage 'Field ''%s'' is not a struct but will be overwritten by a struct!'],fieldname);
+        end
+        assigned = reference;
+    else
+        assigned = assignTo;
     end
-    assigned = reference;
 else
-    if ~isempty(fieldname) && ~isempty(fieldChangedWarningMessage)
-        matRad_cfg = MatRad_Config.instance();
-        if isequal(class(assignTo),class(reference))
-            matRad_cfg.dispWarning([fieldChangedWarningMessage 'Field ''%s'' will be overwritten by reference value!'],fieldname);
-        else
+    if overwrite
+        if ~isempty(fieldname) && ~isempty(fieldChangedWarningMessage)
+            matRad_cfg = MatRad_Config.instance();
             matRad_cfg.dispWarning([fieldChangedWarningMessage 'Field ''%s'' is supposed to be a %s but will be overwritten by a ''%s!'''],fieldname,class(assignTo),class(reference));
         end
-    end
-    if ~isempty(assignTo)
-        assigned = assignTo;
-    else
         assigned = reference;
+    else
+        assigned = assignTo;
     end
 
 end

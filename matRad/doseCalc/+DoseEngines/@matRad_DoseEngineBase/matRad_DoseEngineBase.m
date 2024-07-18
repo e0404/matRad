@@ -156,7 +156,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
                 try
                     field = fields{i};
                     if isprop(this,field)
-                        this.(field) = matRad_recursiveFieldAssignment(this.(field),plnStruct.(field),warningMsg);
+                        this.(field) = matRad_recursiveFieldAssignment(this.(field),plnStruct.(field),true,warningMsg);
                     else
                         matRad_cfg.dispWarning('Not able to assign property ''%s'' from pln.propDoseCalc to Dose Engine!',field);
                     end
