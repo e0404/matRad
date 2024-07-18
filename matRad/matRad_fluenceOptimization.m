@@ -106,6 +106,40 @@ end
 ixTarget       = ixTarget(i);
 wOnes          = ones(dij.totalNumOfBixels,1);
 
+
+if ~isfield(pln.propOpt, 'quantityOpt') || isempty(pln.propOpt.quantityOpt)
+    matRad_cfg.dispWarning('quantityOpt was not provided, using default physical dose optimization');
+    pln.propOpt.quantityOpt = 'physicalDose';
+end
+% Check optimization quantity
+switch pln.propOpt.quantityOpt
+    case 'effect'
+        if strcmp(pln.propDoseCalc.bioModel,'constRBE')
+            matRad_cfg.dispError('Effect optimization with constant RBE model not supported');
+        end
+        backProjection = matRad_EffectProjection;
+    case 'RBExD'
+        %Capture special case of constant RBE
+        if strcmp(pln.propDoseCalc.bioModel,'constRBE')
+            backProjection = matRad_ConstantRBEProjection;
+        else
+            backProjection = matRad_VariableRBEProjection;
+        end
+    case 'physicalDose'
+        backProjection = matRad_DoseProjection;
+    otherwise
+        warning(['Did not recognize bioloigcal setting ''' pln.propOpt.quantityOpt '''!\nUsing physical dose optimization!']);
+        backProjection = matRad_DoseProjection;
+
+end
+
+% Sanity check
+if isa(backProjection, 'matRad_EffectProjection')
+    if ~isfield(dij, 'mAlphaDose') || ~isfield(dij, 'mSqrtBetaDose')
+        matRad_cfg.dispError('mAlphaDose or mSqrtBetaDose fields missing in dij, check consistency of required optimization quantity');
+    end
+
+end
 % calculate initial beam intensities wInit
 matRad_cfg.dispInfo('Estimating initial weights... ');
 
@@ -114,7 +148,7 @@ if exist('wInit','var')
     matRad_cfg.dispInfo('chosen provided wInit!\n');
 
     % Write ixDose which is needed for the optimizer
-    if pln.bioParam.bioOpt
+    if isa(backProjection, 'matRad_EffectProjection')
         dij.ixDose  = dij.bx~=0;
 
         %pre-calculations
@@ -122,7 +156,7 @@ if exist('wInit','var')
         dij.gamma(dij.ixDose) = dij.ax(dij.ixDose)./(2*dij.bx(dij.ixDose));
     end
 
-elseif strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'protons')
+elseif isa(backProjection, 'matRad_ConstantRBEProjection') && strcmp(pln.radiationMode,'protons')
     % check if a constant RBE is defined - if not use 1.1
     if ~isfield(dij,'RBE')
         dij.RBE = 1.1;
@@ -133,7 +167,7 @@ elseif strcmp(pln.bioParam.model,'constRBE') && strcmp(pln.radiationMode,'proton
     wInit       = wOnes * bixelWeight;
     matRad_cfg.dispInfo('chosen uniform weight of %f!\n',bixelWeight);
 
-elseif pln.bioParam.bioOpt
+elseif isa(backProjection, 'matRad_EffectProjection')
     % retrieve photon LQM parameter 
     [ax,bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels);
     checkAxBx = cellfun(@(ax1,bx1,ax2,bx2) isequal(ax1(ax1~=0),ax2(ax1~=0)) && isequal(bx1(bx1~=0),bx2(bx1~=0)),dij.ax,dij.bx,ax,bx);
@@ -158,7 +192,7 @@ elseif pln.bioParam.bioOpt
         dij.ixDose{s}  = dij.bx{s}~=0;
     end
 
-    if isequal(pln.bioParam.quantityOpt,'effect')
+    if isequal(pln.propOpt.quantityOpt,'effect')
 
         effectTarget = cst{ixTarget,5}.alphaX * doseTarget + cst{ixTarget,5}.betaX * doseTarget^2;
         aTmp = dij.mAlphaDose{1}*wOnes;
@@ -168,7 +202,7 @@ elseif pln.bioParam.bioOpt
 
         wInit        = -(p/2) + sqrt((p^2)/4 -q) * wOnes;
 
-    elseif isequal(pln.bioParam.quantityOpt,'RBExD')
+    elseif isequal(pln.propOpt.quantityOpt,'RBExD')
 
         %pre-calculations
         for s = 1:numel(dij.ixDose)
@@ -247,22 +281,22 @@ else
     ixForOpt = linIxDIJ;
 end
 
-switch pln.bioParam.quantityOpt
-    case 'effect'
-        backProjection = matRad_EffectProjection;
-    case 'RBExD'
-        %Capture special case of constant RBE
-        if strcmp(pln.bioParam.model,'constRBE')
-            backProjection = matRad_ConstantRBEProjection;
-        else
-            backProjection = matRad_VariableRBEProjection;
-        end
-    case 'physicalDose'
-        backProjection = matRad_DoseProjection;
-    otherwise
-        warning(['Did not recognize bioloigcal setting ''' pln.probOpt.bioOptimization '''!\nUsing physical dose optimization!']);
-        backProjection = matRad_DoseProjection;
-end
+% switch pln.bioParam.quantityOpt
+%     case 'effect'
+%         backProjection = matRad_EffectProjection;
+%     case 'RBExD'
+%         %Capture special case of constant RBE
+%         if strcmp(pln.bioParam.model,'constRBE')
+%             backProjection = matRad_ConstantRBEProjection;
+%         else
+%             backProjection = matRad_VariableRBEProjection;
+%         end
+%     case 'physicalDose'
+%         backProjection = matRad_DoseProjection;
+%     otherwise
+%         warning(['Did not recognize bioloigcal setting ''' pln.probOpt.bioOptimization '''!\nUsing physical dose optimization!']);
+%         backProjection = matRad_DoseProjection;
+% end
 
 %Give scenarios used for optimization
 backProjection.scenarios    = ixForOpt;
@@ -271,7 +305,7 @@ backProjection.nominalCtScenarios = linIxDIJ_nominalCT;
 %backProjection.scenDim      = pln.multScen
 
 optiProb = matRad_OptimizationProblem(backProjection);
-optiProb.quantityOpt = pln.bioParam.quantityOpt;
+optiProb.quantityOpt = pln.propOpt.quantityOpt;
 if isfield(pln,'propOpt') && isfield(pln.propOpt,'useLogSumExpForRobOpt')
     optiProb.useLogSumExpForRobOpt = pln.propOpt.useLogSumExpForRobOpt;
 end
