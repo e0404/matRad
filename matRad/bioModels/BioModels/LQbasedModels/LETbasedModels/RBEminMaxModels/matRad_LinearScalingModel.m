@@ -1,5 +1,19 @@
 classdef matRad_LinearScalingModel < matRad_RBEminMax
-
+% This class implements the Linear Scaling Model
+% according to Malte Frese https://www.ncbi.nlm.nih.gov/pubmed/20382482 (FITTED for head and neck patients !)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2023 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% LICENSE file.
+%
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
     properties (Constant)
 
         model = 'LSM';
@@ -16,7 +30,6 @@ classdef matRad_LinearScalingModel < matRad_RBEminMax
         end
 
         function [RBEmin,RBEmax] = getRBEminMax(this,bixel)
-            % according to Malte Frese https://www.ncbi.nlm.nih.gov/pubmed/20382482 (FITTED for head and neck patients !)
 
             RBEmax = NaN*ones(size(bixel.vAlphaX));
             

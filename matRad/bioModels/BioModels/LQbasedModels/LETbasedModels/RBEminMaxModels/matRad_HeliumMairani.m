@@ -1,5 +1,20 @@
 classdef matRad_HeliumMairani < matRad_RBEminMax
-
+% This class implements the HEL model
+% This is a data-driven RBE parametrization of helium ions
+% https://iopscience.iop.org/article/10.1088/0031-9155/61/2/888
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2023 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% LICENSE file.
+%
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
     properties (Constant)
 
         model = 'HEL';
@@ -18,19 +33,6 @@ classdef matRad_HeliumMairani < matRad_RBEminMax
 
         function [RBEmin, RBEmax] = getRBEminMax(this,bixel)
 
-          % data-driven RBE parametrization of helium ions
-          % https://iopscience.iop.org/article/10.1088/0031-9155/61/2/888
-         
-          
-          % quadratic fit
-          %f_Q      = 8.53959e-4 .* bixelLET.^2;
-          %RBEmax_Q = 1 + 2.145e-1  + vABratio.^-1 .* f_Q;
-          % linear quadratic fit
-          %f_LQ      = 2.91783e-1*bixelLET - 9.525e-4*bixelLET.^2;
-          %RBEmax_LQ = 1 + ((1.42057e-1 + (vABratio.^-1)) .* f_LQ);
-          % linear exponential fit
-          %f_LE      = (2.965e-1 * bixelLET) .* exp(-4.90821e-3 * bixelLET);
-          %RBEmax_LE = 1 + ((1.5384e-1  + (vABratio.^-1)) .* f_LE);
 
           f_QE      = (this.p1_HEL * bixel.LET.^2) .* exp(-this.p2_HEL * bixel.LET);
           RBEmax_QE = 1 + ((this.p0_HEL  + (bixel.vABratio.^-1)) .* f_QE);

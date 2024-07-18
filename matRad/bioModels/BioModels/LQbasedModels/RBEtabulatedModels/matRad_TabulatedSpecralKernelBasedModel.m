@@ -1,5 +1,28 @@
 classdef matRad_TabulatedSpecralKernelBasedModel < matRad_LQRBETabulatedModel
-    
+% This is class implementig a spectra-based tabulated RBE model.
+% Spectral kernels should be provided in the base data
+% The model can handle multiple tissue alphaX/betaX ratio specified by the 
+% cst structure, as long as a compatible RBEtable is provided.
+%
+% Properties of the model that can be defined by the user in pln.propDoseCalc.bioProperties:
+%   fragmentsToInclude  specifies which fragments to include in the
+%                       biological calculation (i.e. 'H', 'He', 'C',...)
+%
+%   weightBy            specifies which kernel data is used in combination
+%                       with the RBE table (i.e. 'Fluence', 'EnergyDeposit')
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2023 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% LICENSE file.
+%
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
     properties (Constant)
         model = 'TAB';
     end
@@ -13,12 +36,6 @@ classdef matRad_TabulatedSpecralKernelBasedModel < matRad_LQRBETabulatedModel
         function this = matRad_TabulatedSpecralKernelBasedModel()
             this@matRad_LQRBETabulatedModel();
       
-            % Cannot require energies and Data because these get
-            % interpolated then by PB engine for example. PB takes the
-            % quantities required here and interpolates them as kernels,
-            % but they could also be something different. Need to find
-            % different solution
-
             % this.requiredQuantities not assigned here because it depends
             % on the specific user defined properties. Could add here just
             % a default
@@ -28,9 +45,26 @@ classdef matRad_TabulatedSpecralKernelBasedModel < matRad_LQRBETabulatedModel
 
         function bixel = calcBiologicalQuantitiesForBixel(this,bixel,kernel)
         
+            % This function implements the variable alpha/beta calculation
+            % for the bixel.
+            % These values are linearly combined for each fragment and
+            % energy. The weighting factor is specified by the selected
+            % spectra kernel.
+            % Formulation for the mixed field:
+            % alpha{d} = sum(sum(alpha(E,F).*Phi(E,F,d))./sum(sum(Phi(E,F,d)));
+            % with:
+            %   d           radiological depth
+            %   E           energy
+            %   F           fragment (particle class)
+            %   Phi(E,F,d)  Spectum (i.e. Fluence)
+            %   alpha(E,F)  alpha value from table for energy E and frgmant F
+            % sums are performed over energy and fragments
+
             bixel = calcBiologicalQuantitiesForBixel@matRad_LQRBETabulatedModel(this,bixel);
 
-            nFragments = numel(this.fragmentsToInclude);    
+            nFragments = numel(this.fragmentsToInclude);
+
+            % collect the spectra from the bixel, for each fragment
             bixel.spectraEnergies = cellfun(@(fragment) bixel.baseData.Spectra.(this.weightBy).(fragment).energies,this.fragmentsToInclude, 'UniformOutput',false);
             
             % Get the tissue classes within the bixel
@@ -41,7 +75,6 @@ classdef matRad_TabulatedSpecralKernelBasedModel < matRad_LQRBETabulatedModel
             for i=bixelTissueIndexes
                 [alphaE(i,:), betaE(i,:)] = arrayfun(@(fragment) this.interpolateRBETableForBixel(bixel.spectraEnergies{fragment}, this.fragmentsToInclude{fragment}, i),[1:nFragments], 'UniformOutput',false);
             end
-
 
             % Get the spectra kernels to be used (one for each fragment).
             kernelName = arrayfun(@(fragment) this.requiredQuantities{fragment}(this.requiredQuantities{fragment} ~= '.'),[1:nFragments], 'UniformOutput', false);
@@ -82,6 +115,7 @@ classdef matRad_TabulatedSpecralKernelBasedModel < matRad_LQRBETabulatedModel
 
         function assignBioModelPropertiesFromEngine(this, engine)
 
+            
             matRad_cfg = MatRad_Config.instance();
 
             % Call superclass funtion

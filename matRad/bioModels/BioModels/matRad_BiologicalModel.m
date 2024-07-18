@@ -4,19 +4,22 @@ classdef (Abstract) matRad_BiologicalModel < handle
 %  dose calculation and plan optimization.
 %  Subclasses should at least implement the methods:
 % 
-%   calcTissueParameters()             to asses the completeness of the model-specific tissue information
-%   calcLQParameter()                  to implement the specific bixel_alpha and bixel_beta calculation algorithm
+%  calcBiologicalQuantitiesForBixel()      to implement the specific model calculation algorithm
+%
+%  Additional methods that can be implemented are:
+% 
+%   getTissueInformation()                  to collect meta information about the tissue defintion and paramters                                        
+%   assignBioModelPropertiesFromEngine()    to translate user defined paramters directly to the biological model subclass
+% 
 % 
 % All subclasses should also declare the  properties:
 %
-%   'AvailableRadiationModalities'         to specify the radiation modalities to which the model validity is limited
-%   'RequiredBaseData'                     to check the availability of information stored in the provided machine file
+%   'availableRadiationModalities'         to specify the radiation modalities to which the model validity is limited
+%   'requiredQuantities'                   to check the availability of information stored in the provided machine file
 %
 % constructor (Abstract)
-%   matRad_BiologicalModel(radiationMode)
+%   matRad_BiologicalModel()
 %
-% input
-%   radiationMode:                 radiation modality selected for the plan
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -31,9 +34,8 @@ classdef (Abstract) matRad_BiologicalModel < handle
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties
-        %model;                          % name of the implemented model
         requiredQuantities;                % kernels in base data needed for the alpha/beta calculation
-        availableRadiationModalities;   % radiation modalitites compatible with the model
+        availableRadiationModalities;      % radiation modalitites compatible with the model
     end
 
     properties (Abstract, Constant)

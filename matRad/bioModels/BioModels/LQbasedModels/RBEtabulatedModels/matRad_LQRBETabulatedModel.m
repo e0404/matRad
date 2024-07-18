@@ -1,5 +1,24 @@
 classdef (Abstract) matRad_LQRBETabulatedModel < matRad_LQBasedModel
-
+% This is an Abstract class implementig a tabulated RBE model.
+% The model can handle multiple tissue alphaX/betaX ratio specified by the 
+% cst structure, as long as a compatible RBEtable is provided.
+%
+% Properties of the model that can be defined by the user in pln.propDoseCalc.bioProperties:
+%   RBEtable:       name of the specific table to be included
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2023 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% LICENSE file.
+%
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
     properties
         RBEtableName;
         defaultRBETable;
@@ -19,12 +38,15 @@ classdef (Abstract) matRad_LQRBETabulatedModel < matRad_LQBasedModel
             matRad_cfg = MatRad_Config.instance();
             
             this@matRad_LQBasedModel();
+            
             % This just for testing
             this.defaultRBETable = 'RBEtable_rapidLEM_Russo2011_longErange_LEMI30';
         
         end
 
         function [alphaE,betaE] = interpolateRBETableForBixel(this,interpEnergies, fragment, tissueClass)
+            % This function interpolates the correct table for the input
+            % fragment and tissue class
             
             fragmentRBEtable = this.selectDataTableForFragment(fragment,tissueClass);
 
@@ -34,7 +56,7 @@ classdef (Abstract) matRad_LQRBETabulatedModel < matRad_LQBasedModel
         end
 
         function assignBioModelPropertiesFromEngine(this, engine)
-
+            
             matRad_cfg = MatRad_Config.instance();
 
             % Check RBE table
@@ -59,7 +81,7 @@ classdef (Abstract) matRad_LQRBETabulatedModel < matRad_LQBasedModel
 
         function vTissueIndex = getTissueInformation(this,~, cst, dij,vAlphaX, ~, VdoseGrid, VdoseGridScenIx)
 
-            % This assumes that info in cst{i,5} has Tissue class =
+            % This function assumes that info in cst{i,5} has Tissue class =
             % integer, alphaX,betaX and combination of alphaX,betaX for
             % given tissue class is consistent
             matRad_cfg = MatRad_Config.instance();
@@ -125,6 +147,23 @@ classdef (Abstract) matRad_LQRBETabulatedModel < matRad_LQBasedModel
 
         function fragmentRBEtable = selectDataTableForFragment(this,fragment,tissueClass)
             
+            % This function selects the specific fragment and tissue class
+            % entry in the RBE table.
+            % The RBE table should be a struct containing the following
+            % fields:
+            %   .meta   struct with meta information
+            %   .data   struct array with one entry for each tissue class
+            % In turn, the data struct should contain the subfields:
+            %   includedIons    ions included for the specific table (i.e 'H', 'He', 'C', ...);                                      
+            %   energies        array containing the energies corresponding
+            %                   to the specified alpha/beta tables
+            %   alpha           matrix (#energies,#fragments) specifieng the alpha
+            %                   value for the included fragments and
+            %                   energies
+            %   beta            matrix (#energies,#fragments) specifieng the alpha
+            %                   value for the included fragments and
+            %                   energies
+
             matRad_cfg = MatRad_Config.instance();
 
             selectedAlphaX = this.tissueAlphaX(tissueClass);
@@ -150,13 +189,8 @@ classdef (Abstract) matRad_LQRBETabulatedModel < matRad_LQBasedModel
 
     methods (Static)
         function RBEtable = loadRBEtable(fileName)
-            %get available tables in folder
-                % RBE table should have meta and data, data.(ParticleName),
-                % and each particle has alpha/beta/energy/mass/charge
-    
-            % Should load the whole RBE table, this should have multiple data
-
-            % entries for different alphaX/betaX
+            
+            % This function loads the specified RBE table
             matRad_cfg = MatRad_Config.instance();
 
 

@@ -66,6 +66,8 @@ end
 % load machine file from base data folder
 this.machine = this.loadMachine(radiationMode,machine);
 
+% This assignment can only be performed once the machine file has been
+% loaded
 if ~ischar(this.bioModel)
     matRad_cfg.dispError('bioModel property should be a string');
 else
