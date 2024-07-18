@@ -33,7 +33,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         multScen;                   % scenario model to use
         voxelSubIx;                 % selection of where to calculate / store dose, empty by default
         selectVoxelsInScenarios;    % which voxels to compute in robustness scenarios
-        bioParam;                   % Biological dose modeling
+        bioModel;                   % name of the biological model
     end
     
     % Protected properties with public get access
@@ -63,6 +63,10 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         VdoseGridMask;  % voxel dose grid inside patient as logical mask
 
         robustVoxelsOnGrid; %voxels to be computed in robustness scenarios
+        
+        bioParam;                   % Biological dose modeling class
+        bioProperties;
+
     end
     
     % Fully protected properties
@@ -116,11 +120,6 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             %Set Scenario Model
             if isfield(pln,'multScen')
                 this.multScen = pln.multScen;
-            end
-            
-            %Assign biological model
-            if isfield(pln,'bioParam')
-                this.bioParam = pln.bioParam;
             end
             
             if nargin < 3 || ~isscalar(warnWhenPropertyChanged) || ~islogical(warnWhenPropertyChanged)
@@ -301,6 +300,83 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             
             % Reset the timer for the next progress update
             this.lastProgressUpdate = tic;
+        end
+
+        function assignBioParam(this, model, radiationMode)
+
+            matRad_cfg = MatRad_Config.instance();
+
+            mainFolder = fullfile(matRad_cfg.matRadSrcRoot,'bioModels');
+
+            % Collect subfolders on all levels
+            subFolders = matRad_getSubfolders(mainFolder);
+ 
+            % Get rid of first one, that is the main folder
+            subFolders = subFolders(2:end);
+
+            % Look for the subclasses of BiologicalModel present in all
+            % subfolders
+            availableBioModelsClassList = matRad_findSubclasses('matRad_BiologicalModel', 'folders', subFolders);
+            availableBioModelsNameList = cellfun(@(model) model.Name, availableBioModelsClassList, 'UniformOutput',false);
+            availableBioModelsNameList = cellfun(@(modelClass) eval([modelClass, '.model']), availableBioModelsNameList, 'UniformOutput',false);
+
+            if ~isequal(size(unique(availableBioModelsNameList)), size(availableBioModelsNameList))
+                matRad_cfg.dispError('Multiple biological models with the same name available.');
+            end
+            
+            selectedModelIdx = find(strcmp(model, availableBioModelsNameList));
+            
+            % Create first instance of the selected model
+            if ~isempty(selectedModelIdx)
+                tmpBioParam = eval(availableBioModelsClassList{selectedModelIdx}.Name);
+            else
+                matRad_cfg.dispError('Unrecognized biological model: %s', model);
+            end
+
+            % Need to assign the properties defined by the user in
+            % pln.propDoseCalc.bioProperties.
+            tmpBioParam.assignBioModelPropertiesFromEngine(this)
+            
+
+            % check for radiation modality availability
+            correctRadiationModality = any(strcmp(tmpBioParam.availableRadiationModalities, radiationMode));
+
+            %check for availability of machine data
+            requiredBaseDataFields = tmpBioParam.requiredQuantities;
+
+            % assume true and check problematic cases
+            correctBaseData = true;
+
+            if ~isempty(requiredBaseDataFields) %if empty, machine always has sufficient data
+                
+                %machineDataFields = fieldnames(this.machine.data(1));
+                machineDataFields = matRad_getStructFieldsAndSubfields(this.machine.data(1));
+                
+                % loop over all required machine fields and check that
+                % everything is in the machine file
+                validMachineFields = 0;
+                for k=1:numel(requiredBaseDataFields)
+
+                    if ~any(strcmp(machineDataFields, requiredBaseDataFields{k}))
+                        matRad_cfg.dispWarning('Could not find the following machine data: %s',requiredBaseDataFields{k});
+                    else
+                        validMachineFields =  validMachineFields + 1;
+                    end
+                end
+               
+                if validMachineFields ~= numel(requiredBaseDataFields)            
+                    matRad_cfg.dispWarning(['Insufficient base data provided for model: ', tmpBioParam.model, '. Cannot perform dose calculation']);
+                    correctBaseData = false;
+                end
+            end
+
+            if correctRadiationModality && correctBaseData
+                this.bioParam = tmpBioParam;
+            else
+                matRad_cfg.dispWarning('Incorrect setting for required biological model. Using default instead');
+                this.bioParam = matRad_None();
+            end
+
         end
     end
     
