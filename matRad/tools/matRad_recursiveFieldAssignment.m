@@ -83,7 +83,12 @@ else
             matRad_cfg.dispWarning([fieldChangedWarningMessage 'Field ''%s'' is supposed to be a %s but will be overwritten by a ''%s!'''],fieldname,class(assignTo),class(reference));
         end
     end
-    assigned = reference;
+    if ~isempty(assignTo)
+        assigned = assignTo;
+    else
+        assigned = reference;
+    end
+
 end
 
 end
