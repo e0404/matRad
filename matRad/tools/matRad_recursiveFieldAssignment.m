@@ -88,7 +88,9 @@ else
     if overwrite
         if ~isempty(fieldname) && ~isempty(fieldChangedWarningMessage)
             matRad_cfg = MatRad_Config.instance();
-            matRad_cfg.dispWarning([fieldChangedWarningMessage 'Field ''%s'' is supposed to be a %s but will be overwritten by a ''%s!'''],fieldname,class(assignTo),class(reference));
+            if ~isequal(class(assignTo),class(reference))
+                matRad_cfg.dispWarning([fieldChangedWarningMessage 'Field ''%s'' is supposed to be a %s but will be overwritten by a ''%s!'''],fieldname,class(assignTo),class(reference));
+            end
         end
         assigned = reference;
     else
