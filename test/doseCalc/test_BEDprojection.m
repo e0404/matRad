@@ -11,35 +11,51 @@ assertTrue(isa(bed, 'matRad_BEDProjection'));
 
 %test compute single scenario BED projection 
 function test_BED_computeSingleScenario
-dij.physicalDose{1} = 2;
-dij.mAlphaDose{1} = 1;
-dij.mSqrtBetaDose{1} = sqrt(0.05)*2;
-dij.ax{1} = 0.5;
-dij.bx{1} = 0.05;
-dij.doseGrid.numOfVoxels = 1;
-dij.ixDose{1} = 1;
+% ct of 3x3 with center voxel as target ,
+% single pencil beam
+a = sparse(zeros(9,1));
+a(5) = 2;
+dij.physicalDose{1} = a;
+a(5)  = 1;
+dij.mAlphaDose{1} = a;
+a(5) = sqrt(0.05)*2;
+dij.mSqrtBetaDose{1} = a;
+dij.ax{1} = 0.5*ones(numel(a),1);
+dij.bx{1} = 0.05*ones(numel(a),1);
+dij.doseGrid.numOfVoxels = 9;
+dij.ixDose{1} = 5;
 w = 1;
 scen = 1;
 obj  = matRad_BEDProjection;
 BED = computeSingleScenario(obj,dij,scen,w);
-expectedResult = 2.4;
+a = zeros(dij.doseGrid.numOfVoxels,1);
+a(dij.ixDose{scen}) = 2.4;
+expectedResult = a;
 
 assertElementsAlmostEqual(BED,expectedResult,'absolute',1e-4);
 
 
 
 function test_BED_computeSingleScenarioGradient
-dij.physicalDose{1} = 2;
-dij.mAlphaDose{1} = 1;
-dij.mSqrtBetaDose{1} = sqrt(0.05)*2;
-dij.ax{1} = 0.5;
-dij.bx{1} = 0.05;
-dij.doseGrid.numOfVoxels = 1;
-dij.ixDose{1} = 1;
+% ct of 3x3 with center voxel as target ,
+% single pencil beam
+a = sparse(zeros(9,1)); 
+a(5) = 2;
+dij.physicalDose{1} = a;
+a(5)  = 1;
+dij.mAlphaDose{1} = a;
+a(5) = sqrt(0.05)*2;
+dij.mSqrtBetaDose{1} = a;
+dij.ax{1} = 0.5*ones(numel(a),1);
+dij.bx{1} = 0.05*ones(numel(a),1);
+dij.doseGrid.numOfVoxels = 9;
+dij.ixDose{1} = 5;
 w = 1;
 scen = 1;
 obj  = matRad_BEDProjection;
-doseGrad{1} = 1;
+a = zeros(dij.doseGrid.numOfVoxels,1);
+a(dij.ixDose{scen}) = 1;
+doseGrad{1} = a ;
 wGrad = projectSingleScenarioGradient(obj,dij,doseGrad,scen,w);
 
 expectedResult = 2.8;
