@@ -103,8 +103,10 @@ else
     packageNameWithDot = [packageName '.'];
     fullFolder =  [folder filesep '+' packageName];
 end
+%If there are multiple files/ folders in the fullFolder, folderInfo is a
+%struct vector and cellfun fails (?)
 folderInfo = what(fullFolder);
-[~,potentialClasses] = cellfun(@fileparts,{folderInfo.m{:};folderInfo.p{:}},'UniformOutput',false); %Potential class files
+[~,potentialClasses] = cellfun(@fileparts,{folderInfo.m{:},folderInfo.p{:}},'UniformOutput',false); %Potential class files
 
 %In octave the what function returns the class folders with an '@'
 classFolders = folderInfo.classes;
