@@ -63,13 +63,23 @@ if ~isa(this.multScen,'matRad_ScenarioModel')
     this.multScen = matRad_multScen(ct,this.multScen);
 end
 
-if ~isa(this.bioParam,'matRad_BiologicalModel')
-    this.bioParam = matRad_bioModel(radiationMode,'physicalDose','none');
+% load machine file from base data folder
+this.machine = this.loadMachine(radiationMode,machine);
+
+if ~ischar(this.bioModel)
+    matRad_cfg.dispError('bioModel property should be a string');
+else
+    this.assignBioParam(this.bioModel, radiationMode);
+end
+
+if any(strcmp(this.bioParam.requiredQuantities, 'LET'))
+
+    this.calcLET = true;
 end
 
 dij = struct();
 
-if ~isnan(this.bioParam.RBE)
+if isfield(this.bioParam, 'RBE') && ~isnan(this.bioParam.RBE)
     dij.RBE = this.bioParam.RBE; 
 end
 
@@ -112,7 +122,7 @@ dij.doseGrid.isoCenterOffset = [dij.doseGrid.resolution.x - dij.ctGrid.resolutio
 
 % meta information for dij
 dij.numOfBeams         = numel(stf);
-dij.numOfScenarios     = 1;
+dij.numOfScenarios     = this.multScen.numOfCtScen;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
@@ -184,9 +194,6 @@ this.VdoseGridMask(this.VdoseGrid) = true;
 
 this.VctGridMask = false(prod(ct.cubeDim),1);
 this.VctGridMask(this.VctGrid) = true;
-
-% load machine file from base data folder
-this.machine = this.loadMachine(radiationMode,machine);
 
 this.doseGrid = dij.doseGrid;
 
