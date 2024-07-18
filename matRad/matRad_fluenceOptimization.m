@@ -69,7 +69,7 @@ cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,  dij.ctGrid.y,  dij.ctGrid.z,...
     dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
 
 % Get rid of voxels that are not interesting for the optimization problem
-if ~isfield(pln.propOpt, 'clearUnusedVoxels')
+if ~isfield(pln,'propOpt') || ~isfield(pln.propOpt, 'clearUnusedVoxels')
     pln.propOpt.clearUnusedVoxels = matRad_cfg.defaults.propOpt.clearUnusedVoxels;
 end
 

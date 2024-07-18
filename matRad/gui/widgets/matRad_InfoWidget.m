@@ -133,11 +133,13 @@ classdef matRad_InfoWidget < matRad_Widget
             end
                         
             msg{end+1} = sprintf('Environment: %s v%s %s',matRad_cfg.env,matRad_cfg.envVersion,version('-release'));
+            msg{end+1} = newline;
             
             msg{end+1} = 'Web: www.matrad.org';
             msg{end+1} = 'E-Mail: contact@matrad.org';
-            
-            msg{end+1} = 'MATRAD IS NOT A MEDICAL PRODUCT AND THEREFORE NOT SUITABLE FOR CLINICAL USE!';
+            msg{end+1} = newline;
+
+            msg{end+1} = matRad_info();
             
             handles.aboutBox = msgbox(msg,'About matRad');
             
