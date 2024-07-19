@@ -237,11 +237,8 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                         matRad_dispError('Kernel: %s with dimension (%u,%u) cannot be interpolated', biologicalKernels{kernel}, ...
                                                                                                      num2str(size(X.(kernelName),1)),...
                                                                                                      num2str(size(X.(kernelName),2)))
-                    end
-
-                    
+                    end                 
                 end
-
 
              end
             
@@ -250,15 +247,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                 X.LET = baseData.LET;
             end
 
-            % bioDose
-            % TODO: Improve isfield check by better model management
-            % if this.calcBioDose && strcmp(this.bioParam.model,'LEM')
-            %     X.alpha = baseData.alpha;
-            %     X.beta = baseData.beta;
-            % end   
-            
-            
-            X = structfun(@(v) matRad_interp1(depths,v,bixel.radDepths,'nearest'),X,'UniformOutput',false); %Extrapolate to zero?           
+            X = structfun(@(v) matRad_interp1(depths,v,bixel.radDepths(:),'nearest'),X,'UniformOutput',false); %Extrapolate to zero?
         end
 
         % We override this function to boost efficiency a bit (latDistX & Z
