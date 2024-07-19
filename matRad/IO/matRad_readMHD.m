@@ -49,9 +49,9 @@ tmp = textscan(s{1}{idx},'BinaryDataByteOrderMSB = %s');
 isLittleEndian = cell2mat(tmp{1});
 switch isLittleEndian
     case 'True'
-        endian = 'l';
-    case 'False'
         endian = 'b';
+    case 'False'
+        endian = 'l';
     otherwise 
         matRad_cfg.dispError('Machine format/endian could not be read!');
 end
@@ -67,6 +67,10 @@ idx = find(~cellfun(@isempty,strfind(s{1}, 'TransformMatrix')),1,'first');
 tmp = textscan(s{1}{idx},'TransformMatrix = %f %f %f %f %f %f %f %f %f');
 T = zeros(3);
 T(:) = cell2mat(tmp);
+
+% Apply Matlab permutation
+Tmatlab = [0 1 0; 1 0 0; 0 0 1];
+%T = T * [0 1 0; 1 0 0; 0 0 1];
 
 % get data type
 idx = find(~cellfun(@isempty,strfind(s{1}, 'ElementType')),1,'first');
@@ -93,7 +97,7 @@ else
 end
 fclose(headerFileHandle);
 metadata.resolution = resolution;
-metadata.cubeDim = dimensions;
+metadata.cubeDim = dimensions * Tmatlab;
 
 end
 

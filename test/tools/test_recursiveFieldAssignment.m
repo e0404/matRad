@@ -31,8 +31,10 @@ function test_recursiveFieldAssignment_existingField
     assignTo = struct('a', 1, 'b', struct('c', 2));
     reference = struct('a', 3, 'b', struct('c', 4));
     expected = struct('a', 3, 'b', struct('c', 4));
-    result = matRad_recursiveFieldAssignment(assignTo, reference);
+    result = matRad_recursiveFieldAssignment(assignTo, reference,true);
     assertEqual(result, expected);
+    result = matRad_recursiveFieldAssignment(assignTo, reference,false);
+    assertEqual(result, assignTo);
     %assertWarning(@() matRad_recursiveFieldAssignment(assignTo, reference,'TestWarn')); %Does not work for some reason, despite warnign being correctly raised
 
 
@@ -40,22 +42,30 @@ function test_recursiveFieldAssignment_keepFields
     assignTo = struct('a', 1, 'b', struct('c', 2), 'd', struct('e','hello'));
     reference = struct('a', 3, 'b', struct('c', 4));
     expected = struct('a', 3, 'b', struct('c', 4), 'd', struct('e','hello'));
-    result = matRad_recursiveFieldAssignment(assignTo, reference);
+    result = matRad_recursiveFieldAssignment(assignTo, reference,true);
     assertEqual(result, expected);
+    result = matRad_recursiveFieldAssignment(assignTo, reference,false);
+    assertEqual(result, assignTo);
 
 % Assigning a struct field to a non-struct field
 function test_recursiveFieldAssignment_structToNonExisting
     assignTo = struct();
     reference = struct('a', 2);
     expected = struct('a', 2);
-    result = matRad_recursiveFieldAssignment(assignTo, reference);
+    result = matRad_recursiveFieldAssignment(assignTo, reference,true);
     assertEqual(result, expected);
     %assertWarning(@() matRad_recursiveFieldAssignment(assignTo, reference)); %Does not work for some reason, despite warning being correctly raised
+    result = matRad_recursiveFieldAssignment(assignTo, reference,false);
+    assertEqual(result, expected);
 
     assignTo = struct('a',2);
     reference = struct('a',3,'b',4);
     expected = struct('a',3,'b',4);
-    result = matRad_recursiveFieldAssignment(assignTo, reference);
+    result = matRad_recursiveFieldAssignment(assignTo, reference,true);
+    assertEqual(result, expected);
+
+    expected = struct('a',2,'b',4);
+    result = matRad_recursiveFieldAssignment(assignTo, reference,false);
     assertEqual(result, expected);
 
 % Overwriting a non-struct field with a non-struct field
@@ -63,8 +73,10 @@ function test_recursiveFieldAssignment_nonStruct
     assignTo = 1;
     reference = 2;
     expected = 2;
-    result = matRad_recursiveFieldAssignment(assignTo, reference);
+    result = matRad_recursiveFieldAssignment(assignTo, reference,true);
     assertEqual(result, expected);
+    result = matRad_recursiveFieldAssignment(assignTo, reference,false);
+    assertEqual(result, assignTo);
     %assertWarning(@() matRad_recursiveFieldAssignment(assignTo, reference,'TestWarn')); %Does not work for some reason, despite warnign being correctly raised
 
 % Overwriting a non-struct field with a struct field
@@ -72,8 +84,10 @@ function test_recursiveFieldAssignment_nonExistingField
     assignTo = struct('a', 1);
     reference = struct('a', struct('b', 2));
     expected = struct('a', struct('b', 2));
-    result = matRad_recursiveFieldAssignment(assignTo, reference);
+    result = matRad_recursiveFieldAssignment(assignTo, reference,true);
     assertEqual(result, expected);
+    result = matRad_recursiveFieldAssignment(assignTo, reference,false);
+    assertEqual(result, assignTo);
     %assertWarning(@() matRad_recursiveFieldAssignment(assignTo, reference)); %Does not work for some reason, despite warnign being correctly raised
 
 
@@ -82,8 +96,10 @@ function test_recursiveFieldAssignment_nestedField
     assignTo = struct('a', struct('b', 2));
     reference = struct('a', 3);
     expected = struct('a', 3);
-    result = matRad_recursiveFieldAssignment(assignTo, reference);
+    result = matRad_recursiveFieldAssignment(assignTo, reference,true);
     assertEqual(result, expected);
+    result = matRad_recursiveFieldAssignment(assignTo, reference,false);
+    assertEqual(result, assignTo);
     %assertWarning(@() matRad_recursiveFieldAssignment(assignTo, reference)); %Does not work for some reason, despite warnign being correctly raised
 
 

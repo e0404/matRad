@@ -112,7 +112,7 @@ dij.doseGrid.isoCenterOffset = [dij.doseGrid.resolution.x - dij.ctGrid.resolutio
 
 % meta information for dij
 dij.numOfBeams         = numel(stf);
-dij.numOfScenarios     = this.multScen.numOfCtScen;
+dij.numOfScenarios     = 1;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);

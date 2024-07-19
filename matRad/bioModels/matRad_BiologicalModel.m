@@ -10,7 +10,9 @@ classdef matRad_BiologicalModel
     %   e.g. pln.bioParam = matRad_BiologicalModel('protons','constRBE','RBExD')
     %
     % input
-    %   sRadiationMode:     radiation modality 'photons' 'protons' 'carbon'
+    %   sRadiationMode:     radiation modality 'photons' 'protons' 'carbon' 'brachy' 
+    %                               
+    %   
     %   sQuntityOpt:        string to denote the quantity used for
     %                       optimization 'physicalDose', 'RBExD',
     %                       'effect','BED'
@@ -60,10 +62,11 @@ classdef matRad_BiologicalModel
     
     % constant public properties which are visible outside of this class
     properties(Constant = true)
-        AvailableModels                 = {'none','constRBE','MCN','WED','LEM','HEL'};   % cell array determines available models - if cell is deleted then the corersponding model can not be generated
-        AvailableradiationModealities   = {'photons','protons','helium','carbon'};
-        AvailableQuantitiesForOpt       = {'physicalDose','effect','RBExD','BED'};
-        
+        availableModels                 = {'none','constRBE','MCN','WED','LEM','HEL'};   % cell array determines available models - if cell is deleted then the corersponding model can not be generated
+
+        availableRadiationModalities   = {'photons','protons','helium','carbon','brachy'};
+        availableQuantitiesForOpt       = {'physicalDose','effect','RBExD','BED'};
+
         AvailableAlphaXBetaX = {[0.036 0.024],    'prostate';
             [0.089 0.287],    'rectum and normal tissue';
             [0.55 0.05],      'head and neck MCN';
@@ -80,7 +83,8 @@ classdef matRad_BiologicalModel
         
         constRBE_protons = 1.1;
         constRBE_photons = 1;
-        
+       
+
         %McNamara variable RBE model for protons
         p0_MCN   = 0.999064;     % according to https://www.ncbi.nlm.nih.gov/pubmed/26459756
         p1_MCN   = 0.35605;
@@ -273,6 +277,44 @@ classdef matRad_BiologicalModel
                                 matRad_cfg.dispWarning(['matRad: Invalid biological optimization quantity: ' this.quantityOpt  '; using "none" instead.']);
                                 this.quantityOpt = 'physicalDose';
                         end
+
+                    case {'brachy'} 
+                        
+                        setDefaultValues = false;
+                        switch this.quantityOpt
+
+                            case {'physicalDose'}
+                                if strcmp(this.model,'none')
+                                    boolCHECK        = true;
+                                    this.bioOpt      = false;
+                                    this.quantityVis = 'physicalDose';
+                                else
+                                    setDefaultValues = true;
+                                end
+
+                            case {'RBExD'}
+                                if sum(strcmp(this.model,{'constRBE', 'none'})) == 1
+                                    this.RBE         = this.constRBE_photons;
+                                    boolCHECK        = true;
+                                    this.bioOpt      = false;
+                                    this.quantityVis = 'RBExD';
+                                else
+                                    setDefaultValues = true;
+                                end
+
+                            case {'effect'}
+                                if strcmp( this.model,'none')
+                                    boolCHECK        = true;
+                                    this.bioOpt      = true;
+                                    this.quantityVis = 'RBExD';
+                                else
+                                    setDefaultValues = true;
+                                end
+
+                            otherwise
+                                matRad_cfg.dispWarning('matRad: Invalid biological optimization quantity: %s; using physical dose instead.',this.quantityOpt);
+                                this.quantityOpt = 'physicalDose';
+                        end
                                       
                     otherwise
                         matRad_cfg.dispWarning(['matRad: Invalid biological radiation mode: ' this.radiationMode  '; using photons instead.']);
@@ -283,7 +325,7 @@ classdef matRad_BiologicalModel
             
             % check quantity for optimization
             if this.bioOpt 
-                if sum(strcmp(this.quantityOpt,this.AvailableQuantitiesForOpt)) == 0
+                if sum(strcmp(this.quantityOpt,this.availableQuantitiesForOpt)) == 0
                     matRad_cfg.dispError(['matRad: Invalid quantity for optimization: ' this.quantityOpt  ]);
                 end
             else
@@ -295,7 +337,7 @@ classdef matRad_BiologicalModel
             
             % check quantity for visualization
             if this.bioOpt 
-                if sum(strcmp(this.quantityVis,this.AvailableQuantitiesForOpt)) == 0
+                if sum(strcmp(this.quantityVis,this.availableQuantitiesForOpt)) == 0
                     matRad_cfg.dispError(['matRad: Invalid quantity for visualization: ' this.quantityVis  ]);
                 end
             else
@@ -326,7 +368,7 @@ classdef matRad_BiologicalModel
         
         % setter functions
         function this = set.radiationMode(this,value)
-            if ischar(value) && sum(strcmp(value,{'photons','protons','helium','carbon'})) == 1
+            if ischar(value) && sum(strcmp(value,this.availableRadiationModalities)) == 1
                 this.radiationMode = value;
             else
                 matRad_cfg = MatRad_Config.instance();

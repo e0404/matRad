@@ -29,8 +29,10 @@ classdef matRad_PlanWidget < matRad_Widget
     end
     
     properties (Constant)
-        modalities = {'photons','protons','carbon', 'helium'};
+
+        modalities = {'photons','protons','carbon', 'helium','brachy'};
         availableProjections = {  'physicalDose'; 'RBExD'; 'effect'; 'BED'; }
+
     end
     
     methods
@@ -184,7 +186,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 'Parent',h12,...
                 'Units','normalized',...
                 'String',this.modalities,...,...
-                'TooltipString','Choose a radiation modality (photons, protons or carbon)',...
+                'TooltipString','Choose a radiation modality (photons, protons, carbon, helium or brachy)',...
                 'Style','popupmenu',...
                 'Value',1,...
                 'Position',gridPos{2,4},...
@@ -201,7 +203,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 'Parent',h12,...
                 'Units','normalized',...
                 'String','Radiation Mode',...
-                'TooltipString','Choose a radiation modality (photons, protons or carbon)',...
+                'TooltipString','Choose a radiation modality (photons, protons, carbon, helium or brachy)',...
                 'Style','text',...
                 'Position',gridPos{1,4},...
                 'BackgroundColor',matRad_cfg.gui.backgroundColor,...
@@ -1058,6 +1060,37 @@ classdef matRad_PlanWidget < matRad_Widget
                     set(handles.popUpMenuSequencer,'Enable','off');
                     set(handles.txtSequencer,'Enable','off');
                     
+                case 'brachy'
+                    
+                    set(handles.popMenuQuantityOpt,'Enable','on');
+%                     ix = find(strcmp(contentPopUpQuantityOpt,'physicalDose'));
+%                     set(handles.popMenuQuantityOpt,'Value',ix);
+                    ix = find(strcmp(contentPopUpBioModel,'none'));
+                    set(handles.popMenuBioModel,'Value',ix);
+                    set(handles.popMenuBioModel,'Enable','off');
+                    set(handles.btnSetTissue,'Enable','off');
+                    
+                    set(handles.btnRunSequencing,'Enable','on');
+                    set(handles.btnRunDAO,'Enable','on');
+                    set(handles.radiobutton3Dconf,'Enable','on');
+                    set(handles.txtSequencing,'Enable','on');
+                    set(handles.editSequencingLevel,'Enable','on');    
+                    set(handles.popUpMenuSequencer,'Enable','on');
+                    set(handles.txtSequencer,'Enable','on');
+                    set(handles.popMenuMultScen, 'Enable','on');
+                    
+                    if ~(get(handles.btnRunSequencing,'Value') || get(handles.btnRunDAO,'Value'))
+                    
+                        set(handles.txtSequencing,'Enable','off');
+                        set(handles.editSequencingLevel,'Enable','off');    
+                        set(handles.popUpMenuSequencer,'Enable','off');
+                        set(handles.txtSequencer,'Enable','off');
+                    else 
+                        set(handles.txtSequencing,'Enable','on');
+                        set(handles.editSequencingLevel,'Enable','on');    
+                        set(handles.popUpMenuSequencer,'Enable','on');
+                        set(handles.txtSequencer,'Enable','on');
+                    end
             end
             
             selectedQuantityOpt = get(handles.popMenuQuantityOpt,'Value');
