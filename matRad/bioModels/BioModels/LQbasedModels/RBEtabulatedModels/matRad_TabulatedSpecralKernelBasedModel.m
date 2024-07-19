@@ -65,7 +65,7 @@ classdef matRad_TabulatedSpecralKernelBasedModel < matRad_LQRBETabulatedModel
             nFragments = numel(this.fragmentsToInclude);
 
             % collect the spectra from the bixel, for each fragment
-            bixel.spectraEnergies = cellfun(@(fragment) bixel.baseData.Spectra.(this.weightBy).(fragment).energies,this.fragmentsToInclude, 'UniformOutput',false);
+            spectraEnergies = cellfun(@(fragment) bixel.baseData.Spectra.(this.weightBy).(fragment).energies,this.fragmentsToInclude, 'UniformOutput',false);
             
             % Get the tissue classes within the bixel
             bixelTissueIndexes = unique(bixel.vTissueIndex)';
@@ -73,13 +73,13 @@ classdef matRad_TabulatedSpecralKernelBasedModel < matRad_LQRBETabulatedModel
             % Interpolate the alpha/beta table for the specific fragment (including primaries)
             % and alphaX/betaX ratio (tissue class)
             for i=bixelTissueIndexes
-                [alphaE(i,:), betaE(i,:)] = arrayfun(@(fragment) this.interpolateRBETableForBixel(bixel.spectraEnergies{fragment}, this.fragmentsToInclude{fragment}, i),[1:nFragments], 'UniformOutput',false);
+                [alphaE(i,:), betaE(i,:)] = arrayfun(@(fragment) this.interpolateRBETableForBixel(spectraEnergies{fragment}, this.fragmentsToInclude{fragment}, i),[1:nFragments], 'UniformOutput',false);
             end
 
             % Get the spectra kernels to be used (one for each fragment).
             kernelName = arrayfun(@(fragment) this.requiredQuantities{fragment}(this.requiredQuantities{fragment} ~= '.'),[1:nFragments], 'UniformOutput', false);
 
-            bixelSpectra = arrayfun(@(fragment) kernel.(kernelName{fragment}),[1:nFragments], 'UniformOutput', false);
+            bixelSpectra = arrayfun(@(fragment) squeeze(kernel.(kernelName{fragment})),[1:nFragments], 'UniformOutput', false);
 
            
             % Get normalization for each fragment

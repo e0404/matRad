@@ -193,8 +193,18 @@ classdef (Abstract) matRad_LQRBETabulatedModel < matRad_LQBasedModel
             % This function loads the specified RBE table
             matRad_cfg = MatRad_Config.instance();
 
+            searchPath = {fullfile(matRad_cfg.matRadSrcRoot,'bioModels','RBEtables'),...    % default matratd folder
+                          fullfile(matRad_cfg.primaryUserFolder, 'RBEtables')};             % user defined RBE table
 
-            load(fullfile(matRad_cfg.matRadSrcRoot,'bioModels','RBEtables', [fileName, '.mat']), 'RBEtable');
+            try
+                load(fullfile(searchPath{1}, [fileName, '.mat']), 'RBEtable');
+            catch
+                try
+                    laod(fullfile(searchPath{2}, [fileName, '.mat']), 'RBEtable');
+                catch
+                    matRad_cfg.dispError('Cannot find RBEtable: %s', fileName);
+                end
+            end
 
         end
 
