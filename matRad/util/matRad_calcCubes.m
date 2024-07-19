@@ -30,6 +30,8 @@ function resultGUI = matRad_calcCubes(w,dij,scenNum)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+
 if nargin < 3
     scenNum = 1;
 end
@@ -119,7 +121,7 @@ elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'alpha')), fieldna
                 % Calculate effect from alpha- and sqrtBetaDose
                 resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])       = full(dij.(['mAlphaDose' RBE_model{j}]){scenNum} * wBeam + (dij.(['mSqrtBetaDose' RBE_model{j}]){scenNum} * wBeam).^2);
                 resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])       = reshape(resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix]),dij.doseGrid.dimensions);
-
+                
                 % Calculate RBExD from the effect
                 resultGUI.(['RBExD', RBE_model{j}, beamInfo(i).suffix])        = zeros(size(resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])));
                 resultGUI.(['RBExD', RBE_model{j}, beamInfo(i).suffix])(ix)    = (sqrt(dij.ax{ctScen}(ix).^2 + 4 .* dij.bx{ctScen}(ix) .* resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])(ix)) - dij.ax{ctScen}(ix))./(2.*dij.bx{ctScen}(ix));
@@ -143,6 +145,43 @@ elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'alpha')), fieldna
                 resultGUI.(['beta', RBE_model{j}, beamInfo(i).suffix])(ix)     = (SqrtBetaDoseCube(ix)./resultGUI.(['physicalDose', beamInfo(i).suffix])(ix)).^2;
                 resultGUI.(['SqrtBetaDoseCube', RBE_model{j}, beamInfo(i).suffix])(ix)   = SqrtBetaDoseCube(ix);
             end
+        end
+    end
+end
+
+%% Calculate Biological Effective Dose (BED)
+
+% When depth Dependent alpha beta values are calculated in dij calculation
+if isfield(dij,'ax') && isfield(dij,'bx')
+    alphaX = reshape(dij.ax{1}, dij.doseGrid.dimensions);
+    ix = ~(alphaX == 0);
+
+    if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
+        for i = 1:length(beamInfo)
+            % photon equivaluent BED = n * effect / alphax
+            resultGUI.(['BED', beamInfo(i).suffix]) = zeros(dij.doseGrid.dimensions);
+            resultGUI.(['BED', beamInfo(i).suffix])(ix) = full(resultGUI.(['effect', beamInfo(i).suffix])(ix) ./alphaX(ix));
+            resultGUI.(['BED', beamInfo(i).suffix]) = reshape(resultGUI.(['BED', beamInfo(i).suffix]), dij.doseGrid.dimensions);
+        end
+        matRad_cfg.dispWarning('Photon Equiavlent BED calculated');
+    else
+        % Get Alpha and Beta Values form dij.ax and dij.bx
+        alphaX = reshape(dij.ax{1}, dij.doseGrid.dimensions);
+        betax = reshape(dij.bx{1}, dij.doseGrid.dimensions);
+        for i = 1:length(beamInfo)
+            %         ix = ~isnan(dij.ax{1}./dij.bx{1});
+            if isfield(resultGUI, 'RBExDose')
+                Dose = resultGUI.(['RBExDose', beamInfo(i).suffix]);
+            else
+                Dose = resultGUI.(['physicalDose', beamInfo(i).suffix]);
+            end
+            effect = alphaX.* Dose + betax.*Dose.^2;
+            resultGUI.(['BED', beamInfo(i).suffix]) = zeros(dij.doseGrid.dimensions);
+            resultGUI.(['BED', beamInfo(i).suffix])(ix) = full(effect(ix)./alphaX(ix));
+            resultGUI.(['BED', beamInfo(i).suffix]) = reshape(resultGUI.(['BED', beamInfo(i).suffix]), dij.doseGrid.dimensions);
+        end
+        if isfield(resultGUI, 'RBExDose')
+            matRad_cfg.dispWarning('Photon Equiavlent BED calculated');
         end
     end
 end
