@@ -31,7 +31,7 @@ function [projCoord,idx,targetPoint, sourcePoint] = matRad_projectOnComponents(i
 %
 % Copyright 2017 the matRad development team.
 %
-% This file is not part of the offical matRad release
+% This file is not part of the offical matRad release ?
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

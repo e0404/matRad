@@ -250,6 +250,11 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                 this.config.LET_Sparse_Output	 = ~this.calcDoseDirect;
             end
 
+            %Create X Y Z vectors if not present
+            if ~any(isfield(ct,{'x','y','z'}))
+                ct = matRad_getWorldAxes(ct);
+            end
+
             for scenarioIx = 1:this.multScen.totNumScen
                 %For direct dose calculation
                 totalWeights = 0;
@@ -268,7 +273,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                     for i = 1:length(stf)
                         %Create new stf for MCsquare with energy layer ordering and
                         %shifted scenario isocenter
-                        stfMCsquare(i).isoCenter   = stf(i).isoCenter + isoCenterShift;
+                        stfMCsquare(i).isoCenter   = stf(i).isoCenter - [ct.x(1) ct.y(1) ct.z(1)] + [ct.resolution.x ct.resolution.y ct.resolution.z]  + isoCenterShift;  
                         stfMCsquare(i).gantryAngle = mod(180-stf(i).gantryAngle,360); %Different MCsquare geometry
                         stfMCsquare(i).couchAngle  = stf(i).couchAngle;
                         stfMCsquare(i).energies    = unique([stf(i).ray.energy]);

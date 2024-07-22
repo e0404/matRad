@@ -85,6 +85,11 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             % initialize
             dij = this.initDoseCalc(ct,cst,stf);
 
+            %Create X Y Z vectors if not present
+            if ~any(isfield(ct,{'x','y','z'}))
+                ct = matRad_getWorldAxes(ct);
+            end
+
             for shiftScen = 1:this.multScen.totNumShiftScen
 
                 %Find first instance of the shift to select the shift values
@@ -93,7 +98,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                 scenStf = stf;
                 % manipulate isocenter
                 for k = 1:numel(scenStf)
-                    scenStf(k).isoCenter = scenStf(k).isoCenter + this.multScen.isoShift(ixShiftScen,:);
+                    scenStf(k).isoCenter = scenStf(k).isoCenter - [ct.x(1) ct.y(1) ct.z(1)] + [ct.resolution.x ct.resolution.y ct.resolution.z]  + this.multScen.isoShift(ixShiftScen,:); 
                 end
 
                 if this.multScen.totNumShiftScen > 1
