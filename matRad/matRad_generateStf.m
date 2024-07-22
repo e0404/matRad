@@ -192,6 +192,11 @@ if isempty(V)
     matRad_cfg.dispError('Could not find target.');
 end
 
+% get world coordinate system
+if ~isfield(ct,'x')
+    ct = matRad_getWorldAxes(ct);
+end
+
 % Convert linear indices to 3D voxel coordinates
 [coordsY_vox, coordsX_vox, coordsZ_vox] = ind2sub(ct.cubeDim,V);
 
@@ -218,9 +223,11 @@ if isExternalTherapy
 
         % Correct for iso center position. Whit this correction Isocenter is
         % (0,0,0) [mm]
-        coordsX = coordsX_vox*ct.resolution.x - pln.propStf.isoCenter(i,1);
-        coordsY = coordsY_vox*ct.resolution.y - pln.propStf.isoCenter(i,2);
-        coordsZ = coordsZ_vox*ct.resolution.z - pln.propStf.isoCenter(i,3);
+        wCoords = matRad_cube2worldCoords([coordsX_vox, coordsY_vox, coordsZ_vox], ct);
+
+        coordsX = wCoords(:,1) - pln.propStf.isoCenter(i,1);
+        coordsY = wCoords(:,2) - pln.propStf.isoCenter(i,2);
+        coordsZ = wCoords(:,3) - pln.propStf.isoCenter(i,3);
 
         % Save meta information for treatment plan
         stf(i).gantryAngle   = pln.propStf.gantryAngles(i);
@@ -325,12 +332,14 @@ if isExternalTherapy
 
         % loop over all rays to determine meta information for each ray
         stf(i).numOfBixelsPerRay = ones(1,stf(i).numOfRays);
-
+        
+        % mm axes with isocenter at  (0,0,0)
+        mmCubeisoCenter = stf(i).isoCenter - [ct.x(1) ct.y(1) ct.z(1)] + [ct.resolution.x ct.resolution.y ct.resolution.z];
         for j = stf(i).numOfRays:-1:1
-
+            
             for ShiftScen = 1:pln.multScen.totNumShiftScen
                 % ray tracing necessary to determine depth of the target
-                [alphas,l{ShiftScen},rho{ShiftScen},d12,~] = matRad_siddonRayTracer(stf(i).isoCenter + pln.multScen.isoShift(ShiftScen,:), ...
+                [alphas,l{ShiftScen},rho{ShiftScen},d12,~] = matRad_siddonRayTracer(mmCubeisoCenter + pln.multScen.isoShift(ShiftScen,:), ...
                     ct.resolution, ...
                     stf(i).sourcePoint, ...
                     stf(i).ray(j).targetPoint, ...
@@ -591,9 +600,10 @@ if isExternalTherapy
 
                 % generate a 3D rectangular grid centered at isocenter in
                 % voxel coordinates
-                [X,Y,Z] = meshgrid((1:ct.cubeDim(2))-stf(i).isoCenter(1)/ct.resolution.x, ...
-                    (1:ct.cubeDim(1))-stf(i).isoCenter(2)/ct.resolution.y, ...
-                    (1:ct.cubeDim(3))-stf(i).isoCenter(3)/ct.resolution.z);
+                cubeIso = matRad_world2cubeCoords(stf(i).isoCenter,ct);
+                [X,Y,Z] = meshgrid( (1:ct.cubeDim(2))- cubeIso(1), ...
+                                    (1:ct.cubeDim(1))- cubeIso(2), ...
+                                    (1:ct.cubeDim(3))- cubeIso(3));
 
                 % computes surface
                 patSurfCube      = 0*ct.cube{1};
