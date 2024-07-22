@@ -141,8 +141,8 @@ figure,title('absolute difference')
 matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
 
 % Let's plot single profiles that are perpendicular to the beam direction
-ixProfileY = round(pln.propStf.isoCenter(1,2)./ct.resolution.y);
-
+ixProfileY = matRad_world2cubeCoords(pln.propStf.isoCenter(1,:),ct);
+ixProfileY = ixProfileY(2)
 profileOrginal = resultGUI.RBExD(:,ixProfileY,slice);
 profileShifted = resultGUI_isoShift.RBExD(:,ixProfileY,slice);
 
