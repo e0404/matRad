@@ -31,21 +31,22 @@ function isoDoseContours = matRad_computeIsoDoseContours(doseCube,isoLevels)
 dim = size(doseCube);
 isoDoseContours = cell(max(dim(:)),3);
 
+isoLevels = double(isoLevels);
 minLevel = min(isoLevels(:));
 
 for slice = 1:dim(1)
     if any(any(doseCube(slice,:,:) >= minLevel))
-        isoDoseContours{slice,1} = contourc(squeeze(doseCube(slice,:,:)),isoLevels);
+        isoDoseContours{slice,1} = contourc(double(squeeze(doseCube(slice,:,:))),isoLevels);
     end
 end
 for slice = 1:dim(2)
     if any(any(doseCube(:,slice,:) >= minLevel))
-        isoDoseContours{slice,2} = contourc(squeeze(doseCube(:,slice,:)),isoLevels);
+        isoDoseContours{slice,2} = contourc(double(squeeze(doseCube(:,slice,:))),isoLevels);
     end
 end
 for slice = 1:dim(3)
     if any(any(doseCube(:,:,slice) >= minLevel))
-        isoDoseContours{slice,3} = contourc(squeeze(doseCube(:,:,slice)),isoLevels);
+        isoDoseContours{slice,3} = contourc(double(squeeze(doseCube(:,:,slice))),isoLevels);
     end
 end
 

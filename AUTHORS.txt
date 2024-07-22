@@ -8,9 +8,10 @@
 * Lucas Burigo
 * Gonzalo Cabal
 * Eduadro Cisternas
-* Edgardo Doerner
 * Louis Charton
 * Eric Christiansen
+* Marios Dallas
+* Edgardo Doerner
 * Hubert Gabrys
 * Josefine Handrack
 * Jennifer Hardt
@@ -29,6 +30,7 @@
 * Martina Palkowitsch
 * Giuseppe Pezzano
 * Daniel Ramirez
+* Claus Sarnighausen
 * Carsten Scholz
 * Camilo Sevilla
 * Alexander Stadler

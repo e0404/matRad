@@ -86,7 +86,7 @@ classdef MatRad_Config < handle
             
             %Set Version
             obj.getEnvironment();
-            obj.matRad_version = matRad_version();
+            obj.matRad_version = matRad_version(obj.matRadRoot);
 
             %Configure Environment
             obj.configureEnvironment();
@@ -490,7 +490,7 @@ classdef MatRad_Config < handle
                     if ~isfield(pln,currField)
                         pln.(currField) = obj.defaults.(currField);
                     else
-                        pln.(currField) = matRad_recursiveFieldAssignment(pln.(currField),obj.defaults.(currField));
+                        pln.(currField) = matRad_recursiveFieldAssignment(pln.(currField),obj.defaults.(currField),false);
                     end
                 end
             end

@@ -69,7 +69,7 @@ cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,  dij.ctGrid.y,  dij.ctGrid.z,...
     dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
 
 % Get rid of voxels that are not interesting for the optimization problem
-if ~isfield(pln.propOpt, 'clearUnusedVoxels')
+if ~isfield(pln,'propOpt') || ~isfield(pln.propOpt, 'clearUnusedVoxels')
     pln.propOpt.clearUnusedVoxels = matRad_cfg.defaults.propOpt.clearUnusedVoxels;
 end
 
@@ -189,6 +189,26 @@ elseif pln.bioParam.bioOpt
         maxCurrRBE = max(-cst{ixTarget,5}.alphaX + sqrt(cst{ixTarget,5}.alphaX^2 + ...
             4*cst{ixTarget,5}.betaX.*CurrEffectTarget)./(2*cst{ixTarget,5}.betaX*doseTmp(V)));
         wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(doseTmp(V))))* wOnes;
+
+     elseif strcmp(pln.bioParam.quantityOpt, 'BED')
+
+        if isfield(dij, 'mAlphaDose') && isfield(dij, 'mSqrtBetaDose')
+            abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
+            meanBED = mean((dij.mAlphaDose{1}(V,:)*wOnes + (dij.mSqrtBetaDose{1}(V,:)*wOnes).^2)./cst{ixTarget,5}.alphaX);
+            BEDTarget = doseTarget.*(1 + doseTarget./abr);
+        elseif isfield(dij, 'RBE')
+            abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
+            meanBED = mean(dij.RBE.*dij.physicalDose{1}(V,:)*wOnes.*(1+dij.RBE.*dij.physicalDose{1}(V,:)*wOnes./abr));
+            BEDTarget = dij.RBE.*doseTarget.*(1 + dij.RBE.*doseTarget./abr);
+        else
+            abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
+            meanBED = mean(dij.physicalDose{1}(V,:)*wOnes.*(1+dij.physicalDose{1}(V,:)*wOnes./abr));
+            BEDTarget = doseTarget.*(1 + doseTarget./abr);
+        end
+
+        bixelWeight =  BEDTarget/meanBED;
+        wInit       = wOnes * bixelWeight;
+        
     end
 
     matRad_cfg.dispInfo('chosen weights adapted to biological dose calculation!\n');
@@ -257,6 +277,8 @@ switch pln.bioParam.quantityOpt
         else
             backProjection = matRad_VariableRBEProjection;
         end
+    case 'BED'
+        backProjection = matRad_BEDProjection;     
     case 'physicalDose'
         backProjection = matRad_DoseProjection;
     otherwise
@@ -310,6 +332,8 @@ switch pln.propOpt.optimizer
         optimizer = matRad_OptimizerIPOPT;
     case 'fmincon'
         optimizer = matRad_OptimizerFmincon;
+    case 'simulannealbnd'
+        optimizer = matRad_OptimizerSimulannealbnd;
     otherwise
         warning(['Optimizer ''' pln.propOpt.optimizer ''' not known! Fallback to IPOPT!']);
         optimizer = matRad_OptimizerIPOPT;

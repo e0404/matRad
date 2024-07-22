@@ -79,9 +79,9 @@ tmString = sprintf(' %d',T(1:3,1:3));
 [~,~,endian] = computer;
 switch endian
     case 'L'
-        byteOrderMSB = 'True';
-    case 'B'
         byteOrderMSB = 'False';
+    case 'B'
+        byteOrderMSB = 'True';
     otherwise
         error('Unknown endian!');
 end

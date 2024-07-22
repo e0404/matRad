@@ -423,13 +423,15 @@ classdef matRad_MainGUI < handle
             oldPos = get(this.ViewingWidget.handles.axesFig,'Position');
             set(new_handle(1),'units','normalized', 'Position',oldPos);
 
-            if exist(this.lastStoragePath,'dir') ~= 7
+            if (ischar(this.lastStoragePath) || isstring(this.lastStoragePath)) && isfolder(this.lastStoragePath)
                 this.lastStoragePath = [];
             end
 
             [filename, pathname] = uiputfile({'*.jpg;*.tif;*.png;*.gif','All Image Files'; '*.fig','MATLAB figure file'},'Save current view',[this.lastStoragePath 'screenshot.png']);
-
-            this.lastStoragePath = pathname;
+            
+            if pathname ~= 0
+                this.lastStoragePath = pathname;
+            end
 
             if ~isequal(filename,0) && ~isequal(pathname,0)
                 set(gcf, 'pointer', 'watch');

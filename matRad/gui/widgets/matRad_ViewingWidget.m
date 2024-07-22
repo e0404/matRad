@@ -1086,17 +1086,19 @@ classdef matRad_ViewingWidget < matRad_Widget
                     end
                 end
                 
-                if this.plane == 1
-                    this.slice= ceil(pln.propStf.isoCenter(1,2)/ct.resolution.x);
-                elseif this.plane == 2
-                    this.slice= ceil(pln.propStf.isoCenter(1,1)/ct.resolution.y);
-                elseif this.plane == 3
-                    this.slice= ceil(pln.propStf.isoCenter(1,3)/ct.resolution.z);
+                if isfield(pln,'propStf')
+                    planeCenters = ceil(pln.propStf.isoCenter(1,[2 1 3]) ./ [ct.resolution.x ct.resolution.y ct.resolution.z]);
+                    this.numOfBeams=pln.propStf.numOfBeams;
+                else
+                    planeCenters = ceil(ct.cubeDim./ 2);
+                    this.numOfBeams = 1;
                 end
+                
+                this.slice = planeCenters(this.plane);                
                 
                 this.maxSlice=ct.cubeDim(this.plane);
                 this.SliceSliderStep=[1/(ct.cubeDim(this.plane)-1) 1/(ct.cubeDim(this.plane)-1)];
-                this.numOfBeams=pln.propStf.numOfBeams;
+                
                 
                  % set profile offset slider
                 this.OffsetMinMax = [-100 100];
@@ -1263,8 +1265,12 @@ classdef matRad_ViewingWidget < matRad_Widget
                 end
                 % set isoCenter values 
                 % Note: only defined for the first Isocenter
-                uniqueIsoCenters = unique(pln.propStf.isoCenter,'rows');
-                this.vIsoCenter      = round(uniqueIsoCenters(1,:)./[ct.resolution.x ct.resolution.y ct.resolution.z]);
+                if isfield(pln,'propStf')
+                    uniqueIsoCenters = unique(pln.propStf.isoCenter,'rows');
+                    this.vIsoCenter      = round(uniqueIsoCenters(1,:)./[ct.resolution.x ct.resolution.y ct.resolution.z]);
+                else
+                    this.plotIsoCenter = false;
+                end
                 
 
                  % set profile offset slider

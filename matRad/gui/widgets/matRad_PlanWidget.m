@@ -29,7 +29,10 @@ classdef matRad_PlanWidget < matRad_Widget
     end
     
     properties (Constant)
-        Modalities = {'photons','protons','carbon', 'helium'};
+
+        modalities = {'photons','protons','carbon', 'helium','brachy'};
+        availableProjections = {  'physicalDose'; 'RBExD'; 'effect'; 'BED'; }
+
     end
     
     methods
@@ -182,8 +185,8 @@ classdef matRad_PlanWidget < matRad_Widget
             h19 = uicontrol(...
                 'Parent',h12,...
                 'Units','normalized',...
-                'String',this.Modalities,...,...
-                'TooltipString','Choose a radiation modality (photons, protons or carbon)',...
+                'String',this.modalities,...,...
+                'TooltipString','Choose a radiation modality (photons, protons, carbon, helium or brachy)',...
                 'Style','popupmenu',...
                 'Value',1,...
                 'Position',gridPos{2,4},...
@@ -200,7 +203,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 'Parent',h12,...
                 'Units','normalized',...
                 'String','Radiation Mode',...
-                'TooltipString','Choose a radiation modality (photons, protons or carbon)',...
+                'TooltipString','Choose a radiation modality (photons, protons, carbon, helium or brachy)',...
                 'Style','text',...
                 'Position',gridPos{1,4},...
                 'BackgroundColor',matRad_cfg.gui.backgroundColor,...
@@ -347,7 +350,7 @@ classdef matRad_PlanWidget < matRad_Widget
             h33 = uicontrol(...
                 'Parent',h12,...
                 'Units','normalized',...
-                'String',{  'physicalDose'; 'RBExD'; 'effect';  },...
+                'String', this.availableProjections,...
                 'TooltipString',txt,...
                 'Style','popupmenu',...
                 'Value',1,...
@@ -789,11 +792,11 @@ classdef matRad_PlanWidget < matRad_Widget
             set(handles.editGantryAngle,'String',num2str(pln.propStf.gantryAngles));
             set(handles.editCouchAngle,'String',num2str(pln.propStf.couchAngles));
             
-            modIx = find(strcmp(pln.radiationMode,this.Modalities));
+            modIx = find(strcmp(pln.radiationMode,this.modalities));
             set(handles.popupRadMode,'Value',modIx);
             
             getMachines(this);
-            modIy = find(strcmp(pln.machine,this.Machines(this.Modalities{modIx}))); 
+            modIy = find(strcmp(pln.machine,this.Machines(this.modalities{modIx}))); 
             set(handles.popUpMachine,'Value',modIy); 
 
             availableEngines = DoseEngines.matRad_DoseEngineBase.getAvailableEngines(pln);
@@ -1057,6 +1060,37 @@ classdef matRad_PlanWidget < matRad_Widget
                     set(handles.popUpMenuSequencer,'Enable','off');
                     set(handles.txtSequencer,'Enable','off');
                     
+                case 'brachy'
+                    
+                    set(handles.popMenuQuantityOpt,'Enable','on');
+%                     ix = find(strcmp(contentPopUpQuantityOpt,'physicalDose'));
+%                     set(handles.popMenuQuantityOpt,'Value',ix);
+                    ix = find(strcmp(contentPopUpBioModel,'none'));
+                    set(handles.popMenuBioModel,'Value',ix);
+                    set(handles.popMenuBioModel,'Enable','off');
+                    set(handles.btnSetTissue,'Enable','off');
+                    
+                    set(handles.btnRunSequencing,'Enable','on');
+                    set(handles.btnRunDAO,'Enable','on');
+                    set(handles.radiobutton3Dconf,'Enable','on');
+                    set(handles.txtSequencing,'Enable','on');
+                    set(handles.editSequencingLevel,'Enable','on');    
+                    set(handles.popUpMenuSequencer,'Enable','on');
+                    set(handles.txtSequencer,'Enable','on');
+                    set(handles.popMenuMultScen, 'Enable','on');
+                    
+                    if ~(get(handles.btnRunSequencing,'Value') || get(handles.btnRunDAO,'Value'))
+                    
+                        set(handles.txtSequencing,'Enable','off');
+                        set(handles.editSequencingLevel,'Enable','off');    
+                        set(handles.popUpMenuSequencer,'Enable','off');
+                        set(handles.txtSequencer,'Enable','off');
+                    else 
+                        set(handles.txtSequencing,'Enable','on');
+                        set(handles.editSequencingLevel,'Enable','on');    
+                        set(handles.popUpMenuSequencer,'Enable','on');
+                        set(handles.txtSequencer,'Enable','on');
+                    end
             end
             
             selectedQuantityOpt = get(handles.popMenuQuantityOpt,'Value');
@@ -1369,17 +1403,17 @@ classdef matRad_PlanWidget < matRad_Widget
             %matRad_cfg = MatRad_Config.instance();
             %seach for availabes machines
             handles = this.handles;
-            this.Machines = matRad_getAvailableMachines(this.Modalities);
+            this.Machines = matRad_getAvailableMachines(this.modalities);
             
             selectedRadMod = get(handles.popupRadMode,'Value');
-            nMachines = numel(this.Machines(this.Modalities{selectedRadMod}));
+            nMachines = numel(this.Machines(this.modalities{selectedRadMod}));
             selectedMachine = get(handles.popUpMachine,'Value');
             
             if get(handles.popUpMachine,'Value') > nMachines
                 selectedMachine = 1;
             end            
             
-            set(handles.popUpMachine,'Value',selectedMachine,'String',this.Machines(this.Modalities{selectedRadMod}));
+            set(handles.popUpMachine,'Value',selectedMachine,'String',this.Machines(this.modalities{selectedRadMod}));
             this.handles = handles;
         end
         

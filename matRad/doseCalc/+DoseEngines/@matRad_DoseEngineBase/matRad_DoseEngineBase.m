@@ -156,7 +156,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
                 try
                     field = fields{i};
                     if isprop(this,field)
-                        this.(field) = matRad_recursiveFieldAssignment(this.(field),plnStruct.(field),warningMsg);
+                        this.(field) = matRad_recursiveFieldAssignment(this.(field),plnStruct.(field),true,warningMsg);
                     else
                         matRad_cfg.dispWarning('Not able to assign property ''%s'' from pln.propDoseCalc to Dose Engine!',field);
                     end
@@ -246,7 +246,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         % Should be called at the beginning of calcDose method.
         % Can be expanded or changed by overwriting this method and calling
         % the superclass method inside of it
-        [dij,ct,cst,stf] = initDoseCalc(this,ct,cst,stf)   
+        dij = initDoseCalc(this,ct,cst,stf)   
         
         % method for finalizing the dose calculation (e.g. postprocessing
         % on dij or files
