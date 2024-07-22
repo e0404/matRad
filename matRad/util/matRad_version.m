@@ -33,7 +33,7 @@ function [versionString,matRadVer] = matRad_version(matRadRoot)
 matRadVer.name = 'Cleve';
 matRadVer.major = 3;
 matRadVer.minor = 0;
-matRadVer.patch = 5;
+matRadVer.patch = 6;
 
 tagged = false;
 
