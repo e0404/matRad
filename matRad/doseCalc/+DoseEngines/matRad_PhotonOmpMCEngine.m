@@ -222,7 +222,19 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             this.getOmpMCgeometry(dij.doseGrid);
 
             %% Create beamlet source
-            this.getOmpMCsource(stf);
+            if ~isfield(ct,'x')
+                ct = matRad_getWorldAxes(ct);
+            end
+
+            tmpStf = stf;
+             for k = 1:length(stf)
+                 shiftedIsoCenter = vertcat(stf(:).isoCenter) - [ct.x(1) ct.y(1) ct.z(1)] + [ct.resolution.x ct.resolution.y ct.resolution.z]...
+                                                 + dij.doseGrid.isoCenterOffset;
+
+                 tmpStf(k).isoCenter = shiftedIsoCenter;
+            end
+
+            this.getOmpMCsource(tmpStf);
         end
     end
 
@@ -400,8 +412,7 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             for i = 1:numOfBeams % loop over all beams
 
                 % define beam source in physical coordinate system in cm
-                isoCenterBeam = stf(i).isoCenter - [ct.x(1) ct.y(1) ct.z(1)] + [ct.resolution.x ct.resolution.y ct.resolution.z] + dij.doseGrid.isoCenterOffset; % coord axes start at 0 in mm
-                beamSource(i,:) = (stf(i).sourcePoint + isoCenterBeam)/10;
+                beamSource(i,:) = (stf(i).sourcePoint + stf(i).isoCenter)/10;
 
                 for j = 1:stf(i).numOfRays % loop over all rays / for photons we only have one bixel per ray!
 
@@ -417,18 +428,18 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
                     % get bixel corner and delimiting vectors.
                     % a) change coordinate system (Isocenter cs-> physical cs) and units mm -> cm
-                    currCorner = (beamletCorners(1,:) + isoCenterBeam) ./ obj.scale;
+                    currCorner = (beamletCorners(1,:) + stf(i).isoCenter) ./ obj.scale;
                     bixelCorner(counter,:) = currCorner;
-                    bixelSide1(counter,:) = (beamletCorners(2,:) + isoCenterBeam) ./ obj.scale - currCorner;
-                    bixelSide2(counter,:) = (beamletCorners(4,:) + isoCenterBeam) ./ obj.scale - currCorner;
+                    bixelSide1(counter,:) = (beamletCorners(2,:) + stf(i).isoCenter) ./ obj.scale - currCorner;
+                    bixelSide2(counter,:) = (beamletCorners(4,:) + stf(i).isoCenter) ./ obj.scale - currCorner;
 
                     if obj.visBool
                         for k = 1:4
-                            currCornerVis = (beamletCorners(k,:) + isoCenterBeam)/10;
+                            currCornerVis = (beamletCorners(k,:) + stf(i).isoCenter)/10;
                             % rays connecting source and ray corner
                             plot3([beamSource(i,1) currCornerVis(1)],[beamSource(i,2) currCornerVis(2)],[beamSource(i,3) currCornerVis(3)],'b')
                             % connection between corners
-                            lRayCorner = (beamletCorners(mod(k,4) + 1,:) + isoCenterBeam)/10;
+                            lRayCorner = (beamletCorners(mod(k,4) + 1,:) + stf(i).isoCenter)/10;
                             plot3([lRayCorner(1) currCornerVis(1)],[lRayCorner(2) currCornerVis(2)],[lRayCorner(3) currCornerVis(3)],'r')
                         end
                     end
