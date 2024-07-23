@@ -6,7 +6,7 @@ function coord = matRad_cube2worldCoords(vCoord, ct)
 %   
 %   ct: matRad ct struct
 %   vCoord : Voxel Coordinates [vx vy vz]
-% 
+%   coord: worldCoordinates [x y z ] mm
 % References
 %   -
 %
@@ -23,20 +23,26 @@ function coord = matRad_cube2worldCoords(vCoord, ct)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 coord = [];   % [x y z ] mm 
-if nargin == 2
+
+if nargin == 2 && ~isempty(vCoord)
     if isfield(ct, 'dicomInfo') && isfield(ct.dicomInfo,'ImagePositionPatient')
         firstVox = ct.dicomInfo.ImagePositionPatient;
     else 
-        firstVox = - (ct.cubeDim./2).*[ct.resolution.x ct.resolution.y ct.resolution.z] ;
+        firstVox = -(ct.cubeDim./2).*[ct.resolution.x ct.resolution.y ct.resolution.z] ;
     end 
-    try
+    if prod(vCoord<=ct.cubeDim)  && prod(vCoord>0)       
         coord(1,:) = firstVox(1) + (vCoord(:,1) - 1 ) *ct.resolution.x;
         coord(2,:) = firstVox(2) + (vCoord(:,2) - 1 ) *ct.resolution.y;
         coord(3,:) = firstVox(3) + (vCoord(:,3) - 1 ) *ct.resolution.z;
         coord = coord';
-    catch
-
+    else 
+        matRad_cfg = MatRad_Config.instance();
+        matRad_cfg.dispError('Queried cube coordinate is outside the ct cube');
     end
+    
+else
+    matRad_cfg = MatRad_Config.instance();
+    matRad_cfg.dispError('Cannot compute coordinates without matRad input coordinates or ct structure');
 end
 
 end

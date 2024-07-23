@@ -19,7 +19,7 @@ function ct = matRad_getWorldAxes(ct)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-matRad_cfg = MatRad_Config.instance();
+
 
 if nargin>0
     %
@@ -34,7 +34,8 @@ if nargin>0
     ct.y = firstVox(2) + ct.resolution.y*[0:ct.cubeDim(1)-1] ;
     ct.z = firstVox(3) + ct.resolution.z*[0:ct.cubeDim(3)-1] ;
 else
-    matRad_cfg.dispWarning('Cannot compute world coordinates without matRad ct structure');
+    matRad_cfg = MatRad_Config.instance();
+    matRad_cfg.dispError('Cannot compute world coordinates without matRad ct structure');
 end
 
 end
