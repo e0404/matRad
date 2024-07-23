@@ -67,16 +67,17 @@ A2Bnorm = (targetPoint-sourcePoint)/norm(targetPoint-sourcePoint);
 % We just use the first row of targetPoint because the distance from one
 % end to the projected point does not change for parallel translations of
 % the ray
-pointToEndDist = bsxfun(@minus,coord,targetPoint(1,:))*A2Bnorm';
+pointToEndDist = (coord - targetPoint(1,:))*A2Bnorm';
 
 % add translation to the extreme of the ray, according to spherical coord,
 % in order to obtain the coord of the projected points
 % signvec = sign(Bvec-Avec);
-projCoord = bsxfun(@plus,reshape(targetPoint',[1,3,length(Dx)]),pointToEndDist*A2Bnorm);
-
+%projCoord = bsxfun(@plus,reshape(targetPoint',[1,3,length(Dx)]),pointToEndDist*A2Bnorm);
+projCoord = reshape(targetPoint',[1 3 size(targetPoint,1)]) + pointToEndDist*A2Bnorm;
 
 % round to voxel coords
-D = round(bsxfun(@rdivide,projCoord,res));
+% D = round(bsxfun(@rdivide,projCoord,res));
+D = round(projCoord./res);
 
 % delete every point which goes out of the matrix
 % D( D(:,1)<1 | D(:,1)>dim(1) | D(:,2)<1 | D(:,2)>dim(2) | D(:,3)<1 | D(:,3)>dim(3), :) = [];
