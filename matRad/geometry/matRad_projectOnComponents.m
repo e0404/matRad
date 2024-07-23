@@ -36,20 +36,14 @@ function [projCoord,idx,targetPoint, sourcePoint] = matRad_projectOnComponents(i
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % add offset to target and source point in bev
+d = [Dx zeros(size(Dx)) Dz];
+targetPoint = (targetPoint_bev + d) * rotMat' + isoCenter; 
+sourcePoint = (sourcePoint_bev + d) * rotMat' + isoCenter; 
 
-targetPoint_bevVec(:,2) = targetPoint_bev(2).*ones([length(Dx) 1]);
-targetPoint_bevVec(:,1) = bsxfun(@plus,Dx,targetPoint_bev(1));
-targetPoint_bevVec(:,3) = bsxfun(@plus,Dz',targetPoint_bev(3));
-sourcePoint_bevVec(:,2) = sourcePoint_bev(2).*ones([length(Dz) 1]);
-sourcePoint_bevVec(:,1) = bsxfun(@plus,Dx,sourcePoint_bev(1));
-sourcePoint_bevVec(:,3) = bsxfun(@plus,Dz,sourcePoint_bev(3));
-
-% rotate in world coord sys and shift by isocenter
-targetPoint = bsxfun(@plus,targetPoint_bevVec * rotMat', isoCenter);
-sourcePoint = bsxfun(@plus,sourcePoint_bevVec * rotMat', isoCenter);
 
 % convert index in coordinates, it does the same job as:
 %       [coord(:,2),coord(:,1),coord(:,3)] = ind2sub(dim,initIx);
+%{
 if max(initIx) > prod(dim) || min(initIx) < 0
     error('Index exceeds matrix dimensions')
 else
@@ -60,9 +54,12 @@ else
     coord(coord(:,1) == 0, 1) = dim(2);
     coord(:,3) = floor((v1) ./ dim(2)) + 1;
 end
+%}
 
+[coord(:,2),coord(:,1),coord(:,3)] = ind2sub(dim,initIx);
 
-coord = bsxfun(@times,coord,res);
+%Multiply with resolution
+coord = coord.*res;
 
 % distance of points Bvec from the projection of points coord onto the line between A 
 A2Bnorm = (targetPoint-sourcePoint)/norm(targetPoint-sourcePoint);
