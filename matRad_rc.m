@@ -25,8 +25,10 @@ sameMatRad = false;
 try %Check if matRad is already on the path and if so, if it is the same installation
     tmp_cfg = MatRad_Config.instance();        
     if ~strcmp(tmp_cfg.matRadRoot,thisFolder)
-        tmp_cfg.dispWarning('Called matRad_rc in folder %s but matRad initialized in folder %s!\n Removing old matRad from path and using new installation!',fileparts(mfilename("fullpath")),tmp_cfg.matRadRoot); 
-        rmpath(genpath(tmp_cfg.matRadRoot));
+        tmp_cfg.dispWarning('Called matRad_rc in folder %s but matRad initialized in folder %s!\n Removing old matRad from path and using new installation!',fileparts(mfilename("fullpath")),tmp_cfg.matRadRoot);
+        if ~isdeployed
+            rmpath(genpath(tmp_cfg.matRadRoot));
+        end
         clear tmp_cfg MatRad_Config;
         tmp_cfg = MatRad_Config.instance();
         sameMatRad = false;
@@ -36,7 +38,9 @@ try %Check if matRad is already on the path and if so, if it is the same install
 catch %If matRad is not on the path, initialize it freshly and add the sourcefolder containing MatRad_Config to the path
     matRadRoot = thisFolder;
     matRadSrcRoot = fullfile(thisFolder,'matRad');
-    addpath(matRadRoot,matRadSrcRoot);
+    if ~isdeployed
+        addpath(matRadRoot,matRadSrcRoot);
+    end
     tmp_cfg = MatRad_Config.instance();
     sameMatRad = false;
 end
