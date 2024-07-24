@@ -10,6 +10,7 @@
 * Eduadro Cisternas
 * Louis Charton
 * Eric Christiansen
+* Remo Cristoforetti
 * Marios Dallas
 * Edgardo Doerner
 * Hubert Gabrys
