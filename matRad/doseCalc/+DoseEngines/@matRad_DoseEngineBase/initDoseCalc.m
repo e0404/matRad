@@ -78,9 +78,8 @@ dij.ctGrid.resolution = ct.resolution;
 
 % to guarantee downwards compatibility with data that does not have
 % ct.x/y/z
-if ~any(isfield(ct,{'x','y','z'}))
-      ct = matRad_getWorldAxes(ct);
-end
+ct = matRad_getWorldAxes(ct);
+
 dij.ctGrid.x = ct.x;
 dij.ctGrid.y = ct.y;   
 dij.ctGrid.z = ct.z;

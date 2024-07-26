@@ -129,9 +129,8 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             calibrationFactor = this.absCalibrationFactor * (bixelWidth/50)^2;
             
             %Create X Y Z vectors if not present
-            if ~any(isfield(ct,{'x','y','z'}))
-                ct = matRad_getWorldAxes(ct);
-            end
+            ct = matRad_getWorldAxes(ct);
+            
 
             scenCount = 0;
             %run over all scenarios
@@ -222,10 +221,8 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             this.getOmpMCgeometry(dij.doseGrid);
 
             %% Create beamlet source
-            if ~isfield(ct,'x')
-                ct = matRad_getWorldAxes(ct);
-            end
-
+            ct = matRad_getWorldAxes(ct);
+           
             tmpStf = stf;
              for k = 1:length(stf)
                  shiftedIsoCenter = vertcat(stf(:).isoCenter) - [ct.x(1) ct.y(1) ct.z(1)] + [ct.resolution.x ct.resolution.y ct.resolution.z]...

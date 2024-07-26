@@ -31,15 +31,8 @@ end
 
 %% CT check
 ct = obj.ct;
-if ~any(isfield(ct,{'x','y','z'}))
-    %positionOffset = transpose(ct.cubeDim ./ 2);
-    %positionOffset = ct.cubeDim .* [ct.resolution.y, ct.resolution.x, ct.resolution.z] ./ 2;
-%     positionOffset = [ct.resolution.y, ct.resolution.x, ct.resolution.z] ./ 2;
-%     ct.x = ct.resolution.x*[0:ct.cubeDim(2)-1] - positionOffset(2);
-%     ct.y = ct.resolution.y*[0:ct.cubeDim(1)-1] - positionOffset(1);
-%     ct.z = ct.resolution.z*[0:ct.cubeDim(3)-1] - positionOffset(3);
-  ct = matRad_getWorldAxes(ct);
-end
+ct = matRad_getWorldAxes(ct);
+
 
 %% Meta data
 storageClass = obj.rtDoseClassUID;

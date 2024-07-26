@@ -251,9 +251,8 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             end
 
             %Create X Y Z vectors if not present
-            if ~any(isfield(ct,{'x','y','z'}))
-                ct = matRad_getWorldAxes(ct);
-            end
+            ct = matRad_getWorldAxes(ct);
+            
 
             for scenarioIx = 1:this.multScen.totNumScen
                 %For direct dose calculation

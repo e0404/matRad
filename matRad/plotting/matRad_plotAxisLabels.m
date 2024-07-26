@@ -37,9 +37,8 @@ if ~exist('defaultFontSize','var') || isempty(defaultFontSize)
     defaultFontSize = 12;
 end
 
-if ~isfield(ct,'x') || isempty(ct.x)
-    ct = matRad_getWorldAxes(ct);
-end
+ct = matRad_getWorldAxes(ct);
+
 
 if ~exist('tickdist','var') || isempty(tickdist)
      tickdist = abs(ct.x(end)-ct.x(1))/10;

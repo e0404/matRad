@@ -193,9 +193,8 @@ if isempty(V)
 end
 
 % get world coordinate system
-if ~isfield(ct,'x')
-    ct = matRad_getWorldAxes(ct);
-end
+ct = matRad_getWorldAxes(ct);
+
 
 % Convert linear indices to 3D voxel coordinates
 [coordsY_vox, coordsX_vox, coordsZ_vox] = ind2sub(ct.cubeDim,V);
@@ -224,11 +223,8 @@ if isExternalTherapy
         % Correct for iso center position. Whit this correction Isocenter is
         % (0,0,0) [mm]
         wCoords = matRad_cube2worldCoords([coordsX_vox, coordsY_vox, coordsZ_vox], ct);
-
-        coordsX = wCoords(:,1) - pln.propStf.isoCenter(i,1);
-        coordsY = wCoords(:,2) - pln.propStf.isoCenter(i,2);
-        coordsZ = wCoords(:,3) - pln.propStf.isoCenter(i,3);
-
+        Icoords = wCoords - pln.propStf.isoCenter(i,:);
+        
         % Save meta information for treatment plan
         stf(i).gantryAngle   = pln.propStf.gantryAngles(i);
         stf(i).couchAngle    = pln.propStf.couchAngles(i);
@@ -244,7 +240,7 @@ if isExternalTherapy
         % rotation matrix are necessary
         rotMat_system_T = matRad_getRotationMatrix(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i));
 
-        rot_coords = [coordsX coordsY coordsZ]*rotMat_system_T;
+        rot_coords = [Icoords]*rotMat_system_T;
 
         % project x and z coordinates to isocenter
         coordsAtIsoCenterPlane(:,1) = (rot_coords(:,1)*SAD)./(SAD + rot_coords(:,2));
@@ -672,7 +668,7 @@ if isExternalTherapy
             subplot(1,2,2)
 
             % Plot target coordinates whitout any rotation
-            plot3(coordsX,coordsY,coordsZ,'r.')
+            plot3(Icoords,'r.')
             hold on;
 
             % Rotated projection matrix at isocenter

@@ -1,41 +1,56 @@
-function ct = matRad_getWorldAxes(ct)
-% matRad function to compute and store world coordinates int ct.x
-% 
+function gridStruct = matRad_getWorldAxes(gridStruct)
+% matRad function to compute and store world coordinates into ct.x
+%
 % call
-%   ct = matRad_getWorldAxes(ct)
+%   gridStruct = matRad_getWorldAxes(gridStruct)
+%
+%   gridStruct:         can be ct, dij.doseGrid,dij.ctGrid
 %
 % References
 %   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
+% Copyright 2015 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
+update = false;
 if nargin>0
-    %
-    % check if dicominfo exists
-    if isfield(ct, 'dicomInfo') && isfield(ct.dicomInfo,'ImagePositionPatient')
-        firstVox = ct.dicomInfo.ImagePositionPatient;
-    else 
-        firstVox = - (ct.cubeDim./2).*[ct.resolution.x ct.resolution.y ct.resolution.z] ;
-    end 
+    if ~ (isfield(gridStruct,{'x','y','z'}))
+        update = true;
+    else
+        if isempty(gridStruct.x)||isempty(gridStruct.y)||isempty(gridStruct.z)
+            update = true;
+        end
+    end
+    
+    if update 
+        %
+        if isfield(gridStruct,'cubeDim')
+            gridStruct.dimensions = gridStruct.cubeDim;
+        end
+        % check if dicominfo exists
+        if isfield(gridStruct, 'dicomInfo') && isfield(gridStruct.dicomInfo,'ImagePositionPatient')
+            firstVox = gridStruct.dicomInfo.ImagePositionPatient;
+        else
+            firstVox = - (gridStruct.dimensions./2).*[gridStruct.resolution.x gridStruct.resolution.y gridStruct.resolution.z] ;
+        end
 
-    ct.x = firstVox(1) + ct.resolution.x*[0:ct.cubeDim(2)-1] ;
-    ct.y = firstVox(2) + ct.resolution.y*[0:ct.cubeDim(1)-1] ;
-    ct.z = firstVox(3) + ct.resolution.z*[0:ct.cubeDim(3)-1] ;
+        gridStruct.x = firstVox(1) + gridStruct.resolution.x*[0:gridStruct.dimensions(2)-1] ;
+        gridStruct.y = firstVox(2) + gridStruct.resolution.y*[0:gridStruct.dimensions(1)-1] ;
+        gridStruct.z = firstVox(3) + gridStruct.resolution.z*[0:gridStruct.dimensions(3)-1] ;
+    end
 else
     matRad_cfg = MatRad_Config.instance();
-    matRad_cfg.dispError('Cannot compute world coordinates without matRad ct structure');
+    matRad_cfg.dispError('Cannot compute world coordinates without matRad ct or grid structure');
 end
 
 end

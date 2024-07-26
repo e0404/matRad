@@ -94,18 +94,8 @@ if ~isfield(pln.propStf,'useRangeShifter')
 end
 
 %Get Isocenter voxel as target
-if ~any(isfield(ct,{'x','y','z'}))
-   ct = matRad_getWorldAxes(ct);
+ct = matRad_getWorldAxes(ct);
 
-end
-
-%xVox = ct.x + ct.resolution.x/2;
-%yVox = ct.y + ct.resolution.y/2;
-%zVox = ct.z + ct.resolution.z/2;
-
-% xVox = ct.resolution.x*[1:ct.cubeDim(2)]-ct.resolution.x/2;
-% yVox = ct.resolution.y*[1:ct.cubeDim(1)]-ct.resolution.y/2;
-% zVox = ct.resolution.z*[1:ct.cubeDim(3)]-ct.resolution.z/2;
 
 % loop over all angles
 for i = 1:length(pln.propStf.gantryAngles)   

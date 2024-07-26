@@ -86,9 +86,8 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             dij = this.initDoseCalc(ct,cst,stf);
 
             %Create X Y Z vectors if not present
-            if ~any(isfield(ct,{'x','y','z'}))
-                ct = matRad_getWorldAxes(ct);
-            end
+            ct = matRad_getWorldAxes(ct);
+            
 
             for shiftScen = 1:this.multScen.totNumShiftScen
 

@@ -1,10 +1,10 @@
-function coord = matRad_cube2worldCoords(vCoord, ct)
+function coord = matRad_cube2worldCoords(vCoord, gridStruct)
 % matRad function to convert cube coordinates to world coordinates
 % 
 % call
-%   coord = matRad_worldToCubeCoordinates(vCoord, ct)
+%   coord = matRad_worldToCubeCoordinates(vCoord, gridStruct)
 %   
-%   ct: matRad ct struct
+%   gridStruct: matRad ct struct or dij.doseGrid/ctGrid struct
 %   vCoord : Voxel Coordinates [vx vy vz]
 %   coord: worldCoordinates [x y z ] mm
 % References
@@ -25,15 +25,19 @@ function coord = matRad_cube2worldCoords(vCoord, ct)
 coord = [];   % [x y z ] mm 
 
 if nargin == 2 && ~isempty(vCoord)
-    if isfield(ct, 'dicomInfo') && isfield(ct.dicomInfo,'ImagePositionPatient')
-        firstVox = ct.dicomInfo.ImagePositionPatient;
+    if isfield(gridStruct,'cubeDim')
+        gridStruct.dimensions = gridStruct.cubeDim;
+    end
+
+    if isfield(gridStruct, 'dicomInfo') && isfield(gridStruct.dicomInfo,'ImagePositionPatient')
+        firstVox = gridStruct.dicomInfo.ImagePositionPatient;
     else 
-        firstVox = -(ct.cubeDim./2).*[ct.resolution.x ct.resolution.y ct.resolution.z] ;
+        firstVox = -(gridStruct.cubeDim./2).*[gridStruct.resolution.x gridStruct.resolution.y gridStruct.resolution.z] ;
     end 
-    if prod(vCoord<=ct.cubeDim)  && prod(vCoord>0)       
-        coord(1,:) = firstVox(1) + (vCoord(:,1) - 1 ) *ct.resolution.x;
-        coord(2,:) = firstVox(2) + (vCoord(:,2) - 1 ) *ct.resolution.y;
-        coord(3,:) = firstVox(3) + (vCoord(:,3) - 1 ) *ct.resolution.z;
+    if  prod(prod(vCoord<=gridStruct.dimensions))  && prod(prod(vCoord>=0))       
+        coord(1,:) = firstVox(1) + (vCoord(:,1) - 1 ) *gridStruct.resolution.x;
+        coord(2,:) = firstVox(2) + (vCoord(:,2) - 1 ) *gridStruct.resolution.y;
+        coord(3,:) = firstVox(3) + (vCoord(:,3) - 1 ) *gridStruct.resolution.z;
         coord = coord';
     else 
         matRad_cfg = MatRad_Config.instance();
