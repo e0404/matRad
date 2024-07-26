@@ -272,7 +272,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                     for i = 1:length(stf)
                         %Create new stf for MCsquare with energy layer ordering and
                         %shifted scenario isocenter
-                        stfMCsquare(i).isoCenter   = matRad_world2imageCoords(stf(i).isoCenter, ct) + isoCenterShift;  
+                        stfMCsquare(i).isoCenter   = matRad_world2isocentricCoords(stf(i).isoCenter, ct) + isoCenterShift;  
                         stfMCsquare(i).gantryAngle = mod(180-stf(i).gantryAngle,360); %Different MCsquare geometry
                         stfMCsquare(i).couchAngle  = stf(i).couchAngle;
                         stfMCsquare(i).energies    = unique([stf(i).ray.energy]);

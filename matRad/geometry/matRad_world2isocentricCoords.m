@@ -1,9 +1,9 @@
-function coord = matRad_world2imageCoords(wCoord, gridStruct)
+function coord = matRad_world2isocentricCoords(wCoord, gridStruct)
 % matRad function to convert world coordinates to Iso Center image coordinates
 % voxels step: mm, isocenter at (0,0) 
 % 
 % call
-%   coord = matRad_world2imageCoords(wCoord, ct)
+%   coord = matRad_world2isocentricCoords(wCoord, ct)
 %
 %
 %   wCoord:         world coordinates (x,y,z)[mm]

@@ -143,7 +143,7 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     scenCount = scenCount + 1;
 
                     % manipulate isocenter
-                    shiftedIsoCenter = matRad_world2imageCoords(vertcat(stf(:).isoCenter), ct) + this.multScen.isoShift(scenarioIx,:) + dij.doseGrid.isoCenterOffset;
+                    shiftedIsoCenter = matRad_world2isocentricCoords(vertcat(stf(:).isoCenter), ct) + this.multScen.isoShift(scenarioIx,:) + dij.doseGrid.isoCenterOffset;
 
                     this.ompMCgeo.isoCenter = shiftedIsoCenter;
                     tmpStf = stf;
@@ -225,7 +225,7 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
            
             tmpStf = stf;
              for k = 1:length(stf)
-                 shiftedIsoCenter = matRad_world2imageCoords(vertcat(stf(:).isoCenter),ct) + dij.doseGrid.isoCenterOffset;
+                 shiftedIsoCenter = matRad_world2isocentricCoords(vertcat(stf(:).isoCenter),ct) + dij.doseGrid.isoCenterOffset;
 
                  tmpStf(k).isoCenter = shiftedIsoCenter;
             end
