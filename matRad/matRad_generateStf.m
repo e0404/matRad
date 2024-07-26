@@ -68,7 +68,7 @@ end
 if isExternalTherapy
     if ~isfield(pln.propStf,'isoCenter')
         matRad_cfg.dispWarning('No isocenter specified! Using center-of-mass of all targets!');
-        pln.propStf.isoCenter = matRad_getIsoCenter(cst,ct);
+        pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct);
     end
 
     if numel(pln.propStf.gantryAngles) ~= numel(pln.propStf.couchAngles)
