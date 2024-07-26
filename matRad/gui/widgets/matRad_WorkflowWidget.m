@@ -243,11 +243,22 @@ classdef matRad_WorkflowWidget < matRad_Widget
         end
         
         function this = doUpdate(this,evt)
-            getFromWorkspace(this);
-            %updateInWorkspace(this);
+            %If the pln was changed, we do not do a consistency check (or
+            %at least we do not throw a warning when it is inconsistent)
+            if nargin < 2 || any(strcmp(evt.changedVariables,'pln'))
+                noCheck = true;
+            else
+                noCheck = false;
+            end
+            this.getFromWorkspace(noCheck);            
         end      
         
-        function this = getFromWorkspace(this)
+        function this = getFromWorkspace(this,noCheck)
+
+            if nargin < 2
+                noCheck = false;
+            end
+
             handles = this.handles;
             matRad_cfg = MatRad_Config.instance();
             % no data loaded, disable the buttons
@@ -277,27 +288,31 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     % check if stf exists
                     if evalin('base','exist(''stf'')') 
                         % check if dij, stf and pln match
-                       [allMatch, msg] = matRad_comparePlnStf(evalin('base','pln'),evalin('base','stf'));
-                        if allMatch
+                       [plnStfMatch, msg] = matRad_comparePlnStf(evalin('base','pln'),evalin('base','stf'));
+                        if plnStfMatch
                             % plan is ready for optimization
                             set(handles.txtInfo,'String','ready for dose calculation');
                             set(handles.btnOptimize ,'Enable','on');
-                        else 
+                        elseif ~noCheck 
                             this.showWarning(msg);
+                        else
+                            %Nothing
+                        end
+
+                        % check if dij exist
+                        if evalin('base','exist(''dij'')')
+                            [dijStfMatch, msg] = matRad_compareDijStf(evalin('base','dij'),evalin('base','stf'));
+                            if plnStfMatch && dijStfMatch
+                                set(handles.txtInfo,'String','ready for optimization');
+                                set(handles.btnOptimize ,'Enable','on');
+                            elseif ~noCheck 
+                                this.showWarning(msg);
+                            else
+                                %Nothing
+                            end
                         end
                         
                     end
-                    % check if dij exist
-                    if evalin('base','exist(''dij'')') && evalin('base','exist(''stf'')') 
-                        [allMatch, msg] = matRad_compareDijStf(evalin('base','stf'),evalin('base','dij'));
-                        if allMatch
-                            set(handles.txtInfo,'String','ready for optimization');
-                            set(handles.btnOptimize ,'Enable','on');
-                        else
-                            this.showWarning(msg);
-                        end
-                    end
-                    
 
                     % does resultGUI exist
                     if evalin('base','exist(''resultGUI'')')
@@ -712,7 +727,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
             end
             
             
-            if ~strcmp(pln.propOpt.bioOptimization,'none')
+            if isfield(pln,'bioParam') && ~strcmp(pln.bioParam.quantityOpt,'none')
                 
                 if isfield(resultGUI,'RBExD')
                     resultGUI.(['RBExD' Suffix]) = resultGUI.RBExD;

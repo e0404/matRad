@@ -241,8 +241,8 @@ classdef matRad_BiologicalModel
                                     this.bioOpt         = true;
                                     this.quantityVis    = 'RBExD';
                                 else
-                                    matRad_cfg.dispWarning(['matRad: Invalid biological Model: ' this.model  '; using "none" instead.']);
-                                    this.model = 'none';
+                                    matRad_cfg.dispWarning(['matRad: Invalid biological Model: ' this.model  '; using "HEL" instead.']);
+                                    this.model = 'HEL';
                                 end
                                 
                             otherwise
