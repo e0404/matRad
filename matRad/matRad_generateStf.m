@@ -330,7 +330,7 @@ if isExternalTherapy
         stf(i).numOfBixelsPerRay = ones(1,stf(i).numOfRays);
         
         % mm axes with isocenter at  (0,0,0)
-        mmCubeisoCenter = stf(i).isoCenter - [ct.x(1) ct.y(1) ct.z(1)] + [ct.resolution.x ct.resolution.y ct.resolution.z];
+        mmCubeisoCenter =  matRad_world2imageCoords(stf(i).isoCenter,ct);
         for j = stf(i).numOfRays:-1:1
             
             for ShiftScen = 1:pln.multScen.totNumShiftScen

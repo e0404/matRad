@@ -149,7 +149,7 @@ for i = 1:length(pln.propStf.gantryAngles)
     stf(i).ray.targetPoint_bev = [0 SAD 0];
     
     
-    shiftedIsoCenter = vertcat(stf(:).isoCenter) - [ct.x(1) ct.y(1) ct.z(1)] + [ct.resolution.x ct.resolution.y ct.resolution.z] ;
+    shiftedIsoCenter =  matRad_world2imageCoords(vertcat(stf(:).isoCenter),ct);
    
     stf(i).ray.rayPos = shiftedIsoCenter;
     stf(i).ray.targetPoint = [0 SAD 0] * rotMat_vectors_T;

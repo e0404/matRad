@@ -97,7 +97,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                 scenStf = stf;
                 % manipulate isocenter
                 for k = 1:numel(scenStf)
-                    scenStf(k).isoCenter = scenStf(k).isoCenter - [ct.x(1) ct.y(1) ct.z(1)] + [ct.resolution.x ct.resolution.y ct.resolution.z]  + this.multScen.isoShift(ixShiftScen,:); 
+                    scenStf(k).isoCenter = matRad_world2imageCoords(scenStf(k).isoCenter,ct)  + this.multScen.isoShift(ixShiftScen,:); 
                 end
 
                 if this.multScen.totNumShiftScen > 1
