@@ -29,6 +29,11 @@ function test_TopasMCdoseCalcBasic
 % it causes an error
 radModes = DoseEngines.matRad_TopasMCEngine.possibleRadiationModes;
 matRad_cfg = MatRad_Config.instance();
+
+if moxunit_util_platform_is_octave
+  confirm_recursive_rmdir(false,'local')
+end
+
 for i = 1:numel(radModes)
     if ~strcmp(radModes{i},'photons')
         load([radModes{i} '_testData.mat']);
@@ -71,6 +76,11 @@ function test_TopasMCdoseCalcMultRuns
 numOfRuns = 5;
 radModes = DoseEngines.matRad_TopasMCEngine.possibleRadiationModes;
 matRad_cfg = MatRad_Config.instance();
+
+if moxunit_util_platform_is_octave
+  confirm_recursive_rmdir(false,'local')
+end
+
 for i = 1:numel(radModes)
     if ~strcmp(radModes{i},'photons')
         load([radModes{i} '_testData.mat']);
@@ -110,6 +120,7 @@ for i = 1:numel(radModes)
             assertTrue(isfile([folderName filesep 'matRad_plan_field' num2str(j) '_run' num2str(k) '.txt']))
         end
     end
+
     rmdir(folderName,'s') %clean up
 end
 
