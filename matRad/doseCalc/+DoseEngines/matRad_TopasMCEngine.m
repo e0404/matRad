@@ -1510,11 +1510,11 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                         selectedData = [];
                         focusIndex = baseData.selectedFocus(baseData.energyIndex);
 
-                        scalarFields = ["NominalEnergy","EnergySpread","MeanEnergy"];                                                   
+                        scalarFields = {'NominalEnergy','EnergySpread','MeanEnergy'};                                                   
                         
                         for i = 1:numel(focusIndex)
                             for field = scalarFields
-                                baseData.monteCarloData(i).(field) = ones(1,max(focusIndex))*baseData.monteCarloData(i).(field);
+                                baseData.monteCarloData(i).(field{1}) = ones(1,max(focusIndex))*baseData.monteCarloData(i).(field{1});
                             end
                             selectedData = [selectedData, structfun(@(x) x(focusIndex(i)),baseData.monteCarloData(i),'UniformOutput',false)];
                         end
