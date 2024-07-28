@@ -31,7 +31,7 @@ radModes = DoseEngines.matRad_TopasMCEngine.possibleRadiationModes;
 matRad_cfg = MatRad_Config.instance();
 
 if moxunit_util_platform_is_octave
-  confirm_recursive_rmdir(false,'local')
+  confirm_recursive_rmdir(false,'local');
 end
 
 for i = 1:numel(radModes)
@@ -60,16 +60,16 @@ for i = 1:numel(radModes)
     folderName = [matRad_cfg.primaryUserFolder filesep 'TOPAS' filesep];
     folderName = [folderName stf(1).radiationMode,'_',stf(1).machine,'_',datestr(now, 'dd-mm-yy')];
     %check of outputfolder exists
-    assertTrue(isfolder(folderName))
+    assertTrue(isfolder(folderName));
     %check if file in folder existi
-    assertTrue(isfile([folderName filesep 'matRad_cube.dat']))
-    assertTrue(isfile([folderName filesep 'matRad_cube.txt']))
-    assertTrue(isfile([folderName filesep 'MCparam.mat']))
+    assertTrue(isfile([folderName filesep 'matRad_cube.dat']));
+    assertTrue(isfile([folderName filesep 'matRad_cube.txt']));
+    assertTrue(isfile([folderName filesep 'MCparam.mat']));
     for j = 1:pln.propStf.numOfBeams
-        assertTrue(isfile([folderName filesep 'beamSetup_matRad_plan_field' num2str(j) '.txt']))
-        assertTrue(isfile([folderName filesep 'matRad_plan_field' num2str(j) '_run1.txt']))
+        assertTrue(isfile([folderName filesep 'beamSetup_matRad_plan_field' num2str(j) '.txt']));
+        assertTrue(isfile([folderName filesep 'matRad_plan_field' num2str(j) '_run1.txt']));
     end
-    rmdir(folderName,'s') %clean up
+    rmdir(folderName,'s'); %clean up
 end
 
 function test_TopasMCdoseCalcMultRuns
@@ -78,7 +78,7 @@ radModes = DoseEngines.matRad_TopasMCEngine.possibleRadiationModes;
 matRad_cfg = MatRad_Config.instance();
 
 if moxunit_util_platform_is_octave
-  confirm_recursive_rmdir(false,'local')
+  confirm_recursive_rmdir(false,'local');
 end
 
 for i = 1:numel(radModes)
@@ -109,19 +109,19 @@ for i = 1:numel(radModes)
     folderName = [matRad_cfg.primaryUserFolder filesep 'TOPAS' filesep];
     folderName = [folderName stf(1).radiationMode,'_',stf(1).machine,'_',datestr(now, 'dd-mm-yy')];
     %check of outputfolder exists
-    assertTrue(isfolder(folderName))
+    assertTrue(isfolder(folderName));
     %check if file in folder existi
-    assertTrue(isfile([folderName filesep 'matRad_cube.dat']))
-    assertTrue(isfile([folderName filesep 'matRad_cube.txt']))
-    assertTrue(isfile([folderName filesep 'MCparam.mat']))
+    assertTrue(isfile([folderName filesep 'matRad_cube.dat']));
+    assertTrue(isfile([folderName filesep 'matRad_cube.txt']));
+    assertTrue(isfile([folderName filesep 'MCparam.mat']));
     for j = 1:pln.propStf.numOfBeams
-        assertTrue(isfile([folderName filesep 'beamSetup_matRad_plan_field' num2str(j) '.txt']))
+        assertTrue(isfile([folderName filesep 'beamSetup_matRad_plan_field' num2str(j) '.txt']));
         for k = 1:numOfRuns
-            assertTrue(isfile([folderName filesep 'matRad_plan_field' num2str(j) '_run' num2str(k) '.txt']))
+            assertTrue(isfile([folderName filesep 'matRad_plan_field' num2str(j) '_run' num2str(k) '.txt']));
         end
     end
 
-    rmdir(folderName,'s') %clean up
+    rmdir(folderName,'s'); %clean up
 end
 
 
