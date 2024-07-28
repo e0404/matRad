@@ -152,6 +152,10 @@ classdef (Abstract) matRad_DoseEngineBase < handle
 
             % iterate over all fieldnames and try to set the
             % corresponding properties inside the engine
+            if matRad_cfg.isOctave
+                c2sWarningState = warning('off','Octave:classdef-to-struct');                
+            end
+            
             for i = 1:length(fields)
                 try
                     field = fields{i};
@@ -176,6 +180,10 @@ classdef (Abstract) matRad_DoseEngineBase < handle
                         end
                     end
                 end
+            end
+            
+            if matRad_cfg.isOctave
+                warning(c2sWarningState.state,'Octave:classdef-to-struct');                
             end
         end
     
