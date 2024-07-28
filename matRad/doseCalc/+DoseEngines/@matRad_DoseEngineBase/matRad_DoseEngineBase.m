@@ -152,10 +152,14 @@ classdef (Abstract) matRad_DoseEngineBase < handle
 
             % iterate over all fieldnames and try to set the
             % corresponding properties inside the engine
+            if matRad_cfg.isOctave
+                c2sWarningState = warning('off','Octave:classdef-to-struct');                
+            end
+            
             for i = 1:length(fields)
                 try
                     field = fields{i};
-                    if isprop(this,field)
+                    if isprop(this,field) || (matRad_cfg.isOctave && any(strcmp(fieldnames(this),field)))
                         this.(field) = matRad_recursiveFieldAssignment(this.(field),plnStruct.(field),true,warningMsg);
                     else
                         matRad_cfg.dispWarning('Not able to assign property ''%s'' from pln.propDoseCalc to Dose Engine!',field);
@@ -176,6 +180,10 @@ classdef (Abstract) matRad_DoseEngineBase < handle
                         end
                     end
                 end
+            end
+            
+            if matRad_cfg.isOctave
+                warning(c2sWarningState.state,'Octave:classdef-to-struct');                
             end
         end
     
