@@ -625,6 +625,10 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     resultGUI = rmfield(resultGUI,'alpha');
                     resultGUI = rmfield(resultGUI,'beta');
                 end
+
+                if isfield(resultGUI,'LET')
+                    resultGUI = rmfield(resultGUI,'LET');
+                end
                 
                 % overwrite the "standard" fields
                 sNames = fieldnames(resultGUIreCalc);
@@ -684,15 +688,29 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     'Style','text',...
                     'Position',[20 Height - (0.35*Height) 350 60],...
                     'String','Please provide a decriptive name for your optimization result:','FontSize',10,'BackgroundColor',[0.5 0.5 0.5]);
+
+                try 
+                    pln = evalin('base','pln');
+                    numOfBeams = pln.propStf.numOfBeams;
+                    radMode = pln.radiationMode;
+                    fractions = pln.numOfFractions;
+
+                    saveString = sprintf('%s_%dbeams_%dfrac',radMode,numOfBeams,fractions);
+                catch
+                    saveString = datestr(now,'mmddyyHHMM');
+                end
                 
-                uicontrol('Parent',figDialog,...
+                hFocus = uicontrol('Parent',figDialog,...
                     'Style','edit',...
                     'Position',[30 60 350 60],...
-                    'String','Please enter name here...','FontSize',10,'BackgroundColor',[0.55 0.55 0.55]);
+                    'String',saveString,'FontSize',10,'BackgroundColor',[0.55 0.55 0.55],...
+                    'Callback', @(hpb,eventdata)SaveResultToGUI(this,hpb,eventdata));
                 
                 uicontrol('Parent', figDialog,'Style', 'pushbutton', 'String', 'Save','FontSize',10,...
                     'Position', [0.42*Width 0.1 * Height 70 30],...
                     'Callback', @(hpb,eventdata)SaveResultToGUI(this,hpb,eventdata));
+
+                uicontrol(hFocus);
             end
             
             uiwait(figDialog);
@@ -705,16 +723,11 @@ classdef matRad_WorkflowWidget < matRad_Widget
             ixHandle      = strcmp(get(AllFigHandles,'Name'),'Provide result name');
             uiEdit        = get(AllFigHandles(ixHandle),'Children');
             
-            if strcmp(get(uiEdit(2),'String'),'Please enter name here...')
-                
-                formatOut = 'mmddyyHHMM';
-                Suffix = ['_' datestr(now,formatOut)];
-            else
-                % delete special characters
-                Suffix = get(uiEdit(2),'String');
-                logIx = isstrprop(Suffix,'alphanum');
-                Suffix = ['_' Suffix(logIx)];
-            end
+            
+            % delete special characters
+            Suffix = get(uiEdit(2),'String');
+            logIx = isstrprop(Suffix,'alphanum');
+            Suffix = ['_' Suffix(logIx)];
             
             pln       = evalin('base','pln');
             resultGUI = evalin('base','resultGUI');
@@ -724,6 +737,10 @@ classdef matRad_WorkflowWidget < matRad_Widget
             end
             if isfield(resultGUI,'w')
                 resultGUI.(['w' Suffix])             = resultGUI.w;
+            end
+
+            if isfield(resultGUI,'LET')
+                resultGUI.(['LET' Suffix])  = resultGUI.LET;
             end
             
             

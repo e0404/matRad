@@ -49,7 +49,6 @@ classdef matRad_3DWidget < matRad_ViewingWidget
 
             this = this@matRad_ViewingWidget(handleParent);
 
-            this.lockUpdate = true;
             this.update();
 
         end
@@ -62,14 +61,15 @@ classdef matRad_3DWidget < matRad_ViewingWidget
     methods(Access = protected)
         function this = createLayout(this)
             h88 = this.widgetHandle;
-            this.createHandles();
+            createLayout@matRad_ViewingWidget(this);
+            %this.createHandles();
         end
 
         function this=doUpdate(this,~)
-            if this.lockUpdate
-                if ~isempty(this.viewingWidgetHandle) && ishandle(this.viewingWidgetHandle)
+            if ~this.lockUpdate
+                if ~isempty(this.viewingWidgetHandle)
                     matRad_cfg = MatRad_Config.instance();
-                    this.lockUpdate=false;
+
                     p = octaveCompat_getProps(this.viewingWidgetHandle);
 
                     % copy all the properties of the viewingwidget except for the widgethandle
@@ -82,7 +82,6 @@ classdef matRad_3DWidget < matRad_ViewingWidget
                             end
                         end
                     end
-                    this.lockUpdate=true;
                 end
                 this.plot3D();
             end
@@ -118,7 +117,7 @@ classdef matRad_3DWidget < matRad_ViewingWidget
                 return
             end
 
-            axesFig3D=axes(this.widgetHandle);
+            axesFig3D=this.handles.axesFig;
             view(axesFig3D,3);
             oldView = get(axesFig3D,'View');
 
@@ -138,7 +137,7 @@ classdef matRad_3DWidget < matRad_ViewingWidget
             %% Plot 3D structures
             hold(axesFig3D,'on');
             if this.plotContour && exist('cst','var') && exist('ct','var') %get(handles.radiobtnContour,'Value') && handles.State>0
-                voiPatches = matRad_plotVois3D(axesFig3D,ct,cst,this.VOIPlotFlag,colorcube);
+                voiPatches = matRad_plotVois3D(axesFig3D,ct,cst,this.VOIPlotFlag);
             end
 
             %% plot the CT slice

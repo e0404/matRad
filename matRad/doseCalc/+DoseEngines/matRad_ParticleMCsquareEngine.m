@@ -30,7 +30,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
         forceBDL = [];      %Specify an existing BDL file to load
 
         %Other Dose Calculation Properties
-        calcLET = false;        
+        calcLET = true;
     end
     
     properties (SetAccess = protected, GetAccess = public)
