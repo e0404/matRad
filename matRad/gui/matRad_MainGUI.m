@@ -1,5 +1,5 @@
 classdef matRad_MainGUI < handle
-% matRad_MainGUI   Graphical User Interface configuration class   
+% matRad_MainGUI   Graphical User Interface configuration class
 % This Class is used to create the main GUI interface where all the widgets
 % are called and created.
 %
@@ -18,9 +18,9 @@ classdef matRad_MainGUI < handle
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties
         guiHandle
-        lastStoragePath = []        
+        lastStoragePath = []
     end
-    
+
     properties (Access = private)
         LogoWidget
         WorkflowWidget
@@ -35,9 +35,9 @@ classdef matRad_MainGUI < handle
         eventListeners
         GammaWidget
     end
-    
-   
-    
+
+
+
     methods(Access = protected)
         function this = createMenuBar(this)
            h1 = this.guiHandle;
@@ -45,11 +45,11 @@ classdef matRad_MainGUI < handle
            loadIcons = load(fullfile(folder,'matRad_iconsGUI.mat'),'icons');
 
            icons = loadIcons.icons;
-            
+
             h60 = uitoolbar(...
                 'Parent',h1,...
                 'Tag','uitoolbar1');
-            
+
             h61 = uipushtool(...
                 'Parent',h60,...
                 'Children',[],...
@@ -60,7 +60,7 @@ classdef matRad_MainGUI < handle
                 'ClickedCallback',@(hObject,eventdata) toolbarLoad_ClickedCallback(this,hObject,eventdata),...
                 'Separator','on',...
                 'TooltipString','Open File' );
-            
+
             h62 = uipushtool(...
                 'Parent',h60,...
                 'BusyAction','cancel',...
@@ -70,15 +70,15 @@ classdef matRad_MainGUI < handle
                 'ClickedCallback',@(hObject,eventdata) toolbarSave_ClickedCallback(this,hObject,eventdata),...
                 'Separator','on',...
                 'TooltipString','Save Figure');
-            
-            
+
+
             h63 = uipushtool(...
                 'Parent',h60,...
                 'Tag','uipushtool_screenshot',...
                 'CData',icons{3},...
                 'ClickedCallback',@(hObject,eventdata)uipushtool_screenshot_ClickedCallback(this, hObject, eventdata),...
                 'TooltipString','Take a screenshot of the current dose or profile plot' );
-            
+
             h64 = uitoggletool(...
                 'Parent',h60,...
                 'Tag','toolbarZoomIn',...
@@ -86,7 +86,7 @@ classdef matRad_MainGUI < handle
                 'ClickedCallback',@(hObject, eventdata)toolbarZoomIn_ClickedCallback(this, hObject, eventdata),...
                 'Separator','on',...
                 'TooltipString','Zoom In');
-            
+
             h65 = uitoggletool(...
                 'Parent',h60,...
                 'Children',[],...
@@ -95,7 +95,7 @@ classdef matRad_MainGUI < handle
                 'ClickedCallback',@(hObject, eventdata)toolbarZoomOut_ClickedCallback(this, hObject, eventdata),...
                 'Separator','on',...
                 'TooltipString','Zoom Out');
-            
+
             h66 = uitoggletool(...
                 'Parent',h60,...
                 'Tag','toolbarPan',...
@@ -103,7 +103,7 @@ classdef matRad_MainGUI < handle
                 'ClickedCallback',@(hObject, eventdata)toolbarPan_ClickedCallback(this, hObject, eventdata),...
                 'Separator','on',...
                 'TooltipString','Pan' );
-            
+
             h67 = uitoggletool(...
                 'Parent',h60,...
                 'Tag','toolbarCursor',...
@@ -111,7 +111,7 @@ classdef matRad_MainGUI < handle
                 'ClickedCallback',@(hObject, eventdata)toolbarCursor_ClickedCallback(this, hObject, eventdata),...
                 'Separator','on',...
                 'TooltipString','Data Cursor' );
-            
+
             h68 = uitoggletool(...
                 'Parent',h60,...
                 'Tag','toolbarLegend',...
@@ -119,7 +119,7 @@ classdef matRad_MainGUI < handle
                 'ClickedCallback',@(hObject, eventdata)toolbarLegend_ClickedCallback(this, hObject, eventdata),...
                 'Separator','on',...
                 'TooltipString','Insert Legend');
-            
+
             h69 = uitoggletool(...
                 'Parent',h60,...
                 'Tag','uitoggletool8',...
@@ -134,110 +134,128 @@ classdef matRad_MainGUI < handle
 %                 'CData',icons{10},...
 %                 'ClickedCallback',@(hObject,eventdata)gammaIndex_ClickedCallback(this, hObject, eventdata),...
 %                 'TooltipString','Calculate Gamma Index' );
-            
+
         end
     end
-    
+
     methods
         function obj = matRad_MainGUI(varargin)
-            %Panel for Main Widget 
-            
+            %Panel for Main Widget
+
             matRad_cfg = MatRad_Config.instance();
-           
-            obj.guiHandle = figure(...
+
+            figArgs = {...
                 'Units','normalized',...
                 'Position',[0.005 0.04 0.99 0.9],... %approximate fullscreen position
                 'Visible','on',...
-                'Color',matRad_cfg.gui.backgroundColor,...  
+                'Color',matRad_cfg.gui.backgroundColor,...
                 'IntegerHandle','off',...
                 'Colormap',[0 0 0.5625;0 0 0.625;0 0 0.6875;0 0 0.75;0 0 0.8125;0 0 0.875;0 0 0.9375;0 0 1;0 0.0625 1;0 0.125 1;0 0.1875 1;0 0.25 1;0 0.3125 1;0 0.375 1;0 0.4375 1;0 0.5 1;0 0.5625 1;0 0.625 1;0 0.6875 1;0 0.75 1;0 0.8125 1;0 0.875 1;0 0.9375 1;0 1 1;0.0625 1 1;0.125 1 0.9375;0.1875 1 0.875;0.25 1 0.8125;0.3125 1 0.75;0.375 1 0.6875;0.4375 1 0.625;0.5 1 0.5625;0.5625 1 0.5;0.625 1 0.4375;0.6875 1 0.375;0.75 1 0.3125;0.8125 1 0.25;0.875 1 0.1875;0.9375 1 0.125;1 1 0.0625;1 1 0;1 0.9375 0;1 0.875 0;1 0.8125 0;1 0.75 0;1 0.6875 0;1 0.625 0;1 0.5625 0;1 0.5 0;1 0.4375 0;1 0.375 0;1 0.3125 0;1 0.25 0;1 0.1875 0;1 0.125 0;1 0.0625 0;1 0 0;0.9375 0 0;0.875 0 0;0.8125 0 0;0.75 0 0;0.6875 0 0;0.625 0 0;0.5625 0 0],...
                 'MenuBar','none',...
                 'Name','matRad (NOT FOR CLINICAL USE!)',...
                 'HandleVisibility','callback',...
                 'Tag','figure1',...
-                'AutoResizeChildren','Off',...
-                'CloseRequestFcn',@(src,hEvent) figure1_CloseRequestFcn(obj,src,hEvent));
+                'CloseRequestFcn',@(src,hEvent) figure1_CloseRequestFcn(obj,src,hEvent)};
+
+            if ~matRad_cfg.isOctave
+                figArgs(end+1:end+2) = {'AutoResizeChildren','Off'};
+            end
+
+            obj.guiHandle = figure(figArgs{:});
 
             %WindowState not available in all versions
-            if isprop(obj.guiHandle,'WindowState')
+            if matRad_ispropCompat(obj.guiHandle,'WindowState')
                 set(obj.guiHandle,'WindowState','maximized');
             end
 
-            commonPanelProperties = {'Parent',obj.guiHandle,...
-                'BackgroundColor',matRad_cfg.gui.backgroundColor,...
-                'Clipping','off',...
-                'FontName',matRad_cfg.gui.fontName,...
-                'FontSize',matRad_cfg.gui.fontSize,...
-                'FontWeight',matRad_cfg.gui.fontWeight,...
-                'AutoResizeChildren','Off',...
-                'Units','normalized', ...
-                'HighlightColor',matRad_cfg.gui.elementColor};
-            
-                
+            if matRad_cfg.isOctave
+                commonPanelProperties = {'Parent',obj.guiHandle,...
+                    'BackgroundColor',matRad_cfg.gui.backgroundColor,...
+                    'Clipping','off',...
+                    'FontName',matRad_cfg.gui.fontName,...
+                    'FontSize',matRad_cfg.gui.fontSize,...
+                    'FontWeight',matRad_cfg.gui.fontWeight,...
+                    'Units','normalized', ...
+                    'HighlightColor',matRad_cfg.gui.elementColor};
+
+            else
+                commonPanelProperties = {'Parent',obj.guiHandle,...
+                    'BackgroundColor',matRad_cfg.gui.backgroundColor,...
+                    'Clipping','off',...
+                    'FontName',matRad_cfg.gui.fontName,...
+                    'FontSize',matRad_cfg.gui.fontSize,...
+                    'FontWeight',matRad_cfg.gui.fontWeight,...
+                    'AutoResizeChildren','Off',...
+                    'Units','normalized', ...
+                    'HighlightColor',matRad_cfg.gui.elementColor};
+            end
+
+
+
             pWorkflow = uipanel(commonPanelProperties{:},...
                 'Title','Workflow',...
                 'Tag','uipanel4',...
                 'Position',[0.005 0.8 0.425 0.2]);
-            
-            pPlan = uipanel(commonPanelProperties{:},...                
-                'Title','Plan',...                
+
+            pPlan = uipanel(commonPanelProperties{:},...
+                'Title','Plan',...
                 'Tag','uipanel1',...
                 'Position',[0.005 0.55 0.425 0.25]);
-            
+
             pOptimization = uipanel(commonPanelProperties{:},...
                 'Title',strtrim(strjoin({  'Objectives & constraints'; '                        '; '                        ' })),...
                 'Tag','uipanel3',...
                 'Position',[0.005 0.21 0.425 0.34]);
-            
+
             pVisualization = uipanel(commonPanelProperties{:},...
                 'Title',strtrim(strjoin({  'Visualization'; '             ' })),...
                 'Tag','uipanel2',...
                 'Position',[0.005 0.005 0.425 0.205]);
-            
+
             pLogo = uipanel(commonPanelProperties{:},...
                 'BackgroundColor',matRad_cfg.gui.backgroundColor,...
                 'Tag','uipanel13',...
                 'Position',[0.44 0.89 0.55 0.1],...
                 'HighLightColor',[0.501960784313725 0.501960784313725 0.501960784313725],...
                 'BorderType','none');
-            
+
             pViewing = uipanel(commonPanelProperties{:},...
                 'Title','Slice Viewer',...
                 'Tag','uipanel11',...
                 'Position',[0.435 0.005 0.455 0.885]);
-            
+
             pViewerOptions = uipanel(commonPanelProperties{:},...
                 'Title','Viewer Options',...
                 'Tag','uipanel_colormapOptions',...
                 'Position',[0.895 0.445 0.1 0.445]);
-            
+
             pStructureVisibility = uipanel(commonPanelProperties{:},...
                 'Title','Structure Visibilty',...
                 'Tag','uipanel10',...
                 'Position',[0.895 0.11 0.1 0.33]);
-            
+
             pInfo = uipanel(commonPanelProperties{:},...
                 'Title','Info',...
                 'Tag','uipanel12',...
                 'Position',[0.895 0.005 0.1 0.1]);
-           
-            % Initialize Widgets            
+
+            % Initialize Widgets
             obj.WorkflowWidget = matRad_WorkflowWidget(pWorkflow);
-            obj.PlanWidget = matRad_PlanWidget(pPlan);            
+            obj.PlanWidget = matRad_PlanWidget(pPlan);
             obj.OptimizationWidget = matRad_OptimizationWidget(pOptimization);
             obj.ViewingWidget = matRad_ViewingWidget(pViewing);
-            obj.ViewingWidget.scrollHandle =  obj.guiHandle;            
-            obj.VisualizationWidget = matRad_VisualizationWidget(pVisualization);  
+            obj.ViewingWidget.scrollHandle =  obj.guiHandle;
+            obj.VisualizationWidget = matRad_VisualizationWidget(pVisualization);
             obj.VisualizationWidget.viewingWidgetHandle = obj.ViewingWidget;
             obj.ViewerOptionsWidget = matRad_ViewerOptionsWidget(pViewerOptions);
             obj.ViewerOptionsWidget.viewingWidgetHandle = obj.ViewingWidget;
-            obj.StructureVisibilityWidget = matRad_StructureVisibilityWidget(pStructureVisibility);           
+            obj.StructureVisibilityWidget = matRad_StructureVisibilityWidget(pStructureVisibility);
             obj.InfoWidget = matRad_InfoWidget(pInfo); % does not need a listener
             obj.LogoWidget = matRad_LogoWidget(pLogo); % does not need a listener
-            
+
             %Initialize event Listeners
             switch matRad_cfg.env
-                case 'MATLAB' 
+                case 'MATLAB'
                     %Event listeners triggered on events
                     obj.eventListeners.workflow = addlistener(obj.WorkflowWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,hEvent));
                     obj.eventListeners.plan = addlistener(obj.PlanWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,hEvent));
@@ -247,14 +265,14 @@ classdef matRad_MainGUI < handle
                     obj.eventListeners.visualization = addlistener(obj.VisualizationWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,hEvent));
                     obj.eventListeners.viewerOptions = addlistener(obj.ViewerOptionsWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,hEvent));
                     obj.eventListeners.structureVisibility = addlistener(obj.StructureVisibilityWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,hEvent));
-                    
+
                     % only available in MATLAB
                     obj.ViewingWidget.dcmHandle = datacursormode(obj.guiHandle);
                     obj.ViewingWidget.panHandle = pan(obj.guiHandle);
                     obj.ViewingWidget.zoomHandle = zoom(obj.guiHandle);
-                    
+
                 case 'OCTAVE'
-                    % addlistener is not yet available in octave 
+                    % addlistener is not yet available in octave
                     obj.eventListeners.workflow = matRad_addListenerOctave(obj.WorkflowWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,hEvent));
                     obj.eventListeners.plan = matRad_addListenerOctave(obj.PlanWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,hEvent));
                     obj.eventListeners.optimization = matRad_addListenerOctave(obj.OptimizationWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,hEvent));
@@ -263,16 +281,16 @@ classdef matRad_MainGUI < handle
                     obj.eventListeners.visualization = matRad_addListenerOctave(obj.VisualizationWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,hEvent));
                     obj.eventListeners.viewerOptions = matRad_addListenerOctave(obj.ViewerOptionsWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,hEvent));
                     obj.eventListeners.structureVisibility = matRad_addListenerOctave(obj.StructureVisibilityWidget,'workspaceChanged',@(src,hEvent) updateWidgets(obj,hEvent));
-                    
+
             end
-            
+
             obj.createMenuBar();
-            
+
             % update button states
             obj.updateButtons();
         end
-        
-        function update(this,evt)           
+
+        function update(this,evt)
             if nargin < 2
                 this.updateWidgets();
                 this.updateButtons();
@@ -280,14 +298,14 @@ classdef matRad_MainGUI < handle
                 this.updateWidgets(evt);
                 this.updateButtons();
             end
-        end          
+        end
 
 
         function updateWidgets(this,evt)
            matRad_cfg = MatRad_Config.instance();
 
            args = {};
-           if matRad_cfg.logLevel > 3 
+           if matRad_cfg.logLevel > 3
                if nargin < 2 || ~isa(evt,'matRad_WorkspaceChangedEvent')
                    changed = {};
                else
@@ -295,15 +313,15 @@ classdef matRad_MainGUI < handle
                    args = {evt};
                end
 
-               matRad_cfg.dispDebug('GUI Workspace Changed at %s. ',datestr(now,'HH:MM:SS.FFF')); 
+               matRad_cfg.dispDebug('GUI Workspace Changed at %s. ',datestr(now,'HH:MM:SS.FFF'));
                if ~isempty(changed)
                    matRad_cfg.dispDebug('Specific Variables: %s.\n',strjoin(changed,'|'));
                else
                    matRad_cfg.dispDebug('\n');
                end
            end
-           
-          
+
+
            %%Debug
            this.PlanWidget.update(args{:});
            this.WorkflowWidget.update(args{:});
@@ -313,22 +331,22 @@ classdef matRad_MainGUI < handle
            this.StructureVisibilityWidget.update(args{:});
            %this.ViewerOptionsWidget.update();
            %this.VisualizationWidget.update();
-           
+
         end
-        
+
         function updateButtons(this)
            %disp(['Plot Changed ' datestr(now,'HH:MM:SS.FFF')]); %Debug
            % update the visualization and viewer options widgets
-           
+
            matRad_cfg = MatRad_Config.instance();
 
            if strcmp(matRad_cfg.env,'OCTAVE')
               return
            end
-         
+
            set(findobj(this.guiHandle,'tag','toolbarPan'),'State',get(this.ViewingWidget.panHandle,'Enable'));
            set(findobj(this.guiHandle,'tag','toolbarCursor'),'State',get(this.ViewingWidget.dcmHandle,'Enable'));
-             
+
            if this.ViewingWidget.plotColorBar  && ~isempty(this.ViewingWidget.cBarHandle) && isvalid(this.ViewingWidget.cBarHandle)
                set(findobj(this.guiHandle,'tag','uitoggletool8'),'State','on')
            else
@@ -351,12 +369,12 @@ classdef matRad_MainGUI < handle
                set(findobj(this.guiHandle,'tag','toolbarZoomOut'),'State','off');
                set(findobj(this.guiHandle,'tag','toolbarZoomIn'),'State','off');
            end
-           
+
            this.ViewerOptionsWidget.update();
            this.VisualizationWidget.update();
-           
+
         end
-        
+
         %% Callbacks
         % toolbar load button
         function toolbarLoad_ClickedCallback(this,hObject, eventdata)
@@ -366,10 +384,10 @@ classdef matRad_MainGUI < handle
         function toolbarSave_ClickedCallback(this,hObject, eventdata)
             %handles=this.handles;
 
-            
+
             answer = questdlg('Do you wish to save the full workspace or only matRad variables?','Save','Full workspace', 'matRad variables', 'matRad variables');
-            
-            
+
+
             switch answer
                 case 'Full workspace'
                     uisave;
@@ -381,7 +399,7 @@ classdef matRad_MainGUI < handle
                         vExists(i) = evalin('base',['exist(''' var ''',''var'')']);
                         if vExists(i)
                             eval([var '=evalin(''base'',''' var ''');'])
-                        end 
+                        end
                     end
                     uisave(variables(vExists));
             end
@@ -392,27 +410,29 @@ classdef matRad_MainGUI < handle
             % hObject    handle to uipushtool_screenshot (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
-            
-            
+
+
             tmpFig = figure('position',[100 100 700 600],'Visible','off','name','Current View');
             cBarHandle = this.ViewingWidget.cBarHandle; %findobj(handles.figure1,'Type','colorbar');
             if ~isempty(cBarHandle)
-                new_handle = copyobj([this.ViewingWidget.handles.axesFig cBarHandle],tmpFig);                
+                new_handle = copyobj([this.ViewingWidget.handles.axesFig cBarHandle],tmpFig);
             else
-                new_handle = copyobj(this.ViewingWidget.handles.axesFig,tmpFig);                
+                new_handle = copyobj(this.ViewingWidget.handles.axesFig,tmpFig);
             end
-            
+
             oldPos = get(this.ViewingWidget.handles.axesFig,'Position');
             set(new_handle(1),'units','normalized', 'Position',oldPos);
-            
-            if exist(this.lastStoragePath,'dir') ~= 7 
+
+            if (ischar(this.lastStoragePath) || isstring(this.lastStoragePath)) && isfolder(this.lastStoragePath)
                 this.lastStoragePath = [];
             end
-            
+
             [filename, pathname] = uiputfile({'*.jpg;*.tif;*.png;*.gif','All Image Files'; '*.fig','MATLAB figure file'},'Save current view',[this.lastStoragePath 'screenshot.png']);
             
-            this.lastStoragePath = pathname;
-            
+            if pathname ~= 0
+                this.lastStoragePath = pathname;
+            end
+
             if ~isequal(filename,0) && ~isequal(pathname,0)
                 set(gcf, 'pointer', 'watch');
                 saveas(tmpFig,fullfile(pathname,filename));
@@ -423,21 +443,21 @@ classdef matRad_MainGUI < handle
                 uiwait(msgbox('Aborted saving, showing figure instead!'));
                 set(tmpFig,'Visible','on');
             end
-            
+
         end
-       
+
         % Toggle color bar callback
         function uitoggletool8_ClickedCallback(this,hObject, eventdata)
             % hObject    handle to uitoggletool8 (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
-            
+
             this.ViewingWidget.plotColorBar = strcmp(get(hObject,'State'),'on');
 
         end
         %Toggle Legend Callback
         function toolbarLegend_ClickedCallback(this,hObject, eventdata)
-           
+
             this.ViewingWidget.plotLegend = strcmp(get(hObject,'State'),'on');
         end
         %Toggle Zoom in Callback
@@ -459,14 +479,14 @@ classdef matRad_MainGUI < handle
         %Toggle cursor Callback
         function toolbarCursor_ClickedCallback(this,hObject, eventdata)
            set(this.ViewingWidget.dcmHandle,'Enable',get(hObject,'State'));
-        end        
+        end
 
         %Toggle cursor Callback
         function gammaIndex_ClickedCallback(this,hObject, eventdata)
            % this.GammaWidget = matRad_GammaWidget();
-        end     
+        end
 
-        
+
         % button: close
         function figure1_CloseRequestFcn(this,hObject, ~)
             matRad_cfg = MatRad_Config.instance();
@@ -483,9 +503,9 @@ classdef matRad_MainGUI < handle
                     return
             end
         end
-        
+
     end
-    
-    
+
+
 end
 

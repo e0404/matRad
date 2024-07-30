@@ -70,14 +70,16 @@ for s = 1:numVois
         matRad_progress(s,numVois);
     end
 
-    if any(ishandle(figureWait))
+    if ~matRad_cfg.disableGUI && any(ishandle(figureWait))
         waitbar(s/numVois,figureWait); % Update the waitbar
     end    
 end    
 
 try
-    delete(figureWait);
-    pause(0.1); 
+    if ~matRad_cfg.disableGUI
+        delete(figureWait);
+        pause(0.1); 
+    end
 catch
     %Nothing to do
 end

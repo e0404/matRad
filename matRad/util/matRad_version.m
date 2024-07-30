@@ -1,12 +1,14 @@
-function [versionString,matRadVer] = matRad_version()
+function [versionString,matRadVer] = matRad_version(matRadRoot)
 % matRad function to get the current matRad version 
 % (and git information when used from within a repository
 % 
 % call
 %   [versionString,matRadVer] = matRad_version()
+%   [versionString,matRadVer] = matRad_version(matRadRoot)
 %
 % input
-%   
+%   matRadRoot:     Optional Root Directory. This is for call in matRad
+%                   initialization when MatRad_Config is not yet available
 % output
 %   versionString:  Readable string build from version information
 %   matRadVer:      struct with version information
@@ -38,8 +40,14 @@ tagged = false;
 %Retreive branch / commit information from current git repo if applicable
 try
     %read HEAD file to point to current ref / commit
-    repoGitDir = [fileparts(mfilename('fullpath')) filesep '.git'];   
-    headText = fileread([repoGitDir filesep 'HEAD']);
+    if nargin == 1
+        repoDir = matRadRoot;
+    else
+        matRad_cfg = MatRad_Config.instance();
+        repoDir = matRad_cfg.matRadRoot;
+    end
+    repoGitDir = fullfile(repoDir,'.git');   
+    headText = fileread(fullfile(repoGitDir,'HEAD'));
 
     %Test if detached head (HEAD contains 40 hex SHA1 commit ID)    
     i = regexp(headText,'[a-f0-9]{40}', 'once');
@@ -50,7 +58,8 @@ try
         headParse = textscan(headText,'%s');    
         refHead = headParse{1}{2};
         refParse = strsplit(refHead,'/');
-        matRadVer.branch = refParse{end};
+        refType = refParse{2};
+        matRadVer.branch = strjoin(refParse(3:end),'/');
 
         %Read ID from ref path
         refID = fileread([repoGitDir filesep strjoin(refParse,filesep)]);
@@ -69,7 +78,6 @@ try
             end
         end
         %}
-        
     end
     
 catch
@@ -82,11 +90,11 @@ end
 %Git path first
 gitString = '';
 if ~isempty(matRadVer.branch) && ~isempty(matRadVer.commitID) && ~tagged
-    gitString = sprintf(' (%s-%s)',matRadVer.branch,matRadVer.commitID(1:8));  
+    gitString = sprintf('(%s-%s)',matRadVer.branch,matRadVer.commitID(1:8));  
 end
 
 %Full string
-versionString = sprintf('v%d.%d.%d "%s"%s',matRadVer.major,matRadVer.minor,matRadVer.patch,matRadVer.name,gitString);
+versionString = sprintf('"%s" v%d.%d.%d%s',matRadVer.name,matRadVer.major,matRadVer.minor,matRadVer.patch,gitString);
 
 %This checks if no explicit assigment is done in which case the version is printed.
 if nargout == 0

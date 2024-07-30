@@ -226,7 +226,7 @@ classdef matRad_Widget <  handle
             
             for i = 1:numel(all_h)
                 this_h = all_h(i);
-                if isprop(this_h, 'Tag')
+                if matRad_ispropCompat(this_h, 'Tag')
                     tag = get(this_h, 'Tag');
                     if ~isempty(tag) && isvarname(tag) % can it be used as a fieldname?
                         

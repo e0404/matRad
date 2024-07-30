@@ -139,10 +139,10 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             
             % set callback functions.
             
-            funcs.objective         = @(x) optiProb.matRad_objectiveFunction(x,dij,cst);
-            funcs.constraints       = @(x) optiProb.matRad_constraintFunctions(x,dij,cst);
-            funcs.gradient          = @(x) optiProb.matRad_objectiveGradient(x,dij,cst);
-            funcs.jacobian          = @(x) optiProb.matRad_constraintJacobian(x,dij,cst);
+            funcs.objective         = @(x) double(optiProb.matRad_objectiveFunction(x,dij,cst));
+            funcs.constraints       = @(x) double(optiProb.matRad_constraintFunctions(x,dij,cst));
+            funcs.gradient          = @(x) double(optiProb.matRad_objectiveGradient(x,dij,cst));
+            funcs.jacobian          = @(x) double(optiProb.matRad_constraintJacobian(x,dij,cst));
             funcs.jacobianstructure = @( ) optiProb.matRad_getJacobianStructure(w0,dij,cst);
             funcs.iterfunc          = @(iter,objective,paramter) obj.iterFunc(iter,objective,paramter,ipoptStruct.ipopt.max_iter);
             
@@ -177,7 +177,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             
             % Run IPOPT.
             try
-                [obj.wResult, obj.resultInfo] = ipopt(w0,funcs,ipoptStruct);
+                [obj.wResult, obj.resultInfo] = ipopt(double(w0),funcs,ipoptStruct);
             catch ME
                 errorString = [ME.message '\nThis error was thrown by the MEX-interface of IPOPT.\nMex interfaces can raise compatability issues which may be resolved by compiling them by hand directly on your particular system.'];
                 matRad_cfg.dispError(errorString);

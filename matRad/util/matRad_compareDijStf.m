@@ -1,4 +1,4 @@
-function [allMatch, msg] = matRad_compareDijStf(stf,dij)
+function [allMatch, msg] = matRad_compareDijStf(dij,stf)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % call
@@ -7,7 +7,6 @@ function [allMatch, msg] = matRad_compareDijStf(stf,dij)
 % input
 %   dij:                        matRad dij struct
 %   stf:                        matRad steering information struct
-%   pln:                        matRad plan meta information struct
 %
 % output
 %

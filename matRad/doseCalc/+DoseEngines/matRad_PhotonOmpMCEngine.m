@@ -25,12 +25,12 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
     properties (SetAccess = public, GetAccess = public)
         visBool = false; %binary switch to en/disable visualitzation
         useCornersSCD = true; %false -> use ISO corners
-        
+
          % This factor calibrates to 1 Gy in a %(5x5)cm^2 open field (1 bixel) at
          % 5cm depth for SSD = 900 which corresponds to the calibration for the
          % analytical base data.
         absCalibrationFactor = 3.49056 * 1e12; %Approximate!
-        
+
         omcFolder;
     end
 
@@ -117,13 +117,13 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             dij = this.initDoseCalc(ct,cst,stf);
 
             %ompMC for matRad returns dose/history * nHistories.
-               
+
             bixelWidth = unique([stf.bixelWidth]);
 
             if numel(bixelWidth) > 1
                 matRad_cfg.dispWarning('Varying bixel width in stf, calibartion might be wrong!')
                 bixelWidth = mean(bixelWidth);
-            end           
+            end
 
             %Now we have to calibrate to the the beamlet width.
             calibrationFactor = this.absCalibrationFactor * (bixelWidth/50)^2;
@@ -137,12 +137,12 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
                 if this.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
                     scenCount = scenCount + 1;
-                    
+
                     % manipulate isocenter
                     shiftedIsoCenter = vertcat(stf(:).isoCenter) + this.multScen.isoShift(scenarioIx,:) + dij.doseGrid.isoCenterOffset;
                     this.ompMCgeo.isoCenter = shiftedIsoCenter;
                     tmpStf = stf;
-                    
+
                     for k = 1:length(tmpStf)
                         tmpStf(k).isoCenter = shiftedIsoCenter;
                     end
@@ -190,13 +190,13 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             end
 
             %Finalize dose calculation
-            dij = this.finalizeDose(dij);   
+            dij = this.finalizeDose(dij);
         end
-    
+
         function dij = initDoseCalc(this,ct,cst,stf)
 
             dij = initDoseCalc@DoseEngines.matRad_MonteCarloEngineAbstract(this,ct,cst,stf);
-            
+
             matRad_cfg = MatRad_Config.instance();
 
             % set up arrays for book keeping
@@ -211,7 +211,7 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
             % conversion from HU to densities & materials
             this.materialConversion(dij.ctGrid,dij.doseGrid,ct);
-            
+
             % Create the Geometry
             this.getOmpMCgeometry(dij.doseGrid);
 
@@ -223,51 +223,51 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
     methods (Access = private)
         function setOmpMCoptions(obj)
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
-            
+
             %display options
             obj.ompMCoptions.verbose = matRad_cfg.logLevel - 1;
-            
+
             % start MC control
             obj.ompMCoptions.nHistories = obj.numHistoriesPerBeamlet;
             obj.ompMCoptions.nSplit = 20;
             obj.ompMCoptions.nBatches = 10;
             obj.ompMCoptions.randomSeeds = [97 33];
-            
+
             %start source definition
             obj.ompMCoptions.spectrumFile       = [obj.omcFolder filesep 'spectra' filesep 'mohan6.spectrum'];
             obj.ompMCoptions.monoEnergy         = 0.1;
             obj.ompMCoptions.charge             = 0;
             obj.ompMCoptions.sourceGeometry     = 'gaussian';
             obj.ompMCoptions.sourceGaussianWidth = obj.getSourceWidthFromPenumbra./obj.scale;
-            
+
             % start MC transport
             obj.ompMCoptions.dataFolder   = [obj.omcFolder filesep 'data' filesep];
             obj.ompMCoptions.pegsFile     = [obj.omcFolder filesep 'pegs4' filesep '700icru.pegs4dat'];
             obj.ompMCoptions.pgs4formFile = [obj.omcFolder filesep 'pegs4' filesep 'pgs4form.dat'];
-            
+
             obj.ompMCoptions.global_ecut = 0.7;
             obj.ompMCoptions.global_pcut = 0.010;
-            
+
             % Relative Threshold for dose
             obj.ompMCoptions.relDoseThreshold = 1 - obj.relativeDosimetricCutOff;
-            
+
             % Output folders
-            obj.ompMCoptions.outputFolder = [obj.omcFolder filesep 'output' filesep];            
+            obj.ompMCoptions.outputFolder = [obj.omcFolder filesep 'output' filesep];
         end
 
         function sigmaGauss = getSourceWidthFromPenumbra(obj)
             % gaussian filter to model penumbra from (measured) machine output / see diploma thesis siggel 4.1.2
             matRad_cfg = MatRad_Config.instance();
-            
+
             if isfield(obj.machine.data,'penumbraFWHMatIso')
                 penumbraFWHM = obj.machine.data.penumbraFWHMatIso;
             else
                 penumbraFWHM = 5;
                 matRad_cfg.dispWarning('photon machine file does not contain measured penumbra width in machine.data.penumbraFWHMatIso. Assuming 5 mm.');
             end
-            
+
             sourceFWHM = penumbraFWHM * obj.machine.meta.SCD/(obj.machine.meta.SAD - obj.machine.meta.SCD);
-            sigmaGauss = sourceFWHM / sqrt(8*log(2)); % [mm]  
+            sigmaGauss = sourceFWHM / sqrt(8*log(2)); % [mm]
         end
 
         function obj = materialConversion(obj,ctGrid,doseGrid,ct)
@@ -275,15 +275,15 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             obj.cubeHU      = cell(1,ct.numOfCtScen);
             obj.cubeMatIx   = cell(1,ct.numOfCtScen);
             obj.cubeRho     = cell(1,ct.numOfCtScen);
-            
+
             % Create Material Density Cube
             material = obj.setupMaterials();
-            
+
             for s = 1:ct.numOfCtScen
-                
+
                 obj.cubeHU{s} =  matRad_interp3(ctGrid.x,ctGrid.y',ctGrid.z,ct.cubeHU{s}, ...
                     doseGrid.x,doseGrid.y',doseGrid.z,'nearest');
-                
+
                 % projecting out of bounds HU values where necessary
                 if max(obj.cubeHU{s}(:)) > material{end,3}
                     matRad_cfg.dispWarning('Projecting out of range HU values');
@@ -293,21 +293,21 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     matRad_cfg.dispWarning('Projecting out of range HU values');
                     obj.cubeHU{s}(obj.cubeHU{s}(:) < material{1,2}) = material{1,2};
                 end
-                
+
                 % find material index
                 obj.cubeMatIx{s} = NaN*ones(doseGrid.dimensions,'int32');
                 for i = size(material,1):-1:1
                     obj.cubeMatIx{s}(obj.cubeHU{s} <= material{i,3}) = i;
                 end
-                
+
                 % create an artificial HU lookup table
                 hlut = [];
                 for i = 1:size(material,1)
                     hlut = [hlut;material{i,2} material{i,4};material{i,3}-1e-10 material{i,5}]; % add eps for interpolation
                 end
-                
+
                 obj.cubeRho{s} = interp1(hlut(:,1),hlut(:,2),obj.cubeHU{s});
-                
+
             end
         end
 
@@ -315,7 +315,7 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             obj.ompMCgeo.xBounds = (doseGrid.resolution.y * (0.5 + [0:doseGrid.dimensions(1)])) ./ obj.scale;
             obj.ompMCgeo.yBounds = (doseGrid.resolution.x * (0.5 + [0:doseGrid.dimensions(2)])) ./ obj.scale;
             obj.ompMCgeo.zBounds = (doseGrid.resolution.z * (0.5 + [0:doseGrid.dimensions(3)])) ./ obj.scale;
-        
+
             % Create Material Density Cube
             obj.ompMCgeo.material    = obj.setupMaterials();
 
@@ -374,9 +374,9 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             material{4,3} = 1976;
             material{4,4} = 1.101;
             material{4,5} = 2.088;
-            
+
         end
-        
+
         function getOmpMCsource(obj,stf)
             numOfBeams = numel(stf);
 
@@ -456,7 +456,7 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             end
 
         end
-    
+
     end
 
     methods (Static)
@@ -527,39 +527,39 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % LICENSE file.
             %
             % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            
-            
+
+
             matRad_cfg = MatRad_Config.instance();
-            
+
             env = matRad_getEnvironment();
-            
+
             %Our destination usually lies in the ompMC thirdPartyFolder
             if nargin < 1
                 dest = [matRad_cfg.matRadRoot filesep 'thirdParty' filesep 'ompMC'];
             end
-            
+
             %We can recompile form the submodules
             if nargin < 2
                 omcFolder = [matRad_cfg.matRadRoot filesep 'submodules' filesep 'ompMC'];
             end
-            
+
             sourceFolder = [omcFolder filesep 'src'];
             interfaceFolder = [omcFolder filesep 'ucodes' filesep 'omc_matrad'];
-            
+
             mainFile = [interfaceFolder filesep 'omc_matrad.c'];
-            
+
             addFiles = {'ompmc.c','omc_utilities.c','omc_random.c'};
             addFiles = cellfun(@(f) fullfile(sourceFolder,f),addFiles,'UniformOutput',false);
-            
+
             addFiles = strjoin(addFiles,' ');
-            
+
             if exist ('OCTAVE_VERSION','builtin')
                 ccName = evalc('mkoctfile -p CC');
             else
                 myCCompiler = mex.getCompilerConfigurations('C','Selected');
                 ccName = myCCompiler.ShortName;
             end
-            
+
             %These settings have only been tested for MSVC and g++. You may need to adapt for other compilers
             if ~isempty(strfind(ccName,'MSVC')) %Not use contains(...) because of octave
                 flags{1,1} = 'COMPFLAGS';
@@ -571,18 +571,18 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 flags{1,2} = '-std=gnu99 -fopenmp -O3';
                 flags{2,1} = 'LDFLAGS';
                 flags{2,2} = '-fopenmp';
-                
+
             end
-            
+
             includestring =  ['-I' sourceFolder];
-            
+
             flagstring = '';
-            
+
             %For Octave, the flags will be set in the environment, while they
             %will be parsed as string arguments in MATLAB
             for flag = 1:size(flags,1)
                 if strcmp(env,'OCTAVE')
-                    preFlagContent = eval(['mkoctfile -p ' flags{flag,1}]);
+                    preFlagContent = evalc(['mkoctfile -p ' flags{flag,1}]);
                     if ~isempty(preFlagContent)
                         preFlagContent = preFlagContent(1:end-1); %Strip newline
                     end
@@ -593,10 +593,10 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     flagstring = [flagstring flags{flag,1} '="$' flags{flag,1} ' ' flags{flag,2} '" '];
                 end
             end
-            
+
             mexCall = ['mex -largeArrayDims ' flagstring ' ' includestring ' ' mainFile ' ' addFiles];
             matRad_cfg.dispDebug('Compiler call: %s\n',mexCall);
-            
+
             currDir = pwd;
             cd(dest);
             eval(mexCall);

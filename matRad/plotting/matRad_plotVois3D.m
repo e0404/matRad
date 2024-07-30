@@ -41,20 +41,23 @@ end
 
 %Use stored colors or colormap?
 if nargin < 5 || isempty(cMap)
+    for i = 1:size(cst,1)
+        if isfield(cst{i,5},'visibleColor')
+            voiColors(i,:) = cst{i,5}.visibleColor;
+        else
+            voiColors(i,:) = [0 0 0];
+        end
+    end
+else
     cMapScale = size(cMap,1)-1;
     %determine colors
     voiColors = cMap(round(linspace(1,cMapScale,size(cst,1))),:);
-else
-    for i = 1:size(cst,1)
-      voiColors(i,:) = cst{i,5}.visibleColor;
-    end
 end
 
+%Check if there's a subselection of VOIs
 if nargin < 4 || isempty(selection) || numel(selection) ~= size(cst,1)
     selection = logical(ones(size(cst,1),1));
 end
-
-cMapScale = size(cMap,1)-1;
 
 axes(axesHandle);
 wasHold = ishold(axesHandle);
