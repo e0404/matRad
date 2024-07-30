@@ -164,7 +164,7 @@ classdef matRad_MainGUI < handle
             obj.guiHandle = figure(figArgs{:});
 
             %WindowState not available in all versions
-            if isprop(obj.guiHandle,'WindowState')
+            if matRad_ispropCompat(obj.guiHandle,'WindowState')
                 set(obj.guiHandle,'WindowState','maximized');
             end
 
