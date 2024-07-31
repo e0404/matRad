@@ -30,7 +30,7 @@ function result = matRad_ispropCompat(obj,prop)
 
 matRad_cfg = MatRad_Config.instance();
 
-if matRad_cfg.isOctave && str2double(matRad_cfg.envVersion(1)) <= 6
+if matRad_cfg.isOctave && str2double(matRad_cfg.envVersion(1)) <= 6 && ~ishghandle(obj) 
     result = any(strcmp(matRad_getPropsCompat(obj),prop));
 else
     result = isprop(obj,prop);

@@ -490,18 +490,38 @@ classdef matRad_MainGUI < handle
         % button: close
         function figure1_CloseRequestFcn(this,hObject, ~)
             matRad_cfg = MatRad_Config.instance();
-            set(0,'DefaultUicontrolBackgroundColor',matRad_cfg.gui.backgroundColor);
+            
+            %Get default colors
+            bgColor = get(0,'DefaultUicontrolBackgroundColor');
+            fgColor = get(0,'DefaultUIcontrolForegroundColor');
+            figColor = get(0,'DefaultFigureColor');
+            txtColor = get(0,'DefaultTextColor');
+            
+            %Make sure we use the matRad color scheme
+            set(0,'DefaultUicontrolBackgroundColor',matRad_cfg.gui.elementColor);
+            set(0,'DefaultUIcontrolForegroundColor',matRad_cfg.gui.textColor);
+            set(0,'DefaultFigureColor',matRad_cfg.gui.backgroundColor);
+            set(0,'DefaultTextColor',matRad_cfg.gui.textColor);
+            
             selection = questdlg('Do you really want to close matRad?',...
                 'Close matRad',...
                 'Yes','No','Yes');
-
+            
+            %restore original colors
+            set(0,'DefaultUicontrolBackgroundColor',bgColor);
+            set(0,'DefaultUIcontrolForegroundColor',fgColor);
+            set(0,'DefaultFigureColor',figColor);
+            set(0,'DefaultTextColor',txtColor);
+            
+            %close if requested
             switch selection
                 case 'Yes'
                     delete(hObject);
                     delete(this);
-                case 'No'
-                    return
+                otherwise
+                    %Do nothing
             end
+
         end
 
     end

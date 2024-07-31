@@ -142,6 +142,11 @@ classdef matRad_InfoWidget < matRad_Widget
             msg{end+1} = matRad_info();
             
             handles.aboutBox = msgbox(msg,'About matRad');
+            set(handles.aboutBox,'Color',matRad_cfg.gui.backgroundColor);
+            txtObj = findall(handles.aboutBox,'type','text','tag','MessageBox');
+            set(txtObj,'Color',matRad_cfg.gui.textColor);
+            okBtn = findall(handles.aboutBox,'tag','OKButton');
+            set(okBtn,'BackgroundColor',matRad_cfg.gui.elementColor,'ForegroundColor',matRad_cfg.gui.textColor);
             
             this.handles = handles;
         end

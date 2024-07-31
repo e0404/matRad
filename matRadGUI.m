@@ -43,7 +43,7 @@ if ischar(parsedInput.eduMode) || isstring(parsedInput.eduMode)
     parsedInput.eduMode = str2double(parsedInput.eduMode);
 end
 
-matRad_cfg = MatRad_Config.instance();
+matRad_cfg = matRad_rc;
 
 %If devMode is true, error dialogs will include the full stack trace of the error
 %If false, only the basic error message is shown (works for errors that
