@@ -117,6 +117,11 @@ classdef matRad_ViewingWidget < matRad_Widget
             end
             this.initialize();
         end
+
+        function initialize(this)
+            evt = matRad_WorkspaceChangedEvent('image_display');
+            this.update(evt);
+        end
                         
         function notifyPlotUpdated(obj)
             % handle environment
@@ -147,8 +152,7 @@ classdef matRad_ViewingWidget < matRad_Widget
             end
             
             this.slice=newSlice;
-            evt = matRad_WorkspaceChangedEvent('image_display');
-            this.update(evt);
+            this.update();
         end
         
         function set.maxSlice(this,value)
@@ -521,12 +525,6 @@ classdef matRad_ViewingWidget < matRad_Widget
                     this.updateValues();
                 end
                             
-                % Update plot only if there are changes to ct, resultGUI and cst structures.
-                % or on initialization           
-                if nargin == 1
-                    this.updateIsoDoseLineCache(); 
-                end
-
                 this.UpdatePlot();
              
             end
@@ -1207,13 +1205,20 @@ classdef matRad_ViewingWidget < matRad_Widget
                         case 'physicalDose'
                             this.SelectedDisplayOption = 'physicalDose';
                         case 'RBExD'
-                            this.SelectedDisplayOption = 'RBExDose';
+                            this.SelectedDisplayOption = 'RBExD';
                         case 'effect'
                             this.SelectedDisplayOption = 'effect';
+                        case 'BED'
+                            this.SelectedDisplayOption = 'BED';
+                        otherwise
+                            this.SelectedDisplayOption = 'physicalDose';
                     end
                     
-                    if sum(strcmp(this.SelectedDisplayOption,fieldnames(Result))) == 0
-                        this.SelectedDisplayOption = this.DispInfo{find([this.DispInfo{:,2}],1,'first'),1};
+                    if ~any(strcmp(this.SelectedDisplayOption,fieldnames(Result)))
+                        this.SelectedDisplayOption = 'physicalDose';
+                        if ~any(strcmp(this.SelectedDisplayOption,fieldnames(Result)))
+                            this.SelectedDisplayOption = this.DispInfo{find([this.DispInfo{:,2}],1,'first'),1};
+                        end
                     end
                     
                     dose = Result.(this.SelectedDisplayOption);
