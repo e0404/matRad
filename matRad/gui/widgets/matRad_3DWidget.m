@@ -62,6 +62,11 @@ classdef matRad_3DWidget < matRad_ViewingWidget
         function this = createLayout(this)
             h88 = this.widgetHandle;
             createLayout@matRad_ViewingWidget(this);
+
+            set(this.handles.axesFig,'XTickMode','auto','XTickLabelMode','auto');
+            set(this.handles.axesFig,'YTickMode','auto','YTickLabelMode','auto');
+            set(this.handles.axesFig,'ZTickMode','auto','ZTickLabelMode','auto');
+            
             %this.createHandles();
         end
 
@@ -97,7 +102,8 @@ classdef matRad_3DWidget < matRad_ViewingWidget
         end
 
         function plot3D(this)
-
+            
+            matRad_cfg = MatRad_Config.instance();
             if evalin('base','exist(''pln'')') && ...
                     evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
 
@@ -125,7 +131,7 @@ classdef matRad_3DWidget < matRad_ViewingWidget
 
             cla(axesFig3D);
 
-            defaultFontSize = 8;
+            defaultFontSize = matRad_cfg.gui.fontSize;
 
             %Check if we need to precompute the surface data
             if size(cst,2) < 8
@@ -133,8 +139,8 @@ classdef matRad_3DWidget < matRad_ViewingWidget
                 assignin('base','cst',cst);
             end
 
-            set(this.widgetHandle,'Color',0.5*[1 1 1]);
-            set(axesFig3D,'Color',1*[0 0 0]);
+            set(this.widgetHandle,'Color',matRad_cfg.gui.backgroundColor);
+            set(axesFig3D,'Color',matRad_cfg.gui.elementColor);
 
             %% Plot 3D structures
             hold(axesFig3D,'on');
@@ -184,14 +190,14 @@ classdef matRad_3DWidget < matRad_ViewingWidget
                 matRad_plotPlan3D(axesFig3D,pln,stf);
             end
 
-            %hLight = light('Parent',axesFig3D);
-            %camlight(hLight,'left');
-            %lighting('gouraud');
+            xlim(ct.resolution.x/2 + ct.resolution.x*[1 ct.cubeDim(2)]);
+            ylim(ct.resolution.y/2 + ct.resolution.y*[1 ct.cubeDim(1)]);
+            zlim(ct.resolution.z/2 + ct.resolution.z*[1 ct.cubeDim(3)]);
 
-            xlabel(axesFig3D,'x [voxels]','FontSize',defaultFontSize)
-            ylabel(axesFig3D,'y [voxels]','FontSize',defaultFontSize)
-            zlabel(axesFig3D,'z [voxels]','FontSize',defaultFontSize)
-            title(axesFig3D,'matRad 3D view');
+            xlabel(axesFig3D,'x [mm]','FontSize',defaultFontSize,'Color',matRad_cfg.gui.textColor)
+            ylabel(axesFig3D,'y [mm]','FontSize',defaultFontSize,'Color',matRad_cfg.gui.textColor)
+            zlabel(axesFig3D,'z [mm]','FontSize',defaultFontSize,'Color',matRad_cfg.gui.textColor)
+            title(axesFig3D,'matRad 3D view','FontSize',defaultFontSize,'Color',matRad_cfg.gui.highlightColor);
 
             % set axis ratio
             ratios = [1 1 1]; %[1/ct.resolution.x 1/ct.resolution.y 1/ct.resolution.z];

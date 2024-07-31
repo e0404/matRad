@@ -303,6 +303,7 @@ classdef MatRad_Config < handle
            obj.gui.backgroundColor = [0.5 0.5 0.5];
            obj.gui.elementColor = [0.75 0.75 0.75];
            obj.gui.textColor = [0 0 0];
+           obj.gui.highlightColor = [0 0 0];
            
            obj.gui.fontSize = 8;
            obj.gui.fontWeight = 'bold';

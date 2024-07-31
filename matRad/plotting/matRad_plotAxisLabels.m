@@ -33,8 +33,10 @@ function  matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize,tickdi
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+
 if ~exist('defaultFontSize','var') || isempty(defaultFontSize)
-    defaultFontSize = 12;
+    defaultFontSize = matRad_cfg.gui.fontSize;
 end
 
 if ~exist('tickdist','var') || isempty(tickdist)

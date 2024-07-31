@@ -274,8 +274,10 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             
             if isempty(obj.axesHandle) || ~isgraphics(obj.axesHandle,'axes')
                 %Create new Fiure and store axes handle
-                hFig = figure('Name','Progress of IPOPT Optimization','NumberTitle','off','Color',[.5 .5 .5]);
-                hAx = axes(hFig);
+                matRad_cfg = MatRad_Config.instance();
+                hFig = figure('Name','Progress of IPOPT Optimization','NumberTitle','off','Color',matRad_cfg.gui.backgroundColor);
+                hAx = axes(hFig,'Color',matRad_cfg.gui.elementColor,'XColor',matRad_cfg.gui.textColor,'YColor',matRad_cfg.gui.textColor,'GridColor',matRad_cfg.gui.textColor,'MinorGridColor',matRad_cfg.gui.backgroundColor);
+
                 hold(hAx,'on');
                 grid(hAx,'on');
                 grid(hAx,'minor');
@@ -293,11 +295,11 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
                 %Set up the axes scaling & labels
                 defaultFontSize = 14;
                 set(hAx,'YScale','log');
-                title(hAx,'Progress of Optimization','LineWidth',defaultFontSize);
+                title(hAx,'Progress of Optimization','LineWidth',defaultFontSize,'Color',matRad_cfg.gui.highlightColor);
                 xlabel(hAx,'# iterations','Fontsize',defaultFontSize),ylabel(hAx,'objective function value','Fontsize',defaultFontSize);
                 
                 %Create plot handle and link to data for faster update
-                hPlot = plot(hAx,x,y,'xb','LineWidth',1.5,'XDataSource','x','YDataSource','y');
+                hPlot = plot(hAx,x,y,'x','MarkerEdgeColor',matRad_cfg.gui.highlightColor,'MarkerFaceColor',matRad_cfg.gui.elementColor,'LineWidth',1.5,'XDataSource','x','YDataSource','y');
                 obj.plotHandle = hPlot;
                 obj.axesHandle = hAx;
                                 
