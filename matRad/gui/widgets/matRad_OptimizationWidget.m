@@ -137,7 +137,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
             %Creates a dummy axis to allow for the use of textboxes instead of uicontrol to be able to use the (la)tex interpreter
             tmpAxes = axes('Parent',cstPanel,'units','normalized','position',[0 0 1 1],'visible','off', 'FontSize',8);
             
-            organTypes = {'OAR', 'TARGET','IGNORED'};
+            organTypes = {'OAR', 'TARGET','EXTERNAL','IGNORED'};
             
             %Get all Classes & classNames
             classNames = matRad_getObjectivesAndConstraints();
