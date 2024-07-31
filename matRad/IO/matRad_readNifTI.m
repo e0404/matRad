@@ -57,8 +57,9 @@ end
 
 metadata = struct();
 metadata.datatype = info.Datatype;
-metadata.cubeDim = info.ImageSize;
-metadata.axisPermutation = [1 2 3];
+metadata.axisPermutation = [2 1 3];
+metadata.cubeDim = info.ImageSize(metadata.axisPermutation);
+cube = permute(cube,metadata.axisPermutation);
 metadata.transform = info.Transform.T;
 metadata.resolution = info.PixelDimensions;
 
