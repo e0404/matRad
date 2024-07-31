@@ -100,24 +100,41 @@ function cstLine = importMaskToCstLine(maskId,mask,maskMeta)
     cstLine = cell(1,6);
     cstLine{1} = maskId - 1;
     cstLine{2} = maskMeta.name;
-    cstLine{3} = tryToGetVoiTypeByName(maskMeta.name);
+    [type,priority] = tryToGetVoiTypeByName(maskMeta.name);
+    cstLine{3} = type;
     cstLine{4}{1} = find(mask > 0);
-    cstLine{5}.Priority = maskId;
+    cstLine{5}.Priority = priority;
     cstLine{5}.alphaX = 0.1;
     cstLine{5}.betaX = 0.05;
     cstLine{5}.Visible = 1;
 end
 
-function type = tryToGetVoiTypeByName(voiName)
-    targetNames = {'target'; 'ptv'; 'ctv'};
+function [type,priority] = tryToGetVoiTypeByName(voiName)
+    targetNames = {'target'; 'gtv'; 'ctv'; 'ptv'};
+    targetPriorities = [1 1 2 3];
+    oarPriority = 4;
+    externalPriorities = [5 5 5];
+    externalNames = {'body','external','skin'};
     for n=1:numel(targetNames)
         found = strfind(lower(voiName),lower(targetNames{n}));
         if ~isempty(found)
             type = 'TARGET';
+            priority = targetPriorities(n);
             return;
         end
     end
+    
+    for n=1:numel(externalNames)
+        found = strfind(lower(voiName),lower(externalNames{n}));
+        if ~isempty(found)
+            type = 'EXTERNAL';
+            priority = externalPriorities(n);
+            return;
+        end
+    end
+
     type = 'OAR';
+    priority = oarPriority;
 end
 
 
