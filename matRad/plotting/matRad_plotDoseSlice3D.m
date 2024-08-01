@@ -76,7 +76,7 @@ if plane == 1  % Coronal plane
     [xMesh,zMesh] = meshgrid(coords{2},coords{3});
     yMesh = slice*ct.resolution.x*ones(size(xMesh));
     %dose_slice = uint8(cMapScale*(squeeze(doseCube(slice,:,:)) - window(1))/(window(2)-window(1)));
-    doseSlice = permute(squeeze(doseCube(slice,:,:)),[2 1]);
+    dose_slice = permute(squeeze(doseCube(slice,:,:)),[2 1]);
 elseif plane == 2 % sagittal plane
     [yMesh,zMesh] = meshgrid(coords{1},coords{3});
     xMesh = slice*ct.resolution.y*ones(size(yMesh));

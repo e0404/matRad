@@ -31,26 +31,32 @@ function [allMatch, msg] = matRad_comparePlnStf(pln,stf)
 allMatch=true;
 msg = [];
 
-%% compare number of gantry angles
-if pln.propStf.numOfBeams ~= numel(stf) 
+%% check if steering information is available in plan from the begining
+if ~isfield(pln,'propStf')
+    allMatch=false;
+    msg= 'No steering information in plan';
+    return
+end
+
+%% compare number of gantry angles, but ignore if numOfBeams not set
+if isfield(pln.propStf,'numOfBeams') && pln.propStf.numOfBeams ~= numel(stf) 
         msg= 'Number of beams do not match';
         allMatch=false;
         return
 end
+
 %% compare gantry angles in  stf and pln
 stf_gantryAngles=[stf.gantryAngle];
-if numel(stf_gantryAngles) ~= numel(pln.propStf.gantryAngles) ... % different size
+if ~isfield(pln.propStf,'gantryAngles') || numel(stf_gantryAngles) ~= numel(pln.propStf.gantryAngles) ... % different size
         || ~isempty(find(stf_gantryAngles-pln.propStf.gantryAngles, 1))  % values in stf and pln do not match  % values in stf and pln do not match
     allMatch=false;
     msg= 'Gantry angles do not match';
     return
 end
 
-
-
 %% compare couch angles in stf and pln
 stf_couchAngles=[stf.couchAngle];
-if numel(stf_couchAngles) ~= numel(pln.propStf.couchAngles) ... % different size
+if ~isfield(pln.propStf,'couchAngles') || numel(stf_couchAngles) ~= numel(pln.propStf.couchAngles) ... % different size
         || ~isempty(find(stf_couchAngles-pln.propStf.couchAngles, 1))  % values in stf and pln do not match
     allMatch=false;
     msg= 'Couch angles do not match';
@@ -58,14 +64,14 @@ if numel(stf_couchAngles) ~= numel(pln.propStf.couchAngles) ... % different size
 end
 
 %% compare Bixel width in stf and pln
-if stf(1).bixelWidth ~= pln.propStf.bixelWidth
+if  ~isfield(pln.propStf,'bixelWidth') || stf(1).bixelWidth ~= pln.propStf.bixelWidth
     allMatch=false;
     msg= 'Bixel width does not match';
     return
 end
 
 %% compare radiation mode in stf and pln
-if ~strcmp(stf(1).radiationMode, pln.radiationMode)
+if ~isfield(pln,'radiationMode') || ~strcmp(stf(1).radiationMode, pln.radiationMode)
     allMatch=false;
     msg= 'Radiation mode does not match';
     return
@@ -79,6 +85,5 @@ for i = 1:numel(pln.propStf.gantryAngles)
         return
     end
 end
-
 
 end

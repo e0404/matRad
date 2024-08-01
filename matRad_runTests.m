@@ -61,6 +61,7 @@ matRad_cfg.setDefaultPropertiesForTesting();
 matRad_cfg.logLevel = 1;
 
 addpath(fullfile(matRad_cfg.matRadRoot,'test'));
+addpath(fullfile(matRad_cfg.matRadRoot,'test','testData'));
 if nargin < 1
     folder = 'test';
 end

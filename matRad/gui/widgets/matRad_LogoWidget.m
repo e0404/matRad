@@ -50,11 +50,7 @@ classdef matRad_LogoWidget < matRad_Widget
             
             matRad_cfg = MatRad_Config.instance();
             
-            if isdeployed
-                filepath = [ctfroot filesep 'matRad'];
-            else
-                filepath = matRad_cfg.matRadSrcRoot;
-            end
+            filepath = matRad_cfg.matRadSrcRoot;
             
             h1 = this.widgetHandle;
             

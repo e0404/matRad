@@ -37,8 +37,8 @@ objective1 = struct(DoseObjectives.matRad_SquaredDeviation(800,45));
 objective2 = struct(DoseObjectives.matRad_SquaredOverdosing(400,0));
 
 builder.addSphericalTarget('target',ctDim(1)/13,'objectives',struct(DoseObjectives.matRad_SquaredDeviation(100,60)));
-builder.addSphericalOAR('OAR',ctDim(1)/15,'offset',[-10 10 0],'HU',-100,'objectives',struct(DoseObjectives.matRad_SquaredOverdosing(10,40)));
-builder.addBoxOAR('contour',ctDim./2,'HU',0,'objectives',struct(DoseObjectives.matRad_SquaredOverdosing(5,20)));
+builder.addSphericalOAR('OAR',ctDim(1)/15,'offset',[-10 10 0],'HU',-100,'objectives',struct(DoseObjectives.matRad_SquaredOverdosing(5,40)));
+builder.addBoxOAR('contour',ctDim./2,'HU',0,'objectives',struct(DoseObjectives.matRad_SquaredOverdosing(1,20)));
 
 %Keep indices for assignment of robustness objectives later
 ixTarget = 1;
@@ -92,9 +92,9 @@ pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
 % retrieve 9 worst case scenarios for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,'wcScen');                                         
 
-pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]
-pln.propDoseCalc.doseGrid.resolution.y = 5; % [mm]
-pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
+pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);

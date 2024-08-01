@@ -73,6 +73,10 @@ classdef matRad_ViewingWidget < matRad_Widget
         vIsoCenter;
         sliceContourLegend;
     end
+
+    properties (SetAccess = protected)
+        initialized = false;
+    end
     
     events
         plotUpdated
@@ -80,12 +84,14 @@ classdef matRad_ViewingWidget < matRad_Widget
     
     methods
         function this = matRad_ViewingWidget(handleParent)
-            if nargin < 1
+            matRad_cfg = MatRad_Config.instance();
+
+            if nargin < 1                
                 handleParent = figure(...
                     'Units','normalized',...
                     'Position',[0.3 0.2 0.4 0.6],...
                     'Visible','on',...
-                    'Color',[0.501960784313725 0.501960784313725 0.501960784313725],...  'CloseRequestFcn',@(hObject,eventdata) figure1_CloseRequestFcn(this,hObject,eventdata),...
+                    'Color',matRad_cfg.gui.backgroundColor,...  'CloseRequestFcn',@(hObject,eventdata) figure1_CloseRequestFcn(this,hObject,eventdata),...
                     'IntegerHandle','off',...
                     'Colormap',[0 0 0.5625;0 0 0.625;0 0 0.6875;0 0 0.75;0 0 0.8125;0 0 0.875;0 0 0.9375;0 0 1;0 0.0625 1;0 0.125 1;0 0.1875 1;0 0.25 1;0 0.3125 1;0 0.375 1;0 0.4375 1;0 0.5 1;0 0.5625 1;0 0.625 1;0 0.6875 1;0 0.75 1;0 0.8125 1;0 0.875 1;0 0.9375 1;0 1 1;0.0625 1 1;0.125 1 0.9375;0.1875 1 0.875;0.25 1 0.8125;0.3125 1 0.75;0.375 1 0.6875;0.4375 1 0.625;0.5 1 0.5625;0.5625 1 0.5;0.625 1 0.4375;0.6875 1 0.375;0.75 1 0.3125;0.8125 1 0.25;0.875 1 0.1875;0.9375 1 0.125;1 1 0.0625;1 1 0;1 0.9375 0;1 0.875 0;1 0.8125 0;1 0.75 0;1 0.6875 0;1 0.625 0;1 0.5625 0;1 0.5 0;1 0.4375 0;1 0.375 0;1 0.3125 0;1 0.25 0;1 0.1875 0;1 0.125 0;1 0.0625 0;1 0 0;0.9375 0 0;0.875 0 0;0.8125 0 0;0.75 0 0;0.6875 0 0;0.625 0 0;0.5625 0 0],...
                     'MenuBar','none',...
@@ -113,6 +119,11 @@ classdef matRad_ViewingWidget < matRad_Widget
             end
             this.initialize();
         end
+
+        function initialize(this)
+            evt = matRad_WorkspaceChangedEvent('image_display');
+            this.update(evt);
+        end
                         
         function notifyPlotUpdated(obj)
             % handle environment
@@ -129,7 +140,7 @@ classdef matRad_ViewingWidget < matRad_Widget
         %% SET FUNCTIONS
         function set.plane(this,value)
             this.plane=value;
-            this.UpdatePlot();
+            this.update();
         end
         
         function set.slice(this,value)
@@ -143,168 +154,187 @@ classdef matRad_ViewingWidget < matRad_Widget
             end
             
             this.slice=newSlice;
-            this.UpdatePlot();
+            this.update();
         end
         
         function set.maxSlice(this,value)
             this.maxSlice=value;
-            this.UpdatePlot();
+            this.update();
         end
         
         function set.SliceSliderStep(this,value)
             this.SliceSliderStep=value;
-            this.UpdatePlot();
+            this.update();
         end
         
         function set.selectedBeam(this,value)
             this.selectedBeam=value;
-            this.UpdatePlot();
+            evt = matRad_WorkspaceChangedEvent('image_display');
+            this.update(evt);
         end
         
         function set.numOfBeams(this,value)
             this.numOfBeams=value;
-            this.UpdatePlot();
+            this.update();
         end
         
         function set.profileOffset(this,value)
             this.profileOffset=value;
-            this.UpdatePlot();
+            evt = matRad_WorkspaceChangedEvent('image_display');
+            this.update(evt);
         end
         
         function set.OffsetSliderStep(this,value)
             this.OffsetSliderStep=value;
-            this.UpdatePlot();
+            this.update();
         end
         
         function set.OffsetMinMax(this,value)
             this.OffsetMinMax=value;
-            this.UpdatePlot();
+            this.update();
         end
         
         
         function set.typeOfPlot(this,value)
             this.typeOfPlot=value;            
-            this.UpdatePlot();
+            evt = matRad_WorkspaceChangedEvent('image_display');
+            this.update(evt);
         end
         
         function set.colorData(this,value)
             this.colorData=value;
-            this.UpdatePlot();
+            evt = matRad_WorkspaceChangedEvent('image_display');
+            this.update(evt);
         end
         
         function set.doseColorMap(this,value)
             this.doseColorMap=value;
-            this.UpdatePlot();
+            evt = matRad_WorkspaceChangedEvent('image_display');
+            this.update(evt);
         end
         
         function set.ctColorMap(this,value)
             this.ctColorMap=value;
-            this.UpdatePlot();
+            evt = matRad_WorkspaceChangedEvent('image_display');
+            this.update(evt);
         end
         
         function set.cMapSize(this,value)
             this.cMapSize=value;
-            this.UpdatePlot();
+            this.update();
         end
 
         function set.ctScen(this,value)
             this.ctScen=value;
-            this.UpdatePlot();
+            evt = matRad_WorkspaceChangedEvent('image_display');
+            this.update(evt);
         end
         
         function set.plotCT(this,value)
             this.plotCT=value;
-            this.UpdatePlot();
+            evt = matRad_WorkspaceChangedEvent('image_display');
+            this.update(evt);
         end
         
         function set.plotContour(this,value)
             this.plotContour=value;
-            this.UpdatePlot();
+            evt = matRad_WorkspaceChangedEvent('image_display');
+            this.update(evt);
         end
         
         function set.plotIsoCenter(this,value)
             this.plotIsoCenter=value;
-            this.UpdatePlot();
+            evt = matRad_WorkspaceChangedEvent('image_display');
+            this.update(evt);
         end
         
         function set.plotPlan(this,value)
             this.plotPlan=value;
-            this.UpdatePlot();
+            evt = matRad_WorkspaceChangedEvent('image_display');
+            this.update(evt);
         end
         
         function set.plotDose(this,value)
             this.plotDose=value;
-            this.UpdatePlot();
+            evt = matRad_WorkspaceChangedEvent('image_display');
+            this.update(evt);
         end
         
         function set.plotIsoDoseLines(this,value)
             this.plotIsoDoseLines=value;
-            this.UpdatePlot();
+            evt = matRad_WorkspaceChangedEvent('image_display');
+            this.update(evt);
         end
         
         function set.plotIsoDoseLinesLabels(this,value)
             this.plotIsoDoseLinesLabels=value;
-            this.UpdatePlot();
+            evt = matRad_WorkspaceChangedEvent('image_display');
+            this.update(evt);
         end
         
         function set.plotLegend(this,value)
             this.plotLegend=value;
-            this.legendToggleFunction();
+            evt = matRad_WorkspaceChangedEvent('image_display');
+            this.update(evt);
         end
         
         function set.plotColorBar(this,value)
             this.plotColorBar=value;
-            this.colorBarToggleFunction();
+            evt = matRad_WorkspaceChangedEvent('image_display');
+            this.update(evt);
         end
                 
         function set.ProfileType(this,value)
             this.ProfileType=value;
-            this.UpdatePlot();
+            evt = matRad_WorkspaceChangedEvent('image_display');
+            this.update(evt);
         end
         
         function set.SelectedDisplayOption(this,value)
             this.SelectedDisplayOption=value;
-            this.updateValues();
-            this.updateIsoDoseLineCache();
-            this.UpdatePlot();
+            evt = matRad_WorkspaceChangedEvent('image_display');
+            this.update(evt);
         end
         
         function set.SelectedDisplayAllOptions(this,value)
             this.SelectedDisplayAllOptions=value;
-            this.UpdatePlot();
+            this.update();
         end
         
         
         function set.CutOffLevel(this,value)
             this.CutOffLevel=value;
-            this.UpdatePlot();
+            this.update();
         end
         
         function set.dispWindow(this,value)
             this.dispWindow=value;
-            this.UpdatePlot();
+            evt = matRad_WorkspaceChangedEvent('image_display');
+            this.update(evt);
         end
         
         function set.doseOpacity(this,value)
             this.doseOpacity=value;
-            this.UpdatePlot();
+            evt = matRad_WorkspaceChangedEvent('image_display');
+            this.update(evt);
         end
         
         function set.IsoDose_Levels(this,value)
             this.IsoDose_Levels=value;
-            updateIsoDoseLineCache(this);
-            this.UpdatePlot();
+            evt = matRad_WorkspaceChangedEvent('image_display');
+            this.update(evt);
         end
         
         function set.IsoDose_Contours(this,value)
             this.IsoDose_Contours=value;
-            this.UpdatePlot();
+            evt = matRad_WorkspaceChangedEvent('image_display');
+            this.update(evt);
         end
         
         function set.NewIsoDoseFlag(this,value)
             this.NewIsoDoseFlag=value;
-            this.updateIsoDoseLineCache();
-            this.UpdatePlot();
+            evt = matRad_WorkspaceChangedEvent('image_display');
+            this.update(evt);
         end
         
         function set.dcmHandle(this,value)
@@ -325,16 +355,22 @@ classdef matRad_ViewingWidget < matRad_Widget
         function this = createLayout(this)
             %Viewer Widget 
             h88 = this.widgetHandle;
-            
+
+            matRad_cfg = MatRad_Config.instance();
+                        
             h89 = axes(...
                 'Parent',h88,...
                 'XTick',[0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1],...
                 'XTickLabel',{  '0'; '0.1'; '0.2'; '0.3'; '0.4'; '0.5'; '0.6'; '0.7'; '0.8'; '0.9'; '1' },...
+                'XColor',matRad_cfg.gui.textColor,...
                 'YTick',[0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1],...
                 'YTickLabel',{  '0'; '0.1'; '0.2'; '0.3'; '0.4'; '0.5'; '0.6'; '0.7'; '0.8'; '0.9'; '1' },...
+                'YColor',matRad_cfg.gui.textColor,...
+                'ZColor',matRad_cfg.gui.textColor,...
                 'Units','normalized',...
                 'Position',[0.0718390804597701 0.0654391371340524 0.902298850574712 0.899121725731895],...
-                 'Tag','axesFig'); 
+                'Color',matRad_cfg.gui.elementColor,...
+                'Tag','axesFig'); 
                  
             %Title
             h90 = get(h89,'title');
@@ -354,8 +390,8 @@ classdef matRad_ViewingWidget < matRad_Widget
                 'Interpreter','tex',...
                 'Rotation',0,...
                 'RotationMode','auto',...
-                'FontName','Helvetica',...
-                'FontSize',10.593,...
+                'FontName',matRad_cfg.gui.fontName,...
+                'FontSize',matRad_cfg.gui.fontSize,...
                 'FontAngle','normal',...
                 'FontWeight','normal',...
                 'HorizontalAlignment','center',...
@@ -376,14 +412,14 @@ classdef matRad_ViewingWidget < matRad_Widget
                 'Parent',h89,...
                 'Units','data',...
                 'FontUnits','points',...
-                'Color',[0.15 0.15 0.15],...
+                'Color',matRad_cfg.gui.textColor,...
                 'Position',[0.500000476837158 -0.0373767115122652 0],...
                 'PositionMode','auto',...
                 'Interpreter','tex',...
                 'Rotation',0,...
                 'RotationMode','auto',...
-                'FontName','CMU Serif',...
-                'FontSize',10.593,...
+                'FontName',matRad_cfg.gui.fontName,...
+                'FontSize',matRad_cfg.gui.fontSize,...
                 'FontAngle','normal',...
                 'FontWeight','normal',...
                 'HorizontalAlignment','center',...
@@ -409,14 +445,14 @@ classdef matRad_ViewingWidget < matRad_Widget
                 'Parent',h89,...
                 'Units','data',...
                 'FontUnits','points',...
-                'Color',[0.15 0.15 0.15],...
+                'Color',matRad_cfg.gui.textColor,...
                 'Position',[-0.0474647368237942 0.500000476837158 0],...
                 'PositionMode','auto',...
                 'Interpreter','tex',...
                 'Rotation',90,...
                 'RotationMode','auto',...
-                'FontName','CMU Serif',...
-                'FontSize',10.593,...
+                'FontName',matRad_cfg.gui.fontName,...
+                'FontSize',matRad_cfg.gui.fontSize,...
                 'FontAngle','normal',...
                 'FontWeight','normal',...
                 'HorizontalAlignment','center',...
@@ -442,14 +478,14 @@ classdef matRad_ViewingWidget < matRad_Widget
                 'Parent',h89,...
                 'Units','data',...
                 'FontUnits','points',...
-                'Color',[0.15 0.15 0.15],...
+                'Color',matRad_cfg.gui.textColor,...
                 'Position',[0 0 0],...
                 'PositionMode','auto',...
                 'Interpreter','tex',...
                 'Rotation',0,...
                 'RotationMode','auto',...
-                'FontName','CMU Serif',...
-                'FontSize',10,...
+                'FontName',matRad_cfg.gui.fontName,...
+                'FontSize',matRad_cfg.gui.fontSize,...
                 'FontAngle','normal',...
                 'FontWeight','normal',...
                 'HorizontalAlignment','left',...
@@ -473,31 +509,31 @@ classdef matRad_ViewingWidget < matRad_Widget
         end
     
         function this=doUpdate(this,evt)
+            if ~this.initialized
+                this.initValues();
+                this.initialized = true;
+            end
+
+
             if ~this.lockUpdate
             
                 doUpdate = false;
                 if nargin == 2
                     %At pln changes and at cst/cst (for Isocenter and new settings) 
                     %we need to update
-                    doUpdate = this.checkUpdateNecessary({'pln_display','ct','cst','resultGUI'},evt);
-                    if  ~this.checkUpdateNecessary({'cst_obj','pln',},evt)
+                    if this.checkUpdateNecessary({'pln','ct','resultGUI'},evt)
+                        this.initValues();
+                    end
+                    this.updateValues();
+                    doUpdate = this.checkUpdateNecessary({'pln_display','ct','cst','resultGUI','image_display'},evt);
+                    if  this.checkUpdateNecessary({'resultGUI','image_display'},evt)
                         this.updateIsoDoseLineCache();
                     end
-                end
-            
-                if ~doUpdate || this.checkUpdateNecessary({'pln','ct','resultGUI'},evt)
-                   this.initValues();
+                else
+                    this.updateValues();
                 end
                             
-                this.updateValues();
-                
-                % Update plot only if there are changes to ct, resultGUI and cst structures.
-                % or on initialization
-           
-                if  doUpdate || nargin == 1
-                    this.UpdatePlot();
-                    this.updateIsoDoseLineCache(); 
-                end
+                this.UpdatePlot();
              
             end
             
@@ -521,7 +557,7 @@ classdef matRad_ViewingWidget < matRad_Widget
             % top of each other in matlab <2014
             drawnow;
             
-            defaultFontSize = 8;
+            defaultFontSize     = matRad_cfg.gui.fontSize;
             currAxes            = axis(handles.axesFig);
             AxesHandlesVOI      = cell(0);
             
@@ -576,9 +612,9 @@ classdef matRad_ViewingWidget < matRad_Widget
                     
                     % plot colorbar? If 1 the user asked for the CT.
                     % not available in octave 
-                    if strcmp(matRad_cfg.env,'MATLAB') && this.colorData == 1
+                    if strcmp(matRad_cfg.env,'MATLAB') && ~isempty(this.colorData) && this.colorData == 1
                         %Plot the colorbar
-                        this.cBarHandle = matRad_plotColorbar(handles.axesFig,ctMap,this.dispWindow{ctIx,1},'fontsize',defaultFontSize);
+                        this.cBarHandle = matRad_plotColorbar(handles.axesFig,ctMap,this.dispWindow{ctIx,1},'FontSize',defaultFontSize,'Color',matRad_cfg.gui.textColor);
                         
                         if this.plotColorBar
                             set(this.cBarHandle,'Visible','on')
@@ -614,9 +650,9 @@ classdef matRad_ViewingWidget < matRad_Widget
                     end
                     
                     % plot colorbar
-                    if matRad_cfg.isMatlab && this.colorData > 1 
+                    if matRad_cfg.isMatlab && ~isempty(this.colorData) && this.colorData > 1 
                         %Plot the colorbar
-                        this.cBarHandle = matRad_plotColorbar(handles.axesFig,doseMap,this.dispWindow{selectIx,1},'fontsize',defaultFontSize);
+                        this.cBarHandle = matRad_plotColorbar(handles.axesFig,doseMap,this.dispWindow{selectIx,1},'fontsize',defaultFontSize,'Color',matRad_cfg.gui.textColor);
                         
                         if this.plotColorBar
                             set(this.cBarHandle,'Visible','on')
@@ -663,7 +699,8 @@ classdef matRad_ViewingWidget < matRad_Widget
             
             %% Set axis labels and plot iso center
             matRad_plotAxisLabels(handles.axesFig,ct,this.plane,this.slice,defaultFontSize);
-            
+            set(get(handles.axesFig,'Title'),'Color',matRad_cfg.gui.textColor);
+                        
             if this.plotIsoCenter && this.typeOfPlot == 1 && ~isempty(pln) %get(handles.radioBtnIsoCenter,'Value') == 1 
                 hIsoCenterCross = matRad_plotIsoCenterMarker(handles.axesFig,pln,ct,this.plane,this.slice);
             end
@@ -1086,17 +1123,19 @@ classdef matRad_ViewingWidget < matRad_Widget
                     end
                 end
                 
-                if this.plane == 1
-                    this.slice= ceil(pln.propStf.isoCenter(1,2)/ct.resolution.x);
-                elseif this.plane == 2
-                    this.slice= ceil(pln.propStf.isoCenter(1,1)/ct.resolution.y);
-                elseif this.plane == 3
-                    this.slice= ceil(pln.propStf.isoCenter(1,3)/ct.resolution.z);
+                if isfield(pln,'propStf')
+                    planeCenters = ceil(pln.propStf.isoCenter(1,[2 1 3]) ./ [ct.resolution.x ct.resolution.y ct.resolution.z]);
+                    this.numOfBeams=pln.propStf.numOfBeams;
+                else
+                    planeCenters = ceil(ct.cubeDim./ 2);
+                    this.numOfBeams = 1;
                 end
+                
+                this.slice = planeCenters(this.plane);                
                 
                 this.maxSlice=ct.cubeDim(this.plane);
                 this.SliceSliderStep=[1/(ct.cubeDim(this.plane)-1) 1/(ct.cubeDim(this.plane)-1)];
-                this.numOfBeams=pln.propStf.numOfBeams;
+                
                 
                  % set profile offset slider
                 this.OffsetMinMax = [-100 100];
@@ -1175,13 +1214,20 @@ classdef matRad_ViewingWidget < matRad_Widget
                         case 'physicalDose'
                             this.SelectedDisplayOption = 'physicalDose';
                         case 'RBExD'
-                            this.SelectedDisplayOption = 'RBExDose';
+                            this.SelectedDisplayOption = 'RBExD';
                         case 'effect'
                             this.SelectedDisplayOption = 'effect';
+                        case 'BED'
+                            this.SelectedDisplayOption = 'BED';
+                        otherwise
+                            this.SelectedDisplayOption = 'physicalDose';
                     end
                     
-                    if sum(strcmp(this.SelectedDisplayOption,fieldnames(Result))) == 0
-                        this.SelectedDisplayOption = this.DispInfo{find([this.DispInfo{:,2}],1,'first'),1};
+                    if ~any(strcmp(this.SelectedDisplayOption,fieldnames(Result)))
+                        this.SelectedDisplayOption = 'physicalDose';
+                        if ~any(strcmp(this.SelectedDisplayOption,fieldnames(Result)))
+                            this.SelectedDisplayOption = this.DispInfo{find([this.DispInfo{:,2}],1,'first'),1};
+                        end
                     end
                     
                     dose = Result.(this.SelectedDisplayOption);
@@ -1263,8 +1309,12 @@ classdef matRad_ViewingWidget < matRad_Widget
                 end
                 % set isoCenter values 
                 % Note: only defined for the first Isocenter
-                uniqueIsoCenters = unique(pln.propStf.isoCenter,'rows');
-                this.vIsoCenter      = round(uniqueIsoCenters(1,:)./[ct.resolution.x ct.resolution.y ct.resolution.z]);
+                if isfield(pln,'propStf')
+                    uniqueIsoCenters = unique(pln.propStf.isoCenter,'rows');
+                    this.vIsoCenter      = round(uniqueIsoCenters(1,:)./[ct.resolution.x ct.resolution.y ct.resolution.z]);
+                else
+                    this.plotIsoCenter = false;
+                end
                 
 
                  % set profile offset slider

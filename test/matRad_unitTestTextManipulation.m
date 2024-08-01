@@ -71,4 +71,3 @@ for fIx = 1:numel(filename)
     movefile(tempFile, currFile, 'f');
 end
 end
-

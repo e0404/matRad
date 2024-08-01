@@ -17,10 +17,16 @@ function test_bioModelConstructor
 function test_setBiologicalModel 
     bioModel = matRad_BiologicalModel('photons','RBExD','LEM');
     assertTrue(strcmp(bioModel.model, 'none')); %default photon model
+    assertTrue(strcmp(bioModel.quantityOpt, 'physicalDose'));
     bioModel = matRad_BiologicalModel('protons','RBExD','LEM');
     assertTrue(strcmp(bioModel.model, 'constRBE')); %default proton model
-    bioModel = matRad_BiologicalModel('carbon','RBExD','MCN');
+    bioModel = matRad_BiologicalModel('carbon','effect','MCN');
     assertTrue(strcmp(bioModel.model, 'LEM')); %default carbon model
+    assertTrue(strcmp(bioModel.quantityOpt, 'effect'));
+    bioModel = matRad_BiologicalModel('protons','BED','LEM');
+    assertTrue(strcmp(bioModel.model, 'MCN')); %default proton model for BED
+    assertTrue(strcmp(bioModel.quantityOpt, 'BED'));
+
 
 function test_calcLQParameter
     bioModel = matRad_BiologicalModel('photons','RBExD','LEM');
