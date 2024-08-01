@@ -117,7 +117,7 @@ classdef matRad_InfoWidget < matRad_Widget
             matRad_cfg = MatRad_Config.instance();
             [~,matRadVer] = matRad_version;
 
-            if isfield(handles,'aboutBox')
+            if isfield(handles,'aboutBox') && ishghandle(handles.aboutBox)
                 delete(handles.aboutBox);
             end
             
