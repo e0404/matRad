@@ -34,6 +34,8 @@ classdef matRad_MainGUI < handle
         DVHStatsWidget
         eventListeners
         GammaWidget
+
+        forceClose = false;
     end
 
 
@@ -291,6 +293,16 @@ classdef matRad_MainGUI < handle
             % update button states
             obj.updateButtons();
         end
+        
+        function delete(this)
+            this.forceClose = true;
+            close(this.guiHandle);
+            delete@handle(this);
+        end
+
+        function close(this)
+            this.delete();
+        end
 
         function update(this,evt)
             if nargin < 2
@@ -490,30 +502,34 @@ classdef matRad_MainGUI < handle
 
 
         % button: close
-        function figure1_CloseRequestFcn(this,hObject, ~)
+        function figure1_CloseRequestFcn(this,hObject,~)
             matRad_cfg = MatRad_Config.instance();
             
-            %Get default colors
-            bgColor = get(0,'DefaultUicontrolBackgroundColor');
-            fgColor = get(0,'DefaultUIcontrolForegroundColor');
-            figColor = get(0,'DefaultFigureColor');
-            txtColor = get(0,'DefaultTextColor');
-            
-            %Make sure we use the matRad color scheme
-            set(0,'DefaultUicontrolBackgroundColor',matRad_cfg.gui.elementColor);
-            set(0,'DefaultUIcontrolForegroundColor',matRad_cfg.gui.textColor);
-            set(0,'DefaultFigureColor',matRad_cfg.gui.backgroundColor);
-            set(0,'DefaultTextColor',matRad_cfg.gui.textColor);
-            
-            selection = questdlg('Do you really want to close matRad?',...
-                'Close matRad',...
-                'Yes','No','Yes');
-            
-            %restore original colors
-            set(0,'DefaultUicontrolBackgroundColor',bgColor);
-            set(0,'DefaultUIcontrolForegroundColor',fgColor);
-            set(0,'DefaultFigureColor',figColor);
-            set(0,'DefaultTextColor',txtColor);
+            if this.forceClose
+                selection = 'Yes';
+            else
+                %Get default colors
+                bgColor = get(0,'DefaultUicontrolBackgroundColor');
+                fgColor = get(0,'DefaultUIcontrolForegroundColor');
+                figColor = get(0,'DefaultFigureColor');
+                txtColor = get(0,'DefaultTextColor');
+                
+                %Make sure we use the matRad color scheme
+                set(0,'DefaultUicontrolBackgroundColor',matRad_cfg.gui.elementColor);
+                set(0,'DefaultUIcontrolForegroundColor',matRad_cfg.gui.textColor);
+                set(0,'DefaultFigureColor',matRad_cfg.gui.backgroundColor);
+                set(0,'DefaultTextColor',matRad_cfg.gui.textColor);
+                
+                selection = questdlg('Do you really want to close matRad?',...
+                    'Close matRad',...
+                    'Yes','No','Yes');
+                
+                %restore original colors
+                set(0,'DefaultUicontrolBackgroundColor',bgColor);
+                set(0,'DefaultUIcontrolForegroundColor',fgColor);
+                set(0,'DefaultFigureColor',figColor);
+                set(0,'DefaultTextColor',txtColor);
+            end
             
             %close if requested
             switch selection
