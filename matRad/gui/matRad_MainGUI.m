@@ -296,8 +296,11 @@ classdef matRad_MainGUI < handle
         
         function delete(this)
             this.forceClose = true;
-            close(this.guiHandle);
-            delete@handle(this);
+            try
+                close(this.guiHandle);
+            catch
+                delete@handle(this);
+            end
         end
 
         function close(this)
