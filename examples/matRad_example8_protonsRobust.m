@@ -142,13 +142,13 @@ figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.RBExD_beam1,plane,sl
 % create an interactive plot to slide through individual scnearios
 f = figure;title('individual scenarios');
 numScen = 1;doseWindow = [0 3.5];
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.(['RBExD_' num2str(round(numScen))]),plane,slice,[],[],colorcube,[],doseWindow,[]);
+matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.(['RBExD_scen' num2str(round(numScen))]),plane,slice,[],[],colorcube,[],doseWindow,[]);
 
 [env,envver] = matRad_getEnvironment();
 if strcmp(env,'MATLAB') || str2double(envver(1)) >= 5
     b = uicontrol('Parent',f,'Style','slider','Position',[50,5,419,23],...
         'value',numScen, 'min',1, 'max',pln.multScen.totNumScen,'SliderStep', [1/(pln.multScen.totNumScen-1) , 1/(pln.multScen.totNumScen-1)]);
-    set(b,'Callback',@(es,ed)  matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.(['RBExD_' num2str(round(get(es,'Value')))]),plane,slice,[],[],colorcube,[],doseWindow,[]));
+    set(b,'Callback',@(es,ed)  matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.(['RBExD_scen' num2str(round(get(es,'Value')))]),plane,slice,[],[],colorcube,[],doseWindow,[]));
 end
 
 %% Indicator calculation and show DVH and QI

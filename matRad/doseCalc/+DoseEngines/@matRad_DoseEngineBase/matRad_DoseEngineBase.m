@@ -228,7 +228,18 @@ classdef (Abstract) matRad_DoseEngineBase < handle
 
             % calculate cubes; use uniform weights here, weighting with actual fluence 
             % already performed in dij construction
-            resultGUI    = matRad_calcCubes(ones(dij.numOfBeams,1),dij);
+            
+            resultGUI = [];
+            
+            for i = 1:this.multScen.totNumScen
+                scenSubIx = this.multScen.linearMask(i,:);
+                resultGUItmp = matRad_calcCubes(ones(dij.numOfBeams,1),dij,this.multScen.sub2scenIx(scenSubIx(1),scenSubIx(2),scenSubIx(3)));
+                if i == 1
+                    resultGUI = resultGUItmp;
+                end
+                resultGUI = matRad_appendResultGUI(resultGUI,resultGUItmp,false,sprintf('scen%d',i));                
+            end
+
             resultGUI.w  = w; 
         end
 
