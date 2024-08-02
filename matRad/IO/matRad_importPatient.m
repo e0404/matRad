@@ -53,18 +53,18 @@ ct.resolution.z = metadata.resolution(3);
 ct.numOfCtScen = 1;
 
 maskId = 1;
-hGlobalWaitbar = waitbar(0,'Importing Segmentations');
-set(findall(hGlobalWaitbar,'type','text'),'Interpreter','none');
-
-
+matRad_cfg = MatRad_Config.instance();
+hGlobalWaitbar = waitbar(0,'Importing Segmentations','Color',matRad_cfg.gui.backgroundColor,'DefaultTextColor',matRad_cfg.gui.textColor);
+matRad_applyThemeToWaitbar(hGlobalWaitbar);
 
 for f=1:numel(maskFiles)
     maskFile = maskFiles{f};
     waitbar(f/numel(maskFiles),hGlobalWaitbar,['Importing Segmentations: ' maskFiles{f}]);
     if exist(maskFile,'dir')
         contents = dir(maskFile);
-        hFolderWaitbar = waitbar(0,'Importing Folder');
-        set(findall(hFolderWaitbar,'type','text'),'Interpreter','none');
+        hFolderWaitbar = waitbar(0,'Importing Folder','Color',matRad_cfg.gui.backgroundColor,'DefaultTextColor',matRad_cfg.gui.textColor);
+        matRad_applyThemeToWaitbar(hFolderWaitbar);
+
         for s=1:numel(contents)
             waitbar(s/numel(contents),hFolderWaitbar,['Importing Folder: ' contents(s).name]);            
             if(~contents(s).isdir)

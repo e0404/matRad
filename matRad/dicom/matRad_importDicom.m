@@ -42,7 +42,8 @@ if ~exist('dicomMetaBool','var')
 end
 
 %%
-h = waitbar(0,'Please wait...');
+h = waitbar(0,'Please wait...','Color',matRad_cfg.gui.backgroundColor,'DefaultTextColor',matRad_cfg.gui.textColor);
+matRad_applyThemeToWaitbar(h);
 %h.WindowStyle = 'Modal';
 steps = 2;
 
@@ -79,7 +80,8 @@ if ~isempty(files.rtss)
     close(h)
 
     %% creating structure cube
-    h = waitbar(0,'Please wait...');
+    h = waitbar(0,'Please wait...','Color',matRad_cfg.gui.backgroundColor,'DefaultTextColor',matRad_cfg.gui.textColor);
+    matRad_applyThemeToWaitbar(h);
     %h.WindowStyle = 'Modal';
     steps = numel(structures);
 

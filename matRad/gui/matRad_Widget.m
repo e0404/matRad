@@ -107,7 +107,8 @@ classdef matRad_Widget <  handle
                     close(handles.ErrorDlg);
                 end
             end
-            errordlg(Message);
+            h = errordlg(Message);
+            matRad_applyThemeToDlg(h);
             matRad_cfg.dispError(Message);
             this.handles = handles;
         end
@@ -126,9 +127,15 @@ classdef matRad_Widget <  handle
                 Message = [Message,ME.message];
                 % Future error hyperlinks {Message,ME.getReport(meType,'hyperlinks','off')};
             end
+            h = warndlg(Message);
+            matRad_applyThemeToDlg(h);
             matRad_cfg.dispWarning(Message);
-            warndlg(Message);
             this.handles = handles;         
+        end
+
+        function showMessage(this,message,varargin)
+            h = msgbox(message,varargin{:});
+            matRad_applyThemeToDlg(h);
         end
         
         %function notifyUpdate(this,workSpaceVariables)

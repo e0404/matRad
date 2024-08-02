@@ -51,7 +51,8 @@ fileList = matRad_listAllFiles(patDir);
 if ~isempty(fileList)
     %% check for dicom files and differentiate patients, types, and series
     numOfFiles = numel(fileList(:,1));
-    h = waitbar(0,'Please wait...');
+    h = waitbar(0,'Please wait...','Color',matRad_cfg.gui.backgroundColor,'DefaultTextColor',matRad_cfg.gui.textColor);
+    matRad_applyThemeToWaitbar(h);
     % precision value for double to string conversion
     str2numPrc = 10;
     %h.WindowStyle = 'Modal';

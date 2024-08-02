@@ -43,7 +43,8 @@ matRad_cfg.dispInfo('%s\n',msg);
 % initialize waitbar
 % TODO: This should be managed from the user interface instead
 if ~matRad_cfg.disableGUI
-    this.hWaitbar = waitbar(0,msg);
+    this.hWaitbar = waitbar(0,msg,'Color',matRad_cfg.gui.backgroundColor,'DefaultTextColor',matRad_cfg.gui.textColor);
+    matRad_applyThemeToWaitbar(this.hWaitbar);
     % prevent closure of waitbar and show busy state
     set(this.hWaitbar,'pointer','watch');
 end

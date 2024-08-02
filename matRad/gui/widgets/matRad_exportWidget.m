@@ -306,6 +306,9 @@ classdef matRad_exportWidget < matRad_Widget
     methods
         %---------------CALLBACK FOR H2 BUTTON EXPORT
         function this = btn_export_Callback(this,  hObject, event)
+
+            matRad_cfg = MatRad_Config.instance();
+
             handles = this.handles;
             
             exportDir = get(handles.edit_dir_export,'String');
@@ -407,7 +410,8 @@ classdef matRad_exportWidget < matRad_Widget
                 
                 currentCube = 0;
                 
-                hWaitbar = waitbar(0,'Exporting...','WindowStyle', 'modal');
+                hWaitbar = waitbar(0,'Exporting...','WindowStyle', 'modal','Color',matRad_cfg.gui.backgroundColor,'DefaultTextColor',matRad_cfg.gui.textColor);
+                matRad_applyThemeToWaitbar(hWaitbar);
                 cleanUp = onCleanup(@() close(hWaitbar));
                 
                 %CT and Mask export

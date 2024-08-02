@@ -142,7 +142,7 @@ end
 %% Legend and limits
 fontSizeValue = matRad_cfg.gui.fontSize;
 if plotLegend
-    myLegend = legend(axesHandle,'location','NorthEast','FontSize',matRad_cfg.gui.fontSize,'Interpreter','none');
+    myLegend = legend(axesHandle,'location','NorthEast','FontSize',matRad_cfg.gui.fontSize,'TextColor',matRad_cfg.gui.textColor,'Interpreter','none');
     legend(axesHandle,'boxoff');
     legend(axesHandle,'show');
 end

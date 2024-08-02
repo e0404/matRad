@@ -33,7 +33,8 @@ matRad_cfg.dispInfo('Computing 3D Surfaces...\n');
 % initialize waitbar
 % TODO: This should be managed from the user interface instead
 if ~matRad_cfg.disableGUI
-    figureWait = waitbar(0,'Computing 3D Surfaces...');
+    figureWait = waitbar(0,'Computing 3D Surfaces...','Color',matRad_cfg.gui.backgroundColor,'DefaultTextColor',matRad_cfg.gui.textColor);
+    matRad_applyThemeToWaitbar(figureWait);
     % prevent closure of waitbar and show busy state
     set(figureWait,'pointer','watch');
 end

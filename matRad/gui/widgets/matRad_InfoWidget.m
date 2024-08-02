@@ -144,20 +144,7 @@ classdef matRad_InfoWidget < matRad_Widget
             msg{end+1} = matRad_info();
 
             handles.aboutBox = msgbox(msg,'About matRad');
-
-            if matRad_cfg.isOctave
-                txtObj = findall(handles.aboutBox,'type','text');
-                txtObj = txtObj(1);
-                okBtn = findall(handles.aboutBox,'type','uicontrol','style','pushbutton');
-                set(findall(handles.aboutBox,'type','uipanel'),'BackgroundColor',matRad_cfg.gui.backgroundColor);
-            else
-                txtObj = findall(handles.aboutBox,'tag','MessageBox');
-                okBtn = findall(handles.aboutBox,'tag','OKButton');
-                handles.aboutBox.Color = matRad_cfg.gui.backgroundColor;
-            end
-
-            set(txtObj,'Color',matRad_cfg.gui.textColor);
-            set(okBtn,'BackgroundColor',matRad_cfg.gui.elementColor,'ForegroundColor',matRad_cfg.gui.textColor);
+            matRad_applyThemeToDlg(handles.aboutBox);
 
             this.handles = handles;
         end

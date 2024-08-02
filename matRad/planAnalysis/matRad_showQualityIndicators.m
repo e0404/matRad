@@ -63,6 +63,21 @@ end
 
 %since uitable is only available in newer octave versions, we try and catch
 try    
+    colorMatrix = repmat(matRad_cfg.gui.elementColor,numel(rnames),1);
+    ix2 = 2:2:numel(rnames);
+    if ~isempty(ix2)    
+        shadeColor = rgb2hsv(matRad_cfg.gui.elementColor);
+        if shadeColor(3) < 0.5
+            shadeColor(3) = shadeColor(3)*1.5+0.1;
+        else
+            shadeColor(3) = shadeColor(3)*0.5-0.1;
+        end
+
+        colorMatrix(ix2,:) = repmat(hsv2rgb(shadeColor),numel(ix2),1);
+    end
+
+
+
     % Create the uitable
     table = uitable(hF,'Data',qi,...
         'ColumnName',cnames,...
@@ -70,7 +85,8 @@ try
         'units','normalized',...
         'position',pos, ...
         'ForegroundColor',matRad_cfg.gui.textColor,...
-        'BackgroundColor',[matRad_cfg.gui.elementColor;matRad_cfg.gui.backgroundColor]);    
+        'BackgroundColor',colorMatrix,...
+        'RowStriping','on');    
 catch ME
     matRad_cfg.dispWarning('The uitable function is not implemented in %s v%s.',env,vStr);
 end
