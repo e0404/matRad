@@ -354,7 +354,7 @@ resultGUI.usedOptimizer = optimizer;
 resultGUI.info = info;
 
 %Robust quantities
-if FLAG_ROB_OPT || numel(ixForOpt) > 1
+if pln.multScen.totNumScen > 1
     for i = 1:pln.multScen.totNumScen
         scenSubIx = pln.multScen.linearMask(i,:);
         resultGUItmp = matRad_calcCubes(wOpt,dij,pln.multScen.sub2scenIx(scenSubIx(1),scenSubIx(2),scenSubIx(3)));
