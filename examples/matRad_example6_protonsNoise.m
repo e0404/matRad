@@ -108,7 +108,7 @@ cst{ixRectum,6}{1} = struct(objective); % We put it back as struct for storage &
 
 cst{ixRectum,6}{1}.parameters{1} = 40;  % Change the reference dose
 cst{ixRectum,6}{1}.penalty = 500; % Change the penalty
-resultGUI               = matRad_fluenceOptimization(dij,cst,pln);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 resultGUI = matRad_planAnalysis(resultGUI,ct,cst,stf,pln);
 
 display(resultGUI.qi(ixRectum).D_5);

@@ -42,7 +42,7 @@ p = inputParser;
 
 p.addRequired('dvh',@isstruct);
 p.addRequired('cst',@iscell);
-p.addOptional('pln',[],@isstruct);
+p.addOptional('pln',[],@(x) isstruct(x) || isempty(x));
 p.addParameter('axesHandle',[],@isgraphics);
 p.addParameter('plotLegend',true,@(x) isscalar(x) && islogical(x));
 %p.addParameter('plotObjectives',false,@(x) isscalar(x) && islogical(x));

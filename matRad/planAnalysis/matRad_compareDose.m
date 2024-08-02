@@ -57,6 +57,12 @@ function [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, c
 
 matRad_cfg = MatRad_Config.instance();
 
+colorSpec = {'Color',matRad_cfg.gui.elementColor,...
+        'XColor',matRad_cfg.gui.textColor,...
+        'YColor',matRad_cfg.gui.textColor,...
+        'GridColor',matRad_cfg.gui.textColor,...
+        'MinorGridColor',matRad_cfg.gui.backgroundColor};
+
 %% check if cubes consistent
 if ~isequal(size(cube1),size(cube2))
     matRad_cfg.dispError('dose cubes must be the same size\n');
@@ -159,11 +165,10 @@ if enable(1) == 1
         matRad_cfg.dispInfo('Plotting %s plane...\n',planename{plane});
         
         % Initialize Figure
-        hfig.(planename{plane}).('fig') = figure('Renderer', 'painters', 'Position', [10 50 800 800]);
-        set(gcf,'Color',[1 1 1]);
+        hfig.(planename{plane}).('fig') = figure('Position', [10 50 800 800],'Color',matRad_cfg.gui.backgroundColor);
         
         % Plot Dose 1
-        hfig.(planename{plane}).('cube1').Axes = subplot(2,2,1);
+        hfig.(planename{plane}).('cube1').Axes = subplot(2,2,1,colorSpec{:});
         [hfig.(planename{plane}).('cube1').CMap,...
             hfig.(planename{plane}).('cube1').Dose,...
             hfig.(planename{plane}).('cube1').Ct,...
@@ -172,7 +177,7 @@ if enable(1) == 1
             matRad_plotSliceWrapper(gca,ct,cstHandle,1,cube1,plane,slicename{plane},[],[],colorcube,jet,doseWindow,[],100);
         
         % Plot Dose 2
-        hfig.(planename{plane}).('cube2').Axes = subplot(2,2,2);
+        hfig.(planename{plane}).('cube2').Axes = subplot(2,2,2,colorSpec{:});
         [hfig.(planename{plane}).('cube2').CMap,...
             hfig.(planename{plane}).('cube2').Dose,...
             hfig.(planename{plane}).('cube2').Ct,...
@@ -181,7 +186,7 @@ if enable(1) == 1
             matRad_plotSliceWrapper(gca,ct,cstHandle,1,cube2,plane,slicename{plane},[],[],colorcube,jet,doseWindow,[],100);
         
         % Plot absolute difference
-        hfig.(planename{plane}).('diff').Axes = subplot(2,2,3);
+        hfig.(planename{plane}).('diff').Axes = subplot(2,2,3,colorSpec{:});
         [hfig.(planename{plane}).('diff').CMap,...
             hfig.(planename{plane}).('diff').Dose,...
             hfig.(planename{plane}).('diff').Ct,...
@@ -190,7 +195,7 @@ if enable(1) == 1
             matRad_plotSliceWrapper(gca,ct,cstHandle,1,differenceCube,plane,slicename{plane},[],[],colorcube,diffCMap,doseDiffWindow,[],100);
         
         % Plot gamma analysis
-        hfig.(planename{plane}).('gamma').Axes = subplot(2,2,4);
+        hfig.(planename{plane}).('gamma').Axes = subplot(2,2,4,colorSpec{:});
         gammaCMap = matRad_getColormap('gammaIndex');
         [hfig.(planename{plane}).('gamma').CMap,...
             hfig.(planename{plane}).('gamma').Dose,...
@@ -244,33 +249,32 @@ if enable(2) == 1
         yLabelString = 'Dose [Gy]';
     end
     
-    hfig.profiles.fig = figure('Renderer', 'painters', 'Position', [10 50 800 800]);
-    set(gcf,'Color',[1 1 1]);
+    hfig.profiles.fig = figure('Position', [10 50 800 800],'Color',matRad_cfg.gui.backgroundColor);
     
-    hfig.profiles.x = subplot(2,2,1);
-    plot(posX,profilex{1},'r')
+    hfig.profiles.x = subplot(2,2,1,colorSpec{:});
+    plot(hfig.profiles.x,posX,profilex{1},'r')
     hold on
-    plot(posX,profilex{2},'r--')
+    plot(hfig.profiles.x,posX,profilex{2},'r--')
     xlabel('X [mm]','FontSize',fontsize)
     ylabel(yLabelString,'FontSize',fontsize);
     title('x-Profiles');
     legend({'Dose 1','Dose 2'},'Location','southeast')
     legend boxoff
     
-    hfig.profiles.y = subplot(2,2,2);
-    plot(posY,profiley{1},'r')
+    hfig.profiles.y = subplot(2,2,2,colorSpec{:});
+    plot(hfig.profiles.y,posY,profiley{1},'r')
     hold on
-    plot(posY,profiley{2},'r--')
+    plot(hfig.profiles.y,posY,profiley{2},'r--')
     xlabel('Y [mm]','FontSize',fontsize)
     ylabel(yLabelString,'FontSize',fontsize);
     title('y-Profiles');
     legend({'Dose 1','Dose 2'},'Location','southeast')
     legend boxoff
     
-    hfig.profiles.z = subplot(2,2,3);
-    plot(posZ,profilez{1},'r')
+    hfig.profiles.z = subplot(2,2,3,colorSpec{:});
+    plot(hfig.profiles.z,posZ,profilez{1},'r')
     hold on
-    plot(posZ,profilez{2},'r--')
+    plot(hfig.profiles.z,posZ,profilez{2},'r--')
     xlabel('Z [mm]','FontSize',fontsize)
     ylabel(yLabelString,'FontSize',fontsize);
     title('z-Profiles');
@@ -290,9 +294,8 @@ if enable(3) == 1 && ~isempty(cst)
     % Plot DVH
     matRad_cfg.dispInfo('Plotting DVH...');
     
-    hfig.dvh.fig = figure('Renderer', 'painters', 'Position', [10 100 1000 700]);
-    set(gcf,'Color',matRad_cfg.gui.backgroundColor);
-    matRad_showDVH(dvh1,cst,pln);
+    hfig.dvh.fig = figure('Position', [10 100 1000 700],'Color',matRad_cfg.gui.backgroundColor);
+    matRad_showDVH(dvh1,cst,pln,'axesHandle',axes(hfig.dvh.fig,colorSpec{:}));
     hold on
     matRad_showDVH(dvh2,cst,pln,'axesHandle',gca,'LineStyle','--');
     xlim([0 dvhWindow*1.2])
