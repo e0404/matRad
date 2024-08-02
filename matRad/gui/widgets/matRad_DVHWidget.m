@@ -20,7 +20,10 @@ classdef matRad_DVHWidget < matRad_Widget
     properties
         selectedCube = [];
         lockUpdate = false;
+    end
 
+    properties (SetAccess = private)
+        dvhAx;
     end
       
     methods
@@ -89,13 +92,37 @@ classdef matRad_DVHWidget < matRad_Widget
             if isempty(this.selectedCube)
                 return;
             end
+            if isgraphics(this.dvhAx)
+                cla(this.dvhAx);
+            else
+                matRad_cfg = MatRad_Config.instance();
+                this.dvhAx = axes(this.widgetHandle,...
+                    'Color',matRad_cfg.gui.elementColor,...
+                    'XColor',matRad_cfg.gui.textColor,...
+                    'YColor',matRad_cfg.gui.textColor,...
+                    'GridColor',matRad_cfg.gui.textColor,...
+                    'MinorGridColor',matRad_cfg.gui.backgroundColor);
+            end
             resultGUI = evalin('base','resultGUI');
             pln = evalin('base','pln');
             cst = evalin('base','cst');
             % Calculate and show DVH
             doseCube = resultGUI.(this.selectedCube);
             dvh = matRad_calcDVH(cst,doseCube,'cum');
-            matRad_showDVH(axes(this.widgetHandle),dvh,cst,pln);
+            
+            matRad_showDVH(dvh,cst,pln,'axesHandle',this.dvhAx);
+            
+            %check scenarios
+            if pln.multScen.totNumScen > 1
+                for i = 1:pln.multScen.totNumScen
+                    scenFieldName = sprintf('%s_scen%d',this.selectedCube,i);
+                    if isfield(resultGUI,scenFieldName)
+                        tmpDvh = matRad_calcDVH(cst,resultGUI.(scenFieldName),'cum'); % Calculate cumulative scenario DVH
+                        matRad_showDVH(tmpDvh,cst,pln,'axesHandle',this.dvhAx,'plotLegend',false,'LineWidth',0.5,'LineStyle','--'); % Show DVH plot
+                    end
+                end
+            end
+        
             this.widgetHandle.Children(2).Title.String = strrep(this.selectedCube, '_',' ');
         end
         

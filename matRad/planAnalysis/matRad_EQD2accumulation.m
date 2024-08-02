@@ -89,7 +89,7 @@ for i = 1 : size(cst1)
         cube1(structIndices) = 1;
         newPhotonCube = imwarp(cube1,Rmoving,geomtform,'OutputView',Rfixed);
         
-        % ist das hier zulässig? vergrössern wir hier durch interpolation
+        % ist das hier zulï¿½ssig? vergrï¿½ssern wir hier durch interpolation
         % bei imwarp nicht die volumina?
         newStructIndices = find(newPhotonCube > 0);
         
@@ -125,9 +125,9 @@ dvh_EQD2 = matRad_calcDVH(cst2,result.totalEQD2 ./ aimedEQD2);
 dvh_EQD2ratio = matRad_calcDVH(cst2,result.EQD2ratio);
 
 figure;
-matRad_showDVH(dvh_dose,cst2,pln2,1);
+matRad_showDVH(dvh_dose,cst2,pln2,'plotLegend',false,'axesHandle',gca);
 hold on
-matRad_showDVH(dvh_EQD2,cst2,pln2,2);
+matRad_showDVH(dvh_EQD2,cst2,pln2,'plotLegend',false,'axesHandle',gca,'lineStyle','--');
 title(['Added dose cubes divided by aimed dose, straight line RBExD added [aimed: ' num2str(aimedDose) 'Gy], dashed line EQD_2 added [aimed : ' num2str(aimedEQD2) 'Gy]']);
 xlabel('relative Dose [%]');
 legend(cst2{:,2});
@@ -135,7 +135,7 @@ hold off
 
 
 figure;
-matRad_showDVH(dvh_EQD2ratio,cst2,pln2,1);
+matRad_showDVH(dvh_EQD2ratio,cst2,pln2,'plotLegend',false,'axesHandle',gca);
 title('Added EQD_2 divided by added RBExD');
 xlabel('relative Dose [%]');
 

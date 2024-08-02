@@ -34,7 +34,7 @@ classdef matRad_DVHStatsWidget < matRad_Widget
 
                 handleParent = figure(...
                     'Units','normalized',...
-                    'OuterPosition',[0 0 0.5 1],...
+                    'OuterPosition',[0 0.05 0.5 0.95],...
                     'Visible','on',...
                     'Color',matRad_cfg.gui.backgroundColor,...  'CloseRequestFcn',@(hObject,eventdata) figure1_CloseRequestFcn(this,hObject,eventdata),...
                     'IntegerHandle','off',...
@@ -114,14 +114,14 @@ classdef matRad_DVHStatsWidget < matRad_Widget
                         this.dvhWidgetHandle.selectedCube = this.selectedDisplayOption;
                         this.statWidgetHandle.selectedCube = this.selectedDisplayOption;
 
-                    end
+                    else
                         this.dvhWidgetHandle = this.dvhWidgetHandle.doUpdate();
                         this.statWidgetHandle = this.statWidgetHandle.doUpdate();
                         %Clear previous DVH and stat
                         if numel(this.dvhWidgetHandle.widgetHandle.Children) > 2 
                             this.removeOverlap();
                         end
-                 
+                    end                 
                 end
             end
         end

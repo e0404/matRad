@@ -46,7 +46,7 @@ p.addOptional('pln',[],@isstruct);
 p.addParameter('axesHandle',[],@isgraphics);
 p.addParameter('plotLegend',true,@(x) isscalar(x) && islogical(x));
 %p.addParameter('plotObjectives',false,@(x) isscalar(x) && islogical(x));
-p.addParameter('LineWidth',4,@(x) isscalar(x) && x > 0);
+p.addParameter('LineWidth',2.5,@(x) isscalar(x) && x > 0);
 p.CaseSensitive = false;
 p.KeepUnmatched = true;
 
@@ -58,12 +58,14 @@ cst = p.Results.cst;
 pln = p.Results.pln;
 
 plotLegend = p.Results.plotLegend;
-plotObjectives = p.Results.plotObjectives;
+%plotObjectives = p.Results.plotObjectives;
 
+%{
 if plotObjectives && isempty(pln)
     matRad_cfg.dispWarning('Plotting objectives requries pln struct! Disabling.');
     plotObjectives = false;
 end
+%}
 
 lineWidth = p.Results.LineWidth;
 
