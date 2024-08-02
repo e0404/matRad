@@ -1,11 +1,11 @@
-function matRad_showDVH(axesHandle,dvh,cst,pln,lineStyleIndicator)
+function matRad_showDVH(dvh,cst,varargin)
 % matRad dvh visualizaion
 % 
 % call
 %   matRad_showDVH(dvh,cst)
 %   matRad_showDVH(dvh,cst,pln)
-%   matRad_showDVH(dvh,cst,lineStyleIndicator)
-%   matRad_showDVH(dvh,cst,pln,lineStyleIndicator)
+%   matRad_showDVH(dvh,cst,Name,Value)
+%   matRad_showDVH(dvh,cst,pln,Name,Value)
 %
 % input
 %   dvh:                result struct from fluence optimization/sequencing
@@ -35,24 +35,78 @@ function matRad_showDVH(axesHandle,dvh,cst,pln,lineStyleIndicator)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if ~exist('lineStyleIndicator','var') || isempty(lineStyleIndicator)
-    lineStyleIndicator = 1;
+matRad_cfg = MatRad_Config.instance();
+
+%% Parse input
+p = inputParser;
+
+p.addRequired('dvh',@isstruct);
+p.addRequired('cst',@iscell);
+p.addOptional('pln',[],@isstruct);
+p.addParameter('axesHandle',[],@isgraphics);
+p.addParameter('plotLegend',true,@(x) isscalar(x) && islogical(x));
+%p.addParameter('plotObjectives',false,@(x) isscalar(x) && islogical(x));
+p.addParameter('LineWidth',4,@(x) isscalar(x) && x > 0);
+p.CaseSensitive = false;
+p.KeepUnmatched = true;
+
+p.parse(dvh,cst,varargin{:});
+
+axesHandle = p.Results.axesHandle;
+dvh = p.Results.dvh;
+cst = p.Results.cst;
+pln = p.Results.pln;
+
+plotLegend = p.Results.plotLegend;
+plotObjectives = p.Results.plotObjectives;
+
+if plotObjectives && isempty(pln)
+    matRad_cfg.dispWarning('Plotting objectives requries pln struct! Disabling.');
+    plotObjectives = false;
 end
 
-% create new figure and set default line style indicator if not explictly
-% specified
+lineWidth = p.Results.LineWidth;
+
+%Get unmatched arguments
+fields = fieldnames(p.Unmatched);
+values = struct2cell(p.Unmatched);
+unmatchedPlotArguments = [fields';values'];
+
+
+%% Preprocessing
+if isempty(axesHandle)
+    axesHandle = axes(...
+        figure('Color',matRad_cfg.gui.backgroundColor),...
+        'Color',matRad_cfg.gui.elementColor,...
+        'XColor',matRad_cfg.gui.textColor,...
+        'YColor',matRad_cfg.gui.textColor,...
+        'GridColor',matRad_cfg.gui.textColor,...
+        'MinorGridColor',matRad_cfg.gui.backgroundColor);
+end
+
+%Hold for plotting multiple DVHs
 hold(axesHandle,'on');
+
+hFig = get(axesHandle,'Parent');
+h = findobj(hFig,'type','legend');
+
+if ~isempty(h) 
+    if ~plotLegend    
+        h.AutoUpdate = false;
+    else
+        h.AutoUpdate = true;
+    end
+end
 
 %reduce cst
 visibleIx = cellfun(@(c) c.Visible == 1,cst(:,5));
 cstNames = cst(visibleIx,2);
 cstInfo = cst(visibleIx,5);
+%cstObjectives = cst(visibleIx,6);
 dvh = dvh(visibleIx);
 
 numOfVois = numel(cstNames);
-        
-%% print the dvh
-
+      
 %try to get colors from cst
 try
     colorMx = cellfun(@(c) c.visibleColor,cstInfo,'UniformOutput',false);
@@ -62,28 +116,34 @@ catch
     colorMx    = colorMx(1:floor(64/numOfVois):64,:);
 end
 
-lineStyles = {'-',':','--','-.'};
-
 maxDVHvol  = 0;
 maxDVHdose = 0;
 
+%% print the dvhs
 for i = 1:numOfVois
     % cut off at the first zero value where there is no more signal
     % behind
     ix      = max([1 find(dvh(i).volumePoints>0,1,'last')]);
     currDvh = [dvh(i).doseGrid(1:ix);dvh(i).volumePoints(1:ix)];
     
-    plot(axesHandle,currDvh(1,:),currDvh(2,:),'LineWidth',4,'Color',colorMx(i,:), ...
-        'LineStyle',lineStyles{lineStyleIndicator},'DisplayName',cstNames{i})
+    if plotLegend
+        plot(axesHandle,currDvh(1,:),currDvh(2,:),'LineWidth',lineWidth,'Color',colorMx(i,:),'DisplayName',cstNames{i},unmatchedPlotArguments{:});
+    else
+        plot(axesHandle,currDvh(1,:),currDvh(2,:),'LineWidth',lineWidth,'Color',colorMx(i,:),unmatchedPlotArguments{:});
+    end
     
     maxDVHvol  = max(maxDVHvol,max(currDvh(2,:)));
     maxDVHdose = max(maxDVHdose,max(currDvh(1,:)));
 end
 
-fontSizeValue = 14;
-myLegend = legend(axesHandle,'show','location','NorthEast');
-set(myLegend,'FontSize',10,'Interpreter','none');
-legend(axesHandle,'boxoff')
+
+%% Legend and limits
+fontSizeValue = matRad_cfg.gui.fontSize;
+if plotLegend
+    myLegend = legend(axesHandle,'location','NorthEast','FontSize',matRad_cfg.gui.fontSize,'Interpreter','none');
+    legend(axesHandle,'boxoff');
+    legend(axesHandle,'show');
+end
 
 ylim(axesHandle,[0 1.1*maxDVHvol]);
 xlim(axesHandle,[0 1.2*maxDVHdose]);
@@ -93,7 +153,7 @@ box(axesHandle,'on'); %box(gca,'on');
 set(axesHandle,'LineWidth',1.5,'FontSize',fontSizeValue); %set(gca,'LineWidth',1.5,'FontSize',fontSizeValue);
 ylabel(axesHandle,'Volume [%]','FontSize',fontSizeValue)
 
-if exist('pln','var') && ~isempty(pln)
+if ~isempty(pln)
 
     if strcmp(pln.bioParam.model,'none')
         xlabel('Dose [Gy]','FontSize',fontSizeValue);
@@ -102,6 +162,5 @@ if exist('pln','var') && ~isempty(pln)
     end
 else
     xlabel('Dose [Gy]','FontSize',fontSizeValue);
-
 end
 hold(axesHandle,'off');
