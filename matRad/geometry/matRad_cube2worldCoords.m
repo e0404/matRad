@@ -32,7 +32,7 @@ if nargin == 2 && ~isempty(vCoord)
     if isfield(gridStruct, 'dicomInfo') && isfield(gridStruct.dicomInfo,'ImagePositionPatient')
         firstVox = gridStruct.dicomInfo.ImagePositionPatient;
     else 
-        firstVox = -(gridStruct.cubeDim./2).*[gridStruct.resolution.x gridStruct.resolution.y gridStruct.resolution.z] ;
+        firstVox = -(gridStruct.dimensions./2).*[gridStruct.resolution.x gridStruct.resolution.y gridStruct.resolution.z] ;
     end 
     if  prod(prod(vCoord<=gridStruct.dimensions))  && prod(prod(vCoord>=0))       
         coord(1,:) = firstVox(1) + (vCoord(:,1) - 1 ) *gridStruct.resolution.x;
