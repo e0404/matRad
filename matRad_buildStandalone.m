@@ -30,6 +30,8 @@ p.addParameter('compileWithRT',false,@islogical);                               
 p.addParameter('buildDir',fullfile(matRadRoot,'build'),@(x) ischar(x) || isstring(x));  %Build directory
 p.addParameter('verbose',false,@islogical);
 p.addParameter('docker',false,@islogical);
+p.addParameter('java',false,@islogical);
+p.addParameter('python',false,@islogical);
 
 p.parse(varargin{:});
 
@@ -37,6 +39,8 @@ isRelease = p.Results.isRelease;
 compileWithRT = p.Results.compileWithRT;
 buildDir = p.Results.buildDir;
 buildDocker = all(p.Results.docker);
+buildJava   = all(p.Results.java);
+buildPython = all(p.Results.python);
 
 if all(p.Results.verbose)
     verbose = 'On';
@@ -87,7 +91,7 @@ buildOpts = compiler.build.StandaloneApplicationOptions('matRadGUI.m',...
     'ExecutableIcon',fullfile(standaloneFolder,'matRad_icon.png'),...
     'AutodetectDataFiles','on',...
     'AdditionalFiles',{'matRad','thirdParty','matRad_rc.m'},...
-    'EmbedArchive','off',...
+    'EmbedArchive','on',...
     'ExecutableName','matRad',...
     'ExecutableSplashScreen',fullfile(standaloneFolder,'matRad_splashscreen.png'),...
     'ExecutableVersion',vernumApp,...
@@ -137,6 +141,32 @@ packageOpts = compiler.package.InstallerOptions(results,...
     'Verbose',verbose);
 
 compiler.package.installer(results,'Options',packageOpts);
+
+%% Python
+if buildPython
+    pythonOpts = compiler.build.PythonPackageOptions('matRadGUI.m',...
+        'AdditionalFiles',{'matRad','thirdParty','matRad_rc.m'},...
+        'Verbose',verbose, ...
+        'PackageName','pyMatRad',...
+        'OutputDir',fullfile(buildDir,'python'));
+    try
+        results = compiler.build.pythonPackage(pythonOpts);
+    catch ME
+        warning(ME.identifier,'Java build failed due to %s!',ME.message);
+    end
+end
+
+%% Java
+if buildJava
+    javaOpts = compiler.build.JavaPackageOptions('matRadGUI.m',...
+        'AdditionalFiles',{'matRad','thirdParty','matRad_rc.m'},...
+        'Verbose',verbose);
+    try
+        results = compiler.build.javaPackage(javaOpts);
+    catch ME
+        warning(ME.identifier,'Java build failed due to %s!',ME.message);
+    end
+end
 
 %% Docker
 if ~buildDocker
