@@ -134,7 +134,8 @@ end
 
 %% Visualize results
 plane      = 3;
-slice      = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
+slice = matRad_world2cubeCoords(pln.propStf.isoCenter(1,:),ct);
+slice = slice(3);
 
 figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExD_beam1      ,plane,slice,[],[],colorcube,[],[0 max(resultGUI.RBExD_beam1(:))],[]);title('conventional plan - beam1')
 figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.RBExD_beam1,plane,slice,[],[],colorcube,[],[0 max(resultGUIrobust.RBExD_beam1(:))],[]);title('robust plan - beam1')

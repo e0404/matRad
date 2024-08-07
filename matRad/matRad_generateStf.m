@@ -192,6 +192,10 @@ if isempty(V)
     matRad_cfg.dispError('Could not find target.');
 end
 
+% get world coordinate system
+ct = matRad_getWorldAxes(ct);
+
+
 % Convert linear indices to 3D voxel coordinates
 [coordsY_vox, coordsX_vox, coordsZ_vox] = ind2sub(ct.cubeDim,V);
 
@@ -218,10 +222,9 @@ if isExternalTherapy
 
         % Correct for iso center position. Whit this correction Isocenter is
         % (0,0,0) [mm]
-        coordsX = coordsX_vox*ct.resolution.x - pln.propStf.isoCenter(i,1);
-        coordsY = coordsY_vox*ct.resolution.y - pln.propStf.isoCenter(i,2);
-        coordsZ = coordsZ_vox*ct.resolution.z - pln.propStf.isoCenter(i,3);
-
+        wCoords = matRad_cube2worldCoords([coordsX_vox, coordsY_vox, coordsZ_vox], ct);
+        Icoords = wCoords - pln.propStf.isoCenter(i,:);
+        
         % Save meta information for treatment plan
         stf(i).gantryAngle   = pln.propStf.gantryAngles(i);
         stf(i).couchAngle    = pln.propStf.couchAngles(i);
@@ -237,7 +240,7 @@ if isExternalTherapy
         % rotation matrix are necessary
         rotMat_system_T = matRad_getRotationMatrix(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i));
 
-        rot_coords = [coordsX coordsY coordsZ]*rotMat_system_T;
+        rot_coords = [Icoords]*rotMat_system_T;
 
         % project x and z coordinates to isocenter
         coordsAtIsoCenterPlane(:,1) = (rot_coords(:,1)*SAD)./(SAD + rot_coords(:,2));
@@ -325,12 +328,14 @@ if isExternalTherapy
 
         % loop over all rays to determine meta information for each ray
         stf(i).numOfBixelsPerRay = ones(1,stf(i).numOfRays);
-
+        
+        % mm axes with isocenter at  (0,0,0)
+        mmCubeisoCenter =  matRad_world2isocentricCoords(stf(i).isoCenter,ct);
         for j = stf(i).numOfRays:-1:1
-
+            
             for ShiftScen = 1:pln.multScen.totNumShiftScen
                 % ray tracing necessary to determine depth of the target
-                [alphas,l{ShiftScen},rho{ShiftScen},d12,~] = matRad_siddonRayTracer(stf(i).isoCenter + pln.multScen.isoShift(ShiftScen,:), ...
+                [alphas,l{ShiftScen},rho{ShiftScen},d12,~] = matRad_siddonRayTracer(mmCubeisoCenter + pln.multScen.isoShift(ShiftScen,:), ...
                     ct.resolution, ...
                     stf(i).sourcePoint, ...
                     stf(i).ray(j).targetPoint, ...
@@ -591,9 +596,10 @@ if isExternalTherapy
 
                 % generate a 3D rectangular grid centered at isocenter in
                 % voxel coordinates
-                [X,Y,Z] = meshgrid((1:ct.cubeDim(2))-stf(i).isoCenter(1)/ct.resolution.x, ...
-                    (1:ct.cubeDim(1))-stf(i).isoCenter(2)/ct.resolution.y, ...
-                    (1:ct.cubeDim(3))-stf(i).isoCenter(3)/ct.resolution.z);
+                cubeIso = matRad_world2cubeCoords(stf(i).isoCenter,ct);
+                [X,Y,Z] = meshgrid( (1:ct.cubeDim(2))- cubeIso(1), ...
+                                    (1:ct.cubeDim(1))- cubeIso(2), ...
+                                    (1:ct.cubeDim(3))- cubeIso(3));
 
                 % computes surface
                 patSurfCube      = 0*ct.cube{1};
@@ -662,7 +668,7 @@ if isExternalTherapy
             subplot(1,2,2)
 
             % Plot target coordinates whitout any rotation
-            plot3(coordsX,coordsY,coordsZ,'r.')
+            plot3(Icoords,'r.')
             hold on;
 
             % Rotated projection matrix at isocenter

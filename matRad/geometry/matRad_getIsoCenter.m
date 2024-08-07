@@ -65,15 +65,16 @@ if isempty(V)
 end
 
 % Transform subcripts from linear indices 
-[yCoordsV, xCoordsV, zCoordsV] = ind2sub(ct.cubeDim,V);
+[coordV(:,2), coordV(:,1), coordV(:,3)] = ind2sub(ct.cubeDim,V);
+
 
 % Transform to [mm]
-xCoordsV = xCoordsV * ct.resolution.x;
-yCoordsV = yCoordsV * ct.resolution.y;
-zCoordsV = zCoordsV * ct.resolution.z;
+coord = matRad_cube2worldCoords(coordV, ct); %idx2worldcoord
+
 
 % Calculated isocenter.
-isoCenter = mean([xCoordsV yCoordsV zCoordsV]);
+isoCenter = mean(coord);
+
 
 % Visualization
 if visBool
@@ -82,7 +83,7 @@ if visBool
     hold on
     
     % Plot target
-    plot3(yCoordsV,xCoordsV,zCoordsV,'kx')
+    plot3(coord(:,2), coord(:,1), coord(:,3),'kx')
     
     % Show isocenter: red point
     plot3(isoCenter(2),isoCenter(1),isoCenter(3),'r.','MarkerSize',30)

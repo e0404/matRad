@@ -85,7 +85,8 @@ resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf) ;
 [resultGUI, timeSequence] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI); 
 
 % plot the result in comparison to the static dose
-slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z); 
+slice = matRad_world2cubeCoords(pln.propStf.isoCenter(1,:),ct);
+slice = slice(3);
 
 figure 
 

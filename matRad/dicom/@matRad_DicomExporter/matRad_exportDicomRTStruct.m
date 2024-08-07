@@ -91,14 +91,8 @@ meta.AccessionNumber = '';
 ct = obj.ct;
 
 %Create X Y Z vectors if not present
-if ~any(isfield(ct,{'x','y','z'}))
-    %positionOffset = transpose(ct.cubeDim ./ 2);
-    %positionOffset = ct.cubeDim .* [ct.resolution.y, ct.resolution.x, ct.resolution.z] ./ 2;
-    positionOffset = [ct.resolution.y, ct.resolution.x, ct.resolution.z] ./ 2;
-    ct.x = ct.resolution.x*[0:ct.cubeDim(2)-1] - positionOffset(2);
-    ct.y = ct.resolution.y*[0:ct.cubeDim(1)-1] - positionOffset(1);
-    ct.z = ct.resolution.z*[0:ct.cubeDim(3)-1] - positionOffset(3);
-end
+ct = matRad_getWorldAxes(ct);
+
 
 
 %Since we are exporting HU directly --> no rescaling in any case
