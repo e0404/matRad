@@ -22,6 +22,10 @@ classdef (Abstract) matRad_LQRBETabulatedModel < matRad_LQBasedModel
     properties
         RBEtableName;
         defaultRBETable;
+        fragmentsToInclude;
+    end
+
+    properties (SetAccess = protected, GetAccess = public)
         RBEtable;
     end
 
@@ -35,12 +39,14 @@ classdef (Abstract) matRad_LQRBETabulatedModel < matRad_LQBasedModel
 
     methods
         function this = matRad_LQRBETabulatedModel()
-            matRad_cfg = MatRad_Config.instance();
+            %matRad_cfg = MatRad_Config.instance();
             
             this@matRad_LQBasedModel();
             
+            this.assignDefaultProperties();
+            
             % This just for testing
-            this.defaultRBETable = 'RBEtable_rapidLEM_Russo2011_longErange_LEMI30';
+            %this.defaultRBETable = 'RBEtable_rapidLEM_Russo2011_longErange_LEMI30';
         
         end
 
@@ -55,29 +61,29 @@ classdef (Abstract) matRad_LQRBETabulatedModel < matRad_LQBasedModel
 
         end
 
-        function assignBioModelPropertiesFromEngine(this, engine)
-            
-            matRad_cfg = MatRad_Config.instance();
-
-            % Check RBE table
-            if isprop(engine, 'bioProperties')
-                if isfield(engine.bioProperties, 'RBEtable')
-                
-                    this.RBEtableName = engine.bioProperties.RBEtable;
-                else
-                    this.RBEtableName = this.defaultRBETable;
-                    matRad_cfg.dispWarning('No RBE table specified, using default table: %s', this.defaultRBETable)
-                end
-
-            end
-           
-            this.RBEtable = this.loadRBEtable(this.RBEtableName);
-
-            this.availableAlphaInTable = [this.RBEtable.data(:).alphaX]';
-            this.availableBetaInTable  = [this.RBEtable.data(:).betaX]';
-            this.availableFragmentsInTable = [this.RBEtable.data(1).includedIons];
-
-        end
+        % function assignBioModelPropertiesFromEngine(this, engine)
+        % 
+        %     matRad_cfg = MatRad_Config.instance();
+        % 
+        %     % Check RBE table
+        %     if isprop(engine, 'bioProperties')
+        %         if isfield(engine.bioProperties, 'RBEtable')
+        % 
+        %             this.RBEtableName = engine.bioProperties.RBEtable;
+        %         else
+        %             this.RBEtableName = this.defaultRBETable;
+        %             matRad_cfg.dispWarning('No RBE table specified, using default table: %s', this.defaultRBETable)
+        %         end
+        % 
+        %     end
+        % 
+        %     this.RBEtable = this.loadRBEtable(this.RBEtableName);
+        % 
+        %     this.availableAlphaInTable = [this.RBEtable.data(:).alphaX]';
+        %     this.availableBetaInTable  = [this.RBEtable.data(:).betaX]';
+        %     this.availableFragmentsInTable = [this.RBEtable.data(1).includedIons];
+        % 
+        % end
 
         function vTissueIndex = getTissueInformation(this,~, cst, dij,vAlphaX, ~, VdoseGrid, VdoseGridScenIx)
 
@@ -185,6 +191,62 @@ classdef (Abstract) matRad_LQRBETabulatedModel < matRad_LQBasedModel
             end
         end
 
+        function calcAvailable = checkBioCalcConsistency(this, machine)
+            
+            matRad_cfg = MatRad_Config.instance();
+
+            calcAvailable = checkBioCalcConsistency@matRad_LQBasedModel(this, machine);
+
+            if isempty(this.RBEtable) && isempty(this.RBEtableName)
+                this.RBEtableName = this.defaultRBETable;
+                matRad_cfg.dispWarning('No RBE table specified, using default table!');
+            end
+
+        end
+
+    end
+
+    methods
+
+        function assignDefaultProperties(this)
+            this.defaultRBETable =  'RBEtable_rapidLEMI_testTable';
+            this.fragmentsToInclude = {'H'};
+        end
+
+        function updateRBEtable(this)
+            
+            this.RBEtable = this.loadRBEtable(this.RBEtableName);
+
+            this.availableAlphaInTable = [this.RBEtable.data(:).alphaX]';
+            this.availableBetaInTable  = [this.RBEtable.data(:).betaX]';
+            this.availableFragmentsInTable = [this.RBEtable.data(1).includedIons];
+        end
+
+      
+    end
+
+    
+    methods %(Setters)
+        
+        function set.RBEtableName(this, value)
+
+            this.RBEtableName = value;
+            this.updateRBEtable();
+
+        end
+
+        function set.fragmentsToInclude(this, value)
+
+            if iscell(value)
+                this.fragmentsToInclude = value;
+                this.updatePropertyValues();
+            else
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Fragments to include should be a cell array: %s', tostring(value));
+            end
+
+        end
+    
     end
 
     methods (Static)
@@ -207,6 +269,66 @@ classdef (Abstract) matRad_LQRBETabulatedModel < matRad_LQBasedModel
             end
 
         end
+
+        function checkTableConsistency(RBEtable, fragments)
+
+           
+            matRad_cfg = MatRad_Config.instance();
+            % For the time being this checks for the RBEtabel field
+            % data.includedIonZ. TODO: change in the RBE table entry the
+            % included Ion Z with some more structured particle information
+            % nABratios = numel(this.RBEtable.data);
+
+
+            %availableZs = arrayfun(@(abRatio) abRatio.includedIonZ, this.RBEtable.data, 'UniformOutput',false);
+            availableZs = RBEtable.data(1).includedIons;
+            %requiredFragments = this.fragmentsToInclude;
+            
+            if any(~ismember(fragments, availableZs))
+                excludedFragments = fragments(~ismember(fragments, availableZs));
+                matRad_cfg.dispError('Included RBE table does not contain information %s,',excludedFragments);
+            end
+          
+        end
+
+
+        function checkRBEtableStructure(RBEtable)
+            % Additional function to check structure of the Table
+
+            matRad_cfg = MatRad_Config.instance();
+
+            % Check structure of the table
+            if ~isstruct(RBEtable)
+                matRad_cfg.dispError('Provided Table is not a struct!');
+            end
+
+            if ~isequal(fieldnames(RBEtable), {'meta', 'data'}')
+
+                matRad_cfg.dispError('Provided Table does not contain meta and data fields');
+
+            end
+
+            numOfTissues = numel(RBEtable.data);
+            tissueAlphaBetaRatios = [RBEtable.data.alphaX]./[RBEtable.data.betaX];
+
+            includedIons = RBEtable.data(1).includedIons;
+
+            matRad_cfg.dispInfo('%2u tissues found in RBEtable\n', numOfTissues);
+            matRad_cfg.dispInfo('with alpha/beta reatios of:\n');
+
+            for tIdx = tissueAlphaBetaRatios
+                matRad_cfg.dispInfo('\t %2.3f:\n', tIdx);
+            end
+
+            matRad_cfg.dispInfo('Data available for ions: ');
+            for fIdx = includedIons
+                matRad_cfg.dispInfo('%s ', fIdx{1});
+            end
+
+            matRad_cfg.dispInfo('\n');
+
+        end
+
 
 
     end

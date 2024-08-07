@@ -4,7 +4,9 @@ classdef matRad_TabulatedSpecralKernelBasedModel < matRad_LQRBETabulatedModel
 % The model can handle multiple tissue alphaX/betaX ratio specified by the 
 % cst structure, as long as a compatible RBEtable is provided.
 %
-% Properties of the model that can be defined by the user in pln.propDoseCalc.bioProperties:
+% Properties of the model that can be defined by the users:
+%   RBEtableName        filename of the table to be included
+%
 %   fragmentsToInclude  specifies which fragments to include in the
 %                       biological calculation (i.e. 'H', 'He', 'C',...)
 %
@@ -28,18 +30,22 @@ classdef matRad_TabulatedSpecralKernelBasedModel < matRad_LQRBETabulatedModel
     end
 
     properties
-        weightBy = 'Fluence';
-        fragmentsToInclude = {'H'};
+        weightBy;
     end
 
     methods
         function this = matRad_TabulatedSpecralKernelBasedModel()
             this@matRad_LQRBETabulatedModel();
       
+            
             % this.requiredQuantities not assigned here because it depends
             % on the specific user defined properties. Could add here just
             % a default
             this.availableRadiationModalities = {'protons', 'carbon', 'helium'};
+
+            
+            this.assignDefaultProperties();
+
         end
 
 
@@ -111,71 +117,90 @@ classdef matRad_TabulatedSpecralKernelBasedModel < matRad_LQRBETabulatedModel
             bixel.alpha = alphaWeightedSpectra./spectraBixelDenominator;
             bixel.beta  = betaWeightedSpectra./spectraBixelDenominator;
         end
+        
+        % function assignBioModelPropertiesFromEngine(this, engine)
+        % 
+        % 
+        %     matRad_cfg = MatRad_Config.instance();
+        % 
+        %     % Call superclass funtion
+        %     assignBioModelPropertiesFromEngine@matRad_LQRBETabulatedModel(this, engine);
+        % 
+        %     % Check fragments
+        %     if isprop(engine, 'bioProperties')
+        % 
+        %         if isfield(engine.bioProperties, 'fragmentsToInclude')
+        %             this.fragmentsToInclude = engine.bioProperties.fragmentsToInclude;
+        %         else
+        %             matRad_cfg.dispWarning('No fragments included! Only using ions identical to primary, this might result in inaccurate prediciton!');
+        %             switch engine.machine.meta.radiationMode
+        %                 case 'protons'
+        %                     this.fragmentsToInclude = {'H'};
+        %                 case 'carbon'
+        %                     this.fragmentsToInclude = {'C'};
+        %                 case 'helium'
+        %                     this.fragmentsToInclude = {'He'};
+        %             end
+        %         end
+        % 
+        %         % Check the weighting factors (spectra)
+        %         if  isfield(engine.bioProperties, 'weightBy')
+        %             this.weightBy = engine.bioProperties.weightBy;
+        %         else
+        %             this.weightBy = 'Fluence';
+        %         end
+        % 
+        %     end
+        % 
+        %     % This field is checked in the base data, depends on the
+        %     % specific spectra and fragments that are included by the user
+        %     % This also becomes the name tag for the bixel field containing
+        %     % this interpolated quantity
+        %     this.requiredQuantities = cellfun(@(fragment) ['Spectra.', this.weightBy, '.', fragment, '.Data'], this.fragmentsToInclude, 'UniformOutput',false); %[requiredSpectraData;requriedEnergies];
+        % 
+        %     % Check table consistency
+        %     this.checkTableConsistency();
+        % end
 
 
-        function assignBioModelPropertiesFromEngine(this, engine)
 
+    end
+    methods
+
+        function assignDefaultProperties(this)
             
-            matRad_cfg = MatRad_Config.instance();
-
-            % Call superclass funtion
-            assignBioModelPropertiesFromEngine@matRad_LQRBETabulatedModel(this, engine);
-
-            % Check fragments
-            if isprop(engine, 'bioProperties') 
-                
-                if isfield(engine.bioProperties, 'fragmentsToInclude')
-                    this.fragmentsToInclude = engine.bioProperties.fragmentsToInclude;
-                else
-                    matRad_cfg.dispWarning('No fragments included! Only using ions identical to primary, this might result in inaccurate prediciton!');
-                    switch engine.machine.meta.radiationMode
-                        case 'protons'
-                            this.fragmentsToInclude = {'H'};
-                        case 'carbon'
-                            this.fragmentsToInclude = {'C'};
-                        case 'helium'
-                            this.fragmentsToInclude = {'He'};
-                    end
-                end
-
-                % Check the weighting factors (spectra)
-                if  isfield(engine.bioProperties, 'weightBy')
-                    this.weightBy = engine.bioProperties.weightBy;
-                else
-                    this.weightBy = 'Fluence';
-                end
-
-            end
-
-            % This field is checked in the base data, depends on the
-            % specific spectra and fragments that are included by the user
-            % This also becomes the name tag for the bixel field containing
-            % this interpolated quantity
-            this.requiredQuantities = cellfun(@(fragment) ['Spectra.', this.weightBy, '.', fragment, '.Data'], this.fragmentsToInclude, 'UniformOutput',false); %[requiredSpectraData;requriedEnergies];
-
-            % Check table consistency
-            this.checkTableConsistency();
+            assignDefaultProperties@matRad_LQRBETabulatedModel(this);
+            this.weightBy = 'Fluence';
+            
         end
 
 
-        function checkTableConsistency(this)
+        function set.weightBy(this, value)
 
-            matRad_cfg = MatRad_Config.instance();
-            % For the time being this checks for the RBEtabel field
-            % data.includedIonZ. TODO: change in the RBE table entry the
-            % included Ion Z with some more structured particle information
-            % nABratios = numel(this.RBEtable.data);
-
-
-            %availableZs = arrayfun(@(abRatio) abRatio.includedIonZ, this.RBEtable.data, 'UniformOutput',false);
-            availableZs = this.RBEtable.data(1).includedIons;
-            requiredFragments = this.fragmentsToInclude;
-            
-            if any(~ismember(this.fragmentsToInclude, availableZs))
-                excludedFragments = this.fragmentsToInclude(~ismember(this.fragmentsToInclude, availableZs));
-                matRad_cfg.dispError('Included RBE table does not contain information %s,',excludedFragments);
+            if ischar(value)
+                this.weightBy = value;
+                this.updatePropertyValues();
+            else
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Unrecognized weighting quantity: %s', tostring(value));
             end
-          
+
         end
+
+       
+        function updatePropertyValues(this)
+        
+            if ~isempty(this.weightBy) && ~isempty(this.fragmentsToInclude)
+            
+                this.requiredQuantities = cellfun(@(fragment) ['Spectra.', this.weightBy, '.', fragment, '.Data'], this.fragmentsToInclude, 'UniformOutput',false); %[requiredSpectraData;requriedEnergies];
+            end
+
+
+            if ~isempty(this.RBEtable)
+                this.checkTableConsistency(this.RBEtable, this.fragmentsToInclude);
+            end
+
+        end
+
     end
 end
