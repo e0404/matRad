@@ -246,25 +246,25 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
                     tmpBixel.radDepths = bixel.radDepths(:);
 
                     % Finaly apply the model
-                    tmpBixel = this.bioParam.calcBiologicalQuantitiesForBixel(tmpBixel,linKernel);
+                    tmpBixel = this.bioModel.calcBiologicalQuantitiesForBixel(tmpBixel,linKernel);
 
                     % Restore everything back to normal
                     tmpBixel.radDepths = reshape(tmpBixel.radDepths, size(bixel.radDepths));
                     
                     % Find those fields that were computed by biological
                     % model
-                    bioParamFields = fieldnames(tmpBixel);
-                    bioParamFields = bioParamFields(~ismember(bioParamFields, fieldnames(bixel)))';
+                    bioModelFileds = fieldnames(tmpBixel);
+                    bioModelFileds = bioModelFileds(~ismember(bioModelFileds, fieldnames(bixel)))';
                     
                     % restore them back to correct dimensionality as well
-                    for i=bioParamFields
+                    for i=bioModelFileds
                         bixel.(i{1}) = reshape(tmpBixel.(i{1}), size(bixel.radDepths));
                     end
                 else
-                    bixel = this.bioParam.calcBiologicalQuantitiesForBixel(bixel,kernel);
+                    bixel = this.bioModel.calcBiologicalQuantitiesForBixel(bixel,kernel);
                 end
 
-                if isa(this.bioParam, 'matRad_LQBasedModel')
+                if isa(this.bioModel, 'matRad_LQBasedModel')
                     bixel.mAlphaDose    = (squeeze(bixel.alpha) .* squeeze(tmpDose))*bixel.finalSubWeight;
                     bixel.mSqrtBetaDose = (squeeze(sqrt(bixel.beta)) .* squeeze(tmpDose))*bixel.finalSubWeight;
                 end

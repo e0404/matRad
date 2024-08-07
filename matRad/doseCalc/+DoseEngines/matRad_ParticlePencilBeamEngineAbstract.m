@@ -217,7 +217,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
 
             
             % Biological kernels
-            biologicalKernels = this.bioParam.requiredQuantities;
+            biologicalKernels = this.bioModel.requiredQuantities;
             for kernelIdx = 1:numel(biologicalKernels)
 
                 % Get the kernel, can be 1 or 2 dimensional kernel
@@ -381,7 +381,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                 dij.RBE = this.constantRBE;
             end
   
-            if ~isa(this.bioParam, 'matRad_None') && ~isa(this.bioParam, 'matRad_ConstantRBE')
+            if ~isa(this.bioModel, 'matRad_None') && ~isa(this.bioModel, 'matRad_ConstantRBE')
                 % This is independent of the biological model implemented.
                 % Not performed for 'none' and 'constRBE' because not
                 % neccessary. We could as well always do this calculation,
@@ -391,7 +391,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
 
                 dij = this.allocateBioDoseContainer(dij);
              
-                [this.vTissueIndex] = this.bioParam.getTissueInformation(this.machine,cst,dij,this.vAlphaX, this.vBetaX,this.VdoseGrid, this.VdoseGridScenIx);
+                [this.vTissueIndex] = this.bioModel.getTissueInformation(this.machine,cst,dij,this.vAlphaX, this.vBetaX,this.VdoseGrid, this.VdoseGridScenIx);
            
 
             end

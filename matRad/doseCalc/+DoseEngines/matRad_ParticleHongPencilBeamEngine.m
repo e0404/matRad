@@ -89,10 +89,10 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
             if this.calcBioDose                               
                 % This updates the info in bixel adding the necessary
                 % quantities
-                bixel = this.bioParam.calcBiologicalQuantitiesForBixel(bixel,kernels);
+                bixel = this.bioModel.calcBiologicalQuantitiesForBixel(bixel,kernels);
 
 
-                if isa(this.bioParam, 'matRad_LQBasedModel')
+                if isa(this.bioModel, 'matRad_LQBasedModel')
                     bixel.mAlphaDose    = bixel.physicalDose .* bixel.alpha;
                     bixel.mSqrtBetaDose = bixel.physicalDose .* sqrt(bixel.beta);
                 end

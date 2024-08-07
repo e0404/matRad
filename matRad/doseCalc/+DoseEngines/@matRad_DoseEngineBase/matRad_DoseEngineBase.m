@@ -33,7 +33,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         multScen;                   % scenario model to use
         voxelSubIx;                 % selection of where to calculate / store dose, empty by default
         selectVoxelsInScenarios;    % which voxels to compute in robustness scenarios
-        bioModel;                   % name of the biological model
+        %bioModel;                   % name of the biological model
     end
     
     % Protected properties with public get access
@@ -64,8 +64,8 @@ classdef (Abstract) matRad_DoseEngineBase < handle
 
         robustVoxelsOnGrid; %voxels to be computed in robustness scenarios
         
-        bioParam;                   % Biological dose modeling class
-        bioProperties;
+        bioModel;                   % Biological dose modeling class
+        %bioProperties;
 
     end
     
@@ -125,7 +125,31 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             if nargin < 3 || ~isscalar(warnWhenPropertyChanged) || ~islogical(warnWhenPropertyChanged)
                 warnWhenPropertyChanged = false;
             end
+            
+            % Check older field name
+            if isfield(pln, 'bioParam') && ~isfield(pln, 'bioModel')
+                matRad_cfg.dispDeprecationWarning('Quantity pln.bioParam will be deprecated, use pln.bioModel instead');
+                pln.bioModel = pln.bioParam;
+            end
 
+            % Check whether the set field is already a bioModel or a struct
+            if isfield(pln, 'bioModel')
+                if isa(pln.bioModel, 'matRad_BiologicalModel')
+                    this.bioModel = pln.bioModel;
+
+                elseif isstruct(pln.bioModel)
+                    if isfield(pln.bioModel, 'model')
+                        this.bioModel = matRad_bioModel(pln.radiationMode,pln.bioModel.model);
+                        pln.bioModel = rmfield(pln.bioModel, 'model');
+                        this.assignBioModelPropertiesFromPln(pln.bioModel, 1);
+                    else
+                        matRad_cfg.dispError('Invalid specified biological model structure');
+                    end
+                end
+            else
+                this.bioModel = [];
+            end
+            
             %Overwrite default properties within the engine with the ones
             %given in the propDoseCalc struct
             if isfield(pln,'propDoseCalc') && isstruct(pln.propDoseCalc)
@@ -178,7 +202,48 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             end
         end
     
-              
+        function assignBioModelPropertiesFromPln(this, plnModel, warnWhenPropertyChanged)
+
+
+            matRad_cfg = MatRad_Config.instance();
+            
+            fields = fieldnames(plnModel);
+            
+            %Set up warning message
+            if warnWhenPropertyChanged
+                warningMsg = 'Property in Biological Model overwritten from pln.bioModel';
+            else
+                warningMsg = '';
+            end
+
+            % iterate over all fieldnames and try to set the
+            % corresponding properties inside the engine
+            for i = 1:length(fields)
+                try
+                    field = fields{i};
+                    if isprop(this.bioModel,field)
+                        this.bioModel.(field) = matRad_recursiveFieldAssignment(this.bioModel.(field),plnModel.(field),warningMsg);
+                    else
+                        matRad_cfg.dispWarning('Not able to assign property ''%s'' from pln.bioModel to Biological Model!',field);
+                    end
+                catch ME
+                % catch exceptions when the engine has no properties,
+                % which are defined in the struct.
+                % When defining an engine with custom setter and getter
+                % methods, custom exceptions can be caught here. Be
+                % careful with Octave exceptions!
+                    if ~isempty(warningMsg)
+                        matRad_cfg = MatRad_Config.instance();
+                        switch ME.identifier
+                            case 'MATLAB:noPublicFieldForClass'
+                                matRad_cfg.dispWarning('Not able to assign property from pln.bioModel to Biological Model: %s',ME.message);
+                            otherwise
+                                matRad_cfg.dispWarning('Problem while setting up Biological Model from struct:%s %s',field,ME.message);
+                        end
+                    end
+                end
+            end
+        end
         
         function resultGUI = calcDoseForward(this,ct,cst,stf,w)
             matRad_cfg = MatRad_Config.instance();
@@ -302,82 +367,82 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             this.lastProgressUpdate = tic;
         end
 
-        function assignBioParam(this, model, radiationMode)
-
-            matRad_cfg = MatRad_Config.instance();
-
-            mainFolder = fullfile(matRad_cfg.matRadSrcRoot,'bioModels');
-
-            % Collect subfolders on all levels
-            subFolders = matRad_getSubfolders(mainFolder);
- 
-            % Get rid of first one, that is the main folder
-            subFolders = subFolders(2:end);
-
-            % Look for the subclasses of BiologicalModel present in all
-            % subfolders
-            availableBioModelsClassList = matRad_findSubclasses('matRad_BiologicalModel', 'folders', subFolders);
-            availableBioModelsNameList = cellfun(@(model) model.Name, availableBioModelsClassList, 'UniformOutput',false);
-            availableBioModelsNameList = cellfun(@(modelClass) eval([modelClass, '.model']), availableBioModelsNameList, 'UniformOutput',false);
-
-            if ~isequal(size(unique(availableBioModelsNameList)), size(availableBioModelsNameList))
-                matRad_cfg.dispError('Multiple biological models with the same name available.');
-            end
-            
-            selectedModelIdx = find(strcmp(model, availableBioModelsNameList));
-            
-            % Create first instance of the selected model
-            if ~isempty(selectedModelIdx)
-                tmpBioParam = eval(availableBioModelsClassList{selectedModelIdx}.Name);
-            else
-                matRad_cfg.dispError('Unrecognized biological model: %s', model);
-            end
-
-            % Need to assign the properties defined by the user in
-            % pln.propDoseCalc.bioProperties.
-            tmpBioParam.assignBioModelPropertiesFromEngine(this)
-            
-
-            % check for radiation modality availability
-            correctRadiationModality = any(strcmp(tmpBioParam.availableRadiationModalities, radiationMode));
-
-            %check for availability of machine data
-            requiredBaseDataFields = tmpBioParam.requiredQuantities;
-
-            % assume true and check problematic cases
-            correctBaseData = true;
-
-            if ~isempty(requiredBaseDataFields) %if empty, machine always has sufficient data
-                
-                %machineDataFields = fieldnames(this.machine.data(1));
-                machineDataFields = matRad_getStructFieldsAndSubfields(this.machine.data(1));
-                
-                % loop over all required machine fields and check that
-                % everything is in the machine file
-                validMachineFields = 0;
-                for k=1:numel(requiredBaseDataFields)
-
-                    if ~any(strcmp(machineDataFields, requiredBaseDataFields{k}))
-                        matRad_cfg.dispWarning('Could not find the following machine data: %s',requiredBaseDataFields{k});
-                    else
-                        validMachineFields =  validMachineFields + 1;
-                    end
-                end
-               
-                if validMachineFields ~= numel(requiredBaseDataFields)            
-                    matRad_cfg.dispWarning(['Insufficient base data provided for model: ', tmpBioParam.model, '. Cannot perform dose calculation']);
-                    correctBaseData = false;
-                end
-            end
-
-            if correctRadiationModality && correctBaseData
-                this.bioParam = tmpBioParam;
-            else
-                matRad_cfg.dispWarning('Incorrect setting for required biological model. Using default instead');
-                this.bioParam = matRad_None();
-            end
-
-        end
+        % function assignBioParam(this, model, radiationMode)
+        % 
+        %     matRad_cfg = MatRad_Config.instance();
+        % 
+        %     mainFolder = fullfile(matRad_cfg.matRadSrcRoot,'bioModels');
+        % 
+        %     % Collect subfolders on all levels
+        %     subFolders = matRad_getSubfolders(mainFolder);
+        % 
+        %     % Get rid of first one, that is the main folder
+        %     subFolders = subFolders(2:end);
+        % 
+        %     % Look for the subclasses of BiologicalModel present in all
+        %     % subfolders
+        %     availableBioModelsClassList = matRad_findSubclasses('matRad_BiologicalModel', 'folders', subFolders);
+        %     availableBioModelsNameList = cellfun(@(model) model.Name, availableBioModelsClassList, 'UniformOutput',false);
+        %     availableBioModelsNameList = cellfun(@(modelClass) eval([modelClass, '.model']), availableBioModelsNameList, 'UniformOutput',false);
+        % 
+        %     if ~isequal(size(unique(availableBioModelsNameList)), size(availableBioModelsNameList))
+        %         matRad_cfg.dispError('Multiple biological models with the same name available.');
+        %     end
+        % 
+        %     selectedModelIdx = find(strcmp(model, availableBioModelsNameList));
+        % 
+        %     % Create first instance of the selected model
+        %     if ~isempty(selectedModelIdx)
+        %         tmpBioParam = eval(availableBioModelsClassList{selectedModelIdx}.Name);
+        %     else
+        %         matRad_cfg.dispError('Unrecognized biological model: %s', model);
+        %     end
+        % 
+        %     % Need to assign the properties defined by the user in
+        %     % pln.propDoseCalc.bioProperties.
+        %     tmpBioParam.assignBioModelPropertiesFromEngine(this)
+        % 
+        % 
+        %     % check for radiation modality availability
+        %     correctRadiationModality = any(strcmp(tmpBioParam.availableRadiationModalities, radiationMode));
+        % 
+        %     %check for availability of machine data
+        %     requiredBaseDataFields = tmpBioParam.requiredQuantities;
+        % 
+        %     % assume true and check problematic cases
+        %     correctBaseData = true;
+        % 
+        %     if ~isempty(requiredBaseDataFields) %if empty, machine always has sufficient data
+        % 
+        %         %machineDataFields = fieldnames(this.machine.data(1));
+        %         machineDataFields = matRad_getStructFieldsAndSubfields(this.machine.data(1));
+        % 
+        %         % loop over all required machine fields and check that
+        %         % everything is in the machine file
+        %         validMachineFields = 0;
+        %         for k=1:numel(requiredBaseDataFields)
+        % 
+        %             if ~any(strcmp(machineDataFields, requiredBaseDataFields{k}))
+        %                 matRad_cfg.dispWarning('Could not find the following machine data: %s',requiredBaseDataFields{k});
+        %             else
+        %                 validMachineFields =  validMachineFields + 1;
+        %             end
+        %         end
+        % 
+        %         if validMachineFields ~= numel(requiredBaseDataFields)            
+        %             matRad_cfg.dispWarning(['Insufficient base data provided for model: ', tmpBioParam.model, '. Cannot perform dose calculation']);
+        %             correctBaseData = false;
+        %         end
+        %     end
+        % 
+        %     if correctRadiationModality && correctBaseData
+        %         this.bioParam = tmpBioParam;
+        %     else
+        %         matRad_cfg.dispWarning('Incorrect setting for required biological model. Using default instead');
+        %         this.bioParam = matRad_None();
+        %     end
+        % 
+        % end
     end
     
     % Should be abstract methods but in order to satisfy the compatibility

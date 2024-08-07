@@ -68,21 +68,25 @@ this.machine = this.loadMachine(radiationMode,machine);
 
 % This assignment can only be performed once the machine file has been
 % loaded
-if ~ischar(this.bioModel)
-    matRad_cfg.dispError('bioModel property should be a string');
-else
-    this.assignBioParam(this.bioModel, radiationMode);
+% if ~ischar(this.bioModel)
+%     matRad_cfg.dispError('bioModel property should be a string');
+% else
+%     this.assignBioParam(this.bioModel, radiationMode);
+% end
+
+if ~this.bioModel.checkBioCalcConsistency(this.machine)
+    matRad_cfg.dispError('Insufficient base data provided for dose calculation.');
 end
 
-if any(strcmp(this.bioParam.requiredQuantities, 'LET'))
+if any(strcmp(this.bioModel.requiredQuantities, 'LET'))
 
     this.calcLET = true;
 end
 
 dij = struct();
 
-if isfield(this.bioParam, 'RBE') && ~isnan(this.bioParam.RBE)
-    dij.RBE = this.bioParam.RBE; 
+if isprop(this.bioModel, 'RBE') && ~isnan(this.bioModel.RBE)
+    dij.RBE = this.bioModel.RBE; 
 end
 
 %store CT grid
