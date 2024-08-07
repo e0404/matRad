@@ -114,13 +114,13 @@ end
 % Check optimization quantity
 switch pln.propOpt.quantityOpt
     case 'effect'
-        if strcmp(pln.propDoseCalc.bioModel,'constRBE')
+        if isa(pln.bioModel,'matRad_ConstantRBE') || (isstruct(pln.bioModel) && strcmp(pln.bioModel.model, 'constRBE'))
             matRad_cfg.dispError('Effect optimization with constant RBE model not supported');
         end
         backProjection = matRad_EffectProjection;
     case 'RBExD'
         %Capture special case of constant RBE
-        if strcmp(pln.propDoseCalc.bioModel,'constRBE')
+        if isa(pln.bioModel,'matRad_ConstantRBE') || (isstruct(pln.bioModel) && strcmp(pln.bioModel.model, 'constRBE'))
             backProjection = matRad_ConstantRBEProjection;
         else
             backProjection = matRad_VariableRBEProjection;
