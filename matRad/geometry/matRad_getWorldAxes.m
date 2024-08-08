@@ -31,8 +31,8 @@ if nargin>0
             update = true;
         end
     end
-    
-    if update 
+
+    if update
         %
         if isfield(gridStruct,'cubeDim')
             gridStruct.dimensions = gridStruct.cubeDim;
@@ -41,12 +41,12 @@ if nargin>0
         if isfield(gridStruct, 'dicomInfo') && isfield(gridStruct.dicomInfo,'ImagePositionPatient')
             firstVox = gridStruct.dicomInfo.ImagePositionPatient;
         else
-            firstVox = - (gridStruct.dimensions./2).*[gridStruct.resolution.x gridStruct.resolution.y gridStruct.resolution.z] ;
+            firstVox = - (gridStruct.dimensions([2 1 3])./2).*[gridStruct.resolution.x gridStruct.resolution.y gridStruct.resolution.z] ;
         end
 
-        gridStruct.x = firstVox(1) + gridStruct.resolution.x*[0:gridStruct.dimensions(2)-1] ;
-        gridStruct.y = firstVox(2) + gridStruct.resolution.y*[0:gridStruct.dimensions(1)-1] ;
-        gridStruct.z = firstVox(3) + gridStruct.resolution.z*[0:gridStruct.dimensions(3)-1] ;
+        gridStruct.x = firstVox(1) + gridStruct.resolution.x*(0:gridStruct.dimensions(2)-1);
+        gridStruct.y = firstVox(2) + gridStruct.resolution.y*(0:gridStruct.dimensions(1)-1);
+        gridStruct.z = firstVox(3) + gridStruct.resolution.z*(0:gridStruct.dimensions(3)-1);
     end
 else
     matRad_cfg = MatRad_Config.instance();
