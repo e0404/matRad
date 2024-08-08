@@ -13,7 +13,7 @@ function [projCoord,idx,targetPoint, sourcePoint] = matRad_projectOnComponents(i
 %   cubeDim:            dimension of the ct cube (i.e. ct.cubeDim)
 %   sourcePoint_bev:    source point of the ray in bev
 %   targetPoint_bev:    target point of the ray in bev
-%   isoCenter:          isocenter coordinates
+%   isoCenter:          isocenter coordinates (in cube system)
 %   res:                resolution in x,y, and z direction
 %   Dx:                 displacement on x axis
 %   Dz:                 displacement on z axis

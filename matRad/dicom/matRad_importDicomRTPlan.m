@@ -91,10 +91,7 @@ for i = 1:length(BeamSeqNames)
 end
 
 % transform iso. At the moment just this way for HFS
-if ct.dicomInfo.ImageOrientationPatient == [1;0;0;0;1;0]
-    isoCenter = isoCenter - ones(length(BeamSeqNames),1) * ...
-        ([ct.x(1) ct.y(1) ct.z(1)] - [ct.resolution.x ct.resolution.y ct.resolution.z]);
-else
+if ct.dicomInfo.ImageOrientationPatient ~= [1;0;0;0;1;0]    
     matRad_cfg.dispError('This Orientation is not yet supported.');
 end
 

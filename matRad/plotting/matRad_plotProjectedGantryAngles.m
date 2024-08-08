@@ -35,14 +35,14 @@ if plane == 3
    
     meanIsoCenter = mean(pln.propStf.isoCenter,1);
     
-    cubeIso = matRad_world2cubeCoords(meanIsoCenter,ct);
+    cubeIso = matRad_world2cubeIndex(meanIsoCenter,ct);
     
     % find radius of inner circle from isocenter
     r = 0.8*min([abs([1 ct.cubeDim(1)]-cubeIso(1)) abs([1 ct.cubeDim(2)]-cubeIso(2))]);
     
     % coordinates of circle
-    x = r*cosd(0:360)+cubeIso(1);
-    y = r*sind(0:360)+cubeIso(2);
+    x = r*cosd(0:360)+cubeIso(2);
+    y = r*sind(0:360)+cubeIso(1);
 
     gantryAngleVisColor = 'w';
 
@@ -51,17 +51,17 @@ if plane == 3
 
     % add text
     txt = '180°';
-    text(axesHandle,1.1*r*sind(0)+cubeIso(1),1.1*r*cosd(0)+cubeIso(2),txt,'Color',gantryAngleVisColor)
+    text(axesHandle,1.1*r*sind(0)+cubeIso(2),1.1*r*cosd(0)+cubeIso(1),txt,'Color',gantryAngleVisColor)
     txt = '90°';
-    text(axesHandle,1.1*r*sind(90)+cubeIso(1),1.1*r*cosd(90)+cubeIso(2),txt,'Color',gantryAngleVisColor)
+    text(axesHandle,1.1*r*sind(90)+cubeIso(2),1.1*r*cosd(90)+cubeIso(1),txt,'Color',gantryAngleVisColor)
     txt = '0°';
-    text(axesHandle,1.1*r*sind(180)+cubeIso(1),1.1*r*cosd(180)+cubeIso(2),txt,'Color',gantryAngleVisColor)
+    text(axesHandle,1.1*r*sind(180)+cubeIso(2),1.1*r*cosd(180)+cubeIso(1),txt,'Color',gantryAngleVisColor)
     txt = '270°';
-    text(axesHandle,1.22*r*sind(270)+cubeIso(1),1.22*r*cosd(270)+cubeIso(2),txt,'Color',gantryAngleVisColor)
+    text(axesHandle,1.22*r*sind(270)+cubeIso(2),1.22*r*cosd(270)+cubeIso(1),txt,'Color',gantryAngleVisColor)
 
     % plot gantry angles
     for i = 1:numel(pln.propStf.gantryAngles)
-        plot(axesHandle,[0 r*sind(180-pln.propStf.gantryAngles(i))]+cubeIso(1),[0 r*cosd(180-pln.propStf.gantryAngles(i))]+cubeIso(2),'LineWidth',1,'Color',gantryAngleVisColor)
+        plot(axesHandle,[0 r*sind(180-pln.propStf.gantryAngles(i))]+cubeIso(2),[0 r*cosd(180-pln.propStf.gantryAngles(i))]+cubeIso(1),'LineWidth',1,'Color',gantryAngleVisColor)
     end
     
 end

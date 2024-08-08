@@ -1087,7 +1087,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 end
                  
                 if isfield(pln,'propStf')
-                    isoCoordinates = matRad_world2cubeCoords(pln.propStf.isoCenter(1,:), ct);
+                    isoCoordinates = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:), ct);
                     planeCenters = ceil(isoCoordinates);
                     this.numOfBeams=pln.propStf.numOfBeams;
                 else
@@ -1267,7 +1267,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 % set isoCenter values 
                 % Note: only defined for the first Isocenter
                 if isfield(pln,'propStf')
-                    this.vIsoCenter      = matRad_world2cubeCoords(pln.propStf.isoCenter(1,:), ct);
+                    this.vIsoCenter      = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:), ct);
                 else
                     this.plotIsoCenter = false;
                 end

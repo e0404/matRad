@@ -1,17 +1,17 @@
-function coord = matRad_world2cubeCoords(wCoord, gridStruct , allowOutside)
-% matRad function to convert world coordinates to cube coordinates
+function coord = matRad_cubeCoords2worldCoords(cCoord, gridStruct, allowOutside)
+% matRad function to convert cube coordinates to world coordinates
 % 
 % call
-%   coord = world2cubeCoords(wCoord, ct)
-%
-%
-%   wCoord:         world coordinates array Nx3 (x,y,z) [mm]
-%   gridStruct:     can be matRad ct, dij.doseGrid, or the ctGrid
-%                   required fields x,y,x,dimensions,resolution
+%   coord = matRad_worldToCubeCoordinates(vCoord, gridStruct)
+% 
+% inputs
+%   cCoord:         cube coordinates [vx vy vz] (Nx3 in mm)
+%   gridStruct:     matRad ct struct or dij.doseGrid/ctGrid struct
 %   allowOutside:   indices not within the image bounds will be calculated
 %                   optional, default is true
 %
-%   coord :         cube coordinates (x,y,z) - Nx3 in mm    
+% outputs
+%   coord:          worldCoordinates [x y z] (Nx3 in mm)
 % References
 %   -
 %
@@ -36,14 +36,13 @@ gridStruct = matRad_getWorldAxes(gridStruct);
 
 firstVoxWorld = [min(gridStruct.x)  min(gridStruct.y) min(gridStruct.z)];
 firstVoxCube  = [gridStruct.resolution.x gridStruct.resolution.y gridStruct.resolution.z];
-translation   = firstVoxCube - firstVoxWorld;
+translation   = firstVoxWorld - firstVoxCube;
 
 % If we don't allow outside coordinates, we check here
 if (~allowOutside)
-    % world bounds
-    minBoundsWorld = [min(gridStruct.x)-gridStruct.resolution.x/2 min(gridStruct.y)-gridStruct.resolution.y/2 min(gridStruct.z)-gridStruct.resolution.z/2];
-    maxBoundsWorld = [max(gridStruct.x)+gridStruct.resolution.x/2 max(gridStruct.y)+gridStruct.resolution.y/2 max(gridStruct.z)+gridStruct.resolution.z/2];
-    violateBounds = any(any(wCoord < minBoundsWorld | wCoord > maxBoundsWorld));
+    minBoundsCube = firstVoxCube./2;
+    maxBoundsCube = firstVoxCube./2 + gridStruct.dimensions([2 1 3]).*[gridStruct.resolution.x gridStruct.resolution.y gridStruct.resolution.z];
+    violateBounds = any(any(cCoord < minBoundsCube | cCoord > maxBoundsCube));
 
     if violateBounds
         matRad_cfg = MatRad_Config.instance();
@@ -53,6 +52,4 @@ end
     
 % find the closest world coord index in gridStruct.x/y/z
 % calc absolute differences and locate smallest difference
-coord = wCoord + translation;
-
-end
+coord = cCoord + translation;

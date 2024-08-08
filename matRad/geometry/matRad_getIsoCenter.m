@@ -64,12 +64,8 @@ if isempty(V)
     matRad_cfg.dispError('Could not find target!');
 end
 
-% Transform subcripts from linear indices 
-[coordV(:,2), coordV(:,1), coordV(:,3)] = ind2sub(ct.cubeDim,V);
-
-
 % Transform to [mm]
-coord = matRad_cube2worldCoords(coordV, ct); %idx2worldcoord
+coord = matRad_cubeIndex2worldCoords(V, ct); %idx2worldcoord
 
 
 % Calculated isocenter.

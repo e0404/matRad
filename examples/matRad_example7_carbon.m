@@ -110,14 +110,14 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
-slice = matRad_world2cubeCoords(pln.propStf.isoCenter(1,:),ct);
+slice = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:),ct);
 slice = slice(3);
 figure,
 imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet);
 
 %% Let's check out the LET
 % Let's plot the transversal iso-center LET slice
-slice = matRad_world2cubeCoords(pln.propStf.isoCenter(1,:),ct);
+slice = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:),ct);
 slice = slice(3);
 figure;
 imagesc(resultGUI.LET(:,:,slice)),colorbar, colormap(jet);

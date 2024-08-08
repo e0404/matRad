@@ -135,7 +135,7 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 matRadGUI
 %% Plot the resulting dose slice
 plane      = 3;
-slice = matRad_world2cubeCoords(pln.propStf.isoCenter(1,:),ct);
+slice = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:),ct);
 slice = slice(3);
 doseWindow = [0 max([resultGUI.physicalDose(:)])];
 

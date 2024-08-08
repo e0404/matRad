@@ -97,7 +97,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                 scenStf = stf;
                 % manipulate isocenter
                 for k = 1:numel(scenStf)
-                    scenStf(k).isoCenter = matRad_world2isocentricCoords(scenStf(k).isoCenter,ct)  + this.multScen.isoShift(ixShiftScen,:); 
+                    scenStf(k).isoCenter = scenStf(k).isoCenter + this.multScen.isoShift(ixShiftScen,:); 
                 end
 
                 if this.multScen.totNumShiftScen > 1
@@ -246,22 +246,11 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             end
 
             currBeam = stf(i);
-            currBeam.beamIndex = i;
-
-            %Adjust for isocenter offset
-            %change the stf
-            currBeam.isoCenter = currBeam.isoCenter + dij.doseGrid.isoCenterOffset;
+            currBeam.beamIndex = i;   
 
             % convert voxel indices to real coordinates using iso center of beam i
-            xCoordsV       = this.xCoordsV_vox(:)*dij.ctGrid.resolution.x-currBeam.isoCenter(1);
-            yCoordsV       = this.yCoordsV_vox(:)*dij.ctGrid.resolution.y-currBeam.isoCenter(2);
-            zCoordsV       = this.zCoordsV_vox(:)*dij.ctGrid.resolution.z-currBeam.isoCenter(3);
-            coordsV        = [xCoordsV yCoordsV zCoordsV];
-
-            xCoordsVdoseGrid = this.xCoordsV_voxDoseGrid(:)*dij.doseGrid.resolution.x-currBeam.isoCenter(1);
-            yCoordsVdoseGrid = this.yCoordsV_voxDoseGrid(:)*dij.doseGrid.resolution.y-currBeam.isoCenter(2);
-            zCoordsVdoseGrid = this.zCoordsV_voxDoseGrid(:)*dij.doseGrid.resolution.z-currBeam.isoCenter(3);
-            coordsVdoseGrid  = [xCoordsVdoseGrid yCoordsVdoseGrid zCoordsVdoseGrid];
+            coordsV         = this.voxWorldCoords - currBeam.isoCenter;
+            coordsVdoseGrid = this.voxWorldCoordsDoseGrid - currBeam.isoCenter;
 
             % Get Rotation Matrix
             % Do not transpose matrix since we usage of row vectors &

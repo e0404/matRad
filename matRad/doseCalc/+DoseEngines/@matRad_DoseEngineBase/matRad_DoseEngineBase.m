@@ -43,14 +43,9 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         timers;                 % timers of dose calc
 
         numOfColumnsDij;        % number of columns in the dij struct
-                                          
-        yCoordsV_vox;           % y-coordinate voxel
-        xCoordsV_vox;           % x-coordinate voxel
-        zCoordsV_vox;           % z-coordinate voxel
-        
-        yCoordsV_voxDoseGrid;   % converted voxel indices to real grid 
-        xCoordsV_voxDoseGrid;   % converted voxel indices to real grid
-        zCoordsV_voxDoseGrid;   % converted voxel indices to real grid
+                                    
+        voxWorldCoords;         % ct voxel coordinates in world
+        voxWorldCoordsDoseGrid; % dose grid voxel coordinates in world 
         
         %offset; % offset adjustment for isocenter
         

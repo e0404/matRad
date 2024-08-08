@@ -6,20 +6,20 @@ initTestSuite;
 
 
 function test_empty_world2cubeCoords
-    ct = get_testCtHelper();
+    ct = helper_getTestCt();
     assertExceptionThrown(@()matRad_world2cubeCoords());
     assertExceptionThrown(@()matRad_world2cubeCoords([],ct));
 
 
 function test_basic_world2cubeCoords
-    ct = get_testCtHelper();
-    expected = [1 12 15];
+    ct = helper_getTestCt();
+    expected = [3 36 45];
     assertEqual(matRad_world2cubeCoords([-30 3 12], ct),expected);
 %   out of bounds 
-    assertExceptionThrown(@()matRad_world2cubeCoords([-30,4,35],ct));
+    assertExceptionThrown(@()matRad_world2cubeCoords([-30,4,45],ct,false));
 
 
-function ct = get_testCtHelper()
+function ct = helper_getTestCt()
     ct.x = -30:3:27;
     ct.y = -30:3:27;
     ct.z = -30:3:27;

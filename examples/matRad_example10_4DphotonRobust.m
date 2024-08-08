@@ -248,7 +248,7 @@ totalPhaseMatrix = bsxfun(@times,totalPhaseMatrix,resultGUIrobust.w);         % 
 %% Visualize results
 
 plane         = 3;
-slice = matRad_world2cubeCoords(pln.propStf.isoCenter(1,:),ct);
+slice = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:),ct);
 slice = slice(3);
 maxDose       = max([max(resultGUI.([quantityOpt])(:,:,slice)) max(resultGUIrobust.([quantityOpt])(:,:,slice))])+1e-4;
 doseIsoLevels = linspace(0.1 * maxDose,maxDose,10);

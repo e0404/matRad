@@ -99,7 +99,7 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
-slice = matRad_world2cubeCoords(pln.propStf.isoCenter(1,:),ct);
+slice = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:),ct);
 slice = slice(3);
 figure
 imagesc(resultGUI.RBExD(:,:,slice)),colorbar,colormap(jet)
@@ -141,7 +141,7 @@ figure,title('absolute difference')
 matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
 
 % Let's plot single profiles that are perpendicular to the beam direction
-ixProfileY = matRad_world2cubeCoords(pln.propStf.isoCenter(1,:),ct);
+ixProfileY = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:),ct);
 ixProfileY = ixProfileY(2)
 profileOrginal = resultGUI.RBExD(:,ixProfileY,slice);
 profileShifted = resultGUI_isoShift.RBExD(:,ixProfileY,slice);

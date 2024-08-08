@@ -102,7 +102,7 @@ dij.doseGrid.dimensions  = [numel(dij.doseGrid.y) numel(dij.doseGrid.x) numel(di
 dij.doseGrid.numOfVoxels = prod(dij.doseGrid.dimensions);
 matRad_cfg.dispInfo('Dose grid has dimensions %dx%dx%d\n',dij.doseGrid.dimensions(1),dij.doseGrid.dimensions(2),dij.doseGrid.dimensions(3));
 
-dij.doseGrid.isoCenterOffset = [dij.doseGrid.resolution.x - dij.ctGrid.resolution.x ...
+dij.doseGrid.cubeCoordOffset = [dij.doseGrid.resolution.x - dij.ctGrid.resolution.x ...
     dij.doseGrid.resolution.y - dij.ctGrid.resolution.y ...
     dij.doseGrid.resolution.z - dij.ctGrid.resolution.z];
 
@@ -167,12 +167,11 @@ this.VdoseGrid = unique(vertcat(tmpVdoseGridScen{:}));
 this.VdoseGridScenIx = cellfun(@(c) ismember(this.VdoseGrid,c), tmpVdoseGridScen,'UniformOutput',false);
 
 
-% Convert CT subscripts to linear indices.
-[this.yCoordsV_vox, this.xCoordsV_vox, this.zCoordsV_vox] = ind2sub(ct.cubeDim,this.VctGrid);
+% Convert CT subscripts to world coordinates.
+this.voxWorldCoords = matRad_cubeIndex2worldCoords(this.VctGrid,dij.ctGrid);
 
-
-% Convert CT subscripts to coarse linear indices.
-[this.yCoordsV_voxDoseGrid, this.xCoordsV_voxDoseGrid, this.zCoordsV_voxDoseGrid] = ind2sub(dij.doseGrid.dimensions,this.VdoseGrid);
+% Convert dosegrid subscripts to world coordinates
+this.voxWorldCoordsDoseGrid = matRad_cubeIndex2worldCoords(this.VdoseGrid,dij.doseGrid);
 
 %Create helper masks
 this.VdoseGridMask = false(dij.doseGrid.numOfVoxels,1);

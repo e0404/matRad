@@ -104,18 +104,14 @@ diffCMap = matRad_getColormap('diffMap');
 
 %% Calculate iso-center slices and resolution
 if isempty(cst)
-    [~,s(1)] = max(sum(sum(cube1,1),3));
-    [~,s(2)] = max(sum(sum(cube1,2),3));
-    [~,s(3)] = max(sum(sum(cube1,1),2));
-    isoCenter = [ct.resolution.y*s(1) ct.resolution.x*s(2) ct.resolution.z*s(3)];
-else
-    
-    isoCenter = matRad_world2cubeCoords( matRad_getIsoCenter(cst,ct,0),ct);
+    isoCenterIx = round(ct.cubeDim./2);
+else    
+    isoCenterIx = matRad_world2cubeIndex( matRad_getIsoCenter(cst,ct,0),ct);
 end
 
 resolution = [ct.resolution.x ct.resolution.y ct.resolution.z];
 
-sliceName = {isoCenter(1),isoCenter(2),isoCenter(3)};
+sliceName = {isoCenterIx(1),isoCenterIx(2),isoCenterIx(3)};
 doseWindow = [0 max([cube1(:); cube2(:)])];
 planeName = {'coronal','sagittal','axial'};
 
@@ -230,9 +226,9 @@ if enable(2) == 1
     posY = resolution(2)*(1:length(profiley{1}));
     posZ = resolution(3)*(1:length(profilez{1}));
     if centerAtIsocenter
-        posX = posX - isoCenter(1);
-        posY = posY - isoCenter(2);
-        posZ = posZ - isoCenter(3);
+        posX = posX - isoCenterIx(1);
+        posY = posY - isoCenterIx(2);
+        posZ = posZ - isoCenterIx(3);
     end
 
     if exist('pln','var') && ~isempty(pln)
