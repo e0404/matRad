@@ -43,7 +43,8 @@ matRad_cfg.dispInfo('%s\n',msg);
 % initialize waitbar
 % TODO: This should be managed from the user interface instead
 if ~matRad_cfg.disableGUI
-    this.hWaitbar = waitbar(0,msg);
+    this.hWaitbar = waitbar(0,msg,'Color',matRad_cfg.gui.backgroundColor,'DefaultTextColor',matRad_cfg.gui.textColor);
+    matRad_applyThemeToWaitbar(this.hWaitbar);
     % prevent closure of waitbar and show busy state
     set(this.hWaitbar,'pointer','watch');
 end
@@ -78,15 +79,11 @@ dij.ctGrid.resolution = ct.resolution;
 
 % to guarantee downwards compatibility with data that does not have
 % ct.x/y/z
-if ~any(isfield(ct,{'x','y','z'}))
-    dij.ctGrid.x = ct.resolution.x*[0:ct.cubeDim(2)-1]-ct.resolution.x/2;
-    dij.ctGrid.y = ct.resolution.y*[0:ct.cubeDim(1)-1]-ct.resolution.y/2;
-    dij.ctGrid.z = ct.resolution.z*[0:ct.cubeDim(3)-1]-ct.resolution.z/2;
-else
-    dij.ctGrid.x = ct.x;
-    dij.ctGrid.y = ct.y;   
-    dij.ctGrid.z = ct.z;
-end
+ct = matRad_getWorldAxes(ct);
+
+dij.ctGrid.x = ct.x;
+dij.ctGrid.y = ct.y;   
+dij.ctGrid.z = ct.z;
 
 dij.ctGrid.dimensions  = [numel(dij.ctGrid.y) numel(dij.ctGrid.x) numel(dij.ctGrid.z)];
 dij.ctGrid.numOfVoxels = prod(dij.ctGrid.dimensions);
@@ -106,13 +103,13 @@ dij.doseGrid.dimensions  = [numel(dij.doseGrid.y) numel(dij.doseGrid.x) numel(di
 dij.doseGrid.numOfVoxels = prod(dij.doseGrid.dimensions);
 matRad_cfg.dispInfo('Dose grid has dimensions %dx%dx%d\n',dij.doseGrid.dimensions(1),dij.doseGrid.dimensions(2),dij.doseGrid.dimensions(3));
 
-dij.doseGrid.isoCenterOffset = [dij.doseGrid.resolution.x - dij.ctGrid.resolution.x ...
+dij.doseGrid.cubeCoordOffset = [dij.doseGrid.resolution.x - dij.ctGrid.resolution.x ...
     dij.doseGrid.resolution.y - dij.ctGrid.resolution.y ...
     dij.doseGrid.resolution.z - dij.ctGrid.resolution.z];
 
 % meta information for dij
 dij.numOfBeams         = numel(stf);
-dij.numOfScenarios     = 1;
+dij.numOfScenarios     = this.multScen.totNumScen;
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
@@ -171,12 +168,11 @@ this.VdoseGrid = unique(vertcat(tmpVdoseGridScen{:}));
 this.VdoseGridScenIx = cellfun(@(c) ismember(this.VdoseGrid,c), tmpVdoseGridScen,'UniformOutput',false);
 
 
-% Convert CT subscripts to linear indices.
-[this.yCoordsV_vox, this.xCoordsV_vox, this.zCoordsV_vox] = ind2sub(ct.cubeDim,this.VctGrid);
+% Convert CT subscripts to world coordinates.
+this.voxWorldCoords = matRad_cubeIndex2worldCoords(this.VctGrid,dij.ctGrid);
 
-
-% Convert CT subscripts to coarse linear indices.
-[this.yCoordsV_voxDoseGrid, this.xCoordsV_voxDoseGrid, this.zCoordsV_voxDoseGrid] = ind2sub(dij.doseGrid.dimensions,this.VdoseGrid);
+% Convert dosegrid subscripts to world coordinates
+this.voxWorldCoordsDoseGrid = matRad_cubeIndex2worldCoords(this.VdoseGrid,dij.doseGrid);
 
 %Create helper masks
 this.VdoseGridMask = false(dij.doseGrid.numOfVoxels,1);

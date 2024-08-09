@@ -23,7 +23,7 @@ function stf = matRad_generateStf(ct,cst,pln,visMode)
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
 % of the matRad project, including this file, may be copied, modified,
 % propagated, or distributed except according to the terms contained in the
 % LICENSE file.
@@ -68,7 +68,7 @@ end
 if isExternalTherapy
     if ~isfield(pln.propStf,'isoCenter')
         matRad_cfg.dispWarning('No isocenter specified! Using center-of-mass of all targets!');
-        pln.propStf.isoCenter = matRad_getIsoCenter(cst,ct);
+        pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct);
     end
 
     if numel(pln.propStf.gantryAngles) ~= numel(pln.propStf.couchAngles)
@@ -192,8 +192,12 @@ if isempty(V)
     matRad_cfg.dispError('Could not find target.');
 end
 
+% get world coordinate system
+ct = matRad_getWorldAxes(ct);
+
 % Convert linear indices to 3D voxel coordinates
-[coordsY_vox, coordsX_vox, coordsZ_vox] = ind2sub(ct.cubeDim,V);
+voxTargetWorldCoords = matRad_cubeIndex2worldCoords(V, ct);
+
 
 % take only voxels inside patient
 V = [cst{:,4}];
@@ -218,10 +222,8 @@ if isExternalTherapy
 
         % Correct for iso center position. Whit this correction Isocenter is
         % (0,0,0) [mm]
-        coordsX = coordsX_vox*ct.resolution.x - pln.propStf.isoCenter(i,1);
-        coordsY = coordsY_vox*ct.resolution.y - pln.propStf.isoCenter(i,2);
-        coordsZ = coordsZ_vox*ct.resolution.z - pln.propStf.isoCenter(i,3);
-
+        isoCoords = voxTargetWorldCoords - pln.propStf.isoCenter(i,:);
+        
         % Save meta information for treatment plan
         stf(i).gantryAngle   = pln.propStf.gantryAngles(i);
         stf(i).couchAngle    = pln.propStf.couchAngles(i);
@@ -237,7 +239,7 @@ if isExternalTherapy
         % rotation matrix are necessary
         rotMat_system_T = matRad_getRotationMatrix(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i));
 
-        rot_coords = [coordsX coordsY coordsZ]*rotMat_system_T;
+        rot_coords = isoCoords*rotMat_system_T;
 
         % project x and z coordinates to isocenter
         coordsAtIsoCenterPlane(:,1) = (rot_coords(:,1)*SAD)./(SAD + rot_coords(:,2));
@@ -274,7 +276,7 @@ if isExternalTherapy
                 x_loc = x(z == uniZ(j));
                 x_min = min(x_loc);
                 x_max = max(x_loc);
-                x = [x; [x_min:pln.propStf.bixelWidth:x_max]'];
+                x = [x; (x_min:pln.propStf.bixelWidth:x_max)'];
                 y = [y; zeros((x_max-x_min)/pln.propStf.bixelWidth+1,1)];
                 z = [z; uniZ(j)*ones((x_max-x_min)/pln.propStf.bixelWidth+1,1)];
             end
@@ -325,12 +327,14 @@ if isExternalTherapy
 
         % loop over all rays to determine meta information for each ray
         stf(i).numOfBixelsPerRay = ones(1,stf(i).numOfRays);
-
+        
+        % mm axes with isocenter at  (0,0,0)
+        mmCubeIsoCenter =  matRad_world2cubeCoords(stf(i).isoCenter,ct);
         for j = stf(i).numOfRays:-1:1
-
+            
             for ShiftScen = 1:pln.multScen.totNumShiftScen
                 % ray tracing necessary to determine depth of the target
-                [alphas,l{ShiftScen},rho{ShiftScen},d12,~] = matRad_siddonRayTracer(stf(i).isoCenter + pln.multScen.isoShift(ShiftScen,:), ...
+                [alphas,l{ShiftScen},rho{ShiftScen},d12,~] = matRad_siddonRayTracer(mmCubeIsoCenter + pln.multScen.isoShift(ShiftScen,:), ...
                     ct.resolution, ...
                     stf(i).sourcePoint, ...
                     stf(i).ray(j).targetPoint, ...
@@ -578,22 +582,26 @@ if isExternalTherapy
         %% visualization
         if visMode > 0
 
+            %center coordinates
+            x = ct.x - stf(i).isoCenter(1);
+            y = ct.y - stf(i).isoCenter(2);
+            z = ct.z - stf(i).isoCenter(3);
+            d = sqrt(sum(([x(1) y(2) z(3)] - [x(end) y(end) z(end)]).^2));
+            limits = [-d/2 d/2 -d/2 d/2 -d/2 d/2];
+
             clf;
             % first subplot: visualization in bev
-            subplot(1,2,1)
-            hold on
+            hAxBEV = subplot(1,2,1);
+            set(hAxBEV,'DataAspectRatioMode','manual');
+            hold on;
 
             % plot rotated target coordinates
-            plot3(rot_coords(:,1),rot_coords(:,2),rot_coords(:,3),'r.')
+            plot3(rot_coords(:,1),rot_coords(:,2),rot_coords(:,3),'r.');
+
+
 
             % surface rendering
             if visMode == 2
-
-                % generate a 3D rectangular grid centered at isocenter in
-                % voxel coordinates
-                [X,Y,Z] = meshgrid((1:ct.cubeDim(2))-stf(i).isoCenter(1)/ct.resolution.x, ...
-                    (1:ct.cubeDim(1))-stf(i).isoCenter(2)/ct.resolution.y, ...
-                    (1:ct.cubeDim(3))-stf(i).isoCenter(3)/ct.resolution.z);
 
                 % computes surface
                 patSurfCube      = 0*ct.cube{1};
@@ -601,18 +609,13 @@ if isExternalTherapy
                 idx              = unique(vertcat(idx{:}));
                 patSurfCube(idx) = 1;
 
-                [f,v] = isosurface(X,Y,Z,patSurfCube,.5);
-
-                % convert isosurface from voxel to [mm]
-                v(:,1) = v(:,1)*ct.resolution.x;
-                v(:,2) = v(:,2)*ct.resolution.y;
-                v(:,3) = v(:,3)*ct.resolution.z;
+                [f,v] = isosurface(x,y,z,patSurfCube,.5);
 
                 % rotate surface
-                rotated_surface = v*rotMat_system_T;
+                vRot = v*rotMat_system_T;
 
                 % surface rendering
-                surface = patch('Faces',f,'Vertices',rotated_surface);
+                surface = patch('Faces',f,'Vertices',vRot);
                 set(surface,'FaceColor',[0 0 1],'EdgeColor','none','FaceAlpha',.4);
                 lighting gouraud;
 
@@ -650,19 +653,20 @@ if isExternalTherapy
             end
 
             % Plot properties
-            daspect([1 1 1]);
-            view(0,-90);
-            xlabel 'X [mm]'
-            ylabel 'Y [mm]'
-            zlabel 'Z [mm]'
-            title ('Beam''s eye view')
-            axis([-300 300 -300 300 -300 300]);
+            view(hAxBEV,0,-90);
+            xlabel(hAxBEV,'X [mm]');
+            ylabel(hAxBEV,'Y [mm]');
+            zlabel(hAxBEV,'Z [mm]');
+            title(hAxBEV,'Beam''s eye view');
+            
+            axis(hAxBEV,limits);
+            
 
             % second subplot: visualization in lps coordinate system
-            subplot(1,2,2)
+            hAxLPS = subplot(1,2,2);
 
             % Plot target coordinates whitout any rotation
-            plot3(coordsX,coordsY,coordsZ,'r.')
+            plot3(isoCoords(:,1),isoCoords(:,2),isoCoords(:,3),'r.');
             hold on;
 
             % Rotated projection matrix at isocenter
@@ -696,11 +700,11 @@ if isExternalTherapy
             % labels etc.
             daspect([1 1 1]);
             view(0,-90);
-            xlabel 'X [mm]'
-            ylabel 'Y [mm]'
-            zlabel 'Z [mm]'
-            title 'lps coordinate system'
-            axis([-300 300 -300 300 -300 300]);
+            xlabel(hAxBEV,'X [mm]');
+            ylabel(hAxBEV,'Y [mm]');
+            zlabel(hAxBEV,'Z [mm]');
+            title('lps coordinate system');
+            axis(limits);
             %pause(1);
         end
         % save total number of bixels
@@ -714,9 +718,9 @@ if isExternalTherapy
 elseif isBrachyTherapy
     %translate to geometric coordinates and save in stf
 
-    stf.targetVolume.Xvox = ct.x(coordsX_vox); % angabe in mm
-    stf.targetVolume.Yvox = ct.y(coordsY_vox);
-    stf.targetVolume.Zvox = ct.z(coordsZ_vox);
+    stf.targetVolume.Xvox = voxTargetWorldCoords(:,1); % angabe in mm
+    stf.targetVolume.Yvox = voxTargetWorldCoords(:,2);
+    stf.targetVolume.Zvox = voxTargetWorldCoords(:,3);
 
     %% meta info from pln
     stf.radiationMode = pln.radiationMode;
@@ -761,7 +765,7 @@ elseif isBrachyTherapy
     % plot 3D seed positions
     if visMode > 0
         clf
-        SeedPoints = plot3(stf.seedPoints.x,stf.seedPoints.y,stf.seedPoints.z,'.','DisplayName', 'seed points','Color','black','markersize',5);
+        seedPoints = plot3(stf.seedPoints.x,stf.seedPoints.y,stf.seedPoints.z,'.','DisplayName', 'seed points','Color','black','markersize',5);
         title( '3D Visualization of seed points')
         xlabel('X (left) [mm]')
         ylabel('Y (posterior) [mm]')
@@ -775,7 +779,7 @@ elseif isBrachyTherapy
         %Prostate = plot3(TargX,TargY,TargZ,'.', 'Color','b','DisplayName', 'prostate');
 
         % Prepare points for boundary calculation
-        P = [TargX', TargY', TargZ'];
+        P = [TargX, TargY, TargZ];
 
         % Determine the environment
         if matRad_cfg.isOctave

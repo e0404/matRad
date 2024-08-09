@@ -23,7 +23,7 @@ function isoCenter = matRad_getIsoCenter(cst,ct,visBool)
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
 % of the matRad project, including this file, may be copied, modified, 
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
@@ -64,16 +64,13 @@ if isempty(V)
     matRad_cfg.dispError('Could not find target!');
 end
 
-% Transform subcripts from linear indices 
-[yCoordsV, xCoordsV, zCoordsV] = ind2sub(ct.cubeDim,V);
-
 % Transform to [mm]
-xCoordsV = xCoordsV * ct.resolution.x;
-yCoordsV = yCoordsV * ct.resolution.y;
-zCoordsV = zCoordsV * ct.resolution.z;
+coord = matRad_cubeIndex2worldCoords(V, ct); %idx2worldcoord
+
 
 % Calculated isocenter.
-isoCenter = mean([xCoordsV yCoordsV zCoordsV]);
+isoCenter = mean(coord);
+
 
 % Visualization
 if visBool
@@ -82,7 +79,7 @@ if visBool
     hold on
     
     % Plot target
-    plot3(yCoordsV,xCoordsV,zCoordsV,'kx')
+    plot3(coord(:,2), coord(:,1), coord(:,3),'kx')
     
     % Show isocenter: red point
     plot3(isoCenter(2),isoCenter(1),isoCenter(3),'r.','MarkerSize',30)

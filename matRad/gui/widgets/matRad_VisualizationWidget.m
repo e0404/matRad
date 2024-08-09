@@ -12,7 +12,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
     % 
     % This file is part of the matRad project. It is subject to the license 
     % terms in the LICENSE file found in the top-level directory of this 
-    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+    % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
     % of the matRad project, including this file, may be copied, modified, 
     % propagated, or distributed except according to the terms contained in the 
     % LICENSE file.
@@ -282,7 +282,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 'FontSize',matRad_cfg.gui.fontSize,...
                 'FontName',matRad_cfg.gui.fontName,...
                 'FontWeight',matRad_cfg.gui.fontWeight,...
-                'Tag','txtDisplayOption' );
+                'Tag','txtCtScen' );
             
             %Fourth Column
             
@@ -839,7 +839,21 @@ classdef matRad_VisualizationWidget < matRad_Widget
        
         % 57 Callback
         function btn3Dview_Callback(this,hObject, event)            
-            matRad_3DWidget(this.viewingWidgetHandle);
+            h3Dwidget = matRad_3DWidget();
+            h3Dwidget.viewingWidgetHandle = this.viewingWidgetHandle;
+
+            %Initialize event Listeners
+            matRad_cfg = MatRad_Config.instance();
+            if matRad_cfg.isMatlab
+                %Event listeners triggered on events
+                hListener = addlistener(this.viewingWidgetHandle,'plotUpdated',@(src,hEvent) h3Dwidget.update());
+                addlistener(h3Dwidget.handles.figure1,'ObjectBeingDestroyed',@(src,hEvent) delete(hListener));
+            else
+                % addlistener is not yet available in octave
+                hListener = matRad_addListenerOctave(this.viewingWidgetHandle,'plotUpdated',@(src,hEvent) h3Dwidget.update());
+                matRad_addListenerOctave(h3Dwidget.handles.figure1,'ObjectBeingDestroyed',@(src,hEvent) delete(hListener));
+            end
+            
         end
        % --- Executes on button press in radiobtnContour.
        function radiobtnContour_Callback(this,hObject, ~)

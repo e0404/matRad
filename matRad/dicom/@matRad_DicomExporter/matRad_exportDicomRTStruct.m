@@ -15,7 +15,7 @@ function obj = matRad_exportDicomRTStruct(obj)
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
 % of the matRad project, including this file, may be copied, modified, 
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
@@ -91,14 +91,8 @@ meta.AccessionNumber = '';
 ct = obj.ct;
 
 %Create X Y Z vectors if not present
-if ~any(isfield(ct,{'x','y','z'}))
-    %positionOffset = transpose(ct.cubeDim ./ 2);
-    %positionOffset = ct.cubeDim .* [ct.resolution.y, ct.resolution.x, ct.resolution.z] ./ 2;
-    positionOffset = [ct.resolution.y, ct.resolution.x, ct.resolution.z] ./ 2;
-    ct.x = ct.resolution.x*[0:ct.cubeDim(2)-1] - positionOffset(2);
-    ct.y = ct.resolution.y*[0:ct.cubeDim(1)-1] - positionOffset(1);
-    ct.z = ct.resolution.z*[0:ct.cubeDim(3)-1] - positionOffset(3);
-end
+ct = matRad_getWorldAxes(ct);
+
 
 
 %Since we are exporting HU directly --> no rescaling in any case

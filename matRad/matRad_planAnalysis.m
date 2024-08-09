@@ -67,15 +67,35 @@ showDVH = p.Results.showDVH;
 showQI = p.Results.showQI;
 
 % Determine which dose cube to use based on resultGUI structure
-if isfield(resultGUI,'RBExD')
-    doseCube = resultGUI.RBExD; % Use RBExD if available
+if ~isfield(pln,'bioParam')
+    visQ = pln.bioParam.quantityVis;
+elseif isfield(resultGUI,'RBExD')
+    visQ = 'RBExD';
 else
-    doseCube = resultGUI.physicalDose; % Default to physicalDose otherwise
+    visQ = 'physicalDose';
 end
+
+if ~isfield(resultGUI,visQ)
+    matRad_cfg = MatRad_Config.instance();
+    matRad_cfg.dispError('Unknown quantity ''%s'' to analyse!',visQ);
+end
+
+doseCube = resultGUI.(visQ);
 
 % Calculate DVH and quality indicators
 resultGUI.dvh = matRad_calcDVH(cst,doseCube,'cum'); % Calculate cumulative DVH
 resultGUI.qi  = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol); % Calculate quality indicators
+
+dvhScen = {};
+if isfield(pln,'multScen') && pln.multScen.totNumScen > 1
+    for i = 1:pln.multScen.totNumScen
+        scenFieldName = sprintf('%s_scen%d',visQ,i);
+        if isfield(resultGUI,scenFieldName)
+            dvhScen{i} = matRad_calcDVH(cst,resultGUI.(scenFieldName),'cum'); % Calculate cumulative scenario DVH
+        end
+    end
+end
+
 
 % Configuration for GUI appearance
 matRad_cfg = MatRad_Config.instance();
@@ -83,19 +103,29 @@ matRad_cfg = MatRad_Config.instance();
 % Create figure for plots with background color from configuration
 hF = figure('Color',matRad_cfg.gui.backgroundColor);
 
+colorSpec = {'Color',matRad_cfg.gui.elementColor,...
+        'XColor',matRad_cfg.gui.textColor,...
+        'YColor',matRad_cfg.gui.textColor,...
+        'GridColor',matRad_cfg.gui.textColor,...
+        'MinorGridColor',matRad_cfg.gui.backgroundColor};
+
 % Determine subplot layout based on flags
 if showDVH && showQI
-    hDVHax = subplot(2,1,1); % DVH plot area
-    hQIax = subplot(2,1,2); % Quality Indicators plot area
+    hDVHax = subplot(2,1,1,colorSpec{:}); % DVH plot area
+    hQIax = subplot(2,1,2,colorSpec{:}); % Quality Indicators plot area
 elseif showDVH
-    hDVHax = subplot(1,1,1); % Only DVH plot
+    hDVHax = subplot(1,1,1,colorSpec{:}); % Only DVH plot
 elseif showQI
-    hQIax = subplot(1,1,1); % Only Quality Indicators plot
+    hQIax = subplot(1,1,1,colorSpec{:}); % Only Quality Indicators plot
 end
 
 % Display DVH if enabled
 if showDVH
-    matRad_showDVH(hDVHax,resultGUI.dvh,cst,pln); % Show DVH plot
+    matRad_showDVH(resultGUI.dvh,cst,pln,'axesHandle',hDVHax,'LineWidth',3); % Show DVH plot
+
+    for i = 1:numel(dvhScen)
+        matRad_showDVH(dvhScen{i},cst,pln,'axesHandle',hDVHax,'LineWidth',0.5,'plotLegend',false,'LineStyle','--'); % Show DVH plot
+    end
 end
 
 % Display Quality Indicators if enabled

@@ -25,15 +25,12 @@ function cBarHandle = matRad_plotColorbar(axesHandle,cMap,window,varargin)
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
 % of the matRad project, including this file, may be copied, modified, 
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-[env,envver] = matRad_getEnvironment();
 
 colormap(axesHandle,cMap);
 caxis(axesHandle,window);
@@ -46,17 +43,11 @@ caxis(axesHandle,window);
 %     matRad_cfg.dispWarning('Unsuitable display window [%d,%d] for color axis!',window(1),window(2));
 % end 
 
+matRad_cfg = MatRad_Config.instance();
 
-switch env
-    case 'MATLAB'
-        if str2double(envver(1:3))>=8.5
-            cBarHandle = colorbar(axesHandle,varargin{:});
-        else
-            cBarHandle = colorbar('peer',axesHandle,varargin{:});
-        end
-    case 'OCTAVE'
-        cBarHandle = colorbar(axesHandle,varargin{:});
-    otherwise
-        cBarHandle = colorbar(axesHandle,varargin{:});
+if matRad_cfg.isMatlab && str2double(matRad_cfg.envVersion)<8.5
+    cBarHandle = colorbar('peer',axesHandle,varargin{:});
+else
+    cBarHandle = colorbar(axesHandle,varargin{:});
 end
 

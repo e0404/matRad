@@ -24,7 +24,7 @@ function [ct,cst] = matRad_importPatient(ctFile,maskFiles,hlutFilename)
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
 % of the matRad project, including this file, may be copied, modified, 
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
@@ -53,18 +53,18 @@ ct.resolution.z = metadata.resolution(3);
 ct.numOfCtScen = 1;
 
 maskId = 1;
-hGlobalWaitbar = waitbar(0,'Importing Segmentations');
-set(findall(hGlobalWaitbar,'type','text'),'Interpreter','none');
-
-
+matRad_cfg = MatRad_Config.instance();
+hGlobalWaitbar = waitbar(0,'Importing Segmentations','Color',matRad_cfg.gui.backgroundColor,'DefaultTextColor',matRad_cfg.gui.textColor);
+matRad_applyThemeToWaitbar(hGlobalWaitbar);
 
 for f=1:numel(maskFiles)
     maskFile = maskFiles{f};
     waitbar(f/numel(maskFiles),hGlobalWaitbar,['Importing Segmentations: ' maskFiles{f}]);
     if exist(maskFile,'dir')
         contents = dir(maskFile);
-        hFolderWaitbar = waitbar(0,'Importing Folder');
-        set(findall(hFolderWaitbar,'type','text'),'Interpreter','none');
+        hFolderWaitbar = waitbar(0,'Importing Folder','Color',matRad_cfg.gui.backgroundColor,'DefaultTextColor',matRad_cfg.gui.textColor);
+        matRad_applyThemeToWaitbar(hFolderWaitbar);
+
         for s=1:numel(contents)
             waitbar(s/numel(contents),hFolderWaitbar,['Importing Folder: ' contents(s).name]);            
             if(~contents(s).isdir)
@@ -100,24 +100,41 @@ function cstLine = importMaskToCstLine(maskId,mask,maskMeta)
     cstLine = cell(1,6);
     cstLine{1} = maskId - 1;
     cstLine{2} = maskMeta.name;
-    cstLine{3} = tryToGetVoiTypeByName(maskMeta.name);
+    [type,priority] = tryToGetVoiTypeByName(maskMeta.name);
+    cstLine{3} = type;
     cstLine{4}{1} = find(mask > 0);
-    cstLine{5}.Priority = maskId;
+    cstLine{5}.Priority = priority;
     cstLine{5}.alphaX = 0.1;
     cstLine{5}.betaX = 0.05;
     cstLine{5}.Visible = 1;
 end
 
-function type = tryToGetVoiTypeByName(voiName)
-    targetNames = {'target'; 'ptv'; 'ctv'};
+function [type,priority] = tryToGetVoiTypeByName(voiName)
+    targetNames = {'target'; 'gtv'; 'ctv'; 'ptv'};
+    targetPriorities = [1 1 2 3];
+    oarPriority = 4;
+    externalPriorities = [5 5 5];
+    externalNames = {'body','external','skin'};
     for n=1:numel(targetNames)
         found = strfind(lower(voiName),lower(targetNames{n}));
         if ~isempty(found)
             type = 'TARGET';
+            priority = targetPriorities(n);
             return;
         end
     end
+    
+    for n=1:numel(externalNames)
+        found = strfind(lower(voiName),lower(externalNames{n}));
+        if ~isempty(found)
+            type = 'EXTERNAL';
+            priority = externalPriorities(n);
+            return;
+        end
+    end
+
     type = 'OAR';
+    priority = oarPriority;
 end
 
 

@@ -1,20 +1,20 @@
 classdef matRad_3DWidget < matRad_ViewingWidget
 
-    % matRad_3DWidget class to generate GUI widget for 3D plan visualization 
-    % 
+    % matRad_3DWidget class to generate GUI widget for 3D plan visualization
+    %
     %
     % References
     %   -
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
-    % Copyright 2020 the matRad development team. 
-    % 
-    % This file is part of the matRad project. It is subject to the license 
-    % terms in the LICENSE file found in the top-level directory of this 
-    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
-    % of the matRad project, including this file, may be copied, modified, 
-    % propagated, or distributed except according to the terms contained in the 
+    % Copyright 2020 the matRad development team.
+    %
+    % This file is part of the matRad project. It is subject to the license
+    % terms in the LICENSE file found in the top-level directory of this
+    % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+    % of the matRad project, including this file, may be copied, modified,
+    % propagated, or distributed except according to the terms contained in the
     % LICENSE file.
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -22,14 +22,14 @@ classdef matRad_3DWidget < matRad_ViewingWidget
     properties
         viewingWidgetHandle;
     end
-    
+
     events
-        
+
     end
-    
+
     methods
         %Constructor
-        function this = matRad_3DWidget(viewingWidgetHandle,handleParent)
+        function this = matRad_3DWidget(handleParent)
             matRad_cfg = MatRad_Config.instance();
             if nargin < 2
                 handleParent = figure(...
@@ -44,41 +44,43 @@ classdef matRad_3DWidget < matRad_ViewingWidget
                     'NumberTitle','off',...
                     'HandleVisibility','callback',...
                     'Tag','figure1');
-                
+
             end
-            
+
             this = this@matRad_ViewingWidget(handleParent);
-            
-            if nargin >= 1
-               this.viewingWidgetHandle=viewingWidgetHandle;
-              
-            end
-            this.lockUpdate = true;
+
             this.update();
-               
+
         end
-        
+
         function this=initialize(this)
-            
-        end        
+
+        end
     end
-    
+
     methods(Access = protected)
         function this = createLayout(this)
             h88 = this.widgetHandle;
-            this.createHandles();
+            createLayout@matRad_ViewingWidget(this);
+
+            set(this.handles.axesFig,'XTickMode','auto','XTickLabelMode','auto');
+            set(this.handles.axesFig,'YTickMode','auto','YTickLabelMode','auto');
+            set(this.handles.axesFig,'ZTickMode','auto','ZTickLabelMode','auto');
+            
+            %this.createHandles();
         end
 
         function this=doUpdate(this,~)
-            if this.lockUpdate
-                if ~isempty(this.viewingWidgetHandle) && ishandle(this.viewingWidgetHandle)
+            if ~this.updateLock
+                if ~isempty(this.viewingWidgetHandle)
                     matRad_cfg = MatRad_Config.instance();
-                    this.lockUpdate=false;
-                    p = octaveCompat_getProps(this.viewingWidgetHandle);
-                    
+
+                    p = matRad_getPropsCompat(this.viewingWidgetHandle);
+
                     % copy all the properties of the viewingwidget except for the widgethandle
+                    this.updateLock = true;
                     for k = 1:length(p)
-                        if ~strcmp(p{k},'widgetHandle') && ~strcmp(p{k},'handles') && ~strcmp(p{k},'lockUpdate')
+                        if ~strcmp(p{k},'widgetHandle') && ~strcmp(p{k},'handles') && ~strcmp(p{k},'updateLock')
                             try
                                 this.(p{k}) = this.viewingWidgetHandle.(p{k});
                             catch
@@ -86,28 +88,34 @@ classdef matRad_3DWidget < matRad_ViewingWidget
                             end
                         end
                     end
-                    this.lockUpdate=true;
+                    this.updateLock = false;
                 end
                 this.plot3D();
             end
         end
     end
-    
+
     methods
-           function plot3D(this)         
+        function set.viewingWidgetHandle(this,hViewingWidget)
+            this.viewingWidgetHandle = hViewingWidget;
+            this.doUpdate();
+        end
+
+        function plot3D(this)
             
+            matRad_cfg = MatRad_Config.instance();
             if evalin('base','exist(''pln'')') && ...
-                evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
-            
+                    evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
+
                 ct  = evalin('base','ct');
                 cst = evalin('base','cst');
                 pln = evalin('base','pln');
-                
-                                
+
+
                 if  evalin('base','exist(''resultGUI'')')
                     Result = evalin('base','resultGUI');
                 end
-                
+
                 if evalin('base','exist(''stf'')')
                     stf = evalin('base','stf');
                 else
@@ -116,37 +124,37 @@ classdef matRad_3DWidget < matRad_ViewingWidget
             else
                 return
             end
-            
-            axesFig3D=axes(this.widgetHandle);
+
+            axesFig3D=this.handles.axesFig;
             view(axesFig3D,3);
             oldView = get(axesFig3D,'View');
-            
+
             cla(axesFig3D);
-            
-            defaultFontSize = 8;
-            
+
+            defaultFontSize = matRad_cfg.gui.fontSize;
+
             %Check if we need to precompute the surface data
             if size(cst,2) < 8
                 cst = matRad_computeAllVoiSurfaces(ct,cst);
                 assignin('base','cst',cst);
             end
-            
-            set(this.widgetHandle,'Color',0.5*[1 1 1]);
-            set(axesFig3D,'Color',1*[0 0 0]);
-            
+
+            set(this.widgetHandle,'Color',matRad_cfg.gui.backgroundColor);
+            set(axesFig3D,'Color',matRad_cfg.gui.elementColor);
+
             %% Plot 3D structures
             hold(axesFig3D,'on');
             if this.plotContour && exist('cst','var') && exist('ct','var') %get(handles.radiobtnContour,'Value') && handles.State>0
-                voiPatches = matRad_plotVois3D(axesFig3D,ct,cst,this.VOIPlotFlag,colorcube);
+                voiPatches = matRad_plotVois3D(axesFig3D,ct,cst,this.VOIPlotFlag);
             end
-            
+
             %% plot the CT slice
             if this.plotCT %get(handles.radiobtnCT,'Value')
                 window = this.dispWindow{2,1}; %(2 for ct)
                 ctMap = matRad_getColormap(this.ctColorMap,this.cMapSize);
                 ctHandle = matRad_plotCtSlice3D(axesFig3D,ct,1,this.plane,this.slice,ctMap,window);
             end
-            
+
             %% plot the dose slice
             if exist('Result','var')
                 doseMap = matRad_getColormap(this.doseColorMap,this.cMapSize);
@@ -155,20 +163,20 @@ classdef matRad_3DWidget < matRad_ViewingWidget
                 % the first cube of the Result struct
                 if ~isfield(Result,this.SelectedDisplayOption)
                     CubeNames = fieldnames(Result);
-                    this.lockUpdate=false;
+                    this.updateLock=false;
                     this.SelectedDisplayOption = CubeNames{1,1};
-                    this.lockUpdate=true;
+                    this.updateLock=true;
                 end
-                
+
                 dose = Result.(this.SelectedDisplayOption);
-                
+
                 % dose colorwash
                 if ~isempty(dose) && ~isvector(dose)
-                    
-%                     if isempty(this.dispWindow{doseIx,2})
-%                         this.dispWindow{doseIx,2} = [min(dose(:)) max(dose(:))];   % set min and max dose values
-%                     end
-                    
+
+                    %                     if isempty(this.dispWindow{doseIx,2})
+                    %                         this.dispWindow{doseIx,2} = [min(dose(:)) max(dose(:))];   % set min and max dose values
+                    %                     end
+
                     if this.plotDose %get(handles.radiobtnDose,'Value')
                         [doseHandle,~,~] = matRad_plotDoseSlice3D(axesFig3D,ct,dose,this.plane,this.slice,this.CutOffLevel,this.doseOpacity,doseMap,this.dispWindow{doseIx,1});
                     end
@@ -177,42 +185,32 @@ classdef matRad_3DWidget < matRad_ViewingWidget
                     end
                 end
             end
-            
+
             if this.plotPlan %get(handles.radiobtnPlan,'Value')
                 matRad_plotPlan3D(axesFig3D,pln,stf);
             end
-            
-            %hLight = light('Parent',axesFig3D);
-            %camlight(hLight,'left');
-            %lighting('gouraud');
-            
-            xlabel(axesFig3D,'x [voxels]','FontSize',defaultFontSize)
-            ylabel(axesFig3D,'y [voxels]','FontSize',defaultFontSize)
-            zlabel(axesFig3D,'z [voxels]','FontSize',defaultFontSize)
-            title(axesFig3D,'matRad 3D view');
-            
+
+            xlim(ct.resolution.x/2 + ct.resolution.x*[1 ct.cubeDim(2)]);
+            ylim(ct.resolution.y/2 + ct.resolution.y*[1 ct.cubeDim(1)]);
+            zlim(ct.resolution.z/2 + ct.resolution.z*[1 ct.cubeDim(3)]);
+
+            xlabel(axesFig3D,'x [mm]','FontSize',defaultFontSize,'Color',matRad_cfg.gui.textColor)
+            ylabel(axesFig3D,'y [mm]','FontSize',defaultFontSize,'Color',matRad_cfg.gui.textColor)
+            zlabel(axesFig3D,'z [mm]','FontSize',defaultFontSize,'Color',matRad_cfg.gui.textColor)
+            title(axesFig3D,'matRad 3D view','FontSize',defaultFontSize,'Color',matRad_cfg.gui.highlightColor);
+
             % set axis ratio
             ratios = [1 1 1]; %[1/ct.resolution.x 1/ct.resolution.y 1/ct.resolution.z];
             ratios = ratios([2 1 3]);
             set(axesFig3D,'DataAspectRatioMode','manual');
             set(axesFig3D,'DataAspectRatio',ratios./max(ratios));
-            
-            set(axesFig3D,'Ydir','reverse');
-            
-            set(axesFig3D,'view',oldView);
-            
-            %this.handles = handles;
-           end
-        
-    end
-end
 
-%Helper function as Octave 6's parser can not parse properties function in
-%class
-function p = octaveCompat_getProps(obj)
-    try
-        p = properties(obj);
-    catch ME
-        p = [];
+            set(axesFig3D,'Ydir','reverse');
+
+            set(axesFig3D,'view',oldView);
+
+            %this.handles = handles;
+        end
+
     end
 end
