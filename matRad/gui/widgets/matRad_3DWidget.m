@@ -71,16 +71,16 @@ classdef matRad_3DWidget < matRad_ViewingWidget
         end
 
         function this=doUpdate(this,~)
-            if ~this.lockUpdate
+            if ~this.updateLock
                 if ~isempty(this.viewingWidgetHandle)
                     matRad_cfg = MatRad_Config.instance();
 
                     p = matRad_getPropsCompat(this.viewingWidgetHandle);
 
                     % copy all the properties of the viewingwidget except for the widgethandle
-                    this.lockUpdate = true;
+                    this.updateLock = true;
                     for k = 1:length(p)
-                        if ~strcmp(p{k},'widgetHandle') && ~strcmp(p{k},'handles') && ~strcmp(p{k},'lockUpdate')
+                        if ~strcmp(p{k},'widgetHandle') && ~strcmp(p{k},'handles') && ~strcmp(p{k},'updateLock')
                             try
                                 this.(p{k}) = this.viewingWidgetHandle.(p{k});
                             catch
@@ -88,7 +88,7 @@ classdef matRad_3DWidget < matRad_ViewingWidget
                             end
                         end
                     end
-                    this.lockUpdate = false;
+                    this.updateLock = false;
                 end
                 this.plot3D();
             end
@@ -163,9 +163,9 @@ classdef matRad_3DWidget < matRad_ViewingWidget
                 % the first cube of the Result struct
                 if ~isfield(Result,this.SelectedDisplayOption)
                     CubeNames = fieldnames(Result);
-                    this.lockUpdate=false;
+                    this.updateLock=false;
                     this.SelectedDisplayOption = CubeNames{1,1};
-                    this.lockUpdate=true;
+                    this.updateLock=true;
                 end
 
                 dose = Result.(this.SelectedDisplayOption);

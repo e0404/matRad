@@ -19,7 +19,6 @@ classdef matRad_DVHWidget < matRad_Widget
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties
         selectedCube = [];
-        lockUpdate = false;
     end
 
     properties (SetAccess = private)
@@ -65,7 +64,7 @@ classdef matRad_DVHWidget < matRad_Widget
         end
 
         function this = doUpdate(this,evt)
-            if ~this.lockUpdate && ~isempty(this.selectedCube)
+            if ~this.updateLock && ~isempty(this.selectedCube)
                 doUpdate = true;
                 if nargin == 2
                     doUpdate = this.checkUpdateNecessary({'resultGUI','cst','pln'},evt);

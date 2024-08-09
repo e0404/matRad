@@ -769,9 +769,9 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             %selectionIndex = this.handles.popupmenu_chooseColorData;
             
             % save the lock state
-            updateLockState = this.viewingWidgetHandle.lockUpdate;
+            updateLockState = this.viewingWidgetHandle.updateLock;
             %colorSettingLockState = this.viewingWidgetHandle.lockColorSettings;
-            this.viewingWidgetHandle.lockUpdate = true;
+            this.viewingWidgetHandle.updateLock = true;
             %this.viewingWidgetHandle.lockColorSettings = true;
             
             
@@ -883,7 +883,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             
             cMapPopupIndex = find(strcmp(currentMap,cMapStrings));
             set(handles.popupmenu_chooseColormap,'Value',cMapPopupIndex);
-            this.viewingWidgetHandle.lockUpdate=updateLockState;
+            this.viewingWidgetHandle.updateLock=updateLockState;
             this.handles=handles;
         end
         %Update button enable/disables

@@ -58,7 +58,6 @@ classdef matRad_ViewingWidget < matRad_Widget
         zoomHandle;
         legendHandle;
         scrollHandle;
-        lockUpdate = false;
         lockColorSettings = false;
         %plotlegend=false;
     end
@@ -514,10 +513,9 @@ classdef matRad_ViewingWidget < matRad_Widget
                 this.initialized = true;
             end
 
-
-            if ~this.lockUpdate
+            if ~this.updateLock
             
-                doUpdate = false;
+                %doUpdate = false;
                 if nargin == 2
                     %At pln changes and at cst/cst (for Isocenter and new settings) 
                     %we need to update
@@ -525,7 +523,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                         this.initValues();
                     end
                     this.updateValues();
-                    doUpdate = this.checkUpdateNecessary({'pln_display','ct','cst','resultGUI','image_display'},evt);
+                    %doUpdate = this.checkUpdateNecessary({'pln_display','ct','cst','resultGUI','image_display'},evt);
                     if  this.checkUpdateNecessary({'resultGUI','image_display'},evt)
                         this.updateIsoDoseLineCache();
                     end
@@ -534,7 +532,6 @@ classdef matRad_ViewingWidget < matRad_Widget
                 end
                             
                 this.UpdatePlot();
-             
             end
             
         end
@@ -542,7 +539,7 @@ classdef matRad_ViewingWidget < matRad_Widget
     
     methods
         function UpdatePlot(this)
-            if this.lockUpdate
+            if this.updateLock
                 return
             end
 
@@ -564,12 +561,17 @@ classdef matRad_ViewingWidget < matRad_Widget
             AxesHandlesCT_Dose  = cell(0);
             AxesHandlesIsoDose  = cell(0);
             
-            if evalin('base','exist(''ct'')') && evalin('base','exist(''pln'')')
+            if evalin('base','exist(''ct'')')
                  ct = evalin('base','ct');
-                 pln = evalin('base','pln');
             else
                  cla(handles.axesFig, 'reset')
                  return
+            end
+
+            if evalin('base','exist(''pln'')')
+                pln = evalin('base','pln');
+            else
+                pln = [];
             end
             
             %% If resultGUI exists, then an optimization has been performed
@@ -922,8 +924,8 @@ classdef matRad_ViewingWidget < matRad_Widget
             handles=this.handles;
             
             %Lock triggering an update during isoline caching
-            currLock = this.lockUpdate;
-            this.lockUpdate = true;
+            currLock = this.updateLock;
+            this.updateLock = true;
             
             if evalin('base','exist(''resultGUI'')')                             
                 resultGUI = evalin('base','resultGUI');
@@ -966,7 +968,7 @@ classdef matRad_ViewingWidget < matRad_Widget
             end
             this.handles = handles;
             
-            this.lockUpdate = currLock;
+            this.updateLock = currLock;
         end
         
         %% Data Cursors
@@ -1074,7 +1076,7 @@ classdef matRad_ViewingWidget < matRad_Widget
         
         %Toggle Colorbar 
         function colorBarToggleFunction(this,src,event)
-            if isempty(this.cBarHandle) || ~isobject(this.cBarHandle) || this.lockUpdate
+            if isempty(this.cBarHandle) || ~isobject(this.cBarHandle) || this.updateLock
                 return;
             end
             if this.plotColorBar
@@ -1094,21 +1096,21 @@ classdef matRad_ViewingWidget < matRad_Widget
         
         %
         function initValues(this)
-            lockState=this.lockUpdate;
+            lockState=this.updateLock;
             
             if lockState 
                 return;
             end
             
-            this.lockUpdate=true;
+            this.updateLock=true;
             
             if isempty(this.plane)
                 this.plane=3;
             end
             
-            if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')') &&  evalin('base','exist(''pln'')')
+            if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')                 
                 % update slice, beam and offset sliders parameters
-                pln= evalin('base','pln');
+                
                 ct = evalin('base','ct');
                 cst = evalin('base','cst');
                 cst = matRad_computeVoiContoursWrapper(cst,ct);
@@ -1122,37 +1124,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                         this.VOIPlotFlag(i) = true;
                     end
                 end
-                 
-                if isfield(pln,'propStf')
-                    isoCoordinates = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:), ct);
-                    planeCenters = ceil(isoCoordinates);
-                    this.numOfBeams=pln.propStf.numOfBeams;
-                else
-                    planeCenters = ceil(ct.cubeDim./ 2);
-                    this.numOfBeams = 1;
-                end
-                
-                this.slice = planeCenters(this.plane);                
-                
-                this.maxSlice=ct.cubeDim(this.plane);
-                this.SliceSliderStep=[1/(ct.cubeDim(this.plane)-1) 1/(ct.cubeDim(this.plane)-1)];
-                
-                
-                 % set profile offset slider
-                this.OffsetMinMax = [-100 100];
-                vRange = sum(abs(this.OffsetMinMax));
-                
-                if strcmp(this.ProfileType,'lateral')
-                    this.OffsetSliderStep = vRange/ct.resolution.x;
-                else
-                    this.OffsetSliderStep = vRange/ct.resolution.y;
-                end
-                this.OffsetSliderStep=[1/this.OffsetSliderStep 1/this.OffsetSliderStep];
-                
-                
-                selectionIndex=1;
-                this.plotColorBar=true;
-                
+
                 if isfield(ct, 'cubeHU')
                     minMax = [min(ct.cubeHU{1}(:)) max(ct.cubeHU{1}(:))];
 
@@ -1166,6 +1138,39 @@ classdef matRad_ViewingWidget < matRad_Widget
                         minMax = [0 2];
                     end
                 end
+
+
+                planeCenters = ceil(ct.cubeDim./ 2);
+                this.numOfBeams = 1;
+                if evalin('base','exist(''pln'')')
+                    pln = evalin('base','pln');
+
+                    if isfield(pln,'propStf')
+                        isoCoordinates = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:), ct);
+                        planeCenters = ceil(isoCoordinates);
+                        this.numOfBeams=pln.propStf.numOfBeams;
+                    end
+                end
+                       
+                this.slice = planeCenters(this.plane);
+                this.maxSlice=ct.cubeDim(this.plane);                            
+                this.SliceSliderStep=[1/(ct.cubeDim(this.plane)-1) 1/(ct.cubeDim(this.plane)-1)];
+
+                % set profile offset slider
+                this.OffsetMinMax = [-100 100];
+                vRange = sum(abs(this.OffsetMinMax));
+
+                if strcmp(this.ProfileType,'lateral')
+                    this.OffsetSliderStep = vRange/ct.resolution.x;
+                else
+                    this.OffsetSliderStep = vRange/ct.resolution.y;
+                end
+                this.OffsetSliderStep=[1/this.OffsetSliderStep 1/this.OffsetSliderStep];
+
+                               
+                selectionIndex=1;
+                this.plotColorBar=true;
+               
                 
                 if evalin('base','exist(''resultGUI'')')
                     this.colorData=2;
@@ -1281,22 +1286,21 @@ classdef matRad_ViewingWidget < matRad_Widget
             this.dispWindow{selectionIndex,1} = minMax;
             this.dispWindow{selectionIndex,2} = minMax;
              
-            this.lockUpdate=lockState;
+            this.updateLock=lockState;
         end
         
         %update the Viewer
         function updateValues(this)
-            lockState=this.lockUpdate;
+            lockState=this.updateLock;
             
             if lockState
                 return;
             end
             
-            this.lockUpdate=true;
+            this.updateLock=true;
                                    
-            if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')') &&  evalin('base','exist(''pln'')')
+            if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
                 % update slice, beam and offset sliders parameters
-                pln = evalin('base','pln');
                 ct = evalin('base','ct');
                 cst = evalin('base','cst');
                 this.cst = cst;
@@ -1310,12 +1314,16 @@ classdef matRad_ViewingWidget < matRad_Widget
                 end
                 % set isoCenter values 
                 % Note: only defined for the first Isocenter
-                if isfield(pln,'propStf')
-                    this.vIsoCenter      = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:), ct);
+                if evalin('base','exist(''pln'')')
+                    pln = evalin('base','pln');
+                    if isfield(pln,'propStf')
+                        this.vIsoCenter      = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:), ct);
+                    else
+                        this.plotIsoCenter = false;
+                    end
                 else
                     this.plotIsoCenter = false;
                 end
-                
 
                  % set profile offset slider
                 this.OffsetMinMax = [-100 100];
@@ -1327,9 +1335,9 @@ classdef matRad_ViewingWidget < matRad_Widget
                     this.OffsetSliderStep = vRange/ct.resolution.y;
                 end
                 this.OffsetSliderStep=[1/this.OffsetSliderStep 1/this.OffsetSliderStep];
-
-                this.lockUpdate=lockState;
             end
+
+            this.updateLock=lockState;
         end
     end
 end
