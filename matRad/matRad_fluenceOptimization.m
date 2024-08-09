@@ -194,39 +194,61 @@ elseif isa(backProjection, 'matRad_EffectProjection')
         dij.ixDose{s}  = dij.bx{s}~=0;
     end
 
+        if isequal(pln.propOpt.quantityOpt,'effect')
 
-    effectTarget = cst{ixTarget,5}.alphaX * doseTarget + cst{ixTarget,5}.betaX * doseTarget^2;
-    aTmp = dij.mAlphaDose{1}*wOnes;
-    bTmp = dij.mSqrtBetaDose{1} * wOnes;
-    p = sum(aTmp(V)) / sum(bTmp(V).^2);
-    q = -(effectTarget * length(V)) / sum(bTmp(V).^2);
+        effectTarget = cst{ixTarget,5}.alphaX * doseTarget + cst{ixTarget,5}.betaX * doseTarget^2;
+        aTmp = dij.mAlphaDose{1}*wOnes;
+        bTmp = dij.mSqrtBetaDose{1} * wOnes;
+        p = sum(aTmp(V)) / sum(bTmp(V).^2);
+        q = -(effectTarget * length(V)) / sum(bTmp(V).^2);
 
-    wInit        = -(p/2) + sqrt((p^2)/4 -q) * wOnes;
+        wInit        = -(p/2) + sqrt((p^2)/4 -q) * wOnes;
+
+    elseif isequal(pln.propOpt.quantityOpt,'RBExD')
+
+        %pre-calculations
+        for s = 1:numel(dij.ixDose)
+            dij.gamma{s}             = zeros(dij.doseGrid.numOfVoxels,dij.numOfScenarios);
+            dij.gamma{s}(dij.ixDose{s}) = dij.ax{s}(dij.ixDose{s})./(2*dij.bx{s}(dij.ixDose{s}));
+        end
 
 
-    matRad_cfg.dispInfo('chosen weights adapted to biological dose calculation!\n');
+        % calculate current effect in target
+        aTmp = dij.mAlphaDose{1}*wOnes;
+        bTmp = dij.mSqrtBetaDose{1} * wOnes;
+        doseTmp = dij.physicalDose{1}*wOnes;
 
-elseif strcmp(pln.bioParam.quantityOpt, 'BED')
+        CurrEffectTarget = aTmp(V) + bTmp(V).^2;
+        % ensure a underestimated biological effective dose
+        TolEstBio        = 1.2;
+        % calculate maximal RBE in target
+        maxCurrRBE = max(-cst{ixTarget,5}.alphaX + sqrt(cst{ixTarget,5}.alphaX^2 + ...
+            4*cst{ixTarget,5}.betaX.*CurrEffectTarget)./(2*cst{ixTarget,5}.betaX*doseTmp(V)));
+        wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(doseTmp(V))))* wOnes;
+        
+    elseif strcmp(pln.propOpt.quantityOpt, 'BED')
 
-    if isfield(dij, 'mAlphaDose') && isfield(dij, 'mSqrtBetaDose')
-        abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
-        meanBED = mean((dij.mAlphaDose{1}(V,:)*wOnes + (dij.mSqrtBetaDose{1}(V,:)*wOnes).^2)./cst{ixTarget,5}.alphaX);
-        BEDTarget = doseTarget.*(1 + doseTarget./abr);
-    % elseif isfield(dij, 'RBE')
-    %     abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
-    %     meanBED = mean(dij.RBE.*dij.physicalDose{1}(V,:)*wOnes.*(1+dij.RBE.*dij.physicalDose{1}(V,:)*wOnes./abr));
-    %     BEDTarget = dij.RBE.*doseTarget.*(1 + dij.RBE.*doseTarget./abr);
-    % else
-    %     abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
-    %     meanBED = mean(dij.physicalDose{1}(V,:)*wOnes.*(1+dij.physicalDose{1}(V,:)*wOnes./abr));
-    %     BEDTarget = doseTarget.*(1 + doseTarget./abr);
-    end
-
-    bixelWeight =  BEDTarget/meanBED;
-    wInit       = wOnes * bixelWeight;
+        if isfield(dij, 'mAlphaDose') && isfield(dij, 'mSqrtBetaDose')
+            abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
+            meanBED = mean((dij.mAlphaDose{1}(V,:)*wOnes + (dij.mSqrtBetaDose{1}(V,:)*wOnes).^2)./cst{ixTarget,5}.alphaX);
+            BEDTarget = doseTarget.*(1 + doseTarget./abr);
+        % elseif isfield(dij, 'RBE')
+        %     abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
+        %     meanBED = mean(dij.RBE.*dij.physicalDose{1}(V,:)*wOnes.*(1+dij.RBE.*dij.physicalDose{1}(V,:)*wOnes./abr));
+        %     BEDTarget = dij.RBE.*doseTarget.*(1 + dij.RBE.*doseTarget./abr);
+        % else
+        %     abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
+        %     meanBED = mean(dij.physicalDose{1}(V,:)*wOnes.*(1+dij.physicalDose{1}(V,:)*wOnes./abr));
+        %     BEDTarget = doseTarget.*(1 + doseTarget./abr);
+        end
     
+        bixelWeight =  BEDTarget/meanBED;
+        wInit       = wOnes * bixelWeight;
+        
+    end
+        
+            matRad_cfg.dispInfo('chosen weights adapted to biological dose calculation!\n');
 
-    matRad_cfg.dispInfo('chosen weights adapted to biological dose calculation!\n');
 else
     doseTmp = dij.physicalDose{1}*wOnes;
     bixelWeight =  (doseTarget)/mean(doseTmp(V));

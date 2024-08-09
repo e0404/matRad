@@ -45,7 +45,7 @@ matRad_cfg = MatRad_Config.instance();
 
 % Look for the correct inputs
 p = inputParser;
-isNotOldQuantityOpt = @(x) ~any(strcmp(x, {'physicalDose', 'RBExD', 'effect'}));
+isNotOldQuantityOpt = @(x) ~any(strcmp(x, {'physicalDose', 'RBExD', 'effect', 'BED'}));
 addRequired(p, 'sRadiationMode');
 addRequired(p, 'sModel',isNotOldQuantityOpt);
 addOptional(p, 'sMachine', [], @isStruct);

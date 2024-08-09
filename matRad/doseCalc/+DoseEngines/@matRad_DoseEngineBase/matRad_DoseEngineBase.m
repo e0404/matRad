@@ -140,6 +140,8 @@ classdef (Abstract) matRad_DoseEngineBase < handle
                     else
                         matRad_cfg.dispError('Invalid specified biological model structure');
                     end
+                else
+                    matRad_cfg.dispError('Unrecognized biological model input');
                 end
             else
                 this.bioModel = [];
