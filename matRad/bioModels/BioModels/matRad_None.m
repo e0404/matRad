@@ -21,7 +21,7 @@ classdef matRad_None < matRad_BiologicalModel
     methods
         function this = matRad_None()
             this@matRad_BiologicalModel();
-            this.availableRadiationModalities = {'photons', 'protons', 'carbon', 'helium'};
+            this.availableRadiationModalities = {'photons', 'protons', 'carbon', 'helium', 'brachy'};
         end
     end
 end
