@@ -16,6 +16,7 @@
 - Transitioned from procedural dose calculation to an object-oriented approach, significantly improving the structure and maintainability of the dose engines.
 - Added customizable TOPAS interface for ions (and experimental for photons)
 - Workflow of the existing Monte Carlo interfaces has been completely overhauled in the new engine format
+- New handling of coordinate system (separation into world / cube systems with dedicated transformation functions) to ease readability
 
 #### Helium planning
 - matRad now contains a Generic helium dataset including LET
@@ -34,6 +35,7 @@
 
 #### Possibly Breaking Changes to matRad core workflow and functions
 While we try to keep downwards compatibility (and will provide fixes if breaking changes are detected), here are some potential dealbreakers
+- The coordinate handling of the isocenter changed. The isocenter is now always given in "world" coordinates (i.e., corresponding to the ct plane coordintes). Before, the isocenter resided in its own "cube" coordinate system (voxel index * resolution)
 - Default configuration options now stored in MatRad_Config under "defaults" struct. There is a compatibility layer, but this might break under user changes
 - Changed matRad_calcCubes to accept a variety of different fields for Monte Carlo, without changing the current usage
 - Some coordinate system bug-fixes might induce changes when an existing script is rerun
@@ -60,7 +62,6 @@ While we try to keep downwards compatibility (and will provide fixes if breaking
 - Corrected path issues and file handling, especially for temporary directories and submodules.
 - Fixed some bugs in optimization objectives & constraints for special input cases
 - Fixed issues in DICOM import expecting non-standard tags
-
 
 ## Version 2.10.1 - Patch release for "Blaise" 
 Release with small updates, clean-ups and bugfixes    
