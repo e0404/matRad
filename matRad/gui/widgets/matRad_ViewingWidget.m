@@ -1008,9 +1008,9 @@ classdef matRad_ViewingWidget < matRad_Widget
                         cursorText{end+1,1} = ['Cube Index: ' mat2str(vCubeIdx)];
                         %Space Coordinates
                         coords = zeros(1,3);
-                        coords(1) = cubePos(2)*ct.resolution.y;
-                        coords(2) = cubePos(1)*ct.resolution.x;
-                        coords(3) = cubePos(3)*ct.resolution.z;
+                        coords(1) = ct.y(cubePos(2));
+                        coords(2) = ct.x(cubePos(1));
+                        coords(3) = ct.z(cubePos(3));
                         cursorText{end+1,1} = ['Space Coordinates: ' mat2str(coords,5) ' mm'];
                         
                         ctVal = ct.cubeHU{1}(cubeIx(1),cubeIx(2),cubeIx(3));
@@ -1122,9 +1122,10 @@ classdef matRad_ViewingWidget < matRad_Widget
                         this.VOIPlotFlag(i) = true;
                     end
                 end
-                
+                 
                 if isfield(pln,'propStf')
-                    planeCenters = ceil(pln.propStf.isoCenter(1,[2 1 3]) ./ [ct.resolution.x ct.resolution.y ct.resolution.z]);
+                    isoCoordinates = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:), ct);
+                    planeCenters = ceil(isoCoordinates);
                     this.numOfBeams=pln.propStf.numOfBeams;
                 else
                     planeCenters = ceil(ct.cubeDim./ 2);
@@ -1310,8 +1311,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 % set isoCenter values 
                 % Note: only defined for the first Isocenter
                 if isfield(pln,'propStf')
-                    uniqueIsoCenters = unique(pln.propStf.isoCenter,'rows');
-                    this.vIsoCenter      = round(uniqueIsoCenters(1,:)./[ct.resolution.x ct.resolution.y ct.resolution.z]);
+                    this.vIsoCenter      = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:), ct);
                 else
                     this.plotIsoCenter = false;
                 end

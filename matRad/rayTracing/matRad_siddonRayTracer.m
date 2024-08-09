@@ -1,10 +1,11 @@
-function [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(isocenter, ...
+function [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(isocenterCube, ...
                                     resolution, ...
                                     sourcePoint, ...
                                     targetPoint, ...
                                     cubes)
 % siddon ray tracing through 3D cube to calculate the radiological depth 
-% according to Siddon 1985 Medical Physics
+% according to Siddon 1985 Medical Physics. The raytracer expects the
+% isocenter in cube coordinates!
 % 
 % call
 %   [alphas,l,rho,d12,vis] = matRad_siddonRayTracer(isocenter, ...
@@ -14,7 +15,7 @@ function [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(isocenter, ...
 %                               cubes)
 %
 % input
-%   isocenter:      isocenter within cube [voxels]
+%   isocenterCube:  isocenter in cube coordinates [mm]
 %   resolution:     resolution of the cubes [mm/voxel]
 %   sourcePoint:    source point of ray tracing
 %   targetPoint:    target point of ray tracing
@@ -50,10 +51,8 @@ function [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(isocenter, ...
 % works with negatives values. This put (resolution.x,resolution.y,resolution.z)
 % in the center of first voxel
 
-matRad_cfg = MatRad_Config.instance();
-
-sourcePoint = sourcePoint + isocenter;
-targetPoint = targetPoint + isocenter;
+sourcePoint = sourcePoint + isocenterCube;
+targetPoint = targetPoint + isocenterCube;
 
 % Save the numbers of planes.
 [yNumPlanes, xNumPlanes, zNumPlanes] = size(cubes{1});

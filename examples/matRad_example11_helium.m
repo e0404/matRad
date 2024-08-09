@@ -93,7 +93,8 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
-slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
+slice = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:),ct);
+slice = slice(3);
 figure
 subplot(121),imagesc(resultGUI.physicalDose(:,:,slice)),colorbar,colormap(jet),title('physical dose')
 subplot(122),imagesc(resultGUI.RBExD(:,:,slice)),colorbar,colormap(jet),title('RBExDose')

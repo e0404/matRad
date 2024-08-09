@@ -170,9 +170,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             end
 
             
-            % The offset of the dose grid of MCsquare and matRad are
-            % different, so we can not use the one computed in
-            % dij.doseGrid.isoCenterOffset
+            % The offset of the dose grid of MCsquare
             mcSquareAddIsoCenterOffset = [dij.doseGrid.resolution.x/2 dij.doseGrid.resolution.y/2 dij.doseGrid.resolution.z/2] ...
                             - [dij.ctGrid.resolution.x   dij.ctGrid.resolution.y   dij.ctGrid.resolution.z];
 
@@ -250,6 +248,10 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                 this.config.LET_Sparse_Output	 = ~this.calcDoseDirect;
             end
 
+            %Create X Y Z vectors if not present
+            ct = matRad_getWorldAxes(ct);
+            
+
             for scenarioIx = 1:this.multScen.totNumScen
                 %For direct dose calculation
                 totalWeights = 0;
@@ -268,7 +270,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                     for i = 1:length(stf)
                         %Create new stf for MCsquare with energy layer ordering and
                         %shifted scenario isocenter
-                        stfMCsquare(i).isoCenter   = stf(i).isoCenter + isoCenterShift;
+                        stfMCsquare(i).isoCenter   = matRad_world2cubeCoords(stf(i).isoCenter, ct) + isoCenterShift;  %MCsquare uses the isoCenter in cubeCoords
                         stfMCsquare(i).gantryAngle = mod(180-stf(i).gantryAngle,360); %Different MCsquare geometry
                         stfMCsquare(i).couchAngle  = stf(i).couchAngle;
                         stfMCsquare(i).energies    = unique([stf(i).ray.energy]);

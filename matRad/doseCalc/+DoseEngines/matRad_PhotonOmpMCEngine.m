@@ -127,6 +127,10 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
             %Now we have to calibrate to the the beamlet width.
             calibrationFactor = this.absCalibrationFactor * (bixelWidth/50)^2;
+            
+            %Create X Y Z vectors if not present
+            ct = matRad_getWorldAxes(ct);
+            
 
             scenCount = 0;
             %run over all scenarios
@@ -139,7 +143,8 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     scenCount = scenCount + 1;
 
                     % manipulate isocenter
-                    shiftedIsoCenter = vertcat(stf(:).isoCenter) + this.multScen.isoShift(scenarioIx,:) + dij.doseGrid.isoCenterOffset;
+                    shiftedIsoCenter = matRad_world2cubeCoords(vertcat(stf(:).isoCenter), this.doseGrid) + this.multScen.isoShift(scenarioIx,:);
+
                     this.ompMCgeo.isoCenter = shiftedIsoCenter;
                     tmpStf = stf;
 
@@ -216,7 +221,16 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             this.getOmpMCgeometry(dij.doseGrid);
 
             %% Create beamlet source
-            this.getOmpMCsource(stf);
+            ct = matRad_getWorldAxes(ct);
+            
+            %Get Isocenter in cube coordinates on the dose grid
+            tmpStf = stf;
+             for k = 1:length(stf)
+                 shiftedIsoCenter = matRad_world2cubeCoords(vertcat(stf(:).isoCenter),this.doseGrid);
+                 tmpStf(k).isoCenter = shiftedIsoCenter;
+            end
+
+            this.getOmpMCsource(tmpStf);
         end
     end
 

@@ -94,19 +94,8 @@ if ~isfield(pln.propStf,'useRangeShifter')
 end
 
 %Get Isocenter voxel as target
-if ~any(isfield(ct,{'x','y','z'}))
-    ct.x = ct.resolution.x*[1:ct.cubeDim(2)]-ct.resolution.x/2;
-    ct.y = ct.resolution.y*[1:ct.cubeDim(1)]-ct.resolution.y/2;
-    ct.z = ct.resolution.z*[1:ct.cubeDim(3)]-ct.resolution.z/2;
-end
+ct = matRad_getWorldAxes(ct);
 
-%xVox = ct.x + ct.resolution.x/2;
-%yVox = ct.y + ct.resolution.y/2;
-%zVox = ct.z + ct.resolution.z/2;
-
-xVox = ct.resolution.x*[1:ct.cubeDim(2)]-ct.resolution.x/2;
-yVox = ct.resolution.y*[1:ct.cubeDim(1)]-ct.resolution.y/2;
-zVox = ct.resolution.z*[1:ct.cubeDim(3)]-ct.resolution.z/2;
 
 % loop over all angles
 for i = 1:length(pln.propStf.gantryAngles)   
@@ -123,9 +112,9 @@ for i = 1:length(pln.propStf.gantryAngles)
     stf(i).totalNumOfBixels     = 1;
     stf(i).machine              = pln.machine;
     
-    x = floor(matRad_interp1(xVox,[1:ct.cubeDim(2)]',stf.isoCenter(1)));
-    y = floor(matRad_interp1(yVox,[1:ct.cubeDim(1)]',stf.isoCenter(2)));
-    z = floor(matRad_interp1(zVox,[1:ct.cubeDim(3)]',stf.isoCenter(3)));
+    x = floor(matRad_interp1(ct.x,[1:ct.cubeDim(2)]',stf.isoCenter(1)));
+    y = floor(matRad_interp1(ct.y,[1:ct.cubeDim(1)]',stf.isoCenter(2)));
+    z = floor(matRad_interp1(ct.z,[1:ct.cubeDim(3)]',stf.isoCenter(3)));
     
     %Voxel index of Isocenter
     isoIx = [y x z];
@@ -159,7 +148,10 @@ for i = 1:length(pln.propStf.gantryAngles)
     stf(i).ray.rayPos_bev = [0 0 0];
     stf(i).ray.targetPoint_bev = [0 SAD 0];
     
-    stf(i).ray.rayPos = stf.isoCenter;
+    
+    shiftedIsoCenter =  matRad_world2cubeCoords(vertcat(stf(:).isoCenter),ct);
+   
+    stf(i).ray.rayPos = shiftedIsoCenter;
     stf(i).ray.targetPoint = [0 SAD 0] * rotMat_vectors_T;
     
     
@@ -168,7 +160,7 @@ for i = 1:length(pln.propStf.gantryAngles)
         stf.longitudinalSpotSpacing = longitudinalSpotSpacing;
               
         % ray tracing necessary to determine depth of the target
-        [alphas,l,rho,d12,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
+        [alphas,l,rho,d12,~] = matRad_siddonRayTracer(shiftedIsoCenter, ...
                              ct.resolution, ...
                              stf(i).sourcePoint, ...
                              stf(i).ray.targetPoint, ...
