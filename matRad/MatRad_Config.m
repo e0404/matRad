@@ -11,7 +11,7 @@ classdef MatRad_Config < handle
     %
     % This file is part of the matRad project. It is subject to the license
     % terms in the LICENSE file found in the top-level directory of this
-    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+    % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
     % of the matRad project, including this file, may be copied, modified,
     % propagated, or distributed except according to the terms contained in the
     % LICENSE file.
@@ -77,12 +77,27 @@ classdef MatRad_Config < handle
             %  For instantiation, use the static MatRad_Config.instance();
             
             %Set Path
-            obj.matRadRoot = fileparts(fileparts(mfilename('fullpath')));
-            addpath(genpath(obj.matRadSrcRoot));
-            addpath(obj.exampleFolder);
-            addpath(genpath(obj.thirdPartyFolder));
+            if isdeployed
+                obj.matRadRoot = [ctfroot filesep 'matRad'];
 
-            obj.userfolders = {[obj.matRadRoot filesep 'userdata' filesep]};
+                if ispc
+                    userdir= getenv('USERPROFILE');
+                else 
+                    userdir= getenv('HOME');
+                end
+
+                userfolderInHomeDir = [userdir filesep 'matRad'];               
+
+                obj.userfolders = {userfolderInHomeDir};
+            else
+                obj.matRadRoot = fileparts(fileparts(mfilename('fullpath')));
+                addpath(genpath(obj.matRadSrcRoot));
+                addpath(obj.exampleFolder);
+                addpath(genpath(obj.thirdPartyFolder));
+                obj.userfolders = {[obj.matRadRoot filesep 'userdata' filesep]};
+            end
+
+            
             
             %Set Version
             obj.getEnvironment();
@@ -288,6 +303,7 @@ classdef MatRad_Config < handle
            obj.gui.backgroundColor = [0.5 0.5 0.5];
            obj.gui.elementColor = [0.75 0.75 0.75];
            obj.gui.textColor = [0 0 0];
+           obj.gui.highlightColor = [0 0 0];
            
            obj.gui.fontSize = 8;
            obj.gui.fontWeight = 'bold';
@@ -367,32 +383,59 @@ classdef MatRad_Config < handle
 
         function set.userfolders(obj,userfolders)
             oldFolders = obj.userfolders;
+                     
+            %Check if folders need to be created
+            for f = 1:numel(userfolders)
+                if ~isfolder(userfolders{f})
+                    [status, msg] = mkdir(userfolders{f});
+                    if status == 0
+                        obj.dispWarning('Userfolder %s not added beacuse it could not be created: %s',userfolders{f},msg);
+                    else
+                        subfolders = {'hluts','machines','patients','scripts'};                    
+                        [status,msgs] = cellfun(@(sub) mkdir([userfolders{f} filesep sub]),subfolders,'UniformOutput',false);
+                        if any(cell2mat(status) ~= 1)
+                            obj.dispWarning('Problem when creating subfolder in Userfolder %s!',userfolders{f})
+                        end
+                    end
+                end
+            end
+
             %We do this to verify folders
+            nonWorkingFolders = cellfun(@isempty,userfolders);
+            userfolders(nonWorkingFolders) = [];
+
             allNewFolders = cellfun(@dir, userfolders,'UniformOutput',false);
             if isempty(allNewFolders)
                 obj.dispWarning('No user folders specified. Defaulting to userdata folder in matRad root directory.');
-                allNewFolders = {[fileparts(mfilename('fullpath')) filesep 'userdata' filesep]}; %We don't access obj.matRadRoot here because of Matlab's weird behavior with properties
-            end
+                if ~isdeployed
+                    allNewFolders = {[fileparts(mfilename('fullpath')) filesep 'userdata' filesep]}; %We don't access obj.matRadRoot here because of Matlab's weird behavior with properties
+                else
+                    allNewFolders = {[ctfroot filesep 'userdata' filesep]}; %We don't access obj.matRadRoot here because of Matlab's weird behavior with properties
+                end
+            end           
 
             cleanedNewFolders = cellfun(@(x) x(1).folder,allNewFolders,'UniformOutput',false);
             
-            % Identify newly added folder paths
-            if ~isempty(oldFolders) %if statement for octave compatibility
-                addedFolders = setdiff(cleanedNewFolders, oldFolders);
-            else
-                addedFolders = cleanedNewFolders;
+            % Identify newly added folder paths and add them to path
+            if ~isdeployed
+                if ~isempty(oldFolders) %if statement for octave compatibility
+                    addedFolders = setdiff(cleanedNewFolders, oldFolders);
+                else
+                    addedFolders = cleanedNewFolders;
+                end
+                addedFolders = cellfun(@genpath,addedFolders,'UniformOutput',false);
+                addedFolders = strjoin(addedFolders,pathsep);
+                addpath(addedFolders);
             end
-
-            addedFolders = cellfun(@genpath,addedFolders,'UniformOutput',false);
-            addedFolders = strjoin(addedFolders,pathsep);
-            addpath(addedFolders);
 
             % Identify removed folder paths
             if ~isempty(oldFolders) %if statement for octave compatibility
                 removedFolders = setdiff(oldFolders, cleanedNewFolders);
                 removedFolders = cellfun(@genpath,removedFolders,'UniformOutput',false);
                 removedFolders = strjoin(removedFolders,pathsep);
-                rmpath(removedFolders);
+                if ~isdeployed
+                    rmpath(removedFolders);
+                end
             end
             
             obj.userfolders = cleanedNewFolders;
@@ -490,7 +533,7 @@ classdef MatRad_Config < handle
                     if ~isfield(pln,currField)
                         pln.(currField) = obj.defaults.(currField);
                     else
-                        pln.(currField) = matRad_recursiveFieldAssignment(pln.(currField),obj.defaults.(currField));
+                        pln.(currField) = matRad_recursiveFieldAssignment(pln.(currField),obj.defaults.(currField),false);
                     end
                 end
             end

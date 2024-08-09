@@ -489,7 +489,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
                 % manipulate isocenter
                 for k = 1:numel(stf)
-                    stf(k).isoCenter = stf(k).isoCenter + this.multScen.isoShift(ixShiftScen,:);
+                    stf(k).isoCenter = matRad_world2cubeCoords(stf(k).isoCenter,this.doseGrid) + this.multScen.isoShift(ixShiftScen,:);
                 end
 
                 % Delete previous topas files so there is no mix-up
@@ -528,7 +528,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 % later are stored in the MCparam file that is stored in the folder. The folder is generated in the working
                 % directory and the matRad_plan*.txt file can be manually called with TOPAS.
                 if strcmp(this.externalCalculation,'write')
-                    matRad_cfg.dispInfo(['TOPAS simulation skipped for external calculation\nFiles have been written to: "',replace(this.workingDir,'\','\\'),'"']);
+                    matRad_cfg.dispInfo(['TOPAS simulation skipped for external calculation\nFiles have been written to: "',strrep(this.workingDir,'\','\\'),'"']);
                 else
                     for ctScen = 1:ct.numOfCtScen
                         for beamIx = 1:numel(stf)
@@ -539,7 +539,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                                     fname = sprintf('%s_field%d_run%d',this.label,beamIx,runIx);
                                 end
 
-                                if isprop(this,'verbosity') && strcmp(this.verbosity,'full')
+                                if strcmp(this.verbosity,'full')
                                     topasCall = sprintf('%s %s.txt',this.topasExecCommand,fname);
                                 else
                                     topasCall = sprintf('%s %s.txt > %s.out > %s.log',this.topasExecCommand,fname,fname,fname);
@@ -556,7 +556,8 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                                 [status,cmdout] = system(topasCall,'-echo');
 
                                 % Process TOPAS output and potential errors
-                                cout = splitlines(string(cmdout));
+                                % cout = splitlines(string(cmdout));
+                                cout = cmdout;
                                 if status == 0
                                     matRad_cfg.dispInfo('TOPAS simulation completed succesfully\n');
                                 else
@@ -748,7 +749,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             end
 
             obj.MCparam.tallies = unique(obj.MCparam.tallies);
-            talliesCut = replace(obj.MCparam.tallies,'-','_');
+            talliesCut = strrep(obj.MCparam.tallies,'-','_');
 
             % Load data for each tally individually
             for t = 1:length(obj.MCparam.tallies)
@@ -1509,11 +1510,11 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                         selectedData = [];
                         focusIndex = baseData.selectedFocus(baseData.energyIndex);
 
-                        scalarFields = ["NominalEnergy","EnergySpread","MeanEnergy"];                                                   
+                        scalarFields = {'NominalEnergy','EnergySpread','MeanEnergy'};                                                   
                         
                         for i = 1:numel(focusIndex)
                             for field = scalarFields
-                                baseData.monteCarloData(i).(field) = ones(1,max(focusIndex))*baseData.monteCarloData(i).(field);
+                                baseData.monteCarloData(i).(field{1}) = ones(1,max(focusIndex))*baseData.monteCarloData(i).(field{1});
                             end
                             selectedData = [selectedData, structfun(@(x) x(focusIndex(i)),baseData.monteCarloData(i),'UniformOutput',false)];
                         end

@@ -27,7 +27,7 @@ function stf = matRad_computeSSD(stf,ct,varargin)
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
 % of the matRad project, including this file, may be copied, modified, 
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
@@ -57,7 +57,10 @@ if strcmp(mode,'first')
     for i = 1:size(stf,2)
         SSD = cell(1,stf(i).numOfRays);
         for j = 1:stf(i).numOfRays
-            [alpha,~,rho,d12,~] = matRad_siddonRayTracer(stf(i).isoCenter, ...
+
+            cubeIsoCenter = matRad_world2cubeCoords(stf(i).isoCenter,ct);
+
+            [alpha,~,rho,d12,~] = matRad_siddonRayTracer(cubeIsoCenter, ...
                                  ct.resolution, ...
                                  stf(i).sourcePoint, ...
                                  stf(i).ray(j).targetPoint, ...

@@ -10,7 +10,7 @@ classdef matRad_MainGUI < handle
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
 % of the matRad project, including this file, may be copied, modified,
 % propagated, or distributed except according to the terms contained in the
 % LICENSE file.
@@ -34,6 +34,8 @@ classdef matRad_MainGUI < handle
         DVHStatsWidget
         eventListeners
         GammaWidget
+
+        forceClose = false;
     end
 
 
@@ -164,13 +166,14 @@ classdef matRad_MainGUI < handle
             obj.guiHandle = figure(figArgs{:});
 
             %WindowState not available in all versions
-            if isprop(obj.guiHandle,'WindowState')
+            if matRad_ispropCompat(obj.guiHandle,'WindowState')
                 set(obj.guiHandle,'WindowState','maximized');
             end
 
             if matRad_cfg.isOctave
                 commonPanelProperties = {'Parent',obj.guiHandle,...
                     'BackgroundColor',matRad_cfg.gui.backgroundColor,...
+                    'ForegroundColor',matRad_cfg.gui.highlightColor,...
                     'Clipping','off',...
                     'FontName',matRad_cfg.gui.fontName,...
                     'FontSize',matRad_cfg.gui.fontSize,...
@@ -181,6 +184,7 @@ classdef matRad_MainGUI < handle
             else
                 commonPanelProperties = {'Parent',obj.guiHandle,...
                     'BackgroundColor',matRad_cfg.gui.backgroundColor,...
+                    'ForegroundColor',matRad_cfg.gui.highlightColor,...
                     'Clipping','off',...
                     'FontName',matRad_cfg.gui.fontName,...
                     'FontSize',matRad_cfg.gui.fontSize,...
@@ -289,6 +293,19 @@ classdef matRad_MainGUI < handle
             % update button states
             obj.updateButtons();
         end
+        
+        function delete(this)
+            this.forceClose = true;
+            try
+                close(this.guiHandle);
+            catch
+                delete@handle(this);
+            end
+        end
+
+        function close(this)
+            this.delete();
+        end
 
         function update(this,evt)
             if nargin < 2
@@ -305,14 +322,14 @@ classdef matRad_MainGUI < handle
            matRad_cfg = MatRad_Config.instance();
 
            args = {};
-           if matRad_cfg.logLevel > 3
-               if nargin < 2 || ~isa(evt,'matRad_WorkspaceChangedEvent')
-                   changed = {};
-               else
-                   changed = evt.changedVariables;
-                   args = {evt};
-               end
+           if nargin < 2 || ~isa(evt,'matRad_WorkspaceChangedEvent')
+               changed = {};
+           else
+               changed = evt.changedVariables;
+               args = {evt};
+           end
 
+           if matRad_cfg.logLevel > 3               
                matRad_cfg.dispDebug('GUI Workspace Changed at %s. ',datestr(now,'HH:MM:SS.FFF'));
                if ~isempty(changed)
                    matRad_cfg.dispDebug('Specific Variables: %s.\n',strjoin(changed,'|'));
@@ -326,11 +343,16 @@ classdef matRad_MainGUI < handle
            this.PlanWidget.update(args{:});
            this.WorkflowWidget.update(args{:});
            this.OptimizationWidget.update(args{:});
-           this.ViewingWidget.lockUpdate = 0;
+           this.ViewingWidget.updateLock = false;
            this.ViewingWidget.update(args{:});
-           this.StructureVisibilityWidget.update(args{:});
-           %this.ViewerOptionsWidget.update();
-           %this.VisualizationWidget.update();
+           this.StructureVisibilityWidget.update(args{:}); 
+           
+           this.ViewingWidget.updateLock = true;
+           this.ViewerOptionsWidget.update(args{:});
+           this.VisualizationWidget.update(args{:});
+           this.ViewingWidget.updateLock = false;
+           
+           
 
         end
 
@@ -423,13 +445,15 @@ classdef matRad_MainGUI < handle
             oldPos = get(this.ViewingWidget.handles.axesFig,'Position');
             set(new_handle(1),'units','normalized', 'Position',oldPos);
 
-            if exist(this.lastStoragePath,'dir') ~= 7
+            if (ischar(this.lastStoragePath) || isstring(this.lastStoragePath)) && isfolder(this.lastStoragePath)
                 this.lastStoragePath = [];
             end
 
             [filename, pathname] = uiputfile({'*.jpg;*.tif;*.png;*.gif','All Image Files'; '*.fig','MATLAB figure file'},'Save current view',[this.lastStoragePath 'screenshot.png']);
-
-            this.lastStoragePath = pathname;
+            
+            if pathname ~= 0
+                this.lastStoragePath = pathname;
+            end
 
             if ~isequal(filename,0) && ~isequal(pathname,0)
                 set(gcf, 'pointer', 'watch');
@@ -486,20 +510,44 @@ classdef matRad_MainGUI < handle
 
 
         % button: close
-        function figure1_CloseRequestFcn(this,hObject, ~)
+        function figure1_CloseRequestFcn(this,hObject,~)
             matRad_cfg = MatRad_Config.instance();
-            set(0,'DefaultUicontrolBackgroundColor',matRad_cfg.gui.backgroundColor);
-            selection = questdlg('Do you really want to close matRad?',...
-                'Close matRad',...
-                'Yes','No','Yes');
-
+            
+            if this.forceClose
+                selection = 'Yes';
+            else
+                %Get default colors
+                bgColor = get(0,'DefaultUicontrolBackgroundColor');
+                fgColor = get(0,'DefaultUIcontrolForegroundColor');
+                figColor = get(0,'DefaultFigureColor');
+                txtColor = get(0,'DefaultTextColor');
+                
+                %Make sure we use the matRad color scheme
+                set(0,'DefaultUicontrolBackgroundColor',matRad_cfg.gui.elementColor);
+                set(0,'DefaultUIcontrolForegroundColor',matRad_cfg.gui.textColor);
+                set(0,'DefaultFigureColor',matRad_cfg.gui.backgroundColor);
+                set(0,'DefaultTextColor',matRad_cfg.gui.textColor);
+                
+                selection = questdlg('Do you really want to close matRad?',...
+                    'Close matRad',...
+                    'Yes','No','Yes');
+                
+                %restore original colors
+                set(0,'DefaultUicontrolBackgroundColor',bgColor);
+                set(0,'DefaultUIcontrolForegroundColor',fgColor);
+                set(0,'DefaultFigureColor',figColor);
+                set(0,'DefaultTextColor',txtColor);
+            end
+            
+            %close if requested
             switch selection
                 case 'Yes'
                     delete(hObject);
                     delete(this);
-                case 'No'
-                    return
+                otherwise
+                    %Do nothing
             end
+
         end
 
     end

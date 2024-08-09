@@ -49,16 +49,11 @@ if isempty(V)
     error('Could not find target');
 end
 
-% Transform subcripts from linear indices 
-[yCoordsV, xCoordsV, zCoordsV] = ind2sub(ct.cubeDim,V);
+% Transform to [mm]
+coord = matRad_cubeIndex2worldCoords(V, ct); %idx2worldcoord
 
-%% Transform to [mm] in ct grid
-xCoordsV = ct.x(xCoordsV);
-yCoordsV = ct.y(yCoordsV);
-zCoordsV = ct.z(zCoordsV);
-
-%% define root position
-templateRoot = [mean(xCoordsV),mean(yCoordsV),min(zCoordsV)];
+% Calculated isocenter.
+templateRoot = [mean(coord(:,[1 2])) min(coord(:,3))];
 
 end
 
