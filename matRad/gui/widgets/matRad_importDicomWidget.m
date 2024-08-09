@@ -49,20 +49,19 @@ classdef matRad_importDicomWidget < matRad_Widget
             handles = this.handles;
             handles.output = handles;
             
-            axes(handles.axesMatRadLogo)
-            [path,name,ext] = fileparts(mfilename('fullpath'));
-            
-            [im, ~, alpha] = imread([path filesep '..' filesep '..' filesep 'gfx/matrad_logo.png']);
-            q = image(im);
-            axis equal off
+            [im, alpha] = matRad_getLogoDKFZ();
+            q = image(im,'Parent',handles.axesDKFZLogo);
+            axis(handles.axesDKFZLogo,'equal','off');
             set(q, 'AlphaData', alpha);
-            % show dkfz logo
-            axes(handles.axesDKFZLogo)
-            [im, ~, alpha] = imread([path filesep '..' filesep  '..' filesep 'gfx/DKFZ_Logo.png']);
-            p = image(im);
-            axis equal off
-            set(p, 'AlphaData', alpha);
-            
+
+            % show dkfz logo            
+            [im,alpha] = matRad_getLogo();
+
+            f = image(im,'Parent',handles.axesMatRadLogo);
+            axis(handles.axesMatRadLogo,'equal','off');
+            set(f, 'AlphaData', alpha);
+
+
             % Update handles structure
             % guidata(hObject, handles);
             this.handles = handles;
