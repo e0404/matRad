@@ -54,6 +54,7 @@ if isfield(pln,'propStf') && isfield(pln.propStf,'addMargin')
 end
 
 % get machine
+fileName = [pln.radiationMode, '_', pln.machine];
 try
     machine = matRad_loadMachine(pln);
 catch
