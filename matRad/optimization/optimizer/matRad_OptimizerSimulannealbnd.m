@@ -48,6 +48,12 @@ classdef matRad_OptimizerSimulannealbnd < matRad_Optimizer
             else
                 optDisplay = 'off';
             end
+
+            if matRad_cfg.disableGUI
+                pltFcns = {[]};                
+            else
+                pltFcns = {@saplotbestf,@saplotbestx, @saplotf,@saplotx,@saplotstopping,@saplottemperature};
+            end
             
             % Create default optimizer options
             obj.options = optimoptions('simulannealbnd', ...
@@ -56,7 +62,7 @@ classdef matRad_OptimizerSimulannealbnd < matRad_Optimizer
                 'Display', optDisplay, ...
                 'MaxIterations', matRad_cfg.defaults.propOpt.maxIter, ...
                 'MaxFunctionEvaluations', 120000, ...
-                'PlotFcn', {@saplotbestf,@saplotbestx, @saplotf,@saplotx,@saplotstopping,@saplottemperature});
+                'PlotFcn',pltFcns);
         end
                 
         function obj = optimize(obj, w0, optiProb, dij, cst)
