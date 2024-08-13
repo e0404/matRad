@@ -158,6 +158,8 @@ end
 
 function valid = validateFoldersInput(folders)
     valid = false;
+    matRad_cfg = MatRad_Config.instance();
+
     if iscellstr(folders) && all(isfolder(folders))
         valid = true;
     else
