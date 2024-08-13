@@ -60,15 +60,18 @@ try
     end
 
 catch ME
-    switch ME.identifier
-        case 'MATLAB:InputParser:ArgumentFailedValidation'
-            if contains(ME.message, 'sModel') && ~isNotOldQuantityOpt(sModel)
-                matRad_cfg.dispDeprecationWarning('quantityOpt input for the biological model will be deprecated!');
-                sModel = sMachine;
-                sMachine = [];
-            else
-                matRad_cfg.dispError(ME.message);
-            end
+    if matRad_cfg.isOctave
+        checkString = upper('sModel');
+    else
+
+        checkString = 'sModel';
+    end
+    if ~isempty(strfind(ME.message, checkString)) && ~isNotOldQuantityOpt(sModel)
+        matRad_cfg.dispDeprecationWarning('quantityOpt input for the biological model will be deprecated!');
+        sModel = sMachine;
+        sMachine = [];
+    else
+        matRad_cfg.dispError(ME.message);
     end
 end
 
@@ -88,8 +91,13 @@ subFolders(cellfun(@isempty, subFolders)) = [];
 % Look for the subclasses of BiologicalModel present in all
 % subfolders
 availableBioModelsClassList = matRad_findSubclasses('matRad_BiologicalModel', 'folders', subFolders);
-availableBioModelsNameList = cellfun(@(model) model.Name, availableBioModelsClassList, 'UniformOutput',false);
-availableBioModelsNameList = cellfun(@(modelClass) eval([modelClass, '.model']), availableBioModelsNameList, 'UniformOutput',false);
+availableBioModelsClassNameList = cellfun(@(model) model.Name, availableBioModelsClassList, 'UniformOutput',false);
+%availableBioModelsNameList = cellfun(@(modelClass) eval([modelClass, '.model']), availableBioModelsNameList, 'UniformOutput',false);
+
+for modelClassIdx = 1:numel(availableBioModelsClassList)
+    availableBioModelsNameList{modelClassIdx,1} = eval([availableBioModelsClassNameList{modelClassIdx}, '.model']);
+
+end
 
 if ~isequal(size(unique(availableBioModelsNameList)), size(availableBioModelsNameList))
     matRad_cfg.dispError('Multiple biological models with the same name available.');
