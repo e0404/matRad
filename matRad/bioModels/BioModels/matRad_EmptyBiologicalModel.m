@@ -1,4 +1,4 @@
-classdef matRad_None < matRad_BiologicalModel
+classdef matRad_EmptyBiologicalModel < matRad_BiologicalModel
 %  matRad_None
 %  Class to implement the None model
 %
@@ -19,7 +19,7 @@ classdef matRad_None < matRad_BiologicalModel
     end
 
     methods
-        function this = matRad_None()
+        function this = matRad_EmptyBiologicalModel()
             this@matRad_BiologicalModel();
             this.availableRadiationModalities = {'photons', 'protons', 'carbon', 'helium', 'brachy'};
         end
