@@ -29,7 +29,7 @@ function classList = matRad_findSubclasses(superClassName,varargin)
     p = inputParser;
     p.addRequired('superclassName',@(x) ischar(x) || isa(x,'meta.class'));
     p.addParameter('packages',{},@(x) iscell(x) && (iscellstr(x) || all(cellfun(@(y) isa(y,'meta.package'),x))));
-    p.addParameter('folders',{},@(x) iscellstr(x) && all(isfolder(x)));
+    p.addParameter('folders',{},@(x) validateFoldersInput(x));
     p.addParameter('includeAbstract',false,@(x) isscalar(x) && islogical(x));
     %p.addParameter('usePath',false,@(x) islogical(x) && isscalar(x));
 
@@ -153,6 +153,28 @@ function inherits = matRad_checkInheritance(metaClass,superClassName)
                 inherits = matRad_checkInheritance(superClasses{ix},superClassName);
             end
         end
+    end
+end
+
+function valid = validateFoldersInput(folders)
+    if iscellstr(folders) && all(isfolder(folders))
+        valid = true;
+    else
+       try
+           iscellstr(folders);
+       catch ME
+           
+           whatisfolders = whos('folders');
+           matRad_cfg.dispError(['iscellstr(folders) failed, folder is of class: ',whatisfolders.class, ' Error message was: ',ME.message]);
+       end
+
+       try
+           isfolder(folders);
+       catch ME
+           
+           whatisfolders = whos('folders');
+           matRad_cfg.dispError(['isfolder(folders) failed, folder is of class: ',whatisfolders.class, ' Error message was: ',ME.message]);
+       end
     end
 end
 
