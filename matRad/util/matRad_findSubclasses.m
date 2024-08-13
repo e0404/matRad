@@ -157,6 +157,7 @@ function inherits = matRad_checkInheritance(metaClass,superClassName)
 end
 
 function valid = validateFoldersInput(folders)
+    valid = false;
     if iscellstr(folders) && all(isfolder(folders))
         valid = true;
     else
@@ -174,6 +175,13 @@ function valid = validateFoldersInput(folders)
            
            whatisfolders = whos('folders');
            matRad_cfg.dispError(['isfolder(folders) failed, folder is of class: ',whatisfolders.class, ' Error message was: ',ME.message]);
+       end
+
+       try 
+            matRad_cfg.dispInfo(folders{1});
+            valid = true;
+       catch ME
+            matRad_dispError(['Folders contains:' folders{1}]);
        end
     end
 end
