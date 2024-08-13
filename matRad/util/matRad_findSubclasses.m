@@ -181,7 +181,7 @@ function valid = validateFoldersInput(folders)
             matRad_cfg.dispInfo(folders{1});
             valid = true;
        catch ME
-            matRad_dispError(['Folders contains:' folders{1}]);
+            matRad_cfg.dispError(ME.message);
        end
     end
 end
