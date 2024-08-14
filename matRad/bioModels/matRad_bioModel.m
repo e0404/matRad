@@ -84,7 +84,7 @@ mainFolder        = fullfile(matRad_cfg.matRadSrcRoot,'bioModels');
 userDefinedFolder = fullfile(matRad_cfg.primaryUserFolder, 'bioModels');
 
 % Collect all the subfolders
-subFolders = [strsplit(genpath(mainFolder), ';')';strsplit(genpath(userDefinedFolder), ';')'];
+subFolders = [strsplit(genpath(mainFolder), {';', ':'})';strsplit(genpath(userDefinedFolder), {';', ':'})'];
 subFolders(cellfun(@isempty, subFolders)) = [];
 
 
