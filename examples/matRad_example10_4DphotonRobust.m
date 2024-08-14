@@ -194,7 +194,7 @@ pln.propDoseCalc.doseGrid.resolution.y = 5; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
 
 % retrieve bio model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
+pln.bioModel = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
 
 % retrieve 9 worst case scenarios for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,'nomScen');                                         
@@ -213,6 +213,7 @@ dij = matRad_calcPhotonDose(ct,stf,pln,cst);
 
 %Activate 4D Optimization
 %pln.propOpt.scen4D = 'all';
+pln.propOpt.quantityOpt = quantityOpt;
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Trigger robust optimization

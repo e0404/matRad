@@ -56,7 +56,7 @@ modelName    = 'constRBE';             % none: for photons, protons, carbon     
 scenGenType  = 'nomScen';          % scenario creation type 'nomScen'  'wcScen' 'impScen' 'rndScen' 
 
 % retrieve bio model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
+pln.bioModel = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 
 % retrieve scenarios for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,scenGenType);
@@ -71,6 +71,7 @@ dij = matRad_calcParticleDose(ct,stf,pln,cst);
 
 %% 
 % inverse planning for imrt on a static CT
+pln.propOpt.quantityOpt = quantityOpt;
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% 

@@ -64,7 +64,7 @@ modelName    = 'constRBE';
 quantityOpt  = 'RBExD'; 
 
 % retrieve bio model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
+pln.bioModel = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
 
 % retrieve scenarios for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,'nomScen');  % optimize on the nominal scenario
@@ -88,6 +88,7 @@ pln.propDoseCalc.engine = 'MCsquare';
 dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 
 %% Inverse Optimization for IMPT
+pln.propOpt.quantityOpt = quantityOpt;
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Calculate quality indicators 

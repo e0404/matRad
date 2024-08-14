@@ -106,7 +106,7 @@ pln.propOpt.runDAO        = 0;
 pln.propOpt.runSequencing = 0;
 
 % retrieve bio model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
+pln.bioModel = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
 
 % retrieve nominal scenario for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,'nomScen'); 
@@ -130,6 +130,7 @@ dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment.
+pln.propOpt.quantityOpt = quantityOpt;
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 %%
 matRadGUI

@@ -72,7 +72,7 @@ cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
 options.ixForOpt     = 1;
 options.numOfScen    = 1;
 options.scenProb     = 1;
-options.bioOpt       = pln.bioParam.bioOpt;
+%options.bioOpt       = pln.bioParam.bioOpt;
 options.quantityOpt  = pln.bioParam.quantityOpt;
 options.model        = pln.bioParam.model;
 
