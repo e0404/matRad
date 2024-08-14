@@ -16,9 +16,9 @@ initTestSuite;
 
 function test_setBiologicalModel
     bioModel = matRad_bioModel('photons','none');
-    assertTrue(isa(bioModel, 'matRad_None'));
+    assertTrue(isa(bioModel, 'matRad_EmptyBiologicalModel'));
     bioModel = matRad_bioModel('protons', 'none');
-    assertTrue(isa(bioModel, 'matRad_None'));
+    assertTrue(isa(bioModel, 'matRad_EmptyBiologicalModel'));
     bioModel = matRad_bioModel('photons', 'MCN');
     assertTrue(isa(bioModel, 'matRad_EmptyBiologicalModel'));
     

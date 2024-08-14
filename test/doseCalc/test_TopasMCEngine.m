@@ -40,12 +40,14 @@ for i = 1:numel(radModes)
         pln.propDoseCalc.engine = 'TOPAS';
         pln.propDoseCalc.externalCalculation = 'write';
         pln.propDoseCalc.numHistoriesDirect = 1e6;
+        pln.bioModel = matRad_bioModel(radModes{i},'none');
         resultGUI = matRad_calcDoseForward(ct,cst,stf,pln, ones(1,sum([stf(:).totalNumOfBixels])));
    
     elseif strcmp(radModes{i},'photons')
         load([radModes{i} '_testData.mat']);
         pln.propOpt.runSequencing =  1;
         pln.propOpt.runDAO = 1;
+        pln.bioModel = matRad_bioModel(radModes{i}, 'none');
         dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
         resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
         resultGUI.wUnsequenced = ones(dij.totalNumOfBixels,1);
@@ -88,12 +90,14 @@ for i = 1:numel(radModes)
         pln.propDoseCalc.externalCalculation = 'write';
         pln.propDoseCalc.numHistoriesDirect = 1e6;
         pln.propDoseCalc.numOfRuns = numOfRuns;
+        pln.bioModel = matRad_bioModel(radModes{i},'none');
         resultGUI = matRad_calcDoseForward(ct,cst,stf,pln, ones(1,sum([stf(:).totalNumOfBixels])));
    
     elseif strcmp(radModes{i},'photons')
         load([radModes{i} '_testData.mat']);
         pln.propOpt.runSequencing =  1;
         pln.propOpt.runDAO = 1;
+        pln.bioModel = matRad_bioModel(radModes{i},'none');
         dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
         resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
         resultGUI.wUnsequenced = ones(dij.totalNumOfBixels,1);
