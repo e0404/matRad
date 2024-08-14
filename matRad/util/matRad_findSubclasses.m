@@ -29,8 +29,8 @@ function classList = matRad_findSubclasses(superClassName,varargin)
     p = inputParser;
     p.addRequired('superclassName',@(x) ischar(x) || isa(x,'meta.class'));
     p.addParameter('packages',{},@(x) iscell(x) && (iscellstr(x) || all(cellfun(@(y) isa(y,'meta.package'),x))));
-    p.addParameter('folders',{},@(x) iscellstr(x) && all(isfolder(x)));
-    %p.addParameter('folders',{},@(x) validateFoldersInput(x));
+    %p.addParameter('folders',{},@(x) iscellstr(x) && all(isfolder(x)));
+    p.addParameter('folders',{},@(x) validateFoldersInput(x));
     p.addParameter('includeAbstract',false,@(x) isscalar(x) && islogical(x));
     %p.addParameter('usePath',false,@(x) islogical(x) && isscalar(x));
 
@@ -159,7 +159,6 @@ end
             
 function valid = validateFoldersInput(folders)
     valid = false;
-    matRad_cfg = MatRad_Config.instance();
 
     if iscellstr(folders) && all(isfolder(folders))
         valid = true;
@@ -168,22 +167,22 @@ function valid = validateFoldersInput(folders)
            iscellstr(folders);
        catch ME
            whatisfolders = whos('folders');
-           matRad_cfg.dispError(['iscellstr(folders) failed, folder is of class: ',whatisfolders.class, ' Error message was: ',ME.message]);
+           error(['iscellstr(folders) failed, folder is of class: ',whatisfolders.class, ' Error message was: ',ME.message]);
        end
 
        try
            isfolder(folders);
        catch ME           
            whatisfolders = whos('folders');
-           matRad_cfg.dispError(['isfolder(folders) failed, folder is of class: ',whatisfolders.class, ' Error message was: ',ME.message]);
+           error(['isfolder(folders) failed, folder is of class: ',whatisfolders.class, ' Error message was: ',ME.message]);
        end
 
-       try 
-            matRad_cfg.dispInfo(folders{1});
-            valid = true;
-       catch ME
-            matRad_cfg.dispError(ME.message);
-       end
+       % try 
+       %      disp(folders{1});
+       %      valid = true;
+       % catch ME
+       %      disp(ME.message);
+       % end
     end
 end
 
