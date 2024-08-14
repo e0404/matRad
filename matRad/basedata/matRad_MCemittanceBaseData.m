@@ -479,7 +479,20 @@ classdef matRad_MCemittanceBaseData
                 
                 options.ipopt.hessian_approximation = 'limited-memory';
                 options.ipopt.limited_memory_update_type = 'bfgs';
-                options.ipopt.print_level = 1;
+                
+                %Set Default Options
+                if obj.matRad_cfg.logLevel <= 1
+                    lvl = 0;
+                elseif obj.matRad_cfg.logLevel <= 2
+                    lvl = 2;
+                elseif obj.matRad_cfg.logLevel <= 3
+                    lvl = 5;
+                else
+                    %There seems to be a problem with higher log levels in
+                    %IPOPT!
+                    lvl = 5;
+                end
+                options.ipopt.print_level = lvl;
                 
                 start = [0.9; 0.1];
                 [result, ~] = ipopt (start, funcs, options);
