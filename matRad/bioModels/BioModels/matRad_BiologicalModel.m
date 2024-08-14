@@ -42,6 +42,11 @@ classdef (Abstract) matRad_BiologicalModel < handle
         model;
     end
 
+    properties (Hidden)
+        quantityOpt;
+        quantityVis;
+    end
+
     methods
         function this = matRad_BiologicaModel()
             
@@ -90,6 +95,30 @@ classdef (Abstract) matRad_BiologicalModel < handle
 
         end
         
+    end
+
+    methods
+        function set.quantityOpt(this, value)
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispDeprecationWarning('Property quantityOpt is deprecated from bioModel. Please set it as a field in pln.propOpt');
+        end
+
+        function value = get.quantityOpt(this)
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispDeprecationWarning('Property quantityOpt is deprecated from bioModel.');
+            value = [];
+        end
+
+        function set.quantityVis(this, value)
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispDeprecationWarning('Property quantityVis is deprecated from bioModel. Please set it as a field in pln.propOpt');
+        end
+
+        function value = get.quantityVis(this)
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispDeprecationWarning('Property quantityVis is deprecated from bioModel.');
+            value = [];
+        end
     end
 
     methods %(Static)
