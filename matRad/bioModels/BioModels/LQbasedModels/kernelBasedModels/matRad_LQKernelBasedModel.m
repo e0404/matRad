@@ -1,4 +1,4 @@
-classdef matRad_LQKernelBasedModel < matRad_LQBasedModel
+classdef (Abstract) matRad_LQKernelBasedModel < matRad_LQBasedModel
 % This is an Abstract class implementing any Kernel-Based model.
 % This class of models rely on the interpolation of the variable alpha/beta
 % kernels presen in the base data.
@@ -17,7 +17,7 @@ classdef matRad_LQKernelBasedModel < matRad_LQBasedModel
 %
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-    properties
+    properties (Abstract)
 
     end
 
