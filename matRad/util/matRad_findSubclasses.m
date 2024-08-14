@@ -158,24 +158,30 @@ function inherits = matRad_checkInheritance(metaClass,superClassName)
 end
             
 function valid = validateFoldersInput(folders)
-    valid = true;
+    valid = false;
 
-    % if iscellstr(folders) && all(isfolder(folders))
-    %     valid = true;
-    % else
-    %    try
-    %        iscellstr(folders);
-    %    catch ME
-    %        whatisfolders = whos('folders');
-    %        error(['iscellstr(folders) failed, folder is of class: ',whatisfolders.class, ' Error message was: ',ME.message]);
-    %    end
-    % 
-    %    try
-    %        isfolder(folders);
-    %    catch ME           
-    %        whatisfolders = whos('folders');
-    %        error(['isfolder(folders) failed, folder is of class: ',whatisfolders.class, ' Error message was: ',ME.message]);
-    %    end
+    if iscellstr(folders) && all(isfolder(folders))
+         valid = true;
+    elseif ~iscellstr(folders)
+ 
+        error('not a cellstr');
+    elseif ~all(isfolder(folders))
+        error('not all folders');
+        disp(num2str(isfolder(folders)));
+    else
+        % try
+        %     iscellstr(folders);
+        % catch ME
+        %     %whatisfolders = whos('folders');
+        %     error('Not a cellstr');
+        % end
+        % 
+        % try
+        %     all(isfolder(folders));
+        % catch ME           
+        %     %whatisfolders = whos('folders');
+        %     error('not a folder');
+        % end
     % 
     %    % try 
     %    %      disp(folders{1});
@@ -183,6 +189,6 @@ function valid = validateFoldersInput(folders)
     %    % catch ME
     %    %      disp(ME.message);
     %    % end
-    % end
+    end
 end
 
