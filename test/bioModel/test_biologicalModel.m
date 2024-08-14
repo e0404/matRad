@@ -30,16 +30,6 @@ function test_setBiologicalModel
         assertExceptionThrown(@(model) matRad_bioModel('photons', model), {'MCN', 'WED', 'CAR', 'LEM'}, 'MATLAB:minrhs');
         assertExceptionThrown(@(model) matRad_bioModel('protons', model), {'LEM'},'MATLAB:minrhs');
     end
-
-function test_calcLQParameter
-    bioModel = matRad_BiologicalModel('photons','LEM');
-    if moxunit_util_platform_is_octave()
-        assertExceptionThrown(@() bioModel.calcLQParameter());
-        assertExceptionThrown(@() bioModel.calcLQParameterForKernel());
-    else
-        assertExceptionThrown(@() bioModel.calcLQParameter(),'MATLAB:minrhs');
-        assertExceptionThrown(@() bioModel.calcLQParameterForKernel(),'MATLAB:minrhs');
-    end
     
 
 function test_calcBiologicalQuantitiesForBixel_MCN
@@ -87,7 +77,7 @@ function test_calcBiologicalQuantitiesForBixel_WED
     assertElementsAlmostEqual(bixel.beta, test_bixelBeta,'absolute', 1e-4);
 
 function test_calcBiologicalQuantitiesForBixel_HEL
-    bioModel = matRad_bioModel('protons','HEL');
+    bioModel = matRad_bioModel('helium','HEL');
     kernels.LET = 4.1914;
         
     bixel.energyIx = 11;

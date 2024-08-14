@@ -47,7 +47,7 @@ if ~exist('totalPhaseMatrix','var')
    motion       = 'linear'; % the assumed motion type
    timeSequence = matRad_makePhaseMatrix(timeSequence, ct.numOfCtScen, ct.motionPeriod, motion);
 
-   resultGUI.bioParam = pln.bioParam;
+   resultGUI.bioModel = pln.bioModel;
 
    % the total phase matrix determines what beamlet will be administered in what ct phase
    totalPhaseMatrix   = vertcat(timeSequence.phaseMatrix);
@@ -56,7 +56,7 @@ else
    
 end
 
-if any(strcmp(pln.bioParam.model,{'MCN','LEM','WED','HEL'}))
+if any(strcmp(pln.bioModel.model,{'MCN','LEM','WED','HEL'}))
     [ax,bx] = matRad_getPhotonLQMParameters(cst,numel(resultGUI.physicalDose));
 end
 
@@ -66,13 +66,13 @@ for i = 1:ct.numOfCtScen
     tmpResultGUI = matRad_calcCubes(totalPhaseMatrix(:,i),dij,i);
     
     % compute physical dose for physical opt
-    if strcmp(pln.bioParam.model,'none')       
+    if strcmp(pln.bioModel.model,'none')       
         resultGUI.phaseDose{i} = tmpResultGUI.physicalDose;
     % compute RBExD with const RBE
-    elseif strcmp(pln.bioParam.model,'constRBE')
+    elseif strcmp(pln.bioModel.model,'constRBE')
         resultGUI.phaseRBExD{i} = tmpResultGUI.RBExD;
     % compute all fields
-    elseif any(strcmp(pln.bioParam.model,{'MCN','LEM','WED','HEL'}))
+    elseif any(strcmp(pln.bioModel.model,{'MCN','LEM','WED','HEL'}))
         resultGUI.phaseAlphaDose{i}    = tmpResultGUI.alpha .* tmpResultGUI.physicalDose;
         resultGUI.phaseSqrtBetaDose{i} = sqrt(tmpResultGUI.beta) .* tmpResultGUI.physicalDose;
         ix = ax{i} ~=0;   
@@ -84,15 +84,15 @@ for i = 1:ct.numOfCtScen
 end
 
 % accumulation
-if strcmp(pln.bioParam.model,'none')       
+if strcmp(pln.bioModel.model,'none')       
     
     resultGUI.accPhysicalDose = matRad_doseAcc(ct,resultGUI.phaseDose, cst, accType);
 
-elseif strcmp(pln.bioParam.model,'constRBE')
+elseif strcmp(pln.bioModel.model,'constRBE')
 
     resultGUI.accRBExD = matRad_doseAcc(ct,resultGUI.phaseRBExD, cst, accType);
 
-elseif any(strcmp(pln.bioParam.model,{'MCN','LEM','WED','HEL'}))
+elseif any(strcmp(pln.bioModel.model,{'MCN','LEM','WED','HEL'}))
 
     resultGUI.accAlphaDose    = matRad_doseAcc(ct,resultGUI.phaseAlphaDose, cst,accType);
     resultGUI.accSqrtBetaDose = matRad_doseAcc(ct,resultGUI.phaseSqrtBetaDose, cst, accType);

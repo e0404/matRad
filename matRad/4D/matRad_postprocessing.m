@@ -46,7 +46,7 @@ end
 
 % remember old solution
 resultGUI.optW = resultGUI.w;
-if isequal(pln.bioParam.model,'none')
+if isequal(pln.bioModel.model,'none')
     resultGUI.optDose = resultGUI.physicalDose;
 else
     resultGUI.optRBExD = resultGUI.RBExD;
@@ -62,7 +62,7 @@ resultGUI.w(resultGUI.w<Imin & resultGUI.w>=Imin/2) = Imin;
 calcCubes = matRad_calcCubes(resultGUI.w,dij,1);
 
 % compare dose
-if isequal(pln.bioParam.model,'none')
+if isequal(pln.bioModel.model,'none')
     resultGUI.physicalDose = calcCubes.physicalDose;
     relIntDoseDif = (1-sum(resultGUI.physicalDose(:))/sum(resultGUI.optDose(:)))*100;
 else
@@ -120,7 +120,7 @@ if(minNrParticlesIES ~= 0)
     calcCubes = matRad_calcCubes(resultGUI.w,dij,1);
 
     % compare dose
-    if isequal(pln.bioParam.model,'none')
+    if isequal(pln.bioModel.model,'none')
         resultGUI.physicalDose = calcCubes.physicalDose;
         relIntDoseDif = (1-sum(resultGUI.physicalDose(:))/sum(resultGUI.optDose(:)))*100;
     else

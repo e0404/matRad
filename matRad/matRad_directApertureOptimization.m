@@ -73,8 +73,8 @@ options.ixForOpt     = 1;
 options.numOfScen    = 1;
 options.scenProb     = 1;
 %options.bioOpt       = pln.bioParam.bioOpt;
-options.quantityOpt  = pln.bioParam.quantityOpt;
-options.model        = pln.bioParam.model;
+options.quantityOpt  = pln.propOpt.quantityOpt;
+options.model        = pln.bioModel.model;
 
 % update aperture info vector
 apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(apertureInfo,apertureInfo.apertureVector);
