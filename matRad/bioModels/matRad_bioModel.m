@@ -46,9 +46,9 @@ matRad_cfg = MatRad_Config.instance();
 % Look for the correct inputs
 p = inputParser;
 isNotOldQuantityOpt = @(x) ~any(strcmp(x, {'physicalDose', 'RBExD', 'effect', 'BED'}));
-addRequired(p, 'sRadiationMode');
+addRequired(p, 'sRadiationMode', @ischar);
 addRequired(p, 'sModel',isNotOldQuantityOpt);
-addOptional(p, 'sMachine', [], @isStruct);
+addOptional(p, 'sMachine', [], @ischar);
 
 p.KeepUnmatched = true;
 
@@ -84,26 +84,25 @@ mainFolder        = fullfile(matRad_cfg.matRadSrcRoot,'bioModels');
 userDefinedFolder = fullfile(matRad_cfg.primaryUserFolder, 'bioModels');
 
 % Collect all the subfolders
-subFolders = [strsplit(genpath(mainFolder), {';', ':'})';strsplit(genpath(userDefinedFolder), {';', ':'})'];
-subFolders(cellfun(@isempty, subFolders)) = [];
-
-
-% Look for the subclasses of BiologicalModel present in all
-% subfolders
-disp(['Found: ', num2str(numel(subFolders))]);
-disp(['Looking for classes in subfolders: ']);
-for i=1:numel(subFolders)
-    disp([subFolders{i}, '\n']);
+if ispc
+    folderDelimiter = ';';
+elseif isunix
+    folderDelimiter = ':';
+else
+    folderDelimiter = ';';
 end
+
+subFolders = [strsplit(genpath(mainFolder), folderDelimiter)';strsplit(genpath(userDefinedFolder), folderDelimiter)'];
+subFolders(cellfun(@isempty, subFolders)) = [];
 
 availableBioModelsClassList = matRad_findSubclasses('matRad_BiologicalModel', 'folders', subFolders);
 availableBioModelsClassNameList = cellfun(@(model) model.Name, availableBioModelsClassList, 'UniformOutput',false);
-%availableBioModelsNameList = cellfun(@(modelClass) eval([modelClass, '.model']), availableBioModelsNameList, 'UniformOutput',false);
+availableBioModelsNameList = cellfun(@(modelClass) eval([modelClass, '.model']), availableBioModelsClassNameList, 'UniformOutput',false);
 
-for modelClassIdx = 1:numel(availableBioModelsClassList)
-    availableBioModelsNameList{modelClassIdx,1} = eval([availableBioModelsClassNameList{modelClassIdx}, '.model']);
-
-end
+% for modelClassIdx = 1:numel(availableBioModelsClassList)
+%     availableBioModelsNameList{modelClassIdx,1} = eval([availableBioModelsClassNameList{modelClassIdx}, '.model']);
+% 
+% end
 
 if ~isequal(size(unique(availableBioModelsNameList)), size(availableBioModelsNameList))
     matRad_cfg.dispError('Multiple biological models with the same name available.');

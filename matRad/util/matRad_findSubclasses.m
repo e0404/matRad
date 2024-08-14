@@ -29,8 +29,8 @@ function classList = matRad_findSubclasses(superClassName,varargin)
     p = inputParser;
     p.addRequired('superclassName',@(x) ischar(x) || isa(x,'meta.class'));
     p.addParameter('packages',{},@(x) iscell(x) && (iscellstr(x) || all(cellfun(@(y) isa(y,'meta.package'),x))));
-    %p.addParameter('folders',{},@(x) iscellstr(x) && all(isfolder(x)));
-    p.addParameter('folders',{},@(x) validateFoldersInput(x));
+    p.addParameter('folders',{},@(x) iscellstr(x) && all(isfolder(x)));
+    %sp.addParameter('folders',{},@(x) validateFoldersInput(x));
     p.addParameter('includeAbstract',false,@(x) isscalar(x) && islogical(x));
     %p.addParameter('usePath',false,@(x) islogical(x) && isscalar(x));
 
@@ -157,39 +157,39 @@ function inherits = matRad_checkInheritance(metaClass,superClassName)
     end
 end
             
-function valid = validateFoldersInput(folders)
-    valid = false;
-
-    if iscellstr(folders) && all(isfolder(folders))
-         valid = true;
-    elseif ~iscellstr(folders)
- 
-        error('not a cellstr');
-    elseif ~all(isfolder(folders))
-        disp(num2str(isfolder(folders)));
-        error(['not all folders: ', num2str(isfolder(folders))]);
-        
-    else
-        % try
-        %     iscellstr(folders);
-        % catch ME
-        %     %whatisfolders = whos('folders');
-        %     error('Not a cellstr');
-        % end
-        % 
-        % try
-        %     all(isfolder(folders));
-        % catch ME           
-        %     %whatisfolders = whos('folders');
-        %     error('not a folder');
-        % end
-    % 
-    %    % try 
-    %    %      disp(folders{1});
-    %    %      valid = true;
-    %    % catch ME
-    %    %      disp(ME.message);
-    %    % end
-    end
-end
+% function valid = validateFoldersInput(folders)
+%     valid = false;
+% 
+%     if iscellstr(folders) && all(isfolder(folders))
+%          valid = true;
+%     elseif ~iscellstr(folders)
+% 
+%         error('not a cellstr');
+%     elseif ~all(isfolder(folders))
+%         disp(num2str(isfolder(folders)));
+%         error(['not all folders: ', num2str(isfolder(folders))]);
+% 
+%     else
+%         % try
+%         %     iscellstr(folders);
+%         % catch ME
+%         %     %whatisfolders = whos('folders');
+%         %     error('Not a cellstr');
+%         % end
+%         % 
+%         % try
+%         %     all(isfolder(folders));
+%         % catch ME           
+%         %     %whatisfolders = whos('folders');
+%         %     error('not a folder');
+%         % end
+%     % 
+%     %    % try 
+%     %    %      disp(folders{1});
+%     %    %      valid = true;
+%     %    % catch ME
+%     %    %      disp(ME.message);
+%     %    % end
+%     end
+% end
 
