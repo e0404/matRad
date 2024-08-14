@@ -166,8 +166,9 @@ function valid = validateFoldersInput(folders)
  
         error('not a cellstr');
     elseif ~all(isfolder(folders))
-        error('not all folders');
         disp(num2str(isfolder(folders)));
+        error(['not all folders: ', num2str(isfolder(folders))]);
+        
     else
         % try
         %     iscellstr(folders);
