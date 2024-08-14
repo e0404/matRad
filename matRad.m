@@ -50,7 +50,7 @@ pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
 scenGenType  = 'nomScen';          % scenario creation type 'nomScen'  'wcScen' 'impScen' 'rndScen'                                          
 
 % retrieve bio model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
+pln.bioModel = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 
 % retrieve scenarios for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,scenGenType);
@@ -73,6 +73,7 @@ stf = matRad_generateStf(ct,cst,pln);
 dij = matRad_calcDoseInfluence(ct, cst, stf, pln);
 
 %% inverse planning for imrt
+pln.propOpt.quantityOpt = quantityOpt;
 resultGUI  = matRad_fluenceOptimization(dij,cst,pln);
 
 %% sequencing
