@@ -49,8 +49,9 @@ pln.propDoseCalc.airOffsetCorrection = true;
 
 %Biology
 modelName                   = 'none';
-quantityOpt                 = 'physicalDose';  
+quantityOpt                 = 'physicalDose';
 pln.bioModel                = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
+pln.propOpt.quantityOpt = quantityOpt;
 
 % optimization settings
 pln.propOpt.optimizer       = 'IPOPT';

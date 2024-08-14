@@ -19,8 +19,6 @@ function test_setBiologicalModel
     assertTrue(isa(bioModel, 'matRad_EmptyBiologicalModel'));
     bioModel = matRad_bioModel('protons', 'none');
     assertTrue(isa(bioModel, 'matRad_EmptyBiologicalModel'));
-    bioModel = matRad_bioModel('photons', 'MCN');
-    assertTrue(isa(bioModel, 'matRad_EmptyBiologicalModel'));
     
     if moxunit_util_platform_is_octave()
         assertExceptionThrown(@(model) matRad_bioModel('photons', model), {'MCN', 'WED', 'CAR', 'LEM'});
