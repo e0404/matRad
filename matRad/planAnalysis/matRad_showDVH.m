@@ -157,7 +157,7 @@ ylabel(axesHandle,'Volume [%]','FontSize',fontSizeValue)
 
 if ~isempty(pln)
 
-    if strcmp(pln.bioParam.model,'none')
+    if strcmp(pln.bioModel.model,'none')
         xlabel('Dose [Gy]','FontSize',fontSizeValue);
     else
         xlabel(axesHandle,'RBE x Dose [Gy(RBE)]','FontSize',fontSizeValue);
