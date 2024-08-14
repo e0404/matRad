@@ -638,9 +638,11 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 'SliderStep',this.viewingWidgetHandle.OffsetSliderStep);
             
             set(handles.popupDisplayOption,'String',this.viewingWidgetHandle.SelectedDisplayAllOptions);
-            if ~strcmp(this.viewingWidgetHandle.SelectedDisplayOption,'')
+            if any(strcmp(this.viewingWidgetHandle.SelectedDisplayOption,this.viewingWidgetHandle.SelectedDisplayAllOptions))
                 set(handles.popupDisplayOption,'Value',find(strcmp(this.viewingWidgetHandle.SelectedDisplayOption,this.viewingWidgetHandle.SelectedDisplayAllOptions)));
-            end            
+            else
+                set(handles.popupDisplayOption,'Value',1);
+            end
             
             if strcmp(this.viewingWidgetHandle.SelectedDisplayOption,'') % no data is loaded
                 % disable 3D and DVH button
