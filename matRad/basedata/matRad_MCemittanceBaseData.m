@@ -479,7 +479,14 @@ classdef matRad_MCemittanceBaseData
                 
                 options.ipopt.hessian_approximation = 'limited-memory';
                 options.ipopt.limited_memory_update_type = 'bfgs';
-                options.ipopt.print_level = 1;
+                
+                %Set Default Options
+                if obj.matRad_cfg.logLevel <= 1
+                    lvl = 0;
+                else
+                    lvl = 1;
+                end
+                options.ipopt.print_level = lvl;
                 
                 start = [0.9; 0.1];
                 [result, ~] = ipopt (start, funcs, options);

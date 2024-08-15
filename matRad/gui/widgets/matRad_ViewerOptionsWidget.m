@@ -840,6 +840,9 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
                     currentMap = this.viewingWidgetHandle.doseColorMap;
                     minMax = [min(dose(:)) max(dose(:))];
                     window = this.viewingWidgetHandle.dispWindow{selectionIndex,1};
+                    if isempty(window)
+                        window = minMax;
+                    end
                 else
                     window = [0 1];
                     minMax = window;

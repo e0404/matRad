@@ -15,9 +15,9 @@
 	branch = dev_parallel
 [submodule "submodules/MOxUnit"]
 	path = submodules/MOxUnit
-	url = https://github.com/MOxUnit/MOxUnit
-	branch = master
+    url = https://github.com/e0404/MOxUnit
+    branch = matRad
 [submodule "submodules/MOcov"]
 	path = submodules/MOcov
 	url = https://github.com/e0404/MOcov
-	branch = md5Methods
+	branch = matRad

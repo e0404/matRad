@@ -1,4 +1,4 @@
-function matRad_buildStandalone(varargin)
+function buildResult = matRad_buildStandalone(varargin)
 % Compiles the standalone exectuable & packages installer using Matlab's
 % Compiler Toolbox
 %
@@ -32,6 +32,7 @@ p.addParameter('verbose',false,@islogical);
 p.addParameter('docker',false,@islogical);
 p.addParameter('java',false,@islogical);
 p.addParameter('python',false,@islogical);
+p.addParameter('json',[],@(x) isempty(x) || ischar(x) || isstring(x));
 
 p.parse(varargin{:});
 
@@ -41,6 +42,7 @@ buildDir = p.Results.buildDir;
 buildDocker = all(p.Results.docker);
 buildJava   = all(p.Results.java);
 buildPython = all(p.Results.python);
+json  = p.Results.json;
 
 if all(p.Results.verbose)
     verbose = 'On';
@@ -85,6 +87,9 @@ end
 %    vernum = sprintf('%d.%d.%d.%s/%s',versionFull.major,versionFull.minor,versionFull.patch,versionFull.branch,versionFull.commitID(1:8));
 %end
 
+buildResult.version = vernumInstall;
+buildResult.versionDetail = versionFull;
+
 %% Set Options and Compile
 try
     buildOpts = compiler.build.StandaloneApplicationOptions('matRadGUI.m',...
@@ -100,10 +105,12 @@ try
         'Verbose',verbose);
     
     if ispc
-        results = compiler.build.standaloneWindowsApplication(buildOpts);
+        resultsStandalone = compiler.build.standaloneWindowsApplication(buildOpts);
     else
-        results = compiler.build.standaloneApplication(buildOpts);
+        resultsStandalone = compiler.build.standaloneApplication(buildOpts);
     end
+
+    buildResult.standalone.compiledFiles = resultsStandalone.Files;
 
 catch ME
     warning(ME.identifier,'Failed to compile standalone due to %s',ME.message);
@@ -129,7 +136,7 @@ else
 end
 
 try
-    packageOpts = compiler.package.InstallerOptions(results,...
+    packageOpts = compiler.package.InstallerOptions(resultsStandalone,...
         'AdditionalFiles',{fullfile(matRadRoot,'AUTHORS.txt'),fullfile(matRadRoot,'LICENSE.md'),fullfile(standaloneFolder,readmeFile)},...
         'ApplicationName','matRad',...
         'AuthorCompany','German Cancer Research Center (DKFZ)',...
@@ -146,7 +153,12 @@ try
         'Summary','matRad is an open source treatment planning system for radiation therapy written in Matlab.',...
         'Version',vernumInstall,...
         'Verbose',verbose);
-    compiler.package.installer(results,'Options',packageOpts);
+    compiler.package.installer(resultsStandalone,'Options',packageOpts);
+
+    outFiles = dir([packageOpts.OutputDir filesep packageOpts.InstallerName '.*']);
+    outFiles = arrayfun(@(f) fullfile(f.folder,f.name),outFiles,'UniformOutput',false);
+
+    buildResult.standalone.installerFiles = outFiles;
 catch ME
     warning(ME.identifier,'Failed to package standalone installer due to %s!',ME.message);
 end
@@ -172,7 +184,9 @@ if buildPython
             'PackageName','pyMatRad',...
             'OutputDir',fullfile(buildDir,'python'));
 
-        results = compiler.build.pythonPackage(pythonOpts);
+        resultsPython = compiler.build.pythonPackage(pythonOpts);
+
+        buildResult.python.packageFiles = resultsPython.Files;
     catch ME
         warning(ME.identifier,'Java build failed due to %s!',ME.message);
     end
@@ -184,7 +198,8 @@ if buildJava
         'AdditionalFiles',{'matRad','thirdParty','matRad_rc.m'},...
         'Verbose',verbose);
     try
-        results = compiler.build.javaPackage(javaOpts);
+        resultsJava = compiler.build.javaPackage(javaOpts);
+        buildResult.java.packageFiles = resultsJava.Files;
     catch ME
         warning(ME.identifier,'Java build failed due to %s!',ME.message);
     end
@@ -202,12 +217,22 @@ if buildDocker
             'ImageName','e0404/matrad');        
 
         compiler.package.docker(results,'Options',dockerOpts);
+        buildResult.docker.image = dockerOpts.ImageName;
     catch ME
         warning(ME.identifier,'Java build failed due to %s!',ME.message);
     end
 end   
 
-
+if ~isempty(json)
+    try
+        fH = fopen(json,'w');
+        jsonStr = jsonencode(buildResult,"PrettyPrint",true);        
+        fwrite(fH,jsonStr);
+        fclose(fH);    
+    catch ME
+        warning(ME.identifier,'Could not open JSON file for writing: %s',ME.message);
+    end
+end
 
 
 
