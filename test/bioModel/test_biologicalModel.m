@@ -21,12 +21,12 @@ function test_setBiologicalModel
     assertTrue(isa(bioModel, 'matRad_EmptyBiologicalModel'));
     
     if moxunit_util_platform_is_octave()
-        assertExceptionThrown(@(model) matRad_bioModel('photons', model), {'MCN', 'WED', 'CAR', 'LEM'});
-        assertExceptionThrown(@(model) matRad_bioModel('protons', model), {'LEM'});
+        assertExceptionThrown(@(model) matRad_bioModel('photons', 'MCN'));
+        assertExceptionThrown(@(model) matRad_bioModel('protons', 'LEM'));
 
     else
-        assertExceptionThrown(@(model) matRad_bioModel('photons', model), {'MCN', 'WED', 'CAR', 'LEM'}, 'MATLAB:minrhs');
-        assertExceptionThrown(@(model) matRad_bioModel('protons', model), {'LEM'},'MATLAB:minrhs');
+        assertExceptionThrown(@(model) matRad_bioModel('photons', 'MCN'), 'matRad:Error');
+        assertExceptionThrown(@(model) matRad_bioModel('protons', 'LEM'),'matRad:Error');
     end
     
 
