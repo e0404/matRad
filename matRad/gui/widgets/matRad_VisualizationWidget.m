@@ -611,6 +611,9 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 else
                     numScen = numel(ct.cubeHU);
                 end
+
+                sliceSliderStep=[1/(ct.cubeDim(this.viewingWidgetHandle.plane)-1) 1/(ct.cubeDim(this.viewingWidgetHandle.plane)-1)];
+                ctDim = ct.cubeDim;
             else
                 set(handles.btn3Dview,'Enable','off');
                 set(handles.popupTypeOfPlot,'Enable','off');
@@ -619,6 +622,8 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 set(handles.sliderSlice,'Enable','off');
                 set(handles.popupPlane,'Enable','off');
                 numScen = 1;
+                sliceSliderStep=[1 1];
+                ctDim = [1 1 1];
             end
             
   
@@ -632,10 +637,11 @@ classdef matRad_VisualizationWidget < matRad_Widget
             set(handles.radiobtnPlan,'Value',this.viewingWidgetHandle.plotPlan);
             
             % update the sliders 
-            % Slice Slider
-            set(handles.sliderSlice,'Min',1,'Max',this.viewingWidgetHandle.maxSlice,...
+            % Slice Slider      
+            
+            set(handles.sliderSlice,'Min',1,'Max',ctDim(this.viewingWidgetHandle.plane),...
                 'Value', this.viewingWidgetHandle.slice, ...
-                'SliderStep',this.viewingWidgetHandle.SliceSliderStep);
+                'SliderStep',sliceSliderStep);
             
             % Beam Slider (Profile Plot)
             if this.viewingWidgetHandle.numOfBeams>1
