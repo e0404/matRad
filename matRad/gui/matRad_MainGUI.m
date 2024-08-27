@@ -10,7 +10,7 @@ classdef matRad_MainGUI < handle
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
 % of the matRad project, including this file, may be copied, modified,
 % propagated, or distributed except according to the terms contained in the
 % LICENSE file.
@@ -322,14 +322,14 @@ classdef matRad_MainGUI < handle
            matRad_cfg = MatRad_Config.instance();
 
            args = {};
-           if matRad_cfg.logLevel > 3
-               if nargin < 2 || ~isa(evt,'matRad_WorkspaceChangedEvent')
-                   changed = {};
-               else
-                   changed = evt.changedVariables;
-                   args = {evt};
-               end
+           if nargin < 2 || ~isa(evt,'matRad_WorkspaceChangedEvent')
+               changed = {};
+           else
+               changed = evt.changedVariables;
+               args = {evt};
+           end
 
+           if matRad_cfg.logLevel > 3               
                matRad_cfg.dispDebug('GUI Workspace Changed at %s. ',datestr(now,'HH:MM:SS.FFF'));
                if ~isempty(changed)
                    matRad_cfg.dispDebug('Specific Variables: %s.\n',strjoin(changed,'|'));
@@ -343,11 +343,16 @@ classdef matRad_MainGUI < handle
            this.PlanWidget.update(args{:});
            this.WorkflowWidget.update(args{:});
            this.OptimizationWidget.update(args{:});
-           this.ViewingWidget.lockUpdate = 0;
+           this.ViewingWidget.updateLock = false;
            this.ViewingWidget.update(args{:});
-           this.StructureVisibilityWidget.update(args{:});
-           %this.ViewerOptionsWidget.update();
-           %this.VisualizationWidget.update();
+           this.StructureVisibilityWidget.update(args{:}); 
+           
+           this.ViewingWidget.updateLock = true;
+           this.ViewerOptionsWidget.update(args{:});
+           this.VisualizationWidget.update(args{:});
+           this.ViewingWidget.updateLock = false;
+           
+           
 
         end
 

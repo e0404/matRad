@@ -11,7 +11,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
     % 
     % This file is part of the matRad project. It is subject to the license 
     % terms in the LICENSE file found in the top-level directory of this 
-    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+    % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
     % of the matRad project, including this file, may be copied, modified, 
     % propagated, or distributed except according to the terms contained in the 
     % LICENSE file.
@@ -769,9 +769,9 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             %selectionIndex = this.handles.popupmenu_chooseColorData;
             
             % save the lock state
-            updateLockState = this.viewingWidgetHandle.lockUpdate;
+            updateLockState = this.viewingWidgetHandle.updateLock;
             %colorSettingLockState = this.viewingWidgetHandle.lockColorSettings;
-            this.viewingWidgetHandle.lockUpdate = true;
+            this.viewingWidgetHandle.updateLock = true;
             %this.viewingWidgetHandle.lockColorSettings = true;
             
             
@@ -840,6 +840,9 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
                     currentMap = this.viewingWidgetHandle.doseColorMap;
                     minMax = [min(dose(:)) max(dose(:))];
                     window = this.viewingWidgetHandle.dispWindow{selectionIndex,1};
+                    if isempty(window)
+                        window = minMax;
+                    end
                 else
                     window = [0 1];
                     minMax = window;
@@ -883,7 +886,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             
             cMapPopupIndex = find(strcmp(currentMap,cMapStrings));
             set(handles.popupmenu_chooseColormap,'Value',cMapPopupIndex);
-            this.viewingWidgetHandle.lockUpdate=updateLockState;
+            this.viewingWidgetHandle.updateLock=updateLockState;
             this.handles=handles;
         end
         %Update button enable/disables

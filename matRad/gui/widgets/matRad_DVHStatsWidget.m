@@ -13,7 +13,7 @@ classdef matRad_DVHStatsWidget < matRad_Widget
     % 
     % This file is part of the matRad project. It is subject to the license 
     % terms in the LICENSE file found in the top-level directory of this 
-    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+    % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
     % of the matRad project, including this file, may be copied, modified, 
     % propagated, or distributed except according to the terms contained in the 
     % LICENSE file.
@@ -34,7 +34,7 @@ classdef matRad_DVHStatsWidget < matRad_Widget
 
                 handleParent = figure(...
                     'Units','normalized',...
-                    'OuterPosition',[0 0 0.5 1],...
+                    'OuterPosition',[0 0.05 0.5 0.95],...
                     'Visible','on',...
                     'Color',matRad_cfg.gui.backgroundColor,...  'CloseRequestFcn',@(hObject,eventdata) figure1_CloseRequestFcn(this,hObject,eventdata),...
                     'IntegerHandle','off',...
@@ -114,14 +114,14 @@ classdef matRad_DVHStatsWidget < matRad_Widget
                         this.dvhWidgetHandle.selectedCube = this.selectedDisplayOption;
                         this.statWidgetHandle.selectedCube = this.selectedDisplayOption;
 
-                    end
+                    else
                         this.dvhWidgetHandle = this.dvhWidgetHandle.doUpdate();
                         this.statWidgetHandle = this.statWidgetHandle.doUpdate();
                         %Clear previous DVH and stat
                         if numel(this.dvhWidgetHandle.widgetHandle.Children) > 2 
                             this.removeOverlap();
                         end
-                 
+                    end                 
                 end
             end
         end

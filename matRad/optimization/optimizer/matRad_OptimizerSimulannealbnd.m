@@ -11,7 +11,7 @@ classdef matRad_OptimizerSimulannealbnd < matRad_Optimizer
     % 
     % This file is part of the matRad project. It is subject to the license 
     % terms in the LICENSE file found in the top-level directory of this 
-    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+    % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
     % of the matRad project, including this file, may be copied, modified, 
     % propagated, or distributed except according to the terms contained in the 
     % LICENSE file.
@@ -38,18 +38,35 @@ classdef matRad_OptimizerSimulannealbnd < matRad_Optimizer
             
             obj.wResult = [];
             obj.resultInfo = [];
+
+            if matRad_cfg.logLevel >= 4
+                optDisplay = 'diagnose';
+            elseif matRad_cfg.logLevel == 3
+                optDisplay = 'iter';
+            elseif matRad_cfg.logLevel == 2
+                optDisplay = 'final';
+            else
+                optDisplay = 'off';
+            end
+
+            if matRad_cfg.disableGUI
+                pltFcns = {[]};                
+            else
+                pltFcns = {@saplotbestf,@saplotbestx, @saplotf,@saplotx,@saplotstopping,@saplottemperature};
+            end
             
             % Create default optimizer options
             obj.options = optimoptions('simulannealbnd', ...
                 'InitialTemperature', 0.7, ...
                 'TemperatureFcn',@temperatureboltz, ... 
-                'Display', 'iter', ...
+                'Display', optDisplay, ...
                 'MaxIterations', matRad_cfg.defaults.propOpt.maxIter, ...
                 'MaxFunctionEvaluations', 120000, ...
-                'PlotFcn', {@saplotbestf,@saplotbestx, @saplotf,@saplotx,@saplotstopping,@saplottemperature});
+                'PlotFcn',pltFcns);
         end
                 
         function obj = optimize(obj, w0, optiProb, dij, cst)
+            matRad_cfg = MatRad_Config.instance();
             % optimize Carries out the optimization
             
             % Obtain lower and upper variable bounds
@@ -57,10 +74,9 @@ classdef matRad_OptimizerSimulannealbnd < matRad_Optimizer
             ub = optiProb.upperBounds(w0);
                         
             % Informing user to press q to terminate optimization
-            fprintf('\nOptimization initiating...\n');
-            fprintf('Press q to terminate the optimization...\n');
+            matRad_cfg.dispInfo('Optimization initiating...\n');
+            matRad_cfg.dispInfo('Press q to terminate the optimization...\n');
 
-            matRad_cfg = MatRad_Config.instance();
             if matRad_cfg.isMatlab && str2double(matRad_cfg.envVersion) <= 9.13 && strcmp(obj.options.Diagnostics, 'on')
                 matRad_cfg.dispWarning('Diagnostics in simulannealbnd will be turned off due to a bug when using lbfgs with specified number of histories!');
                 obj.options.Diagnostics = 'off';

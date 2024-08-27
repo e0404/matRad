@@ -489,7 +489,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
                 % manipulate isocenter
                 for k = 1:numel(stf)
-                    stf(k).isoCenter = stf(k).isoCenter + this.multScen.isoShift(ixShiftScen,:);
+                    stf(k).isoCenter = matRad_world2cubeCoords(stf(k).isoCenter,this.doseGrid) + this.multScen.isoShift(ixShiftScen,:);
                 end
 
                 % Delete previous topas files so there is no mix-up

@@ -12,7 +12,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
 % of the matRad project, including this file, may be copied, modified,
 % propagated, or distributed except according to the terms contained in the
 % LICENSE file.
@@ -43,14 +43,9 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         timers;                 % timers of dose calc
 
         numOfColumnsDij;        % number of columns in the dij struct
-                                          
-        yCoordsV_vox;           % y-coordinate voxel
-        xCoordsV_vox;           % x-coordinate voxel
-        zCoordsV_vox;           % z-coordinate voxel
-        
-        yCoordsV_voxDoseGrid;   % converted voxel indices to real grid 
-        xCoordsV_voxDoseGrid;   % converted voxel indices to real grid
-        zCoordsV_voxDoseGrid;   % converted voxel indices to real grid
+                                    
+        voxWorldCoords;         % ct voxel coordinates in world
+        voxWorldCoordsDoseGrid; % dose grid voxel coordinates in world 
         
         %offset; % offset adjustment for isocenter
         
@@ -228,7 +223,18 @@ classdef (Abstract) matRad_DoseEngineBase < handle
 
             % calculate cubes; use uniform weights here, weighting with actual fluence 
             % already performed in dij construction
-            resultGUI    = matRad_calcCubes(ones(dij.numOfBeams,1),dij);
+            
+            resultGUI = [];
+            
+            for i = 1:this.multScen.totNumScen
+                scenSubIx = this.multScen.linearMask(i,:);
+                resultGUItmp = matRad_calcCubes(ones(dij.numOfBeams,1),dij,this.multScen.sub2scenIx(scenSubIx(1),scenSubIx(2),scenSubIx(3)));
+                if i == 1
+                    resultGUI = resultGUItmp;
+                end
+                resultGUI = matRad_appendResultGUI(resultGUI,resultGUItmp,false,sprintf('scen%d',i));                
+            end
+
             resultGUI.w  = w; 
         end
 

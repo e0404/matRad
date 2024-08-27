@@ -20,7 +20,7 @@ function [cube, metadata] = matRad_readNRRD(filename)
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
 % of the matRad project, including this file, may be copied, modified, 
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
@@ -198,7 +198,24 @@ end
 originFieldIx = find(ismember(nrrdMetaData.fields(:,1), 'space'));
 if ~isempty(originFieldIx)
     metadata.coordinateSystem = nrrdMetaData.fields{originFieldIx,2};
+    
+    switch metadata.coordinateSystem
+        case {'LPS','left-posterior-superior'}
+            metadata.coordinateSystem = 'LPS';
+            systemTransform = [0 -1 0; -1 0 0; 0 0 1];
+        case {'RAS','right-anterior-superior'}
+            metadata.coordinateSystem = 'RAS';
+            systemTransform = [1 0 0; 0 1 0; 0 0 1];
+        case {'LAS','left-anterior-superior'}
+            metadata.coordinateSystem = 'LAS';
+            systemTransform = [0 1 0; 1 0 0; 0 0 1];        
+
+        otherwise
+            systemTransform = eye(3);
+    end
 end
+
+
     
 %Check for separate file
 data_fileFieldIx = find(ismember(nrrdMetaData.fields(:,1), 'data file'));

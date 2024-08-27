@@ -12,7 +12,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
     % 
     % This file is part of the matRad project. It is subject to the license 
     % terms in the LICENSE file found in the top-level directory of this 
-    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+    % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
     % of the matRad project, including this file, may be copied, modified, 
     % propagated, or distributed except according to the terms contained in the 
     % LICENSE file.
@@ -59,6 +59,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
             set(handles.radioBtnIsoCenter,'Enable','off');
             set(handles.radiobtnPlan,'Enable','off');
             set(handles.btn3Dview,'Enable','off');
+            set(handles.sliderCTScen,'Enable','off');
 
             this.handles = handles;
         end
@@ -90,6 +91,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 set(handles.radioBtnIsoCenter,'Enable','off');
                 set(handles.radiobtnPlan,'Enable','off');
                 set(handles.btn3Dview,'Enable','off');
+                set(handles.sliderCTScen,'Enable','off');
                 this.handles=handles;
             end
         end
@@ -258,7 +260,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 'Parent',h36,...
                 'Units','normalized',...
                 'HorizontalAlignment','left',...
-                'String','Display option',...
+                'String','Display Quantity',...
                 'TooltipString','Select the result distribution which should be displayed',...
                 'Style','text',...
                 'Position',gridPos{3,3},...
@@ -273,7 +275,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 'Parent',h36,...
                 'Units','normalized',...
                 'HorizontalAlignment','left',...
-                'String','Display ct scen',...
+                'String','CT Scenario',...
                 'TooltipString','Select the ct scenario which should be displayed',...
                 'Style','text',...
                 'Position',gridPos{3,4},...
@@ -336,15 +338,16 @@ classdef matRad_VisualizationWidget < matRad_Widget
             h60 = uicontrol(...
                 'Parent',h36,...
                 'Units','normalized',...
-                'String','1',...
+                'Value',1,...
+                'SliderStep',[1 1],...
                 'TooltipString', 'Choose the ct Scenario to be display',...
-                'Style','edit',...
+                'Style','slider',...
                 'Position',gridPos{4,4},...
                 'BackgroundColor',matRad_cfg.gui.elementColor,...
                 'ForegroundColor',matRad_cfg.gui.textColor,....
                 'Callback',@(hObject,eventdata) ctScen_Callback(this,hObject,eventdata),...
-                'Enable','on',...
-                'Tag','editCTScen',...
+                'Enable','off',...
+                'Tag','sliderCTScen',...
                 'FontSize',matRad_cfg.gui.fontSize,...
                 'FontName',matRad_cfg.gui.fontName,...
                 'FontWeight',matRad_cfg.gui.fontWeight);
@@ -601,7 +604,16 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 set(handles.radiobtnCT,'Enable','on');
                 set(handles.radiobtnContour,'Enable','on');
                 set(handles.sliderSlice,'Enable','on');
-                set(handles.popupPlane,'Enable','on');                
+                set(handles.popupPlane,'Enable','on');
+                ct = evalin('base','ct');
+                if isfield(ct,'numOfCtScen')
+                    numScen = ct.numOfCtScen;
+                else
+                    numScen = numel(ct.cubeHU);
+                end
+
+                sliceSliderStep=[1/(ct.cubeDim(this.viewingWidgetHandle.plane)-1) 1/(ct.cubeDim(this.viewingWidgetHandle.plane)-1)];
+                ctDim = ct.cubeDim;
             else
                 set(handles.btn3Dview,'Enable','off');
                 set(handles.popupTypeOfPlot,'Enable','off');
@@ -609,7 +621,11 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 set(handles.radiobtnContour,'Enable','off');
                 set(handles.sliderSlice,'Enable','off');
                 set(handles.popupPlane,'Enable','off');
+                numScen = 1;
+                sliceSliderStep=[1 1];
+                ctDim = [1 1 1];
             end
+            
   
             set(handles.popupTypeOfPlot,'Value',this.viewingWidgetHandle.typeOfPlot);
             set(handles.popupPlane,'Value',this.viewingWidgetHandle.plane);
@@ -621,10 +637,13 @@ classdef matRad_VisualizationWidget < matRad_Widget
             set(handles.radiobtnPlan,'Value',this.viewingWidgetHandle.plotPlan);
             
             % update the sliders 
-            set(handles.sliderSlice,'Min',1,'Max',this.viewingWidgetHandle.maxSlice,...
-                'Value', this.viewingWidgetHandle.slice, ...
-                'SliderStep',this.viewingWidgetHandle.SliceSliderStep);
+            % Slice Slider      
             
+            set(handles.sliderSlice,'Min',1,'Max',ctDim(this.viewingWidgetHandle.plane),...
+                'Value', this.viewingWidgetHandle.slice, ...
+                'SliderStep',sliceSliderStep);
+            
+            % Beam Slider (Profile Plot)
             if this.viewingWidgetHandle.numOfBeams>1
                 set(handles.sliderBeamSelection,'Min',1,'Max',this.viewingWidgetHandle.numOfBeams,...
                     'Value',this.viewingWidgetHandle.selectedBeam,...
@@ -632,15 +651,25 @@ classdef matRad_VisualizationWidget < matRad_Widget
             else
                 set(handles.sliderBeamSelection,'Min',1,'Max',1, 'Value',1,'SliderStep',[1 1]);
             end
-           
+
+            % Offset Slider (profile plot)           
             set(handles.sliderOffset,'Min',this.viewingWidgetHandle.OffsetMinMax(1),'Max',this.viewingWidgetHandle.OffsetMinMax(2),...
                 'Value',this.viewingWidgetHandle.profileOffset,...
                 'SliderStep',this.viewingWidgetHandle.OffsetSliderStep);
+
+            %CT Scenario Slider
+            if numScen > 1
+                set(handles.sliderCTScen,'Min',1,'Max',numScen,'Enable','on','SliderStep',[1 1]./(numScen-1));
+            else
+                set(handles.sliderCTScen,'Enable','off');
+            end
             
             set(handles.popupDisplayOption,'String',this.viewingWidgetHandle.SelectedDisplayAllOptions);
-            if ~strcmp(this.viewingWidgetHandle.SelectedDisplayOption,'')
+            if any(strcmp(this.viewingWidgetHandle.SelectedDisplayOption,this.viewingWidgetHandle.SelectedDisplayAllOptions))
                 set(handles.popupDisplayOption,'Value',find(strcmp(this.viewingWidgetHandle.SelectedDisplayOption,this.viewingWidgetHandle.SelectedDisplayAllOptions)));
-            end            
+            else
+                set(handles.popupDisplayOption,'Value',1);
+            end
             
             if strcmp(this.viewingWidgetHandle.SelectedDisplayOption,'') % no data is loaded
                 % disable 3D and DVH button
@@ -883,7 +912,7 @@ classdef matRad_VisualizationWidget < matRad_Widget
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
 
-            this.viewingWidgetHandle.ctScen = str2num(get(hObject,'String'));
+            this.viewingWidgetHandle.ctScen = get(hObject,'Value');
         end
 
        function radiobtnCT_Callback(this,hObject, ~)

@@ -39,7 +39,7 @@ load 'PROSTATE.mat';
 % towards higher or lower doses (SquaredOverdose, SquaredUnderdose) or
 % doses that are particularly aimed for (SquaredUnderDose).
 
-disp(cst{6,6}{1});
+display(cst{6,6}{1});
 
 % Following frequently prescribed planning doses of 15 Gy
 % (https://pubmed.ncbi.nlm.nih.gov/22559663/) objectives can be updated to:
@@ -189,7 +189,7 @@ pln.numOfFractions          = 1;
 
 %% II.1 - view plan
 % Et voila! Our treatment plan structure is ready. Lets have a look:
-disp(pln);
+display(pln);
 
 
 %% II.2 Steering Seed Positions From STF
@@ -203,7 +203,7 @@ stf = matRad_generateStf(ct,cst,pln,1);
 % The 3D view is interesting, but we also want to know how the stf struct
 % looks like.
 
-disp(stf)
+display(stf)
 
 %% II.3 - Dose Calculation
 % Let's generate dosimetric information by pre-computing a dose influence 
@@ -226,7 +226,8 @@ matRadGUI;
 %% IV.1 Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
 
-slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
+slice = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:),ct);
+slice = slice(3);
 figure
 imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet);
 

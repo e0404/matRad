@@ -12,7 +12,7 @@ classdef matRad_InfoWidget < matRad_Widget
     %
     % This file is part of the matRad project. It is subject to the license
     % terms in the LICENSE file found in the top-level directory of this
-    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+    % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
     % of the matRad project, including this file, may be copied, modified,
     % propagated, or distributed except according to the terms contained in the
     % LICENSE file.
@@ -144,20 +144,7 @@ classdef matRad_InfoWidget < matRad_Widget
             msg{end+1} = matRad_info();
 
             handles.aboutBox = msgbox(msg,'About matRad');
-
-            if matRad_cfg.isOctave
-                txtObj = findall(handles.aboutBox,'type','text');
-                txtObj = txtObj(1);
-                okBtn = findall(handles.aboutBox,'type','uicontrol','style','pushbutton');
-                set(findall(handles.aboutBox,'type','uipanel'),'BackgroundColor',matRad_cfg.gui.backgroundColor);
-            else
-                txtObj = findall(handles.aboutBox,'tag','MessageBox');
-                okBtn = findall(handles.aboutBox,'tag','OKButton');
-                handles.aboutBox.Color = matRad_cfg.gui.backgroundColor;
-            end
-
-            set(txtObj,'Color',matRad_cfg.gui.textColor);
-            set(okBtn,'BackgroundColor',matRad_cfg.gui.elementColor,'ForegroundColor',matRad_cfg.gui.textColor);
+            matRad_applyThemeToDlg(handles.aboutBox);
 
             this.handles = handles;
         end

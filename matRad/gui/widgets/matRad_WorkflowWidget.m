@@ -12,7 +12,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
     % 
     % This file is part of the matRad project. It is subject to the license 
     % terms in the LICENSE file found in the top-level directory of this 
-    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+    % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
     % of the matRad project, including this file, may be copied, modified, 
     % propagated, or distributed except according to the terms contained in the 
     % LICENSE file.
@@ -878,12 +878,12 @@ classdef matRad_WorkflowWidget < matRad_Widget
             [statusmsg,statusflag] = usedOptimizer.GetStatus();
             
             if statusflag == 0 || statusflag == 1
-                status = 'none';
+                statusIcon = 'none';
             else
-                status = 'warn';
+                statusIcon = 'warn';
             end
             
-            msgbox(['Optimizer finished with status ' num2str(statusflag) ' (' statusmsg ')'],'Optimizer',status,'modal');
+            this.showMessage(sprintf('Optimizer finished with status %d (%s)',statusflag,statusmsg),'Optimization finished!',statusIcon,'modal');
         end
     end
 end

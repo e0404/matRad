@@ -12,7 +12,7 @@ classdef matRad_ViewingWidget < matRad_Widget
     % 
     % This file is part of the matRad project. It is subject to the license 
     % terms in the LICENSE file found in the top-level directory of this 
-    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+    % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
     % of the matRad project, including this file, may be copied, modified, 
     % propagated, or distributed except according to the terms contained in the 
     % LICENSE file.
@@ -22,8 +22,6 @@ classdef matRad_ViewingWidget < matRad_Widget
     properties
         plane = 3;
         slice = 1;
-        maxSlice;
-        SliceSliderStep;
         selectedBeam = 1;
         numOfBeams=1;
         profileOffset=0;
@@ -58,7 +56,6 @@ classdef matRad_ViewingWidget < matRad_Widget
         zoomHandle;
         legendHandle;
         scrollHandle;
-        lockUpdate = false;
         lockColorSettings = false;
         %plotlegend=false;
     end
@@ -156,17 +153,7 @@ classdef matRad_ViewingWidget < matRad_Widget
             this.slice=newSlice;
             this.update();
         end
-        
-        function set.maxSlice(this,value)
-            this.maxSlice=value;
-            this.update();
-        end
-        
-        function set.SliceSliderStep(this,value)
-            this.SliceSliderStep=value;
-            this.update();
-        end
-        
+                       
         function set.selectedBeam(this,value)
             this.selectedBeam=value;
             evt = matRad_WorkspaceChangedEvent('image_display');
@@ -370,6 +357,8 @@ classdef matRad_ViewingWidget < matRad_Widget
                 'Units','normalized',...
                 'Position',[0.0718390804597701 0.0654391371340524 0.902298850574712 0.899121725731895],...
                 'Color',matRad_cfg.gui.elementColor,...
+                'Box','on',...
+                'BoxStyle','full',...
                 'Tag','axesFig'); 
                  
             %Title
@@ -514,18 +503,17 @@ classdef matRad_ViewingWidget < matRad_Widget
                 this.initialized = true;
             end
 
-
-            if ~this.lockUpdate
+            if ~this.updateLock
             
-                doUpdate = false;
+                %doUpdate = false;
                 if nargin == 2
                     %At pln changes and at cst/cst (for Isocenter and new settings) 
                     %we need to update
-                    if this.checkUpdateNecessary({'pln','ct','resultGUI'},evt)
+                    if this.checkUpdateNecessary({'ct','cst'},evt)
                         this.initValues();
                     end
                     this.updateValues();
-                    doUpdate = this.checkUpdateNecessary({'pln_display','ct','cst','resultGUI','image_display'},evt);
+                    %doUpdate = this.checkUpdateNecessary({'pln_display','ct','cst','resultGUI','image_display'},evt);
                     if  this.checkUpdateNecessary({'resultGUI','image_display'},evt)
                         this.updateIsoDoseLineCache();
                     end
@@ -534,7 +522,6 @@ classdef matRad_ViewingWidget < matRad_Widget
                 end
                             
                 this.UpdatePlot();
-             
             end
             
         end
@@ -542,7 +529,7 @@ classdef matRad_ViewingWidget < matRad_Widget
     
     methods
         function UpdatePlot(this)
-            if this.lockUpdate
+            if this.updateLock
                 return
             end
 
@@ -559,22 +546,27 @@ classdef matRad_ViewingWidget < matRad_Widget
             
             defaultFontSize     = matRad_cfg.gui.fontSize;
             currAxes            = axis(handles.axesFig);
-            AxesHandlesVOI      = cell(0);
+            axesHandlesVOI      = cell(0);
             
-            AxesHandlesCT_Dose  = cell(0);
-            AxesHandlesIsoDose  = cell(0);
+            axesHandlesCT_Dose  = cell(0);
+            axesHandlesIsoDose  = cell(0);
             
-            if evalin('base','exist(''ct'')') && evalin('base','exist(''pln'')')
+            if evalin('base','exist(''ct'')')
                  ct = evalin('base','ct');
-                 pln = evalin('base','pln');
             else
-                 cla(handles.axesFig, 'reset')
+                 cla(handles.axesFig);
                  return
+            end
+
+            if evalin('base','exist(''pln'')')
+                pln = evalin('base','pln');
+            else
+                pln = [];
             end
             
             %% If resultGUI exists, then an optimization has been performed
             if evalin('base','exist(''resultGUI'')') 
-                Result = evalin('base','resultGUI');
+                result = evalin('base','resultGUI');
             end
 
             %% set and get required variables
@@ -608,7 +600,7 @@ classdef matRad_ViewingWidget < matRad_Widget
 %                 end
                 
                 if this.plotCT %get(handles.radiobtnCT,'Value')
-                    [AxesHandlesCT_Dose{end+1},~,~] = matRad_plotCtSlice(handles.axesFig,plotCtCube,this.ctScen,this.plane,this.slice,ctMap,this.dispWindow{ctIx,1});
+                    [axesHandlesCT_Dose{end+1},~,~] = matRad_plotCtSlice(handles.axesFig,plotCtCube,this.ctScen,this.plane,this.slice,ctMap,this.dispWindow{ctIx,1});
                     
                     % plot colorbar? If 1 the user asked for the CT.
                     % not available in octave 
@@ -635,18 +627,18 @@ classdef matRad_ViewingWidget < matRad_Widget
             end
             
             %% plot dose cube
-            if this.typeOfPlot== 1  && exist('Result','var') % handles.State >= 1 && 
+            if this.typeOfPlot== 1  && exist('result','var') % handles.State >= 1 && 
                 doseMap = matRad_getColormap(this.doseColorMap,this.cMapSize);
                 doseIx  = 2;
                 
-                dose = Result.(this.SelectedDisplayOption);
+                dose = result.(this.SelectedDisplayOption);
                 
                 % dose colorwash
                 if ~isempty(dose) && ~isvector(dose)
                   
                     if this.plotDose 
                         [doseHandle,~,~] = matRad_plotDoseSlice(handles.axesFig,dose,this.plane,this.slice,this.CutOffLevel,this.doseOpacity,doseMap,this.dispWindow{doseIx,1});
-                        AxesHandlesCT_Dose{end+1}         = doseHandle;
+                        axesHandlesCT_Dose{end+1}         = doseHandle;
                     end
                     
                     % plot colorbar
@@ -671,31 +663,16 @@ classdef matRad_ViewingWidget < matRad_Widget
                 %% plot iso dose lines
                 if this.plotIsoDoseLines 
                     plotLabels = this.plotIsoDoseLinesLabels; 
-%                     
-%                     %Sanity Check for Contours, which actually should have been
-%                     %computed before calling UpdatePlot
-%                     if isempty(this.IsoDose_Contours) %~isfield(handles.IsoDose,'Contours')
-%                         try
-%                             this.IsoDose_Contours = matRad_computeIsoDoseContours(dose,this.IsoDose_Levels);
-%                         catch
-%                             %If the computation didn't work, we set the field to
-%                             %empty, which will force matRad_plotIsoDoseLines to use
-%                             %matlabs contour function instead of repeating the
-%                             %failing computation every time
-%                             this.IsoDose_Contours = [];
-%                             warning('Could not compute isodose lines! Will try slower contour function!');
-%                         end
-%                      end
-                    AxesHandlesIsoDose = matRad_plotIsoDoseLines(handles.axesFig,dose,this.IsoDose_Contours,this.IsoDose_Levels,plotLabels,this.plane,this.slice,doseMap,this.dispWindow{doseIx,1},'LineWidth',1.5);
+                    axesHandlesIsoDose = matRad_plotIsoDoseLines(handles.axesFig,dose,this.IsoDose_Contours,this.IsoDose_Levels,plotLabels,this.plane,this.slice,doseMap,this.dispWindow{doseIx,1},'LineWidth',1.5);
                 end
             end
            
             %% plot VOIs
             if this.plotContour && this.typeOfPlot==1 && exist('ct','var') %&& get(handles.radiobtnContour,'Value') && handles.State>0
                 [AxVOI, this.sliceContourLegend] = matRad_plotVoiContourSlice(handles.axesFig,this.cst,ct,this.ctScen,this.VOIPlotFlag,this.plane,this.slice,[],'LineWidth',2);
-                AxesHandlesVOI = [AxesHandlesVOI AxVOI];
+                axesHandlesVOI = [axesHandlesVOI AxVOI];
             end
-            this.AxesHandlesVOI=AxesHandlesVOI;
+            this.AxesHandlesVOI=axesHandlesVOI;
             
             %% Set axis labels and plot iso center
             matRad_plotAxisLabels(handles.axesFig,ct,this.plane,this.slice,defaultFontSize);
@@ -773,7 +750,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                     Suffix = SelectedCube(Idx:end);
                 end
                 
-                mPhysDose = Result.(['physicalDose' Suffix]);
+                mPhysDose = result.(['physicalDose' Suffix]);
                 PlotHandles{1} = plot(handles.axesFig,vX,mPhysDose(ix),'color',cColor{1,1},'LineWidth',3); hold(handles.axesFig,'on');
                 PlotHandles{1,2} ='physicalDose';
                 ylabel(handles.axesFig,'dose in [Gy]');
@@ -782,7 +759,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 % plot counter
                 Cnt=2;
                 
-                if isfield(Result,['RBE' Suffix])
+                if isfield(result,['RBE' Suffix])
                     
                     %disbale specific plots
                     %this.DispInfo{6,2}=0;
@@ -799,7 +776,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                                     ~strcmp(this.DispInfo{i,1},['RBE' Suffix]) && ...
                                     ~strcmp(this.DispInfo{i,1},['physicalDose' Suffix])
                                 
-                                mCube = Result.([this.DispInfo{i,1}]);
+                                mCube = result.([this.DispInfo{i,1}]);
                                 PlotHandles{Cnt,1} = plot(handles.axesFig,vX,mCube(ix),'color',cColor{1,Cnt},'LineWidth',3); hold(handles.axesFig,'on');
                                 PlotHandles{Cnt,2} = this.DispInfo{i,1};
                                 StringYLabel2 = [StringYLabel2  ' \color{'  cColor{1,Cnt} '}' this.DispInfo{i,1} ' ['  this.DispInfo{i,3} ']'];
@@ -809,9 +786,9 @@ classdef matRad_ViewingWidget < matRad_Widget
                     end
                     StringYLabel2 = [StringYLabel2 '}'];
                     % always plot RBExD against RBE
-                    mRBExDose = Result.(['RBExDose' Suffix]);
+                    mRBExDose = result.(['RBExDose' Suffix]);
                     vBED = mRBExDose(ix);
-                    mRBE = Result.(['RBE' Suffix]);
+                    mRBE = result.(['RBE' Suffix]);
                     vRBE = mRBE(ix);
                     
                     % plot biological dose against RBE
@@ -922,8 +899,8 @@ classdef matRad_ViewingWidget < matRad_Widget
             handles=this.handles;
             
             %Lock triggering an update during isoline caching
-            currLock = this.lockUpdate;
-            this.lockUpdate = true;
+            currLock = this.updateLock;
+            this.updateLock = true;
             
             if evalin('base','exist(''resultGUI'')')                             
                 resultGUI = evalin('base','resultGUI');
@@ -966,7 +943,7 @@ classdef matRad_ViewingWidget < matRad_Widget
             end
             this.handles = handles;
             
-            this.lockUpdate = currLock;
+            this.updateLock = currLock;
         end
         
         %% Data Cursors
@@ -1008,9 +985,9 @@ classdef matRad_ViewingWidget < matRad_Widget
                         cursorText{end+1,1} = ['Cube Index: ' mat2str(vCubeIdx)];
                         %Space Coordinates
                         coords = zeros(1,3);
-                        coords(1) = cubePos(2)*ct.resolution.y;
-                        coords(2) = cubePos(1)*ct.resolution.x;
-                        coords(3) = cubePos(3)*ct.resolution.z;
+                        coords(1) = ct.y(cubePos(2));
+                        coords(2) = ct.x(cubePos(1));
+                        coords(3) = ct.z(cubePos(3));
                         cursorText{end+1,1} = ['Space Coordinates: ' mat2str(coords,5) ' mm'];
                         
                         ctVal = ct.cubeHU{1}(cubeIx(1),cubeIx(2),cubeIx(3));
@@ -1074,7 +1051,7 @@ classdef matRad_ViewingWidget < matRad_Widget
         
         %Toggle Colorbar 
         function colorBarToggleFunction(this,src,event)
-            if isempty(this.cBarHandle) || ~isobject(this.cBarHandle) || this.lockUpdate
+            if isempty(this.cBarHandle) || ~isobject(this.cBarHandle) || this.updateLock
                 return;
             end
             if this.plotColorBar
@@ -1094,21 +1071,21 @@ classdef matRad_ViewingWidget < matRad_Widget
         
         %
         function initValues(this)
-            lockState=this.lockUpdate;
+            lockState=this.updateLock;
             
             if lockState 
                 return;
             end
             
-            this.lockUpdate=true;
+            this.updateLock=true;
             
             if isempty(this.plane)
                 this.plane=3;
             end
             
-            if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')') &&  evalin('base','exist(''pln'')')
+            if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')                 
                 % update slice, beam and offset sliders parameters
-                pln= evalin('base','pln');
+                
                 ct = evalin('base','ct');
                 cst = evalin('base','cst');
                 cst = matRad_computeVoiContoursWrapper(cst,ct);
@@ -1122,36 +1099,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                         this.VOIPlotFlag(i) = true;
                     end
                 end
-                
-                if isfield(pln,'propStf')
-                    planeCenters = ceil(pln.propStf.isoCenter(1,[2 1 3]) ./ [ct.resolution.x ct.resolution.y ct.resolution.z]);
-                    this.numOfBeams=pln.propStf.numOfBeams;
-                else
-                    planeCenters = ceil(ct.cubeDim./ 2);
-                    this.numOfBeams = 1;
-                end
-                
-                this.slice = planeCenters(this.plane);                
-                
-                this.maxSlice=ct.cubeDim(this.plane);
-                this.SliceSliderStep=[1/(ct.cubeDim(this.plane)-1) 1/(ct.cubeDim(this.plane)-1)];
-                
-                
-                 % set profile offset slider
-                this.OffsetMinMax = [-100 100];
-                vRange = sum(abs(this.OffsetMinMax));
-                
-                if strcmp(this.ProfileType,'lateral')
-                    this.OffsetSliderStep = vRange/ct.resolution.x;
-                else
-                    this.OffsetSliderStep = vRange/ct.resolution.y;
-                end
-                this.OffsetSliderStep=[1/this.OffsetSliderStep 1/this.OffsetSliderStep];
-                
-                
-                selectionIndex=1;
-                this.plotColorBar=true;
-                
+
                 if isfield(ct, 'cubeHU')
                     minMax = [min(ct.cubeHU{1}(:)) max(ct.cubeHU{1}(:))];
 
@@ -1165,6 +1113,45 @@ classdef matRad_ViewingWidget < matRad_Widget
                         minMax = [0 2];
                     end
                 end
+
+
+                planeCenters = ceil(ct.cubeDim./ 2);
+                this.numOfBeams = 1;
+                if evalin('base','exist(''pln'')')
+                    pln = evalin('base','pln');
+
+                    if isfield(pln,'bioParam')
+                        visQuantity = pln.bioParam.quantityVis;
+                    else
+                        visQuantity = [];
+                    end
+
+                    if isfield(pln,'propStf')
+                        isoCoordinates = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:), ct);
+                        planeCenters = ceil(isoCoordinates);
+                        this.numOfBeams=pln.propStf.numOfBeams;
+                    end
+                else
+                    visQuantity = [];
+                end
+                       
+                this.slice = planeCenters(this.plane);                        
+
+                % set profile offset slider
+                this.OffsetMinMax = [-100 100];
+                vRange = sum(abs(this.OffsetMinMax));
+
+                if strcmp(this.ProfileType,'lateral')
+                    this.OffsetSliderStep = vRange/ct.resolution.x;
+                else
+                    this.OffsetSliderStep = vRange/ct.resolution.y;
+                end
+                this.OffsetSliderStep=[1/this.OffsetSliderStep 1/this.OffsetSliderStep];
+
+                               
+                selectionIndex=1;
+                this.plotColorBar=true;
+               
                 
                 if evalin('base','exist(''resultGUI'')')
                     this.colorData=2;
@@ -1174,83 +1161,8 @@ classdef matRad_ViewingWidget < matRad_Widget
                     Result = evalin('base','resultGUI');
                     
                     this.DispInfo = fieldnames(Result);
-                    for i = 1:size(this.DispInfo,1)
-                        
-                        % delete weight vectors in Result struct for plotting
-                        if isstruct(Result.(this.DispInfo{i,1})) || isvector(Result.(this.DispInfo{i,1}))
-                            Result = rmfield(Result,this.DispInfo{i,1});
-                            this.DispInfo{i,2}=false;
-                        else
-                            %second dimension indicates if it should be plotted
-                            this.DispInfo{i,2} = true;
-                            % determine units
-                            if strfind(this.DispInfo{i,1},'physicalDose')
-                                this.DispInfo{i,3} = '[Gy]';
-                            elseif strfind(this.DispInfo{i,1},'alpha')
-                                this.DispInfo{i,3} = '[Gy^{-1}]';
-                            elseif strfind(this.DispInfo{i,1},'beta')
-                                this.DispInfo{i,3} = '[Gy^{-2}]';
-                            elseif strfind(this.DispInfo{i,1},'RBExD')
-                                this.DispInfo{i,3} = '[Gy(RBE)]';
-                            elseif strfind(this.DispInfo{i,1},'LET')
-                                this.DispInfo{i,3} = '[keV/um]';
-                            else
-                                this.DispInfo{i,3} = '[a.u.]';
-                            end
-                            this.DispInfo{i,4} = [];    % optional for the future: color range for plotting
-                            this.DispInfo{i,5} = [];    % optional for the future: min max values
-                        end
-                    end
                     
-                    this.SelectedDisplayAllOptions=fieldnames(Result);                    
-                    
-%                     if strcmp(pln.radiationMode,'carbon') || strcmp(pln.bioParam.quantityOpt,'RBExD') 
-%                         this.SelectedDisplayOption = 'RBExDose';
-%                     else
-%                         this.SelectedDisplayOption = 'physicalDose';
-%                     end
-
-                    switch pln.bioParam.quantityOpt
-                        case 'physicalDose'
-                            this.SelectedDisplayOption = 'physicalDose';
-                        case 'RBExD'
-                            this.SelectedDisplayOption = 'RBExD';
-                        case 'effect'
-                            this.SelectedDisplayOption = 'effect';
-                        case 'BED'
-                            this.SelectedDisplayOption = 'BED';
-                        otherwise
-                            this.SelectedDisplayOption = 'physicalDose';
-                    end
-                    
-                    if ~any(strcmp(this.SelectedDisplayOption,fieldnames(Result)))
-                        this.SelectedDisplayOption = 'physicalDose';
-                        if ~any(strcmp(this.SelectedDisplayOption,fieldnames(Result)))
-                            this.SelectedDisplayOption = this.DispInfo{find([this.DispInfo{:,2}],1,'first'),1};
-                        end
-                    end
-                    
-                    dose = Result.(this.SelectedDisplayOption);
-                    
-                    %if the workspace has changed update the display parameters
-                    if  isempty(this.dispWindow{3,1}) || ~this.lockColorSettings
-                        this.dispWindow{2,1} = [min(dose(:)) max(dose(:))]; % set default dose range
-                        this.dispWindow{2,2} = [min(dose(:)) max(dose(:))]; % set min max values
-                    end
-                    
-                    minMaxRange = this.dispWindow{2,1};
-                    % if upper colorrange is defined then use it otherwise 120% iso dose
-                    upperMargin = 1;
-                    if abs((max(dose(:)) - this.dispWindow{2,1}(1,2))) < 0.01  * max(dose(:))
-                        upperMargin = 1.2;
-                    end
-                    
-                    if (length(this.IsoDose_Levels) == 1 && this.IsoDose_Levels(1,1) == 0)
-                        vLevels                  = [0.1:0.1:0.9 0.95:0.05:upperMargin];
-                        referenceDose            = (minMaxRange(1,2))/(upperMargin);
-                        this.IsoDose_Levels   = minMaxRange(1,1) + (referenceDose-minMaxRange(1,1)) * vLevels;
-                        this.IsoDose_Contours = matRad_computeIsoDoseContours(dose,this.IsoDose_Levels);
-                    end
+                    this.updateDisplaySelection(visQuantity);
                 else
                     this.colorData=1;
                     if evalin('base','exist(''resultGUI'')')
@@ -1263,8 +1175,6 @@ classdef matRad_ViewingWidget < matRad_Widget
                 end
             else %no data is loaded 
                 this.slice=1;
-                this.maxSlice=1;
-                this.SliceSliderStep=[1 1];
                 this.numOfBeams=1;
                 this.OffsetMinMax = [1 1];
                 this.profileOffset=1;
@@ -1280,22 +1190,21 @@ classdef matRad_ViewingWidget < matRad_Widget
             this.dispWindow{selectionIndex,1} = minMax;
             this.dispWindow{selectionIndex,2} = minMax;
              
-            this.lockUpdate=lockState;
+            this.updateLock=lockState;
         end
         
         %update the Viewer
         function updateValues(this)
-            lockState=this.lockUpdate;
+            lockState=this.updateLock;
             
             if lockState
                 return;
             end
             
-            this.lockUpdate=true;
+            this.updateLock=true;
                                    
-            if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')') &&  evalin('base','exist(''pln'')')
+            if evalin('base','exist(''ct'')') && evalin('base','exist(''cst'')')
                 % update slice, beam and offset sliders parameters
-                pln = evalin('base','pln');
                 ct = evalin('base','ct');
                 cst = evalin('base','cst');
                 this.cst = cst;
@@ -1309,13 +1218,16 @@ classdef matRad_ViewingWidget < matRad_Widget
                 end
                 % set isoCenter values 
                 % Note: only defined for the first Isocenter
-                if isfield(pln,'propStf')
-                    uniqueIsoCenters = unique(pln.propStf.isoCenter,'rows');
-                    this.vIsoCenter      = round(uniqueIsoCenters(1,:)./[ct.resolution.x ct.resolution.y ct.resolution.z]);
+                if evalin('base','exist(''pln'')')
+                    pln = evalin('base','pln');
+                    if isfield(pln,'propStf')
+                        this.vIsoCenter      = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:), ct);
+                    else
+                        this.plotIsoCenter = false;
+                    end
                 else
                     this.plotIsoCenter = false;
                 end
-                
 
                  % set profile offset slider
                 this.OffsetMinMax = [-100 100];
@@ -1328,8 +1240,77 @@ classdef matRad_ViewingWidget < matRad_Widget
                 end
                 this.OffsetSliderStep=[1/this.OffsetSliderStep 1/this.OffsetSliderStep];
 
-                this.lockUpdate=lockState;
+                this.updateDisplaySelection();
             end
+
+            this.updateLock=lockState;
         end
+    
+        function updateDisplaySelection(this,visSelection)
+            %Lock triggering an update during isoline caching
+            currLock = this.updateLock;
+            this.updateLock = true;
+
+            if nargin < 2
+                visSelection = [];
+            end
+
+            if evalin('base','exist(''resultGUI'')')                   
+                result = evalin('base','resultGUI');
+                
+                this.DispInfo = fieldnames(result);
+                for i = 1:size(this.DispInfo,1)
+                    
+                    % delete weight vectors in Result struct for plotting
+                    if isstruct(result.(this.DispInfo{i,1})) || isvector(result.(this.DispInfo{i,1}))
+                        result = rmfield(result,this.DispInfo{i,1});
+                        this.DispInfo{i,2}=false;
+                    else
+                        %second dimension indicates if it should be plotted
+                        this.DispInfo{i,2} = true;
+                        % determine units
+                        if strfind(this.DispInfo{i,1},'physicalDose')
+                            this.DispInfo{i,3} = '[Gy]';
+                        elseif strfind(this.DispInfo{i,1},'alpha')
+                            this.DispInfo{i,3} = '[Gy^{-1}]';
+                        elseif strfind(this.DispInfo{i,1},'beta')
+                            this.DispInfo{i,3} = '[Gy^{-2}]';
+                        elseif strfind(this.DispInfo{i,1},'RBExD')
+                            this.DispInfo{i,3} = '[Gy(RBE)]';
+                        elseif strfind(this.DispInfo{i,1},'LET')
+                            this.DispInfo{i,3} = '[keV/um]';
+                        else
+                            this.DispInfo{i,3} = '[a.u.]';
+                        end
+                        this.DispInfo{i,4} = [];    % optional for the future: color range for plotting
+                        this.DispInfo{i,5} = [];    % optional for the future: min max values
+                    end
+                end
+                
+                this.SelectedDisplayAllOptions=fieldnames(result);                    
+                
+                if ~isempty(visSelection) && isfield(result,visSelection)
+                    this.SelectedDisplayOption = visSelection;
+                elseif ~isfield(result,this.SelectedDisplayOption)
+                    this.SelectedDisplayOption = 'physicalDose';
+                else
+                    %Keep option
+                end
+                
+                if ~any(strcmp(this.SelectedDisplayOption,fieldnames(result)))
+                    this.SelectedDisplayOption = 'physicalDose';
+                    if ~any(strcmp(this.SelectedDisplayOption,fieldnames(result)))
+                        this.SelectedDisplayOption = this.DispInfo{find([this.DispInfo{:,2}],1,'first'),1};
+                    end
+
+                    this.updateIsoDoseLineCache();
+                end               
+            else
+                this.SelectedDisplayAllOptions = 'no option available';
+                this.SelectedDisplayOption = '';
+            end
+
+            this.updateLock = currLock;
+        end        
     end
 end

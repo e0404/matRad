@@ -92,11 +92,19 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             % create this from superclass
             this = this@DoseEngines.matRad_PencilBeamEngineAbstract(pln);            
 
-            if nargin > 0 && isfield(pln,'propStf') && isfield(pln.propStf,'bixelWidth')
-                % 0 if field calc is bixel based, 1 if dose calc is field based
-                % num2str is only used to prevent failure of strcmp when bixelWidth
-                % contains a number and not a string
-                this.isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
+            %TODO: engines should not rely on reading properties from "propStf", we need to find another way to handle those two fields in the future.
+            if nargin > 0 && isfield(pln,'propStf') 
+                if isfield(pln.propStf,'bixelWidth')
+                    % 0 if field calc is bixel based, 1 if dose calc is field based
+                    % num2str is only used to prevent failure of strcmp when bixelWidth
+                    % contains a number and not a string
+                    this.isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
+                end
+
+                %Potentially stored collimation information
+                if isfield(pln.propStf,'collimation')
+                    this.collimation = pln.propStf.collimation;
+                end
             end
         end
 
@@ -357,7 +365,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             %
             % This file is part of the matRad project. It is subject to the license
             % terms in the LICENSE file found in the top-level directory of this
-            % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+            % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
             % of the matRad project, including this file, may be copied, modified,
             % propagated, or distributed except according to the terms contained in the
             % LICENSE file.

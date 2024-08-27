@@ -28,7 +28,7 @@ function [ct,cst,pln,stf,resultGUI] = matRad_importDicom( files, dicomMetaBool )
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
 % of the matRad project, including this file, may be copied, modified, 
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
@@ -42,7 +42,8 @@ if ~exist('dicomMetaBool','var')
 end
 
 %%
-h = waitbar(0,'Please wait...');
+h = waitbar(0,'Please wait...','Color',matRad_cfg.gui.backgroundColor,'DefaultTextColor',matRad_cfg.gui.textColor);
+matRad_applyThemeToWaitbar(h);
 %h.WindowStyle = 'Modal';
 steps = 2;
 
@@ -79,7 +80,8 @@ if ~isempty(files.rtss)
     close(h)
 
     %% creating structure cube
-    h = waitbar(0,'Please wait...');
+    h = waitbar(0,'Please wait...','Color',matRad_cfg.gui.backgroundColor,'DefaultTextColor',matRad_cfg.gui.textColor);
+    matRad_applyThemeToWaitbar(h);
     %h.WindowStyle = 'Modal';
     steps = numel(structures);
 

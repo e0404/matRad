@@ -11,7 +11,7 @@ function obj = matRad_exportDicomRTPlan(obj)
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
 % of the matRad project, including this file, may be copied, modified,
 % propagated, or distributed except according to the terms contained in the
 % LICENSE file.
@@ -108,11 +108,6 @@ if ~any(isfield(ct,{'x','y','z'}))
     ct.y = ct.resolution.y*[0:ct.cubeDim(1)-1] - positionOffset(1);
     ct.z = ct.resolution.z*[0:ct.cubeDim(3)-1] - positionOffset(3);
 end
-
-positionOffsetCoordinates = [ct.x(1) ct.y(1) ct.z(1)];
-positionOffsetCoordinates = positionOffsetCoordinates - [ct.resolution.x ct.resolution.y ct.resolution.z];
-
-
 
 %Write references to image, RTStruct, RTDose
 %RTStruct
@@ -274,7 +269,7 @@ for iBeam = 1:obj.pln.propStf.numOfBeams
                 currCtrlSeqItem.PatientSupportRotationDirection = 'NONE';
                 currCtrlSeqItem.TableTopEccentricAngle = 0;
                 currCtrlSeqItem.TableTopEccentricRotationDirection = 'NONE';
-                currCtrlSeqItem.IsocenterPosition = (obj.stf(iBeam).isoCenter + positionOffsetCoordinates)';
+                currCtrlSeqItem.IsocenterPosition = obj.stf(iBeam).isoCenter';
             end
 
             %Check energy, currently can only be constant

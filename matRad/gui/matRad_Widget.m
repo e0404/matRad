@@ -12,7 +12,7 @@ classdef matRad_Widget <  handle
     % 
     % This file is part of the matRad project. It is subject to the license 
     % terms in the LICENSE file found in the top-level directory of this 
-    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+    % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
     % of the matRad project, including this file, may be copied, modified, 
     % propagated, or distributed except according to the terms contained in the 
     % LICENSE file.
@@ -107,7 +107,8 @@ classdef matRad_Widget <  handle
                     close(handles.ErrorDlg);
                 end
             end
-            errordlg(Message);
+            h = errordlg(Message);
+            matRad_applyThemeToDlg(h);
             matRad_cfg.dispError(Message);
             this.handles = handles;
         end
@@ -126,9 +127,15 @@ classdef matRad_Widget <  handle
                 Message = [Message,ME.message];
                 % Future error hyperlinks {Message,ME.getReport(meType,'hyperlinks','off')};
             end
+            h = warndlg(Message);
+            matRad_applyThemeToDlg(h);
             matRad_cfg.dispWarning(Message);
-            warndlg(Message);
             this.handles = handles;         
+        end
+
+        function showMessage(this,message,varargin)
+            h = msgbox(message,varargin{:});
+            matRad_applyThemeToDlg(h);
         end
         
         %function notifyUpdate(this,workSpaceVariables)

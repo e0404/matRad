@@ -7,3 +7,4 @@ mv matRad/optimization/optimizer/ipopt.m optimization/optimizer/ipopt.m.bak
 
 octave --no-gui --eval "pkg install -forge dicom"
 octave --no-gui --eval "pkg install -forge nan"
+octave --no-gui --eval "pkg install -forge image"

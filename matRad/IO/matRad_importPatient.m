@@ -24,7 +24,7 @@ function [ct,cst] = matRad_importPatient(ctFile,maskFiles,hlutFilename)
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
 % of the matRad project, including this file, may be copied, modified, 
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
@@ -53,18 +53,18 @@ ct.resolution.z = metadata.resolution(3);
 ct.numOfCtScen = 1;
 
 maskId = 1;
-hGlobalWaitbar = waitbar(0,'Importing Segmentations');
-set(findall(hGlobalWaitbar,'type','text'),'Interpreter','none');
-
-
+matRad_cfg = MatRad_Config.instance();
+hGlobalWaitbar = waitbar(0,'Importing Segmentations','Color',matRad_cfg.gui.backgroundColor,'DefaultTextColor',matRad_cfg.gui.textColor);
+matRad_applyThemeToWaitbar(hGlobalWaitbar);
 
 for f=1:numel(maskFiles)
     maskFile = maskFiles{f};
     waitbar(f/numel(maskFiles),hGlobalWaitbar,['Importing Segmentations: ' maskFiles{f}]);
     if exist(maskFile,'dir')
         contents = dir(maskFile);
-        hFolderWaitbar = waitbar(0,'Importing Folder');
-        set(findall(hFolderWaitbar,'type','text'),'Interpreter','none');
+        hFolderWaitbar = waitbar(0,'Importing Folder','Color',matRad_cfg.gui.backgroundColor,'DefaultTextColor',matRad_cfg.gui.textColor);
+        matRad_applyThemeToWaitbar(hFolderWaitbar);
+
         for s=1:numel(contents)
             waitbar(s/numel(contents),hFolderWaitbar,['Importing Folder: ' contents(s).name]);            
             if(~contents(s).isdir)

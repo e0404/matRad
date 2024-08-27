@@ -3,3 +3,5 @@ userdata/*
 testresults.xml
 coverage.xml
 coverage.json
+*.asv
+build/

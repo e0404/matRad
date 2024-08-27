@@ -142,6 +142,6 @@ matRad is distributed in the hope that it will be useful, but WITHOUT ANY WARRAN
 
 Please note that we treat the compilation of matRad and Ipopt as separate and independent works (or modules, components, programs). Therefore, to the best of our understanding, the compilation of matRad and Ipopt is subject to the "Mere Aggregation" exception in section 5 of the GNU v3 and the exemption from "Contributions" in section 1. b) ii) of the EPL v1.0. Should this interpretation turn out to be not in compliance with the applicable laws in force, we have provided you with an additional permission under GNU GPL version 3 section 7 to allow you to use the work resulting from combining matRad with Ipopt.
 
-You will receive a copy of the GPL v3  and a copy of the EPL v1.0 in the file LICENSES.txt along with the compilation. If not, see http://www.gnu.org/licenses/ and/or http://opensource.org/licenses/EPL-1.0/.
+You will receive a copy of the GPL v3  and a copy of the EPL v1.0 in the file LICENSE.md along with the compilation. If not, see http://www.gnu.org/licenses/ and/or http://opensource.org/licenses/EPL-1.0/.
 
 ---
