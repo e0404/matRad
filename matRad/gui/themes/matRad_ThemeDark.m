@@ -1,4 +1,4 @@
-classdef matRad_Dark < matRad_Theme
+classdef matRad_ThemeDark < matRad_Theme
     properties (Constant)
         name                = 'Dark';
         backgroundColor     = [0.129176470588235 0.137568627450980 0.143529411764706];

@@ -300,7 +300,7 @@ classdef MatRad_Config < handle
         end
 
         function setDefaultGUIProperties(obj)
-            theme = matRad_Dark();
+            theme = matRad_ThemeDark();
             obj.gui = struct(theme);
         end
 

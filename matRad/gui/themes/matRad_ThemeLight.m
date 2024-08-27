@@ -1,4 +1,4 @@
-classdef matRad_Light < matRad_Theme
+classdef matRad_ThemeLight < matRad_Theme
     properties (Constant)
         name                = 'Light';
         backgroundColor     = [212, 211, 205]/255; %very light beige/yellow
@@ -8,7 +8,7 @@ classdef matRad_Light < matRad_Theme
         fontSize            = 8;
         fontWeight          = 'bold';
         fontName            = 'Helvetica';
-        author              = 'Pia Stammer';
+        author              = 'Pia Stammer (github.com/PiaStammer)';
         description         = 'Default Light Theme for matRad';    
     end
 end

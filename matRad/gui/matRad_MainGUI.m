@@ -559,9 +559,9 @@ classdef matRad_MainGUI < handle
 
         function theme_ClickedCallback(this,hObject,eventdata)
             if strcmp(get(hObject,'State'),'on')
-                theme = matRad_Dark;
+                theme = matRad_ThemeDark;
             else
-                theme = matRad_Light;
+                theme = matRad_ThemeLight;
             end
             delete(this);
             matRad_cfg = MatRad_Config.instance();            

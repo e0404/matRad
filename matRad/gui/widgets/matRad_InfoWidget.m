@@ -145,9 +145,9 @@ classdef matRad_InfoWidget < matRad_Widget
 
             %Theme Information
             msg{end+1} = 'GUI Themes:';
-            darkTheme = matRad_Dark();
+            darkTheme = matRad_ThemeDark();
             msg{end+1} = sprintf('%s - %s by %s',darkTheme.name,darkTheme.description,darkTheme.author);
-            lightTheme = matRad_Light();
+            lightTheme = matRad_ThemeLight();
             msg{end+1} = sprintf('%s - %s by %s',lightTheme.name,lightTheme.description,lightTheme.author);
             msg{end+1} = newline;
             
