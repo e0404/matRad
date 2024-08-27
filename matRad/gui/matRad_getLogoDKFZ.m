@@ -57,6 +57,16 @@ end
 [im,~,alpha] = imread(fullfile(filepath,'gfx',dkfzLogo));
 
 %Recolor Logo
+% if colorWhiteLogo
+%     rgbUint = uint8(matRad_cfg.gui.highlightColor * 255);
+%     for i = 1:3
+%         tmp = squeeze(im(:,:,i));
+%         tmp(tmp == 255) = rgbUint(i);
+%         im(:,:,i) = tmp;
+%     end
+% end
+
+%In case of Octave with no transparancy we recolor the background
 if matRad_cfg.isOctave
     rgbUint = uint8(matRad_cfg.gui.backgroundColor * 255);
     alphaMap = alpha == 0;

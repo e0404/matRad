@@ -1,21 +1,21 @@
 classdef matRad_MainGUI < handle
-% matRad_MainGUI   Graphical User Interface configuration class
-% This Class is used to create the main GUI interface where all the widgets
-% are called and created.
-%
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% Copyright 2019 the matRad development team.
-%
-% This file is part of the matRad project. It is subject to the license
-% terms in the LICENSE file found in the top-level directory of this
-% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
-% of the matRad project, including this file, may be copied, modified,
-% propagated, or distributed except according to the terms contained in the
-% LICENSE file.
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % matRad_MainGUI   Graphical User Interface configuration class
+    % This Class is used to create the main GUI interface where all the widgets
+    % are called and created.
+    %
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %
+    % Copyright 2019 the matRad development team.
+    %
+    % This file is part of the matRad project. It is subject to the license
+    % terms in the LICENSE file found in the top-level directory of this
+    % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+    % of the matRad project, including this file, may be copied, modified,
+    % propagated, or distributed except according to the terms contained in the
+    % LICENSE file.
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties
         guiHandle
         lastStoragePath = []
@@ -42,11 +42,13 @@ classdef matRad_MainGUI < handle
 
     methods(Access = protected)
         function this = createMenuBar(this)
-           h1 = this.guiHandle;
-           folder = fileparts(mfilename('fullpath'));
-           loadIcons = load(fullfile(folder,'matRad_iconsGUI.mat'),'icons');
+            h1 = this.guiHandle;
+            folder = fileparts(mfilename('fullpath'));
+            loadIcons = load(fullfile(folder,'matRad_iconsGUI.mat'),'icons');
 
-           icons = loadIcons.icons;
+            icons = loadIcons.icons;
+
+            matRad_cfg = MatRad_Config.instance();
 
             h60 = uitoolbar(...
                 'Parent',h1,...
@@ -129,14 +131,53 @@ classdef matRad_MainGUI < handle
                 'ClickedCallback',@(hObject, eventdata)uitoggletool8_ClickedCallback(this, hObject, eventdata),...
                 'Separator','on',...
                 'TooltipString','Insert Colorbar' );
-% TODO: future dose comparison tool
-%             h70 = uipushtool(...
-%                 'Parent',h60,...
-%                 'Tag','uipushtool_GammaIndex',...
-%                 'CData',icons{10},...
-%                 'ClickedCallback',@(hObject,eventdata)gammaIndex_ClickedCallback(this, hObject, eventdata),...
-%                 'TooltipString','Calculate Gamma Index' );
 
+
+            % TODO: future dose comparison tool
+            %             h70 = uipushtool(...
+            %                 'Parent',h60,...
+            %                 'Tag','uipushtool_GammaIndex',...
+            %                 'CData',icons{10},...
+            %                 'ClickedCallback',@(hObject,eventdata)gammaIndex_ClickedCallback(this, hObject, eventdata),...
+            %                 'TooltipString','Calculate Gamma Index' );
+
+            h70 = uitoggletool(...
+                'Parent',h60,...
+                'Tag','uitoggletool_theme',...
+                'CData',icons{11},...
+                'ClickedCallback',@(hObject, eventdata)theme_ClickedCallback(this, hObject, eventdata),...
+                'Separator','on',...
+                'TooltipString','Toogle Dark Mode');
+
+
+            % Adapt background color
+            if matRad_isUifigure(h1)
+                h60.BackgroundColor = matRad_cfg.gui.backgroundColor;
+            elseif matRad_cfg.isOctave
+                %Do nothing
+            else
+                try
+                    drawnow();
+                    jToolbar = get(get(h60,'JavaContainer'),'ComponentPeer');
+                    
+                    cellColor = num2cell(matRad_cfg.gui.backgroundColor);
+                    color = java.awt.Color(cellColor{:});
+                    jToolbar.setBackground(color);
+                    jToolbar.getParent.getParent.setBackground(color);
+                    jToolbar.setBorderPainted(false);
+
+                    toolbarComponents = jToolbar.getComponents();
+                    for c=1:length(toolbarComponents)
+                        %toolbarComponents(c).setOpaque(false);
+                        toolbarComponents(c).setBackground(color);
+                        for subIx = 1 : length(toolbarComponents(c).getComponents())
+                            toolbarComponents(c).getComponent(subIx-1).setBackground(color);
+                        end
+                    end
+                catch ME
+                    matRad_cfg.dispDeprecationWarning('Setting the Background Color seems to be deprecated now: %s',ME.message);
+                end
+            end
         end
     end
 
@@ -293,7 +334,7 @@ classdef matRad_MainGUI < handle
             % update button states
             obj.updateButtons();
         end
-        
+
         function delete(this)
             this.forceClose = true;
             try
@@ -319,81 +360,89 @@ classdef matRad_MainGUI < handle
 
 
         function updateWidgets(this,evt)
-           matRad_cfg = MatRad_Config.instance();
+            matRad_cfg = MatRad_Config.instance();
 
-           args = {};
-           if nargin < 2 || ~isa(evt,'matRad_WorkspaceChangedEvent')
-               changed = {};
-           else
-               changed = evt.changedVariables;
-               args = {evt};
-           end
+            args = {};
+            if nargin < 2 || ~isa(evt,'matRad_WorkspaceChangedEvent')
+                changed = {};
+            else
+                changed = evt.changedVariables;
+                args = {evt};
+            end
 
-           if matRad_cfg.logLevel > 3               
-               matRad_cfg.dispDebug('GUI Workspace Changed at %s. ',datestr(now,'HH:MM:SS.FFF'));
-               if ~isempty(changed)
-                   matRad_cfg.dispDebug('Specific Variables: %s.\n',strjoin(changed,'|'));
-               else
-                   matRad_cfg.dispDebug('\n');
-               end
-           end
+            if matRad_cfg.logLevel > 3
+                matRad_cfg.dispDebug('GUI Workspace Changed at %s. ',datestr(now,'HH:MM:SS.FFF'));
+                if ~isempty(changed)
+                    matRad_cfg.dispDebug('Specific Variables: %s.\n',strjoin(changed,'|'));
+                else
+                    matRad_cfg.dispDebug('\n');
+                end
+            end
 
 
-           %%Debug
-           this.PlanWidget.update(args{:});
-           this.WorkflowWidget.update(args{:});
-           this.OptimizationWidget.update(args{:});
-           this.ViewingWidget.updateLock = false;
-           this.ViewingWidget.update(args{:});
-           this.StructureVisibilityWidget.update(args{:}); 
-           
-           this.ViewingWidget.updateLock = true;
-           this.ViewerOptionsWidget.update(args{:});
-           this.VisualizationWidget.update(args{:});
-           this.ViewingWidget.updateLock = false;
-           
-           
+            %%Debug
+            this.PlanWidget.update(args{:});
+            this.WorkflowWidget.update(args{:});
+            this.OptimizationWidget.update(args{:});
+            this.ViewingWidget.updateLock = false;
+            this.ViewingWidget.update(args{:});
+            this.StructureVisibilityWidget.update(args{:});
 
+            this.ViewingWidget.updateLock = true;
+            this.ViewerOptionsWidget.update(args{:});
+            this.VisualizationWidget.update(args{:});
+            this.ViewingWidget.updateLock = false;
         end
 
         function updateButtons(this)
-           %disp(['Plot Changed ' datestr(now,'HH:MM:SS.FFF')]); %Debug
-           % update the visualization and viewer options widgets
+            %disp(['Plot Changed ' datestr(now,'HH:MM:SS.FFF')]); %Debug
+            % update the visualization and viewer options widgets
 
-           matRad_cfg = MatRad_Config.instance();
+            matRad_cfg = MatRad_Config.instance();
 
-           if strcmp(matRad_cfg.env,'OCTAVE')
-              return
-           end
+            if strcmp(matRad_cfg.env,'OCTAVE')
+                return
+            end
 
-           set(findobj(this.guiHandle,'tag','toolbarPan'),'State',get(this.ViewingWidget.panHandle,'Enable'));
-           set(findobj(this.guiHandle,'tag','toolbarCursor'),'State',get(this.ViewingWidget.dcmHandle,'Enable'));
+            set(findobj(this.guiHandle,'tag','toolbarPan'),'State',get(this.ViewingWidget.panHandle,'Enable'));
+            set(findobj(this.guiHandle,'tag','toolbarCursor'),'State',get(this.ViewingWidget.dcmHandle,'Enable'));
+            if ~isempty(strfind(lower(matRad_cfg.gui.name),'light'))
+                enable = 'on';
+                state = 'off';
+            elseif ~isempty(strfind(lower(matRad_cfg.gui.name),'dark'))
+                enable = 'on';
+                state = 'on';
+            else
+                enable = 'off';
+                state = 'off';
+            end
+            set(findobj(this.guiHandle,'tag','uitoggletool_theme'),'State',state,'Enable',enable);
 
-           if this.ViewingWidget.plotColorBar  && ~isempty(this.ViewingWidget.cBarHandle) && isvalid(this.ViewingWidget.cBarHandle)
-               set(findobj(this.guiHandle,'tag','uitoggletool8'),'State','on')
-           else
-               set(findobj(this.guiHandle,'tag','uitoggletool8'),'State','off')
-           end
-           if this.ViewingWidget.plotLegend && ~isempty(this.ViewingWidget.legendHandle) && isvalid(this.ViewingWidget.legendHandle)
-               set(findobj(this.guiHandle,'tag','toolbarLegend'),'State',get(this.ViewingWidget.legendHandle,'visible'));
-           else
-               set(findobj(this.guiHandle,'tag','toolbarLegend'),'State','off');
-           end
-           if strcmp(get(this.ViewingWidget.zoomHandle,'Enable'),'on')
-               if strcmp(get(this.ViewingWidget.zoomHandle,'Direction'),'in')
-                   set(findobj(this.guiHandle,'tag','toolbarZoomOut'),'State','off');
-                   set(findobj(this.guiHandle,'tag','toolbarZoomIn'),'State','on');
-               else
-                   set(findobj(this.guiHandle,'tag','toolbarZoomOut'),'State','on');
-                   set(findobj(this.guiHandle,'tag','toolbarZoomIn'),'State','off');
-               end
-           else
-               set(findobj(this.guiHandle,'tag','toolbarZoomOut'),'State','off');
-               set(findobj(this.guiHandle,'tag','toolbarZoomIn'),'State','off');
-           end
+            if this.ViewingWidget.plotColorBar  && ~isempty(this.ViewingWidget.cBarHandle) && isvalid(this.ViewingWidget.cBarHandle)
+                set(findobj(this.guiHandle,'tag','uitoggletool8'),'State','on')
+            else
+                set(findobj(this.guiHandle,'tag','uitoggletool8'),'State','off')
+            end
+            if this.ViewingWidget.plotLegend && ~isempty(this.ViewingWidget.legendHandle) && isvalid(this.ViewingWidget.legendHandle)
+                set(findobj(this.guiHandle,'tag','toolbarLegend'),'State',get(this.ViewingWidget.legendHandle,'visible'));
+            else
+                set(findobj(this.guiHandle,'tag','toolbarLegend'),'State','off');
+            end
+            if strcmp(get(this.ViewingWidget.zoomHandle,'Enable'),'on')
+                if strcmp(get(this.ViewingWidget.zoomHandle,'Direction'),'in')
+                    set(findobj(this.guiHandle,'tag','toolbarZoomOut'),'State','off');
+                    set(findobj(this.guiHandle,'tag','toolbarZoomIn'),'State','on');
+                else
+                    set(findobj(this.guiHandle,'tag','toolbarZoomOut'),'State','on');
+                    set(findobj(this.guiHandle,'tag','toolbarZoomIn'),'State','off');
+                end
+            else
+                set(findobj(this.guiHandle,'tag','toolbarZoomOut'),'State','off');
+                set(findobj(this.guiHandle,'tag','toolbarZoomIn'),'State','off');
+            end
 
-           this.ViewerOptionsWidget.update();
-           this.VisualizationWidget.update();
+            this.ViewerOptionsWidget.update();
+            this.VisualizationWidget.update();
 
         end
 
@@ -450,7 +499,7 @@ classdef matRad_MainGUI < handle
             end
 
             [filename, pathname] = uiputfile({'*.jpg;*.tif;*.png;*.gif','All Image Files'; '*.fig','MATLAB figure file'},'Save current view',[this.lastStoragePath 'screenshot.png']);
-            
+
             if pathname ~= 0
                 this.lastStoragePath = pathname;
             end
@@ -496,23 +545,36 @@ classdef matRad_MainGUI < handle
         end
         %Toggle Pan Callback
         function toolbarPan_ClickedCallback(this,hObject, eventdata)
-           set(this.ViewingWidget.panHandle,'Enable',char(get(hObject,'State')));
+            set(this.ViewingWidget.panHandle,'Enable',char(get(hObject,'State')));
         end
         %Toggle cursor Callback
         function toolbarCursor_ClickedCallback(this,hObject, eventdata)
-           set(this.ViewingWidget.dcmHandle,'Enable',get(hObject,'State'));
+            set(this.ViewingWidget.dcmHandle,'Enable',get(hObject,'State'));
         end
 
         %Toggle cursor Callback
         function gammaIndex_ClickedCallback(this,hObject, eventdata)
-           % this.GammaWidget = matRad_GammaWidget();
+            this.GammaWidget = matRad_GammaWidget();
+        end
+
+        function theme_ClickedCallback(this,hObject,eventdata)
+            if strcmp(get(hObject,'State'),'on')
+                theme = matRad_ThemeDark;
+            else
+                theme = matRad_ThemeLight;
+            end
+            delete(this);
+            matRad_cfg = MatRad_Config.instance();            
+            matRad_cfg.gui = struct(theme);
+            
+            this = matRad_MainGUI;
         end
 
 
         % button: close
         function figure1_CloseRequestFcn(this,hObject,~)
             matRad_cfg = MatRad_Config.instance();
-            
+
             if this.forceClose
                 selection = 'Yes';
             else
@@ -521,24 +583,24 @@ classdef matRad_MainGUI < handle
                 fgColor = get(0,'DefaultUIcontrolForegroundColor');
                 figColor = get(0,'DefaultFigureColor');
                 txtColor = get(0,'DefaultTextColor');
-                
+
                 %Make sure we use the matRad color scheme
                 set(0,'DefaultUicontrolBackgroundColor',matRad_cfg.gui.elementColor);
                 set(0,'DefaultUIcontrolForegroundColor',matRad_cfg.gui.textColor);
                 set(0,'DefaultFigureColor',matRad_cfg.gui.backgroundColor);
                 set(0,'DefaultTextColor',matRad_cfg.gui.textColor);
-                
+
                 selection = questdlg('Do you really want to close matRad?',...
                     'Close matRad',...
                     'Yes','No','Yes');
-                
+
                 %restore original colors
                 set(0,'DefaultUicontrolBackgroundColor',bgColor);
                 set(0,'DefaultUIcontrolForegroundColor',fgColor);
                 set(0,'DefaultFigureColor',figColor);
                 set(0,'DefaultTextColor',txtColor);
             end
-            
+
             %close if requested
             switch selection
                 case 'Yes'
