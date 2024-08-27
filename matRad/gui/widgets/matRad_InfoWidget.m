@@ -122,7 +122,8 @@ classdef matRad_InfoWidget < matRad_Widget
             if isfield(handles,'aboutBox') && ishghandle(handles.aboutBox)
                 delete(handles.aboutBox);
             end
-
+            
+            %Version Information
             msg{1} = ['matRad ''' matRadVer.name '''']; %Name
             if matRad_cfg.eduMode
                 msg{1} = [msg{1} ' Educational'];
@@ -137,10 +138,21 @@ classdef matRad_InfoWidget < matRad_Widget
             msg{end+1} = sprintf('Environment: %s v%s %s',matRad_cfg.env,matRad_cfg.envVersion,version('-release'));
             msg{end+1} = newline;
 
+            %Contact Information
             msg{end+1} = 'Web: www.matrad.org';
             msg{end+1} = 'E-Mail: contact@matrad.org';
             msg{end+1} = newline;
 
+            %Theme Information
+            msg{end+1} = 'GUI Themes:';
+            darkTheme = matRad_Dark();
+            msg{end+1} = sprintf('%s - %s by %s',darkTheme.name,darkTheme.description,darkTheme.author);
+            lightTheme = matRad_Light();
+            msg{end+1} = sprintf('%s - %s by %s',lightTheme.name,lightTheme.description,lightTheme.author);
+            msg{end+1} = newline;
+            
+
+            %Info Teext
             msg{end+1} = matRad_info();
 
             handles.aboutBox = msgbox(msg,'About matRad');
