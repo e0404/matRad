@@ -8,6 +8,8 @@ classdef matRad_Dark < matRad_Theme
         fontSize            = 8;
         fontWeight          = 'bold';
         fontName            = 'Helvetica';
+        author              = 'Niklas Wahl (github.com/wahln)';
+        description         = 'Default Dark theme for matRad';    
     end
 end
 

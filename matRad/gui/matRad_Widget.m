@@ -154,21 +154,8 @@ classdef matRad_Widget <  handle
         end
 
         function isInUi = get.isInUifigure(this)
-            matRad_cfg = MatRad_Config.instance();
-            
-            if matRad_cfg.isOctave
-                isInUi = false;
-            else
-                hFig = ancestor(this.widgetHandle,'Figure');
-    
-                if verLessThan('Matlab','9.0')      %version < 2016a (release of uifigs)
-                    isInUi = false;
-                elseif verLessThan('Matlab','9.5')  % 16a <= version < 2018b
-                    isInUi = ~isempty(matlab.ui.internal.dialog.DialogHelper.getFigureID(hFig));
-                else                                % version >= 2018b 
-                    isInUi = matlab.ui.internal.isUIFigure(hFig);
-                end
-            end
+            hFig = ancestor(this.widgetHandle,'Figure');
+            isInUi = matRad_isUifigure(hFig);
         end
 
         function delete(this)

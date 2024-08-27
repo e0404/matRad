@@ -149,6 +149,35 @@ classdef matRad_MainGUI < handle
                 'Separator','on',...
                 'TooltipString','Toogle Dark Mode');
 
+
+            % Adapt background color
+            if matRad_isUifigure(h1)
+                h60.BackgroundColor = matRad_cfg.gui.backgroundColor;
+            elseif matRad_cfg.isOctave
+                %Do nothing
+            else
+                try
+                    drawnow();
+                    jToolbar = get(get(h60,'JavaContainer'),'ComponentPeer');
+                    
+                    cellColor = num2cell(matRad_cfg.gui.backgroundColor);
+                    color = java.awt.Color(cellColor{:});
+                    jToolbar.setBackground(color);
+                    jToolbar.getParent.getParent.setBackground(color);
+                    jToolbar.setBorderPainted(false);
+
+                    toolbarComponents = jToolbar.getComponents();
+                    for c=1:length(toolbarComponents)
+                        %toolbarComponents(c).setOpaque(false);
+                        toolbarComponents(c).setBackground(color);
+                        for subIx = 1 : length(toolbarComponents(c).getComponents())
+                            toolbarComponents(c).getComponent(subIx-1).setBackground(color);
+                        end
+                    end
+                catch ME
+                    matRad_cfg.dispDeprecationWarning('Setting the Background Color seems to be deprecated now: %s',ME.message);
+                end
+            end
         end
     end
 
@@ -534,9 +563,10 @@ classdef matRad_MainGUI < handle
             else
                 theme = matRad_Light;
             end
-            matRad_cfg = MatRad_Config.instance();
-            matRad_cfg.gui = struct(theme);
             delete(this);
+            matRad_cfg = MatRad_Config.instance();            
+            matRad_cfg.gui = struct(theme);
+            
             this = matRad_MainGUI;
         end
 

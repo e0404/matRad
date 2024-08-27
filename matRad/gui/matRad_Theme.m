@@ -8,6 +8,8 @@ classdef (Abstract) matRad_Theme
         fontSize;           %font size
         fontWeight;         %font Weight
         fontName;           %font name
+        author;             %credit for theme
+        description;        %theme description
     end
 
     methods
@@ -27,6 +29,8 @@ classdef (Abstract) matRad_Theme
             validateattributes(this.fontSize,{'double'},{'scalar','positive'},mfilename('class'),'fontSize');
             validateattributes(this.fontWeight,{'char'},{'nonempty','row'},mfilename('class'),'fontWeight');
             validateattributes(this.fontName,{'char'},{'nonempty','row'},mfilename('class'),'fontName');
+            validateattributes(this.author,{'char'},{'nonempty','row'},mfilename('class'),'author');
+            validateattributes(this.description,{'char'},{'nonempty','row'},mfilename('class'),'description');
                        
             %Further checks on font weight
             if ~any(strcmp(this.fontWeight,{'normal','bold'}))
@@ -43,6 +47,8 @@ classdef (Abstract) matRad_Theme
             s.fontSize        = this.fontSize;
             s.fontWeight      = this.fontWeight;
             s.fontName        = this.fontName;
+            s.author          = this.author;
+            s.description     = this.description;
         end
     end
 end
