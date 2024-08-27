@@ -79,7 +79,7 @@ end
 
 dij = struct();
 
-if isprop(this.bioModel, 'RBE') && ~isnan(this.bioModel.RBE)
+if matRad_ispropCompat(this.bioModel, 'RBE') && ~isnan(this.bioModel.RBE)
     dij.RBE = this.bioModel.RBE; 
 end
 
