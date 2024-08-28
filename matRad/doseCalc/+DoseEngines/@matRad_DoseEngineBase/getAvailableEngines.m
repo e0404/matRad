@@ -81,30 +81,7 @@ if nargin >= 1 && ~isempty(pln)
     availableDoseEngines = availableDoseEngines(ix);
 end
 
-classNameList = cellfun(@(mc) mc.Name,availableDoseEngines,'UniformOutput',false);
-
-if matRad_cfg.isMatlab
-    shortNameList = cellfun(@(mc) mc.PropertyList(strcmp({mc.PropertyList.Name}, 'shortName')).DefaultValue,availableDoseEngines,'UniformOutput',false);
-    nameList = cellfun(@(mc) mc.PropertyList(strcmp({mc.PropertyList.Name}, 'name')).DefaultValue,availableDoseEngines,'UniformOutput',false);
-else
-    %Indexing a cell array with . not possible (in Octave)
-    shortNameList = cellfun(@(mc) mc.PropertyList{find(cellfun(@(p) strcmp(p.Name, 'shortName'),mc.PropertyList))}.DefaultValue,availableDoseEngines,'UniformOutput',false);
-    nameList = cellfun(@(mc) mc.PropertyList{find(cellfun(@(p) strcmp(p.Name, 'name'),mc.PropertyList))}.DefaultValue,availableDoseEngines,'UniformOutput',false);
-end
-
-%make sure the default engines are the first ones listed
-for defaultEngine = matRad_cfg.defaults.propDoseCalc.engine
-    findDefaultIx = strcmp(defaultEngine,shortNameList);
-    if ~isempty(findDefaultIx)
-        shortNameList = [shortNameList(findDefaultIx), shortNameList(~findDefaultIx)];
-        classNameList = [classNameList(findDefaultIx), classNameList(~findDefaultIx)];
-    end
-end
-
-
-handleList = cellfun(@(namestr) str2func(namestr),classNameList,'UniformOutput',false);
-
-classList = cell2struct([shortNameList; nameList; classNameList; handleList],{'shortName','name','className','handle'});
+classList = matRad_identifyClassesByConstantProperties(availableDoseEngines,'shortName','defaults',matRad_cfg.defaults.propDoseCalc.engine,'additionalPropertyNames',{'name'});
 
 end
 
