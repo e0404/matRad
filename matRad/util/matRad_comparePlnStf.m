@@ -64,9 +64,9 @@ if ~isfield(pln.propStf,'couchAngles') || numel(stf_couchAngles) ~= numel(pln.pr
 end
 
 %% compare Bixel width in stf and pln
-if  ischar(stf(1).bixelWidth)
+if  isfield(pln.propStf,'bixelWidth') && ischar(stf(1).bixelWidth)
     LogVal = strcmp(stf(1).radiationMode, pln.radiationMode);
-else
+elseif isfield(pln.propStf,'bixelWidth') && ~ischar(stf(1).bixelWidth)
     LogVal = logical(stf(1).bixelWidth == pln.propStf.bixelWidth);
 end
 
