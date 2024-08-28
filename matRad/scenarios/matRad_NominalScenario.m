@@ -23,7 +23,8 @@ classdef matRad_NominalScenario < matRad_ScenarioModel
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (SetAccess = protected)
-        name = 'nomScen';
+        shortName   = 'nomScen';
+        name        = 'Nominal Scenario';
     end
 
     methods

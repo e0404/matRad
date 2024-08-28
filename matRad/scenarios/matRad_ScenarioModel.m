@@ -37,6 +37,7 @@ classdef (Abstract) matRad_ScenarioModel < handle
 
     properties (Abstract,SetAccess=protected)
         name
+        shortName
     end
 
     properties (Dependent)
@@ -206,7 +207,7 @@ classdef (Abstract) matRad_ScenarioModel < handle
         function t = TYPE(this)
             matRad_cfg = MatRad_Config.instance();
             matRad_cfg.dispDeprecationWarning('The property TYPE of the scenario class will soon be deprecated!');
-            t = this.name;
+            t = this.shortName;
         end
 
         function value = get.wcFactor(this)
@@ -224,24 +225,24 @@ classdef (Abstract) matRad_ScenarioModel < handle
     end
 
     methods (Static)
-        %{
-        %TODO: implement automatic collection of available scenario classes
  
-        function metaScenarioModels = getAvailableModels()
+        function classList = getAvailableModels()
             matRad_cfg = MatRad_Config.instance();
             
             %Use the root folder and the scenarios folder only
-            folders = {matRad_cfg.matRadRoot,mfilename("fullpath")};
-
-            %
+            folders = {fileparts(mfilename('fullpath'))};
+            folders = [folders matRad_cfg.userfolders];
+            metaScenarioModels = matRad_findSubclasses(meta.class.fromName(mfilename('class')),'folders',folders,'includeSubfolders',true);
+            classList = matRad_identifyClassesByConstantProperties(metaScenarioModels,'shortName','defaults',{'nomScen'});
         end
-        %}
+        
 
         function types = AvailableScenCreationTYPE()
             matRad_cfg = MatRad_Config.instance();
             matRad_cfg.dispDeprecationWarning('The function/property AvailableScenarioCreationTYPE of the scenario class will soon be deprecated!');
             %Hardcoded for compatability with matRad_multScen
-            types = {'nomScen','wcScen','impScen','rndScen'};
+            classList = matRad_ScenarioModel.getAvailableModels();
+            types = {classList.shortName};
         end
     end
 end

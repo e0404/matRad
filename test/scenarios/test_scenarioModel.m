@@ -41,7 +41,7 @@ function test_scenarioAbstractAvailableTypes()
     for i = 1:numel(availableTypes)
         model = matRad_multScen([],availableTypes{i});
         assertTrue(isa(model,'matRad_ScenarioModel'));
-        assertEqual(model.name,availableTypes{i});
+        assertEqual(model.shortName,availableTypes{i});
     end
 
 
@@ -98,9 +98,9 @@ function instanceTest_ctScenProb(model)
 
 function instanceTest_TYPE(model)
     %assertWarning(@() model.TYPE,'matRad:Deprecated');
-    assertEqual(model.TYPE,model.name);
+    assertEqual(model.TYPE,model.shortName);
 
 function instanceTest_wcFactor(model)
     %assertWarning(@() model.wcFactor,'matRad:Deprecated');
-    assertEqual(model.TYPE,model.name);
+    assertEqual(model.TYPE,model.shortName);
 
