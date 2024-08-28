@@ -35,7 +35,7 @@ classdef (Abstract) matRad_ScenarioModel < handle
         ctScenProb  = [1 1];              % Ct Scenarios to be included in the model. Left column: Scenario Index. Right column: Scenario Probability        
     end
 
-    properties (Abstract,SetAccess=protected)
+    properties (Abstract,SetAccess = protected)
         name
         shortName
     end
@@ -236,13 +236,78 @@ classdef (Abstract) matRad_ScenarioModel < handle
             classList = matRad_identifyClassesByConstantProperties(metaScenarioModels,'shortName','defaults',{'nomScen'});
         end
         
-
-        function types = AvailableScenCreationTYPE()
+        function model = create(modelMetadata,ct)
+            if isa(modelMetadata,'matRad_ScenarioModel')
+                model = modelMetadata;
+                return;
+            end
+            
             matRad_cfg = MatRad_Config.instance();
-            matRad_cfg.dispDeprecationWarning('The function/property AvailableScenarioCreationTYPE of the scenario class will soon be deprecated!');
-            %Hardcoded for compatability with matRad_multScen
-            classList = matRad_ScenarioModel.getAvailableModels();
-            types = {classList.shortName};
+
+            if ischar(modelMetadata) || isstring(modelMetadata)
+                modelMetadata = struct('model',modelMetadata);
+            end
+
+            modelClassList = matRad_ScenarioModel.getAvailableModels();
+            modelNames = {modelClassList.shortName};
+            
+            if ~isfield(modelMetadata,'model') || ~any(strcmp(modelNames,modelMetadata.model))
+                matRad_cfg.dispWarning('Scenario Model not found, creating nominal scenario instead!');
+                modelMetadata.model = 'nomScen';
+            end
+
+            usedModel = find(strcmp(modelNames,modelMetadata.model));
+            
+            if ~isscalar(usedModel)
+                usedModel = usedModel(1);
+            end
+            
+            modelClassInfo = modelClassList(usedModel);
+
+            if nargin < 2
+                model = modelClassInfo.handle();
+            else
+                model = modelClassInfo.handle(ct);
+            end
+
+            modelMetadata = rmfield(modelMetadata,'model');
+            
+            %Now overwrite properties
+            fields = fieldnames(modelMetadata);
+            
+            % iterate over all fieldnames and try to set the
+            % corresponding properties inside the engine
+            if matRad_cfg.isOctave
+                c2sWarningState = warning('off','Octave:classdef-to-struct');                
+            end
+            
+            for i = 1:length(fields)
+                try
+                    field = fields{i};
+                    if matRad_ispropCompat(model,field)
+                        model.(field) = matRad_recursiveFieldAssignment(model.(field),modelMetadata.(field),true);
+                    else
+                        matRad_cfg.dispWarning('Not able to assign property ''%s'' from multScen struct to Scenario Model!',field);
+                    end
+                catch ME
+                    % catch exceptions when the model has no properties,
+                    % which are defined in the struct.
+                    % When defining an engine with custom setter and getter
+                    % methods, custom exceptions can be caught here. Be
+                    % careful with Octave exceptions!
+                    matRad_cfg = MatRad_Config.instance();
+                    switch ME.identifier
+                        case 'MATLAB:noPublicFieldForClass'
+                            matRad_cfg.dispWarning('Not able to assign property from multScen struct to scenario model: %s',ME.message);
+                        otherwise
+                            matRad_cfg.dispWarning('Problem while setting up scenario Model from struct:%s %s',field,ME.message);
+                    end
+                end
+            end
+            
+            if matRad_cfg.isOctave
+                warning(c2sWarningState.state,'Octave:classdef-to-struct');                
+            end
         end
     end
 end
