@@ -1,9 +1,9 @@
-function ct = matRad_calcHU(ct)
+function obj = matRad_calcHU(obj)
 % matRad function to calculate Hounsfield units from a dicom ct 
 % that originally uses intensity values
 %
 % call
-%   ct = matRad_calcHU(ct)
+%   obj = matRad_calcHU(obj)
 %
 % input
 %   ct: unprocessed dicom ct data which are stored as intensity values (IV)
@@ -29,10 +29,10 @@ function ct = matRad_calcHU(ct)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-for i = 1:ct.numOfCtScen
-    ct.cubeHU{i} = double(ct.cubeIV{i}) * double(ct.dicomInfo.RescaleSlope) + double(ct.dicomInfo.RescaleIntercept);
+for i = 1:obj.ct.numOfCtScen
+    obj.ct.cubeHU{i} = double(obj.ct.cubeIV{i}) * double(obj.ct.dicomInfo.RescaleSlope) + double(obj.ct.dicomInfo.RescaleIntercept);
 end
 
-ct = rmfield(ct,'cubeIV');
+obj.ct = rmfield(obj.ct,'cubeIV');
 
 end

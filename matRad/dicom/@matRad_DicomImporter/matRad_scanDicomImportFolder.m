@@ -1,14 +1,14 @@
-function [ fileList, patientList ] = matRad_scanDicomImportFolder( patDir )
+function obj = matRad_scanDicomImportFolder(obj)
 % matRad function to scan a folder for dicom data
 % 
 % call
-%   [ fileList, patientList ] = matRad_scanDicomImportFolder( patDir )
+%   obj = matRad_scanDicomImportFolder(obj)
 %
 % input
 %   patDir:         folder to be scanned
 %
 % output
-%   fileList:       matlab struct with a list of dicom files including meta
+%   allfiles:       matlab struct with a list of dicom files including meta
 %                   infomation (type, series number etc.)
 %   patientList:    list of patients with dicom data in the folder
 %
@@ -46,11 +46,17 @@ if ~available
     matRad_cfg.dispError('Image processing toolbox / packages not available!');
 end
 
-fileList = matRad_listAllFiles(patDir);
+obj.allfiles = matRad_listAllFiles(obj.patDir);
 
-if ~isempty(fileList)
+if ~isempty(obj.allfiles)
     %% check for dicom files and differentiate patients, types, and series
-    numOfFiles = numel(fileList(:,1));
+    
+    % Arrays of slice locations to find z resolution 
+    % if it is not given initially in the files 
+    LocationsArray1 = ones(1, numel(obj.allfiles(:,1))); 
+    LocationsArray = LocationsArray1*1000;
+    ThBool = [];
+    numOfFiles = numel(obj.allfiles(:,1));
     h = waitbar(0,'Please wait...','Color',matRad_cfg.gui.backgroundColor,'DefaultTextColor',matRad_cfg.gui.textColor);
     matRad_applyThemeToWaitbar(h);
     % precision value for double to string conversion
@@ -61,12 +67,12 @@ if ~isempty(fileList)
         waitbar((numOfFiles+1-i) / steps)
         try % try to get DicomInfo
             if matRad_cfg.isOctave || verLessThan('matlab','9')
-                info = dicominfo(fileList{i});
+                info = dicominfo(obj.allfiles{i});
             else
-                info = dicominfo(fileList{i},'UseDictionaryVR',true);
+                info = dicominfo(obj.allfiles{i},'UseDictionaryVR',true);
             end
         catch
-            fileList(i,:) = [];
+            obj.allfiles(i,:) = [];
             
             % Show progress
             if matRad_cfg.logLevel > 2
@@ -76,95 +82,102 @@ if ~isempty(fileList)
             continue;
         end
         try
-            fileList{i,2} = info.Modality;
+            obj.allfiles{i,2} = info.Modality;
         catch
-            fileList{i,2} = NaN;
+            obj.allfiles{i,2} = NaN;
         end
         
-        fileList = parseDicomTag(fileList,info,'PatientID',i,3);
+        obj.allfiles = parseDicomTag(obj.allfiles,info,'PatientID',i,3);
         
-        switch fileList{i,2}
+        switch obj.allfiles{i,2}
             case 'CT'
                
-               fileList = parseDicomTag(fileList,info,'SeriesInstanceUID',i,4);
+               obj.allfiles = parseDicomTag(obj.allfiles,info,'SeriesInstanceUID',i,4);
                 
             case {'RTPLAN','RTDOSE','RTSTRUCT'}
                
-               fileList = parseDicomTag(fileList,info,'SOPInstanceUID',i,4);
+               obj.allfiles = parseDicomTag(obj.allfiles,info,'SOPInstanceUID',i,4);
 
            otherwise
                
-              fileList = parseDicomTag(fileList,info,'SeriesInstanceUID',i,4);
+              obj.allfiles = parseDicomTag(obj.allfiles,info,'SeriesInstanceUID',i,4);
 
         end
         
-        fileList = parseDicomTag(fileList,info,'SeriesNumber',i,5,@seriesnum2str); %We want to make sure the series number is stored as string
-        fileList = parseDicomTag(fileList,info,'FamilyName',i,6);
-        fileList = parseDicomTag(fileList,info,'GivenName',i,7);
-        fileList = parseDicomTag(fileList,info,'PatientBirthDate',i,8);
+        obj.allfiles = parseDicomTag(obj.allfiles,info,'SeriesNumber',i,5,@seriesnum2str); %We want to make sure the series number is stored as string
+        obj.allfiles = parseDicomTag(obj.allfiles,info,'FamilyName',i,6);
+        obj.allfiles = parseDicomTag(obj.allfiles,info,'GivenName',i,7);
+        obj.allfiles = parseDicomTag(obj.allfiles,info,'PatientBirthDate',i,8);
 
         try
             if strcmp(info.Modality,'CT')
-                fileList{i,9} = num2str(info.PixelSpacing(1),str2numPrc);
+                obj.allfiles{i,9} = num2str(info.PixelSpacing(1),str2numPrc);
             else
-                fileList{i,9} = NaN;
+                obj.allfiles{i,9} = NaN;
             end
         catch
-            fileList{i,9} = NaN;
+            obj.allfiles{i,9} = NaN;
         end
         try
             if strcmp(info.Modality,'CT')
-                fileList{i,10} = num2str(info.PixelSpacing(2),str2numPrc);
+
+                obj.allfiles{i,10} = num2str(info.PixelSpacing(2),str2numPrc);
             else
-                fileList{i,10} = NaN;
+                obj.allfiles{i,10} = NaN;
             end
         catch
-            fileList{i,10} = NaN;
+            obj.allfiles{i,10} = NaN;
         end
         try
             if strcmp(info.Modality,'CT')
                 %usually the Attribute should be SliceThickness, but it
-                %seems like some data uses "SpacingBetweenSlices" instead.
-                if isfield(info,'SliceThickness') && ~isempty(info.SliceThickness)
-                    fileList{i,11} = num2str(info.SliceThickness,str2numPrc);
-                elseif isfield(info,'SpacingBetweenSlices')
-                    fileList{i,11} = num2str(info.SpacingBetweenSlices,str2numPrc);
+                %seems like some data uses "SpacingBetweenSlices" instead,
+                %but if there is neither this nor that attribute,
+                %resolution will be calculated based on SliceLocations
+                if isfield(info,'SliceThickness') && info.SliceThickness ~= 0
+                    obj.allfiles{i,11} = num2str(info.SliceThickness,str2numPrc);
+                    ThBool = 1;
+                elseif isfield(info,'SpacingBetweenSlices') && ~isempty(info.SpacingBetweenSlices)
+                    obj.allfiles{i,11} = num2str(info.SpacingBetweenSlices,str2numPrc);
+                    ThBool = 1;
                 else
-                    matRad_cfg.dispError('Could not identify spacing between slices since neither ''SliceThickness'' nor ''SpacingBetweenSlices'' are specified');
+                    LocationsArray(i) = info.SliceLocation; 
+                    
                 end
             else
-                fileList{i,11} = NaN;
+                obj.allfiles{i,11} = NaN;
             end
         catch
-            fileList{i,11} = NaN;
+            obj.allfiles{i,11} = NaN;
         end
         try
+
             if strcmp(info.Modality,'RTDOSE')
                 dosetext_helper = strcat('Instance','_', num2str(info.InstanceNumber),'_', ...
                     info.DoseSummationType, '_', info.DoseType);
-                fileList{i,12} = dosetext_helper;
+                obj.allfiles{i,12} = dosetext_helper;
             else
-                fileList{i,12} = NaN;
+                obj.allfiles{i,12} = NaN;
             end
         catch
-            fileList{i,12} = NaN;
+            obj.allfiles{i,12} = NaN;
         end
         % writing corresponding dose dist.
         try
-            if strcmp(fileList{i,2},'RTPLAN')
+            if strcmp(obj.allfiles{i,2},'RTPLAN')
                 corrDose = [];
                 numDose = length(fieldnames(info.ReferencedDoseSequence));
                 for j = 1:numDose
                     fieldName = strcat('Item_',num2str(j));
                     corrDose{j} = info.ReferencedDoseSequence.(fieldName).ReferencedSOPInstanceUID;
                 end
-                fileList{i,13} = corrDose;
+                obj.allfiles{i,13} = corrDose;
             else
-                fileList{i,13} = {'NaN'};
+                obj.allfiles{i,13} = {'NaN'};
             end
 
         catch
-            fileList{i,13} = {'NaN'};
+            obj.allfiles{i,13} = {'NaN'};
         end
         
         % Show progress
@@ -173,12 +186,26 @@ if ~isempty(fileList)
         end
         
     end
+
+    % Filtration, getting and assigning z resolution to all CT files
+    FiltredLocArray = unique(LocationsArray);
+    FiltredLocArray(end) = [];
+    numOfFiles = numel(obj.allfiles(:,1));
+
+    if isempty(ThBool)
+        for i = numOfFiles:-1:1
+            if strcmp(obj.allfiles{i,2},'CT') 
+                obj.allfiles{i,11} = num2str(unique(diff(FiltredLocArray)));
+            end
+        end
+    end    
+    
     close(h)
     
-    if ~isempty(fileList)
-        patientList = unique(fileList(:,3));
+    if ~isempty(obj.allfiles)
+        obj.patients = unique(obj.allfiles(:,3));
         
-        if isempty(patientList)
+        if isempty(obj.patients)
             msgbox('No patient found with DICOM CT _and_ RT structure set in patient directory!', 'Error','error');
         end
     else
@@ -195,7 +222,7 @@ clear warnDlgDICOMtagShown;
 
 end
 
-function fileList = parseDicomTag(fileList,info,tag,row,column,parsefcn)
+function allfiles = parseDicomTag(allfiles,info,tag,row,column,parsefcn)
 
 global warnDlgDICOMtagShown;
 
@@ -208,18 +235,18 @@ end
 try
    if isfield(info,tag)
       if ~isempty(info.(tag))
-         fileList{row,column} = parsefcn(info.(tag));
+         allfiles{row,column} = parsefcn(info.(tag));
       else
-         fileList{row,column} = defaultPlaceHolder;
+         allfiles{row,column} = defaultPlaceHolder;
       end
    else
-      fileList{row,column} = defaultPlaceHolder;
+      allfiles{row,column} = defaultPlaceHolder;
    end
 catch
-   fileList{row,column} = NaN;
+   allfiles{row,column} = NaN;
 end
 
-if ~warnDlgDICOMtagShown && strcmp(fileList{row,column},defaultPlaceHolder) && (column == 3 || column == 4)
+if ~warnDlgDICOMtagShown && strcmp(allfiles{row,column},defaultPlaceHolder) && (column == 3 || column == 4)
  
    dlgTitle    = 'Dicom Tag import';
    dlgQuestion = ['matRad_scanDicomImportFolder: Could not parse dicom tag: ' tag '. Using placeholder ' defaultPlaceHolder ' instead. Please check imported data carefully! Do you want to continue?'];

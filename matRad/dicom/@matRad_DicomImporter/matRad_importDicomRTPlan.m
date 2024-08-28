@@ -1,17 +1,17 @@
-function pln = matRad_importDicomRTPlan(ct, rtPlanFiles, dicomMetaBool)
+function obj = matRad_importDicomRTPlan(obj)
 % matRad function to import dicom RTPLAN data
 % 
 % call
-%   pln = matRad_importDicomRTPlan(ct, rtPlanFiles, dicomMetaBool)
+%   obj = matRad_importDicomRTPlan(obj)
 %
 % input
-%   ct:             ct imported by the matRad_importDicomCt function
-%   rtPlanFiles:   	list of RTPlan Dicom files
-%   dicomMetaBool:  import whole dicom information
+%   ct:                 ct imported by the matRad_importDicomCt function
+%   importFiles.rtplan:    list of RTPlan Dicom files
+%   dicomMetaBool:      import whole dicom information
 %
 % output
-%   pln:            matRad pln struct with meta information. Note that
-%                   bixelWidth is determined via the importSteering function.
+%   pln:                matRad pln struct with meta information. Note that
+%                       bixelWidth is determined via the importSteering function.
 %
 % References
 %   -
@@ -34,15 +34,15 @@ matRad_checkEnvDicomRequirements(matRad_cfg.env);
 
 %% load plan file
 % check size of RT Plan
-if size(rtPlanFiles,1) ~= 1
+if size(obj.importFiles.rtplan,1) ~= 1
    errordlg('Too few or to many RTPlan files')
 end
 
 % read information out of the RT file
 if matRad_cfg.isOctave || verLessThan('matlab','9')
-    planInfo = dicominfo(rtPlanFiles{1});
+    planInfo = dicominfo(obj.importFiles.rtplan{1});
 else
-    planInfo = dicominfo(rtPlanFiles{1},'UseDictionaryVR',true);
+    planInfo = dicominfo(obj.importFiles.rtplan{1},'UseDictionaryVR',true);
 end
 
 % check which type of Radiation is used
@@ -88,10 +88,13 @@ for i = 1:length(BeamSeqNames)
     gantryAngles{i}         = currBeamSeq.(ControlParam).Item_1.GantryAngle;
     PatientSupportAngle{i}  = currBeamSeq.(ControlParam).Item_1.PatientSupportAngle;
     isoCenter(i,:)          = currBeamSeq.(ControlParam).Item_1.IsocenterPosition';
+    if ~ismember(isoCenter(i,1), obj.ct.x) || ~ismember(isoCenter(i,2), obj.ct.y) || ~ismember(isoCenter(i,3), obj.ct.z)
+        isoCenter(i,:)          = matRad_getIsoCenter(obj.cst, obj.ct);
+    end
 end
 
 % transform iso. At the moment just this way for HFS
-if ct.dicomInfo.ImageOrientationPatient ~= [1;0;0;0;1;0]    
+if obj.ct.dicomInfo.ImageOrientationPatient ~= [1;0;0;0;1;0]    
     matRad_cfg.dispError('This Orientation is not yet supported.');
 end
 
@@ -121,50 +124,66 @@ end
 if strcmp(radiationMode, 'photons')
            
     fractionSequence         = planInfo.FractionGroupSequence.Item_1;
-    pln.propStf.collimation  = matRad_importFieldShapes(BeamSequence,fractionSequence);
+    obj.pln.propStf.collimation  = matRad_importFieldShapes(BeamSequence,fractionSequence);
     
 end
 
 %% write parameters found to pln variable
-pln.radiationMode   = radiationMode; % either photons / protons / carbon
-pln.numOfFractions  = planInfo.FractionGroupSequence.Item_1.NumberOfFractionsPlanned;
+obj.pln.radiationMode   = radiationMode; % either photons / protons / carbon
+obj.pln.numOfFractions  = planInfo.FractionGroupSequence.Item_1.NumberOfFractionsPlanned;
 
 % set handling of multiple scenarios -> default: only nominal
-pln.multScen = matRad_multScen(ct,'nomScen');
-pln.machine         = BeamSequence.Item_1.TreatmentMachineName;
-
+obj.pln.multScen = matRad_multScen(obj.ct,'nomScen');
+if isfield(BeamSequence.Item_1, 'TreatmentMachineName')
+    obj.pln.machine         = BeamSequence.Item_1.TreatmentMachineName;
+else 
+    obj.pln.machine         = 'Generic';
+end
 % set bio model parameters (default physical opt, no bio model)
-pln.bioParam = matRad_bioModel(pln.radiationMode,'physicalDose','none');
+obj.pln.bioParam = matRad_bioModel(obj.pln.radiationMode,'physicalDose','none');
 
 % set properties for steering
-pln.propStf.isoCenter    = isoCenter;
-pln.propStf.bixelWidth   = NaN; % [mm] / also corresponds to lateral spot spacing for particles
-pln.propStf.gantryAngles = [gantryAngles{1:length(BeamSeqNames)}];
-pln.propStf.couchAngles  = [PatientSupportAngle{1:length(BeamSeqNames)}]; % [??]
-pln.propStf.numOfBeams   = length(BeamSeqNames);
+obj.pln.propStf.isoCenter    = isoCenter;
+obj.pln.propStf.bixelWidth   = NaN; % [mm] / also corresponds to lateral spot spacing for particles
+obj.pln.propStf.gantryAngles = [gantryAngles{1:length(BeamSeqNames)}];
+obj.pln.propStf.couchAngles  = [PatientSupportAngle{1:length(BeamSeqNames)}]; % [??]
+obj.pln.propStf.numOfBeams   = length(BeamSeqNames);
+numOfVoxels = 1;
+for i = 1:length(obj.ct.cubeDim)
+    numOfVoxels = numOfVoxels*obj.ct.cubeDim(i);
+end
+obj.pln.numOfVoxels          = numOfVoxels;
+obj.pln.VoxelDimentions      = obj.ct.cubeDim;
+
+%if there is not special doseGrid for rtdose
+if ~obj.importFiles.useDoseGrid && isfield(obj.importFiles,'rtdose')
+    obj.pln.propDoseCalc.doseGrid.resolution.x = obj.ct.resolution.x;
+    obj.pln.propDoseCalc.doseGrid.resolution.y = obj.ct.resolution.y;
+    obj.pln.propDoseCalc.doseGrid.resolution.z = obj.ct.resolution.z;
+end
 
 % turn off sequerncing an DAO by default
-pln.propOpt.runSequencing   = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
-pln.propOpt.runDAO          = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
+obj.pln.propOpt.runSequencing   = false; % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
+obj.pln.propOpt.runDAO          = false; % 1/true: run DAO, 0/false: don't / will be ignored for particles
 
 % if we imported field shapes then let's trigger field based dose calc by
 % setting the bixelWidth to 'field'
-if isfield(pln.propStf,'collimation')
-    pln.propStf.bixelWidth  = 'field'; 
+if isfield(obj.pln.propStf,'collimation')
+    obj.pln.propStf.bixelWidth  = 'field'; 
 end
 
 % timestamp
-pln.DicomInfo.timeStamp = datestr(clock);
+obj.pln.DicomInfo.timeStamp = datestr(clock);
 
 try
-   pln.DicomInfo.SOPClassUID = planInfo.SOPClassUID;
-   pln.DicomInfo.SOPInstanceUID = planInfo.SOPInstanceUID;
-   pln.DicomInfo.ReferencedDoseSequence = planInfo.ReferencedDoseSequence;
+   obj.pln.DicomInfo.SOPClassUID = planInfo.SOPClassUID;
+   obj.pln.DicomInfo.SOPInstanceUID = planInfo.SOPInstanceUID;
+   obj.pln.DicomInfo.ReferencedDoseSequence = planInfo.ReferencedDoseSequence;
 catch
 end
 
 % safe entire dicomInfo
-if dicomMetaBool == true
-    pln.DicomInfo.Meta = planInfo;
+if obj.dicomMetaBool == true
+    obj.pln.DicomInfo.Meta = planInfo;
 end
 end

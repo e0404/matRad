@@ -1,14 +1,13 @@
-function [resultGUI] = matRad_importDicomRTDose(ct, rtDoseFiles, pln)
+function obj = matRad_importDicomRTDose(obj)
 % matRad function to import dicom RTDOSE data
 % 
 % call
-%   resultGUI = matRad_importDicomRTDose(ct, rtDoseFiles)
-%   resultGUI = matRad_importDicomRTDose(ct, rtDoseFiles, pln)
+%   obj = matRad_importDicomRTDose(obj)
 %
-% input
-%   ct:             ct imported by the matRad_importDicomCt function
-%   rtDoseFiles:   	cell array of RTDOSE Dicom files
-%   pln:            (optional) matRad pln struct
+% input 
+%   obj.ct:                     ct imported by the matRad_importDicomCt function
+%   obj.importFiles.rtdose:   	cell array of RTDOSE Dicom files
+%   obj.pln:                    (optional) matRad pln struct
 %
 % output
 %   resultGUI:      matRad resultGUI struct with different beams. Note that
@@ -35,12 +34,13 @@ matRad_cfg = MatRad_Config.instance();
 
 %% import and interpolate dose files
 % number of dosefiles
-numDoseFiles = size(rtDoseFiles,1);
+numDoseFiles = size(obj.importFiles.rtdose,1);
 
 for i = 1 : numDoseFiles
-    currDose = rtDoseFiles(i,:);
+    obj.importRTDose.currDose = obj.importFiles.rtdose(i,:);
     itemName = strcat('Item_',num2str(i));
-    dose.(itemName) = matRad_interpDicomDoseCube( ct, currDose);
+    obj = matRad_interpDicomDoseCube(obj);
+    dose.(itemName) = obj.importRTDose.dose;
 end
 
 %% put dose information and dose meta information to resultGUI
@@ -48,7 +48,7 @@ countBeamNumberPhysDose = 1;
 countBeamNumberRBExDose = 1;
 countBeamNumberOther = 1;
 
-resultGUI = struct();
+obj.resultGUI = struct();
 
 for i = 1 : numDoseFiles
     itemName = strcat('Item_',num2str(i));
@@ -70,8 +70,8 @@ for i = 1 : numDoseFiles
     
     %If given as plan and not per fraction
     if strcmpi(doseSumHelper,'PLAN') || strcmpi(doseSumHelper,'BEAM')
-        if exist('pln','var') 
-            dose.(itemName).cube = dose.(itemName).cube / pln.numOfFractions;
+        if ~isempty(obj.pln) 
+            dose.(itemName).cube = dose.(itemName).cube / obj.pln.numOfFractions;
         else
             matRad_cfg.dispWarning('DICOM dose given as PLAN, but no pln struct available to compute fraction dose! Assuming 1 fraction!');
         end
@@ -108,11 +108,11 @@ for i = 1 : numDoseFiles
     resultName = strcat(doseTypeHelper,instanceSuffix,beamSuffix);
         
 
-    if isfield(resultGUI,resultName)
+    if isfield(obj.resultGUI,resultName)
         count = 1;
         addSuffix = ['_' num2str(count)];
         resultNameNew = [resultName addSuffix];
-        while isfield(resultGUI,resultNameNew)
+        while isfield(obj.resultGUI,resultNameNew)
             count = count + 1;
             addSuffix = ['_' num2str(count)];
             resultNameNew = [resultName addSuffix];
@@ -122,10 +122,10 @@ for i = 1 : numDoseFiles
         resultName = resultNameNew;
     end
     
-    resultGUI.(resultName) = dose.(itemName).cube;
-    resultGUI.doseMetaInfo.(resultName) = dose.(itemName).dicomInfo;
+    obj.resultGUI.(resultName) = dose.(itemName).cube;
+    obj.resultGUI.doseMetaInfo.(resultName) = dose.(itemName).dicomInfo;
     
 end
 % save timeStamp
-resultGUI.doseMetaInfo.timeStamp = datestr(clock);
+obj.resultGUI.doseMetaInfo.timeStamp = datestr(clock);
 end

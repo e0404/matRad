@@ -1,13 +1,13 @@
-function [stf, pln] = matRad_importDicomSteeringParticles(ct, pln, rtPlanFile)
+function obj = matRad_importDicomSteeringParticles(obj)
 % matRad function to import a matRad stf struct from dicom RTPLAN data
 % 
 % call
-%   [stf, pln] = matRad_importDicomSteeringParticles(ct, pln, rtPlanFile)
+%   obj = matRad_importDicomSteeringParticles(obj)
 %
 % input
 %   ct:             ct imported by the matRad_importDicomCt function
 %   pln:            matRad pln struct with meta information
-%   rtPlanFile:   	name of RTPLAN DICOM file
+%   importFiles.rtplan:   	name of RTPLAN DICOM file
 %
 % output
 %   stf             matRad stf struct
@@ -42,27 +42,27 @@ matRad_cfg = MatRad_Config.instance();
 matRad_checkEnvDicomRequirements(matRad_cfg.env);
 
 dlgBaseDataText = ['Import steering information from DICOM Plan.','Choose corresponding matRad base data for ', ...
-        pln.radiationMode, '.'];
+        obj.pln.radiationMode, '.'];
 % messagebox only necessary for non windows users
 if ~ispc
-    uiwait(helpdlg(dlgBaseDataText,['DICOM import - ', pln.radiationMode, ' base data' ]));
+    uiwait(helpdlg(dlgBaseDataText,['DICOM import - ', obj.pln.radiationMode, ' base data' ]));
 end
 [fileName,pathName] = uigetfile([matRad_cfg.matRadSrcRoot filesep 'basedata' filesep '*.mat'], dlgBaseDataText);
 load([pathName filesep fileName]);
 
 ix = find(fileName == '_');
-pln.machine = fileName(ix(1)+1:end-4);
+obj.pln.machine = fileName(ix(1)+1:end-4);
 
 % RT Plan consists only on meta information
 if matRad_cfg.isOctave || verLessThan('matlab','9')
-    rtPlanInfo = dicominfo(rtPlanFile{1});
+    rtPlanInfo = dicominfo(obj.importFiles.rtplan{1});
 else
-    rtPlanInfo = dicominfo(rtPlanFile{1},'UseDictionaryVR',true);
+    rtPlanInfo = dicominfo(obj.importFiles.rtplan{1},'UseDictionaryVR',true);
 end
 BeamSeq = rtPlanInfo.IonBeamSequence;
 BeamSeqNames = fieldnames(BeamSeq);
 % Number of Beams from plan
-numOfBeamsPlan = length(pln.propStf.gantryAngles);
+numOfBeamsPlan = length(obj.pln.propStf.gantryAngles);
 
 % use only the treatment beams
 for i = 1:length(BeamSeqNames)
@@ -121,16 +121,16 @@ stf(length(BeamSeqNames)).ray = [];
 for i = 1:length(BeamSeqNames)
     currBeamSeq = BeamSeq.(BeamSeqNames{i});
     ControlPointSeq      = currBeamSeq.IonControlPointSequence;
-    stf(i).gantryAngle   = pln.propStf.gantryAngles(i);
-    stf(i).couchAngle    = pln.propStf.couchAngles(i);
-    stf(i).bixelWidth    = pln.propStf.bixelWidth;
-    stf(i).radiationMode = pln.radiationMode;
+    stf(i).gantryAngle   = obj.pln.propStf.gantryAngles(i);
+    stf(i).couchAngle    = obj.pln.propStf.couchAngles(i);
+    stf(i).bixelWidth    = obj.pln.propStf.bixelWidth;
+    stf(i).radiationMode = obj.pln.radiationMode;
     % there might be several SAD's, e.g. compensator?
     stf(i).SAD_x         = currBeamSeq.VirtualSourceAxisDistances(1);
     stf(i).SAD_y         = currBeamSeq.VirtualSourceAxisDistances(1);
     %stf(i).SAD           = machine.meta.SAD; %we write the SAD later when we check machine match
     %stf(i).sourcePoint_bev = [0 -stf(i).SAD 0];
-    stf(i).isoCenter     = pln.propStf.isoCenter(i,:);
+    stf(i).isoCenter     = obj.pln.propStf.isoCenter(i,:);
     
         % now loop over ControlPointSequences
     ControlPointSeqNames = fieldnames(ControlPointSeq);
@@ -345,9 +345,9 @@ for i = 1:numel(stf)
 end
 
 if any(isnan([stf(:).bixelWidth])) || numel(unique([stf(:).bixelWidth])) > 1
-    pln.propStf.bixelWidth = NaN;
+    obj.pln.propStf.bixelWidth = NaN;
 else
-    pln.propStf.bixelWidth = stf(1).bixelWidth;
+    obj.pln.propStf.bixelWidth = stf(1).bixelWidth;
 end
 
 end

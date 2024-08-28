@@ -1,8 +1,8 @@
-function cst = matRad_dummyCst(ct)
+function obj = matRad_dummyCst(obj)
 % matRad function to create a dummy cst struct for a ct
 % 
 % call
-%   cst = matRad_dummyCst(ct)
+%   obj = matRad_dummyCst(obj)
 %
 % input
 %   ct: matRad ct struct
@@ -29,21 +29,21 @@ function cst = matRad_dummyCst(ct)
 warning('Did not find RTSS. Creating dummy segmentation for matRad.');
 
 % allocate
-cst = cell(1,6);
+obj.cst = cell(1,6);
 
 % fill
-cst{1,1}          = 0; % first organ has number 0
-cst{1,2}          = 'dummyContour';
-cst{1,3}          = 'OAR';
-cst{1,4}{1}       = find(ct.cubeHU{1}>0.1);        
-cst{1,5}.Priority = 1;       
+obj.cst{1,1}          = 0; % first organ has number 0
+obj.cst{1,2}          = 'dummyContour';
+obj.cst{1,3}          = 'OAR';
+obj.cst{1,4}{1}       = find(obj.ct.cubeHU{1}>0.1);        
+obj.cst{1,5}.Priority = 1;       
 
 % set default parameter for biological planning
-cst{1,5}.alphaX   = 0.1;
-cst{1,5}.betaX    = 0.05;
-cst{1,5}.Visible  = 1;
-cst{1,5}.visibleColor = [0 0 0];
+obj.cst{1,5}.alphaX   = 0.1;
+obj.cst{1,5}.betaX    = 0.05;
+obj.cst{1,5}.Visible  = 1;
+obj.cst{1,5}.visibleColor = [0 0 0];
 
 % define no objcetives   
-cst{1,6}          = [];
+obj.cst{1,6}          = [];
 

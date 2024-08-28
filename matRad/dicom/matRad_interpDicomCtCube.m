@@ -1,16 +1,16 @@
-function interpCt = matRad_interpDicomCtCube(origCt, origCtInfo, resolution, grid)
+function interpCt = matRad_interpDicomCtCube(origCt, origCtInfo, resolution, doseGrid)
 % matRad function to interpolate a 3D ct cube to a different resolution
 %
 % call
 %   interpCt = matRad_interpDicomCtCube(origCt, origCtInfo, resolution)
-%   interpCt = matRad_interpDicomCtCube(origCt, origCtInfo, resolution, grid)
+%   interpCt = matRad_interpDicomCtCube(origCt, origCtInfo, resolution, doseGrid)
 %
 % input
 %   origCt:         original CT as matlab 3D array
 %   origCtInfo:     meta information about the geometry of the orgiCt cube
 %   resolution:     target resolution [mm] in x, y, an z direction for the
 %                   new cube
-%   grid:           optional: externally specified grid vector
+%   doseGrid:       optional: externally specified grid vector
 %
 % output
 %   interpCt:       interpolated ct cube as matlab 3D array
@@ -51,10 +51,10 @@ if yDir(1) == 0 && yDir(2) == -1 && yDir(3) == 0
     y = flip(y,2);
 end
 
-if exist('grid','var')
-    xq = grid{1};
-    yq = grid{2};
-    zq = grid{3};
+if exist('doseGrid','var')
+    xq = doseGrid{1};
+    yq = doseGrid{2};
+    zq = doseGrid{3};
     
     % calculate intersection of regions to avoid interpolation issues
     xqRe = coordsOfFirstPixel(1,1):origCtInfo(1).ImageOrientationPatient(1)*resolution.x: ...
