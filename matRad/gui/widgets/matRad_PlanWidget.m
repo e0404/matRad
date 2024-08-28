@@ -849,12 +849,13 @@ classdef matRad_PlanWidget < matRad_Widget
             else
                 set(handles.btnRunSequencing,'Value', 0 );
             end
+
             if isfield (pln.propOpt, 'conf3D')
                 set(handles.radiobutton3Dconf,'Value',pln.propOpt.conf3D);
             end 
 
             if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'doseGrid')
-                pln.propDoseCalc.doseGrid.resolution = matRad_cfg.defaults.propDoseCalc.resolution;
+                pln.propDoseCalc.doseGrid.resolution = matRad_cfg.defaults.propDoseCalc.doseGrid.resolution;
             end
 
             set(handles.editDoseX,'String',num2str(pln.propDoseCalc.doseGrid.resolution.x));
