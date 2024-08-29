@@ -132,7 +132,7 @@ else
 end
 folderInfo = what(fullFolder);
 if ~isempty(folderInfo)
-    [~,potentialClasses] = cellfun(@fileparts,{folderInfo.m{:};folderInfo.p{:}},'UniformOutput',false); %Potential class files
+    [~,potentialClasses] = cellfun(@fileparts,{folderInfo.m{:},folderInfo.p{:}},'UniformOutput',false); %Potential class files
     
     %In octave the what function returns the class folders with an '@'
     classFolders = folderInfo.classes;

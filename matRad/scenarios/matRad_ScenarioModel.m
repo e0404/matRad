@@ -234,6 +234,10 @@ classdef (Abstract) matRad_ScenarioModel < handle
             folders = [folders matRad_cfg.userfolders];
             metaScenarioModels = matRad_findSubclasses(meta.class.fromName(mfilename('class')),'folders',folders,'includeSubfolders',true);
             classList = matRad_identifyClassesByConstantProperties(metaScenarioModels,'shortName','defaults',{'nomScen'});
+
+            if isempty(classList)
+                matRad_cfg.dispError('No models found in paths %s',strjoin(folders,'\n'));
+            end
         end
         
         function model = create(modelMetadata,ct)
