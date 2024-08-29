@@ -2,7 +2,7 @@ function classList = matRad_findSubclasses(superClass,varargin)
 % matRad_findSubclasses: Helper function to find subclasses
 %   This method can find subclasses to a class within package folders and
 %   normal folders. It is not very fast, but Matlab & Octave compatible, so
-%   it is advised to cache classes once scanned. 
+%   it is advised to cache classes once scanned.
 %
 % call:
 %   classList = matRad_findSubclasses(superClass);
@@ -26,95 +26,95 @@ function classList = matRad_findSubclasses(superClass,varargin)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    p = inputParser;
-    p.addRequired('superClass',@(x) ischar(x) || isa(x,'meta.class'));
-    p.addParameter('packages',{},@(x) iscell(x) && (iscellstr(x) || all(cellfun(@(y) isa(y,'meta.package'),x))));
-    p.addParameter('folders',{},@(x) iscellstr(x) && all(isfolder(x)));
-    p.addParameter('includeAbstract',false,@(x) isscalar(x) && islogical(x));
-    p.addParameter('includeSubfolders',false,@(x) isscalar(x) && islogical(x));
-    p.addParameter('usePath',false,@(x) islogical(x) && isscalar(x));
+p = inputParser;
+p.addRequired('superClass',@(x) ischar(x) || isa(x,'meta.class'));
+p.addParameter('packages',{},@(x) iscell(x) && (iscellstr(x) || all(cellfun(@(y) isa(y,'meta.package'),x))));
+p.addParameter('folders',{},@(x) iscellstr(x) && all(isfolder(x)));
+p.addParameter('includeAbstract',false,@(x) isscalar(x) && islogical(x));
+p.addParameter('includeSubfolders',false,@(x) isscalar(x) && islogical(x));
+p.addParameter('usePath',false,@(x) islogical(x) && isscalar(x));
 
-    p.parse(superClass,varargin{:});
+p.parse(superClass,varargin{:});
 
-    superClass = p.Results.superClass;
-    packages = p.Results.packages;
-    folders = p.Results.folders;
-    includeAbstract = p.Results.includeAbstract;
-    includeSubfolders = p.Results.includeSubfolders;
-    usePath = p.Results.usePath;
+superClass = p.Results.superClass;
+packages = p.Results.packages;
+folders = p.Results.folders;
+includeAbstract = p.Results.includeAbstract;
+includeSubfolders = p.Results.includeSubfolders;
+usePath = p.Results.usePath;
 
-    %Create MetaObject if char was given
-    if ischar(superClass)
-        superClass = meta.class.fromName(superClass);
-    end
+%Create MetaObject if char was given
+if ischar(superClass)
+    superClass = meta.class.fromName(superClass);
+end
 
-    %Check if path is used
-    if usePath
-        addPath = [path ';'];
+%Check if path is used
+if usePath
+    addPath = [path ';'];
+else
+    addPath = '';
+end
+
+for folderIx = 1:length(folders)
+    %Generate subfolder path or only add current folder to class search
+    %path
+    if includeSubfolders
+        addPath = [addPath genpath(folders{folderIx})];
     else
-        addPath = '';
+        addPath = [addPath folders{folderIx} pathsep];
     end
-       
-    for folderIx = 1:length(folders)
-        %Generate subfolder path or only add current folder to class search
-        %path
-        if includeSubfolders
-            addPath = [addPath genpath(folders{folderIx})];
-        else
-            addPath = [addPath folders{folderIx} pathsep];
+end
+folders = strsplit(addPath,';');
+
+if all(cellfun(@(y) isa(y,'meta.package'),packages))
+    packages = cellfun(@(y) y.Name,packages);
+end
+
+matRad_cfg = MatRad_Config.instance();
+
+classList = {};
+
+%%Collect package classes
+for packageIx = 1:length(packages)
+    package = packages{packageIx};
+    if matRad_cfg.isMatlab
+        mp = meta.package.fromName(package);
+        classList = [classList; num2cell(mp.ClassList)];
+    elseif matRad_cfg.isOctave
+        p = strsplit(path,pathsep);
+        ix = find(cellfun(@(f) isfolder([f filesep '+' package]),p));
+        if ~isscalar(ix)
+            matRad_cfg.dispError('Could not uniquely identify package folder ''+%s'' (%d folders found with that name!)',package,numel(ix));
         end
+        classList = [classList; matRad_getClassesFromFolder(p{ix},package)];
+    else
+        matRad_cfg.dispError('Environment %s unknown!',matRad_cfg.env);
     end
-    folders = strsplit(addPath,';');   
+end
 
-    if all(cellfun(@(y) isa(y,'meta.package'),packages))
-        packages = cellfun(@(y) y.Name,packages);
-    end
-        
-    matRad_cfg = MatRad_Config.instance();
-    
-    classList = {};
-    
-    %%Collect package classes
-    for packageIx = 1:length(packages)
-        package = packages{packageIx};
-        if matRad_cfg.isMatlab        
-            mp = meta.package.fromName(package);
-            classList = [classList; num2cell(mp.ClassList)];                   
-        elseif matRad_cfg.isOctave
-            p = strsplit(path,pathsep);
-            ix = find(cellfun(@(f) isfolder([f filesep '+' package]),p));
-            if ~isscalar(ix)
-                matRad_cfg.dispError('Could not uniquely identify package folder ''+%s'' (%d folders found with that name!)',package,numel(ix));
-            end
-            classList = [classList; matRad_getClassesFromFolder(p{ix},package)];
-        else
-            matRad_cfg.dispError('Environment %s unknown!',matRad_cfg.env);
-        end
-    end
-    
-    %Collect classes from folders
-    for folderIx = 1:length(folders)
-        folder = folders{folderIx};
-        classList = [classList; matRad_getClassesFromFolder(folder)];
-    end
+%Collect classes from folders
+for folderIx = 1:length(folders)
+    folder = folders{folderIx};
+    classList = [classList; matRad_getClassesFromFolder(folder)];
+end
 
-    %Throw out abstract classes if requested
-    if ~includeAbstract
-        isNotAbstract = cellfun(@(mc) ~mc.Abstract,classList);
-        classList = classList(isNotAbstract);
-    end
+%Throw out abstract classes if requested
+if ~includeAbstract
+    isNotAbstract = cellfun(@(mc) ~mc.Abstract,classList);
+    classList = classList(isNotAbstract);
+end
 
-    %Now test if it is a subclass    
+%Now test if it is a subclass
 
-    inherits = cellfun(@(mc) matRad_checkInheritance(mc,superClass),classList);
-    classList = classList(inherits);
+inherits = cellfun(@(mc) matRad_checkInheritance(mc,superClass),classList);
+classList = classList(inherits);
 
-    
-    %We want classes to be a row vector, but the meta.class lists column
-    %vector
-    if ~isrow(classList)
-        classList = classList';
-    end
+
+%We want classes to be a row vector, but the meta.class lists column
+%vector
+if ~isrow(classList)
+    classList = classList';
+end
 end
 
 function metaClassList = matRad_getClassesFromFolder(folder,packageName)
@@ -160,7 +160,6 @@ for potentialClassIx = 1:length(potentialClasses)
 end
 metaClassList = transpose(metaClassList);
 end
-
 
 function inherits = matRad_checkInheritance(metaClass,superClass)
 % matRad_checkInheritance: checks class inheritance of a superclass
