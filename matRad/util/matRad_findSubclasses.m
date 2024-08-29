@@ -131,7 +131,11 @@ else
     fullFolder =  [folder filesep '+' packageName];
 end
 folderInfo = what(fullFolder);
-[~,potentialClasses] = cellfun(@fileparts,{folderInfo.m{:};folderInfo.p{:}},'UniformOutput',false); %Potential class files
+if ~isempty(folderInfo)
+    [~,potentialClasses] = cellfun(@fileparts,{folderInfo.m{:};folderInfo.p{:}},'UniformOutput',false); %Potential class files
+else
+    potentialClasses = {};
+end
 
 %In octave the what function returns the class folders with an '@'
 classFolders = folderInfo.classes;
