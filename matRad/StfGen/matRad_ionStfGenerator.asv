@@ -12,7 +12,6 @@ classdef matRad_ionStfGenerator < matRad_externalStfGenerator
         availablePeakPosRaShi
         longitudinalSpotSpacing
         maxPBwidth
-        availablePeakPos
     end
 
 
@@ -42,7 +41,7 @@ classdef matRad_ionStfGenerator < matRad_externalStfGenerator
             end
 
             this.availableEnergies = [this.machine.data.energy];
-            this.availablePeakPos  = [this.machine.data.peakPos] + [this.machine.data.offset];
+            availablePeakPos  = [this.machine.data.peakPos] + [this.machine.data.offset];
             availableWidths   = [this.machine.data.initFocus];
             availableWidths   = [availableWidths.SisFWHMAtIso];
             this.maxPBwidth        = max(availableWidths) / 2.355;
@@ -50,8 +49,8 @@ classdef matRad_ionStfGenerator < matRad_externalStfGenerator
             if pln.propStf.useRangeShifter
             %For now only a generic range shifter is used whose thickness is
             %determined by the minimum peak width to play with
-            rangeShifterEqD = round(min(this.availablePeakPos)* 1.25);
-            this.availablePeakPosRaShi = this.availablePeakPos - rangeShifterEqD;
+            rangeShifterEqD = round(min(availablePeakPos)* 1.25);
+            this.availablePeakPosRaShi = availablePeakPos - rangeShifterEqD;
 
             matRad_cfg.dispWarning('Use of range shifter enabled. matRad will generate a generic range shifter with WEPL %f to enable ranges below the shortest base data entry.',rangeShifterEqD);
             end
@@ -62,7 +61,7 @@ classdef matRad_ionStfGenerator < matRad_externalStfGenerator
                 this.longitudinalSpotSpacing = pln.propStf.longitudinalSpotSpacing;
             end
 
-            if sum(this.availablePeakPos<0)>0
+            if sum(availablePeakPos<0)>0
                 matRad_cfg.dispError('at least one available peak position is negative - inconsistent machine file')
             end
 
@@ -76,15 +75,15 @@ classdef matRad_ionStfGenerator < matRad_externalStfGenerator
         function photonRayPos = initializePhotonRayPos(this,photonRayPos,rotMat_vectors_T,SAD) 
         end
 
-        function rays = initializeEnergy(this,rays,ct) 
-            for j = rays.numOfRays:-1:1
+        function rays = initializeEnergy(this,rays) 
+            for j = stf(i).numOfRays:-1:1
 
-                for ShiftScen = 1:this.pln.multScen.totNumShiftScen
+                for ShiftScen = 1:pln.multScen.totNumShiftScen
                         % ray tracing necessary to determine depth of the target
-                        [alphas,l{ShiftScen},rho{ShiftScen},d12,~] = matRad_siddonRayTracer(rays.isoCenter + this.pln.multScen.isoShift(ShiftScen,:), ...
+                        [alphas,l{ShiftScen},rho{ShiftScen},d12,~] = matRad_siddonRayTracer(stf(i).isoCenter + pln.multScen.isoShift(ShiftScen,:), ...
                             ct.resolution, ...
-                            rays.sourcePoint, ...
-                            rays.ray(j).targetPoint, ...
+                            stf(i).sourcePoint, ...
+                            stf(i).ray(j).targetPoint, ...
                             [ct.cube {this.voiTarget}]);
 
                         %Used for generic range-shifter placement
@@ -103,20 +102,20 @@ classdef matRad_ionStfGenerator < matRad_externalStfGenerator
                     %Here we iterate through scenarios to check the required
                     %energies w.r.t lateral position.
                     %TODO: iterate over the linear scenario mask instead?
-                    for CtScen = 1:this.pln.multScen.numOfCtScen
-                        for ShiftScen = 1:this.pln.multScen.totNumShiftScen
-                            for RangeShiftScen = 1:this.pln.multScen.totNumRangeScen
-                                if this.pln.multScen.scenMask(CtScen,ShiftScen,RangeShiftScen)
+                    for CtScen = 1:pln.multScen.numOfCtScen
+                        for ShiftScen = 1:pln.multScen.totNumShiftScen
+                            for RangeShiftScen = 1:pln.multScen.totNumRangeScen
+                                if pln.multScen.scenMask(CtScen,ShiftScen,RangeShiftScen)
                                     Counter = Counter+1;
 
                                     % compute radiological depths
                                     % http://www.ncbi.nlm.nih.gov/pubmed/4000088, eq 14
                                     radDepths = cumsum(l{ShiftScen} .* rho{ShiftScen}{CtScen});
 
-                                    if this.pln.multScen.relRangeShift(RangeShiftScen) ~= 0 || this.pln.multScen.absRangeShift(RangeShiftScen) ~= 0
+                                    if pln.multScen.relRangeShift(RangeShiftScen) ~= 0 || pln.multScen.absRangeShift(RangeShiftScen) ~= 0
                                         radDepths = radDepths +...                                                        % original cube
-                                            rho{ShiftScen}{CtScen}*this.pln.multScen.relRangeShift(RangeShiftScen) +... % rel range shift
-                                            this.pln.multScen.absRangeShift(RangeShiftScen);                           % absolute range shift
+                                            rho{ShiftScen}{CtScen}*pln.multScen.relRangeShift(RangeShiftScen) +... % rel range shift
+                                            pln.multScen.absRangeShift(RangeShiftScen);                           % absolute range shift
                                         radDepths(radDepths < 0) = 0;
                                     end
 
@@ -162,38 +161,38 @@ classdef matRad_ionStfGenerator < matRad_externalStfGenerator
                         matRad_cfg.dispError('Inconsistency during ray tracing. Please check correct assignment and overlap priorities of structure types OAR & TARGET.');
                     end
 
-                    rays.ray(j).energy = [];
-                    rays.ray(j).rangeShifter = [];
+                    stf(i).ray(j).energy = [];
+                    stf(i).ray(j).rangeShifter = [];
 
                     % Save energies in stf struct
                     for k = 1:numel(targetEntry)
 
                         %If we need lower energies than available, consider
                         %range shifter (if asked for)
-                        if any(targetEntry < min(this.availablePeakPos)) && pln.propStf.useRangeShifter
+                        if any(targetEntry < min(availablePeakPos)) && pln.propStf.useRangeShifter
                             %Get Energies to use with range shifter to fill up
                             %non-reachable low-range spots
-                            raShiEnergies = this.availableEnergies(this.availablePeakPosRaShi >= targetEntry(k) & min(this.availablePeakPos) > this.availablePeakPosRaShi);
+                            raShiEnergies = this.availableEnergies(this.availablePeakPosRaShi >= targetEntry(k) & min(availablePeakPos) > this.availablePeakPosRaShi);
 
                             raShi.ID = 1;
                             raShi.eqThickness = rangeShifterEqD;
                             raShi.sourceRashiDistance = round(ctEntryPoint - 2*rangeShifterEqD,-1); %place a little away from entry, round to cms to reduce number of unique settings
 
-                            rays.ray(j).energy = [rays.ray(j).energy raShiEnergies];
-                            rays.ray(j).rangeShifter = [rays.ray(j).rangeShifter repmat(raShi,1,length(raShiEnergies))];
+                            stf(i).ray(j).energy = [stf(i).ray(j).energy raShiEnergies];
+                            stf(i).ray(j).rangeShifter = [stf(i).ray(j).rangeShifter repmat(raShi,1,length(raShiEnergies))];
                         end
 
                         %Normal placement without rangeshifter
-                        newEnergies = this.availableEnergies(this.availablePeakPos>=targetEntry(k)&this.availablePeakPos<=targetExit(k));
+                        newEnergies = this.availableEnergies(availablePeakPos>=targetEntry(k)&availablePeakPos<=targetExit(k));
 
 
-                        rays.ray(j).energy = [rays.ray(j).energy newEnergies];
+                        stf(i).ray(j).energy = [stf(i).ray(j).energy newEnergies];
 
 
                         raShi.ID = 0;
                         raShi.eqThickness = 0;
                         raShi.sourceRashiDistance = 0;
-                        rays.ray(j).rangeShifter = [rays.ray(j).rangeShifter repmat(raShi,1,length(newEnergies))];
+                        rays.rangeShifter = [rays.rangeShifter repmat(raShi,1,length(newEnergies))];
                     end
 
 
@@ -202,27 +201,27 @@ classdef matRad_ionStfGenerator < matRad_externalStfGenerator
 
 
                     % book keeping & calculate focus index
-                    rays.ray(j).numOfBixelsPerRay(j) = numel([rays.ray(j).energy]);
+                    stf(i).ray(j).numOfBixelsPerRay(j) = numel([rays.energy]);
                     currentMinimumFWHM = matRad_interp1(this.machine.meta.LUT_bxWidthminFWHM(1,:)',...
                         this.machine.meta.LUT_bxWidthminFWHM(2,:)',...
                         this.pln.propStf.bixelWidth, ...
                         this.machine.meta.LUT_bxWidthminFWHM(2,end));
-                    focusIx  =  ones(rays.ray(j).numOfBixelsPerRay(j),1);
+                    focusIx  =  ones(stf(i).ray(j).numOfBixelsPerRay(j),1);
                     [~, vEnergyIx] = min(abs(bsxfun(@minus,[this.machine.data.energy]',...
-                        repmat(rays.ray(j).energy,length([this.machine.data]),1))));
+                        repmat(rays.energy,length([this.machine.data]),1))));
 
                     % get for each spot the focus index
-                    for k = 1:rays.numOfBixelsPerRay(j)
+                    for k = 1:stf(i).numOfBixelsPerRay(j)
                         focusIx(k) = find(this.machine.data(vEnergyIx(k)).initFocus.SisFWHMAtIso > currentMinimumFWHM,1,'first');
                     end
 
-                    rays.ray(j).focusIx = focusIx';
+                    rays.focusIx = focusIx';
 
                     %Get machine bounds
-                    numParticlesPerMU = 1e6*ones(1,rays.numOfBixelsPerRay(j));
-                    minMU = zeros(1,rays.numOfBixelsPerRay(j));
-                    maxMU = Inf(1,rays.numOfBixelsPerRay(j));
-                    for k = 1:rays.numOfBixelsPerRay(j)
+                    numParticlesPerMU = 1e6*ones(1,stf(i).numOfBixelsPerRay(j));
+                    minMU = zeros(1,stf(i).numOfBixelsPerRay(j));
+                    maxMU = Inf(1,stf(i).numOfBixelsPerRay(j));
+                    for k = 1:stf(i).numOfBixelsPerRay(j)
                         if isfield(this.machine.data(vEnergyIx(k)),'MUdata')
                             MUdata = this.machine.data(vEnergyIx(k)).MUdata;
                             if isfield(MUdata,'numParticlesPerMU')
@@ -239,13 +238,13 @@ classdef matRad_ionStfGenerator < matRad_externalStfGenerator
                         end
                     end
 
-                    rays.ray(j).numParticlesPerMU = numParticlesPerMU;
-                    rays.ray(j).minMU = minMU;
-                    rays.ray(j).maxMU = maxMU;
+                    rays.numParticlesPerMU = numParticlesPerMU;
+                    rays.minMU = minMU;
+                    rays.maxMU = maxMU;
 
                 else % target not hit
-                    rays.ray(j)               = [];
-                    rays.numOfBixelsPerRay(j) = [];
+                    rays               = [];
+                    stf(i).numOfBixelsPerRay(j) = [];
                 end
 
             end
@@ -268,14 +267,14 @@ classdef matRad_ionStfGenerator < matRad_externalStfGenerator
 
             tolerance              = this.longitudinalSpotSpacing/10;
 
-            useEnergyBool = this.availablePeakPos >= minPeakPos & this.availablePeakPos <= maxPeakPos;
+            useEnergyBool = availablePeakPos >= minPeakPos & availablePeakPos <= maxPeakPos;
 
             ixCurr = find(useEnergyBool,1,'first');
             ixRun  = ixCurr + 1;
             ixEnd  = find(useEnergyBool,1,'last');
 
             while ixRun <= ixEnd
-                if abs(this.availablePeakPos(ixRun)-this.availablePeakPos(ixCurr)) < ...
+                if abs(availablePeakPos(ixRun)-availablePeakPos(ixCurr)) < ...
                         this.longitudinalSpotSpacing - tolerance
                     useEnergyBool(ixRun) = 0;
                 else

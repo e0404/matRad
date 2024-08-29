@@ -1,22 +1,34 @@
-classdef matRad_StfGeneratorBase
+classdef matRad_StfGeneratorBase < handle
 
     properties (Access = protected)
-        V = [];
-        ctConverted = [];
-        pln = [];
+        machine
+        pln
         cubeDim
-        coordsY_vox
-        coordsX_vox
-        coordsZ_vox
-        radiationMode = [];
+        coordsY_vox 
+        coordsX_vox 
+        coordsZ_vox 
+        voiTarget
+        
     end
+
+    properties
+        visMode = true;
+        %all propStf properties here except the brachy stf after the gens
+        %are properly working
+    end
+
 
     methods 
         function this = matRad_StfGeneratorBase(pln)
             matRad_cfg = MatRad_Config.instance();
             addpath(fullfile(matRad_cfg.matRadRoot));
+
+            %after the gens are properly working implent a setDefaults from
+            %pln function like in doseengines and assign all the propStf
+            %properties here to override default attributes from pln
             
             this.pln = pln;
+
             
             
             if ~isfield(pln, 'propStf')
@@ -27,23 +39,20 @@ classdef matRad_StfGeneratorBase
 
     methods 
 
-        function stf = generate(this, ct, cst)
+        function stf = generate(this, ct, cst, visMode)  
             % Instance of MatRad_Config class
             matRad_cfg = MatRad_Config.instance();
             matRad_cfg.dispInfo('matRad: Generating stf struct... ');
-
-            pln = this.pln;
-
             % load default parameters if not set
-            pln = matRad_cfg.getDefaultProperties(pln, {'propOpt','propStf'});
+            this.pln = matRad_cfg.getDefaultProperties(this.pln, {'propOpt','propStf'});
 
             if nargin < 4
-                visMode = 0;
+                this.visMode = 0;
             end
 
             % get machine
             try
-                machine = matRad_loadMachine(pln);
+                this.machine = matRad_loadMachine(this.pln);
             catch
                 matRad_cfg.dispError('Could not find the following machine file: %s', fileName);
             end
@@ -51,20 +60,22 @@ classdef matRad_StfGeneratorBase
             % Check Config
             if ~isfield(this.pln, 'multScen')
                 matRad_cfg.dispWarning('No scenario model specified! Using nominal Scenario model!');
-                pln.multScen = matRad_NominalScenario(ct);
+                this.pln.multScen = matRad_NominalScenario(ct);
             end
 
-            this.initializePatientGeometry(ct, cst);
-            stf = this.generateSourceGeometry(ct, cst);
+            this.initializePatientGeometry(ct, cst, visMode);
+            stf = this.generateSourceGeometry(ct, cst, visMode);
         end
     end
 
     methods (Access = protected)
 
-        function initializePatientGeometry(this, ct, cst)
+        function initializePatientGeometry(this, ct, cst, visMode)
+            matRad_cfg = MatRad_Config.instance();
+            
             % Initialize patient geometry
-            V = ct.cubeDim;
-            this.ctConverted = matRad_calcWaterEqD(ct,this.radiationMode);  % Added here remove if wrong method this.radiationMode
+            V = [];
+            ct = matRad_calcWaterEqD(ct,this.pln);  
 
             isTarget = cellfun(@(voiType) isequal(voiType, 'TARGET'), cst(:,3));
             if ~any(isTarget)
@@ -82,15 +93,15 @@ classdef matRad_StfGeneratorBase
             % Now add all used target voxels to the voxel list
             for i = 1:size(cst, 1)
                 if useTargetForBixelPlacement(i)
-                    V = [V; cst{i,4}{1}(:)];  % Added here remove if wrong method (:)
+                    V = [V; cst{i,4}{1}];  
                 end
             end
 
             % Remove double voxels
             V = unique(V);
             % generate voi cube for targets
-            voiTarget = zeros(ct.cubeDim);
-            voiTarget(V) = 1;
+            this.voiTarget = zeros(ct.cubeDim);
+            this.voiTarget(V) = 1;
 
             % add margin information
             addmarginBool = matRad_cfg.defaults.propStf.addMargin;
@@ -100,6 +111,8 @@ classdef matRad_StfGeneratorBase
 
             % Margin info
             if addmarginBool
+                pbMargin = this.getPbMargin();
+
                 % Assumption for range uncertainty
                 assumeRangeMargin = this.pln.multScen.maxAbsRangeShift + this.pln.multScen.maxRelRangeShift + pbMargin;
 
@@ -108,8 +121,8 @@ classdef matRad_StfGeneratorBase
                 margin.y = max([ct.resolution.y max(abs(this.pln.multScen.isoShift(:,2)) + assumeRangeMargin)]);
                 margin.z = max([ct.resolution.z max(abs(this.pln.multScen.isoShift(:,3)) + assumeRangeMargin)]);
 
-                voiTarget = matRad_addMargin(voiTarget, cst, ct.resolution, margin, true);
-                V = find(voiTarget > 0);
+                this.voiTarget = matRad_addMargin(this.voiTarget, cst, ct.resolution, margin, true);
+                V = find(this.voiTarget > 0);
             end
 
             % throw error message if no target is found
@@ -119,6 +132,10 @@ classdef matRad_StfGeneratorBase
 
             % Convert linear indices to 3D voxel coordinates
             [this.coordsY_vox, this.coordsX_vox, this.coordsZ_vox] = ind2sub(ct.cubeDim, V);
+
+            if isempty(this.coordsX_vox) || isempty(this.coordsY_vox) || isempty(this.coordsZ_vox)
+                matRad_cfg.dispWarning('coordsXYZ are empty, boundary cannot be computed.');   % they AREN'T EMPTY here problem is in brachyStfGen
+            end
 
             % take only voxels inside patient
             V = [cst{:,4}];
@@ -144,7 +161,7 @@ classdef matRad_StfGeneratorBase
         % Needs to be implemented in non-abstract subclasses.
         % (Internal logic is often split into multiple methods in order to
         % make the whole calculation more modular)
-        function stf = generateSourceGeometry(this, ct, cst)
+        function stf = generateSourceGeometry(this, ct, cst, visMode)
             throw(MException('MATLAB:class:AbstractMember','Abstract function generateSourceGeometry of your StfGenerator needs to be implemented!'));
         end
     end

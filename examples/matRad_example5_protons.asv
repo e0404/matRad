@@ -86,8 +86,8 @@ pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
 
 
 
-%stf = matRad_generateStf(ct,cst,pln);
-matRad_StfScript;
+stf = matRad_generateStf(ct,cst,pln);
+%matRad_StfScript;
 
 %% Dose Calculation
 % Lets generate dosimetric information by pre-computing dose influence 

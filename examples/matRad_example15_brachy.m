@@ -129,20 +129,10 @@ pln.propStf.templateRoot = matRad_getTemplateRoot(ct,cst); % mass center of
 % A checkerboard pattern is frequantly used. The whole geometry will become
 % clearer when it is displayed in 3D view in the next section.
 
-pln.propStf.template.activeNeedles = [0 0 0 1 0 1 0 1 0 1 0 0 0;... % 7.0
-                                      0 0 1 0 1 0 0 0 1 0 1 0 0;... % 6.5
-                                      0 1 0 1 0 1 0 1 0 1 0 1 0;... % 6.0
-                                      1 0 1 0 1 0 0 0 1 0 1 0 1;... % 5.5
-                                      0 1 0 1 0 1 0 1 0 1 0 1 0;... % 5.0
-                                      1 0 1 0 1 0 0 0 1 0 1 0 1;... % 4.5
-                                      0 1 0 1 0 1 0 1 0 1 0 1 0;... % 4.0
-                                      1 0 1 0 1 0 0 0 1 0 1 0 1;... % 4.5
-                                      0 1 0 1 0 1 0 1 0 1 0 1 0;... % 3.0
-                                      1 0 1 0 1 0 1 0 1 0 1 0 1;... % 2.5
-                                      0 1 0 1 0 1 0 1 0 1 0 1 0;... % 2.0
-                                      1 0 1 0 1 0 0 0 0 0 1 0 1;... % 1.5
-                                      0 0 0 0 0 0 0 0 0 0 0 0 0];   % 1.0
-                                     %A a B b C c D d E e F f G
+
+pln.propStf.template.type = 'checkerboard';   %  'matrix' if template is needed as preset manually
+                                                                        %  'checkerboard' if template is taken from data
+
 
 pln.propStf.isoCenter    = matRad_getIsoCenter(cst,ct,0); %  target center
 
@@ -197,12 +187,11 @@ disp(pln);
 % target volume, number of needles, seeds and the positions of all needles
 % The one in the end enables visualization.
 
-%original for testing and comparison stf = matRad_generateStf(ct,cst,pln,1);
-%new method stf struct:
+
+%stf = matRad_generateStf(ct,cst,pln,1);
 %brachyStfGen = matRad_brachyStfGenerator(pln);
-%stf = brachyStfGen.generate(ct,cst);
-brachyStfGen = matRad_brachyStfGenerator(pln);
-stf = brachyStfGen.generate(ct,cst);
+%stf = brachyStfGen.generate(ct, cst, 1);
+matRad_StfScript;
 
 
 %% II.2 - view stf

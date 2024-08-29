@@ -163,7 +163,7 @@ classdef matRad_externalStfGenerator < matRad_StfGeneratorBase
                 % store total number of rays for beam-i
                 stf(i).numOfRays = size(stf(i).ray,2);
 
-                stf(i).longitudinalSpotSpacing = []; % ensures the stf(i) structs have the same structures when the next line comes
+                stf(i).longitudinalSpotSpacing = []; % ensures the stf(i
                 stf(i) = this.initializePostProcessing(stf(i)); % Post Processing for Ions 
 
                 % save total number of bixels
