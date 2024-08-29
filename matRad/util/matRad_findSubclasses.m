@@ -50,7 +50,7 @@ end
 
 %Check if path is used
 if usePath
-    addPath = [path ';'];
+    addPath = [path pathsep];
 else
     addPath = '';
 end
@@ -64,7 +64,7 @@ for folderIx = 1:length(folders)
         addPath = [addPath folders{folderIx} pathsep];
     end
 end
-folders = strsplit(addPath,';');
+folders = strsplit(addPath,pathsep);
 
 if all(cellfun(@(y) isa(y,'meta.package'),packages))
     packages = cellfun(@(y) y.Name,packages);
