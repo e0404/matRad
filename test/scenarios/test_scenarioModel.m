@@ -33,13 +33,15 @@ function test_scenarioAbstract
         assertExceptionThrown(@() matRad_ScenarioModel(),'MATLAB:class:abstract');
     end
 
-function test_scenarioAbstractAvailableTypes()
-    availableTypes = matRad_ScenarioModel.AvailableScenCreationTYPE();
+function test_scenarioAbstractStaticAvailableModels()
+    availableTypes = matRad_ScenarioModel.getAvailableModels();
+    assertTrue(isstruct(availableTypes) && all(isfield(availableTypes,{'shortName','className','handle'})))
+    availableTypes = {availableTypes.shortName};
     assertTrue(iscell(availableTypes))
     assertTrue(all(cellfun(@ischar,availableTypes)));
 
     for i = 1:numel(availableTypes)
-        model = matRad_multScen([],availableTypes{i});
+        model = matRad_ScenarioModel.create(availableTypes{i},ct);
         assertTrue(isa(model,'matRad_ScenarioModel'));
         assertEqual(model.shortName,availableTypes{i});
     end
