@@ -150,7 +150,11 @@ display(pln);
 %% Generate Beam Geometry STF
 % The steering file struct comprises the complete beam geometry along with 
 % ray position, pencil beam positions and energies, source to axis distance (SAD) etc.
-stf = matRad_generateStf(ct,cst,pln);
+
+
+
+%stf = matRad_generateStf(ct,cst,pln);
+matRad_StfScript;
 
 %%
 % Let's display the beam geometry information of the 6th beam
@@ -183,6 +187,8 @@ imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet);
 pln.propStf.gantryAngles = [0:50:359];
 pln.propStf.couchAngles  = zeros(1,numel(pln.propStf.gantryAngles));
 pln.propStf.numOfBeams   = numel(pln.propStf.gantryAngles);
+
+
 
 stf                      = matRad_generateStf(ct,cst,pln);
 pln.propStf.isoCenter    = vertcat(stf.isoCenter);
