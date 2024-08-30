@@ -2075,7 +2075,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                             fprintf(fileID,'#-- time feature splitting for dij calculation\n');
                             fprintf(fileID,'s:Tf/ImageName/Function = "Step"\n');
                             % create time feature scorer and save with original rays and bixel names
-                            imageName = ['sv:Tf/ImageName/Values = ',num2str(cutNumOfBixel),cell2mat(strcat(strcat(' "ray',strsplit(num2str([dataTOPAS.ray]))),strcat('_bixel',strsplit(num2str([dataTOPAS.bixel])),'"')))];
+                            imageName = string(['sv:Tf/ImageName/Values = ',num2str(cutNumOfBixel),cell2mat(strcat(strcat(' "ray',strsplit(num2str([dataTOPAS.ray]))),strcat('_bixel',strsplit(num2str([dataTOPAS.bixel])),'"')))]);
                             fprintf(fileID,'%s\n',strjoin(imageName));
                             fprintf(fileID,'dv:Tf/ImageName/Times = Tf/Beam/Spot/Times ms\n');
                         end
