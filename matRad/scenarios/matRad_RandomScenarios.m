@@ -34,7 +34,8 @@ classdef matRad_RandomScenarios < matRad_ScenarioModel
     end
 
     properties (SetAccess=protected)
-        name = 'rndScen';
+        name = 'Randomly sampled Scenarios';
+        shortName   = 'rndScen';        
     end
     
     methods

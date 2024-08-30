@@ -395,11 +395,20 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
                     %% MC computation and dij filling
                     
-
                     % run MCsquare
                     mcSquareCall = [this.mcSquareBinary ' ' MCsquareConfigFile];
                     matRad_cfg.dispInfo(['Calling Monte Carlo Engine: ' mcSquareCall]);
-                    [status,cmdout] = system(mcSquareCall,'-echo');
+                    if matRad_cfg.logLevel >= 3
+                        [status,cmdout] = system(mcSquareCall,'-echo');
+                    else
+                        [status,cmdout] = system(mcSquareCall);
+                        matRad_cfg.dispInfo(cmdout);
+                    end
+                    if status == 0
+                        matRad_cfg.dispInfo('MCsquare exited successfully with status %d!',status);
+                    else
+                        matRad_cfg.dispInfo('MCsquare did not exit successfully with status %d! Results might be compromised!',status);
+                    end
 
                     mask = false(dij.doseGrid.numOfVoxels,1);
                     mask(this.VdoseGrid) = true;

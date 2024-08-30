@@ -300,14 +300,8 @@ classdef MatRad_Config < handle
         end
 
         function setDefaultGUIProperties(obj)
-           obj.gui.backgroundColor = [0.5 0.5 0.5];
-           obj.gui.elementColor = [0.75 0.75 0.75];
-           obj.gui.textColor = [0 0 0];
-           obj.gui.highlightColor = [0 0 0];
-           
-           obj.gui.fontSize = 8;
-           obj.gui.fontWeight = 'bold';
-           obj.gui.fontName = 'Helvetica';
+            theme = matRad_ThemeDark();
+            obj.gui = struct(theme);
         end
 
         function dispDebug(obj,formatSpec,varargin)

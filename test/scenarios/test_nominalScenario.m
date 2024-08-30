@@ -8,7 +8,7 @@ function test_nominalScenarioConstructor
     scenario = matRad_NominalScenario();
     assertTrue(isa(scenario, 'matRad_NominalScenario'));
     assertTrue(isa(scenario, 'matRad_ScenarioModel'));
-    assertEqual(scenario.name, 'nomScen');
+    assertEqual(scenario.shortName, 'nomScen');
     assertEqual(scenario.ctScenProb, [1 1]);
     assertEqual(scenario.numOfCtScen, 1);
     assertEqual(scenario.totNumScen, 1);
@@ -31,7 +31,7 @@ function test_nominalScenarioConstructorWithCt
     scenario = matRad_NominalScenario(ct);
     assertTrue(isa(scenario, 'matRad_NominalScenario'));
     assertTrue(isa(scenario, 'matRad_ScenarioModel'));
-    assertEqual(scenario.name, 'nomScen');
+    assertEqual(scenario.shortName, 'nomScen');
     assertEqual(scenario.ctScenProb, [(1:n)' ones(n,1)./n]);
     assertEqual(scenario.numOfCtScen, n);
     assertEqual(scenario.totNumScen, n);
