@@ -188,10 +188,7 @@ display(pln);
 % The one in the end enables visualization.
 
 
-%stf = matRad_generateStf(ct,cst,pln,1);
-%brachyStfGen = matRad_brachyStfGenerator(pln);
-%stf = brachyStfGen.generate(ct, cst, 1);
-matRad_StfScript;
+matRad_generateStf;
 
 
 %% II.2 - view stf

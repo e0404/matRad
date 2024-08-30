@@ -84,10 +84,7 @@ pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
 
 %% Generate Beam Geometry STF
 
-
-
-%stf = matRad_generateStf(ct,cst,pln);
-matRad_StfScript;
+matRad_generateStf;
 
 %% Dose Calculation
 % Lets generate dosimetric information by pre-computing dose influence 
