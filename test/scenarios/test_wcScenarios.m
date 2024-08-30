@@ -9,7 +9,7 @@ function test_worstCaseScenarioConstructor
     assertTrue(isa(scenario, 'matRad_WorstCaseScenarios'));
     assertTrue(isa(scenario, 'matRad_GriddedScenariosAbstract'));
     assertTrue(isa(scenario, 'matRad_ScenarioModel'));
-    assertEqual(scenario.name, 'wcScen');
+    assertEqual(scenario.shortName, 'wcScen');
     %Test correct standard values & sizes
     assertEqual(scenario.ctScenProb, [1 1]);
     assertEqual(scenario.numOfCtScen, 1);
@@ -47,7 +47,7 @@ function test_worstCaseScenarioConstructorWithCt
     assertTrue(isa(scenario, 'matRad_WorstCaseScenarios'));
     assertTrue(isa(scenario, 'matRad_GriddedScenariosAbstract'));
     assertTrue(isa(scenario, 'matRad_ScenarioModel'));
-    assertEqual(scenario.name, 'wcScen');
+    assertEqual(scenario.shortName, 'wcScen');
     %Test correct standard values & sizes
     assertEqual(scenario.ctScenProb, [(1:n)' ones(n,1)./n]);
     assertEqual(scenario.numOfCtScen, n);

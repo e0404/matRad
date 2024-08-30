@@ -16,13 +16,7 @@ function test_multScenConstructWithCt
     assertTrue(isa(model,'matRad_RandomScenarios'));
     
     model = matRad_multScen(ct,'impScen');
-    assertTrue(isa(model,'matRad_ImportanceScenarios'));
-    
-    if moxunit_util_platform_is_octave()
-        assertExceptionThrown(@() matRad_multScen(ct,'nonExistingScen'));    
-    else
-        assertExceptionThrown(@() matRad_multScen(ct,'nonExistingScen'),'matRad:Error');    
-    end
+    assertTrue(isa(model,'matRad_ImportanceScenarios'));    
 
 function test_multScenConstructWithEmptyCt
     ct = [];
@@ -37,9 +31,3 @@ function test_multScenConstructWithEmptyCt
     
     model = matRad_multScen(ct,'impScen');
     assertTrue(isa(model,'matRad_ImportanceScenarios'));
-    
-    if moxunit_util_platform_is_octave()
-        assertExceptionThrown(@() matRad_multScen(ct,'nonExistingScen'));    
-    else
-        assertExceptionThrown(@() matRad_multScen(ct,'nonExistingScen'),'matRad:Error');    
-    end

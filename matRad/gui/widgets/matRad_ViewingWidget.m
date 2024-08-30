@@ -22,8 +22,6 @@ classdef matRad_ViewingWidget < matRad_Widget
     properties
         plane = 3;
         slice = 1;
-        maxSlice;
-        SliceSliderStep;
         selectedBeam = 1;
         numOfBeams=1;
         profileOffset=0;
@@ -155,17 +153,7 @@ classdef matRad_ViewingWidget < matRad_Widget
             this.slice=newSlice;
             this.update();
         end
-        
-        function set.maxSlice(this,value)
-            this.maxSlice=value;
-            this.update();
-        end
-        
-        function set.SliceSliderStep(this,value)
-            this.SliceSliderStep=value;
-            this.update();
-        end
-        
+                       
         function set.selectedBeam(this,value)
             this.selectedBeam=value;
             evt = matRad_WorkspaceChangedEvent('image_display');
@@ -1147,9 +1135,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                     visQuantity = [];
                 end
                        
-                this.slice = planeCenters(this.plane);
-                this.maxSlice=ct.cubeDim(this.plane);                            
-                this.SliceSliderStep=[1/(ct.cubeDim(this.plane)-1) 1/(ct.cubeDim(this.plane)-1)];
+                this.slice = planeCenters(this.plane);                        
 
                 % set profile offset slider
                 this.OffsetMinMax = [-100 100];
@@ -1189,8 +1175,6 @@ classdef matRad_ViewingWidget < matRad_Widget
                 end
             else %no data is loaded 
                 this.slice=1;
-                this.maxSlice=1;
-                this.SliceSliderStep=[1 1];
                 this.numOfBeams=1;
                 this.OffsetMinMax = [1 1];
                 this.profileOffset=1;

@@ -27,7 +27,7 @@ function indices = matRad_world2cubeIndex(wCoord, gridStruct)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if size(wCoord,2) ~= 3
-    matRad_cfg = matRad_Config.instance();
+    matRad_cfg = MatRad_Config.instance();
     matRad_cfg.dispError('world coordinates must be Nx3');
 end    
           

@@ -92,11 +92,19 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             % create this from superclass
             this = this@DoseEngines.matRad_PencilBeamEngineAbstract(pln);            
 
-            if nargin > 0 && isfield(pln,'propStf') && isfield(pln.propStf,'bixelWidth')
-                % 0 if field calc is bixel based, 1 if dose calc is field based
-                % num2str is only used to prevent failure of strcmp when bixelWidth
-                % contains a number and not a string
-                this.isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
+            %TODO: engines should not rely on reading properties from "propStf", we need to find another way to handle those two fields in the future.
+            if nargin > 0 && isfield(pln,'propStf') 
+                if isfield(pln.propStf,'bixelWidth')
+                    % 0 if field calc is bixel based, 1 if dose calc is field based
+                    % num2str is only used to prevent failure of strcmp when bixelWidth
+                    % contains a number and not a string
+                    this.isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
+                end
+
+                %Potentially stored collimation information
+                if isfield(pln.propStf,'collimation')
+                    this.collimation = pln.propStf.collimation;
+                end
             end
         end
 
