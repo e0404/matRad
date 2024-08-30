@@ -250,6 +250,11 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
             %Create X Y Z vectors if not present
             ct = matRad_getWorldAxes(ct);
+
+            
+            if this.multScen.totNumRangeScen > 1
+                matRad_cfg.dispWarning('Range shift scenarios are not yet implemented for Monte Carlo simulations.');
+            end
             
 
             for scenarioIx = 1:this.multScen.totNumScen
