@@ -59,7 +59,7 @@ for folderIx = 1:length(folders)
     %Generate subfolder path or only add current folder to class search
     %path
     if includeSubfolders
-        addPath = [addPath genpath(folders{folderIx})];
+        addPath = [addPath genpath(folders{folderIx}) pathsep];
     else
         addPath = [addPath folders{folderIx} pathsep];
     end
@@ -109,7 +109,6 @@ end
 inherits = cellfun(@(mc) matRad_checkInheritance(mc,superClass),classList);
 classList = classList(inherits);
 
-
 %We want classes to be a row vector, but the meta.class lists column
 %vector
 if ~isrow(classList)
@@ -122,6 +121,12 @@ function metaClassList = matRad_getClassesFromFolder(folder,packageName)
 % can be passed for Octave compatibility
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%Sanity check to avoid octave calling what when argument empty
+if isempty(folder)
+    metaClassList = {};
+    return;
+end
+
 %We accept the specific package name for Octave compatability
 if nargin < 2
     packageNameWithDot= '';
@@ -130,6 +135,7 @@ else
     packageNameWithDot = [packageName '.'];
     fullFolder =  [folder filesep '+' packageName];
 end
+
 folderInfo = what(fullFolder);
 if ~isempty(folderInfo)
     [~,potentialClasses] = cellfun(@fileparts,{folderInfo.m{:},folderInfo.p{:}},'UniformOutput',false); %Potential class files
@@ -172,7 +178,7 @@ if matRad_cfg.isMatlab
     scs = superclasses(metaClass.Name);
     inherits = any(strcmp(scs,superClass.Name));
 else
-    superClasses = num2cell(metaClass.SuperclassList);
+    superClasses = metaClass.SuperclassList;
 
     if isempty(superClasses)
         inherits = false;
