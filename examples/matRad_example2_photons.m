@@ -154,7 +154,7 @@ display(pln);
 
 
 %stf = matRad_generateStf(ct,cst,pln);
-matRad_StfScript;
+matRad_generateStf;
 
 %%
 % Let's display the beam geometry information of the 6th beam
