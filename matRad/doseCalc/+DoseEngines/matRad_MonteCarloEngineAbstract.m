@@ -91,12 +91,12 @@ classdef (Abstract) matRad_MonteCarloEngineAbstract < DoseEngines.matRad_DoseEng
             dij = this.calcDose(ct,cst,stf);
 
             % hack dij struct
-            dij.numOfBeams = 1;
-            dij.beamNum = 1;
+            %dij.numOfBeams = 1;
+            %dij.beamNum = 1;
 
             % calculate cubes; use uniform weights here, weighting with actual fluence
             % already performed in dij construction
-            resultGUI    = matRad_calcCubes(sum(w),dij);
+            resultGUI    = matRad_calcCubes(ones(dij.numOfBeams, 1),dij);
             
             % remember original fluence weights
             resultGUI.w  = w;
