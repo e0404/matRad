@@ -142,7 +142,17 @@ classdef matRad_importDicomWidget < matRad_Widget
         % H22 IMPORT BUTTON CALLBACK
         function this = import_button_Callback(this, hObject, eventdata)
             handles = this.handles;
-            
+
+            % case the resolution was changed manually
+            if handles.resx_edit.String ~= this.importer.importFiles.resx
+                this.importer.importFiles.resx = handles.resx_edit.String;
+            end 
+            if handles.resy_edit.String ~= this.importer.importFiles.resy
+                this.importer.importFiles.resy = handles.resy_edit.String;
+            end
+            if handles.resz_edit.String ~= this.importer.importFiles.resz
+                this.importer.importFiles.resz = handles.resz_edit.String;
+            end
             this.importer.matRad_importDicom();
 
             %% save ct, cst, pln, dose
