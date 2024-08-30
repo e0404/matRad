@@ -83,36 +83,25 @@ end
 mainFolder        = fullfile(matRad_cfg.matRadSrcRoot,'bioModels');
 userDefinedFolder = fullfile(matRad_cfg.primaryUserFolder, 'bioModels');
 
-% Collect all the subfolders
-if ispc
-    folderDelimiter = ';';
-elseif isunix
-    folderDelimiter = ':';
+if ~exist(userDefinedFolder,"dir")
+    folders = {mainFolder};
 else
-    folderDelimiter = ';';
+    folders = {mainFolder,userDefinedFolder};
 end
 
-subFolders = [strsplit(genpath(mainFolder), folderDelimiter)';strsplit(genpath(userDefinedFolder), folderDelimiter)'];
-subFolders(cellfun(@isempty, subFolders)) = [];
+availableBioModelsClassList = matRad_findSubclasses('matRad_BiologicalModel', 'folders', folders , 'includeSubfolders',true);
+modelInfos = matRad_identifyClassesByConstantProperties(availableBioModelsClassList,'model');
+modelNames = {modelInfos.model};
 
-availableBioModelsClassList = matRad_findSubclasses('matRad_BiologicalModel', 'folders', subFolders);
-availableBioModelsClassNameList = cellfun(@(model) model.Name, availableBioModelsClassList, 'UniformOutput',false);
-availableBioModelsNameList = cellfun(@(modelClass) eval([modelClass, '.model']), availableBioModelsClassNameList, 'UniformOutput',false);
-
-% for modelClassIdx = 1:numel(availableBioModelsClassList)
-%     availableBioModelsNameList{modelClassIdx,1} = eval([availableBioModelsClassNameList{modelClassIdx}, '.model']);
-% 
-% end
-
-if ~isequal(size(unique(availableBioModelsNameList)), size(availableBioModelsNameList))
+if numel(unique({modelInfos.model})) ~= numel(modelInfos)
     matRad_cfg.dispError('Multiple biological models with the same name available.');
 end
             
-selectedModelIdx = find(strcmp(sModel, availableBioModelsNameList));
+selectedModelIdx = find(strcmp(sModel, modelNames));
             
 % Create first instance of the selected model
 if ~isempty(selectedModelIdx)
-    tmpBioParam = eval(availableBioModelsClassList{selectedModelIdx}.Name);
+    tmpBioParam = modelInfos(selectedModelIdx).handle();
 else
     matRad_cfg.dispError('Unrecognized biological model: %s', sModel);
 end
