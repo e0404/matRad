@@ -151,7 +151,7 @@ for i = 1:length(pln.propStf.gantryAngles)
     
     shiftedIsoCenter =  matRad_world2cubeCoords(vertcat(stf(i).isoCenter),ct);
    
-    stf(i).ray.rayPos = shiftedIsoCenter;
+    stf(i).ray.rayPos = stf(i).ray.rayPos_bev * rotMat_vectors_T;
     stf(i).ray.targetPoint = [0 SAD 0] * rotMat_vectors_T;
     
     
@@ -235,6 +235,18 @@ for i = 1:length(pln.propStf.gantryAngles)
         
         % book keeping for photons
         stf(i).ray.energy = machine.data.energy;
+
+        rayPos = stf(i).ray.rayPos;
+        
+        stf(i).ray.beamletCornersAtIso = [rayPos + [+stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];...
+            rayPos + [-stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];...
+            rayPos + [-stf(i).bixelWidth/2,0,-stf(i).bixelWidth/2];...
+            rayPos + [+stf(i).bixelWidth/2,0,-stf(i).bixelWidth/2]]*rotMat_vectors_T;
+        stf(i).ray.rayCorners_SCD = (repmat([0, machine.meta.SCD - SAD, 0],4,1)+ (machine.meta.SCD/SAD) * ...
+            [rayPos + [+stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];...
+            rayPos + [-stf(i).bixelWidth/2,0,+stf(i).bixelWidth/2];...
+            rayPos + [-stf(i).bixelWidth/2,0,-stf(i).bixelWidth/2];...
+            rayPos + [+stf(i).bixelWidth/2,0,-stf(i).bixelWidth/2]])*rotMat_vectors_T;
         
     else
         matRad_cfg.dispError('Error generating stf struct: invalid radiation modality.');

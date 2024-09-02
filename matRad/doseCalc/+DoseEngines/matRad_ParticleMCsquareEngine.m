@@ -416,6 +416,9 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                     mask(this.VdoseGrid) = true;
 
                     if this.calcDoseDirect
+                        if abs(totalWeights-sum(this.directWeights)) > 1e-2
+                            matRad_cfg.dispWarning('Sum of provided weights and weights used in MCsquare inconsistent!');
+                        end
                         finalResultWeight = absCalibrationFactorMC2 * totalWeights;
                     else
                         finalResultWeight = absCalibrationFactorMC2;

@@ -64,6 +64,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
     properties (Access = protected)
         lastProgressUpdate;
         calcDoseDirect = false; % switch for direct cube / dij calculation
+        directWeights  = [];
     end
     
     properties (Constant)
@@ -218,6 +219,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             end            
             
             %Set direct dose calculation and compute "dij"
+            this.directWeights = w;
             this.calcDoseDirect = true;
             dij = this.calcDose(ct,cst,stf);
 
