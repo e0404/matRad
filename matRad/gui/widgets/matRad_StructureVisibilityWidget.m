@@ -134,7 +134,7 @@ classdef matRad_StructureVisibilityWidget < matRad_Widget
             % update cst in workspace accordingly
             assignin('base','cst',cst)
             this.handles = handles;
-            this.changedWorkspace('image_display');
+            this.changedWorkspace('cst_param');
             %UpdatePlot(handles)
         end
         
