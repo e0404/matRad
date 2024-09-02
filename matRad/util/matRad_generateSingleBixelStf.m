@@ -112,9 +112,9 @@ for i = 1:length(pln.propStf.gantryAngles)
     stf(i).totalNumOfBixels     = 1;
     stf(i).machine              = pln.machine;
     
-    x = floor(matRad_interp1(ct.x,[1:ct.cubeDim(2)]',stf.isoCenter(1)));
-    y = floor(matRad_interp1(ct.y,[1:ct.cubeDim(1)]',stf.isoCenter(2)));
-    z = floor(matRad_interp1(ct.z,[1:ct.cubeDim(3)]',stf.isoCenter(3)));
+    x = floor(matRad_interp1(ct.x,[1:ct.cubeDim(2)]',stf(i).isoCenter(1)));
+    y = floor(matRad_interp1(ct.y,[1:ct.cubeDim(1)]',stf(i).isoCenter(2)));
+    z = floor(matRad_interp1(ct.z,[1:ct.cubeDim(3)]',stf(i).isoCenter(3)));
     
     %Voxel index of Isocenter
     isoIx = [y x z];
@@ -149,7 +149,7 @@ for i = 1:length(pln.propStf.gantryAngles)
     stf(i).ray.targetPoint_bev = [0 SAD 0];
     
     
-    shiftedIsoCenter =  matRad_world2cubeCoords(vertcat(stf(:).isoCenter),ct);
+    shiftedIsoCenter =  matRad_world2cubeCoords(vertcat(stf(i).isoCenter),ct);
    
     stf(i).ray.rayPos = shiftedIsoCenter;
     stf(i).ray.targetPoint = [0 SAD 0] * rotMat_vectors_T;
@@ -157,7 +157,7 @@ for i = 1:length(pln.propStf.gantryAngles)
     
     % find appropriate energies for particles
     if strcmp(stf(i).radiationMode,'protons') || strcmp(stf(i).radiationMode,'carbon') || strcmp(stf(i).radiationMode,'helium')
-        stf.longitudinalSpotSpacing = longitudinalSpotSpacing;
+        stf(i).longitudinalSpotSpacing = longitudinalSpotSpacing;
               
         % ray tracing necessary to determine depth of the target
         [alphas,l,rho,d12,~] = matRad_siddonRayTracer(shiftedIsoCenter, ...
