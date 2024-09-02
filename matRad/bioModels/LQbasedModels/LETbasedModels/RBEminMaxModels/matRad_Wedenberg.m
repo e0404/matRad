@@ -1,4 +1,4 @@
-classdef matRad_Wedemberg < matRad_RBEminMax
+classdef matRad_Wedenberg < matRad_RBEminMax
 % subclass that implements the WED model
 % (https://www.ncbi.nlm.nih.gov/pubmed/22909391) (accessed on 21/7/2023)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -24,7 +24,7 @@ classdef matRad_Wedemberg < matRad_RBEminMax
     end
 
     methods
-        function this = matRad_Wedemberg()
+        function this = matRad_Wedenberg()
             this@matRad_RBEminMax();
             
             this.availableRadiationModalities = {'protons'};
