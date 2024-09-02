@@ -482,6 +482,10 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % save current directory to revert back to later
             currDir = cd;
 
+            if this.multScen.totNumRangeScen > 1
+                matRad_cfg.dispWarning('Range shift scenarios are not yet implemented for Monte Carlo simulations.');
+            end
+
             for shiftScen = 1:this.multScen.totNumShiftScen
 
                 %Find first instance of the shift to select the shift values
