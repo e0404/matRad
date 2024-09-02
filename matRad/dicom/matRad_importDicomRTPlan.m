@@ -134,7 +134,7 @@ pln.multScen = matRad_multScen(ct,'nomScen');
 pln.machine         = BeamSequence.Item_1.TreatmentMachineName;
 
 % set bio model parameters (default physical opt, no bio model)
-pln.bioParam = matRad_bioModel(pln.radiationMode,'physicalDose','none');
+pln.bioModel = matRad_bioModel(pln.radiationMode,'none');
 
 % set properties for steering
 pln.propStf.isoCenter    = isoCenter;

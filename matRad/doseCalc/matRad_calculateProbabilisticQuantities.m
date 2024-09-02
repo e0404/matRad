@@ -44,7 +44,7 @@ end
 
 matRad_cfg.dispInfo('Calculating probabilistic quantities E[D] & Omega[D] ...\n');
 
-if ~pln.bioParam.bioOpt
+if ~pln.bioModel.bioOpt
     fNames = {'physicalDose'};
 else
     fNames = {'mAlphaDose','mSqrtBetaDose'};

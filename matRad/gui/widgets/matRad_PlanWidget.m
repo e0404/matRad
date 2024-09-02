@@ -799,16 +799,7 @@ classdef matRad_PlanWidget < matRad_Widget
             pln = evalin('base', 'pln');
             handles = this.handles;
 
-            matRad_cfg = MatRad_Config.instance();
-            
-            
-            % sanity check of isoCenter
-            if size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) == 1
-                pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * pln.propStf.isoCenter(1,:);
-            elseif size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) ~= 1
-                this.showError('Isocenter in plan file are inconsistent.');
-            end           
-            
+            matRad_cfg = MatRad_Config.instance();                                   
             
             set(handles.editBixelWidth,'String',num2str(pln.propStf.bixelWidth));
             set(handles.editGantryAngle,'String',num2str(pln.propStf.gantryAngles));
@@ -825,6 +816,13 @@ classdef matRad_PlanWidget < matRad_Widget
             set(handles.popUpMenuDoseEngine,'String',{availableEngines(:).shortName});
             
             if isfield(pln.propStf,'isoCenter')
+                % sanity check of isoCenter
+                if size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) == 1
+                    pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * pln.propStf.isoCenter(1,:);
+                elseif size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) ~= 1
+                    this.showError('Isocenter in plan file are inconsistent.');
+                end
+
                 if size(unique(pln.propStf.isoCenter,'rows'),1) == 1
                     set(handles.editIsoCenter,'String',regexprep(num2str((round(pln.propStf.isoCenter(1,:)*10))./10), '\s+', ' '));
                     set(handles.checkIsoCenter,'Enable','on');
@@ -844,7 +842,18 @@ classdef matRad_PlanWidget < matRad_Widget
             
             set(handles.editFraction,'String',num2str(pln.numOfFractions));
             
-            
+            if ~isfield(pln,'propOpt')
+                pln.propOpt = struct();
+            end
+
+            if ~isfield(pln.propOpt,'quantityOpt')
+                pln.propOpt.quantityOpt = 'physicalDose';
+            end
+
+            if ~isfield(pln,'bioModel')
+                pln.bioModel = matRad_bioModel(pln.radiationMode, contentBioModel{get(handles.popMenuBioModel,'Value'),:});
+            end
+
             contentPopUpQuantityOpt = get(handles.popMenuQuantityOpt,'String');
             ix = find(strcmp(pln.propOpt.quantityOpt,contentPopUpQuantityOpt));
             set(handles.popMenuQuantityOpt,'Value',ix);
@@ -962,6 +971,10 @@ classdef matRad_PlanWidget < matRad_Widget
             contentBioModel = get(handles.popMenuBioModel,'String');
             contentMultScen = get(handles.popMenuMultScen,'String');
             pln.bioModel = matRad_bioModel(pln.radiationMode, contentBioModel{get(handles.popMenuBioModel,'Value'),:});
+            
+            pln.propOpt.quantityOpt = contentQuantityOpt{get(handles.popMenuQuantityOpt,'Value')};
+
+            
             if evalin('base','exist(''ct'')')
                 ct = evalin('base','ct');
                 pln.numOfVoxels     = prod(ct.cubeDim);

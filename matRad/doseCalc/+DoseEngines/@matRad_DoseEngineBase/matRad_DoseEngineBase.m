@@ -455,7 +455,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         %         this.bioParam = tmpBioParam;
         %     else
         %         matRad_cfg.dispWarning('Incorrect setting for required biological model. Using default instead');
-        %         this.bioParam = matRad_None();
+        %         this.bioParam = matRad_EmptyBiologicalModel();
         %     end
         % 
         % end

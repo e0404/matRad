@@ -9,7 +9,7 @@ function model = matRad_bioModel(sRadiationMode, sModel, sMachine)
 %   matRad_bioModel(sRadiationMode, sModel)
 %   matRad_bioModel(sRadiationMode, sModel, sMachine)
 %
-%   e.g. pln.bioParam = matRad_bioModel('protons','MCN', 'Generic')
+%   e.g. pln.bioModel = matRad_bioModel('protons','MCN', 'Generic')
 %
 % input
 %   sRadiationMode:     radiation modality 'photons' 'protons' 'helium' 'carbon' 'brachy'

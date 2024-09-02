@@ -381,7 +381,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                 dij.RBE = this.constantRBE;
             end
   
-            if ~isa(this.bioModel, 'matRad_None') && ~isa(this.bioModel, 'matRad_ConstantRBE')
+            if ~isa(this.bioModel, 'matRad_EmptyBiologicalModel') && ~isa(this.bioModel, 'matRad_ConstantRBE')
                 % This is independent of the biological model implemented.
                 % Not performed for 'none' and 'constRBE' because not
                 % neccessary. We could as well always do this calculation,
