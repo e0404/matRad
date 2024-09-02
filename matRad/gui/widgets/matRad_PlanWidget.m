@@ -846,11 +846,11 @@ classdef matRad_PlanWidget < matRad_Widget
             
             
             contentPopUpQuantityOpt = get(handles.popMenuQuantityOpt,'String');
-            ix = find(strcmp(pln.bioParam.quantityOpt,contentPopUpQuantityOpt));
+            ix = find(strcmp(pln.propOpt.quantityOpt,contentPopUpQuantityOpt));
             set(handles.popMenuQuantityOpt,'Value',ix);
             
             contentPopUpBioModel = get(handles.popMenuBioModel,'String');
-            ix = find(strcmp(pln.bioParam.model,contentPopUpBioModel));
+            ix = find(strcmp(pln.bioModel.model,contentPopUpBioModel));
             set(handles.popMenuBioModel,'Value',ix);
             
             if evalin('base','exist(''ct'')') 
@@ -961,7 +961,7 @@ classdef matRad_PlanWidget < matRad_Widget
             contentQuantityOpt = get(handles.popMenuQuantityOpt,'String');
             contentBioModel = get(handles.popMenuBioModel,'String');
             contentMultScen = get(handles.popMenuMultScen,'String');
-            pln.bioParam = matRad_bioModel(pln.radiationMode, contentQuantityOpt{get(handles.popMenuQuantityOpt,'Value'),:}, contentBioModel{get(handles.popMenuBioModel,'Value'),:});
+            pln.bioModel = matRad_bioModel(pln.radiationMode, contentBioModel{get(handles.popMenuBioModel,'Value'),:});
             if evalin('base','exist(''ct'')')
                 ct = evalin('base','ct');
                 pln.numOfVoxels     = prod(ct.cubeDim);

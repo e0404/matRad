@@ -1120,10 +1120,15 @@ classdef matRad_ViewingWidget < matRad_Widget
                 if evalin('base','exist(''pln'')')
                     pln = evalin('base','pln');
 
-                    if isfield(pln,'bioParam')
-                        visQuantity = pln.bioParam.quantityVis;
-                    else
-                        visQuantity = [];
+                    if isfield(pln,'propOpt') && isfield(pln.propOpt, 'quantityOpt')
+                        switch pln.propOpt.quantityOpt
+                            case 'physicalDose'
+                                visQuantity = 'physicalDose';
+                            case {'RBExD', 'effect'}
+                                visQuantity = 'RBExD';
+                            otherwise
+                                visQuantity = [];
+                        end
                     end
 
                     if isfield(pln,'propStf')
