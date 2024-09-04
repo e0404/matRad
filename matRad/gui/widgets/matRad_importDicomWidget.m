@@ -106,7 +106,27 @@ classdef matRad_importDicomWidget < matRad_Widget
                 %   11. res_z
                 %   12. detailed dose description - currently not in use for GUI user
                 patient_listbox = get(handles.patient_listbox,'String');
-                selected_patient = patient_listbox(get(handles.patient_listbox,'Value'));
+                if ~isempty(patient_listbox)
+                    selected_patient = patient_listbox(get(handles.patient_listbox,'Value'));
+                end
+
+                if get(handles.SeriesUID_radiobutton,'Value') == 1
+                    % this gets a list of ct series for this patient
+                    set(handles.ctseries_listbox,'Value',1); % set dummy value to one
+                    
+                    set(handles.ctseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),4)));
+                    
+                else
+                    set(handles.ctseries_listbox,'Value',1); % set dummy value to one
+                    set(handles.ctseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),5)));
+                end
+                % for i = 1:numel(this.handles.ctseries_listbox.String)
+                %     if i == handles.ctseries_listbox.Value
+                %         SeriesInstUID = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),15))
+                %         if 
+                % 
+                %     end
+                % end
                 % this gets a list of rtss series for this patient
                 set(handles.rtseries_listbox,'Value',1); % set dummy value to one
                 set(handles.rtseries_listbox,'String',handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),4));
@@ -121,6 +141,7 @@ classdef matRad_importDicomWidget < matRad_Widget
                 if get(handles.SeriesUID_radiobutton,'Value') == 1
                     % this gets a list of ct series for this patient
                     set(handles.ctseries_listbox,'Value',1); % set dummy value to one
+                    
                     set(handles.ctseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),4)));
                 else
                     set(handles.ctseries_listbox,'Value',1); % set dummy value to one
@@ -153,11 +174,59 @@ classdef matRad_importDicomWidget < matRad_Widget
             if handles.resz_edit.String ~= this.importer.importFiles.resz
                 this.importer.importFiles.resz = handles.resz_edit.String;
             end
+
+            % to pass only selected objects to the matRad_importDicom
+            % selected patient
+            if ~isempty(handles.patient_listbox)
+                selected_patient = this.importer.patient{get(handles.patient_listbox,'Value')};
+                this.importer.patient = selected_patient;
+            end
+
+            % selected CT serie
+            allCTSeries = this.importer.importFiles.ct;
+            if ~isempty(handles.ctseries_listbox) && get(handles.SeriesUID_radiobutton,'Value') == 1
+                UIDSelected_ctserie = handles.ctseries_listbox.String{get(handles.ctseries_listbox,'Value'), 1};
+                selectedCTSerie = allCTSeries(strcmp(allCTSeries(:, 4), UIDSelected_ctserie), :); 
+                this.importer.importFiles.ct = selectedCTSerie;
+            elseif ~isempty(handles.ctseries_listbox) && get(handles.SeriesNumber_radiobutton,'Value') == 1
+                SeriesNumSelected_ctserie = handles.ctseries_listbox.String{get(handles.ctseries_listbox,'Value'), 1};
+                selectedCTSerie = allCTSeries(strcmp(allCTSeries(:, 5), SeriesNumSelected_ctserie), :);
+                this.importer.importFiles.ct = selectedCTSerie;
+            end
+
+            % selected RTStruct
+            allRtss = this.importer.importFiles.rtss;
+            if ~isempty(allRtss)
+                UIDSelected_rtserie = handles.rtseries_listbox.String{get(handles.rtseries_listbox,'Value'), 1};
+                selectedRTStructSerie = allRtss(strcmp(allRtss(:, 4), UIDSelected_rtserie), :);
+                this.importer.importFiles.rtss = selectedRTStructSerie;
+            end
+
+            % selected RTPlan
+            allRTPlans = this.importer.importFiles.rtplan;
+            if ~isempty(allRTPlans) && ~isempty(handles.rtplan_listbox.Value)
+                UIDSelected_rtplan = handles.rtplan_listbox.String{get(handles.rtplan_listbox,'Value'), 1};
+                selectedRTPlan = allRTPlans(strcmp(allRTPlans(:, 4), UIDSelected_rtplan), :);
+                this.importer.importFiles.rtplan = selectedRTPlan;
+            else
+                this.importer.importFiles.rtplan = [];
+            end
+            
+            % selected dose serie
+            allRTDoses = this.importer.importFiles.rtdose;
+            if ~isempty(allRTDoses) && ~isempty(handles.doseseries_listbox.Value)
+                UIDSelected_rtdose = handles.doseseries_listbox.String{get(handles.doseseries_listbox,'Value'), 1};
+                selectedRTDose = allRTDoses(strcmp(allRTDoses(:, 4), UIDSelected_rtdose), :);
+                this.importer.importFiles.rtdose = selectedRTDose;
+            else 
+                this.importer.importFiles.rtdose = [];
+            end
+
             this.importer.matRad_importDicom();
 
             %% save ct, cst, pln, dose
             matRad_cfg = MatRad_Config.instance();
-            matRadFileName = fullfile(matRad_cfg.userfolders{1},[this.importer.allfiles{1,3} '.mat']); % use default from dicom
+            matRadFileName = fullfile(matRad_cfg.userfolders{1},[this.importer.patient '.mat']); % use default from dicom
             [FileName,PathName] = uiputfile('*.mat','Save as...',matRadFileName);
             ct = this.importer.ct;
             cst = this.importer.cst;
@@ -908,12 +977,13 @@ classdef matRad_importDicomWidget < matRad_Widget
     % SCAN FUNKTION
         function this = scan(this, hObject, eventdata)
             handles = this.handles;
+
             this.importer = matRad_DicomImporter(get(handles.dir_path_field,'String'));
 
-            if iscell(this.importer.patients)
+            if iscell(this.importer.patient)
                 handles.fileList =  this.importer.allfiles;
                 %handles.patient_listbox.String = patient_listbox;
-                set(handles.patient_listbox,'String',this.importer.patients,'Value',1);
+                set(handles.patient_listbox,'String',this.importer.patient,'Value',1);
                 % guidata(hObject, handles);
                 this.handles = handles;
             end
