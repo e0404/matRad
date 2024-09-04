@@ -65,7 +65,7 @@ end
 
 %% compare Bixel width in stf and pln
 if  isfield(pln.propStf,'bixelWidth') && ischar(stf(1).bixelWidth)
-    LogVal = strcmp(stf(1).radiationMode, pln.radiationMode);
+    LogVal = strcmp(stf(1).matchRadiationMode, pln.radiationMode);
 elseif isfield(pln.propStf,'bixelWidth') && ~ischar(stf(1).bixelWidth)
     LogVal = logical(stf(1).bixelWidth == pln.propStf.bixelWidth);
 end
@@ -77,7 +77,7 @@ if  ~isfield(pln.propStf,'bixelWidth') || ~LogVal
 end
 
 %% compare radiation mode in stf and pln
-if ~isfield(pln,'radiationMode') || ~strcmp(stf(1).radiationMode, pln.radiationMode)
+if ~isfield(pln,'radiationMode') || ~strcmp(stf(1).matchRadiationMode, pln.radiationMode)
     allMatch=false;
     msg= 'Radiation mode does not match';
     return
