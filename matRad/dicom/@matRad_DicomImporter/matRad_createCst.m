@@ -1,16 +1,15 @@
 function obj = matRad_createCst(obj)
 % matRad function to create a cst struct upon dicom import
 % 
+% In your object, there must be a property that contains matlab structure 
+% containing information about rt structure set (generated with 
+% matRad_importDicomRtss and matRad_convRtssContours2Indices)
+%
+% Output - matRad cst structure
+%
 % call
 %   obj = matRad_createCst(obj)
 %
-% input
-%   structures:     matlab struct containing information about rt structure
-%                   set (generated with matRad_importDicomRtss and 
-%                   matRad_convRtssContours2Indices)
-%
-% output
-%   cst:            matRad cst struct
 %
 % References
 %   -

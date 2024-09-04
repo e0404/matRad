@@ -1,18 +1,19 @@
 function obj = matRad_importDicomRTDose(obj)
 % matRad function to import dicom RTDOSE data
 % 
+% In your object, there must be properties that contain:
+%   - ct imported by the matRad_importDicomCt function;
+%   - cell array of RTDose DICOM files.
+% Optional:
+%   - matRad pln structure.
+%
+% Output - matRad resultGUI structure with different beams.
+% Note that the summation (called plan) of the beams is named without 
+% subscripts, e.g. physical_Dose.
+%
 % call
 %   obj = matRad_importDicomRTDose(obj)
 %
-% input 
-%   obj.ct:                     ct imported by the matRad_importDicomCt function
-%   obj.importFiles.rtdose:   	cell array of RTDOSE Dicom files
-%   obj.pln:                    (optional) matRad pln struct
-%
-% output
-%   resultGUI:      matRad resultGUI struct with different beams. Note that
-%                   the summation (called plan) of the beams is named 
-%                   without subscripts, e.g. physical_Dose.
 %
 % References
 %   -

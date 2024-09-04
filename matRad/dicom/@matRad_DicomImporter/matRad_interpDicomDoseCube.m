@@ -1,16 +1,18 @@
 function obj = matRad_interpDicomDoseCube(obj) 
 % matRad function to interpolate a given Dicom Dose Cube dicom RTDOSE data
 %
+% In your object, there must be properties that contain:
+%   - ct imported by the matRad_importDicomCt function;
+%   - one (of several) dose cubes which should be interpolated.
+% Optional:
+%   - pln structure.
+%
+% Output - structure with different actual current dose cube and several 
+% meta data.
+%
 % call
 %   obj = matRad_interpDicomDoseCube(obj)
 %
-% input
-%   ct:             ct imported by the matRad_importDicomCt function
-%   currDose:       one (of several) dose cubes which should be interpolated
-%
-% output
-%   dose:           struct with different actual current dose cube and several
-%                   meta data
 %
 % References
 %   -

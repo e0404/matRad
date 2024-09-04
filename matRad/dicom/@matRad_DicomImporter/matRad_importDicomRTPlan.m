@@ -1,17 +1,18 @@
 function obj = matRad_importDicomRTPlan(obj)
 % matRad function to import dicom RTPLAN data
 % 
+% In your object, there must be properties that contain:
+%   - ct imported by the matRad_importDicomCt function;
+%   - list of RTPlan Dicom files;
+%   - a boolean, if you don't want to import whole dicom information set it
+%   false.
+% 
+% Output - matRad pln structure with meta information.
+% Note that bixelWidth is determined via the importSteering function.
+%
 % call
 %   obj = matRad_importDicomRTPlan(obj)
 %
-% input
-%   ct:                 ct imported by the matRad_importDicomCt function
-%   importFiles.rtplan:    list of RTPlan Dicom files
-%   dicomMetaBool:      import whole dicom information
-%
-% output
-%   pln:                matRad pln struct with meta information. Note that
-%                       bixelWidth is determined via the importSteering function.
 %
 % References
 %   -
@@ -87,7 +88,7 @@ for i = 1:length(BeamSeqNames)
     % parameters not changing are stored in the first ControlPointSequence
     gantryAngles{i}         = currBeamSeq.(ControlParam).Item_1.GantryAngle;
     PatientSupportAngle{i}  = currBeamSeq.(ControlParam).Item_1.PatientSupportAngle;
-    isoCenter(i,:)          = currBeamSeq.(ControlParam).Item_1.IsocenterPosition';
+        isoCenter(i,:)          = currBeamSeq.(ControlParam).Item_1.IsocenterPosition';
     if ~ismember(isoCenter(i,1), obj.ct.x) || ~ismember(isoCenter(i,2), obj.ct.y) || ~ismember(isoCenter(i,3), obj.ct.z)
         isoCenter(i,:)          = matRad_getIsoCenter(obj.cst, obj.ct);
     end
@@ -156,7 +157,7 @@ obj.pln.numOfVoxels          = numOfVoxels;
 obj.pln.VoxelDimentions      = obj.ct.cubeDim;
 
 %if there is not special doseGrid for rtdose
-if ~obj.importFiles.useDoseGrid && isfield(obj.importFiles,'rtdose')
+if ~obj.importFiles.useImportGrid && isfield(obj.importFiles,'rtdose')
     obj.pln.propDoseCalc.doseGrid.resolution.x = obj.ct.resolution.x;
     obj.pln.propDoseCalc.doseGrid.resolution.y = obj.ct.resolution.y;
     obj.pln.propDoseCalc.doseGrid.resolution.z = obj.ct.resolution.z;

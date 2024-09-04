@@ -1,14 +1,14 @@
 function obj = matRad_dummyCst(obj)
 % matRad function to create a dummy cst struct for a ct
-% 
+%
+% In your object, there should be properties that contain:
+%   - ct structure;
+%   - cst structure.
+%
+% Output - matRad cst structure
+%
 % call
 %   obj = matRad_dummyCst(obj)
-%
-% input
-%   ct: matRad ct struct
-%
-% output
-%   cst: matRad cst struct
 %
 % References
 %   -

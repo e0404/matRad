@@ -26,7 +26,7 @@ classdef matRad_DicomImporter < handle
 
        % lists of all files
        allfiles;
-       patients;
+       patient;
        importFiles; % all the names (directories) of files, that will be imported
 
        % properties with data for import functions
@@ -41,7 +41,7 @@ classdef matRad_DicomImporter < handle
        pln = [];
        resultGUI = [];
        
-       doseGrid;
+       ImportGrid;
        
        % bools 
        dicomMetaBool;
@@ -62,8 +62,7 @@ classdef matRad_DicomImporter < handle
             obj.patDir = pathToFolder;
             matRad_cfg = MatRad_Config.instance();
             
-            env = matRad_getEnvironment();
-            if strcmp(env,'OCTAVE')
+            if matRad_cfg.isOctave
                 %Octave needs the DICOM package
                 try
                     pkg load dicom;
@@ -78,7 +77,9 @@ classdef matRad_DicomImporter < handle
             
             obj = matRad_scanDicomImportFolder(obj);
 
-            %MatRad will also be able to separate multiple patients, but this example will only work if there's only a single patient in the folder.
+            % matRad_DicomImporter imports only one structure, to select
+            % patients and structures within a single patient the
+            % matRad_importDicomWidget is used
 
             ctFiles = strcmp(obj.allfiles(:,2),'CT');
             rtssFiles = strcmpi(obj.allfiles(:,2),'rtstruct'); %note we can have multiple RT structure sets, matRad will always import the firstit finds
@@ -86,24 +87,23 @@ classdef matRad_DicomImporter < handle
             rtDoseFiles = strcmpi(obj.allfiles(:,2),'rtdose');
 
             obj.importFiles.ct = obj.allfiles(ctFiles,:);%All CT slice filepaths stored in a cell array like {'CTSlice1.dcm','CTSlice2.dcm'};
-            obj.importFiles.rtss = obj.allfiles(rtssFiles,1); %will also be a cell array like {'RTStruct.dcm'};
-            obj.importFiles.rtplan = obj.allfiles(rtPlanFiles,1);
-            obj.importFiles.rtdose = obj.allfiles(rtDoseFiles,1);
+            obj.importFiles.rtss = obj.allfiles(rtssFiles,:); 
+            obj.importFiles.rtplan = obj.allfiles(rtPlanFiles,:);
+            obj.importFiles.rtdose = obj.allfiles(rtDoseFiles,:);
             
             for i = numel(obj.allfiles(:,1)):-1:1
                 if strcmp(obj.allfiles(i,2),'CT')
                     obj.importFiles.resx = obj.allfiles{i,9}; 
-                    obj.importFiles.resy = obj.allfiles{i,10}; 
-                    obj.importFiles.resz = obj.allfiles{i,11}; %some CT dicoms do not follow  the standard and use SpacingBetweenSlices
+                    obj.importFiles.resy = obj.allfiles{i,10};
+                    obj.importFiles.resz = obj.allfiles{i,11}; %some CT dicoms do not follow  the standard and use SpacingBetweenSlices 
                     break
                 end
             end 
              
             %We need to set one more variable I forgot to mention above 
-            obj.importFiles.useDoseGrid = false;
+            obj.importFiles.useImportGrid = false;
             
                    
-
         end
 
         matRad_importDicom(obj)
@@ -128,7 +128,7 @@ classdef matRad_DicomImporter < handle
         
         obj = matRad_dummyCst(obj)
 
-        matRad_saveImport(obj);
+        % matRad_saveImport(obj);
         
     end
 

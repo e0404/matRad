@@ -1,19 +1,19 @@
 function obj = matRad_importDicomRtss(obj)
-% matRad function to read the data of the selected dicomRT structure set file 
-% into a matlab struct
+% matRad function to read the data of the selected dicomRT structure set 
+% file into a matRad structure
 % 
+% In your object, there must be properties that contain:
+%   - name of the rtss file;
+%   - meta information from the dicom ct files for sanity checks.
+% Optional:
+%   - boolean to turn on/off visualization.
+%
+% Output - structure containing names, numbers, colors and coordinates 
+% of the polygon segmentations.
+%
 % call
 %   obj = matRad_importDicomRtss(obj)
 %
-% input
-%   filename:       name of the rtss file
-%   dicomInfo:      meta information from the dicom ct files for sanity
-%                   checks
-%   visBool:        (optional) turn on/off visualization
-%
-% output
-%   structures:     struct containing names, numbers, colors, and
-%                   coordinates of the polygon segmentations
 %
 % References
 %   -

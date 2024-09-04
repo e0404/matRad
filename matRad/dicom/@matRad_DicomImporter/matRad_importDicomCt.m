@@ -1,22 +1,24 @@
 function obj = matRad_importDicomCt(obj)
 % matRad function to import dicom ct data
 % 
+% In your object, there must be properties that contain:
+%   - list of dicom ct files;
+%   - resolution of the imported ct cube, i.e. this function will 
+%   interpolate to a different resolution if desired;
+%   - a boolean, if you don't want to import complete dicom information set
+%   it false.
+% Optional:
+%   - a priori grid specified for interpolation;
+%   - a boolean to turn off/on visualization.
+%
+% Output - matRad ct structure. 
+% Note that this 3D matlab array contains water euqivalent 
+% electron denisities. Hounsfield units are converted using a standard
+% lookup table in matRad_calcWaterEqD
+%
 % call
 %   matRad_importDicomCt(obj)
 %
-% input
-%   ct:             list of dicom ct files
-%   resolution:   	resolution of the imported ct cube, i.e. this function
-%                   will interpolate to a different resolution if desired
-%   dicomMetaBool:  store complete dicom information if true
-%   doseGrid:       optional: a priori grid specified for interpolation
-%   visBool:        optional: turn on/off visualization
-%
-% output
-%   ct:             matRad ct struct. Note that this 3D matlab array 
-%                   contains water euqivalent electron denisities.
-%                   Hounsfield units are converted using a standard lookup
-%                   table in matRad_calcWaterEqD
 %
 % References
 %   -
@@ -54,9 +56,9 @@ sliceThicknessStandard = true;
 for i = 1:numOfSlices
 
     if matRad_cfg.isOctave || verLessThan('matlab','9')
-        tmpDicomInfo = dicominfo(obj.importFiles.ct{i,1});
+        tmpDicomInfo = dicominfo(obj.importFiles.ct{i, 1});
     else
-        tmpDicomInfo = dicominfo(obj.importFiles.ct{i,1},'UseDictionaryVR',true);
+        tmpDicomInfo = dicominfo(obj.importFiles.ct{i, 1},'UseDictionaryVR',true);
     end
     
     % remember relevant dicom info - do not record everything as some tags
@@ -217,8 +219,8 @@ end
 
 %% interpolate cube
 matRad_cfg.dispInfo('\nInterpolating CT cube...');
-if ~isempty(obj.doseGrid)
-    obj.ct = matRad_interpDicomCtCube(origCt, obj.importCT.ctInfo, obj.importCT.resolution, obj.doseGrid);
+if ~isempty(obj.ImportGrid)
+    obj.ct = matRad_interpDicomCtCube(origCt, obj.importCT.ctInfo, obj.importCT.resolution, obj.ImportGrid);
 else
     obj.ct = matRad_interpDicomCtCube(origCt, obj.importCT.ctInfo, obj.importCT.resolution);
 end

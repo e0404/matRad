@@ -1,16 +1,17 @@
 function obj = matRad_scanDicomImportFolder(obj)
 % matRad function to scan a folder for dicom data
 % 
+% In your object, there must be a property that contains path to the
+% folder to be scanned
+%
+% Output:
+%   - matlab struct with a list of dicom files including meta 
+% infomation (type, series number etc.)
+%   - list of patients with dicom data in the folder
+%
 % call
 %   obj = matRad_scanDicomImportFolder(obj)
 %
-% input
-%   patDir:         folder to be scanned
-%
-% output
-%   allfiles:       matlab struct with a list of dicom files including meta
-%                   infomation (type, series number etc.)
-%   patientList:    list of patients with dicom data in the folder
 %
 % References
 %   -

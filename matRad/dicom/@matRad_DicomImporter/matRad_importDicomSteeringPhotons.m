@@ -1,18 +1,17 @@
 function obj = matRad_importDicomSteeringPhotons(obj)
 % matRad function to import a matRad stf struct from dicom RTPLAN data
 % 
+% In your object, there must be a property that contains matRad pln 
+% structure with meta information (collimation data included)
+% 
+% Output - matRad stf and pln structures.
+%
 % call
 %   obj = matRad_importDicomSteeringPhotons(obj)
 %
-% input
-%   pln:            matRad pln struct with meta information (collimation
-%                   data included)
-%
-% output
-%   stf             matRad stf struct
-%   pln             matRad pln struct
 %
 % References
+%   -
 % 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

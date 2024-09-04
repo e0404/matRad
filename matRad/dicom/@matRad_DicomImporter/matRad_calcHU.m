@@ -2,16 +2,16 @@ function obj = matRad_calcHU(obj)
 % matRad function to calculate Hounsfield units from a dicom ct 
 % that originally uses intensity values
 %
+% In your object, there must be a property that contains unprocessed 
+% dicom ct data which are stored as intensity values (IV)
+%
+% Output - ct structure with cube with HU
+%
+% HU = IV * slope + intercept
+%
 % call
 %   obj = matRad_calcHU(obj)
 %
-% input
-%   ct: unprocessed dicom ct data which are stored as intensity values (IV)
-%
-%                      HU = IV * slope + intercept
-%
-% output
-%   ct:                 ct struct with cube with HU
 %
 % References
 %   -

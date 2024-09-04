@@ -2,21 +2,19 @@ function matRad_importDicom(obj)
 % matRad wrapper function to import a predefined set of dicom files files
 % into matRad's native data formats
 % 
+% In your object, there must be properties that contain: 
+%   - list of files to be imported.
+% Optional:
+%   - а boolean; if you don't want to import complete DICOM information, 
+%   set it to false.
+%
+% Next matRad structures are created in the object and saved in the 
+% workspace:
+%   - ct, cst, stf, pln, resultGUI.
+% *to save them as .mat file you can use matRad_importDicomWidget
+%
 % call
 %   matRad_importDicom(obj)
-%
-% input
-%   importFiles:          list of files to be imported (will contain cts and rt
-%                         structure set)
-%   dicomMetaBool:        (boolean, optional) import complete dicomInfo and
-%                         patientName
-%
-% output
-%   ct:        matRad ct struct
-%   cst:       matRad cst struct
-%   pln:       matRad plan struct
-%   stf:       matRad stf struct
-%   resultGUI: matRad result struct holding data for visualization in GUI
 %
 % References
 %   -
@@ -51,18 +49,18 @@ waitbar(1 / steps)
 obj.importCT.resolution.x = str2double(obj.importFiles.resx);
 obj.importCT.resolution.y = str2double(obj.importFiles.resy);
 obj.importCT.resolution.z = str2double(obj.importFiles.resz); % [mm] / lps coordinate system
-if obj.importFiles.useDoseGrid && isfield(obj.importFiles,'rtdose')
+if obj.importFiles.useImportGrid && isfield(obj.importFiles,'rtdose')
     % get grid from dose cube
     if matRad_cfg.isOctave || verLessThan('matlab','9')
         doseInfo = dicominfo(obj.importFiles.rtdose{1,1});
     else
         doseInfo = dicominfo(obj.importFiles.rtdose{1,1},'UseDictionaryVR',true);
     end
-    obj.doseGrid{1} = doseInfo.ImagePositionPatient(1) + doseInfo.ImageOrientationPatient(1) * ...
+    obj.ImportGrid{1} = doseInfo.ImagePositionPatient(1) + doseInfo.ImageOrientationPatient(1) * ...
                                                      doseInfo.PixelSpacing(1) * double(0:doseInfo.Columns - 1);
-    obj.doseGrid{2} = doseInfo.ImagePositionPatient(2) + doseInfo.ImageOrientationPatient(5) * ...
+    obj.ImportGrid{2} = doseInfo.ImagePositionPatient(2) + doseInfo.ImageOrientationPatient(5) * ...
                                                      doseInfo.PixelSpacing(2) * double(0:doseInfo.Rows - 1);
-    obj.doseGrid{3} = doseInfo.ImagePositionPatient(3) + doseInfo.GridFrameOffsetVector(:)';
+    obj.ImportGrid{3} = doseInfo.ImagePositionPatient(3) + doseInfo.GridFrameOffsetVector(:)';
 
     % get ct on grid
     obj = matRad_importDicomCt(obj); 
