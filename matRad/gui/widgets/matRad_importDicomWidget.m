@@ -84,7 +84,7 @@ classdef matRad_importDicomWidget < matRad_Widget
                 % Update handles structure
                 % guidata(hObject, handles);
                 this.handles = handles;
-                this.scan(hObject, eventdata)
+                this.scanFolder(hObject, eventdata)
             end
         end
         
@@ -387,7 +387,7 @@ classdef matRad_importDicomWidget < matRad_Widget
                 % guidata(hObject, handles);
                 this.handles = handles;
             end
-            scan(hObject, eventdata);
+            scanForder(hObject, eventdata);
         end
         
         % H37 CHECK PATIENTNAME CALLBACK
@@ -974,8 +974,8 @@ classdef matRad_importDicomWidget < matRad_Widget
     end    
     
     methods (Access = private)
-    % SCAN FUNKTION
-        function this = scan(this, hObject, eventdata)
+    % SCANFOLDER FUNKTION
+        function this = scanFolder(this, hObject, eventdata)
             handles = this.handles;
 
             this.importer = matRad_DicomImporter(get(handles.dir_path_field,'String'));
