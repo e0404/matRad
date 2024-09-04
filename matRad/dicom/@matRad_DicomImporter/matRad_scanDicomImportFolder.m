@@ -92,22 +92,39 @@ if ~isempty(obj.allfiles)
         switch obj.allfiles{i,2}
             case 'CT'
                
-               obj.allfiles = parseDicomTag(obj.allfiles,info,'SeriesInstanceUID',i,4);
-                
-            case {'RTPLAN','RTDOSE','RTSTRUCT'}
+                obj.allfiles = parseDicomTag(obj.allfiles,info,'SeriesInstanceUID',i,4);
+                obj.allfiles = parseDicomTag(obj.allfiles,info,'SOPInstanceUID',i,15);
+
+            case 'RTPLAN'
                
-               obj.allfiles = parseDicomTag(obj.allfiles,info,'SOPInstanceUID',i,4);
+                obj.allfiles = parseDicomTag(obj.allfiles,info,'SOPInstanceUID',i,4);
+                if isfield(info.ReferencedStructureSetSequence.Item_1,'ReferencedSOPInstanceUID')
+                    obj.allfiles = parseDicomTag(obj.allfiles,info.ReferencedStructureSetSequence.Item_1,'ReferencedSOPInstanceUID',i,15);
+                end
+            case 'RTDOSE'
+
+                obj.allfiles = parseDicomTag(obj.allfiles,info,'SOPInstanceUID',i,4);
+                if isfield(info.ReferencedRTPlanSequence.Item_1,'ReferencedSOPInstanceUID')
+                    obj.allfiles = parseDicomTag(obj.allfiles,info.ReferencedRTPlanSequence.Item_1,'ReferencedSOPInstanceUID',i,15);
+                end
+            case 'RTSTRUCT'
+                
+                obj.allfiles = parseDicomTag(obj.allfiles,info,'SOPInstanceUID',i,4);
+                if isfield(info.ReferencedFrameOfReferenceSequence.Item_1.RTReferencedStudySequence.Item_1,'ReferencedSOPInstanceUID')
+                    obj.allfiles = parseDicomTag(obj.allfiles,info.ReferencedFrameOfReferenceSequence.Item_1.RTReferencedStudySequence.Item_1,'ReferencedSOPInstanceUID',i,15);
+                end
 
            otherwise
                
               obj.allfiles = parseDicomTag(obj.allfiles,info,'SeriesInstanceUID',i,4);
 
         end
-        
+
         obj.allfiles = parseDicomTag(obj.allfiles,info,'SeriesNumber',i,5,@seriesnum2str); %We want to make sure the series number is stored as string
         obj.allfiles = parseDicomTag(obj.allfiles,info,'FamilyName',i,6);
         obj.allfiles = parseDicomTag(obj.allfiles,info,'GivenName',i,7);
         obj.allfiles = parseDicomTag(obj.allfiles,info,'PatientBirthDate',i,8);
+        obj.allfiles = parseDicomTag(obj.allfiles,info,'StudyInstanceUID',i,14);
 
         try
             if strcmp(info.Modality,'CT')
@@ -203,9 +220,9 @@ if ~isempty(obj.allfiles)
     close(h)
     
     if ~isempty(obj.allfiles)
-        obj.patients = unique(obj.allfiles(:,3));
+        obj.patient = unique(obj.allfiles(:,3));
         
-        if isempty(obj.patients)
+        if isempty(obj.patient)
             msgbox('No patient found with DICOM CT _and_ RT structure set in patient directory!', 'Error','error');
         end
     else
