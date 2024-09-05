@@ -112,14 +112,11 @@ for i = 1:length(pln.propStf.gantryAngles)
     stf(i).totalNumOfBixels     = 1;
     stf(i).machine              = pln.machine;
     
-    x = floor(matRad_interp1(ct.x,[1:ct.cubeDim(2)]',stf(i).isoCenter(1)));
-    y = floor(matRad_interp1(ct.y,[1:ct.cubeDim(1)]',stf(i).isoCenter(2)));
-    z = floor(matRad_interp1(ct.z,[1:ct.cubeDim(3)]',stf(i).isoCenter(3)));
-    
     %Voxel index of Isocenter
-    isoIx = [y x z];
-    
-    
+    isoIx = matRad_world2cubeIndex(stf(i).isoCenter,ct,true);
+    isoIx(isoIx < 1) = 1;
+    isoIx(isoIx > ct.cubeDim) = ct.cubeDim(isoIx > ct.cubeDim);
+
     % generate voi cube for targets
     voiTarget    = zeros(ct.cubeDim);
     voiTarget(isoIx(1),isoIx(2),isoIx(3)) = 1;
