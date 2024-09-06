@@ -1,26 +1,27 @@
-classdef matRad_photonStfGenerator < matRad_externalStfGenerator
+classdef matRad_PhotonStfGenerator < matRad_ExternalStfGenerator
 
     properties (Constant)
         name = 'photonStfGen';
         shortName = 'photonStfGen';
+        possibleRadiationModes = {'photons'};
     end 
 
     
     
     methods 
-        function this = matRad_photonStfGenerator(pln)
-            this@matRad_externalStfGenerator(pln);
-            matRad_cfg = MatRad_Config.instance();
-            addpath(fullfile(matRad_cfg.matRadRoot));
-            if ~isfield(pln, 'propStf')
-                matRad_cfg.dispError('no applicator information in pln struct');
+        function this = matRad_PhotonStfGenerator(pln)
+            if nargin < 1
+                pln = [];
             end
-         end
+            this@matRad_ExternalStfGenerator(pln);
+
+            this.radiationMode = 'photons';
+        end            
     end
 
     methods (Access = protected)        
         function pbMargin = getPbMargin(this)
-            pbMargin = this.pln.propStf.bixelWidth;
+            pbMargin = this.bixelWidth;
         end
         function photonRayPos = initializePhotonRayPos(this,photonRayPos,rotMat_vectors_T,SAD) 
             %photon ray-target position

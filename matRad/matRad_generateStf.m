@@ -1,6 +1,8 @@
+function stf = matRad_generateStf(ct,cst,pln)
 % matRad steering information generation
 %
-%
+% call
+%   stf = matRad_generateStf(ct,cst,pln,visMode)
 %
 % input
 %   ct:         ct cube
@@ -30,12 +32,14 @@
 
 
 if strcmp(pln.radiationMode, 'brachy')
-    brachyStfGen = matRad_brachyStfGenerator(pln);
-    stf = brachyStfGen.generate(ct, cst, 1);
+    brachyStfGen = matRad_BrachyStfGenerator(pln);
+    stf = brachyStfGen.generate(ct, cst);
 elseif strcmp(pln.radiationMode, 'photons')
-    photonStfGen = matRad_photonStfGenerator(pln);
-    stf = photonStfGen.generate(ct, cst, 1);
+    photonStfGen = matRad_PhotonStfGenerator(pln);
+    stf = photonStfGen.generate(ct, cst);
 elseif any(strcmp(pln.radiationMode, {'protons', 'carbon', 'helium'}))
-    ionStfGen = matRad_ionStfGenerator(pln);
-    stf = ionStfGen.generate(ct, cst, 1);
+    ionStfGen = matRad_IonStfGenerator(pln);
+    stf = ionStfGen.generate(ct, cst);
+end
+
 end

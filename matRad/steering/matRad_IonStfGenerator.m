@@ -1,8 +1,9 @@
-classdef matRad_ionStfGenerator < matRad_externalStfGenerator     
+classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator     
 
         properties (Constant)
         name = 'ionStfGen';
         shortName = 'ionStfGen';
+        possibleRadiationModes = {'protons','helium','carbon'};
     end 
     
     
@@ -18,14 +19,11 @@ classdef matRad_ionStfGenerator < matRad_externalStfGenerator
 
 
     methods 
-        function this = matRad_ionStfGenerator(pln)
-            this@matRad_externalStfGenerator(pln);
-            matRad_cfg = MatRad_Config.instance();
-            addpath(fullfile(matRad_cfg.matRadRoot));
-
-            if ~isfield(pln, 'propStf')
-                matRad_cfg.dispError('no applicator information in pln struct');
+        function this = matRad_IonStfGenerator(pln)
+            if nargin < 1
+                pln = [];
             end
+            this@matRad_ExternalStfGenerator(pln);
          end
     end
 

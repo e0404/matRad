@@ -1,8 +1,9 @@
-classdef matRad_brachyStfGenerator < matRad_StfGeneratorBase
+classdef matRad_BrachyStfGenerator < matRad_StfGeneratorBase
 
     properties (Constant)
-        name = 'brachyStfGen';
-        shortName = 'brachyStfGen';
+        name = 'Basic Brachytherapy Template';
+        shortName = 'simpleBrachy';
+        possibleRadiationModels = {'brachy'};
     end
     properties
         numRows
@@ -12,16 +13,11 @@ classdef matRad_brachyStfGenerator < matRad_StfGeneratorBase
     end
     
     methods 
-        function this = matRad_brachyStfGenerator(pln)
-            this@matRad_StfGeneratorBase(pln);
-            matRad_cfg = MatRad_Config.instance();
-            addpath(fullfile(matRad_cfg.matRadRoot));
-
-            
-
-            if ~isfield(pln, 'propStf')
-                matRad_cfg.dispError('no applicator information in pln struct');
+        function this = matRad_BrachyStfGenerator(pln)
+            if nargin < 1
+                pln = [];
             end
+            this@matRad_StfGeneratorBase(pln);
          end
     end
 

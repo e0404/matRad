@@ -1,4 +1,4 @@
-classdef matRad_externalStfGenerator < matRad_StfGeneratorBase
+classdef matRad_ExternalStfGenerator < matRad_StfGeneratorBase
 
     
     properties (Access = protected)
@@ -6,45 +6,33 @@ classdef matRad_externalStfGenerator < matRad_StfGeneratorBase
         ctEntryPoint
     end
 
-    
+    properties
+        gantryAngles
+        couchAngles
+        bixelWidth
+    end
     
 
 
     methods 
-         function this = matRad_externalStfGenerator(pln)
+         function this = matRad_ExternalStfGenerator(pln)
             if nargin < 1
                 pln = [];
             end
             this@matRad_StfGeneratorBase(pln);
+         end
 
-            matRad_cfg = MatRad_Config.instance();
-            addpath(fullfile(matRad_cfg.matRadRoot));
-
-            if ~isfield(pln, 'propStf')
-                matRad_cfg.dispError('no applicator information in pln struct');
-            end
+         function setDefaults(this)
+             this.setDefaults@matRad_StfGeneratorBase();
+             this.gantryAngles = 0;
+             this.couchAngles = 0;
+             this.bixelWidth = 0;
          end
     end
 
     methods (Access = protected)
-        function initializePatientGeometry(this,ct, cst, visMode)
-            initializePatientGeometry@matRad_StfGeneratorBase(this,ct, cst, visMode)
-            matRad_cfg = MatRad_Config.instance;
-
-            pln = this.pln; 
-
-            if ~isfield(this.pln.propStf, 'isoCenter')
-                matRad_cfg.dispWarning('No isocenter specified! Using center-of-mass of all targets!');
-                this.pln.propStf.isoCenter = matRad_getIsoCenter(cst, ct);
-            end
-
-            if numel(this.pln.propStf.gantryAngles) ~= numel(this.pln.propStf.couchAngles)
-                matRad_cfg.dispError('Inconsistent number of gantry and couch angles.');
-            end
-
-            if ~isnumeric(this.pln.propStf.bixelWidth) || this.pln.propStf.bixelWidth <= 0 || ~isfinite(this.pln.propStf.bixelWidth)
-                matRad_cfg.dispError('Bixel width (spot distance) needs to be a real number [mm] larger than zero.');
-            end
+        function initializePatientGeometry(this,ct, cst)
+            initializePatientGeometry@matRad_StfGeneratorBase(this,ct, cst)
         end
         
         function stf = generateSourceGeometry(this,ct, cst, visMode)
@@ -58,28 +46,28 @@ classdef matRad_externalStfGenerator < matRad_StfGeneratorBase
             stf = struct;
     
             % loop over all angles
-            for i = 1:length(pln.propStf.gantryAngles)
+            for i = 1:length(this.gantryAngles)
 
                 % Correct for iso center position. Whit this correction Isocenter is
                 % (0,0,0) [mm]
-                coordsX = this.coordsX_vox*ct.resolution.x - pln.propStf.isoCenter(i,1);
-                coordsY = this.coordsY_vox*ct.resolution.y - pln.propStf.isoCenter(i,2);
-                coordsZ = this.coordsZ_vox*ct.resolution.z - pln.propStf.isoCenter(i,3);
+                coordsX = this.coordsX_vox*ct.resolution.x - this.isoCenter(i,1);
+                coordsY = this.coordsY_vox*ct.resolution.y - this.isoCenter(i,2);
+                coordsZ = this.coordsZ_vox*ct.resolution.z - this.isoCenter(i,3);
 
                 % Save meta information for treatment plan
-                stf(i).gantryAngle   = pln.propStf.gantryAngles(i);
-                stf(i).couchAngle    = pln.propStf.couchAngles(i);
-                stf(i).bixelWidth    = pln.propStf.bixelWidth;
+                stf(i).gantryAngle   = this.gantryAngles(i);
+                stf(i).couchAngle    = this.couchAngles(i);
+                stf(i).bixelWidth    = this.bixelWidth;
                 stf(i).radiationMode = pln.radiationMode;
                 stf(i).machine       = pln.machine;
                 stf(i).SAD           = SAD;
-                stf(i).isoCenter     = pln.propStf.isoCenter(i,:);
+                stf(i).isoCenter     = this.isoCenter(i,:);
 
                 % Get the (active) rotation matrix. We perform a passive/system
                 % rotation with row vector coordinates, which would introduce two
                 % inversions / transpositions of the matrix, thus no changes to the
                 % rotation matrix are necessary
-                rotMat_system_T = matRad_getRotationMatrix(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i));
+                rotMat_system_T = matRad_getRotationMatrix(this.gantryAngles(i),this.couchAngles(i));
 
                 rot_coords = [coordsX coordsY coordsZ]*rotMat_system_T;
 
@@ -89,20 +77,20 @@ classdef matRad_externalStfGenerator < matRad_StfGeneratorBase
 
                 % Take unique rows values for beamlets positions. Calculate position of
                 % central ray for every bixel
-                this.rayPos = unique(pln.propStf.bixelWidth*round([           coordsAtIsoCenterPlane(:,1) ...
+                this.rayPos = unique(this.bixelWidth*round([           coordsAtIsoCenterPlane(:,1) ...
                     zeros(size(coordsAtIsoCenterPlane,1),1) ...
-                    coordsAtIsoCenterPlane(:,2)]/pln.propStf.bixelWidth),'rows');
+                    coordsAtIsoCenterPlane(:,2)]/this.bixelWidth),'rows');
 
                 % pad ray position array if resolution of target voxel grid not sufficient
                maxCtResolution = max([ct.resolution.x ct.resolution.y ct.resolution.z]);
-                if pln.propStf.bixelWidth < maxCtResolution
+                if this.bixelWidth < maxCtResolution
                     origRayPos = this.rayPos;
-                    for j = -floor(maxCtResolution/pln.propStf.bixelWidth):floor(maxCtResolution/pln.propStf.bixelWidth)
-                        for k = -floor(maxCtResolution/pln.propStf.bixelWidth):floor(maxCtResolution/pln.propStf.bixelWidth)
+                    for j = -floor(maxCtResolution/this.bixelWidth):floor(maxCtResolution/this.bixelWidth)
+                        for k = -floor(maxCtResolution/this.bixelWidth):floor(maxCtResolution/this.bixelWidth)
                             if abs(j)+abs(k)==0
                                 continue;
                             end
-                            this.rayPos = [this.rayPos; origRayPos(:,1)+j*pln.propStf.bixelWidth origRayPos(:,2) origRayPos(:,3)+k*pln.propStf.bixelWidth];
+                            this.rayPos = [this.rayPos; origRayPos(:,1)+j*this.bixelWidth origRayPos(:,2) origRayPos(:,3)+k*this.bixelWidth];
                         end
                     end
                 end
@@ -118,9 +106,9 @@ classdef matRad_externalStfGenerator < matRad_StfGeneratorBase
                         x_loc = x(z == uniZ(j));
                         x_min = min(x_loc);
                         x_max = max(x_loc);
-                        x = [x; (x_min:pln.propStf.bixelWidth:x_max)'];
-                        y = [y; zeros((x_max-x_min)/pln.propStf.bixelWidth+1,1)];
-                        z = [z; uniZ(j)*ones((x_max-x_min)/pln.propStf.bixelWidth+1,1)];
+                        x = [x; (x_min:this.bixelWidth:x_max)'];
+                        y = [y; zeros((x_max-x_min)/this.bixelWidth+1,1)];
+                        z = [z; uniZ(j)*ones((x_max-x_min)/this.bixelWidth+1,1)];
                     end
 
                     this.rayPos = [x,y,z];
@@ -145,7 +133,7 @@ classdef matRad_externalStfGenerator < matRad_StfGeneratorBase
 
                 % get (active) rotation matrix
                 % transpose matrix because we are working with row vectors
-                rotMat_vectors_T = transpose(matRad_getRotationMatrix(pln.propStf.gantryAngles(i),pln.propStf.couchAngles(i)));
+                rotMat_vectors_T = transpose(matRad_getRotationMatrix(this.gantryAngles(i),this.couchAngles(i)));
 
 
                 stf(i).sourcePoint = stf(i).sourcePoint_bev*rotMat_vectors_T;
@@ -171,7 +159,7 @@ classdef matRad_externalStfGenerator < matRad_StfGeneratorBase
 
                 % Show progress
                 if matRad_cfg.logLevel > 2
-                    matRad_progress(i,length(pln.propStf.gantryAngles));
+                    matRad_progress(i,length(this.gantryAngles));
                 end
 
                 %% visualization
@@ -224,21 +212,21 @@ classdef matRad_externalStfGenerator < matRad_StfGeneratorBase
                     for j = 1:stf(i).numOfRays
 
                         % Compute border for every bixels
-                        targetPoint_vox_X_1 = stf(i).ray(j).targetPoint_bev(:,1) + pln.propStf.bixelWidth;
+                        targetPoint_vox_X_1 = stf(i).ray(j).targetPoint_bev(:,1) + this.bixelWidth;
                         targetPoint_vox_Y_1 = stf(i).ray(j).targetPoint_bev(:,2);
-                        targetPoint_vox_Z_1 = stf(i).ray(j).targetPoint_bev(:,3) + pln.propStf.bixelWidth;
+                        targetPoint_vox_Z_1 = stf(i).ray(j).targetPoint_bev(:,3) + this.bixelWidth;
 
-                        targetPoint_vox_X_2 = stf(i).ray(j).targetPoint_bev(:,1) + pln.propStf.bixelWidth;
+                        targetPoint_vox_X_2 = stf(i).ray(j).targetPoint_bev(:,1) + this.bixelWidth;
                         targetPoint_vox_Y_2 = stf(i).ray(j).targetPoint_bev(:,2);
-                        targetPoint_vox_Z_2 = stf(i).ray(j).targetPoint_bev(:,3) - pln.propStf.bixelWidth;
+                        targetPoint_vox_Z_2 = stf(i).ray(j).targetPoint_bev(:,3) - this.bixelWidth;
 
-                        targetPoint_vox_X_3 = stf(i).ray(j).targetPoint_bev(:,1) - pln.propStf.bixelWidth;
+                        targetPoint_vox_X_3 = stf(i).ray(j).targetPoint_bev(:,1) - this.bixelWidth;
                         targetPoint_vox_Y_3 = stf(i).ray(j).targetPoint_bev(:,2);
-                        targetPoint_vox_Z_3 = stf(i).ray(j).targetPoint_bev(:,3) - pln.propStf.bixelWidth;
+                        targetPoint_vox_Z_3 = stf(i).ray(j).targetPoint_bev(:,3) - this.bixelWidth;
 
-                        targetPoint_vox_X_4 = stf(i).ray(j).targetPoint_bev(:,1) - pln.propStf.bixelWidth;
+                        targetPoint_vox_X_4 = stf(i).ray(j).targetPoint_bev(:,1) - this.bixelWidth;
                         targetPoint_vox_Y_4 = stf(i).ray(j).targetPoint_bev(:,2);
-                        targetPoint_vox_Z_4 = stf(i).ray(j).targetPoint_bev(:,3) + pln.propStf.bixelWidth;
+                        targetPoint_vox_Z_4 = stf(i).ray(j).targetPoint_bev(:,3) + this.bixelWidth;
 
                         % plot
                         plot3([stf(i).sourcePoint_bev(1) targetPoint_vox_X_1],[stf(i).sourcePoint_bev(2) targetPoint_vox_Y_1],[stf(i).sourcePoint_bev(3) targetPoint_vox_Z_1],'g')
@@ -273,10 +261,10 @@ classdef matRad_externalStfGenerator < matRad_StfGeneratorBase
                     % Plot rotated bixels border.
                     for j = 1:stf(i).numOfRays
                         % Generate rotated projection target points.
-                        targetPoint_vox_1_rotated = [stf(i).ray(j).targetPoint_bev(:,1) + pln.propStf.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) + pln.propStf.bixelWidth]*rotMat_vectors_T;
-                        targetPoint_vox_2_rotated = [stf(i).ray(j).targetPoint_bev(:,1) + pln.propStf.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) - pln.propStf.bixelWidth]*rotMat_vectors_T;
-                        targetPoint_vox_3_rotated = [stf(i).ray(j).targetPoint_bev(:,1) - pln.propStf.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) - pln.propStf.bixelWidth]*rotMat_vectors_T;
-                        targetPoint_vox_4_rotated = [stf(i).ray(j).targetPoint_bev(:,1) - pln.propStf.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) + pln.propStf.bixelWidth]*rotMat_vectors_T;
+                        targetPoint_vox_1_rotated = [stf(i).ray(j).targetPoint_bev(:,1) + this.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) + this.bixelWidth]*rotMat_vectors_T;
+                        targetPoint_vox_2_rotated = [stf(i).ray(j).targetPoint_bev(:,1) + this.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) - this.bixelWidth]*rotMat_vectors_T;
+                        targetPoint_vox_3_rotated = [stf(i).ray(j).targetPoint_bev(:,1) - this.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) - this.bixelWidth]*rotMat_vectors_T;
+                        targetPoint_vox_4_rotated = [stf(i).ray(j).targetPoint_bev(:,1) - this.bixelWidth,stf(i).ray(j).targetPoint_bev(:,2),stf(i).ray(j).targetPoint_bev(:,3) + this.bixelWidth]*rotMat_vectors_T;
 
                         % Plot rotated target points.
                         plot3([stf(i).sourcePoint(1) targetPoint_vox_1_rotated(:,1)],[stf(i).sourcePoint(2) targetPoint_vox_1_rotated(:,2)],[stf(i).sourcePoint(3) targetPoint_vox_1_rotated(:,3)],'g')
@@ -307,7 +295,7 @@ classdef matRad_externalStfGenerator < matRad_StfGeneratorBase
 
                 % Show progress
                 if matRad_cfg.logLevel > 2
-                    matRad_progress(i,length(pln.propStf.gantryAngles));
+                    matRad_progress(i,length(this.gantryAngles));
                 end
             end
         end
