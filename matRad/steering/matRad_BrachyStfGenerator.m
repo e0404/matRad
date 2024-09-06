@@ -3,13 +3,12 @@ classdef matRad_BrachyStfGenerator < matRad_StfGeneratorBase
     properties (Constant)
         name = 'Basic Brachytherapy Template';
         shortName = 'simpleBrachy';
-        possibleRadiationModels = {'brachy'};
+        possibleRadiationModes = {'brachy'};
     end
     properties
-        numRows
-        numCols
-        Xgrid
-        Ygrid
+        needle
+        template
+        bixelWidth
     end
     
     methods 
@@ -18,125 +17,89 @@ classdef matRad_BrachyStfGenerator < matRad_StfGeneratorBase
                 pln = [];
             end
             this@matRad_StfGeneratorBase(pln);
-         end
+        end
+
+        function setDefaults(this)
+            this.setDefaults@matRad_StfGeneratorBase();
+            this.machine = 'HDR';
+
+            this.needle = struct(...
+                'seedDistance',10,...
+                'seedsNo',6);
+
+            this.template.type = 'checkerboard';
+
+            this.bixelWidth = 5;
+        end
     end
 
-    methods (Access = protected)
+    methods (Access = protected)        
 
-        function initializePatientGeometry(this,ct, cst, visMode)
-            initializePatientGeometry@matRad_StfGeneratorBase(this,ct, cst, visMode)
-            matRad_cfg = MatRad_Config.instance;
-
-
-
-            pln = this.pln; 
-
-           
-
-
-            if ~isfield(pln.propStf, 'needle') || ~isfield(pln.propStf.needle, 'seedDistance') || ~isfield(pln.propStf.needle, 'seedsNo')
-                matRad_cfg.dispError('Needle information missing in pln.propStf.needle');
-            end
-            if isfield(pln.propStf.template, 'type') && strcmp(pln.propStf.template.type, 'matrix')
-                pln.propStf.template.activeNeedles = [0 0 0 1 0 1 0 1 0 1 0 0 0;... % 7.0
-                                      0 0 1 0 1 0 0 0 1 0 1 0 0;... % 6.5
-                                      0 1 0 1 0 1 0 1 0 1 0 1 0;... % 6.0
-                                      1 0 1 0 1 0 0 0 1 0 1 0 1;... % 5.5
-                                      0 1 0 1 0 1 0 1 0 1 0 1 0;... % 5.0
-                                      1 0 1 0 1 0 0 0 1 0 1 0 1;... % 4.5
-                                      0 1 0 1 0 1 0 1 0 1 0 1 0;... % 4.0
-                                      1 0 1 0 1 0 0 0 1 0 1 0 1;... % 4.5
-                                      0 1 0 1 0 1 0 1 0 1 0 1 0;... % 3.0
-                                      1 0 1 0 1 0 1 0 1 0 1 0 1;... % 2.5
-                                      0 1 0 1 0 1 0 1 0 1 0 1 0;... % 2.0
-                                      1 0 1 0 1 0 0 0 0 0 1 0 1;... % 1.5
-                                      0 0 0 0 0 0 0 0 0 0 0 0 0];   % 1.0
-                                     %A a B b C c D d E e F f G
-            elseif isfield(pln.propStf.template, 'type') && strcmp(pln.propStf.template.type, 'checkerboard')
-                pln.propStf.template.activeNeedles = this.createCheckerboard(this.numRows,this.numCols);
+        function initializePatientGeometry(this,ct, cst)
+            if ~isa(this.multScen,'matRad_NominalScenario') && ~strcmp(this.multScen,'nomScen')
+                matRad_cfg.dispError('Brachy Therapy does only work with a single nominal scenario model!');
             end
 
-            if ~isfield(pln.propStf, 'template') || ~isfield(pln.propStf.template, 'activeNeedles')
-                matRad_cfg.dispError('Template information missing in pln.propStf.template!');
-            end
-
-
-            if ~isfield(pln.propStf, 'templateRoot')
-                matRad_cfg.dispError('TemplateRoot information missing in pln.propStf.templateRoot!');
-            end
-
-            if ~isa(pln.multScen, 'matRad_NominalScenario') && ~strcmp(pln.multScen, 'nomScen')
-                matRad_cfg.dispError('Brachy Therapy does only work with a nominal scenario for now!');
-            end
-
-            if isempty(this.coordsX_vox) || isempty(this.coordsY_vox) || isempty(this.coordsZ_vox)
-                matRad_cfg.dispWarning('coordsXYZ are empty, boundary cannot be computed.');   % they AREN'T EMPTY here problem is in brachyStfGen
-                throw(MException('MATLAB:class:AbstractMember','coordsXYZ_vox need to be implemented!'));
-            end
+            this.initializePatientGeometry@matRad_StfGeneratorBase(ct,cst);
         end
         
-        
-        function stf = generateSourceGeometry(this, ct, cst, visMode)
-            matRad_cfg = MatRad_Config.instance;
-            pln = this.pln; 
-            %translate to geometric coordinates and save in stf
+        function stf = generateSourceGeometry(this, ct, cst)
+            matRad_cfg = MatRad_Config.instance();
 
-            stf.targetVolume.Xvox = ct.x(this.coordsX_vox); % angabe in mm  
-            stf.targetVolume.Yvox = ct.y(this.coordsY_vox);
-            stf.targetVolume.Zvox = ct.z(this.coordsZ_vox);
+            if ~isfield(this.template,'root')
+                this.template.root = matRad_getTemplateRoot(ct,cst);
+            end
 
-            if strcmp(pln.propStf.template.type, 'matrix')
-                
-                pln.propStf.template.activeNeedles = [0 0 0 1 0 1 0 1 0 1 0 0 0;... % 7.0
-                                      0 0 1 0 1 0 0 0 1 0 1 0 0;... % 6.5
-                                      0 1 0 1 0 1 0 1 0 1 0 1 0;... % 6.0
-                                      1 0 1 0 1 0 0 0 1 0 1 0 1;... % 5.5
-                                      0 1 0 1 0 1 0 1 0 1 0 1 0;... % 5.0
-                                      1 0 1 0 1 0 0 0 1 0 1 0 1;... % 4.5
-                                      0 1 0 1 0 1 0 1 0 1 0 1 0;... % 4.0
-                                      1 0 1 0 1 0 0 0 1 0 1 0 1;... % 4.5
-                                      0 1 0 1 0 1 0 1 0 1 0 1 0;... % 3.0
-                                      1 0 1 0 1 0 1 0 1 0 1 0 1;... % 2.5
-                                      0 1 0 1 0 1 0 1 0 1 0 1 0;... % 2.0
-                                      1 0 1 0 1 0 0 0 0 0 1 0 1;... % 1.5
-                                      0 0 0 0 0 0 0 0 0 0 0 0 0];   % 1.0
-                                     %A a B b C c D d E e F f G
+            if ~isfield(this.needle,'seedDistance') || ~isfield(this.needle,'seedsNo')
+                matRad_cfg.dispError('Needle information missing!');
+            end
+            
+                        
+            stf.targetVolume.Xvox = this.voxTargetWorldCoords(:,1); 
+            stf.targetVolume.Yvox = this.voxTargetWorldCoords(:,2);
+            stf.targetVolume.Zvox = this.voxTargetWorldCoords(:,3);
 
-                [row, col] = find(pln.propStf.template.activeNeedles);
-                templX = col * pln.propStf.bixelWidth + pln.propStf.templateRoot(1) - (13 + 1)/2 * pln.propStf.bixelWidth;
-                templY = row * pln.propStf.bixelWidth + pln.propStf.templateRoot(2) - (13 + 1)/2 * pln.propStf.bixelWidth;
-                templZ = ones(size(col)) + pln.propStf.templateRoot(3);
+            if ~isfield(this.template,'type')
+                matRad_cfg.dispError('No template type specified!');
+            end
 
-            elseif strcmp(pln.propStf.template.type, 'checkerboard')
+            if strcmp(this.template.type, 'manual')
+                %nothing to be done
+                if ~isfield(this.template,'activeNeedles')
+                    matRad_cfg.dispError('No active needle mask defined for template!');
+                end
 
-                [this.Xgrid, this.Ygrid] = meshgrid(stf.targetVolume.Xvox,stf.targetVolume.Yvox);
+            elseif strcmp(this.template.type, 'checkerboard')
 
+                %Bounding box
                 xMin = min(stf.targetVolume.Xvox);
                 xMax = max(stf.targetVolume.Xvox);
                 yMin = min(stf.targetVolume.Yvox);
                 yMax = max(stf.targetVolume.Yvox);
 
-                checkerBoardX = length(xMin:pln.propStf.bixelWidth:xMax);
-                checkerBoardY = length(yMin:pln.propStf.bixelWidth:yMax);
+                %Calculate checkerboard size
+                nCheckerboardX = ceil((xMax - xMin) ./ this.bixelWidth);
+                nCheckerBoardY = ceil((yMax - yMin) ./ this.bixelWidth);
+
+                %Create checkerboard
+                this.template.activeNeedles = this.createCheckerboard(nCheckerboardX, nCheckerBoardY);
 
 
-                pln.propStf.template.activeNeedles = this.createCheckerboard(checkerBoardX, checkerBoardY);
-                [row, col] = find(pln.propStf.template.activeNeedles);
-                templX = col * pln.propStf.bixelWidth + pln.propStf.templateRoot(1) - checkerBoardX / 2 * pln.propStf.bixelWidth;
-                templY = row * pln.propStf.bixelWidth + pln.propStf.templateRoot(2) - checkerBoardY / 2 * pln.propStf.bixelWidth;
-                templZ = ones(size(col)) + pln.propStf.templateRoot(3);
 
             else
-                error('ActiveNeedles of your StfGenerator needs to be implemented!');
+                matRad_cfg.dispError('Template type ''%s'' invalid / not implemented!',this.template.type);
             end
 
+            [row, col] = find(this.template.activeNeedles);            
+            templX = col * this.bixelWidth + this.template.root(1) - (size(this.template.activeNeedles,1) + 1) / 2 * this.bixelWidth;
+            templY = row * this.bixelWidth + this.template.root(2) - (size(this.template.activeNeedles,2) + 1) / 2 * this.bixelWidth;
+            templZ = ones(size(col)) + this.template.root(3);
 
-            
 
             %% meta info from pln
-            stf.radiationMode = pln.radiationMode;
-            stf.numOfSeedsPerNeedle = pln.propStf.needle.seedsNo;
-            stf.numOfNeedles = nnz(pln.propStf.template.activeNeedles);
+            stf.radiationMode = this.radiationMode;
+            stf.numOfSeedsPerNeedle = this.needle.seedsNo;
+            stf.numOfNeedles = sum(this.template.activeNeedles(:));
             stf.totalNumOfBixels = stf.numOfSeedsPerNeedle * stf.numOfNeedles; % means total number of seeds
 
             %% generate 2D template points
@@ -150,8 +113,8 @@ classdef matRad_BrachyStfGenerator < matRad_StfGeneratorBase
             % needles are assumed to go through the template vertically
 
             % needle position
-            d = pln.propStf.needle.seedDistance;
-            seedsNo = pln.propStf.needle.seedsNo;
+            d = this.needle.seedDistance;
+            seedsNo = this.needle.seedsNo;
             needleDist(1, 1, :) = d .* [0:seedsNo - 1]'; % 1x1xN Array with seed positions on needle
             needleDir = needleDist .* [0; 0; 1];
             seedPos_coord_need_seed = needleDir + stf.template;
@@ -228,13 +191,13 @@ classdef matRad_BrachyStfGenerator < matRad_StfGeneratorBase
             % distance outside the TARGET volume or if no seed points are in the
             % target volume
 
-            seedPointsX = stf.seedPoints.x - pln.propStf.templateRoot(1);
-            seedPointsY = stf.seedPoints.y - pln.propStf.templateRoot(2);
-            seedPointsZ = stf.seedPoints.z - pln.propStf.templateRoot(3);
+            seedPointsX = stf.seedPoints.x - this.template.root(1);
+            seedPointsY = stf.seedPoints.y - this.template.root(2);
+            seedPointsZ = stf.seedPoints.z - this.template.root(3);
 
-            targetVolumeX = stf.targetVolume.Xvox - pln.propStf.templateRoot(1);
-            targetVolumeY = stf.targetVolume.Yvox - pln.propStf.templateRoot(2);
-            targetVolumeZ = stf.targetVolume.Zvox - pln.propStf.templateRoot(3);
+            targetVolumeX = stf.targetVolume.Xvox - this.template.root(1);
+            targetVolumeY = stf.targetVolume.Yvox - this.template.root(2);
+            targetVolumeZ = stf.targetVolume.Zvox - this.template.root(3);
 
             if any([max(seedPointsX) >= 4 * max(targetVolumeX), ...
                     min(seedPointsX) <= 4 * min(targetVolumeX), ...
@@ -255,17 +218,12 @@ classdef matRad_BrachyStfGenerator < matRad_StfGeneratorBase
     methods
         function checkerboardMatrix = createCheckerboard(this, numRows, numCols)
             % Initialize checkerboard matrix
-            checkerboardMatrix = zeros(numRows, numCols);
+            checkerboardMatrix = false(numRows, numCols);
 
-            for row = 1:numRows
-                for col = 1:numCols
-                    if mod(row + col, 2) == 0 
-                        checkerboardMatrix(row, col) = 1;
-                    else
-                        checkerboardMatrix(row, col) = 0;
-                    end
-                end
-            end
+            % Fill checkerboard matrix
+            ix = 1:numel(checkerboardMatrix);
+            [i,j] = ind2sub(size(checkerboardMatrix), ix);
+            checkerboardMatrix(ix) = mod(i + j, 2) == 0;
         end
     end
 end

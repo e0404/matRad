@@ -121,22 +121,34 @@ pln.propStf.needle.seedsNo           = 6;
 
 
 pln.propStf.bixelWidth   = 5; % [mm] template grid distance
-pln.propStf.templateRoot = matRad_getTemplateRoot(ct,cst); % mass center of
-% target in x and y and bottom in z
+
+%Template Type
+pln.propStf.template.type = 'checkerboard'; %  'checkerboard' if template is created automatically 
+                                            %  'manual' if template is  needed as preset manually (see below)
+
+%Template Root - mass center of target in x and y and bottom in z
+pln.propStf.template.root = matRad_getTemplateRoot(ct,cst); 
 
 % Here, we define active needles as 1 and inactive needles
 % as 0. This is the x-y plane and needles point in z direction. 
 % A checkerboard pattern is frequantly used. The whole geometry will become
 % clearer when it is displayed in 3D view in the next section.
-
-
-pln.propStf.template.type = 'checkerboard';   %  'matrix' if template is needed as preset manually
-                                                                        %  'checkerboard' if template is taken from data
-
-
-pln.propStf.isoCenter    = matRad_getIsoCenter(cst,ct,0); %  target center
-
-
+if strcmp(pln.propStf.template.type,'manual')
+    pln.propStf.template.activeNeedles = [0 0 0 1 0 1 0 1 0 1 0 0 0;... % 7.0
+        0 0 1 0 1 0 0 0 1 0 1 0 0;... % 6.5
+        0 1 0 1 0 1 0 1 0 1 0 1 0;... % 6.0
+        1 0 1 0 1 0 0 0 1 0 1 0 1;... % 5.5
+        0 1 0 1 0 1 0 1 0 1 0 1 0;... % 5.0
+        1 0 1 0 1 0 0 0 1 0 1 0 1;... % 4.5
+        0 1 0 1 0 1 0 1 0 1 0 1 0;... % 4.0
+        1 0 1 0 1 0 0 0 1 0 1 0 1;... % 4.5
+        0 1 0 1 0 1 0 1 0 1 0 1 0;... % 3.0
+        1 0 1 0 1 0 1 0 1 0 1 0 1;... % 2.5
+        0 1 0 1 0 1 0 1 0 1 0 1 0;... % 2.0
+        1 0 1 0 1 0 0 0 0 0 1 0 1;... % 1.5
+        0 0 0 0 0 0 0 0 0 0 0 0 0];   % 1.0
+       %A a B b C c D d E e F f G
+end
 
 %% II.1 - dose calculation options
 % for dose calculation we use eather the 2D or the 1D formalism proposed by
@@ -166,6 +178,8 @@ if matRad_OptimizerSimulannealbnd.IsAvailable()
 else
     pln.propOpt.optimizer = 'IPOPT';
 end
+
+pln.propOpt.optimizer = 'IPOPT';
 %% II.1 - book keeping
 % Some field names have to be kept although they don't have a direct
 % relevance for brachy therapy.
@@ -179,7 +193,7 @@ pln.numOfFractions          = 1;
 
 %% II.1 - view plan
 % Et voila! Our treatment plan structure is ready. Lets have a look:
-display(pln);
+disp(pln);
 
 
 %% II.2 Steering Seed Positions From STF
@@ -187,15 +201,13 @@ display(pln);
 % target volume, number of needles, seeds and the positions of all needles
 % The one in the end enables visualization.
 
-
-matRad_generateStf;
+stf = matRad_generateStf(ct,cst,pln);
 
 
 %% II.2 - view stf
 % The 3D view is interesting, but we also want to know how the stf struct
 % looks like.
-
-display(stf)
+disp(stf);
 
 %% II.3 - Dose Calculation
 % Let's generate dosimetric information by pre-computing a dose influence 
