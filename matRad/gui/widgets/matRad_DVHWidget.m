@@ -123,6 +123,7 @@ classdef matRad_DVHWidget < matRad_Widget
             end
         
             this.widgetHandle.Children(2).Title.String = strrep(this.selectedCube, '_',' ');
+            this.widgetHandle.Children(2).Title.Color = matRad_cfg.gui.textColor;
         end
         
     end
