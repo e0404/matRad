@@ -100,7 +100,6 @@ classdef matRad_DicomImporter < handle
                 end
             end 
              
-            %We need to set one more variable I forgot to mention above 
             obj.importFiles.useImportGrid = false;
             
                    

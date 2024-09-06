@@ -46,7 +46,6 @@ end
 % read the dosefile itself
 dosedata = dicomread(dosefile);
 obj.importRTDose.dose.cube = double(dosedata);
-% importRTDose.dose.cube = single(dosedata);
 
 % give it an internal name
  % obj.dose.internalName = obj.currDose{12};%?????
