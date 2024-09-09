@@ -92,7 +92,7 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
                 end
 
                 if any(rhoVOITarget)
-                    Counter = 0;
+                    counter = 0;
 
                     %Here we iterate through scenarios to check the required
                     %energies w.r.t lateral position.
@@ -101,7 +101,7 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
                         for shiftScen = 1:this.multScen.totNumShiftScen
                             for rangeShiftScen = 1:this.multScen.totNumRangeScen
                                 if this.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
-                                    Counter = Counter+1;
+                                    counter = counter+1;
 
                                     % compute radiological depths
                                     % http://www.ncbi.nlm.nih.gov/pubmed/4000088, eq 14
@@ -121,8 +121,8 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
 
                                     %We approximate the interface using the rad depth between the last voxel before and the first voxel after the interface 
                                     % This captures the case that the first relevant voxel is a target voxel
-                                    targetEntry(Counter,1:length(entryIx))  = (radDepths(entryIx) + radDepths(entryIx+1)) ./ 2;
-                                    targetExit(Counter,1:length(exitIx))    = (radDepths(exitIx) + radDepths(exitIx+1))   ./ 2;
+                                    targetEntry(counter,1:length(entryIx))  = (radDepths(entryIx) + radDepths(entryIx+1)) ./ 2;
+                                    targetExit(counter,1:length(exitIx))    = (radDepths(exitIx) + radDepths(exitIx+1))   ./ 2;
                                 end
                             end
                         end
@@ -193,12 +193,12 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
 
 
                     % book keeping & calculate focus index
-                    stfElement.ray(j).numOfBixelsPerRay(j) = numel([stfElement.ray(j).energy]);
+                    stfElement.numOfBixelsPerRay(j) = numel([stfElement.ray(j).energy]);
                     currentMinimumFWHM = matRad_interp1(this.machine.meta.LUT_bxWidthminFWHM(1,:)',...
                         this.machine.meta.LUT_bxWidthminFWHM(2,:)',...
                         this.bixelWidth, ...
                         this.machine.meta.LUT_bxWidthminFWHM(2,end));
-                    focusIx  =  ones(stfElement.ray(j).numOfBixelsPerRay(j),1);
+                    focusIx  =  ones(stfElement.numOfBixelsPerRay(j),1);
                     [~, vEnergyIx] = min(abs(bsxfun(@minus,[this.machine.data.energy]',...
                         repmat(stfElement.ray(j).energy,length([this.machine.data]),1))));
 
