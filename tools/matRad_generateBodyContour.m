@@ -25,6 +25,15 @@ function cst = matRad_generateBodyContour(ct,cst,thresholdHU)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+matRad_cfg = MatRad_Config.instance();
+% dicom import needs image processing toolbox -> check if available
+available = matRad_checkEnvDicomRequirements(matRad_cfg.env);
+
+if ~available
+    matRad_cfg.dispError('Image processing toolbox / packages not available!');
+end
+
 if nargin<3
     thresholdHU = -500;
 end
