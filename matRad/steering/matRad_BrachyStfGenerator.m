@@ -17,6 +17,9 @@ classdef matRad_BrachyStfGenerator < matRad_StfGeneratorBase
                 pln = [];
             end
             this@matRad_StfGeneratorBase(pln);
+            if isempty(this.radiationMode)
+                this.radiationMode = 'brachy';
+            end
         end
 
         function setDefaults(this)

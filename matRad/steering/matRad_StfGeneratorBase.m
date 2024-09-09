@@ -32,7 +32,7 @@ classdef matRad_StfGeneratorBase < handle
             if nargin == 1 && ~isempty(pln)
                 this.assignPropertiesFromPln(pln);
             end
-            this.radiationMode = 'brachy';
+            
         end
 
         function setDefaults(this)
@@ -50,6 +50,14 @@ classdef matRad_StfGeneratorBase < handle
                 end
             end
             this.machine = 'Generic';
+        end
+
+        function set.radiationMode(this,mode)
+            if ~any(strcmp(mode,this.possibleRadiationModes))
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Radiation mode %s not supported by stf generator ''%s'' (%s)!',mode,this.name,class(this));
+            end
+            this.radiationMode = mode;
         end
         
         function warnDeprecatedProperty(this,oldProp,msg,newProp)

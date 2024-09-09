@@ -14,6 +14,7 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
         longitudinalSpotSpacing
         maxPBwidth
         availablePeakPos
+        useRangeShifter = false;
     end
 
 
@@ -24,19 +25,23 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
                 pln = [];
             end
             this@matRad_ExternalStfGenerator(pln);
+
+            if isempty(this.radiationMode)
+                this.radiationMode = 'protons';
+            end
          end
     end
 
 
     methods (Access = protected)
-        function initializePatientGeometry(this,ct, cst, visMode)
+        function initializePatientGeometry(this,ct, cst)
             % Initialize the patient geometry
-            initializePatientGeometry@matRad_externalStfGenerator(this,ct, cst, visMode)
+            initializePatientGeometry@matRad_ExternalStfGenerator(this,ct, cst)
             matRad_cfg = MatRad_Config.instance;
             pln = this.pln; 
 
-            if ~isfield(pln.propStf,'useRangeShifter')
-            pln.propStf.useRangeShifter = false;
+            if ~isfield(this,'useRangeShifter')
+            this.useRangeShifter = false;
             end
 
             this.availableEnergies = [this.machine.data.energy];
@@ -45,7 +50,7 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
             availableWidths   = [availableWidths.SisFWHMAtIso];
             this.maxPBwidth        = max(availableWidths) / 2.355;
 
-            if pln.propStf.useRangeShifter
+            if this.useRangeShifter
             %For now only a generic range shifter is used whose thickness is
             %determined by the minimum peak width to play with
             rangeShifterEqD = round(min(this.availablePeakPos)* 1.25);
@@ -54,10 +59,10 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
             matRad_cfg.dispWarning('Use of range shifter enabled. matRad will generate a generic range shifter with WEPL %f to enable ranges below the shortest base data entry.',rangeShifterEqD);
             end
 
-            if ~isfield(pln.propStf, 'longitudinalSpotSpacing')
+            if ~isfield(this, 'longitudinalSpotSpacing')
                 this.longitudinalSpotSpacing = matRad_cfg.propStf.defaultLongitudinalSpotSpacing;
             else
-                this.longitudinalSpotSpacing = pln.propStf.longitudinalSpotSpacing;
+                this.longitudinalSpotSpacing = this.longitudinalSpotSpacing;
             end
 
             if sum(this.availablePeakPos<0)>0
@@ -68,7 +73,7 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
         
         function pbMargin = getPbMargin(this)
             %Compute a margin to account for pencil beam width
-            pbMargin = min(this.maxPBwidth,this.pln.propStf.bixelWidth);
+            pbMargin = min(this.maxPBwidth,this.bixelWidth);
         end
         
         function photonRayPos = initializePhotonRayPos(this,photonRayPos,rotMat_vectors_T,SAD) 
@@ -77,9 +82,9 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
         function rays = initializeEnergy(this,rays,ct) 
             for j = rays.numOfRays:-1:1
 
-                for ShiftScen = 1:this.pln.multScen.totNumShiftScen
+                for shiftScen = 1:this.multScen.totNumshiftScen
                         % ray tracing necessary to determine depth of the target
-                        [alphas,l{ShiftScen},rho{ShiftScen},d12,~] = matRad_siddonRayTracer(rays.isoCenter + this.pln.multScen.isoShift(ShiftScen,:), ...
+                        [alphas,l{shiftScen},rho{shiftScen},d12,~] = matRad_siddonRayTracer(rays.isoCenter + this.multScen.isoShift(shiftScen,:), ...
                             ct.resolution, ...
                             rays.sourcePoint, ...
                             rays.ray(j).targetPoint, ...
@@ -91,7 +96,7 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
 
                 % target hit
                 rhoVOITarget = [];
-                for shiftScen = 1:this.pln.multScen.totNumShiftScen
+                for shiftScen = 1:this.multScen.totNumshiftScen
                     rhoVOITarget = [rhoVOITarget, rho{shiftScen}{end}];
                 end
 
@@ -101,35 +106,32 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
                     %Here we iterate through scenarios to check the required
                     %energies w.r.t lateral position.
                     %TODO: iterate over the linear scenario mask instead?
-                    for CtScen = 1:this.pln.multScen.numOfCtScen
-                        for ShiftScen = 1:this.pln.multScen.totNumShiftScen
-                            for RangeShiftScen = 1:this.pln.multScen.totNumRangeScen
-                                if this.pln.multScen.scenMask(CtScen,ShiftScen,RangeShiftScen)
+                    for ctScen = 1:this.multScen.numOfctScen
+                        for shiftScen = 1:this.multScen.totNumshiftScen
+                            for rangeShiftScen = 1:this.multScen.totNumRangeScen
+                                if this.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
                                     Counter = Counter+1;
 
                                     % compute radiological depths
                                     % http://www.ncbi.nlm.nih.gov/pubmed/4000088, eq 14
-                                    radDepths = cumsum(l{ShiftScen} .* rho{ShiftScen}{CtScen});
+                                    radDepths = cumsum(l{shiftScen} .* rho{shiftScen}{ctScen});
 
-                                    if this.pln.multScen.relRangeShift(RangeShiftScen) ~= 0 || this.pln.multScen.absRangeShift(RangeShiftScen) ~= 0
-                                        radDepths = radDepths +...                                                        % original cube
-                                            rho{ShiftScen}{CtScen}*this.pln.multScen.relRangeShift(RangeShiftScen) +... % rel range shift
-                                            this.pln.multScen.absRangeShift(RangeShiftScen);                           % absolute range shift
+                                    if this.multScen.relRangeShift(rangeShiftScen) ~= 0 || this.multScen.absRangeShift(rangeShiftScen) ~= 0
+                                        radDepths = radDepths +...                                                      % original cube
+                                            rho{shiftScen}{ctScen}*this.multScen.relRangeShift(rangeShiftScen) +...     % rel range shift
+                                            this.multScen.absRangeShift(rangeShiftScen);                                % absolute range shift
                                         radDepths(radDepths < 0) = 0;
                                     end
 
                                     % find target entry & exit
-                                    diff_voi    = [diff([rho{ShiftScen}{end}])];
+                                    diff_voi    = [diff([rho{shiftScen}{end}])];
                                     entryIx = find(diff_voi == 1);
                                     exitIx = find(diff_voi == -1);
 
-                                    %We approximate the interface using the
-                                    %rad depth between the last voxel before
-                                    %and the first voxel after the interface
-                                    %This captures the case that the first
-                                    %relevant voxel is a target voxel
-                                    targetEntry(Counter,1:length(entryIx)) = (radDepths(entryIx) + radDepths(entryIx+1)) ./ 2;
-                                    targetExit(Counter,1:length(exitIx)) = (radDepths(exitIx) + radDepths(exitIx+1)) ./ 2;
+                                    %We approximate the interface using the rad depth between the last voxel before and the first voxel after the interface 
+                                    % This captures the case that the first relevant voxel is a target voxel
+                                    targetEntry(Counter,1:length(entryIx))  = (radDepths(entryIx) + radDepths(entryIx+1)) ./ 2;
+                                    targetExit(Counter,1:length(exitIx))    = (radDepths(exitIx) + radDepths(exitIx+1))   ./ 2;
                                 end
                             end
                         end
@@ -168,7 +170,7 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
 
                         %If we need lower energies than available, consider
                         %range shifter (if asked for)
-                        if any(targetEntry < min(this.availablePeakPos)) && pln.propStf.useRangeShifter
+                        if any(targetEntry < min(this.availablePeakPos)) && this.useRangeShifter
                             %Get Energies to use with range shifter to fill up
                             %non-reachable low-range spots
                             raShiEnergies = this.availableEnergies(this.availablePeakPosRaShi >= targetEntry(k) & min(this.availablePeakPos) > this.availablePeakPosRaShi);
@@ -203,7 +205,7 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
                     rays.ray(j).numOfBixelsPerRay(j) = numel([rays.ray(j).energy]);
                     currentMinimumFWHM = matRad_interp1(this.machine.meta.LUT_bxWidthminFWHM(1,:)',...
                         this.machine.meta.LUT_bxWidthminFWHM(2,:)',...
-                        this.pln.propStf.bixelWidth, ...
+                        this.bixelWidth, ...
                         this.machine.meta.LUT_bxWidthminFWHM(2,end));
                     focusIx  =  ones(rays.ray(j).numOfBixelsPerRay(j),1);
                     [~, vEnergyIx] = min(abs(bsxfun(@minus,[this.machine.data.energy]',...

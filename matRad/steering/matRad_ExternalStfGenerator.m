@@ -3,15 +3,24 @@ classdef matRad_ExternalStfGenerator < matRad_StfGeneratorBase
     
     properties (Access = protected)
         rayPos
-        ctEntryPoint
+        ctEntryPoint        
     end
 
     properties
-        gantryAngles
-        couchAngles
-        bixelWidth
+        gantryAngles = 0;
+        couchAngles  = 0;
+        bixelWidth   = 0;
+        isoCenter
+        fillEmptyBixels
     end
-    
+
+    properties (Dependent)
+        numOfBeams;
+    end
+
+    properties (Access = protected, Hidden)  
+        lockAngleUpdate = false;
+    end
 
 
     methods 
@@ -24,20 +33,97 @@ classdef matRad_ExternalStfGenerator < matRad_StfGeneratorBase
 
          function setDefaults(this)
              this.setDefaults@matRad_StfGeneratorBase();
-             this.gantryAngles = 0;
-             this.couchAngles = 0;
-             this.bixelWidth = 0;
+         end
+
+         function nBeams = get.numOfBeams(this)
+             nBeams = numel(this.gantryAngles);
+             if nBeams ~= numel(this.couchAngles)
+                 matRad_cfg = MatRad_Config.instance();
+                 matRad_cfg.dispWarning('For some reason, we have a different number of beam and couch angles!');
+             end
+         end
+
+         function set.gantryAngles(this,angles)
+            validateattributes(angles,{'numeric'},{'vector','nonempty','nonnan'});            
+            oldAngles = this.gantryAngles;
+            this.gantryAngles = angles;
+            if ~this.lockAngleUpdate
+                this.lockAngleUpdate = true;
+                if numel(this.gantryAngles) > numel(this.couchAngles)
+                    %Append Couch angles with zeros
+                    this.couchAngles = [this.couchAngles zeros(1,numel(this.gantryAngles)-numel(this.couchAngles))];                    
+                elseif numel(this.couchAngles) > numel(this.gantryAngles)
+                    %Try to identify the removed beam angles
+                    [removedAngles,ix] = setdiff(oldAngles,this.gantryAngles);
+                    
+                    nRemovedAngles = numel(this.couchAngles) - numel(this.gantryAngles);
+                    
+                    if ~isempty(ix) && numel(ix) == nRemovedAngles
+                        %Remove corresponding couch angles
+                        this.couchAngles(ix) = [];                    
+                    else                        
+                        this.couchAngles(end-nRemovedAngles+1:end) = [];
+                    end
+                end
+                this.lockAngleUpdate = false;
+            end            
+         end
+
+         function set.couchAngles(this,angles)
+            validateattributes(angles,{'numeric'},{'vector','nonempty','nonnan'});            
+            oldAngles = this.couchAngles;
+            this.couchAngles = angles;
+            if ~this.lockAngleUpdate
+                this.lockAngleUpdate = true;
+                if numel(this.couchAngles) > numel(this.gantryAngles)
+                    %Append Gantry angles with zeros
+                    this.gantryAngles = [this.gantryAngles zeros(1,numel(this.couchAngles)-numel(this.gantryAngles))];                    
+                elseif numel(this.gantryAngles) > numel(this.couchAngles)
+                    %Try to identify the removed couch angles
+                    [removedAngles,ix] = setdiff(oldAngles,this.couchAngles);
+
+                    nRemovedAngles = numel(this.gantryAngles) - numel(this.couchAngles);
+
+                    if ~isempty(ix) && numel(ix) == nRemovedAngles
+                        %Remove corresponding gantry angles
+                        this.gantryAngles(ix) = [];                    
+                    else                        
+                        this.gantryAngles(end-nRemovedAngles+1:end) = [];
+                    end                    
+                end
+                this.lockAngleUpdate = false;
+            end            
          end
     end
 
     methods (Access = protected)
         function initializePatientGeometry(this,ct, cst)
-            initializePatientGeometry@matRad_StfGeneratorBase(this,ct, cst)
+            matRad_cfg = MatRad_Config.instance();
+
+            if this.visMode > 1
+                visBool = true;
+            else 
+                visBool = false;
+            end
+
+            if isempty(this.isoCenter)
+                this.isoCenter = matRad_getIsoCenter(cst,ct,visBool);
+            end
+
+            if ~isequal(size(this.isoCenter),[this.numOfBeams,3]) && ~size(this.isoCenter,1) ~= 1
+                matRad_cfg.dispWarning('IsoCenter invalid, creating new one automatically!');
+                this.isoCenter = matRad_getIsoCenter(cst,ct,visBool);
+            end
+            
+            if size(this.isoCenter,1) ~= 1          
+                this.isoCenter = repmat(this.isoCenter,this.numOfBeams,1);
+            end
+
+            initializePatientGeometry@matRad_StfGeneratorBase(this,ct, cst);
         end
         
-        function stf = generateSourceGeometry(this,ct, cst, visMode)
+        function stf = generateSourceGeometry(this,ct, cst)
             matRad_cfg = MatRad_Config.instance;
-            pln = this.pln;
 
             % prepare structures necessary for particles
             SAD = this.machine.meta.SAD;
@@ -47,29 +133,26 @@ classdef matRad_ExternalStfGenerator < matRad_StfGeneratorBase
     
             % loop over all angles
             for i = 1:length(this.gantryAngles)
-
-                % Correct for iso center position. Whit this correction Isocenter is
-                % (0,0,0) [mm]
-                coordsX = this.coordsX_vox*ct.resolution.x - this.isoCenter(i,1);
-                coordsY = this.coordsY_vox*ct.resolution.y - this.isoCenter(i,2);
-                coordsZ = this.coordsZ_vox*ct.resolution.z - this.isoCenter(i,3);
-
                 % Save meta information for treatment plan
                 stf(i).gantryAngle   = this.gantryAngles(i);
                 stf(i).couchAngle    = this.couchAngles(i);
                 stf(i).bixelWidth    = this.bixelWidth;
-                stf(i).radiationMode = pln.radiationMode;
-                stf(i).machine       = pln.machine;
+                stf(i).radiationMode = this.radiationMode;
+                stf(i).machine       = this.machine.meta.machine;
                 stf(i).SAD           = SAD;
                 stf(i).isoCenter     = this.isoCenter(i,:);
+
+                % Correct for iso center position. Whit this correction Isocenter is
+                % (0,0,0) [mm]
+                isoCoords = this.voxTargetWorldCoords - stf(i).isoCenter;
 
                 % Get the (active) rotation matrix. We perform a passive/system
                 % rotation with row vector coordinates, which would introduce two
                 % inversions / transpositions of the matrix, thus no changes to the
                 % rotation matrix are necessary
-                rotMat_system_T = matRad_getRotationMatrix(this.gantryAngles(i),this.couchAngles(i));
+                rotMat_system_T = matRad_getRotationMatrix(stf(i).gantryAngle,stf(i).couchAngle);
 
-                rot_coords = [coordsX coordsY coordsZ]*rotMat_system_T;
+                rot_coords =  isoCoords*rotMat_system_T;
 
                 % project x and z coordinates to isocenter
                 coordsAtIsoCenterPlane(:,1) = (rot_coords(:,1)*SAD)./(SAD + rot_coords(:,2));
@@ -77,12 +160,12 @@ classdef matRad_ExternalStfGenerator < matRad_StfGeneratorBase
 
                 % Take unique rows values for beamlets positions. Calculate position of
                 % central ray for every bixel
-                this.rayPos = unique(this.bixelWidth*round([           coordsAtIsoCenterPlane(:,1) ...
+                this.rayPos = unique(this.bixelWidth*round([coordsAtIsoCenterPlane(:,1) ...
                     zeros(size(coordsAtIsoCenterPlane,1),1) ...
                     coordsAtIsoCenterPlane(:,2)]/this.bixelWidth),'rows');
 
                 % pad ray position array if resolution of target voxel grid not sufficient
-               maxCtResolution = max([ct.resolution.x ct.resolution.y ct.resolution.z]);
+                maxCtResolution = max([ct.resolution.x ct.resolution.y ct.resolution.z]);
                 if this.bixelWidth < maxCtResolution
                     origRayPos = this.rayPos;
                     for j = -floor(maxCtResolution/this.bixelWidth):floor(maxCtResolution/this.bixelWidth)
@@ -96,7 +179,8 @@ classdef matRad_ExternalStfGenerator < matRad_StfGeneratorBase
                 end
 
                 % remove spaces within rows of bixels for DAO
-                if pln.propOpt.runDAO
+                %TODO Only Photons
+                if this.fillEmptyBixels
                     % create single x,y,z vectors
                     x = this.rayPos(:,1);
                     y = this.rayPos(:,2);
@@ -163,7 +247,7 @@ classdef matRad_ExternalStfGenerator < matRad_StfGeneratorBase
                 end
 
                 %% visualization
-                if visMode > 0
+                if this.visMode > 0
 
                     clf;
                     % first subplot: visualization in bev
@@ -174,7 +258,7 @@ classdef matRad_ExternalStfGenerator < matRad_StfGeneratorBase
                     plot3(rot_coords(:,1),rot_coords(:,2),rot_coords(:,3),'r.')
 
                     % surface rendering
-                    if visMode == 2
+                    if this.visMode == 2
 
                         % generate a 3D rectangular grid centered at isocenter in
                         % voxel coordinates
@@ -249,7 +333,7 @@ classdef matRad_ExternalStfGenerator < matRad_StfGeneratorBase
                     subplot(1,2,2)
 
                     % Plot target coordinates whitout any rotation
-                    plot3(coordsX,coordsY,coordsZ,'r.')
+                    plot3(this.voxTargetWorldCoords(:,1),this.voxTargetWorldCoords(:,2),this.voxTargetWorldCoords(:,3),'r.')
                     hold on;
 
                     % Rotated projection matrix at isocenter
@@ -274,7 +358,7 @@ classdef matRad_ExternalStfGenerator < matRad_StfGeneratorBase
                     end
 
                     % surface rendering
-                    if visMode == 2
+                    if this.visMode == 2
                         surface = patch('Faces',f,'Vertices',v);
                         set(surface,'FaceColor',[0 0 1],'EdgeColor','none','FaceAlpha',.4);
                         lighting gouraud;

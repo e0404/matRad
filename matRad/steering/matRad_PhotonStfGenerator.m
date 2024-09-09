@@ -15,7 +15,9 @@ classdef matRad_PhotonStfGenerator < matRad_ExternalStfGenerator
             end
             this@matRad_ExternalStfGenerator(pln);
 
-            this.radiationMode = 'photons';
+            if isempty(this.radiationMode)
+                this.radiationMode = 'photons';
+            end
         end            
     end
 
