@@ -1,20 +1,22 @@
 classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator     
 
-        properties (Constant)
+    properties (Constant)
         name = 'ionStfGen';
         shortName = 'ionStfGen';
         possibleRadiationModes = {'protons','helium','carbon'};
     end 
-    
+
+    properties
+        longitudinalSpotSpacing;
+        useRangeShifter = false;
+    end
     
     properties (Access = protected)
         availableEnergies
-        pbMargin
-        availablePeakPosRaShi
-        longitudinalSpotSpacing
-        maxPBwidth
         availablePeakPos
-        useRangeShifter = false;
+        availablePeakPosRaShi
+        maxPBwidth
+        pbMargin
     end
 
 
@@ -38,11 +40,6 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
             % Initialize the patient geometry
             initializePatientGeometry@matRad_ExternalStfGenerator(this,ct, cst)
             matRad_cfg = MatRad_Config.instance;
-            pln = this.pln; 
-
-            if ~isfield(this,'useRangeShifter')
-            this.useRangeShifter = false;
-            end
 
             this.availableEnergies = [this.machine.data.energy];
             this.availablePeakPos  = [this.machine.data.peakPos] + [this.machine.data.offset];
@@ -51,18 +48,12 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
             this.maxPBwidth        = max(availableWidths) / 2.355;
 
             if this.useRangeShifter
-            %For now only a generic range shifter is used whose thickness is
-            %determined by the minimum peak width to play with
-            rangeShifterEqD = round(min(this.availablePeakPos)* 1.25);
-            this.availablePeakPosRaShi = this.availablePeakPos - rangeShifterEqD;
+                %For now only a generic range shifter is used whose thickness is
+                %determined by the minimum peak width to play with
+                rangeShifterEqD = round(min(this.availablePeakPos)* 1.25);
+                this.availablePeakPosRaShi = this.availablePeakPos - rangeShifterEqD;
 
-            matRad_cfg.dispWarning('Use of range shifter enabled. matRad will generate a generic range shifter with WEPL %f to enable ranges below the shortest base data entry.',rangeShifterEqD);
-            end
-
-            if ~isfield(this, 'longitudinalSpotSpacing')
-                this.longitudinalSpotSpacing = matRad_cfg.propStf.defaultLongitudinalSpotSpacing;
-            else
-                this.longitudinalSpotSpacing = this.longitudinalSpotSpacing;
+                matRad_cfg.dispWarning('Use of range shifter enabled. matRad will generate a generic range shifter with WEPL %f to enable ranges below the shortest base data entry.',rangeShifterEqD);
             end
 
             if sum(this.availablePeakPos<0)>0
@@ -76,18 +67,18 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
             pbMargin = min(this.maxPBwidth,this.bixelWidth);
         end
         
-        function photonRayPos = initializePhotonRayPos(this,photonRayPos,rotMat_vectors_T,SAD) 
-        end
+        function stfElement = initializeEnergy(this,stfElement,ct) 
 
-        function rays = initializeEnergy(this,rays,ct) 
-            for j = rays.numOfRays:-1:1
+            isoCenterInCubeCoords = matRad_world2cubeCoords(stfElement.isoCenter,ct);
 
-                for shiftScen = 1:this.multScen.totNumshiftScen
+            for j = stfElement.numOfRays:-1:1
+
+                for shiftScen = 1:this.multScen.totNumShiftScen
                         % ray tracing necessary to determine depth of the target
-                        [alphas,l{shiftScen},rho{shiftScen},d12,~] = matRad_siddonRayTracer(rays.isoCenter + this.multScen.isoShift(shiftScen,:), ...
+                        [alphas,l{shiftScen},rho{shiftScen},d12,~] = matRad_siddonRayTracer(isoCenterInCubeCoords + this.multScen.isoShift(shiftScen,:), ...
                             ct.resolution, ...
-                            rays.sourcePoint, ...
-                            rays.ray(j).targetPoint, ...
+                            stfElement.sourcePoint, ...
+                            stfElement.ray(j).targetPoint, ...
                             [ct.cube {this.voiTarget}]);
 
                         %Used for generic range-shifter placement
@@ -96,7 +87,7 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
 
                 % target hit
                 rhoVOITarget = [];
-                for shiftScen = 1:this.multScen.totNumshiftScen
+                for shiftScen = 1:this.multScen.totNumShiftScen
                     rhoVOITarget = [rhoVOITarget, rho{shiftScen}{end}];
                 end
 
@@ -106,8 +97,8 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
                     %Here we iterate through scenarios to check the required
                     %energies w.r.t lateral position.
                     %TODO: iterate over the linear scenario mask instead?
-                    for ctScen = 1:this.multScen.numOfctScen
-                        for shiftScen = 1:this.multScen.totNumshiftScen
+                    for ctScen = 1:this.multScen.numOfCtScen
+                        for shiftScen = 1:this.multScen.totNumShiftScen
                             for rangeShiftScen = 1:this.multScen.totNumRangeScen
                                 if this.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
                                     Counter = Counter+1;
@@ -162,8 +153,8 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
                         matRad_cfg.dispError('Inconsistency during ray tracing. Please check correct assignment and overlap priorities of structure types OAR & TARGET.');
                     end
 
-                    rays.ray(j).energy = [];
-                    rays.ray(j).rangeShifter = [];
+                    stfElement.ray(j).energy = [];
+                    stfElement.ray(j).rangeShifter = [];
 
                     % Save energies in stf struct
                     for k = 1:numel(targetEntry)
@@ -179,21 +170,21 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
                             raShi.eqThickness = rangeShifterEqD;
                             raShi.sourceRashiDistance = round(ctEntryPoint - 2*rangeShifterEqD,-1); %place a little away from entry, round to cms to reduce number of unique settings
 
-                            rays.ray(j).energy = [rays.ray(j).energy raShiEnergies];
-                            rays.ray(j).rangeShifter = [rays.ray(j).rangeShifter repmat(raShi,1,length(raShiEnergies))];
+                            stfElement.ray(j).energy = [stfElement.ray(j).energy raShiEnergies];
+                            stfElement.ray(j).rangeShifter = [stfElement.ray(j).rangeShifter repmat(raShi,1,length(raShiEnergies))];
                         end
 
                         %Normal placement without rangeshifter
                         newEnergies = this.availableEnergies(this.availablePeakPos>=targetEntry(k)&this.availablePeakPos<=targetExit(k));
 
 
-                        rays.ray(j).energy = [rays.ray(j).energy newEnergies];
+                        stfElement.ray(j).energy = [stfElement.ray(j).energy newEnergies];
 
 
                         raShi.ID = 0;
                         raShi.eqThickness = 0;
                         raShi.sourceRashiDistance = 0;
-                        rays.ray(j).rangeShifter = [rays.ray(j).rangeShifter repmat(raShi,1,length(newEnergies))];
+                        stfElement.ray(j).rangeShifter = [stfElement.ray(j).rangeShifter repmat(raShi,1,length(newEnergies))];
                     end
 
 
@@ -202,27 +193,27 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
 
 
                     % book keeping & calculate focus index
-                    rays.ray(j).numOfBixelsPerRay(j) = numel([rays.ray(j).energy]);
+                    stfElement.ray(j).numOfBixelsPerRay(j) = numel([stfElement.ray(j).energy]);
                     currentMinimumFWHM = matRad_interp1(this.machine.meta.LUT_bxWidthminFWHM(1,:)',...
                         this.machine.meta.LUT_bxWidthminFWHM(2,:)',...
                         this.bixelWidth, ...
                         this.machine.meta.LUT_bxWidthminFWHM(2,end));
-                    focusIx  =  ones(rays.ray(j).numOfBixelsPerRay(j),1);
+                    focusIx  =  ones(stfElement.ray(j).numOfBixelsPerRay(j),1);
                     [~, vEnergyIx] = min(abs(bsxfun(@minus,[this.machine.data.energy]',...
-                        repmat(rays.ray(j).energy,length([this.machine.data]),1))));
+                        repmat(stfElement.ray(j).energy,length([this.machine.data]),1))));
 
                     % get for each spot the focus index
-                    for k = 1:rays.numOfBixelsPerRay(j)
+                    for k = 1:stfElement.numOfBixelsPerRay(j)
                         focusIx(k) = find(this.machine.data(vEnergyIx(k)).initFocus.SisFWHMAtIso > currentMinimumFWHM,1,'first');
                     end
 
-                    rays.ray(j).focusIx = focusIx';
+                    stfElement.ray(j).focusIx = focusIx';
 
                     %Get machine bounds
-                    numParticlesPerMU = 1e6*ones(1,rays.numOfBixelsPerRay(j));
-                    minMU = zeros(1,rays.numOfBixelsPerRay(j));
-                    maxMU = Inf(1,rays.numOfBixelsPerRay(j));
-                    for k = 1:rays.numOfBixelsPerRay(j)
+                    numParticlesPerMU = 1e6*ones(1,stfElement.numOfBixelsPerRay(j));
+                    minMU = zeros(1,stfElement.numOfBixelsPerRay(j));
+                    maxMU = Inf(1,stfElement.numOfBixelsPerRay(j));
+                    for k = 1:stfElement.numOfBixelsPerRay(j)
                         if isfield(this.machine.data(vEnergyIx(k)),'MUdata')
                             MUdata = this.machine.data(vEnergyIx(k)).MUdata;
                             if isfield(MUdata,'numParticlesPerMU')
@@ -239,13 +230,13 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
                         end
                     end
 
-                    rays.ray(j).numParticlesPerMU = numParticlesPerMU;
-                    rays.ray(j).minMU = minMU;
-                    rays.ray(j).maxMU = maxMU;
+                    stfElement.ray(j).numParticlesPerMU = numParticlesPerMU;
+                    stfElement.ray(j).minMU = minMU;
+                    stfElement.ray(j).maxMU = maxMU;
 
                 else % target not hit
-                    rays.ray(j)               = [];
-                    rays.numOfBixelsPerRay(j) = [];
+                    stfElement.ray(j)               = [];
+                    stfElement.numOfBixelsPerRay(j) = [];
                 end
 
             end

@@ -389,7 +389,6 @@ classdef matRad_ExternalStfGenerator < matRad_StfGeneratorBase
              for j = 1:rayTargetPos.numOfRays
                   rayTargetPos.ray(j).rayPos      = rayTargetPos.ray(j).rayPos_bev*rotMat_vectors_T;
                   rayTargetPos.ray(j).targetPoint = rayTargetPos.ray(j).targetPoint_bev*rotMat_vectors_T;
-                  rayTargetPos = this.initializePhotonRayPos(rayTargetPos,rotMat_vectors_T,SAD);
              end
         end
 
@@ -400,10 +399,6 @@ classdef matRad_ExternalStfGenerator < matRad_StfGeneratorBase
         function postProc = initializePostProcessing(this,postProc)
             
         end
-
-        function photonRayPos = initializePhotonRayPos(this,photonRayPos)
-        end
-
     end
 end
 
