@@ -41,7 +41,7 @@ function test_scenarioAbstractStaticAvailableModels()
     assertTrue(all(cellfun(@ischar,availableTypes)));
 
     for i = 1:numel(availableTypes)
-        model = matRad_ScenarioModel.create(availableTypes{i},ct);
+        model = matRad_ScenarioModel.create(availableTypes{i});
         assertTrue(isa(model,'matRad_ScenarioModel'));
         assertEqual(model.shortName,availableTypes{i});
     end
