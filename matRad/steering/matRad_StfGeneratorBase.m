@@ -1,25 +1,42 @@
 classdef matRad_StfGeneratorBase < handle
+% matRad_StfGeneratorBase: Abstract Superclass for Steering information 
+%   generators. Steering information is used to guide the dose calculation
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2024 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     properties (Constant, Abstract)
-        name;
-        shortName;
-        possibleRadiationModes;
+        name;                       %Descriptive Name
+        shortName;                  %Short name for referencing
+        possibleRadiationModes;     %Possible radiation modes for the respective StfGenerator
     end
 
     properties
-        visMode = 0;
-        addMargin = true;
-        multScen;
-        bioParam;
-        radiationMode;
-        machine;
+        visMode = 0;                %Visualization Options
+        addMargin = true;           %Add margins to target (for numerical stability and robustness)
+        multScen;                   %Scenario Model
+        bioParam;                   %Biological Model
+        radiationMode;              %Radiation Mode
+        machine;                    %Machine
     end
 
     properties (Access = protected)
-        pln
-        cubeDim
-        voxTargetWorldCoords
-        voiTarget
+        pln                         %matRad Plan struct
+        cubeDim                     %Underlying CT dimension
+        voxTargetWorldCoords        %Target voxels in world coordinates
+        voiTarget                   %merged Target VOI cube
+        ct                          %ct reference during generation
+        cst                         %cst reference during generation
     end
 
     properties (Constant)
@@ -28,6 +45,8 @@ classdef matRad_StfGeneratorBase < handle
 
     methods 
         function this = matRad_StfGeneratorBase(pln)
+            % Constructs standalone StfGenerator with or without pln
+
             this.setDefaults();
             if nargin == 1 && ~isempty(pln)
                 this.assignPropertiesFromPln(pln);
@@ -36,6 +55,8 @@ classdef matRad_StfGeneratorBase < handle
         end
 
         function setDefaults(this)
+            % set default values from MatRad_Config
+
             matRad_cfg = MatRad_Config.instance();
             defaultPropStf = matRad_cfg.defaults.propStf;
             fields = fieldnames(defaultPropStf);
@@ -53,6 +74,8 @@ classdef matRad_StfGeneratorBase < handle
         end
 
         function set.radiationMode(this,mode)
+            % radiationMode setter
+
             if ~any(strcmp(mode,this.possibleRadiationModes))
                 matRad_cfg = MatRad_Config.instance();
                 matRad_cfg.dispError('Radiation mode %s not supported by stf generator ''%s'' (%s)!',mode,this.name,class(this));
@@ -76,6 +99,8 @@ classdef matRad_StfGeneratorBase < handle
         end
 
         function assignPropertiesFromPln(this,pln,warnWhenPropertyChanged)
+            % Assign properties from pln.propStf to the stf generator
+
             matRad_cfg = MatRad_Config.instance();
             
             %Set Scenario Model
@@ -161,6 +186,12 @@ classdef matRad_StfGeneratorBase < handle
     methods 
 
         function stf = generate(this, ct, cst)  
+            % Generate steering information for the given ct and cst
+            % This is a base class function performing the following tasks
+            % 1. Checking the input
+            % 2. Initializing the patient geometry (protected properties)
+            % 3. Generating the source information (and thus the "stf")
+
             % Instance of MatRad_Config class
             matRad_cfg = MatRad_Config.instance();
             matRad_cfg.dispInfo('matRad: Generating stf struct with generator ''%s''... ',this.name);
@@ -178,26 +209,31 @@ classdef matRad_StfGeneratorBase < handle
                 end
             end
 
-            this.initializePatientGeometry(ct, cst);
-            stf = this.generateSourceGeometry(ct, cst);
+            this.ct = ct;
+            this.cst = cst;
+
+            this.initializePatientGeometry();
+            stf = this.generateSourceGeometry();
         end
     end
 
     methods (Access = protected)
 
-        function initializePatientGeometry(this, ct, cst)
+        function initializePatientGeometry(this)
+            % Basic Initialization of the Patient Geometry
+
             matRad_cfg = MatRad_Config.instance();
             
             % Initialize patient geometry
             V = [];
             %ct = matRad_calcWaterEqD(ct,this.radiationMode);  
 
-            isTarget = cellfun(@(voiType) isequal(voiType, 'TARGET'), cst(:,3));
+            isTarget = cellfun(@(voiType) isequal(voiType, 'TARGET'), this.cst(:,3));
             if ~any(isTarget)
                 matRad_cfg.dispError('No target found in cst. Please designate at least one VOI as ''TARGET''!');
             end
 
-            hasObjective = ~cellfun(@isempty, cst(:,6));
+            hasObjective = ~cellfun(@isempty, this.cst(:,6));
             useTargetForBixelPlacement = isTarget & hasObjective;
 
             if ~any(useTargetForBixelPlacement)
@@ -206,16 +242,16 @@ classdef matRad_StfGeneratorBase < handle
             end
 
             % Now add all used target voxels to the voxel list
-            for i = 1:size(cst, 1)
+            for i = 1:size(this.cst, 1)
                 if useTargetForBixelPlacement(i)
-                    V = [V; cst{i,4}{1}];  
+                    V = [V; this.cst{i,4}{1}];  
                 end
             end
 
             % Remove double voxels
             V = unique(V);
             % generate voi cube for targets
-            this.voiTarget = zeros(ct.cubeDim);
+            this.voiTarget = zeros(this.ct.cubeDim);
             this.voiTarget(V) = 1;
 
             % Margin info
@@ -226,11 +262,11 @@ classdef matRad_StfGeneratorBase < handle
                 assumeRangeMargin = this.multScen.maxAbsRangeShift + this.multScen.maxRelRangeShift + pbMargin;
 
                 % add margin - account for voxel resolution, the maximum shift scenario and the current bixel width.
-                margin.x = max([ct.resolution.x max(abs(this.multScen.isoShift(:,1)) + assumeRangeMargin)]);
-                margin.y = max([ct.resolution.y max(abs(this.multScen.isoShift(:,2)) + assumeRangeMargin)]);
-                margin.z = max([ct.resolution.z max(abs(this.multScen.isoShift(:,3)) + assumeRangeMargin)]);
+                margin.x = max([this.ct.resolution.x max(abs(this.multScen.isoShift(:,1)) + assumeRangeMargin)]);
+                margin.y = max([this.ct.resolution.y max(abs(this.multScen.isoShift(:,2)) + assumeRangeMargin)]);
+                margin.z = max([this.ct.resolution.z max(abs(this.multScen.isoShift(:,3)) + assumeRangeMargin)]);
 
-                this.voiTarget = matRad_addMargin(this.voiTarget, cst, ct.resolution, margin, true);
+                this.voiTarget = matRad_addMargin(this.voiTarget, this.cst, this.ct.resolution, margin, true);
                 V = find(this.voiTarget > 0);
             end
 
@@ -240,36 +276,37 @@ classdef matRad_StfGeneratorBase < handle
             end
 
             % get world coordinate system
-            ct = matRad_getWorldAxes(ct);
+            this.ct = matRad_getWorldAxes(this.ct);
 
             % Convert linear indices to 3D voxel coordinates
-            this.voxTargetWorldCoords = matRad_cubeIndex2worldCoords(V, ct);
+            this.voxTargetWorldCoords = matRad_cubeIndex2worldCoords(V, this.ct);
 
             % take only voxels inside patient
-            V = [cst{:,4}];
+            V = [this.cst{:,4}];
             V = unique(vertcat(V{:}));
 
             % ignore densities outside of contours
-            eraseCtDensMask = ones(prod(ct.cubeDim), 1);
+            eraseCtDensMask = ones(prod(this.ct.cubeDim), 1);
             eraseCtDensMask(V) = 0;
-            for i = 1:ct.numOfCtScen
-                ct.cube{i}(eraseCtDensMask == 1) = 0;
+            for i = 1:this.ct.numOfCtScen
+                this.ct.cube{i}(eraseCtDensMask == 1) = 0;
             end
 
             
         end
 
         function pbMargin = getPbMargin(this)
+            % Get the geometrical margin to add to the target (e.g. for safe spot placement or because of robustness)
             pbMargin = 0;
         end
     end
 
     methods (Access = protected)
-        % the actual calculation method which returns the final stf struct.
-        % Needs to be implemented in non-abstract subclasses.
-        % (Internal logic is often split into multiple methods in order to
-        % make the whole calculation more modular)
-        function stf = generateSourceGeometry(this, ct, cst)
+        function stf = generateSourceGeometry(this)
+            % the actual calculation method which returns the final stf struct.
+            % Needs to be implemented in non-abstract subclasses.
+            % (Internal logic is often split into multiple methods in order to
+            % make the whole calculation more modular)
             throw(MException('MATLAB:class:AbstractMember','Abstract function generateSourceGeometry of your StfGenerator needs to be implemented!'));
         end
     end

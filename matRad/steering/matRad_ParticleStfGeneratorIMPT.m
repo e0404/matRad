@@ -1,8 +1,23 @@
-classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator     
+classdef matRad_ParticleStfGeneratorIMPT < matRad_ExternalStfGeneratorIMRT     
+% matRad_ParticleStfGenerator: Abstract Superclass for Steering information 
+%   generators. Steering information is used to guide the dose calculation
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2024 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     properties (Constant)
-        name = 'ionStfGen';
-        shortName = 'ionStfGen';
+        name = 'Particle IMPT stf Generator';
+        shortName = 'ParticleIMPT';
         possibleRadiationModes = {'protons','helium','carbon'};
     end 
 
@@ -22,11 +37,11 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
 
 
     methods 
-        function this = matRad_IonStfGenerator(pln)
+        function this = matRad_ParticleStfGeneratorIMPT(pln)
             if nargin < 1
                 pln = [];
             end
-            this@matRad_ExternalStfGenerator(pln);
+            this@matRad_ExternalStfGeneratorIMRT(pln);
 
             if isempty(this.radiationMode)
                 this.radiationMode = 'protons';
@@ -36,9 +51,10 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
 
 
     methods (Access = protected)
-        function initializePatientGeometry(this,ct, cst)
-            % Initialize the patient geometry
-            initializePatientGeometry@matRad_ExternalStfGenerator(this,ct, cst)
+        function initializePatientGeometry(this)
+            % Initialize the patient geometry for particles
+
+            initializePatientGeometry@matRad_ExternalStfGeneratorIMRT(this)
             matRad_cfg = MatRad_Config.instance;
 
             this.availableEnergies = [this.machine.data.energy];
@@ -64,22 +80,24 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
         
         function pbMargin = getPbMargin(this)
             %Compute a margin to account for pencil beam width
+
             pbMargin = min(this.maxPBwidth,this.bixelWidth);
         end
         
-        function stfElement = initializeEnergy(this,stfElement,ct) 
+        function stfElement = setSourceEnergyOnBeam(this,stfElement) 
+            %Assigns the max particle machine energy layers to all rays
 
-            isoCenterInCubeCoords = matRad_world2cubeCoords(stfElement.isoCenter,ct);
+            isoCenterInCubeCoords = matRad_world2cubeCoords(stfElement.isoCenter,this.ct);
 
             for j = stfElement.numOfRays:-1:1
 
                 for shiftScen = 1:this.multScen.totNumShiftScen
                         % ray tracing necessary to determine depth of the target
                         [alphas,l{shiftScen},rho{shiftScen},d12,~] = matRad_siddonRayTracer(isoCenterInCubeCoords + this.multScen.isoShift(shiftScen,:), ...
-                            ct.resolution, ...
+                            this.ct.resolution, ...
                             stfElement.sourcePoint, ...
                             stfElement.ray(j).targetPoint, ...
-                            [ct.cube {this.voiTarget}]);
+                            [this.ct.cube {this.voiTarget}]);
 
                         %Used for generic range-shifter placement
                         this.ctEntryPoint = alphas(1) * d12;
@@ -242,11 +260,11 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
             end
         end
 
-        function  postProc = initializePostProcessing(this,postProc)
+        function  stfElement = finalizeBeam(this,stfElement)
 
             % get minimum energy per field
-            minEnergy = min([postProc.ray.energy]);
-            maxEnergy = max([postProc.ray.energy]);
+            minEnergy = min([stfElement.ray.energy]);
+            maxEnergy = max([stfElement.ray.energy]);
 
             % get corresponding peak position
             minPeakPos  = this.machine.data(minEnergy == this.availableEnergies).peakPos;
@@ -255,7 +273,7 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
             % find set of energyies with adequate spacing
 
 
-            postProc.longitudinalSpotSpacing = this.longitudinalSpotSpacing;
+            stfElement.longitudinalSpotSpacing = this.longitudinalSpotSpacing;
 
             tolerance              = this.longitudinalSpotSpacing/10;
 
@@ -275,20 +293,20 @@ classdef matRad_IonStfGenerator < matRad_ExternalStfGenerator
                 ixRun = ixRun + 1;
             end
 
-            for j = postProc.numOfRays:-1:1
-                for k = postProc.numOfBixelsPerRay(j):-1:1
-                    maskEnergy = postProc.ray(j).energy(k) == this.availableEnergies;
+            for j = stfElement.numOfRays:-1:1
+                for k = stfElement.numOfBixelsPerRay(j):-1:1
+                    maskEnergy = stfElement.ray(j).energy(k) == this.availableEnergies;
                     if ~useEnergyBool(maskEnergy)
-                        postProc.ray(j).energy(k)         = [];
-                        postProc.ray(j).focusIx(k)        = [];
-                        postProc.ray(j).rangeShifter(k)   = [];
-                        postProc.numOfBixelsPerRay(j) = postProc.numOfBixelsPerRay(j) - 1;
+                        stfElement.ray(j).energy(k)         = [];
+                        stfElement.ray(j).focusIx(k)        = [];
+                        stfElement.ray(j).rangeShifter(k)   = [];
+                        stfElement.numOfBixelsPerRay(j) = stfElement.numOfBixelsPerRay(j) - 1;
                     end
                 end
-                if isempty(postProc.ray(j).energy)
-                    postProc.ray(j) = [];
-                    postProc.numOfBixelsPerRay(j) = [];
-                    postProc.numOfRays = postProc.numOfRays - 1;
+                if isempty(stfElement.ray(j).energy)
+                    stfElement.ray(j) = [];
+                    stfElement.numOfBixelsPerRay(j) = [];
+                    stfElement.numOfRays = stfElement.numOfRays - 1;
                 end
             end
 

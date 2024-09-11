@@ -1,4 +1,4 @@
-classdef matRad_ExternalStfGenerator < matRad_StfGeneratorBase
+classdef matRad_ExternalStfGeneratorIMRT < matRad_StfGeneratorBase
 
     
     properties (Access = protected)
@@ -12,6 +12,7 @@ classdef matRad_ExternalStfGenerator < matRad_StfGeneratorBase
         bixelWidth   = 0;
         isoCenter
         fillEmptyBixels
+        centered
     end
 
     properties (Dependent)
@@ -24,7 +25,8 @@ classdef matRad_ExternalStfGenerator < matRad_StfGeneratorBase
 
 
     methods 
-         function this = matRad_ExternalStfGenerator(pln)
+         function this = matRad_ExternalStfGeneratorIMRT(pln)
+            % Constructs ExternalStfGenerator with or without pln
             if nargin < 1
                 pln = [];
             end
@@ -32,18 +34,24 @@ classdef matRad_ExternalStfGenerator < matRad_StfGeneratorBase
          end
 
          function setDefaults(this)
-             this.setDefaults@matRad_StfGeneratorBase();
+            % Set default values for ExternalStfGenerator
+
+            this.setDefaults@matRad_StfGeneratorBase();
          end
 
          function nBeams = get.numOfBeams(this)
-             nBeams = numel(this.gantryAngles);
-             if nBeams ~= numel(this.couchAngles)
-                 matRad_cfg = MatRad_Config.instance();
-                 matRad_cfg.dispWarning('For some reason, we have a different number of beam and couch angles!');
-             end
+            % Return number of beams obtained from angles
+
+            nBeams = numel(this.gantryAngles);
+            if nBeams ~= numel(this.couchAngles)
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispWarning('For some reason, we have a different number of beam and couch angles!');
+            end
          end
 
          function set.gantryAngles(this,angles)
+            % Set gantry angles and update couch angles if necessary
+
             validateattributes(angles,{'numeric'},{'vector','nonempty','nonnan'});            
             oldAngles = this.gantryAngles;
             this.gantryAngles = angles;
@@ -70,6 +78,8 @@ classdef matRad_ExternalStfGenerator < matRad_StfGeneratorBase
          end
 
          function set.couchAngles(this,angles)
+            % Set couch angles and update gantry angles if necessary
+
             validateattributes(angles,{'numeric'},{'vector','nonempty','nonnan'});            
             oldAngles = this.couchAngles;
             this.couchAngles = angles;
@@ -97,7 +107,9 @@ classdef matRad_ExternalStfGenerator < matRad_StfGeneratorBase
     end
 
     methods (Access = protected)
-        function initializePatientGeometry(this,ct, cst)
+        function initializePatientGeometry(this)
+            % Initialize patient geometry for external beam therapy geometry
+
             matRad_cfg = MatRad_Config.instance();
 
             if this.visMode > 1
@@ -107,22 +119,24 @@ classdef matRad_ExternalStfGenerator < matRad_StfGeneratorBase
             end
 
             if isempty(this.isoCenter)
-                this.isoCenter = matRad_getIsoCenter(cst,ct,visBool);
+                this.isoCenter = matRad_getIsoCenter(this.cst,this.ct,visBool);
             end
 
             if ~isequal(size(this.isoCenter),[this.numOfBeams,3]) && ~size(this.isoCenter,1) ~= 1
                 matRad_cfg.dispWarning('IsoCenter invalid, creating new one automatically!');
-                this.isoCenter = matRad_getIsoCenter(cst,ct,visBool);
+                this.isoCenter = matRad_getIsoCenter(this.cst,this.ct,visBool);
             end
             
             if size(this.isoCenter,1) ~= 1          
                 this.isoCenter = repmat(this.isoCenter,this.numOfBeams,1);
             end
 
-            initializePatientGeometry@matRad_StfGeneratorBase(this,ct, cst);
+            initializePatientGeometry@matRad_StfGeneratorBase(this);
         end
         
-        function stf = generateSourceGeometry(this,ct, cst)
+        function stf = generateSourceGeometry(this)
+            % Generate basic source geometry (beams & rays) for external beam therapy
+
             matRad_cfg = MatRad_Config.instance;
 
             % prepare structures necessary for particles
@@ -165,7 +179,7 @@ classdef matRad_ExternalStfGenerator < matRad_StfGeneratorBase
                     coordsAtIsoCenterPlane(:,2)]/this.bixelWidth),'rows');
 
                 % pad ray position array if resolution of target voxel grid not sufficient
-                maxCtResolution = max([ct.resolution.x ct.resolution.y ct.resolution.z]);
+                maxCtResolution = max([this.ct.resolution.x this.ct.resolution.y this.ct.resolution.z]);
                 if this.bixelWidth < maxCtResolution
                     origRayPos = this.rayPos;
                     for j = -floor(maxCtResolution/this.bixelWidth):floor(maxCtResolution/this.bixelWidth)
@@ -227,7 +241,7 @@ classdef matRad_ExternalStfGenerator < matRad_StfGeneratorBase
                 % loop over all rays to determine meta information for each ray
                 stf(i).numOfBixelsPerRay = ones(1,stf(i).numOfRays);
 
-                stf(i) = this.initializeEnergy(stf(i),ct);
+                stf(i) = this.setSourceEnergyOnBeam(stf(i));
 
                 if ~isfield(stf(i).ray,'energy')
                     matRad_cfg.dispError('Error generating stf struct: no suitable energies found. Check if bixelwidth is too large.');
@@ -236,7 +250,7 @@ classdef matRad_ExternalStfGenerator < matRad_StfGeneratorBase
                 stf(i).numOfRays = size(stf(i).ray,2);
 
                 stf(i).longitudinalSpotSpacing = []; % ensures the stf(i) structs have the same structures when the next line comes
-                stf(i) = this.initializePostProcessing(stf(i)); % Post Processing for Ions 
+                stf(i) = this.finalizeBeam(stf(i)); % Post Processing for Ions 
 
                 % save total number of bixels
                 stf(i).totalNumOfBixels = sum(stf(i).numOfBixelsPerRay);
@@ -262,22 +276,22 @@ classdef matRad_ExternalStfGenerator < matRad_StfGeneratorBase
 
                         % generate a 3D rectangular grid centered at isocenter in
                         % voxel coordinates
-                        [X,Y,Z] = meshgrid((1:ct.cubeDim(2))-stf(i).isoCenter(1)/ct.resolution.x, ...
-                            (1:ct.cubeDim(1))-stf(i).isoCenter(2)/ct.resolution.y, ...
-                            (1:ct.cubeDim(3))-stf(i).isoCenter(3)/ct.resolution.z);
+                        [X,Y,Z] = meshgrid((1:this.ct.cubeDim(2))-stf(i).isoCenter(1)/this.ct.resolution.x, ...
+                            (1:this.ct.cubeDim(1))-stf(i).isoCenter(2)/this.ct.resolution.y, ...
+                            (1:this.ct.cubeDim(3))-stf(i).isoCenter(3)/this.ct.resolution.z);
 
                         % computes surface
-                        patSurfCube      = 0*ct.cube{1};
-                        idx              = [cst{:,4}];
+                        patSurfCube      = 0*this.ct.cube{1};
+                        idx              = [this.cst{:,4}];
                         idx              = unique(vertcat(idx{:}));
                         patSurfCube(idx) = 1;
 
                         [f,v] = isosurface(X,Y,Z,patSurfCube,.5);
 
                         % convert isosurface from voxel to [mm]
-                        v(:,1) = v(:,1)*ct.resolution.x;
-                        v(:,2) = v(:,2)*ct.resolution.y;
-                        v(:,3) = v(:,3)*ct.resolution.z;
+                        v(:,1) = v(:,1)*this.ct.resolution.x;
+                        v(:,2) = v(:,2)*this.ct.resolution.y;
+                        v(:,3) = v(:,3)*this.ct.resolution.z;
 
                         % rotate surface
                         rotated_surface = v*rotMat_system_T;
@@ -386,17 +400,22 @@ classdef matRad_ExternalStfGenerator < matRad_StfGeneratorBase
 
         function rayTargetPos = initializeRayTargetPosition(this,rayTargetPos,rotMat_vectors_T,SAD)
              % Save ray and target position in lps system.
+
              for j = 1:rayTargetPos.numOfRays
                   rayTargetPos.ray(j).rayPos      = rayTargetPos.ray(j).rayPos_bev*rotMat_vectors_T;
                   rayTargetPos.ray(j).targetPoint = rayTargetPos.ray(j).targetPoint_bev*rotMat_vectors_T;
              end
         end
 
-        function rays = initializeEnergy(this,rays)
+        function stfElement = setSourceEnergyOnBeam(this,stfElement)
+            % Abstract method to set source energy on beam. Implemented in Subclasses
+
+            throw(MException('MATLAB:class:AbstractMember','This method is not implemented in the base class'));
         end
 
 
-        function postProc = initializePostProcessing(this,postProc)
+        function stfElement = finalizeBeam(this,stfElement)
+            % Base method to set source energy on beam. Empty by default
             
         end
     end

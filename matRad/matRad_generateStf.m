@@ -35,10 +35,10 @@ if strcmp(pln.radiationMode, 'brachy')
     brachyStfGen = matRad_BrachyStfGenerator(pln);
     stf = brachyStfGen.generate(ct, cst);
 elseif strcmp(pln.radiationMode, 'photons')
-    photonStfGen = matRad_PhotonStfGenerator(pln);
+    photonStfGen = matRad_PhotonStfGeneratorIMRT(pln);
     stf = photonStfGen.generate(ct, cst);
 elseif any(strcmp(pln.radiationMode, {'protons', 'carbon', 'helium'}))
-    ionStfGen = matRad_IonStfGenerator(pln);
+    ionStfGen = matRad_ParticleStfGeneratorIMPT(pln);
     stf = ionStfGen.generate(ct, cst);
 end
 
