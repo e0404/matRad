@@ -54,9 +54,9 @@ if ~isempty(obj.allfiles)
     
     % Arrays of slice locations to find z resolution 
     % if it is not given initially in the files 
-    LocationsArray1 = ones(1, numel(obj.allfiles(:,1))); 
-    LocationsArray = LocationsArray1*1000;
+    LocationsArray = NaN(1, numel(obj.allfiles(:,1))); 
     ThBool = [];
+
     numOfFiles = numel(obj.allfiles(:,1));
     h = waitbar(0,'Please wait...','Color',matRad_cfg.gui.backgroundColor,'DefaultTextColor',matRad_cfg.gui.textColor);
     matRad_applyThemeToWaitbar(h);
@@ -207,13 +207,19 @@ if ~isempty(obj.allfiles)
 
     % Filtration, getting and assigning z resolution to all CT files
     FiltredLocArray = unique(LocationsArray);
-    FiltredLocArray(end) = [];
+    Thickness = rmmissing(unique(diff(FiltredLocArray)));
     numOfFiles = numel(obj.allfiles(:,1));
+    
+    if numel(Thickness) > 1
+        msgbox('Slices are not equidistant! Slice thickness of the first slice was taken as the value for all slices.', 'Warning');
+        FirstSliceThikness = rmmissing(unique(diff(FiltredLocArray)));
+        Thickness = FirstSliceThikness; 
+    end
 
     if isempty(ThBool)
         for i = numOfFiles:-1:1
             if strcmp(obj.allfiles{i,2},'CT') 
-                obj.allfiles{i,11} = num2str(unique(diff(FiltredLocArray)));
+                obj.allfiles{i,11} = num2str(Thickness);
             end
         end
     end    
