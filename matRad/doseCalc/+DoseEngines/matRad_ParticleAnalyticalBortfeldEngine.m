@@ -28,27 +28,27 @@ classdef matRad_ParticleAnalyticalBortfeldEngine < DoseEngines.matRad_ParticlePe
     properties (SetAccess = public, GetAccess = public)
         
         % target material parameters (Water)
-        massDensity = 0.997;                            % Mass Density of the medium in (g/cm^3)
-        p           = 1.77;                             % Exponent in the Bragg-Kleemann rule
-        alpha       = 2.2*10^(-3);                      % Material-dependent constant in the Bragg-Kleemann rule
-        beta        = 0.012;                            % Slope parameter of the linear fluence reduction
-        gammaNuc    = 0.6;                              % Fraction of locally absorbed energy in nuclear interactions
-        Z           = 10;                               % N of electrons per molecule (water)
-        MM          = 18.01;                            % Molar mass in g/mol (water)
+        massDensity = 0.997;        % Mass Density of the medium in (g/cm^3)
+        p           = 1.77;         % Exponent in the Bragg-Kleemann rule
+        alpha       = 2.2*10^(-3);  % Material-dependent constant in the Bragg-Kleemann rule
+        beta        = 0.012;        % Slope parameter of the linear fluence reduction
+        gammaNuc    = 0.6;          % Fraction of locally absorbed energy in nuclear interactions
+        Z           = 10;           % N of electrons per molecule (water)
+        MM          = 18.01;        % Molar mass in g/mol (water)
+        radLength   = 36.3;         % Radiation Length of the assumed medium
 
         % Beam parameters
-        phi0         = 1;                               % Primary proton fluence
-        epsilonTail  = 0.1;                             % (Small) fraction of primary fluence \phi_0 contributing to the linear "tail" of the energy spectrum
-        sigmaEnergy  = 0.01;                            % sigma of the gaussian energy spectrum
-
-        radLength    = 36.3;
-        modeWidth   = true;                             % Boolean which defines a monoenergetic (0) and gaussian (1) energy spectrum
+        phi0        = 1;            % Primary proton fluence
+        epsilonTail = 0.1;          % (Small) fraction of primary fluence \phi_0 contributing to the linear "tail" of the energy spectrum
+        sigmaEnergy = 0.01;         % sigma of the gaussian energy spectrum
+        
+        modeWidth   = true;         % Boolean which defines a monoenergetic (0) and gaussian (1) energy spectrum
     end
 
     properties (Access = private, Constant)
-        epsilon0         = 8.854*10^(-12);              % Vacuum dielectric constant in (C^2/(N*m^2))
-        electronCharge   = 1.602*10^(-19);              % Electron charge in (C)
-        avogadroNum      = 6.022*10^23;                 % Avogadro number
+        epsilon0         = 8.854e-12;   % Vacuum dielectric constant in (C^2/(N*m^2))
+        electronCharge   = 1.602e-19;   % Electron charge in (C)
+        avogadroNum      = 6.022e23;    % Avogadro number
     end
 
     methods
@@ -91,14 +91,13 @@ classdef matRad_ParticleAnalyticalBortfeldEngine < DoseEngines.matRad_ParticlePe
         function chooseLateralModel(this)
             %Now check if we need tho chose the lateral model because it
             %was set to auto
+            matRad_cfg = MatRad_Config.instance();
             if strcmp(this.lateralModel,'auto') 
                 this.lateralModel = 'single';
             elseif ~strcmp(this.lateralModel,'single') 
                 matRad_cfg.dispWarning('Engine only supports analytically computed singleGaussian lateral Model!');
                 this.lateralModel = 'single';
             end   
-            matRad_cfg = MatRad_Config.instance();
-
             matRad_cfg.dispInfo('Using an analytically computed %s Gaussian pencil-beam kernel model!\n');
         end
 
@@ -195,8 +194,8 @@ classdef matRad_ParticleAnalyticalBortfeldEngine < DoseEngines.matRad_ParticlePe
             %       Bragg curve for therapeutic proton beams".
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-            numberDensity   = this.massDensity*this.avogadroNum/this.MM;                                      % Number density of molecules per cm^3
-            alphaPrime      = this.electronCharge^2*numberDensity*this.Z/(4*pi*this.epsilon0^2)/10^8;   % Bohr's formula for d(sigmaE)^2/dz
+            numberDensity   = this.massDensity*this.avogadroNum/this.MM;                                        % Number density of molecules per cm^3
+            alphaPrime      = this.electronCharge^2*numberDensity*this.Z/(4*pi*this.epsilon0^2)/10^8;           % Bohr's formula for d(sigmaE)^2/dz
 
 
             % Conversion of depth value from mm to cm
@@ -214,9 +213,9 @@ classdef matRad_ParticleAnalyticalBortfeldEngine < DoseEngines.matRad_ParticlePe
 
             % COEFFICIENTS IN THE BRAGG CURVE (WITHOUT STRAGGLING)
             coeffA   = this.phi0*(1-this.epsilonTail)./(this.massDensity*this.p*this.alpha^(1/this.p)*(1+this.beta*range));
-            coeffA1  = coeffA;                                                % Coefficient of D1
-            coeffA2  = coeffA*this.beta*(1+this.gammaNuc*this.p);            % Coefficient of D2
-            coeffA3  = coeffA*this.epsilonTail*this.p./((1-this.epsilonTail)*range);              % Coefficient of Dtail
+            coeffA1  = coeffA;                                                          % Coefficient of D1
+            coeffA2  = coeffA*this.beta*(1+this.gammaNuc*this.p);                       % Coefficient of D2
+            coeffA3  = coeffA*this.epsilonTail*this.p./((1-this.epsilonTail)*range);    % Coefficient of Dtail
             coeffA23 = coeffA2 + coeffA3;
 
             % Definition of the Depth - Dose curve without straggling
@@ -326,7 +325,7 @@ classdef matRad_ParticleAnalyticalBortfeldEngine < DoseEngines.matRad_ParticlePe
             end
 
             for i = 1:numel(this.machine.data)
-                this.machine.data(i).LatCutOff.CompFac = 1-cutOffLevel;
+                this.machine.data(i).LatCutOff.CompFac = 1/cutOffLevel;
                 this.machine.data(i).LatCutOff.numSig  = sqrt(2) * sqrt(gammaincinv(0.995,1)); %For a 2D symmetric gaussian we need the inverse of the incomplete Gamma function for defining the CutOff
                 this.machine.data(i).LatCutOff.maxSigmaIni = max([this.machine.data(i).initFocus(:).SisFWHMAtIso]) ./ 2.3548;
                 if calcRange

@@ -33,7 +33,9 @@ classdef matRad_ImportanceScenarios < matRad_GriddedScenariosAbstract
     end
 
     properties (SetAccess=protected)
-        name = 'impScen';
+        shortName   = 'impScen';   
+        name        = 'Gridded Scenarios with Importance Weights';
+        
     end
     
     methods

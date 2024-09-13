@@ -12,7 +12,7 @@ classdef matRad_Widget <  handle
     % 
     % This file is part of the matRad project. It is subject to the license 
     % terms in the LICENSE file found in the top-level directory of this 
-    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+    % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
     % of the matRad project, including this file, may be copied, modified, 
     % propagated, or distributed except according to the terms contained in the 
     % LICENSE file.
@@ -107,7 +107,10 @@ classdef matRad_Widget <  handle
                     close(handles.ErrorDlg);
                 end
             end
-            errordlg(Message);
+            if ~matRad_cfg.disableGUI
+                h = errordlg(Message);
+                matRad_applyThemeToDlg(h);
+            end
             matRad_cfg.dispError(Message);
             this.handles = handles;
         end
@@ -126,9 +129,20 @@ classdef matRad_Widget <  handle
                 Message = [Message,ME.message];
                 % Future error hyperlinks {Message,ME.getReport(meType,'hyperlinks','off')};
             end
+            if ~matRad_cfg.disableGUI
+                h = warndlg(Message);
+                matRad_applyThemeToDlg(h);
+            end
             matRad_cfg.dispWarning(Message);
-            warndlg(Message);
             this.handles = handles;         
+        end
+
+        function showMessage(this,message,varargin)
+            matRad_cfg = MatRad_Config.instance();
+            if ~matRad_cfg.disableGUI
+                h = msgbox(message,varargin{:});
+                matRad_applyThemeToDlg(h);
+            end
         end
         
         %function notifyUpdate(this,workSpaceVariables)
@@ -147,21 +161,8 @@ classdef matRad_Widget <  handle
         end
 
         function isInUi = get.isInUifigure(this)
-            matRad_cfg = MatRad_Config.instance();
-            
-            if matRad_cfg.isOctave
-                isInUi = false;
-            else
-                hFig = ancestor(this.widgetHandle,'Figure');
-    
-                if verLessThan('Matlab','9.0')      %version < 2016a (release of uifigs)
-                    isInUi = false;
-                elseif verLessThan('Matlab','9.5')  % 16a <= version < 2018b
-                    isInUi = ~isempty(matlab.ui.internal.dialog.DialogHelper.getFigureID(hFig));
-                else                                % version >= 2018b 
-                    isInUi = matlab.ui.internal.isUIFigure(hFig);
-                end
-            end
+            hFig = ancestor(this.widgetHandle,'Figure');
+            isInUi = matRad_isUifigure(hFig);
         end
 
         function delete(this)
@@ -226,7 +227,7 @@ classdef matRad_Widget <  handle
             
             for i = 1:numel(all_h)
                 this_h = all_h(i);
-                if isprop(this_h, 'Tag')
+                if matRad_ispropCompat(this_h, 'Tag')
                     tag = get(this_h, 'Tag');
                     if ~isempty(tag) && isvarname(tag) % can it be used as a fieldname?
                         

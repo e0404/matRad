@@ -21,7 +21,7 @@ function isoDoseContours = matRad_computeIsoDoseContours(doseCube,isoLevels)
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
 % of the matRad project, including this file, may be copied, modified, 
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
@@ -31,21 +31,22 @@ function isoDoseContours = matRad_computeIsoDoseContours(doseCube,isoLevels)
 dim = size(doseCube);
 isoDoseContours = cell(max(dim(:)),3);
 
+isoLevels = double(isoLevels);
 minLevel = min(isoLevels(:));
 
 for slice = 1:dim(1)
     if any(any(doseCube(slice,:,:) >= minLevel))
-        isoDoseContours{slice,1} = contourc(squeeze(doseCube(slice,:,:)),isoLevels);
+        isoDoseContours{slice,1} = contourc(double(squeeze(doseCube(slice,:,:))),isoLevels);
     end
 end
 for slice = 1:dim(2)
     if any(any(doseCube(:,slice,:) >= minLevel))
-        isoDoseContours{slice,2} = contourc(squeeze(doseCube(:,slice,:)),isoLevels);
+        isoDoseContours{slice,2} = contourc(double(squeeze(doseCube(:,slice,:))),isoLevels);
     end
 end
 for slice = 1:dim(3)
     if any(any(doseCube(:,:,slice) >= minLevel))
-        isoDoseContours{slice,3} = contourc(squeeze(doseCube(:,:,slice)),isoLevels);
+        isoDoseContours{slice,3} = contourc(double(squeeze(doseCube(:,:,slice))),isoLevels);
     end
 end
 

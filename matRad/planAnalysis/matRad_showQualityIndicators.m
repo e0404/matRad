@@ -20,7 +20,7 @@ function matRad_showQualityIndicators(figHandle,qi)
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
 % of the matRad project, including this file, may be copied, modified, 
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
@@ -57,18 +57,63 @@ if ~strcmp(hType,'figure')
     end
     hF = ancestor(figHandle,'figure');
 else
-    pos = get(figHandle,'position');
+    pos = [0 0 1 1];
     hF = figHandle;
 end
 
 %since uitable is only available in newer octave versions, we try and catch
 try    
+    colorMatrix = repmat(matRad_cfg.gui.elementColor,numel(rnames),1);
+    ix2 = 2:2:numel(rnames);
+    if ~isempty(ix2)    
+        shadeColor = rgb2hsv(matRad_cfg.gui.elementColor);
+        if shadeColor(3) < 0.5
+            shadeColor(3) = shadeColor(3)*1.5+0.1;
+        else
+            shadeColor(3) = shadeColor(3)*0.5-0.1;
+        end
+
+        colorMatrix(ix2,:) = repmat(hsv2rgb(shadeColor),numel(ix2),1);
+    end
+
+
+
     % Create the uitable
     table = uitable(hF,'Data',qi,...
         'ColumnName',cnames,...
         'RowName',rnames,'ColumnWidth',{70},...
         'units','normalized',...
-        'position',pos);
+        'position',pos, ...
+        'ForegroundColor',matRad_cfg.gui.textColor,...
+        'BackgroundColor',colorMatrix,...
+        'RowStriping','on'); 
+
+    %Try to adapt the position of the table
+    try
+        ext = get(table,'Extent');
+
+        pixPosTableBefore = getpixelposition(table);
+
+        relScrollSize = 16./pixPosTableBefore([3 4]);
+
+        posOld = pos;
+
+        if ext(3) < pos(3)
+            pos(3) = ext(3) + relScrollSize(1);
+            pos(1) = posOld(3) - pos(3);
+        end
+
+        if ext(4) < pos(4)
+            pos(4) = ext(4) + relScrollSize(2);
+            pos(2) = posOld(4) - pos(4);
+        end
+
+        set(table,'Position',pos);
+
+
+
+    catch
+    end
 catch ME
     matRad_cfg.dispWarning('The uitable function is not implemented in %s v%s.',env,vStr);
 end

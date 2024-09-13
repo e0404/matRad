@@ -9,7 +9,7 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
     %
     % This file is part of the matRad project. It is subject to the license
     % terms in the LICENSE file found in the top-level directory of this
-    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+    % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
     % of the matRad project, including this file, may be copied, modified,
     % propagated, or distributed except according to the terms contained in the
     % LICENSE file.
@@ -104,17 +104,17 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             %
             % This file is part of the matRad project. It is subject to the license
             % terms in the LICENSE file found in the top-level directory of this
-            % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+            % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
             % of the matRad project, including this file, may be copied, modified,
             % propagated, or distributed except according to the terms contained in the
             % LICENSE file.
             %
             % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-            matRad_cfg =  MatRad_Config.instance();
+            matRad_cfg =  MatRad_Config.instance();           
 
             %run initDoseCalc as usual
-            dij = this.initDoseCalc(ct,cst,stf);
+            dij = this.initDoseCalc(ct,cst,stf);           
 
             %ompMC for matRad returns dose/history * nHistories.
 
@@ -127,6 +127,10 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
             %Now we have to calibrate to the the beamlet width.
             calibrationFactor = this.absCalibrationFactor * (bixelWidth/50)^2;
+            
+            %Create X Y Z vectors if not present
+            ct = matRad_getWorldAxes(ct);
+            
 
             scenCount = 0;
             %run over all scenarios
@@ -139,12 +143,13 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     scenCount = scenCount + 1;
 
                     % manipulate isocenter
-                    shiftedIsoCenter = vertcat(stf(:).isoCenter) + this.multScen.isoShift(scenarioIx,:) + dij.doseGrid.isoCenterOffset;
+                    shiftedIsoCenter = matRad_world2cubeCoords(vertcat(stf(:).isoCenter), this.doseGrid) + this.multScen.isoShift(scenarioIx,:);
+
                     this.ompMCgeo.isoCenter = shiftedIsoCenter;
                     tmpStf = stf;
 
                     for k = 1:length(tmpStf)
-                        tmpStf(k).isoCenter = shiftedIsoCenter;
+                        tmpStf(k).isoCenter = shiftedIsoCenter(k,:);
                     end
 
                     % load ompMC source
@@ -186,6 +191,14 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     if isfield(dij,'physicalDose_MCvar')
                         dij.physicalDose_MCvar{scenarioIx} = dij.physicalDose_MCvar{scenarioIx} * calibrationFactor^2;
                     end
+
+                    if this.calcDoseDirect
+                        dij.physicalDose{scenarioIx} = dij.physicalDose{scenarioIx} .* this.directWeights';
+
+                        if isfield(dij,'physicalDose_MCvar')
+                            dij.physicalDose_MCvar{scenarioIx} = dij.physicalDose_MCvar{scenarioIx} .* (this.directWeights').^2;
+                        end
+                    end
                 end
             end
 
@@ -197,12 +210,16 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
             dij = initDoseCalc@DoseEngines.matRad_MonteCarloEngineAbstract(this,ct,cst,stf);
 
-            matRad_cfg = MatRad_Config.instance();
-
             % set up arrays for book keeping
             dij.bixelNum = NaN*ones(dij.totalNumOfBixels,1);
             dij.rayNum   = NaN*ones(dij.totalNumOfBixels,1);
             dij.beamNum  = NaN*ones(dij.totalNumOfBixels,1);
+
+            if this.calcDoseDirect
+                this.numHistoriesPerBeamlet = ceil(this.numHistoriesDirect / dij.totalNumOfBixels); %Use ceil to avoid 0 when number of histories is small
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispWarning('The ompMC engine implements beamlet-wise calculation only at the moment, so we will set the histories per bemlet to numHistoriesDirect/numBeamlets: %d!');
+            end
 
             dij.numHistoriesPerBeamlet = this.numHistoriesPerBeamlet;
 
@@ -215,8 +232,15 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % Create the Geometry
             this.getOmpMCgeometry(dij.doseGrid);
 
-            %% Create beamlet source
-            this.getOmpMCsource(stf);
+            %% Create Beamlet source
+            %Get Isocenter in cube coordinates on the dose grid
+            tmpStf = stf;
+             for k = 1:length(stf)
+                 shiftedIsoCenter = matRad_world2cubeCoords(vertcat(stf(:).isoCenter),this.doseGrid);
+                 tmpStf(k).isoCenter = shiftedIsoCenter(k,:);
+            end
+
+            this.getOmpMCsource(tmpStf);
         end
     end
 
@@ -521,7 +545,7 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             %
             % This file is part of the matRad project. It is subject to the license
             % terms in the LICENSE file found in the top-level directory of this
-            % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+            % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
             % of the matRad project, including this file, may be copied, modified,
             % propagated, or distributed except according to the terms contained in the
             % LICENSE file.

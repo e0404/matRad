@@ -12,7 +12,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
 % of the matRad project, including this file, may be copied, modified,
 % propagated, or distributed except according to the terms contained in the
 % LICENSE file.
@@ -43,14 +43,9 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         timers;                 % timers of dose calc
 
         numOfColumnsDij;        % number of columns in the dij struct
-                                          
-        yCoordsV_vox;           % y-coordinate voxel
-        xCoordsV_vox;           % x-coordinate voxel
-        zCoordsV_vox;           % z-coordinate voxel
-        
-        yCoordsV_voxDoseGrid;   % converted voxel indices to real grid 
-        xCoordsV_voxDoseGrid;   % converted voxel indices to real grid
-        zCoordsV_voxDoseGrid;   % converted voxel indices to real grid
+                                    
+        voxWorldCoords;         % ct voxel coordinates in world
+        voxWorldCoordsDoseGrid; % dose grid voxel coordinates in world 
         
         %offset; % offset adjustment for isocenter
         
@@ -69,6 +64,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
     properties (Access = protected)
         lastProgressUpdate;
         calcDoseDirect = false; % switch for direct cube / dij calculation
+        directWeights  = [];
     end
     
     properties (Constant)
@@ -152,11 +148,15 @@ classdef (Abstract) matRad_DoseEngineBase < handle
 
             % iterate over all fieldnames and try to set the
             % corresponding properties inside the engine
+            if matRad_cfg.isOctave
+                c2sWarningState = warning('off','Octave:classdef-to-struct');                
+            end
+            
             for i = 1:length(fields)
                 try
                     field = fields{i};
-                    if isprop(this,field)
-                        this.(field) = matRad_recursiveFieldAssignment(this.(field),plnStruct.(field),warningMsg);
+                    if matRad_ispropCompat(this,field)
+                        this.(field) = matRad_recursiveFieldAssignment(this.(field),plnStruct.(field),true,warningMsg);
                     else
                         matRad_cfg.dispWarning('Not able to assign property ''%s'' from pln.propDoseCalc to Dose Engine!',field);
                     end
@@ -177,6 +177,10 @@ classdef (Abstract) matRad_DoseEngineBase < handle
                     end
                 end
             end
+            
+            if matRad_cfg.isOctave
+                warning(c2sWarningState.state,'Octave:classdef-to-struct');                
+            end
         end
     
               
@@ -189,7 +193,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
 
             % copy bixel weight vector into stf struct
             if nargin == 5
-                if sum([stf.totalNumOfBixels]) ~= numel(w)
+                if sum([stf.totalNumOfBixels]) ~= numel(w) && ~isfield([stf.ray],'shapes')
                     matRad_cfg.dispError('weighting does not match steering information');
                 end
                 counter = 0;
@@ -215,12 +219,24 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             end            
             
             %Set direct dose calculation and compute "dij"
+            this.directWeights = w;
             this.calcDoseDirect = true;
             dij = this.calcDose(ct,cst,stf);
 
             % calculate cubes; use uniform weights here, weighting with actual fluence 
             % already performed in dij construction
-            resultGUI    = matRad_calcCubes(ones(dij.numOfBeams,1),dij);
+            
+            resultGUI = [];
+            
+            for i = 1:this.multScen.totNumScen
+                scenSubIx = this.multScen.linearMask(i,:);
+                resultGUItmp = matRad_calcCubes(ones(dij.numOfBeams,1),dij,this.multScen.sub2scenIx(scenSubIx(1),scenSubIx(2),scenSubIx(3)));
+                if i == 1
+                    resultGUI = resultGUItmp;
+                end
+                resultGUI = matRad_appendResultGUI(resultGUI,resultGUItmp,false,sprintf('scen%d',i));                
+            end
+
             resultGUI.w  = w; 
         end
 
@@ -246,7 +262,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         % Should be called at the beginning of calcDose method.
         % Can be expanded or changed by overwriting this method and calling
         % the superclass method inside of it
-        [dij,ct,cst,stf] = initDoseCalc(this,ct,cst,stf)   
+        dij = initDoseCalc(this,ct,cst,stf)   
         
         % method for finalizing the dose calculation (e.g. postprocessing
         % on dij or files

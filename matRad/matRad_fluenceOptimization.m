@@ -25,7 +25,7 @@ function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
 % of the matRad project, including this file, may be copied, modified,
 % propagated, or distributed except according to the terms contained in the
 % LICENSE file.
@@ -69,7 +69,7 @@ cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,  dij.ctGrid.y,  dij.ctGrid.z,...
     dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
 
 % Get rid of voxels that are not interesting for the optimization problem
-if ~isfield(pln.propOpt, 'clearUnusedVoxels')
+if ~isfield(pln,'propOpt') || ~isfield(pln.propOpt, 'clearUnusedVoxels')
     pln.propOpt.clearUnusedVoxels = matRad_cfg.defaults.propOpt.clearUnusedVoxels;
 end
 
@@ -189,6 +189,26 @@ elseif pln.bioParam.bioOpt
         maxCurrRBE = max(-cst{ixTarget,5}.alphaX + sqrt(cst{ixTarget,5}.alphaX^2 + ...
             4*cst{ixTarget,5}.betaX.*CurrEffectTarget)./(2*cst{ixTarget,5}.betaX*doseTmp(V)));
         wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(doseTmp(V))))* wOnes;
+
+     elseif strcmp(pln.bioParam.quantityOpt, 'BED')
+
+        if isfield(dij, 'mAlphaDose') && isfield(dij, 'mSqrtBetaDose')
+            abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
+            meanBED = mean((dij.mAlphaDose{1}(V,:)*wOnes + (dij.mSqrtBetaDose{1}(V,:)*wOnes).^2)./cst{ixTarget,5}.alphaX);
+            BEDTarget = doseTarget.*(1 + doseTarget./abr);
+        elseif isfield(dij, 'RBE')
+            abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
+            meanBED = mean(dij.RBE.*dij.physicalDose{1}(V,:)*wOnes.*(1+dij.RBE.*dij.physicalDose{1}(V,:)*wOnes./abr));
+            BEDTarget = dij.RBE.*doseTarget.*(1 + dij.RBE.*doseTarget./abr);
+        else
+            abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
+            meanBED = mean(dij.physicalDose{1}(V,:)*wOnes.*(1+dij.physicalDose{1}(V,:)*wOnes./abr));
+            BEDTarget = doseTarget.*(1 + doseTarget./abr);
+        end
+
+        bixelWeight =  BEDTarget/meanBED;
+        wInit       = wOnes * bixelWeight;
+        
     end
 
     matRad_cfg.dispInfo('chosen weights adapted to biological dose calculation!\n');
@@ -257,6 +277,8 @@ switch pln.bioParam.quantityOpt
         else
             backProjection = matRad_VariableRBEProjection;
         end
+    case 'BED'
+        backProjection = matRad_BEDProjection;     
     case 'physicalDose'
         backProjection = matRad_DoseProjection;
     otherwise
@@ -310,6 +332,8 @@ switch pln.propOpt.optimizer
         optimizer = matRad_OptimizerIPOPT;
     case 'fmincon'
         optimizer = matRad_OptimizerFmincon;
+    case 'simulannealbnd'
+        optimizer = matRad_OptimizerSimulannealbnd;
     otherwise
         warning(['Optimizer ''' pln.propOpt.optimizer ''' not known! Fallback to IPOPT!']);
         optimizer = matRad_OptimizerIPOPT;
@@ -330,12 +354,11 @@ resultGUI.usedOptimizer = optimizer;
 resultGUI.info = info;
 
 %Robust quantities
-if FLAG_ROB_OPT || numel(ixForOpt) > 1
-    Cnt = 1;
-    for i = find(~cellfun(@isempty,dij.physicalDose))'
-        tmpResultGUI = matRad_calcCubes(wOpt,dij,i);
-        resultGUI.([pln.bioParam.quantityVis '_' num2str(Cnt,'%d')]) = tmpResultGUI.(pln.bioParam.quantityVis);
-        Cnt = Cnt + 1;
+if pln.multScen.totNumScen > 1
+    for i = 1:pln.multScen.totNumScen
+        scenSubIx = pln.multScen.linearMask(i,:);
+        resultGUItmp = matRad_calcCubes(wOpt,dij,pln.multScen.sub2scenIx(scenSubIx(1),scenSubIx(2),scenSubIx(3)));
+        resultGUI = matRad_appendResultGUI(resultGUI,resultGUItmp,false,sprintf('scen%d',i));
     end
 end
 

@@ -10,7 +10,7 @@ classdef (Abstract) matRad_MonteCarloEngineAbstract < DoseEngines.matRad_DoseEng
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
 % of the matRad project, including this file, may be copied, modified,
 % propagated, or distributed except according to the terms contained in the
 % LICENSE file.
@@ -50,56 +50,6 @@ classdef (Abstract) matRad_MonteCarloEngineAbstract < DoseEngines.matRad_DoseEng
             this.outputMCvariance           = matRad_cfg.defaults.propDoseCalc.outputMCvariance;
 
             this.relativeDosimetricCutOff   = matRad_cfg.defaults.propDoseCalc.dosimetricLateralCutOff;
-        end
-
-        function resultGUI = calcDoseForward(this,ct,cst,stf,w)
-            
-            matRad_cfg = MatRad_Config.instance();
-            if nargin < 5 && ~isfield([stf.ray],'weight')
-                matRad_cfg.dispError('No weight vector available. Please provide w or add info to stf')
-            end
-
-            % copy bixel weight vector into stf struct
-            if nargin == 5
-                if sum([stf.totalNumOfBixels]) ~= numel(w) && ~isfield([stf.ray],'shapes')
-                    matRad_cfg.dispError('weighting does not match steering information')
-                end
-                counter = 0;
-                for i = 1:size(stf,2)
-                    for j = 1:stf(i).numOfRays
-                        for k = 1:stf(i).numOfBixelsPerRay(j)
-                            counter = counter + 1;
-                            stf(i).ray(j).weight(k) = w(counter);
-                        end
-                    end
-                end
-            else % weights need to be in stf!
-                w = NaN*ones(sum([stf.totalNumOfBixels]),1);
-                counter = 0;
-                for i = 1:size(stf,2)
-                    for j = 1:stf(i).numOfRays
-                        for k = 1:stf(i).numOfBixelsPerRay(j)
-                            counter = counter + 1;
-                            w(counter) = stf(i).ray(j).weight(k);
-                        end
-                    end
-                end
-            end            
-            
-            %Set direct dose calculation and compute "dij"
-            this.calcDoseDirect = true;
-            dij = this.calcDose(ct,cst,stf);
-
-            % hack dij struct
-            dij.numOfBeams = 1;
-            dij.beamNum = 1;
-
-            % calculate cubes; use uniform weights here, weighting with actual fluence
-            % already performed in dij construction
-            resultGUI    = matRad_calcCubes(sum(w),dij);
-            
-            % remember original fluence weights
-            resultGUI.w  = w;
         end
     end
 

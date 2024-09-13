@@ -29,7 +29,7 @@ function markerHandle = matRad_plotIsoCenterMarker(axesHandle,pln,ct,plane,slice
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
 % of the matRad project, including this file, may be copied, modified, 
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
@@ -40,7 +40,8 @@ uniqueIsoCenters = unique(pln.propStf.isoCenter,'rows');
 
 for i = 1:size(uniqueIsoCenters,1)
 
-    vIsoCenter           = round(uniqueIsoCenters(i,:)./[ct.resolution.x ct.resolution.y ct.resolution.z]);
+    vIsoCenter           = matRad_world2cubeIndex(pln.propStf.isoCenter(i,:), ct);
+    vIsoCenter = vIsoCenter([2 1 3]);
     if  plane == 3% Axial plane
         vIsoCenterPlot  = [vIsoCenter(1) vIsoCenter(2)];
         if vIsoCenter(3) == slice
@@ -50,7 +51,7 @@ for i = 1:size(uniqueIsoCenters,1)
         end
     elseif plane == 2
         vIsoCenterPlot  = [vIsoCenter(3) vIsoCenter(2)];
-        if vIsoCenter(2) == slice
+        if vIsoCenter(1) == slice
             isoCenterDirection = 0;
         else
             isoCenterDirection = sign(double(vIsoCenter(1) > slice) - 0.5);
@@ -58,7 +59,7 @@ for i = 1:size(uniqueIsoCenters,1)
 
     elseif plane == 1    
         vIsoCenterPlot  = [vIsoCenter(3) vIsoCenter(1)];
-        if vIsoCenter(1) == slice
+        if vIsoCenter(2) == slice
             isoCenterDirection = 0;
         else
             isoCenterDirection = sign(double(vIsoCenter(2) > slice) - 0.5);

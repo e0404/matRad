@@ -44,7 +44,7 @@ function [doseHandle,cMap,window] = matRad_plotDoseSlice3D(axesHandle,ct,doseCub
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
 % of the matRad project, including this file, may be copied, modified, 
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
@@ -76,7 +76,7 @@ if plane == 1  % Coronal plane
     [xMesh,zMesh] = meshgrid(coords{2},coords{3});
     yMesh = slice*ct.resolution.x*ones(size(xMesh));
     %dose_slice = uint8(cMapScale*(squeeze(doseCube(slice,:,:)) - window(1))/(window(2)-window(1)));
-    doseSlice = permute(squeeze(doseCube(slice,:,:)),[2 1]);
+    dose_slice = permute(squeeze(doseCube(slice,:,:)),[2 1]);
 elseif plane == 2 % sagittal plane
     [yMesh,zMesh] = meshgrid(coords{1},coords{3});
     xMesh = slice*ct.resolution.y*ones(size(yMesh));
