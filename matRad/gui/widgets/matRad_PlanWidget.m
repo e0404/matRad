@@ -844,16 +844,22 @@ classdef matRad_PlanWidget < matRad_Widget
             
             if ~isfield(pln,'propOpt')
                 pln.propOpt = struct();
-            end            
-
+            end
+            
+            %Biological optimization dose quantity
             contentPopUpQuantityOpt = get(handles.popMenuQuantityOpt,'String');
             if ~isfield(pln.propOpt,'quantityOpt')
                 pln.propOpt.quantityOpt = 'physicalDose';
             end
 
             ix = find(strcmp(pln.propOpt.quantityOpt,contentPopUpQuantityOpt));
+
+            if isempty(ix)
+                ix = 1;
+            end
             set(handles.popMenuQuantityOpt,'Value',ix);
-            
+
+            %bio model
             contentPopUpBioModel = get(handles.popMenuBioModel,'String');
             if ~isfield(pln,'bioModel')
                 pln.bioModel = matRad_bioModel(pln.radiationMode, contentPopUpBioModel{get(handles.popMenuBioModel,'Value'),:});
@@ -885,7 +891,7 @@ classdef matRad_PlanWidget < matRad_Widget
             end 
 
             if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'doseGrid')
-                pln.propDoseCalc.doseGrid.resolution = matRad_cfg.defaults.propDoseCalc.resolution;
+                pln.propDoseCalc.doseGrid.resolution = matRad_cfg.defaults.propDoseCalc.doseGrid.resolution;
             end
 
             set(handles.editDoseX,'String',num2str(pln.propDoseCalc.doseGrid.resolution.x));

@@ -1,4 +1,4 @@
-function indices = matRad_world2cubeIndex(wCoord, gridStruct)
+function indices = matRad_world2cubeIndex(wCoord, gridStruct,allowOutside)
 % matRad function to convert world coordinates to cube indices
 % 
 % call
@@ -8,6 +8,7 @@ function indices = matRad_world2cubeIndex(wCoord, gridStruct)
 %   wCoord:         world coordinates array Nx3 (x,y,z) [mm]
 %   gridStruct:     can be matRad ct, dij.doseGrid, or the ctGrid
 %                   required fields x,y,x,dimensions,resolution
+%   allowOutside:   If coordinates outside are allowed. False default.
 %
 %   index:          cube index (i,j,k) honoring Matlab permuatation of i,j
 % References
@@ -26,6 +27,10 @@ function indices = matRad_world2cubeIndex(wCoord, gridStruct)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+if nargin < 3
+    allowOutside = false;
+end
+
 if size(wCoord,2) ~= 3
     matRad_cfg = MatRad_Config.instance();
     matRad_cfg.dispError('world coordinates must be Nx3');
@@ -34,7 +39,7 @@ end
 gridStruct = matRad_getWorldAxes(gridStruct);  
 
 %First obtain coordinates in multiples of the resolution
-coords = matRad_world2cubeCoords(wCoord,gridStruct,false);
+coords = matRad_world2cubeCoords(wCoord,gridStruct,allowOutside);
 
 %Now get the indices
 coords = round(coords ./ [gridStruct.resolution.x gridStruct.resolution.y gridStruct.resolution.z]);

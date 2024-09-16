@@ -99,6 +99,8 @@ if ~exist('cst','var') || isempty(cst)
    cst = [];
 end
 
+matRad_cfg = MatRad_Config.instance();
+
 set(axesHandle,'YDir','Reverse');
 % plot ct slice
 hCt = matRad_plotCtSlice(axesHandle,ct.cubeHU,cubeIdx,plane,slice); 
@@ -129,13 +131,13 @@ if boolPlotLegend
    ixLegend = find(voiSelection);
    hContourTmp    = cellfun(@(X) X(1),hContour(visibleOnSlice),'UniformOutput',false);
    if ~isempty(voiSelection)
-       hLegend        =  legend(axesHandle,[hContourTmp{:}],[cst(ixLegend(visibleOnSlice),2)],'AutoUpdate','off');
+       hLegend        =  legend(axesHandle,[hContourTmp{:}],[cst(ixLegend(visibleOnSlice),2)],'AutoUpdate','off','TextColor',matRad_cfg.gui.textColor);
    else
-       hLegend        =  legend(axesHandle,[hContourTmp{:}],[cst(visibleOnSlice,2)],'AutoUpdate','off');
+       hLegend        =  legend(axesHandle,[hContourTmp{:}],[cst(visibleOnSlice,2)],'AutoUpdate','off','TextColor',matRad_cfg.gui.textColor);
    end
    set(hLegend,'Box','Off');
-   set(hLegend,'TextColor',[1 1 1]);
-   set(hLegend,'FontSize',12);
+   set(hLegend,'TextColor',matRad_cfg.gui.textColor);
+   set(hLegend,'FontSize',matRad_cfg.gui.fontSize);
 
 end
 else
@@ -165,8 +167,9 @@ elseif  plane == 3 % Axial plane
 end
 
 hCMap = matRad_plotColorbar(axesHandle,doseColorMap,doseWindow,'Location','EastOutside');
+set(hCMap,'Color',matRad_cfg.gui.textColor);
 if ~isempty(colorBarLabel)
-    set(get(hCMap,'YLabel'),'String', colorBarLabel,'FontSize',14);
+    set(get(hCMap,'YLabel'),'String', colorBarLabel,'FontSize',matRad_cfg.gui.fontSize);
 end
 
 end
