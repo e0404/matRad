@@ -844,21 +844,21 @@ classdef matRad_PlanWidget < matRad_Widget
             
             if ~isfield(pln,'propOpt')
                 pln.propOpt = struct();
-            end
+            end            
 
+            contentPopUpQuantityOpt = get(handles.popMenuQuantityOpt,'String');
             if ~isfield(pln.propOpt,'quantityOpt')
                 pln.propOpt.quantityOpt = 'physicalDose';
             end
 
-            if ~isfield(pln,'bioModel')
-                pln.bioModel = matRad_bioModel(pln.radiationMode, contentBioModel{get(handles.popMenuBioModel,'Value'),:});
-            end
-
-            contentPopUpQuantityOpt = get(handles.popMenuQuantityOpt,'String');
             ix = find(strcmp(pln.propOpt.quantityOpt,contentPopUpQuantityOpt));
             set(handles.popMenuQuantityOpt,'Value',ix);
             
             contentPopUpBioModel = get(handles.popMenuBioModel,'String');
+            if ~isfield(pln,'bioModel')
+                pln.bioModel = matRad_bioModel(pln.radiationMode, contentPopUpBioModel{get(handles.popMenuBioModel,'Value'),:});
+            end
+
             ix = find(strcmp(pln.bioModel.model,contentPopUpBioModel));
             set(handles.popMenuBioModel,'Value',ix);
             
@@ -970,7 +970,13 @@ classdef matRad_PlanWidget < matRad_Widget
             contentQuantityOpt = get(handles.popMenuQuantityOpt,'String');
             contentBioModel = get(handles.popMenuBioModel,'String');
             contentMultScen = get(handles.popMenuMultScen,'String');
-            pln.bioModel = matRad_bioModel(pln.radiationMode, contentBioModel{get(handles.popMenuBioModel,'Value'),:});
+            try 
+                pln.bioModel = matRad_bioModel(pln.radiationMode, contentBioModel{get(handles.popMenuBioModel,'Value'),:});
+            catch ME
+                set(handles.popMenuBioModel,'Value',find(strcmp(contentBioModel,'none')));
+                pln.bioModel = matRad_bioModel(pln.radiationMode,'none');
+                this.showWarning(ME.message);               
+            end
             
             pln.propOpt.quantityOpt = contentQuantityOpt{get(handles.popMenuQuantityOpt,'Value')};
 
