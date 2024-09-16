@@ -118,7 +118,7 @@ end
 resolution = [ct.resolution.x ct.resolution.y ct.resolution.z];
 
 sliceName = {isoCenterIx(1),isoCenterIx(2),isoCenterIx(3)};
-doseWindow = [0 max([cube1(:); cube2(:)])];
+doseWindow = [0 max([cube1(:); cube2(:)])*1.001];
 planeName = {'coronal','sagittal','axial'};
 
 %% Integral Energy Output

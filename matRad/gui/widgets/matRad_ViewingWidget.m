@@ -918,8 +918,8 @@ classdef matRad_ViewingWidget < matRad_Widget
                 
                 %if function is called for the first time then set display parameters
                 if isempty(this.dispWindow{2,2}) || ~this.lockColorSettings
-                    this.dispWindow{2,1} = [min(dose(:)) max(dose(:))]; % set default dose range
-                    this.dispWindow{2,2} = [min(dose(:)) max(dose(:))]; % set min max values
+                    this.dispWindow{2,1} = [min(dose(:)) max(dose(:))*1.001]; % set default dose range
+                    this.dispWindow{2,2} = [min(dose(:)) max(dose(:))*1.001]; % set min max values
                 end
                 
                 minMaxRange = this.dispWindow{2,1};
