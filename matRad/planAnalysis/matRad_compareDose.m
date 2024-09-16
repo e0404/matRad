@@ -165,7 +165,6 @@ if enable(1) == 1
         
         % Initialize Figure
         hfig.(planeName{plane}).('fig') = figure('Position', [10 50 800 800],'Color',matRad_cfg.gui.backgroundColor);
-        set(gcf,'Color',[1 1 1]);
         
         % Plot Dose 1
         hfig.(planeName{plane}).('cube1').Axes = subplot(2,2,1,colorSpec{:});
@@ -252,34 +251,13 @@ if enable(2) == 1
     hfig.profiles.fig = figure('Position', [10 50 800 800],'Color',matRad_cfg.gui.backgroundColor);
     
     hfig.profiles.x = subplot(2,2,1,colorSpec{:});
-    plot(hfig.profiles.x,posX,profilex{1},'r')
-    hold on
-    plot(hfig.profiles.x,posX,profilex{2},'r--')
-    xlabel('X [mm]','FontSize',fontsize)
-    ylabel(yLabelString,'FontSize',fontsize);
-    title('x-Profiles');
-    legend({'Dose 1','Dose 2'},'Location','southeast')
-    legend boxoff
-    
+    profilePlot(hfig.profiles.x,posX,profilex{1},profilex{2},'x-Profiles','Dose 1','Dose 2', 'x [mm]','dose [Gy]',matRad_cfg.gui);
+
     hfig.profiles.y = subplot(2,2,2,colorSpec{:});
-    plot(hfig.profiles.y,posY,profiley{1},'r')
-    hold on
-    plot(hfig.profiles.y,posY,profiley{2},'r--')
-    xlabel('Y [mm]','FontSize',fontsize)
-    ylabel(yLabelString,'FontSize',fontsize);
-    title('y-Profiles');
-    legend({'Dose 1','Dose 2'},'Location','southeast')
-    legend boxoff
-    
+    profilePlot(hfig.profiles.y,posY,profiley{1},profiley{2},'y-Profiles','Dose 1','Dose 2', 'x [mm]','dose [Gy]',matRad_cfg.gui);
+
     hfig.profiles.z = subplot(2,2,3,colorSpec{:});
-    plot(hfig.profiles.z,posZ,profilez{1},'r')
-    hold on
-    plot(hfig.profiles.z,posZ,profilez{2},'r--')
-    xlabel('Z [mm]','FontSize',fontsize)
-    ylabel(yLabelString,'FontSize',fontsize);
-    title('z-Profiles');
-    legend({'Dose 1','Dose 2'},'Location','southeast')
-    legend boxoff
+    profilePlot(hfig.profiles.z,posZ,profilez{1},profilez{2},'z-Profiles','Dose 1','Dose 2', 'x [mm]','dose [Gy]',matRad_cfg.gui);
     
     set(hfig.profiles.fig,'name',['Profiles:, x=',num2str(sliceName{1}),'mm, y=',num2str(sliceName{2}),'mm, z=',num2str(sliceName{3}),'mm']);
     
@@ -299,9 +277,21 @@ if enable(3) == 1 && ~isempty(cst)
     hold on
     matRad_showDVH(dvh2,cst,pln,'axesHandle',gca,'LineStyle','--');
     xlim([0 dvhWindow*1.2])
-    title('Dose Volume Histrogram, Dose 1: solid, Dose 2: dashed')
+    title('Dose Volume Histrogram, Dose 1: solid, Dose 2: dashed','Color',matRad_cfg.gui.highlightColor)
 end
 %%
 matRad_cfg.dispInfo('Done!\n');
 
+end
+
+function profilePlot(hAx,x,y1,y2,titleTxt,nameProfile1,nameProfile2, xLabelTxt,yLabelTxt,guiSettings)
+    hold(hAx,'on');
+    grid(hAx,'on');
+    grid(hAx,'minor');
+    plot(hAx,x,y1,'r')
+    plot(hAx,x,y2,'r--')
+    xlabel(xLabelTxt,'FontSize',guiSettings.fontSize)
+    ylabel(yLabelTxt,'FontSize',guiSettings.fontSize);
+    title(titleTxt,'Color',guiSettings.highlightColor);
+    legend({nameProfile1,nameProfile2},'Location','best','TextColor',guiSettings.textColor,'Box','off');
 end
