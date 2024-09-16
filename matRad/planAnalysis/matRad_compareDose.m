@@ -122,10 +122,12 @@ doseWindow = [0 max([cube1(:); cube2(:)])];
 planeName = {'coronal','sagittal','axial'};
 
 %% Integral Energy Output
-intEnergy1 = matRad_calcIntEnergy(cube1,ct,pln);
-intEnergy2 = matRad_calcIntEnergy(cube2,ct,pln);
-
-matRad_cfg.dispInfo('Integral energy comparison: Cube 1 = %1.4g MeV, Cube 2 = %1.4g MeV, difference = %1.4g Mev\n',intEnergy1,intEnergy2,intEnergy1-intEnergy2);
+if ~isempty(pln)    
+    intEnergy1 = matRad_calcIntEnergy(cube1,ct,pln);
+    intEnergy2 = matRad_calcIntEnergy(cube2,ct,pln);
+    
+    matRad_cfg.dispInfo('Integral energy comparison: Cube 1 = %1.4g MeV, Cube 2 = %1.4g MeV, difference = %1.4g Mev\n',intEnergy1,intEnergy2,intEnergy1-intEnergy2);
+end
 
 %% Colorwash images
 if enable(1) == 1
