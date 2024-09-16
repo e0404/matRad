@@ -185,6 +185,7 @@ classdef matRad_ViewingWidget < matRad_Widget
         function set.typeOfPlot(this,value)
             this.typeOfPlot=value;            
             evt = matRad_WorkspaceChangedEvent('image_display');
+            cla(this.handles.axesFig,'reset');
             this.update(evt);
         end
         
@@ -699,10 +700,12 @@ classdef matRad_ViewingWidget < matRad_Widget
                 res = [ratios(1) ratios(2)]./max([ratios(1) ratios(2)]);
                 set(handles.axesFig,'DataAspectRatio',[res 1])
             end
+
+            axis(handles.axesFig,'tight');
             
             
             %% profile plot
-            if this.typeOfPlot == 2 && exist('Result','var')
+            if this.typeOfPlot == 2 && exist('result','var')
                 % set SAD
                 fileName = [pln.radiationMode '_' pln.machine];
                 try
@@ -714,9 +717,16 @@ classdef matRad_ViewingWidget < matRad_Widget
                 
                 % clear view and initialize some values
                 cla(handles.axesFig,'reset')
-                set(handles.axesFig,'YDir','normal');
-                ylabel('{\color{black}dose [Gy]}')
-                cColor={'black','green','magenta','cyan','yellow','red','blue'};
+                set(handles.axesFig,'YDir','normal','Color',matRad_cfg.gui.elementColor,'XColor',matRad_cfg.gui.textColor);
+                hold(handles.axesFig,'on');
+                tmpColor = rgb2hsv(matRad_cfg.gui.elementColor);
+                if tmpColor(3) > 0.5
+                    tmpColor = 'black';
+                else
+                    tmpColor = 'white';
+                end
+                ylabel(['{\color{' tmpColor '}dose [Gy]}']);
+                cColor={tmpColor,'green','magenta','cyan','yellow','red','blue'};
                 
                 % Rotate the system into the beam.
                 % passive rotation & row vector multiplication & inverted rotation requires triple matrix transpose
@@ -735,7 +745,8 @@ classdef matRad_ViewingWidget < matRad_Widget
                 
                 % perform raytracing on the central axis of the selected beam, use unit
                 % electron density for plotting against the geometrical depth
-                [~,l,rho,~,ix] = matRad_siddonRayTracer(pln.propStf.isoCenter(this.selectedBeam,:),ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{0*ct.cubeHU{1}+1});
+                cubeIsoCenter = matRad_world2cubeCoords(pln.propStf.isoCenter(this.selectedBeam,:),ct);
+                [~,l,rho,~,ix] = matRad_siddonRayTracer(cubeIsoCenter,ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{0*ct.cubeHU{1}+1});
                 d = [0 l .* rho{1}];
                 % Calculate accumulated d sum.
                 vX = cumsum(d(1:end-1));
@@ -743,7 +754,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 % plot physical dose
                 %Content =this.SelectedDisplayOption; %get(this.popupDisplayOption,'String');
                 SelectedCube = this.SelectedDisplayOption; %Content{get(this.popupDisplayOption,'Value')};
-                if sum(strcmp(SelectedCube,{'physicalDose','effect','RBExDose','alpha','beta','RBE'})) > 0
+                if sum(strcmp(SelectedCube,{'physicalDose','effect','RBExD','alpha','beta','RBE','BED'})) > 0
                     Suffix = '';
                 else
                     Idx    = find(SelectedCube == '_');
@@ -758,6 +769,8 @@ classdef matRad_ViewingWidget < matRad_Widget
                  
                 % plot counter
                 Cnt=2;
+
+                rightAx = [];
                 
                 if isfield(result,['RBE' Suffix])
                     
@@ -767,12 +780,12 @@ classdef matRad_ViewingWidget < matRad_Widget
                     %this.DispInfo{2,2}=0;
                     
                     % generate two lines for ylabel
-                    StringYLabel1 = '\fontsize{8}{\color{red}RBE x dose [Gy(RBE)] \color{black}dose [Gy] ';
+                    StringYLabel1 = ['\fontsize{8}{\color{red}RBE x dose [Gy(RBE)] \color{' tmpColor '}dose [Gy] '];
                     StringYLabel2 = '';
                     for i=1:1:size(this.DispInfo,1)
                         if this.DispInfo{i,2} && sum(strcmp(this.DispInfo{i,1},{['effect' Suffix],['alpha' Suffix],['beta' Suffix]})) > 0
                             %physicalDose is already plotted and RBExD vs RBE is plotted later with plotyy
-                            if ~strcmp(this.DispInfo{i,1},['RBExDose' Suffix]) &&...
+                            if ~strcmp(this.DispInfo{i,1},['RBExD' Suffix]) &&...
                                     ~strcmp(this.DispInfo{i,1},['RBE' Suffix]) && ...
                                     ~strcmp(this.DispInfo{i,1},['physicalDose' Suffix])
                                 
@@ -786,25 +799,28 @@ classdef matRad_ViewingWidget < matRad_Widget
                     end
                     StringYLabel2 = [StringYLabel2 '}'];
                     % always plot RBExD against RBE
-                    mRBExDose = result.(['RBExDose' Suffix]);
+                    mRBExDose = result.(['RBExD' Suffix]);
                     vBED = mRBExDose(ix);
                     mRBE = result.(['RBE' Suffix]);
                     vRBE = mRBE(ix);
                     
                     % plot biological dose against RBE
-                    [ax, PlotHandles{Cnt,1}, PlotHandles{Cnt+1,1}]=plotyy(handles.axesFig,vX,vBED,vX,vRBE,'plot');hold(handles.axesFig,'on');
-                    PlotHandles{Cnt,2}='RBExDose';
-                    PlotHandles{Cnt+1,2}='RBE';
+                    [ax, PlotHandles{Cnt,1}, PlotHandles{Cnt+1,1}]=plotyy(handles.axesFig,vX,vBED,vX,vRBE,'plot'); 
+                    hold(ax(2),'on');
+                    PlotHandles{Cnt,2}='RBExD';
+                    PlotHandles{Cnt+1,2}='RBE';                    
                     
                     % set plotyy properties
-                    set(get(ax(2),'Ylabel'),'String','RBE [a.u.]','FontSize',8);
+                    set(get(ax(2),'Ylabel'),'String','RBE [1]','FontSize',defaultFontSize);
+
                     ylabel({StringYLabel1;StringYLabel2})
                     set(PlotHandles{Cnt,1},'Linewidth',4,'color','r');
                     set(PlotHandles{Cnt+1,1},'Linewidth',3,'color','b');
                     set(ax(1),'ycolor','r')
                     set(ax(2),'ycolor','b')
-                    set(ax,'FontSize',8);
+                    set(ax,'FontSize',defaultFontSize);
                     Cnt=Cnt+2;
+                    rightAx = ax(2);
                 end
                 
                 % asses target coordinates
@@ -819,9 +835,9 @@ classdef matRad_ViewingWidget < matRad_Widget
                     end
                 end
                 
-                str = sprintf('profile plot - central axis of %d beam gantry angle %d? couch angle %d?',...
+                str = sprintf('profile plot - central axis of %d beam, gantry angle %d°, couch angle %d°',...
                     this.selectedBeam ,pln.propStf.gantryAngles(this.selectedBeam),pln.propStf.couchAngles(this.selectedBeam));
-                h_title = title(handles.axesFig,str,'FontSize',defaultFontSize);
+                h_title = title(handles.axesFig,str,'FontSize',defaultFontSize,'Color',matRad_cfg.gui.highlightColor);
                 pos = get(h_title,'Position');
                 set(h_title,'Position',[pos(1)-40 pos(2) pos(3)])
                 
@@ -836,8 +852,8 @@ classdef matRad_ViewingWidget < matRad_Widget
                 if ~isempty(WEPL_Target_Entry) && ~isempty(WEPL_Target_Exit)
                     hold(handles.axesFig,'on');
                     PlotHandles{Cnt,1} = ...
-                        plot([WEPL_Target_Entry WEPL_Target_Entry],get(handles.axesFig,'YLim'),'--','Linewidth',3,'color','k');hold(handles.axesFig,'on');
-                    plot([WEPL_Target_Exit WEPL_Target_Exit],get(handles.axesFig,'YLim'),'--','Linewidth',3,'color','k');hold(handles.axesFig,'on');
+                        plot([WEPL_Target_Entry WEPL_Target_Entry],get(handles.axesFig,'YLim'),'--','Linewidth',3,'color',matRad_cfg.gui.highlightColor);hold(handles.axesFig,'on');
+                    plot([WEPL_Target_Exit WEPL_Target_Exit],get(handles.axesFig,'YLim'),'--','Linewidth',3,'color',matRad_cfg.gui.highlightColor);hold(handles.axesFig,'on');
                     
                 else
                     PlotHandles{Cnt,1} =[];
@@ -845,9 +861,12 @@ classdef matRad_ViewingWidget < matRad_Widget
                 
                 Lines  = PlotHandles(~cellfun(@isempty,PlotHandles(:,1)),1);
                 Labels = PlotHandles(~cellfun(@isempty,PlotHandles(:,1)),2);
-                l=legend(handles.axesFig,[Lines{:}],Labels{:});
-                xlabel('radiological depth [mm]','FontSize',8);
+                l=legend(handles.axesFig,[Lines{:}],Labels{:},'TextColor',matRad_cfg.gui.textColor,'FontSize',defaultFontSize,'Color',matRad_cfg.gui.backgroundColor,'EdgeColor',matRad_cfg.gui.textColor);
+                xlabel('radiological depth [mm]','FontSize',matRad_cfg.gui.fontSize,'Color',matRad_cfg.gui.textColor);
                 grid on, grid minor
+                if ~isempty(rightAx)
+                    set(rightAx,'XLim',get(handles.axesFig,'XLim'));
+                end
             else
                 % create legend for the visible VOI
                 if this.typeOfPlot==2 || ~this.plotContour || isempty([this.AxesHandlesVOI{:}]) %isempty(find(this.VOIPlotFlag, 1))
@@ -871,8 +890,6 @@ classdef matRad_ViewingWidget < matRad_Widget
             end
             this.legendHandle=l;
             
-            %zoom(handles.figure1,'reset');
-            axis(handles.axesFig,'tight');
             
 %             if this.rememberCurrAxes
 %                 axis(handles.axesFig);%currAxes);
@@ -1268,22 +1285,36 @@ classdef matRad_ViewingWidget < matRad_Widget
                     else
                         %second dimension indicates if it should be plotted
                         this.DispInfo{i,2} = true;
-                        % determine units
+                        % determine units (third dimension) and left or
+                        % right axis (fourth dimension, ignored so far
                         if strfind(this.DispInfo{i,1},'physicalDose')
-                            this.DispInfo{i,3} = '[Gy]';
+                            this.DispInfo{i,3} = 'Gy';
+                            this.DispInfo{i,4} = 'left';   
                         elseif strfind(this.DispInfo{i,1},'alpha')
-                            this.DispInfo{i,3} = '[Gy^{-1}]';
+                            this.DispInfo{i,3} = 'Gy^{-1}';
+                            this.DispInfo{i,4} = 'left';   
                         elseif strfind(this.DispInfo{i,1},'beta')
-                            this.DispInfo{i,3} = '[Gy^{-2}]';
+                            this.DispInfo{i,3} = 'Gy^{-2}';
+                            this.DispInfo{i,4} = 'left';   
                         elseif strfind(this.DispInfo{i,1},'RBExD')
-                            this.DispInfo{i,3} = '[Gy(RBE)]';
+                            this.DispInfo{i,3} = 'Gy(RBE)';
+                            this.DispInfo{i,4} = 'left';   
                         elseif strfind(this.DispInfo{i,1},'LET')
-                            this.DispInfo{i,3} = '[keV/um]';
+                            this.DispInfo{i,3} = 'keV/um';
+                            this.DispInfo{i,4} = 'left';   
+                        elseif strfind(this.DispInfo{i,1},'effect')
+                            this.DispInfo{i,3} = '1';
+                            this.DispInfo{i,4} = 'right';   
+                        elseif strfind(this.DispInfo{i,1},'RBE')
+                            this.DispInfo{i,3} = '1';
+                            this.DispInfo{i,4} = 'right';   
+                        elseif strfind(this.DispInfo{i,1},'BED')
+                            this.DispInfo{i,3} = 'Gy';
+                            this.DispInfo{i,4} = 'left';   
                         else
-                            this.DispInfo{i,3} = '[a.u.]';
+                            this.DispInfo{i,3} = 'a.u.';
+                            this.DispInfo{i,4} = 'right';
                         end
-                        this.DispInfo{i,4} = [];    % optional for the future: color range for plotting
-                        this.DispInfo{i,5} = [];    % optional for the future: min max values
                     end
                 end
                 
