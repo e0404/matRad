@@ -56,11 +56,11 @@ if  plane == 3% Axial plane
         xlabel(axesHandle,'x [mm]','FontSize',defaultFontSize)
         ylabel(axesHandle,'y [mm]','FontSize',defaultFontSize)
         vcoord = matRad_cubeIndex2worldCoords([1,1,slice],ct);
-        title(axesHandle,['axial plane z = ' num2str(vcoord(3)) ' [mm]'],'FontSize',defaultFontSize);
+        title(axesHandle,['axial plane z = ' num2str(vcoord(3)) ' [mm]'],'FontSize',defaultFontSize,'Color',matRad_cfg.gui.highlightColor);
     else
         xlabel(axesHandle,'x [voxels]','FontSize',defaultFontSize)
         ylabel(axesHandle,'y [voxels]','FontSize',defaultFontSize)
-        title(axesHandle,'axial plane','FontSize',defaultFontSize)
+        title(axesHandle,'axial plane','FontSize',defaultFontSize,'Color',matRad_cfg.gui.highlightColor)
     end
 elseif plane == 2 % Sagittal plane
     if ~isempty(ct.resolution.y) && ~isempty(ct.resolution.z)
@@ -71,11 +71,11 @@ elseif plane == 2 % Sagittal plane
         xlabel(axesHandle,'z [mm]','FontSize',defaultFontSize);
         ylabel(axesHandle,'y [mm]','FontSize',defaultFontSize);
         vcoord = matRad_cubeIndex2worldCoords([slice,1,1],ct);
-        title(axesHandle,['sagittal plane x = ' num2str(vcoord(1)) ' [mm]'],'FontSize',defaultFontSize);
+        title(axesHandle,['sagittal plane x = ' num2str(vcoord(1)) ' [mm]'],'FontSize',defaultFontSize,'Color',matRad_cfg.gui.highlightColor);
     else
         xlabel(axesHandle,'z [voxels]','FontSize',defaultFontSize)
         ylabel(axesHandle,'y [voxels]','FontSize',defaultFontSize)
-        title(axesHandle,'sagittal plane','FontSize',defaultFontSize);
+        title(axesHandle,'sagittal plane','FontSize',defaultFontSize,'Color',matRad_cfg.gui.highlightColor);
     end
 elseif plane == 1 % Coronal plane
     if ~isempty(ct.resolution.x) && ~isempty(ct.resolution.z)
@@ -86,13 +86,16 @@ elseif plane == 1 % Coronal plane
         xlabel(axesHandle,'z [mm]','FontSize',defaultFontSize)
         ylabel(axesHandle,'x [mm]','FontSize',defaultFontSize)
         vcoord = matRad_cubeIndex2worldCoords([1,slice,1],ct);
-        title(axesHandle,['coronal plane y = ' num2str(vcoord(2)) ' [mm]'],'FontSize',defaultFontSize)
+        title(axesHandle,['coronal plane y = ' num2str(vcoord(2)) ' [mm]'],'FontSize',defaultFontSize,'Color',matRad_cfg.gui.highlightColor)
     else
         xlabel(axesHandle,'z [voxels]','FontSize',defaultFontSize)
         ylabel(axesHandle,'x [voxels]','FontSize',defaultFontSize)
-        title(axesHandle,'coronal plane','FontSize',defaultFontSize)
+        title(axesHandle,'coronal plane','FontSize',defaultFontSize,'Color',matRad_cfg.gui.highlightColor)
     end
 end
+
+%Apply coloring
+set(axesHandle,'XColor',matRad_cfg.gui.textColor,'YColor',matRad_cfg.gui.textColor);
 
 end
 
