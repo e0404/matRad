@@ -60,12 +60,7 @@ classdef matRad_ParticleStfGeneratorSingleBeamlet < matRad_ParticleStfGeneratorR
             
             if size(this.isoCenter,1) == 1          
                 this.isoCenter = repmat(this.isoCenter,this.numOfBeams,1);
-            end
-
-            this.ct = matRad_calcWaterEqD(this.ct,this.radiationMode);
-
-            % get world coordinate system
-            this.ct = matRad_getWorldAxes(this.ct);
+            end            
 
             %Voxel index of Isocenter
             isoIx = matRad_world2cubeIndex(this.isoCenter,this.ct,true);

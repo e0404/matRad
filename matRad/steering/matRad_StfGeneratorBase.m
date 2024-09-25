@@ -229,6 +229,10 @@ classdef matRad_StfGeneratorBase < handle
                 end
             end
 
+            %Make sure the coordinate system is initialized
+            this.ct = matRad_getWorldAxes(this.ct);
+
+            %Make sure we have a  valid scenario model
             if isempty(this.multScen)
                 this.multScen = matRad_NominalScenario(this.ct);
             end
@@ -289,9 +293,6 @@ classdef matRad_StfGeneratorBase < handle
             if isempty(V)
                 matRad_cfg.dispError('Could not find target.');
             end
-
-            % get world coordinate system
-            this.ct = matRad_getWorldAxes(this.ct);
 
             % Convert linear indices to 3D voxel coordinates
             this.voxTargetWorldCoords = matRad_cubeIndex2worldCoords(V, this.ct);

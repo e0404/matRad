@@ -67,6 +67,9 @@ classdef matRad_ParticleStfGeneratorRayBixelAbstract < matRad_ExternalStfGenerat
             if sum(this.availablePeakPos<0)>0
                 matRad_cfg.dispError('at least one available peak position is negative - inconsistent machine file')
             end
+
+            %Create Water equivalent cube in ct
+            this.ct = matRad_calcWaterEqD(this.ct,this.radiationMode);
         end
     end
 
