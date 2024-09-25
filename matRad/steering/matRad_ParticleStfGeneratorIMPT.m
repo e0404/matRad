@@ -54,15 +54,13 @@ classdef matRad_ParticleStfGeneratorIMPT < matRad_ExternalStfGeneratorIMRT
         function initializePatientGeometry(this)
             % Initialize the patient geometry for particles
 
-            initializePatientGeometry@matRad_ExternalStfGeneratorIMRT(this)
-            matRad_cfg = MatRad_Config.instance;
+            this.availableEnergies  = [this.machine.data.energy];
+            this.availablePeakPos   = [this.machine.data.peakPos] + [this.machine.data.offset];
+            availableWidths         = [this.machine.data.initFocus];
+            availableWidths         = [availableWidths.SisFWHMAtIso];
+            this.maxPBwidth         = max(availableWidths) / 2.355;
 
-            this.availableEnergies = [this.machine.data.energy];
-            this.availablePeakPos  = [this.machine.data.peakPos] + [this.machine.data.offset];
-            availableWidths   = [this.machine.data.initFocus];
-            availableWidths   = [availableWidths.SisFWHMAtIso];
-            this.maxPBwidth        = max(availableWidths) / 2.355;
-
+            matRad_cfg = MatRad_Config.instance();
             if this.useRangeShifter
                 %For now only a generic range shifter is used whose thickness is
                 %determined by the minimum peak width to play with
@@ -75,6 +73,8 @@ classdef matRad_ParticleStfGeneratorIMPT < matRad_ExternalStfGeneratorIMRT
             if sum(this.availablePeakPos<0)>0
                 matRad_cfg.dispError('at least one available peak position is negative - inconsistent machine file')
             end
+
+            initializePatientGeometry@matRad_ExternalStfGeneratorIMRT(this)
 
         end
         
