@@ -122,7 +122,7 @@ pln.propStf.bixelWidth     = 5;
 % calculate the iso-center which is per default the center of gravity of 
 % all target voxels.
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
-pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+pln.propStf.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 
 %% dose calculation settings
 % set resolution of dose calculation and optimization
