@@ -419,5 +419,28 @@ classdef matRad_ExternalStfGeneratorIMRT < matRad_StfGeneratorBase
             
         end
     end
+
+    methods (Static)
+        function [available,msg] = isAvailable(pln,machine)
+            % see superclass for information            
+                   
+            if nargin < 2
+                machine = matRad_loadMachine(pln);
+            end
+
+            %checkBasic
+            available = isfield(machine,'meta') && isfield(machine,'data');
+
+            available = available && isfield(machine.meta,'machine');
+
+            available = available && isfield(machine.meta,'SAD') && isscalar(machine.meta.SAD);
+    
+            if ~available
+                msg = 'Your machine file is invalid and does not contain the basic field (meta/data/radiationMode)!';                
+            else
+                msg = [];
+            end
+        end
+    end
 end
 

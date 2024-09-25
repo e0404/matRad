@@ -1,5 +1,5 @@
 classdef matRad_StfGeneratorBase < handle
-% matRad_StfGeneratorBase: Abstract Superclass for Steering information 
+% matRad_StfGeneratorBase: Abstract Superclass for Steering information
 %   generators. Steering information is used to guide the dose calculation
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -15,13 +15,17 @@ classdef matRad_StfGeneratorBase < handle
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+    properties (Constant)
+        isStfGenerator = true;      % const boolean for inheritance quick check
+    end
+
     properties (Constant, Abstract)
         name;                       %Descriptive Name
         shortName;                  %Short name for referencing
         possibleRadiationModes;     %Possible radiation modes for the respective StfGenerator
     end
 
-    properties
+    properties (Access = public)
         visMode = 0;                %Visualization Options
         addMargin = true;           %Add margins to target (for numerical stability and robustness)
         multScen;                   %Scenario Model
@@ -39,11 +43,7 @@ classdef matRad_StfGeneratorBase < handle
         cst                         %cst reference during generation
     end
 
-    properties (Constant)
-        isStfGenerator = true;    % const boolean for checking inheritance
-    end
-
-    methods 
+    methods
         function this = matRad_StfGeneratorBase(pln)
             % Constructs standalone StfGenerator with or without pln
 
@@ -51,7 +51,7 @@ classdef matRad_StfGeneratorBase < handle
             if nargin == 1 && ~isempty(pln)
                 this.assignPropertiesFromPln(pln);
             end
-            
+
         end
 
         function setDefaults(this)
@@ -82,7 +82,7 @@ classdef matRad_StfGeneratorBase < handle
             end
             this.radiationMode = mode;
         end
-        
+
         function warnDeprecatedProperty(this,oldProp,msg,newProp)
             matRad_cfg = MatRad_Config.instance();
             if nargin < 3 || isempty(msg)
@@ -102,12 +102,12 @@ classdef matRad_StfGeneratorBase < handle
             % Assign properties from pln.propStf to the stf generator
 
             matRad_cfg = MatRad_Config.instance();
-            
+
             %Set Scenario Model
             if isfield(pln,'multScen')
                 this.multScen = pln.multScen;
             end
-            
+
             %Assign biological model
             if isfield(pln,'bioParam')
                 this.bioParam = pln.bioParam;
@@ -117,27 +117,27 @@ classdef matRad_StfGeneratorBase < handle
             if isfield(pln,'machine')
                 this.machine = pln.machine;
             end
-            
+
             if nargin < 3 || ~isscalar(warnWhenPropertyChanged) || ~islogical(warnWhenPropertyChanged)
                 warnWhenPropertyChanged = false;
             end
 
-            %Overwrite default properties within the stf generatorwith the 
+            %Overwrite default properties within the stf generatorwith the
             %ones given in the propStf struct
             if isfield(pln,'propStf') && isstruct(pln.propStf)
                 plnStruct = pln.propStf; %get remaining fields
-                if isfield(plnStruct,'type') && ~isempty(plnStruct.type) && ~any(strcmp(plnStruct.type,this.shortName))
-                    matRad_cfg.dispWarning('Inconsistent stf generators given! pln asks for ''%s'', but you are using ''%s''!',plnStruct.type,this.shortName);
+                if isfield(plnStruct,'generator') && ~isempty(plnStruct.generator) && ~any(strcmp(plnStruct.generator,this.shortName))
+                    matRad_cfg.dispWarning('Inconsistent stf generators given! pln asks for ''%s'', but you are using ''%s''!',plnStruct.generator,this.shortName);
                 end
-                if isfield(plnStruct,'type')
-                    plnStruct = rmfield(plnStruct, 'type'); % type field is no longer needed and would throw an exception
+                if isfield(plnStruct,'generator')
+                    plnStruct = rmfield(plnStruct, 'generator'); % generator field is no longer needed and would throw an exception
                 end
             else
                 plnStruct = struct();
             end
 
             fields = fieldnames(plnStruct);
-            
+
             %Set up warning message
             if warnWhenPropertyChanged
                 warningMsg = 'Property in stf generator overwritten from pln.propStf';
@@ -148,9 +148,9 @@ classdef matRad_StfGeneratorBase < handle
             % iterate over all fieldnames and try to set the
             % corresponding properties inside the stf generator
             if matRad_cfg.isOctave
-                c2sWarningState = warning('off','Octave:classdef-to-struct');                
+                c2sWarningState = warning('off','Octave:classdef-to-struct');
             end
-            
+
             for i = 1:length(fields)
                 try
                     field = fields{i};
@@ -160,11 +160,11 @@ classdef matRad_StfGeneratorBase < handle
                         matRad_cfg.dispWarning('Not able to assign property ''%s'' from pln.propStf to stf generator!',field);
                     end
                 catch ME
-                % catch exceptions when the stf generator has no 
-                % properties which are defined in the struct.
-                % When defining an engine with custom setter and getter
-                % methods, custom exceptions can be caught here. Be
-                % careful with Octave exceptions!
+                    % catch exceptions when the stf generator has no
+                    % properties which are defined in the struct.
+                    % When defining an engine with custom setter and getter
+                    % methods, custom exceptions can be caught here. Be
+                    % careful with Octave exceptions!
                     if ~isempty(warningMsg)
                         matRad_cfg = MatRad_Config.instance();
                         switch ME.identifier
@@ -176,16 +176,16 @@ classdef matRad_StfGeneratorBase < handle
                     end
                 end
             end
-            
+
             if matRad_cfg.isOctave
-                warning(c2sWarningState.state,'Octave:classdef-to-struct');                
+                warning(c2sWarningState.state,'Octave:classdef-to-struct');
             end
         end
     end
 
-    methods 
+    methods %(Abstract)
 
-        function stf = generate(this, ct, cst)  
+        function stf = generate(this, ct, cst)
             % Generate steering information for the given ct and cst
             % This is a base class function performing the following tasks
             % 1. Checking the input
@@ -223,10 +223,10 @@ classdef matRad_StfGeneratorBase < handle
             % Basic Initialization of the Patient Geometry
 
             matRad_cfg = MatRad_Config.instance();
-            
+
             % Initialize patient geometry
             V = [];
-            %ct = matRad_calcWaterEqD(ct,this.radiationMode);  
+            %ct = matRad_calcWaterEqD(ct,this.radiationMode);
 
             isTarget = cellfun(@(voiType) isequal(voiType, 'TARGET'), this.cst(:,3));
             if ~any(isTarget)
@@ -244,7 +244,7 @@ classdef matRad_StfGeneratorBase < handle
             % Now add all used target voxels to the voxel list
             for i = 1:size(this.cst, 1)
                 if useTargetForBixelPlacement(i)
-                    V = [V; this.cst{i,4}{1}];  
+                    V = [V; this.cst{i,4}{1}];
                 end
             end
 
@@ -292,7 +292,7 @@ classdef matRad_StfGeneratorBase < handle
                 this.ct.cube{i}(eraseCtDensMask == 1) = 0;
             end
 
-            
+
         end
 
         function pbMargin = getPbMargin(this)
@@ -308,6 +308,186 @@ classdef matRad_StfGeneratorBase < handle
             % (Internal logic is often split into multiple methods in order to
             % make the whole calculation more modular)
             throw(MException('MATLAB:class:AbstractMember','Abstract function generateSourceGeometry of your StfGenerator needs to be implemented!'));
+        end
+    end
+
+    methods (Static)
+        function generator = getGeneratorFromPln(pln)
+            %GETENGINE Summary of this function goes here
+            %   Detailed explanation goes here
+
+            matRad_cfg = MatRad_Config.instance();
+
+            generator = [];
+
+            initDefaultGenerator = false;
+            %get all available engines for given pln struct, could be done conditional
+            classList = matRad_StfGeneratorBase.getAvailableGenerators(pln);
+
+            % Check for a valid engine, and if the given engine isn't valid set boolean
+            % to initiliaze default engine at the end of this function
+            if isfield(pln,'propStf') && isa(pln.propStf, mfilename('class'))
+                generator = pln.propStf;
+            elseif isfield(pln,'propStf') && isstruct(pln.propStf) && isfield(pln.propStf,'generator')
+                if ischar(pln.propStf.generator) || isstring(pln.propStf.generator)
+                    matchGenerators = strcmpi({classList(:).shortName},pln.propStf.generator);
+                    if any(matchGenerators)
+                        %instantiate engine
+                        generatorHandle = classList(matchGenerators).handle;
+                        generator = generatorHandle(pln);
+                    else
+                        initDefaultGenerator = true;
+                    end
+                else
+                    initDefaultGenerator = true;
+                    matRad_cfg.dispWarning('pln.propStf.generator field not valid!');
+                end
+            else
+                initDefaultGenerator = true;
+            end
+
+            % trying to use a default engine which fits
+            % the given radiation mode, when no valid engine was defined.
+            % Default Engines are defined in matRad_Config.
+            if initDefaultGenerator
+                matchGenerators = ismember({classList(:).shortName},matRad_cfg.defaults.propStf.generator);
+                if any(matchGenerators)
+                    generatorHandle = classList(matchGenerators).handle;
+
+                    % unlikely event that multiple engines fit just take the first
+                    if length(generatorHandle) > 1
+                        generatorHandle = generatorHandle{1};
+                    end
+                    generator = generatorHandle(pln);
+                    matRad_cfg.dispWarning('Using default stf generator %s!', generator.name);
+                elseif ~isempty(classList)
+                    generatorHandle = classList(1).handle;
+                    generator = generatorHandle(pln);
+                    matRad_cfg.dispWarning('Default stf generator not available! Using %s.', generator.name);
+                else
+                    matRad_cfg.dispError('Default stf generator not found!');
+                end
+            end
+
+            if isempty(generator)
+                matRad_cfg.dispError('No suitable stf generator found!');
+            end
+
+        end
+
+        function classList = getAvailableGenerators(pln,optionalPaths)
+            % Returns a list of names and coresponding handle for stf
+            % generators. Returns all stf generators when no arg is
+            %   given. If no generators are found return gonna be empty.
+            %
+            % call:
+            %   classList = matRad_StfGeneratorBase.getAvailableGenerators(pln,optional_path)
+            %
+            % input:
+            %   pln:            containing proposed generator and machine file informations
+            %   optionalPath:   cell array of other folders to search in
+            %
+            % returns:
+            %   classList: struct array containing name, shortName, className, and
+            %   handle for construction of the Generator
+
+            matRad_cfg = MatRad_Config.instance();
+
+            %Parse inputs
+            if nargin < 2
+                optionalPaths = {fileparts(mfilename("fullpath"))};
+            else
+                if ~(iscellstr(optionalPaths) && all(optionalPaths))
+                    matRad_cfg.dispError('Invalid path array!');
+                end
+
+                optionalPaths = horzcat(fileparts(mfilename("fullpath")),optionalPaths)
+            end
+
+            if nargin < 1
+                pln = [];
+            else
+                if ~(isstruct(pln) || isempty(pln))
+                    matRad_cfg.dispError('Invalid pln!');
+                end
+            end
+
+
+            %Get available, valid classes through call to matRad helper function
+            %for finding subclasses
+            availableStfGenerators = matRad_findSubclasses(mfilename('class'),'folders',optionalPaths,'includeAbstract',false);
+
+            %Now filter for pln
+            ix = [];
+
+            if nargin >= 1 && ~isempty(pln)
+                machine = matRad_loadMachine(pln);
+                machineMode = machine.meta.radiationMode;
+
+                for cIx = 1:length(availableStfGenerators)
+                    mc = availableStfGenerators{cIx};
+                    availabilityFuncStr = [mc.Name '.isAvailable'];
+                    %availabilityFunc = str2func(availabilityFuncStr); %str2func  does not seem to work on static class functions in Octave 5.2.0
+                    try
+                        %available = availabilityFunc(pln,machine);
+                        available = eval([availabilityFuncStr '(pln,machine)']);
+                    catch
+                        available = false;
+                        mpList = mc.PropertyList;
+                        if matRad_cfg.isMatlab
+                            loc = find(arrayfun(@(x) strcmp('possibleRadiationModes',x.Name),mpList));
+                            propValue = mpList(loc).DefaultValue;
+                        else
+                            loc = find(cellfun(@(x) strcmp('possibleRadiationModes',x.Name),mpList));
+                            propValue = mpList{loc}.DefaultValue;
+                        end
+
+                        if any(strcmp(propValue, pln.radiationMode))
+                            % get radiation mode from the in pln proposed basedata machine file
+                            % add current class to return lists if the
+                            % radiation mode is compatible
+                            if(any(strcmp(propValue, machineMode)))
+                                available = true;
+
+                            end
+                        end
+                    end
+                    if available
+                        ix = [ix cIx];
+                    end
+                end
+
+                availableStfGenerators = availableStfGenerators(ix);
+            end
+
+            classList = matRad_identifyClassesByConstantProperties(availableStfGenerators,'shortName','defaults',matRad_cfg.defaults.propStf.generator,'additionalPropertyNames',{'name'});
+
+        end
+
+        function [available,msg] = isAvailable(pln,machine)
+            % return a boolean if the generator is is available for the given pln
+            % struct. Needs to be implemented in non abstract subclasses
+            % input:
+            % - pln:        matRad pln struct
+            % - machine:    optional machine to avoid loading the machine from
+            %               disk (makes sense to use if machine already loaded)
+            % output:
+            % - available:  boolean value to check if the dose engine is
+            %               available for the given pln/machine
+            % - msg:        msg to elaborate on availability. If not available,
+            %               a msg string indicates an error during the check
+            %               if available, indicates a warning that not all
+            %               information was present in the machine file and
+            %               approximations need to be made
+
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispError('This is an Abstract Base class! Function needs to be called for instantiable subclasses!');
+        end
+
+        % Machine Loader
+        % Currently just uses the matRad function that asks for pln
+        function machine = loadMachine(radiationMode,machineName)
+            machine = matRad_loadMachine(struct('radiationMode',radiationMode,'machine',machineName));
         end
     end
 end

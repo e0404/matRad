@@ -49,6 +49,58 @@ classdef matRad_PhotonStfGeneratorIMRT < matRad_ExternalStfGeneratorIMRT
             for j = stfElement.numOfRays:-1:1
                 stfElement.ray(j).energy = this.machine.data.energy;
             end
+        end        
+    end
+
+    methods (Static)
+        function [available,msg] = isAvailable(pln,machine)
+            % see superclass for information            
+                   
+            if nargin < 2
+                machine = matRad_loadMachine(pln);
+            end
+
+            % Check superclass availability
+            [available,msg] = matRad_ExternalStfGeneratorIMRT.IsAvailable(pln,machine);
+
+            if ~available
+                return;
+            else
+                available = false;
+                msg = [];
+            end
+    
+            %checkBasic
+            try
+                checkBasic = isfield(machine,'meta') && isfield(machine,'data');
+    
+                %check modality
+                checkModality = any(strcmp(matRad_PhotonStfGeneratorIMRT.possibleRadiationModes, machine.meta.radiationMode)) && any(strcmp(matRad_PhotonStfGeneratorIMRT.possibleRadiationModes, pln.radiationMode));
+                
+                %Sanity check compatibility
+                if checkModality
+                    checkModality = strcmp(machine.meta.radiationMode,pln.radiationMode);
+                end
+    
+                preCheck = checkBasic && checkModality;
+    
+                if ~preCheck
+                    return;
+                end
+            catch
+                msg = 'Your machine file is invalid and does not contain the basic field (meta/data/radiationMode)!';
+                return;
+            end
+
+            %check required fields
+            checkFields = true;
+
+            checkFields = checkFields && isfield(machine.data,'energy') && isscalar(machine.data.energy);
+            
+            checkFields = checkFields && isfield(machine.meta,'SCD') && isscalar(machine.meta.SCD);
+
+
+            available = preCheck && checkFields;
         end
     end
 end

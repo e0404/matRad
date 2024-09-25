@@ -1,15 +1,13 @@
-function stf = matRad_generateStf(ct,cst,pln)
+function stf = matRad_generateStf(ct,cst,pln,visMode)
 % matRad steering information generation
 %
 % call
-%   stf = matRad_generateStf(ct,cst,pln,visMode)
+%   stf = matRad_generateStf(ct,cst,pln)
 %
 % input
 %   ct:         ct cube
 %   cst:        matRad cst struct
 %   pln:        matRad plan meta information struct
-%   visMode:    toggle on/off different visualizations by setting
-%               this value to 1,2,3 (optional)
 %
 % output
 %   stf:        matRad steering information struct
@@ -30,16 +28,16 @@ function stf = matRad_generateStf(ct,cst,pln)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
 
-if strcmp(pln.radiationMode, 'brachy')
-    brachyStfGen = matRad_BrachyStfGenerator(pln);
-    stf = brachyStfGen.generate(ct, cst);
-elseif strcmp(pln.radiationMode, 'photons')
-    photonStfGen = matRad_PhotonStfGeneratorIMRT(pln);
-    stf = photonStfGen.generate(ct, cst);
-elseif any(strcmp(pln.radiationMode, {'protons', 'carbon', 'helium'}))
-    ionStfGen = matRad_ParticleStfGeneratorIMPT(pln);
-    stf = ionStfGen.generate(ct, cst);
+generator = matRad_StfGeneratorBase.getGeneratorFromPln(pln);
+
+if nargin == 4
+    matRad_cfg.dispDeprecationWarning('The fourth ''visMode'' argument for matRad_generateStf is deprecated and will be removed in a future release. Please use pln.propStf.visMode as a replacement (or the corresponding property in the stf generators))');
+    generator.visMode = visMode;
 end
+
+%call the calcDose funktion
+stf = generator.generate(ct,cst);
 
 end
