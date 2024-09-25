@@ -211,7 +211,7 @@ classdef matRad_StfGeneratorBase < handle
             this.cst = cst;
 
             this.initialize();
-            this.initializePatientGeometry();
+            this.createPatientGeometry();
             stf = this.generateSourceGeometry();
         end
     end
@@ -234,7 +234,7 @@ classdef matRad_StfGeneratorBase < handle
             end
         end
 
-        function initializePatientGeometry(this)
+        function createPatientGeometry(this)
             % Basic Initialization of the Patient Geometry
 
             matRad_cfg = MatRad_Config.instance();

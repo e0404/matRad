@@ -45,7 +45,7 @@ classdef matRad_ParticleStfGeneratorSingleBeamlet < matRad_ParticleStfGeneratorR
             rayPos = [0 0 0];
         end
 
-        function initializePatientGeometry(this)
+        function createPatientGeometry(this)
             % Simple patient geometry with isocenter target
             matRad_cfg = MatRad_Config.instance();
 
