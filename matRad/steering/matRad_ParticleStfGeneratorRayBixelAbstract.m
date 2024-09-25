@@ -45,6 +45,8 @@ classdef matRad_ParticleStfGeneratorRayBixelAbstract < matRad_ExternalStfGenerat
 
     methods (Access = protected)
         function initialize(this)
+            this.initialize@matRad_ExternalStfGeneratorRayBixelAbstract();
+
             %Initialize Metadata needed for stf generators
             this.availableEnergies  = [this.machine.data.energy];
             this.availablePeakPos   = [this.machine.data.peakPos] + [this.machine.data.offset];
