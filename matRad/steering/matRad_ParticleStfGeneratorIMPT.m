@@ -1,4 +1,4 @@
-classdef matRad_ParticleStfGeneratorIMPT < matRad_ExternalStfGeneratorRayBixelAbstract     
+classdef matRad_ParticleStfGeneratorIMPT < matRad_ParticleStfGeneratorRayBixelAbstract
 % matRad_ParticleStfGenerator: Abstract Superclass for Steering information 
 %   generators. Steering information is used to guide the dose calculation
 %
@@ -23,25 +23,14 @@ classdef matRad_ParticleStfGeneratorIMPT < matRad_ExternalStfGeneratorRayBixelAb
 
     properties
         longitudinalSpotSpacing;
-        useRangeShifter = false;
     end
-    
-    properties (Access = protected)
-        availableEnergies
-        availablePeakPos
-        availablePeakPosRaShi
-        maxPBwidth
-        pbMargin
-    end
-
-
 
     methods 
         function this = matRad_ParticleStfGeneratorIMPT(pln)
             if nargin < 1
                 pln = [];
             end
-            this@matRad_ExternalStfGeneratorRayBixelAbstract(pln);
+            this@matRad_ParticleStfGeneratorRayBixelAbstract(pln);
 
             if isempty(this.radiationMode)
                 this.radiationMode = 'protons';
@@ -51,41 +40,9 @@ classdef matRad_ParticleStfGeneratorIMPT < matRad_ExternalStfGeneratorRayBixelAb
 
 
     methods (Access = protected)
-        function initializePatientGeometry(this)
-            % Initialize the patient geometry for particles
-
-            this.availableEnergies  = [this.machine.data.energy];
-            this.availablePeakPos   = [this.machine.data.peakPos] + [this.machine.data.offset];
-            availableWidths         = [this.machine.data.initFocus];
-            availableWidths         = [availableWidths.SisFWHMAtIso];
-            this.maxPBwidth         = max(availableWidths) / 2.355;
-
-            matRad_cfg = MatRad_Config.instance();
-            if this.useRangeShifter
-                %For now only a generic range shifter is used whose thickness is
-                %determined by the minimum peak width to play with
-                rangeShifterEqD = round(min(this.availablePeakPos)* 1.25);
-                this.availablePeakPosRaShi = this.availablePeakPos - rangeShifterEqD;
-
-                matRad_cfg.dispWarning('Use of range shifter enabled. matRad will generate a generic range shifter with WEPL %f to enable ranges below the shortest base data entry.',rangeShifterEqD);
-            end
-
-            if sum(this.availablePeakPos<0)>0
-                matRad_cfg.dispError('at least one available peak position is negative - inconsistent machine file')
-            end
-
-            initializePatientGeometry@matRad_ExternalStfGeneratorRayBixelAbstract(this)
-
-        end
-        
-        function pbMargin = getPbMargin(this)
-            %Compute a margin to account for pencil beam width
-
-            pbMargin = min(this.maxPBwidth,this.bixelWidth);
-        end
 
         function beam = initBeamData(this,beam)
-            beam = this.initBeamData@matRad_ExternalStfGeneratorRayBixelAbstract(beam);
+            beam = this.initBeamData@matRad_ParticleStfGeneratorRayBixelAbstract(beam);
             beam.longitudinalSpotSpacing = this.longitudinalSpotSpacing;
         end
         
@@ -313,7 +270,7 @@ classdef matRad_ParticleStfGeneratorIMPT < matRad_ExternalStfGeneratorRayBixelAb
                 end
             end
             
-            beam = this.finalizeBeam@matRad_ExternalStfGeneratorRayBixelAbstract(beam);
+            beam = this.finalizeBeam@matRad_ParticleStfGeneratorRayBixelAbstract(beam);
         end
     end
 
@@ -326,7 +283,7 @@ classdef matRad_ParticleStfGeneratorIMPT < matRad_ExternalStfGeneratorRayBixelAb
             end
 
             % Check superclass availability
-            [available,msg] = matRad_ExternalStfGeneratorRayBixelAbstract.IsAvailable(pln,machine);
+            [available,msg] = matRad_ParticleStfGeneratorRayBixelAbstract.IsAvailable(pln,machine);
 
             if ~available
                 return;
@@ -354,15 +311,8 @@ classdef matRad_ParticleStfGeneratorIMPT < matRad_ExternalStfGeneratorRayBixelAb
                 msg = 'Your machine file is invalid and does not contain the basic field (meta/data/radiationMode)!';
                 return;
             end
-
-            %check required fields
-            checkFields = true;
-
-            checkFields = checkFields && isstruct(machine.data);
-            
-            checkFields = checkFields && all(isfield(machine.data),{'energy','peakPos','initFocus','offset'});                        
-
-            available = preCheck && checkFields;
+                   
+            available = preCheck;
         end
     end
 end
