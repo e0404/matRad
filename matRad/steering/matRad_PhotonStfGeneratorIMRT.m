@@ -2,7 +2,7 @@ classdef matRad_PhotonStfGeneratorIMRT < matRad_PhotonStfGeneratorRayBixelAbstra
 
     properties (Constant)
         name = 'Photon IMRT stf Generator';
-        shortName = 'photonIMRT';
+        shortName = 'PhotonIMRT';
         possibleRadiationModes = {'photons'};
     end 
 

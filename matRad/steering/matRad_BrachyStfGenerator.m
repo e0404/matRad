@@ -2,7 +2,7 @@ classdef matRad_BrachyStfGenerator < matRad_StfGeneratorBase
 
     properties (Constant)
         name = 'Basic Brachytherapy Template';
-        shortName = 'simpleBrachy';
+        shortName = 'SimpleBrachy';
         possibleRadiationModes = {'brachy'};
     end
     properties
