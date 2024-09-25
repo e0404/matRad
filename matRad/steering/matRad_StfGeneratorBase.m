@@ -1,4 +1,4 @@
-classdef matRad_StfGeneratorBase < handle
+classdef (Abstract) matRad_StfGeneratorBase < handle
 % matRad_StfGeneratorBase: Abstract Superclass for Steering information
 %   generators. Steering information is used to guide the dose calculation
 %
@@ -418,7 +418,7 @@ classdef matRad_StfGeneratorBase < handle
                     matRad_cfg.dispError('Invalid path array!');
                 end
 
-                optionalPaths = horzcat(fileparts(mfilename("fullpath")),optionalPaths)
+                optionalPaths = horzcat(fileparts(mfilename("fullpath")),optionalPaths);
             end
 
             if nargin < 1
@@ -428,7 +428,6 @@ classdef matRad_StfGeneratorBase < handle
                     matRad_cfg.dispError('Invalid pln!');
                 end
             end
-
 
             %Get available, valid classes through call to matRad helper function
             %for finding subclasses

@@ -1,4 +1,4 @@
-classdef matRad_ParticleStfGeneratorRayBixelAbstract < matRad_ExternalStfGeneratorRayBixelAbstract
+classdef (Abstract) matRad_ParticleStfGeneratorRayBixelAbstract < matRad_ExternalStfGeneratorRayBixelAbstract
 % matRad_ParticleStfGeneratorRayBixelAbstract: Abstract Superclass for
 % Particle Stf Generators using the ray-bixel mechanism
 %

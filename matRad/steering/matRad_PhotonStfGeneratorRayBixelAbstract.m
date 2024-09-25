@@ -1,4 +1,4 @@
-classdef matRad_PhotonStfGeneratorRayBixelAbstract < matRad_ExternalStfGeneratorRayBixelAbstract
+classdef (Abstract) matRad_PhotonStfGeneratorRayBixelAbstract < matRad_ExternalStfGeneratorRayBixelAbstract
 % matRad_PhotonStfGeneratorRayBixelAbstract: Abstract Superclass for Photon
 %   Stf Generators using the ray-bixel mechanism 
 %
