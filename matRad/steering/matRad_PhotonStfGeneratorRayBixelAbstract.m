@@ -26,7 +26,6 @@ classdef matRad_PhotonStfGeneratorRayBixelAbstract < matRad_ExternalStfGenerator
 
          function setDefaults(this)
             % Set default values for ExternalStfGenerator
-
             this.setDefaults@matRad_ExternalStfGeneratorRayBixelAbstract();
          end
     end

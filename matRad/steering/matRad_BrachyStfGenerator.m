@@ -36,15 +36,13 @@ classdef matRad_BrachyStfGenerator < matRad_StfGeneratorBase
         end
     end
 
-    methods (Access = protected)        
-
-        function initializePatientGeometry(this)
+    methods (Access = protected)
+        function initialize(this)
+            this.initialize@matRad_StfGeneratorBase();
             if ~isa(this.multScen,'matRad_NominalScenario') && ~strcmp(this.multScen,'nomScen')
                 matRad_cfg.dispError('Brachy Therapy does only work with a single nominal scenario model!');
             end
-
-            this.initializePatientGeometry@matRad_StfGeneratorBase();
-        end
+        end        
         
         function stf = generateSourceGeometry(this)
             matRad_cfg = MatRad_Config.instance();

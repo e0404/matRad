@@ -222,7 +222,6 @@ for i = 1:length(pln.propStf.gantryAngles)
                 stf(i).ray.rangeShifter.sourceRashiDistance = 0;
             end
             
-            
         else % target not hit
             stf(i).ray               = [];
             stf(i).numOfBixelsPerray = [];

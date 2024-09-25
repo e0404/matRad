@@ -72,7 +72,7 @@ classdef matRad_StfGeneratorBase < handle
             end
             this.machine = 'Generic';
         end
-
+        
         function set.radiationMode(this,mode)
             % radiationMode setter
 
@@ -207,9 +207,18 @@ classdef matRad_StfGeneratorBase < handle
             matRad_cfg = MatRad_Config.instance();
             matRad_cfg.dispInfo('matRad: Generating stf struct with generator ''%s''... ',this.name);
 
-            if isempty(this.multScen)
-                this.multScen = matRad_NominalScenario(ct);
-            end
+            this.ct = ct;
+            this.cst = cst;
+
+            this.initialize();
+            this.initializePatientGeometry();
+            stf = this.generateSourceGeometry();
+        end
+    end
+
+    methods (Access = protected)
+        function initialize(this)
+            %Do nothing
 
             % get machine
             if ~isstruct(this.machine)
@@ -220,15 +229,10 @@ classdef matRad_StfGeneratorBase < handle
                 end
             end
 
-            this.ct = ct;
-            this.cst = cst;
-
-            this.initializePatientGeometry();
-            stf = this.generateSourceGeometry();
+            if isempty(this.multScen)
+                this.multScen = matRad_NominalScenario(this.ct);
+            end
         end
-    end
-
-    methods (Access = protected)
 
         function initializePatientGeometry(this)
             % Basic Initialization of the Patient Geometry
@@ -302,8 +306,6 @@ classdef matRad_StfGeneratorBase < handle
             for i = 1:this.ct.numOfCtScen
                 this.ct.cube{i}(eraseCtDensMask == 1) = 0;
             end
-
-
         end
 
         function pbMargin = getPbMargin(this)

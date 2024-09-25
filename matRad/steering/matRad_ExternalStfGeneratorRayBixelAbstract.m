@@ -116,10 +116,9 @@ classdef matRad_ExternalStfGeneratorRayBixelAbstract < matRad_StfGeneratorBase
     end
 
     methods (Access = protected)
-        function initializePatientGeometry(this)
-            % Initialize patient geometry for external beam therapy geometry
-
-            matRad_cfg = MatRad_Config.instance();
+        function initialize(this)
+            
+            this.initialize@matRad_StfGeneratorBase();
 
             if this.visMode > 1
                 visBool = true;
@@ -132,6 +131,7 @@ classdef matRad_ExternalStfGeneratorRayBixelAbstract < matRad_StfGeneratorBase
             end
 
             if ~isequal(size(this.isoCenter),[this.numOfBeams,3]) && ~size(this.isoCenter,1) ~= 1
+                matRad_cfg = MatRad_Config.instance();
                 matRad_cfg.dispWarning('IsoCenter invalid, creating new one automatically!');
                 this.isoCenter = matRad_getIsoCenter(this.cst,this.ct,visBool);
             end
@@ -139,10 +139,6 @@ classdef matRad_ExternalStfGeneratorRayBixelAbstract < matRad_StfGeneratorBase
             if size(this.isoCenter,1) == 1          
                 this.isoCenter = repmat(this.isoCenter,this.numOfBeams,1);
             end
-
-            this.ct = matRad_calcWaterEqD(this.ct,this.radiationMode);
-
-            initializePatientGeometry@matRad_StfGeneratorBase(this);
         end
 
         function rayPos = getRayPositionMatrix(this, beam)

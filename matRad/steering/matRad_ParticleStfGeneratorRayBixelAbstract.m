@@ -44,10 +44,8 @@ classdef matRad_ParticleStfGeneratorRayBixelAbstract < matRad_ExternalStfGenerat
     end
 
     methods (Access = protected)
-
-        function initializePatientGeometry(this)
-            % Initialize the patient geometry for particles
-
+        function initialize(this)
+            %Initialize Metadata needed for stf generators
             this.availableEnergies  = [this.machine.data.energy];
             this.availablePeakPos   = [this.machine.data.peakPos] + [this.machine.data.offset];
             availableWidths         = [this.machine.data.initFocus];
@@ -67,8 +65,6 @@ classdef matRad_ParticleStfGeneratorRayBixelAbstract < matRad_ExternalStfGenerat
             if sum(this.availablePeakPos<0)>0
                 matRad_cfg.dispError('at least one available peak position is negative - inconsistent machine file')
             end
-
-            initializePatientGeometry@matRad_ExternalStfGeneratorRayBixelAbstract(this)
         end
     end
 
