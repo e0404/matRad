@@ -131,6 +131,8 @@ classdef matRad_ExternalStfGeneratorIMRT < matRad_StfGeneratorBase
                 this.isoCenter = repmat(this.isoCenter,this.numOfBeams,1);
             end
 
+            this.ct = matRad_calcWaterEqD(this.ct,this.radiationMode);
+
             initializePatientGeometry@matRad_StfGeneratorBase(this);
         end
         
