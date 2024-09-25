@@ -843,10 +843,19 @@ classdef matRad_PlanWidget < matRad_Widget
             end
             
             set(handles.editFraction,'String',num2str(pln.numOfFractions));
-            
-            
+
+            if ~isfield(pln,'bioParam')
+                pln.bioParam = matRad_bioModel(pln.radiationMode,'physicalDose','none');
+            end
+                        
             contentPopUpQuantityOpt = get(handles.popMenuQuantityOpt,'String');
+            
             ix = find(strcmp(pln.bioParam.quantityOpt,contentPopUpQuantityOpt));
+
+            if isempty(ix)
+                ix = 1;
+            end
+
             set(handles.popMenuQuantityOpt,'Value',ix);
             
             contentPopUpBioModel = get(handles.popMenuBioModel,'String');
@@ -876,7 +885,7 @@ classdef matRad_PlanWidget < matRad_Widget
             end 
 
             if ~isfield(pln,'propDoseCalc') || ~isfield(pln.propDoseCalc,'doseGrid')
-                pln.propDoseCalc.doseGrid.resolution = matRad_cfg.defaults.propDoseCalc.resolution;
+                pln.propDoseCalc.doseGrid.resolution = matRad_cfg.defaults.propDoseCalc.doseGrid.resolution;
             end
 
             set(handles.editDoseX,'String',num2str(pln.propDoseCalc.doseGrid.resolution.x));

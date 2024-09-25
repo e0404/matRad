@@ -482,10 +482,10 @@ classdef matRad_MainGUI < handle
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
 
-
-            tmpFig = figure('position',[100 100 700 600],'Visible','off','name','Current View');
+            matRad_cfg = MatRad_Config.instance();
+            tmpFig = figure('position',[100 100 700 600],'Visible','off','name','Current View','Color',matRad_cfg.gui.backgroundColor);
             cBarHandle = this.ViewingWidget.cBarHandle; %findobj(handles.figure1,'Type','colorbar');
-            if ~isempty(cBarHandle)
+            if ~isempty(cBarHandle) && ishghandle(cBarHandle)
                 new_handle = copyobj([this.ViewingWidget.handles.axesFig cBarHandle],tmpFig);
             else
                 new_handle = copyobj(this.ViewingWidget.handles.axesFig,tmpFig);
