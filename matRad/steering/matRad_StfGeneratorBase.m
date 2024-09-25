@@ -102,7 +102,23 @@ classdef matRad_StfGeneratorBase < handle
             % Assign properties from pln.propStf to the stf generator
 
             matRad_cfg = MatRad_Config.instance();
+            
+            %Must haves in pln struct
+            %Set/validate radiation Mode
+            if ~isfield(pln,'radiationMode') && isempty(this.radiationMode)
+                matRad_cfg.dispError('No radiation mode specified in pln struct!');
+            else
+                this.radiationMode = pln.radiationMode;
+            end
 
+            %Take machine from pln
+            if ~isfield(pln,'machine') && isempty(this.machine)
+                matRad_cfg.dispError('No machine specified in pln struct!');
+            else
+                this.machine = pln.machine;
+            end
+            
+            % Defaults if not provided
             %Set Scenario Model
             if isfield(pln,'multScen')
                 this.multScen = pln.multScen;
@@ -111,11 +127,6 @@ classdef matRad_StfGeneratorBase < handle
             %Assign biological model
             if isfield(pln,'bioParam')
                 this.bioParam = pln.bioParam;
-            end
-
-            %Take machine from pln
-            if isfield(pln,'machine')
-                this.machine = pln.machine;
             end
 
             if nargin < 3 || ~isscalar(warnWhenPropertyChanged) || ~islogical(warnWhenPropertyChanged)
