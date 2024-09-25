@@ -53,7 +53,7 @@ classdef matRad_PhotonStfGeneratorSingleBeamlet < matRad_ExternalStfGeneratorRay
                 checkBasic = isfield(machine,'meta') && isfield(machine,'data');
     
                 %check modality
-                checkModality = any(strcmp(matRad_PhotonStfGeneratorSingleBeamlet.possibleRadiationModes, machine.meta.radiationMode)) && any(strcmp(matRad_PhotonStfGeneratorIMRT.possibleRadiationModes, pln.radiationMode));
+                checkModality = any(strcmp(matRad_PhotonStfGeneratorSingleBeamlet.possibleRadiationModes, machine.meta.radiationMode)) && any(strcmp(atRad_PhotonStfGeneratorSingleBeamlet.possibleRadiationModes, pln.radiationMode));
                 
                 %Sanity check compatibility
                 if checkModality
