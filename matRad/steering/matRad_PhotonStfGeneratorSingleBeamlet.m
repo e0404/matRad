@@ -1,19 +1,17 @@
-classdef matRad_PhotonStfGeneratorIMRT < matRad_PhotonStfGeneratorRayBixelAbstract
+classdef matRad_PhotonStfGeneratorSingleBeamlet < matRad_ExternalStfGeneratorRayBixelAbstract
 
     properties (Constant)
-        name = 'Photon IMRT stf Generator';
-        shortName = 'photonIMRT';
+        name = 'Photon Single Beamlet';
+        shortName = 'photonSingleBixel';
         possibleRadiationModes = {'photons'};
-    end 
-
-    
+    end  
     
     methods 
-        function this = matRad_PhotonStfGeneratorIMRT(pln)
+        function this = matRad_PhotonStfGeneratorSingleBeamlet(pln)
             if nargin < 1
                 pln = [];
             end
-            this@matRad_PhotonStfGeneratorRayBixelAbstract(pln);
+            this@matRad_ExternalStfGeneratorRayBixelAbstract(pln);
 
             if isempty(this.radiationMode)
                 this.radiationMode = 'photons';
@@ -21,10 +19,15 @@ classdef matRad_PhotonStfGeneratorIMRT < matRad_PhotonStfGeneratorRayBixelAbstra
         end            
     end
 
-    methods (Access = protected)        
+    methods (Access = protected)  
         function pbMargin = getPbMargin(this)
-            pbMargin = this.bixelWidth;
-        end        
+            pbMargin = 0;
+        end
+        
+        function rayPos = getRayPositionMatrix(this,beam)
+            % see superclass for information
+            rayPos = [0 0 0];
+        end   
     end
 
     methods (Static)
@@ -50,7 +53,7 @@ classdef matRad_PhotonStfGeneratorIMRT < matRad_PhotonStfGeneratorRayBixelAbstra
                 checkBasic = isfield(machine,'meta') && isfield(machine,'data');
     
                 %check modality
-                checkModality = any(strcmp(matRad_PhotonStfGeneratorIMRT.possibleRadiationModes, machine.meta.radiationMode)) && any(strcmp(matRad_PhotonStfGeneratorIMRT.possibleRadiationModes, pln.radiationMode));
+                checkModality = any(strcmp(matRad_PhotonStfGeneratorSingleBeamlet.possibleRadiationModes, machine.meta.radiationMode)) && any(strcmp(matRad_PhotonStfGeneratorIMRT.possibleRadiationModes, pln.radiationMode));
                 
                 %Sanity check compatibility
                 if checkModality

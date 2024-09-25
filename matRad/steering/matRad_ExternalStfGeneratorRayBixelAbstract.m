@@ -1,11 +1,20 @@
-classdef matRad_ExternalStfGeneratorIMRT < matRad_StfGeneratorBase
-
+classdef matRad_ExternalStfGeneratorRayBixelAbstract < matRad_StfGeneratorBase
+% matRad_PhotonStfGeneratorRayBixelAbstract: Abstract Superclass for 
+%   external beam stf generators using the ray-bixel mechanism 
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2024 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    properties (Access = protected)
-        rayPos
-        ctEntryPoint        
-    end
-
     properties
         gantryAngles = 0;
         couchAngles  = 0;
@@ -25,7 +34,7 @@ classdef matRad_ExternalStfGeneratorIMRT < matRad_StfGeneratorBase
 
 
     methods 
-         function this = matRad_ExternalStfGeneratorIMRT(pln)
+         function this = matRad_ExternalStfGeneratorRayBixelAbstract(pln)
             % Constructs ExternalStfGenerator with or without pln
             if nargin < 1
                 pln = [];
@@ -127,7 +136,7 @@ classdef matRad_ExternalStfGeneratorIMRT < matRad_StfGeneratorBase
                 this.isoCenter = matRad_getIsoCenter(this.cst,this.ct,visBool);
             end
             
-            if size(this.isoCenter,1) ~= 1          
+            if size(this.isoCenter,1) == 1          
                 this.isoCenter = repmat(this.isoCenter,this.numOfBeams,1);
             end
 
@@ -206,9 +215,6 @@ classdef matRad_ExternalStfGeneratorIMRT < matRad_StfGeneratorBase
             % Generate basic source geometry (beams & rays) for external beam therapy
 
             matRad_cfg = MatRad_Config.instance;
-
-            % prepare structures necessary for particles
-            SAD = this.machine.meta.SAD;
    
             % loop over all angles
             for i = 1:length(this.gantryAngles)

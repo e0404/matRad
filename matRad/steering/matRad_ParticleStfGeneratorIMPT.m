@@ -1,4 +1,4 @@
-classdef matRad_ParticleStfGeneratorIMPT < matRad_ExternalStfGeneratorIMRT     
+classdef matRad_ParticleStfGeneratorIMPT < matRad_ExternalStfGeneratorRayBixelAbstract     
 % matRad_ParticleStfGenerator: Abstract Superclass for Steering information 
 %   generators. Steering information is used to guide the dose calculation
 %
@@ -41,7 +41,7 @@ classdef matRad_ParticleStfGeneratorIMPT < matRad_ExternalStfGeneratorIMRT
             if nargin < 1
                 pln = [];
             end
-            this@matRad_ExternalStfGeneratorIMRT(pln);
+            this@matRad_ExternalStfGeneratorRayBixelAbstract(pln);
 
             if isempty(this.radiationMode)
                 this.radiationMode = 'protons';
@@ -74,7 +74,7 @@ classdef matRad_ParticleStfGeneratorIMPT < matRad_ExternalStfGeneratorIMRT
                 matRad_cfg.dispError('at least one available peak position is negative - inconsistent machine file')
             end
 
-            initializePatientGeometry@matRad_ExternalStfGeneratorIMRT(this)
+            initializePatientGeometry@matRad_ExternalStfGeneratorRayBixelAbstract(this)
 
         end
         
@@ -85,7 +85,7 @@ classdef matRad_ParticleStfGeneratorIMPT < matRad_ExternalStfGeneratorIMRT
         end
 
         function beam = initBeamData(this,beam)
-            beam = this.initBeamData@matRad_ExternalStfGeneratorIMRT(beam);
+            beam = this.initBeamData@matRad_ExternalStfGeneratorRayBixelAbstract(beam);
             beam.longitudinalSpotSpacing = this.longitudinalSpotSpacing;
         end
         
@@ -107,7 +107,7 @@ classdef matRad_ParticleStfGeneratorIMPT < matRad_ExternalStfGeneratorIMRT
                             [this.ct.cube {this.voiTarget}]);
 
                         %Used for generic range-shifter placement
-                        this.ctEntryPoint = alphas(1) * d12;
+                        ctEntryPoint = alphas(1) * d12;
                 end
 
                 % target hit
@@ -313,7 +313,7 @@ classdef matRad_ParticleStfGeneratorIMPT < matRad_ExternalStfGeneratorIMRT
                 end
             end
             
-            beam = this.finalizeBeam@matRad_ExternalStfGeneratorIMRT(beam);
+            beam = this.finalizeBeam@matRad_ExternalStfGeneratorRayBixelAbstract(beam);
         end
     end
 
@@ -326,7 +326,7 @@ classdef matRad_ParticleStfGeneratorIMPT < matRad_ExternalStfGeneratorIMRT
             end
 
             % Check superclass availability
-            [available,msg] = matRad_ExternalStfGeneratorIMRT.IsAvailable(pln,machine);
+            [available,msg] = matRad_ExternalStfGeneratorRayBixelAbstract.IsAvailable(pln,machine);
 
             if ~available
                 return;
