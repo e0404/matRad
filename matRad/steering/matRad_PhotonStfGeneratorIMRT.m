@@ -25,29 +25,41 @@ classdef matRad_PhotonStfGeneratorIMRT < matRad_ExternalStfGeneratorIMRT
         function pbMargin = getPbMargin(this)
             pbMargin = this.bixelWidth;
         end
-        function rayPos = initializeRayTargetPosition(this,rayPos,rotMat_vectors_T,SAD) 
+
+        function beam = initBeamData(this,beam)
+            beam = this.initBeamData@matRad_ExternalStfGeneratorIMRT(beam);
+            beam.SCD = this.machine.meta.SCD;
+        end
+
+        function beam = initRays(this,beam) 
             %Initializes the geometrical beamlet information for photon bixels (ray corners at isocenter and collimator plane)
 
-            rayPos = this.initializeRayTargetPosition@matRad_ExternalStfGeneratorIMRT(rayPos,rotMat_vectors_T,SAD);
+            beam = this.initRays@matRad_ExternalStfGeneratorIMRT(beam);
+
+            rotMat_vectors_T = transpose(matRad_getRotationMatrix(beam.gantryAngle,beam.couchAngle));
+
+            numOfRays = numel(beam.ray);
 
             %photon ray-target position
-            for j = 1:rayPos.numOfRays
-                        rayPos.ray(j).beamletCornersAtIso = [this.rayPos(j,:) + [+rayPos.bixelWidth/2,0,+rayPos.bixelWidth/2];...
-                            this.rayPos(j,:) + [-rayPos.bixelWidth/2,0,+rayPos.bixelWidth/2];...
-                            this.rayPos(j,:) + [-rayPos.bixelWidth/2,0,-rayPos.bixelWidth/2];...
-                            this.rayPos(j,:) + [+rayPos.bixelWidth/2,0,-rayPos.bixelWidth/2]]*rotMat_vectors_T;
-                        rayPos.ray(j).rayCorners_SCD = (repmat([0, this.machine.meta.SCD - SAD, 0],4,1)+ (this.machine.meta.SCD/SAD) * ...
-                            [this.rayPos(j,:) + [+rayPos.bixelWidth/2,0,+rayPos.bixelWidth/2];...
-                            this.rayPos(j,:) + [-rayPos.bixelWidth/2,0,+rayPos.bixelWidth/2];...
-                            this.rayPos(j,:) + [-rayPos.bixelWidth/2,0,-rayPos.bixelWidth/2];...
-                            this.rayPos(j,:) + [+rayPos.bixelWidth/2,0,-rayPos.bixelWidth/2]])*rotMat_vectors_T;
+            for j = 1:numOfRays
+                        beam.ray(j).beamletCornersAtIso = [beam.ray(j).rayPos_bev + [+beam.bixelWidth/2,0,+beam.bixelWidth/2];...
+                            beam.ray(j).rayPos_bev + [-beam.bixelWidth/2,0,+beam.bixelWidth/2];...
+                            beam.ray(j).rayPos_bev + [-beam.bixelWidth/2,0,-beam.bixelWidth/2];...
+                            beam.ray(j).rayPos_bev + [+beam.bixelWidth/2,0,-beam.bixelWidth/2]]*rotMat_vectors_T;
+                        beam.ray(j).rayCorners_SCD = (repmat([0, beam.SCD - beam.SAD, 0],4,1)+ (beam.SCD/beam.SAD) * ...
+                            [beam.ray(j).rayPos_bev + [+beam.bixelWidth/2,0,+beam.bixelWidth/2];...
+                            beam.ray(j).rayPos_bev + [-beam.bixelWidth/2,0,+beam.bixelWidth/2];...
+                            beam.ray(j).rayPos_bev + [-beam.bixelWidth/2,0,-beam.bixelWidth/2];...
+                            beam.ray(j).rayPos_bev + [+beam.bixelWidth/2,0,-beam.bixelWidth/2]])*rotMat_vectors_T;
             end
         end
-        function stfElement = setSourceEnergyOnBeam(this,stfElement)
+        function beam = setBeamletEnergies(this,beam)
             %Assigns the max photon machine energy to all rays
+            
+            numOfRays = numel(beam.ray);
 
-            for j = stfElement.numOfRays:-1:1
-                stfElement.ray(j).energy = this.machine.data.energy;
+            for j = numOfRays:-1:1
+                beam.ray(j).energy = this.machine.data.energy;
             end
         end        
     end
