@@ -236,6 +236,9 @@ classdef matRad_StfGeneratorBase < handle
             if isempty(this.multScen)
                 this.multScen = matRad_NominalScenario(this.ct);
             end
+            
+            %create / validate scenario model
+            this.multScen = matRad_ScenarioModel.create(this.multScen,this.ct);
         end
 
         function createPatientGeometry(this)
