@@ -15,11 +15,11 @@ function cst = matRad_generateBodyContour(ct,cst,thresholdHU)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2018 the matRad development team.
+% Copyright 2024 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
 % of the matRad project, including this file, may be copied, modified,
 % propagated, or distributed except according to the terms contained in the
 % LICENSE file.
@@ -34,7 +34,7 @@ if ~available
     matRad_cfg.dispError('Image processing toolbox / packages not available!');
 end
 
-if nargin<3
+if nargin < 3
     thresholdHU = -500;
 end
 % visualize Histogram
@@ -49,7 +49,6 @@ end
 % Thresholding on HU
 mask = zeros(ct.cubeDim);
 mask(ct.cubeHU{1}>thresholdHU) = 1;
-list = find(mask);
 filledIm= imfill(mask);
 
 % Write to cst
