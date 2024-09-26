@@ -36,7 +36,7 @@ function test_generate_HDR()
     load PROSTATE.mat ct cst;
     pln = createPln('HDR',ct,cst);
     
-    stf = matRad_generateStf(ct, cst, pln);
+    stf = matRad_generateStf(ct, cst, pln, 0);
     assertTrue(isfield(stf, 'radiationMode'));
     assertTrue(isfield(stf, 'numOfSeedsPerNeedle'));
     assertTrue(isfield(stf, 'numOfNeedles'));
@@ -49,7 +49,7 @@ function test_generate_LDR()
     load PROSTATE.mat ct cst;
     pln = createPln('LDR',ct,cst);
 
-    stf = matRad_generateStf(ct, cst, pln);
+    stf = matRad_generateStf(ct, cst, pln, 0);
     assertTrue(isfield(stf, 'radiationMode'));
     assertTrue(isfield(stf, 'numOfSeedsPerNeedle'));
     assertTrue(isfield(stf, 'numOfNeedles'));
