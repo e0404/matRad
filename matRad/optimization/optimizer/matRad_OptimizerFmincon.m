@@ -54,12 +54,6 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
             else
                 optDisplay = 'off';
             end
-
-            if matRad_cfg.disableGUI
-                pltFcns = {[]};                
-            else
-                pltFcns = {@optimplotfval,@optimplotx,@optimplotfunccount,@optimplotconstrviolation,@optimplotstepsize,@optimplotfirstorderopt};
-            end
             
             %createDefaultOptimizerOptions Constructs a set of default
             %options for the optimizer to use
@@ -75,8 +69,11 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
                 'HessianApproximation',{'lbfgs',50},...
                 'UseParallel',true,...
                 'Diagnostics',optDiag,...
-                'ScaleProblem',true,...
-                'PlotFcn',pltFcns);
+                'ScaleProblem',true);
+            
+            if ~matRad_cfg.disableGUI
+                obj.options.PlotFcn = {@optimplotfval,@optimplotx,@optimplotfunccount,@optimplotconstrviolation,@optimplotstepsize,@optimplotfirstorderopt};
+            end
         end
                 
         function obj = optimize(obj,w0,optiProb,dij,cst)
