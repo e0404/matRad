@@ -94,5 +94,8 @@ elseif plane == 1 % Coronal plane
     end
 end
 
+%Apply coloring
+set(axesHandle,'XColor',matRad_cfg.gui.textColor,'YColor',matRad_cfg.gui.textColor);
+
 end
 

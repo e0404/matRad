@@ -66,6 +66,7 @@ pln.multScen = matRad_multScen(ct,'nomScen'); % optimize on the nominal scenario
 %Enable/Disable use of range shifter (has effect only when we need to fill 
 %up the low-range region)
 pln.propStf.useRangeShifter = false;  
+pln.propStf.generator = 'ParticleSingleSpot'; 
 
 %Enable LET calculation
 pln.propDoseCalc.calcLET = true;
@@ -75,8 +76,7 @@ pln.propDoseCalc.calcLET = true;
 % pln.propMC.externalCalculation = true;
 
 %% generate steering file
-%stf = matRad_generateStf(ct,cst,pln);
-stf = matRad_generateSingleBixelStf(ct,cst,pln); %Example to create a single beamlet stf
+stf = matRad_generateStf(ct,cst,pln);
 
 %% analytical dose calculation
 pln.propDoseCalc.engine = 'MCsquare';
