@@ -11,6 +11,7 @@ function test_basic_construct()
 function test_pln_construct()
     load photons_testData.mat
     stfGen = matRad_PhotonStfGeneratorSingleBeamlet(pln);
+    stfGen.isAvailable(pln);
     assertTrue(isa(stfGen, 'matRad_PhotonStfGeneratorSingleBeamlet'));
     assertEqual(stfGen.gantryAngles, pln.propStf.gantryAngles);
     assertEqual(stfGen.couchAngles, pln.propStf.couchAngles);
@@ -26,7 +27,6 @@ function test_generate_multibeams()
     stfGen = matRad_PhotonStfGeneratorSingleBeamlet(pln);
     stf = stfGen.generate(ct,cst);
    
-
     assertTrue(isfield(stf, 'radiationMode'));
     assertTrue(isfield(stf, 'machine'));
     assertTrue(isfield(stf, 'gantryAngle'));

@@ -36,7 +36,7 @@ classdef matRad_PhotonStfGeneratorIMRT < matRad_PhotonStfGeneratorRayBixelAbstra
             end
 
             % Check superclass availability
-            [available,msg] = matRad_PhotonStfGeneratorRayBixelAbstract.IsAvailable(pln,machine);
+            [available,msg] = matRad_PhotonStfGeneratorRayBixelAbstract.isAvailable(pln,machine);
 
             if ~available
                 return;

@@ -79,7 +79,7 @@ classdef (Abstract) matRad_PhotonStfGeneratorRayBixelAbstract < matRad_ExternalS
             end
 
             % Check superclass availability
-            [available,msg] = matRad_ExternalStfGeneratorRayBixelAbstract.IsAvailable(pln,machine);
+            [available,msg] = matRad_ExternalStfGeneratorRayBixelAbstract.isAvailable(pln,machine);
            
             if ~available
                 return;

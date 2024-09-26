@@ -86,7 +86,7 @@ classdef (Abstract) matRad_ParticleStfGeneratorRayBixelAbstract < matRad_Externa
             end
 
             % Check superclass availability
-            [available,msg] = matRad_ExternalStfGeneratorRayBixelAbstract.IsAvailable(pln,machine);
+            [available,msg] = matRad_ExternalStfGeneratorRayBixelAbstract.isAvailable(pln,machine);
 
             if ~available
                 return;
@@ -94,7 +94,7 @@ classdef (Abstract) matRad_ParticleStfGeneratorRayBixelAbstract < matRad_Externa
 
             available = available && isstruct(machine.data);
 
-            available = available && all(isfield(machine.data),{'energy','peakPos','initFocus','offset'});
+            available = available && all(isfield(machine.data,{'energy','peakPos','initFocus','offset'}));
 
 
             if ~available

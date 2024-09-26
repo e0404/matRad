@@ -279,7 +279,7 @@ classdef matRad_ParticleStfGeneratorIMPT < matRad_ParticleStfGeneratorRayBixelAb
             end
 
             % Check superclass availability
-            [available,msg] = matRad_ParticleStfGeneratorRayBixelAbstract.IsAvailable(pln,machine);
+            [available,msg] = matRad_ParticleStfGeneratorRayBixelAbstract.isAvailable(pln,machine);
 
             if ~available
                 return;
@@ -298,7 +298,7 @@ classdef matRad_ParticleStfGeneratorIMPT < matRad_ParticleStfGeneratorRayBixelAb
                     checkModality = strcmp(machine.meta.radiationMode,pln.radiationMode);
                 end
     
-                preCheck = checkBasic && checkModality;
+                preCheck = checkModality;
     
                 if ~preCheck
                     return;

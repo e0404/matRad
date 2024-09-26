@@ -208,7 +208,7 @@ classdef matRad_ParticleStfGeneratorSingleBeamlet < matRad_ParticleStfGeneratorR
             end
 
             % Check superclass availability
-            [available,msg] = matRad_ParticleStfGeneratorRayBixelAbstract.IsAvailable(pln,machine);
+            [available,msg] = matRad_ParticleStfGeneratorRayBixelAbstract.isAvailable(pln,machine);
 
             if ~available
                 return;
