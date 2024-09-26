@@ -97,7 +97,7 @@ classdef MatRad_Config < handle
                 obj.userfolders = {[obj.matRadRoot filesep 'userdata' filesep]};
             end           
             
-            %Set Versiong
+            %set version
             obj.getEnvironment();
             obj.matRad_version = matRad_version(obj.matRadRoot);
 
