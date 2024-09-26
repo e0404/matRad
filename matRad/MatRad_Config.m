@@ -298,7 +298,32 @@ classdef MatRad_Config < handle
         end
 
         function setDefaultGUIProperties(obj)
-            theme = matRad_ThemeDark();
+            %Detect current theme
+            light = false;
+            try
+                if ispc
+                    light = logical(winqueryreg('HKEY_CURRENT_USER','Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize','AppsUseLightTheme'));
+                elseif ismac
+                    out = system('defaults read -g AppleInterfaceStyle');
+                    if ~strcmp(out,'Dark')
+                        light = true;
+                    end
+                else
+                    out = system('gsettings get org.gnome.desktop.interface color-scheme');
+                    if strcmp(out,'prefer-light')
+                        light = true;
+                    end
+                end
+            catch
+                light = false;
+            end
+            
+            if light
+                theme = matRad_ThemeLight();
+            else
+                theme = matRad_ThemeDark();
+            end
+
             obj.gui = struct(theme);
         end
 
