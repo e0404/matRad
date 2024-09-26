@@ -31,10 +31,6 @@ classdef matRad_ParticleStfGeneratorIMPT < matRad_ParticleStfGeneratorRayBixelAb
                 pln = [];
             end
             this@matRad_ParticleStfGeneratorRayBixelAbstract(pln);
-
-            if isempty(this.radiationMode)
-                this.radiationMode = 'protons';
-            end
          end
     end
 

@@ -35,6 +35,10 @@ classdef (Abstract) matRad_ParticleStfGeneratorRayBixelAbstract < matRad_Externa
                 pln = [];
             end
             this@matRad_ExternalStfGeneratorRayBixelAbstract(pln);
+
+            if isempty(this.radiationMode)
+                this.radiationMode = 'protons';
+            end
         end
 
         function setDefaults(this)

@@ -1,4 +1,4 @@
-function test_suite = test_generatePhotonBixel
+function test_suite = test_stfGeneratorPhotonBixel
 
 test_functions=localfunctions();
 
