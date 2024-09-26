@@ -1,4 +1,4 @@
-classdef matRad_PhotonStfGeneratorIMRT < matRad_PhotonStfGeneratorRayBixelAbstract
+classdef matRad_StfGeneratorPhotonIMRT < matRad_StfGeneratorPhotonRayBixelAbstract
 
     properties (Constant)
         name = 'Photon IMRT stf Generator';
@@ -9,11 +9,11 @@ classdef matRad_PhotonStfGeneratorIMRT < matRad_PhotonStfGeneratorRayBixelAbstra
     
     
     methods 
-        function this = matRad_PhotonStfGeneratorIMRT(pln)
+        function this = matRad_StfGeneratorPhotonIMRT(pln)
             if nargin < 1
                 pln = [];
             end
-            this@matRad_PhotonStfGeneratorRayBixelAbstract(pln);
+            this@matRad_StfGeneratorPhotonRayBixelAbstract(pln);
 
             if isempty(this.radiationMode)
                 this.radiationMode = 'photons';
@@ -36,7 +36,7 @@ classdef matRad_PhotonStfGeneratorIMRT < matRad_PhotonStfGeneratorRayBixelAbstra
             end
 
             % Check superclass availability
-            [available,msg] = matRad_PhotonStfGeneratorRayBixelAbstract.isAvailable(pln,machine);
+            [available,msg] = matRad_StfGeneratorPhotonRayBixelAbstract.isAvailable(pln,machine);
 
             if ~available
                 return;
@@ -50,7 +50,7 @@ classdef matRad_PhotonStfGeneratorIMRT < matRad_PhotonStfGeneratorRayBixelAbstra
                 checkBasic = isfield(machine,'meta') && isfield(machine,'data');
     
                 %check modality
-                checkModality = any(strcmp(matRad_PhotonStfGeneratorIMRT.possibleRadiationModes, machine.meta.radiationMode)) && any(strcmp(matRad_PhotonStfGeneratorIMRT.possibleRadiationModes, pln.radiationMode));
+                checkModality = any(strcmp(matRad_StfGeneratorPhotonIMRT.possibleRadiationModes, machine.meta.radiationMode)) && any(strcmp(matRad_StfGeneratorPhotonIMRT.possibleRadiationModes, pln.radiationMode));
                 
                 %Sanity check compatibility
                 if checkModality

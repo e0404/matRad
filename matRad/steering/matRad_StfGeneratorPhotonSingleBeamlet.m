@@ -1,5 +1,5 @@
-classdef matRad_PhotonStfGeneratorSingleBeamlet < matRad_PhotonStfGeneratorRayBixelAbstract
-% matRad_PhotonStfGeneratorSingleBeamlet: 
+classdef matRad_StfGeneratorPhotonSingleBeamlet < matRad_StfGeneratorPhotonRayBixelAbstract
+% matRad_StfGeneratorPhotonSingleBeamlet: 
 %   Creates a single beamlet for photons
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -22,11 +22,11 @@ classdef matRad_PhotonStfGeneratorSingleBeamlet < matRad_PhotonStfGeneratorRayBi
     end  
     
     methods 
-        function this = matRad_PhotonStfGeneratorSingleBeamlet(pln)
+        function this = matRad_StfGeneratorPhotonSingleBeamlet(pln)
             if nargin < 1
                 pln = [];
             end
-            this@matRad_PhotonStfGeneratorRayBixelAbstract(pln);
+            this@matRad_StfGeneratorPhotonRayBixelAbstract(pln);
 
             if isempty(this.radiationMode)
                 this.radiationMode = 'photons';
@@ -54,7 +54,7 @@ classdef matRad_PhotonStfGeneratorSingleBeamlet < matRad_PhotonStfGeneratorRayBi
             end
 
             % Check superclass availability
-            [available,msg] = matRad_PhotonStfGeneratorRayBixelAbstract.isAvailable(pln,machine);
+            [available,msg] = matRad_StfGeneratorPhotonRayBixelAbstract.isAvailable(pln,machine);
 
             if ~available
                 return;
@@ -68,7 +68,7 @@ classdef matRad_PhotonStfGeneratorSingleBeamlet < matRad_PhotonStfGeneratorRayBi
                 checkBasic = isfield(machine,'meta') && isfield(machine,'data');
     
                 %check modality
-                checkModality = any(strcmp(matRad_PhotonStfGeneratorSingleBeamlet.possibleRadiationModes, machine.meta.radiationMode)) && any(strcmp(matRad_PhotonStfGeneratorSingleBeamlet.possibleRadiationModes, pln.radiationMode));
+                checkModality = any(strcmp(matRad_StfGeneratorPhotonSingleBeamlet.possibleRadiationModes, machine.meta.radiationMode)) && any(strcmp(matRad_StfGeneratorPhotonSingleBeamlet.possibleRadiationModes, pln.radiationMode));
                 
                 %Sanity check compatibility
                 if checkModality

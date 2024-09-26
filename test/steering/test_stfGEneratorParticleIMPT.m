@@ -5,14 +5,14 @@ function test_suite = test_stfGeneratorPhotonIMRT
     initTestSuite;
     
     function test_basic_construct()
-        stfGen = matRad_ParticleStfGeneratorIMPT();    
-        assertTrue(isa(stfGen, 'matRad_ParticleStfGeneratorIMPT'));
+        stfGen = matRad_StfGeneratorParticleIMPT();    
+        assertTrue(isa(stfGen, 'matRad_StfGeneratorParticleIMPT'));
     
     function test_pln_construct()
         load protons_testData.mat
-        stfGen = matRad_ParticleStfGeneratorIMPT(pln);
+        stfGen = matRad_StfGeneratorParticleIMPT(pln);
         stfGen.isAvailable(pln);
-        assertTrue(isa(stfGen, 'matRad_ParticleStfGeneratorIMPT'));
+        assertTrue(isa(stfGen, 'matRad_StfGeneratorParticleIMPT'));
         assertEqual(stfGen.gantryAngles, pln.propStf.gantryAngles);
         assertEqual(stfGen.couchAngles, pln.propStf.couchAngles);
         assertEqual(stfGen.isoCenter, pln.propStf.isoCenter);
@@ -24,7 +24,7 @@ function test_suite = test_stfGeneratorPhotonIMRT
         % geometry settings
         load protons_testData.mat ct cst pln stf;
         
-        stfGen = matRad_ParticleStfGeneratorIMPT(pln);
+        stfGen = matRad_StfGeneratorParticleIMPT(pln);
         stf2 = stfGen.generate(ct,cst);
        
         assertTrue(isfield(stf2, 'radiationMode'));

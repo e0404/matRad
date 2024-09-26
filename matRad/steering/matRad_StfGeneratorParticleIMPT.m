@@ -1,4 +1,4 @@
-classdef matRad_ParticleStfGeneratorIMPT < matRad_ParticleStfGeneratorRayBixelAbstract
+classdef matRad_StfGeneratorParticleIMPT < matRad_StfGeneratorParticleRayBixelAbstract
 % matRad_ParticleStfGenerator: Abstract Superclass for Steering information 
 %   generators. Steering information is used to guide the dose calculation
 %
@@ -26,11 +26,11 @@ classdef matRad_ParticleStfGeneratorIMPT < matRad_ParticleStfGeneratorRayBixelAb
     end
 
     methods 
-        function this = matRad_ParticleStfGeneratorIMPT(pln)
+        function this = matRad_StfGeneratorParticleIMPT(pln)
             if nargin < 1
                 pln = [];
             end
-            this@matRad_ParticleStfGeneratorRayBixelAbstract(pln);
+            this@matRad_StfGeneratorParticleRayBixelAbstract(pln);
          end
     end
 
@@ -38,7 +38,7 @@ classdef matRad_ParticleStfGeneratorIMPT < matRad_ParticleStfGeneratorRayBixelAb
     methods (Access = protected)
 
         function beam = initBeamData(this,beam)
-            beam = this.initBeamData@matRad_ParticleStfGeneratorRayBixelAbstract(beam);
+            beam = this.initBeamData@matRad_StfGeneratorParticleRayBixelAbstract(beam);
             beam.longitudinalSpotSpacing = this.longitudinalSpotSpacing;
         end
         
@@ -266,7 +266,7 @@ classdef matRad_ParticleStfGeneratorIMPT < matRad_ParticleStfGeneratorRayBixelAb
                 end
             end
             
-            beam = this.finalizeBeam@matRad_ParticleStfGeneratorRayBixelAbstract(beam);
+            beam = this.finalizeBeam@matRad_StfGeneratorParticleRayBixelAbstract(beam);
         end
     end
 
@@ -279,7 +279,7 @@ classdef matRad_ParticleStfGeneratorIMPT < matRad_ParticleStfGeneratorRayBixelAb
             end
 
             % Check superclass availability
-            [available,msg] = matRad_ParticleStfGeneratorRayBixelAbstract.isAvailable(pln,machine);
+            [available,msg] = matRad_StfGeneratorParticleRayBixelAbstract.isAvailable(pln,machine);
 
             if ~available
                 return;
@@ -291,7 +291,7 @@ classdef matRad_ParticleStfGeneratorIMPT < matRad_ParticleStfGeneratorRayBixelAb
             %checkBasic
             try    
                 %check modality
-                checkModality = any(strcmp(matRad_ParticleStfGeneratorIMPT.possibleRadiationModes, machine.meta.radiationMode)) && any(strcmp(matRad_ParticleStfGeneratorIMPT.possibleRadiationModes, pln.radiationMode));
+                checkModality = any(strcmp(matRad_StfGeneratorParticleIMPT.possibleRadiationModes, machine.meta.radiationMode)) && any(strcmp(matRad_StfGeneratorParticleIMPT.possibleRadiationModes, pln.radiationMode));
                 
                 %Sanity check compatibility
                 if checkModality

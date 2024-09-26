@@ -33,9 +33,9 @@ matRad_cfg = MatRad_Config.instance();
 matRad_cfg.dispDeprecationWarning('The function %s is not intendet to be used, check out the Single Bixel Stf Generators in the steering folder',fileparts(mfilename));
 
 if any(strcmp(pln.radiationMode,{'protons','helium','carbon','oxygen'}))
-    stfGen = matRad_ParticleStfGeneratorSingleBeamlet(pln);
+    stfGen = matRad_StfGeneratorParticleSingleBeamlet(pln);
 elseif strcmp(pln.radiationMode,'photons')
-    stfGen = matRad_PhotonStfGeneratorSingleBeamlet(pln);
+    stfGen = matRad_StfGeneratorPhotonSingleBeamlet(pln);
 else
     matRad_cfg.dispError('Unsupported Radiation Mode!');
 end

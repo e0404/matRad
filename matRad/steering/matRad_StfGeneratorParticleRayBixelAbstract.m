@@ -1,5 +1,5 @@
-classdef (Abstract) matRad_ParticleStfGeneratorRayBixelAbstract < matRad_ExternalStfGeneratorRayBixelAbstract
-% matRad_ParticleStfGeneratorRayBixelAbstract: Abstract Superclass for
+classdef (Abstract) matRad_StfGeneratorParticleRayBixelAbstract < matRad_StfGeneratorExternalRayBixelAbstract
+% matRad_StfGeneratorParticleRayBixelAbstract: Abstract Superclass for
 % Particle Stf Generators using the ray-bixel mechanism
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -29,12 +29,12 @@ classdef (Abstract) matRad_ParticleStfGeneratorRayBixelAbstract < matRad_Externa
     end
 
     methods
-        function this = matRad_ParticleStfGeneratorRayBixelAbstract(pln)
+        function this = matRad_StfGeneratorParticleRayBixelAbstract(pln)
             % Constructs ExternalStfGenerator with or without pln
             if nargin < 1
                 pln = [];
             end
-            this@matRad_ExternalStfGeneratorRayBixelAbstract(pln);
+            this@matRad_StfGeneratorExternalRayBixelAbstract(pln);
 
             if isempty(this.radiationMode)
                 this.radiationMode = 'protons';
@@ -43,13 +43,13 @@ classdef (Abstract) matRad_ParticleStfGeneratorRayBixelAbstract < matRad_Externa
 
         function setDefaults(this)
             % Set default values for ExternalStfGenerator
-            this.setDefaults@matRad_ExternalStfGeneratorRayBixelAbstract();
+            this.setDefaults@matRad_StfGeneratorExternalRayBixelAbstract();
         end
     end
 
     methods (Access = protected)
         function initialize(this)
-            this.initialize@matRad_ExternalStfGeneratorRayBixelAbstract();
+            this.initialize@matRad_StfGeneratorExternalRayBixelAbstract();
 
             %Initialize Metadata needed for stf generators
             this.availableEnergies  = [this.machine.data.energy];
@@ -86,7 +86,7 @@ classdef (Abstract) matRad_ParticleStfGeneratorRayBixelAbstract < matRad_Externa
             end
 
             % Check superclass availability
-            [available,msg] = matRad_ExternalStfGeneratorRayBixelAbstract.isAvailable(pln,machine);
+            [available,msg] = matRad_StfGeneratorExternalRayBixelAbstract.isAvailable(pln,machine);
 
             if ~available
                 return;

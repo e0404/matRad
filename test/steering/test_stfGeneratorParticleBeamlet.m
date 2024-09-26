@@ -5,15 +5,15 @@ function test_suite = test_stfGeneratorParticleBeamlet
     initTestSuite;
     
     function test_basic_construct()
-        stfGen = matRad_ParticleStfGeneratorSingleBeamlet();    
-        assertTrue(isa(stfGen, 'matRad_ParticleStfGeneratorSingleBeamlet'));
+        stfGen = matRad_StfGeneratorParticleSingleBeamlet();    
+        assertTrue(isa(stfGen, 'matRad_StfGeneratorParticleSingleBeamlet'));
         assertEqual(stfGen.radiationMode,'protons');
     
     function test_pln_construct()
         load protons_testData.mat
-        stfGen = matRad_ParticleStfGeneratorSingleBeamlet(pln);
+        stfGen = matRad_StfGeneratorParticleSingleBeamlet(pln);
         assertTrue(stfGen.isAvailable(pln));
-        assertTrue(isa(stfGen, 'matRad_ParticleStfGeneratorSingleBeamlet'));
+        assertTrue(isa(stfGen, 'matRad_StfGeneratorParticleSingleBeamlet'));
         assertEqual(stfGen.gantryAngles, pln.propStf.gantryAngles);
         assertEqual(stfGen.couchAngles, pln.propStf.couchAngles);
         assertEqual(stfGen.isoCenter, pln.propStf.isoCenter);
@@ -23,15 +23,15 @@ function test_suite = test_stfGeneratorParticleBeamlet
         assertEqual(stfGen.radiationMode,'protons');
 
         pln.radiationMode = 'helium';
-        stfGen = matRad_ParticleStfGeneratorSingleBeamlet(pln);
+        stfGen = matRad_StfGeneratorParticleSingleBeamlet(pln);
         assertTrue(stfGen.isAvailable(pln));
-        assertTrue(isa(stfGen, 'matRad_ParticleStfGeneratorSingleBeamlet'));
+        assertTrue(isa(stfGen, 'matRad_StfGeneratorParticleSingleBeamlet'));
         assertEqual(stfGen.radiationMode, pln.radiationMode);
 
         pln.radiationMode = 'carbon';
-        stfGen = matRad_ParticleStfGeneratorSingleBeamlet(pln);
+        stfGen = matRad_StfGeneratorParticleSingleBeamlet(pln);
         assertTrue(stfGen.isAvailable(pln));
-        assertTrue(isa(stfGen, 'matRad_ParticleStfGeneratorSingleBeamlet'));
+        assertTrue(isa(stfGen, 'matRad_StfGeneratorParticleSingleBeamlet'));
         assertEqual(stfGen.radiationMode, pln.radiationMode);        
 
         
@@ -39,7 +39,7 @@ function test_suite = test_stfGeneratorParticleBeamlet
         % geometry settings
         load protons_testData.mat ct cst pln;
         
-        stfGen = matRad_ParticleStfGeneratorSingleBeamlet(pln);
+        stfGen = matRad_StfGeneratorParticleSingleBeamlet(pln);
         stf = stfGen.generate(ct,cst);
        
     
@@ -87,7 +87,7 @@ function test_suite = test_stfGeneratorParticleBeamlet
             % geometry settings
             load protons_testData.mat ct cst pln;
             
-            stfGen = matRad_ParticleStfGeneratorSingleBeamlet(pln);
+            stfGen = matRad_StfGeneratorParticleSingleBeamlet(pln);
     
             stfGen.gantryAngles = 0;
             assertTrue(numel(stfGen.couchAngles) == 1);

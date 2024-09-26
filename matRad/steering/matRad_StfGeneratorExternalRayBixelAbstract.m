@@ -1,5 +1,5 @@
-classdef (Abstract) matRad_ExternalStfGeneratorRayBixelAbstract < matRad_StfGeneratorBase
-% matRad_PhotonStfGeneratorRayBixelAbstract: Abstract Superclass for 
+classdef (Abstract) matRad_StfGeneratorExternalRayBixelAbstract < matRad_StfGeneratorBase
+% matRad_StfGeneratorPhotonRayBixelAbstract: Abstract Superclass for 
 %   external beam stf generators using the ray-bixel mechanism 
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -34,7 +34,7 @@ classdef (Abstract) matRad_ExternalStfGeneratorRayBixelAbstract < matRad_StfGene
 
 
     methods 
-         function this = matRad_ExternalStfGeneratorRayBixelAbstract(pln)
+         function this = matRad_StfGeneratorExternalRayBixelAbstract(pln)
             % Constructs ExternalStfGenerator with or without pln
             if nargin < 1
                 pln = [];

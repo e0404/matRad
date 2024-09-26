@@ -5,14 +5,14 @@ function test_suite = test_stfGeneratorPhotonIMRT
     initTestSuite;
     
     function test_basic_construct()
-        stfGen = matRad_PhotonStfGeneratorIMRT();    
-        assertTrue(isa(stfGen, 'matRad_PhotonStfGeneratorIMRT'));
+        stfGen = matRad_StfGeneratorPhotonIMRT();    
+        assertTrue(isa(stfGen, 'matRad_StfGeneratorPhotonIMRT'));
     
     function test_pln_construct()
         load photons_testData.mat
-        stfGen = matRad_PhotonStfGeneratorIMRT(pln);
+        stfGen = matRad_StfGeneratorPhotonIMRT(pln);
         stfGen.isAvailable(pln);
-        assertTrue(isa(stfGen, 'matRad_PhotonStfGeneratorIMRT'));
+        assertTrue(isa(stfGen, 'matRad_StfGeneratorPhotonIMRT'));
         assertEqual(stfGen.gantryAngles, pln.propStf.gantryAngles);
         assertEqual(stfGen.couchAngles, pln.propStf.couchAngles);
         assertEqual(stfGen.isoCenter, pln.propStf.isoCenter);
@@ -24,7 +24,7 @@ function test_suite = test_stfGeneratorPhotonIMRT
         % geometry settings
         load photons_testData.mat ct cst pln stf;
         
-        stfGen = matRad_PhotonStfGeneratorIMRT(pln);
+        stfGen = matRad_StfGeneratorPhotonIMRT(pln);
         stf2 = stfGen.generate(ct,cst);
        
         assertTrue(isfield(stf2, 'radiationMode'));

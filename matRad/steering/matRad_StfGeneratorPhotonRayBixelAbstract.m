@@ -1,5 +1,5 @@
-classdef (Abstract) matRad_PhotonStfGeneratorRayBixelAbstract < matRad_ExternalStfGeneratorRayBixelAbstract
-% matRad_PhotonStfGeneratorRayBixelAbstract: Abstract Superclass for Photon
+classdef (Abstract) matRad_StfGeneratorPhotonRayBixelAbstract < matRad_StfGeneratorExternalRayBixelAbstract
+% matRad_StfGeneratorPhotonRayBixelAbstract: Abstract Superclass for Photon
 %   Stf Generators using the ray-bixel mechanism 
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -16,24 +16,24 @@ classdef (Abstract) matRad_PhotonStfGeneratorRayBixelAbstract < matRad_ExternalS
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     methods 
-        function this = matRad_PhotonStfGeneratorRayBixelAbstract(pln)
+        function this = matRad_StfGeneratorPhotonRayBixelAbstract(pln)
             % Constructs ExternalStfGenerator with or without pln
             if nargin < 1
                 pln = [];
             end
-            this@matRad_ExternalStfGeneratorRayBixelAbstract(pln);
+            this@matRad_StfGeneratorExternalRayBixelAbstract(pln);
          end
 
          function setDefaults(this)
             % Set default values for ExternalStfGenerator
-            this.setDefaults@matRad_ExternalStfGeneratorRayBixelAbstract();
+            this.setDefaults@matRad_StfGeneratorExternalRayBixelAbstract();
          end
     end
 
     methods (Access = protected)
                 
         function beam = initBeamData(this,beam)
-            beam = this.initBeamData@matRad_ExternalStfGeneratorRayBixelAbstract(beam);
+            beam = this.initBeamData@matRad_StfGeneratorExternalRayBixelAbstract(beam);
             beam.SCD = this.machine.meta.SCD;
         end
 
@@ -49,7 +49,7 @@ classdef (Abstract) matRad_PhotonStfGeneratorRayBixelAbstract < matRad_ExternalS
         function beam = initRays(this,beam) 
             %Initializes the geometrical beamlet information for photon bixels (ray corners at isocenter and collimator plane)
 
-            beam = this.initRays@matRad_ExternalStfGeneratorRayBixelAbstract(beam);
+            beam = this.initRays@matRad_StfGeneratorExternalRayBixelAbstract(beam);
 
             rotMat_vectors_T = transpose(matRad_getRotationMatrix(beam.gantryAngle,beam.couchAngle));
 
@@ -79,7 +79,7 @@ classdef (Abstract) matRad_PhotonStfGeneratorRayBixelAbstract < matRad_ExternalS
             end
 
             % Check superclass availability
-            [available,msg] = matRad_ExternalStfGeneratorRayBixelAbstract.isAvailable(pln,machine);
+            [available,msg] = matRad_StfGeneratorExternalRayBixelAbstract.isAvailable(pln,machine);
            
             if ~available
                 return;

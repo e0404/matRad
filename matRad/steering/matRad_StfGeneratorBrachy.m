@@ -1,4 +1,4 @@
-classdef matRad_BrachyStfGenerator < matRad_StfGeneratorBase
+classdef matRad_StfGeneratorBrachy < matRad_StfGeneratorBase
 
     properties (Constant)
         name = 'Basic Brachytherapy Template';
@@ -12,7 +12,7 @@ classdef matRad_BrachyStfGenerator < matRad_StfGeneratorBase
     end
     
     methods 
-        function this = matRad_BrachyStfGenerator(pln)
+        function this = matRad_StfGeneratorBrachy(pln)
             if nargin < 1
                 pln = [];
             end
@@ -244,7 +244,7 @@ classdef matRad_BrachyStfGenerator < matRad_StfGeneratorBase
                 checkBasic = isfield(machine,'meta') && isfield(machine,'data');
     
                 %check modality
-                checkModality = any(strcmp(matRad_BrachyStfGenerator.possibleRadiationModes, machine.meta.radiationMode)) && any(strcmp(matRad_BrachyStfGenerator.possibleRadiationModes, pln.radiationMode));
+                checkModality = any(strcmp(matRad_StfGeneratorBrachy.possibleRadiationModes, machine.meta.radiationMode)) && any(strcmp(matRad_StfGeneratorBrachy.possibleRadiationModes, pln.radiationMode));
                 
                 %Sanity check compatibility
                 if checkModality
