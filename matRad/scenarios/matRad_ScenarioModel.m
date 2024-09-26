@@ -89,9 +89,9 @@ classdef (Abstract) matRad_ScenarioModel < handle
         function listAllScenarios(this)
             matRad_cfg = MatRad_Config.instance();
             matRad_cfg.dispInfo('Listing all scenarios...\n');
-            matRad_cfg.dispInfo('\t#\txShift\tyShift\tzShift\tabsRng\trelRng\tprob.\n');
+            matRad_cfg.dispInfo('\t#\tctScen\txShift\tyShift\tzShift\tabsRng\trelRng\tprob.\n');
             for s = 1:size(this.scenForProb,1)
-                str = num2str(this.scenForProb(s,:),'\t%.3f');
+                str = [num2str(this.scenForProb(s,1),'\t%d'),sprintf('\t\t'), num2str(this.scenForProb(s,2:end),'\t%.3f')];
                 matRad_cfg.dispInfo('\t%d\t%s\t%.3f\n',s,str,this.scenProb(s));
             end
         end
