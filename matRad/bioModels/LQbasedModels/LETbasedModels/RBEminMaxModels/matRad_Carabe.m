@@ -24,12 +24,14 @@ classdef matRad_Carabe < matRad_RBEminMax
         p3_CAR = 1.09;
         p4_CAR = 0.006;
 
+        requiredQuantities = {'physicalDose','LET'};
+        possibleRadiationModalities = {'protons'};
+
     end
 
     methods
         function this = matRad_Carabe()
             this@matRad_RBEminMax();
-            this.availableRadiationModalities = {'protons'};
         end
 
         function [RBEmin, RBEmax] = getRBEminMax(this,bixel)

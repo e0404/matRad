@@ -15,14 +15,10 @@ classdef (Abstract) matRad_RBEminMax < matRad_LQLETbasedModel
 %
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-    properties
-
-    end
 
     methods
         function this = matRad_RBEminMax()
             this@matRad_LQLETbasedModel();
-            this.requiredQuantities = {'LET'};
         end
 
         function [bixel] = calcBiologicalQuantitiesForBixel(this,bixel,kernels)

@@ -33,13 +33,11 @@ classdef (Abstract) matRad_BiologicalModel < handle
     % LICENSE file.
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    properties
-        requiredQuantities;                % kernels in base data needed for the alpha/beta calculation
-        availableRadiationModalities;      % radiation modalitites compatible with the model
-    end
 
     properties (Abstract, Constant)
         model;
+        requiredQuantities;                % kernels in base data needed for the alpha/beta calculation
+        availableRadiationModalities;      % radiation modalitites compatible with the model
     end
 
     properties (Hidden)
@@ -133,12 +131,31 @@ classdef (Abstract) matRad_BiologicalModel < handle
     end
 
     methods (Static)
-        function classList = getAvailableModels()
+        function classList = getAvailableModels(radiationMode,machine)
+            %Get available models (optionally for radiationMode / machine combination)
+            matRad_cfg = MatRad_Config.instance();
+
             %Use the root folder and the biomodel folder only
             folders = {fileparts(mfilename('fullpath'))};
             folders = [folders matRad_cfg.userfolders];
             metaScenarioModels = matRad_findSubclasses(meta.class.fromName(mfilename('class')),'folders',folders,'includeSubfolders',true);
             classList = matRad_identifyClassesByConstantProperties(metaScenarioModels,'model','defaults',{'none'});
+
+            if nargin == 2
+                isAvailable = false(1,numel(classList));
+                if isstring(machine)
+                    machine = matRad_loadMachine(struct('radiationMode',radiationMode,'machine',machine));
+                end
+                
+                for i = 1:numel(classList)
+                    modelInstance = classList.handle();
+                    isAvailable(i) = modelInstance.isAvailable(radiationMode,machine);
+                end
+
+                classList = classList(isAvailable);
+            elseif nargin ~= 2 && nargin ~= 0
+                matRad_cfg.dispError('Wrong call to getAvailableModels!');
+            end
 
             if isempty(classList)
                 matRad_cfg = MatRad_Config.instance();
@@ -221,13 +238,21 @@ classdef (Abstract) matRad_BiologicalModel < handle
             %Make sure model is a validly created instance
             model = matRad_BiologicalModel.create(model);
 
-            matRad_cfg = MatRad_Config.instance();
+            [valid,msg] = model.isAvailable(radiationMode,machine);
+            
+            if ~valid
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Biological Model not valid: %s',msg);
+            end
+        end
 
-            %TODO: validate model choice for selected machine & radiation
-            %mode
+        function [avail, msg] = isAvailable(radiationMode, machine)
             validRadMode = any(strcmp(model.availableRadiationModalities,radiationMode));
+            
+            msg1 = '';
+            msg2 = '';
             if ~validRadMode
-                matRad_cfg.dispError('Radiation mode invalid for model %s!',model.model);
+                msg1 = sprintf('Radiation mode invalid for model %s!',model.model);
             end
 
             if isstring(machine)
@@ -235,12 +260,19 @@ classdef (Abstract) matRad_BiologicalModel < handle
             end
 
             validMachine = model.checkBioCalcConsistency(machine);
-
+            
             if ~validMachine
-                matRad_cfg.dispError('Machine invalid for model %s!',model.model);
+                msg2 = sprintf('Machine invalid for model %s!',model.model);
             end
-        end
+            
+            msg = strjoin({msg1,msg2},',');
 
+            if isequal(msg(end),',')
+                msg = msg(1:end-1);
+            end
+
+            avail = validRadMode && validMachine;
+        end
     end
 
 end

@@ -17,9 +17,6 @@ classdef (Abstract) matRad_LQKernelBasedModel < matRad_LQBasedModel
 %
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-    properties (Abstract)
-
-    end
 
     methods
         function this = matRad_LQKernelBasedModel()

@@ -21,14 +21,14 @@ classdef matRad_Wedenberg < matRad_RBEminMax
         p1_WED = 0.434;
         p2_WED = 1;
 
+        requiredQuantities = {'physicalDose','LET'};
+        possibleRadiationModalities = {'protons'};
+
     end
 
     methods
         function this = matRad_Wedenberg()
             this@matRad_RBEminMax();
-            
-            this.availableRadiationModalities = {'protons'};
-        
         end
 
         function [RBEmin, RBEmax] = getRBEminMax(this,bixel)

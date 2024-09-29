@@ -25,10 +25,6 @@ classdef matRad_TabulatedSpecralKernelBasedModel < matRad_LQRBETabulatedModel
 %
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
-    properties (Constant)
-        model = 'TAB';
-    end
-
     properties
         weightBy;
     end
@@ -36,14 +32,6 @@ classdef matRad_TabulatedSpecralKernelBasedModel < matRad_LQRBETabulatedModel
     methods
         function this = matRad_TabulatedSpecralKernelBasedModel()
             this@matRad_LQRBETabulatedModel();
-      
-            
-            % this.requiredQuantities not assigned here because it depends
-            % on the specific user defined properties. Could add here just
-            % a default
-            this.availableRadiationModalities = {'protons', 'carbon', 'helium'};
-
-            
             this.assignDefaultProperties();
 
         end

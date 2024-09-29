@@ -15,14 +15,14 @@ classdef matRad_KernelBasedLEM < matRad_LQKernelBasedModel
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
     properties (Constant)
         model = 'LEM';
+
+        requiredQuantities = {'alpha','beta'};
+        possibleRadiationModalities = {'protons','helium','carbon'};
     end
 
     methods
         function this = matRad_KernelBasedLEM()
             this@matRad_LQKernelBasedModel();
-
-            this.requiredQuantities = {'alpha', 'beta'};
-            this.availableRadiationModalities = {'carbon'};
         end
 
         
@@ -30,7 +30,7 @@ classdef matRad_KernelBasedLEM < matRad_LQKernelBasedModel
             % This function assignis the interpolated kernels to the
             % correct tissue class
             
-            bixel  = calcBiologicalQuantitiesForBixel@matRad_LQBasedModel(this,bixel);
+            bixel  = calcBiologicalQuantitiesForBixel@matRad_LQKernelBasedModel(this,bixel);
             
             numOfTissueClass = size(bixel.baseData.alpha,2);
             

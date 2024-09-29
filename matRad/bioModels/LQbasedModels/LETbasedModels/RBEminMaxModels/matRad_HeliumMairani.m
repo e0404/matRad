@@ -22,13 +22,14 @@ classdef matRad_HeliumMairani < matRad_RBEminMax
         p0_HEL = 1.36938e-1; 
         p1_HEL = 9.73154e-3;
         p2_HEL = 1.51998e-2;
+
+        requiredQuantities = {'physicalDose','LET'};
+        possibleRadiationModalities = {'helium'};
     end
 
     methods
         function this = matRad_HeliumMairani()
             this@matRad_RBEminMax();
-
-            this.availableRadiationModalities = {'helium'};
         end
 
         function [RBEmin, RBEmax] = getRBEminMax(this,bixel)

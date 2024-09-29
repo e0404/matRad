@@ -21,12 +21,14 @@ classdef matRad_LinearScalingModel < matRad_RBEminMax
         p_corrFacEntranceRBE = 0.5;   %[kev/mum]
         p_upperLETThreshold  = 30;    %[kev/mum]
         p_lowerLETThreshold  = 0.3;   %[kev/mum]
+
+        requiredQuantities = {'physicalDose','LET'};
+        possibleRadiationModalities = {'protons','helium','carbon'};
     end
 
     methods
         function this = matRad_LinearScalingModel()
             this@matRad_RBEminMax();
-            this.availableRadiationModalities = {'protons'};
         end
 
         function [RBEmin,RBEmax] = getRBEminMax(this,bixel)

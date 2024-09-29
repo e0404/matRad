@@ -20,6 +20,8 @@ classdef matRad_ConstantRBE < matRad_BiologicalModel
         model = 'constRBE'
         defaultRBEprotons = 1.1;
         defaultRBEphotons = 1;
+        availableRadiationModalities = {'photons','protons','helium','carbon','brachy'};
+        requiredQuantities = {'physicalDose'};
     end
 
     properties
@@ -29,7 +31,6 @@ classdef matRad_ConstantRBE < matRad_BiologicalModel
     methods
         function this = matRad_ConstantRBE()
             this = this@matRad_BiologicalModel();
-            this.availableRadiationModalities = {'protons', 'photons'};
 
         end
   

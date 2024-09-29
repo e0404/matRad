@@ -15,18 +15,15 @@ classdef matRad_MCNamara < matRad_RBEminMax
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
     
-    properties
-        
-        
-    end
-    
     properties (Constant)
         model = 'MCN';
         p0_MCN = 0.999064;
         p1_MCN = 0.35605;
         p2_MCN = 1.1012;
         p3_MCN = -0.0038703;
-
+        
+        requiredQuantities = {'physicalDose','LET'};
+        possibleRadiationModalities = {'protons'};
     end
 
     methods
