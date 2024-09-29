@@ -23,14 +23,14 @@ classdef matRad_MCNamara < matRad_RBEminMax
         p3_MCN = -0.0038703;
         
         requiredQuantities = {'physicalDose','LET'};
-        possibleRadiationModalities = {'protons'};
+        possibleRadiationModes = {'protons'};
     end
 
     methods
         
         function this = matRad_MCNamara()
             this@matRad_RBEminMax();
-            this.availableRadiationModalities = {'protons'};
+            this.possibleRadiationModes = {'protons'};
 
         end
 

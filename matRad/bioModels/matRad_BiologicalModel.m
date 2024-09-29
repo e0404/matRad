@@ -14,7 +14,7 @@ classdef (Abstract) matRad_BiologicalModel < handle
     %
     % All subclasses should also declare the  properties:
     %
-    %   'availableRadiationModalities'         to specify the radiation modalities to which the model validity is limited
+    %   'possibleRadiationModes'         to specify the radiation modalities to which the model validity is limited
     %   'requiredQuantities'                   to check the availability of information stored in the provided machine file
     %
     % constructor (Abstract)
@@ -37,7 +37,7 @@ classdef (Abstract) matRad_BiologicalModel < handle
     properties (Abstract, Constant)
         model;
         requiredQuantities;                % kernels in base data needed for the alpha/beta calculation
-        availableRadiationModalities;      % radiation modalitites compatible with the model
+        possibleRadiationModes;      % radiation modalitites compatible with the model
     end
 
     properties (Hidden)
@@ -247,7 +247,7 @@ classdef (Abstract) matRad_BiologicalModel < handle
         end
 
         function [avail, msg] = isAvailable(radiationMode, machine)
-            validRadMode = any(strcmp(model.availableRadiationModalities,radiationMode));
+            validRadMode = any(strcmp(model.possibleRadiationModes,radiationMode));
             
             msg1 = '';
             msg2 = '';

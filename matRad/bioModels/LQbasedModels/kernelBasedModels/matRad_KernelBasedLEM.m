@@ -17,7 +17,7 @@ classdef matRad_KernelBasedLEM < matRad_LQKernelBasedModel
         model = 'LEM';
 
         requiredQuantities = {'alpha','beta'};
-        possibleRadiationModalities = {'protons','helium','carbon'};
+        possibleRadiationModes = {'protons','helium','carbon'};
     end
 
     methods

@@ -24,7 +24,7 @@ classdef matRad_HeliumMairani < matRad_RBEminMax
         p2_HEL = 1.51998e-2;
 
         requiredQuantities = {'physicalDose','LET'};
-        possibleRadiationModalities = {'helium'};
+        possibleRadiationModes = {'helium'};
     end
 
     methods

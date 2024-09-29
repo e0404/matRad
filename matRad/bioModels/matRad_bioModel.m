@@ -109,7 +109,7 @@ end
 % For the time being I do not assigne the model specific parameters, they
 % can be assigned by the user later
 
-correctRadiationModality = any(strcmp(tmpBioParam.availableRadiationModalities, sRadiationMode));
+correctRadiationModality = any(strcmp(tmpBioParam.possibleRadiationModes, sRadiationMode));
 
 % Assume base data are correct, if not the check function will fail
 correctBaseData = true;

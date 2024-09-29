@@ -422,7 +422,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         % 
         % 
         %     % check for radiation modality availability
-        %     correctRadiationModality = any(strcmp(tmpBioParam.availableRadiationModalities, radiationMode));
+        %     correctRadiationModality = any(strcmp(tmpBioParam.possibleRadiationModes, radiationMode));
         % 
         %     %check for availability of machine data
         %     requiredBaseDataFields = tmpBioParam.requiredQuantities;
