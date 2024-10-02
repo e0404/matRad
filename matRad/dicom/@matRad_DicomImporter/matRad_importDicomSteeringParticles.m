@@ -106,7 +106,7 @@ end
 obj.stf(length(BeamSeqNames)).gantryAngle = [];
 obj.stf(length(BeamSeqNames)).couchAngle = [];
 obj.stf(length(BeamSeqNames)).bixelWidth = [];
-obj.stf(length(BeamSeqNames)).matchRadiationMode = [];
+obj.stf(length(BeamSeqNames)).radiationMode = [];
 obj.stf(length(BeamSeqNames)).SAD = [];
 obj.stf(length(BeamSeqNames)).isoCenter = [];
 obj.stf(length(BeamSeqNames)).sourcePoint_bev = [];
@@ -123,7 +123,7 @@ for i = 1:length(BeamSeqNames)
     obj.stf(i).gantryAngle   = obj.pln.propStf.gantryAngles(i);
     obj.stf(i).couchAngle    = obj.pln.propStf.couchAngles(i);
     obj.stf(i).bixelWidth    = obj.pln.propStf.bixelWidth;
-    obj.stf(i).matchRadiationMode = obj.pln.radiationMode;
+    obj.stf(i).radiationMode = obj.pln.radiationMode;
     % there might be several SAD's, e.g. compensator?
     obj.stf(i).SAD_x         = currBeamSeq.VirtualSourceAxisDistances(1);
     obj.stf(i).SAD_y         = currBeamSeq.VirtualSourceAxisDistances(2);
