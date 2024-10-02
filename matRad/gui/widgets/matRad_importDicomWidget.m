@@ -149,11 +149,7 @@ classdef matRad_importDicomWidget < matRad_Widget
                 end
                 set(handles.resx_edit,'String',this.importer.importFiles.resx);
                 set(handles.resy_edit,'String',this.importer.importFiles.resy);
-                if numel(this.importer.importFiles.resz) > 1
-                    set(handles.resz_edit,'String','not equi');
-                else
-                    set(handles.resz_edit,'String',this.importer.importFiles.resz);
-                end
+                set(handles.resz_edit,'String',this.importer.importFiles.resz);
                 % Update handles structure
                 % guidata(hObject, handles);
                 this.handles = handles;
@@ -319,11 +315,8 @@ classdef matRad_importDicomWidget < matRad_Widget
                 % retrieve and display resolution for DICOM ct cube
                 set(handles.resx_edit,'String',this.importer.importFiles.resx);
                 set(handles.resy_edit,'String',this.importer.importFiles.resy);
-                if numel(res_z) > 1
-                    set(handles.resz_edit,'String','not equi');
-                else
-                    set(handles.resz_edit,'String',this.importer.importFiles.resz);
-                end             
+                set(handles.resz_edit,'String',this.importer.importFiles.resz);
+           
                 
             end
             
@@ -476,11 +469,8 @@ classdef matRad_importDicomWidget < matRad_Widget
                 end
                 set(handles.resx_edit,'String',res_x);
                 set(handles.resy_edit,'String',res_y);
-                if numel(res_z) > 1
-                    set(handles.resz_edit,'String','not equi');
-                else
-                    set(handles.resz_edit,'String',res_z);
-                end
+                set(handles.resz_edit,'String',res_z);
+                
             end
             
             this.handles = handles;

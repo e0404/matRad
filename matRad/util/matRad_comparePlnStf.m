@@ -65,10 +65,12 @@ end
 
 %% compare Bixel width in stf and pln
 bixelMatch = false;
-if isnumeric(stf(1).bixelWidth) && isequal(stf(1).bixelWidth,pln.propStf.bixelWidth)
-    bixelMatch = true;
-elseif ischar(stf(1).bixelWidth) && strcmp(stf(1).bixelWidth,'field')
-    bixelMatch = true;
+if isfield(pln.propStf,'bixelWidth') && isfield(stf(1),'bixelWidth')
+    if isnumeric(stf(1).bixelWidth) && isequal(stf(1).bixelWidth,pln.propStf.bixelWidth)
+        bixelMatch = true;
+    elseif ischar(stf(1).bixelWidth) && strcmp(stf(1).bixelWidth,'field')
+        bixelMatch = true;
+    end
 end
 
 if ~bixelMatch
