@@ -16,7 +16,7 @@ function test_importanceScenarioConstructor
     assertTrue(isa(scenario, 'matRad_ImportanceScenarios'));
     assertTrue(isa(scenario, 'matRad_GriddedScenariosAbstract'));
     assertTrue(isa(scenario, 'matRad_ScenarioModel'));
-    assertEqual(scenario.name, 'impScen');
+    assertEqual(scenario.shortName, 'impScen');
     %Test correct standard values & sizes
     assertEqual(scenario.ctScenProb, [1 1]);
     assertEqual(scenario.numOfCtScen, 1);
@@ -57,7 +57,7 @@ function test_importanceScenarioConstructorWithCt
     assertTrue(isa(scenario, 'matRad_ImportanceScenarios'));
     assertTrue(isa(scenario, 'matRad_GriddedScenariosAbstract'));
     assertTrue(isa(scenario, 'matRad_ScenarioModel'));
-    assertEqual(scenario.name, 'impScen');
+    assertEqual(scenario.shortName, 'impScen');
     %Test correct standard values & sizes
     assertEqual(scenario.ctScenProb, [(1:n)' ones(n,1)./n]);
     assertEqual(scenario.numOfCtScen, n);

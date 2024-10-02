@@ -72,7 +72,8 @@ classdef matRad_DVHWidget < matRad_Widget
 
                 if doUpdate && evalin('base','exist(''resultGUI'')') && evalin('base','exist(''cst'')')
                     this.showDVH();
-                    if numel(this.widgetHandle.Children) > 2
+                    ch = get(this.widgetHandle,'Children'); %Octave compatibility, no dot indexing
+                    if numel(ch) > 2
                         this.removeOverlap();
                     end
                 end
@@ -121,8 +122,10 @@ classdef matRad_DVHWidget < matRad_Widget
                     end
                 end
             end
-        
-            this.widgetHandle.Children(2).Title.String = strrep(this.selectedCube, '_',' ');
+            
+            %No dot indexing for Octave compatibility
+            hTitle = get(this.dvhAx,'Title');
+            set(hTitle,'String', strrep(this.selectedCube, '_',' '), 'Color',matRad_cfg.gui.highlightColor);
         end
         
     end

@@ -542,7 +542,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 'Parent',h12,...
                 'Units','normalized',...
                 'String',{  'none';'constRBE'; 'MCN';'WED';'LEM';'HEL';  },...
-                'TooltipString',txt,...
+                'TooltipString','Choose a biological model to be applied',...
                 'Style','popupmenu',...
                 'Value',1,...
                 'Position',pos,...
@@ -573,14 +573,16 @@ classdef matRad_PlanWidget < matRad_Widget
                 'FontWeight',matRad_cfg.gui.fontWeight,...
                 'Tag','txtMultScen' );
             
+            scenarioModels = matRad_ScenarioModel.getAvailableModels();
+            scenarioModels = {scenarioModels.shortName};
 
             pos = gridPos{5,6};
             pos(3) = pos(3) / 2;
             h56 = uicontrol(...
                 'Parent',h12,...
                 'Units','normalized',...
-                'String',{ 'nomScen','wcScen','impScen','rndScen' },...
-                'TooltipString',txt,...
+                'String',scenarioModels,...
+                'TooltipString','List of available scenario Models',...
                 'Style','popupmenu',...
                 'Value',1,...
                 'Position',pos,...
@@ -613,6 +615,26 @@ classdef matRad_PlanWidget < matRad_Widget
                 'FontSize',matRad_cfg.gui.fontSize,...
                 'FontName',matRad_cfg.gui.fontName,...
                 'FontWeight',matRad_cfg.gui.fontWeight);
+
+            pos = gridPos{5,7};
+            %pos(3) = pos(3)*2;
+
+            h36 = uicontrol(...
+                'Parent',h12,...
+                'Units','normalized',...
+                'String','use CT grid',...
+                'TooltipString', txt,...
+                'Style','pushbutton',...
+                'Position',pos,...
+                'BackgroundColor',matRad_cfg.gui.backgroundColor,...
+                'ForegroundColor',matRad_cfg.gui.textColor,....
+                'Callback',@(hObject,eventdata) applyCtGrid_callback(this,hObject,eventdata),...
+                'Enable','on',...
+                'Value',0,...
+                'Tag','buttonUseCtGrid',...
+                'FontSize',matRad_cfg.gui.fontSize,...
+                'FontName',matRad_cfg.gui.fontName,...
+                'FontWeight',matRad_cfg.gui.fontWeight);            
 
             % Edit dose grid x  
             pos = gridPos{4,8};
@@ -821,10 +843,19 @@ classdef matRad_PlanWidget < matRad_Widget
             end
             
             set(handles.editFraction,'String',num2str(pln.numOfFractions));
-            
-            
+
+            if ~isfield(pln,'bioParam')
+                pln.bioParam = matRad_bioModel(pln.radiationMode,'physicalDose','none');
+            end
+                        
             contentPopUpQuantityOpt = get(handles.popMenuQuantityOpt,'String');
+            
             ix = find(strcmp(pln.bioParam.quantityOpt,contentPopUpQuantityOpt));
+
+            if isempty(ix)
+                ix = 1;
+            end
+
             set(handles.popMenuQuantityOpt,'Value',ix);
             
             contentPopUpBioModel = get(handles.popMenuBioModel,'String');
@@ -836,7 +867,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 if ~isfield(pln,'multScen')
                     ix = 1;
                 else
-                    ix = find(strcmp(pln.multScen.name,contentPopUpMultScen));
+                    ix = find(strcmp(pln.multScen.shortName,contentPopUpMultScen));
                 end
                 set(handles.popMenuMultScen,'Value',ix);
             end
@@ -1131,6 +1162,14 @@ classdef matRad_PlanWidget < matRad_Widget
 %% CALLBACKS        
         function popupRadMode_Callback(this, hObject, eventdata)
             handles = this.handles;
+
+            defaultMachines.photons     = 'Generic';
+            defaultMachines.protons     = 'Generic';
+            defaultMachines.helium      = 'Generic';
+            defaultMachines.carbon      = 'Generic';
+            defaultMachines.brachy      = 'HDR';
+            defaultMachines.fallback    = 'Generic';
+            
             contents      = cellstr(get(hObject,'String'));
             RadIdentifier = contents{get(hObject,'Value')};
             contentPopUp  = get(handles.popMenuQuantityOpt,'String');
@@ -1167,7 +1206,15 @@ classdef matRad_PlanWidget < matRad_Widget
                 %Do nothing here
             end
             
-            pln.radiationMode = RadIdentifier;
+            if ~strcmp(pln.radiationMode,RadIdentifier)
+                pln.radiationMode = RadIdentifier;
+                if isfield(defaultMachines,RadIdentifier)
+                    pln.machine = defaultMachines.(RadIdentifier);
+                else
+                    pln.machine = defaultMachines.fallback;
+                end
+            end                
+
             availableEngines = DoseEngines.matRad_DoseEngineBase.getAvailableEngines(pln);
             set(handles.popUpMenuDoseEngine,'String',{availableEngines(:).shortName});
 
@@ -1176,7 +1223,7 @@ classdef matRad_PlanWidget < matRad_Widget
         end
         
         function editIsocenter_Callback(this, hObject, eventdata)
-        handles = this.handles;
+            handles = this.handles;
 
             % checkIsoCenter checkbox
             W = evalin('base','whos');
@@ -1186,22 +1233,39 @@ classdef matRad_PlanWidget < matRad_Widget
             if doesPlnExist
                 pln = evalin('base','pln');
             end
-            
-           
-         % editIsoCenter textbox
+
+
+            % editIsoCenter textbox
             tmpIsoCenter = str2num(get(handles.editIsoCenter,'String'));
-            
+
             if length(tmpIsoCenter) == 3
                 if sum(any(unique(pln.propStf.isoCenter,'rows')~=tmpIsoCenter))
                     pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1)*tmpIsoCenter;
-                    
+
                 end
             else
                 handles = showError(this,'EditIsoCenterCallback: Could not set iso center');
             end
             this.handles = handles;
             updatePlnInWorkspace(this);
-            this.changedWorkspace('pln_display');  
+            this.changedWorkspace('pln_display');
+        end
+
+        function applyCtGrid_callback(this, hObject, eventdata)            
+            handles = this.handles;
+            
+            try 
+                ct = evalin('base','ct');
+                resolution = ct.resolution;
+                %We use mat2str here because for some reason it prints to
+                %the required precision (not like num2str which rounds)
+                set(handles.editDoseX,'String',mat2str(resolution.x));
+                set(handles.editDoseY,'String',mat2str(resolution.y));
+                set(handles.editDoseZ,'String',mat2str(resolution.z));                    
+            catch ME
+                this.showWarning('Could not load resolution from CT!');
+            end
+            this.updatePlnInWorkspace();
         end
 
         function popUpMenuSequencer_Callback(this, hObject, eventdata)

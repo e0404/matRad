@@ -13,6 +13,7 @@
 * Remo Cristoforetti
 * Marios Dallas
 * Edgardo Doerner
+* Simona Facchiano
 * Hubert Gabrys
 * Josefine Handrack
 * Jennifer Hardt

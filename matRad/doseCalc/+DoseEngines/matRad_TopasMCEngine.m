@@ -482,6 +482,10 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % save current directory to revert back to later
             currDir = cd;
 
+            if this.multScen.totNumRangeScen > 1
+                matRad_cfg.dispWarning('Range shift scenarios are not yet implemented for Monte Carlo simulations.');
+            end
+
             for shiftScen = 1:this.multScen.totNumShiftScen
 
                 %Find first instance of the shift to select the shift values
@@ -2076,7 +2080,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                             fprintf(fileID,'s:Tf/ImageName/Function = "Step"\n');
                             % create time feature scorer and save with original rays and bixel names
                             imageName = ['sv:Tf/ImageName/Values = ',num2str(cutNumOfBixel),cell2mat(strcat(strcat(' "ray',strsplit(num2str([dataTOPAS.ray]))),strcat('_bixel',strsplit(num2str([dataTOPAS.bixel])),'"')))];
-                            fprintf(fileID,'%s\n',strjoin(imageName));
+                            fprintf(fileID,'%s\n',imageName);
                             fprintf(fileID,'dv:Tf/ImageName/Times = Tf/Beam/Spot/Times ms\n');
                         end
                     end

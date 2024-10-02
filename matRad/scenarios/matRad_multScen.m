@@ -30,21 +30,10 @@ function multScen = matRad_multScen(ct,scenarioModel)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-matRad_cfg = MatRad_Config.instance();
+%matRad_cfg = MatRad_Config.instance();
 %matRad_cfg.dispWarning('The matRad_multScen function will be deprecated soon!\nCheck out the new Scenario Models in the scenarios folder.');
 
-switch scenarioModel
-    case 'nomScen'
-        multScen = matRad_NominalScenario(ct);
-    case 'wcScen'
-        multScen = matRad_WorstCaseScenarios(ct);
-    case 'impScen'
-        multScen = matRad_ImportanceScenarios(ct);
-    case 'rndScen'
-        multScen = matRad_RandomScenarios(ct);
-    otherwise
-        matRad_cfg.dispError('''%s'' not known as scenario type!',scenarioModel);
-end
+multScen = matRad_ScenarioModel.create(scenarioModel,ct);
 
 end
 

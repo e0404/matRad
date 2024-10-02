@@ -64,6 +64,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
     properties (Access = protected)
         lastProgressUpdate;
         calcDoseDirect = false; % switch for direct cube / dij calculation
+        directWeights  = [];
     end
     
     properties (Constant)
@@ -192,7 +193,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
 
             % copy bixel weight vector into stf struct
             if nargin == 5
-                if sum([stf.totalNumOfBixels]) ~= numel(w)
+                if sum([stf.totalNumOfBixels]) ~= numel(w) && ~isfield([stf.ray],'shapes')
                     matRad_cfg.dispError('weighting does not match steering information');
                 end
                 counter = 0;
@@ -218,6 +219,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             end            
             
             %Set direct dose calculation and compute "dij"
+            this.directWeights = w;
             this.calcDoseDirect = true;
             dij = this.calcDose(ct,cst,stf);
 

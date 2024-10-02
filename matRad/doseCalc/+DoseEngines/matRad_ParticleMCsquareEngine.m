@@ -15,9 +15,9 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 % propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-   
-    properties (Constant)  
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    properties (Constant)
         possibleRadiationModes = {'protons'};
         name = 'MCsquare';
         shortName = 'MCsquare';
@@ -32,19 +32,19 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
         %Other Dose Calculation Properties
         calcLET = true;
     end
-    
+
     properties (SetAccess = protected, GetAccess = public)
-        
+
         currFolder = pwd; %folder path when set
-        
+
         mcSquareBinary; %Executable for mcSquare simulation
         nbThreads; %number of threads for MCsquare, 0 is all available
 
-        constantRBE = NaN;              % constant RBE value 
-    end      
-    
+        constantRBE = NaN;              % constant RBE value
+    end
+
     methods
-        
+
         function this = matRad_ParticleMCsquareEngine(pln)
             % Constructor
             %
@@ -56,7 +56,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             %   stf:                        matRad steering information struct
             %   pln:                        matRad plan meta information struct
             %   cst:                        matRad cst struct
-            
+
             if nargin < 1
                 pln = [];
             end
@@ -65,23 +65,23 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             this = this@DoseEngines.matRad_MonteCarloEngineAbstract(pln);
 
             this.config = matRad_MCsquareConfig();
-            
+
             % check if bio optimization is needed and set the
             % coresponding boolean accordingly
             % TODO:
             % This should not be handled here as an optimization property
             % We should rather make optimization dependent on what we have
             % decided to calculate here.
-            if nargin > 0 
+            if nargin > 0
                 if (isfield(pln,'bioParam')&& isfield(pln.bioParam,'quantityOpt')&& ...
-                    (isequal(pln.bioParam.quantityOpt,'effect') ||...
-                    isequal(pln.bioParam.quantityOpt,'RBExD')) && ...
-                    strcmp(pln.radiationMode,'carbon'))
-                this.calcBioDose = true;
+                        (isequal(pln.bioParam.quantityOpt,'effect') ||...
+                        isequal(pln.bioParam.quantityOpt,'RBExD')) && ...
+                        strcmp(pln.radiationMode,'carbon'))
+                    this.calcBioDose = true;
                 elseif strcmp(pln.radiationMode,'protons') && isfield(pln,'bioParam') && ...
                         isfield(pln.bioParam,'quantityOpt') && isequal(pln.bioParam.quantityOpt,'RBExD')...
                         && isequal(pln.bioParam.model,'constRBE')
-                    this.constantRBE = 1.1;                    
+                    this.constantRBE = 1.1;
                 end
             end
         end
@@ -90,16 +90,16 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             this.setDefaults@DoseEngines.matRad_MonteCarloEngineAbstract();
 
             % future code for property validation on creation here
-            matRad_cfg = MatRad_Config.instance();            
+            matRad_cfg = MatRad_Config.instance();
             %Set Default MCsquare path
             %Set folder
             this.workingDir     = fullfile(matRad_cfg.primaryUserFolder,'MCsquare');
             this.MCsquareFolder = fullfile(matRad_cfg.matRadRoot,'thirdParty','MCsquare','bin');
         end
     end
-    
+
     methods(Access = protected)
-        
+
         function dij = calcDose(this,ct,cst,stf)
             % matRad MCsqaure monte carlo photon dose calculation wrapper
             % can be automaticly called through matRad_calcDose or
@@ -116,7 +116,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             %   ct:          	matRad ct struct
             %   cst:            matRad cst struct
             %   stf:         	atRad steering information struct
-            %   
+            %
             % output
             %   dij:            matRad dij struct
             %
@@ -127,17 +127,17 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             %
             % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %
-            % Copyright 2019 the matRad development team. 
-            % 
-            % This file is part of the matRad project. It is subject to the license 
-            % terms in the LICENSE file found in the top-level directory of this 
-            % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
-            % of the matRad project, including this file, may be copied, modified, 
-            % propagated, or distributed except according to the terms contained in the 
+            % Copyright 2019 the matRad development team.
+            %
+            % This file is part of the matRad project. It is subject to the license
+            % terms in the LICENSE file found in the top-level directory of this
+            % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+            % of the matRad project, including this file, may be copied, modified,
+            % propagated, or distributed except according to the terms contained in the
             % LICENSE file.
             %
             % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            
+
             matRad_cfg = MatRad_Config.instance();
 
             %Now we can run initDoseCalc as usual
@@ -169,29 +169,29 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
             end
 
-            
+
             % The offset of the dose grid of MCsquare
             mcSquareAddIsoCenterOffset = [dij.doseGrid.resolution.x/2 dij.doseGrid.resolution.y/2 dij.doseGrid.resolution.z/2] ...
-                            - [dij.ctGrid.resolution.x   dij.ctGrid.resolution.y   dij.ctGrid.resolution.z];
+                - [dij.ctGrid.resolution.x   dij.ctGrid.resolution.y   dij.ctGrid.resolution.z];
 
             % for MCsquare we explicitly downsample the ct to the dose grid (might not
             % be necessary in future MCsquare versions with separated grids)
             for s = 1:dij.numOfScenarios
                 HUcube{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{s}, ...
-                                            dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
+                    dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
             end
-           
+
             % set absolute calibration factor
             % convert from eV/g/primary to Gy 1e6 primaries
             absCalibrationFactorMC2 = 1.602176e-19 * 1.0e+9;
-            
+
             MCsquareConfigFile = fullfile(this.workingDir,'MCsquareConfig.txt');
             plnFile = fullfile(this.workingDir,'currBixels.txt');
             ctFile = fullfile(this.workingDir,'MC2patientCT.mhd');
             outputDir = fullfile(this.workingDir,'output');
             HU_Density_Conversion_File	= fullfile(this.MCsquareFolder,'Scanners','matRad_default','HU_Density_Conversion.txt');	% Name of the file containing HU to density conversion data. Default: HU_Density_Conversion.txt
             HU_Material_Conversion_File	= fullfile(this.MCsquareFolder,'Scanners','matRad_default','HU_Material_Conversion.txt');	% Name of the filecontaining HU to material conversion data. Default: HU_Material_Conversion.txt
-            
+
 
             %Format paths to always have slashes
             if isequal(filesep,'\')
@@ -212,13 +212,10 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                 HU_Material_Conversion_File_write = HU_Material_Conversion_File;
             end
 
-            
-            
-
             % MCsquare settings
             MCsquareConfigFile = MCsquareConfigFileWrite;
 
-            this.config.BDL_Plan_File = plnFileWrite; 
+            this.config.BDL_Plan_File = plnFileWrite;
             this.config.BDL_Machine_Parameter_File = bdFileWrite;
             this.config.Output_Directory = outputDirWrite;
             this.config.HU_Density_Conversion_File = HU_Density_Conversion_File_write;
@@ -227,7 +224,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             this.config.CT_File       = ctFileWrite;
             this.config.Num_Threads   = this.nbThreads;
             this.config.RNG_Seed      = 1234;
-            if this.calcDoseDirect 
+            if this.calcDoseDirect
                 this.config.Num_Primaries = this.numHistoriesDirect;
             else
                 this.config.Num_Primaries = this.numHistoriesPerBeamlet;
@@ -250,7 +247,12 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
             %Create X Y Z vectors if not present
             ct = matRad_getWorldAxes(ct);
-            
+
+
+            if this.multScen.totNumRangeScen > 1
+                matRad_cfg.dispWarning('Range shift scenarios are not yet implemented for Monte Carlo simulations.');
+            end
+
 
             for scenarioIx = 1:this.multScen.totNumScen
                 %For direct dose calculation
@@ -258,14 +260,14 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
                 % manipulate isocenter
                 isoCenterShift = this.multScen.isoShift(scenarioIx,:) + mcSquareAddIsoCenterOffset;
-                
+
                 ctScen = this.multScen.linearMask(scenarioIx,1);
                 shiftScen = this.multScen.linearMask(scenarioIx,2);
                 rangeShiftScen = this.multScen.linearMask(scenarioIx,3);
 
                 if this.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
-           
- 
+
+
                     counter = 0;
                     for i = 1:length(stf)
                         %Create new stf for MCsquare with energy layer ordering and
@@ -394,24 +396,42 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                     this.writeInputFiles(MCsquareConfigFile,stfMCsquare);
 
                     %% MC computation and dij filling
-                    
 
                     % run MCsquare
                     mcSquareCall = [this.mcSquareBinary ' ' MCsquareConfigFile];
                     matRad_cfg.dispInfo(['Calling Monte Carlo Engine: ' mcSquareCall]);
-                    [status,cmdout] = system(mcSquareCall,'-echo');
+                    if matRad_cfg.logLevel >= 3
+                        [status,cmdout] = system(mcSquareCall,'-echo');
+                    else
+                        [status,cmdout] = system(mcSquareCall);
+                        matRad_cfg.dispInfo(cmdout);
+                    end
+                    if status == 0
+                        matRad_cfg.dispInfo('MCsquare exited successfully with status %d!',status);
+                    else
+                        matRad_cfg.dispInfo('MCsquare did not exit successfully with status %d! Results might be compromised!',status);
+                    end
 
                     mask = false(dij.doseGrid.numOfVoxels,1);
                     mask(this.VdoseGrid) = true;
 
+                    if this.calcDoseDirect
+                        if abs(totalWeights-sum(this.directWeights)) > 1e-2
+                            matRad_cfg.dispWarning('Sum of provided weights and weights used in MCsquare inconsistent!');
+                        end
+                        finalResultWeight = absCalibrationFactorMC2 * totalWeights;
+                    else
+                        finalResultWeight = absCalibrationFactorMC2;
+                    end
+
                     % read sparse matrix
                     if ~this.calcDoseDirect
-                        dij.physicalDose{ctScen,shiftScen,rangeShiftScen} = absCalibrationFactorMC2 * matRad_sparseBeamletsReaderMCsquare ( ...
+                        dij.physicalDose{ctScen,shiftScen,rangeShiftScen} = finalResultWeight * matRad_sparseBeamletsReaderMCsquare ( ...
                             [this.config.Output_Directory filesep 'Sparse_Dose.bin'], ...
                             dij.doseGrid.dimensions, ...
                             dij.totalNumOfBixels, ...
                             mask);
-                        
+
                         %Read sparse LET
                         if this.calcLET
                             dij.mLETDose{ctScen,shiftScen,rangeShiftScen} = dij.physicalDose{ctScen,shiftScen,rangeShiftScen} .* matRad_sparseBeamletsReaderMCsquare ( ...
@@ -420,7 +440,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                                 dij.totalNumOfBixels, ...
                                 mask);
                         end
-                        
+
                         % reorder influence matrix to comply with matRad default ordering
                         dij.physicalDose = cellfun(@(mx) mx(:,MCsquareOrder),dij.physicalDose,'UniformOutput',false);
                         if this.calcLET
@@ -429,7 +449,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                     else
                         cube = this.readMhd('Dose.mhd');
                         dij.physicalDose{ctScen,shiftScen,rangeShiftScen} = sparse(this.VdoseGrid,ones(numel(this.VdoseGrid),1), ...
-                            absCalibrationFactorMC2 * cube(this.VdoseGrid), ...
+                            finalResultWeight * cube(this.VdoseGrid), ...
                             dij.doseGrid.numOfVoxels,1);
 
                         %Read LET cube
@@ -453,13 +473,13 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                         dij.numOfRaysPerBeam = 1;
                     end
 
-                    
+
                     if this.config.Beamlet_Mode
-                        
+
                     end
 
                     matRad_cfg.dispInfo('Scenario %d of %d finished!\n',scenarioIx,this.multScen.totNumScen);
-                    
+
                     %% clear all data
                     %could also be moved to the "finalize" function
                     delete([this.config.CT_File(1:end-4) '.*']);
@@ -481,7 +501,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                     cd(this.currFolder);
                 end
             end
-        
+
             matRad_cfg.dispInfo('matRad: Simulation finished!\n');
             %Finalize dose calculation
             dij = this.finalizeDose(dij);
@@ -496,10 +516,10 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             [~,binaryFile] = this.checkBinaries();
             this.mcSquareBinary = binaryFile;
         end
-        
+
         function dij = initDoseCalc(this,ct,cst,stf)
             %% Assingn and check parameters
-            matRad_cfg = MatRad_Config.instance();            
+            matRad_cfg = MatRad_Config.instance();
 
             % check if binaries are available
             % Executables for simulation
@@ -507,9 +527,9 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
             %Mex interface for import of sparse matrix
             if ~this.calcDoseDirect && ~matRad_checkMexFileExists('matRad_sparseBeamletsReaderMCsquare')
-                matRad_cfg.dispWarning('Compiled sparse reader interface not found. Trying to compile it on the fly!');      
+                matRad_cfg.dispWarning('Compiled sparse reader interface not found. Trying to compile it on the fly!');
                 try
-                    matRad_compileMCsquareSparseReader();        
+                    matRad_compileMCsquareSparseReader();
                 catch MException
                     matRad_cfg.dispError('Could not find/generate mex interface for reading the sparse matrix. \nCause of error:\n%s\n Please compile it yourself.',MException.message);
                 end
@@ -522,13 +542,13 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             % cd to MCsquare folder (necessary for binary)
             % TODO: Could be checked in a property setter function
             if ~exist(this.MCsquareFolder,'dir')
-                matRad_cfg.dispError('MCsquare Folder does not exist!'); 
+                matRad_cfg.dispError('MCsquare Folder does not exist!');
             end
             cd(this.MCsquareFolder);
 
             %Check Materials
             if ~exist([this.MCsquareFolder filesep 'Materials'],'dir') || ~exist(fullfile(this.MCsquareFolder,'Materials','list.dat'),'file')
-                matRad_cfg.dispInfo('First call of MCsquare: unzipping Materials...');    
+                matRad_cfg.dispInfo('First call of MCsquare: unzipping Materials...');
                 unzip('Materials.zip');
                 matRad_cfg.dispInfo('Done');
             end
@@ -544,28 +564,28 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                 this.doseGrid.resolution.y = this.doseGrid.resolution.x;
                 matRad_cfg.dispWarning('Anisotropic resolution in axial plane for dose calculation with MCsquare not possible\nUsing average x = y = %g mm\n',this.doseGrid.resolution.x);
             end
-            
-            dij = initDoseCalc@DoseEngines.matRad_MonteCarloEngineAbstract(this,ct,cst,stf);            
-            
+
+            dij = initDoseCalc@DoseEngines.matRad_MonteCarloEngineAbstract(this,ct,cst,stf);
+
             %% Validate and preset some additional dij variables
-            
+
             % Explicitly setting the number of threads for MCsquare, 0 is all available
             this.nbThreads = 0;
-            
+
             %Issue a warning when we have more than 1 scenario
             if dij.numOfScenarios ~= 1
                 matRad_cfg.dispWarning('MCsquare is only implemented for single scenario use at the moment. Will only use the first Scenario for Monte Carlo calculation!');
             end
-            
-            % prefill ordering of MCsquare bixels
-            dij.MCsquareCalcOrder = NaN*ones(dij.totalNumOfBixels,1);  
 
-            if ~isnan(this.constantRBE) 
+            % prefill ordering of MCsquare bixels
+            dij.MCsquareCalcOrder = NaN*ones(dij.totalNumOfBixels,1);
+
+            if ~isnan(this.constantRBE)
                 dij.RBE = this.constantRBE;
             end
         end
-        
-        function writeInputFiles(obj,filename,stf)           
+
+        function writeInputFiles(obj,filename,stf)
             % generate input files for MCsquare dose calcualtion from matRad
             %
             % call
@@ -773,7 +793,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             cube = flip(cube,2);
             fclose(dataFileHandle);
         end
-    
+
         function writeMhd(obj,cube,resolution)
             % TODO: This should become a binary export function in matRads
             % IO folder
@@ -854,16 +874,16 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
         end
     end
 
-    
+
     methods (Static)
 
         function [binaryFound,binaryFile] = checkBinaries()
             % checkBinaries check if the binaries are available on the current
             % machine and sets to the mcsquarebinary object property
-            %        
+            %
             %
             matRad_cfg = MatRad_Config.instance();
-            
+
             binaryFile = [];
             binaryFound = false;
 
@@ -894,9 +914,9 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
         end
 
-        function [available,msg] = isAvailable(pln,machine)   
+        function [available,msg] = isAvailable(pln,machine)
             % see superclass for information
-            
+
             msg = [];
             available = false;
 
@@ -910,7 +930,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
                 %check modality
                 checkModality = any(strcmp(DoseEngines.matRad_ParticleMCsquareEngine.possibleRadiationModes, machine.meta.radiationMode));
-                
+
                 preCheck = checkBasic && checkModality;
 
                 if ~preCheck
@@ -926,7 +946,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
             available = preCheck & hasBinaries;
         end
-              
+
     end
 end
 

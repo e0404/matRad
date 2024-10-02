@@ -24,7 +24,8 @@ classdef matRad_WorstCaseScenarios < matRad_GriddedScenariosAbstract
     
 
     properties (SetAccess=protected)
-        name = 'wcScen';
+        shortName   = 'wcScen';
+        name        = 'Worst Case Scenarios';
     end
 
     properties (Hidden)

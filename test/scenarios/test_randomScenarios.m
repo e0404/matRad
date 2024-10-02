@@ -12,7 +12,7 @@ function test_randomScenarioConstructor
 
     assertTrue(isa(scenario, 'matRad_RandomScenarios'));
     assertTrue(isa(scenario, 'matRad_ScenarioModel'));
-    assertEqual(scenario.name, 'rndScen');
+    assertEqual(scenario.shortName, 'rndScen');
     %Test correct standard values & sizes
     assertEqual(scenario.ctScenProb, [1 1]);
     assertEqual(scenario.numOfCtScen, 1);
@@ -52,7 +52,7 @@ function test_randomScenarioConstructorWithCt
     scenario = matRad_RandomScenarios(ct);
     assertTrue(isa(scenario, 'matRad_RandomScenarios'));
     assertTrue(isa(scenario, 'matRad_ScenarioModel'));
-    assertEqual(scenario.name, 'rndScen');
+    assertEqual(scenario.shortName, 'rndScen');
     %Test correct standard values & sizes
     assertEqual(scenario.ctScenProb, [(1:n)' ones(n,1)./n]);
     assertEqual(scenario.numOfCtScen, n);
