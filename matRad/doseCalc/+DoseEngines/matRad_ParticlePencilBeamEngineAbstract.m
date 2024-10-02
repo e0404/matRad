@@ -605,7 +605,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                 sigmaIni_sq = sigmaIni^2;
 
                 % consider range shifter for protons if applicable
-                if  strcmp(this.machine.meta.radiationMode,'protons') && rangeShifterLUT(i).eqThickness > 0  && ~strcmp(this.machine.meta.machine,'Generic')
+                if  strcmp(this.machine.meta.radiationMode,'protons') && rangeShifterLUT(i).eqThickness > 0 
 
                     %get max range shift
                     sigmaRashi = matRad_calcSigmaRashi(this.machine.data(energyIx).energy, ...

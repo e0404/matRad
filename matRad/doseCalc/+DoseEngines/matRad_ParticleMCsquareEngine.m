@@ -150,8 +150,14 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                 bdFile = this.forceBDL;
 
             else
+                % Newer machine files have "name" instead of "machine"
+                if ~isfield(this.machine.meta,'machine')
+                    machineName = this.machine.meta.name;                    
+                else
+                    machineName = this.machine.meta.machine;
+                end
                 % fit and create BDL file using selected machine file
-                bdFile = [this.machine.meta.machine '.txt'];
+                bdFile = [machineName '.txt'];
 
                 % Calculate MCsquare base data
                 % Argument stf is optional, if given, calculation only for energies given in stf
