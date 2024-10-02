@@ -472,7 +472,7 @@ classdef (Abstract) matRad_StfGeneratorExternalRayBixelAbstract < matRad_StfGene
             %checkBasic
             available = isfield(machine,'meta') && isfield(machine,'data');
 
-            available = available && isfield(machine.meta,'machine');
+            available = available && any(isfield(machine.meta,{'machine','name'}));
 
             available = available && isfield(machine.meta,'SAD') && isscalar(machine.meta.SAD);
     

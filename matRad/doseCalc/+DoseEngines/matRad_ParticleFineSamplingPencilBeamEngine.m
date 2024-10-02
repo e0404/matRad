@@ -424,7 +424,10 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
                 return;
             end
 
-            checkMeta = all(isfield(machine.meta,{'SAD','BAMStoIsoDist','LUT_bxWidthminFWHM','dataType'}));
+            checkMeta = all(isfield(machine.meta,{'SAD','BAMStoIsoDist','dataType'}));
+            
+            %Superseded names from older machine file versions
+            checkMeta = checkMeta && any(isfield(machine.meta,{'LUTspotSize','LUT_bxWidthminFWHM'}));
 
             dataType = machine.meta.dataType;
             if strcmp(dataType,'singleGauss')
