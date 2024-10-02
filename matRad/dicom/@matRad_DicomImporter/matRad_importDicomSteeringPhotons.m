@@ -51,7 +51,7 @@ for i = 1:size(UniqueComb,1)
     
     % bixelWidth = 'field' as keyword for whole field dose calc
     obj.stf(i).bixelWidth    = 'field';
-    obj.stf(i).matchRadiationMode = 'photons';
+    obj.stf(i).radiationMode = 'photons';
     
     % only one bixel per ray and one ray for photon dose calc based on
     % fields
