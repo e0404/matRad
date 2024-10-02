@@ -99,9 +99,7 @@ else
         
         % set the return ctCube to the original Ct information because
         % there is no interpolation needed
-        interpCt.cubeIV{1} = origCt;
-        cfg = MatRad_Config.instance();
-        
+        interpCt.cubeIV{1} = origCt;        
     else  
         % calculate new grid for the interpolation,
         % grid equals a range of the first pixel, to the original

@@ -51,7 +51,7 @@ function test_DicomExporter
     assertTrue(numel(dircontents) > 0)
 
 
-function test_DicomImporter_loadFiles
+function test_DicomImporter_construct_with_path_and_file_load
     path = helper_temporaryFolder('dicomIOtest',false);
     h = matRad_DicomImporter(path);
     assertTrue(isequal(h.patDir, path));
@@ -73,7 +73,11 @@ function test_DicomImporter_loadFiles
     end
     assertTrue(resBool);
 
+function test_DicomImporter_Import
+    path = helper_temporaryFolder('dicomIOtest',false);
+    h = matRad_DicomImporter(path);
 
+    h.matRad_importDicom();
 
     
     
