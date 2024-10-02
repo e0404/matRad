@@ -26,6 +26,8 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
         airOffsetCorrection  = true;    % Corrects WEPL for SSD difference to kernel database
         lateralModel = 'auto';          % Lateral Model used. 'auto' uses the most accurate model available (i.e. multiple Gaussians). 'single','double','multi' try to force a singleGaussian or doubleGaussian model, if available
 
+        cutOffMethod = 'integral'; % or 'relative'
+
         visBoolLateralCutOff = false;   % Boolean switch for visualization during+ LeteralCutOff calculation
     end
 
@@ -710,8 +712,19 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                             matRad_cfg.dispWarning('LateralParticleCutOff: shell integration is wrong !')
                         end
 
-                        IX = find(cumArea >= idd(j) * cutOffLevel,1, 'first');
-                        this.machine.data(energyIx).LatCutOff.CompFac = cutOffLevel^-1;
+                        % Find radius at which integrated dose becomes
+                        % bigger than cutoff * IDD
+                        if strcmp(this.cutOffMethod, 'integral')
+                            IX = find(cumArea >= idd(j) * cutOffLevel,1, 'first');
+                            this.machine.data(energyIx).LatCutOff.CompFac = cutOffLevel^-1;
+                        elseif strcmp(this.cutOffMethod, 'relative')
+                            IX = find(dose_r <= (1-cutOffLevel) * max(dose_r), 1, 'first');
+                            relFac = cumArea(IX)./cumArea(end); % (or idd(j)) to find the appropriate integral of dose
+                            this.machine.data(energyIx).LatCutOff.CompFac = relFac^-1;
+                        else
+                            matRad_cfg = MatRad_Config.instance();
+                            matRad_cfg.dispError('Invalid Cutoff Method');
+                        end
 
                         if isempty(IX)
                             depthDoseCutOff = Inf;

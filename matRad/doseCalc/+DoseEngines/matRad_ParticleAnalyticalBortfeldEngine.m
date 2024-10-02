@@ -74,7 +74,9 @@ classdef matRad_ParticleAnalyticalBortfeldEngine < DoseEngines.matRad_ParticlePe
 
     methods (Access = protected)
         function dij = initDoseCalc(this,ct,cst,stf)
-           
+
+            matRad_cfg = MatRad_Config.instance();
+
             if this.calcLET == true
                 matRad_cfg.dispWarning('Engine does not support LET calculation! Disabling!');
                 this.calcLET = false;
@@ -324,6 +326,11 @@ classdef matRad_ParticleAnalyticalBortfeldEngine < DoseEngines.matRad_ParticlePe
                 calcRange = true;
             end
 
+            if strcmp(this.cutOffMethod, 'relative')
+                warning('Relative cutoff not yet implemented for Analytical Engine. Default integral method used.')
+                this.cutOffMethod = 'integral';
+            end
+
             for i = 1:numel(this.machine.data)
                 this.machine.data(i).LatCutOff.CompFac = 1/cutOffLevel;
                 this.machine.data(i).LatCutOff.numSig  = sqrt(2) * sqrt(gammaincinv(0.995,1)); %For a 2D symmetric gaussian we need the inverse of the incomplete Gamma function for defining the CutOff
@@ -362,6 +369,7 @@ classdef matRad_ParticleAnalyticalBortfeldEngine < DoseEngines.matRad_ParticlePe
                 end
             catch
                 msg = 'Your machine file is invalid and does not contain the basic field (meta/data/radiationMode)!';
+                error(msg);
                 return;
             end
 
