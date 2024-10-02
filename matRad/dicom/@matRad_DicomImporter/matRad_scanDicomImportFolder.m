@@ -209,11 +209,23 @@ if ~isempty(obj.allfiles)
     FiltredLocArray = unique(LocationsArray);
     Thickness = rmmissing(unique(diff(FiltredLocArray)));
     numOfFiles = numel(obj.allfiles(:,1));
-    
+   
     if numel(Thickness) > 1
-        msgbox('Slices are not equidistant! Slice thickness of the first slice was taken as the value for all slices.', 'Warning');
-        FirstSliceThikness = rmmissing(unique(diff(FiltredLocArray)));
-        Thickness = FirstSliceThikness; 
+        msgbox('Slices are not equidistant! CT will be interpolate with the lowest value of resolution is given by CT slices.', 'Warning');
+        Thickness = Thickness(1); % min thickness
+        ThBool = []; % in this case we will also create ct cube with the same resolution for all slices 
+        PriorThicknesses = flip(rmmissing(diff(FiltredLocArray))); % prior values of spacing, which are needed for interpolation
+        Counter = 0;
+        
+        for i = 1:numOfFiles
+            if strcmp(obj.allfiles{i,2},'CT') && (i - Counter <= numel(PriorThicknesses))
+                obj.allfiles{i,16} = num2str(PriorThicknesses(i - Counter));
+            else 
+                Counter = Counter + 1;
+                obj.allfiles{i,16} = NaN;
+            end
+        end
+        
     end
 
     if isempty(ThBool)
@@ -223,7 +235,6 @@ if ~isempty(obj.allfiles)
             end
         end
     end    
-    
     close(h)
     
     if ~isempty(obj.allfiles)

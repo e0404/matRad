@@ -93,9 +93,9 @@ classdef matRad_DicomImporter < handle
             
             for i = numel(obj.allfiles(:,1)):-1:1
                 if strcmp(obj.allfiles(i,2),'CT')
-                    obj.importFiles.resx = cellstr(obj.allfiles{i,9}); 
-                    obj.importFiles.resy = cellstr(obj.allfiles{i,10});
-                    obj.importFiles.resz = cellstr(obj.allfiles{i,11}); %some CT dicoms do not follow  the standard and use SpacingBetweenSlices 
+                    obj.importFiles.resx = obj.allfiles{i,9}; 
+                    obj.importFiles.resy = obj.allfiles{i,10};
+                    obj.importFiles.resz = obj.allfiles{i,11}; %some CT dicoms do not follow  the standard and use SpacingBetweenSlices 
                     break
                 end
             end 
