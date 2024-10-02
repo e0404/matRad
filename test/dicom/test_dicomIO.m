@@ -1,4 +1,4 @@
-function test_suite = test_DicomImporter
+function test_suite = test_dicomIO
 %The output should always be test_suite, and the function name the same as
 %your file name
 
@@ -26,14 +26,33 @@ initTestSuite;
 % assertExceptionThrown(f,id) - test if exception of id is thrown. Take care of Octave issues with exception id (or don't provide id)
 % Check MOxUnit for more information or look at other tests
 
-function test_DicomImporter_classattachment
-    path = 'C:\Users\r114m\Documents\GitHub\matRad\userdata\dicomExport\HEAD_AND_NECK';
-    h = matRad_DicomImporter(path);
-    assertTrue(isa(h,'matRad_DicomImporter'));
+function test_DicomImporter_emptyfolder    
+    path = helper_temporaryFolder('dicomIOtest');
+    assertExceptionThrown(@() matRad_DicomImporter(path));
+
+function test_DicomExporter
+    testpatient = load('photons_testData.mat');
+    path = helper_temporaryFolder('dicomIOtest');
+    
+    dummyResultGUI = struct('physicalDose',rand(testpatient.ct.cubeDim),'w',ones(sum([testpatient.stf.totalNumOfBixels]),1));
+    for i = 1:numel(testpatient.stf)
+        dummyResultGUI.(['physicalDose_beam' num2str(i)]) = rand(testpatient.ct.cubeDim);
+    end
+    dummyResultGUI.wUnsequenced = dummyResultGUI.w;
+    
+    h = matRad_DicomExporter(testpatient.ct,testpatient.cst,testpatient.pln,testpatient.stf,dummyResultGUI);
+    assertTrue(isa(h,'matRad_DicomExporter'));
     assertTrue(isa(h,'handle'));
 
+    h.dicomDir = path;
+    h.matRad_exportDicom();
+
+    dircontents = dir([path filesep '*.dcm']);
+    assertTrue(numel(dircontents) > 0)
+
+
 function test_DicomImporter_loadFiles
-    path = 'C:\Users\r114m\Documents\GitHub\matRad\userdata\dicomExport\HEAD_AND_NECK';
+    path = helper_temporaryFolder('dicomIOtest',false);
     h = matRad_DicomImporter(path);
     assertTrue(isequal(h.patDir, path));
     assertTrue(~isempty(h.allfiles));

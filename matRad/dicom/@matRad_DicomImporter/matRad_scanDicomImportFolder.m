@@ -211,7 +211,7 @@ if ~isempty(obj.allfiles)
     numOfFiles = numel(obj.allfiles(:,1));
    
     if numel(Thickness) > 1
-        msgbox('Slices are not equidistant! CT will be interpolate with the lowest value of resolution is given by CT slices.', 'Warning');
+        matRad_cfg.dispWarning('Slices are not equidistant! CT will be interpolate with the lowest value of resolution is given by CT slices.');
         Thickness = Thickness(1); % min thickness
         ThBool = []; % in this case we will also create ct cube with the same resolution for all slices 
         PriorThicknesses = flip(rmmissing(diff(FiltredLocArray))); % prior values of spacing, which are needed for interpolation
@@ -241,16 +241,15 @@ if ~isempty(obj.allfiles)
         obj.patient = unique(obj.allfiles(:,3));
         
         if isempty(obj.patient)
-            msgbox('No patient found with DICOM CT _and_ RT structure set in patient directory!', 'Error','error');
+             matRad_cfg.dispError('No patient found with DICOM CT _and_ RT structure set in patient directory!');
         end
     else
-        msgbox('No DICOM files found in patient directory!', 'Error','error');
+         matRad_cfg.dispError('No DICOM files found in patient directory!');
         %h.WindowStyle = 'Modal';
         %error('No DICOM files found in patient directory');
     end
 else
-    msgbox('Search folder empty!', 'Error','error');
-    
+    matRad_cfg.dispError('Folder is empty!');
 end
 
 clear warnDlgDICOMtagShown;

@@ -70,12 +70,10 @@ classdef matRad_DicomImporter < handle
                     matRad_cfg.dispError('The DICOM export requires the octave-forge package "dicom"!\n');
                 end
             end
-            disp(pathToFolder)
-            if isempty(pathToFolder)
-                obj.patDir = uigetdir(pwd);
-            end
-            
-            obj = matRad_scanDicomImportFolder(obj);
+
+            obj.patDir = pathToFolder;
+                        
+            obj.matRad_scanDicomImportFolder();
 
             % matRad_DicomImporter imports only one structure, to select
             % patients and structures within a single patient the
