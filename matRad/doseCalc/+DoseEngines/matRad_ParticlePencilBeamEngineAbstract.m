@@ -26,7 +26,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
         airOffsetCorrection  = true;    % Corrects WEPL for SSD difference to kernel database
         lateralModel = 'auto';          % Lateral Model used. 'auto' uses the most accurate model available (i.e. multiple Gaussians). 'single','double','multi' try to force a singleGaussian or doubleGaussian model, if available
 
-        cutOffMethod = 'integral'; % or 'relative'
+        cutOffMethod = 'integral';      % or 'relative' - describes how to calculate the lateral dosimetric cutoff
 
         visBoolLateralCutOff = false;   % Boolean switch for visualization during+ LeteralCutOff calculation
     end
@@ -714,27 +714,26 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
 
                         % Find radius at which integrated dose becomes
                         % bigger than cutoff * IDD
-                        if strcmp(this.cutOffMethod, 'integral')
-                            IX = find(cumArea >= idd(j) * cutOffLevel,1, 'first');
-                            this.machine.data(energyIx).LatCutOff.CompFac = cutOffLevel^-1;
-                        elseif strcmp(this.cutOffMethod, 'relative')
-                            IX = find(dose_r <= (1-cutOffLevel) * max(dose_r), 1, 'first');
-                            relFac = cumArea(IX)./cumArea(end); % (or idd(j)) to find the appropriate integral of dose
-                            this.machine.data(energyIx).LatCutOff.CompFac = relFac^-1;
-                        else
-                            matRad_cfg = MatRad_Config.instance();
-                            matRad_cfg.dispError('Invalid Cutoff Method');
+                        switch this.cutOffMethod
+                            case 'integral'
+                                IX = find(cumArea >= idd(j) * cutOffLevel,1, 'first');
+                                this.machine.data(energyIx).LatCutOff.CompFac = cutOffLevel^-1;
+                            case 'relative'
+                                IX = find(dose_r <= (1-cutOffLevel) * max(dose_r), 1, 'first');
+                                relFac = cumArea(IX)./cumArea(end); % (or idd(j)) to find the appropriate integral of dose
+                                this.machine.data(energyIx).LatCutOff.CompFac = relFac^-1;
+                            otherwise
+                                matRad_cfg.dispError('LateralParticleCutOff: Invalid Cutoff Method. Must be ''integral'' or ''relative''!');
                         end
 
                         if isempty(IX)
                             depthDoseCutOff = Inf;
-                            matRad_cfg.dispWarning('LateralParticleCutOff: Couldnt find lateral cut off !')
+                            matRad_cfg.dispWarning('LateralParticleCutOff: Couldnt find lateral cut off!')
                         elseif isnumeric(IX)
                             depthDoseCutOff = r_mid(IX);
                         end
 
                         this.machine.data(energyIx).LatCutOff.CutOff(j) = depthDoseCutOff;
-
                     end
                 end
             end

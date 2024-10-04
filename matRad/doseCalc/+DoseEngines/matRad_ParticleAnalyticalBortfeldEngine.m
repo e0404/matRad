@@ -326,9 +326,14 @@ classdef matRad_ParticleAnalyticalBortfeldEngine < DoseEngines.matRad_ParticlePe
                 calcRange = true;
             end
 
+            if ~any(strcmp(this.cutOffMethod,{'integral','relative'}))
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('LateralParticleCutOff: Invalid Cutoff Method. Must be ''integral'' or ''relative''!');
+            end
+
             for i = 1:numel(this.machine.data)
                 this.machine.data(i).LatCutOff.CompFac = 1/cutOffLevel;
-                this.machine.data(i).LatCutOff.numSig  = sqrt(-2*log(1-cutOffLevel)); %For a 2D symmetric gaussian we need the inverse of the incomplete Gamma function for defining the CutOff
+                this.machine.data(i).LatCutOff.numSig  = sqrt(-2*log(1-cutOffLevel));
                 this.machine.data(i).LatCutOff.maxSigmaIni = max([this.machine.data(i).initFocus(:).SisFWHMAtIso]) ./ 2.3548;
                 if calcRange
                     this.machine.data(i).range = 10 * this.alpha*this.machine.data(i).energy.^this.p;
