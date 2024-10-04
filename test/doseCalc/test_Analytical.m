@@ -6,17 +6,17 @@ initTestSuite;
 
 function test_getAnalyticalEngineFromPln
     % Single gaussian lateral model
-    protonDummyPln = struct('radiationMode','protons','machine','Generic');
-    protonDummyPln.propDoseCalc.engine = 'AnalyticalPB';
-    engine = DoseEngines.matRad_ParticleAnalyticalBortfeldEngine.getEngineFromPln(protonDummyPln);
+    testData.pln = struct('radiationMode','protons','machine','Generic');
+    testData.pln.propDoseCalc.engine = 'AnalyticalPB';
+    engine = DoseEngines.matRad_ParticleAnalyticalBortfeldEngine.getEngineFromPln(testData.pln);
     assertTrue(isa(engine,'DoseEngines.matRad_ParticleAnalyticalBortfeldEngine'));
 
     % Double Gaussian lateral model 
     % If you don't have my clusterDose basedata you cannot try this :P
     %{
-    protonDummyPln = struct('radiationMode','protons','machine','Generic_clusterDose');
-    protonDummyPln.propDoseCalc.engine = 'AnalyticalPB';
-    engine = DoseEngines.matRad_ParticleAnalyticalBortfeldEngine.getEngineFromPln(protonDummyPln);
+    testData.pln = struct('radiationMode','protons','machine','Generic_clusterDose');
+    testData.pln.propDoseCalc.engine = 'AnalyticalPB';
+    engine = DoseEngines.matRad_ParticleAnalyticalBortfeldEngine.getEngineFromPln(testData.pln);
     assertTrue(isa(engine,'DoseEngines.matRad_ParticleAnalyticalBortfeldEngine'));
     %}
 
@@ -31,50 +31,39 @@ function test_loadMachineForAnalytical
     end
 
 function test_calcDoseAnalytical
-    matRad_cfg = MatRad_Config.instance();
-
-    protonDummyPln = struct('radiationMode','protons','machine','Generic');
-    protonDummyPln.propDoseCalc.engine = 'AnalyticalPB';
-
-    load([protonDummyPln.radiationMode '_' protonDummyPln.machine]);
-
-    load BOXPHANTOM.mat
-
-    stf = matRad_generateStf(ct, cst, protonDummyPln);
-    
-    resultGUI = matRad_calcDoseForward(ct, cst, stf, protonDummyPln, ones([1, stf(:).totalNumOfBixels]));
+    testData = load('protons_testData.mat');
+    assertTrue(DoseEngines.matRad_ParticleAnalyticalBortfeldEngine.isAvailable(testData.pln))
+    testData.pln.propDoseCalc.engine = 'AnalyticalPB';
+    resultGUI = matRad_calcDoseForward(testData.ct, testData.cst, testData.stf, testData.pln, ones(sum([testData.stf(:).totalNumOfBixels]),1));
 
     assertTrue(isfield(resultGUI, 'physicalDose'));
     assertTrue(isfield(resultGUI, 'w'));
-    assertTrue(isequal(size(ct.cube{1}), size(resultGUI.physicalDose)))
+    assertTrue(isequal(testData.ct.cubeDim, size(resultGUI.physicalDose)));
 
 function test_nonSupportedSettings
     % Radiation mode other than protons not implemented 
-    carbonDummyPln = struct('radiationMode','carbon','machine','Generic');
-    carbonDummyPln.propDoseCalc.engine = 'AnalyticalPB';
-    engine = DoseEngines.matRad_ParticleAnalyticalBortfeldEngine.getEngineFromPln(carbonDummyPln);
-    assertTrue(~isa(engine,'DoseEngines.matRad_ParticleAnalyticalBortfeldEngine'));
-
+    testData = load('carbon_testData.mat');
+    testData.pln.propDoseCalc.engine = 'AnalyticalPB';    
+    assertFalse(DoseEngines.matRad_ParticleAnalyticalBortfeldEngine.isAvailable(testData.pln));
+   
     % Biological models, LET, other lateral models not implemented
-    protonDummyPln = struct('radiationMode','protons','machine','Generic');
-    protonDummyPln.propDoseCalc.engine = 'AnalyticalPB';
-    protonDummyPln.propDoseCalc.calcLET = true;
-    protonDummyPln.propDoseCalc.calcBioDose = true;
-    protonDummyPln.propDoseCalc.lateralModel = 'double';
-    engine = DoseEngines.matRad_ParticleAnalyticalBortfeldEngine.getEngineFromPln(protonDummyPln);
+    testData = load('protons_testData.mat'); 
+    testData.pln.propDoseCalc.engine = 'AnalyticalPB';
+    testData.pln.propDoseCalc.calcLET = true;
+    testData.pln.propDoseCalc.calcBioDose = true;
+    testData.pln.propDoseCalc.lateralModel = 'double';
+    engine = DoseEngines.matRad_ParticleAnalyticalBortfeldEngine.getEngineFromPln(testData.pln);
     assertTrue(isa(engine,'DoseEngines.matRad_ParticleAnalyticalBortfeldEngine'));
-    load BOXPHANTOM.mat
-    stf = matRad_generateStf(ct, cst, protonDummyPln);
-    resultGUI = matRad_calcDoseForward(ct, cst, stf, protonDummyPln, ones([1, stf(:).totalNumOfBixels]));
+
+    resultGUI = matRad_calcDoseForward(testData.ct, testData.cst, testData.stf, testData.pln, ones(sum([testData.stf(:).totalNumOfBixels]),1));
     assertTrue(~engine.calcLET)
     %assertTrue(~engine.calcBioDose) % Access protected property
 
     % Invalid machine without radiation mode field
-    matRad_cfg = MatRad_Config.instance();
-    protonDummyPln = struct('radiationMode','protons','machine','Empty');
-    protonDummyPln.propDoseCalc.engine = 'AnalyticalPB';
-    machine = [];
-    assertExceptionThrown(@() DoseEngines.matRad_ParticleAnalyticalBortfeldEngine.isAvailable(protonDummyPln, machine));
+    testData.pln.machine = 'Empty';
+    testData.pln.propDoseCalc.engine = 'AnalyticalPB';    
+    assertExceptionThrown(@() DoseEngines.matRad_ParticleAnalyticalBortfeldEngine.isAvailable(testData.pln));
+    assertFalse(DoseEngines.matRad_ParticleAnalyticalBortfeldEngine.isAvailable(testData.pln,[]));
 
 
 
