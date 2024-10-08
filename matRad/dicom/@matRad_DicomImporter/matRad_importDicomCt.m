@@ -65,7 +65,7 @@ for i = 1:numOfSlices
     % might not been defined for individual files
     obj.importCT.ctInfo(i).PixelSpacing            = tmpDicomInfo.PixelSpacing;
     obj.importCT.ctInfo(i).ImagePositionPatient    = tmpDicomInfo.ImagePositionPatient;
-    obj.importCT.ctInfo(i).SliceThickness          = obj.importFiles.resz;
+    obj.importCT.ctInfo(i).SliceThickness          = str2double(obj.importFiles.resz);
     obj.importCT.ctInfo(i).ImageOrientationPatient = tmpDicomInfo.ImageOrientationPatient;
     obj.importCT.ctInfo(i).PatientPosition         = tmpDicomInfo.PatientPosition;
     obj.importCT.ctInfo(i).Rows                    = tmpDicomInfo.Rows;

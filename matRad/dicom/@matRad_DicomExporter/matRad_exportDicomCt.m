@@ -81,7 +81,7 @@ end
 obj.ct = ct;
 
 %Since we are exporting HU directly --> no rescaling in any case
-meta.SliceThickness = ct.resolution.z;
+meta.SliceThickness = num2str(ct.resolution.z);
 meta.PixelSpacing   = [ct.resolution.y; ct.resolution.x];
 meta.ImageOrientationPatient = [1;0;0;0;1;0]; %lps
 meta.RescaleType = 'HU';

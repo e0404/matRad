@@ -96,9 +96,9 @@ ct = matRad_getWorldAxes(ct);
 
 
 %Since we are exporting HU directly --> no rescaling in any case
-%meta.SliceThickness = ct.resolution.z;
-%meta.PixelSpacing = [ct.resolution.y; ct.resolution.x];
-%meta.ImageOrientationPatient = [1;0;0;0;1;0]; %lps
+meta.SliceThickness = num2str(ct.resolution.z);
+meta.PixelSpacing = [ct.resolution.y; ct.resolution.x];
+meta.ImageOrientationPatient = [1;0;0;0;1;0]; %lps
 
 %meta.RescaleSlope = 1;
 %meta.RescaleIntercept = 0;    
