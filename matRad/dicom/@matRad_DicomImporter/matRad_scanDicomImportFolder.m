@@ -280,21 +280,14 @@ catch
    allfiles{row,column} = NaN;
 end
 
-if ~warnDlgDICOMtagShown && strcmp(allfiles{row,column},defaultPlaceHolder) && (column == 3 || column == 4)
- 
-   dlgTitle    = 'Dicom Tag import';
-   dlgQuestion = ['matRad_scanDicomImportFolder: Could not parse dicom tag: ' tag '. Using placeholder ' defaultPlaceHolder ' instead. Please check imported data carefully! Do you want to continue?'];
-   answer      = questdlg(dlgQuestion,dlgTitle,'Yes','No', 'Yes');
+if strcmp(allfiles{row,column},defaultPlaceHolder) && (column == 3 || column == 4)
    
-   warnDlgDICOMtagShown = true;
+   wrnTxt = ['matRad_scanDicomImportFolder: Could not parse dicom tag: ' tag '. Using placeholder ' defaultPlaceHolder ' instead. Please check imported data carefully!'];
+   matRad_cfg.dispWarning(wrnTxt)  
    
-   switch answer
-      case 'No'
-         matRad_cfg.dispError('Inconsistency in DICOM tags')  
-   end
+end
 end
 
-end
 
 function value = seriesnum2str(value)
     if isnumeric(value)
