@@ -67,7 +67,7 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
                     L = (1-kernels.weight).*L_Narr + kernels.weight.*L_Bro;
                 case 'multi'
                     sigmaSq = kernels.sigmaMulti.^2 + bixel.sigmaIniSq;
-                    L = sum([1 - sum(kernels.weightMulti,2), kernels.weightMulti] .* exp(-radialDist_sq ./ (2*sigmaSq))./(2*pi*sigmaSq),2);
+                    L = sum([1 - sum(kernels.weightMulti,2), kernels.weightMulti] .* exp(-bixel.radialDist_sq ./ (2*sigmaSq))./(2*pi*sigmaSq),2);
                 otherwise
                     %Sanity check
                     matRad_cfg = MatRad_Config.instance();
