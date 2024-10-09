@@ -2,6 +2,11 @@ function [tmpPath,status] = helper_temporaryFolder(folderName,clearIfExists)
 %helper_temporaryFolder Creates a temporary folder for test data in the
 %  users temporary systemdirectory. 
 
+matRad_cfg = MatRad_Config.instance();
+if matRad_cfg.isOctave
+    confirm_recursive_rmdir(false,"local");
+end
+
 if nargin < 2
     clearIfExists = true;
 end
