@@ -128,10 +128,39 @@ classdef (Abstract) matRad_BiologicalModel < handle
                 vTissueIndex{s} = zeros(size(vAlphaX{s}));
             end
         end
+
+        function [avail, msg] = isAvailable(this, radiationMode, providedQuantities)
+            validRadMode = any(strcmp(this.possibleRadiationModes,radiationMode));
+            
+            msg1 = '';
+            msg2 = '';
+            if ~validRadMode
+                msg1 = sprintf('Radiation mode invalid for model %s!',this.model);
+            end
+
+
+            % TODO: can we check for quantities?
+            validQuantities = true;
+
+            % TODO: can we check machines?
+            validMachine = true;
+
+            if ~validMachine
+                msg2 = sprintf('Machine invalid for model %s!',this.model);
+            end
+            
+            msg = strjoin({msg1,msg2},',');
+
+            if isequal(msg(end),',')
+                msg = msg(1:end-1);
+            end
+
+            avail = validRadMode && validMachine;
+        end
     end
 
     methods (Static)
-        function classList = getAvailableModels(radiationMode,machine)
+        function classList = getAvailableModels(radiationMode,providedQuantities)
             %Get available models (optionally for radiationMode / machine combination)
             matRad_cfg = MatRad_Config.instance();
 
@@ -141,20 +170,20 @@ classdef (Abstract) matRad_BiologicalModel < handle
             metaScenarioModels = matRad_findSubclasses(meta.class.fromName(mfilename('class')),'folders',folders,'includeSubfolders',true);
             classList = matRad_identifyClassesByConstantProperties(metaScenarioModels,'model','defaults',{'none'});
 
-            if nargin == 2
-                isAvailable = false(1,numel(classList));
-                if isstring(machine)
-                    machine = matRad_loadMachine(struct('radiationMode',radiationMode,'machine',machine));
+            if nargin > 0 
+                callargs = {radiationMode};
+                if nargin == 2 && iscellstr(providedQuantities)
+                    callargs{end+1} = providedQuantities;
                 end
                 
+                isAvailable = false(1,numel(classList));
+                
                 for i = 1:numel(classList)
-                    modelInstance = classList.handle();
-                    isAvailable(i) = modelInstance.isAvailable(radiationMode,machine);
+                    modelInstance = classList(i).handle();
+                    isAvailable(i) = all(modelInstance.isAvailable(callargs{:}));
                 end
 
                 classList = classList(isAvailable);
-            elseif nargin ~= 2 && nargin ~= 0
-                matRad_cfg.dispError('Wrong call to getAvailableModels!');
             end
 
             if isempty(classList)
@@ -234,11 +263,11 @@ classdef (Abstract) matRad_BiologicalModel < handle
             end
         end
     
-        function model = validate(model,radiationMode,machine)
+        function model = validate(model,radiationMode,providedQuantities)
             %Make sure model is a validly created instance
             model = matRad_BiologicalModel.create(model);
 
-            [valid,msg] = model.isAvailable(radiationMode,machine);
+            [valid,msg] = model.isAvailable(radiationMode,providedQuantities);
             
             if ~valid
                 matRad_cfg = MatRad_Config.instance();
@@ -246,33 +275,7 @@ classdef (Abstract) matRad_BiologicalModel < handle
             end
         end
 
-        function [avail, msg] = isAvailable(radiationMode, machine)
-            validRadMode = any(strcmp(model.possibleRadiationModes,radiationMode));
-            
-            msg1 = '';
-            msg2 = '';
-            if ~validRadMode
-                msg1 = sprintf('Radiation mode invalid for model %s!',model.model);
-            end
-
-            if isstring(machine)
-                machine = matRad_loadMachine(struct('radiationMode',radiationMode,'machine',machine));
-            end
-
-            validMachine = model.checkBioCalcConsistency(machine);
-            
-            if ~validMachine
-                msg2 = sprintf('Machine invalid for model %s!',model.model);
-            end
-            
-            msg = strjoin({msg1,msg2},',');
-
-            if isequal(msg(end),',')
-                msg = msg(1:end-1);
-            end
-
-            avail = validRadMode && validMachine;
-        end
+        
     end
 
 end

@@ -541,7 +541,7 @@ classdef matRad_PlanWidget < matRad_Widget
             h55 = uicontrol(...
                 'Parent',h12,...
                 'Units','normalized',...
-                'String',{  'none';'constRBE'; 'MCN';'WED';'LEM';'HEL';  },...
+                'String',{'none'},...
                 'TooltipString','Choose a biological model to be applied',...
                 'Style','popupmenu',...
                 'Value',1,...
@@ -845,6 +845,9 @@ classdef matRad_PlanWidget < matRad_Widget
             if ~isfield(pln,'propOpt')
                 pln.propOpt = struct();
             end
+
+            %biological model
+            availableModels = matRad_BiologicalModel.getAvailableModels();
             
             %Biological optimization dose quantity
             contentPopUpQuantityOpt = get(handles.popMenuQuantityOpt,'String');
@@ -1186,10 +1189,9 @@ classdef matRad_PlanWidget < matRad_Widget
                 set(handles.popMenuQuantityOpt,'Value',ix);                                    
             end
             
-            pln = evalin('base','pln');
-            
             % new radiation modality is photons -> just keep physicalDose
             try
+                pln = evalin('base','pln');
                 AllVarNames = evalin('base','who');
                 if  ismember('resultGUI',AllVarNames)
                     resultGUI = evalin('base','resultGUI');
@@ -1208,17 +1210,23 @@ classdef matRad_PlanWidget < matRad_Widget
                     end
                     assignin('base','resultGUI',resultGUI);
                     %handles = updateIsoDoseLineCache(handles);
-                end                
+                end
+
+                pln.radiationMode = RadIdentifier;
+                availableEngines = DoseEngines.matRad_DoseEngineBase.getAvailableEngines(pln);
+                set(handles.popUpMenuDoseEngine,'String',{availableEngines(:).shortName});
+
+                models = matRad_BiologicalModel.getAvailableModels(pln.radiationMode);
+                modelNames = {models.model};
+
+                set(handles.popMenuBioModel,'String',modelNames);
             catch
                 %Do nothing here
             end
-            
-            pln.radiationMode = RadIdentifier;
-            availableEngines = DoseEngines.matRad_DoseEngineBase.getAvailableEngines(pln);
-            set(handles.popUpMenuDoseEngine,'String',{availableEngines(:).shortName});
 
             this.handles = handles;
             updatePlnInWorkspace(this);
+            
         end
         
         function editIsocenter_Callback(this, hObject, eventdata)

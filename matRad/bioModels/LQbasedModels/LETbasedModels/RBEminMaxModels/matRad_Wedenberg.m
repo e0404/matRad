@@ -21,7 +21,7 @@ classdef matRad_Wedenberg < matRad_RBEminMax
         p1_WED = 0.434;
         p2_WED = 1;
 
-        requiredQuantities = {'physicalDose','LET'};
+        requiredQuantities = {'LET'};
         possibleRadiationModes = {'protons'};
 
     end

@@ -23,7 +23,7 @@ classdef matRad_HeliumMairani < matRad_RBEminMax
         p1_HEL = 9.73154e-3;
         p2_HEL = 1.51998e-2;
 
-        requiredQuantities = {'physicalDose','LET'};
+        requiredQuantities = {'LET'};
         possibleRadiationModes = {'helium'};
     end
 

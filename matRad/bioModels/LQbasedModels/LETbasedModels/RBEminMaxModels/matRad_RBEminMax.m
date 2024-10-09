@@ -21,6 +21,14 @@ classdef (Abstract) matRad_RBEminMax < matRad_LQLETbasedModel
             this@matRad_LQLETbasedModel();
         end
 
+        function [alpha,beta] = getAlphaBeta(this,alphaX,betaX,quantityStruct)
+            % Get the model specific RBEmin/RBEmax
+            [RBEmin, RBEmax] = this.getRBEminMax(quantityStruct);
+            
+            alpha = RBEmax.*alphaX;
+            beta = RBEmin.^2 .* betaX;
+        end
+
         function [bixel] = calcBiologicalQuantitiesForBixel(this,bixel,kernels)
             % This function implement the standard RBEmin/RBEmax formalism.
             % Specific model parameters are computed by the subclass.

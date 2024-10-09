@@ -22,7 +22,7 @@ classdef matRad_LinearScalingModel < matRad_RBEminMax
         p_upperLETThreshold  = 30;    %[kev/mum]
         p_lowerLETThreshold  = 0.3;   %[kev/mum]
 
-        requiredQuantities = {'physicalDose','LET'};
+        requiredQuantities = {'LET'};
         possibleRadiationModes = {'protons','helium','carbon'};
     end
 

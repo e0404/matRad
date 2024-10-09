@@ -16,12 +16,13 @@ classdef matRad_EmptyBiologicalModel < matRad_BiologicalModel
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties (Constant)
         model = 'none';
+        possibleRadiationModes =  {'photons', 'protons', 'carbon', 'helium', 'brachy'};
+        requiredQuantities = {};
     end
 
     methods
         function this = matRad_EmptyBiologicalModel()
             this@matRad_BiologicalModel();
-            this.possibleRadiationModes = {'photons', 'protons', 'carbon', 'helium', 'brachy'};
         end
     end
 end
