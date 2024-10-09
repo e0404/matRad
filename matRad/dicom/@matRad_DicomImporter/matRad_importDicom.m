@@ -39,13 +39,19 @@ if ~exist('dicomMetaBool','var')
 end
 
 %%
-h = waitbar(0,'Please wait...','Color',matRad_cfg.gui.backgroundColor,'DefaultTextColor',matRad_cfg.gui.textColor);
-matRad_applyThemeToWaitbar(h);
+if ~matRad_cfg.disableGUI
+    h = waitbar(0,'Please wait...','Color',matRad_cfg.gui.backgroundColor,'DefaultTextColor',matRad_cfg.gui.textColor);
+    matRad_applyThemeToWaitbar(h);
+else
+    h = [];
+end
 %h.WindowStyle = 'Modal';
 steps = 2;
 
 %% import ct-cube
-waitbar(1 / steps)
+if any(ishandle(h))
+    waitbar(1/steps, h)
+end
 obj.importCT.resolution.x = str2double(obj.importFiles.resx);
 obj.importCT.resolution.y = str2double(obj.importFiles.resy);
 obj.importCT.resolution.z = str2double(obj.importFiles.resz); % [mm] / lps coordinate system
@@ -72,13 +78,21 @@ end
 if ~isempty(obj.importFiles.rtss)
     
     %% import structure data
-    waitbar(2 / steps)
+    if any(ishandle(h))
+        waitbar(2/steps, h)
+    end
     obj = matRad_importDicomRtss(obj);
-    close(h)
+    if any(ishandle(h))
+        close(h)
+    end
 
     %% creating structure cube
-    h = waitbar(0,'Please wait...','Color',matRad_cfg.gui.backgroundColor,'DefaultTextColor',matRad_cfg.gui.textColor);
-    matRad_applyThemeToWaitbar(h);
+    if ~matRad_cfg.disableGUI
+        h = waitbar(0,'Please wait...','Color',matRad_cfg.gui.backgroundColor,'DefaultTextColor',matRad_cfg.gui.textColor);
+        matRad_applyThemeToWaitbar(h);
+    else
+        h = [];
+    end
     %h.WindowStyle = 'Modal';
     steps = numel(obj.importRtss.structures);
 
@@ -99,17 +113,19 @@ if ~(obj.importRtss.yDir(1) == 0 && obj.importRtss.yDir(2) == 1 && obj.importRts
 end
     for i = 1:numel(obj.importRtss.structures)
         % computations take place here
-        waitbar(i / steps)
-        fprintf('creating cube for %s volume... ', obj.importRtss.structures(i).structName);
+        if any(ishandle(h))
+            waitbar(1/steps, h)
+        end
+        matRad_cfg.dispInfo('creating cube for %s volume... ', obj.importRtss.structures(i).structName);
         try
             obj.importRtss.structures(i).indices = matRad_convRtssContours2Indices(obj.importRtss.structures(i),obj.ct);
-            fprintf('\n');
+            matRad_cfg.dispInfo('\n');
         catch ME
             warning('matRad:dicomImport','could not be imported: %s',ME.message);
             obj.importRtss.structures(i).indices = [];
         end      
     end
-    fprintf('finished!\n');
+    matRad_cfg.dispInfo('finished!\n');
     close(h)
 
     %% creating cst
@@ -153,17 +169,17 @@ if ~isempty(obj.importFiles.rtdose)
     % check if obj.importFiles.rtdose contains a path and is labeld as RTDose
     % only the first two elements are relevant for loading the rt dose
     if ~(cellfun(@isempty,obj.importFiles.rtdose(1,1))) 
-        fprintf('loading dose files...\n');
+        matRad_cfg.dispInfo('loading dose files...\n');
         % parse plan in order to scale dose cubes to a fraction based dose
         obj = matRad_importDicomRTDose(obj);        
         if size(obj.resultGUI) == 0
            obj.resultGUI = struct([]);
         end
     end
-    fprintf('finished!\n');
+    matRad_cfg.dispInfo('finished!\n');
 else
     obj.resultGUI = struct([]);
-    fprintf('There are no dose files!\n');
+    matRad_cfg.dispInfo('There are no dose files!\n');
 end
 
 %% put weight also into resultGUI

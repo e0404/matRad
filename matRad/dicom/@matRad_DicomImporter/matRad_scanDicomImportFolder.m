@@ -58,14 +58,21 @@ if ~isempty(obj.allfiles)
     ThBool = [];
 
     numOfFiles = numel(obj.allfiles(:,1));
-    h = waitbar(0,'Please wait...','Color',matRad_cfg.gui.backgroundColor,'DefaultTextColor',matRad_cfg.gui.textColor);
-    matRad_applyThemeToWaitbar(h);
+    if ~matRad_cfg.disableGUI
+        h = waitbar(0,'Please wait...','Color',matRad_cfg.gui.backgroundColor,'DefaultTextColor',matRad_cfg.gui.textColor);
+        matRad_applyThemeToWaitbar(h);
+    else
+        h = [];
+    end
     % precision value for double to string conversion
     str2numPrc = 10;
     %h.WindowStyle = 'Modal';
     steps = numOfFiles;
     for i = numOfFiles:-1:1
-        waitbar((numOfFiles+1-i) / steps)
+        if any(ishandle(h))
+            waitbar((numOfFiles+1-i) / steps, h)
+        end
+        
         try % try to get DicomInfo
             if matRad_cfg.isOctave || verLessThan('matlab','9')
                 info = dicominfo(obj.allfiles{i});
@@ -246,8 +253,6 @@ if ~isempty(obj.allfiles)
         end
     else
          matRad_cfg.dispError('No DICOM files found in patient directory!');
-        %h.WindowStyle = 'Modal';
-        %error('No DICOM files found in patient directory');
     end
 else
     matRad_cfg.dispError('Folder is empty!');
