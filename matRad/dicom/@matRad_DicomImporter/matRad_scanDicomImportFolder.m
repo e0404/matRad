@@ -281,7 +281,7 @@ catch
 end
 
 if strcmp(allfiles{row,column},defaultPlaceHolder) && (column == 3 || column == 4)
-   
+   matRad_cfg = MatRad_Config.instance();
    wrnTxt = ['matRad_scanDicomImportFolder: Could not parse dicom tag: ' tag '. Using placeholder ' defaultPlaceHolder ' instead. Please check imported data carefully!'];
    matRad_cfg.dispWarning(wrnTxt)  
    
