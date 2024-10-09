@@ -880,6 +880,7 @@ classdef matRad_PlanWidget < matRad_Widget
             else
                 set(handles.btnRunSequencing,'Value', 0 );
             end
+
             if isfield (pln.propOpt, 'conf3D')
                 set(handles.radiobutton3Dconf,'Value',pln.propOpt.conf3D);
             end 

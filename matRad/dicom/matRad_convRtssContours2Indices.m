@@ -44,7 +44,7 @@ for i = 1:size(structure.item,2)
         end
     
         round2 = @(a,b) round(a*10^b)/10^b;
-        dicomCtSliceThickness = ct.dicomInfo.SliceThickness(round2(ct.dicomInfo.SlicePositions,1)==round2(dicomCtSlicePos,1));
+        dicomCtSliceThickness = ct.dicomInfo.SliceThickness;
         
         %Sanity check
         msg = checkSliceThickness(dicomCtSliceThickness);
