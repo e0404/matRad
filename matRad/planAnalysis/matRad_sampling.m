@@ -92,7 +92,12 @@ try
     if ~FlagParallToolBoxLicensed
         matRad_cfg.dispWarning('Could not check out parallel computing toolbox. \n');
     end
+    % Create parallel pool on cluster
+    p = gcp(); % If no pool, create new one.
 
+    if isempty(p)
+        matRad_cfg.dispError('matRad: Could not start valid parallel pool. Please check your parallel computing toolbox installation. \n');
+    end
 catch
     FlagParallToolBoxLicensed  = false;
 end
@@ -115,9 +120,7 @@ resultGUInomScen.cst = cst;
 
 %% perform parallel sampling
 if FlagParallToolBoxLicensed
-    % Create parallel pool on cluster
-    p = gcp(); % If no pool, create new one.
-
+    
     if isempty(p)
         poolSize = 1;
     else
