@@ -83,7 +83,7 @@ classdef matRad_StfGeneratorParticleIMPT < matRad_StfGeneratorParticleRayBixelAb
 
                                     % compute radiological depths
                                     % http://www.ncbi.nlm.nih.gov/pubmed/4000088, eq 14
-                                    rSp = l{shiftScen} .* rho{shiftScen}{ctScen};
+                                    rSP = l{shiftScen} .* rho{shiftScen}{ctScen};
                                     radDepths = cumsum(rSP) - 0.5*rSP;
 
                                     if this.multScen.relRangeShift(rangeShiftScen) ~= 0 || this.multScen.absRangeShift(rangeShiftScen) ~= 0
