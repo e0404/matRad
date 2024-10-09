@@ -207,7 +207,8 @@ if ~isempty(obj.allfiles)
 
     % Filtration, getting and assigning z resolution to all CT files
     FiltredLocArray = unique(LocationsArray);
-    Thickness = rmmissing(unique(diff(FiltredLocArray)));
+    locZ = ~isnan(FiltredLocArray);
+    Thickness = unique(diff(FiltredLocArray(locZ)));
     numOfFiles = numel(obj.allfiles(:,1));
    
     if numel(Thickness) > 1
