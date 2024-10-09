@@ -55,7 +55,16 @@ for s = 1:numVois
     
     %Smooth the VOI
     v = smooth3(mask,'gaussian',[5 5 5],2);
-    isoSurface = isosurface(xMesh,yMesh,zMesh,v,0.5);
+
+    maskThreshold = 0.5;
+
+    %Small sanity check in case we smoothed to much on a small VOI
+    if all(v(:) < maskThreshold)
+        v = mask;
+    end
+    
+    isoSurface = isosurface(xMesh,yMesh,zMesh,v,maskThreshold);
+    
     
     %reduce the complexity
     isoSurface = reducepatch(isoSurface,0.05);

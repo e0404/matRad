@@ -20,6 +20,7 @@ classdef matRad_importDicomWidget < matRad_Widget
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
     properties
+        importer;
     end
     
     methods
@@ -83,7 +84,7 @@ classdef matRad_importDicomWidget < matRad_Widget
                 % Update handles structure
                 % guidata(hObject, handles);
                 this.handles = handles;
-                this.scan(hObject, eventdata)
+                this.scanFolder(hObject, eventdata)
             end
         end
         
@@ -105,7 +106,27 @@ classdef matRad_importDicomWidget < matRad_Widget
                 %   11. res_z
                 %   12. detailed dose description - currently not in use for GUI user
                 patient_listbox = get(handles.patient_listbox,'String');
-                selected_patient = patient_listbox(get(handles.patient_listbox,'Value'));
+                if ~isempty(patient_listbox)
+                    selected_patient = patient_listbox(get(handles.patient_listbox,'Value'));
+                end
+
+                if get(handles.SeriesUID_radiobutton,'Value') == 1
+                    % this gets a list of ct series for this patient
+                    set(handles.ctseries_listbox,'Value',1); % set dummy value to one
+                    
+                    set(handles.ctseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),4)));
+                    
+                else
+                    set(handles.ctseries_listbox,'Value',1); % set dummy value to one
+                    set(handles.ctseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),5)));
+                end
+                % for i = 1:numel(this.handles.ctseries_listbox.String)
+                %     if i == handles.ctseries_listbox.Value
+                %         SeriesInstUID = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),15))
+                %         if 
+                % 
+                %     end
+                % end
                 % this gets a list of rtss series for this patient
                 set(handles.rtseries_listbox,'Value',1); % set dummy value to one
                 set(handles.rtseries_listbox,'String',handles.fileList(strcmp(handles.fileList(:,2), 'RTSTRUCT') & strcmp(handles.fileList(:,3), selected_patient),4));
@@ -120,37 +141,15 @@ classdef matRad_importDicomWidget < matRad_Widget
                 if get(handles.SeriesUID_radiobutton,'Value') == 1
                     % this gets a list of ct series for this patient
                     set(handles.ctseries_listbox,'Value',1); % set dummy value to one
-                    set(handles.ctseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),4)));
                     
-                    selectedDoseSeriesString = get(handles.doseseries_listbox,'String');
-                    % this gets a resolution for this patient
-                    selectedCtSeriesString = get(handles.ctseries_listbox,'String');
-                    if ~isempty(selectedCtSeriesString)
-                        res_x = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),9));
-                        res_y = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),10));
-                        res_z = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),11));
-                    else
-                        res_x = NaN; res_y = NaN; res_z = NaN;
-                    end
+                    set(handles.ctseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),4)));
                 else
                     set(handles.ctseries_listbox,'Value',1); % set dummy value to one
                     set(handles.ctseries_listbox,'String',unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient),5)));
-                    selectedCtSeriesString = get(handles.ctseries_listbox,'String');
-                    if ~isempty(selectedCtSeriesString)
-                        res_x = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),9));
-                        res_y = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),10));
-                        res_z = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),11));
-                    else
-                        res_x = NaN; res_y = NaN; res_z = NaN;
-                    end
                 end
-                set(handles.resx_edit,'String',res_x);
-                set(handles.resy_edit,'String',res_y);
-                if numel(res_z) > 1
-                    set(handles.resz_edit,'String','not equi');
-                else
-                    set(handles.resz_edit,'String',res_z);
-                end
+                set(handles.resx_edit,'String',this.importer.importFiles.resx);
+                set(handles.resy_edit,'String',this.importer.importFiles.resy);
+                set(handles.resz_edit,'String',this.importer.importFiles.resz);
                 % Update handles structure
                 % guidata(hObject, handles);
                 this.handles = handles;
@@ -160,78 +159,76 @@ classdef matRad_importDicomWidget < matRad_Widget
         % H22 IMPORT BUTTON CALLBACK
         function this = import_button_Callback(this, hObject, eventdata)
             handles = this.handles;
-            patient_listbox = get(handles.patient_listbox,'String');
-            ctseries_listbox = get(handles.ctseries_listbox,'String');
-            rtplan_listbox = get(handles.rtplan_listbox,'String');
-            doseseries_listbox = get(handles.rtplan_listbox,'String');
-            if ~isempty(patient_listbox)
-                selected_patient = patient_listbox(get(handles.patient_listbox,'Value'));
+
+            % case the resolution was changed manually
+            if handles.resx_edit.String ~= this.importer.importFiles.resx
+                this.importer.importFiles.resx = handles.resx_edit.String;
+            end 
+            if handles.resy_edit.String ~= this.importer.importFiles.resy
+                this.importer.importFiles.resy = handles.resy_edit.String;
             end
-            if ~isempty(ctseries_listbox)
-                selected_ctseries = ctseries_listbox(get(handles.ctseries_listbox,'Value'));
+            if handles.resz_edit.String ~= this.importer.importFiles.resz
+                this.importer.importFiles.resz = handles.resz_edit.String;
             end
-            if ~isempty(rtplan_listbox)
-                selected_rtplan = rtplan_listbox(get(handles.rtplan_listbox,'Value'));
+
+            % to pass only selected objects to the matRad_importDicom
+            % selected patient
+            if ~isempty(handles.patient_listbox)
+                selected_patient = this.importer.patient{get(handles.patient_listbox,'Value')};
+                this.importer.patient = selected_patient;
             end
-            
-            if get(handles.SeriesUID_radiobutton,'Value') == 1
-                files.ct = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & ...
-                    strcmp(handles.fileList(:,4), selected_ctseries),:);
-                
-                %files.rtss = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & ...
-                %    strcmp(handles.fileList(:,4), selected_rtseries),:);
-            else
-                files.ct = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & ...
-                    strcmp(cellfun(@num2str,handles.fileList(:,5),'UniformOutput',false), selected_ctseries) & strcmp(handles.fileList(:,2),'CT'),:);
-                
-                %files.rtss = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & ...
-                %    strcmp(handles.fileList(:,5), selected_rtseries),:);
+
+            % selected CT serie
+            allCTSeries = this.importer.importFiles.ct;
+            if ~isempty(handles.ctseries_listbox) && get(handles.SeriesUID_radiobutton,'Value') == 1
+                UIDSelected_ctserie = handles.ctseries_listbox.String{get(handles.ctseries_listbox,'Value'), 1};
+                selectedCTSerie = allCTSeries(strcmp(allCTSeries(:, 4), UIDSelected_ctserie), :); 
+                this.importer.importFiles.ct = selectedCTSerie;
+            elseif ~isempty(handles.ctseries_listbox) && get(handles.SeriesNumber_radiobutton,'Value') == 1
+                SeriesNumSelected_ctserie = handles.ctseries_listbox.String{get(handles.ctseries_listbox,'Value'), 1};
+                selectedCTSerie = allCTSeries(strcmp(allCTSeries(:, 5), SeriesNumSelected_ctserie), :);
+                this.importer.importFiles.ct = selectedCTSerie;
             end
-            
-            allRtss = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,2),'RTSTRUCT'),:);
+
+            % selected RTStruct
+            allRtss = this.importer.importFiles.rtss;
             if ~isempty(allRtss)
-                files.rtss = allRtss(get(handles.rtseries_listbox,'Value'),:);
+                UIDSelected_rtserie = handles.rtseries_listbox.String{get(handles.rtseries_listbox,'Value'), 1};
+                selectedRTStructSerie = allRtss(strcmp(allRtss(:, 4), UIDSelected_rtserie), :);
+                this.importer.importFiles.rtss = selectedRTStructSerie;
+            end
+
+            % selected RTPlan
+            allRTPlans = this.importer.importFiles.rtplan;
+            if ~isempty(allRTPlans) && ~isempty(handles.rtplan_listbox.Value)
+                UIDSelected_rtplan = handles.rtplan_listbox.String{get(handles.rtplan_listbox,'Value'), 1};
+                selectedRTPlan = allRTPlans(strcmp(allRTPlans(:, 4), UIDSelected_rtplan), :);
+                this.importer.importFiles.rtplan = selectedRTPlan;
             else
-                files.rtss = [];
+                this.importer.importFiles.rtplan = [];
             end
             
-            files.resx = str2double(get(handles.resx_edit,'String'));
-            files.resy = str2double(get(handles.resy_edit,'String'));
-            % check if valid assignment is made when z slices are not equi-distant
-            if strcmp(get(handles.resz_edit,'String'),'not equi')
-                this.showError('Ct data not sliced equi-distantly in z direction! Chose uniform resolution.');
-                return;
-            else
-                files.resz = str2double(get(handles.resz_edit,'String'));
+            % selected dose serie
+            allRTDoses = this.importer.importFiles.rtdose;
+            if ~isempty(allRTDoses) && ~isempty(handles.doseseries_listbox.Value)
+                UIDSelected_rtdose = handles.doseseries_listbox.String{get(handles.doseseries_listbox,'Value'), 1};
+                selectedRTDose = allRTDoses(strcmp(allRTDoses(:, 4), UIDSelected_rtdose), :);
+                this.importer.importFiles.rtdose = selectedRTDose;
+            else 
+                this.importer.importFiles.rtdose = [];
             end
-            % selected RT Plan
-            rtplan = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,2),'RTPLAN'),:);
-            if ~isempty(rtplan) && ~isempty(get(handles.rtplan_listbox,'Value'))
-                files.rtplan = rtplan(get(handles.rtplan_listbox,'Value'),:);
-            end
-            
-            % selected RT Dose
-            rtdose = handles.fileList(strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,2),'RTDOSE'),:);
-            if ~isempty(rtdose) && ~isempty(get(handles.doseseries_listbox,'Value'))
-                selectedRtDose   = get(handles.doseseries_listbox,'String');
-                selectedRtDoseIx = NaN*ones(1,numel(selectedRtDose));
-                for i = 1:numel(selectedRtDose)
-                    selectedRtDoseIx(i) = find(strcmp(rtdose(:,4),selectedRtDose{i}));
-                end
-                files.rtdose = rtdose(selectedRtDoseIx,:);
-            end
-            
-            % check if we should use the dose grid resolution
-            files.useDoseGrid = get(handles.checkbox3,'Value');
-            
-            % dicomMetaBool: store complete DICOM information and patientName or not
-            dicomMetaBool = logical(get(handles.checkPatientName,'Value'));
-            [ct, cst, pln, stf, resultGUI] = matRad_importDicom(files, dicomMetaBool);
+
+            this.importer.matRad_importDicom();
 
             %% save ct, cst, pln, dose
             matRad_cfg = MatRad_Config.instance();
-            matRadFileName = fullfile(matRad_cfg.userfolders{1},[files.ct{1,3} '.mat']); % use default from dicom
+            matRadFileName = fullfile(matRad_cfg.userfolders{1},[this.importer.patient '.mat']); % use default from dicom
             [FileName,PathName] = uiputfile('*.mat','Save as...',matRadFileName);
+            ct = this.importer.ct;
+            cst = this.importer.cst;
+            pln = this.importer.pln;
+            stf = this.importer.stf;
+            resultGUI = this.importer.resultGUI;
             if ischar(FileName)
                 variableNames = {'ct','cst','pln','stf','resultGUI'};
 
@@ -310,39 +307,16 @@ classdef matRad_importDicomWidget < matRad_Widget
         function this = doseseries_listbox_Callback(this, hObject, eventdata)
             handles = this.handles;
             
-            if ~isempty(get(hObject,'Value'))
+            if ~isempty(get(hObject,'Value')) 
                 set(handles.checkbox3,'Enable','on');
             else
                 set(handles.checkbox3,'Value',0);
                 set(handles.checkbox3,'Enable','off');
                 % retrieve and display resolution for DICOM ct cube
-                patient_listbox = get(handles.patient_listbox,'String');
-                selected_patient = patient_listbox(get(handles.patient_listbox,'Value'));
-                selectedCtSeriesString = get(handles.ctseries_listbox,'String');
-                if get(handles.SeriesUID_radiobutton,'Value') == 1
-                    if ~isempty(selectedCtSeriesString)
-                        res_x = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),9));
-                        res_y = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),10));
-                        res_z = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,4), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),11));
-                    else
-                        res_x = NaN; res_y = NaN; res_z = NaN;
-                    end
-                else
-                    if ~isempty(selectedCtSeriesString)
-                        res_x = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),9));
-                        res_y = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),10));
-                        res_z = unique(handles.fileList(strcmp(handles.fileList(:,2), 'CT') & strcmp(handles.fileList(:,3), selected_patient) & strcmp(handles.fileList(:,5), selectedCtSeriesString{get(handles.ctseries_listbox,'Value')}),11));
-                    else
-                        res_x = NaN; res_y = NaN; res_z = NaN;
-                    end
-                end
-                set(handles.resx_edit,'String',res_x);
-                set(handles.resy_edit,'String',res_y);
-                if numel(res_z) > 1
-                    set(handles.resz_edit,'String','not equi');
-                else
-                    set(handles.resz_edit,'String',res_z);
-                end
+                set(handles.resx_edit,'String',this.importer.importFiles.resx);
+                set(handles.resy_edit,'String',this.importer.importFiles.resy);
+                set(handles.resz_edit,'String',this.importer.importFiles.resz);
+           
                 
             end
             
@@ -406,7 +380,7 @@ classdef matRad_importDicomWidget < matRad_Widget
                 % guidata(hObject, handles);
                 this.handles = handles;
             end
-            scan(hObject, eventdata);
+            scanForder(hObject, eventdata);
         end
         
         % H37 CHECK PATIENTNAME CALLBACK
@@ -495,11 +469,8 @@ classdef matRad_importDicomWidget < matRad_Widget
                 end
                 set(handles.resx_edit,'String',res_x);
                 set(handles.resy_edit,'String',res_y);
-                if numel(res_z) > 1
-                    set(handles.resz_edit,'String','not equi');
-                else
-                    set(handles.resz_edit,'String',res_z);
-                end
+                set(handles.resz_edit,'String',res_z);
+                
             end
             
             this.handles = handles;
@@ -993,14 +964,16 @@ classdef matRad_importDicomWidget < matRad_Widget
     end    
     
     methods (Access = private)
-        % SCAN FUNKTION
-        function this = scan(this, hObject, eventdata)
+    % SCANFOLDER FUNKTION
+        function this = scanFolder(this, hObject, eventdata)
             handles = this.handles;
-            [fileList, patient_listbox] = matRad_scanDicomImportFolder(get(handles.dir_path_field,'String'));
-            if iscell(patient_listbox)
-                handles.fileList =  fileList;
+
+            this.importer = matRad_DicomImporter(get(handles.dir_path_field,'String'));
+
+            if iscell(this.importer.patient)
+                handles.fileList =  this.importer.allfiles;
                 %handles.patient_listbox.String = patient_listbox;
-                set(handles.patient_listbox,'String',patient_listbox,'Value',1);
+                set(handles.patient_listbox,'String',this.importer.patient,'Value',1);
                 % guidata(hObject, handles);
                 this.handles = handles;
             end

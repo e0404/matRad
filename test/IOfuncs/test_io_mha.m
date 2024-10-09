@@ -28,13 +28,9 @@ initTestSuite;
 
 function test_mhd_basic_writeReadCube
     load TG119.mat
-    tmpDir = tempdir();
-    tmpDir = [tmpDir filesep 'matRad_test_mha' filesep];
-    if ~exist(tmpDir,'dir')
-        mkdir(tmpDir);
-    end
-
-    tmpFilePath = [tmpDir filesep 'TG119.mhd'];
+    
+    tmpDir = helper_temporaryFolder('matRad_test_mha');    
+    tmpFilePath = fullfile(tmpDir,'TG119.mhd');
     
     datatype = 'double';
 
@@ -54,13 +50,9 @@ function test_mhd_basic_writeReadCube
 
 function test_mha_basic_writeReadCube
     load TG119.mat
-    tmpDir = tempdir();
-    tmpDir = [tmpDir filesep 'matRad_test_mha' filesep];
-    if ~exist(tmpDir,'dir')
-        mkdir(tmpDir);
-    end
-
-    tmpFilePath = [tmpDir filesep 'TG119.mha'];
+    
+    tmpDir = helper_temporaryFolder('matRad_test_mha');    
+    tmpFilePath = fullfile(tmpDir,'TG119.mha');
     
     datatype = 'double';
 
