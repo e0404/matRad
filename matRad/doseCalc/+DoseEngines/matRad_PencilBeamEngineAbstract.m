@@ -531,6 +531,10 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                 end
             end
 
+            if this.keepRadDepthCubes && ~isempty(this.radDepthCubes)
+                dij.radDepthCubes = this.radDepthCubes;
+            end            
+
             dij = this.finalizeDose@DoseEngines.matRad_DoseEngineBase(dij);
         end
     end
