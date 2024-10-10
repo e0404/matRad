@@ -1,4 +1,4 @@
-function model = matRad_bioModel(sRadiationMode, sModel, sMachine)
+function model = matRad_bioModel(sRadiationMode, sModel)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %  matRad_bioModel
 %  This is a helper function to instantiate a matRad_BiologicalModel. This
@@ -7,9 +7,8 @@ function model = matRad_bioModel(sRadiationMode, sModel, sMachine)
 %
 % call
 %   matRad_bioModel(sRadiationMode, sModel)
-%   matRad_bioModel(sRadiationMode, sModel, sMachine)
 %
-%   e.g. pln.bioModel = matRad_bioModel('protons','MCN', 'Generic')
+%   e.g. pln.bioModel = matRad_bioModel('protons','MCN')
 %
 % input
 %   sRadiationMode:     radiation modality 'photons' 'protons' 'helium' 'carbon' 'brachy'
@@ -18,10 +17,6 @@ function model = matRad_bioModel(sRadiationMode, sModel, sMachine)
 %                       'none': for photons, protons, carbon                'constRBE': constant RBE for photons and protons
 %                       'MCN': McNamara-variable RBE model for protons      'WED': Wedenberg-variable RBE model for protons
 %                       'LEM': Local Effect Model for carbon ions
-%   sMachine (optional): checks the consistency of the provided machine for
-%                        the default parameters of the model. Can be used
-%                        to check the completeness of the base data
-%                        provided
 %
 % output
 %   model:              instance of a biological model
@@ -45,39 +40,10 @@ matRad_cfg = MatRad_Config.instance();
 
 % Look for the correct inputs
 p = inputParser;
-isNotOldQuantityOpt = @(x) ~any(strcmp(x, {'physicalDose', 'RBExD', 'effect', 'BED'}));
 addRequired(p, 'sRadiationMode', @ischar);
-addRequired(p, 'sModel',isNotOldQuantityOpt);
-addOptional(p, 'sMachine', [], @ischar);
+addRequired(p, 'sModel',@ischar);
 
 p.KeepUnmatched = true;
-
-try
-    if nargin>2
-        parse(p, sRadiationMode, sModel, sMachine);
-    else
-        parse(p, sRadiationMode, sModel);
-    end
-
-catch ME
-    if matRad_cfg.isOctave
-        checkString = upper('sModel');
-    else
-
-        checkString = 'sModel';
-    end
-    if ~isempty(strfind(ME.message, checkString)) && ~isNotOldQuantityOpt(sModel)
-        matRad_cfg.dispDeprecationWarning('quantityOpt input for the biological model will be deprecated!');
-        sModel = sMachine;
-        sMachine = [];
-    else
-        matRad_cfg.dispError(ME.message);
-    end
-end
-
-if ~exist('sMachine', 'var')
-    sMachine = [];
-end
 
 %Check for the available models
 mainFolder        = fullfile(matRad_cfg.matRadSrcRoot,'bioModels');
@@ -111,29 +77,10 @@ end
 
 correctRadiationModality = any(strcmp(tmpBioParam.possibleRadiationModes, sRadiationMode));
 
-% Assume base data are correct, if not the check function will fail
-correctBaseData = true;
-
-if ~isempty(sMachine)
-    try
-        machineStruct = struct('radiationMode', sRadiationMode, 'machine', sMachine);
-        machine = matRad_loadMachine(machineStruct);
-    catch
-        matRad_cfg.dispError('Could not find the following machine file: %s',[sRadiationMode, '_', sMachine]);
-    end
-
-    correctBaseData = tmpBioParam.checkBioCalcConsistency(machine);
-end
-
-if correctRadiationModality && correctBaseData
-    model = tmpBioParam;
-elseif ~correctRadiationModality
+if ~correctRadiationModality
     matRad_cfg.dispError('Incorrect radiation modality for the required biological model');
-    model = [];
-elseif ~correctBaseData
-    matRad_cfg.dispWarning('Insufficient base data for required biological model.');
-    model = tmpBioParam;
 end
 
+model = tmpBioParam;
 
-end % end class definition
+end % end function

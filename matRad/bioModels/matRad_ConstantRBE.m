@@ -18,65 +18,18 @@ classdef matRad_ConstantRBE < matRad_BiologicalModel
 
     properties (Constant)
         model = 'constRBE'
-        defaultRBEprotons = 1.1;
-        defaultRBEphotons = 1;
         possibleRadiationModes = {'photons','protons','helium','carbon','brachy'};
         requiredQuantities = {'physicalDose'};
     end
 
     properties
-        RBE;
+        RBE = 1.1;
     end
 
     methods
         function this = matRad_ConstantRBE()
             this = this@matRad_BiologicalModel();
-
         end
-  
-
-        % function assignBioModelPropertiesFromEngine(this,engine)
-        % 
-        %     % This function mirrors the user defined property
-        %     % pln.propDoseCalc.bioProperties.RBE to the model property RBE.
-        %     % If not defined, just uses default values
-        % 
-        %     matRad_cfg = MatRad_Config.instance();
-        % 
-        %     if isprop(engine, 'bioProperties') && isfield(engine.bioProperties, 'RBE')
-        %         this.RBE = engine.bioProperties.RBE;
-        %     else
-        %         switch radiationMode
-        % 
-        %             case 'photons'
-        %                 this.RBE = this.defaultRBEphotons;
-        %             case 'protons'
-        %                 this.RBE = this.defaultRBEprotons;
-        %         end
-        % 
-        %         matRad_cfg.dispWarning('No RBE value specified, using default value of %f', this.RBE);
-        %     end
-        % ends
-
-        function calcAvailable = checkBioCalcConsistency(this, machine)
-
-            matRad_cfg = MatRad_Config.instance();
-
-            calcAvailable = checkBioCalcConsistency@matRad_BiologicalModel(this, machine);
-
-            if isempty(this.RBE)
-                matRad_cfg.dispWarning('No specifc constant RBE value provided, using default!');
-                
-                switch machine.meta.radiationMode
-                    case 'photons'
-                        this.RBE = this.defaultRBEphotons;
-
-                    case 'protons'
-                        this.RBE = this.defaultRBEprotons;
-                end
-            end
-        end
-
     end
 
 

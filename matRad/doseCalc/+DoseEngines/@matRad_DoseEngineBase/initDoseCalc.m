@@ -72,11 +72,6 @@ if ~isa(this.bioModel,'matRad_BiologicalModel')
     this.bioModel = matRad_BiologicalModel.validate(this.bioModel,radiationMode, this.providedQuantites(this.machine));
 end
 
-% Check biological model consistency
-if ~this.bioModel.checkBioCalcConsistency(this.machine)
-    matRad_cfg.dispError('Insufficient base data provided for dose calculation.');
-end
-
 if any(strcmp(this.bioModel.requiredQuantities, 'LET'))
 
     this.calcLET = true;

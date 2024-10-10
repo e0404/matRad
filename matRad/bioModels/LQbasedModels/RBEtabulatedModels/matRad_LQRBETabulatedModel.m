@@ -166,20 +166,6 @@ classdef (Abstract) matRad_LQRBETabulatedModel < matRad_LQBasedModel
                 matRad_cfg.dispError('fragment %s not available in table: %s', fragment, this.RBEtableName);
             end
         end
-
-        function calcAvailable = checkBioCalcConsistency(this, machine)
-            
-            matRad_cfg = MatRad_Config.instance();
-
-            calcAvailable = checkBioCalcConsistency@matRad_LQBasedModel(this, machine);
-
-            if isempty(this.RBEtable) && isempty(this.RBEtableName)
-                this.RBEtableName = this.defaultRBETable;
-                matRad_cfg.dispWarning('No RBE table specified, using default table!');
-            end
-
-        end
-
     end
 
     methods

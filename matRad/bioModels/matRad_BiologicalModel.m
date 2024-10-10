@@ -55,44 +55,6 @@ classdef (Abstract) matRad_BiologicalModel < handle
             % Needs to be implemented in non abstract subclasses. 
             throw(MException('MATLAB:class:AbstractMember','Abstract function calcBiologicalQuantitiesForBixel of your BiologicalModel needs to be implemented!'));
         end
-
-        % function assignBioModelPropertiesFromEngine(this, pln)
-        %
-        %     % This function can be implemented by the specific subclasses
-        %     % to assign model-specific user defined paramters
-        %
-        % end
-
-        function calcAvailable = checkBioCalcConsistency(this, machine)
-            
-            matRad_cfg = MatRad_Config.instance();
-
-            calcAvailable = true;
-
-            if ~isempty(this.requiredQuantities) %if empty, machine always has sufficient data
-
-                machineDataFields = matRad_getStructFieldsAndSubfields(machine.data(1));
-
-                % loop over all required machine fields and check that
-                % everything is in the machine file
-                validMachineFields = 0;
-                for k=1:numel(this.requiredQuantities)
-
-                    if ~any(strcmp(machineDataFields, this.requiredQuantities{k}))
-                        matRad_cfg.dispWarning('Could not find the following machine data: %s',this.requiredQuantities{k});
-                    else
-                        validMachineFields =  validMachineFields + 1;
-                    end
-                end
-
-                if validMachineFields ~= numel(this.requiredQuantities)
-                    matRad_cfg.dispWarning(['Insufficient base data provided for model: ', this.model, '. Cannot perform dose calculation']);
-                    calcAvailable = false;
-                end
-            end
-
-        end
-
     end
 
     methods
