@@ -1,4 +1,4 @@
-classdef matRad_TabulatedSpecralKernelBasedModel < matRad_LQRBETabulatedModel
+classdef matRad_TabulatedSpectralKernelBasedModel < matRad_LQRBETabulatedModel
 % This is class implementig a spectra-based tabulated RBE model.
 % Spectral kernels should be provided in the base data
 % The model can handle multiple tissue alphaX/betaX ratio specified by the 
@@ -30,10 +30,9 @@ classdef matRad_TabulatedSpecralKernelBasedModel < matRad_LQRBETabulatedModel
     end
 
     methods
-        function this = matRad_TabulatedSpecralKernelBasedModel()
+        function this = matRad_TabulatedSpectralKernelBasedModel()
             this@matRad_LQRBETabulatedModel();
             this.assignDefaultProperties();
-
         end
 
 
@@ -105,54 +104,8 @@ classdef matRad_TabulatedSpecralKernelBasedModel < matRad_LQRBETabulatedModel
             bixel.alpha = alphaWeightedSpectra./spectraBixelDenominator;
             bixel.beta  = betaWeightedSpectra./spectraBixelDenominator;
         end
-        
-        % function assignBioModelPropertiesFromEngine(this, engine)
-        % 
-        % 
-        %     matRad_cfg = MatRad_Config.instance();
-        % 
-        %     % Call superclass funtion
-        %     assignBioModelPropertiesFromEngine@matRad_LQRBETabulatedModel(this, engine);
-        % 
-        %     % Check fragments
-        %     if isprop(engine, 'bioProperties')
-        % 
-        %         if isfield(engine.bioProperties, 'fragmentsToInclude')
-        %             this.fragmentsToInclude = engine.bioProperties.fragmentsToInclude;
-        %         else
-        %             matRad_cfg.dispWarning('No fragments included! Only using ions identical to primary, this might result in inaccurate prediciton!');
-        %             switch engine.machine.meta.radiationMode
-        %                 case 'protons'
-        %                     this.fragmentsToInclude = {'H'};
-        %                 case 'carbon'
-        %                     this.fragmentsToInclude = {'C'};
-        %                 case 'helium'
-        %                     this.fragmentsToInclude = {'He'};
-        %             end
-        %         end
-        % 
-        %         % Check the weighting factors (spectra)
-        %         if  isfield(engine.bioProperties, 'weightBy')
-        %             this.weightBy = engine.bioProperties.weightBy;
-        %         else
-        %             this.weightBy = 'Fluence';
-        %         end
-        % 
-        %     end
-        % 
-        %     % This field is checked in the base data, depends on the
-        %     % specific spectra and fragments that are included by the user
-        %     % This also becomes the name tag for the bixel field containing
-        %     % this interpolated quantity
-        %     this.requiredQuantities = cellfun(@(fragment) ['Spectra.', this.weightBy, '.', fragment, '.Data'], this.fragmentsToInclude, 'UniformOutput',false); %[requiredSpectraData;requriedEnergies];
-        % 
-        %     % Check table consistency
-        %     this.checkTableConsistency();
-        % end
-
-
-
     end
+
     methods
 
         function assignDefaultProperties(this)

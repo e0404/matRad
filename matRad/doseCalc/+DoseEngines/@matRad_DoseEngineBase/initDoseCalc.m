@@ -67,6 +67,11 @@ end
 % load machine file from base data folder
 this.machine = this.loadMachine(radiationMode,machine);
 
+%Biological Model
+if ~isa(this.bioModel,'matRad_BiologicalModel')
+    this.bioModel = matRad_BiologicalModel.validate(this.bioModel,radiationMode, this.providedQuantites(this.machine));
+end
+
 % Check biological model consistency
 if ~this.bioModel.checkBioCalcConsistency(this.machine)
     matRad_cfg.dispError('Insufficient base data provided for dose calculation.');

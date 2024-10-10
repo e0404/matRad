@@ -61,30 +61,6 @@ classdef (Abstract) matRad_LQRBETabulatedModel < matRad_LQBasedModel
 
         end
 
-        % function assignBioModelPropertiesFromEngine(this, engine)
-        % 
-        %     matRad_cfg = MatRad_Config.instance();
-        % 
-        %     % Check RBE table
-        %     if isprop(engine, 'bioProperties')
-        %         if isfield(engine.bioProperties, 'RBEtable')
-        % 
-        %             this.RBEtableName = engine.bioProperties.RBEtable;
-        %         else
-        %             this.RBEtableName = this.defaultRBETable;
-        %             matRad_cfg.dispWarning('No RBE table specified, using default table: %s', this.defaultRBETable)
-        %         end
-        % 
-        %     end
-        % 
-        %     this.RBEtable = this.loadRBEtable(this.RBEtableName);
-        % 
-        %     this.availableAlphaInTable = [this.RBEtable.data(:).alphaX]';
-        %     this.availableBetaInTable  = [this.RBEtable.data(:).betaX]';
-        %     this.availableFragmentsInTable = [this.RBEtable.data(1).includedIons];
-        % 
-        % end
-
         function vTissueIndex = getTissueInformation(this,~, cst, dij,vAlphaX, ~, VdoseGrid, VdoseGridScenIx)
 
             % This function assumes that info in cst{i,5} has Tissue class =

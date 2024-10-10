@@ -428,5 +428,13 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         function machine = loadMachine(radiationMode,machineName)
             machine = matRad_loadMachine(struct('radiationMode',radiationMode,'machine',machineName));
         end
+        
+        %Used to check against a machine file if a specific quantity can be
+        %computed. Needs to be overriden in subclasses if additional
+        %quantities are available.
+        function q = providedQuantites(machine)
+            %A dose engine will, by definition, return dose
+            q{1} = 'physicalDose';
+        end
     end
 end

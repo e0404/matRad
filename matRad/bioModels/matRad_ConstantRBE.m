@@ -21,7 +21,7 @@ classdef matRad_ConstantRBE < matRad_BiologicalModel
         defaultRBEprotons = 1.1;
         defaultRBEphotons = 1;
         possibleRadiationModes = {'photons','protons','helium','carbon','brachy'};
-        requiredQuantities = {};
+        requiredQuantities = {'physicalDose'};
     end
 
     properties

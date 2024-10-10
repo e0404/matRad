@@ -15,7 +15,7 @@ classdef matRad_KernelBasedLEM < matRad_LQKernelBasedModel
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
     properties (Constant)
         model = 'LEM';
-        requiredQuantities = {'alpha','beta'};
+        requiredQuantities = {'alpha','beta','physicalDose'};
         possibleRadiationModes = {'protons','helium','carbon'};
     end
 

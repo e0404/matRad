@@ -21,7 +21,6 @@ classdef (Abstract) matRad_LQKernelBasedModel < matRad_LQBasedModel
     methods
         function this = matRad_LQKernelBasedModel()
             this@matRad_LQBasedModel();
-
         end
     end
 

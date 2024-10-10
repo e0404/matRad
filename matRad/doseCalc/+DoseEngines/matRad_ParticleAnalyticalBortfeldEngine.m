@@ -385,6 +385,17 @@ classdef matRad_ParticleAnalyticalBortfeldEngine < DoseEngines.matRad_ParticlePe
 
             available = checkMeta && checkData;
         end
+
+        %Used to check against a machine file if a specific quantity can be
+        %computed.
+        function cando = canComputeQuantity(machine,quantity)
+            %A dose engine will, by definition, return dose
+            if isfield(machine.data,'energy') && isfield(machine.data,'initFocus')
+                cando = all(strcmp(quantity,'physicalDose'));
+            else
+                cando = false;
+            end
+        end
     end
 end
 

@@ -24,7 +24,7 @@ classdef matRad_Carabe < matRad_RBEminMax
         p3_CAR = 1.09;
         p4_CAR = 0.006;
 
-        requiredQuantities = {'LET'};
+        requiredQuantities = {'physicalDose','LET'};
         possibleRadiationModes = {'protons'};
 
     end

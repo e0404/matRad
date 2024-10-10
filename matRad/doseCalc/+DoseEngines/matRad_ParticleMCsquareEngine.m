@@ -947,6 +947,12 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             available = preCheck & hasBinaries;
         end
 
+        %Used to check against a machine file if a specific quantity can be
+        %computed.
+        function q = providedQuantites(machine)
+            %A dose engine will, by definition, return dose
+            q = {'physicalDose','LET'};
+        end
     end
 end
 

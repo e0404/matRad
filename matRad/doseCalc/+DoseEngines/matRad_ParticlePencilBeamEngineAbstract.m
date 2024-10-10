@@ -958,7 +958,25 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             % helper function for energy selection
             r2 = round(a*10^b)/10^b; 
         end
+    end
 
-    end   
+    methods (Static)
+        %Used to check against a machine file if a specific quantity can be
+        %computed.
+        function q = providedQuantites(machine)            
+            q = {};
+            if all(isfield(machine.data,{'energy','Z','depths','initFocus'})) && any(isfield(machine.data,{'sigma','weight','multiGauss'}))
+                q{end+1} = 'physicalDose';
+                if all(isfield(machine.data,{'alphaX','betaX','alpha','beta'}))
+                    q{end+1} = 'alpha';
+                    q{end+1} = 'beta';
+                end
+            end
+            
+            if ~isempty(q{1}) && isfield(machine.data,'LET')
+                q{end+1} = 'LET';
+            end
+        end
+    end
 end
 

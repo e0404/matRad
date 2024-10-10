@@ -16,9 +16,6 @@ classdef (Abstract) matRad_LQLETbasedModel < matRad_LQBasedModel
 %
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    properties
-
-    end
 
     methods
         function this = matRad_LQLETbasedModel()
