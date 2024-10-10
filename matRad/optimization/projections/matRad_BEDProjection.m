@@ -22,7 +22,7 @@ classdef matRad_BEDProjection < matRad_EffectProjection
     methods
         function BED = computeSingleScenario(obj,dij,scen,w)
             %Get corresponding ct scenario
-            [ctScen,~] = ind2sub(size(dij.physicalDose),scen);
+            [ctScen,~,~] = ind2sub(size(dij.physicalDose),scen); %TODO: Workaround for now
 
             effect = computeSingleScenario@matRad_EffectProjection(obj,dij,scen,w);
             
@@ -32,7 +32,8 @@ classdef matRad_BEDProjection < matRad_EffectProjection
         end
 
         function wGrad = projectSingleScenarioGradient(obj,dij,doseGrad,scen,w)
-            [ctScen,~] = ind2sub(size(dij.physicalDose),scen);
+            %Get corresponding ct scenario
+            [ctScen,~,~] = ind2sub(size(dij.physicalDose),scen); %TODO: Workaround for now
 
             doseGradtmp{scen} = zeros(size(doseGrad{scen}));
             doseGradtmp{scen}(dij.ixDose{ctScen}) = doseGrad{scen}(dij.ixDose{ctScen})./dij.ax{scen}(dij.ixDose{ctScen});

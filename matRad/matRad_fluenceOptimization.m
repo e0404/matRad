@@ -134,16 +134,36 @@ switch pln.propOpt.quantityOpt
     otherwise
         warning(['Did not recognize biological setting ''' pln.propOpt.quantityOpt '''!\nUsing physical dose optimization!']);
         backProjection = matRad_DoseProjection;
-
 end
 
-% Sanity check
-if isa(backProjection, 'matRad_EffectProjection')
-    if ~isfield(dij, 'mAlphaDose') || ~isfield(dij, 'mSqrtBetaDose')
-        matRad_cfg.dispError('mAlphaDose or mSqrtBetaDose fields missing in dij, check consistency of required optimization quantity');
+% Check minimum biological quantities available
+if isa(backProjection,'matRad_EffectProjection') && ~all(isfield(dij,{'ax','bx'}))
+    matRad_cfg.dispWarning('Biological optimization requested, but no ax & bx provided in dij. Getting from cst...');
+
+    %First get the voxels where we need it
+    validScen = ~cellfun(@isempty,dij.physicalDose);
+    d = cellfun(@(D) D*ones(dij.totalNumOfBixels,1),dij.physicalDose(validScen),'UniformOutput',false);
+    d = sum(cell2mat(d'),2);
+    ixZeroDose = d == 0;
+
+    numOfCtScenarios = numel(cst{1,4});
+    for i = 1:numOfCtScenarios
+        dij.ax{i} = zeros(dij.doseGrid.numOfVoxels,1);
+        dij.bx{i} = zeros(dij.doseGrid.numOfVoxels,1);
+
+        for v = 1:size(cst,1)
+            %We already did the overlap stuff so we do not need to care for
+            %overlaps here
+            dij.ax{i}(cst{v,4}{i}) = cst{v,5}.alphaX;
+            dij.bx{i}(cst{v,4}{i}) = cst{v,5}.betaX;
+        end
+
+        dij.ax{i}(ixZeroDose) = 0;
+        dij.bx{i}(ixZeroDose) = 0;
     end
-
 end
+
+
 % calculate initial beam intensities wInit
 matRad_cfg.dispInfo('Estimating initial weights... ');
 
@@ -172,7 +192,7 @@ elseif isa(backProjection, 'matRad_ConstantRBEProjection') && strcmp(pln.radiati
     matRad_cfg.dispInfo('chosen uniform weight of %f!\n',bixelWeight);
 
 elseif isa(backProjection, 'matRad_EffectProjection')
-    % retrieve photon LQM parameter 
+    % retrieve photon LQM parameter
     [ax,bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels);
     checkAxBx = cellfun(@(ax1,bx1,ax2,bx2) isequal(ax1(ax1~=0),ax2(ax1~=0)) && isequal(bx1(bx1~=0),bx2(bx1~=0)),dij.ax,dij.bx,ax,bx);
     if ~all(checkAxBx)
@@ -189,16 +209,23 @@ elseif isa(backProjection, 'matRad_EffectProjection')
 
         end
     end
-    
+
     for s = 1:numel(dij.bx)
         dij.ixDose{s}  = dij.bx{s}~=0;
     end
-
-        if isequal(pln.propOpt.quantityOpt,'effect')
-
-        effectTarget = cst{ixTarget,5}.alphaX * doseTarget + cst{ixTarget,5}.betaX * doseTarget^2;
+    
+    doseTmp = dij.physicalDose{1}*wOnes;
+    if all(isfield(dij,{'mAlphaDose','mSqrtBetaDose'}))
         aTmp = dij.mAlphaDose{1}*wOnes;
         bTmp = dij.mSqrtBetaDose{1} * wOnes;
+    else        
+        aTmp = doseTmp.*dij.ax{1};
+        bTmp = doseTmp.*sqrt(dij.bx{1});
+    end
+
+    if isequal(pln.propOpt.quantityOpt,'effect')
+
+        effectTarget = cst{ixTarget,5}.alphaX * doseTarget + cst{ixTarget,5}.betaX * doseTarget^2;
         p = sum(aTmp(V)) / sum(bTmp(V).^2);
         q = -(effectTarget * length(V)) / sum(bTmp(V).^2);
 
@@ -214,10 +241,6 @@ elseif isa(backProjection, 'matRad_EffectProjection')
 
 
         % calculate current effect in target
-        aTmp = dij.mAlphaDose{1}*wOnes;
-        bTmp = dij.mSqrtBetaDose{1} * wOnes;
-        doseTmp = dij.physicalDose{1}*wOnes;
-
         CurrEffectTarget = aTmp(V) + bTmp(V).^2;
         % ensure a underestimated biological effective dose
         TolEstBio        = 1.2;
@@ -225,29 +248,30 @@ elseif isa(backProjection, 'matRad_EffectProjection')
         maxCurrRBE = max(-cst{ixTarget,5}.alphaX + sqrt(cst{ixTarget,5}.alphaX^2 + ...
             4*cst{ixTarget,5}.betaX.*CurrEffectTarget)./(2*cst{ixTarget,5}.betaX*doseTmp(V)));
         wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(doseTmp(V))))* wOnes;
-        
+
     elseif strcmp(pln.propOpt.quantityOpt, 'BED')
 
         if isfield(dij, 'mAlphaDose') && isfield(dij, 'mSqrtBetaDose')
             abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
-            meanBED = mean((dij.mAlphaDose{1}(V,:)*wOnes + (dij.mSqrtBetaDose{1}(V,:)*wOnes).^2)./cst{ixTarget,5}.alphaX);
+            meanBED = mean((aTmp(V) + bTmp(V).^2)./cst{ixTarget,5}.alphaX)
+            %meanBED = mean((dij.mAlphaDose{1}(V,:)*wOnes + (dij.mSqrtBetaDose{1}(V,:)*wOnes).^2)./cst{ixTarget,5}.alphaX);
             BEDTarget = doseTarget.*(1 + doseTarget./abr);
-        % elseif isfield(dij, 'RBE')
-        %     abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
-        %     meanBED = mean(dij.RBE.*dij.physicalDose{1}(V,:)*wOnes.*(1+dij.RBE.*dij.physicalDose{1}(V,:)*wOnes./abr));
-        %     BEDTarget = dij.RBE.*doseTarget.*(1 + dij.RBE.*doseTarget./abr);
-        % else
-        %     abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
-        %     meanBED = mean(dij.physicalDose{1}(V,:)*wOnes.*(1+dij.physicalDose{1}(V,:)*wOnes./abr));
-        %     BEDTarget = doseTarget.*(1 + doseTarget./abr);
+            % elseif isfield(dij, 'RBE')
+            %     abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
+            %     meanBED = mean(dij.RBE.*dij.physicalDose{1}(V,:)*wOnes.*(1+dij.RBE.*dij.physicalDose{1}(V,:)*wOnes./abr));
+            %     BEDTarget = dij.RBE.*doseTarget.*(1 + dij.RBE.*doseTarget./abr);
+            % else
+            %     abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
+            %     meanBED = mean(dij.physicalDose{1}(V,:)*wOnes.*(1+dij.physicalDose{1}(V,:)*wOnes./abr));
+            %     BEDTarget = doseTarget.*(1 + doseTarget./abr);
         end
-    
+
         bixelWeight =  BEDTarget/meanBED;
         wInit       = wOnes * bixelWeight;
-        
+
     end
-        
-            matRad_cfg.dispInfo('chosen weights adapted to biological dose calculation!\n');
+
+    matRad_cfg.dispInfo('chosen weights adapted to biological dose calculation!\n');
 
 else
     doseTmp = dij.physicalDose{1}*wOnes;
@@ -357,7 +381,7 @@ switch pln.propOpt.optimizer
         warning(['Optimizer ''' pln.propOpt.optimizer ''' not known! Fallback to IPOPT!']);
         optimizer = matRad_OptimizerIPOPT;
 end
-        
+
 if ~optimizer.IsAvailable()
     matRad_cfg.dispError(['Optimizer ''' pln.propOpt.optimizer ''' not available!']);
 end
