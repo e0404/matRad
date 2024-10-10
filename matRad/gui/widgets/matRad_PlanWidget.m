@@ -1222,7 +1222,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 end
 
 
-                models = matRad_BiologicalModel.getAvailableModels(pln.radiationMode);
+                models = matRad_BiologicalModel.getAvailableModels(RadIdentifier);
                 modelNames = {models.model};
 
                 set(handles.popMenuBioModel,'String',modelNames);
