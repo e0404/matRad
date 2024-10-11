@@ -186,7 +186,7 @@ classdef (Abstract) matRad_ScenarioModel < handle
             %Returns linear index in the scenario cell array from scenario
             %subscript indices
             if ~isvector(this.scenMask)
-                scenIx = sub2ind(size(this.scenMask),this.ctScenIx(ctScen),shiftScen,rangeShiftScen);
+                scenIx = sub2ind(size(this.scenMask),ctScen,shiftScen,rangeShiftScen);
             else
                 scenIx = this.ctScenIx(ctScen);
             end

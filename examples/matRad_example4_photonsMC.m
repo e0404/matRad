@@ -35,6 +35,9 @@ load('BOXPHANTOM.mat');
 pln.radiationMode           = 'photons';  
 pln.machine                 = 'Generic';
 pln.numOfFractions          = 30;
+pln.bioModel = 'none'; 
+pln.multScen = 'nomScen';
+
 pln.propStf.gantryAngles    = [0];
 pln.propStf.couchAngles     = [0];
 pln.propStf.bixelWidth      = 10;
@@ -43,16 +46,11 @@ pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCent
 pln.propSeq.runSequencing   = 0;
 pln.propOpt.runDAO          = 0;
 
-quantityOpt    = 'physicalDose';                                     
-modelName      = 'none';  
-
-% retrieve bio model parameters
-pln.bioModel = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
-
-% retrieve scenarios for dose calculation and optimziation
-pln.multScen = matRad_multScen(ct,'nomScen');
 % dose calculation settings
-%Choose MC Engine
+% We can choose a different dose calculation engine, here "ompMC", by
+% setting the engine parameter in propDoseCalc. Further settings for the
+% engine can be written into the propDoseCalc struct and will be passed on
+% to the dose algorithm, if such a setting can be found
 pln.propDoseCalc.engine = 'ompMC';
 
 pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]

@@ -23,18 +23,23 @@ matRad_rc
 %% Load data, add generic 4D information, and display 'moving' geometry
 load BOXPHANTOM.mat
 
-%%
-
 amplitude    = [0 3 0]; % [voxels]
 numOfCtScen  = 5;
 motionPeriod = 2.5; % [s] 
 
 [ct,cst] = matRad_addMovement(ct, cst,motionPeriod, numOfCtScen, amplitude,'dvfType','pull');
+
 % Set up a plan, compute dose influence on all phases, conventional optimization
 % meta information for treatment plan
 pln.numOfFractions  = 30;
 pln.radiationMode   = 'protons';           % either photons / protons / helium / carbon
 pln.machine         = 'Generic';
+pln.bioModel        = 'constRBE';
+
+% retrieve scenarios for dose calculation and optimziation.
+% A nominal Scenario Model will consider all 4D scenarios as they are not
+% "uncertainty" per se
+pln.multScen = matRad_multScen(ct, 'nomScen');
 
 % beam geometry settings
 pln.propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
@@ -44,22 +49,6 @@ pln.propStf.couchAngles     = [0];
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
-%optimization settings
-pln.propOpt.runDAO          = false;      % 1/true: run DAO, 0/false: don't / will be ignored for particles
-pln.propOpt.runSequencing   = false;      % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
-
-quantityOpt  = 'RBExD';     % options: physicalDose, effect, RBExD
-modelName    = 'constRBE';             % none: for photons, protons, carbon            % constRBE: constant RBE 
-                                   % MCN: McNamara-variable RBE model for protons  % WED: Wedenberg-variable RBE model for protons 
-                                   % LEM: Local Effect Model for carbon ions
-
-scenGenType  = 'nomScen';          % scenario creation type 'nomScen'  'wcScen' 'impScen' 'rndScen' 
-
-% retrieve bio model parameters
-pln.bioModel = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
-
-% retrieve scenarios for dose calculation and optimziation
-pln.multScen = matRad_multScen(ct,scenGenType);
 
 %%
 % generate steering file
@@ -71,7 +60,6 @@ dij = matRad_calcParticleDose(ct,stf,pln,cst);
 
 %% 
 % inverse planning for imrt on a static CT
-pln.propOpt.quantityOpt = quantityOpt;
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% 

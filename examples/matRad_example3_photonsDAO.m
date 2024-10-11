@@ -26,7 +26,6 @@ matRad_rc; %If this throws an error, run it from the parent directory first to s
 
 %% Patient Data Import
 % import the head & neck patient into your workspace.
-
 load('HEAD_AND_NECK.mat');
 
 %% Treatment Plan
@@ -44,15 +43,8 @@ pln.propStf.bixelWidth      = 5;
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
-quantityOpt   = 'physicalDose';     % either  physicalDose / effect / RBExD
-modelName     = 'none';             % none: for photons, protons, carbon                                    constRBE: constant RBE model
-                                    % MCN: McNamara-variable RBE model for protons                          WED: Wedenberg-variable RBE model for protons 
-                                    % LEM: Local Effect Model for carbon ions
-% retrieve bio model parameters
-pln.bioModel = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
-
-% retrieve scenarios for dose calculation and optimziation
-pln.multScen = matRad_multScen(ct,'nomScen');
+pln.bioModel = 'none'; 
+pln.multScen = 'nomScen';
 
 % dose calculation settings
 pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
@@ -69,6 +61,7 @@ if matRad_OptimizerFmincon.IsAvailable()
 else
     pln.propOpt.optimizer = 'IPOPT';
 end
+pln.propOpt.quantityOpt = 'physicalDose';  
 
 %%
 % Enable sequencing and direct aperture optimization (DAO).
@@ -90,7 +83,6 @@ dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 % predefined clinical objectives and constraints underlying the radiation 
 % treatment. Once the optimization has finished, trigger once the GUI to
 % visualize the optimized dose cubes.
-pln.propOpt.quantityOpt = quantityOpt;
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 matRadGUI;
 

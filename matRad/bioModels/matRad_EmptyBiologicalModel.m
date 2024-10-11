@@ -18,6 +18,7 @@ classdef matRad_EmptyBiologicalModel < matRad_BiologicalModel
         model = 'none';
         possibleRadiationModes =  {'photons', 'protons', 'carbon', 'helium', 'brachy'};
         requiredQuantities = {};
+        defaultReportQuantity = 'physicalDose';
     end
 
     methods

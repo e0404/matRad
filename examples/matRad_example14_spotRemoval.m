@@ -13,6 +13,7 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+clear;
 %% set matRad runtime configuration
 matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
 
@@ -36,6 +37,8 @@ load('PROSTATE.mat');
 % 'proton_Generic.mat'; consequently the machine has to be set accordingly
 pln.radiationMode = 'protons';        
 pln.machine       = 'Generic';
+pln.bioModel      = 'constRBE';
+pln.multScen      = 'nomScen';
 
 %%
 % for particles it is possible to also calculate the LET disutribution
@@ -53,19 +56,6 @@ pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 pln.propOpt.runDAO        = 0;
 pln.propOpt.runSequencing = 0;
-
-% Define the flavor of biological optimization for treatment planning along
-% with the quantity that should be used for optimization.
-
-quantityOpt   = 'RBExD';            % either  physicalDose / effect / RBExD
-modelName     = 'constRBE';         % none: for photons, protons, carbon                                    constRBE: constant RBE model
-                                    % MCN: McNamara-variable RBE model for protons                          WED: Wedenberg-variable RBE model for protons 
-                                    % LEM: Local Effect Model for carbon ions
-% retrieve bio model parameters
-pln.bioModel = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
-
-% retrieve scenarios for dose calculation and optimziation
-pln.multScen = matRad_multScen(ct,'nomScen');
 
 % dose calculation settings
 pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]
@@ -90,11 +80,11 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Spot removal
 % instantiate spot removal class
-sr_cfg = MatRad_spotRemovalDij(dij,resultGUI.w);
+spotRemover = matRad_SpotRemovalDij(dij,resultGUI.w);
 
-sr_cfg.removalMode = 'relative';
-sr_cfg.propSpotRemoval.relativeThreshold = 0.05;
-resultGUI2 = sr_cfg.reoptimize(cst,pln);
+spotRemover.removalMode = 'relative';
+spotRemover.propSpotRemoval.relativeThreshold = 0.05;
+resultGUI2 = spotRemover.reoptimize(cst,pln);
 
 % numOfRemovedSpots = sr_cfg.numOfRemovedSpots;
 

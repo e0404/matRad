@@ -36,8 +36,9 @@ classdef (Abstract) matRad_BiologicalModel < handle
 
     properties (Abstract, Constant)
         model;
-        requiredQuantities;                % kernels in base data needed for the alpha/beta calculation
-        possibleRadiationModes;      % radiation modalitites compatible with the model
+        requiredQuantities;     % kernels in base data needed for the alpha/beta calculation
+        possibleRadiationModes; % radiation modalitites compatible with the model
+        defaultReportQuantity;  % default suggested quantity to use for display and planning    
     end
 
     properties (Hidden)
@@ -45,11 +46,7 @@ classdef (Abstract) matRad_BiologicalModel < handle
         quantityVis;
     end
 
-    methods
-        function this = matRad_BiologicaModel()
-
-        end
-
+    methods %(Abstract)
         function bixel = calcBiologicalQuantitiesForBixel(this)
             % the actual calculation method wich calculates biological quantities for individual beamlets
             % Needs to be implemented in non abstract subclasses. 
@@ -103,7 +100,7 @@ classdef (Abstract) matRad_BiologicalModel < handle
             % Quantity check
             validQuantities = true;
             if nargin > 2 && ~isempty(this.requiredQuantities)
-                validQuantities = all(cellfun(@(q) any(strcmp(q,providedQuantities),this.requiredQuantities)));
+                validQuantities = all(cellfun(@(q) any(strcmp(q,providedQuantities)),this.requiredQuantities));
             end
 
 

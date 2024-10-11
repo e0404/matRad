@@ -38,42 +38,24 @@ load('PROSTATE.mat');
 pln.radiationMode                   = 'protons';           
 pln.machine                         = 'generic_MCsquare'; %Use the base data fitted to MC here
 pln.numOfFractions                  = 30;  
+pln.bioModel                        = 'constRBE';
+pln.multScen                        = 'nomScen';
+
+%Geometry Settings
 pln.propStf.gantryAngles            = [90 270];
 pln.propStf.couchAngles             = [0 0];
 pln.propStf.bixelWidth              = 5;
 pln.propStf.longitudinalSpotSpacing = 5;
 pln.propStf.numOfBeams              = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter               = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
-pln.propOpt.runDAO                  = 0;
-pln.propOpt.runSequencing           = 0;
-
-
-%%
-% Define the biological optimization model for treatment planning along
-% with the quantity that should be used for optimization. Possible model values 
-% are:
-%('none': physical optimization;
-%'constRBE': constant RBE of 1.1; 
-% 'MCN': McNamara-variable RBE model for protons; 
-% 'WED':  Wedenberg-variable RBE model for protons
-% 'LEM': local effect model 
-% As we use protons, we follow here the clinical 
-% standard and use a constant relative biological effectiveness of 1.1. 
-% Therefore we set modelName to constRBE
-modelName    = 'constRBE';
-quantityOpt  = 'RBExD'; 
-
-% retrieve bio model parameters
-pln.bioModel = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
-
-% retrieve scenarios for dose calculation and optimziation
-pln.multScen = matRad_multScen(ct,'nomScen');  % optimize on the nominal scenario
-
 
 % dose calculation settings
 pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
+
+% Optimization Settings
+pln.propOpt.quantityOpt             = 'RBExD'; 
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
@@ -88,13 +70,12 @@ pln.propDoseCalc.engine = 'MCsquare';
 dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 
 %% Inverse Optimization for IMPT
-pln.propOpt.quantityOpt = quantityOpt;
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Calculate quality indicators 
 resultGUI = matRad_planAnalysis(resultGUI,ct,cst,stf,pln);
 ixRectum       = 1;
-display(resultGUI.qi(ixRectum).D_5);
+disp(resultGUI.qi(ixRectum).D_5);
 
 %%
 % Let's change the optimization parameter of the rectum in such a way that it
@@ -112,7 +93,7 @@ cst{ixRectum,6}{1}.penalty = 500; % Change the penalty
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 resultGUI = matRad_planAnalysis(resultGUI,ct,cst,stf,pln);
 
-display(resultGUI.qi(ixRectum).D_5);
+disp(resultGUI.qi(ixRectum).D_5);
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice

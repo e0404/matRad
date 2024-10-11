@@ -39,7 +39,7 @@ load 'PROSTATE.mat';
 % towards higher or lower doses (SquaredOverdose, SquaredUnderdose) or
 % doses that are particularly aimed for (SquaredUnderDose).
 
-display(cst{6,6}{1});
+disp(cst{6,6}{1});
 
 % Following frequently prescribed planning doses of 15 Gy
 % (https://pubmed.ncbi.nlm.nih.gov/22559663/) objectives can be updated to:
@@ -88,18 +88,8 @@ cst{9,6}{1} = struct(DoseObjectives.matRad_MeanDose(1));
 pln.radiationMode   = 'brachy'; 
 pln.machine         = 'HDR';    % 'LDR' or 'HDR' for brachy
 
-quantityOpt    = 'physicalDose';                                     
-modelName      = 'none';  
-
-% retrieve bio model parameters
-pln.bioModel = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
-
-% retrieve scenarios for dose calculation and optimziation
-pln.multScen = matRad_multScen(ct,'nomScen');
-% dose calculation settings
-%Choose BT Engine
-pln.propDoseCalc.engine = 'TG43';
-
+pln.bioModel        = 'none';
+pln.multScen        = 'nomScen';
 
 
 %% II.1 - needle and template geometry
@@ -128,6 +118,9 @@ pln.propStf.template.type = 'checkerboard'; %  'checkerboard' if template is cre
 
 %Template Root - mass center of target in x and y and bottom in z
 pln.propStf.template.root = matRad_getTemplateRoot(ct,cst); 
+
+% Dose Calculation engine
+pln.propDoseCalc.engine = 'TG43';
 
 % Here, we define active needles as 1 and inactive needles
 % as 0. This is the x-y plane and needles point in z direction. 

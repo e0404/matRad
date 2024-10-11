@@ -81,41 +81,45 @@ builder.addBoxOAR('Volume3',[60,30,60],'offset',[0 15 0],'objectives',objective3
 pln.radiationMode = 'photons';            
 pln.machine       = 'Generic';
 
-%%
-% Define the biological optimization model for treatment planning along
-% with the quantity that should be used for optimization. Possible model values 
-% are:
-% 'none':     physical optimization;
+% Define the biological optimization model for treatment planning.
+% Examples for possible models are:
+% 'none':     no biological model (physical dose only);
 % 'constRBE': constant RBE of 1.1; 
 % 'MCN':      McNamara-variable RBE model for protons; 
 % 'WED':      Wedenberg-variable RBE model for protons
-% 'LEM':      Local Effect Model 
-% and possible quantityOpt are 'physicalDose', 'effect' or 'RBExD'.
-modelName    = 'none';
-quantityOpt  = 'physicalDose';                                             
+% 'LEM':      Local Effect Model (based on precomputed kernels)
+pln.bioModel = 'none';
 
-%%
-% The remaining plan parameters are set like in the previous example files
+% matRad allows for an uncertainty scenario model to be respected in planning, 
+% which compute a number of error scenarios which can be used in optimization.
+% Examples for possible scenario models
+% 'nomScen':    Only Nominal Scenario is considered
+% 'wcScen':     Worst Case Scenarios are generated
+% 'impScen':    Importance weighted gridded scenarios are generated
+% 'rndScen':    Randomly sampled scenarios are generated
+pln.multScen = 'nomScen';
+
+% Number of fractions
+% Matlab considers prescriptions for the total plan, but shows fraction dose
 pln.numOfFractions        = 30;
+
+% Settings for the irradiation geometry
 pln.propStf.gantryAngles  = [0:70:355];
 pln.propStf.couchAngles   = zeros(size(pln.propStf.gantryAngles));
 pln.propStf.bixelWidth    = 5;
 pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+
+% Settings for Optimization
 pln.propOpt.runDAO        = 0;
 pln.propOpt.runSequencing = 0;
-
-% retrieve bio model parameters
-pln.bioModel = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
-
-% retrieve nominal scenario for dose calculation and optimziation
-pln.multScen = matRad_multScen(ct,'nomScen'); 
 
 % dose calculation settings
 pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
-%%
+
+%% Visualization in GUI
 matRadGUI;
 
 %% Generate Beam Geometry STF
@@ -124,15 +128,13 @@ stf = matRad_generateStf(ct,cst,pln);
 %% Dose Calculation
 dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 
-%% Export dij matrix
-%matRad_exportDij('dij.bin',dij,stf);
 %% Inverse Optimization for intensity-modulated photon therapy
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment.
-pln.propOpt.quantityOpt = quantityOpt;
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
-%%
+
+%% Visualization
 matRadGUI
 %% Plot the resulting dose slice
 plane      = 3;
@@ -142,7 +144,6 @@ doseWindow = [0 max([resultGUI.physicalDose(:)])];
 
 figure,title('phantom plan')
 matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
-
 
 %% 
 % We export the the created phantom & dose as dicom. This is handled by the 

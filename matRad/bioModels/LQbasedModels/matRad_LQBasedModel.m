@@ -16,6 +16,11 @@ classdef (Abstract) matRad_LQBasedModel < matRad_BiologicalModel
 %
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    properties (Constant)
+        defaultReportQuantity = 'RBExD';
+    end
+    
     properties
         defaultAlphaX = 0.1;        % Tissue defalut alphaX parameter
         defaultBetaX  = 0.05;       % Tissue default betaX parameter

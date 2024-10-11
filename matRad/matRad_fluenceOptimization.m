@@ -106,10 +106,41 @@ end
 ixTarget       = ixTarget(i);
 wOnes          = ones(dij.totalNumOfBixels,1);
 
+%Check how to use 4D data
+if isfield(pln,'propOpt') && isfield(pln.propOpt,'scen4D')
+    scen4D = pln.propOpt.scen4D;
+else
+    scen4D = 1; %Use only first 4D scenario for optimization
+end
+
+% Workaround until future release with consistent data management
+totNumCtScen = size(dij.physicalDose,1);
+
+% Validate / Create Scenario model
+if ~isfield(pln,'multScen')
+    pln.multScen = 'nomScen';
+end
+
+if ~isa(pln.multScen,'matRad_ScenarioModel')
+    pln.multScen = matRad_ScenarioModel.create(pln.multScen,struct('numOfCtScen',totNumCtScen));
+end
+
+if ~isfield(pln,'bioModel')
+    pln.bioModel = 'none';
+end
+
+if ~isa(pln.bioModel,'matRad_BiologicalModel')
+    pln.bioModel = matRad_BiologicalModel.validate(pln.bioModel,pln.radiationMode);
+end
+
+%If "all" provided, use all scenarios
+if isequal(scen4D,'all')
+    scen4D = 1:totNumCtScen;
+end
 
 if ~isfield(pln.propOpt, 'quantityOpt') || isempty(pln.propOpt.quantityOpt)
-    matRad_cfg.dispWarning('quantityOpt was not provided, using default physical dose optimization');
-    pln.propOpt.quantityOpt = 'physicalDose';
+    pln.propOpt.quantityOpt = pln.bioModel.defaultReportQuantity;
+    matRad_cfg.dispWarning('quantityOpt was not provided, using quantity suggested by biological model: %s',pln.propOpt.quantityOpt);    
 end
 
 % Check optimization quantity
@@ -284,18 +315,6 @@ end
 %% calculate probabilistic quantities for probabilistic optimization if at least
 % one robust objective is defined
 
-%Check how to use 4D data
-if isfield(pln,'propOpt') && isfield(pln.propOpt,'scen4D')
-    scen4D = pln.propOpt.scen4D;
-else
-    scen4D = 1; %Use only first 4D scenario for optimization
-end
-
-%If "all" provided, use all scenarios
-if isequal(scen4D,'all')
-    scen4D = 1:size(dij.physicalDose,1);
-end
-
 linIxDIJ = find(~cellfun(@isempty,dij.physicalDose(scen4D,:,:)))';
 
 %Only select the indexes of the nominal ct Scenarios
@@ -336,7 +355,7 @@ backProjection.nominalCtScenarios = linIxDIJ_nominalCT;
 %backProjection.scenDim      = pln.multScen
 
 optiProb = matRad_OptimizationProblem(backProjection);
-optiProb.quantityOpt = pln.propOpt.quantityOpt;
+
 if isfield(pln,'propOpt') && isfield(pln.propOpt,'useLogSumExpForRobOpt')
     optiProb.useLogSumExpForRobOpt = pln.propOpt.useLogSumExpForRobOpt;
 end
