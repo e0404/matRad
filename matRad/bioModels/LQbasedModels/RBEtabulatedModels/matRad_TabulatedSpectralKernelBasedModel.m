@@ -25,6 +25,16 @@ classdef matRad_TabulatedSpectralKernelBasedModel < matRad_LQRBETabulatedModel
 %
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
+    
+    properties (Constant)
+        model = 'TAB';
+        
+        requiredQuantities = {'spectra','physicalDose'};
+        kernelQuantities = {'spectra'};
+
+        possibleRadiationModes = {'protons','helium','carbon'};
+    end
+
     properties
         weightBy;
     end
