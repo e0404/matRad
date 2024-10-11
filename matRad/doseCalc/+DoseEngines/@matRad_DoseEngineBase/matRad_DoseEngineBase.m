@@ -61,7 +61,8 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         
         bioModel = 'None';                   % Biological dose modeling class
         %bioProperties;
-
+        
+        cstDoseGrid;
     end
     
     % Fully protected properties

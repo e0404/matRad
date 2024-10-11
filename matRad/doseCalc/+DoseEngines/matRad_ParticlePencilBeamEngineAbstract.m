@@ -37,7 +37,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
         vAlphaX;                        % Stores Photon Alpha
         vBetaX;                         % Stores Photon Beta
 
-        bioKernelQuantites;             % Kernel quantites to request from the machine data for biological dose calculation
+        bioKernelQuantities;             % Kernel quantites to request from the machine data for biological dose calculation
     end
 
     methods
@@ -218,9 +218,9 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                     matRad_cfg.dispError('Invalid Lateral Model');
             end
 
-            if ~isempty(this.bioKernelQuantites)
-                for i = 1:numel(this.bioKernelQuantites)
-                    X.(this.bioKernelQuantites{i}) = baseData.(i);
+            if ~isempty(this.bioKernelQuantities)
+                for i = 1:numel(this.bioKernelQuantities)
+                    X.(this.bioKernelQuantities{i}) = baseData.(this.bioKernelQuantities{i});
                 end
             end
             
@@ -369,13 +369,9 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                 % neccessary. We could as well always do this calculation,
                 % probably no great benefit in avoiding it
 
-                dij = this.loadBiologicalBaseData(cst,dij);
+                dij = this.loadBiologicalBaseData(dij);
 
                 dij = this.allocateBioDoseContainer(dij);
-             
-                [this.vTissueIndex] = this.bioModel.getTissueInformation(this.machine,cst,dij,this.vAlphaX, this.vBetaX,this.VdoseGrid, this.VdoseGridScenIx);
-           
-
             end
 
             % allocate LET containner and let sparse matrix in dij struct
@@ -419,23 +415,16 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             this.calcLateralParticleCutOff(this.dosimetricLateralCutOff,currBeam);
         end
         
-        function dij = loadBiologicalBaseData(this,cst,dij)
+        function dij = loadBiologicalBaseData(this,dij)
             matRad_cfg = MatRad_Config.instance();
 
             matRad_cfg.dispInfo('Initializing biological dose calculation...\n');
             
             numOfCtScen = numel(this.VdoseGridScenIx);
-
-
-            cstDownsampled = matRad_setOverlapPriorities(cst);
-
-            % resizing cst to dose cube resolution
-            cstDownsampled = matRad_resizeCstToGrid(cstDownsampled,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
-                dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
-            
+           
             tmpScenVdoseGrid = cell(numOfCtScen,1);
 
-            [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cstDownsampled,dij.doseGrid.numOfVoxels,this.VdoseGrid);  
+            [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(this.cstDoseGrid,dij.doseGrid.numOfVoxels,this.VdoseGrid);  
 
             for s = 1:numOfCtScen            
                 tmpScenVdoseGrid{s} = this.VdoseGrid(this.VdoseGridScenIx{s});
@@ -446,14 +435,17 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                 this.vBetaX{s}          = dij.bx{s}(tmpScenVdoseGrid{s});
                 this.vTissueIndex{s}    = zeros(size(tmpScenVdoseGrid{s},1),1);
             end
-            
-            if isa(this.bioModel,'matRad_LQKernelBasedModel')
-                this.bioKernelQuantites = this.bioModel.kernelQuantities;
+           
+            if isa(this.bioModel,'matRad_LQKernelBasedModel') || isa(this.bioModel,'matRad_LQRBETabulatedModel')
+                this.bioKernelQuantities = this.bioModel.kernelQuantities;
+                [this.vTissueIndex] = this.bioModel.getTissueInformation(this.machine,this.cstDoseGrid,dij,this.vAlphaX, this.vBetaX,this.VdoseGrid, this.VdoseGridScenIx);
             end
 
             if isa(this.bioModel,'matRad_LETbasedModels')
                 this.calcLET = true;
             end
+
+            
         end
 
         function dij = allocateBioDoseContainer(this,dij)

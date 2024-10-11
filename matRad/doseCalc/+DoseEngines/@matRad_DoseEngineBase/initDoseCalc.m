@@ -195,14 +195,14 @@ this.doseGrid = dij.doseGrid;
 
 %Voxel selection for dose calculation
 % ser overlap prioriites
-cst = matRad_setOverlapPriorities(cst);
+this.cstDoseGrid = matRad_setOverlapPriorities(cst);
 
 % resizing cst to dose cube resolution
-cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
+this.cstDoseGrid = matRad_resizeCstToGrid(this.cstDoseGrid,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
    dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
 
 %structures that are selected here will be included in dose calculation over the robust scenarios
-this.robustVoxelsOnGrid = matRad_selectVoxelsFromCst(cst, dij.doseGrid, this.selectVoxelsInScenarios);
+this.robustVoxelsOnGrid = matRad_selectVoxelsFromCst(this.cstDoseGrid, dij.doseGrid, this.selectVoxelsInScenarios);
 
 end
 

@@ -30,17 +30,11 @@ classdef (Abstract) matRad_LQKernelBasedModel < matRad_LQBasedModel
 
     methods %(Static)
         
-        function vTissueIndex = getTissueInformation(this,machine, cst, dij,vAlphaX, ~, VdoseGrid, VdoseGridScenIx)
+        function vTissueIndex = getTissueInformation(this,machine, cstDownsampled, dij,vAlphaX, ~, VdoseGrid, VdoseGridScenIx)
 
             matRad_cfg = MatRad_Config.instance();
 
             numOfCtScen = numel(vAlphaX);
-
-            cstDownsampled = matRad_setOverlapPriorities(cst);
-
-            % resizing cst to dose cube resolution
-            cstDownsampled = matRad_resizeCstToGrid(cstDownsampled,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
-                dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
             
             tmpScenVdoseGrid = cell(numOfCtScen,1);
 
