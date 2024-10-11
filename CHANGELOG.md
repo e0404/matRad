@@ -1,6 +1,6 @@
 # Changelog
 
-## Release Candidate v3 "Cleve" 
+## Current Development Branch
 
 ### Major Changes and New Features
 
@@ -23,15 +23,17 @@
 - LET-based Helium model
 
 #### Extended biological modeling
-- Multiple variable RBE models for protons and helium
+- Multiple variable RBE models for protons and helium added
 - BED optimization
 
 #### Widget-Based GUI
 - Replaced Matlab's GUIDE-based approach with a modern widget-based GUI.
 - Large parts of the GUI are now Octave Compatible
+- Light & Dark Mode
 
-#### DICOM Exporter
+#### DICOM Exporter and Importer
 - added a DICOM exporter for CTs, RTStruct, RTPlan (photons, safeguarded) and RTDose
+- Refactored the DICOM importer for better use from scripts
 
 #### Possibly Breaking Changes to matRad core workflow and functions
 While we try to keep downwards compatibility (and will provide fixes if breaking changes are detected), here are some potential dealbreakers
@@ -41,6 +43,7 @@ While we try to keep downwards compatibility (and will provide fixes if breaking
 - Some coordinate system bug-fixes might induce changes when an existing script is rerun
 - The object oriented scenario models and biological models could procude issues in old scripts if not set
 - While the old dose calculation functions have been kept in a compatibility / deprecation layer, some configuration options might not work as intended
+- Biological Models are defined in a completely different way now
 
 ### Other Enhancements, Documentation, and Testing
 
