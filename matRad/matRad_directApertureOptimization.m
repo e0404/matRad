@@ -67,6 +67,13 @@ cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
                                  dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
 
 
+if ~isfield(pln,'bioModel')
+    pln.bioModel = 'none';
+end
+
+if ~isa(pln.bioModel,'matRad_BiologicalModel')
+    pln.bioModel = matRad_BiologicalModel.validate(pln.bioModel,pln.radiationMode);
+end
 
 % set optimization options
 options.ixForOpt     = 1;

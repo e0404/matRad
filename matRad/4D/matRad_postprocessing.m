@@ -56,7 +56,7 @@ if ~isa(pln.bioModel,'matRad_BiologicalModel')
 end
 
 % Optimization Quantity
-if ~isfield(pln.propOpt, 'quantityOpt') || isempty(pln.propOpt.quantityOpt)
+if ~isfield(pln,'propOpt') || ~isfield(pln.propOpt, 'quantityOpt') || isempty(pln.propOpt.quantityOpt)
     pln.propOpt.quantityOpt = pln.bioModel.defaultReportQuantity;
     matRad_cfg.dispWarning('quantityOpt was not provided, using quantity suggested by biological model: %s',pln.propOpt.quantityOpt);    
 end

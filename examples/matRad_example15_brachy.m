@@ -216,7 +216,6 @@ dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 % the clinical objectives and constraints underlying the radiation 
 % treatment. Once the optimization has finished, trigger to 
 % visualize the optimized dose cubes.
-pln.propOpt.quantityOpt = quantityOpt;
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 matRadGUI;
 

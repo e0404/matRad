@@ -19,7 +19,7 @@ classdef (Abstract) matRad_LQKernelBasedModel < matRad_LQBasedModel
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
     properties (Abstract, Constant)
-        kernelNames;
+        kernelQuantities;
     end
 
     methods

@@ -448,7 +448,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             end
             
             if isa(this.bioModel,'matRad_LQKernelBasedModel')
-                this.bioKernelQuantites = this.bioModel.kernelQuantites;
+                this.bioKernelQuantites = this.bioModel.kernelQuantities;
             end
 
             if isa(this.bioModel,'matRad_LETbasedModels')
