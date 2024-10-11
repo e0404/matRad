@@ -59,7 +59,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
 
         robustVoxelsOnGrid; %voxels to be computed in robustness scenarios
         
-        bioModel;                   % Biological dose modeling class
+        bioModel = 'None';                   % Biological dose modeling class
         %bioProperties;
 
     end
@@ -129,23 +129,10 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             end
 
             % Check whether the set field is already a bioModel or a struct
-            if isfield(pln, 'bioModel')
-                if isa(pln.bioModel, 'matRad_BiologicalModel')
-                    this.bioModel = pln.bioModel;
-
-                elseif isstruct(pln.bioModel)
-                    if isfield(pln.bioModel, 'model')
-                        this.bioModel = matRad_bioModel(pln.radiationMode,pln.bioModel.model);
-                        pln.bioModel = rmfield(pln.bioModel, 'model');
-                        this.assignBioModelPropertiesFromPln(pln.bioModel, 1);
-                    else
-                        matRad_cfg.dispError('Invalid specified biological model structure');
-                    end
-                else
-                    matRad_cfg.dispError('Unrecognized biological model input');
-                end
+            if ~isfield(pln, 'bioModel')
+                this.bioModel = 'none';
             else
-                this.bioModel = [];
+                this.bioModel = pln.bioModel;
             end
             
             %Overwrite default properties within the engine with the ones
@@ -432,7 +419,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         %Used to check against a machine file if a specific quantity can be
         %computed. Needs to be overriden in subclasses if additional
         %quantities are available.
-        function q = providedQuantites(machine)
+        function q = providedQuantities(machine)
             %A dose engine will, by definition, return dose
             q{1} = 'physicalDose';
         end

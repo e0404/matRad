@@ -949,7 +949,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
         %Used to check against a machine file if a specific quantity can be
         %computed.
-        function q = providedQuantites(machine)
+        function q = providedQuantities(machine)
             %A dose engine will, by definition, return dose
             q = {'physicalDose','LET'};
         end

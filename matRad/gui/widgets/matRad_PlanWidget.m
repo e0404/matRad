@@ -26,6 +26,8 @@ classdef matRad_PlanWidget < matRad_Widget
 
     properties (Access = private)
         hTissueWindow;
+
+        currentMachine;
     end
 
     properties (Constant)
@@ -814,7 +816,9 @@ classdef matRad_PlanWidget < matRad_Widget
 
             availableEngines = DoseEngines.matRad_DoseEngineBase.getAvailableEngines(pln);
             set(handles.popUpMenuDoseEngine,'String',{availableEngines(:).shortName});
-
+            selectedEngineIx = get(handles.popUpMenuDoseEngine,'Value');
+            selectedEngine = availableEngines(selectedEngineIx);
+            
             if isfield(pln.propStf,'isoCenter')
                 % sanity check of isoCenter
                 if size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) == 1
@@ -865,10 +869,12 @@ classdef matRad_PlanWidget < matRad_Widget
             %bio model
             contentPopUpBioModel = get(handles.popMenuBioModel,'String');
             if ~isfield(pln,'bioModel')
-                pln.bioModel = matRad_bioModel(pln.radiationMode, contentPopUpBioModel{get(handles.popMenuBioModel,'Value'),:});
+                pln.bioModel = contentPopUpBioModel{get(handles.popMenuBioModel,'Value')};
             end
-
-            ix = find(strcmp(pln.bioModel.model,contentPopUpBioModel));
+            
+            bioModel = matRad_BiologicalModel.validate(pln.bioModel,pln.radiationMode);
+            
+            ix = find(strcmp(bioModel.model,contentPopUpBioModel));
             set(handles.popMenuBioModel,'Value',ix);
 
             if evalin('base','exist(''ct'')')
@@ -981,10 +987,10 @@ classdef matRad_PlanWidget < matRad_Widget
             contentBioModel = get(handles.popMenuBioModel,'String');
             contentMultScen = get(handles.popMenuMultScen,'String');
             try
-                pln.bioModel = matRad_bioModel(pln.radiationMode, contentBioModel{get(handles.popMenuBioModel,'Value'),:});
+                pln.bioModel = contentBioModel{get(handles.popMenuBioModel,'Value')};
             catch ME
                 set(handles.popMenuBioModel,'Value',find(strcmp(contentBioModel,'none')));
-                pln.bioModel = matRad_bioModel(pln.radiationMode,'none');
+                pln.bioModel = 'none';
                 this.showWarning(ME.message);
             end
 
@@ -1330,7 +1336,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 this.showWarning(['No base data available for machine: ' MachineIdentifier '. Selecting default machine.']);
                 set(handles.popUpMachine,'Value',1);
             end
-            getMachines(this);
+            this.getMachines();
             pln = evalin('base','pln');
 
             % MOEGLICHEE FEHLER HIER VALUE UND GENERIC WERDEN VERGLICHEN
@@ -1366,9 +1372,24 @@ classdef matRad_PlanWidget < matRad_Widget
 
             availableEngines = DoseEngines.matRad_DoseEngineBase.getAvailableEngines(pln);
             set(handles.popUpMenuDoseEngine,'String',{availableEngines(:).shortName});
+            engineIx = get(handles.popUpMenuDoseEngine,'Value');
+            if engineIx > numel(availableEngines)
+                engineIx = 1;
+                set(handles.popUpMenuDoseEngine,'Value',1);
+            end
+
+            try
+                fHandle = str2func([availableEngines(engineIx).className '.providedQuantities']);
+                providedQuantities = fHandle(this.currentMachine);
+                availableBioModels = matRad_BiologicalModel.getAvailableModels(pln.radiationMode,providedQuantities);
+            catch ME
+                availableBioModels = matRad_BiologicalModel.getAvailableModels(pln.radiationMode);
+            end
+            
+            set(handles.popMenuBioModel,'String',{availableBioModels(:).model});
 
             this.handles = handles;
-            updatePlnInWorkspace(this);
+            this.updatePlnInWorkspace();
         end
 
         function btnSetTissue_Callback(this, hObject, eventdata)
@@ -1517,6 +1538,15 @@ classdef matRad_PlanWidget < matRad_Widget
             end
 
             set(handles.popUpMachine,'Value',selectedMachine,'String',this.Machines(this.modalities{selectedRadMod}));
+
+            availableMachines = this.Machines(this.modalities{selectedRadMod});
+            
+            try
+                this.currentMachine = matRad_loadMachine(struct('radiationMode',this.modalities{selectedRadMod},'machine',availableMachines{selectedMachine}));
+            catch ME
+                this.currentMachine = [];
+            end
+            
             this.handles = handles;
         end
 

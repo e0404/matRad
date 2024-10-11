@@ -69,7 +69,7 @@ this.machine = this.loadMachine(radiationMode,machine);
 
 %Biological Model
 if ~isa(this.bioModel,'matRad_BiologicalModel')
-    this.bioModel = matRad_BiologicalModel.validate(this.bioModel,radiationMode, this.providedQuantites(this.machine));
+    this.bioModel = matRad_BiologicalModel.validate(this.bioModel,radiationMode, this.providedQuantities(this.machine));
 end
 
 if any(strcmp(this.bioModel.requiredQuantities, 'LET'))

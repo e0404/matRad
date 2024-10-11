@@ -100,15 +100,15 @@ classdef (Abstract) matRad_BiologicalModel < handle
                 msg1 = sprintf('Radiation mode invalid for model %s!',this.model);
             end
 
-
-            % TODO: can we check for quantities?
+            % Quantity check
             validQuantities = true;
+            if nargin > 2 && ~isempty(this.requiredQuantities)
+                validQuantities = all(cellfun(@(q) any(strcmp(q,providedQuantities),this.requiredQuantities)));
+            end
 
-            % TODO: can we check machines?
-            validMachine = true;
 
-            if ~validMachine
-                msg2 = sprintf('Machine invalid for model %s!',this.model);
+            if ~validQuantities
+                msg2 = sprintf('Required quantities not provided by Dose Engine or selected Machine Dataset');
             end
             
             msg = strjoin({msg1,msg2},',');
@@ -117,7 +117,7 @@ classdef (Abstract) matRad_BiologicalModel < handle
                 msg = msg(1:end-1);
             end
 
-            avail = validRadMode && validMachine;
+            avail = validRadMode && validQuantities;
         end
     end
 
@@ -159,7 +159,7 @@ classdef (Abstract) matRad_BiologicalModel < handle
                 model = modelMetadata;
                 return;
             end
-            
+
             matRad_cfg = MatRad_Config.instance();
 
             if ischar(modelMetadata) || isstring(modelMetadata)
@@ -228,8 +228,12 @@ classdef (Abstract) matRad_BiologicalModel < handle
         function model = validate(model,radiationMode,providedQuantities)
             %Make sure model is a validly created instance
             model = matRad_BiologicalModel.create(model);
-
-            [valid,msg] = model.isAvailable(radiationMode,providedQuantities);
+            
+            if nargin == 3
+                [valid,msg] = model.isAvailable(radiationMode,providedQuantities);
+            else
+                [valid,msg] = model.isAvailable(radiationMode);
+            end
             
             if ~valid
                 matRad_cfg = MatRad_Config.instance();

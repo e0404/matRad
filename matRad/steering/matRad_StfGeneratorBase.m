@@ -127,7 +127,7 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
             %Assign biological model
             if isfield(pln,'bioModel')
                 try
-                    this.bioModel = matRad_BiologicalModel.validate(pln.bioParam);
+                    this.bioModel = matRad_BiologicalModel.validate(pln.bioModel);
                 catch ME
                     %Steering generation usually works independent of biological model, so we warn and set a dummy model
                     matRad_cfg.dispWarning('Biological model inconsistent with chosen machine / radiation mode, biological dose calculation will probably not work: %s',ME.message);

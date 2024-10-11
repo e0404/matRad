@@ -2442,7 +2442,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         end
         %Used to check against a machine file if a specific quantity can be
         %computed.
-        function q = providedQuantites(machine)
+        function q = providedQuantities(machine)
             q = {'physicalDose','LET','alpha','beta'};            
         end
     end

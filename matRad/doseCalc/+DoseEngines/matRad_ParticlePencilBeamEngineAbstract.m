@@ -36,6 +36,8 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
         vTissueIndex;                   % Stores tissue indices available in the matRad base data
         vAlphaX;                        % Stores Photon Alpha
         vBetaX;                         % Stores Photon Beta
+
+        bioKernelQuantites;             % Kernel quantites to request from the machine data for biological dose calculation
     end
 
     methods
@@ -215,37 +217,15 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                     matRad_cfg = MatRad_Config.instance();
                     matRad_cfg.dispError('Invalid Lateral Model');
             end
-                   
 
-            
-            % Biological kernels
-            biologicalKernels = this.bioModel.requiredQuantities;
-            for kernelIdx = 1:numel(biologicalKernels)
-
-                % Get the kernel, can be 1 or 2 dimensional kernel
-
-
-                % Temporary: get the kernel field name
-                kernelName = biologicalKernels{kernelIdx}(biologicalKernels{kernelIdx} ~= '.');
-                eval(['X.', kernelName, ' = baseData.', biologicalKernels{kernelIdx}, ';']);
-
-                % Check if size of kernel is correct
-                if size(X.(kernelName),1) ~= numel(depths)
-                    
-                    X.(kernelName) = X.(kernelName)';
-                    
-                    % If still not correct, cannot be interpolated
-                    if size(X.(kernelName),1) ~= numel(depths)
-                        matRad_dispError('Kernel: %s with dimension (%u,%u) cannot be interpolated', biologicalKernels{kernel}, ...
-                                                                                                     num2str(size(X.(kernelName),1)),...
-                                                                                                     num2str(size(X.(kernelName),2)))
-                    end                 
+            if ~isempty(this.bioKernelQuantites)
+                for i = 1:numel(this.bioKernelQuantites)
+                    X.(this.bioKernelQuantites{i}) = baseData.(i);
                 end
-
-             end
+            end
             
             % LET
-            if this.calcLET && ~any(strcmp(biologicalKernels, 'LET'))
+            if this.calcLET
                 X.LET = baseData.LET;
             end
 
@@ -466,7 +446,14 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                 this.vBetaX{s}          = dij.bx{s}(tmpScenVdoseGrid{s});
                 this.vTissueIndex{s}    = zeros(size(tmpScenVdoseGrid{s},1),1);
             end
+            
+            if isa(this.bioModel,'matRad_LQKernelBasedModel')
+                this.bioKernelQuantites = this.bioModel.kernelQuantites;
+            end
 
+            if isa(this.bioModel,'matRad_LETbasedModels')
+                this.calcLET = true;
+            end
         end
 
         function dij = allocateBioDoseContainer(this,dij)
@@ -963,7 +950,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
     methods (Static)
         %Used to check against a machine file if a specific quantity can be
         %computed.
-        function q = providedQuantites(machine)            
+        function q = providedQuantities(machine)            
             q = {};
             if all(isfield(machine.data,{'energy','Z','depths','initFocus'})) && any(isfield(machine.data,{'sigma','weight','multiGauss'}))
                 q{end+1} = 'physicalDose';
