@@ -25,7 +25,7 @@ function test_doseObjective_SquaredOverdosing_computeObjFunction
    
     assertElementsAlmostEqual(test_fDose,expected_fDose,'absolute', 1e-4);
     
-    dose = [55,58,60,nan,65]';
+    dose = [55,58,60,NaN,65]';
     test_fDose = computeDoseObjectiveFunction(obj,dose);
     
     assertTrue(isnan(test_fDose));
@@ -40,7 +40,7 @@ function test_doseObjective_SquaredOverdosing_computeGradient
     expected_fDose = [0         0         0    0.8000    2.0000]'; 
     assertElementsAlmostEqual(test_fDose,expected_fDose,'absolute', 1e-4);
 
-    dose = [55,58,60,nan,65]';
+    dose = [55,58,60,NaN,65]';
     test_fDose = computeDoseObjectiveGradient(obj,dose);
     
     assertTrue(isnan(test_fDose(4)));
