@@ -290,8 +290,5 @@ classdef (Abstract) matRad_LQRBETabulatedModel < matRad_LQBasedModel
             matRad_cfg.dispInfo('\n');
 
         end
-
-
-
     end
 end

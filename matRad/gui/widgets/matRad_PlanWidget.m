@@ -1232,8 +1232,8 @@ classdef matRad_PlanWidget < matRad_Widget
                 modelNames = {models.model};
 
                 set(handles.popMenuBioModel,'String',modelNames);
-            catch
-                %Do nothing here
+            catch ME
+                matRad_cfg.dispWarning('Plan Widget Update failed: %s!',ME.message);
             end
 
             if ~strcmp(pln.radiationMode,RadIdentifier)

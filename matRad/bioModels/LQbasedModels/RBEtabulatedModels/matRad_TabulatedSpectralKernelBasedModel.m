@@ -37,6 +37,7 @@ classdef matRad_TabulatedSpectralKernelBasedModel < matRad_LQRBETabulatedModel
 
     properties
         weightBy;
+        requiredSpectra;
     end
 
     methods
@@ -80,7 +81,7 @@ classdef matRad_TabulatedSpectralKernelBasedModel < matRad_LQRBETabulatedModel
             end
 
             % Get the spectra kernels to be used (one for each fragment).
-            kernelName = arrayfun(@(fragment) this.requiredQuantities{fragment}(this.requiredQuantities{fragment} ~= '.'),[1:nFragments], 'UniformOutput', false);
+            kernelName = arrayfun(@(fragment) this.requiredSpectra{fragment}(this.requiredSpectra{fragment} ~= '.'),[1:nFragments], 'UniformOutput', false);
 
             bixelSpectra = arrayfun(@(fragment) squeeze(kernel.(kernelName{fragment})),[1:nFragments], 'UniformOutput', false);
 
@@ -143,7 +144,7 @@ classdef matRad_TabulatedSpectralKernelBasedModel < matRad_LQRBETabulatedModel
         
             if ~isempty(this.weightBy) && ~isempty(this.fragmentsToInclude)
             
-                this.requiredQuantities = cellfun(@(fragment) ['Spectra.', this.weightBy, '.', fragment, '.Data'], this.fragmentsToInclude, 'UniformOutput',false); %[requiredSpectraData;requriedEnergies];
+                this.requiredSpectra = cellfun(@(fragment) ['Spectra.', this.weightBy, '.', fragment, '.Data'], this.fragmentsToInclude, 'UniformOutput',false); %[requiredSpectraData;requriedEnergies];
             end
 
 
