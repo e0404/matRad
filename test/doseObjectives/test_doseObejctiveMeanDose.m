@@ -41,7 +41,7 @@ function test_doseObjective_MeanDose_computeObjFunction
    
     assertElementsAlmostEqual(test_fDose,expected_fDose,'absolute', 1e-4);
     
-    dose = [55,58,60,nan,65]';
+    dose = [55,58,60,NaN,65]';
     test_fDose = computeDoseObjectiveFunction(obj,dose);
     
     assertTrue(isnan(test_fDose));
@@ -63,7 +63,7 @@ function test_doseObjective_MeanDose_computeGradient
     expected_fDose = [24; 24; 24; 24; 24]; 
     assertElementsAlmostEqual(test_fDose,expected_fDose,'absolute', 1e-4);
 
-    dose = [55,58,60,nan,65]';
+    dose = [55,58,60,NaN,65]';
     test_fDose = computeDoseObjectiveGradient(obj,dose);
     
     assertTrue(isnan(test_fDose(4)));

@@ -27,7 +27,7 @@ function test_doseObjective_EUD_computeObjFunction
    
     assertElementsAlmostEqual(test_fDose,expected_fDose,'absolute', 1e-4);
     
-    dose = [55,58,60,nan,65]';
+    dose = [55,58,60,NaN,65]';
     test_fDose = computeDoseObjectiveFunction(obj,dose);
     
     assertTrue(isnan(test_fDose));
@@ -42,6 +42,6 @@ function test_doseObjective_EUD_computeGradient
     expected_fDose = [ 18.3392   19.3395   20.0064   20.6733   21.6736]'; 
     assertElementsAlmostEqual(test_fDose,expected_fDose,'absolute', 1e-4);
 
-    dose = [55,58,60,nan,65]';
+    dose = [55,58,60,NaN,65]';
     assertExceptionThrown(@()computeDoseObjectiveGradient(obj,dose),'matRad:Error')
   
