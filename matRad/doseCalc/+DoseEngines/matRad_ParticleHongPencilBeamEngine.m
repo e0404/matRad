@@ -74,7 +74,10 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
                     matRad_cfg.dispError('Invalid Lateral Model');
             end
                         
-            bixel.physicalDose = bixel.baseData.LatCutOff.CompFac * L .* kernels.Z;
+            if length(bixel.baseData.LatCutOff.CompFac) > 1
+                bixel.baseData.LatCutOff.CompFac = matRad_interp1(bixel.baseData.LatCutOff.depths', bixel.baseData.LatCutOff.CompFac', bixel.radDepths);
+            end
+            bixel.physicalDose = bixel.baseData.LatCutOff.CompFac .* L .* kernels.Z;
             
             % check if we have valid dose values
             if any(isnan(bixel.physicalDose)) || any(bixel.physicalDose<0)
