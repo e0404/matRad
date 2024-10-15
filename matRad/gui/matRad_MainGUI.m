@@ -21,7 +21,7 @@ classdef matRad_MainGUI < handle
         lastStoragePath = []
     end
 
-    properties (Access = private)
+    properties (SetAccess = private)
         LogoWidget
         WorkflowWidget
         PlanWidget
