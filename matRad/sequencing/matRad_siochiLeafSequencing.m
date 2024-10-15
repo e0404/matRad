@@ -59,12 +59,18 @@ end
 
 offset = 0;
 
+if ~isfield(resultGUI,'wUnsequenced')
+    wUnsequenced = resultGUI.w;
+else
+    wUnsequenced = resultGUI.wUnsequenced;
+end
+
 for i = 1:numOfBeams
     
     numOfRaysPerBeam = stf(i).numOfRays;
     
     % get relevant weights for current beam
-    wOfCurrBeams = resultGUI.wUnsequenced(1+offset:numOfRaysPerBeam+offset);%REVIEW OFFSET
+    wOfCurrBeams = wUnsequenced(1+offset:numOfRaysPerBeam+offset);%REVIEW OFFSET
     
     X = ones(numOfRaysPerBeam,1)*NaN;
     Z = ones(numOfRaysPerBeam,1)*NaN;

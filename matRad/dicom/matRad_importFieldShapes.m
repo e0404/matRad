@@ -53,10 +53,21 @@ for i = 1:length(beamSeqNames)
     
     % set device specific parameters
     device = struct;
+    
     for j = 1:length(currDeviceSeqNames)
         currLimitsSeq = currDeviceSeq.(currDeviceSeqNames{j});
         device(j).DeviceType = currLimitsSeq.RTBeamLimitingDeviceType;
-        device(j).NumOfLeafs = currLimitsSeq.NumberOfLeafJawPairs;
+
+        % Check a type of collimator 
+        if isfield(currLimitsSeq, 'NumberOfLeafJawPairs')
+            device(j).NumOfLeafs = currLimitsSeq.NumberOfLeafJawPairs; 
+        elseif any(strcmpi(device(j).DeviceType, {'X', 'Y', 'ASYMX', 'ASYMY'} ))
+            device(j).NumOfLeafs = 1;
+            currLimitsSeq.NumberOfLeafJawPairs = device(j).NumOfLeafs;
+        else 
+            error('Number of leafs/jaws is not determined');
+        end
+
         % Check for nonstandard double collimators 
         if strncmpi(device(j).DeviceType,'MLC',3)
             device(j).Limits = currLimitsSeq.LeafPositionBoundaries;
@@ -80,7 +91,7 @@ for i = 1:length(beamSeqNames)
             return;
         end
     end
-    
+     
     for j = 1:length(currControlPointSeqNames)-1
        counter = counter + 1;
        currControlPointElement = currBeamSeq.ControlPointSequence.(currControlPointSeqNames{j});
@@ -91,7 +102,7 @@ for i = 1:length(beamSeqNames)
            matRad_cfg.dispWarning('First Control Point in Beam %d already has a CumulativeMeterset bigger than 0.',i)
            cumWeight = currControlPointElement.CumulativeMetersetWeight;
        end
-        
+
        if isfield(currControlPointElement, 'BeamLimitingDevicePositionSequence')
            % get the leaf position for every device
            tmpCollimation.Fields(counter).LeafPos{length(currDeviceSeqNames),1} = [];
@@ -100,8 +111,8 @@ for i = 1:length(beamSeqNames)
            % the first control point and has to be defined on following
            % points only if it changes -> default initilation if counter > 1
            if counter > 1
-               for k = 1:length(currDeviceSeqNames)
-                   tmpCollimation.Fields(counter).LeafPos{k} = tmpCollimation.Fields(counter-1).LeafPos{k};
+               for n = 1:length(currDeviceSeqNames) 
+                        tmpCollimation.Fields(counter).LeafPos{n} = tmpCollimation.Fields(counter-1).LeafPos{n};                
                end
            end
 
@@ -113,13 +124,13 @@ for i = 1:length(beamSeqNames)
                    deviceIx = find(strcmp({device(:).DeviceType}, ...
                        currControlPointElement.BeamLimitingDevicePositionSequence.(currDeviceSeqNames{k}).RTBeamLimitingDeviceType));
 
-                   if (length(currLeafPos) ~= 2 * device(deviceIx).NumOfLeafs)
+                   if length(currLeafPos) ~= 2*device(deviceIx).NumOfLeafs
                        warning(['Number of leafs/jaws does not match given number of leaf/jaw positions in control point sequence ' ...
                                 currControlPointSeqNames{j} ' on beam sequence ' beamSeqNames{i} ' for device ' ...
                                 device(deviceIx).DeviceType '. No field shape import performed!']);
                        return;
                    end
-                   
+
                    % set left and right leaf positions
                    tmpCollimation.Fields(counter).LeafPos{deviceIx}(:,1) = currLeafPos(1:device(deviceIx).NumOfLeafs);
                    tmpCollimation.Fields(counter).LeafPos{deviceIx}(:,2) = currLeafPos(device(deviceIx).NumOfLeafs+1:end);
@@ -133,9 +144,9 @@ for i = 1:length(beamSeqNames)
            end
        else
            tmpCollimation.Fields(counter) = tmpCollimation.Fields(counter - 1);
-       end
-       
-       % get field meta information
+      end
+
+      % get field meta information
        if isfield(nextControlPointElement, 'CumulativeMetersetWeight')      
            newCumWeight = nextControlPointElement.CumulativeMetersetWeight;
            relativeShapeWeight = (newCumWeight - cumWeight) / currBeamSeq.FinalCumulativeMetersetWeight;
@@ -148,7 +159,7 @@ for i = 1:length(beamSeqNames)
            return;
        end
        tmpCollimation.Fields(counter).SAD = currBeamSeq.SourceAxisDistance;
-        
+
        % other meta information is only included in all control point
        % sequences if it changes during treatment, otherwise use FieldMeta
        for k = 1:length(meta)
@@ -158,7 +169,7 @@ for i = 1:length(beamSeqNames)
                tmpCollimation.Fields(counter).(meta{k,2}) = FieldMeta.(meta{k,2});
            end
        end
-       % save information which control point sequence belongs to which beam sequence       
+       % % save information which control point sequence belongs to which beam sequence       
        tmpCollimation.Fields(counter).BeamIndex = i;
     end
 end
@@ -200,10 +211,10 @@ for i = 1:length(tmpCollimation.Fields)
             firstLeafStart = ceil(tmpCollimation.Devices{beamIndex}(j).Limits(1)/convResolution)+shapeLimit+1;
             lastLeafEnd = ceil(tmpCollimation.Devices{beamIndex}(j).Limits(end)/convResolution)+shapeLimit;
 
-            if strcmpi(tmpCollimation.Devices{beamIndex}(j).Direction, 'X')
+            if ismember(tmpCollimation.Devices{beamIndex}(j).Direction, {'X', 'X1', 'X2'}, 'legacy')
                 shape(1:firstLeafStart-1,:) = 0;
                 shape(lastLeafEnd+1:end,:) = 0;
-            elseif strcmpi(tmpCollimation.Devices{beamIndex}(j).Direction, 'Y')
+            elseif ismember(tmpCollimation.Devices{beamIndex}(j).Direction, {'Y', 'Y1', 'Y2'}, 'legacy')
                 shape(:,1:firstLeafStart-1) = 0;
                 shape(:,lastLeafEnd+1:end) = 0;
             else
@@ -269,3 +280,5 @@ for i = 1:length(tmpCollimation.Fields)
 end
 collimation = tmpCollimation;
 end
+
+

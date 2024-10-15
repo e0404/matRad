@@ -71,7 +71,7 @@ classdef matRad_DoseConstraintFromObjective < DoseConstraints.matRad_DoseConstra
         end
         
         function cu = upperBounds(this,n)
-            cu = this.parameters{1}+this.slackParameter;
+            cu = this.parameters{1}+this.parameters{2};
             %cu = [Inf; this.parameters{2}];
         end
         function cl = lowerBounds(this,n)          

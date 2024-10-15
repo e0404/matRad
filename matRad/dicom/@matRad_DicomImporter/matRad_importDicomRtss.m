@@ -1,20 +1,19 @@
-function structures = matRad_importDicomRtss(filename,dicomInfo,visBool)
-% matRad function to read the data of the selected dicomRT structure set file 
-% into a matlab struct
+function obj = matRad_importDicomRtss(obj)
+% matRad function to read the data of the selected dicomRT structure set 
+% file into a matRad structure
 % 
+% In your object, there must be properties that contain:
+%   - name of the rtss file;
+%   - meta information from the dicom ct files for sanity checks.
+% Optional:
+%   - boolean to turn on/off visualization.
+%
+% Output - structure containing names, numbers, colors and coordinates 
+% of the polygon segmentations.
+%
 % call
-%   structures = matRad_importDicomRtss(filename,dicomInfo)
-%   structures = matRad_importDicomRtss(filename,dicomInfo,visBool)
+%   obj = matRad_importDicomRtss(obj)
 %
-% input
-%   filename:       name of the rtss file
-%   dicomInfo:      meta information from the dicom ct files for sanity
-%                   checks
-%   visBool:        (optional) turn on/off visualization
-%
-% output
-%   structures:     struct containing names, numbers, colors, and
-%                   coordinates of the polygon segmentations
 %
 % References
 %   -
@@ -37,7 +36,7 @@ matRad_cfg = MatRad_Config.instance();
 matRad_cfg.dispInfo('\nReading structures...');
 
 if nargin < 3
-    visBool = 0;
+    obj.visBool = 0;
 end
 
 matRad_checkEnvDicomRequirements(matRad_cfg.env);
@@ -46,10 +45,10 @@ matRad_checkEnvDicomRequirements(matRad_cfg.env);
 
 % read dicom info (this includes already all data for the rtss)
 if matRad_cfg.isOctave || verLessThan('matlab','9')
-    structInfo = dicominfo(filename);
+    structInfo = dicominfo(obj.importFiles.rtss{1});
 else % apply 'UseVRHeuristic' option when available to use a to help read certain 
      % noncompliant files which switch value representation (VR) modes incorrectly
-    structInfo = dicominfo(filename,'UseVRHeuristic',false,'UseDictionaryVR',true);
+    structInfo = dicominfo(obj.importFiles.rtss{1},'UseVRHeuristic',false,'UseDictionaryVR',true);
 end
 
 % list the defined structures
@@ -78,14 +77,14 @@ for i = 1:numOfContStructs % loop over every structure
             break;
         end
     end    
-    structures(i).structName   = regexprep(...  % replace nonregular characters by whitespace
+    obj.importRtss.structures(i).structName   = regexprep(...  % replace nonregular characters by whitespace
         structInfo.StructureSetROISequence.(listOfDefStructs{j}).ROIName,...
         '[^a-zA-Z0-9]',' ');
                              
-    structures(i).structNumber = structInfo.ROIContourSequence.(...
+    obj.importRtss.structures(i).structNumber = structInfo.ROIContourSequence.(...
                                  listOfContStructs{i}).ReferencedROINumber;
     if isfield(structInfo.ROIContourSequence.(listOfContStructs{i}),'ROIDisplayColor')
-        structures(i).structColor  = structInfo.ROIContourSequence.(...
+        obj.importRtss.structures(i).structColor  = structInfo.ROIContourSequence.(...
                                      listOfContStructs{i}).ROIDisplayColor;  
     end
 
@@ -96,11 +95,11 @@ for i = 1:numOfContStructs % loop over every structure
                     listOfSlices = fieldnames(structInfo.ROIContourSequence.(...
                                                 listOfContStructs{i}).ContourSequence);
                 else
-                    matRad_cfg.dispWarning(['Contour ' structures(i).structName ' is empty'])
+                    matRad_cfg.dispWarning(['Contour ' obj.importRtss.structures(i).structName ' is empty'])
                     continue;
                 end
     else
-        matRad_cfg.dispWarning(['Contour ' structures(i).structName ' is empty'])
+        matRad_cfg.dispWarning(['Contour ' obj.importRtss.structures(i).structName ' is empty'])
         continue;
     end
     
@@ -127,10 +126,10 @@ for i = 1:numOfContStructs % loop over every structure
         end
         
         % sanity check 2
-        if unique(structZ) > max(dicomInfo.SlicePositions) || unique(structZ) < min(dicomInfo.SlicePositions)
-            matRad_cfg.dispWarning(['Omitting contour data for ' structures(i).structName ' at slice position ' num2str(unique(structZ)) 'mm - no ct data available.\n']);
+         if unique(structZ) > max(obj.ct.dicomInfo.SlicePositions) || unique(structZ) < min(obj.ct.dicomInfo.SlicePositions)
+            matRad_cfg.dispWarning(['Omitting contour data for ' obj.importRtss.structures(i).structName ' at slice position ' num2str(unique(structZ)) 'mm - no ct data available.\n']);
         else
-            structures(i).item(j).points = [structX, structY, structZ];
+            obj.importRtss.structures(i).item(j).points = [structX, structY, structZ];
         end
             
     end
@@ -139,13 +138,13 @@ end
 
 %% visualization
 % show all structure points in a single plot
-if visBool
+if obj.visBool
     figure;
     hold on
-    for i = 1:numel(structures)
-        plot3(structures(i).points(:,1),structures(i).points(:,2),...
-            structures(i).points(:,3),'-',...
-            'Color',structures(i).structColor ./ 255,'Displayname',structures(i).structName);
+    for i = 1:numel(obj.importRtss.structures)
+        plot3(obj.importRtss.structures(i).points(:,1),obj.importRtss.structures(i).points(:,2),...
+            obj.importRtss.structures(i).points(:,3),'-',...
+            'Color',obj.importRtss.structures(i).structColor ./ 255,'Displayname',obj.importRtss.structures(i).structName);
     end
     legend('show')
 end

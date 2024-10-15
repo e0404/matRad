@@ -26,6 +26,8 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
         airOffsetCorrection  = true;    % Corrects WEPL for SSD difference to kernel database
         lateralModel = 'auto';          % Lateral Model used. 'auto' uses the most accurate model available (i.e. multiple Gaussians). 'single','double','multi' try to force a singleGaussian or doubleGaussian model, if available
 
+        cutOffMethod = 'integral';      % or 'relative' - describes how to calculate the lateral dosimetric cutoff
+
         visBoolLateralCutOff = false;   % Boolean switch for visualization during+ LeteralCutOff calculation
     end
 
@@ -710,18 +712,29 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                             matRad_cfg.dispWarning('LateralParticleCutOff: shell integration is wrong !')
                         end
 
-                        IX = find(cumArea >= idd(j) * cutOffLevel,1, 'first');
-                        this.machine.data(energyIx).LatCutOff.CompFac = cutOffLevel^-1;
+                        % Find radius at which integrated dose becomes
+                        % bigger than cutoff * IDD
+
+                        switch this.cutOffMethod
+                            case 'integral'
+                                IX = find(cumArea >= idd(j) * cutOffLevel,1, 'first');
+                                this.machine.data(energyIx).LatCutOff.CompFac = cutOffLevel^-1;
+                            case 'relative'
+                                IX = find(dose_r <= (1-cutOffLevel) * max(dose_r), 1, 'first');
+                                relFac = cumArea(IX)./cumArea(end); % (or idd(j)) to find the appropriate integral of dose
+                                this.machine.data(energyIx).LatCutOff.CompFac(j) = relFac^-1;
+                            otherwise
+                                matRad_cfg.dispError('LateralParticleCutOff: Invalid Cutoff Method. Must be ''integral'' or ''relative''!');
+                        end
 
                         if isempty(IX)
                             depthDoseCutOff = Inf;
-                            matRad_cfg.dispWarning('LateralParticleCutOff: Couldnt find lateral cut off !')
+                            matRad_cfg.dispWarning('LateralParticleCutOff: Couldnt find lateral cut off!')
                         elseif isnumeric(IX)
                             depthDoseCutOff = r_mid(IX);
                         end
 
                         this.machine.data(energyIx).LatCutOff.CutOff(j) = depthDoseCutOff;
-
                     end
                 end
             end
@@ -860,14 +873,17 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                 else
                     idd = this.machine.data(energyIx).Z;
                 end
+                if length(TmpCompFac)>1
+                    TmpCompFac = matRad_interp1(depthValues, TmpCompFac', radDepths);
+                end
                 subplot(312),plot(this.machine.data(energyIx).depths,idd*conversionFactor,'k','LineWidth',2),grid on,hold on
                 plot(radDepths - this.machine.data(energyIx).offset,vDoseInt,'r--','LineWidth',2),hold on,
-                plot(radDepths - this.machine.data(energyIx).offset,vDoseInt * TmpCompFac,'bx','LineWidth',1),hold on,
+                plot(radDepths - this.machine.data(energyIx).offset,vDoseInt .* TmpCompFac,'bx','LineWidth',1),hold on,
                 legend({'original IDD',['cut off IDD at ' num2str(cutOffLevel) '%'],'cut off IDD with compensation'},'Location','northwest'),
                 xlabel('z [mm]'),ylabel('[MeV cm^2 /(g * primary)]'),set(gca,'FontSize',12)
 
                 totEnergy        = trapz(this.machine.data(energyIx).depths,idd*conversionFactor) ;
-                totEnergyCutOff  = trapz(radDepths,vDoseInt * TmpCompFac) ;
+                totEnergyCutOff  = trapz(radDepths,vDoseInt .* TmpCompFac) ;
                 relDiff          =  ((totEnergy/totEnergyCutOff)-1)*100;
                 title(['rel diff of integral dose ' num2str(relDiff) '%']);
                 baseData.LatCutOff.CompFac = TmpCompFac;

@@ -28,14 +28,10 @@ initTestSuite;
 
 function test_vtk_basic_write
     load TG119.mat
-    tmpDir = tempdir();
-    tmpDir = [tmpDir filesep 'matRad_test_vtk' filesep];
-    if ~exist(tmpDir,'dir')
-        mkdir(tmpDir);
-    end
 
-    tmpFilePath = [tmpDir filesep 'TG119.vtk'];
-    
+    tmpDir = helper_temporaryFolder('matRad_test_vtk');
+    tmpFilePath = fullfile(tmpDir,'TG119.vtk');
+
     datatype = 'double';
 
     metadata = struct;

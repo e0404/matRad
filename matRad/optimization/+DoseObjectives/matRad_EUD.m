@@ -96,7 +96,8 @@ classdef matRad_EUD < DoseObjectives.matRad_DoseObjective
             fDoseGrad = 2 * nthroot(1/numel(dose),k) * powersum^((1-k)/k) * (dose.^(k-1)) .* (nthroot(powersum/numel(dose),k) - obj.parameters{1});
             %end
             if any(~isfinite(fDoseGrad)) % check for inf and nan for numerical stability
-                error(['EUD computation failed. Reduce exponent to resolve numerical problems.']);
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError(['EUD computation failed. Reduce exponent to resolve numerical problems.']);
             end
         end
     end

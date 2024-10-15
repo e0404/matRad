@@ -1,24 +1,24 @@
-function ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid, visBool)
+function obj = matRad_importDicomCt(obj)
 % matRad function to import dicom ct data
 % 
+% In your object, there must be properties that contain:
+%   - list of dicom ct files;
+%   - resolution of the imported ct cube, i.e. this function will 
+%   interpolate to a different resolution if desired;
+%   - a boolean, if you don't want to import complete dicom information set
+%   it false.
+% Optional:
+%   - a priori grid specified for interpolation;
+%   - a boolean to turn off/on visualization.
+%
+% Output - matRad ct structure. 
+% Note that this 3D matlab array contains water euqivalent 
+% electron denisities. Hounsfield units are converted using a standard
+% lookup table in matRad_calcWaterEqD
+%
 % call
-%   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool)
-%   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid)
-%   ct = matRad_importDicomCt(ctList, resolution, dicomMetaBool, grid, visBool)
+%   matRad_importDicomCt(obj)
 %
-% input
-%   ctList:         list of dicom ct files
-%   resolution:   	resolution of the imported ct cube, i.e. this function
-%                   will interpolate to a different resolution if desired
-%   dicomMetaBool:  store complete dicom information if true
-%   grid:           optional: a priori grid specified for interpolation
-%   visBool:        optional: turn on/off visualization
-%
-% output
-%   ct:             matRad ct struct. Note that this 3D matlab array 
-%                   contains water euqivalent electron denisities.
-%                   Hounsfield units are converted using a standard lookup
-%                   table in matRad_calcWaterEqD
 %
 % References
 %   -
@@ -42,48 +42,48 @@ matRad_cfg.dispInfo('\nimporting ct-cube...');
 
 %% processing input variables
 if ~exist('visBool','var')
-  visBool = 0;
+  obj.visBool = 0;
 end
 
 matRad_checkEnvDicomRequirements(matRad_cfg.env);
 
 
 % creation of ctInfo list
-numOfSlices = size(ctList,1);
+numOfSlices = size(obj.importFiles.ct, 1);
 matRad_cfg.dispInfo('\ncreating info...')
 
 sliceThicknessStandard = true;
 for i = 1:numOfSlices
 
     if matRad_cfg.isOctave || verLessThan('matlab','9')
-        tmpDicomInfo = dicominfo(ctList{i,1});
+        tmpDicomInfo = dicominfo(obj.importFiles.ct{i, 1});
     else
-        tmpDicomInfo = dicominfo(ctList{i,1},'UseDictionaryVR',true);
+        tmpDicomInfo = dicominfo(obj.importFiles.ct{i, 1},'UseDictionaryVR',true);
     end
     
     % remember relevant dicom info - do not record everything as some tags
     % might not been defined for individual files
-    ctInfo(i).PixelSpacing            = tmpDicomInfo.PixelSpacing;
-    ctInfo(i).ImagePositionPatient    = tmpDicomInfo.ImagePositionPatient;
-    ctInfo(i).SliceThickness          = tmpDicomInfo.SliceThickness;
-    ctInfo(i).ImageOrientationPatient = tmpDicomInfo.ImageOrientationPatient;
-    ctInfo(i).PatientPosition         = tmpDicomInfo.PatientPosition;
-    ctInfo(i).Rows                    = tmpDicomInfo.Rows;
-    ctInfo(i).Columns                 = tmpDicomInfo.Columns;
-    ctInfo(i).Width                   = tmpDicomInfo.Columns;%tmpDicomInfo.Width;
-    ctInfo(i).Height                  = tmpDicomInfo.Rows;%tmpDicomInfo.Height;
-    ctInfo(i).RescaleSlope            = tmpDicomInfo.RescaleSlope;
-    ctInfo(i).RescaleIntercept        = tmpDicomInfo.RescaleIntercept;
+    obj.importCT.ctInfo(i).PixelSpacing            = tmpDicomInfo.PixelSpacing;
+    obj.importCT.ctInfo(i).ImagePositionPatient    = tmpDicomInfo.ImagePositionPatient;
+    obj.importCT.ctInfo(i).SliceThickness          = str2double(obj.importFiles.resz);
+    obj.importCT.ctInfo(i).ImageOrientationPatient = tmpDicomInfo.ImageOrientationPatient;
+    obj.importCT.ctInfo(i).PatientPosition         = tmpDicomInfo.PatientPosition;
+    obj.importCT.ctInfo(i).Rows                    = tmpDicomInfo.Rows;
+    obj.importCT.ctInfo(i).Columns                 = tmpDicomInfo.Columns;
+    obj.importCT.ctInfo(i).Width                   = tmpDicomInfo.Columns;%tmpDicomInfo.Width;
+    obj.importCT.ctInfo(i).Height                  = tmpDicomInfo.Rows;%tmpDicomInfo.Height;
+    obj.importCT.ctInfo(i).RescaleSlope            = tmpDicomInfo.RescaleSlope;
+    obj.importCT.ctInfo(i).RescaleIntercept        = tmpDicomInfo.RescaleIntercept;
     
     %Problem due to some CT files using non-standard SpacingBetweenSlices
     
-    if isempty(ctInfo(i).SliceThickness)
+    if isempty(obj.importCT.ctInfo(i).SliceThickness)
         %Print warning once
         if sliceThicknessStandard
             matRad_cfg.dispWarning('Non-standard use of SliceThickness Attribute (empty), trying to overwrite with SpacingBetweenSlices');
             sliceThicknessStandard = false;
         end
-        ctInfo(i).SliceThickness = tmpDicomInfo.SpacingBetweenSlices;
+        obj.importCT.ctInfo(i).SliceThickness = tmpDicomInfo.SpacingBetweenSlices;
     end
     
     if i == 1
@@ -98,25 +98,25 @@ end
 
 % adjusting sequence of slices (filenames may not be ordered propperly....
 % e.g. CT1.dcm, CT10.dcm, CT100zCoordList = [ctInfo.ImagePositionPatient(1,3)]';.dcm, CT101.dcm,...
-CoordList = [ctInfo.ImagePositionPatient]';
-[~, indexing] = sort(CoordList(:,3)); % get sortation from z-coordinates
+CoordList = [obj.importCT.ctInfo.ImagePositionPatient]';
+[~, indexing] = unique(CoordList(:,3)); % get sortation from z-coordinates
 
-ctList = ctList(indexing);
-ctInfo = ctInfo(indexing);
+obj.importFiles.ct = obj.importFiles.ct(indexing');
+obj.importCT.ctInfo = obj.importCT.ctInfo(indexing');
 
 %% check data set for consistency
-if size(unique([ctInfo.PixelSpacing]','rows'),1) > 1
+if size(unique([obj.importCT.ctInfo.PixelSpacing]','rows'),1) > 1
     matRad_cfg.dispError('Different pixel size in different CT slices');
 end
 
-coordsOfFirstPixel = [ctInfo.ImagePositionPatient];
+coordsOfFirstPixel = [obj.importCT.ctInfo.ImagePositionPatient];
 if numel(unique(coordsOfFirstPixel(1,:))) > 1 || numel(unique(coordsOfFirstPixel(2,:))) > 1
     matRad_cfg.dispError('Ct slices are not aligned');
 end
 if sum(diff(coordsOfFirstPixel(3,:))<=0) > 0
     matRad_cfg.dispError('Ct slices not monotonically increasing');
 end
-if numel(unique([ctInfo.Rows])) > 1 || numel(unique([ctInfo.Columns])) > 1
+if numel(unique([obj.importCT.ctInfo.Rows])) > 1 || numel(unique([obj.importCT.ctInfo.Columns])) > 1
     matRad_cfg.dispError('Ct slice sizes inconsistent');
 end
 
@@ -135,7 +135,7 @@ end
 % FFP     Feet First-Prone                  (supported)
 % FFS     Feet First-Supine                 (supported)
 
-if isempty(regexp(ctInfo(1).PatientPosition,{'S','P'}, 'once'))
+if isempty(regexp(obj.importCT.ctInfo(1).PatientPosition,{'S','P'}, 'once'))
     matRad_cfg.dispError(['This Patient Position is not supported by matRad.'...
         ' As of now only ''HFS'' (Head First-Supine), ''FFS'''...
         ' (Feet First-Supine), '...    
@@ -145,9 +145,9 @@ end
 
 %% creation of ct-cube
 matRad_cfg.dispInfo('reading slices...')
-origCt = zeros(ctInfo(1).Height, ctInfo(1).Width, numOfSlices);
+origCt = zeros(obj.importCT.ctInfo(1).Height, obj.importCT.ctInfo(1).Width, numOfSlices);
 for i = 1:numOfSlices
-    currentFilename = ctList{i};
+    currentFilename = obj.importFiles.ct{i};
     if matRad_cfg.isOctave
         currentImage = dicomread(currentFilename);
         map = [];
@@ -157,7 +157,7 @@ for i = 1:numOfSlices
     origCt(:,:,i) = currentImage(:,:); % creation of the ct cube
     
     % draw current ct-slice
-    if visBool
+    if obj.visBool
         if ~isempty(map)
             image(ind2rgb(uint8(63*currentImage/max(currentImage(:))),map));
             xlabel('x [voxelnumber]')
@@ -186,8 +186,8 @@ matRad_cfg.dispInfo('\nz-coordinates taken from ImagePositionPatient\n')
 
 % The x- & y-direction in lps-coordinates are specified in:
 % ImageOrientationPatient
-xDir = ctInfo(1).ImageOrientationPatient(1:3); % lps: [1;0;0]
-yDir = ctInfo(1).ImageOrientationPatient(4:6); % lps: [0;1;0]
+xDir = obj.importCT.ctInfo(1).ImageOrientationPatient(1:3); % lps: [1;0;0]
+yDir = obj.importCT.ctInfo(1).ImageOrientationPatient(4:6); % lps: [0;1;0]
 nonStandardDirection = false;
 
 % correct x- & y-direction
@@ -219,48 +219,49 @@ end
 
 %% interpolate cube
 matRad_cfg.dispInfo('\nInterpolating CT cube...');
-if exist('grid','var')
-    ct = matRad_interpDicomCtCube(origCt, ctInfo, resolution, grid);
+if ~isempty(obj.ImportGrid)
+    obj.ct = matRad_interpDicomCtCube(origCt, obj.importCT.ctInfo, obj.importCT.resolution, obj.ImportGrid);
 else
-    ct = matRad_interpDicomCtCube(origCt, ctInfo, resolution);
+    obj.ct = matRad_interpDicomCtCube(origCt, obj.importCT.ctInfo, obj.importCT.resolution);
 end
 matRad_cfg.dispInfo('finished!\n');
 
 %% remember some parameters of original dicom
-ct.dicomInfo.PixelSpacing            = ctInfo(1).PixelSpacing;
-                                       tmp = [ctInfo.ImagePositionPatient];
-ct.dicomInfo.SlicePositions          = tmp(3,:);
-ct.dicomInfo.SliceThickness          = [ctInfo.SliceThickness];
-ct.dicomInfo.ImagePositionPatient    = ctInfo(1).ImagePositionPatient;
-ct.dicomInfo.ImageOrientationPatient = ctInfo(1).ImageOrientationPatient;
-ct.dicomInfo.PatientPosition         = ctInfo(1).PatientPosition;
-ct.dicomInfo.Width                   = ctInfo(1).Width;
-ct.dicomInfo.Height                  = ctInfo(1).Height;
-ct.dicomInfo.RescaleSlope            = ctInfo(1).RescaleSlope;
-ct.dicomInfo.RescaleIntercept        = ctInfo(1).RescaleIntercept;
+tmp = [obj.importCT.ctInfo.ImagePositionPatient];
+
+obj.ct.dicomInfo.PixelSpacing            = obj.importCT.ctInfo(1).PixelSpacing;                                      
+obj.ct.dicomInfo.SlicePositions          = tmp(3,:);
+obj.ct.dicomInfo.SliceThickness          = str2double(obj.importCT.ctInfo(1).SliceThickness);
+obj.ct.dicomInfo.ImagePositionPatient    = obj.importCT.ctInfo(1).ImagePositionPatient;
+obj.ct.dicomInfo.ImageOrientationPatient = obj.importCT.ctInfo(1).ImageOrientationPatient;
+obj.ct.dicomInfo.PatientPosition         = obj.importCT.ctInfo(1).PatientPosition;
+obj.ct.dicomInfo.Width                   = obj.importCT.ctInfo(1).Width;
+obj.ct.dicomInfo.Height                  = obj.importCT.ctInfo(1).Height;
+obj.ct.dicomInfo.RescaleSlope            = obj.importCT.ctInfo(1).RescaleSlope;
+obj.ct.dicomInfo.RescaleIntercept        = obj.importCT.ctInfo(1).RescaleIntercept;
 if isfield(completeDicom, 'Manufacturer')
-ct.dicomInfo.Manufacturer            = completeDicom.Manufacturer;
+obj.ct.dicomInfo.Manufacturer            = completeDicom.Manufacturer;
 end
 if isfield(completeDicom, 'ManufacturerModelName')
-ct.dicomInfo.ManufacturerModelName   = completeDicom.ManufacturerModelName;
+obj.ct.dicomInfo.ManufacturerModelName   = completeDicom.ManufacturerModelName;
 end
 if isfield(completeDicom, 'ConvolutionKernel')
-ct.dicomInfo.ConvolutionKernel       = completeDicom.ConvolutionKernel;
+obj.ct.dicomInfo.ConvolutionKernel       = completeDicom.ConvolutionKernel;
 end
 
 % store patientName only if user wants to
-if isfield(completeDicom,'PatientName') && dicomMetaBool == true
-    ct.dicomInfo.PatientName         = completeDicom.PatientName;
+if isfield(completeDicom,'PatientName') && obj.dicomMetaBool == true
+    obj.ct.dicomInfo.PatientName         = completeDicom.PatientName;
 end
-if dicomMetaBool == true
-    ct.dicomMeta                     = completeDicom;
+if obj.dicomMetaBool == true
+    obj.ct.dicomMeta                     = completeDicom;
 end
 
-ct.timeStamp = datestr(clock);
+obj.ct.timeStamp = datestr(clock);
 
 % convert to Hounsfield units
 matRad_cfg.dispInfo('\nconversion of ct-Cube to Hounsfield units...');
-ct = matRad_calcHU(ct);
+obj = matRad_calcHU(obj);
 matRad_cfg.dispInfo('finished!\n');
 
 end

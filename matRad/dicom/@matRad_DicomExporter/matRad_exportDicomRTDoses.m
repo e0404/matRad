@@ -82,7 +82,7 @@ meta.SeriesInstanceUID = dicomuid;
 %Now image meta
 resolution = ct.resolution;
 meta.PixelSpacing = [resolution.y; resolution.x];
-meta.SliceThickness = resolution.z;
+meta.SliceThickness = num2str(resolution.z);
 
 meta.ImagePositionPatient = [ct.x(1); ct.y(1); ct.z(1)];
 meta.ImageOrientationPatient = [1;0;0;0;1;0];
