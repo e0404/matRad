@@ -714,6 +714,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
 
                         % Find radius at which integrated dose becomes
                         % bigger than cutoff * IDD
+
                         switch this.cutOffMethod
                             case 'integral'
                                 IX = find(cumArea >= idd(j) * cutOffLevel,1, 'first');
@@ -721,7 +722,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                             case 'relative'
                                 IX = find(dose_r <= (1-cutOffLevel) * max(dose_r), 1, 'first');
                                 relFac = cumArea(IX)./cumArea(end); % (or idd(j)) to find the appropriate integral of dose
-                                this.machine.data(energyIx).LatCutOff.CompFac = relFac^-1;
+                                this.machine.data(energyIx).LatCutOff.CompFac(j) = relFac^-1;
                             otherwise
                                 matRad_cfg.dispError('LateralParticleCutOff: Invalid Cutoff Method. Must be ''integral'' or ''relative''!');
                         end
@@ -872,14 +873,17 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                 else
                     idd = this.machine.data(energyIx).Z;
                 end
+                if length(TmpCompFac)>1
+                    TmpCompFac = matRad_interp1(depthValues, TmpCompFac', radDepths);
+                end
                 subplot(312),plot(this.machine.data(energyIx).depths,idd*conversionFactor,'k','LineWidth',2),grid on,hold on
                 plot(radDepths - this.machine.data(energyIx).offset,vDoseInt,'r--','LineWidth',2),hold on,
-                plot(radDepths - this.machine.data(energyIx).offset,vDoseInt * TmpCompFac,'bx','LineWidth',1),hold on,
+                plot(radDepths - this.machine.data(energyIx).offset,vDoseInt .* TmpCompFac,'bx','LineWidth',1),hold on,
                 legend({'original IDD',['cut off IDD at ' num2str(cutOffLevel) '%'],'cut off IDD with compensation'},'Location','northwest'),
                 xlabel('z [mm]'),ylabel('[MeV cm^2 /(g * primary)]'),set(gca,'FontSize',12)
 
                 totEnergy        = trapz(this.machine.data(energyIx).depths,idd*conversionFactor) ;
-                totEnergyCutOff  = trapz(radDepths,vDoseInt * TmpCompFac) ;
+                totEnergyCutOff  = trapz(radDepths,vDoseInt .* TmpCompFac) ;
                 relDiff          =  ((totEnergy/totEnergyCutOff)-1)*100;
                 title(['rel diff of integral dose ' num2str(relDiff) '%']);
                 baseData.LatCutOff.CompFac = TmpCompFac;
