@@ -24,6 +24,7 @@ load BOXPHANTOM.mat
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
 pln.machine         = 'Generic';
+
 %Biology
 pln.bioModel = 'none';
 %Scenario Model
@@ -69,8 +70,8 @@ pln.propOpt.quantityOpt = 'physicalDose';
 stf = matRad_generateStf(ct,cst,pln);
 
 %% analytical dose calculation
-pln.propDoseCalc.engine = 'MCsquare';
-pln.propDoseCalc.numHistoriesPerBeamlet = 1e4;
+pln.propDoseCalc.engine = 'HongPB';
+%pln.propDoseCalc.numHistoriesPerBeamlet = 1e6;
 
 dij = matRad_calcDoseInfluence(ct, cst,stf, pln); %Calculate particle dose influence matrix (dij) with analytical algorithm
 
@@ -84,7 +85,7 @@ pln.propDoseCalc.engine = 'MCsquare';
 %pln.propDoseCalc.engine = 'TOPAS';
 
 % set number of histories lower than default for this example (default: 1e8)
-pln.propDoseCalc.numHistoriesDirect = 1e3;
+pln.propDoseCalc.numHistoriesDirect = 5e6;
 %pln.propDoseCalc.externalCalculation = 'write';
 resultGUI_MC = matRad_calcDoseForward(ct,cst,stf,pln,resultGUI.w);
 

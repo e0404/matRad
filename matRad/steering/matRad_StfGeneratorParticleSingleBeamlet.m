@@ -170,10 +170,18 @@ classdef matRad_StfGeneratorParticleSingleBeamlet < matRad_StfGeneratorParticleR
 
             % get the focus index
             if isfield(this.machine.meta,'LUT_bxWidthminFWHM')
-                currentMinimumFWHM = matRad_interp1(this.machine.meta.LUT_bxWidthminFWHM(1,:)',...
-                    this.machine.meta.LUT_bxWidthminFWHM(2,:)',...
+                LUTspotSize = this.machine.meta.LUT_bxWidthminFWHM;
+            elseif isfield(this.machine.meta,'LUTspotSize')
+                LUTspotSize = this.machine.meta.LUTspotSize;
+            else
+                LUTspotSize = [];
+            end
+                    
+            if ~isempty(LUTspotSize)
+                currentMinimumFWHM = matRad_interp1(LUTspotSize(1,:)',...
+                    LUTspotSize(2,:)',...
                     beam.bixelWidth, ...
-                    this.machine.meta.LUT_bxWidthminFWHM(2,end));
+                    LUTspotSize(2,end));
                 
                 beam.ray.focusIx = find(this.machine.data(vEnergyIx).initFocus.SisFWHMAtIso > currentMinimumFWHM,1,'first');
             else
