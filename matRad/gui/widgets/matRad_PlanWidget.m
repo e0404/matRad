@@ -880,6 +880,7 @@ classdef matRad_PlanWidget < matRad_Widget
             else
                 set(handles.btnRunSequencing,'Value', 0 );
             end
+
             if isfield (pln.propOpt, 'conf3D')
                 set(handles.radiobutton3Dconf,'Value',pln.propOpt.conf3D);
             end 
@@ -1161,6 +1162,14 @@ classdef matRad_PlanWidget < matRad_Widget
 %% CALLBACKS        
         function popupRadMode_Callback(this, hObject, eventdata)
             handles = this.handles;
+
+            defaultMachines.photons     = 'Generic';
+            defaultMachines.protons     = 'Generic';
+            defaultMachines.helium      = 'Generic';
+            defaultMachines.carbon      = 'Generic';
+            defaultMachines.brachy      = 'HDR';
+            defaultMachines.fallback    = 'Generic';
+            
             contents      = cellstr(get(hObject,'String'));
             RadIdentifier = contents{get(hObject,'Value')};
             contentPopUp  = get(handles.popMenuQuantityOpt,'String');
@@ -1197,7 +1206,15 @@ classdef matRad_PlanWidget < matRad_Widget
                 %Do nothing here
             end
             
-            pln.radiationMode = RadIdentifier;
+            if ~strcmp(pln.radiationMode,RadIdentifier)
+                pln.radiationMode = RadIdentifier;
+                if isfield(defaultMachines,RadIdentifier)
+                    pln.machine = defaultMachines.(RadIdentifier);
+                else
+                    pln.machine = defaultMachines.fallback;
+                end
+            end                
+
             availableEngines = DoseEngines.matRad_DoseEngineBase.getAvailableEngines(pln);
             set(handles.popUpMenuDoseEngine,'String',{availableEngines(:).shortName});
 

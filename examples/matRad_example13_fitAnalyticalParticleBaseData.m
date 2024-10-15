@@ -167,7 +167,7 @@ pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 
 
 %% generate steering file
-stf = matRad_generateStfSinglePencilBeam(ct,cst,pln);
+stf = matRad_generateSingleBixelStf(ct,cst,pln);
 
 % Select existing BDL file to load and fit
 pln.loadExistingBDL = 'BDL_matRad.txt';

@@ -41,11 +41,7 @@ unitTestResolution = matRad_cfg.defaults.propDoseCalc.doseGrid.resolution;
 [folders,names,exts] = cellfun(@fileparts,exampleScripts,'UniformOutput',false);
 
 %Create temporary example test folder
-tmpExampleTestFolder = tempdir();
-tmpExampleTestFolder = fullfile(tmpExampleTestFolder,'exampleTest');
-if ~exist(tmpExampleTestFolder,'dir')
-    mkdir(tmpExampleTestFolder);
-end
+tmpExampleTestFolder = helper_temporaryFolder('exampleTest',true);
 addpath(tmpExampleTestFolder);
 newFolders = cell(size(folders));
 [newFolders{:}] = deal(tmpExampleTestFolder);
@@ -78,12 +74,6 @@ for testIx = 1:length(testScriptNames)
         mfilename, testfun);
     test_suite=addTest(test_suite, test_case);
     %test_functions{testIx,1} = testfun;
-end
-
-try
-    rmdir(exampleTestFolder,'s');
-catch
-    warning('Could not delete temporary example test folder');
 end
 
 %initTestSuite;

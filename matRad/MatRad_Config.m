@@ -95,11 +95,9 @@ classdef MatRad_Config < handle
                 addpath(obj.exampleFolder);
                 addpath(genpath(obj.thirdPartyFolder));
                 obj.userfolders = {[obj.matRadRoot filesep 'userdata' filesep]};
-            end
-
+            end           
             
-            
-            %Set Version
+            %set version
             obj.getEnvironment();
             obj.matRad_version = matRad_version(obj.matRadRoot);
 

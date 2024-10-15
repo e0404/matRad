@@ -84,10 +84,11 @@ tvalues = [tvalues,([xPlane_end,yPlane_end,zPlane_end] - sourcePoint)./ (targetP
 doesHit = false;
 for t = tvalues
     p = sourcePoint + t*(targetPoint - sourcePoint);
-    if (p(1) >= xPlane_1 && p(1) <= xPlane_end && ...
-        p(2) >= yPlane_1 && p(2) <= yPlane_end && ...
-        p(3) >= zPlane_1 && p(3) <= zPlane_end)
+    lowerPlanes = [xPlane_1,yPlane_1,zPlane_1]  - sqrt(eps);
+    upperPlanes = [xPlane_end,yPlane_end,zPlane_end]  + sqrt(eps);
+    if all(p > lowerPlanes & p < upperPlanes)
         doesHit = true;
+        continue;
     end
 end
 
