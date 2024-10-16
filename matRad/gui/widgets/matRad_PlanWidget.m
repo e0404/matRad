@@ -851,7 +851,30 @@ classdef matRad_PlanWidget < matRad_Widget
             end
 
             %biological model
-            availableModels = matRad_BiologicalModel.getAvailableModels();
+            if isfield(matRad_cfg.defaults.bioModel,pln.radiationMode)
+                defaultModel = matRad_cfg.defaults.bioModel.(pln.radiationMode);
+            else
+                defaultModel = matRad_cfg.defaults.bioModel.fallback;
+            end
+            if ~isfield(pln,'bioModel')
+                pln.bioModel = defaultModel;
+            end
+
+            bioModel = matRad_BiologicalModel.validate(pln.bioModel,pln.radiationMode);
+
+            fHandle = str2func([selectedEngine.className '.providedQuantities']);
+            qs = fHandle(this.currentMachine);
+            availableModels = matRad_BiologicalModel.getAvailableModels(pln.radiationMode,qs);
+            modelNames = {availableModels.model};
+            ix = find(strcmp(bioModel.model,modelNames));
+
+            if isempty(ix)
+                this.showWarning('Bio Model seems to be invalid! Choosing none!');
+                pln.bioModel = 'none';
+                ix = find(strcmp('none',modelNames));
+            end
+
+            set(handles.popMenuBioModel,'String',modelNames,'Value',ix);
 
             %Biological optimization dose quantity
             contentPopUpQuantityOpt = get(handles.popMenuQuantityOpt,'String');
@@ -865,17 +888,6 @@ classdef matRad_PlanWidget < matRad_Widget
                 ix = 1;
             end
             set(handles.popMenuQuantityOpt,'Value',ix);
-
-            %bio model
-            contentPopUpBioModel = get(handles.popMenuBioModel,'String');
-            if ~isfield(pln,'bioModel')
-                pln.bioModel = contentPopUpBioModel{get(handles.popMenuBioModel,'Value')};
-            end
-            
-            bioModel = matRad_BiologicalModel.validate(pln.bioModel,pln.radiationMode);
-            
-            ix = find(strcmp(bioModel.model,contentPopUpBioModel));
-            set(handles.popMenuBioModel,'Value',ix);
 
             if evalin('base','exist(''ct'')')
                 contentPopUpMultScen = get(handles.popMenuMultScen,'String');
@@ -1187,30 +1199,77 @@ classdef matRad_PlanWidget < matRad_Widget
         %% CALLBACKS
         function popupRadMode_Callback(this, hObject, eventdata)
             handles = this.handles;
+            
+            matRad_cfg = MatRad_Config.instance();
 
-            defaultMachines.photons     = 'Generic';
-            defaultMachines.protons     = 'Generic';
-            defaultMachines.helium      = 'Generic';
-            defaultMachines.carbon      = 'Generic';
-            defaultMachines.brachy      = 'HDR';
-            defaultMachines.fallback    = 'Generic';
+            defaultMachines = matRad_cfg.defaults.machine;
+            defaultBioModels = matRad_cfg.defaults.bioModel;
 
-            contents      = cellstr(get(hObject,'String'));
-            RadIdentifier = contents{get(hObject,'Value')};
-            contentPopUp  = get(handles.popMenuQuantityOpt,'String');
+            allRadiationModes      = cellstr(get(hObject,'String'));
+            newRadiationMode = allRadiationModes{get(hObject,'Value')};
+            optimizationQuantityPopUpContents  = get(handles.popMenuQuantityOpt,'String');
 
-            if any(strcmp(RadIdentifier,{'protons','helium','carbon'}))
-                ix = find(strcmp(contentPopUp,'RBExD'));
+            %Now get pln and stop if nothing changed
+            try
+                pln = evalin('base','pln');
+                if strcmp(pln.radiationMode,newRadiationMode)
+                    %Nothing changed
+                    return;
+                end
+            catch
+                this.setPlnDefaultValues();
+                pln = evalin('base','pln');
+            end          
+
+            if any(strcmp(newRadiationMode,{'protons','helium','carbon'}))
+                ix = find(strcmp(optimizationQuantityPopUpContents,'RBExD'));
                 set(handles.popMenuQuantityOpt,'Value',ix);
+            end
+
+            pln.radiationMode = newRadiationMode;
+            if isfield(defaultMachines,newRadiationMode)
+                pln.machine = defaultMachines.(newRadiationMode);
+            else
+                pln.machine = defaultMachines.fallback;
+            end
+            
+            %Update machine storages
+            this.getMachines();
+         
+            % Get the dose engines for the current pln selection
+            try
+                availableEngines = DoseEngines.matRad_DoseEngineBase.getAvailableEngines(pln);
+                set(handles.popUpMenuDoseEngine,'String',{availableEngines(:).shortName},'Value',1);
+                fHandle = str2func([availableEngines(1).className '.providedQuantities']);
+                qs = fHandle(this.currentMachine);
+
+                %With the dose engines available, we can now manage biological
+                %models
+                models = matRad_BiologicalModel.getAvailableModels(newRadiationMode,qs);
+                modelNames = {models.model};
+
+                if isfield(defaultBioModels, newRadiationMode)
+                    bioModel = defaultBioModels.(newRadiationMode);
+                else
+                    bioModel = defaultBioModels.fallback;
+                end
+
+                bioMenuIx = find(strcmp(modelNames,bioModel));
+                if isempty(bioMenuIx)
+                    bioMenuIx = 1;
+                end
+                
+                set(handles.popMenuBioModel,'String',modelNames,'Value',bioMenuIx);
+            catch ME
+                this.showWarning('Dose Engine & Bio Model Update Failed!',ME);
             end
 
             % new radiation modality is photons -> just keep physicalDose
             try
-                pln = evalin('base','pln');
                 AllVarNames = evalin('base','who');
                 if  ismember('resultGUI',AllVarNames)
                     resultGUI = evalin('base','resultGUI');
-                    radMode = contents(get(hObject,'Value'));
+                    radMode = allRadiationModes(get(hObject,'Value'));
                     if any(strcmp(radMode,{'photons','brachy'}))
                         if isfield(resultGUI,'alpha');    resultGUI = rmfield(resultGUI,'alpha');   end
                         if isfield(resultGUI,'beta');     resultGUI = rmfield(resultGUI,'beta');    end
@@ -1226,27 +1285,9 @@ classdef matRad_PlanWidget < matRad_Widget
                     assignin('base','resultGUI',resultGUI);
                     %handles = updateIsoDoseLineCache(handles);
                 end
-
-
-                models = matRad_BiologicalModel.getAvailableModels(RadIdentifier);
-                modelNames = {models.model};
-
-                set(handles.popMenuBioModel,'String',modelNames);
             catch ME
-                matRad_cfg.dispWarning('Plan Widget Update failed: %s!',ME.message);
+                this.showWarning("Result Cleanup Failed!", ME);
             end
-
-            if ~strcmp(pln.radiationMode,RadIdentifier)
-                pln.radiationMode = RadIdentifier;
-                if isfield(defaultMachines,RadIdentifier)
-                    pln.machine = defaultMachines.(RadIdentifier);
-                else
-                    pln.machine = defaultMachines.fallback;
-                end
-            end
-
-            availableEngines = DoseEngines.matRad_DoseEngineBase.getAvailableEngines(pln);
-            set(handles.popUpMenuDoseEngine,'String',{availableEngines(:).shortName});
 
             this.handles = handles;
             updatePlnInWorkspace(this);

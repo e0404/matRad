@@ -193,6 +193,22 @@ classdef MatRad_Config < handle
             %setDefaultProperties set matRad's default computation
             %   properties
             %  input
+
+            %Default machines
+            obj.defaults.machine.photons    = 'Generic';
+            obj.defaults.machine.protons    = 'Generic';
+            obj.defaults.machine.helium     = 'Generic';
+            obj.defaults.machine.carbon     = 'Generic';
+            obj.defaults.machine.brachy     = 'HDR';
+            obj.defaults.machine.fallback   = 'Generic';
+
+            %Default Bio Model
+            obj.defaults.bioModel.photons   = 'none';
+            obj.defaults.bioModel.protons   = 'constRBE';
+            obj.defaults.bioModel.helium    = 'HEL';
+            obj.defaults.bioModel.carbon    = 'LEM';
+            obj.defaults.bioModel.brachy    = 'none';
+            obj.defaults.bioModel.fallback  = 'none';
             
             %Default Steering/Geometry Properties
             obj.defaults.propStf.generator = {'PhotonIMRT','ParticleIMPT','SimpleBrachy'};
