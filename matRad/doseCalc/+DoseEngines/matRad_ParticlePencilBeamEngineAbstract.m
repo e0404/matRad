@@ -24,7 +24,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
         calcLET = true;                 % Boolean which defines if LET should be calculated
         calcBioDose = false;            % Boolean which defines if biological dose calculation shoudl be performed (alpha*dose and sqrt(beta)*dose)
         airOffsetCorrection  = true;    % Corrects WEPL for SSD difference to kernel database
-        lateralModel = 'auto';          % Lateral Model used. 'auto' uses the most accurate model available (i.e. multiple Gaussians). 'single','double','multi' try to force a singleGaussian or doubleGaussian model, if available
+        lateralModel = 'fast';          % Lateral Model used. 'auto' uses the most accurate model available (i.e. multiple Gaussians), 'fastest' uses the most simple model. 'single','double','multi' try to force a singleGaussian or doubleGaussian model, if available
 
         cutOffMethod = 'integral';      % or 'relative' - describes how to calculate the lateral dosimetric cutoff
 
@@ -69,23 +69,29 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             
             matRad_cfg = MatRad_Config.instance();
 
+            singleAvailable = all(arrayfun(fValidateSingle,this.machine.data));
+            doubleAvailable = all(arrayfun(fValidateDouble,this.machine.data));
+            multiAvailable = all(arrayfun(fValidateMulti,this.machine.data));
+
+            matRad_cfg.dispInfo('''%s'' selected for lateral beam model, checking machine...\n',this.lateralModel);
+
             switch this.lateralModel
                 case 'single'
-                    if ~all(arrayfun(fValidateSingle,this.machine.data))
+                    if ~singleAvailable
                         matRad_cfg.dispWarning('Chosen Machine does not support a singleGaussian Pencil-Beam model!');
                         this.lateralModel = 'auto';
                     end
                 case 'double'
-                    if ~all(arrayfun(fValidateDouble,this.machine.data))
+                    if ~doubleAvailable
                         matRad_cfg.dispWarning('Chosen Machine does not support a doubleGaussian Pencil-Beam model!');
                         this.lateralModel = 'auto';
                     end
                 case 'multi'
-                    if ~all(arrayfun(fValidateMulti,this.machine.data))
+                    if ~multiAvailable
                         matRad_cfg.dispWarning('Chosen Machine does not support a multiGaussian Pencil-Beam model!');
                         this.lateralModel = 'auto';
                     end
-                case 'auto'
+                case {'auto','fast'}
                     %Do nothing, will be handled below
                 otherwise
                     matRad_cfg.dispError('Lateral model ''%s'' not known!',this.lateralModel);
@@ -94,12 +100,24 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             %Now check if we need tho chose the lateral model because it
             %was set to auto
             if strcmp(this.lateralModel,'auto') 
-                if all(arrayfun(fValidateMulti,this.machine.data))
+                if multiAvailable
                     this.lateralModel = 'multi';
-                elseif all(arrayfun(fValidateDouble,this.machine.data))
+                elseif doubleAvailable
                     this.lateralModel = 'double';
-                elseif all(arrayfun(fValidateSingle,this.machine.data))
+                elseif singleAvailable
                     this.lateralModel = 'single';
+                else
+                    matRad_cfg.dispError('Invalid kernel model!');
+                end
+            end
+
+            if strcmp(this.lateralModel,'fast')
+                if singleAvailable
+                    this.lateralModel = 'single';
+                elseif doubleAvailable
+                    this.lateralModel = 'double';
+                elseif multiAvailable
+                    this.lateralModel = 'multi';
                 else
                     matRad_cfg.dispError('Invalid kernel model!');
                 end
@@ -566,7 +584,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                 sigmaIni_sq = sigmaIni^2;
 
                 % consider range shifter for protons if applicable
-                if  strcmp(this.machine.meta.radiationMode,'protons') && rangeShifterLUT(i).eqThickness > 0  && ~strcmp(this.machine.meta.machine,'Generic')
+                if  strcmp(this.machine.meta.radiationMode,'protons') && rangeShifterLUT(i).eqThickness > 0 
 
                     %get max range shift
                     sigmaRashi = matRad_calcSigmaRashi(this.machine.data(energyIx).energy, ...

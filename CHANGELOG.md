@@ -17,13 +17,14 @@
 - Added customizable TOPAS interface for ions (and experimental for photons)
 - Workflow of the existing Monte Carlo interfaces has been completely overhauled in the new engine format
 - New handling of coordinate system (separation into world / cube systems with dedicated transformation functions) to ease readability
+- Recalculated proton_Generic machine with stored phase space parameterization to facilitate consistent MC / PB calculations.
 
 #### Helium planning
 - matRad now contains a Generic helium dataset including LET
 - LET-based Helium model
 
 #### Extended biological modeling
-- Multiple variable RBE models for protons and helium added
+- Multiple variable RBE models for protons and helium added with an Object-oriented Datamodel Architecture
 - BED optimization
 
 #### Widget-Based GUI
@@ -35,15 +36,15 @@
 - added a DICOM exporter for CTs, RTStruct, RTPlan (photons, safeguarded) and RTDose
 - Refactored the DICOM importer for better use from scripts
 
-#### Possibly Breaking Changes to matRad core workflow and functions
-While we try to keep downwards compatibility (and will provide fixes if breaking changes are detected), here are some potential dealbreakers
+#### Possibly (and probably) Breaking Changes to matRad core workflow and functions
+While we try to keep downwards compatibility (and will provide fixes if breaking changes are detected), here are some potential/probable dealbreakers
 - The coordinate handling of the isocenter changed. The isocenter is now always given in "world" coordinates (i.e., corresponding to the ct plane coordintes). Before, the isocenter resided in its own "cube" coordinate system (voxel index * resolution)
+- Some other coordinate system bug-fixes might induce changes when an existing script is rerun
 - Default configuration options now stored in MatRad_Config under "defaults" struct. There is a compatibility layer, but this might break under user changes
 - Changed matRad_calcCubes to accept a variety of different fields for Monte Carlo, without changing the current usage
-- Some coordinate system bug-fixes might induce changes when an existing script is rerun
-- The object oriented scenario models and biological models could procude issues in old scripts if not set
+- Biological Models are defined in a completely different way now and downwards compatibility is not guaranteed.
+- The object oriented scenario models and biological models could procude issues in old scripts if matRad can not infer the models
 - While the old dose calculation functions have been kept in a compatibility / deprecation layer, some configuration options might not work as intended
-- Biological Models are defined in a completely different way now
 
 ### Other Enhancements, Documentation, and Testing
 
@@ -65,6 +66,12 @@ While we try to keep downwards compatibility (and will provide fixes if breaking
 - Corrected path issues and file handling, especially for temporary directories and submodules.
 - Fixed some bugs in optimization objectives & constraints for special input cases
 - Fixed issues in DICOM import expecting non-standard tags
+
+### Semantic Versioning
+- Starting from major version 3.*, matRad will follow rigorous semantic versioning in a major.minor.patch style
+  - **Major:** Major releases include major new features (e.g. a new modality) and/or do not guarantee downwards compatibility of the top-level API, which we consider calls to all functions on the top-level of the "matRad" folder. Since a lot of configuration of these functions can be done per `pln.prop*` and other propertie sin `pln`, this might happen more quickly than one might think.
+  - **Minor:** Minor releases incldue minor new features (e.g. a new optimizer, objectives, biomodel or dose calculation algorithm). Downwards compatibility (within the major release) is preserved.
+  - **Patch:** Patch versions only fix bugs and do not introduce new features. Exceptions could be the exposure of new, minimal configuration options to mitigate a bug occuring in special circumstances.
 
 ## Version 2.10.1 - Patch release for "Blaise" 
 Release with small updates, clean-ups and bugfixes    
