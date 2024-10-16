@@ -64,14 +64,23 @@ if ~isa(this.multScen,'matRad_ScenarioModel')
     this.multScen = matRad_multScen(ct,this.multScen);
 end
 
-if ~isa(this.bioParam,'matRad_BiologicalModel')
-    this.bioParam = matRad_bioModel(radiationMode,'physicalDose','none');
+% load machine file from base data folder
+this.machine = this.loadMachine(radiationMode,machine);
+
+%Biological Model
+if ~isa(this.bioModel,'matRad_BiologicalModel')
+    this.bioModel = matRad_BiologicalModel.validate(this.bioModel,radiationMode, this.providedQuantities(this.machine));
+end
+
+if any(strcmp(this.bioModel.requiredQuantities, 'LET'))
+
+    this.calcLET = true;
 end
 
 dij = struct();
 
-if ~isnan(this.bioParam.RBE)
-    dij.RBE = this.bioParam.RBE; 
+if matRad_ispropCompat(this.bioModel, 'RBE') && ~isnan(this.bioModel.RBE)
+    dij.RBE = this.bioModel.RBE; 
 end
 
 %store CT grid
@@ -110,6 +119,7 @@ dij.doseGrid.cubeCoordOffset = [dij.doseGrid.resolution.x - dij.ctGrid.resolutio
 % meta information for dij
 dij.numOfBeams         = numel(stf);
 dij.numOfScenarios     = this.multScen.totNumScen;
+
 dij.numOfRaysPerBeam   = [stf(:).numOfRays];
 dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
 dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
@@ -181,21 +191,18 @@ this.VdoseGridMask(this.VdoseGrid) = true;
 this.VctGridMask = false(prod(ct.cubeDim),1);
 this.VctGridMask(this.VctGrid) = true;
 
-% load machine file from base data folder
-this.machine = this.loadMachine(radiationMode,machine);
-
 this.doseGrid = dij.doseGrid;
 
 %Voxel selection for dose calculation
 % ser overlap prioriites
-cst = matRad_setOverlapPriorities(cst);
+this.cstDoseGrid = matRad_setOverlapPriorities(cst);
 
 % resizing cst to dose cube resolution
-cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
+this.cstDoseGrid = matRad_resizeCstToGrid(this.cstDoseGrid,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
    dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
 
 %structures that are selected here will be included in dose calculation over the robust scenarios
-this.robustVoxelsOnGrid = matRad_selectVoxelsFromCst(cst, dij.doseGrid, this.selectVoxelsInScenarios);
+this.robustVoxelsOnGrid = matRad_selectVoxelsFromCst(this.cstDoseGrid, dij.doseGrid, this.selectVoxelsInScenarios);
 
 end
 

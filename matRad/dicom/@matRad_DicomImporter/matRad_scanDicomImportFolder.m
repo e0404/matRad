@@ -112,7 +112,7 @@ if ~isempty(obj.allfiles)
             case 'RTDOSE'
 
                 obj.allfiles = parseDicomTag(obj.allfiles,info,'SOPInstanceUID',i,4);
-                if isfield(info.ReferencedRTPlanSequence.Item_1,'ReferencedSOPInstanceUID')
+                if isfield(info,'ReferencedRTPlanSequence') &&  isfield(info.ReferencedRTPlanSequence.Item_1,'ReferencedSOPInstanceUID')
                     obj.allfiles = parseDicomTag(obj.allfiles,info.ReferencedRTPlanSequence.Item_1,'ReferencedSOPInstanceUID',i,15);
                 end
             case 'RTSTRUCT'

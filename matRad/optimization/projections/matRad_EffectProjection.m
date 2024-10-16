@@ -30,12 +30,13 @@ classdef matRad_EffectProjection < matRad_BackProjection
                     effect = dij.mAlphaDose{scen}*w + (dij.mSqrtBetaDose{scen}*w).^2;
                 end 
             else
-                if isempty(dij.ax{scen}) || isempty(dij.bx{scen})
+                [ctScen,~,~] = ind2sub(size(dij.physicalDose),scen); %TODO: Workaround for now
+                if isempty(dij.ax{ctScen}) || isempty(dij.bx{ctScen})
                     effect = [];
                     matRad_cfg = MatRad_Config.instance();
                     matRad_cfg.dispWarning('Empty dij.ax scenario in optimization detected! This should not happen...\n');
                 else
-                    effect = dij.ax{scen} .* (dij.physicalDose{scen} * w) + dij.bx{scen} .* (dij.physicalDose{scen}*w).^2;
+                    effect = dij.ax{ctScen} .* (dij.physicalDose{scen} * w) + dij.bx{ctScen} .* (dij.physicalDose{scen}*w).^2;
                 end
             end
         end
@@ -53,14 +54,15 @@ classdef matRad_EffectProjection < matRad_BackProjection
                     wGrad = vBias + mPsi;
                 end
             else
-                if isempty(dij.ax{scen}) || isempty(dij.bx{scen})
+                [ctScen,~,~] = ind2sub(size(dij.physicalDose),scen); %TODO: Workaround for now
+                if isempty(dij.ax{ctScen}) || isempty(dij.bx{ctScen})
                     wGrad = [];
                     matRad_cfg = MatRad_Config.instance();
                     matRad_cfg.dispWarning('Empty dij.ax/dij.bx scenario in optimization detected! This should not happen...\n');
                 else
-                    vBias = ((doseGrad{scen}.*dij.ax{scen})' * dij.physicalDose{scen})';
+                    vBias = ((doseGrad{scen}.*dij.ax{ctScen})' * dij.physicalDose{scen})';
                     quadTerm = dij.physicalDose{scen} * w;
-                    mPsi = (2*(doseGrad{scen}.*quadTerm.*dij.bx{scen})' * dij.physicalDose{scen})';
+                    mPsi = (2*(doseGrad{scen}.*quadTerm.*dij.bx{ctScen})' * dij.physicalDose{scen})';
                     wGrad = vBias + mPsi;
                 end
             end

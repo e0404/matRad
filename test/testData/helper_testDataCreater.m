@@ -54,7 +54,7 @@ pln.propStf.longitudinalSpotSpacing = 8;
 pln.propStf.bixelWidth = 10;
 pln.propDoseCalc.doseGrid.resolution = struct('x',10,'y',10,'z',10); %[mm]
 
-%pln.bioParam = matRad_bioModel(pln.radiationMode,'physicalDose','none');
+%pln.bioModel = matRad_bioModel(pln.radiationMode,'none');
 
 %% Generate Beam Geometry STF
 pln.propStf.addMargin    = false; %to make smaller stf, les bixel

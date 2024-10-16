@@ -141,7 +141,7 @@ else
     obj.pln.machine         = 'Generic';
 end
 % set bio model parameters (default physical opt, no bio model)
-obj.pln.bioParam = matRad_bioModel(obj.pln.radiationMode,'physicalDose','none');
+obj.pln.bioModel = matRad_bioModel(pln.radiationMode,'none');
 
 % set properties for steering
 obj.pln.propStf.isoCenter    = isoCenter;

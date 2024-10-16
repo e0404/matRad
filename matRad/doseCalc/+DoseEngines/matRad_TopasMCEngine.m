@@ -2411,9 +2411,9 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
     end
     methods(Static)
-           function [available,msg] = isAvailable(pln,machine)   
+        function [available,msg] = isAvailable(pln,machine)
             % see superclass for information
-            
+
             msg = [];
             available = false;
 
@@ -2427,7 +2427,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
                 %check modality
                 checkModality = any(strcmp(DoseEngines.matRad_TopasMCEngine.possibleRadiationModes, machine.meta.radiationMode));
-                
+
                 preCheck = checkBasic && checkModality;
 
                 if ~preCheck
@@ -2439,9 +2439,12 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 msg = 'Your machine file is invalid and does not contain the basic field (meta/data/radiationMode)!';
                 return;
             end
-
-            
-       end
+        end
+        %Used to check against a machine file if a specific quantity can be
+        %computed.
+        function q = providedQuantities(machine)
+            q = {'physicalDose','LET','alpha','beta'};            
+        end
     end
 end
 

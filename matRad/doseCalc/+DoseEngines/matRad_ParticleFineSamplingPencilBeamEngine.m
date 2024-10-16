@@ -163,7 +163,8 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
         
         function kernels = interpolateKernelsInDepth(this,bixel)
             kernels = interpolateKernelsInDepth@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(this,bixel);
-            kernels = structfun(@(x) reshape(x,size(bixel.radDepths)),kernels,'UniformOutput',false);
+
+            kernels = structfun(@(x) reshape(x,[size(bixel.radDepths), size(x,2)]),kernels,'UniformOutput',false);
         end
         
         function bixel = calcParticleBixel(this,bixel)
@@ -184,21 +185,28 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
             
             bixel.sigmaSubSq = bixel.sigmaSub.^2;            
             
-            dg = ~isfield(bixel.baseData,'sigma');
-      
-            if dg
-                % compute lateral sigmas
-                sigmaSqNarrow = squeeze(kernel.sigma1).^2 + bixel.sigmaSubSq';
-                sigmaSqBroad  = squeeze(kernel.sigma2).^2 + bixel.sigmaSubSq';
-
-                % calculate lateral profile
-                L_Narr =  exp( -squeeze(bixel.radialDist_sq) ./ (2*sigmaSqNarrow))./(2*pi*sigmaSqNarrow);
-                L_Bro  =  exp( -squeeze(bixel.radialDist_sq) ./ (2*sigmaSqBroad ))./(2*pi*sigmaSqBroad );
-                L = (1-squeeze(kernel.weight)).*L_Narr + squeeze(kernel.weight).*L_Bro;
-            else
-                %compute lateral sigma
-                sigmaSq = squeeze(kernel.sigma).^2 + bixel.sigmaSubSq';
-                L = exp( -squeeze(bixel.radialDist_sq) ./ (2*sigmaSq))./ (2*pi*sigmaSq);
+            
+            switch this.lateralModel
+                case 'single'
+                    %compute lateral sigma
+                    sigmaSq = squeeze(kernel.sigma).^2 + bixel.sigmaSubSq';
+                    L = exp( -squeeze(bixel.radialDist_sq) ./ (2*sigmaSq))./ (2*pi*sigmaSq);
+                case 'double'
+                    % compute lateral sigmas
+                    sigmaSqNarrow = squeeze(kernel.sigma1).^2 + bixel.sigmaSubSq';
+                    sigmaSqBroad  = squeeze(kernel.sigma2).^2 + bixel.sigmaSubSq';
+    
+                    % calculate lateral profile
+                    L_Narr =  exp( -squeeze(bixel.radialDist_sq) ./ (2*sigmaSqNarrow))./(2*pi*sigmaSqNarrow);
+                    L_Bro  =  exp( -squeeze(bixel.radialDist_sq)./ (2*sigmaSqBroad ))./(2*pi*sigmaSqBroad );
+                    L = (1-squeeze(kernel.weight)).*L_Narr + squeeze(kernel.weight).*L_Bro;
+                %case 'multi'
+                %    sigmaSq = kernels.sigmaMulti.^2 + bixel.sigmaIniSq;
+                %    L = sum([1 - sum(kernels.weightMulti,2), kernels.weightMulti] .* exp(-radialDist_sq ./ (2*sigmaSq))./(2*pi*sigmaSq),2);
+                otherwise
+                    %Sanity check
+                    matRad_cfg = MatRad_Config.instance();
+                    matRad_cfg.dispError('Invalid Lateral Model');
             end
             
             tmpDose = (L .* squeeze(kernel.Z));
@@ -206,24 +214,61 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
             bixel.physicalDose = bixel.baseData.LatCutOff.CompFac*(tmpDose*bixel.finalSubWeight);
 
             nanIx = isnan(bixel.physicalDose);
-            bixel.pyhsicalDose(nanIx) = 0;
+            bixel.physicalDose(nanIx) = 0;
             if this.calcLET
                 tmpLET = bixel.baseData.LatCutOff.CompFac*((tmpDose .* squeeze(kernel.LET)) *bixel.finalSubWeight);
                 bixel.mLETDose(~nanIx) = bixel.mLETDose(~nanIx) + tmpLET(~nanIx);
             end
-            
+
             if this.calcBioDose
-                bixel.mAlphaDose = bixel.physicalDose;
-                bixel.mSqrtBetaDose = bixel.physicalDose;
-                %From matRad_calcLQParameter
-                numOfTissueClass = size(bixel.baseData.alpha,2);
-                for i = 1:numOfTissueClass
-                    mask = bixel.vTissueIndex == i;
-                    if any(mask)
-                        bixel.mAlphaDose(mask) = bixel.mAlphaDose(mask) .* X.alpha(mask);
-                        bixel.mSqrtBetaDose(mask)  = bixel.mSqrtBetaDose(mask) .* X.beta(mask);
+
+                % Chek if there are bi dimensional kernel, (this is not very well implemented)
+                biDimKernels = find(structfun(@(x) size(x,4)>1,kernel));
+                
+                if any(biDimKernels)
+
+                    tmpBixel = bixel;
+
+                    % Rearrange kernel fields to column arrazs
+                    linKernel = structfun(@(x) squeeze(reshape(x,[size(bixel.radDepths(:)), size(x,4)])), kernel, 'UniformOutput',false);
+                   
+                    % Define those fields that are stored only as
+                    % (#radDepths,1) and not (#radDepths,1,numOfSub)
+                    fieldsToIncrease = {'vTissueIndex','vAlphaX', 'vBetaX'};
+                    
+                    % adjust te dimension by repeating
+                    for f=fieldsToIncrease
+                        tmpBixel.(f{1}) = repmat(bixel.(f{1}), bixel.numOfSub,1);
+                        tmpBixel.(f{1}) = tmpBixel.(f{1})(:);
                     end
+
+                    % Get column array of depths
+                    tmpBixel.radDepths = bixel.radDepths(:);
+
+                    % Finaly apply the model
+                    tmpBixel = this.bioModel.calcBiologicalQuantitiesForBixel(tmpBixel,linKernel);
+
+                    % Restore everything back to normal
+                    tmpBixel.radDepths = reshape(tmpBixel.radDepths, size(bixel.radDepths));
+                    
+                    % Find those fields that were computed by biological
+                    % model
+                    bioModelFileds = fieldnames(tmpBixel);
+                    bioModelFileds = bioModelFileds(~ismember(bioModelFileds, fieldnames(bixel)))';
+                    
+                    % restore them back to correct dimensionality as well
+                    for i=bioModelFileds
+                        bixel.(i{1}) = reshape(tmpBixel.(i{1}), size(bixel.radDepths));
+                    end
+                else
+                    bixel = this.bioModel.calcBiologicalQuantitiesForBixel(bixel,kernel);
                 end
+
+                if isa(this.bioModel, 'matRad_LQBasedModel')
+                    bixel.mAlphaDose    = (squeeze(bixel.alpha) .* squeeze(tmpDose))*bixel.finalSubWeight;
+                    bixel.mSqrtBetaDose = (squeeze(sqrt(bixel.beta)) .* squeeze(tmpDose))*bixel.finalSubWeight;
+                end
+
             end
             
         end
@@ -424,7 +469,10 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
                 return;
             end
 
-            checkMeta = all(isfield(machine.meta,{'SAD','BAMStoIsoDist','LUT_bxWidthminFWHM','dataType'}));
+            checkMeta = all(isfield(machine.meta,{'SAD','BAMStoIsoDist','dataType'}));
+            
+            %Superseded names from older machine file versions
+            checkMeta = checkMeta && any(isfield(machine.meta,{'LUTspotSize','LUT_bxWidthminFWHM'}));
 
             dataType = machine.meta.dataType;
             if strcmp(dataType,'singleGauss')

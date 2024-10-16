@@ -67,7 +67,7 @@ mkdir(fullfile(dataPath,'figures'));
 
 %% correct cst for unwanted characters and disable commonly not wanted structures
 
-doseCube = nominalScenario.(pln.bioParam.quantityVis);
+doseCube = nominalScenario.(pln.bioModel.quantityVis);
 
 fillPrescription = isempty(dPres);
 
@@ -235,7 +235,7 @@ for plane=1:3
     for cubesToPlot = 1:3
         figure; ax = gca;
         
-        doseCube = nominalScenario.(pln.bioParam.quantityVis); 
+        doseCube = nominalScenario.(pln.bioModel.quantityVis); 
         
         if cubesToPlot == 1 
             
@@ -314,7 +314,7 @@ for i = 1:size(cst,1)
         x = nominalScenario.dvh(i).doseGrid(1:argmin);        
         h(1) = plot(x,y,'LineWidth',2, 'Color', colors(i,:), 'DisplayName', cst{i,2});      
         ylim([0 100]);
-        if strncmp(pln.bioParam.quantityVis,'RBExD',5)
+        if strncmp(pln.bioModel.quantityVis,'RBExD',5)
             xlabel('Dose RBE x [Gy]');
         else
             xlabel('Dose [Gy]');
@@ -382,7 +382,7 @@ clear filename
 % relative file path (relative to main.tex)
 relativePath = fullfile('data','structures');
 
-if strcmp(pln.bioParam.quantityVis, 'RBExD')
+if strcmp(pln.bioModel.quantityVis, 'RBExD')
     labelDoseDVH = 'Dose RBE x [Gy]';
 else
    labelDoseDVH = 'Dose [Gy]';

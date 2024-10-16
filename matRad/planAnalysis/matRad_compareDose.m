@@ -18,7 +18,7 @@ function [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, c
 %                  [0 0 1]: evaluate only DVH
 %   contours       (optional) specify if contours are plotted,
 %                  'on' or 'off'
-%   pln            (optional) specify BioModel for DVH plot
+%   pln            (optional) specify BfioModel for DVH plot
 %   criteria:      (optional)[1x2] vector specifying the distance to agreement
 %                  criterion; first element is percentage difference,
 %                  second element is distance [mm], default [3 3]
@@ -239,7 +239,7 @@ if enable(2) == 1
     end
 
     if exist('pln','var') && ~isempty(pln)
-        if strcmp(pln.bioParam.quantityVis,'physicalDose')
+        if strcmp(pln.propOpt.quantityOpt,'physicalDose')
             yLabelString = 'Dose [Gy]';
         else
             yLabelString = 'RBE x Dose [Gy(RBE)]';

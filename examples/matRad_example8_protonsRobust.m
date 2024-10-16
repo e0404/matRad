@@ -58,40 +58,29 @@ ixNT = 3;
 % need to define a treatment machine to correctly load the corresponding 
 % base data. matRad features generic base data in the file
 % 'carbon_Generic.mat'; consequently the machine has to be set accordingly
-pln.radiationMode = 'protons';            
-pln.machine       = 'Generic';
+pln.radiationMode   = 'protons';            
+pln.machine         = 'Generic';
+pln.numOfFractions  = 20;
+pln.bioModel        = 'constRBE';
 
-%%
-% Define the biological optimization model for treatment planning along
-% with the quantity that should be used for optimization. Possible model values 
-% are:
-% 'none':     physical optimization;
-% 'constRBE': constant RBE of 1.1; 
-% 'MCN':      McNamara-variable RBE model for protons; 
-% 'WED':      Wedenberg-variable RBE model for protons
-% 'LEM':      Local Effect Model 
-% and possible quantityOpt are 'physicalDose', 'effect' or 'RBExD'.
-% As we use protons, we use a constant RBE of 1.1.
-modelName    = 'constRBE';
-quantityOpt  = 'RBExD';   
+%% Uncertainty Model Setup 
+% Now we want to set up a suitable scenario model for robust optimization
+% We can use standard model by setting pln.multScen to wcScen, impScen, or
+% rndScen. But we can also define the model directly here
+pln.multScen = matRad_WorstCaseScenarios(ct);
+pln.multScen.shiftSD = [1 1 1]; %Standard shift errors
+pln.multScen.wcFactor = 3; %Our worst case is considered ot be 3 standard deviations
+pln.multScen.listAllScenarios();
+
 
 %%
 % The remaining plan parameters are set like in the previous example files
-pln.numOfFractions        = 20;
 pln.propStf.gantryAngles  = [0 90];
 pln.propStf.couchAngles   = [0 0];
 pln.propStf.bixelWidth    = 5;
 pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
-pln.propOpt.runDAO        = 0;
-pln.propOpt.runSequencing = 0;
-
-% retrieve bio model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
-
-% retrieve 9 worst case scenarios for dose calculation and optimziation
-pln.multScen = matRad_multScen(ct,'wcScen');                                         
-
+                            
 pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
@@ -106,7 +95,6 @@ dij = matRad_calcParticleDose(ct,stf,pln,cst);
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment.
-
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Trigger robust optimization

@@ -67,14 +67,20 @@ cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
                                  dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
 
 
+if ~isfield(pln,'bioModel')
+    pln.bioModel = 'none';
+end
+
+if ~isa(pln.bioModel,'matRad_BiologicalModel')
+    pln.bioModel = matRad_BiologicalModel.validate(pln.bioModel,pln.radiationMode);
+end
 
 % set optimization options
 options.ixForOpt     = 1;
 options.numOfScen    = 1;
 options.scenProb     = 1;
-options.bioOpt       = pln.bioParam.bioOpt;
-options.quantityOpt  = pln.bioParam.quantityOpt;
-options.model        = pln.bioParam.model;
+options.quantityOpt  = pln.propOpt.quantityOpt;
+options.model        = pln.bioModel.model;
 
 % update aperture info vector
 apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(apertureInfo,apertureInfo.apertureVector);

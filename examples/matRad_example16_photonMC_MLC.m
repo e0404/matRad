@@ -50,7 +50,7 @@ quantityOpt    = 'physicalDose';
 modelName      = 'none';  
 
 % retrieve bio model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
+pln.bioModel = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 
 % retrieve scenarios for dose calculation and optimziation
 pln.multScen = matRad_NominalScenario(ct);
@@ -67,6 +67,7 @@ stf = matRad_generateStf(ct,cst,pln);
 dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 
 %% Inverse Optimization for IMRT
+pln.propOpt.quantityOpt = quantityOpt;
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 %% Sequencing
 % This is a multileaf collimator leaf sequencing algorithm that is used in 

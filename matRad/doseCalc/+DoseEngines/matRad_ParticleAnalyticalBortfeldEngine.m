@@ -372,7 +372,10 @@ classdef matRad_ParticleAnalyticalBortfeldEngine < DoseEngines.matRad_ParticlePe
                 return;
             end
 
-            checkMeta = all(isfield(machine.meta,{'SAD','BAMStoIsoDist','LUT_bxWidthminFWHM','dataType'}));
+            checkMeta = all(isfield(machine.meta,{'SAD','BAMStoIsoDist','dataType'}));
+            
+            %Superseded names from older machine file versions
+            checkMeta = checkMeta && any(isfield(machine.meta,{'LUTspotSize','LUT_bxWidthminFWHM'}));
 
             dataType = machine.meta.dataType;
             if strcmp(dataType,'singleGauss')
@@ -384,6 +387,12 @@ classdef matRad_ParticleAnalyticalBortfeldEngine < DoseEngines.matRad_ParticlePe
             end
 
             available = checkMeta && checkData;
+        end
+
+        %Used to check against a machine file if a specific quantity can be
+        %computed.
+        function q = providesQuantities(machine)
+            q = {'physicalDose'};
         end
     end
 end

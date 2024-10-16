@@ -82,7 +82,7 @@ if ~(exist('ct','var') && exist('cst','var') && exist('stf','var') && exist('pln
 end
 
 % calculate RBExDose
-if ~isfield(pln, 'bioParam')
+if ~isfield(pln, 'bioModel')
     if strcmp(pln.radiationMode, 'protons')
         pln.bioOptimization = 'RBExD';
         pln.model = 'constRBE';
@@ -90,7 +90,7 @@ if ~isfield(pln, 'bioParam')
         pln.bioOptimization = 'RBExD';
         pln.model = 'LEM';
     end
-    pln.bioParam = matRad_bioModel(pln.radiationMode, pln.bioOptimization, pln.model);
+    pln.bioModel = matRad_bioModel(pln.radiationMode, pln.model);
 end
 
 

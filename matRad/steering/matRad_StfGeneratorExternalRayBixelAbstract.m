@@ -202,8 +202,16 @@ classdef (Abstract) matRad_StfGeneratorExternalRayBixelAbstract < matRad_StfGene
             beam.isoCenter       = this.isoCenter(beamIndex,:);
             beam.bixelWidth      = this.bixelWidth;
             beam.radiationMode   = this.radiationMode;
-            beam.machine         = this.machine.meta.machine;
-            beam.SAD             = this.machine.meta.SAD;
+
+            % Newer machine files have "name" instead of "machine"
+            if ~isfield(this.machine.meta,'machine')
+                machineName = this.machine.meta.name;                    
+            else
+                machineName = this.machine.meta.machine;
+            end
+            beam.machine = machineName;
+
+            beam.SAD = this.machine.meta.SAD;
         end
             
         
@@ -464,7 +472,7 @@ classdef (Abstract) matRad_StfGeneratorExternalRayBixelAbstract < matRad_StfGene
             %checkBasic
             available = isfield(machine,'meta') && isfield(machine,'data');
 
-            available = available && isfield(machine.meta,'machine');
+            available = available && any(isfield(machine.meta,{'machine','name'}));
 
             available = available && isfield(machine.meta,'SAD') && isscalar(machine.meta.SAD);
     

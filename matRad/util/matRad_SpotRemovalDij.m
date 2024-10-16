@@ -1,5 +1,5 @@
-classdef MatRad_spotRemovalDij < handle
-    % MatRad_spotRemovalDij class definition
+classdef matRad_SpotRemovalDij < handle
+    % matRad_SpotRemovalDij class definition
     %
     %
     % References
@@ -37,7 +37,7 @@ classdef MatRad_spotRemovalDij < handle
     end
 
     methods
-        function obj = MatRad_spotRemovalDij(dij,w)
+        function obj = matRad_SpotRemovalDij(dij,w)
 
             obj.reset();
 

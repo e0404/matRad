@@ -156,8 +156,13 @@ set(axesHandle,'LineWidth',1.5,'FontSize',fontSizeValue); %set(gca,'LineWidth',1
 ylabel(axesHandle,'Volume [%]','FontSize',fontSizeValue)
 
 if ~isempty(pln)
+    if ~isfield(pln,'bioModel')
+        pln.bioModel = 'none';
+    end
 
-    if strcmp(pln.bioParam.model,'none')
+    pln.bioModel = matRad_BiologicalModel.validate(pln.bioModel,pln.radiationMode);
+    
+    if strcmp(pln.bioModel.model,'none')
         xlabel('Dose [Gy]','FontSize',fontSizeValue);
     else
         xlabel(axesHandle,'RBE x Dose [Gy(RBE)]','FontSize',fontSizeValue);

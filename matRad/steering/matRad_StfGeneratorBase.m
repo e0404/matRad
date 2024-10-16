@@ -29,7 +29,7 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
         visMode = 0;                %Visualization Options
         addMargin = true;           %Add margins to target (for numerical stability and robustness)
         multScen;                   %Scenario Model
-        bioParam;                   %Biological Model
+        bioModel;                   %Biological Model
         radiationMode;              %Radiation Mode
         machine;                    %Machine
     end
@@ -125,8 +125,16 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
             end
 
             %Assign biological model
-            if isfield(pln,'bioParam')
-                this.bioParam = pln.bioParam;
+            if isfield(pln,'bioModel')
+                try
+                    this.bioModel = matRad_BiologicalModel.validate(pln.bioModel, pln.radiationMode);
+                catch ME
+                    %Steering generation usually works independent of biological model, so we warn and set a dummy model
+                    matRad_cfg.dispWarning('Biological model inconsistent with chosen machine / radiation mode, biological dose calculation will probably not work: %s',ME.message);
+                    this.bioModel = matRad_EmptyBiologicalModel();
+                end
+            else
+                this.bioModel = matRad_EmptyBiologicalModel();
             end
 
             if nargin < 3 || ~isscalar(warnWhenPropertyChanged) || ~islogical(warnWhenPropertyChanged)

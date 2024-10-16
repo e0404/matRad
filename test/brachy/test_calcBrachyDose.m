@@ -7,6 +7,9 @@ initTestSuite;
 % test if dij struct has required shape
 function test_rightOutput()
     engine = DoseEngines.matRad_TG43BrachyEngine;
+    pln.bioModel = matRad_bioModel('brachy', 'none');
+    engine.assignPropertiesFromPln(pln);
+
     load PROSTATE.mat ct cst;
     load examplePlnAndStf.mat pln stf;
     pln.propDoseCalc.durationImplanted = Inf;

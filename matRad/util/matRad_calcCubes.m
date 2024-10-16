@@ -176,13 +176,13 @@ if isfield(dij,'ax') && isfield(dij,'bx')
         for i = 1:length(beamInfo)
             %         ix = ~isnan(dij.ax{1}./dij.bx{1});
             if isfield(resultGUI, 'RBExDose')
-                Dose = resultGUI.(['RBExDose', beamInfo(i).suffix]);
+                dose = resultGUI.(['RBExDose', beamInfo(i).suffix]);
             else
-                Dose = resultGUI.(['physicalDose', beamInfo(i).suffix]);
+                dose = resultGUI.(['physicalDose', beamInfo(i).suffix]);
             end
-            effect = dij.ax{ctScen}.* Dose + dij.bx{ctScen}.*Dose.^2;
+            effect = dij.ax{ctScen}.* dose(:) + dij.bx{ctScen}.*dose(:).^2;
             resultGUI.(['BED', beamInfo(i).suffix]) = zeros(dij.doseGrid.dimensions);
-            resultGUI.(['BED', beamInfo(i).suffix])(ix) = effect(ixWeighted)./alphaX(ixWeighted);
+            resultGUI.(['BED', beamInfo(i).suffix])(ixWeighted) = effect(ixWeighted)./dij.ax{ctScen}(ixWeighted);
             resultGUI.(['BED', beamInfo(i).suffix]) = reshape(resultGUI.(['BED', beamInfo(i).suffix]), dij.doseGrid.dimensions);
         end
         if isfield(resultGUI, 'RBExDose')

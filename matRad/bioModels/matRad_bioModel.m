@@ -1,4 +1,4 @@
-function model = matRad_bioModel(sRadiationMode,sQuantityOpt, sModel)
+function model = matRad_bioModel(sRadiationMode, sModel)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %  matRad_bioModel
 %  This is a helper function to instantiate a matRad_BiologicalModel. This
@@ -6,14 +6,13 @@ function model = matRad_bioModel(sRadiationMode,sQuantityOpt, sModel)
 %  Biological Models will follow a polymorphic software architecture
 %
 % call
-%   matRad_bioModel(sRadiationMode,sQuantityOpt, sModel)
+%   matRad_bioModel(sRadiationMode, sModel)
 %
-%   e.g. pln.bioParam = matRad_bioModel('protons','constRBE','RBExD')
+%   e.g. pln.bioModel = matRad_bioModel('protons','MCN')
 %
 % input
 %   sRadiationMode:     radiation modality 'photons' 'protons' 'helium' 'carbon' 'brachy'
-%   sQuantityOpt:       string to denote the quantity used for
-%                       optimization 'physicalDose', 'RBExD', 'effect'
+%   
 %   sModel:             string to denote which biological model is used
 %                       'none': for photons, protons, carbon                'constRBE': constant RBE for photons and protons
 %                       'MCN': McNamara-variable RBE model for protons      'WED': Wedenberg-variable RBE model for protons
@@ -37,6 +36,51 @@ function model = matRad_bioModel(sRadiationMode,sQuantityOpt, sModel)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-model = matRad_BiologicalModel(sRadiationMode,sQuantityOpt,sModel);
+matRad_cfg = MatRad_Config.instance();
 
-end % end class definition
+% Look for the correct inputs
+p = inputParser;
+addRequired(p, 'sRadiationMode', @ischar);
+addRequired(p, 'sModel',@ischar);
+
+p.KeepUnmatched = true;
+
+%Check for the available models
+mainFolder        = fullfile(matRad_cfg.matRadSrcRoot,'bioModels');
+userDefinedFolder = fullfile(matRad_cfg.primaryUserFolder, 'bioModels');
+
+if ~exist(userDefinedFolder,"dir")
+    folders = {mainFolder};
+else
+    folders = {mainFolder,userDefinedFolder};
+end
+
+availableBioModelsClassList = matRad_findSubclasses('matRad_BiologicalModel', 'folders', folders , 'includeSubfolders',true);
+modelInfos = matRad_identifyClassesByConstantProperties(availableBioModelsClassList,'model');
+modelNames = {modelInfos.model};
+
+if numel(unique({modelInfos.model})) ~= numel(modelInfos)
+    matRad_cfg.dispError('Multiple biological models with the same name available.');
+end
+            
+selectedModelIdx = find(strcmp(sModel, modelNames));
+            
+% Create first instance of the selected model
+if ~isempty(selectedModelIdx)
+    tmpBioParam = modelInfos(selectedModelIdx).handle();
+else
+    matRad_cfg.dispError('Unrecognized biological model: %s', sModel);
+end
+
+% For the time being I do not assigne the model specific parameters, they
+% can be assigned by the user later
+
+correctRadiationModality = any(strcmp(tmpBioParam.possibleRadiationModes, sRadiationMode));
+
+if ~correctRadiationModality
+    matRad_cfg.dispError('Incorrect radiation modality for the required biological model');
+end
+
+model = tmpBioParam;
+
+end % end function

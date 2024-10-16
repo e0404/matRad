@@ -72,16 +72,16 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             % This should not be handled here as an optimization property
             % We should rather make optimization dependent on what we have
             % decided to calculate here.
-            if nargin > 0
-                if (isfield(pln,'bioParam')&& isfield(pln.bioParam,'quantityOpt')&& ...
-                        (isequal(pln.bioParam.quantityOpt,'effect') ||...
-                        isequal(pln.bioParam.quantityOpt,'RBExD')) && ...
-                        strcmp(pln.radiationMode,'carbon'))
-                    this.calcBioDose = true;
-                elseif strcmp(pln.radiationMode,'protons') && isfield(pln,'bioParam') && ...
-                        isfield(pln.bioParam,'quantityOpt') && isequal(pln.bioParam.quantityOpt,'RBExD')...
-                        && isequal(pln.bioParam.model,'constRBE')
-                    this.constantRBE = 1.1;
+
+            if nargin > 0 
+                if isfield(pln,'bioModel') 
+                    if isa(pln.bioModel,'matRad_LQBasedModel')        
+                        this.calcBioDose = true;
+                    elseif isa(pln.bioModel,'matRad_ConstantRBE')
+                        this.constantRBE = 1.1;                    
+                    else
+                        %Physical Dose calculation
+                    end
                 end
             end
         end
@@ -150,8 +150,14 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                 bdFile = this.forceBDL;
 
             else
+                % Newer machine files have "name" instead of "machine"
+                if ~isfield(this.machine.meta,'machine')
+                    machineName = this.machine.meta.name;                    
+                else
+                    machineName = this.machine.meta.machine;
+                end
                 % fit and create BDL file using selected machine file
-                bdFile = [this.machine.meta.machine '.txt'];
+                bdFile = [machineName '.txt'];
 
                 % Calculate MCsquare base data
                 % Argument stf is optional, if given, calculation only for energies given in stf
@@ -947,6 +953,12 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             available = preCheck & hasBinaries;
         end
 
+        %Used to check against a machine file if a specific quantity can be
+        %computed.
+        function q = providedQuantities(machine)
+            %A dose engine will, by definition, return dose
+            q = {'physicalDose','LET'};
+        end
     end
 end
 

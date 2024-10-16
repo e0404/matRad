@@ -4,43 +4,34 @@ test_functions = localfunctions();
 
 initTestSuite;
 
-function test_bioModelConstructor
+% function test_bioModelConstructor
+%     if moxunit_util_platform_is_octave()
+%          assertExceptionThrown(@() matRad_BiologicalModel());
+%          assertExceptionThrown(@() matRad_BiologicalModel('photons'));
+%     else
+%         assertExceptionThrown(@() matRad_BiologicalModel(),'MATLAB:minrhs');
+%         assertExceptionThrown(@() matRad_BiologicalModel('photons'),'MATLAB:minrhs');
+%     end
+
+
+function test_setBiologicalModel
+    bioModel = matRad_bioModel('photons','none');
+    assertTrue(isa(bioModel, 'matRad_EmptyBiologicalModel'));
+    bioModel = matRad_bioModel('protons', 'none');
+    assertTrue(isa(bioModel, 'matRad_EmptyBiologicalModel'));
+    
     if moxunit_util_platform_is_octave()
-         assertExceptionThrown(@() matRad_BiologicalModel());
-         assertExceptionThrown(@() matRad_BiologicalModel('photons'));
+        assertExceptionThrown(@(model) matRad_bioModel('photons', 'MCN'));
+        assertExceptionThrown(@(model) matRad_bioModel('protons', 'HEL'));
+
     else
-        assertExceptionThrown(@() matRad_BiologicalModel(),'MATLAB:minrhs');
-        assertExceptionThrown(@() matRad_BiologicalModel('photons'),'MATLAB:minrhs');
-    end
-
-
-function test_setBiologicalModel 
-    bioModel = matRad_BiologicalModel('photons','RBExD','LEM');
-    assertTrue(strcmp(bioModel.model, 'none')); %default photon model
-    assertTrue(strcmp(bioModel.quantityOpt, 'physicalDose'));
-    bioModel = matRad_BiologicalModel('protons','RBExD','LEM');
-    assertTrue(strcmp(bioModel.model, 'constRBE')); %default proton model
-    bioModel = matRad_BiologicalModel('carbon','effect','MCN');
-    assertTrue(strcmp(bioModel.model, 'LEM')); %default carbon model
-    assertTrue(strcmp(bioModel.quantityOpt, 'effect'));
-    bioModel = matRad_BiologicalModel('protons','BED','LEM');
-    assertTrue(strcmp(bioModel.model, 'MCN')); %default proton model for BED
-    assertTrue(strcmp(bioModel.quantityOpt, 'BED'));
-
-
-function test_calcLQParameter
-    bioModel = matRad_BiologicalModel('photons','RBExD','LEM');
-    if moxunit_util_platform_is_octave()
-        assertExceptionThrown(@() bioModel.calcLQParameter());
-        assertExceptionThrown(@() bioModel.calcLQParameterForKernel());
-    else
-        assertExceptionThrown(@() bioModel.calcLQParameter(),'MATLAB:minrhs');
-        assertExceptionThrown(@() bioModel.calcLQParameterForKernel(),'MATLAB:minrhs');
+        assertExceptionThrown(@(model) matRad_bioModel('photons', 'MCN'), 'matRad:Error');
+        assertExceptionThrown(@(model) matRad_bioModel('protons', 'HEL'),'matRad:Error');
     end
     
 
-function test_calcLQParameterForKernel_protonsMCN
-    bioModel = matRad_BiologicalModel('protons','RBExD','MCN');
+function test_calcBiologicalQuantitiesForBixel_MCN
+    bioModel = matRad_bioModel('protons','MCN');
     kernels.LET = 0.9810;
         
     bixel.energyIx = 11;
@@ -54,17 +45,17 @@ function test_calcLQParameterForKernel_protonsMCN
     test_bixelAlpha = 0.5170;
     test_bixelBeta = 0.0593;
     
-    [bixelAlpha,bixelBeta] = calcLQParameterForKernel(bioModel,bixel,kernels);
-    assertTrue(isnumeric(bixelBeta));
-    assertTrue(isnumeric(bixelAlpha));
-    assertElementsAlmostEqual(bixelAlpha,test_bixelAlpha,'absolute', 1e-4);
-    assertElementsAlmostEqual(bixelBeta, test_bixelBeta,'absolute', 1e-4);
+    [bixel] = calcBiologicalQuantitiesForBixel(bioModel,bixel,kernels);
+    assertTrue(isstruct(bixel));
+    assertTrue(isnumeric(bixel.alpha));
+    assertTrue(isnumeric(bixel.beta));
+    assertElementsAlmostEqual(bixel.alpha,test_bixelAlpha,'absolute', 1e-4);
+    assertElementsAlmostEqual(bixel.beta, test_bixelBeta,'absolute', 1e-4);
 
-
-function test_calcLQParameterForKernel_protonsWED
-    bioModel = matRad_BiologicalModel('protons','RBExD','WED');
+function test_calcBiologicalQuantitiesForBixel_WED
+    bioModel = matRad_bioModel('protons','WED');
     kernels.LET = 0.9810;
-    
+        
     bixel.energyIx = 11;
     load protons_Generic.mat;
     bixel.baseData = machine.data(11);
@@ -76,21 +67,21 @@ function test_calcLQParameterForKernel_protonsWED
     test_bixelAlpha = 0.5213;
     test_bixelBeta = 0.0500;
     
-    [bixelAlpha,bixelBeta] = calcLQParameterForKernel(bioModel,bixel,kernels);
-    
-    assertTrue(isnumeric(bixelBeta));
-    assertTrue(isnumeric(bixelAlpha));
-    assertElementsAlmostEqual(bixelAlpha,test_bixelAlpha,'absolute', 1e-4);
-    assertElementsAlmostEqual(bixelBeta, test_bixelBeta,'absolute', 1e-4);
+    [bixel] = calcBiologicalQuantitiesForBixel(bioModel,bixel,kernels);
+    assertTrue(isstruct(bixel));
+    assertTrue(isnumeric(bixel.alpha));
+    assertTrue(isnumeric(bixel.beta));
+    assertElementsAlmostEqual(bixel.alpha,test_bixelAlpha,'absolute', 1e-4);
+    assertElementsAlmostEqual(bixel.beta, test_bixelBeta,'absolute', 1e-4);
 
-function test_calcLQParameterForKernel_heliumHEL
-    bioModel = matRad_BiologicalModel('helium','RBExD','HEL');
+function test_calcBiologicalQuantitiesForBixel_HEL
+    bioModel = matRad_bioModel('helium','HEL');
     kernels.LET = 4.1914;
         
     bixel.energyIx = 11;
     load helium_Generic.mat;
     bixel.baseData = machine.data(11);
-    bixel.radDepths = 0.05;
+    bixel.radDepths = 0;
     bixel.vAlphaX = 0.5;
     bixel.vBetaX = 0.05;
     bixel.vTissueIndex = 1;
@@ -98,14 +89,15 @@ function test_calcLQParameterForKernel_heliumHEL
     test_bixelAlpha = 0.5190;
     test_bixelBeta = 0.0500;
     
-    [bixelAlpha,bixelBeta] = calcLQParameterForKernel(bioModel,bixel,kernels);
-    assertTrue(isnumeric(bixelBeta));
-    assertTrue(isnumeric(bixelAlpha));
-    assertElementsAlmostEqual(bixelAlpha,test_bixelAlpha,'absolute', 1e-4);
-    assertElementsAlmostEqual(bixelBeta, test_bixelBeta,'absolute', 1e-4);
+    [bixel] = calcBiologicalQuantitiesForBixel(bioModel,bixel,kernels);
+    assertTrue(isstruct(bixel));
+    assertTrue(isnumeric(bixel.alpha));
+    assertTrue(isnumeric(bixel.beta));
+    assertElementsAlmostEqual(bixel.alpha,test_bixelAlpha,'absolute', 1e-4);
+    assertElementsAlmostEqual(bixel.beta, test_bixelBeta,'absolute', 1e-4);
 
-function test_calcLQParameterForKernel_carbonLEM
-    bioModel = matRad_BiologicalModel('carbon','RBExD','LEM');
+function test_calcBiologicalQuantitiesForBixel_LEM
+    bioModel = matRad_bioModel('carbon','LEM');
     kernels.LET = 34.968;
     kernels.alpha = [0.2978 0.7053];
     kernels.beta = [0.0412 0.0443];
@@ -121,9 +113,56 @@ function test_calcLQParameterForKernel_carbonLEM
     test_bixelAlpha = 0.2978;
     test_bixelBeta = 0.0412;
     
-    [bixelAlpha,bixelBeta] = calcLQParameterForKernel(bioModel,bixel,kernels);
-    assertTrue(isnumeric(bixelBeta));
-    assertTrue(isnumeric(bixelAlpha));
-    assertElementsAlmostEqual(bixelAlpha,test_bixelAlpha,'absolute', 1e-4);
-    assertElementsAlmostEqual(bixelBeta, test_bixelBeta,'absolute', 1e-4);
+    [bixel] = calcBiologicalQuantitiesForBixel(bioModel,bixel,kernels);
+    assertTrue(isstruct(bixel));
+    assertTrue(isnumeric(bixel.alpha));
+    assertTrue(isnumeric(bixel.beta));
+    assertElementsAlmostEqual(bixel.alpha,test_bixelAlpha,'absolute', 1e-4);
+    assertElementsAlmostEqual(bixel.beta, test_bixelBeta,'absolute', 1e-4);
 
+% function test_bioOptimization_MCN_BED
+%     matRad_rc;
+%     matRad_cfg = MatRad_Config.instance();
+% 
+%     load('BOXPHANTOM.mat');
+% 
+%     pln.radiationMode = 'protons';
+%     pln.machine       = 'Generic';
+% 
+%     pln.numOfFractions        = 30;
+%     pln.propStf.gantryAngles  = 0;
+%     pln.propStf.couchAngles   = 0;
+%     pln.propStf.bixelWidth    = 5;
+%     pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
+% 
+%     pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+%     pln.propOpt.runDAO        = 0;
+%     pln.propSeq.runSequencing = 0;
+% 
+%     % dose calculation settings
+%     pln.propDoseCalc.doseGrid.resolution.x = 8;
+%     pln.propDoseCalc.doseGrid.resolution.y = 8;
+%     pln.propDoseCalc.doseGrid.resolution.z = 8;
+%     pln.propDoseCalc.calcLET = false;
+% 
+%     pln.multScen = matRad_multScen(ct, 'nomScen');
+% 
+%     stf = matRad_generateStf(ct,cst,pln);
+%     %Dose calc
+%     pln.bioModel = matRad_bioModel(pln.radiationMode,'MCN');
+% 
+%     pln.propDoseCalc.engine = 'HongPB';
+%     dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
+% 
+%     %Opt
+%     matRad_cfg.defaults.propOpt.maxIter = 10;
+% 
+%     pln.propOpt.quantityOpt = 'BED';
+%     resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+%     cumulativeBED = sum(resultGUI.BED, 'all');
+% 
+%     expectedCumulativeBED = 1.271963512370974e+05;
+% 
+%     assertTrue(isstruct(resultGUI));
+%     assertTrue(isfield(resultGUI, 'BED'));
+%     assertElementsAlmostEqual(cumulativeBED,expectedCumulativeBED, 1e-04);

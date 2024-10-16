@@ -44,6 +44,8 @@ load('PROSTATE.mat');
 % 'proton_Generic.mat'; consequently the machine has to be set accordingly
 pln.radiationMode = 'protons';        
 pln.machine       = 'Generic';
+pln.bioModel      = 'constRBE';
+pln.multScen      = 'nomScen';
 
 %%
 % for particles it is possible to also calculate the LET disutribution
@@ -64,23 +66,13 @@ pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter
 pln.propOpt.runDAO        = 0;
 pln.propSeq.runSequencing = 0;
 
-% Define the flavor of biological optimization for treatment planning along
-% with the quantity that should be used for optimization.
-
-quantityOpt   = 'RBExD';            % either  physicalDose / effect / RBExD
-modelName     = 'constRBE';         % none: for photons, protons, carbon                                    constRBE: constant RBE model
-                                    % MCN: McNamara-variable RBE model for protons                          WED: Wedenberg-variable RBE model for protons 
-                                    % LEM: Local Effect Model for carbon ions
-% retrieve bio model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
-
-% retrieve scenarios for dose calculation and optimziation
-pln.multScen = matRad_multScen(ct,'nomScen');
-
 % dose calculation settings
 pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
+
+% Optimization settings
+pln.propOpt.quantityOpt = 'RBExD';
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
@@ -93,7 +85,7 @@ dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 
 %% Inverse Optimization for IMPT
 % The goal of the fluence optimization is to find a set of bixel/spot 
-% weights which yield the best possible dose distribution according to the 
+% weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 

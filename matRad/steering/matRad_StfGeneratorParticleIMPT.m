@@ -47,6 +47,13 @@ classdef matRad_StfGeneratorParticleIMPT < matRad_StfGeneratorParticleRayBixelAb
 
             isoCenterInCubeCoords = matRad_world2cubeCoords(beam.isoCenter,this.ct);
 
+            if isfield(this.machine.meta,'LUT_bxWidthminFWHM')
+                LUTspotSize = this.machine.meta.LUT_bxWidthminFWHM;
+            else
+                LUTspotSize = this.machine.meta.LUTspotSize;
+            end
+            
+
             beam.numOfBixelsPerRay = zeros(1,beam.numOfRays);
 
             for j = beam.numOfRays:-1:1
@@ -173,10 +180,10 @@ classdef matRad_StfGeneratorParticleIMPT < matRad_StfGeneratorParticleRayBixelAb
 
                     % book keeping & calculate focus index
                     beam.numOfBixelsPerRay(j) = numel([beam.ray(j).energy]);
-                    currentMinimumFWHM = matRad_interp1(this.machine.meta.LUT_bxWidthminFWHM(1,:)',...
-                        this.machine.meta.LUT_bxWidthminFWHM(2,:)',...
+                    currentMinimumFWHM = matRad_interp1(LUTspotSize(1,:)',...
+                        LUTspotSize(2,:)',...
                         this.bixelWidth, ...
-                        this.machine.meta.LUT_bxWidthminFWHM(2,end));
+                        LUTspotSize(2,end));
                     focusIx  =  ones(beam.numOfBixelsPerRay(j),1);
                     [~, vEnergyIx] = min(abs(bsxfun(@minus,[this.machine.data.energy]',...
                         repmat(beam.ray(j).energy,length([this.machine.data]),1))));

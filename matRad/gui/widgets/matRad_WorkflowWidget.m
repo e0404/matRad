@@ -744,7 +744,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
             end
             
             
-            if isfield(pln,'bioParam') && ~strcmp(pln.bioParam.quantityOpt,'none')
+            if isfield(pln,'propOpt') && ~strcmp(pln.propOpt.quantityOpt,'none')
                 
                 if isfield(resultGUI,'RBExD')
                     resultGUI.(['RBExD' Suffix]) = resultGUI.RBExD;

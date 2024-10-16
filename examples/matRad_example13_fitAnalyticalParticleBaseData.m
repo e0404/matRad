@@ -109,18 +109,18 @@ clearvars -except ct cst matRad_cfg
 pln.radiationMode   = 'protons'; 
 
 % create meta machine data
-machine.meta.machine = 'example'; %name of the machine
+machine.meta.name = 'example'; %name of the machine
 machine.meta.radiationMode = 'protons'; %modality
 machine.meta.dataType = 'singleGauss'; %singleGauss or doubleGauss
 machine.meta.created_on = date;
 machine.meta.created_by = 'matRad_example';
 machine.meta.SAD = (2218 + 1839) / 2; %This is the (virtual) source to axis distance
 machine.meta.BAMStoIsoDist = 420.0; %distance from beam nozzle ot isocenter
-machine.meta.LUT_bxWidthminFWHM = [0, Inf; 5 ,5]; %Specifies which minimum FWHM to use as spot sice for which ranges of lateral spot distance (here, each spot distance of 0 to to Inf gets at least 5mm wide spots
+machine.meta.LUTspotSize = [0, Inf; 5 ,5]; %Specifies which minimum FWHM to use as spot sice for which ranges of lateral spot distance (here, each spot distance of 0 to to Inf gets at least 5mm wide spots
 machine.meta.fitAirOffset = 420.0; %Tells matRad how much "air" was considered during fitting. Set this to 0 if the fit is obtained in vacuum and no air transport is simulated up to the phantom. matRad assumes that the phantom starts at the isocenter.
 
 % Now add the example machine to the pln and then save it
-pln.machine = machine.meta.machine;
+pln.machine = machine.meta.name;
 pln.radiationMode = machine.meta.radiationMode;
 fileName = [pln.radiationMode '_' pln.machine];
 filePath = fullfile(matRad_cfg.userfolders{1},'machines',[fileName '.mat']);
@@ -163,7 +163,7 @@ modelName     = 'none';         % none: for photons, protons, carbon            
                                     % MCN: McNamara-variable RBE model for protons                          WED: Wedenberg-variable RBE model for protons 
                                     % LEM: Local Effect Model for carbon ions
 % retrieve bio model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
+pln.bioModel = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 
 
 %% generate steering file

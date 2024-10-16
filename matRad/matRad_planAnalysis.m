@@ -67,9 +67,7 @@ showDVH = p.Results.showDVH;
 showQI = p.Results.showQI;
 
 % Determine which dose cube to use based on resultGUI structure
-if ~isfield(pln,'bioParam')
-    visQ = pln.bioParam.quantityVis;
-elseif isfield(resultGUI,'RBExD')
+if isfield(resultGUI,'RBExD')
     visQ = 'RBExD';
 else
     visQ = 'physicalDose';
@@ -80,6 +78,15 @@ if ~isfield(resultGUI,visQ)
     matRad_cfg.dispError('Unknown quantity ''%s'' to analyse!',visQ);
 end
 
+% Validate / Create Scenario model
+if ~isfield(pln,'multScen')
+    pln.multScen = 'nomScen';
+end
+if ~isa(pln.multScen,'matRad_ScenarioModel')
+    pln.multScen = matRad_ScenarioModel.create(pln.multScen,ct);
+end
+
+
 doseCube = resultGUI.(visQ);
 
 % Calculate DVH and quality indicators
@@ -87,7 +94,9 @@ resultGUI.dvh = matRad_calcDVH(cst,doseCube,'cum'); % Calculate cumulative DVH
 resultGUI.qi  = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol); % Calculate quality indicators
 
 dvhScen = {};
-if isfield(pln,'multScen') && pln.multScen.totNumScen > 1
+
+
+if pln.multScen.totNumScen > 1
     for i = 1:pln.multScen.totNumScen
         scenFieldName = sprintf('%s_scen%d',visQ,i);
         if isfield(resultGUI,scenFieldName)
@@ -95,7 +104,6 @@ if isfield(pln,'multScen') && pln.multScen.totNumScen > 1
         end
     end
 end
-
 
 % Configuration for GUI appearance
 matRad_cfg = MatRad_Config.instance();

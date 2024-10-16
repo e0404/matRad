@@ -47,7 +47,6 @@ classdef matRad_MCsquareBaseData < matRad_MCemittanceBaseData
                 fileID = fopen(filepath,'w');
                 
                 %Header
-                %fprintf(fileID,'--matRad: Beam Model for machine %s (%s)--\n',machine.meta.machine,machine.meta.dataType);
                 fprintf(fileID,'--UPenn beam model (double gaussian)--\n');
                 fprintf(fileID,'# %s\n', obj.machine.meta.description);
                 fprintf(fileID,'# created by %s on %s\n\n', obj.machine.meta.created_by, obj.machine.meta.created_on);

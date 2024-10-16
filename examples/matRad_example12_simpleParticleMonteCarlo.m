@@ -23,9 +23,12 @@ load BOXPHANTOM.mat
 
 % meta information for treatment plan
 pln.radiationMode   = 'protons';     % either photons / protons / carbon
-%pln.machine         = 'generic_TOPAS_cropped';
-pln.machine         = 'generic_MCsquare';
+pln.machine         = 'Generic';
 
+%Biology
+pln.bioModel = 'none';
+%Scenario Model
+pln.multScen = 'nomScen';
 
 pln.numOfFractions  = 1;
 
@@ -47,21 +50,9 @@ pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
 %Turn on to correct for nozzle-to-skin air WEPL in analytical calculation
 pln.propDoseCalc.airOffsetCorrection = true;
 
-%Biology
-modelName                   = 'none';
-quantityOpt                 = 'physicalDose';  
-pln.bioParam                = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
-
 % optimization settings
 pln.propOpt.optimizer       = 'IPOPT';
-                                      
                                                                            
-pln.propOpt.runDAO          = false;  % 1/true: run DAO, 0/false: don't / will be ignored for particles
-pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
-
-% retrieve scenarios for dose calculation and optimziation
-pln.multScen = matRad_multScen(ct,'nomScen'); % optimize on the nominal scenario     
-
 %Enable/Disable use of range shifter (has effect only when we need to fill 
 %up the low-range region)
 pln.propStf.useRangeShifter = false;  
@@ -69,6 +60,7 @@ pln.propStf.generator = 'ParticleSingleSpot';
 
 %Enable LET calculation
 pln.propDoseCalc.calcLET = true;
+pln.propOpt.quantityOpt = 'physicalDose';
 
 % Enable/Disable local computation with TOPAS. Enabling this will generate
 % the necessary TOPAS files to run the simulation on any machine or server.
@@ -78,8 +70,8 @@ pln.propDoseCalc.calcLET = true;
 stf = matRad_generateStf(ct,cst,pln);
 
 %% analytical dose calculation
-pln.propDoseCalc.engine = 'MCsquare';
-pln.propDoseCalc.numHistoriesPerBeamlet = 1e4;
+pln.propDoseCalc.engine = 'HongPB';
+%pln.propDoseCalc.numHistoriesPerBeamlet = 1e6;
 
 dij = matRad_calcDoseInfluence(ct, cst,stf, pln); %Calculate particle dose influence matrix (dij) with analytical algorithm
 
@@ -93,7 +85,7 @@ pln.propDoseCalc.engine = 'MCsquare';
 %pln.propDoseCalc.engine = 'TOPAS';
 
 % set number of histories lower than default for this example (default: 1e8)
-pln.propDoseCalc.numHistoriesDirect = 1e3;
+pln.propDoseCalc.numHistoriesDirect = 5e6;
 %pln.propDoseCalc.externalCalculation = 'write';
 resultGUI_MC = matRad_calcDoseForward(ct,cst,stf,pln,resultGUI.w);
 

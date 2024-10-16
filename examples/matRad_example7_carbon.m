@@ -41,8 +41,10 @@ load('LIVER.mat');
 % need to define a treatment machine to correctly load the corresponding 
 % base data. matRad features generic base data in the file
 % 'carbon_Generic.mat'; consequently the machine has to be set accordingly
-pln.radiationMode = 'carbon';            
-pln.machine       = 'Generic';
+pln.radiationMode   = 'carbon';            
+pln.machine         = 'Generic';
+pln.numOfFractions  = 30;
+pln.multScen        = 'nomScen';    
 
 %%
 % Define the biological optimization model for treatment planning along
@@ -55,33 +57,21 @@ pln.machine       = 'Generic';
 % 'LEM': local effect model 
 % As we use carbons, we use the local effect model.
 % Therefore we set modelName to LEM
-modelName           = 'LEM';
-quantityOpt         = 'RBExD';   
+pln.bioModel = 'LEM';
 
 %%
 % The remaining plan parameters are set like in the previous example files
-pln.numOfFractions        = 30;
 pln.propStf.gantryAngles  = 315;
 pln.propStf.couchAngles   = 0;
 pln.propStf.bixelWidth    = 6;
 pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
-pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
-pln.propOpt.runDAO        = 0;
-pln.propSeq.runSequencing = 0;
-
-% retrieve bio model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
-
-% retrieve scenarios for dose calculation and optimziation
-pln.multScen = matRad_multScen(ct,'nomScen'); % optimize on the nominal scenario                                            
+pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);                                  
 
 % dose calculation settings
+pln.propDoseCalc.calcLET = true; %Let's also calculate the LET
 pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
-
-%Let's also calculate the LET
-pln.propDoseCalc.calcLET = true;
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
@@ -93,11 +83,11 @@ stf = matRad_generateStf(ct,cst,pln);
 % and orientation of the ray, we can also find pencil beam information. If 
 % the ray coincides with the target, pencil beams were defined along the 
 % ray from target entry to target exit. 
-display(stf.ray(100));
+disp(stf.ray(100));
 
 %%
 % Here are the energies selected on ray # 100: 
-display(stf.ray(100).energy);
+disp(stf.ray(100).energy);
 
 %% Dose Calculation
 dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
@@ -106,6 +96,7 @@ dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment.
+pln.propOpt.quantityOpt = 'RBExD';
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Plot the Resulting Dose Slice
@@ -126,9 +117,7 @@ imagesc(resultGUI.LET(:,:,slice)),colorbar, colormap(jet);
 % To perform a dose optimization for carbon ions we can also use the
 % biological effect instead of the RBE-weighted dose. Therefore we have to
 % change the optimization mode and restart the optimization
-quantityOpt  = 'effect'; 
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
-
+pln.propOpt.quantityOpt = 'effect';
 resultGUI_effect = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Visualize differences

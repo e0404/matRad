@@ -72,7 +72,7 @@ elseif ~isfield(machine.data,'alphaX') || overrideAB
                 modelName = 'HEL';
         end
     end
-    pln.bioParam = matRad_bioModel(machine.meta.radiationMode,'RBExD',modelName);
+    pln.bioModel = matRad_bioModel(machine.meta.radiationMode,modelName);
     
     %% get unique combintions of alpha/beta from cst or use default alpha/beta values
     if ~exist('cst','var')
@@ -98,7 +98,7 @@ elseif ~isfield(machine.data,'alphaX') || overrideAB
         machine.data(j).beta = zeros(numel(voxelsOnes),size(ab,1));
         
         for k = 1:length(machine.data(j).alphaX)
-            [machine.data(j).alpha(:,k),machine.data(j).beta(:,k)] = pln.bioParam.calcLQParameter(depths,machine.data(j),voxelsOnes,...
+            [machine.data(j).alpha(:,k),machine.data(j).beta(:,k)] = pln.bioModel.calcLQParameter(depths,machine.data(j),voxelsOnes,...
                 machine.data(j).alphaX(k)*voxelsOnes,machine.data(j).betaX(k)*voxelsOnes,machine.data(j).alphaBetaRatio(k)*voxelsOnes);
         end
     end
