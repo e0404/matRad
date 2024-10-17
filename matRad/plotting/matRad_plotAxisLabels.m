@@ -70,7 +70,7 @@ elseif plane == 2 % Sagittal plane
         set(axesHandle,'YTickLabel',round(linspace(ct.y(1),ct.y(end),10)));
         xlabel(axesHandle,'z [mm]','FontSize',defaultFontSize);
         ylabel(axesHandle,'y [mm]','FontSize',defaultFontSize);
-        vcoord = matRad_cubeIndex2worldCoords([slice,1,1],ct);
+        vcoord = matRad_cubeIndex2worldCoords([1,slice,1],ct);
         title(axesHandle,['sagittal plane x = ' num2str(vcoord(1)) ' [mm]'],'FontSize',defaultFontSize,'Color',matRad_cfg.gui.highlightColor);
     else
         xlabel(axesHandle,'z [voxels]','FontSize',defaultFontSize)
@@ -85,7 +85,7 @@ elseif plane == 1 % Coronal plane
         set(axesHandle,'YTickLabel',round(linspace(ct.x(1),ct.x(end),10)));
         xlabel(axesHandle,'z [mm]','FontSize',defaultFontSize)
         ylabel(axesHandle,'x [mm]','FontSize',defaultFontSize)
-        vcoord = matRad_cubeIndex2worldCoords([1,slice,1],ct);
+        vcoord = matRad_cubeIndex2worldCoords([slice,1,1],ct);
         title(axesHandle,['coronal plane y = ' num2str(vcoord(2)) ' [mm]'],'FontSize',defaultFontSize,'Color',matRad_cfg.gui.highlightColor)
     else
         xlabel(axesHandle,'z [voxels]','FontSize',defaultFontSize)

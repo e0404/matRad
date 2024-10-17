@@ -1146,6 +1146,8 @@ classdef matRad_ViewingWidget < matRad_Widget
                             otherwise
                                 visQuantity = [];
                         end
+                    else
+                        visQuantity = [];
                     end
 
                     if isfield(pln,'propStf')
