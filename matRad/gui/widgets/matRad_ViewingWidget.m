@@ -996,15 +996,11 @@ classdef matRad_ViewingWidget < matRad_Widget
                         cubePos(this.plane) = this.slice;
                         cubePos(1:end ~= this.plane) = fliplr(pos);
                         cubeIx = round(cubePos);
-                        vCubeIdx = [cubeIx(2),cubeIx(1),cubeIx(3)];
                         %Here comes the index permutation stuff
                         %Cube Index
-                        cursorText{end+1,1} = ['Cube Index: ' mat2str(vCubeIdx)];
+                        cursorText{end+1,1} = ['Cube Index: ' mat2str(cubeIx)];
                         %Space Coordinates
-                        coords = zeros(1,3);
-                        coords(1) = ct.y(cubePos(2));
-                        coords(2) = ct.x(cubePos(1));
-                        coords(3) = ct.z(cubePos(3));
+                        coords = matRad_cubeIndex2worldCoords(cubeIx,ct);
                         cursorText{end+1,1} = ['Space Coordinates: ' mat2str(coords,5) ' mm'];
                         
                         ctVal = ct.cubeHU{1}(cubeIx(1),cubeIx(2),cubeIx(3));
