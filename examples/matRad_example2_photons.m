@@ -6,15 +6,14 @@
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
 % of the matRad project, including this file, may be copied, modified, 
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%
-% In this example we will show 
+%% In this example we will show 
 % (i) how to load patient data into matRad
 % (ii) how to setup a photon dose calculation and 
 % (iii) how to inversely optimize beamlet intensities
@@ -27,8 +26,7 @@
 % matRad root directory with all its subdirectories is added to the Matlab 
 % search path.
 
-matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
-
+matRad_cfg = matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
 load('TG119.mat');
 
 %%
@@ -37,8 +35,7 @@ load('TG119.mat');
 %with some meta information describing properties of the ct cube (cube 
 % dimensions, resolution, number of CT scenarios). Please note that 
 %multiple ct cubes (e.g. 4D CT) can be stored in the cell array ct.cube{}
-display(ct);
-
+disp(ct);
 %%
 % The 'cst' cell array defines volumes of interests along with information 
 % required for optimization. Each row belongs to one certain volume of 
@@ -47,8 +44,7 @@ display(ct);
 % the structure. The type can be set to OAR, TARGET or IGNORED. The fourth 
 % column contains a linear index vector that lists all voxels belonging to 
 % a certain VOI.
-display(cst);
-
+disp(cst);
 %%
 % The fifth column represents meta parameters for optimization. The overlap
 % priority is used to resolve ambiguities of overlapping structures (voxels 
@@ -58,8 +54,9 @@ display(cst);
 % parameter of the linear quadratic model. These parameter are required for
 % biological treatment planning using a variable RBE. Let's output the meta 
 % optimization parameter of the target, which is stored in the thrid row:
+
 ixTarget = 3;
-display(cst{ixTarget,5});
+disp(cst{ixTarget,5});
 
 %%
 % The sixth column contains optimization information such as objectives and
@@ -68,7 +65,8 @@ display(cst{ixTarget,5});
 % individual structures. Here, we have defined a squared deviation 
 % objective making it 'expensive/costly' for the optimizer to over- and 
 % underdose the target structure (both are equally important). 
-display(cst{ixTarget,6});
+
+disp(cst{ixTarget,6});
 
 %% Treatment Plan
 % The next step is to define your treatment plan labeled as 'pln'. This 
@@ -82,18 +80,32 @@ display(cst{ixTarget,6});
 % correctly load the corresponding base data. matRad includes base data for
 % generic photon linear accelerator called 'Generic'. By this means matRad 
 % will look for 'photons_Generic.mat' in our root directory and will use 
-% the data provided in there for dose calculation
-pln.radiationMode = 'photons';  
-pln.machine       = 'Generic';
+% the data provided in there for dose calculation.
+% The number of fractions is set to 30. Internally, matRad considers the 
+% fraction dose for optimization, however, objetives and constraints are 
+% defined for the entire treatment.
+
+pln.radiationMode   = 'photons';  
+pln.machine         = 'Generic';
+pln.numOfFractions  = 30;
 
 %%
-% Define the flavor of optimization along with the quantity that should be
-% used for optimization. Possible values are (none: physical optimization; 
-% const_RBExD: constant RBE of 1.1; LEMIV_effect: effect-based 
-% optimization; LEMIV_RBExD: optimization of RBE-weighted dose. As we are 
-% using photons, we simply set the parameter to 'none' thereby indicating 
-% the physical dose should be optimized.
-pln.propOpt.bioOptimization = 'none';    
+% Define the biological model used for modeling biological dose (esp. for
+% particles).
+% Possible biological models are:
+% none:        use no specific biological model
+% constRBE:    use a constant RBE
+% MCN:         use the variable RBE McNamara model for protons
+% WED:         use the variable RBE Wedenberg model for protons
+% LEM:         use the biophysical variable RBE Local Effect model for carbons
+% As we are  using photons, we simply set the parameter to 'none'
+pln.bioModel = 'none';
+
+%% 
+% It is possible to request multiple error scenarios for robustness
+% analysis and optimization. Here, we just use the "nominal scenario"
+% (nomScen)
+pln.multScen = 'nomScen';
 
 %%
 % Now we have to set some beam parameters. We can define multiple beam 
@@ -102,20 +114,17 @@ pln.propOpt.bioOptimization = 'none';
 % linear spaced beams from 0 degree to 359 degree in 40 degree steps. This 
 % results in 9 beams. All corresponding couch angles are set to 0 at this 
 % point. Moreover, we set the bixelWidth to 5, which results in a beamlet 
-% size of 5 x 5 mm in the isocenter plane. The number of fractions is set 
-% to 30. Internally, matRad considers the fraction dose for optimization, 
-% however, objetives and constraints are defined for the entire treatment.
-pln.numOfFractions         = 30;
+% size of 5 x 5 mm in the isocenter plane. 
+
 pln.propStf.gantryAngles   = [0:40:359];
 pln.propStf.couchAngles    = zeros(1,numel(pln.propStf.gantryAngles));
 pln.propStf.bixelWidth     = 5;
 
-%%
 % Obtain the number of beams and voxels from the existing variables and 
 % calculate the iso-center which is per default the center of gravity of 
 % all target voxels.
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
-pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+pln.propStf.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 
 %% dose calculation settings
 % set resolution of dose calculation and optimization
@@ -126,27 +135,30 @@ pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
 %%
 % Enable sequencing and disable direct aperture optimization (DAO) for now.
 % A DAO optimization is shown in a seperate example.
-pln.propOpt.runSequencing = 1;
+pln.propSeq.runSequencing = 1;
 pln.propOpt.runDAO        = 0;
+
 
 %%
 % and et voila our treatment plan structure is ready. Lets have a look:
-display(pln);
+disp(pln);
+
 
 %% Generate Beam Geometry STF
 % The steering file struct comprises the complete beam geometry along with 
 % ray position, pencil beam positions and energies, source to axis distance (SAD) etc.
+
 stf = matRad_generateStf(ct,cst,pln);
 
 %%
 % Let's display the beam geometry information of the 6th beam
-display(stf(6));
+disp(stf(6));
 
 %% Dose Calculation
 % Let's generate dosimetric information by pre-computing dose influence 
 % matrices for unit beamlet intensities. Having dose influences available 
 % allows subsequent inverse optimization.
-dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 
 %% Inverse Optimization for IMRT
 % The goal of the fluence optimization is to find a set of beamlet/pencil 
@@ -159,7 +171,8 @@ matRadGUI;
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
-slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
+slice = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:),ct);
+slice = slice(3);
 figure
 imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet);
 
@@ -168,10 +181,14 @@ imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet);
 pln.propStf.gantryAngles = [0:50:359];
 pln.propStf.couchAngles  = zeros(1,numel(pln.propStf.gantryAngles));
 pln.propStf.numOfBeams   = numel(pln.propStf.gantryAngles);
+
+
+
 stf                      = matRad_generateStf(ct,cst,pln);
 pln.propStf.isoCenter    = vertcat(stf.isoCenter);
-dij                      = matRad_calcPhotonDose(ct,stf,pln,cst);
+dij                      = matRad_calcDoseInfluence(ct,cst,stf,pln);
 resultGUI_coarse         = matRad_fluenceOptimization(dij,cst,pln);
+
 
 %%  Visual Comparison of results
 % Let's compare the new recalculation against the optimization result.
@@ -196,16 +213,16 @@ matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
 %% Obtain dose statistics
 % Two more columns will be added to the cst structure depicting the DVH and
 % standard dose statistics such as D95,D98, mean dose, max dose etc.
-[dvh,qi]               = matRad_indicatorWrapper(cst,pln,resultGUI);
-[dvh_coarse,qi_coarse] = matRad_indicatorWrapper(cst,pln,resultGUI_coarse);
+resultGUI = matRad_planAnalysis(resultGUI,ct,cst,stf,pln);
+resultGUI_coarse = matRad_planAnalysis(resultGUI_coarse,ct,cst,stf,pln);
 
 %%
 % The treatment plan using more beams should in principle result in a
 % better OAR sparing. Therefore lets have a look at the D95 of the OAR of 
 % both plans
 ixOAR = 2;
-display(qi(ixOAR).D_95);
-display(qi_coarse(ixOAR).D_95);
+disp(resultGUI.qi(ixOAR).D_95);
+disp(resultGUI.qi_coarse(ixOAR).D_95);
 
 
 %% 
@@ -215,6 +232,4 @@ display(qi_coarse(ixOAR).D_95);
 % also store more optional parameters, but requires only the resolution to be s
 % set.
 metadata = struct('resolution',[ct.resolution.x ct.resolution.y ct.resolution.z]);
-matRad_writeCube([pwd filesep 'photonDose_example2.nrrd'],resultGUI.physicalDose,'double',metadata);
-
-
+matRad_writeCube(fullfile(matRad_cfg.primaryUserFolder,'photonDose_example2.nrrd'),resultGUI.physicalDose,'double',metadata);

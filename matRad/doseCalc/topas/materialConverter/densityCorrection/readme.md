@@ -1,0 +1,2 @@
+Schneider_TOPAS (default): taken from official TOPAS example "https://topas.readthedocs.io/en/latest/examples-docs/Patient/HUtoMaterialSchneider.html"
+Schneider_matRad: density conversion interpolated from matRad default HLUT, rspHlut = matRad_readHLUT('matRad_default.hlut'), same as 'rspHLUT' option, if the default HLUT is used

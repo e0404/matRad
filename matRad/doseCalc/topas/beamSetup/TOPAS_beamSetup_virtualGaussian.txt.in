@@ -1,0 +1,16 @@
+s:Ge/BeamSpot/Parent = "Nozzle"
+s:Ge/BeamSpot/Type = "Group"
+d:Ge/BeamSpot/TransX = Tf/Beam/PosX/Value mm
+d:Ge/BeamSpot/TransY = Tf/Beam/PosY/Value mm
+
+s:So/PencilBeam/BeamParticle = Sim/ParticleName
+i:So/PencilBeam/NumberOfHistoriesInRun = Tf/Beam/Current/Value
+u:So/PencilBeam/BeamEnergySpread = Tf/Beam/EnergySpread/Value
+d:So/PencilBeam/BeamEnergy = Tf/Beam/Energy/Value MeV
+s:So/PencilBeam/BeamPositionCutoffShape = "Ellipse" # Rectangle or Ellipse (if Flat or Gaussian)
+s:So/PencilBeam/Type = "Beam" # Beam, Isotropic, Emittance or PhaseSpace
+s:So/PencilBeam/BeamPositionDistribution = "Gaussian" #
+s:So/PencilBeam/Component = "BeamSpot"
+d:So/PencilBeam/BeamPositionCutoffX = 200 mm
+d:So/PencilBeam/BeamPositionCutoffY = 200 mm
+s:So/PencilBeam/BeamAngularDistribution = "None" # None, Flat or Gaussian

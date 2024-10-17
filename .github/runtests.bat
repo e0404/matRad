@@ -33,7 +33,7 @@ set CONTINUOUS_INTEGRATION=true
 set CI=true
 
 REM Actually run the test suite
-cd unitTest
+cd test
 set TESTDIR="%cd%"
 REM also CD in MATLAB/Octave to make sure that startup files
 REM cannot play any role in setting the path

@@ -6,15 +6,14 @@
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
 % of the matRad project, including this file, may be copied, modified, 
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%
-% In this example we will show 
+%% In this example we will show 
 % (i) how to load patient data into matRad
 % (ii) how to setup a photon dose calculation and 
 % (iii) how to inversely optimize directly from command window in MatLab.
@@ -22,12 +21,11 @@
 % (v) how to run a direct aperture optimization
 % (iv) how to visually and quantitatively evaluate the result
 
-%% Patient Data Import
-% Let's begin with a clear Matlab environment and import the head &
-% neck patient into your workspace.
-
+%% set matRad runtime configuration
 matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
 
+%% Patient Data Import
+% import the head & neck patient into your workspace.
 load('HEAD_AND_NECK.mat');
 
 %% Treatment Plan
@@ -38,13 +36,15 @@ load('HEAD_AND_NECK.mat');
 pln.radiationMode   = 'photons';   % either photons / protons / carbon
 pln.machine         = 'Generic';
 pln.numOfFractions  = 30;
-
-pln.propOpt.bioOptimization = 'none';    
+ 
 pln.propStf.gantryAngles    = [0:72:359];
 pln.propStf.couchAngles     = [0 0 0 0 0];
 pln.propStf.bixelWidth      = 5;
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+
+pln.bioModel = 'none'; 
+pln.multScen = 'nomScen';
 
 % dose calculation settings
 pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
@@ -61,11 +61,12 @@ if matRad_OptimizerFmincon.IsAvailable()
 else
     pln.propOpt.optimizer = 'IPOPT';
 end
+pln.propOpt.quantityOpt = 'physicalDose';  
 
 %%
 % Enable sequencing and direct aperture optimization (DAO).
-pln.propOpt.runSequencing = 1;
-pln.propOpt.runDAO        = 1;
+pln.propSeq.runSequencing = true;
+pln.propOpt.runDAO        = true;
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
@@ -74,7 +75,7 @@ stf = matRad_generateStf(ct,cst,pln);
 % Lets generate dosimetric information by pre-computing dose influence 
 % matrices for unit beamlet intensities. Having dose influences available 
 % allows for subsequent inverse optimization.
-dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 
 %% Inverse Planning for IMRT
 % The goal of the fluence optimization is to find a set of beamlet weights 
@@ -90,7 +91,7 @@ matRadGUI;
 % order to modulate the intensity of the beams with multiple static 
 % segments, so that translates each intensity map into a set of deliverable 
 % aperture shapes.
-resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,5);
+resultGUI = matRad_sequencing(resultGUI,stf,dij,pln);
 
 %% DAO - Direct Aperture Optimization
 % The Direct Aperture Optimization is an optimization approach where we 
@@ -102,4 +103,4 @@ resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,res
 matRad_visApertureInfo(resultGUI.apertureInfo);
 
 %% Indicator Calculation and display of DVH and QI
-[dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI);
+resultGUI = matRad_planAnalysis(resultGUI,ct,cst,stf,pln);
