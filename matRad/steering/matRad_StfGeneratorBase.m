@@ -227,7 +227,7 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
     methods (Access = protected)
         function initialize(this)
             %Do nothing
-
+            matRad_cfg = MatRad_Config.instance();
             % get machine
             if ~isstruct(this.machine)
                 try

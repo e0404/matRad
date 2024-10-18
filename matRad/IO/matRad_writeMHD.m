@@ -49,6 +49,7 @@ end
 %We perform the permutation
 if isfield(metadata,'axisPermutation')
     cube = permute(cube,metadata.axisPermutation);
+    dimensions = size(cube);
 end
 %The transformation matrix is now the unit matrix
 transformMatrix = diag(ones(1,numel(dimensions)));
