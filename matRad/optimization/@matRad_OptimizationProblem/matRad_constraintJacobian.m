@@ -172,7 +172,7 @@ for i = 1:size(cst,1)
                %The betadose has a different structure due to the
                %quadratic transformation, but in principle the
                %same as above
-               mSqrtBetaDoseProjection{1} =  [mSqrtBetaDoseProjection{1}, sparse(repmat(cst{i,4}{1},nConst,1),repmat(1:numel(cst{i,4}{1}),1,nConst),2*reshape(jacobSub',[],1),dij.doseGrid.numOfVoxels,nConst*numel(cst{i,4}{1}))];
+               mSqrtBetaDoseProjection{1} =  [mSqrtBetaDoseProjection{1}, sparse(repmat(cst{i,4}{1},nConst,1),1:numel(cst{i,4}{1})*nConst,2*reshape(jacobSub',[],1),dij.doseGrid.numOfVoxels,nConst*numel(cst{i,4}{1}))];
                
                if isempty(constraintID)
                   newID = 1;
