@@ -1045,9 +1045,17 @@ classdef matRad_ViewingWidget < matRad_Widget
         
         %Scroll wheel update
         function matRadScrollWheelFcn(this,src,event)
-            % compute new slice
-            this.slice= this.slice - event.VerticalScrollCount;
-                        
+            % Check Position
+            cursorPos = get(src,'CurrentPoint');
+            viewerPos = get(this.widgetHandle,'Position');
+
+            %If the request came from within the widget change the slice
+            if cursorPos(1) > viewerPos(1) && cursorPos(1) < viewerPos(1) + viewerPos(3) ...
+                    && cursorPos(2) > viewerPos(2) && cursorPos(2) < viewerPos(2) + viewerPos(4)
+
+                % compute new slice
+                this.slice= this.slice - event.VerticalScrollCount;
+            end
         end
         
         %Toggle Legend
