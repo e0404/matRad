@@ -386,7 +386,13 @@ else
 end
 
 if ~isfield(pln.propOpt,'optimizer')
-    pln.propOpt.optimizer = 'IPOPT';
+    %While the default optimizer is IPOPT, we can try to fallback to
+    %fmincon in case it does not work for some reason
+    if ~matRad_OptimizerIPOPT.IsAvailable()
+        pln.propOpt.optimizer = 'fmincon';
+    else
+        pln.propOpt.optimizer = 'IPOPT';
+    end    
 end
 
 switch pln.propOpt.optimizer
