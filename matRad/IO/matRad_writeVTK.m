@@ -48,8 +48,10 @@ cleaner = onCleanup(@() fclose(fid));
 if ~isfield(metadata, 'axisPermutation')
     % This reverts the matRlab conventianl indexing
     axisPermutation = [2,1,3];
-elseif ~isequal(metadata.axisPermutation, [2,1,3])
-    matRad_cfg.dispWarning('Unconventianal permutation of patient indexing, this might cause inconsistency');
+else
+    if ~isequal(metadata.axisPermutation, [2,1,3])
+        matRad_cfg.dispWarning('Unconventianal permutation of patient indexing, this might cause inconsistency');
+    end
     axisPermutation = metadata.axisPermutation;
 end
 
