@@ -231,7 +231,7 @@ tmp = [obj.importCT.ctInfo.ImagePositionPatient];
 
 obj.ct.dicomInfo.PixelSpacing            = obj.importCT.ctInfo(1).PixelSpacing;                                      
 obj.ct.dicomInfo.SlicePositions          = tmp(3,:);
-obj.ct.dicomInfo.SliceThickness          = str2double(obj.importCT.ctInfo(1).SliceThickness);
+obj.ct.dicomInfo.SliceThickness          = obj.importCT.ctInfo(1).SliceThickness;
 obj.ct.dicomInfo.ImagePositionPatient    = obj.importCT.ctInfo(1).ImagePositionPatient;
 obj.ct.dicomInfo.ImageOrientationPatient = obj.importCT.ctInfo(1).ImageOrientationPatient;
 obj.ct.dicomInfo.PatientPosition         = obj.importCT.ctInfo(1).PatientPosition;
