@@ -300,9 +300,9 @@ classdef matRad_WorkflowWidget < matRad_Widget
                         end
 
                         % check if dij exist
-                        if evalin('base','exist(''dij'')')
+                        if evalin('base','exist(''dij'')') && plnStfMatch
                             [dijStfMatch, msg] = matRad_compareDijStf(evalin('base','dij'),evalin('base','stf'));
-                            if plnStfMatch && dijStfMatch
+                            if dijStfMatch
                                 set(handles.txtInfo,'String','ready for optimization');
                                 set(handles.btnOptimize ,'Enable','on');
                             elseif ~noCheck 

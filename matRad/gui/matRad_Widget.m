@@ -194,7 +194,7 @@ classdef matRad_Widget <  handle
                 end
             catch ME
                 %Error Handling
-                this.showWarning('Update failed',ME); %We only show a warning to not halt execution.
+                this.showWarning('Update failed ',ME); %We only show a warning to not halt execution.
             end
         end
     end
