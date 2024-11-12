@@ -891,11 +891,13 @@ classdef matRad_PlanWidget < matRad_Widget
 
             if evalin('base','exist(''ct'')')
                 contentPopUpMultScen = get(handles.popMenuMultScen,'String');
-                if ~isfield(pln,'multScen')
+                try
+                    scenModel = matRad_ScenarioModel.create(pln.multScen);
+                    ix = find(strcmp(scenModel.shortName,contentPopUpMultScen));
+                catch
                     ix = 1;
-                else
-                    ix = find(strcmp(pln.multScen,contentPopUpMultScen));
                 end
+                
                 set(handles.popMenuMultScen,'Value',ix);
             end
 
