@@ -44,11 +44,22 @@ if fid <= 0
 end
 cleaner = onCleanup(@() fclose(fid));
 
-%We perform 
-if isfield(metadata,'axisPermutation')
-    cube = permute(cube,metadata.axisPermutation);
+%We perform the permutation
+if ~isfield(metadata, 'axisPermutation')
+    % This reverts the matRlab conventianl indexing
+    axisPermutation = [2,1,3];
+else
+    if ~isequal(metadata.axisPermutation, [2,1,3])
+        matRad_cfg.dispWarning('Unconventianal permutation of patient indexing, this might cause inconsistency');
+    end
+    axisPermutation = metadata.axisPermutation;
 end
 
+% Force the permutation here according to the axis permutation
+cube = permute(cube, axisPermutation);
+
+% Need to permute the dimensions as well
+dimensions = size(cube);
 
 fprintf(fid, '# vtk DataFile Version 3.0\n');
 fprintf(fid, 'vtk output\n');

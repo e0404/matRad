@@ -68,9 +68,15 @@ tmp = textscan(s{1}{idx},'TransformMatrix = %f %f %f %f %f %f %f %f %f');
 T = zeros(3);
 T(:) = cell2mat(tmp);
 
+if ~isequal(T, diag(ones(1,numel(dimensions))))
+    matRad_cfg.dispWarning('Non identity transformation matrix detected in the loaded cube. This might lead to reconstruction inconsistency.')
+end
+    
 % Apply Matlab permutation
+% This ensures that the cube is reverted back to the matLab standard
+% indexing
 Tmatlab = [0 1 0; 1 0 0; 0 0 1];
-%T = T * [0 1 0; 1 0 0; 0 0 1];
+T = T*Tmatlab;
 
 % get data type
 idx = find(~cellfun(@isempty,strfind(s{1}, 'ElementType')),1,'first');
@@ -84,20 +90,18 @@ if strcmpi(dataFilename,'LOCAL')
     fseek(headerFileHandle,-S.bytes*prod(dimensions),'eof');
     cube = fread(headerFileHandle,prod(dimensions),type,endian);
     cube = reshape(cube,dimensions);
-    cube = permute(cube,[2 1 3]);
-    %matRad_cfg.dispError('MHA not implemented!');
+    cube = permute(cube,abs([1 2 3]*T));
 else
     %% read data
     [filepath,~,~] = fileparts(filename);
     dataFileHandle = fopen(fullfile(filepath,dataFilename),'r');
     cube = reshape(fread(dataFileHandle,inf,type,endian),dimensions);
-    cube = permute(cube,[2 1 3]);
-    %cube = flip(cube,1);
+    cube = permute(cube,abs([1 2 3]*T));
     fclose(dataFileHandle);
 end
 fclose(headerFileHandle);
 metadata.resolution = resolution;
-metadata.cubeDim = dimensions * Tmatlab;
+metadata.cubeDim = dimensions * T;
 
 end
 
