@@ -363,9 +363,14 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 fprintf(newLut, template);
                 fclose(newLut);
             else
-                matRad_cfg.dispError(['Cannot open hLut: ',hLutFile]);
+ 
+                errString = sprintf('Cannot open hLut: %s. Available hLut files are: ',hLutFile);
+                errString = [errString, sprintf('\ninternal')];
+                for hLUTindex=1:numel(availableHLUTs)
+                    errString = [errString, sprintf('\n '), strrep(fullfile(availableHLUTs(hLUTindex).folder, availableHLUTs(hLUTindex).name), '\', '\\')];
+                end
+                matRad_cfg.dispError(errString);
             end
-
         end
 
     end
