@@ -803,9 +803,11 @@ classdef matRad_PlanWidget < matRad_Widget
 
             matRad_cfg = MatRad_Config.instance();
 
-            set(handles.editBixelWidth,'String',num2str(pln.propStf.bixelWidth));
-            set(handles.editGantryAngle,'String',num2str(pln.propStf.gantryAngles));
-            set(handles.editCouchAngle,'String',num2str(pln.propStf.couchAngles));
+            stfGen = matRad_StfGeneratorBase.getGeneratorFromPln(pln);
+
+            set(handles.editBixelWidth,'String',num2str(stfGen.bixelWidth));
+            set(handles.editGantryAngle,'String',num2str(stfGen.gantryAngles));
+            set(handles.editCouchAngle,'String',num2str(stfGen.couchAngles));
 
             modIx = find(strcmp(pln.radiationMode,this.modalities));
             set(handles.popupRadMode,'Value',modIx);
@@ -899,8 +901,9 @@ classdef matRad_PlanWidget < matRad_Widget
                 set(handles.popMenuMultScen,'Value',ix);
             end
 
-
-            set(handles.btnRunDAO,'Value',pln.propOpt.runDAO);
+            if isfield(pln,'propOpt') && isfield(pln.propOpt,'runDAO')
+                set(handles.btnRunDAO,'Value',pln.propOpt.runDAO);
+            end
             if isfield(pln, 'propSeq') && isfield(pln.propSeq, 'sequencingLevel')
                 set(handles.btnRunSequencing,'Value',pln.propSeq.runSequencing);
                 set(handles.editSequencingLevel,'String',num2str(pln.propSeq.sequencingLevel));
