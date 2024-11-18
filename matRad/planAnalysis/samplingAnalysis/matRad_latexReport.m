@@ -239,7 +239,7 @@ for plane=1:3
         
         if cubesToPlot == 1 
             
-            if isfield(nominalScenario,'RBExD')              
+            if isfield(nominalScenario,'RBExDose')              
               colorMapLabel = 'RBExDose [Gy(RBE)]';
             else
                 colorMapLabel = 'physical Dose [Gy]';
@@ -257,7 +257,7 @@ for plane=1:3
             
         elseif cubesToPlot == 3
             
-            if isfield(nominalScenario,'RBExD')
+            if isfield(nominalScenario,'RBExDose')
                 colorMapLabel = 'Standard deviation [Gy(RBE)]';
             else
                 colorMapLabel = 'Standard deviation [Gy]';
@@ -280,7 +280,7 @@ if exist('matRad_getGaussianOrbitSamples','file') == 2
 
     slice = round(pln.propStf.isoCenter(1,plane) / ct.resolution.z,0);            
     framePath = fullfile(dataPath, 'frames');
-    if isfield(nominalScenario,'RBExD')
+    if isfield(nominalScenario,'RBExDose')
         legendColorbar = 'RBExDose [Gy(RBE)]';
     else
         legendColorbar = 'physical Dose [Gy]';
@@ -314,7 +314,7 @@ for i = 1:size(cst,1)
         x = nominalScenario.dvh(i).doseGrid(1:argmin);        
         h(1) = plot(x,y,'LineWidth',2, 'Color', colors(i,:), 'DisplayName', cst{i,2});      
         ylim([0 100]);
-        if strncmp(pln.bioModel.quantityVis,'RBExD',5)
+        if strncmp(pln.bioModel.quantityVis,'RBExDose',5)
             xlabel('Dose RBE x [Gy]');
         else
             xlabel('Dose [Gy]');
@@ -382,7 +382,7 @@ clear filename
 % relative file path (relative to main.tex)
 relativePath = fullfile('data','structures');
 
-if strcmp(pln.bioModel.quantityVis, 'RBExD')
+if strcmp(pln.bioModel.quantityVis, 'RBExDose')
     labelDoseDVH = 'Dose RBE x [Gy]';
 else
    labelDoseDVH = 'Dose [Gy]';

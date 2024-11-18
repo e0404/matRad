@@ -94,6 +94,6 @@ resultGUI2 = spotRemover.reoptimize(cst,pln);
 % weightLogical = sr_cfg.getLogical;
 
 %% Plot difference of the doses
-matRad_compareDose(resultGUI.RBExD,resultGUI2.RBExD,ct,cst);
+matRad_compareDose(resultGUI.RBExDose,resultGUI2.RBExDose,ct,cst);
 
 

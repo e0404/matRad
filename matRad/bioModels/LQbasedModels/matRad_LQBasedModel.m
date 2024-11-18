@@ -18,7 +18,7 @@ classdef (Abstract) matRad_LQBasedModel < matRad_BiologicalModel
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (Constant)
-        defaultReportQuantity = 'RBExD';
+        defaultReportQuantity = 'RBExDose';
     end
     
     properties

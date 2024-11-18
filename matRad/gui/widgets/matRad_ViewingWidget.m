@@ -754,7 +754,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 % plot physical dose
                 %Content =this.SelectedDisplayOption; %get(this.popupDisplayOption,'String');
                 SelectedCube = this.SelectedDisplayOption; %Content{get(this.popupDisplayOption,'Value')};
-                if sum(strcmp(SelectedCube,{'physicalDose','effect','RBExD','alpha','beta','RBE','BED'})) > 0
+                if sum(strcmp(SelectedCube,{'physicalDose','effect','RBExDose','alpha','beta','RBE','BED'})) > 0
                     Suffix = '';
                 else
                     Idx    = find(SelectedCube == '_');
@@ -784,8 +784,8 @@ classdef matRad_ViewingWidget < matRad_Widget
                     StringYLabel2 = '';
                     for i=1:1:size(this.DispInfo,1)
                         if this.DispInfo{i,2} && sum(strcmp(this.DispInfo{i,1},{['effect' Suffix],['alpha' Suffix],['beta' Suffix]})) > 0
-                            %physicalDose is already plotted and RBExD vs RBE is plotted later with plotyy
-                            if ~strcmp(this.DispInfo{i,1},['RBExD' Suffix]) &&...
+                            %physicalDose is already plotted and RBExDose vs RBE is plotted later with plotyy
+                            if ~strcmp(this.DispInfo{i,1},['RBExDose' Suffix]) &&...
                                     ~strcmp(this.DispInfo{i,1},['RBE' Suffix]) && ...
                                     ~strcmp(this.DispInfo{i,1},['physicalDose' Suffix])
                                 
@@ -798,8 +798,8 @@ classdef matRad_ViewingWidget < matRad_Widget
                         end
                     end
                     StringYLabel2 = [StringYLabel2 '}'];
-                    % always plot RBExD against RBE
-                    mRBExDose = result.(['RBExD' Suffix]);
+                    % always plot RBExDose against RBE
+                    mRBExDose = result.(['RBExDose' Suffix]);
                     vBED = mRBExDose(ix);
                     mRBE = result.(['RBE' Suffix]);
                     vRBE = mRBE(ix);
@@ -807,7 +807,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                     % plot biological dose against RBE
                     [ax, PlotHandles{Cnt,1}, PlotHandles{Cnt+1,1}]=plotyy(handles.axesFig,vX,vBED,vX,vRBE,'plot'); 
                     hold(ax(2),'on');
-                    PlotHandles{Cnt,2}='RBExD';
+                    PlotHandles{Cnt,2}='RBExDose';
                     PlotHandles{Cnt+1,2}='RBE';                    
                     
                     % set plotyy properties
@@ -1145,8 +1145,8 @@ classdef matRad_ViewingWidget < matRad_Widget
                         switch pln.propOpt.quantityOpt
                             case 'physicalDose'
                                 visQuantity = 'physicalDose';
-                            case {'RBExD', 'effect'}
-                                visQuantity = 'RBExD';
+                            case {'RBExDose', 'effect'}
+                                visQuantity = 'RBExDose';
                             otherwise
                                 visQuantity = [];
                         end
@@ -1307,7 +1307,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                         elseif strfind(this.DispInfo{i,1},'beta')
                             this.DispInfo{i,3} = 'Gy^{-2}';
                             this.DispInfo{i,4} = 'left';   
-                        elseif strfind(this.DispInfo{i,1},'RBExD')
+                        elseif strfind(this.DispInfo{i,1},'RBExDose')
                             this.DispInfo{i,3} = 'Gy(RBE)';
                             this.DispInfo{i,4} = 'left';   
                         elseif strfind(this.DispInfo{i,1},'LET')

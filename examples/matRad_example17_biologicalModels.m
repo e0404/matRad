@@ -25,7 +25,7 @@ pln.propDoseCalc.doseGrid.resolution.z = 8;
 pln.propDoseCalc.engine = 'HongPB';
 
 %Optimization Settings
-pln.propOpt.quantityOpt = 'RBExD';
+pln.propOpt.quantityOpt = 'RBExDose';
 
 %% stf
 stf = matRad_generateStf(ct,cst,pln);
@@ -55,4 +55,4 @@ pln.bioModel.RBE = 1.1; %1.1 is standard, this is for illustration
 resultGUI_recalc = matRad_calcDoseForward(ct,cst,stf,pln,resultGUI.w);
 
 %% Compare Dose distributions
-matRad_compareDose(resultGUI.RBExD,resultGUI_recalc.RBExD,ct,cst);
+matRad_compareDose(resultGUI.RBExDose,resultGUI_recalc.RBExDose,ct,cst);

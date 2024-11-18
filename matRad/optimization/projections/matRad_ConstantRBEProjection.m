@@ -20,11 +20,11 @@ classdef matRad_ConstantRBEProjection < matRad_BackProjection
     end
     
     methods 
-        function RBExD = computeSingleScenario(~,dij,scen,w)
+        function RBExDose = computeSingleScenario(~,dij,scen,w)
             if ~isempty(dij.physicalDose{scen})
-                RBExD = dij.physicalDose{scen} * (dij.RBE * w);
+                RBExDose = dij.physicalDose{scen} * (dij.RBE * w);
             else
-                RBExD = [];
+                RBExDose = [];
                 matRad_cfg = MatRad_Config.instance();
                 matRad_cfg.dispWarning('Empty scenario in optimization detected! This should not happen...\n');
             end 

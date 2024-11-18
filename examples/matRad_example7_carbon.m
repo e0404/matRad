@@ -96,7 +96,7 @@ dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment.
-pln.propOpt.quantityOpt = 'RBExD';
+pln.propOpt.quantityOpt = 'RBExDose';
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Plot the Resulting Dose Slice
@@ -104,7 +104,7 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 slice = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:),ct);
 slice = slice(3);
 figure,
-imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet);
+imagesc(resultGUI.RBExDose(:,:,slice)),colorbar, colormap(jet);
 
 %% Let's check out the LET
 % Let's plot the transversal iso-center LET slice
@@ -125,7 +125,7 @@ resultGUI_effect = matRad_fluenceOptimization(dij,cst,pln);
 % different dose distribution as visualized by the following dose
 % difference map
 figure;
-imagesc(resultGUI.RBExD(:,:,slice)-resultGUI_effect.RBExD(:,:,slice));
+imagesc(resultGUI.RBExDose(:,:,slice)-resultGUI_effect.RBExDose(:,:,slice));
 colorbar;
 colormap(jet);
 
@@ -146,22 +146,22 @@ resultGUI_tissue = matRad_calcDoseForward(ct,cst,stf,pln,resultGUI.w);
 %% Result Comparison
 % Let's compare the new recalculation against the optimization result.
 plane = 3;
-doseWindow = [0 max([resultGUI_effect.RBExD(:); resultGUI_tissue.RBExD(:)])];
+doseWindow = [0 max([resultGUI_effect.RBExDose(:); resultGUI_tissue.RBExDose(:)])];
 
 figure,
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_effect.RBExD,plane,slice,[],[],colorcube,[],doseWindow,[]);
+matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_effect.RBExDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
 title('original plan')
 figure,
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_tissue.RBExD,plane,slice,[],[],colorcube,[],doseWindow,[]);
+matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_tissue.RBExDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
 title('manipulated plan')
 %% 
 % At this point we would like to see the absolute difference of the original optimization and the 
 % recalculation. 
-absDiffCube = resultGUI_effect.RBExD-resultGUI_tissue.RBExD;
+absDiffCube = resultGUI_effect.RBExDose-resultGUI_tissue.RBExDose;
 figure,
 matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
 title('absolute difference')
 %%
 % Plot both doses with absolute difference and gamma analysis
-[gammaCube,gammaPassRate,hfigure]=matRad_compareDose(resultGUI_effect.RBExD, resultGUI_tissue.RBExD, ct, cst,[1 1 1],'on');
+[gammaCube,gammaPassRate,hfigure]=matRad_compareDose(resultGUI_effect.RBExDose, resultGUI_tissue.RBExDose, ct, cst,[1 1 1],'on');
 

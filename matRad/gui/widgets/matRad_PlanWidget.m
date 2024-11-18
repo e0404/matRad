@@ -33,7 +33,7 @@ classdef matRad_PlanWidget < matRad_Widget
     properties (Constant)
 
         modalities = {'photons','protons','carbon', 'helium','brachy'};
-        availableProjections = {  'physicalDose'; 'RBExD'; 'effect'; 'BED'; }
+        availableProjections = {  'physicalDose'; 'RBExDose'; 'effect'; 'BED'; }
 
     end
 
@@ -348,7 +348,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 'Tag','btnSetTissue');
 
             %Popup menu for Biological model and optimized quantity
-            txt = sprintf('Choose a quantity to optimize \nPhysical Dose: physical dose is optimized\nRBExD: RBE-weighted dose is optimized\neffect: effect calculated according to LQ model is optimized');
+            txt = sprintf('Choose a quantity to optimize \nPhysical Dose: physical dose is optimized\nRBExDose: RBE-weighted dose is optimized\neffect: effect calculated according to LQ model is optimized');
             h33 = uicontrol(...
                 'Parent',h12,...
                 'Units','normalized',...
@@ -367,7 +367,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 'FontWeight',matRad_cfg.gui.fontWeight);
 
             %Text for Biological model and optimized quantity
-            txt = sprintf('Choose a quantity to optimize \nPhysical Dose: physical dose is optimized\nRBExD: RBE-weighted dose is optimized\neffect: effect calculated according to LQ model is optimized');
+            txt = sprintf('Choose a quantity to optimize \nPhysical Dose: physical dose is optimized\nRBExDose: RBE-weighted dose is optimized\neffect: effect calculated according to LQ model is optimized');
             h34 = uicontrol(...
                 'Parent',h12,...
                 'Units','normalized',...
@@ -1230,7 +1230,7 @@ classdef matRad_PlanWidget < matRad_Widget
             end
 
             if any(strcmp(newRadiationMode,{'protons','helium','carbon'}))
-                ix = find(strcmp(optimizationQuantityPopUpContents,'RBExD'));
+                ix = find(strcmp(optimizationQuantityPopUpContents,'RBExDose'));
                 set(handles.popMenuQuantityOpt,'Value',ix);
             end
 
@@ -1526,8 +1526,8 @@ classdef matRad_PlanWidget < matRad_Widget
             contentBioModel = get(handles.popMenuBioModel,'String');
             NewBioModel = contentBioModel(get(handles.popMenuBioModel,'Value'),:);
 
-            %                 if (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') && strcmp(NewBioOptimization,'LEMIV_RBExD')) ||...
-            %                         (strcmp(pln.propOpt.bioOptimization,'LEMIV_RBExD') && strcmp(NewBioOptimization,'LEMIV_effect'))
+            %                 if (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') && strcmp(NewBioOptimization,'LEMIV_RBExDose')) ||...
+            %                         (strcmp(pln.propOpt.bioOptimization,'LEMIV_RBExDose') && strcmp(NewBioOptimization,'LEMIV_effect'))
             %                     % do nothing - re-optimization is still possible
             %                 elseif ((strcmp(pln.propOpt.bioOptimization,'const_RBE') && strcmp(NewBioOptimization,'none')) ||...
             %                         (strcmp(pln.propOpt.bioOptimization,'none') && strcmp(NewBioOptimization,'const_RBE'))) && isequal(pln.radiationMode,'protons')
@@ -1549,8 +1549,8 @@ classdef matRad_PlanWidget < matRad_Widget
             %             contentQuantityOpt = get(handles.popMenuQuantityOpt,'String');
             %             NewQuantityOpt = contentQuantityOpt(get(handles.popMenuQuantityOpt,'Value'),:);
             %
-            % %                 if (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') && strcmp(NewBioOptimization,'LEMIV_RBExD')) ||...
-            % %                         (strcmp(pln.propOpt.bioOptimization,'LEMIV_RBExD') && strcmp(NewBioOptimization,'LEMIV_effect'))
+            % %                 if (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') && strcmp(NewBioOptimization,'LEMIV_RBExDose')) ||...
+            % %                         (strcmp(pln.propOpt.bioOptimization,'LEMIV_RBExDose') && strcmp(NewBioOptimization,'LEMIV_effect'))
             % %                     % do nothing - re-optimization is still possible
             % %                 elseif ((strcmp(pln.propOpt.bioOptimization,'const_RBE') && strcmp(NewBioOptimization,'none')) ||...
             % %                         (strcmp(pln.propOpt.bioOptimization,'none') && strcmp(NewBioOptimization,'const_RBE'))) && isequal(pln.radiationMode,'protons')
