@@ -238,7 +238,7 @@ if enable(2) == 1
         posZ = posZ - isoCenterIx(3);
     end
 
-    if exist('pln','var') && ~isempty(pln)
+    if exist('pln','var') && ~isempty(pln) && isfield(pln,'propOpt') && isfield(pln.propOpt,'quantityOpt')
         if strcmp(pln.propOpt.quantityOpt,'physicalDose')
             yLabelString = 'Dose [Gy]';
         else
