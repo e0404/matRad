@@ -161,13 +161,13 @@ classdef matRad_importDicomWidget < matRad_Widget
             handles = this.handles;
 
             % case the resolution was changed manually
-            if handles.resx_edit.String ~= this.importer.importFiles.resx
+            if ~strcmp(handles.resx_edit.String, this.importer.importFiles.resx)
                 this.importer.importFiles.resx = handles.resx_edit.String;
             end 
-            if handles.resy_edit.String ~= this.importer.importFiles.resy
+            if ~strcmp(handles.resy_edit.String, this.importer.importFiles.resy)
                 this.importer.importFiles.resy = handles.resy_edit.String;
             end
-            if handles.resz_edit.String ~= this.importer.importFiles.resz
+            if ~strcmp(handles.resz_edit.String, this.importer.importFiles.resz)
                 this.importer.importFiles.resz = handles.resz_edit.String;
             end
 
