@@ -869,7 +869,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 end
             else
                 % create legend for the visible VOI
-                if this.typeOfPlot==2 || ~this.plotContour || isempty([this.AxesHandlesVOI{:}]) %isempty(find(this.VOIPlotFlag, 1))
+                if this.typeOfPlot==2 || ~this.plotContour || isempty(this.AxesHandlesVOI) || isempty([this.AxesHandlesVOI{:}]) %isempty(find(this.VOIPlotFlag, 1))
                     l=legend(handles.axesFig,'off');
                 else
 %                    
