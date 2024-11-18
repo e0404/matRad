@@ -281,6 +281,10 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             % already performed in dij construction
             
             resultGUI = [];
+
+            if ~isa(this.multScen,'matRad_ScenarioModel')
+                this.multScen = matRad_ScenarioModel.create(this.multScen,struct('numOfCtScen',ct.numOfCtScen));
+            end
             
             for i = 1:this.multScen.totNumScen
                 scenSubIx = this.multScen.linearMask(i,:);
