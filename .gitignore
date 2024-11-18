@@ -1,1 +1,7 @@
-MCsquare/bin/Materials/
+thirdParty/MCsquare/bin/Materials/
+userdata/*
+testresults.xml
+coverage.xml
+coverage.json
+*.asv
+build/
