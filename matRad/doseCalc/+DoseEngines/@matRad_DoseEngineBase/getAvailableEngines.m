@@ -29,7 +29,7 @@ if nargin < 1
     pln = [];
 else
     if ~(isstruct(pln) || isempty(pln))
-        matRad_cfg.dispError('Invalid pln!');
+        matRad_cfg.dispError('Invalid pln struct!');
     end
 end
 

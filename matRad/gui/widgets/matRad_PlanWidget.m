@@ -820,7 +820,7 @@ classdef matRad_PlanWidget < matRad_Widget
             set(handles.popUpMenuDoseEngine,'String',{availableEngines(:).shortName});
             selectedEngineIx = get(handles.popUpMenuDoseEngine,'Value');
             selectedEngine = availableEngines(selectedEngineIx);
-            
+
             if isfield(pln.propStf,'isoCenter')
                 % sanity check of isoCenter
                 if size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) == 1
@@ -893,17 +893,22 @@ classdef matRad_PlanWidget < matRad_Widget
 
             if evalin('base','exist(''ct'')')
                 contentPopUpMultScen = get(handles.popMenuMultScen,'String');
-                if ~isfield(pln,'multScen')
+                try
+                    scenModel = matRad_ScenarioModel.create(pln.multScen);
+                    ix = find(strcmp(scenModel.shortName,contentPopUpMultScen));
+                catch
                     ix = 1;
-                else
-                    ix = find(strcmp(pln.multScen.shortName,contentPopUpMultScen));
                 end
+
                 set(handles.popMenuMultScen,'Value',ix);
             end
 
-            if isfield(pln,'propOpt') && isfield(pln.propOpt,'runDAO')
+            if strcmp(pln.radiationMode,'photons') && isfield(pln.propOpt,'runDAO')
                 set(handles.btnRunDAO,'Value',pln.propOpt.runDAO);
+            else
+                set(handles.btnRunDAO,'Value', 0 );
             end
+
             if isfield(pln, 'propSeq') && isfield(pln.propSeq, 'sequencingLevel')
                 set(handles.btnRunSequencing,'Value',pln.propSeq.runSequencing);
                 set(handles.editSequencingLevel,'String',num2str(pln.propSeq.sequencingLevel));
@@ -1202,7 +1207,7 @@ classdef matRad_PlanWidget < matRad_Widget
         %% CALLBACKS
         function popupRadMode_Callback(this, hObject, eventdata)
             handles = this.handles;
-            
+
             matRad_cfg = MatRad_Config.instance();
 
             defaultMachines = matRad_cfg.defaults.machine;
@@ -1222,7 +1227,7 @@ classdef matRad_PlanWidget < matRad_Widget
             catch
                 this.setPlnDefaultValues();
                 pln = evalin('base','pln');
-            end          
+            end
 
             if any(strcmp(newRadiationMode,{'protons','helium','carbon'}))
                 ix = find(strcmp(optimizationQuantityPopUpContents,'RBExD'));
@@ -1235,10 +1240,10 @@ classdef matRad_PlanWidget < matRad_Widget
             else
                 pln.machine = defaultMachines.fallback;
             end
-            
+
             %Update machine storages
             this.getMachines();
-         
+
             % Get the dose engines for the current pln selection
             try
                 availableEngines = DoseEngines.matRad_DoseEngineBase.getAvailableEngines(pln);
@@ -1261,7 +1266,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 if isempty(bioMenuIx)
                     bioMenuIx = 1;
                 end
-                
+
                 set(handles.popMenuBioModel,'String',modelNames,'Value',bioMenuIx);
             catch ME
                 this.showWarning('Dose Engine & Bio Model Update Failed!',ME);
@@ -1429,7 +1434,7 @@ classdef matRad_PlanWidget < matRad_Widget
             catch ME
                 availableBioModels = matRad_BiologicalModel.getAvailableModels(pln.radiationMode);
             end
-            
+
             set(handles.popMenuBioModel,'String',{availableBioModels(:).model});
 
             this.handles = handles;
@@ -1584,13 +1589,13 @@ classdef matRad_PlanWidget < matRad_Widget
             set(handles.popUpMachine,'Value',selectedMachine,'String',this.Machines(this.modalities{selectedRadMod}));
 
             availableMachines = this.Machines(this.modalities{selectedRadMod});
-            
+
             try
                 this.currentMachine = matRad_loadMachine(struct('radiationMode',this.modalities{selectedRadMod},'machine',availableMachines{selectedMachine}));
             catch ME
                 this.currentMachine = [];
             end
-            
+
             this.handles = handles;
         end
 
