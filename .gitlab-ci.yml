@@ -41,9 +41,7 @@ package:
       fi
       INSTALLER_NAME="matRad_installerLinux64_$PACKAGE_NAME"
     - tar -czvf $INSTALLER_NAME.tar.gz build/installer
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" \
-            --upload-file $INSTALLER_NAME.tar.gz 
-            "$CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/generic/matRad_linux64/$CI_COMMIT_BRANCH/matRad/$PACKAGE_NAME/$INSTALLER_NAME.tar.gz"'
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $INSTALLER_NAME.tar.gz "$CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/generic/matRad_linux64/$CI_COMMIT_BRANCH/matRad/$PACKAGE_NAME/$INSTALLER_NAME.tar.gz"'
     # - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
     # - docker image tag matRad:develop $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/matRad:develop
     # - docker push $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/matRad:develop
