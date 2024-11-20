@@ -55,4 +55,18 @@ function test_exportWidget_constructWithData
     evalin('base','clear ct cst pln');
     delete(h);
 
+function test_exportWidget_constructWithCarbonPln
+    evalin('base','load carbon_testData.mat');
+    h = matRad_exportWidget();
+    try
+        assertTrue(isa(h, 'matRad_exportWidget'));
+        assertTrue(isa(h, 'matRad_Widget'));
+    catch ME
+        evalin('base','clear ct cst pln stf dij resultGUI');
+        delete(h);
+        rethrow(ME);
+    end
+    evalin('base','clear ct cst pln stf dij resultGUI');
+    delete(h);
+
 %TODO: Test Buttons / visibility depending on data
