@@ -41,5 +41,5 @@ jobs:
               uses: codecov/test-results-action@v1
               with:
                   token: ${{ secrets.CODECOV_TOKEN }}
-                  files: test-results/test-results/matlab-R2022b/coverage.xml,test-results/matlab-latest/coverage.xml,test-results/octave/coverage.xml
+                  files: test-results/matlab-R2022b/testresults.xml,test-results/matlab-latest/testresults.xml,test-results/octave/testresults.xml
             
