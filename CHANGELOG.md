@@ -1,5 +1,8 @@
 # Changelog
 
+## Development Changes
+- Bugfix for DVH widget to not throw a warning in updates, handle scenarios correctly / more robustly and missing xlabel axesHandle parameter.
+
 ## Version 3.1.0 - "Cleve"
 
 ### Major Changes and New Features
