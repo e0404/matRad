@@ -88,4 +88,4 @@ pln.propDoseCalc.scorers     = {'Dose', 'LETd'};
 resultGUI_recalc = matRad_calcDoseForward(ct,cst,stf,pln, wOptimized);
 
 %% Compare physical dose and RBExD distributions
-matRad_compareDose(resultGUI_recalc.physicalDose, resultGUI_recalc.RBExD,ct,cst,[],'on');
+matRad_compareDose(resultGUI_recalc.physicalDose, resultGUI_recalc.RBExDose,ct,cst,[],'on');
