@@ -335,24 +335,24 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             fredDefinedFolder = fullfile(matRad_cfg.matRadSrcRoot, 'doseCalc', 'FRED', 'hluts');
 
             % Collect all the subfolders
-            if ispc
-                folderDelimiter = ';';
-            elseif isunix
-                folderDelimiter = ':';
-            else
-                folderDelimiter = ';';
-            end
+            % if ispc
+            %     folderDelimiter = ';';
+            % elseif isunix
+            %     folderDelimiter = ':';
+            % else
+            %     folderDelimiter = ';';
+            % end
 
-            searchPath = [strsplit(genpath(mainFolder), folderDelimiter)';...
-                          strsplit(genpath(userDefinedFolder), folderDelimiter)';...
-                          strsplit(genpath(fredDefinedFolder),folderDelimiter)'];
+            searchPath = [strsplit(genpath(mainFolder), pathsep)';...
+                          strsplit(genpath(userDefinedFolder), pathsep)';...
+                          strsplit(genpath(fredDefinedFolder),pathsep)'];
  
             searchPath(cellfun(@isempty, searchPath)) = [];
 
             % Check for existence of folder paths
             searchPath = searchPath(cellfun(@isfolder, searchPath));
             
-            availableHLUTs = cellfun(@(x) dir([x, folderDelimiter, '*.txt']), searchPath, 'UniformOutput',false);
+            availableHLUTs = cellfun(@(x) dir([x, filesep, '*.txt']), searchPath, 'UniformOutput',false);
             availableHLUTs = cell2mat(availableHLUTs);
 
             hLUTindex = find(strcmp([hLutFile,'.txt'], {availableHLUTs.name}));
