@@ -620,7 +620,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 % delete old variables to avoid confusion
                 if isfield(resultGUI,'effect')
                     resultGUI = rmfield(resultGUI,'effect');
-                    resultGUI = rmfield(resultGUI,'RBExD');
+                    resultGUI = rmfield(resultGUI,'RBExDose');
                     resultGUI = rmfield(resultGUI,'RBE');
                     resultGUI = rmfield(resultGUI,'alpha');
                     resultGUI = rmfield(resultGUI,'beta');
@@ -746,8 +746,8 @@ classdef matRad_WorkflowWidget < matRad_Widget
             
             if isfield(pln,'propOpt') && ~strcmp(pln.propOpt.quantityOpt,'none')
                 
-                if isfield(resultGUI,'RBExD')
-                    resultGUI.(['RBExD' Suffix]) = resultGUI.RBExD;
+                if isfield(resultGUI,'RBExDose')
+                    resultGUI.(['RBExDose' Suffix]) = resultGUI.RBExDose;
                 end
                 
                 if strcmp(pln.radiationMode,'carbon') == 1

@@ -92,10 +92,13 @@ classdef matRad_DVHWidget < matRad_Widget
             if isempty(this.selectedCube)
                 return;
             end
+
+            matRad_cfg = MatRad_Config.instance();
+            
+            %Create axis if not existing, otherwise clear
             if isgraphics(this.dvhAx)
                 cla(this.dvhAx);
             else
-                matRad_cfg = MatRad_Config.instance();
                 this.dvhAx = axes(this.widgetHandle,...
                     'Color',matRad_cfg.gui.elementColor,...
                     'XColor',matRad_cfg.gui.textColor,...

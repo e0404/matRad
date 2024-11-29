@@ -20,7 +20,7 @@ classdef matRad_ConstantRBE < matRad_BiologicalModel
         model = 'constRBE'
         possibleRadiationModes = {'photons','protons','helium','carbon','brachy'};
         requiredQuantities = {'physicalDose'};
-        defaultReportQuantity = 'RBExD';
+        defaultReportQuantity = 'RBExDose';
     end
 
     properties

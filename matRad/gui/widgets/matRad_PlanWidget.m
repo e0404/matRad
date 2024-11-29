@@ -33,7 +33,7 @@ classdef matRad_PlanWidget < matRad_Widget
     properties (Constant)
 
         modalities = {'photons','protons','carbon', 'helium','brachy'};
-        availableProjections = {  'physicalDose'; 'RBExD'; 'effect'; 'BED'; }
+        availableProjections = {  'physicalDose'; 'RBExDose'; 'effect'; 'BED'; }
 
     end
 
@@ -348,7 +348,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 'Tag','btnSetTissue');
 
             %Popup menu for Biological model and optimized quantity
-            txt = sprintf('Choose a quantity to optimize \nPhysical Dose: physical dose is optimized\nRBExD: RBE-weighted dose is optimized\neffect: effect calculated according to LQ model is optimized');
+            txt = sprintf('Choose a quantity to optimize \nPhysical Dose: physical dose is optimized\nRBExDose: RBE-weighted dose is optimized\neffect: effect calculated according to LQ model is optimized');
             h33 = uicontrol(...
                 'Parent',h12,...
                 'Units','normalized',...
@@ -367,7 +367,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 'FontWeight',matRad_cfg.gui.fontWeight);
 
             %Text for Biological model and optimized quantity
-            txt = sprintf('Choose a quantity to optimize \nPhysical Dose: physical dose is optimized\nRBExD: RBE-weighted dose is optimized\neffect: effect calculated according to LQ model is optimized');
+            txt = sprintf('Choose a quantity to optimize \nPhysical Dose: physical dose is optimized\nRBExDose: RBE-weighted dose is optimized\neffect: effect calculated according to LQ model is optimized');
             h34 = uicontrol(...
                 'Parent',h12,...
                 'Units','normalized',...
@@ -803,9 +803,11 @@ classdef matRad_PlanWidget < matRad_Widget
 
             matRad_cfg = MatRad_Config.instance();
 
-            set(handles.editBixelWidth,'String',num2str(pln.propStf.bixelWidth));
-            set(handles.editGantryAngle,'String',num2str(pln.propStf.gantryAngles));
-            set(handles.editCouchAngle,'String',num2str(pln.propStf.couchAngles));
+            stfGen = matRad_StfGeneratorBase.getGeneratorFromPln(pln);
+
+            set(handles.editBixelWidth,'String',num2str(stfGen.bixelWidth));
+            set(handles.editGantryAngle,'String',num2str(stfGen.gantryAngles));
+            set(handles.editCouchAngle,'String',num2str(stfGen.couchAngles));
 
             modIx = find(strcmp(pln.radiationMode,this.modalities));
             set(handles.popupRadMode,'Value',modIx);
@@ -818,7 +820,7 @@ classdef matRad_PlanWidget < matRad_Widget
             set(handles.popUpMenuDoseEngine,'String',{availableEngines(:).shortName});
             selectedEngineIx = get(handles.popUpMenuDoseEngine,'Value');
             selectedEngine = availableEngines(selectedEngineIx);
-            
+
             if isfield(pln.propStf,'isoCenter')
                 % sanity check of isoCenter
                 if size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) == 1
@@ -891,16 +893,22 @@ classdef matRad_PlanWidget < matRad_Widget
 
             if evalin('base','exist(''ct'')')
                 contentPopUpMultScen = get(handles.popMenuMultScen,'String');
-                if ~isfield(pln,'multScen')
+                try
+                    scenModel = matRad_ScenarioModel.create(pln.multScen);
+                    ix = find(strcmp(scenModel.shortName,contentPopUpMultScen));
+                catch
                     ix = 1;
-                else
-                    ix = find(strcmp(pln.multScen.shortName,contentPopUpMultScen));
                 end
+
                 set(handles.popMenuMultScen,'Value',ix);
             end
 
+            if strcmp(pln.radiationMode,'photons') && isfield(pln.propOpt,'runDAO')
+                set(handles.btnRunDAO,'Value',pln.propOpt.runDAO);
+            else
+                set(handles.btnRunDAO,'Value', 0 );
+            end
 
-            set(handles.btnRunDAO,'Value',pln.propOpt.runDAO);
             if isfield(pln, 'propSeq') && isfield(pln.propSeq, 'sequencingLevel')
                 set(handles.btnRunSequencing,'Value',pln.propSeq.runSequencing);
                 set(handles.editSequencingLevel,'String',num2str(pln.propSeq.sequencingLevel));
@@ -1199,7 +1207,7 @@ classdef matRad_PlanWidget < matRad_Widget
         %% CALLBACKS
         function popupRadMode_Callback(this, hObject, eventdata)
             handles = this.handles;
-            
+
             matRad_cfg = MatRad_Config.instance();
 
             defaultMachines = matRad_cfg.defaults.machine;
@@ -1219,10 +1227,10 @@ classdef matRad_PlanWidget < matRad_Widget
             catch
                 this.setPlnDefaultValues();
                 pln = evalin('base','pln');
-            end          
+            end
 
             if any(strcmp(newRadiationMode,{'protons','helium','carbon'}))
-                ix = find(strcmp(optimizationQuantityPopUpContents,'RBExD'));
+                ix = find(strcmp(optimizationQuantityPopUpContents,'RBExDose'));
                 set(handles.popMenuQuantityOpt,'Value',ix);
             end
 
@@ -1232,10 +1240,10 @@ classdef matRad_PlanWidget < matRad_Widget
             else
                 pln.machine = defaultMachines.fallback;
             end
-            
+
             %Update machine storages
             this.getMachines();
-         
+
             % Get the dose engines for the current pln selection
             try
                 availableEngines = DoseEngines.matRad_DoseEngineBase.getAvailableEngines(pln);
@@ -1258,7 +1266,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 if isempty(bioMenuIx)
                     bioMenuIx = 1;
                 end
-                
+
                 set(handles.popMenuBioModel,'String',modelNames,'Value',bioMenuIx);
             catch ME
                 this.showWarning('Dose Engine & Bio Model Update Failed!',ME);
@@ -1426,7 +1434,7 @@ classdef matRad_PlanWidget < matRad_Widget
             catch ME
                 availableBioModels = matRad_BiologicalModel.getAvailableModels(pln.radiationMode);
             end
-            
+
             set(handles.popMenuBioModel,'String',{availableBioModels(:).model});
 
             this.handles = handles;
@@ -1518,8 +1526,8 @@ classdef matRad_PlanWidget < matRad_Widget
             contentBioModel = get(handles.popMenuBioModel,'String');
             NewBioModel = contentBioModel(get(handles.popMenuBioModel,'Value'),:);
 
-            %                 if (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') && strcmp(NewBioOptimization,'LEMIV_RBExD')) ||...
-            %                         (strcmp(pln.propOpt.bioOptimization,'LEMIV_RBExD') && strcmp(NewBioOptimization,'LEMIV_effect'))
+            %                 if (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') && strcmp(NewBioOptimization,'LEMIV_RBExDose')) ||...
+            %                         (strcmp(pln.propOpt.bioOptimization,'LEMIV_RBExDose') && strcmp(NewBioOptimization,'LEMIV_effect'))
             %                     % do nothing - re-optimization is still possible
             %                 elseif ((strcmp(pln.propOpt.bioOptimization,'const_RBE') && strcmp(NewBioOptimization,'none')) ||...
             %                         (strcmp(pln.propOpt.bioOptimization,'none') && strcmp(NewBioOptimization,'const_RBE'))) && isequal(pln.radiationMode,'protons')
@@ -1541,8 +1549,8 @@ classdef matRad_PlanWidget < matRad_Widget
             %             contentQuantityOpt = get(handles.popMenuQuantityOpt,'String');
             %             NewQuantityOpt = contentQuantityOpt(get(handles.popMenuQuantityOpt,'Value'),:);
             %
-            % %                 if (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') && strcmp(NewBioOptimization,'LEMIV_RBExD')) ||...
-            % %                         (strcmp(pln.propOpt.bioOptimization,'LEMIV_RBExD') && strcmp(NewBioOptimization,'LEMIV_effect'))
+            % %                 if (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') && strcmp(NewBioOptimization,'LEMIV_RBExDose')) ||...
+            % %                         (strcmp(pln.propOpt.bioOptimization,'LEMIV_RBExDose') && strcmp(NewBioOptimization,'LEMIV_effect'))
             % %                     % do nothing - re-optimization is still possible
             % %                 elseif ((strcmp(pln.propOpt.bioOptimization,'const_RBE') && strcmp(NewBioOptimization,'none')) ||...
             % %                         (strcmp(pln.propOpt.bioOptimization,'none') && strcmp(NewBioOptimization,'const_RBE'))) && isequal(pln.radiationMode,'protons')
@@ -1581,13 +1589,13 @@ classdef matRad_PlanWidget < matRad_Widget
             set(handles.popUpMachine,'Value',selectedMachine,'String',this.Machines(this.modalities{selectedRadMod}));
 
             availableMachines = this.Machines(this.modalities{selectedRadMod});
-            
+
             try
                 this.currentMachine = matRad_loadMachine(struct('radiationMode',this.modalities{selectedRadMod},'machine',availableMachines{selectedMachine}));
             catch ME
                 this.currentMachine = [];
             end
-            
+
             this.handles = handles;
         end
 

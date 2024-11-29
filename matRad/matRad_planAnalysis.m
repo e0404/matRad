@@ -67,8 +67,8 @@ showDVH = p.Results.showDVH;
 showQI = p.Results.showQI;
 
 % Determine which dose cube to use based on resultGUI structure
-if isfield(resultGUI,'RBExD')
-    visQ = 'RBExD';
+if isfield(resultGUI,'RBExDose')
+    visQ = 'RBExDose';
 else
     visQ = 'physicalDose';
 end

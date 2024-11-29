@@ -472,7 +472,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 end
             end            
 
-            % Get photon parameters for RBExD calculation
+            % Get photon parameters for RBExDose calculation
             if this.calcBioDose
                 this.scorer.RBE = true;
                 [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
@@ -2186,7 +2186,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                         fprintf(fID,'d:Ma/%s/Density = %f g/cm3\n',unique_materials{ix},unique_rsp(ix));
                     end
 
-                    fprintf(fID,'s:Ge/Patient/Parent="World"\n');
+                    fprintf(fID,'s:Ge/Patient/Parent="Isocenter"\n');
                     fprintf(fID,'s:Ge/Patient/Type = "TsImageCube"\n');
                     fprintf(fID,'s:Ge/Patient/InputDirectory = "./"\n');
                     fprintf(fID,'s:Ge/Patient/InputFile = "%s"\n',dataFile);
@@ -2348,7 +2348,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                         % write patient environment
                         matRad_cfg.dispInfo('TOPAS: Writing patient environment\n');
                         fprintf(fID,'\n# -- Patient parameters\n');
-                        fprintf(fID,'s:Ge/Patient/Parent="World"\n');
+                        fprintf(fID,'s:Ge/Patient/Parent="Isocenter"\n');
                         fprintf(fID,'s:Ge/Patient/Type = "TsImageCube"\n');
                         fprintf(fID,'b:Ge/Patient/DumpImagingValues = "True"\n');
                         fprintf(fID,'s:Ge/Patient/InputDirectory = "./"\n');

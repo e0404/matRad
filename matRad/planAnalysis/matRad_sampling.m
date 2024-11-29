@@ -109,7 +109,7 @@ nomScenTime      = toc(nomScenTimer);
 matRad_cfg.dispInfo('Finished nominal Scenario Calculation. Computation time: %f h \n',round(nomScenTime / 3600));
 
 refVol = [2 5 50 95 98];
-if isfield(resultGUInomScen,'RBExD'), quantityVis  = 'RBExD'; else,  quantityVis = 'physicalDose';  end
+if isfield(resultGUInomScen,'RBExDose'), quantityVis  = 'RBExDose'; else,  quantityVis = 'physicalDose';  end
 
 refGy = linspace(0,max(resultGUInomScen.(quantityVis)(:)),6);
 
@@ -158,7 +158,7 @@ if FlagParallToolBoxLicensed
 
         resultSamp                 = matRad_calcDoseForward(ct,cst,stf,plnSamp,w);
         
-        if isfield(resultSamp,'RBExD'), quantityVis  = 'RBExD'; else,  quantityVis = 'physicalDose';  end
+        if isfield(resultSamp,'RBExDose'), quantityVis  = 'RBExDose'; else,  quantityVis = 'physicalDose';  end
         
         sampledDose                = resultSamp.(quantityVis)(subIx);
         mSampDose(:,i)             = single(reshape(sampledDose,[],1));
@@ -198,7 +198,7 @@ else
 
         resultSamp                 = matRad_calcDoseDirect(ct,stf,plnSamp,cst,w);
 
-        if isfield(resultSamp,'RBExD'), quantityVis  = 'RBExD'; else,  quantityVis = 'physicalDose';  end
+        if isfield(resultSamp,'RBExDose'), quantityVis  = 'RBExDose'; else,  quantityVis = 'physicalDose';  end
 
         sampledDose                = resultSamp.(quantityVis)(subIx);
         mSampDose(:,i)             = single(reshape(sampledDose,[],1));

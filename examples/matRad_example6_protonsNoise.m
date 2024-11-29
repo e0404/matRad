@@ -55,7 +55,7 @@ pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
 
 % Optimization Settings
-pln.propOpt.quantityOpt             = 'RBExD'; 
+pln.propOpt.quantityOpt             = 'RBExDose'; 
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
@@ -100,7 +100,7 @@ disp(resultGUI.qi(ixRectum).D_5);
 slice = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:),ct);
 slice = slice(3);
 figure
-imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet)
+imagesc(resultGUI.RBExDose(:,:,slice)),colorbar, colormap(jet)
 
 %% Add Range Uncertainty
 % Now let's manually simulate a range undershoot by scaling the relative 
@@ -150,5 +150,5 @@ pln.propDoseCalc.fineSampling.N = 2;
 resultGUI_FS = matRad_calcDoseForward(ct,cst,stf,pln,resultGUI.w);
 
 %%  Visual Comparison of results using the "compareDose" helper function
-matRad_compareDose(resultGUI_noise.RBExD,resultGUI.RBExD,ct,cst);
-matRad_compareDose(resultGUI_FS.RBExD,resultGUI.RBExD,ct,cst);
+matRad_compareDose(resultGUI_noise.RBExDose,resultGUI.RBExDose,ct,cst);
+matRad_compareDose(resultGUI_FS.RBExDose,resultGUI.RBExDose,ct,cst);

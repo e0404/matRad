@@ -1,6 +1,6 @@
 # Changelog
 
-## Current Development Branch
+## Version 3.1.0 - "Cleve"
 
 ### Major Changes and New Features
 
