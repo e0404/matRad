@@ -20,7 +20,7 @@ function test_propertyAssignmentFromPln
         pln = struct('radiationMode',radModes{i},'machine','Generic','propDoseCalc',struct('engine','FRED'));
         
         pln.propDoseCalc.HUclamping               = false;
-        pln.propDoseCalc.HUtable                  = 'matRad_default_FRED';
+        pln.propDoseCalc.HUtable                  = 'matRad_default_FredMaterialConverter';
         pln.propDoseCalc.exportCalculation        = true;
         pln.propDoseCalc.sourceModel              = 'gaussian';
         pln.propDoseCalc.useWSL                   = true;
