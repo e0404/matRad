@@ -348,6 +348,9 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                           strsplit(genpath(fredDefinedFolder),folderDelimiter)'];
  
             searchPath(cellfun(@isempty, searchPath)) = [];
+
+            % Check for existence of folder paths
+            searchPath = searchPath(cellfun(@isfolder, searchPath));
             
             availableHLUTs = cellfun(@(x) dir([x,'\*.txt']), searchPath, 'UniformOutput',false);
             availableHLUTs = cell2mat(availableHLUTs);
