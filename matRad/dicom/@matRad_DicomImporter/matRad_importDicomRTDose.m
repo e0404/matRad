@@ -75,7 +75,7 @@ for i = 1 : numDoseFiles
             doseTypeHelper = 'physicalDose';
         end
     elseif strncmpi(doseTypeHelper,'EFFECTIVE',6)
-        if any(strcmp(doseComment,{'RBExDose','BED','alpha','beta'}))
+        if any(strcmp(doseComment,{'RBExDose','BED','alpha','beta','effect','RBE'}))
             doseTypeHelper = doseComment;
         else
             doseTypeHelper = 'RBExDose';
