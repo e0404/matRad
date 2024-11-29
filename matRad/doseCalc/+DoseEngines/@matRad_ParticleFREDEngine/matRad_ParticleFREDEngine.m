@@ -352,7 +352,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % Check for existence of folder paths
             searchPath = searchPath(cellfun(@isfolder, searchPath));
             
-            availableHLUTs = cellfun(@(x) dir([x,'\*.txt']), searchPath, 'UniformOutput',false);
+            availableHLUTs = cellfun(@(x) dir([x, folderDelimiter, '*.txt']), searchPath, 'UniformOutput',false);
             availableHLUTs = cell2mat(availableHLUTs);
 
             hLUTindex = find(strcmp([hLutFile,'.txt'], {availableHLUTs.name}));
