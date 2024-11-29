@@ -211,7 +211,7 @@ classdef matRad_importDicomWidget < matRad_Widget
             % selected dose serie
             allRTDoses = this.importer.importFiles.rtdose;
             if ~isempty(allRTDoses) && ~isempty(handles.doseseries_listbox.Value)
-                UIDSelected_rtdose = handles.doseseries_listbox.String{get(handles.doseseries_listbox,'Value'), 1};
+                UIDSelected_rtdose = handles.doseseries_listbox.String(get(handles.doseseries_listbox,'Value'));
                 selectedRTDose = allRTDoses(strcmp(allRTDoses(:, 4), UIDSelected_rtdose), :);
                 this.importer.importFiles.rtdose = selectedRTDose;
             else 
