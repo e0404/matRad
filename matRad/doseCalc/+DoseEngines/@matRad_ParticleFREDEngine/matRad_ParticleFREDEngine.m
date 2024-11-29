@@ -51,7 +51,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
     properties (SetAccess = protected, GetAccess = public)
         
-        defaultHUtable        = 'matRad_default_FRED';
+        defaultHUtable        = 'matRad_default_FredMaterialConverter';
         AvailableSourceModels = {'gaussian', 'emittance', 'sigmaSqrModel'};
       
         calcBioDose;
@@ -332,7 +332,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
             mainFolder        = fullfile(matRad_cfg.matRadSrcRoot,'hluts');
             userDefinedFolder = fullfile(matRad_cfg.primaryUserFolder, 'hluts');
-            fredDefinedFolder = fullfile(matRad_cfg.thirdPartyFolder, 'FRED', 'hluts');
+            fredDefinedFolder = fullfile(matRad_cfg.matRadSrcRoot, 'doseCalc', 'FRED', 'hluts');
 
             % Collect all the subfolders
             if ispc
@@ -349,10 +349,10 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
  
             searchPath(cellfun(@isempty, searchPath)) = [];
             
-            availableHLUTs = cellfun(@(x) dir([x,'\*.hlut']), searchPath, 'UniformOutput',false);
+            availableHLUTs = cellfun(@(x) dir([x,'\*.txt']), searchPath, 'UniformOutput',false);
             availableHLUTs = cell2mat(availableHLUTs);
 
-            hLUTindex = find(strcmp([hLutFile,'.hlut'], {availableHLUTs.name}));
+            hLUTindex = find(strcmp([hLutFile,'.txt'], {availableHLUTs.name}));
 
             if ~isempty(hLUTindex)
                 selectedHlutfile = fullfile(availableHLUTs(hLUTindex).folder, availableHLUTs(hLUTindex).name);
@@ -371,6 +371,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 end
                 matRad_cfg.dispError(errString);
             end
+
         end
 
     end
@@ -533,12 +534,16 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % Function to get current default FRED version
             matRad_cfg = MatRad_Config.instance();
 
-            [status, cmdOut] = system([this.cmdCall,'fred -vn']);
+            try
+                [status, cmdOut] = system([this.cmdCall,'fred -vn']);
 
-            if status == 0
-                version = cmdOut(1:end-1);
-            else
-                matRad_dispError('Something wrong occured in checking FRED installation. Please check correct FRED installation');
+                if status == 0
+                    version = cmdOut(1:end-1);
+                else
+                    matRad_cfg.dispError('Something wrong occured in checking FRED installation. Please check correct FRED installation');
+                end
+            catch
+                matRad_cfg.dispWarning('Something wrong occured in checking FRED installation. Please check correct FRED installation');
             end
         end
 

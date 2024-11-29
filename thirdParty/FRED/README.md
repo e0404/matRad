@@ -1,1 +1,0 @@
-https://www.fred-mc.org/Manual_3.70/index.html
