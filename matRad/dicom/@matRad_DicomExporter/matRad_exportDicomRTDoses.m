@@ -126,14 +126,14 @@ obj.rtDoseMetas = struct([]);
 obj.rtDoseExportStatus = struct([]);
 
 for i = 1:numel(doseFieldNames)
-    doseName = doseFieldNames{i};
+    doseName = doseFieldNames{i};    
     
     %Now check if we export physical or RBE weighted dose, they are known
     %to dicom
-    if strncmp(doseName,'physicalDose',12)
+    if strncmp(doseName,'physicalDose',12) || strncmp(doseName,'LET',3)
         doseType = 'PHYSICAL';
-    elseif strncmp(doseName,'RBExDose',8)
-        doseType = 'EFFECTIVE';
+    elseif strncmp(doseName,'RBExDose',8) || strncmp(doseName,'BED',3) || strncmp(doseName,'alpha',3) || strncmp(doseName,'beta',3)
+        doseType = 'EFFECTIVE';        
     else
         matRad_cfg.dispInfo('Dose Cube ''%s'' of unknown type for DICOM. Not exported!\n',doseName);
         continue;
@@ -165,6 +165,7 @@ for i = 1:numel(doseFieldNames)
     metaCube = meta;
     metaCube.DoseType = doseType;
     metaCube.DoseSummationType = deliveryType;
+    metaCube.DoseComment = doseName;
        
     %ID of the RTDose
     metaCube.SeriesInstanceUID = dicomuid;    
