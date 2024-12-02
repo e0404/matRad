@@ -36,5 +36,10 @@ jobs:
               with:
                   files: |
                       test-results/*/testresults.xml
-
+            
+            - name: Publish Test Results on Codecov
+              uses: codecov/test-results-action@v1
+              with:
+                  token: ${{ secrets.CODECOV_TOKEN }}
+                  files: test-results/matlab-R2022b/testresults.xml,test-results/matlab-latest/testresults.xml,test-results/octave/testresults.xml
             
