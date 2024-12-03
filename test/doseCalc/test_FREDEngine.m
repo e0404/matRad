@@ -23,7 +23,6 @@ function test_propertyAssignmentFromPln
         pln.propDoseCalc.HUtable                  = 'matRad_default_FredMaterialConverter';
         pln.propDoseCalc.exportCalculation        = true;
         pln.propDoseCalc.sourceModel              = 'gaussian';
-        pln.propDoseCalc.useWSL                   = true;
         pln.propDoseCalc.useGPU                   = false;
         pln.propDoseCalc.roomMaterial             = 'Vacuum';
         pln.propDoseCalc.printOutput              = false;

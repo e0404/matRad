@@ -17,7 +17,6 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 % exportCalculation      [b] t: Only write simulation paramter files
 %                            f: run FRED
 % sourceModel            [s] see AvailableSourceModels, {'gaussian', 'emittance', 'sigmaSqrModel'}
-% useWSL                 [b] for Windows user: use WSL
 % useGPU                 [b] trigger use of GPU (if available)
 % roomMaterial           [s] material of the patient surroundings. Example:
 %                            'vacuum', 'Air'
@@ -63,6 +62,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
     properties
         exportCalculation;
+        useGPU;
         calcLET;
         constantRBE;
         HUclamping;
@@ -70,13 +70,11 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         HUtable;
         sourceModel;
         roomMaterial;
-        useWSL;
-        useGPU;
         printOutput;
         primaryMass;
         numOfNucleons;
         ignoreOutsideDensities;
-    end        
+    end
 
 
     properties (SetAccess = private, Hidden)
@@ -100,12 +98,9 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         inputFolder;
         regionsFolder;
         planFolder;
-
-        cmdCall;
     end
     
     methods
-        
         function this = matRad_ParticleFREDEngine(pln)
             % Constructor
             %
@@ -309,9 +304,8 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             this.HUclamping             = false;
             this.HUtable                = this.defaultHUtable;
             this.exportCalculation      = false;
+            this.useGPU                 = false;
             this.sourceModel            = this.AvailableSourceModels{1};
-            this.useWSL                 = false;
-            this.useGPU                 = true;
             this.roomMaterial           = 'Air';
             this.printOutput            = true;
             this.numHistoriesDirect     = matRad_cfg.defaults.propDoseCalc.numHistoriesDirect;
@@ -335,13 +329,6 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             fredDefinedFolder = fullfile(matRad_cfg.matRadSrcRoot, 'doseCalc', 'FRED', 'hluts');
 
             % Collect all the subfolders
-            % if ispc
-            %     folderDelimiter = ';';
-            % elseif isunix
-            %     folderDelimiter = ':';
-            % else
-            %     folderDelimiter = ';';
-            % end
 
             searchPath = [strsplit(genpath(mainFolder), pathsep)';...
                           strsplit(genpath(userDefinedFolder), pathsep)';...
@@ -380,6 +367,46 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
     end
 
     methods (Static)
+        function cmdString = cmdCall(newCmdString)
+            persistent fredCmdCall;
+            if nargin > 0
+                fredCmdCall = newCmdString;                
+            elseif isempty(fredCmdCall)
+                if ispc
+                    fredCmdCall = 'wsl if [ -f ~/.fredenv.sh ] ; then source ~/.fredenv.sh ; fi; fred';
+                elseif isunix
+                    fredCmdCall = 'if [ -f ~/.fredenv.sh ] ; then source ~/.fredenv.sh ; fi; fred';
+                else
+                    matRad_cfg = MatRad_Config.instance();
+                    matRad_cfg.dispError('OS not supported for FRED!');
+                end                
+            end
+            cmdString = fredCmdCall;
+        end
+
+        function availableVersions = getAvailableVersions()
+            % Function to get available FRED version
+
+            matRad_cfg = MatRad_Config.instance();
+
+            currCmdCall = DoseEngines.matRad_ParticleFREDEngine.cmdCall;
+
+            availableVersions = [];
+
+            [status, cmdOut] = system([currCmdCall, ' -listVers']);
+
+            if status == 0
+                nLidx = regexp(cmdOut, '\n')+6; %6 because of tab
+                nVersions = numel(nLidx)-1;
+
+                for versIdx=1:nVersions
+                    availableVersions = [availableVersions,{cmdOut(nLidx(versIdx):nLidx(versIdx)+5)}];
+                end
+
+            else
+                matRad_cfg.dispError('Something wrong occured in checking FRED available version. Please check correct FRED installation');
+            end
+        end
 
         function [available,msg] = isAvailable(pln,machine)   
             % see superclass for information
@@ -408,7 +435,38 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 return;
             end
 
-            available = preCheck;
+            %Check if I can obtain FRED version
+            try
+                ver = DoseEngines.matRad_ParticleFREDEngine.getVersion();
+                if ~isempty(ver)
+                    execCheck = true;
+                else
+                    execCheck = false;
+                    msg = sprintf('Couldn''t call FRED executable. Please set the correct system call with DoseEngines.matRad_ParticleFREDEngine.cmdCall(''path/to/executable''). Current value is ''%s''',DoseEngines.matRad_ParticleFREDEngine.cmdCall);
+                end
+            catch
+                msg = 'Your machine file is invalid and does not contain the basic field (meta/data/radiationMode)!';
+                return;
+            end
+
+            available = preCheck & execCheck;
+        end
+
+        function version = getVersion()
+            % Function to get current default FRED version
+            matRad_cfg = MatRad_Config.instance();
+
+            try
+                [status, cmdOut] = system([DoseEngines.matRad_ParticleFREDEngine.cmdCall,' -vn']);
+
+                if status == 0
+                    version = cmdOut(1:end-1);
+                else
+                    matRad_cfg.dispError('Something wrong occured in checking FRED installation. Please check correct FRED installation');
+                end
+            catch
+                matRad_cfg.dispWarning('Something wrong occured in checking FRED installation. Please check correct FRED installation');
+            end
         end
 
         % end
@@ -503,89 +561,6 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             obj.planFolder      = fullfile(obj.inputFolder, 'plan');
         end
 
-
-        function calculationAvailable = checkSystemAvailability(this)
-            matRad_cfg = MatRad_Config.instance();
-
-            calculationAvailable = true;
-
-            % Disabling GPU for WSL
-            if this.useWSL
-                matRad_cfg.dispInfo('Calling FRED from WSL');
-
-                if this.useGPU
-                    matRad_cfg.dispWarning('GPU not available in WSL');
-                end
-                this.useGPU = false;
-            end
-
-            switch this.machine.meta.radiationMode
-                case 'protons'
-
-                otherwise
-                    matRad_cfg.dispError('Only proton dose calculation available with this version of FRED');
-                    calculationAvailable = false;
-
-            end
-
-            this.availableVersions = this.getAvailableVersions;
-
-        end
-
-
-        function version = getVersion(this)
-            % Function to get current default FRED version
-            matRad_cfg = MatRad_Config.instance();
-
-            try
-                [status, cmdOut] = system([this.cmdCall,'fred -vn']);
-
-                if status == 0
-                    version = cmdOut(1:end-1);
-                else
-                    matRad_cfg.dispError('Something wrong occured in checking FRED installation. Please check correct FRED installation');
-                end
-            catch
-                matRad_cfg.dispWarning('Something wrong occured in checking FRED installation. Please check correct FRED installation');
-            end
-        end
-
-        function availableVersions = getAvailableVersions(this, sist)
-            % Function to get available FRED version
-            
-            matRad_cfg = MatRad_Config.instance();
-
-            if ~exist('sist', 'var') || isempty(sist)
-                if this.useWSL
-                    sist = 'wsl';
-                else
-                    sist = 'win';
-                end                   
-            end
-
-            if strcmp(sist, 'win')
-                currCmdCall = '';
-            else
-                currCmdCall = 'wsl if [ -f ~/.fredenv.sh ] ; then source ~/.fredenv.sh ; fi;';
-            end
-
-            availableVersions = [];
-
-            [status, cmdOut] = system([currCmdCall, 'fred -listVers']);
-            
-            if status == 0
-                nLidx = regexp(cmdOut, '\n')+6; %6 because of tab
-                nVersions = numel(nLidx)-1;
-                
-                for versIdx=1:nVersions
-                    availableVersions = [availableVersions,{cmdOut(nLidx(versIdx):nLidx(versIdx)+5)}];
-                end
-
-            else
-                matRad_cfg.dispError('Something wrong occured in checking FRED available version. Please check correct FRED installation');
-            end
-        end
-
         function [radiationMode] = updateRadiationMode(this,value)
             % This function also resets the values for primary mass and numebr
             % of nucleons. Used for possible future extension to multiple
@@ -639,17 +614,6 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 version = this.currentVersion;
              end
 
-         end
-
-         function set.useWSL(this,value)
-
-             this.useWSL = value;
-        
-             if value
-                this.cmdCall = 'wsl if [ -f ~/.fredenv.sh ] ; then source ~/.fredenv.sh ; fi;';
-             else
-                this.cmdCall = '';
-             end
          end
 
          function set.radiationMode(this,value)

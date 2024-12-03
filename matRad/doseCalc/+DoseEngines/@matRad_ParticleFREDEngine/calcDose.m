@@ -306,23 +306,22 @@ function dij = calcDose(this,ct,cst,stf)
     if ~this.exportCalculation
 
         % Check consistency of installation
-        if this.checkSystemAvailability()
+        if this.isAvailable(struct('radiationMode',this.radiationMode),this.machine)
             
             matRad_cfg.dispInfo('calling FRED');
 
             cd(this.MCrunFolder);
-
+            
+            systemCall = [this.cmdCall, '-f fred.inp'];
             if ~this.useGPU
-                cmdCall = [this.cmdCall, 'fred -f fred.inp -nogpu'];
-            else
-                cmdCall = [this.cmdCall, 'fred -f fred.inp'];
+                systemCall = [this.cmdCall, ' -nogpu'];
             end
 
             % printOutput to matLab console
             if this.printOutput
-                [status,~] = system(cmdCall,'-echo');
+                [status,~] = system(systemCall,'-echo');
             else
-                [status,~] = system(cmdCall);
+                [status,~] = system(systemCall);
             end
             cd(this.FREDrootFolder);
         else

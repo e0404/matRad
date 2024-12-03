@@ -61,6 +61,7 @@ wOptimized = resultGUI_PB.w;
 
 %% Let's now re-compute the dose distribution with FRED MC
 pln.propDoseCalc.engine = 'FRED';
+pln.propDoseCalc.useGPU = false;
 
 % For illustraton, let's compute a dose influence matrix.
 dij_FRED = matRad_calcDoseInfluence(ct,cst,stf,pln);
