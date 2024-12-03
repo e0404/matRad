@@ -1,0 +1,51 @@
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+  GIT_SUBMODULE_DEPTH: 1
+  GIT_SUBMODULE_PATH: submodules/MOxUnit submodules/MOcov
+
+.matlab_defaults:
+  image:
+    name: '${CUSTOM_MATLAB_IMAGE}:r2024b'  # Replace the value with the name of the MATLAB container image you want to use
+    entrypoint: [""]
+  variables:
+    MLM_LICENSE_FILE: $E040_MATLAB_LICENSE_SERVER  # Replace the value with the port number and DNS address for your network license manager
+  resource_group: matlab
+
+test:
+  stage: test
+  extends: .matlab_defaults
+  script: matlab -batch "assert(matRad_runTests('test',true));"
+  artifacts:
+    reports:
+      junit: "./testresults.xml"
+      coverage_report:
+        coverage_format: cobertura
+        path: "./coverage.xml"
+    paths:
+      - "./*.xml"
+      - "./*.json"
+  coverage: '/TOTAL.*? (100(?:\.0+)?%|[1-9]?\d(?:\.\d+)?%)/'
+
+
+package:
+  stage: deploy
+  extends: .matlab_defaults
+  script: 
+    - |
+      if [ -n "$CI_COMMIT_TAG" ]; then        
+        matlab -batch "matRad_buildStandalone('isRelease', true);"
+        PACKAGE_NAME="$CI_COMMIT_TAG"        
+      else
+        matlab -batch "matRad_buildStandalone();"
+        PACKAGE_NAME="$CI_COMMIT_BRANCH"
+      fi
+      INSTALLER_NAME="matRad_installerLinux64_$PACKAGE_NAME"
+    - tar -czvf $INSTALLER_NAME.tar.gz build/installer
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $INSTALLER_NAME.tar.gz "$CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/generic/matRad_linux64/$CI_COMMIT_BRANCH/matRad/$PACKAGE_NAME/$INSTALLER_NAME.tar.gz"'
+    # - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+    # - docker image tag matRad:develop $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/matRad:develop
+    # - docker push $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/matRad:develop
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_BRANCH == "dev"
+    - if: $CI_COMMIT_TAG
