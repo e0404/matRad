@@ -4,13 +4,17 @@ test_functions=localfunctions();
 
 initTestSuite;
 
-function test_getEngineFromPlnByName
+function test_constructFREDEngine
     radModes = DoseEngines.matRad_ParticleFREDEngine.possibleRadiationModes;
     for i = 1:numel(radModes)
         plnDummy = struct('radiationMode',radModes{i},'machine','Generic','propDoseCalc',struct('engine','FRED'));
-        engine = DoseEngines.matRad_ParticleFREDEngine.getEngineFromPln(plnDummy);
+        engine = DoseEngines.matRad_ParticleFREDEngine(plnDummy);
         assertTrue(isa(engine,'DoseEngines.matRad_ParticleFREDEngine'));
     end
+
+function test_constructFailOnWrongRadMode
+    plnDummy = struct('radiationMode','brachy','machine','HDR','propDoseCalc',struct('engine','FRED'));
+    assertExceptionThrown(@()DoseEngines.matRad_ParticleFREDEngine(plnDummy));
 
 function test_propertyAssignmentFromPln
 
@@ -29,7 +33,7 @@ function test_propertyAssignmentFromPln
         pln.propDoseCalc.numHistoriesDirect       = 42;
         pln.propDoseCalc.numHistoriesPerBeamlet   = 42;
         
-        engine = DoseEngines.matRad_ParticleFREDEngine.getEngineFromPln(pln);
+        engine = DoseEngines.matRad_ParticleFREDEngine(pln);
         
         assertTrue(isa(engine,'DoseEngines.matRad_ParticleFREDEngine'));
         

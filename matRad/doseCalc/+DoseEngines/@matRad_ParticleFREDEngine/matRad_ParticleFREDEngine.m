@@ -472,27 +472,18 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         % end
 
         function dijMatrix = readSparseDijBin(fName)
-        % FRED function to read sparseDij in .bin format
-        % call
-        %   readSparseDijBin(fName)
-        % 
-        % input
-        %   fName: filename to read
-        %
-        % output
-        %   dijMatrix: dij structure
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %
-        % Copyright 2023 the matRad development team.
-        %
-        % This file is part of the matRad project. It is subject to the license
-        % terms in the LICENSE file found in the top-level directory of this
-        % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
-        % of the matRad project, including this file, may be copied, modified,
-        % propagated, or distributed except according to the terms contained in the
-        % LICENSE file.
-        %
-        % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % FRED function to read sparseDij in .bin format
+            % call
+            %   readSparseDijBin(fName)
+            % 
+            % input
+            %   fName: filename to read
+            %
+            % output
+            %   dijMatrix: dij structure
+            
+            matRad_cfg = MatRad_Config.instance();
+            
             f = fopen(fName,'r','l');
 
             %Header
@@ -509,7 +500,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             colIndices = [];
             valuesNom = [];
             
-            fprintf("Reading %d number of beamlets in %d voxels (%dx%dx%d)\n",numberOfBixels,prod(dims),dims(1),dims(2),dims(3));
+            matRad_cfg.dispInfo("Reading %d number of beamlets in %d voxels (%dx%dx%d)\n",numberOfBixels,prod(dims),dims(1),dims(2),dims(3));
         
             bixelCounter = 0;
             for i = 1:numberOfBixels
@@ -538,7 +529,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 [indY, indX, indZ] = ind2sub(dims, currVoxelIndices);
 
                 voxelIndices(end+1:end+numVox) = sub2ind(dims([2,1,3]), indX, indY, indZ);
-                fprintf("\tRead beamlet %d, %d voxels...\n",bixNum,numVox);
+                matRad_cfg.dispInfo("\tRead beamlet %d, %d voxels...\n",bixNum,numVox);
             end
             
             fclose(f);
