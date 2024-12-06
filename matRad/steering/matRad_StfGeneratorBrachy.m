@@ -148,7 +148,7 @@ classdef matRad_StfGeneratorBrachy < matRad_StfGeneratorBase
                 % Prostate = plot3(TargX, TargY, TargZ, '.', 'Color', 'b', 'DisplayName', 'prostate');
 
                 % Prepare points for boundary calculation
-                P = [TargX', TargY', TargZ'];
+                P = [TargX, TargY, TargZ];
 
                 if ~isempty(P)
                     % Determine the environment

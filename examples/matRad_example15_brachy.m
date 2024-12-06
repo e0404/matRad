@@ -84,13 +84,11 @@ cst{9,6}{1} = struct(DoseObjectives.matRad_MeanDose(1));
 % Here we will use HDR. By this means matRad will look for 'brachy_HDR.mat'
 % in our root directory and will use the data provided in there for 
 % dose calculation.
-
 pln.radiationMode   = 'brachy'; 
 pln.machine         = 'HDR';    % 'LDR' or 'HDR' for brachy
 
 pln.bioModel        = 'none';
 pln.multScen        = 'nomScen';
-
 
 %% II.1 - needle and template geometry
 % Now we have to set some parameters for the template and the needles. 
@@ -110,6 +108,7 @@ pln.propStf.needle.seedsNo           = 6;
 % The needles will be positioned right under the target volume pointing up.
 
 
+pln.propStf.visMode      = 1; %Enable visualization for stf generation
 pln.propStf.bixelWidth   = 5; % [mm] template grid distance
 
 %Template Type
@@ -151,15 +150,11 @@ end
 % needles.
 % Calculation time will be reduced by one tenth when we define a dose
 % cutoff distance.
-
-
 pln.propDoseCalc.TG43approximation = '2D'; %'1D' or '2D' 
 
 pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]
 pln.propDoseCalc.doseGrid.resolution.y = 5; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
-
-
 
 % We can also use other solver for optimization than IPOPT. matRad 
 % currently supports simulannealbnd from the MATLAB Global Optimization Toolbox. First we
@@ -172,7 +167,6 @@ else
     pln.propOpt.optimizer = 'IPOPT';
 end
 
-pln.propOpt.optimizer = 'IPOPT';
 %% II.1 - book keeping
 % Some field names have to be kept although they don't have a direct
 % relevance for brachy therapy.
@@ -182,13 +176,11 @@ pln.numOfFractions          = 1;
 % Et voila! Our treatment plan structure is ready. Lets have a look:
 disp(pln);
 
-
 %% II.2 Steering Seed Positions From STF
 % The steering file struct contains all needls/catheter geometry with the
 % target volume, number of needles, seeds and the positions of all needles
 % The one in the end enables visualization.
 stf = matRad_generateStf(ct,cst,pln);
-
 
 %% II.2 - view stf
 % The 3D view is interesting, but we also want to know how the stf struct

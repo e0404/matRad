@@ -63,6 +63,9 @@ info.PixelDimensions = [metadata.resolution(metadata.axisPermutation)];
 info.Datatype = metadata.datatype;
 info.ImageSize = size(cube);
 info.Description = sprintf('Exported from matRad %s',matRad_version());
+if length(info.Description) >= 80
+    info.Description = info.Description(1:79);
+end
 
 if max(info.ImageSize) > 32767
     info.Version = 'NIfTI2';
