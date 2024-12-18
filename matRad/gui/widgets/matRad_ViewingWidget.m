@@ -58,6 +58,7 @@ classdef matRad_ViewingWidget < matRad_Widget
         scrollHandle;
         lockColorSettings = false;
         %plotlegend=false;
+        evt;
     end
     
     properties (SetAccess=private)
@@ -297,7 +298,7 @@ classdef matRad_ViewingWidget < matRad_Widget
         
         function set.dispWindow(this,value)
             this.dispWindow=value;
-            evt = matRad_WorkspaceChangedEvent('image_display');
+            evt = matRad_WorkspaceChangedEvent('viewer_options');
             this.update(evt);
         end
         
@@ -508,6 +509,7 @@ classdef matRad_ViewingWidget < matRad_Widget
             
                 %doUpdate = false;
                 if nargin == 2
+                    this.evt = evt;
                     %At pln changes and at cst/cst (for Isocenter and new settings) 
                     %we need to update
                     if this.checkUpdateNecessary({'ct','cst'},evt)
@@ -515,14 +517,16 @@ classdef matRad_ViewingWidget < matRad_Widget
                     end
                     this.updateValues();
                     %doUpdate = this.checkUpdateNecessary({'pln_display','ct','cst','resultGUI','image_display'},evt);
-                    if  this.checkUpdateNecessary({'resultGUI','image_display'},evt)
+                    if  this.checkUpdateNecessary({'resultGUI','image_display','viewer_options'},evt)
                         this.updateIsoDoseLineCache();
+                        this.UpdatePlot();
                     end
                 else
                     this.updateValues();
+                    this.UpdatePlot();
                 end
                             
-                this.UpdatePlot();
+                this.evt =[];
             end
             
         end
@@ -933,10 +937,10 @@ classdef matRad_ViewingWidget < matRad_Widget
                 end
                 dose = resultGUI.(this.SelectedDisplayOption);
                 
-                %if function is called for the first time then set display parameters
-                if isempty(this.dispWindow{2,2}) || ~this.lockColorSettings
-                    this.dispWindow{2,1} = [min(dose(:)) max(dose(:))*1.001]; % set default dose range
-                    this.dispWindow{2,2} = [min(dose(:)) max(dose(:))*1.001]; % set min max values
+                %if function is called for the first time then set display parameters                        
+                if (isempty(this.dispWindow{2,2}) || ~this.checkUpdateNecessary({'viewer_options'},this.evt) ) &&  ~this.lockColorSettings 
+                   this.dispWindow{2,1} = [min(dose(:)) max(dose(:))*1.001]; % set default dose range
+                   this.dispWindow{2,2} = [min(dose(:)) max(dose(:))*1.001]; % set min max values
                 end
                 
                 minMaxRange = this.dispWindow{2,1};
