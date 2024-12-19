@@ -1142,29 +1142,16 @@ classdef matRad_ViewingWidget < matRad_Widget
 
                 planeCenters = ceil(ct.cubeDim./ 2);
                 this.numOfBeams = 1;
+
+                visQuantity = this.tryVisQuantityFromPln();
+                
                 if evalin('base','exist(''pln'')')
                     pln = evalin('base','pln');
-
-                    if isfield(pln,'propOpt') && isfield(pln.propOpt, 'quantityOpt')
-                        switch pln.propOpt.quantityOpt
-                            case 'physicalDose'
-                                visQuantity = 'physicalDose';
-                            case {'RBExDose', 'effect'}
-                                visQuantity = 'RBExDose';
-                            otherwise
-                                visQuantity = [];
-                        end
-                    else
-                        visQuantity = [];
-                    end
-
                     if isfield(pln,'propStf') && isfield(pln.propStf,'isoCenter')
                         isoCoordinates = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:), ct);
                         planeCenters = ceil(isoCoordinates);
                         this.numOfBeams=pln.propStf.numOfBeams;
                     end
-                else
-                    visQuantity = [];
                 end
                        
                 this.slice = planeCenters(this.plane);                        
@@ -1197,13 +1184,8 @@ classdef matRad_ViewingWidget < matRad_Widget
                     this.updateDisplaySelection(visQuantity);
                 else
                     this.colorData=1;
-                    if evalin('base','exist(''resultGUI'')')
-                        this.SelectedDisplayAllOptions ='physicalDose';
-                        this.SelectedDisplayOption ='physicalDose';
-                    else
-                        this.SelectedDisplayAllOptions = 'no option available';
-                        this.SelectedDisplayOption = '';
-                    end
+                    this.SelectedDisplayAllOptions = 'no option available';
+                    this.SelectedDisplayOption = '';
                 end
             else %no data is loaded 
                 this.slice=1;
@@ -1338,13 +1320,13 @@ classdef matRad_ViewingWidget < matRad_Widget
                 if ~isempty(visSelection) && isfield(result,visSelection)
                     this.SelectedDisplayOption = visSelection;
                 elseif ~isfield(result,this.SelectedDisplayOption)
-                    this.SelectedDisplayOption = 'physicalDose';
+                    this.SelectedDisplayOption = this.tryVisQuantityFromPln('physicalDose');
                 else
                     %Keep option
                 end
                 
                 if ~any(strcmp(this.SelectedDisplayOption,fieldnames(result)))
-                    this.SelectedDisplayOption = 'physicalDose';
+                    this.SelectedDisplayOption = this.tryVisQuantityFromPln('physicalDose');
                     if ~any(strcmp(this.SelectedDisplayOption,fieldnames(result)))
                         this.SelectedDisplayOption = this.DispInfo{find([this.DispInfo{:,2}],1,'first'),1};
                     end
@@ -1358,5 +1340,27 @@ classdef matRad_ViewingWidget < matRad_Widget
 
             this.updateLock = currLock;
         end        
+
+        function visQuantity = tryVisQuantityFromPln(~, default)
+            if nargin < 2
+                default = [];
+            end
+            visQuantity = default;
+            if evalin('base','exist(''pln'')')
+                pln = evalin('base','pln');
+                if isfield(pln,'propOpt') && isfield(pln.propOpt, 'quantityOpt')
+                    switch pln.propOpt.quantityOpt
+                        case 'physicalDose'
+                            visQuantity = 'physicalDose';
+                        case {'RBExDose', 'effect'}
+                            visQuantity = 'RBExDose';
+                        otherwise
+                            %Do Nothing
+                    end
+                end
+            end
+        end
     end
+
+    
 end
