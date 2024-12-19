@@ -310,7 +310,7 @@ classdef matRad_ViewingWidget < matRad_Widget
         
         function set.IsoDose_Levels(this,value)
             this.IsoDose_Levels=value;
-            evt = matRad_WorkspaceChangedEvent('image_display');
+            evt = matRad_WorkspaceChangedEvent('viewer_options');
             this.update(evt);
         end
         
@@ -951,7 +951,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 end
                 
                 %this creates a loop(needed the first time a dose cube is loaded)
-                if isempty(this.IsoDose_Levels) || ~this.NewIsoDoseFlag
+                if isempty(this.IsoDose_Levels) || ~this.NewIsoDoseFlag || ~this.checkUpdateNecessary({'viewer_options'},this.evt)
                     vLevels                  = [0.1:0.1:0.9 0.95:0.05:upperMargin];
                     referenceDose            = (minMaxRange(1,2))/(upperMargin);
                     
