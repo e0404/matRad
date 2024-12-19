@@ -722,6 +722,7 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
             set(handles.edit_windowCenter,'Enable',state);
             set(handles.edit_windowRange,'Enable',state);
             set(handles.popupmenu_chooseColormap,'Enable',state);
+            set(handles.btnSetIsoDoseLevels,'Enable',state);
             
             this.handles = handles;
         end
