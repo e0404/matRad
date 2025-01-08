@@ -20,6 +20,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     properties
+        savedResultTag = {};
     end        
     
     methods
@@ -465,21 +466,20 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 AllVarNames = evalin('base','who');
                 if  ismember('resultGUI',AllVarNames)
                     resultGUI = evalin('base','resultGUI');
-                    sNames = fieldnames(resultGUIcurrentRun);
                     oldNames = fieldnames(resultGUI);
-                    if(length(oldNames) > length(sNames))
+
+                    if ~isempty(this.savedResultTag)
                         for j = 1:length(oldNames)
-                            if strfind(oldNames{j}, 'beam')
-                                resultGUI = rmfield(resultGUI, oldNames{j});
+                            for k = 1:length(this.savedResultTag)
+                                if ~isempty(strfind(oldNames{j}, this.savedResultTag{k}))
+                                    resultGUIcurrentRun.(oldNames{j}) = resultGUI.(oldNames{j});
+                                end
                             end
                         end
-                    end
-                    for j = 1:length(sNames)
-                        resultGUI.(sNames{j}) = resultGUIcurrentRun.(sNames{j});
-                    end
-                else
-                    resultGUI = resultGUIcurrentRun;
+                    end                
                 end
+
+                resultGUI = resultGUIcurrentRun;
 
                 assignin('base','resultGUI',resultGUI);
 
@@ -728,7 +728,8 @@ classdef matRad_WorkflowWidget < matRad_Widget
             Suffix = get(uiEdit(2),'String');
             logIx = isstrprop(Suffix,'alphanum');
             Suffix = ['_' Suffix(logIx)];
-            
+            this.savedResultTag{end+1}= Suffix;
+
             pln       = evalin('base','pln');
             resultGUI = evalin('base','resultGUI');
             
