@@ -958,17 +958,20 @@ classdef matRad_PlanWidget < matRad_Widget
             pln.propStf.couchAngles     = this.parseStringAsNum(get(handles.editCouchAngle,'String'),true); % [°]
 
             if ~isempty(hObject) && strcmp(hObject.Tag,'editGantryAngle')
-                if numel(this.parseStringAsNum(get(handles.editCouchAngle,'String'),true))==1 % Feature: autofill couch angles to single plane by entering a single value
-                    pln.propStf.couchAngles     = this.parseStringAsNum(get(handles.editCouchAngle,'String'),true) * ones(1,numel(pln.propStf.gantryAngles));
-                else
-                    pln.propStf.couchAngles     = this.parseStringAsNum(get(handles.editCouchAngle,'String'),true); % [°]
+                if numel(this.parseStringAsNum(get(handles.editCouchAngle,'String'),true))<numel(this.parseStringAsNum(get(handles.editGantryAngle,'String'),true)) % Feature: autofill couch angles to single plane by entering a single value
+                    couchGantryDifference = numel(this.parseStringAsNum(get(handles.editGantryAngle,'String'),true))-numel(this.parseStringAsNum(get(handles.editCouchAngle,'String'),true));
+                    pln.propStf.couchAngles     = [this.parseStringAsNum(get(handles.editCouchAngle,'String'),true) zeros(1,couchGantryDifference)];
+                elseif  numel(this.parseStringAsNum(get(handles.editCouchAngle,'String'),true))>numel(this.parseStringAsNum(get(handles.editGantryAngle,'String'),true)) % Feature: autofill couch angles to single plane by entering a single value
+                    couchGantryDifference = numel(this.parseStringAsNum(get(handles.editCouchAngle,'String'),true))-numel(this.parseStringAsNum(get(handles.editGantryAngle,'String'),true));
+                    pln.propStf.couchAngles     = pln.propStf.couchAngles(1:end-couchGantryDifference);
+                
                 end
-            elseif ~isempty(hObject) && strcmp(hObject.Tag,'editCouchAngle')
-                if numel(this.parseStringAsNum(get(handles.editGantryAngle,'String'),true))==1 % Feature: autofill gantry angles to single plane by entering a single value
-                    pln.propStf.gantryAngles    = this.parseStringAsNum(get(handles.editGantryAngle,'String'),true) * ones(1,numel(pln.propStf.couchAngles));
-                else
-                    pln.propStf.gantryAngles    = this.parseStringAsNum(get(handles.editGantryAngle,'String'),true); % [°]
-                end
+%             elseif ~isempty(hObject) && strcmp(hObject.Tag,'editCouchAngle')
+%                 if numel(this.parseStringAsNum(get(handles.editGantryAngle,'String'),true))==1 % Feature: autofill gantry angles to single plane by entering a single value
+%                     pln.propStf.gantryAngles    = this.parseStringAsNum(get(handles.editGantryAngle,'String'),true) * ones(1,numel(pln.propStf.couchAngles));
+%                 else
+%                     pln.propStf.gantryAngles    = this.parseStringAsNum(get(handles.editGantryAngle,'String'),true); % [°]
+%                 end
             end
 
             pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
