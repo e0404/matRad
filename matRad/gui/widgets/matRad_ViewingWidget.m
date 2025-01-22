@@ -517,10 +517,10 @@ classdef matRad_ViewingWidget < matRad_Widget
                     end
                     this.updateValues();
                     %doUpdate = this.checkUpdateNecessary({'pln_display','ct','cst','resultGUI','image_display'},evt);
-                    if  this.checkUpdateNecessary({'resultGUI','image_display','viewer_options'},evt)
+                    if  this.checkUpdateNecessary({'resultGUI','image_display','viewer_options','pln_angles'},evt)
                         this.updateIsoDoseLineCache();
                         this.UpdatePlot();
-                    end
+                    end                 
                 else
                     this.updateValues();
                     this.UpdatePlot();
