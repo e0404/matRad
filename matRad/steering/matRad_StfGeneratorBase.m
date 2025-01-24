@@ -439,7 +439,13 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
 
             %Get available, valid classes through call to matRad helper function
             %for finding subclasses
-            availableStfGenerators = matRad_findSubclasses(mfilename('class'),'folders',optionalPaths,'includeAbstract',false);
+            persistent allAvailableStfGenerators lastOptionalPaths
+            if isempty(allAvailableStfGenerators) || (~isempty(lastOptionalPaths) && ~isequal(lastOptionalPaths, optionalPaths))
+                lastOptionalPaths = optionalPaths;
+                allAvailableStfGenerators = matRad_findSubclasses(mfilename('class'),'folders',optionalPaths,'includeAbstract',false);
+            end
+
+            availableStfGenerators = allAvailableStfGenerators;
 
             %Now filter for pln
             ix = [];
