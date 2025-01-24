@@ -337,9 +337,13 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
     end
 
     methods (Static)
-        function generator = getGeneratorFromPln(pln)
+        function generator = getGeneratorFromPln(pln, warnDefault)
             %GETENGINE Summary of this function goes here
             %   Detailed explanation goes here
+
+            if nargin < 2
+                warnDefault = true;
+            end
 
             matRad_cfg = MatRad_Config.instance();
 
@@ -384,7 +388,9 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
                         generatorHandle = generatorHandle{1};
                     end
                     generator = generatorHandle(pln);
-                    matRad_cfg.dispWarning('Using default stf generator %s!', generator.name);
+                    if warnDefault
+                        matRad_cfg.dispWarning('Using default stf generator %s!', generator.name);
+                    end
                 elseif ~isempty(classList)
                     generatorHandle = classList(1).handle;
                     generator = generatorHandle(pln);
