@@ -281,12 +281,16 @@ elseif isa(backProjection, 'matRad_EffectProjection')
         wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(doseTmp(V))))* wOnes;
 
     elseif strcmp(pln.propOpt.quantityOpt, 'BED')
-
-        if isfield(dij, 'mAlphaDose') && isfield(dij, 'mSqrtBetaDose')
             abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
-            meanBED = mean((aTmp(V) + bTmp(V).^2)./cst{ixTarget,5}.alphaX)
-            %meanBED = mean((dij.mAlphaDose{1}(V,:)*wOnes + (dij.mSqrtBetaDose{1}(V,:)*wOnes).^2)./cst{ixTarget,5}.alphaX);
+            meanBED = mean((aTmp(V) + bTmp(V).^2)./cst{ixTarget,5}.alphaX);
+            
             BEDTarget = doseTarget.*(1 + doseTarget./abr);
+
+%         if isfield(dij, 'mAlphaDose') && isfield(dij, 'mSqrtBetaDose')
+%             abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
+%             meanBED = mean((aTmp(V) + bTmp(V).^2)./cst{ixTarget,5}.alphaX)
+%             
+%             BEDTarget = doseTarget.*(1 + doseTarget./abr);
             % elseif isfield(dij, 'RBE')
             %     abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
             %     meanBED = mean(dij.RBE.*dij.physicalDose{1}(V,:)*wOnes.*(1+dij.RBE.*dij.physicalDose{1}(V,:)*wOnes./abr));
@@ -295,7 +299,7 @@ elseif isa(backProjection, 'matRad_EffectProjection')
             %     abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
             %     meanBED = mean(dij.physicalDose{1}(V,:)*wOnes.*(1+dij.physicalDose{1}(V,:)*wOnes./abr));
             %     BEDTarget = doseTarget.*(1 + doseTarget./abr);
-        end
+%         end
 
         bixelWeight =  BEDTarget/meanBED;
         wInit       = wOnes * bixelWeight;
