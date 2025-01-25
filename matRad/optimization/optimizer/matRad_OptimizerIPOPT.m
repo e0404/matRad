@@ -343,6 +343,26 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
     methods (Static)
         function available = IsAvailable()
             available = matRad_checkMexFileExists('ipopt');
+            
+            %Let's run a tiny testproblem to see if it really works
+            if available
+                funcs.objective         = @(x) x.^2;
+                funcs.gradient          = @(x) 2*x;                
+                funcs.hessian           = @(x,sigma,lambda) sigma*sparse(2);
+                funcs.hessianstructure  = @()  sparse(true);
+                
+                s.ipopt.tol             = 1e-5; % (Opt1)
+                s.ipopt.print_level     = 0;
+                s.ipopt.print_user_options            = 'no';
+                s.ipopt.print_options_documentation   = 'no';
+                
+                try
+                    [x,~] = ipopt(1,funcs,s);
+                    assert(abs(x) < 1e-5);
+                catch ME
+                    available = false;
+                end
+            end
         end
     end
 end

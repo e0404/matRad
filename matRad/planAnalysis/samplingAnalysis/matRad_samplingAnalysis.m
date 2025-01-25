@@ -112,12 +112,12 @@ end
     
 
 % gamma cube
-if isfield(resultGUInomScen,'RBExD'), quantityVis  = 'RBExD'; else,  quantityVis = 'physicalDose';  end
+if isfield(resultGUInomScen,'RBExDose'), quantityVis  = 'RBExDose'; else,  quantityVis = 'physicalDose';  end
 
 doseCube = resultGUInomScen.(quantityVis);
 
-if strncmp(quantityVis,'RBExD', 5)
-    doseStat.gammaAnalysis.cube1Name = 'resultGUInomScen.RBExD';
+if strncmp(quantityVis,'RBExDose', 5)
+    doseStat.gammaAnalysis.cube1Name = 'resultGUInomScen.RBExDose';
 else
     doseStat.gammaAnalysis.cube1Name = 'resultGUInomScen.physicalDose';
 end

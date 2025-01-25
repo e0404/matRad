@@ -103,7 +103,7 @@ for i = 1 : size(cst1)
     end
 end
 
-%% EQD_2 calculations (calculates RBExD added dose, photon EQD_2, particle EQD_2, added EQD_2 and RBExD added divided by EQD_2 added [and invers ^-1])
+%% EQD_2 calculations (calculates RBExDose added dose, photon EQD_2, particle EQD_2, added EQD_2 and RBExDose added divided by EQD_2 added [and invers ^-1])
 
 result.totalDose = numOfFractions1 * warpDose1 + numOfFractions2 * dose2;
 
@@ -128,7 +128,7 @@ figure;
 matRad_showDVH(dvh_dose,cst2,pln2,'plotLegend',false,'axesHandle',gca);
 hold on
 matRad_showDVH(dvh_EQD2,cst2,pln2,'plotLegend',false,'axesHandle',gca,'lineStyle','--');
-title(['Added dose cubes divided by aimed dose, straight line RBExD added [aimed: ' num2str(aimedDose) 'Gy], dashed line EQD_2 added [aimed : ' num2str(aimedEQD2) 'Gy]']);
+title(['Added dose cubes divided by aimed dose, straight line RBExDose added [aimed: ' num2str(aimedDose) 'Gy], dashed line EQD_2 added [aimed : ' num2str(aimedEQD2) 'Gy]']);
 xlabel('relative Dose [%]');
 legend(cst2{:,2});
 hold off
@@ -136,7 +136,7 @@ hold off
 
 figure;
 matRad_showDVH(dvh_EQD2ratio,cst2,pln2,'plotLegend',false,'axesHandle',gca);
-title('Added EQD_2 divided by added RBExD');
+title('Added EQD_2 divided by added RBExDose');
 xlabel('relative Dose [%]');
 
 %% Qualitiy indicators

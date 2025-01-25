@@ -58,6 +58,7 @@ classdef matRad_ViewingWidget < matRad_Widget
         scrollHandle;
         lockColorSettings = false;
         %plotlegend=false;
+        evt;
     end
     
     properties (SetAccess=private)
@@ -297,7 +298,7 @@ classdef matRad_ViewingWidget < matRad_Widget
         
         function set.dispWindow(this,value)
             this.dispWindow=value;
-            evt = matRad_WorkspaceChangedEvent('image_display');
+            evt = matRad_WorkspaceChangedEvent('viewer_options');
             this.update(evt);
         end
         
@@ -309,7 +310,7 @@ classdef matRad_ViewingWidget < matRad_Widget
         
         function set.IsoDose_Levels(this,value)
             this.IsoDose_Levels=value;
-            evt = matRad_WorkspaceChangedEvent('image_display');
+            evt = matRad_WorkspaceChangedEvent('viewer_options');
             this.update(evt);
         end
         
@@ -508,6 +509,7 @@ classdef matRad_ViewingWidget < matRad_Widget
             
                 %doUpdate = false;
                 if nargin == 2
+                    this.evt = evt;
                     %At pln changes and at cst/cst (for Isocenter and new settings) 
                     %we need to update
                     if this.checkUpdateNecessary({'ct','cst'},evt)
@@ -515,14 +517,16 @@ classdef matRad_ViewingWidget < matRad_Widget
                     end
                     this.updateValues();
                     %doUpdate = this.checkUpdateNecessary({'pln_display','ct','cst','resultGUI','image_display'},evt);
-                    if  this.checkUpdateNecessary({'resultGUI','image_display'},evt)
+                    if  this.checkUpdateNecessary({'resultGUI','image_display','viewer_options','pln_angles'},evt)
                         this.updateIsoDoseLineCache();
-                    end
+                        this.UpdatePlot();
+                    end                 
                 else
                     this.updateValues();
+                    this.UpdatePlot();
                 end
                             
-                this.UpdatePlot();
+                this.evt =[];
             end
             
         end
@@ -754,7 +758,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 % plot physical dose
                 %Content =this.SelectedDisplayOption; %get(this.popupDisplayOption,'String');
                 SelectedCube = this.SelectedDisplayOption; %Content{get(this.popupDisplayOption,'Value')};
-                if sum(strcmp(SelectedCube,{'physicalDose','effect','RBExD','alpha','beta','RBE','BED'})) > 0
+                if sum(strcmp(SelectedCube,{'physicalDose','effect','RBExDose','alpha','beta','RBE','BED'})) > 0
                     Suffix = '';
                 else
                     Idx    = find(SelectedCube == '_');
@@ -784,8 +788,8 @@ classdef matRad_ViewingWidget < matRad_Widget
                     StringYLabel2 = '';
                     for i=1:1:size(this.DispInfo,1)
                         if this.DispInfo{i,2} && sum(strcmp(this.DispInfo{i,1},{['effect' Suffix],['alpha' Suffix],['beta' Suffix]})) > 0
-                            %physicalDose is already plotted and RBExD vs RBE is plotted later with plotyy
-                            if ~strcmp(this.DispInfo{i,1},['RBExD' Suffix]) &&...
+                            %physicalDose is already plotted and RBExDose vs RBE is plotted later with plotyy
+                            if ~strcmp(this.DispInfo{i,1},['RBExDose' Suffix]) &&...
                                     ~strcmp(this.DispInfo{i,1},['RBE' Suffix]) && ...
                                     ~strcmp(this.DispInfo{i,1},['physicalDose' Suffix])
                                 
@@ -798,8 +802,8 @@ classdef matRad_ViewingWidget < matRad_Widget
                         end
                     end
                     StringYLabel2 = [StringYLabel2 '}'];
-                    % always plot RBExD against RBE
-                    mRBExDose = result.(['RBExD' Suffix]);
+                    % always plot RBExDose against RBE
+                    mRBExDose = result.(['RBExDose' Suffix]);
                     vBED = mRBExDose(ix);
                     mRBE = result.(['RBE' Suffix]);
                     vRBE = mRBE(ix);
@@ -807,7 +811,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                     % plot biological dose against RBE
                     [ax, PlotHandles{Cnt,1}, PlotHandles{Cnt+1,1}]=plotyy(handles.axesFig,vX,vBED,vX,vRBE,'plot'); 
                     hold(ax(2),'on');
-                    PlotHandles{Cnt,2}='RBExD';
+                    PlotHandles{Cnt,2}='RBExDose';
                     PlotHandles{Cnt+1,2}='RBE';                    
                     
                     % set plotyy properties
@@ -869,7 +873,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 end
             else
                 % create legend for the visible VOI
-                if this.typeOfPlot==2 || ~this.plotContour || isempty([this.AxesHandlesVOI{:}]) %isempty(find(this.VOIPlotFlag, 1))
+                if this.typeOfPlot==2 || ~this.plotContour || isempty(this.AxesHandlesVOI) || isempty([this.AxesHandlesVOI{:}]) %isempty(find(this.VOIPlotFlag, 1))
                     l=legend(handles.axesFig,'off');
                 else
 %                    
@@ -933,10 +937,10 @@ classdef matRad_ViewingWidget < matRad_Widget
                 end
                 dose = resultGUI.(this.SelectedDisplayOption);
                 
-                %if function is called for the first time then set display parameters
-                if isempty(this.dispWindow{2,2}) || ~this.lockColorSettings
-                    this.dispWindow{2,1} = [min(dose(:)) max(dose(:))*1.001]; % set default dose range
-                    this.dispWindow{2,2} = [min(dose(:)) max(dose(:))*1.001]; % set min max values
+                %if function is called for the first time then set display parameters                        
+                if (isempty(this.dispWindow{2,2}) || ~this.checkUpdateNecessary({'viewer_options'},this.evt) ) &&  ~this.lockColorSettings 
+                   this.dispWindow{2,1} = [min(dose(:)) max(dose(:))*1.001]; % set default dose range
+                   this.dispWindow{2,2} = [min(dose(:)) max(dose(:))*1.001]; % set min max values
                 end
                 
                 minMaxRange = this.dispWindow{2,1};
@@ -947,7 +951,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 end
                 
                 %this creates a loop(needed the first time a dose cube is loaded)
-                if isempty(this.IsoDose_Levels) || ~this.NewIsoDoseFlag
+                if isempty(this.IsoDose_Levels) || ~this.NewIsoDoseFlag || ~this.checkUpdateNecessary({'viewer_options'},this.evt)
                     vLevels                  = [0.1:0.1:0.9 0.95:0.05:upperMargin];
                     referenceDose            = (minMaxRange(1,2))/(upperMargin);
                     
@@ -996,15 +1000,11 @@ classdef matRad_ViewingWidget < matRad_Widget
                         cubePos(this.plane) = this.slice;
                         cubePos(1:end ~= this.plane) = fliplr(pos);
                         cubeIx = round(cubePos);
-                        vCubeIdx = [cubeIx(2),cubeIx(1),cubeIx(3)];
                         %Here comes the index permutation stuff
                         %Cube Index
-                        cursorText{end+1,1} = ['Cube Index: ' mat2str(vCubeIdx)];
+                        cursorText{end+1,1} = ['Cube Index: ' mat2str(cubeIx)];
                         %Space Coordinates
-                        coords = zeros(1,3);
-                        coords(1) = ct.y(cubePos(2));
-                        coords(2) = ct.x(cubePos(1));
-                        coords(3) = ct.z(cubePos(3));
+                        coords = matRad_cubeIndex2worldCoords(cubeIx,ct);
                         cursorText{end+1,1} = ['Space Coordinates: ' mat2str(coords,5) ' mm'];
                         
                         ctVal = ct.cubeHU{1}(cubeIx(1),cubeIx(2),cubeIx(3));
@@ -1049,9 +1049,17 @@ classdef matRad_ViewingWidget < matRad_Widget
         
         %Scroll wheel update
         function matRadScrollWheelFcn(this,src,event)
-            % compute new slice
-            this.slice= this.slice - event.VerticalScrollCount;
-                        
+            % Check Position
+            cursorPos = get(src,'CurrentPoint');
+            viewerPos = get(this.widgetHandle,'Position');
+
+            %If the request came from within the widget change the slice
+            if cursorPos(1) > viewerPos(1) && cursorPos(1) < viewerPos(1) + viewerPos(3) ...
+                    && cursorPos(2) > viewerPos(2) && cursorPos(2) < viewerPos(2) + viewerPos(4)
+
+                % compute new slice
+                this.slice= this.slice - event.VerticalScrollCount;
+            end
         end
         
         %Toggle Legend
@@ -1134,27 +1142,16 @@ classdef matRad_ViewingWidget < matRad_Widget
 
                 planeCenters = ceil(ct.cubeDim./ 2);
                 this.numOfBeams = 1;
+
+                visQuantity = this.tryVisQuantityFromPln();
+                
                 if evalin('base','exist(''pln'')')
                     pln = evalin('base','pln');
-
-                    if isfield(pln,'propOpt') && isfield(pln.propOpt, 'quantityOpt')
-                        switch pln.propOpt.quantityOpt
-                            case 'physicalDose'
-                                visQuantity = 'physicalDose';
-                            case {'RBExD', 'effect'}
-                                visQuantity = 'RBExD';
-                            otherwise
-                                visQuantity = [];
-                        end
-                    end
-
-                    if isfield(pln,'propStf')
+                    if isfield(pln,'propStf') && isfield(pln.propStf,'isoCenter')
                         isoCoordinates = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:), ct);
                         planeCenters = ceil(isoCoordinates);
                         this.numOfBeams=pln.propStf.numOfBeams;
                     end
-                else
-                    visQuantity = [];
                 end
                        
                 this.slice = planeCenters(this.plane);                        
@@ -1187,13 +1184,8 @@ classdef matRad_ViewingWidget < matRad_Widget
                     this.updateDisplaySelection(visQuantity);
                 else
                     this.colorData=1;
-                    if evalin('base','exist(''resultGUI'')')
-                        this.SelectedDisplayAllOptions ='physicalDose';
-                        this.SelectedDisplayOption ='physicalDose';
-                    else
-                        this.SelectedDisplayAllOptions = 'no option available';
-                        this.SelectedDisplayOption = '';
-                    end
+                    this.SelectedDisplayAllOptions = 'no option available';
+                    this.SelectedDisplayOption = '';
                 end
             else %no data is loaded 
                 this.slice=1;
@@ -1242,7 +1234,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                 % Note: only defined for the first Isocenter
                 if evalin('base','exist(''pln'')')
                     pln = evalin('base','pln');
-                    if isfield(pln,'propStf')
+                    if isfield(pln,'propStf') && isfield(pln.propStf,'isoCenter')
                         this.vIsoCenter      = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:), ct);
                     else
                         this.plotIsoCenter = false;
@@ -1301,7 +1293,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                         elseif strfind(this.DispInfo{i,1},'beta')
                             this.DispInfo{i,3} = 'Gy^{-2}';
                             this.DispInfo{i,4} = 'left';   
-                        elseif strfind(this.DispInfo{i,1},'RBExD')
+                        elseif strfind(this.DispInfo{i,1},'RBExDose')
                             this.DispInfo{i,3} = 'Gy(RBE)';
                             this.DispInfo{i,4} = 'left';   
                         elseif strfind(this.DispInfo{i,1},'LET')
@@ -1328,13 +1320,13 @@ classdef matRad_ViewingWidget < matRad_Widget
                 if ~isempty(visSelection) && isfield(result,visSelection)
                     this.SelectedDisplayOption = visSelection;
                 elseif ~isfield(result,this.SelectedDisplayOption)
-                    this.SelectedDisplayOption = 'physicalDose';
+                    this.SelectedDisplayOption = this.tryVisQuantityFromPln('physicalDose');
                 else
                     %Keep option
                 end
                 
                 if ~any(strcmp(this.SelectedDisplayOption,fieldnames(result)))
-                    this.SelectedDisplayOption = 'physicalDose';
+                    this.SelectedDisplayOption = this.tryVisQuantityFromPln('physicalDose');
                     if ~any(strcmp(this.SelectedDisplayOption,fieldnames(result)))
                         this.SelectedDisplayOption = this.DispInfo{find([this.DispInfo{:,2}],1,'first'),1};
                     end
@@ -1348,5 +1340,27 @@ classdef matRad_ViewingWidget < matRad_Widget
 
             this.updateLock = currLock;
         end        
+
+        function visQuantity = tryVisQuantityFromPln(~, default)
+            if nargin < 2
+                default = [];
+            end
+            visQuantity = default;
+            if evalin('base','exist(''pln'')')
+                pln = evalin('base','pln');
+                if isfield(pln,'propOpt') && isfield(pln.propOpt, 'quantityOpt')
+                    switch pln.propOpt.quantityOpt
+                        case 'physicalDose'
+                            visQuantity = 'physicalDose';
+                        case {'RBExDose', 'effect'}
+                            visQuantity = 'RBExDose';
+                        otherwise
+                            %Do Nothing
+                    end
+                end
+            end
+        end
     end
+
+    
 end

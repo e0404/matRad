@@ -89,7 +89,8 @@ for i = 1:length(BeamSeqNames)
     gantryAngles{i}         = currBeamSeq.(ControlParam).Item_1.GantryAngle;
     PatientSupportAngle{i}  = currBeamSeq.(ControlParam).Item_1.PatientSupportAngle;
         isoCenter(i,:)          = currBeamSeq.(ControlParam).Item_1.IsocenterPosition';
-    if ~ismember(isoCenter(i,1), obj.ct.x) || ~ismember(isoCenter(i,2), obj.ct.y) || ~ismember(isoCenter(i,3), obj.ct.z)
+    if isoCenter(i,1) < min(obj.ct.x) || isoCenter(i,1) > max(obj.ct.x)  || isoCenter(i,2) < min(obj.ct.y) || ...
+            isoCenter(i,2) > max(obj.ct.y) || isoCenter(i,3) < min(obj.ct.z) || isoCenter(i,3) > max(obj.ct.z)
         isoCenter(i,:)          = matRad_getIsoCenter(obj.cst, obj.ct);
     end
 end
@@ -141,7 +142,7 @@ else
     obj.pln.machine         = 'Generic';
 end
 % set bio model parameters (default physical opt, no bio model)
-obj.pln.bioModel = matRad_bioModel(pln.radiationMode,'none');
+obj.pln.bioModel = matRad_bioModel(obj.pln.radiationMode,'none');
 
 % set properties for steering
 obj.pln.propStf.isoCenter    = isoCenter;

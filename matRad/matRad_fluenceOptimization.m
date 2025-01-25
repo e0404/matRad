@@ -150,7 +150,7 @@ switch pln.propOpt.quantityOpt
             matRad_cfg.dispError('Effect optimization with constant RBE model not supported');
         end
         backProjection = matRad_EffectProjection;
-    case 'RBExD'
+    case 'RBExDose'
         %Capture special case of constant RBE
         if isa(pln.bioModel,'matRad_ConstantRBE') || (isstruct(pln.bioModel) && strcmp(pln.bioModel.model, 'constRBE'))
             backProjection = matRad_ConstantRBEProjection;
@@ -262,7 +262,7 @@ elseif isa(backProjection, 'matRad_EffectProjection')
 
         wInit        = -(p/2) + sqrt((p^2)/4 -q) * wOnes;
 
-    elseif isequal(pln.propOpt.quantityOpt,'RBExD')
+    elseif isequal(pln.propOpt.quantityOpt,'RBExDose')
 
         %pre-calculations
         for s = 1:numel(dij.ixDose)
@@ -386,7 +386,13 @@ else
 end
 
 if ~isfield(pln.propOpt,'optimizer')
-    pln.propOpt.optimizer = 'IPOPT';
+    %While the default optimizer is IPOPT, we can try to fallback to
+    %fmincon in case it does not work for some reason
+    if ~matRad_OptimizerIPOPT.IsAvailable()
+        pln.propOpt.optimizer = 'fmincon';
+    else
+        pln.propOpt.optimizer = 'IPOPT';
+    end    
 end
 
 switch pln.propOpt.optimizer

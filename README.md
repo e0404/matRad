@@ -3,8 +3,9 @@
 [![Contributors](https://img.shields.io/github/contributors/e0404/matRad)](https://github.com/e0404/matRad/graphs/contributors)
 
 [![GitHub Build Status](https://github.com/e0404/matRad/actions/workflows/tests.yml/badge.svg)](https://github.com/e0404/matRad/actions/workflows/tests.yml)
+[![codecov](https://codecov.io/gh/e0404/matRad/graph/badge.svg?token=xQhUQLu4FK)](https://codecov.io/gh/e0404/matRad)
 
-DOIs:
+Citable DOIs:
 - General DOI: [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.3879615.svg)](https://doi.org/10.5281/zenodo.3879615)
 - Latest Release: [![DOI](https://zenodo.org/badge/29671667.svg)](https://zenodo.org/badge/latestdoi/29671667)
 

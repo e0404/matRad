@@ -1,6 +1,16 @@
 # Changelog
 
-## Current Development Branch
+## Development Changes
+
+### Bug Fixes
+- DICOM Import widget allow selection of multiple RTDose files.
+- DICOM Import Widget and importer handle selected patient more consistently and robustly. 
+- DICOM Exporter writes quantities beyond dose, importer tries to import them correctly.
+- DICOM Exporter now always writes ReferencedRTPlanSequence. Importer can now survive without it.
+- DVH widget does not throw a warning in updates, handle scenarios correctly / more robustly and missing xlabel axesHandle parameter.
+
+
+## Version 3.1.0 - "Cleve"
 
 ### Major Changes and New Features
 

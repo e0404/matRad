@@ -20,6 +20,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     properties
+        savedResultTag = {};
     end        
     
     methods
@@ -300,9 +301,9 @@ classdef matRad_WorkflowWidget < matRad_Widget
                         end
 
                         % check if dij exist
-                        if evalin('base','exist(''dij'')')
+                        if evalin('base','exist(''dij'')') && plnStfMatch
                             [dijStfMatch, msg] = matRad_compareDijStf(evalin('base','dij'),evalin('base','stf'));
-                            if plnStfMatch && dijStfMatch
+                            if dijStfMatch
                                 set(handles.txtInfo,'String','ready for optimization');
                                 set(handles.btnOptimize ,'Enable','on');
                             elseif ~noCheck 
@@ -465,21 +466,20 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 AllVarNames = evalin('base','who');
                 if  ismember('resultGUI',AllVarNames)
                     resultGUI = evalin('base','resultGUI');
-                    sNames = fieldnames(resultGUIcurrentRun);
                     oldNames = fieldnames(resultGUI);
-                    if(length(oldNames) > length(sNames))
+
+                    if ~isempty(this.savedResultTag)
                         for j = 1:length(oldNames)
-                            if strfind(oldNames{j}, 'beam')
-                                resultGUI = rmfield(resultGUI, oldNames{j});
+                            for k = 1:length(this.savedResultTag)
+                                if ~isempty(strfind(oldNames{j}, this.savedResultTag{k}))
+                                    resultGUIcurrentRun.(oldNames{j}) = resultGUI.(oldNames{j});
+                                end
                             end
                         end
-                    end
-                    for j = 1:length(sNames)
-                        resultGUI.(sNames{j}) = resultGUIcurrentRun.(sNames{j});
-                    end
-                else
-                    resultGUI = resultGUIcurrentRun;
+                    end                
                 end
+
+                resultGUI = resultGUIcurrentRun;
 
                 assignin('base','resultGUI',resultGUI);
 
@@ -620,7 +620,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 % delete old variables to avoid confusion
                 if isfield(resultGUI,'effect')
                     resultGUI = rmfield(resultGUI,'effect');
-                    resultGUI = rmfield(resultGUI,'RBExD');
+                    resultGUI = rmfield(resultGUI,'RBExDose');
                     resultGUI = rmfield(resultGUI,'RBE');
                     resultGUI = rmfield(resultGUI,'alpha');
                     resultGUI = rmfield(resultGUI,'beta');
@@ -728,7 +728,8 @@ classdef matRad_WorkflowWidget < matRad_Widget
             Suffix = get(uiEdit(2),'String');
             logIx = isstrprop(Suffix,'alphanum');
             Suffix = ['_' Suffix(logIx)];
-            
+            this.savedResultTag{end+1}= Suffix;
+
             pln       = evalin('base','pln');
             resultGUI = evalin('base','resultGUI');
             
@@ -746,8 +747,8 @@ classdef matRad_WorkflowWidget < matRad_Widget
             
             if isfield(pln,'propOpt') && ~strcmp(pln.propOpt.quantityOpt,'none')
                 
-                if isfield(resultGUI,'RBExD')
-                    resultGUI.(['RBExD' Suffix]) = resultGUI.RBExD;
+                if isfield(resultGUI,'RBExDose')
+                    resultGUI.(['RBExDose' Suffix]) = resultGUI.RBExDose;
                 end
                 
                 if strcmp(pln.radiationMode,'carbon') == 1

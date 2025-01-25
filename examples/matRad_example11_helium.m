@@ -94,7 +94,7 @@ slice = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:),ct);
 slice = slice(3);
 figure
 subplot(121),imagesc(resultGUI.physicalDose(:,:,slice)),colorbar,colormap(jet),title('physical dose')
-subplot(122),imagesc(resultGUI.RBExD(:,:,slice)),colorbar,colormap(jet),title('RBExDose')
+subplot(122),imagesc(resultGUI.RBExDose(:,:,slice)),colorbar,colormap(jet),title('RBExDose')
 
 
 

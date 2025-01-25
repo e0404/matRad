@@ -84,10 +84,10 @@ end
 % calculate RBExDose
 if ~isfield(pln, 'bioModel')
     if strcmp(pln.radiationMode, 'protons')
-        pln.bioOptimization = 'RBExD';
+        pln.bioOptimization = 'RBExDose';
         pln.model = 'constRBE';
     elseif strcmp(pln.radiationMode, 'carbon')
-        pln.bioOptimization = 'RBExD';
+        pln.bioOptimization = 'RBExDose';
         pln.model = 'LEM';
     end
     pln.bioModel = matRad_bioModel(pln.radiationMode, pln.model);
