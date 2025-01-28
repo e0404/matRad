@@ -653,8 +653,6 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 for s = 1:ct.numOfCtScen
                     cubeHUresampled{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{s}, ...
                         dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
-                    cubeResampled{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cube{s}, ...
-                        dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
                 end
             
                 % Allocate temporary resampled CT
@@ -671,7 +669,6 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             
                 % Write resampled cubes
                 this.ctR.cubeHU = cubeHUresampled;
-                this.ctR.cube = cubeResampled;
             
                 % Set flag for complete resampling
                 this.ctR.resampled = 1;
