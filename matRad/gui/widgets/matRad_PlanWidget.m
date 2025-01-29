@@ -804,7 +804,7 @@ classdef matRad_PlanWidget < matRad_Widget
 
             matRad_cfg = MatRad_Config.instance();
 
-            stfGen = matRad_StfGeneratorBase.getGeneratorFromPln(pln);
+            stfGen = matRad_StfGeneratorBase.getGeneratorFromPln(pln, false);
 
             set(handles.editBixelWidth,'String',num2str(stfGen.bixelWidth));
             set(handles.editGantryAngle,'String',num2str(stfGen.gantryAngles));
