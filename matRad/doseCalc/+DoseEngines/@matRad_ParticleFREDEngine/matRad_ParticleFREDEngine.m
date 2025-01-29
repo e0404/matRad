@@ -357,7 +357,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 errString = sprintf('Cannot open hLut: %s. Available hLut files are: ',hLutFile);
                 errString = [errString, sprintf('\ninternal')];
                 for hLUTindex=1:numel(availableHLUTs)
-                    errString = [errString, sprintf('\n '), strrep(fullfile(availableHLUTs(hLUTindex).folder, availableHLUTs(hLUTindex).name), '\', '\\')];
+                    errString = [errString, sprintf('\n%s', strrep(fullfile(availableHLUTs(hLUTindex).folder, availableHLUTs(hLUTindex).name), '\', '\\'))];
                 end
                 matRad_cfg.dispError(errString);
             end
@@ -373,7 +373,8 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 fredCmdCall = newCmdString;                
             elseif isempty(fredCmdCall)
                 if ispc
-                    fredCmdCall = 'wsl if [ -f ~/.fredenv.sh ] ; then source ~/.fredenv.sh ; fi; fred';
+%                    fredCmdCall = 'wsl if [ -f ~/.fredenv.sh ] ; then source ~/.fredenv.sh ; fi; fred';
+                    fredCmdCall = 'fred ';
                 elseif isunix
                     fredCmdCall = 'if [ -f ~/.fredenv.sh ] ; then source ~/.fredenv.sh ; fi; fred';
                 else
@@ -434,7 +435,13 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 msg = 'Your machine file is invalid and does not contain the basic field (meta/data/radiationMode)!';
                 return;
             end
+            available = preCheck;
+        end
 
+        function execCheck = checkExec()
+
+            matRad_cfg = MatRad_Config.instance();
+            
             %Check if I can obtain FRED version
             try
                 ver = DoseEngines.matRad_ParticleFREDEngine.getVersion();
@@ -443,15 +450,15 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 else
                     execCheck = false;
                     msg = sprintf('Couldn''t call FRED executable. Please set the correct system call with DoseEngines.matRad_ParticleFREDEngine.cmdCall(''path/to/executable''). Current value is ''%s''',DoseEngines.matRad_ParticleFREDEngine.cmdCall);
+                    matRad_cfg.dispError(msg);
                 end
             catch
-                msg = 'Your machine file is invalid and does not contain the basic field (meta/data/radiationMode)!';
-                return;
+                execCheck = false;
+                msg = sprintf('Couldn''t call FRED executable. Please set the correct system call with DoseEngines.matRad_ParticleFREDEngine.cmdCall(''path/to/executable''). Current value is ''%s''',DoseEngines.matRad_ParticleFREDEngine.cmdCall);
+                matRad_cfg.dispError(msg);
             end
-
-            available = preCheck & execCheck;
         end
-
+        
         function version = getVersion()
             % Function to get current default FRED version
             matRad_cfg = MatRad_Config.instance();
@@ -486,55 +493,61 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             
             f = fopen(fName,'r','l');
 
-            %Header
-            fileFormatVerison = fread(f,1,"int32");
-            dims = fread(f,3,"int32");
-            res = fread(f,3,"float32");
-            offset = fread(f,3,"float32");
-            nComponents = fread(f,1,"int32");
-            numberOfBixels = fread(f,1,"int32");
-        
-            values = [];
-            valuesDen = [];
-            voxelIndices = [];
-            colIndices = [];
-            valuesNom = [];
+            try
+                %Header
+                fileFormatVerison = fread(f,1,"int32");
+                dims = fread(f,3,"int32");
+                res = fread(f,3,"float32");
+                offset = fread(f,3,"float32");
+                nComponents = fread(f,1,"int32");
+                numberOfBixels = fread(f,1,"int32");
             
-            matRad_cfg.dispInfo("Reading %d number of beamlets in %d voxels (%dx%dx%d)\n",numberOfBixels,prod(dims),dims(1),dims(2),dims(3));
-        
-            bixelCounter = 0;
-            for i = 1:numberOfBixels
-                %Read Beamlet
-                bixNum = fread(f,1,"int32");
-                numVox  = fread(f,1,"int32");
+                values = [];
+                valuesDen = [];
+                voxelIndices = [];
+                colIndices = [];
+                valuesNom = [];
                 
-                bixelCounter = bixelCounter +1;
-                % FRED adds 1000000 when new field is added
-                %bixNum = bixNum - (10^6*(i-1));
-
-                colIndices(end+1:end+numVox) = bixelCounter; %bixNum + 1;
-                currVoxelIndices = fread(f,numVox,"uint32") + 1;
-                tmpValues = fread(f,numVox*nComponents,"float32");
-                valuesNom = tmpValues(1:nComponents:end);%tmpValues(nComponents:nComponents:end);
-                % values(end+1:end+numVox) = tmpValuess(1:nComponents:end);%tmpValues(nComponents:nComponents:end);
-
-                if nComponents == 2
-                    valuesDen = tmpValues(nComponents:nComponents:end);
-                    values(end+1:end+numVox) = valuesNom./valuesDen;
-                else
-                    values(end+1:end+numVox) = valuesNom;
+                matRad_cfg.dispInfo("Reading %d number of beamlets in %d voxels (%dx%dx%d)\n",numberOfBixels,prod(dims),dims(1),dims(2),dims(3));
+            
+                bixelCounter = 0;
+                for i = 1:numberOfBixels
+                    %Read Beamlet
+                    bixNum = fread(f,1,"int32");
+                    numVox  = fread(f,1,"int32");
+                    
+                    bixelCounter = bixelCounter +1;
+                    % FRED adds 1000000 when new field is added
+                    %bixNum = bixNum - (10^6*(i-1));
+    
+                    colIndices(end+1:end+numVox) = bixelCounter; %bixNum + 1;
+                    currVoxelIndices = fread(f,numVox,"uint32") + 1;
+                    tmpValues = fread(f,numVox*nComponents,"float32");
+                    valuesNom = tmpValues(1:nComponents:end);%tmpValues(nComponents:nComponents:end);
+                    % values(end+1:end+numVox) = tmpValuess(1:nComponents:end);%tmpValues(nComponents:nComponents:end);
+    
+                    if nComponents == 2
+                        valuesDen = tmpValues(nComponents:nComponents:end);
+                        values(end+1:end+numVox) = valuesNom./valuesDen;
+                    else
+                        values(end+1:end+numVox) = valuesNom;
+                    end
+    
+                    % x and y components have been permuted in CT
+                    [indY, indX, indZ] = ind2sub(dims, currVoxelIndices);
+    
+                    voxelIndices(end+1:end+numVox) = sub2ind(dims([2,1,3]), indX, indY, indZ);
+                    matRad_cfg.dispInfo("\tRead beamlet %d, %d voxels...\n",bixNum,numVox);
                 end
-
-                % x and y components have been permuted in CT
-                [indY, indX, indZ] = ind2sub(dims, currVoxelIndices);
-
-                voxelIndices(end+1:end+numVox) = sub2ind(dims([2,1,3]), indX, indY, indZ);
-                matRad_cfg.dispInfo("\tRead beamlet %d, %d voxels...\n",bixNum,numVox);
+                dijMatrix = sparse(voxelIndices,colIndices,values,prod(dims),numberOfBixels);
+                        
+                fclose(f);
+            catch
+                fclose(f);
+                matRad_cfg.dispError('unable to load file: %s',fName);
             end
+
             
-            fclose(f);
-            
-            dijMatrix = sparse(voxelIndices,colIndices,values,prod(dims),numberOfBixels);
 
         end
 

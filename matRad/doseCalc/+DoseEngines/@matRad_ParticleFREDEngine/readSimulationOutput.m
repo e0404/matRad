@@ -24,11 +24,8 @@ if ~calcDoseDirect
     doseDijFileName = fullfile(doseDijFolder,doseDijFile);
     
     % read dij matrix
-    try
-        doseCube = DoseEngines.matRad_ParticleFREDEngine.readSparseDijBin(doseDijFileName);
-    catch
-        matRad_cfg.dispError('unable to load file: %s',doseDijFileName);
-    end
+ 
+    doseCube = DoseEngines.matRad_ParticleFREDEngine.readSparseDijBin(doseDijFileName);
 
     if calcLET
         
@@ -46,11 +43,7 @@ else
     doseCubeFolder = fullfile(runFolder, 'out', 'score');
     doseCubeFileName = 'Phantom.Dose.mhd';
     
-    try
-        doseCube = matRad_readMHD(fullfile(doseCubeFolder, doseCubeFileName));
-    catch
-        matRad_cfg.dispError('unable to load file: %s',fullfile(doseCubeFolder, doseCubeFileName));
-    end
+    doseCube = matRad_readMHD(fullfile(doseCubeFolder, doseCubeFileName));
         
     if calcLET
 

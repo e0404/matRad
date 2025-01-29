@@ -306,7 +306,7 @@ function dij = calcDose(this,ct,cst,stf)
     if ~this.exportCalculation
 
         % Check consistency of installation
-        if this.isAvailable(struct('radiationMode',this.radiationMode),this.machine)
+        if this.checkExec()
             
             matRad_cfg.dispInfo('calling FRED');
 
