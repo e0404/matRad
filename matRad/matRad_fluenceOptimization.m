@@ -146,9 +146,9 @@ end
 % Check optimization quantity
 switch pln.propOpt.quantityOpt
     case 'effect'
-        if isa(pln.bioModel,'matRad_ConstantRBE') || (isstruct(pln.bioModel) && strcmp(pln.bioModel.model, 'constRBE'))
-            matRad_cfg.dispError('Effect optimization with constant RBE model not supported');
-        end
+%         if isa(pln.bioModel,'matRad_ConstantRBE') || (isstruct(pln.bioModel) && strcmp(pln.bioModel.model, 'constRBE'))
+%             matRad_cfg.dispError('Effect optimization with constant RBE model not supported');
+%         end
         backProjection = matRad_EffectProjection;
     case 'RBExDose'
         %Capture special case of constant RBE
@@ -281,25 +281,10 @@ elseif isa(backProjection, 'matRad_EffectProjection')
         wInit    =  ((doseTarget)/(TolEstBio*maxCurrRBE*max(doseTmp(V))))* wOnes;
 
     elseif strcmp(pln.propOpt.quantityOpt, 'BED')
-            abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
-            meanBED = mean((aTmp(V) + bTmp(V).^2)./cst{ixTarget,5}.alphaX);
-            
-            BEDTarget = doseTarget.*(1 + doseTarget./abr);
+        abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
+        meanBED = mean((aTmp(V) + bTmp(V).^2)./cst{ixTarget,5}.alphaX);
 
-%         if isfield(dij, 'mAlphaDose') && isfield(dij, 'mSqrtBetaDose')
-%             abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
-%             meanBED = mean((aTmp(V) + bTmp(V).^2)./cst{ixTarget,5}.alphaX)
-%             
-%             BEDTarget = doseTarget.*(1 + doseTarget./abr);
-            % elseif isfield(dij, 'RBE')
-            %     abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
-            %     meanBED = mean(dij.RBE.*dij.physicalDose{1}(V,:)*wOnes.*(1+dij.RBE.*dij.physicalDose{1}(V,:)*wOnes./abr));
-            %     BEDTarget = dij.RBE.*doseTarget.*(1 + dij.RBE.*doseTarget./abr);
-            % else
-            %     abr = cst{ixTarget,5}.alphaX./cst{ixTarget,5}.betaX;
-            %     meanBED = mean(dij.physicalDose{1}(V,:)*wOnes.*(1+dij.physicalDose{1}(V,:)*wOnes./abr));
-            %     BEDTarget = doseTarget.*(1 + doseTarget./abr);
-%         end
+        BEDTarget = doseTarget.*(1 + doseTarget./abr);
 
         bixelWeight =  BEDTarget/meanBED;
         wInit       = wOnes * bixelWeight;
