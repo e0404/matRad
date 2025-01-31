@@ -314,7 +314,7 @@ function dij = calcDose(this,ct,cst,stf)
             
             systemCall = [this.cmdCall, '-f fred.inp'];
             if ~this.useGPU
-                systemCall = [this.cmdCall, ' -nogpu'];
+                systemCall = [this.cmdCall, ' -nogpu -f fred.inp'];
             end
 
             % printOutput to matLab console
