@@ -54,7 +54,7 @@ function test_writeFiles
         pln.radiationMode = radModes{1};
         pln.machine = 'Generic';
         pln.propDoseCalc.engine = 'FRED';
-        pln.propDoseCalc.exportCalculation = true;
+        pln.propDoseCalc.externalCalculation = 'write';
 
         w = ones(sum([stf(:).totalNumOfBixels]),1);
 
@@ -88,17 +88,60 @@ function test_loadDij
         load(['protons_testData.mat']);
         pln.machine = 'Generic';
         pln.propDoseCalc.engine = 'FRED';
+        pln.propDoseCalc.useGPU = true;
+        pln.propDoseCalc.externalCalculation = fullfile(matRad_cfg.matRadRoot, 'test', 'testData', 'FRED_data');
+        
+        % Test dij-load
+        dijFredLoad         = matRad_calcDoseInfluence(ct,cst,stf,pln);
+        
+        % Test forward calculation cube load
+        w = ones(sum([stf(:).totalNumOfBixels]),1);
+        forwardDoseFredLoad = matRad_calcDoseForward(ct,cst,stf,pln,w);
 
-        eng = DoseEngines.matRad_ParticleFREDEngine.getEngineFromPln(pln);
-
-        dijFile = 'Fred.sparseDij.bin';
-
-        dijFredLoad = eng.readSparseDijBin(dijFile);
+        resultGUI = matRad_calcCubes(w, dijFredLoad, 1);
 
         nBixels = sum([stf(:).totalNumOfBixels]);
         nVoxles = prod(ct.cubeDim);
 
         % Assert basic parameters
-        assertTrue(isequal(size(dijFredLoad),[nVoxles, nBixels]));
+        assertTrue(isequal(dijFredLoad.externalCalculationLodPath, fullfile(pln.propDoseCalc.externalCalculation, 'MCrun', 'out', 'scoreij', 'Phantom.Dose.bin')));
+        assertTrue(isequal(size(dijFredLoad.physicalDose{1}),[nVoxles, nBixels]));
+        assertTrue(isequal(size(forwardDoseFredLoad.physicalDose), size(resultGUI.physicalDose)));
 
 
+function test_bioCalculation
+
+        matRad_cfg = MatRad_Config.instance();
+        load(['protons_testData.mat']);
+        pln.machine = 'Generic';
+        pln.propDoseCalc.bioModel = matRad_bioModel('protons', 'MCN');
+        
+        pln.propDoseCalc.engine = 'FRED';
+        pln.propDoseCalc.useGPU = true;
+        pln.propDoseCalc.externalCalculation = fullfile(matRad_cfg.matRadRoot, 'test', 'testData', 'FRED_data');
+        
+        % Test dij-load
+        dijFredLoad         = matRad_calcDoseInfluence(ct,cst,stf,pln);
+        
+        % Test forward calculation cube load
+        w = ones(sum([stf(:).totalNumOfBixels]),1);
+        forwardDoseFredLoad = matRad_calcDoseForward(ct,cst,stf,pln,w);
+
+        % Assert basic parameters
+        assertTrue(all(cellfun(@(x) isfield(dijFredLoad, x), {'physicalDose', 'mLETd', 'mAlphaDose', 'mSqrtBetaDose'})));
+        assertTrue(all(cellfun(@(x) isfield(forwardDoseFredLoad, x), {'physicalDose', 'LET', 'alpha', 'beta', 'effect'})));
+
+
+function test_additionalParameters
+        
+        matRad_cfg = MatRad_Config.instance();
+        load(['protons_testData.mat']);
+        pln.machine = 'Generic';
+
+        pln.propDoseCalc.HUtable = 'internal';
+        pln.propDoseCalc.sourceModel = 'emittance';
+        pln.propDoseCalc.HUclamping = true;
+
+        engine = DoseEngines.matRad_ParticleFREDEngine(pln);
+
+        assertTrue(all(cellfun(@(x,y) isequal(engine.(x), y), {'sourceModel','HUtable', 'HUclamping'}, {'emittance','internal', true})));
