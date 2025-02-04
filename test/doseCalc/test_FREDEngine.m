@@ -25,7 +25,7 @@ function test_propertyAssignmentFromPln
         
         pln.propDoseCalc.HUclamping               = false;
         pln.propDoseCalc.HUtable                  = 'matRad_default_FredMaterialConverter';
-        pln.propDoseCalc.exportCalculation        = true;
+        pln.propDoseCalc.externalCalculation      = 'write';
         pln.propDoseCalc.sourceModel              = 'gaussian';
         pln.propDoseCalc.useGPU                   = false;
         pln.propDoseCalc.roomMaterial             = 'Vacuum';
@@ -60,27 +60,21 @@ function test_writeFiles
 
         resultGUI = matRad_calcDoseForward(ct,cst,stf,pln,w);
 
-        fredMainDir   = [matRad_cfg.primaryUserFolder filesep 'FRED'];
-        runFolder     = [fredMainDir filesep 'MCrun'];
-        inputFolder   = [runFolder filesep 'inp'];
-        planFolder    = [inputFolder filesep 'plan'];
-        regionsFolder = [inputFolder filesep 'regions'];
+        fredMainDir   = fullfile(matRad_cfg.primaryUserFolder, 'FRED');
+        runFolder     = fullfile(fredMainDir, 'MCrun');
+        inputFolder   = fullfile(runFolder, 'inp');
+        planFolder    = fullfile(inputFolder, 'plan');
+        regionsFolder = fullfile(inputFolder, 'regions');
 
         
-        assertTrue(isfolder(fredMainDir));
-        assertTrue(isfolder(runFolder));
-        assertTrue(isfolder(inputFolder));
-        assertTrue(isfolder(planFolder));
-        assertTrue(isfolder(regionsFolder));        
-        
-        assertTrue(isfile([planFolder filesep 'plan.inp']));
-        assertTrue(isfile([planFolder filesep 'planDelivery.inp']));
-
-        assertTrue(isfile([regionsFolder filesep 'CTpatient.raw']));
-        assertTrue(isfile([regionsFolder filesep 'CTpatient.mhd']));
-        assertTrue(isfile([regionsFolder filesep 'regions.inp']));
-        
-        assertTrue(isfile([runFolder filesep 'fred.inp']));
+        assertTrue(all(cellfun(@isfolder, {fredMainDir,runFolder,inputFolder,planFolder,regionsFolder})));       
+        assertTrue(all(cellfun(@isfile, {fullfile(planFolder, 'plan.inp'),...
+                                         fullfile(planFolder, 'planDelivery.inp'),...
+                                         fullfile(regionsFolder, 'CTpatient.raw'),...
+                                         fullfile(regionsFolder, 'CTpatient.mhd'),...
+                                         fullfile(regionsFolder, 'regions.inp'),...
+                                         fullfile(runFolder, 'fred.inp'),...
+                                        })));
 
 function test_loadDij
 
