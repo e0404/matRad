@@ -14,8 +14,10 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 %
 % HUclamping:            [b] allows for clamping of HU table. Default: true
 % HUtable:               [s] HU table name. Example: 'internal', 'matRad_default_FRED'
-% exportCalculation      [b] t: Only write simulation paramter files
-%                            f: run FRED
+% externalCalculation    [b/s] off (default): run FRED
+%                              t/'write'  : Only write simulation paramter files
+%                              'path'     : read simulation files from 'path'
+%                              
 % sourceModel            [s] see AvailableSourceModels, {'gaussian', 'emittance', 'sigmaSqrModel'}
 % useGPU                 [b] trigger use of GPU (if available)
 % roomMaterial           [s] material of the patient surroundings. Example:
@@ -61,7 +63,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
     end
 
     properties
-        exportCalculation;
+        externalCalculation;
         useGPU;
         calcLET;
         constantRBE;
@@ -122,7 +124,9 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 end
             end
 
-            this.FREDrootFolder = fullfile(matRad_cfg.primaryUserFolder, 'FRED');
+            if isempty(this.FREDrootFolder)
+                this.FREDrootFolder = fullfile(matRad_cfg.primaryUserFolder, 'FRED');
+            end
             
             if ~exist(this.FREDrootFolder, 'dir')
                 mkdir(this.FREDrootFolder);
@@ -131,10 +135,6 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
         end
 
-        function set.FREDrootFolder(obj, pathValue)
-            obj.FREDrootFolder = pathValue;
-            obj.updatePaths;
-        end
     end
 
     methods(Access = protected)
@@ -303,7 +303,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
             this.HUclamping             = false;
             this.HUtable                = this.defaultHUtable;
-            this.exportCalculation      = false;
+            this.externalCalculation    = 'off';
             this.useGPU                 = false;
             this.sourceModel            = this.AvailableSourceModels{1};
             this.roomMaterial           = 'Air';
@@ -551,18 +551,24 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
         end
 
-        [doseCubeV, letdCubeV] = readSimulationOutput(runFolder,calcDoseDirect, calcLET);
+        [doseCubeV, letdCubeV, fileName] = readSimulationOutput(runFolder,calcDoseDirect, calcLET);
 
     end
 
 
      methods (Access = private)
 
-        function updatePaths(obj)
+        function updatePaths(obj, rootFolder)
+
+            if ~strcmp(rootFolder, obj.FREDrootFolder)
+                obj.FREDrootFolder  = rootFolder;
+            end
+            
             obj.MCrunFolder     = fullfile(obj.FREDrootFolder, 'MCrun');
             obj.inputFolder     = fullfile(obj.MCrunFolder, 'inp');
             obj.regionsFolder   = fullfile(obj.inputFolder, 'regions');
             obj.planFolder      = fullfile(obj.inputFolder, 'plan');
+
         end
 
         function [radiationMode] = updateRadiationMode(this,value)
@@ -593,9 +599,9 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
      end
 
      
-     methods
+    methods
 
-         function set.sourceModel(this, value)
+        function set.sourceModel(this, value)
             matRad_cfg = MatRad_Config.instance();
 
             valid = ischar(value) && any(strcmp(value, this.AvailableSourceModels));
@@ -621,15 +627,48 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
          end
 
          function set.radiationMode(this,value)
-            if ischar(value)
-                if ~isempty(this.radiationMode) && ~strcmp(this.radiationMode, value)
+             if ischar(value)
+                 if ~isempty(this.radiationMode) && ~strcmp(this.radiationMode, value)
                     this.radiationMode = value;
                     this.updateRadiationMode(this.radiationMode);
-                elseif isempty(this.radiationMode)
+                 elseif isempty(this.radiationMode)
                     this.radiationMode = value;
-                end
-            end
+                 end
+             end
 
+         end
+
+        function set.FREDrootFolder(obj, pathValue)
+            obj.FREDrootFolder = pathValue;
+            obj.updatePaths(pathValue);
+        end
+
+
+         function set.externalCalculation(this, value)
+         % Set exportCalculation value, available options are:
+         %  - false:    (default) runs the FRED simulation (requires FRED installation)
+         %  - write/1:  triggers the file export
+         %  - 'path':   simulation data will be loaded from the specified
+         %              path. Full simulation directory path should be provided.
+         %              Example: 'matRadRoot/userdata/FRED/'
+             
+            if isnumeric(value) || islogical(value)
+                switch value
+                    case 1
+                        this.externalCalculation = 'write';
+                    case 0
+                        this.externalCalculation = 'off';
+                end
+             elseif ischar(value)
+                 
+                 if any(strcmp(value, {'write', 'off'}))
+                     this.externalCalculation = value;
+                 elseif isfolder(value)
+                    this.externalCalculation = value;
+                    
+                    this.updatePaths(value);
+                 end
+             end
          end
 
      end

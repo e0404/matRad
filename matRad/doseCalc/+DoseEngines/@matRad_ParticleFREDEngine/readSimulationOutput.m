@@ -1,4 +1,4 @@
-function [doseCube, letCube] = readSimulationOutput(runFolder,calcDoseDirect, varargin)
+function [doseCube, letCube, loadFileName] = readSimulationOutput(runFolder,calcDoseDirect, varargin)
 
 matRad_cfg = MatRad_Config.instance();
 
@@ -15,17 +15,22 @@ calcLET         = p.Results.calcLET;
 
 doseCube = [];
 letCube  = [];
+loadFileName = [];
 
 if ~calcDoseDirect
 
     doseDijFolder = fullfile(runFolder, 'out', 'scoreij');
     doseDijFile = 'Phantom.Dose.bin';
+    loadFileName = fullfile(doseDijFolder,doseDijFile);
     
-    doseDijFileName = fullfile(doseDijFolder,doseDijFile);
+    matRad_cfg.dispInfo(sprintf('Looking for scorer-ij output in sub folder: %s\n', strrep(doseDijFolder, '\', '\\')));
     
     % read dij matrix
- 
-    doseCube = DoseEngines.matRad_ParticleFREDEngine.readSparseDijBin(doseDijFileName);
+    if isfile(loadFileName)
+        doseCube = DoseEngines.matRad_ParticleFREDEngine.readSparseDijBin(loadFileName);
+    else
+        matRad_cfg.dispError(sprintf('Unable to find file: %s', strrep(loadFileName, '\', '\\')));
+    end
 
     if calcLET
         
@@ -39,12 +44,19 @@ if ~calcDoseDirect
         end
     end
 else
-
+    
     doseCubeFolder = fullfile(runFolder, 'out', 'score');
     doseCubeFileName = 'Phantom.Dose.mhd';
-    
-    doseCube = matRad_readMHD(fullfile(doseCubeFolder, doseCubeFileName));
-        
+    loadFileName = fullfile(doseCubeFolder, doseCubeFileName);
+
+    matRad_cfg.dispInfo(sprintf('Looking for scorer-ij file in sub folder: %s\n', strrep(doseCubeFolder, '\', '\\')));
+
+    if isfile(loadFileName)
+        doseCube = matRad_readMHD(loadFileName);
+    else
+        matRad_cfg.dispError(sprintf('Unable to find file: %s', strrep(loadFileName, '\', '\\')));
+    end
+
     if calcLET
 
         letdDijFolder   = doseCubeFolder;
@@ -53,9 +65,11 @@ else
         try 
             letCube = matRad_readMHD(fullfile(letdDijFolder, letdCubeFileName));
         catch
-            matRad_cfg.dispError('unable to load file: %s',fullfile(letdDijFolder, letdCubeFileName));
+            matRad_cfg.dispError('Unable to load file: %s',fullfile(letdDijFolder, letdCubeFileName));
         end
     end
     
 end
+
+matRad_cfg.dispInfo('Loading succesful!\n');
 end

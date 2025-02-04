@@ -303,37 +303,63 @@ function dij = calcDose(this,ct,cst,stf)
     % %% MC computation and dij filling
     this.writeFredInputAllFiles(stfFred);
 
-    if ~this.exportCalculation
-
-        % Check consistency of installation
-        if this.checkExec()
-            
-            matRad_cfg.dispInfo('calling FRED');
-
-            cd(this.MCrunFolder);
-            
-            systemCall = [this.cmdCall, '-f fred.inp'];
-            if ~this.useGPU
-                systemCall = [this.cmdCall, ' -nogpu -f fred.inp'];
+    switch this.externalCalculation
+        
+        case 'write' % Write simulation files for external calculation (no FRED installation required)
+    
+            matRad_cfg.dispInfo('All files have been generated\n');
+            dijFieldsToOverride = {'numOfBeams','beamNum','bixelNum','rayNum','totalNumOfBixels','totalNumOfRays','numOfRaysPerBeam'};
+                
+            for fieldName=dijFieldsToOverride
+                dij.(fieldName{1}) = this.numOfColumnsDij;
             end
 
-            % printOutput to matLab console
-            if this.printOutput
-                [status,~] = system(systemCall,'-echo');
+            doseCube = [];
+        
+        case 'off' % Run FRED simulation (requires installation)
+
+            % Check consistency of installation
+            if this.checkExec()
+                
+                matRad_cfg.dispInfo('calling FRED');
+    
+                cd(this.MCrunFolder);
+                
+                systemCall = [this.cmdCall, '-f fred.inp'];
+                if ~this.useGPU
+                    systemCall = [this.cmdCall, ' -nogpu -f fred.inp'];
+                end
+    
+                % printOutput to matLab console
+                if this.printOutput
+                    [status,~] = system(systemCall,'-echo');
+                else
+                    [status,~] = system(systemCall);
+                end
+                cd(this.FREDrootFolder);
             else
-                [status,~] = system(systemCall);
+                matRad_cfg.dispError('FRED setup incorrect for this plan simulation');
             end
-            cd(this.FREDrootFolder);
-        else
-            matRad_cfg.dispError('FRED setup incorrect for this plan simulation');
-        end
 
-        if status==0
-            matRad_cfg.dispInfo(' done\n');
-        end
+            if status==0
+                matRad_cfg.dispInfo(' done\n');
+            end
+            
+            % read simulation output
+            [doseCube, letdCube] = this.readSimulationOutput(this.MCrunFolder,this.calcDoseDirect, logical(this.calcLET));
 
-        % read simulation output
-        [doseCube, letdCube] = this.readSimulationOutput(this.MCrunFolder,this.calcDoseDirect, logical(this.calcLET));
+        otherwise % A path for loading has been provided
+            
+            matRad_cfg.dispInfo(['Reading simulation data from: ', strrep(this.MCrunFolder,'\','\\'), '\n']);
+
+            % read simulation output
+            [doseCube, letdCube, loadFileName] = this.readSimulationOutput(this.MCrunFolder,this.calcDoseDirect, logical(this.calcLET));
+
+            dij.externalCalculationLodPath = loadFileName;
+
+    end
+
+    if ~isempty(doseCube)
     
         % Fill dij
         if this.calcDoseDirect
@@ -341,7 +367,7 @@ function dij = calcDose(this,ct,cst,stf)
             if isequal(size(doseCube), this.doseGrid.dimensions)
                 dij.physicalDose{1} = sparse(this.VdoseGrid, ones(numel(this.VdoseGrid),1),doseCube(this.VdoseGrid), this.doseGrid.numOfVoxels,1);
             end
-
+    
             % LETd cube
             if this.calcLET
                 if isequal(size(letdCube), this.doseGrid.dimensions)
@@ -351,7 +377,7 @@ function dij = calcDose(this,ct,cst,stf)
                     dij.mLETDose{1} = sparse(this.VdoseGrid, ones(numel(this.VdoseGrid),1),(letdCube(this.VdoseGrid)./10).*doseCube(this.VdoseGrid), this.doseGrid.numOfVoxels,1);
                 end
             end
-
+    
             % Needed for calcCubes
             dijFieldsToOverride = {'numOfBeams','beamNum','bixelNum','rayNum','totalNumOfBixels','totalNumOfRays','numOfRaysPerBeam'};
             
@@ -413,15 +439,6 @@ function dij = calcDose(this,ct,cst,stf)
                    dij.mSqrtBetaDose{1}(:,bxlIdx)  = sparse(this.VdoseGrid, ones(numel(this.VdoseGrid),1),sqrt(tmpBixel.beta).*dij.physicalDose{1}(this.VdoseGrid,bxlIdx), this.doseGrid.numOfVoxels,1);
                end
            end
-        end 
-
-
-    else
-        matRad_cfg.dispInfo('All files have been generated');
-        dijFieldsToOverride = {'numOfBeams','beamNum','bixelNum','rayNum','totalNumOfBixels','totalNumOfRays','numOfRaysPerBeam'};
-                
-        for fieldName=dijFieldsToOverride
-            dij.(fieldName{1}) = this.numOfColumnsDij;
         end
     end
 
