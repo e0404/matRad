@@ -161,21 +161,21 @@ classdef matRad_importDicomWidget < matRad_Widget
             handles = this.handles;
 
             % case the resolution was changed manually
-            if handles.resx_edit.String ~= this.importer.importFiles.resx
+            if str2double(handles.resx_edit.String) ~= str2double(this.importer.importFiles.resx)
                 this.importer.importFiles.resx = handles.resx_edit.String;
             end 
-            if handles.resy_edit.String ~= this.importer.importFiles.resy
+            if str2double(handles.resy_edit.String) ~= str2double(this.importer.importFiles.resy)
                 this.importer.importFiles.resy = handles.resy_edit.String;
             end
-            if handles.resz_edit.String ~= this.importer.importFiles.resz
+            if str2double(handles.resz_edit.String) ~= str2double(this.importer.importFiles.resz)
                 this.importer.importFiles.resz = handles.resz_edit.String;
             end
 
             % to pass only selected objects to the matRad_importDicom
             % selected patient
             if ~isempty(handles.patient_listbox)
-                selected_patient = this.importer.patient{get(handles.patient_listbox,'Value')};
-                this.importer.patient = selected_patient;
+                selected_patient = get(handles.patient_listbox,'Value');
+                this.importer.selectedPatient = selected_patient;
             end
 
             % selected CT serie
@@ -211,7 +211,7 @@ classdef matRad_importDicomWidget < matRad_Widget
             % selected dose serie
             allRTDoses = this.importer.importFiles.rtdose;
             if ~isempty(allRTDoses) && ~isempty(handles.doseseries_listbox.Value)
-                UIDSelected_rtdose = handles.doseseries_listbox.String{get(handles.doseseries_listbox,'Value'), 1};
+                UIDSelected_rtdose = handles.doseseries_listbox.String(get(handles.doseseries_listbox,'Value'));
                 selectedRTDose = allRTDoses(strcmp(allRTDoses(:, 4), UIDSelected_rtdose), :);
                 this.importer.importFiles.rtdose = selectedRTDose;
             else 
@@ -222,7 +222,7 @@ classdef matRad_importDicomWidget < matRad_Widget
 
             %% save ct, cst, pln, dose
             matRad_cfg = MatRad_Config.instance();
-            matRadFileName = fullfile(matRad_cfg.userfolders{1},[this.importer.patient '.mat']); % use default from dicom
+            matRadFileName = fullfile(matRad_cfg.userfolders{1},[this.importer.patients{this.importer.selectedPatient} '.mat']); % use default from dicom
             [FileName,PathName] = uiputfile('*.mat','Save as...',matRadFileName);
             ct = this.importer.ct;
             cst = this.importer.cst;
@@ -970,13 +970,15 @@ classdef matRad_importDicomWidget < matRad_Widget
 
             this.importer = matRad_DicomImporter(get(handles.dir_path_field,'String'));
 
-            if iscell(this.importer.patient)
-                handles.fileList =  this.importer.allfiles;
-                %handles.patient_listbox.String = patient_listbox;
-                set(handles.patient_listbox,'String',this.importer.patient,'Value',1);
-                % guidata(hObject, handles);
-                this.handles = handles;
+            handles.fileList =  this.importer.allfiles;
+            %handles.patient_listbox.String = patient_listbox;
+            if isempty(this.importer.selectedPatient) || this.importer.selectedPatient > numel(this.importer.patients)
+                this.importer.selectedPatient = 1;
             end
+                
+            set(handles.patient_listbox,'String',this.importer.patients,'Value',this.importer.selectedPatient);
+            % guidata(hObject, handles);
+            this.handles = handles;
         end
     end
     

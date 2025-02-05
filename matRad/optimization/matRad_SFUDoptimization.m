@@ -66,7 +66,7 @@ for i = 1:size(cst,1)
         
         % biological dose splitting for carbon
         if strcmp(pln.propOpt.bioOptimization, 'LEMIV_effect') || ...
-                        strcmp(pln.propOpt.bioOptimization, 'LEMIV_RBExD')
+                        strcmp(pln.propOpt.bioOptimization, 'LEMIV_RBExDose')
             
             % dose per fraction
             fx_dose = obj.getDoseParameters()/pln.numOfFractions;

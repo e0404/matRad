@@ -80,17 +80,17 @@ slice = slice(3);
 figure 
 
 subplot(2,2,1)
-imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet);
+imagesc(resultGUI.RBExDose(:,:,slice)),colorbar, colormap(jet);
 title('static dose distribution [Gy (RBE)]')
 axis equal
 
 subplot(2,2,3)
-imagesc(resultGUI.accRBExD(:,:,slice)),colorbar, colormap(jet); 
+imagesc(resultGUI.accRBExDose(:,:,slice)),colorbar, colormap(jet); 
 title('accumulated (4D) dose distribution [Gy (RBE)]')
 axis equal
 
 subplot(2,2,2)
-imagesc(resultGUI.RBExD(:,:,slice) - resultGUI.accRBExD(:,:,slice)) ,colorbar, colormap(jet); 
+imagesc(resultGUI.RBExDose(:,:,slice) - resultGUI.accRBExDose(:,:,slice)) ,colorbar, colormap(jet); 
 title('static dose distribution - accumulated (4D) dose distribution [Gy (RBE)]')
 
 axis equal

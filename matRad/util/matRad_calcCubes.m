@@ -100,7 +100,7 @@ end
 % consider RBE for protons and skip varRBE calculation
 if isfield(dij,'RBE') && isscalar(dij.RBE)
     for i = 1:length(beamInfo)
-        resultGUI.(['RBExD', beamInfo(i).suffix]) = resultGUI.(['physicalDose', beamInfo(i).suffix]) * dij.RBE;
+        resultGUI.(['RBExDose', beamInfo(i).suffix]) = resultGUI.(['physicalDose', beamInfo(i).suffix]) * dij.RBE;
     end
 elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'alpha')), fieldnames(dij)))
     % Load RBE models if MonteCarlo was calculated for multiple models
@@ -129,13 +129,13 @@ elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'alpha')), fieldna
                 resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])                = full(dij.(['mAlphaDose' RBE_model{j}]){scenNum} * wBeam + (dij.(['mSqrtBetaDose' RBE_model{j}]){scenNum} * wBeam).^2);
                 resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])                = reshape(resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix]),dij.doseGrid.dimensions);
 
-                % Calculate RBExD from the effect
-                resultGUI.(['RBExD', RBE_model{j}, beamInfo(i).suffix])                 = zeros(size(resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])));
-                resultGUI.(['RBExD', RBE_model{j}, beamInfo(i).suffix])(ix)             = (sqrt(dij.ax{ctScen}(ix).^2 + 4 .* dij.bx{ctScen}(ix) .* resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])(ix)) - dij.ax{ctScen}(ix))./(2.*dij.bx{ctScen}(ix));
+                % Calculate RBExDose from the effect
+                resultGUI.(['RBExDose', RBE_model{j}, beamInfo(i).suffix])                 = zeros(size(resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])));
+                resultGUI.(['RBExDose', RBE_model{j}, beamInfo(i).suffix])(ix)             = (sqrt(dij.ax{ctScen}(ix).^2 + 4 .* dij.bx{ctScen}(ix) .* resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])(ix)) - dij.ax{ctScen}(ix))./(2.*dij.bx{ctScen}(ix));
 
-                % Divide RBExD with the physicalDose to get the plain RBE cube
+                % Divide RBExDose with the physicalDose to get the plain RBE cube
                 resultGUI.(['RBE', RBE_model{j}, beamInfo(i).suffix])                   = zeros(size(resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])));
-                resultGUI.(['RBE', RBE_model{j}, beamInfo(i).suffix])(ixWeighted)               = resultGUI.(['RBExD', RBE_model{j}, beamInfo(i).suffix])(ixWeighted)./resultGUI.(['physicalDose', beamInfo(i).suffix])(ixWeighted);
+                resultGUI.(['RBE', RBE_model{j}, beamInfo(i).suffix])(ixWeighted)               = resultGUI.(['RBExDose', RBE_model{j}, beamInfo(i).suffix])(ixWeighted)./resultGUI.(['physicalDose', beamInfo(i).suffix])(ixWeighted);
 
                 % Initialize alpha/beta cubes
                 resultGUI.(['alpha', RBE_model{j}, beamInfo(i).suffix])                 = zeros(dij.doseGrid.dimensions);
@@ -198,7 +198,7 @@ end
 
 
 %% Final processing
-% Remove suffix for RBExD if there's only one available
+% Remove suffix for RBExDose if there's only one available
 if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'alpha')), fieldnames(dij))) && isfield(dij,'RBE_models') && length(dij.RBE_models) == 1
     % Get fieldnames that include the specified RBE model
     fnames = fieldnames(resultGUI);

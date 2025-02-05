@@ -114,6 +114,11 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         function assignPropertiesFromPln(this,pln,warnWhenPropertyChanged)
             matRad_cfg = MatRad_Config.instance();
             
+            %Check radiation mode
+            if ~isfield(pln,'radiationMode') || ~any(strcmp(pln.radiationMode,this.possibleRadiationModes))
+                matRad_cfg.dispError('Invalid radiation mode for engine ''%s''!',this.name);
+            end
+
             %Set Scenario Model
             if isfield(pln,'multScen')
                 this.multScen = pln.multScen;
@@ -281,6 +286,10 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             % already performed in dij construction
             
             resultGUI = [];
+
+            if ~isa(this.multScen,'matRad_ScenarioModel')
+                this.multScen = matRad_ScenarioModel.create(this.multScen,struct('numOfCtScen',ct.numOfCtScen));
+            end
             
             for i = 1:this.multScen.totNumScen
                 scenSubIx = this.multScen.linearMask(i,:);

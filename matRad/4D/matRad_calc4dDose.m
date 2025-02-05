@@ -76,17 +76,17 @@ for i = 1:ct.numOfCtScen
     % compute physical dose for physical opt
     if isa(pln.bioModel,'matRad_EmptyBiologicalModel')
         resultGUI.phaseDose{i} = tmpResultGUI.physicalDose;
-        % compute RBExD with const RBE
+        % compute RBExDose with const RBE
     elseif isa(pln.bioModel,'matRad_ConstantRBE')
-        resultGUI.phaseRBExD{i} = tmpResultGUI.RBExD;
+        resultGUI.phaseRBExDose{i} = tmpResultGUI.RBExDose;
         % compute all fields
     elseif isa(pln.bioModel,'matRad_LQBasedModel')
         resultGUI.phaseAlphaDose{i}    = tmpResultGUI.alpha .* tmpResultGUI.physicalDose;
         resultGUI.phaseSqrtBetaDose{i} = sqrt(tmpResultGUI.beta) .* tmpResultGUI.physicalDose;
         ix = ax{i} ~=0;
         resultGUI.phaseEffect{i}    = resultGUI.phaseAlphaDose{i} + resultGUI.phaseSqrtBetaDose{i}.^2;
-        resultGUI.phaseRBExD{i}     = zeros(ct.cubeDim);
-        resultGUI.phaseRBExD{i}(ix) = ((sqrt(ax{i}(ix).^2 + 4 .* bx{i}(ix) .* resultGUI.phaseEffect{i}(ix)) - ax{i}(ix))./(2.*bx{i}(ix)));
+        resultGUI.phaseRBExDose{i}     = zeros(ct.cubeDim);
+        resultGUI.phaseRBExDose{i}(ix) = ((sqrt(ax{i}(ix).^2 + 4 .* bx{i}(ix) .* resultGUI.phaseEffect{i}(ix)) - ax{i}(ix))./(2.*bx{i}(ix)));
     else
         matRad_cfg.dispError('Unsupported biological model %s!',pln.bioModel.model);
     end
@@ -99,7 +99,7 @@ if isa(pln.bioModel,'matRad_EmptyBiologicalModel')
 
 elseif isa(pln.bioModel,'matRad_ConstantRBE')
 
-    resultGUI.accRBExD = matRad_doseAcc(ct,resultGUI.phaseRBExD, cst, accType);
+    resultGUI.accRBExDose = matRad_doseAcc(ct,resultGUI.phaseRBExDose, cst, accType);
 
 elseif isa(pln.bioModel,'matRad_LQBasedModel')
 
@@ -111,8 +111,8 @@ elseif isa(pln.bioModel,'matRad_LQBasedModel')
 
     resultGUI.accEffect = resultGUI.accAlphaDose + resultGUI.accSqrtBetaDose.^2;
 
-    resultGUI.accRBExD     = zeros(ct.cubeDim);
-    resultGUI.accRBExD(ix) = ((sqrt(ax{1}(ix).^2 + 4 .* bx{1}(ix) .* resultGUI.accEffect(ix)) - ax{1}(ix))./(2.*bx{1}(ix)));
+    resultGUI.accRBExDose     = zeros(ct.cubeDim);
+    resultGUI.accRBExDose(ix) = ((sqrt(ax{1}(ix).^2 + 4 .* bx{1}(ix) .* resultGUI.accEffect(ix)) - ax{1}(ix))./(2.*bx{1}(ix)));
 else
     matRad_cfg.dispError('Unsupported biological model %s!',pln.bioModel.model);
 end

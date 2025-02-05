@@ -23,8 +23,8 @@ matRad_cfg = matRad_rc;
 matRadRoot = matRad_cfg.matRadRoot;
 standaloneFolder = fullfile(matRadRoot,'standalone');
 
+%Setup Input Parsing
 p = inputParser;
-
 p.addParameter('isRelease',false,@islogical);                                           %By default we compile a snapshot of the current branch
 p.addParameter('compileWithRT',false,@islogical);                                       %By default we don't package installers with runtime
 p.addParameter('buildDir',fullfile(matRadRoot,'build'),@(x) ischar(x) || isstring(x));  %Build directory
@@ -34,8 +34,8 @@ p.addParameter('java',false,@islogical);
 p.addParameter('python',false,@islogical);
 p.addParameter('json',[],@(x) isempty(x) || ischar(x) || isstring(x));
 
+%Parse and manage inputs
 p.parse(varargin{:});
-
 isRelease = p.Results.isRelease;
 compileWithRT = p.Results.compileWithRT;
 buildDir = p.Results.buildDir;
@@ -56,12 +56,20 @@ else
     rtOption = 'web';
 end
 
-try 
+%Display OS for debugging and information
+arch = computer('arch');
+fprintf('Build Architecture: %s\n',arch);
+archcheck = string([ispc,isunix,ismac]).cellstr();
+fprintf('pc\t\tunix\tmac\n%s\t%s\t%s\n',archcheck{:});
+
+%Check build directory
+try
     mkdir(buildDir);
 catch ME
     error(ME.identifier,'Could not create build directory %s\n Error:',buildDir,ME.message);
 end
 
+%Docker build?
 if buildDocker && isunix && ~ismac
     warning('Can''t build docker container. Only works on linux!');
     buildDocker = false;
@@ -103,7 +111,7 @@ try
         'ExecutableVersion',vernumApp,...
         'TreatInputsAsNumeric','off',...
         'Verbose',verbose);
-    
+
     if ispc
         resultsStandalone = compiler.build.standaloneWindowsApplication(buildOpts);
     else
@@ -120,20 +128,12 @@ end
 %% Package
 if ispc
     readmeFile = 'readme_standalone_windows.txt';
-    installerId = 'Win64';
 elseif ismac
     readmeFile = 'readme_standalone_mac.txt';
-    [~,result] = system('uname -m');
-    if any(strfind(result,'ARM64')) %is m1mac
-        installerId = 'MacARM';
-    else
-        installerId = 'Mac64';
-    end
-
 else
     readmeFile = 'readme_standalone_linux.txt';
-    installerId = 'Linux64';
 end
+installerId = arch;
 
 try
     packageOpts = compiler.package.InstallerOptions(resultsStandalone,...
@@ -147,7 +147,7 @@ try
         'InstallerIcon',fullfile(standaloneFolder,'matRad_icon.png'),...
         'InstallerLogo',fullfile(standaloneFolder,'matRad_installscreen.png'),...
         'InstallerSplash',fullfile(standaloneFolder,'matRad_splashscreen.png'),...
-        'InstallerName',sprintf('matRad_installer%s_v%s',installerId,vernumApp),...
+        'InstallerName',sprintf('matRad_installer_%s_v%s',installerId,vernumApp),...
         'OutputDir',fullfile(buildDir,'installer'),...
         'RuntimeDelivery',rtOption,...
         'Summary','matRad is an open source treatment planning system for radiation therapy written in Matlab.',...
@@ -208,34 +208,33 @@ end
 %% Docker
 if buildDocker
     try
+        if isRelease
+            imageName = ['matRad:' vernumInstall];
+        else
+            imageName = 'matRad:develop';
+        end
         dockerOpts = compiler.package.DockerOptions(results,...
             'AdditionalInstructions','',...
             'AdditionalPackages','',...
             'ContainerUser','appuser',...
             'DockerContext',fullfile(buildDir,'docker'),...
             'ExecuteDockerBuild','on',...
-            'ImageName','e0404/matrad');        
+            'ImageName',imageName);
 
         compiler.package.docker(results,'Options',dockerOpts);
         buildResult.docker.image = dockerOpts.ImageName;
     catch ME
         warning(ME.identifier,'Java build failed due to %s!',ME.message);
     end
-end   
+end
 
 if ~isempty(json)
     try
         fH = fopen(json,'w');
-        jsonStr = jsonencode(buildResult,"PrettyPrint",true);        
+        jsonStr = jsonencode(buildResult,"PrettyPrint",true);
         fwrite(fH,jsonStr);
-        fclose(fH);    
+        fclose(fH);
     catch ME
         warning(ME.identifier,'Could not open JSON file for writing: %s',ME.message);
     end
 end
-
-
-
-
-
-

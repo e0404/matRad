@@ -64,7 +64,7 @@ end
 if isequal(pln.propOpt.quantityOpt,'physicalDose')
     resultGUI.optDose = resultGUI.physicalDose;
 else
-    resultGUI.optRBExD = resultGUI.RBExD;
+    resultGUI.optRBExDose = resultGUI.RBExDose;
 end
 
 % manipulate fluence vector
@@ -81,8 +81,8 @@ if isequal(pln.propOpt.quantityOpt,'physicalDose')
     resultGUI.physicalDose = calcCubes.physicalDose;
     relIntDoseDif = (1-sum(resultGUI.physicalDose(:))/sum(resultGUI.optDose(:)))*100;
 else
-    resultGUI.RBExD = calcCubes.RBExD;
-    relIntDoseDif = (1-sum(resultGUI.RBExD(:))/sum(resultGUI.optRBExD(:)))*100;
+    resultGUI.RBExDose = calcCubes.RBExDose;
+    relIntDoseDif = (1-sum(resultGUI.RBExDose(:))/sum(resultGUI.optRBExDose(:)))*100;
 end
 
 if relIntDoseDif ~= 0
@@ -139,8 +139,8 @@ if(minNrParticlesIES ~= 0)
         resultGUI.physicalDose = calcCubes.physicalDose;
         relIntDoseDif = (1-sum(resultGUI.physicalDose(:))/sum(resultGUI.optDose(:)))*100;
     else
-        resultGUI.RBExD = calcCubes.RBExD;
-        relIntDoseDif = (1-sum(resultGUI.RBExD(:))/sum(resultGUI.optRBExD(:)))*100;
+        resultGUI.RBExDose = calcCubes.RBExDose;
+        relIntDoseDif = (1-sum(resultGUI.RBExDose(:))/sum(resultGUI.optRBExDose(:)))*100;
     end
 
     if relIntDoseDif ~= 0

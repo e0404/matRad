@@ -23,7 +23,7 @@ function obj = matRad_interpDicomDoseCube(obj)
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
 % of the matRad project, including this file, may be copied, modified,
 % propagated, or distributed except according to the terms contained in the
 % LICENSE file.
@@ -102,7 +102,9 @@ obj.importRTDose.dose.dicomInfo.DoseSummationType       = doseInfo.DoseSummation
 %always given
 obj.importRTDose.dose.dicomInfo.SOPClassUID             = doseInfo.SOPClassUID;
 obj.importRTDose.dose.dicomInfo.SOPInstanceUID          = doseInfo.SOPInstanceUID;
-obj.importRTDose.dose.dicomInfo.ReferencedRTPlanSequence = doseInfo.ReferencedRTPlanSequence;
+if isfield(doseInfo,'ReferencedRTPlanSequence')
+    obj.importRTDose.dose.dicomInfo.ReferencedRTPlanSequence = doseInfo.ReferencedRTPlanSequence;
+end
 
 end
 

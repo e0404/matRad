@@ -149,8 +149,8 @@ pln.propDoseCalc.doseGrid.resolution.z = ct.resolution.z; % [mm]
 
 % optimization settings
 pln.propOpt.optimizer       = 'IPOPT';
-pln.propOpt.bioOptimization = 'none'; % none: physical optimization;             const_RBExD; constant RBE of 1.1;
-                                      % LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose
+pln.propOpt.bioOptimization = 'none'; % none: physical optimization;             const_RBExDose; constant RBE of 1.1;
+                                      % LEMIV_effect: effect-based optimization; LEMIV_RBExDose: optimization of RBE-weighted dose
 pln.propOpt.runDAO          = false;  % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 
@@ -158,7 +158,7 @@ pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't /
 pln.multScen = matRad_multScen(ct,'nomScen');
 
 
-quantityOpt   = 'physicalDose';            % either  physicalDose / effect / RBExD
+quantityOpt   = 'physicalDose';            % either  physicalDose / effect / RBExDose
 modelName     = 'none';         % none: for photons, protons, carbon                                    constRBE: constant RBE model
                                     % MCN: McNamara-variable RBE model for protons                          WED: Wedenberg-variable RBE model for protons 
                                     % LEM: Local Effect Model for carbon ions
