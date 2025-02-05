@@ -1,0 +1,14 @@
+region<
+	ID=Phantom
+	CTscan=inp/regions/CTpatient.mhd
+	O=[0,0,0]
+	pivot=[0.5,0.5,0.5]
+	l=[1.0,0.0,0.0]
+	u=[0.0,-1.0,0.0]
+	score=[Dose]
+region>
+region<
+	ID=Room
+	material=Air
+region>
+include: inp/regions/hLut.inp
