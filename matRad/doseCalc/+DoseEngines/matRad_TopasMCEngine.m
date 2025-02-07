@@ -28,6 +28,8 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
     end
 
     properties
+        hlut;
+        useGivenEqDensityCube;      % Use the given density cube ct.cube and omit conversion from cubeHU.
         calcLET = false;
         calcBioDose = false;
         prescribedDose = [];
@@ -176,7 +178,9 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         function setDefaults(this)
             this.setDefaults@DoseEngines.matRad_MonteCarloEngineAbstract();
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
-
+            
+            this.useGivenEqDensityCube        = matRad_cfg.defaults.propDoseCalc.useGivenEqDensityCube;
+            
             % Default execution paths are set here
             this.topasFolder = [matRad_cfg.matRadSrcRoot filesep 'doseCalc' filesep 'topas' filesep];
             this.workingDir = [matRad_cfg.primaryUserFolder filesep 'TOPAS' filesep];
@@ -641,6 +645,25 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             dij = this.initDoseCalc@DoseEngines.matRad_MonteCarloEngineAbstract(ct,cst,stf);
             matRad_cfg = MatRad_Config.instance();
 
+           % calculate rED or rSP from HU or take provided wedCube
+            if this.useGivenEqDensityCube && ~isfield(ct,'cube')
+                matRad_cfg.dispWarning('HU Conversion requested to be omitted but no ct.cube exists! Will override and do the conversion anyway!');
+                this.useGivenEqDensityCube = false;
+            end
+
+            if this.useGivenEqDensityCube
+                matRad_cfg.dispInfo('Omitting HU to rED/rSP conversion and using existing ct.cube!\n');
+            else
+                ct = matRad_calcWaterEqD(ct, stf); % Maybe we can avoid duplicating the CT here?
+            end
+
+            if isfield(ct,'hlut')
+                this.hlut = ct.hlut;
+            else
+                this.hlut = matRad_loadHLUT(ct,stf);
+            end
+
+
             % % for TOPAS we explicitly downsample the ct to the dose grid (might not be necessary in future versions with separated grids)
             % Check if CT has already been resampled
             matRad_cfg.dispInfo('Resampling cst... ');
@@ -652,6 +675,8 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 % Perform resampling to dose grid
                 for s = 1:ct.numOfCtScen
                     cubeHUresampled{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{s}, ...
+                        dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
+                    cubeResampled{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cube{s}, ...
                         dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
                 end
             
@@ -669,6 +694,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             
                 % Write resampled cubes
                 this.ctR.cubeHU = cubeHUresampled;
+                this.ctR.cube = cubeResampled;
             
                 % Set flag for complete resampling
                 this.ctR.resampled = 1;
@@ -2159,7 +2185,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % Write material converter
             switch obj.materialConverter.mode
                 case 'RSP' % Relative stopping power converter
-                    rspHlut = matRad_loadHLUT(ct,obj.radiationMode);
+                    rspHlut = obj.hlut;
                     min_HU = rspHlut(1,1);
                     max_HU = rspHlut(end,1);
 
@@ -2211,7 +2237,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
 
                 case 'HUToWaterSchneider' % Schneider converter
-                    rspHlut = matRad_loadHLUT(ct,obj.radiationMode);
+                    rspHlut = obj.hlut;
 
                     try
                         % Write Schneider Converter
