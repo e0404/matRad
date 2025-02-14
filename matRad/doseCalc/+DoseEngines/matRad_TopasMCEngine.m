@@ -1446,7 +1446,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
                 otherwise
                     % if particles
-                    if ~any(ismember(obj.beamProfile,{'biGaussian','simple','phasespace','virtualGaussian','uniform'}))
+                    if ~any(ismember(obj.beamProfile,{'biGaussian','simple'}))
                         matRad_cfg.dispWarning('beamProfile "%s" not available for particles, switching to "%s" as default.',obj.beamProfile,obj.defaultParticleBeamProfile);
                         obj.beamProfile = obj.defaultParticleBeamProfile;
                     end
