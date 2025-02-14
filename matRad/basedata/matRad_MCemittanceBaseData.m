@@ -541,6 +541,21 @@ classdef matRad_MCemittanceBaseData
             mcDataOptics.Divergence2y  = 0;
             mcDataOptics.Correlation2y = 0;
             mcDataOptics.FWHMatIso = 2.355 * sigmaSqIso;
+
+            % Parameters for parametrization of sigma squared model.
+            % sigma^2 = a + b*z + c*z^2;
+            mcDataOptics.sSQ_a = (sigmaSqIso/10)^2;
+            mcDataOptics.sSQ_b = (2*rho*sigmaT*sigmaSqIso)/10;
+            mcDataOptics.sSQ_c = sigmaT^2;
+
+            % Parameters for emittance model
+            mcDataOptics.twissEpsilonX =  sqrt(mcDataOptics.sSQ_a*mcDataOptics.sSQ_c - (mcDataOptics.sSQ_b^2)/4);
+            mcDataOptics.twissAlphaX   = - mcDataOptics.sSQ_b/(2*mcDataOptics.twissEpsilonX);
+            mcDataOptics.twissBetaX    =  mcDataOptics.sSQ_a/mcDataOptics.twissEpsilonX;
+
+            mcDataOptics.twissEpsilonY = mcDataOptics.twissEpsilonX;
+            mcDataOptics.twissAlphaY   = mcDataOptics.twissAlphaX;
+            mcDataOptics.twissBetaY    = mcDataOptics.twissBetaX;
         end
         
         
