@@ -86,12 +86,6 @@ function dij = calcDose(this,ct,cst,stf)
     % Use the emittance base data class to recover MC information
     emittanceBaseData = matRad_MCemittanceBaseData(this.machine,stf);
     
-    % if this.calcDoseDirect
-    %     cumulativeWeights = 0;
-    %     for i=1:length(stf)
-    %         cumulativeWeights = cumulativeWeights + sum([stf(i).ray.weight]);
-    %     end
-    % end
     
     % Loop over fields. FRED performs one single simulation for multiple
     % fields
@@ -162,7 +156,7 @@ function dij = calcDose(this,ct,cst,stf)
                 stfFred(i).emittanceRefPlaneDistance = [];
                 
                 % Need to get the parameters for the model from MCemittance
-                for eIdx=emittanceBaseData.energyIndex
+                for eIdx=emittanceBaseData.energyIndex'
                     % Only using first focus index for now
                     tmpOpticsData = emittanceBaseData.fitBeamOpticsForEnergy(eIdx,1);
                     stfFred(i).emittanceX       = [stfFred(i).emittanceX,  tmpOpticsData.twissEpsilonX];
@@ -176,7 +170,7 @@ function dij = calcDose(this,ct,cst,stf)
                 stfFred(i).sSQr_b = [];
                 stfFred(i).sSQr_c = [];
 
-                for eIdx=emittanceBaseData.energyIndex
+                for eIdx=emittanceBaseData.energyIndex'
                     tmpOpticsData = emittanceBaseData.fitBeamOpticsForEnergy(eIdx,1);
                     stfFred(i).sSQr_a           = [stfFred(i).sSQr_a, tmpOpticsData.sSQ_a];
                     stfFred(i).sSQr_b           = [stfFred(i).sSQr_b, tmpOpticsData.sSQ_b];
@@ -272,7 +266,6 @@ function dij = calcDose(this,ct,cst,stf)
         for j=1:numel(stfFred(i).nominalEnergies)
            stfFred(i).energyLayer(j).rayPosX      = stfFred(i).energyLayer(j).rayPosX/10;
            stfFred(i).energyLayer(j).rayPosY      = stfFred(i).energyLayer(j).rayPosY/10;
-           %stfFred(i).energyLayer(j).targetPoints = stfFred(i).energyLayer(j).targetPoints/10;
            stfFred(i).energyLayer(j).nBixels      = numel(stfFred(i).energyLayer(j).bixelNum);
 
            if this.calcDoseDirect
@@ -330,7 +323,7 @@ function dij = calcDose(this,ct,cst,stf)
                     systemCall = [this.cmdCall, ' -nogpu -f fred.inp'];
                 end
     
-                % printOutput to matLab console
+                % printOutput to matlab console
                 if this.printOutput
                     [status,~] = system(systemCall,'-echo');
                 else
@@ -346,14 +339,14 @@ function dij = calcDose(this,ct,cst,stf)
             end
             
             % read simulation output
-            [doseCube, letdCube] = this.readSimulationOutput(this.MCrunFolder,this.calcDoseDirect, logical(this.calcLET));
+            [doseCube, letdCube] = this.readSimulationOutput(this.MCrunFolder,this.calcDoseDirect, 'calcLET', logical(this.calcLET), 'readFunctionHandle', this.dijReaderHandle);
 
         otherwise % A path for loading has been provided
             
             matRad_cfg.dispInfo(['Reading simulation data from: ', strrep(this.MCrunFolder,'\','\\'), '\n']);
 
             % read simulation output
-            [doseCube, letdCube, loadFileName] = this.readSimulationOutput(this.MCrunFolder,this.calcDoseDirect, logical(this.calcLET));
+            [doseCube, letdCube, loadFileName] = this.readSimulationOutput(this.MCrunFolder,this.calcDoseDirect, 'calcLET',logical(this.calcLET),'readFunctionHandle', this.dijReaderHandle);
 
             dij.externalCalculationLodPath = loadFileName;
 
