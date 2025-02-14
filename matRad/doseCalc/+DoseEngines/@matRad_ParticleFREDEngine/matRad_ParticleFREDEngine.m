@@ -477,6 +477,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 end
             catch
                 matRad_cfg.dispWarning('Something wrong occured in checking FRED installation. Please check correct FRED installation');
+                version = [];
             end
         end
 
