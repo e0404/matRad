@@ -1,4 +1,4 @@
-function [] = matRad_plotSlice(ct, dose, varargin)
+function [] = matRad_plotSlice(ct, varargin)
 % matRad tool function to directly plot a complete slice of a ct with dose
 % optionally including contours and isolines
 %
@@ -45,22 +45,25 @@ function [] = matRad_plotSlice(ct, dose, varargin)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+defaultDose             = [];
 defaultCst              = [];
-defaultSlice            = floor(min(size(dose))./2);
+defaultSlice            = floor(min(ct.cubeDim)./2);
 defaultAxesHandle       = gca;
 defaultCubeIdx          = 1;
 defaultPlane            = 1;
 defaultDoseWindow       = [];
 defaultThresh           = [];
 defaultAlpha            = [];
-defaultDoseColorMap     = [];
+defaultDoseColorMap     = jet;
 defaultDoseIsoLevels    = [];
 defaultVOIselection     = [];
 defaultContourColorMap  = [];
 defaultBoolPlotLegend   = false;
 defaultColorBarLabel    = [];
+defaultShowCt           = true;
 
-isSlice             = @(x) x>=1 && x<=max(size(dose)) && floor(x)==x;
+isDose              = @(x) isnumeric(x) && all(size(x) == ct.cubeDim);
+isSlice             = @(x) x>=1 && x<=max(ct.cubeDim) && floor(x)==x;
 isAxes              = @(x) strcmp(get(gca, 'type'), 'axes');
 isCubeIdx           = @(x) isscalar(x);
 isPlane             = @(x) isscalar(x) && (sum(x==[1, 2, 3])==1);
@@ -73,12 +76,13 @@ isVOIselection      = @(x) all(x(:)==1 | x(:)==0);
 isContourColorMap   = @(x) isnumeric(x) && (size(x, 2)==3) && size(x, 1)>=2 && all(x(:) >= 0) && all(x(:) <= 1);
 isBoolPlotLegend    = @(x) x==0 || x ==1;
 isColorBarLabel     = @(x) isstring(x) || ischar(x);
+isShowCt            = @(x) isscalar(x) && (x==0) || (x==1);
 
 p = inputParser;
 p.KeepUnmatched = true;
 addRequired(p, 'ct')
-addRequired(p, 'dose')
 
+addParameter(p, 'dose', defaultDose, isDose)
 addParameter(p, 'cst', defaultCst)
 addParameter(p, 'slice', defaultSlice, isSlice)
 addParameter(p, 'axesHandle', defaultAxesHandle, isAxes)
@@ -93,8 +97,9 @@ addParameter(p, 'voiSelection', defaultVOIselection, isVOIselection)
 addParameter(p, 'contourColorMap', defaultContourColorMap, isContourColorMap)
 addParameter(p, 'boolPlotLegend', defaultBoolPlotLegend, isBoolPlotLegend)
 addParameter(p, 'colorBarLabel', defaultColorBarLabel, isColorBarLabel)
+addParameter(p, 'showCt', defaultShowCt, isShowCt)
 
-parse(p, ct, dose, varargin{:});
+parse(p, ct, varargin{:});
 
 %% Unmatched properties
 % General properties
@@ -118,24 +123,37 @@ matRad_cfg = MatRad_Config.instance();
 % Flip axes direction
 set(p.Results.axesHandle,'YDir','Reverse');
 % plot ct slice
-hCt = matRad_plotCtSlice(p.Results.axesHandle,p.Results.ct.cubeHU,p.Results.cubeIdx,p.Results.plane,p.Results.slice, [], []);
+if p.Results.showCt
+    hCt = matRad_plotCtSlice(p.Results.axesHandle,p.Results.ct.cubeHU,p.Results.cubeIdx,p.Results.plane,p.Results.slice, [], []);
+else
+    %figure()
+end
 hold on;
 
 %% Plot dose
-if ~isempty(p.Results.doseWindow) && p.Results.doseWindow(2) - p.Results.doseWindow(1) <= 0
-    p.Results.doseWindow = [0 2];
+if ~isempty(p.Results.dose)
+    if ~isempty(p.Results.doseWindow) && p.Results.doseWindow(2) - p.Results.doseWindow(1) <= 0
+        p.Results.doseWindow = [0 2];
+    end
+
+    [hDose,doseColorMap,doseWindow] = matRad_plotDoseSlice(p.Results.axesHandle, p.Results.dose, p.Results.plane, p.Results.slice, p.Results.thresh, p.Results.alpha, p.Results.doseColorMap, p.Results.doseWindow);
+
+    %% Plot iso dose lines
+    if ~isempty(p.Results.doseIsoLevels)
+        hIsoDose = matRad_plotIsoDoseLines(p.Results.axesHandle,p.Results.dose,[],p.Results.doseIsoLevels,false,p.Results.plane,p.Results.slice,p.Results.doseColorMap,p.Results.doseWindow, lineVarargin{:});
+        hold on;
+    else
+        hIsoDose = [];
+    end
+
+    %% Set Colorbar
+    hCMap = matRad_plotColorbar(p.Results.axesHandle,doseColorMap,doseWindow,'Location','EastOutside');
+    set(hCMap,'Color',matRad_cfg.gui.textColor);
+    if ~isempty(p.Results.colorBarLabel)
+        set(get(hCMap,'YLabel'),'String', p.Results.colorBarLabel,'FontSize',matRad_cfg.gui.fontSize);
+    end
+    set(get(hCMap,'YLabel'),'String', p.Results.colorBarLabel, textVarargin{:});
 end
-
-[hDose,doseColorMap,doseWindow] = matRad_plotDoseSlice(p.Results.axesHandle, p.Results.dose, p.Results.plane, p.Results.slice, p.Results.thresh, p.Results.alpha, p.Results.doseColorMap, p.Results.doseWindow);
-
-%% Plot iso dose lines
-if ~isempty(p.Results.doseIsoLevels)
-    hIsoDose = matRad_plotIsoDoseLines(p.Results.axesHandle,p.Results.dose,[],p.Results.doseIsoLevels,false,p.Results.plane,p.Results.slice,p.Results.doseColorMap,p.Results.doseWindow, lineVarargin{:});
-    hold on;
-else
-    hIsoDose = [];
-end
-
 %% Plot VOI contours & Legend
 
 if  ~isempty(p.Results.cst)
@@ -188,18 +206,10 @@ elseif  p.Results.plane == 3 % Axial plane
     set(p.Results.axesHandle,'DataAspectRatio',[res 1])
 end
 
-%% Set Colorbar
-hCMap = matRad_plotColorbar(p.Results.axesHandle,doseColorMap,doseWindow,'Location','EastOutside');
-set(hCMap,'Color',matRad_cfg.gui.textColor);
-if ~isempty(p.Results.colorBarLabel)
-    set(get(hCMap,'YLabel'),'String', p.Results.colorBarLabel,'FontSize',matRad_cfg.gui.fontSize);
-end
-
 %% Set text properties
 if ~isempty(textVarargin)
     set(p.Results.axesHandle, textVarargin{:})
     set(p.Results.axesHandle.Title, textVarargin{:})
-    set(get(hCMap,'YLabel'),'String', p.Results.colorBarLabel, textVarargin{:});
 end
 
 end
