@@ -121,3 +121,5 @@ pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCent
 if numel(pln.propStf.FMOGantryAngles) <= 2
    matRad_dispToConsole('matRad_VMATGantryAngles: Two or less beam angles will be used for FMO. \n',[],'warning') 
 end
+
+pln.propStf.generator = 'PhotonVMAT';
