@@ -339,14 +339,14 @@ function dij = calcDose(this,ct,cst,stf)
             end
             
             % read simulation output
-            [doseCube, letdCube] = this.readSimulationOutput(this.MCrunFolder,this.calcDoseDirect, logical(this.calcLET));
+            [doseCube, letdCube] = this.readSimulationOutput(this.MCrunFolder,this.calcDoseDirect, 'calcLET', logical(this.calcLET), 'readFunctionHandle', this.dijReaderHandle);
 
         otherwise % A path for loading has been provided
             
             matRad_cfg.dispInfo(['Reading simulation data from: ', strrep(this.MCrunFolder,'\','\\'), '\n']);
 
             % read simulation output
-            [doseCube, letdCube, loadFileName] = this.readSimulationOutput(this.MCrunFolder,this.calcDoseDirect, logical(this.calcLET));
+            [doseCube, letdCube, loadFileName] = this.readSimulationOutput(this.MCrunFolder,this.calcDoseDirect, 'calcLET',logical(this.calcLET),'readFunctionHandle', this.dijReaderHandle);
 
             dij.externalCalculationLodPath = loadFileName;
 
