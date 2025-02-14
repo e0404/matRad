@@ -63,6 +63,8 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandl
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+warning('Deprecation warning: matRad_plotSliceWrapper is deprecated. Using matRad_plot_Slice instead');
+
 % Handle the argument list
 if ~exist('thresh','var') || isempty(thresh)
     thresh = [];
@@ -101,6 +103,11 @@ end
 
 matRad_cfg = MatRad_Config.instance();
 
+warning('Deprecation warning: matRad_plotSliceWrapper is deprecated. Using matRad_plot_Slice instead');
+
+[hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSlice(ct, 'axesHandle', axesHandle, 'cst', cst, 'cubeIdx', cubeIdx, 'dose', dose, 'plane', plane, 'slice', slice,'thresh', thresh, 'alpha', alpha, 'contourColorMap', contourColorMap, 'doseColorMap', doseColorMap, 'doseWindow', doseWindow, 'doseIsoLevels', doseIsoLevels, 'voiSelection', voiSelection, 'colorBarLabel', colorBarLabel, 'boolPlotLegend', boolPlotLegend, 'others', varargin);
+
+%{
 set(axesHandle,'YDir','Reverse');
 % plot ct slice
 hCt = matRad_plotCtSlice(axesHandle,ct.cubeHU,cubeIdx,plane,slice); 
@@ -171,6 +178,6 @@ set(hCMap,'Color',matRad_cfg.gui.textColor);
 if ~isempty(colorBarLabel)
     set(get(hCMap,'YLabel'),'String', colorBarLabel,'FontSize',matRad_cfg.gui.fontSize);
 end
-
+%}
 end
 

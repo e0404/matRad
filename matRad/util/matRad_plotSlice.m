@@ -1,4 +1,4 @@
-function [] = matRad_plotSlice(ct, varargin)
+function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSlice(ct, varargin)
 % matRad tool function to directly plot a complete slice of a ct with dose
 % optionally including contours and isolines
 %
@@ -68,14 +68,14 @@ isAxes              = @(x) strcmp(get(gca, 'type'), 'axes');
 isCubeIdx           = @(x) isscalar(x);
 isPlane             = @(x) isscalar(x) && (sum(x==[1, 2, 3])==1);
 isDoseWindow        = @(x) (length(x) == 2 && isvector(x));
-isThresh            = @(x) isscalar(x) && (x>=0) && (x<=1);
-isAlpha             = @(x) isscalar(x) && (x>=0) && (x<=1);
+isThresh            = @(x) (isscalar(x) && (x>=0) && (x<=1)) || isempty(x);
+isAlpha             = @(x) isscalar(x) && (x>=0) && (x<=1) || isempty(x);
 isDoseColorMap      = @(x) isnumeric(x) && (size(x, 2)==3) &&  all(x(:) >= 0) && all(x(:) <= 1);
-isDoseIsoLevels     = @(x) isnumeric(x) && isvector(x);
-isVOIselection      = @(x) all(x(:)==1 | x(:)==0);
+isDoseIsoLevels     = @(x) isnumeric(x) && isvector(x)|| isempty(x);
+isVOIselection      = @(x) isnumeric(x) || isempty(x); %all(x(:)==1 | x(:)==0) || isempty(x);
 isContourColorMap   = @(x) isnumeric(x) && (size(x, 2)==3) && size(x, 1)>=2 && all(x(:) >= 0) && all(x(:) <= 1);
 isBoolPlotLegend    = @(x) x==0 || x ==1;
-isColorBarLabel     = @(x) isstring(x) || ischar(x);
+isColorBarLabel     = @(x) isstring(x) || ischar(x) || isempty(x);
 isShowCt            = @(x) isscalar(x) && (x==0) || (x==1);
 
 p = inputParser;
