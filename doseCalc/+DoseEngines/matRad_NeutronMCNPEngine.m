@@ -737,7 +737,7 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
             %checkBasic
             try
-                checkBasic =true; % any(strcmp(machine.meta.calculationMode, 'MonteCarlo'));
+                checkBasic = any(strcmp(machine.meta.calculationMode, 'MonteCarlo'));
 
                 %check modality
                 checkModality = any(strcmp(DoseEngines.matRad_NeutronMCNPEngine.possibleRadiationModes, machine.meta.radiationMode));

@@ -153,17 +153,6 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
             end
 
             %% Initiate KERMA correction for neutron dose calculation
-            % for scenCounter = 1:ct.numOfCtScen
-            %     this.cubeKERMAcorr{scenCounter} = zeros(size(ct.cubeHU{scenCounter}));
-            %                 if isfield(this.machine.data,'neutronKERMAcorr')
-            %                     for counterCorrInt = 1:size(this.machine.data.neutronKERMAcorr,2)-1
-            %                     this.cubeKERMAcorr{scenCounter}((ct.cubeHU{scenCounter}>=this.machine.data.neutronKERMAcorr(1,counterCorrInt))&(ct.cubeHU{scenCounter}<this.machine.data.neutronKERMAcorr(1,counterCorrInt+1))) = this.machine.data.neutronKERMAcorr(2,counterCorrInt+1);
-            %                     end
-            %                 else
-            %                     this.cubeKERMAcorr{scenCounter}(:)=1;
-            %                     matRad_cfg.dispWarning('No KERMA correction provided in machine data for neutron dose calculation.');
-            %                 end
-            % end
             if ct.numOfCtScen==1
                 if isfield(this.machine.data,'neutronKERMAcorr')
                     for counterCorrInt = 1:size(this.machine.data.neutronKERMAcorr,2)-1
@@ -311,7 +300,7 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
         end
 
         function [bixel] = computeBixel(this,currRay,k)
-            % matRad photon dose calculation for an individual bixel
+            % matRad neutron dose calculation for an individual bixel
             %
             % call
             %   bixel = this.computeBixel(currRay,k)
@@ -572,9 +561,8 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
             %   a fully defined dose engine
             %
             % call
-            %   dose = this.calcNeutronDoseBixel(SAD,m,betas,Interp_kernel1,...
-            %                  Interp_kernel2,Interp_kernel3,radDepths,geoDists,...
-            %                  isoLatDistsX,isoLatDistsZ)
+            %   bixelDose = calcSingleBixel(SAD,m,betas,interpKernels,...
+            %   radDepths,geoDists,isoLatDistsX,isoLatDistsZ)
             %
             % input
             %   SAD:                source to axis distance
@@ -591,23 +579,19 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
             %                       ray at iso center plane
             %
             % output
-            %   dose:               photon dose at specified locations as linear vector
+            %   dose:               neutron dose at specified locations as linear vector
             %
             % References
-            %   [1] http://www.ncbi.nlm.nih.gov/pubmed/8497215
+            %   [1] https://pubmed.ncbi.nlm.nih.gov/38241727/
             %
 
-            % Compute depth dose components according to [1, eq. 17]
-            % doseComponent = betas(:,1)./(betas(:,2)-m)' .* (exp(-m*radDepths) - exp(-betas(:,2).*radDepths)) + ...
-            %     betas(:,3)/(betas(:,4) - m) * (exp(-m*radDepths) - exp(-betas(:,4)*radDepths));
-
+            % Compute depth dose components according to [1, eq. 2]
             func_Di = @(beta,x) beta(1)/(beta(2) - m) * (exp(-m*x) - exp(-beta(2)*x)) + ...
                 beta(3)/(beta(4) - m) * (exp(-m*x) - exp(-beta(4)*x));
 
             doseComponent = zeros(size(radDepths,1),length(interpKernels));
             % Multiply with lateral 2D-convolved kernels using
-            % grid interpolation at lateral distances (summands in [1, eq.
-            % 19] w/o inv sq corr)
+            % grid interpolation at lateral distances 
             for ik = 1:length(interpKernels)
                 doseComponent(:,ik) = func_Di(betas(ik,:),radDepths) .* interpKernels{ik}(isoLatDistsX,isoLatDistsZ);
             end

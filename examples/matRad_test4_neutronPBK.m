@@ -211,7 +211,7 @@ ct.dicomInfo.Manufacturer = 'MEDAPP';
 % base data. matRad features generic base data in the file
 % 'photons_Generic.mat'; consequently the machine has to be set to 'Generic'
 pln.radiationMode = 'neutrons'; %'photons'; %'neutrons';            
-pln.machine       = 'MEDAPP'; %'Generic'; %'';
+pln.machine       = 'generic_PBK'; %'Generic'; %'';
 
 %%
 % Define the biological optimization model for treatment planning along
@@ -264,7 +264,8 @@ stf = matRad_generateStf(ct,cst,pln);
 cst{2,6}{1,1}.parameters{1,1} = 1.5;
 
 %% Dose Calculation
-dij = matRad_calcNeutronDose(ct,stf,pln,cst);
+%dij = matRad_calcNeutronDose(ct,stf,pln,cst);
+dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 
 %% Export dij matrix
 %matRad_exportDij('dij.bin',dij,stf);
