@@ -269,7 +269,7 @@ stf = matRad_generateStf(ct,cst,pln);
 cst{2,6}{1,1}.parameters{1,1} = 1.5;
 
 %% Dose Calculation
-dij = matRad_calcNeutronDose(ct,stf,pln,cst);
+dij = matRad_calcDoseInfluence(ct,stf,pln,cst);
 
 %% Export dij matrix
 %matRad_exportDij('dij.bin',dij,stf);

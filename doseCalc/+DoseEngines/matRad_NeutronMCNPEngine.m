@@ -19,7 +19,7 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
     properties (Constant)
         possibleRadiationModes = {'neutrons'};
-        name = 'MCNP';
+        name = 'MCNP dose engine';
         shortName = 'MCNP';
     end
 
@@ -27,7 +27,12 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         config;             %Holds an instance of all configurable parameters
 
         %Other Dose Calculation Properties
-        externalCalculation = false;
+        externalCalculation = true;
+        
+        % Question dialogs avoided
+        useDICOMinfoRescale = true;
+        useLungQuestionDialog = false;
+        
         calcRMFparameters = false;
         MCNPinstallationCheck;
         MCNPFolder;
@@ -99,8 +104,6 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
         function dij = calcDose(this,ct,cst,stf)
             % matRad MCNP monte carlo dose calculation wrapper
-            % can be automaticly called through matRad_calcDose or
-            % matRad_calcParticleDoseMC
             %
             %
             % call
@@ -153,11 +156,11 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % Load predefined conversion properties for tissue characterization
             % according to CT values - elemental composition will be assigned according
             % to these predefined tissue intervals later
-            matRad_cfg.dispInfo('*****')
-            matRad_cfg.dispInfo('Load pre-defined HU conversion properties and MCNP cross sections from conversionCT2tissue.mat.')
-            matRad_cfg.dispInfo('Note: Modification of conversionCT2tissue.mat using generateVar_conversionCT2tissue.m.')
-            load('conversionCT2tissue.mat')
-            matRad_cfg.dispInfo('*****')
+            matRad_cfg.dispInfo('*****\n')
+            matRad_cfg.dispInfo('Load pre-defined HU conversion properties and MCNP cross sections from conversionCT2tissue.mat.\n')
+            matRad_cfg.dispInfo('Note: Modification of conversionCT2tissue.mat using matRad_genVarCT2tissueConversion.m.\n')
+            load([this.MCNPFolder,filesep,'conversionCT2tissue.mat'])
+            matRad_cfg.dispInfo('*****\n')
 
             %% Process CT data
             % Check ct for MCNP Simulation
@@ -181,20 +184,20 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             end
 
             % Process HU values
-            matRad_cfg.dispInfo('*****')
-            matRad_cfg.dispInfo(['Properties from (scaled) HU loaded are: Minimum value: ',num2str(min(ct.cubeHU{1}, [], 'all')), ' and '])
-            matRad_cfg.dispInfo(['Maximum value: ',num2str(max(ct.cubeHU{1}(cst{cstBodyIndex,4}{1}), [], 'all')), '.'])
+            matRad_cfg.dispInfo('*****\n')
+            matRad_cfg.dispInfo(['Properties from (scaled) HU loaded are: Minimum value: ',num2str(min(ct.cubeHU{1}, [], 'all')), ' and \n'])
+            matRad_cfg.dispInfo(['Maximum value: ',num2str(max(ct.cubeHU{1}(cst{cstBodyIndex,4}{1}), [], 'all')), '.\n'])
             if ~isfield(ct, 'dicomInfo') || ~isfield(ct.dicomInfo, 'RescaleSlope') || ~isfield(ct.dicomInfo, 'RescaleIntercept')
-                matRad_cfg.dispWarning('No information on rescale slope and/or intercept provided in DICOM data. Calculation might crash...')
+                matRad_cfg.dispWarning('No information on rescale slope and/or intercept provided in DICOM data. Calculation might crash...\n')
             else
-                matRad_cfg.dispInfo(['Rescale slope from CT data is read to be: ',num2str(ct.dicomInfo.RescaleSlope), ' and rescale intercept is read to be ',num2str(ct.dicomInfo.RescaleIntercept),'.'])
+                matRad_cfg.dispInfo(['Rescale slope from CT data is read to be: ',num2str(ct.dicomInfo.RescaleSlope), ' and rescale intercept is read to be ',num2str(ct.dicomInfo.RescaleIntercept),'.\n'])
             end
 
             % Set values outside body to air
             try
                 cstTargetIndex = matRad_findTargetStructureCST(cst);
             catch
-                matRad_cfg.dispError('Target structure has to be set in matRad.')
+                matRad_cfg.dispError('Target structure has to be set in matRad.\n')
             end
 
             maskNonBody = ones(ct.cubeDim);
@@ -207,13 +210,13 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             maskNonBody(bodyIdx) = 0;
             maskNonBody_doseGrid(bodyIdx_doseGrid) = 0;
             ct.cube{1}(maskNonBody>0) = 0;
-            ct.cubeHU{1}(maskNonBody>0) = -1000;
-            ct.doseGridCT.HUcube{1}(maskNonBody_doseGrid>0) = -1000;
+            ct.cubeHU{1}(maskNonBody>0) = 0;
+            ct.doseGridCT.HUcube{1}(maskNonBody_doseGrid>0) = 0;
 
 
-            if ~isprop(this, 'useDICOMinfo')
-                matRad_cfg.dispInfo('Please use question dialog to decide how to convert to scaled HU.')
-                matRad_cfg.dispInfo('*****')
+            if ~isprop(this, 'useDICOMinfoRescale')
+                matRad_cfg.dispInfo('Please use question dialog to decide how to convert to scaled HU.\n')
+                matRad_cfg.dispInfo('*****\n')
                 % DICOM rescaling
                 answer = questdlg('Would you like to use DICOM rescale slope and intercept? If not, an offset of 1000 will be added to the HU values to get re-scale HUs.', ...
                     'Use DICOM Info', ...
@@ -221,19 +224,34 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
                 switch answer
                     case 'Yes'
-                        matRad_cfg.dispInfo('*****')
-                        matRad_cfg.dispInfo('You decided to use the following parameters to re-scale (scaled) HU data given in ct.cubeHU to HU in ct.cube.')
-                        matRad_cfg.dispInfo(['Rescale HU: slope=', num2str(ct.dicomInfo.RescaleSlope), ' intercept=', num2str(ct.dicomInfo.RescaleIntercept)])
-                        matRad_cfg.dispInfo('*****')
-                        ct.doseGridCT.HUcube{1} = ct.doseGridCT.HUcube{1}.*ct.dicomInfo.RescaleSlope - ct.dicomInfo.RescaleIntercept;
+                        matRad_cfg.dispInfo('*****\n')
+                        matRad_cfg.dispInfo('You decided to use the following parameters to re-scale (scaled) HU data given in ct.cubeHU to HU in ct.cube.\n')
+                        matRad_cfg.dispInfo(['Rescale HU: slope=', num2str(ct.dicomInfo.RescaleSlope), ' intercept=', num2str(ct.dicomInfo.RescaleIntercept),'\n'])
+                        matRad_cfg.dispInfo('*****\n')
+                        ct.doseGridCT.HUcube{1} = ct.doseGridCT.HUcube{1}.*ct.dicomInfo.RescaleSlope + abs(ct.dicomInfo.RescaleIntercept);
                     case 'No'
-                        matRad_cfg.dispInfo('*****')
-                        matRad_cfg.dispInfo('You decided not to use DICOM rescale slope and intercept.')
-                        matRad_cfg.dispInfo('*****')
+                        matRad_cfg.dispInfo('*****\n')
+                        matRad_cfg.dispInfo('You decided not to use DICOM rescale slope and intercept.\n')
+                        matRad_cfg.dispInfo('*****\n')
                         ct.doseGridCT.HUcube{1} = ct.doseGridCT.HUcube{1} + 1000;
                 end
                 clear answer
+            elseif this.useDICOMinfoRescale
+                matRad_cfg.dispInfo('*****\n')
+                matRad_cfg.dispInfo('Re-scaling of (scaled) HU data given in ct.cubeHU to HU in ct.cube selected according to property useDICOMinfoRescale.\n')
+                matRad_cfg.dispInfo('DICOM rescale slope and intercept are used to re-scale.\n')
+                matRad_cfg.dispInfo(['Rescale HU: slope=', num2str(ct.dicomInfo.RescaleSlope), ' intercept=', num2str(ct.dicomInfo.RescaleIntercept),'\n'])
+                matRad_cfg.dispInfo('*****\n')
+                ct.doseGridCT.HUcube{1} = ct.doseGridCT.HUcube{1}.*ct.dicomInfo.RescaleSlope + abs(ct.dicomInfo.RescaleIntercept);
+            elseif ~this.useDICOMinfoRescale
+                matRad_cfg.dispInfo('*****\n')
+                matRad_cfg.dispInfo('Re-scaling of (scaled) HU data given in ct.cubeHU to HU in ct.cube selected according to property useDICOMinfoRescale.\n')
+                matRad_cfg.dispInfo('You decided not to use DICOM rescale slope and intercept. An offset of +1000 is added.\n')
+                matRad_cfg.dispInfo('*****\n')
+                ct.doseGridCT.HUcube{1} = ct.doseGridCT.HUcube{1} + 1000;
+
             end
+
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % Additional Information on Conversion                                                                        %
             % Re-scale HU from intensity values given in DICOM by using 'rescale intercept' and 'rescale slope'           %
@@ -242,29 +260,29 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
             % Infere tissue characteristics from HU
-            matRad_cfg.dispInfo('*****')
-            matRad_cfg.dispInfo(['Properties from rescaled HU are: Minimum value: ',num2str(min(ct.doseGridCT.HUcube{1}, [], 'all')), ' and '])
-            matRad_cfg.dispInfo(['Maximum value: ',num2str(max(ct.doseGridCT.HUcube{1}, [], 'all')), '.'])
-            matRad_cfg.dispInfo('*****')
-            matRad_cfg.dispInfo('Material types are assigned using the following HU intervals...')
+            matRad_cfg.dispInfo('*****\n')
+            matRad_cfg.dispInfo(['Properties from rescaled HU are: Minimum value: ',num2str(min(ct.doseGridCT.HUcube{1}, [], 'all')), ' and \n'])
+            matRad_cfg.dispInfo(['Maximum value: ',num2str(max(ct.doseGridCT.HUcube{1}, [], 'all')), '.\n'])
+            matRad_cfg.dispInfo('*****\n')
+            matRad_cfg.dispInfo('Material types are assigned using the following HU intervals:\n')
             maxHUbin_nonEmpty = 1;  % Find last non-empty entry
             while ~isempty(binIntervals(maxHUbin_nonEmpty+1).HUbin) && (maxHUbin_nonEmpty <= size(binIntervals,2))
                 maxHUbin_nonEmpty = maxHUbin_nonEmpty +1;
             end
             for i=1:maxHUbin_nonEmpty
-                matRad_cfg.dispInfo([binIntervals(i).name, ': ', num2str(binIntervals(i).HUbin(1)), ' to ', num2str(binIntervals(i).HUbin(2))]);
+                matRad_cfg.dispInfo([binIntervals(i).name, ': ', num2str(binIntervals(i).HUbin(1)), ' to ', num2str(binIntervals(i).HUbin(2)),'\n']);
             end
-            matRad_cfg.dispInfo('*****')
+            matRad_cfg.dispInfo('*****\n')
 
-            [cst_doseGrid, ct.doseGridCT.tissueBin] = matRad_segmentationCTscan(ct.doseGridCT.HUcube{1}, dij.doseGrid.resolution, binIntervals, cst_doseGrid, cstBodyIndex, cstTargetIndex);
+            [cst_doseGrid, ct.doseGridCT.tissueBin] = matRad_segmentationCTscan(ct.doseGridCT.HUcube{1}, dij.doseGrid.resolution, binIntervals, cst_doseGrid, cstBodyIndex, cstTargetIndex, this.useLungQuestionDialog);
             ct.doseGridCT.cubeDim = dij.doseGrid.dimensions;
 
             % Calculate density for CT voxels and resize afterwards -> caution: step-
             % wise definition of conversion causes a difference concerning the ordering
             % of the conversion and resize operation
-            matRad_cfg.dispInfo('*****')
-            matRad_cfg.dispInfo('Calculate density from CT data with density given in [g/cm^3]')
-            matRad_cfg.dispInfo('*****')
+            matRad_cfg.dispInfo('*****\n')
+            matRad_cfg.dispInfo('Calculate density from CT data with density given in [g/cm^3]\n')
+            matRad_cfg.dispInfo('*****\n')
             ct.doseGridCT.density{1} = hounsfield2density(ct.doseGridCT.HUcube{1})*1e-3; % rescale from kg/m^3 to g/cm^3
             ct.doseGridCT.density{1}(ct.doseGridCT.density{1}<=(hounsfield2density(segVar.upperLimitAir)*1e-3)) = segVar.densityAir;
 
@@ -290,7 +308,7 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             end
 
             if ~varHelper.simPropMCNP.control_makeTargetMCNP
-                error('Number of defined elements for simulation is too high! MCNP6 only allows 99,999,999 cells and surfaces in total.')
+                matRad_cfg.dispError('Number of defined elements for simulation is too high! MCNP6 only allows 99,999,999 cells and surfaces in total.\n')
             end
 
             %% Create MCNP runfile block C (source etc.)
@@ -396,7 +414,7 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % Since MCNP setup only allows similar resolution in x&y, we do some
             % extra checks on that before calling the normal initDoseCalc. 
             if dij.doseGrid.resolution.x ~= dij.doseGrid.resolution.y
-                matRad_cfg.dispError('Voxel size in x and y do not agree.');
+                matRad_cfg.dispError('Voxel size in x and y do not agree.\n');
             end
 
             %% Validate and preset some additional dij variables

@@ -23,7 +23,7 @@ display(cst);
 % base data. matRad features generic base data in the file
 % 'photons_Generic.mat'; consequently the machine has to be set to 'Generic'
 pln.radiationMode = 'neutrons';
-pln.machine       = 'MEDAPP_MCNP'; 
+pln.machine       = 'generic_MCNP'; 
 
 % MCNP parameter
 pln.propMCNP.normalizationFactor = 1e5;
@@ -81,7 +81,7 @@ stf = matRad_generateStf(ct,cst,pln);
 %cst{2,6}{1,1}.parameters{1,1} = 1.5;
 
 %% Dose Calculation
-[dij,ct,stf,pln,cst] = matRad_calcNeutronDoseMCNP(ct,stf,pln,cst);
+[dij,ct,stf,pln,cst] = matRad_calcDoseInfluence(ct,stf,pln,cst);
 
 %% Export dij matrix
 %matRad_exportDij('dij.bin',dij,stf);
