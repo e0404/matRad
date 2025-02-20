@@ -25,8 +25,10 @@ load TG119.mat
 
 % meta information for treatment plan
 pln.numOfFractions  = 30;
-pln.radiationMode   = 'photons';            % either photons / protons / helium / carbon / brachy
-pln.machine         = 'Generic';            % generic for RT / LDR or HDR for BT
+pln.radiationMode   = 'vhee';            % either photons / protons / helium / carbon / brachy
+pln.machine         = 'FermiEyges';            % generic for RT / LDR or HDR for BT
+pln.propStf.energy = 200;
+pln.propStf.generator     = 'ParticleVHEE';  
 
 pln.bioModel = 'none';      % none: for photons, protons, carbon, brachy    % constRBE: constant RBE for photons and protons 
                             % MCN: McNamara-variable RBE model for protons  % WED: Wedenberg-variable RBE model for protons 
@@ -54,7 +56,7 @@ pln.propSeq.runSequencing   = true;  % true: run sequencing, false: don't / will
 
 
 %% initial visualization and change objective function settings if desired
-matRadGUI
+%matRadGUI
 
 %% generate steering file 
 stf = matRad_generateStf(ct,cst,pln);

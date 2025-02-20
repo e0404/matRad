@@ -37,7 +37,8 @@ classdef (Abstract) matRad_StfGeneratorParticleRayBixelAbstract < matRad_StfGene
             this@matRad_StfGeneratorExternalRayBixelAbstract(pln);
 
             if isempty(this.radiationMode)
-                this.radiationMode = 'protons';
+                %this.radiationMode = 'protons'
+                this.radiationMode = {'protons','vhee'};
             end
         end
 
