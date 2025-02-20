@@ -126,7 +126,13 @@ classdef (Abstract) matRad_BiologicalModel < handle
             %Use the root folder and the biomodel folder only
             folders = {fileparts(mfilename('fullpath'))};
             folders = [folders matRad_cfg.userfolders];
-            metaBioModels = matRad_findSubclasses(meta.class.fromName(mfilename('class')),'folders',folders,'includeSubfolders',true);
+
+            persistent metaBioModels lastOptionalPaths
+            if isempty(metaBioModels) || (~isempty(lastOptionalPaths) && ~isequal(lastOptionalPaths, folders))
+                lastOptionalPaths = folders;
+                metaBioModels = matRad_findSubclasses(meta.class.fromName(mfilename('class')),'folders',folders,'includeSubfolders',true);
+            end
+            
             classList = matRad_identifyClassesByConstantProperties(metaBioModels,'model','defaults',{'none'});
 
             if nargin > 0 

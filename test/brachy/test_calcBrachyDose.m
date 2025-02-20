@@ -8,6 +8,7 @@ initTestSuite;
 function test_rightOutput()
     engine = DoseEngines.matRad_TG43BrachyEngine;
     pln.bioModel = matRad_bioModel('brachy', 'none');
+    pln.radiationMode = {'brachy'};
     engine.assignPropertiesFromPln(pln);
 
     load PROSTATE.mat ct cst;

@@ -2,8 +2,8 @@ function resultGUI = matRad_calcDoseForward(ct,cst,stf,pln,w)
     % matRad forward dose calculation (no dij)
     % 
     % call
-    %   resultGUI = matRad_calcDoseForward(ct,stf,pln,cst) %If weights stored in stf
-    %   resultGUI = matRad_calcDoseForward(ct,stf,pln,cst,w)
+    %   resultGUI = matRad_calcDoseForward(ct,cst,stf,pln) %If weights stored in stf
+    %   resultGUI = matRad_calcDoseForward(ct,cst,stf,pln,w)
     %
     % input
     %   ct:         ct cube

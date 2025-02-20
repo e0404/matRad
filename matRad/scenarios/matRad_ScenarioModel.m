@@ -232,7 +232,12 @@ classdef (Abstract) matRad_ScenarioModel < handle
             %Use the root folder and the scenarios folder only
             folders = {fileparts(mfilename('fullpath'))};
             folders = [folders matRad_cfg.userfolders];
-            metaScenarioModels = matRad_findSubclasses(meta.class.fromName(mfilename('class')),'folders',folders,'includeSubfolders',true);
+
+            persistent metaScenarioModels lastOptionalPaths
+            if isempty(metaScenarioModels) || (~isempty(lastOptionalPaths) && ~isequal(lastOptionalPaths, folders))
+                lastOptionalPaths = folders;
+                metaScenarioModels = matRad_findSubclasses(meta.class.fromName(mfilename('class')),'folders',folders,'includeSubfolders',true);
+            end
             classList = matRad_identifyClassesByConstantProperties(metaScenarioModels,'shortName','defaults',{'nomScen'});
 
             if isempty(classList)
