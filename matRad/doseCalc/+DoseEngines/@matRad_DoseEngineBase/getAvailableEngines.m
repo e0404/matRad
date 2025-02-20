@@ -58,6 +58,7 @@ if nargin >= 1 && ~isempty(pln)
         try
             %available = availabilityFunc(pln,machine);
             available = eval([availabilityFuncStr '(pln,machine)']);
+            available{1}
         catch
             available = false;
             mpList = mc.PropertyList;
