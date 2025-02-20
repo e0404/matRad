@@ -5,7 +5,7 @@
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
 % of the matRad project, including this file, may be copied, modified, 
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
@@ -23,18 +23,23 @@ matRad_rc
 %% Load data, add generic 4D information, and display 'moving' geometry
 load BOXPHANTOM.mat
 
-%%
-
 amplitude    = [0 3 0]; % [voxels]
 numOfCtScen  = 5;
 motionPeriod = 2.5; % [s] 
 
 [ct,cst] = matRad_addMovement(ct, cst,motionPeriod, numOfCtScen, amplitude,'dvfType','pull');
+
 % Set up a plan, compute dose influence on all phases, conventional optimization
 % meta information for treatment plan
 pln.numOfFractions  = 30;
 pln.radiationMode   = 'protons';           % either photons / protons / helium / carbon
 pln.machine         = 'Generic';
+pln.bioModel        = 'constRBE';
+
+% retrieve scenarios for dose calculation and optimziation.
+% A nominal Scenario Model will consider all 4D scenarios as they are not
+% "uncertainty" per se
+pln.multScen = matRad_multScen(ct, 'nomScen');
 
 % beam geometry settings
 pln.propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
@@ -44,22 +49,6 @@ pln.propStf.couchAngles     = [0];
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
-%optimization settings
-pln.propOpt.runDAO          = false;      % 1/true: run DAO, 0/false: don't / will be ignored for particles
-pln.propOpt.runSequencing   = false;      % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
-
-quantityOpt  = 'RBExD';     % options: physicalDose, effect, RBExD
-modelName    = 'constRBE';             % none: for photons, protons, carbon            % constRBE: constant RBE 
-                                   % MCN: McNamara-variable RBE model for protons  % WED: Wedenberg-variable RBE model for protons 
-                                   % LEM: Local Effect Model for carbon ions
-
-scenGenType  = 'nomScen';          % scenario creation type 'nomScen'  'wcScen' 'impScen' 'rndScen' 
-
-% retrieve bio model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
-
-% retrieve scenarios for dose calculation and optimziation
-pln.multScen = matRad_multScen(ct,scenGenType);
 
 %%
 % generate steering file
@@ -85,22 +74,23 @@ resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf) ;
 [resultGUI, timeSequence] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI); 
 
 % plot the result in comparison to the static dose
-slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z); 
+slice = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:),ct);
+slice = slice(3);
 
 figure 
 
 subplot(2,2,1)
-imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet);
+imagesc(resultGUI.RBExDose(:,:,slice)),colorbar, colormap(jet);
 title('static dose distribution [Gy (RBE)]')
 axis equal
 
 subplot(2,2,3)
-imagesc(resultGUI.accRBExD(:,:,slice)),colorbar, colormap(jet); 
+imagesc(resultGUI.accRBExDose(:,:,slice)),colorbar, colormap(jet); 
 title('accumulated (4D) dose distribution [Gy (RBE)]')
 axis equal
 
 subplot(2,2,2)
-imagesc(resultGUI.RBExD(:,:,slice) - resultGUI.accRBExD(:,:,slice)) ,colorbar, colormap(jet); 
+imagesc(resultGUI.RBExDose(:,:,slice) - resultGUI.accRBExDose(:,:,slice)) ,colorbar, colormap(jet); 
 title('static dose distribution - accumulated (4D) dose distribution [Gy (RBE)]')
 
 axis equal

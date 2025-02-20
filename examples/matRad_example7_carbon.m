@@ -6,7 +6,7 @@
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
 % of the matRad project, including this file, may be copied, modified, 
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
@@ -41,8 +41,10 @@ load('LIVER.mat');
 % need to define a treatment machine to correctly load the corresponding 
 % base data. matRad features generic base data in the file
 % 'carbon_Generic.mat'; consequently the machine has to be set accordingly
-pln.radiationMode = 'carbon';            
-pln.machine       = 'Generic';
+pln.radiationMode   = 'carbon';            
+pln.machine         = 'Generic';
+pln.numOfFractions  = 30;
+pln.multScen        = 'nomScen';    
 
 %%
 % Define the biological optimization model for treatment planning along
@@ -55,33 +57,21 @@ pln.machine       = 'Generic';
 % 'LEM': local effect model 
 % As we use carbons, we use the local effect model.
 % Therefore we set modelName to LEM
-modelName           = 'LEM';
-quantityOpt         = 'RBExD';   
+pln.bioModel = 'LEM';
 
 %%
 % The remaining plan parameters are set like in the previous example files
-pln.numOfFractions        = 30;
 pln.propStf.gantryAngles  = 315;
 pln.propStf.couchAngles   = 0;
 pln.propStf.bixelWidth    = 6;
 pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
-pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
-pln.propOpt.runDAO        = 0;
-pln.propSeq.runSequencing = 0;
-
-% retrieve bio model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
-
-% retrieve scenarios for dose calculation and optimziation
-pln.multScen = matRad_multScen(ct,'nomScen'); % optimize on the nominal scenario                                            
+pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);                                  
 
 % dose calculation settings
+pln.propDoseCalc.calcLET = true; %Let's also calculate the LET
 pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
-
-%Let's also calculate the LET
-pln.propDoseCalc.calcLET = true;
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
@@ -93,40 +83,41 @@ stf = matRad_generateStf(ct,cst,pln);
 % and orientation of the ray, we can also find pencil beam information. If 
 % the ray coincides with the target, pencil beams were defined along the 
 % ray from target entry to target exit. 
-display(stf.ray(100));
+disp(stf.ray(100));
 
 %%
 % Here are the energies selected on ray # 100: 
-display(stf.ray(100).energy);
+disp(stf.ray(100).energy);
 
 %% Dose Calculation
 dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 
-%% Inverse Optimization  for IMPT based on RBE-weighted dose
+%% Inverse Optimization  for Carbon ion treatment based on RBE-weighted dose
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment.
+pln.propOpt.quantityOpt = 'RBExDose';
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
-slice = round(pln.propStf.isoCenter(3)./ct.resolution.z);
+slice = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:),ct);
+slice = slice(3);
 figure,
-imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet);
+imagesc(resultGUI.RBExDose(:,:,slice)),colorbar, colormap(jet);
 
 %% Let's check out the LET
 % Let's plot the transversal iso-center LET slice
-slice = round(pln.propStf.isoCenter(3)./ct.resolution.z);
+slice = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:),ct);
+slice = slice(3);
 figure;
 imagesc(resultGUI.LET(:,:,slice)),colorbar, colormap(jet);
 
-%% Inverse Optimization  for IMPT based on biological effect
+%% Inverse Optimization  for Carbon ion treatment based on biological effect
 % To perform a dose optimization for carbon ions we can also use the
 % biological effect instead of the RBE-weighted dose. Therefore we have to
 % change the optimization mode and restart the optimization
-quantityOpt  = 'effect'; 
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
-
+pln.propOpt.quantityOpt = 'effect';
 resultGUI_effect = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Visualize differences
@@ -134,7 +125,23 @@ resultGUI_effect = matRad_fluenceOptimization(dij,cst,pln);
 % different dose distribution as visualized by the following dose
 % difference map
 figure;
-imagesc(resultGUI.RBExD(:,:,slice)-resultGUI_effect.RBExD(:,:,slice));
+imagesc(resultGUI.RBExDose(:,:,slice)-resultGUI_effect.RBExDose(:,:,slice));
+colorbar;
+colormap(jet);
+
+%% Inverse Optimization  for Carbon ion treatment based on BED
+% To perform a dose optimization for carbon ions we can also use the
+% BED instead of the RBE-weighted dose. Therefore we have to
+% change the optimization mode and restart the optimization
+pln.propOpt.quantityOpt = 'BED';
+resultGUI_BED = matRad_fluenceOptimization(dij,cst,pln);
+
+%% Visualize differences
+% Through optimzation based on the biological effect we obtain a slightly
+% different dose distribution as visualized by the following dose
+% difference map
+figure;
+imagesc(resultGUI.RBExDose(:,:,slice)-resultGUI_BED.RBExDose(:,:,slice));
 colorbar;
 colormap(jet);
 
@@ -150,27 +157,27 @@ end
 
 %% Recalculate Plan
 % Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose
-resultGUI_tissue = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
+resultGUI_tissue = matRad_calcDoseForward(ct,cst,stf,pln,resultGUI.w);
 
 %% Result Comparison
 % Let's compare the new recalculation against the optimization result.
 plane = 3;
-doseWindow = [0 max([resultGUI_effect.RBExD(:); resultGUI_tissue.RBExD(:)])];
+doseWindow = [0 max([resultGUI_effect.RBExDose(:); resultGUI_tissue.RBExDose(:)])];
 
 figure,
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_effect.RBExD,plane,slice,[],[],colorcube,[],doseWindow,[]);
+matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_effect.RBExDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
 title('original plan')
 figure,
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_tissue.RBExD,plane,slice,[],[],colorcube,[],doseWindow,[]);
+matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_tissue.RBExDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
 title('manipulated plan')
 %% 
 % At this point we would like to see the absolute difference of the original optimization and the 
 % recalculation. 
-absDiffCube = resultGUI_effect.RBExD-resultGUI_tissue.RBExD;
+absDiffCube = resultGUI_effect.RBExDose-resultGUI_tissue.RBExDose;
 figure,
 matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
 title('absolute difference')
 %%
 % Plot both doses with absolute difference and gamma analysis
-[gammaCube,gammaPassRate,hfigure]=matRad_compareDose(resultGUI_effect.RBExD, resultGUI_tissue.RBExD, ct, cst,[1 1 1],'on');
+[gammaCube,gammaPassRate,hfigure]=matRad_compareDose(resultGUI_effect.RBExDose, resultGUI_tissue.RBExDose, ct, cst,[1 1 1],'on');
 

@@ -6,7 +6,7 @@
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
 % of the matRad project, including this file, may be copied, modified, 
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
@@ -26,7 +26,6 @@ matRad_rc; %If this throws an error, run it from the parent directory first to s
 
 %% Patient Data Import
 % import the head & neck patient into your workspace.
-
 load('HEAD_AND_NECK.mat');
 
 %% Treatment Plan
@@ -44,15 +43,8 @@ pln.propStf.bixelWidth      = 5;
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 
-quantityOpt   = 'physicalDose';     % either  physicalDose / effect / RBExD
-modelName     = 'none';             % none: for photons, protons, carbon                                    constRBE: constant RBE model
-                                    % MCN: McNamara-variable RBE model for protons                          WED: Wedenberg-variable RBE model for protons 
-                                    % LEM: Local Effect Model for carbon ions
-% retrieve bio model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
-
-% retrieve scenarios for dose calculation and optimziation
-pln.multScen = matRad_multScen(ct,'nomScen');
+pln.bioModel = 'none'; 
+pln.multScen = 'nomScen';
 
 % dose calculation settings
 pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
@@ -69,6 +61,7 @@ if matRad_OptimizerFmincon.IsAvailable()
 else
     pln.propOpt.optimizer = 'IPOPT';
 end
+pln.propOpt.quantityOpt = 'physicalDose';  
 
 %%
 % Enable sequencing and direct aperture optimization (DAO).
@@ -110,4 +103,4 @@ resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,res
 matRad_visApertureInfo(resultGUI.apertureInfo);
 
 %% Indicator Calculation and display of DVH and QI
-[dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,[],[]);
+resultGUI = matRad_planAnalysis(resultGUI,ct,cst,stf,pln);

@@ -6,7 +6,7 @@
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
 % of the matRad project, including this file, may be copied, modified, 
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
@@ -38,12 +38,14 @@ load('BOXPHANTOM.mat');
 % 'proton_Generic.mat'; consequently the machine has to be set accordingly
 pln.radiationMode = 'helium';        
 pln.machine       = 'Generic';
+pln.multScen      = 'nomScen';
 
-%%
-% for particles it is possible to also calculate the LET disutribution
-% alongside the physical dose. Therefore you need to activate the
-% corresponding option during dose calculcation
-pln.propDoseCalc.calcLET = true;
+% Define the flavor of biological optimization for treatment planning along
+% with the quantity that should be used for optimization. As we use helium,
+% we follow a data-driven RBE parametrization to obtbain the variable 
+% relative biological effectiveness. 
+pln.bioModel      = 'HEL';
+
                                        
 %%
 % Now we have to set the remaining plan parameters.
@@ -56,25 +58,20 @@ pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter
 pln.propOpt.runDAO        = 0;
 pln.propOpt.runSequencing = 0;
 
-% Define the flavor of biological optimization for treatment planning along
-% with the quantity that should be used for optimization. As we use helium,
-% we follow a data-driven RBE parametrization to obtbain the variable 
-% relative biological effectiveness. 
-
-quantityOpt   = 'RBExD';            % either  physicalDose / effect / RBExD
-modelName     = 'HEL';              % none: for photons, protons, carbon                   constRBE: constant RBE model
-                                    % MCN: McNamara-variable RBE model for protons         WED: Wedenberg-variable RBE model for protons 
-                                    % LEM: Local Effect Model for carbon ions              HEL: data-driven RBE parametrization for helium
-% retrieve bio model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
-
 % dose calculation settings
 pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]
 pln.propDoseCalc.doseGrid.resolution.y = 5; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
 
-% retrieve scenarios for dose calculation and optimziation
-pln.multScen = matRad_multScen(ct,'nomScen');
+% for particles it is possible to also calculate the LET disutribution
+% alongside the physical dose. Therefore you can activate the
+% corresponding option during dose calculcation. Technically it is not
+% needed here, because the HEL model requires LET and will request it
+% automatically
+pln.propDoseCalc.calcLET = true;
+
+% optimization settings
+pln.propOpt.quantityOpt = 'effect';
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
@@ -93,10 +90,11 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
-slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
+slice = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:),ct);
+slice = slice(3);
 figure
 subplot(121),imagesc(resultGUI.physicalDose(:,:,slice)),colorbar,colormap(jet),title('physical dose')
-subplot(122),imagesc(resultGUI.RBExD(:,:,slice)),colorbar,colormap(jet),title('RBExDose')
+subplot(122),imagesc(resultGUI.RBExDose(:,:,slice)),colorbar,colormap(jet),title('RBExDose')
 
 
 

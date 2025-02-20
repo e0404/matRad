@@ -6,7 +6,7 @@
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
 % of the matRad project, including this file, may be copied, modified, 
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
@@ -37,8 +37,8 @@ objective1 = struct(DoseObjectives.matRad_SquaredDeviation(800,45));
 objective2 = struct(DoseObjectives.matRad_SquaredOverdosing(400,0));
 
 builder.addSphericalTarget('target',ctDim(1)/13,'objectives',struct(DoseObjectives.matRad_SquaredDeviation(100,60)));
-builder.addSphericalOAR('OAR',ctDim(1)/15,'offset',[-10 10 0],'HU',-100,'objectives',struct(DoseObjectives.matRad_SquaredOverdosing(10,40)));
-builder.addBoxOAR('contour',ctDim./2,'HU',0,'objectives',struct(DoseObjectives.matRad_SquaredOverdosing(5,20)));
+builder.addSphericalOAR('OAR',ctDim(1)/15,'offset',[-10 10 0],'HU',-100,'objectives',struct(DoseObjectives.matRad_SquaredOverdosing(5,40)));
+builder.addBoxOAR('contour',ctDim./2,'HU',0,'objectives',struct(DoseObjectives.matRad_SquaredOverdosing(1,20)));
 
 %Keep indices for assignment of robustness objectives later
 ixTarget = 1;
@@ -58,43 +58,32 @@ ixNT = 3;
 % need to define a treatment machine to correctly load the corresponding 
 % base data. matRad features generic base data in the file
 % 'carbon_Generic.mat'; consequently the machine has to be set accordingly
-pln.radiationMode = 'protons';            
-pln.machine       = 'Generic';
+pln.radiationMode   = 'protons';            
+pln.machine         = 'Generic';
+pln.numOfFractions  = 20;
+pln.bioModel        = 'constRBE';
 
-%%
-% Define the biological optimization model for treatment planning along
-% with the quantity that should be used for optimization. Possible model values 
-% are:
-% 'none':     physical optimization;
-% 'constRBE': constant RBE of 1.1; 
-% 'MCN':      McNamara-variable RBE model for protons; 
-% 'WED':      Wedenberg-variable RBE model for protons
-% 'LEM':      Local Effect Model 
-% and possible quantityOpt are 'physicalDose', 'effect' or 'RBExD'.
-% As we use protons, we use a constant RBE of 1.1.
-modelName    = 'constRBE';
-quantityOpt  = 'RBExD';   
+%% Uncertainty Model Setup 
+% Now we want to set up a suitable scenario model for robust optimization
+% We can use standard model by setting pln.multScen to wcScen, impScen, or
+% rndScen. But we can also define the model directly here
+pln.multScen = matRad_WorstCaseScenarios(ct);
+pln.multScen.shiftSD = [1 1 1]; %Standard shift errors
+pln.multScen.wcFactor = 3; %Our worst case is considered ot be 3 standard deviations
+pln.multScen.listAllScenarios();
+
 
 %%
 % The remaining plan parameters are set like in the previous example files
-pln.numOfFractions        = 20;
 pln.propStf.gantryAngles  = [0 90];
 pln.propStf.couchAngles   = [0 0];
 pln.propStf.bixelWidth    = 5;
 pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
-pln.propOpt.runDAO        = 0;
-pln.propOpt.runSequencing = 0;
-
-% retrieve bio model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
-
-% retrieve 9 worst case scenarios for dose calculation and optimziation
-pln.multScen = matRad_multScen(ct,'wcScen');                                         
-
-pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]
-pln.propDoseCalc.doseGrid.resolution.y = 5; % [mm]
-pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
+                            
+pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
@@ -106,7 +95,6 @@ dij = matRad_calcParticleDose(ct,stf,pln,cst);
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment.
-
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Trigger robust optimization
@@ -134,25 +122,26 @@ end
 
 %% Visualize results
 plane      = 3;
-slice      = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
+slice = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:),ct);
+slice = slice(3);
 
-figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExD_beam1      ,plane,slice,[],[],colorcube,[],[0 max(resultGUI.RBExD_beam1(:))],[]);title('conventional plan - beam1')
-figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.RBExD_beam1,plane,slice,[],[],colorcube,[],[0 max(resultGUIrobust.RBExD_beam1(:))],[]);title('robust plan - beam1')
+figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExDose_beam1      ,plane,slice,[],[],colorcube,[],[0 max(resultGUI.RBExDose_beam1(:))],[]);title('conventional plan - beam1')
+figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.RBExDose_beam1,plane,slice,[],[],colorcube,[],[0 max(resultGUIrobust.RBExDose_beam1(:))],[]);title('robust plan - beam1')
 
 % create an interactive plot to slide through individual scnearios
 f = figure;title('individual scenarios');
 numScen = 1;doseWindow = [0 3.5];
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.(['RBExD_' num2str(round(numScen))]),plane,slice,[],[],colorcube,[],doseWindow,[]);
+matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.(['RBExDose_scen' num2str(round(numScen))]),plane,slice,[],[],colorcube,[],doseWindow,[]);
 
 [env,envver] = matRad_getEnvironment();
 if strcmp(env,'MATLAB') || str2double(envver(1)) >= 5
     b = uicontrol('Parent',f,'Style','slider','Position',[50,5,419,23],...
         'value',numScen, 'min',1, 'max',pln.multScen.totNumScen,'SliderStep', [1/(pln.multScen.totNumScen-1) , 1/(pln.multScen.totNumScen-1)]);
-    set(b,'Callback',@(es,ed)  matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.(['RBExD_' num2str(round(get(es,'Value')))]),plane,slice,[],[],colorcube,[],doseWindow,[]));
+    set(b,'Callback',@(es,ed)  matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.(['RBExDose_scen' num2str(round(get(es,'Value')))]),plane,slice,[],[],colorcube,[],doseWindow,[]));
 end
 
 %% Indicator calculation and show DVH and QI
-[dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUIrobust);
+resultGUI = matRad_planAnalysis(resultGUI,ct,cst,stf,pln);
 %% Perform sampling
 % select structures to include in sampling; leave empty to sample dose for all structures
 structSel = {}; % structSel = {'PTV','OAR1'};

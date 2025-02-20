@@ -1,5 +1,9 @@
-MCsquare/bin/Materials/
-topas/MCrun
+thirdParty/MCsquare/bin/Materials/
+userdata/*
+testresults.xml
+coverage.xml
+coverage.json
 *.asv
+build/
 /MCNP/runfiles_tmp
 /MCNP/logFile
