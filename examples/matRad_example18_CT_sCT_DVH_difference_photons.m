@@ -15,15 +15,95 @@
 
 
 %% In this example, we will show:
+% (0) how to export .mat data into DICOM format to illustrate a synthetic CT data generation, 
+% as it is usually stored in DICOM format;
 % (i) how to load DICOM patient data into matRad and modify dosimetric
 % objectives and constraints;
 % (ii) how to set up a photon dose calculation and optimization based on the real CT;
 % (iii) how to translate the optimized plan to be applied to a synthetic CT image; and
 % (iv) how to calculate the DVH differences between the plans.
 
+%% Preliminary step: DICOM data preparation and export from .mat format to .dcm for further use
+% Start with a clean MATLAB environment. We will export Liver phantom data  
+% from .mat format to .dcm, consisting of 3D body volume slices as well as a structure file and use it as a real CT.  
+% Additionally, we will slightly modify the intensities of the phantom to generate  
+% synthetic CT images, illustrating dose difference.
+clear;
+matRad_cfg = matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
+
+% Create directories to store DICOM real CT and synthetic (fake) CT data  
+patDir= "userdata\syntheticCT\"; % If you want to export your data, use "userdata" folder as it is ignored by git
+name="pat001";
+patDirRealCT= fullfile(patDir,name,"realCT");
+patDirFakeCT= fullfile(patDir,name,"fakeCT");
+
+try
+    if ~exist(patDirRealCT, 'dir')
+        mkdir(patDirRealCT);
+    end
+catch ME
+    fprintf('Error creating realCT directory: %s\n', patDirRealCT);
+    fprintf('Error message: %s\n', ME.message);
+end
+
+try
+    if ~exist(patDirFakeCT, 'dir')
+        mkdir(patDirFakeCT);
+    end
+catch ME
+    fprintf('Error creating fakeCT directory: %s\n', patDirFakeCT);
+    fprintf('Error message: %s\n', ME.message);
+end
+
+% Now, as the directories are created, let us create the DICOM data. Here, the DICOM
+% files will be created from the .mat format.
+load('Liver.mat');
+realCTct=ct;
+%review real CT volume
+matRadGUI;
+%saving as DICOMs
+dcmExpRealCT= matRad_DicomExporter;   % create instance of matRad_DicomExporter
+dcmExpRealCT.dicomDir = patDirRealCT;         % set the output path for the Dicom export
+dcmExpRealCT.cst = cst;     % set the structure set for the Dicom export
+dcmExpRealCT.ct = realCTct;     % set the image volume for the Dicom export
+dcmExpRealCT.matRad_exportDicom();   
+
+
+% In order to create a fake or synthetic CT volume, we will use real CT data and re-use its HU values 
+% for illustrative purposes. First, we extract the original 3D HU image data.
+fakeCTct=ct;
+fakeCTcubeHU = fakeCTct.cubeHU{1};
+
+% Then, we define the range values to be coerced to create the fake CT volume. For this, we will
+% coerce the soft tissue range and scale values in the range [0,100] to
+% [100,300] and export them as .dcm files.
+oldMin = 0; oldMax = 100;  % Original range
+newMin = 100; newMax = 300;  % Target range
+%scaling
+mask = (fakeCTcubeHU >= oldMin) & (fakeCTcubeHU <= oldMax);
+fakeCTcubeHU(mask) = newMin + (fakeCTcubeHU(mask) - oldMin) * (newMax - newMin) / (oldMax - oldMin);
+fakeCTct.cubeHU{1} = fakeCTcubeHU;
+
+%review fake CT volume
+ct= fakeCTct;
+matRadGUI;
+
+%saving as DICOMs
+dcmExpFakeCT= matRad_DicomExporter;   % create instance of matRad_DicomExporter
+dcmExpFakeCT.dicomDir = patDirFakeCT;         % set the output path for the Dicom export
+dcmExpFakeCT.cst = [];     % set the structure set for the Dicom export [we will keep it empty and use further the real CT cst]
+dcmExpFakeCT.ct = fakeCTct;     % set the image volume for the Dicom export
+dcmExpFakeCT.matRad_exportDicom();   
+
+%clear all except of paths, close windows to start from clean space
+delete(matRadGUI);
+clearvars -except 'patDir' 'patDirFakeCT' 'patDirRealCT' 'matRad_cfg' 'name';
+
+
 %% Patient Data Import from DICOM  
-% Start with a clean MATLAB environment, then import the real CT data of a patient.  
-% For this purpose, LIVER phantom data has been adapted and saved as a DICOM file with a structure set.  
+% Here we are. Let us import prepared DICOM real CT data. If you
+% have your data you can try to replace it with your data in the folder,
+% mentioned above. 
 % Functions for importing DICOM files will search for .dcm files in the directory  
 % and automatically recognize 3D volumes and structure files.  
 % The DICOM files will then be read into the workspace as 'ct' and 'cst',  
@@ -31,13 +111,8 @@
 % Ensure that the matRad root directory, along with all its subdirectories,  
 % is added to the MATLAB search path.  
 
-clear;
-matRad_cfg = matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
-patDir= "matRad/phantoms/synthetic_ct/"; % If you want to export your data further, use "userdata" folder
-name="pat001";
-patDir_real_CT= fullfile(patDir,name,"real_CT");
-imp_real_CT = matRad_DicomImporter(patDir_real_CT);
-matRad_importDicom(imp_real_CT);
+impRealCT = matRad_DicomImporter(patDirRealCT);
+matRad_importDicom(impRealCT);
 % Review the exported file and automatically identified  
 % optimization objectives and constraints. 
 matRadGUI;
@@ -47,7 +122,7 @@ matRadGUI;
 % When importing DICOM structure files, matRad uses matRad_createCst() to generate this cell.  
 % Default regular expressions are used to define target objectives. However,  
 % additional constraints for organs at risk (OARs) need to be added for the plan.  
-% This can be done by directly modifying the cst cell.  
+% One of the methods to do this is by directly modifying the cst cell.
 % If different volumes with varying optimization objectives need to be loaded,  
 % refer to the documentation for matRad_createCst() and choose suitable options  
 % to create a custom implementation. In this case, the plan will be modified directly here.  
@@ -81,7 +156,7 @@ end
 % Verify that the new objectives have been added and are visible in the
 % user interface. We save it for further synthetic CT calculations
 matRadGUI;
-real_CT_cst=cst;
+realCTcst=cst;
 
 %% Treatment Plan
 % The next step is to define your treatment plan labeled as 'pln'. This 
@@ -150,18 +225,10 @@ pln.propDoseCalc.doseGrid.resolution.z = 4; % [mm]
 pln.propSeq.runSequencing = 1;
 pln.propOpt.runDAO        = 0;
 
-
-%%
-% and et voila our treatment plan structure is ready. Lets have a look:
-%disp(pln);
-
-
 %% Generate Beam Geometry STF
 % The steering file struct comprises the complete beam geometry along with 
 % ray position, pencil beam positions and energies, source to axis distance (SAD) etc.
-
 stf = matRad_generateStf(ct,cst,pln);
-
 
 %% Dose Calculation for real CT
 % Let's generate dosimetric information by pre-computing dose influence 
@@ -191,32 +258,32 @@ qi = resultGUI.qi;
 % for further comparison with plans calculated on the synthetic CT.  
 % Include the patient number and indicate the CT type as "real"  
 % to facilitate delta calculations between the plans later.  
-dvh_table_real=struct2table(qi);
+dvhTableReal=struct2table(qi);
 % Select only DVH parameters from QI table you are interested in comparison
-dvh_table_real=dvh_table_real(:,1:9);
-dvh_table_real.patient= repmat(char(name),length(qi),1);
-dvh_table_real.ct_type = repmat(char("real"),length(qi),1);
+dvhTableReal=dvhTableReal(:,1:9);
+dvhTableReal.patient= repmat(char(name),length(qi),1);
+dvhTableReal.ct_type = repmat(char("real"),length(qi),1);
 % Check DVH table for real CT
-disp(dvh_table_real);
+disp(dvhTableReal);
 
 %% Now clear the data from the real CT image, except for the plan parameters,  
 % and load the synthetic (fake) CT image of the same patient.  
 % It is important that your image sets are compatible (i.e., same number of CT slices,  
 % same isocenter position, etc.). We will re-use the structure file from real CT with adjusted objectives 
 % for dose calculations.
-clear resultGUI ct cst idx qi* dvh dij;
-patDir_fake_CT= fullfile(patDir,name,"fake_CT");
-imp_fake_CT = matRad_DicomImporter(patDir_fake_CT);
-matRad_importDicom(imp_fake_CT);
 delete(matRadGUI);
-cst=real_CT_cst;
+clear resultGUI ct cst idx qi* dvh dij;
+
+
+impFakeCT = matRad_DicomImporter(patDirFakeCT);
+matRad_importDicom(impFakeCT);
+cst=realCTcst;
 % Review the exported file and previously identified
 % optimization objectives and constraints. 
 matRadGUI;
 
 %% Perform the dose calculation for synthetic CT by using the weights of plan, calculated on real CT 
 % (i.e., obtain the dij variable) for the synthetic CT image. 
-%TBD ask a question whether it is correct in the new version
 resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst, weights);
 resultGUI = matRad_planAnalysis(resultGUI,ct,cst,stf,pln);
 matRadGUI;
@@ -225,30 +292,30 @@ dvh = resultGUI.dvh;
 qi = resultGUI.qi;
 
 % In the similar fashion, save DVH parameters calculated on the synthetic CT to the table  
-dvh_table_fake=struct2table(qi);
+dvhTableFake=struct2table(qi);
 % Select the same DVH parameters for further comparison
-dvh_table_fake=dvh_table_fake(:,1:9);
-dvh_table_fake.patient= repmat(char(name),length(qi),1);
-dvh_table_fake.ct_type = repmat(char("fake"),length(qi),1);
+dvhTableFake=dvhTableFake(:,1:9);
+dvhTableFake.patient= repmat(char(name),length(qi),1);
+dvhTableFake.ct_type = repmat(char("fake"),length(qi),1);
 
 %% Calculate the difference in between of DVH calculated on real CT (dvh_table_real) and synthetic CT (dvh_table_fake)
-dvh_table_diff=dvh_table_real;
-for i =1:height(dvh_table_real)
+dvhTableDiff=dvhTableReal;
+for i =1:height(dvhTableReal)
     for j=["mean","std","max", "min", "D_2","D_5", "D_95", "D_98"]
-        if cell2mat(dvh_table_real{i,"name"})==cell2mat(dvh_table_fake{i,"name"})
-            dvh_table_diff{i,j}=(dvh_table_real{i,j}-dvh_table_fake{i,j})/dvh_table_real{i,j}*100;
+        if cell2mat(dvhTableReal{i,"name"})==cell2mat(dvhTableFake{i,"name"})
+            dvhTableDiff{i,j}=(dvhTableReal{i,j}-dvhTableFake{i,j})/dvhTableReal{i,j}*100;
         else
-            dvh_table_diff{i,j}="error";
+            dvhTableDiff{i,j}="error";
         end
     end
 end
 
 %% Check the difference
-disp(dvh_table_diff)
+disp(dvhTableDiff)
 
 %%% Save the results to CSV file
 %file_path_dvh_diff = "YOUR PATH"
 %writetable(dvh_table_diff, file_path_dvh_diff);
-
+delete(matRadGUI);
 close all;
 clear;
