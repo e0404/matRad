@@ -196,6 +196,7 @@ classdef MatRad_Config < handle
 
             %Default machines
             obj.defaults.machine.photons    = 'Generic';
+            obj.defaults.machine.neutrons    = 'Generic';
             obj.defaults.machine.protons    = 'Generic';
             obj.defaults.machine.helium     = 'Generic';
             obj.defaults.machine.carbon     = 'Generic';
@@ -204,6 +205,7 @@ classdef MatRad_Config < handle
 
             %Default Bio Model
             obj.defaults.bioModel.photons   = 'none';
+            obj.defaults.bioModel.neutrons   = 'none';
             obj.defaults.bioModel.protons   = 'constRBE';
             obj.defaults.bioModel.helium    = 'HEL';
             obj.defaults.bioModel.carbon    = 'LEM';
