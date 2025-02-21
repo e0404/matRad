@@ -74,12 +74,10 @@ for i = 1:ct.numOfCtScen
     tmpResultGUI = matRad_calcCubes(totalPhaseMatrix(:,i),dij,i);
 
     % compute physical dose for physical opt
-    if isa(pln.bioModel,'matRad_EmptyBiologicalModel')
-        resultGUI.phaseDose{i} = tmpResultGUI.physicalDose;
-        % compute RBExDose with const RBE
-    elseif isa(pln.bioModel,'matRad_ConstantRBE')
+    resultGUI.phaseDose{i} = tmpResultGUI.physicalDose;
+    % compute RBExDose with const RBE
+    if isa(pln.bioModel,'matRad_ConstantRBE')
         resultGUI.phaseRBExDose{i} = tmpResultGUI.RBExDose;
-        % compute all fields
     elseif isa(pln.bioModel,'matRad_LQBasedModel')
         resultGUI.phaseAlphaDose{i}    = tmpResultGUI.alpha .* tmpResultGUI.physicalDose;
         resultGUI.phaseSqrtBetaDose{i} = sqrt(tmpResultGUI.beta) .* tmpResultGUI.physicalDose;
@@ -90,14 +88,29 @@ for i = 1:ct.numOfCtScen
     else
         matRad_cfg.dispError('Unsupported biological model %s!',pln.bioModel.model);
     end
+
+     for beamIx = 1:dij.numOfBeams
+        resultGUI.(['phaseDose_beam', num2str(beamIx)]){i} = tmpResultGUI.(['physicalDose_beam', num2str(beamIx)]);
+        % compute RBExD with const RBE
+        if isa(pln.bioModel,'matRad_ConstantRBE')
+            resultGUI.(['phaseRBExDose_beam', num2str(beamIx)]){i} = tmpResultGUI.(['RBExDose_beam', num2str(beamIx)]);
+        % compute all fields
+        elseif isa(pln.bioModel,'matRad_LQBasedModel')
+            resultGUI.(['phaseAlphaDose_beam', num2str(beamIx)]){i} = tmpResultGUI.(['alpha_beam', num2str(beamIx)]).*tmpResultGUI.(['physicalDose_beam', num2str(beamIx)]);
+            resultGUI.(['phaseSqrtBetaDose_beam', num2str(beamIx)]){i} = sqrt(tmpResultGUI.(['beta_beam', num2str(beamIx)])).*tmpResultGUI.(['physicalDose_beam', num2str(beamIx)]);
+             ix = ax{i} ~=0;
+             resultGUI.(['phaseEffect_beam', num2str(beamIx)]){i}    = resultGUI.(['phaseAlphaDose_beam', num2str(beamIx)]){i} + resultGUI.(['phaseSqrtBetaDose_beam', num2str(beamIx)]){i}.^2;  
+             resultGUI.(['phaseRBExDose_beam', num2str(beamIx)]){i}    = zeros(ct.cubeDim);
+             resultGUI.(['phaseRBExDose_beam', num2str(beamIx)]){i}     =  ((sqrt(ax{i}(ix).^2 + 4 .* bx{i}(ix) .* resultGUI.(['phaseEffect_beam', num2str(beamIx)]){i}(ix)) - ax{i}(ix))./(2.*bx{i}(ix)));
+        else
+            matRad_cfg.dispError('Unsupported biological model %s!',pln.bioModel.model);
+        end
+    end
 end
 
 % accumulation
-if isa(pln.bioModel,'matRad_EmptyBiologicalModel')
-
-    resultGUI.accPhysicalDose = matRad_doseAcc(ct,resultGUI.phaseDose, cst, accType);
-
-elseif isa(pln.bioModel,'matRad_ConstantRBE')
+resultGUI.accPhysicalDose = matRad_doseAcc(ct,resultGUI.phaseDose, cst, accType);
+if isa(pln.bioModel,'matRad_ConstantRBE')
 
     resultGUI.accRBExDose = matRad_doseAcc(ct,resultGUI.phaseRBExDose, cst, accType);
 
@@ -116,5 +129,22 @@ elseif isa(pln.bioModel,'matRad_LQBasedModel')
 else
     matRad_cfg.dispError('Unsupported biological model %s!',pln.bioModel.model);
 end
+
+for beamIx = 1:dij.numOfBeams
+    resultGUI.(['accPhysicalDose_beam', num2str(beamIx)])= matRad_doseAcc(ct,resultGUI.(['phaseDose_beam', num2str(beamIx)]), cst, accType);
+    if isa(pln.bioModel,'matRad_ConstantRBE')
+        resultGUI.(['accRBExDose_beam', num2str(beamIx)]) = matRad_doseAcc(ct,resultGUI.(['phaseRBExDose_beam', num2str(beamIx)]), cst, accType);
+   elseif isa(pln.bioModel,'matRad_LQBasedModel')
+        resultGUI.(['accAlphaDose_beam', num2str(beamIx)])      = matRad_doseAcc(ct,resultGUI.(['phaseAlphaDose_beam', num2str(beamIx)]), cst, accType);
+        resultGUI.(['accSqrtBetaDose_beam', num2str(beamIx)])   = matRad_doseAcc(ct,resultGUI.(['phaseAlphaDose_beam', num2str(beamIx)]), cst, accType);
+        resultGUI.(['accEffect_beam', num2str(beamIx)])         = resultGUI.(['accAlphaDose_beam', num2str(beamIx)]) + resultGUI.(['accSqrtBetaDose_beam', num2str(beamIx)]).^2;
+        resultGUI.(['accRBExDose_beam', num2str(beamIx)]){i}       = zeros(ct.cubeDim);
+        resultGUI.(['accRBExDose_beam', num2str(beamIx)]){i}       =  ((sqrt(ax{i}(ix).^2 + 4 .* bx{i}(ix) .* resultGUI.(['accEffect_beam', num2str(beamIx)]){i}(ix)) - ax{i}(ix))./(2.*bx{i}(ix)));    
+   else
+    matRad_cfg.dispError('Unsupported biological model %s!',pln.bioModel.model);
+    end
+end
+
+
 end
 
