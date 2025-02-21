@@ -1,6 +1,6 @@
 function beam = matRad_arcSequencing(beam,stf,pln,weightToMU)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% The sequencing algorithm generates an a priori unkown number of aperture.
+% The sequencing algorithm generates an a priori unkown number of apertures.
 % We only want to keep a certain number of them (numToKeep).  These will be
 % the ones with the highest intensity-area product.
 %
@@ -34,14 +34,9 @@ function beam = matRad_arcSequencing(beam,stf,pln,weightToMU)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-fileName = pln.propOpt.VMAToptions.machineConstraintFile;
-try
-    load(fileName,'machine');
-catch
-    error(['Could not find the following machine file: ' fileName ]);
-end
+machine = matRad_loadMachine(pln);
 
-numOfBeams = pln.propStf.numOfBeams;
+numOfBeams = numel(stf);
 
 leafDir = 1;
 

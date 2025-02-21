@@ -70,7 +70,7 @@ timeDAOBorderAngles = apertureInfoVec(((apertureInfo.totalNumOfShapes+apertureIn
 timeFacCurr = [apertureInfo.propVMAT.beam([apertureInfo.propVMAT.beam.DAOBeam]).timeFacCurr]';
 timeDoseBorderAngles = timeDAOBorderAngles.*timeFacCurr;
 
-if apertureInfo.propVMAT.continuousAperture
+if apertureInfo.continuousAperture
     timeFac = [apertureInfo.propVMAT.beam.timeFac]';
     deleteInd = timeFac == 0;
     timeFac(deleteInd) = [];

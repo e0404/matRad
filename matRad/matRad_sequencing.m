@@ -48,18 +48,22 @@ if strcmp(pln.radiationMode,'photons') && (pln.propSeq.runSequencing || pln.prop
         matRad_cfg.dispWarning ('pln.propSeq.sequencer not specified. Using siochi leaf sequencing (default).')
     end
     
+    % Is this used? Is it the same as numLevels? Should standardize, across
+    % all leaf sequencing algorithms.
     if ~isfield(pln.propSeq, 'sequencingLevel')
         pln.propSeq.sequencingLevel = 5;
          matRad_cfg.dispWarning ('pln.propSeq.sequencingLevel not specified. Using 5 sequencing levels (default).')
     end
     
+    % Could probably consolidate a lot of the code in the following
+    % functions.
     switch pln.propSeq.sequencer
         case 'xia'
-            resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,pln.propSeq.sequencingLevel,visBool);
+            resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,pln,visBool);
         case 'engel'
-            resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,pln.propSeq.sequencingLevel,visBool);
+            resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,pln,visBool);
         case 'siochi'
-            resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln.propSeq.sequencingLevel,visBool);
+            resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln,visBool);
         otherwise
             matRad_cfg.dispError('Could not find specified sequencing algorithm ''%s''',pln.propSeq.sequencer);
     end

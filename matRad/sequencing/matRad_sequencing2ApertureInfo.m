@@ -154,7 +154,7 @@ for i=1:size(stf,2)
         
         apertureInfo.beam(i).shape(m).jacobiScale = 1;
         
-        if pln.propOpt.runVMAT && pln.propOpt.VMAToptions.continuousAperture
+        if pln.propOpt.runVMAT && pln.propStf.continuousAperture
             apertureInfo.beam(i).shape(m).vectorOffset = [vectorOffset vectorOffset+dimZ];
             
             % update index for bookkeeping
@@ -241,7 +241,7 @@ for i=1:size(stf,2)
                 apertureInfo.propVMAT.beam(i).FMOAngleBordersDiff = stf(i).propVMAT.FMOAngleBordersDiff;
             end
             
-            if pln.propOpt.VMAToptions.continuousAperture
+            if pln.propStf.continuousAperture
                 apertureInfo.propVMAT.beam(i).timeFacInd = stf(i).propVMAT.timeFacInd;
                 apertureInfo.propVMAT.beam(i).doseAngleDAO = stf(i).propVMAT.doseAngleDAO;
                 
@@ -258,7 +258,7 @@ for i=1:size(stf,2)
             apertureInfo.propVMAT.beam(i).lastDAOIndex = stf(i).propVMAT.lastDAOIndex;
             apertureInfo.propVMAT.beam(i).nextDAOIndex = stf(i).propVMAT.nextDAOIndex;
             
-            if pln.propOpt.VMAToptions.continuousAperture
+            if pln.propStf.continuousAperture
                 apertureInfo.propVMAT.beam(i).fracFromLastDAO_I = stf(i).propVMAT.fracFromLastDAO_I;
                 apertureInfo.propVMAT.beam(i).fracFromLastDAO_F = stf(i).propVMAT.fracFromLastDAO_F;
                 apertureInfo.propVMAT.beam(i).fracFromNextDAO_I = stf(i).propVMAT.fracFromNextDAO_I;
@@ -281,6 +281,7 @@ if ~isfield(pln.propOpt,'preconditioner')
 end
 
 % save global data
+apertureInfo.continuousAperture = pln.propStf.continuousAperture;
 apertureInfo.runVMAT            = pln.propOpt.runVMAT;
 apertureInfo.preconditioner     = pln.propOpt.preconditioner;
 apertureInfo.bixelWidth         = bixelWidth;
@@ -294,16 +295,19 @@ end
 
 if pln.propOpt.runVMAT
     
-    tempStruct_beam = apertureInfo.propVMAT.beam;
-    tempStruct_jacobT = apertureInfo.propVMAT.jacobT;
-    apertureInfo.propVMAT = pln.propOpt.VMAToptions;
-    apertureInfo.propVMAT.beam = tempStruct_beam;
-    apertureInfo.propVMAT.jacobT = tempStruct_jacobT;
+    %tempStruct_beam = apertureInfo.propVMAT.beam;
+    %tempStruct_jacobT = apertureInfo.propVMAT.jacobT;
+    %apertureInfo.propVMAT.beam = tempStruct_beam;
+    %apertureInfo.propVMAT.jacobT = tempStruct_jacobT;
+    
+    % put constraints in apertureInfo.propVMAT
+    machine = matRad_loadMachine(pln);
+    apertureInfo.propVMAT.constraints = machine.constraints;
     
     apertureInfo.totalNumOfOptBixels = totalNumOfOptBixels;
     apertureInfo.doseTotalNumOfLeafPairs = sum([apertureInfo.beam(:).numOfActiveLeafPairs]);
     
-    if apertureInfo.propVMAT.continuousAperture
+    if apertureInfo.continuousAperture
         apertureInfo.totalNumOfLeafPairs = sum(reshape([apertureInfo.propVMAT.beam([apertureInfo.propVMAT.beam.DAOBeam]).doseAngleDAO],2,[]),1)*[apertureInfo.beam([apertureInfo.propVMAT.beam.DAOBeam]).numOfActiveLeafPairs]';
         
         % count number of transitions
@@ -335,8 +339,6 @@ else
     % create vectors for optimization
     [apertureInfo.apertureVector, apertureInfo.mappingMx, apertureInfo.limMx] = matRad_OptimizationProblemDAO.matRad_daoApertureInfo2Vec(apertureInfo);
 end
-
-
 
 end
 

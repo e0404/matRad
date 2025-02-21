@@ -36,32 +36,23 @@ apertureInfo = optiProb.apertureInfo;
 % get dosimetric bounds from cst by call to DAO superclass method
 [cl_dos_dao,cu_dos_dao] = matRad_getConstraintBounds@matRad_OptimizationProblemDAO(optiProb,cst);
 
-
-%Can we pass this information so that we do not need to read the machine?
-fileName = apertureInfo.propVMAT.machineConstraintFile;
-try
-    load(fileName,'machine');
-catch
-    error(['Could not find the following machine file: ' fileName ]);
-end
-
 optInd = find([apertureInfo.propVMAT.beam.DAOBeam]);
 
 
-if apertureInfo.propVMAT.continuousAperture
-    cl_lfspd = machine.constraints.leafSpeed(1)*ones(2*apertureInfo.propVMAT.numLeafSpeedConstraint*apertureInfo.beam(1).numOfActiveLeafPairs,1); %Minimum leaf travel speed (mm/s)
-    cu_lfspd = machine.constraints.leafSpeed(2)*ones(2*apertureInfo.propVMAT.numLeafSpeedConstraint*apertureInfo.beam(1).numOfActiveLeafPairs,1); %Maximum leaf travel speed (mm/s)
+if apertureInfo.continuousAperture
+    cl_lfspd = apertureInfo.propVMAT.constraints.leafSpeed(1)*ones(2*apertureInfo.propVMAT.numLeafSpeedConstraint*apertureInfo.beam(1).numOfActiveLeafPairs,1); %Minimum leaf travel speed (mm/s)
+    cu_lfspd = apertureInfo.propVMAT.constraints.leafSpeed(2)*ones(2*apertureInfo.propVMAT.numLeafSpeedConstraint*apertureInfo.beam(1).numOfActiveLeafPairs,1); %Maximum leaf travel speed (mm/s)
     %apertureInfo.beam(i).numOfActiveLeafPairs should be independent of i, due to using the union of all ray positions in the stf
     %Convert from cm/deg when checking constraints; cannot do it at this stage since gantry rotation speed is not hard-coded
 else
     
-    cl_lfspd = machine.constraints.leafSpeed(1)*ones(2*(numel(optInd)-1)*apertureInfo.beam(1).numOfActiveLeafPairs,1); %Minimum leaf travel speed (mm/s)
-    cu_lfspd = machine.constraints.leafSpeed(2)*ones(2*(numel(optInd)-1)*apertureInfo.beam(1).numOfActiveLeafPairs,1); %Maximum leaf travel speed (mm/s)
+    cl_lfspd = apertureInfo.propVMAT.constraints.leafSpeed(1)*ones(2*(numel(optInd)-1)*apertureInfo.beam(1).numOfActiveLeafPairs,1); %Minimum leaf travel speed (mm/s)
+    cu_lfspd = apertureInfo.propVMAT.constraints.leafSpeed(2)*ones(2*(numel(optInd)-1)*apertureInfo.beam(1).numOfActiveLeafPairs,1); %Maximum leaf travel speed (mm/s)
     %apertureInfo.beam(i).numOfActiveLeafPairs should be independent of i, due to using the union of all ray positions in the stf
     %Convert from cm/deg when checking constraints; cannot do it at this stage since gantry rotation speed is not hard-coded
 end
-cl_dosrt = machine.constraints.monitorUnitRate(1)*ones(numel(optInd),1); %Minimum MU/sec
-cu_dosrt = machine.constraints.monitorUnitRate(2)*ones(numel(optInd),1); %Maximum MU/sec
+cl_dosrt = apertureInfo.propVMAT.constraints.monitorUnitRate(1)*ones(numel(optInd),1); %Minimum MU/sec
+cu_dosrt = apertureInfo.propVMAT.constraints.monitorUnitRate(2)*ones(numel(optInd),1); %Maximum MU/sec
 
 % concatenate
 cl = [cl_dos_dao; cl_lfspd; cl_dosrt];

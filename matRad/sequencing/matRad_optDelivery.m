@@ -41,19 +41,10 @@ end
 
 apertureInfo = result.apertureInfo;
 
-fileName = apertureInfo.propVMAT.machineConstraintFile;
-try
-    load(fileName,'machine');
-catch
-    error(['Could not find the following machine file: ' fileName ]);
-end
-
-
-
 %calculate max leaf speed
 apertureInfo = matRad_maxLeafSpeed(apertureInfo);
 
-doInterp = 0;
+doInterp = false;
 
 for i = 1:size(apertureInfo.beam,2)
     if apertureInfo.propVMAT.beam(i).DAOBeam
@@ -62,9 +53,9 @@ for i = 1:size(apertureInfo.beam,2)
         %constraints
         
         %if one of them is less than 1, then a constraint is violated
-        factorMURate    = machine.constraints.monitorUnitRate(2)/apertureInfo.beam(i).shape(1).MURate;
-        factorLeafSpeed = machine.constraints.leafSpeed(2)/apertureInfo.beam(i).maxLeafSpeed;
-        factorGantryRot = machine.constraints.gantryRotationSpeed(2)/apertureInfo.beam(i).gantryRot;
+        factorMURate    = apertureInfo.propVMAT.constraints.monitorUnitRate(2)/apertureInfo.beam(i).shape(1).MURate;
+        factorLeafSpeed = apertureInfo.propVMAT.constraints.leafSpeed(2)/apertureInfo.beam(i).maxLeafSpeed;
+        factorGantryRot = apertureInfo.propVMAT.constraints.gantryRotationSpeed(2)/apertureInfo.beam(i).gantryRot;
         
         %The constraint that is limiting the speed the most is the one
         %whose factor is closest to 1
@@ -83,13 +74,13 @@ for i = 1:size(apertureInfo.beam,2)
         apertureInfo.beam(i).gantryRot = factor*apertureInfo.beam(i).gantryRot;
         apertureInfo.beam(i).time = apertureInfo.beam(i).time/factor;
         
-        factorMURate = machine.constraints.monitorUnitRate(1)/apertureInfo.beam(i).shape(1).MURate;
+        factorMURate = apertureInfo.propVMAT.constraints.monitorUnitRate(1)/apertureInfo.beam(i).shape(1).MURate;
         
         if factorMURate > 1
             apertureInfo.beam(i).shape(1).MURate = factorMURate*apertureInfo.beam(i).shape(1).MURate;
             apertureInfo.beam(i).shape(1).weight = factorMURate*apertureInfo.beam(i).shape(1).weight;
             
-            doInterp = 1;
+            doInterp = true;
         end
     end
 end
@@ -102,6 +93,11 @@ end
 %redo interpolation
 apertureInfo = matRad_OptimizationProblemVMAT.matRad_daoVec2ApertureInfo(apertureInfo,apertureInfo.apertureVector);
 
+% doInterp is set to true if, during the previous step, the dose rate
+% somehow was lower than the minimum dose rate. This can happen if the
+% gantry speed has to go low enough to accomodate a slowly-moving leaf. In
+% this case, the weight has to increase to bring the dose rate above the
+% minimum threshold. If this is done, the bixel weights will be different.
 if doInterp
     fprintf('\n\nWE ARE REDOING INTERPOLATION\n\n');
 else

@@ -34,7 +34,7 @@ apertureInfoVec = apertureInfo.apertureVector;
 timeDAOBorderAngles = apertureInfoVec(1+(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2):end);
 
 % find values of leaf speeds of optimized gantry angles
-if apertureInfo.propVMAT.continuousAperture
+if apertureInfo.continuousAperture
     % Using the dynamic fluence calculation, we have the leaf positions in
     % the vector be the leaf positions at the borders of the Dij arcs (for optimized angles only).
     % Therefore we must also use the times between the borders of the Dij
@@ -151,7 +151,7 @@ l = 1;
 maxMaxLeafSpeed = 0;
 for i = 1:size(apertureInfo.beam,2)
     if apertureInfo.propVMAT.beam(i).DAOBeam
-        if apertureInfo.propVMAT.continuousAperture
+        if apertureInfo.continuousAperture
             % for dynamic, we take the max leaf speed to be the actual leaf
             % speed
             ind = apertureInfo.propVMAT.beam(i).timeFacInd(apertureInfo.propVMAT.beam(i).timeFac ~= 0);

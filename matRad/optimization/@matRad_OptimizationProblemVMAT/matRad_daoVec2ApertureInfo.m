@@ -64,7 +64,7 @@ else
     
     % options for bixel and Jacobian calculation
     mlcOptions.bixelWidth = apertureInfo.bixelWidth;
-    calcOptions.continuousAperture = updatedInfo.propVMAT.continuousAperture;
+    calcOptions.continuousAperture = updatedInfo.continuousAperture;
     vectorIndices.totalNumOfShapes = apertureInfo.totalNumOfShapes;
 end
 
@@ -179,7 +179,7 @@ for i = 1:numel(updatedInfo.beam)
                 updatedInfo.beam(i).shape(j).MURate = updatedInfo.beam(i).shape(j).MU./updatedInfo.beam(i).time;
             end
             
-            if ~updatedInfo.runVMAT || ~updatedInfo.propVMAT.continuousAperture
+            if ~updatedInfo.runVMAT || ~updatedInfo.continuousAperture
                 % extract left and right leaf positions from shape vector
                 vectorIx_L = updatedInfo.beam(i).shape(j).vectorOffset + ((1:n)-1);
                 vectorIx_R = vectorIx_L+apertureInfo.totalNumOfLeafPairs;
@@ -225,7 +225,7 @@ for i = 1:numel(updatedInfo.beam)
             updatedInfo.beam(i).shape(j).MU = updatedInfo.beam(i).shape(j).MURate.*updatedInfo.beam(i).time;
             updatedInfo.beam(i).shape(j).weight = updatedInfo.beam(i).shape(j).MU./updatedInfo.weightToMU;
             
-            if ~updatedInfo.propVMAT.continuousAperture
+            if ~updatedInfo.continuousAperture
                 
                 fracFromLastOpt = updatedInfo.propVMAT.beam(i).fracFromLastDAO;
                 fracFromLastOptI = updatedInfo.propVMAT.beam(i).fracFromLastDAO*ones(n,1);
@@ -380,7 +380,7 @@ for i = 1:numel(updatedInfo.beam)
                 variables.jacobiScale = updatedInfo.beam(i).shape(1).jacobiScale;
                 
                 vectorIndices.DAOindex      = updatedInfo.propVMAT.beam(i).DAOIndex;
-                if updatedInfo.propVMAT.continuousAperture
+                if updatedInfo.continuousAperture
                     vectorIndices.vectorIx_LI   = updatedInfo.beam(i).shape(j).vectorOffset(1) + ((1:n)-1);
                     vectorIndices.vectorIx_LF   = updatedInfo.beam(i).shape(j).vectorOffset(2) + ((1:n)-1);
                     vectorIndices.vectorIx_RI   = vectorIndices.vectorIx_LI+apertureInfo.totalNumOfLeafPairs;
@@ -423,7 +423,7 @@ for i = 1:numel(updatedInfo.beam)
                 vectorIndices.tIx_last      = (apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2)+updatedInfo.propVMAT.beam(updatedInfo.propVMAT.beam(i).lastDAOIndex).DAOIndex;
                 vectorIndices.tIx_next      = (apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2)+updatedInfo.propVMAT.beam(updatedInfo.propVMAT.beam(i).nextDAOIndex).DAOIndex;
                 
-                if updatedInfo.propVMAT.continuousAperture
+                if updatedInfo.continuousAperture
                     vectorIndices.vectorIx_LF_last  = updatedInfo.beam(updatedInfo.propVMAT.beam(i).lastDAOIndex).shape(j).vectorOffset(2) + ((1:n)-1);
                     vectorIndices.vectorIx_LI_next  = updatedInfo.beam(updatedInfo.propVMAT.beam(i).nextDAOIndex).shape(j).vectorOffset(1) + ((1:n)-1);
                     vectorIndices.vectorIx_RF_last  = vectorIndices.vectorIx_LF_last+apertureInfo.totalNumOfLeafPairs;

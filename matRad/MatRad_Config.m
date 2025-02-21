@@ -321,12 +321,12 @@ classdef MatRad_Config < handle
                 if ispc
                     light = logical(winqueryreg('HKEY_CURRENT_USER','Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize','AppsUseLightTheme'));
                 elseif ismac
-                    out = system('defaults read -g AppleInterfaceStyle');
-                    if ~strcmp(out,'Dark')
+                    [~,out] = system('defaults read -g AppleInterfaceStyle');
+                    if ~strcmp(out(1:end-1),'Dark')
                         light = true;
                     end
                 else
-                    out = system('gsettings get org.gnome.desktop.interface color-scheme');
+                    [~,out] = system('gsettings get org.gnome.desktop.interface color-scheme');
                     if strcmp(out,'prefer-light')
                         light = true;
                     end

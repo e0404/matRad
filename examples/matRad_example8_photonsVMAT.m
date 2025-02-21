@@ -24,60 +24,58 @@
 % (vii) how to visually and quantitatively evaluate the result
 
 %% Patient Data Import
-% Let's begin with a clear Matlab environment and import the head &
-% neck patient into your workspace.
+% Let's begin with a clear Matlab environment and import the TG119 patient
+% into your workspace
 matRad_rc
 
-load('HEAD_AND_NECK.mat');
+load TG119.mat
 
 %% Treatment Plan
 % The next step is to define your treatment plan labeled as 'pln'. This 
 % structure requires input from the treatment planner and defines 
 % the most important cornerstones of your treatment plan.
 
-pln.radiationMode   = 'photons';   % either photons / protons / carbon
-pln.machine         = 'Generic';
-
+% meta information for treatment plan
 pln.numOfFractions  = 30;
+pln.radiationMode   = 'photons';            % either photons / protons / helium / carbon / brachy
+pln.machine         = 'Generic';            % generic for RT / LDR or HDR for BT
+
+pln.bioModel = 'none';      % none: for photons, protons, carbon, brachy    % constRBE: constant RBE for photons and protons 
+                            % MCN: McNamara-variable RBE model for protons  % WED: Wedenberg-variable RBE model for protons 
+                            % LEM: Local Effect Model for carbon ions       % HEL: data-driven RBE parametrization for helium
+
+pln.multScen = 'nomScen';   % scenario creation type 'nomScen'  'wcScen' 'impScen' 'rndScen'         
 
 % beam geometry settings
-pln.propStf.bixelWidth = 5;
+pln.propStf.bixelWidth      = 5;            % [mm] / also corresponds to lateral spot spacing for particles
+pln.propStf.maxGantryAngleSpacing    = 30;   % [°] / max gantry angle spacing for dose calculation
+pln.propStf.maxDAOGantryAngleSpacing = 60;  % [°] / max gantry angle spacing for DAO
+pln.propStf.maxFMOGantryAngleSpacing = 180;  % [°] / max gantry angle spacing for FMO
+pln.propStf.startingAngle = -180;           % [°] / starting angle for VMAT
+pln.propStf.finishingAngle = 180;           % [°] / finishing angle for VMAT
+pln.propStf.couchAngle      = 0;            % [°]
+pln.propStf.isoCenter       = matRad_getIsoCenter(cst,ct,0);
+pln.propStf.generator       = 'PhotonVMAT';
+pln.propStf.continuousAperture  = false;
 
-% optimization settings
-pln.propOpt.bioOptimization = 'none';
-pln.propOpt.runVMAT         = true;
-pln.propOpt.runDAO          = true;
-pln.propOpt.runSequencing   = true;
-pln.propOpt.preconditioner  = true;
-pln.propOpt.numLevels       = 7;
- 
-pln.propOpt.VMAToptions.machineConstraintFile = [pln.radiationMode '_' pln.machine];
-
-pln.propOpt.VMAToptions.maxGantryAngleSpacing    = 2;      % Max gantry angle spacing for dose calculation
-pln.propOpt.VMAToptions.maxDAOGantryAngleSpacing = 4;      % Max gantry angle spacing for DAO
-pln.propOpt.VMAToptions.maxFMOGantryAngleSpacing = 28;     % Max gantry angle spacing for FMO
-
-pln.propOpt.VMAToptions.startingAngle = 0;
-pln.propOpt.VMAToptions.finishingAngle = 359;
-pln.propOpt.VMAToptions.continuousAperture = 0;
-
+% dose calculation settings
 pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]
 pln.propDoseCalc.doseGrid.resolution.y = 5; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
 
-%%
-% Generate dose calculation, DAO, and FMO angles from the parameters input
-% above. FMO is performed only on the initGantryAngles set. In the DAO
-% step, weights and leaf positions are optimized at the angles in the
-% optGantryAngles set. Weights and leaf positions are interpolated at the
-% angles in the gantryAngles set to increase the accuracy of the dose
-% calculation (each iteration).
+% sequencing settings
+pln.propSeq.runSequencing   = true;  % true: run sequencing, false: don't / will be ignored for particles and also triggered by runDAO below
+pln.propSeq.sequencer       = 'siochi';
+pln.propSeq.numLevels       = 7;
 
-% FMO: optimize fluence on coarse subset of gantry angles
-% Sequencing: select subset of apertures and spread to finer angles
-% DAO: constrain for leaf speed, gantry rotation speed and MU rate
+% optimization settings
+pln.propOpt.quantityOpt         = 'physicalDose';   % Quantity to optimizer (could also be RBExDose, BED, effect)
+pln.propOpt.optimizer           = 'IPOPT';          % We can also utilize 'fmincon' from Matlab's optimization toolbox
+pln.propOpt.runDAO              = true;             % 1/true: run DAO, 0/false: don't / will be ignored for particles
+pln.propOpt.runVMAT             = true;
+pln.propOpt.preconditioner      = true;
 
-pln = matRad_VMATGantryAngles(pln,cst,ct);
+%pln.propOpt.VMAToptions.machineConstraintFile = [pln.radiationMode '_' pln.machine];
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
@@ -86,14 +84,14 @@ stf = matRad_generateStf(ct,cst,pln);
 % Lets generate dosimetric information by pre-computing dose influence 
 % matrices for unit beamlet intensities. Having dose influences available 
 % allows for subsequent inverse optimization.
-dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+dij = matRad_calcDoseInfluence(ct, cst, stf, pln);
 
 %% Inverse Planning for IMRT
 % The goal of the fluence optimization is to find a set of beamlet weights 
 % which yield the best possible dose distribution according to the 
 % predefined clinical objectives and constraints underlying the radiation 
 % treatment. In VMAT, FMO is done only at the angles in the
-% initGantryAngles set. Once the optimization has finished, trigger once the GUI to
+% FMOGantryAngles set. Once the optimization has finished, trigger once the GUI to
 % visualize the optimized dose cubes.
 resultGUI = matRad_fluenceOptimization(dij,cst,pln,stf);
 matRadGUI;
@@ -105,7 +103,7 @@ matRadGUI;
 % aperture shapes. The fluence map at each angle in the initGantryAngles
 % set is sequenced, with the resulting apertures spread to neighbouring
 % angles from the optGantryAngles set.
-resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln,0);
+resultGUI = matRad_sequencing(resultGUI,stf,dij,pln);
 
 %% DAO - Direct Aperture Optimization
 % The Direct Aperture Optimization is an optimization approach where we 
@@ -119,6 +117,9 @@ resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,res
 matRad_visApertureInfo(resultGUI.apertureInfo);
 
 %% Indicator Calculation and display of DVH and QI
-[dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI);
-matRad_showDVH(dvh,cst,pln);
+resultGUI = matRad_planAnalysis(resultGUI,ct,cst,stf,pln);
+
+%% Calculate delivery metrics
+
+resultGUI = matRad_calcDeliveryMetrics(resultGUI,pln,stf);
 

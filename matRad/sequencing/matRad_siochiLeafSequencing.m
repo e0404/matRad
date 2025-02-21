@@ -44,6 +44,8 @@ function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln,visBool)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+
 % if visBool not set toogle off visualization
 if nargin < 5
     visBool = 0;
@@ -137,7 +139,6 @@ for i = 1:numOfBeams
     %Save weights in fluence matrix.
     fluenceMx(indInFluenceMx) = wOfCurrBeams;
     
-    
     if matRad_cfg.isMatlab && license('test','image_toolbox')   
         temp = zeros(size(fluenceMx));
         for row = 1:dimOfFluenceMxZ
@@ -151,7 +152,7 @@ for i = 1:numOfBeams
     %allow for possibility to repeat sequencing with higher number of
     %levels if number of apertures is lower than required
     notFinished = 1;
-    numOfLevels = pln.propOpt.numLevels;
+    numOfLevels = pln.propSeq.numLevels;
     
     while notFinished
         % Keep looping until we have at least as many apertures as

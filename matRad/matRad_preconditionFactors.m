@@ -36,6 +36,9 @@ function apertureInfo = matRad_preconditionFactors(apertureInfo)
 % given by the dividing the mean of the actual aperture weights by the
 % bixel width.  This factor will divide all of the aperture weights.
 
+% TODO: could probably integrate dijScaleFactor into jacobiScale. These
+% were originally separated for research purposes. It would greatly
+% simplify the code to have them all together.
 dijScaleFactor = mean(apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes)./apertureInfo.jacobiScale)/(apertureInfo.bixelWidth);
 
 for i = 1:numel(apertureInfo.beam)

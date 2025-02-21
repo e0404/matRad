@@ -51,7 +51,7 @@ rightLeafPos = apertureInfoVec((1+apertureInfo.totalNumOfLeafPairs+apertureInfo.
 timeDAOBorderAngles = apertureInfoVec(((apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2)+1):end);
 timeDoseBorderAngles = timeDAOBorderAngles.*[apertureInfo.propVMAT.beam([apertureInfo.propVMAT.beam.DAOBeam]).timeFacCurr]';
 
-if apertureInfo.propVMAT.continuousAperture
+if apertureInfo.continuousAperture
     % Using the dynamic fluence calculation, we have the leaf positions in
     % the vector be the leaf positions at the borders of the Dij arcs (for optimized angles only).
     % Therefore we must also use the times between the borders of the Dij

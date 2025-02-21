@@ -35,12 +35,7 @@ apertureInfo = result.apertureInfo;
 l = 0;
 if pln.propOpt.runVMAT
     
-    fileName = apertureInfo.propVMAT.machineConstraintFile;
-    try
-        load(fileName,'machine');
-    catch
-        error(['Could not find the following machine file: ' fileName ]);
-    end
+    machine = matRad_loadMachine(pln);
     
     apertureInfo.planMU     = 0;
     apertureInfo.planTime   = 0;
@@ -48,11 +43,11 @@ if pln.propOpt.runVMAT
     %All of these are vectors
     %Each entry corresponds to a beam angle
     %Later, we will convert these to histograms, find max, mean, min, etc.
-    gantryRot = zeros(1,size(pln.propStf.DAOGantryAngles,2)-1);
+    gantryRot = zeros(1,result.apertureInfo.totalNumOfShapes);
     MURate = gantryRot;
     times = gantryRot;
     angles = gantryRot;
-    maxLeafSpeed = 0*pln.propStf.DAOGantryAngles;
+    maxLeafSpeed = gantryRot;
     
     for i = 1:size(apertureInfo.beam,2)
         
@@ -71,7 +66,7 @@ if pln.propOpt.runVMAT
     
     
     apertureInfoVec = apertureInfo.apertureVector;
-    if pln.propOpt.VMAToptions.continuousAperture
+    if pln.propStf.continuousAperture
         leftLeafPos  = apertureInfoVec([1:apertureInfo.totalNumOfLeafPairs]+apertureInfo.totalNumOfShapes);
         rightLeafPos = apertureInfoVec(1+apertureInfo.totalNumOfLeafPairs+apertureInfo.totalNumOfShapes:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2);
         
@@ -114,11 +109,11 @@ if pln.propOpt.runVMAT
             repmat(timeBNOptAngles',apertureInfo.beam(1).numOfActiveLeafPairs,2),2*apertureInfo.beam(1).numOfActiveLeafPairs*numel(timeBNOptAngles),1);
     end
     
-    if pln.propOpt.VMAToptions.continuousAperture
+    if pln.propStf.continuousAperture
         
-        FMOBorders = zeros(1,2*numel(pln.propStf.FMOGantryAngles));
+        %FMOBorders = zeros(1,2*numel(pln.propStf.FMOGantryAngles));
         counter = 1;
-        for i = 1:numel(pln.propStf.gantryAngles)
+        for i = 1:numel(stf)
             if stf(i).propVMAT.FMOBeam
                 FMOBorders(counter) = stf(i).propVMAT.FMOAngleBorders(1);
                 FMOBorders(counter+1) = stf(i).propVMAT.FMOAngleBorders(2);

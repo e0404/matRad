@@ -66,7 +66,7 @@ end
 for i = 1:size(apertureInfo.beam,2)
     for j = 1:apertureInfo.beam(i).numOfShapes
         
-        if ~apertureInfo.runVMAT || ~apertureInfo.propVMAT.continuousAperture
+        if ~apertureInfo.runVMAT || ~apertureInfo.continuousAperture
             
             apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]) = apertureInfo.beam(i).shape(j).leftLeafPos;
             apertureInfoVec(offset+[1:apertureInfo.beam(i).numOfActiveLeafPairs]+apertureInfo.totalNumOfLeafPairs) = apertureInfo.beam(i).shape(j).rightLeafPos;
@@ -120,15 +120,9 @@ if nargout > 1
         for j = 1:apertureInfo.beam(i).numOfShapes
             mappingMx(counter,1) = i;
             if apertureInfo.runVMAT
-                fileName = apertureInfo.propVMAT.machineConstraintFile;
-                try
-                    load(fileName,'machine');
-                catch
-                    error(['Could not find the following machine file: ' fileName ]);
-                end
                 
-                timeLimL = diff(apertureInfo.propVMAT.beam(i).DAOAngleBorders)/machine.constraints.gantryRotationSpeed(2); %Minimum time interval between two optimized beams/gantry angles
-                timeLimU = diff(apertureInfo.propVMAT.beam(i).DAOAngleBorders)/machine.constraints.gantryRotationSpeed(1); %Maximum time interval between two optimized beams/gantry angles
+                timeLimL = diff(apertureInfo.propVMAT.beam(i).DAOAngleBorders)/apertureInfo.propVMAT.constraints.gantryRotationSpeed(2); %Minimum time interval between two optimized beams/gantry angles
+                timeLimU = diff(apertureInfo.propVMAT.beam(i).DAOAngleBorders)/apertureInfo.propVMAT.constraints.gantryRotationSpeed(1); %Maximum time interval between two optimized beams/gantry angles
                 
                 mappingMx(counter+(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2),1) = i;
                 limMx(counter+(apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2),:) = [timeLimL timeLimU];
@@ -150,7 +144,7 @@ if nargout > 1
                 limMx(counter,2)     = apertureInfo.beam(i).lim_r(k);
                 counter = counter + 1;
                 
-                if apertureInfo.runVMAT && apertureInfo.propVMAT.continuousAperture && nnz(apertureInfo.propVMAT.beam(i).doseAngleDAO) == 2
+                if apertureInfo.runVMAT && apertureInfo.continuousAperture && nnz(apertureInfo.propVMAT.beam(i).doseAngleDAO) == 2
                     %redo for initial and final leaf positions
                     %might have to revisit this after looking at gradient,
                     %esp. mappingMx(counter,2)

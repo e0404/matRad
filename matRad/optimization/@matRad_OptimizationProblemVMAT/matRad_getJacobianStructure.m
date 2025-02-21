@@ -74,7 +74,7 @@ j_sparse = repmat(j_sparse,1,numOfConstraints);
 jacobStructSparseVec = zeros(numOfConstraints*numel(apertureInfo.apertureVector),1);
 
 offset = 1;
-if apertureInfo.runVMAT && apertureInfo.propVMAT.continuousAperture
+if apertureInfo.runVMAT && apertureInfo.continuousAperture
     repFactor = 2;
 else
     repFactor = 1;
@@ -173,7 +173,7 @@ end
 
 jacobStruct_dos_dao = [jacobStruct_dos; jacobStruct_dao];
     
-if apertureInfo.propVMAT.continuousAperture
+if apertureInfo.continuousAperture
     % set up
     n = apertureInfo.beam(1).numOfActiveLeafPairs;
     indInSparseVec  = (1:n);
