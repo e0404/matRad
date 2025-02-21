@@ -1,0 +1,154 @@
+classdef matRad_StfGeneratorParticleVHEE < matRad_StfGeneratorParticleRayBixelAbstract
+% matRad_ParticleStfGenerator: Abstract Superclass for Steering information 
+%   generators. Steering information is used to guide the dose calculation
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2024 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    properties (Constant)
+        name = 'Particle VHEE stf Generator';
+        shortName = 'ParticleVHEE';
+        possibleRadiationModes = {'VHEE'};
+    end 
+
+    properties
+        longitudinalSpotSpacing;
+        energy;
+    end
+
+    methods 
+        function this = matRad_StfGeneratorParticleVHEE(pln)
+            if nargin < 1
+                pln = [];
+            end
+            this@matRad_StfGeneratorParticleRayBixelAbstract(pln);
+            
+            % If plan has no specified radiationMode, set it to 'vhee'
+            if isempty(this.radiationMode)
+                this.radiationMode = 'VHEE';
+            end
+         end
+    end
+
+
+    methods (Access = protected)
+
+        function beam = initBeamData(this, beam)
+            % Initialize beam data from the superclass, then handle single-energy logic
+            beam = initBeamData@matRad_StfGeneratorParticleRayBixelAbstract(this, beam);
+            % If user doesn't specify an energy, default to 200 MeV
+            if isempty(this.energy)
+                beam.VHEEenergy = 200;  % Default
+            else
+                beam.VHEEenergy = this.energy;
+            end
+            % Optional: check if that energy is in the machine data
+            if isfield(this.machine.data,'energies') && ~isempty(this.machine.data.energies)
+                if ~ismember(beam.VHEEenergy, this.machine.data.energies)
+                    error(['The specified VHEE energy (',num2str(beam.VHEEenergy), ...
+                           ' MeV) is not found in machine.data.energies!']);
+                end
+            end
+        end
+
+        function beam = setBeamletEnergies(this,beam) 
+            %Assigns defined particle machine energy from plan to all rays
+            
+            isoCenterInCubeCoords = matRad_world2cubeCoords(beam.isoCenter,this.ct);
+
+            if isfield(this.machine.meta,'LUT_bxWidthminFWHM')
+                LUTspotSize = this.machine.meta.LUT_bxWidthminFWHM;
+            else
+                LUTspotSize = this.machine.meta.LUTspotSize;
+            end
+            
+            beam.numOfBixelsPerRay = zeros(1,beam.numOfRays);
+            beam.numOfRays = numel(beam.ray);
+            for j = beam.numOfRays:-1:1
+
+                %fix the energy for all rays for VHEE
+                beam.ray(j).focusIx = 1;
+                
+                beam.ray(j).energy = beam.VHEEenergy;
+                beam.ray(j).rangeShifter.ID = 0;
+                beam.ray(j).rangeShifter.eqThickness = 0;
+                beam.ray(j).rangeShifter.sourceRashiDistance = 0;
+              
+                beam.numOfBixelsPerRay(j) = 1;
+            end
+        end
+
+        function  beam = finalizeBeam(this,beam)
+
+            % get minimum energy per field
+            minEnergy = min([beam.ray.energy]);
+            maxEnergy = max([beam.ray.energy]);
+
+
+
+            for j = beam.numOfRays:-1:1
+                for k = beam.numOfBixelsPerRay(j):-1:1
+                    maskEnergy = beam.ray(j).energy(k) == beam.VHEEenergy;
+                end
+                if isempty(beam.ray(j).energy)
+                    beam.ray(j) = [];
+                    beam.numOfBixelsPerRay(j) = [];
+                    beam.numOfRays = beam.numOfRays - 1;
+                end
+            end
+            beam = this.finalizeBeam@matRad_StfGeneratorParticleRayBixelAbstract(beam);
+        end
+    end
+
+    methods (Static)
+        function [available,msg] = isAvailable(pln,machine)
+            % see superclass for information            
+                   
+            if nargin < 2
+                machine = matRad_loadMachine(pln);
+            end
+
+            % Check superclass availability
+            [available,msg] = matRad_StfGeneratorParticleRayBixelAbstract.isAvailable(pln,machine);
+
+            if ~available
+                return;
+            else
+                available = false;
+                msg = [];
+            end
+    
+            %checkBasic
+            try    
+                %check modality
+                checkModality = any(strcmp(matRad_StfGeneratorParticleVHEE.possibleRadiationModes, machine.meta.radiationMode)) && any(strcmp(matRad_StfGeneratorParticleVHEE.possibleRadiationModes, pln.radiationMode));
+                
+                %Sanity check compatibility
+                if checkModality
+                    checkModality = strcmp(machine.meta.radiationMode,pln.radiationMode);
+                end
+    
+                preCheck = checkModality;
+    
+                if ~preCheck
+                    return;
+                end
+            catch
+                msg = 'Your machine file is invalid and does not contain the basic field (meta/data/radiationMode)!';
+                return;
+            end
+                   
+            available = preCheck;
+        end
+    end
+end

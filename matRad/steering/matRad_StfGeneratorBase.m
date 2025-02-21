@@ -337,13 +337,9 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
     end
 
     methods (Static)
-        function generator = getGeneratorFromPln(pln, warnDefault)
+        function generator = getGeneratorFromPln(pln)
             %GETENGINE Summary of this function goes here
             %   Detailed explanation goes here
-
-            if nargin < 2
-                warnDefault = true;
-            end
 
             matRad_cfg = MatRad_Config.instance();
 
@@ -388,9 +384,7 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
                         generatorHandle = generatorHandle{1};
                     end
                     generator = generatorHandle(pln);
-                    if warnDefault
-                        matRad_cfg.dispWarning('Using default stf generator %s!', generator.name);
-                    end
+                    matRad_cfg.dispWarning('Using default stf generator %s!', generator.name);
                 elseif ~isempty(classList)
                     generatorHandle = classList(1).handle;
                     generator = generatorHandle(pln);
@@ -445,14 +439,7 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
 
             %Get available, valid classes through call to matRad helper function
             %for finding subclasses
-            persistent allAvailableStfGenerators lastOptionalPaths
-            if isempty(allAvailableStfGenerators) || (~isempty(lastOptionalPaths) && ~isequal(lastOptionalPaths, optionalPaths))
-                lastOptionalPaths = optionalPaths;
-                allAvailableStfGenerators = matRad_findSubclasses(mfilename('class'),'folders',optionalPaths,'includeAbstract',false);
-            end
-
-            availableStfGenerators = allAvailableStfGenerators;
-
+            availableStfGenerators = matRad_findSubclasses(mfilename('class'),'folders',optionalPaths,'includeAbstract',false);
             %Now filter for pln
             ix = [];
 
@@ -467,7 +454,6 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
                     try
                         %available = availabilityFunc(pln,machine);
                         available = eval([availabilityFuncStr '(pln,machine)']);
-                        available{1}
                     catch
                         available = false;
                         mpList = mc.PropertyList;
@@ -485,7 +471,6 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
                             % radiation mode is compatible
                             if(any(strcmp(propValue, machineMode)))
                                 available = true;
-
                             end
                         end
                     end
@@ -498,7 +483,6 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
             end
 
             classList = matRad_identifyClassesByConstantProperties(availableStfGenerators,'shortName','defaults',matRad_cfg.defaults.propStf.generator,'additionalPropertyNames',{'name'});
-
         end
 
         function [available,msg] = isAvailable(pln,machine)

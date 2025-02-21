@@ -201,7 +201,8 @@ classdef MatRad_Config < handle
             obj.defaults.machine.carbon     = 'Generic';
             obj.defaults.machine.brachy     = 'HDR';
             obj.defaults.machine.fallback   = 'Generic';
-            obj.defaults.machine.vhee   = 'FermiEyges';
+            obj.defaults.machine.VHEE       = 'FermiEyges';
+
 
             %Default Bio Model
             obj.defaults.bioModel.photons   = 'none';
@@ -210,7 +211,8 @@ classdef MatRad_Config < handle
             obj.defaults.bioModel.carbon    = 'LEM';
             obj.defaults.bioModel.brachy    = 'none';
             obj.defaults.bioModel.fallback  = 'none';
-            
+            obj.defaults.bioModel.VHEE      = 'none';
+
             %Default Steering/Geometry Properties
             obj.defaults.propStf.generator = {'PhotonIMRT','ParticleIMPT','SimpleBrachy','ParticleVHEE'};
             obj.defaults.propStf.longitudinalSpotSpacing = 2;

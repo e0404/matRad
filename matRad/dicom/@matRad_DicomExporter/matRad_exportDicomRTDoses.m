@@ -44,11 +44,14 @@ meta.FrameOfReferenceUID = obj.FrameOfReferenceUID;
 
 meta.Modality = 'RTDOSE';
 meta.Manufacturer = '';
+meta.DoseUnits = 'GY';
 
 %Reference
 %ID of the CT
 meta.StudyInstanceUID = obj.StudyInstanceUID;
 meta.StudyID = obj.StudyID; 
+
+
 
 %Dates & Times
 currDate = now;
@@ -96,11 +99,10 @@ meta.NumberOfFrames = ct.cubeDim(3);
 meta.GridFrameOffsetVector = transpose(ct.z - ct.z(1));
 
 %Referenced Plan
-%This does currently not work well due to how Matlab creates UIDs by
-%itself, we can not know the reference before it is written by the 
-%RTPlanExport, which itself needs the RTDose UIDs.
-%However, we need to set the ReferencedRTPlanSequence, because it is a
-%conditionally required field according to the DICOM standard
+%This does currently not work due to how Matlab creates UIDs by itself,
+%we can not know the reference before it is written by the RTPlanExport,
+%which itself needs the RTDose UIDs
+%{
 try
     rtPlanUID = obj.rtPlanMeta.SOPInstanceUID;   
 catch
@@ -109,34 +111,38 @@ catch
     obj.rtPlanMeta.SOPClassUID = obj.rtPlanClassUID;
     rtPlanUID = obj.rtPlanMeta.SOPInstanceUID;
 end
-   
-meta.ReferencedRTPlanSequence.Item_1.ReferencedSOPClassUID = obj.rtPlanClassUID;
-meta.ReferencedRTPlanSequence.Item_1.ReferencedSOPInstanceUID = rtPlanUID;
+%}
 
-doseFieldNames = cell(0);
-fn = fieldnames(obj.resultGUI);
-for i = 1:numel(fn)
-    if numel(size(obj.resultGUI.(fn{i}))) == 3
-        doseFieldNames{end+1} = fn{i};
+    
+%meta.ReferencedRTPlanSequence.Item_1.ReferencedSOPClassUID = obj.rtPlanClassUID;
+%meta.ReferencedRTPlanSequence.Item_1.ReferencedSOPInstanceUID = rtPlanUID;
+
+if nargin < 4 || isempty(doseFieldNames)
+    doseFieldNames = cell(0);
+    fn = fieldnames(obj.resultGUI);
+    for i = 1:numel(fn)
+        if numel(size(obj.resultGUI.(fn{i}))) == 3
+            doseFieldNames{end+1} = fn{i};
+        end
     end
 end
+
+
+
+
 
 obj.rtDoseMetas = struct([]);
 obj.rtDoseExportStatus = struct([]);
 
 for i = 1:numel(doseFieldNames)
-    doseName = doseFieldNames{i};    
-    doseUnits = 'GY';
+    doseName = doseFieldNames{i};
     
     %Now check if we export physical or RBE weighted dose, they are known
     %to dicom
-    if strncmp(doseName,'physicalDose',12) || strncmp(doseName,'LET',3)
+    if strncmp(doseName,'physicalDose',12)
         doseType = 'PHYSICAL';
-    elseif strncmp(doseName,'RBExDose',8) || strncmp(doseName,'BED',3) || strncmp(doseName,'alpha',3) || strncmp(doseName,'beta',3) || strncmp(doseName,'effect',6) || strncmp(doseName,'RBE',3)
+    elseif strncmp(doseName,'RBExDose',8)
         doseType = 'EFFECTIVE';
-        if strncmp(doseName,'RBE',3)
-            doseUnits = 'RELATIVE';
-        end
     else
         matRad_cfg.dispInfo('Dose Cube ''%s'' of unknown type for DICOM. Not exported!\n',doseName);
         continue;
@@ -168,8 +174,6 @@ for i = 1:numel(doseFieldNames)
     metaCube = meta;
     metaCube.DoseType = doseType;
     metaCube.DoseSummationType = deliveryType;
-    metaCube.DoseComment = doseName;
-    metaCube.DoseUnits = doseUnits;
        
     %ID of the RTDose
     metaCube.SeriesInstanceUID = dicomuid;    

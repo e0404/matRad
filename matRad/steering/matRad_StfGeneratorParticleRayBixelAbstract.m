@@ -37,8 +37,7 @@ classdef (Abstract) matRad_StfGeneratorParticleRayBixelAbstract < matRad_StfGene
             this@matRad_StfGeneratorExternalRayBixelAbstract(pln);
 
             if isempty(this.radiationMode)
-                %this.radiationMode = 'protons'
-                this.radiationMode = {'protons','vhee'};
+                this.radiationMode = 'protons';
             end
         end
 
@@ -54,7 +53,11 @@ classdef (Abstract) matRad_StfGeneratorParticleRayBixelAbstract < matRad_StfGene
 
             %Initialize Metadata needed for stf generators
             this.availableEnergies  = [this.machine.data.energy];
-            this.availablePeakPos   = [this.machine.data.peakPos] + [this.machine.data.offset];
+            if isfield(this.machine.data, 'peakPos')
+                this.availablePeakPos   = [this.machine.data.peakPos] + [this.machine.data.offset];
+            else
+                this.availablePeakPos   = [];
+            end
             availableWidths         = [this.machine.data.initFocus];
             availableWidths         = [availableWidths.SisFWHMAtIso];
             this.maxPBwidth         = max(availableWidths) / 2.355;
@@ -94,9 +97,14 @@ classdef (Abstract) matRad_StfGeneratorParticleRayBixelAbstract < matRad_StfGene
             end
 
             available = available && isstruct(machine.data);
-
-            available = available && all(isfield(machine.data,{'energy','peakPos','initFocus','offset'}));
-
+            
+            if strcmp(machine.meta.radiationMode, 'VHEE')
+                available = available && isstruct(machine.data);
+                available = available && all(isfield(machine.data,{'energy','initFocus'}));
+            else
+                available = available && isstruct(machine.data);
+                available = available && all(isfield(machine.data,{'energy','peakPos','initFocus','offset'}));
+            end
 
             if ~available
                 msg = 'Your machine file is invalid and does not contain the basic fields required for photon machines!';

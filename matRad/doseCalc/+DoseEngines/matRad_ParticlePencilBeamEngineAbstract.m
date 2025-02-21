@@ -29,6 +29,8 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
         cutOffMethod = 'integral';      % or 'relative' - describes how to calculate the lateral dosimetric cutoff
 
         visBoolLateralCutOff = false;   % Boolean switch for visualization during+ LeteralCutOff calculation
+        
+        
     end
 
     properties (SetAccess = protected, GetAccess = public)
@@ -66,13 +68,20 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             fValidateMulti = @(bd) isfield(bd,'sigmaMulti') && isfield(bd,'weightMulti') && ~isempty(bd.sigmaMulti) && ~isempty(bd.weightMulti);
             fValidateDouble = @(bd) isfield(bd,'sigma1') && isfield(bd,'sigma2') && isfield(bd,'weight') && ~isempty(bd.sigma1) && ~isempty(bd.sigma2) && ~isempty(bd.weight);
             fValidateSingle = @(bd) isfield(bd,'sigma') && ~isempty(bd.sigma);
-            
+            fValidateFocused = @(bd) isfield(bd,'sigmaXY') && ~isempty(bd.sigmaXY);
+
             matRad_cfg = MatRad_Config.instance();
 
             singleAvailable = all(arrayfun(fValidateSingle,this.machine.data));
             doubleAvailable = all(arrayfun(fValidateDouble,this.machine.data));
-            multiAvailable = all(arrayfun(fValidateMulti,this.machine.data));
-
+            multiAvailable  = all(arrayfun(fValidateMulti,this.machine.data));
+            FocusedAvailable = all(arrayfun(fValidateFocused,this.machine.data));
+%             if this.machine.meta.machine == 'FermiEyges'
+%                 doubleAvailable = 0;
+%                 FermiAvailable = 1;
+%             end
+            
+            
             matRad_cfg.dispInfo('''%s'' selected for lateral beam model, checking machine...\n',this.lateralModel);
 
             switch this.lateralModel
@@ -84,6 +93,11 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                 case 'double'
                     if ~doubleAvailable
                         matRad_cfg.dispWarning('Chosen Machine does not support a doubleGaussian Pencil-Beam model!');
+                        this.lateralModel = 'auto';
+                    end
+                case 'singleGaussXY'
+                    if ~multiAvailable
+                        matRad_cfg.dispWarning('Chosen Machine does not support a Focused Pencil-Beam model!');
                         this.lateralModel = 'auto';
                     end
                 case 'multi'
@@ -106,6 +120,8 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                     this.lateralModel = 'double';
                 elseif singleAvailable
                     this.lateralModel = 'single';
+                elseif FocusedAvailable
+                    this.lateralModel = 'singleGaussXY';
                 else
                     matRad_cfg.dispError('Invalid kernel model!');
                 end
@@ -118,6 +134,8 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                     this.lateralModel = 'double';
                 elseif multiAvailable
                     this.lateralModel = 'multi';
+                elseif FocusedAvailable
+                    this.lateralModel = 'singleGaussXY';
                 else
                     matRad_cfg.dispError('Invalid kernel model!');
                 end
@@ -227,6 +245,9 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                     X.sigma1 = baseData.sigma1;
                     X.sigma2 = baseData.sigma2;
                     X.weight = baseData.weight;
+                case 'singleGaussXY'
+                    X.sigmaX = baseData.sigmaXY(:,1);
+                    X.sigmaY = baseData.sigmaXY(:,2);
                 case 'multi'
                     X.weightMulti = baseData.weightMulti;
                     X.sigmaMulti = baseData.sigmaMulti;
@@ -247,7 +268,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                 X.LET = baseData.LET;
             end
 
-            X = structfun(@(v) matRad_interp1(depths,v,bixel.radDepths(:),'linear'),X,'UniformOutput',false); %Extrapolate to zero?
+            X = structfun(@(v) matRad_interp1(depths,v,bixel.radDepths(:),'nearest'),X,'UniformOutput',false); %Extrapolate to zero?
         end
 
         % We override this function to boost efficiency a bit (latDistX & Z
@@ -973,10 +994,9 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                     q{end+1} = 'beta';
                 end
             end
-            
-            if ~isempty(q{1}) && isfield(machine.data,'LET')
-                q{end+1} = 'LET';
-            end
+%             if ~isempty(q{1}) && isfield(machine.data,'LET')
+%                 q{end+1} = 'LET';
+%             end
         end
     end
 end

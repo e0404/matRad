@@ -62,24 +62,11 @@ for i = 1 : numDoseFiles
     else
         doseInstanceHelper = [];
     end
-
-    doseComment = '';
-    if isfield(dose.(itemName).dicomInfo,'DoseComment')
-        doseComment = dose.(itemName).dicomInfo.DoseComment;
-    end
-            
+    
     if strncmpi(doseTypeHelper,'PHYSICAL',6)
-        if any(strcmp(doseComment,{'physicalDose','LET'}))
-            doseTypeHelper = doseComment;
-        else
-            doseTypeHelper = 'physicalDose';
-        end
+        doseTypeHelper = 'physicalDose';
     elseif strncmpi(doseTypeHelper,'EFFECTIVE',6)
-        if any(strcmp(doseComment,{'RBExDose','BED','alpha','beta','effect','RBE'}))
-            doseTypeHelper = doseComment;
-        else
-            doseTypeHelper = 'RBExDose';
-        end
+        doseTypeHelper = 'RBExDose';
     end
     
     %If given as plan and not per fraction

@@ -102,9 +102,7 @@ obj.importRTDose.dose.dicomInfo.DoseSummationType       = doseInfo.DoseSummation
 %always given
 obj.importRTDose.dose.dicomInfo.SOPClassUID             = doseInfo.SOPClassUID;
 obj.importRTDose.dose.dicomInfo.SOPInstanceUID          = doseInfo.SOPInstanceUID;
-if isfield(doseInfo,'ReferencedRTPlanSequence')
-    obj.importRTDose.dose.dicomInfo.ReferencedRTPlanSequence = doseInfo.ReferencedRTPlanSequence;
-end
+obj.importRTDose.dose.dicomInfo.ReferencedRTPlanSequence = doseInfo.ReferencedRTPlanSequence;
 
 end
 

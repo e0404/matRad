@@ -246,9 +246,9 @@ if ~isempty(obj.allfiles)
     close(h)
     
     if ~isempty(obj.allfiles)
-        obj.patients = unique(obj.allfiles(:,3));
+        obj.patient = unique(obj.allfiles(:,3));
         
-        if isempty(obj.patients)
+        if isempty(obj.patient)
              matRad_cfg.dispError('No patient found with DICOM CT _and_ RT structure set in patient directory!');
         end
     else
