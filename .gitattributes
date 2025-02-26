@@ -8,3 +8,6 @@
 *.zip binary
 *.dll binary
 *.exe binary
+
+# Ensure .m files are never marked as executable
+*.m -x
