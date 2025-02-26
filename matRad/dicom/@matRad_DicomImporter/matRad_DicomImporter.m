@@ -26,7 +26,8 @@ classdef matRad_DicomImporter < handle
 
        % lists of all files
        allfiles;
-       patient;
+       patients;
+       selectedPatient;
        importFiles; % all the names (directories) of files, that will be imported
 
        % properties with data for import functions

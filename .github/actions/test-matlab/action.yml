@@ -15,7 +15,7 @@ runs:
       uses: matlab-actions/setup-matlab@v2
       with:
         release: ${{ inputs.matlab-version }}
-        products: Image_Processing_Toolbox Parallel_Computing_Toolbox Optimization_Toolbox
+        products: Image_Processing_Toolbox Parallel_Computing_Toolbox Optimization_Toolbox Global_Optimization_Toolbox
 
     # Runs test command
     - name: Run Tests

@@ -40,7 +40,7 @@ function test_PlanWidget_constructor
     delete(h);
     close(get(p,'Parent'));
 
-function test_PlanWidget_constructWithData
+function test_PlanWidget_constructWithTG119
     evalin('base','load TG119.mat');
     h = matRad_PlanWidget();
     try
@@ -52,6 +52,63 @@ function test_PlanWidget_constructWithData
         rethrow(ME);
     end
     evalin('base','clear ct cst pln');
-    delete(h);   
+    delete(h);
 
-%TODO: Test Buttons / visibility depending on data
+function test_PlanWidget_constructWithPhotonPln
+    evalin('base','load photons_testData.mat');
+    h = matRad_PlanWidget();
+    try
+        assertTrue(isa(h, 'matRad_PlanWidget'));
+        assertTrue(isa(h, 'matRad_Widget'));
+    catch ME
+        evalin('base','clear ct cst pln stf dij resultGUI');
+        delete(h);
+        rethrow(ME);
+    end
+    evalin('base','clear ct cst pln stf dij resultGUI');
+    delete(h);
+
+function test_PlanWidget_constructWithProtonPln
+    evalin('base','load protons_testData.mat');
+    h = matRad_PlanWidget();
+    try
+        assertTrue(isa(h, 'matRad_PlanWidget'));
+        assertTrue(isa(h, 'matRad_Widget'));
+    catch ME
+        evalin('base','clear ct cst pln stf dij resultGUI');
+        delete(h);
+        rethrow(ME);
+    end
+    evalin('base','clear ct cst pln stf dij resultGUI');
+    delete(h);
+
+function test_PlanWidget_constructWithCarbonPln
+    evalin('base','load carbon_testData.mat');
+    h = matRad_PlanWidget();
+    try
+        assertTrue(isa(h, 'matRad_PlanWidget'));
+        assertTrue(isa(h, 'matRad_Widget'));
+    catch ME
+        evalin('base','clear ct cst pln stf dij resultGUI');
+        delete(h);
+        rethrow(ME);
+    end
+    evalin('base','clear ct cst pln stf dij resultGUI');
+    delete(h);
+
+function test_PlanWidget_constructWithHeliumPln
+    evalin('base','load helium_testData.mat');
+    h = matRad_PlanWidget();
+    try
+        assertTrue(isa(h, 'matRad_PlanWidget'));
+        assertTrue(isa(h, 'matRad_Widget'));
+    catch ME
+        evalin('base','clear ct cst pln stf dij resultGUI');
+        delete(h);
+        rethrow(ME);
+    end
+    evalin('base','clear ct cst pln stf dij resultGUI');
+    delete(h);
+
+
+%TODO: Test Buttons

@@ -35,6 +35,8 @@ classdef matRad_EffectProjection < matRad_BackProjection
                     effect = [];
                     matRad_cfg = MatRad_Config.instance();
                     matRad_cfg.dispWarning('Empty dij.ax scenario in optimization detected! This should not happen...\n');
+                elseif isfield(dij,'RBE') && dij.RBE == 1.1
+                    effect = dij.ax{ctScen} .* (dij.physicalDose{scen} * w .* dij.RBE) + dij.bx{ctScen} .* (dij.physicalDose{scen} * w .* dij.RBE).^2;
                 else
                     effect = dij.ax{ctScen} .* (dij.physicalDose{scen} * w) + dij.bx{ctScen} .* (dij.physicalDose{scen}*w).^2;
                 end

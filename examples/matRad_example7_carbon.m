@@ -92,7 +92,7 @@ disp(stf.ray(100).energy);
 %% Dose Calculation
 dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 
-%% Inverse Optimization  for IMPT based on RBE-weighted dose
+%% Inverse Optimization  for Carbon ion treatment based on RBE-weighted dose
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment.
@@ -113,7 +113,7 @@ slice = slice(3);
 figure;
 imagesc(resultGUI.LET(:,:,slice)),colorbar, colormap(jet);
 
-%% Inverse Optimization  for IMPT based on biological effect
+%% Inverse Optimization  for Carbon ion treatment based on biological effect
 % To perform a dose optimization for carbon ions we can also use the
 % biological effect instead of the RBE-weighted dose. Therefore we have to
 % change the optimization mode and restart the optimization
@@ -126,6 +126,22 @@ resultGUI_effect = matRad_fluenceOptimization(dij,cst,pln);
 % difference map
 figure;
 imagesc(resultGUI.RBExDose(:,:,slice)-resultGUI_effect.RBExDose(:,:,slice));
+colorbar;
+colormap(jet);
+
+%% Inverse Optimization  for Carbon ion treatment based on BED
+% To perform a dose optimization for carbon ions we can also use the
+% BED instead of the RBE-weighted dose. Therefore we have to
+% change the optimization mode and restart the optimization
+pln.propOpt.quantityOpt = 'BED';
+resultGUI_BED = matRad_fluenceOptimization(dij,cst,pln);
+
+%% Visualize differences
+% Through optimzation based on the biological effect we obtain a slightly
+% different dose distribution as visualized by the following dose
+% difference map
+figure;
+imagesc(resultGUI.RBExDose(:,:,slice)-resultGUI_BED.RBExDose(:,:,slice));
 colorbar;
 colormap(jet);
 
