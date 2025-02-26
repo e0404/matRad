@@ -34,7 +34,7 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSlice(ct, varargin)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team.
+% Copyright 2025 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
@@ -132,19 +132,17 @@ hold on;
 
 %% Plot dose
 if ~isempty(p.Results.dose)
+    doseWindow = [min(min(min(p.Results.dose))) max(max(max(p.Results.dose)))];
     if ~isempty(p.Results.doseWindow) && p.Results.doseWindow(2) - p.Results.doseWindow(1) <= 0
-        %p.Results.doseWindow = [0 2];
-        doseWindow = [min(min(min(p.Results.dose))) max(max(max(p.Results.dose)))];
-        [hDose,doseColorMap,doseWindow] = matRad_plotDoseSlice(p.Results.axesHandle, p.Results.dose, p.Results.plane, p.Results.slice, p.Results.thresh, p.Results.alpha, p.Results.doseColorMap, doseWindow);
-    else
-        [hDose,doseColorMap,doseWindow] = matRad_plotDoseSlice(p.Results.axesHandle, p.Results.dose, p.Results.plane, p.Results.slice, p.Results.thresh, p.Results.alpha, p.Results.doseColorMap, p.Results.doseWindow);
-    end
+        doseWindow = p.Results.doseWindow;
+    end        
+    [hDose,doseColorMap,doseWindow] = matRad_plotDoseSlice(p.Results.axesHandle, p.Results.dose, p.Results.plane, p.Results.slice, p.Results.thresh, p.Results.alpha, p.Results.doseColorMap, doseWindow);
+    hold on;
+    
     %% Plot iso dose lines
+    hIsoDose = [];
     if ~isempty(p.Results.doseIsoLevels)
         hIsoDose = matRad_plotIsoDoseLines(p.Results.axesHandle,p.Results.dose,[],p.Results.doseIsoLevels,false,p.Results.plane,p.Results.slice,p.Results.doseColorMap,p.Results.doseWindow, lineVarargin{:});
-        hold on;
-    else
-        hIsoDose = [];
     end
 
     %% Set Colorbar
@@ -161,14 +159,13 @@ if  ~isempty(p.Results.cst)
     [hContour,~] = matRad_plotVoiContourSlice(p.Results.axesHandle, p.Results.cst, p.Results.ct, p.Results.cubeIdx, p.Results.voiSelection, p.Results.plane, p.Results.slice, p.Results.contourColorMap, lineVarargin{:});
 
     if p.Results.boolPlotLegend
-        visibleOnSlice = (~cellfun(@isempty,hContour));
-        ixLegend = find(p.Results.voiSelection);
+        visibleOnSlice = (~cellfun(@isempty,hContour));        
         hContourTmp    = cellfun(@(X) X(1),hContour(visibleOnSlice),'UniformOutput',false);
+        voiSelection = visibleOnSlice;
         if ~isempty(p.Results.voiSelection)
-            hLegend        =  legend(p.Results.axesHandle,[hContourTmp{:}],[p.Results.cst(ixLegend(visibleOnSlice),2)],'AutoUpdate','off','TextColor',matRad_cfg.gui.textColor);
-        else
-            hLegend        =  legend(p.Results.axesHandle,[hContourTmp{:}],[p.Results.cst(visibleOnSlice,2)],'AutoUpdate','off','TextColor',matRad_cfg.gui.textColor);
+            voiSelection = visibleOnSlice(find(p.Results.voiSelection));
         end
+        hLegend        =  legend(p.Results.axesHandle,[hContourTmp{:}],[p.Results.cst(voiSelection,2)],'AutoUpdate','off','TextColor',matRad_cfg.gui.textColor);
         set(hLegend,'Box','On');
         set(hLegend,'TextColor',matRad_cfg.gui.textColor);
         if ~isempty(textVarargin)
@@ -185,12 +182,11 @@ end
 axis(p.Results.axesHandle,'tight');
 set(p.Results.axesHandle,'xtick',[],'ytick',[]);
 colormap(p.Results.axesHandle,p.Results.doseColorMap);
-
+fontSize = [];
 if isfield(p.Unmatched, 'FontSize')
-    matRad_plotAxisLabels(p.Results.axesHandle,p.Results.ct,p.Results.plane,p.Results.slice, p.Unmatched.FontSize, [])
-else
-    matRad_plotAxisLabels(p.Results.axesHandle,p.Results.ct,p.Results.plane,p.Results.slice, [], [])
+    fontSize = p.Unmatched.FontSize;
 end
+matRad_plotAxisLabels(p.Results.axesHandle,p.Results.ct,p.Results.plane,p.Results.slice, fontSize, [])
 
 % Set axis ratio.
 ratios = [1/p.Results.ct.resolution.x 1/p.Results.ct.resolution.y 1/p.Results.ct.resolution.z];
