@@ -1,5 +1,5 @@
 # Auto-detect text files and normalize (LF in repo).
-* text-auto
+* text=auto
 
 # Force files to be binary
 *.mat binary
