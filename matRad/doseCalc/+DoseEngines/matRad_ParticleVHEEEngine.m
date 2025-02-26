@@ -126,7 +126,7 @@ classdef matRad_ParticleVHEEEngine < DoseEngines.matRad_ParticlePencilBeamEngine
             checkMeta = checkMeta && any(isfield(machine.meta,{'LUTspotSize','LUT_bxWidthminFWHM'}));
 
             dataType = machine.meta.dataType;
-            if strcmp(dataType,'singleXY')
+            if strcmp(dataType,'singleGaussXY')
                 checkData = all(isfield(machine.data,{'energy','depths','Z','offset','initFocus','sigmaXY'}));
             elseif strcmp(dataType,'doubleGauss')
                 checkData = all(isfield(machine.data,{'energy','depths','Z','weight','sigma1','sigma2','offset','initFocus'}));

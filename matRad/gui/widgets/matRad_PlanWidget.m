@@ -33,7 +33,7 @@ classdef matRad_PlanWidget < matRad_Widget
 
     properties (Constant)
 
-        modalities = {'photons','protons','carbon', 'helium','brachy'};
+        modalities = {'photons','protons','carbon', 'helium','brachy', 'VHEE'};
         availableProjections = {  'physicalDose'; 'RBExDose'; 'effect'; 'BED'; }
 
     end
@@ -1250,6 +1250,11 @@ classdef matRad_PlanWidget < matRad_Widget
                 set(handles.popMenuQuantityOpt,'Value',ix);
             end
 
+            if any(strcmp(newRadiationMode,{'photons','VHEE','brachy'}))
+                ix = find(strcmp(optimizationQuantityPopUpContents,'physicalDose'));
+                set(handles.popMenuQuantityOpt,'Value',ix);
+            end
+
             pln.radiationMode = newRadiationMode;
             if isfield(defaultMachines,newRadiationMode)
                 pln.machine = defaultMachines.(newRadiationMode);
@@ -1294,7 +1299,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 if  ismember('resultGUI',AllVarNames)
                     resultGUI = evalin('base','resultGUI');
                     radMode = allRadiationModes(get(hObject,'Value'));
-                    if any(strcmp(radMode,{'photons','brachy'}))
+                    if any(strcmp(radMode,{'photons','brachy','VHEE'}))
                         if isfield(resultGUI,'alpha');    resultGUI = rmfield(resultGUI,'alpha');   end
                         if isfield(resultGUI,'beta');     resultGUI = rmfield(resultGUI,'beta');    end
                         if isfield(resultGUI,'RBExDose'); resultGUI = rmfield(resultGUI,'RBExDose');end
