@@ -76,11 +76,6 @@ classdef matRad_OptimizerSimulannealbnd < matRad_Optimizer
             % Informing user to press q to terminate optimization
             matRad_cfg.dispInfo('Optimization initiating...\n');
             matRad_cfg.dispInfo('Press q to terminate the optimization...\n');
-
-            if matRad_cfg.isMatlab && str2double(matRad_cfg.envVersion) <= 9.13 && strcmp(obj.options.Diagnostics, 'on')
-                matRad_cfg.dispWarning('Diagnostics in simulannealbnd will be turned off due to a bug when using lbfgs with specified number of histories!');
-                obj.options.Diagnostics = 'off';
-            end
                 
             % Define the objective function
             objectiveFunction = @(x) optiProb.matRad_objectiveFunction(x, dij, cst);

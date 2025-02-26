@@ -1,23 +1,23 @@
 classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad_PencilBeamEngineAbstract
-    % matRad_DoseEngineParticlePB:
-    %   Implements an engine for particle based dose calculation
-    %   For detailed information see superclass matRad_DoseEngine
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% matRad_DoseEngineParticlePB:
+%   Implements an engine for particle based dose calculation
+%   For detailed information see superclass matRad_DoseEngine
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %
-    % Copyright 2022 the matRad development team.
-    %
-    % This file is part of the matRad project. It is subject to the license
-    % terms in the LICENSE file found in the top-level directory of this
-    % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
-    % of the matRad project, including this file, may be copied, modified,
-    % propagated, or distributed except according to the terms contained in the
-    % help edit
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2022 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% help edit
 
-    % LICENSE file.
-    %
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     properties (SetAccess = public, GetAccess = public)
 
@@ -95,7 +95,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                         matRad_cfg.dispWarning('Chosen Machine does not support a doubleGaussian Pencil-Beam model!');
                         this.lateralModel = 'auto';
                     end
-                case 'singleGaussXY'
+                case 'singleXY'
                     if ~multiAvailable
                         matRad_cfg.dispWarning('Chosen Machine does not support a Focused Pencil-Beam model!');
                         this.lateralModel = 'auto';
@@ -121,7 +121,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                 elseif singleAvailable
                     this.lateralModel = 'single';
                 elseif FocusedAvailable
-                    this.lateralModel = 'singleGaussXY';
+                    this.lateralModel = 'singleXY';
                 else
                     matRad_cfg.dispError('Invalid kernel model!');
                 end
@@ -135,7 +135,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                 elseif multiAvailable
                     this.lateralModel = 'multi';
                 elseif FocusedAvailable
-                    this.lateralModel = 'singleGaussXY';
+                    this.lateralModel = 'singleXY';
                 else
                     matRad_cfg.dispError('Invalid kernel model!');
                 end
@@ -245,7 +245,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                     X.sigma1 = baseData.sigma1;
                     X.sigma2 = baseData.sigma2;
                     X.weight = baseData.weight;
-                case 'singleGaussXY'
+                case 'singleXY'
                     X.sigmaX = baseData.sigmaXY(:,1);
                     X.sigmaY = baseData.sigmaXY(:,2);
                 case 'multi'
@@ -268,7 +268,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                 X.LET = baseData.LET;
             end
 
-            X = structfun(@(v) matRad_interp1(depths,v,bixel.radDepths(:),'nearest'),X,'UniformOutput',false); %Extrapolate to zero?
+            X = structfun(@(v) matRad_interp1(depths,v,bixel.radDepths(:),'linear'),X,'UniformOutput',false); %Extrapolate to zero?
         end
 
         % We override this function to boost efficiency a bit (latDistX & Z
@@ -994,9 +994,9 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                     q{end+1} = 'beta';
                 end
             end
-%             if ~isempty(q{1}) && isfield(machine.data,'LET')
-%                 q{end+1} = 'LET';
-%             end
+            if ~isempty(q) && ~isempty(q{1}) && isfield(machine.data,'LET')
+                q{end+1} = 'LET';
+            end
         end
     end
 end

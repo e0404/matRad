@@ -16,13 +16,12 @@ classdef matRad_StfGeneratorParticleVHEE < matRad_StfGeneratorParticleRayBixelAb
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     properties (Constant)
-        name = 'Particle VHEE stf Generator';
-        shortName = 'ParticleVHEE';
+        name = 'VHEE Geometry Generator';
+        shortName = 'VHEE';
         possibleRadiationModes = {'VHEE'};
     end 
 
     properties
-        longitudinalSpotSpacing;
         energy;
     end
 
@@ -61,17 +60,9 @@ classdef matRad_StfGeneratorParticleVHEE < matRad_StfGeneratorParticleRayBixelAb
             end
         end
 
-        function beam = setBeamletEnergies(this,beam) 
+        function beam = setBeamletEnergies(~,beam) 
             %Assigns defined particle machine energy from plan to all rays
-            
-            isoCenterInCubeCoords = matRad_world2cubeCoords(beam.isoCenter,this.ct);
-
-            if isfield(this.machine.meta,'LUT_bxWidthminFWHM')
-                LUTspotSize = this.machine.meta.LUT_bxWidthminFWHM;
-            else
-                LUTspotSize = this.machine.meta.LUTspotSize;
-            end
-            
+           
             beam.numOfBixelsPerRay = zeros(1,beam.numOfRays);
             beam.numOfRays = numel(beam.ray);
             for j = beam.numOfRays:-1:1
@@ -89,17 +80,10 @@ classdef matRad_StfGeneratorParticleVHEE < matRad_StfGeneratorParticleRayBixelAb
         end
 
         function  beam = finalizeBeam(this,beam)
-
-            % get minimum energy per field
-            minEnergy = min([beam.ray.energy]);
-            maxEnergy = max([beam.ray.energy]);
-
-
-
             for j = beam.numOfRays:-1:1
-                for k = beam.numOfBixelsPerRay(j):-1:1
-                    maskEnergy = beam.ray(j).energy(k) == beam.VHEEenergy;
-                end
+                % for k = beam.numOfBixelsPerRay(j):-1:1
+                %     maskEnergy = beam.ray(j).energy(k) == beam.VHEEenergy;
+                % end
                 if isempty(beam.ray(j).energy)
                     beam.ray(j) = [];
                     beam.numOfBixelsPerRay(j) = [];

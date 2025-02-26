@@ -97,14 +97,7 @@ classdef (Abstract) matRad_StfGeneratorParticleRayBixelAbstract < matRad_StfGene
             end
 
             available = available && isstruct(machine.data);
-            
-            if strcmp(machine.meta.radiationMode, 'VHEE')
-                available = available && isstruct(machine.data);
-                available = available && all(isfield(machine.data,{'energy','initFocus'}));
-            else
-                available = available && isstruct(machine.data);
-                available = available && all(isfield(machine.data,{'energy','peakPos','initFocus','offset'}));
-            end
+            available = available && all(isfield(machine.data,{'energy','initFocus'}));
 
             if ~available
                 msg = 'Your machine file is invalid and does not contain the basic fields required for photon machines!';

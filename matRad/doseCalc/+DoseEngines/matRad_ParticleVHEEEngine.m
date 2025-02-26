@@ -1,20 +1,16 @@
 classdef matRad_ParticleVHEEEngine < DoseEngines.matRad_ParticlePencilBeamEngineAbstract
-% matRad_ParticlePencilBeamEngineAbstractGaussian: 
-%   Implements an engine for particle based dose calculation 
-%   For detailed information see superclass matRad_DoseEngine
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+% matRad_ParticleVHEEEngine: 
+%   Implements an engine for VHEE dose calculation
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2022 the matRad development team. 
+% Copyright 2025 the matRad development team. 
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
 % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
 % of the matRad project, including this file, may be copied, modified, 
 % propagated, or distributed except according to the terms contained in the
-% help edit
-
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -67,7 +63,7 @@ classdef matRad_ParticleVHEEEngine < DoseEngines.matRad_ParticlePencilBeamEngine
                 case 'multi'
                     sigmaSq = kernels.sigmaMulti.^2 + bixel.sigmaIniSq;
                     L = sum([1 - sum(kernels.weightMulti,2), kernels.weightMulti] .* exp(-bixel.radialDist_sq ./ (2*sigmaSq))./(2*pi*sigmaSq),2);
-                case 'singleGaussXY'
+                case 'singleXY'
                     %compute lateral sigma in both directions
                     sigmaSq_x = kernels.sigmaX.^2 + bixel.sigmaIniSq;
                     sigmaSq_y = kernels.sigmaY.^2 + bixel.sigmaIniSq;
@@ -130,7 +126,7 @@ classdef matRad_ParticleVHEEEngine < DoseEngines.matRad_ParticlePencilBeamEngine
             checkMeta = checkMeta && any(isfield(machine.meta,{'LUTspotSize','LUT_bxWidthminFWHM'}));
 
             dataType = machine.meta.dataType;
-            if strcmp(dataType,'singleGaussXY')
+            if strcmp(dataType,'singleXY')
                 checkData = all(isfield(machine.data,{'energy','depths','Z','offset','initFocus','sigmaXY'}));
             elseif strcmp(dataType,'doubleGauss')
                 checkData = all(isfield(machine.data,{'energy','depths','Z','weight','sigma1','sigma2','offset','initFocus'}));

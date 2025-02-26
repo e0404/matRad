@@ -1,7 +1,6 @@
 classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencilBeamEngineAbstract
-% matRad_ParticlePencilBeamEngineAbstractGaussian: 
-%   Implements an engine for particle based dose calculation 
-%   For detailed information see superclass matRad_DoseEngine
+% matRad_ParticleHongPencilBeamEngine: 
+%   Implements the Hong pencil-beam engine
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

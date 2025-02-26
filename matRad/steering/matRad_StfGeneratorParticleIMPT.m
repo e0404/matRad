@@ -288,6 +288,9 @@ classdef matRad_StfGeneratorParticleIMPT < matRad_StfGeneratorParticleRayBixelAb
 
             % Check superclass availability
             [available,msg] = matRad_StfGeneratorParticleRayBixelAbstract.isAvailable(pln,machine);
+            
+            %Check additional base data
+            available = available && all(isfield(machine.data,{'peakPos','offset'}));
 
             if ~available
                 return;

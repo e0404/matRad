@@ -20,6 +20,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     properties
+        savedResultTag = {};
     end        
     
     methods
@@ -300,7 +301,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                         end
 
                         % check if dij exist
-                        if evalin('base','exist(''dij'')') && plnStfMatch
+                        if evalin('base','exist(''dij'')') && plnStfMatch && ~evalin('base','pln.propOpt.conf3D')
                             [dijStfMatch, msg] = matRad_compareDijStf(evalin('base','dij'),evalin('base','stf'));
                             if dijStfMatch
                                 set(handles.txtInfo,'String','ready for optimization');
@@ -413,7 +414,11 @@ classdef matRad_WorkflowWidget < matRad_Widget
             % carry out dose calculation
             try
                 dij = matRad_calcDoseInfluence(evalin('base','ct'),evalin('base','cst'),stf,pln);
-                               
+                
+                % prepare dij for 3d conformal
+                if isfield(pln.propOpt,'conf3D') && pln.propOpt.conf3D
+                   dij = matRad_collapseDij(dij);
+                end
                 % assign results to base worksapce
                 assignin('base','dij',dij);
                 
@@ -465,21 +470,20 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 AllVarNames = evalin('base','who');
                 if  ismember('resultGUI',AllVarNames)
                     resultGUI = evalin('base','resultGUI');
-                    sNames = fieldnames(resultGUIcurrentRun);
                     oldNames = fieldnames(resultGUI);
-                    if(length(oldNames) > length(sNames))
+
+                    if ~isempty(this.savedResultTag)
                         for j = 1:length(oldNames)
-                            if strfind(oldNames{j}, 'beam')
-                                resultGUI = rmfield(resultGUI, oldNames{j});
+                            for k = 1:length(this.savedResultTag)
+                                if ~isempty(strfind(oldNames{j}, this.savedResultTag{k}))
+                                    resultGUIcurrentRun.(oldNames{j}) = resultGUI.(oldNames{j});
+                                end
                             end
                         end
-                    end
-                    for j = 1:length(sNames)
-                        resultGUI.(sNames{j}) = resultGUIcurrentRun.(sNames{j});
-                    end
-                else
-                    resultGUI = resultGUIcurrentRun;
+                    end                
                 end
+
+                resultGUI = resultGUIcurrentRun;
 
                 assignin('base','resultGUI',resultGUI);
 
@@ -728,7 +732,8 @@ classdef matRad_WorkflowWidget < matRad_Widget
             Suffix = get(uiEdit(2),'String');
             logIx = isstrprop(Suffix,'alphanum');
             Suffix = ['_' Suffix(logIx)];
-            
+            this.savedResultTag{end+1}= Suffix;
+
             pln       = evalin('base','pln');
             resultGUI = evalin('base','resultGUI');
             
