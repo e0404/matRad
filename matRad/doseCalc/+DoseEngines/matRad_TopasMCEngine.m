@@ -114,7 +114,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         modules_protons     = {'g4em-standard_opt4','g4h-phy_QGSP_BIC_HP','g4decay','g4h-elastic_HP','g4stopping','g4ion-QMD','g4radioactivedecay'};
         modules_GenericIon  = {'g4em-standard_opt4','g4h-phy_QGSP_BIC_HP','g4decay','g4h-elastic_HP','g4stopping','g4ion-QMD','g4radioactivedecay'};
         modules_photons     = {'g4em-standard_opt4','g4h-phy_QGSP_BIC_HP','g4decay'};
-        modules_VHEE        = {'g4em-standard_opt4','g4h-phy_QGSP_BIC_HP','g4decay','g4ion-binarycascade','g4h-elastic_HP','g4stopping'};
+        modules_VHEE        = {'g4em-standard_opt4','g4h-phy_QGSP_BIC_HP','g4decay','g4ion-binarycascade','g4h-elastic_HP','g4stopping'}; %From 10.1002/mp.16697
 
         %Geometry / World
         worldMaterial = 'G4_AIR';
