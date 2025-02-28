@@ -19,7 +19,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     properties (Constant)  
-        possibleRadiationModes = {'photons','protons','helium','carbon'};
+        possibleRadiationModes = {'photons','protons','helium','carbon','VHEE'};
         name = 'TOPAS';
         shortName = 'TOPAS';
 
@@ -53,7 +53,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         modeHistories = 'num'; %'frac';
         fracHistories = 1e-4; %Fraction of histories to compute
 
-        numParticlesPerHistory = 1e6;
+        numParticlesPerWeight = 1e6;
         verbosity = struct( 'timefeatures',0,...
             'cputime',true,...
             'run',0,...
@@ -756,7 +756,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             end
 
             % Normalize with histories and particles/weight
-            correctionFactor = obj.numParticlesPerHistory / double(obj.MCparam.nbHistoriesTotal);
+            correctionFactor = obj.numParticlesPerWeight / double(obj.MCparam.nbHistoriesTotal);
 
             % Get all saved quantities
             % Make sure that the filename always ends on 'run1_tally'
@@ -1460,9 +1460,9 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 matRad_cfg.dispError('Given number of weights (#%d) doesn''t match bixel count in stf (#%d)',numel(w), sum([stf(:).totalNumOfBixels]));
             end
 
-            nParticlesTotalBixel = round(obj.numParticlesPerHistory * w);
+            nParticlesTotalBixel = round(obj.numParticlesPerWeight * w);
             nParticlesTotal = sum(nParticlesTotalBixel);
-            maxParticlesBixel = obj.numParticlesPerHistory * max(w(:));
+            maxParticlesBixel = obj.numParticlesPerWeight * max(w(:));
             minParticlesBixel = round(max([obj.minRelWeight*maxParticlesBixel,1]));
 
             switch obj.modeHistories
@@ -1604,7 +1604,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                             end
 
                             switch obj.radiationMode
-                                case {'protons','carbon','helium'}
+                                case {'protons','carbon','helium','VHEE'}
                                     [~,ixTmp,~] = intersect(energies, bixelEnergy);
                                     if obj.useOrigBaseData
                                         dataTOPAS(cutNumOfBixel).energy = selectedData(ixTmp).energy;
@@ -1762,6 +1762,15 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                         fprintf(fileID,'u:Sim/ParticleMass = 0\n');
 
                         particleA = 0;
+                        % particleZ = 0;
+
+                        modules = obj.modules_photons;
+
+                    case 'VHEE'
+                        fprintf(fileID,'s:Sim/ParticleName = "e-"\n');
+                        fprintf(fileID,'u:Sim/ParticleMass = 5.4462e-04\n');
+
+                        particleA = 1;
                         % particleZ = 0;
 
                         modules = obj.modules_photons;

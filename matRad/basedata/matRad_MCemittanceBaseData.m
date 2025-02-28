@@ -122,7 +122,7 @@ classdef matRad_MCemittanceBaseData
                 if isfield(machine.data(ixE), 'energySpectrum') && ~obj.forceSpectrumApproximation
                     energySpectrum = machine.data(ixE).energySpectrum;
                     if isfield(energySpectrum,'type') && strcmp(energySpectrum.type,'gaussian')
-                        energyData.NominalEnergy    = ones(1,4) * machine.data(ixE).energy(:);
+                        energyData.NominalEnergy    = machine.data(ixE).energy(:);
                         energyData.MeanEnergy       = machine.data(ixE).energySpectrum.mean(:);
                         energyData.EnergySpread     = machine.data(ixE).energySpectrum.sigma(:);
                     else
