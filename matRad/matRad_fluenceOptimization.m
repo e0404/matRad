@@ -387,7 +387,7 @@ else
     matRad_cfg.dispInfo('Using standard MU bounds of [0,Inf]!\n')
 end
 
-if pln.propOpt.runVMAT
+if isfield(pln.propOpt,'runVMAT') && pln.propOpt.runVMAT
     % Only the bixels belonging to FMO gantry angles should have their
     % weights optimized. The rest should be initialized and bounded to
     % zero.

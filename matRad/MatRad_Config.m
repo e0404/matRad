@@ -246,6 +246,7 @@ classdef MatRad_Config < handle
 
             %Sequencing Options
             obj.defaults.propSeq.sequencer = 'siochi';
+            obj.defaults.propSeq.numLevels = 5;
             
 
 

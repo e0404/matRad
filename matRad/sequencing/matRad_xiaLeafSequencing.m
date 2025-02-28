@@ -40,6 +40,8 @@ if nargin < 5
     visBool = 0;
 end
 
+matRad_cfg = MatRad_Config.instance();
+
 mode = 'rl'; % sliding window (sw) or reducing level (rl)
 
 numOfBeams = numel(stf);
@@ -51,6 +53,10 @@ if visBool
     xpos = ceil((screensize(3)-sz(2))/2); % center the figure on the screen horizontally
     ypos = ceil((screensize(4)-sz(1))/2); % center the figure on the screen vertically
     seqFig = figure('position',[xpos,ypos,sz(2),sz(1)]);     
+end
+
+if ~isfield(pln,'propSeq') || ~isfield(pln.propSeq,'numLevels')
+    pln.propSeq.numLevels = matRad_cfg.defaults.propSeq.numLevels;
 end
 
 offset = 0;
@@ -95,7 +101,7 @@ for i = 1:numOfBeams
     
     % Stratification
     calFac = max(fluenceMx(:));
-    D_k = round(fluenceMx/calFac*pln.propOpt.numLevels); 
+    D_k = round(fluenceMx/calFac*pln.propSeq.numLevels); 
     
     % Save the stratification in the initial intensity matrix D_0.
     D_0 = D_k;
@@ -242,11 +248,11 @@ for i = 1:numOfBeams
     
     sequencing.beam(i).numOfShapes  = k;
     sequencing.beam(i).shapes       = shapes(:,:,1:k);
-    sequencing.beam(i).shapesWeight = shapesWeight(1:k)/pln.propOpt.numLevels*calFac;
+    sequencing.beam(i).shapesWeight = shapesWeight(1:k)/pln.propSeq.numLevels*calFac;
     sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
     sequencing.beam(i).fluence      = D_0;
     
-    sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = D_0(indInFluenceMx)/pln.propOpt.numLevels*calFac;
+    sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = D_0(indInFluenceMx)/pln.propSeq.numLevels*calFac;
 
     offset = offset + numOfRaysPerBeam;
 

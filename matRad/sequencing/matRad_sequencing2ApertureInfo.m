@@ -45,10 +45,13 @@ vectorOffset = totalNumOfShapes + 1; % used for bookkeeping in the vector for op
 bixOffset = 1; %used for gradient calculations
 interpGetsTransition = false; % boolean to determine if an interpolated beam is responsible for a leaf speed constraint check
 
+if ~isfield(pln, 'propOpt') || ~isfield(pln.propOpt,'runVMAT')
+    pln.propOpt.runVMAT = false;
+end
+
 if pln.propOpt.runVMAT
     totalNumOfOptBixels = 0;
-    totalNumOfLeafPairs = 0;
-    
+    totalNumOfLeafPairs = 0;    
     apertureInfo.propVMAT.jacobT = zeros(sum([sequencing.beam.numOfShapes]),numel(sequencing.beam));
 end
 

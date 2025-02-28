@@ -48,11 +48,13 @@ if strcmp(pln.radiationMode,'photons') && (pln.propSeq.runSequencing || pln.prop
         matRad_cfg.dispWarning ('pln.propSeq.sequencer not specified. Using siochi leaf sequencing (default).')
     end
     
-    % Is this used? Is it the same as numLevels? Should standardize, across
-    % all leaf sequencing algorithms.
-    if ~isfield(pln.propSeq, 'sequencingLevel')
-        pln.propSeq.sequencingLevel = 5;
-         matRad_cfg.dispWarning ('pln.propSeq.sequencingLevel not specified. Using 5 sequencing levels (default).')
+    
+    if ~any(isfield(pln.propSeq, {'numLevels','sequencingLevel'}))
+        pln.propSeq.numLevels = 5;
+        matRad_cfg.dispWarning ('pln.propSeq.sequencingLevel not specified. Using 5 sequencing levels (default).')
+    elseif isfield(pln.propSeq,'sequencingLevel')
+        matRad_cfg.dispDeprecationWarning('The pln.propSeq.sequencingLevel property is deprecated. Use pln.propSeq.numLevels instead!');
+        pln.propSeq.numLevels = pln.propSeq.sequencingLevel;
     end
     
     % Could probably consolidate a lot of the code in the following

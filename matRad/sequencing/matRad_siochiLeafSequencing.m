@@ -64,6 +64,10 @@ end
 
 offset             = 0;
 
+if ~isfield(pln,'propSeq') || ~isfield(pln.propSeq,'numLevels')
+    pln.propSeq.numLevels = matRad_cfg.defaults.propSeq.numLevels;
+end
+
 if ~isfield(pln.propOpt,'runVMAT')
     pln.propOpt.runVMAT = false;
 end
