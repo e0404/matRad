@@ -11,8 +11,10 @@
 * Louis Charton
 * Eric Christiansen
 * Remo Cristoforetti
+* Fabio D'Andrea
 * Marios Dallas
 * Edgardo Doerner
+* Louis Ermeneux
 * Simona Facchiano
 * Hubert Gabrys
 * Josefine Handrack
@@ -36,6 +38,7 @@
 * Claus Sarnighausen
 * Carsten Scholz
 * Camilo Sevilla
+* Mateusz Sitarz
 * Alexander Stadler
 * Uwe Titt
 * Niklas Wahl

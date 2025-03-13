@@ -5,3 +5,4 @@ coverage.xml
 coverage.json
 *.asv
 build/
+.DS_Store
