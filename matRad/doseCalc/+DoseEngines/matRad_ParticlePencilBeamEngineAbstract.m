@@ -211,6 +211,9 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             % This allows us to efficiently access them by indexing in the
             % bixel computation
             bixel.radialDist_sq = currRay.radialDist_sq(bixel.subRayIx);
+            if isfield(currRay,'latDists')
+                bixel.latDists = currRay.latDists(bixel.subRayIx,:);
+            end
             bixel.radDepths = currRay.radDepths(bixel.subRayIx);
             if this.calcBioDose
                 bixel.vTissueIndex = currRay.vTissueIndex(bixel.subRayIx);
@@ -277,12 +280,22 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             lateralRayCutOff = this.getLateralDistanceFromDoseCutOffOnRay(ray);
 
             % Ray tracing for beam i and ray j
-            [ix,radialDist_sq] = this.calcGeoDists(currBeam.bevCoords, ...
-                ray.sourcePoint_bev, ...
-                ray.targetPoint_bev, ...
-                ray.SAD, ...
-                currBeam.validCoordsAll, ...
-                lateralRayCutOff);
+            if isequal(this.lateralModel,'singleXY')
+                [ix,radialDist_sq,latDists] = this.calcGeoDists(currBeam.bevCoords, ...
+                    ray.sourcePoint_bev, ...
+                    ray.targetPoint_bev, ...
+                    ray.SAD, ...
+                    currBeam.validCoordsAll, ...
+                    lateralRayCutOff);
+            else
+                [ix,radialDist_sq] = this.calcGeoDists(currBeam.bevCoords, ...
+                    ray.sourcePoint_bev, ...
+                    ray.targetPoint_bev, ...
+                    ray.SAD, ...
+                    currBeam.validCoordsAll, ...
+                    lateralRayCutOff);
+                latDists = [];
+            end
 
             ray.validCoords = cellfun(@(beamIx) beamIx & ix,currBeam.validCoords,'UniformOutput',false);
             ray.ix = cellfun(@(ixInGrid) this.VdoseGrid(ixInGrid),ray.validCoords,'UniformOutput',false);
@@ -290,6 +303,9 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             %subCoords = cellfun(@(beamIx) beamIx(ix),currBeam.validCoords,'UniformOutput',false);
             %ray.radialDist_sq = cellfun(@(subix) radialDist_sq(subix),radialDist_sq,subCoords);
             ray.radialDist_sq = cellfun(@(beamIx) radialDist_sq(beamIx(ix)),currBeam.validCoords,'UniformOutput',false);
+            if ~isempty(latDists)
+                ray.latDists = cellfun(@(beamIx) latDists(beamIx(ix),:),currBeam.validCoords,'UniformOutput',false);
+            end
 
             ray.validCoordsAll = any(cell2mat(ray.validCoords),2);
             
@@ -564,13 +580,15 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             % function handle for calculating depth dose for APM
             sumGauss = @(x,mu,SqSigma,w) ((1./sqrt(2*pi*ones(numel(x),1) * SqSigma') .* ...
                 exp(-bsxfun(@minus,x,mu').^2 ./ (2* ones(numel(x),1) * SqSigma' ))) * w);
+            
+            
 
             % define some variables needed for the cutoff calculation
-            vX = [0 logspace(-1,3,1200)]; % [mm]
+            vR = [0 logspace(-1,3,120)]; % [mm]
 
             % integration steps
-            r_mid          = 0.5*(vX(1:end-1) +  vX(2:end))'; % [mm]
-            dr             = (vX(2:end) - vX(1:end-1))';
+            r_mid          = 0.5*(vR(1:end-1) +  vR(2:end))'; % [mm]
+            dr             = (vR(2:end) - vR(1:end-1))';
             radialDist_sq  = r_mid.^2;
 
             % number of depth points for which a lateral cutoff is determined
@@ -633,6 +651,24 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             vEnergiesIx = find(ismember([this.machine.data(:).energy],uniqueEnergies(:,1)));
             cnt         = 0;
 
+            if isequal(this.lateralModel,'singleXY')
+                vTheta = linspace(0,2*pi,361);
+                vTheta = vTheta(1:end-1);
+                dTheta = (vTheta(2)-vTheta(1))*ones(size(vTheta));
+                [r_mid,theta] = meshgrid(r_mid,vTheta);
+                r_mid = r_mid(:);
+                radialDist_sq = r_mid.^2;
+                dr = repmat(dr,1,numel(vTheta))';
+                dr = dr(:);                
+                theta = theta(:);
+                dTheta = repmat(dTheta,1,numel(vR)-1);
+                dTheta = dTheta(:);
+                latDists = sqrt(radialDist_sq).* [cos(theta), sin(theta)];                
+            else
+                latDists = repmat(sqrt(radialDist_sq ./ 2),1,2);
+                dTheta = 2*pi;
+            end
+
             % loop over all entries in the machine.data struct
             for energyIx = vEnergiesIx
 
@@ -690,6 +726,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                         bixel.energyIx = energyIx;
                         bixel.baseData = baseData;
                         bixel.radialDist_sq = radialDist_sq;
+                        bixel.latDists = latDists;
                         bixel.sigmaIniSq = largestSigmaSq4uniqueEnergies(cnt);
                         bixel.radDepths = (depthValues(j) + baseData.offset) * ones(size(radialDist_sq));
                         bixel.vTissueIndex = ones(size(bixel.radDepths));
@@ -704,7 +741,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                         bixel = this.calcParticleBixel(bixel);
                         dose_r = bixel.physicalDose;
 
-                        cumArea = cumsum(2*pi.*r_mid.*dose_r.*dr);
+                        cumArea = cumsum(dTheta.*r_mid.*dose_r.*dr);
                         relativeTolerance = 0.5; %in [%]
                         if abs((cumArea(end)./(idd(j)))-1)*100 > relativeTolerance
                             matRad_cfg.dispWarning('LateralParticleCutOff: shell integration is wrong !')
@@ -763,6 +800,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                 radDepths     = [0:sStep:this.machine.data(energyIx).depths(end)] + this.machine.data(energyIx).offset;
                 radialDist_sq = (X.^2 + Y.^2);
                 radialDist_sq = radialDist_sq(:);
+                latDists      = [X(:)', Y(:)'];
                 mDose         = zeros(dimX,dimX,numel(radDepths));
                 vDoseInt      = zeros(numel(radDepths),1);
 
@@ -787,6 +825,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                     bixel.energyIx = energyIx;
                     bixel.baseData = baseData;
                     bixel.radialDist_sq = radialDist_sq;
+                    bixel.latDists = latDists;
                     bixel.sigmaIniSq = sigmaIni_sq;
                     bixel.radDepths = radDepths(kk)*ones(size(bixel.radialDist_sq));
                     bixel.vTissueIndex = ones(size(bixel.radDepths));
@@ -801,7 +840,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
 
                     [~,IX]           = min(abs((this.machine.data(energyIx).LatCutOff.depths + this.machine.data(energyIx).offset) - radDepths(kk)));
                     TmpCutOff        = this.machine.data(energyIx).LatCutOff.CutOff(IX);
-                    vXCut            = vX(vX<=TmpCutOff);
+                    vXCut            = vR(vR<=TmpCutOff);
 
                     % integration steps
                     r_mid_Cut        = (0.5*(vXCut(1:end-1) +  vXCut(2:end)))'; % [mm]

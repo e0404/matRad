@@ -58,6 +58,7 @@ pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCent
 pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
+pln.propDoseCalc.engine = 'HongPB';
 
 % optimization settings
 pln.propOpt.quantityOpt     = 'physicalDose';   % Quantity to optimizer (could also be RBExDose, BED, effect)
@@ -74,5 +75,17 @@ dij = matRad_calcDoseInfluence(ct, cst, stf, pln);
 %% inverse planning for imrt
 resultGUI  = matRad_fluenceOptimization(dij,cst,pln);  % Future work - remove low weighted spots to aid MC
 
-%% start gui for visualization of result
-matRadGUI
+%% use the GUI widgets directly to visualize the result
+viewer = matRad_ViewingWidget();
+viewer.doseOpacity = 0.35; %lets change the doseOpacity
+
+dvhwidget = matRad_DVHStatsWidget();
+dvhwidget.selectedDisplayOption = 'physicalDose';
+
+%% Export parameter files for a TOPAS recalculation
+% set number of histories lower than default for this example (default: 1e8)
+pln.propDoseCalc.numHistoriesDirect = 5e6;
+pln.propDoseCalc.engine = 'TOPAS';
+pln.propDoseCalc.externalCalculation = 'write';
+resultGUI_MC = matRad_calcDoseForward(ct,cst,stf,pln,resultGUI.w);
+
