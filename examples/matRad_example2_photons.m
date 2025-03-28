@@ -222,7 +222,7 @@ resultGUI_coarse = matRad_planAnalysis(resultGUI_coarse,ct,cst,stf,pln);
 % both plans
 ixOAR = 2;
 disp(resultGUI.qi(ixOAR).D_95);
-disp(resultGUI.qi_coarse(ixOAR).D_95);
+disp(resultGUI_coarse.qi(ixOAR).D_95);
 
 
 %% 
