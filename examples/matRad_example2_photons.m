@@ -197,18 +197,26 @@ resultGUI_coarse         = matRad_fluenceOptimization(dij,cst,pln);
 plane      = 3;
 doseWindow = [0 max([resultGUI.physicalDose(:); resultGUI_coarse.physicalDose(:)])];
 
-figure,title('original plan - fine beam spacing')
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
-figure,title('modified plan - coarse beam spacing')
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_coarse.physicalDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
+% Create figure for the original plan
+figure
+titleString = 'Original Plan - Fine Beam Spacing';
+matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],0.75,colorcube,[],doseWindow,[],[],[],false,titleString);
+
+% Create figure for the modified plan
+figure
+titleString = 'Modified Plan - Coarse Beam Spacing';
+matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_coarse.physicalDose,plane,slice,[],0.75,colorcube,[],doseWindow,[],[],[],false,titleString);
 
 %% 
 % At this point we would like to see the absolute difference of the first 
 % optimization (finer beam spacing) and the second optimization (coarser 
 % beam spacing)
 absDiffCube = resultGUI.physicalDose-resultGUI_coarse.physicalDose;
-figure,title( 'fine beam spacing plan - coarse beam spacing plan')
-matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
+
+% Create figure for the difference plot
+figure
+titleString = 'Fine Beam Spacing Plan - Coarse Beam Spacing Plan';
+matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube,[],[],[],[],[],false,titleString);
 
 %% Obtain dose statistics
 % Two more columns will be added to the cst structure depicting the DVH and
@@ -222,7 +230,7 @@ resultGUI_coarse = matRad_planAnalysis(resultGUI_coarse,ct,cst,stf,pln);
 % both plans
 ixOAR = 2;
 disp(resultGUI.qi(ixOAR).D_95);
-disp(resultGUI.qi_coarse(ixOAR).D_95);
+disp(resultGUI_coarse.qi(ixOAR).D_95);
 
 
 %% 
