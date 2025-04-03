@@ -1,4 +1,4 @@
-%% Example: Photon Treatment Plan
+%% Example: Comparison of a CT and (fake) synthetic CT dose calculation
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -28,7 +28,6 @@
 % from .mat format to .dcm, consisting of 3D body volume slices as well as a structure file and use it as a real CT.  
 % Additionally, we will slightly modify the intensities of the phantom to generate  
 % synthetic CT images, illustrating dose difference.
-clear;
 matRad_cfg = matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
 
 % Create directories to store DICOM real CT and synthetic (fake) CT data  
@@ -57,7 +56,7 @@ end
 
 % Now, as the directories are created, let us create the DICOM data. Here, the DICOM
 % files will be created from the .mat format.
-load('Liver.mat');
+load('LIVER.mat');
 realCTct=ct;
 %review real CT volume
 matRadGUI;
