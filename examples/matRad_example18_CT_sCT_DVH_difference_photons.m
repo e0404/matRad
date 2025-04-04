@@ -31,10 +31,10 @@
 matRad_cfg = matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
 
 % Create directories to store DICOM real CT and synthetic (fake) CT data  
-patDir = [matRad_cfg.primaryUserFolder filesep "syntheticCT" filesep]; % If you want to export your data, use "userdata" folder as it is ignored by git
-name = "LIVER";
-patDirRealCT = fullfile(patDir,name,"realCT");
-patDirFakeCT = fullfile(patDir,name,"fakeCT");
+patDir = [matRad_cfg.primaryUserFolder filesep 'syntheticCT' filesep]; % If you want to export your data, use "userdata" folder as it is ignored by git
+name = 'LIVER';
+patDirRealCT = fullfile(patDir,name,'realCT');
+patDirFakeCT = fullfile(patDir,name,'fakeCT');
 
 try
     if ~exist(patDirRealCT, 'dir')
@@ -110,6 +110,12 @@ delete(hGUI);
 
 impRealCT = matRad_DicomImporter(patDirRealCT);
 matRad_importDicom(impRealCT);
+
+% StructureSet Import does not work in octave
+if matRad_cfg.isOctave
+    cst = realCTcst;
+end
+
 % Review the exported file and automatically identified  
 % optimization objectives and constraints. 
 matRadGUI;
