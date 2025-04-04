@@ -84,7 +84,7 @@ fakeCTct.cubeHU{1} = fakeCTcubeHU;
 
 %review fake CT volume
 ct= fakeCTct;
-matRadGUI;
+hGUI = matRadGUI;
 
 %saving as DICOMs
 dcmExpFakeCT= matRad_DicomExporter;   % create instance of matRad_DicomExporter
@@ -94,7 +94,7 @@ dcmExpFakeCT.ct = fakeCTct;     % set the image volume for the Dicom export
 dcmExpFakeCT.matRad_exportDicom();   
 
 %clear all except of paths, close windows to start from clean space
-delete(matRadGUI);
+delete(hGUI);
 
 
 %% Patient Data Import from DICOM  
@@ -313,6 +313,3 @@ disp(dvhTableDiff)
 %%% Save the results to CSV file
 %file_path_dvh_diff = "YOUR PATH"
 %writetable(dvh_table_diff, file_path_dvh_diff);
-delete(matRadGUI);
-close all;
-clear;
