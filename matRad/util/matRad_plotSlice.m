@@ -7,9 +7,9 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSlice(ct, varargin)
 %
 % input (required)
 %   ct              matRad ct struct
-%   dose            dose cube
 %
 % input (optional/empty) to be called as Name-value pair arguments:
+%   dose            dose cube
 %   axesHandle      handle to axes the slice should be displayed in
 %   cst             matRad cst struct
 %   cubeIdx         Index of the desired cube in the ct struct
@@ -26,8 +26,8 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSlice(ct, varargin)
 %                   all non-ignored contours.
 %   colorBarLabel   string defining the yLabel of the colorBar
 %   boolPlotLegend  boolean if legend should be plottet or not
+%   showCt          boolean if CT slice should be displayed or not
 %   varargin        Additional MATLAB Line or Text Properties (e.g. 'LineWidth', 'FontSize', etc.)
-%
 %
 % References
 %   -
@@ -103,19 +103,19 @@ parse(p, ct, varargin{:});
 
 %% Unmatched properties
 % General properties
-lineFieldNames = fieldnames(set(line));
-textFieldNames = fieldnames(set(text));
+lineFieldNames  = fieldnames(set(line));
+textFieldNames  = fieldnames(set(text));
 % Filter line properties from Unmatched
-unmParamNames = fieldnames(p.Unmatched);
-lineFields = unmParamNames(ismember(unmParamNames, lineFieldNames));
-lineValues = struct2cell(p.Unmatched);
-lineValues = lineValues(ismember(unmParamNames, lineFieldNames));
-lineVarargin = reshape([lineFields, lineValues]', 1, []);
-% Filter text properites from Unmatched
-textFields = unmParamNames(ismember(unmParamNames, textFieldNames));
-textValues = struct2cell(p.Unmatched);
-textValues = textValues(ismember(unmParamNames, textFieldNames));
-textVarargin = reshape([textFields, textValues]', 1, []);
+unmParamNames   = fieldnames(p.Unmatched);
+lineFields      = unmParamNames(ismember(unmParamNames, lineFieldNames));
+lineValues      = struct2cell(p.Unmatched);
+lineValues      = lineValues(ismember(unmParamNames, lineFieldNames));
+lineVarargin    = reshape([lineFields, lineValues]', 1, []);
+% Filter text properties from Unmatched
+textFields      = unmParamNames(ismember(unmParamNames, textFieldNames));
+textValues      = struct2cell(p.Unmatched);
+textValues      = textValues(ismember(unmParamNames, textFieldNames));
+textVarargin    = reshape([textFields, textValues]', 1, []);
 
 %% Plot ct slice
 matRad_cfg = MatRad_Config.instance();
@@ -125,14 +125,12 @@ set(p.Results.axesHandle,'YDir','Reverse');
 % plot ct slice
 if p.Results.showCt
     hCt = matRad_plotCtSlice(p.Results.axesHandle,p.Results.ct.cubeHU,p.Results.cubeIdx,p.Results.plane,p.Results.slice, [], []);
-else
-    %figure()
 end
 hold on;
 
 %% Plot dose
 if ~isempty(p.Results.dose)
-    doseWindow = [min(min(min(p.Results.dose))) max(max(max(p.Results.dose)))];
+    doseWindow = [min(p.Results.dose(:)) max(p.Results.dose(:))];
     if ~isempty(p.Results.doseWindow) && p.Results.doseWindow(2) - p.Results.doseWindow(1) <= 0
         doseWindow = p.Results.doseWindow;
     end        
@@ -207,6 +205,22 @@ end
 if ~isempty(textVarargin)
     set(p.Results.axesHandle, textVarargin{:})
     set(p.Results.axesHandle.Title, textVarargin{:})
+end
+
+if ~exist('hCMap', 'var')
+    hCMap = [];
+end
+if ~exist('hDose', 'var')
+    hDose = [];
+end
+if ~exist('hCt', 'var')
+    hCt = [];
+end
+if ~exist('hContour', 'var')
+    hContour = [];
+end
+if ~exist('hIsoDose', 'var')
+    hIsoDose = [];
 end
 
 end
