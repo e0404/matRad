@@ -12,21 +12,23 @@ function test_suite = test_xiaLeafSequencing
     % Test Case, and add them to the test-runner
     initTestSuite;
     
-    function [resultGUI,stf,dij] = helper_getTestData()
+function [resultGUI,stf,dij,pln] = helper_getTestData()
         p = load('photons_testData.mat');
         resultGUI = p.resultGUI;
         stf = p.stf;
         dij = p.dij;
+        pln = p.pln;
     
     
     function test_run_sequencing_basic
-        [resultGUI,stf,dij] = helper_getTestData();
+        [resultGUI,stf,dij,pln] = helper_getTestData();
         fn_old = fieldnames(resultGUI);
         
-        numOfLevels = [1,10];
+        numOfLevels = [1,10];        
     
         for levels = numOfLevels
-            resultGUI_sequenced = matRad_siochiLeafSequencing(resultGUI,stf,dij,levels);
+            pln.propSeq.numLevels = levels;
+            resultGUI_sequenced = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln);
             
             fn_new = fieldnames(resultGUI_sequenced);
             for i = 1:numel(fn_old)

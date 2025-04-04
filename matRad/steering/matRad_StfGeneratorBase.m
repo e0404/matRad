@@ -220,7 +220,7 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
 
             this.initialize();
             this.createPatientGeometry();
-            stf = this.generateSourceGeometry();
+              stf = this.generateSourceGeometry();
         end
     end
 

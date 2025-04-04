@@ -1,17 +1,17 @@
-function resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)
-% multileaf collimator leaf sequencing algorithm 
-% for intensity modulated beams with multiple static segments accroding 
-% to Engel et al. 2005 Discrete Applied Mathematics
+function resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,pln,visBool)
+% multileaf collimator leaf sequencing algorithm for intensity modulated 
+% beams with multiple static segments accroding to Engel et al. 2005
+% Discrete Applied Mathematics
 % 
 % call
-%   resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)
+%   resultSequencing = matRad_engelSequencing(w,stf,pln,pln,visBool)
 %
 % input
 %   resultGUI:          resultGUI struct to which the output data will be added, if
 %                       this field is empty resultGUI struct will be created
 %   stf:                matRad steering information struct
 %   dij:                matRad's dij matrix
-%   numOfLevels:        number of stratification levels
+%   pln:                pln struct
 %   visBool:            toggle on/off visualization (optional)
 %
 % output
@@ -34,6 +34,8 @@ function resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,vi
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+
 % if visBool not set toogle off visualization
 if nargin < 5
     visBool = 0;
@@ -48,6 +50,10 @@ if visBool
     xpos = ceil((screensize(3)-sz(2))/2); % center the figure on the screen horizontally
     ypos = ceil((screensize(4)-sz(1))/2); % center the figure on the screen vertically
     seqFig = figure('position',[xpos,ypos,sz(2),sz(1)]);     
+end
+
+if ~isfield(pln,'propSeq') || ~isfield(pln.propSeq,'numLevels')
+    pln.propSeq.numLevels = matRad_cfg.defaults.propSeq.numLevels;
 end
 
 offset = 0;
@@ -92,7 +98,7 @@ for i = 1:numOfBeams
     
     % Stratification
     calFac = max(fluenceMx(:));
-    D_k = round(fluenceMx/calFac*numOfLevels); 
+    D_k = round(fluenceMx/calFac*pln.propSeq.numLevels); 
     
     % Save the stratification in the initial intensity matrix D_0.
     D_0 = D_k;
@@ -108,7 +114,7 @@ for i = 1:numOfBeams
         
         seqSubPlots(1) = subplot(2,2,1,'parent',seqFig);
         imagesc(D_k,'parent',seqSubPlots(1));
-        set(seqSubPlots(1),'CLim',[0 numOfLevels],'YDir','normal');
+        set(seqSubPlots(1),'CLim',[0 pln.propSeq.numLevels],'YDir','normal');
         title(seqSubPlots(1),['Beam # ' num2str(i) ': max(D_0) = ' num2str(max(D_0(:))) ' - ' num2str(numel(unique(D_0))) ' intensity levels']);
         xlabel(seqSubPlots(1),'x - direction parallel to leaf motion ')
         ylabel(seqSubPlots(1),'z - direction perpendicular to leaf motion ')
@@ -136,7 +142,7 @@ for i = 1:numOfBeams
         if visBool
             seqSubPlots(2) = subplot(2,2,2,'parent',seqFig);
             imagesc(D_k,'parent',seqSubPlots(2));
-            set(seqSubPlots(2),'CLim',[0 numOfLevels],'YDir','normal');
+            set(seqSubPlots(2),'CLim',[0 pln.propSeq.numLevels],'YDir','normal');
             title(seqSubPlots(2),['k = ' num2str(k)]);
             colorbar
             drawnow
@@ -355,11 +361,11 @@ for i = 1:numOfBeams
     
     sequencing.beam(i).numOfShapes  = k;
     sequencing.beam(i).shapes       = shapes(:,:,1:k);
-    sequencing.beam(i).shapesWeight = shapesWeight(1:k)/numOfLevels*calFac;
+    sequencing.beam(i).shapesWeight = shapesWeight(1:k)/pln.propSeq.numLevels*calFac;
     sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
     sequencing.beam(i).fluence      = D_0;
     
-    sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = D_0(indInFluenceMx)/numOfLevels*calFac;
+    sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = D_0(indInFluenceMx)/pln.propSeq.numLevels*calFac;
 
     offset = offset + numOfRaysPerBeam;
 
@@ -369,7 +375,7 @@ resultGUI.w          = sequencing.w;
 resultGUI.wSequenced = sequencing.w;
 
 resultGUI.sequencing   = sequencing;
-resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
+resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf,pln);
 
 doseSequencedDoseGrid = reshape(dij.physicalDose{1} * sequencing.w,dij.doseGrid.dimensions);
 % interpolate to ct grid for visualiation & analysis
