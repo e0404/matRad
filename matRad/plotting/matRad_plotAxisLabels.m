@@ -1,11 +1,10 @@
-function  matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize,tickdist)
+function  matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize,titleString)
 % matRad function to plot x and y labels denoting the ct dimensions 
 % according to the selected plane
 %
 % call
 %   matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize)
-%   matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize,
-%   tickdist)
+%   matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize,titleString)
 %
 % input
 %   axesHandle         handle to axes the slice should be displayed in
@@ -13,6 +12,7 @@ function  matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize,tickdi
 %   plane              plane view (coronal=1,sagittal=2,axial=3)
 %   slice              slice in the selected plane of the 3D cube
 %   defaultFontSize    default font size as double value
+%   titleString        optional custom title to display above plane information
 %
 % output
 %   -
@@ -39,15 +39,14 @@ if ~exist('defaultFontSize','var') || isempty(defaultFontSize)
     defaultFontSize = matRad_cfg.gui.fontSize;
 end
 
-ct = matRad_getWorldAxes(ct);
-
-
-if ~exist('tickdist','var') || isempty(tickdist)
-     tickdist = abs(ct.x(end)-ct.x(1))/10;
+if ~exist('titleString','var') || isempty(titleString)
+    titleString = '';
 end
 
+ct = matRad_getWorldAxes(ct);
+
 %% Set axis labels and plot iso center
-if  plane == 3% Axial plane
+if plane == 3 % Axial plane
     if ~isempty(ct.resolution.x) && ~isempty(ct.resolution.y)
         set(axesHandle,'XTick',linspace(0,ct.x(end)-ct.x(1),10)./ct.resolution.x); 
         set(axesHandle,'YTick',linspace(0,ct.y(end)-ct.y(1),10)./ct.resolution.y);
@@ -56,11 +55,11 @@ if  plane == 3% Axial plane
         xlabel(axesHandle,'x [mm]','FontSize',defaultFontSize)
         ylabel(axesHandle,'y [mm]','FontSize',defaultFontSize)
         vcoord = matRad_cubeIndex2worldCoords([1,1,slice],ct);
-        title(axesHandle,['axial plane z = ' num2str(vcoord(3)) ' [mm]'],'FontSize',defaultFontSize,'Color',matRad_cfg.gui.highlightColor);
+        planeInfo = ['axial plane z = ' num2str(vcoord(3)) ' [mm]'];
     else
         xlabel(axesHandle,'x [voxels]','FontSize',defaultFontSize)
         ylabel(axesHandle,'y [voxels]','FontSize',defaultFontSize)
-        title(axesHandle,'axial plane','FontSize',defaultFontSize,'Color',matRad_cfg.gui.highlightColor)
+        planeInfo = 'axial plane';
     end
 elseif plane == 2 % Sagittal plane
     if ~isempty(ct.resolution.y) && ~isempty(ct.resolution.z)
@@ -71,11 +70,11 @@ elseif plane == 2 % Sagittal plane
         xlabel(axesHandle,'z [mm]','FontSize',defaultFontSize);
         ylabel(axesHandle,'y [mm]','FontSize',defaultFontSize);
         vcoord = matRad_cubeIndex2worldCoords([1,slice,1],ct);
-        title(axesHandle,['sagittal plane x = ' num2str(vcoord(1)) ' [mm]'],'FontSize',defaultFontSize,'Color',matRad_cfg.gui.highlightColor);
+        planeInfo = ['sagittal plane x = ' num2str(vcoord(1)) ' [mm]'];
     else
         xlabel(axesHandle,'z [voxels]','FontSize',defaultFontSize)
         ylabel(axesHandle,'y [voxels]','FontSize',defaultFontSize)
-        title(axesHandle,'sagittal plane','FontSize',defaultFontSize,'Color',matRad_cfg.gui.highlightColor);
+        planeInfo = 'sagittal plane';
     end
 elseif plane == 1 % Coronal plane
     if ~isempty(ct.resolution.x) && ~isempty(ct.resolution.z)
@@ -86,16 +85,27 @@ elseif plane == 1 % Coronal plane
         xlabel(axesHandle,'z [mm]','FontSize',defaultFontSize)
         ylabel(axesHandle,'x [mm]','FontSize',defaultFontSize)
         vcoord = matRad_cubeIndex2worldCoords([slice,1,1],ct);
-        title(axesHandle,['coronal plane y = ' num2str(vcoord(2)) ' [mm]'],'FontSize',defaultFontSize,'Color',matRad_cfg.gui.highlightColor)
+        planeInfo = ['coronal plane y = ' num2str(vcoord(2)) ' [mm]'];
     else
         xlabel(axesHandle,'z [voxels]','FontSize',defaultFontSize)
         ylabel(axesHandle,'x [voxels]','FontSize',defaultFontSize)
-        title(axesHandle,'coronal plane','FontSize',defaultFontSize,'Color',matRad_cfg.gui.highlightColor)
+        planeInfo = 'coronal plane';
     end
 end
+
+% Create the combined title if a custom title is provided
+if ~isempty(titleString)
+    titleText = sprintf('%s\n%s', titleString, planeInfo);
+else
+    titleText = planeInfo;
+end
+
+% Set the title with the combined text
+title(axesHandle, titleText, 'FontSize', defaultFontSize, 'Color', matRad_cfg.gui.highlightColor);
 
 %Apply coloring
 set(axesHandle,'XColor',matRad_cfg.gui.textColor,'YColor',matRad_cfg.gui.textColor);
 
 end
+
 

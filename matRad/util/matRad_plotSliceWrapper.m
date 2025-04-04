@@ -1,5 +1,5 @@
 function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,...
-                                                                          doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,varargin)
+                                                                          doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,titleString,varargin)
 % matRad tool function to directly plot a complete slice of a ct with dose
 % including contours and isolines.
 %
@@ -13,7 +13,7 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandl
 % [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,doseIsoLevels)
 %               ...
 % [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,...
-%                                                                          doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,...)
+%                                                                          doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,titleString,...)
 %
 % input (required)
 %   axesHandle      handle to axes the slice should be displayed in
@@ -36,6 +36,7 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandl
 %                   all non-ignored contours.
 %   colorBarLabel   string defining the yLabel of the colorBar
 %   boolPlotLegend  boolean if legend should be plottet or not
+%   titleString     string to display as title for the plot
 %   varargin        additional input parameters that are passed on to
 %                   individual plotting functions (e.g. 'LineWidth',1.5)
 %   
@@ -99,6 +100,10 @@ if ~exist('cst','var') || isempty(cst)
    cst = [];
 end
 
+if ~exist('titleString','var') || isempty(titleString)
+   titleString = [];
+end
+
 matRad_cfg = MatRad_Config.instance();
 
 set(axesHandle,'YDir','Reverse');
@@ -148,10 +153,10 @@ axis(axesHandle,'tight');
 set(axesHandle,'xtick',[],'ytick',[]);
 colormap(axesHandle,doseColorMap);
 
-matRad_plotAxisLabels(axesHandle,ct,plane,slice,[])
+% Add axis labels with plane information and title
+matRad_plotAxisLabels(axesHandle,ct,plane,slice,[],titleString)
 
 % set axis ratio
-
 ratios = [1/ct.resolution.x 1/ct.resolution.y 1/ct.resolution.z];
    
 set(axesHandle,'DataAspectRatioMode','manual');
@@ -170,6 +175,11 @@ hCMap = matRad_plotColorbar(axesHandle,doseColorMap,doseWindow,'Location','EastO
 set(hCMap,'Color',matRad_cfg.gui.textColor);
 if ~isempty(colorBarLabel)
     set(get(hCMap,'YLabel'),'String', colorBarLabel,'FontSize',matRad_cfg.gui.fontSize);
+end
+
+% Set the figure name as well if title is provided
+if ~isempty(titleString)   
+    set(ancestor(axesHandle, 'figure'), 'Name', titleString);
 end
 
 end
