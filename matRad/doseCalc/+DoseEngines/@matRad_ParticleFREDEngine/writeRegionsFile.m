@@ -72,6 +72,10 @@ try
         fprintf(fID, 'lAllowHUClamping=t\n');
     end
 
+    if ~isempty(this.dijFormatVersion) && this.isVersionHigher('3.70.0')
+        fprintf(fID, 'ijFormatVersion = %s\n', this.dijFormatVersion);
+    end
+
 catch ME
     matRad_cfg.dispError(['Failed to write regions file. Exit with error: ', ME.message]);
 
