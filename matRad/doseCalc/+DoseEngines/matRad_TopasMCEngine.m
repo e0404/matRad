@@ -374,12 +374,12 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         function resultGUI = getResultGUI(obj,dij)
             if obj.scorer.calcDij
                 resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij,1);
-            elseif obj.calc4DInterplayI || obj.MCparam.numOfCtScen > 1
+            elseif obj.calc4DInterplay || obj.MCparam.numOfCtScen > 1
                 for ctScen = 1:dij.numOfScenarios
                     tmpResultGUI = matRad_calcCubes(ones(dij.numOfBeams,1),dij,ctScen);
-                    resultGUI.phaseDose{ctScen} = tmpResultGUI.phaseDose;
+                    resultGUI.phaseDose{ctScen} = tmpResultGUI.physicalDose;
                     for beamIx = 1:dij.numOfBeams
-                        resultGUI.(['phaseDose_beam', num2str(beamIx)]){ctScen} = tmpResultGUI.(['phaseDose_beam', num2str(beamIx)]);
+                        resultGUI.(['phaseDose_beam', num2str(beamIx)]){ctScen} = tmpResultGUI.(['physicalDose_beam', num2str(beamIx)]);
                     end
                     if isfield(tmpResultGUI, 'alphaDoseCube') && isfield(tmpResultGUI, 'SqrtBetaDoseCube')
                         resultGUI.phaseAlphaDose{ctScen}    = tmpResultGUI.alpha .* tmpResultGUI.physicalDose;
