@@ -55,6 +55,7 @@ end
 % Now, as the directories are created, let us create the DICOM data. Here, the DICOM
 % files will be created from the .mat format.
 load('LIVER.mat');
+indicators = {'mean','std','max', 'min', 'D_2','D_5', 'D_95', 'D_98'};
 realCTct = ct;
 realCTcst = cst;
 
@@ -137,7 +138,7 @@ for i = 1:size(cst, 1)
     % This is the superclass for all objectives and constraints to enable easy 
     % identification.
 
-    if cst{i,3} == "OAR"
+    if strcmp(cst{i,3},'OAR')
         if ~isempty(regexpi(cst{i,2},'spinal', 'once'))
             objective = DoseObjectives.matRad_MaxDVH; 
             objective.penalty = 1;
@@ -209,7 +210,7 @@ pln.multScen = 'nomScen';
 
 pln.propStf.gantryAngles   = [0 50 100 150 200 250 300];
 pln.propStf.couchAngles    = zeros(1,numel(pln.propStf.gantryAngles));
-pln.propStf.bixelWidth     = 4;
+pln.propStf.bixelWidth     = 5;
 
 % Obtain the number of beams and voxels from the existing variables and 
 % calculate the iso-center which is per default the center of gravity of 
@@ -219,9 +220,9 @@ pln.propStf.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 
 %% Dose calculation settings
 % set resolution of dose calculation and optimization
-pln.propDoseCalc.doseGrid.resolution.x = 4; % [mm]
-pln.propDoseCalc.doseGrid.resolution.y = 4; % [mm]
-pln.propDoseCalc.doseGrid.resolution.z = 4; % [mm]
+pln.propDoseCalc.doseGrid.resolution.x = 7; % [mm]
+pln.propDoseCalc.doseGrid.resolution.y = 7; % [mm]
+pln.propDoseCalc.doseGrid.resolution.z = 7; % [mm]
 
 %%
 % Enable sequencing and disable direct aperture optimization (DAO) for now.
@@ -261,14 +262,16 @@ qi = resultGUI.qi;
 % Save DVH parameters calculated on the real CT to the table  
 % for further comparison with plans calculated on the synthetic CT.  
 % Include the patient number and indicate the CT type as "real"  
-% to facilitate delta calculations between the plans later.  
-dvhTableReal=struct2table(qi);
-% Select only DVH parameters from QI table you are interested in comparison
-dvhTableReal=dvhTableReal(:,1:9);
-dvhTableReal.patient= repmat(char(name),length(qi),1);
-dvhTableReal.ct_type = repmat(char("real"),length(qi),1);
-% Check DVH table for real CT
-disp(dvhTableReal);
+% to facilitate delta calculations between the plans later.
+if matRad_cfg.isMatlab %tables not supported by Octave
+    dvhTableReal=struct2table(qi);
+    % Select only DVH parameters from QI table you are interested in comparison
+    dvhTableReal=dvhTableReal(:,horzcat({'name'},indicators));
+    dvhTableReal.patient= repmat(char(name),length(qi),1);
+    dvhTableReal.ct_type = repmat('real',length(qi),1);
+    % Check DVH table for real CT
+    disp(dvhTableReal);
+end
 
 %% Now clear the data from the real CT image, except for the plan parameters,  
 % and load the synthetic (fake) CT image of the same patient.  
@@ -296,27 +299,30 @@ dvh = resultGUI.dvh;
 qi = resultGUI.qi;
 
 % In the similar fashion, save DVH parameters calculated on the synthetic CT to the table  
-dvhTableFake=struct2table(qi);
-% Select the same DVH parameters for further comparison
-dvhTableFake=dvhTableFake(:,1:9);
-dvhTableFake.patient= repmat(char(name),length(qi),1);
-dvhTableFake.ct_type = repmat(char("fake"),length(qi),1);
-
-%% Calculate the difference in between of DVH calculated on real CT (dvh_table_real) and synthetic CT (dvh_table_fake)
-dvhTableDiff=dvhTableReal;
-for i =1:height(dvhTableReal)
-    for j=["mean","std","max", "min", "D_2","D_5", "D_95", "D_98"]
-        if cell2mat(dvhTableReal{i,"name"})==cell2mat(dvhTableFake{i,"name"})
-            dvhTableDiff{i,j}=(dvhTableReal{i,j}-dvhTableFake{i,j})/dvhTableReal{i,j}*100;
-        else
-            dvhTableDiff{i,j}="error";
-        end
-    end
+if matRad_cfg.isMatlab  %tables not supported by Octave
+    dvhTableFake=struct2table(qi);
+    % Select the same DVH parameters for further comparison
+    dvhTableFake=dvhTableFake(:,horzcat({'name'},indicators));
+    dvhTableFake.patient= repmat(char(name),length(qi),1);
+    dvhTableFake.ct_type = repmat('fake',length(qi),1);
 end
 
-%% Check the difference
-disp(dvhTableDiff)
+%% Calculate the difference in between of DVH calculated on real CT (dvh_table_real) and synthetic CT (dvh_table_fake)
+if matRad_cfg.isMatlab
+    dvhTableDiff = dvhTableReal;
+    for i = 1:height(dvhTableReal)
+        for j = indicators
+            if cell2mat(dvhTableReal{i,'name'}) == cell2mat(dvhTableFake{i,'name'})
+                dvhTableDiff{i,j} = (dvhTableReal{i,j} - dvhTableFake{i,j}) / dvhTableReal{i,j}*100;
+            else
+                dvhTableDiff{i,j} = 'error';
+            end
+        end
+    end
 
-%%% Save the results to CSV file
-%file_path_dvh_diff = "YOUR PATH"
-%writetable(dvh_table_diff, file_path_dvh_diff);
+    disp(dvhTableDiff)
+
+    %%% Save the results to CSV file
+    %file_path_dvh_diff = "YOUR PATH"
+    %writetable(dvh_table_diff, file_path_dvh_diff);
+end
