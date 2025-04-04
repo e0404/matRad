@@ -37,6 +37,14 @@ end
 %Get available, valid classes through call to matRad helper function
 %for finding subclasses
 persistent allAvailableDoseEngines lastOptionalPaths
+
+%First we do a sanity check if persistently stored metaclasses are valid
+if ~matRad_cfg.isOctave && ~isempty(allAvailableDoseEngines) && ~all(cellfun(@isvalid,allAvailableDoseEngines))
+    matRad_cfg.dispWarning('Found invalid Dose Engines, updating engine cache.');
+    allAvailableDoseEngines = [];
+end
+
+%Check if we need to find the engines and if yes, do
 if isempty(allAvailableDoseEngines) || (~isempty(lastOptionalPaths) && ~isequal(lastOptionalPaths, optionalPaths))
     lastOptionalPaths = optionalPaths;
     allAvailableDoseEngines = matRad_findSubclasses('DoseEngines.matRad_DoseEngineBase','packages',{'DoseEngines'},'folders',optionalPaths,'includeAbstract',false);

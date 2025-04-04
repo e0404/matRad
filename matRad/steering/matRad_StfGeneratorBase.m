@@ -446,6 +446,13 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
             %Get available, valid classes through call to matRad helper function
             %for finding subclasses
             persistent allAvailableStfGenerators lastOptionalPaths
+            
+            %First we do a sanity check if persistently stored metaclasses are valid
+            if ~matRad_cfg.isOctave && ~isempty(allAvailableStfGenerators) && ~all(cellfun(@isvalid,allAvailableStfGenerators))
+                matRad_cfg.dispWarning('Found invalid Steering Geometry Generators, updating cache.');
+                allAvailableStfGenerators = [];
+            end
+
             if isempty(allAvailableStfGenerators) || (~isempty(lastOptionalPaths) && ~isequal(lastOptionalPaths, optionalPaths))
                 lastOptionalPaths = optionalPaths;
                 allAvailableStfGenerators = matRad_findSubclasses(mfilename('class'),'folders',optionalPaths,'includeAbstract',false);
