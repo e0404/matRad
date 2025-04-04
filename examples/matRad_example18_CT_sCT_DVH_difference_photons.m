@@ -31,18 +31,17 @@
 matRad_cfg = matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
 
 % Create directories to store DICOM real CT and synthetic (fake) CT data  
-patDir= "userdata\syntheticCT\"; % If you want to export your data, use "userdata" folder as it is ignored by git
-name="pat001";
-patDirRealCT= fullfile(patDir,name,"realCT");
-patDirFakeCT= fullfile(patDir,name,"fakeCT");
+patDir = [matRad_cfg.primaryUserFolder filesep "syntheticCT" filesep]; % If you want to export your data, use "userdata" folder as it is ignored by git
+name = "LIVER";
+patDirRealCT = fullfile(patDir,name,"realCT");
+patDirFakeCT = fullfile(patDir,name,"fakeCT");
 
 try
     if ~exist(patDirRealCT, 'dir')
         mkdir(patDirRealCT);
     end
 catch ME
-    fprintf('Error creating realCT directory: %s\n', patDirRealCT);
-    fprintf('Error message: %s\n', ME.message);
+    matRad_cfg.dispError('Error creating realCT directory: %s\nError message: %s\n', patDirRealCT, ME.message);
 end
 
 try
@@ -50,14 +49,14 @@ try
         mkdir(patDirFakeCT);
     end
 catch ME
-    fprintf('Error creating fakeCT directory: %s\n', patDirFakeCT);
-    fprintf('Error message: %s\n', ME.message);
+    matRad_cfg.dispError('Error creating fakeCT directory: %s\nError message: %s\n', patDirFakeCT, ME.message);
 end
 
 % Now, as the directories are created, let us create the DICOM data. Here, the DICOM
 % files will be created from the .mat format.
 load('LIVER.mat');
-realCTct=ct;
+realCTct = ct;
+
 %review real CT volume
 matRadGUI;
 %saving as DICOMs
@@ -96,7 +95,6 @@ dcmExpFakeCT.matRad_exportDicom();
 
 %clear all except of paths, close windows to start from clean space
 delete(matRadGUI);
-clearvars -except 'patDir' 'patDirFakeCT' 'patDirRealCT' 'matRad_cfg' 'name';
 
 
 %% Patient Data Import from DICOM  
