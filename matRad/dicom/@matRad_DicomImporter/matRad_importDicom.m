@@ -189,7 +189,9 @@ if ~isempty(obj.stf) && ~isempty(obj.resultGUI)
         obj.resultGUI.w = [obj.resultGUI.w; [obj.stf(i).ray.weight]'];
     end
 end
-
+if any(ishandle(h))
+        close(h)
+end
 %% put ct, cst, pln, stf, resultGUI to the workspace
 ct = obj.ct;
 cst = obj.cst;

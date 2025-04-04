@@ -1,4 +1,4 @@
-﻿List of all matRad developers that contributed code (alphabetical)
+List of all matRad developers that contributed code (alphabetical)
 
 * Nelly Abbani
 * Nabe Al-Hasnawi
@@ -26,6 +26,7 @@
 * Navid Khaledi
 * Thomas Klinge
 * Jeremias Kunz
+* Mariia Lapaeva
 * Paul Anton Meder
 * Henning Mescher
 * Lucas-Raphael Müller
