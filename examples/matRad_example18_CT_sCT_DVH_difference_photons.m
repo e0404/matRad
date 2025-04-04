@@ -56,11 +56,12 @@ end
 % files will be created from the .mat format.
 load('LIVER.mat');
 realCTct = ct;
+realCTcst = cst;
 
 %review real CT volume
 matRadGUI;
 %saving as DICOMs
-dcmExpRealCT= matRad_DicomExporter;   % create instance of matRad_DicomExporter
+dcmExpRealCT = matRad_DicomExporter;   % create instance of matRad_DicomExporter
 dcmExpRealCT.dicomDir = patDirRealCT;         % set the output path for the Dicom export
 dcmExpRealCT.cst = cst;     % set the structure set for the Dicom export
 dcmExpRealCT.ct = realCTct;     % set the image volume for the Dicom export
@@ -69,7 +70,7 @@ dcmExpRealCT.matRad_exportDicom();
 
 % In order to create a fake or synthetic CT volume, we will use real CT data and re-use its HU values 
 % for illustrative purposes. First, we extract the original 3D HU image data.
-fakeCTct=ct;
+fakeCTct = ct;
 fakeCTcubeHU = fakeCTct.cubeHU{1};
 
 % Then, we define the range values to be coerced to create the fake CT volume. For this, we will
@@ -83,7 +84,7 @@ fakeCTcubeHU(mask) = newMin + (fakeCTcubeHU(mask) - oldMin) * (newMax - newMin) 
 fakeCTct.cubeHU{1} = fakeCTcubeHU;
 
 %review fake CT volume
-ct= fakeCTct;
+ct = fakeCTct;
 hGUI = matRadGUI;
 
 %saving as DICOMs
