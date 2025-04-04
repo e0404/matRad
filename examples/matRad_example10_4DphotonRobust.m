@@ -192,7 +192,7 @@ pln.propOpt.quantityOpt = 'physicalDose';
 stf = matRad_generateStf(ct,cst,pln);
 
 %% Dose Calculation
-dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+dij =  matRad_calcDoseInfluence(ct,cst,stf,pln);
 
 %% Inverse Optimization  for IMPT based on RBE-weighted dose
 % The goal of the fluence optimization is to find a set of bixel/spot 
