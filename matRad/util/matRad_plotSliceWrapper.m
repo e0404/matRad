@@ -63,8 +63,6 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandl
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-warning('Deprecation warning: matRad_plotSliceWrapper is deprecated. Using matRad_plot_Slice instead');
-
 % Handle the argument list
 if ~exist('thresh','var') || isempty(thresh)
     thresh = [];
