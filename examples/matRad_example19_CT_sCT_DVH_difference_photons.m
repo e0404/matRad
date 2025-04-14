@@ -57,7 +57,7 @@ end
 
 % Now, as the directories are created, let us create the DICOM data. Here, the DICOM
 % files will be created from the .mat format.
-load('Liver.mat');
+load('LIVER.mat');
 realCTct=ct;
 %review real CT volume
 matRadGUI;
