@@ -1,4 +1,4 @@
-%% Example: Photon Treatment Plan
+%% Example: Comparison of a CT and (fake) synthetic CT dose calculation
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -28,41 +28,32 @@
 % from .mat format to .dcm, consisting of 3D body volume slices as well as a structure file and use it as a real CT.  
 % Additionally, we will slightly modify the intensities of the phantom to generate  
 % synthetic CT images, illustrating dose difference.
-clear;
 matRad_cfg = matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
 
 % Create directories to store DICOM real CT and synthetic (fake) CT data  
-patDir= "userdata\syntheticCT\"; % If you want to export your data, use "userdata" folder as it is ignored by git
-name="pat001";
-patDirRealCT= fullfile(patDir,name,"realCT");
-patDirFakeCT= fullfile(patDir,name,"fakeCT");
+patDir = [matRad_cfg.primaryUserFolder filesep 'syntheticCT' filesep]; % If you want to export your data, use "userdata" folder as it is ignored by git
+name = 'LIVER';
+patDirRealCT = [name '_realCT'];
+patDirFakeCT = [name '_fakeCT'];
 
-try
-    if ~exist(patDirRealCT, 'dir')
-        mkdir(patDirRealCT);
-    end
-catch ME
-    fprintf('Error creating realCT directory: %s\n', patDirRealCT);
-    fprintf('Error message: %s\n', ME.message);
+if ~mkdir(patDir,patDirRealCT) || ~mkdir(patDir,patDirFakeCT)
+    matRad_cfg.dispError('Error creating directories %s and %s in %s',patDirRealCT,patDirFakeCT,patDir);
 end
 
-try
-    if ~exist(patDirFakeCT, 'dir')
-        mkdir(patDirFakeCT);
-    end
-catch ME
-    fprintf('Error creating fakeCT directory: %s\n', patDirFakeCT);
-    fprintf('Error message: %s\n', ME.message);
-end
+patDirRealCT = fullfile(patDir,patDirRealCT);
+patDirFakeCT = fullfile(patDir,patDirFakeCT);
 
 % Now, as the directories are created, let us create the DICOM data. Here, the DICOM
 % files will be created from the .mat format.
 load('LIVER.mat');
-realCTct=ct;
+indicators = {'mean','std','max', 'min', 'D_2','D_5', 'D_95', 'D_98'};
+realCTct = ct;
+realCTcst = cst;
+
 %review real CT volume
 matRadGUI;
 %saving as DICOMs
-dcmExpRealCT= matRad_DicomExporter;   % create instance of matRad_DicomExporter
+dcmExpRealCT = matRad_DicomExporter;   % create instance of matRad_DicomExporter
 dcmExpRealCT.dicomDir = patDirRealCT;         % set the output path for the Dicom export
 dcmExpRealCT.cst = cst;     % set the structure set for the Dicom export
 dcmExpRealCT.ct = realCTct;     % set the image volume for the Dicom export
@@ -71,7 +62,7 @@ dcmExpRealCT.matRad_exportDicom();
 
 % In order to create a fake or synthetic CT volume, we will use real CT data and re-use its HU values 
 % for illustrative purposes. First, we extract the original 3D HU image data.
-fakeCTct=ct;
+fakeCTct = ct;
 fakeCTcubeHU = fakeCTct.cubeHU{1};
 
 % Then, we define the range values to be coerced to create the fake CT volume. For this, we will
@@ -85,8 +76,8 @@ fakeCTcubeHU(mask) = newMin + (fakeCTcubeHU(mask) - oldMin) * (newMax - newMin) 
 fakeCTct.cubeHU{1} = fakeCTcubeHU;
 
 %review fake CT volume
-ct= fakeCTct;
-matRadGUI;
+ct = fakeCTct;
+hGUI = matRadGUI;
 
 %saving as DICOMs
 dcmExpFakeCT= matRad_DicomExporter;   % create instance of matRad_DicomExporter
@@ -96,8 +87,7 @@ dcmExpFakeCT.ct = fakeCTct;     % set the image volume for the Dicom export
 dcmExpFakeCT.matRad_exportDicom();   
 
 %clear all except of paths, close windows to start from clean space
-delete(matRadGUI);
-clearvars -except 'patDir' 'patDirFakeCT' 'patDirRealCT' 'matRad_cfg' 'name';
+delete(hGUI);
 
 
 %% Patient Data Import from DICOM  
@@ -113,6 +103,12 @@ clearvars -except 'patDir' 'patDirFakeCT' 'patDirRealCT' 'matRad_cfg' 'name';
 
 impRealCT = matRad_DicomImporter(patDirRealCT);
 matRad_importDicom(impRealCT);
+
+% StructureSet Import does not work in octave
+if matRad_cfg.isOctave
+    cst = realCTcst;
+end
+
 % Review the exported file and automatically identified  
 % optimization objectives and constraints. 
 matRadGUI;
@@ -133,7 +129,7 @@ for i = 1:size(cst, 1)
     % This is the superclass for all objectives and constraints to enable easy 
     % identification.
 
-    if cst{i,3} == "OAR"
+    if strcmp(cst{i,3},'OAR')
         if ~isempty(regexpi(cst{i,2},'spinal', 'once'))
             objective = DoseObjectives.matRad_MaxDVH; 
             objective.penalty = 1;
@@ -205,7 +201,7 @@ pln.multScen = 'nomScen';
 
 pln.propStf.gantryAngles   = [0 50 100 150 200 250 300];
 pln.propStf.couchAngles    = zeros(1,numel(pln.propStf.gantryAngles));
-pln.propStf.bixelWidth     = 4;
+pln.propStf.bixelWidth     = 5;
 
 % Obtain the number of beams and voxels from the existing variables and 
 % calculate the iso-center which is per default the center of gravity of 
@@ -215,9 +211,9 @@ pln.propStf.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 
 %% Dose calculation settings
 % set resolution of dose calculation and optimization
-pln.propDoseCalc.doseGrid.resolution.x = 4; % [mm]
-pln.propDoseCalc.doseGrid.resolution.y = 4; % [mm]
-pln.propDoseCalc.doseGrid.resolution.z = 4; % [mm]
+pln.propDoseCalc.doseGrid.resolution.x = 7; % [mm]
+pln.propDoseCalc.doseGrid.resolution.y = 7; % [mm]
+pln.propDoseCalc.doseGrid.resolution.z = 7; % [mm]
 
 %%
 % Enable sequencing and disable direct aperture optimization (DAO) for now.
@@ -257,14 +253,16 @@ qi = resultGUI.qi;
 % Save DVH parameters calculated on the real CT to the table  
 % for further comparison with plans calculated on the synthetic CT.  
 % Include the patient number and indicate the CT type as "real"  
-% to facilitate delta calculations between the plans later.  
-dvhTableReal=struct2table(qi);
-% Select only DVH parameters from QI table you are interested in comparison
-dvhTableReal=dvhTableReal(:,1:9);
-dvhTableReal.patient= repmat(char(name),length(qi),1);
-dvhTableReal.ct_type = repmat(char("real"),length(qi),1);
-% Check DVH table for real CT
-disp(dvhTableReal);
+% to facilitate delta calculations between the plans later.
+if matRad_cfg.isMatlab %tables not supported by Octave
+    dvhTableReal=struct2table(qi);
+    % Select only DVH parameters from QI table you are interested in comparison
+    dvhTableReal=dvhTableReal(:,horzcat({'name'},indicators));
+    dvhTableReal.patient= repmat(char(name),length(qi),1);
+    dvhTableReal.ct_type = repmat('real',length(qi),1);
+    % Check DVH table for real CT
+    disp(dvhTableReal);
+end
 
 %% Now clear the data from the real CT image, except for the plan parameters,  
 % and load the synthetic (fake) CT image of the same patient.  
@@ -292,30 +290,30 @@ dvh = resultGUI.dvh;
 qi = resultGUI.qi;
 
 % In the similar fashion, save DVH parameters calculated on the synthetic CT to the table  
-dvhTableFake=struct2table(qi);
-% Select the same DVH parameters for further comparison
-dvhTableFake=dvhTableFake(:,1:9);
-dvhTableFake.patient= repmat(char(name),length(qi),1);
-dvhTableFake.ct_type = repmat(char("fake"),length(qi),1);
-
-%% Calculate the difference in between of DVH calculated on real CT (dvh_table_real) and synthetic CT (dvh_table_fake)
-dvhTableDiff=dvhTableReal;
-for i =1:height(dvhTableReal)
-    for j=["mean","std","max", "min", "D_2","D_5", "D_95", "D_98"]
-        if cell2mat(dvhTableReal{i,"name"})==cell2mat(dvhTableFake{i,"name"})
-            dvhTableDiff{i,j}=(dvhTableReal{i,j}-dvhTableFake{i,j})/dvhTableReal{i,j}*100;
-        else
-            dvhTableDiff{i,j}="error";
-        end
-    end
+if matRad_cfg.isMatlab  %tables not supported by Octave
+    dvhTableFake=struct2table(qi);
+    % Select the same DVH parameters for further comparison
+    dvhTableFake=dvhTableFake(:,horzcat({'name'},indicators));
+    dvhTableFake.patient= repmat(char(name),length(qi),1);
+    dvhTableFake.ct_type = repmat('fake',length(qi),1);
 end
 
-%% Check the difference
-disp(dvhTableDiff)
+%% Calculate the difference in between of DVH calculated on real CT (dvh_table_real) and synthetic CT (dvh_table_fake)
+if matRad_cfg.isMatlab
+    dvhTableDiff = dvhTableReal;
+    for i = 1:height(dvhTableReal)
+        for j = indicators
+            if cell2mat(dvhTableReal{i,'name'}) == cell2mat(dvhTableFake{i,'name'})
+                dvhTableDiff{i,j} = (dvhTableReal{i,j} - dvhTableFake{i,j}) / dvhTableReal{i,j}*100;
+            else
+                dvhTableDiff{i,j} = 'error';
+            end
+        end
+    end
 
-%%% Save the results to CSV file
-%file_path_dvh_diff = "YOUR PATH"
-%writetable(dvh_table_diff, file_path_dvh_diff);
-delete(matRadGUI);
-close all;
-clear;
+    disp(dvhTableDiff)
+
+    %%% Save the results to CSV file
+    %file_path_dvh_diff = "YOUR PATH"
+    %writetable(dvh_table_diff, file_path_dvh_diff);
+end
