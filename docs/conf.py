@@ -7,7 +7,11 @@ author = "e0404"
 version = "3.1.0"
 release = "3.1.0"
 
-extensions = ['sphinxcontrib.matlab', 'sphinx.ext.autodoc']
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinxcontrib.matlab', 
+    'sphinxcontrib.youtube',
+    ]
 primary_domain = "mat"
 
 matlab_src_dir = os.path.join(os.path.dirname(__file__), '../')

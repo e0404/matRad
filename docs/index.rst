@@ -48,17 +48,18 @@ Please send us an email if you want to receive the matRad newsletter that inform
 Quick Navigation
 ^^^^^^^^^^^^^^^^
 
-+----------------+---------------+--------------------------+
-| :ref:`about`   | Quick Setup   | :ref:`techdoc`           |
-+================+===============+==========================+
-| |icon_about|   | |icon_setup|  | |icon_techdoc|           |
-+----------------+---------------+--------------------------+    
++----------------+--------------------------------+-----------------+
+| :ref:`about`   | :ref:`Quick Setup <settingup>` | :ref:`techdoc`  |
++================+================================+=================+
+| |icon_about|   | |icon_setup|                   | |icon_techdoc|  |
++----------------+--------------------------------+-----------------+    
 
 |matRad_logo_subheader| Webinars
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you like video lectures and tutorials, you can also have a look at the recording of the matRad webinar at the brown bag medical physics seminar at Massachusetts General hospital on `Youtube <https://www.youtube.com/watch?v=40_n7BIqLdw>`_.
 
+..  youtube:: 40_n7BIqLdw
 
 Centers using |matRad_logo_subheader|
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
