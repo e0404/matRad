@@ -11,6 +11,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinxcontrib.matlab', 
     'sphinxcontrib.youtube',
+    'sphinx_togglebutton',
     ]
 primary_domain = "mat"
 

@@ -1,6 +1,7 @@
-matRadMaster
+matRad
 ============
 
-.. toctree::
-   :maxdepth: 4
-
+.. automodule:: matRad
+    :members:
+    :show-inheritance:
+    :undoc-members:

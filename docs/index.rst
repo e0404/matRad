@@ -21,10 +21,6 @@
 .. |icon_techdoc| image:: images/technicalDocumentationIcon(klein).png
     :target: `techdoc`
 
-
-.. toctree::
-    :maxdepth: 2
-
 .. _Home:
 
 ====
@@ -67,7 +63,16 @@ Centers using |matRad_logo_subheader|
 On `Google Maps <https://www.google.com/maps>`_ we are maintaining a `list of matRad user groups <https://tinyurl.com/matRadMap>`_. 
 Please let us know if we can include your center, or if you have discontinued the usage of matRad so we can remove you from the list.
 
-.. automodule:: matRad
-    :members:
-    :show-inheritance:
-    :undoc-members:
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents
+   :glob:
+
+   index
+   about
+   settingup
+   techdoc
+   modules
+   faq
+   genindex
+   modindex

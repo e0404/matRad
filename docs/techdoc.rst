@@ -26,35 +26,27 @@ calculation <Dose-influence-matrix-calculation>`__
 
 `Visualization <Visualization>`__
 
-.. raw:: html
-
-   <a name="how2cite" />
-
 How to cite matRad
 ------------------
 
 `matRad publications <How-to-cite-matRad>`__
-
-.. raw:: html
-
-   <a name="variables" />
 
 .. _httpsrawgitcomwikie0404matradimagesmatrad_blanksvg--height--25pxs-most-important-matlab-variables:
 
 |matRad_logo|'s most important Matlab variables
 -----------------------------------------------
 
-`pln-struct <The-pln-struct>`__ Treatment plan information
+`pln-struct <pln>`__ Treatment plan information
 
-`ct-struct <The-ct-struct>`__ CT-data
+`ct-struct <ct>`__ CT-data
 
-`cst-cell array <The-cst-cell>`__ Structure sets, inverse planning objectives, and other meta-information
+`cst-cell array <cst>`__ Structure sets, inverse planning objectives, and other meta-information
 
-`stf-struct <The-stf-struct>`__ Steering information
+`stf-struct <stf>`__ Steering information
 
-`dij-struct <The-dij-struct>`__ Dose influence data
+`dij-struct <dij>`__ Dose influence data
 
-`result-struct <The-result-struct>`__ Resulting dose distribution, RBE cube etc..
+`result-struct <result>`__ Resulting dose distribution, RBE cube etc..
 
 Additional information
 ----------------------
