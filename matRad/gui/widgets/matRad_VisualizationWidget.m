@@ -652,10 +652,24 @@ classdef matRad_VisualizationWidget < matRad_Widget
                 set(handles.sliderBeamSelection,'Min',1,'Max',1, 'Value',1,'SliderStep',[1 1]);
             end
 
-            % Offset Slider (profile plot)           
-            set(handles.sliderOffset,'Min',this.viewingWidgetHandle.OffsetMinMax(1),'Max',this.viewingWidgetHandle.OffsetMinMax(2),...
-                'Value',this.viewingWidgetHandle.profileOffset,...
-                'SliderStep',this.viewingWidgetHandle.OffsetSliderStep);
+                % Offset Slider (profile plot)
+
+                    if isfield(this.viewingWidgetHandle, 'OffsetMinMax') && ...
+                       numel(this.viewingWidgetHandle.OffsetMinMax) >= 2 && ...
+                       all(isfinite(this.viewingWidgetHandle.OffsetMinMax))
+
+                        set(handles.sliderOffset, ...
+                            'Min', this.viewingWidgetHandle.OffsetMinMax(1), ...
+                            'Max', this.viewingWidgetHandle.OffsetMinMax(2), ...
+                            'Value', this.viewingWidgetHandle.profileOffset, ...
+                            'SliderStep', this.viewingWidgetHandle.OffsetSliderStep);
+                    else
+                        warning('OffsetMinMax is improperly defined. Skipping offset slider setup.');
+                    end
+
+
+
+
 
             %CT Scenario Slider
             if numScen > 1

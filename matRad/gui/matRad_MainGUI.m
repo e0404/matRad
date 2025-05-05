@@ -34,6 +34,7 @@ classdef matRad_MainGUI < handle
         DVHStatsWidget
         eventListeners
         GammaWidget
+        
 
         forceClose = false;
     end
@@ -41,6 +42,7 @@ classdef matRad_MainGUI < handle
 
 
     methods(Access = protected)
+
         function this = createMenuBar(this)
             h1 = this.guiHandle;
             folder = fileparts(mfilename('fullpath'));

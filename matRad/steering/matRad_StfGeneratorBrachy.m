@@ -102,6 +102,7 @@ classdef matRad_StfGeneratorBrachy < matRad_StfGeneratorBase
             stf.numOfSeedsPerNeedle = this.needle.seedsNo;
             stf.numOfNeedles = sum(this.template.activeNeedles(:));
             stf.totalNumOfBixels = stf.numOfSeedsPerNeedle * stf.numOfNeedles; % means total number of seeds
+            stf.numOfRays = NaN;
 
             %% generate 2D template points
             % the template origin is set at its center. In the image coordinate system,

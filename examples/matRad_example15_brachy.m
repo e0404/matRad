@@ -190,6 +190,9 @@ pln.propStf.gantryAngles    = [];
 pln.propStf.couchAngles     = []; 
 pln.propStf.numOfBeams      = 0;
 pln.numOfFractions          = 1; 
+pln.propStf.isoCenter = matRad_getIsoCenter(cst, ct, 0);
+pln.propStf.numOfRays = NaN ;
+
 
 %% II.1 - view plan
 % Et voila! Our treatment plan structure is ready. Lets have a look:
@@ -225,6 +228,7 @@ dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 % visualize the optimized dose cubes.
 
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+
 matRadGUI;
 
 %% IV.1 Plot the Resulting Dose Slice
