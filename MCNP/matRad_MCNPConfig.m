@@ -12,7 +12,7 @@ classdef matRad_MCNPConfig
     properties              
 
         %%% Simulation parameters:
-        Num_Primaries = 1e5; %1e6;
+        Num_Primaries = 1e6;
         Num_Threads   =	feature('numcores');		% Number of parallel calculation threads
         RNG_Seed      =	43;		% Seed for the random number generator
 

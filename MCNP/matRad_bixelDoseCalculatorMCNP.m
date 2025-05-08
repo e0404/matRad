@@ -76,8 +76,9 @@ elseif this.externalCalculation
         cores = feature('numcores');    % Attention: should be adopted to allow portability to other pc/cluster
         cd(strcat(matRad_cfg.matRadRoot, filesep, 'MCNP', filesep, 'runfiles_tmp'));
         runFileList = dir('MCNPrunfile_*bixel');
+        commandMCNP = 'mpiexec -np %d mcnp6.mpi n=MCNPrunfile_%dbixel\n';
         fileID_runAll = fopen('runAll.cmd', 'w');
-        for i=1:size(runFileList,1); fprintf(fileID_runAll, strcat('mpiexec -np ',in2str(cores),' mcnp6.mpi n=MCNPrunfile_bixel', int2str(i), '\n')); end
+        for i=1:size(runFileList,1); fprintf(fileID_runAll, commandMCNP,cores, i); end
         fclose(fileID_runAll);
     end
 
