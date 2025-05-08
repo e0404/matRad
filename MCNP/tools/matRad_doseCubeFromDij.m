@@ -1,4 +1,4 @@
-function [doseCube_physicalDose, doseCube_physicalDoseRelError] = matRad_doseCubeFromDij(dij)
+function [doseCube_physicalDose, doseCube_physicalDoseRelError] = matRad_doseCubeFromDij(dij) %, counter)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Function to generate dose cube from dij sparse matrix
@@ -15,12 +15,19 @@ function [doseCube_physicalDose, doseCube_physicalDoseRelError] = matRad_doseCub
 doseCube_physicalDose_dummy = zeros(prod(dij.doseGrid.dimensions),1);
 doseCube_physicalDose = zeros(dij.doseGrid.dimensions);
 
+% Comment here to avoid loop over all bixels
 for i = 1:size(dij.physicalDose{1,1},2)
     doseCube_physicalDose_dummy = doseCube_physicalDose_dummy + ...
         full(dij.physicalDose{1,1}(:,i));
     max(doseCube_physicalDose_dummy)
     disp(i)
 end
+% Uncomment to get specific bixel
+    % doseCube_physicalDose_dummy = doseCube_physicalDose_dummy + ...
+    %     full(dij.physicalDose{1,1}(:,counter));
+    % max(doseCube_physicalDose_dummy)
+    % disp(counter)
+
 doseCube_physicalDose(:) =  doseCube_physicalDose_dummy;
 
 % Get error of total physical dose

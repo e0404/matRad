@@ -28,7 +28,6 @@ if this.MCNPinstallationCheck && ~this.externalCalculation
     runFileList = dir('MCNPrunfile_bixel*');
 
     wb = waitbar(0, ['Calculating dose for bixel: ', num2str(1)], 'Name', 'Dose Calculation with MCNP');
-    numberCores4U = this.config.Num_Primaries;
 
     %% Run calculation for every bixel
     parfor bixelCounter=1:size(runFileList,1)
@@ -40,7 +39,7 @@ if this.MCNPinstallationCheck && ~this.externalCalculation
         tic;
 
         %     waitbar(bixelCounter/size(runFileList,1), wb, ['Calculating dose for bixel: ', num2str(bixelCounter)], 'Name', 'Dose Calculation with MCNP');
-        if ispc % MPI has to be installed on the windows machine to use multithreading for MCNP
+        if ispc 
             % system(['mpiexec -np ',num2str(numberCores4U), ' mcnp6.mpi I=', runFileList(bixelCounter).name, ...
             system(['mcnp6 I=', runFileList(bixelCounter).name, ...
                  ' OUTP=', runFileList(bixelCounter).name, 'o ', ...
@@ -52,7 +51,7 @@ if this.MCNPinstallationCheck && ~this.externalCalculation
             delete(strcat(runFileList(bixelCounter).name, 'r'))
             delete(strcat(runFileList(bixelCounter).name, 'd'))
 
-        else    % MPI only available with source code for linux
+        else   
             system(['mcnp6 I=', runFileList(bixelCounter).name, ...
                 ' OUTP=', runFileList(bixelCounter).name, 'o ', ...
                 ' RUNTPE=', runFileList(bixelCounter).name, 'r ', ...

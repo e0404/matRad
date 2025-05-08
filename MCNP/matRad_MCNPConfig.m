@@ -27,7 +27,7 @@ classdef matRad_MCNPConfig
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
             
             % Set default histories from MatRad_Config
-            if isfield(matRad_cfg.propMC,'defaultNumHistories')
+            if isfield(matRad_cfg.propDoseCalc,'defaultNumHistories')
                 obj.Num_Primaries = matRad_cfg.propMC.defaultNumHistories;
             end
         end

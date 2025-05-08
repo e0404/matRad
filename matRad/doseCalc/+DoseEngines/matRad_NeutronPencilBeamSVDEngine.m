@@ -537,7 +537,7 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
 
             %Basic check for information (does not check data integrity & subfields etc.)
             checkData = all(isfield(machine.data,{'betas','energy','m','primaryFluence','kernel','kernelPos'}));
-            checkMeta = all(isfield(machine.meta,{'SAD','SCD'}));
+            checkMeta = all(isfield(machine.meta,{'SAD'})); %,'SCD'}));
 
             if checkData && checkMeta
                 available = true;

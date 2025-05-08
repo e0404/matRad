@@ -14,7 +14,11 @@ classdef matRad_StfGeneratorNeutronIMRT < matRad_StfGeneratorNeutronRayBixelAbst
                 pln = [];
             end
             this@matRad_StfGeneratorNeutronRayBixelAbstract(pln);
-
+            
+            if (isfield(pln, 'propDoseCalc') && isfield(pln.propDoseCalc, 'addMargin') && ~pln.propDoseCalc.addMargin) 
+            this.addMargin = false;
+            end
+            
             if isempty(this.radiationMode)
                 this.radiationMode = 'neutrons';
             end

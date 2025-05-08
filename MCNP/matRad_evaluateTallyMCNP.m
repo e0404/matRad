@@ -71,6 +71,7 @@ for counterBeam = 1:dij.numOfBeams
             % mean(ct.doseGridCT.density{1,1}(ct.doseGridCT.tissueBin(cellCounter).linIndVol))
         end
         doseMatrixBixel.physicalDose = doseMatrixBixel.physicalDose*1.602177e-19*1e6*1e3; % Convert MeV/g to J/kg, output is now in Gy/source particle
+        doseMatrixBixel.physicalDose = doseMatrixBixel.physicalDose./max(doseMatrixBixel.physicalDose, [], 'all');
 
         doseMatrixBixel.physicalDose_relError = permute(doseMatrixBixel.physicalDose_relError, [2,1,3]);
 

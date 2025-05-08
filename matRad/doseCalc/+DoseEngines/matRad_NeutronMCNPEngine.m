@@ -211,7 +211,7 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             maskNonBody_doseGrid(bodyIdx_doseGrid) = 0;
             ct.cube{1}(maskNonBody>0) = 0;
             ct.cubeHU{1}(maskNonBody>0) = 0;
-            ct.doseGridCT.HUcube{1}(maskNonBody_doseGrid>0) = 0;
+            ct.doseGridCT.HUcube{1}(maskNonBody_doseGrid>0) = min(ct.doseGridCT.HUcube{1}, [], 'all'); % Use minimum to ensure compatibility with rescaling below
 
 
             if ~isprop(this, 'useDICOMinfoRescale')
@@ -330,7 +330,7 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
                     % Generate source card for each bixel - see also description of
                     % matRad^_makeSourceMCNP(...)
-                    [control_makeSourceMCNP, varHelper] = matRad_makeSourceMCNP(this, stf, varHelper, counterField, counterRay);
+                    [control_makeSourceMCNP, varHelper] = matRad_makeSourceMCNP(this, stf, ct, varHelper, counterField, counterRay);
                 end
             end
 
@@ -689,31 +689,6 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
     end
 
     methods (Access = private)
-        function gain = mcSquare_magicFudge(~,energy)
-            % mcSquare will scale the spot intensities in
-            % https://gitlab.com/openmcsquare/MCsquare/blob/master/src/data_beam_model.c#L906
-            % by this factor so we need to divide up front to make things work. The
-            % original code can be found at https://gitlab.com/openmcsquare/MCsquare/blob/master/src/compute_beam_model.c#L16
-
-            K = 35.87; % in eV (other value 34.23 ?)
-
-            % // Air stopping power (fit ICRU) multiplied by air density
-            SP = (9.6139e-9*energy^4 - 7.0508e-6*energy^3 + 2.0028e-3*energy^2 - 2.7615e-1*energy + 2.0082e1) * 1.20479E-3 * 1E6; % // in eV / cm
-
-            % // Temp & Pressure correction
-            PTP = 1.0;
-
-            % // MU calibration (1 MU = 3 nC/cm)
-            % // 1cm de gap effectif
-            C = 3.0E-9; % // in C / cm
-
-            % // Gain: 1eV = 1.602176E-19 J
-            gain = (C*K) / (SP*PTP*1.602176E-19);
-
-            % divide by 1e7 to not get tiny numbers...
-            gain = gain/1e7;
-
-        end
     end
 
 

@@ -1,4 +1,4 @@
-function [control_makeSourceMCNP, varHelper] = matRad_makeSourceMCNP(this,stf, varHelper, counterField, counterRay)
+function [control_makeSourceMCNP, varHelper] = matRad_makeSourceMCNP(this,stf, ct, varHelper, counterField, counterRay)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Write source data as MCNP input file. For each bixel/ray an individual
 % MCNP input file is generated, where position of the source is defined by
@@ -34,9 +34,12 @@ matRad_cfg =  MatRad_Config.instance();
 %% Check source input and create source part of runfile
 pathRunfiles = fullfile(matRad_cfg.matRadRoot, 'MCNP', filesep, 'runfiles_tmp', filesep);
 
+%% Reset isocenter coordinates to cube coodinates (and forget)
+stf.isoCenter = matRad_world2cubeCoords(stf.isoCenter, ct, 0);
+
 %% Option A: Predefined field using RSSA file
 if strcmp(num2str(stf(1).bixelWidth),'field')
-    pathRSSA = fullfile(matRad_cfg.matRadRoot, 'submodules', 'MCdoseEngineMCNP', 'RSSA_depot', filesep);
+    pathRSSA = fullfile(matRad_cfg.matRadRoot, 'MCNP', filesep, 'RSSA_depot', filesep);
     makeSource_readRSSA(stf, varHelper, pathRunfiles, pathRSSA)
     control_makeSourceMCNP = 1;
 
@@ -47,21 +50,21 @@ elseif strcmp(this.machine.meta.radiationMode, 'neutrons') ...
         && ~isfield(this.machine.data, 'neutronMonoEn')
     if isfield(this.machine.data, 'photonSpec')
         if counterField==1 && counterRay==1
-        matRad_cfg.dispInfo('***')
-        matRad_cfg.dispInfo('Neutron spectrum load from machine file.\n')
+        matRad_cfg.dispInfo('***\n')
+        matRad_cfg.dispInfo('Neutron spectrum loaded from machine file.\n')
         matRad_cfg.dispInfo('***\n')
         matRad_cfg.dispInfo('Gamma/photon spectrum found in neutron machine. Will be included in the simulation as primary particles.\n')
         matRad_cfg.dispInfo('***\n')
         end
-        makeSource_spectralInformationNeutronsPlusPhotons(stf, varHelper, pathRunfiles,this.machine.data)
+        makeSource_spectralInformationNeutronsPlusPhotons(stf, varHelper, pathRunfiles, counterField, counterRay,this.machine)
         control_makeSourceMCNP = 1;
     else
         if counterField==1 && counterRay==1
         matRad_cfg.dispInfo('***\n')
-        matRad_cfg.dispInfo('Neutron spectrum load from machine file.\n')
+        matRad_cfg.dispInfo('Neutron spectrum loaded from machine file.\n')
         matRad_cfg.dispInfo('***\n')
         end
-        makeSource_spectralInformationNeutrons(stf, varHelper, pathRunfiles, counterField, counterRay,this.machine.data)
+        makeSource_spectralInformationNeutrons(stf, varHelper, pathRunfiles, counterField, counterRay,this.machine)
         control_makeSourceMCNP = 1;
     end
 %% Option C: only photons but with spectral information
@@ -70,10 +73,10 @@ elseif strcmp(this.machine.meta.radiationMode, 'photons') ...
         && isfield(this.machine.data, 'photonSpec')
     if counterField==1 && counterRay==1
     matRad_cfg.dispInfo('***\n')
-    matRad_cfg.dispInfo('Photon spectrum load from machine file.\n')
+    matRad_cfg.dispInfo('Photon spectrum loaded from machine file.\n')
     matRad_cfg.dispInfo('***\n')
     end
-    makeSource_spectralInformationPhotons(stf, varHelper, pathRunfiles, counterField, counterRay, this.machine.data)
+    makeSource_spectralInformationPhotons(stf, varHelper, pathRunfiles, counterField, counterRay, this.machine)
     control_makeSourceMCNP = 1;
 %% Option D: monoenergetic neutrons
 elseif strcmp(this.machine.meta.radiationMode,'neutrons') ...
@@ -85,7 +88,7 @@ elseif strcmp(this.machine.meta.radiationMode,'neutrons') ...
     disp('Monoenergetic neutrons used for simulation.\n')
     disp('*****\n')
     end
-    makeSource_monoenN(stf, varHelper, pathRunfiles, counterField, counterRay, this.machine.data)
+    makeSource_monoenN(stf, varHelper, pathRunfiles, counterField, counterRay, this.machine)
     control_makeSourceMCNP = 1;
 
 else
@@ -111,7 +114,7 @@ end
         source.sourceCard_2_p = 'SP2 0 1\n';
 
         % Define coordinate transformation card
-        coordTrafo.TRcard = 'TR1\n        %.4f %.4f %.4f\n        %.4f %.4f %.4f\n        %.4f %.4f %.4f\n        %.4f %.4f %.4f\n -1\n';
+        coordTrafo.TRcard = 'TR1\n        %.4f %.4f %.4f\n        %.4f %.4f %.4f\n        %.4f %.4f %.4f\n        %.4f %.4f %.4f\n\n';
 
         % Write Block C
         fprintf(fileID_C, 'C ***************************************************************\n');
@@ -133,9 +136,9 @@ end
 
         % Write TR card for spatial source transformation
         fprintf(fileID_C, coordTrafo.TRcard, ...
-            (stf(counterField).isoCenter(1)+stf(counterField).ray(counterRay).rayPos_bev(1))*varHelper.rescaleFactor, ...
-            (stf(counterField).isoCenter(2)+stf(counterField).ray(counterRay).rayPos_bev(2))*varHelper.rescaleFactor, ...
-            (stf(counterField).isoCenter(3)+stf(counterField).ray(counterRay).rayPos_bev(3))*varHelper.rescaleFactor, ...
+            (stf(counterField).isoCenter(1)+stf(counterField).ray(counterRay).rayPos(1))*varHelper.rescaleFactor, ...
+            (stf(counterField).isoCenter(2)+stf(counterField).ray(counterRay).rayPos(2))*varHelper.rescaleFactor, ...
+            (stf(counterField).isoCenter(3)+stf(counterField).ray(counterRay).rayPos(3))*varHelper.rescaleFactor, ...
             rotMatrix(1,1), rotMatrix(1,2), rotMatrix(1,3),...
             rotMatrix(2,1), rotMatrix(2,2), rotMatrix(2,3),...
             rotMatrix(3,1), rotMatrix(3,2), rotMatrix(3,3));
@@ -143,7 +146,7 @@ end
         fclose(fileID_C);
     end
 
-    function makeSource_spectralInformationNeutrons(stf, varHelper, pathRunfiles, counterField, counterRay, spectralInformation)
+    function makeSource_spectralInformationNeutrons(stf, varHelper, pathRunfiles, counterField, counterRay, machineInformation)
         % Get rotation matrix
         rotMatrix = matRad_calcMCNProtMatrix(stf(counterField).gantryAngle, stf(counterField).couchAngle);
         % Calculate source position in original coordinate system
@@ -157,12 +160,21 @@ end
         % VEC.
         % ERG=d3 used to define spectrum according to information read from
         % tabulated data in ..\MATRAD\MCNP\SpectralInformation
-        
-        source.sourceCard_0 = 'SDEF\n        X=d1 Y=%.4f Z=d2\n        VEC=0 1 0\n        DIR=1 PAR=1 ERG=d3 TR=1\n';
-        source.sourceCard_1_i = 'SI1 %.4f %.4f\n';  % Initial position and source extension
-        source.sourceCard_1_p = 'SP1 0 1\n';
-        source.sourceCard_2_i = 'SI2 %.4f %.4f\n';  % ...
-        source.sourceCard_2_p = 'SP2 0 1\n';
+        % Added for BNCT: circular field shape with diameter equal to bixel
+        % size. Attention: matRad machine has to be named leading with BNCT
+
+        if strcmp(machineInformation.meta.name(1:4), 'BNCT') 
+            source.sourceCard_0 = 'SDEF\n       POS=0 %.4f 0 AXS=0 1 0\n       EXT=0 RAD=d1\n       VEC=0 1 0 DIR=1\n       PAR=1 ERG=d3 TR=1\n';
+            source.sourceCard_1_i = 'SI1 0 %.4f\n';  % Initial position and source extension
+            source.sourceCard_1_p = 'SP1 -21 1\n';
+        else
+            source.sourceCard_0 = 'SDEF\n        X=d1 Y=%.4f Z=d2\n        VEC=0 1 0\n        DIR=1 PAR=1 ERG=d3 TR=1\n';
+            source.sourceCard_1_i = 'SI1 %.4f %.4f\n';  % Initial position and source extension
+            source.sourceCard_1_p = 'SP1 0 1\n';
+            source.sourceCard_2_i = 'SI2 %.4f %.4f\n';  % ...
+            source.sourceCard_2_p = 'SP2 0 1\n';
+        end
+
         source.energyCard_3_i_0 = 'SI3 H\n';        % Energy bins
         source.energyCard_3_i = '        %8d\n';
         source.energyCard_3_p_0 = 'SP3 D\n';        % Spectral information
@@ -179,28 +191,33 @@ end
         % Write initial source position and extension
         fprintf(fileID_C, source.sourceCard_0, ...
             sourcePoint(2)*varHelper.rescaleFactor);
-        fprintf(fileID_C, source.sourceCard_1_i, ...
-            (sourcePoint(1)-stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor, ...
-            (sourcePoint(1)+stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
-        fprintf(fileID_C, source.sourceCard_1_p);
-        fprintf(fileID_C, source.sourceCard_2_i, ...
-            (sourcePoint(3)-stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor, ...
-            (sourcePoint(3)+stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
-        fprintf(fileID_C, source.sourceCard_2_p);
-
+        if strcmp(machineInformation.meta.name(1:4), 'BNCT')
+            fprintf(fileID_C, source.sourceCard_1_i, ...             
+                (sourcePoint(1)+stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
+            fprintf(fileID_C, source.sourceCard_1_p);
+        else
+            fprintf(fileID_C, source.sourceCard_1_i, ...
+                (sourcePoint(1)-stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor, ...
+                (sourcePoint(1)+stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
+            fprintf(fileID_C, source.sourceCard_1_p);
+            fprintf(fileID_C, source.sourceCard_2_i, ...
+                (sourcePoint(3)-stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor, ...
+                (sourcePoint(3)+stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
+            fprintf(fileID_C, source.sourceCard_2_p);
+        end
         % Write spectral distribution
         fprintf(fileID_C, source.energyCard_3_i_0);
         fprintf(fileID_C, source.energyCard_3_i, ...
-            spectralInformation.neutronSpec(:,1));
+            machineInformation.data.neutronSpec(:,1));
         fprintf(fileID_C, source.energyCard_3_p_0);
         fprintf(fileID_C, source.energyCard_3_p, ...
-            spectralInformation.neutronSpec(:,2));
+            machineInformation.data.neutronSpec(:,2));
 
         % Write TR card for spatial source transformation
         fprintf(fileID_C, coordTrafo.TRcard, ...
-            (stf(counterField).isoCenter(1)+stf(counterField).ray(counterRay).rayPos_bev(1))*varHelper.rescaleFactor, ...
-            (stf(counterField).isoCenter(2)+stf(counterField).ray(counterRay).rayPos_bev(2))*varHelper.rescaleFactor, ...
-            (stf(counterField).isoCenter(3)+stf(counterField).ray(counterRay).rayPos_bev(3))*varHelper.rescaleFactor, ...
+            (stf(counterField).isoCenter(1)+stf(counterField).ray(counterRay).rayPos(1))*varHelper.rescaleFactor, ...
+            (stf(counterField).isoCenter(2)+stf(counterField).ray(counterRay).rayPos(2))*varHelper.rescaleFactor, ...
+            (stf(counterField).isoCenter(3)+stf(counterField).ray(counterRay).rayPos(3))*varHelper.rescaleFactor, ...
             rotMatrix(1,1), rotMatrix(1,2), rotMatrix(1,3),...
             rotMatrix(2,1), rotMatrix(2,2), rotMatrix(2,3),...
             rotMatrix(3,1), rotMatrix(3,2), rotMatrix(3,3));
@@ -263,9 +280,9 @@ end
 
         % Write TR card for spatial source transformation
         fprintf(fileID_C, coordTrafo.TRcard, ...
-            (stf(counterField).isoCenter(1)+stf(counterField).ray(counterRay).rayPos_bev(1))*varHelper.rescaleFactor, ...
-            (stf(counterField).isoCenter(2)+stf(counterField).ray(counterRay).rayPos_bev(2))*varHelper.rescaleFactor, ...
-            (stf(counterField).isoCenter(3)+stf(counterField).ray(counterRay).rayPos_bev(3))*varHelper.rescaleFactor, ...
+            (stf(counterField).isoCenter(1)+stf(counterField).ray(counterRay).rayPos(1))*varHelper.rescaleFactor, ...
+            (stf(counterField).isoCenter(2)+stf(counterField).ray(counterRay).rayPos(2))*varHelper.rescaleFactor, ...
+            (stf(counterField).isoCenter(3)+stf(counterField).ray(counterRay).rayPos(3))*varHelper.rescaleFactor, ...
             rotMatrix(1,1), rotMatrix(1,2), rotMatrix(1,3),...
             rotMatrix(2,1), rotMatrix(2,2), rotMatrix(2,3),...
             rotMatrix(3,1), rotMatrix(3,2), rotMatrix(3,3));
@@ -274,7 +291,7 @@ end
         fclose(fileID_C);
     end
 
-    function makeSource_spectralInformationNeutronsPlusPhotons(stf, varHelper, pathRunfiles, spectralInformation)
+    function makeSource_spectralInformationNeutronsPlusPhotons(stf, varHelper, pathRunfiles, counterField, counterRay, machineInformation)
         % Get rotation matrix
         rotMatrix = matRad_calcMCNProtMatrix(stf(counterField).gantryAngle, stf(counterField).couchAngle);
         % Calculate source position in original coordinate system
@@ -287,11 +304,17 @@ end
         % VEC.
         % ERG=d3 used to define spectrum according to information read from
         % tabulated data in ..\MATRAD\MCNP\SpectralInformation
-        source.sourceCard_0 = 'SDEF\n        X=d1 Y=%.4f Z=d2\n        VEC=0 1 0\n        DIR=1 PAR=d3 ERG=fpar=d4 TR=1\n';
-        source.sourceCard_1_i = 'SI1 %.4f %.4f\n';  % Initial position and source extension
-        source.sourceCard_1_p = 'SP1 0 1\n';
-        source.sourceCard_2_i = 'SI2 %.4f %.4f\n';  % ...
-        source.sourceCard_2_p = 'SP2 0 1\n';        
+        if strcmp(machineInformation.meta.name(1:4), 'BNCT')
+            source.sourceCard_0 = 'SDEF\n       POS=0 %.4f 0 AXS=0 1 0\n       EXT=0 RAD=d1\n       VEC=0 1 0 DIR=1\n       PAR=d3 ERG=fpar=d4 TR=1\n';
+            source.sourceCard_1_i = 'SI1 0 %.4f\n';  % Initial position and source extension
+            source.sourceCard_1_p = 'SP1 -21 1\n';
+        else
+            source.sourceCard_0 = 'SDEF\n        X=d1 Y=%.4f Z=d2\n        VEC=0 1 0\n        DIR=1 PAR=d3 ERG=fpar=d4 TR=1\n';
+            source.sourceCard_1_i = 'SI1 %.4f %.4f\n';  % Initial position and source extension
+            source.sourceCard_1_p = 'SP1 0 1\n';
+            source.sourceCard_2_i = 'SI2 %.4f %.4f\n';  % ...
+            source.sourceCard_2_p = 'SP2 0 1\n';
+        end
         source.particleDistribution_i = 'SI3 L 1 2\n';
         source.particleDistribution_p = 'SP3 1 1\n';
         source.particleEnergyDistributions = 'DS4 S 5 6\n';
@@ -315,15 +338,21 @@ end
         % Write initial source position and extension
         fprintf(fileID_C, source.sourceCard_0, ...
             sourcePoint(2)*varHelper.rescaleFactor);
-        fprintf(fileID_C, source.sourceCard_1_i, ...
-            (-stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor, ...
-            (stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
-        fprintf(fileID_C, source.sourceCard_1_p);
-        fprintf(fileID_C, source.sourceCard_2_i, ...
-            (-stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor, ...
-            (stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
-        fprintf(fileID_C, source.sourceCard_2_p);
-
+        if strcmp(machineInformation.meta.name(1:4), 'BNCT')
+            fprintf(fileID_C, source.sourceCard_1_i, ...
+                (sourcePoint(1)+stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
+            fprintf(fileID_C, source.sourceCard_1_p);
+        else
+            fprintf(fileID_C, source.sourceCard_1_i, ...
+                (-stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor, ...
+                (stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
+            fprintf(fileID_C, source.sourceCard_1_p);
+            fprintf(fileID_C, source.sourceCard_2_i, ...
+                (-stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor, ...
+                (stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
+            fprintf(fileID_C, source.sourceCard_2_p);
+        end
+        
         % Write spectral distribution
         fprintf(fileID_C, source.particleDistribution_i);
         fprintf(fileID_C, source.particleDistribution_p);
@@ -331,27 +360,26 @@ end
         % Neutrons
         fprintf(fileID_C, source.neutronEnergyCard_5_i_0);
         fprintf(fileID_C, source.neutronEnergyCard_5_i, ...
-            spectralInformation.neutronSpec(:,1));
+            machineInformation.data.neutronSpec(:,1));
         fprintf(fileID_C, source.neutronEnergyCard_5_p_0);
         fprintf(fileID_C, source.neutronEnergyCard_5_p, ...
-            spectralInformation.neutronSpec(:,2));
+            machineInformation.data.neutronSpec(:,2));
         % Photons
         fprintf(fileID_C, source.photonEnergyCard_6_i_0);
         fprintf(fileID_C, source.photonEnergyCard_6_i, ...
-            spectralInformation.photonSpec(:,1));
+            machineInformation.data.photonSpec(:,1));
         fprintf(fileID_C, source.photonEnergyCard_6_p_0);
         fprintf(fileID_C, source.photonEnergyCard_6_p, ...
-            spectralInformation.photonSpec(:,2));
+            machineInformation.data.photonSpec(:,2));
 
         % Write TR card for spatial source transformation
         fprintf(fileID_C, coordTrafo.TRcard, ...
-            (stf(counterField).isoCenter(1)+stf(counterField).ray(counterRay).rayPos_bev(1))*varHelper.rescaleFactor, ...
-            (stf(counterField).isoCenter(2)+stf(counterField).ray(counterRay).rayPos_bev(2))*varHelper.rescaleFactor, ...
-            (stf(counterField).isoCenter(3)+stf(counterField).ray(counterRay).rayPos_bev(3))*varHelper.rescaleFactor, ...
+            (stf(counterField).isoCenter(1)+stf(counterField).ray(counterRay).rayPos(1))*varHelper.rescaleFactor, ...
+            (stf(counterField).isoCenter(2)+stf(counterField).ray(counterRay).rayPos(2))*varHelper.rescaleFactor, ...
+            (stf(counterField).isoCenter(3)+stf(counterField).ray(counterRay).rayPos(3))*varHelper.rescaleFactor, ...
             rotMatrix(1,1), rotMatrix(1,2), rotMatrix(1,3),...
             rotMatrix(2,1), rotMatrix(2,2), rotMatrix(2,3),...
             rotMatrix(3,1), rotMatrix(3,2), rotMatrix(3,3));
-
         % Close blockC_source file
         fclose(fileID_C);
     end
