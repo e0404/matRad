@@ -24,7 +24,7 @@ cd(pathRunfiles)
 if ismac || isunix
     for counterRunfile=1:varHelper.totalNumberBixels
         dummy_name = convertStringsToChars(varHelper.simPropMCNP.sourceBlockNames(counterRunfile));
-        dummy_nameRunfile = ['MCNPrunfile_bixel', num2str(counterRunfile)];
+        dummy_nameRunfile = ['MCNPrunfile_', num2str(counterRunfile),'bixel'];
         dummy_nameRunfile = convertStringsToChars(dummy_nameRunfile);
         system(['cat blockA.txt >> ', dummy_nameRunfile]);
         system(['cat blockB.txt >> ', dummy_nameRunfile]);
@@ -34,7 +34,7 @@ if ismac || isunix
 elseif ispc
     for counterRunfile=1:varHelper.totalNumberBixels
         dummy_name = convertStringsToChars(varHelper.simPropMCNP.sourceBlockNames(counterRunfile));
-        dummy_nameRunfile = ['MCNPrunfile_bixel', num2str(counterRunfile)];
+        dummy_nameRunfile = ['MCNPrunfile_', num2str(counterRunfile),'bixel'];
         dummy_nameRunfile = convertStringsToChars(dummy_nameRunfile);
         system(['type blockA.txt > ', dummy_nameRunfile]);
         system(['type blockB.txt >> ', dummy_nameRunfile]);

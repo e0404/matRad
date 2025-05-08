@@ -3,12 +3,12 @@ function dij = matRad_evaluateTallyMCNP(dij, cst, ct)
 %% Preparation and get list of mctal data
 matRad_cfg = MatRad_Config.instance();
 cd(strcat(matRad_cfg.matRadRoot, filesep, 'MCNP', filesep, 'runfiles_tmp'));
-tallyDataList = dir('MCNPrunfile_bixel*m');
+tallyDataList = dir('MCNPrunfile_*bixelm');
 % Re-organize list
 dummyList = struct;
 lengthList = dij.totalNumOfRays;
 for listCounter = 1:lengthList
-    i=1; while i<= lengthList && ~strcmp(tallyDataList(i).name, strcat('MCNPrunfile_bixel', int2str(listCounter), 'm')); i=i+1; end
+    i=1; while i<= lengthList && ~strcmp(tallyDataList(i).name, strcat('MCNPrunfile_', int2str(listCounter),'bixelm')); i=i+1; end
     dummyList(listCounter).name = tallyDataList(i).name;
     dummyList(listCounter).folder = tallyDataList(i).folder;
     dummyList(listCounter).date = tallyDataList(i).date;

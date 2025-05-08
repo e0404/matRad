@@ -25,7 +25,7 @@ matRad_cfg = MatRad_Config.instance();
 if this.MCNPinstallationCheck && ~this.externalCalculation
     %% Go to runfiles and get list of runfiles within directory
     cd(strcat(matRad_cfg.matRadRoot, filesep, 'MCNP', filesep, 'runfiles_tmp'));
-    runFileList = dir('MCNPrunfile_bixel*');
+    runFileList = dir('MCNPrunfile_*bixel');
 
     wb = waitbar(0, ['Calculating dose for bixel: ', num2str(1)], 'Name', 'Dose Calculation with MCNP');
 
@@ -72,6 +72,15 @@ if this.MCNPinstallationCheck && ~this.externalCalculation
 
     close(wb)
 elseif this.externalCalculation
+    if ispc % Write script to run MCNP simulation
+        cores = feature('numcores');    % Attention: should be adopted to allow portability to other pc/cluster
+        cd(strcat(matRad_cfg.matRadRoot, filesep, 'MCNP', filesep, 'runfiles_tmp'));
+        runFileList = dir('MCNPrunfile_*bixel');
+        fileID_runAll = fopen('runAll.cmd', 'w');
+        for i=1:size(runFileList.name); fprintf(fileID_runAll, strcat('mpiexec -np ',in2str(cores),' mcnp6.mpi n=MCNPrunfile_bixel', int2str(i), '\n')); end
+        fclose(fileID_runAll);
+    end
+
     matRad_cfg.dispInfo('Please use question dialog to continue after finishing external calculations.\n')
     matRad_cfg.dispInfo('*****\n')
     % External calculation
