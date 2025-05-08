@@ -50,8 +50,8 @@ binIntervals(6).importance = 5;
 
 %% Cross sections
 
-crossSectionsLibrary(1,:)='.66c';
-crossSectionsLibrary(2,:)= '.80c'; 
+crossSectionsLibrary(1,:)='.20c';
+crossSectionsLibrary(2,:)= '.00c'; 
 
 %% Material Definition: Isotopes only added, when rounded percentage is at least 1%
 %% Air - Taken from Schneider et al. (2000)
@@ -69,149 +69,165 @@ binIntervals(1).percentageMass(1,3) = -0.013;
 
 %% Lung 
 binIntervals(2).ZAID(1,1) = 1001; % H from ICRU Report 46
-binIntervals(2).crossSection(1,1) = 1;
+binIntervals(2).crossSection(1,1) = 2;
 binIntervals(2).percentageMass(1,1) = -0.103;
 
-binIntervals(2).ZAID(1,2) = 6000; % C from ICRU Report 46
+binIntervals(2).ZAID(1,2) = 6012; % C from ICRU Report 46
 binIntervals(2).crossSection(1,2) = 2;
-binIntervals(2).percentageMass(1,2) = -0.105;
+binIntervals(2).percentageMass(1,2) = -0.104;
+
+binIntervals(2).ZAID(1,2) = 6013; % C from ICRU Report 46
+binIntervals(2).crossSection(1,3) = 2;
+binIntervals(2).percentageMass(1,3) = -0.001;
 
 binIntervals(2).ZAID(1,3) = 7014; % N from ICRU Report 46
-binIntervals(2).crossSection(1,3) = 2;
-binIntervals(2).percentageMass(1,3) = -0.031;
+binIntervals(2).crossSection(1,4) = 2;
+binIntervals(2).percentageMass(1,4) = -0.031;
 
 binIntervals(2).ZAID(1,4) = 8016; % O from ICRU Report 46
-binIntervals(2).crossSection(1,4) = 2;
-binIntervals(2).percentageMass(1,4) = -0.749;
+binIntervals(2).crossSection(1,5) = 2;
+binIntervals(2).percentageMass(1,5) = -0.749;
 
 binIntervals(2).ZAID(1,5) = 11023; % Na from ICRU Report 46
-binIntervals(2).crossSection(1,5) = 2;
-binIntervals(2).percentageMass(1,5) = -0.002;
-
-binIntervals(2).ZAID(1,6) = 15031; % P from ICRU Report 46
 binIntervals(2).crossSection(1,6) = 2;
 binIntervals(2).percentageMass(1,6) = -0.002;
 
-binIntervals(2).ZAID(1,7) = 16032; % S from ICRU Report 46
+binIntervals(2).ZAID(1,6) = 15031; % P from ICRU Report 46
 binIntervals(2).crossSection(1,7) = 2;
-binIntervals(2).percentageMass(1,7) = -0.003*0.95;
-binIntervals(2).ZAID(1,8) = 16033; % S from ICRU Report 46
+binIntervals(2).percentageMass(1,7) = -0.002;
+
+binIntervals(2).ZAID(1,7) = 16032; % S from ICRU Report 46
 binIntervals(2).crossSection(1,8) = 2;
-binIntervals(2).percentageMass(1,8) = -0.003*0.01;
-binIntervals(2).ZAID(1,9) = 16034; % S from ICRU Report 46
+binIntervals(2).percentageMass(1,8) = -0.003*0.95;
+binIntervals(2).ZAID(1,8) = 16033; % S from ICRU Report 46
 binIntervals(2).crossSection(1,9) = 2;
-binIntervals(2).percentageMass(1,9) = -0.003*0.04;
+binIntervals(2).percentageMass(1,9) = -0.003*0.01;
+binIntervals(2).ZAID(1,9) = 16034; % S from ICRU Report 46
+binIntervals(2).crossSection(1,10) = 2;
+binIntervals(2).percentageMass(1,10) = -0.003*0.04;
 
 binIntervals(2).ZAID(1,10) = 17035; % Cl from ICRU Report 46
-binIntervals(2).crossSection(1,10) = 2;
-binIntervals(2).percentageMass(1,10) = -0.003*0.76;
-binIntervals(2).ZAID(1,11) = 17037; % Cl from ICRU Report 46
 binIntervals(2).crossSection(1,11) = 2;
-binIntervals(2).percentageMass(1,11) = -0.003*0.24;
+binIntervals(2).percentageMass(1,11) = -0.003*0.76;
+binIntervals(2).ZAID(1,11) = 17037; % Cl from ICRU Report 46
+binIntervals(2).crossSection(1,12) = 2;
+binIntervals(2).percentageMass(1,12) = -0.003*0.24;
 
 binIntervals(2).ZAID(1,12) = 19039; % K from ICRU Report 46
-binIntervals(2).crossSection(1,12) = 2;
-binIntervals(2).percentageMass(1,12) = -0.002*0.93;
-binIntervals(2).ZAID(1,13) = 19041; % K from ICRU Report 46
 binIntervals(2).crossSection(1,13) = 2;
-binIntervals(2).percentageMass(1,13) = -0.002*0.07;
+binIntervals(2).percentageMass(1,13) = -0.002*0.93;
+binIntervals(2).ZAID(1,13) = 19041; % K from ICRU Report 46
+binIntervals(2).crossSection(1,14) = 2;
+binIntervals(2).percentageMass(1,14) = -0.002*0.07;
 
 %% Soft Tissue
 binIntervals(3).ZAID(1,1) = 1001; % H from ICRU Report 46
 binIntervals(3).crossSection(1,1) = 1;
 binIntervals(3).percentageMass(1,1) = -0.101;
 
-binIntervals(3).ZAID(1,2) = 6000; % C from ICRU Report 46
+binIntervals(3).ZAID(1,2) = 6012; % C from ICRU Report 46
 binIntervals(3).crossSection(1,2) = 2;
-binIntervals(3).percentageMass(1,2) = -0.111;
+binIntervals(3).percentageMass(1,2) = -0.110;
+
+binIntervals(2).ZAID(1,2) = 6013; % C from ICRU Report 46
+binIntervals(2).crossSection(1,3) = 2;
+binIntervals(2).percentageMass(1,3) = -0.001;
 
 binIntervals(3).ZAID(1,3) = 7014; % N from ICRU Report 46
-binIntervals(3).crossSection(1,3) = 2;
-binIntervals(3).percentageMass(1,3) = -0.026;
+binIntervals(3).crossSection(1,4) = 2;
+binIntervals(3).percentageMass(1,4) = -0.026;
 
 binIntervals(3).ZAID(1,4) = 8016; % O from ICRU Report 46
-binIntervals(3).crossSection(1,4) = 2;
-binIntervals(3).percentageMass(1,4) = -0.762;
+binIntervals(3).crossSection(1,5) = 2;
+binIntervals(3).percentageMass(1,5) = -0.762;
 
 %% Bone
 binIntervals(4).ZAID(1,1) = 1001; % H from ICRU Report 44; all taken from DeMarco et al. 1998
-binIntervals(4).crossSection(1,1) = 1;
+binIntervals(4).crossSection(1,1) = 2;
 binIntervals(4).percentageMass(1,1) = -0.034;
 
-binIntervals(4).ZAID(1,2) = 6000; % C from ICRU Report 46
+binIntervals(4).ZAID(1,2) = 6012; % C from ICRU Report 46
 binIntervals(4).crossSection(1,2) = 2;
-binIntervals(4).percentageMass(1,2) = -0.155;
+binIntervals(4).percentageMass(1,2) = -0.153;
+
+binIntervals(2).ZAID(1,2) = 6013; % C from ICRU Report 46
+binIntervals(2).crossSection(1,3) = 2;
+binIntervals(2).percentageMass(1,3) = -0.002;
 
 binIntervals(4).ZAID(1,3) = 7014; % N from ICRU Report 46
-binIntervals(4).crossSection(1,3) = 2;
-binIntervals(4).percentageMass(1,3) = -0.042;
+binIntervals(4).crossSection(1,4) = 2;
+binIntervals(4).percentageMass(1,4) = -0.042;
 
 binIntervals(4).ZAID(1,4) = 8016; % O from ICRU Report 44
-binIntervals(4).crossSection(1,4) = 2;
-binIntervals(4).percentageMass(1,4) = -0.435;
+binIntervals(4).crossSection(1,5) = 2;
+binIntervals(4).percentageMass(1,5) = -0.435;
 
 binIntervals(4).ZAID(1,5) = 15031; % P from ICRU Report 44
-binIntervals(4).crossSection(1,5) = 2;
-binIntervals(4).percentageMass(1,5) = -0.103;
+binIntervals(4).crossSection(1,6) = 2;
+binIntervals(4).percentageMass(1,6) = -0.103;
 
 binIntervals(4).ZAID(1,6) = 20040; % Ca from ICRU Report 44
-binIntervals(4).crossSection(1,6) = 2;
-binIntervals(4).percentageMass(1,6) = -0.225*0.97;
-binIntervals(4).ZAID(1,7) = 20042; % Ca from ICRU Report 44
 binIntervals(4).crossSection(1,7) = 2;
-binIntervals(4).percentageMass(1,7) = -0.225*0.01;
-binIntervals(4).ZAID(1,8) = 20044; % Ca from ICRU Report 44
+binIntervals(4).percentageMass(1,7) = -0.225*0.97;
+binIntervals(4).ZAID(1,7) = 20042; % Ca from ICRU Report 44
 binIntervals(4).crossSection(1,8) = 2;
-binIntervals(4).percentageMass(1,8) = -0.225*0.02;
+binIntervals(4).percentageMass(1,8) = -0.225*0.01;
+binIntervals(4).ZAID(1,8) = 20044; % Ca from ICRU Report 44
+binIntervals(4).crossSection(1,9) = 2;
+binIntervals(4).percentageMass(1,9) = -0.225*0.02;
 
 %% Skin 
 binIntervals(5).ZAID(1,1) = 1001; % H from ICRU Report 46
-binIntervals(5).crossSection(1,1) = 1;
+binIntervals(5).crossSection(1,1) = 2;
 binIntervals(5).percentageMass(1,1) = -0.100;
 
-binIntervals(5).ZAID(1,2) = 6000; % C from ICRU Report 46
+binIntervals(5).ZAID(1,2) = 6012; % C from ICRU Report 46
 binIntervals(5).crossSection(1,2) = 2;
-binIntervals(5).percentageMass(1,2) = -0.204*0.99;
+binIntervals(5).percentageMass(1,2) = -0.202*0.99;
+
+binIntervals(5).ZAID(1,2) = 6013; % C from ICRU Report 46
+binIntervals(5).crossSection(1,3) = 2;
+binIntervals(5).percentageMass(1,3) = -0.002*0.99;
 
 binIntervals(5).ZAID(1,3) = 7014; % N from ICRU Report 46
-binIntervals(5).crossSection(1,3) = 2;
-binIntervals(5).percentageMass(1,3) = -0.042;
+binIntervals(5).crossSection(1,4) = 2;
+binIntervals(5).percentageMass(1,4) = -0.042;
 
 binIntervals(5).ZAID(1,4) = 8016; % O from ICRU Report 46
-binIntervals(5).crossSection(1,4) = 2;
-binIntervals(5).percentageMass(1,4) = -0.645;
+binIntervals(5).crossSection(1,5) = 2;
+binIntervals(5).percentageMass(1,5) = -0.645;
 
 binIntervals(5).ZAID(1,5) = 11023; % Na from ICRU Report 46
-binIntervals(5).crossSection(1,5) = 2;
-binIntervals(5).percentageMass(1,5) = -0.002;
+binIntervals(5).crossSection(1,6) = 2;
+binIntervals(5).percentageMass(1,6) = -0.002;
 
 binIntervals(5).ZAID(1,6) = 15031; % P from ICRU Report 44
-binIntervals(5).crossSection(1,6) = 2;
-binIntervals(5).percentageMass(1,6) = -0.001;
+binIntervals(5).crossSection(1,7) = 2;
+binIntervals(5).percentageMass(1,7) = -0.001;
 
 binIntervals(5).ZAID(1,7) = 16032; % S from ICRU Report 46
-binIntervals(5).crossSection(1,7) = 2;
-binIntervals(5).percentageMass(1,7) = -0.002*0.95;
-binIntervals(5).ZAID(1,8) = 16033; % S from ICRU Report 46
 binIntervals(5).crossSection(1,8) = 2;
-binIntervals(5).percentageMass(1,8) = -0.002*0.01;
-binIntervals(5).ZAID(1,9) = 16034; % S from ICRU Report 46
+binIntervals(5).percentageMass(1,8) = -0.002*0.95;
+binIntervals(5).ZAID(1,8) = 16033; % S from ICRU Report 46
 binIntervals(5).crossSection(1,9) = 2;
-binIntervals(5).percentageMass(1,9) = -0.002*0.04;
+binIntervals(5).percentageMass(1,9) = -0.002*0.01;
+binIntervals(5).ZAID(1,9) = 16034; % S from ICRU Report 46
+binIntervals(5).crossSection(1,10) = 2;
+binIntervals(5).percentageMass(1,10) = -0.002*0.04;
 
 binIntervals(5).ZAID(1,10) = 17035; % Cl from ICRU Report 46
-binIntervals(5).crossSection(1,10) = 2;
-binIntervals(5).percentageMass(1,10) = -0.003*0.76;
-binIntervals(5).ZAID(1,11) = 17037; % Cl from ICRU Report 46
 binIntervals(5).crossSection(1,11) = 2;
-binIntervals(5).percentageMass(1,11) = -0.003*0.24;
+binIntervals(5).percentageMass(1,11) = -0.003*0.76;
+binIntervals(5).ZAID(1,11) = 17037; % Cl from ICRU Report 46
+binIntervals(5).crossSection(1,12) = 2;
+binIntervals(5).percentageMass(1,12) = -0.003*0.24;
 
 binIntervals(5).ZAID(1,12) = 19039; % K from ICRU Report 46
-binIntervals(5).crossSection(1,12) = 2;
-binIntervals(5).percentageMass(1,12) = -0.001*0.93;
-binIntervals(5).ZAID(1,13) = 19041; % K from ICRU Report 46
 binIntervals(5).crossSection(1,13) = 2;
-binIntervals(5).percentageMass(1,13) = -0.001*0.07;
+binIntervals(5).percentageMass(1,13) = -0.001*0.93;
+binIntervals(5).ZAID(1,13) = 19041; % K from ICRU Report 46
+binIntervals(5).crossSection(1,14) = 2;
+binIntervals(5).percentageMass(1,14) = -0.001*0.07;
 
 %% Soft Tissue with Boron Content
 % Fraction of mass necessary for BNCT (Chandra et al., 2015): 20mug/g
@@ -219,24 +235,28 @@ binIntervals(5).percentageMass(1,13) = -0.001*0.07;
 boronPercentPerMass = 30e-6; %30e-6; %20e-6;
 
 binIntervals(6).ZAID(1,1) = 1001; % H from ICRU Report 46
-binIntervals(6).crossSection(1,1) = 1;
+binIntervals(6).crossSection(1,1) = 2;
 binIntervals(6).percentageMass(1,1) = -0.101 * (1 - boronPercentPerMass);
 
-binIntervals(6).ZAID(1,2) = 6000; % C from ICRU Report 46
+binIntervals(6).ZAID(1,2) = 6012; % C from ICRU Report 46
 binIntervals(6).crossSection(1,2) = 2;
-binIntervals(6).percentageMass(1,2) = -0.105*0.99 * (1 - boronPercentPerMass);
+binIntervals(6).percentageMass(1,2) = -0.104*0.99 * (1 - boronPercentPerMass);
+
+binIntervals(6).ZAID(1,2) = 6013; % C from ICRU Report 46
+binIntervals(6).crossSection(1,3) = 2;
+binIntervals(6).percentageMass(1,3) = -0.001*0.99 * (1 - boronPercentPerMass);
 
 binIntervals(6).ZAID(1,3) = 7014; % N from ICRU Report 46
-binIntervals(6).crossSection(1,3) = 2;
-binIntervals(6).percentageMass(1,3) = -0.026 * (1 - boronPercentPerMass);
+binIntervals(6).crossSection(1,4) = 2;
+binIntervals(6).percentageMass(1,4) = -0.026 * (1 - boronPercentPerMass);
 
 binIntervals(6).ZAID(1,4) = 8016; % O from ICRU Report 46
-binIntervals(6).crossSection(1,4) = 2;
-binIntervals(6).percentageMass(1,4) = -0.762 * (1 - boronPercentPerMass);
+binIntervals(6).crossSection(1,5) = 2;
+binIntervals(6).percentageMass(1,5) = -0.762 * (1 - boronPercentPerMass);
 
 binIntervals(6).ZAID(1,5) = 5010; % B-10
-binIntervals(6).crossSection(1,5) = 2;
-binIntervals(6).percentageMass(1,5) = -boronPercentPerMass;
+binIntervals(6).crossSection(1,6) = 1;
+binIntervals(6).percentageMass(1,6) = -boronPercentPerMass;
 
 %% Controle whether percentages are all one
 dummySummy = 0;
