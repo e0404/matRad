@@ -77,7 +77,7 @@ elseif this.externalCalculation
         cd(strcat(matRad_cfg.matRadRoot, filesep, 'MCNP', filesep, 'runfiles_tmp'));
         runFileList = dir('MCNPrunfile_*bixel');
         fileID_runAll = fopen('runAll.cmd', 'w');
-        for i=1:size(runFileList.name); fprintf(fileID_runAll, strcat('mpiexec -np ',in2str(cores),' mcnp6.mpi n=MCNPrunfile_bixel', int2str(i), '\n')); end
+        for i=1:size(runFileList,1); fprintf(fileID_runAll, strcat('mpiexec -np ',in2str(cores),' mcnp6.mpi n=MCNPrunfile_bixel', int2str(i), '\n')); end
         fclose(fileID_runAll);
     end
 
