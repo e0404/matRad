@@ -191,7 +191,7 @@ end
         % Write initial source position and extension
         fprintf(fileID_C, source.sourceCard_0, ...
             sourcePoint(2)*varHelper.rescaleFactor);
-        if strcmp(machineInformation.meta.name(1:4), 'BNCT')
+        if size(machineInformation.meta.name,2)>=4 && strcmp(machineInformation.meta.name(1:4), 'BNCT')
             fprintf(fileID_C, source.sourceCard_1_i, ...             
                 (sourcePoint(1)+stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
             fprintf(fileID_C, source.sourceCard_1_p);
@@ -304,7 +304,7 @@ end
         % VEC.
         % ERG=d3 used to define spectrum according to information read from
         % tabulated data in ..\MATRAD\MCNP\SpectralInformation
-        if strcmp(machineInformation.meta.name(1:4), 'BNCT')
+        if size(machineInformation.meta.name,2)>=4 && strcmp(machineInformation.meta.name(1:4), 'BNCT')
             source.sourceCard_0 = 'SDEF\n       POS=0 %.4f 0 AXS=0 1 0\n       EXT=0 RAD=d1\n       VEC=0 1 0 DIR=1\n       PAR=d3 ERG=fpar=d4 TR=1\n';
             source.sourceCard_1_i = 'SI1 0 %.4f\n';  % Initial position and source extension
             source.sourceCard_1_p = 'SP1 -21 1\n';
@@ -338,7 +338,7 @@ end
         % Write initial source position and extension
         fprintf(fileID_C, source.sourceCard_0, ...
             sourcePoint(2)*varHelper.rescaleFactor);
-        if strcmp(machineInformation.meta.name(1:4), 'BNCT')
+        if size(machineInformation.meta.name,2)>=4 && strcmp(machineInformation.meta.name(1:4), 'BNCT')
             fprintf(fileID_C, source.sourceCard_1_i, ...
                 (sourcePoint(1)+stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
             fprintf(fileID_C, source.sourceCard_1_p);
