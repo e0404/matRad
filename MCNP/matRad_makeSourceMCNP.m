@@ -163,7 +163,7 @@ end
         % Added for BNCT: circular field shape with diameter equal to bixel
         % size. Attention: matRad machine has to be named leading with BNCT
 
-        if strcmp(machineInformation.meta.name(1:4), 'BNCT') 
+        if size(machine.meta.name,2)>=4 && strcmp(machineInformation.meta.name(1:4), 'BNCT') 
             source.sourceCard_0 = 'SDEF\n       POS=0 %.4f 0 AXS=0 1 0\n       EXT=0 RAD=d1\n       VEC=0 1 0 DIR=1\n       PAR=1 ERG=d3 TR=1\n';
             source.sourceCard_1_i = 'SI1 0 %.4f\n';  % Initial position and source extension
             source.sourceCard_1_p = 'SP1 -21 1\n';
