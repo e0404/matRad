@@ -23,7 +23,7 @@ function [control_makeSourceMCNP, varHelper] = matRad_makeSourceMCNP(this,stf, c
 %           together later
 %
 % References
-%   [1] PELOWITZ, D. B., et al. MCNP6 User’s Manual. LACP-00634, May, 2013.
+%   [1] PELOWITZ, D. B., et al. MCNP6 Users Manual. LACP-00634, May, 2013.
 %
 % Author: Lucas Sommer (Lucas.Sommer@tum.de), 11/2018
 %
@@ -35,7 +35,7 @@ matRad_cfg =  MatRad_Config.instance();
 pathRunfiles = fullfile(matRad_cfg.matRadRoot, 'MCNP', filesep, 'runfiles_tmp', filesep);
 
 %% Reset isocenter coordinates to cube coodinates (and forget)
-stf.isoCenter = matRad_world2cubeCoords(stf.isoCenter, ct, 0);
+stf(counterField).isoCenter = matRad_world2cubeCoords(stf(counterField).isoCenter, ct, 0);
 
 %% Option A: Predefined field using RSSA file
 if strcmp(num2str(stf(1).bixelWidth),'field')
@@ -123,15 +123,14 @@ end
 
         % Write initial source position and extension
         fprintf(fileID_C, source.sourceCard_0, ...
-            sourcePoint(2)*varHelper.rescaleFactor, ...
-            spectralInformation.neutronMonoEn);
+            sourcePoint(2)*varHelper.rescaleFactor);
         fprintf(fileID_C, source.sourceCard_1_i, ...
-            (sourcePoint(1)-stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor, ...
-            (sourcePoint(1)+stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
+            (-stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor, ...
+            (stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
         fprintf(fileID_C, source.sourceCard_1_p);
         fprintf(fileID_C, source.sourceCard_2_i, ...
-            (sourcePoint(3)-stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor, ...
-            (sourcePoint(3)+stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
+            (-stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor, ...
+            (stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
         fprintf(fileID_C, source.sourceCard_2_p);
 
         % Write TR card for spatial source transformation
@@ -192,19 +191,20 @@ end
         fprintf(fileID_C, source.sourceCard_0, ...
             sourcePoint(2)*varHelper.rescaleFactor);
         if size(machineInformation.meta.name,2)>=4 && strcmp(machineInformation.meta.name(1:4), 'BNCT')
-            fprintf(fileID_C, source.sourceCard_1_i, ...             
+            fprintf(fileID_C, source.sourceCard_1_i, ...
                 (sourcePoint(1)+stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
             fprintf(fileID_C, source.sourceCard_1_p);
         else
             fprintf(fileID_C, source.sourceCard_1_i, ...
-                (sourcePoint(1)-stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor, ...
-                (sourcePoint(1)+stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
+                (-stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor, ...
+                (stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
             fprintf(fileID_C, source.sourceCard_1_p);
             fprintf(fileID_C, source.sourceCard_2_i, ...
-                (sourcePoint(3)-stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor, ...
-                (sourcePoint(3)+stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
+                (-stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor, ...
+                (stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
             fprintf(fileID_C, source.sourceCard_2_p);
         end
+
         % Write spectral distribution
         fprintf(fileID_C, source.energyCard_3_i_0);
         fprintf(fileID_C, source.energyCard_3_i, ...
@@ -261,14 +261,16 @@ end
         % Write initial source position and extension
         fprintf(fileID_C, source.sourceCard_0, ...
             sourcePoint(2)*varHelper.rescaleFactor);
+
         fprintf(fileID_C, source.sourceCard_1_i, ...
-            (sourcePoint(1)-stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor, ...
-            (sourcePoint(1)+stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
+            (-stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor, ...
+            (stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
         fprintf(fileID_C, source.sourceCard_1_p);
         fprintf(fileID_C, source.sourceCard_2_i, ...
-            (sourcePoint(3)-stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor, ...
-            (sourcePoint(3)+stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
+            (-stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor, ...
+            (stf(varHelper.simPropMCNP.counterField).bixelWidth/2)*varHelper.rescaleFactor);
         fprintf(fileID_C, source.sourceCard_2_p);
+
 
         % Write spectral distribution
         fprintf(fileID_C, source.energyCard_3_i_0);
@@ -440,9 +442,9 @@ end
             if length(pln.propStf.gantryAngles)~=1 || length(pln.propStf.couchAngles)~=1
                 error('Simulation of only one predefined field using RSSA file currently supported.')
             elseif (pln.propStf.gantryAngles~=90 && pln.propStf.gantryAngles~=270)
-                error('For simulation of irradiation at FRM 2 only gantry angles of 90° and 270° are allowed.')
+                error('For simulation of irradiation at FRM 2 only gantry angles of 90 and 270 are allowed.')
             elseif pln.propStf.couchAngles > 180
-                error('For simulation of irradiation at FRM 2 only couch angles of 0° to 180° are allowed. Consider opposing gantry angle.')
+                error('For simulation of irradiation at FRM 2 only couch angles of 0 to 180 are allowed. Consider opposing gantry angle.')
             elseif pln.propStf.gantryAngles==90 && pln.propStf.couchAngles <= 90
                 % Define position of surface for RSSA positioning
                 pos_tr1 = [cosd(pln.propStf.couchAngles)*stf.SAD, 0, -sind(pln.propStf.couchAngles)*stf.SAD];
