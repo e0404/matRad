@@ -101,6 +101,7 @@ end
 if ~isempty(tissueBin(lungIndex).linIndVol)
     lungMask_HUsegmentation = zeros(size(CTdata));
     lungMask_HUsegmentation(tissueBin(lungIndex).linIndVol) = 1;
+    falseLungIdx = [];
 else
     disp('Segmentation via HU intervals led to zero voxels with lung tissue.')
     lungIndex = false;
