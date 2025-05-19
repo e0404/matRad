@@ -1471,8 +1471,26 @@ classdef matRad_PlanWidget < matRad_Widget
                     load(fileName);
 
                     % check for available cell types characterized by alphaX and betaX
-                    for i = 1:size(machine.data(1).alphaX,2)
-                        CellType{i} = [num2str(machine.data(1).alphaX(i)) ' ' num2str(machine.data(1).betaX(i))];
+                    % if all(isfield(machine.data(1), {'alphaX', 'betaX'}))
+                    %     for i = 1:size(machine.data(1).alphaX,2)
+                    %         CellType{i} = [num2str(machine.data(1).alphaX(i)) ' ' num2str(machine.data(1).betaX(i))];
+                    %     end
+                    % end
+                    % Get the current biological model
+                    
+                    if ischar(pln.bioModel)
+                        bioModel = matRad_bioModel(pln.radiationMode, pln.bioModel);
+                    end
+
+                    [availableAlphaX, availableBetaX] = bioModel.getAvailableTissueParameters(pln);
+
+                    if ~isempty(availableAlphaX) && ~isempty(availableBetaX)
+                        for i = 1:size(availableAlphaX,2)
+                            CellType{i} = [num2str(availableAlphaX(i)) ' ' num2str(availableBetaX(i))];
+                            columnformat = {'char',CellType,'numeric'};
+                        end
+                    else
+                        columnformat = {'char','numeric','numeric'};
                     end
 
                     %fill table data array
@@ -1507,7 +1525,7 @@ classdef matRad_PlanWidget < matRad_Widget
 
                     % define the tissue parameter table
                     cNames = {'VOI','alphaX betaX','alpha beta ratio'};
-                    columnformat = {'char',CellType,'numeric'};
+                    % columnformat = {'char',CellType,'numeric'};
 
                     tissueTable = uitable('Parent', figTissue,'Data', data,'ColumnEditable',[false true false],...
                         'ColumnName',cNames, 'ColumnFormat',columnformat,'Position',[50 150 10 10]);
