@@ -251,6 +251,14 @@ classdef (Abstract) matRad_BiologicalModel < handle
             end
         end
 
+        function [alphaX, betaX] = getAvailableTissueParameters(pln)
+            
+            % load machine
+            alphaX = [];
+            betaX  = [];
+
+        end
+
         
     end
 
