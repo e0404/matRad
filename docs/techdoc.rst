@@ -17,46 +17,67 @@ The four main parts of the matRad workflow are
 
 Information about the individual modules is given in the following subsections:
 
-`Set treatment plan parameters <Set-treatment-plan-parameters>`__
+:ref:`Set treatment plan parameters <plan>`
 
-`Dose influence matrix
-calculation <Dose-influence-matrix-calculation>`__
+:ref:`Dose influence matrix calculation <dosecalc>`
 
-`Fluence optimization <Fluence-optimization>`__
+:ref:`Fluence optimization <optimization>` (potentiall followed by sequencing)
 
-`Visualization <Visualization>`__
+:ref:`Visualization <visualization>`
 
 How to cite matRad
 ------------------
 
-`matRad publications <How-to-cite-matRad>`__
+:ref:`matRad publications <cite>`
 
 .. _httpsrawgitcomwikie0404matradimagesmatrad_blanksvg--height--25pxs-most-important-matlab-variables:
+
+.. _matrad_variables:
 
 |matRad_logo|'s most important Matlab variables
 -----------------------------------------------
 
-`pln-struct <pln>`__ Treatment plan information
+:ref:`pln-struct <pln>` Treatment plan information
 
-`ct-struct <ct>`__ CT-data
+:ref:`ct-struct <ct>` CT-data
 
-`cst-cell array <cst>`__ Structure sets, inverse planning objectives, and other meta-information
+:ref:`cst-cell array <cst>` Structure sets, inverse planning objectives, and other meta-information
 
-`stf-struct <stf>`__ Steering information
+:ref:`stf-struct <stf>` Steering information
 
-`dij-struct <dij>`__ Dose influence data
+:ref:`dij-struct <dij>` Dose influence data
 
-`result-struct <result>`__ Resulting dose distribution, RBE cube etc..
+:ref:`result-struct <result>` Resulting dose distribution, RBE cube etc..
+
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :glob:
+
+   datastructures/*
+
+|matRad_logo|'s top-level functions
+-----------------------------------
+
+:ref:`MatRad_Config <config>` Global configuration class
+
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :glob:
+
+   api/*
 
 Additional information
 ----------------------
 
-`How to run matRad with Octave <How-to-run-matRad-with-Octave>`__
+:ref:`How to run matRad with Octave <octave>`
 
-`matRad coordinate system <The-matRad-coordinate-system>`__
+:ref:`matRad coordinate system <coords>`
 
-`The CORT dataset <The-CORT-dataset>`__
+:ref:`The CORT dataset <cort>`
 
-`DICOM import <The-dicom-import>`__
+:ref:`DICOM import <dicom>`
 
-`Minimum system requirements <min-sys-requirements>`__
+:ref:`Minimum system requirements <requirements>`
+

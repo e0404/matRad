@@ -10,6 +10,17 @@ Frequently Asked Questions
 While this site attempts to cover a set of frequently asked questions, it is not exhaustive.
 We suggest to visit our `GitHub Discussion Forum <https://github.com/e0404/matRad/discussions>`_ for Questions and Answers from the Community.
 
+.. admonition:: How to cite matRad?
+    :class: dropdown
+
+    If you use matRad, please consider :ref:`citing our publications <citepubs>` as well as :ref:`the software version <citesoftware>` you are using directly.
+
+.. admonition:: Can I run matRad without a MATLAB installation?
+    :class: dropdown
+
+    Yes, if you only need the graphical user interface you can also use the commpiled standalone. 
+    If you need to work with the code, check our :ref:`guide <octave>` on running matRad with `GNU Octave <http://www.octave.org>`_
+
 .. admonition:: How can I model custom particle machines in matRad?
     :class: dropdown
 
@@ -33,4 +44,3 @@ We suggest to visit our `GitHub Discussion Forum <https://github.com/e0404/matRa
     For further information refer to : 
     * `matRad Issue #550 <https://github.com/e0404/matRad/issues/550>_`
     * `MATLAB Answers thread <https://de.mathworks.com/matlabcentral/answers/422244-why-do-buttons-apps-or-the-editor-in-matlab-respond-slowly-or-hang-on-macos>_`
- 

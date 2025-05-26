@@ -1,13 +1,13 @@
-.. _dosecalc:
+.. _dicom:
 
 .. toctree::
    :maxdepth: 2
 
-================
-Dose Calculation
-================
+=====================
+DICOM Import & Export
+=====================
 
-.. automodule:: matRad.doseCalc
+.. automodule:: matRad.dicom
    :members:
    :undoc-members:
    :show-inheritance:

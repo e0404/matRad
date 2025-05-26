@@ -1,7 +1,9 @@
-matRad
-============
+matRad Modules
+==============
 
 .. automodule:: matRad
-    :members:
-    :show-inheritance:
-    :undoc-members:
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+

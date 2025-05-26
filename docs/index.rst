@@ -68,11 +68,11 @@ Please let us know if we can include your center, or if you have discontinued th
    :caption: Contents
    :glob:
 
-   index
    about
    settingup
    techdoc
    modules
    faq
+   cite
    genindex
-   modindex
+   MATLAB Module Index <mat-modindex.html#http://>
