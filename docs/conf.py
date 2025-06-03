@@ -11,6 +11,7 @@ html_theme = "sphinx_rtd_theme" #pip install sphinx-rtd-theme
 
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx_toolbox.collapse',
     'sphinxcontrib.matlab', 
     'sphinxcontrib.youtube',
     'sphinx_togglebutton',

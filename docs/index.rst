@@ -27,6 +27,30 @@
 Home
 ====
 
+.. image:: https://img.shields.io/github/v/release/e0404/matRad
+   :target: https://github.com/e0404/matRad/releases
+   :alt: Current Release
+
+.. image:: https://img.shields.io/github/downloads/e0404/matRad/total
+   :target: https://github.com/e0404/matRad/releases
+   :alt: Downloads
+
+.. image:: https://img.shields.io/github/contributors/e0404/matRad
+   :target: https://github.com/e0404/matRad/graphs/contributors
+   :alt: Contributors
+
+.. image:: https://img.shields.io/endpoint?url=https%3A%2F%2Fapi.juleskreuer.eu%2Fcitation-badge.php%3Fshield%26doi%3D10.1002%2Fmp.12251&style=flat&color=blue
+   :alt: Citations
+
+.. image:: https://github.com/e0404/matRad/actions/workflows/tests.yml/badge.svg
+   :target: https://github.com/e0404/matRad/actions/workflows/tests.yml
+   :alt: GitHub Build Status
+
+.. image:: https://codecov.io/gh/e0404/matRad/graph/badge.svg?token=xQhUQLu4FK
+   :target: https://codecov.io/gh/e0404/matRad
+   :alt: codecov
+
+
 Welcome to the |matRad_logo_header| documentation
 -------------------------------------------------
 

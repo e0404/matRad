@@ -77,7 +77,7 @@ Additional information
 
 :ref:`The CORT dataset <cort>`
 
-:ref:`DICOM import <dicom>`
+:ref:`DICOM import <dicomimport>`
 
 :ref:`Minimum system requirements <requirements>`
 

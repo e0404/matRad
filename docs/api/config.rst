@@ -9,6 +9,8 @@ It is implemented as a Singleton pattern and thus consistent throughout a matRad
 At the core, the class handles user folders, caches the environment (Matlab/Octave), provides matRad's version, and stores default parameters. 
 The class also provides logging functionality enabling control over output via log levels.
 
+----
+
 .. autoclass:: matRad.MatRad_Config
     :members:
     :undoc-members:
