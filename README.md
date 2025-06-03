@@ -1,6 +1,7 @@
 [![Current Release](https://img.shields.io/github/v/release/e0404/matRad)](https://github.com/e0404/matRad/releases) 
 [![Downloads](https://img.shields.io/github/downloads/e0404/matRad/total)](https://github.com/e0404/matRad/releases) 
 [![Contributors](https://img.shields.io/github/contributors/e0404/matRad)](https://github.com/e0404/matRad/graphs/contributors)
+![Citations](https://img.shields.io/endpoint?url=https%3A%2F%2Fapi.juleskreuer.eu%2Fcitation-badge.php%3Fshield%26doi%3D10.1002%2Fmp.12251&style=flat&color=blue)
 
 [![GitHub Build Status](https://github.com/e0404/matRad/actions/workflows/tests.yml/badge.svg)](https://github.com/e0404/matRad/actions/workflows/tests.yml)
 [![codecov](https://codecov.io/gh/e0404/matRad/graph/badge.svg?token=xQhUQLu4FK)](https://codecov.io/gh/e0404/matRad)
