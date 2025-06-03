@@ -1,11 +1,11 @@
 .. toctree::
    :maxdepth: 2
 
-================
-Dose Calculation
-================
+============
+Dose Engines
+============
 
-.. automodule:: matRad.doseCalc
+.. automodule:: matRad.doseCalc.+DoseEngines
    :members:
    :undoc-members:
    :show-inheritance:
