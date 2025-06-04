@@ -1,3 +1,10 @@
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+
+   guide/matradscript
+   guide/gui
+
 .. |matRad_logo_header| image:: ../matRad/gfx/matRad_logo.png
    :width: 130 px
    :alt: matRad

@@ -122,7 +122,7 @@ Dose calculation algorithm
 
 matRad's default conventional pencil beam model for particle dose calculations is implemented in :class:`DoseEngines.matRad_ParticleHongPencilBeamEngine` and similar to the work of `Hong et al. (1996) <http://iopscience.iop.org/0031-9155/41/8/005/>`_. The dose at a particular voxel is given as the product of a depth dependent part and a lateral part. For the depth dependent part, matRad uses tabulated depth dose curves for individual particle energies. For lateral beam broadening, matRad uses a depth-dependent sigma of a Gaussian profile, which is also tabulated versus depth for all available beam energies.
 
-The dose delivered to a certain voxel *i* from bixel *j* is stored as dose influence matrix in the `dij struct <dij>`_ using MATLAB's built-in double precision sparse matrix format.
+The dose delivered to a certain voxel *i* from bixel *j* is stored as dose influence matrix in the :ref:`dij struct <dij>` using MATLAB's built-in double precision sparse matrix format.
 
 α- and β-matrix pre-computations
 ################################

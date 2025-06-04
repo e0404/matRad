@@ -88,15 +88,16 @@ On `Google Maps <https://www.google.com/maps>`_ we are maintaining a `list of ma
 Please let us know if we can include your center, or if you have discontinued the usage of matRad so we can remove you from the list.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents
    :glob:
+   :includehidden:
 
    about
    settingup
-   techdoc
+   guide/index
    modules
    faq
    cite
    genindex
-   MATLAB Module Index <mat-modindex.html#http://>
+   MATLAB Module Index </mat-modindex.html#http://>

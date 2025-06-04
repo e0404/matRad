@@ -1,4 +1,4 @@
-.. |matRad_logo| image:: ../matRad/gfx/matRad_logo.png
+.. |matRad_logo| image:: ../../matRad/gfx/matRad_logo.png
    :width: 80 px
    :alt: matRad
    :target: https://www.matRad.org
@@ -13,7 +13,7 @@ Technical Documentation
 After importing your own data or loading one of the provided cases, you can start working with matRad dose calculation and optimization modules. 
 The four main parts of the matRad workflow are
 
-.. image:: images/matRad_steps.png
+.. image:: /images/matRad_steps.png
 
 Information about the individual modules is given in the following subsections:
 
@@ -21,7 +21,7 @@ Information about the individual modules is given in the following subsections:
 
 :ref:`Dose influence matrix calculation <dosecalc>`
 
-:ref:`Fluence optimization <optimization>` (potentiall followed by sequencing)
+:ref:`Fluence optimization <plan_opt>` (potentiall followed by sequencing)
 
 :ref:`Visualization <visualization>`
 

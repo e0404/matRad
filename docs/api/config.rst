@@ -16,3 +16,4 @@ The class also provides logging functionality enabling control over output via l
     :undoc-members:
     :show-inheritance:
     :private-members:
+    :no-index:
