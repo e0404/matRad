@@ -140,7 +140,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
     end
 
-    methods(Access = protected)
+    methods (Access = protected)
 
         dij = calcDose(this,ct,cst,stf)
 
@@ -220,7 +220,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
         %% Write files functions
 
-        writeRunFile(~, fName)
+        writeRunFile(this, fName)
                 
         writeRegionsFile(this,fName, stf)
 
@@ -377,7 +377,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 fredCmdCall = newCmdString;                
             elseif isempty(fredCmdCall)
                 if ispc
-%                    fredCmdCall = 'wsl if [ -f ~/.fredenv.sh ] ; then source ~/.fredenv.sh ; fi; fred';
+                    %fredCmdCall = 'wsl if [ -f ~/.fredenv.sh ] ; then source ~/.fredenv.sh ; fi; fred';
                     fredCmdCall = 'fred ';
                 elseif isunix
                     fredCmdCall = 'if [ -f ~/.fredenv.sh ] ; then source ~/.fredenv.sh ; fi; fred';
@@ -837,14 +837,14 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         end
 
 
-         function set.externalCalculation(this, value)
-         % Set exportCalculation value, available options are:
-         %  - false:    (default) runs the FRED simulation (requires FRED installation)
-         %  - write/1:  triggers the file export
-         %  - 'path':   simulation data will be loaded from the specified
-         %              path. Full simulation directory path should be provided.
-         %              Example: 'matRadRoot/userdata/FRED/'
-             
+        function set.externalCalculation(this, value)
+        % Set exportCalculation value, available options are:
+        %  - false:    (default) runs the FRED simulation (requires FRED installation)
+        %  - write/1:  triggers the file export
+        %  - 'path':   simulation data will be loaded from the specified
+        %              path. Full simulation directory path should be provided.
+        %              Example: 'matRadRoot/userdata/FRED/'
+            
             if isnumeric(value) || islogical(value)
                 switch value
                     case 1
@@ -852,17 +852,17 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     case 0
                         this.externalCalculation = 'off';
                 end
-             elseif ischar(value)
-                 
-                 if any(strcmp(value, {'write', 'off'}))
-                     this.externalCalculation = value;
-                 elseif isfolder(value)
+            elseif ischar(value)
+                
+                if any(strcmp(value, {'write', 'off'}))
                     this.externalCalculation = value;
-                    
-                    this.updatePaths(value);
-                 end
-             end
-         end
+                elseif isfolder(value)
+                this.externalCalculation = value;
+                
+                this.updatePaths(value);
+                end
+            end
+        end
 
      end
 end

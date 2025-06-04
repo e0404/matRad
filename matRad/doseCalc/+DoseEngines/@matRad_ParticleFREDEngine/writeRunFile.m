@@ -1,4 +1,4 @@
-function writeRunFile(~, fName)
+function writeRunFile(this, fName)
 % FRED helper to write file for simulation
 % call
 %   writeRunFile(fName)
