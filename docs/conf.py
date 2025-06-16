@@ -9,6 +9,14 @@ release = "3.1.0"
 
 html_theme = "sphinx_rtd_theme" #pip install sphinx-rtd-theme
 
+html_static_path = ["_static"]
+html_css_files = ["style.css"]
+html_logo = "../matRad/gfx/matrad_logo.png"
+html_theme_options = {
+    'logo_only': True,
+    'display_version': True,
+}
+
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx_toolbox.collapse',

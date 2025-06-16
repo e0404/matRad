@@ -1,7 +1,4 @@
-.. |matRad_logo_header| image:: ../matRad/gfx/matRad_logo.png
-    :width: 150 px
-    :alt: matRad
-    :target: https://www.matRad.org
+.. include:: includes/logo.rst
 
 .. _about:
 

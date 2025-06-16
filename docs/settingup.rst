@@ -5,15 +5,7 @@
    guide/matradscript
    guide/gui
 
-.. |matRad_logo_header| image:: ../matRad/gfx/matRad_logo.png
-   :width: 130 px
-   :alt: matRad
-   :target: https://www.matRad.org
-
-.. |matRad_logo| image:: ../matRad/gfx/matRad_logo.png
-   :width: 60 px
-   :alt: matRad
-   :target: https://www.matRad.org
+.. include:: includes/logo.rst
 
 .. _settingup:
 
@@ -26,7 +18,7 @@ To get |matRad_logo| running you have two options:
 1. Source Code for people with Matlab installation:
 ---------------------------------------------------
 
-If you have MATLAB you can just `get a local copy of the source code <How-to-get-a-local-copy>`_. Then you have to choose whether you want to `use the  GUI <How-to-execute-matRadGUI>`_ or `execute the main script <How-to-execute-matRad>`_.
+If you have MATLAB you can just :ref:`get a local copy of the source code <get_code>`. Then you have to choose whether you want to :ref:`use the  GUI <run_gui>` or :ref:`execute the main script <run_script>`.
 
 2. Standalone installation:
 ---------------------------
