@@ -15,6 +15,10 @@ jobs:
         runs-on: ubuntu-latest
             
         steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v4 # Checks-out repository under $GITHUB_WORKSPACE
+              with:
+                  submodules: 'false'
             
             - name: Download Coverage Artifact
               uses: actions/download-artifact@v4
@@ -30,10 +34,10 @@ jobs:
                   format: coveralls
             
             - name: Upload to Codecov
-              uses: codecov/codecov-action@v4
+              uses: codecov/codecov-action@v5
               with:
                   token: ${{ secrets.CODECOV_TOKEN }}
-                  file: coverage/coverage.xml
+                  files: coverage/coverage.json,coverage/coverage.xml
                   fail_ci_if_error: false
             
             - name: Publish Coverage Report
