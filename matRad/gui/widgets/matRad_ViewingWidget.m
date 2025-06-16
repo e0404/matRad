@@ -1360,6 +1360,11 @@ classdef matRad_ViewingWidget < matRad_Widget
                 end
             end
         end
+
+        function exportSlice(this,filename,varargin)
+            exportgraphics(this.handles.figure1,filename,varargin{:});
+        end
+
     end
 
     
