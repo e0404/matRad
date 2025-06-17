@@ -1,5 +1,5 @@
 classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
-    % matRad_TopasMCEngine 
+    % matRad_TopasMCEngine
     %   Implementation of the TOPAS interface for Monte Carlo dose
     %   calculation
     %
@@ -18,7 +18,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    properties (Constant)  
+    properties (Constant)
         possibleRadiationModes = {'photons','protons','helium','carbon'};
         name = 'TOPAS';
         shortName = 'TOPAS';
@@ -38,7 +38,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         topasExecCommand; %Defaults will be set during construction according to TOPAS installation instructions and used system
 
         parallelRuns = false; %Starts runs in parallel
-        
+
         externalCalculation = 'off'; %Generates folder for external TOPAS calculation (e.g. on a server)
 
         workingDir; %working directory for the simulation
@@ -157,7 +157,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             'Scorer_RBE_MCN','TOPAS_scorer_doseRBE_McNamara.txt.in', ...
             ... %PhaseSpace Source
             'phaseSpaceSourcePhotons' ,'VarianClinaciX_6MV_20x20_aboveMLC_w2' );
-       
+
 
     end
 
@@ -182,9 +182,9 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         function setDefaults(this)
             this.setDefaults@DoseEngines.matRad_MonteCarloEngineAbstract();
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
-            
+
             this.useGivenEqDensityCube        = matRad_cfg.defaults.propDoseCalc.useGivenEqDensityCube;
-            
+
             % Default execution paths are set here
             this.topasFolder = [matRad_cfg.matRadSrcRoot filesep 'doseCalc' filesep 'topas' filesep];
             this.workingDir = [matRad_cfg.primaryUserFolder filesep 'TOPAS' filesep];
@@ -193,7 +193,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 mkdir(this.workingDir);
                 matRad_cfg.dispInfo('Created TOPAS working directory in userfolder %s\n',this.workingDir);
             end
-            
+
 
             %Let's set some default commands taken from topas installation
             %instructions for mac & debain/ubuntu
@@ -465,7 +465,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 return;
             else
             end
-                
+
 
             %% Initialize dose grid and dij
 
@@ -496,12 +496,12 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     end
                 end
             end
-            
+
             for i = 1:numel(stf)
                 if strcmp(stf(i).radiationMode,'photons')
                     stf(i).ray.energy = stf(i).ray.energy.*ones(size(w));
                 end
-            end            
+            end
 
             % Get photon parameters for RBExDose calculation
             if this.calcBioDose
@@ -645,7 +645,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 dij.beamNum = 1;
                 dij.bixelNum = 1;
                 dij.ctGrid = this.ctR.ctGrid;
-                dij.doseGrid = this.doseGrid;                
+                dij.doseGrid = this.doseGrid;
                 dij.numOfBeams = 1;
                 dij.numOfRaysPerBeam = 1;
                 dij.numOfScenarios = this.multScen.totNumScen;
@@ -671,7 +671,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
         end
 
-                
+
         function dij = initDoseCalc(this,ct,cst,stf)
             dij = this.initDoseCalc@DoseEngines.matRad_MonteCarloEngineAbstract(ct,cst,stf);
             matRad_cfg = MatRad_Config.instance();
@@ -702,7 +702,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 % Allpcate resampled cubes
                 cubeHUresampled = cell(1,ct.numOfCtScen);
                 cubeResampled = cell(1,ct.numOfCtScen);
-            
+
                 % Perform resampling to dose grid
                 for s = 1:ct.numOfCtScen
                     cubeHUresampled{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{s}, ...
@@ -710,27 +710,27 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     cubeResampled{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cube{s}, ...
                         dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
                 end
-            
+
                 % Allocate temporary resampled CT
                 this.ctR = ct;
                 this.ctR.cube = cell(1);
                 this.ctR.cubeHU = cell(1);
-            
+
                 % Set CT resolution to doseGrid resolution
                 this.ctR.resolution = dij.doseGrid.resolution;
                 this.ctR.cubeDim = dij.doseGrid.dimensions;
                 this.ctR.x = dij.doseGrid.x;
                 this.ctR.y = dij.doseGrid.y;
                 this.ctR.z = dij.doseGrid.z;
-            
+
                 % Write resampled cubes
                 this.ctR.cubeHU = cubeHUresampled;
                 this.ctR.cube = cubeResampled;
-            
+
                 % Set flag for complete resampling
                 this.ctR.resampled = 1;
                 this.ctR.ctGrid = dij.doseGrid;
-            
+
                 % Save original grid
                 this.ctR.originalGrid = dij.ctGrid;
                 matRad_cfg.dispInfo('done!\n');
@@ -905,7 +905,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                         end
 
                         % Tally per field
-                        if isfield(topasSum,'Sum') 
+                        if isfield(topasSum,'Sum')
                            if obj.calc4DInterplay || obj.MCparam.numOfCtScen > 1
                                 if strcmp(tname, 'physicalDose')
                                     topasCube.(['phaseDose_beam' num2str(f)]){ctScen} = topasSum.Sum;
@@ -1071,7 +1071,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % Allocate possible scored quantities
             processedQuantities = {'','_std','_batchStd'};
             topasCubesTallies = unique(erase(topasCubesTallies,processedQuantities(2:end)));
-            
+
 
             % Loop through 4D scenarios
             for ctScen = 1:dij.numOfScenarios
@@ -1232,7 +1232,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             fprintf(fID,'\n');
             fprintf(fID,['i:Ts/Seed = ',num2str(runIx),'\n']);
 
-            %TODO: remove or document 
+            %TODO: remove or document
             %fprintf(fID,'includeFile = %s/TOPAS_Simulation_Setup.txt\n',obj.thisFolder);
             %fprintf(fID,'includeFile = %s/TOPAS_matRad_geometry.txt\n',obj.thisFolder);
             %fprintf(fID,'includeFile = %s/TOPAS_scorer_surfaceIC.txt\n',obj.thisFolder);
@@ -1295,12 +1295,12 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 matRad_cfg.dispDebug('Reading doseToMedium scorer from %s\n',fname);
                 scorerName = fileread(fname);
                 fprintf(fID,'\n%s\n\n',scorerName);
-                
+
                 if obj.calc4DInterplay
                     for PhaseNum = obj.MCparam.Phases{beamIx}'
                         scorerTxt = fileread(fname);
-                        scorerTxt = replace(scorerTxt, '/Patient', ['/Patient' num2str(PhaseNum)]);
-                        scorerTxt = replace(scorerTxt, '_physicalDose', ['_physicalDose-matRad_cube' num2str(PhaseNum)]);
+                        scorerTxt = strrep(scorerTxt, '/Patient', ['/Patient' num2str(PhaseNum)]);
+                        scorerTxt = strrep(scorerTxt, '_physicalDose', ['_physicalDose-matRad_cube' num2str(PhaseNum)]);
                         fprintf(fID,'\n%s\n\n',scorerTxt);
                         fprintf(fID, 'b:Sc/Patient%i/Tally_DoseToMedium/Active		        = Tf/Patient%i/Tally_DoseToMedium/Active/Value\n', PhaseNum, PhaseNum);
                         fprintf(fID,'s:Tf/Patient%i/Tally_DoseToMedium/Active/Function = "Step"\n', PhaseNum);
@@ -1354,25 +1354,25 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     fprintf(fID,'\n%s\n\n',scorerName);
 
                     if obj.calc4DInterplay
-                        for PhaseNum = obj.MCparam.Phases{beamIx}'    
+                        for PhaseNum = obj.MCparam.Phases{beamIx}'
                             scorerTxt = fileread(fname);
-                            scorerTxt = replace(scorerTxt, 'Alpha/', ['Alpha' num2str(PhaseNum) '/']);
-                            scorerTxt = replace(scorerTxt, 'Beta/', ['Beta' num2str(PhaseNum) '/']);
-                            scorerTxt = replace(scorerTxt, '/RBE', ['/RBE' num2str(PhaseNum)]);
+                            scorerTxt = strrep(scorerTxt, 'Alpha/', ['Alpha' num2str(PhaseNum) '/']);
+                            scorerTxt = strrep(scorerTxt, 'Beta/', ['Beta' num2str(PhaseNum) '/']);
+                            scorerTxt = strrep(scorerTxt, '/RBE', ['/RBE' num2str(PhaseNum)]);
                             if contains(lower(obj.scorer.RBE_model{i}),'mcn')
-                                scorerTxt = replace(scorerTxt, '_alpha_MCN', ['_alpha_MCN-matRad_cube' num2str(PhaseNum)]);
-                                scorerTxt = replace(scorerTxt, '_beta_MCN', ['_beta_MCN-matRad_cube' num2str(PhaseNum)]);
+                                scorerTxt = strrep(scorerTxt, '_alpha_MCN', ['_alpha_MCN-matRad_cube' num2str(PhaseNum)]);
+                                scorerTxt = strrep(scorerTxt, '_beta_MCN', ['_beta_MCN-matRad_cube' num2str(PhaseNum)]);
                             elseif contains(lower(obj.scorer.RBE_model{i}),'wed')
-                                scorerTxt = replace(scorerTxt, '_alpha_WED', ['_alpha_WED-matRad_cube' num2str(PhaseNum)]);
-                                scorerTxt = replace(scorerTxt, '_beta_WED', ['_beta_WED-matRad_cube' num2str(PhaseNum)]);
+                                scorerTxt = strrep(scorerTxt, '_alpha_WED', ['_alpha_WED-matRad_cube' num2str(PhaseNum)]);
+                                scorerTxt = strrep(scorerTxt, '_beta_WED', ['_beta_WED-matRad_cube' num2str(PhaseNum)]);
                             elseif contains(lower(obj.scorer.RBE_model{i}),'lem')
-                                scorerTxt = replace(scorerTxt, '_alpha_LEM', ['_alpha_LEM-matRad_cube' num2str(PhaseNum)]);
-                                scorerTxt = replace(scorerTxt, '_beta_LEM', ['_beta_LEM-matRad_cube' num2str(PhaseNum)]);
-                                scorerTxt = replace(scorerTxt, '_RBE_LEM', ['_RBE_LEM-matRad_cube' num2str(PhaseNum)]);
+                                scorerTxt = strrep(scorerTxt, '_alpha_LEM', ['_alpha_LEM-matRad_cube' num2str(PhaseNum)]);
+                                scorerTxt = strrep(scorerTxt, '_beta_LEM', ['_beta_LEM-matRad_cube' num2str(PhaseNum)]);
+                                scorerTxt = strrep(scorerTxt, '_RBE_LEM', ['_RBE_LEM-matRad_cube' num2str(PhaseNum)]);
                             elseif contains(lower(obj.scorer.RBE_model{i}),'libamtrack')
-                                scorerTxt = replace(scorerTxt, '_alpha_libamtrack', ['_alpha_libamtrack-matRad_cube' num2str(PhaseNum)]);
-                                scorerTxt = replace(scorerTxt, '_beta_libamtrack', ['_beta_libamtrack-matRad_cube' num2str(PhaseNum)]);
-                                scorerTxt = replace(scorerTxt, '_RBE_libamtrack', ['_RBE_libamtrack-matRad_cube' num2str(PhaseNum)]);
+                                scorerTxt = strrep(scorerTxt, '_alpha_libamtrack', ['_alpha_libamtrack-matRad_cube' num2str(PhaseNum)]);
+                                scorerTxt = strrep(scorerTxt, '_beta_libamtrack', ['_beta_libamtrack-matRad_cube' num2str(PhaseNum)]);
+                                scorerTxt = strrep(scorerTxt, '_RBE_libamtrack', ['_RBE_libamtrack-matRad_cube' num2str(PhaseNum)]);
                             end
                             %dont allways write cell lines
                             if contains(scorerTxt,'### HCP Tabulated ###')
@@ -1380,7 +1380,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                             end
                             fprintf(fID,'\n%s\n\n',scorerTxt);
                             scorerInString = {'tabulatedAlpha', 'tabulatedBeta', 'RBE', 'McNamaraAlpha', 'McNamaraBeta', 'WedenbergAlpha', 'WedenbergBeta'};
-                            for ixWrite = ixToWrite4DInterplay 
+                            for ixWrite = ixToWrite4DInterplay
                                 fprintf(fID,'b:Sc/%s%i/Active = Tf/%s%i/Active/Value\n', scorerInString{ixWrite},PhaseNum,scorerInString{ixWrite},PhaseNum);
                                 fprintf(fID,'s:Tf/%s%i/Active/Function = "Step"\n', scorerInString{ixWrite}, PhaseNum);
                                 fprintf(fID,'dv:Tf/%s%i/Active/Times= %i ',scorerInString{ixWrite},PhaseNum, obj.MCparam.cutNumOfBixel(beamIx));
@@ -1450,7 +1450,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     end
                     fprintf(fID,'s:Sc/%s%s/ReferencedSubScorer_Dose     = "Tally_DoseToWater"\n',scorerPrefix,scorerNames{s});
                     if obj.calc4DInterplay
-                        for PhaseNum = obj.MCparam.Phases{beamIx}'  
+                        for PhaseNum = obj.MCparam.Phases{beamIx}'
                             if strcmp(obj.radiationMode,'protons')
                                 fprintf(fID,'s:Sc/%s%s%i/ReferencedSubScorer_LET      = "ProtonLET%i"\n',scorerPrefix,scorerNames{s},PhaseNum,PhaseNum);
                             end
@@ -1473,8 +1473,8 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 if obj.calc4DInterplay
                     for PhaseNum = obj.MCparam.Phases{beamIx}'
                         scorerTxt = fileread(fname);
-                        scorerTxt = replace(scorerTxt, 'Tally_DoseToWater', ['Tally_DoseToWater' num2str(PhaseNum)]);
-                        scorerTxt = replace(scorerTxt, '_doseToWater', ['_doseToWater-matRad_cube' num2str(PhaseNum)]);
+                        scorerTxt = strrep(scorerTxt, 'Tally_DoseToWater', ['Tally_DoseToWater' num2str(PhaseNum)]);
+                        scorerTxt = strrep(scorerTxt, '_doseToWater', ['_doseToWater-matRad_cube' num2str(PhaseNum)]);
                         fprintf(fID,'\n%s\n\n',scorerTxt);
                         fprintf(fID, 'b:Sc/Tally_DoseToWater%i/Active		        = Tf/Tally_DoseToWater%i/Active/Value\n', PhaseNum, PhaseNum);
                         fprintf(fID,'s:Tf/Tally_DoseToWater%i/Active/Function = "Step"\n', PhaseNum);
@@ -1502,8 +1502,8 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     if obj.calc4DInterplay
                         for PhaseNum = obj.MCparam.Phases{beamIx}'
                             scorerTxt = fileread(fname);
-                            scorerTxt = replace(scorerTxt, '/ProtonLET', ['/ProtonLET' num2str(PhaseNum)]);
-                            scorerTxt = replace(scorerTxt, '_LET', ['_LET-matRad_cube' num2str(PhaseNum)]);
+                            scorerTxt = strrep(scorerTxt, '/ProtonLET', ['/ProtonLET' num2str(PhaseNum)]);
+                            scorerTxt = strrep(scorerTxt, '_LET', ['_LET-matRad_cube' num2str(PhaseNum)]);
                             fprintf(fID,'\n%s\n\n',scorerTxt);
                             fprintf(fID, 'b:Sc/ProtonLET%i/Active		        = Tf/ProtonLET%i/Active/Value\n', PhaseNum, PhaseNum);
                             fprintf(fID,'s:Tf/ProtonLET%i/Active/Function = "Step"\n', PhaseNum);
@@ -1700,8 +1700,8 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                         selectedData = [];
                         focusIndex = baseData.selectedFocus(baseData.energyIndex);
 
-                        scalarFields = {'NominalEnergy','EnergySpread','MeanEnergy'};                                                   
-                        
+                        scalarFields = {'NominalEnergy','EnergySpread','MeanEnergy'};
+
                         for i = 1:numel(focusIndex)
                             for field = scalarFields
                                 baseData.monteCarloData(i).(field{1}) = ones(1,max(focusIndex))*baseData.monteCarloData(i).(field{1});
@@ -1821,7 +1821,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                         nBeamParticlesTotal(beamIx) = nBeamParticlesTotal(beamIx) + nCurrentParticles;
                         currentBixel = currentBixel + 1;
 
-                        
+
                     end
                 end
 
@@ -1890,7 +1890,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 end
 
                 % NozzleAxialDistance
-                if isPhoton 
+                if isPhoton
                     fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', stf(beamIx).SCD+40); %Phasespace hardcorded infront of MLC at SSD 46 cm
                 else
                     fprintf(fileID,'d:Ge/Nozzle/TransZ = -%f mm\n', nozzleToAxisDistance);
@@ -2082,7 +2082,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
                         fprintf(fileID,'d:Sim/GantryAngle = %f deg\n',stf(beamIx).gantryAngle); %just one beam angle for now
                         fprintf(fileID,'d:Sim/CouchAngle = %f deg\n',stf(beamIx).couchAngle);
-                        % Here the phasespace file is loaded and referenced in the beamSetup file                      
+                        % Here the phasespace file is loaded and referenced in the beamSetup file
                         if strcmp(obj.externalCalculation,'write')
                             matRad_cfg.dispWarning(['External calculation and phaseSpace selected, manually place ' obj.infilenames.phaseSpaceSourcePhotons '.header and ' obj.infilenames.phaseSpaceSourcePhotons  '.phsp into your simulation directory.']);
                         else
@@ -2091,7 +2091,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                             end
                         end
                         %phasespaceStr = ['..' filesep 'beamSetup' filesep 'phasespace' filesep phaseSpaceFileName];
-                        %&phasespaceStr =  replace(phasespaceStr, '\', '/');
+                        %&phasespaceStr =  strrep(phasespaceStr, '\', '/');
                         fprintf(fileID,'s:So/Phasespace/PhaseSpaceFileName = "%s"\n', obj.infilenames.phaseSpaceSourcePhotons );
 
                 end
@@ -2238,7 +2238,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     if isempty(obj.calcTimeSequence)
                         matRad_cfg.dispError('Time Sequence Data required for 4D calculation \n');
                     end
-                
+
                     % Write changing CT phases in matRad_cube file
                     outfilePatient = obj.outfilenames.patientParam;
                     outfilePatient = strsplit(outfilePatient,'.');
@@ -2261,7 +2261,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     fprintf(fIDPatient,'sv:Tf/InputFile/Values = %d %s \n ',  numel(fileNamesPhases),strjoin(fileNamesPhases,' '));
                     fprintf(fIDPatient, '\n');
                     fclose(fIDPatient);
-                
+
                     %write On of Feature into MCparam to create scorers
                     %later
                     uniquePhaseNum = unique(PhaseNum);
@@ -2714,7 +2714,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         %Used to check against a machine file if a specific quantity can be
         %computed.
         function q = providedQuantities(machine)
-            q = {'physicalDose','LET','alpha','beta'};            
+            q = {'physicalDose','LET','alpha','beta'};
         end
     end
 end
