@@ -19,28 +19,28 @@ jobs:
             - name: Download Results for Matlab R2022b
               uses: actions/download-artifact@v4
               with:
-                  run_id: ${{ github.event.workflow_run.id }}
+                  run-id: ${{ github.event.workflow_run.id }}
                   name: test-results-matlab-R2022b
                   path: test-results/matlab-R2022b
             
             - name: Download Results for Matlab Latest
               uses: actions/download-artifact@v4
               with:
-                  run_id: ${{ github.event.workflow_run.id }}
+                  run-id: ${{ github.event.workflow_run.id }}
                   name: test-results-matlab-latest
                   path: test-results/matlab-latest
             
             - name: Download Results for Octave
               uses: actions/download-artifact@v4
               with:
-                  run_id: ${{ github.event.workflow_run.id }}
+                  run-id: ${{ github.event.workflow_run.id }}
                   name: test-results-octave
                   path: test-results/octave
 
             - name: Download Event File
               uses: actions/download-artifact@v4
               with:
-                  run_id: ${{ github.event.workflow_run.id }}
+                  run-id: ${{ github.event.workflow_run.id }}
                   name: event-file
                   path: event-file
 
