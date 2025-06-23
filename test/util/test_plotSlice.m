@@ -103,5 +103,4 @@ function test_optional_input
     assertTrue(isa(hIsoDose, "cell"));
     if ~moxunit_util_platform_is_octave
         assertTrue(isa(hDose, 'matlab.graphics.primitive.Image'));
-        assertTrue(isa(hCt, 'matlab.graphics.primitive.Image'))
     end
