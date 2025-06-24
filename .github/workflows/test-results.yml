@@ -1,45 +1,62 @@
 name: Test Report
 
-permissions:
-    checks: write
-    pull-requests: write
-
 on:
-    workflow_call:
+    workflow_run:
+        workflows: ["Tests"]
+        types:
+            - completed
             
 jobs:
-    test_report:
+    test-report:
+        if: github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure'
         runs-on: ubuntu-latest
+        permissions:
+            checks: write
+            pull-requests: write
+
             
-        steps:
-            
+        steps:            
             - name: Download Results for Matlab R2022b
               uses: actions/download-artifact@v4
               with:
+                  run-id: ${{ github.event.workflow_run.id }}
                   name: test-results-matlab-R2022b
                   path: test-results/matlab-R2022b
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
             
             - name: Download Results for Matlab Latest
               uses: actions/download-artifact@v4
               with:
+                  run-id: ${{ github.event.workflow_run.id }}
                   name: test-results-matlab-latest
                   path: test-results/matlab-latest
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
             
             - name: Download Results for Octave
               uses: actions/download-artifact@v4
               with:
+                  run-id: ${{ github.event.workflow_run.id }}
                   name: test-results-octave
                   path: test-results/octave
-            
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Download Event File
+              uses: actions/download-artifact@v4
+              with:
+                  run-id: ${{ github.event.workflow_run.id }}
+                  name: event-file
+                  path: event-file
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+
             - name: Publish Test Results
               uses: EnricoMi/publish-unit-test-result-action@v2
               with:
-                  files: |
-                      test-results/*/testresults.xml
-            
-            - name: Publish Test Results on Codecov
-              uses: codecov/test-results-action@v1
-              with:
-                  token: ${{ secrets.CODECOV_TOKEN }}
-                  files: test-results/matlab-R2022b/testresults.xml,test-results/matlab-latest/testresults.xml,test-results/octave/testresults.xml
+                  commit: ${{ github.event.workflow_run.head_sha }}
+                  files: "test-results/**/testresults.xml"
+                  event_file: event-file/event.json
+                  event_name: ${{ github.event.workflow_run.event}}
+                  comment_mode: ${{ (github.event.workflow_run.event == 'pull_request' || github.event_name == 'pull_request') && 'always' || 'off' }}
+                  check_name: "Test Results"
+
+
             
