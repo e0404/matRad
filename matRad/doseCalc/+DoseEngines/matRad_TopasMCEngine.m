@@ -246,13 +246,13 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 end
 
                 % Get alpha beta parameters from bioParam struct
-                for i = 1:length(obj.bioParameters.AvailableAlphaXBetaX)
-                    if ~isempty(strfind(lower(obj.bioParameters.AvailableAlphaXBetaX{i,2}),'default'))
-                        break
-                    end
+                if isfield(obj.bioParameters, 'tissuseAlphaX')
+                    obj.bioParameters.AlphaX = obj.bioModel.tissueAlphaX(1);
+                    obj.bioParameters.BetaX  = obj.bioModel.tissueBetaX(1);
                 end
-                obj.bioParameters.AlphaX = obj.bioParameters.AvailableAlphaXBetaX{5,1}(1);
-                obj.bioParameters.BetaX = obj.bioParameters.AvailableAlphaXBetaX{5,1}(2);
+                if numel(obj.bioParameters.AlphaX)>1
+                    matRad_cfg.dispWarning('!!! Only a unique alpha/beta ratio supported at the moment. Found multiple, only the first one will be used !!!!');
+                end
 
             end
             if obj.scorer.LET
@@ -294,8 +294,11 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % Save used RBE models
             if obj.scorer.RBE
                 obj.MCparam.RBE_models = obj.scorer.RBE_model;
-                [obj.MCparam.ax,obj.MCparam.bx] = matRad_getPhotonLQMParameters(cst,prod(ct.cubeDim),obj.MCparam.numOfCtScen);
-                obj.MCparam.abx(obj.MCparam.bx>0) = obj.MCparam.ax(obj.MCparam.bx>0)./obj.MCparam.bx(obj.MCparam.bx>0);
+                [obj.MCparam.ax,obj.MCparam.bx] = matRad_getPhotonLQMParameters(obj.cstDoseGrid,prod(ct.cubeDim),obj.VdoseGrid);
+                obj.MCparam.abx = arrayfun(@(scen) zeros(size(obj.MCparam.bx{scen})), 1:obj.MCparam.numOfCtScen, 'UniformOutput',false);
+                for scen=1:obj.MCparam.numOfCtScen
+                    obj.MCparam.abx{scen}(obj.MCparam.bx{scen}>0) = obj.MCparam.ax{scen}(obj.MCparam.bx{scen}>0)./obj.MCparam.bx{scen}(obj.MCparam.bx{scen}>0);
+                end
             end
 
             % fill in bixels, rays and beams in case of dij calculation or external calculation
@@ -1380,7 +1383,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                             end
                             fprintf(fID,'\n%s\n\n',scorerTxt);
                             scorerInString = {'tabulatedAlpha', 'tabulatedBeta', 'RBE', 'McNamaraAlpha', 'McNamaraBeta', 'WedenbergAlpha', 'WedenbergBeta'};
-                            for ixWrite = ixToWrite4DInterplay
+                            for ixWrite = ixToWrite4D
                                 fprintf(fID,'b:Sc/%s%i/Active = Tf/%s%i/Active/Value\n', scorerInString{ixWrite},PhaseNum,scorerInString{ixWrite},PhaseNum);
                                 fprintf(fID,'s:Tf/%s%i/Active/Function = "Step"\n', scorerInString{ixWrite}, PhaseNum);
                                 fprintf(fID,'dv:Tf/%s%i/Active/Times= %i ',scorerInString{ixWrite},PhaseNum, obj.MCparam.cutNumOfBixel(beamIx));
