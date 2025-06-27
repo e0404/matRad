@@ -1362,24 +1362,25 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                             scorerTxt = strrep(scorerTxt, 'Alpha/', ['Alpha' num2str(PhaseNum) '/']);
                             scorerTxt = strrep(scorerTxt, 'Beta/', ['Beta' num2str(PhaseNum) '/']);
                             scorerTxt = strrep(scorerTxt, '/RBE', ['/RBE' num2str(PhaseNum)]);
-                            if contains(lower(obj.scorer.RBE_model{i}),'mcn')
+                            if ~isempty(regexp(obj.scorer.RBE_model{i}, 'mcn', 'ignorecase'))
                                 scorerTxt = strrep(scorerTxt, '_alpha_MCN', ['_alpha_MCN-matRad_cube' num2str(PhaseNum)]);
                                 scorerTxt = strrep(scorerTxt, '_beta_MCN', ['_beta_MCN-matRad_cube' num2str(PhaseNum)]);
-                            elseif contains(lower(obj.scorer.RBE_model{i}),'wed')
+                            elseif ~isempty(regexp(obj.scorer.RBE_model{i}, 'wed', 'ignorecase'))
                                 scorerTxt = strrep(scorerTxt, '_alpha_WED', ['_alpha_WED-matRad_cube' num2str(PhaseNum)]);
                                 scorerTxt = strrep(scorerTxt, '_beta_WED', ['_beta_WED-matRad_cube' num2str(PhaseNum)]);
-                            elseif contains(lower(obj.scorer.RBE_model{i}),'lem')
+                            elseif ~isempty(regexp(obj.scorer.RBE_model{i}, 'lem', 'ignorecase'))
                                 scorerTxt = strrep(scorerTxt, '_alpha_LEM', ['_alpha_LEM-matRad_cube' num2str(PhaseNum)]);
                                 scorerTxt = strrep(scorerTxt, '_beta_LEM', ['_beta_LEM-matRad_cube' num2str(PhaseNum)]);
                                 scorerTxt = strrep(scorerTxt, '_RBE_LEM', ['_RBE_LEM-matRad_cube' num2str(PhaseNum)]);
-                            elseif contains(lower(obj.scorer.RBE_model{i}),'libamtrack')
+                            elseif ~isempty(regexp(obj.scorer.RBE_model{i}, 'libamtrack', 'ignorecase'))
                                 scorerTxt = strrep(scorerTxt, '_alpha_libamtrack', ['_alpha_libamtrack-matRad_cube' num2str(PhaseNum)]);
                                 scorerTxt = strrep(scorerTxt, '_beta_libamtrack', ['_beta_libamtrack-matRad_cube' num2str(PhaseNum)]);
                                 scorerTxt = strrep(scorerTxt, '_RBE_libamtrack', ['_RBE_libamtrack-matRad_cube' num2str(PhaseNum)]);
                             end
                             %dont allways write cell lines
-                            if contains(scorerTxt,'### HCP Tabulated ###')
-                                scorerTxt = extractBefore(scorerTxt, '### HCP Tabulated ###');
+                            idx = strfind(scorerTxt, '### HCP Tabulated ###');
+                            if ~isempty(idx)
+                                scorerTxt = scorerTxt(1:idx(1)-1);
                             end
                             fprintf(fID,'\n%s\n\n',scorerTxt);
                             scorerInString = {'tabulatedAlpha', 'tabulatedBeta', 'RBE', 'McNamaraAlpha', 'McNamaraBeta', 'WedenbergAlpha', 'WedenbergBeta'};
