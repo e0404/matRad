@@ -245,7 +245,8 @@ for plane=1:3
                 colorMapLabel = 'physical Dose [Gy]';
             end
             fileSuffix = 'nominal';
-            matRad_plotSliceWrapper(ax,ct,cst,1,doseCube,plane,slice,[],[],colors,[],[],[],[],colorMapLabel);
+            matRad_plotSlice(ct,'axesHandle', ax, 'cst', cst, 'cubeIdx', 1, 'dose', doseCube, 'plane', plane, 'slice', slice, 'contourColorMap', colors, 'colorBarLabel', colorMapLabel);
+            %matRad_plotSliceWrapper(ax,ct,cst,1,doseCube,plane,slice,[],[],colors,[],[],[],[],colorMapLabel);
             
         elseif cubesToPlot == 2
             
@@ -253,7 +254,8 @@ for plane=1:3
             colorMapLabel = 'gamma index';
             fileSuffix = 'gamma';
             gammaColormap = matRad_getColormap('gammaIndex');
-            matRad_plotSliceWrapper(ax,ct,cst,1,doseCube,plane,slice,[],[],colors,gammaColormap,[0 2],[],[],colorMapLabel);
+            matRad_plotSlice(ct,'axesHandle', ax, 'cst', cst, 'cubeIdx', 1, 'dose', doseCube, 'plane', plane, 'slice', slice, 'contourColorMap', colors, 'doseColorMap', gammaColormap, 'doseWindow', [0 2], 'colorBarLabel', colorMapLabel);
+            %matRad_plotSliceWrapper(ax,ct,cst,1,doseCube,plane,slice,[],[],colors,gammaColormap,[0 2],[],[],colorMapLabel);
             
         elseif cubesToPlot == 3
             
@@ -264,7 +266,8 @@ for plane=1:3
             end
             doseCube = doseStat.stdCubeW;
             fileSuffix = 'stdW';
-            matRad_plotSliceWrapper(ax,ct,cst,1,doseCube,plane,slice,[],[],colors,[],[],[],[],colorMapLabel);
+            matRad_plotSlice(ct,'axesHandle', ax, 'cst', cst, 'cubeIdx', 1, 'dose', doseCube, 'plane', plane, 'slice', slice, 'contourColorMap', colors, 'colorBarLabel', colorMapLabel);
+            %matRad_plotSliceWrapper(ax,ct,cst,1,doseCube,plane,slice,[],[],colors,[],[],[],[],colorMapLabel);
             
         end
         drawnow();
