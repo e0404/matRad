@@ -64,7 +64,7 @@ defaultShowCt           = true;
 
 isDose              = @(x) isnumeric(x) && all(size(x) == ct.cubeDim);
 isSlice             = @(x) x>=1 && x<=max(ct.cubeDim) && floor(x)==x;
-isAxes              = @(x) strcmp(get(gca, 'type'), 'axes');
+isAxes              = @(x) strcmp(get(x, 'type'), 'axes');
 isCubeIdx           = @(x) isscalar(x);
 isPlane             = @(x) isscalar(x) && (sum(x==[1, 2, 3])==1);
 isDoseWindow        = @(x) (length(x) == 2 && isvector(x));
@@ -128,11 +128,14 @@ axesVarargin    = reshape([axesFields, axesValues]', 1, []);
 matRad_cfg = MatRad_Config.instance();
 
 % Flip axes direction
-set(p.Results.axesHandle,'YDir','Reverse');
+set(gca,'XTick',[],'YTick',[]);
+set(gca,'YDir','Reverse');
 % plot ct slice
 if p.Results.showCt
     hCt = matRad_plotCtSlice(p.Results.axesHandle,p.Results.ct.cubeHU,p.Results.cubeIdx,p.Results.plane,p.Results.slice, [], []);
 end
+axis(gca, 'off');
+
 hold on;
 
 %% Plot dose
