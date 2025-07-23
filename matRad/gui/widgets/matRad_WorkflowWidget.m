@@ -302,7 +302,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                         end
 
                         % check if dij exist
-                        conf3D = isfield(pln,'propOpt') && ~isfield(pln.propOpt,'conf3D') && pln.propOpt.conf3D;
+                        conf3D = isfield(pln,'propOpt') && isfield(pln.propOpt,'conf3D') && pln.propOpt.conf3D;
 
                         if evalin('base','exist(''dij'')') && plnStfMatch && ~conf3D
                             dij = evalin('base','dij');
@@ -420,7 +420,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 dij = matRad_calcDoseInfluence(evalin('base','ct'),evalin('base','cst'),stf,pln);
                 
                 % prepare dij for 3d conformal
-                if isfield(pln,'propOpt') && ~isfield(pln.propOpt,'conf3D') && pln.propOpt.conf3D
+                if isfield(pln,'propOpt') && isfield(pln.propOpt,'conf3D') && pln.propOpt.conf3D
                    dij = matRad_collapseDij(dij);
                 end
                 % assign results to base worksapce
