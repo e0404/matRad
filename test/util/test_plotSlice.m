@@ -7,7 +7,6 @@ initTestSuite;
 function test_plot_ct_only
 
     load BOXPHANTOM.mat
-    figure()
     [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSlice(ct);
     assertTrue(isempty(hCMap));
     assertTrue(isempty(hDose));
@@ -17,9 +16,9 @@ function test_plot_ct_only
     end
     assertTrue(isempty(hContour));
     assertTrue(isempty(hIsoDose));
+    close(gcf);
 
     load PROSTATE.mat
-    figure()
     [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSlice(ct, 'slice', 91, 'cst', cst);
     assertTrue(isempty(hCMap));
     assertTrue(isempty(hDose));
@@ -29,12 +28,11 @@ function test_plot_ct_only
     end
     assertTrue(isa(hContour, 'cell'));
     assertTrue(isempty(hIsoDose));
-
+    close(gcf);
 
 function test_plot_dose_slice
 
     load protons_testData.mat
-    figure();
     [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSlice(ct, 'dose', resultGUI.physicalDose);
     assertFalse(isempty(hCt));
     assertTrue(isempty(hContour));
@@ -44,9 +42,9 @@ function test_plot_dose_slice
         assertTrue(isa(hDose, 'matlab.graphics.primitive.Image'));
         assertTrue(isa(hCt, 'matlab.graphics.primitive.Image'))
     end
+    close(gcf);
 
     load helium_testData.mat
-    figure();
     [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSlice(ct, 'dose', resultGUI.physicalDose);
     assertFalse(isempty(hCt));
     assertTrue(isempty(hContour));
@@ -56,9 +54,9 @@ function test_plot_dose_slice
         assertTrue(isa(hDose, 'matlab.graphics.primitive.Image'));
         assertTrue(isa(hCt, 'matlab.graphics.primitive.Image'))
     end
+    close(gcf);
 
     load carbon_testData.mat
-    figure();
     [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSlice(ct, 'dose', resultGUI.physicalDose);
     assertFalse(isempty(hCt));
     assertTrue(isempty(hContour));
@@ -68,9 +66,9 @@ function test_plot_dose_slice
         assertTrue(isa(hDose, 'matlab.graphics.primitive.Image'));
         assertTrue(isa(hCt, 'matlab.graphics.primitive.Image'))
     end
+    close(gcf);
 
     load photons_testData.mat
-    figure();
     [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSlice(ct, 'dose', resultGUI.physicalDose, 'plane', 3);
     assertFalse(isempty(hCt));
     assertTrue(isempty(hContour));
@@ -80,11 +78,12 @@ function test_plot_dose_slice
         assertTrue(isa(hDose, 'matlab.graphics.primitive.Image'));
         assertTrue(isa(hCt, 'matlab.graphics.primitive.Image'))
     end
+    close(gcf);
 
 function test_optional_input
     
     load photons_testData.mat
-    figure();
+    hF = figure();
     doseCube = resultGUI.physicalDose;
     boolVOIselection = ones(1, size(cst, 1));
     [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSlice(ct,  ...
@@ -104,3 +103,13 @@ function test_optional_input
     if ~moxunit_util_platform_is_octave
         assertTrue(isa(hDose, 'matlab.graphics.primitive.Image'));
     end
+    close(hF);
+
+function test_title_input
+    load photons_testData.mat
+    hF = figure();
+    hA = axes(hF);
+    tString = 'Hello';
+    matRad_plotSlice(ct,'title','Hello','axesHandle',hA);
+    assertTrue(isequal('Hello',get(get(hA,'Title'),'String')));
+    close(hF);

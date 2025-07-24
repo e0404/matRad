@@ -48,7 +48,7 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSlice(ct, varargin)
 defaultDose             = [];
 defaultCst              = [];
 defaultSlice            = floor(min(ct.cubeDim)./2);
-defaultAxesHandle       = gca;
+defaultAxesHandle       = [];
 defaultCubeIdx          = 1;
 defaultPlane            = 1;
 defaultDoseWindow       = [];
@@ -61,10 +61,11 @@ defaultContourColorMap  = [];
 defaultBoolPlotLegend   = false;
 defaultColorBarLabel    = [];
 defaultShowCt           = true;
+defaultTitle            = [];
 
 isDose              = @(x) isnumeric(x) && all(size(x) == ct.cubeDim);
 isSlice             = @(x) x>=1 && x<=max(ct.cubeDim) && floor(x)==x;
-isAxes              = @(x) strcmp(get(gca, 'type'), 'axes');
+isAxes              = @(x) strcmp(get(x, 'type'), 'axes') || isempty(x);
 isCubeIdx           = @(x) isscalar(x);
 isPlane             = @(x) isscalar(x) && (sum(x==[1, 2, 3])==1);
 isDoseWindow        = @(x) (length(x) == 2 && isvector(x));
@@ -77,55 +78,81 @@ isContourColorMap   = @(x) isnumeric(x) && (size(x, 2)==3) && size(x, 1)>=2 && a
 isBoolPlotLegend    = @(x) x==0 || x ==1;
 isColorBarLabel     = @(x) isstring(x) || ischar(x) || isempty(x);
 isShowCt            = @(x) isscalar(x) && (x==0) || (x==1);
+isTitle             = @(x) isstring(x) || ischar(x) || isempty(x);
 
 p = inputParser;
 p.KeepUnmatched = true;
-addRequired(p, 'ct')
 
-addParameter(p, 'dose', defaultDose, isDose)
-addParameter(p, 'cst', defaultCst)
-addParameter(p, 'slice', defaultSlice, isSlice)
-addParameter(p, 'axesHandle', defaultAxesHandle, isAxes)
-addParameter(p, 'cubeIdx', defaultCubeIdx, isCubeIdx)
-addParameter(p, 'plane', defaultPlane, isPlane)
-addParameter(p, 'doseWindow', defaultDoseWindow, isDoseWindow)
-addParameter(p, 'thresh', defaultThresh, isThresh)
-addParameter(p, 'alpha', defaultAlpha, isAlpha)
-addParameter(p, 'doseColorMap', defaultDoseColorMap, isDoseColorMap)
-addParameter(p, 'doseIsoLevels', defaultDoseIsoLevels, isDoseIsoLevels)
-addParameter(p, 'voiSelection', defaultVOIselection, isVOIselection)
-addParameter(p, 'contourColorMap', defaultContourColorMap, isContourColorMap)
-addParameter(p, 'boolPlotLegend', defaultBoolPlotLegend, isBoolPlotLegend)
-addParameter(p, 'colorBarLabel', defaultColorBarLabel, isColorBarLabel)
-addParameter(p, 'showCt', defaultShowCt, isShowCt)
+addRequired(p, 'ct');
 
-parse(p, ct, varargin{:});
+addParameter(p, 'dose', defaultDose, isDose);
+addParameter(p, 'cst', defaultCst);
+addParameter(p, 'slice', defaultSlice, isSlice);
+addParameter(p, 'axesHandle', defaultAxesHandle, isAxes);
+addParameter(p, 'cubeIdx', defaultCubeIdx, isCubeIdx);
+addParameter(p, 'plane', defaultPlane, isPlane);
+addParameter(p, 'doseWindow', defaultDoseWindow, isDoseWindow);
+addParameter(p, 'thresh', defaultThresh, isThresh);
+addParameter(p, 'alpha', defaultAlpha, isAlpha);
+addParameter(p, 'doseColorMap', defaultDoseColorMap, isDoseColorMap);
+addParameter(p, 'doseIsoLevels', defaultDoseIsoLevels, isDoseIsoLevels);
+addParameter(p, 'voiSelection', defaultVOIselection, isVOIselection);
+addParameter(p, 'contourColorMap', defaultContourColorMap, isContourColorMap);
+addParameter(p, 'boolPlotLegend', defaultBoolPlotLegend, isBoolPlotLegend);
+addParameter(p, 'colorBarLabel', defaultColorBarLabel, isColorBarLabel);
+addParameter(p, 'showCt', defaultShowCt, isShowCt);
+addParameter(p, 'title', defaultTitle, isTitle);
+
+p.parse(ct, varargin{:});
 
 %% Unmatched properties
 % General properties
-lineFieldNames  = fieldnames(set(line));
-textFieldNames  = fieldnames(set(text));
+% This is a hack with an invisible figure to obtain the properties
+hTmpFig = figure('Visible','off','HandleVisibility','off');
+hTmpAx  = axes(hTmpFig);
+axesFieldNames  = fieldnames(set(hTmpAx));
+lineFieldNames  = fieldnames(set(line(hTmpAx)));
+textFieldNames  = fieldnames(set(text(hTmpAx)));
+delete(hTmpAx);
+close(hTmpFig);
+
 % Filter line properties from Unmatched
 unmParamNames   = fieldnames(p.Unmatched);
 lineFields      = unmParamNames(ismember(unmParamNames, lineFieldNames));
 lineValues      = struct2cell(p.Unmatched);
 lineValues      = lineValues(ismember(unmParamNames, lineFieldNames));
 lineVarargin    = reshape([lineFields, lineValues]', 1, []);
+
 % Filter text properties from Unmatched
 textFields      = unmParamNames(ismember(unmParamNames, textFieldNames));
 textValues      = struct2cell(p.Unmatched);
 textValues      = textValues(ismember(unmParamNames, textFieldNames));
 textVarargin    = reshape([textFields, textValues]', 1, []);
+%
+axesFields      = unmParamNames(ismember(unmParamNames, axesFieldNames));
+axesValues      = struct2cell(p.Unmatched);
+axesValues      = axesValues(ismember(unmParamNames, axesFieldNames));
+axesVarargin    = reshape([axesFields, axesValues]', 1, []);
+
 
 %% Plot ct slice
 matRad_cfg = MatRad_Config.instance();
 
+if isempty(p.Results.axesHandle)
+    axesHandle = axes(figure());
+else
+    axesHandle = p.Results.axesHandle;
+end
+
 % Flip axes direction
-set(p.Results.axesHandle,'YDir','Reverse');
+set(axesHandle,'XTick',[],'YTick',[]);
+set(axesHandle,'YDir','Reverse');
 % plot ct slice
 if p.Results.showCt
-    hCt = matRad_plotCtSlice(p.Results.axesHandle,p.Results.ct.cubeHU,p.Results.cubeIdx,p.Results.plane,p.Results.slice, [], []);
+    hCt = matRad_plotCtSlice(axesHandle,p.Results.ct.cubeHU,p.Results.cubeIdx,p.Results.plane,p.Results.slice, [], []);
 end
+axis(axesHandle, 'off');
+
 hold on;
 
 %% Plot dose
@@ -134,17 +161,17 @@ if ~isempty(p.Results.dose)
     if ~isempty(p.Results.doseWindow) && p.Results.doseWindow(2) - p.Results.doseWindow(1) <= 0
         doseWindow = p.Results.doseWindow;
     end        
-    [hDose,doseColorMap,doseWindow] = matRad_plotDoseSlice(p.Results.axesHandle, p.Results.dose, p.Results.plane, p.Results.slice, p.Results.thresh, p.Results.alpha, p.Results.doseColorMap, doseWindow);
+    [hDose,doseColorMap,doseWindow] = matRad_plotDoseSlice(axesHandle, p.Results.dose, p.Results.plane, p.Results.slice, p.Results.thresh, p.Results.alpha, p.Results.doseColorMap, doseWindow);
     hold on;
     
     %% Plot iso dose lines
     hIsoDose = [];
     if ~isempty(p.Results.doseIsoLevels)
-        hIsoDose = matRad_plotIsoDoseLines(p.Results.axesHandle,p.Results.dose,[],p.Results.doseIsoLevels,false,p.Results.plane,p.Results.slice,p.Results.doseColorMap,p.Results.doseWindow, lineVarargin{:});
+        hIsoDose = matRad_plotIsoDoseLines(axesHandle,p.Results.dose,[],p.Results.doseIsoLevels,false,p.Results.plane,p.Results.slice,p.Results.doseColorMap,p.Results.doseWindow, lineVarargin{:});
     end
 
     %% Set Colorbar
-    hCMap = matRad_plotColorbar(p.Results.axesHandle,doseColorMap,doseWindow,'Location','EastOutside');
+    hCMap = matRad_plotColorbar(axesHandle,doseColorMap,doseWindow,'Location','EastOutside');
     set(hCMap,'Color',matRad_cfg.gui.textColor);
     if ~isempty(p.Results.colorBarLabel)
         set(get(hCMap,'YLabel'),'String', p.Results.colorBarLabel,'FontSize',matRad_cfg.gui.fontSize);
@@ -154,7 +181,7 @@ end
 %% Plot VOI contours & Legend
 
 if  ~isempty(p.Results.cst)
-    [hContour,~] = matRad_plotVoiContourSlice(p.Results.axesHandle, p.Results.cst, p.Results.ct, p.Results.cubeIdx, p.Results.voiSelection, p.Results.plane, p.Results.slice, p.Results.contourColorMap, lineVarargin{:});
+    [hContour,~] = matRad_plotVoiContourSlice(axesHandle, p.Results.cst, p.Results.ct, p.Results.cubeIdx, p.Results.voiSelection, p.Results.plane, p.Results.slice, p.Results.contourColorMap, lineVarargin{:});
 
     if p.Results.boolPlotLegend
         visibleOnSlice = (~cellfun(@isempty,hContour));        
@@ -163,7 +190,7 @@ if  ~isempty(p.Results.cst)
         if ~isempty(p.Results.voiSelection)
             voiSelection = visibleOnSlice(find(p.Results.voiSelection));
         end
-        hLegend        =  legend(p.Results.axesHandle,[hContourTmp{:}],[p.Results.cst(voiSelection,2)],'AutoUpdate','off','TextColor',matRad_cfg.gui.textColor);
+        hLegend        =  legend(axesHandle,[hContourTmp{:}],[p.Results.cst(voiSelection,2)],'AutoUpdate','off','TextColor',matRad_cfg.gui.textColor);
         set(hLegend,'Box','On');
         set(hLegend,'TextColor',matRad_cfg.gui.textColor);
         if ~isempty(textVarargin)
@@ -177,34 +204,39 @@ else
 end
 
 %% Adjust axes
-axis(p.Results.axesHandle,'tight');
-set(p.Results.axesHandle,'xtick',[],'ytick',[]);
-colormap(p.Results.axesHandle,p.Results.doseColorMap);
+axis(axesHandle,'tight');
+set(axesHandle,'xtick',[],'ytick',[]);
+colormap(axesHandle,p.Results.doseColorMap);
 fontSize = [];
 if isfield(p.Unmatched, 'FontSize')
     fontSize = p.Unmatched.FontSize;
 end
-matRad_plotAxisLabels(p.Results.axesHandle,p.Results.ct,p.Results.plane,p.Results.slice, fontSize, [])
+matRad_plotAxisLabels(axesHandle,p.Results.ct,p.Results.plane,p.Results.slice, fontSize, [])
 
 % Set axis ratio.
 ratios = [1/p.Results.ct.resolution.x 1/p.Results.ct.resolution.y 1/p.Results.ct.resolution.z];
 
-set(p.Results.axesHandle,'DataAspectRatioMode','manual');
+set(axesHandle,'DataAspectRatioMode','manual');
 if p.Results.plane == 1
     res = [ratios(3) ratios(2)]./max([ratios(3) ratios(2)]);
-    set(p.Results.axesHandle,'DataAspectRatio',[res 1])
+    set(axesHandle,'DataAspectRatio',[res 1])
 elseif p.Results.plane == 2 % sagittal plane
     res = [ratios(3) ratios(1)]./max([ratios(3) ratios(1)]);
-    set(p.Results.axesHandle,'DataAspectRatio',[res 1])
+    set(axesHandle,'DataAspectRatio',[res 1])
 elseif  p.Results.plane == 3 % Axial plane
     res = [ratios(2) ratios(1)]./max([ratios(2) ratios(1)]);
-    set(p.Results.axesHandle,'DataAspectRatio',[res 1])
+    set(axesHandle,'DataAspectRatio',[res 1])
+end
+
+%% Title
+if ~isempty(p.Results.title)
+    title(axesHandle,p.Results.title);
 end
 
 %% Set text properties
 if ~isempty(textVarargin)
-    set(p.Results.axesHandle, textVarargin{:})
-    set(p.Results.axesHandle.Title, textVarargin{:})
+    set(axesHandle, textVarargin{:})
+    set(axesHandle.Title, textVarargin{:})
 end
 
 if ~exist('hCMap', 'var')
