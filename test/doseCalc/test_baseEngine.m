@@ -57,6 +57,10 @@ function test_getEngineFromPlnDefaults
     engine = DoseEngines.matRad_DoseEngineBase.getEngineFromPln(heliumDummyPln);
     assertTrue(isa(engine,'DoseEngines.matRad_ParticleHongPencilBeamEngine'));
 
+    vheeDummyPln = struct('radiationMode','VHEE','machine','FermiEyges');
+    engine = DoseEngines.matRad_DoseEngineBase.getEngineFromPln(vheeDummyPln);
+    assertTrue(isa(engine,'DoseEngines.matRad_ParticleHongPencilBeamEngine'));
+
 function test_getEngineFromPlnByName
     protonDummyPln = struct('radiationMode','protons','machine','Generic','propDoseCalc',struct('engine','MCsquare'));
     engine = DoseEngines.matRad_DoseEngineBase.getEngineFromPln(protonDummyPln);
