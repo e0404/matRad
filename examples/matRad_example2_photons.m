@@ -182,13 +182,17 @@ pln.propStf.gantryAngles = [0:50:359];
 pln.propStf.couchAngles  = zeros(1,numel(pln.propStf.gantryAngles));
 pln.propStf.numOfBeams   = numel(pln.propStf.gantryAngles);
 
-
-
+%Let's rerun the dose calculation and optimization
 stf                      = matRad_generateStf(ct,cst,pln);
 pln.propStf.isoCenter    = vertcat(stf.isoCenter);
 dij                      = matRad_calcDoseInfluence(ct,cst,stf,pln);
 resultGUI_coarse         = matRad_fluenceOptimization(dij,cst,pln);
 
+%We append the new result to the resultGUI variable (recognized by the GUI)
+%using the identifier coarse
+resultGUI = matRad_appendResultGUI(resultGUI,resultGUI_coarse,false,'coarse');
+%A GUI update ensures the current values are updated
+matRadGUI;
 
 %%  Visual Comparison of results
 % Let's compare the new recalculation against the optimization result.
