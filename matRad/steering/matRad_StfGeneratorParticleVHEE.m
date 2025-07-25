@@ -30,12 +30,8 @@ classdef matRad_StfGeneratorParticleVHEE < matRad_StfGeneratorParticleRayBixelAb
             if nargin < 1
                 pln = [];
             end
+
             this@matRad_StfGeneratorParticleRayBixelAbstract(pln);
-            
-            % If plan has no specified radiationMode, set it to 'vhee'
-            if isempty(this.radiationMode)
-                this.radiationMode = 'VHEE';
-            end
          end
     end
 
