@@ -159,7 +159,7 @@ hold on;
 %% Plot dose
 if ~isempty(p.Results.dose)
     doseWindow = [min(p.Results.dose(:)) max(p.Results.dose(:))];
-    if ~isempty(p.Results.doseWindow) && p.Results.doseWindow(2) - p.Results.doseWindow(1) <= 0
+    if ~isempty(p.Results.doseWindow) && p.Results.doseWindow(1) - p.Results.doseWindow(2) <= 0
         doseWindow = p.Results.doseWindow;
     end        
     [hDose,doseColorMap,doseWindow] = matRad_plotDoseSlice(axesHandle, p.Results.dose, p.Results.plane, p.Results.slice, p.Results.thresh, p.Results.alpha, p.Results.doseColorMap, doseWindow);
