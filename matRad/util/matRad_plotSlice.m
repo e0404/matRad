@@ -68,13 +68,13 @@ isSlice             = @(x) x>=1 && x<=max(ct.cubeDim) && floor(x)==x;
 isAxes              = @(x) strcmp(get(x, 'type'), 'axes') || isempty(x);
 isCubeIdx           = @(x) isscalar(x);
 isPlane             = @(x) isscalar(x) && (sum(x==[1, 2, 3])==1);
-isDoseWindow        = @(x) (length(x) == 2 && isvector(x));
+isDoseWindow        = @(x) (length(x) == 2 && isvector(x) && diff(x) > 0);
 isThresh            = @(x) (isscalar(x) && (x>=0) && (x<=1)) || isempty(x);
 isAlpha             = @(x) isscalar(x) && (x>=0) && (x<=1) || isempty(x);
-isDoseColorMap      = @(x) isnumeric(x) && (size(x, 2)==3) &&  all(x(:) >= 0) && all(x(:) <= 1);
+isDoseColorMap      = @(x) (isnumeric(x) && (size(x, 2)==3) &&  all(x(:) >= 0) && all(x(:) <= 1)) || isempty(x);
 isDoseIsoLevels     = @(x) isnumeric(x) && isvector(x)|| isempty(x);
 isVOIselection      = @(x) isnumeric(x) || isempty(x); %all(x(:)==1 | x(:)==0) || isempty(x);
-isContourColorMap   = @(x) isnumeric(x) && (size(x, 2)==3) && size(x, 1)>=2 && all(x(:) >= 0) && all(x(:) <= 1);
+isContourColorMap   = @(x) (isnumeric(x) && (size(x, 2)==3) && size(x, 1)>=2 && all(x(:) >= 0) && all(x(:) <= 1)) || isempty(x);
 isBoolPlotLegend    = @(x) x==0 || x ==1;
 isColorBarLabel     = @(x) isstring(x) || ischar(x) || isempty(x);
 isShowCt            = @(x) isscalar(x) && (x==0) || (x==1);
@@ -128,7 +128,8 @@ textFields      = unmParamNames(ismember(unmParamNames, textFieldNames));
 textValues      = struct2cell(p.Unmatched);
 textValues      = textValues(ismember(unmParamNames, textFieldNames));
 textVarargin    = reshape([textFields, textValues]', 1, []);
-%
+
+% Filter axes properties from Unmatched
 axesFields      = unmParamNames(ismember(unmParamNames, axesFieldNames));
 axesValues      = struct2cell(p.Unmatched);
 axesValues      = axesValues(ismember(unmParamNames, axesFieldNames));
@@ -158,7 +159,7 @@ hold on;
 %% Plot dose
 if ~isempty(p.Results.dose)
     doseWindow = [min(p.Results.dose(:)) max(p.Results.dose(:))];
-    if ~isempty(p.Results.doseWindow) && p.Results.doseWindow(2) - p.Results.doseWindow(1) <= 0
+    if ~isempty(p.Results.doseWindow)
         doseWindow = p.Results.doseWindow;
     end        
     [hDose,doseColorMap,doseWindow] = matRad_plotDoseSlice(axesHandle, p.Results.dose, p.Results.plane, p.Results.slice, p.Results.thresh, p.Results.alpha, p.Results.doseColorMap, doseWindow);
@@ -206,7 +207,7 @@ end
 %% Adjust axes
 axis(axesHandle,'tight');
 set(axesHandle,'xtick',[],'ytick',[]);
-colormap(axesHandle,p.Results.doseColorMap);
+%colormap(p.Results.axesHandle,p.Results.doseColorMap);
 fontSize = [];
 if isfield(p.Unmatched, 'FontSize')
     fontSize = p.Unmatched.FontSize;
