@@ -68,7 +68,7 @@ isSlice             = @(x) x>=1 && x<=max(ct.cubeDim) && floor(x)==x;
 isAxes              = @(x) strcmp(get(x, 'type'), 'axes') || isempty(x);
 isCubeIdx           = @(x) isscalar(x);
 isPlane             = @(x) isscalar(x) && (sum(x==[1, 2, 3])==1);
-isDoseWindow        = @(x) (length(x) == 2 && isvector(x));
+isDoseWindow        = @(x) (length(x) == 2 && isvector(x) && diff(x) > 0);
 isThresh            = @(x) (isscalar(x) && (x>=0) && (x<=1)) || isempty(x);
 isAlpha             = @(x) isscalar(x) && (x>=0) && (x<=1) || isempty(x);
 isDoseColorMap      = @(x) (isnumeric(x) && (size(x, 2)==3) &&  all(x(:) >= 0) && all(x(:) <= 1)) || isempty(x);
@@ -159,7 +159,7 @@ hold on;
 %% Plot dose
 if ~isempty(p.Results.dose)
     doseWindow = [min(p.Results.dose(:)) max(p.Results.dose(:))];
-    if ~isempty(p.Results.doseWindow) && p.Results.doseWindow(1) - p.Results.doseWindow(2) <= 0
+    if ~isempty(p.Results.doseWindow)
         doseWindow = p.Results.doseWindow;
     end        
     [hDose,doseColorMap,doseWindow] = matRad_plotDoseSlice(axesHandle, p.Results.dose, p.Results.plane, p.Results.slice, p.Results.thresh, p.Results.alpha, p.Results.doseColorMap, doseWindow);
