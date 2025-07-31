@@ -205,8 +205,8 @@ else
 end
 
 %% Adjust axes
-axis(p.Results.axesHandle,'tight');
-set(p.Results.axesHandle,'xtick',[],'ytick',[]);
+axis(axesHandle,'tight');
+set(axesHandle,'xtick',[],'ytick',[]);
 %colormap(p.Results.axesHandle,p.Results.doseColorMap);
 fontSize = [];
 if isfield(p.Unmatched, 'FontSize')
