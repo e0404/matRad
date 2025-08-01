@@ -31,41 +31,16 @@ function resultGUI = matRad_sequencing(resultGUI,stf,dij,pln,visBool)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-matRad_cfg = MatRad_Config.instance();
+sequencer = matRad_SequencingBase.getSequencerFromPln(pln);
 
-if nargin < 5
-    visBool = 0;
+if nargin == 5
+    sequencer.visMode = visMode;
+
 end
 
-if ~isfield(pln,'propSeq')
-    pln.propSeq = struct('runSequencing',false);
-end
+sequence = sequencer.sequence(resultGUI.w,stf);
+resultGUI = sequencer.updateResultGUI(resultGUI,sequence,stf,dij);
 
-if strcmp(pln.radiationMode,'photons') && (pln.propSeq.runSequencing || pln.propOpt.runDAO)
-    
-    if ~isfield(pln.propSeq, 'sequencer')
-        pln.propSeq.sequencer = 'siochi'; % default: siochi sequencing algorithm
-        matRad_cfg.dispWarning ('pln.propSeq.sequencer not specified. Using siochi leaf sequencing (default).')
-    end
-    
-    if ~isfield(pln.propSeq, 'sequencingLevel')
-        pln.propSeq.sequencingLevel = 5;
-         matRad_cfg.dispWarning ('pln.propSeq.sequencingLevel not specified. Using 5 sequencing levels (default).')
-    end
-    
-    switch pln.propSeq.sequencer
-        case 'xia'
-            resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,pln.propSeq.sequencingLevel,visBool);
-        case 'engel'
-            resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,pln.propSeq.sequencingLevel,visBool);
-        case 'siochi'
-            resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln.propSeq.sequencingLevel,visBool);
-        otherwise
-            matRad_cfg.dispError('Could not find specified sequencing algorithm ''%s''',pln.propSeq.sequencer);
-    end
-elseif (pln.propSeq.runSequencing || pln.propOpt.runDAO) && ~strcmp(pln.radiationMode,'photons')
-    matRad_cfg.dispWarning('Sequencing is only specified for pln.radiationMode = "photons". Continuing with out sequencing ... ')
-end
 end
 
 

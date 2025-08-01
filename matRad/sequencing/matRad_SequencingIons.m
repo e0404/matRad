@@ -8,17 +8,34 @@ classdef matRad_SequencingIons < matRad_SequencingBase
         possibleRadiationModes = {'protons','helium','carbon'};
     end 
 
-    methods
-        function obj = matRad_SequencingIons(inputArg1,inputArg2)
-            %UNTITLED2 Construct an instance of this class
-            %   Detailed explanation goes here
-            obj.Property1 = inputArg1 + inputArg2;
-        end
-
-        function outputArg = method1(obj,inputArg)
-            %METHOD1 Summary of this method goes here
-            %   Detailed explanation goes here
-            outputArg = obj.Property1 + inputArg;
+    methods  (Static)
+        function [available,msg] = isAvailable(pln,machine)
+                % see superclass for information            
+                       
+                if nargin < 2
+                    machine = matRad_loadMachine(pln);
+                end
+                %checkBasic
+                available = isfield(machine,'meta') && isfield(machine,'data');
+    
+                available = available && any(isfield(machine.meta,{'machine','radiationMode'}));
+        
+                if ~available
+                    msg = 'Your machine file is invalid and does not contain the basic field (meta/data/radiationMode)!';                
+                else
+                    msg = [];
+                end
+   
+                 %check modality
+                 checkModality = any(strcmp(matRad_SequencingIons.possibleRadiationModes, machine.meta.radiationMode)) && any(strcmp(matRad_SequencingIons.possibleRadiationModes, pln.radiationMode));
+                    
+                 %Sanity check compatibility
+                 if checkModality
+                    checkModality = strcmp(machine.meta.radiationMode,pln.radiationMode);
+                 end
+        
+                 available  = available && checkModality;
+       
         end
     end
 end

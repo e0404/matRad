@@ -4,9 +4,10 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_SequencingPhotonsAbstract
     %   Detailed explanation goes here
 
     properties (Constant)
-        name = 'Photons Sochi Leaf Sequenceer';
-        shortName = 'Sochi Leaf';
+        name = 'Photons Siochi Leaf Sequenceer';
+        shortName = 'siochi';
         possibleRadiationModes = {'photons'};
+
     end 
 
     methods
@@ -23,8 +24,7 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_SequencingPhotonsAbstract
                 
                 shapesWeight = zeros(10000,1);
                 k = 0;
-                
-              
+                              
                 %Decompose the port, do rod pushing
                 [tops, bases] = this.decomposePort(D_k);
                 %Form segments
@@ -32,7 +32,7 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_SequencingPhotonsAbstract
                     
                 sequence.beam(i).numOfShapes  = k;
                 sequence.beam(i).shapes       = shapes(:,:,1:k);
-                sequence.beam(i).shapesWeight = shapesWeight(1:k)/this.numOfLevels*calFac;
+                sequence.beam(i).shapesWeight = shapesWeight(1:k)/this.sequencingLevel*calFac;
                 sequence.beam(i).bixelIx      = 1+offset:stf(i).numOfRays+offset;
                 sequence.beam(i).fluence      = D_0;
                 sequence.beam(i).sum          = zeros(size(D_0));
@@ -46,7 +46,7 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_SequencingPhotonsAbstract
                 
             end
 
-            if this.visBool
+            if this.visMode
                 this.plotSegments(sequence)
             end
         end
@@ -194,79 +194,48 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_SequencingPhotonsAbstract
             end
         end
 
-        function plotSegments(this,sequencing)
-                % create the sequencing figure
-                sz = [800 1000]; % figure size
-                screensize = get(0,'ScreenSize');
-                xpos = ceil((screensize(3)-sz(2))/2); % center the figure on the screen horizontally
-                ypos = ceil((screensize(4)-sz(1))/2); % center the figure on the screen vertically
-                seqFig = figure('position',[xpos,ypos,sz(2),sz(1)]);  
+    end
+    methods  (Static)
+        function [available,msg] = isAvailable(pln,machine)
+            % see superclass for information            
+                   
+            if nargin < 2
+                machine = matRad_loadMachine(pln);
+            end
 
-                for i = 1:numel(sequencing)
+            % Check superclass availability
+            [available,msg] = matRad_SequencingPhotonsAbstract.isAvailable(pln,machine);
 
-                    D_0 = sequencing.beam(i).fluence;
-
-                    clf(seqFig);
-                    colormap(seqFig,'jet');
-                        
-                    seqSubPlots(1) = subplot(2,2,1,'parent',seqFig);
-                    imagesc(sequencing.beam(i).fluence,'parent',seqSubPlots(1));
-                    set(seqSubPlots(1),'CLim',[0 this.numOfLevels],'YDir','normal');
-                    title(seqSubPlots(1),['Beam # ' num2str(i) ': max(D_0) = ' num2str(max(D_0(:))) ' - ' num2str(numel(unique(D_0))) ' intensity levels']);
-                    xlabel(seqSubPlots(1),'x - direction parallel to leaf motion ')
-                    ylabel(seqSubPlots(1),'z - direction perpendicular to leaf motion ')
-                    colorbar;
-                    drawnow
-
-                    %show the leaf positions
-                    D_k =  sequencing.beam(i).fluence;
-                    for  k = 1:sequencing.beam(i).numOfShapes
-                        shape_k = sequencing.beam(i).shapes(:,:,k);
-                        [dimZ,dimX] = size(sequencing.beam(i).fluence);
-                        seqSubPlots(4) = subplot(2,2,3.5,'parent',seqFig);
-                        imagesc(shape_k,'parent',seqSubPlots(4));
-                        hold(seqSubPlots(4),'on');
-                        set(seqSubPlots(4),'YDir','normal')
-                        xlabel(seqSubPlots(4),'x - direction parallel to leaf motion ')
-                        ylabel(seqSubPlots(4),'z - direction perpendicular to leaf motion ')
-                        title(seqSubPlots(4),['beam # ' num2str(i) ' shape # ' num2str(k) ' d_k = ' num2str(sequencing.beam(i).shapesWeight(k))]);
-                        for j = 1:dimZ
-                            leftLeafIx = find(shape_k(j,:)>0,1,'first');
-                            rightLeafIx = find(shape_k(j,:)>0,1,'last');
-                            if leftLeafIx > 1
-                                plot(seqSubPlots(4),[.5 leftLeafIx-.5],j-[.5 .5] ,'w','LineWidth',2)
-                                plot(seqSubPlots(4),[.5 leftLeafIx-.5],j+[.5 .5] ,'w','LineWidth',2)
-                                plot(seqSubPlots(4),[ leftLeafIx-.5 leftLeafIx-.5],j+[.5 -.5] ,'w','LineWidth',2)
-                            end
-                            if rightLeafIx<dimX
-                                plot(seqSubPlots(4),[dimX+.5 rightLeafIx+.5],j-[.5 .5] ,'w','LineWidth',2)
-                                plot(seqSubPlots(4),[dimX+.5 rightLeafIx+.5],j+[.5 .5] ,'w','LineWidth',2)
-                                plot(seqSubPlots(4),[ rightLeafIx+.5 rightLeafIx+.5],j+[.5 -.5] ,'w','LineWidth',2)
-                            end
-                            if isempty(rightLeafIx) && isempty (leftLeafIx)
-                                plot(seqSubPlots(4),[dimX+.5 .5],j-[.5 .5] ,'w','LineWidth',2)
-                                plot(seqSubPlots(4),[dimX+.5 .5],j+[.5 .5] ,'w','LineWidth',2)
-                                plot(seqSubPlots(4),.5*dimX*[1 1]+[0.5],j+[.5 -.5] ,'w','LineWidth',2)
-                            end
-                        end
-                        pause(1);
-                        
-                        %Plot residual intensity matrix.
-                        D_k = D_k-shape_k; %residual intensity matrix for visualization
-                        seqSubPlots(2) = subplot(2,2,2,'parent',seqFig);
-                        imagesc(D_k,'parent',seqSubPlots(2));
-                        set(seqSubPlots(2),'CLim',[0 this.numOfLevels],'YDir','normal');
-                        title(seqSubPlots(2),['k = ' num2str(k)]);
-                        colorbar
-                        drawnow
-                        
-                        axis tight
-                        drawnow
-                    end
-
-
+            if ~available
+                return;
+            else
+                available = false;
+                msg = [];
+            end
+    
+            %checkBasic
+            try
+                checkBasic = isfield(machine,'meta') && isfield(machine,'data');
+    
+                %check modality
+                checkModality = any(strcmp(matRad_SequencingPhotonsSiochiLeaf.possibleRadiationModes, machine.meta.radiationMode)) && any(strcmp(matRad_SequencingPhotonsSiochiLeaf.possibleRadiationModes, pln.radiationMode));
+                
+                %Sanity check compatibility
+                if checkModality
+                    checkModality = strcmp(machine.meta.radiationMode,pln.radiationMode);
                 end
-        end
+    
+                preCheck = checkBasic && checkModality;
+    
+                if ~preCheck
+                    return;
+                end
+            catch
+                msg = 'Your machine file is invalid and does not contain the basic field (meta/data/radiationMode)!';
+                return;
+            end
 
+            available = preCheck;
+        end
     end
 end
