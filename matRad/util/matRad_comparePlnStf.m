@@ -46,18 +46,18 @@ if isfield(pln.propStf,'numOfBeams') && pln.propStf.numOfBeams ~= numel(stf)
 end
 
 %% compare gantry angles in  stf and pln
-stf_gantryAngles=[stf.gantryAngle];
-if ~isfield(pln.propStf,'gantryAngles') || numel(stf_gantryAngles) ~= numel(pln.propStf.gantryAngles) ... % different size
-        || ~isempty(find(stf_gantryAngles-pln.propStf.gantryAngles, 1))  % values in stf and pln do not match  % values in stf and pln do not match
+stfGantryAngles=[stf.gantryAngle];
+if ~isfield(pln.propStf,'gantryAngles') || numel(stfGantryAngles) ~= numel(pln.propStf.gantryAngles) ... % different size
+        || ~isempty(find(stfGantryAngles-pln.propStf.gantryAngles, 1))  % values in stf and pln do not match  % values in stf and pln do not match
     allMatch=false;
     msg= 'Gantry angles do not match';
     return
 end
 
 %% compare couch angles in stf and pln
-stf_couchAngles=[stf.couchAngle];
-if ~isfield(pln.propStf,'couchAngles') || numel(stf_couchAngles) ~= numel(pln.propStf.couchAngles) ... % different size
-        || ~isempty(find(stf_couchAngles-pln.propStf.couchAngles, 1))  % values in stf and pln do not match
+stfCouchAngles=[stf.couchAngle];
+if ~isfield(pln.propStf,'couchAngles') || numel(stfCouchAngles) ~= numel(pln.propStf.couchAngles) ... % different size
+        || ~isempty(find(stfCouchAngles-pln.propStf.couchAngles, 1))  % values in stf and pln do not match
     allMatch=false;
     msg= 'Couch angles do not match';
     return
@@ -88,7 +88,12 @@ end
 
 %% compare isocenter in stf and pln for each gantry angle
 for i = 1:numel(pln.propStf.gantryAngles)
-    if ~isempty(find(stf(i).isoCenter - pln.propStf.isoCenter(i,:) ,1))
+    if size(pln.propStf.isoCenter,1) == 1
+        isoCenter = repmat(pln.propStf.isoCenter,numel(stf),1);
+    else
+        isoCenter = pln.propStf.isoCenter;
+    end
+    if size(isoCenter,1) ~= numel(stf) || any(stf(i).isoCenter - isoCenter(i,:) ~= 0)
         allMatch=false;
         msg= 'Isocenters do not match';
         return
