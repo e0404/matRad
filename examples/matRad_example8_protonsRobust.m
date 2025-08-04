@@ -125,19 +125,23 @@ plane      = 3;
 slice = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:),ct);
 slice = slice(3);
 
-figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExDose_beam1      ,plane,slice,[],[],colorcube,[],[0 max(resultGUI.RBExDose_beam1(:))],[]);title('conventional plan - beam1')
-figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.RBExDose_beam1,plane,slice,[],[],colorcube,[],[0 max(resultGUIrobust.RBExDose_beam1(:))],[]);title('robust plan - beam1')
+figure,matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', resultGUI.RBExDose_beam1, 'plane', plane, 'slice', slice, 'contourColorMap', colorcube, 'doseWindow', [0 max(resultGUI.RBExDose_beam1(:))]);title('conventional plan - beam1')
+figure,matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', resultGUIrobust.RBExDose_beam1, 'plane', plane, 'slice', slice, 'contourColorMap', colorcube, 'doseWindow', [0 max(resultGUIrobust.RBExDose_beam1(:))]);title('robust plan - beam1')
+%figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExDose_beam1      ,plane,slice,[],[],colorcube,[],[0 max(resultGUI.RBExDose_beam1(:))],[]);title('conventional plan - beam1')
+%figure,matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.RBExDose_beam1,plane,slice,[],[],colorcube,[],[0 max(resultGUIrobust.RBExDose_beam1(:))],[]);title('robust plan - beam1')
 
 % create an interactive plot to slide through individual scnearios
 f = figure;title('individual scenarios');
 numScen = 1;doseWindow = [0 3.5];
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.(['RBExDose_scen' num2str(round(numScen))]),plane,slice,[],[],colorcube,[],doseWindow,[]);
+matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', resultGUIrobust.(['RBExDose_scen' num2str(round(numScen))]), 'plane', plane, 'slice', slice, 'contourColorMap', colorcube, 'doseWindow', doseWindow);
+%matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.(['RBExDose_scen' num2str(round(numScen))]),plane,slice,[],[],colorcube,[],doseWindow,[]);
 
 [env,envver] = matRad_getEnvironment();
 if strcmp(env,'MATLAB') || str2double(envver(1)) >= 5
     b = uicontrol('Parent',f,'Style','slider','Position',[50,5,419,23],...
         'value',numScen, 'min',1, 'max',pln.multScen.totNumScen,'SliderStep', [1/(pln.multScen.totNumScen-1) , 1/(pln.multScen.totNumScen-1)]);
-    set(b,'Callback',@(es,ed)  matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.(['RBExDose_scen' num2str(round(get(es,'Value')))]),plane,slice,[],[],colorcube,[],doseWindow,[]));
+    set(b,'Callback',@(es,ed)  matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', resultGUIrobust.(['RBExDose_scen' num2str(round(get(es,'Value')))]), 'plane', plane, 'slice', slice, 'contourColorMap', colorcube, 'doseWindow', doseWindow));
+        %matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.(['RBExDose_scen' num2str(round(get(es,'Value')))]),plane,slice,[],[],colorcube,[],doseWindow,[]));
 end
 
 %% Indicator calculation and show DVH and QI
@@ -152,8 +156,10 @@ structSel = {}; % structSel = {'PTV','OAR1'};
 [cstStatRob, resultGUISampRob, metaRob]                = matRad_samplingAnalysis(ct,cst,plnSampRob,caSampRob, mSampDoseRob, resultGUInomScen);
 
 figure,title('std dose cube based on sampling - conventional')
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUISamp.stdCube,plane,slice,[],[],colorcube,[],[0 max(resultGUISamp.stdCube(:))]);
+matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', resultGUISamp.stdCube, 'plane', plane, 'slice', slice, 'contourColorMap', colorcube, 'doseWindow', [0 max(resultGUISamp.stdCube(:))]);
+%matRad_plotSliceWrapper(gca,ct,cst,1,resultGUISamp.stdCube,plane,slice,[],[],colorcube,[],[0 max(resultGUISamp.stdCube(:))]);
 
 figure,title('std dose cube based on sampling - robust')
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUISampRob.stdCube,plane,slice,[],[],colorcube,[],[0 max(resultGUISampRob.stdCube(:))]);
+matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', resultGUISampRob.stdCube, 'plane', plane, 'slice', slice, 'contourColorMap', colorcube, 'doseWindow', [0 max(resultGUISampRob.stdCube(:))]);
+%matRad_plotSliceWrapper(gca,ct,cst,1,resultGUISampRob.stdCube,plane,slice,[],[],colorcube,[],[0 max(resultGUISampRob.stdCube(:))]);
 

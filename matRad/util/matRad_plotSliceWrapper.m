@@ -101,76 +101,9 @@ end
 
 matRad_cfg = MatRad_Config.instance();
 
-set(axesHandle,'YDir','Reverse');
-% plot ct slice
-hCt = matRad_plotCtSlice(axesHandle,ct.cubeHU,cubeIdx,plane,slice); 
-hold on;
+matRad_cfg.dispDeprecationWarning('Deprecation warning: matRad_plotSliceWrapper is deprecated. Using matRad_plot_Slice instead');
 
-% plot dose
-if ~isempty(doseWindow) && doseWindow(2) - doseWindow(1) <= 0
-    doseWindow = [0 2];
-end
-
-[hDose,doseColorMap,doseWindow] = matRad_plotDoseSlice(axesHandle,dose,plane,slice,thresh,alpha,doseColorMap,doseWindow);
-
-% plot iso dose lines
-if ~isempty(doseIsoLevels)
-    hIsoDose = matRad_plotIsoDoseLines(axesHandle,dose,[],doseIsoLevels,false,plane,slice,doseColorMap,doseWindow,varargin{:});
-    hold on;
-else
-    hIsoDose = [];
-end
-
-%plot VOI contours
-if  ~isempty(cst)
-
-    [hContour,~] = matRad_plotVoiContourSlice(axesHandle,cst,ct,cubeIdx,voiSelection,plane,slice,contourColorMap,varargin{:});
-
-if boolPlotLegend
-   visibleOnSlice = (~cellfun(@isempty,hContour));
-   ixLegend = find(voiSelection);
-   hContourTmp    = cellfun(@(X) X(1),hContour(visibleOnSlice),'UniformOutput',false);
-   if ~isempty(voiSelection)
-       hLegend        =  legend(axesHandle,[hContourTmp{:}],[cst(ixLegend(visibleOnSlice),2)],'AutoUpdate','off','TextColor',matRad_cfg.gui.textColor);
-   else
-       hLegend        =  legend(axesHandle,[hContourTmp{:}],[cst(visibleOnSlice,2)],'AutoUpdate','off','TextColor',matRad_cfg.gui.textColor);
-   end
-   set(hLegend,'Box','Off');
-   set(hLegend,'TextColor',matRad_cfg.gui.textColor);
-   set(hLegend,'FontSize',matRad_cfg.gui.fontSize);
-
-end
-else
-    hContour = [];
-end
-
-axis(axesHandle,'tight');
-set(axesHandle,'xtick',[],'ytick',[]);
-colormap(axesHandle,doseColorMap);
-
-matRad_plotAxisLabels(axesHandle,ct,plane,slice,[])
-
-% set axis ratio
-
-ratios = [1/ct.resolution.x 1/ct.resolution.y 1/ct.resolution.z];
-   
-set(axesHandle,'DataAspectRatioMode','manual');
-if plane == 1 
-      res = [ratios(3) ratios(2)]./max([ratios(3) ratios(2)]);  
-      set(axesHandle,'DataAspectRatio',[res 1])
-elseif plane == 2 % sagittal plane
-      res = [ratios(3) ratios(1)]./max([ratios(3) ratios(1)]);  
-      set(axesHandle,'DataAspectRatio',[res 1]) 
-elseif  plane == 3 % Axial plane
-      res = [ratios(2) ratios(1)]./max([ratios(2) ratios(1)]);  
-      set(axesHandle,'DataAspectRatio',[res 1])
-end
-
-hCMap = matRad_plotColorbar(axesHandle,doseColorMap,doseWindow,'Location','EastOutside');
-set(hCMap,'Color',matRad_cfg.gui.textColor);
-if ~isempty(colorBarLabel)
-    set(get(hCMap,'YLabel'),'String', colorBarLabel,'FontSize',matRad_cfg.gui.fontSize);
-end
+[hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSlice(ct, 'axesHandle', axesHandle, 'cst', cst, 'cubeIdx', cubeIdx, 'dose', dose, 'plane', plane, 'slice', slice,'thresh', thresh, 'alpha', alpha, 'contourColorMap', contourColorMap, 'doseColorMap', doseColorMap, 'doseWindow', doseWindow, 'doseIsoLevels', doseIsoLevels, 'voiSelection', voiSelection, 'colorBarLabel', colorBarLabel, 'boolPlotLegend', boolPlotLegend, 'others', varargin);
 
 end
 

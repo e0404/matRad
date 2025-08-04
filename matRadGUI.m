@@ -62,10 +62,9 @@ end
 
 if matRad_cfg.disableGUI
     matRad_cfg.dispInfo('matRad GUI disabled in matRad_cfg!\n');
+    hGUI = [];
     return;
 end
-
-handleValid = true;
 
 try
     handleValid = ishandle(hMatRadGUI.guiHandle);

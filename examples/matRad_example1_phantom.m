@@ -143,7 +143,8 @@ slice = slice(3);
 doseWindow = [0 max([resultGUI.physicalDose(:)])];
 
 figure,title('phantom plan')
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
+matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', resultGUI.physicalDose, 'plane', plane, 'slice', slice, 'contourColorMap', colorcube, 'doseWindow', doseWindow);
+%matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
 
 %% 
 % We export the the created phantom & dose as dicom. This is handled by the 
