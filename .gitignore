@@ -4,6 +4,7 @@ testresults.xml
 coverage.xml
 coverage.json
 *.asv
+.DS_Store
 build/
 /MCNP/runfiles_tmp
 /MCNP/logFile
