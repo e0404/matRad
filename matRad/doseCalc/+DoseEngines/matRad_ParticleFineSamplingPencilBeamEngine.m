@@ -45,6 +45,8 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
             end
 
             this = this@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(pln);
+
+            this.restrictBeamRadDepthsByMaxEnergy = false;
         end
 
         function setDefaults(this)
