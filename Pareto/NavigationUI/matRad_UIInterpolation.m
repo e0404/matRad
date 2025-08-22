@@ -114,7 +114,7 @@ function matRad_UIInterpolation(data,dij,pln,ct,cst,optiProb)
         set(fixButtons{i},'Callback',{@FixButton_callback,refObj,sliders,i})
     end
 
-    set(DVHButton,'Callback',{@DVHButton_callback,cst,refObj,dij,pln})
+    set(DVHButton,'Callback',{@DVHButton_callback,DVHPlot,cst,refObj,dij,pln})
     set(ExportButton,'Callback',{@ExportButton_callback,refObj,dij})
     set(ResetConstraintButton,'Callback',{@ResetConstraintButton_callback,refObj,sliders})
     set(ParetoSurfaceButton,'Callback',{@ParetoSurfaceButton_callback,refObj})
@@ -131,17 +131,17 @@ function matRad_UIInterpolation(data,dij,pln,ct,cst,optiProb)
     matRad_plotSliceWrapper(DosePlot,ct,cst,1,cubes,3,slice);
     %zoom(DosePlot,1.1);
     dvh = matRad_calcDVH(cst,cubes,'cum');
-    matRad_showDVH(dvh,cst,pln);
+    matRad_showDVH(DVHPlot,dvh,cst,pln);
 
 end
     % End of main file
-    function DVHButton_callback(~,~,cst,refObj,dij,pln)
+    function DVHButton_callback(~,~,axesDVH,cst,refObj,dij,pln)
         %Shows the DVH for the current plan
         resultGUI = matRad_calcCubes(refObj.wRef,dij);
         %dvh = matRad_calcDVH(cst,doseCube,'cum');
         dvh = matRad_calcDVH(cst,resultGUI.physicalDose,'cum');
 
-        matRad_showDVH(dvh,cst,pln,refObj.linestyle);
+        matRad_showDVH(axesDVH,dvh,cst,pln,refObj.linestyle);
         if refObj.linestyle < 4
             refObj.linestyle = refObj.linestyle + 1;
         else
