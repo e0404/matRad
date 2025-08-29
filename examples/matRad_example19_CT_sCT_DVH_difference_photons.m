@@ -215,12 +215,6 @@ pln.propDoseCalc.doseGrid.resolution.x = 7; % [mm]
 pln.propDoseCalc.doseGrid.resolution.y = 7; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 7; % [mm]
 
-%%
-% Enable sequencing and disable direct aperture optimization (DAO) for now.
-% A DAO optimization is shown in a seperate example.
-pln.propSeq.runSequencing = 1;
-pln.propOpt.runDAO        = 0;
-
 %% Generate Beam Geometry STF
 % The steering file struct comprises the complete beam geometry along with 
 % ray position, pencil beam positions and energies, source to axis distance (SAD) etc.

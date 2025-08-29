@@ -71,7 +71,8 @@ resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf) ;
 %%
 % calc 4D dose
 % make sure that the correct pln, dij and stf are loeaded in the workspace
-[resultGUI, timeSequence] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI); 
+resultGUI = matRad_calc4dDose(dij, pln,stf,resultGUI);
+resultGUI = matRad_acc4dDose( dij, pln, ct, cst,resultGUI, 'DDM');
 
 % plot the result in comparison to the static dose
 slice = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:),ct);

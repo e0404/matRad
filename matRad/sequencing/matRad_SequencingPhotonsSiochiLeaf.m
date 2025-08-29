@@ -49,6 +49,7 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_SequencingPhotonsAbstract
             if this.visMode
                 this.plotSegments(sequence)
             end
+            sequence =  this.sequencing2ApertureInfo(sequence,stf);
         end
 
 

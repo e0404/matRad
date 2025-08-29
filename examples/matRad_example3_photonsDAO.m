@@ -37,8 +37,8 @@ pln.radiationMode   = 'photons';   % either photons / protons / carbon
 pln.machine         = 'Generic';
 pln.numOfFractions  = 30;
  
-pln.propStf.gantryAngles    = [0:72:359];
-pln.propStf.couchAngles     = [0 0 0 0 0];
+pln.propStf.gantryAngles    = [0:90:359];
+pln.propStf.couchAngles     = [0 0 0 0 ];
 pln.propStf.bixelWidth      = 5;
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
@@ -47,9 +47,9 @@ pln.bioModel = 'none';
 pln.multScen = 'nomScen';
 
 % dose calculation settings
-pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
-pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
-pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
+pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]
+pln.propDoseCalc.doseGrid.resolution.y = 5; % [mm]
+pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
 
 % We can also use other solver for optimization than IPOPT. matRad 
 % currently supports fmincon from the MATLAB Optimization Toolbox. First we
@@ -62,11 +62,6 @@ else
     pln.propOpt.optimizer = 'IPOPT';
 end
 pln.propOpt.quantityOpt = 'physicalDose';  
-
-%%
-% Enable sequencing and direct aperture optimization (DAO).
-pln.propSeq.runSequencing = true;
-pln.propOpt.runDAO        = true;
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
@@ -84,23 +79,37 @@ dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 % treatment. Once the optimization has finished, trigger once the GUI to
 % visualize the optimized dose cubes.
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
-matRadGUI;
+%matRadGUI;
 
 %% Sequencing
 % This is a multileaf collimator leaf sequencing algorithm that is used in 
 % order to modulate the intensity of the beams with multiple static 
 % segments, so that translates each intensity map into a set of deliverable 
 % aperture shapes.
-resultGUI = matRad_sequencing(resultGUI,stf,dij,pln);
+
+
+%% some testing of sequencing
+pln.propSeq.sequencer = 'siochi';
+pln.propSeq.sequencingLevel = 10;
+resultGUI_SIOCHI = matRad_sequencing(resultGUI,stf,pln, dij);
+resultGUI_SIOCHI_OLD = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln.propSeq.sequencingLevel,0);
+
+pln.propSeq.sequencer = 'xia';
+resultGUI_XIA = matRad_sequencing(resultGUI,stf,pln, dij);
+resultGUI_XIA_OLD =  matRad_xiaLeafSequencing(resultGUI,stf,dij,pln.propSeq.sequencingLevel,0);
+
+pln.propSeq.sequencer = 'engel';
+resultGUI_ENGEL = matRad_sequencing(resultGUI,stf,pln, dij);
+resultGUI_ENGEL_OLD = matRad_engelLeafSequencing(resultGUI,stf,dij,pln.propSeq.sequencingLevel,0);
 
 %% DAO - Direct Aperture Optimization
 % The Direct Aperture Optimization is an optimization approach where we 
 % directly optimize aperture shapes and weights.
-resultGUI = matRad_directApertureOptimization(dij,cst,resultGUI.apertureInfo,resultGUI,pln);
+resultGUI_SIOCHI_DAO = matRad_directApertureOptimization(dij,cst,resultGUI_SIOCHI.sequencing.apertureInfo,resultGUI,pln);
 
 %% Aperture visualization
 % Use a matrad function to visualize the resulting aperture shapes
-matRad_visApertureInfo(resultGUI.apertureInfo);
+matRad_visApertureInfo(resultGUI_SIOCHI_DAO.sequencing.apertureInfo);
 
 %% Indicator Calculation and display of DVH and QI
-resultGUI = matRad_planAnalysis(resultGUI,ct,cst,stf,pln);
+#resultGUI = matRad_planAnalysis(resultGUI,ct,cst,stf,pln);

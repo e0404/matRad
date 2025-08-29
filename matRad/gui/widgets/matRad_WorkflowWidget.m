@@ -450,6 +450,8 @@ classdef matRad_WorkflowWidget < matRad_Widget
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
             handles = this.handles;
+            runDAO = this.widgetHandle.Parent.Children(9).Children(13).Value;
+            runSeq = this.widgetHandle.Parent.Children(9).Children(18).Value;
             try
                 % indicate that matRad is busy
                 % change mouse pointer to hour glass
@@ -491,7 +493,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
 
                 assignin('base','resultGUI',resultGUI);
 
-                if ~pln.propOpt.runDAO || ~strcmp(pln.radiationMode,'photons')
+                if ~runDAO|| ~strcmp(pln.radiationMode,'photons')
                     CheckOptimizerStatus(this,usedOptimizer,'Fluence')
                 end
                 
@@ -508,7 +510,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
             try
                 %% sequencing
                 
-                resultGUI = matRad_sequencing(resultGUI,evalin('base','stf'),dij,pln);
+                resultGUI = matRad_sequencing(resultGUI,evalin('base','stf'),pln,dij);
                 assignin('base','resultGUI',resultGUI);
                 
                 
@@ -523,20 +525,20 @@ classdef matRad_WorkflowWidget < matRad_Widget
             
             try
                 %% DAO
-                if strcmp(pln.radiationMode,'photons') && pln.propOpt.runDAO
+                if strcmp(pln.radiationMode,'photons') && runDAO
 
                     showWarning(this,['Observe: You are running direct aperture optimization' filesep 'This is experimental code that has not been thoroughly debugged - especially in combination with constrained optimization.']); % was assigned to handles WHY ? 
                     [resultGUI,usedOptimizer] = matRad_directApertureOptimization(evalin('base','dij'),evalin('base','cst'),...
-                        resultGUI.apertureInfo,resultGUI,pln);
+                        resultGUI.sequencing.apertureInfo,resultGUI,pln);
                     assignin('base','resultGUI',resultGUI);
                     % check IPOPT status and return message for GUI user
                     CheckOptimizerStatus(this,usedOptimizer,'DAO');
                 end
                 
 
-                if strcmp(pln.radiationMode,'photons') && (pln.propSeq.runSequencing || pln.propOpt.runDAO)
+                if strcmp(pln.radiationMode,'photons') && runSeq||  runDAO
 
-                    matRad_visApertureInfo(resultGUI.apertureInfo);
+                    matRad_visApertureInfo(resultGUI.sequencing.apertureInfo);
                 end
                 
             catch ME

@@ -42,9 +42,6 @@ pln.propStf.couchAngles     = [0 0 0 0 0];
 pln.propStf.bixelWidth      = 10;
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
-% Enable sequencing and direct aperture optimization (DAO).
-pln.propOpt.runSequencing   = 1;
-pln.propOpt.runDAO          = 1;
 
 quantityOpt    = 'physicalDose';                                     
 modelName      = 'none';  
@@ -74,11 +71,11 @@ resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 % order to modulate the intensity of the beams with multiple static 
 % segments, so that translates each intensity map into a set of deliverable 
 % aperture shapes.
-resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,5,1);
-[pln,stf] = matRad_aperture2collimation(pln,stf,resultGUI.sequencing,resultGUI.apertureInfo);
+resultGUI = matRad_sequencing(resultGUI,stf,pln, dij);
+
 %% Aperture visualization
 % Use a matrad function to visualize the resulting aperture shapes
-matRad_visApertureInfo(resultGUI.apertureInfo)
+matRad_visApertureInfo(resultGUI.sequencing.apertureInfo)
 %% Plot the Resulting Dose Slice
 % Just let's plot the transversal iso-center dose slice
 slice = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:),ct);

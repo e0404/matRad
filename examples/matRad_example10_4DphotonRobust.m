@@ -177,8 +177,6 @@ pln.propStf.couchAngles   = [0 0];
 pln.propStf.bixelWidth    = 5;
 pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
-pln.propOpt.runDAO        = 0;
-pln.propOpt.runSequencing = 0;
 
 % dose calculation settings
 pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]
@@ -231,7 +229,8 @@ resultGUI = matRad_appendResultGUI(resultGUI,resultGUIrobust,0,'robust');
 totalPhaseMatrix = ones(dij.totalNumOfBixels,ct.numOfCtScen)/ct.numOfCtScen;  % the total phase matrix determines a mapping what fluence will be delivered in the which phase
 totalPhaseMatrix = bsxfun(@times,totalPhaseMatrix,resultGUIrobust.w);         % equally distribute the fluence over all fluences
 
-[resultGUIrobust4D, timeSequence] = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUIrobust,totalPhaseMatrix); 
+resultGUIrobust4D = matRad_calc4dDose(dij, pln, stf,resultGUIrobust,totalPhaseMatrix); 
+resultGUIrobust4D = matRad_acc4dDose( dij, pln, ct, cst,resultGUIrobust4D, 'DDM');
 
 %% Visualize results
 

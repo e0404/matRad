@@ -9,6 +9,10 @@ classdef  (Abstract) matRad_SequencingPhotonsAbstract < matRad_SequencingBase
 
     methods
 
+        function sequence = sequence(this,w,stf)
+
+            throw(MException('MATLAB:class:AbstractMember','Abstract function sequence needs to be implemented!'))
+        end
 
         function [D_0,D_k, shapes,calFac, indInMx] = initBeam(this,stf, wCurr)
 
@@ -56,25 +60,7 @@ classdef  (Abstract) matRad_SequencingPhotonsAbstract < matRad_SequencingBase
                 
         end
 
-        function resultGUI = updateResultGUI(this,resultGUI,sequence, stf,dij)
-            resultGUI.w = sequence.w;
-            resultGUI.wSequenced = sequence.w;
-            resultGUI.sequencing   = sequence;
-            resultGUI.apertureInfo = this.sequencing2ApertureInfo(sequence,stf);
-            
-            doseSequencedDoseGrid = reshape(dij.physicalDose{1} * sequence.w,dij.doseGrid.dimensions);
-            % interpolate to ct grid for visualiation & analysis
-            resultGUI.physicalDose = matRad_interp3(dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z, ...
-                                                    doseSequencedDoseGrid, ...
-                                                    dij.ctGrid.x,dij.ctGrid.y',dij.ctGrid.z);
-            
-            % if weights exists from an former DAO remove it
-            if isfield(resultGUI,'wDao')
-                resultGUI = rmfield(resultGUI,'wDao');
-            end
-        end
-
-        function apertureInfo = sequencing2ApertureInfo(this,sequence,stf)
+        function sequence = sequencing2ApertureInfo(this,sequence,stf)
             % MLC parameters:
             bixelWidth = stf(1).bixelWidth; % [mm]
             %     define central leaf pair (here we want the 0mm position to be in the
@@ -166,11 +152,11 @@ classdef  (Abstract) matRad_SequencingPhotonsAbstract < matRad_SequencingBase
                     end
                     
                     % save data for each shape of this beam
-                    apertureInfo.beam(i).shape(m).leftLeafPos = leftLeafPos;
-                    apertureInfo.beam(i).shape(m).rightLeafPos = rightLeafPos;
-                    apertureInfo.beam(i).shape(m).weight = sequence.beam(i).shapesWeight(m);
-                    apertureInfo.beam(i).shape(m).shapeMap = shapeMap;
-                    apertureInfo.beam(i).shape(m).vectorOffset = vectorOffset;
+                    sequence.apertureInfo.beam(i).shape(m).leftLeafPos = leftLeafPos;
+                    sequence.apertureInfo.beam(i).shape(m).rightLeafPos = rightLeafPos;
+                    sequence.apertureInfo.beam(i).shape(m).weight = sequence.beam(i).shapesWeight(m);
+                    sequence.apertureInfo.beam(i).shape(m).shapeMap = shapeMap;
+                    sequence.apertureInfo.beam(i).shape(m).vectorOffset = vectorOffset;
                     
                     % update index for bookkeeping
                     vectorOffset = vectorOffset + dimZ;
@@ -199,124 +185,30 @@ classdef  (Abstract) matRad_SequencingPhotonsAbstract < matRad_SequencingBase
                                 minZ-bixelWidth/2 maxZ+bixelWidth/2];
                 
                 % save data for each beam
-                apertureInfo.beam(i).numOfShapes = sequence.beam(i).numOfShapes;
-                apertureInfo.beam(i).numOfActiveLeafPairs = dimZ;
-                apertureInfo.beam(i).leafPairPos = leafPairPos;
-                apertureInfo.beam(i).isActiveLeafPair = isActiveLeafPair;
-                apertureInfo.beam(i).centralLeafPair = centralLeafPair;
-                apertureInfo.beam(i).lim_l = lim_l;
-                apertureInfo.beam(i).lim_r = lim_r;
-                apertureInfo.beam(i).bixelIndMap = bixelIndMap;
-                apertureInfo.beam(i).posOfCornerBixel = posOfCornerBixel;
-                apertureInfo.beam(i).MLCWindow = MLCWindow;
+                sequence.apertureInfo.beam(i).numOfShapes = sequence.beam(i).numOfShapes;
+                sequence.apertureInfo.beam(i).numOfActiveLeafPairs = dimZ;
+                sequence.apertureInfo.beam(i).leafPairPos = leafPairPos;
+                sequence.apertureInfo.beam(i).isActiveLeafPair = isActiveLeafPair;
+                sequence.apertureInfo.beam(i).centralLeafPair = centralLeafPair;
+                sequence.apertureInfo.beam(i).lim_l = lim_l;
+                sequence.apertureInfo.beam(i).lim_r = lim_r;
+                sequence.apertureInfo.beam(i).bixelIndMap = bixelIndMap;
+                sequence.apertureInfo.beam(i).posOfCornerBixel = posOfCornerBixel;
+                sequence.apertureInfo.beam(i).MLCWindow = MLCWindow;
                 
             end
             
             % save global data
-            apertureInfo.bixelWidth = bixelWidth;
-            apertureInfo.numOfMLCLeafPairs = this.numOfMLCLeafPairs;
-            apertureInfo.totalNumOfBixels = totalNumOfBixels;
-            apertureInfo.totalNumOfShapes = sum([apertureInfo.beam.numOfShapes]);
-            apertureInfo.totalNumOfLeafPairs = sum([apertureInfo.beam.numOfShapes]*[apertureInfo.beam.numOfActiveLeafPairs]');
+            sequence.apertureInfo.bixelWidth = bixelWidth;
+            sequence.apertureInfo.numOfMLCLeafPairs = this.numOfMLCLeafPairs;
+            sequence.apertureInfo.totalNumOfBixels = totalNumOfBixels;
+            sequence.apertureInfo.totalNumOfShapes = sum([sequence.apertureInfo.beam.numOfShapes]);
+            sequence.apertureInfo.totalNumOfLeafPairs = sum([sequence.apertureInfo.beam.numOfShapes]*[sequence.apertureInfo.beam.numOfActiveLeafPairs]');
             
             % create vectors for optimization
-            [apertureInfo.apertureVector, apertureInfo.mappingMx, apertureInfo.limMx] = matRad_OptimizationProblemDAO.matRad_daoApertureInfo2Vec(apertureInfo);
+            [sequence.apertureInfo.apertureVector, sequence.apertureInfo.mappingMx, sequence.apertureInfo.limMx] = matRad_OptimizationProblemDAO.matRad_daoApertureInfo2Vec(sequence.apertureInfo);
         end
 
-        function [pln,stf] = aperture2collimation(this,pln,stf,sequence,apertureInfo)
-
-            bixelWidth = apertureInfo.bixelWidth;
-            leafWidth = bixelWidth;
-            convResolution = 0.5; %[mm]
-            
-            %The collimator limits are infered here from the apertureInfo. This could
-            %be handled differently by explicitly storing collimator info in the base
-            %data?
-            symmetricMLClimits = vertcat(apertureInfo.beam.MLCWindow);
-            symmetricMLClimits = max(abs(symmetricMLClimits));
-            fieldWidth = 2*max(symmetricMLClimits);
-            
-            %modify basic pln variables
-            pln.propStf.bixelWidth = 'field';
-            pln.propStf.collimation.convResolution = 0.5; %[mm]
-            pln.propStf.collimation.fieldWidth = fieldWidth;
-            pln.propStf.collimation.leafWidth = leafWidth;
-            
-            %
-            %[bixelFieldX,bixelFieldY] = ndgrid(-fieldWidth/2:bixelWidth:fieldWidth/2,-fieldWidth/2:leafWidth:fieldWidth/2);
-            [convFieldX,convFieldY] = meshgrid(-fieldWidth/2:convResolution:fieldWidth/2);
-            
-            %TODO: Not used in calcPhotonDose but imported from DICOM
-            %pln.propStf.collimation.Devices ...
-            %pln.propStf.collimation.numOfFields
-            %pln.propStf.collimation.beamMeterset 
-            
-            for iBeam = 1:numel(stf)
-                stfTmp = stf(iBeam);
-                beamSequencing = sequence.beam(iBeam);
-                beamAperture = apertureInfo.beam(iBeam);
-                
-                stfTmp.bixelWidth = 'field';
-                
-                nShapes = beamSequencing.numOfShapes;
-            
-                stfTmp.numOfRays = 1;%
-                stfTmp.numOfBixelsPerRay = nShapes;
-                stfTmp.totalNumOfBixels = nShapes;
-                
-                ray = struct();
-                ray.rayPos_bev = [0 0 0];
-                ray.targetPoint_bev = [0 stfTmp.SAD 0];
-                ray.weight = 1;
-                ray.energy = stfTmp.ray(1).energy;
-                ray.beamletCornersAtIso = stfTmp.ray(1).beamletCornersAtIso;
-                ray.rayCorners_SCD = stfTmp.ray(1).rayCorners_SCD;
-            
-                %ray.shape = beamSequencing.sum;
-                shapeTotalF = zeros(size(convFieldX));
-            
-                ray.shapes = struct();
-                for iShape = 1:nShapes
-                    currShape = beamAperture.shape(iShape);
-                    activeLeafPairPosY = beamAperture.leafPairPos;
-                    F = zeros(size(convFieldX));
-                    if this.visMode
-                        hF = figure; imagesc(F); title(sprintf('Beam %d, Shape %d',iBeam,iShape)); hold on;
-                    end
-                    for iLeafPair = 1:numel(activeLeafPairPosY)
-                        posY = activeLeafPairPosY(iLeafPair);
-                        ixY = convFieldY >= posY-leafWidth/2 & convFieldY < posY + leafWidth/2;
-                        ixX = convFieldX >= currShape.leftLeafPos(iLeafPair) & convFieldX < currShape.rightLeafPos(iLeafPair);
-                        ix = ixX & ixY;            
-                        F(ix) = 1;
-                        if visBool
-                            figure(hF); imagesc(F); drawnow; pause(0.1);
-                        end
-                    end
-            
-                    if visBool
-                        pause(1); close(hF);
-                    end
-            
-                    F = F*currShape.weight;
-                    shapeTotalF = shapeTotalF + F;
-            
-                    ray.shapes(iShape).convFluence = F;
-                    ray.shapes(iShape).shapeMap = currShape.shapeMap;
-                    ray.shapes(iShape).weight = currShape.weight;
-                    ray.shapes(iShape).leftLeafPos = currShape.leftLeafPos;
-                    ray.shapes(iShape).rightLeafPos = currShape.rightLeafPos;
-                    ray.shapes(iShape).leafPairCenterPos = activeLeafPairPosY;
-                end
-            
-                ray.shape = shapeTotalF;
-                ray.weight = ones(1,nShapes);
-                ray.collimation = pln.propStf.collimation;
-                stfTmp.ray = ray;
-            
-                stf(iBeam) = stfTmp;
-            end
-        end
         
         function plotSegments(this,sequencing)
                 % create the sequencing figure
@@ -409,5 +301,106 @@ classdef  (Abstract) matRad_SequencingPhotonsAbstract < matRad_SequencingBase
                     msg = [];
                 end
         end
+
+        function [pln,stf] = aperture2collimation(pln,stf,sequence, visBool)
+
+            if nargin < 4
+                visBool = false;
+            end
+
+            bixelWidth = sequence.apertureInfo.bixelWidth;
+            leafWidth = bixelWidth;
+            convResolution = 0.5; %[mm]
+            
+            %The collimator limits are infered here from the apertureInfo. This could
+            %be handled differently by explicitly storing collimator info in the base
+            %data?
+            symmetricMLClimits = vertcat(apertureInfo.beam.MLCWindow);
+            symmetricMLClimits = max(abs(symmetricMLClimits));
+            fieldWidth = 2*max(symmetricMLClimits);
+            
+            %modify basic pln variables
+            pln.propStf.bixelWidth = 'field';
+            pln.propStf.collimation.convResolution = 0.5; %[mm]
+            pln.propStf.collimation.fieldWidth = fieldWidth;
+            pln.propStf.collimation.leafWidth = leafWidth;
+            
+            %
+            %[bixelFieldX,bixelFieldY] = ndgrid(-fieldWidth/2:bixelWidth:fieldWidth/2,-fieldWidth/2:leafWidth:fieldWidth/2);
+            [convFieldX,convFieldY] = meshgrid(-fieldWidth/2:convResolution:fieldWidth/2);
+            
+            %TODO: Not used in calcPhotonDose but imported from DICOM
+            %pln.propStf.collimation.Devices ...
+            %pln.propStf.collimation.numOfFields
+            %pln.propStf.collimation.beamMeterset 
+            
+            for iBeam = 1:numel(stf)
+                stfTmp = stf(iBeam);
+                beamSequencing = sequence.beam(iBeam);
+                beamAperture = sequence.apertureInfo.beam(iBeam);
+                
+                stfTmp.bixelWidth = 'field';
+                
+                nShapes = beamSequencing.numOfShapes;
+            
+                stfTmp.numOfRays = 1;%
+                stfTmp.numOfBixelsPerRay = nShapes;
+                stfTmp.totalNumOfBixels = nShapes;
+                
+                ray = struct();
+                ray.rayPos_bev = [0 0 0];
+                ray.targetPoint_bev = [0 stfTmp.SAD 0];
+                ray.weight = 1;
+                ray.energy = stfTmp.ray(1).energy;
+                ray.beamletCornersAtIso = stfTmp.ray(1).beamletCornersAtIso;
+                ray.rayCorners_SCD = stfTmp.ray(1).rayCorners_SCD;
+            
+                %ray.shape = beamSequencing.sum;
+                shapeTotalF = zeros(size(convFieldX));
+            
+                ray.shapes = struct();
+                for iShape = 1:nShapes
+                    currShape = beamAperture.shape(iShape);
+                    activeLeafPairPosY = beamAperture.leafPairPos;
+                    F = zeros(size(convFieldX));
+                    if visBool
+                        hF = figure; imagesc(F); title(sprintf('Beam %d, Shape %d',iBeam,iShape)); hold on;
+                    end
+                    for iLeafPair = 1:numel(activeLeafPairPosY)
+                        posY = activeLeafPairPosY(iLeafPair);
+                        ixY = convFieldY >= posY-leafWidth/2 & convFieldY < posY + leafWidth/2;
+                        ixX = convFieldX >= currShape.leftLeafPos(iLeafPair) & convFieldX < currShape.rightLeafPos(iLeafPair);
+                        ix = ixX & ixY;            
+                        F(ix) = 1;
+                        if visBool
+                            figure(hF); imagesc(F); drawnow; pause(0.1);
+                        end
+                    end
+            
+                    if visBool
+                        pause(1); close(hF);
+                    end
+            
+                    F = F*currShape.weight;
+                    shapeTotalF = shapeTotalF + F;
+            
+                    ray.shapes(iShape).convFluence = F;
+                    ray.shapes(iShape).shapeMap = currShape.shapeMap;
+                    ray.shapes(iShape).weight = currShape.weight;
+                    ray.shapes(iShape).leftLeafPos = currShape.leftLeafPos;
+                    ray.shapes(iShape).rightLeafPos = currShape.rightLeafPos;
+                    ray.shapes(iShape).leafPairCenterPos = activeLeafPairPosY;
+                end
+            
+                ray.shape = shapeTotalF;
+                ray.weight = ones(1,nShapes);
+                ray.collimation = pln.propStf.collimation;
+                stfTmp.ray = ray;
+            
+                stf(iBeam) = stfTmp;
+            end
+        end
     end
 end
+
+

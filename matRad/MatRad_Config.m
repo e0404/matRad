@@ -245,7 +245,7 @@ classdef MatRad_Config < handle
             obj.defaults.propOpt.clearUnusedVoxels = false;
 
             %Sequencing Options
-            obj.defaults.propSeq.sequencer = {'siochi', 'IMRT'};
+            obj.defaults.propSeq.sequencer = {'siochi', 'IMPT'};
             
 
 

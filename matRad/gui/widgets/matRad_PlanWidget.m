@@ -904,18 +904,6 @@ classdef matRad_PlanWidget < matRad_Widget
                 set(handles.popMenuMultScen,'Value',ix);
             end
 
-            if strcmp(pln.radiationMode,'photons') && isfield(pln.propOpt,'runDAO')
-                set(handles.btnRunDAO,'Value',pln.propOpt.runDAO);
-            else
-                set(handles.btnRunDAO,'Value', 0 );
-            end
-
-            if isfield(pln, 'propSeq') && isfield(pln.propSeq, 'sequencingLevel')
-                set(handles.btnRunSequencing,'Value',pln.propSeq.runSequencing);
-                set(handles.editSequencingLevel,'String',num2str(pln.propSeq.sequencingLevel));
-            else
-                set(handles.btnRunSequencing,'Value', 0 );
-            end
 
             if isfield (pln.propOpt, 'conf3D')
                 set(handles.radiobutton3Dconf,'Value',pln.propOpt.conf3D);
@@ -1061,9 +1049,7 @@ classdef matRad_PlanWidget < matRad_Widget
             end
             contents   = get(handles.popUpMenuSequencer,'String');
             pln.propSeq.sequencer = contents{get(handles.popUpMenuSequencer,'Value')};
-            pln.propSeq.runSequencing = logical(get(handles.btnRunSequencing,'Value'));
             pln.propSeq.sequencingLevel = this.parseStringAsNum(get(handles.editSequencingLevel,'String'),false);
-            pln.propOpt.runDAO = logical(get(handles.btnRunDAO,'Value'));
             pln.propOpt.conf3D = logical(get(handles.radiobutton3Dconf,'Value'));
 
 

@@ -126,6 +126,7 @@ classdef  matRad_SequencingPhotonsXiaLeaf < matRad_SequencingPhotonsAbstract
             if this.visMode
                this.plotSegments(sequence)
             end
+            sequence =  this.sequencing2ApertureInfo(sequence,stf);
         end
     end
     methods  (Static)

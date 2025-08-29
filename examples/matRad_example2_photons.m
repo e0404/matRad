@@ -132,12 +132,6 @@ pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
 
-%%
-% Enable sequencing and disable direct aperture optimization (DAO) for now.
-% A DAO optimization is shown in a seperate example.
-pln.propSeq.runSequencing = 1;
-pln.propOpt.runDAO        = 0;
-
 
 %%
 % and et voila our treatment plan structure is ready. Lets have a look:

@@ -1,4 +1,4 @@
-function resultGUI = matRad_sequencing(resultGUI,stf,dij,pln,visBool)
+function resultGUI = matRad_sequencing(resultGUI,stf,pln,dij,visMode)
 % matRad inverse planning wrapper function
 % 
 % call
@@ -30,16 +30,26 @@ function resultGUI = matRad_sequencing(resultGUI,stf,dij,pln,visBool)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+matRad_cfg = MatRad_Config.instance();
+    
 sequencer = matRad_SequencingBase.getSequencerFromPln(pln);
 
-if nargin == 5
-    sequencer.visMode = visMode;
-
+% Handle optional inputs
+if nargin == 5 && ~isempty(visMode)
+     sequencer.visMode = visMode;
+end
+if nargin < 4 || isempty(dij)
+    dij = []; 
 end
 
 sequence = sequencer.sequence(resultGUI.w,stf);
-resultGUI = sequencer.updateResultGUI(resultGUI,sequence,stf,dij);
+if ~isempty(dij)
+    resultGUI = matRad_calcCubes(sequence.w,dij);
+else
+
+    matRad_cfg.dispWarning('Dose not recalcaulted with sequenced fluence');    
+end
+resultGUI.sequencing   = sequence;
 
 end
 

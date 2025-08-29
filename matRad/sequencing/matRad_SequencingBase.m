@@ -1,4 +1,4 @@
-classdef matRad_SequencingBase < handle
+classdef (Abstract) matRad_SequencingBase < handle
     %UNTITLED2 Summary of this class goes here
     %   Detailed explanation goes here
 
@@ -138,6 +138,17 @@ classdef matRad_SequencingBase < handle
             end
         end
 
+        function sequence = sequence(this,w,stf)
+
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispError('This is an Abstract Base class! Function needs to be called for instantiable subclasses!');
+        end
+
+        function resultGUI = updateResultGUI(this,sequence,varargin)
+
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispError('This is an Abstract Base class! Function needs to be called for instantiable subclasses!');
+        end
     end
     methods (Static)
         function sequencer = getSequencerFromPln(pln, warnDefault)
