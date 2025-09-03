@@ -970,7 +970,9 @@ classdef matRad_PlanWidget < matRad_Widget
                 pln.propStf.gantryAngles    = this.parseStringAsNum(get(handles.editGantryAngle,'String'),true); % [°]
                 pln.propStf.couchAngles     = this.parseStringAsNum(get(handles.editCouchAngle,'String'),true); % [°]
 
-                if ~isempty(hObject) && (strcmp(hObject.Tag,'editGantryAngle')||strcmp(hObject.Tag,'editCouchAngle'))
+                objectTag = get(hObject,'Tag'); % Returns empty if hObject is empty, no check required
+
+                if ~isempty(objectTag) && (strcmp(objectTag,'editGantryAngle')||strcmp(objectTag,'editCouchAngle'))
                     if numel(this.parseStringAsNum(get(handles.editCouchAngle,'String'),true))<numel(this.parseStringAsNum(get(handles.editGantryAngle,'String'),true)) % Feature: autofill couch angles to single plane by entering a single value
                         couchGantryDifference = numel(this.parseStringAsNum(get(handles.editGantryAngle,'String'),true))-numel(this.parseStringAsNum(get(handles.editCouchAngle,'String'),true));
                         pln.propStf.couchAngles     = [this.parseStringAsNum(get(handles.editCouchAngle,'String'),true) zeros(1,couchGantryDifference)];
@@ -982,8 +984,12 @@ classdef matRad_PlanWidget < matRad_Widget
                 this.plotPlan = true;
             end
 
-            pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
-            pln.propStf.isoCenter       = this.parseStringAsNum(get(handles.editIsoCenter,'String'),true);
+            pln.propStf.numOfBeams = numel(pln.propStf.gantryAngles);
+
+            isoStr = get(handles.editIsoCenter,'String');
+            if ~isequal(isoStr,'multiple isoCenter')
+                pln.propStf.isoCenter = this.parseStringAsNum(isoStr,true);
+            end
 
             % switch machines depending on radmode selection
             selectedMachine                     = get(handles.popUpMachine,'Value');
