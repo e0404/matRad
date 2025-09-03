@@ -1468,6 +1468,7 @@ classdef matRad_PlanWidget < matRad_Widget
 
             if evalin('base','exist(''cst'')') && evalin('base','exist(''pln'')')
                 try
+                    matRad_cfg = MatRad_Config.instance();
                     %parse variables from base-workspace
                     cst = evalin('base','cst');
                     pln = evalin('base','pln');
@@ -1476,9 +1477,27 @@ classdef matRad_PlanWidget < matRad_Widget
                     fileName = [pln.radiationMode '_' pln.machine];
                     load(fileName);
 
-                    % check for available cell types characterized by alphaX and betaX
-                    for i = 1:size(machine.data(1).alphaX,2)
-                        CellType{i} = [num2str(machine.data(1).alphaX(i)) ' ' num2str(machine.data(1).betaX(i))];
+                    %biological model
+                    if isfield(matRad_cfg.defaults.bioModel,pln.radiationMode)
+                        defaultModel = matRad_cfg.defaults.bioModel.(pln.radiationMode);
+                    else
+                        defaultModel = matRad_cfg.defaults.bioModel.fallback;
+                    end
+                    if ~isfield(pln,'bioModel')
+                        pln.bioModel = defaultModel;
+                    end
+
+                    bioModel = matRad_BiologicalModel.validate(pln.bioModel,pln.radiationMode);
+
+                    [availableAlphaX, availableBetaX] = bioModel.getAvailableTissueParameters(pln);
+
+                    if ~isempty(availableAlphaX) && ~isempty(availableBetaX)
+                        for i = 1:size(availableAlphaX,2)
+                            CellType{i} = [num2str(availableAlphaX(i)) ' ' num2str(availableBetaX(i))];
+                            columnformat = {'char',CellType,'numeric'};
+                        end
+                    else
+                        columnformat = {'char','numeric','numeric'};
                     end
 
                     %fill table data array
@@ -1507,16 +1526,42 @@ classdef matRad_PlanWidget < matRad_Widget
                         %set focus
                         figure(figTissue);
                     else
-                        figTissue = figure('Name','Set Tissue Parameters','Color',[.5 .5 .5],'NumberTitle','off','OuterPosition',...
-                            [ceil(ScreenSize(3)/2) 100 Width Height]);
+                        figTissue = figure('Name','Set Tissue Parameters', ...
+                            'NumberTitle','off', ...
+                            'OuterPosition',[ceil(ScreenSize(3)/2) 100 Width Height],...
+                            'Color',matRad_cfg.gui.backgroundColor);                         
                     end
 
                     % define the tissue parameter table
                     cNames = {'VOI','alphaX betaX','alpha beta ratio'};
-                    columnformat = {'char',CellType,'numeric'};
+                    % columnformat = {'char',CellType,'numeric'};
+                    
+                    %design table colors
+                    colorMatrix = repmat(matRad_cfg.gui.elementColor,size(data,1),1);
+                    ix2 = 2:2:size(data,1);
+                    if ~isempty(ix2)    
+                        shadeColor = rgb2hsv(matRad_cfg.gui.elementColor);
+                        if shadeColor(3) < 0.5
+                            shadeColor(3) = shadeColor(3)*1.5+0.1;
+                        else
+                            shadeColor(3) = shadeColor(3)*0.5-0.1;
+                        end
+                
+                        colorMatrix(ix2,:) = repmat(hsv2rgb(shadeColor),numel(ix2),1);
+                    end
+                               
+                
+                    % Create the uitable
+                    tissueTable = uitable('Parent', figTissue, ...
+                        'Data', data, ...
+                        'ColumnEditable',[false true false],...
+                        'ColumnName',cNames, ...
+                        'ColumnFormat',columnformat, ...
+                        'Position',[50 150 10 10], ...
+                        'ForegroundColor',matRad_cfg.gui.textColor,...
+                        'BackgroundColor',colorMatrix,...
+                        'RowStriping','on'); 
 
-                    tissueTable = uitable('Parent', figTissue,'Data', data,'ColumnEditable',[false true false],...
-                        'ColumnName',cNames, 'ColumnFormat',columnformat,'Position',[50 150 10 10]);
                     set(tissueTable,'CellEditCallback',@(hObject,eventdata) tissueTable_CellEditCallback(this,hObject,eventdata));
                     % set width and height
                     currTablePos = get(tissueTable,'Position');
@@ -1525,14 +1570,27 @@ classdef matRad_PlanWidget < matRad_Widget
                     currTablePos(4) = currTableExt(4);
                     set(tissueTable,'Position',currTablePos);
 
-                    % define two buttons with callbacks
-                    uicontrol('Parent', figTissue,'Style', 'pushbutton', 'String', 'Save&Close',...
-                        'Position', [Width-(0.25*Width) 0.1 * Height 70 30],...
-                        'Callback', @(hpb,eventdata)SaveTissueParameters(this,hpb,eventdata));
+                    themeParams = {'BackgroundColor', matRad_cfg.gui.backgroundColor,...
+                            'ForegroundColor',matRad_cfg.gui.textColor,...
+                            'FontSize',matRad_cfg.gui.fontSize,...
+                            'FontName',matRad_cfg.gui.fontName,...
+                            'FontWeight',matRad_cfg.gui.fontWeight};   
 
-                    uicontrol('Parent', figTissue,'Style', 'pushbutton', 'String', 'Cancel&Close',...
+                    % define two buttons with callbacks
+                    uicontrol('Parent', figTissue, ...
+                        'Style', 'pushbutton', ...
+                        'String', 'Save&Close',...
+                        'Position', [Width-(0.25*Width) 0.1 * Height 70 30],...
+                        'Callback', @(hpb,eventdata)SaveTissueParameters(this,hpb,eventdata),...
+                        themeParams{:});
+
+                    uicontrol('Parent', ...
+                        figTissue,'Style', ...
+                        'pushbutton', ...
+                        'String', 'Cancel&Close',...
                         'Position', [Width-(0.5*Width) 0.1 * Height 80 30],...
-                        'Callback', 'close');
+                        'Callback', 'close', ...
+                        themeParams{:});
                 catch ME
                     this.showWarning('Could not set Tissue parameter update! Reason: %s\n',ME.message)
                 end
