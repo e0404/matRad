@@ -970,7 +970,9 @@ classdef matRad_PlanWidget < matRad_Widget
                 pln.propStf.gantryAngles    = this.parseStringAsNum(get(handles.editGantryAngle,'String'),true); % [°]
                 pln.propStf.couchAngles     = this.parseStringAsNum(get(handles.editCouchAngle,'String'),true); % [°]
 
-                if ~isempty(hObject) && (strcmp(hObject.Tag,'editGantryAngle')||strcmp(hObject.Tag,'editCouchAngle'))
+                objectTag = get(hObject,'Tag');
+
+                if ~isempty(hObject) && (strcmp(objectTag,'editGantryAngle')||strcmp(objectTag,'editCouchAngle'))
                     if numel(this.parseStringAsNum(get(handles.editCouchAngle,'String'),true))<numel(this.parseStringAsNum(get(handles.editGantryAngle,'String'),true)) % Feature: autofill couch angles to single plane by entering a single value
                         couchGantryDifference = numel(this.parseStringAsNum(get(handles.editGantryAngle,'String'),true))-numel(this.parseStringAsNum(get(handles.editCouchAngle,'String'),true));
                         pln.propStf.couchAngles     = [this.parseStringAsNum(get(handles.editCouchAngle,'String'),true) zeros(1,couchGantryDifference)];
