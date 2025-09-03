@@ -982,8 +982,12 @@ classdef matRad_PlanWidget < matRad_Widget
                 this.plotPlan = true;
             end
 
-            pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
-            pln.propStf.isoCenter       = this.parseStringAsNum(get(handles.editIsoCenter,'String'),true);
+            pln.propStf.numOfBeams = numel(pln.propStf.gantryAngles);
+
+            isoStr = get(handles.editIsoCenter,'String');
+            if ~isequal(isoStr,'multiple isoCenter')
+                pln.propStf.isoCenter = this.parseStringAsNum(isoStr,true);
+            end
 
             % switch machines depending on radmode selection
             selectedMachine                     = get(handles.popUpMachine,'Value');
