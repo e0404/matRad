@@ -37,7 +37,25 @@ function test_setBiologicalModelProvidedQuantities
     else
         assertExceptionThrown(@(model) matRad_bioModel('photons', 'MCN', {'physicalDose'}), 'matRad:Error');
     end
+
+function test_tissueParameters_emptyModel
+    bioModel = matRad_EmptyBiologicalModel();
+    abx = bioModel.getAvailableTissueParameters(struct());
+    assertTrue(isempty(abx));
+
+function test_tissueParameters_kernelModel
+    bioModel = matRad_KernelBasedLEM();
+    abx = bioModel.getAvailableTissueParameters(struct('machine','Generic','radiationMode','carbon'));
+    assertTrue(isnumeric(abx));
+    assertEqual(size(abx,2),2);
+    assertTrue(size(abx,1) >= 1);
     
+    if moxunit_util_platform_is_octave()
+         assertExceptionThrown(@() bioModel.getAvailableTissueParameters(struct('machine','Generic','radiationMode','photons')));
+    else
+        assertExceptionThrown(@() bioModel.getAvailableTissueParameters(struct('machine','Generic','radiationMode','photons')), 'matRad:Error');
+    end
+
 
 function test_calcBiologicalQuantitiesForBixel_MCN
     bioModel = matRad_bioModel('protons','MCN');

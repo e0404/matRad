@@ -251,12 +251,11 @@ classdef (Abstract) matRad_BiologicalModel < handle
             end
         end
 
-        function [alphaX, betaX] = getAvailableTissueParameters(pln)
-            
-            % load machine
+        function [alphaX, betaX] = getAvailableTissueParameters(pln)            
+            % empty values in standard implementation, needs to be
+            % overwritten in subclasses
             alphaX = [];
             betaX  = [];
-
         end
 
         
