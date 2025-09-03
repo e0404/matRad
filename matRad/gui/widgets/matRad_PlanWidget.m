@@ -1470,17 +1470,17 @@ classdef matRad_PlanWidget < matRad_Widget
                     fileName = [pln.radiationMode '_' pln.machine];
                     load(fileName);
 
-                    % check for available cell types characterized by alphaX and betaX
-                    % if all(isfield(machine.data(1), {'alphaX', 'betaX'}))
-                    %     for i = 1:size(machine.data(1).alphaX,2)
-                    %         CellType{i} = [num2str(machine.data(1).alphaX(i)) ' ' num2str(machine.data(1).betaX(i))];
-                    %     end
-                    % end
-                    % Get the current biological model
-                    
-                    if ischar(pln.bioModel)
-                        bioModel = matRad_bioModel(pln.radiationMode, pln.bioModel);
+                    %biological model
+                    if isfield(matRad_cfg.defaults.bioModel,pln.radiationMode)
+                        defaultModel = matRad_cfg.defaults.bioModel.(pln.radiationMode);
+                    else
+                        defaultModel = matRad_cfg.defaults.bioModel.fallback;
                     end
+                    if ~isfield(pln,'bioModel')
+                        pln.bioModel = defaultModel;
+                    end
+
+                    bioModel = matRad_BiologicalModel.validate(pln.bioModel,pln.radiationMode);
 
                     [availableAlphaX, availableBetaX] = bioModel.getAvailableTissueParameters(pln);
 
