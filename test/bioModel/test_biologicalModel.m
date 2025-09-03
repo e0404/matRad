@@ -23,10 +23,19 @@ function test_setBiologicalModel
     if moxunit_util_platform_is_octave()
         assertExceptionThrown(@(model) matRad_bioModel('photons', 'MCN'));
         assertExceptionThrown(@(model) matRad_bioModel('protons', 'HEL'));
-
     else
         assertExceptionThrown(@(model) matRad_bioModel('photons', 'MCN'), 'matRad:Error');
         assertExceptionThrown(@(model) matRad_bioModel('protons', 'HEL'),'matRad:Error');
+    end
+
+function test_setBiologicalModelProvidedQuantities
+    bioModel = matRad_bioModel('protons', 'MCN', {'physicalDose','LET'});
+    assertTrue(isa(bioModel, 'matRad_MCNamara'));
+    
+    if moxunit_util_platform_is_octave()
+        assertExceptionThrown(@(model) matRad_bioModel('protons', 'MCN', {'physicalDose'}));        
+    else
+        assertExceptionThrown(@(model) matRad_bioModel('photons', 'MCN', {'physicalDose'}), 'matRad:Error');
     end
     
 
