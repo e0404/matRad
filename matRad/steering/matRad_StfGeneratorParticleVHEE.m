@@ -49,6 +49,7 @@ classdef matRad_StfGeneratorParticleVHEE < matRad_StfGeneratorParticleRayBixelAb
             else
                 beam.VHEEenergy = this.energy;
             end
+            this.energy = beam.VHEEenergy;
             % Optional: check if that energy is in the machine data
             if isfield(this.machine.data,'energies') && ~isempty(this.machine.data.energies)
                 if ~ismember(beam.VHEEenergy, this.machine.data.energies)

@@ -10,9 +10,9 @@ function test_suite = test_stfGeneratorVHEE
     
     function test_pln_construct()
         load VHEE_testData.mat
+        pln.propStf.energy = 150;
         stfGen = matRad_StfGeneratorParticleVHEE(pln);
         stfGen.isAvailable(pln);
-        pln.propStf.energy = 150;
         assertTrue(isa(stfGen, 'matRad_StfGeneratorParticleVHEE'));
         assertEqual(stfGen.gantryAngles, pln.propStf.gantryAngles);
         assertEqual(stfGen.couchAngles, pln.propStf.couchAngles);
@@ -25,9 +25,9 @@ function test_suite = test_stfGeneratorVHEE
     function test_pln_construct_focused()
         load VHEE_testData.mat
         pln.machine = 'Focused';
+        pln.propStf.energy = 150;
         stfGen = matRad_StfGeneratorParticleVHEE(pln);
         stfGen.isAvailable(pln);
-        pln.propStf.energy = 150;
         assertTrue(isa(stfGen, 'matRad_StfGeneratorParticleVHEE'));
         assertEqual(stfGen.gantryAngles, pln.propStf.gantryAngles);
         assertEqual(stfGen.couchAngles, pln.propStf.couchAngles);
