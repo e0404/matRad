@@ -23,7 +23,7 @@ function test_suite = test_HongPB
     
     function test_calcDoseHongPBprotons
         testData = load('protons_testData.mat');
-        
+
         assertTrue(DoseEngines.matRad_ParticleHongPencilBeamEngine.isAvailable(testData.pln));
         
         testData.pln.propDoseCalc.engine = 'HongPB';

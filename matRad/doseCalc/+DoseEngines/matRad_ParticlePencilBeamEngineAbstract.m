@@ -50,8 +50,6 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
 
             this = this@DoseEngines.matRad_PencilBeamEngineAbstract(pln);
         end
-        
-
     end
 
     % Should be abstract methods but in order to satisfy the compatibility
@@ -174,6 +172,15 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             bixel.numParticlesPerMU = 1e6;
             if isfield(currRay,'numParticlesPerMU')
                 bixel.numParticlesPerMU = currRay.numParticlesPerMU(k);
+            end
+
+            if this.calcDoseDirect
+                if ~isfield(currRay,'weight') || numel(currRay.weight) < k
+                    matRad_cfg = MatRad_Config.instance();
+                    matRad_cfg.dispError('No weight available for beam %d, ray %d, bixel %d',bixel.beamIndex,bixel.rayIndex,bixel.bixelIndex);
+                end
+                bixel.weight = currRay.weight(k);
+                bixel.MU = (bixel.weight.*1e6) ./ bixel.numParticlesPerMU;
             end
 
             % find energy index in base data
@@ -996,7 +1003,9 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             dij = this.fillDij@DoseEngines.matRad_PencilBeamEngineAbstract(bixel,dij,stf,scenIdx,currBeamIdx,currRayIdx,currBixelIdx,bixelCounter);
             
             % Add MU information
-            if ~this.calcDoseDirect
+            if this.calcDoseDirect
+                dij.MU(bixelCounter,1) = bixel.MU;
+            else 
                 dij.minMU(bixelCounter,1) = bixel.minMU;
                 dij.maxMU(bixelCounter,1) = bixel.maxMU;
                 dij.numParticlesPerMU(bixelCounter,1) = bixel.numParticlesPerMU;
