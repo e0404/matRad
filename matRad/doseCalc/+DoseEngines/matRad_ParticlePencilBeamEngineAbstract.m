@@ -38,6 +38,8 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
         vBetaX;                         % Stores Photon Beta
 
         bioKernelQuantities;             % Kernel quantites to request from the machine data for biological dose calculation
+
+        restrictBeamRadDepthsByMaxEnergy = true;
     end
 
     methods
@@ -449,12 +451,12 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             radDepthOffset = this.machine.data(maxEnergyIx).offset + minRaShi;
 
             % apply limit in depth
-            %subSelectIx = currBeam.radDepths{1} < (this.machine.data(maxEnergyIx).depths(end) - radDepthOffset);
-
-            subSelectIx = cellfun(@(rD) rD < (this.machine.data(maxEnergyIx).depths(end) - radDepthOffset),currBeam.radDepths,'UniformOutput',false);
-            currBeam.validCoords = cellfun(@and,subSelectIx,currBeam.validCoords,'UniformOutput',false);
-            currBeam.validCoordsAll = any(cell2mat(currBeam.validCoords),2);
-
+            if this.restrictBeamRadDepthsByMaxEnergy
+                subSelectIx = cellfun(@(rD) rD < (this.machine.data(maxEnergyIx).depths(end) - radDepthOffset),currBeam.radDepths,'UniformOutput',false);
+                currBeam.validCoords = cellfun(@and,subSelectIx,currBeam.validCoords,'UniformOutput',false);
+                currBeam.validCoordsAll = any(cell2mat(currBeam.validCoords),2);
+            end
+                 
             %currBeam.ixRadDepths = currBeam.ixRadDepths(subSelectIx);
             %currBeam.subIxVdoseGrid = currBeam.subIxVdoseGrid(subSelectIx);
             %currBeam.radDepths = cellfun(@(rd) rd(subSelectIx),currBeam.radDepths,'UniformOutput',false);
