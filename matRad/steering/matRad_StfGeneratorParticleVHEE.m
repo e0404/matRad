@@ -79,9 +79,6 @@ classdef matRad_StfGeneratorParticleVHEE < matRad_StfGeneratorParticleRayBixelAb
 
         function  beam = finalizeBeam(this,beam)
             for j = beam.numOfRays:-1:1
-                % for k = beam.numOfBixelsPerRay(j):-1:1
-                %     maskEnergy = beam.ray(j).energy(k) == beam.VHEEenergy;
-                % end
                 if isempty(beam.ray(j).energy)
                     beam.ray(j) = [];
                     beam.numOfBixelsPerRay(j) = [];
