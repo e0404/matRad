@@ -1,9 +1,9 @@
 function updatedInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVect)
-% matRad function to translate vector representation into struct
-% The vector representation of the aperture shape and weight are translated 
-% into an aperture info struct. At the same time, the updated bixel weight
-% vector w is computed and a vector listing the correspondence between leaf 
-% tips and bixel indices for gradient calculation
+% matRad function to translate the vector representation of the aperture
+% shape and weight into an aperture info struct. At the same time, the
+% updated bixel weight vector w is computed and a vector listing the
+% correspondence between leaf tips and bixel indices for gradient
+% calculation
 %
 % call
 %   [updatedInfo,w,indVect] = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVect)
@@ -22,14 +22,25 @@ function updatedInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVect)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
-% LICENSE file.
+% Copyright 2015, Mark Bangert, on behalf of the matRad development team
+%
+% m.bangert@dkfz.de
+%
+% This file is part of matRad.
+%
+% matrad is free software: you can redistribute it and/or modify it under
+% the terms of the GNU General Public License as published by the Free
+% Software Foundation, either version 3 of the License, or (at your option)
+% any later version.
+%
+% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
+% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+% details.
+%
+% You should have received a copy of the GNU General Public License in the
+% file license.txt along with matRad. If not, see
+% <http://www.gnu.org/licenses/>.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -53,7 +64,7 @@ else
     
     % options for bixel and Jacobian calculation
     mlcOptions.bixelWidth = apertureInfo.bixelWidth;
-    calcOptions.continuousAperture = updatedInfo.propVMAT.continuousAperture;
+    calcOptions.continuousAperture = updatedInfo.continuousAperture;
     vectorIndices.totalNumOfShapes = apertureInfo.totalNumOfShapes;
 end
 
@@ -168,7 +179,7 @@ for i = 1:numel(updatedInfo.beam)
                 updatedInfo.beam(i).shape(j).MURate = updatedInfo.beam(i).shape(j).MU./updatedInfo.beam(i).time;
             end
             
-            if ~updatedInfo.runVMAT || ~updatedInfo.propVMAT.continuousAperture
+            if ~updatedInfo.runVMAT || ~updatedInfo.continuousAperture
                 % extract left and right leaf positions from shape vector
                 vectorIx_L = updatedInfo.beam(i).shape(j).vectorOffset + ((1:n)-1);
                 vectorIx_R = vectorIx_L+apertureInfo.totalNumOfLeafPairs;
@@ -214,7 +225,7 @@ for i = 1:numel(updatedInfo.beam)
             updatedInfo.beam(i).shape(j).MU = updatedInfo.beam(i).shape(j).MURate.*updatedInfo.beam(i).time;
             updatedInfo.beam(i).shape(j).weight = updatedInfo.beam(i).shape(j).MU./updatedInfo.weightToMU;
             
-            if ~updatedInfo.propVMAT.continuousAperture
+            if ~updatedInfo.continuousAperture
                 
                 fracFromLastOpt = updatedInfo.propVMAT.beam(i).fracFromLastDAO;
                 fracFromLastOptI = updatedInfo.propVMAT.beam(i).fracFromLastDAO*ones(n,1);
@@ -369,7 +380,7 @@ for i = 1:numel(updatedInfo.beam)
                 variables.jacobiScale = updatedInfo.beam(i).shape(1).jacobiScale;
                 
                 vectorIndices.DAOindex      = updatedInfo.propVMAT.beam(i).DAOIndex;
-                if updatedInfo.propVMAT.continuousAperture
+                if updatedInfo.continuousAperture
                     vectorIndices.vectorIx_LI   = updatedInfo.beam(i).shape(j).vectorOffset(1) + ((1:n)-1);
                     vectorIndices.vectorIx_LF   = updatedInfo.beam(i).shape(j).vectorOffset(2) + ((1:n)-1);
                     vectorIndices.vectorIx_RI   = vectorIndices.vectorIx_LI+apertureInfo.totalNumOfLeafPairs;
@@ -412,7 +423,7 @@ for i = 1:numel(updatedInfo.beam)
                 vectorIndices.tIx_last      = (apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2)+updatedInfo.propVMAT.beam(updatedInfo.propVMAT.beam(i).lastDAOIndex).DAOIndex;
                 vectorIndices.tIx_next      = (apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2)+updatedInfo.propVMAT.beam(updatedInfo.propVMAT.beam(i).nextDAOIndex).DAOIndex;
                 
-                if updatedInfo.propVMAT.continuousAperture
+                if updatedInfo.continuousAperture
                     vectorIndices.vectorIx_LF_last  = updatedInfo.beam(updatedInfo.propVMAT.beam(i).lastDAOIndex).shape(j).vectorOffset(2) + ((1:n)-1);
                     vectorIndices.vectorIx_LI_next  = updatedInfo.beam(updatedInfo.propVMAT.beam(i).nextDAOIndex).shape(j).vectorOffset(1) + ((1:n)-1);
                     vectorIndices.vectorIx_RF_last  = vectorIndices.vectorIx_LF_last+apertureInfo.totalNumOfLeafPairs;

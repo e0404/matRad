@@ -1,18 +1,18 @@
-function resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)
+function resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,pln,visBool)
 % multileaf collimator leaf sequencing algorithm 
 % for intensity modulated beams with multiple static segments according to 
 % Xia et al. (1998) Medical Physics
 % 
 % call
-%   resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,numOfLevels)
-%   resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)
+%   resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,pln)
+%   resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,pln,visBool)
 %
 % input
 %   resultGUI:          resultGUI struct to which the output data will be added, if
 %                       this field is empty resultGUI struct will be created
 %   stf:                matRad steering information struct
 %   dij:                matRad's dij matrix
-%   numOfLevels:        number of stratification levels
+%   pln:                pln structure
 %   visBool:            toggle on/off visualization (optional)
 %
 % output
@@ -40,6 +40,8 @@ if nargin < 5
     visBool = 0;
 end
 
+matRad_cfg = MatRad_Config.instance();
+
 mode = 'rl'; % sliding window (sw) or reducing level (rl)
 
 numOfBeams = numel(stf);
@@ -51,6 +53,10 @@ if visBool
     xpos = ceil((screensize(3)-sz(2))/2); % center the figure on the screen horizontally
     ypos = ceil((screensize(4)-sz(1))/2); % center the figure on the screen vertically
     seqFig = figure('position',[xpos,ypos,sz(2),sz(1)]);     
+end
+
+if ~isfield(pln,'propSeq') || ~isfield(pln.propSeq,'numLevels')
+    pln.propSeq.numLevels = matRad_cfg.defaults.propSeq.numLevels;
 end
 
 offset = 0;
@@ -95,7 +101,7 @@ for i = 1:numOfBeams
     
     % Stratification
     calFac = max(fluenceMx(:));
-    D_k = round(fluenceMx/calFac*numOfLevels); 
+    D_k = round(fluenceMx/calFac*pln.propSeq.numLevels); 
     
     % Save the stratification in the initial intensity matrix D_0.
     D_0 = D_k;
@@ -242,11 +248,11 @@ for i = 1:numOfBeams
     
     sequencing.beam(i).numOfShapes  = k;
     sequencing.beam(i).shapes       = shapes(:,:,1:k);
-    sequencing.beam(i).shapesWeight = shapesWeight(1:k)/numOfLevels*calFac;
+    sequencing.beam(i).shapesWeight = shapesWeight(1:k)/pln.propSeq.numLevels*calFac;
     sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
     sequencing.beam(i).fluence      = D_0;
     
-    sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = D_0(indInFluenceMx)/numOfLevels*calFac;
+    sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = D_0(indInFluenceMx)/pln.propSeq.numLevels*calFac;
 
     offset = offset + numOfRaysPerBeam;
 
@@ -256,7 +262,7 @@ resultGUI.w          = sequencing.w;
 resultGUI.wSequenced = sequencing.w;
 
 resultGUI.sequencing   = sequencing;
-resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
+resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf,pln);
 
 doseSequencedDoseGrid = reshape(dij.physicalDose{1} * sequencing.w,dij.doseGrid.dimensions);
 % interpolate to ct grid for visualiation & analysis
