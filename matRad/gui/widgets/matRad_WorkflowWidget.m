@@ -289,6 +289,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     % check if stf exists
                     if evalin('base','exist(''stf'')')
                         stf = evalin('base','stf');
+
                         % check if dij, stf and pln match
                        [plnStfMatch, msg] = matRad_comparePlnStf(pln,stf);
                         if plnStfMatch
@@ -307,6 +308,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                         if evalin('base','exist(''dij'')') && plnStfMatch && ~conf3D
                             dij = evalin('base','dij');
                             [dijStfMatch, msg] = matRad_compareDijStf(dij,stf);
+
                             if dijStfMatch
                                 set(handles.txtInfo,'String','ready for optimization');
                                 set(handles.btnOptimize ,'Enable','on');

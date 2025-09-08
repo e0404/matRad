@@ -11,8 +11,10 @@ List of all matRad developers that contributed code (alphabetical)
 * Louis Charton
 * Eric Christiansen
 * Remo Cristoforetti
+* Fabio D'Andrea
 * Marios Dallas
 * Edgardo Doerner
+* Louis Ermeneux
 * Simona Facchiano
 * Hubert Gabrys
 * Josefine Handrack
@@ -37,6 +39,7 @@ List of all matRad developers that contributed code (alphabetical)
 * Claus Sarnighausen
 * Carsten Scholz
 * Camilo Sevilla
+* Mateusz Sitarz
 * Alexander Stadler
 * Uwe Titt
 * Niklas Wahl

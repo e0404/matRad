@@ -1,6 +1,8 @@
 classdef matRad_StfGeneratorParticleIMPT < matRad_StfGeneratorParticleRayBixelAbstract
-% matRad_ParticleStfGenerator: Abstract Superclass for Steering information 
-%   generators. Steering information is used to guide the dose calculation
+% matRad_StfGeneratorParticleIMPT: IMPT Steering Geometry Setup (stf)
+%   Creates the stf data structure containing the steering information /
+%   field geometry for standard IMPT plans on a regular lateral spot grid
+%   with modulation in depth through energy layers
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -310,6 +312,9 @@ classdef matRad_StfGeneratorParticleIMPT < matRad_StfGeneratorParticleRayBixelAb
 
             % Check superclass availability
             [available,msg] = matRad_StfGeneratorParticleRayBixelAbstract.isAvailable(pln,machine);
+            
+            %Check additional base data
+            available = available && all(isfield(machine.data,{'peakPos','offset'}));
 
             if ~available
                 return;
