@@ -182,13 +182,17 @@ pln.propStf.gantryAngles = [0:50:359];
 pln.propStf.couchAngles  = zeros(1,numel(pln.propStf.gantryAngles));
 pln.propStf.numOfBeams   = numel(pln.propStf.gantryAngles);
 
-
-
+%Let's rerun the dose calculation and optimization
 stf                      = matRad_generateStf(ct,cst,pln);
 pln.propStf.isoCenter    = vertcat(stf.isoCenter);
 dij                      = matRad_calcDoseInfluence(ct,cst,stf,pln);
 resultGUI_coarse         = matRad_fluenceOptimization(dij,cst,pln);
 
+%We append the new result to the resultGUI variable (recognized by the GUI)
+%using the identifier coarse
+resultGUI = matRad_appendResultGUI(resultGUI,resultGUI_coarse,false,'coarse');
+%A GUI update ensures the current values are updated
+matRadGUI;
 
 %%  Visual Comparison of results
 % Let's compare the new recalculation against the optimization result.
@@ -198,9 +202,11 @@ plane      = 3;
 doseWindow = [0 max([resultGUI.physicalDose(:); resultGUI_coarse.physicalDose(:)])];
 
 figure,title('original plan - fine beam spacing')
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
+matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', resultGUI.physicalDose, 'plane', plane, 'slice', slice, 'alpha', 0.75, 'contourColorMap', colorcube, 'doseWindow', doseWindow);
+%matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.physicalDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
 figure,title('modified plan - coarse beam spacing')
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_coarse.physicalDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
+matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', resultGUI_coarse.physicalDose, 'plane', plane, 'slice', slice, 'alpha', 0.75, 'contourColorMap', colorcube, 'doseWindow', doseWindow);
+%matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_coarse.physicalDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
 
 %% 
 % At this point we would like to see the absolute difference of the first 
@@ -208,7 +214,8 @@ matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_coarse.physicalDose,plane,slice,[
 % beam spacing)
 absDiffCube = resultGUI.physicalDose-resultGUI_coarse.physicalDose;
 figure,title( 'fine beam spacing plan - coarse beam spacing plan')
-matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
+matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', absDiffCube, 'plane', plane, 'slice', slice, 'contourColorMap', colorcube);
+%matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
 
 %% Obtain dose statistics
 % Two more columns will be added to the cst structure depicting the DVH and
@@ -222,7 +229,7 @@ resultGUI_coarse = matRad_planAnalysis(resultGUI_coarse,ct,cst,stf,pln);
 % both plans
 ixOAR = 2;
 disp(resultGUI.qi(ixOAR).D_95);
-disp(resultGUI.qi_coarse(ixOAR).D_95);
+disp(resultGUI_coarse.qi(ixOAR).D_95);
 
 
 %% 

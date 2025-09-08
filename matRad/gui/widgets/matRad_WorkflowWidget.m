@@ -278,7 +278,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 set(handles.txtInfo,'String','loaded and ready');
                 
                 if evalin('base','exist(''pln'')')
-
+                    pln = evalin('base','pln');
                     
                     % ct cst and pln available; ready for dose calculation
                     set(handles.txtInfo,'String','ready for dose calculation');
@@ -287,9 +287,11 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     set(handles.exportDicomButton,'Enable','on');
 
                     % check if stf exists
-                    if evalin('base','exist(''stf'')') 
+                    if evalin('base','exist(''stf'')')
+                        stf = evalin('base','stf');
+
                         % check if dij, stf and pln match
-                       [plnStfMatch, msg] = matRad_comparePlnStf(evalin('base','pln'),evalin('base','stf'));
+                       [plnStfMatch, msg] = matRad_comparePlnStf(pln,stf);
                         if plnStfMatch
                             % plan is ready for optimization
                             set(handles.txtInfo,'String','ready for dose calculation');
@@ -301,8 +303,12 @@ classdef matRad_WorkflowWidget < matRad_Widget
                         end
 
                         % check if dij exist
-                        if evalin('base','exist(''dij'')') && plnStfMatch && ~evalin('base','pln.propOpt.conf3D')
-                            [dijStfMatch, msg] = matRad_compareDijStf(evalin('base','dij'),evalin('base','stf'));
+                        conf3D = isfield(pln,'propOpt') && isfield(pln.propOpt,'conf3D') && pln.propOpt.conf3D;
+
+                        if evalin('base','exist(''dij'')') && plnStfMatch && ~conf3D
+                            dij = evalin('base','dij');
+                            [dijStfMatch, msg] = matRad_compareDijStf(dij,stf);
+
                             if dijStfMatch
                                 set(handles.txtInfo,'String','ready for optimization');
                                 set(handles.btnOptimize ,'Enable','on');
@@ -416,7 +422,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 dij = matRad_calcDoseInfluence(evalin('base','ct'),evalin('base','cst'),stf,pln);
                 
                 % prepare dij for 3d conformal
-                if isfield(pln.propOpt,'conf3D') && pln.propOpt.conf3D
+                if isfield(pln,'propOpt') && isfield(pln.propOpt,'conf3D') && pln.propOpt.conf3D
                    dij = matRad_collapseDij(dij);
                 end
                 % assign results to base worksapce

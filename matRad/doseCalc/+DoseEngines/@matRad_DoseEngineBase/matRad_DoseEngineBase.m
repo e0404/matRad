@@ -290,17 +290,51 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             if ~isa(this.multScen,'matRad_ScenarioModel')
                 this.multScen = matRad_ScenarioModel.create(this.multScen,struct('numOfCtScen',ct.numOfCtScen));
             end
-            
+           
             for i = 1:this.multScen.totNumScen
                 scenSubIx = this.multScen.linearMask(i,:);
                 resultGUItmp = matRad_calcCubes(ones(dij.numOfBeams,1),dij,this.multScen.sub2scenIx(scenSubIx(1),scenSubIx(2),scenSubIx(3)));
                 if i == 1
                     resultGUI = resultGUItmp;
                 end
-                resultGUI = matRad_appendResultGUI(resultGUI,resultGUItmp,false,sprintf('scen%d',i));                
+                if isvector(this.multScen.scenMask) &&  this.multScen.numOfCtScen>1%ctScen
+                    resultGUI.phaseDose{i} = resultGUItmp.physicalDose;
+                    for beamIx = 1:dij.numOfBeams
+                        resultGUI.(['phaseDose_beam', num2str(beamIx)]){i} = resultGUItmp.(['physicalDose_beam', num2str(beamIx)]);
+                    end
+                    if isfield(resultGUItmp, 'alphaDoseCube') && isfield(resultGUItmp, 'SqrtBetaDoseCube')
+                        resultGUI.phaseAlphaDose{i}    = resultGUItmp.alpha .* resultGUItmp.physicalDose;
+                        resultGUI.phaseSqrtBetaDose{i} = sqrt(resultGUItmp.beta) .* resultGUItmp.physicalDose;
+                        resultGUI.phaseRBExDose{i} = resultGUItmp.RBExDose;
+                        for beamIx = 1:dij.numOfBeams
+                            resultGUI.(['phaseAlphaDose_beam', num2str(beamIx)]){i} = resultGUItmp.(['alpha_beam', num2str(beamIx)]).*resultGUItmp.(['physicalDose_beam', num2str(beamIx)]);
+                            resultGUI.(['phaseSqrtBetaDose_beam', num2str(beamIx)]){i} = sqrt(resultGUItmp.(['beta_beam', num2str(beamIx)])).*resultGUItmp.(['physicalDose_beam', num2str(beamIx)]);
+                            resultGUI.(['phaseRBExDose_beam', num2str(beamIx)]){i} = resultGUItmp.(['RBExDose_beam', num2str(beamIx)]);
+                        end
+                    elseif isfield(resultGUItmp,'RBExDose')
+                        resultGUI.phaseRBExDose{i} = resultGUItmp.RBExDose;
+                        for beamIx = 1:dij.numOfBeams
+                          resultGUI.(['phaseRBExDose_beam', num2str(beamIx)]){i} = resultGUItmp.(['RBExDose_beam', num2str(beamIx)]);
+                        end
+                    end
+                else
+                    if this.multScen.totNumScen > 1
+                        resultGUI = matRad_appendResultGUI(resultGUI,resultGUItmp,false,sprintf('scen%d',i));
+                    end
+                end
+            end
+            
+            if isfield(dij,'w')
+                resultGUI.w  = dij.w;
+            else
+                resultGUI.w = w;
             end
 
-            resultGUI.w  = w; 
+            if isfield(dij,'MU')
+                resultGUI.MU = dij.MU;
+            end
+
+            resultGUI = orderfields(resultGUI);
         end
 
         function dij = calcDoseInfluence(this,ct,cst,stf)

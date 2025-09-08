@@ -201,6 +201,8 @@ classdef MatRad_Config < handle
             obj.defaults.machine.carbon     = 'Generic';
             obj.defaults.machine.brachy     = 'HDR';
             obj.defaults.machine.fallback   = 'Generic';
+            obj.defaults.machine.VHEE       = 'Generic';
+
 
             %Default Bio Model
             obj.defaults.bioModel.photons   = 'none';
@@ -209,9 +211,10 @@ classdef MatRad_Config < handle
             obj.defaults.bioModel.carbon    = 'LEM';
             obj.defaults.bioModel.brachy    = 'none';
             obj.defaults.bioModel.fallback  = 'none';
-            
+            obj.defaults.bioModel.VHEE      = 'none';
+
             %Default Steering/Geometry Properties
-            obj.defaults.propStf.generator = {'PhotonIMRT','ParticleIMPT','SimpleBrachy'};
+            obj.defaults.propStf.generator = {'PhotonIMRT','ParticleIMPT','SimpleBrachy','VHEE'};
             obj.defaults.propStf.longitudinalSpotSpacing = 2;
             obj.defaults.propStf.addMargin = true; %expand target for beamlet finding
             obj.defaults.propStf.bixelWidth = 5;

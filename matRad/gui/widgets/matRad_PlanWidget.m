@@ -33,7 +33,7 @@ classdef matRad_PlanWidget < matRad_Widget
 
     properties (Constant)
 
-        modalities = {'photons','protons','carbon', 'helium','brachy'};
+        modalities = {'photons','protons','carbon', 'helium','brachy', 'VHEE'};
         availableProjections = {  'physicalDose'; 'RBExDose'; 'effect'; 'BED'; }
 
     end
@@ -970,7 +970,9 @@ classdef matRad_PlanWidget < matRad_Widget
                 pln.propStf.gantryAngles    = this.parseStringAsNum(get(handles.editGantryAngle,'String'),true); % [°]
                 pln.propStf.couchAngles     = this.parseStringAsNum(get(handles.editCouchAngle,'String'),true); % [°]
 
-                if ~isempty(hObject) && (strcmp(hObject.Tag,'editGantryAngle')||strcmp(hObject.Tag,'editCouchAngle'))
+                objectTag = get(hObject,'Tag'); % Returns empty if hObject is empty, no check required
+
+                if ~isempty(objectTag) && (strcmp(objectTag,'editGantryAngle')||strcmp(objectTag,'editCouchAngle'))
                     if numel(this.parseStringAsNum(get(handles.editCouchAngle,'String'),true))<numel(this.parseStringAsNum(get(handles.editGantryAngle,'String'),true)) % Feature: autofill couch angles to single plane by entering a single value
                         couchGantryDifference = numel(this.parseStringAsNum(get(handles.editGantryAngle,'String'),true))-numel(this.parseStringAsNum(get(handles.editCouchAngle,'String'),true));
                         pln.propStf.couchAngles     = [this.parseStringAsNum(get(handles.editCouchAngle,'String'),true) zeros(1,couchGantryDifference)];
@@ -982,8 +984,12 @@ classdef matRad_PlanWidget < matRad_Widget
                 this.plotPlan = true;
             end
 
-            pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
-            pln.propStf.isoCenter       = this.parseStringAsNum(get(handles.editIsoCenter,'String'),true);
+            pln.propStf.numOfBeams = numel(pln.propStf.gantryAngles);
+
+            isoStr = get(handles.editIsoCenter,'String');
+            if ~isequal(isoStr,'multiple isoCenter')
+                pln.propStf.isoCenter = this.parseStringAsNum(isoStr,true);
+            end
 
             % switch machines depending on radmode selection
             selectedMachine                     = get(handles.popUpMachine,'Value');
@@ -1250,6 +1256,11 @@ classdef matRad_PlanWidget < matRad_Widget
                 set(handles.popMenuQuantityOpt,'Value',ix);
             end
 
+            if any(strcmp(newRadiationMode,{'photons','VHEE','brachy'}))
+                ix = find(strcmp(optimizationQuantityPopUpContents,'physicalDose'));
+                set(handles.popMenuQuantityOpt,'Value',ix);
+            end
+
             pln.radiationMode = newRadiationMode;
             if isfield(defaultMachines,newRadiationMode)
                 pln.machine = defaultMachines.(newRadiationMode);
@@ -1294,7 +1305,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 if  ismember('resultGUI',AllVarNames)
                     resultGUI = evalin('base','resultGUI');
                     radMode = allRadiationModes(get(hObject,'Value'));
-                    if any(strcmp(radMode,{'photons','brachy'}))
+                    if any(strcmp(radMode,{'photons','brachy','VHEE'}))
                         if isfield(resultGUI,'alpha');    resultGUI = rmfield(resultGUI,'alpha');   end
                         if isfield(resultGUI,'beta');     resultGUI = rmfield(resultGUI,'beta');    end
                         if isfield(resultGUI,'RBExDose'); resultGUI = rmfield(resultGUI,'RBExDose');end
@@ -1462,6 +1473,7 @@ classdef matRad_PlanWidget < matRad_Widget
 
             if evalin('base','exist(''cst'')') && evalin('base','exist(''pln'')')
                 try
+                    matRad_cfg = MatRad_Config.instance();
                     %parse variables from base-workspace
                     cst = evalin('base','cst');
                     pln = evalin('base','pln');
@@ -1470,9 +1482,27 @@ classdef matRad_PlanWidget < matRad_Widget
                     fileName = [pln.radiationMode '_' pln.machine];
                     load(fileName);
 
-                    % check for available cell types characterized by alphaX and betaX
-                    for i = 1:size(machine.data(1).alphaX,2)
-                        CellType{i} = [num2str(machine.data(1).alphaX(i)) ' ' num2str(machine.data(1).betaX(i))];
+                    %biological model
+                    if isfield(matRad_cfg.defaults.bioModel,pln.radiationMode)
+                        defaultModel = matRad_cfg.defaults.bioModel.(pln.radiationMode);
+                    else
+                        defaultModel = matRad_cfg.defaults.bioModel.fallback;
+                    end
+                    if ~isfield(pln,'bioModel')
+                        pln.bioModel = defaultModel;
+                    end
+
+                    bioModel = matRad_BiologicalModel.validate(pln.bioModel,pln.radiationMode);
+
+                    [availableAlphaX, availableBetaX] = bioModel.getAvailableTissueParameters(pln);
+
+                    if ~isempty(availableAlphaX) && ~isempty(availableBetaX)
+                        for i = 1:size(availableAlphaX,2)
+                            CellType{i} = [num2str(availableAlphaX(i)) ' ' num2str(availableBetaX(i))];
+                            columnformat = {'char',CellType,'numeric'};
+                        end
+                    else
+                        columnformat = {'char','numeric','numeric'};
                     end
 
                     %fill table data array
@@ -1501,16 +1531,42 @@ classdef matRad_PlanWidget < matRad_Widget
                         %set focus
                         figure(figTissue);
                     else
-                        figTissue = figure('Name','Set Tissue Parameters','Color',[.5 .5 .5],'NumberTitle','off','OuterPosition',...
-                            [ceil(ScreenSize(3)/2) 100 Width Height]);
+                        figTissue = figure('Name','Set Tissue Parameters', ...
+                            'NumberTitle','off', ...
+                            'OuterPosition',[ceil(ScreenSize(3)/2) 100 Width Height],...
+                            'Color',matRad_cfg.gui.backgroundColor);                         
                     end
 
                     % define the tissue parameter table
                     cNames = {'VOI','alphaX betaX','alpha beta ratio'};
-                    columnformat = {'char',CellType,'numeric'};
+                    % columnformat = {'char',CellType,'numeric'};
+                    
+                    %design table colors
+                    colorMatrix = repmat(matRad_cfg.gui.elementColor,size(data,1),1);
+                    ix2 = 2:2:size(data,1);
+                    if ~isempty(ix2)    
+                        shadeColor = rgb2hsv(matRad_cfg.gui.elementColor);
+                        if shadeColor(3) < 0.5
+                            shadeColor(3) = shadeColor(3)*1.5+0.1;
+                        else
+                            shadeColor(3) = shadeColor(3)*0.5-0.1;
+                        end
+                
+                        colorMatrix(ix2,:) = repmat(hsv2rgb(shadeColor),numel(ix2),1);
+                    end
+                               
+                
+                    % Create the uitable
+                    tissueTable = uitable('Parent', figTissue, ...
+                        'Data', data, ...
+                        'ColumnEditable',[false true false],...
+                        'ColumnName',cNames, ...
+                        'ColumnFormat',columnformat, ...
+                        'Position',[50 150 10 10], ...
+                        'ForegroundColor',matRad_cfg.gui.textColor,...
+                        'BackgroundColor',colorMatrix,...
+                        'RowStriping','on'); 
 
-                    tissueTable = uitable('Parent', figTissue,'Data', data,'ColumnEditable',[false true false],...
-                        'ColumnName',cNames, 'ColumnFormat',columnformat,'Position',[50 150 10 10]);
                     set(tissueTable,'CellEditCallback',@(hObject,eventdata) tissueTable_CellEditCallback(this,hObject,eventdata));
                     % set width and height
                     currTablePos = get(tissueTable,'Position');
@@ -1519,14 +1575,27 @@ classdef matRad_PlanWidget < matRad_Widget
                     currTablePos(4) = currTableExt(4);
                     set(tissueTable,'Position',currTablePos);
 
-                    % define two buttons with callbacks
-                    uicontrol('Parent', figTissue,'Style', 'pushbutton', 'String', 'Save&Close',...
-                        'Position', [Width-(0.25*Width) 0.1 * Height 70 30],...
-                        'Callback', @(hpb,eventdata)SaveTissueParameters(this,hpb,eventdata));
+                    themeParams = {'BackgroundColor', matRad_cfg.gui.backgroundColor,...
+                            'ForegroundColor',matRad_cfg.gui.textColor,...
+                            'FontSize',matRad_cfg.gui.fontSize,...
+                            'FontName',matRad_cfg.gui.fontName,...
+                            'FontWeight',matRad_cfg.gui.fontWeight};   
 
-                    uicontrol('Parent', figTissue,'Style', 'pushbutton', 'String', 'Cancel&Close',...
+                    % define two buttons with callbacks
+                    uicontrol('Parent', figTissue, ...
+                        'Style', 'pushbutton', ...
+                        'String', 'Save&Close',...
+                        'Position', [Width-(0.25*Width) 0.1 * Height 70 30],...
+                        'Callback', @(hpb,eventdata)SaveTissueParameters(this,hpb,eventdata),...
+                        themeParams{:});
+
+                    uicontrol('Parent', ...
+                        figTissue,'Style', ...
+                        'pushbutton', ...
+                        'String', 'Cancel&Close',...
                         'Position', [Width-(0.5*Width) 0.1 * Height 80 30],...
-                        'Callback', 'close');
+                        'Callback', 'close', ...
+                        themeParams{:});
                 catch ME
                     this.showWarning('Could not set Tissue parameter update! Reason: %s\n',ME.message)
                 end

@@ -43,7 +43,7 @@ function [ct, cst] = matRad_addMovement(ct, cst, motionPeriod, numOfCtScen, amp,
 
 expectedDVF = {'pull', 'push'};
 
-p = inputParser; 
+p = inputParser;
 addParameter(p,'dvfType','pull', @(x) any(validatestring(x,expectedDVF)))
 addParameter(p,'visBool',false, @islogical);
 parse(p,varargin{:});
@@ -64,64 +64,64 @@ env = matRad_getEnvironment();
 
 % generate scenarios
 for i = 1:numOfCtScen
-    
+
     if isfield(ct,'hlut')
         padValue = min(ct.hlut(:,2));
     else
         padValue = -1024;
     end
-    
+
     ct.dvf{i} = zeros([ct.cubeDim, 3]);
-    
+
     dVec = arrayfun(@(A)  A*sin((i-1)*pi / numOfCtScen)^2, amp);
-    
+
     ct.dvf{i}(:,:,:,1) = dVec(1); % deformation along x direction (i.e. 2nd coordinate in dose/ct)
     ct.dvf{i}(:,:,:,2) = dVec(2);
     ct.dvf{i}(:,:,:,3) = dVec(3);
-    
+
     matRad_cfg.dispInfo('Deforming ct phase %d with [dx,dy,dz] = [%f,%f,%f] voxels\n',i,dVec(1),dVec(2),dVec(3));
-    
+
     % warp ct
     switch env
         case 'MATLAB'
             ct.cubeHU{i} = imwarp(ct.cubeHU{1}, ct.dvf{i},'FillValues',padValue);
-            
+
             if isfield(ct,'cube')
                 ct.cube{i}   = imwarp(ct.cube{1},   ct.dvf{i},'FillValues',0);
             end
-            
+
             % warp cst
             for j = 1:size(cst,1)
                 tmp = zeros(ct.cubeDim);
                 tmp(cst{j,4}{1}) = 1;
                 tmpWarp     = imwarp(tmp, ct.dvf{i});
-                
+
                 cst{j,4}{i} = find(tmpWarp > .5);
             end
         case 'OCTAVE'
             ct.cubeHU{i} = displaceOctave(ct.cubeHU{1}, ct.dvf{i},'linear',padValue);
-            
+
             if isfield(ct,'cube')
                 ct.cube{i}   = displaceOctave(ct.cube{1},ct.dvf{i},'linear',0);
             end
-            
+
             % warp cst
             for j = 1:size(cst,1)
                 tmp = zeros(ct.cubeDim);
                 tmp(cst{j,4}{1}) = 1;
                 tmpWarp     = displaceOctave(tmp, ct.dvf{i},'linear',0);
-                
+
                 cst{j,4}{i} = find(tmpWarp > .5);
             end
-        otherwise   
+        otherwise
     end
-    
+
     % convert dvfs to [mm]
     ct.dvf{i}(:,:,:,1) = ct.dvf{i}(:,:,:,1).* ct.resolution.x;
     ct.dvf{i}(:,:,:,2) = ct.dvf{i}(:,:,:,2).*ct.resolution.y;
     ct.dvf{i}(:,:,:,3) = ct.dvf{i}(:,:,:,3).* ct.resolution.z;
-    
-    ct.dvf{i} = permute(ct.dvf{i}, [4,1,2,3]);    
+
+    ct.dvf{i} = permute(ct.dvf{i}, [4,1,2,3]);
 end
 
 
@@ -139,8 +139,8 @@ end
 end
 
 function newCube = displaceOctave(cube,vectorfield,interpMethod,fillValue)
-x = 1:size(cube,1);
-y = 1:size(cube,2);
+x = 1:size(cube,2);
+y = 1:size(cube,1);
 z = 1:size(cube,3);
 
 [X,Y,Z] = meshgrid(x,y,z);

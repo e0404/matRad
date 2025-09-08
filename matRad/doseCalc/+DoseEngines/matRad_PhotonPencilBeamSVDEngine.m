@@ -306,6 +306,10 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             
             bixel = struct();
 
+            if this.calcDoseDirect
+                bixel.weight = currRay.weight;
+            end
+
             if isfield(this.tmpMatrixContainers,'physicalDose')            
                 bixel.physicalDose = this.calcSingleBixel(currRay.SAD,...
                     this.machine.data.m,...

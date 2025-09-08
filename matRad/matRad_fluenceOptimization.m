@@ -313,6 +313,10 @@ else
     matRad_cfg.dispInfo('chosen uniform weight of %f!\n',bixelWeight);
 end
 
+if any(~isfinite(wInit))
+    matRad_cfg.dispWarning('Invalid number in fluence weight initialization. Something might be off with your geometry. Setting invalid values to 1.');
+    wInit(~isfinite(wInit)) = 1;
+end
 
 %% calculate probabilistic quantities for probabilistic optimization if at least
 % one robust objective is defined

@@ -54,15 +54,17 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         
         defaultHUtable        = 'matRad_default_FredMaterialConverter';
         AvailableSourceModels = {'gaussian', 'emittance', 'sigmaSqrModel'};
+        defaultDijFormatVersion = '20';
       
         calcBioDose;
         currentVersion;
-        availableVersions = {'3.70.0'}; % Interface requires latest FRED version  
+        availableVersions = {'3.70.0'}; % Or higher.
         radiationMode;
 
     end
 
     properties
+        dijFormatVersion;
         externalCalculation;
         useGPU;
         calcLET;
@@ -100,6 +102,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         inputFolder;
         regionsFolder;
         planFolder;
+        dijReaderHandle;
     end
     
     methods
@@ -316,6 +319,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             this.outputMCvariance       = false;
             this.constantRBE            = NaN;
             this.ignoreOutsideDensities = false;
+            this.dijFormatVersion       = this.defaultDijFormatVersion;
 
         end
 
@@ -464,15 +468,24 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             matRad_cfg = MatRad_Config.instance();
 
             try
-                [status, cmdOut] = system([DoseEngines.matRad_ParticleFREDEngine.cmdCall,' -vn']);
+                [status, cmdOut] = system([DoseEngines.matRad_ParticleFREDEngine.cmdCall, ' -vn']);
 
                 if status == 0
-                    version = cmdOut(1:end-1);
+                    % Extract the version number using a regular expression
+                    versionMatch = regexp(cmdOut, '\d+\.\d+\.\d+', 'match', 'once');
+                    if ~isempty(versionMatch)
+                        version = versionMatch;
+                    else
+                        matRad_cfg.dispError('Unable to parse FRED version from output. Please check FRED installation.');
+                        version = [];
+                    end
                 else
-                    matRad_cfg.dispError('Something wrong occured in checking FRED installation. Please check correct FRED installation');
+                    matRad_cfg.dispError('Error occurred while checking FRED installation. Please check FRED installation.');
+                    version = [];
                 end
             catch
                 matRad_cfg.dispWarning('Something wrong occured in checking FRED installation. Please check correct FRED installation');
+                version = [];
             end
         end
 
@@ -517,14 +530,70 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     numVox  = fread(f,1,"int32");
                     
                     bixelCounter = bixelCounter +1;
-                    % FRED adds 1000000 when new field is added
-                    %bixNum = bixNum - (10^6*(i-1));
-    
-                    colIndices(end+1:end+numVox) = bixelCounter; %bixNum + 1;
+   
+                    colIndices(end+1:end+numVox) = bixelCounter;
                     currVoxelIndices = fread(f,numVox,"uint32") + 1;
                     tmpValues = fread(f,numVox*nComponents,"float32");
-                    valuesNom = tmpValues(1:nComponents:end);%tmpValues(nComponents:nComponents:end);
-                    % values(end+1:end+numVox) = tmpValuess(1:nComponents:end);%tmpValues(nComponents:nComponents:end);
+                    valuesNom = tmpValues(1:nComponents:end);
+                   
+                    if nComponents == 2
+                        valuesDen = tmpValues(nComponents:nComponents:end);
+                        values(end+1:end+numVox) = valuesNom./valuesDen;
+                    else
+                        values(end+1:end+numVox) = valuesNom;
+                    end
+    
+                    % x and y components have been permuted in CT
+                    [indY, indX, indZ] = ind2sub(dims, currVoxelIndices);
+    
+                    voxelIndices(end+1:end+numVox) = sub2ind(dims([2,1,3]), indX, indY, indZ);
+                    matRad_cfg.dispInfo("\tRead beamlet %d, %d voxels...\n",bixNum,numVox);
+                end
+                dijMatrix = sparse(voxelIndices,colIndices,values,prod(dims),numberOfBixels);
+                        
+                fclose(f);
+            catch
+                fclose(f);
+                matRad_cfg.dispError('unable to load file: %s',fName);
+            end
+        end
+
+        function dijMatrix = readSparseDijBin_v21(fName)
+            
+            matRad_cfg = MatRad_Config.instance();
+            
+            f = fopen(fName,'r','l');
+
+            try
+                %Header
+                fileFormatVerison = fread(f,1,"int32");
+                dims = fread(f,3,"int32");
+                res = fread(f,3,"float32");
+                offset = fread(f,3,"float32");
+                orientation = fread(f,9,"float32");
+                nComponents = fread(f,1,"int32");
+                numberOfBixels = fread(f,1,"int32");
+            
+                values = [];
+                valuesDen = [];
+                voxelIndices = [];
+                colIndices = [];
+                valuesNom = [];
+                
+                matRad_cfg.dispInfo("Reading %d number of beamlets in %d voxels (%dx%dx%d)\n",numberOfBixels,prod(dims),dims(1),dims(2),dims(3));
+            
+                bixelCounter = 0;
+                for i = 1:numberOfBixels
+                    %Read Beamlet
+                    bixNum = fread(f,1,"uint32");
+                    numVox  = fread(f,1,"int32");
+                    
+                    bixelCounter = bixelCounter +1;
+    
+                    colIndices(end+1:end+numVox) = bixelCounter;
+                    currVoxelIndices = fread(f,numVox,"uint32") + 1;
+                    tmpValues = fread(f,numVox*nComponents,"float32");
+                    valuesNom = tmpValues(1:nComponents:end);
     
                     if nComponents == 2
                         valuesDen = tmpValues(nComponents:nComponents:end);
@@ -546,12 +615,78 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 fclose(f);
                 matRad_cfg.dispError('unable to load file: %s',fName);
             end
-
-            
-
         end
 
-        [doseCubeV, letdCubeV, fileName] = readSimulationOutput(runFolder,calcDoseDirect, calcLET);
+        function dijMatrix = readSparseDijBin_v31(fName)
+
+            matRad_cfg = MatRad_Config.instance();
+
+            f = fopen(fName,'r','l');
+
+            try
+                fileFormatVerison = fread(f,1,"int32");
+                dims = fread(f,3,"int32");
+                res = fread(f,3,"float32");
+                offset = fread(f,3,"float32");
+                orientation = fread(f,9,"float32");
+                nComponents = fread(f,1,"uint32");
+                numberOfBixels = fread(f,1,"uint32");
+            
+                values = [];
+                valuesDen = [];
+                voxelIndices = [];
+                colIndices = [];
+                valuesNom = [];
+                
+                matRad_cfg.dispInfo("Reading %d number of beamlets in %d voxels (%dx%dx%d)\n",numberOfBixels,prod(dims),dims(1),dims(2),dims(3));
+
+                allBixelMeta = fread(f, 3*numberOfBixels, "uint32");
+                allBixelMeta = reshape(allBixelMeta, 3,numberOfBixels)'; % (#bixels, PBidx, FID, PBID)
+                
+                % if nComponents>1
+                %     matRad_cfg.dispWarning('!! Only last component will be read!!')
+                % end
+                % Components header
+                for i = 1:nComponents
+                    componentDataSize(i) = fread(f,1,"uint32");
+                end
+
+               % Data
+               for compIdx=1:nComponents
+                   % PBidx and voxelIndices should be always the same for
+                   % each component?
+                   PBidxs           = fread(f, componentDataSize(compIdx), "uint32")+1;
+                   voxelIndices     = fread(f, componentDataSize(compIdx), "uint32")+1;
+                   tmpValues{compIdx}  = fread(f, componentDataSize(compIdx), "float32");
+
+               end
+               
+               % For now we only have Dose and LET scorers, if nComponents
+               % == 2, then it's LET
+
+               if nComponents>1
+                   values = tmpValues{1}./tmpValues{2};
+               else
+                   values = tmpValues{1};
+               end
+
+               % x and y components have been permuted in CT
+               [indY, indX, indZ] = ind2sub(dims, voxelIndices);
+
+               voxelIndices = sub2ind(dims([2,1,3]), indX, indY, indZ); % + (nComponents-1)*prod(dims);
+               % This will probably not work for multiple components
+               dijMatrix = sparse(voxelIndices,PBidxs,values,prod(dims), numberOfBixels);
+
+               fclose(f);
+            
+            catch
+                fclose(f);
+                matRad_cfg.dispError('unable to load file: %s',fName);
+            
+            end
+        end
+
+        [doseCubeV, letdCubeV, fileName] = readSimulationOutput(runFolder,calcDoseDirect, varargin);
 
     end
 
@@ -595,6 +730,25 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             
             matRad_cfg.dispWarning('Selected radiation modality: %s with primary mass: %2.3f', radiationMode, this.primaryMass);
         end
+
+        function isHigher = isVersionHigher(this,version)
+            isHigher = false;
+            
+            % This function directly looks at FRED installation, not at
+            % the current FRED version stored in the class property.
+            fredVersion = this.getVersion();
+
+            if ~isempty(fredVersion)
+                % Decompose the current version for comparison
+                v1 = sscanf(fredVersion, '%d.%d.%d')';
+                v2 = sscanf(version, '%d.%d.%d')';
+            
+                if (v1(1) >= v2(1)) && (v1(2) >= v2(2)) && (v1(3) > v2(3))
+                    isHigher = true;
+                end
+            end            
+
+        end
      
      end
 
@@ -624,6 +778,53 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 version = this.currentVersion;
              end
 
+         end
+
+         function set.dijFormatVersion(this,value)
+
+             matRad_cfg = MatRad_Config.instance();
+
+             if ~this.isVersionHigher('3.70.0')
+                % FRED version < 3.70.0 does not allow dij version
+                % selection and only works with ifFormatVersion < 21
+   
+                this.dijFormatVersion = this.defaultDijFormatVersion;
+             
+                if ~strcmp(value, this.defaultDijFormatVersion)
+                    matRad_cfg.dispWarning(sprintf('ijFormat: %s not available for FRED version < 3.70.0', value));
+                end
+             
+             else
+                 %if this.useGPU
+                     if strcmp(value, '20')
+                         this.dijFormatVersion = '21';
+                     else
+                         this.dijFormatVersion = value;
+                     end
+                 %else
+                 %    this.dijFormatVersion = '20';
+                 %end
+             end
+         end
+
+         function readerHandle = get.dijReaderHandle(this)
+
+             matRad_cfg = MatRad_Config.instance();
+
+             switch this.dijFormatVersion
+
+                 case '20'
+                    readerHandle = @(lFile) DoseEngines.matRad_ParticleFREDEngine.readSparseDijBin(lFile);                     
+                 case '21'
+                    readerHandle = @(lFile) DoseEngines.matRad_ParticleFREDEngine.readSparseDijBin_v21(lFile);
+                 case '31'
+                    readerHandle = @(lFile) DoseEngines.matRad_ParticleFREDEngine.readSparseDijBin_v31(lFile);
+                 otherwise
+                     matRad_cfg.dispWarning(sprintf('Unable to read dij format version: %s, using default: %s', this.dijFormatVersion, this.defaultDijFormatVersion));
+                     readerHandle = @(lFile) DoseEngines.matRad_ParticleFREDEngine.readSparseDijBin(lFile);
+             end
+
+                
          end
 
          function set.radiationMode(this,value)

@@ -128,6 +128,13 @@ classdef (Abstract) matRad_BiologicalModel < handle
             folders = [folders matRad_cfg.userfolders];
 
             persistent metaBioModels lastOptionalPaths
+            
+            %First we do a sanity check if persistently stored metaclasses are valid
+            if ~matRad_cfg.isOctave && ~isempty(metaBioModels) && ~all(cellfun(@isvalid,metaBioModels))
+                matRad_cfg.dispWarning('Found invalid BioModels, updating model cache.');
+                metaBioModels = [];
+            end
+
             if isempty(metaBioModels) || (~isempty(lastOptionalPaths) && ~isequal(lastOptionalPaths, folders))
                 lastOptionalPaths = folders;
                 metaBioModels = matRad_findSubclasses(meta.class.fromName(mfilename('class')),'folders',folders,'includeSubfolders',true);
@@ -242,6 +249,13 @@ classdef (Abstract) matRad_BiologicalModel < handle
                 matRad_cfg = MatRad_Config.instance();
                 matRad_cfg.dispError('Biological Model not valid: %s',msg);
             end
+        end
+
+        function [alphaX, betaX] = getAvailableTissueParameters(pln)            
+            % empty values in standard implementation, needs to be
+            % overwritten in subclasses
+            alphaX = [];
+            betaX  = [];
         end
 
         
