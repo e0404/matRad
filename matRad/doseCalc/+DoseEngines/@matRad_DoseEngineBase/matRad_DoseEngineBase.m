@@ -318,13 +318,23 @@ classdef (Abstract) matRad_DoseEngineBase < handle
                         end
                     end
                 else
-                    resultGUI = matRad_appendResultGUI(resultGUI,resultGUItmp,false,sprintf('scen%d',i));
+                    if this.multScen.totNumScen > 1
+                        resultGUI = matRad_appendResultGUI(resultGUI,resultGUItmp,false,sprintf('scen%d',i));
+                    end
                 end
             end
+            
+            if isfield(dij,'w')
+                resultGUI.w  = dij.w;
+            else
+                resultGUI.w = w;
+            end
 
+            if isfield(dij,'MU')
+                resultGUI.MU = dij.MU;
+            end
 
-            resultGUI.w  = w; 
-
+            resultGUI = orderfields(resultGUI);
         end
 
         function dij = calcDoseInfluence(this,ct,cst,stf)
