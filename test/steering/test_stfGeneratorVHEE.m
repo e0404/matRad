@@ -97,5 +97,4 @@ function test_suite = test_stfGeneratorVHEE
             energiesRef = [stf(i).ray.energy];
             assertEqual(unique(energiesTest),unique(energiesRef));
             
-            %assertTrue(isscalar(stf2(i).ray.energy));
         end
