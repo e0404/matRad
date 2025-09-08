@@ -1,10 +1,12 @@
 classdef matRad_StfGeneratorParticleVHEE < matRad_StfGeneratorParticleRayBixelAbstract
-% matRad_ParticleStfGenerator: Abstract Superclass for Steering information 
-%   generators. Steering information is used to guide the dose calculation
+% matRad_StfGeneratorParticleVHEE: VHEE Steering Geometry Setup (stf)
+%   Creates the stf data structure containing the steering information /
+%   field geometry for VHEE plans on a regular lateral spot grid by using a
+%   single, manually defined energy setting.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2024 the matRad development team.
+% Copyright 2025 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this

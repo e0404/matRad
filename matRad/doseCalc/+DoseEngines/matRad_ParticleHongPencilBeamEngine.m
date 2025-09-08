@@ -151,6 +151,10 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
                 checkData = all(isfield(machine.data,{'energy','depths','Z','weightMulti','sigmaMulti','offset','initFocus'}));
             elseif strcmp(dataType,'singleGaussXY')
                 checkData = all(isfield(machine.data,{'energy','depths','Z','offset','initFocus','sigmaXY'}));
+            else
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispWarning('Machine does not contain a valid ''dataType'' field!');
+                checkData = false;
             end
             
             available = checkMeta && checkData;

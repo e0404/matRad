@@ -15,7 +15,7 @@
 % Authors : F. D'Andrea ; A. Bennan ; L. Ermeneux ; N. Wahl 
 %
 % Based on implementation proposed by M. Sitarz et al. (doi:10.1002/mp.17392)
-% FermiEyges machine based on work of M.G. Ronga et al. (doi:10.1002/mp.16697)
+% Generic machine using FermiEyges model based on work of M.G. Ronga et al. (doi:10.1002/mp.16697)
 % Applied matRad for a VHEE study as described by F. D'andrea et al. (doi:10.1016/j.phro.2025.100732)
 % Focused machine based on work of L. Whitmore et al. (doi:10.1038/s41598-021-93276-8)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -23,7 +23,8 @@
 %% In this example we will show 
 % (i) how to load patient data into matRad
 % (ii) how to setup a VHEE dose calculation 
-% (iii) how to inversely optimize the pencil beam intensities directly from command window in MATLAB. 
+% (iii) how to inversely optimize the pencil beam intensities directly from 
+%       command window in MATLAB. 
 
 %% set matRad runtime configuration
 matRad_rc; %If this throws an error, run it from the parent directory first to set the paths
@@ -34,13 +35,14 @@ matRad_rc; %If this throws an error, run it from the parent directory first to s
 load('PROSTATE.mat');
 
 %% Treatment Plan
-% Here, we would like to use VHEE for treatment planning. Next, we
-% need to define a treatment machine to correctly load the corresponding 
-% base data. matRad features two base data for VHEE, a divergent beam 
-% (VHEE_FermiEyges.mat), that has to be called through 'FermiEyges' and a 
-% Focused beam (VHEE_Focused.mat), to be called by 'Focused'.
+% Here, we would like to use VHEE for treatment planning. Next, we need to
+% define a treatment machine to correctly load the corresponding base data.
+% matRad features two base data for VHEE, a divergent beam 
+% (VHEE_Generic.mat) based on a FermiEyges model that has to be called 
+% through 'Generic' and a Focused beam (VHEE_Focused.mat), to be called by 
+% 'Focused'.
 pln.radiationMode   = 'VHEE';    % either photons / protons / helium / carbon / brachy / VHEE
-pln.machine         = 'FermiEyges'; %  FermiEyges / Focused VHEE - (Focused still in development) 
+pln.machine         = 'Generic'; %  Generic / Focused VHEE - (Focused still in development) 
 pln.bioModel        = 'none'; % 'none' for VHEE
                                        
 %% plan parameters

@@ -29,8 +29,6 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
         cutOffMethod = 'integral';      % or 'relative' - describes how to calculate the lateral dosimetric cutoff
 
         visBoolLateralCutOff = false;   % Boolean switch for visualization during+ LeteralCutOff calculation
-        
-        
     end
 
     properties (SetAccess = protected, GetAccess = public)
@@ -68,18 +66,14 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             fValidateMulti = @(bd) isfield(bd,'sigmaMulti') && isfield(bd,'weightMulti') && ~isempty(bd.sigmaMulti) && ~isempty(bd.weightMulti);
             fValidateDouble = @(bd) isfield(bd,'sigma1') && isfield(bd,'sigma2') && isfield(bd,'weight') && ~isempty(bd.sigma1) && ~isempty(bd.sigma2) && ~isempty(bd.weight);
             fValidateSingle = @(bd) isfield(bd,'sigma') && ~isempty(bd.sigma);
-            fValidateFocused = @(bd) isfield(bd,'sigmaXY') && ~isempty(bd.sigmaXY);
+            fValidateAsymFocused = @(bd) isfield(bd,'sigmaXY') && ~isempty(bd.sigmaXY);
 
             matRad_cfg = MatRad_Config.instance();
 
             singleAvailable = all(arrayfun(fValidateSingle,this.machine.data));
             doubleAvailable = all(arrayfun(fValidateDouble,this.machine.data));
             multiAvailable  = all(arrayfun(fValidateMulti,this.machine.data));
-            FocusedAvailable = all(arrayfun(fValidateFocused,this.machine.data));
-%             if this.machine.meta.machine == 'FermiEyges'
-%                 doubleAvailable = 0;
-%                 FermiAvailable = 1;
-%             end
+            focusedAvailable = all(arrayfun(fValidateAsymFocused,this.machine.data));
             
             
             matRad_cfg.dispInfo('''%s'' selected for lateral beam model, checking machine...\n',this.lateralModel);
@@ -97,7 +91,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                     end
                 case 'singleXY'
                     if ~multiAvailable
-                        matRad_cfg.dispWarning('Chosen Machine does not support a Focused Pencil-Beam model!');
+                        matRad_cfg.dispWarning('Chosen Machine does not support an asymmetrically focused Pencil-Beam model!');
                         this.lateralModel = 'auto';
                     end
                 case 'multi'
@@ -120,7 +114,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                     this.lateralModel = 'double';
                 elseif singleAvailable
                     this.lateralModel = 'single';
-                elseif FocusedAvailable
+                elseif focusedAvailable
                     this.lateralModel = 'singleXY';
                 else
                     matRad_cfg.dispError('Invalid kernel model!');
@@ -134,7 +128,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                     this.lateralModel = 'double';
                 elseif multiAvailable
                     this.lateralModel = 'multi';
-                elseif FocusedAvailable
+                elseif focusedAvailable
                     this.lateralModel = 'singleXY';
                 else
                     matRad_cfg.dispError('Invalid kernel model!');

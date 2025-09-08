@@ -201,7 +201,7 @@ classdef MatRad_Config < handle
             obj.defaults.machine.carbon     = 'Generic';
             obj.defaults.machine.brachy     = 'HDR';
             obj.defaults.machine.fallback   = 'Generic';
-            obj.defaults.machine.VHEE       = 'FermiEyges';
+            obj.defaults.machine.VHEE       = 'Generic';
 
 
             %Default Bio Model

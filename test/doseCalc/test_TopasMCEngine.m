@@ -7,11 +7,7 @@ initTestSuite;
 function test_loadMachine
     radModes = DoseEngines.matRad_TopasMCEngine.possibleRadiationModes;
     for i = 1:numel(radModes)
-        if isequal(radModes{i},'VHEE')
-            machineName = 'FermiEyges';
-        else
-            machineName = 'Generic';
-        end
+        machineName = 'Generic';
         machine = DoseEngines.matRad_TopasMCEngine.loadMachine(radModes{i},machineName);
         assertTrue(isstruct(machine));
     end
@@ -20,11 +16,7 @@ function test_loadMachine
 function test_getEngineFromPlnByName
     radModes = DoseEngines.matRad_TopasMCEngine.possibleRadiationModes;
     for i = 1:numel(radModes)
-        if isequal(radModes{i},'VHEE')
-            machineName = 'FermiEyges';
-        else
-            machineName = 'Generic';
-        end
+        machineName = 'Generic';
         plnDummy = struct('radiationMode',radModes{i},'machine',machineName,'propDoseCalc',struct('engine','TOPAS'));
          engine = DoseEngines.matRad_TopasMCEngine.getEngineFromPln(plnDummy);
         assertTrue(isa(engine,'DoseEngines.matRad_TopasMCEngine'));

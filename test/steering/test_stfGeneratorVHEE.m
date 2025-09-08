@@ -22,6 +22,21 @@ function test_suite = test_stfGeneratorVHEE
         assertEqual(stfGen.bixelWidth, pln.propStf.bixelWidth);
         assertEqual(stfGen.energy, pln.propStf.energy);
 
+    function test_pln_construct_focused()
+        load VHEE_testData.mat
+        pln.machine = 'Focused';
+        stfGen = matRad_StfGeneratorParticleVHEE(pln);
+        stfGen.isAvailable(pln);
+        pln.propStf.energy = 150;
+        assertTrue(isa(stfGen, 'matRad_StfGeneratorParticleVHEE'));
+        assertEqual(stfGen.gantryAngles, pln.propStf.gantryAngles);
+        assertEqual(stfGen.couchAngles, pln.propStf.couchAngles);
+        assertEqual(stfGen.isoCenter, pln.propStf.isoCenter);
+        assertEqual(stfGen.radiationMode, pln.radiationMode);
+        assertEqual(stfGen.machine, pln.machine);
+        assertEqual(stfGen.bixelWidth, pln.propStf.bixelWidth);
+        assertEqual(stfGen.energy, pln.propStf.energy);
+
     function test_generate_multibeams()
         % geometry settings
         load VHEE_testData.mat ct cst pln stf;
