@@ -468,12 +468,20 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             matRad_cfg = MatRad_Config.instance();
 
             try
-                [status, cmdOut] = system([DoseEngines.matRad_ParticleFREDEngine.cmdCall,' -vn']);
+                [status, cmdOut] = system([DoseEngines.matRad_ParticleFREDEngine.cmdCall, ' -vn']);
 
                 if status == 0
-                    version = cmdOut(1:end-1);
+                    % Extract the version number using a regular expression
+                    versionMatch = regexp(cmdOut, '\d+\.\d+\.\d+', 'match', 'once');
+                    if ~isempty(versionMatch)
+                        version = versionMatch;
+                    else
+                        matRad_cfg.dispError('Unable to parse FRED version from output. Please check FRED installation.');
+                        version = [];
+                    end
                 else
-                    matRad_cfg.dispError('Something wrong occured in checking FRED installation. Please check correct FRED installation');
+                    matRad_cfg.dispError('Error occurred while checking FRED installation. Please check FRED installation.');
+                    version = [];
                 end
             catch
                 matRad_cfg.dispWarning('Something wrong occured in checking FRED installation. Please check correct FRED installation');
