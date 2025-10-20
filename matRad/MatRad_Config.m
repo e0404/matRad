@@ -196,6 +196,7 @@ classdef MatRad_Config < handle
 
             %Default machines
             obj.defaults.machine.photons    = 'Generic';
+            obj.defaults.machine.neutrons    = 'Generic';
             obj.defaults.machine.protons    = 'Generic';
             obj.defaults.machine.helium     = 'Generic';
             obj.defaults.machine.carbon     = 'Generic';
@@ -206,6 +207,7 @@ classdef MatRad_Config < handle
 
             %Default Bio Model
             obj.defaults.bioModel.photons   = 'none';
+            obj.defaults.bioModel.neutrons   = 'none';
             obj.defaults.bioModel.protons   = 'constRBE';
             obj.defaults.bioModel.helium    = 'HEL';
             obj.defaults.bioModel.carbon    = 'LEM';
@@ -229,6 +231,7 @@ classdef MatRad_Config < handle
             obj.defaults.propDoseCalc.useGivenEqDensityCube = false; %Use the given density cube ct.cube and omit conversion from cubeHU.
             obj.defaults.propDoseCalc.ignoreOutsideDensities = true; %Ignore densities outside of cst contours
             obj.defaults.propDoseCalc.useCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
+            obj.defaults.propDoseCalc.useCustomPrimaryNeutronFluence = false; %Use a custom primary neutron fluence
             obj.defaults.propDoseCalc.calcLET = true; %calculate LETs for particles
             obj.defaults.propDoseCalc.selectVoxelsInScenarios = 'all';
             obj.defaults.propDoseCalc.airOffsetCorrection = true;
@@ -250,8 +253,6 @@ classdef MatRad_Config < handle
             %Sequencing Options
             obj.defaults.propSeq.sequencer = 'siochi';
             
-
-
             obj.disableGUI = false;
             
             obj.defaults.samplingScenarios = 25;

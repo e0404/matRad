@@ -4,5 +4,9 @@ testresults.xml
 coverage.xml
 coverage.json
 *.asv
-build/
 .DS_Store
+build/
+/MCNP/runfiles_tmp
+/MCNP/logFile
+MCNP/matRad_MCNPConfig.m
+
