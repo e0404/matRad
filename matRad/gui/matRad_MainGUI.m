@@ -210,6 +210,9 @@ classdef matRad_MainGUI < handle
             if matRad_ispropCompat(obj.guiHandle,'WindowState')
                 set(obj.guiHandle,'WindowState','maximized');
             end
+            if  matRad_cfg.isMatlab && isunix
+                movegui(obj.guiHandle,'onscreen');
+            end
 
             if matRad_cfg.isOctave
                 commonPanelProperties = {'Parent',obj.guiHandle,...

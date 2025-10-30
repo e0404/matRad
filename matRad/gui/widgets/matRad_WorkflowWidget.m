@@ -20,6 +20,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     properties
+        savedResultTag = {};
     end        
     
     methods
@@ -277,7 +278,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 set(handles.txtInfo,'String','loaded and ready');
                 
                 if evalin('base','exist(''pln'')')
-
+                    pln = evalin('base','pln');
                     
                     % ct cst and pln available; ready for dose calculation
                     set(handles.txtInfo,'String','ready for dose calculation');
@@ -286,9 +287,11 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     set(handles.exportDicomButton,'Enable','on');
 
                     % check if stf exists
-                    if evalin('base','exist(''stf'')') 
+                    if evalin('base','exist(''stf'')')
+                        stf = evalin('base','stf');
+
                         % check if dij, stf and pln match
-                       [plnStfMatch, msg] = matRad_comparePlnStf(evalin('base','pln'),evalin('base','stf'));
+                       [plnStfMatch, msg] = matRad_comparePlnStf(pln,stf);
                         if plnStfMatch
                             % plan is ready for optimization
                             set(handles.txtInfo,'String','ready for dose calculation');
@@ -300,8 +303,12 @@ classdef matRad_WorkflowWidget < matRad_Widget
                         end
 
                         % check if dij exist
-                        if evalin('base','exist(''dij'')') && plnStfMatch
-                            [dijStfMatch, msg] = matRad_compareDijStf(evalin('base','dij'),evalin('base','stf'));
+                        conf3D = isfield(pln,'propOpt') && isfield(pln.propOpt,'conf3D') && pln.propOpt.conf3D;
+
+                        if evalin('base','exist(''dij'')') && plnStfMatch && ~conf3D
+                            dij = evalin('base','dij');
+                            [dijStfMatch, msg] = matRad_compareDijStf(dij,stf);
+
                             if dijStfMatch
                                 set(handles.txtInfo,'String','ready for optimization');
                                 set(handles.btnOptimize ,'Enable','on');
@@ -413,7 +420,11 @@ classdef matRad_WorkflowWidget < matRad_Widget
             % carry out dose calculation
             try
                 dij = matRad_calcDoseInfluence(evalin('base','ct'),evalin('base','cst'),stf,pln);
-                               
+                
+                % prepare dij for 3d conformal
+                if isfield(pln,'propOpt') && isfield(pln.propOpt,'conf3D') && pln.propOpt.conf3D
+                   dij = matRad_collapseDij(dij);
+                end
                 % assign results to base worksapce
                 assignin('base','dij',dij);
                 
@@ -465,21 +476,20 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 AllVarNames = evalin('base','who');
                 if  ismember('resultGUI',AllVarNames)
                     resultGUI = evalin('base','resultGUI');
-                    sNames = fieldnames(resultGUIcurrentRun);
                     oldNames = fieldnames(resultGUI);
-                    if(length(oldNames) > length(sNames))
+
+                    if ~isempty(this.savedResultTag)
                         for j = 1:length(oldNames)
-                            if strfind(oldNames{j}, 'beam')
-                                resultGUI = rmfield(resultGUI, oldNames{j});
+                            for k = 1:length(this.savedResultTag)
+                                if ~isempty(strfind(oldNames{j}, this.savedResultTag{k}))
+                                    resultGUIcurrentRun.(oldNames{j}) = resultGUI.(oldNames{j});
+                                end
                             end
                         end
-                    end
-                    for j = 1:length(sNames)
-                        resultGUI.(sNames{j}) = resultGUIcurrentRun.(sNames{j});
-                    end
-                else
-                    resultGUI = resultGUIcurrentRun;
+                    end                
                 end
+
+                resultGUI = resultGUIcurrentRun;
 
                 assignin('base','resultGUI',resultGUI);
 
@@ -728,7 +738,8 @@ classdef matRad_WorkflowWidget < matRad_Widget
             Suffix = get(uiEdit(2),'String');
             logIx = isstrprop(Suffix,'alphanum');
             Suffix = ['_' Suffix(logIx)];
-            
+            this.savedResultTag{end+1}= Suffix;
+
             pln       = evalin('base','pln');
             resultGUI = evalin('base','resultGUI');
             

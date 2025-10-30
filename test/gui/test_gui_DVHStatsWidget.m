@@ -40,4 +40,61 @@ function test_DVHStatsWidget_constructor
     delete(h);
     close(get(p,'Parent'));
 
+function test_DVHStatsWidget_constructWithPhotonPln
+    evalin('base','load photons_testData.mat');
+    h = matRad_DVHStatsWidget();
+    h.selectedDisplayOption = 'physicalDose';
+    try
+        assertTrue(isa(h, 'matRad_DVHStatsWidget'));
+        assertTrue(isa(h, 'matRad_Widget'));
+    catch ME
+        evalin('base','clear ct cst pln stf dij resultGUI');
+        delete(h);
+        rethrow(ME);
+    end
+    evalin('base','clear ct cst pln stf dij resultGUI');
+    delete(h);
+
+function test_DVHStatsWidget_constructWithProtonPln
+    evalin('base','load protons_testData.mat');
+    h = matRad_DVHStatsWidget();
+    try
+        assertTrue(isa(h, 'matRad_DVHStatsWidget'));
+        assertTrue(isa(h, 'matRad_Widget'));
+    catch ME
+        evalin('base','clear ct cst pln stf dij resultGUI');
+        delete(h);
+        rethrow(ME);
+    end
+    evalin('base','clear ct cst pln stf dij resultGUI');
+    delete(h);
+
+function test_DVHStatsWidget_constructWithCarbonPln
+    evalin('base','load carbon_testData.mat');
+    h = matRad_DVHStatsWidget();
+    try
+        assertTrue(isa(h, 'matRad_DVHStatsWidget'));
+        assertTrue(isa(h, 'matRad_Widget'));
+    catch ME
+        evalin('base','clear ct cst pln stf dij resultGUI');
+        delete(h);
+        rethrow(ME);
+    end
+    evalin('base','clear ct cst pln stf dij resultGUI');
+    delete(h);
+
+function test_DVHStatsWidget_constructWithHeliumPln
+    evalin('base','load helium_testData.mat');
+    h = matRad_DVHStatsWidget();
+    try
+        assertTrue(isa(h, 'matRad_DVHStatsWidget'));
+        assertTrue(isa(h, 'matRad_Widget'));
+    catch ME
+        evalin('base','clear ct cst pln stf dij resultGUI');
+        delete(h);
+        rethrow(ME);
+    end
+    evalin('base','clear ct cst pln stf dij resultGUI');
+    delete(h);
+
 %TODO: Test Buttons / visibility depending on data

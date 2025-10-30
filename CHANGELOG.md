@@ -1,5 +1,37 @@
 # Changelog
 
+## Minor Update 3.2.0
+
+### New Features
+- FRED MC interface (if installed)
+- VHEE planning with a Generic (unfocused) beam and a focused beam. The Generic beam can be forwarded to TOPAS as well.
+- New matRad_plotSlice function with keyword / value synxtax for more intuitive plotting of slices
+
+### Bug Fixes & Performance
+- DICOM Import widget allow selection of multiple RTDose files.
+- DICOM Import Widget and importer handle selected patient more consistently and robustly. 
+- DICOM Exporter writes quantities beyond dose, importer tries to import them correctly.
+- DICOM Exporter now always writes ReferencedRTPlanSequence. Importer can now survive without it.
+- DVH widget does not throw a warning in updates, handle scenarios correctly / more robustly and missing xlabel axesHandle parameter.
+- GUI fixes regarding setting of gantry angles and other parameters in the PlanningWidget
+- EXTERNAL contours now correctly recognized
+- performance improvement for obtaining jacobian structure in optimization
+- Available Classes (e.g., dose engines) are now cached for faster loading
+
+### User Experience
+- Added new examples for usage of FRED & VHEE and a workflow example for comparing dose calculation on synthetic CT to planning CT
+- Updated examples to use matRad_plotSlice
+- GUI fixes for use in Matlab Online
+- The analyitcal functions from the Bortfeld Bragg Peak Model are now public and can be used to compute standard approximations (e.g. range-energy relationship)
+
+### Development and CI
+- Added a new `.gitlab-ci.yml` file to support GitLab CI/CD, including test and package stages, artifact handling, and configuration for MATLAB container images and licensing.
+- Added a `.gitattributes` file to standardize line endings, treat certain file types as binary, and ensure `.m` files are not marked as executable.
+- In `.github/actions/test-matlab/action.yml`, added `Global_Optimization_Toolbox` to the list of MATLAB products for testing.
+- In `.github/workflows/coverage-report.yml`, made the coverage PR comment step tolerant to errors to avoid workflow failures.
+- More comprehensive dose calculation tests
+- Added new contributors
+
 ## Version 3.1.0 - "Cleve"
 
 ### Major Changes and New Features

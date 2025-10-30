@@ -92,7 +92,7 @@ disp(stf.ray(100).energy);
 %% Dose Calculation
 dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 
-%% Inverse Optimization  for IMPT based on RBE-weighted dose
+%% Inverse Optimization  for Carbon ion treatment based on RBE-weighted dose
 % The goal of the fluence optimization is to find a set of bixel/spot 
 % weights which yield the best possible dose distribution according to the
 % clinical objectives and constraints underlying the radiation treatment.
@@ -113,7 +113,7 @@ slice = slice(3);
 figure;
 imagesc(resultGUI.LET(:,:,slice)),colorbar, colormap(jet);
 
-%% Inverse Optimization  for IMPT based on biological effect
+%% Inverse Optimization  for Carbon ion treatment based on biological effect
 % To perform a dose optimization for carbon ions we can also use the
 % biological effect instead of the RBE-weighted dose. Therefore we have to
 % change the optimization mode and restart the optimization
@@ -126,6 +126,22 @@ resultGUI_effect = matRad_fluenceOptimization(dij,cst,pln);
 % difference map
 figure;
 imagesc(resultGUI.RBExDose(:,:,slice)-resultGUI_effect.RBExDose(:,:,slice));
+colorbar;
+colormap(jet);
+
+%% Inverse Optimization  for Carbon ion treatment based on BED
+% To perform a dose optimization for carbon ions we can also use the
+% BED instead of the RBE-weighted dose. Therefore we have to
+% change the optimization mode and restart the optimization
+pln.propOpt.quantityOpt = 'BED';
+resultGUI_BED = matRad_fluenceOptimization(dij,cst,pln);
+
+%% Visualize differences
+% Through optimzation based on the biological effect we obtain a slightly
+% different dose distribution as visualized by the following dose
+% difference map
+figure;
+imagesc(resultGUI.RBExDose(:,:,slice)-resultGUI_BED.RBExDose(:,:,slice));
 colorbar;
 colormap(jet);
 
@@ -149,17 +165,20 @@ plane = 3;
 doseWindow = [0 max([resultGUI_effect.RBExDose(:); resultGUI_tissue.RBExDose(:)])];
 
 figure,
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_effect.RBExDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
+matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', resultGUI_effect.RBExDose, 'plane', plane, 'slice', slice, 'contourColorMap', colorcube, 'doseWindow', doseWindow);
+%matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_effect.RBExDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
 title('original plan')
 figure,
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_tissue.RBExDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
+matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', resultGUI_tissue.RBExDose, 'plane', plane, 'slice', slice, 'contourColorMap', colorcube, 'doseWindow', doseWindow);
+%matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_tissue.RBExDose,plane,slice,[],[],colorcube,[],doseWindow,[]);
 title('manipulated plan')
 %% 
 % At this point we would like to see the absolute difference of the original optimization and the 
 % recalculation. 
 absDiffCube = resultGUI_effect.RBExDose-resultGUI_tissue.RBExDose;
 figure,
-matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
+matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', absDiffCube, 'plane', plane, 'slice', slice, 'contourColorMap', colorcube);
+%matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
 title('absolute difference')
 %%
 % Plot both doses with absolute difference and gamma analysis

@@ -70,7 +70,7 @@ for i = 1:length(timeSequence)
     
     % permuatation of phaseMatrix from SS order to STF order
     timeSequence(i).phaseMatrix = timeSequence(i).phaseMatrix(timeSequence(i).orderToSTF,:);
-    
+    [timeSequence(i).phaseNum,~] = find(timeSequence(i).phaseMatrix');
     % inserting the fluence in phaseMatrix
     timeSequence(i).phaseMatrix = timeSequence(i).phaseMatrix .* timeSequence(i).w;
     

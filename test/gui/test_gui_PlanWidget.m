@@ -40,7 +40,7 @@ function test_PlanWidget_constructor
     delete(h);
     close(get(p,'Parent'));
 
-function test_PlanWidget_constructWithData
+function test_PlanWidget_constructWithTG119
     evalin('base','load TG119.mat');
     h = matRad_PlanWidget();
     try
@@ -52,6 +52,107 @@ function test_PlanWidget_constructWithData
         rethrow(ME);
     end
     evalin('base','clear ct cst pln');
-    delete(h);   
+    delete(h);
 
-%TODO: Test Buttons / visibility depending on data
+function test_PlanWidget_constructWithPhotonPln
+    evalin('base','load photons_testData.mat');
+    h = matRad_PlanWidget();
+    try
+        assertTrue(isa(h, 'matRad_PlanWidget'));
+        assertTrue(isa(h, 'matRad_Widget'));
+    catch ME
+        evalin('base','clear ct cst pln stf dij resultGUI');
+        delete(h);
+        rethrow(ME);
+    end
+    evalin('base','clear ct cst pln stf dij resultGUI');
+    delete(h);
+
+function test_PlanWidget_constructWithProtonPln
+    evalin('base','load protons_testData.mat');
+    h = matRad_PlanWidget();
+    try
+        assertTrue(isa(h, 'matRad_PlanWidget'));
+        assertTrue(isa(h, 'matRad_Widget'));
+    catch ME
+        evalin('base','clear ct cst pln stf dij resultGUI');
+        delete(h);
+        rethrow(ME);
+    end
+    evalin('base','clear ct cst pln stf dij resultGUI');
+    delete(h);
+
+function test_PlanWidget_constructWithCarbonPln
+    evalin('base','load carbon_testData.mat');
+    h = matRad_PlanWidget();
+    try
+        assertTrue(isa(h, 'matRad_PlanWidget'));
+        assertTrue(isa(h, 'matRad_Widget'));
+    catch ME
+        evalin('base','clear ct cst pln stf dij resultGUI');
+        delete(h);
+        rethrow(ME);
+    end
+    evalin('base','clear ct cst pln stf dij resultGUI');
+    delete(h);
+
+function test_PlanWidget_constructWithHeliumPln
+    evalin('base','load helium_testData.mat');
+    h = matRad_PlanWidget();
+    try
+        assertTrue(isa(h, 'matRad_PlanWidget'));
+        assertTrue(isa(h, 'matRad_Widget'));
+    catch ME
+        evalin('base','clear ct cst pln stf dij resultGUI');
+        delete(h);
+        rethrow(ME);
+    end
+    evalin('base','clear ct cst pln stf dij resultGUI');
+    delete(h);
+
+function test_PlanWidget_multiisocenter
+    evalin('base','load protons_testData.mat');
+    
+    %Modify to have multiple isocenters
+    pln = evalin('base','pln');
+    pln.propStf.isoCenter(2,:) = [0 0 0];
+    iso = pln.propStf.isoCenter;
+    assignin('base','pln',pln);
+
+    h = matRad_PlanWidget();
+
+    % check correct value in isocenter edit field
+    str = get(h.handles.editIsoCenter,'String');
+    assertEqual(str,'multiple isoCenter'); 
+
+    %Now force an update by changing a value and executing the callback
+    set(h.handles.editBixelWidth,'String','1');
+    cb = get(h.handles.editBixelWidth,'Callback');
+    cb(h.handles.editBixelWidth,[]);
+    
+    str = get(h.handles.editIsoCenter,'String');
+    assertEqual(str,'multiple isoCenter'); 
+    pln = evalin('base','pln');        
+    assertEqual(pln.propStf.isoCenter,iso);
+
+    evalin('base','clear ct cst pln stf dij resultGUI');
+    delete(h);
+
+function test_PlanWidget_tissuetable
+    evalin('base','load carbon_testData.mat');
+    
+    %Modify to have multiple isocenters
+    h = matRad_PlanWidget();
+
+    cb = get(h.handles.btnSetTissue,'Callback');
+    cb(h.handles.btnSetTissue,[]);
+
+    figHandles = get(0,'Children');
+    assertTrue(strcmp(get(figHandles,'Name'),'Set Tissue Parameters'));
+    
+    close(figHandles);
+    delete(h);
+        
+
+
+%TODO: Test Buttons

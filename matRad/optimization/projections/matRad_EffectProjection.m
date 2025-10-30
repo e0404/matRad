@@ -35,6 +35,8 @@ classdef matRad_EffectProjection < matRad_BackProjection
                     effect = [];
                     matRad_cfg = MatRad_Config.instance();
                     matRad_cfg.dispWarning('Empty dij.ax scenario in optimization detected! This should not happen...\n');
+                elseif isfield(dij,'RBE') && (isscalar(dij.RBE) || numel(dij.RBE) == size(dij.physicalDose{scen},1)) && all(isfinite(dij.RBE))
+                    effect = dij.ax{ctScen} .* (dij.physicalDose{scen} * w .* dij.RBE) + dij.bx{ctScen} .* (dij.physicalDose{scen} * w .* dij.RBE).^2;
                 else
                     effect = dij.ax{ctScen} .* (dij.physicalDose{scen} * w) + dij.bx{ctScen} .* (dij.physicalDose{scen}*w).^2;
                 end
@@ -48,10 +50,10 @@ classdef matRad_EffectProjection < matRad_BackProjection
                     matRad_cfg = MatRad_Config.instance();
                     matRad_cfg.dispWarning('Empty mAlphaDose scenario in optimization detected! This should not happen...\n');
                 else
-                    vBias = (doseGrad{scen}' * dij.mAlphaDose{scen})';
+                    alphaTerm = (doseGrad{scen}' * dij.mAlphaDose{scen})';
                     quadTerm = dij.mSqrtBetaDose{scen} * w;
-                    mPsi = (2*(doseGrad{scen}.*quadTerm)' * dij.mSqrtBetaDose{scen})';
-                    wGrad = vBias + mPsi;
+                    betaTerm = (2*(doseGrad{scen}.*quadTerm)' * dij.mSqrtBetaDose{scen})';
+                    wGrad = alphaTerm + betaTerm;
                 end
             else
                 [ctScen,~,~] = ind2sub(size(dij.physicalDose),scen); %TODO: Workaround for now
@@ -60,10 +62,18 @@ classdef matRad_EffectProjection < matRad_BackProjection
                     matRad_cfg = MatRad_Config.instance();
                     matRad_cfg.dispWarning('Empty dij.ax/dij.bx scenario in optimization detected! This should not happen...\n');
                 else
-                    vBias = ((doseGrad{scen}.*dij.ax{ctScen})' * dij.physicalDose{scen})';
-                    quadTerm = dij.physicalDose{scen} * w;
-                    mPsi = (2*(doseGrad{scen}.*quadTerm.*dij.bx{ctScen})' * dij.physicalDose{scen})';
-                    wGrad = vBias + mPsi;
+                    physDose = dij.physicalDose{scen} * w;
+                    if isfield(dij,'RBE') && (isscalar(dij.RBE) || numel(dij.RBE) == size(dij.physicalDose{scen},1)) && all(isfinite(dij.RBE))
+                        alpha = dij.ax{ctScen} .* dij.RBE;
+                        beta = dij.bx{ctScen} .* dij.RBE.^2;
+                    else
+                        alpha = dij.ax{ctScen};
+                        beta = dij.bx{ctScen};
+                    end
+                    alphaTerm = ((doseGrad{scen} .* alpha)' * dij.physicalDose{scen})';
+                    betaTerm = (2 * (doseGrad{scen} .* physDose .* beta)' * dij.physicalDose{scen})';
+                    
+                    wGrad = alphaTerm + betaTerm;
                 end
             end
         end
@@ -91,10 +101,10 @@ classdef matRad_EffectProjection < matRad_BackProjection
             if isempty(dij.mAlphaDoseExp{scen}) || isempty(dij.mSqrtBetaDoseExp{scen})
                 wGrad = [];
             else
-                vBias = (dExpGrad{scen}' * dij.mAlphaDoseExp{scen})';
+                alphaTerm = (dExpGrad{scen}' * dij.mAlphaDoseExp{scen})';
                 quadTerm = dij.mSqrtBetaDoseExp{scen} * w;
-                mPsi = (2*(dExpGrad{scen}.*quadTerm)' * dij.mSqrtBetaDoseExp{scen})';
-                wGrad = vBias + mPsi;
+                betaTerm = (2*(dExpGrad{scen}.*quadTerm)' * dij.mSqrtBetaDoseExp{scen})';
+                wGrad = alphaTerm + betaTerm;
                 wGrad = wGrad + 2 * dOmegaVgrad;
             end            
         end        

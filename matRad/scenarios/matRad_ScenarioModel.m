@@ -232,7 +232,19 @@ classdef (Abstract) matRad_ScenarioModel < handle
             %Use the root folder and the scenarios folder only
             folders = {fileparts(mfilename('fullpath'))};
             folders = [folders matRad_cfg.userfolders];
-            metaScenarioModels = matRad_findSubclasses(meta.class.fromName(mfilename('class')),'folders',folders,'includeSubfolders',true);
+
+            persistent metaScenarioModels lastOptionalPaths
+            
+            %First we do a sanity check if persistently stored metaclasses are valid
+            if ~matRad_cfg.isOctave && ~isempty(metaScenarioModels) && ~all(cellfun(@isvalid,metaScenarioModels))
+                matRad_cfg.dispWarning('Found invalid ScenarioModels, updating model cache.');
+                metaScenarioModels = [];
+            end
+
+            if isempty(metaScenarioModels) || (~isempty(lastOptionalPaths) && ~isequal(lastOptionalPaths, folders))
+                lastOptionalPaths = folders;
+                metaScenarioModels = matRad_findSubclasses(meta.class.fromName(mfilename('class')),'folders',folders,'includeSubfolders',true);
+            end
             classList = matRad_identifyClassesByConstantProperties(metaScenarioModels,'shortName','defaults',{'nomScen'});
 
             if isempty(classList)

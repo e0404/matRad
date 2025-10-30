@@ -64,6 +64,7 @@ jobs:
                         
             - name: Add Coverage PR Comment
               uses: marocchino/sticky-pull-request-comment@v2
+              continue-on-error: true
               if: github.event_name == 'pull_request'
               with:
                   recreate: true

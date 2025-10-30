@@ -163,7 +163,7 @@ if ~isempty(pln)
     pln.bioModel = matRad_BiologicalModel.validate(pln.bioModel,pln.radiationMode);
     
     if strcmp(pln.bioModel.model,'none')
-        xlabel('Dose [Gy]','FontSize',fontSizeValue);
+        xlabel(axesHandle,'Dose [Gy]','FontSize',fontSizeValue);
     else
         xlabel(axesHandle,'RBE x Dose [Gy(RBE)]','FontSize',fontSizeValue);
     end
