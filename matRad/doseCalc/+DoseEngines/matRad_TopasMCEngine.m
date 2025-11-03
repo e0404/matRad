@@ -246,8 +246,21 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     end
                 end
 
+                tmpAlphaX = [];
+                tmpBetaX = [];
+                for idx = 1:size(cst, 1)
+                    if ~isempty(cst{idx,5}) && isfield(cst{idx,5}, 'alphaX')
+                        tmpAlphaX = [tmpAlphaX cst{idx,5}.alphaX];
+                        tmpBetaX = [tmpBetaX cst{idx,5}.betaX];
+                    end
+                end
+                abX         = [tmpAlphaX(:) tmpBetaX(:)];
+                unique_abX  = unique(abX, 'rows');
+                obj.bioParameters.AlphaX    = unique_abX(:, 1);
+                obj.bioParameters.BetaX     = unique_abX(:, 2);
+
                 % Get alpha beta parameters from bioParam struct
-                if isfield(obj.bioParameters, 'tissuseAlphaX')
+                if isfield(obj.bioParameters, 'tissueAlphaX')
                     obj.bioParameters.AlphaX = obj.bioModel.tissueAlphaX(1);
                     obj.bioParameters.BetaX  = obj.bioModel.tissueBetaX(1);
                 end
@@ -508,10 +521,15 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             end
 
             % Get photon parameters for RBExDose calculation
-            if this.calcBioDose
+            if this.calcBioDose || this.scorer.RBE
                 this.scorer.RBE = true;
-                [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,1,VdoseGrid);
-                dij.abx(dij.bx>0) = dij.ax(dij.bx>0)./dij.bx(dij.bx>0);
+                this.calcBioDose = true;
+                [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,this.VdoseGrid);
+                dij.abx = zeros(size(dij.ax{1}));
+                ax = dij.ax{1};
+                bx = dij.bx{1};
+                dij.abx(bx>0) = ax(bx>0)./bx(bx>0);
+                dij.abx = {dij.abx};
             end
 
             % save current directory to revert back to later
@@ -1355,7 +1373,40 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     % Read appropriate scorer from file and write to config file
                     matRad_cfg.dispDebug('Reading RBE Scorer from %s\n',fname);
                     scorerName = fileread(fname);
-                    fprintf(fID,'\n%s\n\n',scorerName);
+
+                    if length(obj.bioParameters.AlphaX) ==1
+                        fprintf(fID,'\n%s\n\n',scorerName);
+                    else
+                        idxRep = strfind(scorerName, '/McNamaraAlpha/');
+                        for idxCell = 1:length(obj.bioParameters.AlphaX)
+                            insertText = ['_CellType_' num2str(idxCell)];
+                            for idxInsert = 1:length(idxRep)% contains(scorerName, '/McNamaraAlpha/')
+                                tmp = strfind(scorerName, '/McNamaraAlpha/');
+                                scorerName = [scorerName(1:tmp(1)+13) insertText scorerName(tmp(1)+14:end)];
+                                tmp = strfind(scorerName, '/McNamaraBeta/');
+                                scorerName = [scorerName(1:tmp(1)+12) insertText scorerName(tmp(1)+13:end)];
+                            end
+                            for idxInsert = 1:length(strfind(scorerName, 'Sc/PrescribedDose Gy'))    %while contains(scorerName, 'Sc/PrescribedDose Gy') && ~contains(scorerName, 'Sc/PrescribedDose_CellType')
+                                tmp = strfind(scorerName, 'Sc/PrescribedDose Gy');
+                                scorerName = [scorerName(1:tmp(1)+16) insertText scorerName(tmp(1)+17:end)];
+                            end
+                            while contains(scorerName, 'Sc/CellLines') && ~contains(scorerName, 'Sc/CellLines_CellType')
+                                tmp = strfind(scorerName, 'Sc/CellLines');
+                                scorerName = [scorerName(1:tmp(1)+11) insertText scorerName(tmp(1)+12:end)];
+                            end
+                            while contains(scorerName, 'Sc/SimultaneousExposure') && ~contains(scorerName, 'Sc/SimultaneousExposure_CellType')
+                                tmp = strfind(scorerName, 'Sc/SimultaneousExposure');
+                                scorerName = [scorerName(1:tmp(1)+22) insertText scorerName(tmp(1)+23:end)];
+                            end
+                            while contains(scorerName, 'Sim/ScoreLabel') && ~contains(scorerName, 'Sim/ScoreLabel + "_CellType')
+                                tmp = strfind(scorerName, 'Sim/ScoreLabel');
+                                scorerName = [scorerName(1:tmp(1)+17) insertText scorerName(tmp(1)+18:end)];
+                            end
+
+                        end
+
+                        fprintf(fID,'\n%s\n\n',scorerName);
+                    end
 
                     if obj.calc4DInterplay
                         for PhaseNum = obj.MCparam.Phases{beamIx}'
