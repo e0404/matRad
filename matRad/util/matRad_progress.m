@@ -1,4 +1,4 @@
-function matRad_progress(currentIndex, totalNumberOfEvaluations)
+function matRad_progress(currentIndex, totalNumberOfEvaluations,scen)
 % matRad progress bar
 % 
 % call
@@ -27,23 +27,30 @@ function matRad_progress(currentIndex, totalNumberOfEvaluations)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
- 
-% If it's not the first step, erase the stuff printed before
-if (currentIndex == 1)
-    fprintf('Progress: ');
+
+persistent isInitialized
+
+if isempty(isInitialized)
+    isInitialized = true;
 end
- 
-if (currentIndex > 1)
-  Length = numel(sprintf('%3.2f %%',(currentIndex-1)/totalNumberOfEvaluations*100));
-  fprintf(repmat('\b',1,Length));
+
+percent = (currentIndex / totalNumberOfEvaluations) * 100;
+
+% --- first part of the progress ---
+if scen == 1
+    % new line
+    fprintf('\rProgress: %6.2f %%', percent);
 end
- 
-% Print the progress tool
-fprintf('%3.2f %%',currentIndex/totalNumberOfEvaluations*100);
- 
-% After the last iteration print a newline command
-if (currentIndex == totalNumberOfEvaluations)
+
+% --- for scenario 2, same line ---
+if scen == 2
+    fprintf('   Progress: %6.2f %%', percent);
+end
+
+% --- finish line after the last angle ---
+if currentIndex == totalNumberOfEvaluations && scen == 2
     fprintf('\n');
+    clear isInitialized
 end
- 
-end
+
+
