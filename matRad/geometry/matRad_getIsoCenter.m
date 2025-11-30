@@ -69,7 +69,7 @@ coord = matRad_cubeIndex2worldCoords(V, ct); %idx2worldcoord
 
 
 % Calculated isocenter.
-isoCenter = mean(coord);
+isoCenter = mean(coord, 1);
 
 
 % Visualization
