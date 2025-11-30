@@ -188,9 +188,13 @@ classdef matRad_StfGeneratorParticleIMPT < matRad_StfGeneratorParticleRayBixelAb
                             %non-reachable low-range spots
                             raShiEnergies = this.availableEnergies(this.availablePeakPosRaShi >= targetEntry(k) & min(this.availablePeakPos) > this.availablePeakPosRaShi);
 
+                            if isempty(raShiEnergies)
+                                matRad_cfg.dispWarning('No energies available for range shifting, please change the range shifter thickness');
+                            end
+                            
                             raShi.ID = 1;
-                            raShi.eqThickness = rangeShifterEqD;
-                            raShi.sourceRashiDistance = round(min(ctEntryPoint) - 2*rangeShifterEqD,-1); %place a little away from entry, round to cms to reduce number of unique settings
+                            raShi.eqThickness = this.rangeShifterEqD;
+                            raShi.sourceRashiDistance = round(min(ctEntryPoint) - 2*this.rangeShifterEqD,-1); %place a little away from entry, round to cms to reduce number of unique settings
 
                             beam.ray(j).energy = [beam.ray(j).energy raShiEnergies];
                             beam.ray(j).rangeShifter = [beam.ray(j).rangeShifter repmat(raShi,1,length(raShiEnergies))];
