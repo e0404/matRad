@@ -314,6 +314,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                         %Create new stf for MCsquare with energy layer ordering and
                         %shifted scenario isocenter
                         % Need to split the current stf field into two separate fields for MCsquare, with and without RaSh
+                        stfFieldMCsquareRaShi = [];
                         if ~isempty(raShiField)
                             % Copy the field information
                             stfFieldMCsquareRaShi = stfFieldMCsquare;
@@ -349,7 +350,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                                 end
                             end
 
-                              % allocate empty target point container
+                            % allocate empty target point container
                             for j = 1:numel(stfFieldMCsquareRaShi.energies)
                                 stfFieldMCsquareRaShi.energyLayer(j).targetPoints   = [];
                                 stfFieldMCsquareRaShi.energyLayer(j).numOfPrimaries = [];
@@ -416,53 +417,54 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                             end
 
                             % Add the bixels to the RaShi field if any
-                            for k = 1:numel(stfFieldMCsquareRaShi.energies)
-                                if any(stf(i).ray(j).energy == stfFieldMCsquareRaShi.energies(k))
-                                    
-                                    energyIx = find(stf(i).ray(j).energy == stfFieldMCsquareRaShi.energies(k));
-                                    
-                                    % If more than one energy layer is
-                                    % found, one of them is for the
-                                    % RaShiField
-                                    energyIx = energyIx([stf(i).ray(j).rangeShifter(energyIx).ID] == stfFieldMCsquareRaShi.rangeShifterID); % Select the one with no RaShi;
-
-                                    stfFieldMCsquareRaShi.energyLayer(k).rayNum   = [stfFieldMCsquareRaShi.energyLayer(k).rayNum j];
-                                    stfFieldMCsquareRaShi.energyLayer(k).bixelNum = [stfFieldMCsquareRaShi.energyLayer(k).bixelNum energyIx];
-                                    stfFieldMCsquareRaShi.energyLayer(k).targetPoints = [stfFieldMCsquareRaShi.energyLayer(k).targetPoints; ...
-                                                                                        -stf(i).ray(j).rayPos_bev(1) stf(i).ray(j).rayPos_bev(3)];
-
-                                    %Number of primaries depending on beamlet-wise or field-based compuation (direct dose calculation)
-                                    if this.calcDoseDirect
-                                        stfFieldMCsquareRaShi.energyLayer(k).numOfPrimaries = [stfFieldMCsquareRaShi.energyLayer(k).numOfPrimaries ...
-                                            round(stf(i).ray(j).weight(energyIx)*this.numHistoriesDirect)];
-
-                                        stfFieldMCsquareRaShi.energyLayer(k).MU = [stfFieldMCsquareRaShi.energyLayer(k).MU ...
-                                            round(stf(i).ray(j).weight(energyIx)*this.numHistoriesDirect)];
-
-                                        totalWeights = totalWeights + stf(i).ray(j).weight(energyIx);
-                                    else
-                                        stfFieldMCsquareRaShi.energyLayer(k).numOfPrimaries = [stfFieldMCsquareRaShi.energyLayer(k).numOfPrimaries ...
-                                            this.numHistoriesPerBeamlet];
-
-                                        stfFieldMCsquareRaShi.energyLayer(k).MU = [stfFieldMCsquareRaShi.energyLayer(k).MU ...
-                                            this.numHistoriesPerBeamlet];
+                            if ~isempty(raShiField)
+                                for k = 1:numel(stfFieldMCsquareRaShi.energies)
+                                    if any(stf(i).ray(j).energy == stfFieldMCsquareRaShi.energies(k))
+                                        
+                                        energyIx = find(stf(i).ray(j).energy == stfFieldMCsquareRaShi.energies(k));
+                                        
+                                        % If more than one energy layer is
+                                        % found, one of them is for the
+                                        % RaShiField
+                                        energyIx = energyIx([stf(i).ray(j).rangeShifter(energyIx).ID] == stfFieldMCsquareRaShi.rangeShifterID); % Select the one with no RaShi;
+    
+                                        stfFieldMCsquareRaShi.energyLayer(k).rayNum   = [stfFieldMCsquareRaShi.energyLayer(k).rayNum j];
+                                        stfFieldMCsquareRaShi.energyLayer(k).bixelNum = [stfFieldMCsquareRaShi.energyLayer(k).bixelNum energyIx];
+                                        stfFieldMCsquareRaShi.energyLayer(k).targetPoints = [stfFieldMCsquareRaShi.energyLayer(k).targetPoints; ...
+                                                                                            -stf(i).ray(j).rayPos_bev(1) stf(i).ray(j).rayPos_bev(3)];
+    
+                                        %Number of primaries depending on beamlet-wise or field-based compuation (direct dose calculation)
+                                        if this.calcDoseDirect
+                                            stfFieldMCsquareRaShi.energyLayer(k).numOfPrimaries = [stfFieldMCsquareRaShi.energyLayer(k).numOfPrimaries ...
+                                                round(stf(i).ray(j).weight(energyIx)*this.numHistoriesDirect)];
+    
+                                            stfFieldMCsquareRaShi.energyLayer(k).MU = [stfFieldMCsquareRaShi.energyLayer(k).MU ...
+                                                round(stf(i).ray(j).weight(energyIx)*this.numHistoriesDirect)];
+    
+                                            totalWeights = totalWeights + stf(i).ray(j).weight(energyIx);
+                                        else
+                                            stfFieldMCsquareRaShi.energyLayer(k).numOfPrimaries = [stfFieldMCsquareRaShi.energyLayer(k).numOfPrimaries ...
+                                                this.numHistoriesPerBeamlet];
+    
+                                            stfFieldMCsquareRaShi.energyLayer(k).MU = [stfFieldMCsquareRaShi.energyLayer(k).MU ...
+                                                this.numHistoriesPerBeamlet];
+                                        end
+    
+                                        %Now add the range shifter
+                                        raShis = stf(i).ray(j).rangeShifter(energyIx);
+                                         
+                                        %sanity check range shifters
+                                        raShiIDs = unique([raShis.ID]);
+                                        %raShiIDs = raShiIDs(raShiIDs ~= 0);
+                                         
+                                        if ~isscalar(raShiIDs)
+                                            matRad_cfg.dispError('MCsquare only supports one range shifter setting (on or off) per energy! Aborting.\n');
+                                        end
+                                         
+                                        stfFieldMCsquareRaShi.energyLayer(k).rangeShifter = raShis(1);
                                     end
-
-                                    %Now add the range shifter
-                                    raShis = stf(i).ray(j).rangeShifter(energyIx);
-                                     
-                                    %sanity check range shifters
-                                    raShiIDs = unique([raShis.ID]);
-                                    %raShiIDs = raShiIDs(raShiIDs ~= 0);
-                                     
-                                    if ~isscalar(raShiIDs)
-                                        matRad_cfg.dispError('MCsquare only supports one range shifter setting (on or off) per energy! Aborting.\n');
-                                    end
-                                     
-                                    stfFieldMCsquareRaShi.energyLayer(k).rangeShifter = raShis(1);
                                 end
                             end
-                            
                         end
 
                         % Fill the stfMCsquare
