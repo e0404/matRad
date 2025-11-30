@@ -125,9 +125,21 @@ classdef matRad_StfGeneratorParticleIMPT < matRad_StfGeneratorParticleRayBixelAb
                                     end
 
                                     % find target entry & exit
-                                    diff_voi    = [diff([rho{shiftScen}{end}])];
-                                    entryIx = find(diff_voi == 1);
-                                    exitIx = find(diff_voi == -1);
+                                    if rho{shiftScen}{end}(1)~=0
+                                        matRad_cfg.dispWarning('Target entry on the first voxel');
+                                        entryIx = 1;
+                                    else
+                                        diff_voi    = [diff([rho{shiftScen}{end}])];
+                                        entryIx = find(diff_voi == 1);
+                                    end
+
+                                    if rho{shiftScen}{end}(end)~=0
+                                        matRad_cfg.dispWarning('Target exit on the last voxel');
+                                        exitIx = numel(rho{shiftScen}{1});
+                                    else
+                                        diff_voi    = [diff([rho{shiftScen}{end}])];
+                                        exitIx = find(diff_voi == -1);
+                                    end
 
                                     %We approximate the interface using the rad depth between the last voxel before and the first voxel after the interface 
                                     % This captures the case that the first relevant voxel is a target voxel
