@@ -613,7 +613,7 @@ classdef matRad_MCemittanceBaseData
         end
     end
     
-    methods (Access = protected)
+    methods %(Access = protected)
         function obj = getRangeShiftersFromStf(obj,stf)
             allRays = [stf.ray];
             raShis = [allRays.rangeShifter];
