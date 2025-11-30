@@ -17,7 +17,8 @@ classdef (Abstract) matRad_StfGeneratorParticleRayBixelAbstract < matRad_StfGene
 
 
     properties
-        useRangeShifter = false;
+        useRangeShifter = false
+        rangeShifterEqD
     end
 
     properties (Access = protected)
@@ -70,6 +71,13 @@ classdef (Abstract) matRad_StfGeneratorParticleRayBixelAbstract < matRad_StfGene
                 this.availablePeakPosRaShi = this.availablePeakPos - rangeShifterEqD;
 
                 matRad_cfg.dispWarning('Use of range shifter enabled. matRad will generate a generic range shifter with WEPL %f to enable ranges below the shortest base data entry.',rangeShifterEqD);
+                this.availablePeakPosRaShi = this.availablePeakPos - this.rangeShifterEqD;
+
+                % Available PeakPositionRaShi has to have same size() as
+                % availablePeaPos for indexing
+                this.availablePeakPosRaShi(this.availablePeakPosRaShi<0) = 0;
+
+                matRad_cfg.dispWarning('Use of range shifter enabled. matRad will generate a generic range shifter with WEPL %f to enable ranges below the shortest base data entry.',this.rangeShifterEqD);
             end
 
             if sum(this.availablePeakPos<0)>0
