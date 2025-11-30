@@ -18,6 +18,7 @@ classdef matRad_StfGeneratorParticleSingleBeamlet < matRad_StfGeneratorParticleR
     properties 
         energy;
         raShiThickness = 50; %Range shifter to be used if useRangeShifter = true;
+        visBool = false;
     end
 
     properties (Constant)
@@ -50,12 +51,12 @@ classdef matRad_StfGeneratorParticleSingleBeamlet < matRad_StfGeneratorParticleR
             matRad_cfg = MatRad_Config.instance();
 
             if isempty(this.isoCenter)
-                this.isoCenter = matRad_getIsoCenter(this.cst,this.ct,visBool);
+                this.isoCenter = matRad_getIsoCenter(this.cst,this.ct,this.visBool);
             end
 
             if ~isequal(size(this.isoCenter),[this.numOfBeams,3]) && ~size(this.isoCenter,1) ~= 1
                 matRad_cfg.dispWarning('IsoCenter invalid, creating new one automatically!');
-                this.isoCenter = matRad_getIsoCenter(this.cst,this.ct,visBool);
+                this.isoCenter = matRad_getIsoCenter(this.cst,this.ct,this.visBool);
             end
             
             if size(this.isoCenter,1) == 1          
