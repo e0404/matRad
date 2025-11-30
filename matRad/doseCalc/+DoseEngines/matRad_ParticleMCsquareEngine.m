@@ -503,7 +503,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                     %% MC computation and dij filling
 
                     % run MCsquare
-                    mcSquareCall = [this.mcSquareBinary ' ' MCsquareConfigFile];
+                    mcSquareCall = [this.mcSquareBinary ' ' sprintf('"%s"', MCsquareConfigFile)];
                     matRad_cfg.dispInfo(['Calling Monte Carlo Engine: ' mcSquareCall]);
                     if matRad_cfg.logLevel >= 3
                         [status,cmdout] = system(mcSquareCall,'-echo');
