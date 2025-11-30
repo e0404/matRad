@@ -83,3 +83,28 @@ function test_suite = test_stfGeneratorPhotonIMRT
             
             %assertTrue(isscalar(stf2(i).ray.energy));
         end
+
+function test_generateRangeShfterStf()
+        % geometry settings
+        load protons_testData.mat
+
+        % Move Target shallower so that range shifter calculation
+        ct.resolution.y=5;
+        VolHelper = false(ct.cubeDim);
+        VolHelper(2:3,5:6,5:6) = true;
+        ixTarget = find(VolHelper);
+
+        cst{1,4}{1} = ixTarget;
+
+        f=figure;
+        movegui(f, 'southwest');
+        matRad_plotSlice(ct, 'cst', cst,'axesHandle', gca(f), 'plane', 3);
+
+        stfGen = matRad_StfGeneratorParticleIMPT(pln);
+        stfGen.useRangeShifter = true;
+        stfGen.rangeShifterEqD = 2;
+
+        stf = stfGen.generate(ct,cst);
+
+        assertTrue(stf(1).ray(1).rangeShifter(1).ID==1);
+        assertTrue(stf(1).ray(1).rangeShifter(1).eqThickness==2);
