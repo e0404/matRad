@@ -96,10 +96,6 @@ function test_generateRangeShfterStf()
 
         cst{1,4}{1} = ixTarget;
 
-        f=figure;
-        movegui(f, 'southwest');
-        matRad_plotSlice(ct, 'cst', cst,'axesHandle', gca(f), 'plane', 3);
-
         stfGen = matRad_StfGeneratorParticleIMPT(pln);
         stfGen.useRangeShifter = true;
         stfGen.rangeShifterEqD = 2;
