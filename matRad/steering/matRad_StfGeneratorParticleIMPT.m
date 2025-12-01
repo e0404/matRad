@@ -194,7 +194,7 @@ classdef matRad_StfGeneratorParticleIMPT < matRad_StfGeneratorParticleRayBixelAb
                             
                             raShi.ID = 1;
                             raShi.eqThickness = this.rangeShifterEqD;
-                            raShi.sourceRashiDistance = round(min(ctEntryPoint) - 2*this.rangeShifterEqD,-1); %place a little away from entry, round to cms to reduce number of unique settings
+                           raShi.sourceRashiDistance = 10 * round((min(ctEntryPoint) - 2*this.rangeShifterEqD) / 10); %place a little away from entry, round to cms to reduce number of unique settings
 
                             beam.ray(j).energy = [beam.ray(j).energy raShiEnergies];
                             beam.ray(j).rangeShifter = [beam.ray(j).rangeShifter repmat(raShi,1,length(raShiEnergies))];
