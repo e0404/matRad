@@ -944,6 +944,10 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     end
                 end
             end
+
+            if sum(contains(obj.MCparam.tallies, 'CellType'))
+                topasCube = 
+            end
         end
 
         function dataOut = readBinCsvData(~,genFullFile)
@@ -1192,7 +1196,13 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                                 modelName = strsplit(topasCubesTallies{j},'_');
                                 modelName = modelName{end};
                                 if isfield(topasCubes,[topasCubesTallies{j} '_beam' num2str(d)]) && iscell(topasCubes.([topasCubesTallies{j} '_beam' num2str(d)]))
+                                    
+                                    if contains(topasCubesTallies{j}, 'CellType_1')
+                                       
+                                    else
+
                                     dij.(['mAlphaDose_' modelName]){ctScen}(:,d)        = reshape(topasCubes.([topasCubesTallies{j} '_beam',num2str(d)]){ctScen},[],1) .* dij.physicalDose{ctScen}(:,d);
+                                    end
                                 end
                             elseif ~isempty(strfind(lower(topasCubesTallies{j}),'beta'))
                                 modelName = strsplit(topasCubesTallies{j},'_');
@@ -1373,12 +1383,14 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     % Read appropriate scorer from file and write to config file
                     matRad_cfg.dispDebug('Reading RBE Scorer from %s\n',fname);
                     scorerName = fileread(fname);
+                    generalScorer = scorerName;
 
                     if length(obj.bioParameters.AlphaX) ==1
                         fprintf(fID,'\n%s\n\n',scorerName);
                     else
                         idxRep = strfind(scorerName, '/McNamaraAlpha/');
                         for idxCell = 1:length(obj.bioParameters.AlphaX)
+                            scorerName = generalScorer;
                             insertText = ['_CellType_' num2str(idxCell)];
                             for idxInsert = 1:length(idxRep)% contains(scorerName, '/McNamaraAlpha/')
                                 tmp = strfind(scorerName, '/McNamaraAlpha/');
@@ -1390,22 +1402,24 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                                 tmp = strfind(scorerName, 'Sc/PrescribedDose Gy');
                                 scorerName = [scorerName(1:tmp(1)+16) insertText scorerName(tmp(1)+17:end)];
                             end
-                            while contains(scorerName, 'Sc/CellLines') && ~contains(scorerName, 'Sc/CellLines_CellType')
-                                tmp = strfind(scorerName, 'Sc/CellLines');
-                                scorerName = [scorerName(1:tmp(1)+11) insertText scorerName(tmp(1)+12:end)];
+                            for idxInsert = 1:length(strfind(scorerName, 'Sc/CellLines'))
+                                tmp  = strfind(scorerName, 'Sc/CellLines');
+                                scorerName = [scorerName(1:tmp(idxInsert)+11) insertText scorerName(tmp(idxInsert)+12:end)];
                             end
-                            while contains(scorerName, 'Sc/SimultaneousExposure') && ~contains(scorerName, 'Sc/SimultaneousExposure_CellType')
+                            for idxInsert = 1:length(strfind(scorerName, 'Sc/SimultaneousExposure'))
+                            %while contains(scorerName, 'Sc/SimultaneousExposure') && ~contains(scorerName, 'Sc/SimultaneousExposure_CellType')
                                 tmp = strfind(scorerName, 'Sc/SimultaneousExposure');
-                                scorerName = [scorerName(1:tmp(1)+22) insertText scorerName(tmp(1)+23:end)];
+                                scorerName = [scorerName(1:tmp(idxInsert)+22) insertText scorerName(tmp(idxInsert)+23:end)];
                             end
-                            while contains(scorerName, 'Sim/ScoreLabel') && ~contains(scorerName, 'Sim/ScoreLabel + "_CellType')
+                            for idxInsert = 1:length(strfind(scorerName, 'Sim/ScoreLabel'))
+                            %while contains(scorerName, 'Sim/ScoreLabel') && ~contains(scorerName, 'Sim/ScoreLabel + "_CellType')
                                 tmp = strfind(scorerName, 'Sim/ScoreLabel');
-                                scorerName = [scorerName(1:tmp(1)+17) insertText scorerName(tmp(1)+18:end)];
+                                scorerName = [scorerName(1:tmp(idxInsert)+17) insertText scorerName(tmp(idxInsert)+18:end)];
                             end
 
+                            fprintf(fID,'\n%s\n\n',scorerName);
                         end
 
-                        fprintf(fID,'\n%s\n\n',scorerName);
                     end
 
                     if obj.calc4DInterplay
@@ -1453,28 +1467,60 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 % Begin writing biological scorer components: cell lines
                 switch obj.radiationMode
                     case 'protons'
-                        fprintf(fID,'\n### Biological Parameters ###\n');
-                        fprintf(fID,'sv:Sc/CellLines = 1 "CellLineGeneric"\n');
-                        fprintf(fID,'d:Sc/CellLineGeneric/Alphax 		= Sc/AlphaX /Gy\n');
-                        fprintf(fID,'d:Sc/CellLineGeneric/Betax 		= Sc/BetaX /Gy2\n');
-                        fprintf(fID,'d:Sc/CellLineGeneric/AlphaBetaRatiox 	= Sc/AlphaBetaX Gy\n\n');
+                        if length(obj.bioParameters.AlphaX) ==1
+                            fprintf(fID,'\n### Biological Parameters ###\n');
+                            fprintf(fID,'sv:Sc/CellLines = 1 "CellLineGeneric"\n');
+                            fprintf(fID,'d:Sc/CellLineGeneric/Alphax 		= Sc/AlphaX /Gy\n');
+                            fprintf(fID,'d:Sc/CellLineGeneric/Betax 		= Sc/BetaX /Gy2\n');
+                            fprintf(fID,'d:Sc/CellLineGeneric/AlphaBetaRatiox 	= Sc/AlphaBetaX Gy\n\n');
+                        else
+                            for idxCell = 1:length(obj.bioParameters.AlphaX)
+                                insertText = ['_CellType_' num2str(idxCell)];
+                                fprintf(fID,'\n### Biological Parameters ###\n');
+                                fprintf(fID, ['sv:Sc/CellLines' insertText ' = 1 "CellLineGeneric' insertText '"\n']);
+                                fprintf(fID, ['d:Sc/CellLineGeneric' insertText '/Alphax 		= Sc/AlphaX' insertText ' /Gy\n']);
+                                fprintf(fID, ['d:Sc/CellLineGeneric' insertText '/Betax 		= Sc/BetaX' insertText ' /Gy2\n']);
+                                fprintf(fID, ['d:Sc/CellLineGeneric' insertText '/AlphaBetaRatiox 	= Sc/AlphaBetaX' insertText ' Gy\n\n']);
+                            end
+                        end
                     case {'carbon','helium'}
-                        fprintf(fID,'\n### Biological Parameters ###\n');
-                        fprintf(fID,'sv:Sc/CellLines = 1 "CellGeneric_abR2"\n');
-                        fprintf(fID,'d:Sc/CellGeneric_abR2/Alphax = Sc/AlphaX /Gy\n');
-                        fprintf(fID,'d:Sc/CellGeneric_abR2/Betax = Sc/BetaX /Gy2\n\n');
-                        % fprintf(fID,'d:Sc/CellGeneric_abR2/AlphaBetaRatiox 	= Sc/AlphaBetaX Gy\n');
+                        if length(obj.bioParameters.AlphaX) ==1
+                            fprintf(fID,'\n### Biological Parameters ###\n');
+                            fprintf(fID,'sv:Sc/CellLines = 1 "CellGeneric_abR2"\n');
+                            fprintf(fID,'d:Sc/CellGeneric_abR2/Alphax = Sc/AlphaX /Gy\n');
+                            fprintf(fID,'d:Sc/CellGeneric_abR2/Betax = Sc/BetaX /Gy2\n\n');
+                            % fprintf(fID,'d:Sc/CellGeneric_abR2/AlphaBetaRatiox 	= Sc/AlphaBetaX Gy\n');
+                        else
+                            for idxCell = 1:length(obj.bioParameters.AlphaX)
+                                insertText = ['_CellType_' num2str(idxCell)];
+                                fprintf(fID,'\n### Biological Parameters ###\n');
+                                fprintf(fID, ['sv:Sc/CellLines' insertText ' = 1 "CellLineGeneric_abR2' insertText '"\n']);
+                                fprintf(fID, ['d:Sc/CellLineGeneric_abR2' insertText '/Alphax 		= Sc/AlphaX' inserText ' /Gy\n']);
+                                fprintf(fID, ['d:Sc/CellLineGeneric_abR2' insertText '/Betax 		= Sc/BetaX' insertText ' /Gy2\n\n']);
+                            end
+                        end
                     otherwise
                         matRad_cfg.dispError([obj.radiationMode ' not implemented']);
                 end
 
                 % write biological scorer components: dose parameters
                 matRad_cfg.dispDebug('Writing Biologial Scorer components.\n');
-                fprintf(fID,'d:Sc/PrescribedDose = %.4f Gy\n',obj.bioParameters.PrescribedDose);
-                fprintf(fID,'b:Sc/SimultaneousExposure = %s\n',obj.bioParameters.SimultaneousExposure);
-                fprintf(fID,'d:Sc/AlphaX = %.4f /Gy\n',obj.bioParameters.AlphaX);
-                fprintf(fID,'d:Sc/BetaX = %.4f /Gy2\n',obj.bioParameters.BetaX);
-                fprintf(fID,'d:Sc/AlphaBetaX = %.4f Gy\n',obj.bioParameters.AlphaX/obj.bioParameters.BetaX);
+                if length(obj.bioParameters.AlphaX) ==1
+                    fprintf(fID,'d:Sc/PrescribedDose = %.4f Gy\n',obj.bioParameters.PrescribedDose);
+                    fprintf(fID,'b:Sc/SimultaneousExposure = %s\n',obj.bioParameters.SimultaneousExposure);
+                    fprintf(fID,'d:Sc/AlphaX = %.4f /Gy\n',obj.bioParameters.AlphaX);
+                    fprintf(fID,'d:Sc/BetaX = %.4f /Gy2\n',obj.bioParameters.BetaX);
+                    fprintf(fID,'d:Sc/AlphaBetaX = %.4f Gy\n',obj.bioParameters.AlphaX/obj.bioParameters.BetaX);
+                else
+                    for idxCell = 1:length(obj.bioParameters.AlphaX)
+                        insertText = ['_CellType_' num2str(idxCell)];
+                        fprintf(fID, ['d:Sc/PrescribedDose' insertText ' = %.4f Gy\n'],obj.bioParameters.PrescribedDose);
+                        fprintf(fID, ['b:Sc/SimultaneousExposure' insertText ' = %s\n'],obj.bioParameters.SimultaneousExposure);
+                        fprintf(fID, ['d:Sc/AlphaX' insertText ' = %.4f /Gy\n'],obj.bioParameters.AlphaX(idxCell));
+                        fprintf(fID, ['d:Sc/BetaX' insertText ' = %.4f /Gy2\n'],obj.bioParameters.BetaX(idxCell));
+                        fprintf(fID, ['d:Sc/AlphaBetaX' insertText ' = %.4f Gy\n\n'],obj.bioParameters.AlphaX(idxCell)/obj.bioParameters.BetaX(idxCell));
+                    end
+                end
 
                 % Update MCparam.tallies with processed scorer
                 for i = 1:length(obj.scorer.RBE_model)
@@ -1502,9 +1548,23 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 % Write subscorer to config files
                 for s = 1:length(scorerNames)
                     if strcmp(obj.radiationMode,'protons')
-                        fprintf(fID,'s:Sc/%s%s/ReferencedSubScorer_LET      = "ProtonLET"\n',scorerPrefix,scorerNames{s});
+                        if length(obj.bioParameters.AlphaX) ==1
+                            fprintf(fID,'s:Sc/%s%s/ReferencedSubScorer_LET      = "ProtonLET"\n',scorerPrefix,scorerNames{s});
+                        else
+                            for idxCell = 1:length(obj.bioParameters.AlphaX)
+                                insertText = ['_CellType_' num2str(idxCell)];
+                                fprintf(fID,['s:Sc/%s%s' insertText '/ReferencedSubScorer_LET      = "ProtonLET"\n'],scorerPrefix,scorerNames{s});
+                            end
+                        end
                     end
+                    if length(obj.bioParameters.AlphaX) ==1
                     fprintf(fID,'s:Sc/%s%s/ReferencedSubScorer_Dose     = "Tally_DoseToWater"\n',scorerPrefix,scorerNames{s});
+                    else
+                        for idxCell = 1:length(obj.bioParameters.AlphaX)
+                            insertText = ['_CellType_' num2str(idxCell)];
+                            fprintf(fID,['s:Sc/%s%s' insertText '/ReferencedSubScorer_Dose     = "Tally_DoseToWater"\n'],scorerPrefix,scorerNames{s});
+                        end
+                    end
                     if obj.calc4DInterplay
                         for PhaseNum = obj.MCparam.Phases{beamIx}'
                             if strcmp(obj.radiationMode,'protons')
