@@ -33,6 +33,8 @@ if nargin < 3
     fast = 1;
 end
 
+matRad_cfg = MatRad_Config.instance();
+
 
 %speed up delivery time, when it is permitted by constraints
 %constraints to consider: doserate, leaf speed, and gantry speed
@@ -85,6 +87,15 @@ for i = 1:size(apertureInfo.beam,2)
     end
 end
 
+% doInterp is set to true if, during the previous step, the dose rate
+% somehow was lower than the minimum dose rate. This can happen if the
+% gantry speed has to go low enough to accomodate a slowly-moving leaf. In
+% this case, the weight has to increase to bring the dose rate above the
+% minimum threshold. If this is done, the bixel weights will be different.
+if doInterp
+    matRad_cfg.dispInfo('Interpolation needs to be redone due to low dose rate.\n');
+end
+
 %recalculate vector with new times
 
 %%%LOOK PAST THIS
@@ -93,16 +104,6 @@ end
 %redo interpolation
 apertureInfo = matRad_OptimizationProblemVMAT.matRad_daoVec2ApertureInfo(apertureInfo,apertureInfo.apertureVector);
 
-% doInterp is set to true if, during the previous step, the dose rate
-% somehow was lower than the minimum dose rate. This can happen if the
-% gantry speed has to go low enough to accomodate a slowly-moving leaf. In
-% this case, the weight has to increase to bring the dose rate above the
-% minimum threshold. If this is done, the bixel weights will be different.
-if doInterp
-    fprintf('\n\nWE ARE REDOING INTERPOLATION\n\n');
-else
-    fprintf('\n\nWE ARE NOT REDOING INTERPOLATION\n\n');
-end
 
 result.apertureInfo = apertureInfo;
 
