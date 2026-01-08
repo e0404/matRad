@@ -68,9 +68,10 @@ if ~isfield(pln,'propSeq') || ~isfield(pln.propSeq,'numLevels')
     pln.propSeq.numLevels = matRad_cfg.defaults.propSeq.numLevels;
 end
 
-if ~isfield(pln.propOpt,'runVMAT')
+if ~isfield(pln, 'propOpt') || ~isfield(pln.propOpt,'runVMAT')
     pln.propOpt.runVMAT = false;
 end
+
 sequencing.runVMAT = pln.propOpt.runVMAT;
 
 if isfield(resultGUI,'scaleFacRx_FMO')
@@ -81,6 +82,10 @@ if ~isfield(resultGUI,'wUnsequenced')
     wUnsequenced = resultGUI.w;
 else
     wUnsequenced = resultGUI.wUnsequenced;
+end
+
+if ~isfield(dij,'weightToMU')
+    dij.weightToMU = 1;
 end
 
 for i = 1:numOfBeams

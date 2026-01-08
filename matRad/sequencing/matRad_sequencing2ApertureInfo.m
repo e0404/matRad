@@ -49,6 +49,10 @@ if ~isfield(pln, 'propOpt') || ~isfield(pln.propOpt,'runVMAT')
     pln.propOpt.runVMAT = false;
 end
 
+if ~isfield(pln, 'propStf') || ~isfield(pln.propStf,'continuousAperture')
+    pln.propStf.continuousAperture = false;
+end
+
 if pln.propOpt.runVMAT
     totalNumOfOptBixels = 0;
     totalNumOfLeafPairs = 0;    
