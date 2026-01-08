@@ -821,6 +821,10 @@ classdef matRad_PlanWidget < matRad_Widget
             set(handles.popUpMenuDoseEngine,'String',{availableEngines(:).shortName});
             selectedEngineIx = get(handles.popUpMenuDoseEngine,'Value');
             selectedEngine = availableEngines(selectedEngineIx);
+            
+            if ~isfield(pln,'propStf') || ~isfield(pln.propStf,'numOfBeams')
+                pln.propStf.numOfBeams = numel(stfGen.gantryAngles);
+            end
 
             if isfield(pln.propStf,'isoCenter')
                 % sanity check of isoCenter
