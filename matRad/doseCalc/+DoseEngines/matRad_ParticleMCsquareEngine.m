@@ -142,6 +142,13 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
             matRad_cfg = MatRad_Config.instance();
 
+            if isfolder(this.externalCalculation)
+                %dij = this.readFiles(this.externalCalculation);
+                matRad_cfg.dispError('MCsquare not yet configured for loading external simulaiton results.');
+                return;
+            else
+            end
+
             %Now we can run initDoseCalc as usual
             dij = this.initDoseCalc(ct,cst,stf);
 
