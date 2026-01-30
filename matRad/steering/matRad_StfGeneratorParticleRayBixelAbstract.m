@@ -17,7 +17,7 @@ classdef (Abstract) matRad_StfGeneratorParticleRayBixelAbstract < matRad_StfGene
 
 
     properties
-        useRangeShifter = false
+        useRangeShifter = false;
         rangeShifterEqD
     end
 
