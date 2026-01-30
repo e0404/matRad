@@ -37,7 +37,7 @@ function test_MCsquareDoseCalcBasic
         fclose(fid);
 
 
-        assertTrue(any(contains(linesConfigFile, "Num_Primaries 42")));
+        assertTrue(any(strcmp(linesConfigFile, "Num_Primaries 42")));
         
         % Read currBixel file
         % linesBixelFile = readlines(fullfile(matRad_cfg.primaryUserFolder, 'MCsquare', 'currBixels.txt'));
@@ -48,7 +48,7 @@ function test_MCsquareDoseCalcBasic
             end
         fclose(fid);
 
-        assertTrue(any(contains(linesBixelFile, "##NumberOfFields")));
+        assertTrue(any(strcmp(linesBixelFile, "##NumberOfFields")));
         assertTrue(str2double(linesBixelFile(find(strcmp(linesBixelFile, "##NumberOfFields"))+1)) == numel(stf));
 
     end
