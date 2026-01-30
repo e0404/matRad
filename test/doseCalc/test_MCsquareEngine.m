@@ -28,12 +28,26 @@ function test_MCsquareDoseCalcBasic
         
         % Check parameters
         % Read config file
-        linesConfigFile = readlines(fullfile(matRad_cfg.primaryUserFolder, 'MCsquare', 'MCsquareConfig.txt'));
+        % linesConfigFile = readlines(fullfile(matRad_cfg.primaryUserFolder, 'MCsquare', 'MCsquareConfig.txt'));
+        fid = fopen(fullfile(matRad_cfg.primaryUserFolder, 'MCsquare', 'MCsquareConfig.txt'),'r');
+            linesConfigFile = {};
+            while ~feof(fid)
+                linesConfigFile{end+1,1} = fgetl(fid);
+            end
+        fclose(fid);
+
 
         assertTrue(any(contains(linesConfigFile, "Num_Primaries 42")));
         
         % Read currBixel file
-        linesBixelFile = readlines(fullfile(matRad_cfg.primaryUserFolder, 'MCsquare', 'currBixels.txt'));
+        % linesBixelFile = readlines(fullfile(matRad_cfg.primaryUserFolder, 'MCsquare', 'currBixels.txt'));
+        fid = fopen(fullfile(matRad_cfg.primaryUserFolder, 'MCsquare', 'currBixels.txt'),'r');
+            linesBixelFile = {};
+            while ~feof(fid)
+                linesBixelFile{end+1,1} = fgetl(fid);
+            end
+        fclose(fid);
+
         assertTrue(any(contains(linesBixelFile, "##NumberOfFields")));
         assertTrue(str2double(linesBixelFile(find(strcmp(linesBixelFile, "##NumberOfFields"))+1)) == numel(stf));
 
