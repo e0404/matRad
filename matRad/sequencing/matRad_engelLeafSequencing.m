@@ -57,12 +57,12 @@ for i = 1:numOfBeams
     numOfRaysPerBeam = stf(i).numOfRays; 
     
     % get relevant weights for current beam
-    wOfCurrBeams = resultGUI.w(1+offset:numOfRaysPerBeam+offset);
+    wOfCurrBeams = resultGUI.w(1+offset:numOfRaysPerBeam+offset).* ones(size(stf(i).ray,2),1);
     
-    X = ones(numOfRaysPerBeam,1)*NaN;
-    Z = ones(numOfRaysPerBeam,1)*NaN;
+    X = ones(size(stf(i).ray,2),1)*NaN; %this way it also works with3dconformal
+    Z = ones(size(stf(i).ray,2),1)*NaN;
         
-    for j=1:stf(i).numOfRays
+    for j=1:size(stf(i).ray,2) 
       X(j) = stf(i).ray(j).rayPos_bev(:,1);
       Z(j) = stf(i).ray(j).rayPos_bev(:,3);
     end
@@ -352,15 +352,28 @@ for i = 1:numOfBeams
         clear rightIntLimit;
        
     end
-    
-    sequencing.beam(i).numOfShapes  = k;
-    sequencing.beam(i).shapes       = shapes(:,:,1:k);
-    sequencing.beam(i).shapesWeight = shapesWeight(1:k)/numOfLevels*calFac;
-    sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
-    sequencing.beam(i).fluence      = D_0;
-    
-    sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = D_0(indInFluenceMx)/numOfLevels*calFac;
+    if sum(wOfCurrBeams)>0
 
+        sequencing.beam(i).numOfShapes  = k;
+        sequencing.beam(i).shapes       = shapes(:,:,1:k);
+        sequencing.beam(i).shapesWeight = shapesWeight(1:k)/numOfLevels*calFac;
+        sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
+        sequencing.beam(i).fluence      = D_0;
+
+    else
+        sequencing.beam(i).numOfShapes  = 1;
+        sequencing.beam(i).shapes       = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
+        sequencing.beam(i).shapesWeight = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
+        sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
+        sequencing.beam(i).fluence      = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
+        sequencing.beam(i).sum          = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
+    end
+    
+    if numOfRaysPerBeam >1
+        sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = sequencing.beam(i).sum(indInFluenceMx);
+    else
+        sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = wOfCurrBeams(1);
+    end
     offset = offset + numOfRaysPerBeam;
 
 end

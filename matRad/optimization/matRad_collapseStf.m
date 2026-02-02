@@ -1,4 +1,4 @@
-function dijNew = matRad_collapseDij(dij)
+function stf = matRad_collapseStf(stf)
 % matRad collapse dij function for simulation of 3D conformal treatments.
 % Function to supress intensity-modulation for photons in order to simulate 
 % 3D conformal treatments.
@@ -28,26 +28,9 @@ function dijNew = matRad_collapseDij(dij)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-dijNew.totalNumOfBixels = dij.numOfBeams;
-dijNew.totalNumOfRays   = dij.numOfBeams;
-dijNew.numOfBeams       = dij.numOfBeams;
-dijNew.numOfRaysPerBeam = ones(dij.numOfBeams,1);
+% dummy collapse so that it works with sequencing
 
-dijNew.beamNum          = [1:dij.numOfBeams]';
-dijNew.bixelNum         = [1:dij.numOfBeams]';
-dijNew.rayNum           = [1:dij.numOfBeams]';
-
-dijNew.doseGrid = dij.doseGrid;
-dijNew.ctGrid   = dij.ctGrid;
-
-dijNew.numOfScenarios = dij.numOfScenarios;
-
-for i = 1:dij.numOfScenarios
-    tmp = sparse(dij.doseGrid.numOfVoxels,dij.numOfBeams);          % initialize sparse matrix
-    for j = 1:dij.numOfBeams
-        % Sum only the columns corresponding to beam j
-        tmp(:, j) = sum(dij.physicalDose{i}(:, dij.beamNum == j), 2);
-    end     
-    dijNew.physicalDose{i} = tmp;
+for i = 1:size(stf,2)
+    stf(i).numOfRays = 1;
+    stf(i).totalNumOfBixels = 1;
 end
-
