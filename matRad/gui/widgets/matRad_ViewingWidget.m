@@ -543,14 +543,13 @@ classdef matRad_ViewingWidget < matRad_Widget
             handles = this.handles;
             
             %profile on;
-            axes(handles.axesFig);
+            %axes(handles.axesFig);
             
             % this is necessary to prevent multiple callbacks of update plot drawing on
             % top of each other in matlab <2014
             drawnow;
             
             defaultFontSize     = matRad_cfg.gui.fontSize;
-            currAxes            = axis(handles.axesFig);
             axesHandlesVOI      = cell(0);
             
             axesHandlesCT_Dose  = cell(0);

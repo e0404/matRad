@@ -87,33 +87,6 @@ try
         'ForegroundColor',matRad_cfg.gui.textColor,...
         'BackgroundColor',colorMatrix,...
         'RowStriping','on'); 
-
-    %Try to adapt the position of the table
-    try
-        ext = get(table,'Extent');
-
-        pixPosTableBefore = getpixelposition(table);
-
-        relScrollSize = 16./pixPosTableBefore([3 4]);
-
-        posOld = pos;
-
-        if ext(3) < pos(3)
-            pos(3) = ext(3) + relScrollSize(1);
-            pos(1) = posOld(3) - pos(3);
-        end
-
-        if ext(4) < pos(4)
-            pos(4) = ext(4) + relScrollSize(2);
-            pos(2) = posOld(4) - pos(4);
-        end
-
-        set(table,'Position',pos);
-
-
-
-    catch
-    end
 catch ME
     matRad_cfg.dispWarning('The uitable function is not implemented in %s v%s.',env,vStr);
 end
