@@ -261,12 +261,12 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
                 % Get alpha beta parameters from bioParam struct
                 if isfield(obj.bioParameters, 'tissueAlphaX')
-                    obj.bioParameters.AlphaX = obj.bioModel.tissueAlphaX(1);
-                    obj.bioParameters.BetaX  = obj.bioModel.tissueBetaX(1);
+                    obj.bioParameters.AlphaX = obj.bioModel.tissueAlphaX;
+                    obj.bioParameters.BetaX  = obj.bioModel.tissueBetaX;
                 end
-                if numel(obj.bioParameters.AlphaX)>1
-                    matRad_cfg.dispWarning('!!! Only a unique alpha/beta ratio supported at the moment. Found multiple, only the first one will be used !!!!');
-                end
+                %if numel(obj.bioParameters.AlphaX)>1
+                %    matRad_cfg.dispWarning('!!! Only a unique alpha/beta ratio supported at the moment. Found multiple, only the first one will be used !!!!');
+                %end
 
             end
             if obj.scorer.LET
@@ -944,10 +944,6 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     end
                 end
             end
-
-            if sum(contains(obj.MCparam.tallies, 'CellType'))
-                topasCube = 
-            end
         end
 
         function dataOut = readBinCsvData(~,genFullFile)
@@ -1193,22 +1189,39 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                                 end
                                 % Handle RBE-related quantities (not multiplied by sum(w)!)
                             elseif ~isempty(strfind(lower(topasCubesTallies{j}),'alpha'))
-                                modelName = strsplit(topasCubesTallies{j},'_');
-                                modelName = modelName{end};
+                                talliesFlags = strsplit(topasCubesTallies{j},'_');
+                                modelName = talliesFlags{end};
                                 if isfield(topasCubes,[topasCubesTallies{j} '_beam' num2str(d)]) && iscell(topasCubes.([topasCubesTallies{j} '_beam' num2str(d)]))
                                     
-                                    if contains(topasCubesTallies{j}, 'CellType_1')
-                                       
+                                    if contains(topasCubesTallies{j}, 'CellType')
+                                        ab_idx      = str2num(talliesFlags{2});
+                                        organAlpha  = obj.bioParameters.AlphaX(ab_idx);
+                                        organBeta   = obj.bioParameters.BetaX(ab_idx);
+                                        mask    = find( (dij.ax{1} == organAlpha) & (dij.bx{1} == organBeta));
+                                        topasCube_values = reshape(topasCubes.([topasCubesTallies{j} '_beam',num2str(d)]){ctScen},[],1);
+                                        topasCube_values = topasCube_values(mask,d);
+                                        dij.(['mAlphaDose_' modelName]){ctScen}(mask,d)        = topasCube_values .* dij.physicalDose{ctScen}(mask,d);
                                     else
 
-                                    dij.(['mAlphaDose_' modelName]){ctScen}(:,d)        = reshape(topasCubes.([topasCubesTallies{j} '_beam',num2str(d)]){ctScen},[],1) .* dij.physicalDose{ctScen}(:,d);
+                                        dij.(['mAlphaDose_' modelName]){ctScen}(:,d)        = reshape(topasCubes.([topasCubesTallies{j} '_beam',num2str(d)]){ctScen},[],1) .* dij.physicalDose{ctScen}(:,d);
                                     end
                                 end
                             elseif ~isempty(strfind(lower(topasCubesTallies{j}),'beta'))
                                 modelName = strsplit(topasCubesTallies{j},'_');
                                 modelName = modelName{end};
                                 if isfield(topasCubes,[topasCubesTallies{j} '_beam' num2str(d)]) && iscell(topasCubes.([topasCubesTallies{j} '_beam' num2str(d)]))
+                                    if contains(topasCubesTallies{j}, 'CellType')
+                                        ab_idx      = str2num(talliesFlags{2});
+                                        organAlpha  = obj.bioParameters.AlphaX(ab_idx);
+                                        organBeta   = obj.bioParameters.BetaX(ab_idx);
+                                        mask    = find( (dij.ax{1} == organAlpha) & (dij.bx{1} == organBeta));
+                                        topasCube_values = reshape(topasCubes.([topasCubesTallies{j} '_beam',num2str(d)]){ctScen},[],1);
+                                        topasCube_values = topasCube_values(mask,d);
+                                        dij.(['mBetaDose_' modelName]){ctScen}(mask,d)        = topasCube_values .* dij.physicalDose{ctScen}(mask,d);
+                                    else
+                                    
                                     dij.(['mSqrtBetaDose_' modelName]){ctScen}(:,d)        = sqrt(reshape(topasCubes.([topasCubesTallies{j} '_beam',num2str(d)]){ctScen},[],1)) .* dij.physicalDose{ctScen}(:,d);
+                                    end
                                 end
                             elseif ~isempty(strfind(topasCubesTallies{j},'LET'))
                                 if isfield(topasCubes,[topasCubesTallies{j} '_beam' num2str(d)]) && iscell(topasCubes.([topasCubesTallies{j} '_beam' num2str(d)]))
@@ -1388,34 +1401,21 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     if length(obj.bioParameters.AlphaX) ==1
                         fprintf(fID,'\n%s\n\n',scorerName);
                     else
-                        idxRep = strfind(scorerName, '/McNamaraAlpha/');
                         for idxCell = 1:length(obj.bioParameters.AlphaX)
                             scorerName = generalScorer;
                             insertText = ['_CellType_' num2str(idxCell)];
-                            for idxInsert = 1:length(idxRep)% contains(scorerName, '/McNamaraAlpha/')
-                                tmp = strfind(scorerName, '/McNamaraAlpha/');
-                                scorerName = [scorerName(1:tmp(1)+13) insertText scorerName(tmp(1)+14:end)];
-                                tmp = strfind(scorerName, '/McNamaraBeta/');
-                                scorerName = [scorerName(1:tmp(1)+12) insertText scorerName(tmp(1)+13:end)];
-                            end
-                            for idxInsert = 1:length(strfind(scorerName, 'Sc/PrescribedDose Gy'))    %while contains(scorerName, 'Sc/PrescribedDose Gy') && ~contains(scorerName, 'Sc/PrescribedDose_CellType')
-                                tmp = strfind(scorerName, 'Sc/PrescribedDose Gy');
-                                scorerName = [scorerName(1:tmp(1)+16) insertText scorerName(tmp(1)+17:end)];
-                            end
-                            for idxInsert = 1:length(strfind(scorerName, 'Sc/CellLines'))
-                                tmp  = strfind(scorerName, 'Sc/CellLines');
-                                scorerName = [scorerName(1:tmp(idxInsert)+11) insertText scorerName(tmp(idxInsert)+12:end)];
-                            end
-                            for idxInsert = 1:length(strfind(scorerName, 'Sc/SimultaneousExposure'))
-                            %while contains(scorerName, 'Sc/SimultaneousExposure') && ~contains(scorerName, 'Sc/SimultaneousExposure_CellType')
-                                tmp = strfind(scorerName, 'Sc/SimultaneousExposure');
-                                scorerName = [scorerName(1:tmp(idxInsert)+22) insertText scorerName(tmp(idxInsert)+23:end)];
-                            end
-                            for idxInsert = 1:length(strfind(scorerName, 'Sim/ScoreLabel'))
-                            %while contains(scorerName, 'Sim/ScoreLabel') && ~contains(scorerName, 'Sim/ScoreLabel + "_CellType')
-                                tmp = strfind(scorerName, 'Sim/ScoreLabel');
-                                scorerName = [scorerName(1:tmp(idxInsert)+17) insertText scorerName(tmp(idxInsert)+18:end)];
-                            end
+                            scorerName = strrep(scorerName, ...
+                                'Alpha/', ['Alpha' insertText '/']);
+                            scorerName = strrep(scorerName, ...
+                                'Beta/', ['Beta' insertText '/']);
+                            scorerName = strrep(scorerName, ...
+                                'Sc/PrescribedDose Gy', ['Sc/PrescribedDose' insertText ' Gy']);
+                            scorerName = strrep(scorerName, ...
+                                'Sc/CellLines', ['Sc/CellLines' insertText]);
+                            scorerName = strrep(scorerName, ...
+                                'Sc/SimultaneousExposure', ['Sc/SimultaneousExposure' insertText]);
+                            scorerName = strrep(scorerName, ...
+                                'Sim/ScoreLabel + "', ['Sim/ScoreLabel + "' insertText]);
 
                             fprintf(fID,'\n%s\n\n',scorerName);
                         end
