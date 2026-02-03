@@ -366,14 +366,10 @@ for i = 1:numOfBeams
         sequencing.beam(i).shapesWeight = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
         sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
         sequencing.beam(i).fluence      = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
-        sequencing.beam(i).sum          = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
     end
     
-    if numOfRaysPerBeam >1
-        sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = sequencing.beam(i).sum(indInFluenceMx);
-    else
-        sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = wOfCurrBeams(1);
-    end
+    sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = D_0(indInFluenceMx)/numOfLevels*calFac;
+    
     offset = offset + numOfRaysPerBeam;
 
 end
