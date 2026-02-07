@@ -33,15 +33,17 @@ function [radDepthV, radDepthCube] = matRad_rayTracing(stf,ct,V,rot_coordsV,late
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+precision = class(rot_coordsV);
+
 % set up rad depth cube for results
-radDepthCube = repmat({NaN*ones(ct.cubeDim)},ct.numOfCtScen);
+radDepthCube = repmat({NaN*ones(ct.cubeDim, precision)},ct.numOfCtScen);
 
 % set up ray matrix direct behind last voxel
 rayMx_bev_y = max(rot_coordsV(:,2)) + max([ct.resolution.x ct.resolution.y ct.resolution.z]);
 rayMx_bev_y = rayMx_bev_y + stf.sourcePoint_bev(2);
 
 % set up list with bev coordinates for calculation of radiological depth
-coords = zeros(prod(ct.cubeDim),3);
+coords = zeros(prod(ct.cubeDim),3, precision);
 coords(V,:) = rot_coordsV;
 
 % calculate spacing of rays on ray matrix
@@ -49,10 +51,10 @@ rayMxSpacing = 1/sqrt(2) * min([ct.resolution.x ct.resolution.y ct.resolution.z]
 
 % define candidate ray matrix covering 1000x1000mm^2
 numOfCandidateRays = 2 * ceil(500/rayMxSpacing) + 1;
-candidateRayMx     = zeros(numOfCandidateRays);
+candidateRayMx     = zeros(numOfCandidateRays,'logical');
 
 % define coordinates
-[candidateRaysCoords_X,candidateRaysCoords_Z] = meshgrid(rayMxSpacing*[floor(-500/rayMxSpacing):ceil(500/rayMxSpacing)]);
+[candidateRaysCoords_X,candidateRaysCoords_Z] = meshgrid(cast(rayMxSpacing*[floor(-500/rayMxSpacing):ceil(500/rayMxSpacing)],precision));
 
 % check which rays should be used
 for i = 1:stf.numOfRays
@@ -66,9 +68,9 @@ for i = 1:stf.numOfRays
 end
 
 % set up ray matrix
-rayMx_bev = [candidateRaysCoords_X(logical(candidateRayMx(:))) ...
+rayMx_bev = [candidateRaysCoords_X(candidateRayMx(:)) ...
              rayMx_bev_y*ones(sum(candidateRayMx(:)),1) ...  
-             candidateRaysCoords_Z(logical(candidateRayMx(:)))];
+             candidateRaysCoords_Z(candidateRayMx(:))];
 
 %     figure,
 %     for jj = 1:length(rayMx_bev)

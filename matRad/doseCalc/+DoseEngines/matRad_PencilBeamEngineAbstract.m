@@ -97,7 +97,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                 scenStf = stf;
                 % manipulate isocenter
                 for k = 1:numel(scenStf)
-                    scenStf(k).isoCenter = scenStf(k).isoCenter + this.multScen.isoShift(ixShiftScen,:); 
+                    scenStf(k).isoCenter = cast(scenStf(k).isoCenter + this.multScen.isoShift(ixShiftScen,:),this.precision); 
                 end
 
                 if this.multScen.totNumShiftScen > 1
@@ -178,9 +178,9 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                 ct = matRad_calcWaterEqD(ct, stf); % Maybe we can avoid duplicating the CT here?
             end
 
-            this.cubeWED = ct.cube;
+            this.cubeWED = cellfun(@(x) cast(x,this.precision),ct.cube, 'UniformOutput',false);
             if isfield(ct,'hlut')
-                this.hlut = ct.hlut;
+                this.hlut = cast(ct.hlut,this.precision);
             end
 
             % ignore densities outside of contours
@@ -213,13 +213,17 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                 %Now preallocate a matrix in each active scenario using the
                 %scenmask
                 if this.calcDoseDirect
-                    dij.(names{n})(this.multScen.scenMask) = {zeros(dij.doseGrid.numOfVoxels,this.numOfColumnsDij)};
+                    dij.(names{n})(this.multScen.scenMask) = {zeros(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,this.precision)};
                 else
                     %We preallocate a sparse matrix with sparsity of
                     %1e-3 to make the filling slightly faster
                     %TODO: the preallocation could probably
-                    %have more accurate estimates
-                    dij.(names{n})(this.multScen.scenMask) = {spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,round(prod(dij.doseGrid.numOfVoxels,this.numOfColumnsDij)*1e-3))};
+                    %have more accurate estimates                    
+                    if this.allowsSinglePrecisionSparseDij()
+                        dij.(names{n})(this.multScen.scenMask) = {spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,round(prod(dij.doseGrid.numOfVoxels,this.numOfColumnsDij)*1e-3),this.precision)};                        
+                    else
+                        dij.(names{n})(this.multScen.scenMask) = {spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,round(prod(dij.doseGrid.numOfVoxels,this.numOfColumnsDij)*1e-3))};
+                    end
                 end
             end
         end
@@ -256,7 +260,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             % Do not transpose matrix since we usage of row vectors &
             % transformation of the coordinate system need double transpose
 
-            currBeam.rotMat_system_T = matRad_getRotationMatrix(currBeam.gantryAngle,currBeam.couchAngle);
+            currBeam.rotMat_system_T = cast(matRad_getRotationMatrix(currBeam.gantryAngle,currBeam.couchAngle),this.precision);
 
             % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
             rot_coordsV         = coordsV*currBeam.rotMat_system_T;
@@ -306,11 +310,11 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             %matRad_progress(1,1000);
         end
         
-        function radDepthVdoseGrid = interpRadDepth(~,ct,ctScen,V,Vcoarse,ctGrid,doseGrid,radDepthVctGrid)                        
+        function radDepthVdoseGrid = interpRadDepth(this,ct,ctScen,V,Vcoarse,ctGrid,doseGrid,radDepthVctGrid)                        
             for i = 1:numel(ctScen)
                 ctScenNum = ctScen(i);
 
-                radDepthCube                = NaN*ones(ct.cubeDim);
+                radDepthCube                = NaN*ones(ct.cubeDim,this.precision);
                 radDepthCube(V(~isnan(radDepthVctGrid{1}))) = radDepthVctGrid{ctScenNum}(~isnan(radDepthVctGrid{1}));
 
                 % interpolate cube - cube is now stored in Y X Z
@@ -428,6 +432,9 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                         %this.tmpMatrixContainers.(qName){bixelContainerColIx,1} = zeros(dij.doseGrid.numOfVoxels,1);                        
                         %this.tmpMatrixContainers.(qName){bixelContainerColIx,1}(this.VdoseGrid(bixel.ix)) = bixel.(qName);
                     else
+                        if ~this.allowsSinglePrecisionSparseDij()
+                            bixel.(qName) = double(bixel.(qName));
+                        end
                         this.tmpMatrixContainers.(qName){bixelContainerColIx,subScenIdx{:}} = sparse(bixel.ix,1,bixel.(qName),dij.doseGrid.numOfVoxels,1);
                     end
                 end

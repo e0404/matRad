@@ -24,7 +24,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
        shortName;               % short identifier by which matRad recognizes an engine
        name;                    % user readable name for dose engine
        possibleRadiationModes;  % radiation modes the engine is meant to process
-       %supportedQuantities;    % supported (influence) quantities. Does not include quantities that can be derived post-calculation.
+       %supportedQuantities;    % supported (influence) quantities. Does not include quantities that can be derived post-calculation.       
     end    
     
     % Public properties
@@ -33,7 +33,8 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         multScen;                   % scenario model to use
         voxelSubIx;                 % selection of where to calculate / store dose, empty by default
         selectVoxelsInScenarios;    % which voxels to compute in robustness scenarios
-        %bioModel;                   % name of the biological model
+        precision = 'single'        % floating point precision for the dij and computations.
+        %bioModel;                  % name of the biological model
     end
     
     % Protected properties with public get access
@@ -414,6 +415,11 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             
             % Reset the timer for the next progress update
             this.lastProgressUpdate = tic;
+        end
+    
+        function allows = allowsSinglePrecisionSparseDij(~)
+            matRad_cfg = MatRad_Config.instance();
+            allows = matRad_cfg.isMatlab & str2double(matRad_cfg.envVersion) >= 25; %single precision sparse is not supported
         end
     end
     
