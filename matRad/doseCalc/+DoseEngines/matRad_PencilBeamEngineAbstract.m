@@ -33,6 +33,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
     properties (SetAccess = protected)
         effectiveLateralCutOff;         %internal cutoff to be used, computed from machine/pencil-beam kernel properties and geometric/dosimetric cutoff settings
+        rayTracer;
     end
 
     properties (SetAccess = protected, GetAccess = public)
@@ -193,7 +194,9 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             end
 
             % Allocate memory for quantity containers
-            dij = this.allocateQuantityMatrixContainers(dij,{'physicalDose'});            
+            dij = this.allocateQuantityMatrixContainers(dij,{'physicalDose'});
+
+            this.rayTracer = matRad_RayTracerSiddon(this.cubeWED,dij.ctGrid);
         end
 
         function dij = allocateQuantityMatrixContainers(this,dij,names)
@@ -275,17 +278,18 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             % Calculate radiological depth cube
             matRad_cfg.dispInfo('matRad: calculate radiological depth cube... ');
 
-            ct.cube = this.cubeWED;
-            if this.keepRadDepthCubes
-                [radDepthVctGrid, currBeam.radDepthCube] = matRad_rayTracing(currBeam,ct,this.VctGrid,rot_coordsV,this.effectiveLateralCutOff);
+            this.rayTracer.lateralCutOff = this.effectiveLateralCutOff;
+            if this.keepRadDepthCubes                
+                [radDepthVctGrid, currBeam.radDepthCube] = this.rayTracer.traceCube(currBeam,this.VctGrid,rot_coordsV);
 
                 currBeam.radDepthCube = cellfun(@(rD) matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z, rD, ...
                     dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest'),currBeam.radDepthCube,'UniformOutput',false);
                 this.radDepthCubes(i,:) = currBeam.radDepthCube(:);
             else
-                radDepthVctGrid = matRad_rayTracing(currBeam,ct,this.VctGrid,rot_coordsV,this.effectiveLateralCutOff);
+                radDepthVctGrid = this.rayTracer.traceCube(currBeam,this.VctGrid,rot_coordsV);
             end
             
+            ct.cube = this.cubeWED;
             % interpolate radiological depth cube to dose grid resolution
             radDepthVdoseGrid = this.interpRadDepth(ct,1:ct.numOfCtScen,this.VctGrid,this.VdoseGrid,dij.ctGrid,dij.doseGrid,radDepthVctGrid);
             
