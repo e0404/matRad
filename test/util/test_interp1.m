@@ -170,6 +170,14 @@ function test_matRad_interp1_extrapolation_nearest
     assertTrue(all(y(ixSmaller) == 1));
     assertTrue(all(y(ixInside) == 2.5));
     assertTrue(all(y(ixLarger) == 4));
+
+function test_matRad_interp1_multi_single
+    dataY = (1:100)' .* ones(100,2);
+    dataX = (1:100)' .* ones(100,1);
+    query = dataX(1:end-1) + 0.5;
+
+    result = matRad_interp1(dataX,dataY,query);
+    assertTrue(all(result == dataY(1:end-1,:) + 0.5,'all'));
     
 
 function test_matRad_interp1_errors
