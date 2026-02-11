@@ -96,7 +96,7 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
             
             % Run fmincon.
             [obj.wResult,fVal,exitflag,info] = fmincon(@(x) obj.fmincon_objAndGradWrapper(x,optiProb,dij,cst),...
-                w0,... % Starting Point
+                double(w0),... % Starting Point
                 [],[],... % Linear Constraints we do not explicitly use
                 [],[],... % Also no linear inequality constraints
                 lb,ub,... % Lower and upper bounds for optimization variable
@@ -109,8 +109,8 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
         end
         
         function [f, fGrad] = fmincon_objAndGradWrapper(obj,x,optiProb,dij,cst)
-            f = optiProb.matRad_objectiveFunction(x,dij,cst);
-            fGrad = optiProb.matRad_objectiveGradient(x,dij,cst);
+            f = double(optiProb.matRad_objectiveFunction(x,dij,cst));
+            fGrad = double(optiProb.matRad_objectiveGradient(x,dij,cst));
         end
         
         function [c,cEq,cJacob,cEqJacob] = fmincon_nonlconWrapper(obj,x,optiProb,dij,cst)
@@ -148,8 +148,8 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
             cJacobU = cJacob(ineqIx & cuFinIx,:);
             
             %build the inequality jacobian
-            c = [cL; cU];
-            cJacob = transpose([cJacobL; cJacobU]);
+            c = double([cL; cU]);
+            cJacob = double(transpose([cJacobL; cJacobU]));
         end
         
         function [statusmsg,statusflag] = GetStatus(obj)
