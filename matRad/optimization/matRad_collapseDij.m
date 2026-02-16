@@ -33,21 +33,43 @@ dijNew.totalNumOfRays   = dij.numOfBeams;
 dijNew.numOfBeams       = dij.numOfBeams;
 dijNew.numOfRaysPerBeam = ones(dij.numOfBeams,1);
 
-dijNew.beamNum          = [1:dij.numOfBeams]';
-dijNew.bixelNum         = [1:dij.numOfBeams]';
-dijNew.rayNum           = [1:dij.numOfBeams]';
+dijNew.beamNum          = (1:dij.numOfBeams)';
+dijNew.bixelNum         = ones(dij.numOfBeams, 1);
+dijNew.rayNum           = ones(dij.numOfBeams,1);
+
+if isfield(dij,'numParticlesPerMU')
+    dijNew.numParticlesPerMU = zeros(dij.numOfBeams,1);
+    for j = 1:dij.numOfBeams
+        dijNew.numParticlesPerMU(j) = sum(dij.numParticlesPerMU(dij.beamNum == j));
+    end
+end
 
 dijNew.doseGrid = dij.doseGrid;
 dijNew.ctGrid   = dij.ctGrid;
 
 dijNew.numOfScenarios = dij.numOfScenarios;
 
-for i = 1:dij.numOfScenarios
-    tmp = sparse(dij.doseGrid.numOfVoxels,dij.numOfBeams);          % initialize sparse matrix
-    for j = 1:dij.numOfBeams
-        % Sum only the columns corresponding to beam j
-        tmp(:, j) = sum(dij.physicalDose{i}(:, dij.beamNum == j), 2);
-    end     
-    dijNew.physicalDose{i} = tmp;
+collapsableQuantites = {'physicalDose', 'mLETDose', 'mAlphaDose', 'mSqrtBetaDose'};
+
+% Identify quantities present in dij
+quantitiesToCollapse = collapsableQuantites(ismember(collapsableQuantites, fieldnames(dij)));
+
+for q = 1:numel(quantitiesToCollapse)
+    quantityName = quantitiesToCollapse{q};
+    
+    for i = 1:numel(dij.(quantityName))
+        if isempty(dij.(quantityName){i})
+            dijNew.(quantityName){i} = [];
+            continue;
+        end
+
+        tmp = sparse(dij.doseGrid.numOfVoxels,dij.numOfBeams);          % initialize sparse matrix
+        for j = 1:dij.numOfBeams
+            % Sum only the columns corresponding to beam j
+            tmp(:, j) = sum(dij.(quantityName){i}(:, dij.beamNum == j), 2);
+        end     
+        dijNew.(quantityName){i} = tmp;
+    end
+
 end
 
