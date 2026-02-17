@@ -1,0 +1,30 @@
+---
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.0.1
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-symlinks
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+    - id: codespell
+
+  - repo: https://github.com/florianschanda/miss_hit
+    rev: 0.9.44
+    hooks:
+    - id: mh_style
+      name: MISS_HIT style check (MATLAB)
+      files: \.m$
+    - id: mh_metric
+      name: MISS_HIT metric check (MATLAB)
+      files: \.m$
+    - id: mh_lint
+      name: MISS_HIT lint check (MATLAB)
+      files: \.m$
