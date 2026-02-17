@@ -26,7 +26,7 @@ function test_collapse_dij_numeric_photon
         if ~isempty(dijNew.physicalDose{i})
             assertEqual(size(dijNew.physicalDose{i},1), size(testData.dij.physicalDose{i},1));
             assertEqual(size(dijNew.physicalDose{i},2), testData.dij.numOfBeams);
-            assertElementsAlmostEqual(sum(dijNew.physicalDose{i},"all"), sum(testData.dij.physicalDose{i},"all"), 'relative', 1e-5, 1e-5);
+            assertElementsAlmostEqual(sum(dijNew.physicalDose{i}(:)), sum(testData.dij.physicalDose{i}(:)), 'relative', 1e-5, 1e-5);
         end
     end
 
@@ -57,7 +57,7 @@ function test_collapse_dij_numeric_proton
             if ~isempty(dijNew.(quantities{q}))
                 assertEqual(size(dijNew.(quantities{q}){i},1), size(testData.dij.(quantities{q}){i},1));
                 assertEqual(size(dijNew.(quantities{q}){i},2), testData.dij.numOfBeams);
-                assertElementsAlmostEqual(sum(dijNew.(quantities{q}){i},"all"), sum(testData.dij.(quantities{q}){i},"all"), 'relative', 1e-5, 1e-5);
+                assertElementsAlmostEqual(sum(dijNew.(quantities{q}){i}(:)), sum(testData.dij.(quantities{q}){i}(:)), 'relative', 1e-5, 1e-5);
             end
         end
     end
@@ -89,7 +89,7 @@ function test_collapse_dij_numeric_carbon
             if ~isempty(dijNew.(quantities{q}))
                 assertEqual(size(dijNew.(quantities{q}){i},1), size(testData.dij.(quantities{q}){i},1));
                 assertEqual(size(dijNew.(quantities{q}){i},2), testData.dij.numOfBeams);
-                assertElementsAlmostEqual(sum(dijNew.(quantities{q}){i},"all"), sum(testData.dij.(quantities{q}){i},"all"), 'relative', 1e-5, 1e-5);
+                assertElementsAlmostEqual(sum(dijNew.(quantities{q}){i}(:)), sum(testData.dij.(quantities{q}){i}(:)), 'relative', 1e-5, 1e-5);
             end
         end
     end
