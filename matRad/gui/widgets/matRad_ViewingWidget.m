@@ -858,8 +858,8 @@ classdef matRad_ViewingWidget < matRad_Widget
                 if ~isempty(WEPL_Target_Entry) && ~isempty(WEPL_Target_Exit)
                     hold(handles.axesFig,'on');
                     PlotHandles{Cnt,1} = ...
-                        plot([WEPL_Target_Entry WEPL_Target_Entry],get(handles.axesFig,'YLim'),'--','Linewidth',3,'color',matRad_cfg.gui.highlightColor);hold(handles.axesFig,'on');
-                    plot([WEPL_Target_Exit WEPL_Target_Exit],get(handles.axesFig,'YLim'),'--','Linewidth',3,'color',matRad_cfg.gui.highlightColor);hold(handles.axesFig,'on');
+                        plot(handles.axesFig,[WEPL_Target_Entry WEPL_Target_Entry],get(handles.axesFig,'YLim'),'--','Linewidth',3,'color',matRad_cfg.gui.highlightColor);hold(handles.axesFig,'on');
+                    plot(handles.axesFig,[WEPL_Target_Exit WEPL_Target_Exit],get(handles.axesFig,'YLim'),'--','Linewidth',3,'color',matRad_cfg.gui.highlightColor);hold(handles.axesFig,'on');
                     
                 else
                     PlotHandles{Cnt,1} =[];
