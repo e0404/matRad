@@ -743,16 +743,19 @@ classdef matRad_ViewingWidget < matRad_Widget
                     targetPointBEV = [ SAD this.profileOffset   0];
                 end
                 
-                rotSourcePointBEV = sourcePointBEV * rotMat_system_T;
-                rotTargetPointBEV = targetPointBEV * rotMat_system_T;
+                rotSourcePoint = sourcePointBEV * rotMat_system_T;
+                rotTargetPoint = targetPointBEV * rotMat_system_T;
                 
                 % perform raytracing on the central axis of the selected beam, use unit
                 % electron density for plotting against the geometrical depth
-                cubeIsoCenter = matRad_world2cubeCoords(pln.propStf.isoCenter(this.selectedBeam,:),ct);
-                [~,l,rho,~,ix] = matRad_siddonRayTracer(cubeIsoCenter,ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{0*ct.cubeHU{1}+1});
-                d = [0 l .* rho{1}];
+                % cubeIsoCenter = matRad_world2cubeCoords(pln.propStf.isoCenter(this.selectedBeam,:),ct);
+                % [~,l,rho,~,ix] = matRad_siddonRayTracer(cubeIsoCenter,ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{0*ct.cubeHU{1}+1});
+                rayTracer = matRad_RayTracerSiddon(ct.cubeHU,ct);
+                [~,l,~,~,ix] = rayTracer.traceRay(pln.propStf.isoCenter(this.selectedBeam,:),rotSourcePoint,rotTargetPoint);
+                d = [0 l];
                 % Calculate accumulated d sum.
                 vX = cumsum(d(1:end-1));
+
                
                 % plot physical dose
                 %Content =this.SelectedDisplayOption; %get(this.popupDisplayOption,'String');
