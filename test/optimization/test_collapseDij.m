@@ -29,6 +29,10 @@ function test_collapse_dij_numeric_photon
             assertElementsAlmostEqual(sum(dijNew.physicalDose{i}(:)), sum(testData.dij.physicalDose{i}(:)), 'relative', 1e-5, 1e-5);
         end
     end
+
+function test_collapse_dij_numeric_photon_ray
+
+    testData = load('photons_testData.mat');
     % RayWise Test , raywise for photons should not do anything
     dijNew = matRad_collapseDij(testData.dij,'ray');
     assertEqual(dijNew.totalNumOfBixels, testData.dij.totalNumOfBixels);
@@ -83,15 +87,22 @@ function test_collapse_dij_numeric_proton
             end
         end
     end
+    % wrong mode test
+    assertExceptionThrown(@() matRad_collapseDij(testData.dij,2));
+    assertExceptionThrown(@() matRad_collapseDij(testData.dij,'rab'));
+
+function test_collapse_dij_numeric_proton_ray
+    testData = load('protons_testData.mat');
+    
     % RayWiseTest
     dijNew = matRad_collapseDij(testData.dij,'ray');
     assertEqual(dijNew.totalNumOfBixels, testData.dij.totalNumOfRays);
     assertEqual(dijNew.totalNumOfRays, testData.dij.totalNumOfRays);
     assertEqual(dijNew.numOfBeams, testData.dij.numOfBeams);
-    assertEqual(dijNew.numOfRaysPerBeam, ones(testData.dij.numOfBeams,1)'*5);
-    assertEqual(dijNew.beamNum, [1;1;1;1;1;2;2;2;2;2]);
+    assertEqual(dijNew.numOfRaysPerBeam, testData.dij.numOfRaysPerBeam);
+    assertEqual(dijNew.beamNum, transpose(cell2mat(arrayfun(@(x) repelem(x,dijNew.numOfRaysPerBeam(x)),1:dijNew.numOfBeams,'UniformOutput',false))));
     assertEqual(dijNew.bixelNum, ones(testData.dij.totalNumOfRays, 1));
-    assertEqual(dijNew.rayNum, [1;2;3;4;5;1;2;3;4;5]);
+    assertEqual(dijNew.rayNum, transpose(cell2mat(arrayfun(@(x) 1:x,dijNew.numOfRaysPerBeam,'UniformOutput',false))));
     assertEqual(numel(dijNew.numParticlesPerMU),testData.dij.totalNumOfRays);
     assertEqual(sum(dijNew.numParticlesPerMU),sum(testData.dij.numParticlesPerMU));
     assertEqual(dijNew.doseGrid, testData.dij.doseGrid)
@@ -112,8 +123,9 @@ function test_collapse_dij_numeric_proton
         end
     end
     % wrong mode test
-    assertExceptionThrown(@() matRad_collapseDij(testData.dij,2),'MATLAB:unrecognizedStringChoice');
-    assertExceptionThrown(@() matRad_collapseDij(testData.dij,'rab'),'MATLAB:unrecognizedStringChoice');
+    assertExceptionThrown(@() matRad_collapseDij(testData.dij,2));
+    assertExceptionThrown(@() matRad_collapseDij(testData.dij,'rab'));
+
 function test_collapse_dij_numeric_carbon
     % matrix
     testData = load('carbon_testData.mat');
@@ -145,24 +157,28 @@ function test_collapse_dij_numeric_carbon
             end
         end
     end
+
+function test_collapse_dij_numeric_carbon_ray
+    % matrix
+    testData = load('carbon_testData.mat');
     %Ray wise test
     dijNew = matRad_collapseDij(testData.dij,'ray');
     assertEqual(dijNew.totalNumOfBixels, testData.dij.totalNumOfRays);
     assertEqual(dijNew.totalNumOfRays, testData.dij.totalNumOfRays);
     assertEqual(dijNew.numOfBeams, testData.dij.numOfBeams);
-    assertEqual(dijNew.numOfRaysPerBeam, ones(testData.dij.numOfBeams,1)'*5);
-    assertEqual(dijNew.beamNum, [1;1;1;1;1;2;2;2;2;2]);
+    assertEqual(dijNew.numOfRaysPerBeam, testData.dij.numOfRaysPerBeam);
+    assertEqual(dijNew.beamNum, transpose(cell2mat(arrayfun(@(x) repelem(x,dijNew.numOfRaysPerBeam(x)),1:dijNew.numOfBeams,'UniformOutput',false))));
     assertEqual(dijNew.bixelNum, ones(testData.dij.totalNumOfRays, 1));
-    assertEqual(dijNew.rayNum, [1;2;3;4;5;1;2;3;4;5]);
+    assertEqual(dijNew.rayNum, transpose(cell2mat(arrayfun(@(x) 1:x,dijNew.numOfRaysPerBeam,'UniformOutput',false))));
     assertEqual(numel(dijNew.numParticlesPerMU),testData.dij.totalNumOfRays);
     assertEqual(sum(dijNew.numParticlesPerMU),sum(testData.dij.numParticlesPerMU));
-    assertEqual(dijNew.doseGrid, testData.dij.doseGrid);
+    assertEqual(dijNew.doseGrid, testData.dij.doseGrid)
     assertEqual(dijNew.ctGrid, testData.dij.ctGrid);
 
     assertEqual(size(dijNew.physicalDose), size(testData.dij.physicalDose));
     assertEqual(cellfun(@isempty, dijNew.physicalDose), cellfun(@isempty, testData.dij.physicalDose));    
     
-     quantities = {'physicalDose','mLETDose','mAlphaDose','mSqrtBetaDose'};
+    quantities = {'physicalDose','mLETDose','mAlphaDose','mSqrtBetaDose'};
 
     for q = 1:numel(quantities)    
         for i = 1:numel(dijNew.(quantities{q}))
@@ -174,5 +190,5 @@ function test_collapse_dij_numeric_carbon
         end
     end
     % wrong mode test
-    assertExceptionThrown(@() matRad_collapseDij(testData.dij,2),'MATLAB:unrecognizedStringChoice');
-    assertExceptionThrown(@() matRad_collapseDij(testData.dij,'rab'),'MATLAB:unrecognizedStringChoice');
+    assertExceptionThrown(@() matRad_collapseDij(testData.dij,2));
+    assertExceptionThrown(@() matRad_collapseDij(testData.dij,'rab'));
