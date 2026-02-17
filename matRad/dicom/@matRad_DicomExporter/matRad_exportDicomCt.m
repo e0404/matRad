@@ -110,7 +110,7 @@ for i = 1:nSlices
     
     obj.ctSliceMetas(i).ImagePositionPatient = [ct.x(1); ct.y(1); ct.z(i)];
     
-    obj.ctSliceMetas(i).SlicePositions = z(i);
+    obj.ctSliceMetas(i).SliceLocation = z(i);
     
     %Create and store unique ID
     obj.ctSliceMetas(i).SOPClassUID    = ClassUID;
