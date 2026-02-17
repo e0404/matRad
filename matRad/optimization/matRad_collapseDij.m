@@ -1,4 +1,4 @@
-function dijNew = matRad_collapseDij(dij)
+function dijNew = matRad_collapseDij(dij, mode)
 % matRad collapse dij function for simulation of 3D conformal treatments.
 % Function to supress intensity-modulation for photons in order to simulate 
 % 3D conformal treatments.
@@ -8,6 +8,7 @@ function dijNew = matRad_collapseDij(dij)
 %
 % input
 %   dij:    dose influence matrix
+%   mode:   collpase mode, beam or ray
 %
 % output
 %   dijNew: collapsed dose influence matrix
@@ -28,19 +29,48 @@ function dijNew = matRad_collapseDij(dij)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-dijNew.totalNumOfBixels = dij.numOfBeams;
-dijNew.totalNumOfRays   = dij.numOfBeams;
-dijNew.numOfBeams       = dij.numOfBeams;
-dijNew.numOfRaysPerBeam = ones(dij.numOfBeams,1);
+ if nargin < 2
+     mode = 'beam'; % default
+ end
+ validatestring(mode, {'beam','ray'});
 
-dijNew.beamNum          = (1:dij.numOfBeams)';
-dijNew.bixelNum         = ones(dij.numOfBeams, 1);
-dijNew.rayNum           = ones(dij.numOfBeams,1);
+  switch mode
+      case 'beam'
+            dijNew.totalNumOfBixels = dij.numOfBeams;
+            dijNew.totalNumOfRays   = dij.numOfBeams;
+            dijNew.numOfBeams       = dij.numOfBeams;
+            dijNew.numOfRaysPerBeam = ones(dij.numOfBeams,1);
+            
+            dijNew.beamNum          = (1:dij.numOfBeams)';
+            dijNew.bixelNum         = ones(dij.numOfBeams, 1);
+            dijNew.rayNum           = ones(dij.numOfBeams,1);
+      case 'ray'
+            dijNew.totalNumOfBixels = dij.totalNumOfRays;
+            dijNew.totalNumOfRays   = dij.totalNumOfRays;
+            dijNew.numOfBeams       = dij.numOfBeams;
+            dijNew.numOfRaysPerBeam = dij.numOfRaysPerBeam;
+
+            dijNew.beamNum          = repelem(1:dij.numOfBeams, dij.numOfRaysPerBeam(:))';
+            dijNew.bixelNum         = ones(dij.totalNumOfRays, 1);
+            dijNew.rayNum           = cell2mat(arrayfun(@(n) 1:n, dij.numOfRaysPerBeam, 'UniformOutput', false))';
+
+            totNumRays =  [0,cumsum(dij.numOfRaysPerBeam)];
+  end
 
 if isfield(dij,'numParticlesPerMU')
-    dijNew.numParticlesPerMU = zeros(dij.numOfBeams,1);
-    for j = 1:dij.numOfBeams
-        dijNew.numParticlesPerMU(j) = sum(dij.numParticlesPerMU(dij.beamNum == j));
+    switch mode
+        case 'beam'
+            dijNew.numParticlesPerMU = zeros(dij.numOfBeams,1);
+            for j = 1:dij.numOfBeams
+                dijNew.numParticlesPerMU(j) = sum(dij.numParticlesPerMU(dij.beamNum == j));
+            end
+        case 'ray'
+            dijNew.numParticlesPerMU = zeros(dij.totalNumOfRays,1);
+            for j = 1:dij.numOfBeams
+                for k = 1:dij.numOfRaysPerBeam(j)
+                   dijNew.numParticlesPerMU(totNumRays(j) + k) = sum(dij.numParticlesPerMU((dij.rayNum == k)&(dij.beamNum == j)));
+                end
+            end
     end
 end
 
@@ -62,14 +92,23 @@ for q = 1:numel(quantitiesToCollapse)
             dijNew.(quantityName){i} = [];
             continue;
         end
-
-        tmp = sparse(dij.doseGrid.numOfVoxels,dij.numOfBeams);          % initialize sparse matrix
-        for j = 1:dij.numOfBeams
-            % Sum only the columns corresponding to beam j
-            tmp(:, j) = sum(dij.(quantityName){i}(:, dij.beamNum == j), 2);
-        end     
+        switch mode
+            case 'beam'
+                tmp = sparse(dij.doseGrid.numOfVoxels,dij.numOfBeams);          % initialize sparse matrix
+                for j = 1:dij.numOfBeams
+                    % Sum only the columns corresponding to beam j
+                    tmp(:, j) = sum(dij.(quantityName){i}(:, dij.beamNum == j), 2);
+                end  
+            case 'ray'
+                tmp = sparse(dij.doseGrid.numOfVoxels,dij.totalNumOfRays);
+                for j = 1:dij.numOfBeams
+                    for k = 1:dij.numOfRaysPerBeam(j)
+                        tmp(:, totNumRays(j) + k) = sum(dij.(quantityName){i}(:, (dij.rayNum == k)&(dij.beamNum == j)),2);
+                    end
+                end
+        end
         dijNew.(quantityName){i} = tmp;
-    end
+     end
 
 end
 

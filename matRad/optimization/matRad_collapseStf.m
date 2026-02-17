@@ -1,13 +1,14 @@
-function stf = matRad_collapseStf(stf)
-% matRad collapse dij function for simulation of 3D conformal treatments.
+function stf = matRad_collapseStf(stf,mode)
+% matRad collapse stf function for simulation of 3D conformal treatments.
 % Function to supress intensity-modulation for photons in order to simulate 
 % 3D conformal treatments.
 %
 % call
-%   dijNew = matRad_collapseDij(dij)
+%   stf = matRad_collapseStd(stf)
 %
 % input
-%   dij:    dose influence matrix
+%   stf:    steering information
+%   mode:   collpase mode, beam or ray
 %
 % output
 %   dijNew: collapsed dose influence matrix
@@ -30,7 +31,19 @@ function stf = matRad_collapseStf(stf)
 
 % dummy collapse so that it works with sequencing
 
-for i = 1:size(stf,2)
-    stf(i).numOfRays = 1;
-    stf(i).totalNumOfBixels = 1;
+ if nargin < 2
+     mode = 'beam'; % default
+ end
+ validatestring(mode, {'beam','ray'});
+
+switch mode
+    case 'beam'
+        for i = 1:size(stf,2)
+            stf(i).numOfRays = 1;
+            stf(i).totalNumOfBixels = 1;
+        end
+    case 'ray'
+        for i = 1:size(stf,2)
+            stf(i).totalNumOfBixels = stf(i).numOfRays;
+        end
 end
