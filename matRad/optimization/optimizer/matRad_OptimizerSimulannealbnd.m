@@ -33,7 +33,7 @@ classdef matRad_OptimizerSimulannealbnd < matRad_Optimizer
             matRad_cfg = MatRad_Config.instance();
 
             if ~matRad_OptimizerSimulannealbnd.IsAvailable()
-                matRad_cfg.dipsError('matRad_OptimizerSimulannealbnd cannot be constructed as simulannealbnd is not available!');
+                matRad_cfg.dispError('matRad_OptimizerSimulannealbnd cannot be constructed as simulannealbnd is not available!');
             end
             
             obj.wResult = [];
@@ -52,7 +52,7 @@ classdef matRad_OptimizerSimulannealbnd < matRad_Optimizer
             if matRad_cfg.disableGUI
                 pltFcns = {[]};                
             else
-                pltFcns = {@saplotbestf,@saplotbestx, @saplotf,@saplotx,@saplotstopping,@saplottemperature};
+                
             end
             
             % Create default optimizer options
@@ -79,6 +79,12 @@ classdef matRad_OptimizerSimulannealbnd < matRad_Optimizer
                 
             % Define the objective function
             objectiveFunction = @(x) optiProb.matRad_objectiveFunction(x, dij, cst);
+
+            if obj.showPlot && ~matRad_cfg.disableGUI
+                obj.options.PlotFcn = {@saplotbestf,@saplotbestx, @saplotf,@saplotx,@saplotstopping,@saplottemperature};
+            else
+                obj.options.PlotFcn = {[]};
+            end
             
             % Run simulated annealing optimization
             [obj.wResult, fVal, exitflag, info] = simulannealbnd(objectiveFunction, w0, lb, ub, obj.options);
