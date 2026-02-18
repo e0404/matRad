@@ -93,16 +93,15 @@ function test_collapse_dij_numeric_proton
 
 function test_collapse_dij_numeric_proton_ray
     testData = load('protons_testData.mat');
-    
     % RayWiseTest
     dijNew = matRad_collapseDij(testData.dij,'ray');
     assertEqual(dijNew.totalNumOfBixels, testData.dij.totalNumOfRays);
     assertEqual(dijNew.totalNumOfRays, testData.dij.totalNumOfRays);
     assertEqual(dijNew.numOfBeams, testData.dij.numOfBeams);
     assertEqual(dijNew.numOfRaysPerBeam, testData.dij.numOfRaysPerBeam);
-    assertEqual(dijNew.beamNum, transpose(cell2mat(arrayfun(@(x) repelem(x,dijNew.numOfRaysPerBeam(x)),1:dijNew.numOfBeams,'UniformOutput',false))));
+    assertEqual(dijNew.beamNum, reshape(cell2mat(arrayfun(@(x) repelem(x,dijNew.numOfRaysPerBeam(x)),1:dijNew.numOfBeams,'UniformOutput',false)),[],1));
     assertEqual(dijNew.bixelNum, ones(testData.dij.totalNumOfRays, 1));
-    assertEqual(dijNew.rayNum, transpose(cell2mat(arrayfun(@(x) 1:x,dijNew.numOfRaysPerBeam,'UniformOutput',false))));
+    assertEqual(dijNew.rayNum, reshape(cell2mat(arrayfun(@(x) 1:x,dijNew.numOfRaysPerBeam,'UniformOutput',false)),[],1));
     assertEqual(numel(dijNew.numParticlesPerMU),testData.dij.totalNumOfRays);
     assertEqual(sum(dijNew.numParticlesPerMU),sum(testData.dij.numParticlesPerMU));
     assertEqual(dijNew.doseGrid, testData.dij.doseGrid)
@@ -167,9 +166,9 @@ function test_collapse_dij_numeric_carbon_ray
     assertEqual(dijNew.totalNumOfRays, testData.dij.totalNumOfRays);
     assertEqual(dijNew.numOfBeams, testData.dij.numOfBeams);
     assertEqual(dijNew.numOfRaysPerBeam, testData.dij.numOfRaysPerBeam);
-    assertEqual(dijNew.beamNum, transpose(cell2mat(arrayfun(@(x) repelem(x,dijNew.numOfRaysPerBeam(x)),1:dijNew.numOfBeams,'UniformOutput',false))));
+    assertEqual(dijNew.beamNum, reshape(cell2mat(arrayfun(@(x) repelem(x,dijNew.numOfRaysPerBeam(x)),1:dijNew.numOfBeams,'UniformOutput',false)),[],1));
     assertEqual(dijNew.bixelNum, ones(testData.dij.totalNumOfRays, 1));
-    assertEqual(dijNew.rayNum, transpose(cell2mat(arrayfun(@(x) 1:x,dijNew.numOfRaysPerBeam,'UniformOutput',false))));
+    assertEqual(dijNew.rayNum, reshape(cell2mat(arrayfun(@(x) 1:x,dijNew.numOfRaysPerBeam,'UniformOutput',false)),[],1));
     assertEqual(numel(dijNew.numParticlesPerMU),testData.dij.totalNumOfRays);
     assertEqual(sum(dijNew.numParticlesPerMU),sum(testData.dij.numParticlesPerMU));
     assertEqual(dijNew.doseGrid, testData.dij.doseGrid)
