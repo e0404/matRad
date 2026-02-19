@@ -424,9 +424,11 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 % prepare dij for 3d conformal
                 if isfield(pln,'propOpt') && isfield(pln.propOpt,'conf3D') && pln.propOpt.conf3D
                    dij = matRad_collapseDij(dij);
+                   stf = matRad_collapseStf(stf);
                 end
                 % assign results to base worksapce
                 assignin('base','dij',dij);
+                assignin('base','stf',stf);
                 
                 
             catch ME
