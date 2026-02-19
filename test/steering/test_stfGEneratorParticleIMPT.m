@@ -1,4 +1,4 @@
-function test_suite = test_stfGeneratorPhotonIMRT
+function test_suite = test_stfGEneratorParticleIMPT
 
     test_functions=localfunctions();
     
