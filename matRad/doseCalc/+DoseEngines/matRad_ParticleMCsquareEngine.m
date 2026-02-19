@@ -371,12 +371,14 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                         end
 
                         % allocate empty target point container
-                        for j = 1:numel(stfFieldMCsquare.energies)
-                            stfFieldMCsquare.energyLayer(j).targetPoints   = [];
-                            stfFieldMCsquare.energyLayer(j).numOfPrimaries = [];
-                            stfFieldMCsquare.energyLayer(j).MU             = [];
-                            stfFieldMCsquare.energyLayer(j).rayNum         = [];
-                            stfFieldMCsquare.energyLayer(j).bixelNum       = [];
+                        if ~isempty(stfFieldMCsquare)
+                            for j = 1:numel(stfFieldMCsquare.energies)
+                                stfFieldMCsquare.energyLayer(j).targetPoints   = [];
+                                stfFieldMCsquare.energyLayer(j).numOfPrimaries = [];
+                                stfFieldMCsquare.energyLayer(j).MU             = [];
+                                stfFieldMCsquare.energyLayer(j).rayNum         = [];
+                                stfFieldMCsquare.energyLayer(j).bixelNum       = [];
+                            end
                         end
 
 
@@ -388,46 +390,47 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                                 dij.bixelNum(counter) = k;
                             end
 
-                            for k = 1:numel(stfFieldMCsquare.energies)
-                                %Check if ray has a spot in the current energy layer
-                                if any(stf(i).ray(j).energy == stfFieldMCsquare.energies(k))
-                                    energyIx = find(stf(i).ray(j).energy == stfFieldMCsquare.energies(k));
-
-                                    % If more than one energy layer is
-                                    % found, one of them is for the
-                                    % RaShiField
-                                    energyIx = energyIx([stf(i).ray(j).rangeShifter(energyIx).ID] == 0); % Select the one with no RaShi;
-
-                                    if isempty(energyIx)
-                                        continue;
+                            if ~isempty(stfFieldMCsquare)
+                                for k = 1:numel(stfFieldMCsquare.energies)
+                                    %Check if ray has a spot in the current energy layer
+                                    if any(stf(i).ray(j).energy == stfFieldMCsquare.energies(k))
+                                        energyIx = find(stf(i).ray(j).energy == stfFieldMCsquare.energies(k));
+    
+                                        % If more than one energy layer is
+                                        % found, one of them is for the
+                                        % RaShiField
+                                        energyIx = energyIx([stf(i).ray(j).rangeShifter(energyIx).ID] == 0); % Select the one with no RaShi;
+    
+                                        if isempty(energyIx)
+                                            continue;
+                                        end
+    
+                                        stfFieldMCsquare.energyLayer(k).rayNum   = [stfFieldMCsquare.energyLayer(k).rayNum j];
+                                        stfFieldMCsquare.energyLayer(k).bixelNum = [stfFieldMCsquare.energyLayer(k).bixelNum energyIx];
+                                        stfFieldMCsquare.energyLayer(k).targetPoints = [stfFieldMCsquare.energyLayer(k).targetPoints; ...
+                                            -stf(i).ray(j).rayPos_bev(1) stf(i).ray(j).rayPos_bev(3)];
+    
+                                        %Number of primaries depending on beamlet-wise or field-based computation (direct dose calculation)
+                                        if this.calcDoseDirect
+                                            stfFieldMCsquare.energyLayer(k).numOfPrimaries = [stfFieldMCsquare.energyLayer(k).numOfPrimaries ...
+                                                round(stf(i).ray(j).weight(energyIx)*this.numHistoriesDirect)];
+    
+                                            stfFieldMCsquare.energyLayer(k).MU = [stfFieldMCsquare.energyLayer(k).MU ...
+                                                round(stf(i).ray(j).weight(energyIx)*this.numHistoriesDirect)];
+    
+                                            totalWeights = totalWeights + stf(i).ray(j).weight(energyIx);
+                                        else
+                                            stfFieldMCsquare.energyLayer(k).numOfPrimaries = [stfFieldMCsquare.energyLayer(k).numOfPrimaries ...
+                                                this.numHistoriesPerBeamlet];
+    
+                                            stfFieldMCsquare.energyLayer(k).MU = [stfFieldMCsquare.energyLayer(k).MU ...
+                                                this.numHistoriesPerBeamlet];
+                                        end
+    
+    
                                     end
-
-                                    stfFieldMCsquare.energyLayer(k).rayNum   = [stfFieldMCsquare.energyLayer(k).rayNum j];
-                                    stfFieldMCsquare.energyLayer(k).bixelNum = [stfFieldMCsquare.energyLayer(k).bixelNum energyIx];
-                                    stfFieldMCsquare.energyLayer(k).targetPoints = [stfFieldMCsquare.energyLayer(k).targetPoints; ...
-                                        -stf(i).ray(j).rayPos_bev(1) stf(i).ray(j).rayPos_bev(3)];
-
-                                    %Number of primaries depending on beamlet-wise or field-based computation (direct dose calculation)
-                                    if this.calcDoseDirect
-                                        stfFieldMCsquare.energyLayer(k).numOfPrimaries = [stfFieldMCsquare.energyLayer(k).numOfPrimaries ...
-                                            round(stf(i).ray(j).weight(energyIx)*this.numHistoriesDirect)];
-
-                                        stfFieldMCsquare.energyLayer(k).MU = [stfFieldMCsquare.energyLayer(k).MU ...
-                                            round(stf(i).ray(j).weight(energyIx)*this.numHistoriesDirect)];
-
-                                        totalWeights = totalWeights + stf(i).ray(j).weight(energyIx);
-                                    else
-                                        stfFieldMCsquare.energyLayer(k).numOfPrimaries = [stfFieldMCsquare.energyLayer(k).numOfPrimaries ...
-                                            this.numHistoriesPerBeamlet];
-
-                                        stfFieldMCsquare.energyLayer(k).MU = [stfFieldMCsquare.energyLayer(k).MU ...
-                                            this.numHistoriesPerBeamlet];
-                                    end
-
-
                                 end
                             end
-
                             % Add the bixels to the RaShi field if any
                             if ~isempty(raShiField)
                                 for k = 1:numel(stfFieldMCsquareRaShi.energies)
@@ -480,6 +483,9 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                         end
 
                         % Fill the stfMCsquare
+                        if isempty(stfFieldMCsquare)
+                            stfFieldMCsquare = [];
+                        end
                         stfMCsquare = [stfMCsquare,stfFieldMCsquare, stfFieldMCsquareRaShi];
                     end
 
