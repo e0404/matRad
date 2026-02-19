@@ -407,7 +407,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                                     stfFieldMCsquare.energyLayer(k).targetPoints = [stfFieldMCsquare.energyLayer(k).targetPoints; ...
                                         -stf(i).ray(j).rayPos_bev(1) stf(i).ray(j).rayPos_bev(3)];
 
-                                    %Number of primaries depending on beamlet-wise or field-based compuation (direct dose calculation)
+                                    %Number of primaries depending on beamlet-wise or field-based computation (direct dose calculation)
                                     if this.calcDoseDirect
                                         stfFieldMCsquare.energyLayer(k).numOfPrimaries = [stfFieldMCsquare.energyLayer(k).numOfPrimaries ...
                                             round(stf(i).ray(j).weight(energyIx)*this.numHistoriesDirect)];
