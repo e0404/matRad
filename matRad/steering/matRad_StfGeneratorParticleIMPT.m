@@ -135,7 +135,7 @@ classdef matRad_StfGeneratorParticleIMPT < matRad_StfGeneratorParticleRayBixelAb
 
                                     if rho{shiftScen}{end}(end)~=0
                                         matRad_cfg.dispWarning('Target exit on the last voxel');
-                                        exitIx = numel(rho{shiftScen}{1});
+                                        exitIx = numel(rho{shiftScen}{end});
                                     else
                                         diffVoi    = [diff([rho{shiftScen}{end}])];
                                         exitIx = find(diffVoi == -1);
