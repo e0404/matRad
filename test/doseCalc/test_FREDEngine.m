@@ -47,7 +47,6 @@ function test_propertyAssignmentFromPln
 
 function test_writeFiles
 
-        matRad_cfg = MatRad_Config.instance();
         radModes = DoseEngines.matRad_ParticleFREDEngine.possibleRadiationModes;
 
         load([radModes{1} '_testData.mat']);
@@ -55,12 +54,13 @@ function test_writeFiles
         pln.machine = 'Generic';
         pln.propDoseCalc.engine = 'FRED';
         pln.propDoseCalc.externalCalculation = 'write';
+        pln.propDoseCalc.workingDir = helper_temporaryFolder('testFRED',true);
 
         w = ones(sum([stf(:).totalNumOfBixels]),1);
 
         resultGUI = matRad_calcDoseForward(ct,cst,stf,pln,w);
 
-        fredMainDir   = fullfile(matRad_cfg.primaryUserFolder, 'FRED');
+        fredMainDir   = pln.propDoseCalc.workingDir;
         runFolder     = fullfile(fredMainDir, 'MCrun');
         inputFolder   = fullfile(runFolder, 'inp');
         planFolder    = fullfile(inputFolder, 'plan');
@@ -108,7 +108,7 @@ function test_bioCalculation
         matRad_cfg = MatRad_Config.instance();
         load(['protons_testData.mat']);
         pln.machine = 'Generic';
-        pln.propDoseCalc.bioModel = matRad_bioModel('protons', 'MCN');
+        pln.bioModel = matRad_bioModel('protons', 'MCN');
         
         pln.propDoseCalc.engine = 'FRED';
         pln.propDoseCalc.useGPU = true;

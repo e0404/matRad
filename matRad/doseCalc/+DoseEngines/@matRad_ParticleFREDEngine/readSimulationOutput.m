@@ -40,13 +40,15 @@ doseCube = [];
 letCube  = [];
 loadFileName = [];
 
+outFolder = fullfile(runFolder,'out');
+
 if ~calcDoseDirect
 
-    doseDijFolder = fullfile(runFolder, 'out', 'scoreij');
+    scoreIjFolder = fullfile(outFolder, 'scoreij');
     doseDijFile = 'Phantom.Dose.bin';
-    loadFileName = fullfile(doseDijFolder,doseDijFile);
+    loadFileName = fullfile(scoreIjFolder,doseDijFile);
     
-    matRad_cfg.dispInfo(sprintf('Looking for scorer-ij output in sub folder: %s\n', strrep(doseDijFolder, '\', '\\')));
+    matRad_cfg.dispInfo(sprintf('Looking for scorer-ij output in sub folder: %s\n', strrep(scoreIjFolder, '\', '\\')));
     
     % read dij matrix
     if isfile(loadFileName)
@@ -59,7 +61,7 @@ if ~calcDoseDirect
     if calcLET
         
         letdDijFile = 'Phantom.LETd.bin';
-        letdDijFileName = fullfile(doseDijFolder,letdDijFile);
+        letdDijFileName = fullfile(scoreIjFolder,letdDijFile);
         
         try
 %            letCube = DoseEngines.matRad_ParticleFREDEngine.readSparseDijBin(letdDijFileName);
@@ -69,12 +71,18 @@ if ~calcDoseDirect
         end
     end
 else
-    
-    doseCubeFolder = fullfile(runFolder, 'out', 'score');
+    scoreFolder = fullfile(outFolder, 'score');
     doseCubeFileName = 'Phantom.Dose.mhd';
-    loadFileName = fullfile(doseCubeFolder, doseCubeFileName);
+    letdCubeFileName = 'Phantom.LETd.mhd';
+    if ~exist(scoreFolder,"dir")
+        scoreFolder = outFolder;
+        doseCubeFileName = 'Dose.mhd';
+        letdCubeFileName = 'LETd.mhd';
+    end
+    
+    loadFileName = fullfile(scoreFolder, doseCubeFileName);
 
-    matRad_cfg.dispInfo(sprintf('Looking for scorer file in sub folder: %s\n', strrep(doseCubeFolder, '\', '\\')));
+    matRad_cfg.dispInfo(sprintf('Looking for scorer file in sub folder: %s\n', strrep(scoreFolder, '\', '\\')));
 
     if isfile(loadFileName)
         doseCube = matRad_readMHD(loadFileName);
@@ -83,12 +91,8 @@ else
     end
 
     if calcLET
-
-        letdDijFolder   = doseCubeFolder;
-        letdCubeFileName     = 'Phantom.LETd.mhd';
-
         try 
-            letCube = matRad_readMHD(fullfile(letdDijFolder, letdCubeFileName));
+            letCube = matRad_readMHD(fullfile(scoreFolder, letdCubeFileName));
         catch
             matRad_cfg.dispError('Unable to load file: %s',fullfile(letdDijFolder, letdCubeFileName));
         end

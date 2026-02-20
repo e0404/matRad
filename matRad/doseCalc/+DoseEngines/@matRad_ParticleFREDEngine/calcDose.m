@@ -32,19 +32,19 @@ function dij = calcDose(this,ct,cst,stf)
     matRad_cfg = MatRad_Config.instance();
     
     currFolder = pwd;
-    cd(this.FREDrootFolder);
+    cd(this.workingDir);
 
     %Now we can run initDoseCalc as usual
     dij = this.initDoseCalc(ct,cst,stf);
 
     % Interpolate cube on dose grid
-    HUcube{1} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{1}, ...
+    this.HUcube{1} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{1}, ...
                                 dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
 
     % Force HU clamping if values are found outside of available range
     switch this.HUtable
        case 'internal'
-           if any(HUcube{1}(:)>this.hLutLimits(2)) || any(HUcube{1}(:)<this.hLutLimits(1))
+           if any(this.HUcube{1}(:)>this.hLutLimits(2)) || any(this.HUcube{1}(:)<this.hLutLimits(1))
                matRad_cfg.dispWarning('HU outside of boundaries');
                this.HUclamping = true;
            end
@@ -55,27 +55,18 @@ function dij = calcDose(this,ct,cst,stf)
     if this.ignoreOutsideDensities
         eraseCtDensMask = ones(prod(ct.cubeDim),1);
         eraseCtDensMask(this.VctGrid) = 0;
-        HUcube{1}(eraseCtDensMask == 1) = this.hLutLimits(1);
+        this.HUcube{1}(eraseCtDensMask == 1) = this.hLutLimits(1);
     end
 
-    %Write the directory tree
-    this.writeTreeDirectory();
-    
-    % Write patient
-    cd(this.regionsFolder);
+    %%%%%% !!!!!!!!!!!!! mind this flip !!!!!!!!!!!!! %%%%%
+    % Need to permute x and y because of the order data is written in mhd
+    % HUcube{1} = permute(HUcube{1}, [2,1,3]);
 
     fileNamePatient = fullfile(this.regionsFolder, this.patientFilename);
     patientMetadata.imageOrigin = [0 0 0];
     patientMetadata.resolution  = [this.doseGrid.resolution.x, this.doseGrid.resolution.y, this.doseGrid.resolution.z];
 
     patientMetadata.datatype = 'int16';
-
-    %%%%%% !!!!!!!!!!!!! mind this flip !!!!!!!!!!!!! %%%%%
-    % Need to permute x and y because of the order data is written in mhd
-    % HUcube{1} = permute(HUcube{1}, [2,1,3]);
-    matRad_writeMHD(fileNamePatient, HUcube{1},patientMetadata);
-
-    cd(this.FREDrootFolder);
 
     % Linear projection of BEV source (x,y) points to plane at BAMStoISO distance 
     getPointAtBAMS = @(target,source,distance,BAMStoIso) (target -source)*(-BAMStoIso)/distance + source;
@@ -292,13 +283,15 @@ function dij = calcDose(this,ct,cst,stf)
     if any(isnan(fredOrder))
         matRad_cfg.dispError('Invalid ordering of Beamlets for FRED computation!');
     end
-    
-    % %% MC computation and dij filling
-    this.writeFredInputAllFiles(stfFred);
 
     switch this.externalCalculation
         
         case 'write' % Write simulation files for external calculation (no FRED installation required)
+            % %% MC computation and dij filling
+
+            this.writeTreeDirectory();            
+            matRad_writeMHD(fileNamePatient, this.HUcube{1},patientMetadata);            
+            this.writeFredInputAllFiles(stfFred);
     
             matRad_cfg.dispInfo('All files have been generated\n');
             dijFieldsToOverride = {'numOfBeams','beamNum','bixelNum','rayNum','totalNumOfBixels','totalNumOfRays','numOfRaysPerBeam'};
@@ -310,6 +303,10 @@ function dij = calcDose(this,ct,cst,stf)
             doseCube = [];
         
         case 'off' % Run FRED simulation (requires installation)
+            
+            this.writeTreeDirectory();            
+            matRad_writeMHD(fileNamePatient, this.HUcube{1},patientMetadata);            
+            this.writeFredInputAllFiles(stfFred);
 
             % Check consistency of installation
             if this.checkExec()
@@ -329,7 +326,7 @@ function dij = calcDose(this,ct,cst,stf)
                 else
                     [status,~] = system(systemCall);
                 end
-                cd(this.FREDrootFolder);
+                cd(this.workingDir);
             else
                 matRad_cfg.dispError('FRED setup incorrect for this plan simulation');
             end

@@ -72,7 +72,7 @@ try
         fprintf(fID, 'lAllowHUClamping=t\n');
     end
 
-    if ~isempty(this.dijFormatVersion) && this.isVersionHigher('3.70.0')
+    if ~isempty(this.dijFormatVersion) && ~this.isVersionLower('3.70.0')
         fprintf(fID, 'ijFormatVersion = %s\n', this.dijFormatVersion);
     end
 

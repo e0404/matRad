@@ -78,6 +78,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         primaryMass;
         numOfNucleons;
         ignoreOutsideDensities;
+        workingDir;
     end
 
 
@@ -95,14 +96,13 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         hLutLimits = [-1000,1375];  % Default FRED values
         
         conversionFactor = 1e6;     % Used to scale the FRED dose to matRad normalization
-
-        FREDrootFolder;
-
         MCrunFolder;
         inputFolder;
         regionsFolder;
         planFolder;
         dijReaderHandle;
+
+        HUcube;
     end
     
     methods
@@ -127,12 +127,12 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 end
             end
 
-            if isempty(this.FREDrootFolder)
-                this.FREDrootFolder = fullfile(matRad_cfg.primaryUserFolder, 'FRED');
+            if isempty(this.workingDir)
+                this.workingDir = fullfile(matRad_cfg.primaryUserFolder, 'FRED');
             end
             
-            if ~exist(this.FREDrootFolder, 'dir')
-                mkdir(this.FREDrootFolder);
+            if ~exist(this.workingDir, 'dir')
+                mkdir(this.workingDir);
                 matRad_cfg.dispWarning('FRED root folder not found, this should not happen!');
             end
 
@@ -695,11 +695,11 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
         function updatePaths(obj, rootFolder)
 
-            if ~strcmp(rootFolder, obj.FREDrootFolder)
-                obj.FREDrootFolder  = rootFolder;
+            if ~strcmp(rootFolder, obj.workingDir)
+                obj.workingDir  = rootFolder;
             end
             
-            obj.MCrunFolder     = fullfile(obj.FREDrootFolder, 'MCrun');
+            obj.MCrunFolder     = fullfile(obj.workingDir, 'MCrun');
             obj.inputFolder     = fullfile(obj.MCrunFolder, 'inp');
             obj.regionsFolder   = fullfile(obj.inputFolder, 'regions');
             obj.planFolder      = fullfile(obj.inputFolder, 'plan');
@@ -731,23 +731,19 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             matRad_cfg.dispWarning('Selected radiation modality: %s with primary mass: %2.3f', radiationMode, this.primaryMass);
         end
 
-        function isHigher = isVersionHigher(this,version)
-            isHigher = false;
-            
+        function isLower = isVersionLower(this,version)
             % This function directly looks at FRED installation, not at
             % the current FRED version stored in the class property.
             fredVersion = this.getVersion();
+            
+            isLower = false;
 
             if ~isempty(fredVersion)
                 % Decompose the current version for comparison
-                v1 = sscanf(fredVersion, '%d.%d.%d')';
-                v2 = sscanf(version, '%d.%d.%d')';
-            
-                if (v1(1) >= v2(1)) && (v1(2) >= v2(2)) && (v1(3) > v2(3))
-                    isHigher = true;
-                end
-            end            
-
+                vdiff = sscanf(fredVersion, '%d.%d.%d') - sscanf(version, '%d.%d.%d');
+                firstdiff = find(vdiff,1,'first');
+                isLower = ~isempty(firstdiff) && vdiff(firstdiff) < 0;
+            end       
         end
      
      end
@@ -784,7 +780,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
              matRad_cfg = MatRad_Config.instance();
 
-             if ~this.isVersionHigher('3.70.0')
+             if this.isVersionLower('3.70.0')
                 % FRED version < 3.70.0 does not allow dij version
                 % selection and only works with ifFormatVersion < 21
    
@@ -839,8 +835,8 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
          end
 
-        function set.FREDrootFolder(obj, pathValue)
-            obj.FREDrootFolder = pathValue;
+        function set.workingDir(obj, pathValue)
+            obj.workingDir = pathValue;
             obj.updatePaths(pathValue);
         end
 
