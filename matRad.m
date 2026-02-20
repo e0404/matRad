@@ -25,10 +25,10 @@ load TG119.mat
 
 % meta information for treatment plan
 pln.numOfFractions  = 30;
-pln.radiationMode   = 'photons';            % either photons / protons / helium / carbon / brachy
-pln.machine         = 'Generic';            % generic for RT / LDR or HDR for BT
+pln.radiationMode   = 'photons';            % either photons / protons / helium / carbon / brachy / VHEE
+pln.machine         = 'Generic';            % generic for RT / LDR or HDR for BT / Generic or Focused for VHEE
 
-pln.bioModel = 'none';      % none: for photons, protons, carbon, brachy    % constRBE: constant RBE for photons and protons 
+pln.bioModel = 'none';      % none: for all                                 % constRBE: constant RBE for photons and protons 
                             % MCN: McNamara-variable RBE model for protons  % WED: Wedenberg-variable RBE model for protons 
                             % LEM: Local Effect Model for carbon ions       % HEL: data-driven RBE parametrization for helium
 

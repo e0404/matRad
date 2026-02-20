@@ -23,7 +23,7 @@ classdef matRad_StfGeneratorParticleSingleBeamlet < matRad_StfGeneratorParticleR
     properties (Constant)
         name = 'Particle Single Spot';
         shortName = 'ParticleSingleSpot';
-        possibleRadiationModes = {'protons','helium','carbon'};
+        possibleRadiationModes = {'protons','helium','carbon','VHEE'};
     end  
     
     methods 

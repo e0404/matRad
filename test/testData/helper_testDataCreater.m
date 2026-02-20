@@ -2,7 +2,6 @@
 % therapy, that can be red in and used in testing
 
 %% create ct
-
 ct = struct();
 ct.cubeDim = [20,10,10];
 ct.resolution.x = 10;
@@ -40,29 +39,32 @@ cst{2,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(400,0));
 
 clear VolHelper ixBody ixTarget i
 %% create pln, stf
-radMode = 'carbon'; %protons,helium,carbon;
-
-pln.radiationMode = radMode;            
-pln.machine               = 'Generic';                                         
-pln.numOfFractions        = 30;
-pln.propStf.gantryAngles  = [0,180];
-pln.propStf.couchAngles   = zeros(size(pln.propStf.gantryAngles));
-pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
-pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
-
-pln.propStf.longitudinalSpotSpacing = 8;
-pln.propStf.bixelWidth = 10;
-pln.propDoseCalc.doseGrid.resolution = struct('x',10,'y',10,'z',10); %[mm]
-
-%pln.bioModel = matRad_bioModel(pln.radiationMode,'none');
-
-%% Generate Beam Geometry STF
-pln.propStf.addMargin    = false; %to make smaller stf, les bixel
-stf = matRad_generateStf(ct,cst,pln);
-ct = matRad_calcWaterEqD(ct, pln);
-%% Dose Calculation
-%dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
-%resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
-
-%% save basic data
-save([radMode '_testData.mat'],'ct','cst','pln','stf','-v7')
+radModes = ["protons","helium","carbon","VHEE"];
+for radMode = radModes
+    %radMode = 'carbon'; %protons,helium,carbon;
+    
+    pln.radiationMode = char(radMode);            
+    pln.machine               = 'Generic';                                         
+    pln.numOfFractions        = 30;
+    pln.propStf.gantryAngles  = [0,180];
+    pln.propStf.couchAngles   = zeros(size(pln.propStf.gantryAngles));
+    pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
+    pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+    
+    pln.propStf.longitudinalSpotSpacing = 8;
+    pln.propStf.bixelWidth = 10;
+    pln.propDoseCalc.doseGrid.resolution = struct('x',10,'y',10,'z',10); %[mm]
+    
+    %pln.bioModel = matRad_bioModel(pln.radiationMode,'none');
+    
+    %% Generate Beam Geometry STF
+    pln.propStf.addMargin    = false; %to make smaller stf, les bixel
+    stf = matRad_generateStf(ct,cst,pln);
+    ct = matRad_calcWaterEqD(ct, pln);
+    %% Dose Calculation
+    dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
+    resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
+    
+    %% save basic data
+    save([char(radMode) '_testData.mat'],'ct','cst','pln','stf','dij','resultGUI','-v7');
+end

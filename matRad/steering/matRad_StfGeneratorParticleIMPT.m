@@ -1,6 +1,8 @@
 classdef matRad_StfGeneratorParticleIMPT < matRad_StfGeneratorParticleRayBixelAbstract
-% matRad_ParticleStfGenerator: Abstract Superclass for Steering information 
-%   generators. Steering information is used to guide the dose calculation
+% matRad_StfGeneratorParticleIMPT: IMPT Steering Geometry Setup (stf)
+%   Creates the stf data structure containing the steering information /
+%   field geometry for standard IMPT plans on a regular lateral spot grid
+%   with modulation in depth through energy layers
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -19,6 +21,7 @@ classdef matRad_StfGeneratorParticleIMPT < matRad_StfGeneratorParticleRayBixelAb
         name = 'Particle IMPT stf Generator';
         shortName = 'ParticleIMPT';
         possibleRadiationModes = {'protons','helium','carbon'};
+        airOffsetCorrection = true;
     end 
 
     properties
@@ -44,6 +47,7 @@ classdef matRad_StfGeneratorParticleIMPT < matRad_StfGeneratorParticleRayBixelAb
         
         function beam = setBeamletEnergies(this,beam) 
             %Assigns the max particle machine energy layers to all rays
+            matRad_cfg = MatRad_Config.instance();
 
             isoCenterInCubeCoords = matRad_world2cubeCoords(beam.isoCenter,this.ct);
 
@@ -52,11 +56,24 @@ classdef matRad_StfGeneratorParticleIMPT < matRad_StfGeneratorParticleRayBixelAb
             else
                 LUTspotSize = this.machine.meta.LUTspotSize;
             end
-            
+
+            %Air Offset Correction
+            if this.airOffsetCorrection
+                if ~isfield(this.machine.meta, 'fitAirOffset')
+                    this.machine.meta.fitAirOffset = 0; %By default we assume that the base data was fitted to a phantom with surface at isocenter
+                    matRad_cfg.dispDebug('Asked for correction of Base Data Air Offset, but no value found. Using default value of %f mm.\n',this.machine.meta.fitAirOffset);
+                end
+            else
+                this.machine.meta.fitAirOffset = 0;
+            end
 
             beam.numOfBixelsPerRay = zeros(1,beam.numOfRays);
 
             for j = beam.numOfRays:-1:1
+                
+                ctEntryPoint = zeros(this.multScen.totNumShiftScen,1);
+
+                radDepthOffset = zeros(this.multScen.totNumShiftScen,1);
 
                 for shiftScen = 1:this.multScen.totNumShiftScen
                         % ray tracing necessary to determine depth of the target
@@ -67,7 +84,14 @@ classdef matRad_StfGeneratorParticleIMPT < matRad_StfGeneratorParticleRayBixelAb
                             [this.ct.cube {this.voiTarget}]);
 
                         %Used for generic range-shifter placement
-                        ctEntryPoint = alphas(1) * d12;
+                        ctEntryPoint(shiftScen) = alphas(1) * d12;
+
+                        if this.airOffsetCorrection
+                            nozzleToSkin = (ctEntryPoint(shiftScen) + this.machine.meta.BAMStoIsoDist) - this.machine.meta.SAD;
+                            radDepthOffset(shiftScen) = 0.0011 * (nozzleToSkin - this.machine.meta.fitAirOffset);
+                        else
+                            radDepthOffset(shiftScen) = 0;
+                        end
                 end
 
                 % target hit
@@ -90,8 +114,8 @@ classdef matRad_StfGeneratorParticleIMPT < matRad_StfGeneratorParticleRayBixelAb
 
                                     % compute radiological depths
                                     % http://www.ncbi.nlm.nih.gov/pubmed/4000088, eq 14
-                                    rSP = l{shiftScen} .* rho{shiftScen}{ctScen};
-                                    radDepths = cumsum(rSP) - 0.5*rSP;
+                                    rSP = l{shiftScen} .* rho{shiftScen}{ctScen} ;
+                                    radDepths = cumsum(rSP) - 0.5*rSP + radDepthOffset(shiftScen);
 
                                     if this.multScen.relRangeShift(rangeShiftScen) ~= 0 || this.multScen.absRangeShift(rangeShiftScen) ~= 0
                                         radDepths = radDepths +...                                                      % original cube
@@ -154,7 +178,7 @@ classdef matRad_StfGeneratorParticleIMPT < matRad_StfGeneratorParticleRayBixelAb
 
                             raShi.ID = 1;
                             raShi.eqThickness = rangeShifterEqD;
-                            raShi.sourceRashiDistance = round(ctEntryPoint - 2*rangeShifterEqD,-1); %place a little away from entry, round to cms to reduce number of unique settings
+                            raShi.sourceRashiDistance = round(min(ctEntryPoint) - 2*rangeShifterEqD,-1); %place a little away from entry, round to cms to reduce number of unique settings
 
                             beam.ray(j).energy = [beam.ray(j).energy raShiEnergies];
                             beam.ray(j).rangeShifter = [beam.ray(j).rangeShifter repmat(raShi,1,length(raShiEnergies))];
@@ -288,6 +312,9 @@ classdef matRad_StfGeneratorParticleIMPT < matRad_StfGeneratorParticleRayBixelAb
 
             % Check superclass availability
             [available,msg] = matRad_StfGeneratorParticleRayBixelAbstract.isAvailable(pln,machine);
+            
+            %Check additional base data
+            available = available && all(isfield(machine.data,{'peakPos','offset'}));
 
             if ~available
                 return;

@@ -442,16 +442,9 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
         
                         dijColIx = (ceil(counter/this.numOfBixelsContainer)-1)*this.numOfBixelsContainer+1:counter;
                         containerIx = 1:bixelContainerColIx;
-                        weight = 1;
                     else
                         dijColIx = currBeamIdx;
                         containerIx = 1;
-                        if isfield(stf(currBeamIdx).ray(currRayIdx),'weight') && numel(stf(currBeamIdx).ray(currRayIdx).weight) >= currBixelIdx
-                            weight = stf(currBeamIdx).ray(currRayIdx).weight(currBixelIdx);
-                        else
-                            matRad_cfg = MatRad_Config.instance();
-                            matRad_cfg.dispError('No weight available for beam %d, ray %d, bixel %d',currBeamIdx,currRayIdx,currBixelIdx);
-                        end
                     end
                     
                     % Iterate through all quantities
@@ -463,7 +456,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                             this.tmpMatrixContainers.(qName)(containerIx,subScenIdx{:}) = cell(numel(containerIx,subScenIdx{:}));
                         else
                             %dij.(qName){1}(this.VdoseGrid(bixel.ix),dijColIx) = dij.(qName){1}(this.VdoseGrid(bixel.ix),dijColIx) + weight * this.tmpMatrixContainers.(qName){containerIx,1}(this.VdoseGrid(bixel.ix));
-                            dij.(qName){scenIdx}(bixel.ix,dijColIx) = dij.(qName){scenIdx}(bixel.ix,dijColIx) + weight * bixel.(qName);
+                            dij.(qName){scenIdx}(bixel.ix,dijColIx) = dij.(qName){scenIdx}(bixel.ix,dijColIx) + bixel.weight * bixel.(qName);
                         end
                     end
                 end
@@ -475,35 +468,13 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                 dij.beamNum(currBeamIdx)    = currBeamIdx;
                 dij.rayNum(currBeamIdx)     = currBeamIdx;
                 dij.bixelNum(currBeamIdx)   = currBeamIdx;
+                dij.w(counter,1) = bixel.weight;                
             else
                 dij.beamNum(counter)    = currBeamIdx;
                 dij.rayNum(counter)     = currRayIdx;
                 dij.bixelNum(counter)   = currBixelIdx;
             end
         end
-        
-        %{
-        function ray = computeRaySSD(this,ray)
-            [alpha,~,rho,d12,~] = matRad_siddonRayTracer(ray.isoCenter, ...
-                                 ct.resolution, ...
-                                 ray.sourcePoint, ...
-                                 ray.targetPoint, ...
-                                 this.cubeWED(1));
-            ixSSD = find(rho{1} > this.ssdDensityThreshold,1,'first');
-
-            
-            if isempty(ixSSD)
-                matRad_cfg.dispError('ray does not hit patient. Trying to fix afterwards...');
-                boolShowWarning = false;
-            elseif ixSSD(1) == 1
-                matRad_cfg.dispWarning('Surface for SSD calculation starts directly in first voxel of CT!');
-                boolShowWarning = false;
-            end
-            
-            % calculate SSD
-            ray.SSD = double(d12* alpha(ixSSD));             
-        end
-        %}
 
         function dij = finalizeDose(this,dij)
             %TODO: We could also do this by default for all engines, but

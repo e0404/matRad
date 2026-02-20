@@ -59,7 +59,7 @@ classdef matRad_ImportanceScenarios < matRad_GriddedScenariosAbstract
                 matRad_cfg = MatRad_Config.instance();
                 matRad_cfg.dispError('Invalid number of setup grid points, needs to be a positive scalar!');
             end
-            this.numOfSetupGridPoints = inumGridPoints;
+            this.numOfSetupGridPoints = numGridPoints;
             this.updateScenarios();
         end
 
@@ -69,7 +69,7 @@ classdef matRad_ImportanceScenarios < matRad_GriddedScenariosAbstract
                 matRad_cfg = MatRad_Config.instance();
                 matRad_cfg.dispError('Invalid number of range grid points, needs to be a positive scalar!');
             end
-            this.numOfRAngeGridPoints = inumGridPoints;
+            this.numOfRangeGridPoints = numGridPoints;
             this.updateScenarios();
         end
     end

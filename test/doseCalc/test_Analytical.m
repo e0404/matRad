@@ -11,15 +11,6 @@ function test_getAnalyticalEngineFromPln
     engine = DoseEngines.matRad_ParticleAnalyticalBortfeldEngine.getEngineFromPln(testData.pln);
     assertTrue(isa(engine,'DoseEngines.matRad_ParticleAnalyticalBortfeldEngine'));
 
-    % Double Gaussian lateral model 
-    % If you don't have my clusterDose basedata you cannot try this :P
-    %{
-    testData.pln = struct('radiationMode','protons','machine','Generic_clusterDose');
-    testData.pln.propDoseCalc.engine = 'AnalyticalPB';
-    engine = DoseEngines.matRad_ParticleAnalyticalBortfeldEngine.getEngineFromPln(testData.pln);
-    assertTrue(isa(engine,'DoseEngines.matRad_ParticleAnalyticalBortfeldEngine'));
-    %}
-
 function test_loadMachineForAnalytical
     possibleRadModes = DoseEngines.matRad_ParticleAnalyticalBortfeldEngine.possibleRadiationModes;
     for i = 1:numel(possibleRadModes)
