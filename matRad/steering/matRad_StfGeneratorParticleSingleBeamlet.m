@@ -198,7 +198,10 @@ classdef matRad_StfGeneratorParticleSingleBeamlet < matRad_StfGeneratorParticleR
             
                 %Place range shifter 2 times the range away from isocenter, but
                 %at least 10 cm
-                sourceRaShi = round(ctEntryPoint - 2*this.raShiThickness,-1); %place a little away from entry, round to cms to reduce number of unique settings;
+
+                roundToDigit = @(x,n) round(x * 10^n)/10^n;
+
+                sourceRaShi = roundToDigit((ctEntryPoint - 2*this.raShiThickness),-1); %place a little away from entry, round to cms to reduce number of unique settings;
                 beam.ray.rangeShifter.sourceRashiDistance = sourceRaShi;
             else
                 beam.ray.rangeShifter.ID = 0;
