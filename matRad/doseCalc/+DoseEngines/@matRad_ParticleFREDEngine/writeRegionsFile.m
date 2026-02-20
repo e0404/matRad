@@ -37,7 +37,8 @@ try
     fprintf(fID, '\tu=[%1.1f,%1.1f,%1.1f]\n', 0,-1,0);
 
     % Syntax changes for scorers according to direct or ij calculation
-    if this.calcDoseDirect
+    
+    if this.calcDoseDirect || this.isVersionLower('3.70.0')
         fprintf(fID,'\tscore=[');
     else
         fprintf(fID,'\tscoreij=[');
@@ -72,7 +73,7 @@ try
         fprintf(fID, 'lAllowHUClamping=t\n');
     end
 
-    if ~isempty(this.dijFormatVersion) && ~this.isVersionLower('3.70.0')
+    if ~isempty(this.dijFormatVersion) && ~this.isVersionLower('3.76.0')
         fprintf(fID, 'ijFormatVersion = %s\n', this.dijFormatVersion);
     end
 

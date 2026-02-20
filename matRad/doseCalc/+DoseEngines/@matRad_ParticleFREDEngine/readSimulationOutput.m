@@ -43,9 +43,16 @@ loadFileName = [];
 outFolder = fullfile(runFolder,'out');
 
 if ~calcDoseDirect
+    letCompatible = true;
 
     scoreIjFolder = fullfile(outFolder, 'scoreij');
     doseDijFile = 'Phantom.Dose.bin';
+    letdDijFile = 'Phantom.LETd.bin';
+    if ~exist(scoreIjFolder,"dir")
+        scoreIjFolder = outFolder;
+        doseDijFile = 'Dij.bin';
+        letCompatible = false;
+    end
     loadFileName = fullfile(scoreIjFolder,doseDijFile);
     
     matRad_cfg.dispInfo(sprintf('Looking for scorer-ij output in sub folder: %s\n', strrep(scoreIjFolder, '\', '\\')));
@@ -58,9 +65,9 @@ if ~calcDoseDirect
         matRad_cfg.dispError(sprintf('Unable to find file: %s', strrep(loadFileName, '\', '\\')));
     end
 
-    if calcLET
+    if calcLET && letCompatible
+
         
-        letdDijFile = 'Phantom.LETd.bin';
         letdDijFileName = fullfile(scoreIjFolder,letdDijFile);
         
         try
