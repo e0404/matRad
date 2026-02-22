@@ -314,11 +314,13 @@ function dij = calcDose(this,ct,cst,stf)
                 matRad_cfg.dispInfo('calling FRED');
     
                 cd(this.MCrunFolder);
-                
-                systemCall = [this.cmdCall, '-f fred.inp'];
+
+                flags = '-V1 -f fred.inp';
+                                
                 if ~this.useGPU
-                    systemCall = [this.cmdCall, '-nogpu -f fred.inp'];
-                end
+                    flags = ['-nogpu ' flags];
+                end                
+                systemCall = [this.cmdCall, flags];
     
                 % printOutput to matlab console
                 if this.printOutput
@@ -336,14 +338,14 @@ function dij = calcDose(this,ct,cst,stf)
             end
             
             % read simulation output
-            [doseCube, letdCube] = this.readSimulationOutput(this.MCrunFolder,this.calcDoseDirect, 'calcLET', logical(this.calcLET), 'readFunctionHandle', this.dijReaderHandle);
+            [doseCube, letdCube] = this.readSimulationOutput(this.MCrunFolder,this.calcDoseDirect, logical(this.calcLET));
 
         otherwise % A path for loading has been provided
             
             matRad_cfg.dispInfo(['Reading simulation data from: ', strrep(this.MCrunFolder,'\','\\'), '\n']);
 
             % read simulation output
-            [doseCube, letdCube, loadFileName] = this.readSimulationOutput(this.MCrunFolder,this.calcDoseDirect, 'calcLET',logical(this.calcLET),'readFunctionHandle', this.dijReaderHandle);
+            [doseCube, letdCube, loadFileName] = this.readSimulationOutput(this.MCrunFolder,this.calcDoseDirect, logical(this.calcLET));
 
             dij.externalCalculationLodPath = loadFileName;
 
@@ -355,16 +357,13 @@ function dij = calcDose(this,ct,cst,stf)
         if this.calcDoseDirect
             % Dose cube
             if isequal(size(doseCube), this.doseGrid.dimensions)
-                dij.physicalDose{1} = sparse(this.VdoseGrid, ones(numel(this.VdoseGrid),1),doseCube(this.VdoseGrid), this.doseGrid.numOfVoxels,1);
+                dij.physicalDose{1} = doseCube(:);                
             end
     
             % LETd cube
             if this.calcLET
                 if isequal(size(letdCube), this.doseGrid.dimensions)
-                    dij.mLETd{1}    = sparse(this.VdoseGrid, ones(numel(this.VdoseGrid),1),letdCube(this.VdoseGrid)./10, this.doseGrid.numOfVoxels,1);
-
-                    % We need LETd * dose as well
-                    dij.mLETDose{1} = sparse(this.VdoseGrid, ones(numel(this.VdoseGrid),1),(letdCube(this.VdoseGrid)./10).*doseCube(this.VdoseGrid), this.doseGrid.numOfVoxels,1);
+                    dij.mLETDose{1} = letdCube(:) .* doseCube(:);
                 end
             end
     
@@ -384,50 +383,60 @@ function dij = calcDose(this,ct,cst,stf)
 
             % LET cube
             if this.calcLET
-                if isequal(size(letdCube), [dij.doseGrid.numOfVoxels,dij.totalNumOfBixels])
-                    % Need to divide by 10, FRED scores in MeV * cm^2 / g
-                    dij.mLETd{1}(this.VdoseGrid,:) = letdCube(this.VdoseGrid,fredOrder)./10;
-                end
+                % if isequal(size(letdCube), [dij.doseGrid.numOfVoxels,dij.totalNumOfBixels])
+                %     % Need to divide by 10, FRED scores in MeV * cm^2 / g
+                %     dij.mLETd{1}(this.VdoseGrid,:) = letdCube(this.VdoseGrid,fredOrder)./10;
+                % end
 
                 % We need LETd * dose as well
-                dij.mLETDose{1} = sparse(dij.physicalDose{1}.*dij.mLETd{1});
+                dij.mLETDose{1} = dij.physicalDose{1}.*letdCube;
             end
         end
 
 
         % Calc Biological quantities
         if this.calcBioDose
-           % recover alpha and beta maps
-           tmpBixel.radDepths = zeros(size(this.VdoseGrid,1),1);
-        
-           tmpBixel.vAlphaX   = dij.ax{1}(this.VdoseGrid);
-           tmpBixel.vBetaX    = dij.bx{1}(this.VdoseGrid);
-           tmpBixel.vABratio  = dij.ax{1}(this.VdoseGrid)./dij.bx{1}(this.VdoseGrid);
+
 
            if this.calcDoseDirect
-                tmpKernel.LET = dij.mLETd{1}(this.VdoseGrid);
+                tmpKernel.LET = letdCube(this.VdoseGrid);
 
+                % recover alpha and beta maps
+                tmpBixel.radDepths = zeros(size(this.VdoseGrid,1),1);
+
+                tmpBixel.vAlphaX   = dij.ax{1}(this.VdoseGrid);
+                tmpBixel.vBetaX    = dij.bx{1}(this.VdoseGrid);
+                tmpBixel.vABratio  = dij.ax{1}(this.VdoseGrid)./dij.bx{1}(this.VdoseGrid);
+                
                 tmpBixel = this.bioModel.calcBiologicalQuantitiesForBixel(tmpBixel,tmpKernel);
                 
                 tmpBixel.alpha(isnan(tmpBixel.alpha)) = 0;
                 tmpBixel.beta(isnan(tmpBixel.beta)) =  0;
-
-                dij.mAlphaDose{1}     = sparse(this.VdoseGrid, ones(numel(this.VdoseGrid),1),tmpBixel.alpha.*dij.physicalDose{1}(this.VdoseGrid), this.doseGrid.numOfVoxels,1);
-                dij.mSqrtBetaDose{1}  = sparse(this.VdoseGrid, ones(numel(this.VdoseGrid),1),sqrt(tmpBixel.beta).*dij.physicalDose{1}(this.VdoseGrid), this.doseGrid.numOfVoxels,1);
-           else    
-               % Loop over all bixels
-               for bxlIdx = 1:dij.totalNumOfBixels
-                   bixelLET           = full(dij.mLETd{1}(:,bxlIdx));
-                   tmpKernel.LET      = bixelLET(this.VdoseGrid);
-
-                   tmpBixel = this.bioModel.calcBiologicalQuantitiesForBixel(tmpBixel,tmpKernel);
-
-                   tmpBixel.alpha(isnan(tmpBixel.alpha)) = 0;
-                   tmpBixel.beta(isnan(tmpBixel.beta)) =  0;
                 
-                   dij.mAlphaDose{1}(:,bxlIdx)     = sparse(this.VdoseGrid, ones(numel(this.VdoseGrid),1),tmpBixel.alpha.*dij.physicalDose{1}(this.VdoseGrid,bxlIdx), this.doseGrid.numOfVoxels,1);
-                   dij.mSqrtBetaDose{1}(:,bxlIdx)  = sparse(this.VdoseGrid, ones(numel(this.VdoseGrid),1),sqrt(tmpBixel.beta).*dij.physicalDose{1}(this.VdoseGrid,bxlIdx), this.doseGrid.numOfVoxels,1);
-               end
+                dij.mAlphaDose{1}     = zeros(size(letdcube));
+                dij.mSqrtBetaDose{1}  = zeros(size(letdcube));
+                dij.mAlphaDose{1}(this.VdoseGrid)     = tmpBixel.alpha.*dij.physicalDose{1}(this.VdoseGrid);
+                dij.mSqrtBetaDose{1}(this.VdoseGrid)  = sqrt(tmpBixel.beta).*dij.physicalDose{1}(this.VdoseGrid);
+           else
+               indices = find(letdCube);
+               matSize = size(letdCube);
+               [voxels,bixels] = ind2sub(size(letdCube),indices);
+               tmpKernel.LET = nonzeros(letdCube);
+
+               tmpBixel.radDepths = zeros(size(voxels),"logical");
+               tmpBixel.vAlphaX   = dij.ax{1}(voxels);
+               tmpBixel.vBetaX    = dij.bx{1}(voxels);
+               tmpBixel.vABratio  = tmpBixel.vAlphaX ./ tmpBixel.vBetaX;
+              
+               tmpBixel = this.bioModel.calcBiologicalQuantitiesForBixel(tmpBixel,tmpKernel);
+
+               tmpBixel.alpha(~isfinite(tmpBixel.alpha)) = 0;
+               tmpBixel.beta(~isfinite(tmpBixel.beta)) =  0;
+
+               dij.mAlphaDose{1} = sparse(voxels, bixels, tmpBixel.alpha, matSize(1), matSize(2));
+               dij.mSqrtBetaDose{1} = sparse(voxels, bixels, sqrt(tmpBixel.beta), matSize(1), matSize(2));
+               dij.mAlphaDose{1} = dij.mAlphaDose{1} .* dij.physicalDose{1};
+               dij.mSqrtBetaDose{1} = dij.mSqrtBetaDose{1} .* dij.physicalDose{1};
            end
         end
     end

@@ -83,6 +83,7 @@ function test_loadDij
         pln.machine = 'Generic';
         pln.propDoseCalc.engine = 'FRED';
         pln.propDoseCalc.useGPU = true;
+        pln.propDoseCalc.calcLET = true;
         pln.propDoseCalc.externalCalculation = fullfile(matRad_cfg.matRadRoot, 'test', 'testData', 'FRED_data');
         
         % Test dij-load
@@ -101,6 +102,8 @@ function test_loadDij
         assertTrue(isequal(dijFredLoad.externalCalculationLodPath, fullfile(pln.propDoseCalc.externalCalculation, 'MCrun', 'out', 'scoreij', 'Phantom.Dose.bin')));
         assertTrue(isequal(size(dijFredLoad.physicalDose{1}),[nVoxles, nBixels]));
         assertTrue(isequal(size(forwardDoseFredLoad.physicalDose), size(resultGUI.physicalDose)));
+        assertTrue(isqeual(size(dijFredLoad.mLETDose{1}),[nVoxles, nBixels]));
+        assertTrue(isequal(size(forwardDoseFredLoad.LET), size(resultGUI.LET)));
 
 
 function test_bioCalculation
