@@ -41,7 +41,7 @@ function test_propertyAssignmentFromPln
         plnFields(strcmp([plnFields(:)], 'engine')) = [];
         
         for fieldIdx=1:numel(plnFields)
-            assertTrue(isequal(engine.(plnFields{fieldIdx}), pln.propDoseCalc.(plnFields{fieldIdx})));
+            assertEqual(engine.(plnFields{fieldIdx}), pln.propDoseCalc.(plnFields{fieldIdx}));
         end
     end
 
@@ -88,7 +88,8 @@ function test_loadDij
         
         % Test dij-load
         dijFredLoad         = matRad_calcDoseInfluence(ct,cst,stf,pln);
-        
+
+       
         % Test forward calculation cube load
         w = ones(sum([stf(:).totalNumOfBixels]),1);
         forwardDoseFredLoad = matRad_calcDoseForward(ct,cst,stf,pln,w);
@@ -99,12 +100,11 @@ function test_loadDij
         nVoxles = prod(ct.cubeDim);
 
         % Assert basic parameters
-        assertTrue(isequal(dijFredLoad.externalCalculationLodPath, fullfile(pln.propDoseCalc.externalCalculation, 'MCrun', 'out', 'scoreij', 'Phantom.Dose.bin')));
-        assertTrue(isequal(size(dijFredLoad.physicalDose{1}),[nVoxles, nBixels]));
-        assertTrue(isequal(size(forwardDoseFredLoad.physicalDose), size(resultGUI.physicalDose)));
-        assertTrue(isqeual(size(dijFredLoad.mLETDose{1}),[nVoxles, nBixels]));
-        assertTrue(isequal(size(forwardDoseFredLoad.LET), size(resultGUI.LET)));
-
+        assertEqual(dijFredLoad.externalCalculationLodPath, fullfile(pln.propDoseCalc.externalCalculation, 'MCrun', 'out', 'scoreij', 'Phantom.Dose.bin'));
+        assertEqual(size(dijFredLoad.physicalDose{1}),[nVoxles, nBixels]);
+        assertEqual(size(forwardDoseFredLoad.physicalDose), size(resultGUI.physicalDose));
+        assertEqual(size(dijFredLoad.mLETDose{1}),[nVoxles, nBixels]);
+        assertEqual(size(forwardDoseFredLoad.LET), size(resultGUI.LET));
 
 function test_bioCalculation
 
