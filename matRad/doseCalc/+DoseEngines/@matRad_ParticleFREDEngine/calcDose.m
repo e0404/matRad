@@ -375,18 +375,14 @@ function dij = calcDose(this,ct,cst,stf)
             end
 
         else
+            doseCube = doseCube(:,fredOrder);
             % Dose cube
-            if isequal(size(doseCube), [dij.doseGrid.numOfVoxels,dij.totalNumOfBixels])
-                %When scoring dij, FRED internaly normalizes to 1
-                dij.physicalDose{1}(this.VdoseGrid,:) = this.conversionFactor*doseCube(this.VdoseGrid,fredOrder);
-            end
-
+            %When scoring dij, FRED internaly normalizes to 1
+            dij.physicalDose{1} = this.conversionFactor*doseCube;
+            
             % LET cube
             if this.calcLET
-                % if isequal(size(letdCube), [dij.doseGrid.numOfVoxels,dij.totalNumOfBixels])
-                %     % Need to divide by 10, FRED scores in MeV * cm^2 / g
-                %     dij.mLETd{1}(this.VdoseGrid,:) = letdCube(this.VdoseGrid,fredOrder)./10;
-                % end
+                letdCube = letdCube(:,fredOrder);
 
                 % We need LETd * dose as well
                 dij.mLETDose{1} = dij.physicalDose{1}.*letdCube;
@@ -413,8 +409,8 @@ function dij = calcDose(this,ct,cst,stf)
                 tmpBixel.alpha(isnan(tmpBixel.alpha)) = 0;
                 tmpBixel.beta(isnan(tmpBixel.beta)) =  0;
                 
-                dij.mAlphaDose{1}     = zeros(size(letdcube));
-                dij.mSqrtBetaDose{1}  = zeros(size(letdcube));
+                dij.mAlphaDose{1}     = zeros(size(letdCube));
+                dij.mSqrtBetaDose{1}  = zeros(size(letdCube));
                 dij.mAlphaDose{1}(this.VdoseGrid)     = tmpBixel.alpha.*dij.physicalDose{1}(this.VdoseGrid);
                 dij.mSqrtBetaDose{1}(this.VdoseGrid)  = sqrt(tmpBixel.beta).*dij.physicalDose{1}(this.VdoseGrid);
            else
