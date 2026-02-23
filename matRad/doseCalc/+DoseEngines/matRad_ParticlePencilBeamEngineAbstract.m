@@ -374,7 +374,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                 end
 
                 % compute!
-                sigmaRashi = matRad_calcSigmaRashi(currBixel.baseData.energy, ...
+                sigmaRashi = matRad_calcSigmaRashi(currBixel.baseData, ...
                     currBixel.rangeShifter, ...
                     currBixel.SSD);
 
@@ -629,7 +629,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                 if  strcmp(this.machine.meta.radiationMode,'protons') && rangeShifterLUT(i).eqThickness > 0 
 
                     %get max range shift
-                    sigmaRashi = matRad_calcSigmaRashi(this.machine.data(energyIx).energy, ...
+                    sigmaRashi = matRad_calcSigmaRashi(this.machine.data(energyIx), ...
                         rangeShifterLUT(i), ...
                         energySigmaLUT(i,3));
 
@@ -818,7 +818,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                     if rangeShifter.eqThickness > 0 && strcmp(pln.radiationMode,'protons')
 
                         % compute!
-                        sigmaRashi = matRad_calcSigmaRashi(this.machine.data(energyIx).energy,rangeShifter,maxSSD);
+                        sigmaRashi = matRad_calcSigmaRashi(this.machine.data(energyIx),rangeShifter,maxSSD);
 
                         % add to initial sigma in quadrature
                         sigmaIni_sq = sigmaIni_sq +  sigmaRashi^2;
