@@ -25,6 +25,7 @@ regex_parameter_name: "^[a-z][a-zA-Z0-9]*$"
 suppress_rule: "copyright_notice"
 
 tab_width: 4
+indent_function_file_body: false
 
 # metrics limit for the code quality (https://florianschanda.github.io/miss_hit/metrics.html)
 metric "cnest": limit 6
