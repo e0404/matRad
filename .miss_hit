@@ -1,0 +1,34 @@
+project_root
+
+# octave: true
+
+exclude_dir: "submodules"
+
+# style guide (https://florianschanda.github.io/miss_hit/style_checker.html)
+line_length: 120
+
+# --- Naming rules for matRad ---
+
+# matRad_ + lowerCamelCase
+regex_function_name: "^matRad_[a-z][a-zA-Z0-9]*$"
+regex_script_name: "^matRad_[a-z][a-zA-Z0-9]*$"
+
+# methods: plain lowerCamelCase
+regex_method_name: "^[a-z][a-zA-Z0-9]*$"
+
+# classes: matRad_ + UpperCamelCase
+regex_class_name: "^matRad_[A-Z][a-zA-Z0-9]*$"
+
+# parameters / variables: lowerCamelCase
+regex_parameter_name: "^[a-z][a-zA-Z0-9]*$"
+
+suppress_rule: "copyright_notice"
+
+tab_width: 4
+indent_function_file_body: false
+
+# metrics limit for the code quality (https://florianschanda.github.io/miss_hit/metrics.html)
+metric "cnest": limit 6
+metric "file_length": limit 450
+metric "cyc": limit 25
+metric "parameters": limit 8

@@ -1,4 +1,4 @@
-function test_suite = test_stfGeneratorPhotonIMRT
+function test_suite = test_stfGEneratorParticleIMPT
 
     test_functions=localfunctions();
     
@@ -84,7 +84,7 @@ function test_suite = test_stfGeneratorPhotonIMRT
             %assertTrue(isscalar(stf2(i).ray.energy));
         end
 
-function test_generateRangeShfterStf()
+function test_generateRangeShifterStf()
         % geometry settings
         load protons_testData.mat
 

@@ -17,7 +17,7 @@ classdef (Abstract) matRad_StfGeneratorParticleRayBixelAbstract < matRad_StfGene
 
 
     properties
-        useRangeShifter = false
+        useRangeShifter = false;
         rangeShifterEqD
     end
 
@@ -68,21 +68,24 @@ classdef (Abstract) matRad_StfGeneratorParticleRayBixelAbstract < matRad_StfGene
                 %For now only a generic range shifter is used whose thickness is
                 %determined by the minimum peak width to play with
                 
-                if isempty(this.rangeShifterEqD)
+                matRad_cfg.dispInfo('\nUse of range shifter active');
+
+                if ~isempty(this.rangeShifterEqD)
+                      matRad_cfg.dispInfo('\nUsing provided range shifter thickness of %f mm\n', this.rangeShifterEqD);                  
+                else
                     this.rangeShifterEqD = round(min(this.availablePeakPos)* 1.25);
+                    matRad_cfg.dispInfo('\nUsing generic range shifter thickness of %f mm determined to allow ranges below the shortest base data entry\n', this.rangeShifterEqD);
                 end
                 
                 this.availablePeakPosRaShi = this.availablePeakPos - this.rangeShifterEqD;
 
                 % Available PeakPositionRaShi has to have same size() as
-                % availablePeaPos for indexing
+                % availablePeakPos for indexing
                 this.availablePeakPosRaShi(this.availablePeakPosRaShi<0) = 0;
-
-                matRad_cfg.dispWarning('Use of range shifter enabled. matRad will generate a generic range shifter with WEPL %f to enable ranges below the shortest base data entry.',this.rangeShifterEqD);
             end
 
             if sum(this.availablePeakPos<0)>0
-                matRad_cfg.dispError('at least one available peak position is negative - inconsistent machine file')
+                matRad_cfg.dispError('At least one available peak position is negative - inconsistent machine file')
             end
 
             %Create Water equivalent cube in ct
