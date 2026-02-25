@@ -29,16 +29,16 @@ In particular, we provide functionalities for:
 - Multileaf collimator sequencing
 - Basic treatment plan visualization and evaluation
 
-matRad is constantly evolving. If you are looking for a special feature, do not hesitate and `get in touch <mailto:matrad@dkfz.de?Subject=matRad>`_.
+matRad is constantly evolving. If you are looking for a special feature, do not hesitate and `get in touch <mailto:contact@matrad.org>`_.
 
 Contact
 -------
 
-If you have any questions or wish to contribute to the development of matRad, you can either write an email to `matrad@dkfz.de <mailto:matrad@dkfz.de>`_, use the GitHub functionalities to file a new issue, or directly fork the matRad repository and send pull requests with your own custom developments. What are you waiting for?
+If you have any questions or wish to contribute to the development of matRad, you can either write an email to `contact@matrad.org <mailto:contact@matrad.org>`_, use the GitHub functionalities to file a new issue, or directly fork the matRad repository and send pull requests with your own custom developments. What are you waiting for?
 
 Development team
 ----------------
 
-matRad development is driven by the research group `Radiotherapy Optimization <http://www.dkfz.de/radopt>`_ within the `Division of Medical Physics in Radiation Oncology <http://www.dkfz.de/en/medphys>`_ at the `German Cancer Research Center DKFZ <http://www.dkfz.de>`_ in `Heidelberg <https://goo.gl/maps/BBo2E>`_. 
+matRad development is driven by the research group `Radiotherapy Optimization <http://www.dkfz.de/radopt>`_ within the `Division of Medical Physics in Radiation Oncology <http://www.dkfz.de/en/medphys>`_ at the `German Cancer Research Center DKFZ <http://www.dkfz.de>`_ in `Heidelberg <https://goo.gl/maps/BBo2E>`_.
 
-We are always looking for beta testers that can provide external feedback on our code and developers that would like to take an active role in the future. Do not hesitate and `get in touch <mailto:contact@matrad.org>`_.
+We are always looking for beta testers that can provide external feedback on our code and developers that would like to take an active role in the future. Do not hesitate and `get in touch <mailto:contact@matrad.org>`__.
