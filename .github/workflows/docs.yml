@@ -28,10 +28,10 @@ jobs:
                   pip install -r docs/requirements.txt
 
             - name: Build documentation
-              run: sphinx-build docs .doc
+              run: sphinx-build docs _doc
 
             - name: Upload artifacts
               uses: actions/upload-artifact@v6
               with:
                   name: documentation
-                  path: .doc
+                  path: _doc
