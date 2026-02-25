@@ -154,8 +154,6 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             else
                 plnStruct = struct();
             end
-
-            fields = fieldnames(plnStruct);
             
             %Set up warning message
             if warnWhenPropertyChanged
@@ -164,49 +162,10 @@ classdef (Abstract) matRad_DoseEngineBase < handle
                 warningMsg = '';
             end
 
-            % iterate over all fieldnames and try to set the
-            % corresponding properties inside the engine
-            if matRad_cfg.isOctave
-                c2sWarningState = warning('off','Octave:classdef-to-struct');                
-            end
-            
-            for i = 1:length(fields)
-                try
-                    field = fields{i};
-                    if matRad_ispropCompat(this,field)
-                        this.(field) = matRad_recursiveFieldAssignment(this.(field),plnStruct.(field),true,warningMsg);
-                    else
-                        matRad_cfg.dispWarning('Not able to assign property ''%s'' from pln.propDoseCalc to Dose Engine!',field);
-                    end
-                catch ME
-                % catch exceptions when the engine has no properties,
-                % which are defined in the struct.
-                % When defining an engine with custom setter and getter
-                % methods, custom exceptions can be caught here. Be
-                % careful with Octave exceptions!
-                    if ~isempty(warningMsg)
-                        matRad_cfg = MatRad_Config.instance();
-                        switch ME.identifier
-                            case 'MATLAB:noPublicFieldForClass'
-                                matRad_cfg.dispWarning('Not able to assign property from pln.propDoseCalc to Dose Engine: %s',ME.message);
-                            otherwise
-                                matRad_cfg.dispWarning('Problem while setting up engine from struct:%s %s',field,ME.message);
-                        end
-                    end
-                end
-            end
-            
-            if matRad_cfg.isOctave
-                warning(c2sWarningState.state,'Octave:classdef-to-struct');                
-            end
+            matRad_assignPropertiesFromStruct(this,plnStruct,true,warningMsg);
         end
     
         function assignBioModelPropertiesFromPln(this, plnModel, warnWhenPropertyChanged)
-
-
-            matRad_cfg = MatRad_Config.instance();
-            
-            fields = fieldnames(plnModel);
             
             %Set up warning message
             if warnWhenPropertyChanged
@@ -215,33 +174,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
                 warningMsg = '';
             end
 
-            % iterate over all fieldnames and try to set the
-            % corresponding properties inside the engine
-            for i = 1:length(fields)
-                try
-                    field = fields{i};
-                    if isprop(this.bioModel,field)
-                        this.bioModel.(field) = matRad_recursiveFieldAssignment(this.bioModel.(field),plnModel.(field),warningMsg);
-                    else
-                        matRad_cfg.dispWarning('Not able to assign property ''%s'' from pln.bioModel to Biological Model!',field);
-                    end
-                catch ME
-                % catch exceptions when the engine has no properties,
-                % which are defined in the struct.
-                % When defining an engine with custom setter and getter
-                % methods, custom exceptions can be caught here. Be
-                % careful with Octave exceptions!
-                    if ~isempty(warningMsg)
-                        matRad_cfg = MatRad_Config.instance();
-                        switch ME.identifier
-                            case 'MATLAB:noPublicFieldForClass'
-                                matRad_cfg.dispWarning('Not able to assign property from pln.bioModel to Biological Model: %s',ME.message);
-                            otherwise
-                                matRad_cfg.dispWarning('Problem while setting up Biological Model from struct:%s %s',field,ME.message);
-                        end
-                    end
-                end
-            end
+            matRad_assignPropertiesFromStruct(this,plnModel,true,warningMsg);
         end
         
         function resultGUI = calcDoseForward(this,ct,cst,stf,w)
@@ -290,17 +223,51 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             if ~isa(this.multScen,'matRad_ScenarioModel')
                 this.multScen = matRad_ScenarioModel.create(this.multScen,struct('numOfCtScen',ct.numOfCtScen));
             end
-            
+           
             for i = 1:this.multScen.totNumScen
                 scenSubIx = this.multScen.linearMask(i,:);
                 resultGUItmp = matRad_calcCubes(ones(dij.numOfBeams,1),dij,this.multScen.sub2scenIx(scenSubIx(1),scenSubIx(2),scenSubIx(3)));
                 if i == 1
                     resultGUI = resultGUItmp;
                 end
-                resultGUI = matRad_appendResultGUI(resultGUI,resultGUItmp,false,sprintf('scen%d',i));                
+                if isvector(this.multScen.scenMask) &&  this.multScen.numOfCtScen>1%ctScen
+                    resultGUI.phaseDose{i} = resultGUItmp.physicalDose;
+                    for beamIx = 1:dij.numOfBeams
+                        resultGUI.(['phaseDose_beam', num2str(beamIx)]){i} = resultGUItmp.(['physicalDose_beam', num2str(beamIx)]);
+                    end
+                    if isfield(resultGUItmp, 'alphaDoseCube') && isfield(resultGUItmp, 'SqrtBetaDoseCube')
+                        resultGUI.phaseAlphaDose{i}    = resultGUItmp.alpha .* resultGUItmp.physicalDose;
+                        resultGUI.phaseSqrtBetaDose{i} = sqrt(resultGUItmp.beta) .* resultGUItmp.physicalDose;
+                        resultGUI.phaseRBExDose{i} = resultGUItmp.RBExDose;
+                        for beamIx = 1:dij.numOfBeams
+                            resultGUI.(['phaseAlphaDose_beam', num2str(beamIx)]){i} = resultGUItmp.(['alpha_beam', num2str(beamIx)]).*resultGUItmp.(['physicalDose_beam', num2str(beamIx)]);
+                            resultGUI.(['phaseSqrtBetaDose_beam', num2str(beamIx)]){i} = sqrt(resultGUItmp.(['beta_beam', num2str(beamIx)])).*resultGUItmp.(['physicalDose_beam', num2str(beamIx)]);
+                            resultGUI.(['phaseRBExDose_beam', num2str(beamIx)]){i} = resultGUItmp.(['RBExDose_beam', num2str(beamIx)]);
+                        end
+                    elseif isfield(resultGUItmp,'RBExDose')
+                        resultGUI.phaseRBExDose{i} = resultGUItmp.RBExDose;
+                        for beamIx = 1:dij.numOfBeams
+                          resultGUI.(['phaseRBExDose_beam', num2str(beamIx)]){i} = resultGUItmp.(['RBExDose_beam', num2str(beamIx)]);
+                        end
+                    end
+                else
+                    if this.multScen.totNumScen > 1
+                        resultGUI = matRad_appendResultGUI(resultGUI,resultGUItmp,false,sprintf('scen%d',i));
+                    end
+                end
+            end
+            
+            if isfield(dij,'w')
+                resultGUI.w  = dij.w;
+            else
+                resultGUI.w = w;
             end
 
-            resultGUI.w  = w; 
+            if isfield(dij,'MU')
+                resultGUI.MU = dij.MU;
+            end
+
+            resultGUI = orderfields(resultGUI);
         end
 
         function dij = calcDoseInfluence(this,ct,cst,stf)

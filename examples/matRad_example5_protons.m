@@ -124,13 +124,16 @@ plane = 3;
 doseWindow = [0 max([resultGUI.RBExDose(:); resultGUI_isoShift.RBExDose(:)])];
 
 figure,title('original plan')
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
+matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', resultGUI.RBExDose, 'plane', plane, 'slice', slice, 'alpha', 0.75, 'contourColorMap', colorcube, 'doseWindow', doseWindow);
+%matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.RBExDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
 figure,title('shifted plan')
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_isoShift.RBExDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
+matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', resultGUI_isoShift.RBExDose, 'plane', plane, 'slice', slice, 'alpha', 0.75, 'contourColorMap', colorcube, 'doseWindow', doseWindow);
+%matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI_isoShift.RBExDose,plane,slice,[],0.75,colorcube,[],doseWindow,[]);
 
 absDiffCube = resultGUI.RBExDose-resultGUI_isoShift.RBExDose;
 figure,title('absolute difference')
-matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
+matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', absDiffCube, 'plane', plane, 'slice', slice, 'contourColorMap', colorcube);
+%matRad_plotSliceWrapper(gca,ct,cst,1,absDiffCube,plane,slice,[],[],colorcube);
 
 % Let's plot single profiles that are perpendicular to the beam direction
 ixProfileY = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:),ct);

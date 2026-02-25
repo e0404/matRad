@@ -192,7 +192,7 @@ pln.propOpt.quantityOpt = 'physicalDose';
 stf = matRad_generateStf(ct,cst,pln);
 
 %% Dose Calculation
-dij = matRad_calcPhotonDose(ct,stf,pln,cst);
+dij =  matRad_calcDoseInfluence(ct,cst,stf,pln);
 
 %% Inverse Optimization  for IMPT based on RBE-weighted dose
 % The goal of the fluence optimization is to find a set of bixel/spot 
@@ -241,30 +241,38 @@ slice = slice(3);
 maxDose       = max([max(resultGUI.([pln.propOpt.quantityOpt])(:,:,slice)) max(resultGUIrobust.([pln.propOpt.quantityOpt])(:,:,slice))])+1e-4;
 doseIsoLevels = linspace(0.1 * maxDose,maxDose,10);
 figure,
-subplot(121),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.([pln.propOpt.quantityOpt '_' 'beam1'])      ,plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels);title('conventional plan - beam1')
-subplot(122),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.([pln.propOpt.quantityOpt])      ,plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels);title('conventional plan')
+subplot(121),matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', resultGUI.([pln.propOpt.quantityOpt '_' 'beam1'])    ,'plane', plane, 'slice', slice, 'contourColorMap', colorcube, 'doseWindow', [0 maxDose], 'doseIsoLevels', doseIsoLevels);title('conventional plan - beam1')
+subplot(122),matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', resultGUI.([pln.propOpt.quantityOpt])                ,'plane', plane, 'slice', slice, 'contourColorMap', colorcube, 'doseWindow', [0 maxDose], 'doseIsoLevels', doseIsoLevels);title('conventional plan')
+%subplot(121),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.([pln.propOpt.quantityOpt '_' 'beam1'])      ,plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels);title('conventional plan - beam1')
+%subplot(122),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUI.([pln.propOpt.quantityOpt])      ,plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels);title('conventional plan')
 
 figure
-subplot(121),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.([pln.propOpt.quantityOpt '_' 'beam1']),plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels);title('robust plan - beam1')
-subplot(122),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.([pln.propOpt.quantityOpt]),plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels);title('robust plan')
+subplot(121),matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', resultGUIrobust.([pln.propOpt.quantityOpt '_' 'beam1'])  ,'plane', plane, 'slice', slice, 'contourColorMap', colorcube, 'doseWindow', [0 maxDose], 'doseIsoLevels', doseIsoLevels);title('robust plan - beam1')
+subplot(122),matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', resultGUIrobust.([pln.propOpt.quantityOpt])              ,'plane', plane, 'slice', slice, 'contourColorMap', colorcube, 'doseWindow', [0 maxDose], 'doseIsoLevels', doseIsoLevels);title('robust plan')
+%subplot(121),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.([pln.propOpt.quantityOpt '_' 'beam1']),plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels);title('robust plan - beam1')
+%subplot(122),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.([pln.propOpt.quantityOpt]),plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels);title('robust plan')
 
 
 figure
-subplot(131),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust4D.([pln.propOpt.quantityOpt]),plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels);title('robust plan')
-subplot(132),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust4D.('accPhysicalDose'),plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels);title('robust plan dose accumulation')
+subplot(131),matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', resultGUIrobust4D.([pln.propOpt.quantityOpt])  ,'plane', plane, 'slice', slice, 'contourColorMap', colorcube, 'doseWindow', [0 maxDose], 'doseIsoLevels', doseIsoLevels);title('robust plan')
+subplot(132),matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', resultGUIrobust4D.('accPhysicalDose')  ,'plane', plane, 'slice', slice, 'contourColorMap', colorcube, 'doseWindow', [0 maxDose], 'doseIsoLevels', doseIsoLevels);title('robust plan dose accumulation')
+%subplot(131),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust4D.([pln.propOpt.quantityOpt]),plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels);title('robust plan')
+%subplot(132),matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust4D.('accPhysicalDose'),plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels);title('robust plan dose accumulation')
 
 % create an interactive plot to slide through individual scnearios
 f       = figure; title('individual scenarios');
 numScen = 1;
 maxDose       = max(max(resultGUIrobust.([pln.propOpt.quantityOpt '_scen' num2str(round(numScen))])(:,:,slice)))+0.2;
 doseIsoLevels = linspace(0.1 * maxDose,maxDose,10);
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.([pln.propOpt.quantityOpt '_scen' num2str(round(numScen))]),plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels);
+matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', resultGUIrobust.([pln.propOpt.quantityOpt '_scen' num2str(round(numScen))]) ,'plane', plane, 'slice', slice, 'contourColorMap', colorcube, 'doseWindow', [0 maxDose], 'doseIsoLevels', doseIsoLevels);
+%matRad_plotSliceWrapper(gca,ct,cst,1,resultGUIrobust.([pln.propOpt.quantityOpt '_scen' num2str(round(numScen))]),plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels);
 
 [env,envver] = matRad_getEnvironment();
 if strcmp(env,'MATLAB') || str2double(envver(1)) >= 5
     b = uicontrol('Parent',f,'Style','slider','Position',[50,5,419,23],...
         'value',numScen, 'min',1, 'max',pln.multScen.totNumScen,'SliderStep', [1/(pln.multScen.totNumScen-1) , 1/(pln.multScen.totNumScen-1)]);
-    set(b,'Callback',@(es,ed)  matRad_plotSliceWrapper(gca,ct,cst,round(get(es,'Value')),resultGUIrobust.([pln.propOpt.quantityOpt '_scen' num2str(round(get(es,'Value')))]),plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels));
+    set(b,'Callback',@(es,ed)  matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', round(get(es,'Value')), 'dose', resultGUIrobust.([pln.propOpt.quantityOpt '_scen' num2str(round(get(es,'Value')))]) ,'plane', plane, 'slice', slice, 'contourColorMap', colorcube, 'doseWindow', [0 maxDose], 'doseIsoLevels', doseIsoLevels)); 
+    %matRad_plotSliceWrapper(gca,ct,cst,round(get(es,'Value')),resultGUIrobust.([pln.propOpt.quantityOpt '_scen' num2str(round(get(es,'Value')))]),plane,slice,[],[],colorcube,[],[0 maxDose],doseIsoLevels));
 end
 
 %% Indicator calculation and show DVH and QI
@@ -282,10 +290,12 @@ structSel = {}; % structSel = {'PTV','OAR1'};
 [cstStatRob, resultGUISampRob, metaRob]                = matRad_samplingAnalysis(ct,cst,plnSampRob,caSampRob, mSampDoseRob, resultGUInomScen);
 
 figure,title('std dose cube based on sampling - conventional')
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUISamp.stdCube,plane,slice,[],[],colorcube,[],[0 max(resultGUISamp.stdCube(:))]);
+matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', resultGUISamp.stdCube     ,'plane', plane, 'slice', slice, 'contourColorMap', colorcube, 'doseWindow', [0 max(resultGUISamp.stdCube(:))]);
+%matRad_plotSliceWrapper(gca,ct,cst,1,resultGUISamp.stdCube,plane,slice,[],[],colorcube,[],[0 max(resultGUISamp.stdCube(:))]);
 
 figure,title('std dose cube based on sampling - robust')
-matRad_plotSliceWrapper(gca,ct,cst,1,resultGUISampRob.stdCube,plane,slice,[],[],colorcube,[],[0 max(resultGUISampRob.stdCube(:))]);
+matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', resultGUISampRob.stdCube  ,'plane', plane, 'slice', slice, 'contourColorMap', colorcube, 'doseWindow', [0 max(resultGUISampRob.stdCube(:))]);
+%matRad_plotSliceWrapper(gca,ct,cst,1,resultGUISampRob.stdCube,plane,slice,[],[],colorcube,[],[0 max(resultGUISampRob.stdCube(:))]);
 
 
 

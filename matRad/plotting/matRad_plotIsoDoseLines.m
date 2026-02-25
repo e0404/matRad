@@ -58,11 +58,11 @@ end
 %fly
 if isempty(isoContours)
     if plane == 1
-        C = contourc(doseCube(slice,:,:),isoLevels);
+        C = contourc(squeeze(doseCube(slice,:,:)),isoLevels);
     elseif plane == 2
-        C = contourc(doseCube(:,slice,:),isoLevels);
+        C = contourc(squeeze(doseCube(:,slice,:)),isoLevels);
     elseif plane == 3
-        C = contourc(doseCube(:,:,slice),isoLevels);
+        C = contourc(squeeze(doseCube(:,:,slice)),isoLevels);
     end    
     isoContours{slice,plane} = C;
 end
@@ -83,7 +83,7 @@ end
 
 colors = squeeze(ind2rgb(isoColorLevel,cMap));
 
-axes(axesHandle);
+%axes(axesHandle);
 hold(axesHandle,'on');
 
 %Check if there is a contour in the plane

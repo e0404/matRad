@@ -91,7 +91,7 @@ classdef (Abstract) matRad_ScenarioModel < handle
             matRad_cfg.dispInfo('Listing all scenarios...\n');
             matRad_cfg.dispInfo('\t#\tctScen\txShift\tyShift\tzShift\tabsRng\trelRng\tprob.\n');
             for s = 1:size(this.scenForProb,1)
-                str = [num2str(this.scenForProb(s,1),'\t%d'),sprintf('\t\t'), num2str(this.scenForProb(s,2:end),'\t%.3f')];
+                str = [num2str(this.scenForProb(s,1),'%d\t'),sprintf('\t'), num2str(this.scenForProb(s,2:end),'\t%.3f')];
                 matRad_cfg.dispInfo('\t%d\t%s\t%.3f\n',s,str,this.scenProb(s));
             end
         end
@@ -234,6 +234,13 @@ classdef (Abstract) matRad_ScenarioModel < handle
             folders = [folders matRad_cfg.userfolders];
 
             persistent metaScenarioModels lastOptionalPaths
+            
+            %First we do a sanity check if persistently stored metaclasses are valid
+            if ~matRad_cfg.isOctave && ~isempty(metaScenarioModels) && ~all(cellfun(@isvalid,metaScenarioModels))
+                matRad_cfg.dispWarning('Found invalid ScenarioModels, updating model cache.');
+                metaScenarioModels = [];
+            end
+
             if isempty(metaScenarioModels) || (~isempty(lastOptionalPaths) && ~isequal(lastOptionalPaths, folders))
                 lastOptionalPaths = folders;
                 metaScenarioModels = matRad_findSubclasses(meta.class.fromName(mfilename('class')),'folders',folders,'includeSubfolders',true);

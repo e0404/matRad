@@ -26,7 +26,11 @@ try
     % Include regions and plan delivery routine
     fprintf(fID, 'include: inp/regions/regions.inp\n');
     fprintf(fID, 'include: inp/plan/planDelivery.inp\n');
+    if ~this.calcDoseDirect && this.isVersionLower('3.70.0')
+        fprintf(fID, 'lwriteDij_bin = True\n');
+    end
 catch
+    fclose(fID);
     matRad_cfg.dispError('Failed to write run file');
 end
 

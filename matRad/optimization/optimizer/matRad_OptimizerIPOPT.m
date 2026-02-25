@@ -19,10 +19,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
 
     properties
         options
-        env
-
-        %Visualization
-        showPlot = true;
+        env;
     end
 
     properties (SetAccess = protected)

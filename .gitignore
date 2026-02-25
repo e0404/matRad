@@ -4,5 +4,7 @@ testresults.xml
 coverage.xml
 coverage.json
 *.asv
+.DS_Store
 build/
 .doc/
+

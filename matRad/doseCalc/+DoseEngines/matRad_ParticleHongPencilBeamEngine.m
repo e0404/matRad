@@ -1,7 +1,6 @@
 classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencilBeamEngineAbstract
-% matRad_ParticlePencilBeamEngineAbstractGaussian: 
-%   Implements an engine for particle based dose calculation 
-%   For detailed information see superclass matRad_DoseEngine
+% matRad_ParticleHongPencilBeamEngine: 
+%   Implements the Hong pencil-beam engine
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -20,7 +19,7 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     properties (Constant)
-           possibleRadiationModes = {'protons', 'helium','carbon'}
+           possibleRadiationModes = {'protons', 'helium','carbon', 'VHEE'}
            name = 'Hong Particle Pencil-Beam';
            shortName = 'HongPB';
     end
@@ -68,6 +67,13 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
                 case 'multi'
                     sigmaSq = kernels.sigmaMulti.^2 + bixel.sigmaIniSq;
                     L = sum([1 - sum(kernels.weightMulti,2), kernels.weightMulti] .* exp(-bixel.radialDist_sq ./ (2*sigmaSq))./(2*pi*sigmaSq),2);
+                case 'singleXY'
+                    %compute lateral sigma in both directions
+                    sigmaSq_x = kernels.sigmaX.^2 + bixel.sigmaIniSq;
+                    sigmaSq_y = kernels.sigmaY.^2 + bixel.sigmaIniSq;
+                    sigma_x = sqrt(sigmaSq_x);
+                    sigma_y = sqrt(sigmaSq_y);
+                    L = exp( - (bixel.latDists(:,1).^2)./(2*sigmaSq_x) - (bixel.latDists(:,2).^2)./(2*sigmaSq_y) ) ./(2*pi*sigma_x.*sigma_y);
                 otherwise
                     %Sanity check
                     matRad_cfg = MatRad_Config.instance();
@@ -138,12 +144,16 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
 
             dataType = machine.meta.dataType;
             if strcmp(dataType,'singleGauss')
-                checkData = all(isfield(machine.data,{'energy','depths','Z','peakPos','sigma','offset','initFocus'}));
+                checkData = all(isfield(machine.data,{'energy','depths','Z','sigma','offset','initFocus'}));
             elseif strcmp(dataType,'doubleGauss')
-                checkData = all(isfield(machine.data,{'energy','depths','Z','peakPos','weight','sigma1','sigma2','offset','initFocus'}));
+                checkData = all(isfield(machine.data,{'energy','depths','Z','weight','sigma1','sigma2','offset','initFocus'}));
             elseif strcmp(dataType,'multipleGauss')
-                checkData = all(isfield(machine.data,{'energy','depths','Z','peakPos','weightMulti','sigmaMulti','offset','initFocus'}));
+                checkData = all(isfield(machine.data,{'energy','depths','Z','weightMulti','sigmaMulti','offset','initFocus'}));
+            elseif strcmp(dataType,'singleGaussXY')
+                checkData = all(isfield(machine.data,{'energy','depths','Z','offset','initFocus','sigmaXY'}));
             else
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispWarning('Machine does not contain a valid ''dataType'' field!');
                 checkData = false;
             end
             

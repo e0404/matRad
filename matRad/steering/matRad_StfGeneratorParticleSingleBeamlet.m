@@ -18,12 +18,13 @@ classdef matRad_StfGeneratorParticleSingleBeamlet < matRad_StfGeneratorParticleR
     properties 
         energy;
         raShiThickness = 50; %Range shifter to be used if useRangeShifter = true;
+        visualize = false;
     end
 
     properties (Constant)
         name = 'Particle Single Spot';
         shortName = 'ParticleSingleSpot';
-        possibleRadiationModes = {'protons','helium','carbon'};
+        possibleRadiationModes = {'protons','helium','carbon','VHEE'};
     end  
     
     methods 
@@ -50,12 +51,12 @@ classdef matRad_StfGeneratorParticleSingleBeamlet < matRad_StfGeneratorParticleR
             matRad_cfg = MatRad_Config.instance();
 
             if isempty(this.isoCenter)
-                this.isoCenter = matRad_getIsoCenter(this.cst,this.ct,visBool);
+                this.isoCenter = matRad_getIsoCenter(this.cst,this.ct,this.visualize);
             end
 
             if ~isequal(size(this.isoCenter),[this.numOfBeams,3]) && ~size(this.isoCenter,1) ~= 1
                 matRad_cfg.dispWarning('IsoCenter invalid, creating new one automatically!');
-                this.isoCenter = matRad_getIsoCenter(this.cst,this.ct,visBool);
+                this.isoCenter = matRad_getIsoCenter(this.cst,this.ct,this.visualize);
             end
             
             if size(this.isoCenter,1) == 1          
@@ -197,7 +198,10 @@ classdef matRad_StfGeneratorParticleSingleBeamlet < matRad_StfGeneratorParticleR
             
                 %Place range shifter 2 times the range away from isocenter, but
                 %at least 10 cm
-                sourceRaShi = round(ctEntryPoint - 2*this.raShiThickness,-1); %place a little away from entry, round to cms to reduce number of unique settings;
+
+                roundToDigit = @(x,n) round(x * 10^n)/10^n;
+
+                sourceRaShi = roundToDigit((ctEntryPoint - 2*this.raShiThickness),-1); %place a little away from entry, round to cms to reduce number of unique settings;
                 beam.ray.rangeShifter.sourceRashiDistance = sourceRaShi;
             else
                 beam.ray.rangeShifter.ID = 0;

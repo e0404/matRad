@@ -80,4 +80,22 @@ classdef (Abstract) matRad_LQKernelBasedModel < matRad_LQBasedModel
 
         end
     end
+
+    methods (Static)
+
+
+        function [alphaX, betaX] = getAvailableTissueParameters(pln)
+            
+            % load machine
+            machine = matRad_loadMachine(pln);
+            if isfield(machine.data,'alphaX') && isfield(machine.data,'betaX')
+                alphaX = machine.data(1).alphaX;
+                betaX  = machine.data(1).betaX; 
+            else
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('The selected biological model requires AlphaX and BetaX to be set in the machine file but none was found.');
+            end
+
+        end
+    end
 end

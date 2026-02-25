@@ -155,8 +155,6 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
                 plnStruct = struct();
             end
 
-            fields = fieldnames(plnStruct);
-
             %Set up warning message
             if warnWhenPropertyChanged
                 warningMsg = 'Property in stf generator overwritten from pln.propStf';
@@ -164,41 +162,8 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
                 warningMsg = '';
             end
 
-            % iterate over all fieldnames and try to set the
-            % corresponding properties inside the stf generator
-            if matRad_cfg.isOctave
-                c2sWarningState = warning('off','Octave:classdef-to-struct');
-            end
+            matRad_assignPropertiesFromStruct(this,plnStruct,true,warningMsg);
 
-            for i = 1:length(fields)
-                try
-                    field = fields{i};
-                    if matRad_ispropCompat(this,field)
-                        this.(field) = matRad_recursiveFieldAssignment(this.(field),plnStruct.(field),true,warningMsg);
-                    else
-                        matRad_cfg.dispWarning('Not able to assign property ''%s'' from pln.propStf to stf generator!',field);
-                    end
-                catch ME
-                    % catch exceptions when the stf generator has no
-                    % properties which are defined in the struct.
-                    % When defining an engine with custom setter and getter
-                    % methods, custom exceptions can be caught here. Be
-                    % careful with Octave exceptions!
-                    if ~isempty(warningMsg)
-                        matRad_cfg = MatRad_Config.instance();
-                        switch ME.identifier
-                            case 'MATLAB:noPublicFieldForClass'
-                                matRad_cfg.dispWarning('Not able to assign property from pln.propStf to stf generator: %s',ME.message);
-                            otherwise
-                                matRad_cfg.dispWarning('Problem while setting up stf generator from struct:%s %s',field,ME.message);
-                        end
-                    end
-                end
-            end
-
-            if matRad_cfg.isOctave
-                warning(c2sWarningState.state,'Octave:classdef-to-struct');
-            end
         end
     end
 
@@ -446,6 +411,13 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
             %Get available, valid classes through call to matRad helper function
             %for finding subclasses
             persistent allAvailableStfGenerators lastOptionalPaths
+            
+            %First we do a sanity check if persistently stored metaclasses are valid
+            if ~matRad_cfg.isOctave && ~isempty(allAvailableStfGenerators) && ~all(cellfun(@isvalid,allAvailableStfGenerators))
+                matRad_cfg.dispWarning('Found invalid Steering Geometry Generators, updating cache.');
+                allAvailableStfGenerators = [];
+            end
+
             if isempty(allAvailableStfGenerators) || (~isempty(lastOptionalPaths) && ~isequal(lastOptionalPaths, optionalPaths))
                 lastOptionalPaths = optionalPaths;
                 allAvailableStfGenerators = matRad_findSubclasses(mfilename('class'),'folders',optionalPaths,'includeAbstract',false);

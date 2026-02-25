@@ -38,15 +38,19 @@ jobs:
         with:
           submodules: 'true'
       - uses: ./.github/actions/test-octave
-
-  test-report:
-    name: Collect Test Results
-    needs: [test-matlab-stable, test-matlab-latest, test-octave-6]
-    uses: ./.github/workflows/test-results.yml
-    secrets: inherit
   
   coverage-report:
     name: Collect Coverage Report
     needs: [test-matlab-stable]
     uses: ./.github/workflows/coverage-report.yml
     secrets: inherit
+
+  event_file:
+    name: Event File
+    runs-on: ubuntu-latest
+    steps:
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: event-file
+          path: ${{ github.event_path }}

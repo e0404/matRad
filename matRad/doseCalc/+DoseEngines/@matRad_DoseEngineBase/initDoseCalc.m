@@ -139,7 +139,7 @@ dij.beamNum  = NaN*ones(this.numOfColumnsDij,1);
 %Default MU calibration
 dij.minMU               = zeros(this.numOfColumnsDij,1);
 dij.maxMU               = inf(this.numOfColumnsDij,1);
-dij.numOfParticlesPerMU = 1e6*ones(this.numOfColumnsDij,1);
+dij.numParticlesPerMU = 1e6*ones(this.numOfColumnsDij,1);
 
 if isempty(this.voxelSubIx)
     % take only voxels inside patient
