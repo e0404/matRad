@@ -83,7 +83,7 @@ end
 
 colors = squeeze(ind2rgb(isoColorLevel,cMap));
 
-axes(axesHandle);
+%axes(axesHandle);
 hold(axesHandle,'on');
 
 %Check if there is a contour in the plane

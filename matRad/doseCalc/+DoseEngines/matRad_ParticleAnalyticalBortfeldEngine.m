@@ -72,107 +72,8 @@ classdef matRad_ParticleAnalyticalBortfeldEngine < DoseEngines.matRad_ParticlePe
         end           
     end
 
-    methods (Access = protected)
-        function dij = initDoseCalc(this,ct,cst,stf)
-
-            matRad_cfg = MatRad_Config.instance();
-
-            if this.calcLET == true
-                matRad_cfg.dispWarning('Engine does not support LET calculation! Disabling!');
-                this.calcLET = false;
-            end
-              
-            if this.calcBioDose == true
-                matRad_cfg.dispWarning('Engine does not support BioDose calculation! Disabling!');
-                this.calcBioDose = false;
-            end
-            
-            dij = this.initDoseCalc@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(ct,cst,stf);
-        end
-
-        function chooseLateralModel(this)
-            %Now check if we need tho chose the lateral model because it
-            %was set to auto
-            matRad_cfg = MatRad_Config.instance();
-            if strcmp(this.lateralModel,'auto') 
-                this.lateralModel = 'single';
-            elseif ~strcmp(this.lateralModel,'single') 
-                matRad_cfg.dispWarning('Engine only supports analytically computed singleGaussian lateral Model!');
-                this.lateralModel = 'single';
-            end   
-            matRad_cfg.dispInfo('Using an analytically computed %s Gaussian pencil-beam kernel model!\n');
-        end
-
-        function [currBixel] = getBixelIndicesOnRay(this,currBixel,currRay)
-            
-            % create offset vector to account for additional offsets modelled in the base data and a potential
-            % range shifter. In the following, we only perform dose calculation for voxels having a radiological depth
-            % that is within the limits of the base data set (-> machine.data(i).dephts). By this means, we only allow
-            % interpolations in this.calcParticleDoseBixel() and avoid extrapolations.
-            %urrBixel.offsetRadDepth = currBixel.baseData.offset + currBixel.radDepthOffset;
-            tmpOffset = currBixel.baseData.offset - currBixel.radDepthOffset;
-            
-            maxDepth = 1.15 * currBixel.baseData.range;
-
-            % find depth depended lateral cut off
-            if this.dosimetricLateralCutOff == 1
-                currIx = currRay.radDepths <= maxDepth + tmpOffset;
-            elseif this.dosimetricLateralCutOff < 1 && this.dosimetricLateralCutOff > 0
-                currIx = currRay.radDepths <= maxDepth + tmpOffset;
-                sigmaSq = this.calcSigmaLatMCS(currRay.radDepths(currIx) - tmpOffset, currBixel.baseData.energy).^2 + currBixel.sigmaIniSq;
-                currIx(currIx) = currRay.radialDist_sq(currIx) < currBixel.baseData.LatCutOff.numSig.^2*sigmaSq;
-            else
-                matRad_cfg = MatRad_Config.instance();
-                matRad_cfg.dispError('Cutoff must be a value between 0 and 1!')
-            end
-
-            currBixel.subRayIx = currIx;
-            currBixel.ix = currRay.ix(currIx);
-        end
-
-        function X = interpolateKernelsInDepth(this,bixel)
-            baseData = bixel.baseData;
-            
-            % calculate particle dose for bixel k on ray j of beam i
-            % convert from MeV cm^2/g per primary to Gy mm^2 per 1e6 primaries
-            conversionFactor = 1.6021766208e-02;
-                       
-            radDepthOffset = bixel.radDepthOffset;
-            
-            if isfield(baseData,'energySpectrum')
-                energyMean      = baseData.energySpectrum.mean;
-                energySpread    = baseData.energySpectrum.sigma/100 * baseData.energySpectrum.mean;
-            else
-                energyMean = baseData.energy;
-                energySpread = baseData.energy * this.sigmaEnergy;
-            end
-
-            if isfield(baseData,'offset') && ~isfield(baseData,'energySpectrum')
-                radDepthOffset = radDepthOffset - baseData.offset;
-            end            
-            
-            X.Z = conversionFactor * this.calcAnalyticalBragg(energyMean, bixel.radDepths + radDepthOffset, energySpread);
-            X.sigma = this.calcSigmaLatMCS(bixel.radDepths + radDepthOffset, baseData.energy);
-        end
-
-        function bixel = calcParticleBixel(this,bixel)
-
-            kernel = this.interpolateKernelsInDepth(bixel);       
-
-            %compute lateral sigma
-            sigmaSq = kernel.sigma.^2 + bixel.sigmaIniSq;
-
-            % calculate dose
-            bixel.physicalDose = bixel.baseData.LatCutOff.CompFac * exp( -bixel.radialDist_sq ./ (2*sigmaSq)) .* kernel.Z ./(2*pi*sigmaSq);
-
-            % check if we have valid dose values
-            if any(isnan(bixel.physicalDose)) || any(bixel.physicalDose<0)
-                matRad_cfg = MatRad_Config.instance();
-                matRad_cfg.dispError('Error in particle dose calculation.');
-            end
-        end
-
-        function doseVector = calcAnalyticalBragg(this, primaryEnergy, depthZ, energySpread)
+    methods (Access = public)
+        function [doseVector,hatD] = calcAnalyticalBragg(this, primaryEnergy, depthZ, energySpread)
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %   call
             %     this.calcAnalyticalBragg(PrimaryEnergy, depthz, WidthMod)
@@ -319,6 +220,107 @@ classdef matRad_ParticleAnalyticalBortfeldEngine < DoseEngines.matRad_ParticlePe
 
             sigmaMCS(depthZ==0) = 0;
         end
+    end
+
+    methods (Access = protected)
+        function dij = initDoseCalc(this,ct,cst,stf)
+
+            matRad_cfg = MatRad_Config.instance();
+
+            if this.calcLET == true
+                matRad_cfg.dispWarning('Engine does not support LET calculation! Disabling!');
+                this.calcLET = false;
+            end
+              
+            if this.calcBioDose == true
+                matRad_cfg.dispWarning('Engine does not support BioDose calculation! Disabling!');
+                this.calcBioDose = false;
+            end
+            
+            dij = this.initDoseCalc@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(ct,cst,stf);
+        end
+
+        function chooseLateralModel(this)
+            %Now check if we need tho chose the lateral model because it
+            %was set to auto
+            matRad_cfg = MatRad_Config.instance();
+            if strcmp(this.lateralModel,'auto') 
+                this.lateralModel = 'single';
+            elseif ~strcmp(this.lateralModel,'single') 
+                matRad_cfg.dispWarning('Engine only supports analytically computed singleGaussian lateral Model!');
+                this.lateralModel = 'single';
+            end   
+            matRad_cfg.dispInfo('Using an analytically computed %s Gaussian pencil-beam kernel model!\n');
+        end
+
+        function [currBixel] = getBixelIndicesOnRay(this,currBixel,currRay)
+            
+            % create offset vector to account for additional offsets modelled in the base data and a potential
+            % range shifter. In the following, we only perform dose calculation for voxels having a radiological depth
+            % that is within the limits of the base data set (-> machine.data(i).dephts). By this means, we only allow
+            % interpolations in this.calcParticleDoseBixel() and avoid extrapolations.
+            %urrBixel.offsetRadDepth = currBixel.baseData.offset + currBixel.radDepthOffset;
+            tmpOffset = currBixel.baseData.offset - currBixel.radDepthOffset;
+            
+            maxDepth = 1.15 * currBixel.baseData.range;
+
+            % find depth depended lateral cut off
+            if this.dosimetricLateralCutOff == 1
+                currIx = currRay.radDepths <= maxDepth + tmpOffset;
+            elseif this.dosimetricLateralCutOff < 1 && this.dosimetricLateralCutOff > 0
+                currIx = currRay.radDepths <= maxDepth + tmpOffset;
+                sigmaSq = this.calcSigmaLatMCS(currRay.radDepths(currIx) - tmpOffset, currBixel.baseData.energy).^2 + currBixel.sigmaIniSq;
+                currIx(currIx) = currRay.radialDist_sq(currIx) < currBixel.baseData.LatCutOff.numSig.^2*sigmaSq;
+            else
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Cutoff must be a value between 0 and 1!')
+            end
+
+            currBixel.subRayIx = currIx;
+            currBixel.ix = currRay.ix(currIx);
+        end
+
+        function X = interpolateKernelsInDepth(this,bixel)
+            baseData = bixel.baseData;
+            
+            % calculate particle dose for bixel k on ray j of beam i
+            % convert from MeV cm^2/g per primary to Gy mm^2 per 1e6 primaries
+            conversionFactor = 1.6021766208e-02;
+                       
+            radDepthOffset = bixel.radDepthOffset;
+            
+            if isfield(baseData,'energySpectrum')
+                energyMean      = baseData.energySpectrum.mean;
+                energySpread    = baseData.energySpectrum.sigma/100 * baseData.energySpectrum.mean;
+            else
+                energyMean = baseData.energy;
+                energySpread = baseData.energy * this.sigmaEnergy;
+            end
+
+            if isfield(baseData,'offset') && ~isfield(baseData,'energySpectrum')
+                radDepthOffset = radDepthOffset - baseData.offset;
+            end            
+            
+            X.Z = conversionFactor * this.calcAnalyticalBragg(energyMean, bixel.radDepths + radDepthOffset, energySpread);
+            X.sigma = this.calcSigmaLatMCS(bixel.radDepths + radDepthOffset, baseData.energy);
+        end
+
+        function bixel = calcParticleBixel(this,bixel)
+
+            kernel = this.interpolateKernelsInDepth(bixel);       
+
+            %compute lateral sigma
+            sigmaSq = kernel.sigma.^2 + bixel.sigmaIniSq;
+
+            % calculate dose
+            bixel.physicalDose = bixel.baseData.LatCutOff.CompFac * exp( -bixel.radialDist_sq ./ (2*sigmaSq)) .* kernel.Z ./(2*pi*sigmaSq);
+
+            % check if we have valid dose values
+            if any(isnan(bixel.physicalDose)) || any(bixel.physicalDose<0)
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Error in particle dose calculation.');
+            end
+        end       
         
         function calcLateralParticleCutOff(this,cutOffLevel,~)
             calcRange = false;

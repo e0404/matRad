@@ -45,6 +45,8 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
             end
 
             this = this@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(pln);
+
+            this.restrictBeamRadDepthsByMaxEnergy = false;
         end
 
         function setDefaults(this)
@@ -64,6 +66,14 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
             
             %We need some more beam information here
             ray.rotMat_system_T = beam.rotMat_system_T;
+        end
+
+        function [currBixel] = getBixelIndicesOnRay(this,currBixel,currRay)
+            % In Finesampling we can not reduce the number of points to be
+            % computed that easily based on the rad depth, so we overload
+            % this method to just give all indices stored in the ray
+            currBixel.subRayIx = true(size(currRay.ix));
+            currBixel.ix = currRay.ix;
         end
 
         % We override this function to get full lateral distances

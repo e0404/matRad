@@ -297,6 +297,10 @@ else
     matRad_cfg.dispInfo('chosen uniform weight of %f!\n',bixelWeight);
 end
 
+if any(~isfinite(wInit))
+    matRad_cfg.dispWarning('Invalid number in fluence weight initialization. Something might be off with your geometry. Setting invalid values to 1.');
+    wInit(~isfinite(wInit)) = 1;
+end
 
 %% calculate probabilistic quantities for probabilistic optimization if at least
 % one robust objective is defined
@@ -381,7 +385,18 @@ if ~isfield(pln.propOpt,'optimizer')
     end    
 end
 
-switch pln.propOpt.optimizer
+if isstring(pln.propOpt.optimizer) || ischar(pln.propOpt.optimizer)
+    pln.propOpt.optimizer = struct('name',pln.propOpt.optimizer);
+end    
+
+if isstruct(pln.propOpt.optimizer) && isfield(pln.propOpt.optimizer,'name')
+    optimizerName = char(pln.propOpt.optimizer.name);
+    optimizerOptions = rmfield(pln.propOpt.optimizer,'name');
+else
+    matRad_cfg.dispError('Could not identify optimizer! Please provide a valid optimizer name or optimizer struct with field ''name''!');
+end
+
+switch optimizerName
     case 'IPOPT'
         optimizer = matRad_OptimizerIPOPT;
     case 'fmincon'
@@ -389,12 +404,14 @@ switch pln.propOpt.optimizer
     case 'simulannealbnd'
         optimizer = matRad_OptimizerSimulannealbnd;
     otherwise
-        warning(['Optimizer ''' pln.propOpt.optimizer ''' not known! Fallback to IPOPT!']);
+        warning(['Optimizer ''' optimizerName ''' not known! Fallback to IPOPT!']);
         optimizer = matRad_OptimizerIPOPT;
 end
 
+matRad_assignPropertiesFromStruct(optimizer,optimizerOptions);
+
 if ~optimizer.IsAvailable()
-    matRad_cfg.dispError(['Optimizer ''' pln.propOpt.optimizer ''' not available!']);
+    matRad_cfg.dispError(['Optimizer ''' optimizerName ''' not available!']);
 end
 
 optimizer = optimizer.optimize(wInit,optiProb,dij,cst);

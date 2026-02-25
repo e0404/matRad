@@ -70,7 +70,7 @@ if nargin > 2 && nargout == 2
         numParticlesPerMUspot = stf(beamNum).ray(rayNum).numParticlesPerMU(spotNum);
 
         dij.minMU(iBixel,1) = minMUSpot;
-        dij.mxaMU(iBixel,1) = maxMUSpot;
+        dij.maxMU(iBixel,1) = maxMUSpot;
         dij.numParticlesPerMU(iBixel)   = numParticlesPerMUspot;
     end
 end
