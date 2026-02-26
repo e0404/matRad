@@ -384,11 +384,6 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 fredCmdCall = newCmdString;
             elseif isempty(fredCmdCall)
                 if ispc
-<<<<<<< HEAD
-                    %fredCmdCall = 'wsl if [ -f ~/.fredenv.sh ] ; then source ~/.fredenv.sh ; fi; fred';
-=======
-                    %                    fredCmdCall = 'wsl if [ -f ~/.fredenv.sh ] ; then source ~/.fredenv.sh ; fi; fred';
->>>>>>> dev
                     fredCmdCall = 'fred ';
                 elseif isunix
                     fredCmdCall = 'if [ -f ~/.fredenv.sh ] ; then source ~/.fredenv.sh ; fi; fred';
@@ -744,18 +739,6 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             %  - 'path':   simulation data will be loaded from the specified
             %              path. Full simulation directory path should be provided.
             %              Example: 'matRadRoot/userdata/FRED/'
-
-<<<<<<< HEAD
-        function set.externalCalculation(this, value)
-        % Set exportCalculation value, available options are:
-        %  - false:    (default) runs the FRED simulation (requires FRED installation)
-        %  - write/1:  triggers the file export
-        %  - 'path':   simulation data will be loaded from the specified
-        %              path. Full simulation directory path should be provided.
-        %              Example: 'matRadRoot/userdata/FRED/'
-            
-=======
->>>>>>> dev
             if isnumeric(value) || islogical(value)
                 switch value
                     case 1
@@ -764,23 +747,12 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                         this.externalCalculation = 'off';
                 end
             elseif ischar(value)
-<<<<<<< HEAD
-                
-                if any(strcmp(value, {'write', 'off'}))
-                    this.externalCalculation = value;
-                elseif isfolder(value)
-                this.externalCalculation = value;
-                
-                this.updatePaths(value);
-=======
-
                 if any(strcmp(value, {'write', 'off'}))
                     this.externalCalculation = value;
                 elseif isfolder(value)
                     this.externalCalculation = value;
 
                     this.updatePaths(value);
->>>>>>> dev
                 end
             end
         end
