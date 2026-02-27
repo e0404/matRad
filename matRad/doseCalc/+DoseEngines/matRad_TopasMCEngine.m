@@ -525,11 +525,16 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 this.scorer.RBE = true;
                 this.calcBioDose = true;
                 [dij.ax,dij.bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels,this.VdoseGrid);
-                dij.abx = zeros(size(dij.ax{1}));
-                ax = dij.ax{1};
-                bx = dij.bx{1};
-                dij.abx(bx>0) = ax(bx>0)./bx(bx>0);
-                dij.abx = {dij.abx};
+                numCtScen = numel(dij.ax);
+                dij.abx = cell(numCtScen,1);
+                for ctScenIdx = 1:numCtScen
+                    ax = dij.ax{ctScenIdx};
+                    bx = dij.bx{ctScenIdx};
+                    abx = zeros(size(ax));
+                    mask = bx > 0;
+                    abx(mask) = ax(mask) ./ bx(mask);
+                    dij.abx{ctScenIdx} = abx;
+                end
             end
 
             % save current directory to revert back to later
@@ -1194,12 +1199,12 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                                 if isfield(topasCubes,[topasCubesTallies{j} '_beam' num2str(d)]) && iscell(topasCubes.([topasCubesTallies{j} '_beam' num2str(d)]))
                                     
                                     if contains(topasCubesTallies{j}, 'CellType')
-                                        ab_idx      = str2num(talliesFlags{2});
+                                        ab_idx      = str2double(talliesFlags{2});
                                         organAlpha  = obj.bioParameters.AlphaX(ab_idx);
                                         organBeta   = obj.bioParameters.BetaX(ab_idx);
                                         mask    = find( (dij.ax{1} == organAlpha) & (dij.bx{1} == organBeta));
                                         topasCube_values = reshape(topasCubes.([topasCubesTallies{j} '_beam',num2str(d)]){ctScen},[],1);
-                                        topasCube_values = topasCube_values(mask,d);
+                                        topasCube_values = topasCube_values(mask);
                                         dij.(['mAlphaDose_' modelName]){ctScen}(mask,d)        = topasCube_values .* dij.physicalDose{ctScen}(mask,d);
                                     else
 
@@ -1207,20 +1212,20 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                                     end
                                 end
                             elseif ~isempty(strfind(lower(topasCubesTallies{j}),'beta'))
-                                modelName = strsplit(topasCubesTallies{j},'_');
-                                modelName = modelName{end};
+                                talliesFlags = strsplit(topasCubesTallies{j},'_');
+                                modelName = talliesFlags{end};
                                 if isfield(topasCubes,[topasCubesTallies{j} '_beam' num2str(d)]) && iscell(topasCubes.([topasCubesTallies{j} '_beam' num2str(d)]))
                                     if contains(topasCubesTallies{j}, 'CellType')
-                                        ab_idx      = str2num(talliesFlags{2});
+                                        ab_idx      = str2double(talliesFlags{2});
                                         organAlpha  = obj.bioParameters.AlphaX(ab_idx);
                                         organBeta   = obj.bioParameters.BetaX(ab_idx);
-                                        mask    = find( (dij.ax{1} == organAlpha) & (dij.bx{1} == organBeta));
+                                        mask    = find( (dij.ax{ctScen} == organAlpha) & (dij.bx{ctScen} == organBeta));
                                         topasCube_values = reshape(topasCubes.([topasCubesTallies{j} '_beam',num2str(d)]){ctScen},[],1);
-                                        topasCube_values = topasCube_values(mask,d);
-                                        dij.(['mBetaDose_' modelName]){ctScen}(mask,d)        = topasCube_values .* dij.physicalDose{ctScen}(mask,d);
+                                        topasCube_values = topasCube_values(mask);
+                                        dij.(['mSqrtBetaDose_' modelName]){ctScen}(mask,d)        = sqrt(topasCube_values) .* dij.physicalDose{ctScen}(mask,d);
                                     else
                                     
-                                    dij.(['mSqrtBetaDose_' modelName]){ctScen}(:,d)        = sqrt(reshape(topasCubes.([topasCubesTallies{j} '_beam',num2str(d)]){ctScen},[],1)) .* dij.physicalDose{ctScen}(:,d);
+                                        dij.(['mSqrtBetaDose_' modelName]){ctScen}(:,d)        = sqrt(reshape(topasCubes.([topasCubesTallies{j} '_beam',num2str(d)]){ctScen},[],1)) .* dij.physicalDose{ctScen}(:,d);
                                     end
                                 end
                             elseif ~isempty(strfind(topasCubesTallies{j},'LET'))
@@ -1495,7 +1500,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                                 insertText = ['_CellType_' num2str(idxCell)];
                                 fprintf(fID,'\n### Biological Parameters ###\n');
                                 fprintf(fID, ['sv:Sc/CellLines' insertText ' = 1 "CellLineGeneric_abR2' insertText '"\n']);
-                                fprintf(fID, ['d:Sc/CellLineGeneric_abR2' insertText '/Alphax 		= Sc/AlphaX' inserText ' /Gy\n']);
+                                fprintf(fID, ['d:Sc/CellLineGeneric_abR2' insertText '/Alphax 		= Sc/AlphaX' insertText ' /Gy\n']);
                                 fprintf(fID, ['d:Sc/CellLineGeneric_abR2' insertText '/Betax 		= Sc/BetaX' insertText ' /Gy2\n\n']);
                             end
                         end
