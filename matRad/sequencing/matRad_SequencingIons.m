@@ -25,10 +25,6 @@ classdef matRad_SequencingIons < matRad_SequencingBase
             sequence = this.calcSpotTime(sequence,w,stf);
         end
 
-        function resultGUI = updateResultGUI(~,sequence,~,~)
-            resultGUI.sequencing   = sequence;
-        end
-
         function sequence = calcSpotOrder(~,stf)
 
             sequence = struct;

@@ -144,11 +144,6 @@ classdef (Abstract) matRad_SequencingBase < handle
             matRad_cfg.dispError('This is an Abstract Base class! Function needs to be called for instantiable subclasses!');
         end
 
-        function resultGUI = updateResultGUI(this,sequence,varargin)
-
-            matRad_cfg = MatRad_Config.instance();
-            matRad_cfg.dispError('This is an Abstract Base class! Function needs to be called for instantiable subclasses!');
-        end
     end
     methods (Static)
         function sequencer = getSequencerFromPln(pln, warnDefault)
