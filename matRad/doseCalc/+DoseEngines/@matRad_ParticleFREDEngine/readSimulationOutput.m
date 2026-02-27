@@ -1,4 +1,4 @@
-function [doseCube, letCube, loadFileName] = readSimulationOutput(runFolder,calcDoseDirect,varargin)
+function [doseCube, letCube, loadFileName] = readSimulationOutput(runFolder,calcDoseDirect,calcLET)
 % FRED helper to read simulation output
 % call
 %   readSimulationOutput(runFolder,calcDoseDirect, varargin)
@@ -7,9 +7,6 @@ function [doseCube, letCube, loadFileName] = readSimulationOutput(runFolder,calc
 %   runFolder:          path to folder containing the simulation files
 %   calcDoseDirect:     boolean to trigger dij or .mhd reading
 %   
-%  optional:
-%   calLET:             addirional boolean to trigger loading of LETd
-%   readFunctionHandle: handle to readout function for ij-scorer
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2023 the matRad development team.
@@ -27,10 +24,9 @@ matRad_cfg = MatRad_Config.instance();
 p = inputParser();
 addRequired(p, 'runFolder', @ischar);
 addRequired(p, 'calcDoseDirect', @islogical);
-addParameter(p, 'calcLET',0,@islogical);
-addParameter(p, 'readFunctionHandle', @(lFile) DoseEngines.matRad_ParticleFREDEngine.readSparseDijBin(lFile))
+addOptional(p, 'calcLET',false,@islogical);
 
-parse(p, runFolder,calcDoseDirect, varargin{:});
+parse(p, runFolder,calcDoseDirect, calcLET);
 
 runFolder       = p.Results.runFolder;
 calcDoseDirect  = p.Results.calcDoseDirect;
@@ -38,43 +34,63 @@ calcLET         = p.Results.calcLET;
 
 doseCube = [];
 letCube  = [];
-loadFileName = [];
+
+outFolder = fullfile(runFolder,'out');
 
 if ~calcDoseDirect
+    letCompatible = true;
 
-    doseDijFolder = fullfile(runFolder, 'out', 'scoreij');
+    scoreIjFolder = fullfile(outFolder, 'scoreij');
     doseDijFile = 'Phantom.Dose.bin';
-    loadFileName = fullfile(doseDijFolder,doseDijFile);
+    letdDijFile = 'Phantom.LETd.bin';
+    if ~exist(scoreIjFolder,"dir")
+        scoreIjFolder = outFolder;
+        doseDijFile = 'Dij.bin';
+        letCompatible = false;
+    end
+    loadFileName = fullfile(scoreIjFolder,doseDijFile);
     
-    matRad_cfg.dispInfo(sprintf('Looking for scorer-ij output in sub folder: %s\n', strrep(doseDijFolder, '\', '\\')));
+    matRad_cfg.dispInfo('Looking for scorer-ij output in sub folder: %s\n', strrep(scoreIjFolder, '\', '\\'));
     
     % read dij matrix
     if isfile(loadFileName)
-%        doseCube = DoseEngines.matRad_ParticleFREDEngine.readSparseDijBin(loadFileName);
-        doseCube = p.Results.readFunctionHandle(loadFileName);
+        dijMatrices = DoseEngines.matRad_ParticleFREDEngine.readSparseDijBin(loadFileName);
+        doseCube = dijMatrices{1};
     else
         matRad_cfg.dispError(sprintf('Unable to find file: %s', strrep(loadFileName, '\', '\\')));
     end
 
-    if calcLET
+    if calcLET && letCompatible
+
         
-        letdDijFile = 'Phantom.LETd.bin';
-        letdDijFileName = fullfile(doseDijFolder,letdDijFile);
+        letdDijFileName = fullfile(scoreIjFolder,letdDijFile);
         
         try
-%            letCube = DoseEngines.matRad_ParticleFREDEngine.readSparseDijBin(letdDijFileName);
-            letCube = p.Results.readFunctionHandle(letdDijFileName);
+            dijMatrices = DoseEngines.matRad_ParticleFREDEngine.readSparseDijBin(letdDijFileName);
+            % TODO: store nominator and denominator in dij and allow this
+            % structure for LETd calculation in calcCubes and
+            % backProjection.
+            dijNom = dijMatrices{1};
+            dijDen = dijMatrices{2};
+            letCube = spfun(@(x) 1./x,dijDen);
+            letCube = letCube .* dijNom ./ 10; %divided by 10 to have keV/um
         catch
             matRad_cfg.dispError('unable to load file: %s',letdDijFileName);
         end
     end
 else
-    
-    doseCubeFolder = fullfile(runFolder, 'out', 'score');
+    scoreFolder = fullfile(outFolder, 'score');
     doseCubeFileName = 'Phantom.Dose.mhd';
-    loadFileName = fullfile(doseCubeFolder, doseCubeFileName);
+    letdCubeFileName = 'Phantom.LETd.mhd';
+    if ~exist(scoreFolder,"dir")
+        scoreFolder = outFolder;
+        doseCubeFileName = 'Dose.mhd';
+        letdCubeFileName = 'LETd.mhd';
+    end
+    
+    loadFileName = fullfile(scoreFolder, doseCubeFileName);
 
-    matRad_cfg.dispInfo(sprintf('Looking for scorer file in sub folder: %s\n', strrep(doseCubeFolder, '\', '\\')));
+    matRad_cfg.dispInfo(sprintf('Looking for scorer file in sub folder: %s\n', strrep(scoreFolder, '\', '\\')));
 
     if isfile(loadFileName)
         doseCube = matRad_readMHD(loadFileName);
@@ -83,12 +99,8 @@ else
     end
 
     if calcLET
-
-        letdDijFolder   = doseCubeFolder;
-        letdCubeFileName     = 'Phantom.LETd.mhd';
-
         try 
-            letCube = matRad_readMHD(fullfile(letdDijFolder, letdCubeFileName));
+            letCube = matRad_readMHD(fullfile(scoreFolder, letdCubeFileName));
         catch
             matRad_cfg.dispError('Unable to load file: %s',fullfile(letdDijFolder, letdCubeFileName));
         end

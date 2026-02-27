@@ -41,13 +41,12 @@ function test_propertyAssignmentFromPln
         plnFields(strcmp([plnFields(:)], 'engine')) = [];
         
         for fieldIdx=1:numel(plnFields)
-            assertTrue(isequal(engine.(plnFields{fieldIdx}), pln.propDoseCalc.(plnFields{fieldIdx})));
+            assertEqual(engine.(plnFields{fieldIdx}), pln.propDoseCalc.(plnFields{fieldIdx}));
         end
     end
 
 function test_writeFiles
 
-        matRad_cfg = MatRad_Config.instance();
         radModes = DoseEngines.matRad_ParticleFREDEngine.possibleRadiationModes;
 
         load([radModes{1} '_testData.mat']);
@@ -55,12 +54,13 @@ function test_writeFiles
         pln.machine = 'Generic';
         pln.propDoseCalc.engine = 'FRED';
         pln.propDoseCalc.externalCalculation = 'write';
+        pln.propDoseCalc.workingDir = helper_temporaryFolder('testFRED',true);
 
         w = ones(sum([stf(:).totalNumOfBixels]),1);
 
         resultGUI = matRad_calcDoseForward(ct,cst,stf,pln,w);
 
-        fredMainDir   = fullfile(matRad_cfg.primaryUserFolder, 'FRED');
+        fredMainDir   = pln.propDoseCalc.workingDir;
         runFolder     = fullfile(fredMainDir, 'MCrun');
         inputFolder   = fullfile(runFolder, 'inp');
         planFolder    = fullfile(inputFolder, 'plan');
@@ -83,11 +83,13 @@ function test_loadDij
         pln.machine = 'Generic';
         pln.propDoseCalc.engine = 'FRED';
         pln.propDoseCalc.useGPU = true;
+        pln.propDoseCalc.calcLET = true;
         pln.propDoseCalc.externalCalculation = fullfile(matRad_cfg.matRadRoot, 'test', 'testData', 'FRED_data');
         
         % Test dij-load
         dijFredLoad         = matRad_calcDoseInfluence(ct,cst,stf,pln);
-        
+
+       
         % Test forward calculation cube load
         w = ones(sum([stf(:).totalNumOfBixels]),1);
         forwardDoseFredLoad = matRad_calcDoseForward(ct,cst,stf,pln,w);
@@ -98,17 +100,18 @@ function test_loadDij
         nVoxles = prod(ct.cubeDim);
 
         % Assert basic parameters
-        assertTrue(isequal(dijFredLoad.externalCalculationLodPath, fullfile(pln.propDoseCalc.externalCalculation, 'MCrun', 'out', 'scoreij', 'Phantom.Dose.bin')));
-        assertTrue(isequal(size(dijFredLoad.physicalDose{1}),[nVoxles, nBixels]));
-        assertTrue(isequal(size(forwardDoseFredLoad.physicalDose), size(resultGUI.physicalDose)));
-
+        assertEqual(dijFredLoad.externalCalculationLodPath, fullfile(pln.propDoseCalc.externalCalculation, 'MCrun', 'out', 'scoreij', 'Phantom.Dose.bin'));
+        assertEqual(size(dijFredLoad.physicalDose{1}),[nVoxles, nBixels]);
+        assertEqual(size(forwardDoseFredLoad.physicalDose), size(resultGUI.physicalDose));
+        assertEqual(size(dijFredLoad.mLETDose{1}),[nVoxles, nBixels]);
+        assertEqual(size(forwardDoseFredLoad.LET), size(resultGUI.LET));
 
 function test_bioCalculation
 
         matRad_cfg = MatRad_Config.instance();
         load(['protons_testData.mat']);
         pln.machine = 'Generic';
-        pln.propDoseCalc.bioModel = matRad_bioModel('protons', 'MCN');
+        pln.bioModel = matRad_bioModel('protons', 'MCN');
         
         pln.propDoseCalc.engine = 'FRED';
         pln.propDoseCalc.useGPU = true;

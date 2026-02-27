@@ -125,9 +125,21 @@ classdef matRad_StfGeneratorParticleIMPT < matRad_StfGeneratorParticleRayBixelAb
                                     end
 
                                     % find target entry & exit
-                                    diff_voi    = [diff([rho{shiftScen}{end}])];
-                                    entryIx = find(diff_voi == 1);
-                                    exitIx = find(diff_voi == -1);
+                                    if rho{shiftScen}{end}(1)~=0
+                                        matRad_cfg.dispWarning('Target entry on the first voxel');
+                                        entryIx = 1;
+                                    else
+                                        diffVoi    = [diff([rho{shiftScen}{end}])];
+                                        entryIx = find(diffVoi == 1);
+                                    end
+
+                                    if rho{shiftScen}{end}(end)~=0
+                                        matRad_cfg.dispWarning('Target exit on the last voxel');
+                                        exitIx = numel(rho{shiftScen}{end});
+                                    else
+                                        diffVoi    = [diff([rho{shiftScen}{end}])];
+                                        exitIx = find(diffVoi == -1);
+                                    end
 
                                     %We approximate the interface using the rad depth between the last voxel before and the first voxel after the interface 
                                     % This captures the case that the first relevant voxel is a target voxel
@@ -176,9 +188,13 @@ classdef matRad_StfGeneratorParticleIMPT < matRad_StfGeneratorParticleRayBixelAb
                             %non-reachable low-range spots
                             raShiEnergies = this.availableEnergies(this.availablePeakPosRaShi >= targetEntry(k) & min(this.availablePeakPos) > this.availablePeakPosRaShi);
 
+                            if isempty(raShiEnergies)
+                                matRad_cfg.dispWarning('No energies available for range shifting, please change the range shifter thickness');
+                            end
+                            
                             raShi.ID = 1;
-                            raShi.eqThickness = rangeShifterEqD;
-                            raShi.sourceRashiDistance = round(min(ctEntryPoint) - 2*rangeShifterEqD,-1); %place a little away from entry, round to cms to reduce number of unique settings
+                            raShi.eqThickness = this.rangeShifterEqD;
+                           raShi.sourceRashiDistance = 10 * round((min(ctEntryPoint) - 2*this.rangeShifterEqD) / 10); %place a little away from entry, round to cms to reduce number of unique settings
 
                             beam.ray(j).energy = [beam.ray(j).energy raShiEnergies];
                             beam.ray(j).rangeShifter = [beam.ray(j).rangeShifter repmat(raShi,1,length(raShiEnergies))];
