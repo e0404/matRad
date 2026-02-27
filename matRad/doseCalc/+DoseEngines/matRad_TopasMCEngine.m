@@ -670,9 +670,6 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 dij.totalNumOfRays = 1;
                 dij.meta.TOPASworkingDir = this.workingDir;
             end
-
-            this.finalizeDose();
-
         end
 
 

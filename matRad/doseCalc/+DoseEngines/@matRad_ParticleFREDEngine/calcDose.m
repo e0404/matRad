@@ -435,9 +435,6 @@ function dij = calcDose(this,ct,cst,stf)
                dij.mSqrtBetaDose{1} = dij.mSqrtBetaDose{1} .* dij.physicalDose{1};
            end
         end
-    end
-
-    dij = this.finalizeDose(dij);
-    
+    end    
     cd(currFolder);
 end

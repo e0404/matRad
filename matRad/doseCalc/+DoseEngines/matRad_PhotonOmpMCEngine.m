@@ -201,9 +201,6 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     end
                 end
             end
-
-            %Finalize dose calculation
-            dij = this.finalizeDose(dij);
         end
 
         function dij = initDoseCalc(this,ct,cst,stf)

@@ -656,9 +656,6 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                 dij.totalNumOfBixels = 1;
                 dij.totalNumOfRays = 1;
             end
-            %Finalize dose calculation
-            dij = this.finalizeDose(dij);
-
         end
 
         function setBinaries(this)

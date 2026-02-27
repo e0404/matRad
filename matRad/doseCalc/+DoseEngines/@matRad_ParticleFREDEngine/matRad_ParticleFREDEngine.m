@@ -84,7 +84,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         dijFormatVersion
     end
 
-    properties (SetAccess = private, Hidden)
+    properties (SetAccess = protected, Hidden)
         patientFilename      = 'CTpatient.mhd'
         runInputFilename     = 'fred.inp'
         regionsFilename      = 'regions.inp'
