@@ -160,9 +160,14 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             % containing intialization which are specificly needed for
             % pencil beam calculation and not for other engines
 
-            dij = initDoseCalc@DoseEngines.matRad_DoseEngineBase(this,ct,cst,stf);
-            
             matRad_cfg = MatRad_Config.instance();
+            if matRad_cfg.enableGPU
+                ct = matRad_moveCtToGPU(ct);
+                cst = matRad_moveCstToGPU(cst);
+            end
+
+
+            dij = initDoseCalc@DoseEngines.matRad_DoseEngineBase(this,ct,cst,stf);
             
             % calculate rED or rSP from HU or take provided wedCube
             if this.useGivenEqDensityCube && ~isfield(ct,'cube')

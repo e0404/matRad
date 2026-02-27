@@ -34,6 +34,11 @@ function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
 
 matRad_cfg = MatRad_Config.instance();
 
+if matRad_cfg.enableGPU
+    cst = matRad_moveCstToGPU(cst);
+    dij = matRad_moveDijToGPU(dij);
+end
+
 % consider VOI priorities
 cst  = matRad_setOverlapPriorities(cst);
 

@@ -106,7 +106,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             % obj.options.derivative_test_perturbation = 1e-6; % default 1e-8
             % obj.options.derivative_test_tol          = 1e-6;
 
-            if ~matRad_checkMexFileExists('ipopt')
+            if ~matRad_OptimizerIPOPT.IsAvailable()
                 matRad_cfg.dispError('IPOPT mex interface not available for %s!',obj.env);
             end
 
@@ -136,10 +136,10 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
 
             % set callback functions.
 
-            funcs.objective         = @(x) double(optiProb.matRad_objectiveFunction(x,dij,cst));
-            funcs.constraints       = @(x) double(optiProb.matRad_constraintFunctions(x,dij,cst));
-            funcs.gradient          = @(x) double(optiProb.matRad_objectiveGradient(x,dij,cst));
-            funcs.jacobian          = @(x) double(optiProb.matRad_constraintJacobian(x,dij,cst));
+            funcs.objective         = @(x) double(gather(optiProb.matRad_objectiveFunction(x,dij,cst))));
+            funcs.constraints       = @(x) double(gather(optiProb.matRad_constraintFunctions(x,dij,cst)));
+            funcs.gradient          = @(x) double(gather(optiProb.matRad_objectiveGradient(x,dij,cst)));
+            funcs.jacobian          = @(x) double(gather(optiProb.matRad_constraintJacobian(x,dij,cst)));
             funcs.jacobianstructure = @( ) optiProb.matRad_getJacobianStructure(w0,dij,cst);
             funcs.iterfunc          = @(iter,objective,paramter) obj.iterFunc(iter,objective,paramter,ipoptStruct.ipopt.max_iter);
 
@@ -174,7 +174,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
 
             % Run IPOPT.
             try
-                [obj.wResult, obj.resultInfo] = ipopt(double(w0),funcs,ipoptStruct);
+                [obj.wResult, obj.resultInfo] = ipopt(double(gather(w0)),funcs,ipoptStruct);
             catch ME
                 errorString = [ME.message '\nThis error was thrown by the MEX-interface of IPOPT.\nMex interfaces can raise compatability issues which may be resolved by compiling them by hand directly on your particular system.'];
                 matRad_cfg.dispError(errorString);
@@ -251,6 +251,11 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.allObjectiveFunctionValues(iter + 1) = objective;
             %We don't want the optimization to crash because of drawing
             %errors
+
+            if ~isempty(obj.axesHandle) && ~isgraphics(obj.axesHandle)
+                obj.plotFailed = true;
+            end
+
             if obj.showPlot && ~obj.plotFailed
                 try
                     obj.plotFunction();
@@ -259,6 +264,11 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
                     %Put a warning at iteration 1 that plotting failed
                     matRad_cfg.dispWarning('Objective Function plotting failed and thus disabled. Message:\n%s',ME.message);
                     obj.plotFailed = true;
+                    if matRad_cfg.isOctave
+                        fflush(stdout);
+                    else
+                        drawnow('update');
+                    end
                 end
             end
             flag = ~obj.abortRequested;
@@ -340,19 +350,19 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
     methods (Static)
         function available = IsAvailable()
             available = matRad_checkMexFileExists('ipopt');
-            
+
             %Let's run a tiny testproblem to see if it really works
             if available
                 funcs.objective         = @(x) x.^2;
-                funcs.gradient          = @(x) 2*x;                
+                funcs.gradient          = @(x) 2*x;
                 funcs.hessian           = @(x,sigma,lambda) sigma*sparse(2);
                 funcs.hessianstructure  = @()  sparse(true);
-                
+
                 s.ipopt.tol             = 1e-5; % (Opt1)
                 s.ipopt.print_level     = 0;
                 s.ipopt.print_user_options            = 'no';
                 s.ipopt.print_options_documentation   = 'no';
-                
+
                 try
                     [x,~] = ipopt(1,funcs,s);
                     assert(abs(x) < 1e-5);

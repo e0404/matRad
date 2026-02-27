@@ -1,4 +1,4 @@
-function [radDepthV, radDepthCube] = matRad_rayTracing(stfElement,ct,V,rot_coordsV,lateralCutoff)
+function [radDepthV, radDepthCube] = matRad_rayTracing(stfElement, ct, V, rot_coordsV, lateralCutoff)
 % matRad visualization of two-dimensional dose distributions on ct including
 % segmentation
 %
@@ -22,13 +22,13 @@ function [radDepthV, radDepthCube] = matRad_rayTracing(stfElement,ct,V,rot_coord
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
+% Copyright 2015 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -37,16 +37,16 @@ matRad_cfg = MatRad_Config.instance();
 matRad_cfg.dispDeprecationWarning('Calls to matRad_rayTracing will be replaced by usage of the matRad_RayTracer class in the future!');
 
 % At the moment we only implement the Siddon ray-tracer in [1]
-hTracer = matRad_RayTracerSiddon(ct.cube,ct);
+hTracer = matRad_RayTracerSiddon(ct.cube, ct);
 
 if nargin >= 5
     hTracer.lateralCutOff = lateralCutoff;
 end
 
 if nargin >= 4
-    [radDepthV,radDepthCube] = hTracer.traceCube(stfElement,V,rot_coordsV);
+    [radDepthV, radDepthCube] = hTracer.traceCube(stfElement, V, rot_coordsV);
 elseif nargin >= 3
-    [radDepthV,radDepthCube] = hTracer.traceCube(stfElement,V);
+    [radDepthV, radDepthCube] = hTracer.traceCube(stfElement, V);
 else
-    [radDepthV,radDepthCube] = hTracer.traceCube(stfElement);
+    [radDepthV, radDepthCube] = hTracer.traceCube(stfElement);
 end

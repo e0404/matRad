@@ -36,6 +36,9 @@ classdef MatRad_Config < handle
         
         gui;
 
+        %Experimental
+        enableGPU = false;
+
         %User folders
         userfolders; %Cell array of user folders containing machines, patients, hluts. Default contains the userdata folder in the matRad root directory
     end

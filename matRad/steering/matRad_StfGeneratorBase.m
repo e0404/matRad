@@ -179,9 +179,14 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
             % Instance of MatRad_Config class
             matRad_cfg = MatRad_Config.instance();
             matRad_cfg.dispInfo('matRad: Generating stf struct with generator ''%s''... ',this.name);
-
-            this.ct = ct;
-            this.cst = cst;
+            
+            if matRad_cfg.enableGPU
+                this.ct = matRad_moveCtToGPU(ct);
+                this.cst = matRad_moveCtToGPU(cst);
+            else
+                this.ct = ct;
+                this.cst = cst;
+            end
 
             this.initialize();
             this.createPatientGeometry();
