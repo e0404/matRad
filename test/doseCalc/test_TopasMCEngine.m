@@ -261,5 +261,100 @@ for i = 1:numel(radModes)
     rmdir(folderName,'s'); %clean up
 end
 
+function test_TopasMCdoseCalc_multiAlphaBeta
+    radModes = {'protons'};
+    matRad_cfg = MatRad_Config.instance();
 
+    if moxunit_util_platform_is_octave
+        confirm_recursive_rmdir(false,'local');
+    end
+
+    for i = 1:numel(radModes)
+        switch radModes{i}
+            case  'protons'
+                RBEmodel = {'mcn', 'wed'};
+            case {'helium', 'carbon'}
+                RBEmodel ={'libamtrack','lem'};
+            otherwise
+                continue;
+        end
+        matRad_cfg = MatRad_Config.instance();
+        load([radModes{i} '_testData.mat']);
+
+        % Extract purely random alpha/beta couples
+        for idx = 1:size(cst,1)
+            alphaList(1,idx) =  0.1 + (0.8-0.1).*rand;
+            betaList(1,idx) = 0.001 + (0.1-0.001).*rand;
+        end
+        %alpha1 = 0.1 + (0.8-0.1).*rand; 
+        %alpha2 = 0.1 + (0.8-0.1).*rand;
+        %beta1  = 0.001 + (0.1-0.001).*rand;
+        %beta2  = 0.001 + (0.1-0.001).*rand;
+        rbeIdx = 1 + (length(RBEmodel)-1)*round(rand);
+
+        for idx = 1:size(cst,1)
+            cst{idx,5}.alphaX = alphaList(idx);
+            cst{idx,5}.betaX = betaList(idx);
+            %cst{1,5}.alphaX = alpha1;
+            %cst{1,5}.betaX = beta1;
+            %cst{2,5}.alphaX = alpha2;
+            %cst{2,5}.betaX = beta2;
+        end
+
+        pln.propDoseCalc.bioParameters.AlphaX = alphaList;%[alpha1, alpha2];
+        pln.propDoseCalc.bioParameters.BetaX = betaList;%[beta1, beta2];
+
+        pln.propDoseCalc.engine                 = 'TOPAS';
+        pln.propDoseCalc.externalCalculation    = 'write';
+        pln.propDoseCalc.numHistoriesDirect     = 1e6;
+        pln.propDoseCalc.numOfRuns              = 1;
+        pln.propDoseCalc.scorer.RBE             = true;
+        pln.propDoseCalc.scorer.RBE_model       = {RBEmodel{rbeIdx}};
+        %pln.bioModel = matRad_bioModel(radModes{i},'none');
+        pln.bioModel = upper(RBEmodel{rbeIdx});
+        pln.propDoseCalc.scorer.reportQuantity  = {'Sum'};
+        resultGUI = matRad_calcDoseForward(ct,cst,stf,pln, ones(1,sum([stf(:).totalNumOfBixels])));
+        %matRad_calcDoseForward(ct,cst,stf,pln,resultGUI.w);
+
+        folderName = [matRad_cfg.primaryUserFolder filesep 'TOPAS' filesep];
+        folderName = [folderName stf(1).radiationMode,'_',stf(1).machine,'_',datestr(now, 'dd-mm-yy')];
+        %check of outputfolder exists
+        assertTrue(isfolder(folderName));
+        %check if file in folder existi
+        assertTrue(isfile([folderName filesep 'matRad_cube.dat']));
+        assertTrue(isfile([folderName filesep 'matRad_cube.txt']));
+        assertTrue(isfile([folderName filesep 'MCparam.mat']));
+        for j = 1:pln.propStf.numOfBeams
+            assertTrue(isfile([folderName filesep 'beamSetup_matRad_plan_field' num2str(j) '.txt']));
+            assertTrue(isfile([folderName filesep 'matRad_plan_field' num2str(j) '_run1.txt']));
+        
+            for runIdx = 1:pln.propDoseCalc.numOfRuns
+                pathFile = [folderName filesep 'matRad_plan_field' num2str(j) '_run' num2str(runIdx) '.txt'];
+                fileText = fileread(pathFile);
+                matches = unique(regexp(fileText, 'CellType_\d+/', 'match'));
+                assertTrue(length(matches) == length(alphaList) && length(matches) == length(betaList));
+
+                lines = splitlines(fileText);
+                idx = startsWith(lines, 'd:Sc/AlphaX');
+                matchingLines = lines(idx);
+                for cellIdx = 1:length(matchingLines)
+                    tmp = split(matchingLines{cellIdx}, '_');
+                    tmp = split(tmp{end}, ' ');
+                    assertElementsAlmostEqual( alphaList(str2double(tmp{1})), str2double(tmp{3}) );
+                end
+
+                lines = splitlines(fileText);
+                idx = startsWith(lines, 'd:Sc/BetaX');
+                matchingLines = lines(idx);
+                for cellIdx = 1:length(matchingLines)
+                    tmp = split(matchingLines{cellIdx}, '_');
+                    tmp = split(tmp{end}, ' ');
+                    assertTrue(abs( betaList(str2double(tmp{1})) - str2double(tmp{3}) ) < 0.01*str2double(tmp{3}) );
+                end
+
+            end
+        
+        end
+    end
+end
 
