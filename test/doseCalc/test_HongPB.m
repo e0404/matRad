@@ -27,8 +27,6 @@ function test_suite = test_HongPB
         assertTrue(DoseEngines.matRad_ParticleHongPencilBeamEngine.isAvailable(testData.pln));
         
         testData.pln.propDoseCalc.engine = 'HongPB';
-        testData.pln.propDoseCalc.dosimetricLateralCutOff = 0.995;
-        testData.pln.propDoseCalc.geometricLateralCutOff = 50;
         resultGUI = matRad_calcDoseForward(testData.ct, testData.cst, testData.stf, testData.pln, ones(sum([testData.stf(:).totalNumOfBixels]),1));
     
         assertTrue(isequal(fieldnames(resultGUI),fieldnames(testData.resultGUI)));
@@ -40,8 +38,6 @@ function test_suite = test_HongPB
         assertTrue(DoseEngines.matRad_ParticleHongPencilBeamEngine.isAvailable(testData.pln));
 
         testData.pln.propDoseCalc.engine = 'HongPB';
-        testData.pln.propDoseCalc.dosimetricLateralCutOff = 0.995;
-        testData.pln.propDoseCalc.geometricLateralCutOff = 50;
         resultGUI = matRad_calcDoseForward(testData.ct, testData.cst, testData.stf, testData.pln, ones(sum([testData.stf(:).totalNumOfBixels]),1));
     
         assertTrue(isequal(fieldnames(resultGUI),fieldnames(testData.resultGUI)));
@@ -51,10 +47,7 @@ function test_suite = test_HongPB
     function test_calcDoseHongPBcarbon
         testData = load('carbon_testData.mat');
         assertTrue(DoseEngines.matRad_ParticleHongPencilBeamEngine.isAvailable(testData.pln));
-
-        testData.pln.propDoseCalc.engine = 'HongPB';
-        testData.pln.propDoseCalc.dosimetricLateralCutOff = 0.995;
-        testData.pln.propDoseCalc.geometricLateralCutOff = 50;
+        
         resultGUI = matRad_calcDoseForward(testData.ct, testData.cst, testData.stf, testData.pln, ones(sum([testData.stf(:).totalNumOfBixels]),1));
     
         assertTrue(isequal(fieldnames(resultGUI),fieldnames(testData.resultGUI)));
@@ -64,9 +57,8 @@ function test_suite = test_HongPB
     function test_calcDoseHongPBVHEE
         testData = load('VHEE_testData.mat');
         assertTrue(DoseEngines.matRad_ParticleHongPencilBeamEngine.isAvailable(testData.pln));
+        
         testData.pln.propDoseCalc.engine = 'HongPB';
-        testData.pln.propDoseCalc.dosimetricLateralCutOff = 0.995;
-        testData.pln.propDoseCalc.geometricLateralCutOff = 50;
         resultGUI = matRad_calcDoseForward(testData.ct, testData.cst, testData.stf, testData.pln, ones(sum([testData.stf(:).totalNumOfBixels]),1));
     
         assertTrue(isequal(fieldnames(resultGUI),fieldnames(testData.resultGUI)));
@@ -97,6 +89,23 @@ function test_suite = test_HongPB
         assertExceptionThrown(@() DoseEngines.matRad_ParticleHongPencilBeamEngine.isAvailable(testData.pln));
         assertFalse(DoseEngines.matRad_ParticleHongPencilBeamEngine.isAvailable(testData.pln,[]));
     
-    
-    
-    
+    function test_doseCalcWithRashi
+        testData = load('protons_testData.mat');
+        engine   = DoseEngines.matRad_ParticleHongPencilBeamEngine(testData.pln);
+
+        stf = testData.stf;
+
+        % Add rangeShifter
+        stf(1).ray(1).rangeShifter.ID =1;
+        stf(1).ray(1).rangeShifter.eqThickness =1;
+        stf(1).ray(1).rangeShifter.sourceRashiDistance = -(stf(1).sourcePoint(2) + 100);
+
+        % Add rangeShifter
+        stf(2).ray(2).rangeShifter.ID =1;
+        stf(2).ray(2).rangeShifter.eqThickness =1;
+        stf(2).ray(2).rangeShifter.sourceRashiDistance = -(stf(2).sourcePoint(2) + 100);
+
+        resultGUI = engine.calcDoseForward(testData.ct,testData.cst,stf,ones(sum([stf.totalNumOfBixels]),1));
+        assertTrue(isequal(fieldnames(resultGUI),fieldnames(testData.resultGUI)));
+
+        

@@ -23,6 +23,10 @@ classdef (Abstract) matRad_Optimizer < handle
         options %options struct
     end
 
+    properties
+        showPlot = true;
+    end
+
     properties (Abstract,SetAccess = protected)
         wResult
         resultInfo

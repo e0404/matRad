@@ -42,6 +42,7 @@ classdef (Abstract) matRad_DoseOptimizationFunction
         function s = struct(obj)
             s.className = class(obj);
             s.parameters = obj.parameters;
+            s.robustness = obj.robustness;
         end
         
         function obj = set.robustness(obj,robustness)
