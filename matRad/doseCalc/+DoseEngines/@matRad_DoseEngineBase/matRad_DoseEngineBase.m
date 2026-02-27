@@ -155,8 +155,6 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             else
                 plnStruct = struct();
             end
-
-            fields = fieldnames(plnStruct);
             
             %Set up warning message
             if warnWhenPropertyChanged
@@ -165,49 +163,10 @@ classdef (Abstract) matRad_DoseEngineBase < handle
                 warningMsg = '';
             end
 
-            % iterate over all fieldnames and try to set the
-            % corresponding properties inside the engine
-            if matRad_cfg.isOctave
-                c2sWarningState = warning('off','Octave:classdef-to-struct');                
-            end
-            
-            for i = 1:length(fields)
-                try
-                    field = fields{i};
-                    if matRad_ispropCompat(this,field)
-                        this.(field) = matRad_recursiveFieldAssignment(this.(field),plnStruct.(field),true,warningMsg);
-                    else
-                        matRad_cfg.dispWarning('Not able to assign property ''%s'' from pln.propDoseCalc to Dose Engine!',field);
-                    end
-                catch ME
-                % catch exceptions when the engine has no properties,
-                % which are defined in the struct.
-                % When defining an engine with custom setter and getter
-                % methods, custom exceptions can be caught here. Be
-                % careful with Octave exceptions!
-                    if ~isempty(warningMsg)
-                        matRad_cfg = MatRad_Config.instance();
-                        switch ME.identifier
-                            case 'MATLAB:noPublicFieldForClass'
-                                matRad_cfg.dispWarning('Not able to assign property from pln.propDoseCalc to Dose Engine: %s',ME.message);
-                            otherwise
-                                matRad_cfg.dispWarning('Problem while setting up engine from struct:%s %s',field,ME.message);
-                        end
-                    end
-                end
-            end
-            
-            if matRad_cfg.isOctave
-                warning(c2sWarningState.state,'Octave:classdef-to-struct');                
-            end
+            matRad_assignPropertiesFromStruct(this,plnStruct,true,warningMsg);
         end
     
         function assignBioModelPropertiesFromPln(this, plnModel, warnWhenPropertyChanged)
-
-
-            matRad_cfg = MatRad_Config.instance();
-            
-            fields = fieldnames(plnModel);
             
             %Set up warning message
             if warnWhenPropertyChanged
@@ -216,33 +175,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
                 warningMsg = '';
             end
 
-            % iterate over all fieldnames and try to set the
-            % corresponding properties inside the engine
-            for i = 1:length(fields)
-                try
-                    field = fields{i};
-                    if isprop(this.bioModel,field)
-                        this.bioModel.(field) = matRad_recursiveFieldAssignment(this.bioModel.(field),plnModel.(field),warningMsg);
-                    else
-                        matRad_cfg.dispWarning('Not able to assign property ''%s'' from pln.bioModel to Biological Model!',field);
-                    end
-                catch ME
-                % catch exceptions when the engine has no properties,
-                % which are defined in the struct.
-                % When defining an engine with custom setter and getter
-                % methods, custom exceptions can be caught here. Be
-                % careful with Octave exceptions!
-                    if ~isempty(warningMsg)
-                        matRad_cfg = MatRad_Config.instance();
-                        switch ME.identifier
-                            case 'MATLAB:noPublicFieldForClass'
-                                matRad_cfg.dispWarning('Not able to assign property from pln.bioModel to Biological Model: %s',ME.message);
-                            otherwise
-                                matRad_cfg.dispWarning('Problem while setting up Biological Model from struct:%s %s',field,ME.message);
-                        end
-                    end
-                end
-            end
+            matRad_assignPropertiesFromStruct(this,plnModel,true,warningMsg);
         end
         
         function resultGUI = calcDoseForward(this,ct,cst,stf,w)
@@ -282,6 +215,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             this.directWeights = w;
             this.calcDoseDirect = true;
             dij = this.calcDose(ct,cst,stf);
+            dij = this.finalizeDose(dij);
 
             % calculate cubes; use uniform weights here, weighting with actual fluence 
             % already performed in dij construction
@@ -341,6 +275,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         function dij = calcDoseInfluence(this,ct,cst,stf)
             this.calcDoseDirect = false;
             dij = this.calcDose(ct,cst,stf);
+            dij = this.finalizeDose(dij);
         end
         function setDefaults(this)
             % future code for property validation on creation here

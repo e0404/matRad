@@ -32,19 +32,19 @@ function dij = calcDose(this,ct,cst,stf)
     matRad_cfg = MatRad_Config.instance();
     
     currFolder = pwd;
-    cd(this.FREDrootFolder);
+    cd(this.workingDir);
 
     %Now we can run initDoseCalc as usual
     dij = this.initDoseCalc(ct,cst,stf);
 
     % Interpolate cube on dose grid
-    HUcube{1} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{1}, ...
+    this.HUcube{1} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{1}, ...
                                 dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
 
     % Force HU clamping if values are found outside of available range
     switch this.HUtable
        case 'internal'
-           if any(HUcube{1}(:)>this.hLutLimits(2)) || any(HUcube{1}(:)<this.hLutLimits(1))
+           if any(this.HUcube{1}(:)>this.hLutLimits(2)) || any(this.HUcube{1}(:)<this.hLutLimits(1))
                matRad_cfg.dispWarning('HU outside of boundaries');
                this.HUclamping = true;
            end
@@ -55,27 +55,18 @@ function dij = calcDose(this,ct,cst,stf)
     if this.ignoreOutsideDensities
         eraseCtDensMask = ones(prod(ct.cubeDim),1);
         eraseCtDensMask(this.VctGrid) = 0;
-        HUcube{1}(eraseCtDensMask == 1) = this.hLutLimits(1);
+        this.HUcube{1}(eraseCtDensMask == 1) = this.hLutLimits(1);
     end
 
-    %Write the directory tree
-    this.writeTreeDirectory();
-    
-    % Write patient
-    cd(this.regionsFolder);
+    %%%%%% !!!!!!!!!!!!! mind this flip !!!!!!!!!!!!! %%%%%
+    % Need to permute x and y because of the order data is written in mhd
+    % HUcube{1} = permute(HUcube{1}, [2,1,3]);
 
     fileNamePatient = fullfile(this.regionsFolder, this.patientFilename);
     patientMetadata.imageOrigin = [0 0 0];
     patientMetadata.resolution  = [this.doseGrid.resolution.x, this.doseGrid.resolution.y, this.doseGrid.resolution.z];
 
     patientMetadata.datatype = 'int16';
-
-    %%%%%% !!!!!!!!!!!!! mind this flip !!!!!!!!!!!!! %%%%%
-    % Need to permute x and y because of the order data is written in mhd
-    % HUcube{1} = permute(HUcube{1}, [2,1,3]);
-    matRad_writeMHD(fileNamePatient, HUcube{1},patientMetadata);
-
-    cd(this.FREDrootFolder);
 
     % Linear projection of BEV source (x,y) points to plane at BAMStoISO distance 
     getPointAtBAMS = @(target,source,distance,BAMStoIso) (target -source)*(-BAMStoIso)/distance + source;
@@ -292,13 +283,15 @@ function dij = calcDose(this,ct,cst,stf)
     if any(isnan(fredOrder))
         matRad_cfg.dispError('Invalid ordering of Beamlets for FRED computation!');
     end
-    
-    % %% MC computation and dij filling
-    this.writeFredInputAllFiles(stfFred);
 
     switch this.externalCalculation
         
         case 'write' % Write simulation files for external calculation (no FRED installation required)
+            % %% MC computation and dij filling
+
+            this.writeTreeDirectory();            
+            matRad_writeMHD(fileNamePatient, this.HUcube{1},patientMetadata);            
+            this.writeFredInputAllFiles(stfFred);
     
             matRad_cfg.dispInfo('All files have been generated\n');
             dijFieldsToOverride = {'numOfBeams','beamNum','bixelNum','rayNum','totalNumOfBixels','totalNumOfRays','numOfRaysPerBeam'};
@@ -310,6 +303,10 @@ function dij = calcDose(this,ct,cst,stf)
             doseCube = [];
         
         case 'off' % Run FRED simulation (requires installation)
+            
+            this.writeTreeDirectory();            
+            matRad_writeMHD(fileNamePatient, this.HUcube{1},patientMetadata);            
+            this.writeFredInputAllFiles(stfFred);
 
             % Check consistency of installation
             if this.checkExec()
@@ -317,11 +314,13 @@ function dij = calcDose(this,ct,cst,stf)
                 matRad_cfg.dispInfo('calling FRED');
     
                 cd(this.MCrunFolder);
-                
-                systemCall = [this.cmdCall, '-f fred.inp'];
+
+                flags = '-V1 -f fred.inp';
+                                
                 if ~this.useGPU
-                    systemCall = [this.cmdCall, ' -nogpu -f fred.inp'];
-                end
+                    flags = ['-nogpu ' flags];
+                end                
+                systemCall = [this.cmdCall, flags];
     
                 % printOutput to matlab console
                 if this.printOutput
@@ -329,7 +328,7 @@ function dij = calcDose(this,ct,cst,stf)
                 else
                     [status,~] = system(systemCall);
                 end
-                cd(this.FREDrootFolder);
+                cd(this.workingDir);
             else
                 matRad_cfg.dispError('FRED setup incorrect for this plan simulation');
             end
@@ -339,14 +338,14 @@ function dij = calcDose(this,ct,cst,stf)
             end
             
             % read simulation output
-            [doseCube, letdCube] = this.readSimulationOutput(this.MCrunFolder,this.calcDoseDirect, 'calcLET', logical(this.calcLET), 'readFunctionHandle', this.dijReaderHandle);
+            [doseCube, letdCube] = this.readSimulationOutput(this.MCrunFolder,this.calcDoseDirect, logical(this.calcLET));
 
         otherwise % A path for loading has been provided
             
             matRad_cfg.dispInfo(['Reading simulation data from: ', strrep(this.MCrunFolder,'\','\\'), '\n']);
 
             % read simulation output
-            [doseCube, letdCube, loadFileName] = this.readSimulationOutput(this.MCrunFolder,this.calcDoseDirect, 'calcLET',logical(this.calcLET),'readFunctionHandle', this.dijReaderHandle);
+            [doseCube, letdCube, loadFileName] = this.readSimulationOutput(this.MCrunFolder,this.calcDoseDirect, logical(this.calcLET));
 
             dij.externalCalculationLodPath = loadFileName;
 
@@ -358,16 +357,13 @@ function dij = calcDose(this,ct,cst,stf)
         if this.calcDoseDirect
             % Dose cube
             if isequal(size(doseCube), this.doseGrid.dimensions)
-                dij.physicalDose{1} = sparse(this.VdoseGrid, ones(numel(this.VdoseGrid),1),doseCube(this.VdoseGrid), this.doseGrid.numOfVoxels,1);
+                dij.physicalDose{1} = doseCube(:);                
             end
     
             % LETd cube
             if this.calcLET
                 if isequal(size(letdCube), this.doseGrid.dimensions)
-                    dij.mLETd{1}    = sparse(this.VdoseGrid, ones(numel(this.VdoseGrid),1),letdCube(this.VdoseGrid)./10, this.doseGrid.numOfVoxels,1);
-
-                    % We need LETd * dose as well
-                    dij.mLETDose{1} = sparse(this.VdoseGrid, ones(numel(this.VdoseGrid),1),(letdCube(this.VdoseGrid)./10).*doseCube(this.VdoseGrid), this.doseGrid.numOfVoxels,1);
+                    dij.mLETDose{1} = letdCube(:) .* doseCube(:);
                 end
             end
     
@@ -379,63 +375,66 @@ function dij = calcDose(this,ct,cst,stf)
             end
 
         else
+            doseCube = doseCube(:,fredOrder);
             % Dose cube
-            if isequal(size(doseCube), [dij.doseGrid.numOfVoxels,dij.totalNumOfBixels])
-                %When scoring dij, FRED internaly normalizes to 1
-                dij.physicalDose{1}(this.VdoseGrid,:) = this.conversionFactor*doseCube(this.VdoseGrid,fredOrder);
-            end
-
+            %When scoring dij, FRED internaly normalizes to 1
+            dij.physicalDose{1} = this.conversionFactor*doseCube;
+            
             % LET cube
             if this.calcLET
-                if isequal(size(letdCube), [dij.doseGrid.numOfVoxels,dij.totalNumOfBixels])
-                    % Need to divide by 10, FRED scores in MeV * cm^2 / g
-                    dij.mLETd{1}(this.VdoseGrid,:) = letdCube(this.VdoseGrid,fredOrder)./10;
-                end
+                letdCube = letdCube(:,fredOrder);
 
                 % We need LETd * dose as well
-                dij.mLETDose{1} = sparse(dij.physicalDose{1}.*dij.mLETd{1});
+                dij.mLETDose{1} = dij.physicalDose{1}.*letdCube;
             end
         end
 
 
         % Calc Biological quantities
         if this.calcBioDose
-           % recover alpha and beta maps
-           tmpBixel.radDepths = zeros(size(this.VdoseGrid,1),1);
-        
-           tmpBixel.vAlphaX   = dij.ax{1}(this.VdoseGrid);
-           tmpBixel.vBetaX    = dij.bx{1}(this.VdoseGrid);
-           tmpBixel.vABratio  = dij.ax{1}(this.VdoseGrid)./dij.bx{1}(this.VdoseGrid);
+
 
            if this.calcDoseDirect
-                tmpKernel.LET = dij.mLETd{1}(this.VdoseGrid);
+                tmpKernel.LET = letdCube(this.VdoseGrid);
 
+                % recover alpha and beta maps
+                tmpBixel.radDepths = zeros(size(this.VdoseGrid,1),1);
+
+                tmpBixel.vAlphaX   = dij.ax{1}(this.VdoseGrid);
+                tmpBixel.vBetaX    = dij.bx{1}(this.VdoseGrid);
+                tmpBixel.vABratio  = dij.ax{1}(this.VdoseGrid)./dij.bx{1}(this.VdoseGrid);
+                
                 tmpBixel = this.bioModel.calcBiologicalQuantitiesForBixel(tmpBixel,tmpKernel);
                 
                 tmpBixel.alpha(isnan(tmpBixel.alpha)) = 0;
                 tmpBixel.beta(isnan(tmpBixel.beta)) =  0;
-
-                dij.mAlphaDose{1}     = sparse(this.VdoseGrid, ones(numel(this.VdoseGrid),1),tmpBixel.alpha.*dij.physicalDose{1}(this.VdoseGrid), this.doseGrid.numOfVoxels,1);
-                dij.mSqrtBetaDose{1}  = sparse(this.VdoseGrid, ones(numel(this.VdoseGrid),1),sqrt(tmpBixel.beta).*dij.physicalDose{1}(this.VdoseGrid), this.doseGrid.numOfVoxels,1);
-           else    
-               % Loop over all bixels
-               for bxlIdx = 1:dij.totalNumOfBixels
-                   bixelLET           = full(dij.mLETd{1}(:,bxlIdx));
-                   tmpKernel.LET      = bixelLET(this.VdoseGrid);
-
-                   tmpBixel = this.bioModel.calcBiologicalQuantitiesForBixel(tmpBixel,tmpKernel);
-
-                   tmpBixel.alpha(isnan(tmpBixel.alpha)) = 0;
-                   tmpBixel.beta(isnan(tmpBixel.beta)) =  0;
                 
-                   dij.mAlphaDose{1}(:,bxlIdx)     = sparse(this.VdoseGrid, ones(numel(this.VdoseGrid),1),tmpBixel.alpha.*dij.physicalDose{1}(this.VdoseGrid,bxlIdx), this.doseGrid.numOfVoxels,1);
-                   dij.mSqrtBetaDose{1}(:,bxlIdx)  = sparse(this.VdoseGrid, ones(numel(this.VdoseGrid),1),sqrt(tmpBixel.beta).*dij.physicalDose{1}(this.VdoseGrid,bxlIdx), this.doseGrid.numOfVoxels,1);
-               end
+                dij.mAlphaDose{1}     = zeros(size(letdCube));
+                dij.mSqrtBetaDose{1}  = zeros(size(letdCube));
+                dij.mAlphaDose{1}(this.VdoseGrid)     = tmpBixel.alpha.*dij.physicalDose{1}(this.VdoseGrid);
+                dij.mSqrtBetaDose{1}(this.VdoseGrid)  = sqrt(tmpBixel.beta).*dij.physicalDose{1}(this.VdoseGrid);
+           else
+               indices = find(letdCube);
+               matSize = size(letdCube);
+               [voxels,bixels] = ind2sub(size(letdCube),indices);
+               tmpKernel.LET = nonzeros(letdCube);
+
+               tmpBixel.radDepths = zeros(size(voxels),"logical");
+               tmpBixel.vAlphaX   = dij.ax{1}(voxels);
+               tmpBixel.vBetaX    = dij.bx{1}(voxels);
+               tmpBixel.vABratio  = tmpBixel.vAlphaX ./ tmpBixel.vBetaX;
+              
+               tmpBixel = this.bioModel.calcBiologicalQuantitiesForBixel(tmpBixel,tmpKernel);
+
+               tmpBixel.alpha(~isfinite(tmpBixel.alpha)) = 0;
+               tmpBixel.beta(~isfinite(tmpBixel.beta)) =  0;
+
+               dij.mAlphaDose{1} = sparse(voxels, bixels, tmpBixel.alpha, matSize(1), matSize(2));
+               dij.mSqrtBetaDose{1} = sparse(voxels, bixels, sqrt(tmpBixel.beta), matSize(1), matSize(2));
+               dij.mAlphaDose{1} = dij.mAlphaDose{1} .* dij.physicalDose{1};
+               dij.mSqrtBetaDose{1} = dij.mSqrtBetaDose{1} .* dij.physicalDose{1};
            end
         end
-    end
-
-    dij = this.finalizeDose(dij);
-    
+    end    
     cd(currFolder);
 end

@@ -140,9 +140,6 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             % update waitbar, delete waitbar
             matRad_cfg.dispInfo('Brachytherapy dose calculation finished in %f s!\n',toc(startTime));
             this.progressUpdate(1,1);
-
-            %Finalize dose calculation
-            dij = this.finalizeDose(dij);
         end
     end
 

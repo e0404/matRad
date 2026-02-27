@@ -31,6 +31,8 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
         %Other Dose Calculation Properties
         calcLET = true;
+
+        externalCalculation = 'off';
     end
 
     properties (SetAccess = protected, GetAccess = public)
@@ -140,6 +142,12 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
             matRad_cfg = MatRad_Config.instance();
 
+            if isfolder(this.externalCalculation)
+                %dij = this.readFiles(this.externalCalculation);
+                matRad_cfg.dispError('MCsquare not yet configured for loading external simulaiton results.');
+                return;
+            end
+
             %Now we can run initDoseCalc as usual
             dij = this.initDoseCalc(ct,cst,stf);
 
@@ -162,6 +170,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                 % Calculate MCsquare base data
                 % Argument stf is optional, if given, calculation only for energies given in stf
                 MCsquareBDL = matRad_MCsquareBaseData(this.machine);
+                MCsquareBDL = MCsquareBDL.getRangeShiftersFromStf(stf);
 
                 %matRad_createMCsquareBaseDataFile(bdFile,machine,1);
                 bdlFolder = fullfile(this.workingDir,'BDL');
@@ -275,15 +284,22 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
 
                     counter = 0;
+                    stfMCsquare = [];
+                    
                     for i = 1:length(stf)
-                        %Create new stf for MCsquare with energy layer ordering and
-                        %shifted scenario isocenter
-                        stfMCsquare(i).isoCenter   = matRad_world2cubeCoords(stf(i).isoCenter, ct) + isoCenterShift;  %MCsquare uses the isoCenter in cubeCoords
-                        stfMCsquare(i).gantryAngle = mod(180-stf(i).gantryAngle,360); %Different MCsquare geometry
-                        stfMCsquare(i).couchAngle  = stf(i).couchAngle;
-                        stfMCsquare(i).energies    = unique([stf(i).ray.energy]);
-                        stfMCsquare(i).SAD         = stf(i).SAD;
+                        
+                        stfFieldMCsquare = [];
 
+                        stfFieldMCsquare.isoCenter             = matRad_world2cubeCoords(stf(i).isoCenter, ct) + isoCenterShift;  %MCsquare uses the isoCenter in cubeCoords
+                        stfFieldMCsquare.gantryAngle           = mod(180-stf(i).gantryAngle,360); %Different MCsquare geometry
+                        stfFieldMCsquare.couchAngle            = stf(i).couchAngle;
+                        stfFieldMCsquare.energies              = unique([stf(i).ray.energy]);
+                        stfFieldMCsquare.SAD                   = stf(i).SAD;
+                        stfFieldMCsquare.originalStfFieldIndex = i; % Required for ordering later 
+                        
+                        stfFieldMCsquare.rangeShifterID = 0;
+                        stfFieldMCsquare.rangeShifterType = 'binary';
+                        
                         %Let's check if we have a unique or no range shifter, because MCsquare
                         %only allows one range shifter type per field which can be IN or OUT
                         %per spot
@@ -302,22 +318,69 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                             matRad_cfg.dispError('MCsquare does not support different range shifter IDs per field! Aborting.\n');
                         end
 
+                      
+                        %Create new stf for MCsquare with energy layer ordering and
+                        %shifted scenario isocenter
+                        % Need to split the current stf field into two separate fields for MCsquare, with and without RaSh
+                        stfFieldMCsquareRaShi = [];
                         if ~isempty(raShiField)
-                            stfMCsquare(i).rangeShifterID = raShiField;
-                            stfMCsquare(i).rangeShifterType = 'binary';
-                        else
-                            stfMCsquare(i).rangeShifterID = 0;
-                            stfMCsquare(i).rangeShifterType = 'binary';
+                            % Copy the field information
+                            stfFieldMCsquareRaShi = stfFieldMCsquare;
+
+                            stfFieldMCsquareRaShi.rangeShifterID = raShiField;
+                            stfFieldMCsquareRaShi.rangeShifterType = 'binary';
+                        
+                            % Select the energies that have a RaShi for
+                            % this stf field
+                            raShiLayers = [];
+                            for j = 1:stf(i).numOfRays
+                                currentRay = stf(i).ray(j);
+                                raShiLayers = [raShiLayers, currentRay.energy([currentRay.rangeShifter.ID] == stfFieldMCsquareRaShi.rangeShifterID)];
+                            end
+                            stfFieldMCsquareRaShi.energies = unique(raShiLayers);
+                            
+                            % Need to delete an energy layer from non rashi
+                            % field if the layer is only delivered with
+                            % rashi
+
+                            % Extract all single bixel RaShiIDs
+                            allRangeShifterIDs = arrayfun(@(rashi) rashi.ID, [stf(i).ray.rangeShifter]);
+                            allEnergies        = [stf(i).ray.energy];
+                            for layerEnergy = stfFieldMCsquareRaShi.energies
+                                raShiIDSinLayer  = unique(allRangeShifterIDs(allEnergies == layerEnergy));
+
+                                % If there is only one raShiId for this
+                                % layer, and its the current range shifter,
+                                % we can eliminate the layer from the
+                                % non-RaShi field
+                                if isscalar(raShiIDSinLayer) && raShiIDSinLayer == stfFieldMCsquareRaShi.rangeShifterID
+                                    stfFieldMCsquare(stfFieldMCsquare.energies == layerEnergy) = [];
+                                end
+                            end
+
+                            % allocate empty target point container
+                            for j = 1:numel(stfFieldMCsquareRaShi.energies)
+                                stfFieldMCsquareRaShi.energyLayer(j).targetPoints   = [];
+                                stfFieldMCsquareRaShi.energyLayer(j).numOfPrimaries = [];
+                                stfFieldMCsquareRaShi.energyLayer(j).MU             = [];
+                                stfFieldMCsquareRaShi.energyLayer(j).rayNum         = [];
+                                stfFieldMCsquareRaShi.energyLayer(j).bixelNum       = [];
+                            end
+
+
                         end
 
                         % allocate empty target point container
-                        for j = 1:numel(stfMCsquare(i).energies)
-                            stfMCsquare(i).energyLayer(j).targetPoints   = [];
-                            stfMCsquare(i).energyLayer(j).numOfPrimaries = [];
-                            stfMCsquare(i).energyLayer(j).MU             = [];
-                            stfMCsquare(i).energyLayer(j).rayNum         = [];
-                            stfMCsquare(i).energyLayer(j).bixelNum       = [];
+                        if ~isempty(stfFieldMCsquare)
+                            for j = 1:numel(stfFieldMCsquare.energies)
+                                stfFieldMCsquare.energyLayer(j).targetPoints   = [];
+                                stfFieldMCsquare.energyLayer(j).numOfPrimaries = [];
+                                stfFieldMCsquare.energyLayer(j).MU             = [];
+                                stfFieldMCsquare.energyLayer(j).rayNum         = [];
+                                stfFieldMCsquare.energyLayer(j).bixelNum       = [];
+                            end
                         end
+
 
                         for j = 1:stf(i).numOfRays
                             for k = 1:stf(i).numOfBixelsPerRay(j)
@@ -327,59 +390,115 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                                 dij.bixelNum(counter) = k;
                             end
 
-                            for k = 1:numel(stfMCsquare(i).energies)
-                                %Check if ray has a spot in the current energy layer
-                                if any(stf(i).ray(j).energy == stfMCsquare(i).energies(k))
-                                    energyIx = find(stf(i).ray(j).energy == stfMCsquare(i).energies(k));
-                                    stfMCsquare(i).energyLayer(k).rayNum   = [stfMCsquare(i).energyLayer(k).rayNum j];
-                                    stfMCsquare(i).energyLayer(k).bixelNum = [stfMCsquare(i).energyLayer(k).bixelNum energyIx];
-                                    stfMCsquare(i).energyLayer(k).targetPoints = [stfMCsquare(i).energyLayer(k).targetPoints; ...
-                                        -stf(i).ray(j).rayPos_bev(1) stf(i).ray(j).rayPos_bev(3)];
-
-                                    %Number of primaries depending on beamlet-wise or field-based compuation (direct dose calculation)
-                                    if this.calcDoseDirect
-                                        stfMCsquare(i).energyLayer(k).numOfPrimaries = [stfMCsquare(i).energyLayer(k).numOfPrimaries ...
-                                            round(stf(i).ray(j).weight(stf(i).ray(j).energy == stfMCsquare(i).energies(k))*this.numHistoriesDirect)];
-
-                                        stfMCsquare(i).energyLayer(k).MU = [stfMCsquare(i).energyLayer(k).MU ...
-                                            round(stf(i).ray(j).weight(stf(i).ray(j).energy == stfMCsquare(i).energies(k))*this.numHistoriesDirect)];
-
-                                        totalWeights = totalWeights + stf(i).ray(j).weight(stf(i).ray(j).energy == stfMCsquare(i).energies(k));
-                                    else
-                                        stfMCsquare(i).energyLayer(k).numOfPrimaries = [stfMCsquare(i).energyLayer(k).numOfPrimaries ...
-                                            this.numHistoriesPerBeamlet];
-
-                                        stfMCsquare(i).energyLayer(k).MU = [stfMCsquare(i).energyLayer(k).MU ...
-                                            this.numHistoriesPerBeamlet];
+                            if ~isempty(stfFieldMCsquare)
+                                for k = 1:numel(stfFieldMCsquare.energies)
+                                    %Check if ray has a spot in the current energy layer
+                                    if any(stf(i).ray(j).energy == stfFieldMCsquare.energies(k))
+                                        energyIx = find(stf(i).ray(j).energy == stfFieldMCsquare.energies(k));
+    
+                                        % If more than one energy layer is
+                                        % found, one of them is for the
+                                        % RaShiField
+                                        energyIx = energyIx([stf(i).ray(j).rangeShifter(energyIx).ID] == 0); % Select the one with no RaShi;
+    
+                                        if isempty(energyIx)
+                                            continue;
+                                        end
+    
+                                        stfFieldMCsquare.energyLayer(k).rayNum   = [stfFieldMCsquare.energyLayer(k).rayNum j];
+                                        stfFieldMCsquare.energyLayer(k).bixelNum = [stfFieldMCsquare.energyLayer(k).bixelNum energyIx];
+                                        stfFieldMCsquare.energyLayer(k).targetPoints = [stfFieldMCsquare.energyLayer(k).targetPoints; ...
+                                            -stf(i).ray(j).rayPos_bev(1) stf(i).ray(j).rayPos_bev(3)];
+    
+                                        %Number of primaries depending on beamlet-wise or field-based computation (direct dose calculation)
+                                        if this.calcDoseDirect
+                                            stfFieldMCsquare.energyLayer(k).numOfPrimaries = [stfFieldMCsquare.energyLayer(k).numOfPrimaries ...
+                                                round(stf(i).ray(j).weight(energyIx)*this.numHistoriesDirect)];
+    
+                                            stfFieldMCsquare.energyLayer(k).MU = [stfFieldMCsquare.energyLayer(k).MU ...
+                                                round(stf(i).ray(j).weight(energyIx)*this.numHistoriesDirect)];
+    
+                                            totalWeights = totalWeights + stf(i).ray(j).weight(energyIx);
+                                        else
+                                            stfFieldMCsquare.energyLayer(k).numOfPrimaries = [stfFieldMCsquare.energyLayer(k).numOfPrimaries ...
+                                                this.numHistoriesPerBeamlet];
+    
+                                            stfFieldMCsquare.energyLayer(k).MU = [stfFieldMCsquare.energyLayer(k).MU ...
+                                                this.numHistoriesPerBeamlet];
+                                        end
+    
+    
                                     end
-
-                                    %Now add the range shifter
-                                    raShis = stf(i).ray(j).rangeShifter(energyIx);
-
-                                    %sanity check range shifters
-                                    raShiIDs = unique([raShis.ID]);
-                                    %raShiIDs = raShiIDs(raShiIDs ~= 0);
-
-                                    if ~isscalar(raShiIDs)
-                                        matRad_cfg.dispError('MCsquare only supports one range shifter setting (on or off) per energy! Aborting.\n');
+                                end
+                            end
+                            % Add the bixels to the RaShi field if any
+                            if ~isempty(raShiField)
+                                for k = 1:numel(stfFieldMCsquareRaShi.energies)
+                                    if any(stf(i).ray(j).energy == stfFieldMCsquareRaShi.energies(k))
+                                        
+                                        energyIx = find(stf(i).ray(j).energy == stfFieldMCsquareRaShi.energies(k));
+                                        
+                                        % If more than one energy layer is
+                                        % found, one of them is for the
+                                        % RaShiField
+                                        energyIx = energyIx([stf(i).ray(j).rangeShifter(energyIx).ID] == stfFieldMCsquareRaShi.rangeShifterID); % Select the one with no RaShi;
+    
+                                        stfFieldMCsquareRaShi.energyLayer(k).rayNum   = [stfFieldMCsquareRaShi.energyLayer(k).rayNum j];
+                                        stfFieldMCsquareRaShi.energyLayer(k).bixelNum = [stfFieldMCsquareRaShi.energyLayer(k).bixelNum energyIx];
+                                        stfFieldMCsquareRaShi.energyLayer(k).targetPoints = [stfFieldMCsquareRaShi.energyLayer(k).targetPoints; ...
+                                                                                            -stf(i).ray(j).rayPos_bev(1) stf(i).ray(j).rayPos_bev(3)];
+    
+                                        %Number of primaries depending on beamlet-wise or field-based computation (direct dose calculation)
+                                        if this.calcDoseDirect
+                                            stfFieldMCsquareRaShi.energyLayer(k).numOfPrimaries = [stfFieldMCsquareRaShi.energyLayer(k).numOfPrimaries ...
+                                                round(stf(i).ray(j).weight(energyIx)*this.numHistoriesDirect)];
+    
+                                            stfFieldMCsquareRaShi.energyLayer(k).MU = [stfFieldMCsquareRaShi.energyLayer(k).MU ...
+                                                round(stf(i).ray(j).weight(energyIx)*this.numHistoriesDirect)];
+    
+                                            totalWeights = totalWeights + stf(i).ray(j).weight(energyIx);
+                                        else
+                                            stfFieldMCsquareRaShi.energyLayer(k).numOfPrimaries = [stfFieldMCsquareRaShi.energyLayer(k).numOfPrimaries ...
+                                                this.numHistoriesPerBeamlet];
+    
+                                            stfFieldMCsquareRaShi.energyLayer(k).MU = [stfFieldMCsquareRaShi.energyLayer(k).MU ...
+                                                this.numHistoriesPerBeamlet];
+                                        end
+    
+                                        %Now add the range shifter
+                                        raShis = stf(i).ray(j).rangeShifter(energyIx);
+                                         
+                                        %sanity check range shifters
+                                        raShiIDs = unique([raShis.ID]);
+                                        %raShiIDs = raShiIDs(raShiIDs ~= 0);
+                                         
+                                        if ~isscalar(raShiIDs)
+                                            matRad_cfg.dispError('MCsquare only supports one range shifter setting (on or off) per energy! Aborting.\n');
+                                        end
+                                         
+                                        stfFieldMCsquareRaShi.energyLayer(k).rangeShifter = raShis(1);
                                     end
-
-                                    stfMCsquare(i).energyLayer(k).rangeShifter = raShis(1);
                                 end
                             end
                         end
+
+                        % Fill the stfMCsquare
+                        if isempty(stfFieldMCsquare)
+                            stfFieldMCsquare = [];
+                        end
+                        stfMCsquare = [stfMCsquare,stfFieldMCsquare, stfFieldMCsquareRaShi];
                     end
 
                     % remember order
                     counterMCsquare = 0;
                     MCsquareOrder = NaN * ones(dij.totalNumOfBixels,1);
-                    for i = 1:length(stf)
+                    for i = 1:length(stfMCsquare)
                         for j = 1:numel(stfMCsquare(i).energies)
                             for k = 1:numel(stfMCsquare(i).energyLayer(j).numOfPrimaries)
                                 counterMCsquare = counterMCsquare + 1;
-                                ix = find(i                                         == dij.beamNum & ...
-                                    stfMCsquare(i).energyLayer(j).rayNum(k)   == dij.rayNum & ...
-                                    stfMCsquare(i).energyLayer(j).bixelNum(k) == dij.bixelNum);
+                                ix = find(stfMCsquare(i).originalStfFieldIndex  == dij.beamNum & ...
+                                    stfMCsquare(i).energyLayer(j).rayNum(k)     == dij.rayNum & ...
+                                    stfMCsquare(i).energyLayer(j).bixelNum(k)   == dij.bixelNum);
 
                                 MCsquareOrder(ix) = counterMCsquare;
                             end
@@ -403,104 +522,108 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
                     %% MC computation and dij filling
 
-                    % run MCsquare
-                    mcSquareCall = [this.mcSquareBinary ' ' MCsquareConfigFile];
-                    matRad_cfg.dispInfo(['Calling Monte Carlo Engine: ' mcSquareCall]);
-                    if matRad_cfg.logLevel >= 3
-                        [status,cmdout] = system(mcSquareCall,'-echo');
+                    if strcmp(this.externalCalculation,'write')
+                        matRad_cfg.dispInfo(['MCsquare simulation skipped for external calculation\nFiles have been written to: "',strrep(this.workingDir,'\','\\'),'"']);
                     else
-                        [status,cmdout] = system(mcSquareCall);
-                        matRad_cfg.dispInfo(cmdout);
-                    end
-                    if status == 0
-                        matRad_cfg.dispInfo('MCsquare exited successfully with status %d!',status);
-                    else
-                        matRad_cfg.dispInfo('MCsquare did not exit successfully with status %d! Results might be compromised!',status);
-                    end
-
-                    mask = false(dij.doseGrid.numOfVoxels,1);
-                    mask(this.VdoseGrid) = true;
-
-                    if this.calcDoseDirect
-                        if abs(totalWeights-sum(this.directWeights)) > 1e-2
-                            matRad_cfg.dispWarning('Sum of provided weights and weights used in MCsquare inconsistent!');
+                        % run MCsquare
+                        mcSquareCall = [this.mcSquareBinary ' ' sprintf('"%s"', MCsquareConfigFile)];
+                        matRad_cfg.dispInfo(['Calling Monte Carlo Engine: ' mcSquareCall]);
+                        if matRad_cfg.logLevel >= 3
+                            [status,cmdout] = system(mcSquareCall,'-echo');
+                        else
+                            [status,cmdout] = system(mcSquareCall);
+                            matRad_cfg.dispInfo(cmdout);
                         end
-                        finalResultWeight = absCalibrationFactorMC2 * totalWeights;
-                    else
-                        finalResultWeight = absCalibrationFactorMC2;
-                    end
-
-                    % read sparse matrix
-                    if ~this.calcDoseDirect
-                        dij.physicalDose{ctScen,shiftScen,rangeShiftScen} = finalResultWeight * matRad_sparseBeamletsReaderMCsquare ( ...
-                            [this.config.Output_Directory filesep 'Sparse_Dose.bin'], ...
-                            dij.doseGrid.dimensions, ...
-                            dij.totalNumOfBixels, ...
-                            mask);
-
-                        %Read sparse LET
-                        if this.calcLET
-                            dij.mLETDose{ctScen,shiftScen,rangeShiftScen} = dij.physicalDose{ctScen,shiftScen,rangeShiftScen} .* matRad_sparseBeamletsReaderMCsquare ( ...
-                                [this.config.Output_Directory filesep 'Sparse_LET.bin'], ...
+                        if status == 0
+                            matRad_cfg.dispInfo('MCsquare exited successfully with status %d!',status);
+                        else
+                            matRad_cfg.dispInfo('MCsquare did not exit successfully with status %d! Results might be compromised!',status);
+                        end
+    
+                        mask = false(dij.doseGrid.numOfVoxels,1);
+                        mask(this.VdoseGrid) = true;
+    
+                        if this.calcDoseDirect
+                            if abs(totalWeights-sum(this.directWeights)) > 1e-2
+                                matRad_cfg.dispWarning('Sum of provided weights and weights used in MCsquare inconsistent!');
+                            end
+                            finalResultWeight = absCalibrationFactorMC2 * totalWeights;
+                        else
+                            finalResultWeight = absCalibrationFactorMC2;
+                        end
+    
+                        % read sparse matrix
+                        if ~this.calcDoseDirect
+                            dij.physicalDose{ctScen,shiftScen,rangeShiftScen} = finalResultWeight * matRad_sparseBeamletsReaderMCsquare ( ...
+                                [this.config.Output_Directory filesep 'Sparse_Dose.bin'], ...
                                 dij.doseGrid.dimensions, ...
                                 dij.totalNumOfBixels, ...
                                 mask);
-                        end
-
-                        % reorder influence matrix to comply with matRad default ordering
-                        dij.physicalDose = cellfun(@(mx) mx(:,MCsquareOrder),dij.physicalDose,'UniformOutput',false);
-                        if this.calcLET
-                            dij.mLETDose = cellfun(@(mx) mx(:,MCsquareOrder),dij.mLETDose,'UniformOutput',false);
-                        end
-                    else
-                        cube = this.readMhd('Dose.mhd');
-                        dij.physicalDose{ctScen,shiftScen,rangeShiftScen} = sparse(this.VdoseGrid,ones(numel(this.VdoseGrid),1), ...
-                            finalResultWeight * cube(this.VdoseGrid), ...
-                            dij.doseGrid.numOfVoxels,1);
-
-                        %Read LET cube
-                        if this.calcLET
-                            cube = this.readMhd('LET.mhd');
-                            dij.mLETDose{ctScen,shiftScen,rangeShiftScen} = dij.physicalDose{ctScen,shiftScen,rangeShiftScen} .* sparse(this.VdoseGrid,ones(numel(this.VdoseGrid),1), ...
-                                cube(this.VdoseGrid), ...
+    
+                            %Read sparse LET
+                            if this.calcLET
+                                dij.mLETDose{ctScen,shiftScen,rangeShiftScen} = dij.physicalDose{ctScen,shiftScen,rangeShiftScen} .* matRad_sparseBeamletsReaderMCsquare ( ...
+                                    [this.config.Output_Directory filesep 'Sparse_LET.bin'], ...
+                                    dij.doseGrid.dimensions, ...
+                                    dij.totalNumOfBixels, ...
+                                    mask);
+                            end
+    
+                            % reorder influence matrix to comply with matRad default ordering
+                            dij.physicalDose = cellfun(@(mx) mx(:,MCsquareOrder),dij.physicalDose,'UniformOutput',false);
+                            if this.calcLET
+                                dij.mLETDose = cellfun(@(mx) mx(:,MCsquareOrder),dij.mLETDose,'UniformOutput',false);
+                            end
+                        else
+                            cube = this.readMhd('Dose.mhd');
+                            dij.physicalDose{ctScen,shiftScen,rangeShiftScen} = sparse(this.VdoseGrid,ones(numel(this.VdoseGrid),1), ...
+                                finalResultWeight * cube(this.VdoseGrid), ...
                                 dij.doseGrid.numOfVoxels,1);
+    
+                            %Read LET cube
+                            if this.calcLET
+                                cube = this.readMhd('LET.mhd');
+                                dij.mLETDose{ctScen,shiftScen,rangeShiftScen} = dij.physicalDose{ctScen,shiftScen,rangeShiftScen} .* sparse(this.VdoseGrid,ones(numel(this.VdoseGrid),1), ...
+                                    cube(this.VdoseGrid), ...
+                                    dij.doseGrid.numOfVoxels,1);
+                            end
+    
+                            % Postprocessing for dij:
+                            % This is already the combined dose over all bixels, so all parameters are 1 in this case
+                            dij = rmfield(dij,'MCsquareCalcOrder');
+    
+                            dij.numOfBeams = 1;
+                            dij.beamNum = 1;
+                            dij.bixelNum = 1;
+                            dij.rayNum = 1;
+                            dij.totalNumOfBixels = 1;
+                            dij.totalNumOfRays = 1;
+                            dij.numOfRaysPerBeam = 1;
                         end
-
-                        % Postprocessing for dij:
-                        % This is already the combined dose over all bixels, so all parameters are 1 in this case
-                        dij = rmfield(dij,'MCsquareCalcOrder');
-
-                        dij.numOfBeams = 1;
-                        dij.beamNum = 1;
-                        dij.bixelNum = 1;
-                        dij.rayNum = 1;
-                        dij.totalNumOfBixels = 1;
-                        dij.totalNumOfRays = 1;
-                        dij.numOfRaysPerBeam = 1;
-                    end
-
-
-                    if this.config.Beamlet_Mode
-
-                    end
-
-                    matRad_cfg.dispInfo('Scenario %d of %d finished!\n',scenarioIx,this.multScen.totNumScen);
-
-                    %% clear all data
-                    %could also be moved to the "finalize" function
-                    delete([this.config.CT_File(1:end-4) '.*']);
-                    fullfile(this.workingDir,'currBixels.txt');
-                    fullfile(this.workingDir,'MCsquareConfig.txt');
-
-                    %For Octave temporarily disable confirmation for recursive rmdir
-                    if strcmp(matRad_cfg.env,'OCTAVE')
-                        rmdirConfirmState = confirm_recursive_rmdir(0);
-                    end
-                    rmdir(this.config.Output_Directory,'s');
-
-                    %Reset to old confirmatoin state
-                    if strcmp(matRad_cfg.env,'OCTAVE')
-                        confirm_recursive_rmdir(rmdirConfirmState);
+    
+    
+                        if this.config.Beamlet_Mode
+    
+                        end
+    
+                        matRad_cfg.dispInfo('Scenario %d of %d finished!\n',scenarioIx,this.multScen.totNumScen);
+                    
+                        %% clear all data
+                        %could also be moved to the "finalize" function
+                        delete([this.config.CT_File(1:end-4) '.*']);
+                        fullfile(this.workingDir,'currBixels.txt');
+                        fullfile(this.workingDir,'MCsquareConfig.txt');
+    
+                        %For Octave temporarily disable confirmation for recursive rmdir
+                        if strcmp(matRad_cfg.env,'OCTAVE')
+                            rmdirConfirmState = confirm_recursive_rmdir(0);
+                        end
+                        rmdir(this.config.Output_Directory,'s');
+    
+                        %Reset to old confirmatoin state
+                        if strcmp(matRad_cfg.env,'OCTAVE')
+                            confirm_recursive_rmdir(rmdirConfirmState);
+                        end
                     end
 
                     % cd back
@@ -509,9 +632,30 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             end
 
             matRad_cfg.dispInfo('matRad: Simulation finished!\n');
-            %Finalize dose calculation
-            dij = this.finalizeDose(dij);
-
+            
+            if strcmp(this.externalCalculation, 'write')
+                dij.beamNum = 1;
+                dij.bixelNum = 1;
+                dij.doseGrid = this.doseGrid;
+                dij.numOfBeams = 1;
+                dij.numOfRaysPerBeam = 1;
+                dij.numOfScenarios = this.multScen.totNumScen;
+                for i = 1:this.multScen.numOfCtScen
+                    for j = 1:this.multScen.totNumShiftScen
+                        for k = 1:this.multScen.totNumRangeScen
+                            if this.multScen.scenMask(i,j,k)
+                                %TODO: loop over all expected output quantities
+                                dij.physicalDose{i,j,k} = zeros(dij.ctGrid.numOfVoxels,1);
+                                dij.physicalDose_std{i,j,k} = zeros(dij.ctGrid.numOfVoxels,1);
+                            end
+    
+                        end
+                    end
+                end
+                dij.rayNum = 1;
+                dij.totalNumOfBixels = 1;
+                dij.totalNumOfRays = 1;
+            end
         end
 
         function setBinaries(this)
@@ -710,8 +854,8 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                             fprintf(fileHandle,'####RangeShifterSetting\n%s\n','IN');
                             pmma_rsp = 1.165; %TODO: hardcoded for now
                             rsWidth = rangeShifter.eqThickness / pmma_rsp;
-                            isoToRaShi = stf(i).SAD - rangeShifter.sourceRashiDistance + rsWidth;
-                            fprintf(fileHandle,'####IsocenterToRangeShifterDistance\n%f\n',-isoToRaShi/10); %in cm
+                            isoToRaShi = stf(i).SAD - rangeShifter.sourceRashiDistance - rsWidth;
+                            fprintf(fileHandle,'####IsocenterToRangeShifterDistance\n%f\n',isoToRaShi/10); %in cm
                             fprintf(fileHandle,'####RangeShifterWaterEquivalentThickness\n%f\n',rangeShifter.eqThickness);
                         else
                             fprintf(fileHandle,'####RangeShifterSetting\n%s\n','OUT');

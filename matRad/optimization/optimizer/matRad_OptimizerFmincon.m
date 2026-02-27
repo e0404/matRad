@@ -69,11 +69,7 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
                 'HessianApproximation',{'lbfgs',50},...
                 'UseParallel',true,...
                 'Diagnostics',optDiag,...
-                'ScaleProblem',true);
-            
-            if ~matRad_cfg.disableGUI
-                obj.options.PlotFcn = {@optimplotfval,@optimplotx,@optimplotfunccount,@optimplotconstrviolation,@optimplotstepsize,@optimplotfirstorderopt};
-            end
+                'ScaleProblem',true);           
         end
                 
         function obj = optimize(obj,w0,optiProb,dij,cst)
@@ -92,7 +88,12 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
                 matRad_cfg.dispWarning('Diagnostics in fmincon will be turned off due to a bug when using lbfgs with specified number of histories!');
                 obj.options.Diagnostics = 'off';
             end
-                
+
+            if obj.showPlot && ~matRad_cfg.disableGUI
+                obj.options.PlotFcn = {@optimplotfval,@optimplotx,@optimplotfunccount,@optimplotconstrviolation,@optimplotstepsize,@optimplotfirstorderopt};
+            else
+                obj.options.PlotFcn = {};
+            end
             
             % Run fmincon.
             [obj.wResult,fVal,exitflag,info] = fmincon(@(x) obj.fmincon_objAndGradWrapper(x,optiProb,dij,cst),...
