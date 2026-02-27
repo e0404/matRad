@@ -7,7 +7,7 @@
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
 % of the matRad project, including this file, may be copied, modified, 
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
@@ -38,42 +38,24 @@ load('PROSTATE.mat');
 pln.radiationMode                   = 'protons';           
 pln.machine                         = 'generic_MCsquare'; %Use the base data fitted to MC here
 pln.numOfFractions                  = 30;  
+pln.bioModel                        = 'constRBE';
+pln.multScen                        = 'nomScen';
+
+%Geometry Settings
 pln.propStf.gantryAngles            = [90 270];
 pln.propStf.couchAngles             = [0 0];
 pln.propStf.bixelWidth              = 5;
 pln.propStf.longitudinalSpotSpacing = 5;
 pln.propStf.numOfBeams              = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter               = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
-pln.propOpt.runDAO                  = 0;
-pln.propOpt.runSequencing           = 0;
-
-
-%%
-% Define the biological optimization model for treatment planning along
-% with the quantity that should be used for optimization. Possible model values 
-% are:
-%('none': physical optimization;
-%'constRBE': constant RBE of 1.1; 
-% 'MCN': McNamara-variable RBE model for protons; 
-% 'WED':  Wedenberg-variable RBE model for protons
-% 'LEM': local effect model 
-% As we use protons, we follow here the clinical 
-% standard and use a constant relative biological effectiveness of 1.1. 
-% Therefore we set modelName to constRBE
-modelName    = 'constRBE';
-quantityOpt  = 'RBExD'; 
-
-% retrieve bio model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt,modelName);
-
-% retrieve scenarios for dose calculation and optimziation
-pln.multScen = matRad_multScen(ct,'nomScen');  % optimize on the nominal scenario
-
 
 % dose calculation settings
 pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.y = 3; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 3; % [mm]
+
+% Optimization Settings
+pln.propOpt.quantityOpt             = 'RBExDose'; 
 
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct,cst,pln);
@@ -82,18 +64,18 @@ stf = matRad_generateStf(ct,cst,pln);
 %We do a Monte Carlo Dose calculation here to demonstrate how long an MC
 %simulation on pencil-beam basis will take. If you just want to get through
 %the example, feel free to use analytical dose calculation instead by
-%uncommenting the first line and comment the second
+%uncommenting the first line or explicitly switch engine to HongPB
 
-%dij = matRad_calcParticleDose(ct,stf,pln,cst);
-dij = matRad_calcParticleDoseMC(ct,stf,pln,cst);
+pln.propDoseCalc.engine = 'MCsquare';
+dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
 
 %% Inverse Optimization for IMPT
 resultGUI = matRad_fluenceOptimization(dij,cst,pln);
 
 %% Calculate quality indicators 
-[dvh,qi]       = matRad_indicatorWrapper(cst,pln,resultGUI);
+resultGUI = matRad_planAnalysis(resultGUI,ct,cst,stf,pln);
 ixRectum       = 1;
-display(qi(ixRectum).D_5);
+disp(resultGUI.qi(ixRectum).D_5);
 
 %%
 % Let's change the optimization parameter of the rectum in such a way that it
@@ -108,16 +90,17 @@ cst{ixRectum,6}{1} = struct(objective); % We put it back as struct for storage &
 
 cst{ixRectum,6}{1}.parameters{1} = 40;  % Change the reference dose
 cst{ixRectum,6}{1}.penalty = 500; % Change the penalty
-resultGUI               = matRad_fluenceOptimization(dij,cst,pln);
-[dvh2,qi2]              = matRad_indicatorWrapper(cst,pln,resultGUI);
+resultGUI = matRad_fluenceOptimization(dij,cst,pln);
+resultGUI = matRad_planAnalysis(resultGUI,ct,cst,stf,pln);
 
-display(qi2(ixRectum).D_5);
+disp(resultGUI.qi(ixRectum).D_5);
 
 %% Plot the Resulting Dose Slice
 % Let's plot the transversal iso-center dose slice
-slice = round(pln.propStf.isoCenter(1,3)./ct.resolution.z);
+slice = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:),ct);
+slice = slice(3);
 figure
-imagesc(resultGUI.RBExD(:,:,slice)),colorbar, colormap(jet)
+imagesc(resultGUI.RBExDose(:,:,slice)),colorbar, colormap(jet)
 
 %% Add Range Uncertainty
 % Now let's manually simulate a range undershoot by scaling the relative 
@@ -133,7 +116,7 @@ ct_manip.cube{1} = 1.035*ct_manip.cube{1};
 
 %% Recalculate Plan with MC square
 % Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose
-resultGUI_noise = matRad_calcDoseDirectMC(ct_manip,stf,pln,cst,resultGUI.w);
+resultGUI_noise = matRad_calcDoseForward(ct_manip,cst,stf,pln,resultGUI.w);
 
 %% Recalculate Plan with analytical fine sampling algorithm
 % Again use the existing optimized pencil beam weights and recalculate the 
@@ -142,30 +125,30 @@ resultGUI_noise = matRad_calcDoseDirectMC(ct_manip,stf,pln,cst,resultGUI.w);
 % pln.propDoseCalc.fineSampling stores parameters defining the fine 
 % sampling simulation
 
-pln.propDoseCalc.fineSampling.method = 'russo'; 
-    % method for weight calculation, availabe methods:
-    %   'russo'
-    %   'fitCircle', supports N = 2,3 and 8
-    %   'fitSquare', supports N = 2 and 3
+pln.propDoseCalc.engine = 'SubsamplingPB';
 
-    % pln.propDoseCalc.fineSampling.N = n sets the number of used fine
-    % sampling sub beams, default is N = 21
-    % parameter to modify number of calculated FS sub beams
-    %   'russo',        total number of beams = N^2
-    %   'fitCircle',    total number of beams = (2*N + 1)^2
-    %   'fitSquare',    total number of beams = (2^N - 1) * 6 + 1
+pln.propDoseCalc.fineSampling.method = 'fitCircle';
+pln.propDoseCalc.fineSampling.sigmaSub = 2; %mm
+pln.propDoseCalc.fineSampling.N = 2;
+% method for weight calculation, availabe methods:
+%   'russo'
+%   'fitCircle', supports N = 2,3 and 8
+%   'fitSquare', supports N = 2 and 3
 
-    % pln.propDoseCalc.fineSampling.sigmaSub = s set the Gaussian standard 
-    % deviation of the sub Gaussian beams, only used when fine sampling 
-    % method 'russo' is selected', default is s = 1;
+% pln.propDoseCalc.fineSampling.N = n sets the number of used fine
+% sampling sub beams, default is N = 21
+% parameter to modify number of calculated FS sub beams
+%   'russo',        total number of beams = N^2
+%   'fitCircle',    total number of beams = (2*N + 1)^2
+%   'fitSquare',    total number of beams = (2^N - 1) * 6 + 1
 
-% Indirect call for fine sampling dose calculation:    
-% dijFS = matRad_calcParticleDose(ct,stf,pln,cst,false);
-% resultGUI_FS = matRad_calcCubes(resultGUI.w,dijFS);
+% pln.propDoseCalc.fineSampling.sigmaSub = s set the Gaussian standard
+% deviation of the sub Gaussian beams, only used when fine sampling
+% method 'russo' is selected', default is s = 1;
 
 % Direct call for fine sampling dose calculation:
-resultGUI_FS = matRad_calcDoseDirect(ct,stf,pln,cst,resultGUI.w);
+resultGUI_FS = matRad_calcDoseForward(ct,cst,stf,pln,resultGUI.w);
 
 %%  Visual Comparison of results using the "compareDose" helper function
-matRad_compareDose(resultGUI_noise.RBExD,resultGUI.RBExD,ct,cst);
-matRad_compareDose(resultGUI_FS.RBExD,resultGUI.RBExD,ct,cst);
+matRad_compareDose(resultGUI_noise.RBExDose,resultGUI.RBExDose,ct,cst);
+matRad_compareDose(resultGUI_FS.RBExDose,resultGUI.RBExDose,ct,cst);

@@ -27,7 +27,7 @@ function matRad_unitTestTextManipulation(filename, string1, string2, path)
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
 % of the matRad project, including this file, may be copied, modified, 
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
@@ -46,8 +46,11 @@ for fIx = 1:numel(filename)
     
     currFilename = filename{fIx};
     
-    fid=fopen([path currFilename]);
-    fo=fopen('tempFile.m','w');
+    currFile = fullfile(path,currFilename);
+    tempFile = fullfile(path,'tempFile.m');
+
+    fid=fopen(currFile);
+    fo=fopen(tempFile,'w');
     tline = fgetl(fid);
     
     while ischar(tline)
@@ -65,7 +68,6 @@ for fIx = 1:numel(filename)
     fclose(fo);
     
     
-    movefile('tempFile.m', [path currFilename], 'f');
+    movefile(tempFile, currFile, 'f');
 end
 end
-

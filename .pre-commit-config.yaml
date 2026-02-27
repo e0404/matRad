@@ -1,0 +1,43 @@
+---
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.0.1
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-symlinks
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+    - id: codespell
+
+  - repo: local
+    hooks:
+      # Run the linter.
+    - id: mmh_style
+      name: MISS_HIT Style
+      entry: mh_style
+      language: python
+      args: [--fix]
+      additional_dependencies: [miss_hit_core]
+      files: \.m$
+
+    - id: mh_metric
+      name: MISS_HIT Metrics
+      entry: mh_metric
+      args: [--ci]
+      files: \.m$
+      language: python
+      additional_dependencies: [miss_hit_core]
+
+    - id: mh_lint
+      name: MISS_HIT Lint
+      entry: mh_lint
+      files: \.m$
+      language: python
+      additional_dependencies: [miss_hit]

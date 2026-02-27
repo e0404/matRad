@@ -16,7 +16,7 @@ function hGUI = matRadGUI(varargin)
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
 % of the matRad project, including this file, may be copied, modified,
 % propagated, or distributed except according to the terms contained in the
 % LICENSE file.
@@ -43,7 +43,7 @@ if ischar(parsedInput.eduMode) || isstring(parsedInput.eduMode)
     parsedInput.eduMode = str2double(parsedInput.eduMode);
 end
 
-matRad_cfg = MatRad_Config.instance();
+matRad_cfg = matRad_rc;
 
 %If devMode is true, error dialogs will include the full stack trace of the error
 %If false, only the basic error message is shown (works for errors that
@@ -62,10 +62,11 @@ end
 
 if matRad_cfg.disableGUI
     matRad_cfg.dispInfo('matRad GUI disabled in matRad_cfg!\n');
+    if nargout > 0
+        hGUI = [];
+    end
     return;
 end
-
-handleValid = true;
 
 try
     handleValid = ishandle(hMatRadGUI.guiHandle);
@@ -76,6 +77,7 @@ end
 
 if handleValid
     figure(hMatRadGUI.guiHandle);
+    hMatRadGUI.update();
 else
     matRad_rc(false);
     hMatRadGUI = matRad_MainGUI;

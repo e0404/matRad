@@ -1,0 +1,26 @@
+s:Ge/World/Material = Sim/WorldMaterial
+d:Ge/World/HLX=200.0 cm
+d:Ge/World/HLY=200.0 cm
+d:Ge/World/HLZ=200.0 cm
+b:Ge/World/Invisible = "TRUE"
+
+s:Ge/Nozzle/Parent = "World"
+s:Ge/Nozzle/Type = "Group"
+
+s:Ge/Isocenter/Parent = "Couch"
+s:Ge/Isocenter/Type = "Group"
+d:Ge/Isocenter/RotX = -90. deg
+d:Ge/Isocenter/RotY = 0. deg
+d:Ge/Isocenter/RotZ = 0. deg
+
+s:Ge/Couch/Parent = "Gantry"
+s:Ge/Couch/Type = "Group"
+d:Ge/Couch/RotX = 0. deg
+d:Ge/Couch/RotY = 0. deg
+d:Ge/Couch/RotZ = Sim/CouchAngle deg
+
+s:Ge/Gantry/Parent = "World"
+s:Ge/Gantry/Type = "Group"
+d:Ge/Gantry/RotX = Sim/GantryAngle deg
+d:Ge/Gantry/RotY =  0 deg
+d:Ge/Gantry/RotZ = -90. deg

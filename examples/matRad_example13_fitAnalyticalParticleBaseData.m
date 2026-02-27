@@ -6,7 +6,7 @@
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part 
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
 % of the matRad project, including this file, may be copied, modified, 
 % propagated, or distributed except according to the terms contained in the 
 % LICENSE file.
@@ -109,21 +109,21 @@ clearvars -except ct cst matRad_cfg
 pln.radiationMode   = 'protons'; 
 
 % create meta machine data
-machine.meta.machine = 'example'; %name of the machine
+machine.meta.name = 'example'; %name of the machine
 machine.meta.radiationMode = 'protons'; %modality
 machine.meta.dataType = 'singleGauss'; %singleGauss or doubleGauss
 machine.meta.created_on = date;
 machine.meta.created_by = 'matRad_example';
 machine.meta.SAD = (2218 + 1839) / 2; %This is the (virtual) source to axis distance
 machine.meta.BAMStoIsoDist = 420.0; %distance from beam nozzle ot isocenter
-machine.meta.LUT_bxWidthminFWHM = [0, Inf; 5 ,5]; %Specifies which minimum FWHM to use as spot sice for which ranges of lateral spot distance (here, each spot distance of 0 to to Inf gets at least 5mm wide spots
+machine.meta.LUTspotSize = [0, Inf; 5 ,5]; %Specifies which minimum FWHM to use as spot sice for which ranges of lateral spot distance (here, each spot distance of 0 to to Inf gets at least 5mm wide spots
 machine.meta.fitAirOffset = 420.0; %Tells matRad how much "air" was considered during fitting. Set this to 0 if the fit is obtained in vacuum and no air transport is simulated up to the phantom. matRad assumes that the phantom starts at the isocenter.
 
 % Now add the example machine to the pln and then save it
-pln.machine = machine.meta.machine;
+pln.machine = machine.meta.name;
 pln.radiationMode = machine.meta.radiationMode;
 fileName = [pln.radiationMode '_' pln.machine];
-filePath = fullfile(matRad_cfg.matRadRoot,'basedata',[fileName '.mat']);
+filePath = fullfile(matRad_cfg.userfolders{1},'machines',[fileName '.mat']);
 
 matRad_cfg.dispInfo('Saving temporary machine %s to %s\n',fileName,filePath);
 save(filePath,'machine','-v7');
@@ -149,8 +149,8 @@ pln.propDoseCalc.doseGrid.resolution.z = ct.resolution.z; % [mm]
 
 % optimization settings
 pln.propOpt.optimizer       = 'IPOPT';
-pln.propOpt.bioOptimization = 'none'; % none: physical optimization;             const_RBExD; constant RBE of 1.1;
-                                      % LEMIV_effect: effect-based optimization; LEMIV_RBExD: optimization of RBE-weighted dose
+pln.propOpt.bioOptimization = 'none'; % none: physical optimization;             const_RBExDose; constant RBE of 1.1;
+                                      % LEMIV_effect: effect-based optimization; LEMIV_RBExDose: optimization of RBE-weighted dose
 pln.propOpt.runDAO          = false;  % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 
@@ -158,16 +158,16 @@ pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't /
 pln.multScen = matRad_multScen(ct,'nomScen');
 
 
-quantityOpt   = 'physicalDose';            % either  physicalDose / effect / RBExD
+quantityOpt   = 'physicalDose';            % either  physicalDose / effect / RBExDose
 modelName     = 'none';         % none: for photons, protons, carbon                                    constRBE: constant RBE model
                                     % MCN: McNamara-variable RBE model for protons                          WED: Wedenberg-variable RBE model for protons 
                                     % LEM: Local Effect Model for carbon ions
 % retrieve bio model parameters
-pln.bioParam = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
+pln.bioModel = matRad_bioModel(pln.radiationMode,quantityOpt, modelName);
 
 
 %% generate steering file
-stf = matRad_generateStfSinglePencilBeam(ct,cst,pln);
+stf = matRad_generateSingleBixelStf(ct,cst,pln);
 
 % Select existing BDL file to load and fit
 pln.loadExistingBDL = 'BDL_matRad.txt';

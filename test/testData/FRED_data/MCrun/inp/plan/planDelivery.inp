@@ -1,0 +1,76 @@
+#Include file defining fields and layers geometry
+include: inp/plan/plan.inp
+
+#Define the fields
+for(currField in plan.get('Fields'))<
+	field<
+		ID = ${currField.get('fieldNumber')}
+		O = [0,${plan.get('SAD')},0]
+		L = ${currField.get('dim')}
+		pivot = [0.5,0.5,0.5]
+		l = [0, 0, -1]
+		u = [1, 0 ,0]
+	field>
+
+	#Deactivate the fields to avoid geometrical overlap
+	deactivate: field_${currField.get('fieldNumber')}
+for>
+
+for(currField in plan.get('Fields'))<
+
+	def: fieldIdx = currField.get('fieldNumber')
+
+	#Activate current field
+	activate: field_$fieldIdx
+
+	#Collect Gantry and Couch angles
+	def: GA = currField.get('GA')
+	def: CA = currField.get('CA')
+
+	#Collect Isocenter
+	def: ISO = currField.get('ISO')
+
+	#First move the patient so that the Isocenter is now in the center of the Room coordinate system
+	transform: Phantom move_to ${ISO.item(0)} ${ISO.item(1)} ${ISO.item(2)} Room
+
+	#Second rotate the patient according to the gantry and couch angles.
+	#In this configuration the fileds are always fixed in +SAD in y direction and the patient is rotated accordingly
+	transform: Phantom rotate y ${CA} Room
+	transform: Phantom rotate z ${GA} Room
+
+	for(layer in currField.get('Layers'))<
+
+		#Recover parameters of the current energy layer
+		def: currEnergy  = layer.get('Energy')
+		def: currEspread = layer.get('Espread')
+		def: currFWHM   = layer.get('FWHM')
+
+		for(beamlet in layer.get('beamlets'))<
+			pb<
+				ID      = ${beamlet.get('beamletID')}
+				fieldID = $fieldIdx
+				particle = proton
+				T	= $currEnergy
+				EFWHM	= $currEspread
+				Xsec = gauss
+				FWHM 	= $currFWHM
+
+				P 	= ${beamlet.get('P')}
+				v 	= ${beamlet.get('v')}
+				N 	= ${beamlet.get('w')}
+			pb>
+		for>
+	for>
+
+	#Deliver all the pecil beams in this field
+	deliver: field_$fieldIdx
+
+	#Deactivate the current field
+	deactivate: field_$fieldIdx
+
+	#Restore the patient to original position
+	transform: Phantom rotate z ${-1*GA} Room
+	transform: Phantom rotate y ${-1*CA} Room
+	transform: Phantom move_to 0 0 0 Room
+for>
+
