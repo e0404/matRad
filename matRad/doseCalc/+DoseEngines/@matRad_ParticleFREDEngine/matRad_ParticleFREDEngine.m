@@ -1,6 +1,6 @@
 classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
     % Engine for particle dose calculation using FRED Monte Carlo algorithm
-    % for more informations see superclass
+    % for more information see superclass
     % DoseEngines.matRad_MonteCarloEngineAbstract
     %
     %
@@ -15,7 +15,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
     % HUclamping:            [b] allows for clamping of HU table. Default: true
     % HUtable:               [s] HU table name. Example: 'internal', 'matRad_default_FRED'
     % externalCalculation    [b/s] off (default): run FRED
-    %                              t/'write'  : Only write simulation paramter files
+    %                              t/'write'  : Only write simulation parameter files
     %                              'path'     : read simulation files from 'path'
     %
     % sourceModel            [s] see AvailableSourceModels, {'gaussian', 'emittance', 'sigmaSqrModel'}
@@ -53,8 +53,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
     properties (SetAccess = protected, GetAccess = public)
 
         defaultHUtable        = 'matRad_default_FredMaterialConverter'
-        AvailableSourceModels = {'gaussian', 'emittance', 'sigmaSqrModel'}
-
+        availableSourceModels = {'gaussian', 'emittance', 'sigmaSqrModel'}
         calcBioDose
         currentVersion
         availableVersions = {'3.70.0'}  % Or higher.
@@ -77,6 +76,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         numOfNucleons
         ignoreOutsideDensities
         workingDir
+        forceDijFormatVersion
     end
 
     properties (Dependent)
@@ -154,7 +154,10 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
             % Issue a warning when we have more than 1 scenario
             if dij.numOfScenarios ~= 1
-                matRad_cfg.dispWarning('FRED is only implemented for single scenario use at the moment. Will only use the first Scenario for Monte Carlo calculation!');
+                matRad_cfg.dispWarning( ...
+                                       ['FRED is only implemented for single scenario use at the moment. '...
+                                        'Will only use the first Scenario for Monte Carlo calculation!'] ...
+                                      );
             end
 
             % Check for model consistency
@@ -280,7 +283,8 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 this.writePlanFile(planFile, stf, scenIdx);
 
                 % write planDelivery file
-                planDeliveryFile = fullfile(strrep(this.planFolder, runFolderName, sprintf('%s%s', runFolderName, tailRun)), this.planDeliveryFilename);
+                planDeliveryFile = fullfile(strrep(this.planFolder, runFolderName, sprintf('%s%s', runFolderName, tailRun)), ...
+                                            this.planDeliveryFilename);
                 this.writePlanDeliveryFile(planDeliveryFile);
             end
         end
@@ -295,7 +299,8 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 [~, runFolderName] = fileparts(this.MCrunFolder);
 
                 for scenIdx = 1:this.multScen.totNumScen
-                    fileNamePatient = fullfile(strrep(this.regionsFolder, runFolderName, sprintf('%s_%d', runFolderName, scenIdx)), this.patientFilename);
+                    fileNamePatient = fullfile(strrep(this.regionsFolder, runFolderName, sprintf('%s_%d', runFolderName, scenIdx)), ...
+                                               this.patientFilename);
                     ctIdx = this.multScen.linearMask(scenIdx, 1);
                     matRad_writeMHD(fileNamePatient, this.HUcube{ctIdx}, patientMetadata);
                 end
@@ -339,7 +344,8 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 errString = sprintf('Cannot open hLut: %s. Available hLut files are: ', hLutFile);
                 errString = [errString, sprintf('\ninternal')];
                 for hLUTindex = 1:numel(availableHLUTs)
-                    errString = [errString, sprintf('\n%s', strrep(fullfile(availableHLUTs(hLUTindex).folder, availableHLUTs(hLUTindex).name), '\', '\\'))];
+                    errString = [errString, sprintf('\n%s', strrep(fullfile(availableHLUTs(hLUTindex).folder, ...
+                                                                            availableHLUTs(hLUTindex).name), '\', '\\'))];
                 end
                 matRad_cfg.dispError(errString);
 
@@ -497,7 +503,12 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     % 1e-3 to make the filling slightly faster
                     % TODO: the preallocation could probably
                     % have more accurate estimates
-                    dij.(names{n})(this.multScen.scenMask) = {spalloc(dij.doseGrid.numOfVoxels, this.numOfColumnsDij, round(prod(dij.doseGrid.numOfVoxels, this.numOfColumnsDij) * 1e-3))};
+
+                    dij.(names{n})(this.multScen.scenMask) = {spalloc(dij.doseGrid.numOfVoxels, ...
+                                                                      this.numOfColumnsDij, ...
+                                                                      round(prod(dij.doseGrid.numOfVoxels, ...
+                                                                                 this.numOfColumnsDij) * 1e-3)) ...
+                                                             };
                 end
             end
 
@@ -516,7 +527,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             this.HUtable                = this.defaultHUtable;
             this.externalCalculation    = 'off';
             this.useGPU                 = false;
-            this.sourceModel            = this.AvailableSourceModels{1};
+            this.sourceModel            = this.availableSourceModels{1};
             this.roomMaterial           = 'Air';
             this.printOutput            = true;
             this.numHistoriesDirect     = matRad_cfg.defaults.propDoseCalc.numHistoriesDirect;
@@ -533,7 +544,6 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         function writeHlut(this, hLutFile, fileName)
 
             matRad_cfg = MatRad_Config.instance();
-            % fileName = fullfile(this.regionsFolder, 'hLut.inp');
 
             mainFolder        = fullfile(matRad_cfg.matRadSrcRoot, 'hluts');
             userDefinedFolder = fullfile(matRad_cfg.primaryUserFolder, 'hluts');
@@ -568,7 +578,10 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 errString = sprintf('Cannot open hLut: %s. Available hLut files are: ', hLutFile);
                 errString = [errString, sprintf('\ninternal')];
                 for hLUTindex = 1:numel(availableHLUTs)
-                    errString = [errString, sprintf('\n%s', strrep(fullfile(availableHLUTs(hLUTindex).folder, availableHLUTs(hLUTindex).name), '\', '\\'))];
+
+                    errString = [errString, sprintf('\n%s', ...
+                                                    strrep(fullfile(availableHLUTs(hLUTindex).folder, availableHLUTs(hLUTindex).name), '\', '\\'))];
+
                 end
                 matRad_cfg.dispError(errString);
             end
@@ -617,7 +630,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 end
 
             else
-                matRad_cfg.dispError('Something wrong occured in checking FRED available version. Please check correct FRED installation');
+                matRad_cfg.dispError('Something wrong occurred in checking FRED available version. Please check correct FRED installation');
             end
         end
 
@@ -661,12 +674,19 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     execCheck = true;
                 else
                     execCheck = false;
-                    msg = sprintf('Couldn''t call FRED executable. Please set the correct system call with DoseEngines.matRad_ParticleFREDEngine.cmdCall(''path/to/executable''). Current value is ''%s''', DoseEngines.matRad_ParticleFREDEngine.cmdCall);
+
+                    msg = sprintf(['Couldn''t call FRED executable. ' ...
+                                   'Please set the correct path with DoseEngines.matRad_ParticleFREDEngine.cmdCall(''path/to/executable''). ' ...
+                                   'Current value is ''%s'''], DoseEngines.matRad_ParticleFREDEngine.cmdCall);
+
                     matRad_cfg.dispError(msg);
                 end
             catch
                 execCheck = false;
-                msg = sprintf('Couldn''t call FRED executable. Please set the correct system call with DoseEngines.matRad_ParticleFREDEngine.cmdCall(''path/to/executable''). Current value is ''%s''', DoseEngines.matRad_ParticleFREDEngine.cmdCall);
+
+                msg = sprintf(['Couldn''t call FRED executable. ' ...
+                               'Please set the correct path with DoseEngines.matRad_ParticleFREDEngine.cmdCall(''path/to/executable''). ' ...
+                               'Current value is ''%s'''], DoseEngines.matRad_ParticleFREDEngine.cmdCall);
                 matRad_cfg.dispError(msg);
             end
         end
@@ -692,7 +712,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     version = [];
                 end
             catch
-                matRad_cfg.dispWarning('Something wrong occured in checking FRED installation. Please check correct FRED installation');
+                matRad_cfg.dispWarning('Something wrong occurred in checking FRED installation. Please check correct FRED installation');
                 version = [];
             end
         end
@@ -777,7 +797,8 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 nComponents = fread(f, 1, "int32");
                 numberOfBixels = fread(f, 1, "int32");
 
-                matRad_cfg.dispInfo("Reading FRED dij with %d components of size %dx%d (voxels x beamlets) with cubeDim = %dx%dx%d\n", nComponents, prod(dims), numberOfBixels, dims(1), dims(2), dims(3));
+                matRad_cfg.dispInfo('Reading FRED dij with %d components of size %dx%d (voxels x beamlets) with cubeDim = %dx%dx%d\n', ...
+                                    nComponents, prod(dims), numberOfBixels, dims(1), dims(2), dims(3));
 
                 if fileFormatVersion < 30
                     dijMatrices = DoseEngines.matRad_ParticleFREDEngine.readSparseDataV2(f, fileFormatVersion, dims, numberOfBixels, nComponents);
@@ -818,7 +839,8 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         end
 
         function [radiationMode] = updateRadiationMode(this, value)
-            % This function also resets the values for primary mass and numebr
+
+            % This function also resets the values for primary mass and number
             % of nucleons. Used for possible future extension to multiple
             % ion species
             matRad_cfg = MatRad_Config.instance();
@@ -864,13 +886,15 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         function set.sourceModel(this, value)
             matRad_cfg = MatRad_Config.instance();
 
-            valid = ischar(value) && any(strcmp(value, this.AvailableSourceModels));
+            valid = ischar(value) && any(strcmp(value, this.availableSourceModels));
 
             if valid
                 this.sourceModel = value;
             else
-                matRad_cfg.dispWarning('Unable to set source model:%s, setting default:%s', value, this.AvailableSourceModels{1});
-                this.sourceModel = this.AvailableSourceModels{1};
+
+                matRad_cfg.dispWarning('Unable to set source model:%s, setting default:%s', value, this.availableSourceModels{1});
+                this.sourceModel = this.availableSourceModels{1};
+
             end
 
         end
@@ -887,19 +911,31 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         end
 
         function v = get.dijFormatVersion(this)
-            v = '20';
+
+            matRad_cfg = MatRad_Config.instance();
+
+            if ~isempty(this.forceDijFormatVersion)
+                v = this.forceDijFormatVersion;
+            elseif this.isVersionLower('3.76.0')
+                v = 20;
+            else
+                v = 31;
+            end
 
             % FRED version <= 3.70.0 does not allow dij version
             % selection and only works with ifFormatVersion < 21
-            if this.isVersionLower('3.71.0')
-                return
+            if this.isVersionLower('3.76.0')
+                if v > 20
+                    matRad_cfg.dispWarning('FRED version %s does not support ijFormatVersions>20. Version 20 will be used!');
+                    v = 20;
+                end
+            else
+                if v == 20
+                    matRad_cfg.dispWarning('FRED version %s does no longer support ijFormatVersions 20. Version 21 will be used!');
+                    v = 21;
+                end
             end
 
-            if this.isVersionLower('3.76.0')
-                v = '21';
-                return
-            end
-            v = '31';
         end
 
         function set.radiationMode(this, value)

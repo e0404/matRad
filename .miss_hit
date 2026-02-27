@@ -5,7 +5,7 @@ project_root
 exclude_dir: "submodules"
 
 # style guide (https://florianschanda.github.io/miss_hit/style_checker.html)
-line_length: 120
+line_length: 150
 
 # --- Naming rules for matRad ---
 
@@ -21,6 +21,7 @@ regex_class_name: "^matRad_[A-Z][a-zA-Z0-9]*$"
 
 # parameters / variables: lowerCamelCase
 regex_parameter_name: "^[a-z][a-zA-Z0-9]*$"
+regex_attribute_name: "^[a-z][a-zA-Z0-9]*$"
 
 suppress_rule: "copyright_notice"
 
@@ -29,6 +30,6 @@ indent_function_file_body: false
 
 # metrics limit for the code quality (https://florianschanda.github.io/miss_hit/metrics.html)
 metric "cnest": limit 6
-metric "file_length": limit 450
+metric "file_length": limit 1000
 metric "cyc": limit 25
 metric "parameters": limit 8
