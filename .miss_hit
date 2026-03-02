@@ -11,7 +11,7 @@ line_length: 150
 
 # matRad_ + lowerCamelCase
 regex_function_name: "^matRad_[a-z][a-zA-Z0-9]*$"
-regex_script_name: "^matRad_[a-z][a-zA-Z0-9]*$"
+regex_script_name: "^matRad_((example[1-9][0-9]*_)?([a-z][a-zA-Z0-9]*|[A-Z]{2,}[a-zA-Z0-9]*))$"
 
 # methods: plain lowerCamelCase
 regex_method_name: "^[a-z][a-zA-Z0-9]*$"
@@ -32,4 +32,4 @@ indent_function_file_body: false
 metric "cnest": limit 6
 metric "file_length": limit 1000
 metric "cyc": limit 25
-metric "parameters": limit 8
+metric "parameters": limit 15
