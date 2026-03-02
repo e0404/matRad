@@ -110,8 +110,8 @@ function test_readOutput
 
        resultMC = engineMC.calcDoseForward(ct,cst,stf,w);
 
-       assertTrue(sum(resultMC.physicalDose,'all')>0);
-       assertTrue(sum(resultMC.LET,'all')>0);
+       assertTrue(sum(resultMC.physicalDose(:))>0);
+       assertTrue(sum(resultMC.LET(:))>0);
 
        dij = engineMC.calcDoseInfluence(ct,cst,stf);
 
