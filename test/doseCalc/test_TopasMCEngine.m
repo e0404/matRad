@@ -340,7 +340,7 @@ function test_TopasMCdoseCalc_multiAlphaBeta
                 for cellIdx = 1:length(matchingLines)
                     tmp = split(matchingLines{cellIdx}, '_');
                     tmp = split(tmp{end}, ' ');
-                    assertElementsAlmostEqual( alphaList(str2double(tmp{1})), str2double(tmp{3}) );
+                    assertTrue( abs(alphaList(str2double(tmp{1})) - str2double(tmp{3})) <= 1e-4 );
                 end
 
                 lines = splitlines(fileText);
@@ -349,12 +349,11 @@ function test_TopasMCdoseCalc_multiAlphaBeta
                 for cellIdx = 1:length(matchingLines)
                     tmp = split(matchingLines{cellIdx}, '_');
                     tmp = split(tmp{end}, ' ');
-                    assertTrue(abs( betaList(str2double(tmp{1})) - str2double(tmp{3}) ) < 0.01*str2double(tmp{3}) );
+                    assertTrue(abs( betaList(str2double(tmp{1})) - str2double(tmp{3}) ) < 1e-4 );
                 end
 
             end
         
         end
     end
-end
 

@@ -255,13 +255,13 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     end
                 end
                 abX         = [tmpAlphaX(:) tmpBetaX(:)];
-                unique_abX  = unique(abX, 'rows');
+                unique_abX  = unique(abX, 'rows', 'stable');
                 obj.bioParameters.AlphaX    = unique_abX(:, 1);
                 obj.bioParameters.BetaX     = unique_abX(:, 2);
 
                 % We don't need this part if we assign the alpha beta from
                 % the cst
-                
+
                 % Get alpha beta parameters from bioParam struct
                 %if isfield(obj.bioParameters, 'tissueAlphaX')
                 %    obj.bioParameters.AlphaX = obj.bioModel.tissueAlphaX;
