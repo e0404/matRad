@@ -10,18 +10,19 @@ line_length: 150
 # --- Naming rules for matRad ---
 
 # matRad_ + lowerCamelCase
-regex_function_name: "^matRad_[a-z][a-zA-Z0-9]*$"
+regex_function_name: "^(matRad|test|helper)_([a-z][a-zA-Z0-9]*|[A-Z]{2,}[a-zA-Z0-9]*)$"
 regex_script_name: "^matRad_((example[1-9][0-9]*_)?([a-z][a-zA-Z0-9]*|[A-Z]{2,}[a-zA-Z0-9]*))$"
 
 # methods: plain lowerCamelCase
-regex_method_name: "^[a-z][a-zA-Z0-9]*$"
+regex_method_name: "^([a-z][a-zA-Z0-9]*|[A-Z]{2,}[a-zA-Z0-9]*)$"
 
 # classes: matRad_ + UpperCamelCase
-regex_class_name: "^matRad_[A-Z][a-zA-Z0-9]*$"
+regex_class_name: "^matRad_([A-Z]{2,}[a-zA-Z0-9]*|[A-Z][a-zA-Z0-9]*)$"
+
 
 # parameters / variables: lowerCamelCase
-regex_parameter_name: "^[a-z][a-zA-Z0-9]*$"
-regex_attribute_name: "^[a-z][a-zA-Z0-9]*$"
+regex_parameter_name: "^(test_functions|test_suite|[a-z][a-zA-Z0-9]*|[A-Z]{2,}[a-zA-Z0-9]*)$"
+regex_attribute_name: "^([a-z][a-zA-Z0-9]*|[A-Z]{2,}[a-zA-Z0-9]*)$"
 
 suppress_rule: "copyright_notice"
 
