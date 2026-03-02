@@ -91,11 +91,11 @@ for s = 1:size(cst,1)
             mask(cst{s,4}{ctIndex}) = 1;
             
             if plane == 1 && any(any(mask(slice,:,:) > 0))
-                C = contourc(squeeze(mask(slice,:,:)),.5*[1 1]);
+                C = contourc(double(squeeze(mask(slice,:,:))),.5*[1 1]);
             elseif plane == 2 && any(any(mask(:,slice,:) > 0))
-                C = contourc(squeeze(mask(:,slice,:)),.5*[1 1]);
+                C = contourc(double(squeeze(mask(:,slice,:))),.5*[1 1]);
             elseif plane == 3 && any(any(mask(:,:,slice) > 0))
-                C = contourc(squeeze(mask(:,:,slice)),.5*[1 1]);
+                C = contourc(double(squeeze(mask(:,:,slice))),.5*[1 1]);
             end  
         end
         

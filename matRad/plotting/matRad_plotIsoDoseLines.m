@@ -58,11 +58,11 @@ end
 %fly
 if isempty(isoContours)
     if plane == 1
-        C = contourc(squeeze(doseCube(slice,:,:)),isoLevels);
+        C = contourc(double(squeeze(doseCube(slice,:,:))),isoLevels);
     elseif plane == 2
-        C = contourc(squeeze(doseCube(:,slice,:)),isoLevels);
+        C = contourc(double(squeeze(doseCube(:,slice,:))),isoLevels);
     elseif plane == 3
-        C = contourc(squeeze(doseCube(:,:,slice)),isoLevels);
+        C = contourc(double(squeeze(doseCube(:,:,slice))),isoLevels);
     end    
     isoContours{slice,plane} = C;
 end
