@@ -383,7 +383,7 @@ end
 if ~isfield(pln.propOpt,'optimizer')
     %While the default optimizer is IPOPT, we can try to fallback to
     %fmincon in case it does not work for some reason
-    if ~matRad_OptimizerIPOPT.IsAvailable()
+    if ~matRad_OptimizerIPOPT.isAvailable()
         pln.propOpt.optimizer = 'fmincon';
     else
         pln.propOpt.optimizer = 'IPOPT';
@@ -415,7 +415,7 @@ end
 
 matRad_assignPropertiesFromStruct(optimizer,optimizerOptions);
 
-if ~optimizer.IsAvailable()
+if ~optimizer.isAvailable()
     matRad_cfg.dispError(['Optimizer ''' optimizerName ''' not available!']);
 end
 

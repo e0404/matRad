@@ -1,25 +1,25 @@
 classdef matRad_OptimizerIPOPT < matRad_Optimizer
-% matRad_OptimizerIPOPT implements the interface for ipopt
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% Copyright 2019 the matRad development team.
-%
-% This file is part of the matRad project. It is subject to the license
-% terms in the LICENSE file found in the top-level directory of this
-% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
-% of the matRad project, including this file, may be copied, modified,
-% propagated, or distributed except according to the terms contained in the
-% LICENSE file.
-%
-% References
-%   -
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % matRad_OptimizerIPOPT implements the interface for ipopt
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %
+    % Copyright 2019 the matRad development team.
+    %
+    % This file is part of the matRad project. It is subject to the license
+    % terms in the LICENSE file found in the top-level directory of this
+    % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+    % of the matRad project, including this file, may be copied, modified,
+    % propagated, or distributed except according to the terms contained in the
+    % LICENSE file.
+    %
+    % References
+    %   -
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     properties
         options
-        env;
+        env
     end
 
     properties (SetAccess = protected)
@@ -36,8 +36,9 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
     end
 
     methods
+
         function obj = matRad_OptimizerIPOPT
-            %matRad_OptimizerIPOPT
+            % matRad_OptimizerIPOPT
             %   Construct an instance of the IPOPT optimizer (mex
             %   interface)
 
@@ -49,7 +50,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.allObjectiveFunctionValues = [];
             obj.abortRequested = false;
 
-            %Set Default Options
+            % Set Default Options
             if matRad_cfg.logLevel <= 1
                 lvl = 0;
             elseif matRad_cfg.logLevel <= 2
@@ -57,8 +58,8 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             elseif matRad_cfg.logLevel <= 3
                 lvl = 5;
             else
-                %There seems to be a problem with higher log levels in
-                %IPOPT!
+                % There seems to be a problem with higher log levels in
+                % IPOPT!
                 lvl = 5;
             end
 
@@ -70,14 +71,14 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.options.tol                           = 1e-10; % (Opt1)
             obj.options.dual_inf_tol                  = 1e-4;    % (Opt2)
             obj.options.constr_viol_tol               = 1e-4; % (Opt3)
-            obj.options.compl_inf_tol                 = 1e-4; % (Opt4), Optimal Solution Found if (Opt1),...,(Opt4) fullfiled
+            obj.options.compl_inf_tol                 = 1e-4; % (Opt4), Optimal Solution Found if (Opt1),...,(Opt4) fulfilled
 
             obj.options.acceptable_iter               = 5;    % (Acc1)
             obj.options.acceptable_tol                = 1e10; % (Acc2)
             obj.options.acceptable_constr_viol_tol    = 1e-2; % (Acc3)
             obj.options.acceptable_dual_inf_tol       = 1e10; % (Acc4)
             obj.options.acceptable_compl_inf_tol      = 1e10; % (Acc5)
-            obj.options.acceptable_obj_change_tol     = 1e-4; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fullfiled
+            obj.options.acceptable_obj_change_tol     = 1e-4; % (Acc6), Solved To Acceptable Level if (Acc1),...,(Acc6) fulfilled
 
             obj.options.max_iter                      = matRad_cfg.defaults.propOpt.maxIter;
             obj.options.max_cpu_time                  = 7200;
@@ -86,12 +87,12 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.options.mu_strategy = 'adaptive';
 
             % Line Sarch (C.8)
-            %obj.options.accept_every_trial_step = 'yes';
-            %obj.options.line_search_method = 'cg-penalty';
+            % obj.options.accept_every_trial_step = 'yes';
+            % obj.options.line_search_method = 'cg-penalty';
 
             % Restoration Phase (C.10)
-            %obj.options.soft_resto_pderror_reduction_factor = 100;
-            %obj.options.required_infeasibility_reduction    = 0.9999;
+            % obj.options.soft_resto_pderror_reduction_factor = 100;
+            % obj.options.required_infeasibility_reduction    = 0.9999;
 
             % Quasi-Newton (C.13)
             obj.options.hessian_approximation         = 'limited-memory';
@@ -106,42 +107,42 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             % obj.options.derivative_test_perturbation = 1e-6; % default 1e-8
             % obj.options.derivative_test_tol          = 1e-6;
 
-            if ~matRad_OptimizerIPOPT.IsAvailable()
-                matRad_cfg.dispError('IPOPT mex interface not available for %s!',obj.env);
+            if ~matRad_OptimizerIPOPT.isAvailable()
+                matRad_cfg.dispError('IPOPT mex interface not available for %s!', obj.env);
             end
 
-            if matRad_cfg.disableGUI || (matRad_cfg.isOctave && isequal(graphics_toolkit(),'gnuplot'))
+            if matRad_cfg.disableGUI || (matRad_cfg.isOctave && isequal(graphics_toolkit(), 'gnuplot'))
                 obj.showPlot = false;
             end
 
         end
 
-        function obj = optimize(obj,w0,optiProb,dij,cst)
+        function obj = optimize(obj, w0, optiProb, dij, cst)
             matRad_cfg = MatRad_Config.instance();
 
             % set optimization options
 
-            %Set up ipopt structure
+            % Set up ipopt structure
             ipoptStruct = struct;
 
-            %optimizer options
+            % optimizer options
             ipoptStruct.ipopt = obj.options;
 
-            %variable bounds
+            % variable bounds
             ipoptStruct.lb = optiProb.lowerBounds(w0);
             ipoptStruct.ub = optiProb.upperBounds(w0);
 
-            %constraint bounds;
-            [ipoptStruct.cl,ipoptStruct.cu] = optiProb.matRad_getConstraintBounds(cst);
+            % constraint bounds;
+            [ipoptStruct.cl, ipoptStruct.cu] = optiProb.matRad_getConstraintBounds(cst);
 
             % set callback functions.
 
-            funcs.objective         = @(x) double(gather(optiProb.matRad_objectiveFunction(x,dij,cst))));
-            funcs.constraints       = @(x) double(gather(optiProb.matRad_constraintFunctions(x,dij,cst)));
-            funcs.gradient          = @(x) double(gather(optiProb.matRad_objectiveGradient(x,dij,cst)));
-            funcs.jacobian          = @(x) double(gather(optiProb.matRad_constraintJacobian(x,dij,cst)));
-            funcs.jacobianstructure = @( ) optiProb.matRad_getJacobianStructure(w0,dij,cst);
-            funcs.iterfunc          = @(iter,objective,paramter) obj.iterFunc(iter,objective,paramter,ipoptStruct.ipopt.max_iter);
+            funcs.objective         = @(x) double(gather(optiProb.matRad_objectiveFunction(x, dij, cst)));
+            funcs.constraints       = @(x) double(gather(optiProb.matRad_constraintFunctions(x, dij, cst)));
+            funcs.gradient          = @(x) double(gather(optiProb.matRad_objectiveGradient(x, dij, cst)));
+            funcs.jacobian          = @(x) double(gather(optiProb.matRad_constraintJacobian(x, dij, cst)));
+            funcs.jacobianstructure = @() optiProb.matRad_getJacobianStructure(w0, dij, cst);
+            funcs.iterfunc          = @(iter, objective, parameter) obj.iterFunc(iter, objective, parameter, ipoptStruct.ipopt.max_iter);
 
             % Informing user to press q to terminate optimization
             matRad_cfg.dispInfo('\nOptimzation initiating...\n');
@@ -156,10 +157,10 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
                             mde         = com.mathworks.mde.desk.MLDesktop.getInstance;
                             cw          = mde.getClient('Command Window');
                             xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
-                            h_cw        = handle(xCmdWndView,'CallbackProperties');
+                            h_cw        = handle(xCmdWndView, 'CallbackProperties');
 
                             % set Key Pressed Callback of Matlab command window
-                            set(h_cw, 'KeyPressedCallback', @(h,event) obj.abortCallbackKey(h,event));
+                            set(h_cw, 'KeyPressedCallback', @(h, event) obj.abortCallbackKey(h, event));
                             matRad_cfg.dispInfo('Press q to terminate the optimization...\n');
                             qCallbackSet = true;
                         catch
@@ -168,21 +169,23 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
                 end
             end
 
-            %ipoptStruct.options = obj.options;
+            % ipoptStruct.options = obj.options;
             obj.abortRequested = false;
             obj.plotFailed = false;
 
             % Run IPOPT.
             try
-                [obj.wResult, obj.resultInfo] = ipopt(double(gather(w0)),funcs,ipoptStruct);
+                [obj.wResult, obj.resultInfo] = ipopt(double(gather(w0)), funcs, ipoptStruct);
             catch ME
-                errorString = [ME.message '\nThis error was thrown by the MEX-interface of IPOPT.\nMex interfaces can raise compatability issues which may be resolved by compiling them by hand directly on your particular system.'];
+                errorString = [ME.message '\nThis error was thrown by the MEX-interface of IPOPT.\n' ...
+                               'Mex interfaces can raise compatibility issues which may be resolved by ' ...
+                               'compiling them by hand directly on your system.'];
                 matRad_cfg.dispError(errorString);
             end
 
             % unset Key Pressed Callback of Matlab command window
             if qCallbackSet
-                set(h_cw, 'KeyPressedCallback',' ');
+                set(h_cw, 'KeyPressedCallback', ' ');
             end
 
             obj.abortRequested = false;
@@ -190,7 +193,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             obj.allObjectiveFunctionValues = [];
         end
 
-        function [statusmsg,statusflag] = GetStatus(obj)
+        function [statusmsg, statusflag] = getStatus(obj)
             try
                 switch obj.resultInfo.status
                     case 0
@@ -246,11 +249,11 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             end
         end
 
-        function flag = iterFunc(obj,iter,objective,~,~)
+        function flag = iterFunc(obj, iter, objective, ~, ~)
 
             obj.allObjectiveFunctionValues(iter + 1) = objective;
-            %We don't want the optimization to crash because of drawing
-            %errors
+            % We don't want the optimization to crash because of drawing
+            % errors
 
             if ~isempty(obj.axesHandle) && ~isgraphics(obj.axesHandle)
                 obj.plotFailed = true;
@@ -261,8 +264,8 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
                     obj.plotFunction();
                 catch ME
                     matRad_cfg = MatRad_Config.instance();
-                    %Put a warning at iteration 1 that plotting failed
-                    matRad_cfg.dispWarning('Objective Function plotting failed and thus disabled. Message:\n%s',ME.message);
+                    % Put a warning at iteration 1 that plotting failed
+                    matRad_cfg.dispWarning('Objective Function plotting failed and thus disabled. Message:\n%s', ME.message);
                     obj.plotFailed = true;
                     if matRad_cfg.isOctave
                         fflush(stdout);
@@ -280,38 +283,49 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             x = 1:numel(y);
 
             if isempty(obj.axesHandle)
-                %Create new Fiure and store axes handle
+                % Create new Fiure and store axes handle
                 matRad_cfg = MatRad_Config.instance();
-                hFig = figure('Name','Progress of IPOPT Optimization','NumberTitle','off','Color',matRad_cfg.gui.backgroundColor);
-                hAx = axes(hFig,'Color',matRad_cfg.gui.elementColor,'XColor',matRad_cfg.gui.textColor,'YColor',matRad_cfg.gui.textColor,'GridColor',matRad_cfg.gui.textColor,'MinorGridColor',matRad_cfg.gui.backgroundColor);
+                hFig = figure('Name', 'Progress of IPOPT Optimization', 'NumberTitle', 'off', 'Color', matRad_cfg.gui.backgroundColor);
+                hAx = axes(hFig, ...
+                           'Color', matRad_cfg.gui.elementColor, ...
+                           'XColor', matRad_cfg.gui.textColor, ...
+                           'YColor', matRad_cfg.gui.textColor, ...
+                           'GridColor', matRad_cfg.gui.textColor, ...
+                           'MinorGridColor', matRad_cfg.gui.backgroundColor);
 
-                hold(hAx,'on');
-                grid(hAx,'on');
-                grid(hAx,'minor');
-                set(hAx,'YScale','log');
+                hold(hAx, 'on');
+                grid(hAx, 'on');
+                grid(hAx, 'minor');
+                set(hAx, 'YScale', 'log');
 
-                %Add a Stop button with callback to change abort flag
+                % Add a Stop button with callback to change abort flag
                 c = uicontrol;
-                cPos = get(c,'Position');
+                cPos = get(c, 'Position');
                 cPos(1) = 5;
                 cPos(2) = 5;
-                set(c,  'String','Stop',...
-                        'Position',cPos,...
-                        'Callback',@(~,~) abortCallbackButton(obj));
+                set(c,  'String', 'Stop', ...
+                    'Position', cPos, ...
+                    'Callback', @(~, ~) abortCallbackButton(obj));
 
-                %Set up the axes scaling & labels
+                % Set up the axes scaling & labels
                 defaultFontSize = 14;
-                set(hAx,'YScale','log');
-                title(hAx,'Progress of Optimization','LineWidth',defaultFontSize,'Color',matRad_cfg.gui.highlightColor);
-                xlabel(hAx,'# iterations','Fontsize',defaultFontSize),ylabel(hAx,'objective function value','Fontsize',defaultFontSize);
+                set(hAx, 'YScale', 'log');
+                title(hAx, 'Progress of Optimization', 'LineWidth', defaultFontSize, 'Color', matRad_cfg.gui.highlightColor);
+                xlabel(hAx, '# iterations', 'Fontsize', defaultFontSize);
+                ylabel(hAx, 'objective function value', 'Fontsize', defaultFontSize);
 
-                %Create plot handle and link to data for faster update
-                hPlot = plot(hAx,x,y,'x','MarkerEdgeColor',matRad_cfg.gui.highlightColor,'MarkerFaceColor',matRad_cfg.gui.elementColor,'LineWidth',1.5,'XDataSource','x','YDataSource','y');
+                % Create plot handle and link to data for faster update
+                hPlot = plot(hAx, x, y, 'x', ...
+                             'MarkerEdgeColor', matRad_cfg.gui.highlightColor, ...
+                             'MarkerFaceColor', matRad_cfg.gui.elementColor, ...
+                             'LineWidth', 1.5, ...
+                             'XDataSource', 'x', ...
+                             'YDataSource', 'y');
                 obj.plotHandle = hPlot;
                 obj.axesHandle = hAx;
 
-            else %Figure already exists, retreive from axes handle
-                hFig = get(obj.axesHandle,'Parent');
+            else % Figure already exists, retrieve from axes handle
+                hFig = get(obj.axesHandle, 'Parent');
                 hAx = obj.axesHandle;
                 hPlot = obj.plotHandle;
             end
@@ -322,10 +336,10 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             switch obj.env
                 case 'OCTAVE'
                     if ishghandle(hFig)
-                        refreshdata(hFig,'caller');
+                        refreshdata(hFig, 'caller');
                     end
                 otherwise
-                    refreshdata(hPlot,'caller');
+                    refreshdata(hPlot, 'caller');
             end
             drawnow;
 
@@ -335,27 +349,29 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             end
         end
 
-        function abortCallbackKey(obj,~,KeyEvent)
+        function abortCallbackKey(obj, ~, keyEvent)
             % check if user pressed q
-            if  get(KeyEvent,'keyCode') == 81
+            if  get(keyEvent, 'keyCode') == 81
                 obj.abortRequested = true;
             end
         end
 
-        function abortCallbackButton(obj,~,~,~)
+        function abortCallbackButton(obj, ~, ~, ~)
             obj.abortRequested = true;
         end
+
     end
 
     methods (Static)
-        function available = IsAvailable()
+
+        function available = isAvailable()
             available = matRad_checkMexFileExists('ipopt');
 
-            %Let's run a tiny testproblem to see if it really works
+            % Let's run a tiny testproblem to see if it really works
             if available
                 funcs.objective         = @(x) x.^2;
-                funcs.gradient          = @(x) 2*x;
-                funcs.hessian           = @(x,sigma,lambda) sigma*sparse(2);
+                funcs.gradient          = @(x) 2 * x;
+                funcs.hessian           = @(x, sigma, lambda) sigma * sparse(2);
                 funcs.hessianstructure  = @()  sparse(true);
 
                 s.ipopt.tol             = 1e-5; % (Opt1)
@@ -364,12 +380,13 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
                 s.ipopt.print_options_documentation   = 'no';
 
                 try
-                    [x,~] = ipopt(1,funcs,s);
+                    [x, ~] = ipopt(1, funcs, s);
                     assert(abs(x) < 1e-5);
                 catch ME
                     available = false;
                 end
             end
         end
+
     end
 end

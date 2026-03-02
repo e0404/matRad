@@ -3,15 +3,15 @@ function ct = matRad_moveCtToGPU(ct, precision)
 %   Detailed explanation goes here
 
 if nargin < 2
-    precision = 'double';
+    precision = [];
 end
 
-if strcmp(precision, 'single')
+if ~isempty(precision)
     if isfield(ct, 'cubeHU')
-        ct.cubeHU = cellfun(@single, ct.cubeHU, 'UniformOutput', false);
+        ct.cubeHU = cellfun(@(x) cast(x, precision), ct.cubeHU, 'UniformOutput', false);
     end
     if isfield(ct, 'cube')
-        ct.cube = cellfun(@single, ct.cube, 'UniformOutput', false);
+        ct.cube = cellfun(@(x) cast(x, precision), ct.cube, 'UniformOutput', false);
     end
 end
 
