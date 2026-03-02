@@ -888,7 +888,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
         
         function CheckOptimizerStatus(this, usedOptimizer,OptCase)
             
-            [statusmsg,statusflag] = usedOptimizer.GetStatus();
+            [statusmsg,statusflag] = usedOptimizer.getStatus();
             
             if statusflag == 0 || statusflag == 1
                 statusIcon = 'none';

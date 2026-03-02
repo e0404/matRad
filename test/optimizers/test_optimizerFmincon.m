@@ -43,7 +43,7 @@ if ~license('test', 'optimization_toolbox') || license('checkout', 'optimization
 end
 
 opti = matRad_OptimizerFmincon();
-[statusmsg, statusflag] = opti.GetStatus();
+[statusmsg, statusflag] = opti.getStatus();
 assertEqual(statusmsg, 'No Last Optimizer Status Available!');
 assertEqual(statusflag, -1);
 

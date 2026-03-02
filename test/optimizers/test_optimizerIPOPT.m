@@ -19,7 +19,7 @@ assertTrue(matRad_OptimizerIPOPT.isAvailable()); % Check static
 function test_optimizer_ipopt_getStatus
 
 opti = matRad_OptimizerIPOPT();
-[statusmsg, statusflag] = opti.GetStatus();
+[statusmsg, statusflag] = opti.getStatus();
 assertEqual(statusmsg, 'No Last IPOPT Status Available!');
 assertEqual(statusflag, -1);
 
