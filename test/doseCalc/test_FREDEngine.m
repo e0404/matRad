@@ -98,7 +98,7 @@ nBixels = sum([stf(:).totalNumOfBixels]);
 nVoxles = prod(ct.cubeDim);
 
 % Assert basic parameters
-assertEqual(dijFredLoad.externalCalculationLodPath, fullfile(pln.propDoseCalc.externalCalculation, 'MCrun', 'out', 'scoreij', 'Phantom.Dose.bin'));
+assertEqual(dijFredLoad.externalCalculationLodPath{1}, fullfile(pln.propDoseCalc.externalCalculation, 'MCrun', 'out', 'scoreij', 'Phantom.Dose.bin'));
 assertEqual(size(dijFredLoad.physicalDose{1}), [nVoxles, nBixels]);
 assertEqual(size(forwardDoseFredLoad.physicalDose), size(resultGUI.physicalDose));
 assertEqual(size(dijFredLoad.mLETDose{1}), [nVoxles, nBixels]);
@@ -151,8 +151,7 @@ pln.propDoseCalc.externalCalculation = 'write';
 pln.propDoseCalc.workingDir = helper_temporaryFolder('testFRED', true);
 
 pln.multScen = matRad_RandomScenarios(ct);
-pln.multScen.nSa;
-ples = 2;
+pln.multScen.nSamples = 2;
 
 w = ones(sum([stf(:).totalNumOfBixels]), 1);
 

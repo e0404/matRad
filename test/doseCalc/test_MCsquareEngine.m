@@ -116,6 +116,6 @@ function test_readOutput
        dij = engineMC.calcDoseInfluence(ct,cst,stf);
 
 
-       assertTrue(size(dij.physicalDose{1})==[prod(ct.cubeDim),stf.totalNumOfBixels]);
+       assertTrue(all(size(dij.physicalDose{1})==[prod(ct.cubeDim),sum([stf.totalNumOfBixels])]));
     
     end

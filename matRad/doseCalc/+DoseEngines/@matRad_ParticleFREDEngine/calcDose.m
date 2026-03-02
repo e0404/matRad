@@ -383,16 +383,22 @@ if ~isempty(doseCube)
         % Dose cube
         if all(cellfun(@(cube) isequal(size(cube), this.doseGrid.dimensions), doseCube))
             for scenIdx = 1:this.multScen.totNumScen
-                dij.physicalDose(this.multScen.linearMask(scenIdx, 1), this.multScen.linearMask(scenIdx, 2), this.multScen.linearMask(scenIdx, 3)) = doseCube(scenIdx);
+                dij.physicalDose{this.multScen.linearMask(scenIdx, 1), this.multScen.linearMask(scenIdx, 2), this.multScen.linearMask(scenIdx, 3)} = doseCube{scenIdx}(:);
             end
         end
 
         % LETd cube
         if this.calcLET
             if all(cellfun(@(cube) isequal(size(cube), this.doseGrid.dimensions), letdCube))
-                letdCube = cellfun(@(letScen, doseScen) letScen(:) .* doseScen(:), letdCube, doseCube, 'UniformOutput', false);
+
                 for scenIdx = 1:this.multScen.totNumScen
-                    dij.mLETdose(this.multScen.linearMask(scenIdx, 1), this.multScen.linearMask(scenIdx, 2), this.multScen.linearMask(scenIdx, 3)) = letdCube(scenIdx);
+                    dij.mLETd{this.multScen.linearMask(scenIdx, 1), this.multScen.linearMask(scenIdx, 2), this.multScen.linearMask(scenIdx, 3)} = letdCube{scenIdx}(:);
+                end
+
+                letdCube = cellfun(@(letScen, doseScen) letScen(:) .* doseScen(:), letdCube, doseCube, 'UniformOutput', false);
+                
+                for scenIdx = 1:this.multScen.totNumScen
+                    dij.mLETDose{this.multScen.linearMask(scenIdx, 1), this.multScen.linearMask(scenIdx, 2), this.multScen.linearMask(scenIdx, 3)} = letdCube{scenIdx}(:);
                 end
             end
         end
@@ -405,17 +411,17 @@ if ~isempty(doseCube)
         end
 
     else
-        doseCube = cellfun(@(doseScen) doseScen(:, fredOrder), doseCube(:, fredOrder));
+        doseCube = cellfun(@(doseScen) doseScen(:, fredOrder), doseCube, 'UniformOutput',false);
         % Dose cube
         % When scoring dij, FRED internaly normalizes to 1
         dij.physicalDose = cellfun(@(doseScen) this.conversionFactor * doseScen, doseCube, 'UniformOutput', false);
 
         % LET cube
         if this.calcLET
-            letdCube = letdCube(:, fredOrder);
+            letdCube = cellfun(@(letdScen) letdScen(:, fredOrder), letdCube, 'UniformOutput',false);
 
             % We need LETd * dose as well
-            dij.mLETDose{1} = dij.physicalDose{1} .* letdCube;
+            dij.mLETDose = cellfun(@(dose, letd) dose .* letd, dij.physicalDose, letdCube, 'UniformOutput',false);
         end
     end
 
@@ -423,44 +429,54 @@ if ~isempty(doseCube)
     if this.calcBioDose
 
         if this.calcDoseDirect
-            tmpKernel.LET = letdCube(this.VdoseGrid);
 
-            % recover alpha and beta maps
-            tmpBixel.radDepths = zeros(size(this.VdoseGrid, 1), 1);
+            for scenIdx=1:this.multScen.totNumScen
 
-            tmpBixel.vAlphaX   = dij.ax{1}(this.VdoseGrid);
-            tmpBixel.vBetaX    = dij.bx{1}(this.VdoseGrid);
-            tmpBixel.vABratio  = dij.ax{1}(this.VdoseGrid) ./ dij.bx{1}(this.VdoseGrid);
+                tmpKernel.LET = letdCube{scenIdx}(this.VdoseGrid);
 
-            tmpBixel = this.bioModel.calcBiologicalQuantitiesForBixel(tmpBixel, tmpKernel);
+                % recover alpha and beta maps
+                tmpBixel.radDepths = zeros(size(this.VdoseGrid, 1), 1);
 
-            tmpBixel.alpha(isnan(tmpBixel.alpha)) = 0;
-            tmpBixel.beta(isnan(tmpBixel.beta)) =  0;
+                tmpBixel.vAlphaX   = dij.ax{scenIdx}(this.VdoseGrid);
+                tmpBixel.vBetaX    = dij.bx{scenIdx}(this.VdoseGrid);
+                tmpBixel.vABratio  = dij.ax{scenIdx}(this.VdoseGrid) ./ dij.bx{scenIdx}(this.VdoseGrid);
 
-            dij.mAlphaDose{1}     = zeros(size(letdCube));
-            dij.mSqrtBetaDose{1}  = zeros(size(letdCube));
-            dij.mAlphaDose{1}(this.VdoseGrid)     = tmpBixel.alpha .* dij.physicalDose{1}(this.VdoseGrid);
-            dij.mSqrtBetaDose{1}(this.VdoseGrid)  = sqrt(tmpBixel.beta) .* dij.physicalDose{1}(this.VdoseGrid);
+                tmpBixel = this.bioModel.calcBiologicalQuantitiesForBixel(tmpBixel, tmpKernel);
+
+                tmpBixel.alpha(isnan(tmpBixel.alpha)) = 0;
+                tmpBixel.beta(isnan(tmpBixel.beta)) =  0;
+
+                dij.mAlphaDose{scenIdx}     = zeros(size(letdCube{scenIdx}));
+                dij.mSqrtBetaDose{scenIdx}  = zeros(size(letdCube{scenIdx}));
+                dij.mAlphaDose{scenIdx}(this.VdoseGrid)     = tmpBixel.alpha .* dij.physicalDose{scenIdx}(this.VdoseGrid);
+                dij.mSqrtBetaDose{scenIdx}(this.VdoseGrid)  = sqrt(tmpBixel.beta) .* dij.physicalDose{scenIdx}(this.VdoseGrid);
+            end
+
         else
-            indices = find(letdCube);
-            matSize = size(letdCube);
-            [voxels, bixels] = ind2sub(size(letdCube), indices);
-            tmpKernel.LET = nonzeros(letdCube);
+            
+            for scenIdx=1:this.multScen.totNumScen
+                
+                currLetdCube = letdCube{scenIdx};
+                indices = find(currLetdCube);
+                matSize = size(currLetdCube);
+                [voxels, bixels] = ind2sub(size(currLetdCube), indices);
+                tmpKernel.LET = nonzeros(currLetdCube);
 
-            tmpBixel.radDepths = zeros(size(voxels), "logical");
-            tmpBixel.vAlphaX   = dij.ax{1}(voxels);
-            tmpBixel.vBetaX    = dij.bx{1}(voxels);
-            tmpBixel.vABratio  = tmpBixel.vAlphaX ./ tmpBixel.vBetaX;
+                tmpBixel.radDepths = zeros(size(voxels), "logical");
+                tmpBixel.vAlphaX   = dij.ax{scenIdx}(voxels);
+                tmpBixel.vBetaX    = dij.bx{scenIdx}(voxels);
+                tmpBixel.vABratio  = tmpBixel.vAlphaX ./ tmpBixel.vBetaX;
 
-            tmpBixel = this.bioModel.calcBiologicalQuantitiesForBixel(tmpBixel, tmpKernel);
+                tmpBixel = this.bioModel.calcBiologicalQuantitiesForBixel(tmpBixel, tmpKernel);
 
-            tmpBixel.alpha(~isfinite(tmpBixel.alpha)) = 0;
-            tmpBixel.beta(~isfinite(tmpBixel.beta)) =  0;
+                tmpBixel.alpha(~isfinite(tmpBixel.alpha)) = 0;
+                tmpBixel.beta(~isfinite(tmpBixel.beta)) =  0;
 
-            dij.mAlphaDose{1} = sparse(voxels, bixels, tmpBixel.alpha, matSize(1), matSize(2));
-            dij.mSqrtBetaDose{1} = sparse(voxels, bixels, sqrt(tmpBixel.beta), matSize(1), matSize(2));
-            dij.mAlphaDose{1} = dij.mAlphaDose{1} .* dij.physicalDose{1};
-            dij.mSqrtBetaDose{1} = dij.mSqrtBetaDose{1} .* dij.physicalDose{1};
+                dij.mAlphaDose{scenIdx} = sparse(voxels, bixels, tmpBixel.alpha, matSize(1), matSize(2));
+                dij.mSqrtBetaDose{scenIdx} = sparse(voxels, bixels, sqrt(tmpBixel.beta), matSize(1), matSize(2));
+                dij.mAlphaDose{scenIdx} = dij.mAlphaDose{scenIdx} .* dij.physicalDose{scenIdx};
+                dij.mSqrtBetaDose{scenIdx} = dij.mSqrtBetaDose{scenIdx} .* dij.physicalDose{scenIdx};
+            end
         end
     end
 end
