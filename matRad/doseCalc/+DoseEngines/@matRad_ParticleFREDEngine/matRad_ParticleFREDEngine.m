@@ -384,7 +384,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             data = [];
             while ~feof(fid)
                 line = strtrim(fgetl(fid));
-                if startsWith(line, 'mat:')
+                if strncmp(line, 'mat:', length('mat:'))
                     line = strrep(line, 'mat:', '');
                     values = sscanf(line, '%f')';
                     data = [data; values];
