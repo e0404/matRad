@@ -1,4 +1,4 @@
-function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln,visBool)
+function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,varargin)
 % multileaf collimator leaf sequencing algorithm for intensity modulated
 % beams with multiple static segments according to Siochi (1999)
 % International Journal of Radiation Oncology * Biology * Physics,
@@ -21,8 +21,10 @@ function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln,visBool)
 %                       be created
 %   stf:                matRad steering information struct
 %   dij:                matRad's dij matrix
-%   pln:                pln struct
-%   visBool:            toggle on/off visualization (optional)
+%   numOfLevels:        number of intensity levels for the sequencing
+% optional key-value pairs
+%   visBool:            toggle on/off visualization (optional - default: false)
+%   dynamic:            toggle on/off dynamic delivery (optional - default: false)
 %
 % output
 %   resultGUI:          matRad result struct containing the new dose cube
@@ -46,10 +48,24 @@ function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln,visBool)
 
 matRad_cfg = MatRad_Config.instance();
 
-% if visBool not set toogle off visualization
-if nargin < 5
-    visBool = 0;
-end
+p = inputParser();
+p.KeepUnmatched = true;
+p.addRequired('resultGUI',@(x) isstruct(x));
+p.addRequired('stf',@(x) isstruct(x));
+p.addRequired('dij',@(x) isstruct(x));
+p.addRequired('numOfLevels',@(x) isnumeric(x) && isscalar(x) && x > 0);
+p.addParameter('visBool',false,@(x) isscalar(x) && (islogical(x) || (isnumeric(x) && (x==0 || x==1))));
+p.addParameter('dynamic',false,@(x) isscalar(x) && (islogical(x) || (isnumeric(x) && (x==0 || x==1))));
+p.addParameter('numApertures',0,@(x) isnumeric(x) && isscalar(x) && x >= 0);
+p.addParameter('continuousAperture',false,@(x) isscalar(x) && (islogical(x) || (isnumeric(x) && (x==0 || x==1))));
+p.addParameter('preconditioner',false,@(x) isscalar(x) && (islogical(x) || (isnumeric(x) && (x==0 || x==1))));
+p.parse(resultGUI,stf,dij,numOfLevels,varargin{:});
+
+visBool = p.Results.visBool;
+dynamic = p.Results.dynamic;
+numApertures = p.Results.numApertures;
+continuousAperture = p.Results.continuousAperture;
+preconditioner = p.Results.preconditioner;
 
 numOfBeams = numel(stf);
 
@@ -63,16 +79,6 @@ if visBool
 end
 
 offset             = 0;
-
-if ~isfield(pln,'propSeq') || ~isfield(pln.propSeq,'numLevels')
-    pln.propSeq.numLevels = matRad_cfg.defaults.propSeq.numLevels;
-end
-
-if ~isfield(pln, 'propOpt') || ~isfield(pln.propOpt,'runVMAT')
-    pln.propOpt.runVMAT = false;
-end
-
-sequencing.runVMAT = pln.propOpt.runVMAT;
 
 if isfield(resultGUI,'scaleFacRx_FMO')
     resultGUI.wUnsequenced = resultGUI.wUnsequenced/resultGUI.scaleFacRx_FMO;
@@ -91,7 +97,7 @@ end
 for i = 1:numOfBeams
     numOfRaysPerBeam = stf(i).numOfRays;
     
-    if pln.propOpt.runVMAT
+    if dynamic
         
         if ~stf(i).propVMAT.FMOBeam
             sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = 0;
@@ -106,21 +112,17 @@ for i = 1:numOfBeams
     else
         
         sequencing.beam(i).numOfShapes = 0;
-        %does this make sense to discard apertures if VMAT isn't run?
-        if isfield(pln.propOpt,'numApertures')
-            numToKeep = pln.propOpt.numApertures; %if all apertures are to be kept, this should be set to 0
-        else
-            numToKeep = 0;
-        end
+        %TODO: does this make sense to discard apertures if VMAT isn't run?
+        numToKeep = numApertures;
     end
     
     % get relevant weights for current beam
-    wOfCurrBeams = wUnsequenced(1+offset:numOfRaysPerBeam+offset);%REVIEW OFFSET
+    wOfCurrBeams =  wUnsequenced(1+offset:numOfRaysPerBeam+offset).* ones(size(stf(i).ray,2),1);%REVIEW OFFSET
     
-    X = ones(numOfRaysPerBeam,1)*NaN;
-    Z = ones(numOfRaysPerBeam,1)*NaN;
+    X = ones(size(stf(i).ray,2),1)*NaN; %this way it also works with3dconformal
+    Z = ones(size(stf(i).ray,2),1)*NaN;
     
-    for j = 1:stf(i).numOfRays
+    for j = 1:size(stf(i).ray,2) 
         X(j) = stf(i).ray(j).rayPos_bev(:,1);
         Z(j) = stf(i).ray(j).rayPos_bev(:,3);
     end
@@ -148,112 +150,151 @@ for i = 1:numOfBeams
     %Save weights in fluence matrix.
     fluenceMx(indInFluenceMx) = wOfCurrBeams;
     
-    if matRad_cfg.isMatlab && license('test','image_toolbox')   
-        temp = zeros(size(fluenceMx));
-        for row = 1:dimOfFluenceMxZ
-            temp(row,:) = imgaussfilt(fluenceMx(row,:),1);
-        end
-        fluenceMx = temp;
-        clear temp
+    % Gaussian fluence filtering - TODO: why?
+    sigma = 1;
+    kernel = exp(-((-2:2).^2)/(2*sigma^2));
+    kernel = kernel / sum(kernel);
+    
+    % Apply to each row
+    temp = zeros(size(fluenceMx));
+    for row = 1:dimOfFluenceMxZ
+        temp(row,:) = conv(fluenceMx(row,:), kernel, 'same');
     end
-
+    fluenceMx = temp;
 
     %allow for possibility to repeat sequencing with higher number of
     %levels if number of apertures is lower than required
-    notFinished = 1;
-    numOfLevels = pln.propSeq.numLevels;
+    notFinished = true;
     
-    while notFinished
-        % Keep looping until we have at least as many apertures as
-        % numToKeep. Increment numOfLevels by 1 each iteration
-        
-        % prepare sequencer
-        calFac = max(fluenceMx(:));
-        
-        D_k = round(fluenceMx/calFac*numOfLevels);
-        
-        % Save the stratification in the initial intensity matrix D_0.
-        D_0 = D_k;
-        
-        % container to remember generated shapes; allocate space for 10000
-        % shapes
-        shapes = NaN*ones(dimOfFluenceMxZ,dimOfFluenceMxX,10000);
-        shapesWeight = zeros(10000,1);
-        k = 0;
-        
-        if visBool
-            clf(seqFig);
-            colormap(seqFig,'jet');
+    if sum(wOfCurrBeams)>0
+        while notFinished
+            % Keep looping until we have at least as many apertures as
+            % numToKeep. Increment numOfLevels by 1 each iteration
             
-            seqSubPlots(1) = subplot(2,2,1,'parent',seqFig);
-            imagesc(D_k,'parent',seqSubPlots(1));
-            set(seqSubPlots(1),'CLim',[0 numOfLevels],'YDir','normal');
-            title(seqSubPlots(1),['Beam # ' num2str(i) ': max(D_0) = ' num2str(max(D_0(:))) ' - ' num2str(numel(unique(D_0))) ' intensity levels']);
-            xlabel(seqSubPlots(1),'x - direction parallel to leaf motion ')
-            ylabel(seqSubPlots(1),'z - direction perpendicular to leaf motion ')
-            colorbar;
-            drawnow
+            % prepare sequencer
+            calFac = max(fluenceMx(:));
+            
+            D_k = round(fluenceMx/calFac*numOfLevels);
+            
+            % Save the stratification in the initial intensity matrix D_0.
+            D_0 = D_k;
+            
+            % container to remember generated shapes; allocate space for 10000
+            % shapes
+            shapes = NaN*ones(dimOfFluenceMxZ,dimOfFluenceMxX,10000);
+            shapesWeight = zeros(10000,1);
+            k = 0;
+            
+            if visBool
+                clf(seqFig);
+                colormap(seqFig,'jet');
+                
+                seqSubPlots(1) = subplot(2,2,1,'parent',seqFig);
+                imagesc(D_k,'parent',seqSubPlots(1));
+                set(seqSubPlots(1),'CLim',[0 numOfLevels],'YDir','normal');
+                title(seqSubPlots(1),['Beam # ' num2str(i) ': max(D_0) = ' num2str(max(D_0(:))) ' - ' num2str(numel(unique(D_0))) ' intensity levels']);
+                xlabel(seqSubPlots(1),'x - direction parallel to leaf motion ')
+                ylabel(seqSubPlots(1),'z - direction perpendicular to leaf motion ')
+                colorbar;
+                drawnow;
+            end
+            
+            D_k_nonZero = (D_k~=0);
+            [D_k_Z, D_k_X] = ind2sub([dimOfFluenceMxZ,dimOfFluenceMxX],find(D_k_nonZero));
+            D_k_MinZ = min(D_k_Z);
+            D_k_MaxZ = max(D_k_Z);
+            D_k_MinX = min(D_k_X);
+            D_k_MaxX = max(D_k_X);
+        
+            %Decompose the port, do rod pushing
+            [tops, bases] = matRad_siochiDecomposePort(D_k,dimOfFluenceMxZ,dimOfFluenceMxX,D_k_MinZ,D_k_MaxZ,D_k_MinX,D_k_MaxX);
+
+            %Form segments with and without visualization
+            if visBool
+                [shapes,shapesWeight,k,D_k]=matRad_siochiConvertToSegments(shapes,shapesWeight,k,tops,bases,visBool,i,D_k,numOfLevels,seqFig,seqSubPlots);
+            else
+                [shapes,shapesWeight,k]=matRad_siochiConvertToSegments(shapes,shapesWeight,k,tops,bases);
+            end
+
+            %are there enough apertures?
+            if numToKeep ~= 0 && k < numToKeep
+                % no, therefore increment numOfLevels
+                numOfLevels = numOfLevels+1;
+            else
+                % yes, therefore exit out of the while loop
+                notFinished = 0;
+            end
         end
-        
-        D_k_nonZero = (D_k~=0);
-        [D_k_Z, D_k_X] = ind2sub([dimOfFluenceMxZ,dimOfFluenceMxX],find(D_k_nonZero));
-        D_k_MinZ = min(D_k_Z);
-        D_k_MaxZ = max(D_k_Z);
-        D_k_MinX = min(D_k_X);
-        D_k_MaxX = max(D_k_X);
-        
-        %Decompose the port, do rod pushing
-        [tops, bases] = matRad_siochiDecomposePort(D_k,dimOfFluenceMxZ,dimOfFluenceMxX,D_k_MinZ,D_k_MaxZ,D_k_MinX,D_k_MaxX);
-        
-        %Form segments with and without visualization
-        if visBool
-            [shapes,shapesWeight,k,D_k]=matRad_siochiConvertToSegments(shapes,shapesWeight,k,tops,bases,visBool,i,D_k,numOfLevels,seqFig,seqSubPlots);
-        else
-            [shapes,shapesWeight,k]=matRad_siochiConvertToSegments(shapes,shapesWeight,k,tops,bases);
-        end
-        
-        %are there enough apertures?
-        if numToKeep ~= 0 && k < numToKeep
-            % no, therefore increment numOfLevels
-            numOfLevels = numOfLevels+1;
-        else
-            % yes, therefore exit out of the while loop
-            notFinished = 0;
-        end
+
+        sequencing.beam(i).numOfShapes  = k;
+        sequencing.beam(i).shapes       = shapes(:,:,1:k);
+        sequencing.beam(i).shapesWeight = shapesWeight(1:k)/numOfLevels*calFac;
+        sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
+        sequencing.beam(i).fluence      = D_0;
+    else
+        sequencing.beam(i).numOfShapes  = 1;
+        sequencing.beam(i).shapes       = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
+        sequencing.beam(i).shapesWeight = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
+        sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
+        sequencing.beam(i).fluence      = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
     end
-    
-    sequencing.beam(i).numOfShapes  = k;
-    sequencing.beam(i).shapes       = shapes(:,:,1:k);
-    sequencing.beam(i).shapesWeight = shapesWeight(1:k)/numOfLevels*calFac;
-    sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
-    sequencing.beam(i).fluence      = D_0;
-    sequencing.beam(i).sum          = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
 
     if numToKeep ~= 0
         sequencing.beam(i) = matRad_discardApertures(sequencing.beam(i),numToKeep);
-    end
+    end   
     
-    if ~pln.propOpt.runVMAT
-        
-        for shape = 1:sequencing.beam(i).numOfShapes
-            sequencing.beam(i).sum = sequencing.beam(i).sum+sequencing.beam(i).shapes(:,:,shape)*sequencing.beam(i).shapesWeight(shape);
+    sequencing.beam(i).sum = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
+    for shape = 1:sequencing.beam(i).numOfShapes
+        sequencing.beam(i).sum = sequencing.beam(i).sum+sequencing.beam(i).shapes(:,:,shape)*sequencing.beam(i).shapesWeight(shape);
+    end
+
+    if ~dynamic
+        if numOfRaysPerBeam > 1
+            sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = sequencing.beam(i).sum(indInFluenceMx);
+        else
+            sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = wOfCurrBeams(1);
         end
-        sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = sequencing.beam(i).sum(indInFluenceMx);
     end
-    
+
     offset = offset + numOfRaysPerBeam;
 end
 
-if pln.propOpt.runVMAT
+sequencing.dynamic = dynamic;
+sequencing.continuousAperture = continuousAperture;
+sequencing.preconditioner = preconditioner;
+
+machineName = unique({stf.machine});
+radiationMode = unique({stf.radiationMode});
+
+if numel(machineName) > 1 || numel(radiationMode) > 1
+    matRad_cfg.dispError('Mixed Sequencing currently not supported for Siochi Leaf Sequencer');
+end
+
+machine = load([radiationMode{1} '_' machineName{1}]);
+if ~isfield(machine, 'constraints')
+    sequencing.constraints = struct( ...
+        'gantryRotationSpeed', [0 6], ... %degree/s
+        'leafSpeed', [0 60], ... %mm/s
+        'monitorUnitRate', [1.25 10]); %MU/s
+else
+    sequencing.constraints = machine.constraints;
+end
+
+if ~isfield(dij,'weightToMU')
+    dij.weightToMU = 100;
+    matRad_cfg.dispWarning('No weight to MU scaling factor defined in dij. Assuming %.1f.',dij.weightToMU);
+end
+
+if dynamic
     
     % do arc sequencing
-    sequencing.beam = matRad_arcSequencing(sequencing.beam,stf,pln,dij.weightToMU);
+    sequencing.beam = matRad_arcSequencing(sequencing,stf,dij.weightToMU);
     
     % carry variables
     sequencing.weightToMU       = dij.weightToMU;
     
     % get apertureInfo
-    resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf,pln);
+    resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
     
     %matRad_daoVec2ApertureInfo will interpolate subchildren gantry
     %segments
@@ -271,17 +312,13 @@ if pln.propOpt.runVMAT
 else
     sequencing.weightToMU = dij.weightToMU;
     
-    resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf,pln);
+    resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
     
     resultGUI.apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
 end
 
-if ~isfield(pln.propOpt,'preconditioner')
-    pln.propOpt.preconditioner = false;
-end
-
-if pln.propOpt.preconditioner
-    % calculation preconditioning factors
+if preconditioner
+    % calculate preconditioning factors for the apertures
     resultGUI.apertureInfo = matRad_preconditionFactors(resultGUI.apertureInfo);
 end
 
@@ -290,6 +327,7 @@ resultGUI.wSequenced = sequencing.w;
 
 resultGUI.sequencing   = sequencing;
 
+%TODO: could we use calcCubes here? What about scenarios?
 doseSequencedDoseGrid = reshape(dij.physicalDose{1} * sequencing.w,dij.doseGrid.dimensions);
 % interpolate to ct grid for visualiation & analysis
 resultGUI.physicalDose = matRad_interp3(dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z, ...
@@ -464,11 +502,9 @@ for level = 1:levels
         imagesc(D_k,'parent',seqSubPlots(2));
         set(seqSubPlots(2),'CLim',[0 numOfLevels],'YDir','normal');
         title(seqSubPlots(2),['k = ' num2str(k)]);
-        colorbar
-        drawnow
-        
-        axis tight
-        drawnow
+        colorbar; 
+        axis tight;
+        drawnow;
     end
 end
 

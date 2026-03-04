@@ -148,6 +148,9 @@ if enable(1) == 1
     % Calculate absolute difference cube and dose windows for plots
     differenceCube  = cube1-cube2;
     doseDiffWindow  = [-max(abs(differenceCube(:))) max(abs(differenceCube(:)))];
+    if doseDiffWindow(1)==0 && doseDiffWindow(2)==0
+        doseDiffWindow(2) = 1;
+    end
     %doseGammaWindow = [0 max(gammaCube(:))];
     doseGammaWindow = [0 2]; %We choose 2 as maximum value since the gamma colormap has a sharp cut in the middle
     

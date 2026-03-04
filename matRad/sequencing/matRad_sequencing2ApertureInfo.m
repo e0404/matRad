@@ -1,4 +1,4 @@
-function apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf,pln)
+function apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf)
 % matRad function to generate a shape info struct based on the result of
 % multileaf collimator sequencing
 %
@@ -27,7 +27,6 @@ function apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf,pln)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
 % MLC parameters:
 bixelWidth = stf(1).bixelWidth; % [mm]
 numOfMLCLeafPairs = 80;
@@ -45,15 +44,19 @@ vectorOffset = totalNumOfShapes + 1; % used for bookkeeping in the vector for op
 bixOffset = 1; %used for gradient calculations
 interpGetsTransition = false; % boolean to determine if an interpolated beam is responsible for a leaf speed constraint check
 
-if ~isfield(pln, 'propOpt') || ~isfield(pln.propOpt,'runVMAT')
-    pln.propOpt.runVMAT = false;
+if ~isfield(sequencing, 'dynamic')
+    sequencing.dynamic = false;
 end
 
-if ~isfield(pln, 'propStf') || ~isfield(pln.propStf,'continuousAperture')
-    pln.propStf.continuousAperture = false;
+if ~isfield(sequencing,'continuousAperture')
+    sequencing.continuousAperture = false;
 end
 
-if pln.propOpt.runVMAT
+if ~isfield(sequencing,'preconditioner')
+    sequencing.preconditioner = false;
+end
+
+if sequencing.dynamic
     totalNumOfOptBixels = 0;
     totalNumOfLeafPairs = 0;    
     apertureInfo.propVMAT.jacobT = zeros(sum([sequencing.beam.numOfShapes]),numel(sequencing.beam));
@@ -155,13 +158,13 @@ for i=1:size(stf,2)
             apertureInfo.beam(i).shape(m).shapeMap = shapeMap;
         end
         
-        if pln.propOpt.runVMAT
+        if sequencing.dynamic
             apertureInfo.beam(i).shape(m).MURate = sequencing.beam(i).MURate;
         end
         
         apertureInfo.beam(i).shape(m).jacobiScale = 1;
         
-        if pln.propOpt.runVMAT && pln.propStf.continuousAperture
+        if sequencing.dynamic && sequencing.continuousAperture
             apertureInfo.beam(i).shape(m).vectorOffset = [vectorOffset vectorOffset+dimZ];
             
             % update index for bookkeeping
@@ -210,7 +213,7 @@ for i=1:size(stf,2)
     apertureInfo.beam(i).MLCWindow = MLCWindow;
     apertureInfo.beam(i).gantryAngle = stf(i).gantryAngle;
     
-    if pln.propOpt.runVMAT
+    if sequencing.dynamic
         
         apertureInfo.beam(i).bixOffset = bixOffset;
         bixOffset = bixOffset+apertureInfo.beam(i).numOfActiveLeafPairs;
@@ -248,7 +251,7 @@ for i=1:size(stf,2)
                 apertureInfo.propVMAT.beam(i).FMOAngleBordersDiff = stf(i).propVMAT.FMOAngleBordersDiff;
             end
             
-            if pln.propStf.continuousAperture
+            if sequencing.continuousAperture
                 apertureInfo.propVMAT.beam(i).timeFacInd = stf(i).propVMAT.timeFacInd;
                 apertureInfo.propVMAT.beam(i).doseAngleDAO = stf(i).propVMAT.doseAngleDAO;
                 
@@ -265,7 +268,7 @@ for i=1:size(stf,2)
             apertureInfo.propVMAT.beam(i).lastDAOIndex = stf(i).propVMAT.lastDAOIndex;
             apertureInfo.propVMAT.beam(i).nextDAOIndex = stf(i).propVMAT.nextDAOIndex;
             
-            if pln.propStf.continuousAperture
+            if sequencing.continuousAperture
                 apertureInfo.propVMAT.beam(i).fracFromLastDAO_I = stf(i).propVMAT.fracFromLastDAO_I;
                 apertureInfo.propVMAT.beam(i).fracFromLastDAO_F = stf(i).propVMAT.fracFromLastDAO_F;
                 apertureInfo.propVMAT.beam(i).fracFromNextDAO_I = stf(i).propVMAT.fracFromNextDAO_I;
@@ -283,14 +286,10 @@ for i=1:size(stf,2)
     end
 end
 
-if ~isfield(pln.propOpt,'preconditioner')
-    pln.propOpt.preconditioner = false;
-end
-
 % save global data
-apertureInfo.continuousAperture = pln.propStf.continuousAperture;
-apertureInfo.runVMAT            = pln.propOpt.runVMAT;
-apertureInfo.preconditioner     = pln.propOpt.preconditioner;
+apertureInfo.continuousAperture = sequencing.continuousAperture;
+apertureInfo.runVMAT            = sequencing.dynamic;
+apertureInfo.preconditioner     = sequencing.preconditioner;
 apertureInfo.bixelWidth         = bixelWidth;
 apertureInfo.numOfMLCLeafPairs  = numOfMLCLeafPairs;
 apertureInfo.totalNumOfBixels   = totalNumOfBixels;
@@ -300,16 +299,9 @@ if isfield(sequencing,'weightToMU')
     apertureInfo.weightToMU = sequencing.weightToMU;
 end
 
-if pln.propOpt.runVMAT
-    
-    %tempStruct_beam = apertureInfo.propVMAT.beam;
-    %tempStruct_jacobT = apertureInfo.propVMAT.jacobT;
-    %apertureInfo.propVMAT.beam = tempStruct_beam;
-    %apertureInfo.propVMAT.jacobT = tempStruct_jacobT;
-    
-    % put constraints in apertureInfo.propVMAT
-    machine = matRad_loadMachine(pln);
-    apertureInfo.propVMAT.constraints = machine.constraints;
+if sequencing.dynamic    
+    % put constraints in apertureInfo.propVMAT    
+    apertureInfo.propVMAT.constraints = sequencing.constraints;
     
     apertureInfo.totalNumOfOptBixels = totalNumOfOptBixels;
     apertureInfo.doseTotalNumOfLeafPairs = sum([apertureInfo.beam(:).numOfActiveLeafPairs]);

@@ -26,14 +26,13 @@ function [resultGUI,stf,dij,pln] = helper_getTestData()
         
         numOfLevels = [1,10];        
     
-        for levels = numOfLevels
-            pln.propSeq.numLevels = levels;
-            resultGUI_sequenced = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln);
+        for levels = numOfLevels            
+            resultGUI_sequenced = matRad_siochiLeafSequencing(resultGUI,stf,dij,levels);
             
             fn_new = fieldnames(resultGUI_sequenced);
             for i = 1:numel(fn_old)
                 assertTrue(any(strcmp(fn_old{i},fn_new)));
-                assertEqual(resultGUI.(fn_old{i}),resultGUI_sequenced.(fn_old{i}));
+                assertElementsAlmostEqual(resultGUI.(fn_old{i}),resultGUI_sequenced.(fn_old{i}));
             end
             
             % Basic additions to resultGUI

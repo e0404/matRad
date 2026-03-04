@@ -1,4 +1,4 @@
-function beam = matRad_arcSequencing(beam,stf,pln,weightToMU)
+function beam = matRad_arcSequencing(sequencing,stf,weightToMU)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % The sequencing algorithm generates an a priori unkown number of apertures.
 % We only want to keep a certain number of them (numToKeep).  These will be
@@ -6,12 +6,12 @@ function beam = matRad_arcSequencing(beam,stf,pln,weightToMU)
 %
 %
 % call
-%   beam =
-%   matRad_arcSequencing(beam)
+%   beam = matRad_arcSequencing(sequencing, stf, weightToMU)
 %
 % input
-%   beam:               beam struct with shapes and weights only at the
-%                       initGantyAngles
+%   sequencing:         shape sequencing structure
+%   stf:                matRad steering struct (beam geometry etc.)
+%   weightToMU:         conversion factor from weight to MU
 %
 %
 % output
@@ -34,14 +34,13 @@ function beam = matRad_arcSequencing(beam,stf,pln,weightToMU)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-machine = matRad_loadMachine(pln);
-
 numOfBeams = numel(stf);
+
+beam = sequencing.beam;
 
 leafDir = 1;
 
-for i = 1:numOfBeams
-    
+for i = 1:numOfBeams   
     if stf(i).propVMAT.FMOBeam
         
         %Spread apertures to each child angle
@@ -89,8 +88,7 @@ for i = 1:numOfBeams
 end
 
 for i = 1:numOfBeams
-    % now go through and calculate gantry rotation speed, MU rate, etc.
-    
+    % now go through and calculate gantry rotation speed, MU rate, etc.    
     if stf(i).propVMAT.FMOBeam
         beam(i).numOfShapes = beam(i).tempNumOfShapes;
         beam(i).shapes = beam(i).tempShapes;
@@ -108,7 +106,7 @@ for i = 1:numOfBeams
     end
     
     if stf(i).propVMAT.DAOBeam
-        beam(i).gantryRot = machine.constraints.gantryRotationSpeed(2); %gantry rotation rate until next opt angle
+        beam(i).gantryRot = sequencing.constraints.gantryRotationSpeed(2); %gantry rotation rate until next opt angle
         beam(i).MURate = weightToMU.*beam(i).shapesWeight.*beam(i).gantryRot./stf(i).propVMAT.DAOAngleBordersDiff; %dose rate until next opt angle
         %Rescale weight to represent only this control point; weight will be shared
         %with the interpolared control points in matRad_daoVec2ApertureInfo
