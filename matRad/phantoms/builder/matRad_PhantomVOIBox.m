@@ -18,56 +18,77 @@ classdef matRad_PhantomVOIBox < matRad_PhantomVOIVolume
     % LICENSE file.
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    properties %additional property of cubic objects
-        boxDimensions;
+    properties % additional property of cubic objects
+        boxDimensions
+        boxDimensionsType  % either voxel or mm
     end
 
     methods (Access = public)
 
-        function obj = matRad_PhantomVOIBox(name,type,boxDimensions,varargin)
+        function obj = matRad_PhantomVOIBox(name, type, boxDimensions, varargin)
             p = inputParser;
-            addParameter(p,'objectives',{});
-            addParameter(p,'offset',[0,0,0]);
-            addParameter(p,'HU',0);
-            parse(p,varargin{:});
+            addParameter(p, 'objectives', {});
+            addParameter(p, 'offset', [0, 0, 0]);
+            addParameter(p, 'HU', 0);
+            addParameter(p, 'boxDimensionsType', 'voxel', @(x) numel(validatestring(x, {'voxel', 'mm'})));
+            parse(p, varargin{:});
 
-            obj@matRad_PhantomVOIVolume(name,type,p); %call superclass constructor
+            obj@matRad_PhantomVOIVolume(name, type, p); % call superclass constructor
             obj.boxDimensions = boxDimensions;
+            obj.boxDimensionsType = p.Results.boxDimensionsType;
         end
 
-        function [cst] = initializeParameters(obj,ct,cst)
-            %add this objective to the phantomBuilders cst
+        function [cst] = initializeParameters(obj, ct, cst)
+            % add this objective to the phantomBuilders cst
+            ct = matRad_getWorldAxes(ct);
+            cst = initializeParameters@matRad_PhantomVOIVolume(obj, cst);
 
-            cst = initializeParameters@matRad_PhantomVOIVolume(obj,cst);
-            center = round(ct.cubeDim/2);
-            VOIHelper = zeros(ct.cubeDim);
+            dimPerm = [0 1 0; 1 0 0; 0 0 1];
+
+            % center = round(ct.cubeDim/2);
+            % from here we work with continuous voxel indices
+            center = ct.cubeDim / 2;
             offsets = obj.offset;
             dims = obj.boxDimensions;
+            centerPoint = center * dimPerm + offsets;
 
-            xMinMax = center(2)+offsets(1) + round(dims(1)/2)*[-1,1];
-            yMinMax = center(1)+offsets(2) + round(dims(2)/2)*[-1,1];
-            zMinMax = center(3)+offsets(3) + round(dims(3)/2)*[-1,1];
-            
-            %Correct if out of bounds
-            xMinMax(xMinMax < 1) = 1;
-            yMinMax(yMinMax < 1) = 1;
-            zMinMax(zMinMax < 1) = 1;
+            switch obj.boxDimensionsType
+                case 'mm' % obtain points and limits in world coordinates
+                    centerPoint = matRad_cubeIndex2worldCoords(centerPoint, ct);
+                    halfRes =  [ct.resolution.x ct.resolution.y ct.resolution.z] / 2;
+                    ctMin = [min(ct.x) min(ct.y) min(ct.z)] - halfRes;
+                    ctMax = [max(ct.x) max(ct.y) max(ct.z)] + halfRes;
 
-            xMinMax(xMinMax > ct.cubeDim(2)) = ct.cubeDim(2);
-            yMinMax(yMinMax > ct.cubeDim(1)) = ct.cubeDim(1);
-            zMinMax(zMinMax > ct.cubeDim(3)) = ct.cubeDim(3);
-            
-            for x = xMinMax(1):1:xMinMax(2) 
-                for y = yMinMax(1):1:yMinMax(2)
-                   for z = zMinMax(1):1:zMinMax(2)
-                        VOIHelper(y,x,z) = 1;
-                   end
-                end
+                    [x, y, z] = ndgrid(ct.x, ct.y, ct.z);
+                case 'voxel' % obtain limits in voxel indices
+                    ctMin = [1 1 1];
+                    ctMax = ct.cubeDim * dimPerm;
+                    [y, x, z] = ndgrid(1:ct.cubeDim(1), 1:ct.cubeDim(2), 1:ct.cubeDim(3));
             end
-            
-            cst{end,4}{1} = find(VOIHelper);
-            
+            coords = [x(:) y(:) z(:)];
 
+            maxPoints = min(centerPoint + dims / 2, ctMax);
+            minPoints = max(centerPoint - dims / 2, ctMin);
+
+            voiHelper = all(coords >= minPoints & coords <= maxPoints, 2);
+            voiHelper = reshape(voiHelper, ct.cubeDim);
+
+            cst{end, 4}{1} = find(voiHelper);
         end
+
     end
-end  
+
+    % Set Methods
+    methods
+
+        function set.boxDimensionsType(obj, dimType)
+            obj.boxDimensionsType = validatestring(dimType, {'voxel', 'mm'});
+        end
+
+        function set.boxDimensions(obj, dims)
+            validateattributes(dims, 'numeric', {'vector', 'numel', 3, 'positive'});
+            obj.boxDimensions = dims;
+        end
+
+    end
+end

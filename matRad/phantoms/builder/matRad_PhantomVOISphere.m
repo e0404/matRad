@@ -19,42 +19,49 @@ classdef  matRad_PhantomVOISphere < matRad_PhantomVOIVolume
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties
-        radius;
+        radius
+        radiusType  % either voxel or mm
     end
 
     methods (Access = public)
-        function obj = matRad_PhantomVOISphere(name,type,radius,varargin)
+
+        function obj = matRad_PhantomVOISphere(name, type, radius, varargin)
             p = inputParser;
-            addParameter(p,'objectives',{});
-            addParameter(p,'offset',[0,0,0]);
-            addParameter(p,'HU',0);
-            parse(p,varargin{:});
+            addParameter(p, 'objectives', {});
+            addParameter(p, 'offset', [0, 0, 0]);
+            addParameter(p, 'HU', 0);
+            addParameter(p, 'radiusType', 'voxel', @(x) numel(validatestring(x, {'voxel', 'mm'}))); % numel trick to guarantee logical cast
+            parse(p, varargin{:});
 
-            obj@matRad_PhantomVOIVolume(name,type,p); %call superclass constructor
+            obj@matRad_PhantomVOIVolume(name, type, p); % call superclass constructor
             obj.radius = radius;
+            obj.radiusType = p.Results.radiusType;
         end
 
-        function [cst] = initializeParameters(obj,ct,cst)
-            %add this VOI to the phantomBuilders cst
-            
-            cst = initializeParameters@matRad_PhantomVOIVolume(obj,cst);
-            center = round([ct.cubeDim/2]);
-            VOIHelper = zeros(ct.cubeDim);
-            offsets = obj.offset;
-
-            for x = 1:ct.cubeDim(2)
-                for y = 1:ct.cubeDim(1)
-                   for z = 1:ct.cubeDim(3)
-                      currPost = [y x z]  + offsets - center;
-                      if  (sqrt(sum(currPost.^2)) < obj.radius)
-                            VOIHelper(y,x,z) = 1;
-                      end
-                   end
-                end
+        function [cst] = initializeParameters(obj, ct, cst)
+            % add this VOI to the phantomBuilders cst
+            ct = matRad_getWorldAxes(ct);
+            cst = initializeParameters@matRad_PhantomVOIVolume(obj, cst);
+            center = ct.cubeDim / 2;
+            offset = obj.offset;
+            centerPoint = center - offset;
+            switch obj.radiusType
+                case 'voxel'
+                    acceptFunc = @(currVoxel) vecnorm(currVoxel - centerPoint, 2, 2) < obj.radius;
+                case 'mm'
+                    centerCoord = matRad_cubeIndex2worldCoords(center, ct);
+                    offsetCoord = offset .* [ct.resolution.x ct.resolution.y ct.resolution.z];
+                    centerPointCoord = centerCoord - offsetCoord;
+                    acceptFunc = @(currVoxel) vecnorm(matRad_cubeIndex2worldCoords(currVoxel, ct) - centerPointCoord, 2, 2) < obj.radius;
             end
-            
-            cst{end,4}{1} = find(VOIHelper);
-            
+
+            [y, x, z] = ndgrid(1:ct.cubeDim(1), 1:ct.cubeDim(2), 1:ct.cubeDim(3));
+            voiHelper = acceptFunc([y(:) x(:) z(:)]);
+            voiHelper = reshape(voiHelper, ct.cubeDim);
+
+            cst{end, 4}{1} = find(voiHelper);
+
         end
+
     end
 end
