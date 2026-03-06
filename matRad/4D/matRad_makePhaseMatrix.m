@@ -34,43 +34,10 @@ function timeSequence = matRad_makePhaseMatrix(timeSequence, numOfPhases, motion
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% time of each phase [/mu s]
-phaseTime = motionPeriod * 10^6 / numOfPhases;
+matRad_cfg = MatRad_Config.instance();
+matRad_cfg.dispWarning('This function is Outdated use new SequencingClass');
 
-for i = 1:length(timeSequence)
-
-    realTime = phaseTime;
-    timeSequence(i).phaseMatrix = zeros(length(timeSequence(i).time), numOfPhases);
-
-    iPhase = 1;
-    iTime = 1;
-
-    while iTime <= length(timeSequence(i).time)
-        if timeSequence(i).time(iTime) < realTime
-
-            while iTime <= length(timeSequence(i).time) && timeSequence(i).time(iTime) < realTime
-                timeSequence(i).phaseMatrix(iTime, iPhase) = 1;
-                iTime = iTime + 1;
-            end
-
-        else
-
-            iPhase = iPhase + 1;
-
-            % back to 1 after going over all phases
-            if iPhase > numOfPhases
-                iPhase = 1;
-            end
-
-            realTime = realTime + phaseTime;
-
-        end
-    end
-
-    % permuatation of phaseMatrix from SS order to STF order
-    timeSequence(i).phaseMatrix = timeSequence(i).phaseMatrix(timeSequence(i).orderToSTF, :);
-    [timeSequence(i).phaseNum, ~] = find(timeSequence(i).phaseMatrix');
-    % inserting the fluence in phaseMatrix
-    timeSequence(i).phaseMatrix = timeSequence(i).phaseMatrix .* timeSequence(i).w;
+sequencer = matRad_ParticleSequencer();
+timeSequence = sequencer.makePhaseMatrix(timeSequence, numOfPhases, motionPeriod);
 
 end
