@@ -1,4 +1,4 @@
-classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_SequencingPhotonsAbstract
+classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_PhotonSequencerAbstract
 
     % UNTITLED Summary of this class goes here
     %   Detailed explanation goes here
@@ -214,7 +214,7 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_SequencingPhotonsAbstract
             end
 
             % Check superclass availability
-            [available, msg] = matRad_SequencingPhotonsAbstract.isAvailable(pln, machine);
+            [available, msg] = matRad_PhotonSequencerAbstract.isAvailable(pln, machine);
 
             if ~available
                 return

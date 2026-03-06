@@ -1,4 +1,4 @@
-classdef  (Abstract) matRad_SequencingPhotonsAbstract < matRad_SequencingBase
+classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
 
     % UNTITLED Summary of this class goes here
     %   Detailed explanation goes her
@@ -317,7 +317,7 @@ classdef  (Abstract) matRad_SequencingPhotonsAbstract < matRad_SequencingBase
             % The collimator limits are infered here from the apertureInfo. This could
             % be handled differently by explicitly storing collimator info in the base
             % data?
-            symmetricMLClimits = vertcat(apertureInfo.beam.MLCWindow);
+            symmetricMLClimits = vertcat(sequence.apertureInfo.beam.MLCWindow);
             symmetricMLClimits = max(abs(symmetricMLClimits));
             fieldWidth = 2 * max(symmetricMLClimits);
 

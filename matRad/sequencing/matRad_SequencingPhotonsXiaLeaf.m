@@ -1,4 +1,4 @@
-classdef  matRad_SequencingPhotonsXiaLeaf < matRad_SequencingPhotonsAbstract
+classdef  matRad_SequencingPhotonsXiaLeaf < matRad_PhotonSequencerAbstract
 
     % multileaf collimator leaf sequence algorithm
     % for intensity modulated beams with multiple static segments according to
@@ -149,7 +149,7 @@ classdef  matRad_SequencingPhotonsXiaLeaf < matRad_SequencingPhotonsAbstract
             end
 
             % Check superclass availability
-            [available, msg] = matRad_SequencingPhotonsAbstract.isAvailable(pln, machine);
+            [available, msg] = matRad_PhotonSequencerAbstract.isAvailable(pln, machine);
 
             if ~available
                 return
