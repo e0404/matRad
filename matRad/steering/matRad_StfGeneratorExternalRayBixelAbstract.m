@@ -20,7 +20,7 @@ classdef (Abstract) matRad_StfGeneratorExternalRayBixelAbstract < matRad_StfGene
         couchAngles  = 0;
         bixelWidth   = 0;
         isoCenter
-        fillEmptyBixels = true;
+        fillEmptyBixels;
         centered
     end
 
