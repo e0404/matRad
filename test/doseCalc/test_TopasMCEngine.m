@@ -43,13 +43,15 @@ for i = 1:numel(radModes)
     w = ones(1,sum([stf(:).totalNumOfBixels]));
     
     if strcmp(radModes{i},'photons')
-        pln.propOpt.runSequencing =  1;
         pln.propOpt.runDAO = 1;
         dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
         resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
         resultGUI.wUnsequenced = ones(dij.totalNumOfBixels,1);
-        resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,5);
-        [pln,stf] = matRad_aperture2collimation(pln,stf,resultGUI.sequencing,resultGUI.apertureInfo);
+        pln.propSeq.sequencer = 'siochi';
+        pln.propSeq.sequencingLevel = 5;
+        sequencer = matRad_SequencerBase.getSequencerFromPln(pln);
+        resultGUI = matRad_sequencing(resultGUI, stf, pln);
+        [pln,stf] = sequencer.aperture2collimation(pln, stf, resultGUI.sequencing);
         w = resultGUI.w;
         pln.propDoseCalc.beamProfile =  'phasespace';
     end
@@ -139,13 +141,14 @@ for i = 1:numel(radModes)
     w = ones(1,sum([stf(:).totalNumOfBixels]));
     
     if strcmp(radModes{i},'photons')
-        pln.propOpt.runSequencing =  1;
-        pln.propOpt.runDAO = 1;
         dij = matRad_calcDoseInfluence(ct,cst,stf,pln);
         resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels,1),dij);
         resultGUI.wUnsequenced = ones(dij.totalNumOfBixels,1);
-        resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,5);
-        [pln,stf] = matRad_aperture2collimation(pln,stf,resultGUI.sequencing,resultGUI.apertureInfo);
+        pln.propSeq.sequencer = 'siochi';
+        pln.propSeq.sequencingLevel = 5;
+        sequencer = matRad_SequencerBase.getSequencerFromPln(pln);
+        resultGUI = matRad_sequencing(resultGUI, stf, pln);
+        [pln,stf] = sequencer.aperture2collimation(pln, stf, resultGUI.sequencing);
         pln.propDoseCalc.beamProfile =  'phasespace';
         w = resultGUI.w;
     end
@@ -187,17 +190,18 @@ end
 
 % physical Dose
 for i = 1:numel(radModes)
-    if ~strcmp(radModes{i},'photons')
+    if ~ismember(radModes{i}, {'photons', 'VHEE'})
         load([radModes{i} '_testData.mat']);
         [ct,cst] = matRad_addMovement(ct, cst,5, numOfPhases,[0 3 0],'dvfType','pull');
         pln.bioModel = matRad_bioModel(radModes{i},'none');
         resultGUI.w = ones(1,sum([stf(:).totalNumOfBixels]))';
-        timeSequence = matRad_makeBixelTimeSeq(stf, resultGUI);
-        timeSequence = matRad_makePhaseMatrix(timeSequence, ct.numOfCtScen, ct.motionPeriod, 'linear');
+        resultGUI = matRad_sequencing(resultGUI, stf, pln);
+        sequencer = matRad_ParticleSequencer();
+        resultGUI.sequencing = sequencer.makePhaseMatrix(resultGUI.sequencing, ct.numOfCtScen, ct.motionPeriod);
         pln.propDoseCalc.engine = 'TOPAS';
         pln.propDoseCalc.externalCalculation = 'write';
         pln.propDoseCalc.calc4DInterplay = true;
-        pln.propDoseCalc.calcTimeSequence = timeSequence;
+        pln.propDoseCalc.calcTimeSequence = resultGUI.sequencing;
         pln.propDoseCalc.numHistoriesDirect = 1e6;
         resultGUI = matRad_calcDoseForward(ct,cst,stf,pln, resultGUI.w);
 
@@ -233,12 +237,13 @@ for i = 1:numel(radModes)
     [ct,cst] = matRad_addMovement(ct, cst,5, numOfPhases,[0 3 0],'dvfType','pull');
     pln.bioModel = matRad_bioModel(radModes{i},'none');
     resultGUI.w = ones(1,sum([stf(:).totalNumOfBixels]))';
-    timeSequence = matRad_makeBixelTimeSeq(stf, resultGUI);
-    timeSequence = matRad_makePhaseMatrix(timeSequence, ct.numOfCtScen, ct.motionPeriod, 'linear');
+    resultGUI = matRad_sequencing(resultGUI, stf, pln);
+    sequencer = matRad_ParticleSequencer();
+    resultGUI.sequencing = sequencer.makePhaseMatrix(resultGUI.sequencing, ct.numOfCtScen, ct.motionPeriod);
     pln.propDoseCalc.engine = 'TOPAS';
     pln.propDoseCalc.externalCalculation = 'write';
     pln.propDoseCalc.calc4DInterplay = true;
-    pln.propDoseCalc.calcTimeSequence = timeSequence;
+    pln.propDoseCalc.calcTimeSequence = resultGUI.sequencing;
     pln.propDoseCalc.numHistoriesDirect = 1e6;
     pln.propDoseCalc.scorer.RBE = true;
     pln.propDoseCalc.scorer.RBE_model = RBEmodel;

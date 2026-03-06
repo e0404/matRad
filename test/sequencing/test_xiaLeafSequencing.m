@@ -12,21 +12,23 @@ test_functions=localfunctions();
 % Test Case, and add them to the test-runner
 initTestSuite;
 
-function [resultGUI,stf,dij] = helper_getTestData()
+function [resultGUI,stf,dij,pln] = helper_getTestData()
     p = load('photons_testData.mat');
+    pln = p.pln;
+    pln.propSeq.sequencer = 'xia';
     resultGUI = p.resultGUI;
     stf = p.stf;
     dij = p.dij;
 
 
 function test_run_sequencing_basic
-    [resultGUI,stf,dij] = helper_getTestData();
+    [resultGUI,stf,dij,pln] = helper_getTestData();
     fn_old = fieldnames(resultGUI);
     
     numOfLevels = [1,10];
 
     for levels = numOfLevels
-        resultGUI_sequenced = matRad_xiaLeafSequencing(resultGUI,stf,dij,levels);
+        resultGUI_sequenced = matRad_sequencing(resultGUI,stf,pln);
         
         fn_new = fieldnames(resultGUI_sequenced);
         for i = 1:numel(fn_old)
@@ -35,27 +37,25 @@ function test_run_sequencing_basic
         end
         
         % Basic additions to resultGUI
-        assertTrue(isvector(resultGUI_sequenced.wSequenced));
-        assertTrue(isstruct(resultGUI_sequenced.apertureInfo));
+        assertTrue(isstruct(resultGUI_sequenced.sequencing.apertureInfo));
         assertTrue(isstruct(resultGUI_sequenced.sequencing));
 
         %Sequencing Struct
         seq = resultGUI_sequenced.sequencing;
         assertTrue(isstruct(seq.beam));
         assertTrue(numel(seq.beam) == numel(stf));
-        for i = 1:numel(seq.beam)
+        for i = 1:size(seq.beam,2)
             assertTrue(isscalar(seq.beam(i).numOfShapes));
             assertTrue(isnumeric(seq.beam(i).shapes));
-            shapeSize = size(seq.beam(i).shapes);
-            assertEqual(shapeSize(3),seq.beam(i).numOfShapes);
+            assertEqual(size(seq.beam(i).shapes,3),seq.beam(i).numOfShapes);
             assertTrue(isvector(seq.beam(i).shapesWeight));
             assertTrue(isvector(seq.beam(i).bixelIx));
             assertTrue(ismatrix(seq.beam(i).fluence));
-            assertEqual(size(seq.beam(i).fluence),shapeSize([1 2]));
+             assertEqual(size(seq.beam(i).fluence),size(seq.beam(i).shapes,[1,2]));
         end
         
         %ApertureInfo Sturct
-        apInfo = resultGUI_sequenced.apertureInfo;
+        apInfo = resultGUI_sequenced.sequencing.apertureInfo;
         assertTrue(isscalar(apInfo.bixelWidth));
         assertTrue(isscalar(apInfo.numOfMLCLeafPairs));
         assertTrue(isscalar(apInfo.totalNumOfBixels));
