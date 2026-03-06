@@ -64,4 +64,17 @@ classdef  matRad_PhantomVOISphere < matRad_PhantomVOIVolume
         end
 
     end
+    % Set Methods
+    methods
+
+        function set.radiusType(obj, rType)
+            obj.radiusType = validatestring(rType, {'voxel', 'mm'});
+        end
+
+        function set.radius(obj, value)
+            validateattributes(value, {'numeric'}, {'scalar', 'positive'});
+            obj.radius = value;
+        end
+
+    end
 end

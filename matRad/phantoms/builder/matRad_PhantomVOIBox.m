@@ -86,7 +86,7 @@ classdef matRad_PhantomVOIBox < matRad_PhantomVOIVolume
         end
 
         function set.boxDimensions(obj, dims)
-            validateattributes(dims, 'numeric', {'vector', 'numel', 3, 'positive'});
+            validateattributes(dims, {'numeric'}, {'vector', 'numel', 3, 'positive'});
             obj.boxDimensions = dims;
         end
 
