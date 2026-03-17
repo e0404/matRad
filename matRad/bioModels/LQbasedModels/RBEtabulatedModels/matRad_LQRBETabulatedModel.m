@@ -224,7 +224,7 @@ classdef (Abstract) matRad_LQRBETabulatedModel < matRad_LQBasedModel
                 load(fullfile(searchPath{1}, [fileName, '.mat']), 'RBEtable');
             catch
                 try
-                    laod(fullfile(searchPath{2}, [fileName, '.mat']), 'RBEtable');
+                    load(fullfile(searchPath{2}, [fileName, '.mat']), 'RBEtable');
                 catch
                     matRad_cfg.dispError('Cannot find RBEtable: %s', fileName);
                 end
