@@ -23,7 +23,7 @@ function [ct] = helper_createTestCt(cubeDim, resolution, varargin)
 
 p = inputParser;
 
-p.addOptional('cubeDim', [10 12 8], @(x) validateattributes(x, {'numeric'}, {'vector', 'numel', 3, 'positive', 'integer'}));
+p.addOptional('cubeDim', [10 12 8], @(x) isnumeric(x) && isvector(x) && numel(x) == 3 && all(x > 0) && all(mod(x, 1) == 0));
 p.addOptional('resolution', [1 2 3], @(x) (isstruct(x) && all(isfield(x, {'x', 'y', 'z'}))) || ...
               (isnumeric(x) && (isscalar(x) || (isvector(x) && numel(x) == 3))));
 p.addParameter('createCoordinateArrays', false, @(x) islogical(x) && isscalar(x));
