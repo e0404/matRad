@@ -20,7 +20,6 @@ classdef  matRad_PhantomVOISphere < matRad_PhantomVOIVolume
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties
         radius
-        radiusType  % either voxel or mm
     end
 
     methods (Access = public)
@@ -30,33 +29,42 @@ classdef  matRad_PhantomVOISphere < matRad_PhantomVOIVolume
             addParameter(p, 'objectives', {});
             addParameter(p, 'offset', [0, 0, 0]);
             addParameter(p, 'HU', 0);
-            addParameter(p, 'radiusType', 'voxel', @(x) numel(validatestring(x, {'voxel', 'mm'}))); % numel trick to guarantee logical cast
+            addParameter(p, 'coordType', 'voxel', @(x) numel(validatestring(x, {'voxel', 'mm'}))); % numel trick to guarantee logical cast
             parse(p, varargin{:});
 
             obj@matRad_PhantomVOIVolume(name, type, p); % call superclass constructor
             obj.radius = radius;
-            obj.radiusType = p.Results.radiusType;
         end
 
         function [cst] = initializeParameters(obj, ct, cst)
             % add this VOI to the phantomBuilders cst
             ct = matRad_getWorldAxes(ct);
             cst = initializeParameters@matRad_PhantomVOIVolume(obj, cst);
-            center = ct.cubeDim / 2;
-            offset = obj.offset;
-            centerPoint = center - offset;
-            switch obj.radiusType
+
+            % Swaps [i j k] (x-first) <-> [j i k] (y-first / MATLAB array order)
+            dimPerm = [0 1 0; 1 0 0; 0 0 1];
+
+            % center as continuuos [j i k]
+            centerPoint = (ct.cubeDim + 1) / 2;
+
+            switch obj.coordType
                 case 'voxel'
-                    acceptFunc = @(currVoxel) vecnorm(currVoxel - centerPoint, 2, 2) < obj.radius;
+                    % Grid in [j i k]: y (rows) along dim1, x (cols) along dim2
+                    [y, x, z] = ndgrid(1:ct.cubeDim(1), 1:ct.cubeDim(2), 1:ct.cubeDim(3));
+
                 case 'mm'
-                    centerCoord = matRad_cubeIndex2worldCoords(center, ct);
-                    offsetCoord = offset .* [ct.resolution.x ct.resolution.y ct.resolution.z];
-                    centerPointCoord = centerCoord - offsetCoord;
-                    acceptFunc = @(currVoxel) vecnorm(matRad_cubeIndex2worldCoords(currVoxel, ct) - centerPointCoord, 2, 2) < obj.radius;
+                    % cubeIndex2worldCoords expects [j i k], outputs [x y z];
+                    % apply dimPerm to arrive at [y x z] = [j i k] in world mm
+                    centerPoint = matRad_cubeIndex2worldCoords(centerPoint, ct) * dimPerm;
+                    % ct.y has nRows elements (dim1), ct.x has nCols elements (dim2)
+                    [y, x, z] = ndgrid(ct.y, ct.x, ct.z);
             end
 
-            [y, x, z] = ndgrid(1:ct.cubeDim(1), 1:ct.cubeDim(2), 1:ct.cubeDim(3));
-            voiHelper = acceptFunc([y(:) x(:) z(:)]);
+            % offset is always in [i j k]; convert to [j i k] before adding
+            centerPoint = centerPoint + obj.offset * dimPerm;
+
+            % Both modes: grid and center are in [j i k] - no extra permutation needed
+            voiHelper = vecnorm([y(:) x(:) z(:)] - centerPoint, 2, 2) < obj.radius;
             voiHelper = reshape(voiHelper, ct.cubeDim);
 
             cst{end, 4}{1} = find(voiHelper);
@@ -64,12 +72,9 @@ classdef  matRad_PhantomVOISphere < matRad_PhantomVOIVolume
         end
 
     end
+
     % Set Methods
     methods
-
-        function set.radiusType(obj, rType)
-            obj.radiusType = validatestring(rType, {'voxel', 'mm'});
-        end
 
         function set.radius(obj, value)
             validateattributes(value, {'numeric'}, {'scalar', 'positive'});

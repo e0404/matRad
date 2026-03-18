@@ -20,7 +20,6 @@ classdef matRad_PhantomVOIBox < matRad_PhantomVOIVolume
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties % additional property of cubic objects
         boxDimensions
-        boxDimensionsType  % either voxel or mm
     end
 
     methods (Access = public)
@@ -30,12 +29,11 @@ classdef matRad_PhantomVOIBox < matRad_PhantomVOIVolume
             addParameter(p, 'objectives', {});
             addParameter(p, 'offset', [0, 0, 0]);
             addParameter(p, 'HU', 0);
-            addParameter(p, 'boxDimensionsType', 'voxel', @(x) numel(validatestring(x, {'voxel', 'mm'})));
+            addParameter(p, 'coordType', 'voxel', @(x) numel(validatestring(x, {'voxel', 'mm'})));
             parse(p, varargin{:});
 
             obj@matRad_PhantomVOIVolume(name, type, p); % call superclass constructor
             obj.boxDimensions = boxDimensions;
-            obj.boxDimensionsType = p.Results.boxDimensionsType;
         end
 
         function [cst] = initializeParameters(obj, ct, cst)
@@ -43,29 +41,34 @@ classdef matRad_PhantomVOIBox < matRad_PhantomVOIVolume
             ct = matRad_getWorldAxes(ct);
             cst = initializeParameters@matRad_PhantomVOIVolume(obj, cst);
 
+            % Swaps [i j k] (x-first) <-> [j i k] (y-first / MATLAB array order)
             dimPerm = [0 1 0; 1 0 0; 0 0 1];
 
-            % center = round(ct.cubeDim/2);
-            % from here we work with continuous voxel indices
-            center = ct.cubeDim / 2;
-            offsets = obj.offset;
-            dims = obj.boxDimensions;
-            centerPoint = center * dimPerm + offsets;
+            % Center in [j i k] (cubeDim is already in MATLAB array order)
+            centerPoint = (ct.cubeDim + 1) / 2;
 
-            switch obj.boxDimensionsType
-                case 'mm' % obtain points and limits in world coordinates
-                    centerPoint = matRad_cubeIndex2worldCoords(centerPoint, ct);
-                    halfRes =  [ct.resolution.x ct.resolution.y ct.resolution.z] / 2;
-                    ctMin = [min(ct.x) min(ct.y) min(ct.z)] - halfRes;
-                    ctMax = [max(ct.x) max(ct.y) max(ct.z)] + halfRes;
-
-                    [x, y, z] = ndgrid(ct.x, ct.y, ct.z);
-                case 'voxel' % obtain limits in voxel indices
+            switch obj.coordType
+                case 'voxel'
                     ctMin = [1 1 1];
-                    ctMax = ct.cubeDim * dimPerm;
+                    ctMax = ct.cubeDim;  % [j i k]
                     [y, x, z] = ndgrid(1:ct.cubeDim(1), 1:ct.cubeDim(2), 1:ct.cubeDim(3));
+
+                case 'mm'
+                    % cubeIndex2worldCoords expects [i j k], outputs [x y z];
+                    % * dimPerm converts to [y x z] = [j i k] in world mm
+                    centerPoint = matRad_cubeIndex2worldCoords(centerPoint, ct) * dimPerm;
+                    halfRes = [ct.resolution.y ct.resolution.x ct.resolution.z] / 2;
+                    ctMin = [min(ct.y) min(ct.x) min(ct.z)] - halfRes;
+                    ctMax = [max(ct.y) max(ct.x) max(ct.z)] + halfRes;
+                    % ct.y has nRows elements (dim1), ct.x has nCols elements (dim2)
+                    [y, x, z] = ndgrid(ct.y, ct.x, ct.z);
             end
-            coords = [x(:) y(:) z(:)];
+
+            % offset and boxDimensions are in [i j k]; convert to [j i k]
+            centerPoint = centerPoint + obj.offset * dimPerm;
+            dims = obj.boxDimensions * dimPerm;
+
+            coords = [y(:) x(:) z(:)];  % [j i k]
 
             maxPoints = min(centerPoint + dims / 2, ctMax);
             minPoints = max(centerPoint - dims / 2, ctMin);
@@ -80,10 +83,6 @@ classdef matRad_PhantomVOIBox < matRad_PhantomVOIVolume
 
     % Set Methods
     methods
-
-        function set.boxDimensionsType(obj, dimType)
-            obj.boxDimensionsType = validatestring(dimType, {'voxel', 'mm'});
-        end
 
         function set.boxDimensions(obj, dims)
             validateattributes(dims, {'numeric'}, {'vector', 'numel', 3, 'positive'});
