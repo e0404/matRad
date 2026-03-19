@@ -9,7 +9,7 @@ end
 for i = 1:size(cst, 1)
 
     if ~isempty(precision)
-        cst{i, 4} = cellfun(@(x) Cst(x, precision), cst{i, 4}, 'UniformOutput', false);
+        cst{i, 4} = cellfun(@(x) cast(x, precision), cst{i, 4}, 'UniformOutput', false);
     end
     cst{i, 4} = cellfun(@gpuArray, cst{i, 4}, 'UniformOutput', false);
 

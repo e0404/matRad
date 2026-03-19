@@ -321,6 +321,9 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                 ctScenNum = ctScen(i);
 
                 radDepthCube                = NaN*ones(ct.cubeDim,this.precision);
+                if isa(radDepthVctGrid{i},'gpuArray')
+                    radDepthCube = gpuArray(radDepthCube);
+                end
                 radDepthCube(V(~isnan(radDepthVctGrid{1}))) = radDepthVctGrid{ctScenNum}(~isnan(radDepthVctGrid{1}));
 
                 % interpolate cube - cube is now stored in Y X Z
