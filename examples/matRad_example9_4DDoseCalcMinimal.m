@@ -46,8 +46,7 @@ pln.propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spaci
 pln.propStf.longitudinalSpotSpacing = 5;      % only relevant for HIT machine, not generic
 pln.propStf.gantryAngles    = [90]; 
 pln.propStf.couchAngles     = [0]; 
-pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
-pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+pln.propStf.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 
 
 %%

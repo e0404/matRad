@@ -61,8 +61,7 @@ pln.numOfFractions        = 30;
 pln.propStf.gantryAngles  = [90 270];
 pln.propStf.couchAngles   = [0 0];
 pln.propStf.bixelWidth    = 5;
-pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
-pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+pln.propStf.isoCenter     = matRad_getIsoCenter(cst,ct,0);
 pln.propOpt.runDAO        = 0;
 pln.propSeq.runSequencing = 0;
 
@@ -112,7 +111,7 @@ end
 % Now let's simulate a patient shift in y direction for both beams
 stf(1).isoCenter(2) = stf(1).isoCenter(2) - 4;
 stf(2).isoCenter(2) = stf(2).isoCenter(2) - 4;
-pln.propStf.isoCenter       = reshape([stf.isoCenter],[3 pln.propStf.numOfBeams])';
+pln.propStf.isoCenter       = reshape([stf.isoCenter],[3 numel(stf)])';
 
 %% Recalculate Plan
 % Let's use the existing optimized pencil beam weights and recalculate the RBE weighted dose

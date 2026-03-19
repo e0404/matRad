@@ -41,8 +41,7 @@ pln.multScen = 'nomScen';
 pln.propStf.gantryAngles    = [0];
 pln.propStf.couchAngles     = [0];
 pln.propStf.bixelWidth      = 10;
-pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
-pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+pln.propStf.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 pln.propSeq.runSequencing   = 0;
 pln.propOpt.runDAO          = 0;
 

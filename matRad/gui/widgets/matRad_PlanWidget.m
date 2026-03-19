@@ -826,11 +826,17 @@ classdef matRad_PlanWidget < matRad_Widget
                 pln.propStf.numOfBeams = numel(stfGen.gantryAngles);
             end
 
+            if matRad_ispropCompat(stfGen,'numOfBeams')
+                numOfBeams = stfGen.numOfBeams;
+            else
+                numOfBeams = 1;
+            end
+
             if isfield(pln.propStf,'isoCenter')
                 % sanity check of isoCenter
-                if size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) == 1
-                    pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * pln.propStf.isoCenter(1,:);
-                elseif size(pln.propStf.isoCenter,1) ~= pln.propStf.numOfBeams && size(pln.propStf.isoCenter,1) ~= 1
+                if size(pln.propStf.isoCenter,1) ~= numOfBeams && size(pln.propStf.isoCenter,1) == 1
+                    pln.propStf.isoCenter = ones(numOfBeams,1) * pln.propStf.isoCenter(1,:);
+                elseif size(pln.propStf.isoCenter,1) ~= numOfBeams && size(pln.propStf.isoCenter,1) ~= 1
                     this.showError('Isocenter in plan file are inconsistent.');
                 end
 
@@ -988,7 +994,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 this.plotPlan = true;
             end
 
-            pln.propStf.numOfBeams = numel(pln.propStf.gantryAngles);
+            numOfBeams = numel(pln.propStf.gantryAngles);
 
             isoStr = get(handles.editIsoCenter,'String');
             if ~isequal(isoStr,'multiple isoCenter')
@@ -1056,7 +1062,7 @@ classdef matRad_PlanWidget < matRad_Widget
                     end
                     tmpIsoCenter = matRad_getIsoCenter(evalin('base','cst'),evalin('base','ct'));
                     if ~isequal(tmpIsoCenter,pln.propStf.isoCenter)
-                        pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1)*tmpIsoCenter;
+                        pln.propStf.isoCenter = ones(numOfBeams,1)*tmpIsoCenter;
                         %handles.State = 1;
                         %UpdateState(handles);
                     end
@@ -1082,11 +1088,11 @@ classdef matRad_PlanWidget < matRad_Widget
                     cst = evalin('base','cst');
                     if (sum(strcmp('TARGET',cst(:,3))) > 0 && get(handles.checkIsoCenter,'Value')) || ...
                             (sum(strcmp('TARGET',cst(:,3))) > 0 && ~isfield(pln.propStf,'isoCenter'))
-                        pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct);
+                        pln.propStf.isoCenter = ones(numOfBeams,1) * matRad_getIsoCenter(cst,ct);
                         set(handles.checkIsoCenter,'Value',1);
                     else
                         if ~strcmp(get(handles.editIsoCenter,'String'),'multiple isoCenter')
-                            pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1) * str2num(get(handles.editIsoCenter,'String'));
+                            pln.propStf.isoCenter = ones(numOfBeams,1) * str2num(get(handles.editIsoCenter,'String'));
                         end
                     end
                 catch ME
@@ -1348,10 +1354,11 @@ classdef matRad_PlanWidget < matRad_Widget
 
             % editIsoCenter textbox
             tmpIsoCenter = str2num(get(handles.editIsoCenter,'String'));
+            numOfBeams = numel(pln.propStf.gantryAngles);
 
             if length(tmpIsoCenter) == 3
                 if sum(any(unique(pln.propStf.isoCenter,'rows')~=tmpIsoCenter))
-                    pln.propStf.isoCenter = ones(pln.propStf.numOfBeams,1)*tmpIsoCenter;
+                    pln.propStf.isoCenter = ones(numOfBeams,1)*tmpIsoCenter;
 
                 end
             else
