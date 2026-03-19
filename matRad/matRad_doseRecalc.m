@@ -1,27 +1,26 @@
-function recalc = matRad_doseRecalc(cst,pln,recalc,ct,apertureInfo,calcDoseDirect,dij)
+function recalc = matRad_doseRecalc(cst, pln, recalc, ct, apertureInfo, calcDoseDirect, dij)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad function to recalculate dose on a Dij angular resolution, or using
-% the dynamic method, whichever the user wants%
+% matRad function to recalculate dose on a finer or equal angular
+% resolution, either by interpolating aperture shapes or by reusing the
+% nearest existing Dij column.
 %
 % call
-%   resultGUI = matRad_doseRecalc(dij,apertureInfo,resultGUI,pln)
+%   recalc = matRad_doseRecalc(cst,pln,recalc,ct,apertureInfo)
+%   recalc = matRad_doseRecalc(cst,pln,recalc,ct,apertureInfo,calcDoseDirect)
+%   recalc = matRad_doseRecalc(cst,pln,recalc,ct,apertureInfo,calcDoseDirect,dij)
 %
 % input
-%   dij:            matRad dij struct
-%   apertureInfo:   aperture shape info struct
-%   resultGUI:      resultGUI struct to which the output data will be added, if
-%                   this field is empty optResult struct will be created
-%                   (optional)
+%   cst, ct:          patient data
+%   pln:              original optimisation plan (anchor angles + propOpt)
+%   recalc:           recalc options struct (interpNew, dijNew,
+%                     continuousAperture, pln with recalc spacing, ...)
+%   apertureInfo:     aperture info from the optimisation result
+%   calcDoseDirect:   (optional, default true) use direct dose calc
+%   dij:              (optional) Dij for back-projection when ~calcDoseDirect
 %
 % output
-%   resultGUI:  struct containing optimized fluence vector, dose, and
-%               shape info
+%   recalc:  updated struct with stf, apertureInfo, and resultGUI
 %
-% References
-%
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team.
@@ -41,121 +40,119 @@ end
 
 recalc.apertureInfo = apertureInfo;
 
-%recalculate dose with finer gantry angles
-%to do this, we need Dij matrices at these new angles
-%Calculate dose directly
+% Old fine angles are the DAO beams from the original optimisation.
+% They live in apertureInfo, so we do not need pln.propStf for this.
+oldFineAngles = [apertureInfo.beam.gantryAngle];
 
-%first, we need to update/generate new apertures for these angles
-recalc.pln = matRad_VMATGantryAngles(recalc.pln,cst,ct);
+% If not interpolating new apertures, force every fine angle to be a DAO
+% control point by equalising the two spacing parameters.
 if ~recalc.interpNew
-    %we will not interpolate new apertures
-    %easiest way to to this is to make ALL gantryAngles optGantryAngles
-    recalc.pln.propStf.DAOGantryAngles = recalc.pln.propStf.gantryAngles;
+    recalc.pln.propStf.maxDAOGantryAngleSpacing = recalc.pln.propStf.maxGantryAngleSpacing;
 end
 
-cd stf
-fname = sprintf('%.1f deg.mat',recalc.pln.propOpt.VMAToptions.maxGantryAngleSpacing);
-if exist(fname,'file')
-    load(fname);
+% Generate (or load cached) stf at the recalc angular resolution.
+% recalc.pln.propStf.gantryAngles contains arc anchor points; the fine
+% angle grid is computed internally by matRad_StfGeneratorPhotonVMAT.
+fname = sprintf('%.1f deg.mat', recalc.pln.propStf.maxGantryAngleSpacing);
+if exist(fname, 'file')
+    load(fname, 'stf');
 else
-    stf = matRad_generateStf(ct,cst,recalc.pln);
-    save(fname,'stf')
+    stf = matRad_generateStf(ct, cst, recalc.pln);
+    save(fname, 'stf');
 end
 recalc.stf = stf;
-clear stf
-cd ..
+clear stf;
 
+% -----------------------------------------------------------------------
+% Handle angles that fall exactly equidistant between two old DAO angles.
+% These need duplicate stf entries so that both neighbouring Dij columns
+% can be used (one per side).
+% -----------------------------------------------------------------------
 if ~recalc.interpNew || ~recalc.dijNew
-    %duplicate any beam angles that are directly between two old
-    %ones
-    duplicate = false(size(recalc.pln.propStf.gantryAngles));
-    for i = 1:numel(recalc.pln.propStf.gantryAngles)
-        if numel(find(abs(recalc.pln.propStf.gantryAngles(i)-pln.propStf.gantryAngles) == min(abs(recalc.pln.propStf.gantryAngles(i)-pln.propStf.gantryAngles)))) > 1
-            duplicate(i) = true;
-        end
+
+    newFineAngles = [recalc.stf.gantryAngle];
+
+    duplicate = false(size(newFineAngles));
+    for i = 1:numel(newFineAngles)
+        diffs = abs(newFineAngles(i) - oldFineAngles);
+        duplicate(i) = sum(diffs == min(diffs)) > 1;
     end
-    newGantryAngles = zeros(1,numel(recalc.pln.propStf.gantryAngles)+nnz(duplicate));
-    newCouchAngles = zeros(1,numel(recalc.pln.propStf.gantryAngles)+nnz(duplicate));
+
     tempStf = recalc.stf;
-    recalc.stf(1).copyInd = [];
-    tempStf(1).copyInd = [];
-    recalc.stf(1).stfCorr = [];
-    tempStf(1).stfCorr = [];
+    [tempStf(:).copyInd] = deal([]);
+    [tempStf(:).stfCorr]  = deal([]);
+
     j = 1;
-    for i = 1:numel(recalc.pln.propStf.gantryAngles)
+    for i = 1:numel(newFineAngles)
         if duplicate(i)
-            tempStf(j).stfCorr = false;
-            newGantryAngles(j) = recalc.pln.propStf.gantryAngles(i);
-            newCouchAngles(j) = recalc.pln.propStf.couchAngles(i);
-            tempStf(j) = recalc.stf(i);
-            tempStf(j).gantryAngle = recalc.stf(i-1).gantryAngle;
-            tempStf(j).copyInd = 1;
-            
-            j = j+1;
-            
-            newGantryAngles(j) = recalc.pln.propStf.gantryAngles(i);
-            newCouchAngles(j) = recalc.pln.propStf.couchAngles(i);
-            tempStf(j) = recalc.stf(i);
-            tempStf(j).gantryAngle = recalc.stf(i+1).gantryAngle;
-            tempStf(j).copyInd = 2;
+            % Left copy: pretend this beam sits at the previous beam angle
+            tempStf(j)            = recalc.stf(i);
+            tempStf(j).gantryAngle = recalc.stf(i - 1).gantryAngle;
+            tempStf(j).copyInd    = 1;
+            tempStf(j).stfCorr    = false;
+            j = j + 1;
+
+            % Right copy: pretend this beam sits at the next beam angle
+            tempStf(j)            = recalc.stf(i);
+            tempStf(j).gantryAngle = recalc.stf(i + 1).gantryAngle;
+            tempStf(j).copyInd    = 2;
+            tempStf(j).stfCorr    = false;
         else
+            tempStf(j)         = recalc.stf(i);
+            tempStf(j).copyInd = [];
             tempStf(j).stfCorr = true;
-            newGantryAngles(j) = recalc.pln.propStf.gantryAngles(i);
-            newCouchAngles(j) = recalc.pln.propStf.couchAngles(i);
-            tempStf(j) = recalc.stf(i);
         end
-        j = j+1;
+        j = j + 1;
     end
-    recalc.pln.propStf.gantryAngles = newGantryAngles;
-    recalc.pln.propStf.couchAngles = newCouchAngles;
-    recalc.pln.propStf.numOfBeams = numel(recalc.pln.propStf.gantryAngles);
-    %recalc.pln.optGantryAngles = recalc.pln.gantryAngles;
     recalc.stf = tempStf;
-end
 
-recalc = matRad_recalcApertureInfo(recalc,recalc.apertureInfo);
-
-if ~recalc.interpNew || ~recalc.dijNew
-    tempPln = recalc.pln;
+    % -------------------------------------------------------------------
+    % Dij reuse: redirect each new beam to the nearest old beam so that
+    % an existing Dij column can be recycled without recomputation.
+    % -------------------------------------------------------------------
     tempStf = recalc.stf;
-    for i = 1:numel(tempPln.propStf.gantryAngles)
-        diff = abs(tempPln.propStf.gantryAngles(i)-pln.propStf.gantryAngles);
-        minDiffInd = diff == min(diff);
-        minDiffInd1 = find(tempPln.propStf.gantryAngles == pln.propStf.gantryAngles(find(minDiffInd,1,'first')));
-        minDiffInd2 = find(tempPln.propStf.gantryAngles == pln.propStf.gantryAngles(find(minDiffInd,1,'last')));
-        
+    for i = 1:numel(recalc.stf)
+        diffs      = abs(recalc.stf(i).gantryAngle - oldFineAngles);
+        minDiff    = min(diffs);
+        nearIdx    = find(diffs == minDiff);   % 1 or 2 indices into oldFineAngles
+
+        % Find where those old angles appear in the (post-duplicate) stf
+        newAngles  = [tempStf.gantryAngle];
+        minInd1    = find(newAngles == oldFineAngles(nearIdx(1)),   1);
+        minInd2    = find(newAngles == oldFineAngles(nearIdx(end)), 1);
+
         if ~recalc.dijNew
-            if isempty(recalc.stf(i).copyInd)
-                recalc.stf(i) = tempStf(minDiffInd1);
-                recalc.pln.propStf.gantryAngles(i) = tempPln.propStf.gantryAngles(minDiffInd1);
-            elseif recalc.stf(i).copyInd == 1
-                recalc.stf(i) = tempStf(minDiffInd1);
-                recalc.pln.propStf.gantryAngles(i) = tempPln.propStf.gantryAngles(minDiffInd1);
+            % Replace this beam with the nearest existing beam entirely
+            if isempty(recalc.stf(i).copyInd) || recalc.stf(i).copyInd == 1
+                recalc.stf(i) = tempStf(minInd1);
             elseif recalc.stf(i).copyInd == 2
-                recalc.stf(i) = tempStf(minDiffInd2);
-                recalc.pln.propStf.gantryAngles(i) = tempPln.propStf.gantryAngles(minDiffInd2);
+                recalc.stf(i) = tempStf(minInd2);
             end
         elseif ~recalc.interpNew
-            if numel(minDiffInd) > 1
-                recalc.stf(i).gantryAngle = tempPln.propStf.gantryAngles(i);
+            % Keep the beam but correct its angle if it is equidistant
+            if numel(nearIdx) > 1
+                recalc.stf(i).gantryAngle = tempStf(i).gantryAngle;
             end
         end
     end
 end
 
-% rename to something else? matRad_daoVec2ApertureInfo_recalc?
+recalc = matRad_recalcApertureInfo(recalc, recalc.apertureInfo);
+
 recalc.apertureInfo.propVMAT.continuousAperture = recalc.continuousAperture;
-recalc.apertureInfo =  matRad_daoVec2ApertureInfo_VMATrecalcDynamic(recalc.apertureInfo,recalc.apertureInfo.apertureVector);
+recalc.apertureInfo = matRad_daoVec2ApertureInfo_VMATrecalcDynamic( ...
+                                                                   recalc.apertureInfo, recalc.apertureInfo.apertureVector);
 
 if calcDoseDirect
-    clear global
-    recalc.resultGUI = matRad_calcDoseDirect(ct,recalc.stf,recalc.pln,cst,recalc.apertureInfo.bixelWeights);
+    clear global;
+    recalc.resultGUI = matRad_calcDoseDirect(ct, recalc.stf, recalc.pln, cst, ...
+                                             recalc.apertureInfo.bixelWeights);
 else
     recalc.resultGUI.w = recalc.apertureInfo.bixelWeights;
-    
+
     options.numOfScenarios = 1;
-    options.bioOpt = 'none';
-    dij.scaleFactor = apertureInfo.weightToMU./dij.weightToMU;
-    d = matRad_backProjection(recalc.resultGUI.w,dij,options);
-    recalc.resultGUI.physicalDose = reshape(d{1},dij.dimensions);
+    options.bioOpt         = 'none';
+    dij.scaleFactor        = apertureInfo.weightToMU ./ dij.weightToMU;
+    d = matRad_backProjection(recalc.resultGUI.w, dij, options);
+    recalc.resultGUI.physicalDose = reshape(d{1}, dij.dimensions);
 end
