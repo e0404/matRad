@@ -1161,7 +1161,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                     if isfield(pln,'propStf') && isfield(pln.propStf,'isoCenter')
                         isoCoordinates = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:), ct);
                         planeCenters = ceil(isoCoordinates);
-                        this.numOfBeams=pln.propStf.numOfBeams;
+                        this.numOfBeams=numel(pln.propStf.gantryAngles);
                     end
                 end
 

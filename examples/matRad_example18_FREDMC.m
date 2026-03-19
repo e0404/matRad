@@ -32,8 +32,7 @@ pln.numOfFractions        = 30;
 pln.propStf.gantryAngles  = [30,330];
 pln.propStf.couchAngles   = zeros(size(pln.propStf.gantryAngles));
 pln.propStf.bixelWidth    = 5;
-pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
-pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+pln.propStf.isoCenter     = matRad_getIsoCenter(cst,ct,0);
 pln.propOpt.runDAO        = 0;
 pln.propSeq.runSequencing = 0;
 

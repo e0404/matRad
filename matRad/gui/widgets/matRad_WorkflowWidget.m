@@ -703,7 +703,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
 
                 try 
                     pln = evalin('base','pln');
-                    numOfBeams = pln.propStf.numOfBeams;
+                    numOfBeams = evalin('base','numel(stf)');
                     radMode = pln.radiationMode;
                     fractions = pln.numOfFractions;
 

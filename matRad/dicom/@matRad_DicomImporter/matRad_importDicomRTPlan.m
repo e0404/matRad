@@ -149,7 +149,6 @@ obj.pln.propStf.isoCenter    = isoCenter;
 obj.pln.propStf.bixelWidth   = NaN; % [mm] / also corresponds to lateral spot spacing for particles
 obj.pln.propStf.gantryAngles = [gantryAngles{1:length(BeamSeqNames)}];
 obj.pln.propStf.couchAngles  = [PatientSupportAngle{1:length(BeamSeqNames)}]; % [??]
-obj.pln.propStf.numOfBeams   = length(BeamSeqNames);
 numOfVoxels = 1;
 for i = 1:length(obj.ct.cubeDim)
     numOfVoxels = numOfVoxels*obj.ct.cubeDim(i);

@@ -1,8 +1,8 @@
-function writePlanFile(this, fName, stf)
+function writePlanFile(this, fName, stf, scenIdx)
 % FRED helper to write data to plan.inp file
 % call
 %   writePlanFile(fName, stf)
-% 
+%
 % input
 %   fName: string specifying the file path and name for saving the data.
 %   stf:   Fred stf struct
@@ -22,40 +22,44 @@ function writePlanFile(this, fName, stf)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 matRad_cfg = MatRad_Config.instance();
 
+if ~exist('scenIdx', 'var') || isempty(scenIdx)
+    scenIdx = 1;
+end
+
 fID = fopen(fName, 'w');
 
 try
     totalNumOfBixels = sum([stf.totalNumOfBixels]);
     if this.calcDoseDirect
-        simulatedPrimariesPerBixel = max([1, floor(this.numHistoriesDirect/totalNumOfBixels)]);
+        simulatedPrimariesPerBixel = max([1, floor(this.numHistoriesDirect / totalNumOfBixels)]);
     else
         simulatedPrimariesPerBixel = this.numHistoriesPerBeamlet;
     end
-    
+
     fprintf(fID, 'nprim = %i\n', simulatedPrimariesPerBixel);
 
     layerCounter = 0;
     bixelCounter = 0;
 
     % loop oever the fields
-    for i=1:numel(stf)
+    for i = 1:numel(stf)
 
-        %Loop over energy layers
-        for j=1:numel(stf(i).energies)
+        % Loop over energy layers
+        for j = 1:numel(stf(i).energies)
 
-            fprintf(fID, '#Bixels Field%i, Layer%i\n', i-1,layerCounter+j-1);
+            fprintf(fID, '#Bixels Field%i, Layer%i\n', i - 1, layerCounter + j - 1);
 
             % Print bixel info (ID, Position, Direction, Weight)
-            for k=1:stf(i).energyLayer(j).nBixels
-                currBixel.beamletID = num2str(bixelCounter+k-1);
-                currBixel.P         = arrayfun(@(idx) num2str(idx, '%2.3f'), [stf(i).energyLayer(j).rayPosY(k),stf(i).energyLayer(j).rayPosX(k),0], 'UniformOutput', false);
-                currBixel.v         = arrayfun(@(idx) num2str(idx, '%2.5f'), [stf(i).energyLayer(j).rayDivY(k),stf(i).energyLayer(j).rayDivX(k),1], 'UniformOutput', false);
+            for k = 1:stf(i).energyLayer(j).nBixels
+                currBixel.beamletID = num2str(bixelCounter + k - 1);
+                currBixel.P         = arrayfun(@(idx) num2str(idx, '%2.3f'), [stf(i).energyLayer(j).rayPosY(k), stf(i).energyLayer(j).rayPosX(k), 0], 'UniformOutput', false);
+                currBixel.v         = arrayfun(@(idx) num2str(idx, '%2.5f'), [stf(i).energyLayer(j).rayDivY(k), stf(i).energyLayer(j).rayDivX(k), 1], 'UniformOutput', false);
                 currBixel.w         = num2str(stf(i).energyLayer(j).numOfPrimaries(k), '%2.7f');
 
-                printStructToDictionary(fID, currBixel, ['S', num2str(bixelCounter+k-1)],2);
-                
+                printStructToDictionary(fID, currBixel, ['S', num2str(bixelCounter + k - 1)], 2);
+
             end
-                
+
             currLayer.Energy   = num2str(stf(i).energies(j));
             currLayer.Espread  = num2str(stf(i).energySpreadFWHMMev(j));
 
@@ -65,7 +69,7 @@ try
                     currLayer.FWHM     = num2str(stf(i).FWHMs(j));
                 case 'emittance'
                     currLayer.emittanceX  = num2str(stf(i).emittanceX(j), '%1.10f');
-                    currLayer.twissAlphaX = num2str(stf(i).twissAlphaX(j),'%1.10f');
+                    currLayer.twissAlphaX = num2str(stf(i).twissAlphaX(j), '%1.10f');
                     currLayer.twissBetaX  = num2str(stf(i).twissBetaX(j), '%1.10f');
                 case 'sigmaSqrModel'
                     currLayer.sSQr_a = num2str(stf(i).sSQr_a(j));
@@ -74,28 +78,31 @@ try
             end
 
             % Specify the beamlets in current layer
-            currLayer.beamlets = arrayfun(@(idx) ['S', num2str(idx)], bixelCounter:stf(i).energyLayer(j).nBixels+bixelCounter-1, 'UniformOutput', false);
+            currLayer.beamlets = arrayfun(@(idx) ['S', num2str(idx)], bixelCounter:stf(i).energyLayer(j).nBixels + bixelCounter - 1, 'UniformOutput', false);
 
-            %Print layer
-            printStructToDictionary(fID, currLayer, ['L', num2str(layerCounter+j-1)],1);
+            % Print layer
+            printStructToDictionary(fID, currLayer, ['L', num2str(layerCounter + j - 1)], 1);
             fprintf(fID, '\n');
             bixelCounter = bixelCounter + stf(i).energyLayer(j).nBixels;
         end
-    
-        % Estimate field dimension
-        fieldLim = max(abs([stf(i).energyLayer.rayPosX,stf(i).energyLayer.rayPosY])) + 10*max([stf(i).FWHMs]);
 
-        %Write field parameters
-        currF.fieldNumber = i-1;
+        % Estimate field dimension
+        fieldLim = max(abs([stf(i).energyLayer.rayPosX, stf(i).energyLayer.rayPosY])) + 10 * max([stf(i).FWHMs]);
+
+        % Write field parameters
+
+        fieldIsocenter = stf(i).isoCenter + this.multScen.isoShift(scenIdx, :) .* [-1 1 1] ./ 10;
+
+        currF.fieldNumber = i - 1;
         currF.GA          = num2str(stf(i).gantryAngle);
         currF.CA          = num2str(stf(i).couchAngle);
-        currF.ISO         = arrayfun(@num2str, stf(i).isoCenter, 'UniformOutput', false);
+        currF.ISO         = arrayfun(@num2str, fieldIsocenter, 'UniformOutput', false);
         currF.dim         = arrayfun(@num2str, [fieldLim, fieldLim, 0.1], 'UniformOutput', false);
-        currF.Layers      = arrayfun(@(idx) ['L', num2str(idx)], layerCounter:numel(stf(i).energies)+layerCounter-1, 'UniformOutput', false);
+        currF.Layers      = arrayfun(@(idx) ['L', num2str(idx)], layerCounter:numel(stf(i).energies) + layerCounter - 1, 'UniformOutput', false);
 
         layerCounter = layerCounter + numel(stf(i).energies);
 
-        printStructToDictionary(fID, currF, ['F', num2str(i-1)]);
+        printStructToDictionary(fID, currF, ['F', num2str(i - 1)]);
         fprintf(fID, '\n');
     end
 
@@ -103,10 +110,10 @@ try
 
     % BAMsToIso is the same for all fields
     plan.SAD    = stf(1).BAMStoIsoDist;
-    plan.Fields = arrayfun(@(i) ['F', num2str(i)], 0:numel(stf)-1, 'UniformOutput', false);
-            
+    plan.Fields = arrayfun(@(i) ['F', num2str(i)], 0:numel(stf) - 1, 'UniformOutput', false);
+
     printStructToDictionary(fID, plan, 'plan');
-    
+
 catch
     matRad_cfg.dispError('Failed to write plan file');
 end
@@ -115,10 +122,10 @@ fclose(fID);
 end
 
 function printStructToDictionary(fID, S, sName, indentTabs)
-% Helper function to convert struct fields into FRED specific python dictionary 
+% Helper function to convert struct fields into FRED specific python dictionary
 % call
 %   printStructToDictionary(fID, S, sName, indentTabs)
-% 
+%
 % input
 %   fID:        ID of file to write
 %   S:          struct to convert
@@ -142,8 +149,7 @@ if ~exist('indentTabs', 'var') || isempty(indentTabs)
     indentTabs = 0;
 end
 
-indentString = repmat('\t',1,indentTabs);
-
+indentString = repmat('\t', 1, indentTabs);
 
 fprintf(fID, indentString);
 
@@ -153,20 +159,19 @@ fprintf(fID, 'def: %s = {', sName);
 % Get all fields to print
 sFields = fieldnames(S);
 
-
-for sFieldIdx =1:numel(sFields)
+for sFieldIdx = 1:numel(sFields)
 
     currField = sFields{sFieldIdx};
 
     % write field name
-    fprintf(fID, '''%s'': ',currField);
+    fprintf(fID, '''%s'': ', currField);
 
     % write one or multiple values
     if ~iscell(S.(currField))
         fprintf(fID, '%s', num2str(S.(currField)));
     else
         fprintf(fID, '[');
-        for elementIdx=1:numel(S.(currField))-1
+        for elementIdx = 1:numel(S.(currField)) - 1
             fprintf(fID, '%s, ', S.(currField){elementIdx});
         end
         fprintf(fID, '%s]', S.(currField){end});
