@@ -38,8 +38,7 @@ pln.multScen = 'nomScen';   % scenario creation type 'nomScen'  'wcScen' 'impSce
 pln.propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
 pln.propStf.gantryAngles    = [0:72:359]; % [°] ;
 pln.propStf.couchAngles     = [0 0 0 0 0]; % [°] ; 
-pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
-pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+pln.propStf.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 
 % dose calculation settings
 pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]

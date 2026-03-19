@@ -40,8 +40,7 @@ pln.propStf.couchAngles     = [0 0 0 0 0];
 %pln.propStf.gantryAngles    = [0];
 %pln.propStf.couchAngles     = [0];
 pln.propStf.bixelWidth      = 10;
-pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
-pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+pln.propStf.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 % Enable sequencing and direct aperture optimization (DAO).
 pln.propOpt.runSequencing   = 1;
 pln.propOpt.runDAO          = 1;

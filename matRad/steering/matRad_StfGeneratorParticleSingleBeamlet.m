@@ -54,7 +54,7 @@ classdef matRad_StfGeneratorParticleSingleBeamlet < matRad_StfGeneratorParticleR
                 this.isoCenter = matRad_getIsoCenter(this.cst,this.ct,this.visualize);
             end
 
-            if ~isequal(size(this.isoCenter),[this.numOfBeams,3]) && ~size(this.isoCenter,1) ~= 1
+            if ~isequal(size(this.isoCenter),[this.numOfBeams,3]) && size(this.isoCenter,1) ~= 1
                 matRad_cfg.dispWarning('IsoCenter invalid, creating new one automatically!');
                 this.isoCenter = matRad_getIsoCenter(this.cst,this.ct,this.visualize);
             end

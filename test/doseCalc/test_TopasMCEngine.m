@@ -67,7 +67,7 @@ for i = 1:numel(radModes)
     assertTrue(isfile([folderName filesep 'matRad_cube.dat']));
     assertTrue(isfile([folderName filesep 'matRad_cube.txt']));
     assertTrue(isfile([folderName filesep 'MCparam.mat']));
-    for j = 1:pln.propStf.numOfBeams
+    for j = 1:numel(stf)
         assertTrue(isfile([folderName filesep 'beamSetup_matRad_plan_field' num2str(j) '.txt']));
         assertTrue(isfile([folderName filesep 'matRad_plan_field' num2str(j) '_run1.txt']));
     end
@@ -116,7 +116,7 @@ for i = 1:numel(radModes)
     assertTrue(isfile([folderName filesep 'matRad_cube.dat']));
     assertTrue(isfile([folderName filesep 'matRad_cube.txt']));
     assertTrue(isfile([folderName filesep 'MCparam.mat']));
-    for j = 1:pln.propStf.numOfBeams
+    for j = 1:numel(stf)
         assertTrue(isfile([folderName filesep 'beamSetup_matRad_plan_field' num2str(j) '.txt']));
         assertTrue(isfile([folderName filesep 'matRad_plan_field' num2str(j) '_run1.txt']));
     end
@@ -164,7 +164,7 @@ for i = 1:numel(radModes)
     assertTrue(isfile([folderName filesep 'matRad_cube.dat']));
     assertTrue(isfile([folderName filesep 'matRad_cube.txt']));
     assertTrue(isfile([folderName filesep 'MCparam.mat']));
-    for j = 1:pln.propStf.numOfBeams
+    for j = 1:numel(stf)
         assertTrue(isfile([folderName filesep 'beamSetup_matRad_plan_field' num2str(j) '.txt']));
         for k = 1:numOfRuns
             assertTrue(isfile([folderName filesep 'matRad_plan_field' num2str(j) '_run' num2str(k) '.txt']));
@@ -205,7 +205,7 @@ for i = 1:numel(radModes)
         assertTrue(isfolder(folderName));
         % check if file in folder existi
         assertTrue(isfile([folderName filesep 'MCparam.mat']));
-        for j = 1:pln.propStf.numOfBeams
+        for j = 1:numel(stf)
             assertTrue(isfile([folderName filesep 'beamSetup_matRad_plan_field' num2str(j) '.txt']));
             assertTrue(isfile([folderName filesep 'matRad_plan_field' num2str(j) '_run1.txt']));
             assertTrue(isfile([folderName filesep 'matRad_cube_field' num2str(j) '.txt']));
@@ -248,7 +248,7 @@ for i = 1:numel(radModes)
     assertTrue(isfolder(folderName));
     % check if file in folder existi
     assertTrue(isfile([folderName filesep 'MCparam.mat']));
-    for j = 1:pln.propStf.numOfBeams
+    for j = 1:numel(stf)
         assertTrue(isfile([folderName filesep 'beamSetup_matRad_plan_field' num2str(j) '.txt']));
         assertTrue(isfile([folderName filesep 'matRad_plan_field' num2str(j) '_run1.txt']));
         assertTrue(isfile([folderName filesep 'matRad_cube_field' num2str(j) '.txt']));

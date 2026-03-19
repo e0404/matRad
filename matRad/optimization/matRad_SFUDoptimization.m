@@ -42,6 +42,21 @@ matRad_cfg = MatRad_Config.instance();
 
 sb_cst = cst;
 
+if nargin < 3 || isempty(dij)
+    if nargin < 5
+        matRad_cfg.dispError('If no dij provided, ct and stf are needed for calculation of single beam dijs!');
+    end
+    useDij = false;
+else
+    useDij = true;
+end
+
+if useDij
+    numOfBeams = dij.numOfBeams;
+else
+    numOfBeams = numel(stf);
+end
+
 % check & adjust objectives and constraints internally for fractionation
 % & adjust for single beams
 for i = 1:size(cst,1)
@@ -73,14 +88,14 @@ for i = 1:size(cst,1)
             
             % calculate dose per beam per fraction according to [1]
             ab = sb_cst{i,5}.alphaX / sb_cst{i,5}.betaX;
-            fx_dose = -0.5*ab + sqrt( 0.25*ab^2 + fx_dose./pln.propStf.numOfBeams .* (fx_dose + ab));
+            fx_dose = -0.5*ab + sqrt( 0.25*ab^2 + fx_dose./numOfBeams .* (fx_dose + ab));
             
             % calculate pseudo total Dose per Beam
             obj.setDoseParameters = fx_dose * pln.numOfFractions;
             
         % physical dose splitting
         else
-            obj = obj.setDoseParameters(obj.getDoseParameters()/pln.propStf.numOfBeams);
+            obj = obj.setDoseParameters(obj.getDoseParameters()/numOfbeams);
         end
         
         sb_cst{i,6}{j} = obj;
@@ -93,7 +108,7 @@ if ~isempty(dij)
     % initialise total weight vector
     wTot = zeros(dij.totalNumOfBixels,1);
 
-    for i = 1:pln.propStf.numOfBeams
+    for i = 1:numOfBeams
         matRad_cfg.dispInfo('optimizing beam %d...\n',i);
         
         % columns in total dij for single beam
@@ -125,7 +140,6 @@ if ~isempty(dij)
         sb_pln = pln;
         sb_pln.propStf.gantryAngles = pln.propStf.gantryAngles(i);
         sb_pln.propStf.couchAngles = pln.propStf.couchAngles(i);
-        sb_pln.propStf.numOfBeams = 1;
         sb_pln.propStf.isoCenter = pln.propStf.isoCenter(i,:);
         
         % optimize single beam
@@ -144,7 +158,7 @@ else
     % initialise total weight vector
     wTot = [];
 
-    for i = 1:pln.propStf.numOfBeams
+    for i = 1:numOfBeams
         matRad_cfg.dispInfo('optimizing beam %d...\n',i);
         % single beam stf
         sb_stf = stf(i);
@@ -152,7 +166,6 @@ else
         % adjust pln to one beam only
         sb_pln = pln;
         sb_pln.propStf.isoCenter = pln.propStf.isoCenter(i,:);
-        sb_pln.propStf.numOfBeams = 1;
         sb_pln.propStf.gantryAngles = pln.propStf.gantryAngles(i);
         sb_pln.propStf.couchAngles = pln.propStf.couchAngles(i);
 
