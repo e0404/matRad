@@ -15,6 +15,9 @@ on:
         type: boolean
         default: false
 
+env:
+    MLM_LICENSE_TOKEN: ${{ secrets.MATLAB_BATCH_TOKEN }}
+
 jobs:
   build-standalone-linux:
     name: Build Standalone (Linux)
@@ -45,8 +48,6 @@ jobs:
         with:
           release: latest
           products: MATLAB_Compiler MATLAB_Compiler_SDK Image_Processing_Toolbox Parallel_Computing_Toolbox Optimization_Toolbox Global_Optimization_Toolbox
-        env:
-          MLM_LICENSE_TOKEN: ${{ secrets.MATLAB_BATCH_TOKEN }}
 
       - name: Build Standalone
         uses: matlab-actions/run-command@v2
