@@ -1,4 +1,4 @@
-function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
+function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,stf,wInit)
 % matRad inverse planning wrapper function
 %
 % call
@@ -31,6 +31,22 @@ function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% input argument handling
+if nargin >= 4
+    % Check whether the 4th argument is a structure.
+    if ~isstruct(stf)
+        % If it is not, then assign it to wInit.
+        tmp = stf;
+        if nargin >= 5
+            % If there are 5 arguments, swap stf and wInit.
+            stf = wInit;
+        end
+        wInit = tmp;
+        clear tmp
+    end
+end
+    
 
 matRad_cfg = MatRad_Config.instance();
 
@@ -373,6 +389,44 @@ if pln.propOpt.boundMU
     end
 else
     matRad_cfg.dispInfo('Using standard MU bounds of [0,Inf]!\n')
+end
+
+if isfield(pln.propOpt,'runVMAT') && pln.propOpt.runVMAT
+    % Only the bixels belonging to FMO gantry angles should have their
+    % weights optimized. The rest should be initialized and bounded to
+    % zero.
+
+    % wInit is already defined, but some of the beam weights will be set to
+    % 0. The remainder should be scaled such that the total weight is
+    % preserved. In doing this, do not assume that all of the weights in wInit 
+    % are equal.
+    totalWeightInit = sum(wInit);
+
+    % Loop through angles to find non-FMO beams.
+    offset = 0;
+    for i = 1:dij.numOfBeams
+        
+        if ~stf(i).propVMAT.FMOBeam
+            % This is not an FMO beam. Set wOnes for the bixels belonging
+            % to this beam to 0.
+            rayIndices = offset + (1:dij.numOfRaysPerBeam(i));
+            wOnes(rayIndices) = 0;
+        end
+
+        offset = offset + dij.numOfRaysPerBeam(i);
+    end
+
+    % Zero out bixels in wInit.
+    wInit = wInit .* wOnes;
+
+    % Rescale wInit to preserve sum.
+    wInit = wInit .* totalWeightInit ./ sum(wInit);
+
+    % Set upper bound on bixels belonging to FMO angles to Inf; the rest,
+    % to 0.
+    optiProb.maximumW = wOnes;
+    optiProb.maximumW(optiProb.maximumW == 1) = Inf;
+
 end
 
 if ~isfield(pln.propOpt,'optimizer')

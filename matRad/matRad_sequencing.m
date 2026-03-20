@@ -48,18 +48,55 @@ if strcmp(pln.radiationMode,'photons') && (pln.propSeq.runSequencing || pln.prop
         matRad_cfg.dispWarning ('pln.propSeq.sequencer not specified. Using siochi leaf sequencing (default).')
     end
     
-    if ~isfield(pln.propSeq, 'sequencingLevel')
-        pln.propSeq.sequencingLevel = 5;
-         matRad_cfg.dispWarning ('pln.propSeq.sequencingLevel not specified. Using 5 sequencing levels (default).')
-    end
     
+    if ~any(isfield(pln.propSeq, {'numLevels','sequencingLevel'}))
+        pln.propSeq.numLevels = 5;
+        matRad_cfg.dispWarning ('pln.propSeq.sequencingLevel not specified. Using 5 sequencing levels (default).')
+    elseif isfield(pln.propSeq,'sequencingLevel')
+        matRad_cfg.dispDeprecationWarning('The pln.propSeq.sequencingLevel property is deprecated. Use pln.propSeq.numLevels instead!');
+        pln.propSeq.numLevels = pln.propSeq.sequencingLevel;
+    end
+
+    if isfield(pln,'propOpt') && isfield(pln.propOpt,'preconditioner')
+        preconditioner = pln.propOpt.preconditioner;
+    else
+        preconditioner = false;
+    end
+
+    if isfield(pln,'propOpt') && isfield(pln.propOpt,'runVMAT')
+        dynamic = pln.propOpt.runVMAT;
+    else
+        dynamic = false;
+    end
+
+    if isfield(pln,'propOpt') && isfield(pln.propOpt,'numApertures')
+        numApertures = pln.propOpt.numApertures;
+    else
+        numApertures = 0;
+    end
+
+    if isfield(pln,'propOpt') && isfield(pln.propOpt,'continuousAperture')
+        continuousAperture = pln.propOpt.continuousAperture;
+    else
+        continuousAperture = false;
+    end
+
+    varArgList = { ...
+        'visBool',visBool, ...
+        'dynamic',dynamic, ...
+        'numApertures',numApertures, ...
+        'continuousAperture',continuousAperture, ...
+        'preconditioner',preconditioner};
+    
+    % Could probably consolidate a lot of the code in the following
+    % functions.
     switch pln.propSeq.sequencer
         case 'xia'
-            resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,pln.propSeq.sequencingLevel,visBool);
+            resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,pln.propSeq.numLevels,varArgList{:});
         case 'engel'
-            resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,pln.propSeq.sequencingLevel,visBool);
+            resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,pln.propSeq.numLevels,varArgList{:});
         case 'siochi'
-            resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln.propSeq.sequencingLevel,visBool);
+            resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln.propSeq.numLevels,varArgList{:});
         otherwise
             matRad_cfg.dispError('Could not find specified sequencing algorithm ''%s''',pln.propSeq.sequencer);
     end

@@ -159,6 +159,17 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
                 matRad_cfg.dispWarning('Kernel Cut-Off ''%f mm'' cannot be smaller than geometric lateral cutoff ''%f mm''. Using ''%f mm''!',this.kernelCutOff,this.geometricLateralCutOff,this.geometricLateralCutOff);
                 this.kernelCutOff = this.geometricLateralCutOff;
             end
+            
+            % TODO: calculate and add weightToMU for the generic photon
+            % machine. Typical calibration: 100 cGy/100 MU in a 10x10 cm^2
+            % field, 100 cm SSD, depth of dose maximum for the given beam
+            % quality.
+            if isfield(this.machine.data,'weightToMU')
+                dij.weightToMU = this.machine.data.weightToMU;
+            else
+                dij.weightToMU = 100;
+                matRad_cfg.dispWarning('photon machine file does not contain weight to MU scaling factor. Assuming %.1f.',dij.weightToMU);
+            end
 
             %% kernel convolution
             % set up convolution grid

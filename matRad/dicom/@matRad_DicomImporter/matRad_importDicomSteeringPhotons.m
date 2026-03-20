@@ -47,7 +47,16 @@ for i = 1:size(UniqueComb,1)
     % set necessary steering information 
     obj.stf(i).gantryAngle  = UniqueComb(i,1);
     obj.stf(i).couchAngle   = UniqueComb(i,2);
-    obj.stf(i).isoCenter    = obj.pln.propStf.isoCenter(i,:);
+
+    %Handle possibility of multiple isocenters
+    if size(obj.pln.propStf.isoCenter,1) == 1
+        obj.stf(i).isoCenter    = obj.pln.propStf.isoCenter;
+    elseif size(pln.propStf.isoCenter,1) == obj.pln.propStf.numOfBeams
+        obj.stf(i).isoCenter = obj.pln.propStf.isoCenter(i,:);
+    else
+        matRad_cfg = MatRad_Config.instance();
+        matRad_cfg.dispError('Invalid number of isocenters - should either be one or as many as beams!');
+    end
     
     % bixelWidth = 'field' as keyword for whole field dose calc
     obj.stf(i).bixelWidth    = 'field';

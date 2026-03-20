@@ -1,18 +1,20 @@
-function resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)
-% multileaf collimator leaf sequencing algorithm 
-% for intensity modulated beams with multiple static segments accroding 
-% to Engel et al. 2005 Discrete Applied Mathematics
+function resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,varargin)
+% multileaf collimator leaf sequencing algorithm for intensity modulated 
+% beams with multiple static segments accroding to Engel et al. 2005
+% Discrete Applied Mathematics
 % 
 % call
-%   resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)
+%   resultSequencing = matRad_engelSequencing(w,stf,numOfLevels,visBool)
 %
 % input
 %   resultGUI:          resultGUI struct to which the output data will be added, if
 %                       this field is empty resultGUI struct will be created
 %   stf:                matRad steering information struct
 %   dij:                matRad's dij matrix
-%   numOfLevels:        number of stratification levels
-%   visBool:            toggle on/off visualization (optional)
+%   numOfLevels:        number of intensity levels for the sequencing
+% optional key-value pairs
+%   visBool:            toggle on/off visualization (optional - default: false)
+%   dynamic:            toggle on/off dynamic delivery (optional - default: false)
 %
 % output
 %   resultGUI:          matRad result struct containing the new dose cube
@@ -34,9 +36,33 @@ function resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,vi
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% if visBool not set toogle off visualization
-if nargin < 5
-    visBool = 0;
+matRad_cfg = MatRad_Config.instance();
+
+p = inputParser();
+p.KeepUnmatched = true;
+p.addRequired('resultGUI',@(x) isstruct(x));
+p.addRequired('stf',@(x) isstruct(x));
+p.addRequired('dij',@(x) isstruct(x));
+p.addRequired('numOfLevels',@(x) isnumeric(x) && isscalar(x) && x > 0);
+p.addParameter('visBool',false,@(x) isscalar(x) && (islogical(x) || (isnumeric(x) && (x==0 || x==1))));
+p.addParameter('dynamic',false,@(x) isscalar(x) && (islogical(x) || (isnumeric(x) && (x==0 || x==1))));
+p.addParameter('continuousAperture',false,@(x) isscalar(x) && (islogical(x) || (isnumeric(x) && (x==0 || x==1))));
+p.addParameter('preconditioner',false,@(x) isscalar(x) && (islogical(x) || (isnumeric(x) && (x==0 || x==1))));
+p.parse(resultGUI,stf,dij,numOfLevels,varargin{:});
+
+numOfLevels = p.Results.numOfLevels;
+visBool = p.Results.visBool;
+dynamic = p.Results.dynamic;
+continuousAperture = p.Results.continuousAperture;
+preconditioner = p.Results.preconditioner;
+
+if dynamic
+    matRad_cfg.dispWarning(['The Engel leaf sequencing implementation is not designed for dynamic delivery. ', ...
+        'Using these sequences for VMAT / other dynamic delivery may fail or yield non-deliverable plans.']);
+end
+if continuousAperture
+    matRad_cfg.dispWarning(['The Engel leaf sequencing implementation is not designed for continuous aperture computation. ', ...
+        'Using these sequences for continuous aperture delivery may fail or yield non-deliverable plans.']);
 end
 
 numOfBeams = numel(stf);
@@ -352,8 +378,8 @@ for i = 1:numOfBeams
         clear rightIntLimit;
        
     end
-    if sum(wOfCurrBeams)>0
 
+    if sum(wOfCurrBeams)>0
         sequencing.beam(i).numOfShapes  = k;
         sequencing.beam(i).shapes       = shapes(:,:,1:k);
         sequencing.beam(i).shapesWeight = shapesWeight(1:k)/numOfLevels*calFac;
@@ -371,14 +397,74 @@ for i = 1:numOfBeams
     sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = D_0(indInFluenceMx)/numOfLevels*calFac;
     
     offset = offset + numOfRaysPerBeam;
+end
 
+sequencing.dynamic = dynamic;
+sequencing.continuousAperture = continuousAperture;
+sequencing.preconditioner = preconditioner;
+
+machineName = unique({stf.machine});
+radiationMode = unique({stf.radiationMode});
+
+if numel(machineName) > 1 || numel(radiationMode) > 1
+    matRad_cfg.dispError('Mixed Sequencing currently not supported for Siochi Leaf Sequencer');
+end
+
+machine = load([radiationMode{1} '_' machineName{1}]);
+if ~isfield(machine, 'constraints')
+    sequencing.constraints = struct( ...
+        'gantryRotationSpeed', [0 6], ... %degree/s
+        'leafSpeed', [0 60], ... %mm/s
+        'monitorUnitRate', [1.25 10]); %MU/s
+else
+    sequencing.constraints = machine.constraints;
+end
+
+if ~isfield(dij,'weightToMU')
+    dij.weightToMU = 100;
+    matRad_cfg.dispWarning('No weight to MU scaling factor defined in dij. Assuming %.1f.',dij.weightToMU);
+end
+
+if dynamic
+    
+    % do arc sequencing
+    sequencing.beam = matRad_arcSequencing(sequencing,stf,dij.weightToMU);
+    
+    % carry variables
+    sequencing.weightToMU       = dij.weightToMU;
+    
+    % get apertureInfo
+    resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
+    
+    %matRad_daoVec2ApertureInfo will interpolate subchildren gantry
+    %segments
+    resultGUI.apertureInfo = matRad_OptimizationProblemVMAT.matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
+    
+    %calculate max leaf speed
+    resultGUI.apertureInfo = matRad_maxLeafSpeed(resultGUI.apertureInfo);
+    
+    %optimize delivery
+    resultGUI = matRad_optDelivery(resultGUI,0);
+    resultGUI.apertureInfo = matRad_maxLeafSpeed(resultGUI.apertureInfo);
+    
+    sequencing.w = resultGUI.apertureInfo.bixelWeights;
+    
+else
+    sequencing.weightToMU = dij.weightToMU;
+    
+    resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
+    
+    resultGUI.apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(resultGUI.apertureInfo,resultGUI.apertureInfo.apertureVector);
+end
+
+if preconditioner
+    % calculate preconditioning factors for the apertures
+    resultGUI.apertureInfo = matRad_preconditionFactors(resultGUI.apertureInfo);
 end
 
 resultGUI.w          = sequencing.w;
 resultGUI.wSequenced = sequencing.w;
-
 resultGUI.sequencing   = sequencing;
-resultGUI.apertureInfo = matRad_sequencing2ApertureInfo(sequencing,stf);
 
 doseSequencedDoseGrid = reshape(dij.physicalDose{1} * sequencing.w,dij.doseGrid.dimensions);
 % interpolate to ct grid for visualiation & analysis
@@ -386,7 +472,7 @@ resultGUI.physicalDose = matRad_interp3(dij.doseGrid.x,dij.doseGrid.y',dij.doseG
                                         doseSequencedDoseGrid, ...
                                         dij.ctGrid.x,dij.ctGrid.y',dij.ctGrid.z);
 
-% if weights exists from an former DAO remove it
+% if weights exists from a former DAO remove it
 if isfield(resultGUI,'wDao')
     resultGUI = rmfield(resultGUI,'wDao');
 end
