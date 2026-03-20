@@ -59,12 +59,10 @@ classdef matRad_RayTracer < handle
             this.lateralCutOff = matRad_cfg.defaults.propDoseCalc.geometricLateralCutOff;
         end
 
-        function [alphas, l, rho, d12, ix] = traceRays(this, ...
-                                                       isocenter, ...
-                                                       resolution, ...
-                                                       sourcePoints, ...
-                                                       targetPoints, ...
-                                                       cubes)
+        function [alphas, l, rhoTmp, d12, ix] = traceRays(this, ...
+                                                          isocenter, ...
+                                                          sourcePoints, ...
+                                                          targetPoints)
 
             % Default trivial implementation based on traceRay
             nRays = size(targetPoints, 1);
@@ -78,24 +76,39 @@ classdef matRad_RayTracer < handle
                 nSources = nRays;
             end
 
+            nCubes = numel(this.cubes);
+
+            rhoTmp = cell(nRays, nCubes);
+            alphas = cell(nRays, 1);
+            l = cell(nRays, 1);
+            ix = cell(nRays, 1);
+            d12 = NaN(nRays, 1);
             for r = 1:nRays
-                [alphas{r}, l{r}, rho{d12}, ix{r}] = this.traceRay(isocenter, resolution, sourcePoints(r, :), targetPoints(r, :), cubes);
+                [alphas{r}, l{r}, rhoTmp(r, :), d12(r), ix{r}] = this.traceRay(isocenter, sourcePoints(r, :), targetPoints(r, :));
             end
 
             % pad with NaN values
-            numval = cellfun(@numel, ix);
-            maxnumval = max(numval);
+            maxnumalphas = max(cellfun(@numel, alphas));
+            maxnumix = max(cellfun(@numel, ix));
 
-            nanpad = @(x) [x(1:end), NaN(maxnumval - length(x), 1)];
-
+            nanpad = @(x, maxval) [x(1:end), NaN(1, maxnumalphas - length(x))];
             alphas = cellfun(nanpad, alphas, 'UniformOutput', false);
+            nanpad = @(x) [x(1:end), NaN(1, maxnumix - length(x))];
+
             l = cellfun(nanpad, l, 'UniformOutput', false);
             ix = cellfun(nanpad, ix, 'UniformOutput', false);
+            rhoTmp = cellfun(nanpad, rhoTmp, 'UniformOutput', false);
 
-            for c = 1:numel(cubes)
-                rho{c} = cellfun(nanpad, rho{c}, 'UniformOutput', false);
+            % now make matrices
+            alphas = cell2mat(alphas');
+            l = cell2mat(l');
+            ix = cell2mat(ix');
+
+            rho = cell(1, nCubes);
+            for c = flip(1:nCubes)
+                rho{c} = cell2mat(rhoTmp(:, c));
+                rhoTmp(:, c) = [];
             end
-            % Now the output should be consistent
 
         end
 

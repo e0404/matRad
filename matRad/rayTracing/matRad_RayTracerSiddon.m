@@ -30,6 +30,14 @@ classdef matRad_RayTracerSiddon < matRad_RayTracer
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+    properties
+        vectorized = true % Uses vectorization instead of looping through rays
+    end
+
+    properties (Access = private, Hidden)
+
+    end
+
     methods
 
         function this = matRad_RayTracerSiddon(cubes, grid)
@@ -55,27 +63,32 @@ classdef matRad_RayTracerSiddon < matRad_RayTracer
 
         function [alphas, l, rho, d12, ix] = traceRays(this, ...
                                                        isocenter, ...
-                                                       sourcePoint, ...
-                                                       targetPoint)
+                                                       sourcePoints, ...
+                                                       targetPoints)
 
-            nRays = size(targetPoint, 1);
-            nSources = size(sourcePoint, 1);
+            nRays = size(targetPoints, 1);
+            nSources = size(sourcePoints, 1);
 
             if nSources ~= nRays && nSources ~= 1
                 matRad_cfg = MatRad_Config.instance();
                 matRad_cfg.dispError('Number of source points (%d) needs to be one or equal to number of target points (%d)!', nSources, nRays);
             elseif nSources == 1
-                sourcePoint = repmat(sourcePoint, nRays, 1);
+                sourcePoints = repmat(sourcePoints, nRays, 1);
                 % nSources = nRays;
             end
 
-            rayVec = targetPoint - sourcePoint;
-            sourcePoint = sourcePoint + isocenter;
+            if ~this.vectorized && nRays > 1
+                [alphas, l, rho, d12, ix] = this.traceRays@matRad_RayTracer(isocenter, sourcePoints, targetPoints);
+                return
+            end
+
+            rayVec = targetPoints - sourcePoints;
+            sourcePoints = sourcePoints + isocenter;
 
             % eq 7 & 8
             % Calculate relative distances (alphas) at which intersections
             % occur
-            alphas = this.computeAllAlphas(sourcePoint, rayVec);
+            alphas = this.computeAllAlphas(sourcePoints, rayVec);
 
             % eq 11
             % Calculate the distance from source to target point.
@@ -91,10 +104,10 @@ classdef matRad_RayTracerSiddon < matRad_RayTracer
             % eq 12
             % Calculate the voxel indices: first convert to physical coords
             % and convert to voxel indices
-            sourcePoint = matRad_world2cubeCoords(sourcePoint, this.grid, true);
-            i = round((sourcePoint(:, 1) + alphas_mid .* rayVec(:, 1)) ./ this.grid.resolution.x);
-            j = round((sourcePoint(:, 2) + alphas_mid .* rayVec(:, 2)) ./ this.grid.resolution.y);
-            k = round((sourcePoint(:, 3) + alphas_mid .* rayVec(:, 3)) ./ this.grid.resolution.z);
+            sourcePoints = matRad_world2cubeCoords(sourcePoints, this.grid, true);
+            i = round((sourcePoints(:, 1) + alphas_mid .* rayVec(:, 1)) ./ this.grid.resolution.x);
+            j = round((sourcePoints(:, 2) + alphas_mid .* rayVec(:, 2)) ./ this.grid.resolution.y);
+            k = round((sourcePoints(:, 3) + alphas_mid .* rayVec(:, 3)) ./ this.grid.resolution.z);
 
             % Handle numerical instabilities at the borders.
             i(i < 1) = 1;
