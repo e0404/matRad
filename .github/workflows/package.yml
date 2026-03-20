@@ -19,28 +19,42 @@ env:
     MLM_LICENSE_TOKEN: ${{ secrets.MATLAB_BATCH_TOKEN }}
 
 jobs:
-  build-standalone-linux:
-    name: Build Standalone (Linux)
-    runs-on: ubuntu-latest
+  build-standalone:
+    name: Build Standalone (${{ matrix.platform }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+          - os: windows-latest
+            platform: windows
+          - os: macos-latest
+            platform: macos-silicon
+          - os: macos-15-intel
+            platform: macos-intel
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
-          submodules: 'true'
+          submodules: 'false'
 
       - name: Determine build type
         id: build-type
+        shell: bash
         run: |
           if [[ "${{ github.ref_type }}" == "tag" ]]; then
             echo "is_release=true" >> "$GITHUB_OUTPUT"
-            echo "artifact_name=matRad-standalone-linux-${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+            echo "artifact_name=matRad-standalone-${{ matrix.platform }}-${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
           elif [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.isRelease }}" == "true" ]]; then
             echo "is_release=true" >> "$GITHUB_OUTPUT"
-            echo "artifact_name=matRad-standalone-linux-manual-release" >> "$GITHUB_OUTPUT"
+            echo "artifact_name=matRad-standalone-${{ matrix.platform }}-manual-release" >> "$GITHUB_OUTPUT"
           else
             echo "is_release=false" >> "$GITHUB_OUTPUT"
-            echo "artifact_name=matRad-standalone-linux-dev" >> "$GITHUB_OUTPUT"
+            echo "artifact_name=matRad-standalone-${{ matrix.platform }}-dev" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Install MATLAB with Compiler
