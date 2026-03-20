@@ -230,3 +230,23 @@ assertElementsAlmostEqual(rho{1}, rhoOld{1});
 assertElementsAlmostEqual(rho{2}, rhoOld{2});
 assertElementsAlmostEqual(d12, d12Old);
 assertElementsAlmostEqual(ix, ixOld);
+
+function test_vectorizedVsLoop
+testData = load('photons_testData.mat');
+targetPoints = vertcat(testData.stf(1).ray.targetPoint);
+sourcePoint = testData.stf(1).sourcePoint;
+isocenter = testData.stf(1).isoCenter;
+
+rt = matRad_RayTracerSiddon(testData.ct.cube, testData.ct);
+
+rt.vectorized = true;
+[alphas, l, rho, d12, ix] = rt.traceRays(isocenter, sourcePoint, targetPoints);
+
+rt.vectorized = false;
+[alphasLoop, lLoop, rhoLoop, d12Loop, ixLoop] = rt.traceRays(isocenter, sourcePoint, targetPoints);
+
+assertElementsAlmostEqual(alphas, alphasLoop);
+assertElementsAlmostEqual(l, lLoop);
+assertElementsAlmostEqual(d12, d12Loop);
+assertElementsAlmostEqual(ix, ixLoop);
+assertElementsAlmostEqual(rho{1}, rhoLoop{1});

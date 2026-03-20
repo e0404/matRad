@@ -59,10 +59,10 @@ classdef matRad_RayTracer < handle
             this.lateralCutOff = matRad_cfg.defaults.propDoseCalc.geometricLateralCutOff;
         end
 
-        function [alphas, l, rhoTmp, d12, ix] = traceRays(this, ...
-                                                          isocenter, ...
-                                                          sourcePoints, ...
-                                                          targetPoints)
+        function [alphas, l, rho, d12, ix] = traceRays(this, ...
+                                                       isocenter, ...
+                                                       sourcePoints, ...
+                                                       targetPoints)
 
             % Default trivial implementation based on traceRay
             nRays = size(targetPoints, 1);
@@ -100,9 +100,9 @@ classdef matRad_RayTracer < handle
             rhoTmp = cellfun(nanpad, rhoTmp, 'UniformOutput', false);
 
             % now make matrices
-            alphas = cell2mat(alphas');
-            l = cell2mat(l');
-            ix = cell2mat(ix');
+            alphas = cell2mat(alphas);
+            l = cell2mat(l);
+            ix = cell2mat(ix);
 
             rho = cell(1, nCubes);
             for c = flip(1:nCubes)
