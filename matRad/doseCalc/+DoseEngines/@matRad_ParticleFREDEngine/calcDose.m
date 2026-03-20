@@ -396,7 +396,7 @@ if ~isempty(doseCube)
                 end
 
                 letdCube = cellfun(@(letScen, doseScen) letScen(:) .* doseScen(:), letdCube, doseCube, 'UniformOutput', false);
-                
+
                 for scenIdx = 1:this.multScen.totNumScen
                     dij.mLETDose{this.multScen.linearMask(scenIdx, 1), this.multScen.linearMask(scenIdx, 2), this.multScen.linearMask(scenIdx, 3)} = letdCube{scenIdx}(:);
                 end
@@ -411,17 +411,17 @@ if ~isempty(doseCube)
         end
 
     else
-        doseCube = cellfun(@(doseScen) doseScen(:, fredOrder), doseCube, 'UniformOutput',false);
+        doseCube = cellfun(@(doseScen) doseScen(:, fredOrder), doseCube, 'UniformOutput', false);
         % Dose cube
         % When scoring dij, FRED internaly normalizes to 1
         dij.physicalDose = cellfun(@(doseScen) this.conversionFactor * doseScen, doseCube, 'UniformOutput', false);
 
         % LET cube
         if this.calcLET
-            letdCube = cellfun(@(letdScen) letdScen(:, fredOrder), letdCube, 'UniformOutput',false);
+            letdCube = cellfun(@(letdScen) letdScen(:, fredOrder), letdCube, 'UniformOutput', false);
 
             % We need LETd * dose as well
-            dij.mLETDose = cellfun(@(dose, letd) dose .* letd, dij.physicalDose, letdCube, 'UniformOutput',false);
+            dij.mLETDose = cellfun(@(dose, letd) dose .* letd, dij.physicalDose, letdCube, 'UniformOutput', false);
         end
     end
 
@@ -429,8 +429,7 @@ if ~isempty(doseCube)
     if this.calcBioDose
 
         if this.calcDoseDirect
-
-            for scenIdx=1:this.multScen.totNumScen
+            for scenIdx = 1:this.multScen.totNumScen
 
                 tmpKernel.LET = letdCube{scenIdx}(this.VdoseGrid);
 
@@ -451,11 +450,9 @@ if ~isempty(doseCube)
                 dij.mAlphaDose{scenIdx}(this.VdoseGrid)     = tmpBixel.alpha .* dij.physicalDose{scenIdx}(this.VdoseGrid);
                 dij.mSqrtBetaDose{scenIdx}(this.VdoseGrid)  = sqrt(tmpBixel.beta) .* dij.physicalDose{scenIdx}(this.VdoseGrid);
             end
-
         else
-            
-            for scenIdx=1:this.multScen.totNumScen
-                
+            for scenIdx = 1:this.multScen.totNumScen
+
                 currLetdCube = letdCube{scenIdx};
                 indices = find(currLetdCube);
                 matSize = size(currLetdCube);
@@ -479,9 +476,5 @@ if ~isempty(doseCube)
             end
         end
     end
-end
-
-dij = this.finalizeDose(dij);
-
-cd(currFolder);
+    cd(currFolder);
 end

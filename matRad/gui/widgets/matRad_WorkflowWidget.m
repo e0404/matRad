@@ -687,14 +687,9 @@ classdef matRad_WorkflowWidget < matRad_Widget
             else
                 figDialog = dialog('Position', [ceil(ScreenSize(3) / 2) ceil(ScreenSize(4) / 2) Width Height], 'Name', 'Provide result name', 'Color', [0.5 0.5 0.5]);
 
-                uicontrol('Parent', figDialog, ...
-                          'Style', 'text', ...
-                          'Position', [20 Height - (0.35 * Height) 350 60], ...
-                          'String', 'Please provide a decriptive name for your optimization result:', 'FontSize', 10, 'BackgroundColor', [0.5 0.5 0.5]);
-
                 try
                     pln = evalin('base', 'pln');
-                    numOfBeams = pln.propStf.numOfBeams;
+                    numOfBeams = evalin('base', 'numel(stf)');
                     radMode = pln.radiationMode;
                     fractions = pln.numOfFractions;
 

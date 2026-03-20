@@ -37,8 +37,7 @@ pln.propStf.bixelWidth              = 5; % [mm] / also corresponds to lateral sp
 pln.propStf.longitudinalSpotSpacing = 3;
 pln.propStf.gantryAngles            = 0; % [?] 
 pln.propStf.couchAngles             = 0; % [?]
-pln.propStf.numOfBeams              = numel(pln.propStf.gantryAngles);
-pln.propStf.isoCenter               = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+pln.propStf.isoCenter               = matRad_getIsoCenter(cst,ct,0);
 %pln.propStf.isoCenter       = [51 0 51];
                             
 % dose calculation settings
