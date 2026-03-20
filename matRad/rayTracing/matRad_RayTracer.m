@@ -30,6 +30,7 @@ classdef matRad_RayTracer < handle
 
     properties
         lateralCutOff
+        forcePrecision = [] % override precision (double or single), otherwise inherited
     end
 
     properties (Access = protected)
@@ -64,6 +65,12 @@ classdef matRad_RayTracer < handle
                                                        sourcePoints, ...
                                                        targetPoints)
 
+            if ~isempty(this.forcePrecision)
+                isocenter = cast(isocenter, this.forcePrecision);
+                sourcePoints = cast(sourcePoints, this.forcePrecision);
+                targetPoints = cast(targetPoints, this.forcePrecision);
+            end
+
             % Default trivial implementation based on traceRay
             nRays = size(targetPoints, 1);
             nSources = size(sourcePoints, 1);
@@ -82,7 +89,7 @@ classdef matRad_RayTracer < handle
             alphas = cell(nRays, 1);
             l = cell(nRays, 1);
             ix = cell(nRays, 1);
-            d12 = NaN(nRays, 1);
+            d12 = NaN(nRays, 1, matRad_underlyingTypeCompat(isocenter));
             for r = 1:nRays
                 [alphas{r}, l{r}, rhoTmp(r, :), d12(r), ix{r}] = this.traceRay(isocenter, sourcePoints(r, :), targetPoints(r, :));
             end

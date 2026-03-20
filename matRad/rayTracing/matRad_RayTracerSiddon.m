@@ -66,6 +66,12 @@ classdef matRad_RayTracerSiddon < matRad_RayTracer
                                                        sourcePoints, ...
                                                        targetPoints)
 
+            if ~isempty(this.forcePrecision)
+                isocenter = cast(isocenter, this.forcePrecision);
+                sourcePoints = cast(sourcePoints, this.forcePrecision);
+                targetPoints = cast(targetPoints, this.forcePrecision);
+            end
+
             nRays = size(targetPoints, 1);
             nSources = size(sourcePoints, 1);
 

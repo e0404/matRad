@@ -232,6 +232,7 @@ assertElementsAlmostEqual(d12, d12Old);
 assertElementsAlmostEqual(ix, ixOld);
 
 function test_vectorizedVsLoop
+
 testData = load('photons_testData.mat');
 targetPoints = vertcat(testData.stf(1).ray.targetPoint);
 sourcePoint = testData.stf(1).sourcePoint;
@@ -250,3 +251,37 @@ assertElementsAlmostEqual(l, lLoop);
 assertElementsAlmostEqual(d12, d12Loop);
 assertElementsAlmostEqual(ix, ixLoop);
 assertElementsAlmostEqual(rho{1}, rhoLoop{1});
+
+function test_singleVsDouble
+testData = load('photons_testData.mat');
+targetPoints = vertcat(testData.stf(1).ray.targetPoint);
+sourcePoint = testData.stf(1).sourcePoint;
+isocenter = testData.stf(1).isoCenter;
+
+rt = matRad_RayTracerSiddon(testData.ct.cube, testData.ct);
+
+% Test force double
+rt.forcePrecision = 'double';
+[alphas, l, rho, d12, ix] = rt.traceRays(isocenter, sourcePoint, targetPoints);
+
+assertTrue(isa(alphas, 'double'));
+assertTrue(isa(l, 'double'));
+assertTrue(isa(d12, 'double'));
+assertTrue(isa(ix, 'double'));
+assertTrue(isa(rho{1}, 'double'));
+
+% test force single
+rt.forcePrecision = 'single';
+[alphasSingle, lSingle, rhoSingle, d12Single, ixSingle] = rt.traceRays(isocenter, sourcePoint, targetPoints);
+
+assertTrue(isa(alphasSingle, 'single'));
+assertTrue(isa(lSingle, 'single'));
+assertTrue(isa(d12Single, 'single'));
+assertTrue(isa(ixSingle, 'double'));
+assertTrue(isa(rhoSingle{1}, 'single'));
+
+assertElementsAlmostEqual(alphasSingle, alphas);
+assertElementsAlmostEqual(lSingle, l);
+assertElementsAlmostEqual(d12Single, d12);
+assertElementsAlmostEqual(ixSingle, ix);
+assertElementsAlmostEqual(rhoSingle{1}, rho{1});
