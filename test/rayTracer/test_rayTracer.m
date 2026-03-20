@@ -1,222 +1,232 @@
 function test_suite = test_rayTracer
 
-    test_functions=localfunctions();
+test_functions = localfunctions();
 
-    initTestSuite;
+initTestSuite;
 
 function test_siddonRayTracer
-    % test funcion with dummy nummerical example
+% test function with dummy numerical example
 
-    cubes{1} = ones([2,2,2]);
-    cubes{2} = cubes{1};
-    cubes{2}(:,:,2) = [2,2; 2,2];
+cubes{1} = ones([2, 2, 2]);
+cubes{2} = cubes{1};
+cubes{2}(:, :, 2) = [2, 2; 2, 2];
 
-    resolution.x = 1;
-    resolution.y = 1;
-    resolution.z = 1;
+resolution.x = 1;
+resolution.y = 1;
+resolution.z = 1;
 
-    grid.resolution = resolution;
-    grid.dimensions = size(cubes{1});
+grid.resolution = resolution;
+grid.dimensions = size(cubes{1});
 
-    isocenter   = [0,0,0];
-    sourcePoint = [-1, -1, -2];
-    targetPoint = [ 0,  0, 2];
+isocenter   = [0, 0, 0];
+sourcePoint = [-1, -1, -2];
+targetPoint = [0,  0, 2];
 
-    %Now we will have voxels centers at -1 0 (default matRad world
-    %coordinates, meaning the isocenter will point into the [2 2 2] voxel)
-    %A ray starting at -1 -1 -2 and ending at 0 0 1 sees the first plane at
-    %z = -1.5 and the last plae at z=0.5. When intersecting the first
-    %plane, it will have passed 1/8 of its length.
+% Now we will have voxels centers at -1 0 (default matRad world
+% coordinates, meaning the isocenter will point into the [2 2 2] voxel)
+% A ray starting at -1 -1 -2 and ending at 0 0 1 sees the first plane at
+% z = -1.5 and the last plae at z=0.5. When intersecting the first
+% plane, it will have passed 1/8 of its length.
 
-    rt = matRad_RayTracerSiddon(cubes,grid);
-    [alphas,l,rho,d12,ix] = rt.traceRay(isocenter,sourcePoint,targetPoint);
+rt = matRad_RayTracerSiddon(cubes, grid);
+[alphas, l, rho, d12, ix] = rt.traceRay(isocenter, sourcePoint, targetPoint);
 
+% test Output types
+assertTrue(isvector(alphas));
+assertTrue(isvector(l));
+assertTrue(iscell(rho));
+assertTrue(isfloat(d12));
+assertTrue(isvector(ix));
 
-    % test Output types
-    assertTrue(isvector(alphas));
-    assertTrue(isvector(l));
-    assertTrue(iscell(rho));
-    assertTrue(isfloat(d12));  
-    assertTrue(isvector(ix));
+% test numerical Output
+grid = matRad_getWorldAxes(grid);
+rayVec = targetPoint - sourcePoint;
+rayLength = norm(rayVec);
+% the ray will intersect z at the coordinates of the z voxel boundaries
 
-    % test numerical Output
-    grid = matRad_getWorldAxes(grid);
-    rayVec = targetPoint - sourcePoint;
-    rayLength = norm(rayVec);
-    % the ray will intersect z at the coordinates of the z voxel boundaries
+entryPoints = [sourcePoint + rayVec * 1 / 8
+               sourcePoint + rayVec * 3 / 8
+               sourcePoint + rayVec * 5 / 8];
+entryPoints = entryPoints - sourcePoint;
+alphasNum   = sqrt(sum(entryPoints.^2, 2)) ./ rayLength;
+lNum        = [rayLength / 4, rayLength / 4];
+rhoNum{1}   = [1, 1];
+rhoNum{2}   = [1, 2];
+d12Num      = rayLength;
+ixNum       = [1, 8];
 
-    entryPoints = [sourcePoint + rayVec * 1/8;
-                   sourcePoint + rayVec * 3/8;
-                   sourcePoint + rayVec * 5/8];
-    entryPoints = entryPoints - sourcePoint;
-    alphasNum   = sqrt(sum(entryPoints.^2,2))./rayLength;
-    lNum        = [rayLength/4,rayLength/4];
-    rhoNum{1}   = [1,1];
-    rhoNum{2}   = [1,2];
-    d12Num      = rayLength;
-    ixNum       = [1,8];
+assertElementsAlmostEqual(alphasNum', alphas);
+assertElementsAlmostEqual(lNum, l);
+assertElementsAlmostEqual(rhoNum{1}, rho{1});
+assertElementsAlmostEqual(rhoNum{2}, rho{2});
+assertElementsAlmostEqual(d12Num, d12);
+assertEqual(ixNum, ix);
 
-    assertElementsAlmostEqual(alphasNum',alphas)
-    assertElementsAlmostEqual(lNum,l)
-    assertElementsAlmostEqual(rhoNum{1},rho{1})
-    assertElementsAlmostEqual(rhoNum{2},rho{2})
-    assertElementsAlmostEqual(d12Num,d12)
-    assertEqual(ixNum,ix)
-    
-    % test the old deprecated function with dummy nummerical example
-    % It expects cube coords for the isocenter
+% test the old deprecated function with dummy numerical example
+% It expects cube coords for the isocenter
 
-    isocenterCube = matRad_world2cubeCoords(isocenter,grid);
-    [alphasOld,lOld,rhoOld,d12Old,ixOld] = matRad_siddonRayTracer(isocenterCube,...
-            resolution, ...
-            sourcePoint, ...
-            targetPoint, ...
-            cubes);
+isocenterCube = matRad_world2cubeCoords(isocenter, grid);
+[alphasOld, lOld, rhoOld, d12Old, ixOld] = matRad_siddonRayTracer(isocenterCube, ...
+                                                                  resolution, ...
+                                                                  sourcePoint, ...
+                                                                  targetPoint, ...
+                                                                  cubes);
 
-    assertElementsAlmostEqual(alphas, alphasOld)
-    assertElementsAlmostEqual(l, lOld)
-    assertElementsAlmostEqual(rho{1},rhoOld{1})
-    assertElementsAlmostEqual(rho{2},rhoOld{2})
-    assertElementsAlmostEqual(d12,d12Old)
-    assertEqual(ixNum,ixOld)
+assertElementsAlmostEqual(alphas, alphasOld);
+assertElementsAlmostEqual(l, lOld);
+assertElementsAlmostEqual(rho{1}, rhoOld{1});
+assertElementsAlmostEqual(rho{2}, rhoOld{2});
+assertElementsAlmostEqual(d12, d12Old);
+assertEqual(ixNum, ixOld);
 
-    function test_rayDoesNotHitCT
-        
-        cubes{1} = ones([2,2,2]);
+function test_rayDoesNotHitCT
 
-        resolution.x = 1;
-        resolution.y = 1;
-        resolution.z = 1;
+cubes{1} = ones([2, 2, 2]);
 
-        grid.resolution = resolution;
-        grid.dimensions = size(cubes{1});
+resolution.x = 1;
+resolution.y = 1;
+resolution.z = 1;
 
-        isocenter   = [-2,-2,-2];
-        sourcePoint = [2.5, 2.5 -4];
-        targetPoint = [ 10, 10, 6];
+grid.resolution = resolution;
+grid.dimensions = size(cubes{1});
 
-        isocenterCube = matRad_world2cubeCoords(isocenter,grid);
-        [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(isocenterCube,...
-                resolution, ...
-                sourcePoint, ...
-                targetPoint, ...
-                cubes);
+isocenter   = [-2, -2, -2];
+sourcePoint = [2.5, 2.5 -4];
+targetPoint = [10, 10, 6];
 
+rt = matRad_RayTracerSiddon(cubes, grid);
+[alphas, l, rho, d12, ix] = rt.traceRay(isocenter, sourcePoint, targetPoint);
 
-        % test numerical Output
-        alphasNum   = [];
-        lNum        = [];
-        rhoNum{1}   = [];
-        d12Num      = norm(sourcePoint - targetPoint);
-        ixNum       = [];
+% test numerical Output
+d12Num      = norm(sourcePoint - targetPoint);
 
-        
-        assertElementsAlmostEqual(alphasNum',alphas)
-        assertElementsAlmostEqual(lNum,l)
-        assertElementsAlmostEqual(rhoNum{1},rho{1})
-        assertElementsAlmostEqual(d12Num,d12)
-        assertEqual(ixNum,ix)
+assertTrue(isempty(alphas));
+assertTrue(isempty(l));
+assertTrue(isempty(ix));
+assertTrue(isempty(rho{1}));
+assertElementsAlmostEqual(d12Num, d12);
 
-        sourcePoint = [10, 10 -4];
-        targetPoint = [ 10, 10, 6];
-        d12Num      = 10;
+% deprecated call using cube coordinates
+isocenterCube = matRad_world2cubeCoords(isocenter, grid);
+[alphasOld, lOld, rhoOld, d12Old, ixOld] = matRad_siddonRayTracer(isocenterCube, ...
+                                                                  resolution, ...
+                                                                  sourcePoint, ...
+                                                                  targetPoint, ...
+                                                                  cubes);
 
-        [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(isocenterCube,...
-                resolution, ...
-                sourcePoint, ...
-                targetPoint, ...
-                cubes);
-        
-        assertElementsAlmostEqual(alphasNum',alphas)
-        assertElementsAlmostEqual(lNum,l)
-        assertElementsAlmostEqual(rhoNum{1},rho{1})
-        assertElementsAlmostEqual(d12Num,d12)
-        assertEqual(ixNum,ix)
+assertElementsAlmostEqual(alphas, alphasOld);
+assertElementsAlmostEqual(l, lOld);
+assertElementsAlmostEqual(rho{1}, rhoOld{1});
+assertElementsAlmostEqual(d12, d12Old);
+assertEqual(ix, ixOld);
 
-    function test_rayHitsAtBoundary
+function test_rayHitsAtBoundary
 
-        cubes{1} = ones([2,2,2]);
-        cubes{2} = cubes{1};
-        cubes{2}(:,:,2) = [2,2; 2,2];
-    
-        resolution.x = 1;
-        resolution.y = 1;
-        resolution.z = 1;
-    
-        isocenter   = [0,0,0];
-        sourcePoint = [2.5, 2.5, -4];
-        targetPoint = [2.5, 2.5, 6];
-    
-       
-        [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(isocenter,...
-                resolution, ...
-                sourcePoint, ...
-                targetPoint, ...
-                cubes);
-        
-        % test Output types
-        assertTrue(isvector(alphas));
-        assertTrue(isvector(l));
-        assertTrue(iscell(rho));
-        assertTrue(isfloat(d12));  
-        assertTrue(isvector(ix));
+cubes{1} = ones([2, 2, 2]);
+cubes{2} = cubes{1};
+cubes{2}(:, :, 2) = [2, 2; 2, 2];
 
-        % test numerical Output
-        entryPoints = [2.5, 2.5, 0.5;
-                       2.5, 2.5, 1.5;
-                       2.5, 2.5, 2.5];
-        entryPoints = entryPoints - sourcePoint;
-        alphasNum   = sqrt(sum(entryPoints.^2,2))./10;
-        lNum        = [1,1];
-        rhoNum{1}   = [1,1];
-        rhoNum{2}   = [1,2];
-        d12Num      = 10;
-        ixNum       = [4,8];
+resolution.x = 1;
+resolution.y = 1;
+resolution.z = 1;
 
-        assertElementsAlmostEqual(alphasNum',alphas)
-        assertElementsAlmostEqual(lNum,l)
-        assertElementsAlmostEqual(rhoNum{1},rho{1})
-        assertElementsAlmostEqual(rhoNum{2},rho{2})
-        assertElementsAlmostEqual(d12Num,d12)
-        assertEqual(ixNum,ix)
+isocenter   = [-2, -2, -2];
+sourcePoint = [2.5, 2.5, -4];
+targetPoint = [2.5, 2.5, 6];
 
-    
-        function test_rayHitsAtCorner
+grid.resolution = resolution;
+grid.dimensions = size(cubes{1});
 
-            cubes{1} = ones([2,2,2]);
-            cubes{2} = cubes{1};
-            cubes{2}(:,:,2) = [2,2; 2,2];
-        
-            resolution.x = 1;
-            resolution.y = 1;
-            resolution.z = 1;
-        
-            isocenter   = [0,0,0];
-            sourcePoint = [1.5, 1.5, -4];
-            targetPoint = [3.5, 3.5, 5];
-        
-           
-            [alphas,l,rho,d12,ix] = matRad_siddonRayTracer(isocenter,...
-                    resolution, ...
-                    sourcePoint, ...
-                    targetPoint, ...
-                    cubes);
-        
-    
-            % test numerical Output
-            alphasNum   = 0.5;
-            ixNum       = 1:0;
-            lNum        = [];
-            rhoNum{1}   = cubes{1}(ixNum);
-            rhoNum{2}   = cubes{2}(ixNum);
-            d12Num      = norm(sourcePoint - targetPoint);
+rt = matRad_RayTracerSiddon(cubes, grid);
+[alphas, l, rho, d12, ix] = rt.traceRay(isocenter, sourcePoint, targetPoint);
 
-    
-            assertElementsAlmostEqual(alphasNum',alphas)
-            assertElementsAlmostEqual(lNum,l)
-            assertElementsAlmostEqual(rhoNum{1},rho{1})
-            assertElementsAlmostEqual(rhoNum{2},rho{2})
-            assertElementsAlmostEqual(d12Num,d12)
-            assertEqual(ixNum,ix)
+% test Output types
+assertTrue(isvector(alphas));
+assertTrue(isvector(l));
+assertTrue(iscell(rho));
+assertTrue(isfloat(d12));
+assertTrue(isvector(ix));
 
-        
+% test numerical Output
+entryPoints = [2.5, 2.5, 0.5
+               2.5, 2.5, 1.5
+               2.5, 2.5, 2.5];
+entryPoints = entryPoints - sourcePoint;
+alphasNum   = sqrt(sum(entryPoints.^2, 2)) ./ 10;
+lNum        = [1, 1];
+rhoNum{1}   = [1, 1];
+rhoNum{2}   = [1, 2];
+d12Num      = 10;
+ixNum       = [4, 8];
+
+assertElementsAlmostEqual(alphasNum', alphas);
+assertElementsAlmostEqual(lNum, l);
+assertElementsAlmostEqual(rhoNum{1}, rho{1});
+assertElementsAlmostEqual(rhoNum{2}, rho{2});
+assertElementsAlmostEqual(d12Num, d12);
+assertEqual(ixNum, ix);
+
+% deprecated call using cube coordinates
+isocenterCube = matRad_world2cubeCoords(isocenter, grid);
+[alphasOld, lOld, rhoOld, d12Old, ixOld] = matRad_siddonRayTracer(isocenterCube, ...
+                                                                  resolution, ...
+                                                                  sourcePoint, ...
+                                                                  targetPoint, ...
+                                                                  cubes);
+
+assertElementsAlmostEqual(alphas, alphasOld);
+assertElementsAlmostEqual(l, lOld);
+assertElementsAlmostEqual(rho{1}, rhoOld{1});
+assertElementsAlmostEqual(rho{2}, rhoOld{2});
+assertElementsAlmostEqual(d12, d12Old);
+assertEqual(ix, ixOld);
+
+function test_rayHitsAtCorner
+
+cubes{1} = ones([2, 2, 2]);
+cubes{2} = cubes{1};
+cubes{2}(:, :, 2) = [2, 2; 2, 2];
+
+resolution.x = 1;
+resolution.y = 1;
+resolution.z = 1;
+
+isocenter   = [-2, -2, -2];
+sourcePoint = [1.5, 1.5, -4];
+targetPoint = [3.5, 3.5, 5];
+
+grid.resolution = resolution;
+grid.dimensions = size(cubes{1});
+
+rt = matRad_RayTracerSiddon(cubes, grid);
+[alphas, l, rho, d12, ix] = rt.traceRay(isocenter, sourcePoint, targetPoint);
+
+% test numerical Output
+alphasNum   = 0.5;
+ixNum       = 1:0;
+rhoNum{1}   = cubes{1}(ixNum);
+rhoNum{2}   = cubes{2}(ixNum);
+d12Num      = norm(sourcePoint - targetPoint);
+
+assertElementsAlmostEqual(alphasNum', alphas);
+assertTrue(isempty(l));
+assertEqual(size(l), [1 0]);
+assertElementsAlmostEqual(rhoNum{1}, rho{1});
+assertElementsAlmostEqual(rhoNum{2}, rho{2});
+assertElementsAlmostEqual(d12Num, d12);
+assertEqual(ixNum, ix);
+
+% deprecated call using cube coordinates
+isocenterCube = matRad_world2cubeCoords(isocenter, grid);
+[alphasOld, lOld, rhoOld, d12Old, ixOld] = matRad_siddonRayTracer(isocenterCube, ...
+                                                                  resolution, ...
+                                                                  sourcePoint, ...
+                                                                  targetPoint, ...
+                                                                  cubes);
+
+assertElementsAlmostEqual(alphas, alphasOld);
+assertElementsAlmostEqual(l, lOld);
+assertElementsAlmostEqual(rho{1}, rhoOld{1});
+assertElementsAlmostEqual(rho{2}, rhoOld{2});
+assertElementsAlmostEqual(d12, d12Old);
+assertElementsAlmostEqual(ix, ixOld);

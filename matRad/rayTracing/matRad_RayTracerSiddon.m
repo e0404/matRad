@@ -162,6 +162,9 @@ classdef matRad_RayTracerSiddon < matRad_RayTracer
             alphaLimits(:, 1) = max([zeros(nRays, 1) min(aX_1, aX_end) min(aY_1, aY_end) min(aZ_1, aZ_end)], [], 2);
             alphaLimits(:, 2) = min([ones(nRays, 1) max(aX_1, aX_end) max(aY_1, aY_end) max(aZ_1, aZ_end)], [], 2);
 
+            % Rays that miss the geometry: alphaMin >= alphaMax before the sort destroys this information
+            alphaLimits(alphaLimits(:, 1) > alphaLimits(:, 2), :) = NaN;
+
             % eq 6
             % Calculate the range of indices who gives parametric values for
             % intersected planes.
