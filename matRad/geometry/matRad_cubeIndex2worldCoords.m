@@ -35,7 +35,10 @@ end
 
 % Check if we have linear indices
 if size(cubeIx, 2) == 1
-    [cubeIx(:, 1), cubeIx(:, 2), cubeIx(:, 3)] = ind2sub(gridStruct.dimensions, cubeIx);
+    [s1, s2, s3] = ind2sub(gridStruct.dimensions, cubeIx);
+    cubeIx = [s2, s1, s3];
+else
+    cubeIx = cubeIx(:, [2 1 3]);
 end
 
 % Check if we have the right dimensions
@@ -45,7 +48,7 @@ if size(cubeIx, 2) ~= 3
 end
 
 % First create cube coordinates
-coord = double(cubeIx(:, [2 1 3])) .* [gridStruct.resolution.x gridStruct.resolution.y gridStruct.resolution.z];
+coord = double(cubeIx) .* [gridStruct.resolution.x gridStruct.resolution.y gridStruct.resolution.z];
 coord = matRad_cubeCoords2worldCoords(coord, gridStruct, false);
 
 end
