@@ -93,7 +93,7 @@ end
 if(minNrParticlesIES ~= 0)   
     
     % Find IES values
-    for i = 1:pln.propStf.numOfBeams 
+    for i = 1:numel(stf) 
         iesArray = [];
         for j = 1:stf(i).numOfRays
             iesArray = unique([iesArray stf(i).ray(j).energy]);

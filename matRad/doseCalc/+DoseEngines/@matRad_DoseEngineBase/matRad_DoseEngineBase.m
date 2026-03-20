@@ -214,6 +214,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             this.directWeights = w;
             this.calcDoseDirect = true;
             dij = this.calcDose(ct,cst,stf);
+            dij = this.finalizeDose(dij);
 
             % calculate cubes; use uniform weights here, weighting with actual fluence 
             % already performed in dij construction
@@ -273,6 +274,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         function dij = calcDoseInfluence(this,ct,cst,stf)
             this.calcDoseDirect = false;
             dij = this.calcDose(ct,cst,stf);
+            dij = this.finalizeDose(dij);
         end
         function setDefaults(this)
             % future code for property validation on creation here

@@ -1,5 +1,5 @@
 function dij = calcDose(this, ct, cst, stf)
-% Function to forward dose calculation to FRED and inport the results
+% Function to forward dose calculation to FRED and import the results
 % in matRad
 %
 % call
@@ -120,7 +120,8 @@ for i = 1:length(stf)
     monteCarloBaseData     = emittanceBaseData.monteCarloData(energyIdxInEmittance);
 
     stfFred(i).nominalEnergies = nominalEnergies;
-    stfFred(i).energies        = [monteCarloBaseData.MeanEnergy] .* this.numOfNucleons .* this.primaryMass;        % Note for generic baseData: the kernels were simulated with equivalent of primaryMass = 1
+    % Note for generic baseData: the kernels were simulated with equivalent of primaryMass = 1
+    stfFred(i).energies        = [monteCarloBaseData.MeanEnergy] .* this.numOfNucleons .* this.primaryMass;
     stfFred(i).energySpread    = [monteCarloBaseData.EnergySpread];
     stfFred(i).energySpreadMeV = [monteCarloBaseData.EnergySpread] .* [monteCarloBaseData.MeanEnergy] / 100;
     stfFred(i).FWHMs = 2.355 * [monteCarloBaseData.SpotSize1x];
@@ -128,7 +129,7 @@ for i = 1:length(stf)
     stfFred(i).energySpreadFWHMMev    = 2.355 * stfFred(i).energySpreadMeV;
     stfFred(i).BAMStoIsoDist   = emittanceBaseData.nozzleToIso;
 
-    % Select the parametrs for source model
+    % Select the parameters for source model
     switch this.sourceModel
 
         case 'gaussian'
@@ -213,8 +214,10 @@ for i = 1:length(stf)
 
                 % This is position of the spot at -BAMsToIso distance
                 % (zero is at IsoCenter depth).
-                stfFred(i).energyLayer(k).rayPosX         = [stfFred(i).energyLayer(k).rayPosX, getPointAtBAMS(targetX, sourceX, distance, stfFred(i).BAMStoIsoDist)];
-                stfFred(i).energyLayer(k).rayPosY         = [stfFred(i).energyLayer(k).rayPosY, getPointAtBAMS(targetY, sourceY, distance, stfFred(i).BAMStoIsoDist)];
+                stfFred(i).energyLayer(k).rayPosX         = [stfFred(i).energyLayer(k).rayPosX, ...
+                                                             getPointAtBAMS(targetX, sourceX, distance, stfFred(i).BAMStoIsoDist)];
+                stfFred(i).energyLayer(k).rayPosY         = [stfFred(i).energyLayer(k).rayPosY, ...
+                                                             getPointAtBAMS(targetY, sourceY, distance, stfFred(i).BAMStoIsoDist)];
 
                 stfFred(i).energyLayer(k).rayDivX         = [stfFred(i).energyLayer(k).rayDivX, divergenceX];
                 stfFred(i).energyLayer(k).rayDivY         = [stfFred(i).energyLayer(k).rayDivY, divergenceY];
@@ -349,9 +352,11 @@ switch this.externalCalculation
             end
 
             % read simulation output
-            [doseCube{scenIdx}, letdCube{scenIdx}] = this.readSimulationOutput(strrep(this.MCrunFolder, runFolderName, sprintf('%s%s', runFolderName, tailRun)), ...
-                                                                               this.calcDoseDirect, ...
-                                                                               logical(this.calcLET));
+            [doseCube{scenIdx}, letdCube{scenIdx}] = ...
+                this.readSimulationOutput(strrep(this.MCrunFolder, ...
+                                                 runFolderName, sprintf('%s%s', runFolderName, tailRun)), ...
+                                          this.calcDoseDirect, ...
+                                          logical(this.calcLET));
         end
 
     otherwise % A path for loading has been provided
@@ -369,7 +374,8 @@ switch this.externalCalculation
             matRad_cfg.dispInfo(['Reading simulation data from: ', strrep(scenarioRunFolder, '\', '\\'), '\n']);
 
             % read simulation output
-            [doseCube{scenIdx}, letdCube{scenIdx}, loadFileName] = this.readSimulationOutput(scenarioRunFolder, this.calcDoseDirect, logical(this.calcLET));
+            [doseCube{scenIdx}, letdCube{scenIdx}, loadFileName] = ...
+                this.readSimulationOutput(scenarioRunFolder, this.calcDoseDirect, logical(this.calcLET));
 
             dij.externalCalculationLodPath{scenIdx} = loadFileName;
         end
@@ -377,13 +383,14 @@ switch this.externalCalculation
 end
 
 if ~isempty(doseCube)
+    scenMaskIdx = num2cell(this.multScen.linearMask(scenIdx, :));
 
     % Fill dij
     if this.calcDoseDirect
         % Dose cube
         if all(cellfun(@(cube) isequal(size(cube), this.doseGrid.dimensions), doseCube))
             for scenIdx = 1:this.multScen.totNumScen
-                dij.physicalDose{this.multScen.linearMask(scenIdx, 1), this.multScen.linearMask(scenIdx, 2), this.multScen.linearMask(scenIdx, 3)} = doseCube{scenIdx}(:);
+                dij.physicalDose{scenMaskIdx{:}} = doseCube{scenIdx}(:);
             end
         end
 
@@ -392,13 +399,13 @@ if ~isempty(doseCube)
             if all(cellfun(@(cube) isequal(size(cube), this.doseGrid.dimensions), letdCube))
 
                 for scenIdx = 1:this.multScen.totNumScen
-                    dij.mLETd{this.multScen.linearMask(scenIdx, 1), this.multScen.linearMask(scenIdx, 2), this.multScen.linearMask(scenIdx, 3)} = letdCube{scenIdx}(:);
+                    dij.mLETd{scenMaskIdx{:}} = letdCube{scenIdx}(:);
                 end
 
                 letdCube = cellfun(@(letScen, doseScen) letScen(:) .* doseScen(:), letdCube, doseCube, 'UniformOutput', false);
-                
+
                 for scenIdx = 1:this.multScen.totNumScen
-                    dij.mLETDose{this.multScen.linearMask(scenIdx, 1), this.multScen.linearMask(scenIdx, 2), this.multScen.linearMask(scenIdx, 3)} = letdCube{scenIdx}(:);
+                    dij.mLETDose{scenMaskIdx{:}} = letdCube{scenIdx}(:);
                 end
             end
         end
@@ -411,17 +418,17 @@ if ~isempty(doseCube)
         end
 
     else
-        doseCube = cellfun(@(doseScen) doseScen(:, fredOrder), doseCube, 'UniformOutput',false);
+        doseCube = cellfun(@(doseScen) doseScen(:, fredOrder), doseCube, 'UniformOutput', false);
         % Dose cube
-        % When scoring dij, FRED internaly normalizes to 1
+        % When scoring dij, FRED internally normalizes to 1
         dij.physicalDose = cellfun(@(doseScen) this.conversionFactor * doseScen, doseCube, 'UniformOutput', false);
 
         % LET cube
         if this.calcLET
-            letdCube = cellfun(@(letdScen) letdScen(:, fredOrder), letdCube, 'UniformOutput',false);
+            letdCube = cellfun(@(letdScen) letdScen(:, fredOrder), letdCube, 'UniformOutput', false);
 
             % We need LETd * dose as well
-            dij.mLETDose = cellfun(@(dose, letd) dose .* letd, dij.physicalDose, letdCube, 'UniformOutput',false);
+            dij.mLETDose = cellfun(@(dose, letd) dose .* letd, dij.physicalDose, letdCube, 'UniformOutput', false);
         end
     end
 
@@ -429,8 +436,7 @@ if ~isempty(doseCube)
     if this.calcBioDose
 
         if this.calcDoseDirect
-
-            for scenIdx=1:this.multScen.totNumScen
+            for scenIdx = 1:this.multScen.totNumScen
 
                 tmpKernel.LET = letdCube{scenIdx}(this.VdoseGrid);
 
@@ -451,11 +457,9 @@ if ~isempty(doseCube)
                 dij.mAlphaDose{scenIdx}(this.VdoseGrid)     = tmpBixel.alpha .* dij.physicalDose{scenIdx}(this.VdoseGrid);
                 dij.mSqrtBetaDose{scenIdx}(this.VdoseGrid)  = sqrt(tmpBixel.beta) .* dij.physicalDose{scenIdx}(this.VdoseGrid);
             end
-
         else
-            
-            for scenIdx=1:this.multScen.totNumScen
-                
+            for scenIdx = 1:this.multScen.totNumScen
+
                 currLetdCube = letdCube{scenIdx};
                 indices = find(currLetdCube);
                 matSize = size(currLetdCube);
@@ -481,7 +485,4 @@ if ~isempty(doseCube)
     end
 end
 
-dij = this.finalizeDose(dij);
-
 cd(currFolder);
-end

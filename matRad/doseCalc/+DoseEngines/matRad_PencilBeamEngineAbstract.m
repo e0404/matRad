@@ -152,9 +152,6 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                     end
                 end
             end
-
-            %Finalize dose calculation
-            dij = this.finalizeDose(dij);
         end
 
         function dij = initDoseCalc(this,ct,cst,stf)
