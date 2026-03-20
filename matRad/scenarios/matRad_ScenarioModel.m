@@ -48,6 +48,7 @@ classdef (Abstract) matRad_ScenarioModel < handle
         numOfCtScen;            % total number of CT scenarios used
         numOfAvailableCtScen;   % total number of CT scenarios existing in ct structure
         ctScenIx;               % map of all ct scenario indices per scenario
+        motionPeriod = Inf      % motion period of 4D CT, if 4D CT
 
 
         % these parameters will be filled according to the choosen scenario type
@@ -77,6 +78,9 @@ classdef (Abstract) matRad_ScenarioModel < handle
             else
                 this.numOfCtScen = ct.numOfCtScen;
                 this.numOfAvailableCtScen = ct.numOfCtScen;
+                if isfield(ct,'motionPeriod')
+                    this.motionPeriod  = ct.motionPeriod;
+                end
             end
 
             this.ctScenProb = [(1:this.numOfCtScen)', ones(this.numOfCtScen,1)./this.numOfCtScen]; %Equal probability to be in each phase of the 4D ct

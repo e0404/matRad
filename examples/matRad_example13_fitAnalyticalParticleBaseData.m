@@ -151,8 +151,6 @@ pln.propDoseCalc.doseGrid.resolution.z = ct.resolution.z; % [mm]
 pln.propOpt.optimizer       = 'IPOPT';
 pln.propOpt.bioOptimization = 'none'; % none: physical optimization;             const_RBExDose; constant RBE of 1.1;
                                       % LEMIV_effect: effect-based optimization; LEMIV_RBExDose: optimization of RBE-weighted dose
-pln.propOpt.runDAO          = false;  % 1/true: run DAO, 0/false: don't / will be ignored for particles
-pln.propOpt.runSequencing   = false;  % 1/true: run sequencing, 0/false: don't / will be ignored for particles and also triggered by runDAO below
 
 % retrieve scenarios for dose calculation and optimziation
 pln.multScen = matRad_multScen(ct,'nomScen');

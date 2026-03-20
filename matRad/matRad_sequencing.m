@@ -1,6 +1,6 @@
-function resultGUI = matRad_sequencing(resultGUI,stf,dij,pln,visBool)
+function resultGUI = matRad_sequencing(resultGUI, stf, pln, dij, visMode)
 % matRad inverse planning wrapper function
-% 
+%
 % call
 %   resultGUI = matRad_sequencing(resultGUI,stf,dij,pln)
 %
@@ -20,52 +20,35 @@ function resultGUI = matRad_sequencing(resultGUI,stf,dij,pln,visBool)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2016 the matRad development team. 
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
+% Copyright 2016 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 matRad_cfg = MatRad_Config.instance();
 
-if nargin < 5
-    visBool = 0;
+sequencer = matRad_SequencerBase.getSequencerFromPln(pln);
+
+% Handle optional inputs
+if nargin == 5 && ~isempty(visMode)
+    sequencer.visMode = visMode;
+end
+if nargin < 4 || isempty(dij)
+    dij = [];
 end
 
-if ~isfield(pln,'propSeq')
-    pln.propSeq = struct('runSequencing',false);
-end
+sequence = sequencer.sequence(resultGUI.w, stf);
+if ~isempty(dij)
+    resultGUI = matRad_calcCubes(sequence.w, dij);
+else
 
-if strcmp(pln.radiationMode,'photons') && (pln.propSeq.runSequencing || pln.propOpt.runDAO)
-    
-    if ~isfield(pln.propSeq, 'sequencer')
-        pln.propSeq.sequencer = 'siochi'; % default: siochi sequencing algorithm
-        matRad_cfg.dispWarning ('pln.propSeq.sequencer not specified. Using siochi leaf sequencing (default).')
-    end
-    
-    if ~isfield(pln.propSeq, 'sequencingLevel')
-        pln.propSeq.sequencingLevel = 5;
-         matRad_cfg.dispWarning ('pln.propSeq.sequencingLevel not specified. Using 5 sequencing levels (default).')
-    end
-    
-    switch pln.propSeq.sequencer
-        case 'xia'
-            resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,pln.propSeq.sequencingLevel,visBool);
-        case 'engel'
-            resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,pln.propSeq.sequencingLevel,visBool);
-        case 'siochi'
-            resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln.propSeq.sequencingLevel,visBool);
-        otherwise
-            matRad_cfg.dispError('Could not find specified sequencing algorithm ''%s''',pln.propSeq.sequencer);
-    end
-elseif (pln.propSeq.runSequencing || pln.propOpt.runDAO) && ~strcmp(pln.radiationMode,'photons')
-    matRad_cfg.dispWarning('Sequencing is only specified for pln.radiationMode = "photons". Continuing with out sequencing ... ')
+    matRad_cfg.dispWarning('Dose not recalcaulted with sequenced fluence');
 end
+resultGUI.sequencing   = sequence;
+
 end
-
-
