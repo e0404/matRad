@@ -54,7 +54,7 @@ if nargin < 9 || isempty(window)
     window = [min(doseCube(:)) max(doseCube(:))];
 end
 
-isoLevels = double(gather(isoLevels));
+isoLevels = double(matRad_gatherCompat(isoLevels));
 
 % Check if precomputed contours where passed, if not, calculate it on the
 % fly

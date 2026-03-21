@@ -137,10 +137,10 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
 
             % set callback functions.
 
-            funcs.objective         = @(x) double(gather(optiProb.matRad_objectiveFunction(x, dij, cst)));
-            funcs.constraints       = @(x) double(gather(optiProb.matRad_constraintFunctions(x, dij, cst)));
-            funcs.gradient          = @(x) double(gather(optiProb.matRad_objectiveGradient(x, dij, cst)));
-            funcs.jacobian          = @(x) double(gather(optiProb.matRad_constraintJacobian(x, dij, cst)));
+            funcs.objective         = @(x) double(matRad_gatherCompat(optiProb.matRad_objectiveFunction(x, dij, cst)));
+            funcs.constraints       = @(x) double(matRad_gatherCompat(optiProb.matRad_constraintFunctions(x, dij, cst)));
+            funcs.gradient          = @(x) double(matRad_gatherCompat(optiProb.matRad_objectiveGradient(x, dij, cst)));
+            funcs.jacobian          = @(x) double(matRad_gatherCompat(optiProb.matRad_constraintJacobian(x, dij, cst)));
             funcs.jacobianstructure = @() optiProb.matRad_getJacobianStructure(w0, dij, cst);
             funcs.iterfunc          = @(iter, objective, parameter) obj.iterFunc(iter, objective, parameter, ipoptStruct.ipopt.max_iter);
 
