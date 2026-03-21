@@ -34,7 +34,7 @@ Workflow Step Configuration properties
 --------------------------------------
 
 Workflow step configuration properties can be stored in the ``pln`` struct.
-The Syntax for accessing these properties is ``pln.prop{StepName}.{PropertyName}``. 
+The Syntax for accessing these properties is ``pln.prop{StepName}.{PropertyName}``.
 This results in a nested structure, where the first level is the step name and the second level is the property name.
 
 Current possible names are  ``propStf`` (steering information / geometry), ``propDoseCalc`` (dose calculation), ``propOpt`` (optimization), and ``propSeq`` (sequencing).
@@ -45,7 +45,7 @@ Current possible names are  ``propStf`` (steering information / geometry), ``pro
 
    matRad distinguishes between a top-level API and low-level programming using the classes defining workflow steps.
    Using top-level functions like :func:`matRad_calcDoseInfluence` from the root :mod:`matRad` folder will take pln as an argument, instantiate the appropriate object (e.g. :class:`matRad_ParticleHongPencilBeamEngine`), and try to configure its properties from the ``pln.prop{StepName}.{PropertyName}`` structure.
-   Alternatively, these classes can be direclty used and properties can be explicitly set.
+   Alternatively, these classes can be directly used and properties can be explicitly set.
 
 Here's an overview of the property mapping:
 
@@ -121,22 +121,6 @@ The following properties of the pln struct can additionally be adjusted. If they
 **pln.propOpt.defaultMaxIter**
 
     Specifies the number of maximum iterations. Default: *500*.
-
-**pln.propMC.ompMC_defaultHistories**
-
-    Specifies the number of particles simulated per pencil beam photon Monte Carlo calculation ompMC. Default: *1e6*.
-
-**pln.propMC.ompMC_outputVariance**
-
-    If it is set to *true*, variance scoring for MCsquare is not supported for the photon Monte Carlo calculation ompMC. Default: *false*.
-
-**pln.propMC.MCsquare_defaultHistories**
-
-    Specifies the number of particles simulated per pencil beam for the proton Monte Carlo calculation MCsquare. Default: *1e6*.
-
-**pln.propMC.direct_defaultHistories**
-
-    Specifies the number of particles simulated per pencil beam for the Monte Carlo calculation when bypassing the dij calculation. Default: *2e4*.
 
 **pln.disableGUI**
 
