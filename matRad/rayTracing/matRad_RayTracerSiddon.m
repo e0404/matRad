@@ -111,9 +111,9 @@ classdef matRad_RayTracerSiddon < matRad_RayTracer
             % Calculate the voxel indices: first convert to physical coords
             % and convert to voxel indices
             sourcePoints = matRad_world2cubeCoords(sourcePoints, this.grid, true);
-            i = round((sourcePoints(:, 1) + alphas_mid .* rayVec(:, 1)) ./ this.grid.resolution.x);
-            j = round((sourcePoints(:, 2) + alphas_mid .* rayVec(:, 2)) ./ this.grid.resolution.y);
-            k = round((sourcePoints(:, 3) + alphas_mid .* rayVec(:, 3)) ./ this.grid.resolution.z);
+            i = double(round((sourcePoints(:, 1) + alphas_mid .* rayVec(:, 1)) ./ this.grid.resolution.x));
+            j = double(round((sourcePoints(:, 2) + alphas_mid .* rayVec(:, 2)) ./ this.grid.resolution.y));
+            k = double(round((sourcePoints(:, 3) + alphas_mid .* rayVec(:, 3)) ./ this.grid.resolution.z));
 
             % Handle numerical instabilities at the borders.
             i(i < 1) = 1;
@@ -125,14 +125,15 @@ classdef matRad_RayTracerSiddon < matRad_RayTracer
 
             valIx = ~isnan(alphas_mid);
 
-            % In Matlab direct assignment with sub2ind would work, Octave
-            % however does not like NaN values in the subscripts
-            ix = NaN(size(valIx));
-            ix(valIx) = sub2ind([this.numPlanes(2), this.numPlanes(1), this.numPlanes(3)] - 1, j(valIx), i(valIx), k(valIx));
+            % Compute linear indices via direct arithmetic (equivalent to sub2ind
+            % but NaN propagates naturally, avoiding the need to mask before calling)
+            dims = [this.numPlanes(2), this.numPlanes(1), this.numPlanes(3)] - 1;
+            ix = j + (i - 1) * dims(1) + (k - 1) * (dims(1) * dims(2));
 
+            validLinIx = ix(valIx);   % extract once, reuse across cubes
             for i = 1:numel(this.cubes)
                 rho{i} = NaN(size(valIx), class(alphas));
-                rho{i}(valIx) = this.cubes{i}(ix(valIx));
+                rho{i}(valIx) = this.cubes{i}(validLinIx);
             end
 
         end

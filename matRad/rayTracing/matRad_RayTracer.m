@@ -201,18 +201,21 @@ classdef matRad_RayTracer < handle
             % the closest ray by projecting the voxel coordinates to the
             % intersection points with the ray matrix and checking if the distance
             % in x and z direction is smaller than the resolution of the ray matrix
-            scale_factor = NaN(size(ixHitVoxel));
             valid_ix = ~isnan(ixHitVoxel);
-            scale_factor(valid_ix) = (rayMx_bev_y - stfElement.sourcePoint_bev(2)) ./ ...
-                   coords(ixHitVoxel(valid_ix), 2);
+            % scale_factor has same shape as ixHitVoxel (nRays s maxHits);
+            % coords(...,2) is the BEV y-coordinate of each hit voxel
+            validCoords = coords(ixHitVoxel(valid_ix), :);
+            scale_factor = (rayMx_bev_y - stfElement.sourcePoint_bev(2)) ./ ...
+                   validCoords(:, 2);
 
+            validCoords = validCoords .* scale_factor;
+
+            % rayMx_bev(:,1/3) broadcasts across hit columns via implicit expansion
             x_dist = NaN(size(ixHitVoxel));
             z_dist = NaN(size(ixHitVoxel));
-
-            x_dist(valid_ix) = coords(ixHitVoxel(valid_ix), 1) .* scale_factor(valid_ix);
+            x_dist(valid_ix) = validCoords(:, 1);
+            z_dist(valid_ix) = validCoords(:, 3);
             x_dist = x_dist - rayMx_bev(:, 1);
-
-            z_dist(valid_ix) = coords(ixHitVoxel(valid_ix), 3) .* scale_factor(valid_ix);
             z_dist = z_dist - rayMx_bev(:, 3);
 
             % Find indices
