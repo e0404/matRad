@@ -175,7 +175,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
 
             % Run IPOPT.
             try
-                [obj.wResult, obj.resultInfo] = ipopt(double(gather(w0)), funcs, ipoptStruct);
+                [obj.wResult, obj.resultInfo] = ipopt(matRad_gatherCompat(gather(w0)), funcs, ipoptStruct);
             catch ME
                 errorString = [ME.message '\nThis error was thrown by the MEX-interface of IPOPT.\n' ...
                                'Mex interfaces can raise compatibility issues which may be resolved by ' ...
