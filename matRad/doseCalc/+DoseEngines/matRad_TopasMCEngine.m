@@ -170,14 +170,20 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
     end
 
     methods
-        function obj = matRad_TopasMCEngine(pln)
+        function this = matRad_TopasMCEngine(pln)
 
             if nargin < 1
                 pln = [];
             end
 
             % call superclass constructor
-            obj = obj@DoseEngines.matRad_MonteCarloEngineAbstract(pln);
+            this = this@DoseEngines.matRad_MonteCarloEngineAbstract(pln);
+
+            if this.enableGPU
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispWarning('Set enableGPU ot true but TOPAS does not support GPU computation! Setting back to false!');
+                this.enableGPU = false;
+            end
         end
 
         function setDefaults(this)

@@ -175,7 +175,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
 
             % Run IPOPT.
             try
-                [obj.wResult, obj.resultInfo] = ipopt(matRad_gatherCompat(gather(w0)), funcs, ipoptStruct);
+                [obj.wResult, obj.resultInfo] = ipopt(double(matRad_gatherCompat(w0)), funcs, ipoptStruct);
             catch ME
                 errorString = [ME.message '\nThis error was thrown by the MEX-interface of IPOPT.\n' ...
                                'Mex interfaces can raise compatibility issues which may be resolved by ' ...
@@ -283,7 +283,7 @@ classdef matRad_OptimizerIPOPT < matRad_Optimizer
             x = 1:numel(y);
 
             if isempty(obj.axesHandle)
-                % Create new Fiure and store axes handle
+                % Create new Figure and store axes handle
                 matRad_cfg = MatRad_Config.instance();
                 hFig = figure('Name', 'Progress of IPOPT Optimization', 'NumberTitle', 'off', 'Color', matRad_cfg.gui.backgroundColor);
                 hAx = axes(hFig, ...

@@ -161,7 +161,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             % pencil beam calculation and not for other engines
 
             matRad_cfg = MatRad_Config.instance();
-            if matRad_cfg.enableGPU
+            if this.enableGPU
                 ct = matRad_moveCtToGPU(ct);
                 cst = matRad_moveCstToGPU(cst);
             end

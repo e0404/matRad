@@ -1,4 +1,4 @@
-function cst = matRad_moveCstToGPU(cst, precision)
+function cst = matRad_moveCstToGPU(cst, indexType)
 % matRad_moveCstToGPU transfers cst dose influence data to the GPU.
 %   Moves all cell arrays stored in column 4 of the cst (dose influence
 %   data) to GPU memory. Optionally casts the data to the requested numeric
@@ -10,8 +10,8 @@ function cst = matRad_moveCstToGPU(cst, precision)
 %
 % input
 %   cst         matRad cst cell array with host arrays in column 4
-%   precision   (optional) target numeric precision as string, e.g.
-%               'single' or 'double'. If empty or omitted, no cast is
+%   indexType   (optional) target index type as integer, e.g.
+%               'int32' or 'uint64'. If empty or omitted, no cast is
 %               performed.
 %
 % output
@@ -34,13 +34,13 @@ function cst = matRad_moveCstToGPU(cst, precision)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if nargin < 2
-    precision = [];
+    indexType = [];
 end
 
 for i = 1:size(cst, 1)
 
-    if ~isempty(precision)
-        cst{i, 4} = cellfun(@(x) cast(x, precision), cst{i, 4}, 'UniformOutput', false);
+    if ~isempty(indexType)
+        cst{i, 4} = cellfun(@(x) cast(x, indexType), cst{i, 4}, 'UniformOutput', false);
     end
     cst{i, 4} = cellfun(@gpuArray, cst{i, 4}, 'UniformOutput', false);
 

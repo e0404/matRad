@@ -104,7 +104,7 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
 
             % Run fmincon.
             [obj.wResult, fVal, exitflag, info] = fmincon(@(x) obj.fminconObjAndGradWrapper(x, optiProb, dij, cst), ...
-                                                          double(w0), ... % Starting Point
+                                                          double(matRad_gatherCompat(w0)), ... % Starting Point
                                                           [], [], ... % Linear Constraints we do not explicitly use
                                                           [], [], ... % Also no linear inequality constraints
                                                           lb, ub, ... % Lower and upper bounds for optimization variable
@@ -117,8 +117,8 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
         end
 
         function [f, fGrad] = fminconObjAndGradWrapper(obj, x, optiProb, dij, cst)
-            f = double(optiProb.matRad_objectiveFunction(x, dij, cst));
-            fGrad = double(optiProb.matRad_objectiveGradient(x, dij, cst));
+            f = double(matRad_gatherCompat(optiProb.matRad_objectiveFunction(x, dij, cst)));
+            fGrad = double(matRad_gatherCompat(optiProb.matRad_objectiveGradient(x, dij, cst)));
         end
 
         function [c, cEq, cJacob, cEqJacob] = fminconNonlconWrapper(obj, x, optiProb, dij, cst)
@@ -150,10 +150,10 @@ classdef matRad_OptimizerFmincon < matRad_Optimizer
             % Prepare inequality constraints:
             % We need to separate upper and lower bound constraints for
             % fmincon
-            cL = cl(ineqIx & clFinIx) - cVals(ineqIx & clFinIx);
-            cU = cVals(ineqIx & cuFinIx) - cu(ineqIx & cuFinIx);
-            cJacobL = -cJacob(ineqIx & clFinIx, :);
-            cJacobU = cJacob(ineqIx & cuFinIx, :);
+            cL = matRad_gatherCompat(cl(ineqIx & clFinIx) - cVals(ineqIx & clFinIx));
+            cU = matRad_gatherCompat(cVals(ineqIx & cuFinIx) - cu(ineqIx & cuFinIx));
+            cJacobL = matRad_gatherCompat(-cJacob(ineqIx & clFinIx, :));
+            cJacobU = matRad_gatherCompat(cJacob(ineqIx & cuFinIx, :));
 
             % build the inequality jacobian
             c = double([cL; cU]);

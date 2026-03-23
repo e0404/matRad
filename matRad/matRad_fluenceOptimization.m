@@ -34,7 +34,13 @@ function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
 
 matRad_cfg = MatRad_Config.instance();
 
-if matRad_cfg.enableGPU
+if isfield(pln, 'propOpt') && isfield(pln.propOpt, 'enableGPU')
+    enableGPU = pln.propOpt.enableGPU;
+else
+    enableGPU = matRad_cfg.defaults.propOpt.enableGPU;
+end
+
+if enableGPU
     cst = matRad_moveCstToGPU(cst);
     dij = matRad_moveDijToGPU(dij);
 end

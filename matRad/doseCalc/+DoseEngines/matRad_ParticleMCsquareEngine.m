@@ -66,6 +66,12 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             % call superclass constructor
             this = this@DoseEngines.matRad_MonteCarloEngineAbstract(pln);
 
+            if this.enableGPU
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispWarning('Set enableGPU ot true but MCsquare does not support GPU computation! Setting back to false!');
+                this.enableGPU = false;
+            end
+
             this.config = matRad_MCsquareConfig();
 
             % check if bio optimization is needed and set the

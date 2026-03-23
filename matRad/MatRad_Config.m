@@ -36,9 +36,6 @@ classdef MatRad_Config < handle
         
         gui;
 
-        %Experimental
-        enableGPU = false;
-
         %User folders
         userfolders; %Cell array of user folders containing machines, patients, hluts. Default contains the userdata folder in the matRad root directory
     end
@@ -249,6 +246,7 @@ classdef MatRad_Config < handle
             obj.defaults.propOpt.maxIter = 500;
             obj.defaults.propOpt.runDAO = 0;
             obj.defaults.propOpt.clearUnusedVoxels = false;
+            obj.defaults.propOpt.enableGPU = false;
 
             %Sequencing Options
             obj.defaults.propSeq.sequencer = 'siochi';

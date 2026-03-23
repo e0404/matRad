@@ -31,6 +31,7 @@ classdef matRad_RayTracer < handle
     properties
         lateralCutOff
         forcePrecision = [] % override precision (double or single), otherwise inherited
+        enableGPU = false   % whether to use GPU arrays for ray tracing (if supported by subclass implementation)
     end
 
     properties (Access = protected)
@@ -139,7 +140,7 @@ classdef matRad_RayTracer < handle
             % If no subset of voxels is specified, take all of them
             if nargin < 4
                 voxelIndices = transpose(1:nCubeVox);
-                if matRad_cfg.enableGPU
+                if this.enableGPU
                     voxelIndices = gpuArray(int32(voxelIndices));
                 end
             end
@@ -168,7 +169,11 @@ classdef matRad_RayTracer < handle
             rayMatrixScale = 1 + rayMx_bev_y / stfElement.SAD;
 
             % set up list with bev coordinates for calculation of radiological depth
-            coords = zeros(nCubeVox, 3, class(rotCoordsV));
+            if matRad_cfg.isMatlab && isgpuarray(rotCoordsV)
+                coords = zeros(nCubeVox, 3, matRad_underlyingTypeCompat(rotCoordsV),'gpuArray');
+            else
+                coords = zeros(nCubeVox, 3, matRad_underlyingTypeCompat(rotCoordsV));
+            end
             coords(voxelIndices, :) = rotCoordsV;
 
             referencePositionsBEV = rayMatrixScale * vertcat(stfElement.ray.rayPos_bev);
@@ -223,7 +228,12 @@ classdef matRad_RayTracer < handle
                 z_dist > -raySelection & z_dist <= raySelection;
 
             % set up rad depth cube for results
-            radDepthCube = repmat({NaN(cubeDim, class(l))}, numel(this.cubes));
+            if matRad_cfg.isMatlab && isgpuarray(rotCoordsV)
+                radDepthCubeTemplate = NaN(cubeDim, matRad_underlyingTypeCompat(l), 'gpuArray');
+            else
+                radDepthCubeTemplate = NaN(cubeDim, matRad_underlyingTypeCompat(l));
+            end
+            radDepthCube = repmat({radDepthCubeTemplate}, numel(this.cubes));
             radDepthsV = cell(size(radDepthCube));
 
             for j = 1:numel(this.cubes)

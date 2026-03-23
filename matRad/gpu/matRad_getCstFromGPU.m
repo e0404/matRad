@@ -1,4 +1,4 @@
-function cst = matRad_getCstFromGPU(cst, precision)
+function cst = matRad_getCstFromGPU(cst, indexType)
 % matRad_getCstFromGPU transfers cst dose influence data from GPU to host.
 %   Gathers all cell arrays stored in column 4 of the cst (dose influence
 %   data) from GPU memory back to host memory. Optionally casts the data to
@@ -10,9 +10,9 @@ function cst = matRad_getCstFromGPU(cst, precision)
 %
 % input
 %   cst         matRad cst cell array with GPU arrays in column 4
-%   precision   (optional) target numeric precision as string, e.g.
-%               'single' or 'double'. If empty or omitted, no cast is
-%               performed.
+%   indexType   (optional) target index type as integer, e.g.
+%               'int32' or 'uint64'. If empty or omitted, it will be cast 
+%               to Matlab's standard double.
 %
 % output
 %   cst         matRad cst cell array with host arrays in column 4
@@ -34,13 +34,13 @@ function cst = matRad_getCstFromGPU(cst, precision)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if nargin < 2
-    precision = [];
+    indexType = 'double';
 end
 
 for i = 1:size(cst, 1)
     cst{i, 4} = cellfun(@matRad_gatherCompat, cst{i, 4}, 'UniformOutput', false);
-    if ~isempty(precision)
-        cst{i, 4} = cellfun(@(x) cast(x, precision), cst{i, 4}, 'UniformOutput', false);
+    if ~isempty(indexType)
+        cst{i, 4} = cellfun(@(x) cast(x, indexType), cst{i, 4}, 'UniformOutput', false);
     end
 end
 
