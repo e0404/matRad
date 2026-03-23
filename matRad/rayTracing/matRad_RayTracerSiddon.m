@@ -98,7 +98,8 @@ classdef matRad_RayTracerSiddon < matRad_RayTracer
 
             % eq 11
             % Calculate the distance from source to target point.
-            d12 = vecnorm(rayVec, 2, 2);
+            % TODO: for some reason this cast needs to be explicit for some octave versions on linux
+            d12 = cast(vecnorm(rayVec, 2, 2), matRad_underlyingTypeCompat(alphas));
 
             % eq 10
             % Calculate the voxel intersection length.
