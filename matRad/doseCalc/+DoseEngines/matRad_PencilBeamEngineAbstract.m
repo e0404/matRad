@@ -29,6 +29,8 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
         ignoreOutsideDensities;     % Ignore densities outside of cst contours
 
         numOfDijFillSteps = 10;     % Number of times during dose calculation the temporary containers are moved to a sparse matrix
+
+        traceOnDoseGrid = true;    % perform raytracing on dose grid instead of CT grid
     end
 
     properties (SetAccess = protected)
@@ -198,7 +200,16 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             % Allocate memory for quantity containers
             dij = this.allocateQuantityMatrixContainers(dij,{'physicalDose'});
 
-            this.rayTracer = matRad_RayTracerSiddon(this.cubeWED,dij.ctGrid);
+            if this.traceOnDoseGrid
+                cubesForTracing = cellfun(@(cube) matRad_interp3(...
+                    dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z, ...
+                    cube, ...
+                    dij.doseGrid.x, dij.doseGrid.y', dij.doseGrid.z, ...
+                    'linear'), this.cubeWED, 'UniformOutput', false);
+                this.rayTracer = matRad_RayTracerSiddon(cubesForTracing, dij.doseGrid);
+            else
+                this.rayTracer = matRad_RayTracerSiddon(this.cubeWED,dij.ctGrid);
+            end
         end
 
         function dij = allocateQuantityMatrixContainers(this,dij,names)
@@ -278,22 +289,40 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             geoDistVdoseGrid(1:ct.numOfCtScen)= {sqrt(sum(rot_coordsVdoseGrid.^2,2))};
 
             % Calculate radiological depth cube
-            matRad_cfg.dispInfo('matRad: calculate radiological depth cube... ');
+            tRayTracingStart = tic;
+            if this.traceOnDoseGrid
+                matRad_cfg.dispInfo('matRad: calculate radiological depth (on dose grid)... ');
+                voxForRayTracer = this.VdoseGrid;
+                rotCoordsForRayTracer = rot_coordsVdoseGrid;
+            else
+                matRad_cfg.dispInfo('matRad: calculate radiological depth (on CT grid)... ');
+                voxForRayTracer = this.VctGrid;
+                rotCoordsForRayTracer = rot_coordsV;
+            end
 
             this.rayTracer.lateralCutOff = this.effectiveLateralCutOff;
-            if this.keepRadDepthCubes                
-                [radDepthVctGrid, currBeam.radDepthCube] = this.rayTracer.traceCube(currBeam,this.VctGrid,rot_coordsV);
 
-                currBeam.radDepthCube = cellfun(@(rD) matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z, rD, ...
-                    dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest'),currBeam.radDepthCube,'UniformOutput',false);
-                this.radDepthCubes(i,:) = currBeam.radDepthCube(:);
+            if this.keepRadDepthCubes
+                [radDepths, currBeam.radDepthCube] = this.rayTracer.traceCube(currBeam,voxForRayTracer,rotCoordsForRayTracer);
+
+                if ~this.traceOnDoseGrid
+                    currBeam.radDepthCube = cellfun(@(rD) matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z, rD, ...
+                        dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest'),currBeam.radDepthCube,'UniformOutput',false);
+                    this.radDepthCubes(i,:) = currBeam.radDepthCube(:);
+                end
             else
-                radDepthVctGrid = this.rayTracer.traceCube(currBeam,this.VctGrid,rot_coordsV);
+                radDepths = this.rayTracer.traceCube(currBeam,voxForRayTracer,rotCoordsForRayTracer);
             end
-            
+
             ct.cube = this.cubeWED;
             % interpolate radiological depth cube to dose grid resolution
-            radDepthVdoseGrid = this.interpRadDepth(ct,1:ct.numOfCtScen,this.VctGrid,this.VdoseGrid,dij.ctGrid,dij.doseGrid,radDepthVctGrid);
+            if this.traceOnDoseGrid
+                radDepthVdoseGrid = radDepths;
+            else
+                radDepthVdoseGrid = this.interpRadDepth(ct,1:ct.numOfCtScen,this.VctGrid,this.VdoseGrid,dij.ctGrid,dij.doseGrid,radDepths);
+            end
+
+            matRad_cfg.dispInfo('done in %fs.\n',toc(tRayTracingStart));
             
             % limit rotated coordinates to positions where ray tracing is availabe
             %radDepthsMat = cellfun(@(radDepthCube) matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z,radDepthCube,dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest'),radDepthsMat,'UniformOutput',false);
@@ -309,8 +338,6 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
             % compute SSDs
             currBeam = matRad_computeSSD(currBeam,ct,'densityThreshold',this.ssdDensityThreshold);
-
-            matRad_cfg.dispInfo('done.\n');
            
             %Reinitialize Progress:
             %matRad_progress(1,1000);
