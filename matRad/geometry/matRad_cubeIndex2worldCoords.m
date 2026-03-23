@@ -36,13 +36,10 @@ end
 % Check if we have linear indices
 if size(cubeIx, 2) == 1
     [s1, s2, s3] = ind2sub(gridStruct.dimensions, cubeIx);
-    cubeIx = [s2, s1, s3];
-else
+    cubeIx = [s2, s1, s3]; % ijk/xyz -> jik
+elseif size(cubeIx, 2) == 3 % if we have subscript coordinates, permute ijk/xyz -> jik
     cubeIx = cubeIx(:, [2 1 3]);
-end
-
-% Check if we have the right dimensions
-if size(cubeIx, 2) ~= 3
+else % we have the wrong dimensions
     matRad_cfg = MatRad_Config.instance();
     matRad_cfg.dispError('voxel coordinates must be Nx3 (subscript indices) or Nx1 (linear indices)!');
 end
