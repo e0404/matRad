@@ -9,14 +9,14 @@ line_length: 150
 
 # --- Naming rules for matRad ---
 
-# matRad_|test_ + lowerCamelCase (OR abbreviation start)
-regex_function_name: "^(matRad|test)_([a-z][a-zA-Z0-9]*|[A-Z]{2,}[a-zA-Z0-9]*)$"
-regex_script_name: "^(matRad|test)_([a-z][a-zA-Z0-9]*|[A-Z]{2,}[a-zA-Z0-9]*)$"
+# matRad_ + lowerCamelCase
+regex_function_name: "^(matRad|test|helper)_([a-z][a-zA-Z0-9]*|[A-Z]{2,}[a-zA-Z0-9]*)$"
+regex_script_name: "^matRad_((example[1-9][0-9]*_)?([a-z][a-zA-Z0-9]*|[A-Z]{2,}[a-zA-Z0-9]*))$"
 
-# methods: same camelCase rule but without prefix
+# methods: plain lowerCamelCase
 regex_method_name: "^([a-z][a-zA-Z0-9]*|[A-Z]{2,}[a-zA-Z0-9]*)$"
 
-# classes: matRad_|test_ + UpperCamelCase OR abbreviation start
+# classes: matRad_ + UpperCamelCase
 regex_class_name: "^(matRad|test)_([A-Z]{2,}[a-zA-Z0-9]*|[A-Z][a-zA-Z0-9]*)$"
 
 # parameters / variables: lowerCamelCase
@@ -32,4 +32,4 @@ indent_function_file_body: false
 metric "cnest": limit 6
 metric "file_length": limit 1000
 metric "cyc": limit 25
-metric "parameters": limit 8
+metric "parameters": limit 15

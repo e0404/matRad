@@ -18,7 +18,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
     %                              t/'write'  : Only write simulation parameter files
     %                              'path'     : read simulation files from 'path'
     %
-    % sourceModel            [s] see availableSourceModels, {'gaussian', 'emittance', 'sigmaSqrModel'}
+    % sourceModel            [s] see AvailableSourceModels, {'gaussian', 'emittance', 'sigmaSqrModel'}
     % useGPU                 [b] trigger use of GPU (if available)
     % roomMaterial           [s] material of the patient surroundings. Example:
     %                            'vacuum', 'Air'
@@ -54,7 +54,6 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
         defaultHUtable        = 'matRad_default_FredMaterialConverter'
         availableSourceModels = {'gaussian', 'emittance', 'sigmaSqrModel'}
-
         calcBioDose
         currentVersion
         availableVersions = {'3.70.0'}  % Or higher.
@@ -84,7 +83,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         dijFormatVersion
     end
 
-    properties (SetAccess = private, Hidden)
+    properties (SetAccess = protected, Hidden)
         patientFilename      = 'CTpatient.mhd'
         runInputFilename     = 'fred.inp'
         regionsFilename      = 'regions.inp'
@@ -201,23 +200,47 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
         function writeTreeDirectory(this)
 
-            if ~exist(this.MCrunFolder, 'dir')
-                mkdir(this.MCrunFolder);
+            % Loop over the scenarios
+            if this.multScen.totNumScen > 1
+                for scenIdx = 1:this.multScen.totNumScen
+                    this.writeTreeDirectoryForRun(scenIdx);
+                end
+            else
+
+                this.writeTreeDirectoryForRun(0);
+            end
+        end
+
+        function writeTreeDirectoryForRun(this, scenIdx)
+
+            [~, runFolderName] = fileparts(this.MCrunFolder);
+            if scenIdx == 0
+                tailRun = '';
+            else
+                tailRun = sprintf('_%d', scenIdx);
+            end
+
+            folderName = sprintf('%s%s', this.MCrunFolder, tailRun);
+            if ~exist(folderName, 'dir')
+                mkdir(folderName);
             end
 
             % write input folder
-            if ~exist(this.inputFolder, 'dir')
-                mkdir(this.inputFolder);
+            folderName = strrep(this.inputFolder, runFolderName, sprintf('%s%s', runFolderName, tailRun));
+            if ~exist(folderName, 'dir')
+                mkdir(folderName);
             end
 
             % build MCrun/inp/regions
-            if ~exist(this.regionsFolder, 'dir')
-                mkdir(this.regionsFolder);
+            folderName = strrep(this.regionsFolder, runFolderName, sprintf('%s%s', runFolderName, tailRun));
+            if ~exist(folderName, 'dir')
+                mkdir(folderName);
             end
 
             % build MCrun/inp/plan
-            if ~exist(this.planFolder, 'dir')
-                mkdir(this.planFolder);
+            folderName = strrep(this.planFolder, runFolderName, sprintf('%s%s', runFolderName, tailRun));
+            if ~exist(folderName, 'dir')
+                mkdir(folderName);
             end
         end
 
@@ -228,26 +251,214 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
         writePlanDeliveryFile(this, fName, stf)
 
-        writePlanFile(this, fName, stf)
+        writePlanFile(this, fName, stf, scenIdx)
 
         function writeFredInputAllFiles(this, stf)
 
             % write fred.inp file
-            runFilename = fullfile(this.MCrunFolder, this.runInputFilename);
-            this.writeRunFile(runFilename);
+            for scenIdx = 1:this.multScen.totNumScen
+                [~, runFolderName] = fileparts(this.MCrunFolder);
 
-            % write region/region.inp file
-            regionFilename = fullfile(this.regionsFolder, this.regionsFilename);
-            this.writeRegionsFile(regionFilename);
+                if this.multScen.totNumScen > 1
+                    tailRun = sprintf('_%d', scenIdx);
+                else
+                    tailRun = '';
+                end
 
-            % write plan file
-            planFile = fullfile(this.planFolder, this.planFilename);
-            this.writePlanFile(planFile, stf);
+                runFilename = fullfile(strrep(this.MCrunFolder, runFolderName, sprintf('%s%s', runFolderName, tailRun)), this.runInputFilename);
+                this.writeRunFile(runFilename);
 
-            % write planDelivery file
+                % write region/region.inp file
+                regionFilename = fullfile(strrep(this.regionsFolder, runFolderName, sprintf('%s%s', runFolderName, tailRun)), this.regionsFilename);
+                this.writeRegionsFile(regionFilename);
 
-            planDeliveryFile = fullfile(this.planFolder, this.planDeliveryFilename);
-            this.writePlanDeliveryFile(planDeliveryFile);
+                if ~strcmp(this.HUtable, 'internal')
+                    hlutFilename = fullfile(strrep(this.regionsFolder, runFolderName, sprintf('%s%s', runFolderName, tailRun)), 'hLut.inp');
+                    this.writeHlutFile(hlutFilename, scenIdx);
+                end
+
+                % write plan file
+                planFile = fullfile(strrep(this.planFolder, runFolderName, sprintf('%s%s', runFolderName, tailRun)), this.planFilename);
+                this.writePlanFile(planFile, stf, scenIdx);
+
+                % write planDelivery file
+                planDeliveryFile = fullfile(strrep(this.planFolder, runFolderName, sprintf('%s%s', runFolderName, tailRun)), ...
+                                            this.planDeliveryFilename);
+                this.writePlanDeliveryFile(planDeliveryFile);
+            end
+        end
+
+        function writeCTs(this)
+
+            patientMetadata.imageOrigin = [0 0 0];
+            patientMetadata.resolution  = [this.doseGrid.resolution.x, this.doseGrid.resolution.y, this.doseGrid.resolution.z];
+            patientMetadata.datatype = 'int16';
+
+            if this.multScen.totNumScen > 1
+                [~, runFolderName] = fileparts(this.MCrunFolder);
+
+                for scenIdx = 1:this.multScen.totNumScen
+                    fileNamePatient = fullfile(strrep(this.regionsFolder, runFolderName, sprintf('%s_%d', runFolderName, scenIdx)), ...
+                                               this.patientFilename);
+                    ctIdx = this.multScen.linearMask(scenIdx, 1);
+                    matRad_writeMHD(fileNamePatient, this.HUcube{ctIdx}, patientMetadata);
+                end
+
+            else
+                fileNamePatient = fullfile(this.regionsFolder, this.patientFilename);
+                matRad_writeMHD(fileNamePatient, this.HUcube{1}, patientMetadata);
+            end
+
+        end
+
+        function writeHlutFile(this, fileName, scenIdx)
+
+            matRad_cfg = MatRad_Config.instance();
+
+            if ~exist('scenIdx', 'var') || isempty(scenIdx)
+                scenIdx = 1;
+            end
+
+            mainFolder        = fullfile(matRad_cfg.matRadSrcRoot, 'hluts');
+            userDefinedFolder = fullfile(matRad_cfg.primaryUserFolder, 'hluts');
+            fredDefinedFolder = fullfile(matRad_cfg.matRadSrcRoot, 'doseCalc', 'FRED', 'hluts');
+
+            % Collect all the subfolders
+
+            searchPath = [strsplit(genpath(mainFolder), pathsep)'; ...
+                          strsplit(genpath(userDefinedFolder), pathsep)'; ...
+                          strsplit(genpath(fredDefinedFolder), pathsep)'];
+
+            searchPath(cellfun(@isempty, searchPath)) = [];
+
+            % Check for existence of folder paths
+            searchPath = searchPath(cellfun(@isfolder, searchPath));
+
+            availableHLUTs = cellfun(@(x) dir([x, filesep, '*.txt']), searchPath, 'UniformOutput', false);
+            availableHLUTs = cell2mat(availableHLUTs);
+
+            hLUTindex = find(strcmp([this.HUtable, '.txt'], {availableHLUTs.name}));
+
+            if isempty(hLUTindex)
+                errString = sprintf('Cannot open hLut: %s. Available hLut files are: ', hLutFile);
+                errString = [errString, sprintf('\ninternal')];
+                for hLUTindex = 1:numel(availableHLUTs)
+                    errString = [errString, sprintf('\n%s', strrep(fullfile(availableHLUTs(hLUTindex).folder, ...
+                                                                            availableHLUTs(hLUTindex).name), '\', '\\'))];
+                end
+                matRad_cfg.dispError(errString);
+
+            else
+                selectedHlutfile = fullfile(availableHLUTs(hLUTindex).folder, availableHLUTs(hLUTindex).name);
+                selectedHlut = this.readHlutFileToStruct(selectedHlutfile);
+            end
+
+            % Apply relative range shift
+            selectedHlut.RSP = selectedHlut.RSP * (1 + this.multScen.relRangeShift(scenIdx));
+
+            % How do we handle absolute shift? Do we insert a slab of water
+            % in front of the patient?
+
+            % Write the hlut back
+            this.writeHlutFileFromStruct(fileName, selectedHlut);
+
+        end
+
+        function materials = readHlutFileToStruct(this, fileName)
+
+            matRad_cfg = MatRad_Config.instance();
+            fid = fopen(fileName, 'r');
+            if fid == -1
+                matRad_cfg.dispError('Cannot open file.');
+            end
+
+            % --- Read header line ---
+            headerLine = fgetl(fid);
+
+            % Remove "matColumns:" and split column names
+            headerLine = strrep(headerLine, 'matColumns:', '');
+            colNames = strsplit(strtrim(headerLine));
+
+            % --- Read data lines ---
+            data = [];
+            while ~feof(fid)
+                line = strtrim(fgetl(fid));
+                if strncmp(line, 'mat:', length('mat:'))
+                    line = strrep(line, 'mat:', '');
+                    values = sscanf(line, '%f')';
+                    data = [data; values];
+                end
+            end
+
+            fclose(fid);
+
+            % --- Assign main fields ---
+            materials = struct();
+
+            materials.HU   = data(:, strcmp(colNames, 'HU'))';
+            materials.rho  = data(:, strcmp(colNames, 'rho'))';
+            materials.RSP  = data(:, strcmp(colNames, 'RSP'))';
+            materials.Ipot = data(:, strcmp(colNames, 'Ipot'))';
+            materials.Lrad = data(:, strcmp(colNames, 'Lrad'))';
+
+            % --- Composition fields ---
+            compStartIdx = find(strcmp(colNames, 'C'));  % first composition column
+            compNames = colNames(compStartIdx:end);
+
+            materials.materialComposition = struct();
+
+            for i = 1:length(compNames)
+                materials.materialComposition.(compNames{i}) = ...
+                    data(:, compStartIdx + i - 1)';
+            end
+
+        end
+
+        function writeHlutFileFromStruct(this, fileName, materials)
+
+            matRad_cfg = MatRad_Config.instance();
+
+            fid = fopen(fileName, 'w');
+            if fid == -1
+                matRad_cfg.dispError('Cannot open file.');
+            end
+
+            % --- Main fields ---
+            mainFields = {'HU', 'rho', 'RSP', 'Ipot', 'Lrad'};
+
+            % --- Composition fields ---
+            compFields = fieldnames(materials.materialComposition);
+
+            % --- Write header ---
+            fprintf(fid, 'matColumns: ');
+            fprintf(fid, '%s ', mainFields{:});
+            fprintf(fid, '%s ', compFields{:});
+            fprintf(fid, '\n');
+
+            % --- Number of materials ---
+            n = numel(materials.HU);
+
+            % --- Write rows ---
+            for i = 1:n
+                fprintf(fid, 'mat: ');
+
+                % Write main properties
+                for k = 1:numel(mainFields)
+                    value = materials.(mainFields{k})(i);
+                    fprintf(fid, '%g ', value);
+                end
+
+                % Write composition values
+                for k = 1:numel(compFields)
+                    value = materials.materialComposition.(compFields{k})(i);
+                    fprintf(fid, '%g ', value);
+                end
+
+                fprintf(fid, '\n');
+            end
+
+            fclose(fid);
+
         end
 
         function dij = loadBiologicalData(this, cst, dij)
@@ -291,6 +502,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     % 1e-3 to make the filling slightly faster
                     % TODO: the preallocation could probably
                     % have more accurate estimates
+
                     dij.(names{n})(this.multScen.scenMask) = {spalloc(dij.doseGrid.numOfVoxels, ...
                                                                       this.numOfColumnsDij, ...
                                                                       round(prod(dij.doseGrid.numOfVoxels, ...
@@ -328,10 +540,9 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
         end
 
-        function writeHlut(this, hLutFile)
+        function writeHlut(this, hLutFile, fileName)
 
             matRad_cfg = MatRad_Config.instance();
-            fileName = fullfile(this.regionsFolder, 'hLut.inp');
 
             mainFolder        = fullfile(matRad_cfg.matRadSrcRoot, 'hluts');
             userDefinedFolder = fullfile(matRad_cfg.primaryUserFolder, 'hluts');
@@ -366,8 +577,10 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 errString = sprintf('Cannot open hLut: %s. Available hLut files are: ', hLutFile);
                 errString = [errString, sprintf('\ninternal')];
                 for hLUTindex = 1:numel(availableHLUTs)
+
                     errString = [errString, sprintf('\n%s', ...
                                                     strrep(fullfile(availableHLUTs(hLUTindex).folder, availableHLUTs(hLUTindex).name), '\', '\\'))];
+
                 end
                 matRad_cfg.dispError(errString);
             end
@@ -459,13 +672,16 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     execCheck = true;
                 else
                     execCheck = false;
+
                     msg = sprintf(['Couldn''t call FRED executable. ' ...
                                    'Please set the correct path with DoseEngines.matRad_ParticleFREDEngine.cmdCall(''path/to/executable''). ' ...
                                    'Current value is ''%s'''], DoseEngines.matRad_ParticleFREDEngine.cmdCall);
+
                     matRad_cfg.dispError(msg);
                 end
             catch
                 execCheck = false;
+
                 msg = sprintf(['Couldn''t call FRED executable. ' ...
                                'Please set the correct path with DoseEngines.matRad_ParticleFREDEngine.cmdCall(''path/to/executable''). ' ...
                                'Current value is ''%s'''], DoseEngines.matRad_ParticleFREDEngine.cmdCall);
@@ -621,6 +837,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         end
 
         function [radiationMode] = updateRadiationMode(this, value)
+
             % This function also resets the values for primary mass and number
             % of nucleons. Used for possible future extension to multiple
             % ion species
@@ -672,8 +889,10 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             if valid
                 this.sourceModel = value;
             else
+
                 matRad_cfg.dispWarning('Unable to set source model:%s, setting default:%s', value, this.availableSourceModels{1});
                 this.sourceModel = this.availableSourceModels{1};
+
             end
 
         end
@@ -690,6 +909,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         end
 
         function v = get.dijFormatVersion(this)
+
             matRad_cfg = MatRad_Config.instance();
 
             if ~isempty(this.forceDijFormatVersion)
@@ -713,6 +933,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     v = 21;
                 end
             end
+
         end
 
         function set.radiationMode(this, value)

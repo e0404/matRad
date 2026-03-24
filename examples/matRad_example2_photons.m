@@ -123,7 +123,6 @@ pln.propStf.bixelWidth     = 5;
 % Obtain the number of beams and voxels from the existing variables and 
 % calculate the iso-center which is per default the center of gravity of 
 % all target voxels.
-pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 
 %% dose calculation settings
@@ -180,7 +179,6 @@ imagesc(resultGUI.physicalDose(:,:,slice)),colorbar, colormap(jet);
 % Instead of 40 degree spacing use a 50 degree geantry beam spacing
 pln.propStf.gantryAngles = [0:50:359];
 pln.propStf.couchAngles  = zeros(1,numel(pln.propStf.gantryAngles));
-pln.propStf.numOfBeams   = numel(pln.propStf.gantryAngles);
 
 %Let's rerun the dose calculation and optimization
 stf                      = matRad_generateStf(ct,cst,pln);

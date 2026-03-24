@@ -98,7 +98,7 @@ nBixels = sum([stf(:).totalNumOfBixels]);
 nVoxles = prod(ct.cubeDim);
 
 % Assert basic parameters
-assertEqual(dijFredLoad.externalCalculationLoadPath, fullfile(pln.propDoseCalc.externalCalculation, 'MCrun', 'out', 'scoreij', 'Phantom.Dose.bin'));
+assertEqual(dijFredLoad.externalCalculationLodPath{1}, fullfile(pln.propDoseCalc.externalCalculation, 'MCrun', 'out', 'scoreij', 'Phantom.Dose.bin'));
 assertEqual(size(dijFredLoad.physicalDose{1}), [nVoxles, nBixels]);
 assertEqual(size(forwardDoseFredLoad.physicalDose), size(resultGUI.physicalDose));
 assertEqual(size(dijFredLoad.mLETDose{1}), [nVoxles, nBixels]);
@@ -139,3 +139,50 @@ pln.propDoseCalc.HUclamping = true;
 engine = DoseEngines.matRad_ParticleFREDEngine(pln);
 
 assertTrue(all(cellfun(@(x, y) isequal(engine.(x), y), {'sourceModel', 'HUtable', 'HUclamping'}, {'emittance', 'internal', true})));
+
+function test_errorScenarios
+radModes = DoseEngines.matRad_ParticleFREDEngine.possibleRadiationModes;
+
+load([radModes{1} '_testData.mat']);
+pln.radiationMode = radModes{1};
+pln.machine = 'Generic';
+pln.propDoseCalc.engine = 'FRED';
+pln.propDoseCalc.externalCalculation = 'write';
+pln.propDoseCalc.workingDir = helper_temporaryFolder('testFRED', true);
+
+pln.multScen = matRad_RandomScenarios(ct);
+pln.multScen.nSamples = 2;
+
+w = ones(sum([stf(:).totalNumOfBixels]), 1);
+
+resultGUI = matRad_calcDoseForward(ct, cst, stf, pln, w);
+
+fredMainDir   = pln.propDoseCalc.workingDir;
+runFolder     = fullfile(fredMainDir, 'MCrun_1');
+inputFolder   = fullfile(runFolder, 'inp');
+planFolder    = fullfile(inputFolder, 'plan');
+regionsFolder = fullfile(inputFolder, 'regions');
+
+assertTrue(all(cellfun(@isfolder, {fredMainDir, runFolder, inputFolder, planFolder, regionsFolder})));
+assertTrue(all(cellfun(@isfile, {fullfile(planFolder, 'plan.inp'), ...
+                                 fullfile(planFolder, 'planDelivery.inp'), ...
+                                 fullfile(regionsFolder, 'CTpatient.raw'), ...
+                                 fullfile(regionsFolder, 'CTpatient.mhd'), ...
+                                 fullfile(regionsFolder, 'regions.inp'), ...
+                                 fullfile(runFolder, 'fred.inp') ...
+                                })));
+
+% Check second folder
+runFolder     = fullfile(fredMainDir, 'MCrun_2');
+inputFolder   = fullfile(runFolder, 'inp');
+planFolder    = fullfile(inputFolder, 'plan');
+regionsFolder = fullfile(inputFolder, 'regions');
+
+assertTrue(all(cellfun(@isfolder, {fredMainDir, runFolder, inputFolder, planFolder, regionsFolder})));
+assertTrue(all(cellfun(@isfile, {fullfile(planFolder, 'plan.inp'), ...
+                                 fullfile(planFolder, 'planDelivery.inp'), ...
+                                 fullfile(regionsFolder, 'CTpatient.raw'), ...
+                                 fullfile(regionsFolder, 'CTpatient.mhd'), ...
+                                 fullfile(regionsFolder, 'regions.inp'), ...
+                                 fullfile(runFolder, 'fred.inp') ...
+                                })));

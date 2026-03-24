@@ -38,8 +38,11 @@ cd(this.workingDir);
 dij = this.initDoseCalc(ct, cst, stf);
 
 % Interpolate cube on dose grid
-this.HUcube{1} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z, ct.cubeHU{1}, ...
-                                 dij.doseGrid.x, dij.doseGrid.y', dij.doseGrid.z, 'linear');
+for ctIdx = 1:this.multScen.numOfCtScen
+    this.HUcube{ctIdx} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z, ...
+                                         ct.cubeHU{ctIdx}, ...
+                                         dij.doseGrid.x, dij.doseGrid.y', dij.doseGrid.z, 'linear');
+end
 
 % Force HU clamping if values are found outside of available range
 switch this.HUtable
@@ -53,20 +56,12 @@ switch this.HUtable
 end
 
 if this.ignoreOutsideDensities
-    eraseCtDensMask = ones(prod(ct.cubeDim), 1);
-    eraseCtDensMask(this.VctGrid) = 0;
-    this.HUcube{1}(eraseCtDensMask == 1) = this.hLutLimits(1);
+    for ctIdx = 1:this.multScen.numOfCtScen
+        eraseCtDensMask = ones(prod(ct.cubeDim), 1);
+        eraseCtDensMask(this.VctGrid(this.VctGridScenIx{ctIdx})) = 0;
+        this.HUcube{ctIdx}(eraseCtDensMask == 1) = this.hLutLimits(1);
+    end
 end
-
-%%%%%% !!!!!!!!!!!!! mind this flip !!!!!!!!!!!!! %%%%%
-% Need to permute x and y because of the order data is written in mhd
-% HUcube{1} = permute(HUcube{1}, [2,1,3]);
-
-fileNamePatient = fullfile(this.regionsFolder, this.patientFilename);
-patientMetadata.imageOrigin = [0 0 0];
-patientMetadata.resolution  = [this.doseGrid.resolution.x, this.doseGrid.resolution.y, this.doseGrid.resolution.z];
-
-patientMetadata.datatype = 'int16';
 
 % Linear projection of BEV source (x,y) points to plane at BAMStoISO distance
 getPointAtBAMS = @(target, source, distance, BAMStoIso) (target - source) * (-BAMStoIso) / distance + source;
@@ -290,7 +285,7 @@ switch this.externalCalculation
         % %% MC computation and dij filling
 
         this.writeTreeDirectory();
-        matRad_writeMHD(fileNamePatient, this.HUcube{1}, patientMetadata);
+        this.writeCTs();
         this.writeFredInputAllFiles(stfFred);
 
         matRad_cfg.dispInfo('All files have been generated\n');
@@ -305,30 +300,41 @@ switch this.externalCalculation
     case 'off' % Run FRED simulation (requires installation)
 
         this.writeTreeDirectory();
-        matRad_writeMHD(fileNamePatient, this.HUcube{1}, patientMetadata);
+        this.writeCTs();
         this.writeFredInputAllFiles(stfFred);
 
         % Check consistency of installation
         if this.checkExec()
 
-            matRad_cfg.dispInfo('calling FRED');
+            for scenIdx = 1:this.multScen.totNumScen
+                matRad_cfg.dispInfo('calling FRED for scenario %d/%d', scenIdx, this.multScen.totNumScen);
 
-            cd(this.MCrunFolder);
+                [~, runFolderName] = fileparts(this.MCrunFolder);
+                if this.multScen.totNumScen > 1
+                    tailRun = sprintf('_%d', scenIdx);
+                else
+                    tailRun = '';
+                end
 
-            flags = '-V1 -f fred.inp';
+                cd(strrep(this.MCrunFolder, runFolderName, sprintf('%s%s', runFolderName, tailRun)));
 
-            if ~this.useGPU
-                flags = ['-nogpu ' flags];
+                flags = '-V1 -f fred.inp';
+
+                if ~this.useGPU
+                    flags = ['-nogpu ' flags];
+                end
+                systemCall = [this.cmdCall, flags];
+
+                % printOutput to matlab console
+                if this.printOutput
+                    [status, ~] = system(systemCall, '-echo');
+                else
+                    [status, ~] = system(systemCall);
+                end
+
+                cd(this.workingDir);
+
             end
-            systemCall = [this.cmdCall, flags];
-
-            % printOutput to matlab console
-            if this.printOutput
-                [status, ~] = system(systemCall, '-echo');
-            else
-                [status, ~] = system(systemCall);
-            end
-            cd(this.workingDir);
         else
             matRad_cfg.dispError('FRED setup incorrect for this plan simulation');
         end
@@ -337,33 +343,70 @@ switch this.externalCalculation
             matRad_cfg.dispInfo(' done\n');
         end
 
-        % read simulation output
-        [doseCube, letdCube] = this.readSimulationOutput(this.MCrunFolder, this.calcDoseDirect, logical(this.calcLET));
+        for scenIdx = 1:this.multScen.totNumScen
+            [~, runFolderName] = fileparts(this.MCrunFolder);
+            if this.multScen.totNumScen > 1
+                tailRun = sprintf('_%d', scenIdx);
+            else
+                tailRun = '';
+            end
+
+            % read simulation output
+            [doseCube{scenIdx}, letdCube{scenIdx}] = ...
+                this.readSimulationOutput(strrep(this.MCrunFolder, ...
+                                                 runFolderName, sprintf('%s%s', runFolderName, tailRun)), ...
+                                          this.calcDoseDirect, ...
+                                          logical(this.calcLET));
+        end
 
     otherwise % A path for loading has been provided
 
-        matRad_cfg.dispInfo(['Reading simulation data from: ', strrep(this.MCrunFolder, '\', '\\'), '\n']);
+        for scenIdx = 1:this.multScen.totNumScen
+            [~, runFolderName] = fileparts(this.MCrunFolder);
+            if this.multScen.totNumScen > 1
+                tailRun = sprintf('_%d', scenIdx);
+            else
+                tailRun = '';
+            end
 
-        % read simulation output
-        [doseCube, letdCube, loadFileName] = this.readSimulationOutput(this.MCrunFolder, this.calcDoseDirect, logical(this.calcLET));
+            scenarioRunFolder = strrep(this.MCrunFolder, runFolderName, sprintf('%s%s', runFolderName, tailRun));
 
-        dij.externalCalculationLoadPath = loadFileName;
+            matRad_cfg.dispInfo(['Reading simulation data from: ', strrep(scenarioRunFolder, '\', '\\'), '\n']);
+
+            % read simulation output
+            [doseCube{scenIdx}, letdCube{scenIdx}, loadFileName] = ...
+                this.readSimulationOutput(scenarioRunFolder, this.calcDoseDirect, logical(this.calcLET));
+
+            dij.externalCalculationLodPath{scenIdx} = loadFileName;
+        end
 
 end
 
 if ~isempty(doseCube)
+    scenMaskIdx = num2cell(this.multScen.linearMask(scenIdx, :));
 
     % Fill dij
     if this.calcDoseDirect
         % Dose cube
-        if isequal(size(doseCube), this.doseGrid.dimensions)
-            dij.physicalDose{1} = doseCube(:);
+        if all(cellfun(@(cube) isequal(size(cube), this.doseGrid.dimensions), doseCube))
+            for scenIdx = 1:this.multScen.totNumScen
+                dij.physicalDose{scenMaskIdx{:}} = doseCube{scenIdx}(:);
+            end
         end
 
         % LETd cube
         if this.calcLET
-            if isequal(size(letdCube), this.doseGrid.dimensions)
-                dij.mLETDose{1} = letdCube(:) .* doseCube(:);
+            if all(cellfun(@(cube) isequal(size(cube), this.doseGrid.dimensions), letdCube))
+
+                for scenIdx = 1:this.multScen.totNumScen
+                    dij.mLETd{scenMaskIdx{:}} = letdCube{scenIdx}(:);
+                end
+
+                letdCube = cellfun(@(letScen, doseScen) letScen(:) .* doseScen(:), letdCube, doseCube, 'UniformOutput', false);
+
+                for scenIdx = 1:this.multScen.totNumScen
+                    dij.mLETDose{scenMaskIdx{:}} = letdCube{scenIdx}(:);
+                end
             end
         end
 
@@ -375,17 +418,17 @@ if ~isempty(doseCube)
         end
 
     else
-        doseCube = doseCube(:, fredOrder);
+        doseCube = cellfun(@(doseScen) doseScen(:, fredOrder), doseCube, 'UniformOutput', false);
         % Dose cube
         % When scoring dij, FRED internally normalizes to 1
-        dij.physicalDose{1} = this.conversionFactor * doseCube;
+        dij.physicalDose = cellfun(@(doseScen) this.conversionFactor * doseScen, doseCube, 'UniformOutput', false);
 
         % LET cube
         if this.calcLET
-            letdCube = letdCube(:, fredOrder);
+            letdCube = cellfun(@(letdScen) letdScen(:, fredOrder), letdCube, 'UniformOutput', false);
 
             % We need LETd * dose as well
-            dij.mLETDose{1} = dij.physicalDose{1} .* letdCube;
+            dij.mLETDose = cellfun(@(dose, letd) dose .* letd, dij.physicalDose, letdCube, 'UniformOutput', false);
         end
     end
 
@@ -393,49 +436,53 @@ if ~isempty(doseCube)
     if this.calcBioDose
 
         if this.calcDoseDirect
-            tmpKernel.LET = letdCube(this.VdoseGrid);
+            for scenIdx = 1:this.multScen.totNumScen
 
-            % recover alpha and beta maps
-            tmpBixel.radDepths = zeros(size(this.VdoseGrid, 1), 1);
+                tmpKernel.LET = letdCube{scenIdx}(this.VdoseGrid);
 
-            tmpBixel.vAlphaX   = dij.ax{1}(this.VdoseGrid);
-            tmpBixel.vBetaX    = dij.bx{1}(this.VdoseGrid);
-            tmpBixel.vABratio  = dij.ax{1}(this.VdoseGrid) ./ dij.bx{1}(this.VdoseGrid);
+                % recover alpha and beta maps
+                tmpBixel.radDepths = zeros(size(this.VdoseGrid, 1), 1);
 
-            tmpBixel = this.bioModel.calcBiologicalQuantitiesForBixel(tmpBixel, tmpKernel);
+                tmpBixel.vAlphaX   = dij.ax{scenIdx}(this.VdoseGrid);
+                tmpBixel.vBetaX    = dij.bx{scenIdx}(this.VdoseGrid);
+                tmpBixel.vABratio  = dij.ax{scenIdx}(this.VdoseGrid) ./ dij.bx{scenIdx}(this.VdoseGrid);
 
-            tmpBixel.alpha(isnan(tmpBixel.alpha)) = 0;
-            tmpBixel.beta(isnan(tmpBixel.beta)) =  0;
+                tmpBixel = this.bioModel.calcBiologicalQuantitiesForBixel(tmpBixel, tmpKernel);
 
-            dij.mAlphaDose{1}     = zeros(size(letdCube));
-            dij.mSqrtBetaDose{1}  = zeros(size(letdCube));
-            dij.mAlphaDose{1}(this.VdoseGrid)     = tmpBixel.alpha .* dij.physicalDose{1}(this.VdoseGrid);
-            dij.mSqrtBetaDose{1}(this.VdoseGrid)  = sqrt(tmpBixel.beta) .* dij.physicalDose{1}(this.VdoseGrid);
+                tmpBixel.alpha(isnan(tmpBixel.alpha)) = 0;
+                tmpBixel.beta(isnan(tmpBixel.beta)) =  0;
+
+                dij.mAlphaDose{scenIdx}     = zeros(size(letdCube{scenIdx}));
+                dij.mSqrtBetaDose{scenIdx}  = zeros(size(letdCube{scenIdx}));
+                dij.mAlphaDose{scenIdx}(this.VdoseGrid)     = tmpBixel.alpha .* dij.physicalDose{scenIdx}(this.VdoseGrid);
+                dij.mSqrtBetaDose{scenIdx}(this.VdoseGrid)  = sqrt(tmpBixel.beta) .* dij.physicalDose{scenIdx}(this.VdoseGrid);
+            end
         else
-            indices = find(letdCube);
-            matSize = size(letdCube);
-            [voxels, bixels] = ind2sub(size(letdCube), indices);
-            tmpKernel.LET = nonzeros(letdCube);
+            for scenIdx = 1:this.multScen.totNumScen
 
-            tmpBixel.radDepths = zeros(size(voxels), "logical");
-            tmpBixel.vAlphaX   = dij.ax{1}(voxels);
-            tmpBixel.vBetaX    = dij.bx{1}(voxels);
-            tmpBixel.vABratio  = tmpBixel.vAlphaX ./ tmpBixel.vBetaX;
+                currLetdCube = letdCube{scenIdx};
+                indices = find(currLetdCube);
+                matSize = size(currLetdCube);
+                [voxels, bixels] = ind2sub(size(currLetdCube), indices);
+                tmpKernel.LET = nonzeros(currLetdCube);
 
-            tmpBixel = this.bioModel.calcBiologicalQuantitiesForBixel(tmpBixel, tmpKernel);
+                tmpBixel.radDepths = zeros(size(voxels), "logical");
+                tmpBixel.vAlphaX   = dij.ax{scenIdx}(voxels);
+                tmpBixel.vBetaX    = dij.bx{scenIdx}(voxels);
+                tmpBixel.vABratio  = tmpBixel.vAlphaX ./ tmpBixel.vBetaX;
 
-            tmpBixel.alpha(~isfinite(tmpBixel.alpha)) = 0;
-            tmpBixel.beta(~isfinite(tmpBixel.beta)) =  0;
+                tmpBixel = this.bioModel.calcBiologicalQuantitiesForBixel(tmpBixel, tmpKernel);
 
-            dij.mAlphaDose{1} = sparse(voxels, bixels, tmpBixel.alpha, matSize(1), matSize(2));
-            dij.mSqrtBetaDose{1} = sparse(voxels, bixels, sqrt(tmpBixel.beta), matSize(1), matSize(2));
-            dij.mAlphaDose{1} = dij.mAlphaDose{1} .* dij.physicalDose{1};
-            dij.mSqrtBetaDose{1} = dij.mSqrtBetaDose{1} .* dij.physicalDose{1};
+                tmpBixel.alpha(~isfinite(tmpBixel.alpha)) = 0;
+                tmpBixel.beta(~isfinite(tmpBixel.beta)) =  0;
+
+                dij.mAlphaDose{scenIdx} = sparse(voxels, bixels, tmpBixel.alpha, matSize(1), matSize(2));
+                dij.mSqrtBetaDose{scenIdx} = sparse(voxels, bixels, sqrt(tmpBixel.beta), matSize(1), matSize(2));
+                dij.mAlphaDose{scenIdx} = dij.mAlphaDose{scenIdx} .* dij.physicalDose{scenIdx};
+                dij.mSqrtBetaDose{scenIdx} = dij.mSqrtBetaDose{scenIdx} .* dij.physicalDose{scenIdx};
+            end
         end
     end
 end
 
-dij = this.finalizeDose(dij);
-
 cd(currFolder);
-end

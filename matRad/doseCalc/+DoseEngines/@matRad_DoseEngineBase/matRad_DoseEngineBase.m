@@ -24,7 +24,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
        shortName;               % short identifier by which matRad recognizes an engine
        name;                    % user readable name for dose engine
        possibleRadiationModes;  % radiation modes the engine is meant to process
-       %supportedQuantities;    % supported (influence) quantities. Does not include quantities that can be derived post-calculation.
+       %supportedQuantities;    % supported (influence) quantities. Does not include quantities that can be derived post-calculation.       
     end    
     
     % Public properties
@@ -33,7 +33,9 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         multScen;                   % scenario model to use
         voxelSubIx;                 % selection of where to calculate / store dose, empty by default
         selectVoxelsInScenarios;    % which voxels to compute in robustness scenarios
-        %bioModel;                   % name of the biological model
+        precision = 'double';       % floating point precision for the dij and computations.
+        enableGPU = false;          % whether to use GPU arrays (experimental) for dose calculation (if supported by subclass implementation).
+        %bioModel;                  % name of the biological model
     end
     
     % Protected properties with public get access
@@ -214,6 +216,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             this.directWeights = w;
             this.calcDoseDirect = true;
             dij = this.calcDose(ct,cst,stf);
+            dij = this.finalizeDose(dij);
 
             % calculate cubes; use uniform weights here, weighting with actual fluence 
             % already performed in dij construction
@@ -273,6 +276,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         function dij = calcDoseInfluence(this,ct,cst,stf)
             this.calcDoseDirect = false;
             dij = this.calcDose(ct,cst,stf);
+            dij = this.finalizeDose(dij);
         end
         function setDefaults(this)
             % future code for property validation on creation here
@@ -299,13 +303,21 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         function dij = finalizeDose(this,dij)
 
             matRad_cfg = MatRad_Config.instance();
+
+            dijStoragePrecision = matRad_underlyingTypeCompat(dij.physicalDose{1});
+            if this.calcDoseDirect
+                matRad_cfg.dispInfo('Dose stored in ''%s'' precision\n', dijStoragePrecision);
+            else
+                matRad_cfg.dispInfo('Dose influence stored in ''%s'' precision\n', dijStoragePrecision);
+            end
+
             %Close Waitbar
             if any(ishandle(this.hWaitbar))
                 delete(this.hWaitbar);
             end
 
             this.timers.full = toc(this.timers.full);
-            
+
             matRad_cfg.dispInfo('Dose calculation finished in %g seconds!\n',this.timers.full);
         end
 
@@ -347,6 +359,13 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             
             % Reset the timer for the next progress update
             this.lastProgressUpdate = tic;
+        end
+    
+        function allows = allowsSinglePrecisionSparseDij(~)
+            matRad_cfg = MatRad_Config.instance();
+            %single precision sparse is not supported in Octave or Matlab
+            %older than R2025a.
+            allows = matRad_cfg.isMatlab & str2double(matRad_cfg.envVersion) >= 25; 
         end
     end
     

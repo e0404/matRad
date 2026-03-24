@@ -38,13 +38,6 @@ if ~isfield(pln,'propStf')
     return
 end
 
-%% compare number of gantry angles, but ignore if numOfBeams not set
-if isfield(pln.propStf,'numOfBeams') && pln.propStf.numOfBeams ~= numel(stf) 
-        msg= 'Number of beams do not match';
-        allMatch=false;
-        return
-end
-
 %% compare gantry angles in  stf and pln
 stfGantryAngles=[stf.gantryAngle];
 if ~isfield(pln.propStf,'gantryAngles') || numel(stfGantryAngles) ~= numel(pln.propStf.gantryAngles) ... % different size

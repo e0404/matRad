@@ -41,6 +41,12 @@ else
     hold(axesHandle,'on');
 end
 
+if nargin < 3
+    numOfBeams = numel(pln.propStf.gantryAngles);
+else
+    numOfBeams = numel(stf);
+end
+
 %nice pink ;)
 beamColor = [255 20 147]/255;
 
@@ -73,7 +79,7 @@ if nargin < 3 || isempty(stf)
     beamVector = [0 SAD 0];
    
     
-    for beamIx = 1:pln.propStf.numOfBeams
+    for beamIx = 1:numOfBeams
         rotMat = matRad_getRotationMatrix(pln.propStf.gantryAngles(beamIx),pln.propStf.couchAngles(beamIx));
         beamIsoCenter = pln.propStf.isoCenter(beamIx,:);
         currBeamVector = rotMat*beamVector';        
@@ -141,7 +147,7 @@ else %We use the steering information to visualize the field contour
             rayMat(el2DIx(1),el2DIx(2)) = 1;
         end
         %Create contour of the field
-        fieldContour2D = contourc(rayMat,1);
+        fieldContour2D = contourc(double(rayMat),1);
         
         %Column in the contour matrix
         cColumn = 1;
