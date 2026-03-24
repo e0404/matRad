@@ -232,6 +232,8 @@ classdef MatRad_Config < handle
             obj.defaults.propDoseCalc.calcLET = true; %calculate LETs for particles
             obj.defaults.propDoseCalc.selectVoxelsInScenarios = 'all';
             obj.defaults.propDoseCalc.airOffsetCorrection = true;
+            obj.defaults.propDoseCalc.precision = 'double';
+            
             % default properties for fine sampling calculation
             obj.defaults.propDoseCalc.fineSampling.sigmaSub = 1;
             obj.defaults.propDoseCalc.fineSampling.N = 2;

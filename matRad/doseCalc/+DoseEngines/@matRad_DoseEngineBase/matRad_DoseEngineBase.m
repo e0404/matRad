@@ -33,7 +33,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         multScen;                   % scenario model to use
         voxelSubIx;                 % selection of where to calculate / store dose, empty by default
         selectVoxelsInScenarios;    % which voxels to compute in robustness scenarios
-        precision = 'single';       % floating point precision for the dij and computations.
+        precision = 'double';       % floating point precision for the dij and computations.
         enableGPU = false;          % whether to use GPU arrays (experimental) for dose calculation (if supported by subclass implementation).
         %bioModel;                  % name of the biological model
     end
