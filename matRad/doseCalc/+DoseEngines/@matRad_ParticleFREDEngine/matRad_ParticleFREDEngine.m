@@ -245,7 +245,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         end
 
         %% Write files functions
-        writeRunFile(~, fName)
+        writeRunFile(this, fName)
 
         writeRegionsFile(this, fName, stf)
 
