@@ -30,7 +30,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
         numOfDijFillSteps = 10;     % Number of times during dose calculation the temporary containers are moved to a sparse matrix
 
-        traceOnDoseGrid = true;    % perform raytracing on dose grid instead of CT grid
+        traceOnDoseGrid = false;    % perform raytracing on dose grid instead of CT grid
     end
 
     properties (SetAccess = protected)
@@ -308,8 +308,9 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                 if ~this.traceOnDoseGrid
                     currBeam.radDepthCube = cellfun(@(rD) matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z, rD, ...
                         dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest'),currBeam.radDepthCube,'UniformOutput',false);
-                    this.radDepthCubes(i,:) = currBeam.radDepthCube(:);
                 end
+
+                this.radDepthCubes(i,:) = currBeam.radDepthCube(:);
             else
                 radDepths = this.rayTracer.traceCube(currBeam,voxForRayTracer,rotCoordsForRayTracer);
             end
