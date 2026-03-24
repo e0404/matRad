@@ -232,6 +232,7 @@ classdef MatRad_Config < handle
             obj.defaults.propDoseCalc.calcLET = true; %calculate LETs for particles
             obj.defaults.propDoseCalc.selectVoxelsInScenarios = 'all';
             obj.defaults.propDoseCalc.airOffsetCorrection = true;
+
             % default properties for fine sampling calculation
             obj.defaults.propDoseCalc.fineSampling.sigmaSub = 1;
             obj.defaults.propDoseCalc.fineSampling.N = 2;
@@ -246,6 +247,7 @@ classdef MatRad_Config < handle
             obj.defaults.propOpt.maxIter = 500;
             obj.defaults.propOpt.runDAO = 0;
             obj.defaults.propOpt.clearUnusedVoxels = false;
+            obj.defaults.propOpt.enableGPU = false;
 
             %Sequencing Options
             obj.defaults.propSeq.sequencer = 'siochi';

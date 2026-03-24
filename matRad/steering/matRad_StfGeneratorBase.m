@@ -32,6 +32,7 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
         bioModel;                   %Biological Model
         radiationMode;              %Radiation Mode
         machine;                    %Machine
+        enableGPU = false;          %Enable computation on the GPU (experimenta, default false)
     end
 
     properties (Access = protected)
@@ -179,9 +180,14 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
             % Instance of MatRad_Config class
             matRad_cfg = MatRad_Config.instance();
             matRad_cfg.dispInfo('matRad: Generating stf struct with generator ''%s''... ',this.name);
-
-            this.ct = ct;
-            this.cst = cst;
+            
+            if this.enableGPU
+                this.ct = matRad_moveCtToGPU(ct);
+                this.cst = matRad_moveCstToGPU(cst);
+            else
+                this.ct = ct;
+                this.cst = cst;
+            end
 
             this.initialize();
             this.createPatientGeometry();

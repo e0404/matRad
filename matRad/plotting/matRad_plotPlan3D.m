@@ -147,7 +147,7 @@ else %We use the steering information to visualize the field contour
             rayMat(el2DIx(1),el2DIx(2)) = 1;
         end
         %Create contour of the field
-        fieldContour2D = contourc(rayMat,1);
+        fieldContour2D = contourc(double(rayMat),1);
         
         %Column in the contour matrix
         cColumn = 1;

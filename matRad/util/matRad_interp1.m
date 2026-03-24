@@ -96,12 +96,17 @@ elseif isGriddedInterpolantAvailable
 
     if size(yi,2) > 1
 		% interpolation for multiple 1-D datasets
-        samplePoints = {xi, 1:size(yi,2)};
-        queryPoints  = {x,  1:size(yi,2)};
+        samplePoints = {xi, cast(1:size(yi,2),class(xi))};
+        queryPoints  = {x,   cast(1:size(yi,2),class(x))};
     else
 		% interpolation for a single 1-D dataset
         samplePoints = {xi};
         queryPoints  = {x};
+    end
+
+    if isgpuarray(x)
+        samplePoints = cellfun(@gpuArray,samplePoints,'UniformOutput',false);
+        yi = gpuArray(yi);
     end
 
     F = griddedInterpolant(samplePoints,yi,'linear',extrapmethod);

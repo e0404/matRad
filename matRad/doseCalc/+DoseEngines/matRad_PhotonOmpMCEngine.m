@@ -65,6 +65,12 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % call superclass constructor
             this = this@DoseEngines.matRad_MonteCarloEngineAbstract(pln);
 
+            if this.enableGPU
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispWarning('Set enableGPU ot true but ompMC does not support GPU computation! Setting back to false!');
+                this.enableGPU = false;
+            end
+
             matRad_cfg = MatRad_Config.instance();
             this.omcFolder = [matRad_cfg.matRadRoot filesep 'thirdParty' filesep 'ompMC'];
 

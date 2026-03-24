@@ -175,7 +175,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             end
 
             % calculate field size and distances
-            fieldLimit = ceil(this.fieldWidth/(2*this.intConvResolution));
+            fieldLimit = cast(ceil(this.fieldWidth/(2*this.intConvResolution)),this.precision);
             [this.F_X,this.F_Z] = meshgrid(-fieldLimit*this.intConvResolution: ...
                 this.intConvResolution: ...
                 (fieldLimit-1)*this.intConvResolution);
@@ -184,7 +184,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
 
             sigmaGauss = this.penumbraFWHM / sqrt(8*log(2)); % [mm]
             % use 5 times sigma as the limits for the gaussian convolution
-            gaussLimit = ceil(5*sigmaGauss/this.intConvResolution);
+            gaussLimit = cast(ceil(5*sigmaGauss/this.intConvResolution),this.precision);
             [gaussFilterX,gaussFilterZ] = meshgrid(-gaussLimit*this.intConvResolution: ...
                 this.intConvResolution: ...
                 (gaussLimit-1)*this.intConvResolution);
@@ -193,7 +193,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
 
             % get kernel size and distances
 
-            kernelLimit = ceil(this.kernelCutOff/this.intConvResolution);
+            kernelLimit = cast(ceil(this.kernelCutOff/this.intConvResolution),this.precision);
             [this.kernelX, this.kernelZ] = meshgrid(-kernelLimit*this.intConvResolution: ...
                 this.intConvResolution: ...
                 (kernelLimit-1)*this.intConvResolution);
@@ -215,7 +215,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             % convolution if we use a uniform fluence
             if ~this.isFieldBasedDoseCalc
                 % Create fluence matrix
-                this.Fpre = ones(floor(this.fieldWidth/this.intConvResolution));
+                this.Fpre = ones(floor(this.fieldWidth/this.intConvResolution),this.precision);
 
                 if ~this.useCustomPrimaryPhotonFluence
                     % gaussian convolution of field to model penumbra
