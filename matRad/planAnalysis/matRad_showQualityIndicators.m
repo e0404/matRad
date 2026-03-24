@@ -1,14 +1,14 @@
 function matRad_showQualityIndicators(figHandle,qi)
 % matRad display of quality indicators as table
 % 
-% call
+% call:
 %   matRad_showQualityIndicators(qi)
 %
-% input
+% input:
 %   figHandle: handle to figure to display the Quality Indicators in
 %   qi: result struct from matRad_calcQualityIndicators
 %
-% output
+% output:
 %   graphical display of quality indicators in table form   
 %
 % References

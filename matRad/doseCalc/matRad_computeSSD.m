@@ -1,11 +1,11 @@
 function stf = matRad_computeSSD(stf,ct,varargin)
 % matRad SSD calculation
 % 
-% call
+% call:
 %   stf = matRad_computeSSD(stf,ct)
 %   stf = matRad_computeSSD(stf,ct,Name,Value)
 %
-% input
+% input:
 %   ct:     ct cube
 %   stf:    matRad steering information struct
 %   
@@ -15,7 +15,7 @@ function stf = matRad_computeSSD(stf,ct,varargin)
 %
 %   densityThreshold: value determining the skin threshold.
 %
-% output
+% output:
 %   stf:    matRad steering information struct
 %
 % References

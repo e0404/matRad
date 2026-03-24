@@ -1,9 +1,9 @@
 function writeRegionsFile(this, fName)
 % FRED helper to write file for geometrical components
-% call
+% call:
 %   writeRegionsFile(fName)
 %
-% input
+% input:
 %   fName: string specifying the file path and name for saving the data.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

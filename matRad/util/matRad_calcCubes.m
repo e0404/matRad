@@ -2,16 +2,16 @@ function resultGUI = matRad_calcCubes(w,dij,scenNum)
 % matRad computation of all cubes for the resultGUI struct
 % which is used as result container and for visualization in matRad's GUI
 %
-% call
+% call:
 %   resultGUI = matRad_calcCubes(w,dij)
 %   resultGUI = matRad_calcCubes(w,dij,scenNum)
 %
-% input
+% input:
 %   w:       bixel weight vector
 %   dij:     dose influence matrix
 %   scenNum: optional: number of scenario to calculated (default 1)
 %
-% output
+% output:
 %   resultGUI: matRad result struct
 %
 % References

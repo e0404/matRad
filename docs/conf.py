@@ -14,16 +14,24 @@ html_css_files = ["style.css"]
 html_logo = "../matRad/gfx/matrad_logo.png"
 html_theme_options = {
     'logo_only': True,
-    'display_version': True,
 }
 
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
     'sphinx_toolbox.collapse',
-    'sphinxcontrib.matlab', 
+    'sphinxcontrib.matlab',
     'sphinxcontrib.youtube',
     'sphinx_togglebutton',
     ]
+
+napoleon_google_docstring = True
+napoleon_numpy_docstring = False
+napoleon_custom_sections = [
+    ('input', 'params_style'),
+    ('output', 'params_style'),
+    'call'
+]
 primary_domain = "mat"
 
 matlab_src_dir = os.path.join(os.path.dirname(__file__), '../')

@@ -1,10 +1,10 @@
 function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nCasePerBixel,calcDoseDirect)
 % matRad MCsqaure monte carlo photon dose calculation wrapper
 %
-% call
+% call:
 %   dij = matRad_calcParticleDoseMc(ct,stf,pln,cst,calcDoseDirect)
 %
-% input
+% input:
 %   ct:          	matRad ct struct
 %   stf:         	matRad steering information struct
 %   pln:            matRad plan meta information struct
@@ -13,7 +13,7 @@ function dij = matRad_calcParticleDoseMC(ct,stf,pln,cst,nCasePerBixel,calcDoseDi
 %   calcDoseDirect: binary switch to enable forward dose
 %                   calcualtion
 %
-% output
+% output:
 %   dij:            matRad dij struct
 %
 % References

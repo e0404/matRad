@@ -3,14 +3,14 @@ function isoLineHandles = matRad_plotIsoDoseLines3D(axesHandle,ct,doseCube,isoCo
 % computed by matRad_computeIsoDoseContours or manually by calling 
 % contourslice itself
 %
-% call
+% call:
 %   isoLineHandles = matRad_plotIsoDoseLines3D(axesHandle,ct,doseCube,isoContours,isoLevels,plane,slice)
 %   isoLineHandles = matRad_plotIsoDoseLines3D(axesHandle,ct,doseCube,isoContours,isoLevels,plane,slice,cMap)
 %   isoLineHandles = matRad_plotIsoDoseLines3D(axesHandle,ct,doseCube,isoContours,isoLevels,plane,slice,window)
 %   isoLineHandles = matRad_plotIsoDoseLines3D(axesHandle,ct,doseCube,isoContours,isoLevels,plane,slice,cMap,window)
 %   isoLineHandles = matRad_plotIsoDoseLines3D(axesHandle,ct,doseCube,isoContours,isoLevels,plane,slice,cMap,window, ...)
 %
-% input
+% input:
 %   axesHandle  handle to axes the slice should be displayed in
 %   ct          matRad ct struct which contains resolution
 %   doseCube    3D array of the corresponding dose cube
@@ -27,7 +27,7 @@ function isoLineHandles = matRad_plotIsoDoseLines3D(axesHandle,ct,doseCube,isoCo
 %               [min(doseCube(:)) max(doseCube(:))]
 %   varargin    Additional Matlab Line-Property/value pairs
 %
-% output
+% output:
 %   isoLineHandles: handle to the plotted isolines
 %
 % References

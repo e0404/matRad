@@ -7,14 +7,14 @@ function [alphas, l, rho, d12, ix] = matRad_siddonRayTracer(isocenterCube, ...
 % according to Siddon 1985 Medical Physics. The raytracer expects the
 % isocenter in cube coordinates!
 %
-% call
+% call:
 %   [alphas,l,rho,d12,vis] = matRad_siddonRayTracer(isocenter, ...
 %                               resolution, ...
 %                               sourcePoint, ...
 %                               targetPoint, ...
 %                               cubes)
 %
-% input
+% input:
 %   isocenterCube:  isocenter in cube coordinates [mm]
 %   resolution:     resolution of the cubes [mm/voxel]
 %   sourcePoint:    source point of ray tracing
@@ -22,14 +22,12 @@ function [alphas, l, rho, d12, ix] = matRad_siddonRayTracer(isocenterCube, ...
 %   cubes:          cell array of cubes for ray tracing (it is possible to pass
 %                   multiple cubes for ray tracing to save computation time)
 %
-% output (see Siddon 1985 Medical Physics for a detailed description of the
-% variables)
-%   alphas          relative distance between start and endpoint for the
-%                    intersections with the cube
-%   l               lengths of intersestions with cubes
-%   rho             densities extracted from cubes
-%   d12             distance between start and endpoint of ray tracing
-%   ix              indices of hit voxels
+% output:
+%   alphas:         relative distance between start and endpoint for the intersections with the cube
+%   l:              lengths of intersections with cubes
+%   rho:            densities extracted from cubes
+%   d12:            distance between start and endpoint of ray tracing
+%   ix:             indices of hit voxels
 %
 % References
 %   [1] http://www.ncbi.nlm.nih.gov/pubmed/4000088

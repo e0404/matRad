@@ -2,7 +2,7 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSlice(ct, varargin)
 % matRad tool function to directly plot a complete slice of a ct with dose
 % optionally including contours and isolines
 %
-% call
+% call:
 % [] = matRad_plotSlice(ct, dose, varargin)
 %
 % input (required)

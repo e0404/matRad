@@ -4,17 +4,17 @@ function ct = matRad_getCtFromGPU(ct, precision)
 %   memory. Optionally casts the data to the requested numeric precision
 %   after gathering.
 %
-% call
+% call:
 %   ct = matRad_getCtFromGPU(ct)
 %   ct = matRad_getCtFromGPU(ct, precision)
 %
-% input
+% input:
 %   ct          matRad ct struct with GPU arrays in cubeHU and/or cube
 %   precision   (optional) target numeric precision as string, e.g.
 %               'single' or 'double'. If empty or omitted, no cast is
 %               performed.
 %
-% output
+% output:
 %   ct          matRad ct struct with host arrays in cubeHU and/or cube
 %
 % References

@@ -7,7 +7,7 @@ function obj = matRad_createCst(obj)
 %
 % Output - matRad cst structure
 %
-% call
+% call:
 %   obj = matRad_createCst(obj)
 %
 %

@@ -4,13 +4,13 @@ function matRad_visPhotonFieldShapes(pln)
 % with matRad's dicom import tool and feature the appropriate field shape
 % information
 % 
-% call
+% call:
 %   matRad_visPhotonFieldShapes(pln)
 %
-% input
+% input:
 %   pln: matRad plan struct
 %
-% output
+% output:
 %   -
 %
 % References

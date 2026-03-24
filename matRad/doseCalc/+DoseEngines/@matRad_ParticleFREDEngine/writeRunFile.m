@@ -1,9 +1,9 @@
 function writeRunFile(this, fName)
 % FRED helper to write file for simulation
-% call
+% call:
 %   writeRunFile(fName)
 %
-% input
+% input:
 %   fName: string specifying the file path and name for saving the data.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

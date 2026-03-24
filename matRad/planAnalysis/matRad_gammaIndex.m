@@ -2,7 +2,7 @@ function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolutio
 % gamma index calculation 
 % according to http://www.ncbi.nlm.nih.gov/pubmed/9608475
 % 
-% call
+% call:
 %   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,cst)
 %   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,cst)
 %   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,n,cst)
@@ -11,7 +11,7 @@ function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolutio
 %               ...
 %   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,n,localglobal,cst)
 %
-% input
+% input:
 %   cube1:         dose cube as an M x N x O array
 %   cube2:         dose cube as an M x N x O array
 %   resolution:    resolution of the cubes [mm/voxel]

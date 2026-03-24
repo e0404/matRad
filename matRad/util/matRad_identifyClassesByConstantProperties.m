@@ -13,20 +13,19 @@ function [classList] = matRad_identifyClassesByConstantProperties(metaClasses,pr
 %       matRad_identifyClassesByProperty(metaClasses, primaryPropertyName,
 %       'additionalPropertyNames', {additionalProperties})
 %
-% inputs:
-%   - metaClasses: A cell array of meta.class objects representing the
-%     classes to be identified. 
-%   - primaryPropertyName: The name of the primary property used for 
-%     identification.
+% input:
+%   metaClasses: A cell array of meta.class objects representing the
+%   classes to be identified. 
+%   primaryPropertyName: The name of the primary property used for 
+%   identification.
 %
 % optional Parameter Inputs:
-%   - defaults: A cell array of default classes that should be listed
-%     first. 
-%   - additionalPropertyNames: A cell array of additional property names
+%   defaults: A cell array of default classes that should be listed first. 
+%   additionalPropertyNames: A cell array of additional property names
 %     used for identification.
 %
 % outputs:
-%   - classList: A structure array containing the identified classes.
+%   classList: A structure array containing the identified classes.
 %       - primaryPropertyName: The values of the primary property for each
 %       class. - additionalPropertyNames: The values of the additional
 %       properties for each class. - className: The names of the identified

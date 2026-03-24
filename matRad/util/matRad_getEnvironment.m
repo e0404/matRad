@@ -1,13 +1,13 @@
 function [env, versionString] = matRad_getEnvironment()
 % matRad function to get the software environment matRad is running on
 % 
-% call
+% call:
 %   [env, versionString] = matRad_getEnvironment()
 %
-% input
+% input:
 %   -
 %   
-% output
+% output:
 %   env:            outputs either 'MATLAB' or 'OCTAVE' as string
 %   versionString:  returns the version number as string
 %

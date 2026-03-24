@@ -1,17 +1,16 @@
 function [sigmaIni] = matRad_calcSigmaIni(baseData,rays,SSD)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % This function evaluates simultaneously the initial sigma of the beam for
 % one or more energies
 %
-% call
+% call:
 %   sigmaIni = matRad_calcSigmaIni(machine.data,stf(i).ray,stf(i).ray(j).SSD);
 %
-% input
+% input:
 %   baseData:           'machine.data' file
 %   rays:            	'stf.ray' file
 %   SSD:                source-surface difference
 %
-% output
+% output:
 %   sigmaIni:        	initial sigma of the ray at certain energy (or
 %                       energies). The data is given in 1xP dimensions,
 %                       where 'P' represents the number of different

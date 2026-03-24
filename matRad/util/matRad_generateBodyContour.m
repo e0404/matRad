@@ -1,16 +1,16 @@
 function cst = matRad_generateBodyContour(ct,cst,thresholdHU)
 % function to create a BODY contour for imported patient cases that do not have one
 % 
-% call
+% call:
 %   cst = matRad_generateBodyContour(ct,cst,thresholdHU)
 %
-% input
+% input:
 %   ct:             matrad ct structure
 %   cst:            matrad cst structure
 %   thresholdHU:    HU thresholding value (optional) default = -500 HU
 %                  
 %
-% output
+% output:
 %   cst:        matRads cst struct  with inserted BODY contour
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -2,10 +2,10 @@ function [cstStat, doseStat, meta] = matRad_samplingAnalysis(ct,cst,pln,caSampRe
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad uncertainty sampling analysis function
 % 
-% call
+% call:
 %   [structureStat, doseStat] = samplingAnalysis(ct,cst,subIx,mSampDose,w)
 %
-% input
+% input:
 %   ct:                 ct cube
 %   cst:                matRad cst struct
 %   pln:                matRad's pln struct
@@ -21,7 +21,7 @@ function [cstStat, doseStat, meta] = matRad_samplingAnalysis(ct,cst,pln,caSampRe
 %                                           between (0,1)
 %   
 %
-% output
+% output:
 %   cstStat         structure-wise statistics (mean, max, percentiles, ...)
 %   doseStat        dose-wise statistics (mean, max, percentiles, ...)
 %   meta            contains additional information about sampling analysis

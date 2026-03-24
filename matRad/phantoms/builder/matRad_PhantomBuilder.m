@@ -117,7 +117,7 @@ classdef matRad_PhantomBuilder < handle
             %   Returns the ct and struct. The function also initializes
             %   the HUs in reverse order of definition
             %
-            % output
+            % output:
             %   ct:         matRad ct struct
             %   cst:        matRad cst struct
 

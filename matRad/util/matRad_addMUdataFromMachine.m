@@ -2,16 +2,16 @@ function [stf, dij] = matRad_addMUdataFromMachine(machine, stf, dij)
 % helper function to add MU data included in machine file to dij and stf
 % computed with earlier versions of matRad
 % 
-% call
+% call:
 %   [stf, dij] = matRad_addMUdataFromMachine(machine, stf, dij)
 %   stf = matRad_addMUdataFromMachine(machine, stf)
 %
-% input
+% input:
 %   machine:        machine struct as stored in basedata file
 %   stf:            matRad steering information struct
 %   dij:            matRad dose influence matrix struct
 %
-% output
+% output:
 %   stf:            matRad steering information struct with MUdata
 %   dij:            matRad dose influence matrix struct with MUdata
 %

@@ -4,17 +4,17 @@ function cst = matRad_moveCstToGPU(cst, indexType)
 %   data) to GPU memory. Optionally casts the data to the requested numeric
 %   precision before uploading.
 %
-% call
+% call:
 %   cst = matRad_moveCstToGPU(cst)
 %   cst = matRad_moveCstToGPU(cst, precision)
 %
-% input
+% input:
 %   cst         matRad cst cell array with host arrays in column 4
 %   indexType   (optional) target index type as integer, e.g.
 %               'int32' or 'uint64'. If empty or omitted, no cast is
 %               performed.
 %
-% output
+% output:
 %   cst         matRad cst cell array with GPU arrays in column 4
 %
 % References

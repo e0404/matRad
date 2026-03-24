@@ -10,7 +10,7 @@ function obj = matRad_interpDicomDoseCube(obj)
 % Output - structure with different actual current dose cube and several 
 % meta data.
 %
-% call
+% call:
 %   obj = matRad_interpDicomDoseCube(obj)
 %
 %

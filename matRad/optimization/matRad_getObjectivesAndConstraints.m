@@ -1,11 +1,11 @@
 function classNames = matRad_getObjectivesAndConstraints()
 % matRad steering information generation
 % 
-% call
+% call:
 %   classNames = matRad_getObjectivesAndConstraints()
 %
 %
-% output
+% output:
 %   classNames:     contains class names (row 1) and display descriptions 
 %                   (row 2) of all available objectives
 %

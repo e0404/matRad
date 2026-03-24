@@ -154,14 +154,14 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             %   1D dose rate formalism from Rivard et al. (2004): AAPM TG-43 update,
             %   page 639, Eq. 11:
             %
-            % call
+            % call:
             %   DoseRate = matRad_TG43BrachyEngine.getDoseRate1D_poly(machine,r_mm)
             %
-            % input
+            % input:
             %   machine:    TG43 information about the used seeds
             %   r:          radial distance array, given in mm!
             %
-            % output
+            % output:
             %   DoseRate:   size(r) array of dose Rate in cGy/h
             %
             % comment on dimensions / units
@@ -236,15 +236,15 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             %   2D dose rate formalism from Rivard et al. (2004): AAPM TG-43 update,
             %   page 637, eq. 1
             %
-            % call
+            % call:
             %   DoseRate = matRad_TG43BrachyEngine.getDoseRate2D_poly(machine,r_mm)
             %
-            % input
+            % input:
             %   machine:    TG43 information about the used seeds
             %   r:          radial distance array, given in mm!
             %   theta:      polar angle in degree
             %
-            % output
+            % output:
             %   DoseRate:   size(r) array of dose Rate in cGy/h
             %
             % comment on dimensions / units
@@ -339,19 +339,20 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
         function [ThetaMatrix,ThetaVector] = getThetaMatrix(this,templateNormal,DistanceMatrix)
             % getThetaMatrix gets (seed x dosepoint) matrix of relative polar angles
             %
-            % call
+            % call:
             %   [ThetaMatrix,ThetaVector] = matRad_TG43BrachyEngine.getThetaMatrix(templateNormal,...
             %       DistanceMatrix)
+            %
             %   normally called within matRad_TG43BrachyEngine.getBrachyDose
             %   !!getDistanceMatrix needs to be called first!!
             %
-            % input
+            % input:
             %   DistanceMatrix:     [dosePoint x seedPoint] struct with fields 'x','y',
             %                       'z' and total distance 'dist'
             %   templateNormal:     normal vector of template (its assumed that this is
             %                       the dir all seeds point to)
             %
-            % output
+            % output:
             %   angle matrix:       rows: index of dosepoint
             %                       columns: index of deedpoint
             %                       entry: polar angles betreen seedpoints and
@@ -379,17 +380,17 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             %   AAPM Task Group No. 43 Report Eq. (2).
             %   Normally called within matRad_TG43BrachyEngine.getDoseRate(...)
             %
-            % call
+            % call:
             %   PhiAn = matRad_TG43BrachyEngine.anisotropyFactor1D(r,PhiAnTab, L)
             %
-            % input
+            % input:
             %   r:          array of radial distances in cm!
             %   PhiAnTab:   tabulated consensus data of gL according to the following
             %               cell structure:
             %               PhiAnTab{1} = AnisotropyFactorRadialDistance
             %               PhiAnTab{2} = AnisotropyFactorValue
             %
-            % output
+            % output:
             %   PhiAn:      array of the same shape as r and thet containing the
             %               interpolated and extrapolated values
             rmin = PhiAnTab{1}(1);
@@ -410,10 +411,10 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             %
             %   This function requires the multiPolyRegress code : https://de.mathworks.com/matlabcentral/fileexchange/34918-multivariate-polynomial-regression
             %
-            % call
+            % call:
             %   F = matRad_TG43BrachyEngine.anisotropyFunction2D(r,thet,FTab)
             %
-            % input
+            % input:
             %   r:      array of radial distances in cm
             %   thet:   array of azimuthal angles in °
             %   FTab:   tabulated consensus data of F according to the
@@ -422,7 +423,7 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             %           FTab{2} = AnisotropyPolarAngles
             %           FTab{3} = AnisotropyFunctionValue
             %
-            % output
+            % output:
             %   F:      array of the same shape as r and thet containing the
             %           interpolated and extrapolated values
 
@@ -454,15 +455,15 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             %   according to Rivard et al.: AAPM TG-43, p 638 update Eq. (4)
             %   Normally called within matRad_TG43BrachyEngine.getDoseRate(...)
             %
-            % call
+            % call:
             %   GL = matRad_TG43BrachyEngine.geometryFunction(r,thet,L)
             %
-            % inputs
+            % input:
             %   r:              array of radial distances in cm!
             %   thet:           array of azimual angles in °
             %   Length:         length of radiation source in cm
             %
-            % outputs
+            % output:
             %   GL(r,theta):    geometry function output
 
             % calculate solution
@@ -497,17 +498,17 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             %   according to Rivard et al.: AAPM TG-43 update, p.669, Eq. (C1).
             %   Normally called within matRad_TG43BrachyEngine.TG43BrachyEngine.getDoseRate(...)
             %
-            % call
+            % call:
             %   matRad_TG43BrachyEngine.TG43BrachyEngine.radialDoseFuncrion(r,gLTab)
             %
-            % input
+            % input:
             %   r:      array of radial distances in cm!
             %   gLTab:  tabulated consensus data of gL according to the
             %           following cell structure:
             %           gLTab{1} = RadialDoseDistance
             %           gLTab{2} = RadialDoseValue
             %
-            % output
+            % output:
             %   gL:     array of the same shape as r containing the interpolated
             %           and extrapolated values
             rmin = gLTab{1}(1);
@@ -526,10 +527,10 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             %   data using interp2 ( interp technique TBD)
             %   Normally called within matRad_TG43BrachyEngine.TG43BrachyEngine.getDoseRate(...)
             %
-            % call
+            % call:
             %   F = matRad_TG43BrachyEngine.TG43BrachyEngine.anisotropyFunction2D(r,thet,FTab)
             %
-            % input
+            % input:
             %   r:      array of radial distances in cm
             %   thet:   array of azimuthal angles in ??
             %   FTab:   tabulated consensus data of F according to the
@@ -538,7 +539,7 @@ classdef matRad_TG43BrachyEngine < DoseEngines.matRad_DoseEngineBase
             %           FTab{2} = AnisotropyPolarAngles
             %           FTab{3} = AnisotropyFunctionValue
             %
-            % output
+            % output:
             %   F:      array of the same shape as r and thet containing the
             %           interpolated and extrapolated values
             [DataRGrid,DataThetGrid] = meshgrid(FTab{1},FTab{2});

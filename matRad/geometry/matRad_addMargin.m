@@ -1,10 +1,10 @@
 function mVOIEnlarged = matRad_addMargin(mVOI,cst,vResolution,vMargin,bDiaElem)
 % matRad add margin function
 % 
-% call
+% call:
 %   mVOIEnlarged = matRad_addMargin(mVOI,cst,vResolution,vMargin,bDiaElem)
 %
-% input
+% input:
 %   mVOI:           image stack in dimensions of X x Y x Z holding ones for
 %                   object and zeros otherwise 
 %   cst:            matRad cst struct
@@ -12,7 +12,7 @@ function mVOIEnlarged = matRad_addMargin(mVOI,cst,vResolution,vMargin,bDiaElem)
 %   vMargin:        margin in mm 
 %   bDiaElem        if true 26-connectivity is used otherwise 6-connectivity
 %
-% output
+% output:
 %   mVOIEnlarged:   enlarged VOI
 %
 % References

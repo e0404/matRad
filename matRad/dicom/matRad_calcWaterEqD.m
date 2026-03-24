@@ -2,15 +2,15 @@ function ct = matRad_calcWaterEqD(ct, radiationMode)
 % matRad function to calculate the equivalent densities from a dicom ct 
 % that originally uses intensity values
 %
-% call
+% call:
 %   ct = matRad_calcWaterEqD(ct, radiationMode)
 %
-% input
+% input:
 %   ct:             ct containing a cubeHU to compute rED/rSP values from
 %   radiationMode:  radiationMode as character array (e.g. 'photons') since matRad 3.
 %                   Can also be a pln-struct for downwards compatibility
 %
-% output
+% output:
 %   ct: ct struct with cube with relative _electron_ densities stored in
 %   ct.cube
 %

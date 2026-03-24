@@ -3,7 +3,7 @@ function [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle,doseCube,pla
 % The function can also be used in personal matlab figures by passing the
 % corresponding axes handle.
 %
-% call
+% call:
 %   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold)
 %   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,alpha)
 %   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,cMap)
@@ -13,7 +13,7 @@ function [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle,doseCube,pla
 %   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,cMap,window)
 %   [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle, doseCube,plane,slice,threshold,alpha,cMap,window)
 %
-% input
+% input:
 %   axesHandle  handle to axes the slice should be displayed in
 %   doseCube    3D array of the dose to select the slice from
 %   plane       plane view (coronal=1,sagittal=2,axial=3)
@@ -31,7 +31,7 @@ function [doseHandle,cMap,window] = matRad_plotDoseSlice(axesHandle,doseCube,pla
 %   window      optional argument defining the displayed range. default is
 %               [min(doseCube(:)) max(doseCube(:))]
 %
-% output
+% output:
 %   doseHandle: handle of the plotted dose axes
 %   cMap        used colormap (same as input if set)
 %   window      used window (same as input if set)

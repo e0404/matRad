@@ -1,14 +1,14 @@
 function matRad_progress(currentIndex, totalNumberOfEvaluations)
 % matRad progress bar
 % 
-% call
+% call:
 %   matRad_progress(currentIndex, totalNumberOfEvaluations)
 %
-% input
+% input:
 %   currentIndex:               current iteration index
 %   totalNumberOfEvaluations:   maximum iteration index
 %
-% output
+% output:
 %   graphical display of progess. make sure there is no other output
 %   written during the loop to prevent confusion
 %

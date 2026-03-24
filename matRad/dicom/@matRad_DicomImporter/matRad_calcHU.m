@@ -9,7 +9,7 @@ function obj = matRad_calcHU(obj)
 %
 % HU = IV * slope + intercept
 %
-% call
+% call:
 %   obj = matRad_calcHU(obj)
 %
 %

@@ -7,8 +7,6 @@ classdef matRad_SquaredDeviation < DoseObjectives.matRad_DoseObjective
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
 % Copyright 2015 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license

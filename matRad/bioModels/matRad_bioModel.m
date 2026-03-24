@@ -5,12 +5,12 @@ function model = matRad_bioModel(radiationMode, model, providedQuantities)
 %  function currently exists for downwards compatability, as the new
 %  Biological Models will follow a polymorphic software architecture
 %
-% call
+% call:
 %   matRad_bioModel(radiationMode, model)
 %
 %   e.g. pln.bioModel = matRad_bioModel('protons','MCN')
 %
-% input
+% input:
 %   radiationMode:      radiation modality 'photons' 'protons' 'helium' 'carbon' 'brachy'
 %   
 %   model:              string to denote which biological model is used
@@ -21,7 +21,7 @@ function model = matRad_bioModel(radiationMode, model, providedQuantities)
 %   providedQuantities: optional cell string of provided quantities to
 %                       check if the model can be evaluated
 %
-% output
+% output:
 %   model:              instance of a biological model
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

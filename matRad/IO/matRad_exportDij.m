@@ -1,11 +1,11 @@
 function matRad_exportDij(filename,dij,stf,metadata)
 % matRad physical dose writer
 %
-% call
+% call:
 %   matRad_exportDij(filename,dij,stf,...
 %                    additionalFields,additionalKeyValuePairs)
 %
-% input
+% input:
 %   filename:   full output path, including the file extension
 %   dij:        matRad dij struct
 %   stf:        matRad stf struct

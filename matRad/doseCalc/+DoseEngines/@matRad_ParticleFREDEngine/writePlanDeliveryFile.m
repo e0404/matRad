@@ -1,9 +1,9 @@
 function writePlanDeliveryFile(this, fName)
 % FRED helper to write file for plan delivery routine
-% call
+% call:
 %   writePlanDeliveryFile(fName)
 %
-% input
+% input:
 %   fName: tring specifying the file path and name for saving the data.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

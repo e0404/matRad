@@ -10,7 +10,7 @@ function obj = matRad_importDicomRTPlan(obj)
 % Output - matRad pln structure with meta information.
 % Note that bixelWidth is determined via the importSteering function.
 %
-% call
+% call:
 %   obj = matRad_importDicomRTPlan(obj)
 %
 %

@@ -50,10 +50,10 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
         function this = matRad_ParticleMCsquareEngine(pln)
             % Constructor
             %
-            % call
+            % call:
             %   engine = DoseEngines.matRad_DoseEngineMCsquare(ct,stf,pln,cst)
             %
-            % input
+            % input:
             %   ct:                         matRad ct struct
             %   stf:                        matRad steering information struct
             %   pln:                        matRad plan meta information struct
@@ -118,15 +118,15 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             % engine or over the matRad_calcPhotonDoseMC function while
             % calling the calculation
             %
-            % call
+            % call:
             %   dij = this.calcDose(ct,stf,pln,cst)
             %
-            % input
+            % input:
             %   ct:             matRad ct struct
             %   cst:            matRad cst struct
             %   stf:            matRad steering information struct
             %
-            % output
+            % output:
             %   dij:            matRad dij struct
             %
             % References
@@ -747,14 +747,14 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
         function writeInputFiles(obj, filename, stf)
             % generate input files for MCsquare dose calculation from matRad
             %
-            % call
+            % call:
             %   obj.writeInputFiles(filename,filename,stf)
             %
-            % input
+            % input:
             %   filename:       filename of the Configuration file
             %   stf:            matRad steering information struct
             %
-            % output
+            % output:
             %   -
             %
             % References
@@ -897,14 +897,14 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             % IO folder
             % matRad mhd file reader
             %
-            % call
+            % call:
             %   cube = matRad_readMhd(folder,filename)
             %
-            % input
+            % input:
             %   folder:   folder where the *raw and *mhd file are located
             %   filename: filename
             %
-            % output
+            % output:
             %   cube:     3D array
             %
             % References

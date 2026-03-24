@@ -5,13 +5,13 @@ function utype = matRad_underlyingTypeCompat(x)
 %   case of data stored on the GPU compared to "single", or "double" for
 %   standard arrays. This wraps the function for Octave compatibility.
 %
-% call
+% call:
 %   utype = matRad_underlyingTypeCompat(x)
 %
-% input
+% input:
 %   x       object to check for datatype
 %
-% output
+% output:
 %   utype   datatype
 %
 % References

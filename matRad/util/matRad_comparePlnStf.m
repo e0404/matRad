@@ -1,15 +1,15 @@
 function [allMatch, msg] = matRad_comparePlnStf(pln,stf)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% call
+% call:
 %   matching = matRad_comparePlnDijStf(pln,stf,dij)
 %
-% input
+% input:
 %   dij:                        matRad dij struct
 %   stf:                        matRad steering information struct
 %   pln:                        matRad plan meta information struct
 %
-% output
+% output:
 %
 %   allMatch:                   flag is true if they all match
 %   matching:                   message to display

@@ -3,15 +3,15 @@ function isoCenter = matRad_getIsoCenter(cst,ct,visBool)
 % of all volumes of interest that are labeled as target within the cst 
 % struct
 % 
-% call
+% call:
 %   isoCenter = matRad_getIsoCenter(cst,ct,visBool)
 %
-% input
+% input:
 %   cst:        matRad cst struct
 %   ct:         ct cube
 %   visBool:    toggle on/off visualization (optional)
 %
-% output
+% output:
 %   isoCenter:  isocenter in [mm]   
 %
 % References

@@ -1,9 +1,9 @@
 function [doseCube, letCube, loadFileName] = readSimulationOutput(runFolder,calcDoseDirect,calcLET)
 % FRED helper to read simulation output
-% call
+% call:
 %   readSimulationOutput(runFolder,calcDoseDirect, varargin)
 % 
-% input
+% input:
 %   runFolder:          path to folder containing the simulation files
 %   calcDoseDirect:     boolean to trigger dij or .mhd reading
 %   

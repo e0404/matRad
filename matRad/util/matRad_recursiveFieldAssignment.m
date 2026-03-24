@@ -5,17 +5,17 @@ function assigned = matRad_recursiveFieldAssignment(assignTo,reference,overwrite
 % or vice versa, a warning message is displayed. The function also handles the case where 'assignTo' or 'reference' are not structures,
 % directly assigning the values. Custom warning messages can be specified for overwriting fields.
 %
-% call
+% call:
 %   assigned = matRad_recursiveFieldAssignment(assignTo,reference,fieldChangedWarningMessage,fieldname)
 %
-% input
+% input:
 %   assignTo:                      The initial structure to which the fields are to be assigned.
 %   reference:                     The structure containing the fields and values to be assigned to 'assignTo'.
 %   overwrite:                     Boolean flag that determines if the field value should be overwritten ( by defaults ) or preserved
 %   fieldChangedWarningMessage:    Optional. A message to display if a field is overwritten. If not provided, no message is displayed.
 %   fieldname:                     Optional. The name of the current field being processed. Used for generating specific warning messages.
 %
-% output
+% output:
 %   assigned:                      The structure 'assignTo' after assigning the fields from 'reference'.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

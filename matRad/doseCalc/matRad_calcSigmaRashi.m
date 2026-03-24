@@ -2,15 +2,15 @@ function sigmaRashi = matRad_calcSigmaRashi(bdEntry,rangeShifter,SSD)
 % calculation of additional beam broadening due to the use of range shifters 
 % (only for protons)
 % 
-% call
+% call:
 %   sigmaRashi = matRad_calcSigmaRashi(bdEntry,rangeShifter,SSD)
 %
-% input
+% input:
 %   bdEntry:        base data entry for energy
 %   rangeShifter: 	structure defining range shifter geometry
 %   SSD:          	source to surface distance
 %
-% output
+% output:
 %   sigmaRashi:   sigma of range shifter (to be added ^2) in mm
 %
 % References

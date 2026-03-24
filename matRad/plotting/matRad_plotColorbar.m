@@ -3,17 +3,17 @@ function cBarHandle = matRad_plotColorbar(axesHandle,cMap,window,varargin)
 % This is necessary since the rgb colors are manually mapped within the ct 
 % and the dose plotting, and MATLAB attaches colorbars to axes.
 %
-% call
+% call:
 %   cBarHandle = matRad_plotColorbar(axesHandle,cMap,window,varargin)
 %
-% input
+% input:
 %   axesHandle  handle to axes the colorbar will be attached to
 %   cMap        corresponding colormap
 %   window      colormap window (corresponds to clim)
 %   varargin    additional key-value pairs that will be forwarded to the
 %               MATLAB colorbar(__) call
 %
-% output
+% output:
 %   cBarHandle  handle of the colorbar object
 %
 % References

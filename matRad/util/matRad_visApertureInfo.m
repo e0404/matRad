@@ -1,15 +1,15 @@
 function matRad_visApertureInfo(apertureInfo,mode)
 % matRad function to visualize aperture shapes stored as struct
 %
-% call
+% call:
 %   matRad_visApertureInfo(apertureInfo,mode)
 %
-% input
+% input:
 %   apertureInfo: aperture weight and shape info struct
 %   mode:         switch to display leaf numbers ('leafNum') or physical
 %                 coordinates of the leaves ('physical')
 %
-% output
+% output:
 %   -
 %
 % References

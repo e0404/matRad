@@ -3,7 +3,7 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandl
 % matRad tool function to directly plot a complete slice of a ct with dose
 % including contours and isolines.
 %
-% call
+% call:
 % [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice)
 % [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh)
 % [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,alpha)
@@ -40,7 +40,7 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandl
 %                   individual plotting functions (e.g. 'LineWidth',1.5)
 %   
 %
-% output
+% output:
 %   hCMap       handle to the colormap
 %   hDose       handle to the dose plot
 %   hCt         handle to the ct plot
