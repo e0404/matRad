@@ -41,8 +41,15 @@ else
 end
 
 if enableGPU
-    cst = matRad_moveCstToGPU(cst);
-    dij = matRad_moveDijToGPU(dij);
+    try
+        d = gpuDevice;
+        cst = matRad_moveCstToGPU(cst);
+        dij = matRad_moveDijToGPU(dij);
+        matRad_cfg.dispInfo('Running optimization on the GPU (as far as possible). Selected device: %s\n', d.Name);
+    catch ME
+        matRad_cfg.dispWarning('Failed to prepae GPU-based optimization, reverting to CPU. Reason: %s\n', ME.message);
+        enableGPU = false;
+    end
 end
 
 % consider VOI priorities

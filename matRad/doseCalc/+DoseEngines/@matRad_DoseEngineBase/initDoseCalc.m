@@ -39,6 +39,7 @@ else
     msg = sprintf('Dose influence matrix calculation using  ''%s'' Dose Engine...',this.name);
 end
 matRad_cfg.dispInfo('%s\n',msg);
+matRad_cfg.dispInfo('Dose calculation will prefer ''%s'' where possible!\n', this.precision);
 
 % initialize waitbar
 % TODO: This should be managed from the user interface instead

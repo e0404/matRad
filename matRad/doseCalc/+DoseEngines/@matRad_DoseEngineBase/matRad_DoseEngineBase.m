@@ -303,13 +303,21 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         function dij = finalizeDose(this,dij)
 
             matRad_cfg = MatRad_Config.instance();
+
+            dijStoragePrecision = matRad_underlyingTypeCompat(dij.physicalDose{1});
+            if this.calcDoseDirect
+                matRad_cfg.dispInfo('Dose stored in ''%s'' precision\n', dijStoragePrecision);
+            else
+                matRad_cfg.dispInfo('Dose influence stored in ''%s'' precision\n', dijStoragePrecision);
+            end
+
             %Close Waitbar
             if any(ishandle(this.hWaitbar))
                 delete(this.hWaitbar);
             end
 
             this.timers.full = toc(this.timers.full);
-            
+
             matRad_cfg.dispInfo('Dose calculation finished in %g seconds!\n',this.timers.full);
         end
 
