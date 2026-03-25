@@ -3,11 +3,11 @@ function isoLineHandles = matRad_plotIsoDoseLines(axesHandle, doseCube, isoConto
 % computed by matRad_computeIsoDoseContours or manually by calling contourc
 % itself
 %
-% call
+% call:
 %   isoLineHandles =
 %   matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,...)
 %
-% input
+% input:
 %   axesHandle  handle to axes the slice should be displayed in
 %   doseCube    3D array of the corresponding dose cube
 %   isoContours precomputed isodose contours in a cell array {maxDim,3}
@@ -24,7 +24,7 @@ function isoLineHandles = matRad_plotIsoDoseLines(axesHandle, doseCube, isoConto
 %               [min(doseCube(:)) max(doseCube(:))]
 %   varargin    Additional MATLAB Line-Property/Value-Pairs etc.
 %
-% output
+% output:
 %   isoLineHandles: handle to the plotted isolines
 %
 % References

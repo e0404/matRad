@@ -1,14 +1,14 @@
 function cst = matRad_computeAllVoiSurfaces(ct,cst)
 % matRad function that computes all VOI surfaces
 %
-% call
+% call:
 %   cst = matRad_computeAllVoiSurfaces(ct,cst)
 %
-% input
+% input:
 %   ct  matRad ct struct
 %   cst matRad cst struct
 %
-% output
+% output:
 %   cst the new cst with the column containing the precomputed surface
 %
 % References

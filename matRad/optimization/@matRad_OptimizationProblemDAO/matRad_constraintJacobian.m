@@ -1,16 +1,16 @@
 function jacob = matRad_constraintJacobian(optiProb,apertureInfoVec,dij,cst)
 % matRad IPOPT callback: jacobian function for direct aperture optimization
 % 
-% call
+% call:
 %   jacob = matRad_daoJacobFunc(optiProb,apertureInfoVec,dij,cst)
 %
-% input
+% input:
 %   optiProb:        option struct defining the type of optimization
 %   apertureInfoVec: aperture info vector
 %   dij:             dose influence matrix
 %   cst:             matRad cst struct
 %
-% output
+% output:
 %   jacob:           jacobian of constraint function
 %
 % References

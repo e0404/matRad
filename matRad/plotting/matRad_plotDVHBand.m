@@ -1,15 +1,15 @@
 function matRad_plotDVHBand(nominalDVH, structureStat, doseLabel)
 % matRad_plotDVHBand to plot dose volume bands
 % 
-% call
+% call:
 %   matRad_plotDVHBand(nominalDVH, structureStat, doseLabel)
 %
-% input
+% input:
 %   nominalDVH:       x axis values
 %   structureStat:    lower bound (start of shadowing)
 %   doseLabel:        upper bound (end of shadowing)
 %
-% output
+% output:
 %   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

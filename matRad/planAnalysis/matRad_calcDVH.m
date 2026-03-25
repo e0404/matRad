@@ -1,13 +1,13 @@
 function dvh = matRad_calcDVH(cst,doseCube,dvhType,doseGrid)
 % matRad dvh calculation
 % 
-% call
+% call:
 %   dvh = matRad_calcDVH(cst,doseCube)
 %   dvh = matRad_calcDVH(cst,doseCube,dvhType)
 %   dvh = matRad_calcDVH(cst,doseCube,doseGrid)
 %   dvh = matRad_calcDVH(cst,doseCube,dvhType,doseGrid)
 %
-% input
+% input:
 %   cst:        matRad cst struct
 %   doseCube:   arbitrary doseCube (e.g. physicalDose)
 %   dvhType:    (optional) string, 'cum' for cumulative, 'diff' for differential
@@ -15,7 +15,7 @@ function dvh = matRad_calcDVH(cst,doseCube,dvhType,doseGrid)
 %   doseGrid:   (optional) use predefined evaluation points. Useful when
 %               comparing multiple realizations
 %
-% output
+% output:
 %   dose volume histogram
 %
 % References

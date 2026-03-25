@@ -2,11 +2,11 @@ function patches = matRad_plotVois3D(axesHandle,ct,cst,selection,cMap)
 % matRad function that plots 3D structures of the volumes of interest
 % If the 3D-data is not stored in the CT, it will be commputed on the fly.
 %
-% call
+% call:
 %   patches = matRad_plotVois3D(axesHandle,ct,cst,selection)
 %   patches = matRad_plotVois3D(axesHandle,ct,cst,selection,cMap)
 %
-% input
+% input:
 %   axesHandle  handle to axes the structures should be displayed in
 %   ct          matRad ct struct which contains resolution
 %   cst         matRad cst struct
@@ -16,7 +16,7 @@ function patches = matRad_plotVois3D(axesHandle,ct,cst,selection,cMap)
 %   cMap        optional argument defining the colormap, default are the
 %               colors stored in the cst
 %
-% output
+% output:
 %   patches     patch objects created by the matlab 3D visualization
 %
 % References

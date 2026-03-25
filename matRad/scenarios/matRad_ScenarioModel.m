@@ -9,7 +9,7 @@ classdef (Abstract) matRad_ScenarioModel < handle
 %   matRad_ScenarioModel()
 %   matRad_ScenarioModel(ct)
 %
-% input
+% input:
 %   ct:                 ct cube
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

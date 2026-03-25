@@ -4,17 +4,17 @@ function dij = matRad_moveDijToGPU(dij, precision)
 %   mSqrtBetaDose, mLETDose) to GPU memory. Optionally casts the data to
 %   the requested numeric precision before uploading.
 %
-% call
+% call:
 %   dij = matRad_moveDijToGPU(dij)
 %   dij = matRad_moveDijToGPU(dij, precision)
 %
-% input
+% input:
 %   dij         matRad dij struct with host arrays in dose influence fields
 %   precision   (optional) target numeric precision as string, e.g.
 %               'single' or 'double'. If empty or omitted, no cast is
 %               performed.
 %
-% output
+% output:
 %   dij         matRad dij struct with GPU arrays in dose influence fields
 %
 % References

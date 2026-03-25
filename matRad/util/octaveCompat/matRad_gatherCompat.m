@@ -4,13 +4,13 @@ function x = matRad_gatherCompat(x)
 %   Octave has no GPU array support, so this function returns the input
 %   unchanged.
 %
-% call
+% call:
 %   x = matRad_gatherCompat(x)
 %
-% input
+% input:
 %   x       array (gpuArray on Matlab, regular array on Octave)
 %
-% output
+% output:
 %   x       array in host memory
 %
 % References

@@ -2,15 +2,15 @@ function dij = calcDose(this, ct, cst, stf)
 % Function to forward dose calculation to FRED and import the results
 % in matRad
 %
-% call
+% call:
 %   dij = this.calcDose(ct,stf,pln,cst)
 %
-% input
+% input:
 %   ct:             matRad ct struct
 %   cst:            matRad cst struct
-%   stf:            atRad steering information struct
+%   stf:            matRad steering information struct
 %
-% output
+% output:
 %   dij:            matRad dij struct
 %
 % References

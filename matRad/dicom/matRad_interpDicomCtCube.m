@@ -1,18 +1,18 @@
 function interpCt = matRad_interpDicomCtCube(origCt, origCtInfo, resolution, doseGrid)
 % matRad function to interpolate a 3D ct cube to a different resolution
 %
-% call
+% call:
 %   interpCt = matRad_interpDicomCtCube(origCt, origCtInfo, resolution)
 %   interpCt = matRad_interpDicomCtCube(origCt, origCtInfo, resolution, doseGrid)
 %
-% input
+% input:
 %   origCt:         original CT as matlab 3D array
 %   origCtInfo:     meta information about the geometry of the orgiCt cube
 %   resolution:     target resolution [mm] in x, y, an z direction for the
 %                   new cube
 %   doseGrid:       optional: externally specified grid vector
 %
-% output
+% output:
 %   interpCt:       interpolated ct cube as matlab 3D array
 %
 % References

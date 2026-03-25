@@ -1,11 +1,10 @@
 function matRad_calcStudy(multScen,varargin)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad uncertainty study wrapper
 %
-% call
+% call:
 %   matRad_calcStudy(structSel,multScen,matPatientPath,param)
 %
-% input
+% input:
 %   structSel:          structures which should be examined (can be empty,
 %                       to examine all structures) cube
 %   multScen:           parameterset of uncertainty analysis
@@ -13,7 +12,7 @@ function matRad_calcStudy(multScen,varargin)
 %                       empty mat file in current folder will be used
 %   param:              structure defining additional parameter
 %                       outputPath
-% output
+% output:
 %   (binary)            all results are saved; a pdf report will be generated
 %                       and saved
 %

@@ -11,7 +11,7 @@ function obj = matRad_importDicomRTDose(obj)
 % Note that the summation (called plan) of the beams is named without 
 % subscripts, e.g. physical_Dose.
 %
-% call
+% call:
 %   obj = matRad_importDicomRTDose(obj)
 %
 %

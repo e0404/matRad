@@ -4,16 +4,16 @@ function jacob = matRad_constraintJacobian(optiProb,w,dij,cst)
 % max mean dose constraint, min EUD constraint, max EUD constraint, max DVH 
 % constraint, min DVH constraint 
 % 
-% call
+% call:
 %   jacob = matRad_jacobFunc(optiProb,w,dij,cst)
 %
-% input
+% input:
 %   optiProb: option struct defining the type of optimization
 %   w:    bixel weight vector
 %   dij:  dose influence matrix
 %   cst:  matRad cst struct
 %
-% output
+% output:
 %   jacob: jacobian of constraint function
 %
 % References

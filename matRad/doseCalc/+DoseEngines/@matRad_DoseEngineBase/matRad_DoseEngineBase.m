@@ -387,14 +387,16 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         function [available,msg] = isAvailable(pln,machine)   
         % return a boolean if the engine is is available for the given pln
         % struct. Needs to be implemented in non abstract subclasses
+        %
         % input:
-        % - pln:        matRad pln struct
-        % - machine:    optional machine to avoid loading the machine from
+        %   pln:        matRad pln struct
+        %   machine:    optional machine to avoid loading the machine from
         %               disk (makes sense to use if machine already loaded)
+        %
         % output:
-        % - available:  boolean value to check if the dose engine is 
+        %   available:  boolean value to check if the dose engine is 
         %               available for the given pln/machine
-        % - msg:        msg to elaborate on availability. If not available,
+        %   msg:        msg to elaborate on availability. If not available,
         %               a msg string indicates an error during the check
         %               if available, indicates a warning that not all
         %               information was present in the machine file and

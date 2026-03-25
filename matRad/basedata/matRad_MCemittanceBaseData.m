@@ -1,5 +1,4 @@
 classdef matRad_MCemittanceBaseData
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % matRad_MCemmitanceBaseData This is the superclass for MonteCarlo base
     % data calculation
     %

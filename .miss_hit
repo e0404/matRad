@@ -17,8 +17,7 @@ regex_script_name: "^matRad_((example[1-9][0-9]*_)?([a-z][a-zA-Z0-9]*|[A-Z]{2,}[
 regex_method_name: "^([a-z][a-zA-Z0-9]*|[A-Z]{2,}[a-zA-Z0-9]*)$"
 
 # classes: matRad_ + UpperCamelCase
-regex_class_name: "^matRad_([A-Z]{2,}[a-zA-Z0-9]*|[A-Z][a-zA-Z0-9]*)$"
-
+regex_class_name: "^(matRad|test)_([A-Z]{2,}[a-zA-Z0-9]*|[A-Z][a-zA-Z0-9]*)$"
 
 # parameters / variables: lowerCamelCase
 regex_parameter_name: "^(test_functions|test_suite|[a-z][a-zA-Z0-9]*|[A-Z]{2,}[a-zA-Z0-9]*)$"

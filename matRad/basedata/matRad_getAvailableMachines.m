@@ -2,13 +2,13 @@ function machineList = matRad_getAvailableMachines(modalities)
 % matRad_loadMachine load a machine base data file from pln struct. 
 %   Looks for the machine fileuct.  in the basedata folder and in the provided user folders.
 %
-% call
+% call:
 %   machine = matRad_loadMachine(pln)
 %
-% input
+% input:
 %   pln:            matRad plan meta information struct 
 %
-% output
+% output:
 %   machine:        matRad machine struct
 %
 % References

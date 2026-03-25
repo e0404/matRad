@@ -1,0 +1,15 @@
+.. _4d:
+
+##
+4D
+##
+
+Specialized functions for 4D dose calculation and treatment planning
+
+.. automodule:: matRad.4D
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+
+..

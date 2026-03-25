@@ -5,17 +5,17 @@ function dij = matRad_getDijFromGPU(dij, precision)
 %   Optionally casts the data to the requested numeric precision after
 %   gathering.
 %
-% call
+% call:
 %   dij = matRad_getDijFromGPU(dij)
 %   dij = matRad_getDijFromGPU(dij, precision)
 %
-% input
+% input:
 %   dij         matRad dij struct with GPU arrays in dose influence fields
 %   precision   (optional) target numeric precision as string, e.g.
 %               'single' or 'double'. If empty or omitted, no cast is
 %               performed.
 %
-% output
+% output:
 %   dij         matRad dij struct with host arrays in dose influence fields
 %
 % References

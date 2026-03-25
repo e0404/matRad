@@ -218,10 +218,10 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         function writeAllFiles(obj,ct,cst,stf,machine,w)
             % constructor to write all TOPAS fils for local or external simulation
             %
-            % call
+            % call:
             %   topasConfig.writeAllFiles(ct,pln,stf,machine,w)
             %
-            % input
+            % input:
             %   ct:             Path to folder where TOPAS files are in (as string)
             %   pln:            matRad plan struct
             %   stf:            matRad steering struct
@@ -364,15 +364,15 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         function dij = readFiles(obj,folder)
             % function to read out TOPAS data
             %
-            % call
+            % call:
             %   topasCube = topasConfig.readFiles(folder,dij)
             %   topasCube = obj.readFiles(folder,dij)
             %
-            % input
+            % input:
             %   folder:         Path to folder where TOPAS files are in (as string)
             %   dij:            dij struct (this part needs update)
             %
-            % output
+            % output:
             %   topasCube:      struct with all read out subfields
 
 
@@ -450,14 +450,14 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         function dij = readExternal(obj,folder)
             % function to read out complete TOPAS simulation from single folder
             %
-            % call
+            % call:
             %   topasCube = topasConfig.readExternal(folder)
             %   topasCube = obj.readExternal(folder)
             %
-            % input
+            % input:
             %   folder:         Path to folder where TOPAS files are in (as string)
             %
-            % output
+            % output:
             %   topasCube:      struct with all read out subfields
             %
             % EXAMPLE calls:
@@ -797,15 +797,15 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         function topasCube = readTopasCubes(obj,folder)
             % function to read out TOPAS data
             %
-            % call
+            % call:
             %   topasCube = topasConfig.readTopasCubes(folder,dij)
             %   topasCube = obj.readTopasCubes(folder,dij)
             %
-            % input
+            % input:
             %   folder:         Path to folder where TOPAS files are in (as string)
             %   dij:            dij struct (this part needs update)
             %
-            % output
+            % output:
             %   topasCube:      struct with all read out subfields
 
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
@@ -2482,17 +2482,15 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         end
 
         function writePatient(obj,ct,pln)
-            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % matRad export CT RSP data for TOPAS simulation
             %
-            % call
+            % call:
             %   obj.writePatient(ct, path, material)
             %
-            % input
+            % input:
             %   ct:                 ct cube
             %   pln:                plan structure containing doseCalc classes
             %
-            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % the image cube contains the indexing of materials
             % since at the moment TOPAS does not support ushort
             % the materials should have indexes between 0 and 32767

@@ -1,17 +1,17 @@
 function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
 % matRad inverse planning wrapper function
 %
-% call
+% call:
 %   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
 %   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
 %
-% input
+% input:
 %   dij:        matRad dij struct
 %   cst:        matRad cst struct
 %   pln:        matRad pln struct
 %   wInit:      (optional) custom weights to initialize problems
 %
-% output
+% output:
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
 %               biological optimization) RBE-weighted dose etc.
 %   optimizer:  Used Optimizer Object

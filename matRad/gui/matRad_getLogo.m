@@ -1,7 +1,7 @@
 function [im,alpha] = matRad_getLogo(scale)
 % matRad function to obtain matRad logo image data adhering to theme
 % 
-% call
+% call:
 %   matRad_getLogoDKFZ()
 %   matRad_getLogoDKFZ(scale)
 %

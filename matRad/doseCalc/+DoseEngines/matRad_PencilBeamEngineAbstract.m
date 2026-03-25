@@ -248,16 +248,16 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             % Method for initializing the beams for analytical pencil beam
             % dose calculation
             %
-            % call
+            % call:
             %   this.initBeam(ct,stf,dij,i)
             %
-            % input
+            % input:
             %   ct:                         matRad ct struct
             %   cst:                        matRad cst struct
             %   stf:                        matRad steering information struct
             %   i:                          index of beam
             %
-            % output
+            % output:
             %   dij:                        updated dij struct
 
             matRad_cfg = MatRad_Config.instance();
@@ -561,7 +561,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             % matRad calculation of lateral distances from central ray
             % used for dose calculation
             %
-            % call
+            % call:
             %   [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = ...
             %           this.calcGeoDists(rot_coords_bev, ...
             %                               sourcePoint_bev, ...
@@ -570,7 +570,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             %                               radDepthIx, ...
             %                               lateralCutOff)
             %
-            % input
+            % input:
             %   rot_coords_bev:     coordinates in bev of the voxels with index V,
             %                       where also ray tracing results are availabe
             %   sourcePoint_bev:    source point in voxel coordinates in beam's eye view
@@ -581,7 +581,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             %   lateralCutOff:      lateral cutoff specifying the neighbourhood for
             %                       which dose calculations will actually be performed
             %
-            % output
+            % output:
             %   ix:                 indices of voxels where we want to compute dose
             %                       influence data
             %   rad_distancesSq:    squared radial distance to the central ray (where the

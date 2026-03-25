@@ -1,13 +1,13 @@
 function [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
 % matRad IPOPT get constraint bounds wrapper function
 % 
-% call
+% call:
 %   [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
 %
-% input
+% input:
 %   cst:            matRad cst struct
 %
-% output
+% output:
 %   cl: lower bounds on constraints
 %   cu: lower bounds on constraints
 %

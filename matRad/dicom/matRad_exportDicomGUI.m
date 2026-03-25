@@ -1,7 +1,7 @@
 function hGUI = matRad_exportDicomGUI()
 % matRad compatability function to call the dicom export widget
 % 
-% call
+% call:
 %   matRad_importDicomGUI
 %
 % References

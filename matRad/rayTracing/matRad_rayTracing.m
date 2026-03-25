@@ -2,10 +2,10 @@ function [radDepthV, radDepthCube] = matRad_rayTracing(stfElement, ct, V, rot_co
 % matRad visualization of two-dimensional dose distributions on ct including
 % segmentation
 %
-% call
+% call:
 %   [radDepthV, radDepthCube] = matRad_rayTracing(stf,ct,V,rot_coordsV,lateralCutoff)
 %
-% input
+% input:
 %   stfElement:    matRad steering information struct of single(!) beam
 %   ct:            ct cube
 %   V:             linear voxel indices e.g. of voxels inside patient.
@@ -13,7 +13,7 @@ function [radDepthV, radDepthCube] = matRad_rayTracing(stfElement, ct, V, rot_co
 %   lateralCutoff: lateral cut off used for ray tracing (optional)
 
 %
-% output
+% output:
 %   radDepthV:      radiological depth inside the patient
 %   radDepthCube:   radiological depth in whole ct
 %

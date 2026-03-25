@@ -3,17 +3,17 @@ function ct = matRad_moveCtToGPU(ct, precision)
 %   Moves ct.cubeHU and ct.cube cell arrays to GPU memory. Optionally
 %   casts the data to the requested numeric precision before uploading.
 %
-% call
+% call:
 %   ct = matRad_moveCtToGPU(ct)
 %   ct = matRad_moveCtToGPU(ct, precision)
 %
-% input
+% input:
 %   ct          matRad ct struct with host arrays in cubeHU and/or cube
 %   precision   (optional) target numeric precision as string, e.g.
 %               'single' or 'double'. If empty or omitted, no cast is
 %               performed.
 %
-% output
+% output:
 %   ct          matRad ct struct with GPU arrays in cubeHU and/or cube
 %
 % References

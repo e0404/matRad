@@ -1,7 +1,7 @@
 function cst = matRad_computeVoiContoursWrapper(cst,ct)
 % matRad computation of VOI contours if not precomputed
 % 
-% call
+% call:
 %   cst = matRad_computeVoiContoursWrapper(ct,cst)
 % 
 % input:

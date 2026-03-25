@@ -1,10 +1,10 @@
 function [saved_metadata] = matRad_writeCube(filepath,cube,datatype,metadata)
 % matRad wrapper for Cube export
 % 
-% call
+% call:
 %   [saved_metadata] = matRad_writeCube(filepath,cube,meta)
 %
-% input
+% input:
 %   filepath:                   full output path. needs the right extension
 %                               to choose the appropriate writer
 %   cube:                       cube that is to be written
@@ -19,7 +19,7 @@ function [saved_metadata] = matRad_writeCube(filepath,cube,datatype,metadata)
 %                               - dataUnit (i.e. Gy..)
 %                               - dataName (i.e. dose, ED, ...)
 %                               - compress (true/false)
-%                                 (default chosen by writer)
+%                               (default chosen by writer)
 %
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

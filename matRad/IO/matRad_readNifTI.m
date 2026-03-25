@@ -1,13 +1,13 @@
 function [cube, metadata] = matRad_readNifTI(filename)
 % matRad NifTI reader
 % 
-% call
+% call:
 %   [cube, metadata] = matRad_readNifTI(filename)
 %
-% input
+% input:
 %   filename:   full path to .nii(.gz) file
 %
-% output
+% output:
 %   cube:       the read cube
 %   metadata:   metadata from header information
 %

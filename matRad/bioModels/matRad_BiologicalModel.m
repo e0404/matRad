@@ -79,7 +79,7 @@ classdef (Abstract) matRad_BiologicalModel < handle
     end
 
     methods %(Static)
-        function [vTissueIndex] = getTissueInformation(this,~,~,~,vAlphaX,~,~,~) %(machine,cst,dij,vAlphaX,vBetaX,VdoseGrid, VdoseGridScenIdx)
+        function [vTissueIndex] = getTissueInformation(this,~,~,~,vAlphaX,~,~,~)
             % This is the default, should be masked by the specific model
             % subclass if needed
 

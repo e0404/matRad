@@ -1,16 +1,16 @@
 function coord = matRad_cubeIndex2worldCoords(cubeIx, gridStruct)
 % matRad function to convert cube indices to world coordinates
 %
-% call
+% call:
 %   coord = matRad_cubeIndex2worldCoords(vCoord, gridStruct)
 %
-% inputs
+% input:
 %   cCoord:         cube indices [i j k] (Nx3) or [linIx] (Nx1)
 %   gridStruct:     matRad ct struct or dij.doseGrid/ctGrid struct
 %   allowOutside:   indices not within the image bounds will be calculated
 %                   optional, default is true
 %
-% outputs
+% output:
 %   coord:          worldCoordinates [x y z] (Nx3 in mm)
 % References
 %   -

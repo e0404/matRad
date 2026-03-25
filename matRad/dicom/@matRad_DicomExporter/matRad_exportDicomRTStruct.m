@@ -2,7 +2,7 @@ function obj = matRad_exportDicomRTStruct(obj)
 % matRad function to export dicom RT structure set. 
 % Class method of matRad_DicomExporter
 % 
-% call
+% call:
 %   matRad_DicomExporter.matRad_exportDicomRTStruct()
 %          
 %

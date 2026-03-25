@@ -1,14 +1,14 @@
 function dose = matRad_calcInversDVH(volume,doseVec)
 % matRad inverse DVH (Dose Volume Histogram) calculation
 % 
-% call
+% call:
 %   dose = matRad_calcInversDVH(volume,doseVec)
 %
-% input
+% input:
 %   volume:     rel volume of structure
 %   doseVec:    dose vector of specific structure
 %
-% output
+% output:
 %   dose:       dose that corresponds to rel volume
 %
 % References
@@ -16,13 +16,13 @@ function dose = matRad_calcInversDVH(volume,doseVec)
 %    
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
 % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
 % of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
+% propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

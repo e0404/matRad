@@ -2,14 +2,14 @@ function result = matRad_ispropCompat(obj,prop)
 % matRad function mimicking Matlab's properties for compatibility with
 % Octave 6 in classdef files (avoids a parse error in the file)
 %
-% call
+% call:
 %   result = matRad_ispropCompat(obj)
 %
-% input
+% input:
 %   obj         object (classdef) to check for property
 %   prop        property to check for
 %
-% output
+% output:
 %   result      true if property exists, false otherwise
 %
 % References

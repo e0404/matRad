@@ -1,10 +1,10 @@
 function cst = matRad_resizeCstToGrid(cst,vXgridOld,vYgridOld,vZgridOld,vXgridNew,vYgridNew,vZgridNew)
 % matRad function to resize the cst to a given resolution
 % 
-% call
+% call:
 %   cst = matRad_resizeCstToGrid(cst,vXgridOld,vYgridOld,vZgridOld,vXgridNew,vYgridNew,vZgridNew)
 %
-% input
+% input:
 %   cst:         matRad cst struct
 %   vXgridOld:   vector containing old spatial grid points in x [mm] 
 %   vYgridOld:   vector containing old spatial grid points in y [mm] 
@@ -13,7 +13,7 @@ function cst = matRad_resizeCstToGrid(cst,vXgridOld,vYgridOld,vZgridOld,vXgridNe
 %   vYgridNew:   vector containing new spatial grid points in y [mm] 
 %   vZgridNew:   vector containing new spatial grid points in z [mm] 
 %
-% output
+% output:
 %   cst:        updated matRad cst struct containing new linear voxel indices
 %
 % References

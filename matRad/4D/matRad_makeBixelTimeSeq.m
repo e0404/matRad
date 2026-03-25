@@ -1,16 +1,15 @@
 function timeSequence = matRad_makeBixelTimeSeq(stf, resultGUI)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % using the steering information of matRad, makes a time sequenced order
 % according to the irradiation scheme in spot scanning
 %
-% call
+% call:
 %   timeSequence = matRad_makeBixelTimeSeq(stf, resultGUI)
 %
-% input
+% input:
 %   stf:            matRad steering information struct
 %   resultGUI:      struct containing optimized fluence vector
 %
-% output
+% output:
 %   timeSequence:      struct containing bixel ordering information and the
 %                   time sequence of the spot scanning
 %

@@ -3,13 +3,13 @@ function [resultGUI] = matRad_SFUDoptimization(pln, cst, dij, ct, stf)
 % If provided the dij matrix is used for optimisation, otherwise single
 % beam dijs are calculated (memory saving).
 %
-% call
+% call:
 %   [resultGUI] = matRad_SFUDoptimization(pln, cst, dij)
 %   or
 %   [resultGUI] = matRad_SFUDoptimization(pln, cst, [], ct, stf)
 %
 %
-% input
+% input:
 %   pln:         matRad pln struct
 %   cst:         matRad cst struct
 %   dij:         matRad dij struct (optional)
@@ -17,7 +17,7 @@ function [resultGUI] = matRad_SFUDoptimization(pln, cst, dij, ct, stf)
 %   ct:          matRad ct struct (optional, only needed if no dij provided)
 %   stf:         matRad stf struct (optional, only if needed no dij provided)
 %
-% output
+% output:
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
 %               biological optimization) RBE-weighted dose etc.
 %   (info:      struct containing information about optimization)
@@ -27,13 +27,13 @@ function [resultGUI] = matRad_SFUDoptimization(pln, cst, dij, ct, stf)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
 % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
 % of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
+% propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

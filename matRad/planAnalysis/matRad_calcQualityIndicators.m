@@ -1,11 +1,11 @@
 function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol)
 % matRad QI calculation
 % 
-% call
+% call:
 %   qi = matRad_calcQualityIndicators(cst,pln,doseCube)
 %   qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol)
 %
-% input
+% input:
 %   cst:                matRad cst struct
 %   pln:                matRad pln struct
 %   doseCube:           arbitrary doseCube (e.g. physicalDose)
@@ -15,7 +15,7 @@ function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol)
 %                       default is [2 5 95 98]
 %                       NOTE: Call either both or none!
 %
-% output
+% output:
 %   qi                  various quality indicators like CI, HI (for 
 %                       targets) and DX, VX within a structure set   
 %

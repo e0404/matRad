@@ -1,19 +1,19 @@
 function y = matRad_interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal)
 % interpolates 3-D data (table lookup) 
 %
-% call
+% call:
 %   y = matRad_interp3(xi,yi,zi,x,xq,yq,zy)
 %   y = matRad_interp3(xi,yi,zi,x,xq,yq,zy,mode)
 %   y = matRad_interp3(xi,yi,zi,x,xq,yq,zy,mode,extrapVal)
 %
-% input
+% input:
 %   xi,yi,zi:   grid vectors 
 %   x:          data
 %   xq,yq,zq:   coordinates of quer points as a grid
 %   mode:       optional interpolation mode (default linear)
 %   extrapVal:  (optional) value for extrapolation
 %	
-% output
+% output:
 %   y: interpolated data   
 %
 %   References

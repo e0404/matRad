@@ -7,10 +7,10 @@ function rotMat = matRad_getRotationMatrix(gantryAngle,couchAngle,system)
 % matrix is required.
 % 
 % 
-% call
+% call:
 %  rotMat = matRad_getRotationMatrix(gantryAngle,couchAngle,type,system)
 %
-% input
+% input:
 %   gantryAngle:    beam/gantry angle
 %   couchAngle:     couch angle 
 %
@@ -18,7 +18,7 @@ function rotMat = matRad_getRotationMatrix(gantryAngle,couchAngle,system)
 %                   requested for. So far, only the default option 'LPS' is
 %                   supported (right handed system).
 %
-% output
+% output:
 %   rotMat:         3x3 matrix that performs an active rotation around the 
 %                   patient system origin via rotMat * x
 %

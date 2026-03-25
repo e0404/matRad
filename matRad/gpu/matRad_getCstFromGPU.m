@@ -4,17 +4,17 @@ function cst = matRad_getCstFromGPU(cst, indexType)
 %   data) from GPU memory back to host memory. Optionally casts the data to
 %   the requested numeric precision after gathering.
 %
-% call
+% call:
 %   cst = matRad_getCstFromGPU(cst)
 %   cst = matRad_getCstFromGPU(cst, precision)
 %
-% input
+% input:
 %   cst         matRad cst cell array with GPU arrays in column 4
 %   indexType   (optional) target index type as integer, e.g.
 %               'int32' or 'uint64'. If empty or omitted, it will be cast 
 %               to Matlab's standard double.
 %
-% output
+% output:
 %   cst         matRad cst cell array with host arrays in column 4
 %
 % References

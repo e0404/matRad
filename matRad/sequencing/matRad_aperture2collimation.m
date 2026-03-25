@@ -3,16 +3,16 @@ function [pln,stf] = matRad_aperture2collimation(pln,stf,sequencing,apertureInfo
 % into collimation information in pln and stf for field-based dose
 % calculation
 % 
-% call
+% call:
 %   [pln,stf] = matRad_aperture2collimation(pln,stf,sequencing,apertureInfo)
 %
-% input
+% input:
 %   pln:            pln file used to generate the sequenced plan
 %   stf:            stf file used to generate the sequenced plan
 %   sequencing:     sequencing information (from resultGUI)
 %   apertureInfo:   apertureInfo (from resultGUI)
 %
-% output
+% output:
 %   pln:            matRad pln struct with collimation information
 %   stf:            matRad stf struct with shapes instead of beamlets 
 %

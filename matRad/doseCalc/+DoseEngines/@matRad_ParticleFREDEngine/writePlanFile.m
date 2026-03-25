@@ -1,9 +1,9 @@
 function writePlanFile(this, fName, stf, scenIdx)
 % FRED helper to write data to plan.inp file
-% call
+% call:
 %   writePlanFile(fName, stf)
 %
-% input
+% input:
 %   fName: string specifying the file path and name for saving the data.
 %   stf:   Fred stf struct
 %
@@ -123,10 +123,10 @@ end
 
 function printStructToDictionary(fID, S, sName, indentTabs)
 % Helper function to convert struct fields into FRED specific python dictionary
-% call
+% call:
 %   printStructToDictionary(fID, S, sName, indentTabs)
 %
-% input
+% input:
 %   fID:        ID of file to write
 %   S:          struct to convert
 %   sName:      variable name of the printed dictionary

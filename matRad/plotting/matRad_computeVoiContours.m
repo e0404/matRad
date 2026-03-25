@@ -1,14 +1,14 @@
 function cst = matRad_computeVoiContours(ct,cst)
 % matRad function that computes all VOI contours
 %
-% call
+% call:
 %   cst = matRad_computeVoiContours(ct,cst)
 %
-% input
+% input:
 %   ct  matRad ct struct
 %   cst matRad cst struct
 %
-% output
+% output:
 %   cst the new cst with the column containing the precomputed contours
 %
 % References

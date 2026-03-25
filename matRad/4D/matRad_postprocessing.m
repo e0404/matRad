@@ -3,17 +3,17 @@ function resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf)
 %       minimum number of particles per spot
 %       minimum number of particles per iso-energy slice
 %   
-% call
+% call:
 %   resultGUI =  matRad_postprocessing(resultGUI, dij, pln, cst, stf)
 
-% input
+% input:
 %   resultGUI   struct containing optimized fluence vector
 %   dij:        matRad dij struct
 %   pln:        matRad pln struct
 %   cst:        matRad cst struct
 %   stf:        matRad stf struct
 %
-% output
+% output:
 %   resultGUI:  new w and doses in resultGUI
 %
 %

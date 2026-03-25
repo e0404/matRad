@@ -1,11 +1,11 @@
 function matRad_writeNRRD(filename,cube,metadata)
 % matRad NRRD writer
 % 
-% call
+% call:
 %   matRad_writeNRRD(filename,cube,datatype,...
 %                    additionalFields,additionalKeyValuePairs)
 %
-% input
+% input:
 %   filename:   full output path, including the nrrd extension
 %   cube:       cube that is to be written
 %   metadata:   struct of metadata. Writer will wrap the existing metadata 

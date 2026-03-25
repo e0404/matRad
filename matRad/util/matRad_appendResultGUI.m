@@ -2,16 +2,16 @@ function resultGUI = matRad_appendResultGUI(resultGUI,resultGUItoAppend,boolOver
 % function to merge two seperate resultGUI structs into one for
 % visualisation
 % 
-% call
+% call:
 %   resultGUI = matRad_mergeResultGUIs(resultGUI,resultGUIrob)
 %
-% input
+% input:
 %   resultGUI:              matRads resultGUI struct
 %   resultGUItoAppend:      resultGUI struct which will be appendet
 %   boolOverwrite:          if true existing fields be overwritten in case
 %                           they already exist
 %
-% output
+% output:
 %   resultGUI:        matRads resultGUI struct
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

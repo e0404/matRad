@@ -1,21 +1,20 @@
 function timeSequence = matRad_makePhaseMatrix(timeSequence, numOfPhases, motionPeriod, motion)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   using the time sequence and the ordering of the bixel iradiation, and
 %   number of scenarios, makes a phase matrix of size number of bixels *
 %   number of scenarios 
 %
 %
-% call
+% call:
 %   timeSequence = matRad_makePhaseMatrix(timeSequence, numOfPhases, motionPeriod, motion)
 %
-% input
+% input:
 %   timeSequence:   struct containing bixel ordering information and the
 %                   time sequence of the spot scanning
 %   numOfCtScen:    number of the desired phases
 %   motionPeriod:   the extent of a whole breathing cycle (in seconds)
 %   motion:         motion scenario: 'linear'(default), 'sampled_period' 
 %
-% output
+% output:
 %   timeSequence:      phase matrix field added
 %
 % References

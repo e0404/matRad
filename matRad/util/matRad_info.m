@@ -1,12 +1,12 @@
 function message = matRad_info()
 % matRad function to get information message
 % 
-% call
+% call:
 %   message = matRad_info()
 %
-% input
+% input:
 %
-% output
+% output:
 %   message:  An Information message about matRad
 %
 % References
