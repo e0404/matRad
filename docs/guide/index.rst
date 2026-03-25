@@ -21,16 +21,17 @@ Information about the individual modules is given in the following sections:
    :maxdepth: 2
    :hidden:
 
-   config
+   ../api/config
    plan
-   dosecalc
+   gdosecalc
+   planopt
    visualization
 
-Global configuration with :ref:`MatRad_Config <config>` 
+Global configuration with :ref:`MatRad_Config <config>`
 
 :ref:`Set treatment plan parameters <plan>`
 
-:ref:`Dose influence matrix calculation <dosecalc>`
+:ref:`Dose influence matrix calculation <dosecalc_guide>`
 
 :ref:`Fluence optimization <plan_opt>` (potentiall followed by sequencing)
 
@@ -54,26 +55,10 @@ Additional information
    :hidden:
 
    get
-   requirements
    guioverview
-   plan
-   dosecalc
-   optimization
-   visualization
    coords
    dicomimport
    octave
-
-.. toctree::
-   :maxdepth: 2
-   :hidden:
-
-   ../algorithms/dicom
-   ../algorithms/dosecalc
-   ../algorithms/doseCalc/doseengines
-   ../algorithms/optimization
-   ../algorithms/sequencing
-
 
 
 :ref:`How to run matRad with Octave <octave>`

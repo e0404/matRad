@@ -19,7 +19,7 @@ Step 1: Open matRad folder in MATLAB
 To use matRad you need to open the matRad folder in MATLAB.
 Open MATLAB and navigate to the location of the files, if you have cloned the repository it is most likely located in your local Github folder.
 
-Inside the :ref:`root folder <root>` of the matRad repository there are only a few files, of which the most important ones are::
+Inside the root folder of the matRad repository there are only a few files, of which the most important ones are::
 
 * :func:`matRad_rc.m <matRad_rc>` - the matRad configuration script setting path and environment
 * :scpt:`matRad.m <matRad>` - the main introductory script to run matRad workflow
@@ -43,7 +43,7 @@ Step 3: Execute treatment planning
 
 **Load patient data**
 
-First, you need to load the patient data. Therefore, the matRad release contains the :doc:`../datastructures/cort`. To import additional patient data have a look at the :doc:`dicomimport`.
+First, you need to load the patient data. Therefore, the matRad release contains the :doc:`../datastructures/cort`. To import additional patient data have a look at the :doc:`../guide/dicomimport`.
 To load a patient click the **Load \*.mat data** button in the **Workflow** section.
 A window should open. In the folder ``phantoms``, you can find different patient files.
 
@@ -132,4 +132,4 @@ To calculate a DVH of all VOIs and to see the quality indicators (which contain 
 Step 5: Import additional patient data
 --------------------------------------
 
-matRad supports the import of patient data stored in the DICOM format. A set of functions designed for this purpose can be found in the subfolder :file:`dicom <https://github.com/e0404/matRad/tree/master/dicom>`. For more information about the usage of the import functions please check out :doc:`dicomimport`.
+matRad supports the import of patient data stored in the DICOM format. A set of functions designed for this purpose can be found in the subfolder :file:`dicom <https://github.com/e0404/matRad/tree/master/dicom>`. For more information about the usage of the import functions please check out :doc:`../guide/dicomimport`.

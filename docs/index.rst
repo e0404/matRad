@@ -102,10 +102,9 @@ Please let us know if we can include your center, or if you have discontinued th
 
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 6
    :caption: Technical Documentation
 
    guide/index
-   modules
-   #modindex
-   MATLAB Module Index </mat-modindex.html#http://>
+   api/index
+   mat-modindex

@@ -1,7 +1,7 @@
 .. _optimizers:
 
 ==========
-Optimizers
+optimizers
 ==========
 
 .. automodule:: matRad.optimization.optimizer

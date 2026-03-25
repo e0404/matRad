@@ -11,6 +11,30 @@ Startup and configuration functions are located in the root of the repository.
 
 Below, the top-level matRad functions are explained. For more specialized functions, refer to the documentation of the respective `Modules / Subfolders`_.
 
+.. contents::
+   :local:
+   :depth: 1
+
+Global Configuration
+--------------------
+.. _config:
+
+matRad's global configuration class :class:`MatRad_Config` is used to set up the environment and configuration for the matRad application.
+It is implemented as a Singleton pattern and thus consistent throughout a matRad session.
+
+At the core, the class handles user folders, caches the environment (Matlab/Octave), provides matRad's version, and stores default parameters.
+The class also provides logging functionality enabling control over output via log levels.
+
+----
+
+.. autoclass:: matRad.MatRad_Config
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :private-members:
+    :noindex:
+..
+
 Top-level API functions
 -----------------------
 
@@ -19,19 +43,18 @@ Top-level API functions
    :undoc-members:
    :show-inheritance:
    :private-members:
+   :exclude-members: MatRad_Config
 
-.. toctree::
-   :maxdepth: 3
-   api/config
-   
 Modules / Subfolders
 --------------------
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 5
    :glob:
    :includehidden:
-   
-   api/**
+   :reversed:
+
+   *
+   optimization/index
 
 ..

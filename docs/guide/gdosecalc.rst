@@ -1,4 +1,4 @@
-.. _dosecalc:
+.. _dosecalc_guide:
 
 -----------------------------------
 Dose (influence matrix) calculation

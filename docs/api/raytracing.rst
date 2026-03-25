@@ -1,7 +1,7 @@
 .. _raytracing:
 
-Ray Tracing
-===========
+rayTracing
+==========
 
 .. automodule:: matRad.rayTracing
    :members:

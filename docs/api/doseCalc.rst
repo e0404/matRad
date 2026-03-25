@@ -15,6 +15,15 @@ Dose calculation engines and supporting utilities for photon, proton, and ion th
    :show-inheritance:
    :private-members:
 
+Dose Engines
+------------
+
+.. automodule:: matRad.doseCalc.+DoseEngines
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+
 FRED
 ----
 

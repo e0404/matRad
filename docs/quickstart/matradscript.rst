@@ -11,7 +11,7 @@ To execute the matRad script using MATLAB you need to:
 3. `Execute inverse planning`_
 4. `Import additional patient data`_
 
-If you prefer to only use the GUI to execute matRad, check out the :doc:`gui`.
+If you prefer to only use the GUI to execute matRad, check out the :doc:`guiintro`.
 
 .. _Open matRad folder in MATLAB:
 
@@ -24,8 +24,8 @@ Open MATLAB and navigate to the location of the files; if you have cloned the re
 Inside the matRad folder there are several MATLAB functions used to run matRad, named ``matRad*.m``, and ``*.mat`` files containing base data and exemplary patient data sets.
 The main script to run matRad is called `matRad.m <https://github.com/e0404/matRad/blob/master/matRad.m>`_. It can be executed section by section.
 
-.. tip:: 
-    
+.. tip::
+
     Editing the matrad.m file is a good starting point, but if you do not want to mess up the original file and git status, you can copy and paste it into userdata/scripts. The userdata folder is ignored by git, so you can place your scripts and data in there without affecting the versioned source code.
 
 .. _Set patient-specific parameters:
@@ -117,7 +117,7 @@ In the GUI you can view the patient CT, change the plan parameters and adjust th
 .. image:: /images/GUI-Guide_loadedGUIScreenshot.png
     :width: 650px
 
-The usage of the GUI is explained in more detail in the :doc:`gui`. Here we will focus on the "manual" execution of the matRad script. To "manually" change the optimization parameters, you can adjust the ``cst``-cell (see :ref:`cst cell array documentation <cst-cell>` for more information).
+The usage of the GUI is explained in more detail in the :doc:`guiintro`. Here we will focus on the "manual" execution of the matRad script. To "manually" change the optimization parameters, you can adjust the ``cst``-cell (see :ref:`cst cell array documentation <cst-cell>` for more information).
 
 .. _Generate steering file:
 
