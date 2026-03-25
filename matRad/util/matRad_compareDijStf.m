@@ -1,8 +1,9 @@
-function [allMatch, msg] = matRad_compareDijStf(dij,stf)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [allMatch, msg] = matRad_compareDijStf(dij, stf)
+% matRad_compareDijStf compares the matRad dij struct with the matRad
+% stf struct to check for consistency.
 %
 % call:
-%   matching = matRad_comparePlnDijStf(pln,stf,dij)
+%   matching = matRad_compareDijStf(stf,dij)
 %
 % input:
 %   dij:                        matRad dij struct
@@ -25,23 +26,23 @@ function [allMatch, msg] = matRad_compareDijStf(dij,stf)
 % propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-allMatch=true;
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+allMatch = true;
 msg = [];
 
-    %% compare number of rays per beam in dij and stf
-    stf_RaysPerBeam=[stf.numOfRays];
-    if numel(stf_RaysPerBeam) ~= numel(dij.numOfRaysPerBeam) ... % different size
-            || ~isempty(find(stf_RaysPerBeam-dij.numOfRaysPerBeam,1)) % different values
-        msg= 'Number of rays do not match';
-        allMatch=false;
-        return
-    end
-    stf_gantryAngles=[stf.gantryAngle];
-    if dij.numOfBeams ~= numel(stf_gantryAngles)
-        msg= 'Number of beams do not match';
-        allMatch=false;
-        return
-    end
+%% compare number of rays per beam in dij and stf
+stf_RaysPerBeam = [stf.numOfRays];
+if numel(stf_RaysPerBeam) ~= numel(dij.numOfRaysPerBeam) || ... % different size
+    ~isempty(find(stf_RaysPerBeam - dij.numOfRaysPerBeam, 1)) % different values
+    msg = 'Number of rays do not match';
+    allMatch = false;
+    return
+end
+stf_gantryAngles = [stf.gantryAngle];
+if dij.numOfBeams ~= numel(stf_gantryAngles)
+    msg = 'Number of beams do not match';
+    allMatch = false;
+    return
+end
 
 end
