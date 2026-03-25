@@ -52,10 +52,10 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         function this = matRad_PhotonOmpMCEngine(pln)
             % Constructor
             %
-            % call
+            % call:
             %   engine = DoseEngines.matRad_DoseEnginePhotonsOmpMCct,stf,pln,cst)
             %
-            % input
+            % input:
             %   pln:                        matRad plan meta information struct
 
             if nargin < 1
@@ -64,6 +64,12 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
             % call superclass constructor
             this = this@DoseEngines.matRad_MonteCarloEngineAbstract(pln);
+
+            if this.enableGPU
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispWarning('Set enableGPU ot true but ompMC does not support GPU computation! Setting back to false!');
+                this.enableGPU = false;
+            end
 
             matRad_cfg = MatRad_Config.instance();
             this.omcFolder = [matRad_cfg.matRadRoot filesep 'thirdParty' filesep 'ompMC'];
@@ -85,14 +91,14 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % can be automaticly called through matRad_calcDose or
             % matRad_calcPhotonDoseMC
             %
-            % call
+            % call:
             %   dij = this.calcDose(ct,stf,pln,cst)
             %
-            % input
+            % input:
             %   ct:                         matRad ct struct
             %   stf:                        matRad steering information struct
             %   cst:                        matRad cst struct
-            % output
+            % output:
             %   dij:                        matRad dij struct
             %
             % References
@@ -201,9 +207,6 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     end
                 end
             end
-
-            %Finalize dose calculation
-            dij = this.finalizeDose(dij);
         end
 
         function dij = initDoseCalc(this,ct,cst,stf)
@@ -523,10 +526,11 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         function compileOmpMCInterface(dest,omcFolder)
             % Compiles the ompMC interface (integrated as submodule)
             %
-            % call
+            % call:
             %   matRad_OmpConfig.compileOmpMCInterface()
             %   matRad_OmpConfig.compileOmpMCInterface(dest)
             %   matRad_OmpConfig.compileOmpMCInterface(dest,sourceFolder)
+            %
             % if an object is instantiated, matRad_OmpConfig can be replaced by the
             % object handle
             %

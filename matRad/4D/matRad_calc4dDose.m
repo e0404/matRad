@@ -2,10 +2,10 @@ function [resultGUI, timeSequence] = matRad_calc4dDose(ct, pln, dij, stf, cst, r
 % wrapper for the whole 4D dose calculation pipeline and calculated dose
 % accumulation
 %
-% call
+% call:
 %   ct = matRad_calc4dDose(ct, pln, dij, stf, cst, resultGUI)
 %
-% input
+% input:
 %   ct :             ct cube
 %   pln:             matRad plan meta information struct
 %   dij:             matRad dij struct
@@ -14,7 +14,7 @@ function [resultGUI, timeSequence] = matRad_calc4dDose(ct, pln, dij, stf, cst, r
 %   resultGUI:       struct containing optimized fluence vector
 %   totalPhaseMatrix optional intput for totalPhaseMatrix
 %   accType:         witch algorithim for dose accumulation
-% output
+% output:
 %   resultGUI:      structure containing phase dose, RBE weighted dose, etc
 %   timeSequence:   timing information about the irradiation
 %

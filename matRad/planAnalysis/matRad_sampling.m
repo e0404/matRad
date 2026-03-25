@@ -1,17 +1,17 @@
 function [caSampRes, mSampDose, pln, resultGUInomScen]  = matRad_sampling(ct,stf,cst,pln,w,structSel,multScen)
 % matRad_randomSampling enables sampling multiple treatment scenarios
 %
-% call
+% call:
 %   [cst,pln] = matRad_setPlanUncertainties(ct,cst,pln)
 %
-% input
+% input:
 %   ct:         ct cube
 %   stf:        matRad steering information struct
 %   pln:        matRad plan meta information struct
 %   cst:        matRad cst struct
 %   w:          optional (if no weights available in stf): bixel weight
 %               vector
-% output
+% output:
 %   caSampRes:         cell array of sampling results depicting plan parameter
 %   mSampDose:         matrix holding the sampled doses, each row corresponds to
 %                      one dose sample

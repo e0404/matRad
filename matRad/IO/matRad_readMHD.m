@@ -1,13 +1,13 @@
 function [cube, metadata] = matRad_readMHD(filename)
 % matRad NRRD reader
 % 
-% call
+% call:
 %   [cube, metadata] = matRad_readMHD(filename)
 %
-% input
+% input:
 %   filename:   full path to mhd or mha file
 %
-% output
+% output:
 %   cube:       the read cube
 %   metadata:   metadata from header information
 %

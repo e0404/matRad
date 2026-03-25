@@ -28,6 +28,7 @@ jobs:
 
             - name: Upload to Coveralls
               uses: coverallsapp/github-action@v2
+              continue-on-error: true
               with:
                   github-token: ${{ secrets.GITHUB_TOKEN }}
                   file: coverage/coverage.json
@@ -35,6 +36,7 @@ jobs:
             
             - name: Upload to Codecov
               uses: codecov/codecov-action@v5
+              continue-on-error: true
               with:
                   token: ${{ secrets.CODECOV_TOKEN }}
                   files: coverage/coverage.json,coverage/coverage.xml

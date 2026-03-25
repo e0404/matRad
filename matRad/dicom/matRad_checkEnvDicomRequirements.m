@@ -2,10 +2,10 @@ function available = matRad_checkEnvDicomRequirements(env)
 % matRad function to check if requirements for dicom import / export are
 % given. Throws an error if requirements not met
 % 
-% call
+% call:
 %   matRad_checkEnvDicomRequirements(env)
 %
-% input
+% input:
 %   env:         folder to be scanned
 %
 % References

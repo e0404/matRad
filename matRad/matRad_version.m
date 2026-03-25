@@ -2,14 +2,14 @@ function [versionString,matRadVer] = matRad_version(matRadRoot)
 % matRad function to get the current matRad version 
 % (and git information when used from within a repository
 % 
-% call
+% call:
 %   [versionString,matRadVer] = matRad_version()
 %   [versionString,matRadVer] = matRad_version(matRadRoot)
 %
-% input
+% input:
 %   matRadRoot:     Optional Root Directory. This is for call in matRad
 %                   initialization when MatRad_Config is not yet available
-% output
+% output:
 %   versionString:  Readable string build from version information
 %   matRadVer:      struct with version information
 %

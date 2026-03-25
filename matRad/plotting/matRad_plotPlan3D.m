@@ -3,11 +3,11 @@ function matRad_plotPlan3D(axesHandle,pln,stf)
 % Stf is optional for plotting more detailed field contours in 
 % visualization of the impinging beams.
 % 
-% call
+% call:
 %  rotMat = matRad_plotPlan3D(axesHandle,pln)
 %  rotMat = matRad_plotPlan3D(axesHandle,pln,stf)
 %
-% input
+% input:
 %   axesHandle: handle to the axes the plan should be visualized in.
 %   pln:        matRad plan meta information struct
 %   stf:        optional steering information struct. if stf is passed and 
@@ -15,7 +15,7 @@ function matRad_plotPlan3D(axesHandle,pln,stf)
 %               information to plot more detailed field contours than with 
 %               pln only
 %
-% output
+% output:
 %   -
 %
 % References
@@ -39,6 +39,12 @@ if ishold(axesHandle)
 else
     wasHold = false;
     hold(axesHandle,'on');
+end
+
+if nargin < 3
+    numOfBeams = numel(pln.propStf.gantryAngles);
+else
+    numOfBeams = numel(stf);
 end
 
 %nice pink ;)
@@ -73,7 +79,7 @@ if nargin < 3 || isempty(stf)
     beamVector = [0 SAD 0];
    
     
-    for beamIx = 1:pln.propStf.numOfBeams
+    for beamIx = 1:numOfBeams
         rotMat = matRad_getRotationMatrix(pln.propStf.gantryAngles(beamIx),pln.propStf.couchAngles(beamIx));
         beamIsoCenter = pln.propStf.isoCenter(beamIx,:);
         currBeamVector = rotMat*beamVector';        
@@ -141,7 +147,7 @@ else %We use the steering information to visualize the field contour
             rayMat(el2DIx(1),el2DIx(2)) = 1;
         end
         %Create contour of the field
-        fieldContour2D = contourc(rayMat,1);
+        fieldContour2D = contourc(double(rayMat),1);
         
         %Column in the contour matrix
         cColumn = 1;

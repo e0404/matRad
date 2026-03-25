@@ -1,19 +1,19 @@
 classdef matRad_OptimizerSimulannealbnd < matRad_Optimizer
-    % matRad_OptimizerSimulannealbnd implements the interface for the Simulated Annealing optimizer 
+    % matRad_OptimizerSimulannealbnd implements the interface for the Simulated Annealing optimizer
     % of the MATLAB Global Optimization toolbox
-    %    
+    %
     % References
     %   -
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
-    % Copyright 2024 the matRad development team. 
-    % 
-    % This file is part of the matRad project. It is subject to the license 
-    % terms in the LICENSE file found in the top-level directory of this 
-    % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
-    % of the matRad project, including this file, may be copied, modified, 
-    % propagated, or distributed except according to the terms contained in the 
+    % Copyright 2024 the matRad development team.
+    %
+    % This file is part of the matRad project. It is subject to the license
+    % terms in the LICENSE file found in the top-level directory of this
+    % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+    % of the matRad project, including this file, may be copied, modified,
+    % propagated, or distributed except according to the terms contained in the
     % LICENSE file.
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -26,16 +26,17 @@ classdef matRad_OptimizerSimulannealbnd < matRad_Optimizer
         wResult     % last optimization result
         resultInfo  % info struct about last results
     end
-    
+
     methods
+
         function obj = matRad_OptimizerSimulannealbnd
             % matRad_OptimizerSimulannealbnd Constructor
             matRad_cfg = MatRad_Config.instance();
 
-            if ~matRad_OptimizerSimulannealbnd.IsAvailable()
+            if ~matRad_OptimizerSimulannealbnd.isAvailable()
                 matRad_cfg.dispError('matRad_OptimizerSimulannealbnd cannot be constructed as simulannealbnd is not available!');
             end
-            
+
             obj.wResult = [];
             obj.resultInfo = [];
 
@@ -50,58 +51,58 @@ classdef matRad_OptimizerSimulannealbnd < matRad_Optimizer
             end
 
             if matRad_cfg.disableGUI
-                pltFcns = {[]};                
+                pltFcns = {[]};
             else
-                
+
             end
-            
+
             % Create default optimizer options
             obj.options = optimoptions('simulannealbnd', ...
-                'InitialTemperature', 0.7, ...
-                'TemperatureFcn',@temperatureboltz, ... 
-                'Display', optDisplay, ...
-                'MaxIterations', matRad_cfg.defaults.propOpt.maxIter, ...
-                'MaxFunctionEvaluations', 120000, ...
-                'PlotFcn',pltFcns);
+                                       'InitialTemperature', 0.7, ...
+                                       'TemperatureFcn', @temperatureboltz, ...
+                                       'Display', optDisplay, ...
+                                       'MaxIterations', matRad_cfg.defaults.propOpt.maxIter, ...
+                                       'MaxFunctionEvaluations', 120000, ...
+                                       'PlotFcn', pltFcns);
         end
-                
+
         function obj = optimize(obj, w0, optiProb, dij, cst)
             matRad_cfg = MatRad_Config.instance();
             % optimize Carries out the optimization
-            
+
             % Obtain lower and upper variable bounds
             lb = optiProb.lowerBounds(w0);
             ub = optiProb.upperBounds(w0);
-                        
+
             % Informing user to press q to terminate optimization
             matRad_cfg.dispInfo('Optimization initiating...\n');
             matRad_cfg.dispInfo('Press q to terminate the optimization...\n');
-                
+
             % Define the objective function
             objectiveFunction = @(x) optiProb.matRad_objectiveFunction(x, dij, cst);
 
             if obj.showPlot && ~matRad_cfg.disableGUI
-                obj.options.PlotFcn = {@saplotbestf,@saplotbestx, @saplotf,@saplotx,@saplotstopping,@saplottemperature};
+                obj.options.PlotFcn = {@saplotbestf, @saplotbestx, @saplotf, @saplotx, @saplotstopping, @saplottemperature};
             else
                 obj.options.PlotFcn = {[]};
             end
-            
+
             % Run simulated annealing optimization
             [obj.wResult, fVal, exitflag, info] = simulannealbnd(objectiveFunction, w0, lb, ub, obj.options);
-            
+
             obj.resultInfo = info;
             obj.resultInfo.fVal = fVal;
             obj.resultInfo.exitflag = exitflag;
         end
 
-        function [statusmsg, statusflag] = GetStatus(obj)
-            try 
+        function [statusmsg, statusflag] = getStatus(obj)
+            try
                 statusmsg = obj.resultInfo.message;
                 if obj.resultInfo.exitflag == 0
                     statusflag = 0;
                 elseif obj.resultInfo.exitflag > 0
                     statusflag = 1;
-                else 
+                else
                     statusflag = -1;
                 end
             catch
@@ -109,11 +110,14 @@ classdef matRad_OptimizerSimulannealbnd < matRad_Optimizer
                 statusflag = -1;
             end
         end
+
     end
-    
-    methods (Static)    
-        function available = IsAvailable()
+
+    methods (Static)
+
+        function available = isAvailable()
             available = exist('simulannealbnd', 'file') ~= 0;
         end
+
     end
 end

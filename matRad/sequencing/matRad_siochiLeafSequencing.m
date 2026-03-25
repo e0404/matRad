@@ -6,13 +6,13 @@ function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,v
 %
 % Implemented in matRad by Eric Christiansen, Emily Heath, and Tong Xu
 %
-% call
+% call:
 %   resultGUI =
 %   matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels)
 %   resultGUI =
 %   matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)
 %
-% input
+% input:
 %   resultGUI:          resultGUI struct to which the output data will be
 %                       added, if this field is empty resultGUI struct will
 %                       be created
@@ -21,7 +21,7 @@ function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,v
 %   numOfLevels:        number of stratification levels
 %   visBool:            toggle on/off visualization (optional)
 %
-% output
+% output:
 %   resultGUI:          matRad result struct containing the new dose cube
 %                       as well as the corresponding weights
 %

@@ -6,7 +6,7 @@ classdef matRad_RandomScenarios < matRad_ScenarioModel
 %   matRad_RandomScenarios()
 %   matRad_RandomScenarios(ct)
 %
-% input
+% input:
 %   ct:                 ct cube
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

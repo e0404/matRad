@@ -1,7 +1,7 @@
 function gridStruct = matRad_getWorldAxes(gridStruct)
 % matRad function to compute and store world coordinates into ct.x
 %
-% call
+% call:
 %   gridStruct = matRad_getWorldAxes(gridStruct)
 %
 %   gridStruct:         can be ct, dij.doseGrid,dij.ctGrid

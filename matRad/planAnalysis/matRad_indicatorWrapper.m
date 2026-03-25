@@ -1,11 +1,11 @@
 function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol)
 % matRad indictor wrapper
 % 
-% call
+% call:
 %   [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI)
 %   [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol)
 %
-% input
+% input:
 %   cst:                  matRad cst struct
 %   pln:                  matRad pln struct
 %   resultGUI:            matRad resultGUI struct
@@ -15,7 +15,7 @@ function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol)
 %                         default is [2 5 95 98]
 %                         NOTE: Call either both or none!
 %
-% output
+% output:
 %   dvh: matRad dvh result struct
 %   qi:  matRad quality indicator result struct
 %   graphical display of all results

@@ -11,7 +11,7 @@ function obj = matRad_importDicomRtss(obj)
 % Output - structure containing names, numbers, colors and coordinates 
 % of the polygon segmentations.
 %
-% call
+% call:
 %   obj = matRad_importDicomRtss(obj)
 %
 %

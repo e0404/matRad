@@ -13,7 +13,7 @@ function matRad_importDicom(obj)
 %   - ct, cst, stf, pln, resultGUI.
 % *to save them as .mat file you can use matRad_importDicomWidget
 %
-% call
+% call:
 %   matRad_importDicom(obj)
 %
 % References

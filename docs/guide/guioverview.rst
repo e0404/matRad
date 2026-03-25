@@ -101,10 +101,10 @@ The optimization parameters regarding the volumes of interest (VOIs) are stored 
     * - Parameters
       - For *Squared Underdosing*, *Squared Overdosing* and *Squared Deviation* this value corresponds to the threshold dose above/below which the penalty will apply. For the *Mean Dose* option, this value is not needed, as the mean dose within this VOI will be minimized. For the *EUD* method, the parameter corresponds to the exponent.
 
-.. _visualization:
+.. _gui-visualization:
 
 Visualizing treatment plans
-==========================
+===========================
 
 After the optimization, the treatment plan can be visualized within the GUI. Using the visualization parameters, you can change the view. The radio buttons can be used to turn on or off, among others, the plotting of contours, dose (isolines), and isoline labels.
 

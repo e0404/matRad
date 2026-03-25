@@ -2,7 +2,6 @@ classdef matRad_ParticleAnalyticalBortfeldEngine < DoseEngines.matRad_ParticlePe
     % matRad_DoseEngineParticlePB:
     %   Implements an engine for particle based dose calculation
     %   For detailed information see superclass matRad_DoseEngine
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
@@ -56,10 +55,10 @@ classdef matRad_ParticleAnalyticalBortfeldEngine < DoseEngines.matRad_ParticlePe
         function this = matRad_ParticleAnalyticalBortfeldEngine(pln)
             % Constructor
             %
-            % call
+            % call:
             %   engine = DoseEngines.matRad_ParticleAnalyticalPencilBeamDoseEngine(ct,stf,pln,cst)
             %
-            % input
+            % input:
             %   pln:                        matRad plan meta information struct
 
             if nargin < 1
@@ -74,28 +73,25 @@ classdef matRad_ParticleAnalyticalBortfeldEngine < DoseEngines.matRad_ParticlePe
 
     methods (Access = public)
         function [doseVector,hatD] = calcAnalyticalBragg(this, primaryEnergy, depthZ, energySpread)
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %   call
-            %     this.calcAnalyticalBragg(PrimaryEnergy, depthz, WidthMod)
-            %       ===========================================================
-            %       Purpose: Compute depth-dose curve i.e. the Bragg Peak
-            %                in 'Bortfeld 1998' formalism.
+            % call:
+            %   this.calcAnalyticalBragg(PrimaryEnergy, depthz, WidthMod)
             %
-            %       Input  : primaryEnergy -- Parameter (primaryEnergy > 0, it
-            %                                 is the primary energy of the beam
-            %                                 )
-            %                depthZ --------- Argument (depthZ > 0,
-            %                                 depth in the target material).
-            %                energySpread ------- 
-            %                                 Energy Spread
-            %       Output : doseVector ----- Depth dose curve; same size of
-            %                                 depthZ
-            %       ===========================================================
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %       This function was inspired by the paper from
-            %       Thomas Bortfeld (1997) "An analytical approximation of the
-            %       Bragg curve for therapeutic proton beams".
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % Purpose: Compute depth-dose curve i.e. the Bragg Peak
+            %          in 'Bortfeld 1998' formalism.
+            %
+            % input:
+            %   primaryEnergy:  Parameter (primaryEnergy > 0, it
+            %                   is the primary energy of the beam)
+            %   depthZ:         Argument (depthZ > 0,
+            %                   depth in the target material).
+            %   energySpread:   Energy Spread
+            %
+            % output:
+            %   doseVector:     Depth dose curve; same size of depthZ
+            %
+            % This function was inspired by the paper from
+            % Thomas Bortfeld (1997) "An analytical approximation of the
+            % Bragg curve for therapeutic proton beams".
 
             numberDensity   = this.massDensity*this.avogadroNum/this.MM;                                        % Number density of molecules per cm^3
             alphaPrime      = this.electronCharge^2*numberDensity*this.Z/(4*pi*this.epsilon0^2)/10^8;           % Bohr's formula for d(sigmaE)^2/dz
@@ -179,22 +175,23 @@ classdef matRad_ParticleAnalyticalBortfeldEngine < DoseEngines.matRad_ParticlePe
         end
 
         function sigmaMCS = calcSigmaLatMCS(this, depthZ, primaryEnergy)
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %call
+            % call:
             %   this.SigmaLatMSC_H(depthz, En)
-            %       ===================================================================
-            %       Purpose: Compute the lateral displacement of a particle beam due to
-            %                Multiple Coulomb Scattering, as function of the depth in
-            %                the target material and in Highland approximation.
-            %       Input  : PrimaryEnergy -- Parameter (PrimaryEnergy > 0, it is the
-            %                                 primary energy of the beam)
-            %                z -------------- Argument (z > 0, it is the actual
-            %                                 depth in the target material)
-            %       Output : displ ---------- SigmaLatMCS_H(z, E)
-            %       ===================================================================
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %       This function was inspired by the paper from Gottschalk et al.1992.
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %
+            % Purpose: Compute the lateral displacement of a particle beam due to
+            %          Multiple Coulomb Scattering, as function of the depth in
+            %          the target material and in Highland approximation.
+            %
+            % input:
+            %   primaryEnergy:  Parameter (PrimaryEnergy > 0, it is the
+            %                   primary energy of the beam)
+            %   depthZ:         Argument (z > 0, it is the actual
+            %                   depth in the target material)
+            %
+            % output:
+            %   sigmaMCS:       SigmaLatMCS_H(z, E)
+            %
+            % This function was inspired by the paper from Gottschalk et al.1992.
 
 
             % Conversion of depth value from mm to cm

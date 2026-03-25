@@ -3,17 +3,17 @@ function resultGUI = matRad_postprocessing(resultGUI, dij, pln, cst, stf)
 %       minimum number of particles per spot
 %       minimum number of particles per iso-energy slice
 %   
-% call
+% call:
 %   resultGUI =  matRad_postprocessing(resultGUI, dij, pln, cst, stf)
 
-% input
+% input:
 %   resultGUI   struct containing optimized fluence vector
 %   dij:        matRad dij struct
 %   pln:        matRad pln struct
 %   cst:        matRad cst struct
 %   stf:        matRad stf struct
 %
-% output
+% output:
 %   resultGUI:  new w and doses in resultGUI
 %
 %
@@ -93,7 +93,7 @@ end
 if(minNrParticlesIES ~= 0)   
     
     % Find IES values
-    for i = 1:pln.propStf.numOfBeams 
+    for i = 1:numel(stf) 
         iesArray = [];
         for j = 1:stf(i).numOfRays
             iesArray = unique([iesArray stf(i).ray(j).energy]);

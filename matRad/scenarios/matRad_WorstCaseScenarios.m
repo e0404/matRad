@@ -6,7 +6,7 @@ classdef matRad_WorstCaseScenarios < matRad_GriddedScenariosAbstract
 %   matRad_WorstCaseScenarios()
 %   matRad_WorstCaseScenarios(ct)
 %
-% input
+% input:
 %   ct:                 ct cube
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

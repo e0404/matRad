@@ -1,14 +1,14 @@
 function [ctR] = matRad_resampleCTtoGrid(ct,dij)
 % function to resample the ct grid for example for faster MC computation
 %
-% call
+% call:
 %   [ctR] = matRad_resampleGrid(ct)
 %
-% input
+% input:
 %   ct:             Path to folder where TOPAS files are in (as string)
 %   cst:            matRad segmentation struct
 %
-% output
+% output:
 %   ctR:            resampled CT
 %   cst:            updated ct struct (due to calcDoseInit)
 %

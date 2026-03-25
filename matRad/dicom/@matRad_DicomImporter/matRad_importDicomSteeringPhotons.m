@@ -6,7 +6,7 @@ function obj = matRad_importDicomSteeringPhotons(obj)
 % 
 % Output - matRad stf and pln structures.
 %
-% call
+% call:
 %   obj = matRad_importDicomSteeringPhotons(obj)
 %
 %

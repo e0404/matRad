@@ -1,12 +1,12 @@
 function [voiContourHandles, visibleOnSlice] = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIndex,selection,plane,slice,cMap,varargin)
 % matRad function that plots the contours of the segmentations given in cst
 %
-% call
+% call:
 % voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIndex,selection,plane,slice) 
 % voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIndex,selection,plane,slice,cMap) 
 % voiContourHandles = matRad_plotVoiContourSlice(axesHandle,cst,ct,ctIndex,selection,plane,slice,cMap,...) 
 %
-% input
+% input:
 %   axesHandle          handle to axes the slice should be displayed in
 %   cst                 matRad cst cell array
 %   ct                  matRad ct structure
@@ -20,7 +20,7 @@ function [voiContourHandles, visibleOnSlice] = matRad_plotVoiContourSlice(axesHa
 %                       colorcube
 %   varargin            Additional Matlab Line-Property/value pairs
 %
-% output
+% output:
 %   voiContourHandles:  handles of the plotted contours
 %   visibleOnSlice:     logicals defining if the contour is actually
 %                       visible on the current slice
@@ -91,11 +91,11 @@ for s = 1:size(cst,1)
             mask(cst{s,4}{ctIndex}) = 1;
             
             if plane == 1 && any(any(mask(slice,:,:) > 0))
-                C = contourc(squeeze(mask(slice,:,:)),.5*[1 1]);
+                C = contourc(double(squeeze(mask(slice,:,:))),.5*[1 1]);
             elseif plane == 2 && any(any(mask(:,slice,:) > 0))
-                C = contourc(squeeze(mask(:,slice,:)),.5*[1 1]);
+                C = contourc(double(squeeze(mask(:,slice,:))),.5*[1 1]);
             elseif plane == 3 && any(any(mask(:,:,slice) > 0))
-                C = contourc(squeeze(mask(:,:,slice)),.5*[1 1]);
+                C = contourc(double(squeeze(mask(:,:,slice))),.5*[1 1]);
             end  
         end
         

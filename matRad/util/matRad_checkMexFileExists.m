@@ -2,7 +2,7 @@ function fileExists = matRad_checkMexFileExists(filename,linkOctave)
 % Checks if a matching mex file exists, and can create a link
 % if a matching custom, system specific precompiled octave mex file is found
 %
-% call
+% call:
 %   matRad_checkMexFileExists(filename)
 %   matRad_checkMexFileExists(filename,linkOctave)
 %

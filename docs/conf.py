@@ -1,5 +1,19 @@
 import os
 
+# Compatibility patch: sphinxcontrib-matlabdomain 0.22.1 was written for
+# Sphinx <8.x. Sphinx 8.x's autodoc base class now emits ':no-index:'
+# (hyphenated) in generated RST, but MatObject/MatModule option_spec only
+# register the old 'noindex' name, causing "unknown option" errors.
+# Remove this block once sphinxcontrib-matlabdomain is updated upstream.
+def _patch_matlabdomain_noindex() -> None:
+    from docutils.parsers.rst import directives as _directives
+    from sphinxcontrib.matlab import MatObject, MatModule
+    for cls in (MatObject, MatModule):
+        if "no-index" not in cls.option_spec:
+            cls.option_spec["no-index"] = _directives.flag
+
+_patch_matlabdomain_noindex()
+
 project = "matRad"
 copyright = "2025, e0404"
 author = "e0404"
@@ -20,11 +34,20 @@ html_theme_options = {
 
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
     'sphinx_toolbox.collapse',
-    'sphinxcontrib.matlab', 
+    'sphinxcontrib.matlab',
     'sphinxcontrib.youtube',
     'sphinx_togglebutton',
     ]
+
+napoleon_google_docstring = True
+napoleon_numpy_docstring = False
+napoleon_custom_sections = [
+    ('input', 'params_style'),
+    ('output', 'params_style'),
+    'call'
+]
 primary_domain = "mat"
 
 matlab_src_dir = os.path.join(os.path.dirname(__file__), '../')

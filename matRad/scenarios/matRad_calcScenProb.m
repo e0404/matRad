@@ -2,10 +2,10 @@ function scenProb = matRad_calcScenProb(mu,sigma,samplePos,calcType,probDist)
 % matRad_calcScenProb provides different ways of calculating the probability 
 % of occurance of individual scenarios
 % 
-% call
+% call:
 %   scenProb = matRad_calcScenProb(mu,sigma,samplePos,calcType,probDist)
 %
-% input
+% input:
 %   mu:             mean of the distrubtion
 %   sigma:          standard deviation of the distribution
 %   calcType:       can be set to 
@@ -14,7 +14,7 @@ function scenProb = matRad_calcScenProb(mu,sigma,samplePos,calcType,probDist)
 %   probDist:       identifier for the underlying probability distribution
 %                   (i) normDist
 %
-% output
+% output:
 %   scenProb:       occurance probability of the specified scenario
 %
 %

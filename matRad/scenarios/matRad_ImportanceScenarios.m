@@ -11,7 +11,7 @@ classdef matRad_ImportanceScenarios < matRad_GriddedScenariosAbstract
 %   matRad_ImportanceScenarios()
 %   matRad_ImportanceScenarios(ct)
 %
-% input
+% input:
 %   ct:                 ct cube
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

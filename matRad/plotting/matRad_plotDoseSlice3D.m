@@ -1,7 +1,7 @@
 function [doseHandle,cMap,window] = matRad_plotDoseSlice3D(axesHandle,ct,doseCube,plane,slice,threshold,alpha,cMap,window)
 % matRad function that generates a dose plot of a selected slice in 3D view
 %
-% call
+% call:
 %   [doseHandle,cMap,window] = matRad_plotDose3DSlice(axesHandle, doseCube,plane,slice,threshold)
 %   [doseHandle,cMap,window] = matRad_plotDose3DSlice(axesHandle, doseCube,plane,slice,threshold,alpha)
 %   [doseHandle,cMap,window] = matRad_plotDose3DSlice(axesHandle, doseCube,plane,slice,threshold,cMap)
@@ -11,7 +11,7 @@ function [doseHandle,cMap,window] = matRad_plotDoseSlice3D(axesHandle,ct,doseCub
 %   [doseHandle,cMap,window] = matRad_plotDose3DSlice(axesHandle, doseCube,plane,slice,threshold,cMap,window)
 %   [doseHandle,cMap,window] = matRad_plotDose3DSlice(axesHandle, doseCube,plane,slice,threshold,alpha,cMap,window)
 %
-% input
+% input:
 %   axesHandle  handle to axes the slice should be displayed in
 %   ct          matRad CT struct which contains resolution
 %   doseCube    3D array of the dose to select the slice from
@@ -30,7 +30,7 @@ function [doseHandle,cMap,window] = matRad_plotDoseSlice3D(axesHandle,ct,doseCub
 %   window      optional argument defining the displayed range. default is
 %               [min(doseCube(:)) max(doseCube(:))]
 %
-% output
+% output:
 %   doseHandle: handle of the plotted dose axes
 %   cMap        used colormap (same as input if set)
 %   window      used window (same as input if set)

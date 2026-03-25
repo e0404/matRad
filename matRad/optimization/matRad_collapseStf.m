@@ -3,14 +3,14 @@ function stf = matRad_collapseStf(stf,mode)
 % Function to supress intensity-modulation for photons in order to simulate 
 % 3D conformal treatments.
 %
-% call
+% call:
 %   stf = matRad_collapseStd(stf)
 %
-% input
+% input:
 %   stf:    steering information
 %   mode:   collpase mode, beam or ray
 %
-% output
+% output:
 %   dijNew: collapsed dose influence matrix
 %
 % References

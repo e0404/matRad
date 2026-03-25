@@ -6,7 +6,7 @@ classdef matRad_NominalScenario < matRad_ScenarioModel
 %   matRad_NominalScenario()
 %   matRad_NominalScenario(ct)
 %
-% input
+% input:
 %   ct:                 ct cube
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

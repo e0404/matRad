@@ -1,14 +1,14 @@
 function cst = matRad_computeVoiContours(ct,cst)
 % matRad function that computes all VOI contours
 %
-% call
+% call:
 %   cst = matRad_computeVoiContours(ct,cst)
 %
-% input
+% input:
 %   ct  matRad ct struct
 %   cst matRad cst struct
 %
-% output
+% output:
 %   cst the new cst with the column containing the precomputed contours
 %
 % References
@@ -38,17 +38,17 @@ for ctScen = 1:ct.numOfCtScen
         mask(cst{s,4}{ctScen}) = 1;
         for slice = 1:ct.cubeDim(1)
             if any(any(mask(slice,:,:) > 0))
-                cst{s,7}{1,ctScen}{slice,1} = contourc(squeeze(mask(slice,:,:)),.5*[1 1]);
+                cst{s,7}{1,ctScen}{slice,1} = contourc(double(squeeze(mask(slice,:,:))),.5*[1 1]);
             end
         end
         for slice = 1:ct.cubeDim(2)
             if any(any(mask(:,slice,:) > 0))
-                cst{s,7}{1,ctScen}{slice,2} = contourc(squeeze(mask(:,slice,:)),.5*[1 1]);
+                cst{s,7}{1,ctScen}{slice,2} = contourc(double(squeeze(mask(:,slice,:))),.5*[1 1]);
             end
         end
         for slice = 1:ct.cubeDim(3)
             if any(any(mask(:,:,slice) > 0))
-                cst{s,7}{1,ctScen}{slice,3} = contourc(squeeze(mask(:,:,slice)),.5*[1 1]);
+                cst{s,7}{1,ctScen}{slice,3} = contourc(double(squeeze(mask(:,:,slice))),.5*[1 1]);
             end
         end
         if matRad_cfg.logLevel > 2

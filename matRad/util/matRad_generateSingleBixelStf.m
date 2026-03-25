@@ -1,15 +1,15 @@
 function stf = matRad_generateSingleBixelStf(ct,cst,pln)
 % 
-% call
+% call:
 %   stf = matRad_generateSingleBixelStf(ct,cst,pln,visMode)
 %
-% input
+% input:
 %   ct:         ct cube
 %   cst:        matRad cst struct
 %   pln:        matRad plan meta information struct
 %   visMode:    toggle on/off different visualizations by setting this value to 1,2,3 (optional)
 %
-% output
+% output:
 %   stf:        matRad steering information struct
 %
 % References

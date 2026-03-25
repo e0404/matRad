@@ -32,6 +32,7 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
         bioModel;                   %Biological Model
         radiationMode;              %Radiation Mode
         machine;                    %Machine
+        enableGPU = false;          %Enable computation on the GPU (experimenta, default false)
     end
 
     properties (Access = protected)
@@ -179,9 +180,14 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
             % Instance of MatRad_Config class
             matRad_cfg = MatRad_Config.instance();
             matRad_cfg.dispInfo('matRad: Generating stf struct with generator ''%s''... ',this.name);
-
-            this.ct = ct;
-            this.cst = cst;
+            
+            if this.enableGPU
+                this.ct = matRad_moveCtToGPU(ct);
+                this.cst = matRad_moveCstToGPU(cst);
+            else
+                this.ct = ct;
+                this.cst = cst;
+            end
 
             this.initialize();
             this.createPatientGeometry();
@@ -374,7 +380,7 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
         function classList = getAvailableGenerators(pln,optionalPaths)
             % Returns a list of names and coresponding handle for stf
             % generators. Returns all stf generators when no arg is
-            %   given. If no generators are found return gonna be empty.
+            % given. If no generators are found return gonna be empty.
             %
             % call:
             %   classList = matRad_StfGeneratorBase.getAvailableGenerators(pln,optional_path)
@@ -475,14 +481,16 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
         function [available,msg] = isAvailable(pln,machine)
             % return a boolean if the generator is is available for the given pln
             % struct. Needs to be implemented in non abstract subclasses
+            %
             % input:
-            % - pln:        matRad pln struct
-            % - machine:    optional machine to avoid loading the machine from
+            %   pln:        matRad pln struct
+            %   machine:    optional machine to avoid loading the machine from
             %               disk (makes sense to use if machine already loaded)
+            %
             % output:
-            % - available:  boolean value to check if the dose engine is
+            %   available:  boolean value to check if the dose engine is
             %               available for the given pln/machine
-            % - msg:        msg to elaborate on availability. If not available,
+            %   msg:        msg to elaborate on availability. If not available,
             %               a msg string indicates an error during the check
             %               if available, indicates a warning that not all
             %               information was present in the machine file and

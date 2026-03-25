@@ -16,7 +16,7 @@ function obj = matRad_importDicomCt(obj)
 % electron denisities. Hounsfield units are converted using a standard
 % lookup table in matRad_calcWaterEqD
 %
-% call
+% call:
 %   matRad_importDicomCt(obj)
 %
 %

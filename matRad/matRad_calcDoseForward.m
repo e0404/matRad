@@ -1,11 +1,11 @@
 function resultGUI = matRad_calcDoseForward(ct,cst,stf,pln,w)
     % matRad forward dose calculation (no dij)
     % 
-    % call
+    % call:
     %   resultGUI = matRad_calcDoseForward(ct,cst,stf,pln) %If weights stored in stf
     %   resultGUI = matRad_calcDoseForward(ct,cst,stf,pln,w)
     %
-    % input
+    % input:
     %   ct:         ct cube
     %   cst:        matRad cst cell array
     %   stf:        matRad steering information struct
@@ -13,7 +13,7 @@ function resultGUI = matRad_calcDoseForward(ct,cst,stf,pln,w)
     %   w:          optional (if no weights available in stf): bixel weight
     %               vector
     %
-    % output
+    % output:
     %   resultGUI:  matRad result struct
     %
     % References

@@ -1,15 +1,15 @@
 function [vAlpha, vBeta] = matRad_calcLQParameter(vRadDepths,mTissueClass,baseData)
 % matRad inverse planning wrapper function
 % 
-% call
+% call:
 %   [vAlpha, vBeta] = matRad_calcLQParameter(vRadDepths,mTissueClass,baseData)
 %
-% input
+% input:
 %   vRadDepths:     radiological depths of voxels
 %   mTissueClass:   tissue classes of voxels
 %   baseData:       biological base data
 %
-% output
+% output:
 %   vAlpha:         alpha values for voxels interpolated from base data
 %   vBeta:          beta values for voxels interpolated from base data
 %

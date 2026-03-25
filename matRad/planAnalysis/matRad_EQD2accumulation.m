@@ -4,11 +4,11 @@ function result = matRad_EQD2accumulation(pln1,ct1,cst1,dose1,prescribedDose1, .
 % matRad function to accumulate and compare dose and EQD2 for two treatment 
 % plans 
 %
-% call
+% call:
 %   result = matRad_EQD2accumulation(pln1,ct1,cst1,dose1,prescribedDose1, ...
 %                                    pln2,ct2,cst2,dose2,prescribedDose2)
 %
-% input
+% input:
 %   pln1/2:             matRad pln struct
 %   ct1/2:              matRad ct struct
 %   cst1/2:             matRad cst struct

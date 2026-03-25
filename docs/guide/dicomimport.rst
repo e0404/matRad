@@ -7,7 +7,7 @@ The DICOM import
 Disclaimer
 ==========
 
-Even though DICOM data is supposed to be highly standardized, it still features substantial variation. Consequently, it is very difficult for us to eliminate all bugs in matRad's DICOM import. As of June 2015, we have a beta version included in matRad which has been thoroughly tested using data from our center(s). We would like to remind all users to take utmost care when running matRad's DICOM import and double-check the imported CT data in the :ref:`ct-struct` and the imported structure sets in the :ref:`cst-cell`. If you do find any bugs, help us improve matRad's DICOM import and `drop us a line <https://github.com/e0404/matRad/issues>`_.
+Even though DICOM data is supposed to be highly standardized, it still features substantial variation. Consequently, it is very difficult for us to eliminate all bugs in matRad's DICOM import. As of June 2015, we have a beta version included in matRad which has been thoroughly tested using data from our center(s). We would like to remind all users to take utmost care when running matRad's DICOM import and double-check the imported CT data in the :ref:`CT struct <ct>` and the imported structure sets in the :ref:`cst cell array <cst-cell>`. If you do find any bugs, help us improve matRad's DICOM import and `drop us a line <https://github.com/e0404/matRad/issues>`_.
 
 Importing patient data
 ======================
@@ -72,6 +72,6 @@ Objectives and constraints are not imported from DICOM files but default values 
 The default values for biological planning are set to ``alphaX = 0.1`` and ``betaX = 0.05`` for all structures.
 After importing and saving the imported files, you should check and adapt all objectives and constraints for your application.
 
-If you have imported a photon treatment plan, you can now adjust the base data to your own machine by adapting :ref:`pln.machine`.
+If you have imported a photon treatment plan, you can now adjust the base data to your own machine by adapting the :ref:`pln struct <pln>` machine field.
 
 Now you can use this patient data set just like the ones provided with matRad.

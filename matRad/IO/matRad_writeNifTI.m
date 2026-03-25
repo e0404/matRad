@@ -1,13 +1,13 @@
 function [cube, metadata] = matRad_writeNifTI(filepath,cube,metadata)
 % matRad NifTI reader
 % 
-% call
+% call:
 %   [cube, metadata] = matRad_writeNifTI(filename)
 %
-% input
+% input:
 %   filename:   full path to .nii(.gz) file
 %
-% output
+% output:
 %   file will be written to disk
 %
 %

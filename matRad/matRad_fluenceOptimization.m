@@ -1,17 +1,17 @@
 function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
 % matRad inverse planning wrapper function
 %
-% call
+% call:
 %   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
 %   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
 %
-% input
+% input:
 %   dij:        matRad dij struct
 %   cst:        matRad cst struct
 %   pln:        matRad pln struct
 %   wInit:      (optional) custom weights to initialize problems
 %
-% output
+% output:
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
 %               biological optimization) RBE-weighted dose etc.
 %   optimizer:  Used Optimizer Object
@@ -33,6 +33,24 @@ function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 matRad_cfg = MatRad_Config.instance();
+
+if isfield(pln, 'propOpt') && isfield(pln.propOpt, 'enableGPU')
+    enableGPU = pln.propOpt.enableGPU;
+else
+    enableGPU = matRad_cfg.defaults.propOpt.enableGPU;
+end
+
+if enableGPU
+    try
+        d = gpuDevice;
+        cst = matRad_moveCstToGPU(cst);
+        dij = matRad_moveDijToGPU(dij);
+        matRad_cfg.dispInfo('Running optimization on the GPU (as far as possible). Selected device: %s\n', d.Name);
+    catch ME
+        matRad_cfg.dispWarning('Failed to prepae GPU-based optimization, reverting to CPU. Reason: %s\n', ME.message);
+        enableGPU = false;
+    end
+end
 
 % consider VOI priorities
 cst  = matRad_setOverlapPriorities(cst);
@@ -378,7 +396,7 @@ end
 if ~isfield(pln.propOpt,'optimizer')
     %While the default optimizer is IPOPT, we can try to fallback to
     %fmincon in case it does not work for some reason
-    if ~matRad_OptimizerIPOPT.IsAvailable()
+    if ~matRad_OptimizerIPOPT.isAvailable()
         pln.propOpt.optimizer = 'fmincon';
     else
         pln.propOpt.optimizer = 'IPOPT';
@@ -410,7 +428,7 @@ end
 
 matRad_assignPropertiesFromStruct(optimizer,optimizerOptions);
 
-if ~optimizer.IsAvailable()
+if ~optimizer.isAvailable()
     matRad_cfg.dispError(['Optimizer ''' optimizerName ''' not available!']);
 end
 

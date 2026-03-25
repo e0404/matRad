@@ -7,7 +7,7 @@ function obj = matRad_dummyCst(obj)
 %
 % Output - matRad cst structure
 %
-% call
+% call:
 %   obj = matRad_dummyCst(obj)
 %
 % References

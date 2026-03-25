@@ -3,17 +3,17 @@ function output = matRad_getColormap(name,size)
 % We use this wrapper to manually handle the supported colormaps enabling 
 % the definition of custom colormaps.
 %
-% call
+% call:
 %   cMap = matRad_getColormap(name,size)
 %   list = matRad_getColormap()
-% input
+% input:
 %   name        name of the colorbar
 %   size        optional argument for the size / resolution of the colorbar
 %   
 %   if no argument is passed, a list (cell array) of the names of all 
 %   supported colormaps will be returned
 %
-% output
+% output:
 %   This is either the requested colormap, or a list of all available
 %   colormaps (see above)
 %

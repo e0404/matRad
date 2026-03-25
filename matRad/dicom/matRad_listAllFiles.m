@@ -1,17 +1,17 @@
 function fileList = matRad_listAllFiles(dirPath,uiInput)
 % matRad function to get all files in arbitrary deep subfolders
 % 
-% call
+% call:
 %   fileList = matRad_listAllFiles()
 %   fileList = matRad_listAllFiles(dirPath)
 %   fileList = matRad_listAllFiles(uiInput)
 %
-% input
+% input:
 %   dirPath:        (optional) initial folder to start searching
 %   uiInput:        (optional) if userInteraction is wanted.
 %                   Use EITHER dirPath or uiInput
 %
-% output
+% output:
 %   fileList:       Filelist
 %
 % References

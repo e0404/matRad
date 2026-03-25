@@ -4,16 +4,16 @@ function c = matRad_constraintFunctions(optiProb,w,dij,cst)
 % max mean dose constraint, min EUD constraint, max EUD constraint, 
 % max DVH constraint, min DVH constraint 
 % 
-% call
+% call:
 %   c = matRad_constraintFunctions(optiProb,w,dij,cst)
 %
-% input
+% input:
 %   optiProb:   option struct defining the type of optimization
 %   w:          bixel weight vector
 %   dij:        dose influence matrix
 %   cst:        matRad cst struct
 %
-% output
+% output:
 %   c:          value of constraints
 %
 % References

@@ -11,6 +11,14 @@ repos:
       - id: check-merge-conflict
       - id: check-symlinks
 
+  - repo: https://github.com/rstcheck/rstcheck
+    rev: v6.2.5
+    hooks:
+    - id: rstcheck
+      additional_dependencies: ['rstcheck[sphinx,toml]']
+      args: [--ignore-languages=matlab, '--ignore-directives=automodule,autoclass,autofunction,autodata,autoevent,autointerface,autolabel,autosectionlabel,autostatus,autotoclabel']
+
+
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
     hooks:

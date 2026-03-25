@@ -1,15 +1,15 @@
 function stf = matRad_generateStf(ct,cst,pln,visMode)
 % matRad steering information generation
 %
-% call
+% call:
 %   stf = matRad_generateStf(ct,cst,pln)
 %
-% input
+% input:
 %   ct:         ct cube
 %   cst:        matRad cst struct
 %   pln:        matRad plan meta information struct
 %
-% output
+% output:
 %   stf:        matRad steering information struct
 %
 % References

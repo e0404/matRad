@@ -1,10 +1,10 @@
 function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 % matRad particle dose calculation wrapper
 % 
-% call
+% call:
 %   dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 %
-% input
+% input:
 %   ct:             ct cube
 %   stf:            matRad steering information struct
 %   pln:            matRad plan meta information struct
@@ -13,7 +13,7 @@ function dij = matRad_calcParticleDose(ct,stf,pln,cst,calcDoseDirect)
 %                   computation and directly calculate dose; only makes
 %                   sense in combination with matRad_calcDoseDirect.m
 %
-% output
+% output:
 %   dij:            matRad dij struct
 %
 % References

@@ -4,23 +4,22 @@ function jacobStruct = matRad_getJacobianStructure(optiProb,w,dij,cst)
 % max mean dose constraint, min EUD constraint, max EUD constraint, max DVH 
 % constraint, min DVH constraint 	
 % 	
-% call	
+% call:	
 %   jacobStruct = matRad_getJacobStruct(optiProb,w,dij,cst)	
 %	
-% input	
+% input:	
 %   optiProb: matRad optimization problem
 %   w:        beamlet/ pencil beam weight vector
 %   dij: dose influence matrix	
 %   cst: matRad cst struct	
 %	
-% output	
+% output:	
 %   jacobStruct: jacobian of constraint function	
 %	
 % References	
 %	
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
- % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
-%	
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
 % Copyright 2016 the matRad development team. 	
 % 	
 % This file is part of the matRad project. It is subject to the license 	
@@ -30,8 +29,6 @@ function jacobStruct = matRad_getJacobianStructure(optiProb,w,dij,cst)
 % propagated, or distributed except according to the terms contained in the 	
 % LICENSE file.	
 %	
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
- % Initializes constraints	
 jacobStruct = sparse([]);
 
 tmp = false(size(dij.physicalDose{1},1),1);

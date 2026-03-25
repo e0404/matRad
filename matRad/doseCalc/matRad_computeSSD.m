@@ -1,11 +1,11 @@
 function stf = matRad_computeSSD(stf,ct,varargin)
 % matRad SSD calculation
 % 
-% call
+% call:
 %   stf = matRad_computeSSD(stf,ct)
 %   stf = matRad_computeSSD(stf,ct,Name,Value)
 %
-% input
+% input:
 %   ct:     ct cube
 %   stf:    matRad steering information struct
 %   
@@ -15,7 +15,7 @@ function stf = matRad_computeSSD(stf,ct,varargin)
 %
 %   densityThreshold: value determining the skin threshold.
 %
-% output
+% output:
 %   stf:    matRad steering information struct
 %
 % References
@@ -54,17 +54,14 @@ boolShowWarning  = p.Results.showWarning;
 
 
 if strcmp(mode,'first')
+    rayTracer = matRad_RayTracerSiddon(ct.cube(1),ct);%Is this correct for multiple scenarios?
+
     for i = 1:size(stf,2)
         SSD = cell(1,stf(i).numOfRays);
         for j = 1:stf(i).numOfRays
 
-            cubeIsoCenter = matRad_world2cubeCoords(stf(i).isoCenter,ct);
+            [alpha,~,rho,d12,~] = rayTracer.traceRay(stf(i).isoCenter,stf(i).sourcePoint,stf(i).ray(j).targetPoint);
 
-            [alpha,~,rho,d12,~] = matRad_siddonRayTracer(cubeIsoCenter, ...
-                                 ct.resolution, ...
-                                 stf(i).sourcePoint, ...
-                                 stf(i).ray(j).targetPoint, ...
-                                 {ct.cube{1}}); %Is this correct for multiple scenarios?
             ixSSD = find(rho{1} > densityThreshold,1,'first');
 
             if boolShowWarning

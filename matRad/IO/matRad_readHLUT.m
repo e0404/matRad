@@ -1,13 +1,13 @@
 function hlut = matRad_readHLUT(filename)
 % matRad function to read HLUT from filename
 %
-% call
+% call:
 %   hlut = matRad_readHLUT(filename)
 %
-% input
+% input:
 %   filename: hlut filename
 %
-% output
+% output:
 %   hlut:     lookup table
 %
 % References

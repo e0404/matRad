@@ -90,7 +90,7 @@ pln.propOpt
     Setting this value to ``true`` will enable sequencing algorithms run.
 
 Additional adjustable properties
--------------------------------
+--------------------------------
 
 The following properties of the pln struct can additionally be adjusted. If they are not explicitly set, default values are used. The default values are handled by the `MatRad_Config class <https://github.com/e0404/matRad/blob/master/MatRad_Config.m>`_.
 

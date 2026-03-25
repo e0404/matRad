@@ -9,8 +9,8 @@
 Technical Documentation
 =======================
 
-|matRad_logo| features a very modular and sequential design which is reflected in the matRad script. 
-After importing your own data or loading one of the provided cases, you can start working with matRad dose calculation and optimization modules. 
+|matRad_logo| features a very modular and sequential design which is reflected in the matRad script.
+After importing your own data or loading one of the provided cases, you can start working with matRad dose calculation and optimization modules.
 The four main parts of the matRad workflow are
 
 .. image:: /images/matRad_steps.png
@@ -53,7 +53,8 @@ matRad's most important MATLAB variables
    :hidden:
    :glob:
 
-   datastructures/*
+   ../datastructures/*
+   ../datastructures/basedata/*
 
 matRad's top-level functions
 -----------------------------------
@@ -65,7 +66,33 @@ matRad's top-level functions
    :hidden:
    :glob:
 
-   api/*
+   ../api/*
+   ../api/optimization/*
+
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+
+   get
+   requirements
+   guioverview
+   plan
+   dosecalc
+   optimization
+   visualization
+   coords
+   dicomimport
+   octave
+
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+
+   ../algorithms/dicom
+   ../algorithms/dosecalc
+   ../algorithms/doseCalc/doseengines
+   ../algorithms/optimization
+   ../algorithms/sequencing
 
 Additional information
 ----------------------
@@ -79,4 +106,3 @@ Additional information
 :ref:`DICOM import <dicomimport>`
 
 :ref:`Minimum system requirements <requirements>`
-

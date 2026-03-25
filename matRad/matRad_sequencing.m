@@ -1,17 +1,17 @@
 function resultGUI = matRad_sequencing(resultGUI,stf,dij,pln,visBool)
 % matRad inverse planning wrapper function
 % 
-% call
+% call:
 %   resultGUI = matRad_sequencing(resultGUI,stf,dij,pln)
 %
-% input
+% input:
 %   dij:        matRad dij struct
 %   stf:        matRad stf struct
 %   pln:        matRad pln struct
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
 %               biological optimization) RBE-weighted dose etc.
 %
-% output
+% output:
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
 %               biological optimization) RBE-weighted dose etc.
 %

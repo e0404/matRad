@@ -1,13 +1,13 @@
-function isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,cMap,window,varargin)
-% matRad function that plots isolines, by precomputed contourc data 
+function isoLineHandles = matRad_plotIsoDoseLines(axesHandle, doseCube, isoContours, isoLevels, plotLabels, plane, slice, cMap, window, varargin)
+% matRad function that plots isolines, by precomputed contourc data
 % computed by matRad_computeIsoDoseContours or manually by calling contourc
 % itself
 %
-% call
+% call:
 %   isoLineHandles =
 %   matRad_plotIsoDoseLines(axesHandle,doseCube,isoContours,isoLevels,plotLabels,plane,slice,...)
 %
-% input
+% input:
 %   axesHandle  handle to axes the slice should be displayed in
 %   doseCube    3D array of the corresponding dose cube
 %   isoContours precomputed isodose contours in a cell array {maxDim,3}
@@ -24,7 +24,7 @@ function isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContour
 %               [min(doseCube(:)) max(doseCube(:))]
 %   varargin    Additional MATLAB Line-Property/Value-Pairs etc.
 %
-% output
+% output:
 %   isoLineHandles: handle to the plotted isolines
 %
 % References
@@ -32,13 +32,13 @@ function isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContour
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
+% Copyright 2015 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -46,7 +46,7 @@ function isoLineHandles = matRad_plotIsoDoseLines(axesHandle,doseCube,isoContour
 matRad_cfg = MatRad_Config.instance();
 
 %% manage optional arguments
-%Use default colormap?
+% Use default colormap?
 if nargin < 8 || isempty(cMap)
     cMap = jet(64);
 end
@@ -54,63 +54,65 @@ if nargin < 9 || isempty(window)
     window = [min(doseCube(:)) max(doseCube(:))];
 end
 
-%Check if precomputed contours where passed, if not, calculate it on the
-%fly
+isoLevels = double(matRad_gatherCompat(isoLevels));
+
+% Check if precomputed contours where passed, if not, calculate it on the
+% fly
 if isempty(isoContours)
     if plane == 1
-        C = contourc(squeeze(doseCube(slice,:,:)),isoLevels);
+        C = contourc(double(squeeze(doseCube(slice, :, :))), isoLevels);
     elseif plane == 2
-        C = contourc(squeeze(doseCube(:,slice,:)),isoLevels);
+        C = contourc(double(squeeze(doseCube(:, slice, :))), isoLevels);
     elseif plane == 3
-        C = contourc(squeeze(doseCube(:,:,slice)),isoLevels);
-    end    
-    isoContours{slice,plane} = C;
+        C = contourc(double(squeeze(doseCube(:, :, slice))), isoLevels);
+    end
+    isoContours{slice, plane} = C;
 end
 
 %% Plotting
-cMapScale = size(cMap,1) - 1;
+cMapScale = size(cMap, 1) - 1;
 
-isoColorLevel = uint8(cMapScale*(isoLevels - window(1))./(window(2)-window(1)));
+isoColorLevel = uint8(cMapScale * (isoLevels - window(1)) ./ (window(2) - window(1)));
 
-%This circumenvents a bug in Octave when the index in the image hase the maximum value of uint8
+% This circumenvents a bug in Octave when the index in the image hase the maximum value of uint8
 if matRad_cfg.isOctave
-	isoColorLevel(isoColorLevel == 255) = 254;
+    isoColorLevel(isoColorLevel == 255) = 254;
     isoLineHandles = [];
-    
+
 elseif matRad_cfg.isMatlab
     isoLineHandles = gobjects(0);
 end
 
-colors = squeeze(ind2rgb(isoColorLevel,cMap));
+colors = squeeze(ind2rgb(isoColorLevel, cMap));
 
-%axes(axesHandle);
-hold(axesHandle,'on');
+% axes(axesHandle);
+hold(axesHandle, 'on');
 
-%Check if there is a contour in the plane
-if any(isoContours{slice,plane}(:))
+% Check if there is a contour in the plane
+if any(isoContours{slice, plane}(:))
     % plot precalculated contourc data
-    
+
     lower = 1; % lower marks the beginning of a section
-    while lower-1 ~= size(isoContours{slice,plane},2)
-        steps = isoContours{slice,plane}(2,lower); % number of elements of current line section
+    while lower - 1 ~= size(isoContours{slice, plane}, 2)
+        steps = isoContours{slice, plane}(2, lower); % number of elements of current line section
         if numel(unique(isoLevels)) > 1
-            color = colors(isoLevels(:) == isoContours{slice,plane}(1,lower),:);
+            color = colors(isoLevels(:) == isoContours{slice, plane}(1, lower), :);
         else
-            color = unique(colors,'rows'); 
+            color = unique(colors, 'rows');
         end
-        isoLineHandles{end+1} = line(isoContours{slice,plane}(1,lower+1:lower+steps),...
-            isoContours{slice,plane}(2,lower+1:lower+steps),...
-            'Color',color,'Parent',axesHandle,varargin{:});
+        isoLineHandles{end + 1} = line(isoContours{slice, plane}(1, lower + 1:lower + steps), ...
+                                       isoContours{slice, plane}(2, lower + 1:lower + steps), ...
+                                       'Color', color, 'Parent', axesHandle, varargin{:});
         if plotLabels
-            text(isoContours{slice,plane}(1,lower+1),...
-                isoContours{slice,plane}(2,lower+1),...
-                num2str(isoContours{slice,plane}(1,lower)),'Parent',axesHandle)
+            text(isoContours{slice, plane}(1, lower + 1), ...
+                 isoContours{slice, plane}(2, lower + 1), ...
+                 num2str(isoContours{slice, plane}(1, lower)), 'Parent', axesHandle);
         end
-        lower = lower+steps+1;
-        
+        lower = lower + steps + 1;
+
     end
 end
 
-hold(axesHandle,'off');
+hold(axesHandle, 'off');
 
 end

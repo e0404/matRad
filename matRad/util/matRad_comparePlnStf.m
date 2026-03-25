@@ -1,15 +1,15 @@
 function [allMatch, msg] = matRad_comparePlnStf(pln,stf)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% call
+% call:
 %   matching = matRad_comparePlnDijStf(pln,stf,dij)
 %
-% input
+% input:
 %   dij:                        matRad dij struct
 %   stf:                        matRad steering information struct
 %   pln:                        matRad plan meta information struct
 %
-% output
+% output:
 %
 %   allMatch:                   flag is true if they all match
 %   matching:                   message to display
@@ -36,13 +36,6 @@ if ~isfield(pln,'propStf')
     allMatch=false;
     msg= 'No steering information in plan';
     return
-end
-
-%% compare number of gantry angles, but ignore if numOfBeams not set
-if isfield(pln.propStf,'numOfBeams') && pln.propStf.numOfBeams ~= numel(stf) 
-        msg= 'Number of beams do not match';
-        allMatch=false;
-        return
 end
 
 %% compare gantry angles in  stf and pln

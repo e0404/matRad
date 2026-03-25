@@ -1,48 +1,48 @@
 classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbstract
-% Engine for particle dose calculation using monte carlo calculation
-% specificly the mc square method
-% for more informations see superclass
-% DoseEngines.matRad_MonteCarloEngineAbstract
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% Copyright 2019 the matRad development team.
-%
-% This file is part of the matRad project. It is subject to the license
-% terms in the LICENSE file found in the top-level directory of this
-% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
-% of the matRad project, including this file, may be copied, modified,
-% propagated, or distributed except according to the terms contained in the
-% LICENSE file.
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Engine for particle dose calculation using monte carlo calculation
+    % specifically the mc square method
+    % for more information see superclass
+    % DoseEngines.matRad_MonteCarloEngineAbstract
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %
+    % Copyright 2019 the matRad development team.
+    %
+    % This file is part of the matRad project. It is subject to the license
+    % terms in the LICENSE file found in the top-level directory of this
+    % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+    % of the matRad project, including this file, may be copied, modified,
+    % propagated, or distributed except according to the terms contained in the
+    % LICENSE file.
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     properties (Constant)
-        possibleRadiationModes = {'protons'};
-        name = 'MCsquare';
-        shortName = 'MCsquare';
+        possibleRadiationModes = {'protons'}
+        name = 'MCsquare'
+        shortName = 'MCsquare'
     end
 
     properties
-        config;             %Holds an instance of all configurable parameters (matRad_MCsquareConfig)
-        MCsquareFolder;     %Folder to the MCsquare installation
-        workingDir;         %Working directory for simulation
-        forceBDL = [];      %Specify an existing BDL file to load
+        config              % Holds an instance of all configurable parameters (matRad_MCsquareConfig)
+        MCsquareFolder      % Folder to the MCsquare installation
+        workingDir          % Working directory for simulation
+        forceBDL = []       % Specify an existing BDL file to load
 
-        %Other Dose Calculation Properties
-        calcLET = true;
+        % Other Dose Calculation Properties
+        calcLET = true
 
-        externalCalculation = 'off';
+        externalCalculation = 'off'
     end
 
     properties (SetAccess = protected, GetAccess = public)
 
-        currFolder = pwd; %folder path when set
+        currFolder = pwd  % folder path when set
 
-        mcSquareBinary; %Executable for mcSquare simulation
-        nbThreads; %number of threads for MCsquare, 0 is all available
+        mcSquareBinary  % Executable for mcSquare simulation
+        nbThreads  % number of threads for MCsquare, 0 is all available
 
-        constantRBE = NaN;              % constant RBE value
+        constantRBE = NaN               % constant RBE value
     end
 
     methods
@@ -50,10 +50,10 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
         function this = matRad_ParticleMCsquareEngine(pln)
             % Constructor
             %
-            % call
+            % call:
             %   engine = DoseEngines.matRad_DoseEngineMCsquare(ct,stf,pln,cst)
             %
-            % input
+            % input:
             %   ct:                         matRad ct struct
             %   stf:                        matRad steering information struct
             %   pln:                        matRad plan meta information struct
@@ -66,23 +66,29 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             % call superclass constructor
             this = this@DoseEngines.matRad_MonteCarloEngineAbstract(pln);
 
+            if this.enableGPU
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispWarning('Set enableGPU ot true but MCsquare does not support GPU computation! Setting back to false!');
+                this.enableGPU = false;
+            end
+
             this.config = matRad_MCsquareConfig();
 
             % check if bio optimization is needed and set the
-            % coresponding boolean accordingly
+            % corresponding boolean accordingly
             % TODO:
             % This should not be handled here as an optimization property
             % We should rather make optimization dependent on what we have
             % decided to calculate here.
 
-            if nargin > 0 
-                if isfield(pln,'bioModel') 
-                    if isa(pln.bioModel,'matRad_LQBasedModel')        
+            if nargin > 0
+                if isfield(pln, 'bioModel')
+                    if isa(pln.bioModel, 'matRad_LQBasedModel')
                         this.calcBioDose = true;
-                    elseif isa(pln.bioModel,'matRad_ConstantRBE')
-                        this.constantRBE = 1.1;                    
+                    elseif isa(pln.bioModel, 'matRad_ConstantRBE')
+                        this.constantRBE = 1.1;
                     else
-                        %Physical Dose calculation
+                        % Physical Dose calculation
                     end
                 end
             end
@@ -93,33 +99,34 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
             % future code for property validation on creation here
             matRad_cfg = MatRad_Config.instance();
-            %Set Default MCsquare path
-            %Set folder
-            this.workingDir     = fullfile(matRad_cfg.primaryUserFolder,'MCsquare');
-            this.MCsquareFolder = fullfile(matRad_cfg.matRadRoot,'thirdParty','MCsquare','bin');
+            % Set Default MCsquare path
+            % Set folder
+            this.workingDir     = fullfile(matRad_cfg.primaryUserFolder, 'MCsquare');
+            this.MCsquareFolder = fullfile(matRad_cfg.matRadRoot, 'thirdParty', 'MCsquare', 'bin');
         end
+
     end
 
-    methods(Access = protected)
+    methods (Access = protected)
 
-        function dij = calcDose(this,ct,cst,stf)
+        function dij = calcDose(this, ct, cst, stf)
             % matRad MCsqaure monte carlo photon dose calculation wrapper
-            % can be automaticly called through matRad_calcDose or
+            % can be automatically called through matRad_calcDose or
             % matRad_calcParticleDoseMC
             %
             % nCase per Bixel and be either set by hand after creating the
             % engine or over the matRad_calcPhotonDoseMC function while
             % calling the calculation
             %
-            % call
+            % call:
             %   dij = this.calcDose(ct,stf,pln,cst)
             %
-            % input
-            %   ct:          	matRad ct struct
+            % input:
+            %   ct:             matRad ct struct
             %   cst:            matRad cst struct
-            %   stf:         	atRad steering information struct
+            %   stf:            matRad steering information struct
             %
-            % output
+            % output:
             %   dij:            matRad dij struct
             %
             % References
@@ -142,14 +149,8 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
             matRad_cfg = MatRad_Config.instance();
 
-            if isfolder(this.externalCalculation)
-                %dij = this.readFiles(this.externalCalculation);
-                matRad_cfg.dispError('MCsquare not yet configured for loading external simulaiton results.');
-                return;
-            end
-
-            %Now we can run initDoseCalc as usual
-            dij = this.initDoseCalc(ct,cst,stf);
+            % Now we can run initDoseCalc as usual
+            dij = this.initDoseCalc(ct, cst, stf);
 
             % switch for using existing BDL file (e.g. to fit matRad basedata),
             % or generate BDL file from matRad base data using MCsquareBDL
@@ -159,8 +160,8 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
             else
                 % Newer machine files have "name" instead of "machine"
-                if ~isfield(this.machine.meta,'machine')
-                    machineName = this.machine.meta.name;                    
+                if ~isfield(this.machine.meta, 'machine')
+                    machineName = this.machine.meta.name;
                 else
                     machineName = this.machine.meta.machine;
                 end
@@ -172,51 +173,49 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                 MCsquareBDL = matRad_MCsquareBaseData(this.machine);
                 MCsquareBDL = MCsquareBDL.getRangeShiftersFromStf(stf);
 
-                %matRad_createMCsquareBaseDataFile(bdFile,machine,1);
-                bdlFolder = fullfile(this.workingDir,'BDL');
-                if ~exist(bdlFolder,'dir')
+                % matRad_createMCsquareBaseDataFile(bdFile,machine,1);
+                bdlFolder = fullfile(this.workingDir, 'BDL');
+                if ~exist(bdlFolder, 'dir')
                     mkdir(bdlFolder);
                 end
-                bdFile = fullfile(bdlFolder,bdFile);
+                bdFile = fullfile(bdlFolder, bdFile);
 
                 MCsquareBDL = MCsquareBDL.writeMCsquareData(bdFile);
                 MCsquareBDL = MCsquareBDL.saveMatradMachine('savedMatRadMachine');
 
             end
 
-
             % The offset of the dose grid of MCsquare
-            mcSquareAddIsoCenterOffset = [dij.doseGrid.resolution.x/2 dij.doseGrid.resolution.y/2 dij.doseGrid.resolution.z/2] ...
+            mcSquareAddIsoCenterOffset = [dij.doseGrid.resolution.x / 2 dij.doseGrid.resolution.y / 2 dij.doseGrid.resolution.z / 2] ...
                 - [dij.ctGrid.resolution.x   dij.ctGrid.resolution.y   dij.ctGrid.resolution.z];
 
             % for MCsquare we explicitly downsample the ct to the dose grid (might not
             % be necessary in future MCsquare versions with separated grids)
             for s = 1:dij.numOfScenarios
-                HUcube{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{s}, ...
-                    dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
+                HUcube{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z, ct.cubeHU{s}, ...
+                                            dij.doseGrid.x, dij.doseGrid.y', dij.doseGrid.z, 'linear');
             end
 
             % set absolute calibration factor
             % convert from eV/g/primary to Gy 1e6 primaries
             absCalibrationFactorMC2 = 1.602176e-19 * 1.0e+9;
 
-            MCsquareConfigFile = fullfile(this.workingDir,'MCsquareConfig.txt');
-            plnFile = fullfile(this.workingDir,'currBixels.txt');
-            ctFile = fullfile(this.workingDir,'MC2patientCT.mhd');
-            outputDir = fullfile(this.workingDir,'output');
-            HU_Density_Conversion_File	= fullfile(this.MCsquareFolder,'Scanners','matRad_default','HU_Density_Conversion.txt');	% Name of the file containing HU to density conversion data. Default: HU_Density_Conversion.txt
-            HU_Material_Conversion_File	= fullfile(this.MCsquareFolder,'Scanners','matRad_default','HU_Material_Conversion.txt');	% Name of the filecontaining HU to material conversion data. Default: HU_Material_Conversion.txt
+            MCsquareConfigFile = fullfile(this.workingDir, 'MCsquareConfig.txt');
+            plnFile = fullfile(this.workingDir, 'currBixels.txt');
+            ctFile = fullfile(this.workingDir, 'MC2patientCT.mhd');
+            outputDir = fullfile(this.workingDir, 'output');
+            HU_Density_Conversion_File  = fullfile(this.MCsquareFolder, 'Scanners', 'matRad_default', 'HU_Density_Conversion.txt');    % Name of the file containing HU to density conversion data. Default: HU_Density_Conversion.txt
+            HU_Material_Conversion_File = fullfile(this.MCsquareFolder, 'Scanners', 'matRad_default', 'HU_Material_Conversion.txt');   % Name of the filecontaining HU to material conversion data. Default: HU_Material_Conversion.txt
 
-
-            %Format paths to always have slashes
-            if isequal(filesep,'\')
-                bdFileWrite = strrep(bdFile,'\','/');
-                plnFileWrite = strrep(plnFile,'\','/');
-                ctFileWrite = strrep(ctFile,'\','/');
-                MCsquareConfigFileWrite = strrep(MCsquareConfigFile,'\','/');
-                outputDirWrite = strrep(outputDir,'\','/');
-                HU_Density_Conversion_File_write = strrep(HU_Density_Conversion_File,'\','/');
-                HU_Material_Conversion_File_write = strrep(HU_Material_Conversion_File,'\','/');
+            % Format paths to always have slashes
+            if isequal(filesep, '\')
+                bdFileWrite = strrep(bdFile, '\', '/');
+                plnFileWrite = strrep(plnFile, '\', '/');
+                ctFileWrite = strrep(ctFile, '\', '/');
+                MCsquareConfigFileWrite = strrep(MCsquareConfigFile, '\', '/');
+                outputDirWrite = strrep(outputDir, '\', '/');
+                HU_Density_Conversion_File_write = strrep(HU_Density_Conversion_File, '\', '/');
+                HU_Material_Conversion_File_write = strrep(HU_Material_Conversion_File, '\', '/');
             else
                 bdFileWrite = bdFile;
                 plnFileWrite = plnFile;
@@ -254,73 +253,69 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             % set threshold of sparse matrix generation
             this.config.Dose_Sparse_Threshold = 1 - this.relativeDosimetricCutOff;
 
-            %Matrices for LET
+            % Matrices for LET
             if this.calcLET
-                this.config.LET_MHD_Output		 = this.calcDoseDirect;
-                this.config.LET_Sparse_Output	 = ~this.calcDoseDirect;
+                this.config.LET_MHD_Output       = this.calcDoseDirect;
+                this.config.LET_Sparse_Output    = ~this.calcDoseDirect;
             end
 
-            %Create X Y Z vectors if not present
+            % Create X Y Z vectors if not present
             ct = matRad_getWorldAxes(ct);
-
 
             if this.multScen.totNumRangeScen > 1
                 matRad_cfg.dispWarning('Range shift scenarios are not yet implemented for Monte Carlo simulations.');
             end
 
-
             for scenarioIx = 1:this.multScen.totNumScen
-                %For direct dose calculation
+                % For direct dose calculation
                 totalWeights = 0;
 
                 % manipulate isocenter
-                isoCenterShift = this.multScen.isoShift(scenarioIx,:) + mcSquareAddIsoCenterOffset;
+                isoCenterShift = this.multScen.isoShift(scenarioIx, :) + mcSquareAddIsoCenterOffset;
 
-                ctScen = this.multScen.linearMask(scenarioIx,1);
-                shiftScen = this.multScen.linearMask(scenarioIx,2);
-                rangeShiftScen = this.multScen.linearMask(scenarioIx,3);
+                ctScen = this.multScen.linearMask(scenarioIx, 1);
+                shiftScen = this.multScen.linearMask(scenarioIx, 2);
+                rangeShiftScen = this.multScen.linearMask(scenarioIx, 3);
 
-                if this.multScen.scenMask(ctScen,shiftScen,rangeShiftScen)
-
+                if this.multScen.scenMask(ctScen, shiftScen, rangeShiftScen)
 
                     counter = 0;
                     stfMCsquare = [];
-                    
+
                     for i = 1:length(stf)
-                        
+
                         stfFieldMCsquare = [];
 
-                        stfFieldMCsquare.isoCenter             = matRad_world2cubeCoords(stf(i).isoCenter, ct) + isoCenterShift;  %MCsquare uses the isoCenter in cubeCoords
-                        stfFieldMCsquare.gantryAngle           = mod(180-stf(i).gantryAngle,360); %Different MCsquare geometry
+                        stfFieldMCsquare.isoCenter             = matRad_world2cubeCoords(stf(i).isoCenter, ct) + isoCenterShift;  % MCsquare uses the isoCenter in cubeCoords
+                        stfFieldMCsquare.gantryAngle           = mod(180 - stf(i).gantryAngle, 360); % Different MCsquare geometry
                         stfFieldMCsquare.couchAngle            = stf(i).couchAngle;
                         stfFieldMCsquare.energies              = unique([stf(i).ray.energy]);
                         stfFieldMCsquare.SAD                   = stf(i).SAD;
-                        stfFieldMCsquare.originalStfFieldIndex = i; % Required for ordering later 
-                        
+                        stfFieldMCsquare.originalStfFieldIndex = i; % Required for ordering later
+
                         stfFieldMCsquare.rangeShifterID = 0;
                         stfFieldMCsquare.rangeShifterType = 'binary';
-                        
-                        %Let's check if we have a unique or no range shifter, because MCsquare
-                        %only allows one range shifter type per field which can be IN or OUT
-                        %per spot
+
+                        % Let's check if we have a unique or no range shifter, because MCsquare
+                        % only allows one range shifter type per field which can be IN or OUT
+                        % per spot
                         raShiField = [];
                         for j = 1:stf(i).numOfRays
-                            if isfield(stf(i).ray(j),'rangeShifter')
+                            if isfield(stf(i).ray(j), 'rangeShifter')
                                 raShiField = [raShiField stf(i).ray(j).rangeShifter(:).ID];
                             else
                                 raShiField = [raShiField zeros(size(stf(i).ray(j).energies))];
                             end
                         end
 
-                        raShiField = unique(raShiField); %unique range shifter
-                        raShiField(raShiField == 0) = []; %no range shifter
+                        raShiField = unique(raShiField); % unique range shifter
+                        raShiField(raShiField == 0) = []; % no range shifter
                         if numel(raShiField) > 1
                             matRad_cfg.dispError('MCsquare does not support different range shifter IDs per field! Aborting.\n');
                         end
 
-                      
-                        %Create new stf for MCsquare with energy layer ordering and
-                        %shifted scenario isocenter
+                        % Create new stf for MCsquare with energy layer ordering and
+                        % shifted scenario isocenter
                         % Need to split the current stf field into two separate fields for MCsquare, with and without RaSh
                         stfFieldMCsquareRaShi = [];
                         if ~isempty(raShiField)
@@ -329,7 +324,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
                             stfFieldMCsquareRaShi.rangeShifterID = raShiField;
                             stfFieldMCsquareRaShi.rangeShifterType = 'binary';
-                        
+
                             % Select the energies that have a RaShi for
                             % this stf field
                             raShiLayers = [];
@@ -338,7 +333,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                                 raShiLayers = [raShiLayers, currentRay.energy([currentRay.rangeShifter.ID] == stfFieldMCsquareRaShi.rangeShifterID)];
                             end
                             stfFieldMCsquareRaShi.energies = unique(raShiLayers);
-                            
+
                             % Need to delete an energy layer from non rashi
                             % field if the layer is only delivered with
                             % rashi
@@ -367,7 +362,6 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                                 stfFieldMCsquareRaShi.energyLayer(j).bixelNum       = [];
                             end
 
-
                         end
 
                         % allocate empty target point container
@@ -381,7 +375,6 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                             end
                         end
 
-
                         for j = 1:stf(i).numOfRays
                             for k = 1:stf(i).numOfBixelsPerRay(j)
                                 counter = counter + 1;
@@ -392,42 +385,41 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
                             if ~isempty(stfFieldMCsquare)
                                 for k = 1:numel(stfFieldMCsquare.energies)
-                                    %Check if ray has a spot in the current energy layer
+                                    % Check if ray has a spot in the current energy layer
                                     if any(stf(i).ray(j).energy == stfFieldMCsquare.energies(k))
                                         energyIx = find(stf(i).ray(j).energy == stfFieldMCsquare.energies(k));
-    
+
                                         % If more than one energy layer is
                                         % found, one of them is for the
                                         % RaShiField
                                         energyIx = energyIx([stf(i).ray(j).rangeShifter(energyIx).ID] == 0); % Select the one with no RaShi;
-    
+
                                         if isempty(energyIx)
-                                            continue;
+                                            continue
                                         end
-    
+
                                         stfFieldMCsquare.energyLayer(k).rayNum   = [stfFieldMCsquare.energyLayer(k).rayNum j];
                                         stfFieldMCsquare.energyLayer(k).bixelNum = [stfFieldMCsquare.energyLayer(k).bixelNum energyIx];
                                         stfFieldMCsquare.energyLayer(k).targetPoints = [stfFieldMCsquare.energyLayer(k).targetPoints; ...
-                                            -stf(i).ray(j).rayPos_bev(1) stf(i).ray(j).rayPos_bev(3)];
-    
-                                        %Number of primaries depending on beamlet-wise or field-based computation (direct dose calculation)
+                                                                                        -stf(i).ray(j).rayPos_bev(1) stf(i).ray(j).rayPos_bev(3)];
+
+                                        % Number of primaries depending on beamlet-wise or field-based computation (direct dose calculation)
                                         if this.calcDoseDirect
                                             stfFieldMCsquare.energyLayer(k).numOfPrimaries = [stfFieldMCsquare.energyLayer(k).numOfPrimaries ...
-                                                round(stf(i).ray(j).weight(energyIx)*this.numHistoriesDirect)];
-    
+                                                                                              round(stf(i).ray(j).weight(energyIx) * this.numHistoriesDirect)];
+
                                             stfFieldMCsquare.energyLayer(k).MU = [stfFieldMCsquare.energyLayer(k).MU ...
-                                                round(stf(i).ray(j).weight(energyIx)*this.numHistoriesDirect)];
-    
+                                                                                  round(stf(i).ray(j).weight(energyIx) * this.numHistoriesDirect)];
+
                                             totalWeights = totalWeights + stf(i).ray(j).weight(energyIx);
                                         else
                                             stfFieldMCsquare.energyLayer(k).numOfPrimaries = [stfFieldMCsquare.energyLayer(k).numOfPrimaries ...
-                                                this.numHistoriesPerBeamlet];
-    
+                                                                                              this.numHistoriesPerBeamlet];
+
                                             stfFieldMCsquare.energyLayer(k).MU = [stfFieldMCsquare.energyLayer(k).MU ...
-                                                this.numHistoriesPerBeamlet];
+                                                                                  this.numHistoriesPerBeamlet];
                                         end
-    
-    
+
                                     end
                                 end
                             end
@@ -435,47 +427,47 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                             if ~isempty(raShiField)
                                 for k = 1:numel(stfFieldMCsquareRaShi.energies)
                                     if any(stf(i).ray(j).energy == stfFieldMCsquareRaShi.energies(k))
-                                        
+
                                         energyIx = find(stf(i).ray(j).energy == stfFieldMCsquareRaShi.energies(k));
-                                        
+
                                         % If more than one energy layer is
                                         % found, one of them is for the
                                         % RaShiField
                                         energyIx = energyIx([stf(i).ray(j).rangeShifter(energyIx).ID] == stfFieldMCsquareRaShi.rangeShifterID); % Select the one with no RaShi;
-    
+
                                         stfFieldMCsquareRaShi.energyLayer(k).rayNum   = [stfFieldMCsquareRaShi.energyLayer(k).rayNum j];
                                         stfFieldMCsquareRaShi.energyLayer(k).bixelNum = [stfFieldMCsquareRaShi.energyLayer(k).bixelNum energyIx];
                                         stfFieldMCsquareRaShi.energyLayer(k).targetPoints = [stfFieldMCsquareRaShi.energyLayer(k).targetPoints; ...
-                                                                                            -stf(i).ray(j).rayPos_bev(1) stf(i).ray(j).rayPos_bev(3)];
-    
-                                        %Number of primaries depending on beamlet-wise or field-based computation (direct dose calculation)
+                                                                                             -stf(i).ray(j).rayPos_bev(1) stf(i).ray(j).rayPos_bev(3)];
+
+                                        % Number of primaries depending on beamlet-wise or field-based computation (direct dose calculation)
                                         if this.calcDoseDirect
                                             stfFieldMCsquareRaShi.energyLayer(k).numOfPrimaries = [stfFieldMCsquareRaShi.energyLayer(k).numOfPrimaries ...
-                                                round(stf(i).ray(j).weight(energyIx)*this.numHistoriesDirect)];
-    
+                                                                                                   round(stf(i).ray(j).weight(energyIx) * this.numHistoriesDirect)];
+
                                             stfFieldMCsquareRaShi.energyLayer(k).MU = [stfFieldMCsquareRaShi.energyLayer(k).MU ...
-                                                round(stf(i).ray(j).weight(energyIx)*this.numHistoriesDirect)];
-    
+                                                                                       round(stf(i).ray(j).weight(energyIx) * this.numHistoriesDirect)];
+
                                             totalWeights = totalWeights + stf(i).ray(j).weight(energyIx);
                                         else
                                             stfFieldMCsquareRaShi.energyLayer(k).numOfPrimaries = [stfFieldMCsquareRaShi.energyLayer(k).numOfPrimaries ...
-                                                this.numHistoriesPerBeamlet];
-    
+                                                                                                   this.numHistoriesPerBeamlet];
+
                                             stfFieldMCsquareRaShi.energyLayer(k).MU = [stfFieldMCsquareRaShi.energyLayer(k).MU ...
-                                                this.numHistoriesPerBeamlet];
+                                                                                       this.numHistoriesPerBeamlet];
                                         end
-    
-                                        %Now add the range shifter
+
+                                        % Now add the range shifter
                                         raShis = stf(i).ray(j).rangeShifter(energyIx);
-                                         
-                                        %sanity check range shifters
+
+                                        % sanity check range shifters
                                         raShiIDs = unique([raShis.ID]);
-                                        %raShiIDs = raShiIDs(raShiIDs ~= 0);
-                                         
+                                        % raShiIDs = raShiIDs(raShiIDs ~= 0);
+
                                         if ~isscalar(raShiIDs)
                                             matRad_cfg.dispError('MCsquare only supports one range shifter setting (on or off) per energy! Aborting.\n');
                                         end
-                                         
+
                                         stfFieldMCsquareRaShi.energyLayer(k).rangeShifter = raShis(1);
                                     end
                                 end
@@ -486,19 +478,19 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                         if isempty(stfFieldMCsquare)
                             stfFieldMCsquare = [];
                         end
-                        stfMCsquare = [stfMCsquare,stfFieldMCsquare, stfFieldMCsquareRaShi];
+                        stfMCsquare = [stfMCsquare, stfFieldMCsquare, stfFieldMCsquareRaShi];
                     end
 
                     % remember order
                     counterMCsquare = 0;
-                    MCsquareOrder = NaN * ones(dij.totalNumOfBixels,1);
+                    MCsquareOrder = NaN * ones(dij.totalNumOfBixels, 1);
                     for i = 1:length(stfMCsquare)
                         for j = 1:numel(stfMCsquare(i).energies)
                             for k = 1:numel(stfMCsquare(i).energyLayer(j).numOfPrimaries)
                                 counterMCsquare = counterMCsquare + 1;
                                 ix = find(stfMCsquare(i).originalStfFieldIndex  == dij.beamNum & ...
-                                    stfMCsquare(i).energyLayer(j).rayNum(k)     == dij.rayNum & ...
-                                    stfMCsquare(i).energyLayer(j).bixelNum(k)   == dij.bixelNum);
+                                          stfMCsquare(i).energyLayer(j).rayNum(k)     == dij.rayNum & ...
+                                          stfMCsquare(i).energyLayer(j).bixelNum(k)   == dij.bixelNum);
 
                                 MCsquareOrder(ix) = counterMCsquare;
                             end
@@ -512,116 +504,132 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                     %% Write config files
                     % write patient data
                     MCsquareBinCubeResolution = [dij.doseGrid.resolution.x ...
-                        dij.doseGrid.resolution.y ...
-                        dij.doseGrid.resolution.z];
-
-                    this.writeMhd(HUcube{ctScen},MCsquareBinCubeResolution);
-
-                    % write config file
-                    this.writeInputFiles(MCsquareConfigFile,stfMCsquare);
+                                                 dij.doseGrid.resolution.y ...
+                                                 dij.doseGrid.resolution.z];
 
                     %% MC computation and dij filling
 
-                    if strcmp(this.externalCalculation,'write')
-                        matRad_cfg.dispInfo(['MCsquare simulation skipped for external calculation\nFiles have been written to: "',strrep(this.workingDir,'\','\\'),'"']);
+                    switch this.externalCalculation
+
+                        case 'write'
+                            this.writeMhd(HUcube{ctScen}, MCsquareBinCubeResolution);
+
+                            % write config file
+                            this.writeInputFiles(MCsquareConfigFile, stfMCsquare);
+                            matRad_cfg.dispInfo(['MCsquare simulation skipped for external calculation\nFiles have been written to: "', strrep(this.workingDir, '\', '\\'), '"']);
+                            cd(this.currFolder);
+                            continue
+                        case 'off'
+                            this.writeMhd(HUcube{ctScen}, MCsquareBinCubeResolution);
+
+                            % write config file
+                            this.writeInputFiles(MCsquareConfigFile, stfMCsquare);
+
+                            % run MCsquare
+                            mcSquareCall = [this.mcSquareBinary ' ' sprintf('"%s"', MCsquareConfigFile)];
+                            matRad_cfg.dispInfo(['Calling Monte Carlo Engine: ' mcSquareCall]);
+                            if matRad_cfg.logLevel >= 3
+                                [status, cmdout] = system(mcSquareCall, '-echo');
+                            else
+                                [status, cmdout] = system(mcSquareCall);
+                                matRad_cfg.dispInfo(cmdout);
+                            end
+                            if status == 0
+                                matRad_cfg.dispInfo('MCsquare exited successfully with status %d!', status);
+                            else
+                                matRad_cfg.dispInfo('MCsquare did not exit successfully with status %d! Results might be compromised!', status);
+                            end
+                        otherwise
+                            if isfolder(this.externalCalculation)
+                                this.config.Output_Directory = fullfile(this.externalCalculation, 'output');
+                                matRad_cfg.dispInfo('Trying to load simulation results from folder:%s', this.config.Output_Directory);
+                            end
+                    end
+
+                    % if strcmp(this.externalCalculation, 'write')
+
+                    mask = false(dij.doseGrid.numOfVoxels, 1);
+                    mask(this.VdoseGrid) = true;
+
+                    if this.calcDoseDirect
+                        if abs(totalWeights - sum(this.directWeights)) > 1e-2
+                            matRad_cfg.dispWarning('Sum of provided weights and weights used in MCsquare inconsistent!');
+                        end
+                        finalResultWeight = absCalibrationFactorMC2 * totalWeights;
                     else
-                        % run MCsquare
-                        mcSquareCall = [this.mcSquareBinary ' ' sprintf('"%s"', MCsquareConfigFile)];
-                        matRad_cfg.dispInfo(['Calling Monte Carlo Engine: ' mcSquareCall]);
-                        if matRad_cfg.logLevel >= 3
-                            [status,cmdout] = system(mcSquareCall,'-echo');
-                        else
-                            [status,cmdout] = system(mcSquareCall);
-                            matRad_cfg.dispInfo(cmdout);
+                        finalResultWeight = absCalibrationFactorMC2;
+                    end
+
+                    % read sparse matrix
+                    if ~this.calcDoseDirect
+                        dij.physicalDose{ctScen, shiftScen, rangeShiftScen} = finalResultWeight * matRad_sparseBeamletsReaderMCsquare ( ...
+                                                                                                                                       [this.config.Output_Directory filesep 'Sparse_Dose.bin'], ...
+                                                                                                                                       dij.doseGrid.dimensions, ...
+                                                                                                                                       dij.totalNumOfBixels, ...
+                                                                                                                                       mask);
+
+                        % Read sparse LET
+                        if this.calcLET
+                            dij.mLETDose{ctScen, shiftScen, rangeShiftScen} = dij.physicalDose{ctScen, shiftScen, rangeShiftScen} .* matRad_sparseBeamletsReaderMCsquare ( ...
+                                                                                                                                                                          [this.config.Output_Directory filesep 'Sparse_LET.bin'], ...
+                                                                                                                                                                          dij.doseGrid.dimensions, ...
+                                                                                                                                                                          dij.totalNumOfBixels, ...
+                                                                                                                                                                          mask);
                         end
-                        if status == 0
-                            matRad_cfg.dispInfo('MCsquare exited successfully with status %d!',status);
-                        else
-                            matRad_cfg.dispInfo('MCsquare did not exit successfully with status %d! Results might be compromised!',status);
+
+                        % reorder influence matrix to comply with matRad default ordering
+                        dij.physicalDose = cellfun(@(mx) mx(:, MCsquareOrder), dij.physicalDose, 'UniformOutput', false);
+                        if this.calcLET
+                            dij.mLETDose = cellfun(@(mx) mx(:, MCsquareOrder), dij.mLETDose, 'UniformOutput', false);
                         end
-    
-                        mask = false(dij.doseGrid.numOfVoxels,1);
-                        mask(this.VdoseGrid) = true;
-    
-                        if this.calcDoseDirect
-                            if abs(totalWeights-sum(this.directWeights)) > 1e-2
-                                matRad_cfg.dispWarning('Sum of provided weights and weights used in MCsquare inconsistent!');
-                            end
-                            finalResultWeight = absCalibrationFactorMC2 * totalWeights;
-                        else
-                            finalResultWeight = absCalibrationFactorMC2;
+                    else
+                        cube = this.readMhd('Dose.mhd');
+                        dij.physicalDose{ctScen, shiftScen, rangeShiftScen} = sparse(this.VdoseGrid, ones(numel(this.VdoseGrid), 1), ...
+                                                                                     finalResultWeight * cube(this.VdoseGrid), ...
+                                                                                     dij.doseGrid.numOfVoxels, 1);
+
+                        % Read LET cube
+                        if this.calcLET
+                            cube = this.readMhd('LET.mhd');
+                            dij.mLETDose{ctScen, shiftScen, rangeShiftScen} = dij.physicalDose{ctScen, shiftScen, rangeShiftScen} .* sparse(this.VdoseGrid, ones(numel(this.VdoseGrid), 1), ...
+                                                                                                                                            cube(this.VdoseGrid), ...
+                                                                                                                                            dij.doseGrid.numOfVoxels, 1);
                         end
-    
-                        % read sparse matrix
-                        if ~this.calcDoseDirect
-                            dij.physicalDose{ctScen,shiftScen,rangeShiftScen} = finalResultWeight * matRad_sparseBeamletsReaderMCsquare ( ...
-                                [this.config.Output_Directory filesep 'Sparse_Dose.bin'], ...
-                                dij.doseGrid.dimensions, ...
-                                dij.totalNumOfBixels, ...
-                                mask);
-    
-                            %Read sparse LET
-                            if this.calcLET
-                                dij.mLETDose{ctScen,shiftScen,rangeShiftScen} = dij.physicalDose{ctScen,shiftScen,rangeShiftScen} .* matRad_sparseBeamletsReaderMCsquare ( ...
-                                    [this.config.Output_Directory filesep 'Sparse_LET.bin'], ...
-                                    dij.doseGrid.dimensions, ...
-                                    dij.totalNumOfBixels, ...
-                                    mask);
-                            end
-    
-                            % reorder influence matrix to comply with matRad default ordering
-                            dij.physicalDose = cellfun(@(mx) mx(:,MCsquareOrder),dij.physicalDose,'UniformOutput',false);
-                            if this.calcLET
-                                dij.mLETDose = cellfun(@(mx) mx(:,MCsquareOrder),dij.mLETDose,'UniformOutput',false);
-                            end
-                        else
-                            cube = this.readMhd('Dose.mhd');
-                            dij.physicalDose{ctScen,shiftScen,rangeShiftScen} = sparse(this.VdoseGrid,ones(numel(this.VdoseGrid),1), ...
-                                finalResultWeight * cube(this.VdoseGrid), ...
-                                dij.doseGrid.numOfVoxels,1);
-    
-                            %Read LET cube
-                            if this.calcLET
-                                cube = this.readMhd('LET.mhd');
-                                dij.mLETDose{ctScen,shiftScen,rangeShiftScen} = dij.physicalDose{ctScen,shiftScen,rangeShiftScen} .* sparse(this.VdoseGrid,ones(numel(this.VdoseGrid),1), ...
-                                    cube(this.VdoseGrid), ...
-                                    dij.doseGrid.numOfVoxels,1);
-                            end
-    
-                            % Postprocessing for dij:
-                            % This is already the combined dose over all bixels, so all parameters are 1 in this case
-                            dij = rmfield(dij,'MCsquareCalcOrder');
-    
-                            dij.numOfBeams = 1;
-                            dij.beamNum = 1;
-                            dij.bixelNum = 1;
-                            dij.rayNum = 1;
-                            dij.totalNumOfBixels = 1;
-                            dij.totalNumOfRays = 1;
-                            dij.numOfRaysPerBeam = 1;
-                        end
-    
-    
-                        if this.config.Beamlet_Mode
-    
-                        end
-    
-                        matRad_cfg.dispInfo('Scenario %d of %d finished!\n',scenarioIx,this.multScen.totNumScen);
-                    
-                        %% clear all data
-                        %could also be moved to the "finalize" function
-                        delete([this.config.CT_File(1:end-4) '.*']);
-                        fullfile(this.workingDir,'currBixels.txt');
-                        fullfile(this.workingDir,'MCsquareConfig.txt');
-    
-                        %For Octave temporarily disable confirmation for recursive rmdir
-                        if strcmp(matRad_cfg.env,'OCTAVE')
+
+                        % Postprocessing for dij:
+                        % This is already the combined dose over all bixels, so all parameters are 1 in this case
+                        dij = rmfield(dij, 'MCsquareCalcOrder');
+
+                        dij.numOfBeams = 1;
+                        dij.beamNum = 1;
+                        dij.bixelNum = 1;
+                        dij.rayNum = 1;
+                        dij.totalNumOfBixels = 1;
+                        dij.totalNumOfRays = 1;
+                        dij.numOfRaysPerBeam = 1;
+                    end
+
+                    if this.config.Beamlet_Mode
+
+                    end
+
+                    matRad_cfg.dispInfo('Scenario %d of %d finished!\n', scenarioIx, this.multScen.totNumScen);
+
+                    %% clear all data
+                    % could also be moved to the "finalize" function
+                    if strcmp(this.externalCalculation, 'off')
+                        delete([this.config.CT_File(1:end - 4) '.*']);
+                        fullfile(this.workingDir, 'currBixels.txt');
+                        fullfile(this.workingDir, 'MCsquareConfig.txt');
+
+                        % For Octave temporarily disable confirmation for recursive rmdir
+                        if strcmp(matRad_cfg.env, 'OCTAVE')
                             rmdirConfirmState = confirm_recursive_rmdir(0);
                         end
-                        rmdir(this.config.Output_Directory,'s');
-    
-                        %Reset to old confirmatoin state
-                        if strcmp(matRad_cfg.env,'OCTAVE')
+                        rmdir(this.config.Output_Directory, 's');
+
+                        % Reset to old confirmatoin state
+                        if strcmp(matRad_cfg.env, 'OCTAVE')
                             confirm_recursive_rmdir(rmdirConfirmState);
                         end
                     end
@@ -632,7 +640,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             end
 
             matRad_cfg.dispInfo('matRad: Simulation finished!\n');
-            
+
             if strcmp(this.externalCalculation, 'write')
                 dij.beamNum = 1;
                 dij.bixelNum = 1;
@@ -643,12 +651,12 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                 for i = 1:this.multScen.numOfCtScen
                     for j = 1:this.multScen.totNumShiftScen
                         for k = 1:this.multScen.totNumRangeScen
-                            if this.multScen.scenMask(i,j,k)
-                                %TODO: loop over all expected output quantities
-                                dij.physicalDose{i,j,k} = zeros(dij.ctGrid.numOfVoxels,1);
-                                dij.physicalDose_std{i,j,k} = zeros(dij.ctGrid.numOfVoxels,1);
+                            if this.multScen.scenMask(i, j, k)
+                                % TODO: loop over all expected output quantities
+                                dij.physicalDose{i, j, k} = zeros(dij.doseGrid.numOfVoxels, 1);
+                                dij.physicalDose_std{i, j, k} = zeros(dij.doseGrid.numOfVoxels, 1);
                             end
-    
+
                         end
                     end
                 end
@@ -656,8 +664,6 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                 dij.totalNumOfBixels = 1;
                 dij.totalNumOfRays = 1;
             end
-            %Finalize dose calculation
-            dij = this.finalizeDose(dij);
 
         end
 
@@ -666,41 +672,41 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             % machine and sets to the mcsquarebinary object property
             %
 
-            [~,binaryFile] = this.checkBinaries();
+            [~, binaryFile] = this.checkBinaries();
             this.mcSquareBinary = binaryFile;
         end
 
-        function dij = initDoseCalc(this,ct,cst,stf)
-            %% Assingn and check parameters
+        function dij = initDoseCalc(this, ct, cst, stf)
+            %% Assign and check parameters
             matRad_cfg = MatRad_Config.instance();
 
             % check if binaries are available
             % Executables for simulation
             this.setBinaries();
 
-            %Mex interface for import of sparse matrix
+            % Mex interface for import of sparse matrix
             if ~this.calcDoseDirect && ~matRad_checkMexFileExists('matRad_sparseBeamletsReaderMCsquare')
                 matRad_cfg.dispWarning('Compiled sparse reader interface not found. Trying to compile it on the fly!');
                 try
                     matRad_compileMCsquareSparseReader();
                 catch MException
-                    matRad_cfg.dispError('Could not find/generate mex interface for reading the sparse matrix. \nCause of error:\n%s\n Please compile it yourself.',MException.message);
+                    matRad_cfg.dispError('Could not find/generate mex interface for reading the sparse matrix. \nCause of error:\n%s\n Please compile it yourself.', MException.message);
                 end
             end
 
             % set and change to MCsquare binary folder
             this.currFolder = pwd;
-            %fullfilename = mfilename('fullpath');
+            % fullfilename = mfilename('fullpath');
 
             % cd to MCsquare folder (necessary for binary)
             % TODO: Could be checked in a property setter function
-            if ~exist(this.MCsquareFolder,'dir')
+            if ~exist(this.MCsquareFolder, 'dir')
                 matRad_cfg.dispError('MCsquare Folder does not exist!');
             end
             cd(this.MCsquareFolder);
 
-            %Check Materials
-            if ~exist([this.MCsquareFolder filesep 'Materials'],'dir') || ~exist(fullfile(this.MCsquareFolder,'Materials','list.dat'),'file')
+            % Check Materials
+            if ~exist([this.MCsquareFolder filesep 'Materials'], 'dir') || ~exist(fullfile(this.MCsquareFolder, 'Materials', 'list.dat'), 'file')
                 matRad_cfg.dispInfo('First call of MCsquare: unzipping Materials...');
                 unzip('Materials.zip');
                 matRad_cfg.dispInfo('Done');
@@ -715,40 +721,40 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             if this.doseGrid.resolution.x ~= this.doseGrid.resolution.y
                 this.doseGrid.resolution.x = mean([this.doseGrid.resolution.x this.doseGrid.resolution.y]);
                 this.doseGrid.resolution.y = this.doseGrid.resolution.x;
-                matRad_cfg.dispWarning('Anisotropic resolution in axial plane for dose calculation with MCsquare not possible\nUsing average x = y = %g mm\n',this.doseGrid.resolution.x);
+                matRad_cfg.dispWarning('Anisotropic resolution in axial plane for dose calculation with MCsquare not possible\nUsing average x = y = %g mm\n', this.doseGrid.resolution.x);
             end
 
-            dij = initDoseCalc@DoseEngines.matRad_MonteCarloEngineAbstract(this,ct,cst,stf);
+            dij = initDoseCalc@DoseEngines.matRad_MonteCarloEngineAbstract(this, ct, cst, stf);
 
             %% Validate and preset some additional dij variables
 
             % Explicitly setting the number of threads for MCsquare, 0 is all available
             this.nbThreads = 0;
 
-            %Issue a warning when we have more than 1 scenario
+            % Issue a warning when we have more than 1 scenario
             if dij.numOfScenarios ~= 1
                 matRad_cfg.dispWarning('MCsquare is only implemented for single scenario use at the moment. Will only use the first Scenario for Monte Carlo calculation!');
             end
 
             % prefill ordering of MCsquare bixels
-            dij.MCsquareCalcOrder = NaN*ones(dij.totalNumOfBixels,1);
+            dij.MCsquareCalcOrder = NaN * ones(dij.totalNumOfBixels, 1);
 
             if ~isnan(this.constantRBE)
                 dij.RBE = this.constantRBE;
             end
         end
 
-        function writeInputFiles(obj,filename,stf)
-            % generate input files for MCsquare dose calcualtion from matRad
+        function writeInputFiles(obj, filename, stf)
+            % generate input files for MCsquare dose calculation from matRad
             %
-            % call
+            % call:
             %   obj.writeInputFiles(filename,filename,stf)
             %
-            % input
+            % input:
             %   filename:       filename of the Configuration file
             %   stf:            matRad steering information struct
             %
-            % output
+            % output:
             %   -
             %
             % References
@@ -767,9 +773,8 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             %
             % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
             %% write overall configuration file
-            fileHandle = fopen(filename,'w');
+            fileHandle = fopen(filename, 'w');
             obj.config.write(fileHandle);
             fclose(fileHandle);
 
@@ -778,7 +783,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             if obj.config.Beamlet_Mode
                 totalMetersetWeightOfAllFields = 1;
             else
-                totalMetersetWeightOfFields = NaN*ones(numOfFields,1);
+                totalMetersetWeightOfFields = NaN * ones(numOfFields, 1);
                 for i = 1:numOfFields
                     totalMetersetWeightOfFields(i) = sum([stf(i).energyLayer.numOfPrimaries]);
                 end
@@ -787,88 +792,88 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
             %% write steering file
 
-            fileHandle = fopen(obj.config.BDL_Plan_File,'w');
+            fileHandle = fopen(obj.config.BDL_Plan_File, 'w');
 
-            fprintf(fileHandle,'#TREATMENT-PLAN-DESCRIPTION\n');
-            fprintf(fileHandle,'#PlanName\n');
-            fprintf(fileHandle,'matRad_bixel\n');
-            fprintf(fileHandle,'#NumberOfFractions\n');
-            fprintf(fileHandle,'1\n');
-            fprintf(fileHandle,'##FractionID\n');
-            fprintf(fileHandle,'1\n');
-            fprintf(fileHandle,'##NumberOfFields\n');
-            fprintf(fileHandle,[num2str(numOfFields) '\n']);
+            fprintf(fileHandle, '#TREATMENT-PLAN-DESCRIPTION\n');
+            fprintf(fileHandle, '#PlanName\n');
+            fprintf(fileHandle, 'matRad_bixel\n');
+            fprintf(fileHandle, '#NumberOfFractions\n');
+            fprintf(fileHandle, '1\n');
+            fprintf(fileHandle, '##FractionID\n');
+            fprintf(fileHandle, '1\n');
+            fprintf(fileHandle, '##NumberOfFields\n');
+            fprintf(fileHandle, [num2str(numOfFields) '\n']);
             for i = 1:numOfFields
-                fprintf(fileHandle,'###FieldsID\n');
-                fprintf(fileHandle,[num2str(i) '\n']);
+                fprintf(fileHandle, '###FieldsID\n');
+                fprintf(fileHandle, [num2str(i) '\n']);
             end
-            fprintf(fileHandle,'\n#TotalMetersetWeightOfAllFields\n');
-            fprintf(fileHandle,[num2str(totalMetersetWeightOfAllFields) '\n']);
+            fprintf(fileHandle, '\n#TotalMetersetWeightOfAllFields\n');
+            fprintf(fileHandle, [num2str(totalMetersetWeightOfAllFields) '\n']);
 
             for i = 1:numOfFields
-                fprintf(fileHandle,'\n#FIELD-DESCRIPTION\n');
-                fprintf(fileHandle,'###FieldID\n');
-                fprintf(fileHandle,[num2str(i) '\n']);
-                fprintf(fileHandle,'###FinalCumulativeMeterSetWeight\n');
+                fprintf(fileHandle, '\n#FIELD-DESCRIPTION\n');
+                fprintf(fileHandle, '###FieldID\n');
+                fprintf(fileHandle, [num2str(i) '\n']);
+                fprintf(fileHandle, '###FinalCumulativeMeterSetWeight\n');
                 if obj.config.Beamlet_Mode
-                    finalCumulativeMeterSetWeight = 1/numOfFields;
+                    finalCumulativeMeterSetWeight = 1 / numOfFields;
                 else
                     finalCumulativeMeterSetWeight = totalMetersetWeightOfFields(i);
                 end
-                fprintf(fileHandle,[num2str(finalCumulativeMeterSetWeight) '\n']);
-                fprintf(fileHandle,'###GantryAngle\n');
-                fprintf(fileHandle,[num2str(stf(i).gantryAngle) '\n']);
-                fprintf(fileHandle,'###PatientSupportAngle\n');
-                fprintf(fileHandle,[num2str(stf(i).couchAngle) '\n']);
-                fprintf(fileHandle,'###IsocenterPosition\n');
-                fprintf(fileHandle,[num2str(stf(i).isoCenter) '\n']);
-                fprintf(fileHandle,'###NumberOfControlPoints\n');
+                fprintf(fileHandle, [num2str(finalCumulativeMeterSetWeight) '\n']);
+                fprintf(fileHandle, '###GantryAngle\n');
+                fprintf(fileHandle, [num2str(stf(i).gantryAngle) '\n']);
+                fprintf(fileHandle, '###PatientSupportAngle\n');
+                fprintf(fileHandle, [num2str(stf(i).couchAngle) '\n']);
+                fprintf(fileHandle, '###IsocenterPosition\n');
+                fprintf(fileHandle, [num2str(stf(i).isoCenter) '\n']);
+                fprintf(fileHandle, '###NumberOfControlPoints\n');
                 numOfEnergies = numel(stf(i).energies);
-                fprintf(fileHandle,[num2str(numOfEnergies) '\n']);
+                fprintf(fileHandle, [num2str(numOfEnergies) '\n']);
 
-                %Range shfiter
+                % Range shfiter
                 if stf(i).rangeShifterID ~= 0
-                    fprintf(fileHandle,'###RangeShifterID\n%d\n',stf(i).rangeShifterID);
-                    fprintf(fileHandle,'###RangeShifterType\n%s\n',stf(i).rangeShifterType);
+                    fprintf(fileHandle, '###RangeShifterID\n%d\n', stf(i).rangeShifterID);
+                    fprintf(fileHandle, '###RangeShifterType\n%s\n', stf(i).rangeShifterType);
                 end
 
                 metersetOffset = 0;
-                fprintf(fileHandle,'\n#SPOTS-DESCRIPTION\n');
+                fprintf(fileHandle, '\n#SPOTS-DESCRIPTION\n');
                 for j = 1:numOfEnergies
-                    fprintf(fileHandle,'####ControlPointIndex\n');
-                    fprintf(fileHandle,[num2str(j) '\n']);
-                    fprintf(fileHandle,'####SpotTunnedID\n');
-                    fprintf(fileHandle,['1\n']);
-                    fprintf(fileHandle,'####CumulativeMetersetWeight\n');
+                    fprintf(fileHandle, '####ControlPointIndex\n');
+                    fprintf(fileHandle, [num2str(j) '\n']);
+                    fprintf(fileHandle, '####SpotTunnedID\n');
+                    fprintf(fileHandle, ['1\n']);
+                    fprintf(fileHandle, '####CumulativeMetersetWeight\n');
                     if obj.config.Beamlet_Mode
-                        cumulativeMetersetWeight = j/numOfEnergies * 1/numOfFields;
+                        cumulativeMetersetWeight = j / numOfEnergies * 1 / numOfFields;
                     else
                         cumulativeMetersetWeight = metersetOffset + sum([stf(i).energyLayer(j).numOfPrimaries]);
                         metersetOffset = cumulativeMetersetWeight;
                     end
-                    fprintf(fileHandle,[num2str(cumulativeMetersetWeight) '\n']);
-                    fprintf(fileHandle,'####Energy (MeV)\n');
-                    fprintf(fileHandle,[num2str(stf(i).energies(j)) '\n']);
+                    fprintf(fileHandle, [num2str(cumulativeMetersetWeight) '\n']);
+                    fprintf(fileHandle, '####Energy (MeV)\n');
+                    fprintf(fileHandle, [num2str(stf(i).energies(j)) '\n']);
 
-                    %Range shfiter
+                    % Range shfiter
                     if stf(i).rangeShifterID ~= 0
                         rangeShifter = stf(i).energyLayer(j).rangeShifter;
                         if rangeShifter.ID ~= 0
-                            fprintf(fileHandle,'####RangeShifterSetting\n%s\n','IN');
-                            pmma_rsp = 1.165; %TODO: hardcoded for now
+                            fprintf(fileHandle, '####RangeShifterSetting\n%s\n', 'IN');
+                            pmma_rsp = 1.165; % TODO: hardcoded for now
                             rsWidth = rangeShifter.eqThickness / pmma_rsp;
                             isoToRaShi = stf(i).SAD - rangeShifter.sourceRashiDistance - rsWidth;
-                            fprintf(fileHandle,'####IsocenterToRangeShifterDistance\n%f\n',isoToRaShi/10); %in cm
-                            fprintf(fileHandle,'####RangeShifterWaterEquivalentThickness\n%f\n',rangeShifter.eqThickness);
+                            fprintf(fileHandle, '####IsocenterToRangeShifterDistance\n%f\n', isoToRaShi / 10); % in cm
+                            fprintf(fileHandle, '####RangeShifterWaterEquivalentThickness\n%f\n', rangeShifter.eqThickness);
                         else
-                            fprintf(fileHandle,'####RangeShifterSetting\n%s\n','OUT');
+                            fprintf(fileHandle, '####RangeShifterSetting\n%s\n', 'OUT');
                         end
                     end
 
-                    fprintf(fileHandle,'####NbOfScannedSpots\n');
-                    numOfSpots = size(stf(i).energyLayer(j).targetPoints,1);
-                    fprintf(fileHandle,[num2str(numOfSpots) '\n']);
-                    fprintf(fileHandle,'####X Y Weight\n');
+                    fprintf(fileHandle, '####NbOfScannedSpots\n');
+                    numOfSpots = size(stf(i).energyLayer(j).targetPoints, 1);
+                    fprintf(fileHandle, [num2str(numOfSpots) '\n']);
+                    fprintf(fileHandle, '####X Y Weight\n');
                     for k = 1:numOfSpots
                         %{
                         if obj.config.Beamlet_Mode
@@ -878,7 +883,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                         end
                         %}
                         n = stf(i).energyLayer(j).numOfPrimaries(k);
-                        fprintf(fileHandle,[num2str(stf(i).energyLayer(j).targetPoints(k,:)) ' ' num2str(n) '\n']);
+                        fprintf(fileHandle, [num2str(stf(i).energyLayer(j).targetPoints(k, :)) ' ' num2str(n) '\n']);
                     end
                 end
             end
@@ -887,19 +892,19 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
         end
 
-        function cube = readMhd(obj,filename)
+        function cube = readMhd(obj, filename)
             % TODO: This should become a binary export function in matRads
-            % IO folde
+            % IO folder
             % matRad mhd file reader
             %
-            % call
+            % call:
             %   cube = matRad_readMhd(folder,filename)
             %
-            % input
+            % input:
             %   folder:   folder where the *raw and *mhd file are located
             %   filename: filename
             %
-            % output
+            % output:
             %   cube:     3D array
             %
             % References
@@ -917,37 +922,36 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             %
             % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
             %% read header
-            headerFileHandle = fopen([obj.config.Output_Directory, filesep filename],'r');
+            headerFileHandle = fopen([obj.config.Output_Directory, filesep filename], 'r');
 
             s = textscan(headerFileHandle, '%s', 'delimiter', '\n');
 
             % read dimensions
-            idx = find(~cellfun(@isempty,strfind(s{1}, 'DimSize')),1,'first');
-            dimensions = cell2mat(textscan(s{1}{idx},'DimSize = %f %f %f'));
+            idx = find(~cellfun(@isempty, strfind(s{1}, 'DimSize')), 1, 'first');
+            dimensions = cell2mat(textscan(s{1}{idx}, 'DimSize = %f %f %f'));
 
             % read filename of data
-            idx = find(~cellfun(@isempty,strfind(s{1}, 'ElementDataFile')),1,'first');
-            tmp = textscan(s{1}{idx},'ElementDataFile = %s');
+            idx = find(~cellfun(@isempty, strfind(s{1}, 'ElementDataFile')), 1, 'first');
+            tmp = textscan(s{1}{idx}, 'ElementDataFile = %s');
             dataFilename = cell2mat(tmp{1});
 
             % get data type
-            idx = find(~cellfun(@isempty,strfind(s{1}, 'ElementType')),1,'first');
-            tmp = textscan(s{1}{idx},'ElementType = MET_%s');
+            idx = find(~cellfun(@isempty, strfind(s{1}, 'ElementType')), 1, 'first');
+            tmp = textscan(s{1}{idx}, 'ElementType = MET_%s');
             type = lower(cell2mat(tmp{1}));
 
             fclose(headerFileHandle);
 
             %% read data
-            dataFileHandle = fopen([obj.config.Output_Directory filesep dataFilename],'r');
-            cube = reshape(fread(dataFileHandle,inf,type),dimensions);
-            cube = permute(cube,[2 1 3]);
-            cube = flip(cube,2);
+            dataFileHandle = fopen([obj.config.Output_Directory filesep dataFilename], 'r');
+            cube = reshape(fread(dataFileHandle, inf, type), dimensions);
+            cube = permute(cube, [2 1 3]);
+            cube = flip(cube, 2);
             fclose(dataFileHandle);
         end
 
-        function writeMhd(obj,cube,resolution)
+        function writeMhd(obj, cube, resolution)
             % TODO: This should become a binary export function in matRads
             % IO folder
             % References
@@ -967,40 +971,41 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
             %% write header file
-            fileHandle = fopen(obj.config.CT_File,'w');
+            fileHandle = fopen(obj.config.CT_File, 'w');
 
-            fprintf(fileHandle,'ObjectType = Image\n');
-            fprintf(fileHandle,'NDims = 3\n');
-            fprintf(fileHandle,'BinaryData = True\n');
-            fprintf(fileHandle,'BinaryDataByteOrderMSB = False\n');
-            fprintf(fileHandle,'CompressedData = False\n');
-            fprintf(fileHandle,'TransformMatrix = 1 0 0 0 1 0 0 0 1\n');
-            fprintf(fileHandle,'Offset = 0 0 0\n');
-            fprintf(fileHandle,'CenterOfRotation = 0 0 0\n');
-            fprintf(fileHandle,'AnatomicalOrientation = RAI\n');
-            fprintf(fileHandle,'ElementSpacing = %f %f %f\n',resolution);
-            fprintf(fileHandle,'DimSize = %d %d %d\n',size(cube,2),size(cube,1),size(cube,3));
-            fprintf(fileHandle,'ElementType = MET_DOUBLE\n');
-            [fPath,fName,~] = fileparts(obj.config.CT_File);
+            fprintf(fileHandle, 'ObjectType = Image\n');
+            fprintf(fileHandle, 'NDims = 3\n');
+            fprintf(fileHandle, 'BinaryData = True\n');
+            fprintf(fileHandle, 'BinaryDataByteOrderMSB = False\n');
+            fprintf(fileHandle, 'CompressedData = False\n');
+            fprintf(fileHandle, 'TransformMatrix = 1 0 0 0 1 0 0 0 1\n');
+            fprintf(fileHandle, 'Offset = 0 0 0\n');
+            fprintf(fileHandle, 'CenterOfRotation = 0 0 0\n');
+            fprintf(fileHandle, 'AnatomicalOrientation = RAI\n');
+            fprintf(fileHandle, 'ElementSpacing = %f %f %f\n', resolution);
+            fprintf(fileHandle, 'DimSize = %d %d %d\n', size(cube, 2), size(cube, 1), size(cube, 3));
+            fprintf(fileHandle, 'ElementType = MET_DOUBLE\n');
+            [fPath, fName, ~] = fileparts(obj.config.CT_File);
             filenameRaw = [fName '.raw'];
-            fprintf(fileHandle,'ElementDataFile = %s\n',filenameRaw);
+            fprintf(fileHandle, 'ElementDataFile = %s\n', filenameRaw);
             fclose(fileHandle);
 
             %% write data file
-            filenameRaw = fullfile(fPath,filenameRaw);
-            dataFileHandle = fopen(filenameRaw,'w');
+            filenameRaw = fullfile(fPath, filenameRaw);
+            dataFileHandle = fopen(filenameRaw, 'w');
 
-            cube = flip(cube,2);
-            cube = permute(cube,[2 1 3]);
+            cube = flip(cube, 2);
+            cube = permute(cube, [2 1 3]);
 
-            fwrite(dataFileHandle,cube(:),'double');
+            fwrite(dataFileHandle, cube(:), 'double');
             fclose(dataFileHandle);
         end
 
     end
 
     methods (Access = private)
-        function gain = mcSquare_magicFudge(~,energy)
+
+        function gain = mcSquare_magicFudge(~, energy)
             % mcSquare will scale the spot intensities in
             % https://gitlab.com/openmcsquare/MCsquare/blob/master/src/data_beam_model.c#L906
             % by this factor so we need to divide up front to make things work. The
@@ -1009,7 +1014,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             K = 35.87; % in eV (other value 34.23 ?)
 
             % // Air stopping power (fit ICRU) multiplied by air density
-            SP = (9.6139e-9*energy^4 - 7.0508e-6*energy^3 + 2.0028e-3*energy^2 - 2.7615e-1*energy + 2.0082e1) * 1.20479E-3 * 1E6; % // in eV / cm
+            SP = (9.6139e-9 * energy^4 - 7.0508e-6 * energy^3 + 2.0028e-3 * energy^2 - 2.7615e-1 * energy + 2.0082e1) * 1.20479E-3 * 1E6; % // in eV / cm
 
             % // Temp & Pressure correction
             PTP = 1.0;
@@ -1019,18 +1024,18 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             C = 3.0E-9; % // in C / cm
 
             % // Gain: 1eV = 1.602176E-19 J
-            gain = (C*K) / (SP*PTP*1.602176E-19);
+            gain = (C * K) / (SP * PTP * 1.602176E-19);
 
             % divide by 1e7 to not get tiny numbers...
-            gain = gain/1e7;
+            gain = gain / 1e7;
 
         end
-    end
 
+    end
 
     methods (Static)
 
-        function [binaryFound,binaryFile] = checkBinaries()
+        function [binaryFound, binaryFile] = checkBinaries()
             % checkBinaries check if the binaries are available on the current
             % machine and sets to the mcsquarebinary object property
             %
@@ -1041,20 +1046,20 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             binaryFound = false;
 
             if ispc
-                if exist('MCSquare_windows.exe','file') ~= 2
+                if exist('MCSquare_windows.exe', 'file') ~= 2
                     matRad_cfg.dispWarning('Could not find MCsquare binary.\n');
                 else
                     binaryFile = 'MCSquare_windows.exe';
                 end
             elseif ismac
-                if exist('MCsquare_mac','file') ~= 2
+                if exist('MCsquare_mac', 'file') ~= 2
                     matRad_cfg.dispWarning('Could not find MCsquare binary.\n');
                 else
                     binaryFile = './MCsquare_mac';
                 end
-                %error('MCsquare binaries not available for mac OS.\n');
+                % error('MCsquare binaries not available for mac OS.\n');
             elseif isunix
-                if exist('MCsquare_linux','file') ~= 2
+                if exist('MCsquare_linux', 'file') ~= 2
                     matRad_cfg.dispWarning('Could not find MCsquare binary.\n');
                 else
                     binaryFile = './MCsquare_linux';
@@ -1067,7 +1072,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
         end
 
-        function [available,msg] = isAvailable(pln,machine)
+        function [available, msg] = isAvailable(pln, machine)
             % see superclass for information
 
             msg = [];
@@ -1077,35 +1082,35 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                 machine = matRad_loadMachine(pln);
             end
 
-            %checkBasic
+            % checkBasic
             try
-                checkBasic = isfield(machine,'meta') && isfield(machine,'data');
+                checkBasic = isfield(machine, 'meta') && isfield(machine, 'data');
 
-                %check modality
+                % check modality
                 checkModality = any(strcmp(DoseEngines.matRad_ParticleMCsquareEngine.possibleRadiationModes, machine.meta.radiationMode));
 
                 preCheck = checkBasic && checkModality;
 
                 if ~preCheck
-                    return;
+                    return
                 end
             catch
                 msg = 'Your machine file is invalid and does not contain the basic field (meta/data/radiationMode)!';
-                return;
+                return
             end
 
-            %Check the binaries
+            % Check the binaries
             hasBinaries = DoseEngines.matRad_ParticleMCsquareEngine.checkBinaries();
 
             available = preCheck & hasBinaries;
         end
 
-        %Used to check against a machine file if a specific quantity can be
-        %computed.
+        % Used to check against a machine file if a specific quantity can be
+        % computed.
         function q = providedQuantities(machine)
-            %A dose engine will, by definition, return dose
-            q = {'physicalDose','LET'};
+            % A dose engine will, by definition, return dose
+            q = {'physicalDose', 'LET'};
         end
+
     end
 end
-

@@ -34,10 +34,10 @@ Dose influence data
 Based on the steering information, matRad can compute dose for individual photon bixels or particle ion pencil beams. The required geometric and radiological distances facilitate the same set of matRad functions.
 
 Dose Calculation algorithms
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Starting with Version 3.1.0, matRad switched to an object-oriented Dose Engine concept. The dose engines are stored :mod:`matRad.doseCalc.+DoseEngines`, and all dose calculation algorithms are implemented as subclasses of the abstract class :class:`DoseEngines.matRad_DoseEngineBase`. 
-These engines can be then used directly for configuration and dose calculation, or configured in ```pln.propDoseCalc`` to then be instantiated in the top-level functions :func:`matRad_calcDoseInfluence` or :func:`matRad_calcDoseForward` (see the page on the :ref:`pln-struct <pln>` for more details). 
+Starting with Version 3.1.0, matRad switched to an object-oriented Dose Engine concept. The dose engines are stored :mod:`matRad.doseCalc.+DoseEngines`, and all dose calculation algorithms are implemented as subclasses of the abstract class :class:`DoseEngines.matRad_DoseEngineBase`.
+These engines can be then used directly for configuration and dose calculation, or configured in ```pln.propDoseCalc`` to then be instantiated in the top-level functions :func:`matRad_calcDoseInfluence` or :func:`matRad_calcDoseForward` (see the page on the :ref:`pln-struct <pln>` for more details).
 
 .. code-block:: matlab
 
@@ -47,7 +47,7 @@ These engines can be then used directly for configuration and dose calculation, 
     dij = doseEngine.calcDoseInfluence(ct,cst,stf);
 
     % Example for a configuration in pln.propDoseCalc
-    pln.propDoseCalc.engine = 'SVDPB'; %The engine is equivalent to the DoseEngines "shortName" 
+    pln.propDoseCalc.engine = 'SVDPB'; %The engine is equivalent to the DoseEngines "shortName"
     pln.propDoseCalc.enableDijSampling = false; %Configure the property in pln.propDoseCalc
     dij = matRad_calcDoseInfluence(ct, cst, stf, pln);
 
@@ -57,30 +57,30 @@ Given a ``pln`` with set ``pln.radiationMode`` (and optionally ``pln.machine``),
 
 
 External Beam Therapy
-"""""""""""""""""""""
+~~~~~~~~~~~~~~~~~~~~~
 
-matRad supports dose calculation for photons and charged particles (protons, helium, carbon ions) in external beam therapy. 
+matRad supports dose calculation for photons and charged particles (protons, helium, carbon ions) in external beam therapy.
 
-matRad's standard algorithms are based on the pencil-beam model, which is a fast and efficient way to compute dose distributions in a patient CT. The pencil beam model assumes that the dose at a certain voxel can be computed as the product of a depth-dependent part and a lateral part, which are computed separately. The model uses a pencil-beam kernel of an infinitely narrow beam, which is convolved with the primary fluence to compute the dose distribution. The pencil beam model is a fast and efficient way to compute dose distributions in a patient CT, but it is not as accurate as Monte Carlo simulations. 
+matRad's standard algorithms are based on the pencil-beam model, which is a fast and efficient way to compute dose distributions in a patient CT. The pencil beam model assumes that the dose at a certain voxel can be computed as the product of a depth-dependent part and a lateral part, which are computed separately. The model uses a pencil-beam kernel of an infinitely narrow beam, which is convolved with the primary fluence to compute the dose distribution. The pencil beam model is a fast and efficient way to compute dose distributions in a patient CT, but it is not as accurate as Monte Carlo simulations.
 
 The class :class:`DoseEngines.matRad_PencilBeamEngineAbstract` implements the abstract base class for all pencil beam dose engines, providing functionality for iterating through the "rays and bixels, geometry computations for distances and transformations like rotations, as well as filling of the sparse dose influence matrix.
 
 Monte Carlo dose calculation algorithms subclass from :class:`DoseEngines.matRad_MonteCarloEngineAbstract`, which provides less functionality than the base class for pencil beam algorithms, since Monte Carlo algorithms are usually integrated as third-party libraries and thus need individual implementations anyway.
 
 Ray Tracing
-~~~~~~~~~~~
+^^^^^^^^^^^
 
 Especially for pencil-beam algorithms, but also for other things like spot placement, matRad implements a voxel raytracing algorithm in :func:`matRad_siddonRayTracer` according to `Siddon (1985) Medical Physics <http://www.ncbi.nlm.nih.gov/pubmed/4000088>`_. Dose calculation algorithms can use :func:`matRad_rayTracing` to perform a volumetric tracing to obtain an image of the water equivalent depth from a source,according to `Siggel (2012) Physica Medica <http://www.sciencedirect.com/science/article/pii/S1120179711001359>`_.
 
 Geometric distances from the lateral distances to the central ray are computed by standard matrix vector algebra in :meth:`DoseEngines.matRad_PencilBeamEngineAbstract.calcGeoDists`.
 
 Photons
-~~~~~~~
+^^^^^^^
 
 Dose Calculation Algorithm
 ##########################
 
-matRad's standard algorithm for photon dose calculation is a singular value decomposed pencil beam algorithm implemented according to `Bortfeld et al. (1993) Medical Physics <http://scitation.aip.org/content/aapm/journal/medphys/20/2/10.1118/1.597070>`_. It is implemented in :class:`DoseEngines.matRad_PhotonPencilBeamSVDEngine`. A more detailed description of the inner workings of the algorithm can also be found in the diploma thesis of Martin Siggel "Entwicklung einer schnellen Dosisberechnung auf Basis eines Pencil-Kernel Algorithmus für die Strahlentherapie mit Photonen" (Universität Heidelberg, 2008) which is available for download `here <https://raw.githubusercontent.com/wiki/e0404/matRad/resources/DiplomaMartinSiggel.pdf>`_.
+matRad's standard algorithm for photon dose calculation is a singular value decomposed pencil beam algorithm implemented according to `Bortfeld et al. (1993) Medical Physics <http://scitation.aip.org/content/aapm/journal/medphys/20/2/10.1118/1.597070>`_. It is implemented in :class:`DoseEngines.matRad_PhotonPencilBeamSVDEngine`. A more detailed description of the inner workings of the algorithm can also be found in the diploma thesis of Martin Siggel "Entwicklung einer schnellen Dosisberechnung auf Basis eines Pencil-Kernel Algorithmus für die Strahlentherapie mit Photonen" (Universität Heidelberg, 2008) which is available for download `here <https://raw.githubusercontent.com/wiki/e0404/matRad/resources/DiplomaMartinSiggel.pdf>`__.
 
 The dose delivered to a certain voxel *i* from bixel *j* is stored as dose influence matrix in the :ref:`dij struct <dij>` using MATLAB's built-in double precision sparse matrix format.
 
@@ -115,7 +115,7 @@ For the photon dose calculation, there are three main possibilities to speed up 
 3. You can reduce the radius around the central ray, around which dose is computed by adjusting the variable ``lateralCutOff`` in ``pln.propDoseCalc``. Currently this variable is already set to 50mm.
 
 Particles
-~~~~~~~~~
+^^^^^^^^^
 
 Dose calculation algorithm
 ##########################
@@ -134,7 +134,7 @@ matRad only models variations of α and β with depth in `matRad_calcLQParameter
 Base data
 #########
 
-The base data files `protons_Generic <https://github.com/e0404/matRad/blob/master/matRad/basedata/protons_Generic.mat>`_ and `carbon_Generic <https://github.com/e0404/matRad/blob/master/matRad/basedata/carbon_Generic.mat>`_ required for particle dose calculation include depth dose curves and tabulated lateral beam widths (as Gaussian sigmas) for a library of different energies. The proton base data has been computed based on an analytical approximation for the Bragg curve (`Bortfeld (1997) <http://www.ncbi.nlm.nih.gov/pubmed/9434986>`_) and Highland's approximation for multiple Coulomb scattering (`Gottschalk (1993) <http://www.sciencedirect.com/science/article/pii/0168583X9395944Z>`_). The carbon ion base data has been Monte Carlo simulated for an idealized beam line without monitoring devices. Besides this physical information, the carbon ion base data also includes α and β tables that have been computed based on LEM IV. Within the *.mat files, the depth is stored in [mm], α tables are stored in [1/Gy], β tables are stored in [1/Gy^2], and the integrated depth dose distribution is stored in [MeV cm^2 /(g * primary)]. Upon dose calculation, the integrated depth dose is converted to [Gy mm^2 /(1e6 primaries)] with a linear scaling in the function `matRad_calcParticleDoseBixel.m <https://github.com/e0404/matRad/blob/master/matRad_calcParticleDoseBixel.m>`_. Given that the lateral components of the dose calculation have the unit [1/mm^2], the weight of the pencil beams in matRad directly corresponds to the number of particles in [1e6] while the dose is given in [Gy].
+The base data files `protons_Generic <https://github.com/e0404/matRad/blob/master/matRad/basedata/protons_Generic.mat>`_ and `carbon_Generic <https://github.com/e0404/matRad/blob/master/matRad/basedata/carbon_Generic.mat>`_ required for particle dose calculation include depth dose curves and tabulated lateral beam widths (as Gaussian sigmas) for a library of different energies. The proton base data has been computed based on an analytical approximation for the Bragg curve (`Bortfeld (1997) <http://www.ncbi.nlm.nih.gov/pubmed/9434986>`_) and Highland's approximation for multiple Coulomb scattering (`Gottschalk (1993) <http://www.sciencedirect.com/science/article/pii/0168583X9395944Z>`_). The carbon ion base data has been Monte Carlo simulated for an idealized beam line without monitoring devices. Besides this physical information, the carbon ion base data also includes α and β tables that have been computed based on LEM IV. Within the \*.mat files, the depth is stored in [mm], α tables are stored in [1/Gy], β tables are stored in [1/Gy^2], and the integrated depth dose distribution is stored in [MeV cm^2 /(g \* primary)]. Upon dose calculation, the integrated depth dose is converted to [Gy mm^2 /(1e6 primaries)] with a linear scaling in the function `matRad_calcParticleDoseBixel.m <https://github.com/e0404/matRad/blob/master/matRad_calcParticleDoseBixel.m>`_. Given that the lateral components of the dose calculation have the unit [1/mm^2], the weight of the pencil beams in matRad directly corresponds to the number of particles in [1e6] while the dose is given in [Gy].
 
 More detailed information on the structure of a particle base data file is given :ref:`here <basedata_particles>`!
 
@@ -149,5 +149,5 @@ Computational bottlenecks
 For the particle dose calculation, there are three main possibilities to speed up computations and reduce memory consumption.
 
 1. It is possible to reduce the spatial resolution of the dose calculation in the patient CT by downsampling the CT data upon import. If you do this as a post-processing step, be aware you need to adjust the binary segmentations in the cst cell array accordingly.
-2. You can increase the variable ``pln.propStf.bixelWidth`` in the :scpt:`matRad script <matRad.m>`_ which effectively reduces the number of pencil beams which have to be computed approximately quadratically.
+2. You can increase the variable ``pln.propStf.bixelWidth`` in the :scpt:`matRad script <matRad.m>` which effectively reduces the number of pencil beams which have to be computed approximately quadratically.
 3. You can reduce the radius around the central ray where dose is computed by adjusting the :attr:`DoseEngines.matRad_PencilBeamEngineAbstract.dosimetricLateralCutOff` property.

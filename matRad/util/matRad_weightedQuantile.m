@@ -1,10 +1,10 @@
 function wQ = matRad_weightedQuantile(values, percentiles, weight, isSorted, extraPolMethod)
 % matRad uncertainty analysis report generaator function
 % 
-% call
+% call:
 %   matRad_weightedQuantile(values, percentiles, weight, isSorted, extraPol)
 %
-% input
+% input:
 %   values:             random variable vector
 %   percentiles:        percentiles to be calculated
 %   weight:             (optional) weight vector (same length as values)

@@ -2,18 +2,18 @@ function y = matRad_interp1(xi,yi,x,extrapolation)
 % interpolates 1-D data (table lookup) and utilizes griddedInterpolant
 % if availabe in the used MATLAB version
 %
-% call
+% call:
 %   y = matRad_interp1(xi,yi,x)
 %   y = matRad_interp1(xi,yi,x,extrapolation)
 %
-% input
+% input:
 %   xi:             sample points
 %   yi:             corresponding data to sample points
 %   x:              query points for interpolation
 %   extrapolation:  (optional) strategy for extrapolation. Similar to
 %                   interp1. NaN is the default extrapolation value
 %
-% output
+% output:
 %   y:              interpolated data
 %
 % Note that all input data has to be given as column vectors for a correct
@@ -96,12 +96,17 @@ elseif isGriddedInterpolantAvailable
 
     if size(yi,2) > 1
 		% interpolation for multiple 1-D datasets
-        samplePoints = {xi, 1:size(yi,2)};
-        queryPoints  = {x,  1:size(yi,2)};
+        samplePoints = {xi, cast(1:size(yi,2),class(xi))};
+        queryPoints  = {x,   cast(1:size(yi,2),class(x))};
     else
 		% interpolation for a single 1-D dataset
         samplePoints = {xi};
         queryPoints  = {x};
+    end
+
+    if isgpuarray(x)
+        samplePoints = cellfun(@gpuArray,samplePoints,'UniformOutput',false);
+        yi = gpuArray(yi);
     end
 
     F = griddedInterpolant(samplePoints,yi,'linear',extrapmethod);

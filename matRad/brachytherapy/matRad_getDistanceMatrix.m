@@ -2,16 +2,16 @@ function [DistanceMatrix,DistanceVector] = matRad_getDistanceMatrix(seedPoints,d
 % matRad_getDistanceMatrix gets (seedpoint x dosepoint) matrix of relative
 % distances
 %
-% call
+% call:
 %   [DistanceMatrix,DistanceVector] = getDistanceMatrix(seedPoints,...
 %       dosePoints)
 %   normally called within matRad_getBrachyDose
 %
-% input
+% input:
 %   seedPoints:     struct with fields x,y,z
 %   dosePoints:     struct with fields x,y,z
 %
-% output
+% output:
 %   distance matrix:    rows: index of dosepoint 
 %                       columns: index of deedpoint
 %                       entry: distance of seedpoints and dosepoint in mm

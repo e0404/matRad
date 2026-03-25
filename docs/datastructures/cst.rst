@@ -9,6 +9,7 @@ The constraints of all defined volumes of interest (VOIs) are stored inside the 
 .. _cst-cell:
 
 Screenshot of the cst-cell:
+
 .. image:: /images/cstCellScreenshot.png
     :alt: Screenshot of the cst cell
 
@@ -127,6 +128,6 @@ In the earlier version, matRad stored the objectives and constraints defined for
 Default *cst*-values
 --------------------
 
-The patient data contained within matRad (*ALDERSON, BOXPHANTOM, HEAD_AND_NECK, LIVER, PROSTATE and TG119*) have default values defined within the *cst*-cell. 
- 
+The patient data contained within matRad (*ALDERSON, BOXPHANTOM, HEAD_AND_NECK, LIVER, PROSTATE and TG119*) have default values defined within the *cst*-cell.
+
 These values are chosen to produce a reasonable treatment plan, when using coplanar and equidistant photon beams. They can be used as a reference point for more sophisticated treatment plans.
