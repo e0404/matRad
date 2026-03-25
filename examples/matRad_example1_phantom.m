@@ -2,7 +2,7 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2023 the matRad development team. 
+% Copyright 2023-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -107,8 +107,7 @@ pln.numOfFractions        = 30;
 pln.propStf.gantryAngles  = [0:70:355];
 pln.propStf.couchAngles   = zeros(size(pln.propStf.gantryAngles));
 pln.propStf.bixelWidth    = 5;
-pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
-pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+pln.propStf.isoCenter     = matRad_getIsoCenter(cst,ct,0);
 
 % Settings for Optimization
 pln.propOpt.runDAO        = 0;

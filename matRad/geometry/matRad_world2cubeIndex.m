@@ -1,22 +1,23 @@
 function indices = matRad_world2cubeIndex(wCoord, gridStruct,allowOutside)
 % matRad function to convert world coordinates to cube indices
 % 
-% call
+% call:
 %   coord = world2cubeCoords(wCoord, ct)
 %
-%
+% input:
 %   wCoord:         world coordinates array Nx3 (x,y,z) [mm]
 %   gridStruct:     can be matRad ct, dij.doseGrid, or the ctGrid
 %                   required fields x,y,x,dimensions,resolution
 %   allowOutside:   If coordinates outside are allowed. False default.
 %
+% output:
 %   index:          cube index (i,j,k) honoring Matlab permuatation of i,j
 % References
 %   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2024 the matRad development team. 
+% Copyright 2024-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

@@ -1,5 +1,4 @@
 classdef matRad_MCemittanceBaseData
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % matRad_MCemmitanceBaseData This is the superclass for MonteCarlo base
     % data calculation
     %
@@ -11,7 +10,7 @@ classdef matRad_MCemittanceBaseData
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
-    % Copyright 2020 the matRad development team.
+    % Copyright 2020-2026 the matRad development team.
     %
     % This file is part of the matRad project. It is subject to the license
     % terms in the LICENSE file found in the top-level directory of this
@@ -613,7 +612,7 @@ classdef matRad_MCemittanceBaseData
         end
     end
     
-    methods (Access = protected)
+    methods
         function obj = getRangeShiftersFromStf(obj,stf)
             allRays = [stf.ray];
             raShis = [allRays.rangeShifter];

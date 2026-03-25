@@ -1,14 +1,15 @@
-function [allMatch, msg] = matRad_compareDijStf(dij,stf)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [allMatch, msg] = matRad_compareDijStf(dij, stf)
+% matRad_compareDijStf compares the matRad dij struct with the matRad
+% stf struct to check for consistency.
 %
-% call
-%   matching = matRad_comparePlnDijStf(pln,stf,dij)
+% call:
+%   matching = matRad_compareDijStf(stf,dij)
 %
-% input
+% input:
 %   dij:                        matRad dij struct
 %   stf:                        matRad steering information struct
 %
-% output
+% output:
 %
 %   allMatch:                   flag is true if they all match
 %   matching:                   message to display
@@ -16,7 +17,7 @@ function [allMatch, msg] = matRad_compareDijStf(dij,stf)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2019 the matRad development team.
+% Copyright 2019-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
@@ -25,23 +26,23 @@ function [allMatch, msg] = matRad_compareDijStf(dij,stf)
 % propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-allMatch=true;
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+allMatch = true;
 msg = [];
 
-    %% compare number of rays per beam in dij and stf
-    stf_RaysPerBeam=[stf.numOfRays];
-    if numel(stf_RaysPerBeam) ~= numel(dij.numOfRaysPerBeam) ... % different size
-            || ~isempty(find(stf_RaysPerBeam-dij.numOfRaysPerBeam,1)) % different values
-        msg= 'Number of rays do not match';
-        allMatch=false;
-        return
-    end
-    stf_gantryAngles=[stf.gantryAngle];
-    if dij.numOfBeams ~= numel(stf_gantryAngles)
-        msg= 'Number of beams do not match';
-        allMatch=false;
-        return
-    end
+%% compare number of rays per beam in dij and stf
+stf_RaysPerBeam = [stf.numOfRays];
+if numel(stf_RaysPerBeam) ~= numel(dij.numOfRaysPerBeam) || ... % different size
+    ~isempty(find(stf_RaysPerBeam - dij.numOfRaysPerBeam, 1)) % different values
+    msg = 'Number of rays do not match';
+    allMatch = false;
+    return
+end
+stf_gantryAngles = [stf.gantryAngle];
+if dij.numOfBeams ~= numel(stf_gantryAngles)
+    msg = 'Number of beams do not match';
+    allMatch = false;
+    return
+end
 
 end

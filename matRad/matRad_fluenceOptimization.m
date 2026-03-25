@@ -1,17 +1,17 @@
 function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
 % matRad inverse planning wrapper function
 %
-% call
+% call:
 %   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
 %   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
 %
-% input
+% input:
 %   dij:        matRad dij struct
 %   cst:        matRad cst struct
 %   pln:        matRad pln struct
 %   wInit:      (optional) custom weights to initialize problems
 %
-% output
+% output:
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
 %               biological optimization) RBE-weighted dose etc.
 %   optimizer:  Used Optimizer Object
@@ -21,7 +21,7 @@ function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2016 the matRad development team.
+% Copyright 2016-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
@@ -33,6 +33,24 @@ function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 matRad_cfg = MatRad_Config.instance();
+
+if isfield(pln, 'propOpt') && isfield(pln.propOpt, 'enableGPU')
+    enableGPU = pln.propOpt.enableGPU;
+else
+    enableGPU = matRad_cfg.defaults.propOpt.enableGPU;
+end
+
+if enableGPU
+    try
+        d = gpuDevice;
+        cst = matRad_moveCstToGPU(cst);
+        dij = matRad_moveDijToGPU(dij);
+        matRad_cfg.dispInfo('Running optimization on the GPU (as far as possible). Selected device: %s\n', d.Name);
+    catch ME
+        matRad_cfg.dispWarning('Failed to prepae GPU-based optimization, reverting to CPU. Reason: %s\n', ME.message);
+        enableGPU = false;
+    end
+end
 
 % consider VOI priorities
 cst  = matRad_setOverlapPriorities(cst);
@@ -378,14 +396,25 @@ end
 if ~isfield(pln.propOpt,'optimizer')
     %While the default optimizer is IPOPT, we can try to fallback to
     %fmincon in case it does not work for some reason
-    if ~matRad_OptimizerIPOPT.IsAvailable()
+    if ~matRad_OptimizerIPOPT.isAvailable()
         pln.propOpt.optimizer = 'fmincon';
     else
         pln.propOpt.optimizer = 'IPOPT';
     end    
 end
 
-switch pln.propOpt.optimizer
+if isstring(pln.propOpt.optimizer) || ischar(pln.propOpt.optimizer)
+    pln.propOpt.optimizer = struct('name',pln.propOpt.optimizer);
+end    
+
+if isstruct(pln.propOpt.optimizer) && isfield(pln.propOpt.optimizer,'name')
+    optimizerName = char(pln.propOpt.optimizer.name);
+    optimizerOptions = rmfield(pln.propOpt.optimizer,'name');
+else
+    matRad_cfg.dispError('Could not identify optimizer! Please provide a valid optimizer name or optimizer struct with field ''name''!');
+end
+
+switch optimizerName
     case 'IPOPT'
         optimizer = matRad_OptimizerIPOPT;
     case 'fmincon'
@@ -393,12 +422,14 @@ switch pln.propOpt.optimizer
     case 'simulannealbnd'
         optimizer = matRad_OptimizerSimulannealbnd;
     otherwise
-        warning(['Optimizer ''' pln.propOpt.optimizer ''' not known! Fallback to IPOPT!']);
+        warning(['Optimizer ''' optimizerName ''' not known! Fallback to IPOPT!']);
         optimizer = matRad_OptimizerIPOPT;
 end
 
-if ~optimizer.IsAvailable()
-    matRad_cfg.dispError(['Optimizer ''' pln.propOpt.optimizer ''' not available!']);
+matRad_assignPropertiesFromStruct(optimizer,optimizerOptions);
+
+if ~optimizer.isAvailable()
+    matRad_cfg.dispError(['Optimizer ''' optimizerName ''' not available!']);
 end
 
 optimizer = optimizer.optimize(wInit,optiProb,dij,cst);

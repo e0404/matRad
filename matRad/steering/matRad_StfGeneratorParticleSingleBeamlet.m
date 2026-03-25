@@ -4,7 +4,7 @@ classdef matRad_StfGeneratorParticleSingleBeamlet < matRad_StfGeneratorParticleR
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2024 the matRad development team.
+% Copyright 2024-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
@@ -18,6 +18,7 @@ classdef matRad_StfGeneratorParticleSingleBeamlet < matRad_StfGeneratorParticleR
     properties 
         energy;
         raShiThickness = 50; %Range shifter to be used if useRangeShifter = true;
+        visualize = false;
     end
 
     properties (Constant)
@@ -50,12 +51,12 @@ classdef matRad_StfGeneratorParticleSingleBeamlet < matRad_StfGeneratorParticleR
             matRad_cfg = MatRad_Config.instance();
 
             if isempty(this.isoCenter)
-                this.isoCenter = matRad_getIsoCenter(this.cst,this.ct,visBool);
+                this.isoCenter = matRad_getIsoCenter(this.cst,this.ct,this.visualize);
             end
 
-            if ~isequal(size(this.isoCenter),[this.numOfBeams,3]) && ~size(this.isoCenter,1) ~= 1
+            if ~isequal(size(this.isoCenter),[this.numOfBeams,3]) && size(this.isoCenter,1) ~= 1
                 matRad_cfg.dispWarning('IsoCenter invalid, creating new one automatically!');
-                this.isoCenter = matRad_getIsoCenter(this.cst,this.ct,visBool);
+                this.isoCenter = matRad_getIsoCenter(this.cst,this.ct,this.visualize);
             end
             
             if size(this.isoCenter,1) == 1          
@@ -113,14 +114,19 @@ classdef matRad_StfGeneratorParticleSingleBeamlet < matRad_StfGeneratorParticleR
         end
 
         function beam = setBeamletEnergies(this,beam)
-            isoCenterCubeSystem = matRad_world2cubeCoords(beam.isoCenter,this.ct);
+            matRad_cfg = MatRad_Config.instance();
 
+            %isoCenterCubeSystem = matRad_world2cubeCoords(beam.isoCenter,this.ct);
+            
             % ray tracing necessary to determine depth of the target
-            [alphas,l,rho,d12,~] = matRad_siddonRayTracer(isoCenterCubeSystem, ...
-                this.ct.resolution, ...
-                beam.sourcePoint, ...
-                beam.ray.targetPoint, ...
-                [{this.ct.cube{1}} {this.voiTarget}]);
+            % [alphas,l,rho,d12,~] = matRad_siddonRayTracer(isoCenterCubeSystem, ...
+            %     this.ct.resolution, ...
+            %     beam.sourcePoint, ...
+            %     beam.ray.targetPoint, ...
+            %     [{this.ct.cube{1}} {this.voiTarget}]);
+
+            rayTracer = matRad_RayTracerSiddon({this.ct.cube{1} this.voiTarget},this.ct);
+            [alphas,l,rho,d12] = rayTracer.traceRay(beam.isoCenter,beam.sourcePoint,beam.ray.targetPoint);
 
             if isempty(alphas)
                 matRad_cfg.dispError('Beam seems to not hit the CT! Check Isocenter placement!');
@@ -197,7 +203,10 @@ classdef matRad_StfGeneratorParticleSingleBeamlet < matRad_StfGeneratorParticleR
             
                 %Place range shifter 2 times the range away from isocenter, but
                 %at least 10 cm
-                sourceRaShi = round(ctEntryPoint - 2*this.raShiThickness,-1); %place a little away from entry, round to cms to reduce number of unique settings;
+
+                roundToDigit = @(x,n) round(x * 10^n)/10^n;
+
+                sourceRaShi = roundToDigit((ctEntryPoint - 2*this.raShiThickness),-1); %place a little away from entry, round to cms to reduce number of unique settings;
                 beam.ray.rangeShifter.sourceRashiDistance = sourceRaShi;
             else
                 beam.ray.rangeShifter.ID = 0;

@@ -1,10 +1,10 @@
 function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
 % matRad photon dose calculation wrapper
 % 
-% call
+% call:
 %   dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
 %
-% input
+% input:
 %   ct:             ct cube
 %   stf:            matRad steering information struct
 %   pln:            matRad plan meta information struct
@@ -13,7 +13,7 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
 %                   computation and directly calculate dose; only makes
 %                   sense in combination with matRad_calcDoseDirect.m
 %
-% output
+% output:
 %   dij:            matRad dij struct
 %
 % References
@@ -21,7 +21,7 @@ function dij = matRad_calcPhotonDose(ct,stf,pln,cst,calcDoseDirect)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

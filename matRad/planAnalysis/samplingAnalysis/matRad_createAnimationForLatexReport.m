@@ -1,11 +1,11 @@
 function matRad_createAnimationForLatexReport(confidenceValue, ct, cst, slice, meanCube, mRealizations, scenProb, subIx, outpath, legendColorbar,varargin)
 % matRad function to create figures for a GIF animation
 % 
-% call
+% call:
 %   matRad_createAnimationForLatexReport(confidenceValue, ct, cst, slice, ...
 %           meanCube, mRealizations, scenProb, subIx, outpath, legendColorbar)
 %
-% input
+% input:
 %   confidenceValue confidence used for visualization        
 %   ct              matRad ct struct
 %   cst             matRad cst struct
@@ -24,14 +24,14 @@ function matRad_createAnimationForLatexReport(confidenceValue, ct, cst, slice, m
 %   Period          total period [s] for the animation (default 5)
 %   FilePrefix      default 'anim'
 %
-% output
+% output:
 %
 % References
 %
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2017 the matRad development team. 
+% Copyright 2017-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

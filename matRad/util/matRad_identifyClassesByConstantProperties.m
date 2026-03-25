@@ -1,41 +1,31 @@
 function [classList] = matRad_identifyClassesByConstantProperties(metaClasses,primaryPropertyName,varargin)
-% matRad_identifyClassesByProperty: Helper function to identify classes by
-% property
+% matRad_identifyClassesByProperty: Helper function to identify classes by property
 %   This method identifies classes based on a primary property and optional
 %   additional properties.
 %
 % call:
-%   classList = matRad_identifyClassesByProperty(metaClasses,
-%   primaryPropertyName) classList =
-%       matRad_identifyClassesByProperty(metaClasses, primaryPropertyName,
-%       'defaults', {defaultClasses})
-%   classList =
-%       matRad_identifyClassesByProperty(metaClasses, primaryPropertyName,
-%       'additionalPropertyNames', {additionalProperties})
+%   classList = matRad_identifyClassesByProperty(metaClasses, primaryPropertyName)
+%   classList = matRad_identifyClassesByProperty(metaClasses, primaryPropertyName, 'defaults', {defaultClasses})
+%   classList = matRad_identifyClassesByProperty(metaClasses, primaryPropertyName, 'additionalPropertyNames', {additionalProperties})
 %
-% inputs:
-%   - metaClasses: A cell array of meta.class objects representing the
-%     classes to be identified. 
-%   - primaryPropertyName: The name of the primary property used for 
-%     identification.
+% input:
+%   metaClasses:            A cell array of meta.class objects representing the classes to be identified.
+%   primaryPropertyName:    The name of the primary property used for identification.
 %
 % optional Parameter Inputs:
-%   - defaults: A cell array of default classes that should be listed
-%     first. 
-%   - additionalPropertyNames: A cell array of additional property names
-%     used for identification.
+%   defaults:                   A cell array of default classes that should be listed first.
+%   additionalPropertyNames:    A cell array of additional property names used for identification.
 %
 % outputs:
-%   - classList: A structure array containing the identified classes.
-%       - primaryPropertyName: The values of the primary property for each
-%       class. - additionalPropertyNames: The values of the additional
-%       properties for each class. - className: The names of the identified
-%       classes. - handle: The constructor handles of the identified
-%       classes.
+%   classList: A structure array containing the identified classes with fields:
+%       - primaryPropertyName: The values of the primary property for each class.
+%       - additionalPropertyNames: The values of the additional properties for each class.
+%       - className: The names of the identified classes.
+%       - handle: The constructor handles of the identified classes.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2024 the matRad development team.
+% Copyright 2024-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this

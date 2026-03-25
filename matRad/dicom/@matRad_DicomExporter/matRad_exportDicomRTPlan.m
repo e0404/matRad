@@ -7,7 +7,7 @@ function obj = matRad_exportDicomRTPlan(obj)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team.
+% Copyright 2015-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
@@ -120,11 +120,6 @@ meta.ReferencedStructureSetSequence.Item_1.ReferencedSOPInstanceUID = obj.rtssMe
 %meta.DoseReferenceSquence.Item_1. ...
 
 
-if obj.pln.propStf.numOfBeams ~= numel(obj.stf)
-    matRad_cfg.error('Inconsistency in stf! number of beams not matching!');
-end
-
-
 %Sequences
 %Sequences
 %ToleranceTableSequence - Optional, we do not write this
@@ -133,7 +128,7 @@ end
 %  meta.FractionGroupSequence.Item_1.
 meta.FractionGroupSequence.Item_1.FractionGroupNumber =  1;
 meta.FractionGroupSequence.Item_1.NumberOfFractionsPlanned =  obj.pln.numOfFractions;
-meta.FractionGroupSequence.Item_1.NumberOfBeams = obj.pln.propStf.numOfBeams;
+meta.FractionGroupSequence.Item_1.NumberOfBeams = numel(obj.stf);
 meta.FractionGroupSequence.Item_1.NumberOfBrachyApplicationSetups = 0;
 % meta.FractionGroupSequence.Item_1.BeamDoseMeaning = 'FRACTION_LEVEL'; %TODO: This is probably no longer necessary.
 
@@ -152,7 +147,7 @@ if ~isempty(refDoseSeq)
 end
 
 
-for iBeam = 1:obj.pln.propStf.numOfBeams
+for iBeam = 1:numel(obj.stf)
     matRad_cfg.dispInfo('\tBeam %d: ',iBeam);
     
     %PatientSetupSequence - Required
@@ -165,7 +160,7 @@ for iBeam = 1:obj.pln.propStf.numOfBeams
     if strcmp(obj.pln.radiationMode,'photons')
         BeamParam = 'BeamSequence';
         ControlParam = 'ControlPointSequence';
-    elseif strcmp(obj.pln.radiationmode, 'protons') ||strcmp(obj.pln.radiationmode, 'helium') || strcmp(obj.pln.radiationmode, 'carbon')
+    elseif strcmp(obj.pln.radiationMode, 'protons') ||strcmp(obj.pln.radiationMode, 'helium') || strcmp(obj.pln.radiationMode, 'carbon')
         BeamParam = 'IonBeamSequence';
         ControlParam = 'IonControlPointSequence';
     else

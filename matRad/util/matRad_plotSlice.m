@@ -2,7 +2,7 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSlice(ct, varargin)
 % matRad tool function to directly plot a complete slice of a ct with dose
 % optionally including contours and isolines
 %
-% call
+% call:
 % [] = matRad_plotSlice(ct, dose, varargin)
 %
 % input (required)
@@ -21,9 +21,7 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSlice(ct, varargin)
 %   doseColorMap    colormap for the dose
 %   doseWindow      dose value window
 %   doseIsoLevels   levels defining the isodose contours
-%   voiSelection    logicals defining the current selection of contours
-%                   that should be plotted. Can be set to [] to plot
-%                   all non-ignored contours.
+%   voiSelection    logicals defining the current selection of contours that should be plotted. Can be set to [] to plot all non-ignored contours.
 %   colorBarLabel   string defining the yLabel of the colorBar
 %   boolPlotLegend  boolean if legend should be plottet or not
 %   showCt          boolean if CT slice should be displayed or not
@@ -34,7 +32,7 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSlice(ct, varargin)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2025 the matRad development team.
+% Copyright 2025-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
@@ -51,10 +49,12 @@ defaultSlice            = floor(min(ct.cubeDim)./2);
 defaultAxesHandle       = [];
 defaultCubeIdx          = 1;
 defaultPlane            = 1;
+defaultCtWindow         = [];
 defaultDoseWindow       = [];
 defaultThresh           = [];
 defaultAlpha            = [];
-defaultDoseColorMap     = jet;
+defaultCtColorMap       = bone(128);
+defaultDoseColorMap     = jet(128);
 defaultDoseIsoLevels    = [];
 defaultVOIselection     = [];
 defaultContourColorMap  = [];
@@ -68,10 +68,10 @@ isSlice             = @(x) x>=1 && x<=max(ct.cubeDim) && floor(x)==x;
 isAxes              = @(x) strcmp(get(x, 'type'), 'axes') || isempty(x);
 isCubeIdx           = @(x) isscalar(x);
 isPlane             = @(x) isscalar(x) && (sum(x==[1, 2, 3])==1);
-isDoseWindow        = @(x) (length(x) == 2 && isvector(x) && diff(x) > 0);
+isImageWindow        = @(x) (length(x) == 2 && isvector(x) && diff(x) > 0);
 isThresh            = @(x) (isscalar(x) && (x>=0) && (x<=1)) || isempty(x);
 isAlpha             = @(x) isscalar(x) && (x>=0) && (x<=1) || isempty(x);
-isDoseColorMap      = @(x) (isnumeric(x) && (size(x, 2)==3) &&  all(x(:) >= 0) && all(x(:) <= 1)) || isempty(x);
+isColorMap      = @(x) (isnumeric(x) && (size(x, 2)==3) &&  all(x(:) >= 0) && all(x(:) <= 1)) || isempty(x);
 isDoseIsoLevels     = @(x) isnumeric(x) && isvector(x)|| isempty(x);
 isVOIselection      = @(x) isnumeric(x) || isempty(x); %all(x(:)==1 | x(:)==0) || isempty(x);
 isContourColorMap   = @(x) (isnumeric(x) && (size(x, 2)==3) && size(x, 1)>=2 && all(x(:) >= 0) && all(x(:) <= 1)) || isempty(x);
@@ -91,10 +91,12 @@ addParameter(p, 'slice', defaultSlice, isSlice);
 addParameter(p, 'axesHandle', defaultAxesHandle, isAxes);
 addParameter(p, 'cubeIdx', defaultCubeIdx, isCubeIdx);
 addParameter(p, 'plane', defaultPlane, isPlane);
-addParameter(p, 'doseWindow', defaultDoseWindow, isDoseWindow);
+addParameter(p, 'ctWindow', defaultCtWindow, isImageWindow);
+addParameter(p, 'ctColorMap', defaultCtColorMap, isColorMap)
+addParameter(p, 'doseWindow', defaultDoseWindow, isImageWindow);
 addParameter(p, 'thresh', defaultThresh, isThresh);
 addParameter(p, 'alpha', defaultAlpha, isAlpha);
-addParameter(p, 'doseColorMap', defaultDoseColorMap, isDoseColorMap);
+addParameter(p, 'doseColorMap', defaultDoseColorMap, isColorMap);
 addParameter(p, 'doseIsoLevels', defaultDoseIsoLevels, isDoseIsoLevels);
 addParameter(p, 'voiSelection', defaultVOIselection, isVOIselection);
 addParameter(p, 'contourColorMap', defaultContourColorMap, isContourColorMap);
@@ -150,7 +152,7 @@ set(axesHandle,'XTick',[],'YTick',[]);
 set(axesHandle,'YDir','Reverse');
 % plot ct slice
 if p.Results.showCt
-    hCt = matRad_plotCtSlice(axesHandle,p.Results.ct.cubeHU,p.Results.cubeIdx,p.Results.plane,p.Results.slice, [], []);
+    hCt = matRad_plotCtSlice(axesHandle,p.Results.ct.cubeHU,p.Results.cubeIdx,p.Results.plane,p.Results.slice, p.Results.ctColorMap, p.Results.ctWindow);
 end
 axis(axesHandle, 'off');
 

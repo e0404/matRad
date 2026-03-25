@@ -2,11 +2,10 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
 % matRad_ParticlePencilBeamEngineAbstractFineSampling: 
 %   Implements an engine for particle based dose calculation 
 %   For detailed information see superclass matRad_DoseEngine
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2022 the matRad development team. 
+% Copyright 2022-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -34,10 +33,10 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
         function this = matRad_ParticleFineSamplingPencilBeamEngine(pln)
             % Constructor
             %
-            % call
+            % call:
             %   engine = DoseEngines.matRad_ParticleAnalyticalPencilBeamDoseEngine(ct,stf,pln,cst)
             %
-            % input
+            % input:
             %   pln:                        matRad plan meta information struct
              
             if nargin < 1
@@ -149,17 +148,17 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
             % Method for initializing the beams for analytical pencil beam
             % dose calculation
             %
-            % call
+            % call:
             %   this.initBeam(dij,ct,cst,stf,i)
             %
-            % input
+            % input:
             %   dij:                        matRad dij struct
             %   ct:                         matRad ct struct
             %   cst:                        matRad cst struct
             %   stf:                        matRad steering information struct
             %   i:                          index of beam
             %
-            % output
+            % output:
             %   dij:                        updated dij struct
 
             if ~this.keepRadDepthCubes
@@ -287,14 +286,14 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
             % This function creates a Gaussian Mixture Model on a Gaussian
             % for Fine-Sampling
             %
-            % call
+            % call:
             %   [finalWeight, sigmaBeamlet, posX, posY, numOfSub] = ...
             %                       this.calcFineSamplingMixture(sigmaTot)
             %
-            % input
+            % input:
             %   sigmaTot:       the standard deviation of the lateral spread of the pencil
             %                   beam
-            % output
+            % output:
             %   finalWeight:    is the array of the weights of the sub-pencil beams. It
             %                   runs over the same index as posx and posy
             %

@@ -4,7 +4,7 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2024 the matRad development team.
+% Copyright 2024-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
@@ -32,6 +32,7 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
         bioModel;                   %Biological Model
         radiationMode;              %Radiation Mode
         machine;                    %Machine
+        enableGPU = false;          %Enable computation on the GPU (experimenta, default false)
     end
 
     properties (Access = protected)
@@ -155,8 +156,6 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
                 plnStruct = struct();
             end
 
-            fields = fieldnames(plnStruct);
-
             %Set up warning message
             if warnWhenPropertyChanged
                 warningMsg = 'Property in stf generator overwritten from pln.propStf';
@@ -164,41 +163,8 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
                 warningMsg = '';
             end
 
-            % iterate over all fieldnames and try to set the
-            % corresponding properties inside the stf generator
-            if matRad_cfg.isOctave
-                c2sWarningState = warning('off','Octave:classdef-to-struct');
-            end
+            matRad_assignPropertiesFromStruct(this,plnStruct,true,warningMsg);
 
-            for i = 1:length(fields)
-                try
-                    field = fields{i};
-                    if matRad_ispropCompat(this,field)
-                        this.(field) = matRad_recursiveFieldAssignment(this.(field),plnStruct.(field),true,warningMsg);
-                    else
-                        matRad_cfg.dispWarning('Not able to assign property ''%s'' from pln.propStf to stf generator!',field);
-                    end
-                catch ME
-                    % catch exceptions when the stf generator has no
-                    % properties which are defined in the struct.
-                    % When defining an engine with custom setter and getter
-                    % methods, custom exceptions can be caught here. Be
-                    % careful with Octave exceptions!
-                    if ~isempty(warningMsg)
-                        matRad_cfg = MatRad_Config.instance();
-                        switch ME.identifier
-                            case 'MATLAB:noPublicFieldForClass'
-                                matRad_cfg.dispWarning('Not able to assign property from pln.propStf to stf generator: %s',ME.message);
-                            otherwise
-                                matRad_cfg.dispWarning('Problem while setting up stf generator from struct:%s %s',field,ME.message);
-                        end
-                    end
-                end
-            end
-
-            if matRad_cfg.isOctave
-                warning(c2sWarningState.state,'Octave:classdef-to-struct');
-            end
         end
     end
 
@@ -214,9 +180,14 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
             % Instance of MatRad_Config class
             matRad_cfg = MatRad_Config.instance();
             matRad_cfg.dispInfo('matRad: Generating stf struct with generator ''%s''... ',this.name);
-
-            this.ct = ct;
-            this.cst = cst;
+            
+            if this.enableGPU
+                this.ct = matRad_moveCtToGPU(ct);
+                this.cst = matRad_moveCstToGPU(cst);
+            else
+                this.ct = ct;
+                this.cst = cst;
+            end
 
             this.initialize();
             this.createPatientGeometry();
@@ -409,7 +380,7 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
         function classList = getAvailableGenerators(pln,optionalPaths)
             % Returns a list of names and coresponding handle for stf
             % generators. Returns all stf generators when no arg is
-            %   given. If no generators are found return gonna be empty.
+            % given. If no generators are found return gonna be empty.
             %
             % call:
             %   classList = matRad_StfGeneratorBase.getAvailableGenerators(pln,optional_path)
@@ -510,14 +481,16 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
         function [available,msg] = isAvailable(pln,machine)
             % return a boolean if the generator is is available for the given pln
             % struct. Needs to be implemented in non abstract subclasses
+            %
             % input:
-            % - pln:        matRad pln struct
-            % - machine:    optional machine to avoid loading the machine from
+            %   pln:        matRad pln struct
+            %   machine:    optional machine to avoid loading the machine from
             %               disk (makes sense to use if machine already loaded)
+            %
             % output:
-            % - available:  boolean value to check if the dose engine is
+            %   available:  boolean value to check if the dose engine is
             %               available for the given pln/machine
-            % - msg:        msg to elaborate on availability. If not available,
+            %   msg:        msg to elaborate on availability. If not available,
             %               a msg string indicates an error during the check
             %               if available, indicates a warning that not all
             %               information was present in the machine file and

@@ -1,4 +1,4 @@
-function test_suite = test_matRad_compareDijStf
+function test_suite = test_compareDijStf
 test_functions=localfunctions();
 
 initTestSuite;

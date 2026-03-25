@@ -5,14 +5,14 @@ function updatedInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVect)
 % vector w is computed and a vector listing the correspondence between leaf 
 % tips and bixel indices for gradient calculation
 %
-% call
+% call:
 %   updatedInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVect)
 %
-% input
+% input:
 %   apertureInfo:     aperture shape info struct
 %   apertureInfoVect: aperture weights and shapes parameterized as vector
 %
-% output
+% output:
 %   updatedInfo: updated aperture shape info struct according to apertureInfoVect
 %
 % References
@@ -22,7 +22,7 @@ function updatedInfo = matRad_daoVec2ApertureInfo(apertureInfo,apertureInfoVect)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

@@ -2,13 +2,13 @@ function p = matRad_getPropsCompat(obj)
 % matRad function mimicking Matlab's properties for compatibility with
 % Octave 6 in classdef files (avoids a parse error in the file)
 %
-% call
+% call:
 %   p =  matRad_getPropsCompat(obj)
 %
-% input
+% input:
 %   obj         object (classdef) to get properties from
 %
-% output
+% output:
 %   p           properties of the object
 %
 % References
@@ -16,7 +16,7 @@ function p = matRad_getPropsCompat(obj)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2024 the matRad development team. 
+% Copyright 2024-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
