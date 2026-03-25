@@ -19,7 +19,7 @@ function [stf, dij] = matRad_addMUdataFromMachine(machine, stf, dij)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2012 the matRad development team. 
+% Copyright 2012-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

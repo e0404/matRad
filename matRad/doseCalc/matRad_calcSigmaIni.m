@@ -23,7 +23,7 @@ function [sigmaIni] = matRad_calcSigmaIni(baseData,rays,SSD)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2017 the matRad development team.
+% Copyright 2017-2026 the matRad development team.
 %
 % This file is not part of the offical matRad release
 %

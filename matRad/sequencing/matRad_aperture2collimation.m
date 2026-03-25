@@ -21,7 +21,7 @@ function [pln,stf] = matRad_aperture2collimation(pln,stf,sequencing,apertureInfo
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2022 the matRad development team. 
+% Copyright 2022-2026 the matRad development team.
 % Author: wahln
 % 
 % This file is part of the matRad project. It is subject to the license 
