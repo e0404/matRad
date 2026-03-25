@@ -1,8 +1,8 @@
 .. _run_gui:
 
-##########################################
-Running the graphical user interface (GUI)
-##########################################
+####################################
+Running the graphical user interface
+####################################
 
 To execute the matRad GUI using MATLAB you need to:
 

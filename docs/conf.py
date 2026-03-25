@@ -30,6 +30,7 @@ html_theme_options = {
     'logo_only': True,
     'display_version': True,
     'navigation_depth': 4,
+    'collapse_navigation': False,
 }
 
 extensions = [

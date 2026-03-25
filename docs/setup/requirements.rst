@@ -1,3 +1,7 @@
+.. toctree::
+   :maxdepth: 4
+   :hidden:
+
 .. _requirements:
 
 ===========================
@@ -6,6 +10,9 @@ Minimum System Requirements
 
 Software Environment
 --------------------
+
+You can either run |matRad_logo| with a local installation of the source code, which requires a MATLAB or Octave installation.
+Or you can use the standalone application, which does not require a MATLAB installation but only exposes the graphical user interface.
 
 MATLAB
 ^^^^^^
@@ -21,6 +28,13 @@ Octave
 ^^^^^^
 
 Note that compatibility with Octave is not our primary goal, but it is also part of the automatic testing framework on GitHub Actions for Octave 6.4.
+
+Standalone
+^^^^^^^^^^
+
+The standalone is built for Windows, Linux, and Mac. Only the Windows standalone is currently regularly tested.
+Linux and Mac users should be able to run the standalone, but third party tools like IPOPT, ompMC or MCsquare might not run reliably.
+If you find bugs on your operating system, report them to us as `GitHub issue <https://github.com/e0404/matRad/issues>`_.
 
 Operating System
 ----------------

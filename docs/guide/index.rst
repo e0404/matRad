@@ -5,9 +5,9 @@
 
 .. _techdoc:
 
-=======================
-Technical Documentation
-=======================
+===============
+Technical Guide
+===============
 
 |matRad_logo| features a very modular and sequential design which is reflected in the matRad script.
 After importing your own data or loading one of the provided cases, you can start working with matRad dose calculation and optimization modules.
@@ -15,7 +15,18 @@ The four main parts of the matRad workflow are
 
 .. image:: /images/matRad_steps.png
 
-Information about the individual modules is given in the following subsections:
+Information about the individual modules is given in the following sections:
+
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+
+   config
+   plan
+   dosecalc
+   visualization
+
+Global configuration with :ref:`MatRad_Config <config>` 
 
 :ref:`Set treatment plan parameters <plan>`
 
@@ -25,49 +36,18 @@ Information about the individual modules is given in the following subsections:
 
 :ref:`Visualization <visualization>`
 
-How to cite matRad
-------------------
-
-:ref:`matRad publications <cite>`
-
-
-matRad's most important MATLAB variables
------------------------------------------------
-
-.. _httpsrawgitcomwikie0404matradimagesmatrad_blanksvg--height--25pxs-most-important-matlab-variables:
-
-:ref:`pln-struct <pln>` Treatment plan information
-
-:ref:`ct-struct <ct>` CT-data
-
-:ref:`cst-cell array <cst>` Structure sets, inverse planning objectives, and other meta-information
-
-:ref:`stf-struct <stf>` Steering information
-
-:ref:`dij-struct <dij>` Dose influence data
-
-:ref:`result-struct <result>` Resulting dose distribution, RBE cube etc..
+Important variables and data structures
+---------------------------------------
 
 .. toctree::
-   :maxdepth: 2
-   :hidden:
+   :maxdepth: 1
    :glob:
 
    ../datastructures/*
    ../datastructures/basedata/*
 
-matRad's top-level functions
------------------------------------
-
-:ref:`MatRad_Config <config>` Global configuration class
-
-.. toctree::
-   :maxdepth: 2
-   :hidden:
-   :glob:
-
-   ../api/*
-   ../api/optimization/*
+Additional information
+----------------------
 
 .. toctree::
    :maxdepth: 2
@@ -94,8 +74,7 @@ matRad's top-level functions
    ../algorithms/optimization
    ../algorithms/sequencing
 
-Additional information
-----------------------
+
 
 :ref:`How to run matRad with Octave <octave>`
 

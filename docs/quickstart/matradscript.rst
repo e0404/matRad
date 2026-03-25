@@ -1,8 +1,8 @@
 .. _run_script:
 
-###################
-The matRad.m script
-###################
+#########################
+Using the matRad.m script
+#########################
 
 To execute the matRad script using MATLAB you need to:
 
@@ -23,6 +23,10 @@ Open MATLAB and navigate to the location of the files; if you have cloned the re
 
 Inside the matRad folder there are several MATLAB functions used to run matRad, named ``matRad*.m``, and ``*.mat`` files containing base data and exemplary patient data sets.
 The main script to run matRad is called `matRad.m <https://github.com/e0404/matRad/blob/master/matRad.m>`_. It can be executed section by section.
+
+.. tip:: 
+    
+    Editing the matrad.m file is a good starting point, but if you do not want to mess up the original file and git status, you can copy and paste it into userdata/scripts. The userdata folder is ignored by git, so you can place your scripts and data in there without affecting the versioned source code.
 
 .. _Set patient-specific parameters:
 

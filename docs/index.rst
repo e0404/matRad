@@ -76,15 +76,36 @@ Please let us know if we can include your center, or if you have discontinued th
 
 .. toctree::
    :maxdepth: 4
-   :caption: Contents
+   :caption: Overview
    :glob:
    :includehidden:
 
-   about
-   settingup
+   overview/about
+   overview/cite
+   overview/faq
+   Changelog <https://github.com/e0404/matRad/blob/master/CHANGELOG.md>
+
+.. toctree::
+   :hidden:
+
+   genindex
+
+.. toctree::
+   :maxdepth: 4
+   :caption: Setting Up
+   :includehidden:
+
+   setup/requirements
+   setup/download
+   setup/installation
+   quickstart/index
+
+
+.. toctree::
+   :maxdepth: 4
+   :caption: Technical Documentation
+
    guide/index
    modules
-   faq
-   cite
-   genindex
+   #modindex
    MATLAB Module Index </mat-modindex.html#http://>
