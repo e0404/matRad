@@ -75,7 +75,7 @@ On `Google Maps <https://www.google.com/maps>`_ we are maintaining a `list of ma
 Please let us know if we can include your center, or if you have discontinued the usage of |matRad_logo| so we can remove you from the list.
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 4
    :caption: Contents
    :glob:
    :includehidden:

@@ -30,12 +30,11 @@ How to cite matRad
 
 :ref:`matRad publications <cite>`
 
-.. _httpsrawgitcomwikie0404matradimagesmatrad_blanksvg--height--25pxs-most-important-matlab-variables:
 
-.. _matrad_variables:
-
-|matRad_logo|'s most important Matlab variables
+matRad's most important MATLAB variables
 -----------------------------------------------
+
+.. _httpsrawgitcomwikie0404matradimagesmatrad_blanksvg--height--25pxs-most-important-matlab-variables:
 
 :ref:`pln-struct <pln>` Treatment plan information
 
@@ -57,7 +56,7 @@ How to cite matRad
    ../datastructures/*
    ../datastructures/basedata/*
 
-|matRad_logo|'s top-level functions
+matRad's top-level functions
 -----------------------------------
 
 :ref:`MatRad_Config <config>` Global configuration class
