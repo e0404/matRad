@@ -19,8 +19,8 @@ In this system, the x-axis points towards the left patient-side, the y-axis towa
 .. image:: /images/CoordinateSystem/LPS2.png
     :width: 400px
 
-3D points, e.g., the isocenter in the ``pln`` struct or source and target points in the ``stf`` struct, directly follow the conventions of the LPS coordinate system: The first coordinate, e.g., ``pln.isoCenter(1)`` corresponds to the x coordinate (right-left direction). 
-For the dose and CT cubes, which are stored as MATLAB 3D arrays, the second dimension corresponds to the x-coordinate (right-left direction), and the first dimension corresponds to the y-coordinate (anterior-posterior direction). 
+3D points, e.g., the isocenter in the ``pln`` struct or source and target points in the ``stf`` struct, directly follow the conventions of the LPS coordinate system: The first coordinate, e.g., ``pln.isoCenter(1)`` corresponds to the x coordinate (right-left direction).
+For the dose and CT cubes, which are stored as MATLAB 3D arrays, the second dimension corresponds to the x-coordinate (right-left direction), and the first dimension corresponds to the y-coordinate (anterior-posterior direction).
 This permutation is due to MATLAB's standard way of displaying two-dimensional matrices with the `image <http://de.mathworks.com/help/matlab/ref/image.html>`_ command, which displays the first array dimension along the vertical direction.
 
 .. tip::
@@ -38,9 +38,9 @@ matRad differentiates between a world system and a cube system.
 
 Coordinates in the :ref:`ct <ct>` struct as well as the plan isocenter, for example, are always given in world coordinates.
 
-Cube coordinates are defined on an image cube (e.g. the :ref:`ct.cube <ct.cube>`). 
+Cube coordinates are defined on an image cube (e.g. the :ref:`ct.cube <ct-cube>`).
 To enable fast access, they are defined such that the coordinates of the most right, anterior, inferior voxel center in the cube has the coordinates (``resolution.x`` / ``resolution.y`` / ``resolution.z``).
-Consequently, the most right, anterior, inferior corner of the most right, anterior, inferior voxel is **not** located at (0 | 0 | 0) but at (resolution.x/2 | resolution.y/2 | resolution.z/2). 
+Consequently, the most right, anterior, inferior corner of the most right, anterior, inferior voxel is **not** located at (0 | 0 | 0) but at (resolution.x/2 | resolution.y/2 | resolution.z/2).
 
 .. danger::
 
@@ -58,7 +58,7 @@ matRad provides helper functions in the :mod:`geometry <matRad.geometry>` folder
 There is no function to convert cube coordinates to voxel indices, as this is a simple operation:
 
 .. code-block:: matlab
-    
+
     %Get the indices from coordinates
     coords = round(coords ./ [gridStruct.resolution.x gridStruct.resolution.y gridStruct.resolution.z]);
 

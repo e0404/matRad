@@ -10,7 +10,7 @@ To execute the matRad GUI using MATLAB you need to:
    :local:
    :depth: 2
 
-If you prefer to use the :file:`matRad.m` script to execute matRad, check out the :ref:`matRad script <run_script>`.  
+If you prefer to use the :file:`matRad.m` script to execute matRad, check out the :ref:`matRad script <run_script>`.
 For more detailed information about the different features of the GUI you can take a look at :ref:`matRad GUI Overview <guioverview>`.
 
 Step 1: Open matRad folder in MATLAB
@@ -30,7 +30,7 @@ The function to run the matRad GUI is called :func:`matRadGUI`, which instantiat
 Step 2: Start the matRad GUI
 ----------------------------
 
-To start the GUI select :file:`matRadGUI.m` from your current folder and run it (right-click → run or F9) or simply type ``matRadGUI`` in your command window.  
+To start the GUI select :file:`matRadGUI.m` from your current folder and run it (right-click → run or F9) or simply type ``matRadGUI`` in your command window.
 Now the empty GUI should be opened:
 
 .. image:: /images/GUI-Guide_emptyGUIScreenshot.png
@@ -43,13 +43,13 @@ Step 3: Execute treatment planning
 
 **Load patient data**
 
-First, you need to load the patient data. Therefore, the matRad release contains the :doc:`The-CORT-dataset`. To import additional patient data have a look at the :doc:`The-dicom-import`.  
-To load a patient click the **Load \*.mat data** button in the **Workflow** section.  
+First, you need to load the patient data. Therefore, the matRad release contains the :doc:`../datastructures/cort`. To import additional patient data have a look at the :doc:`dicomimport`.
+To load a patient click the **Load \*.mat data** button in the **Workflow** section.
 A window should open. In the folder ``phantoms``, you can find different patient files.
 
 .. image:: /images/GUI-Guide_loadDataGUIScreenshot.png
 
-Here you can select which patient file (``*.mat``) you want to load. Upon opening the ``*.mat`` file the patient data is loaded into the GUI:  
+Here you can select which patient file (``*.mat``) you want to load. Upon opening the ``*.mat`` file the patient data is loaded into the GUI:
 On the right side of the GUI you should see the patient-CT with the defined VOIs. On the left side, the optimization parameter table should now be filled.
 
 .. image:: /images/GUI-Guide_loadedGUIScreenshot.png
@@ -81,7 +81,7 @@ Now you can start to adjust the plan parameters:
 
 **Set optimization parameters**
 
-The optimization parameters are used to influence the outcome of the fluence optimization. Here you can set the parameters of the VOIs (e.g. min/max dose, penalty, overlap priority, etc.). For more information, take a look at the :doc:`The-cst-cell`. Using the '**+**' and '**-**' buttons you can add and remove VOIs.
+The optimization parameters are used to influence the outcome of the fluence optimization. Here you can set the parameters of the VOIs (e.g. min/max dose, penalty, overlap priority, etc.). For more information, take a look at the :doc:`../datastructures/cst`. Using the '**+**' and '**-**' buttons you can add and remove VOIs.
 
 The column ``p`` (*penalty*) determines the relative weighting of the objective within the overall weighted sum objective function. The column ``Parameters`` lets you specify additional parameters for given objectives. For squared over- and underdosage as well as squared deviation, this simply corresponds to the reference dose level, for EUD it is the exponent. A mean dose objective does not require an additional parameter.
 
@@ -111,8 +111,8 @@ Once the dose calculation is completed, you can start the fluence optimization b
 
 .. image:: /images/GUI-Guide_fluenceOptOutputScreenshot.png
 
-To adjust the convergence criteria you can specify the *maximum number of iterations* and the *convergence* precision in the *Optimization Parameter* section. Default values are: 1000 iterations and a precision of :math:`10^{-3}`:  
-(Precision ≡ |(FuncValue_old − FuncValue_new) / FuncValue_old|)
+To adjust the convergence criteria you can specify the *maximum number of iterations* and the *convergence* precision in the *Optimization Parameter* section. Default values are: 1000 iterations and a precision of :math:`10^{-3}`:
+(Precision ≡ \|(FuncValue_old − FuncValue_new) / FuncValue_old\|)
 
 .. image:: /images/GUI-Guide_optimizationParameters2.png
 
@@ -132,5 +132,4 @@ To calculate a DVH of all VOIs and to see the quality indicators (which contain 
 Step 5: Import additional patient data
 --------------------------------------
 
-matRad supports the import of patient data stored in the DICOM format. A set of functions designed for this purpose can be found in the subfolder :file:`dicom <https://github.com/e0404/matRad/tree/master/dicom>`. For more information about the usage of the import functions please check out :doc:`The-dicom-import`.
-
+matRad supports the import of patient data stored in the DICOM format. A set of functions designed for this purpose can be found in the subfolder :file:`dicom <https://github.com/e0404/matRad/tree/master/dicom>`. For more information about the usage of the import functions please check out :doc:`dicomimport`.

@@ -8,6 +8,7 @@ Whenever you use matRad, we kindly ask yuo to cite our publications and/or the s
 This helps us to keep the project alive and to continue the development of matRad.
 
 .. _citepubs:
+
 Cite our publications
 ---------------------
 
@@ -18,7 +19,7 @@ Cite our publications
 The main citation for matRad is `Development of the open-source dose calculation and optimization toolkit matRad <https://www.ncbi.nlm.nih.gov/pubmed/28370020>`_, which details the development process of matRad and provides a detailed evaluation of the dose calculation and optimization engine.
 
 .. collapse:: matRad main publication - BibTeX
-    
+
     .. code-block:: bibtex
 
         @article{matRad2017,
@@ -39,7 +40,7 @@ The first paper about matRad was submitted to the `2015 World Congress on Medica
 `matRad – a multi-modality open source 3D treatment planning toolkit <https://github.com/e0404/matRad/wiki/documents/matRad_Full_Paper_Eduardo.pdf>`_.
 
 .. collapse:: matRad conference paper - BibTeX
-    
+
     .. code-block:: bibtex
 
         @inproceedings{Cisternas2015a,
@@ -82,6 +83,7 @@ In addition, a joint open-source paper about matRad focusing on educational purp
 ----
 
 .. _citesoftware:
+
 Direct Software Citation (zenodo)
 ---------------------------------
 
@@ -133,4 +135,3 @@ The respective Zenodo entry gives you an overview over all available versions to
         }
 
 |
-

@@ -39,15 +39,15 @@ Home
 
 
 Welcome to the |matRad_logo_header2| documentation
--------------------------------------------------
+--------------------------------------------------
 
 **Date**: |today| **Version**: |version|
 
-|matRad_logo| is an open source software for radiation treatment planning of intensity-modulated photon, proton, helium and carbon ion therapy, with experimental modules for brachytherapy and very-high energy electrons (VHEE). 
+|matRad_logo| is an open source software for radiation treatment planning of intensity-modulated photon, proton, helium and carbon ion therapy, with experimental modules for brachytherapy and very-high energy electrons (VHEE).
 |matRad_logo| is developed for educational and research purposes; it is entirely written in MATLAB.
 
-This guide is the main source of information for users working with, and developers contributing to matRad. 
-If you do not already have a local copy of |matRad_logo| or you want to know how to get started, have a look at the Quick Setup Guide. 
+This guide is the main source of information for users working with, and developers contributing to matRad.
+If you do not already have a local copy of |matRad_logo| or you want to know how to get started, have a look at the Quick Setup Guide.
 For detailed technical information about |matRad_logo| and its functions please check out the Technical Documentation.
 
 Please send us an email if you want to receive the |matRad_logo| newsletter that informs about the latest developments on an irregular basis.
@@ -59,7 +59,7 @@ Quick Navigation
 | :ref:`about`   | :ref:`Quick Setup <settingup>` | :ref:`techdoc`  |
 +================+================================+=================+
 | |icon_about|   | |icon_setup|                   | |icon_techdoc|  |
-+----------------+--------------------------------+-----------------+    
++----------------+--------------------------------+-----------------+
 
 |matRad_logo_header3| Webinars
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -71,7 +71,7 @@ If you like video lectures and tutorials, you can also have a look at the record
 Centers using |matRad_logo_header3|
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-On `Google Maps <https://www.google.com/maps>`_ we are maintaining a `list of matRad user groups <https://tinyurl.com/matRadMap>`_. 
+On `Google Maps <https://www.google.com/maps>`_ we are maintaining a `list of matRad user groups <https://tinyurl.com/matRadMap>`_.
 Please let us know if we can include your center, or if you have discontinued the usage of |matRad_logo| so we can remove you from the list.
 
 .. toctree::

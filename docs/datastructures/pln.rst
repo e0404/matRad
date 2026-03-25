@@ -34,7 +34,7 @@ Workflow Step Configuration properties
 --------------------------------------
 
 Workflow step configuration properties can be stored in the ``pln`` struct.
-The Syntax for accessing these properties is ``pln.prop{StepName}.{PropertyName}``. 
+The Syntax for accessing these properties is ``pln.prop{StepName}.{PropertyName}``.
 This results in a nested structure, where the first level is the step name and the second level is the property name.
 
 Current possible names are  ``propStf`` (steering information / geometry), ``propDoseCalc`` (dose calculation), ``propOpt`` (optimization), and ``propSeq`` (sequencing).
@@ -90,7 +90,7 @@ pln.propOpt
     Setting this value to ``true`` will enable sequencing algorithms run.
 
 Additional adjustable properties
--------------------------------
+--------------------------------
 
 The following properties of the pln struct can additionally be adjusted. If they are not explicitly set, default values are used. The default values are handled by the `MatRad_Config class <https://github.com/e0404/matRad/blob/master/MatRad_Config.m>`_.
 
