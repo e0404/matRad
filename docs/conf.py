@@ -55,7 +55,6 @@ html_css_files = ["style.css"]
 html_logo = "../matRad/gfx/matrad_logo.png"
 html_theme_options = {
     'logo_only': True,
-    'display_version': True,
     'navigation_depth': 5,
     'collapse_navigation': True,
 }

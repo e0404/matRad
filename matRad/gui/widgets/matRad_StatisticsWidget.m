@@ -28,7 +28,7 @@ classdef matRad_StatisticsWidget < matRad_Widget
 
     methods
 
-        function this = matRad_StatisticsWidget(handleParent)    % use (varargin) ?
+        function this = matRad_StatisticsWidget(handleParent)
 
             matRad_cfg = MatRad_Config.instance();
             if nargin < 1

@@ -1,5 +1,4 @@
 function model = matRad_bioModel(radiationMode, model, providedQuantities)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %  matRad_bioModel
 %  This is a helper function to instantiate a matRad_BiologicalModel. This
 %  function currently exists for downwards compatability, as the new

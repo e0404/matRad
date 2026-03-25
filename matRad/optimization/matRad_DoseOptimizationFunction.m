@@ -1,6 +1,7 @@
 classdef (Abstract) matRad_DoseOptimizationFunction
-% matRad_DoseOptimizationFunction. Superclass for objectives and constraints
-% This is the superclass for all objectives and constraints to enable easy 
+% matRad_DoseOptimizationFunction. Superclass for objectives and 
+% constraints. 
+% This is the superclass for all objectives and constraints to enable easy
 % one-line identification.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -15,7 +16,7 @@ classdef (Abstract) matRad_DoseOptimizationFunction
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
+
     properties (Abstract, Constant)
         name                %Display name of the Objective. Needs to be implemented in sub-classes.
         parameterNames      %Cell array of Display names of the parameters. Needs to be implemented in sub-classes.

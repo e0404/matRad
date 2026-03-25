@@ -4,9 +4,6 @@ classdef  matRad_PhantomVOISphere < matRad_PhantomVOIVolume
     % References
     %     -
     %
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
     % Copyright 2022 the matRad development team.
     %

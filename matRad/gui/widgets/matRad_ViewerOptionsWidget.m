@@ -639,10 +639,10 @@ classdef matRad_ViewerOptionsWidget < matRad_Widget
         
         % H109
         function sliderOpacity_Callback(this,hObject, eventdata)
-            % hObject    handle to sliderOpacity (see GCBO)
-            % eventdata  reserved - to be defined in a future version of MATLAB
-            % handles    structure with handles and user data (see GUIDATA)
-            %handles = this.handles;
+            % Callback for the opacity slider.
+            %
+            % hObject:   handle to sliderOpacity (see GCBO)
+            % eventdata: reserved - to be defined in a future version of MATLAB
             
             this.viewingWidgetHandle.doseOpacity = get(hObject,'Value');
             

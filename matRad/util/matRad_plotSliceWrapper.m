@@ -11,9 +11,8 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandl
 % [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,doseColorMap)
 % [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,doseWindow)
 % [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,doseIsoLevels)
-%               ...
-% [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,...
-%                                                                          doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,...)
+% ...
+% [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandle,ct,cst,cubeIdx,dose,plane,slice,thresh,alpha,contourColorMap,doseColorMap,doseWindow,doseIsoLevels,voiSelection,colorBarLabel,boolPlotLegend,...)
 %
 % input (required)
 %   axesHandle      handle to axes the slice should be displayed in
@@ -31,13 +30,10 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSliceWrapper(axesHandl
 %   doseColorMap    colormap for the dose
 %   doseWindow      dose value window
 %   doseIsoLevels   levels defining the isodose contours
-%   voiSelection    logicals defining the current selection of contours
-%                   that should be plotted. Can be set to [] to plot
-%                   all non-ignored contours.
+%   voiSelection    logicals defining the current selection of contours that should be plotted. Can be set to [] to plot all non-ignored contours.
 %   colorBarLabel   string defining the yLabel of the colorBar
 %   boolPlotLegend  boolean if legend should be plottet or not
-%   varargin        additional input parameters that are passed on to
-%                   individual plotting functions (e.g. 'LineWidth',1.5)
+%   varargin        additional input parameters that are passed on to individual plotting functions (e.g. 'LineWidth',1.5)
 %   
 %
 % output:

@@ -49,10 +49,8 @@ classdef matRad_PhantomBuilder < handle
             %   dimensions:     Dimensions of the box as [x,y,z] array
             %
             % Name-Value pairs:
-            %   'offset':       The offset of the VOI with respect to the
-            %                   center of the geometry as [x,y,z] array
-            %   'objectives':   Either a single objective or a cell array
-            %                   of objectives
+            %   'offset':       The offset of the VOI with respect to the center of the geometry as [x,y,z] array
+            %   'objectives':   Either a single objective or a cell array of objectives
             %   'HU':           Houndsfield unit of the volume
 
             obj.volumes(end + 1) = {matRad_PhantomVOIBox(name, 'TARGET', dimensions, varargin{:})};
@@ -67,10 +65,8 @@ classdef matRad_PhantomBuilder < handle
             %   radius:         Radius of the sphere
             %
             % Name-Value pairs:
-            %   'offset':       The offset of the VOI with respect to the
-            %                   center of the geometry as [x,y,z] array
-            %   'objectives':   Either a single objective or a cell array
-            %                   of objectives
+            %   'offset':       The offset of the VOI with respect to the center of the geometry as [x,y,z] array
+            %   'objectives':   Either a single objective or a cell array of objectives
             %   'HU':           Houndsfield unit of the volume
 
             obj.volumes(end + 1) = {matRad_PhantomVOISphere(name, 'TARGET', radius, varargin{:})};
@@ -85,10 +81,8 @@ classdef matRad_PhantomBuilder < handle
             %   dimensions:     Dimensions of the box as [x,y,z] array
             %
             % Name-Value pairs:
-            %   'offset':       The offset of the VOI with respect to the
-            %                   center of the geometry as [x,y,z] array
-            %   'objectives':   Either a single objective or a cell array
-            %                   of objectives
+            %   'offset':       The offset of the VOI with respect to the center of the geometry as [x,y,z] array
+            %   'objectives':   Either a single objective or a cell array of objectives
             %   'HU':           Houndsfield unit of the volume
 
             obj.volumes(end + 1) = {matRad_PhantomVOIBox(name, 'OAR', dimensions, varargin{:})};
@@ -103,10 +97,8 @@ classdef matRad_PhantomBuilder < handle
             %   radius:         Radius of the sphere
             %
             % Name-Value pairs:
-            %   'offset':       The offset of the VOI with respect to the
-            %                   center of the geometry as [x,y,z] array
-            %   'objectives':   Either a single objective or a cell array
-            %                   of objectives
+            %   'offset':       The offset of the VOI with respect to the center of the geometry as [x,y,z] array
+            %   'objectives':   Either a single objective or a cell array of objectives
             %   'HU':           Houndsfield unit of the volume
 
             obj.volumes(end + 1) = {matRad_PhantomVOISphere(name, 'OAR', radius, varargin{:})};

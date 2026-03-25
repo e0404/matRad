@@ -1,5 +1,4 @@
 function matRad_calcStudy(multScen,varargin)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad uncertainty study wrapper
 %
 % call:

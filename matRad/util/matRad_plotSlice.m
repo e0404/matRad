@@ -21,9 +21,7 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSlice(ct, varargin)
 %   doseColorMap    colormap for the dose
 %   doseWindow      dose value window
 %   doseIsoLevels   levels defining the isodose contours
-%   voiSelection    logicals defining the current selection of contours
-%                   that should be plotted. Can be set to [] to plot
-%                   all non-ignored contours.
+%   voiSelection    logicals defining the current selection of contours that should be plotted. Can be set to [] to plot all non-ignored contours.
 %   colorBarLabel   string defining the yLabel of the colorBar
 %   boolPlotLegend  boolean if legend should be plottet or not
 %   showCt          boolean if CT slice should be displayed or not

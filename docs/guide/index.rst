@@ -21,7 +21,6 @@ Information about the individual modules is given in the following sections:
    :maxdepth: 2
    :hidden:
 
-   ../api/config
    plan
    gdosecalc
    planopt

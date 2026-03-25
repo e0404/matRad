@@ -2,6 +2,8 @@
    :maxdepth: 4
    :hidden:
 
+.. include:: ../includes/logo.rst
+
 .. _requirements:
 
 ===========================

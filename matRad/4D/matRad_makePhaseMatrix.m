@@ -1,5 +1,4 @@
 function timeSequence = matRad_makePhaseMatrix(timeSequence, numOfPhases, motionPeriod, motion)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   using the time sequence and the ordering of the bixel iradiation, and
 %   number of scenarios, makes a phase matrix of size number of bixels *
 %   number of scenarios 

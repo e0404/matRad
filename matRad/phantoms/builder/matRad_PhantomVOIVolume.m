@@ -3,9 +3,6 @@ classdef (Abstract) matRad_PhantomVOIVolume < handle
     %   This abstract base class provides the structure of VOI Volumes.
     %   So far implemented: Box and spherical objectives
     %
-    %
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
     % Copyright 2023 the matRad development team.

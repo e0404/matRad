@@ -19,7 +19,7 @@ function [saved_metadata] = matRad_writeCube(filepath,cube,datatype,metadata)
 %                               - dataUnit (i.e. Gy..)
 %                               - dataName (i.e. dose, ED, ...)
 %                               - compress (true/false)
-%                                 (default chosen by writer)
+%                               (default chosen by writer)
 %
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

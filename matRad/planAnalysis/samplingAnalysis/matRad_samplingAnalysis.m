@@ -1,5 +1,4 @@
 function [cstStat, doseStat, meta] = matRad_samplingAnalysis(ct,cst,pln,caSampRes,mSampDose,resultGUInomScen,varargin)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad uncertainty sampling analysis function
 % 
 % call:
@@ -18,7 +17,7 @@ function [cstStat, doseStat, meta] = matRad_samplingAnalysis(ct,cst,pln,caSampRe
 %                       settings
 %                       - 'GammaCriterion': 1x2 vector [%  mm] 
 %                       - 'Percentiles':    vector with desired percentiles
-%                                           between (0,1)
+%                       between (0,1)
 %   
 %
 % output:

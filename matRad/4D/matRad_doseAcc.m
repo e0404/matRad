@@ -1,5 +1,4 @@
 function dAcc = matRad_doseAcc(ct, phaseCubes, cst, accMethod)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad dose accumulation function
 % 
 % call:

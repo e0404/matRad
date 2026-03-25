@@ -97,7 +97,6 @@ Please let us know if we can include your center, or if you have discontinued th
 
    setup/requirements
    setup/download
-   setup/installation
    quickstart/index
 
 

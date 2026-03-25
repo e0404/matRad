@@ -7,9 +7,8 @@
 
 .. _settingup:
 
-=============================
 Download and Install |matRad_logo_header|
-=============================
+=========================================
 
 To get |matRad_logo| have two options:
 

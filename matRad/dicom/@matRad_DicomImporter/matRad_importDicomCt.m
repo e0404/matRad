@@ -2,12 +2,13 @@ function obj = matRad_importDicomCt(obj)
 % matRad function to import dicom ct data
 % 
 % In your object, there must be properties that contain:
+%
 %   - list of dicom ct files;
-%   - resolution of the imported ct cube, i.e. this function will 
-%   interpolate to a different resolution if desired;
-%   - a boolean, if you don't want to import complete dicom information set
-%   it false.
+%   - resolution of the imported ct cube, i.e. this function will interpolate to a different resolution if desired;
+%   - a boolean, if you don't want to import complete dicom information set it false.
+%
 % Optional:
+%
 %   - a priori grid specified for interpolation;
 %   - a boolean to turn off/on visualization.
 %

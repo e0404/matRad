@@ -13,8 +13,8 @@ function matRad_visApertureInfo(apertureInfo,mode)
 %   -
 %
 % References
-%   
 %   -
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

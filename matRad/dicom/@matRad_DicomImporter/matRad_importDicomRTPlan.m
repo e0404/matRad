@@ -2,10 +2,11 @@ function obj = matRad_importDicomRTPlan(obj)
 % matRad function to import dicom RTPLAN data
 % 
 % In your object, there must be properties that contain:
+%
 %   - ct imported by the matRad_importDicomCt function;
 %   - list of RTPlan Dicom files;
-%   - a boolean, if you don't want to import whole dicom information set it
-%   false.
+%   - a boolean, if you don't want to import whole dicom information set it false.
+%
 % 
 % Output - matRad pln structure with meta information.
 % Note that bixelWidth is determined via the importSteering function.

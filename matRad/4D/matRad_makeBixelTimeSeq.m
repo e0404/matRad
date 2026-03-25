@@ -1,5 +1,4 @@
 function timeSequence = matRad_makeBixelTimeSeq(stf, resultGUI)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % using the steering information of matRad, makes a time sequenced order
 % according to the irradiation scheme in spot scanning
 %

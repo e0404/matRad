@@ -1,6 +1,6 @@
 function assigned = matRad_recursiveFieldAssignment(assignTo,reference,overwrite,fieldChangedWarningMessage,fieldname)
 % matRad recursive field assignment tool
-%   This function recursively assigns fields from one structure to another. If both 'assignTo' and 'reference' are structures,
+% This function recursively assigns fields from one structure to another. If both 'assignTo' and 'reference' are structures,
 % it will recurse into their fields. If a field in 'assignTo' is a structure and its corresponding field in 'reference' is not,
 % or vice versa, a warning message is displayed. The function also handles the case where 'assignTo' or 'reference' are not structures,
 % directly assigning the values. Custom warning messages can be specified for overwriting fields.

@@ -32,7 +32,7 @@ function [dij, mask] = matRad_clearUnusedVoxelsFromDij(cstOnDoseGrid, dij, scena
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
 
-    
+
     matRad_cfg = MatRad_Config.instance();
     matRad_cfg.dispInfo('Clearing unused voxels in dij... ');
     
