@@ -33,7 +33,7 @@ function [versionString, matRadVer] = matRad_version(matRadRoot)
 matRadVer.name = 'Cleve';
 matRadVer.major = 3;
 matRadVer.minor = 2;
-matRadVer.patch = 1;
+matRadVer.patch = 2;
 matRadVer.revision = 65534; % Fallback value for unknown revision (e.g., when not running from a git repository)
 matRadVer.branch = [];
 matRadVer.commitID = [];
@@ -113,10 +113,15 @@ if gitRepo
     tagged = matRadVer.revision == 0;
 
     % Create a readable string
-    if ~isempty(matRadVer.branch) && ~isempty(matRadVer.commitID) && ~tagged
+    if tagged
+        versionString = sprintf('"%s" v%d.%d.%d', matRadVer.name, matRadVer.major, matRadVer.minor, matRadVer.patch);
+    elseif ~isempty(matRadVer.branch) && ~isempty(matRadVer.commitID)
         gitString = sprintf('(%s-%s)', matRadVer.branch, matRadVer.commitID(1:8));
+        versionString = sprintf('"%s" v%d.%d.%d.%d%s', matRadVer.name, matRadVer.major, matRadVer.minor, matRadVer.patch, matRadVer.revision, ...
+                                gitString);
+    else
+        versionString = sprintf('"%s" v%d.%d.%d.%d', matRadVer.name, matRadVer.major, matRadVer.minor, matRadVer.patch, matRadVer.revision);
     end
-    versionString = sprintf('"%s" v%d.%d.%d.%d%s', matRadVer.name, matRadVer.major, matRadVer.minor, matRadVer.patch, matRadVer.revision, gitString);
 else
     versionString = sprintf('"%s" v%d.%d.%d', matRadVer.name, matRadVer.major, matRadVer.minor, matRadVer.patch);
 end
