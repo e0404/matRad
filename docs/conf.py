@@ -45,8 +45,8 @@ project = "matRad"
 copyright = "2025, e0404"
 author = "e0404"
 
-version = "3.2.0"
-release = "3.2.0"
+version = "3.2.1"
+release = "3.2.1"
 
 html_theme = "sphinx_rtd_theme" #pip install sphinx-rtd-theme
 
