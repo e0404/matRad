@@ -1,10 +1,10 @@
 function [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln)
 % matRad function to run direct aperture optimization
 %
-% call
+% call:
 %   [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln)
 %
-% input
+% input:
 %   dij:            matRad dij struct
 %   cst:            matRad cst struct
 %   apertureInfo:   aperture shape info struct
@@ -13,7 +13,7 @@ function [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apert
 %                   
 %   pln:            matRad pln struct
 %
-% output
+% output:
 %   optResult:  struct containing optimized fluence vector, dose, and
 %               shape info
 %   optimizer:  used optimizer object
@@ -23,7 +23,7 @@ function [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apert
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

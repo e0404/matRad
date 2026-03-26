@@ -1,14 +1,13 @@
 function [projCoord,idx,targetPoint, sourcePoint] = matRad_projectOnComponents(initIx,dim,sourcePoint_bev,targetPoint_bev,isoCenter, res, Dx, Dz, rotMat)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % This function projects a point on a certain ray and returns both the index
 % of the projected point in the reference system of the ct cube and its
 % coordinates
 %
-% call
+% call:
 %   [projCoord,idx,targetPoint, sourcePoint] = 
 %           matRad_projectOnComponents(initIx,dim,sourcePoint_bev,targetPoint_bev,isoCenter, res, Dx, Dz, rotMat)
 %
-% input
+% input:
 %   initIx:             initial indices of the points
 %   cubeDim:            dimension of the ct cube (i.e. ct.cubeDim)
 %   sourcePoint_bev:    source point of the ray in bev
@@ -18,7 +17,7 @@ function [projCoord,idx,targetPoint, sourcePoint] = matRad_projectOnComponents(i
 %   Dx:                 displacement on x axis
 %   Dz:                 displacement on z axis
 %
-% output
+% output:
 %   idx:        projected indeces
 %   projCoord:  projected coordinates
 %
@@ -29,7 +28,7 @@ function [projCoord,idx,targetPoint, sourcePoint] = matRad_projectOnComponents(i
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2017 the matRad development team.
+% Copyright 2017-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

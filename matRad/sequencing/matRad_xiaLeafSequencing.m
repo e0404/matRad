@@ -3,11 +3,11 @@ function resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,numOfLevels,visB
 % for intensity modulated beams with multiple static segments according to 
 % Xia et al. (1998) Medical Physics
 % 
-% call
+% call:
 %   resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,numOfLevels)
 %   resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)
 %
-% input
+% input:
 %   resultGUI:          resultGUI struct to which the output data will be added, if
 %                       this field is empty resultGUI struct will be created
 %   stf:                matRad steering information struct
@@ -15,7 +15,7 @@ function resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,numOfLevels,visB
 %   numOfLevels:        number of stratification levels
 %   visBool:            toggle on/off visualization (optional)
 %
-% output
+% output:
 %   resultGUI:          matRad result struct containing the new dose cube as well as 
 %                       the corresponding weights
 %
@@ -24,7 +24,7 @@ function resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,numOfLevels,visB
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

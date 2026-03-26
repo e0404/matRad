@@ -42,15 +42,15 @@ Starting from version 3.1.0, the dose grid has been separated from the CT grid, 
 
 **dij.bixelNum**
 
-    Lists the bixel number in an individual beam for all columns in the precomputed influence data. Together with ``dij.rayNum`` and ``dij.beamNum`` this information facilitates an easy assignment of columns of the influence data to the :ref:`stf struct`.
+    Lists the bixel number in an individual beam for all columns in the precomputed influence data. Together with ``dij.rayNum`` and ``dij.beamNum`` this information facilitates an easy assignment of columns of the influence data to the :ref:`stf struct <stf>`.
 
 **dij.rayNum**
 
-    Lists the ray number in an individual beam for all columns in the precomputed influence data. Together with ``dij.bixelNum`` and ``dij.beamNum`` this information facilitates an easy assignment of columns of the influence data to the :ref:`stf struct`.
+    Lists the ray number in an individual beam for all columns in the precomputed influence data. Together with ``dij.bixelNum`` and ``dij.beamNum`` this information facilitates an easy assignment of columns of the influence data to the :ref:`stf struct <stf>`.
 
 **dij.beamNum**
 
-    Lists the beam number for all columns in the precomputed influence data. Together with ``dij.bixelNum`` and ``dij.rayNum`` this information facilitates an easy assignment of columns of the influence data to the :ref:`stf struct`.
+    Lists the beam number for all columns in the precomputed influence data. Together with ``dij.bixelNum`` and ``dij.rayNum`` this information facilitates an easy assignment of columns of the influence data to the :ref:`stf struct <stf>`.
 
 **dij.physicalDose**
 
@@ -65,6 +65,6 @@ Starting from version 3.1.0, the dose grid has been separated from the CT grid, 
     Pre-computed sqrt(beta)*dose matrix with ``dij.numOfVoxels`` rows and ``dij.totalNumOfBixels`` columns, stored with MATLAB's built-in double precision sparse matrix format within a cell array. This matrix is only computed for biological optimization, where this information is required to compute dose-averaged alpha cubes that are in turn required for three-dimensional RBE modeling.
 
 Screenshot of the dij-struct:
-    
+
 .. image:: /images/dij-struct.png
    :alt: Screenshot of the dij struct

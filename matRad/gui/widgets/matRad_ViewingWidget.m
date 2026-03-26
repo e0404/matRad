@@ -8,7 +8,7 @@ classdef matRad_ViewingWidget < matRad_Widget
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
-    % Copyright 2020 the matRad development team.
+    % Copyright 2020-2026 the matRad development team.
     %
     % This file is part of the matRad project. It is subject to the license
     % terms in the LICENSE file found in the top-level directory of this
@@ -743,14 +743,16 @@ classdef matRad_ViewingWidget < matRad_Widget
                     targetPointBEV = [ SAD this.profileOffset   0];
                 end
 
-                rotSourcePointBEV = sourcePointBEV * rotMat_system_T;
-                rotTargetPointBEV = targetPointBEV * rotMat_system_T;
+                rotSourcePoint = sourcePointBEV * rotMat_system_T;
+                rotTargetPoint = targetPointBEV * rotMat_system_T;
 
                 % perform raytracing on the central axis of the selected beam, use unit
                 % electron density for plotting against the geometrical depth
-                cubeIsoCenter = matRad_world2cubeCoords(pln.propStf.isoCenter(this.selectedBeam,:),ct);
-                [~,l,rho,~,ix] = matRad_siddonRayTracer(cubeIsoCenter,ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{0*ct.cubeHU{1}+1});
-                d = [0 l .* rho{1}];
+                % cubeIsoCenter = matRad_world2cubeCoords(pln.propStf.isoCenter(this.selectedBeam,:),ct);
+                % [~,l,rho,~,ix] = matRad_siddonRayTracer(cubeIsoCenter,ct.resolution,rotSourcePointBEV,rotTargetPointBEV,{0*ct.cubeHU{1}+1});
+                rayTracer = matRad_RayTracerSiddon(ct.cubeHU,ct);
+                [~,l,~,~,ix] = rayTracer.traceRay(pln.propStf.isoCenter(this.selectedBeam,:),rotSourcePoint,rotTargetPoint);
+                d = [0 l];
                 % Calculate accumulated d sum.
                 vX = cumsum(d(1:end-1));
 
@@ -1159,7 +1161,7 @@ classdef matRad_ViewingWidget < matRad_Widget
                     if isfield(pln,'propStf') && isfield(pln.propStf,'isoCenter')
                         isoCoordinates = matRad_world2cubeIndex(pln.propStf.isoCenter(1,:), ct);
                         planeCenters = ceil(isoCoordinates);
-                        this.numOfBeams=pln.propStf.numOfBeams;
+                        this.numOfBeams=numel(pln.propStf.gantryAngles);
                     end
                 end
 

@@ -5,13 +5,13 @@ function ct = matRad_electronDensitiesToHU(ct)
 % import process. HU values can only be calculated if the HLUT is
 % bijective.
 %
-% call
+% call:
 %   ct = matRad_electronDensitiesToHU(ct)
 %
-% input
+% input:
 %   ct: matRad ct struct containing cube and all additional information
 %
-% output
+% output:
 %   ct: ct struct with HU and equivalent density cube
 %
 % References
@@ -19,7 +19,7 @@ function ct = matRad_electronDensitiesToHU(ct)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

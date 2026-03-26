@@ -6,7 +6,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
-    % Copyright 2019 the matRad development team.
+    % Copyright 2019-2026 the matRad development team.
     %
     % This file is part of the matRad project. It is subject to the license
     % terms in the LICENSE file found in the top-level directory of this
@@ -50,10 +50,10 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
         function this = matRad_ParticleMCsquareEngine(pln)
             % Constructor
             %
-            % call
+            % call:
             %   engine = DoseEngines.matRad_DoseEngineMCsquare(ct,stf,pln,cst)
             %
-            % input
+            % input:
             %   ct:                         matRad ct struct
             %   stf:                        matRad steering information struct
             %   pln:                        matRad plan meta information struct
@@ -65,6 +65,12 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
             % call superclass constructor
             this = this@DoseEngines.matRad_MonteCarloEngineAbstract(pln);
+
+            if this.enableGPU
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispWarning('Set enableGPU ot true but MCsquare does not support GPU computation! Setting back to false!');
+                this.enableGPU = false;
+            end
 
             this.config = matRad_MCsquareConfig();
 
@@ -112,15 +118,15 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             % engine or over the matRad_calcPhotonDoseMC function while
             % calling the calculation
             %
-            % call
+            % call:
             %   dij = this.calcDose(ct,stf,pln,cst)
             %
-            % input
+            % input:
             %   ct:             matRad ct struct
             %   cst:            matRad cst struct
             %   stf:            matRad steering information struct
             %
-            % output
+            % output:
             %   dij:            matRad dij struct
             %
             % References
@@ -318,7 +324,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
                             stfFieldMCsquareRaShi.rangeShifterID = raShiField;
                             stfFieldMCsquareRaShi.rangeShifterType = 'binary';
-                        
+
                             % Select the energies that have a RaShi for
                             % this stf field
                             raShiLayers = [];
@@ -327,7 +333,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                                 raShiLayers = [raShiLayers, currentRay.energy([currentRay.rangeShifter.ID] == stfFieldMCsquareRaShi.rangeShifterID)];
                             end
                             stfFieldMCsquareRaShi.energies = unique(raShiLayers);
-                            
+
                             % Need to delete an energy layer from non rashi
                             % field if the layer is only delivered with
                             % rashi
@@ -356,7 +362,6 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                                 stfFieldMCsquareRaShi.energyLayer(j).bixelNum       = [];
                             end
 
-
                         end
 
                         % allocate empty target point container
@@ -369,7 +374,6 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                                 stfFieldMCsquare.energyLayer(j).bixelNum       = [];
                             end
                         end
-
 
                         for j = 1:stf(i).numOfRays
                             for k = 1:stf(i).numOfBixelsPerRay(j)
@@ -514,7 +518,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                             this.writeInputFiles(MCsquareConfigFile, stfMCsquare);
                             matRad_cfg.dispInfo(['MCsquare simulation skipped for external calculation\nFiles have been written to: "', strrep(this.workingDir, '\', '\\'), '"']);
                             cd(this.currFolder);
-                            continue;
+                            continue
                         case 'off'
                             this.writeMhd(HUcube{ctScen}, MCsquareBinCubeResolution);
 
@@ -541,9 +545,9 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                                 matRad_cfg.dispInfo('Trying to load simulation results from folder:%s', this.config.Output_Directory);
                             end
                     end
-                    
-                    %if strcmp(this.externalCalculation, 'write')
- 
+
+                    % if strcmp(this.externalCalculation, 'write')
+
                     mask = false(dij.doseGrid.numOfVoxels, 1);
                     mask(this.VdoseGrid) = true;
 
@@ -556,21 +560,21 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                         finalResultWeight = absCalibrationFactorMC2;
                     end
 
-                        % read sparse matrix
+                    % read sparse matrix
                     if ~this.calcDoseDirect
                         dij.physicalDose{ctScen, shiftScen, rangeShiftScen} = finalResultWeight * matRad_sparseBeamletsReaderMCsquare ( ...
-                                                                                                                                     [this.config.Output_Directory filesep 'Sparse_Dose.bin'], ...
-                                                                                                                                     dij.doseGrid.dimensions, ...
-                                                                                                                                     dij.totalNumOfBixels, ...
-                                                                                                                                     mask);
+                                                                                                                                       [this.config.Output_Directory filesep 'Sparse_Dose.bin'], ...
+                                                                                                                                       dij.doseGrid.dimensions, ...
+                                                                                                                                       dij.totalNumOfBixels, ...
+                                                                                                                                       mask);
 
                         % Read sparse LET
                         if this.calcLET
                             dij.mLETDose{ctScen, shiftScen, rangeShiftScen} = dij.physicalDose{ctScen, shiftScen, rangeShiftScen} .* matRad_sparseBeamletsReaderMCsquare ( ...
-                                                                                                                                                                      [this.config.Output_Directory filesep 'Sparse_LET.bin'], ...
-                                                                                                                                                                      dij.doseGrid.dimensions, ...
-                                                                                                                                                                      dij.totalNumOfBixels, ...
-                                                                                                                                                                      mask);
+                                                                                                                                                                          [this.config.Output_Directory filesep 'Sparse_LET.bin'], ...
+                                                                                                                                                                          dij.doseGrid.dimensions, ...
+                                                                                                                                                                          dij.totalNumOfBixels, ...
+                                                                                                                                                                          mask);
                         end
 
                         % reorder influence matrix to comply with matRad default ordering
@@ -581,15 +585,15 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                     else
                         cube = this.readMhd('Dose.mhd');
                         dij.physicalDose{ctScen, shiftScen, rangeShiftScen} = sparse(this.VdoseGrid, ones(numel(this.VdoseGrid), 1), ...
-                                                                                   finalResultWeight * cube(this.VdoseGrid), ...
-                                                                                   dij.doseGrid.numOfVoxels, 1);
+                                                                                     finalResultWeight * cube(this.VdoseGrid), ...
+                                                                                     dij.doseGrid.numOfVoxels, 1);
 
                         % Read LET cube
                         if this.calcLET
                             cube = this.readMhd('LET.mhd');
                             dij.mLETDose{ctScen, shiftScen, rangeShiftScen} = dij.physicalDose{ctScen, shiftScen, rangeShiftScen} .* sparse(this.VdoseGrid, ones(numel(this.VdoseGrid), 1), ...
-                                                                                                                                        cube(this.VdoseGrid), ...
-                                                                                                                                        dij.doseGrid.numOfVoxels, 1);
+                                                                                                                                            cube(this.VdoseGrid), ...
+                                                                                                                                            dij.doseGrid.numOfVoxels, 1);
                         end
 
                         % Postprocessing for dij:
@@ -623,7 +627,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                             rmdirConfirmState = confirm_recursive_rmdir(0);
                         end
                         rmdir(this.config.Output_Directory, 's');
-    
+
                         % Reset to old confirmatoin state
                         if strcmp(matRad_cfg.env, 'OCTAVE')
                             confirm_recursive_rmdir(rmdirConfirmState);
@@ -660,8 +664,6 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                 dij.totalNumOfBixels = 1;
                 dij.totalNumOfRays = 1;
             end
-            % Finalize dose calculation
-            dij = this.finalizeDose(dij);
 
         end
 
@@ -745,14 +747,14 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
         function writeInputFiles(obj, filename, stf)
             % generate input files for MCsquare dose calculation from matRad
             %
-            % call
+            % call:
             %   obj.writeInputFiles(filename,filename,stf)
             %
-            % input
+            % input:
             %   filename:       filename of the Configuration file
             %   stf:            matRad steering information struct
             %
-            % output
+            % output:
             %   -
             %
             % References
@@ -895,14 +897,14 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             % IO folder
             % matRad mhd file reader
             %
-            % call
+            % call:
             %   cube = matRad_readMhd(folder,filename)
             %
-            % input
+            % input:
             %   folder:   folder where the *raw and *mhd file are located
             %   filename: filename
             %
-            % output
+            % output:
             %   cube:     3D array
             %
             % References

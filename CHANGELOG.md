@@ -1,5 +1,51 @@
 # Changelog
 
+## Hotfix 3.2.2
+- Fixes `matRad_version` in case of tagged releases.
+- Small documentation fix
+
+## Patch 3.2.1
+This (arguably large) patch does fix a multitude of issues with the new >=R2025 MATLAB Desktop and reported minor issues import/export, helper, and other minor functions. Apart from that it introduced some new flexibilities under the hood (single precision, raytracer vectorization) that do not expose changes on the outside, and can thus be sustainably tested before changing behavior in the next major release. Further the license has changed to a 3-Clause-BSD.
+
+### Preliminary new features & Enhancements
+- Dose engines can now optionally run calculations in single precision (default remains double). A new `precision` configuration property controls this
+- GPU acceleration is available as an opt-in property for optimization. Helper functions for translating matRad data structures to/from GPU arrays were added.
+- The Siddon raytracer is now implemented as a class with vectorized ray processing and optional single-precision forcing.
+- Pencil beam engines now expose a `traceOnDoseGrid` switch (default `false`) to optionally retain radiological depth cubes on the dose grid.
+- Performance improvements in `matRad_cubeIndex2worldCoords`.
+- Improvements on the phantom builder to also accept mm coordinates for phantom definition
+- Variance calculation from MC statistics can now be computed correctly
+- `matRad_plotSlice` input parsing enhancements; fixed empty figure opening due to colormap array request.
+- TOPAS now correctly support multiple alpha/beta values.
+- Streamlined sequecing and 3D conformal calculations
+- FRED interface updated with new test data, improved version compatibility, and the ability to force `ijFormatVersion`.
+- DICOM import now imports passively scattered proton beams (gantry/couch angles)
+- Optimizer instantiation reworked to allow more configuration options via `propOpt`.
+- `finalizeDose` call in DoseEngines moved to `calcDoseForward` and `calcDoseInfluence`
+
+### Bug Fixes
+- Fixed range-shifter handling issues in MC dose calculation interfaces
+- Fix typo in RBE model fallback load path.
+- Fix typo in `addMUdataFromMachine`.
+- Correct DICOM attribute for `SliceLocation`.
+- Fix slight dimension interpretation issue in `cubeIndex2worldCoords`.
+- Fix scenario listing and the robustness field when serializing objectives to structs or displaying them in the CST.
+- Multiple GUI fixes for MATLAB 2025 compatibility.
+- GUI: fix missing plot handle; fix empty figure handles returned when GUI is globally disabled; fix `plotSlice` colormap issue; fix scrolling in the viewing widget under Octave (empty `CurrentPoint`).
+- Drop `numOfbeams` as a required parameter (it can be inferred).
+
+### Documentation
+- Full Sphinx / ReadTheDocs documentation build pipeline added (readthedocs.yml, GitHub Actions workflow, `docs/` folder with images and rst structure).
+- Docstrings updated to be sphinx-napoleon compatible across many files.
+- Copyright notices updated to 2026.
+
+### Development & CI
+- Standalone build step added to GitHub Actions workflows with matrix build (windows, linux, macos intel / silicon).
+- Preliminary pre-commit hooks configured with `miss_hit` (MATLAB style checker) and `codespell` (not enforced yet)
+- GitHub Actions workflow for documentation building (triggered on changes to `docs/`).
+- Coverage report workflow made more tolerant to errors.
+- MOcov submodule updated to include md5 fix.
+
 ## Minor Update 3.2.0
 
 ### New Features
@@ -9,7 +55,7 @@
 
 ### Bug Fixes & Performance
 - DICOM Import widget allow selection of multiple RTDose files.
-- DICOM Import Widget and importer handle selected patient more consistently and robustly. 
+- DICOM Import Widget and importer handle selected patient more consistently and robustly.
 - DICOM Exporter writes quantities beyond dose, importer tries to import them correctly.
 - DICOM Exporter now always writes ReferencedRTPlanSequence. Importer can now survive without it.
 - DVH widget does not throw a warning in updates, handle scenarios correctly / more robustly and missing xlabel axesHandle parameter.
@@ -36,15 +82,15 @@
 
 ### Major Changes and New Features
 
-#### File Structure Overhaul 
+#### File Structure Overhaul
 - Major restructuring of files into organized subfolders, such as matRad (core code), thirdParty, examples, etc., to improve clarity and maintainability.
 - Introduction of userdata folder to maintain custom data
 
 #### Scenario Management and robust / 4D optimization
 - Introduced comprehensive scenario management (scenario models), including support for 4D phase scenarios and automated scenario model instance tests.
-- Multiple robust optimization methods (COWC, OWC, VWWC, expected value) 
+- Multiple robust optimization methods (COWC, OWC, VWWC, expected value)
 
-#### Object-Oriented DoseEngines & new Monte Carlo interfaces 
+#### Object-Oriented DoseEngines & new Monte Carlo interfaces
 - Transitioned from procedural dose calculation to an object-oriented approach, significantly improving the structure and maintainability of the dose engines.
 - Added customizable TOPAS interface for ions (and experimental for photons)
 - Workflow of the existing Monte Carlo interfaces has been completely overhauled in the new engine format
@@ -85,7 +131,7 @@ While we try to keep downwards compatibility (and will provide fixes if breaking
 - Unit tests now runnig as GitHub Actions on Matlab R2022b, the latest release, and Octave 6
 
 #### Improved Octave Compatibility:
-- Compatibility tested for Octave 6 to 9. 
+- Compatibility tested for Octave 6 to 9.
 - Octave compatibility not always optimal, and IPOPT needs to be compiled individually.
 
 #### Performance Improvements & Code Cleanup
@@ -105,8 +151,8 @@ While we try to keep downwards compatibility (and will provide fixes if breaking
   - **Minor:** Minor releases incldue minor new features (e.g. a new optimizer, objectives, biomodel or dose calculation algorithm). Downwards compatibility (within the major release) is preserved.
   - **Patch:** Patch versions only fix bugs and do not introduce new features. Exceptions could be the exposure of new, minimal configuration options to mitigate a bug occuring in special circumstances.
 
-## Version 2.10.1 - Patch release for "Blaise" 
-Release with small updates, clean-ups and bugfixes    
+## Version 2.10.1 - Patch release for "Blaise"
+Release with small updates, clean-ups and bugfixes
 - Bugfix in 3D view due to inconsistent angles in pln & stf
 - Bugfix for using incorrect dicom UID's and wrong writing order in the dicom export
 - Bugfix for weird colormap issue in plotting
@@ -129,7 +175,7 @@ The new release contains:
 - Integration tests using TravisCI (with Octave, so no GUI functionalities are tested)
 - matRad_rc script to configure matRad paths
 - matRad version can now be printed with matRad_version, version correctly shown in GUI and when using matRad_rc
-- Seven new Matlab example scripts to demonstrate use of matRad 
+- Seven new Matlab example scripts to demonstrate use of matRad
 - Added basic interfaces to the open-source photon/proton MC engines ompMC/MCsquare
 - Overhaul of the optimization interface using OOP and integration of the fmincon optimizer from Mathworks' MATLAB Optimization toolbox
 - Changes to the cst variable (new script to convert old to new cst structures in tools folder)
@@ -150,7 +196,7 @@ The new release contains:
 - New colormap handling to allow integration of custom colormaps
 - Modularization of slice display by dedicated functions in plotting folder including generation of 3D views
 - New global configuration object (matRad_cfg <- MatRad_Config.m) to store default values and with logging interface
-- Many bug fixes and many new bugs..	
+- Many bug fixes and many new bugs..
 
 ## Version 2.1 "Alan"
 First official release of matRad including

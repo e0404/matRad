@@ -2,15 +2,16 @@ function obj = matRad_importDicomRTPlan(obj)
 % matRad function to import dicom RTPLAN data
 % 
 % In your object, there must be properties that contain:
+%
 %   - ct imported by the matRad_importDicomCt function;
 %   - list of RTPlan Dicom files;
-%   - a boolean, if you don't want to import whole dicom information set it
-%   false.
+%   - a boolean, if you don't want to import whole dicom information set it false.
+%
 % 
 % Output - matRad pln structure with meta information.
 % Note that bixelWidth is determined via the importSteering function.
 %
-% call
+% call:
 %   obj = matRad_importDicomRTPlan(obj)
 %
 %
@@ -19,7 +20,7 @@ function obj = matRad_importDicomRTPlan(obj)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -149,7 +150,6 @@ obj.pln.propStf.isoCenter    = isoCenter;
 obj.pln.propStf.bixelWidth   = NaN; % [mm] / also corresponds to lateral spot spacing for particles
 obj.pln.propStf.gantryAngles = [gantryAngles{1:length(BeamSeqNames)}];
 obj.pln.propStf.couchAngles  = [PatientSupportAngle{1:length(BeamSeqNames)}]; % [??]
-obj.pln.propStf.numOfBeams   = length(BeamSeqNames);
 numOfVoxels = 1;
 for i = 1:length(obj.ct.cubeDim)
     numOfVoxels = numOfVoxels*obj.ct.cubeDim(i);

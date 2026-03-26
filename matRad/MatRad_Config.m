@@ -2,12 +2,13 @@ classdef MatRad_Config < handle
     % MatRad_Config MatRad Configuration class
     % This class is used globally through Matlab to handle default values and
     % logging and is declared as global matRad_cfg.
+    %
     % Usage:
     %    matRad_cfg = MatRad_Config.instance();
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
-    % Copyright 2019 the matRad development team.
+    % Copyright 2019-2026 the matRad development team.
     %
     % This file is part of the matRad project. It is subject to the license
     % terms in the LICENSE file found in the top-level directory of this
@@ -124,7 +125,7 @@ classdef MatRad_Config < handle
             %   Display to console will be called from the public wrapper
             %   functions dispError, dispWarning, dispInfo, dispDebug
             %
-            %  input
+            % input:
             %    type:			type of the log information.
             %                   Needs to be one of 'error', 'warning', 'info' or 'debug'.
             %    formatSpec: 	string to print using format specifications similar to fprintf
@@ -191,8 +192,7 @@ classdef MatRad_Config < handle
 
         function setDefaultProperties(obj)
             %setDefaultProperties set matRad's default computation
-            %   properties
-            %  input
+            % properties
 
             %Default machines
             obj.defaults.machine.photons    = 'Generic';
@@ -232,6 +232,7 @@ classdef MatRad_Config < handle
             obj.defaults.propDoseCalc.calcLET = true; %calculate LETs for particles
             obj.defaults.propDoseCalc.selectVoxelsInScenarios = 'all';
             obj.defaults.propDoseCalc.airOffsetCorrection = true;
+
             % default properties for fine sampling calculation
             obj.defaults.propDoseCalc.fineSampling.sigmaSub = 1;
             obj.defaults.propDoseCalc.fineSampling.N = 2;
@@ -246,6 +247,7 @@ classdef MatRad_Config < handle
             obj.defaults.propOpt.maxIter = 500;
             obj.defaults.propOpt.runDAO = 0;
             obj.defaults.propOpt.clearUnusedVoxels = false;
+            obj.defaults.propOpt.enableGPU = false;
 
             %Sequencing Options
             obj.defaults.propSeq.sequencer = 'siochi';
@@ -349,7 +351,8 @@ classdef MatRad_Config < handle
 
         function dispDebug(obj,formatSpec,varargin)
             %dispDebug print debug messages (log level >= 4)
-            %  input
+            %
+            % input:
             %    formatSpec: 	string to print using format specifications similar to fprintf
             %    varargin:   	variables according to formatSpec
 
@@ -358,7 +361,8 @@ classdef MatRad_Config < handle
 
         function dispInfo(obj,formatSpec,varargin)
             %dispInfo print information console output (log level >= 3)
-            %  input
+            %
+            % input:
             %    formatSpec: 	string to print using format specifications similar to fprintf
             %    varargin:   	variables according to formatSpec
             obj.displayToConsole('info',formatSpec,varargin{:});
@@ -366,7 +370,8 @@ classdef MatRad_Config < handle
 
         function dispError(obj,formatSpec,varargin)
             %dispError print errors (forwarded to "error" that will stop the program) (log level >= 1)
-            %  input
+            %
+            % input:
             %    formatSpec: 	string to print using format specifications
             %                   similar to 'error'
             %    varargin:   	variables according to formatSpec
@@ -385,7 +390,8 @@ classdef MatRad_Config < handle
 
         function dispWarning(obj,formatSpec,varargin)
             %dispError print warning (forwarded to 'warning') (log level >= 2)
-            %  input
+            %
+            % input:
             %    formatSpec: 	string to print using format specifications
             %                   similar to 'warning'
             %    varargin:   	variables according to formatSpec

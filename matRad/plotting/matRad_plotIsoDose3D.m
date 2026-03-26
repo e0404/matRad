@@ -1,10 +1,10 @@
 function hpatch = matRad_plotIsoDose3D(axesHandle,xMesh,yMesh,zMesh,doseCube,isoLevels,cMap,window,alpha)
 % matRad function that plots isolines in 3d
 %
-% call
+% call:
 %   hpatch = matRad_plotIsoDose3D(axesHandle,xMesh,yMesh,zMesh,doseCube,isoLevels,cMap,window,alpha)
 %
-% input
+% input:
 %   axesHandle  handle to axes the slice should be displayed in
 %   x/y/zMesh   meshs
 %   doseCube    dose cube
@@ -13,7 +13,7 @@ function hpatch = matRad_plotIsoDose3D(axesHandle,xMesh,yMesh,zMesh,doseCube,iso
 %   window      window for dose display
 %   alpha       transparency
 %
-% output
+% output:
 %   hpatch: handle to the patch object
 %
 % References
@@ -21,7 +21,7 @@ function hpatch = matRad_plotIsoDose3D(axesHandle,xMesh,yMesh,zMesh,doseCube,iso
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team.
+% Copyright 2015-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this

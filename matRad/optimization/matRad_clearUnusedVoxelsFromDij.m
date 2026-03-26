@@ -2,26 +2,26 @@ function [dij, mask] = matRad_clearUnusedVoxelsFromDij(cstOnDoseGrid, dij, scena
 % matRad function to set the voxels in dij that are not used for
 % optimization.
 %
-% call
+% call:
 %   [dij] = matRad_clearUnusedVoxelsFromDij(cst, dij)
 %   [dij] = matRad_clearUnusedVoxelsFromDij(cst, dij, scenarios)
 %   [dij, mask] = matRad_clearUnusedVoxelsFromDij(cst, dij)
 %   [dij, mask] = matRad_clearUnusedVoxelsFromDij(cst, dij, scenarios)
 %
-% input
+% input:
 %   cstInDoseGrid:          cst (on dose grid)
 %   dij:                    dij struct
 %   scenarios (optional):   explicitly define the scenario indexes that need to be cleared
 %                               
 % 
-% output
+% output:
 % 
 %   dij:                cleared dij struct
 %   mask (optional):    cell array containig the mask that has been applied to every ct scenario
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2023 the matRad development team.
+% Copyright 2023-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
@@ -32,7 +32,7 @@ function [dij, mask] = matRad_clearUnusedVoxelsFromDij(cstOnDoseGrid, dij, scena
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
 
-    
+
     matRad_cfg = MatRad_Config.instance();
     matRad_cfg.dispInfo('Clearing unused voxels in dij... ');
     

@@ -3,10 +3,10 @@ function newCst = matRad_convertOldCstToNewCstObjectives(cst)
 % Converts a cst with struct array objectives / constraints to the new cst
 % format using a cell array of objects.
 % 
-% call
+% call:
 %    newCst = matRad_convertOldCstToNewCstObjectives(cst)
 %
-% input
+% input:
 %   cst     a cst cell array that contains the old obectives as struct
 %           array
 %
@@ -22,7 +22,7 @@ function newCst = matRad_convertOldCstToNewCstObjectives(cst)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2019 the matRad development team. 
+% Copyright 2019-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

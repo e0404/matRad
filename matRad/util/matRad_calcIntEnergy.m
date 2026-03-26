@@ -1,15 +1,15 @@
 function intDose = matRad_calcIntEnergy(dose,ct,pln)
 % matRad function to compute the integral energy in MeV for a dose cube
 %
-% call
+% call:
 %   intDose = matRad_calcIntEnergy(dose,ct,pln)
 %
-% input
+% input:
 %   dose:   3D matlab array with dose e.g. resultGUI.physicalDose
 %   ct:     matRad ct struct
 %   pln:    matRad pln struct
 %
-% output
+% output:
 %   intDose: integral dose in MeV
 %
 % References
@@ -17,7 +17,7 @@ function intDose = matRad_calcIntEnergy(dose,ct,pln)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2019 the matRad development team. 
+% Copyright 2019-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

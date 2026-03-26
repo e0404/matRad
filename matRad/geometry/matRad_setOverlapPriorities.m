@@ -4,15 +4,15 @@ function [cst,overlapPriorityCube] = matRad_setOverlapPriorities(cst,ctDim)
 % volumes of interest you need to inform matRad to which volume(s) the 
 % intersection voxels belong.
 % 
-% call
+% call:
 %   cst = matRad_considerOverlap(cst)
 %   [cst, overlapPriorityCube] = matRad_setOverlapPriorities(cst,ctDim)
 %
-% input
+% input:
 %   cst:        cst file
 %   ctDim:      (optional) dimension of the ct for overlap cube claculation 
 %
-% output
+% output:
 %   cst:                updated cst file considering overlap priorities
 %   overlapPriorityCube:(optional) cube visualizing the overlap priority 
 %
@@ -21,7 +21,7 @@ function [cst,overlapPriorityCube] = matRad_setOverlapPriorities(cst,ctDim)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

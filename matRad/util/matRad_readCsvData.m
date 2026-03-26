@@ -1,14 +1,14 @@
 function dataOut = matRad_readCsvData(csvFile,cubeDim)
 % matRad read TOPAS csv data
 %
-% call
+% call:
 %   dataOut = matRad_readCsvData(csvFile,cubeDim)
 %
-% input
+% input:
 %   csvFile: TOPAS csv scoring file
 %   cubeDim: size of cube
 %
-% output
+% output:
 %   dataOut: cube of size cubeDim containing scored values
 %
 % References
@@ -16,7 +16,7 @@ function dataOut = matRad_readCsvData(csvFile,cubeDim)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2024 the matRad development team.
+% Copyright 2024-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this

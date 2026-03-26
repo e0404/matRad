@@ -1,10 +1,10 @@
 function success = matRad_latexReport(outputPath, ct, cst, pln, nominalScenario, structureStat, doseStat, sampDose, listOfQI, varargin)
 % matRad uncertainty analysis report generaator function
 % 
-% call
+% call:
 %   latexReport(ct, cst, pln, nominalScenario, structureStat)
 %
-% input
+% input:
 %   outputPath:         where to generate the report
 %   ct:                 ct cube
 %   cst:                matRad cst struct
@@ -27,13 +27,13 @@ function success = matRad_latexReport(outputPath, ct, cst, pln, nominalScenario,
 %                           the largest value found in target objectives
 %   
 
-% output
+% output:
 %   (binary)            a pdf report will be generated and saved
 %
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2017 the matRad development team. 
+% Copyright 2017-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

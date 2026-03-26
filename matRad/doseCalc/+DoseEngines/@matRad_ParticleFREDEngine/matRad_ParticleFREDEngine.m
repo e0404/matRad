@@ -33,7 +33,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
-    % Copyright 2023 the matRad development team.
+    % Copyright 2023-2026 the matRad development team.
     %
     % This file is part of the matRad project. It is subject to the license
     % terms in the LICENSE file found in the top-level directory of this
@@ -83,7 +83,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         dijFormatVersion
     end
 
-    properties (SetAccess = private, Hidden)
+    properties (SetAccess = protected, Hidden)
         patientFilename      = 'CTpatient.mhd'
         runInputFilename     = 'fred.inp'
         regionsFilename      = 'regions.inp'
@@ -110,7 +110,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         function this = matRad_ParticleFREDEngine(pln)
             % Constructor
             %
-            % call
+            % call:
             %   engine = DoseEngines.matRad_DoseEngineFRED(ct,stf,pln,cst)
             %
 
@@ -245,7 +245,7 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         end
 
         %% Write files functions
-        writeRunFile(~, fName)
+        writeRunFile(this, fName)
 
         writeRegionsFile(this, fName, stf)
 
@@ -597,11 +597,6 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 fredCmdCall = newCmdString;
             elseif isempty(fredCmdCall)
                 if ispc
-<<<<<<< HEAD
-                    %fredCmdCall = 'wsl if [ -f ~/.fredenv.sh ] ; then source ~/.fredenv.sh ; fi; fred';
-=======
-                    %                    fredCmdCall = 'wsl if [ -f ~/.fredenv.sh ] ; then source ~/.fredenv.sh ; fi; fred';
->>>>>>> dev
                     fredCmdCall = 'fred ';
                 elseif isunix
                     fredCmdCall = 'if [ -f ~/.fredenv.sh ] ; then source ~/.fredenv.sh ; fi; fred';
@@ -776,13 +771,13 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
         function dijMatrices = readSparseDijBin(fName)
             % FRED function to read sparseDij in .bin format
-            % call
+            % call:
             %   readSparseDijBin(fName)
             %
-            % input
+            % input:
             %   fName: filename to read
             %
-            % output
+            % output:
             %   dijMatrix: dij structure
             matRad_cfg = MatRad_Config.instance();
 
@@ -965,18 +960,6 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             %  - 'path':   simulation data will be loaded from the specified
             %              path. Full simulation directory path should be provided.
             %              Example: 'matRadRoot/userdata/FRED/'
-
-<<<<<<< HEAD
-        function set.externalCalculation(this, value)
-        % Set exportCalculation value, available options are:
-        %  - false:    (default) runs the FRED simulation (requires FRED installation)
-        %  - write/1:  triggers the file export
-        %  - 'path':   simulation data will be loaded from the specified
-        %              path. Full simulation directory path should be provided.
-        %              Example: 'matRadRoot/userdata/FRED/'
-            
-=======
->>>>>>> dev
             if isnumeric(value) || islogical(value)
                 switch value
                     case 1
@@ -985,23 +968,12 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                         this.externalCalculation = 'off';
                 end
             elseif ischar(value)
-<<<<<<< HEAD
-                
-                if any(strcmp(value, {'write', 'off'}))
-                    this.externalCalculation = value;
-                elseif isfolder(value)
-                this.externalCalculation = value;
-                
-                this.updatePaths(value);
-=======
-
                 if any(strcmp(value, {'write', 'off'}))
                     this.externalCalculation = value;
                 elseif isfolder(value)
                     this.externalCalculation = value;
 
                     this.updatePaths(value);
->>>>>>> dev
                 end
             end
         end

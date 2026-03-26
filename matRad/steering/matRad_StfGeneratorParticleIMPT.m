@@ -6,7 +6,7 @@ classdef matRad_StfGeneratorParticleIMPT < matRad_StfGeneratorParticleRayBixelAb
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2024 the matRad development team.
+% Copyright 2024-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
@@ -49,8 +49,6 @@ classdef matRad_StfGeneratorParticleIMPT < matRad_StfGeneratorParticleRayBixelAb
             %Assigns the max particle machine energy layers to all rays
             matRad_cfg = MatRad_Config.instance();
 
-            isoCenterInCubeCoords = matRad_world2cubeCoords(beam.isoCenter,this.ct);
-
             if isfield(this.machine.meta,'LUT_bxWidthminFWHM')
                 LUTspotSize = this.machine.meta.LUT_bxWidthminFWHM;
             else
@@ -77,11 +75,10 @@ classdef matRad_StfGeneratorParticleIMPT < matRad_StfGeneratorParticleRayBixelAb
 
                 for shiftScen = 1:this.multScen.totNumShiftScen
                         % ray tracing necessary to determine depth of the target
-                        [alphas,l{shiftScen},rho{shiftScen},d12,~] = matRad_siddonRayTracer(isoCenterInCubeCoords + this.multScen.isoShift(shiftScen,:), ...
-                            this.ct.resolution, ...
+                        [alphas,l{shiftScen},rho{shiftScen},d12,~] = this.rayTracer.traceRay(...
+                            beam.isoCenter + this.multScen.isoShift(shiftScen,:), ...
                             beam.sourcePoint, ...
-                            beam.ray(j).targetPoint, ...
-                            [this.ct.cube {this.voiTarget}]);
+                            beam.ray(j).targetPoint);
 
                         %Used for generic range-shifter placement
                         ctEntryPoint(shiftScen) = alphas(1) * d12;
