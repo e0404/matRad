@@ -1,5 +1,9 @@
 # Changelog
 
+## Hotfix 3.2.2
+- Fixes `matRad_version` in case of tagged releases.
+- Small documentation fix
+
 ## Patch 3.2.1
 This (arguably large) patch does fix a multitude of issues with the new >=R2025 MATLAB Desktop and reported minor issues import/export, helper, and other minor functions. Apart from that it introduced some new flexibilities under the hood (single precision, raytracer vectorization) that do not expose changes on the outside, and can thus be sustainably tested before changing behavior in the next major release. Further the license has changed to a 3-Clause-BSD.
 
