@@ -33,6 +33,8 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
         radiationMode;              %Radiation Mode
         machine;                    %Machine
         enableGPU = false;          %Enable computation on the GPU (experimenta, default false)
+        ignoreOutsideDensities       % Ignore densities outside of cst contours
+        useGivenEqDensityCube;      % Use the given density cube ct.cube and omit conversion from cubeHU.
     end
 
     properties (Access = protected)
@@ -282,12 +284,23 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
             % take only voxels inside patient
             V = [this.cst{:,4}];
             V = unique(vertcat(V{:}));
+            if this.ignoreOutsideDensities
+                % ignore densities outside of contours
+                eraseCtDensMask = ones(prod(this.ct.cubeDim), 1);
+                eraseCtDensMask(V) = 0;
+                for i = 1:this.ct.numOfCtScen
+                    this.ct.cubeHU{i}(eraseCtDensMask == 1) = -1000;
+                end
+            end
+            if this.useGivenEqDensityCube && ~isfield(this.ct,'cube')
+                matRad_cfg.dispWarning('HU Conversion requested to be omitted but no ct.cube exists! Will override and do the conversion anyway!');
+                this.useGivenEqDensityCube = false;
+            end
 
-            % ignore densities outside of contours
-            eraseCtDensMask = ones(prod(this.ct.cubeDim), 1);
-            eraseCtDensMask(V) = 0;
-            for i = 1:this.ct.numOfCtScen
-                this.ct.cube{i}(eraseCtDensMask == 1) = 0;
+            if this.useGivenEqDensityCube
+                matRad_cfg.dispInfo('Omitting HU to rED/rSP conversion and using existing ct.cube!\n');
+            else
+                this.ct = matRad_calcWaterEqD(this.ct, this.radiationMode); % Maybe we can avoid duplicating the CT here?
             end
         end
 
