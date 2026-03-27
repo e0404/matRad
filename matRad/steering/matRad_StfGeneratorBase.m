@@ -194,6 +194,10 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
             this.initialize();
             this.createPatientGeometry();
             stf = this.generateSourceGeometry();
+            propStruct = this.getProperties();
+            for i = 1:size(stf,2)
+                stf(i).props = propStruct;
+            end
         end
     end
 
@@ -302,6 +306,7 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
             else
                 this.ct = matRad_calcWaterEqD(this.ct, this.radiationMode); % Maybe we can avoid duplicating the CT here?
             end
+      
         end
 
         function pbMargin = getPbMargin(this)
@@ -318,7 +323,12 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
             % make the whole calculation more modular)
             throw(MException('MATLAB:class:AbstractMember','Abstract function generateSourceGeometry of your StfGenerator needs to be implemented!'));
         end
-    end
+
+        function s = getProperties(this)
+            s.ignoreOutsideDensities = this.ignoreOutsideDensities;
+            s.useGivenEqDensityCube = this.useGivenEqDensityCube;
+        end
+    end   
 
     methods (Static)
         function generator = getGeneratorFromPln(pln, warnDefault)
@@ -518,5 +528,6 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
         function machine = loadMachine(radiationMode,machineName)
             machine = matRad_loadMachine(struct('radiationMode',radiationMode,'machine',machineName));
         end
+
     end
 end
