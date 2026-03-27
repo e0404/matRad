@@ -48,9 +48,7 @@ Steps for installation:
 Patient/Phantom files
 ---------------------
 
-The patient files should be included with the installer and will be installed into the desired location. For Windows, for example, they can be found within the "application" folder of the chosen installation directory. Moreover, we also provide extra links to the open source patient files stored in |matRad_logo|'s native ``*.mat`` format for a `head and neck case <https://github.com/e0404/matRad/blob/master/phantoms/HEAD_AND_NECK.mat>`_, a `liver case <https://github.com/e0404/matRad/blob/master/phantoms/LIVER.mat>`_, a `prostate case <https://github.com/e0404/matRad/blob/master/phantoms/PROSTATE.mat>`_, a `box phantom <https://github.com/e0404/matRad/blob/master/phantoms/BOXPHANTOM.mat>`_, and AAPM's `TG119 phantom <https://github.com/e0404/matRad/blob/master/phantoms/TG119.mat>`_. Otherwise you need to start with a `DICOM import of your own patient data <The-dicom-import>`_.
+The patient files should be included with the installer and will be installed into the desired location. For Windows, for example, they can be found within the "application" folder of the chosen installation directory. Moreover, we also provide extra links to the open source patient files stored in |matRad_logo|'s native ``*.mat`` format for a `head and neck case <https://github.com/e0404/matRad/blob/master/matRad/phantoms/HEAD_AND_NECK.mat>`_, a `liver case <https://github.com/e0404/matRad/blob/master/matRad/phantoms/LIVER.mat>`_, a `prostate case <https://github.com/e0404/matRad/blob/master/matRad/phantoms/PROSTATE.mat>`_, a `box phantom <https://github.com/e0404/matRad/blob/master/matRad/phantoms/BOXPHANTOM.mat>`_, and AAPM's `TG119 phantom <https://github.com/e0404/matRad/blob/master/matRad/phantoms/TG119.mat>`_. Otherwise you need to start with a :ref:`DICOM import of your own patient data <dicomimport>`.
 
-
-An overview of the functions of the |matRad_logo| GUI can be found `here <The-matRad-GUI>`_.
-
-If you want to import patient data, check out `the dicom import functionality <The-dicom-import>`_.
+Once loaded, both built-in and custom phantoms can be visualized in the matRad GUI and navigated by scrolling through the slices.
+An overview of the functions of the |matRad_logo| GUI can be found :ref:`here <guioverview>`.

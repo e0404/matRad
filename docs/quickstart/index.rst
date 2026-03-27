@@ -8,7 +8,7 @@
 Quick Start
 ===========
 
-It's the first time you want to use matRad?
+New to matRad? This quick start guide will help you get started.
 
 First, get a local copy of matRad by download or git cloning. Having done that, we recommend you navigate into the folder in Matlab and execute
 
