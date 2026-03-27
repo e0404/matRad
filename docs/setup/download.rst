@@ -10,7 +10,7 @@
 Download and Install |matRad_logo_header|
 =========================================
 
-To get |matRad_logo| have two options:
+To get |matRad_logo| you have two options:
 
 1. Source Code with Matlab or Octave installation
 -------------------------------------------------
