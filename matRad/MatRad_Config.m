@@ -218,6 +218,8 @@ classdef MatRad_Config < handle
             obj.defaults.propStf.longitudinalSpotSpacing = 2;
             obj.defaults.propStf.addMargin = true; %expand target for beamlet finding
             obj.defaults.propStf.bixelWidth = 5;
+            obj.defaults.propStf.ignoreOutsideDensities = false; %Ignore densities outside of cst contours
+            obj.defaults.propStf.useCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
           
             %Dose Calculation Options
             obj.defaults.propDoseCalc.engine = {'SVDPB','HongPB'}; %Names for default engines used when no other is given
@@ -227,7 +229,7 @@ classdef MatRad_Config < handle
             obj.defaults.propDoseCalc.kernelCutOff = Inf; %[mm]
             obj.defaults.propDoseCalc.ssdDensityThreshold = 0.05; %[rel.]
             obj.defaults.propDoseCalc.useGivenEqDensityCube = false; %Use the given density cube ct.cube and omit conversion from cubeHU.
-            obj.defaults.propDoseCalc.ignoreOutsideDensities = true; %Ignore densities outside of cst contours
+            obj.defaults.propDoseCalc.ignoreOutsideDensities = false; %Ignore densities outside of cst contours
             obj.defaults.propDoseCalc.useCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
             obj.defaults.propDoseCalc.calcLET = true; %calculate LETs for particles
             obj.defaults.propDoseCalc.selectVoxelsInScenarios = 'all';
