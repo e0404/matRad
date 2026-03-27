@@ -80,7 +80,6 @@ Voxel indices
 -------------
 
 The indices of all voxels (of the :ref:`CT-cube <ct>`) that are covered by the VOI are stored in a vector within a cell array. I.e. we store the segmentation for the VOI as a binary mask, the polygon contour data is not part of matRad's standard data sets.
-As the same voxel can be covered by more than one VOI, an overlap priority (see :ref:`tissue parameters <TissParam>`) is defined to handle potential discrepancies when calculating the objective function value and generating the :ref:`stf struct <stf>`.
 
 .. _TissParam:
 
@@ -90,14 +89,26 @@ Tissue parameters
 .. image:: /images/cstCellTissueParametersScreenshot.png
     :alt: Screenshot of tissue parameters
 
-Data can also be stored as in the :ref:`old format (see below) <DoseParamOld>`.
+-----------------
 
-New constraints or objectives can be implemented by adding a respective class definition to the :mod:`matRad.optimization.+DoseConstraints` or :mod:`matRad.optimization.+DoseObjectives` folder.
+The parameters *TissueClass*, *alpha* and *beta* are used for biological treatment planning. They can be used to extract the correct *alpha* and *beta* kernels from the :ref:`base data <basedata_particles>`
+
+As the same voxel can be covered by more than one VOI, an overlap priority is defined to handle potential discrepancies when calculating the objective function value and generating the :ref:`stf struct <stf>`. A lower value of *Priority* means that the voxels in the VOI take precedence.
+
+The parameter *Visible* determins if the outline of the VOI is shown in the GUI or if the DVH of the VOI is shown in the DVH plot.
+
+The parameter *visibleColor* specifies the color in which the VOI is shown in red, green and blue (RGB) values between 0 and 1.
 
 .. _DoseParam:
 
 Dose Objectives & Constraints since v2.10.0
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Data can also be stored as in the :ref:`old format (see below) <DoseParamOld>`.
+
+New constraints or objectives can be implemented by adding a respective class definition to the :mod:`matRad.optimization.+DoseConstraints` or :mod:`matRad.optimization.+DoseObjectives` folder.
+
+
 matRad supports inverse planning based on the minimization of a weighted sum of objectives subject to non-linear yet differentiable hard constraints. The following kind of individual objectives are currently supported:
 
 .. include:: ../includes/objtable.rst
