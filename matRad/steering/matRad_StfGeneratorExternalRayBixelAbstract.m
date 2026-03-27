@@ -54,7 +54,7 @@ classdef (Abstract) matRad_StfGeneratorExternalRayBixelAbstract < matRad_StfGene
             nBeams = numel(this.gantryAngles);
             if nBeams ~= numel(this.couchAngles)
                 matRad_cfg = MatRad_Config.instance();
-                matRad_cfg.dispError('There are more gantry angles than couch angles. They have to have the same size.')
+                matRad_cfg.dispError('The number of gantry angles and couch angles must be equal.');
             end
          end
 
@@ -67,11 +67,13 @@ classdef (Abstract) matRad_StfGeneratorExternalRayBixelAbstract < matRad_StfGene
             if ~this.lockAngleUpdate
                 this.lockAngleUpdate = true;
                 if numel(this.gantryAngles) > numel(this.couchAngles)
-                    matRad_cfg.dispError('There are more gantry angles than couch angles. They have to have the same size.')
+                    matRad_cfg = MatRad_Config.instance();
+                    matRad_cfg.dispError('There are more gantry angles than couch angles. They have to have the same size.');
                     %Append Couch angles with zeros
                     this.couchAngles = [this.couchAngles zeros(1,numel(this.gantryAngles)-numel(this.couchAngles))];                    
                 elseif numel(this.couchAngles) > numel(this.gantryAngles)
-                    matRad_cfg.dispError('There are more couch angles than gantry angles. They have to have the same size.')
+                    matRad_cfg = MatRad_Config.instance();
+                    matRad_cfg.dispError('There are more couch angles than gantry angles. They have to have the same size.');
                     %Try to identify the removed beam angles
                     [removedAngles,ix] = setdiff(oldAngles,this.gantryAngles);
                     
@@ -241,7 +243,7 @@ classdef (Abstract) matRad_StfGeneratorExternalRayBixelAbstract < matRad_StfGene
 
                 % Show progress
                 if matRad_cfg.logLevel > 2
-                    matRad_progress(i,length(this.gantryAngles),1);
+                    matRad_progress(i,length(this.gantryAngles));
                 end
 
                 %% visualization
@@ -383,11 +385,6 @@ classdef (Abstract) matRad_StfGeneratorExternalRayBixelAbstract < matRad_StfGene
                     pause(1);
                 end
                 
-
-                % Show progress
-                if matRad_cfg.logLevel > 2
-                    matRad_progress(i,length(this.gantryAngles),2);
-                end
             end
         end
 

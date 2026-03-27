@@ -1,5 +1,4 @@
-function matRad_progress(currentIndex, totalNumberOfEvaluations,scen)
-% matRad progress bar
+function matRad_progress(currentIndex, totalNumberOfEvaluations)
 % 
 % call
 %   matRad_progress(currentIndex, totalNumberOfEvaluations)
@@ -28,29 +27,13 @@ function matRad_progress(currentIndex, totalNumberOfEvaluations,scen)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-persistent isInitialized
-
-if isempty(isInitialized)
-    isInitialized = true;
-end
-
-percent = (currentIndex / totalNumberOfEvaluations) * 100;
-
-% --- first part of the progress ---
-if scen == 1
-    % new line
+    percent = (currentIndex / totalNumberOfEvaluations) * 100;
+    
     fprintf('\rProgress: %6.2f %%', percent);
-end
-
-% --- for scenario 2, same line ---
-if scen == 2
-    fprintf('   Progress: %6.2f %%', percent);
-end
-
-% --- finish line after the last angle ---
-if currentIndex == totalNumberOfEvaluations && scen == 2
-    fprintf('\n');
-    clear isInitialized
+    
+    if currentIndex == totalNumberOfEvaluations
+        fprintf('\n');
+    end
 end
 
 
