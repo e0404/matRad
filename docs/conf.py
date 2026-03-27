@@ -42,7 +42,7 @@ def _patch_matlabdomain_noindex() -> None:
 _patch_matlabdomain_noindex()
 
 project = "matRad"
-copyright = "2025, e0404"
+copyright = "2026, e0404"
 author = "e0404"
 
 version = "3.2.2"

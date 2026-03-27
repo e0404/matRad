@@ -8,9 +8,9 @@
 Quick Start
 ===========
 
-It's the first time you want to use matRad?
+Is it the first time you want to use matRad?
 
-First, get a local copy of matRad by download or git cloning. Having done that, we recommend you navigate into the folder in Matlab and execute
+First, get a local copy of matRad by downloading or git cloning. Having done that, we recommend you navigate into the folder in Matlab and execute
 
 .. code-block:: matlab
 
@@ -18,14 +18,14 @@ First, get a local copy of matRad by download or git cloning. Having done that, 
 
 which will setup the path & configuration and tell you the current version.
 
-Then there're three options for a pleasant start with matRad. Choose one or try out each of them.
+A key feature of matRad is that it can be used either through a graphical user interface (GUI) or as a MATLAB script.
 
+Accordingly, there are different ways to familiarize yourself with the software and get started with matRad. Below, we present three different beginner-friendly approaches. Choose one or explore and try out each of them.
 
 .. rubric:: Option 1: Using the GUI
     :heading-level: 2
 
-
-For an intuitive workflow with the graphical user interface, type
+For the most intuitive workflow, we recommend using the graphical user interface (GUI). In order to start it, type
 
 .. code-block:: matlab
 
@@ -42,9 +42,9 @@ If you prefer scripting, open the default script *matRad.m* from the main matRad
 
     edit matRad.m
 
-Use it to learn something about the code structure and execute it section by section.
+You can use it to learn something about the code structure of a typical matRad workflow and execute it section by section.
 
-You can also run the full script for an example photon plan by just typing
+If you want to run the full script for an exemplary photon plan, you can type
 
 .. code-block:: matlab
 
@@ -55,9 +55,9 @@ in your command window.
 .. rubric:: Option 3: Using the examples
     :heading-level: 2
 
-The most time consuming but also most educational approach to matRad.
+This is by far the most time consuming, but also the most educational approach to matRad, as it includes working through tutorial-style example scripts for different scenarios, e.g. treatment planning with different radiation sources or including biological models. Therefore, if you want to have in-depth training on the whole bandwidth of applications of our software, working through the examples is what we recommend.
 
-When in the main matRad folder, navigate to the folder *examples*. Open one of the examples given there. Execute it section by section. Move on to the next example afterwards.
+In order to get started with the examples, you simply need to navigate to the folder *examples* when in the main matRad directory, open any example of your choice, execute it section by section and move on to the next example afterwards. As the code includes detailed instructional comments, the examples serve as a step-by-step guide to different matRad use cases and are easy to follow and understand.
 
 **See also:**
 
