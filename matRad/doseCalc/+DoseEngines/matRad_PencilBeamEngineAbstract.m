@@ -25,8 +25,6 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
         dosimetricLateralCutOff; %relative dosimetric cut-off (in fraction of values calculated)
 
         ssdDensityThreshold;        % Threshold for SSD computation
-        useGivenEqDensityCube;      % Use the given density cube ct.cube and omit conversion from cubeHU.
-        ignoreOutsideDensities;     % Ignore densities outside of cst contours
 
         numOfDijFillSteps = 10;     % Number of times during dose calculation the temporary containers are moved to a sparse matrix
 
