@@ -219,7 +219,7 @@ classdef MatRad_Config < handle
             obj.defaults.propStf.addMargin = true; %expand target for beamlet finding
             obj.defaults.propStf.bixelWidth = 5;
             obj.defaults.propStf.ignoreOutsideDensities = false; %Ignore densities outside of cst contours
-            obj.defaults.propStf.useCustomPrimaryPhotonFluence = false; %Use a custom primary photon fluence
+            obj.defaults.propStf.useGivenEqDensityCube = false; %Use a custom primary photon fluence
           
             %Dose Calculation Options
             obj.defaults.propDoseCalc.engine = {'SVDPB','HongPB'}; %Names for default engines used when no other is given
