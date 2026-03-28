@@ -91,7 +91,7 @@ Tissue parameters
 
 -----------------
 
-The parameters *TissueClass*, *alpha* and *beta* are used for biological treatment planning. They can be used to extract the correct *alpha* and *beta* kernels from the :ref:`base data <basedata_particles>`
+The parameters *TissueClass*, *alpha* and *beta* are used for biological treatment planning. They can be used to extract the correct *alpha* and *beta* kernels from the :ref:`base data <basedata_particles>`.
 
 As the same voxel can be covered by more than one VOI, an overlap priority is defined to handle potential discrepancies when calculating the objective function value and generating the :ref:`stf struct <stf>`. A lower value of *Priority* means that the voxels in the VOI take precedence.
 
