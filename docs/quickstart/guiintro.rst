@@ -13,7 +13,7 @@ To execute the matRad GUI using MATLAB you need to:
 If you prefer to use the :file:`matRad.m` script to execute matRad, check out the :ref:`matRad script <run_script>`.
 For more detailed information about the different features of the GUI you can take a look at :ref:`matRad GUI Overview <guioverview>`.
 
-Step 1: Open matRad folder in MATLAB
+Step 1: Open the matRad folder in MATLAB
 ------------------------------------
 
 To use matRad you need to open the matRad folder in MATLAB.
@@ -61,19 +61,25 @@ Now you can start to adjust the plan parameters:
 
 +-----------------------------------------------------------------------------------------------+
 | The bixel width, as well as the isocenter, can be adjusted but should already be set to       |
+|												|
 | reasonable values.                                                                            |
 +-----------------------------------------------------------------------------------------------+
 | To set the beam directions you have to select the according gantry and couch angles. Every    |
+|												|
 | gantry angle defines a beam and needs a couch angle.                                          |
 +-----------------------------------------------------------------------------------------------+
 | For the radiation mode, you can choose photons, protons or carbon.                            |
 +-----------------------------------------------------------------------------------------------+
 | If you set carbon as radiation mode, you can activate the biological optimization. You can    |
+|												|
 | choose between an effect based optimization (*effect*) or the optimization of the RBE-weighted|
+|												|
 | dose (*RBExD*).                                                                               |
 +-----------------------------------------------------------------------------------------------+
 | For the radiation mode "photons", you have the option to run a MLC sequencing, where you can  |
+|												|
 | set the number of stratification levels and additionally you can run a direct aperture        |
+|												|
 | optimization.                                                                                 |
 +-----------------------------------------------------------------------------------------------+
 
