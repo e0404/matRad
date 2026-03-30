@@ -281,7 +281,7 @@ classdef MatRad_Config < handle
             %Dose Calculation Options
             obj.defaults.propDoseCalc.doseGrid.resolution = struct('x',5,'y',6,'z',7); %[mm]
             obj.defaults.propDoseCalc.geometricLateralCutOff = 20;
-            obj.defaults.propDoseCalc.dosimetricLateralCutOff = 0.8;
+            obj.defaults.propDoseCalc.dosimetricLateralCutOff = 0.9;
             obj.defaults.propDoseCalc.kernelCutOff = 20; %[mm]
 
             %Monte Carlo options
