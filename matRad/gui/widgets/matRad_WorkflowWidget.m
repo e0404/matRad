@@ -8,7 +8,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
-    % Copyright 2020 the matRad development team. 
+    % Copyright 2020-2026 the matRad development team.
     % 
     % This file is part of the matRad project. It is subject to the license 
     % terms in the LICENSE file found in the top-level directory of this 
@@ -424,9 +424,11 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 % prepare dij for 3d conformal
                 if isfield(pln,'propOpt') && isfield(pln.propOpt,'conf3D') && pln.propOpt.conf3D
                    dij = matRad_collapseDij(dij);
+                   stf = matRad_collapseStf(stf);
                 end
                 % assign results to base worksapce
                 assignin('base','dij',dij);
+                assignin('base','stf',stf);
                 
                 
             catch ME
@@ -701,7 +703,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
 
                 try 
                     pln = evalin('base','pln');
-                    numOfBeams = pln.propStf.numOfBeams;
+                    numOfBeams = evalin('base','numel(stf)');
                     radMode = pln.radiationMode;
                     fractions = pln.numOfFractions;
 
@@ -886,7 +888,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
         
         function CheckOptimizerStatus(this, usedOptimizer,OptCase)
             
-            [statusmsg,statusflag] = usedOptimizer.GetStatus();
+            [statusmsg,statusflag] = usedOptimizer.getStatus();
             
             if statusflag == 0 || statusflag == 1
                 statusIcon = 'none';

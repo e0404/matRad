@@ -1,17 +1,17 @@
 function f = matRad_objectiveFunction(optiProb,w,dij,cst)
 % matRad IPOPT objective function wrapper
 %
-% call
+% call:
 %   f = matRad_objectiveFuncWrapper(optiProb,w,dij,cst)
 %
-% input
+% input:
 %   optiProb: matRad optimization problem
 %   w:        beamlet/ pencil beam weight vector
 %   dij:      matRad dose influence struct
 %   cst:      matRad cst struct
 %   scenario: index of dij scenario to consider (optional: default 1)
 %
-% output
+% output:
 %   f: objective function value
 %
 % References
@@ -19,7 +19,7 @@ function f = matRad_objectiveFunction(optiProb,w,dij,cst)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2016 the matRad development team.
+% Copyright 2016-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this

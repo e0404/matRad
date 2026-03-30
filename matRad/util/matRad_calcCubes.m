@@ -2,16 +2,16 @@ function resultGUI = matRad_calcCubes(w,dij,scenNum)
 % matRad computation of all cubes for the resultGUI struct
 % which is used as result container and for visualization in matRad's GUI
 %
-% call
+% call:
 %   resultGUI = matRad_calcCubes(w,dij)
 %   resultGUI = matRad_calcCubes(w,dij,scenNum)
 %
-% input
+% input:
 %   w:       bixel weight vector
 %   dij:     dose influence matrix
 %   scenNum: optional: number of scenario to calculated (default 1)
 %
-% output
+% output:
 %   resultGUI: matRad result struct
 %
 % References
@@ -19,7 +19,7 @@ function resultGUI = matRad_calcCubes(w,dij,scenNum)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2024 the matRad development team.
+% Copyright 2024-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
@@ -55,7 +55,7 @@ beamInfo(dij.numOfBeams+1).logIx  = true(size(resultGUI.w,1),1);
 
 %% Physical Dose
 doseFields = {'physicalDose','doseToWater'};
-doseQuantities = {'','_std','_batchStd'};
+doseQuantities = {'','_std','_batchStd', '_MCvar'};
 % compute physical dose for all beams individually and together
 for j = 1:length(doseFields)
     for k = 1:length(doseQuantities)
@@ -68,6 +68,11 @@ for j = 1:length(doseFields)
                     resultGUI.([doseFields{j}, doseQuantities{k}, beamInfo(i).suffix])(isnan(resultGUI.([doseFields{j}, doseQuantities{k}, beamInfo(i).suffix]))) = 0;
                 end
             % Handle normal fields as usual
+            elseif ~isempty(strfind(lower(doseQuantities{1}),'var'))
+                for i = 1:length(beamInfo)
+                    resultGUI.([doseFields{j}, doseQuantities{k}, beamInfo(i).suffix]) = reshape(full(dij.([doseFields{j} doseQuantities{k}]){scenNum} * (resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
+                    resultGUI.([doseFields{j}, doseQuantities{k}, beamInfo(i).suffix])(isnan(resultGUI.([doseFields{j}, doseQuantities{k}, beamInfo(i).suffix]))) = 0;
+                end
             else
                 for i = 1:length(beamInfo)
                     resultGUI.([doseFields{j}, doseQuantities{k}, beamInfo(i).suffix]) = reshape(full(dij.([doseFields{j} doseQuantities{k}]){scenNum} * (resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);

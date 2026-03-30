@@ -2,15 +2,15 @@ function indices = matRad_convRtssContours2Indices(structure,ct)
 % matRad function to convert a polygon segmentation from an rt structure
 % set into a binary segmentation as required within matRad's cst struct
 % 
-% call
+% call:
 %   indices = matRad_convRtssContours2Indices(contPoints,ct)
 %
-% input
+% input:
 %   structure:      information about a single structure
 %   ct:             matRad ct struct where the binary segmentations will
 %                   be aligned to
 %
-% output
+% output:
 %   indicies:       indices of voxels of the ct cube that are inside the
 %                   contour
 %
@@ -19,7 +19,7 @@ function indices = matRad_convRtssContours2Indices(structure,ct)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

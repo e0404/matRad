@@ -3,10 +3,10 @@ function resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,vi
 % for intensity modulated beams with multiple static segments accroding 
 % to Engel et al. 2005 Discrete Applied Mathematics
 % 
-% call
+% call:
 %   resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)
 %
-% input
+% input:
 %   resultGUI:          resultGUI struct to which the output data will be added, if
 %                       this field is empty resultGUI struct will be created
 %   stf:                matRad steering information struct
@@ -14,7 +14,7 @@ function resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,vi
 %   numOfLevels:        number of stratification levels
 %   visBool:            toggle on/off visualization (optional)
 %
-% output
+% output:
 %   resultGUI:          matRad result struct containing the new dose cube
 %                       as well as the corresponding weights
 %
@@ -23,7 +23,7 @@ function resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,numOfLevels,vi
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -57,12 +57,12 @@ for i = 1:numOfBeams
     numOfRaysPerBeam = stf(i).numOfRays; 
     
     % get relevant weights for current beam
-    wOfCurrBeams = resultGUI.w(1+offset:numOfRaysPerBeam+offset);
+    wOfCurrBeams = resultGUI.w(1+offset:numOfRaysPerBeam+offset).* ones(size(stf(i).ray,2),1);
     
-    X = ones(numOfRaysPerBeam,1)*NaN;
-    Z = ones(numOfRaysPerBeam,1)*NaN;
+    X = ones(size(stf(i).ray,2),1)*NaN; %this way it also works with3dconformal
+    Z = ones(size(stf(i).ray,2),1)*NaN;
         
-    for j=1:stf(i).numOfRays
+    for j=1:size(stf(i).ray,2) 
       X(j) = stf(i).ray(j).rayPos_bev(:,1);
       Z(j) = stf(i).ray(j).rayPos_bev(:,3);
     end
@@ -352,15 +352,24 @@ for i = 1:numOfBeams
         clear rightIntLimit;
        
     end
-    
-    sequencing.beam(i).numOfShapes  = k;
-    sequencing.beam(i).shapes       = shapes(:,:,1:k);
-    sequencing.beam(i).shapesWeight = shapesWeight(1:k)/numOfLevels*calFac;
-    sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
-    sequencing.beam(i).fluence      = D_0;
+    if sum(wOfCurrBeams)>0
+
+        sequencing.beam(i).numOfShapes  = k;
+        sequencing.beam(i).shapes       = shapes(:,:,1:k);
+        sequencing.beam(i).shapesWeight = shapesWeight(1:k)/numOfLevels*calFac;
+        sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
+        sequencing.beam(i).fluence      = D_0;
+
+    else
+        sequencing.beam(i).numOfShapes  = 1;
+        sequencing.beam(i).shapes       = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
+        sequencing.beam(i).shapesWeight = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
+        sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
+        sequencing.beam(i).fluence      = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
+    end
     
     sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = D_0(indInFluenceMx)/numOfLevels*calFac;
-
+    
     offset = offset + numOfRaysPerBeam;
 
 end

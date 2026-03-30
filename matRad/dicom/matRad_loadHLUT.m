@@ -1,15 +1,15 @@
 function hlut = matRad_loadHLUT(ct, radiationMode)
 % matRad function to load HLUT file based on the provided ct
 %
-% call
+% call:
 %   hlut = matRad_loadHLUT(ct, pln)
 %
-% input
+% input:
 %   ct:             ct with dicom information
 %   radiationMode:  radiationMode as character array (e.g. 'photons') since matRad 3.
 %                   Can also be a pln-struct for downwards compatibility
 %
-% output
+% output:
 %   hlut: lookup table
 %
 % References
@@ -17,7 +17,7 @@ function hlut = matRad_loadHLUT(ct, radiationMode)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2018 the matRad development team. 
+% Copyright 2018-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

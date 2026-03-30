@@ -1,26 +1,26 @@
 function [machine] = matRad_getAlphaBetaCurves(machine,varargin)
 % matRad alpha beta curve calculation tool
 %
-% call
+% call:
 %   machine = matRad_getAlphaBetaCurves(machine)
 %   machine = matRad_getAlphaBetaCurves(machine,cst,modelName,overrideAB)
-% Example full call for protons
-%   machine = matRad_getAlphaBetaCurves(machine,pln,cst,'MCN','override')
-% input
-%   machine:                matRad machine file to change
-%   varargin (optional):    cst:        matRad cst struct (for custom alpha/beta,
-%                                       otherwise default is alpha=0.1, beta=0.05;
-%                           modelName:  specify RBE modelName
-%                   	    overrideAB: calculate new alpha beta even if available
-%                                       and override
 %
-% output
+% Example full call for protons:
+%   machine = matRad_getAlphaBetaCurves(machine,pln,cst,'MCN','override')
+%
+% input:
+%   machine:             matRad machine file to change
+%   varargin (optional): cst: matRad cst struct (for custom alpha/beta, otherwise default is alpha=0.1, beta=0.05)
+%                        modelName: specify RBE modelName
+%                        overrideAB: calculate new alpha beta even if available and override
+%
+% output:
 %   machine:                updated machine file with alpha/beta curves
 %
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2021 the matRad development team.
+% Copyright 2021-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this

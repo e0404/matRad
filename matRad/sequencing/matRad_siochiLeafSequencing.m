@@ -6,13 +6,13 @@ function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,v
 %
 % Implemented in matRad by Eric Christiansen, Emily Heath, and Tong Xu
 %
-% call
+% call:
 %   resultGUI =
 %   matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels)
 %   resultGUI =
 %   matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,visBool)
 %
-% input
+% input:
 %   resultGUI:          resultGUI struct to which the output data will be
 %                       added, if this field is empty resultGUI struct will
 %                       be created
@@ -21,7 +21,7 @@ function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,v
 %   numOfLevels:        number of stratification levels
 %   visBool:            toggle on/off visualization (optional)
 %
-% output
+% output:
 %   resultGUI:          matRad result struct containing the new dose cube
 %                       as well as the corresponding weights
 %
@@ -30,7 +30,7 @@ function resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,numOfLevels,v
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team.
+% Copyright 2015-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
@@ -70,12 +70,12 @@ for i = 1:numOfBeams
     numOfRaysPerBeam = stf(i).numOfRays;
     
     % get relevant weights for current beam
-    wOfCurrBeams = wUnsequenced(1+offset:numOfRaysPerBeam+offset);%REVIEW OFFSET
+    wOfCurrBeams =  wUnsequenced(1+offset:numOfRaysPerBeam+offset).* ones(size(stf(i).ray,2),1);%REVIEW OFFSET
     
-    X = ones(numOfRaysPerBeam,1)*NaN;
-    Z = ones(numOfRaysPerBeam,1)*NaN;
+    X = ones(size(stf(i).ray,2),1)*NaN; %this way it also works with3dconformal
+    Z = ones(size(stf(i).ray,2),1)*NaN;
     
-    for j = 1:stf(i).numOfRays
+    for j = 1:size(stf(i).ray,2) 
         X(j) = stf(i).ray(j).rayPos_bev(:,1);
         Z(j) = stf(i).ray(j).rayPos_bev(:,3);
     end
@@ -137,27 +137,41 @@ for i = 1:numOfBeams
     D_k_MinX = min(D_k_X);
     D_k_MaxX = max(D_k_X);
     
-    %Decompose the port, do rod pushing
-    [tops, bases] = matRad_siochiDecomposePort(D_k,dimOfFluenceMxZ,dimOfFluenceMxX,D_k_MinZ,D_k_MaxZ,D_k_MinX,D_k_MaxX);
-    %Form segments with and without visualization
-    if visBool
-        [shapes,shapesWeight,k,D_k]=matRad_siochiConvertToSegments(shapes,shapesWeight,k,tops,bases,visBool,i,D_k,numOfLevels,seqFig,seqSubPlots);
+    if sum(wOfCurrBeams)>0
+        %Decompose the port, do rod pushing
+        [tops, bases] = matRad_siochiDecomposePort(D_k,dimOfFluenceMxZ,dimOfFluenceMxX,D_k_MinZ,D_k_MaxZ,D_k_MinX,D_k_MaxX);
+        %Form segments with and without visualization
+        if visBool
+            [shapes,shapesWeight,k,D_k]=matRad_siochiConvertToSegments(shapes,shapesWeight,k,tops,bases,visBool,i,D_k,numOfLevels,seqFig,seqSubPlots);
+        else
+            [shapes,shapesWeight,k]=matRad_siochiConvertToSegments(shapes,shapesWeight,k,tops,bases);
+        end
+        
+        sequencing.beam(i).numOfShapes  = k;
+        sequencing.beam(i).shapes       = shapes(:,:,1:k);
+        sequencing.beam(i).shapesWeight = shapesWeight(1:k)/numOfLevels*calFac;
+        sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
+        sequencing.beam(i).fluence      = D_0;
+        sequencing.beam(i).sum          = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
+        
+        for j = 1:k
+            sequencing.beam(i).sum = sequencing.beam(i).sum+sequencing.beam(i).shapes(:,:,j)*sequencing.beam(i).shapesWeight(j);
+        end
+
     else
-        [shapes,shapesWeight,k]=matRad_siochiConvertToSegments(shapes,shapesWeight,k,tops,bases);
+        sequencing.beam(i).numOfShapes  = 1;
+        sequencing.beam(i).shapes       = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
+        sequencing.beam(i).shapesWeight = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
+        sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
+        sequencing.beam(i).fluence      = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
+        sequencing.beam(i).sum          = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
     end
     
-    sequencing.beam(i).numOfShapes  = k;
-    sequencing.beam(i).shapes       = shapes(:,:,1:k);
-    sequencing.beam(i).shapesWeight = shapesWeight(1:k)/numOfLevels*calFac;
-    sequencing.beam(i).bixelIx      = 1+offset:numOfRaysPerBeam+offset;
-    sequencing.beam(i).fluence      = D_0;
-    sequencing.beam(i).sum          = zeros(dimOfFluenceMxZ,dimOfFluenceMxX);
-    
-    for j = 1:k
-        sequencing.beam(i).sum = sequencing.beam(i).sum+sequencing.beam(i).shapes(:,:,j)*sequencing.beam(i).shapesWeight(j);
+    if numOfRaysPerBeam >1
+        sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = sequencing.beam(i).sum(indInFluenceMx);
+    else
+        sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = wOfCurrBeams(1);
     end
-    sequencing.w(1+offset:numOfRaysPerBeam+offset,1) = sequencing.beam(i).sum(indInFluenceMx);
-    
     offset = offset + numOfRaysPerBeam;
 
 end

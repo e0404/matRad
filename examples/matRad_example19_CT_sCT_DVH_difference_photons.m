@@ -2,7 +2,7 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2017 the matRad development team. 
+% Copyright 2017-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -206,7 +206,6 @@ pln.propStf.bixelWidth     = 5;
 % Obtain the number of beams and voxels from the existing variables and 
 % calculate the iso-center which is per default the center of gravity of 
 % all target voxels.
-pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 
 %% Dose calculation settings

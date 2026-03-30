@@ -4,7 +4,7 @@ classdef (Abstract) matRad_StfGeneratorExternalRayBixelAbstract < matRad_StfGene
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2024 the matRad development team.
+% Copyright 2024-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
@@ -134,7 +134,7 @@ classdef (Abstract) matRad_StfGeneratorExternalRayBixelAbstract < matRad_StfGene
                 this.isoCenter = matRad_getIsoCenter(this.cst,this.ct,visBool);
             end
 
-            if ~isequal(size(this.isoCenter),[this.numOfBeams,3]) && ~size(this.isoCenter,1) ~= 1
+            if ~isequal(size(this.isoCenter),[this.numOfBeams,3]) && size(this.isoCenter,1) ~= 1
                 matRad_cfg = MatRad_Config.instance();
                 matRad_cfg.dispWarning('IsoCenter invalid, creating new one automatically!');
                 this.isoCenter = matRad_getIsoCenter(this.cst,this.ct,visBool);

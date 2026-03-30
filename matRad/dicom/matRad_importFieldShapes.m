@@ -1,14 +1,14 @@
 function collimation = matRad_importFieldShapes(beamSequence, fractionSequence)
 % function to import collimator shapes from a DICOM RT plan
 % 
-% call
+% call:
 %   collimation = matRad_importFieldShapes(beamSequence, fractionSequence)
 %
-% input
+% input:
 %   beamSequence: struct containing the beamSequence elements from the RT plan    
 %   fractionSequence: struct containing the fractionGroupSequence elements from the RT plan    
 %
-% output
+% output:
 %   collimation: struct with all meta information about the collimators and
 %   all field shape matrices 
 %
@@ -17,7 +17,7 @@ function collimation = matRad_importFieldShapes(beamSequence, fractionSequence)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

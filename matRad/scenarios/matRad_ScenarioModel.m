@@ -9,12 +9,12 @@ classdef (Abstract) matRad_ScenarioModel < handle
 %   matRad_ScenarioModel()
 %   matRad_ScenarioModel(ct)
 %
-% input
+% input:
 %   ct:                 ct cube
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2022 the matRad development team.
+% Copyright 2022-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
@@ -91,7 +91,7 @@ classdef (Abstract) matRad_ScenarioModel < handle
             matRad_cfg.dispInfo('Listing all scenarios...\n');
             matRad_cfg.dispInfo('\t#\tctScen\txShift\tyShift\tzShift\tabsRng\trelRng\tprob.\n');
             for s = 1:size(this.scenForProb,1)
-                str = [num2str(this.scenForProb(s,1),'\t%d'),sprintf('\t\t'), num2str(this.scenForProb(s,2:end),'\t%.3f')];
+                str = [num2str(this.scenForProb(s,1),'%d\t'),sprintf('\t'), num2str(this.scenForProb(s,2:end),'\t%.3f')];
                 matRad_cfg.dispInfo('\t%d\t%s\t%.3f\n',s,str,this.scenProb(s));
             end
         end

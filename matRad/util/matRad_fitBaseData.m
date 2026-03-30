@@ -3,10 +3,10 @@ function fitData = matRad_fitBaseData(doseCube, resolution, energy, mcData, init
 % pencil beam in positive y direction, target per default in center of
 % plane
 % 
-% call
+% call:
 %    fitData = matRad_fitBaseData(doseCube, resolution, energy, initSigma0)
 %
-% input
+% input:
 %   doseCube:   dose cube as an M x N x O array
 %   resolution: resolution of the cubes [mm/voxel]
 %   energy:     energy of ray
@@ -19,7 +19,7 @@ function fitData = matRad_fitBaseData(doseCube, resolution, energy, mcData, init
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2022 the matRad development team. 
+% Copyright 2022-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

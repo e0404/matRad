@@ -4,7 +4,7 @@ classdef (Abstract) matRad_StfGeneratorParticleRayBixelAbstract < matRad_StfGene
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2024 the matRad development team.
+% Copyright 2024-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
@@ -18,6 +18,7 @@ classdef (Abstract) matRad_StfGeneratorParticleRayBixelAbstract < matRad_StfGene
 
     properties
         useRangeShifter = false;
+        rangeShifterEqD
     end
 
     properties (Access = protected)
@@ -26,6 +27,7 @@ classdef (Abstract) matRad_StfGeneratorParticleRayBixelAbstract < matRad_StfGene
         availablePeakPosRaShi
         maxPBwidth
         pbMargin
+        rayTracer
     end
 
     methods
@@ -66,18 +68,34 @@ classdef (Abstract) matRad_StfGeneratorParticleRayBixelAbstract < matRad_StfGene
             if this.useRangeShifter
                 %For now only a generic range shifter is used whose thickness is
                 %determined by the minimum peak width to play with
-                rangeShifterEqD = round(min(this.availablePeakPos)* 1.25);
-                this.availablePeakPosRaShi = this.availablePeakPos - rangeShifterEqD;
+                
+                matRad_cfg.dispInfo('\nUse of range shifter active');
 
-                matRad_cfg.dispWarning('Use of range shifter enabled. matRad will generate a generic range shifter with WEPL %f to enable ranges below the shortest base data entry.',rangeShifterEqD);
+                if ~isempty(this.rangeShifterEqD)
+                      matRad_cfg.dispInfo('\nUsing provided range shifter thickness of %f mm\n', this.rangeShifterEqD);                  
+                else
+                    this.rangeShifterEqD = round(min(this.availablePeakPos)* 1.25);
+                    matRad_cfg.dispInfo('\nUsing generic range shifter thickness of %f mm determined to allow ranges below the shortest base data entry\n', this.rangeShifterEqD);
+                end
+                
+                this.availablePeakPosRaShi = this.availablePeakPos - this.rangeShifterEqD;
+
+                % Available PeakPositionRaShi has to have same size() as
+                % availablePeakPos for indexing
+                this.availablePeakPosRaShi(this.availablePeakPosRaShi<0) = 0;
             end
 
             if sum(this.availablePeakPos<0)>0
-                matRad_cfg.dispError('at least one available peak position is negative - inconsistent machine file')
+                matRad_cfg.dispError('At least one available peak position is negative - inconsistent machine file')
             end
 
             %Create Water equivalent cube in ct
             this.ct = matRad_calcWaterEqD(this.ct,this.radiationMode);
+        end
+
+        function createPatientGeometry(this)
+            this.createPatientGeometry@matRad_StfGeneratorExternalRayBixelAbstract();
+            this.rayTracer = matRad_RayTracerSiddon([this.ct.cube {this.voiTarget}],this.ct);
         end
     end
 

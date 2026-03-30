@@ -35,6 +35,7 @@ classdef (Abstract) matRad_GriddedScenariosAbstract < matRad_ScenarioModel
             %this.updateScenarios();
         end
         
+        %% set methods
         function set.combineRange(this,combineRange_)
             valid = isscalar(combineRange_) && (isnumeric(combineRange_) || islogical(combineRange_));
             if ~valid 
@@ -45,19 +46,6 @@ classdef (Abstract) matRad_GriddedScenariosAbstract < matRad_ScenarioModel
             this.updateScenarios();
         end
 
-        %% set methods
-        %{
-        function set.includeNominalScenario(this,includeNomScen)
-            valid = isscalar(includeNomScen) && (isnumeric(includeNomScen) || islogical(includeNomScen));
-            if ~valid 
-                matRad_cfg = MatRad_Config.instance();
-                matRad_cfg.dispError('Invalid value for includeNominalScenario! Needs to be a boolean / logical value!');
-            end
-            this.includeNominalScenario = includeNomScen;
-            this.updateScenarios();
-        end
-        %}
-    
         function set.combinations(this,combinations_)
             valid = any(strcmp(combinations_,this.validCombinationTypes));
             if ~valid 

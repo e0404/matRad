@@ -1,23 +1,24 @@
 function coord = matRad_world2cubeCoords(wCoord, gridStruct , allowOutside)
 % matRad function to convert world coordinates to cube coordinates
 % 
-% call
+% call:
 %   coord = world2cubeCoords(wCoord, ct)
 %
-%
+% input:
 %   wCoord:         world coordinates array Nx3 (x,y,z) [mm]
 %   gridStruct:     can be matRad ct, dij.doseGrid, or the ctGrid
 %                   required fields x,y,x,dimensions,resolution
 %   allowOutside:   indices not within the image bounds will be calculated
 %                   optional, default is true
 %
-%   coord :         cube coordinates (x,y,z) - Nx3 in mm    
+% output:
+%   coord:          cube coordinates (x,y,z) - Nx3 in mm
 % References
 %   -
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2024 the matRad development team. 
+% Copyright 2024-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

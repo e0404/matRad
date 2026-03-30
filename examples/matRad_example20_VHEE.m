@@ -1,7 +1,7 @@
 %% Example: VHEE Treatment Plan
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2017 the matRad development team. 
+% Copyright 2017-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -53,8 +53,7 @@ pln.propStf.energy          = 200; % set VHEE beam energy in MeV [100,150 or 200
 pln.propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
 pln.propStf.gantryAngles    = [35, 110, 180, 250, 325]; % [°] ;
 pln.propStf.couchAngles     = [0 0 0 0 0]; % [°] ; 
-pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
-pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
+pln.propStf.isoCenter       = matRad_getIsoCenter(cst,ct,0);
 
 % dose calculation settings
 pln.propDoseCalc.doseGrid.resolution.x = 3; % [mm]

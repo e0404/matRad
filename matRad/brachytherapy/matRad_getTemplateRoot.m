@@ -1,20 +1,20 @@
 function templateRoot = matRad_getTemplateRoot(ct,cst)
 %matRad_getTemplateRoot calculates origin position for template
 %
-% call
+% call:
 %   matRad_getTemplateRoot(ct,cst)
 %
-% input
+% input:
 %   ct:         ct cube
 %   cst:        matRad cst struct
 %
-% output
+% output:
 %   templateRoot:   1x3 column vector with root position
 %                   x,y : center \\ z : bottom of target VOI
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2021 the matRad development team. 
+% Copyright 2021-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

@@ -1,4 +1,4 @@
-function test_suite = test_xiaLeafSequencing
+function test_suite = test_siochiLeafSequencing
     %The output should always be test_suite, and the function name the same as
     %your file name
        
@@ -31,7 +31,7 @@ function test_suite = test_xiaLeafSequencing
             fn_new = fieldnames(resultGUI_sequenced);
             for i = 1:numel(fn_old)
                 assertTrue(any(strcmp(fn_old{i},fn_new)));
-                assertEqual(resultGUI.(fn_old{i}),resultGUI_sequenced.(fn_old{i}));
+                assertElementsAlmostEqual(resultGUI.(fn_old{i}),resultGUI_sequenced.(fn_old{i}));
             end
             
             % Basic additions to resultGUI

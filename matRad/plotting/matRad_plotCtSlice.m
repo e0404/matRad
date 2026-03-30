@@ -3,13 +3,13 @@ function [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,p
 % The function can also be used in personal matlab figures by passing the
 % corresponding axes handle
 %
-% call
+% call:
 %   [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,plane,slice)
 %   [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,plane,slice,cMap)
 %   [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,plane,slice,window)
 %   [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,plane,slice,cMap,window)
 %
-% input
+% input:
 %   axesHandle  handle to axes the slice should be displayed in
 %   ctCube      the cell of ct cubes
 %   cubeIdx     Index of the desired cube in the ct struct
@@ -21,7 +21,7 @@ function [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,p
 %   window      optional argument defining the displayed range. default is
 %               [min(ctCube(:)) max(ctCube(:))]
 %
-% output
+% output:
 %   ctHandle    handle of the plotted CT axes
 %   cMap        used colormap (same as input if set)
 %   window      used window (same as input if set)
@@ -31,7 +31,7 @@ function [ctHandle,cMap,window] = matRad_plotCtSlice(axesHandle,ctCube,cubeIdx,p
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
