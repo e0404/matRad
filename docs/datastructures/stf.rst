@@ -34,7 +34,8 @@ Screenshot of the stf structure:
       - *Photons*: each ray is a single bixel. *Particles*: :ref:`number of bixels / dose spots along each ray <numOfBixels>`.
     * - **total number of bixels**
       - Total number of bixels for each beam.
-
+    * - **props**
+      - Additional properties used during generation of the stf struct, used to check consistency to the dose calculation.
 .. _ray:
 
 stf.ray substructure
@@ -92,3 +93,10 @@ Screenshot of the stf.numOfBixelsPerRay field:
 
 .. image:: /images/stfStructNumOfBixelsScreenshot.png
    :alt: stf.numOfBixelsPerRay field screenshot
+
+
+stf.props field
+===========================
+
+The *stf.props* field contains additional properties used during generation of the stf struct, used to check consistency to the dose calculation.
+The parameters ignoreOutsideDensities and useGivenEqDensityCube are saved (:ref:`pln_additional_properties`)

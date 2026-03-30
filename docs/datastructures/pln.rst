@@ -89,8 +89,11 @@ pln.propOpt
 
     Setting this value to ``true`` will enable sequencing algorithms run.
 
+.. _pln_additional_properties:
+
 Additional adjustable properties
 --------------------------------
+
 
 The following properties of the pln struct can additionally be adjusted. If they are not explicitly set, default values are used. The default values are handled by the `MatRad_Config class <https://github.com/e0404/matRad/blob/master/MatRad_Config.m>`_.
 
@@ -101,6 +104,18 @@ The following properties of the pln struct can additionally be adjusted. If they
 **pln.propStf.addMargin**
 
     If this property is set to *true*, the target is expanded for beamlet finding. Default: *true*.
+
+**pln.propStf.ignoreOutsideDensities**
+    If this property is set to *true*, the stf generation will ignore densities outside of the patient, this is important for the selection of energies for the particles. Default: *false*.
+
+**pln.propStf.useGivenEqDensityCube**
+    If this property is set to *true*, the stf generation calculation will use the given equivalent density cube. Default: *false*.
+
+**pln.propDoseCalc.ignoreOutsideDensities**
+    If this property is set to *true*, the dose calculation will ignore densities outside of the patient. This should be the same as **pln.propStf.ignoreOutsideDensities**. Default: *false*.
+
+**pln.propDoseCalc.useGivenEqDensityCube**
+    If this property is set to *true*, the dose calculation will use the given equivalent density cube. This should be the same as **pln.propStf.useGivenEqDensityCube**. Default: *false*.
 
 **pln.propDoseCalc.doseGrid.resolution**
 
