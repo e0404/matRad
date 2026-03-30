@@ -1,6 +1,5 @@
 % this script creates a testing ct,cst,stf,pln for external radiation
 % therapy, that can be red in and used in testing
-
 %% create ct
 ct = struct();
 ct.cubeDim = [20,10,10];
@@ -54,7 +53,11 @@ for radMode = radModes
     pln.propStf.bixelWidth = 10;
     pln.propDoseCalc.doseGrid.resolution = struct('x',10,'y',10,'z',10); %[mm]
     
-    %pln.bioModel = matRad_bioModel(pln.radiationMode,'none');
+    if strcmp(radMode,'carbon')
+        pln.bioModel = matRad_bioModel(pln.radiationMode,'LEM');
+    else
+        pln.bioModel = matRad_bioModel(pln.radiationMode,'none');
+    end
     
     %% Generate Beam Geometry STF
     pln.propStf.addMargin    = false; %to make smaller stf, les bixel
