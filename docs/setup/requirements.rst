@@ -43,7 +43,7 @@ Operating System
 
 Since we work in the programming environment MATLAB, operating system incompatibilities are not that common. They may arise, in particular, when using mex interfaces. Our precompiled mex interfaces should work on Windows 10 & 11, Ubuntu 18.04 (and later), and MacOS High Sierra. Please let us know if you run into issues, but the first step should always be trying to compile the mex interfaces yourself.
 
-Especially on Mac, there might be substantial issues due to their extremely annoying quarantine system, which prevents the execution of downloaded files. If you run into this problem, you need to remove the respective quarantine flags, especially from mex files you intend to use.
+Especially on Mac, there might be substantial issues due to their annoying quarantine system, which prevents the execution of downloaded files. If you run into this problem, you need to remove the respective quarantine flags, especially from mex files you intend to use.
 
 Hardware Requirements
 ---------------------
