@@ -172,8 +172,9 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
         
         function kernels = interpolateKernelsInDepth(this,bixel)
             kernels = interpolateKernelsInDepth@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(this,bixel);
-
-            kernels = structfun(@(x) reshape(x,[size(bixel.radDepths), size(x,2)]),kernels,'UniformOutput',false);
+            
+            % reshape output while clipping negatives (from extrapolation)
+            kernels = structfun(@(x) reshape(x .* (x >= 0),[size(bixel.radDepths), size(x,2)]),kernels,'UniformOutput',false);
         end
         
         function bixel = calcParticleBixel(this,bixel)
