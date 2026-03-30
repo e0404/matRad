@@ -377,13 +377,16 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         end
 
     
-        function progressUpdate(this,pos,total)
+        function progressUpdate(this,pos,total,linereset)
             % This function updates the progress of the dose calculation process.
             % It can handle both absolute and relative progress updates.
             % If only one argument is provided, it assumes a relative progress
             % update from 0 to 1000. If two arguments are provided, it uses the
             % actual values to calculate the progress percentage.
-            
+            if nargin < 4
+                linereset = false;
+            end
+
             % Default total value handling
             if nargin < 3
                 pos = pos*1000; % Assume pos is a relative progress if total is not provided
@@ -403,7 +406,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             % Log progress if the log level is high enough
             % This allows for detailed tracking of the calculation progress in logs
             if matRad_cfg.logLevel > 2
-                matRad_progress(pos,total); % Log the progress
+                matRad_progress(pos,total,linereset); % Log the progress
             end
             
             % Update the waitbar with the current progress if it exists

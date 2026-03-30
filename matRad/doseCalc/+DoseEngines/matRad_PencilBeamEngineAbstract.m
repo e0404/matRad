@@ -111,6 +111,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
                     %Initialize Beam Geometry
                     currBeam = this.initBeam(dij,ct,cst,scenStf,i);
+                    progressLineReset = true;
 
                     %Keep tabs on bixels computed in this beam
                     bixelBeamCounter = 0;
@@ -148,7 +149,8 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                         % Progress Update & Bookkeeping
                         bixelCounter = bixelCounter + currRay.numOfBixels;
                         bixelBeamCounter = bixelBeamCounter + currRay.numOfBixels;
-                        this.progressUpdate(bixelCounter,dij.totalNumOfBixels);
+                        this.progressUpdate(bixelCounter,dij.totalNumOfBixels,progressLineReset);
+                        progressLineReset = false;
                     end
                 end
             end
