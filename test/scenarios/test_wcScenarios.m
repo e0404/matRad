@@ -206,3 +206,32 @@ assertEqual(model.numOfSetupGridPoints, 1);
 assertEqual(model.totNumShiftScen, 1);
 assertEqual(model.totNumRangeScen, 3);
 assertEqual(model.totNumScen, 3);
+
+function test_worstCaseScenarioSub2scenIxDegenerate
+% Regression test for sub2scenIx when scenMask dimensions are degenerate
+% (i.e., MATLAB squeezes trailing/leading singletons).
+
+% Case 1: numOfRangeGridPoints=1 -> scenMask is [1 x N_S x 1], MATLAB
+% squeezes to [1 x N_S] (row vector). sub2scenIx must NOT fall into the
+% CT-only branch (iscolumn = false for row vectors).
+model = matRad_WorstCaseScenarios();
+model.numOfRangeGridPoints = 1;
+assertEqual(model.totNumRangeScen, 1);
+assertEqual(model.totNumShiftScen, 7);
+assertEqual(model.numOfCtScen, 1);
+% Verify sub2scenIx round-trips correctly for every scenario
+for s = 1:model.totNumScen
+    scenIx = model.sub2scenIx(model.linearMask(s, 1), model.linearMask(s, 2), model.linearMask(s, 3));
+    assertEqual(model.scenNum(scenIx), s);
+end
+
+% Case 2: numOfSetupGridPoints=1 -> scenMask is [1 x 1 x N_R], stays 3-D.
+% sub2ind path must work with the known dimensions, not size(scenMask).
+model2 = matRad_WorstCaseScenarios();
+model2.numOfSetupGridPoints = 1;
+assertEqual(model2.totNumShiftScen, 1);
+assertEqual(model2.totNumRangeScen, 3);
+for s = 1:model2.totNumScen
+    scenIx = model2.sub2scenIx(model2.linearMask(s, 1), model2.linearMask(s, 2), model2.linearMask(s, 3));
+    assertEqual(model2.scenNum(scenIx), s);
+end
