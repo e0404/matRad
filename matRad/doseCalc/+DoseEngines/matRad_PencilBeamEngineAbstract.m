@@ -169,30 +169,10 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
             dij = initDoseCalc@DoseEngines.matRad_DoseEngineBase(this,ct,cst,stf);
             
-            % calculate rED or rSP from HU or take provided wedCube
-            if this.useGivenEqDensityCube && ~isfield(ct,'cube')
-                matRad_cfg.dispWarning('HU Conversion requested to be omitted but no ct.cube exists! Will override and do the conversion anyway!');
-                this.useGivenEqDensityCube = false;
-            end
-
-            if this.useGivenEqDensityCube
-                matRad_cfg.dispInfo('Omitting HU to rED/rSP conversion and using existing ct.cube!\n');
-            else
-                ct = matRad_calcWaterEqD(ct, stf); % Maybe we can avoid duplicating the CT here?
-            end
 
             this.cubeWED = cellfun(@(x) cast(x,this.precision),ct.cube, 'UniformOutput',false);
             if isfield(ct,'hlut')
                 this.hlut = cast(ct.hlut,this.precision);
-            end
-
-            % ignore densities outside of contours
-            if this.ignoreOutsideDensities
-                eraseCtDensMask = ones(prod(ct.cubeDim),1);
-                eraseCtDensMask(this.VctGrid) = 0;
-                for i = 1:ct.numOfCtScen
-                    this.cubeWED{i}(eraseCtDensMask == 1) = 0;
-                end
             end
 
             % Allocate memory for quantity containers
