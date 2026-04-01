@@ -14,7 +14,7 @@ These include the radiation modality, the machine information, the number of fra
 
 **pln.radiationMode**
 
-    Specifies the radiation modality. Can either be *photons*, *protons*, *helium* or *carbon*.
+    Specifies the radiation modality. Can either be *photons*, *protons*, *helium*, *carbon*, *VHEE* or *brachy*.
 
 **pln.machine**
 
@@ -22,7 +22,7 @@ These include the radiation modality, the machine information, the number of fra
 
 **pln.numOfFractions**
 
-    Specifies the number of fractions. Note that this parameter only needs to be set for biological treatment planning for carbon ions, where the optimization process is based on the fraction dose and not based on the overall dose.
+    Specifies the number of fractions. Note that this parameter only needs to be set for biological treatment planning with variable RBE since the optimization process is based on the fraction dose and not based on the overall dose.
 
 **pln.multScen**
     Specifies a scenario model for the treatment plan, see :mod:`matRad.scenarios`.
@@ -99,7 +99,7 @@ The following properties of the pln struct can additionally be adjusted. If they
 
 **pln.propStf.longitudinalSpotSpacing**
 
-    Specifies the longitudinal spot spacing. Default: *3* mm.
+    Specifies the longitudinal spot spacing. Default: *3* mm. For particles this corresponds to the distance of Bragg peaks of neighboring energies.
 
 **pln.propStf.addMargin**
 
