@@ -146,9 +146,6 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
             %ones given in the propStf struct
             if isfield(pln,'propStf') && isstruct(pln.propStf)
                 plnStruct = pln.propStf; %get remaining fields
-                if numel(plnStruct.gantryAngles) ~= numel(plnStruct.couchAngles)
-                    matRad_cfg.dispError('Inconsistent number of couch and gantry angles. Select the same number!');
-                end
                 if isfield(plnStruct,'generator') && ~isempty(plnStruct.generator) && ~any(strcmp(plnStruct.generator,this.shortName))
                     matRad_cfg.dispWarning('Inconsistent stf generators given! pln asks for ''%s'', but you are using ''%s''!',plnStruct.generator,this.shortName);
                 end
