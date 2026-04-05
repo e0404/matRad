@@ -8,7 +8,7 @@ About |matRad_logo_header|
 
 matRad is an open source software for radiation treatment planning of intensity-modulated photon, proton, and carbon ion therapy. matRad is developed for educational and research purposes. It is entirely written in `MATLAB <http://www.mathworks.com/products/matlab>`_.
 
-This wiki is the main source of information for users working with, and developers contributing to matRad. If you do not already have a local copy of matRad or you want to know how to get started, have a look at the `Quick Start Guide <!>`_. For detailed technical information about matRad and its functions please check out the `Technical Documentation <!>`_.
+This wiki is the main source of information for users working with, and developers contributing to matRad. If you do not already have a local copy of matRad or you want to know how to get started, have a look at the :ref:`Quick Start Guide <quickstart>`. For detailed technical information about matRad and its functions please check out the :ref:`Technical Documentation <techdoc>`.
 
 Please send us an `email <mailto:matrad@dkfz.de?Subject=matRad newsletter>`_ if you want to receive the matRad newsletter that informs about the latest developments on an irregular basis.
 
@@ -41,6 +41,6 @@ If you have any questions or wish to contribute to the development of matRad, yo
 Development team
 ----------------
 
-matRad development is driven by the research group `Radiotherapy Optimization <http://www.dkfz.de/radopt>`_ within the `Division of Medical Physics in Radiation Oncology <http://www.dkfz.de/en/medphys>`_ at the `German Cancer Research Center DKFZ <http://www.dkfz.de>`_ in `Heidelberg <https://goo.gl/maps/BBo2E>`_.
+matRad development is driven by the research group `Radiotherapy Optimization <http://www.dkfz.de/radopt>`_ within the `Division of Medical Physics in Radiation Oncology <http://www.dkfz.de/en/medical-physics-in-radiation-oncology/>`_ at the `German Cancer Research Center DKFZ <http://www.dkfz.de/en/>`_ in `Heidelberg <https://goo.gl/maps/BBo2E>`_.
 
 We are always looking for beta testers that can provide external feedback on our code and developers that would like to take an active role in the future. Do not hesitate and `get in touch <mailto:contact@matrad.org>`__.

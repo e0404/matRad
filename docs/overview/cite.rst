@@ -36,7 +36,7 @@ The main citation for matRad is `Development of the open-source dose calculation
 
 ----
 
-The first paper about matRad was submitted to the `2015 World Congress on Medical Physics & Biomedical Engineering <http://wc2015.org/>`_ by Eduardo Cisternas Jimenéz:
+The first paper about matRad was submitted to the `2015 World Congress on Medical Physics & Biomedical Engineering <https://iupesm.org/wc2015/>`_ by Eduardo Cisternas Jimenéz:
 `matRad – a multi-modality open source 3D treatment planning toolkit <https://github.com/e0404/matRad/wiki/documents/matRad_Full_Paper_Eduardo.pdf>`_.
 
 .. collapse:: matRad conference paper - BibTeX
