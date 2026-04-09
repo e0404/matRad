@@ -55,9 +55,9 @@ for radMode = radModes
     pln.propStf.bixelWidth = 10;
     pln.propDoseCalc.doseGrid.resolution = struct('x', 10, 'y', 10, 'z', 10); % [mm]
     if radMode == "carbon"
-        pln.bioModel =  matRad_bioModel(pln.radiationMode, 'LEM');
+        pln.bioModel = 'LEM'
     else
-        pln.bioModel = matRad_bioModel(pln.radiationMode, 'none');
+        pln.bioModel = 'none'
     end
 
     %% Generate Beam Geometry STF
