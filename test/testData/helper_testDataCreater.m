@@ -54,8 +54,11 @@ for radMode = radModes
     pln.propStf.longitudinalSpotSpacing = 8;
     pln.propStf.bixelWidth = 10;
     pln.propDoseCalc.doseGrid.resolution = struct('x', 10, 'y', 10, 'z', 10); % [mm]
-
-    pln.bioModel = matRad_bioModel(pln.radiationMode, 'none');
+    if radMode == "carbon"
+        pln.bioModel =  matRad_bioModel(pln.radiationMode, 'LEM');
+    else
+        pln.bioModel = matRad_bioModel(pln.radiationMode, 'none');
+    end
 
     %% Generate Beam Geometry STF
     pln.propStf.addMargin    = false; % to make smaller stf, les bixel
