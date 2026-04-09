@@ -322,7 +322,7 @@ for i = 1:numel(radModes)
     assertTrue(isfile([folderName filesep 'matRad_cube.dat']));
     assertTrue(isfile([folderName filesep 'matRad_cube.txt']));
     assertTrue(isfile([folderName filesep 'MCparam.mat']));
-    for j = 1:pln.propStf.numOfBeams
+    for j = 1:numel(pln.propStf.gantryAngles)
         assertTrue(isfile([folderName filesep 'beamSetup_matRad_plan_field' num2str(j) '.txt']));
         assertTrue(isfile([folderName filesep 'matRad_plan_field' num2str(j) '_run1.txt']));
 
