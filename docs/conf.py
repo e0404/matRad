@@ -54,17 +54,13 @@ html_static_path = ["_static"]
 html_css_files = ["style.css"]
 html_logo = "../matRad/gfx/matrad_logo.png"
 
-favicon_path = "_static/favicon_hat/"
+templates_path = ["_templates"]
 
-html_extrahead = [
-    '<link rel="icon" href="{favicon_path}favicon.ico">',
-    '<link rel="icon" type="image/png" sizes="32x32" href="{favicon_path}favicon-32x32.png">',
-    '<link rel="icon" type="image/png" sizes="16x16" href="{favicon_path}favicon-16x16.png">',
-    '<link rel="apple-touch-icon" href="{favicon_path}apple-touch-icon.png">',
-    '<link rel="manifest" href="{favicon_path}site.webmanifest">',
-]
+favicon_path = "_static/favicon_mR/"
 
-html_favicon = f"{favicon_path}favicon.ico"
+html_context = {
+	"fav": favicon_path,
+}
 
 html_theme_options = {
     'logo_only': True,
