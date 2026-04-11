@@ -95,7 +95,7 @@ The column ``OP`` (*overlap priority*) is very important as it determines the as
 
 *Note: Changing the VOI Type from OAR to target will lead to additional beamlets or spots that need to be considered for the dose-influence-matrix calculation. As a result, these changes have to be done before the Dij-calculation.*
 
-.. image:: /images/QuickStart_GUI_objectives_and_constraints.png
+.. image:: /images/QuickStart_GUI_objectives_and_constraints_Window.png
 
 **Calculate Dose influence matrix**
 
@@ -132,19 +132,17 @@ Once the fluence optimization has converged the resulting dose distribution will
 
 You can choose between an intensity plot (for the coronal, sagital and axial plane) and a profile plot (either depth or lateral, see images below), for which you can choose your slice to be displayed, respectively:
 
-.. list-table::
-   :widths: 50 50
-   :align: center
+.. image:: /images/QuickStart_GUI_Profile_Depth.png
+   :width: 50%
+      
+.. image:: /images/QuickStart_GUI_Profile_Lateral.png
+   :width: 50%
+ 
 
-   * - ..image::/images/QuickStart_GUI_Profile_Depth.png
-          :width: 100%
+Furthermore, you can have a look at your slice within a 3D model of your patient by clicking *Open 3D Viewer*:
 
-     - ..image::/images/QuickStart_GUI_Profile_Lateral.png
-          :width: 100%
+.. image:: /images/QuickStart_GUI_3D_Viewer.png
 
-Furthermore, you can have a look at your slice within a 3D model of your patient by clicking *Open 3D Viewer*
-
-.. image:: /images/QuickStart_GUI_3D_Viewer
 
 To calculate a DVH of all VOIs and to see the quality indicators (which contain the mean/max/min dose for each VOI) you can use the **Show DVH/QI** button in the *Visualization* section.
 
