@@ -1,5 +1,4 @@
-function matRad_progress(currentIndex, totalNumberOfEvaluations)
-% matRad progress bar
+function matRad_progress(currentIndex, totalNumberOfEvaluations, linereset)
 % 
 % call:
 %   matRad_progress(currentIndex, totalNumberOfEvaluations)
@@ -7,6 +6,7 @@ function matRad_progress(currentIndex, totalNumberOfEvaluations)
 % input:
 %   currentIndex:               current iteration index
 %   totalNumberOfEvaluations:   maximum iteration index
+%   linereset:                  (optional) reset output to new line
 %
 % output:
 %   graphical display of progess. make sure there is no other output
@@ -27,15 +27,17 @@ function matRad_progress(currentIndex, totalNumberOfEvaluations)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
- 
-% If it's not the first step, erase the stuff printed before
-if (currentIndex == 1)
-    fprintf('Progress: ');
+
+if nargin < 3 
+    linereset = false;
 end
- 
-if (currentIndex > 1)
-  Length = numel(sprintf('%3.2f %%',(currentIndex-1)/totalNumberOfEvaluations*100));
-  fprintf(repmat('\b',1,Length));
+
+% If it's not the first step, erase the stuff printed before
+if (currentIndex == 1 || linereset)
+    fprintf('Progress: ');
+else
+    length = numel(sprintf('%3.2f %%',(currentIndex-1)/totalNumberOfEvaluations*100));
+    fprintf(repmat('\b',1,length));
 end
  
 % Print the progress tool
@@ -45,5 +47,7 @@ fprintf('%3.2f %%',currentIndex/totalNumberOfEvaluations*100);
 if (currentIndex == totalNumberOfEvaluations)
     fprintf('\n');
 end
- 
+
 end
+
+
