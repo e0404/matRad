@@ -13,7 +13,7 @@ To execute the matRad GUI using MATLAB you need to:
 If you prefer to use the :file:`matRad.m` script to execute matRad, check out the :ref:`matRad script <run_script>`.
 For more detailed information about the different features of the GUI you can take a look at :ref:`matRad GUI Overview <guioverview>`.
 
-Step 1: Open matRad folder in MATLAB
+Step 1: Open the matRad folder in MATLAB
 ------------------------------------
 
 To use matRad you need to open the matRad folder in MATLAB.
@@ -33,7 +33,7 @@ Step 2: Start the matRad GUI
 To start the GUI select :file:`matRadGUI.m` from your current folder and run it (right-click → run or F9) or simply type ``matRadGUI`` in your command window.
 Now the empty GUI should be opened:
 
-.. image:: /images/GUI-Guide_emptyGUIScreenshot.png
+.. image:: /images/QuickStart_GUI_matRad_empty_GUI.png
     :width: 650px
 
 If the GUI is not empty, then there is a patient already loaded in your workspace. To get an empty GUI you can clear your workspace and restart the GUI. However, this is not necessary as you can simply load a new patient.
@@ -47,12 +47,12 @@ First, you need to load the patient data. Therefore, the matRad release contains
 To load a patient click the **Load \*.mat data** button in the **Workflow** section.
 A window should open. In the folder ``phantoms``, you can find different patient files.
 
-.. image:: /images/GUI-Guide_loadDataGUIScreenshot.png
+.. image:: /images/QuickStart_GUI_load_patient.png
 
 Here you can select which patient file (``*.mat``) you want to load. Upon opening the ``*.mat`` file the patient data is loaded into the GUI:
 On the right side of the GUI you should see the patient-CT with the defined VOIs. On the left side, the optimization parameter table should now be filled.
 
-.. image:: /images/GUI-Guide_loadedGUIScreenshot.png
+.. image:: /images/QuickStart_GUI_loaded_patient.png
     :width: 650px
 
 **Set plan parameters**
@@ -61,27 +61,33 @@ Now you can start to adjust the plan parameters:
 
 +-----------------------------------------------------------------------------------------------+
 | The bixel width, as well as the isocenter, can be adjusted but should already be set to       |
+|												|
 | reasonable values.                                                                            |
 +-----------------------------------------------------------------------------------------------+
 | To set the beam directions you have to select the according gantry and couch angles. Every    |
+|												|
 | gantry angle defines a beam and needs a couch angle.                                          |
 +-----------------------------------------------------------------------------------------------+
 | For the radiation mode, you can choose photons, protons or carbon.                            |
 +-----------------------------------------------------------------------------------------------+
 | If you set carbon as radiation mode, you can activate the biological optimization. You can    |
+|												|
 | choose between an effect based optimization (*effect*) or the optimization of the RBE-weighted|
+|												|
 | dose (*RBExD*).                                                                               |
 +-----------------------------------------------------------------------------------------------+
 | For the radiation mode "photons", you have the option to run a MLC sequencing, where you can  |
+|												|
 | set the number of stratification levels and additionally you can run a direct aperture        |
+|												|
 | optimization.                                                                                 |
 +-----------------------------------------------------------------------------------------------+
 
-.. image:: /images/GUI-Guide_planParametersGUIScreenshot.png
+.. image:: /images/QuickStart_GUI_Plan_Window.png
 
-**Set optimization parameters**
+**Set objectives and constraints**
 
-The optimization parameters are used to influence the outcome of the fluence optimization. Here you can set the parameters of the VOIs (e.g. min/max dose, penalty, overlap priority, etc.). For more information, take a look at the :doc:`../datastructures/cst`. Using the '**+**' and '**-**' buttons you can add and remove VOIs.
+The objectives and constraints are used to influence the outcome of the fluence optimization. Here you can set the parameters of the VOIs (e.g. min/max dose, penalty, overlap priority, etc.). For more information, take a look at the :doc:`../datastructures/cst`. Using the '**+**' and '**-**' buttons you can add and remove VOIs.
 
 The column ``p`` (*penalty*) determines the relative weighting of the objective within the overall weighted sum objective function. The column ``Parameters`` lets you specify additional parameters for given objectives. For squared over- and underdosage as well as squared deviation, this simply corresponds to the reference dose level, for EUD it is the exponent. A mean dose objective does not require an additional parameter.
 
@@ -89,27 +95,27 @@ The column ``OP`` (*overlap priority*) is very important as it determines the as
 
 *Note: Changing the VOI Type from OAR to target will lead to additional beamlets or spots that need to be considered for the dose-influence-matrix calculation. As a result, these changes have to be done before the Dij-calculation.*
 
-.. image:: /images/GUI-Guide_optimizationParametersGUIScreenshot.png
+.. image:: /images/QuickStart_GUI_objectives_and_constraints_Window.png
 
 **Calculate Dose influence matrix**
 
 To start the calculation of the dose-influence-matrix you simply need to click the **Calc. Dose Influence** button in the workflow:
 
-.. image:: /images/GUI-Guide_workflowGUIScreenshot.png
+.. image:: /images/QuickStart_GUI_readyForDoseCalc.png
 
 You should see a window pop up, showing a progress bar of the calculation:
 
-.. image:: /images/GUI-Guide_dijProgressBarScreenshot.png
+.. image:: /images/QuickStart_GUI_DoseCalc.png
 
 In addition, the progress is displayed in the Command Window:
 
-.. image:: /images/GUI-Guide_dijOutputScreenshot.png
+.. image:: /images/QuickStart_GUI_finishedDoseCalc.png
 
 **Execute fluence optimization**
 
 Once the dose calculation is completed, you can start the fluence optimization by clicking the **Optimize** button in the workflow section. The iterations of the optimization are displayed in the Command Window:
 
-.. image:: /images/GUI-Guide_fluenceOptOutputScreenshot.png
+.. image:: /images/QuickStart_GUI_finished_Optimization.png
 
 To adjust the convergence criteria you can specify the *maximum number of iterations* and the *convergence* precision in the *Optimization Parameter* section. Default values are: 1000 iterations and a precision of :math:`10^{-3}`:
 (Precision ≡ \|(FuncValue_old − FuncValue_new) / FuncValue_old\|)
@@ -121,12 +127,28 @@ Step 4: Visualize resulting treatment plan
 
 Once the fluence optimization has converged the resulting dose distribution will be displayed in the GUI. Here you can adjust the visualization parameters to display different slices/planes, use different plot types, etc.
 
-.. image:: /images/GUI-Guide_optimizedGUIScreenshot.png
+.. image:: /images/QuickStart_GUI_GUI_after_Optimization.png
     :width: 650px
+
+You can choose between an intensity plot (for the coronal, sagital and axial plane) and a profile plot (either depth or lateral, see images below), for which you can choose your slice to be displayed, respectively:
+
+.. image:: /images/QuickStart_GUI_Profile_Depth.png
+   :width: 50%
+      
+.. image:: /images/QuickStart_GUI_Profile_Lateral.png
+   :width: 50%
+ 
+
+Furthermore, you can have a look at your slice within a 3D model of your patient by clicking *Open 3D Viewer*:
+
+.. image:: /images/QuickStart_GUI_3D_Viewer.png
+
 
 To calculate a DVH of all VOIs and to see the quality indicators (which contain the mean/max/min dose for each VOI) you can use the **Show DVH/QI** button in the *Visualization* section.
 
 .. image:: /images/DVHVisScreenshot.png
+
+
 
 
 Step 5: Import additional patient data

@@ -42,7 +42,7 @@ def _patch_matlabdomain_noindex() -> None:
 _patch_matlabdomain_noindex()
 
 project = "matRad"
-copyright = "2025, e0404"
+copyright = "2026, e0404"
 author = "e0404"
 
 version = "3.2.2"
@@ -53,6 +53,15 @@ html_theme = "sphinx_rtd_theme" #pip install sphinx-rtd-theme
 html_static_path = ["_static"]
 html_css_files = ["style.css"]
 html_logo = "../matRad/gfx/matrad_logo.png"
+
+templates_path = ["_templates"]
+
+favicon_path = "_static/favicon_mR/"
+
+html_context = {
+	"fav": favicon_path,
+}
+
 html_theme_options = {
     'logo_only': True,
     'navigation_depth': 5,
