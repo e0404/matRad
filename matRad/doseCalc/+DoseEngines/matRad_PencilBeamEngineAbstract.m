@@ -123,7 +123,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
                         for ctScen = 1:this.multScen.numOfCtScen
                             for rangeShiftScen = 1:this.multScen.totNumRangeScen
-                                fullScenIdx = this.multScen.sub2scenIx(ctScen,shiftScen,rangeShiftScen);
+                                fullScenIdx = this.multScen.sub2scenIx(ctScen,shiftScen,rangeShiftScen,'position');
  
                                 if this.multScen.scenMask(fullScenIdx)
                                     %TODO: This shows we probably need
@@ -673,4 +673,3 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
     end
 
 end
-

@@ -226,9 +226,9 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             
             resultGUI = [];
             
+            activeScenIx = find(this.multScen.scenMask);
             for i = 1:this.multScen.totNumScen
-                scenSubIx = this.multScen.linearMask(i,:);
-                resultGUItmp = matRad_calcCubes(ones(dij.numOfBeams,1),dij,this.multScen.sub2scenIx(scenSubIx(1),scenSubIx(2),scenSubIx(3)));
+                resultGUItmp = matRad_calcCubes(ones(dij.numOfBeams,1),dij,activeScenIx(i));
                 if i == 1
                     resultGUI = resultGUItmp;
                 end
