@@ -1,6 +1,6 @@
 function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol)
 % matRad QI calculation
-% 
+%
 % call
 %   qi = matRad_calcQualityIndicators(cst,pln,doseCube)
 %   qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol)
@@ -8,16 +8,19 @@ function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol)
 % input
 %   cst:                matRad cst struct
 %   pln:                matRad pln struct
-%   doseCube:           arbitrary doseCube (e.g. physicalDose)
+%   doseCube:           per-fraction doseCube (e.g. physicalDose)
 %   refGy: (optional)   array of dose values used for V_XGy calculation
-%                       default is [40 50 60]
+%                       defaults are derived from doseCube
 %   refVol:(optional)   array of volumes (0-100) used for D_X calculation
-%                       default is [2 5 95 98]
+%                       default is [2 5 50 95 98]
 %                       NOTE: Call either both or none!
+%                       Dose values are evaluated per fraction. Use display
+%                       scaling outside this function for total-dose plots.
 %
 % output
-%   qi                  various quality indicators like CI, HI (for 
-%                       targets) and DX, VX within a structure set   
+%   qi:                 various quality indicators like CI, HI (for
+%                       targets), coverage indicators, and DX, VX within a
+%                       structure set
 %
 % References
 %   van't Riet et. al., IJROBP, 1997 Feb 1;37(3):731-6.
@@ -25,13 +28,13 @@ function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2016 the matRad development team. 
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
+% Copyright 2016-2026 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -39,30 +42,44 @@ function qi = matRad_calcQualityIndicators(cst,pln,doseCube,refGy,refVol)
 
 matRad_cfg = MatRad_Config.instance();
 
+if ~exist('refGy', 'var')
+    refGy = [];
+end
+
+if ~exist('refVol', 'var')
+    refVol = [];
+end
+
 if ~exist('refVol', 'var') || isempty(refVol)
     refVol = [2 5 50 95 98];
 end
 
 if ~exist('refGy', 'var') || isempty(refGy)
-    refGy = floor(linspace(0,max(doseCube(:)),6)*10)/10;
+    finiteDose = doseCube(isfinite(doseCube));
+    if isempty(finiteDose)
+        refGy = 0;
+    else
+        refGy = floor(linspace(0,max(finiteDose(:)),6)*10)/10;
+    end
 end
 
-    
 % calculate QIs per VOI
 qi = struct;
+targetDoseInfo = matRad_getTargetReferenceDoses(cst,pln);
+targetDoseCstIndex = [targetDoseInfo.cstIndex];
+
 for runVoi = 1:size(cst,1)
-    
+
     indices     = cst{runVoi,4}{1};
-    numOfVoxels = numel(indices); 
+    numOfVoxels = numel(indices);
     voiPrint    = sprintf('%3d %20s',cst{runVoi,1},cst{runVoi,2}); %String that will print quality indicators
-    
+    qi(runVoi).name = cst{runVoi,2};
+
     % get Dose, dose is sorted to simplify calculations
     doseInVoi    = sort(doseCube(indices));
-        
+
     if ~isempty(doseInVoi)
-        
-        qi(runVoi).name = cst{runVoi,2};
-        
+
         % easy stats
         qi(runVoi).mean = mean(doseInVoi);
         qi(runVoi).std  = std(doseInVoi);
@@ -89,54 +106,44 @@ for runVoi = 1:size(cst,1)
         voiPrint = sprintf('%s\n%27s',voiPrint,' ');
 
         % if current voi is a target -> calculate homogeneity and conformity
-        if strcmp(cst{runVoi,3},'TARGET') > 0      
+        if strcmp(cst{runVoi,3},'TARGET') > 0
 
-            % loop over target objectives and get the lowest dose objective 
-            referenceDose = inf;
-            
-            if isstruct(cst{runVoi,6})
-                cst{runVoi,6} = num2cell(arrayfun(@matRad_DoseOptimizationFunction.convertOldOptimizationStruct,cst{runVoi,6}));
-            end
-            
-            for runObjective = 1:numel(cst{runVoi,6})
-               % check if this is an objective that penalizes underdosing 
-               obj = cst{runVoi,6}{runObjective};
-               if ~isa(obj,'matRad_DoseOptimizationFunction')
-                   try
-                       obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
-                   catch ME
-                       matRad_cfg.dispWarning('Objective/Constraint not valid!\n%s',ME.message)
-                       continue;
-                   end
-               end
-               
-               %if strcmp(cst{runVoi,6}(runObjective).type,'square deviation') > 0 || strcmp(cst{runVoi,6}(runObjective).type,'square underdosing') > 0
-               if isa(obj,'DoseObjectives.matRad_SquaredDeviation') || isa(obj,'DoseObjectives.matRad_SquaredUnderdosing')
-                   referenceDose = (min(obj.getDoseParameters(),referenceDose))/pln.numOfFractions;
-               end            
+            targetDoseIx = find(targetDoseCstIndex == runVoi,1,'first');
+            if isempty(targetDoseIx)
+                referenceDose = inf;
+            else
+                referenceDose = targetDoseInfo(targetDoseIx).refDose;
             end
 
-            if referenceDose == inf 
+            if ~isfinite(referenceDose)
                 voiPrint = sprintf('%s%s',voiPrint,'Warning: target has no objective that penalizes underdosage, ');
             else
- 
                 StringReferenceDose = regexprep(num2str(round(referenceDose*100)/100),'\D','_');
                 % Conformity Index, fieldname contains reference dose
                 VTarget95 = sum(doseInVoi >= 0.95*referenceDose); % number of target voxels recieving dose >= 0.95 dPres
                 VTreated95 = sum(doseCube(:) >= 0.95*referenceDose);  %number of all voxels recieving dose >= 0.95 dPres ("treated volume")
-                qi(runVoi).(['CI_' StringReferenceDose 'Gy']) = VTarget95^2/(numOfVoxels * VTreated95); 
+                qi(runVoi).(['CI_' StringReferenceDose 'Gy']) = VTarget95^2/(numOfVoxels * VTreated95);
 
-                % Homogeneity Index (one out of many), fieldname contains reference dose        
+                % Homogeneity Index (one out of many), fieldname contains reference dose
                 qi(runVoi).(['HI_' StringReferenceDose 'Gy']) = (DX(5) - DX(95))/referenceDose * 100;
 
-                voiPrint = sprintf('%sCI = %6.4f, HI = %5.2f for reference dose of %3.1f Gy\n',voiPrint,...
-                                   qi(runVoi).(['CI_' StringReferenceDose 'Gy']),qi(runVoi).(['HI_' StringReferenceDose 'Gy']),referenceDose);
+                qi(runVoi).referenceDose = referenceDose;
+                qi(runVoi).COV_95 = VX(0.95*referenceDose);
+                qi(runVoi).COV_98 = VX(0.98*referenceDose);
+                qi(runVoi).COV_99 = VX(0.99*referenceDose);
+                qi(runVoi).COV1 = VX(referenceDose);
+
+                voiPrint = sprintf('%sCI = %6.4f, HI = %5.2f for reference dose of %3.1f Gy\n%27s',voiPrint,...
+                                   qi(runVoi).(['CI_' StringReferenceDose 'Gy']),qi(runVoi).(['HI_' StringReferenceDose 'Gy']),referenceDose,' ');
+                voiPrint = sprintf('%sCOV95 = %6.2f%%, COV98 = %6.2f%%, COV99 = %6.2f%%, COV1 = %6.2f%%\n', ...
+                                   voiPrint,100*qi(runVoi).COV_95,100*qi(runVoi).COV_98, ...
+                                   100*qi(runVoi).COV_99,100*qi(runVoi).COV1);
             end
         end
         %We do it this way so the percentages in the string are not interpreted as format specifiers
-        matRad_cfg.dispInfo('%s\n',voiPrint);    
-    else        
-        matRad_cfg.dispInfo('%d %s - No dose information.',cst{runVoi,1},cst{runVoi,2});        
+        matRad_cfg.dispInfo('%s\n',voiPrint);
+    else
+        matRad_cfg.dispInfo('%d %s - No dose information.',cst{runVoi,1},cst{runVoi,2});
     end
 end
 
@@ -154,4 +161,3 @@ for i = 1:size(cst,1)
 end
 
 end
-

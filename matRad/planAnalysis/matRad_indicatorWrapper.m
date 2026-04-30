@@ -1,6 +1,6 @@
 function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol)
 % matRad indictor wrapper
-% 
+%
 % call
 %   [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI)
 %   [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol)
@@ -9,8 +9,8 @@ function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol)
 %   cst:                  matRad cst struct
 %   pln:                  matRad pln struct
 %   resultGUI:            matRad resultGUI struct
-%   refGy: (optional)     array of dose values used for V_XGy calculation
-%                         default is [40 50 60]
+%   refGy: (optional)     per-fraction dose values used for V_XGy
+%                         calculation. Defaults are derived from doseCube.
 %   refVol:(optional)     array of volumes (0-100) used for D_X calculation
 %                         default is [2 5 95 98]
 %                         NOTE: Call either both or none!
@@ -25,13 +25,13 @@ function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2017 the matRad development team. 
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
+% Copyright 2017 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -39,18 +39,19 @@ function [dvh,qi] = matRad_indicatorWrapper(cst,pln,resultGUI,refGy,refVol)
 % Initialize the matRad configuration instance
 matRad_cfg = MatRad_Config.instance();
 % Display a deprecation warning for the current function
-matRad_cfg.dispDeprecationWarning('The matRad_indicatorWrapper function will be deprecated soon!\nPlan analysis is now handled by matRad_planAnalysis!');
+matRad_cfg.dispDeprecationWarning(['The matRad_indicatorWrapper function will be deprecated soon!\n', ...
+    'Plan analysis is now handled by matRad_planAnalysis!']);
 
 % Initialize an empty cell array for optional arguments to translate the into key-value pairs
 args = {};
 % Check if 'refVol' variable exists and add it to the arguments if it does
-if exist('refVol', 'var') 
-    args{end+1,end+2} = {'refVol',refVol};
+if exist('refVol', 'var') && ~isempty(refVol)
+    args = [args {'refVol',refVol}];
 end
 
 % Check if 'refGy' variable exists and add it to the arguments if it does
-if exist('refGy', 'var')
-    args{end+1,end+2} = {'refGy',refGy};
+if exist('refGy', 'var') && ~isempty(refGy)
+    args = [args {'refGy',refGy}];
 end
 
 % Initialize empty structures for ct and stf, required for matRad_planAnalysis
@@ -65,6 +66,4 @@ dvh = resultGUI.dvh;
 qi = resultGUI.qi;
 
 end
-
-
 
