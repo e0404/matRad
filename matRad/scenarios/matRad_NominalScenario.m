@@ -96,7 +96,14 @@ classdef matRad_NominalScenario < matRad_ScenarioModel
                 this.totNumScen = totNumScen;
             end
         end
+
+        function scenIx = sub2scenIx(this,ctScen,shiftScen,rangeShiftScen,ctScenReference)
+            if nargin < 5
+                scenIx = sub2scenIx@matRad_ScenarioModel(this,ctScen,shiftScen,rangeShiftScen);
+            else
+                scenIx = sub2scenIx@matRad_ScenarioModel(this,ctScen,shiftScen,rangeShiftScen,ctScenReference);
+            end
+        end
         
     end
 end
-

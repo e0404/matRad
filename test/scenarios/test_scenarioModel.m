@@ -44,6 +44,19 @@ function test_scenarioAbstractAvailableTypes()
         assertEqual(model.name,availableTypes{i});
     end
 
+function test_extractSingleScenario_accepts_sparse_ct_scenario_probabilities
+    ct.numOfCtScen = 3;
+    model = matRad_RandomScenarios(ct);
+    model.ctScenProb = [2 1];
+
+    scenario = model.extractSingleScenario(1);
+
+    assertEqual(scenario.ctScenProb,[2 1]);
+    assertEqual(scenario.ctScenIx,2);
+    assertEqual(scenario.sub2scenIx(1,1,1),2);
+    assertEqual(scenario.sub2scenIx(1,1,1,'position'),2);
+    assertEqual(scenario.sub2scenIx(2,1,1,'id'),2);
+    assertExceptionThrown(@() scenario.sub2scenIx(2,1,1,'position'),'matRad:Error');
 
 function instanceTest_listAllScenarios(model)
     model.listAllScenarios();
@@ -103,4 +116,3 @@ function instanceTest_TYPE(model)
 function instanceTest_wcFactor(model)
     %assertWarning(@() model.wcFactor,'matRad:Deprecated');
     assertEqual(model.TYPE,model.name);
-

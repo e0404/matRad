@@ -159,10 +159,15 @@ classdef (Abstract) matRad_ScenarioModel < handle
             newInstance = matRad_NominalScenario();
             
             ctScenNum = this.linearMask(scenNum,1);
+            ctScenProbIx = find(this.ctScenProb(:,1) == ctScenNum,1,'first');
+            if isempty(ctScenProbIx)
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Could not find CT scenario %d in ctScenProb.',ctScenNum);
+            end
             
             %First set properties that force an update
             newInstance.numOfCtScen         = 1;            
-            newInstance.ctScenProb          = this.ctScenProb(ctScenNum,:);
+            newInstance.ctScenProb          = this.ctScenProb(ctScenProbIx,:);
 
             %Now overwrite existing variables for correct probabilties and
             %error realizations
@@ -181,14 +186,16 @@ classdef (Abstract) matRad_ScenarioModel < handle
             %newInstance.updateScenarios();
         end
         
-        function scenIx = sub2scenIx(this,ctScen,shiftScen,rangeShiftScen)
+        function scenIx = sub2scenIx(this,ctScen,shiftScen,rangeShiftScen,ctScenReference)
             %Returns linear index in the scenario cell array from scenario
-            %subscript indices
-            if ~isvector(this.scenMask)
-                scenIx = sub2ind(size(this.scenMask),this.ctScenIx(ctScen),shiftScen,rangeShiftScen);
-            else
-                scenIx = this.ctScenIx(ctScen);
+            %subscript indices. The optional ctScenReference disambiguates
+            %whether ctScen is a local position ('position', default) or
+            %an absolute CT scenario id ('id').
+            if nargin < 5 || isempty(ctScenReference)
+                ctScenReference = 'position';
             end
+            ctScenId = resolveCtScenarioId(this,ctScen,ctScenReference);
+            scenIx = scenarioSub2Ind(this,ctScenId,shiftScen,rangeShiftScen);
         end
 
         function scenNum = scenNum(this,fullScenIx)
@@ -246,3 +253,80 @@ classdef (Abstract) matRad_ScenarioModel < handle
     end
 end
 
+function ctScenId = resolveCtScenarioId(scenarioModel,ctScen,ctScenReference)
+
+validatePositiveIntegerScalar(ctScen,'ctScen');
+ctScenReference = normalizeCtScenReference(ctScenReference);
+
+switch ctScenReference
+    case 'position'
+        if ctScen > size(scenarioModel.ctScenProb,1)
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispError('CT scenario position %d exceeds the scenario model size.',ctScen);
+        end
+        ctScenId = scenarioModel.ctScenProb(ctScen,1);
+    case 'id'
+        if ~any(scenarioModel.ctScenProb(:,1) == ctScen)
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispError('Could not find CT scenario %d in the scenario model.',ctScen);
+        end
+        ctScenId = ctScen;
+end
+
+end
+
+function ctScenReference = normalizeCtScenReference(ctScenReference)
+
+if isstring(ctScenReference) && isscalar(ctScenReference)
+    ctScenReference = char(ctScenReference);
+end
+
+if ~ischar(ctScenReference)
+    matRad_cfg = MatRad_Config.instance();
+    matRad_cfg.dispError('ctScenReference must be ''position'' or ''id''.');
+end
+
+switch lower(ctScenReference)
+    case {'position','ctscenposition'}
+        ctScenReference = 'position';
+    case {'id','ctscenid'}
+        ctScenReference = 'id';
+    otherwise
+        matRad_cfg = MatRad_Config.instance();
+        matRad_cfg.dispError('ctScenReference must be ''position'' or ''id''.');
+end
+
+end
+
+function scenIx = scenarioSub2Ind(scenarioModel,ctScenId,shiftScen,rangeShiftScen)
+
+validatePositiveIntegerScalar(shiftScen,'shiftScen');
+validatePositiveIntegerScalar(rangeShiftScen,'rangeShiftScen');
+
+if ~isvector(scenarioModel.scenMask)
+    scenMaskSize = size(scenarioModel.scenMask);
+    if ctScenId > scenMaskSize(1) || shiftScen > scenMaskSize(2) || ...
+            rangeShiftScen > scenMaskSize(3)
+        matRad_cfg = MatRad_Config.instance();
+        matRad_cfg.dispError('Scenario subscript exceeds the scenario mask dimensions.');
+    end
+    scenIx = sub2ind(scenMaskSize,ctScenId,shiftScen,rangeShiftScen);
+else
+    if ctScenId > numel(scenarioModel.scenMask)
+        matRad_cfg = MatRad_Config.instance();
+        matRad_cfg.dispError('CT scenario id %d exceeds the scenario mask dimensions.',ctScenId);
+    end
+    scenIx = ctScenId;
+end
+
+end
+
+function validatePositiveIntegerScalar(value,valueName)
+
+if ~(isnumeric(value) && isscalar(value) && isfinite(value) && ...
+        round(value) == value && value >= 1)
+    matRad_cfg = MatRad_Config.instance();
+    matRad_cfg.dispError('%s must be a positive integer scalar.',valueName);
+end
+
+end
