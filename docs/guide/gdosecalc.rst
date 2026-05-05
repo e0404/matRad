@@ -89,9 +89,12 @@ An experimental Monte Carlo dose engine based on a the reimplementation `ompMC <
 Base data / Machine
 ###################
 
-The necessary measured base data, namely the kernel functions as described by `Bortfeld et al. (1993) Medical Physics <http://scitation.aip.org/content/aapm/journal/medphys/20/2/10.1118/1.597070>`_ are supplied for a 6MV LINAC and stored in `photons_Generic.mat <https://github.com/e0404/matRad/blob/master/matRad/basedata/photons_Generic.mat>`_ as MATLAB piecewise polynomial.
+The necessary measured base data, namely the kernel functions as described by `Bortfeld et al. (1993) Medical Physics <http://scitation.aip.org/content/aapm/journal/medphys/20/2/10.1118/1.597070>`_ are supplied for a 6MV LINAC and stored in `photons_Generic.mat <https://github.com/e0404/matRad/blob/master/matRad/basedata/photons_Generic.mat>`_ as tabulated kernels.
 
-matRad's photon dose engine is calibrated such that a bixel intensity of all ones, i.e., ``w = ones(stf.totalNumOfBixels,1)``, yields a dose of roughly 1Gy in 5cm depth for a 5cm by 5cm field at SSD = 900mm. If you want to reproduce this, you can download a set of stf and pln structures that work with the TG119 phantom `here <https://raw.githubusercontent.com/wiki/e0404/matRad/resources/TG119absDosNorm.mat>`_.
+For the machine file format, see :ref:`here <_basedata_photons>`.
+
+matRad's photon dose engine is calibrated such that a bixel intensity of all ones, i.e., ``w = ones(stf.totalNumOfBixels,1)``, yields a dose of roughly 1Gy in 5cm depth for a 5cm by 5cm field at SSD = 900mm. 
+If you want to reproduce this, matRad contains a script ``matRad_photonDosimetry.m`` within the tools folder to reproduce the calibration.
 
 Approximations
 ##############
@@ -136,7 +139,7 @@ Base data
 
 The base data files `protons_Generic <https://github.com/e0404/matRad/blob/master/matRad/basedata/protons_Generic.mat>`_ and `carbon_Generic <https://github.com/e0404/matRad/blob/master/matRad/basedata/carbon_Generic.mat>`_ required for particle dose calculation include depth dose curves and tabulated lateral beam widths (as Gaussian sigmas) for a library of different energies. The proton base data has been computed based on an analytical approximation for the Bragg curve (`Bortfeld (1997) <http://www.ncbi.nlm.nih.gov/pubmed/9434986>`_) and Highland's approximation for multiple Coulomb scattering (`Gottschalk (1993) <http://www.sciencedirect.com/science/article/pii/0168583X9395944Z>`_). The carbon ion base data has been Monte Carlo simulated for an idealized beam line without monitoring devices. Besides this physical information, the carbon ion base data also includes α and β tables that have been computed based on LEM IV. Within the \*.mat files, the depth is stored in [mm], α tables are stored in [1/Gy], β tables are stored in [1/Gy^2], and the integrated depth dose distribution is stored in [MeV cm^2 /(g \* primary)]. Upon dose calculation, the integrated depth dose is converted to [Gy mm^2 /(1e6 primaries)] with a linear scaling in the function `matRad_calcParticleDoseBixel.m <https://github.com/e0404/matRad/blob/master/matRad_calcParticleDoseBixel.m>`_. Given that the lateral components of the dose calculation have the unit [1/mm^2], the weight of the pencil beams in matRad directly corresponds to the number of particles in [1e6] while the dose is given in [Gy].
 
-More detailed information on the structure of a particle base data file is given :ref:`here <basedata_particles>`!
+More detailed information on the structure of a photon base data file is given :ref:`here <basedata_photons>`!
 
 Approximations
 ##############

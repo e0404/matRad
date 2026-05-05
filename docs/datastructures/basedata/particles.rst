@@ -12,8 +12,8 @@ machine.meta
 ------------
 Stores relevant isolated meta information describing the actual base data file that does not fit into the machine.data structure.
 
-machine.meta.machine
-^^^^^^^^^^^^^^^^^^^^
+machine.meta.name
+^^^^^^^^^^^^^^^^^
 Actual machine name as string to identify the base data set during runtime.
 
 machine.meta.radiationMode

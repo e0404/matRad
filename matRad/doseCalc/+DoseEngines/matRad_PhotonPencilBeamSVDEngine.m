@@ -138,10 +138,30 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             %% Call Superclass init
             dij = initDoseCalc@DoseEngines.matRad_PencilBeamEngineAbstract(this,ct,cst,stf);
 
-            %% Validate some properties
+            %% Validate some properties and machine file version
+            %Check machine file version
+            if ~isfield(this.machine, 'version')
+                this.machine.version = 1;
+            end
+
+            % Kernels in matRad's original machine files were hardcoded to
+            % 0.5 mm spacing, which was included in the normalization for
+            % later convolution. Thus the units were not correctly given as
+            % 1/mm^2, but 1/(0.5^2 mm^2) --> factor 4
+            if this.machine.version < 2
+                kernelFn = fieldnames(this.machine.data.kernel);
+                nKernels = sum(strncmp('kernel',kernelFn,6));
+                for i = 1:numel(this.machine.data.kernel)
+                    for k = 1:nKernels
+                        %Correct kernel normalization to 1/mm^2
+                        this.machine.data.kernel(i).(sprintf('kernel%d',k)) = 4*this.machine.data.kernel(i).(sprintf('kernel%d',k));
+                    end
+                end
+            end
+
             % gaussian filter to model penumbra from (measured) machine output / see
             % diploma thesis siggel 4.1.2 -> https://github.com/e0404/matRad/wiki/Dose-influence-matrix-calculation
-            if isfield(this.machine.data,'penumbraFWHMatIso')
+            if isfield(this.machine.data,'penumbraFWHMatIso') %should only happen for version 1 machine files
                 this.penumbraFWHM = this.machine.data.penumbraFWHMatIso;
             else
                 this.penumbraFWHM = 5;
@@ -159,6 +179,11 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
                 this.kernelCutOff = this.geometricLateralCutOff;
             end
 
+
+            %Original kernels in the first machine files of matRad were
+            %scaled by a factor of 4 since the convolution grid of 0.5 mm
+            %was hardcoded
+
             %% kernel convolution
             % set up convolution grid
             if this.isFieldBasedDoseCalc
@@ -171,6 +196,11 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
                 end
 
                 this.fieldWidth = unique([stf.bixelWidth]);
+            end
+            
+            minKernelSpacing = min(diff(this.machine.data.kernelPos));
+            if this.intConvResolution > minKernelSpacing
+                matRad_cfg.dispWarning('Chosen kernel convolution resolution of %f mm is larger than minimum kernel spacing of %f mm. This can strongly affect absolute dosimetry.',this.intConvResolution,minKernelSpacing);
             end
 
             % calculate field size and distances
@@ -187,7 +217,9 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             [gaussFilterX,gaussFilterZ] = meshgrid(-gaussLimit*this.intConvResolution: ...
                 this.intConvResolution: ...
                 (gaussLimit-1)*this.intConvResolution);
-            this.gaussFilter =  1/(2*pi*sigmaGauss^2/this.intConvResolution^2) * exp(-(gaussFilterX.^2+gaussFilterZ.^2)/(2*sigmaGauss^2) );
+            %Scaling with intconvResolution^2 for correct convolution integral
+            %in mm units
+            this.gaussFilter =  this.intConvResolution^2 / (2*pi*sigmaGauss^2) * exp(-(gaussFilterX.^2+gaussFilterZ.^2)/(2*sigmaGauss^2) );
             this.gaussConvSize = 2*(fieldLimit + gaussLimit);
 
             % get kernel size and distances
@@ -272,7 +304,9 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
 
             for k = 1:length(useKernels)
                 kernel = this.machine.data.kernel(currSSDix).(useKernels{k});
-                this.kernelMxs{k} = interp1(kernelPos,kernel,sqrt(this.kernelX.^2+this.kernelZ.^2),'linear',0);
+                %Kernel has units 1/mm^2, needs to be scaled with the
+                %convolution resolution to obtain correct normalization
+                this.kernelMxs{k} = this.intConvResolution^2 * interp1(kernelPos,kernel,sqrt(this.kernelX.^2+this.kernelZ.^2),'linear',0);
             end
 
             % convolution here if no custom primary fluence and no field based dose calc
