@@ -130,7 +130,7 @@ Once the fluence optimization has converged the resulting dose distribution will
 .. image:: /images/QuickStart_GUI_GUI_after_Optimization.png
     :width: 650px
 
-You can choose between an intensity plot (for the coronal, sagital and axial plane) and a profile plot (either depth or lateral, see images below), for which you can choose your slice to be displayed, respectively:
+You can choose between an intensity plot (for the coronal, sagittal and axial plane) and a profile plot (either depth or lateral, see images below), for which you can choose your slice to be displayed, respectively:
 
 .. image:: /images/QuickStart_GUI_Profile_Depth.png
    :width: 50%
@@ -139,14 +139,14 @@ You can choose between an intensity plot (for the coronal, sagital and axial pla
    :width: 50%
  
 
-Furthermore, you can have a look at your slice within a 3D model of your patient by clicking *Open 3D Viewer*:
+Furthermore, you can have a look at your slice within a 3D model of your patient by clicking *Open 3D View*:
 
 .. image:: /images/QuickStart_GUI_3D_Viewer.png
 
 
 To calculate a DVH of all VOIs and to see the quality indicators (which contain the mean/max/min dose for each VOI) you can use the **Show DVH/QI** button in the *Visualization* section.
 
-.. image:: /images/DVHVisScreenshot.png
+.. image:: /images/QuickStart_GUI_DVH_QI.png
 
 
 
