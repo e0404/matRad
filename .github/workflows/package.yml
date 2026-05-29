@@ -58,13 +58,13 @@ jobs:
           fi
 
       - name: Install MATLAB with Compiler
-        uses: matlab-actions/setup-matlab@v2
+        uses: matlab-actions/setup-matlab@v3
         with:
-          release: latest
+          release: ${{ matrix.platform == 'macos-intel' && 'R2025b' || 'latest' }}
           products: MATLAB_Compiler MATLAB_Compiler_SDK Image_Processing_Toolbox Parallel_Computing_Toolbox Optimization_Toolbox Global_Optimization_Toolbox
 
       - name: Build Standalone
-        uses: matlab-actions/run-command@v2
+        uses: matlab-actions/run-command@v3
         with:
           command: |
             matRad_buildStandalone('isRelease',${{ steps.build-type.outputs.is_release }},'verbose',true,'json','build_result.json')
