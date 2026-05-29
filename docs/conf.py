@@ -56,7 +56,7 @@ html_logo = "../matRad/gfx/matrad_logo.png"
 
 templates_path = ["_templates"]
 
-favicon_path = "_static/favicon_mR/"
+favicon_path = "_static/favicon_hat/"
 
 html_context = {
 	"fav": favicon_path,
