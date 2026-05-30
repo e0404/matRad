@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Userfolders can now also be set via environment variable `MATRAD_USERDATA`
 - Documentation: Documented the userfolder feature and its usage as well as other datastructures more clearly
+- Added helper to create ring VOIs from margins around existing structures
 
 ### Fixed
 - possible negative doses in finesampling engine due to extrapolation in kernel interpolation
