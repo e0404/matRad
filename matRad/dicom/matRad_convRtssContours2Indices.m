@@ -2,15 +2,15 @@ function indices = matRad_convRtssContours2Indices(structure,ct)
 % matRad function to convert a polygon segmentation from an rt structure
 % set into a binary segmentation as required within matRad's cst struct
 % 
-% call
+% call:
 %   indices = matRad_convRtssContours2Indices(contPoints,ct)
 %
-% input
+% input:
 %   structure:      information about a single structure
 %   ct:             matRad ct struct where the binary segmentations will
 %                   be aligned to
 %
-% output
+% output:
 %   indicies:       indices of voxels of the ct cube that are inside the
 %                   contour
 %
@@ -19,7 +19,7 @@ function indices = matRad_convRtssContours2Indices(structure,ct)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -43,16 +43,14 @@ for i = 1:size(structure.item,2)
             matRad_cfg.dispError('Contour defined over multiple planes!');
         end
     
-        round2 = @(a,b) round(a*10^b)/10^b;
-        dicomCtSliceThickness = ct.dicomInfo.SliceThickness;
-        
-        %Sanity check
-        msg = checkSliceThickness(dicomCtSliceThickness);
-        if ~isempty(msg)
-            matRad_cfg.dispError('Slice Thickness of slice at %f could not be identified: %s',dicomCtSlicePos,msg);
+        slicesInMatradCt = matRad_findRtssContourSlicesInCt(dicomCtSlicePos, ct);
+        if isempty(slicesInMatradCt)
+            structureName = matRad_getStructureName(structure);
+            matRad_cfg.dispWarning(['Omitting contour data for ' structureName ...
+                                    ' at slice position ' num2str(dicomCtSlicePos) ...
+                                    'mm - no ct data available.\n']);
+            continue
         end
-        
-        slicesInMatradCt = find(dicomCtSlicePos+dicomCtSliceThickness/2 > ct.z & dicomCtSlicePos-dicomCtSliceThickness/2 <= ct.z);
         
         coords1 = interp1(ct.x,1:ct.cubeDim(2),structure.item(i).points(:,1),'linear','extrap');
         coords2 = interp1(ct.y,1:ct.cubeDim(1),structure.item(i).points(:,2),'linear','extrap');
@@ -72,14 +70,10 @@ indices = find(voiCube(:));
 
 end
 
-function msg = checkSliceThickness(dicomCtSliceThickness)
-    if isempty(dicomCtSliceThickness)
-        msg = 'Slice could not be identified (empty)';
-    elseif ~isscalar(dicomCtSliceThickness)
-        msg = 'Slice thickness not unique';
-    elseif ~isnumeric(dicomCtSliceThickness)
-        msg = 'unexpected value';
-    else
-        msg = '';
-    end
+function structureName = matRad_getStructureName(structure)
+if isfield(structure, 'structName') && ~isempty(structure.structName)
+    structureName = structure.structName;
+else
+    structureName = 'structure';
+end
 end

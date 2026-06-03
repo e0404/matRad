@@ -1,11 +1,10 @@
 function [cstStat, doseStat, meta] = matRad_samplingAnalysis(ct,cst,pln,caSampRes,mSampDose,resultGUInomScen,varargin)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad uncertainty sampling analysis function
 % 
-% call
+% call:
 %   [structureStat, doseStat] = samplingAnalysis(ct,cst,subIx,mSampDose,w)
 %
-% input
+% input:
 %   ct:                 ct cube
 %   cst:                matRad cst struct
 %   pln:                matRad's pln struct
@@ -18,10 +17,10 @@ function [cstStat, doseStat, meta] = matRad_samplingAnalysis(ct,cst,pln,caSampRe
 %                       settings
 %                       - 'GammaCriterion': 1x2 vector [%  mm] 
 %                       - 'Percentiles':    vector with desired percentiles
-%                                           between (0,1)
+%                       between (0,1)
 %   
 %
-% output
+% output:
 %   cstStat         structure-wise statistics (mean, max, percentiles, ...)
 %   doseStat        dose-wise statistics (mean, max, percentiles, ...)
 %   meta            contains additional information about sampling analysis
@@ -29,7 +28,7 @@ function [cstStat, doseStat, meta] = matRad_samplingAnalysis(ct,cst,pln,caSampRe
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2017 the matRad development team. 
+% Copyright 2017-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

@@ -1,0 +1,85 @@
+name: Build Standalone
+
+on:
+  push:
+    branches:
+      - master
+      - 'rc/**'
+      - 'devops/**'
+    tags:
+      - '**'
+  workflow_dispatch:
+    inputs:
+      isRelease:
+        description: 'Build as release'
+        type: boolean
+        default: false
+
+env:
+    MLM_LICENSE_TOKEN: ${{ secrets.MATLAB_BATCH_TOKEN }}
+
+jobs:
+  build-standalone:
+    name: Build Standalone (${{ matrix.platform }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+          - os: windows-latest
+            platform: windows
+          - os: macos-latest
+            platform: macos-silicon
+          - os: macos-15-intel
+            platform: macos-intel
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          submodules: 'false'
+
+      - name: Determine build type
+        id: build-type
+        shell: bash
+        run: |
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            echo "is_release=true" >> "$GITHUB_OUTPUT"
+            echo "artifact_name=matRad-standalone-${{ matrix.platform }}-${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.isRelease }}" == "true" ]]; then
+            echo "is_release=true" >> "$GITHUB_OUTPUT"
+            echo "artifact_name=matRad-standalone-${{ matrix.platform }}-manual-release" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_release=false" >> "$GITHUB_OUTPUT"
+            echo "artifact_name=matRad-standalone-${{ matrix.platform }}-dev" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install MATLAB with Compiler
+        uses: matlab-actions/setup-matlab@v2
+        with:
+          release: latest
+          products: MATLAB_Compiler MATLAB_Compiler_SDK Image_Processing_Toolbox Parallel_Computing_Toolbox Optimization_Toolbox Global_Optimization_Toolbox
+
+      - name: Build Standalone
+        uses: matlab-actions/run-command@v2
+        with:
+          command: |
+            matRad_buildStandalone('isRelease',${{ steps.build-type.outputs.is_release }},'verbose',true,'json','build_result.json')
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.build-type.outputs.artifact_name }}
+          path: build/installer/
+          if-no-files-found: error
+
+      - name: Upload build result JSON
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.build-type.outputs.artifact_name }}-build-info
+          path: build_result.json
+          if-no-files-found: warn

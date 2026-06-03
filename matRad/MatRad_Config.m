@@ -2,12 +2,13 @@ classdef MatRad_Config < handle
     % MatRad_Config MatRad Configuration class
     % This class is used globally through Matlab to handle default values and
     % logging and is declared as global matRad_cfg.
+    %
     % Usage:
     %    matRad_cfg = MatRad_Config.instance();
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
-    % Copyright 2019 the matRad development team.
+    % Copyright 2019-2026 the matRad development team.
     %
     % This file is part of the matRad project. It is subject to the license
     % terms in the LICENSE file found in the top-level directory of this
@@ -33,13 +34,13 @@ classdef MatRad_Config < handle
 
         devMode = false;
         eduMode = false;
-        
+
         gui;
 
         %User folders
         userfolders; %Cell array of user folders containing machines, patients, hluts. Default contains the userdata folder in the matRad root directory
     end
-    
+
     %Deprecated properties referencing a newer one
     properties (Dependent,SetAccess = private)
         %Default Properties
@@ -65,7 +66,7 @@ classdef MatRad_Config < handle
     properties (SetAccess = private, Dependent)
         matRadSrcRoot;      %Path to matRadSrcRoot ("matRad" subfolder of matRadRoot)
         primaryUserFolder;  %Points to the first entry in userfolders
-        exampleFolder;      %Contains examples  
+        exampleFolder;      %Contains examples
         thirdPartyFolder;   %Contains third party tools/libraries used in matRad
     end
 
@@ -75,28 +76,19 @@ classdef MatRad_Config < handle
             %  The configuration is implemented as a singleton and used globally
             %  Therefore its constructor is private
             %  For instantiation, use the static MatRad_Config.instance();
-            
-            %Set Path
+
+            %Set
             if isdeployed
                 obj.matRadRoot = [ctfroot filesep 'matRad'];
-
-                if ispc
-                    userdir= getenv('USERPROFILE');
-                else 
-                    userdir= getenv('HOME');
-                end
-
-                userfolderInHomeDir = [userdir filesep 'matRad'];               
-
-                obj.userfolders = {userfolderInHomeDir};
             else
                 obj.matRadRoot = fileparts(fileparts(mfilename('fullpath')));
                 addpath(genpath(obj.matRadSrcRoot));
                 addpath(obj.exampleFolder);
                 addpath(genpath(obj.thirdPartyFolder));
-                obj.userfolders = {[obj.matRadRoot filesep 'userdata' filesep]};
-            end           
-            
+            end
+
+            obj.updateUserfolders();
+
             %set version
             obj.getEnvironment();
             obj.matRad_version = matRad_version(obj.matRadRoot);
@@ -124,7 +116,7 @@ classdef MatRad_Config < handle
             %   Display to console will be called from the public wrapper
             %   functions dispError, dispWarning, dispInfo, dispDebug
             %
-            %  input
+            % input:
             %    type:			type of the log information.
             %                   Needs to be one of 'error', 'warning', 'info' or 'debug'.
             %    formatSpec: 	string to print using format specifications similar to fprintf
@@ -191,8 +183,7 @@ classdef MatRad_Config < handle
 
         function setDefaultProperties(obj)
             %setDefaultProperties set matRad's default computation
-            %   properties
-            %  input
+            % properties
 
             %Default machines
             obj.defaults.machine.photons    = 'Generic';
@@ -218,7 +209,7 @@ classdef MatRad_Config < handle
             obj.defaults.propStf.longitudinalSpotSpacing = 2;
             obj.defaults.propStf.addMargin = true; %expand target for beamlet finding
             obj.defaults.propStf.bixelWidth = 5;
-          
+
             %Dose Calculation Options
             obj.defaults.propDoseCalc.engine = {'SVDPB','HongPB'}; %Names for default engines used when no other is given
             obj.defaults.propDoseCalc.doseGrid.resolution = struct('x',3,'y',3,'z',3); %[mm]
@@ -232,6 +223,7 @@ classdef MatRad_Config < handle
             obj.defaults.propDoseCalc.calcLET = true; %calculate LETs for particles
             obj.defaults.propDoseCalc.selectVoxelsInScenarios = 'all';
             obj.defaults.propDoseCalc.airOffsetCorrection = true;
+
             % default properties for fine sampling calculation
             obj.defaults.propDoseCalc.fineSampling.sigmaSub = 1;
             obj.defaults.propDoseCalc.fineSampling.N = 2;
@@ -240,21 +232,21 @@ classdef MatRad_Config < handle
             obj.defaults.propDoseCalc.numHistoriesPerBeamlet = 2e4;
             obj.defaults.propDoseCalc.numHistoriesDirect = 1e6;
             obj.defaults.propDoseCalc.outputMCvariance = true;
-                      
+
             %Optimization Options
             obj.defaults.propOpt.optimizer = 'IPOPT';
             obj.defaults.propOpt.maxIter = 500;
             obj.defaults.propOpt.runDAO = 0;
             obj.defaults.propOpt.clearUnusedVoxels = false;
+            obj.defaults.propOpt.enableGPU = false;
 
             %Sequencing Options
             obj.defaults.propSeq.sequencer = 'siochi';
             obj.defaults.propSeq.numLevels = 5;
-            
 
 
             obj.disableGUI = false;
-            
+
             obj.defaults.samplingScenarios = 25;
 
             obj.devMode = false;
@@ -270,11 +262,11 @@ classdef MatRad_Config < handle
             obj.setDefaultProperties();
 
             obj.logLevel   = 1; %Omit output except errors
-            
+
             %Default Steering/Geometry Properties
             obj.defaults.propStf.longitudinalSpotSpacing = 20;
             obj.defaults.propStf.bixelWidth = 20;
-            
+
             %Dose Calculation Options
             obj.defaults.propDoseCalc.doseGrid.resolution = struct('x',5,'y',6,'z',7); %[mm]
             obj.defaults.propDoseCalc.geometricLateralCutOff = 20;
@@ -284,7 +276,7 @@ classdef MatRad_Config < handle
             %Monte Carlo options
             obj.defaults.propDoseCalc.numHistoriesPerBeamlet = 100;
             obj.defaults.propDoseCalc.numHistoriesDirect = 100;
-            
+
             %Optimization Options
             obj.defaults.propOpt.maxIter = 10;
 
@@ -294,26 +286,26 @@ classdef MatRad_Config < handle
 
             obj.devMode = true;
             obj.eduMode = false;
-        end  
-        
+        end
+
         %%for edu mode
         function setDefaultPropertiesForEduMode(obj)
             obj.setDefaultProperties();
 
             obj.logLevel = 2;
-            
+
             %Default Steering/Geometry Properties
             obj.defaults.propStf.longitudinalSpotSpacing = 3;
-            
+
             %Dose calculation options
             obj.defaults.propDoseCalc.resolution = struct('x',4,'y',4,'z',4); %[mm]
             obj.defaults.propDoseCalc.lateralCutOff = 0.975; %[rel.]
-            
+
             %Optimization Options
             obj.defaults.propOpt.maxIter = 500;
-                       
+
             obj.disableGUI = false;
-            
+
             obj.devMode = false;
             obj.eduMode = true;
         end
@@ -338,7 +330,7 @@ classdef MatRad_Config < handle
             catch
                 light = false;
             end
-            
+
             if light
                 theme = matRad_ThemeLight();
             else
@@ -350,7 +342,8 @@ classdef MatRad_Config < handle
 
         function dispDebug(obj,formatSpec,varargin)
             %dispDebug print debug messages (log level >= 4)
-            %  input
+            %
+            % input:
             %    formatSpec: 	string to print using format specifications similar to fprintf
             %    varargin:   	variables according to formatSpec
 
@@ -359,7 +352,8 @@ classdef MatRad_Config < handle
 
         function dispInfo(obj,formatSpec,varargin)
             %dispInfo print information console output (log level >= 3)
-            %  input
+            %
+            % input:
             %    formatSpec: 	string to print using format specifications similar to fprintf
             %    varargin:   	variables according to formatSpec
             obj.displayToConsole('info',formatSpec,varargin{:});
@@ -367,7 +361,8 @@ classdef MatRad_Config < handle
 
         function dispError(obj,formatSpec,varargin)
             %dispError print errors (forwarded to "error" that will stop the program) (log level >= 1)
-            %  input
+            %
+            % input:
             %    formatSpec: 	string to print using format specifications
             %                   similar to 'error'
             %    varargin:   	variables according to formatSpec
@@ -386,7 +381,8 @@ classdef MatRad_Config < handle
 
         function dispWarning(obj,formatSpec,varargin)
             %dispError print warning (forwarded to 'warning') (log level >= 2)
-            %  input
+            %
+            % input:
             %    formatSpec: 	string to print using format specifications
             %                   similar to 'warning'
             %    varargin:   	variables according to formatSpec
@@ -421,15 +417,15 @@ classdef MatRad_Config < handle
 
         function set.userfolders(obj,userfolders)
             oldFolders = obj.userfolders;
-                     
+
             %Check if folders need to be created
             for f = 1:numel(userfolders)
                 if ~isfolder(userfolders{f})
                     [status, msg] = mkdir(userfolders{f});
                     if status == 0
-                        obj.dispWarning('Userfolder %s not added beacuse it could not be created: %s',userfolders{f},msg);
+                        obj.dispWarning('Userfolder %s not added because it could not be created: %s',userfolders{f},msg);
                     else
-                        subfolders = {'hluts','machines','patients','scripts'};                    
+                        subfolders = {'hluts','machines','patients','scripts'};
                         [status,msgs] = cellfun(@(sub) mkdir([userfolders{f} filesep sub]),subfolders,'UniformOutput',false);
                         if any(cell2mat(status) ~= 1)
                             obj.dispWarning('Problem when creating subfolder in Userfolder %s!',userfolders{f})
@@ -450,10 +446,10 @@ classdef MatRad_Config < handle
                 else
                     allNewFolders = {[ctfroot filesep 'userdata' filesep]}; %We don't access obj.matRadRoot here because of Matlab's weird behavior with properties
                 end
-            end           
+            end
 
             cleanedNewFolders = cellfun(@(x) x(1).folder,allNewFolders,'UniformOutput',false);
-            
+
             % Identify newly added folder paths and add them to path
             if ~isdeployed
                 if ~isempty(oldFolders) %if statement for octave compatibility
@@ -475,7 +471,7 @@ classdef MatRad_Config < handle
                     rmpath(removedFolders);
                 end
             end
-            
+
             obj.userfolders = cleanedNewFolders;
         end
 
@@ -488,7 +484,7 @@ classdef MatRad_Config < handle
         end
 
         function exampleFolder = get.exampleFolder(obj)
-            exampleFolder = [obj.matRadRoot filesep 'examples' filesep];            
+            exampleFolder = [obj.matRadRoot filesep 'examples' filesep];
         end
 
         function thirdPartyFolder = get.thirdPartyFolder(obj)
@@ -497,8 +493,8 @@ classdef MatRad_Config < handle
 
         function propDoseCalc = get.propDoseCalc(obj)
             obj.dispWarning('Property ''propDoseCalc'' is deprecated. Use ''defaults.propDoseCalc'' instead!');
-            
-            fNames = fieldnames(obj.defaults.propDoseCalc);            
+
+            fNames = fieldnames(obj.defaults.propDoseCalc);
             for i = 1:numel(fNames)
                 fNewName = ['default' upper(fNames{i}(1)) fNames{i}(2:end)];
                 propDoseCalc.(fNewName) = obj.defaults.propDoseCalc.(fNames{i});
@@ -507,8 +503,8 @@ classdef MatRad_Config < handle
 
         function propStf = get.propStf(obj)
             obj.dispWarning('Property ''propStf'' is deprecated. Use ''defaults.propStf'' instead!');
-            
-            fNames = fieldnames(obj.defaults.propStf);            
+
+            fNames = fieldnames(obj.defaults.propStf);
             for i = 1:numel(fNames)
                 fNewName = ['default' upper(fNames{i}(1)) fNames{i}(2:end)];
                 propStf.(fNewName) = obj.defaults.propStf.(fNames{i});
@@ -517,8 +513,8 @@ classdef MatRad_Config < handle
 
         function propOpt = get.propOpt(obj)
             obj.dispWarning('Property ''propOpt'' is deprecated. Use ''defaults.propStf'' instead!');
-            
-            fNames = fieldnames(obj.defaults.propOpt);            
+
+            fNames = fieldnames(obj.defaults.propOpt);
             for i = 1:numel(fNames)
                 fNewName = ['default' upper(fNames{i}(1)) fNames{i}(2:end)];
                 propOpt.(fNewName) = obj.defaults.propOpt.(fNames{i});
@@ -583,6 +579,40 @@ classdef MatRad_Config < handle
                 warning("off","Octave:data-file-in-path");  %Disables warning of loading patients from the data folder
             end
         end
+
+        function userfolders = updateUserfolders(obj)
+            %obtain userfolders
+            if ispc
+                userdir = getenv('USERPROFILE');
+            else
+                userdir = getenv('HOME');
+            end
+            userfolderInHomeDir = [userdir filesep 'matRad'];
+
+            if isdeployed
+                userfolders = {userfolderInHomeDir};
+            else
+                userfolders = {[obj.matRadRoot filesep 'userdata' filesep]};
+                if isfolder(userfolderInHomeDir)
+                    userfolders{end+1} = userfolderInHomeDir;
+                end
+            end
+
+            % Append any paths from the MATRAD_USERDATA environment variable
+            % (semicolon-separated list of directories)
+            envUserData = getenv('MATRAD_USERDATA');
+            if ~isempty(envUserData)
+                envPaths = strsplit(envUserData, ';');
+                for i = 1:numel(envPaths)
+                    p = strtrim(envPaths{i});
+                    if ~isempty(p) && isfolder(p)
+                        userfolders{end+1} = p;
+                    end
+                end
+            end
+
+            obj.userfolders = userfolders;
+        end
     end
 
     %methods (Access = private)
@@ -594,7 +624,7 @@ classdef MatRad_Config < handle
         function obj = instance()
             %instance creates a singleton instance of MatRad_Config
             %  In MatRad_Config, the constructor is private to make sure only on global instance exists.
-            %  Call this static functino to get or create an instance of the matRad configuration class
+            %  Call this static function to get or create an instance of the matRad configuration class
             persistent uniqueInstance;
 
             if isempty(uniqueInstance)
@@ -628,9 +658,9 @@ classdef MatRad_Config < handle
             end
 
             % If the saved object is loaded as a struct there was a problem
-            % with the generic loading process most likly a version-conflict
+            % with the generic loading process most likely a version-conflict
             % regarding the structs, in order to fix this, do a custom
-            % loading process including recursivly copying the conflicting structs
+            % loading process including recursively copying the conflicting structs
             if isstruct(sobj)
                 warning('The  loaded object differs from the current MatRad_Config class, resuming the loading process with the overloaded loadobj function!');
                 obj = MatRad_Config();
@@ -642,10 +672,10 @@ classdef MatRad_Config < handle
                 % matRad_version field from the loaded struct, in order to
                 % not overwrite the version later
                 if (isfield(sobj, 'matRad_version') && ~(strcmp(obj.matRad_version, sobj.matRad_version)))
-                    warning('MatRad version or git Branch of the loaded object differs from the curret version!');
+                    warning('MatRad version or git Branch of the loaded object differs from the current version!');
                     sobj = rmfield(sobj, 'matRad_version');
                 end
-                % Itterate over the properties of the newly created MatRad_Config object
+                % Iterate over the properties of the newly created MatRad_Config object
                 for i = 1:length(props)
                     % check if the field exists in the loaded object
                     if(isfield(sobj,props{i}))
@@ -673,4 +703,3 @@ classdef MatRad_Config < handle
 
     end
 end
-

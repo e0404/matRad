@@ -1,14 +1,14 @@
 function writePlanDeliveryFile(this, fName)
 % FRED helper to write file for plan delivery routine
-% call
+% call:
 %   writePlanDeliveryFile(fName)
 %
-% input
+% input:
 %   fName: tring specifying the file path and name for saving the data.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2023 the matRad development team.
+% Copyright 2023-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this

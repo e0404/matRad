@@ -2,11 +2,10 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
 % matRad_DoseEngineParticlePB:
 %   Implements an engine for particle based dose calculation
 %   For detailed information see superclass matRad_DoseEngine
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2022 the matRad development team.
+% Copyright 2022-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
@@ -149,7 +148,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
         function bixel = initBixel(this,currRay,k)
             % matRad initialize general bixel geometry for particle dose calc
             %
-            % call
+            % call:
             %   bixel = this.initBixel(currRay,k)
             
             bixel = struct();
@@ -532,15 +531,15 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             % matRad function to calculate a depth dependend lateral cutoff
             % for each pristine particle beam
             %
-            % call
+            % call:
             %   this.calcLateralParticleCutOff(cutOffLevel,stf)
             %
-            % input
+            % input:
             %   this:        current engine object includes machine base data file
             %   cutOffLevel:    cut off level - number between 0 and 1
             %   stfElement:  matRad steering information struct for a single beam
             %
-            % output
+            % output:
             %   machine:    	changes in the object property machine base data file including an additional field representing the lateral
             %                    cutoff
             %

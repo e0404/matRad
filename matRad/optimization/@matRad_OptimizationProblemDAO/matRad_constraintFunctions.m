@@ -1,16 +1,16 @@
 function c = matRad_constraintFunctions(optiProb,apertureInfoVec,dij,cst)
 % matRad IPOPT callback: constraint function for direct aperture optimization
 % 
-% call
+% call:
 %   c = matRad_constraintFunctions(optiProb,apertureInfoVec,dij,cst)
 %
-% input
+% input:
 %   optiProb:       option struct defining the type of optimization
 %   apertueInfoVec: aperture info vector
 %   dij:            dose influence matrix
 %   cst:            matRad cst struct
 %
-% output
+% output:
 %   c:              value of constraints
 %
 % Reference
@@ -21,7 +21,7 @@ function c = matRad_constraintFunctions(optiProb,apertureInfoVec,dij,cst)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

@@ -1,12 +1,12 @@
 function matRad_assignPropertiesFromStruct(obj,propertiesStruct,overwrite,fieldChangedWarningMessage)
 % matRad helper function to configure object from structure
 %
-% call
+% call:
 %   obj = matRad_assignPropertiesFromStruct(obj,propertiesStruct,overwrite,fieldChangedWarningMessage)
 %   obj = matRad_assignPropertiesFromStruct(obj,propertiesStruct,overwrite)
 %   obj = matRad_assignPropertiesFromStruct(obj,propertiesStruct)
 %
-% input
+% input:
 %   obj:                        Object to be configured
 %   propertiesStruct:           Structure containing properties to be
 %                               assigned
@@ -15,7 +15,7 @@ function matRad_assignPropertiesFromStruct(obj,propertiesStruct,overwrite,fieldC
 %   fieldChangedWarningMessage: (optional) Custom warning message for
 %                               changed fields
 %
-% output
+% output:
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
 %               biological optimization) RBE-weighted dose etc.
 %   optimizer:  Used Optimizer Object
@@ -25,7 +25,7 @@ function matRad_assignPropertiesFromStruct(obj,propertiesStruct,overwrite,fieldC
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2016 the matRad development team.
+% Copyright 2016-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this

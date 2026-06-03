@@ -1,11 +1,11 @@
 function markerHandle = matRad_plotIsoCenterMarker(axesHandle,pln,ct,plane,slice,style)
 % matRad function that plots an isocenter marker
 %
-% call
+% call:
 %   markerHandle = matRad_plotIsoCenterMarker(axesHandle,pln,ct,plane,slice)
 %   markerHandle = matRad_plotIsoCenterMarker(axesHandle,pln,ct,plane,slice,style)
 %
-% input
+% input:
 %   axesHandle          handle to axes the marker should be displayed in
 %   pln                 matRad plan structure
 %   ct                  matRad ct structure
@@ -16,7 +16,7 @@ function markerHandle = matRad_plotIsoCenterMarker(axesHandle,pln,ct,plane,slice
 %                       with export to tikz for example
 %                       
 %
-% output
+% output:
 %   markerHandle:       handle to the isocenter marker
 %
 % References
@@ -25,7 +25,7 @@ function markerHandle = matRad_plotIsoCenterMarker(axesHandle,pln,ct,plane,slice
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

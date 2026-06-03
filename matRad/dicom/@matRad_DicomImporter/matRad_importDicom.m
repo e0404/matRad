@@ -2,18 +2,21 @@ function matRad_importDicom(obj)
 % matRad wrapper function to import a predefined set of dicom files files
 % into matRad's native data formats
 % 
-% In your object, there must be properties that contain: 
+% In your object, there must be properties that contain:
+%
 %   - list of files to be imported.
+%
 % Optional:
-%   - а boolean; if you don't want to import complete DICOM information, 
-%   set it to false.
 %
-% Next matRad structures are created in the object and saved in the 
-% workspace:
+%   - a boolean; if you don't want to import complete DICOM information, set it to false.
+%
+% Next matRad structures are created in the object and saved in the workspace:
+%
 %   - ct, cst, stf, pln, resultGUI.
-% *to save them as .mat file you can use matRad_importDicomWidget
 %
-% call
+% To save them as .mat file you can use matRad_importDicomWidget
+%
+% call:
 %   matRad_importDicom(obj)
 %
 % References
@@ -21,7 +24,7 @@ function matRad_importDicom(obj)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

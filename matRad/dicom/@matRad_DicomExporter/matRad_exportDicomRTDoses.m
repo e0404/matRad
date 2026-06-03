@@ -2,7 +2,7 @@ function obj = matRad_exportDicomRTDoses(obj)
 % matRad function to exportt resultGUI to dicom RT dose. 
 % Function of matRad_DicomExporter
 % 
-% call
+% call:
 %   matRad_DicomExporter.matRad_exportDicomRTDoses()
 %
 % References
@@ -10,7 +10,7 @@ function obj = matRad_exportDicomRTDoses(obj)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

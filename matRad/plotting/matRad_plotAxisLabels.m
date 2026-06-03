@@ -2,19 +2,19 @@ function  matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize,tickdi
 % matRad function to plot x and y labels denoting the ct dimensions 
 % according to the selected plane
 %
-% call
+% call:
 %   matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize)
 %   matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize,
 %   tickdist)
 %
-% input
+% input:
 %   axesHandle         handle to axes the slice should be displayed in
 %   ct                 matRad ct structure
 %   plane              plane view (coronal=1,sagittal=2,axial=3)
 %   slice              slice in the selected plane of the 3D cube
 %   defaultFontSize    default font size as double value
 %
-% output
+% output:
 %   -
 %
 % References
@@ -22,7 +22,7 @@ function  matRad_plotAxisLabels(axesHandle,ct,plane,slice,defaultFontSize,tickdi
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2017 the matRad development team. 
+% Copyright 2017-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

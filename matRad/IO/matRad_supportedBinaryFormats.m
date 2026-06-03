@@ -1,12 +1,12 @@
 function [readers,writers] = matRad_supportedBinaryFormats()
 % matRad function to obtain supported binary formats
 % 
-% call
+% call:
 %   [read,write] = matRad_supportedBinaryFormats()
 %
-% input
+% input:
 %
-% output
+% output:
 %   read    cell array with file filter in first column, name in second
 %           column, and handle to read function in third column
 %   write   cell array with file filter in first column, name in second
@@ -17,7 +17,7 @@ function [readers,writers] = matRad_supportedBinaryFormats()
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

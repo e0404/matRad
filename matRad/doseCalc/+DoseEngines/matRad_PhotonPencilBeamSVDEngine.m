@@ -5,11 +5,10 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
     %
     % References
     %   [1] http://www.ncbi.nlm.nih.gov/pubmed/8497215
+
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %
-    % Copyright 2022 the matRad development team.
+    % Copyright 2022-2026 the matRad development team.
     %
     % This file is part of the matRad project. It is subject to the license
     % terms in the LICENSE file found in the top-level directory of this
@@ -77,10 +76,10 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
         function this = matRad_PhotonPencilBeamSVDEngine(pln)
             % Constructor
             %
-            % call
+            % call:
             %   engine = DoseEngines.matRad_PhotonPencilBeamSVDEngine(pln)
             %
-            % input
+            % input:
             %   ct:                         matRad ct struct
             %   stf:                        matRad steering information struct
             %   pln:                        matRad plan meta information struct
@@ -139,10 +138,30 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             %% Call Superclass init
             dij = initDoseCalc@DoseEngines.matRad_PencilBeamEngineAbstract(this,ct,cst,stf);
 
-            %% Validate some properties
+            %% Validate some properties and machine file version
+            %Check machine file version
+            if ~isfield(this.machine, 'version')
+                this.machine.version = 1;
+            end
+
+            % Kernels in matRad's original machine files were hardcoded to
+            % 0.5 mm spacing, which was included in the normalization for
+            % later convolution. Thus the units were not correctly given as
+            % 1/mm^2, but 1/(0.5^2 mm^2) --> factor 4
+            if this.machine.version < 2
+                kernelFn = fieldnames(this.machine.data.kernel);
+                nKernels = sum(strncmp('kernel',kernelFn,6));
+                for i = 1:numel(this.machine.data.kernel)
+                    for k = 1:nKernels
+                        %Correct kernel normalization to 1/mm^2
+                        this.machine.data.kernel(i).(sprintf('kernel%d',k)) = 4*this.machine.data.kernel(i).(sprintf('kernel%d',k));
+                    end
+                end
+            end
+
             % gaussian filter to model penumbra from (measured) machine output / see
             % diploma thesis siggel 4.1.2 -> https://github.com/e0404/matRad/wiki/Dose-influence-matrix-calculation
-            if isfield(this.machine.data,'penumbraFWHMatIso')
+            if isfield(this.machine.data,'penumbraFWHMatIso') %should only happen for version 1 machine files
                 this.penumbraFWHM = this.machine.data.penumbraFWHMatIso;
             else
                 this.penumbraFWHM = 5;
@@ -171,6 +190,11 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
                 matRad_cfg.dispWarning('photon machine file does not contain weight to MU scaling factor. Assuming %.1f.',dij.weightToMU);
             end
 
+
+            %Original kernels in the first machine files of matRad were
+            %scaled by a factor of 4 since the convolution grid of 0.5 mm
+            %was hardcoded
+
             %% kernel convolution
             % set up convolution grid
             if this.isFieldBasedDoseCalc
@@ -184,9 +208,14 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
 
                 this.fieldWidth = unique([stf.bixelWidth]);
             end
+            
+            minKernelSpacing = min(diff(this.machine.data.kernelPos));
+            if this.intConvResolution > minKernelSpacing
+                matRad_cfg.dispWarning('Chosen kernel convolution resolution of %f mm is larger than minimum kernel spacing of %f mm. This can strongly affect absolute dosimetry.',this.intConvResolution,minKernelSpacing);
+            end
 
             % calculate field size and distances
-            fieldLimit = ceil(this.fieldWidth/(2*this.intConvResolution));
+            fieldLimit = cast(ceil(this.fieldWidth/(2*this.intConvResolution)),this.precision);
             [this.F_X,this.F_Z] = meshgrid(-fieldLimit*this.intConvResolution: ...
                 this.intConvResolution: ...
                 (fieldLimit-1)*this.intConvResolution);
@@ -195,16 +224,18 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
 
             sigmaGauss = this.penumbraFWHM / sqrt(8*log(2)); % [mm]
             % use 5 times sigma as the limits for the gaussian convolution
-            gaussLimit = ceil(5*sigmaGauss/this.intConvResolution);
+            gaussLimit = cast(ceil(5*sigmaGauss/this.intConvResolution),this.precision);
             [gaussFilterX,gaussFilterZ] = meshgrid(-gaussLimit*this.intConvResolution: ...
                 this.intConvResolution: ...
                 (gaussLimit-1)*this.intConvResolution);
-            this.gaussFilter =  1/(2*pi*sigmaGauss^2/this.intConvResolution^2) * exp(-(gaussFilterX.^2+gaussFilterZ.^2)/(2*sigmaGauss^2) );
+            %Scaling with intconvResolution^2 for correct convolution integral
+            %in mm units
+            this.gaussFilter =  this.intConvResolution^2 / (2*pi*sigmaGauss^2) * exp(-(gaussFilterX.^2+gaussFilterZ.^2)/(2*sigmaGauss^2) );
             this.gaussConvSize = 2*(fieldLimit + gaussLimit);
 
             % get kernel size and distances
 
-            kernelLimit = ceil(this.kernelCutOff/this.intConvResolution);
+            kernelLimit = cast(ceil(this.kernelCutOff/this.intConvResolution),this.precision);
             [this.kernelX, this.kernelZ] = meshgrid(-kernelLimit*this.intConvResolution: ...
                 this.intConvResolution: ...
                 (kernelLimit-1)*this.intConvResolution);
@@ -226,7 +257,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             % convolution if we use a uniform fluence
             if ~this.isFieldBasedDoseCalc
                 % Create fluence matrix
-                this.Fpre = ones(floor(this.fieldWidth/this.intConvResolution));
+                this.Fpre = ones(floor(this.fieldWidth/this.intConvResolution),this.precision);
 
                 if ~this.useCustomPrimaryPhotonFluence
                     % gaussian convolution of field to model penumbra
@@ -253,16 +284,16 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             % Method for initializing the beams for analytical pencil beam
             % dose calculation
             %
-            % call
+            % call:
             %   this.initBeam(ct,stf,dij,i)
             %
-            % input
+            % input:
             %   ct:                         matRad ct struct
             %   stf:                        matRad steering information struct
             %   dij:                        matRad dij struct
             %   i:                          index of beam
             %
-            % output
+            % output:
             %   dij:                        updated dij struct
 
             currBeam = initBeam@DoseEngines.matRad_PencilBeamEngineAbstract(this,currBeam,ct,cst,stf,i);
@@ -284,7 +315,9 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
 
             for k = 1:length(useKernels)
                 kernel = this.machine.data.kernel(currSSDix).(useKernels{k});
-                this.kernelMxs{k} = interp1(kernelPos,kernel,sqrt(this.kernelX.^2+this.kernelZ.^2),'linear',0);
+                %Kernel has units 1/mm^2, needs to be scaled with the
+                %convolution resolution to obtain correct normalization
+                this.kernelMxs{k} = this.intConvResolution^2 * interp1(kernelPos,kernel,sqrt(this.kernelX.^2+this.kernelZ.^2),'linear',0);
             end
 
             % convolution here if no custom primary fluence and no field based dose calc
@@ -301,7 +334,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
         function [bixel] = computeBixel(this,currRay,k)
             % matRad photon dose calculation for an individual bixel
             %
-            % call
+            % call:
             %   bixel = this.computeBixel(currRay,k)
             
             bixel = struct();
@@ -358,18 +391,18 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             % matRad dij sampling function
             % This function samples.
             %
-            % call
+            % call:
             %   [ixNew,bixelDoseNew] =
             %   this.sampleDij(ix,bixelDose,radDepthV,rad_distancesSq,sType,Param)
             %
-            % input
+            % input:
             %   ix:               indices of voxels where we want to compute dose influence data
             %   bixelDose:        dose at specified locations as linear vector
             %   radDepthV:        radiological depth vector
             %   rad_distancesSq:  squared radial distance to the central ray
             %   bixelWidth:       bixelWidth as set in pln (optional)
             %
-            % output
+            % output:
             %   ixNew:            reduced indices of voxels where we want to compute dose influence data
             %   bixelDoseNew      reduced dose at specified locations as linear vector
             %
@@ -559,12 +592,12 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             %   called individually for certain applications without having
             %   a fully defined dose engine
             %
-            % call
+            % call:
             %   dose = this.calcPhotonDoseBixel(SAD,m,betas,Interp_kernel1,...
             %                  Interp_kernel2,Interp_kernel3,radDepths,geoDists,...
             %                  isoLatDistsX,isoLatDistsZ)
             %
-            % input
+            % input:
             %   SAD:                source to axis distance
             %   m:                  absorption in water (part of the dose calc base
             %                       data)
@@ -578,7 +611,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             %   isoLatDistsZ:       lateral distance in Z direction in BEV from central
             %                       ray at iso center plane
             %
-            % output
+            % output:
             %   dose:               photon dose at specified locations as linear vector
             %
             % References

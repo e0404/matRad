@@ -3,13 +3,13 @@ function [apertureInfoVec, mappingMx, limMx] = matRad_daoApertureInfo2Vec(apertu
 % A vector representation of the aperture weights and shapes and (optional) 
 % some meta information needed during optimization is generated.
 %
-% call
+% call:
 %   [apertureInfoVec, mappingMx, limMx] = matRad_daoApertureInfo2Vec(apertureInfo)
 %
-% input
+% input:
 %   apertureInfo:    aperture weight and shape info struct
 %
-% output
+% output:
 %   apertureInfoVec: vector respresentation of the apertue weights and shapes
 %   mappingMx:       mapping of vector components to beams, shapes and leaves
 %   limMx:           bounds on vector components, i.e., minimum and maximum
@@ -22,7 +22,7 @@ function [apertureInfoVec, mappingMx, limMx] = matRad_daoApertureInfo2Vec(apertu
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

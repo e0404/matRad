@@ -3,7 +3,7 @@ function resultGUI = matRad_planAnalysis(resultGUI,ct,cst,stf,pln,varargin)
 % This function performs analysis on radiation therapy plans, including DVH (Dose-Volume Histogram) and quality indicators.
 % It optionally displays these analyses based on input parameters.
 %
-% input
+% input:
 %   resultGUI:              matRad resultGUI struct containing the analysis results
 %   ct:                     matRad ct struct with computed tomography data
 %   cst:                    matRad cst cell array with structure definitions
@@ -13,7 +13,7 @@ function resultGUI = matRad_planAnalysis(resultGUI,ct,cst,stf,pln,varargin)
 %   refGy: (optional)       Dose values for V_XGy calculation (default: [40 50 60])
 %   refVol:(optional)       Volume percentages for D_X calculation (default: [2 5 95 98])
 %
-% output
+% output:
 %   resultGUI:              Updated resultGUI with analysis data
 
 % Initialize input parser for function arguments

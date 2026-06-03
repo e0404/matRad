@@ -7,7 +7,7 @@ classdef matRad_PlanWidget < matRad_Widget
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
-    % Copyright 2020 the matRad development team.
+    % Copyright 2020-2026 the matRad development team.
     %
     % This file is part of the matRad project. It is subject to the license
     % terms in the LICENSE file found in the top-level directory of this
@@ -1639,21 +1639,7 @@ classdef matRad_PlanWidget < matRad_Widget
         end
 
         function popMenuQuantityOpt_Callback(this, hObject, eventdata)
-            %             handles = this.handles;
-            %
-            %             pln = evalin('base','pln');
-            %             contentQuantityOpt = get(handles.popMenuQuantityOpt,'String');
-            %             NewQuantityOpt = contentQuantityOpt(get(handles.popMenuQuantityOpt,'Value'),:);
-            %
-            % %                 if (strcmp(pln.propOpt.bioOptimization,'LEMIV_effect') && strcmp(NewBioOptimization,'LEMIV_RBExDose')) ||...
-            % %                         (strcmp(pln.propOpt.bioOptimization,'LEMIV_RBExDose') && strcmp(NewBioOptimization,'LEMIV_effect'))
-            % %                     % do nothing - re-optimization is still possible
-            % %                 elseif ((strcmp(pln.propOpt.bioOptimization,'const_RBE') && strcmp(NewBioOptimization,'none')) ||...
-            % %                         (strcmp(pln.propOpt.bioOptimization,'none') && strcmp(NewBioOptimization,'const_RBE'))) && isequal(pln.radiationMode,'protons')
-            % %                     % do nothing - re-optimization is still possible
-            % %                 end
-            % %
-            %             this.handles = handles;
+            % Callback for the quantity optimization popup menu.
             updatePlnInWorkspace(this);
         end
 

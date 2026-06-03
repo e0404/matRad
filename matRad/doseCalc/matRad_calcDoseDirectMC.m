@@ -3,13 +3,13 @@ function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)
 % matRad dose calculation wrapper for MC dose calculation algorithms
 % bypassing dij calculation for MC dose calculation algorithms.
 % 
-% call
+% call:
 %   resultGUI = matRad_calcDoseDirecMC(ct,stf,pln,cst)
 %   resultGUI = matRad_calcDoseDirecMC(ct,stf,pln,cst,w)
 %   resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,nHistories)
 %   resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)
 %
-% input
+% input:
 %   ct:         ct cube
 %   stf:        matRad steering information struct
 %   pln:        matRad plan meta information struct
@@ -18,7 +18,7 @@ function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)
 %               vector
 %   nHistories: (optional) number of histories
 %
-% output
+% output:
 %   resultGUI:  matRad result struct
 %
 % References
@@ -26,7 +26,7 @@ function resultGUI = matRad_calcDoseDirectMC(ct,stf,pln,cst,w,nHistories)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2019 the matRad development team. 
+% Copyright 2019-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

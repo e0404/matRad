@@ -2,29 +2,23 @@ function [includeMask] = matRad_selectVoxelsFromCst(cstOnDoseGrid, doseGrid, sel
 % matRad function to get mask of the voxels (on dose grid) that are
 % included in cst structures specified by selectionMode.
 %
-% call
+% call:
 %   includeMask = matRad_getVoxelsOnCstStructs(cst,doseGrid,VdoseGrid,selectionMode)
 %
-% input
+% input:
 %   cstOnDoseGrid:          cstOnDoseGrid (voxel indexes included in cst{:,4} are referred to a cube of dimensions doseGrid.dimensions)
 %   doseGrid:               doseGrid struct containing field doseGrid.dimensions
-%   selectionMode:          define wich method to apply to select the cst
-%                           structures to include. Choices are: 
-%                               all             all voxels will be included                         
-%                               targetOnly      only includes the voxels in structures labeld as target                      
-%                               oarsOnly        only includes the voxels in structures labeld as oars    
-%                               objectivesOnly  only includes the voxels in structures with at least one objective/constraint    
-%                               robustnessOnly  only includes the voxels in structures with robustness objectives/constraints
-%                               [indexes]       only includes the voxels in structures specified by index array (i.e. [1,2,3] includes first three structures)
-%                               
+%   selectionMode:          define which method to apply to select cst structures.
+%                           Choices: all, targetOnly, oarsOnly, objectivesOnly,
+%                           robustnessOnly, [indexes]
 % 
-% output
+% output:
 % 
 %   includeMask:            logical array #voxels in dose grid
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2023 the matRad development team.
+% Copyright 2023-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this

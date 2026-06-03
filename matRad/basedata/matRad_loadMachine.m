@@ -2,13 +2,13 @@ function machine = matRad_loadMachine(pln)
 % matRad_loadMachine load a machine base data file from pln struct. 
 %   Looks for the machine file from pln in the basedata folder and in the provided user folders.
 %
-% call
+% call:
 %   machine = matRad_loadMachine(pln)
 %
-% input
+% input:
 %   pln:            matRad plan meta information struct 
 %
-% output
+% output:
 %   machine:        matRad machine struct
 %
 % References
@@ -16,7 +16,7 @@ function machine = matRad_loadMachine(pln)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2022 the matRad development team. 
+% Copyright 2022-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

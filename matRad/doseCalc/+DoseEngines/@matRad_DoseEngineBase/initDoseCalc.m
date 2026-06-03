@@ -18,7 +18,7 @@ function [dij] = initDoseCalc(this,ct,cst,stf)
 %   dij:            matRad dij struct
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2022 the matRad development team.
+% Copyright 2022-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
@@ -39,6 +39,7 @@ else
     msg = sprintf('Dose influence matrix calculation using  ''%s'' Dose Engine...',this.name);
 end
 matRad_cfg.dispInfo('%s\n',msg);
+matRad_cfg.dispInfo('Dose calculation will prefer ''%s'' where possible!\n', this.precision);
 
 % initialize waitbar
 % TODO: This should be managed from the user interface instead
@@ -179,10 +180,10 @@ this.VdoseGridScenIx = cellfun(@(c) ismember(this.VdoseGrid,c), tmpVdoseGridScen
 
 
 % Convert CT subscripts to world coordinates.
-this.voxWorldCoords = matRad_cubeIndex2worldCoords(this.VctGrid,dij.ctGrid);
+this.voxWorldCoords = cast(matRad_cubeIndex2worldCoords(this.VctGrid,dij.ctGrid),this.precision);
 
 % Convert dosegrid subscripts to world coordinates
-this.voxWorldCoordsDoseGrid = matRad_cubeIndex2worldCoords(this.VdoseGrid,dij.doseGrid);
+this.voxWorldCoordsDoseGrid = cast(matRad_cubeIndex2worldCoords(this.VdoseGrid,dij.doseGrid),this.precision);
 
 %Create helper masks
 this.VdoseGridMask = false(dij.doseGrid.numOfVoxels,1);

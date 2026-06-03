@@ -9,7 +9,7 @@ function obj = matRad_importDicomSteeringParticles(obj)
 % Output - matRad stf and pln structures.
 % Note: pln is input and output since pln.bixelWidth is determined here.
 %
-% call
+% call:
 %   obj = matRad_importDicomSteeringParticles(obj)
 %
 %
@@ -21,7 +21,7 @@ function obj = matRad_importDicomSteeringParticles(obj)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team.
+% Copyright 2015-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this

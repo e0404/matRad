@@ -1,17 +1,17 @@
 function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,stf,wInit)
 % matRad inverse planning wrapper function
 %
-% call
+% call:
 %   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
 %   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
 %
-% input
+% input:
 %   dij:        matRad dij struct
 %   cst:        matRad cst struct
 %   pln:        matRad pln struct
 %   wInit:      (optional) custom weights to initialize problems
 %
-% output
+% output:
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
 %               biological optimization) RBE-weighted dose etc.
 %   optimizer:  Used Optimizer Object
@@ -21,7 +21,7 @@ function [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,stf,wIni
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2016 the matRad development team.
+% Copyright 2016-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
@@ -49,6 +49,24 @@ end
     
 
 matRad_cfg = MatRad_Config.instance();
+
+if isfield(pln, 'propOpt') && isfield(pln.propOpt, 'enableGPU')
+    enableGPU = pln.propOpt.enableGPU;
+else
+    enableGPU = matRad_cfg.defaults.propOpt.enableGPU;
+end
+
+if enableGPU
+    try
+        d = gpuDevice;
+        cst = matRad_moveCstToGPU(cst);
+        dij = matRad_moveDijToGPU(dij);
+        matRad_cfg.dispInfo('Running optimization on the GPU (as far as possible). Selected device: %s\n', d.Name);
+    catch ME
+        matRad_cfg.dispWarning('Failed to prepae GPU-based optimization, reverting to CPU. Reason: %s\n', ME.message);
+        enableGPU = false;
+    end
+end
 
 % consider VOI priorities
 cst  = matRad_setOverlapPriorities(cst);
@@ -180,32 +198,8 @@ switch pln.propOpt.quantityOpt
         backProjection = matRad_DoseProjection;
 end
 
-% Check minimum biological quantities available
-if isa(backProjection,'matRad_EffectProjection') && ~all(isfield(dij,{'ax','bx'}))
-    matRad_cfg.dispWarning('Biological optimization requested, but no ax & bx provided in dij. Getting from cst...');
-
-    %First get the voxels where we need it
-    validScen = ~cellfun(@isempty,dij.physicalDose);
-    d = cellfun(@(D) D*ones(dij.totalNumOfBixels,1),dij.physicalDose(validScen),'UniformOutput',false);
-    d = sum(cell2mat(d'),2);
-    ixZeroDose = d == 0;
-
-    numOfCtScenarios = numel(cst{1,4});
-    for i = 1:numOfCtScenarios
-        dij.ax{i} = zeros(dij.doseGrid.numOfVoxels,1);
-        dij.bx{i} = zeros(dij.doseGrid.numOfVoxels,1);
-
-        for v = 1:size(cst,1)
-            %We already did the overlap stuff so we do not need to care for
-            %overlaps here
-            dij.ax{i}(cst{v,4}{i}) = cst{v,5}.alphaX;
-            dij.bx{i}(cst{v,4}{i}) = cst{v,5}.betaX;
-        end
-
-        dij.ax{i}(ixZeroDose) = 0;
-        dij.bx{i}(ixZeroDose) = 0;
-    end
-end
+% Check and prepare biological quantities for all initialization paths.
+dij = matRad_prepareBiologicalOptimizationDij(dij,cst,backProjection);
 
 
 % calculate initial beam intensities wInit
@@ -214,15 +208,6 @@ matRad_cfg.dispInfo('Estimating initial weights... ');
 if exist('wInit','var')
     %do nothing as wInit was passed to the function
     matRad_cfg.dispInfo('chosen provided wInit!\n');
-
-    % Write ixDose which is needed for the optimizer
-    if isa(backProjection, 'matRad_EffectProjection')
-        dij.ixDose  = dij.bx~=0;
-
-        %pre-calculations
-        dij.gamma             = zeros(dij.doseGrid.numOfVoxels,dij.numOfScenarios);
-        dij.gamma(dij.ixDose) = dij.ax(dij.ixDose)./(2*dij.bx(dij.ixDose));
-    end
 
 elseif isa(backProjection, 'matRad_ConstantRBEProjection') && strcmp(pln.radiationMode,'protons')
     % check if a constant RBE is defined - if not use 1.1
@@ -236,13 +221,6 @@ elseif isa(backProjection, 'matRad_ConstantRBEProjection') && strcmp(pln.radiati
     matRad_cfg.dispInfo('chosen uniform weight of %f!\n',bixelWeight);
 
 elseif isa(backProjection, 'matRad_EffectProjection')
-    % retrieve photon LQM parameter
-    [ax,bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels);
-    checkAxBx = cellfun(@(ax1,bx1,ax2,bx2) isequal(ax1(ax1~=0),ax2(ax1~=0)) && isequal(bx1(bx1~=0),bx2(bx1~=0)),dij.ax,dij.bx,ax,bx);
-    if ~all(checkAxBx)
-        matRad_cfg.dispError('Inconsistent biological parameters in dij.ax and/or dij.bx - please recalculate dose influence matrix before optimization!\n');
-    end
-
     for i = 1:size(cst,1)
 
         for j = 1:size(cst{i,6},2)
@@ -254,10 +232,6 @@ elseif isa(backProjection, 'matRad_EffectProjection')
         end
     end
 
-    for s = 1:numel(dij.bx)
-        dij.ixDose{s}  = dij.bx{s}~=0;
-    end
-    
     doseTmp = dij.physicalDose{1}*wOnes;
     if all(isfield(dij,{'mAlphaDose','mSqrtBetaDose'}))
         aTmp = dij.mAlphaDose{1}*wOnes;
@@ -276,13 +250,6 @@ elseif isa(backProjection, 'matRad_EffectProjection')
         wInit        = -(p/2) + sqrt((p^2)/4 -q) * wOnes;
 
     elseif isequal(pln.propOpt.quantityOpt,'RBExDose')
-
-        %pre-calculations
-        for s = 1:numel(dij.ixDose)
-            dij.gamma{s}             = zeros(dij.doseGrid.numOfVoxels,dij.numOfScenarios);
-            dij.gamma{s}(dij.ixDose{s}) = dij.ax{s}(dij.ixDose{s})./(2*dij.bx{s}(dij.ixDose{s}));
-        end
-
 
         % calculate current effect in target
         CurrEffectTarget = aTmp(V) + bTmp(V).^2;
@@ -432,7 +399,7 @@ end
 if ~isfield(pln.propOpt,'optimizer')
     %While the default optimizer is IPOPT, we can try to fallback to
     %fmincon in case it does not work for some reason
-    if ~matRad_OptimizerIPOPT.IsAvailable()
+    if ~matRad_OptimizerIPOPT.isAvailable()
         pln.propOpt.optimizer = 'fmincon';
     else
         pln.propOpt.optimizer = 'IPOPT';
@@ -464,7 +431,7 @@ end
 
 matRad_assignPropertiesFromStruct(optimizer,optimizerOptions);
 
-if ~optimizer.IsAvailable()
+if ~optimizer.isAvailable()
     matRad_cfg.dispError(['Optimizer ''' optimizerName ''' not available!']);
 end
 

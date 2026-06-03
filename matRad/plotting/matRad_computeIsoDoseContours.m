@@ -2,14 +2,14 @@ function isoDoseContours = matRad_computeIsoDoseContours(doseCube,isoLevels)
 % matRad function that computes all isodse contours 
 % (along each dose cube dimension)
 %
-% call
+% call:
 %   isoDoseContours = matRad_computeIsoDoseContours(doseCube,isoLevels)
 %
-% input
+% input:
 %   doseCube            3D array containing the dose cube
 %   isoLevels           iso dose levels (same units as doseCube)
 %
-% output
+% output:
 %   isoDoseContours     cell array containing the isolines along each dim
 %
 % References
@@ -17,7 +17,7 @@ function isoDoseContours = matRad_computeIsoDoseContours(doseCube,isoLevels)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

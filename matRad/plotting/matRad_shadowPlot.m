@@ -1,10 +1,10 @@
 function s = matRad_shadowPlot(x, yLow, yUp, color, legendName, alphaTrans)
 % shadowPlot to plot confidence bands mainly
 % 
-% call
+% call:
 %   shadowPlot(x, yLow, yUp, color, legendName, alphaTrans)
 %
-% input
+% input:
 %   x:          x axis values
 %   yLow:       lower bound (start of shadowing)
 %   yUp:        upper bound (end of shadowing)
@@ -12,13 +12,13 @@ function s = matRad_shadowPlot(x, yLow, yUp, color, legendName, alphaTrans)
 %   legendName: legendname to be shown in the plot
 %   alphaTrans: transparency
 %
-% output
+% output:
 %   axesHandle
 %
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2017 the matRad development team. 
+% Copyright 2017-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

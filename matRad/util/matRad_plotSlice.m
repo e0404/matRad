@@ -2,7 +2,7 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSlice(ct, varargin)
 % matRad tool function to directly plot a complete slice of a ct with dose
 % optionally including contours and isolines
 %
-% call
+% call:
 % [] = matRad_plotSlice(ct, dose, varargin)
 %
 % input (required)
@@ -21,9 +21,7 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSlice(ct, varargin)
 %   doseColorMap    colormap for the dose
 %   doseWindow      dose value window
 %   doseIsoLevels   levels defining the isodose contours
-%   voiSelection    logicals defining the current selection of contours
-%                   that should be plotted. Can be set to [] to plot
-%                   all non-ignored contours.
+%   voiSelection    logicals defining the current selection of contours that should be plotted. Can be set to [] to plot all non-ignored contours.
 %   colorBarLabel   string defining the yLabel of the colorBar
 %   boolPlotLegend  boolean if legend should be plottet or not
 %   showCt          boolean if CT slice should be displayed or not
@@ -34,7 +32,7 @@ function [hCMap,hDose,hCt,hContour,hIsoDose] = matRad_plotSlice(ct, varargin)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2025 the matRad development team.
+% Copyright 2025-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this

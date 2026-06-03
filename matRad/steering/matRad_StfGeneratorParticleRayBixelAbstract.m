@@ -4,7 +4,7 @@ classdef (Abstract) matRad_StfGeneratorParticleRayBixelAbstract < matRad_StfGene
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2024 the matRad development team.
+% Copyright 2024-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
@@ -27,6 +27,7 @@ classdef (Abstract) matRad_StfGeneratorParticleRayBixelAbstract < matRad_StfGene
         availablePeakPosRaShi
         maxPBwidth
         pbMargin
+        rayTracer
     end
 
     methods
@@ -90,6 +91,11 @@ classdef (Abstract) matRad_StfGeneratorParticleRayBixelAbstract < matRad_StfGene
 
             %Create Water equivalent cube in ct
             this.ct = matRad_calcWaterEqD(this.ct,this.radiationMode);
+        end
+
+        function createPatientGeometry(this)
+            this.createPatientGeometry@matRad_StfGeneratorExternalRayBixelAbstract();
+            this.rayTracer = matRad_RayTracerSiddon([this.ct.cube {this.voiTarget}],this.ct);
         end
     end
 

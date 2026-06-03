@@ -1,16 +1,16 @@
 function dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst,nCasePerBixel,visBool)
 % matRad ompMC monte carlo photon dose calculation wrapper
 %
-% call
+% call:
 %   dij = matRad_calcPhotonDoseMc(ct,stf,pln,cst,visBool)
 %
-% input
+% input:
 %   ct:                         matRad ct struct
 %   stf:                        matRad steering information struct
 %   pln:                        matRad plan meta information struct
 %   cst:                        matRad cst struct
 %   visBool:                    binary switch to enable visualization
-% output
+% output:
 %   dij:                        matRad dij struct
 %
 % References
@@ -18,7 +18,7 @@ function dij = matRad_calcPhotonDoseMC(ct,stf,pln,cst,nCasePerBixel,visBool)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2018 the matRad development team. 
+% Copyright 2018-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

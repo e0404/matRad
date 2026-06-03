@@ -3,11 +3,11 @@ function matRad_plotPlan3D(axesHandle,pln,stf)
 % Stf is optional for plotting more detailed field contours in 
 % visualization of the impinging beams.
 % 
-% call
+% call:
 %  rotMat = matRad_plotPlan3D(axesHandle,pln)
 %  rotMat = matRad_plotPlan3D(axesHandle,pln,stf)
 %
-% input
+% input:
 %   axesHandle: handle to the axes the plan should be visualized in.
 %   pln:        matRad plan meta information struct
 %   stf:        optional steering information struct. if stf is passed and 
@@ -15,7 +15,7 @@ function matRad_plotPlan3D(axesHandle,pln,stf)
 %               information to plot more detailed field contours than with 
 %               pln only
 %
-% output
+% output:
 %   -
 %
 % References
@@ -23,7 +23,7 @@ function matRad_plotPlan3D(axesHandle,pln,stf)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -147,7 +147,7 @@ else %We use the steering information to visualize the field contour
             rayMat(el2DIx(1),el2DIx(2)) = 1;
         end
         %Create contour of the field
-        fieldContour2D = contourc(rayMat,1);
+        fieldContour2D = contourc(double(rayMat),1);
         
         %Column in the contour matrix
         cColumn = 1;
