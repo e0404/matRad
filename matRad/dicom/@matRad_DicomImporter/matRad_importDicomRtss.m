@@ -126,8 +126,11 @@ for i = 1:numOfContStructs % loop over every structure
         end
         
         % sanity check 2
-         if unique(structZ) > max(obj.ct.dicomInfo.SlicePositions) || unique(structZ) < min(obj.ct.dicomInfo.SlicePositions)
-            matRad_cfg.dispWarning(['Omitting contour data for ' obj.importRtss.structures(i).structName ' at slice position ' num2str(unique(structZ)) 'mm - no ct data available.\n']);
+        contourZ = unique(structZ);
+        if isempty(matRad_findRtssContourSlicesInCt(contourZ, obj.ct))
+            matRad_cfg.dispWarning(['Omitting contour data for ' obj.importRtss.structures(i).structName ...
+                                    ' at slice position ' num2str(contourZ) ...
+                                    'mm - no ct data available.\n']);
         else
             obj.importRtss.structures(i).item(j).points = [structX, structY, structZ];
         end
