@@ -310,9 +310,29 @@ for i = 1:numel(updatedInfo.beam)
                 - apertureInfo.beam(i).posOfCornerBixel(1))/apertureInfo.bixelWidth);
             
             % find the bixel index that the leaves currently touch
-            bixelIndLeftLeaf  = apertureInfo.beam(i).bixelIndMap((xPosIndLeftLeaf-1)*n+[1:n]');
-            bixelIndRightLeaf = apertureInfo.beam(i).bixelIndMap((xPosIndRightLeaf-1)*n+[1:n]');
-            
+            bixelIndMapBeam   = apertureInfo.beam(i).bixelIndMap;
+            bixelIndLeftLeaf  = bixelIndMapBeam((xPosIndLeftLeaf-1)*n+[1:n]');
+            bixelIndRightLeaf = bixelIndMapBeam((xPosIndRightLeaf-1)*n+[1:n]');
+
+            % In non-rectangular fields a leaf tip can land on a column that
+            % holds no open bixel (ray) in its row. Snap the touched bixel to
+            % the nearest valid (non-NaN) bixel within the row, searching
+            % inward (left leaf to the right, right leaf to the left).
+            for leafRow = find(isnan(bixelIndLeftLeaf))'
+                validCols = find(~isnan(bixelIndMapBeam(leafRow,:)));
+                nextCol = validCols(validCols >= xPosIndLeftLeaf(leafRow));
+                if ~isempty(nextCol)
+                    bixelIndLeftLeaf(leafRow) = bixelIndMapBeam(leafRow,nextCol(1));
+                end
+            end
+            for leafRow = find(isnan(bixelIndRightLeaf))'
+                validCols = find(~isnan(bixelIndMapBeam(leafRow,:)));
+                prevCol = validCols(validCols <= xPosIndRightLeaf(leafRow));
+                if ~isempty(prevCol)
+                    bixelIndRightLeaf(leafRow) = bixelIndMapBeam(leafRow,prevCol(end));
+                end
+            end
+
             if any(isnan(bixelIndLeftLeaf)) || any(isnan(bixelIndRightLeaf))
                 error('cannot map leaf position to bixel index');
             end
@@ -331,9 +351,10 @@ for i = 1:numel(updatedInfo.beam)
             tempMap = 1 - (coveredByLeftLeaf  + abs(coveredByLeftLeaf))  / 2 ...
                 - (coveredByRightLeaf + abs(coveredByRightLeaf)) / 2;
             
-            % find open bixels
-            tempMapIx = tempMap > 0;
-            
+            % find open bixels (ignore positions without a ray in
+            % non-rectangular fields, which carry no bixel/dose)
+            tempMapIx = tempMap > 0 & ~isnan(apertureInfo.beam(i).bixelIndMap);
+
             currBixelIx = apertureInfo.beam(i).bixelIndMap(tempMapIx);
             w(currBixelIx) = w(currBixelIx) + tempMap(tempMapIx)*updatedInfo.beam(i).shape(j).weight;
             

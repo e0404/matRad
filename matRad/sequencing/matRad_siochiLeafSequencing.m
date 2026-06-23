@@ -151,16 +151,21 @@ for i = 1:numOfBeams
     fluenceMx(indInFluenceMx) = wOfCurrBeams;
     
     % Gaussian fluence filtering - TODO: why?
-    sigma = 1;
-    kernel = exp(-((-2:2).^2)/(2*sigma^2));
-    kernel = kernel / sum(kernel);
-    
-    % Apply to each row
-    temp = zeros(size(fluenceMx));
-    for row = 1:dimOfFluenceMxZ
-        temp(row,:) = conv(fluenceMx(row,:), kernel, 'same');
+    % Only applied for dynamic (VMAT) delivery; for static IMRT sequencing
+    % it would alter the fluence so the sequenced result no longer
+    % reproduces the optimized fluence.
+    if dynamic
+        sigma = 1;
+        kernel = exp(-((-2:2).^2)/(2*sigma^2));
+        kernel = kernel / sum(kernel);
+
+        % Apply to each row
+        temp = zeros(size(fluenceMx));
+        for row = 1:dimOfFluenceMxZ
+            temp(row,:) = conv(fluenceMx(row,:), kernel, 'same');
+        end
+        fluenceMx = temp;
     end
-    fluenceMx = temp;
 
     %allow for possibility to repeat sequencing with higher number of
     %levels if number of apertures is lower than required
