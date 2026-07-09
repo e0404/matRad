@@ -9,7 +9,7 @@ runs:
       shell: bash
       run: | 
         sudo apt update
-        sudo apt-get install -y gdb gfortran fonts-freefont-otf gnuplot-x11 libgdcm-dev octave liboctave-dev
+        sudo apt-get install -y gdb gfortran fonts-freefont-otf gnuplot-x11 libgdcm-dev octave octave-dev
     - name: Prepare Test Environment
       shell: bash
       run: |
