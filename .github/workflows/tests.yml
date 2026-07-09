@@ -13,7 +13,7 @@ jobs:
   test-matlab-stable: #Matlab test Job for supported Release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4 # Checks-out repository under $GITHUB_WORKSPACE
+      - uses: actions/checkout@v7 # Checks-out repository under $GITHUB_WORKSPACE
         with:
           submodules: 'true'
       - name: Run Test
@@ -24,7 +24,7 @@ jobs:
   test-matlab-latest: #Matlab test Job for latest Matlab release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4 # Checks-out repository under $GITHUB_WORKSPACE
+      - uses: actions/checkout@v7 # Checks-out repository under $GITHUB_WORKSPACE
         with:
           submodules: 'true'
       - uses: ./.github/actions/test-matlab
@@ -34,7 +34,7 @@ jobs:
   test-octave-6: #Octave test Job
     runs-on: ubuntu-24.04 # We use Ubuntu-24.04 because of Octave 8.4.0, for which we build ipopt
     steps:
-      - uses: actions/checkout@v4 # Checks-out repository under $GITHUB_WORKSPACE
+      - uses: actions/checkout@v7 # Checks-out repository under $GITHUB_WORKSPACE
         with:
           submodules: 'true'
       - uses: ./.github/actions/test-octave
@@ -50,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Upload
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: event-file
           path: ${{ github.event_path }}
