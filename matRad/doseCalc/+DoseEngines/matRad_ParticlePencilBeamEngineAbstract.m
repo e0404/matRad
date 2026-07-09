@@ -149,6 +149,10 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
             % Initialize Bixel Geometry
             bixel = this.initBixel(currRay, k);
 
+            if isempty(bixel.ix)
+                return
+            end
+
             % Compute Bixel
             bixel = this.calcParticleBixel(bixel);
         end

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Userfolders can now also be set via environment variable `MATRAD_USERDATA`
 - Documentation: Documented the userfolder feature and its usage as well as other datastructures more clearly
+- Range shifter lateral scattering (`matRad_calcSigmaRashi`) is now modeled for heavier ions (helium, carbon, oxygen) in addition to protons
 
 ### Fixed
 - possible negative doses in finesampling engine due to extrapolation in kernel interpolation
@@ -17,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CheckGradients option for fmincon dropped due to change in Matlab 2026
 - `dij.ax` and `dij.bx` are correctly handled as cell arrays in weight initialization
 - `matRad_GriddedScenariosAbstract` now correctly allows single grid point (collapse to nominal value) for a specific error type
+- Range shifter lateral scattering is now correctly applied to the lateral dose kernels of the analytical pencil-beam engines (HongPB, AnalyticalPB, SubsamplingPB); previously it was computed but never added, so range shifters produced no lateral broadening (#923)
+- Fixed a unit bug in `matRad_calcSigmaRashi` where the base data range (in mm) was used directly in a cm-based formula, underestimating the range shifter scattering for protons
+- Correct edge case in handling of empty bixels in `matRad_ParticlePencilBeamEngineAbstract`
 
 ### Changed
 - New version of photons_Generic.mat basedata file can now be provided, allowing a "version" field alongside "meta" and "data" files within the machine struct. Version 2 requires correct kernel normalization (without implying a spacing in the convolution integral). photons_Generic.mat has been updated to version 2 with correct kernel normalization.
