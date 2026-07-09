@@ -780,7 +780,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
 
                         if isempty(IX)
                             depthDoseCutOff = Inf;
-                            matRad_cfg.dispWarning('LateralParticleCutOff: Couldn't find lateral cut off!');
+                            matRad_cfg.dispWarning('LateralParticleCutOff: Couldn''t find lateral cut off!');
                         elseif isnumeric(IX)
                             depthDoseCutOff = r_mid(IX);
                         end
