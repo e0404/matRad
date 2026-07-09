@@ -31,7 +31,7 @@ jobs:
         with:
           matlab-version: latest
 
-  test-octave-6: #Octave test Job
+  test-octave-8: #Octave test Job
     runs-on: ubuntu-24.04 # We use Ubuntu-24.04 because of Octave 8.4.0, for which we build ipopt
     steps:
       - uses: actions/checkout@v7 # Checks-out repository under $GITHUB_WORKSPACE
