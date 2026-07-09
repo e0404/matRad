@@ -142,7 +142,7 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
                 end
             end
 
-            matRad_cfg.dispInfo('Using a %s Gaussian pencil-beam kernel model!\n');
+            matRad_cfg.dispInfo('Using a %s Gaussian pencil-beam kernel model!\n', this.lateralModel);
         end
 
         function bixel = computeBixel(this, currRay, k)
