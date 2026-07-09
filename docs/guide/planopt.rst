@@ -28,6 +28,42 @@ This is extended to the implementation of optimization problems and :mod:`optimi
 Optimizers can be changed by setting ``pln.propOpt.optimizer``.
 The :class:`matRad_OptimizationProblem` class also enables to implement advanced planning problems as subclasses, like direct aperture optimization as implemented in :class:`matRad_OptimizationProblemDAO`.
 
+DVH constraints and the adaptive logistic approximation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The DVH constraint :class:`DoseConstraints.matRad_MinMaxDVH` constrains a DVH point :math:`V(d^{ref})` - the volume fraction of a structure receiving at least the reference dose :math:`d^{ref}` - to lie between :math:`V^{min}` and :math:`V^{max}`.
+
+The constraint value itself is the *exact* DVH point, i.e. a count of voxels above the threshold,
+
+.. math::
+
+   c(\mathbf{d}) = \frac{1}{N} \sum_{i=1}^{N} H(d_i - d^{ref}),
+
+where :math:`H` is the Heaviside step function and :math:`N` the number of voxels of the structure. Its exact derivative is a Dirac delta - zero for every voxel except those exactly at the threshold - and therefore provides no useful information to a gradient-based optimizer. For the Jacobian the Heaviside step is hence approximated by a logistic (sigmoid) function of steepness :math:`k`,
+
+.. math::
+
+   H(x) \approx \sigma(x) = \frac{1}{1 + e^{-2kx}}, \qquad
+   \sigma'(x) = 2\,k\,\sigma(x)\,\bigl(1-\sigma(x)\bigr),
+
+so that the per-voxel gradient becomes a smooth bump centered at the threshold. Only voxels whose dose lies close to :math:`d^{ref}` receive a meaningful gradient; voxels far away are "saturated" and contribute almost nothing.
+
+Because the dose distribution within a structure changes during optimization, the steepness :math:`k` is re-derived in every iteration so that this sensitivity band keeps covering a useful set of voxels. Two (largely empirical) parameters control it:
+
+``voxelScalingRatio`` (default ``1``)
+   Sets the *width* of the sensitivity band. All voxels are sorted by the absolute distance of their dose from :math:`d^{ref}`, and the band half-width :math:`\Delta` (``deltaDoseMax`` in the code) is taken as the distance enclosing the closest ``voxelScalingRatio * N / 2`` voxels. With the default value this is the median distance, i.e. the closest half of all voxels. Reducing it narrows the band (sharper sigmoid, fewer contributing voxels), which can be useful for OARs where only few voxels violate the constraint.
+
+``referenceScalingVal`` (default ``0.01``)
+   Sets how *step-like* the sigmoid is at the edge of that band. The steepness is chosen so that at :math:`\pm\Delta` the sigmoid has reached within ``referenceScalingVal`` of its asymptote, i.e. :math:`\sigma(\Delta) = 1 - \texttt{referenceScalingVal}`, which gives
+
+   .. math::
+
+      k = \frac{\ln\!\left(1/\texttt{referenceScalingVal} - 1\right)}{2\,\Delta}.
+
+   A smaller value makes the transition between "below" and "above" the reference dose crisper. It can make sense to reduce it as the optimization settles close to a constraint value.
+
+In practice ``voxelScalingRatio = 1`` usually works well. Note that the constraint *value* uses the exact (Heaviside) DVH point while the *Jacobian* uses the smoothed surrogate - a deliberate choice that reports the true DVH point to the solver while still providing a smooth search direction.
+
 Before Version 2.10.0
 ---------------------
 

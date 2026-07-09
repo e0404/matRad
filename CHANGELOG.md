@@ -14,10 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - possible negative doses in finesampling engine due to extrapolation in kernel interpolation
 - correct parsing of all optional arguments of the `traceCube` function for `matRad_RayTracer`
+- CheckGradients option for fmincon dropped due to change in Matlab 2026
+- `dij.ax` and `dij.bx` are correctly handled as cell arrays in weight initialization
+- `matRad_GriddedScenariosAbstract` now correctly allows single grid point (collapse to nominal value) for a specific error type
 
 ### Changed
 - New version of photons_Generic.mat basedata file can now be provided, allowing a "version" field alongside "meta" and "data" files within the machine struct. Version 2 requires correct kernel normalization (without implying a spacing in the convolution integral). photons_Generic.mat has been updated to version 2 with correct kernel normalization.
 - Photon dose calculation now does not rely on hardcoded convolution resolution integral normalization of machine kernels. Assumes that old kernels use hardcoded factor of 4 for 0.5 mm resolution (1/0.5^2).
+- Improved matching of RTStruct contours to ct slices in DICOM import
 
 
 ## [3.2.2]

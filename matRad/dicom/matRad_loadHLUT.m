@@ -75,7 +75,8 @@ try
     end       
     
     if sum(existIx) == 0
-        produce an error to enter catch statment below :)
+        %produce an error to enter catch statment below :)
+        error('No valid custom hlut table found.');
     else
         hlutFileName = hlutFileCell{existIx};
     end
