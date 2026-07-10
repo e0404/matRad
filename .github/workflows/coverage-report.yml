@@ -16,12 +16,12 @@ jobs:
             
         steps:
             - name: Checkout Repository
-              uses: actions/checkout@v4 # Checks-out repository under $GITHUB_WORKSPACE
+              uses: actions/checkout@v7 # Checks-out repository under $GITHUB_WORKSPACE
               with:
                   submodules: 'false'
             
             - name: Download Coverage Artifact
-              uses: actions/download-artifact@v4
+              uses: actions/download-artifact@v8
               with:
                   name: test-results-matlab-R2022b
                   path: coverage
@@ -35,7 +35,7 @@ jobs:
                   format: coveralls
             
             - name: Upload to Codecov
-              uses: codecov/codecov-action@v5
+              uses: codecov/codecov-action@v7
               continue-on-error: true
               with:
                   token: ${{ secrets.CODECOV_TOKEN }}
@@ -56,7 +56,7 @@ jobs:
                   thresholds: '50 70'
 
             - name: Attach Job Summary
-              uses: actions/github-script@v7
+              uses: actions/github-script@v9
               with:
                 script: |
                   const fs = require('fs');
@@ -65,7 +65,7 @@ jobs:
                   core.summary.write();
                         
             - name: Add Coverage PR Comment
-              uses: marocchino/sticky-pull-request-comment@v2
+              uses: marocchino/sticky-pull-request-comment@v3
               continue-on-error: true
               if: github.event_name == 'pull_request'
               with:

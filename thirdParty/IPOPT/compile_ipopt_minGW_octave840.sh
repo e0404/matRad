@@ -1,4 +1,4 @@
-# How to compile the IPOPT mex interface for Octave 6.4.0 (64-bit) in Windows
+# How to compile the IPOPT mex interface for Octave 8.4.0 (64-bit) in Windows
 # matRad only includes the IPOPT mex interface compiled for Matlab. It is also possible to compile the interface from the MSYS/MinGW distribution included in Octave for Windows.
 # The following has been tested for Octave 6.4.0 in 64 bit version to allow 64-bit algebra. Start this script from an octave mingw shell. You can open such a shell by running "cmdshell.bat" (potentially as administrator)from your Octave install directory
 
