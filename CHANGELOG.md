@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Userfolders can now also be set via environment variable `MATRAD_USERDATA`
 - Documentation: Documented the userfolder feature and its usage as well as other datastructures more clearly
 - Range shifter lateral scattering (`matRad_calcSigmaRashi`) is now modeled for heavier ions (helium, carbon, oxygen) in addition to protons
+- Precompiled IPOPT interface binaries for Octave 8.4.0 on Linux (`ipopt.mexoct840a64`) and Windows (`ipopt.mexoct840w64`), together with an updated MinGW compilation script
+- CI: added dependabot configuration for monthly, grouped GitHub Actions updates
+- Octave >= 10 mex file for ipopt linked against Octave's OpenBLAS and LAPACK.
 
 ### Fixed
 - possible negative doses in finesampling engine due to extrapolation in kernel interpolation
@@ -21,11 +24,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Range shifter lateral scattering is now correctly applied to the lateral dose kernels of the analytical pencil-beam engines (HongPB, AnalyticalPB, SubsamplingPB); previously it was computed but never added, so range shifters produced no lateral broadening (#923)
 - Fixed a unit bug in `matRad_calcSigmaRashi` where the base data range (in mm) was used directly in a cm-based formula, underestimating the range shifter scattering for protons
 - Correct edge case in handling of empty bixels in `matRad_ParticlePencilBeamEngineAbstract`
+- CI: pinned the Octave dicom package to 0.7.2 due to a build bug in newer releases
 
 ### Changed
 - New version of photons_Generic.mat basedata file can now be provided, allowing a "version" field alongside "meta" and "data" files within the machine struct. Version 2 requires correct kernel normalization (without implying a spacing in the convolution integral). photons_Generic.mat has been updated to version 2 with correct kernel normalization.
 - Photon dose calculation now does not rely on hardcoded convolution resolution integral normalization of machine kernels. Assumes that old kernels use hardcoded factor of 4 for 0.5 mm resolution (1/0.5^2).
 - Improved matching of RTStruct contours to ct slices in DICOM import
+- CI: Octave tests now run with Octave 8.4.0 on ubuntu-24.04 (previously Octave 6.4 on ubuntu-22.04)
+- CI: updated GitHub Actions to current major versions (checkout v7, upload-artifact v7, download-artifact v8, and others)
+- Octave now manages mex file versions differently. Since Octave 10, mex files only link against a dedicated mex library (instead of full octave and libinterp1). The mex file checker now checks for the latest available major version build, and tries to run it.
 
 
 ## [3.2.2]
