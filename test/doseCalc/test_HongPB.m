@@ -120,6 +120,20 @@ stf(2).ray(2).rangeShifter.sourceRashiDistance = -(stf(2).sourcePoint(2) + 100);
 resultGUI = engine.calcDoseForward(testData.ct, testData.cst, stf, ones(sum([stf.totalNumOfBixels]), 1));
 assertTrue(isequal(fieldnames(resultGUI), fieldnames(testData.resultGUI)));
 
+function test_rashiLateralBroadening
+% range shifter scattering must broaden the lateral dose profile (issue #923)
+% generous cutoffs so the broadened profile is not truncated by the
+% strict testing defaults
+propDoseCalc = struct('dosimetricLateralCutOff', 0.995, 'geometricLateralCutOff', 100);
+[sigmaNoRashi, sigmaWithRashi] = helper_rashiLateralBroadening('HongPB', propDoseCalc);
+assertTrue(sigmaWithRashi^2 - sigmaNoRashi^2 > 5^2);
+
+function test_rashiLateralBroadeningHelium
+% range shifter scattering is also modeled for heavier ions
+propDoseCalc = struct('dosimetricLateralCutOff', 0.995, 'geometricLateralCutOff', 100);
+[sigmaNoRashi, sigmaWithRashi] = helper_rashiLateralBroadening('HongPB', propDoseCalc, 'helium_testData.mat');
+assertTrue(sigmaWithRashi^2 - sigmaNoRashi^2 > 5^2);
+
 function test_traceDoseGrid
 testData = load('protons_testData.mat');
 testData.pln.propDoseCalc.engine = 'HongPB';

@@ -52,24 +52,24 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
             switch this.lateralModel
                 case 'single'
                     % compute lateral sigma
-                    sigmaSq = kernels.sigma.^2 + bixel.sigmaIniSq;
+                    sigmaSq = kernels.sigma.^2 + bixel.totalInitialSigmaSq;
                     L = exp(-bixel.radialDist_sq ./ (2 * sigmaSq)) ./ (2 * pi * sigmaSq);
                 case 'double'
                     % compute lateral sigmas
-                    sigmaSqNarrow = kernels.sigma1.^2 + bixel.sigmaIniSq;
-                    sigmaSqBroad  = kernels.sigma2.^2 + bixel.sigmaIniSq;
+                    sigmaSqNarrow = kernels.sigma1.^2 + bixel.totalInitialSigmaSq;
+                    sigmaSqBroad  = kernels.sigma2.^2 + bixel.totalInitialSigmaSq;
 
                     % calculate lateral profile
                     L_Narr =  exp(-bixel.radialDist_sq ./ (2 * sigmaSqNarrow)) ./ (2 * pi * sigmaSqNarrow);
                     L_Bro  =  exp(-bixel.radialDist_sq ./ (2 * sigmaSqBroad)) ./ (2 * pi * sigmaSqBroad);
                     L = (1 - kernels.weight) .* L_Narr + kernels.weight .* L_Bro;
                 case 'multi'
-                    sigmaSq = kernels.sigmaMulti.^2 + bixel.sigmaIniSq;
+                    sigmaSq = kernels.sigmaMulti.^2 + bixel.totalInitialSigmaSq;
                     L = sum([1 - sum(kernels.weightMulti, 2), kernels.weightMulti] .* exp(-bixel.radialDist_sq ./ (2 * sigmaSq)) ./ (2 * pi * sigmaSq), 2);
                 case 'singleXY'
                     % compute lateral sigma in both directions
-                    sigmaSq_x = kernels.sigmaX.^2 + bixel.sigmaIniSq;
-                    sigmaSq_y = kernels.sigmaY.^2 + bixel.sigmaIniSq;
+                    sigmaSq_x = kernels.sigmaX.^2 + bixel.totalInitialSigmaSq;
+                    sigmaSq_y = kernels.sigmaY.^2 + bixel.totalInitialSigmaSq;
                     sigma_x = sqrt(sigmaSq_x);
                     sigma_y = sqrt(sigmaSq_y);
                     L = exp(-(bixel.latDists(:, 1).^2) ./ (2 * sigmaSq_x) - (bixel.latDists(:, 2).^2) ./ (2 * sigmaSq_y)) ./ (2 * pi * sigma_x .* sigma_y);
