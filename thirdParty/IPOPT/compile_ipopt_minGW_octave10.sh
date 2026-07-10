@@ -196,23 +196,26 @@ if ! command -v cmake >/dev/null 2>&1 ; then
 fi
 if command -v ninja >/dev/null 2>&1 ; then METIS_GEN="Ninja"; else METIS_GEN="MSYS Makefiles"; fi
 echo "Using CMake $(cmake --version | head -n1) with generator: $METIS_GEN"
+# Download and patch the source only on a fresh extract, so the (non-idempotent)
+# sed patches are never re-applied on a re-run of the script.
 if [ ! -d "metis-$METIS_VERSION" ]; then
   wget --no-check-certificate \
     "https://papers.karypis.org/glaros/files/sw/metis/metis-$METIS_VERSION.tar.gz"
   tar -xzf "metis-$METIS_VERSION.tar.gz"
+  cd "metis-$METIS_VERSION"
+  # --- MinGW patches (equivalent to MSYS2's mingw-w64-metis patches) ---
+  # 1) GKlib includes <sys/resource.h>, which MinGW lacks.
+  sed -i 's|\(#include <sys/resource.h>\)|#ifndef __MINGW32__\n\1\n#endif|' GKlib/gk_arch.h
+  # 2) GKlib's getopt prototypes use reserved names __argc/__argv (real symbols
+  #    on MinGW); rename them so the headers compile.
+  sed -i 's/__argc/gk_argc/g; s/__argv/gk_argv/g' GKlib/gk_getopt.h
+  # 3) Make GKLIB_PATH absolute so out-of-tree CMake builds find GKlib.
+  sed -i 's|set(GKLIB_PATH "GKlib"|set(GKLIB_PATH "${CMAKE_SOURCE_DIR}/GKlib"|' CMakeLists.txt
+  # --- select 64-bit integer indices ---
+  sed -i -E 's/^#define IDXTYPEWIDTH[[:space:]]+32/#define IDXTYPEWIDTH 64/' include/metis.h
+  cd "$WORKDIR"
 fi
 cd "metis-$METIS_VERSION"
-
-# --- MinGW patches (equivalent to MSYS2's mingw-w64-metis patches) ---
-# 1) GKlib includes <sys/resource.h>, which MinGW lacks.
-sed -i 's|\(#include <sys/resource.h>\)|#ifndef __MINGW32__\n\1\n#endif|' GKlib/gk_arch.h
-# 2) GKlib's getopt prototypes use reserved names __argc/__argv (real symbols on
-#    MinGW); rename them so the headers compile.
-sed -i 's/__argc/gk_argc/g; s/__argv/gk_argv/g' GKlib/gk_getopt.h
-# 3) Make GKLIB_PATH absolute so out-of-tree CMake builds find GKlib.
-sed -i 's|set(GKLIB_PATH "GKlib"|set(GKLIB_PATH "${CMAKE_SOURCE_DIR}/GKlib"|' CMakeLists.txt
-# --- select 64-bit integer indices ---
-sed -i -E 's/^#define IDXTYPEWIDTH[[:space:]]+32/#define IDXTYPEWIDTH 64/' include/metis.h
 grep -E '^#define IDXTYPEWIDTH' include/metis.h   # sanity: must show 64
 
 # Configure + build ONLY the library (CMAKE_POLICY_VERSION_MINIMUM lets modern
@@ -225,6 +228,8 @@ cmake -S . -B build -G "$METIS_GEN" \
   -DCMAKE_POLICY_VERSION_MINIMUM=3.5
 cmake --build build --target metis
 # Install just the pieces MUMPS needs (libmetis.a already contains GKlib).
+# METIS is built before MUMPS, so $PREFIX/lib and /include may not exist yet.
+mkdir -p "$PREFIX/lib" "$PREFIX/include"
 cp "$(find build -name 'libmetis.a' | head -1)" "$PREFIX/lib/"
 cp include/metis.h "$PREFIX/include/"
 cd "$WORKDIR"
