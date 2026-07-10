@@ -1095,22 +1095,14 @@ classdef (Abstract) matRad_ParticlePencilBeamEngineAbstract < DoseEngines.matRad
         % computed.
         function q = providedQuantities(machine)
             q = {};
-<<<<<<< HEAD
-            if all(isfield(machine.data,{'energy','Z','depths','initFocus'})) && any(isfield(machine.data,{'sigma','weight','sigmaMulti', 'weightMulti','multiGauss'}))
-                q{end+1} = 'physicalDose';
-                if all(isfield(machine.data,{'alphaX','betaX','alpha','beta'}))
-                    q{end+1} = 'alpha';
-                    q{end+1} = 'beta';
-=======
-            if all(isfield(machine.data, {'energy', 'Z', 'depths', 'initFocus'})) && any(isfield(machine.data, {'sigma', 'weight', 'multiGauss'}))
+            if all(isfield(machine.data, {'energy', 'Z', 'depths', 'initFocus'})) && any(isfield(machine.data, {'sigma', 'weight', 'sigmaMulti', 'weightMulti', 'multiGauss'}))
                 q{end + 1} = 'physicalDose';
                 if all(isfield(machine.data, {'alphaX', 'betaX', 'alpha', 'beta'}))
                     q{end + 1} = 'alpha';
                     q{end + 1} = 'beta';
->>>>>>> dev
                 end
-                if all(isfield(machine.data,{'zs'}))
-                    q{end+1}='zs';
+                if all(isfield(machine.data, {'zs'}))
+                    q{end + 1} = 'zs';
                 end
             end
             if ~isempty(q) && ~isempty(q{1}) && isfield(machine.data, 'LET')

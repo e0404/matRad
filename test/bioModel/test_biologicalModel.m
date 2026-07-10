@@ -169,6 +169,59 @@ function test_calcBiologicalQuantitiesForBixel_MKM
     assertElementsAlmostEqual(bixel.alpha,test_bixelAlpha,'absolute', 1e-4);
     assertElementsAlmostEqual(bixel.beta, test_bixelBeta,'absolute', 1e-4);
 
+function test_setBiologicalModel_oxygen
+    % oxygen is a supported radiation mode for the constant-RBE and empty
+    % (none) models as well as the z*-based MKM model
+    bioModel = matRad_bioModel('oxygen','none');
+    assertTrue(isa(bioModel, 'matRad_EmptyBiologicalModel'));
+
+    bioModel = matRad_bioModel('oxygen','constRBE');
+    assertTrue(isa(bioModel, 'matRad_ConstantRBE'));
+
+    bioModel = matRad_bioModel('oxygen','MKM');
+    assertTrue(isa(bioModel, 'matRad_MKM'));
+    assertTrue(isa(bioModel, 'matRad_LQZStarBasedModel'));
+    assertTrue(any(strcmp(bioModel.possibleRadiationModes, 'oxygen')));
+    assertTrue(isequal(bioModel.kernelQuantities, {'zs'}));
+
+function test_calcBiologicalQuantitiesForBixel_MKM_viaSuperclass
+    % the abstract z*-based superclass must forward the zs kernel quantity
+    % onto the bixel struct
+    bioModel = matRad_bioModel('oxygen','MKM');
+    kernels.zs = 12.5;
+
+    bixel.energyIx = 4;
+    load oxygen_Generic.mat;
+    bixel.baseData = machine.data(4);
+    bixel.radDepths = 0;
+    bixel.vAlphaX = 0.5;
+    bixel.vBetaX = 0.05;
+    bixel.vTissueIndex = 1;
+
+    [bixel] = calcBiologicalQuantitiesForBixel(bioModel,bixel,kernels);
+    assertEqual(bixel.zs, kernels.zs);
+    assertElementsAlmostEqual(bixel.alpha, 0.5 + 0.05*12.5, 'absolute', 1e-8);
+    assertElementsAlmostEqual(bixel.beta, 0.05, 'absolute', 1e-8);
+
+function test_calcDoseInfluence_MKM_oxygen
+    % full pencil-beam pipeline with the MKM z*-based model. This exercises
+    % the engine branch that requests the zs kernel quantity from the
+    % machine data for z*-based biological models.
+    testData = load('oxygen_testData.mat');
+
+    pln = testData.pln;
+    pln.propDoseCalc.engine = 'HongPB';
+    pln.bioModel = matRad_bioModel('oxygen','MKM');
+
+    dij = matRad_calcDoseInfluence(testData.ct, testData.cst, testData.stf, pln);
+
+    assertTrue(isfield(dij, 'mAlphaDose'));
+    assertTrue(isfield(dij, 'mSqrtBetaDose'));
+    assertTrue(iscell(dij.mAlphaDose));
+    assertTrue(nnz(dij.mAlphaDose{1}) > 0);
+    assertTrue(nnz(dij.mSqrtBetaDose{1}) > 0);
+    assertTrue(isequal(size(dij.mAlphaDose{1}), size(dij.physicalDose{1})));
+
 % function test_bioOptimization_MCN_BED
 %     matRad_rc;
 %     matRad_cfg = MatRad_Config.instance();
