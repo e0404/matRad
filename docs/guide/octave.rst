@@ -13,7 +13,7 @@ While we provide some GNU Octave mex files for a few Windows versions, the IPOPT
 Installing GNU Octave
 ---------------------
 
-It is recommended to use matRad with the latest stable release of `GNU Octave <https://www.gnu.org/software/octave/>`_. matRad has been mainly tested with GNU Octave versions 6 in Linux, but also newer versions seem to work. When installing Octave from the package manager of a Linux distribution, it is necessary to also install the development files to provide the command ``mkoctfile`` required to build the interface to Ipopt.
+It is recommended to use matRad with the latest stable release of `GNU Octave <https://www.gnu.org/software/octave/>`_. matRad has been mainly tested with GNU Octave versions 8.4.0 in Linux, but also newer versions seem to work. When installing Octave from the package manager of a Linux distribution, it is necessary to also install the development files to provide the command ``mkoctfile`` required to build the interface to Ipopt.
 
 By default, Octave is distributed with 32-bit indexing on Linux, while for Windows also a 64bit indexing installer is available. GNU Octave can also be compiled from source with 64-bit indexing. However, building Octave with 64-bit indexing is rather laborious requiring the compilation of several external libraries to enable 64-bit indexing. `Click here <https://www.gnu.org/software/octave/doc/v4.2.0/Compiling-Octave-with-64_002dbit-Indexing.html>`_ for further details on how to compile GNU Octave with 64-bit indexing. Notice that the 64-bit indexing option of Octave is still experimental and that special care should be taken when linking the libraries to avoid segmentation faults.
 

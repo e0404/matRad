@@ -9,7 +9,7 @@ runs:
       shell: bash
       run: | 
         sudo apt update
-        sudo apt-get install -y gdb gfortran fonts-freefont-otf gnuplot-x11 libgdcm-dev octave liboctave-dev
+        sudo apt-get install -y gdb gfortran fonts-freefont-otf gnuplot-x11 libgdcm-dev octave octave-dev
     - name: Prepare Test Environment
       shell: bash
       run: |
@@ -23,7 +23,7 @@ runs:
       #   run: .github/runtests.sh octave-cli
     - name: Upload Test Results
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: test-results-octave
         path: testresults.xml
