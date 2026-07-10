@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation: Documented the userfolder feature and its usage as well as other datastructures more clearly
 - Precompiled IPOPT interface binaries for Octave 8.4.0 on Linux (`ipopt.mexoct840a64`) and Windows (`ipopt.mexoct840w64`), together with an updated MinGW compilation script
 - CI: added dependabot configuration for monthly, grouped GitHub Actions updates
+- Octave >= 10 mex file for ipopt linked against Octave's OpenBLAS and LAPACK.
 
 ### Fixed
 - possible negative doses in finesampling engine due to extrapolation in kernel interpolation
@@ -27,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved matching of RTStruct contours to ct slices in DICOM import
 - CI: Octave tests now run with Octave 8.4.0 on ubuntu-24.04 (previously Octave 6.4 on ubuntu-22.04)
 - CI: updated GitHub Actions to current major versions (checkout v7, upload-artifact v7, download-artifact v8, and others)
+- Octave now manages mex file versions differently. Since Octave 10, mex files only link against a dedicated mex library (instead of full octave and libinterp1). The mex file checker now checks for the latest available major version build, and tries to run it.
 
 
 ## [3.2.2]
