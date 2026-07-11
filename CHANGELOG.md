@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Support for oxygen ions, including `oxygen_Generic` base data, the MKM biological model (`matRad_MKM` / z*-based LQ models), and oxygen handling in the particle stf generators and pencil-beam engine
 - Userfolders can now also be set via environment variable `MATRAD_USERDATA`
 - Documentation: Documented the userfolder feature and its usage as well as other datastructures more clearly
 - Range shifter lateral scattering (`matRad_calcSigmaRashi`) is now modeled for heavier ions (helium, carbon, oxygen) in addition to protons
