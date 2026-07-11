@@ -67,7 +67,7 @@ pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
 % for particles it is possible to also calculate the LET disutribution
 % alongside the physical dose. Therefore you can activate the
 % corresponding option during dose calculcation. Technically it is not
-% needed here, because the HEL model requires LET and will request it
+% needed here, because the MKM model requires LET and will request it
 % automatically
 
 %% Generate Beam Geometry STF
