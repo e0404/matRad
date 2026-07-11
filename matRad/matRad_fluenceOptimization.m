@@ -182,32 +182,8 @@ switch pln.propOpt.quantityOpt
         backProjection = matRad_DoseProjection;
 end
 
-% Check minimum biological quantities available
-if isa(backProjection,'matRad_EffectProjection') && ~all(isfield(dij,{'ax','bx'}))
-    matRad_cfg.dispWarning('Biological optimization requested, but no ax & bx provided in dij. Getting from cst...');
-
-    %First get the voxels where we need it
-    validScen = ~cellfun(@isempty,dij.physicalDose);
-    d = cellfun(@(D) D*ones(dij.totalNumOfBixels,1),dij.physicalDose(validScen),'UniformOutput',false);
-    d = sum(cell2mat(d'),2);
-    ixZeroDose = d == 0;
-
-    numOfCtScenarios = numel(cst{1,4});
-    for i = 1:numOfCtScenarios
-        dij.ax{i} = zeros(dij.doseGrid.numOfVoxels,1);
-        dij.bx{i} = zeros(dij.doseGrid.numOfVoxels,1);
-
-        for v = 1:size(cst,1)
-            %We already did the overlap stuff so we do not need to care for
-            %overlaps here
-            dij.ax{i}(cst{v,4}{i}) = cst{v,5}.alphaX;
-            dij.bx{i}(cst{v,4}{i}) = cst{v,5}.betaX;
-        end
-
-        dij.ax{i}(ixZeroDose) = 0;
-        dij.bx{i}(ixZeroDose) = 0;
-    end
-end
+% Check and prepare biological quantities for all initialization paths.
+dij = matRad_prepareBiologicalOptimizationDij(dij,cst,backProjection);
 
 
 % calculate initial beam intensities wInit
@@ -216,15 +192,6 @@ matRad_cfg.dispInfo('Estimating initial weights... ');
 if exist('wInit','var')
     %do nothing as wInit was passed to the function
     matRad_cfg.dispInfo('chosen provided wInit!\n');
-
-    % Write ixDose which is needed for the optimizer
-    if isa(backProjection, 'matRad_EffectProjection')
-        dij.ixDose  = dij.bx~=0;
-
-        %pre-calculations
-        dij.gamma             = zeros(dij.doseGrid.numOfVoxels,dij.numOfScenarios);
-        dij.gamma(dij.ixDose) = dij.ax(dij.ixDose)./(2*dij.bx(dij.ixDose));
-    end
 
 elseif isa(backProjection, 'matRad_ConstantRBEProjection') && strcmp(pln.radiationMode,'protons')
     % check if a constant RBE is defined - if not use 1.1
@@ -238,13 +205,6 @@ elseif isa(backProjection, 'matRad_ConstantRBEProjection') && strcmp(pln.radiati
     matRad_cfg.dispInfo('chosen uniform weight of %f!\n',bixelWeight);
 
 elseif isa(backProjection, 'matRad_EffectProjection')
-    % retrieve photon LQM parameter
-    [ax,bx] = matRad_getPhotonLQMParameters(cst,dij.doseGrid.numOfVoxels);
-    checkAxBx = cellfun(@(ax1,bx1,ax2,bx2) isequal(ax1(ax1~=0),ax2(ax1~=0)) && isequal(bx1(bx1~=0),bx2(bx1~=0)),dij.ax,dij.bx,ax,bx);
-    if ~all(checkAxBx)
-        matRad_cfg.dispError('Inconsistent biological parameters in dij.ax and/or dij.bx - please recalculate dose influence matrix before optimization!\n');
-    end
-
     for i = 1:size(cst,1)
 
         for j = 1:size(cst{i,6},2)
@@ -256,10 +216,6 @@ elseif isa(backProjection, 'matRad_EffectProjection')
         end
     end
 
-    for s = 1:numel(dij.bx)
-        dij.ixDose{s}  = dij.bx{s}~=0;
-    end
-    
     doseTmp = dij.physicalDose{1}*wOnes;
     if all(isfield(dij,{'mAlphaDose','mSqrtBetaDose'}))
         aTmp = dij.mAlphaDose{1}*wOnes;
@@ -278,13 +234,6 @@ elseif isa(backProjection, 'matRad_EffectProjection')
         wInit        = -(p/2) + sqrt((p^2)/4 -q) * wOnes;
 
     elseif isequal(pln.propOpt.quantityOpt,'RBExDose')
-
-        %pre-calculations
-        for s = 1:numel(dij.ixDose)
-            dij.gamma{s}             = zeros(dij.doseGrid.numOfVoxels,dij.numOfScenarios);
-            dij.gamma{s}(dij.ixDose{s}) = dij.ax{s}(dij.ixDose{s})./(2*dij.bx{s}(dij.ixDose{s}));
-        end
-
 
         % calculate current effect in target
         CurrEffectTarget = aTmp(V) + bTmp(V).^2;

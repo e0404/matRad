@@ -39,7 +39,7 @@ cst{2,6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(400,0));
 
 clear VolHelper ixBody ixTarget i
 %% create pln, stf
-radModes = ["protons","helium","carbon","VHEE"];
+radModes = ["protons","helium","carbon","oxygen","VHEE"];
 for radMode = radModes
     %radMode = 'carbon'; %protons,helium,carbon;
     

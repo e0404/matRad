@@ -43,16 +43,14 @@ for i = 1:size(structure.item,2)
             matRad_cfg.dispError('Contour defined over multiple planes!');
         end
     
-        round2 = @(a,b) round(a*10^b)/10^b;
-        dicomCtSliceThickness = ct.dicomInfo.SliceThickness;
-        
-        %Sanity check
-        msg = checkSliceThickness(dicomCtSliceThickness);
-        if ~isempty(msg)
-            matRad_cfg.dispError('Slice Thickness of slice at %f could not be identified: %s',dicomCtSlicePos,msg);
+        slicesInMatradCt = matRad_findRtssContourSlicesInCt(dicomCtSlicePos, ct);
+        if isempty(slicesInMatradCt)
+            structureName = matRad_getStructureName(structure);
+            matRad_cfg.dispWarning(['Omitting contour data for ' structureName ...
+                                    ' at slice position ' num2str(dicomCtSlicePos) ...
+                                    'mm - no ct data available.\n']);
+            continue
         end
-        
-        slicesInMatradCt = find(dicomCtSlicePos+dicomCtSliceThickness/2 > ct.z & dicomCtSlicePos-dicomCtSliceThickness/2 <= ct.z);
         
         coords1 = interp1(ct.x,1:ct.cubeDim(2),structure.item(i).points(:,1),'linear','extrap');
         coords2 = interp1(ct.y,1:ct.cubeDim(1),structure.item(i).points(:,2),'linear','extrap');
@@ -72,14 +70,10 @@ indices = find(voiCube(:));
 
 end
 
-function msg = checkSliceThickness(dicomCtSliceThickness)
-    if isempty(dicomCtSliceThickness)
-        msg = 'Slice could not be identified (empty)';
-    elseif ~isscalar(dicomCtSliceThickness)
-        msg = 'Slice thickness not unique';
-    elseif ~isnumeric(dicomCtSliceThickness)
-        msg = 'unexpected value';
-    else
-        msg = '';
-    end
+function structureName = matRad_getStructureName(structure)
+if isfield(structure, 'structName') && ~isempty(structure.structName)
+    structureName = structure.structName;
+else
+    structureName = 'structure';
+end
 end
