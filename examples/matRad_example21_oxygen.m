@@ -1,4 +1,4 @@
-%% Example: Proton Treatment Plan with subsequent Isocenter shift
+%% Example: Oxygen Ion Treatment Plan with LEM & MKM biological models
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -15,8 +15,9 @@
 
 %% In this example we will show
 % (i) how to load patient data into matRad
-% (ii) how to setup a helium dose calculation
+% (ii) how to setup an oxygen ion dose calculation
 % (iii) how to inversely optimize the pencil beam intensities directly from command window in MATLAB.
+% (iv) how to compare the resulting RBE-weighted dose between the LEM and MKM biological models.
 
 %% set matRad runtime configuration
 matRad_rc;
@@ -31,19 +32,21 @@ load('BOXPHANTOM.mat');
 
 %%
 % First of all, we need to define what kind of radiation modality we would
-% like to use. Possible values are photons, protons or carbon. In this
-% example we would like to use protons for treatment planning. Next, we
-% need to define a treatment machine to correctly load the corresponding
-% base data. matRad features generic base data in the file
-% 'proton_Generic.mat'; consequently the machine has to be set accordingly
+% like to use. Possible values are photons, protons, helium, carbon or
+% oxygen. In this example we would like to use oxygen ions for treatment
+% planning. Next, we need to define a treatment machine to correctly load
+% the corresponding base data. matRad features generic base data in the
+% file 'oxygen_Generic.mat'; consequently the machine has to be set
+% accordingly
 pln.radiationMode = 'oxygen';
 pln.machine       = 'Generic';
 pln.multScen      = 'nomScen';
 
 % Define the flavor of biological optimization for treatment planning along
-% with the quantity that should be used for optimization. As we use helium,
-% we follow a data-driven RBE parametrization to obtbain the variable
-% relative biological effectiveness.
+% with the quantity that should be used for optimization. As we use oxygen
+% ions, we use a model-based RBE parametrization to obtain the variable
+% relative biological effectiveness. Here, we optimize with the LEM model
+% and later recompute the dose with the MKM model for comparison.
 pln.bioModel      = 'LEM';
 
 %%

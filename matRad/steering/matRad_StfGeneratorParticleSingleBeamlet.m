@@ -1,5 +1,5 @@
 classdef matRad_StfGeneratorParticleSingleBeamlet < matRad_StfGeneratorParticleRayBixelAbstract
-    % matRad_StfGeneratorPhotonSingleBeamlet:
+    % matRad_StfGeneratorParticleSingleBeamlet:
     %   Creates a single beamlet for particles
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
