@@ -58,6 +58,14 @@ function test_generateStf_carbon
     assertTrue(isstruct(stf));
     assertEqual(numel(stf),numel(pln.propStf.gantryAngles));
 
+function test_generateStf_oxygen
+    load TG119.mat;
+    pln = helper_basicPln('oxygen',ct,cst);
+
+    stf = matRad_generateStf(ct,cst,pln);
+    assertTrue(isstruct(stf));
+    assertEqual(numel(stf),numel(pln.propStf.gantryAngles));
+
 function test_generateStf_noTargetObjectives
     load TG119.mat;
     [cst{:,6}] = deal([]);
@@ -74,6 +82,10 @@ function test_generateStfSingleBixel
     assertTrue(isstruct(stf));
     
     pln = helper_basicPln('protons',ct,cst);
+    stf = matRad_generateSingleBixelStf(ct,cst,pln);
+    assertTrue(isstruct(stf));
+
+    pln = helper_basicPln('oxygen',ct,cst);
     stf = matRad_generateSingleBixelStf(ct,cst,pln);
     assertTrue(isstruct(stf));
 
