@@ -448,8 +448,12 @@ classdef matRad_WorkflowWidget < matRad_Widget
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
             handles = this.handles;
-            runDAO = this.widgetHandle.Parent.Children(9).Children(13).Value;
-            runSeq = this.widgetHandle.Parent.Children(9).Children(18).Value;
+
+            % The sequencing / DAO toggle buttons live in the PlanWidget. Locate
+            % them by their Tag rather than by hard-coded child indices, which
+            % silently break whenever the widget layout changes.
+            runDAO = this.getButtonValue('btnRunDAO');
+            runSeq = this.getButtonValue('btnRunSequencing');
             try
                 % indicate that matRad is busy
                 % change mouse pointer to hour glass
@@ -532,7 +536,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
                     CheckOptimizerStatus(this, usedOptimizer, 'DAO');
                 end
 
-                if strcmp(pln.radiationMode, 'photons') && runSeq ||  runDAO
+                if strcmp(pln.radiationMode, 'photons') && (runSeq || runDAO)
 
                     matRad_visApertureInfo(resultGUI.sequencing.apertureInfo);
                 end
@@ -880,6 +884,17 @@ classdef matRad_WorkflowWidget < matRad_Widget
             end
 
             this.showMessage(sprintf('Optimizer finished with status %d (%s)', statusflag, statusmsg), 'Optimization finished!', statusIcon, 'modal');
+        end
+
+        function value = getButtonValue(this, tag)
+            % Reads the logical 'Value' of a toggle button identified by its
+            % Tag, searching all widgets below this widget's parent container.
+            % Returns false if the button cannot be found.
+            value = false;
+            btnHandle = findobj(this.widgetHandle.Parent, 'Tag', tag);
+            if ~isempty(btnHandle)
+                value = logical(get(btnHandle(1), 'Value'));
+            end
         end
 
     end
