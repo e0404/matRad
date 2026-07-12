@@ -43,11 +43,18 @@ if nargin < 4 || isempty(dij)
 end
 
 sequence = sequencer.sequence(resultGUI.w, stf);
-if ~isempty(dij)
-    resultGUI = matRad_calcCubes(sequence.w, dij);
-else
 
-    matRad_cfg.dispWarning('Dose not recalcaulted with sequenced fluence');
+% Aperture-based (photon) sequencing modifies the fluence into deliverable
+% MLC segments, so the dose has to be recomputed from the sequenced fluence.
+% Particle sequencing only derives the spot delivery order/timing, leaves the
+% fluence unchanged and returns a per-beam struct array - the existing dose
+% cubes stay valid and must not be recomputed here.
+if isa(sequencer, 'matRad_PhotonSequencerAbstract')
+    if ~isempty(dij)
+        resultGUI = matRad_calcCubes(sequence.w, dij);
+    else
+        matRad_cfg.dispWarning('Dose not recalculated with sequenced fluence');
+    end
 end
 resultGUI.sequencing   = sequence;
 
