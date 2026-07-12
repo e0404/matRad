@@ -94,7 +94,7 @@ for i = 1:numel(radModes)
     switch radModes{i}
         case  'protons'
             RBEmodel = {'mcn', 'wed'};
-        case {'helium', 'carbon'}
+        case {'helium', 'carbon','oxygen'}
             RBEmodel = {'libamtrack', 'lem'};
         otherwise
             continue
@@ -225,7 +225,7 @@ for i = 1:numel(radModes)
     switch radModes{i}
         case  'protons'
             RBEmodel = {'mcn', 'wed'};
-        case {'helium', 'carbon'}
+        case {'helium', 'carbon','oxygen'}
             RBEmodel = {'libamtrack', 'lem'};
         otherwise
             continue

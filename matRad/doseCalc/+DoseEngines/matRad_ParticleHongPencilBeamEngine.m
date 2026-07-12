@@ -11,14 +11,12 @@ classdef matRad_ParticleHongPencilBeamEngine < DoseEngines.matRad_ParticlePencil
     % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
     % of the matRad project, including this file, may be copied, modified,
     % propagated, or distributed except according to the terms contained in the
-    % help edit
-
     % LICENSE file.
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     properties (Constant)
-        possibleRadiationModes = {'protons', 'helium', 'carbon', 'VHEE'}
+        possibleRadiationModes = {'protons', 'helium', 'carbon', 'oxygen', 'VHEE'}
         name = 'Hong Particle Pencil-Beam'
         shortName = 'HongPB'
     end

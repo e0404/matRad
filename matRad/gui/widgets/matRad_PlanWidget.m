@@ -33,7 +33,7 @@ classdef matRad_PlanWidget < matRad_Widget
 
     properties (Constant)
 
-        modalities = {'photons', 'protons', 'carbon', 'helium', 'brachy', 'VHEE'}
+        modalities = {'photons', 'protons', 'carbon', 'helium', 'oxygen', 'brachy', 'VHEE'}
         availableProjections = {  'physicalDose'; 'RBExDose'; 'effect'; 'BED'}
 
     end
@@ -191,7 +191,7 @@ classdef matRad_PlanWidget < matRad_Widget
                             'Parent', h12, ...
                             'Units', 'normalized', ...
                             'String', this.modalities, ...,...
-                            'TooltipString', 'Choose a radiation modality (photons, protons, carbon, helium or brachy)', ...
+                            'TooltipString', 'Choose a radiation modality (photons, protons, carbon, helium, oxygen or brachy)', ...
                             'Style', 'popupmenu', ...
                             'Value', 1, ...
                             'Position', gridPos{2, 4}, ...
@@ -208,7 +208,7 @@ classdef matRad_PlanWidget < matRad_Widget
                             'Parent', h12, ...
                             'Units', 'normalized', ...
                             'String', 'Radiation Mode', ...
-                            'TooltipString', 'Choose a radiation modality (photons, protons, carbon, helium or brachy)', ...
+                            'TooltipString', 'Choose a radiation modality (photons, protons, carbon, helium, oxygen or brachy)', ...
                             'Style', 'text', ...
                             'Position', gridPos{1, 4}, ...
                             'BackgroundColor', matRad_cfg.gui.backgroundColor, ...
@@ -1165,6 +1165,21 @@ classdef matRad_PlanWidget < matRad_Widget
                     set(handles.popUpMenuSequencer, 'Enable', 'off');
                     set(handles.txtSequencer, 'Enable', 'off');
 
+                case 'oxygen'
+
+                    set(handles.popMenuQuantityOpt, 'Enable', 'on');
+                    set(handles.popMenuBioModel, 'Enable', 'on');
+                    set(handles.btnSetTissue, 'Enable', 'on');
+                    set(handles.popMenuMultScen, 'Enable', 'on');
+
+                    set(handles.btnRunSequencing, 'Enable', 'off');
+                    set(handles.btnRunDAO, 'Enable', 'off');
+                    set(handles.radiobutton3Dconf, 'Enable', 'on');
+                    set(handles.txtSequencing, 'Enable', 'off');
+                    set(handles.editSequencingLevel, 'Enable', 'off');
+                    set(handles.popUpMenuSequencer, 'Enable', 'off');
+                    set(handles.txtSequencer, 'Enable', 'off');
+
                 case 'brachy'
 
                     set(handles.popMenuQuantityOpt, 'Enable', 'on');
@@ -1240,7 +1255,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 pln = evalin('base', 'pln');
             end
 
-            if any(strcmp(newRadiationMode, {'protons', 'helium', 'carbon'}))
+            if any(strcmp(newRadiationMode, {'protons', 'helium', 'carbon', 'oxygen'}))
                 ix = find(strcmp(optimizationQuantityPopUpContents, 'RBExDose'));
                 set(handles.popMenuQuantityOpt, 'Value', ix);
             end

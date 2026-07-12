@@ -54,6 +54,34 @@ assertTrue(isequal(fieldnames(resultGUI), fieldnames(testData.resultGUI)));
 assertTrue(isequal(testData.ct.cubeDim, size(resultGUI.physicalDose)));
 assertElementsAlmostEqual(resultGUI.physicalDose, testData.resultGUI.physicalDose, 'relative', 1e-2, 1e-2);
 
+
+function test_calcDoseHongPBoxygen
+testData = load('oxygen_testData.mat');
+assertTrue(DoseEngines.matRad_ParticleHongPencilBeamEngine.isAvailable(testData.pln));
+
+resultGUI = matRad_calcDoseForward(testData.ct, testData.cst, testData.stf, testData.pln, ones(sum([testData.stf(:).totalNumOfBixels]), 1));
+
+assertTrue(isequal(fieldnames(resultGUI), fieldnames(testData.resultGUI)));
+assertTrue(isequal(testData.ct.cubeDim, size(resultGUI.physicalDose)));
+assertElementsAlmostEqual(resultGUI.physicalDose, testData.resultGUI.physicalDose, 'relative', 1e-2, 1e-2);
+
+
+function test_providedQuantitiesOxygenZs
+% The oxygen machine provides the zStar (zs) kernel quantity required by
+% z*-based biological models (e.g. MKM), which must be reported by
+% providedQuantities alongside physicalDose/alpha/beta.
+machine = DoseEngines.matRad_ParticleHongPencilBeamEngine.loadMachine('oxygen', 'Generic');
+q = DoseEngines.matRad_ParticleHongPencilBeamEngine.providedQuantities(machine);
+assertTrue(iscell(q));
+assertTrue(any(strcmp(q, 'physicalDose')));
+assertTrue(any(strcmp(q, 'zs')));
+
+% A machine without a zs field must not report the zs quantity
+machineNoZs = rmfield(machine.data, 'zs');
+machine.data = machineNoZs;
+qNoZs = DoseEngines.matRad_ParticleHongPencilBeamEngine.providedQuantities(machine);
+assertFalse(any(strcmp(qNoZs, 'zs')));
+
 function test_calcDoseHongPBVHEE
 testData = load('VHEE_testData.mat');
 assertTrue(DoseEngines.matRad_ParticleHongPencilBeamEngine.isAvailable(testData.pln));
