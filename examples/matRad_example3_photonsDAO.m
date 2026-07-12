@@ -100,7 +100,7 @@ resultGUI_ENGEL = matRad_sequencing(resultGUI, stf, pln, dij);
 %% DAO - Direct Aperture Optimization
 % The Direct Aperture Optimization is an optimization approach where we
 % directly optimize aperture shapes and weights.
-resultGUI_SIOCHI_DAO = matRad_directApertureOptimization(dij, cst, resultGUI_SIOCHI.sequencing.apertureInfo, pln);
+resultGUI_SIOCHI_DAO = matRad_directApertureOptimization(dij, cst, resultGUI_SIOCHI.sequencing.apertureInfo, resultGUI_SIOCHI, pln);
 
 %% Aperture visualization
 % Use a matrad function to visualize the resulting aperture shapes

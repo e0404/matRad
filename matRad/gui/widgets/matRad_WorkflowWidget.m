@@ -526,7 +526,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
 
                     showWarning(this, ['Observe: You are running direct aperture optimization' filesep 'This is experimental code that has not been thoroughly debugged - especially in combination with constrained optimization.']); % was assigned to handles WHY ?
                     [resultGUI, usedOptimizer] = matRad_directApertureOptimization(evalin('base', 'dij'), evalin('base', 'cst'), ...
-                                                                                   resultGUI.sequencing.apertureInfo, pln);
+                                                                                   resultGUI.sequencing.apertureInfo, resultGUI, pln);
                     assignin('base', 'resultGUI', resultGUI);
                     % check IPOPT status and return message for GUI user
                     CheckOptimizerStatus(this, usedOptimizer, 'DAO');

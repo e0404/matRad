@@ -1,4 +1,4 @@
-function [resultGUI, optimizer] = matRad_directApertureOptimization(dij, cst, apertureInfo, pln)
+function [optResult, optimizer] = matRad_directApertureOptimization(dij, cst, apertureInfo, optResult, pln)
 % matRad function to run direct aperture optimization
 %
 % call:
@@ -112,6 +112,18 @@ apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(aperture
 % logging final results
 matRad_cfg.dispInfo('Calculating final cubes...\n');
 resultGUI = matRad_calcCubes(apertureInfo.bixelWeights, dij);
-resultGUI.w    = apertureInfo.bixelWeights;
-resultGUI.wDAO = apertureInfo.bixelWeights;
-resultGUI.sequencing.apertureInfo = apertureInfo;
+
+% add the computed dose cubes / weights to the passed-in optResult struct
+% (an empty input is promoted to a fresh struct). Nested fields such as
+% optResult.sequencing are preserved.
+fNames = fieldnames(resultGUI);
+for f = 1:numel(fNames)
+    optResult.(fNames{f}) = resultGUI.(fNames{f});
+end
+optResult.w    = apertureInfo.bixelWeights;
+optResult.wDAO = apertureInfo.bixelWeights;
+
+% store the aperture info both at the top level (backward-compatible API)
+% and under the sequencing field used by the refactored workflow
+optResult.apertureInfo = apertureInfo;
+optResult.sequencing.apertureInfo = apertureInfo;

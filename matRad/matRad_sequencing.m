@@ -51,4 +51,10 @@ else
 end
 resultGUI.sequencing   = sequence;
 
+% keep a backward-compatible copy of the aperture info at the top level so
+% that legacy calls (e.g. matRad_directApertureOptimization) still work
+if isfield(sequence, 'apertureInfo')
+    resultGUI.apertureInfo = sequence.apertureInfo;
+end
+
 end
