@@ -67,3 +67,18 @@ for levels = numOfLevels
     assertTrue(isstruct(apInfo.beam));
     assertTrue(numel(apInfo.beam) == numel(stf));
 end
+
+function test_slidingWindow_mode
+% The Xia sequencer supports a sliding-window ('sw') mode in addition to the
+% default reducing-levels ('rl') mode - exercise the 'sw' branch.
+[resultGUI, stf, dij, pln] = helper_getTestData();
+
+seq = matRad_SequencingPhotonsXiaLeaf();
+seq.mode = 'sw';
+sequence = seq.sequence(resultGUI.w, stf);
+
+assertEqual(numel(sequence.beam), numel(stf));
+for i = 1:numel(sequence.beam)
+    assertTrue(sequence.beam(i).numOfShapes >= 1);
+    assertEqual(size(sequence.beam(i).shapes, 3), sequence.beam(i).numOfShapes);
+end

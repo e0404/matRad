@@ -30,6 +30,13 @@ classdef  matRad_SequencingPhotonsXiaLeaf < matRad_PhotonSequencerAbstract
 
     methods
 
+        function this = matRad_SequencingPhotonsXiaLeaf(pln)
+            if nargin < 1
+                pln = [];
+            end
+            this = this@matRad_PhotonSequencerAbstract(pln);
+        end
+
         function sequence = sequence(this, w, stf)
             matRad_cfg = MatRad_Config.instance();
             numOfBeams = numel(stf);

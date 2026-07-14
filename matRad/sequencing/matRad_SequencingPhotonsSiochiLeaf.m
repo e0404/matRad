@@ -16,6 +16,13 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_PhotonSequencerAbstract
 
     methods
 
+        function this = matRad_SequencingPhotonsSiochiLeaf(pln)
+            if nargin < 1
+                pln = [];
+            end
+            this = this@matRad_PhotonSequencerAbstract(pln);
+        end
+
         function sequence = sequence(this, w, stf)
 
             offset = 0;

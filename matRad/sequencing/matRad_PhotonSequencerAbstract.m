@@ -11,6 +11,16 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
 
     methods
 
+        function this = matRad_PhotonSequencerAbstract(pln)
+            % Constructor, forwards to the base class. An explicit constructor
+            % chain is required so that property assignment from pln persists
+            % under Octave.
+            if nargin < 1
+                pln = [];
+            end
+            this = this@matRad_SequencerBase(pln);
+        end
+
         function sequence = sequence(this, w, stf)
 
             throw(MException('MATLAB:class:AbstractMember', 'Abstract function sequence needs to be implemented!'));
