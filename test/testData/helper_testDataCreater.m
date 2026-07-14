@@ -40,7 +40,7 @@ cst{2, 6}{1} = struct(DoseObjectives.matRad_SquaredOverdosing(400, 0));
 
 clear VolHelper ixBody ixTarget i;
 %% create pln, stf
-radModes = ["protons", "helium", "carbon", "VHEE"];
+radModes = ["photons", "protons", "helium", "carbon", "oxygen", "VHEE"];
 for radMode = radModes
     % radMode = 'carbon'; %protons,helium,carbon;
 
@@ -54,10 +54,10 @@ for radMode = radModes
     pln.propStf.longitudinalSpotSpacing = 8;
     pln.propStf.bixelWidth = 10;
     pln.propDoseCalc.doseGrid.resolution = struct('x', 10, 'y', 10, 'z', 10); % [mm]
-    if radMode == "carbon"
-        pln.bioModel = 'LEM'
+    if radMode == "carbon" || radMode == "oxygen"
+        pln.bioModel = 'LEM';
     else
-        pln.bioModel = 'none'
+        pln.bioModel = 'none';
     end
 
     %% Generate Beam Geometry STF

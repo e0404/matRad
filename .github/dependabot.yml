@@ -1,0 +1,9 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/" # scans .github/workflows and .github/actions/*
+    schedule:
+      interval: "monthly"
+    groups:
+      gh-actions:
+        patterns: ["*"] # one combined PR instead of one per action

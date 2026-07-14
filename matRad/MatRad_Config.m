@@ -192,6 +192,7 @@ classdef MatRad_Config < handle
             obj.defaults.machine.protons    = 'Generic';
             obj.defaults.machine.helium     = 'Generic';
             obj.defaults.machine.carbon     = 'Generic';
+            obj.defaults.machine.oxygen     = 'Generic';
             obj.defaults.machine.brachy     = 'HDR';
             obj.defaults.machine.fallback   = 'Generic';
             obj.defaults.machine.VHEE       = 'Generic';
@@ -201,6 +202,7 @@ classdef MatRad_Config < handle
             obj.defaults.bioModel.protons   = 'constRBE';
             obj.defaults.bioModel.helium    = 'HEL';
             obj.defaults.bioModel.carbon    = 'LEM';
+            obj.defaults.bioModel.oxygen    = 'LEM';
             obj.defaults.bioModel.brachy    = 'none';
             obj.defaults.bioModel.fallback  = 'none';
             obj.defaults.bioModel.VHEE      = 'none';
@@ -244,7 +246,7 @@ classdef MatRad_Config < handle
             obj.defaults.propOpt.enableGPU = false;
 
             % Sequencing Options
-            obj.defaults.propSeq.sequencer = 'siochi';
+            obj.defaults.propSeq.sequencer = {'siochi', 'IMPT'};
 
             obj.disableGUI = false;
 

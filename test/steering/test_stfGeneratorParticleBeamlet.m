@@ -130,3 +130,46 @@ function test_suite = test_stfGeneratorParticleBeamlet
             
             assertTrue(isfield(stf.ray,'rangeShifter'));
             assertTrue(isscalar(stf.ray.energy));
+
+function test_construct_oxygen()
+    load protons_testData.mat pln;
+    pln.radiationMode = 'oxygen';
+    stfGen = matRad_StfGeneratorParticleSingleBeamlet(pln);
+    assertTrue(stfGen.isAvailable(pln));
+    assertTrue(isa(stfGen, 'matRad_StfGeneratorParticleSingleBeamlet'));
+    assertEqual(stfGen.radiationMode, 'oxygen');
+
+function test_generate_explicitEnergy()
+    % specifying the energy directly picks the closest available energy
+    load protons_testData.mat ct cst pln;
+    stfGen = matRad_StfGeneratorParticleSingleBeamlet(pln);
+    stfGen.energy = 100;
+    stf = stfGen.generate(ct,cst);
+    assertTrue(isscalar(stf(1).ray.energy));
+    % closest available energy to 100 MeV
+    assertElementsAlmostEqual(stf(1).ray.energy, 99.7909, 'relative', 1e-3);
+
+function test_generate_autoIsoCenter()
+    % an empty isoCenter must be computed automatically from the cst
+    load protons_testData.mat ct cst pln;
+    stfGen = matRad_StfGeneratorParticleSingleBeamlet(pln);
+    stfGen.isoCenter = [];
+    stf = stfGen.generate(ct,cst);
+    assertTrue(isstruct(stf));
+    assertTrue(isfield(stf, 'isoCenter'));
+
+function test_generate_rangeShifter()
+    % range shifter placement fills the rangeShifter sub-struct
+    load protons_testData.mat ct cst pln;
+    stfGen = matRad_StfGeneratorParticleSingleBeamlet(pln);
+    stfGen.useRangeShifter = true;
+    stf = stfGen.generate(ct,cst);
+    assertEqual(stf(1).ray.rangeShifter.ID, 1);
+    assertEqual(stf(1).ray.rangeShifter.eqThickness, stfGen.raShiThickness);
+
+function test_isAvailable_invalidMachine()
+    % an invalid machine struct (no meta/data) must be reported unavailable
+    load protons_testData.mat pln;
+    [available, msg] = matRad_StfGeneratorParticleSingleBeamlet.isAvailable(pln, struct('foo',1));
+    assertFalse(available);
+    assertTrue(ischar(msg));
