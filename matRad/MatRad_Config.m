@@ -244,7 +244,7 @@ classdef MatRad_Config < handle
             obj.defaults.propOpt.enableGPU = false;
 
             % Sequencing Options
-            obj.defaults.propSeq.sequencer = 'siochi';
+            obj.defaults.propSeq.sequencer = {'siochi', 'IMPT'};
 
             obj.disableGUI = false;
 
