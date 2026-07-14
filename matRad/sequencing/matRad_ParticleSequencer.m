@@ -6,7 +6,7 @@ classdef matRad_ParticleSequencer < matRad_SequencerBase
     properties (Constant)
         name                    = 'Particle IMPT Scanning Sequencing'
         shortName               = 'IMPT'
-        possibleRadiationModes  = {'protons', 'helium', 'carbon'}
+        possibleRadiationModes  = {'protons', 'helium', 'carbon', 'oxygen'}
         weightPencilBeam        = 1e6
     end
 

@@ -56,3 +56,22 @@ resultGUI_sequenced = matRad_sequencing(resultGUI, stf, pln);
 
 assertTrue(isstruct(resultGUI_sequenced.sequencing));
 assertEqual(numel(resultGUI_sequenced.sequencing), numel(stf));
+
+function test_particle_makePhaseMatrix
+% Covers the spot-time based phase matrix generation used in 4D dose calc.
+[resultGUI, stf, dij, pln] = helper_getTestData();
+
+numOfPhases  = 4;
+motionPeriod = 5; % [s]
+
+sequencer = matRad_ParticleSequencer();
+sequence  = sequencer.sequence(resultGUI.w, stf);
+sequence  = sequencer.makePhaseMatrix(sequence, numOfPhases, motionPeriod);
+
+for i = 1:numel(sequence)
+    % phase matrix has one row per spot and one column per phase
+    assertEqual(size(sequence(i).phaseMatrix, 1), numel(sequence(i).time));
+    assertEqual(size(sequence(i).phaseMatrix, 2), numOfPhases);
+    % every spot is assigned to exactly one phase
+    assertEqual(numel(sequence(i).phaseNum), numel(sequence(i).time));
+end

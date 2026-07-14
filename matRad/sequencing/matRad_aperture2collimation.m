@@ -35,14 +35,15 @@ function [pln, stf] = matRad_aperture2collimation(pln, stf, sequencing, aperture
 
 matRad_cfg = MatRad_Config.instance();
 
-matRad_cfg.dispWarning('This function is outdated use, class intead');
+matRad_cfg.dispWarning('This function is outdated, use the sequencer class instead');
 
 sequencer = matRad_SequencerBase.getSequencerFromPln(pln);
 
-if ~exist("apertureInfo")
-    if ~isfield(sequencing, 'apertureInfo')
-        sequencing.aperatureInfo = aperaturInfo;
+if ~isfield(sequencing, 'apertureInfo')
+    if nargin < 4
+        matRad_cfg.dispError('Sequencing struct does not contain apertureInfo and none was provided!');
     end
+    sequencing.apertureInfo = apertureInfo;
 end
 [pln, stf] = sequencer.aperture2collimation(pln, stf, sequencing);
 
