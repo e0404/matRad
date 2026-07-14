@@ -21,7 +21,7 @@ classdef  matRad_SequencingPhotonsEngelLeaf < matRad_PhotonSequencerAbstract
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     properties (Constant)
-        name = 'Photons Engel Leaf Sequenceer'
+        name = 'Photons Engel Leaf Sequencer'
         shortName = 'engel'
         possibleRadiationModes = {'photons'}
     end

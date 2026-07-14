@@ -2,14 +2,17 @@ function resultGUI = matRad_sequencing(resultGUI, stf, pln, dij, visMode)
 % matRad inverse planning wrapper function
 % 
 % call:
-%   resultGUI = matRad_sequencing(resultGUI,stf,dij,pln)
+%   resultGUI = matRad_sequencing(resultGUI,stf,pln,dij)
+%   resultGUI = matRad_sequencing(resultGUI,stf,pln,dij,visMode)
 %
 % input:
-%   dij:        matRad dij struct
-%   stf:        matRad stf struct
-%   pln:        matRad pln struct
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
 %               biological optimization) RBE-weighted dose etc.
+%   stf:        matRad stf struct
+%   pln:        matRad pln struct
+%   dij:        matRad dij struct (optional; if given, the dose is
+%               recomputed from the sequenced fluence for photon plans)
+%   visMode:    toggle sequencing visualization on/off (optional)
 %
 % output:
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
@@ -31,6 +34,16 @@ function resultGUI = matRad_sequencing(resultGUI, stf, pln, dij, visMode)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 matRad_cfg = MatRad_Config.instance();
+
+% Backwards compatibility: the order of the pln and dij arguments was swapped
+% (previously matRad_sequencing(resultGUI, stf, dij, pln)). A dij always carries
+% the dose-influence grid (doseGrid), a pln never does at the top level - so if
+% the pln position holds a dij, the call uses the old order and the arguments
+% are swapped with a deprecation warning.
+if nargin >= 4 && isstruct(pln) && isfield(pln, 'doseGrid')
+    matRad_cfg.dispDeprecationWarning('The argument order of matRad_sequencing changed to matRad_sequencing(resultGUI, stf, pln, dij). Please update your call.');
+    [pln, dij] = deal(dij, pln);
+end
 
 sequencer = matRad_SequencerBase.getSequencerFromPln(pln);
 

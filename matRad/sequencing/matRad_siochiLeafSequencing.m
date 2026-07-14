@@ -52,7 +52,7 @@ sequence = sequencer.sequence(resultGUI.w, stf);
 if ~isempty(dij)
     resultGUI = matRad_calcCubes(sequence.w, dij);
 else
-    matRad_cfg.dispWarning('Dose not recalcaulted with sequenced fluence');
+    matRad_cfg.dispWarning('Dose not recalculated with sequenced fluence');
 end
 resultGUI.sequencing   = sequence;
 

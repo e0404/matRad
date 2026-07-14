@@ -1,6 +1,8 @@
 classdef (Abstract) matRad_SequencerBase < handle
-    % UNTITLED2 Summary of this class goes here
-    %   Detailed explanation goes here
+    % matRad_SequencerBase: Abstract base class for all matRad sequencers.
+    %   Defines the common interface and the factory/lookup machinery (see
+    %   getSequencerFromPln / getAvailableSequencers) shared by the photon
+    %   leaf sequencers and the particle spot sequencer.
 
     properties (Constant)
         isSequencer = true       % const boolean for inheritance quick check
@@ -84,7 +86,13 @@ classdef (Abstract) matRad_SequencerBase < handle
             if isfield(pln, 'propSeq') && isstruct(pln.propSeq)
                 plnStruct = pln.propSeq; % get remaining fields
                 if isfield(plnStruct, 'sequencer') && ~isempty(plnStruct.sequencer) && ~any(strcmp(plnStruct.sequencer, this.shortName))
-                    matRad_cfg.dispWarning('Inconsistent sequencers given! pln asks for ''%s'', but you are using ''%s''!', plnStruct.sequencer, this.shortName);
+                    % sequencer may be given as a char or as a cell list of
+                    % shortNames (e.g. the per-modality default) - format both
+                    requestedSequencer = plnStruct.sequencer;
+                    if iscell(requestedSequencer)
+                        requestedSequencer = strjoin(requestedSequencer, ', ');
+                    end
+                    matRad_cfg.dispWarning('Inconsistent sequencers given! pln asks for ''%s'', but you are using ''%s''!', requestedSequencer, this.shortName);
                 end
                 if isfield(plnStruct, 'sequencer')
                     plnStruct = rmfield(plnStruct, 'sequencer'); % sequencer field is no longer needed and would throw an exception
@@ -149,8 +157,8 @@ classdef (Abstract) matRad_SequencerBase < handle
     methods (Static)
 
         function sequencer = getSequencerFromPln(pln, warnDefault)
-            % GETENGINE Summary of this function goes here
-            %   Detailed explanation goes here
+            % Returns a sequencer instance selected from the given pln struct,
+            % falling back to the configured default sequencer if none fits.
 
             if nargin < 2
                 warnDefault = true;

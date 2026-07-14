@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- Refactored leaf/spot sequencing into an object-oriented class hierarchy (`matRad_SequencerBase` with the photon MLC sequencers `matRad_SequencingPhotonsSiochiLeaf`/`matRad_SequencingPhotonsXiaLeaf`/`matRad_SequencingPhotonsEngelLeaf` and the particle spot sequencer `matRad_ParticleSequencer`), mirroring the dose engine design. The sequencer is selected via `pln.propSeq.sequencer` and discovered automatically; the previous `matRad_siochiLeafSequencing`/`matRad_xiaLeafSequencing`/`matRad_engelLeafSequencing` functions are retained as thin deprecated wrappers.
+- Argument order of `matRad_sequencing` changed to `matRad_sequencing(resultGUI, stf, pln, dij)`; the previous order (with `dij` and `pln` swapped) is still accepted with a deprecation warning
+
 ## 3.2.3 - 2026-07-11
 
 ### Added

@@ -67,3 +67,16 @@ for levels = numOfLevels
     assertTrue(isstruct(apInfo.beam));
     assertTrue(numel(apInfo.beam) == numel(stf));
 end
+
+function test_deprecated_argument_order
+% The pln/dij argument order was swapped; the previous order
+% matRad_sequencing(resultGUI, stf, dij, pln) must still produce the same
+% result (with a deprecation warning).
+[resultGUI, stf, dij, pln] = helper_getTestData();
+
+resultGUI_new = matRad_sequencing(resultGUI, stf, pln, dij);
+resultGUI_old = matRad_sequencing(resultGUI, stf, dij, pln); % deprecated order
+
+assertEqual(fieldnames(resultGUI_new), fieldnames(resultGUI_old));
+assertElementsAlmostEqual(resultGUI_new.w, resultGUI_old.w);
+assertElementsAlmostEqual(resultGUI_new.physicalDose, resultGUI_old.physicalDose);

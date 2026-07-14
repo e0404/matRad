@@ -1,7 +1,9 @@
 classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
 
-    % UNTITLED Summary of this class goes here
-    %   Detailed explanation goes her
+    % matRad_PhotonSequencerAbstract: Abstract base class for photon multileaf
+    %   collimator (MLC) leaf sequencers. Provides the shared fluence
+    %   stratification, aperture-info generation and segment visualization;
+    %   concrete subclasses implement the specific leaf sequencing algorithm.
     properties
         numOfMLCLeafPairs = 80
         sequencingLevel = 5
@@ -219,7 +221,7 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
             ypos = ceil((screensize(4) - sz(1)) / 2); % center the figure on the screen vertically
             seqFig = figure('position', [xpos, ypos, sz(2), sz(1)]);
 
-            for i = 1:numel(sequencing)
+            for i = 1:numel(sequencing.beam)
 
                 D_0 = sequencing.beam(i).fluence;
 

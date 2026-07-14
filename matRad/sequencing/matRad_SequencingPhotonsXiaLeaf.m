@@ -20,7 +20,7 @@ classdef  matRad_SequencingPhotonsXiaLeaf < matRad_PhotonSequencerAbstract
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     properties (Constant)
-        name = 'Photons Xia Leaf Sequenceer'
+        name = 'Photons Xia Leaf Sequencer'
         shortName = 'xia'
         possibleRadiationModes = {'photons'}
     end

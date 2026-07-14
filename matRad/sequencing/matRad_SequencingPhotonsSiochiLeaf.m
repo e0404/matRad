@@ -1,10 +1,14 @@
 classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_PhotonSequencerAbstract
 
-    % UNTITLED Summary of this class goes here
-    %   Detailed explanation goes here
+    % matRad_SequencingPhotonsSiochiLeaf: photon MLC leaf sequencing after
+    %   Siochi (1999), using rod pushing with collision and tongue-and-groove
+    %   correction to convert the optimized fluence into deliverable segments.
+    %
+    % References
+    %   [1] https://www.ncbi.nlm.nih.gov/pubmed/10078655
 
     properties (Constant)
-        name = 'Photons Siochi Leaf Sequenceer'
+        name = 'Photons Siochi Leaf Sequencer'
         shortName = 'siochi'
         possibleRadiationModes = {'photons'}
 

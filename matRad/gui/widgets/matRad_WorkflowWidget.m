@@ -511,9 +511,13 @@ classdef matRad_WorkflowWidget < matRad_Widget
             % perform sequencing and DAO
             try
                 %% sequencing
-
-                resultGUI = matRad_sequencing(resultGUI, evalin('base', 'stf'), pln, dij);
-                assignin('base', 'resultGUI', resultGUI);
+                % Sequencing only applies to photons and is run when explicitly
+                % requested or when DAO is enabled (DAO needs the sequenced
+                % aperture info as a starting point).
+                if strcmp(pln.radiationMode, 'photons') && (runSeq || runDAO)
+                    resultGUI = matRad_sequencing(resultGUI, evalin('base', 'stf'), pln, dij);
+                    assignin('base', 'resultGUI', resultGUI);
+                end
 
             catch ME
                 % change state from busy to normal

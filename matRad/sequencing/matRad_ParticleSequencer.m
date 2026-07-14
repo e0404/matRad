@@ -1,6 +1,7 @@
 classdef matRad_ParticleSequencer < matRad_SequencerBase
-    % UNTITLED2 Summary of this class goes here
-    %   Detailed explanation goes here
+    % matRad_ParticleSequencer: Sequencer for scanned particle delivery.
+    %   Computes the spot delivery order and timing (spill / lateral scanning
+    %   model), e.g. for 4D dose calculation. It does not modify the fluence.
 
     properties (Constant)
         name                    = 'Particle IMPT Scanning Sequencing'

@@ -37,6 +37,6 @@ matRad_cfg.dispWarning('This function is Outdated use new SequencingClass');
 
 sequencer = matRad_ParticleSequencer();
 
-timeSequence = sequencer.sequence(stf, resultGUI.w);
+timeSequence = sequencer.sequence(resultGUI.w, stf);
 
 end
