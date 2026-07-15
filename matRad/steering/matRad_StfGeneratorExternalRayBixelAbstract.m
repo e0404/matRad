@@ -251,6 +251,10 @@ classdef (Abstract) matRad_StfGeneratorExternalRayBixelAbstract < matRad_StfGene
                     % inversions / transpositions of the matrix, thus no changes to the
                     % rotation matrix are necessary
                     rotMat_system_T = matRad_getRotationMatrix(stf(i).gantryAngle, stf(i).couchAngle);
+                    rotMat_vectors_T = transpose(rotMat_system_T);
+
+                    % Ray positions in bev as computed in initRays
+                    rayPos_bev = vertcat(stf(i).ray.rayPos_bev);
 
                     rot_coords = isoCoords * rotMat_system_T;
 
@@ -267,8 +271,6 @@ classdef (Abstract) matRad_StfGeneratorExternalRayBixelAbstract < matRad_StfGene
                         patSurfCube(idx) = 1;
 
                         [f, v] = isosurface(x, y, z, patSurfCube, .5);
-
-                        vRot = v * rotMat_system_T;
 
                         % rotate surface
                         rotated_surface = v * rotMat_system_T;
@@ -358,9 +360,9 @@ classdef (Abstract) matRad_StfGeneratorExternalRayBixelAbstract < matRad_StfGene
                     % labels etc.
                     daspect([1 1 1]);
                     view(0, -90);
-                    xlabel(hAxBEV, 'X [mm]');
-                    ylabel(hAxBEV, 'Y [mm]');
-                    zlabel(hAxBEV, 'Z [mm]');
+                    xlabel(hAxLPS, 'X [mm]');
+                    ylabel(hAxLPS, 'Y [mm]');
+                    zlabel(hAxLPS, 'Z [mm]');
                     title('lps coordinate system');
                     axis(limits);
                     drawnow();

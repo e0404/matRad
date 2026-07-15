@@ -1,5 +1,6 @@
 function matRad_progress(currentIndex, totalNumberOfEvaluations, linereset)
-% 
+% matRad progress bar
+%
 % call:
 %   matRad_progress(currentIndex, totalNumberOfEvaluations)
 %
@@ -36,8 +37,8 @@ end
 if (currentIndex == 1 || linereset)
     fprintf('Progress: ');
 else
-    length = numel(sprintf('%3.2f %%',(currentIndex-1)/totalNumberOfEvaluations*100));
-    fprintf(repmat('\b',1,length));
+    nChars = numel(sprintf('%3.2f %%',(currentIndex-1)/totalNumberOfEvaluations*100));
+    fprintf(repmat('\b',1,nChars));
 end
  
 % Print the progress tool
