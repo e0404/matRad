@@ -90,8 +90,10 @@ function test_suite = test_stfGeneratorParticleBeamlet
             stfGen = matRad_StfGeneratorParticleSingleBeamlet(pln);
     
             stfGen.gantryAngles = 0;
-            assertTrue(numel(stfGen.couchAngles) == 1);
+            % couch angles are not auto-synced; the mismatch is caught on use
+            assertExceptionThrown(@() stfGen.numOfBeams, 'matRad:Error');
             stfGen.couchAngles = 0;
+            assertEqual(stfGen.numOfBeams, 1);
     
             stf = stfGen.generate(ct,cst);
         

@@ -28,10 +28,6 @@ classdef (Abstract) matRad_StfGeneratorExternalRayBixelAbstract < matRad_StfGene
         numOfBeams
     end
 
-    properties (Access = protected, Hidden)
-        lockAngleUpdate = false
-    end
-
     methods
 
         function this = matRad_StfGeneratorExternalRayBixelAbstract(pln)
@@ -49,68 +45,49 @@ classdef (Abstract) matRad_StfGeneratorExternalRayBixelAbstract < matRad_StfGene
         end
 
         function nBeams = get.numOfBeams(this)
-            % Return number of beams obtained from angles
+            % Return number of beams obtained from gantry angles
+            % A scalar couch angle is valid for any number of gantry angles
+            % and will be applied to all beams on initialization
 
             nBeams = numel(this.gantryAngles);
-            if nBeams ~= numel(this.couchAngles)
+            if numel(this.couchAngles) ~= nBeams && ~isscalar(this.couchAngles)
                 matRad_cfg = MatRad_Config.instance();
-                matRad_cfg.dispWarning('For some reason, we have a different number of beam and couch angles!');
+                matRad_cfg.dispError('The number of gantry angles (%d) and couch angles (%d) must be equal (a scalar couch angle is applied to all beams).', nBeams, numel(this.couchAngles));
             end
         end
 
         function set.gantryAngles(this, angles)
-            % Set gantry angles and update couch angles if necessary
+            % Set gantry angles
+            % Consistency with couch angles is validated on use (numOfBeams)
 
             validateattributes(angles, {'numeric'}, {'vector', 'nonempty', 'nonnan'});
-            oldAngles = this.gantryAngles;
             this.gantryAngles = angles;
-            if ~this.lockAngleUpdate
-                this.lockAngleUpdate = true;
-                if numel(this.gantryAngles) > numel(this.couchAngles)
-                    % Append Couch angles with zeros
-                    this.couchAngles = [this.couchAngles zeros(1, numel(this.gantryAngles) - numel(this.couchAngles))];
-                elseif numel(this.couchAngles) > numel(this.gantryAngles)
-                    % Try to identify the removed beam angles
-                    [removedAngles, ix] = setdiff(oldAngles, this.gantryAngles);
-
-                    nRemovedAngles = numel(this.couchAngles) - numel(this.gantryAngles);
-
-                    if ~isempty(ix) && numel(ix) == nRemovedAngles
-                        % Remove corresponding couch angles
-                        this.couchAngles(ix) = [];
-                    else
-                        this.couchAngles(end - nRemovedAngles + 1:end) = [];
-                    end
-                end
-                this.lockAngleUpdate = false;
-            end
         end
 
         function set.couchAngles(this, angles)
-            % Set couch angles and update gantry angles if necessary
+            % Set couch angles
+            % Consistency with gantry angles is validated on use (numOfBeams)
 
             validateattributes(angles, {'numeric'}, {'vector', 'nonempty', 'nonnan'});
-            oldAngles = this.couchAngles;
             this.couchAngles = angles;
-            if ~this.lockAngleUpdate
-                this.lockAngleUpdate = true;
-                if numel(this.couchAngles) > numel(this.gantryAngles)
-                    % Append Gantry angles with zeros
-                    this.gantryAngles = [this.gantryAngles zeros(1, numel(this.couchAngles) - numel(this.gantryAngles))];
-                elseif numel(this.gantryAngles) > numel(this.couchAngles)
-                    % Try to identify the removed couch angles
-                    [removedAngles, ix] = setdiff(oldAngles, this.couchAngles);
+        end
 
-                    nRemovedAngles = numel(this.gantryAngles) - numel(this.couchAngles);
+        function assignPropertiesFromPln(this, pln, warnWhenPropertyChanged)
+            % Validate angle consistency before assignment, since setter
+            % errors would be downgraded to warnings during property
+            % assignment from pln
+            if isfield(pln, 'propStf') && isstruct(pln.propStf) ...
+                    && isfield(pln.propStf, 'gantryAngles') && isfield(pln.propStf, 'couchAngles') ...
+                    && numel(pln.propStf.gantryAngles) ~= numel(pln.propStf.couchAngles) ...
+                    && ~isscalar(pln.propStf.couchAngles)
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('The number of gantry angles (%d) and couch angles (%d) in pln.propStf must be equal (a scalar couch angle is applied to all beams).', numel(pln.propStf.gantryAngles), numel(pln.propStf.couchAngles));
+            end
 
-                    if ~isempty(ix) && numel(ix) == nRemovedAngles
-                        % Remove corresponding gantry angles
-                        this.gantryAngles(ix) = [];
-                    else
-                        this.gantryAngles(end - nRemovedAngles + 1:end) = [];
-                    end
-                end
-                this.lockAngleUpdate = false;
+            if nargin < 3
+                this.assignPropertiesFromPln@matRad_StfGeneratorBase(pln);
+            else
+                this.assignPropertiesFromPln@matRad_StfGeneratorBase(pln, warnWhenPropertyChanged);
             end
         end
 
@@ -121,6 +98,14 @@ classdef (Abstract) matRad_StfGeneratorExternalRayBixelAbstract < matRad_StfGene
         function initialize(this)
 
             this.initialize@matRad_StfGeneratorBase();
+
+            % Apply a scalar couch angle to all beams
+            if isscalar(this.couchAngles) && numel(this.gantryAngles) > 1
+                this.couchAngles = repmat(this.couchAngles, 1, numel(this.gantryAngles));
+            end
+
+            % Errors if the number of gantry and couch angles is inconsistent
+            this.numOfBeams;
 
             if this.visMode > 1
                 visBool = true;
@@ -266,6 +251,10 @@ classdef (Abstract) matRad_StfGeneratorExternalRayBixelAbstract < matRad_StfGene
                     % inversions / transpositions of the matrix, thus no changes to the
                     % rotation matrix are necessary
                     rotMat_system_T = matRad_getRotationMatrix(stf(i).gantryAngle, stf(i).couchAngle);
+                    rotMat_vectors_T = transpose(rotMat_system_T);
+
+                    % Ray positions in bev as computed in initRays
+                    rayPos_bev = vertcat(stf(i).ray.rayPos_bev);
 
                     rot_coords = isoCoords * rotMat_system_T;
 
@@ -282,8 +271,6 @@ classdef (Abstract) matRad_StfGeneratorExternalRayBixelAbstract < matRad_StfGene
                         patSurfCube(idx) = 1;
 
                         [f, v] = isosurface(x, y, z, patSurfCube, .5);
-
-                        vRot = v * rotMat_system_T;
 
                         % rotate surface
                         rotated_surface = v * rotMat_system_T;
@@ -373,18 +360,13 @@ classdef (Abstract) matRad_StfGeneratorExternalRayBixelAbstract < matRad_StfGene
                     % labels etc.
                     daspect([1 1 1]);
                     view(0, -90);
-                    xlabel(hAxBEV, 'X [mm]');
-                    ylabel(hAxBEV, 'Y [mm]');
-                    zlabel(hAxBEV, 'Z [mm]');
+                    xlabel(hAxLPS, 'X [mm]');
+                    ylabel(hAxLPS, 'Y [mm]');
+                    zlabel(hAxLPS, 'Z [mm]');
                     title('lps coordinate system');
                     axis(limits);
                     drawnow();
                     pause(1);
-                end
-
-                % Show progress
-                if matRad_cfg.logLevel > 2
-                    matRad_progress(i, length(this.gantryAngles));
                 end
             end
         end
