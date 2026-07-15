@@ -104,16 +104,7 @@ classdef matRad_StfGeneratorParticleSingleBeamlet < matRad_StfGeneratorParticleR
             % Convert linear indices to 3D voxel coordinates
             this.voxTargetWorldCoords = matRad_cubeIndex2worldCoords(V, this.ct);
 
-            % take only voxels inside patient
-            V = [this.cst{:, 4}];
-            V = unique(vertcat(V{:}));
-
-            % ignore densities outside of contours
-            eraseCtDensMask = ones(prod(this.ct.cubeDim), 1);
-            eraseCtDensMask(V) = 0;
-            for i = 1:this.ct.numOfCtScen
-                this.ct.cube{i}(eraseCtDensMask == 1) = 0;
-            end
+            this.preprocessCt();
         end
 
         function beam = setBeamletEnergies(this, beam)

@@ -52,7 +52,8 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                 pln = [];
             end
 
-            this = this@DoseEngines.matRad_DoseEngineBase(pln);            
+            this = this@DoseEngines.matRad_DoseEngineBase(pln);
+            this.requiresEqDensityCube = true;
         end
 
         function setDefaults(this)

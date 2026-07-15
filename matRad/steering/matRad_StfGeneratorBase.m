@@ -285,28 +285,41 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
             % Convert linear indices to 3D voxel coordinates
             this.voxTargetWorldCoords = matRad_cubeIndex2worldCoords(V, this.ct);
 
-            % take only voxels inside patient
-            V = [this.cst{:,4}];
-            V = unique(vertcat(V{:}));
-            if this.ignoreOutsideDensities
-                % ignore densities outside of contours
-                eraseCtDensMask = ones(prod(this.ct.cubeDim), 1);
-                eraseCtDensMask(V) = 0;
-                for i = 1:this.ct.numOfCtScen
-                    this.ct.cubeHU{i}(eraseCtDensMask == 1) = -1000;
-                end
-            end
-            if this.useGivenEqDensityCube && ~isfield(this.ct,'cube')
+            this.preprocessCt();
+        end
+
+        function preprocessCt(this)
+            % Applies ignoreOutsideDensities / useGivenEqDensityCube to this.ct
+            % and provides the rED/rSP cube this.ct.cube
+
+            matRad_cfg = MatRad_Config.instance();
+
+            useGivenCube = this.useGivenEqDensityCube;
+            if useGivenCube && ~isfield(this.ct,'cube')
                 matRad_cfg.dispWarning('HU Conversion requested to be omitted but no ct.cube exists! Will override and do the conversion anyway!');
-                this.useGivenEqDensityCube = false;
+                useGivenCube = false;
             end
 
-            if this.useGivenEqDensityCube
+            if this.ignoreOutsideDensities
+                % ignore densities outside of contours
+                V = [this.cst{:,4}];
+                V = unique(vertcat(V{:}));
+                eraseCtDensMask = true(prod(this.ct.cubeDim), 1);
+                eraseCtDensMask(V) = false;
+                for i = 1:this.ct.numOfCtScen
+                    this.ct.cubeHU{i}(eraseCtDensMask) = -1000;
+                    if useGivenCube
+                        % the given cube is not re-converted from cubeHU below, so mask it directly
+                        this.ct.cube{i}(eraseCtDensMask) = 0;
+                    end
+                end
+            end
+
+            if useGivenCube
                 matRad_cfg.dispInfo('Omitting HU to rED/rSP conversion and using existing ct.cube!\n');
             else
                 this.ct = matRad_calcWaterEqD(this.ct, this.radiationMode); % Maybe we can avoid duplicating the CT here?
             end
-      
         end
 
         function pbMargin = getPbMargin(this)

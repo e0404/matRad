@@ -176,6 +176,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
             % call superclass constructor
             this = this@DoseEngines.matRad_MonteCarloEngineAbstract(pln);
+            this.requiresEqDensityCube = true; % ct.cube is used for resampling to the dose grid
 
             if this.enableGPU
                 matRad_cfg = MatRad_Config.instance();
