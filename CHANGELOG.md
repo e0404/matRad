@@ -6,8 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Progress display in the console no longer gets mangled when other log output is written in between updates: `matRad_progress` accepts an optional `linereset` argument, used by the pencil-beam dose engines to restart the progress display for each beam
+- Removed a duplicated progress printout per beam during stf generation
+- The debug visualization of external beam stf generation (`visMode > 0`) crashed on undefined variables since the class-based generator refactor and now works again; the LPS subplot also gets its own axis labels instead of relabeling the beam's eye view
+
 ### Changed
 
+- Consistency handling of gantry and couch angles in external beam stf generators was reworked: the property setters no longer silently pad or trim the respective other angle vector. Inconsistent numbers of gantry and couch angles now throw an error, both when set via `pln.propStf` and (on use) when set directly on the generator. As a documented convenience, a scalar couch angle is valid for any number of gantry angles and is applied to all beams
 - Refactored leaf/spot sequencing into an object-oriented class hierarchy (`matRad_SequencerBase` with the photon MLC sequencers `matRad_SequencingPhotonsSiochiLeaf`/`matRad_SequencingPhotonsXiaLeaf`/`matRad_SequencingPhotonsEngelLeaf` and the particle spot sequencer `matRad_ParticleSequencer`), mirroring the dose engine design. The sequencer is selected via `pln.propSeq.sequencer` and discovered automatically; the previous `matRad_siochiLeafSequencing`/`matRad_xiaLeafSequencing`/`matRad_engelLeafSequencing` functions are retained as thin deprecated wrappers.
 - Argument order of `matRad_sequencing` changed to `matRad_sequencing(resultGUI, stf, pln, dij)`; the previous order (with `dij` and `pln` swapped) is still accepted with a deprecation warning
 
