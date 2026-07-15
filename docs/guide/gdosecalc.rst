@@ -89,9 +89,12 @@ An experimental Monte Carlo dose engine based on a the reimplementation `ompMC <
 Base data / Machine
 ###################
 
-The necessary measured base data, namely the kernel functions as described by `Bortfeld et al. (1993) Medical Physics <http://scitation.aip.org/content/aapm/journal/medphys/20/2/10.1118/1.597070>`_ are supplied for a 6MV LINAC and stored in `photons_Generic.mat <https://github.com/e0404/matRad/blob/master/matRad/basedata/photons_Generic.mat>`_ as MATLAB piecewise polynomial.
+The necessary measured base data, namely the kernel functions as described by `Bortfeld et al. (1993) Medical Physics <http://scitation.aip.org/content/aapm/journal/medphys/20/2/10.1118/1.597070>`_ are supplied for a 6MV LINAC and stored in `photons_Generic.mat <https://github.com/e0404/matRad/blob/master/matRad/basedata/photons_Generic.mat>`_ as tabulated kernels.
 
-matRad's photon dose engine is calibrated such that a bixel intensity of all ones, i.e., ``w = ones(stf.totalNumOfBixels,1)``, yields a dose of roughly 1Gy in 5cm depth for a 5cm by 5cm field at SSD = 900mm. If you want to reproduce this, you can download a set of stf and pln structures that work with the TG119 phantom `here <https://raw.githubusercontent.com/wiki/e0404/matRad/resources/TG119absDosNorm.mat>`_.
+For the machine file format, see :ref:`here <_basedata_photons>`.
+
+matRad's photon dose engine is calibrated such that a bixel intensity of all ones, i.e., ``w = ones(stf.totalNumOfBixels,1)``, yields a dose of roughly 1Gy in 5cm depth for a 5cm by 5cm field at SSD = 900mm. 
+If you want to reproduce this, matRad contains a script ``matRad_photonDosimetry.m`` within the tools folder to reproduce the calibration.
 
 Approximations
 ##############

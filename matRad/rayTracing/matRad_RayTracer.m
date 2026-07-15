@@ -138,7 +138,7 @@ classdef matRad_RayTracer < handle
             nCubeVox = numel(this.cubes{1});
 
             % If no subset of voxels is specified, take all of them
-            if nargin < 4
+            if nargin < 3
                 voxelIndices = transpose(1:nCubeVox);
                 if this.enableGPU
                     voxelIndices = gpuArray(int32(voxelIndices));
@@ -147,7 +147,7 @@ classdef matRad_RayTracer < handle
 
             % if we don't provide rotated patient coordinates we can compute
             % them here on our own
-            if nargin < 5
+            if nargin < 4
                 coordsV = single(matRad_cubeIndex2worldCoords(voxelIndices, this.grid));
 
                 % Get Rotation Matrix
@@ -170,7 +170,7 @@ classdef matRad_RayTracer < handle
 
             % set up list with bev coordinates for calculation of radiological depth
             if matRad_cfg.isMatlab && isgpuarray(rotCoordsV)
-                coords = zeros(nCubeVox, 3, matRad_underlyingTypeCompat(rotCoordsV),'gpuArray');
+                coords = zeros(nCubeVox, 3, matRad_underlyingTypeCompat(rotCoordsV), 'gpuArray');
             else
                 coords = zeros(nCubeVox, 3, matRad_underlyingTypeCompat(rotCoordsV));
             end
@@ -183,9 +183,9 @@ classdef matRad_RayTracer < handle
                                 min([this.grid.resolution.x this.grid.resolution.y this.grid.resolution.z]), matRad_underlyingTypeCompat(coords));
             spacingRange = rayMxSpacing * (floor(-500 / rayMxSpacing):ceil(500 / rayMxSpacing));
 
-            t_candidate = tic;
+            % tCandidate = tic;
             candidateRayMx = this.getCandidateRayMatrix(spacingRange, referencePositionsBEV);
-            t_candidate = toc(t_candidate);
+            % tCandidate = toc(tCandidate);
 
             [rayIdxZ, rayIdxX] = find(candidateRayMx);
             rayMx_bev = [spacingRange(rayIdxX)' rayMx_bev_y * ones(sum(candidateRayMx(:)), 1) spacingRange(rayIdxZ)'];
