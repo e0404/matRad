@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - possible negative doses in finesampling engine due to extrapolation in kernel interpolation
 - correct parsing of all optional arguments of the `traceCube` function for `matRad_RayTracer`
+- corrected an inconsistency where analytical dose calculations used an RSP cube with `ignoreOutsideDensities` applied, while MC dose engines often converted materials directly from the HU cube without the same masking. Added the variables `ignoreOutsideDensities` and `useGivenEqDensityCube` to `pln.propStf` and `pln.propDoseCalc` to handle this consistently between STF generation and dose engines. Note that `ignoreOutsideDensities` now defaults to `false` (densities outside contours are kept), whereas dose calculation and STF generation previously masked outside densities by default, so results can differ unless the option is set explicitly.
 - CheckGradients option for fmincon dropped due to change in Matlab 2026
 - `dij.ax` and `dij.bx` are correctly handled as cell arrays in weight initialization
 - `matRad_GriddedScenariosAbstract` now correctly allows single grid point (collapse to nominal value) for a specific error type

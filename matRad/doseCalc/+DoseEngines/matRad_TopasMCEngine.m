@@ -29,7 +29,6 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
     properties
         hlut
-        useGivenEqDensityCube       % Use the given density cube ct.cube and omit conversion from cubeHU.
         calcLET = false
         calcBioDose = false
         prescribedDose = []
@@ -177,6 +176,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
             % call superclass constructor
             this = this@DoseEngines.matRad_MonteCarloEngineAbstract(pln);
+            this.requiresEqDensityCube = true; % ct.cube is used for resampling to the dose grid
 
             if this.enableGPU
                 matRad_cfg = MatRad_Config.instance();
@@ -188,9 +188,6 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         function setDefaults(this)
             this.setDefaults@DoseEngines.matRad_MonteCarloEngineAbstract();
             matRad_cfg = MatRad_Config.instance(); % Instance of matRad configuration class
-
-            this.useGivenEqDensityCube        = matRad_cfg.defaults.propDoseCalc.useGivenEqDensityCube;
-
             % Default execution paths are set here
             this.topasFolder = [matRad_cfg.matRadSrcRoot filesep 'doseCalc' filesep 'topas' filesep];
             this.workingDir = [matRad_cfg.primaryUserFolder filesep 'TOPAS' filesep];
@@ -705,18 +702,6 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         function dij = initDoseCalc(this, ct, cst, stf)
             dij = this.initDoseCalc@DoseEngines.matRad_MonteCarloEngineAbstract(ct, cst, stf);
             matRad_cfg = MatRad_Config.instance();
-
-            % calculate rED or rSP from HU or take provided wedCube
-            if this.useGivenEqDensityCube && ~isfield(ct, 'cube')
-                matRad_cfg.dispWarning('HU Conversion requested to be omitted but no ct.cube exists! Will override and do the conversion anyway!');
-                this.useGivenEqDensityCube = false;
-            end
-
-            if this.useGivenEqDensityCube
-                matRad_cfg.dispInfo('Omitting HU to rED/rSP conversion and using existing ct.cube!\n');
-            else
-                ct = matRad_calcWaterEqD(ct, stf); % Maybe we can avoid duplicating the CT here?
-            end
 
             if isfield(ct, 'hlut')
                 this.hlut = ct.hlut;

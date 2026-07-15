@@ -36,10 +36,14 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         precision = 'double';       % floating point precision for the dij and computations.
         enableGPU = false;          % whether to use GPU arrays (experimental) for dose calculation (if supported by subclass implementation).
         %bioModel;                  % name of the biological model
+        ignoreOutsideDensities       % Ignore densities outside of cst contours
+        useGivenEqDensityCube;      % Use the given density cube ct.cube and omit conversion from cubeHU.
     end
     
     % Protected properties with public get access
     properties (SetAccess = protected, GetAccess = public)
+        requiresEqDensityCube = false; % whether the engine computes on the rED/rSP cube ct.cube (given or converted from cubeHU in preprocessCT)
+
         machine;                % base data defined in machine file
 
         timers;                 % timers of dose calc
@@ -215,6 +219,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             %Set direct dose calculation and compute "dij"
             this.directWeights = w;
             this.calcDoseDirect = true;
+            ct = this.preprocessCT(ct,cst,stf);
             dij = this.calcDose(ct,cst,stf);
             dij = this.finalizeDose(dij);
 
@@ -275,17 +280,60 @@ classdef (Abstract) matRad_DoseEngineBase < handle
 
         function dij = calcDoseInfluence(this,ct,cst,stf)
             this.calcDoseDirect = false;
+            ct = this.preprocessCT(ct,cst,stf);
             dij = this.calcDose(ct,cst,stf);
             dij = this.finalizeDose(dij);
         end
         function setDefaults(this)
             % future code for property validation on creation here
             matRad_cfg = MatRad_Config.instance();
-            
             %Assign default parameters from MatRad_Config
-            this.doseGrid                   = matRad_cfg.defaults.propDoseCalc.doseGrid;
             this.multScen                   = 'nomScen';
+            this.doseGrid                   = matRad_cfg.defaults.propDoseCalc.doseGrid;
             this.selectVoxelsInScenarios    = matRad_cfg.defaults.propDoseCalc.selectVoxelsInScenarios;
+            this.ignoreOutsideDensities       = matRad_cfg.defaults.propDoseCalc.ignoreOutsideDensities;
+            this.useGivenEqDensityCube      = matRad_cfg.defaults.propDoseCalc.useGivenEqDensityCube;
+        end
+    
+        function ct = preprocessCT(this,ct,cst,stf)
+            matRad_cfg = MatRad_Config.instance();
+            % check consistent with stf
+            if isfield(stf(1),'props') && this.ignoreOutsideDensities ~= stf(1).props.ignoreOutsideDensities
+                matRad_cfg.dispWarning('The parameter ignoreOutsideDensities is inconsistent between stf generation and dose calculation')
+            end
+            if isfield(stf(1),'props') && this.useGivenEqDensityCube ~= stf(1).props.useGivenEqDensityCube
+                matRad_cfg.dispWarning('The parameter useGivenEqDensityCube is inconsistent between stf generation and dose calculation')
+            end
+
+            useGivenCube = this.requiresEqDensityCube && this.useGivenEqDensityCube;
+            if useGivenCube && ~isfield(ct,'cube')
+                matRad_cfg.dispWarning('HU Conversion requested to be omitted but no ct.cube exists! Will override and do the conversion anyway!');
+                useGivenCube = false;
+            end
+
+            if this.ignoreOutsideDensities
+                % ignore densities outside of contours
+                V = [cst{:,4}];
+                V = unique(vertcat(V{:}));
+                eraseCtDensMask = true(prod(ct.cubeDim), 1);
+                eraseCtDensMask(V) = false;
+                for i = 1:ct.numOfCtScen
+                    ct.cubeHU{i}(eraseCtDensMask) = -1000;
+                    if useGivenCube
+                        % the given cube is not re-converted from cubeHU below, so mask it directly
+                        ct.cube{i}(eraseCtDensMask) = 0;
+                    end
+                end
+            end
+
+            % only engines computing on the rED/rSP cube need ct.cube; others work on cubeHU directly
+            if this.requiresEqDensityCube
+                if useGivenCube
+                    matRad_cfg.dispInfo('Omitting HU to rED/rSP conversion and using existing ct.cube!\n');
+                else
+                    ct = matRad_calcWaterEqD(ct, stf(1).radiationMode); % Maybe we can avoid duplicating the CT here?
+                end
+            end
         end
     end
     
