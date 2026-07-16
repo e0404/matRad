@@ -1,0 +1,16 @@
+{% extends "!layout.html" %}
+
+{% block extrahead %}
+  {{ super() }}
+
+  <link rel="icon" href="{{ pathto(fav ~ 'favicon.ico', 1) }}">
+  <link rel="icon" type="image/png" sizes="32x32"
+        href="{{ pathto(fav ~ 'favicon-32x32.png', 1) }}">
+  <link rel="icon" type="image/png" sizes="16x16"
+        href="{{ pathto(fav ~ 'favicon-16x16.png', 1) }}">
+  <link rel="apple-touch-icon"
+        href="{{ pathto(fav ~ 'apple-touch-icon.png', 1) }}">
+  <link rel="manifest"
+        href="{{ pathto(fav ~ 'site.webmanifest', 1) }}">
+
+{% endblock %}

@@ -76,8 +76,10 @@ function test_generate_multibeams()
         stfGen = matRad_StfGeneratorPhotonSingleBeamlet(pln);
 
         stfGen.gantryAngles = 0;
-        assertTrue(numel(stfGen.couchAngles) == 1);
+        % couch angles are not auto-synced; the mismatch is caught on use
+        assertExceptionThrown(@() stfGen.numOfBeams, 'matRad:Error');
         stfGen.couchAngles = 0;
+        assertEqual(stfGen.numOfBeams, 1);
 
         stf = stfGen.generate(ct,cst);
     
@@ -113,6 +115,47 @@ function test_generate_multibeams()
         assertEqual(stf.ray.rayPos, [0 0 0]);
         assertEqual(stf.ray.rayPos_bev, [0 0 0]);
         assertEqual(stf.ray.targetPoint_bev, [0 stf.SAD 0]);
-        assertEqual(stf.ray.targetPoint, stf.ray.targetPoint_bev*rotMat);        
+        assertEqual(stf.ray.targetPoint, stf.ray.targetPoint_bev*rotMat);
         assertTrue(isfield(stf.ray,'beamletCornersAtIso'));
         assertTrue(isfield(stf.ray,'rayCorners_SCD'));
+
+function test_angle_consistency_pln()
+    load photons_testData.mat pln;
+
+    % Inconsistent numbers of gantry and couch angles in pln throw an error
+    plnBad = pln;
+    plnBad.propStf.gantryAngles = [0 90 270];
+    plnBad.propStf.couchAngles  = [0 0];
+    assertExceptionThrown(@() matRad_StfGeneratorPhotonSingleBeamlet(plnBad), 'matRad:Error');
+
+    % A scalar couch angle is valid for multiple gantry angles
+    plnScalar = pln;
+    plnScalar.propStf.gantryAngles = [0 90 270];
+    plnScalar.propStf.couchAngles  = 0;
+    stfGen = matRad_StfGeneratorPhotonSingleBeamlet(plnScalar);
+    assertEqual(stfGen.numOfBeams, 3);
+
+function test_angle_consistency_properties()
+    stfGen = matRad_StfGeneratorPhotonSingleBeamlet();
+
+    % Sequential assignment with transient mismatch is allowed
+    stfGen.gantryAngles = [0 90 270];
+    stfGen.couchAngles  = [0 10 20];
+    assertEqual(stfGen.numOfBeams, 3);
+
+    % Mismatch is caught when the number of beams is queried
+    stfGen.couchAngles = [0 10];
+    assertExceptionThrown(@() stfGen.numOfBeams, 'matRad:Error');
+
+function test_scalar_couch_angle_expansion()
+    load photons_testData.mat ct cst pln;
+
+    stfGen = matRad_StfGeneratorPhotonSingleBeamlet(pln);
+    stfGen.gantryAngles = [0 180];
+    stfGen.couchAngles  = 10;
+
+    stf = stfGen.generate(ct,cst);
+
+    assertEqual([stf.gantryAngle], [0 180]);
+    assertEqual([stf.couchAngle], [10 10]);
+    assertEqual(stfGen.couchAngles, [10 10]);

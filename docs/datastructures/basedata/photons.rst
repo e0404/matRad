@@ -4,9 +4,9 @@
 Photon Base Data File
 ======================
 
-This page describes the format and the variables as part of the particle base data files `protons_Generic.mat <https://github.com/e0404/matRad/blob/master/basedata/protons_Generic.mat>`_ and `carbon_Generic.mat <https://github.com/e0404/matRad/blob/master/basedata/carbon_Generic.mat>`_.
+This page describes the format and the variables as part of the photon base data file `photons_Generic.mat <https://github.com/e0404/matRad/blob/master/matRad/basedata/photons_Generic.mat>`_.
 The base data is stored using MATLAB's structure format.
-The first sub level of the structure 'machine' contains two fields named 'meta' and 'data' which are explained separately next.
+The first sub level of the structure 'machine' contains the fields 'meta' and 'data' (and, since version 2, 'version') which are explained separately next.
 
 machine.version
 ---------------
@@ -23,7 +23,7 @@ Actual machine name as string to identify the base data set during runtime.
 
 machine.meta.radiationMode
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-The radiationMode stores the radiation modality the base data is describing. Logically, `protons_Generic.mat <https://github.com/e0404/matRad/blob/master/basedata/protons_Generic.mat>`_ models protons in water and the corresponding field machine.meta.radiationMode is set to 'protons'.
+The radiationMode stores the radiation modality the base data is describing. Logically, `photons_Generic.mat <https://github.com/e0404/matRad/blob/master/matRad/basedata/photons_Generic.mat>`_ models photons in water and the corresponding field machine.meta.radiationMode is set to 'photons'.
 
 machine.meta.SAD
 ^^^^^^^^^^^^^^^^

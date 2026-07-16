@@ -1,4 +1,4 @@
-function [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apertureInfo,optResult,pln)
+function [optResult, optimizer] = matRad_directApertureOptimization(dij, cst, apertureInfo, optResult, pln)
 % matRad function to run direct aperture optimization
 %
 % call:
@@ -10,7 +10,7 @@ function [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apert
 %   apertureInfo:   aperture shape info struct
 %   optResult:      resultGUI struct to which the output data will be added, if
 %                   this field is empty optResult struct will be created
-%                   
+%
 %   pln:            matRad pln struct
 %
 % output:
@@ -36,43 +36,41 @@ function [optResult,optimizer] = matRad_directApertureOptimization(dij,cst,apert
 
 matRad_cfg = MatRad_Config.instance();
 
-
 % adjust overlap priorities
 cst = matRad_setOverlapPriorities(cst);
 
-% check & adjust objectives and constraints internally for fractionation 
-for i = 1:size(cst,1)
-    for j = 1:numel(cst{i,6})
-        obj = cst{i,6}{j};
-        
-        %In case it is a default saved struct, convert to object
-        %Also intrinsically checks that we have a valid optimization
-        %objective or constraint function in the end
-        if ~isa(obj,'matRad_DoseOptimizationFunction')
+% check & adjust objectives and constraints internally for fractionation
+for i = 1:size(cst, 1)
+    for j = 1:numel(cst{i, 6})
+        obj = cst{i, 6}{j};
+
+        % In case it is a default saved struct, convert to object
+        % Also intrinsically checks that we have a valid optimization
+        % objective or constraint function in the end
+        if ~isa(obj, 'matRad_DoseOptimizationFunction')
             try
                 obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
             catch
-                matRad_cfg.dispError('cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!',i,j);
+                matRad_cfg.dispError('cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!', i, j);
             end
         end
-        
-        obj = obj.setDoseParameters(obj.getDoseParameters()/pln.numOfFractions);
-        
-        cst{i,6}{j} = obj;        
+
+        obj = obj.setDoseParameters(obj.getDoseParameters() / pln.numOfFractions);
+
+        cst{i, 6}{j} = obj;
     end
 end
 
-% resizing cst to dose cube resolution 
-cst = matRad_resizeCstToGrid(cst,dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z,...
-                                 dij.doseGrid.x,dij.doseGrid.y,dij.doseGrid.z);
+% resizing cst to dose cube resolution
+cst = matRad_resizeCstToGrid(cst, dij.ctGrid.x, dij.ctGrid.y, dij.ctGrid.z, ...
+                             dij.doseGrid.x, dij.doseGrid.y, dij.doseGrid.z);
 
-
-if ~isfield(pln,'bioModel')
+if ~isfield(pln, 'bioModel')
     pln.bioModel = 'none';
 end
 
-if ~isa(pln.bioModel,'matRad_BiologicalModel')
-    pln.bioModel = matRad_BiologicalModel.validate(pln.bioModel,pln.radiationMode);
+if ~isa(pln.bioModel, 'matRad_BiologicalModel')
+    pln.bioModel = matRad_BiologicalModel.validate(pln.bioModel, pln.radiationMode);
 end
 
 % set optimization options
@@ -83,14 +81,14 @@ options.quantityOpt  = pln.propOpt.quantityOpt;
 options.model        = pln.bioModel.model;
 
 % update aperture info vector
-apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(apertureInfo,apertureInfo.apertureVector);
+apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(apertureInfo, apertureInfo.apertureVector);
 
-%Use Dose Projection only
+% Use Dose Projection only
 backProjection = matRad_DoseProjection();
 
-optiProb = matRad_OptimizationProblemDAO(backProjection,apertureInfo);
+optiProb = matRad_OptimizationProblemDAO(backProjection, apertureInfo);
 
-if ~isfield(pln.propOpt,'optimizer')
+if ~isfield(pln.propOpt, 'optimizer')
     pln.propOpt.optimizer = 'IPOPT';
 end
 
@@ -100,21 +98,32 @@ switch pln.propOpt.optimizer
     case 'fmincon'
         optimizer = matRad_OptimizerFmincon;
     otherwise
-        matRad_cfg.dispWarning('Optimizer ''%s'' not known! Fallback to IPOPT!',pln.propOpt.optimizer);
+        matRad_cfg.dispWarning('Optimizer ''%s'' not known! Fallback to IPOPT!', pln.propOpt.optimizer);
         optimizer = matRad_OptimizerIPOPT;
 end
 
 % Run IPOPT.
-optimizer = optimizer.optimize(apertureInfo.apertureVector,optiProb,dij,cst);
+optimizer = optimizer.optimize(apertureInfo.apertureVector, optiProb, dij, cst);
 wOpt = optimizer.wResult;
 
 % update the apertureInfoStruct and calculate bixel weights
-apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(apertureInfo,wOpt);
+apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(apertureInfo, wOpt);
 
 % logging final results
 matRad_cfg.dispInfo('Calculating final cubes...\n');
-resultGUI = matRad_calcCubes(apertureInfo.bixelWeights,dij);
-resultGUI.w    = apertureInfo.bixelWeights;
-resultGUI.wDAO = apertureInfo.bixelWeights;
-resultGUI.apertureInfo = apertureInfo;
+resultGUI = matRad_calcCubes(apertureInfo.bixelWeights, dij);
 
+% add the computed dose cubes / weights to the passed-in optResult struct
+% (an empty input is promoted to a fresh struct). Nested fields such as
+% optResult.sequencing are preserved.
+fNames = fieldnames(resultGUI);
+for f = 1:numel(fNames)
+    optResult.(fNames{f}) = resultGUI.(fNames{f});
+end
+optResult.w    = apertureInfo.bixelWeights;
+optResult.wDAO = apertureInfo.bixelWeights;
+
+% store the aperture info both at the top level (backward-compatible API)
+% and under the sequencing field used by the refactored workflow
+optResult.apertureInfo = apertureInfo;
+optResult.sequencing.apertureInfo = apertureInfo;

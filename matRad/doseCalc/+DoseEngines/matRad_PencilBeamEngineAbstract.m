@@ -1,7 +1,7 @@
 classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEngineBase
     % matRad_PencilBeamEngineAbstract: abstract superclass for all dose calculation engines which are based on
     %   analytical pencil beam calculation
-    %   for more informations see superclass
+    %   for more information see superclass
     %   DoseEngines.matRad_DoseEngine
     %   MatRad_Config MatRad Configuration class
     %
@@ -25,8 +25,6 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
         dosimetricLateralCutOff; %relative dosimetric cut-off (in fraction of values calculated)
 
         ssdDensityThreshold;        % Threshold for SSD computation
-        useGivenEqDensityCube;      % Use the given density cube ct.cube and omit conversion from cubeHU.
-        ignoreOutsideDensities;     % Ignore densities outside of cst contours
 
         numOfDijFillSteps = 10;     % Number of times during dose calculation the temporary containers are moved to a sparse matrix
 
@@ -45,7 +43,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
         radDepthCubes = {};     % only stored if property set accordingly
 
         cubeWED;                % relative electron density / stopping power cube
-        hlut;                   % hounsfield lookup table to craete relative electron density cube    
+        hlut;                   % hounsfield lookup table to create relative electron density cube
     end
 
     methods
@@ -54,7 +52,8 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                 pln = [];
             end
 
-            this = this@DoseEngines.matRad_DoseEngineBase(pln);            
+            this = this@DoseEngines.matRad_DoseEngineBase(pln);
+            this.requiresEqDensityCube = true;
         end
 
         function setDefaults(this)
@@ -114,6 +113,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
                     %Initialize Beam Geometry
                     currBeam = this.initBeam(dij,ct,cst,scenStf,i);
+                    progressLineReset = true;
 
                     %Keep tabs on bixels computed in this beam
                     bixelBeamCounter = 0;
@@ -151,7 +151,8 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                         % Progress Update & Bookkeeping
                         bixelCounter = bixelCounter + currRay.numOfBixels;
                         bixelBeamCounter = bixelBeamCounter + currRay.numOfBixels;
-                        this.progressUpdate(bixelCounter,dij.totalNumOfBixels);
+                        this.progressUpdate(bixelCounter,dij.totalNumOfBixels,progressLineReset);
+                        progressLineReset = false;
                     end
                 end
             end
@@ -159,7 +160,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
         function dij = initDoseCalc(this,ct,cst,stf)
             % modified inherited method of the superclass DoseEngine,
-            % containing intialization which are specificly needed for
+            % containing initialization which are specifically needed for
             % pencil beam calculation and not for other engines
 
             matRad_cfg = MatRad_Config.instance();
@@ -171,30 +172,10 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
             dij = initDoseCalc@DoseEngines.matRad_DoseEngineBase(this,ct,cst,stf);
             
-            % calculate rED or rSP from HU or take provided wedCube
-            if this.useGivenEqDensityCube && ~isfield(ct,'cube')
-                matRad_cfg.dispWarning('HU Conversion requested to be omitted but no ct.cube exists! Will override and do the conversion anyway!');
-                this.useGivenEqDensityCube = false;
-            end
-
-            if this.useGivenEqDensityCube
-                matRad_cfg.dispInfo('Omitting HU to rED/rSP conversion and using existing ct.cube!\n');
-            else
-                ct = matRad_calcWaterEqD(ct, stf); % Maybe we can avoid duplicating the CT here?
-            end
 
             this.cubeWED = cellfun(@(x) cast(x,this.precision),ct.cube, 'UniformOutput',false);
             if isfield(ct,'hlut')
                 this.hlut = cast(ct.hlut,this.precision);
-            end
-
-            % ignore densities outside of contours
-            if this.ignoreOutsideDensities
-                eraseCtDensMask = ones(prod(ct.cubeDim),1);
-                eraseCtDensMask(this.VctGrid) = 0;
-                for i = 1:ct.numOfCtScen
-                    this.cubeWED{i}(eraseCtDensMask == 1) = 0;
-                end
             end
 
             % Allocate memory for quantity containers
@@ -325,7 +306,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
             matRad_cfg.dispInfo('done in %fs.\n',toc(tRayTracingStart));
             
-            % limit rotated coordinates to positions where ray tracing is availabe
+            % limit rotated coordinates to positions where ray tracing is available
             %radDepthsMat = cellfun(@(radDepthCube) matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z,radDepthCube,dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest'),radDepthsMat,'UniformOutput',false);
             
             %Find valid coordinates
@@ -455,7 +436,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             % last step in bixel dose calculation
 
             %Only fill if we actually had bixel (indices) to compute
-            if ~isempty(bixel) || ~isempty(bixel.ix)
+            if ~isempty(bixel) && ~isempty(bixel.ix)
                 % Store in temporary containers to limit matrix filling
                 names = fieldnames(this.tmpMatrixContainers);
                 bixelContainerColIx = mod(counter-1,this.numOfBixelsContainer)+1;
@@ -572,7 +553,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             %
             % input:
             %   rot_coords_bev:     coordinates in bev of the voxels with index V,
-            %                       where also ray tracing results are availabe
+            %                       where also ray tracing results are available
             %   sourcePoint_bev:    source point in voxel coordinates in beam's eye view
             %   targetPoint_bev:    target point in voxel coordinated in beam's eye view
             %   SAD:                source-to-axis distance

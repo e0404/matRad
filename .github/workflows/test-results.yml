@@ -17,7 +17,7 @@ jobs:
             
         steps:            
             - name: Download Results for Matlab R2022b
-              uses: actions/download-artifact@v4
+              uses: actions/download-artifact@v8
               with:
                   run-id: ${{ github.event.workflow_run.id }}
                   name: test-results-matlab-R2022b
@@ -25,7 +25,7 @@ jobs:
                   github-token: ${{ secrets.GITHUB_TOKEN }}
             
             - name: Download Results for Matlab Latest
-              uses: actions/download-artifact@v4
+              uses: actions/download-artifact@v8
               with:
                   run-id: ${{ github.event.workflow_run.id }}
                   name: test-results-matlab-latest
@@ -33,7 +33,7 @@ jobs:
                   github-token: ${{ secrets.GITHUB_TOKEN }}
             
             - name: Download Results for Octave
-              uses: actions/download-artifact@v4
+              uses: actions/download-artifact@v8
               with:
                   run-id: ${{ github.event.workflow_run.id }}
                   name: test-results-octave
@@ -41,7 +41,7 @@ jobs:
                   github-token: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Download Event File
-              uses: actions/download-artifact@v4
+              uses: actions/download-artifact@v8
               with:
                   run-id: ${{ github.event.workflow_run.id }}
                   name: event-file

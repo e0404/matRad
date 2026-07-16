@@ -1,15 +1,18 @@
-function resultGUI = matRad_sequencing(resultGUI,stf,dij,pln,visBool)
+function resultGUI = matRad_sequencing(resultGUI, stf, pln, dij, visMode)
 % matRad inverse planning wrapper function
 % 
 % call:
-%   resultGUI = matRad_sequencing(resultGUI,stf,dij,pln)
+%   resultGUI = matRad_sequencing(resultGUI,stf,pln,dij)
+%   resultGUI = matRad_sequencing(resultGUI,stf,pln,dij,visMode)
 %
 % input:
-%   dij:        matRad dij struct
-%   stf:        matRad stf struct
-%   pln:        matRad pln struct
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
 %               biological optimization) RBE-weighted dose etc.
+%   stf:        matRad stf struct
+%   pln:        matRad pln struct
+%   dij:        matRad dij struct (optional; if given, the dose is
+%               recomputed from the sequenced fluence for photon plans)
+%   visMode:    toggle sequencing visualization on/off (optional)
 %
 % output:
 %   resultGUI:  struct containing optimized fluence vector, dose, and (for
@@ -30,42 +33,48 @@ function resultGUI = matRad_sequencing(resultGUI,stf,dij,pln,visBool)
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 matRad_cfg = MatRad_Config.instance();
 
-if nargin < 5
-    visBool = 0;
+% Backwards compatibility: the order of the pln and dij arguments was swapped
+% (previously matRad_sequencing(resultGUI, stf, dij, pln)). A dij always carries
+% the dose-influence grid (doseGrid), a pln never does at the top level - so if
+% the pln position holds a dij, the call uses the old order and the arguments
+% are swapped with a deprecation warning.
+if nargin >= 4 && isstruct(pln) && isfield(pln, 'doseGrid')
+    matRad_cfg.dispDeprecationWarning('The argument order of matRad_sequencing changed to matRad_sequencing(resultGUI, stf, pln, dij). Please update your call.');
+    [pln, dij] = deal(dij, pln);
 end
 
-if ~isfield(pln,'propSeq')
-    pln.propSeq = struct('runSequencing',false);
+sequencer = matRad_SequencerBase.getSequencerFromPln(pln);
+
+% Handle optional inputs
+if nargin == 5 && ~isempty(visMode)
+    sequencer.visMode = visMode;
+end
+if nargin < 4 || isempty(dij)
+    dij = [];
 end
 
-if strcmp(pln.radiationMode,'photons') && (pln.propSeq.runSequencing || pln.propOpt.runDAO)
-    
-    if ~isfield(pln.propSeq, 'sequencer')
-        pln.propSeq.sequencer = 'siochi'; % default: siochi sequencing algorithm
-        matRad_cfg.dispWarning ('pln.propSeq.sequencer not specified. Using siochi leaf sequencing (default).')
+sequence = sequencer.sequence(resultGUI.w, stf);
+
+% Aperture-based (photon) sequencing modifies the fluence into deliverable
+% MLC segments, so the dose has to be recomputed from the sequenced fluence.
+% Particle sequencing only derives the spot delivery order/timing, leaves the
+% fluence unchanged and returns a per-beam struct array - the existing dose
+% cubes stay valid and must not be recomputed here.
+if isa(sequencer, 'matRad_PhotonSequencerAbstract')
+    if ~isempty(dij)
+        resultGUI = matRad_calcCubes(sequence.w, dij);
+    else
+        matRad_cfg.dispWarning('Dose not recalculated with sequenced fluence');
     end
-    
-    if ~isfield(pln.propSeq, 'sequencingLevel')
-        pln.propSeq.sequencingLevel = 5;
-         matRad_cfg.dispWarning ('pln.propSeq.sequencingLevel not specified. Using 5 sequencing levels (default).')
-    end
-    
-    switch pln.propSeq.sequencer
-        case 'xia'
-            resultGUI = matRad_xiaLeafSequencing(resultGUI,stf,dij,pln.propSeq.sequencingLevel,visBool);
-        case 'engel'
-            resultGUI = matRad_engelLeafSequencing(resultGUI,stf,dij,pln.propSeq.sequencingLevel,visBool);
-        case 'siochi'
-            resultGUI = matRad_siochiLeafSequencing(resultGUI,stf,dij,pln.propSeq.sequencingLevel,visBool);
-        otherwise
-            matRad_cfg.dispError('Could not find specified sequencing algorithm ''%s''',pln.propSeq.sequencer);
-    end
-elseif (pln.propSeq.runSequencing || pln.propOpt.runDAO) && ~strcmp(pln.radiationMode,'photons')
-    matRad_cfg.dispWarning('Sequencing is only specified for pln.radiationMode = "photons". Continuing with out sequencing ... ')
 end
+resultGUI.sequencing   = sequence;
+
+% keep a backward-compatible copy of the aperture info at the top level so
+% that legacy calls (e.g. matRad_directApertureOptimization) still work
+if isfield(sequence, 'apertureInfo')
+    resultGUI.apertureInfo = sequence.apertureInfo;
 end
 
-
+end

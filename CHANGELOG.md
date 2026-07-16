@@ -2,39 +2,72 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
 ### Added
-- Userfolders can now also be set via environment variable `MATRAD_USERDATA`
-- Documentation: Documented the userfolder feature and its usage as well as other datastructures more clearly
+
 - Added helper to create ring VOIs from margins around existing structures
 
 ### Fixed
-- possible negative doses in finesampling engine due to extrapolation in kernel interpolation
-- correct parsing of all optional arguments of the `traceCube` function for `matRad_RayTracer`
-- CheckGradients option for fmincon dropped due to change in Matlab 2026
-- `dij.ax` and `dij.bx` are correctly handled as cell arrays in weight initialization
+
+- Progress display in the console no longer gets mangled when other log output is written in between updates: `matRad_progress` accepts an optional `linereset` argument, used by the pencil-beam dose engines to restart the progress display for each beam
+- Removed a duplicated progress printout per beam during stf generation
+- The debug visualization of external beam stf generation (`visMode > 0`) crashed on undefined variables since the class-based generator refactor and now works again; the LPS subplot also gets its own axis labels instead of relabeling the beam's eye view
 
 ### Changed
+
+- Consistency handling of gantry and couch angles in external beam stf generators was reworked: the property setters no longer silently pad or trim the respective other angle vector. Inconsistent numbers of gantry and couch angles now throw an error, both when set via `pln.propStf` and (on use) when set directly on the generator. As a documented convenience, a scalar couch angle is valid for any number of gantry angles and is applied to all beams
+- Refactored leaf/spot sequencing into an object-oriented class hierarchy (`matRad_SequencerBase` with the photon MLC sequencers `matRad_SequencingPhotonsSiochiLeaf`/`matRad_SequencingPhotonsXiaLeaf`/`matRad_SequencingPhotonsEngelLeaf` and the particle spot sequencer `matRad_ParticleSequencer`), mirroring the dose engine design. The sequencer is selected via `pln.propSeq.sequencer` and discovered automatically; the previous `matRad_siochiLeafSequencing`/`matRad_xiaLeafSequencing`/`matRad_engelLeafSequencing` functions are retained as thin deprecated wrappers.
+- Argument order of `matRad_sequencing` changed to `matRad_sequencing(resultGUI, stf, pln, dij)`; the previous order (with `dij` and `pln` swapped) is still accepted with a deprecation warning
+
+## 3.2.3 - 2026-07-11
+
+### Added
+
+- Support for oxygen ions, including `oxygen_Generic` base data, the MKM biological model (`matRad_MKM` / z*-based LQ models), and oxygen handling in the particle stf generators and pencil-beam engine
+- Userfolders can now also be set via environment variable `MATRAD_USERDATA`
+- Documentation: Documented the userfolder feature and its usage as well as other datastructures more clearly
+- Range shifter lateral scattering (`matRad_calcSigmaRashi`) is now modeled for heavier ions (helium, carbon, oxygen) in addition to protons
+- Precompiled IPOPT interface binaries for Octave 8.4.0 on Linux (`ipopt.mexoct840a64`) and Windows (`ipopt.mexoct840w64`), together with an updated MinGW compilation script
+- CI: added dependabot configuration for monthly, grouped GitHub Actions updates
+- Octave >= 10 mex file for ipopt linked against Octave's OpenBLAS and LAPACK.
+
+### Fixed
+
+- possible negative doses in finesampling engine due to extrapolation in kernel interpolation
+- correct parsing of all optional arguments of the `traceCube` function for `matRad_RayTracer`
+- corrected an inconsistency where analytical dose calculations used an RSP cube with `ignoreOutsideDensities` applied, while MC dose engines often converted materials directly from the HU cube without the same masking. Added the variables `ignoreOutsideDensities` and `useGivenEqDensityCube` to `pln.propStf` and `pln.propDoseCalc` to handle this consistently between STF generation and dose engines. Note that `ignoreOutsideDensities` now defaults to `false` (densities outside contours are kept), whereas dose calculation and STF generation previously masked outside densities by default, so results can differ unless the option is set explicitly.
+- CheckGradients option for fmincon dropped due to change in Matlab 2026
+- `dij.ax` and `dij.bx` are correctly handled as cell arrays in weight initialization
+- `matRad_GriddedScenariosAbstract` now correctly allows single grid point (collapse to nominal value) for a specific error type
+- Range shifter lateral scattering is now correctly applied to the lateral dose kernels of the analytical pencil-beam engines (HongPB, AnalyticalPB, SubsamplingPB); previously it was computed but never added, so range shifters produced no lateral broadening (#923)
+- Fixed a unit bug in `matRad_calcSigmaRashi` where the base data range (in mm) was used directly in a cm-based formula, underestimating the range shifter scattering for protons
+- Correct edge case in handling of empty bixels in `matRad_ParticlePencilBeamEngineAbstract`
+- CI: pinned the Octave dicom package to 0.7.2 due to a build bug in newer releases
+
+### Changed
+
 - New version of photons_Generic.mat basedata file can now be provided, allowing a "version" field alongside "meta" and "data" files within the machine struct. Version 2 requires correct kernel normalization (without implying a spacing in the convolution integral). photons_Generic.mat has been updated to version 2 with correct kernel normalization.
 - Photon dose calculation now does not rely on hardcoded convolution resolution integral normalization of machine kernels. Assumes that old kernels use hardcoded factor of 4 for 0.5 mm resolution (1/0.5^2).
 - Improved matching of RTStruct contours to ct slices in DICOM import
+- CI: Octave tests now run with Octave 8.4.0 on ubuntu-24.04 (previously Octave 6.4 on ubuntu-22.04)
+- CI: updated GitHub Actions to current major versions (checkout v7, upload-artifact v7, download-artifact v8, and others)
+- Octave now manages mex file versions differently. Since Octave 10, mex files only link against a dedicated mex library (instead of full octave and libinterp1). The mex file checker now checks for the latest available major version build, and tries to run it.
 
-
-## [3.2.2]
+## [3.2.2] - 2026-03-26
 
 ### Fixed
+
 - Fixed `matRad_version` in case of tagged releases.
 - Fixed documentation: small documentation correction.
 
-## [3.2.1]
-
-This patch fixes a multitude of issues with the new MATLAB Desktop from R2025 and reported minor issues in import/export, helper functions, and other utility functions. Apart from that, it introduces new flexibilities under the hood, such as single precision and raytracer vectorization, that do not intentionally change outward-facing behavior and can be tested before broader behavioral changes in a future major release. The license was also changed to BSD 3-Clause.
+## [3.2.1] - 2026-03-25
 
 ### Added
+
+- This patch fixes a multitude of issues with the new MATLAB Desktop from R2025 and reported minor issues in import/export, helper functions, and other utility functions. Apart from that, it introduces new flexibilities under the hood, such as single precision and raytracer vectorization, that do not intentionally change outward-facing behavior and can be tested before broader behavioral changes in a future major release. The license was also changed to BSD 3-Clause.
 - Dose engines can now optionally run calculations in single precision while the default remains double. A new `precision` configuration property controls this.
 - GPU acceleration is available as an opt-in property for optimization. Helper functions for translating matRad data structures to and from GPU arrays were added.
 - The Siddon raytracer is now implemented as a class with vectorized ray processing and optional single-precision forcing.
@@ -48,6 +81,7 @@ This patch fixes a multitude of issues with the new MATLAB Desktop from R2025 an
 - CI: added a GitHub Actions workflow for documentation building triggered by changes to `docs/`.
 
 ### Changed
+
 - Streamlined sequencing and 3D conformal calculations.
 - Optimizer instantiation was reworked to allow more configuration options via `propOpt`.
 - The `finalizeDose` call in dose engines was moved to `calcDoseForward` and `calcDoseInfluence`.
@@ -58,6 +92,7 @@ This patch fixes a multitude of issues with the new MATLAB Desktop from R2025 an
 - CI: updated the MOcov submodule to include an md5 fix.
 
 ### Fixed
+
 - Variance calculation from MC statistics can now be computed correctly.
 - `matRad_plotSlice` input parsing was improved, including a fix for empty figure opening due to colormap array requests.
 - TOPAS now correctly supports multiple alpha/beta values.
@@ -71,9 +106,10 @@ This patch fixes a multitude of issues with the new MATLAB Desktop from R2025 an
 - GUI fixes include a missing plot handle, empty figure handles returned when the GUI is globally disabled, a `plotSlice` colormap issue, and scrolling in the viewing widget under Octave when `CurrentPoint` is empty.
 - `numOfbeams` is no longer required because it can be inferred.
 
-## [3.2.0]
+## [3.2.0] - 2025-10-30
 
 ### Added
+
 - Added the FRED MC interface, if installed.
 - Added VHEE planning with a generic unfocused beam and a focused beam. The generic beam can also be forwarded to TOPAS.
 - Added a new `matRad_plotSlice` function with keyword/value syntax for more intuitive slice plotting.
@@ -84,12 +120,14 @@ This patch fixes a multitude of issues with the new MATLAB Desktop from R2025 an
 - Project: added new contributors.
 
 ### Changed
+
 - Updated examples to use `matRad_plotSlice`.
 - The analytical functions from the Bortfeld Bragg Peak Model are now public and can be used to compute standard approximations such as range-energy relationships.
 - CI: added `Global_Optimization_Toolbox` to the MATLAB products list in `.github/actions/test-matlab/action.yml`.
 - CI: made the coverage PR comment step in `.github/workflows/coverage-report.yml` tolerant to errors to avoid workflow failures.
 
 ### Fixed
+
 - The DICOM import widget now allows selection of multiple RTDose files.
 - The DICOM import widget and importer now handle selected patients more consistently and robustly.
 - The DICOM exporter writes quantities beyond dose, and the importer now tries to import them correctly.
@@ -101,9 +139,10 @@ This patch fixes a multitude of issues with the new MATLAB Desktop from R2025 an
 - Available classes such as dose engines are now cached for faster loading.
 - GUI fixes were added for use in MATLAB Online.
 
-## [3.1.0]
+## [3.1.0] - 2024-11-18
 
 ### Added
+
 - Introduced a major file structure overhaul into organized subfolders such as `matRad`, `thirdParty`, and `examples` to improve clarity and maintainability.
 - Introduced the `userdata` folder to maintain custom data.
 - Introduced comprehensive scenario management, including support for 4D phase scenarios and automated scenario model instance tests.
@@ -124,6 +163,7 @@ This patch fixes a multitude of issues with the new MATLAB Desktop from R2025 an
 - Introduced MOxUnit and MOcov for automated unit tests, including example tests, as submodules.
 
 ### Changed
+
 - Large parts of the GUI are now Octave compatible.
 - Default configuration options are now stored in `MatRad_Config` under the `defaults` struct, with a compatibility layer for older access patterns.
 - `matRad_calcCubes` was changed to accept a variety of Monte Carlo-related fields without changing typical current usage.
@@ -144,27 +184,31 @@ This patch fixes a multitude of issues with the new MATLAB Desktop from R2025 an
 - Patch releases fix bugs and do not generally introduce new features, except for minimal configuration options that mitigate bugs in special cases.
 
 ### Fixed
+
 - Resolved issues with `ompMC` mex file compilation and Octave compatibility warnings.
 - Corrected path issues and file handling, especially for temporary directories and submodules.
 - Fixed bugs in optimization objectives and constraints for special input cases.
 - Fixed issues in DICOM import that expected non-standard tags.
 
 ### Deprecated
+
 - The previous procedural dose calculation workflow has been superseded by object-oriented dose engines, although compatibility layers remain in place.
 
 ### Removed
+
 - MATLAB GUIDE-based GUI usage as the primary GUI architecture.
 
-## [2.10.1]
-
-Release with small updates, cleanups, and bug fixes.
+## [2.10.1] - 2020-11-20
 
 ### Added
+
 - Added blue/white/red difference maps to the available colormaps.
 - Added the option `pln.propDoseCalc.useGivenEqDensityCube`, defaulting to `false`, to directly use the literal values from `ct.cube` and omit HU to WEQ conversion from `ct.cubeHU`.
 - Added the option `pln.propDoseCalc.ignoreOutsideDensities`, defaulting to `true`, to disable or enable inclusion of WEPL outside the patient contour during ray tracing.
 
 ### Changed
+
+- Release with small updates, cleanups, and bug fixes.
 - Removed the hardcoded penumbra width in photon dose calculation so it can now be stored in the machine file as `machine.data.penumbraFWHMatIso`.
 - Updated `ompMC` to use a virtual Gaussian source with measured penumbra values, including precompiled mex files.
 - Updated Travis CI testing, speeding it up by using precompiled mex interfaces and including testing with MATLAB on Ubuntu, with Azure DevOps as fallback.
@@ -173,17 +217,18 @@ Release with small updates, cleanups, and bug fixes.
 - Documentation: updated code documentation.
 
 ### Fixed
+
 - Fixed a 3D view issue caused by inconsistent angles in `pln` and `stf`.
 - Fixed incorrect DICOM UIDs and writing order in DICOM export.
 - Fixed a colormap issue in plotting.
 - Added new handling of environment checking with `matRad_cfg`, while retaining the old function.
 - Removed unnecessary `global` statements before `matRad_cfg`.
 
-## [2.10.0]
-
-Second release of matRad. Despite major incompatibilities with "Alan", the project kept the major version number `2` to preserve a more consistent versioning scheme going forward. The team thanks all new contributing authors listed in `AUTHORS.txt`.
+## [2.10.0] - 2020-06-05
 
 ### Added
+
+- Second release of matRad. Despite major incompatibilities with "Alan", the project kept the major version number `2` to preserve a more consistent versioning scheme going forward. The team thanks all new contributing authors listed in `AUTHORS.txt`.
 - Added integration tests using Travis CI with Octave, excluding GUI functionality.
 - Added the `matRad_rc` script to configure matRad paths.
 - Added version printing through `matRad_version`, and the version is now shown in the GUI and when using `matRad_rc`.
@@ -210,13 +255,14 @@ Second release of matRad. Despite major incompatibilities with "Alan", the proje
 - Added the global configuration object `matRad_cfg` backed by `MatRad_Config` to store default values and provide a logging interface.
 
 ### Fixed
+
 - Many bug fixes and many new bugs.
 
-## [2.1.0]
-
-First official release of matRad.
+## [2.1.0] - 2016-05-23
 
 ### Added
+
+- First official release of matRad.
 - Added the IPOPT optimizer for constrained optimization.
 - Added validated ray tracing.
 - Added validated pencil beam particle dose calculation.
@@ -226,4 +272,14 @@ First official release of matRad.
 - Improved the GUI workflow.
 
 ### Fixed
+
 - Many bug fixes and many new bugs.
+
+[Unreleased]: https://github.com/e0404/matRad/compare/v3.2.2...HEAD
+[3.2.2]: https://github.com/e0404/matRad/compare/v3.2.1...v3.2.2
+[3.2.1]: https://github.com/e0404/matRad/compare/v3.2.0...v3.2.1
+[3.2.0]: https://github.com/e0404/matRad/compare/v3.1.0...v3.2.0
+[3.1.0]: https://github.com/e0404/matRad/compare/v2.10.1...v3.1.0
+[2.10.1]: https://github.com/e0404/matRad/compare/v2.10.0...v2.10.1
+[2.10.0]: https://github.com/e0404/matRad/compare/2.1.0...2.10.0
+[2.1.0]: https://github.com/e0404/matRad/compare/initial...2.1.0
