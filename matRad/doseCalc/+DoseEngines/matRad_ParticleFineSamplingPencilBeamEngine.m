@@ -1,35 +1,35 @@
 classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_ParticlePencilBeamEngineAbstract
-% matRad_ParticlePencilBeamEngineAbstractFineSampling: 
-%   Implements an engine for particle based dose calculation 
-%   For detailed information see superclass matRad_DoseEngine
+    % matRad_ParticlePencilBeamEngineAbstractFineSampling:
+    %   Implements an engine for particle based dose calculation
+    %   For detailed information see superclass matRad_DoseEngine
 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% Copyright 2022-2026 the matRad development team.
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the
-% help edit
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %
+    % Copyright 2022-2026 the matRad development team.
+    %
+    % This file is part of the matRad project. It is subject to the license
+    % terms in the LICENSE file found in the top-level directory of this
+    % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+    % of the matRad project, including this file, may be copied, modified,
+    % propagated, or distributed except according to the terms contained in the
+    % help edit
 
-% LICENSE file.
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
+    % LICENSE file.
+    %
+    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     properties (Constant)
-           possibleRadiationModes = {'protons', 'helium','carbon'}
-           name = 'Subsampling Particle Pencil-Beam';
-           shortName = 'SubsamplingPB';
+        possibleRadiationModes = {'protons', 'helium', 'carbon'}
+        name = 'Subsampling Particle Pencil-Beam'
+        shortName = 'SubsamplingPB'
     end
-    
+
     properties (SetAccess = public, GetAccess = public)
-        fineSampling;                   % Struct with finesampling properties
+        fineSampling                    % Struct with finesampling properties
     end
-                 
-    methods 
-        
+
+    methods
+
         function this = matRad_ParticleFineSamplingPencilBeamEngine(pln)
             % Constructor
             %
@@ -38,7 +38,7 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
             %
             % input:
             %   pln:                        matRad plan meta information struct
-             
+
             if nargin < 1
                 pln = [];
             end
@@ -56,18 +56,19 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
             this.fineSampling.method = 'fitCircle';
             this.fineSampling.N = 2;
         end
+
     end
-    
+
     methods (Access = protected)
 
-        function ray = initRay(this,beam,j)           
-            ray = initRay@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(this,beam,j);
-            
-            %We need some more beam information here
+        function ray = initRay(this, beam, j)
+            ray = initRay@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(this, beam, j);
+
+            % We need some more beam information here
             ray.rotMat_system_T = beam.rotMat_system_T;
         end
 
-        function [currBixel] = getBixelIndicesOnRay(this,currBixel,currRay)
+        function [currBixel] = getBixelIndicesOnRay(this, currBixel, currRay)
             % In Finesampling we can not reduce the number of points to be
             % computed that easily based on the rad depth, so we overload
             % this method to just give all indices stored in the ray
@@ -76,75 +77,75 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
         end
 
         % We override this function to get full lateral distances
-        function ray = getRayGeometryFromBeam(this,ray,currBeam)
+        function ray = getRayGeometryFromBeam(this, ray, currBeam)
             lateralRayCutOff = this.getLateralDistanceFromDoseCutOffOnRay(ray);
 
             % Ray tracing for beam i and ray j
-            [ix,radialDist_sq,latDists] = this.calcGeoDists(currBeam.bevCoords, ...
-                ray.sourcePoint_bev, ...
-                ray.targetPoint_bev, ...
-                ray.SAD, ...
-                currBeam.validCoordsAll, ...
-                lateralRayCutOff);
-            
-            ray.validCoords = cellfun(@(beamIx) beamIx & ix,currBeam.validCoords,'UniformOutput',false);
-            ray.ix = cellfun(@(ixInGrid) this.VdoseGrid(ixInGrid),ray.validCoords,'UniformOutput',false);
+            [ix, radialDist_sq, latDists] = this.calcGeoDists(currBeam.bevCoords, ...
+                                                              ray.sourcePoint_bev, ...
+                                                              ray.targetPoint_bev, ...
+                                                              ray.SAD, ...
+                                                              currBeam.validCoordsAll, ...
+                                                              lateralRayCutOff);
 
-            %subCoords = cellfun(@(beamIx) beamIx(ix),currBeam.validCoords,'UniformOutput',false);
-            %ray.radialDist_sq = cellfun(@(subix) radialDist_sq(subix),radialDist_sq,subCoords);
-            ray.radialDist_sq = cellfun(@(beamIx) radialDist_sq(beamIx(ix)),currBeam.validCoords,'UniformOutput',false);
-            ray.latDists = cellfun(@(beamIx) latDists(beamIx(ix),:),currBeam.validCoords,'UniformOutput',false);
+            ray.validCoords = cellfun(@(beamIx) beamIx & ix, currBeam.validCoords, 'UniformOutput', false);
+            ray.ix = cellfun(@(ixInGrid) this.VdoseGrid(ixInGrid), ray.validCoords, 'UniformOutput', false);
 
-            ray.validCoordsAll = any(cell2mat(ray.validCoords),2);
-            
-            ray.geoDepths = cellfun(@(rD,ix) rD(ix),currBeam.geoDepths,ray.validCoords,'UniformOutput',false); %usually not needed for particle beams
-            ray.radDepths = cellfun(@(rD,ix) rD(ix),currBeam.radDepths,ray.validCoords,'UniformOutput',false);
+            % subCoords = cellfun(@(beamIx) beamIx(ix),currBeam.validCoords,'UniformOutput',false);
+            % ray.radialDist_sq = cellfun(@(subix) radialDist_sq(subix),radialDist_sq,subCoords);
+            ray.radialDist_sq = cellfun(@(beamIx) radialDist_sq(beamIx(ix)), currBeam.validCoords, 'UniformOutput', false);
+            ray.latDists = cellfun(@(beamIx) latDists(beamIx(ix), :), currBeam.validCoords, 'UniformOutput', false);
+
+            ray.validCoordsAll = any(cell2mat(ray.validCoords), 2);
+
+            ray.geoDepths = cellfun(@(rD, ix) rD(ix), currBeam.geoDepths, ray.validCoords, 'UniformOutput', false); % usually not needed for particle beams
+            ray.radDepths = cellfun(@(rD, ix) rD(ix), currBeam.radDepths, ray.validCoords, 'UniformOutput', false);
         end
 
-        function bixel = initBixel(this,currRay,k)
-            bixel = initBixel@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(this,currRay,k);
-            
-            bixel.latDists = currRay.latDists(bixel.subRayIx,:);            
+        function bixel = initBixel(this, currRay, k)
+            bixel = initBixel@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(this, currRay, k);
+
+            bixel.latDists = currRay.latDists(bixel.subRayIx, :);
 
             % Given the initial sigmas of the sampling ray, this
             % function provides the weights for the sub-pencil beams,
-            % their positions and their sigma used for dose calculation
-            if (this.fineSampling.sigmaSub^2 < bixel.sigmaIniSq) && (this.fineSampling.sigmaSub > 0)
+            % their positions and their sigma used for dose calculation.
+            % The mixture is built on the total initial sigma including
+            % beam modifier contributions (e.g. range shifter scattering)
+            if (this.fineSampling.sigmaSub^2 < bixel.totalInitialSigmaSq) && (this.fineSampling.sigmaSub > 0)
                 [bixel.finalSubWeight, bixel.sigmaSub, bixel.subPosX, bixel.subPosZ, bixel.numOfSub] = ...
-                    this.calcFineSamplingMixture(sqrt(bixel.sigmaIniSq));
+                    this.calcFineSamplingMixture(sqrt(bixel.totalInitialSigmaSq));
             else
                 matRad_cfg = MatRad_Config.instance();
-                if (this.fineSampling.sigmaSub < 0)
+                if this.fineSampling.sigmaSub < 0
                     matRad_cfg.dispError('Chosen fine sampling sigma cannot be negative!');
-                elseif (this.fineSampling.sigmaSub > sqrt(bixel.sigmaIniSq))
+                elseif this.fineSampling.sigmaSub > sqrt(bixel.totalInitialSigmaSq)
                     matRad_cfg.dispError('Chosen fine sampling sigma is too high for defined plan!');
                 end
             end
 
             % calculate projected coordinates for fine sampling of
             % each beamlet
-            projCoords = matRad_projectOnComponents(bixel.ix, size(this.radDepthCubes{currRay.beamIndex}), currRay.sourcePoint_bev,...
-                currRay.targetPoint_bev, matRad_world2cubeCoords(currRay.isoCenter,this.doseGrid),...
-                [this.doseGrid.resolution.x this.doseGrid.resolution.y this.doseGrid.resolution.z],...
-                -bixel.subPosX, -bixel.subPosZ, currRay.rotMat_system_T);
-
+            projCoords = matRad_projectOnComponents(bixel.ix, size(this.radDepthCubes{currRay.beamIndex}), currRay.sourcePoint_bev, ...
+                                                    currRay.targetPoint_bev, matRad_world2cubeCoords(currRay.isoCenter, this.doseGrid), ...
+                                                    [this.doseGrid.resolution.x this.doseGrid.resolution.y this.doseGrid.resolution.z], ...
+                                                    -bixel.subPosX, -bixel.subPosZ, currRay.rotMat_system_T);
 
             % interpolate radiological depths at projected
             % coordinates
             % TODO: we get NaN's here - why? (They come from the
             % radDepthCubes, but I don't know why we interpolate at these
             % positions)
-            bixel.radDepths = interp3(this.radDepthCubes{currRay.beamIndex},projCoords(:,1,:)./this.doseGrid.resolution.x,...
-                projCoords(:,2,:)./this.doseGrid.resolution.y,projCoords(:,3,:)./this.doseGrid.resolution.z,'nearest',0);
-
+            bixel.radDepths = interp3(this.radDepthCubes{currRay.beamIndex}, projCoords(:, 1, :) ./ this.doseGrid.resolution.x, ...
+                                      projCoords(:, 2, :) ./ this.doseGrid.resolution.y, projCoords(:, 3, :) ./ this.doseGrid.resolution.z, 'nearest', 0);
 
             % compute radial distances relative to pencil beam
             % component
-            %bixel.radialDist_sq = reshape(bsxfun(@plus,bixel.latDists(:,1),bixel.subPosX'),[],1,bixel.numOfSub).^2 + reshape(bsxfun(@plus,bixel.latDists(:,2),bixel.subPosZ'),[],1,bixel.numOfSub).^2;
-            bixel.radialDist_sq = reshape((bixel.latDists(:,1) + bixel.subPosX').^2 + (bixel.latDists(:,2) + bixel.subPosZ').^2,[],1,bixel.numOfSub);
+            % bixel.radialDist_sq = reshape(bsxfun(@plus,bixel.latDists(:,1),bixel.subPosX'),[],1,bixel.numOfSub).^2 + reshape(bsxfun(@plus,bixel.latDists(:,2),bixel.subPosZ'),[],1,bixel.numOfSub).^2;
+            bixel.radialDist_sq = reshape((bixel.latDists(:, 1) + bixel.subPosX').^2 + (bixel.latDists(:, 2) + bixel.subPosZ').^2, [], 1, bixel.numOfSub);
         end
 
-        function currBeam = initBeam(this,dij,ct,cst,stf,i)
+        function currBeam = initBeam(this, dij, ct, cst, stf, i)
             % Method for initializing the beams for analytical pencil beam
             % dose calculation
             %
@@ -167,123 +168,125 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
                 matRad_cfg.dispInfo('Keeping radiological depth cubes for fine-sampling!');
             end
 
-            currBeam = initBeam@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(this,dij,ct,cst,stf,i);
+            currBeam = initBeam@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(this, dij, ct, cst, stf, i);
         end
-        
-        function kernels = interpolateKernelsInDepth(this,bixel)
-            kernels = interpolateKernelsInDepth@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(this,bixel);
-            
+
+        function kernels = interpolateKernelsInDepth(this, bixel)
+            kernels = interpolateKernelsInDepth@DoseEngines.matRad_ParticlePencilBeamEngineAbstract(this, bixel);
+
             % reshape output while clipping negatives (from extrapolation)
-            kernels = structfun(@(x) reshape(x .* (x >= 0),[size(bixel.radDepths), size(x,2)]),kernels,'UniformOutput',false);
+            kernels = structfun(@(x) reshape(x .* (x >= 0), [size(bixel.radDepths), size(x, 2)]), kernels, 'UniformOutput', false);
         end
-        
-        function bixel = calcParticleBixel(this,bixel)
+
+        function bixel = calcParticleBixel(this, bixel)
             kernel = this.interpolateKernelsInDepth(bixel);
             % initialise empty dose array
-            bixel.physicalDose = zeros(size(bixel.ix,1),1);
+            bixel.physicalDose = zeros(size(bixel.ix, 1), 1);
 
             if this.calcLET
                 bixel.mLETDose = zeros(size(bixel.physicalDose));
             end
-            
-            %We only have one bixel
-            if ~isfield(bixel,'numOfSub')
+
+            % We only have one bixel
+            if ~isfield(bixel, 'numOfSub')
                 bixel.numOfSub = 1;
                 bixel.finalSubWeight = 1;
-                bixel.sigmaSub = sqrt(bixel.sigmaIniSq);
+                bixel.sigmaSub = sqrt(bixel.totalInitialSigmaSq);
             end
-            
-            bixel.sigmaSubSq = bixel.sigmaSub.^2;            
-            
-            
+
+            % beam modifier contributions (e.g. range shifter scattering)
+            % are already included via the mixture built on the total
+            % initial sigma
+            bixel.sigmaSubSq = bixel.sigmaSub.^2;
+
             switch this.lateralModel
                 case 'single'
-                    %compute lateral sigma
+                    % compute lateral sigma
                     sigmaSq = squeeze(kernel.sigma).^2 + bixel.sigmaSubSq';
-                    L = exp( -squeeze(bixel.radialDist_sq) ./ (2*sigmaSq))./ (2*pi*sigmaSq);
+                    L = exp(-squeeze(bixel.radialDist_sq) ./ (2 * sigmaSq)) ./ (2 * pi * sigmaSq);
                 case 'double'
                     % compute lateral sigmas
                     sigmaSqNarrow = squeeze(kernel.sigma1).^2 + bixel.sigmaSubSq';
                     sigmaSqBroad  = squeeze(kernel.sigma2).^2 + bixel.sigmaSubSq';
-    
+
                     % calculate lateral profile
-                    L_Narr =  exp( -squeeze(bixel.radialDist_sq) ./ (2*sigmaSqNarrow))./(2*pi*sigmaSqNarrow);
-                    L_Bro  =  exp( -squeeze(bixel.radialDist_sq)./ (2*sigmaSqBroad ))./(2*pi*sigmaSqBroad );
-                    L = (1-squeeze(kernel.weight)).*L_Narr + squeeze(kernel.weight).*L_Bro;
-                %case 'multi'
-                %    sigmaSq = kernels.sigmaMulti.^2 + bixel.sigmaIniSq;
-                %    L = sum([1 - sum(kernels.weightMulti,2), kernels.weightMulti] .* exp(-radialDist_sq ./ (2*sigmaSq))./(2*pi*sigmaSq),2);
+                    L_Narr =  exp(-squeeze(bixel.radialDist_sq) ./ (2 * sigmaSqNarrow)) ./ (2 * pi * sigmaSqNarrow);
+                    L_Bro  =  exp(-squeeze(bixel.radialDist_sq) ./ (2 * sigmaSqBroad)) ./ (2 * pi * sigmaSqBroad);
+                    L = (1 - squeeze(kernel.weight)) .* L_Narr + squeeze(kernel.weight) .* L_Bro;
+                    % case 'multi'
+                    %    sigmaSq = kernels.sigmaMulti.^2 + bixel.sigmaIniSq;
+                    %    L = sum([1 - sum(kernels.weightMulti,2), kernels.weightMulti] .* exp(-radialDist_sq ./ (2*sigmaSq))./(2*pi*sigmaSq),2);
                 otherwise
-                    %Sanity check
+                    % Sanity check
                     matRad_cfg = MatRad_Config.instance();
                     matRad_cfg.dispError('Invalid Lateral Model');
             end
-            
+
             tmpDose = (L .* squeeze(kernel.Z));
 
-            bixel.physicalDose = bixel.baseData.LatCutOff.CompFac*(tmpDose*bixel.finalSubWeight);
+            bixel.physicalDose = bixel.baseData.LatCutOff.CompFac * (tmpDose * bixel.finalSubWeight);
 
             nanIx = isnan(bixel.physicalDose);
             bixel.physicalDose(nanIx) = 0;
             if this.calcLET
-                tmpLET = bixel.baseData.LatCutOff.CompFac*((tmpDose .* squeeze(kernel.LET)) *bixel.finalSubWeight);
+                tmpLET = bixel.baseData.LatCutOff.CompFac * ((tmpDose .* squeeze(kernel.LET)) * bixel.finalSubWeight);
                 bixel.mLETDose(~nanIx) = bixel.mLETDose(~nanIx) + tmpLET(~nanIx);
             end
 
             if this.calcBioDose
 
-                % Chek if there are bi dimensional kernel, (this is not very well implemented)
-                biDimKernels = find(structfun(@(x) size(x,4)>1,kernel));
-                
+                % Check if there are bi dimensional kernel, (this is not very well implemented)
+                biDimKernels = find(structfun(@(x) size(x, 4) > 1, kernel));
+
                 if any(biDimKernels)
 
                     tmpBixel = bixel;
 
                     % Rearrange kernel fields to column arrazs
-                    linKernel = structfun(@(x) squeeze(reshape(x,[size(bixel.radDepths(:)), size(x,4)])), kernel, 'UniformOutput',false);
-                   
+                    linKernel = structfun(@(x) squeeze(reshape(x, [size(bixel.radDepths(:)), size(x, 4)])), kernel, 'UniformOutput', false);
+
                     % Define those fields that are stored only as
                     % (#radDepths,1) and not (#radDepths,1,numOfSub)
-                    fieldsToIncrease = {'vTissueIndex','vAlphaX', 'vBetaX'};
-                    
-                    % adjust te dimension by repeating
-                    for f=fieldsToIncrease
-                        tmpBixel.(f{1}) = repmat(bixel.(f{1}), bixel.numOfSub,1);
+                    fieldsToIncrease = {'vTissueIndex', 'vAlphaX', 'vBetaX'};
+
+                    % adjust the dimension by repeating
+                    for f = fieldsToIncrease
+                        tmpBixel.(f{1}) = repmat(bixel.(f{1}), bixel.numOfSub, 1);
                         tmpBixel.(f{1}) = tmpBixel.(f{1})(:);
                     end
 
                     % Get column array of depths
                     tmpBixel.radDepths = bixel.radDepths(:);
 
-                    % Finaly apply the model
-                    tmpBixel = this.bioModel.calcBiologicalQuantitiesForBixel(tmpBixel,linKernel);
+                    % Finally apply the model
+                    tmpBixel = this.bioModel.calcBiologicalQuantitiesForBixel(tmpBixel, linKernel);
 
                     % Restore everything back to normal
                     tmpBixel.radDepths = reshape(tmpBixel.radDepths, size(bixel.radDepths));
-                    
+
                     % Find those fields that were computed by biological
                     % model
                     bioModelFileds = fieldnames(tmpBixel);
                     bioModelFileds = bioModelFileds(~ismember(bioModelFileds, fieldnames(bixel)))';
-                    
+
                     % restore them back to correct dimensionality as well
-                    for i=bioModelFileds
+                    for i = bioModelFileds
                         bixel.(i{1}) = reshape(tmpBixel.(i{1}), size(bixel.radDepths));
                     end
                 else
-                    bixel = this.bioModel.calcBiologicalQuantitiesForBixel(bixel,kernel);
+                    bixel = this.bioModel.calcBiologicalQuantitiesForBixel(bixel, kernel);
                 end
 
                 if isa(this.bioModel, 'matRad_LQBasedModel')
-                    bixel.mAlphaDose    = (squeeze(bixel.alpha) .* squeeze(tmpDose))*bixel.finalSubWeight;
-                    bixel.mSqrtBetaDose = (squeeze(sqrt(bixel.beta)) .* squeeze(tmpDose))*bixel.finalSubWeight;
+                    bixel.mAlphaDose    = (squeeze(bixel.alpha) .* squeeze(tmpDose)) * bixel.finalSubWeight;
+                    bixel.mSqrtBetaDose = (squeeze(sqrt(bixel.beta)) .* squeeze(tmpDose)) * bixel.finalSubWeight;
                 end
 
             end
-            
+
         end
 
-        function [finalWeight, sigmaBeamlet, posX, posY, numOfSub] = calcFineSamplingMixture(this,sigmaTot)
+        function [finalWeight, sigmaBeamlet, posX, posY, numOfSub] = calcFineSamplingMixture(this, sigmaTot)
             % This function creates a Gaussian Mixture Model on a Gaussian
             % for Fine-Sampling
             %
@@ -305,14 +308,13 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
             %
             % References
             %   [1] https://iopscience.iop.org/article/10.1088/0031-9155/61/1/183
-            
 
             % method:   method of weight calculation
             %           'russo' for integral calculation according to [1]
             %           'fitCircle'   for using square grid weights derived from a fit
             %           'fitSquare'   for using circular grid weights derived from a fit
             method = this.fineSampling.method;
-            
+
             %   N:              if method == russo:
             %                   number of subsample beams shells. Means we have a
             %                   grid of NxN sub beams representing the total beam
@@ -320,8 +322,8 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
             %                   number of subsample beams shells. n = 2 means we have two
             %                   lines of points around the central ray. The number of
             %                   sub-beams will be:
-            %                   #sb = (2*n +1)^2 for the square;
-            %                   #sb = (2^n -1)*6 +1 for the circle
+            %#sb = (2*n +1)^2 for the square;
+            %#sb = (2^n -1)*6 +1 for the circle
             N = this.fineSampling.N;
 
             %   sigmaSub:       is the sigma of the gaussian of the sub-beams (only
@@ -334,7 +336,7 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
                 error('method not supported');
 
             elseif strcmp(method, 'russo')
-                % splitting into N^2 sub beams accoring to Russo et al (2016)
+                % splitting into N^2 sub beams according to Russo et al (2016)
 
                 sigmaHead = sqrt(sigmaTot^2 - sigmaSub^2);
 
@@ -344,15 +346,15 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
                 dR = 2 * R / N;
 
                 counter = 1;
-                for iX = -(N - 1) / 2 : (N - 1) / 2
-                    for iY = -(N - 1) / 2 : (N - 1) / 2
-                        if (iX*dR)^2 + (iY*dR)^2 > R^2
-                            continue;
+                for iX = -(N - 1) / 2:(N - 1) / 2
+                    for iY = -(N - 1) / 2:(N - 1) / 2
+                        if (iX * dR)^2 + (iY * dR)^2 > R^2
+                            continue
                         end
 
-                        finalWeight(counter) = integral2(@(x,y) gauss(sigmaHead, x, y, 0, 0), ...
-                            (iX - 0.5) * dR, (iX + 0.5) * dR, ...
-                            (iY - 0.5) * dR, (iY + 0.5) * dR);
+                        finalWeight(counter) = integral2(@(x, y) gauss(sigmaHead, x, y, 0, 0), ...
+                                                         (iX - 0.5) * dR, (iX + 0.5) * dR, ...
+                                                         (iY - 0.5) * dR, (iY + 0.5) * dR);
                         posX(counter) = iX * dR;
                         posY(counter) = iY * dR;
                         sigmaBeamlet(counter) = sigmaSub;
@@ -362,18 +364,17 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
                 end
 
                 finalWeight = finalWeight';
-                finalWeight = finalWeight*1/sum(finalWeight);
+                finalWeight = finalWeight * 1 / sum(finalWeight);
                 posX = posX';
                 posY = posY';
                 sigmaBeamlet = sigmaBeamlet';
-
 
                 numOfSub = numel(finalWeight);
 
             elseif strcmp(method, 'fitCircle') || strcmp(method, 'fitSquare')
                 % number of sub beams will be (2*n +1)^2 for the square;
                 %                             (2^n -1)*6 +1 for the circle
-                if N~=2 && N~=3 && N~=8
+                if N ~= 2 && N ~= 3 && N ~= 8
                     error('number of shells N not supported');
                 end
 
@@ -381,80 +382,82 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
                 % see "Research on the dosimetric accuracy of pencil beam fine sampling
                 % for radiation proton dose calculation" by Giuseppe Pezzano (2018)
                 if N == 2
-                    if strcmp(method,'fitCircle')
+                    if strcmp(method, 'fitCircle')
                         sigmaBeamlet = 0.8237 .* sigmaTot;
                         radius    = 0.6212 .* sigmaTot;
-                        X1(1,:)     = 0.3866 .* sigmaTot.^2;
-                        X1(2,:)     = 0.6225 .* sigmaTot;
-                    elseif strcmp(method,'fitSquare')
+                        X1(1, :)     = 0.3866 .* sigmaTot.^2;
+                        X1(2, :)     = 0.6225 .* sigmaTot;
+                    elseif strcmp(method, 'fitSquare')
                         sigmaBeamlet = 0.8409 .* sigmaTot;
                         radius    = 0.5519 .* sigmaTot;
-                        X1(1,:)     = 0.3099 .* sigmaTot.^2;
-                        X1(2,:)     = 0.5556 .* sigmaTot;
+                        X1(1, :)     = 0.3099 .* sigmaTot.^2;
+                        X1(2, :)     = 0.5556 .* sigmaTot;
                     end
                 elseif N == 3
-                    if strcmp(method,'fitCircle')
+                    if strcmp(method, 'fitCircle')
                         sigmaBeamlet = 0.7605 .* sigmaTot;
                         radius    = 0.5000 .* sigmaTot;
-                        X1(1,:)     = 0.3006 .* sigmaTot.^2 - 1.3005 .* sigmaTot + 7.3097;
-                        X1(2,:)     = 0.6646 .* sigmaTot - 0.0044;
-                    elseif strcmp(method,'fitSquare')
+                        X1(1, :)     = 0.3006 .* sigmaTot.^2 - 1.3005 .* sigmaTot + 7.3097;
+                        X1(2, :)     = 0.6646 .* sigmaTot - 0.0044;
+                    elseif strcmp(method, 'fitSquare')
                         sigmaBeamlet = 0.8409 .* sigmaTot;
                         radius    = 0.5391 .* sigmaTot + 0.0856;
-                        X1(1,:)     = 0.3245 .* sigmaTot.^2 + 0.0001 .* sigmaTot - 0.0004;
-                        X1(2,:)     = 0.6290 .* sigmaTot - 0.0403;
+                        X1(1, :)     = 0.3245 .* sigmaTot.^2 + 0.0001 .* sigmaTot - 0.0004;
+                        X1(2, :)     = 0.6290 .* sigmaTot - 0.0403;
                     end
-                elseif N == 8 && strcmp(method,'fitCircle')
+                elseif N == 8 && strcmp(method, 'fitCircle')
                     sigmaBeamlet = 0.5 .* sigmaTot;
                     radius    = 0.25 .* sigmaTot;
-                    X1(1,:)     = 0.0334 .* sigmaTot.^2 - 4.1061e-06 .* sigmaTot + 1.5047e-06;
-                    X1(2,:)     = 0.6 .* sigmaTot + 3.3151e-06;
+                    X1(1, :)     = 0.0334 .* sigmaTot.^2 - 4.1061e-06 .* sigmaTot + 1.5047e-06;
+                    X1(2, :)     = 0.6 .* sigmaTot + 3.3151e-06;
                 else
                     error('number of shells N not supported');
                 end
 
                 % setting positions of sub-beams
-                if strcmp(method,'fitSquare')
-                    numOfSub = (2*N +1)^2;
-                    points   = linspace(-radius*N,radius*N,2*N +1);
-                    posX     = points'*ones(1,2*N +1);
+                if strcmp(method, 'fitSquare')
+                    numOfSub = (2 * N + 1)^2;
+                    points   = linspace(-radius * N, radius * N, 2 * N + 1);
+                    posX     = points' * ones(1, 2 * N + 1);
                     posY     = posX';
                 else
-                    dim = size(radius,2);
-                    numOfSub = (2^N -1)*6 +1;
-                    ang  = zeros(1,1);
-                    posX = zeros(1,dim);
-                    posY = zeros(1,dim);
-                    radiusShell = zeros(1,dim);
+                    dim = size(radius, 2);
+                    numOfSub = (2^N - 1) * 6 + 1;
+                    ang  = zeros(1, 1);
+                    posX = zeros(1, dim);
+                    posY = zeros(1, dim);
+                    radiusShell = zeros(1, dim);
                     for i = 1:N
-                        subsInShell = 6 * 2^(i-1);
+                        subsInShell = 6 * 2^(i - 1);
                         % this takes the sub-beams index in one shell
-                        ang         = cat(2, ang, pi .* linspace(0,2-2/subsInShell, subsInShell));
-                        radiusShell = cat(1, radiusShell, ones(subsInShell,1)*(i.*radius));
+                        ang         = cat(2, ang, pi .* linspace(0, 2 - 2 / subsInShell, subsInShell));
+                        radiusShell = cat(1, radiusShell, ones(subsInShell, 1) * (i .* radius));
                     end
-                    posX = cat(1, posX, bsxfun(@times,cos(ang(2:end))',radiusShell(2:end,:)));
-                    posY = cat(1, posY, bsxfun(@times,sin(ang(2:end))',radiusShell(2:end,:)));
+                    posX = cat(1, posX, bsxfun(@times, cos(ang(2:end))', radiusShell(2:end, :)));
+                    posY = cat(1, posY, bsxfun(@times, sin(ang(2:end))', radiusShell(2:end, :)));
                 end
 
                 % compute weights at positions
-                sig  = ones(size(posX,1),1)*X1(2,:);
-                normSig = ones(size(posX,1),1)*X1(1,:);
+                sig  = ones(size(posX, 1), 1) * X1(2, :);
+                normSig = ones(size(posX, 1), 1) * X1(1, :);
 
-                finalWeight = normSig .* (2.*pi.*sig.^2).^(-1) .* exp(-(posX.^2+posY.^2)./(2.*(sig.^2)));
+                finalWeight = normSig .* (2 .* pi .* sig.^2).^(-1) .* exp(-(posX.^2 + posY.^2) ./ (2 .* (sig.^2)));
                 finalWeight = reshape(finalWeight, numel(finalWeight), 1);
-                sigmaBeamlet = repmat(reshape(sigmaBeamlet, numel(sigmaBeamlet), 1), numel(finalWeight),1);
-                posX =reshape(posX, numel(posX), 1);
-                posY =reshape(posY, numel(posY), 1);
+                sigmaBeamlet = repmat(reshape(sigmaBeamlet, numel(sigmaBeamlet), 1), numel(finalWeight), 1);
+                posX = reshape(posX, numel(posX), 1);
+                posY = reshape(posY, numel(posY), 1);
 
             end
 
         end
+
     end
-    
+
     methods (Static)
-        function [available,msg] = isAvailable(pln,machine)   
+
+        function [available, msg] = isAvailable(pln, machine)
             % see superclass for information
-            
+
             msg = [];
             available = false;
 
@@ -462,39 +465,39 @@ classdef matRad_ParticleFineSamplingPencilBeamEngine < DoseEngines.matRad_Partic
                 machine = matRad_loadMachine(pln);
             end
 
-            %checkBasic
+            % checkBasic
             try
-                checkBasic = isfield(machine,'meta') && isfield(machine,'data');
+                checkBasic = isfield(machine, 'meta') && isfield(machine, 'data');
 
-                %check modality
+                % check modality
                 checkModality = any(strcmp(DoseEngines.matRad_ParticleFineSamplingPencilBeamEngine.possibleRadiationModes, machine.meta.radiationMode));
-                
+
                 preCheck = checkBasic && checkModality;
 
                 if ~preCheck
-                    return;
+                    return
                 end
             catch
                 msg = 'Your machine file is invalid and does not contain the basic field (meta/data/radiationMode)!';
-                return;
+                return
             end
 
-            checkMeta = all(isfield(machine.meta,{'SAD','BAMStoIsoDist','dataType'}));
-            
-            %Superseded names from older machine file versions
-            checkMeta = checkMeta && any(isfield(machine.meta,{'LUTspotSize','LUT_bxWidthminFWHM'}));
+            checkMeta = all(isfield(machine.meta, {'SAD', 'BAMStoIsoDist', 'dataType'}));
+
+            % Superseded names from older machine file versions
+            checkMeta = checkMeta && any(isfield(machine.meta, {'LUTspotSize', 'LUT_bxWidthminFWHM'}));
 
             dataType = machine.meta.dataType;
-            if strcmp(dataType,'singleGauss')
-                checkData = all(isfield(machine.data,{'energy','depths','Z','peakPos','sigma','offset','initFocus'}));
-            elseif strcmp(dataType,'doubleGauss')
-                checkData = all(isfield(machine.data,{'energy','depths','Z','peakPos','weight','sigma1','sigma2','offset','initFocus'}));
+            if strcmp(dataType, 'singleGauss')
+                checkData = all(isfield(machine.data, {'energy', 'depths', 'Z', 'peakPos', 'sigma', 'offset', 'initFocus'}));
+            elseif strcmp(dataType, 'doubleGauss')
+                checkData = all(isfield(machine.data, {'energy', 'depths', 'Z', 'peakPos', 'weight', 'sigma1', 'sigma2', 'offset', 'initFocus'}));
             else
                 checkData = false;
             end
-            
+
             available = checkMeta & checkData;
         end
+
     end
 end
-

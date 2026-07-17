@@ -54,6 +54,34 @@ assertTrue(isequal(fieldnames(resultGUI), fieldnames(testData.resultGUI)));
 assertTrue(isequal(testData.ct.cubeDim, size(resultGUI.physicalDose)));
 assertElementsAlmostEqual(resultGUI.physicalDose, testData.resultGUI.physicalDose, 'relative', 1e-2, 1e-2);
 
+
+function test_calcDoseHongPBoxygen
+testData = load('oxygen_testData.mat');
+assertTrue(DoseEngines.matRad_ParticleHongPencilBeamEngine.isAvailable(testData.pln));
+
+resultGUI = matRad_calcDoseForward(testData.ct, testData.cst, testData.stf, testData.pln, ones(sum([testData.stf(:).totalNumOfBixels]), 1));
+
+assertTrue(isequal(fieldnames(resultGUI), fieldnames(testData.resultGUI)));
+assertTrue(isequal(testData.ct.cubeDim, size(resultGUI.physicalDose)));
+assertElementsAlmostEqual(resultGUI.physicalDose, testData.resultGUI.physicalDose, 'relative', 1e-2, 1e-2);
+
+
+function test_providedQuantitiesOxygenZs
+% The oxygen machine provides the zStar (zs) kernel quantity required by
+% z*-based biological models (e.g. MKM), which must be reported by
+% providedQuantities alongside physicalDose/alpha/beta.
+machine = DoseEngines.matRad_ParticleHongPencilBeamEngine.loadMachine('oxygen', 'Generic');
+q = DoseEngines.matRad_ParticleHongPencilBeamEngine.providedQuantities(machine);
+assertTrue(iscell(q));
+assertTrue(any(strcmp(q, 'physicalDose')));
+assertTrue(any(strcmp(q, 'zs')));
+
+% A machine without a zs field must not report the zs quantity
+machineNoZs = rmfield(machine.data, 'zs');
+machine.data = machineNoZs;
+qNoZs = DoseEngines.matRad_ParticleHongPencilBeamEngine.providedQuantities(machine);
+assertFalse(any(strcmp(qNoZs, 'zs')));
+
 function test_calcDoseHongPBVHEE
 testData = load('VHEE_testData.mat');
 assertTrue(DoseEngines.matRad_ParticleHongPencilBeamEngine.isAvailable(testData.pln));
@@ -107,6 +135,20 @@ stf(2).ray(2).rangeShifter.sourceRashiDistance = -(stf(2).sourcePoint(2) + 100);
 
 resultGUI = engine.calcDoseForward(testData.ct, testData.cst, stf, ones(sum([stf.totalNumOfBixels]), 1));
 assertTrue(isequal(fieldnames(resultGUI), fieldnames(testData.resultGUI)));
+
+function test_rashiLateralBroadening
+% range shifter scattering must broaden the lateral dose profile (issue #923)
+% generous cutoffs so the broadened profile is not truncated by the
+% strict testing defaults
+propDoseCalc = struct('dosimetricLateralCutOff', 0.995, 'geometricLateralCutOff', 100);
+[sigmaNoRashi, sigmaWithRashi] = helper_rashiLateralBroadening('HongPB', propDoseCalc);
+assertTrue(sigmaWithRashi^2 - sigmaNoRashi^2 > 5^2);
+
+function test_rashiLateralBroadeningHelium
+% range shifter scattering is also modeled for heavier ions
+propDoseCalc = struct('dosimetricLateralCutOff', 0.995, 'geometricLateralCutOff', 100);
+[sigmaNoRashi, sigmaWithRashi] = helper_rashiLateralBroadening('HongPB', propDoseCalc, 'helium_testData.mat');
+assertTrue(sigmaWithRashi^2 - sigmaNoRashi^2 > 5^2);
 
 function test_traceDoseGrid
 testData = load('protons_testData.mat');
