@@ -256,6 +256,83 @@ cstByName = matRad_createRing(ct, cst, 'PTV', outerMargin, innerMargin, 'voiLimi
 
 assertEqual(cstByIx(3, :), cstByName(3, :));
 
+function test_createRingAcceptsStringVoiNames
+% Matlab string scalars are converted to char, on Octave double quoted
+% literals already are char arrays, so this must work on both
+[ct, cst] = helper_createRingFixture();
+[outerMargin, innerMargin] = helper_ringArguments();
+
+cstChar   = matRad_createRing(ct, cst, 'PTV', outerMargin, innerMargin, 'voiLimit', 'BODY');
+cstString = matRad_createRing(ct, cst, "PTV", outerMargin, innerMargin, 'voiLimit', "BODY");
+
+assertEqual(cstString(3, :), cstChar(3, :));
+
+function test_createRingRejectsInvalidVoiType
+% neither a name nor an index
+[ct, cst] = helper_createRingFixture();
+[outerMargin, innerMargin] = helper_ringArguments();
+
+assertExceptionThrown(@() matRad_createRing(ct, cst, {1}, outerMargin, innerMargin));
+assertExceptionThrown(@() matRad_createRing(ct, cst, 1.5, outerMargin, innerMargin));
+assertExceptionThrown(@() matRad_createRing(ct, cst, 1, outerMargin, innerMargin, 'voiLimit', {2}));
+
+function test_createRingRejectsTooFewInputs
+[ct, cst] = helper_createRingFixture();
+[outerMargin] = helper_ringArguments();
+
+assertExceptionThrown(@() matRad_createRing(ct, cst, 1, outerMargin));
+
+function test_createRingRejectsInvalidCt
+[ct, cst] = helper_createRingFixture();
+[outerMargin, innerMargin] = helper_ringArguments();
+
+ctNoScen = rmfield(ct, 'numOfCtScen');
+assertExceptionThrown(@() matRad_createRing(ctNoScen, cst, 1, outerMargin, innerMargin));
+
+ctZeroScen = ct;
+ctZeroScen.numOfCtScen = 0;
+assertExceptionThrown(@() matRad_createRing(ctZeroScen, cst, 1, outerMargin, innerMargin));
+
+ctNoDim = rmfield(ct, 'cubeDim');
+assertExceptionThrown(@() matRad_createRing(ctNoDim, cst, 1, outerMargin, innerMargin));
+
+ctNoRes = rmfield(ct, 'resolution');
+assertExceptionThrown(@() matRad_createRing(ctNoRes, cst, 1, outerMargin, innerMargin));
+
+function test_createRingRejectsIncompleteMargins
+[ct, cst] = helper_createRingFixture();
+[outerMargin, innerMargin] = helper_ringArguments();
+
+assertExceptionThrown(@() matRad_createRing(ct, cst, 1, rmfield(outerMargin, 'z'), innerMargin));
+assertExceptionThrown(@() matRad_createRing(ct, cst, 1, outerMargin, rmfield(innerMargin, 'x')));
+
+function test_createRingRejectsVoisMissingCtScenarios
+[ct, cst] = helper_createRingFixture();
+[outerMargin, innerMargin] = helper_ringArguments();
+ct.numOfCtScen = 2;
+
+% base VOI misses the second scenario
+cstShortBase = cst;
+cstShortBase{2, 4} = {cst{2, 4}{1}, cst{2, 4}{1}};
+assertExceptionThrown(@() matRad_createRing(ct, cstShortBase, 1, outerMargin, innerMargin, 'voiLimit', 2));
+
+% limiting VOI misses the second scenario
+cstShortLimit = cst;
+cstShortLimit{1, 4} = {cst{1, 4}{1}, cst{1, 4}{1}};
+assertExceptionThrown(@() matRad_createRing(ct, cstShortLimit, 1, outerMargin, innerMargin, 'voiLimit', 2));
+
+function test_createRingWarnsWhenNoPriorityIsAvailable
+% neither the metadata nor the base VOI carry an overlap priority
+[ct, cst] = helper_createRingFixture();
+cst{1, 5} = rmfield(cst{1, 5}, 'Priority');
+[outerMargin, innerMargin] = helper_ringArguments();
+
+[cst, ixRing] = matRad_createRing(ct, cst, 1, outerMargin, innerMargin, 'voiLimit', 2);
+
+% the ring is still created, it just has no priority to inherit
+assertFalse(isfield(cst{ixRing, 5}, 'Priority'));
+assertEqual(cst{ixRing, 2}, 'PTV_RING');
+
 function test_createRingRejectsUnknownVoiName
 [ct, cst] = helper_createRingFixture();
 [outerMargin, innerMargin] = helper_ringArguments();
