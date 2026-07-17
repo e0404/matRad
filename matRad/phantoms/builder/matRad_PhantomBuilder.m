@@ -105,6 +105,23 @@ classdef matRad_PhantomBuilder < handle
             obj.updatecst();
         end
 
+        function addSphericalShellOAR(obj, name, innerRadius, outerRadius, varargin)
+            % Adds a spherical shell (ring) OAR, e.g. around a target
+            %
+            % input:
+            %   name:           Name of VOI as string
+            %   innerRadius:    Inner radius of the shell
+            %   outerRadius:    Outer radius of the shell
+            %
+            % Name-Value pairs:
+            %   'offset':       The offset of the VOI with respect to the center of the geometry as [x,y,z] array
+            %   'objectives':   Either a single objective or a cell array of objectives
+            %   'HU':           Houndsfield unit of the volume
+
+            obj.volumes(end + 1) = {matRad_PhantomVOISphere(name, 'OAR', outerRadius, 'innerRadius', innerRadius, varargin{:})};
+            obj.updatecst();
+        end
+
         function [ct, cst] = getctcst(obj)
             %   Returns the ct and struct. The function also initializes
             %   the HUs in reverse order of definition

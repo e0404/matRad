@@ -34,6 +34,16 @@ assertExceptionThrown(@() matRad_PhantomVOISphere('MySphere', 'OAR', 'big'));
 % Invalid coordType
 assertExceptionThrown(@() matRad_PhantomVOISphere('MySphere', 'OAR', 5, 'coordType', 'invalid'));
 
+function test_constructorInnerRadius
+sphere = matRad_PhantomVOISphere('MyShell', 'OAR', 5, 'innerRadius', 3);
+assertEqual(sphere.innerRadius, 3);
+% defaults to a full sphere
+assertEqual(matRad_PhantomVOISphere('MySphere', 'OAR', 5).innerRadius, 0);
+% inner radius must stay below the radius and be non-negative
+assertExceptionThrown(@() matRad_PhantomVOISphere('MyShell', 'OAR', 5, 'innerRadius', 5));
+assertExceptionThrown(@() matRad_PhantomVOISphere('MyShell', 'OAR', 5, 'innerRadius', 7));
+assertExceptionThrown(@() matRad_PhantomVOISphere('MyShell', 'OAR', 5, 'innerRadius', -1));
+
 %% set-method Validation
 
 function test_setMethodsValidation
@@ -46,6 +56,9 @@ assertExceptionThrown(@() helper_assignmentTest(sphere, 'coordType', 'cube'));
 assertExceptionThrown(@() helper_assignmentTest(sphere, 'radius', -3));
 assertExceptionThrown(@() helper_assignmentTest(sphere, 'radius', 0));
 assertExceptionThrown(@() helper_assignmentTest(sphere, 'radius', [1 2 3]));
+% innerRadius: rejection of negative and non-scalar values
+assertExceptionThrown(@() helper_assignmentTest(sphere, 'innerRadius', -3));
+assertExceptionThrown(@() helper_assignmentTest(sphere, 'innerRadius', [1 2 3]));
 
 %% initializeParameters Tests
 
@@ -109,6 +122,21 @@ nLarge = numel(cst2{1, 4}{1});
 assertTrue(nSmall > 0);
 assertTrue(nLarge > nSmall);
 assertTrue(all(cst1{1, 4}{1} >= 1) && all(cst1{1, 4}{1} <= prod(ct.cubeDim)));
+
+function test_initializeParametersInnerRadiusYieldsShell
+% A shell must be exactly the outer sphere minus the inner sphere, and must
+% leave the plain sphere case untouched
+ct = helper_createTestCt();
+cstOuter = matRad_PhantomVOISphere('Outer', 'OAR', 4).initializeParameters(ct, {});
+cstInner = matRad_PhantomVOISphere('Inner', 'OAR', 2).initializeParameters(ct, {});
+cstShell = matRad_PhantomVOISphere('Shell', 'OAR', 4, 'innerRadius', 2).initializeParameters(ct, {});
+
+assertEqual(sort(cstShell{1, 4}{1}), sort(setdiff(cstOuter{1, 4}{1}, cstInner{1, 4}{1})));
+assertTrue(isempty(intersect(cstShell{1, 4}{1}, cstInner{1, 4}{1})));
+
+% innerRadius = 0 must reproduce the full sphere
+cstFull = matRad_PhantomVOISphere('Full', 'OAR', 4, 'innerRadius', 0).initializeParameters(ct, {});
+assertEqual(sort(cstFull{1, 4}{1}), sort(cstOuter{1, 4}{1}));
 
 function test_initializeParametersLargerRadiusMoreVoxels
 % Increasing the radius must strictly grow the voxel set (voxel mode)
