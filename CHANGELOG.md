@@ -8,7 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- Added helper to create ring VOIs from margins around existing structures
+- Added helper to create ring VOIs from margins around existing structures: `matRad_createRing`, optionally grown around the union of the base VOI over all CT scenarios (e.g. a ring around the full motion of a 4D target)
+- `matRad_PhantomVOISphere` accepts an optional `innerRadius` to create spherical shells, exposed via the new `matRad_PhantomBuilder.addSphericalShellOAR`
 
 ### Fixed
 

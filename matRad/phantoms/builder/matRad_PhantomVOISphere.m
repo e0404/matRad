@@ -17,6 +17,7 @@ classdef  matRad_PhantomVOISphere < matRad_PhantomVOIVolume
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties
         radius
+        innerRadius = 0 % if > 0 a spherical shell instead of a full sphere is created
     end
 
     methods (Access = public)
@@ -26,11 +27,18 @@ classdef  matRad_PhantomVOISphere < matRad_PhantomVOIVolume
             addParameter(p, 'objectives', {});
             addParameter(p, 'offset', [0, 0, 0]);
             addParameter(p, 'HU', 0);
+            addParameter(p, 'innerRadius', 0);
             addParameter(p, 'coordType', 'voxel', @(x) numel(validatestring(x, {'voxel', 'mm'}))); % numel trick to guarantee logical cast
             parse(p, varargin{:});
 
             obj@matRad_PhantomVOIVolume(name, type, p); % call superclass constructor
             obj.radius = radius;
+            obj.innerRadius = p.Results.innerRadius;
+
+            if obj.innerRadius >= obj.radius
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('The inner radius of ''%s'' must be smaller than its radius.', name);
+            end
         end
 
         function [cst] = initializeParameters(obj, ct, cst)
@@ -61,7 +69,8 @@ classdef  matRad_PhantomVOISphere < matRad_PhantomVOIVolume
             centerPoint = centerPoint + obj.offset * dimPerm;
 
             % Both modes: grid and center are in [j i k] - no extra permutation needed
-            voiHelper = vecnorm([y(:) x(:) z(:)] - centerPoint, 2, 2) < obj.radius;
+            distToCenter = vecnorm([y(:) x(:) z(:)] - centerPoint, 2, 2);
+            voiHelper = distToCenter < obj.radius & distToCenter >= obj.innerRadius;
             voiHelper = reshape(voiHelper, ct.cubeDim);
 
             cst{end, 4}{1} = find(voiHelper);
@@ -76,6 +85,11 @@ classdef  matRad_PhantomVOISphere < matRad_PhantomVOIVolume
         function set.radius(obj, value)
             validateattributes(value, {'numeric'}, {'scalar', 'positive'});
             obj.radius = value;
+        end
+
+        function set.innerRadius(obj, value)
+            validateattributes(value, {'numeric'}, {'scalar', 'nonnegative'});
+            obj.innerRadius = value;
         end
 
     end
