@@ -26,7 +26,7 @@ The main script to run matRad is called `matRad.m <https://github.com/e0404/matR
 
 .. tip::
 
-    Editing the matrad.m file is a good starting point, but if you do not want to mess up the original file and git status, you can copy and paste it into userdata/scripts. The userdata folder is ignored by git, so you can place your scripts and data in there without affecting the versioned source code.
+    While editing the matrad.m file seems like a good starting point, it is advisable to not touch the original file and git status of the versioned source code. Therefore, you can copy and paste the file into ``userdata/scripts``, as the userdata subfolder is ignored by git.
 
 .. _Set patient-specific parameters:
 
@@ -91,7 +91,7 @@ The `matRad.m <https://github.com/e0404/matRad/blob/master/matRad.m>`_ script ca
 8. `Visualization of the resulting treatment plan`_
 9. `Show DVH and quality indicators`_
 
-To evaluate a single section, you have to "activate" it (*Left-click* inside section) and then use *ctrl + enter* or use *Right-click* → *Evaluate Current Section*.
+To evaluate a single section, you have to "activate" it (*Left-click* inside section) and then use *ctrl + enter*, use *Right-click* → *Run Section* or click *Run Section* within the *Editor* window of the MATLAB interface.
 
 .. _Load settings:
 
@@ -100,7 +100,7 @@ To evaluate a single section, you have to "activate" it (*Left-click* inside sec
 
 Now you can execute the first section. You should see, among others, the variables ``cst``, ``ct`` and ``pln`` in your Workspace.
 
-.. image:: /images/parametersLoadedScreenshot.png
+.. image:: /images/QuickStart_Script_vars.png
     :width: 300px
 
 .. _Initial visualization:
@@ -110,11 +110,11 @@ Now you can execute the first section. You should see, among others, the variabl
 
 After the patient data is loaded, you can execute the second section to open the GUI:
 
-.. image:: /images/executeGUIScreenshot.png
+.. image:: /images/QuickStart_Script_init_vis_GUI.png
 
 In the GUI you can view the patient CT, change the plan parameters and adjust the optimization parameters.
 
-.. image:: /images/GUI-Guide_loadedGUIScreenshot.png
+.. image:: /images/QuickStart_Script_GUI_pre.png
     :width: 650px
 
 The usage of the GUI is explained in more detail in the :doc:`guiintro`. Here we will focus on the "manual" execution of the matRad script. To "manually" change the optimization parameters, you can adjust the ``cst``-cell (see :ref:`cst cell array documentation <cst-cell>` for more information).
@@ -126,11 +126,11 @@ The usage of the GUI is explained in more detail in the :doc:`guiintro`. Here we
 
 In this section, the steering file ``stf`` is created and the matRad steering information is stored as a struct (see :ref:`stf struct <stf>` for more information).
 
-.. image:: /images/STFScreenshot.png
+.. image:: /images/QuickStart_Script_stf.png
 
 The Command Window should show the progress.
 
-.. image:: /images/calcSTFScreenshot.png
+.. image:: /images/QuickStart_Script_stf_cmd_win.png
 
 .. _Dose calculation:
 
@@ -139,11 +139,11 @@ The Command Window should show the progress.
 
 In this section, the dose influence matrix ``dij`` for the defined beam angles is calculated (see :ref:`dij struct <dij>` for more information).
 
-.. image:: /images/doseCalcScreenshot.png
+.. image:: /images/QuickStart_Script_dosecalc_code.png
 
 Again, the progress should be shown in the Command Window.
 
-.. image:: /images/doseCalcProgScreenshot.png
+.. image:: /images/QuickStart_Script_dosecalc_cmd_win.png
 
 .. _Inverse planning for IMRT:
 
@@ -152,11 +152,11 @@ Again, the progress should be shown in the Command Window.
 
 In this section, the fluence is optimized to find the bixel (*photons*) or spot (*protons/carbon*) weights minimizing the objective function.
 
-.. image:: /images/invPlanningScreenshot.png
+.. image:: /images/QuickStart_Script_optimization_code.png
 
 During this process, the current objective function value is displayed:
 
-.. image:: /images/invPlanningProgScreenshot.png
+.. image:: /images/QuickStart_Script_optimize_cmd_win.png
 
 .. _sequencing_step:
 
@@ -165,7 +165,7 @@ During this process, the current objective function value is displayed:
 
 For photon IMRT the application of a multileaf collimator is necessary. By sequencing, the applicable dose distribution can be simulated. The fourth input of ``matRad_engelLeafSequencing(resultGUI,stf,dij,7)`` is the number of stratification levels. You can adjust this number to use the number of levels you want.
 
-.. image:: /images/sequencingScreenshot.png
+.. image:: /images/QuickStart_Script_sequencing.png
 
 When the sequencing is finished, the `result struct <https://github.com/e0404/matRad/wiki/The-resultGUI-struct>`_ is updated.
 
@@ -176,7 +176,7 @@ When the sequencing is finished, the `result struct <https://github.com/e0404/ma
 
 For photon therapy, the multileaf collimator sequencing can be further refined by using an experimental gradient-based direct aperture optimization algorithm, where leaf settings and aperture intensities are optimized simultaneously. Further information including references about the direct aperture optimization algorithm can be found directly in the source code or in the technical documentation about the :ref:`fluence optimization <plan_opt>`.
 
-.. image:: /images/daoScreenshot.png
+.. image:: /images/QuickStart_Script_DAO.png
 
 .. _Visualization of the resulting treatment plan:
 
@@ -185,12 +185,12 @@ For photon therapy, the multileaf collimator sequencing can be further refined b
 
 Now you can visualize the resulting treatment plan using the GUI.
 
-.. image:: /images/doseVisGUIScreenshot.png
+.. image:: /images/QuickStart_Script_results.png
 
 In the GUI you can see the resulting dose distribution for the calculated treatment plan. You can choose which plane and slice should be displayed. You can also display a dose profile plot by changing *Type of plot* from *intensity* to *profile*.
 If you have chosen a biological optimization, then you have several parameters to be displayed (e.g. RBE-weighted dose, biological effect, α or β values).
 
-.. image:: /images/GUI-Guide_optimizedGUIScreenshot.png
+.. image:: /images/QuickStart_Script_GUI_post.png
     :width: 650px
 
 .. _Show DVH and quality indicators:
@@ -200,9 +200,9 @@ If you have chosen a biological optimization, then you have several parameters t
 
 In this section, the dose-volume histograms (DVH) are calculated and visualized.
 
-.. image:: /images/DVHScreenshot.png
+.. image:: /images/QuickStart_Script_resultGUI.png
 
-.. image:: /images/DVHVisScreenshot.png
+.. image:: /images/QuickStart_Script_DVH_vis.png
     :width: 650px
 
 The diagram shows the DVH and in the table, you see the mean, maximum and minimum dose for every VOI. Additionally, the dose and dose-volume coefficient for several confidence levels are displayed.

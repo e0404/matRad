@@ -14,7 +14,6 @@ classdef (Abstract) matRad_StfGeneratorPhotonRayBixelAbstract < matRad_StfGenera
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
     methods 
         function this = matRad_StfGeneratorPhotonRayBixelAbstract(pln)
             % Constructs ExternalStfGenerator with or without pln
@@ -22,10 +21,12 @@ classdef (Abstract) matRad_StfGeneratorPhotonRayBixelAbstract < matRad_StfGenera
                 pln = [];
             end
             this@matRad_StfGeneratorExternalRayBixelAbstract(pln);
+            
          end
 
          function setDefaults(this)
             % Set default values for ExternalStfGenerator
+            this.fillEmptyBixels = true;
             this.setDefaults@matRad_StfGeneratorExternalRayBixelAbstract();
          end
     end

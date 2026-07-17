@@ -33,6 +33,8 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
         radiationMode;              %Radiation Mode
         machine;                    %Machine
         enableGPU = false;          %Enable computation on the GPU (experimenta, default false)
+        ignoreOutsideDensities       % Ignore densities outside of cst contours
+        useGivenEqDensityCube;      % Use the given density cube ct.cube and omit conversion from cubeHU.
     end
 
     properties (Access = protected)
@@ -191,7 +193,11 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
 
             this.initialize();
             this.createPatientGeometry();
-              stf = this.generateSourceGeometry();
+            stf = this.generateSourceGeometry();
+            propStruct = this.getProperties();
+            for i = 1:size(stf,2)
+                stf(i).props = propStruct;
+            end
         end
     end
 
@@ -279,15 +285,40 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
             % Convert linear indices to 3D voxel coordinates
             this.voxTargetWorldCoords = matRad_cubeIndex2worldCoords(V, this.ct);
 
-            % take only voxels inside patient
-            V = [this.cst{:,4}];
-            V = unique(vertcat(V{:}));
+            this.preprocessCt();
+        end
 
-            % ignore densities outside of contours
-            eraseCtDensMask = ones(prod(this.ct.cubeDim), 1);
-            eraseCtDensMask(V) = 0;
-            for i = 1:this.ct.numOfCtScen
-                this.ct.cube{i}(eraseCtDensMask == 1) = 0;
+        function preprocessCt(this)
+            % Applies ignoreOutsideDensities / useGivenEqDensityCube to this.ct
+            % and provides the rED/rSP cube this.ct.cube
+
+            matRad_cfg = MatRad_Config.instance();
+
+            useGivenCube = this.useGivenEqDensityCube;
+            if useGivenCube && ~isfield(this.ct,'cube')
+                matRad_cfg.dispWarning('HU Conversion requested to be omitted but no ct.cube exists! Will override and do the conversion anyway!');
+                useGivenCube = false;
+            end
+
+            if this.ignoreOutsideDensities
+                % ignore densities outside of contours
+                V = [this.cst{:,4}];
+                V = unique(vertcat(V{:}));
+                eraseCtDensMask = true(prod(this.ct.cubeDim), 1);
+                eraseCtDensMask(V) = false;
+                for i = 1:this.ct.numOfCtScen
+                    this.ct.cubeHU{i}(eraseCtDensMask) = -1000;
+                    if useGivenCube
+                        % the given cube is not re-converted from cubeHU below, so mask it directly
+                        this.ct.cube{i}(eraseCtDensMask) = 0;
+                    end
+                end
+            end
+
+            if useGivenCube
+                matRad_cfg.dispInfo('Omitting HU to rED/rSP conversion and using existing ct.cube!\n');
+            else
+                this.ct = matRad_calcWaterEqD(this.ct, this.radiationMode); % Maybe we can avoid duplicating the CT here?
             end
         end
 
@@ -305,7 +336,12 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
             % make the whole calculation more modular)
             throw(MException('MATLAB:class:AbstractMember','Abstract function generateSourceGeometry of your StfGenerator needs to be implemented!'));
         end
-    end
+
+        function s = getProperties(this)
+            s.ignoreOutsideDensities = this.ignoreOutsideDensities;
+            s.useGivenEqDensityCube = this.useGivenEqDensityCube;
+        end
+    end   
 
     methods (Static)
         function generator = getGeneratorFromPln(pln, warnDefault)
@@ -505,5 +541,6 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
         function machine = loadMachine(radiationMode,machineName)
             machine = matRad_loadMachine(struct('radiationMode',radiationMode,'machine',machineName));
         end
+
     end
 end

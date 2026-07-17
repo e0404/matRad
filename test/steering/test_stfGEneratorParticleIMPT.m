@@ -104,3 +104,45 @@ function test_generateRangeShifterStf()
 
         assertTrue(stf(1).ray(1).rangeShifter(1).ID==1);
         assertTrue(stf(1).ray(1).rangeShifter(1).eqThickness==2);
+
+function test_construct_oxygen()
+    load protons_testData.mat pln;
+    pln.radiationMode = 'oxygen';
+    stfGen = matRad_StfGeneratorParticleIMPT(pln);
+    assertTrue(isa(stfGen, 'matRad_StfGeneratorParticleIMPT'));
+    assertEqual(stfGen.radiationMode, 'oxygen');
+    assertTrue(any(strcmp(stfGen.possibleRadiationModes, 'oxygen')));
+
+function test_isAvailable_mismatchAndInvalid()
+    load protons_testData.mat pln;
+    machine = matRad_loadMachine(pln);
+
+    % radiation mode of pln not matching the (protons) machine
+    plnMismatch = pln;
+    plnMismatch.radiationMode = 'carbon';
+    assertFalse(matRad_StfGeneratorParticleIMPT.isAvailable(plnMismatch, machine));
+
+    % invalid machine struct without meta/data fields
+    [available, msg] = matRad_StfGeneratorParticleIMPT.isAvailable(pln, struct('foo',1));
+    assertFalse(available);
+    assertTrue(ischar(msg));
+
+function test_generate_nonConvexTarget()
+    % a non-convex target (two disconnected slabs) must still yield a valid
+    % stf with energy layers assigned per ray
+    load protons_testData.mat ct cst pln;
+
+    targetRow = find(strcmp(cst(:,3),'TARGET'),1);
+    Vol = false(ct.cubeDim);
+    Vol(3:4, 4:7, 4:7) = true;   % first target slab
+    Vol(8:9, 4:7, 4:7) = true;   % second target slab, separated along dim 1
+    cst{targetRow,4}{1} = find(Vol);
+
+    stfGen = matRad_StfGeneratorParticleIMPT(pln);
+    stfGen.gantryAngles = 90;
+    stfGen.couchAngles  = 0;
+    stfGen.isoCenter    = [];
+
+    stf = stfGen.generate(ct,cst);
+    assertTrue(isstruct(stf));
+    assertTrue(stf(1).totalNumOfBixels > 0);
