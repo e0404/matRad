@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- Added elastic image registration for 4D CT scenarios: `matRad_DemonsImageRegistration` (based on `imregdemons`, requires the Image Processing Toolbox) computes pull or push deformation vector fields between a reference CT scenario and the remaining scenarios, stored in `ct.dvf` / `ct.dvfMetadata` in mm by default and compatible with `matRad_doseAcc`, and can propagate contours to the other scenarios using push fields. New registration algorithms can be added by subclassing `matRad_ImageRegistrationBase`. Also adds `matRad_checkEnvImageProcessingRequirements` to check availability of the Image Processing Toolbox (MATLAB) / image package (Octave)
 - Added helper to create ring VOIs from margins around existing structures: `matRad_createRing`, optionally grown around the union of the base VOI over all CT scenarios (e.g. a ring around the full motion of a 4D target)
 - `matRad_PhantomVOISphere` accepts an optional `innerRadius` to create spherical shells, exposed via the new `matRad_PhantomBuilder.addSphericalShellOAR`
 
