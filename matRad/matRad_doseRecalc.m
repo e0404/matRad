@@ -139,9 +139,8 @@ end
 
 recalc = matRad_recalcApertureInfo(recalc, recalc.apertureInfo);
 
-recalc.apertureInfo.propVMAT.continuousAperture = recalc.continuousAperture;
-recalc.apertureInfo = matRad_daoVec2ApertureInfo_VMATrecalcDynamic( ...
-                                                                   recalc.apertureInfo, recalc.apertureInfo.apertureVector);
+recalc.apertureInfo.continuousAperture = recalc.continuousAperture;
+recalc.apertureInfo = matRad_recalcApertureBixelWeights(recalc.apertureInfo);
 
 if calcDoseDirect
     clear global;

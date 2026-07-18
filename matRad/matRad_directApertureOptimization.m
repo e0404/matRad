@@ -120,15 +120,16 @@ end
 % Use Dose Projection only
 backProjection = matRad_DoseProjection();
 
+% the VMAT/DAO mode choice is made exactly once here; everything below
+% dispatches polymorphically through the optiProb instance
 if pln.propOpt.runVMAT
-    apertureInfo = matRad_OptimizationProblemVMAT.matRad_daoVec2ApertureInfo(apertureInfo, apertureInfo.apertureVector);
-    apertureInfo.newIteration = true; % do we need this?
     optiProb = matRad_OptimizationProblemVMAT(backProjection, apertureInfo);
 else
-    apertureInfo = matRad_OptimizationProblemDAO.matRad_daoVec2ApertureInfo(apertureInfo, apertureInfo.apertureVector);
-    apertureInfo.newIteration = true; % do we need this?
     optiProb = matRad_OptimizationProblemDAO(backProjection, apertureInfo);
 end
+apertureInfo = optiProb.matRad_daoVec2ApertureInfo(apertureInfo, apertureInfo.apertureVector);
+apertureInfo.newIteration = true; % do we need this?
+optiProb.apertureInfo = apertureInfo;
 
 if ~isfield(pln.propOpt, 'optimizer')
     pln.propOpt.optimizer = 'IPOPT';

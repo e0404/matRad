@@ -1,4 +1,4 @@
-function g = matRad_objectiveGradient(optiProb,apertureInfoVec,dij,cst)
+function g = matRad_objectiveGradient(optiProb, apertureInfoVec, dij, cst)
 % matRad IPOPT callback: gradient function for direct aperture optimization
 %
 % call:
@@ -21,27 +21,35 @@ function g = matRad_objectiveGradient(optiProb,apertureInfoVec,dij,cst)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015-2026 the matRad development team.
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % update apertureInfo, bixel weight vector an mapping of leafes to bixels
-if ~isequal(apertureInfoVec,optiProb.apertureInfo.apertureVector)
-    optiProb.apertureInfo = optiProb.matRad_daoVec2ApertureInfo(optiProb.apertureInfo,apertureInfoVec);
+if ~isequal(apertureInfoVec, optiProb.apertureInfo.apertureVector)
+    optiProb.apertureInfo = optiProb.matRad_daoVec2ApertureInfo(optiProb.apertureInfo, apertureInfoVec);
 end
 apertureInfo = optiProb.apertureInfo;
 
 % bixel based gradient calculation
-bixelG = matRad_objectiveGradient@matRad_OptimizationProblem(optiProb,apertureInfo.bixelWeights,dij,cst);
-    
+bixelG = matRad_objectiveGradient@matRad_OptimizationProblem(optiProb, apertureInfo.bixelWeights, dij, cst);
+
+if isfield(apertureInfo, 'bixelJApVec')
+    % use the analytic bixel-aperture Jacobian if the vector conversion
+    % assembled it (VMAT); the manual chain rule below is the static
+    % (step-and-shoot) equivalent
+    g = apertureInfo.bixelJApVec * bixelG;
+    return
+end
+
 % allocate gradient vector for aperture weights and leaf positions
-g = NaN * ones(size(apertureInfoVec,1),1);
+g = NaN * ones(size(apertureInfoVec, 1), 1);
 
 % 1. calculate aperatureGrad
 % loop over all beams
@@ -52,9 +60,9 @@ for i = 1:numel(apertureInfo.beam)
     ix = ~isnan(apertureInfo.beam(i).bixelIndMap);
 
     % loop over all shapes and add up the gradients x openingFrac for this shape
-    for j = 1:apertureInfo.beam(i).numOfShapes            
-        g(j+offset) = apertureInfo.beam(i).shape(j).shapeMap(ix)' ./apertureInfo.beam(i).shape(j).jacobiScale ...
-                        * bixelG(apertureInfo.beam(i).bixelIndMap(ix));
+    for j = 1:apertureInfo.beam(i).numOfShapes
+        g(j + offset) = apertureInfo.beam(i).shape(j).shapeMap(ix)' ./ apertureInfo.beam(i).shape(j).jacobiScale * ...
+                        bixelG(apertureInfo.beam(i).bixelIndMap(ix));
     end
 
     % increment offset
@@ -62,15 +70,16 @@ for i = 1:numel(apertureInfo.beam)
 
 end
 
-ixAperturesOnly = apertureInfo.totalNumOfShapes+1:apertureInfo.totalNumOfShapes+apertureInfo.totalNumOfLeafPairs*2; %The first entries in most of the vectors denote shape weights
+% The first entries in most of the vectors denote shape weights
+ixAperturesOnly = apertureInfo.totalNumOfShapes + 1:apertureInfo.totalNumOfShapes + apertureInfo.totalNumOfLeafPairs * 2;
 
-% 2. find corresponding bixel to the leaf Positions and aperture 
+% 2. find corresponding bixel to the leaf Positions and aperture
 % weights to calculate the gradient
 g(ixAperturesOnly) = ...
-        apertureInfoVec(apertureInfo.mappingMx(ixAperturesOnly,2)) ...
-        .* bixelG(apertureInfo.bixelIndices) ./ ...
-        (apertureInfo.bixelWidth.*apertureInfo.jacobiScale(apertureInfo.mappingMx(ixAperturesOnly,2)));
-    
-    % correct the sign for the left leaf positions
-    g(apertureInfo.totalNumOfShapes+(1:(apertureInfo.totalNumOfLeafPairs))) = ...
-        -g(apertureInfo.totalNumOfShapes+(1:(apertureInfo.totalNumOfLeafPairs)));
+    apertureInfoVec(apertureInfo.mappingMx(ixAperturesOnly, 2)) .* ...
+    bixelG(apertureInfo.bixelIndices) ./ ...
+    (apertureInfo.bixelWidth .* apertureInfo.jacobiScale(apertureInfo.mappingMx(ixAperturesOnly, 2)));
+
+% correct the sign for the left leaf positions
+g(apertureInfo.totalNumOfShapes + (1:(apertureInfo.totalNumOfLeafPairs))) = ...
+    -g(apertureInfo.totalNumOfShapes + (1:(apertureInfo.totalNumOfLeafPairs)));

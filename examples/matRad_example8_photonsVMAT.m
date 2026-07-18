@@ -72,8 +72,6 @@ pln.propOpt.runDAO              = true;             % 1/true: run DAO, 0/false: 
 pln.propOpt.runVMAT             = true;
 pln.propOpt.preconditioner      = true;
 
-% pln.propOpt.VMAToptions.machineConstraintFile = [pln.radiationMode '_' pln.machine];
-
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct, cst, pln);
 
