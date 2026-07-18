@@ -60,6 +60,10 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
         savedAnchorGantryAngles
         savedAnchorCouchAngles
         savedIsoCenter
+
+        % Guard flag set while gantryAngles/couchAngles are being
+        % programmatically swapped to/from the fine angle grid.
+        lockAngleUpdate = false
     end
 
     methods

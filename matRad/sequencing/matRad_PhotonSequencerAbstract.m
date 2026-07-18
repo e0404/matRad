@@ -7,6 +7,7 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
     properties
         numOfMLCLeafPairs = 80
         sequencingLevel = 5
+        preconditioner = false % apply matRad_preconditionFactors to the resulting apertureInfo
     end
 
     methods
@@ -26,7 +27,7 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
             throw(MException('MATLAB:class:AbstractMember', 'Abstract function sequence needs to be implemented!'));
         end
 
-        function [D_0, D_k, shapes, calFac, indInMx] = initBeam(this, stf, wCurr)
+        function [d0, dCurrent, shapes, calFac, indInMx] = initBeam(this, stf, wCurr)
 
             numOfRaysPerBeam = size(stf.ray, 2);
             X = ones(numOfRaysPerBeam, 1) * NaN;
@@ -62,10 +63,10 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
 
             % Stratification
             calFac = max(fluenceMx(:));
-            D_k = round(fluenceMx / calFac * this.sequencingLevel);
+            dCurrent = round(fluenceMx / calFac * this.sequencingLevel);
 
-            % Save the stratification in the initial intensity matrix D_0.
-            D_0 = D_k;
+            % Save the stratification in the initial intensity matrix d0.
+            d0 = dCurrent;
 
             % container to remember generated shapes; allocate space for 10000 shapes
             shapes = NaN * ones(dimOfFluenceMxZ, dimOfFluenceMxX, 10000);
@@ -85,6 +86,7 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
             totalNumOfBixels = sum([stf(:).totalNumOfBixels]);
             totalNumOfShapes = sum([sequence.beam.numOfShapes]);
             vectorOffset = totalNumOfShapes + 1; % used for bookkeeping in the vector for optimization
+            weightOffset = 1; % used for bookkeeping in matRad_preconditionFactors
 
             % loop over all beams
             for i = 1:size(stf, 2)
@@ -157,10 +159,10 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
                             rightLeafPos(l) = leftLeafPos(l);
                         else
                             % the physical position [mm] can be calculated from the indices
-                            leftLeafPos(l) = (leftLeafPosInd - 1) * bixelWidth ...
-                                                + minX - 1 / 2 * bixelWidth;
-                            rightLeafPos(l) = (rightLeafPosInd - 1) * bixelWidth ...
-                                                + minX + 1 / 2 * bixelWidth;
+                            leftLeafPos(l) = (leftLeafPosInd - 1) * bixelWidth + ...
+                                minX - 1 / 2 * bixelWidth;
+                            rightLeafPos(l) = (rightLeafPosInd - 1) * bixelWidth + ...
+                                minX + 1 / 2 * bixelWidth;
 
                         end
                     end
@@ -172,9 +174,11 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
                     sequence.apertureInfo.beam(i).shape(m).shapeMap = shapeMap;
                     sequence.apertureInfo.beam(i).shape(m).vectorOffset = vectorOffset;
                     sequence.apertureInfo.beam(i).shape(m).jacobiScale = 1;
+                    sequence.apertureInfo.beam(i).shape(m).weightOffset = weightOffset;
 
                     % update index for bookkeeping
                     vectorOffset = vectorOffset + dimZ;
+                    weightOffset = weightOffset + 1;
 
                 end
 
@@ -214,15 +218,20 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
             end
 
             % save global data
+            sequence.apertureInfo.runVMAT = false;
+            sequence.apertureInfo.preconditioner = this.preconditioner;
             sequence.apertureInfo.bixelWidth = bixelWidth;
             sequence.apertureInfo.numOfMLCLeafPairs = this.numOfMLCLeafPairs;
             sequence.apertureInfo.totalNumOfBixels = totalNumOfBixels;
             sequence.apertureInfo.totalNumOfShapes = sum([sequence.apertureInfo.beam.numOfShapes]);
-            sequence.apertureInfo.totalNumOfLeafPairs = sum([sequence.apertureInfo.beam.numOfShapes] * [sequence.apertureInfo.beam.numOfActiveLeafPairs]');
+            sequence.apertureInfo.totalNumOfLeafPairs = sum([sequence.apertureInfo.beam.numOfShapes] * ...
+                                                            [sequence.apertureInfo.beam.numOfActiveLeafPairs]');
+            sequence.apertureInfo.doseTotalNumOfLeafPairs = sequence.apertureInfo.totalNumOfLeafPairs;
             sequence.apertureInfo.jacobiScale = ones(sequence.apertureInfo.totalNumOfShapes, 1);
 
             % create vectors for optimization
-            [sequence.apertureInfo.apertureVector, sequence.apertureInfo.mappingMx, sequence.apertureInfo.limMx] = matRad_OptimizationProblemDAO.matRad_daoApertureInfo2Vec(sequence.apertureInfo);
+            [sequence.apertureInfo.apertureVector, sequence.apertureInfo.mappingMx, sequence.apertureInfo.limMx] ...
+                = matRad_OptimizationProblemDAO.matRad_daoApertureInfo2Vec(sequence.apertureInfo);
         end
 
         function plotSegments(this, sequencing)
@@ -243,7 +252,8 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
                 seqSubPlots(1) = subplot(2, 2, 1, 'parent', seqFig);
                 imagesc(sequencing.beam(i).fluence, 'parent', seqSubPlots(1));
                 set(seqSubPlots(1), 'CLim', [0 this.sequencingLevel], 'YDir', 'normal');
-                title(seqSubPlots(1), ['Beam # ' num2str(i) ': max(D_0) = ' num2str(max(D_0(:))) ' - ' num2str(numel(unique(D_0))) ' intensity levels']);
+                title(seqSubPlots(1), ['Beam # ' num2str(i) ': max(D_0) = ' num2str(max(D_0(:))) ...
+                                       ' - ' num2str(numel(unique(D_0))) ' intensity levels']);
                 xlabel(seqSubPlots(1), 'x - direction parallel to leaf motion ');
                 ylabel(seqSubPlots(1), 'z - direction perpendicular to leaf motion ');
                 colorbar;

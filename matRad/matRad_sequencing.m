@@ -41,7 +41,8 @@ matRad_cfg = MatRad_Config.instance();
 % the pln position holds a dij, the call uses the old order and the arguments
 % are swapped with a deprecation warning.
 if nargin >= 4 && isstruct(pln) && isfield(pln, 'doseGrid')
-    matRad_cfg.dispDeprecationWarning('The argument order of matRad_sequencing changed to matRad_sequencing(resultGUI, stf, pln, dij). Please update your call.');
+    matRad_cfg.dispDeprecationWarning(['The argument order of matRad_sequencing changed to ' ...
+                                       'matRad_sequencing(resultGUI, stf, pln, dij). Please update your call.']);
     [pln, dij] = deal(dij, pln);
 end
 
@@ -58,9 +59,12 @@ if nargin < 4 || isempty(dij)
 end
 
 if strcmp(pln.radiationMode, 'photons')
-    % Photon (MLC leaf) sequencing keeps using the functional
-    % implementations, which carry VMAT-specific dynamic/arc-sequencing
-    % support that the class-based sequencers do not implement yet.
+    % Photon (MLC leaf) sequencing. Siochi (static or VMAT) and static
+    % Xia/Engel go through the class-based sequencers. Xia/Engel were never
+    % designed for VMAT (no FMO-beam gating) and only tolerate it with a
+    % warning in the legacy functional implementation - dynamic requests for
+    % those two keep routing there unchanged, rather than inventing FMO
+    % gating for algorithms that were never designed for it.
 
     if ~isfield(pln, 'propSeq')
         pln.propSeq = struct();
@@ -79,54 +83,17 @@ if strcmp(pln.radiationMode, 'photons')
         pln.propSeq.numLevels = pln.propSeq.sequencingLevel;
     end
 
-    if isfield(pln, 'propOpt') && isfield(pln.propOpt, 'preconditioner')
-        preconditioner = pln.propOpt.preconditioner;
+    preconditioner = matRad_getPlnOptField(pln, 'preconditioner', false);
+    dynamic = matRad_getPlnOptField(pln, 'runVMAT', false);
+    numApertures = matRad_getPlnOptField(pln, 'numApertures', 0);
+    continuousAperture = matRad_getPlnOptField(pln, 'continuousAperture', false);
+
+    if dynamic && any(strcmp(pln.propSeq.sequencer, {'xia', 'engel'}))
+        resultGUI = matRad_sequencePhotonsLegacy(resultGUI, stf, dij, pln, visMode, ...
+                                                 dynamic, numApertures, continuousAperture, preconditioner);
     else
-        preconditioner = false;
-    end
-
-    if isfield(pln, 'propOpt') && isfield(pln.propOpt, 'runVMAT')
-        dynamic = pln.propOpt.runVMAT;
-    else
-        dynamic = false;
-    end
-
-    if isfield(pln, 'propOpt') && isfield(pln.propOpt, 'numApertures')
-        numApertures = pln.propOpt.numApertures;
-    else
-        numApertures = 0;
-    end
-
-    if isfield(pln, 'propOpt') && isfield(pln.propOpt, 'continuousAperture')
-        continuousAperture = pln.propOpt.continuousAperture;
-    else
-        continuousAperture = false;
-    end
-
-    varArgList = { ...
-                  'visBool', visMode, ...
-                  'dynamic', dynamic, ...
-                  'numApertures', numApertures, ...
-                  'continuousAperture', continuousAperture, ...
-                  'preconditioner', preconditioner};
-
-    % Could probably consolidate a lot of the code in the following
-    % functions.
-    switch pln.propSeq.sequencer
-        case 'xia'
-            resultGUI = matRad_xiaLeafSequencing(resultGUI, stf, dij, pln.propSeq.numLevels, varArgList{:});
-        case 'engel'
-            resultGUI = matRad_engelLeafSequencing(resultGUI, stf, dij, pln.propSeq.numLevels, varArgList{:});
-        case 'siochi'
-            resultGUI = matRad_siochiLeafSequencing(resultGUI, stf, dij, pln.propSeq.numLevels, varArgList{:});
-        otherwise
-            matRad_cfg.dispError('Could not find specified sequencing algorithm ''%s''', pln.propSeq.sequencer);
-    end
-
-    % keep the aperture info available under resultGUI.sequencing.apertureInfo
-    % too, matching the location used by the class-based sequencers
-    if isfield(resultGUI, 'apertureInfo') && isfield(resultGUI, 'sequencing') && isstruct(resultGUI.sequencing)
-        resultGUI.sequencing.apertureInfo = resultGUI.apertureInfo;
+        resultGUI = matRad_sequencePhotonsClassBased(sequencer, resultGUI, stf, dij, pln, ...
+                                                     dynamic, continuousAperture, preconditioner);
     end
 else
     % Non-photon (e.g. particle) sequencing goes through the new
@@ -139,4 +106,78 @@ else
     end
 end
 
+end
+
+function val = matRad_getPlnOptField(pln, fieldName, defaultVal)
+% Reads pln.propOpt.(fieldName), falling back to defaultVal if pln has no
+% propOpt struct or the field is unset.
+if isfield(pln, 'propOpt') && isfield(pln.propOpt, fieldName)
+    val = pln.propOpt.(fieldName);
+else
+    val = defaultVal;
+end
+end
+
+function resultGUI = matRad_sequencePhotonsLegacy(resultGUI, stf, dij, pln, visMode, ...
+                                                  dynamic, numApertures, continuousAperture, preconditioner)
+% Dynamic Xia/Engel sequencing: neither was ever designed for VMAT (no
+% FMO-beam gating), so this keeps routing to the legacy functional
+% implementation, which at least warns about it, unchanged.
+
+varArgList = { ...
+              'visBool', visMode, ...
+              'dynamic', dynamic, ...
+              'numApertures', numApertures, ...
+              'continuousAperture', continuousAperture, ...
+              'preconditioner', preconditioner};
+
+switch pln.propSeq.sequencer
+    case 'xia'
+        resultGUI = matRad_xiaLeafSequencing(resultGUI, stf, dij, pln.propSeq.numLevels, varArgList{:});
+    case 'engel'
+        resultGUI = matRad_engelLeafSequencing(resultGUI, stf, dij, pln.propSeq.numLevels, varArgList{:});
+end
+
+% keep the aperture info available under resultGUI.sequencing.apertureInfo
+% too, matching the location used by the class-based sequencers
+if isfield(resultGUI, 'apertureInfo') && isfield(resultGUI, 'sequencing') && isstruct(resultGUI.sequencing)
+    resultGUI.sequencing.apertureInfo = resultGUI.apertureInfo;
+end
+end
+
+function resultGUI = matRad_sequencePhotonsClassBased(sequencer, resultGUI, stf, dij, pln, ...
+                                                      dynamic, continuousAperture, preconditioner)
+% Siochi (static or VMAT) and static Xia/Engel sequencing through the
+% class-based sequencers.
+
+matRad_cfg = MatRad_Config.instance();
+
+% bridge legacy pln.propOpt/propSeq fields onto the sequencer object,
+% since assignPropertiesFromPln only auto-maps pln.propSeq.*
+sequencer.sequencingLevel = pln.propSeq.numLevels;
+sequencer.preconditioner = preconditioner;
+if isa(sequencer, 'matRad_PhotonSequencerVMATAbstract')
+    sequencer.runVMAT = dynamic;
+    sequencer.continuousAperture = continuousAperture;
+    if ~isempty(dij) && isfield(dij, 'weightToMU')
+        sequencer.weightToMU = dij.weightToMU;
+    end
+end
+
+sequence = sequencer.sequence(resultGUI.w, stf);
+if ~isempty(dij)
+    % merge the computed dose cubes into resultGUI instead of overwriting
+    % it, so that pre-existing fields (e.g. from FMO) survive
+    doseCubes = matRad_calcCubes(sequence.w, dij);
+    fNames = fieldnames(doseCubes);
+    for f = 1:numel(fNames)
+        resultGUI.(fNames{f}) = doseCubes.(fNames{f});
+    end
+else
+    matRad_cfg.dispWarning('Dose not recalculated with sequenced fluence');
+end
+resultGUI.sequencing = sequence;
+if isfield(sequence, 'apertureInfo')
+    resultGUI.apertureInfo = sequence.apertureInfo;
+end
 end

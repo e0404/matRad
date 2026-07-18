@@ -1,8 +1,10 @@
-classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_PhotonSequencerAbstract
+classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_PhotonSequencerVMATAbstract
 
     % matRad_SequencingPhotonsSiochiLeaf: photon MLC leaf sequencing after
     %   Siochi (1999), using rod pushing with collision and tongue-and-groove
     %   correction to convert the optimized fluence into deliverable segments.
+    %   Supports both static (IMRT) and VMAT (dynamic/arc) delivery - see
+    %   this.runVMAT and matRad_PhotonSequencerVMATAbstract.
     %
     % References
     %   [1] https://www.ncbi.nlm.nih.gov/pubmed/10078655
@@ -20,10 +22,26 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_PhotonSequencerAbstract
             if nargin < 1
                 pln = [];
             end
-            this = this@matRad_PhotonSequencerAbstract(pln);
+            this = this@matRad_PhotonSequencerVMATAbstract(pln);
         end
 
         function sequence = sequence(this, w, stf)
+            if this.runVMAT
+                sequence = this.sequenceDynamic(w, stf);
+            else
+                sequence = this.sequenceStatic(w, stf);
+            end
+
+            if this.preconditioner
+                sequence.apertureInfo = matRad_preconditionFactors(sequence.apertureInfo);
+            end
+
+            if this.visMode
+                this.plotSegments(sequence);
+            end
+        end
+
+        function sequence = sequenceStatic(this, w, stf)
 
             offset = 0;
 
@@ -67,13 +85,123 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_PhotonSequencerAbstract
 
             end
 
-            if this.visMode
-                this.plotSegments(sequence);
-            end
-            sequence =  this.sequencing2ApertureInfo(sequence, stf);
+            sequence = this.sequencing2ApertureInfo(sequence, stf);
         end
 
-        function [tops, bases] = decomposePort(~, map)
+        function sequence = sequenceDynamic(this, w, stf)
+            % VMAT (dynamic/arc) sequencing: gates to FMO-anchor beams,
+            % smooths the fluence before decomposition, keeps re-decomposing
+            % at increasing sequencingLevel until enough shapes exist for
+            % this beam's DAO-angle children, then spreads the result across
+            % those children and builds the VMAT apertureInfo. Ported from
+            % the former matRad_siochiLeafSequencing.m functional
+            % implementation.
+
+            offset = 0;
+
+            for i = 1:numel(stf)
+                numOfRaysPerBeam = stf(i).numOfRays;
+
+                if ~stf(i).propVMAT.FMOBeam
+                    sequence.w(1 + offset:numOfRaysPerBeam + offset, 1) = 0;
+                    sequence.beam(i).bixelIx = 1 + offset:numOfRaysPerBeam + offset;
+                    offset = offset + numOfRaysPerBeam;
+                    continue % this beam carries no shapes of its own; matRad_arcSequencing fills it in as a child of an FMO beam
+                end
+                numToKeep = stf(i).propVMAT.numOfBeamChildren;
+
+                wOfCurrBeams = w(1 + offset:numOfRaysPerBeam + offset) .* ones(size(stf(i).ray, 2), 1);
+
+                X = ones(size(stf(i).ray, 2), 1) * NaN;
+                Z = ones(size(stf(i).ray, 2), 1) * NaN;
+                for j = 1:size(stf(i).ray, 2)
+                    X(j) = stf(i).ray(j).rayPos_bev(:, 1);
+                    Z(j) = stf(i).ray(j).rayPos_bev(:, 3);
+                end
+
+                minX = min(X);
+                maxX = max(X);
+                minZ = min(Z);
+                maxZ = max(Z);
+
+                dimOfFluenceMxX = (maxX - minX) / stf(i).bixelWidth + 1;
+                dimOfFluenceMxZ = (maxZ - minZ) / stf(i).bixelWidth + 1;
+
+                fluenceMx = zeros(dimOfFluenceMxZ, dimOfFluenceMxX);
+
+                xPos = (X - minX) / stf(i).bixelWidth + 1;
+                zPos = (Z - minZ) / stf(i).bixelWidth + 1;
+
+                indInFluenceMx = zPos + (xPos - 1) * dimOfFluenceMxZ;
+                fluenceMx(indInFluenceMx) = wOfCurrBeams;
+
+                % Gaussian fluence smoothing (VMAT only - would corrupt static
+                % IMRT fluence reproduction otherwise)
+                fluenceMx = this.smoothFluenceForArc(fluenceMx);
+
+                numOfLevels = this.sequencingLevel;
+                notFinished = true;
+
+                if sum(wOfCurrBeams) > 0
+                    while notFinished
+                        % keep re-decomposing at an increasing number of
+                        % levels until there are at least as many shapes as
+                        % this FMO beam's DAO-angle children (numToKeep)
+
+                        calFac = max(fluenceMx(:));
+                        D_k = round(fluenceMx / calFac * numOfLevels);
+                        D_0 = D_k;
+
+                        shapes = NaN * ones(dimOfFluenceMxZ, dimOfFluenceMxX, 10000);
+                        shapesWeight = zeros(10000, 1);
+                        k = 0;
+
+                        [tops, bases] = this.decomposePort(D_k);
+                        [shapes, shapesWeight, k] = this.convertToSegments(shapes, shapesWeight, k, tops, bases);
+
+                        if numToKeep ~= 0 && k < numToKeep
+                            numOfLevels = numOfLevels + 1;
+                        else
+                            notFinished = false;
+                        end
+                    end
+
+                    sequence.beam(i).numOfShapes  = k;
+                    sequence.beam(i).shapes       = shapes(:, :, 1:k);
+                    sequence.beam(i).shapesWeight = shapesWeight(1:k) / numOfLevels * calFac;
+                    sequence.beam(i).bixelIx      = 1 + offset:numOfRaysPerBeam + offset;
+                    sequence.beam(i).fluence      = D_0;
+                else
+                    sequence.beam(i).numOfShapes  = 1;
+                    sequence.beam(i).shapes       = zeros(dimOfFluenceMxZ, dimOfFluenceMxX);
+                    sequence.beam(i).shapesWeight = zeros(dimOfFluenceMxZ, dimOfFluenceMxX);
+                    sequence.beam(i).bixelIx      = 1 + offset:numOfRaysPerBeam + offset;
+                    sequence.beam(i).fluence      = zeros(dimOfFluenceMxZ, dimOfFluenceMxX);
+                end
+
+                if numToKeep ~= 0
+                    sequence.beam(i) = matRad_discardApertures(sequence.beam(i), numToKeep);
+                end
+
+                sequence.beam(i).sum = zeros(dimOfFluenceMxZ, dimOfFluenceMxX);
+                for shape = 1:sequence.beam(i).numOfShapes
+                    sequence.beam(i).sum = sequence.beam(i).sum + sequence.beam(i).shapes(:, :, shape) * sequence.beam(i).shapesWeight(shape);
+                end
+
+                offset = offset + numOfRaysPerBeam;
+            end
+
+            % spread shapes to DAO-angle children, compute gantry rotation/MU rate
+            sequence = this.applyArcSequencing(sequence, stf);
+
+            % build the full VMAT apertureInfo and run the post-processing pipeline
+            sequence.apertureInfo = this.buildVMATApertureInfo(sequence, stf);
+            sequence.apertureInfo = this.postProcessVMATApertureInfo(sequence.apertureInfo);
+
+            sequence.w = sequence.apertureInfo.bixelWeights;
+        end
+
+        function [tops, bases] = decomposePort(this, map)
             % Returns tops and bases of a fluence matrix "map" for Siochi leaf
             % sequencing algorithm (rod pushing part).  Accounts for collisions and
             % tongue and groove (Tng) effects.
@@ -124,45 +252,9 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_PhotonSequencerAbstract
                     % rod is "peeking over" a longer one in the direction transverse to
                     % the leaf motion.  To fix this, match either the tops or bases of
                     % the rods.
-                    for j = (maxRow - 1):-1:minZ
-                        if map(j, i) < map(j + 1, i)
-                            if tops(j, i) > tops(j + 1, i)
-                                tops(j + 1, i) = tops(j, i);
-                                bases(j + 1, i) = tops(j + 1, i) - map(j + 1, i) + 1;
-                            elseif bases(j, i) < bases(j + 1, i)
-                                bases(j, i) = bases(j + 1, i);
-                                tops(j, i) = bases(j, i) + map(j, i) - 1;
-                            end
-                        else
-                            if tops(j, i) < tops(j + 1, i)
-                                tops(j, i) = tops(j + 1, i);
-                                bases(j, i) = tops(j, i) - map(j, i) + 1;
-                            elseif bases(j, i) > bases(j + 1, i)
-                                bases(j + 1, i) = bases(j, i);
-                                tops(j + 1, i) = bases(j + 1, i) + map(j + 1, i) - 1;
-                            end
-                        end
-                    end
+                    [tops, bases] = this.fixTnGPass(tops, bases, map, i, (maxRow - 1):-1:minZ, 1);
                     % go from maxRow up checking for TnG
-                    for j = (maxRow + 1):maxZ
-                        if map(j, i) < map(j - 1, i)
-                            if tops(j, i) > tops(j - 1, i)
-                                tops(j - 1, i) = tops(j, i);
-                                bases(j - 1, i) = tops(j - 1, i) - map(j - 1, i) + 1;
-                            elseif bases(j, i) < bases(j - 1, i)
-                                bases(j, i) = bases(j - 1, i);
-                                tops(j, i) = bases(j, i) + map(j, i) - 1;
-                            end
-                        else
-                            if tops(j, i) < tops(j - 1, i)
-                                tops(j, i) = tops(j - 1, i);
-                                bases(j, i) = tops(j, i) - map(j, i) + 1;
-                            elseif bases(j, i) > bases(j - 1, i)
-                                bases(j - 1, i) = bases(j, i);
-                                tops(j - 1, i) = bases(j - 1, i) + map(j - 1, i) - 1;
-                            end
-                        end
-                    end
+                    [tops, bases] = this.fixTnGPass(tops, bases, map, i, (maxRow + 1):maxZ, -1);
                     % now check if all TnG conditions have been removed
                     TnG = 0;
                     for j = (minZ + 1):maxZ
@@ -179,6 +271,35 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_PhotonSequencerAbstract
                                 TnG = 1;
                             end
                         end
+                    end
+                end
+            end
+        end
+
+        function [tops, bases] = fixTnGPass(~, tops, bases, map, i, jRange, neighborOffset)
+            % One directional tongue-and-groove correction pass over jRange,
+            % matching each rod j against its neighbor j+neighborOffset.
+            % Shared by decomposePort's "down" (neighborOffset=1, comparing
+            % against j+1) and "up" (neighborOffset=-1, comparing against
+            % j-1) passes, which are otherwise identical.
+
+            for j = jRange
+                jn = j + neighborOffset;
+                if map(j, i) < map(jn, i)
+                    if tops(j, i) > tops(jn, i)
+                        tops(jn, i) = tops(j, i);
+                        bases(jn, i) = tops(jn, i) - map(jn, i) + 1;
+                    elseif bases(j, i) < bases(jn, i)
+                        bases(j, i) = bases(jn, i);
+                        tops(j, i) = bases(j, i) + map(j, i) - 1;
+                    end
+                else
+                    if tops(j, i) < tops(jn, i)
+                        tops(j, i) = tops(jn, i);
+                        bases(j, i) = tops(j, i) - map(j, i) + 1;
+                    elseif bases(j, i) > bases(jn, i)
+                        bases(jn, i) = bases(j, i);
+                        tops(jn, i) = bases(jn, i) + map(jn, i) - 1;
                     end
                 end
             end
@@ -239,7 +360,8 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_PhotonSequencerAbstract
                 checkBasic = isfield(machine, 'meta') && isfield(machine, 'data');
 
                 % check modality
-                checkModality = any(strcmp(matRad_SequencingPhotonsSiochiLeaf.possibleRadiationModes, machine.meta.radiationMode)) && any(strcmp(matRad_SequencingPhotonsSiochiLeaf.possibleRadiationModes, pln.radiationMode));
+                checkModality = any(strcmp(matRad_SequencingPhotonsSiochiLeaf.possibleRadiationModes, machine.meta.radiationMode)) && ...
+                    any(strcmp(matRad_SequencingPhotonsSiochiLeaf.possibleRadiationModes, pln.radiationMode));
 
                 % Sanity check compatibility
                 if checkModality
