@@ -37,7 +37,8 @@ classdef MatRad_Config < handle
         gui
 
         % User folders
-        userfolders  % Cell array of user folders containing machines, patients, hluts. Default contains the userdata folder in the matRad root directory
+        userfolders  % Cell array of user folders containing machines, patients, hluts.
+        % Default contains the userdata folder in the matRad root directory
     end
 
     % Deprecated properties referencing a newer one
@@ -247,7 +248,15 @@ classdef MatRad_Config < handle
 
             % Sequencing Options
             obj.defaults.propSeq.sequencer = {'siochi', 'IMPT'};
+            % sequencingLevel is the field name that actually matches
+            % matRad_PhotonSequencerAbstract.sequencingLevel, so it's the one
+            % matRad_SequencerBase.setDefaults() picks up and applies to a
+            % sequencer object. numLevels is kept alongside it for backward
+            % compatibility with anything reading matRad_cfg.defaults.propSeq
+            % directly and as the user-facing name matRad_sequencing.m reads
+            % from pln.propSeq.
             obj.defaults.propSeq.numLevels = 5;
+            obj.defaults.propSeq.sequencingLevel = 5;
 
             obj.disableGUI = false;
 
@@ -319,7 +328,8 @@ classdef MatRad_Config < handle
             light = false;
             try
                 if ispc
-                    light = logical(winqueryreg('HKEY_CURRENT_USER', 'Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize', 'AppsUseLightTheme'));
+                    light = logical(winqueryreg('HKEY_CURRENT_USER', ...
+                                                'Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize', 'AppsUseLightTheme'));
                 elseif ismac
                     [~, out] = system('defaults read -g AppleInterfaceStyle');
                     if ~strcmp(out(1:end - 1), 'Dark')
@@ -445,10 +455,11 @@ classdef MatRad_Config < handle
             allNewFolders = cellfun(@dir, userfolders, 'UniformOutput', false);
             if isempty(allNewFolders)
                 obj.dispWarning('No user folders specified. Defaulting to userdata folder in matRad root directory.');
+                % We don't access obj.matRadRoot here because of Matlab's weird behavior with properties
                 if ~isdeployed
-                    allNewFolders = {[fileparts(mfilename('fullpath')) filesep 'userdata' filesep]}; % We don't access obj.matRadRoot here because of Matlab's weird behavior with properties
+                    allNewFolders = {[fileparts(mfilename('fullpath')) filesep 'userdata' filesep]};
                 else
-                    allNewFolders = {[ctfroot filesep 'userdata' filesep]}; % We don't access obj.matRadRoot here because of Matlab's weird behavior with properties
+                    allNewFolders = {[ctfroot filesep 'userdata' filesep]};
                 end
             end
 
@@ -644,19 +655,19 @@ classdef MatRad_Config < handle
             % Overload the loadobj function to allow downward compatibility
             % with workspaces which where saved as an older version of this class
 
-            function basic_struct = mergeStructs(basic_struct, changed_struct)
+            function basicStruct = mergeStructsRecursive(basicStruct, changedStruct)
                 % nested function for merging the properties of the loaded
                 % obj into a new obj.
                 % Merges two structs, including nestes structs, by overwriting
-                % the properties of basic_struct with the changed properties in changed_struct
-                fields = fieldnames(basic_struct);
+                % the properties of basicStruct with the changed properties in changedStruct
+                fields = fieldnames(basicStruct);
                 for k = 1:length(fields)
                     disp(fields{k});
-                    if isfield(changed_struct, fields{k})
-                        if isstruct(changed_struct.(fields{k})) && isstruct(basic_struct.(fields{i}))
-                            basic_struct.(fields{k}) = mergeStructs(basic_struct.(fields{k}), changed_struct.(fields{i}));
+                    if isfield(changedStruct, fields{k})
+                        if isstruct(changedStruct.(fields{k})) && isstruct(basicStruct.(fields{i}))
+                            basicStruct.(fields{k}) = mergeStructsRecursive(basicStruct.(fields{k}), changedStruct.(fields{i}));
                         else
-                            basic_struct.(fields{k}) = changed_struct.(fields{k});
+                            basicStruct.(fields{k}) = changedStruct.(fields{k});
                         end
                     end
                 end
@@ -667,7 +678,8 @@ classdef MatRad_Config < handle
             % regarding the structs, in order to fix this, do a custom
             % loading process including recursively copying the conflicting structs
             if isstruct(sobj)
-                warning('The  loaded object differs from the current MatRad_Config class, resuming the loading process with the overloaded loadobj function!');
+                warning(['The  loaded object differs from the current MatRad_Config class, ' ...
+                         'resuming the loading process with the overloaded loadobj function!']);
                 obj = MatRad_Config();
                 % Use a metaclass object to get the properties because
                 % Octave <= 5.2 doesn't have a properties function
@@ -692,7 +704,7 @@ classdef MatRad_Config < handle
                         % check it's field recursively
                         if ~(isequal(sobjField, objField))
                             if isstruct(sobjField) && isstruct(objField)
-                                retStruct = mergeStructs(objField, sobjField);
+                                retStruct = mergeStructsRecursive(objField, sobjField);
                                 obj.(props{i}) = retStruct;
                             else
                                 obj.(props{i}) = sobjField;

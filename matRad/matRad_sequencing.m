@@ -64,26 +64,55 @@ if strcmp(pln.radiationMode, 'photons')
     if ~isfield(pln, 'propSeq')
         pln.propSeq = struct();
     end
-
-    if ~isfield(pln.propSeq, 'sequencer')
-        pln.propSeq.sequencer = 'siochi'; % default: siochi sequencing algorithm
-        matRad_cfg.dispWarning ('pln.propSeq.sequencer not specified. Using siochi leaf sequencing (default).');
+    if ~isfield(pln, 'propOpt')
+        pln.propOpt = struct();
     end
 
-    if ~any(isfield(pln.propSeq, {'numLevels', 'sequencingLevel'}))
-        pln.propSeq.numLevels = 5;
-        matRad_cfg.dispWarning ('pln.propSeq.sequencingLevel not specified. Using 5 sequencing levels (default).');
-    elseif isfield(pln.propSeq, 'sequencingLevel')
+    pln.propSeq.sequencer = matRad_getFieldOrDefault(pln.propSeq, 'sequencer', 'siochi', ...
+                                                     'pln.propSeq.sequencer not specified. Using siochi leaf sequencing (default).');
+
+    if isfield(pln.propSeq, 'sequencingLevel') && ~isfield(pln.propSeq, 'numLevels')
         matRad_cfg.dispDeprecationWarning('The pln.propSeq.sequencingLevel property is deprecated. Use pln.propSeq.numLevels instead!');
         pln.propSeq.numLevels = pln.propSeq.sequencingLevel;
     end
+    numLevels = matRad_getFieldOrDefault(pln.propSeq, 'numLevels', 5, ...
+                                         'pln.propSeq.numLevels not specified. Using 5 sequencing levels (default).');
 
-    preconditioner = matRad_getPlnOptField(pln, 'preconditioner', false);
-    dynamic = matRad_getPlnOptField(pln, 'runVMAT', false);
-    continuousAperture = matRad_getPlnOptField(pln, 'continuousAperture', false);
+    preconditioner = matRad_getFieldOrDefault(pln.propOpt, 'preconditioner', false);
+    dynamic = matRad_getFieldOrDefault(pln.propOpt, 'runVMAT', false);
+    continuousAperture = matRad_getFieldOrDefault(pln.propOpt, 'continuousAperture', false);
 
-    resultGUI = matRad_sequencePhotonsClassBased(sequencer, resultGUI, stf, dij, pln, ...
-                                                 dynamic, continuousAperture, preconditioner);
+    % bridge legacy pln.propOpt/propSeq fields onto the sequencer object,
+    % since assignPropertiesFromPln only auto-maps pln.propSeq.*
+    sequencer.sequencingLevel = numLevels;
+    sequencer.preconditioner = preconditioner;
+    if isa(sequencer, 'matRad_PhotonSequencerVMATAbstract')
+        sequencer.runVMAT = dynamic;
+        sequencer.continuousAperture = continuousAperture;
+        if ~isempty(dij) && isfield(dij, 'weightToMU')
+            sequencer.weightToMU = dij.weightToMU;
+        end
+    elseif dynamic
+        matRad_cfg.dispError(['Sequencer ''%s'' does not support VMAT (dynamic) delivery. ' ...
+                              'Use ''siochi'' for VMAT plans.'], sequencer.shortName);
+    end
+
+    sequence = sequencer.sequence(resultGUI.w, stf);
+    if ~isempty(dij)
+        % merge the computed dose cubes into resultGUI instead of overwriting
+        % it, so that pre-existing fields (e.g. from FMO) survive
+        doseCubes = matRad_calcCubes(sequence.w, dij);
+        fNames = fieldnames(doseCubes);
+        for f = 1:numel(fNames)
+            resultGUI.(fNames{f}) = doseCubes.(fNames{f});
+        end
+    else
+        matRad_cfg.dispWarning('Dose not recalculated with sequenced fluence');
+    end
+    resultGUI.sequencing = sequence;
+    if isfield(sequence, 'apertureInfo')
+        resultGUI.apertureInfo = sequence.apertureInfo;
+    end
 else
     % Non-photon (e.g. particle) sequencing goes through the new
     % class-based sequencer, which only derives spot delivery order/timing
@@ -95,54 +124,4 @@ else
     end
 end
 
-end
-
-function val = matRad_getPlnOptField(pln, fieldName, defaultVal)
-% Reads pln.propOpt.(fieldName), falling back to defaultVal if pln has no
-% propOpt struct or the field is unset.
-if isfield(pln, 'propOpt') && isfield(pln.propOpt, fieldName)
-    val = pln.propOpt.(fieldName);
-else
-    val = defaultVal;
-end
-end
-
-function resultGUI = matRad_sequencePhotonsClassBased(sequencer, resultGUI, stf, dij, pln, ...
-                                                      dynamic, continuousAperture, preconditioner)
-% Siochi (static or VMAT) and static Xia/Engel sequencing through the
-% class-based sequencers.
-
-matRad_cfg = MatRad_Config.instance();
-
-% bridge legacy pln.propOpt/propSeq fields onto the sequencer object,
-% since assignPropertiesFromPln only auto-maps pln.propSeq.*
-sequencer.sequencingLevel = pln.propSeq.numLevels;
-sequencer.preconditioner = preconditioner;
-if isa(sequencer, 'matRad_PhotonSequencerVMATAbstract')
-    sequencer.runVMAT = dynamic;
-    sequencer.continuousAperture = continuousAperture;
-    if ~isempty(dij) && isfield(dij, 'weightToMU')
-        sequencer.weightToMU = dij.weightToMU;
-    end
-elseif dynamic
-    matRad_cfg.dispError(['Sequencer ''%s'' does not support VMAT (dynamic) delivery. ' ...
-                          'Use ''siochi'' for VMAT plans.'], sequencer.shortName);
-end
-
-sequence = sequencer.sequence(resultGUI.w, stf);
-if ~isempty(dij)
-    % merge the computed dose cubes into resultGUI instead of overwriting
-    % it, so that pre-existing fields (e.g. from FMO) survive
-    doseCubes = matRad_calcCubes(sequence.w, dij);
-    fNames = fieldnames(doseCubes);
-    for f = 1:numel(fNames)
-        resultGUI.(fNames{f}) = doseCubes.(fNames{f});
-    end
-else
-    matRad_cfg.dispWarning('Dose not recalculated with sequenced fluence');
-end
-resultGUI.sequencing = sequence;
-if isfield(sequence, 'apertureInfo')
-    resultGUI.apertureInfo = sequence.apertureInfo;
-end
 end
