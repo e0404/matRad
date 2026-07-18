@@ -64,6 +64,10 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
         % Guard flag set while gantryAngles/couchAngles are being
         % programmatically swapped to/from the fine angle grid.
         lockAngleUpdate = false
+
+        % Stacked dose angle borders of all DAO beams (filled in
+        % prepareArcs, consumed in finalizeArcs).
+        DAODoseAngleBorders
     end
 
     methods
@@ -154,6 +158,15 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
             % currently recorded but not yet used to subdivide the spacing
             % calculation (TODO: waypoint support).
 
+            matRad_cfg = MatRad_Config.instance();
+            if this.maxGantryAngleSpacing > this.maxDAOGantryAngleSpacing || ...
+               this.maxDAOGantryAngleSpacing > this.maxFMOGantryAngleSpacing
+                matRad_cfg.dispError(['Inconsistent VMAT gantry angle spacings: ' ...
+                                      'maxGantryAngleSpacing (%g) <= maxDAOGantryAngleSpacing (%g) <= maxFMOGantryAngleSpacing (%g) required, ' ...
+                                      'since dose-calc angles must subdivide DAO control points, which must subdivide FMO control points.'], ...
+                                     this.maxGantryAngleSpacing, this.maxDAOGantryAngleSpacing, this.maxFMOGantryAngleSpacing);
+            end
+
             anchorGantry = this.gantryAngles;
             anchorCouch  = this.couchAngles;
 
@@ -186,7 +199,7 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
                     % In continuous mode the gantry rotates between dose
                     % positions; first/last beams are centred half a
                     % spacing inside the arc boundaries.
-                    numGantryAngles    = ceil(angularRange / this.maxGantryAngleSpacing);
+                    numGantryAngles    = max(ceil(angularRange / this.maxGantryAngleSpacing), 2);
                     gantryAngleSpacing = angularRange / numGantryAngles;
 
                     numDAOGantryAngles = ceil((numGantryAngles - 1) * gantryAngleSpacing / this.maxDAOGantryAngleSpacing) + 1;
@@ -202,6 +215,9 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
                     numDAOGantryAngles    = ceil(angularRange / this.maxDAOGantryAngleSpacing);
                     DAOGantryAngleSpacing = angularRange / numDAOGantryAngles;
                     numGantryAngles       = ceil(numDAOGantryAngles * DAOGantryAngleSpacing / this.maxGantryAngleSpacing);
+                    % Align the fine dose grid so DAO angles land exactly on
+                    % fine angles (fine count must be a multiple of DAO count)
+                    numGantryAngles       = numDAOGantryAngles * ceil(numGantryAngles / numDAOGantryAngles);
                     gantryAngleSpacing    = angularRange / numGantryAngles;
 
                     firstGantryAngle = startAngle;
@@ -213,6 +229,9 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
                 if mod(numApertures, 2) == 0
                     numApertures = numApertures - 1;
                 end
+                % At least one DAO aperture per FMO angle (guards against
+                % maxFMOGantryAngleSpacing < the realized DAO spacing)
+                numApertures = max(numApertures, 1);
                 FMOGantryAngleSpacing = numApertures * DAOGantryAngleSpacing;
                 firstFMOGantryAngle   = firstGantryAngle + DAOGantryAngleSpacing * floor(numApertures / 2);
                 lastFMOGantryAngle    = lastGantryAngle  - DAOGantryAngleSpacing * floor(numApertures / 2);
@@ -296,7 +315,7 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
         function stf = prepareArcs(this, stf, masterRayPosBEV,  masterTargetPointBEV)
             nBeams              = numel(stf);
             numDAO              = 1;
-            DAODoseAngleBorders = zeros(2 * numel(this.arcDAOGantryAngles), 1);
+            this.DAODoseAngleBorders = zeros(2 * numel(this.arcDAOGantryAngles), 1);
             offset              = 1;
             timeFacIndOffset    = 1;
             SAD = this.machine.meta.SAD;
@@ -306,7 +325,7 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
                 %% Determine FMO parent beam
                 [~, stf(i).propVMAT.beamParentFMOIndex] = min(abs(this.arcFMOGantryAngles - stf(i).gantryAngle));
                 stf(i).propVMAT.beamParentGantryAngle   = this.arcFMOGantryAngles(stf(i).propVMAT.beamParentFMOIndex);
-                stf(i).propVMAT.beamParentIndex         = find(abs([stf.gantryAngle] - stf(i).propVMAT.beamParentGantryAngle) < 1e-6);
+                [~, stf(i).propVMAT.beamParentIndex]    = min(abs([stf.gantryAngle] - stf(i).propVMAT.beamParentGantryAngle));
 
                 stf(i).propVMAT.FMOBeam = any(abs(this.arcFMOGantryAngles - stf(i).gantryAngle) < 1e-6);
                 stf(i).propVMAT.DAOBeam = any(abs(this.arcDAOGantryAngles - stf(i).gantryAngle) < 1e-6);
@@ -326,7 +345,7 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
 
                 if stf(i).propVMAT.DAOBeam
                     %% DAO beam: record dose angle borders and compute DAO influence range
-                    DAODoseAngleBorders(offset:offset + 1) = stf(i).propVMAT.doseAngleBorders;
+                    this.DAODoseAngleBorders(offset:offset + 1) = stf(i).propVMAT.doseAngleBorders;
                     offset = offset + 2;
 
                     % Register as child of its FMO parent
@@ -488,7 +507,7 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
 
                 if stf(i).propVMAT.DAOBeam && this.continuousAperture
                     stf(i).propVMAT.doseAngleDAO = ones(1, 2);
-                    if sum(DAODoseAngleBorders == stf(i).propVMAT.doseAngleBorders(2)) > 1
+                    if sum(this.DAODoseAngleBorders == stf(i).propVMAT.doseAngleBorders(2)) > 1
                         % Final dose angle is shared - count it only once
                         stf(i).propVMAT.doseAngleDAO(2) = 0;
                     end

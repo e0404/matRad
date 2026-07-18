@@ -253,7 +253,8 @@ apertureInfoNew.doseTotalNumOfLeafPairs = sum([apertureInfoNew.beam(:).numOfActi
 apertureInfoNew.totalNumOfOptBixels     = apertureInfoNew.totalNumOfBixels;
 
 % recalc apertureVector
-[apertureInfoNew.apertureVector, apertureInfoNew.mappingMx, apertureInfoNew.limMx] = matRad_daoApertureInfo2Vec(apertureInfoNew);
+[apertureInfoNew.apertureVector, apertureInfoNew.mappingMx, apertureInfoNew.limMx] = ...
+    matRad_OptimizationProblemVMAT.matRad_daoApertureInfo2Vec(apertureInfoNew);
 
 recalc.apertureInfo = apertureInfoNew;
 recalc.stf = stf;

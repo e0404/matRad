@@ -100,7 +100,7 @@ matRadGUI;
 % aperture shapes. The fluence map at each angle in the initGantryAngles
 % set is sequenced, with the resulting apertures spread to neighbouring
 % angles from the optGantryAngles set.
-resultGUI = matRad_sequencing(resultGUI, stf, dij, pln);
+resultGUI = matRad_sequencing(resultGUI, stf, pln, dij);
 
 %% DAO - Direct Aperture Optimization
 % The Direct Aperture Optimization is an optimization approach where we

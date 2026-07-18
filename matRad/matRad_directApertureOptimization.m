@@ -91,7 +91,8 @@ options.model        = pln.bioModel.model;
 if isfield(apertureInfo, 'scaleFacRx')
     % weights were scaled to achieve 95% PTV coverage
     % scale back to "optimal" weights
-    apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes) = apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes) / apertureInfo.scaleFacRx;
+    apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes) = ...
+        apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes) / apertureInfo.scaleFacRx;
 end
 
 if ~isfield(pln.propOpt, 'preconditioner')
@@ -157,7 +158,8 @@ if pln.propOpt.preconditioner
 end
 
 % update the apertureInfoStruct and calculate bixel weights
-newApertureInfo = optiProb.matRad_daoVec2ApertureInfo(resultGUI.apertureInfo, optApertureInfoVec); % Use optiprob here to automatically choose VMAT / DAO code
+% Use optiProb dispatch to automatically choose VMAT / DAO code
+newApertureInfo = optiProb.matRad_daoVec2ApertureInfo(resultGUI.apertureInfo, optApertureInfoVec);
 
 % override also bixel weight vector in optResult struct
 w    = newApertureInfo.bixelWeights;
@@ -190,10 +192,11 @@ if isfield(pln, 'scaleDRx') && pln.scaleDRx
     resultGUI.QI = matRad_calcQualityIndicators(cst, pln, resultGUI.physicalDose);
 
     resultGUI.apertureInfo.scaleFacRx = max((pln.DRx / pln.numOfFractions) ./ [resultGUI.QI(pln.RxStruct).D_95]');
-    resultGUI.apertureInfo.apertureVector(1:resultGUI.apertureInfo.totalNumOfShapes) = resultGUI.apertureInfo.apertureVector(1:resultGUI.apertureInfo.totalNumOfShapes) * resultGUI.apertureInfo.scaleFacRx;
+    resultGUI.apertureInfo.apertureVector(1:resultGUI.apertureInfo.totalNumOfShapes) = ...
+        resultGUI.apertureInfo.apertureVector(1:resultGUI.apertureInfo.totalNumOfShapes) * resultGUI.apertureInfo.scaleFacRx;
 
     % update the apertureInfoStruct and calculate bixel weights
-    resultGUI.apertureInfo = matRad_daoVec2ApertureInfo(resultGUI.apertureInfo, resultGUI.apertureInfo.apertureVector);
+    resultGUI.apertureInfo = optiProb.matRad_daoVec2ApertureInfo(resultGUI.apertureInfo, resultGUI.apertureInfo.apertureVector);
 
     % override also bixel weight vector in optResult struct
     resultGUI.w    = resultGUI.apertureInfo.bixelWeights;

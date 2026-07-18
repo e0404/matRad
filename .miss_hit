@@ -13,8 +13,10 @@ line_length: 150
 regex_function_name: "^(matRad|test|helper)_([a-z][a-zA-Z0-9]*|[A-Z]{2,}[a-zA-Z0-9]*)$"
 regex_script_name: "^matRad_((example[1-9][0-9]*_)?([a-z][a-zA-Z0-9]*|[A-Z]{2,}[a-zA-Z0-9]*))$"
 
-# methods: plain lowerCamelCase
-regex_method_name: "^([a-z][a-zA-Z0-9]*|[A-Z]{2,}[a-zA-Z0-9]*)$"
+# methods: lowerCamelCase, optionally matRad_/test_/helper_ prefixed
+# (methods in @-class folders follow the same prefix convention as free
+# functions throughout the codebase)
+regex_method_name: "^((matRad|test|helper)_)?([a-z][a-zA-Z0-9]*|[A-Z]{2,}[a-zA-Z0-9]*)$"
 
 # classes: matRad_ + UpperCamelCase
 regex_class_name: "^(matRad|test)_([A-Z]{2,}[a-zA-Z0-9]*|[A-Z][a-zA-Z0-9]*)$"
