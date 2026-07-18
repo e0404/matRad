@@ -59,12 +59,7 @@ if nargin < 4 || isempty(dij)
 end
 
 if strcmp(pln.radiationMode, 'photons')
-    % Photon (MLC leaf) sequencing. Siochi (static or VMAT) and static
-    % Xia/Engel go through the class-based sequencers. Xia/Engel were never
-    % designed for VMAT (no FMO-beam gating) and only tolerate it with a
-    % warning in the legacy functional implementation - dynamic requests for
-    % those two keep routing there unchanged, rather than inventing FMO
-    % gating for algorithms that were never designed for it.
+    % Photon (MLC leaf) sequencing goes through the class-based sequencers.
 
     if ~isfield(pln, 'propSeq')
         pln.propSeq = struct();
@@ -85,16 +80,10 @@ if strcmp(pln.radiationMode, 'photons')
 
     preconditioner = matRad_getPlnOptField(pln, 'preconditioner', false);
     dynamic = matRad_getPlnOptField(pln, 'runVMAT', false);
-    numApertures = matRad_getPlnOptField(pln, 'numApertures', 0);
     continuousAperture = matRad_getPlnOptField(pln, 'continuousAperture', false);
 
-    if dynamic && any(strcmp(pln.propSeq.sequencer, {'xia', 'engel'}))
-        resultGUI = matRad_sequencePhotonsLegacy(resultGUI, stf, dij, pln, visMode, ...
-                                                 dynamic, numApertures, continuousAperture, preconditioner);
-    else
-        resultGUI = matRad_sequencePhotonsClassBased(sequencer, resultGUI, stf, dij, pln, ...
-                                                     dynamic, continuousAperture, preconditioner);
-    end
+    resultGUI = matRad_sequencePhotonsClassBased(sequencer, resultGUI, stf, dij, pln, ...
+                                                 dynamic, continuousAperture, preconditioner);
 else
     % Non-photon (e.g. particle) sequencing goes through the new
     % class-based sequencer, which only derives spot delivery order/timing
@@ -118,33 +107,6 @@ else
 end
 end
 
-function resultGUI = matRad_sequencePhotonsLegacy(resultGUI, stf, dij, pln, visMode, ...
-                                                  dynamic, numApertures, continuousAperture, preconditioner)
-% Dynamic Xia/Engel sequencing: neither was ever designed for VMAT (no
-% FMO-beam gating), so this keeps routing to the legacy functional
-% implementation, which at least warns about it, unchanged.
-
-varArgList = { ...
-              'visBool', visMode, ...
-              'dynamic', dynamic, ...
-              'numApertures', numApertures, ...
-              'continuousAperture', continuousAperture, ...
-              'preconditioner', preconditioner};
-
-switch pln.propSeq.sequencer
-    case 'xia'
-        resultGUI = matRad_xiaLeafSequencing(resultGUI, stf, dij, pln.propSeq.numLevels, varArgList{:});
-    case 'engel'
-        resultGUI = matRad_engelLeafSequencing(resultGUI, stf, dij, pln.propSeq.numLevels, varArgList{:});
-end
-
-% keep the aperture info available under resultGUI.sequencing.apertureInfo
-% too, matching the location used by the class-based sequencers
-if isfield(resultGUI, 'apertureInfo') && isfield(resultGUI, 'sequencing') && isstruct(resultGUI.sequencing)
-    resultGUI.sequencing.apertureInfo = resultGUI.apertureInfo;
-end
-end
-
 function resultGUI = matRad_sequencePhotonsClassBased(sequencer, resultGUI, stf, dij, pln, ...
                                                       dynamic, continuousAperture, preconditioner)
 % Siochi (static or VMAT) and static Xia/Engel sequencing through the
@@ -162,6 +124,9 @@ if isa(sequencer, 'matRad_PhotonSequencerVMATAbstract')
     if ~isempty(dij) && isfield(dij, 'weightToMU')
         sequencer.weightToMU = dij.weightToMU;
     end
+elseif dynamic
+    matRad_cfg.dispError(['Sequencer ''%s'' does not support VMAT (dynamic) delivery. ' ...
+                          'Use ''siochi'' for VMAT plans.'], sequencer.shortName);
 end
 
 sequence = sequencer.sequence(resultGUI.w, stf);
