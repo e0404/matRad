@@ -208,8 +208,8 @@ end
 
 % update apertureInfoStruct with the maximum leaf speeds per segment
 if pln.propOpt.runVMAT
-    resultGUI.apertureInfo = matRad_maxLeafSpeed(resultGUI.apertureInfo);
+    resultGUI.apertureInfo = matRad_OptimizationProblemVMAT.maxLeafSpeed(resultGUI.apertureInfo);
 
     % optimize delivery
-    resultGUI.apertureInfo = matRad_optDelivery(resultGUI.apertureInfo, 1);
+    resultGUI.apertureInfo = matRad_OptimizationProblemVMAT.optDelivery(resultGUI.apertureInfo, 1);
 end

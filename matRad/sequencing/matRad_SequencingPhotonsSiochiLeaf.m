@@ -106,7 +106,7 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_PhotonSequencerVMATAbstrac
                     sequence.w(1 + offset:numOfRaysPerBeam + offset, 1) = 0;
                     sequence.beam(i).bixelIx = 1 + offset:numOfRaysPerBeam + offset;
                     offset = offset + numOfRaysPerBeam;
-                    continue % this beam carries no shapes of its own; matRad_arcSequencing fills it in as a child of an FMO beam
+                    continue % this beam carries no shapes of its own; arcSequencing fills it in as a child of an FMO beam
                 end
                 numToKeep = stf(i).propVMAT.numOfBeamChildren;
 
@@ -180,7 +180,7 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_PhotonSequencerVMATAbstrac
                 end
 
                 if numToKeep ~= 0
-                    sequence.beam(i) = matRad_discardApertures(sequence.beam(i), numToKeep);
+                    sequence.beam(i) = this.discardApertures(sequence.beam(i), numToKeep);
                 end
 
                 sequence.beam(i).sum = zeros(dimOfFluenceMxZ, dimOfFluenceMxX);

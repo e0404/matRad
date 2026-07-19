@@ -99,7 +99,7 @@ w = ones(sum([stf.numOfRays]), 1);
 sequence = sequencer.sequence(w, stf);
 
 % every FMO beam must end up with exactly numOfBeamChildren shapes
-% distributed across its children (matRad_discardApertures caps it)
+% distributed across its children (discardApertures caps it)
 for i = 1:numel(stf)
     if stf(i).propVMAT.FMOBeam
         assertTrue(sequence.beam(i).numOfShapes <= stf(i).propVMAT.numOfBeamChildren);

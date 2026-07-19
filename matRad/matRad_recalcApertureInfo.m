@@ -66,7 +66,7 @@ for i = 1:numel(apertureInfoOld.beam)
     for j = newInd
         % derive the MLC geometry for this beam; the bixel numbering
         % restarts per beam index (equal ray count per beam)
-        geometry = matRad_getMLCGeometry(stf(j), numOfMLCLeafPairs, (j - 1) * stf(1).numOfRays);
+        geometry = matRad_PhotonSequencerAbstract.getMLCGeometry(stf(j), numOfMLCLeafPairs, (j - 1) * stf(1).numOfRays);
         dimZ = geometry.numOfActiveLeafPairs;
 
         % save data for each beam

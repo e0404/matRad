@@ -1,9 +1,9 @@
-function apertureInfo = matRad_optDelivery(apertureInfo, fast)
+function apertureInfo = optDelivery(apertureInfo, fast)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad: optimize VMAT delivery
 %
 % call
-%   apertureInfo = matRad_optDelivery(apertureInfo,fast)
+%   apertureInfo = matRad_OptimizationProblemVMAT.optDelivery(apertureInfo,fast)
 %
 % input
 %   apertureInfo:       aperture shape info struct from DAO/sequencing
@@ -41,7 +41,7 @@ matRad_cfg = MatRad_Config.instance();
 % Do this after DAO
 
 % calculate max leaf speed
-apertureInfo = matRad_maxLeafSpeed(apertureInfo);
+apertureInfo = matRad_OptimizationProblemVMAT.maxLeafSpeed(apertureInfo);
 
 doInterp = false;
 

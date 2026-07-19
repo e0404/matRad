@@ -6,6 +6,14 @@ classdef matRad_OptimizationProblemVMAT < matRad_OptimizationProblemDAO
         updatedInfo = matRad_daoVec2ApertureInfo(apertureInfo, apertureInfoVect)
 
         [apertureInfoVec, mappingMx, limMx] = matRad_daoApertureInfo2Vec(apertureInfo)
+
+        % Aperture-info delivery post-processing (shared by the VMAT
+        % sequencer and the DAO optimizer)
+        apertureInfo = leafTouching(apertureInfo)
+
+        apertureInfo = maxLeafSpeed(apertureInfo)
+
+        apertureInfo = optDelivery(apertureInfo, fast)
     end
 
     methods

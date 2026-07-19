@@ -88,7 +88,7 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
             for i = 1:size(stf, 2)
 
                 %% 1. read stf and derive the MLC geometry (Ray & Bixelindex maps)
-                [geometry, bixelIndOffset] = matRad_getMLCGeometry(stf(i), this.numOfMLCLeafPairs, bixelIndOffset);
+                [geometry, bixelIndOffset] = this.getMLCGeometry(stf(i), this.numOfMLCLeafPairs, bixelIndOffset);
                 dimZ = geometry.numOfActiveLeafPairs;
                 minX = geometry.posOfCornerBixel(1);
 
@@ -364,6 +364,159 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
 
                 stf(iBeam) = stfTmp;
             end
+        end
+
+        function [geometry, bixelIndOffset] = getMLCGeometry(stfBeam, numOfMLCLeafPairs, bixelIndOffset)
+            % Derive the per-beam MLC geometry from an stf beam's ray
+            % positions: bixel index map, leaf position limits, active leaf
+            % pairs and MLC window. Shared by aperture-info construction in
+            % the photon sequencers and the fine-angle recalculation.
+            %
+            % input:
+            %   stfBeam:            single stf beam entry (stf(i))
+            %   numOfMLCLeafPairs:  total number of physical MLC leaf pairs
+            %   bixelIndOffset:     index of the last bixel of the preceding
+            %                       beams; the beam's rays are numbered
+            %                       starting from bixelIndOffset + 1
+            %
+            % output:
+            %   geometry:        struct with fields numOfActiveLeafPairs,
+            %                    leafPairPos, isActiveLeafPair, centralLeafPair,
+            %                    lim_l, lim_r, bixelIndMap, posOfCornerBixel,
+            %                    MLCWindow
+            %   bixelIndOffset:  updated offset (input + stfBeam.numOfRays)
+
+            bixelWidth = stfBeam.bixelWidth; % [mm]
+
+            % define central leaf pair (here we want the 0mm position to be in the
+            % center of a leaf pair, e.g. leaf 41 stretches from -2.5mm to 2.5mm
+            % for a bixel/leafWidth of 5mm and 81 leaf pairs)
+            centralLeafPair = ceil(numOfMLCLeafPairs / 2);
+
+            % get x- and z-coordinates of bixels
+            rayPos_bev = reshape([stfBeam.ray.rayPos_bev], 3, []);
+            X = rayPos_bev(1, :)';
+            Z = rayPos_bev(3, :)';
+
+            % create ray-map
+            maxX = max(X);
+            minX = min(X);
+            maxZ = max(Z);
+            minZ = min(Z);
+
+            dimX = (maxX - minX) / bixelWidth + 1;
+            dimZ = (maxZ - minZ) / bixelWidth + 1;
+
+            rayMap = zeros(dimZ, dimX);
+
+            % get indices for x and z positions
+            xPos = (X - minX) / bixelWidth + 1;
+            zPos = (Z - minZ) / bixelWidth + 1;
+
+            % get indices in the ray-map
+            indInRay = zPos + (xPos - 1) * dimZ;
+
+            % fill ray-map
+            rayMap(indInRay) = 1;
+
+            % create map of bixel indices
+            bixelIndMap = NaN * ones(dimZ, dimX);
+            bixelIndMap(indInRay) = (1:stfBeam.numOfRays) + bixelIndOffset;
+            bixelIndOffset = bixelIndOffset + stfBeam.numOfRays;
+
+            % get leaf limits from the leaf map
+            lim_l = NaN * ones(dimZ, 1);
+            lim_r = NaN * ones(dimZ, 1);
+            for l = 1:dimZ
+                lim_lInd = find(rayMap(l, :), 1, 'first');
+                lim_rInd = find(rayMap(l, :), 1, 'last');
+                % the physical position [mm] can be calculated from the indices
+                lim_l(l) = (lim_lInd - 1) * bixelWidth + minX - 1 / 2 * bixelWidth;
+                lim_r(l) = (lim_rInd - 1) * bixelWidth + minX + 1 / 2 * bixelWidth;
+            end
+
+            % find upmost and downmost leaf pair
+            topLeafPair = centralLeafPair - maxZ / bixelWidth;
+            bottomLeafPair = centralLeafPair - minZ / bixelWidth;
+
+            % create bool map of active leaf pairs
+            isActiveLeafPair = zeros(numOfMLCLeafPairs, 1);
+            isActiveLeafPair(topLeafPair:bottomLeafPair) = 1;
+
+            % getting the dimensions of the MLC in order to be able to plot the
+            % shapes using physical coordinates
+            MLCWindow = [minX - bixelWidth / 2 maxX + bixelWidth / 2 ...
+                         minZ - bixelWidth / 2 maxZ + bixelWidth / 2];
+
+            geometry.numOfActiveLeafPairs = dimZ;
+            geometry.leafPairPos          = unique(Z);
+            geometry.isActiveLeafPair     = isActiveLeafPair;
+            geometry.centralLeafPair      = centralLeafPair;
+            geometry.lim_l                = lim_l;
+            geometry.lim_r                = lim_r;
+            geometry.bixelIndMap          = bixelIndMap;
+            geometry.posOfCornerBixel     = [minX 0 minZ];
+            geometry.MLCWindow            = MLCWindow;
+        end
+
+        function newBeam = discardApertures(beam, numToKeep)
+            % The sequencing algorithm generates an a priori unknown number
+            % of apertures. We only want to keep a certain number of them
+            % (numToKeep) - the ones with the highest intensity-area product.
+            % The kept shapes are preserved and their weights are rescaled so
+            % the total dose-area product is maintained.
+            %
+            % input:
+            %   beam:       beam struct containing original shapes and intensities
+            %   numToKeep:  number of apertures to keep
+            %
+            % output:
+            %   newBeam:    beam struct with shapes and re-scaled intensities
+
+            newBeam = beam;
+            newBeam.shapes = zeros(size(newBeam.shapes, 1), size(newBeam.shapes, 2), numToKeep);
+            newBeam.shapesWeight = zeros(numToKeep, 1);
+
+            % Find the numToKeep apertures having the highest dose-area product
+            numToKeep = min(numToKeep, beam.numOfShapes);
+
+            DAP = zeros(beam.numOfShapes, 1);
+            comPos = zeros(beam.numOfShapes, 1);
+
+            for shape = 1:beam.numOfShapes
+                DAP(shape) = nnz(beam.shapes(:, :, shape)) .* beam.shapesWeight(shape);
+                x = repmat(1:size(beam.shapes(:, :, shape), 2), size(beam.shapes(:, :, shape), 1), 1);
+                comPosRow = sum(beam.shapes(:, :, shape) .* x, 2) ./ sum(beam.shapes(:, :, shape), 2);
+                comPos(shape) = mean(comPosRow(~isnan(comPosRow), 1));
+            end
+
+            % Note: some algorithms (in particular, Siochi) already sort shapes
+            % in increasing (left to right) leaf position, so sorting by centre
+            % of mass here is intentionally omitted - it would reorder them.
+
+            [~, comPosToDAPSort] = sort(DAP, 'descend');
+
+            totDAP_all = sum(DAP(:));
+            totDAP_keep = sum(DAP(comPosToDAPSort(1:numToKeep)));
+
+            segmentKeep = 1;
+
+            % Keep only those numToKeep apertures with the highest DAP
+            % Preserve the shapes of the apertures, but scale the weights so
+            % that the total DAP is kept
+            for shape = 1:beam.numOfShapes
+                if comPosToDAPSort(shape) <= numToKeep
+                    newBeam.shapes(:, :, segmentKeep) = beam.shapes(:, :, shape);
+                    tempNewDAP = totDAP_all * DAP(shape) / totDAP_keep;
+                    newBeam.shapesWeight(segmentKeep) = tempNewDAP / (nnz(newBeam.shapes(:, :, segmentKeep)));
+
+                    segmentKeep = segmentKeep + 1;
+                else
+                    continue
+                end
+            end
+
+            newBeam.numOfShapes = numToKeep;
         end
 
     end
