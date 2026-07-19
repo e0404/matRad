@@ -662,10 +662,9 @@ classdef MatRad_Config < handle
                 % the properties of basicStruct with the changed properties in changedStruct
                 fields = fieldnames(basicStruct);
                 for k = 1:length(fields)
-                    disp(fields{k});
                     if isfield(changedStruct, fields{k})
-                        if isstruct(changedStruct.(fields{k})) && isstruct(basicStruct.(fields{i}))
-                            basicStruct.(fields{k}) = mergeStructsRecursive(basicStruct.(fields{k}), changedStruct.(fields{i}));
+                        if isstruct(changedStruct.(fields{k})) && isstruct(basicStruct.(fields{k}))
+                            basicStruct.(fields{k}) = mergeStructsRecursive(basicStruct.(fields{k}), changedStruct.(fields{k}));
                         else
                             basicStruct.(fields{k}) = changedStruct.(fields{k});
                         end
