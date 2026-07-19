@@ -2,11 +2,11 @@
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2017 the matRad development team.
+% Copyright 2017-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
 % of the matRad project, including this file, may be copied, modified,
 % propagated, or distributed except according to the terms contained in the
 % LICENSE file.
@@ -22,6 +22,10 @@
 % (v) how to apply a sequencing algorithm
 % (vi) how to run a VMAT direct aperture optimization
 % (vii) how to visually and quantitatively evaluate the result
+%
+% VMAT is direct aperture optimization on a rotating arc. For the static
+% (step-and-shoot) counterpart - including a comparison of the siochi, xia
+% and engel leaf sequencers - see matRad_example3_photonsDAO.
 
 %% Patient Data Import
 % Let's begin with a clear Matlab environment and import the TG119 patient
@@ -58,6 +62,7 @@ pln.propStf.generator                = 'PhotonVMAT';
 pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]
 pln.propDoseCalc.doseGrid.resolution.y = 5; % [mm]
 pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
+pln.propDoseCalc.precision = 'single';
 
 % sequencing settings
 pln.propSeq.runSequencing      = true;   % true: run sequencing, false: don't / will be ignored for particles and also triggered by runDAO below
@@ -108,8 +113,15 @@ resultGUI = matRad_sequencing(resultGUI, stf, pln, dij);
 resultGUI = matRad_directApertureOptimization(dij, cst, resultGUI.apertureInfo, resultGUI, pln);
 
 %% Aperture visualization
-% Use a matrad function to visualize the resulting aperture shapes
+% Use a matRad function to visualize the result. For a VMAT plan this shows
+% three views: the apertures of all control points on one grid, the leaf
+% trajectories over the arc, and the delivery metrics (MU rate, gantry
+% rotation speed, leaf speed) against the machine constraints.
 matRad_visApertureInfo(resultGUI.apertureInfo);
+
+% Individual views can also be requested explicitly, e.g. the leaf
+% trajectories in physical coordinates:
+% matRad_visApertureInfo(resultGUI.apertureInfo, 'physical', 'trajectory');
 
 %% Indicator Calculation and display of DVH and QI
 resultGUI = matRad_planAnalysis(resultGUI, ct, cst, stf, pln);
